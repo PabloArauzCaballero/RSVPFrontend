@@ -1,0 +1,12 @@
+.yarn/cache
+.yarn/install-state.gz
+.pnp.*
+node_modules
+.expo
+.next
+.turbo
+web-build
+dist
+coverage
+*.tsbuildinfo
+.env.local

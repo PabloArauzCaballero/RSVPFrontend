@@ -1,0 +1,16 @@
+{
+  "extends": "@rsvp/config-ts/base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "types": [
+      "nativewind/types"
+    ]
+  },
+  "include": [
+    "app",
+    "src",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts",
+    "nativewind-env.d.ts"
+  ]
+}

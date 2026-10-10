@@ -1,0 +1,14 @@
+{
+  "name": "@rsvp/config-tailwind",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    ".": "./preset.cjs"
+  },
+  "scripts": {
+    "build": "node -e \"\"",
+    "lint": "node -e \"\"",
+    "test": "node -e \"\"",
+    "typecheck": "node -e \"\""
+  }
+}

@@ -1,0 +1,1 @@
+{ "extends": "@rsvp/config-ts/base.json", "compilerOptions": { "jsx": "preserve", "plugins": [{ "name": "next" }], "incremental": true }, "include": ["next-env.d.ts", ".next/types/**/*.ts", "app", "tests"] }

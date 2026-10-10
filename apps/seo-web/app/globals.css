@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { --canvas: #FFFBFF; --surface: #FFFFFF; --surface-muted: #F4F1F8; --text: #1D1B20; --text-muted: #625B71; --primary: #6750A4; --on-primary: #FFFFFF; --primary-muted: #E9DDFF; --border: #CAC4D0; --danger: #BA1A1A; }
+[data-theme='dark'] { --canvas: #141218; --surface: #1D1B20; --surface-muted: #211F26; --text: #E6E0E9; --text-muted: #CAC4D0; --primary: #D0BCFF; --on-primary: #381E72; --primary-muted: #4F378B; --border: #938F99; --danger: #FFB4AB; }
+* { box-sizing: border-box; }
+body { margin: 0; color: var(--text); background: var(--canvas); font-family: Arial, sans-serif; }
+button, input, select { font: inherit; }
+.rsvp-catalog, .seo-home { width: min(100% - 2rem, 70rem); margin: 0 auto; padding: 2rem 0; display: grid; gap: 1rem; }
+.rsvp-button { min-height: 2.75rem; width: fit-content; border: 0; border-radius: .5rem; padding: .5rem 1rem; cursor: pointer; background: var(--primary); color: var(--on-primary); font-weight: 600; }
+.rsvp-button--secondary { background: var(--primary-muted); color: var(--primary); }
+.rsvp-button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+.rsvp-button:disabled { cursor: not-allowed; opacity: .55; }
+.rsvp-field { display: grid; gap: .35rem; max-width: 28rem; font-weight: 600; }
+.rsvp-field input, .rsvp-field select { min-height: 2.75rem; padding: .5rem .75rem; border: 1px solid var(--border); border-radius: .5rem; background: var(--surface); color: var(--text); }
+.rsvp-card { display: grid; gap: .75rem; border: 1px solid var(--border); border-radius: .75rem; padding: 1rem; background: var(--surface); }
+.rsvp-overlay { position: fixed; inset: 0; display: grid; align-items: end; background: rgb(0 0 0 / .45); }
+.rsvp-sheet, .rsvp-modal { display: grid; gap: 1rem; padding: 1.25rem; background: var(--surface); }
+.rsvp-modal { width: min(90vw, 32rem); margin: auto; border-radius: .75rem; }
+.rsvp-table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: .75rem; }
+table { width: 100%; border-collapse: collapse; } th, td { padding: .75rem; text-align: left; border-bottom: 1px solid var(--border); } th { background: var(--surface-muted); }
+.rsvp-toast { position: fixed; bottom: 1rem; right: 1rem; padding: .75rem 1rem; border: 0; border-radius: .5rem; background: var(--text); color: var(--surface); }
+@media (min-width: 48rem) { .rsvp-sheet { width: min(34rem, 100%); margin-left: auto; height: 100%; } }

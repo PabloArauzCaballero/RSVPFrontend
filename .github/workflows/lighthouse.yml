@@ -1,0 +1,17 @@
+name: Lighthouse SEO
+on: [pull_request]
+permissions: { contents: read }
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version-file: .nvmrc, cache: yarn }
+      - run: corepack enable
+      - run: yarn install --immutable
+      - run: yarn workspace @rsvp/seo-web build && yarn workspace @rsvp/seo-web start &
+      - uses: treosh/lighthouse-ci-action@v12
+        with:
+          urls: http://localhost:3000
+          budgetPath: .lighthouserc.json

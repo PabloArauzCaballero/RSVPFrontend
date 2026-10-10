@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "RSVP", "slug": "rsvp", "scheme": "rsvp",
+    "version": "0.1.0", "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "web": { "bundler": "metro", "output": "single" },
+    "plugins": ["expo-router"],
+    "experiments": { "typedRoutes": true }
+  }
+}

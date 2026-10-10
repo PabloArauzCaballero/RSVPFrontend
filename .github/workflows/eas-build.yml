@@ -1,0 +1,27 @@
+name: EAS build
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: EAS build profile
+        required: true
+        default: preview
+        type: choice
+        options: [development, preview, production]
+  push:
+    tags: ["mobile-v*"]
+permissions: { contents: read }
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.profile || 'production' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version-file: .nvmrc, cache: yarn }
+      - run: corepack enable
+      - run: yarn install --immutable
+      - uses: expo/expo-github-action@v8
+        with: { eas-version: latest, token: ${{ secrets.EXPO_TOKEN }} }
+      - run: eas build --platform all --profile ${{ github.event.inputs.profile || 'production' }} --non-interactive --no-wait
+        working-directory: apps/universal

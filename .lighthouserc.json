@@ -1,0 +1,1 @@
+{ "ci": { "assert": { "assertions": { "categories:seo": ["error", { "minScore": 0.95 }] } } } }

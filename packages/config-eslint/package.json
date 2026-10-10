@@ -1,0 +1,16 @@
+{
+  "name": "@rsvp/config-eslint",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./base": "./base.js",
+    "./no-literal-strings": "./rules/no-literal-strings.js"
+  },
+  "scripts": {
+    "build": "node --check base.js && node --check rules/no-literal-strings.js",
+    "lint": "node --check base.js && node --check rules/no-literal-strings.js",
+    "test": "node --check base.js",
+    "typecheck": "node --check base.js"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "@rsvp/config-ts",
+  "version": "0.0.0",
+  "private": true,
+  "files": [
+    "*.json"
+  ],
+  "scripts": {
+    "build": "node -e \"\"",
+    "lint": "node -e \"\"",
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "node -e \"\""
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "eslint": "^9.25.1",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.2"
+  }
+}

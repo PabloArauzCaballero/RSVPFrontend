@@ -1,0 +1,14 @@
+{
+  "name": "@rsvp/config-jest",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    ".": "./vitest.base.ts"
+  },
+  "scripts": {
+    "build": "node -e \"\"",
+    "lint": "node -e \"\"",
+    "test": "node -e \"\"",
+    "typecheck": "node -e \"\""
+  }
+}
