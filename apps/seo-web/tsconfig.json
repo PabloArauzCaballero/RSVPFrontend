@@ -1,1 +1,23 @@
-{ "extends": "@rsvp/config-ts/base.json", "compilerOptions": { "jsx": "preserve", "plugins": [{ "name": "next" }], "incremental": true }, "include": ["next-env.d.ts", ".next/types/**/*.ts", "app", "tests"] }
+{
+  "extends": "@rsvp/config-ts/base.json",
+  "compilerOptions": {
+    "jsx": "preserve",
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "incremental": true,
+    "allowJs": true,
+    "noEmit": true
+  },
+  "include": [
+    "next-env.d.ts",
+    ".next/types/**/*.ts",
+    "app",
+    "tests"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

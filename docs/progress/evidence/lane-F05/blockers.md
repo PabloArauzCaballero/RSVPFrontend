@@ -1,9 +1,14 @@
-# F05 · bloqueos externos y de contrato
+# F05 · bloqueos externos
 
-Fecha: 2026-10-10.
+Actualizado: 2026-10-11.
 
-- `REQ-F05-01` no puede cerrar completamente: el contrato OpenAPI de Identity v1.0.0 solo declara registro, login y refresh; no declara recuperación de contraseña.
-- `REQ-F05-06` no puede cerrar completamente: el contrato no declara revocación/cierre de sesión remoto. El cliente borra el estado local de forma garantizada, pero necesita un endpoint de revocación para invalidar el refresh token en servidor.
-- `REQ-F05-04` y `REQ-F05-05` requieren el dominio verificado, Apple Developer Team ID, Android package name y fingerprint SHA-256 de la firma. `@rsvp/auth` genera el contenido correcto de ambos documentos; su publicación bajo `apps/seo-web/public/.well-known/` y la prueba en dispositivos físicos quedan bloqueadas hasta contar con esos valores y las cuentas de tienda.
+`POST /identity/auth/password-recovery` y `POST /identity/auth/logout` ya forman parte del contrato de Identity y están consumidos por `@rsvp/auth`.
 
-Evidencia de fuente: `RSVPBackend/packages/contracts-openapi/specs/identity.openapi.json` v1.0.0.
+Para cerrar la demostración de enlaces universales en dispositivos reales siguen faltando recursos que no pueden inventarse desde código:
+
+- dominio verificado para `EXPO_PUBLIC_LINK_DOMAIN`;
+- Apple Developer Team ID / App ID (`RSVP_APPLE_APP_ID`);
+- package Android y huella SHA-256 de la firma;
+- cuentas Apple Developer y Google Play con dispositivos físicos de prueba.
+
+Las rutas `/.well-known/apple-app-site-association` y `/.well-known/assetlinks.json` están listas y responden 404 hasta recibir esos identificadores, para no publicar archivos de verificación falsos.

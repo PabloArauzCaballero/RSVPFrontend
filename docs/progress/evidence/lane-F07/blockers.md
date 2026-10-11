@@ -1,5 +1,13 @@
 # F07 · bloqueos externos
 
-Fecha: 2026-10-10.
+Actualizado: 2026-10-11.
 
-El workflow EAS y los perfiles están definidos. La generación de binarios firmados, distribución a TestFlight y Google Play requiere `EXPO_TOKEN`, proyecto EAS enlazado, credenciales de Apple/Google y `EXPO_ASC_APP_ID`. Esos secretos y cuentas no están presentes en el repositorio y no deben añadirse al código.
+Los workflows de CI, EAS Build y Lighthouse, los perfiles de `eas.json`, el runtime version y el runbook de OTA están versionados.
+
+Una build firmada y su distribución requieren recursos externos que no existen en el repositorio:
+
+- `EXPO_TOKEN` y proyecto EAS enlazado (`EXPO_PUBLIC_EAS_PROJECT_ID`);
+- credenciales de firma Apple y Google;
+- `EXPO_ASC_APP_ID` y acceso a TestFlight / Google Play Internal Testing.
+
+No se añadieron secretos ni identificadores ficticios al código.

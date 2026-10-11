@@ -10,7 +10,10 @@ jobs:
         with: { node-version-file: .nvmrc, cache: yarn }
       - run: corepack enable
       - run: yarn install --immutable
-      - run: yarn workspace @rsvp/seo-web build && yarn workspace @rsvp/seo-web start &
+      - run: yarn workspace @rsvp/seo-web build
+      - run: yarn workspace @rsvp/seo-web start > /tmp/rsvp-next.log 2>&1 &
+      - name: Wait for Next.js
+        run: until curl --fail --silent http://localhost:3000; do sleep 1; done
       - uses: treosh/lighthouse-ci-action@v12
         with:
           urls: http://localhost:3000

@@ -9,4 +9,6 @@ web-build
 dist
 coverage
 *.tsbuildinfo
+*.out.log
+*.err.log
 .env.local

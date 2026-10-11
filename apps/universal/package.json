@@ -8,7 +8,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "build": "expo export --platform web --output-dir web-build",
+    "build": "expo export --platform web --output-dir web-build --max-workers 1",
     "lint": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit"
