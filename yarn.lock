@@ -3810,6 +3810,20 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@rsvp/celebration-theme@workspace:*, @rsvp/celebration-theme@workspace:packages/celebration-theme":
+  version: 0.0.0-use.local
+  resolution: "@rsvp/celebration-theme@workspace:packages/celebration-theme"
+  dependencies:
+    "@rsvp/config-ts": "workspace:*"
+    "@types/react": "npm:~19.1.0"
+    react: "npm:19.1.0"
+    typescript: "npm:^5.8.3"
+    vitest: "npm:^3.1.2"
+  peerDependencies:
+    react: ">=18"
+  languageName: unknown
+  linkType: soft
+
 "@rsvp/config-eslint@workspace:packages/config-eslint":
   version: 0.0.0-use.local
   resolution: "@rsvp/config-eslint@workspace:packages/config-eslint"
@@ -3900,6 +3914,7 @@ __metadata:
   resolution: "@rsvp/seo-web@workspace:apps/seo-web"
   dependencies:
     "@rsvp/auth": "workspace:*"
+    "@rsvp/celebration-theme": "workspace:*"
     "@rsvp/config-ts": "workspace:*"
     "@rsvp/design-tokens": "workspace:*"
     "@rsvp/ui-web": "workspace:*"

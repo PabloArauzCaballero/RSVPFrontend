@@ -22,3 +22,12 @@ button, input, select { font: inherit; }
 table { width: 100%; border-collapse: collapse; } th, td { padding: .75rem; text-align: left; border-bottom: 1px solid var(--border); } th { background: var(--surface-muted); }
 .rsvp-toast { position: fixed; bottom: 1rem; right: 1rem; padding: .75rem 1rem; border: 0; border-radius: .5rem; background: var(--text); color: var(--surface); }
 @media (min-width: 48rem) { .rsvp-sheet { width: min(34rem, 100%); margin-left: auto; height: 100%; } }
+.celebration-shell { min-height: 100vh; background: var(--celebration-canvas, var(--canvas)); color: var(--celebration-text, var(--text)); }
+.celebration-hero { width: min(100% - 2rem, 62rem); margin: 0 auto; padding: clamp(3rem, 12vw, 8rem) 0 3rem; text-align: center; }
+.celebration-hero p:first-child { margin: 0 0 .5rem; color: var(--celebration-accent, var(--primary)); font-size: .875rem; letter-spacing: .12em; text-transform: uppercase; }
+.celebration-hero h1 { margin: 0; font-size: clamp(2.2rem, 8vw, 5rem); line-height: 1.05; }
+.celebration-hero p:last-child { max-width: 38rem; margin: 1.25rem auto 0; color: var(--text-muted); font-family: Arial, sans-serif; }
+.celebration-shell article { display: grid; gap: 1px; background: color-mix(in srgb, var(--celebration-accent, var(--border)) 22%, transparent); }
+.celebration-shell article section { width: min(100% - 2rem, 62rem); margin: 0 auto; padding: clamp(2rem, 7vw, 4rem); background: var(--celebration-surface, var(--surface)); }
+.celebration-shell article section h2 { margin-top: 0; color: var(--celebration-accent, var(--primary)); }
+.celebration-shell details { font-family: Arial, sans-serif; }

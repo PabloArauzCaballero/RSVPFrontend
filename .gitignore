@@ -4,6 +4,7 @@
 node_modules
 .expo
 .next
+.next-*
 .turbo
 web-build
 dist

@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@rsvp/auth": "workspace:*",
+    "@rsvp/celebration-theme": "workspace:*",
     "@rsvp/design-tokens": "workspace:*",
     "@rsvp/ui-web": "workspace:*",
     "next": "15.3.1",
