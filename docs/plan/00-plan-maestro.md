@@ -1,7 +1,11 @@
+> **Revisión vigente (16-oct-2026):** [replanificación por slices verticales](revision-vertical-slice-2026-10-16.md). Sus criterios de entrega, CodeGraph, UX/UI y animación prevalecen sobre secuencias por capas y calendario histórico de este documento.
+
 > Plan maestro del frontend. Es la referencia estable del producto visible.
 > El reparto por persona está en [`equipo/`](equipo/), el calendario en [`calendario/`](calendario/)
 > y las órdenes de trabajo en [`carriles/`](carriles/).
 > El plan de backend vive en `RSVPBackend/docs/plan/`.
+
+> **Nota de ejecución vigente (2026-10-16):** el harness `.claude/` completo, `tareas/` y las skills por carril descritos abajo son el diseño histórico y no están implementados. `.claude/skills/` contiene adaptadores hacia las skills compartidas; sí existen hooks de recarga por prompt para Claude y Gemini. El flujo obligatorio actual está en [`AGENTS.md`](../../AGENTS.md), las skills de [`.agents/skills/`](../../.agents/skills/rsvp-frontend-lane/SKILL.md), la [política de skills](../engineering/skills.md), las [convenciones](../engineering/convenciones.md) y las 28 fichas existentes en [`carriles/`](carriles/).
 
 ---
 

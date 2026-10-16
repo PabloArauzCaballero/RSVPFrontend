@@ -1,3 +1,5 @@
+> **Replanificación vigente (16-oct-2026):** [slices verticales y gates de CodeGraph, UX/UI y animación](../revision-vertical-slice-2026-10-16.md). Las fechas y tareas de esta ficha son objetivos históricos sujetos a reestimación con evidencia de slices completos.
+
 # Leo · Celebración, contenido y SEO
 
 > Tenés la isla de Next.js, que es la parte del producto que Google lee. El buscador de proveedores que construís en `F24` es el embudo de captación orgánica del negocio: alguien busca «salón de eventos Santa Cruz», llega a nuestra ficha y se convierte en un lead para un partner.

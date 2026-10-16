@@ -6,6 +6,8 @@ Turborepo · Expo Router universal (iOS + Android + Web) + isla Next.js para SEO
 
 ## Cómo se lee esta carpeta
 
+**Revisión vigente (16-oct-2026):** lee [la replanificación por slices verticales](revision-vertical-slice-2026-10-16.md) antes de ejecutar el calendario o una ficha. Sus cortes y gates de UX/animación/CodeGraph prevalecen sobre las listas históricas por componentes. Las fechas H1–H6 siguen como objetivos y requieren reestimación con evidencia de capacidad; no equivalen a compromiso verificado.
+
 | Carpeta | Qué contiene | Cuándo la abrís |
 |---|---|---|
 | [`00-plan-maestro.md`](00-plan-maestro.md) | El plan completo: arquitectura, inventario de las 86 pantallas, motor de templates, estrategia de pruebas | Una vez al empezar |
@@ -98,7 +100,7 @@ API_URL=http://localhost:8000 yarn dev
 Y después, tu carril:
 
 ```
-/rsvp-master Ejecuta el carril FNN completo
+Usa $rsvp-frontend-lane para ejecutar el carril FNN completo
 ```
 
 ---

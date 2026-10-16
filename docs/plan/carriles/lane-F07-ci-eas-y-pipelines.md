@@ -42,9 +42,23 @@ Cada requisito es falsable: o pasa su prueba, o no pasa. No hay interpretación.
 
 ---
 
-## Plan por slices
+## Primer slice vertical replanificado (16-oct-2026)
 
-Cada slice es vertical y termina con sus pruebas en verde. No se pasa al siguiente con el anterior rojo.
+**Resultado demostrable:** Construir una ruta mínima en CI y obtener un artefacto EAS o un bloqueo externo reproducible.
+
+- **REQs:** relacionar el primer corte con los requisitos aplicables (REQ-F07-01, REQ-F07-02, REQ-F07-03, REQ-F07-04, REQ-F07-05, REQ-F07-06) en la evidencia antes de implementarlo; los demás se reparten en cortes posteriores. Este primer corte no cierra el carril.
+- **Frontera entre repos:** 09 backend; coordinar contrato versionado y prueba de integración cuando el resultado la requiera.
+- **Prueba mínima:** caso de éxito y caso negativo en runtime pertinente, con comando/artefacto y resultado en la evidencia del carril. Un mock solo prueba su capa.
+- **Gates de interfaz:** interfaz solo si el cambio la toca. **Animación:** según superficie.
+- **Descubrimiento:** consultar CodeGraph para flujo e impacto y confirmar en archivos actuales.
+
+Los puntos del inventario siguiente describen capacidades previstas, **no** slices verticales listos para ejecutar. Corta cada capacidad restante por comportamiento y cierra su prueba antes de avanzar; sigue [la revisión general](../revision-vertical-slice-2026-10-16.md).
+
+---
+
+## Inventario histórico de capacidades
+
+Esta lista conserva el inventario original por componentes. No representa slices ejecutables ni el orden de entrega.
 
 1. Pipeline base con `--affected`, lint, typecheck y tests.
 2. Perfiles de EAS para desarrollo, vista previa y producción.
@@ -94,5 +108,5 @@ Y en todos los casos:
 ## Cómo se activa
 
 ```
-/rsvp-master Ejecuta el carril F07 completo
+Usa $rsvp-frontend-lane para ejecutar el carril F07 completo
 ```

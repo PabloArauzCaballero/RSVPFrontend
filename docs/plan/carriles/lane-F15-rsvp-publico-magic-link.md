@@ -40,9 +40,23 @@ Cada requisito es falsable: o pasa su prueba, o no pasa. No hay interpretación.
 
 ---
 
-## Plan por slices
+## Primer slice vertical replanificado (16-oct-2026)
 
-Cada slice es vertical y termina con sus pruebas en verde. No se pasa al siguiente con el anterior rojo.
+**Resultado demostrable:** Abrir magic link válido, confirmar RSVP y ver el estado; token inválido muestra recuperación.
+
+- **REQs:** relacionar el primer corte con los requisitos aplicables (REQ-F15-01, REQ-F15-02, REQ-F15-03, REQ-F15-04, REQ-F15-05, REQ-F15-06) en la evidencia antes de implementarlo; los demás se reparten en cortes posteriores. Este primer corte no cierra el carril.
+- **Frontera entre repos:** 19 backend; coordinar contrato versionado y prueba de integración cuando el resultado la requiera.
+- **Prueba mínima:** caso de éxito y caso negativo en runtime pertinente, con comando/artefacto y resultado en la evidencia del carril. Un mock solo prueba su capa.
+- **Gates de interfaz:** Impeccable + UI/UX Pro Max + estados + visual. **Animación:** evaluar propósito; si se implementa, motion design + reduced motion.
+- **Descubrimiento:** consultar CodeGraph para flujo e impacto y confirmar en archivos actuales.
+
+Los puntos del inventario siguiente describen capacidades previstas, **no** slices verticales listos para ejecutar. Corta cada capacidad restante por comportamiento y cierra su prueba antes de avanzar; sigue [la revisión general](../revision-vertical-slice-2026-10-16.md).
+
+---
+
+## Inventario histórico de capacidades
+
+Esta lista conserva el inventario original por componentes. No representa slices ejecutables ni el orden de entrega.
 
 1. Formulario con React Hook Form y Zod, y envío optimista.
 2. Los tres estados de error: fuera de plazo, token inválido y no autorizado.
@@ -93,5 +107,5 @@ Y en todos los casos:
 ## Cómo se activa
 
 ```
-/rsvp-master Ejecuta el carril F15 completo
+Usa $rsvp-frontend-lane para ejecutar el carril F15 completo
 ```

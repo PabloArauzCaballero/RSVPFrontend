@@ -15,9 +15,15 @@
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
     "dev": "turbo run dev --parallel",
-    "verify": "yarn build && yarn lint && yarn test && yarn typecheck"
+    "verify": "yarn build && yarn lint && yarn test && yarn typecheck",
+    "harness:validate": "node scripts/validate-harness.mjs",
+    "graph:init": "codegraph init --yes",
+    "graph:status": "codegraph status",
+    "graph:sync": "codegraph sync",
+    "graph:probe": "node scripts/probe-codegraph-mcp.mjs"
   },
   "devDependencies": {
+    "@colbymchenry/codegraph": "1.6.2",
     "@types/node": "22.15.3",
     "eslint": "9.25.1",
     "prettier": "3.5.3",

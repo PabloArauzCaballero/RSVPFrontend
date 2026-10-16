@@ -1,3 +1,5 @@
+> **Replanificación vigente (16-oct-2026):** [slices verticales y gates de CodeGraph, UX/UI y animación](../revision-vertical-slice-2026-10-16.md). Las fechas y tareas de esta ficha son objetivos históricos sujetos a reestimación con evidencia de slices completos.
+
 # Miguel · Invitados, avisos y móvil
 
 > Tenés la pantalla con más usuarios de todo el producto —el RSVP, que abren cientos de invitados por celebración— y la exigencia dura del cliente, que es el push real en iOS y Android. Tres de tus carriles no se pueden demostrar con un test: necesitan dos teléfonos en la mano.

@@ -1,6 +1,10 @@
 # Carriles · RSVP Frontend
 
+**Orden vigente:** [revisión de slices verticales](../revision-vertical-slice-2026-10-16.md). Cada ficha tiene un primer corte específico; el antiguo plan por componentes es inventario. CodeGraph sustituye Graphify y los gates visuales/motion se aplican donde correspondan.
+
 28 órdenes de trabajo. Cada carril es una unidad de ejecución con dueño, semana, requisitos falsables y Definition of Done propio.
+
+**Ejecución obligatoria:** al trabajar un carril, aplica [`$rsvp-frontend-lane`](../../../.agents/skills/rsvp-frontend-lane/SKILL.md) y las [convenciones de código](../../engineering/convenciones.md). Para pantallas, navegación, estilos o SEO, aplica también [`$rsvp-frontend-visual-proof`](../../../.agents/skills/rsvp-frontend-visual-proof/SKILL.md). `AGENTS.md` fija esta regla para agentes; el cumplimiento humano requiere revisión y checks de CI. Las fichas conservan su alcance específico.
 
 ---
 

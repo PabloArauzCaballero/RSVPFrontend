@@ -1,3 +1,5 @@
+> **Replanificación vigente (16-oct-2026):** [slices verticales y gates de CodeGraph, UX/UI y animación](../revision-vertical-slice-2026-10-16.md). Las fechas y tareas de esta ficha son objetivos históricos sujetos a reestimación con evidencia de slices completos.
+
 # Pablo · Plataforma de frontend
 
 > Sos el primero otra vez. `F01`–`F05` son predecesores de casi todas las pantallas del producto: nadie puede construir una vista sin design system, sin primitivas y sin cliente de API. Leo te espera el lunes de la semana 7, Miguel el de la 8 y Fabio el de la 9.
