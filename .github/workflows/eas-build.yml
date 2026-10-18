@@ -17,11 +17,13 @@ jobs:
     environment: ${{ github.event.inputs.profile || 'production' }}
     steps:
       - uses: actions/checkout@v4
+      - run: corepack enable
       - uses: actions/setup-node@v4
         with: { node-version-file: .nvmrc, cache: yarn }
-      - run: corepack enable
       - run: yarn install --immutable
       - uses: expo/expo-github-action@v8
-        with: { eas-version: latest, token: ${{ secrets.EXPO_TOKEN }} }
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
       - run: eas build --platform all --profile ${{ github.event.inputs.profile || 'production' }} --non-interactive --no-wait
         working-directory: apps/universal

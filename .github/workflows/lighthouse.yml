@@ -6,9 +6,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - run: corepack enable
       - uses: actions/setup-node@v4
         with: { node-version-file: .nvmrc, cache: yarn }
-      - run: corepack enable
       - run: yarn install --immutable
       - run: yarn workspace @rsvp/seo-web build
       - run: yarn workspace @rsvp/seo-web start > /tmp/rsvp-next.log 2>&1 &
