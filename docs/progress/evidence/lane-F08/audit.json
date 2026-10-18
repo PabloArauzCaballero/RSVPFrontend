@@ -1,0 +1,239 @@
+{
+  "base": "http://localhost:3317",
+  "slug": "boda-live-512eb35a",
+  "at": "2026-10-18T02:25:18.463Z",
+  "routes": [
+    {
+      "lane": "lane-F08",
+      "name": "home",
+      "path": "/",
+      "indexable": true,
+      "status": 200,
+      "axe": {
+        "360": [],
+        "768": [],
+        "1280": []
+      },
+      "screenshots": [
+        "lane-F08/home-360.png",
+        "lane-F08/home-768.png",
+        "lane-F08/home-1280.png"
+      ],
+      "keyboard": "a:Encuentra proveedores para tu evento",
+      "lighthouse": {
+        "seo": 1,
+        "accessibility": 1,
+        "failedSeoAudits": []
+      }
+    },
+    {
+      "lane": "lane-F10",
+      "name": "A1-portada",
+      "path": "/c/boda-live-512eb35a",
+      "indexable": true,
+      "status": 200,
+      "axe": {
+        "360": [],
+        "768": [],
+        "1280": []
+      },
+      "screenshots": [
+        "lane-F10/A1-portada-360.png",
+        "lane-F10/A1-portada-768.png",
+        "lane-F10/A1-portada-1280.png"
+      ],
+      "keyboard": "a:Español",
+      "lighthouse": {
+        "seo": 1,
+        "accessibility": 1,
+        "failedSeoAudits": []
+      }
+    },
+    {
+      "lane": "lane-F10",
+      "name": "A1-portada-en",
+      "path": "/c/boda-live-512eb35a?lang=en-US",
+      "indexable": false,
+      "status": 200,
+      "axe": {
+        "360": [],
+        "768": [],
+        "1280": []
+      },
+      "screenshots": [
+        "lane-F10/A1-portada-en-360.png",
+        "lane-F10/A1-portada-en-768.png",
+        "lane-F10/A1-portada-en-1280.png"
+      ],
+      "keyboard": "a:Español",
+      "lighthouse": null
+    },
+    {
+      "lane": "lane-F10",
+      "name": "A3-itinerario",
+      "path": "/c/boda-live-512eb35a/itinerario",
+      "indexable": true,
+      "optional": true,
+      "status": 404,
+      "axe": {},
+      "screenshots": [],
+      "keyboard": null,
+      "lighthouse": null,
+      "skipped": "section has no content in this celebration"
+    },
+    {
+      "lane": "lane-F10",
+      "name": "A4-lugares",
+      "path": "/c/boda-live-512eb35a/lugares",
+      "indexable": true,
+      "status": 200,
+      "axe": {
+        "360": [],
+        "768": [],
+        "1280": []
+      },
+      "screenshots": [
+        "lane-F10/A4-lugares-360.png",
+        "lane-F10/A4-lugares-768.png",
+        "lane-F10/A4-lugares-1280.png"
+      ],
+      "keyboard": "a:Español",
+      "lighthouse": {
+        "seo": 1,
+        "accessibility": 1,
+        "failedSeoAudits": []
+      }
+    },
+    {
+      "lane": "lane-F10",
+      "name": "A5-galeria",
+      "path": "/c/boda-live-512eb35a/galeria",
+      "indexable": true,
+      "status": 200,
+      "axe": {
+        "360": [],
+        "768": [],
+        "1280": []
+      },
+      "screenshots": [
+        "lane-F10/A5-galeria-360.png",
+        "lane-F10/A5-galeria-768.png",
+        "lane-F10/A5-galeria-1280.png"
+      ],
+      "keyboard": "a:Español",
+      "lighthouse": {
+        "seo": 1,
+        "accessibility": 1,
+        "failedSeoAudits": []
+      }
+    },
+    {
+      "lane": "lane-F10",
+      "name": "A21-no-publicada",
+      "path": "/c/esta-celebracion-no-existe",
+      "indexable": false,
+      "expected": 404,
+      "status": 404,
+      "axe": {
+        "360": [],
+        "768": [],
+        "1280": []
+      },
+      "screenshots": [
+        "lane-F10/A21-no-publicada-360.png",
+        "lane-F10/A21-no-publicada-768.png",
+        "lane-F10/A21-no-publicada-1280.png"
+      ],
+      "keyboard": "a:Ir al inicio",
+      "lighthouse": null
+    },
+    {
+      "lane": "lane-F24",
+      "name": "B1-directorio",
+      "path": "/proveedores",
+      "indexable": true,
+      "status": 200,
+      "axe": {
+        "360": [],
+        "768": [],
+        "1280": []
+      },
+      "screenshots": [
+        "lane-F24/B1-directorio-360.png",
+        "lane-F24/B1-directorio-768.png",
+        "lane-F24/B1-directorio-1280.png"
+      ],
+      "keyboard": "a:Inicio",
+      "lighthouse": {
+        "seo": 1,
+        "accessibility": 1,
+        "failedSeoAudits": []
+      }
+    },
+    {
+      "lane": "lane-F24",
+      "name": "B2-categoria",
+      "path": "/proveedores/salones",
+      "indexable": true,
+      "status": 200,
+      "axe": {
+        "360": [],
+        "768": [],
+        "1280": []
+      },
+      "screenshots": [
+        "lane-F24/B2-categoria-360.png",
+        "lane-F24/B2-categoria-768.png",
+        "lane-F24/B2-categoria-1280.png"
+      ],
+      "keyboard": "a:Inicio",
+      "lighthouse": {
+        "seo": 1,
+        "accessibility": 1,
+        "failedSeoAudits": []
+      }
+    },
+    {
+      "lane": "lane-F24",
+      "name": "B3-categoria-ciudad",
+      "path": "/proveedores/salones/santa-cruz",
+      "indexable": true,
+      "status": 200,
+      "axe": {
+        "360": [],
+        "768": [],
+        "1280": []
+      },
+      "screenshots": [
+        "lane-F24/B3-categoria-ciudad-360.png",
+        "lane-F24/B3-categoria-ciudad-768.png",
+        "lane-F24/B3-categoria-ciudad-1280.png"
+      ],
+      "keyboard": "a:Inicio",
+      "lighthouse": {
+        "seo": 1,
+        "accessibility": 1,
+        "failedSeoAudits": []
+      }
+    },
+    {
+      "lane": "lane-F24",
+      "name": "B4-buscar",
+      "path": "/proveedores/buscar?ciudad=la-paz&verificado=1",
+      "indexable": false,
+      "status": 200,
+      "axe": {
+        "360": [],
+        "768": [],
+        "1280": []
+      },
+      "screenshots": [
+        "lane-F24/B4-buscar-360.png",
+        "lane-F24/B4-buscar-768.png",
+        "lane-F24/B4-buscar-1280.png"
+      ],
+      "keyboard": "a:Inicio",
+      "lighthouse": null
+    }
+  ]
+}

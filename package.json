@@ -23,9 +23,12 @@
     "graph:probe": "node scripts/probe-codegraph-mcp.mjs"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.11.0",
     "@colbymchenry/codegraph": "1.6.2",
     "@types/node": "22.15.3",
     "eslint": "9.25.1",
+    "lighthouse": "12.8.2",
+    "playwright": "1.62.1",
     "prettier": "3.5.3",
     "turbo": "2.5.2",
     "typescript": "5.8.3",

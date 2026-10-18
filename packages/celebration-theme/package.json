@@ -4,22 +4,39 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.tsx"
+    ".": "./src/index.tsx",
+    "./native": "./src/native.tsx",
+    "./styles.css": "./styles.css"
   },
   "scripts": {
     "build": "tsc --noEmit",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "coverage": "vitest run --coverage"
   },
   "peerDependencies": {
-    "react": ">=18"
+    "react": ">=18",
+    "react-native": ">=0.79"
   },
   "devDependencies": {
     "@rsvp/config-ts": "workspace:*",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.0",
     "@types/react": "~19.1.0",
+    "@types/react-dom": "~19.1.0",
+    "@vitest/coverage-v8": "^3.1.2",
+    "jsdom": "^26.1.0",
     "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-native": "0.81.4",
+    "react-native-web": "^0.21.0",
     "typescript": "^5.8.3",
     "vitest": "^3.1.2"
+  },
+  "peerDependenciesMeta": {
+    "react-native": {
+      "optional": true
+    }
   }
 }

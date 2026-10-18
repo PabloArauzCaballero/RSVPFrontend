@@ -1,4 +1,10 @@
-import { useLocalSearchParams } from 'expo-router';
-import { ContentEditor } from '../../../src/host-workflows';
-const sections = ['inicio', 'lugares', 'historia', 'itinerario', 'secciones'] as const;
-export default function ContentEditorScreen() { const { section } = useLocalSearchParams<{ section?: string }>(); const value = sections.find((item) => item === section) ?? 'inicio'; return <ContentEditor section={value} />; }
+import { ContentEditorScreen } from '../../../src/host/content-editor';
+import { EDITOR_SECTIONS, type EditorSection } from '../../../src/host/routes';
+import { useHostRoute } from '../../../src/platform/route';
+
+/** C7–C11 · Editor de contenido por sección. */
+export default function ContentEditorRoute() {
+  const { celebrationId, onNavigate, params } = useHostRoute();
+  const section = EDITOR_SECTIONS.find((item): item is EditorSection => item === params['section']) ?? 'general';
+  return <ContentEditorScreen section={section} celebrationId={celebrationId} onNavigate={onNavigate} />;
+}

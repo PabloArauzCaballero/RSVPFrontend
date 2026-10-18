@@ -1,6 +1,12 @@
 import type { MetadataRoute } from "next";
+import { siteUrl } from "../lib/metadata";
 
+/** Private surfaces and guest magic links are never crawled; the redirector only records clicks. */
 export default function robots(): MetadataRoute.Robots {
-  const base = process.env.NEXT_PUBLIC_SITE_URL ?? "https://rsvp.example";
-  return { rules: [{ userAgent: "*", allow: ["/"], disallow: ["/admin", "/api", "/panel"] }], sitemap: `${base}/sitemap.xml` };
+  const base = siteUrl();
+  return {
+    rules: [{ userAgent: "*", allow: ["/"], disallow: ["/admin", "/api", "/panel", "/catalogo", "/r/", "/c/*/rsvp"] }],
+    sitemap: `${base}/sitemap.xml`,
+    host: base
+  };
 }

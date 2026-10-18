@@ -1,17 +1,34 @@
-import { CelebrationRenderer, type CelebrationSection } from "@rsvp/celebration-theme";
-import type { PublicCelebration } from "../lib/celebration";
+import { CelebrationRenderer, fontStylesheet, themeFromTemplate, type SectionId } from "@rsvp/celebration-theme";
+import { createTranslator, supportedLocales } from "@rsvp/i18n/server";
+import type { PublicPage } from "../lib/celebration";
+import { eventJsonLd, jsonLdScript } from "../lib/json-ld";
+import { uiLocale } from "../lib/locale";
+import { celebrationPath, siteUrl } from "../lib/metadata";
 
-const sections: Record<CelebrationSection, (celebration: PublicCelebration) => React.ReactNode> = {
-  story: (celebration) => <><h2>Una celebración para recordar</h2><p>{celebration.hosts.join(" y ")} te esperan para compartir este momento especial.</p></>,
-  schedule: (celebration) => <><h2>Itinerario</h2><p><time dateTime={celebration.startsAt}>{new Intl.DateTimeFormat("es-BO", { dateStyle: "full", timeStyle: "short", timeZone: "America/La_Paz" }).format(new Date(celebration.startsAt))}</time> — Bienvenida y ceremonia.</p></>,
-  venues: (celebration) => <><h2>Lugar</h2><p>{celebration.venue}</p></>,
-  gallery: () => <><h2>Galería</h2><p>Los recuerdos de la celebración aparecerán aquí.</p></>,
-  dressCode: () => <><h2>Código de vestimenta</h2><p>Elegante y cómodo para celebrar.</p></>,
-  faq: () => <><h2>Preguntas frecuentes</h2><details><summary>¿Cómo confirmo mi asistencia?</summary><p>Usa el enlace de invitación personal que recibiste.</p></details></>,
-  recommendations: () => <><h2>Recomendaciones</h2><p>Planifica tu llegada con anticipación y guarda esta página.</p></>
-};
-
-export function PublicCelebration({ celebration, only }: { celebration: PublicCelebration; only?: CelebrationSection }) {
-  const renderedSections = only ? { [only]: sections[only](celebration) } : Object.fromEntries(Object.entries(sections).map(([key, render]) => [key, render(celebration)]));
-  return <main className="celebration-shell"><header className="celebration-hero"><p>{celebration.eventType}</p><h1>{celebration.title.replace(" | RSVP", "")}</h1><p>{celebration.description}</p></header><CelebrationRenderer theme={{ ...celebration.theme, enabledSections: only ? [only] : celebration.theme.enabledSections }} sections={renderedSections} /></main>;
+/** The public celebration (A1) or one of its sections (A2–A8), server-rendered with its theme. */
+export function PublicCelebration({ page, only }: { readonly page: PublicPage; readonly only?: SectionId }) {
+  const { view, template, gallery } = page;
+  const locale = uiLocale(view.locale);
+  const t = createTranslator(locale);
+  const theme = themeFromTemplate(template, view.enabledSections);
+  const fonts = fontStylesheet(theme);
+  const basePath = celebrationPath(view.slug);
+  const jsonLd = only ? null : eventJsonLd(view, gallery, `${siteUrl()}${basePath}`);
+  const languages = view.availableLocales.filter((candidate) => (supportedLocales as readonly string[]).includes(candidate));
+  return (
+    <>
+      {fonts ? <link rel="stylesheet" href={fonts} precedence="default" /> : null}
+      {jsonLd ? <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} /> : null}
+      {languages.length > 1 ? (
+        <nav className="celebration-languages" aria-label={t("celebration.language.label")}>
+          {languages.map((candidate) => (
+            <a key={candidate} href={`?lang=${candidate}`} hrefLang={candidate} lang={candidate} aria-current={candidate === view.locale ? "true" : undefined} data-link-kind="internal">
+              {t(`celebration.language.${candidate}`)}
+            </a>
+          ))}
+        </nav>
+      ) : null}
+      <CelebrationRenderer theme={theme} view={view} gallery={gallery} t={t} only={only} basePath={basePath} />
+    </>
+  );
 }
