@@ -1,16 +1,9 @@
 import { createTranslator, defaultLocale } from "@rsvp/i18n/server";
+import { Landing } from "../components/landing";
 
 export const revalidate = 3600;
 
-/** Public home: what RSVP is, and the entry to the provider directory. */
+/** Public home for hosts: the offer, a working sample of the invitation, and the way in. */
 export default function Home() {
-  const t = createTranslator(defaultLocale);
-  return (
-    <main className="seo-home">
-      <h1>{t("celebration.site.title")}</h1>
-      <p>{t("celebration.site.tagline")}</p>
-      <p>{t("celebration.site.description")}</p>
-      <a className="rsvp-button" href="/proveedores">{t("celebration.site.directory")}</a>
-    </main>
-  );
+  return <Landing t={createTranslator(defaultLocale)} />;
 }

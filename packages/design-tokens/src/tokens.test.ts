@@ -5,6 +5,7 @@ describe('design tokens', () => {
   it('keeps complete light and dark semantic palettes', () => {
     expect(Object.keys(colors.light)).toEqual(Object.keys(colors.dark));
     expect(colors.light.primary).not.toBe(colors.dark.primary);
+    expect(colors.light.canvas).not.toMatch(/^#FF[EF]/i);
   });
   it('exposes the required token scales', () => {
     expect(spacing[4]).toBe(16);

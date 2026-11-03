@@ -1,17 +1,29 @@
+/**
+ * RSVP palette: the woven stripes of a Bolivian aguayo. Wine is the committed ground colour,
+ * marigold is the single warm accent. Canvas is a cool pale rose, never cream.
+ * Contrast (WCAG): text on canvas 16:1, textMuted on canvas 6.4:1, onPrimary on primary 9:1, onAccent on accent 9:1.
+ */
 export const colors = {
   light: {
-    canvas: '#FFFBFF', surface: '#FFFFFF', surfaceMuted: '#F4F1F8',
-    text: '#1D1B20', textMuted: '#625B71', primary: '#6750A4',
-    onPrimary: '#FFFFFF', primaryMuted: '#E9DDFF', border: '#CAC4D0',
-    danger: '#BA1A1A', onDanger: '#FFFFFF', success: '#146C43', warning: '#7A5800'
+    canvas: '#FBF8FB', surface: '#FFFFFF', surfaceMuted: '#F2ECF1',
+    text: '#24101F', textMuted: '#6A5566', primary: '#8C1D5A',
+    onPrimary: '#FFFFFF', primaryMuted: '#F6DCE9', border: '#DCCCD7',
+    accent: '#F2A900', onAccent: '#2B1400', accentMuted: '#FFE9B0',
+    danger: '#B3261E', onDanger: '#FFFFFF', success: '#146C43', warning: '#7A5800'
   },
   dark: {
-    canvas: '#141218', surface: '#1D1B20', surfaceMuted: '#211F26',
-    text: '#E6E0E9', textMuted: '#CAC4D0', primary: '#D0BCFF',
-    onPrimary: '#381E72', primaryMuted: '#4F378B', border: '#938F99',
+    canvas: '#1B0A17', surface: '#27121F', surfaceMuted: '#311A28',
+    text: '#F7ECF3', textMuted: '#CDB5C6', primary: '#FF8DBE',
+    onPrimary: '#4A0A2B', primaryMuted: '#6B1E47', border: '#5A3A50',
+    accent: '#FFC93C', onAccent: '#2B1400', accentMuted: '#5C4300',
     danger: '#FFB4AB', onDanger: '#690005', success: '#6DDBA0', warning: '#F5C051'
   }
 } as const;
+
+/** Signature stripes, in weaving order. Used for the aguayo band on web and native. */
+export const aguayo = ['#8C1D5A', '#F2A900', '#0E8A7D', '#D8452B', '#3A0D2B'] as const;
+/** Deep wine used for committed hero and footer regions (same in light and dark). */
+export const wine = '#3A0D2B';
 
 export type ColorTheme = keyof typeof colors;
 export type ColorToken = keyof typeof colors.light;
