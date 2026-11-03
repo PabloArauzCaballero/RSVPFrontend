@@ -24,4 +24,6 @@ Para un cambio que no altere permisos, dependencias nativas ni configuración de
 yarn eas update --channel production --message "Descripción del parche"
 ```
 
+O desde Actions: workflow **EAS update** (`.github/workflows/eas-update.yml`), con canal y mensaje. Requiere `EXPO_TOKEN` y `EXPO_PUBLIC_EAS_PROJECT_ID`; hasta tenerlos, no se ha ejecutado.
+
 Si cambia código nativo, se requiere una nueva build de producción, no una actualización OTA.

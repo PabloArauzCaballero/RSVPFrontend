@@ -1,0 +1,1 @@
+eslint . (2026-11-03): 3 errores ajenos al carril: apps/universal/src/auth/auth-context.tsx (consistent-type-imports), packages/config-eslint/test/no-literal-strings.test.js (2 imports sin usar).

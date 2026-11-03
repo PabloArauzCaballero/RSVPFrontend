@@ -31,7 +31,9 @@ export default defineConfig({
       { find: /^expo-image-picker$/, replacement: stub("expo-image-picker") },
       // Exact module id only: matches "expo-router", rejects "expo-router/entry".
       // https://regex101.com/?regex=%5Eexpo-router%24&testString=expo-router
-      { find: /^expo-router$/, replacement: stub("expo-router") }
+      { find: /^expo-router$/, replacement: stub("expo-router") },
+      // Exact module id only: matches "expo-secure-store".
+      { find: /^expo-secure-store$/, replacement: stub("expo-secure-store") }
     ]
   }
 });

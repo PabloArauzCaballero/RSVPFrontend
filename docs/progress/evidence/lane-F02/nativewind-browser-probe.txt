@@ -1,0 +1,6 @@
+light 360 {"bg":"rgb(242, 236, 241)","radius":"12px","pad":"16px","overflowX":false}
+light 768 {"bg":"rgb(242, 236, 241)","radius":"12px","pad":"16px","overflowX":false}
+light 1280 {"bg":"rgb(242, 236, 241)","radius":"12px","pad":"16px","overflowX":false}
+dark 360 {"bg":"rgb(49, 26, 40)","radius":"12px","pad":"16px","overflowX":false}
+dark 768 {"bg":"rgb(49, 26, 40)","radius":"12px","pad":"16px","overflowX":false}
+dark 1280 {"bg":"rgb(49, 26, 40)","radius":"12px","pad":"16px","overflowX":false}

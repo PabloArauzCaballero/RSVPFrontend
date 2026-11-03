@@ -24,6 +24,8 @@ export const colors = {
 export const aguayo = ['#8C1D5A', '#F2A900', '#0E8A7D', '#D8452B', '#3A0D2B'] as const;
 /** Deep wine used for committed hero and footer regions (same in light and dark). */
 export const wine = '#3A0D2B';
+/** Readable text on the wine ground (same in light and dark). */
+export const onWine = '#FBEFF6';
 
 export type ColorTheme = keyof typeof colors;
 export type ColorToken = keyof typeof colors.light;

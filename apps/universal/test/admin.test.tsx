@@ -14,7 +14,7 @@ const type = (label: string, value: string): void => { fireEvent.change(screen.g
 
 describe("REQ-F14-06 · only ADMIN reaches administration", () => {
   it.each([["HOST", HOST], ["GUEST", GUEST]] as const)("%s sees access denied on every module", (_role, claims) => {
-    const { client, calls } = fakeClient({});
+    const { client } = fakeClient({});
     renderApp(<><DashboardScreen onNavigate={navigate} /><EventTypesScreen onNavigate={navigate} /><TemplatesAdminScreen onNavigate={navigate} /><OperationsScreen onNavigate={navigate} /><VerificationScreen onNavigate={navigate} /><PendingModuleScreen module="users" onNavigate={navigate} /></>, client, claims);
     expect(screen.getAllByText("Acceso denegado: esta área es solo para administradores de la plataforma.")).toHaveLength(6);
   });

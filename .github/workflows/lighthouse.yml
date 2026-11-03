@@ -16,5 +16,6 @@ jobs:
         run: until curl --fail --silent http://localhost:3000; do sleep 1; done
       - uses: treosh/lighthouse-ci-action@v12
         with:
-          urls: http://localhost:3000
-          budgetPath: .lighthouserc.json
+          # configPath (not budgetPath): budgetPath expects a budget.json and ignores `ci.assert`.
+          configPath: ./.lighthouserc.json
+          uploadArtifacts: true

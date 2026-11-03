@@ -1,0 +1,4 @@
+http://localhost:3200/ seo 1
+http://localhost:3200/proveedores seo 1
+http://localhost:3200/proveedores/salones seo 1
+http://localhost:3200/proveedores/salones/la-paz seo 1

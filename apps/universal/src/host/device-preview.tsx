@@ -2,7 +2,7 @@ import { useState, type ReactNode } from "react";
 import { Linking, ScrollView, View } from "react-native";
 import { themeFromTemplate } from "@rsvp/celebration-theme";
 import { CelebrationNativeRenderer } from "@rsvp/celebration-theme/native";
-import { useMediaAssets, useTemplate } from "@rsvp/query-hooks";
+import { useMediaAssets, useTemplate, type MediaAsset } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "./gate";
 import { previewView } from "./preview-model";
@@ -32,7 +32,7 @@ export function DevicePreviewScreen({ celebrationId, onNavigate }: ScreenProps):
   );
 }
 
-function Preview({ celebration, eventType, device, setDevice, gallery, locale }: { readonly celebration: Parameters<typeof previewView>[0]; readonly eventType: Parameters<typeof previewView>[1]; readonly device: Device; readonly setDevice: (device: Device) => void; readonly gallery: readonly import("@rsvp/query-hooks").MediaAsset[]; readonly locale: string }): ReactNode {
+function Preview({ celebration, eventType, device, setDevice, gallery, locale }: { readonly celebration: Parameters<typeof previewView>[0]; readonly eventType: Parameters<typeof previewView>[1]; readonly device: Device; readonly setDevice: (device: Device) => void; readonly gallery: readonly MediaAsset[]; readonly locale: string }): ReactNode {
   const t = useT();
   const client = useApiClient();
   const template = useTemplate(client, celebration.templateId);

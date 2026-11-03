@@ -1,0 +1,28 @@
+{
+  "date": "2026-11-03T18:25:34.666Z",
+  "role": "PROVIDER",
+  "passed": 5,
+  "failed": 0,
+  "results": [
+    {
+      "label": "real Identity token carries roles [\"PROVIDER\"]",
+      "ok": true
+    },
+    {
+      "label": "PROVIDER opening /admin sees the access-denied screen (no admin content)",
+      "ok": true
+    },
+    {
+      "label": "PROVIDER opening the host workspace is denied too",
+      "ok": true
+    },
+    {
+      "label": "'Ir a mi espacio' leads the PROVIDER to /portal",
+      "ok": true
+    },
+    {
+      "label": "PROVIDER reaches (provider)",
+      "ok": true
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+POST /identity/auth/logout -> sent refresh token; replay POST /auth/refresh -> HTTP 401

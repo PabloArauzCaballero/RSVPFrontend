@@ -2,6 +2,7 @@ import type { PropsWithChildren, ReactNode } from "react";
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type KeyboardTypeOptions } from "react-native";
 import { ApiError } from "@rsvp/api-client";
 import { colors, radius, spacing, typography } from "@rsvp/design-tokens";
+import { useAuth } from "../auth/auth-context";
 import { useT } from "../platform/providers";
 
 /** Building blocks shared by the host and admin screens. No copy lives here: callers pass translated text. */
@@ -52,15 +53,21 @@ export interface NavItem { readonly key: string; readonly label: string; readonl
 
 export function Screen({ title, nav, current, onNavigate, children }: PropsWithChildren<{ readonly title: string; readonly nav?: readonly NavItem[]; readonly current?: string; readonly onNavigate?: (href: string) => void }>): ReactNode {
   const t = useT();
+  const auth = useAuth();
   return (
     <ScrollView style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-      {nav?.length ? (
+      {nav?.length || auth.state.status === "authenticated" ? (
         <View role="navigation" aria-label={t("host.nav.label")} style={styles.nav}>
-          {nav.map((item) => (
+          {(nav ?? []).map((item) => (
             <Pressable key={item.key} role="link" aria-current={item.key === current ? "page" : undefined} onPress={() => onNavigate?.(item.href)} style={[styles.navItem, item.key === current && styles.navItemCurrent]}>
               <Text style={styles.label}>{item.label}</Text>
             </Pressable>
           ))}
+          {auth.state.status === "authenticated" ? (
+            <Pressable role="button" accessibilityLabel={t("common.signOut")} onPress={() => { void auth.signOut(); }} style={styles.navItem}>
+              <Text style={styles.label}>{t("common.signOut")}</Text>
+            </Pressable>
+          ) : null}
         </View>
       ) : null}
       <Text accessibilityRole="header" style={styles.title}>{title}</Text>

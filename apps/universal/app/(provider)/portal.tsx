@@ -1,2 +1,4 @@
 import { Surface } from '@rsvp/ui';
-export default function ProviderHome() { return <Surface title="Portal del proveedor" description="Revisa y responde tus solicitudes." />; }
+import { useT } from '../../src/platform/providers';
+
+export default function ProviderHome() { const t = useT(); return <Surface title={t('stubs.provider.title')} description={t('stubs.provider.description')} />; }

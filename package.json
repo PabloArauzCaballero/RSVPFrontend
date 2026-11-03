@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "build": "turbo run build",
-    "lint": "turbo run lint",
+    "lint": "eslint . --max-warnings 0 && turbo run lint",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
     "dev": "turbo run dev --parallel",
@@ -20,7 +20,8 @@
     "graph:init": "codegraph init --yes",
     "graph:status": "codegraph status",
     "graph:sync": "codegraph sync",
-    "graph:probe": "node scripts/probe-codegraph-mcp.mjs"
+    "graph:probe": "node scripts/probe-codegraph-mcp.mjs",
+    "lint:code": "eslint . --max-warnings 0"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.11.0",

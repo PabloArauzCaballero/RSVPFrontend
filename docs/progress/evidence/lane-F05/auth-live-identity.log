@@ -1,0 +1,14 @@
+
+ RUN  v3.2.7 /Users/pablo/Documents/GitHub/RSVP/RSVPFrontend/packages/auth
+
+ ✓ test/deep-links.test.ts (5 tests) 2ms
+ ✓ test/guards.test.ts (31 tests) 2ms
+ ✓ test/identity-client.test.ts (7 tests) 6ms
+ ✓ test/session.test.ts (19 tests) 7ms
+ ✓ test/identity-live.test.ts (1 test) 87ms
+
+ Test Files  5 passed (5)
+      Tests  63 passed (63)
+   Start at  14:25:42
+   Duration  340ms (transform 143ms, setup 0ms, collect 313ms, tests 104ms, environment 0ms, prepare 187ms)
+

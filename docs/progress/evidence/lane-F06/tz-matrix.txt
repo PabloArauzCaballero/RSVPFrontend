@@ -1,0 +1,8 @@
+TZ=UTC
+      Tests  8 passed (8)
+TZ=Europe/Madrid
+      Tests  8 passed (8)
+TZ=Asia/Tokyo
+      Tests  8 passed (8)
+TZ=America/Los_Angeles
+      Tests  8 passed (8)

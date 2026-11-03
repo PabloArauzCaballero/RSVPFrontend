@@ -2,10 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
-:root { --canvas: #FBF8FB; --surface: #FFFFFF; --surface-muted: #F2ECF1; --text: #24101F; --text-muted: #6A5566; --primary: #8C1D5A; --on-primary: #FFFFFF; --primary-muted: #F6DCE9; --border: #DCCCD7; --accent: #F2A900; --on-accent: #2B1400; --accent-muted: #FFE9B0; --wine: #3A0D2B; --on-wine: #FBEFF6; --danger: #B3261E; --teal: #0E8A7D; --vermilion: #D8452B;
+:root {
   --font-body: var(--font-text), system-ui, sans-serif; --font-head: var(--font-display), var(--font-text), system-ui, sans-serif;
   --ease-out: cubic-bezier(.16, 1, .3, 1); --shadow-card: 0 2px 4px rgb(58 13 43 / .06), 0 12px 28px rgb(58 13 43 / .12); }
-[data-theme='dark'] { --canvas: #1B0A17; --surface: #27121F; --surface-muted: #311A28; --text: #F7ECF3; --text-muted: #CDB5C6; --primary: #FF8DBE; --on-primary: #4A0A2B; --primary-muted: #6B1E47; --border: #5A3A50; --accent: #FFC93C; --accent-muted: #5C4300; --danger: #FFB4AB; }
 * { box-sizing: border-box; }
 body { margin: 0; color: var(--text); background: var(--canvas); font-family: var(--font-body); line-height: 1.55; -webkit-font-smoothing: antialiased; }
 h1, h2, h3 { font-family: var(--font-head); letter-spacing: -.02em; text-wrap: balance; }
@@ -17,21 +16,12 @@ html { scrollbar-color: var(--primary) var(--surface-muted); }
 button, input, select { font: inherit; }
 .rsvp-catalog, .seo-home { width: min(100% - 2rem, 70rem); margin: 0 auto; padding: 2rem 0; display: grid; gap: 1rem; }
 .rsvp-button { min-height: 2.75rem; width: fit-content; border: 0; border-radius: .625rem; padding: .5rem 1.1rem; cursor: pointer; background: var(--primary); color: var(--on-primary); font-weight: 650; text-decoration: none; display: inline-flex; align-items: center; transition: transform .2s var(--ease-out), box-shadow .2s var(--ease-out); }
-.rsvp-button:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgb(140 29 90 / .28); }
+.rsvp-button:hover { transform: translateY(-1px); box-shadow: 0 6px 16px color-mix(in srgb, var(--primary) 28%, transparent); }
 .rsvp-button:active { transform: translateY(0); }
 .rsvp-button--secondary { background: var(--primary-muted); color: var(--primary); }
 .rsvp-button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
 .rsvp-button:disabled { cursor: not-allowed; opacity: .55; }
-.rsvp-field { display: grid; gap: .35rem; max-width: 28rem; font-weight: 600; }
-.rsvp-field input, .rsvp-field select { min-height: 2.75rem; padding: .5rem .75rem; border: 1px solid var(--border); border-radius: .5rem; background: var(--surface); color: var(--text); }
-.rsvp-card { display: grid; gap: .75rem; border: 1px solid var(--border); border-radius: .75rem; padding: 1rem; background: var(--surface); }
-.rsvp-overlay { position: fixed; inset: 0; display: grid; align-items: end; background: rgb(0 0 0 / .45); }
-.rsvp-sheet, .rsvp-modal { display: grid; gap: 1rem; padding: 1.25rem; background: var(--surface); }
-.rsvp-modal { width: min(90vw, 32rem); margin: auto; border-radius: .75rem; }
-.rsvp-table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: .75rem; }
 table { width: 100%; border-collapse: collapse; } th, td { padding: .75rem; text-align: left; border-bottom: 1px solid var(--border); } th { background: var(--surface-muted); }
-.rsvp-toast { position: fixed; bottom: 1rem; right: 1rem; padding: .75rem 1rem; border: 0; border-radius: .5rem; background: var(--text); color: var(--surface); }
-@media (min-width: 48rem) { .rsvp-sheet { width: min(34rem, 100%); margin-left: auto; height: 100%; } }
 .celebration-shell { min-height: 100vh; background: var(--celebration-canvas, var(--canvas)); color: var(--celebration-text, var(--text)); }
 .celebration-hero { width: min(100% - 2rem, 62rem); margin: 0 auto; padding: clamp(3rem, 12vw, 8rem) 0 3rem; text-align: center; }
 .celebration-hero p:first-child { margin: 0 0 .5rem; color: var(--celebration-accent, var(--primary)); font-size: .875rem; letter-spacing: .12em; text-transform: uppercase; }
@@ -96,7 +86,7 @@ table { width: 100%; border-collapse: collapse; } th, td { padding: .75rem; text
 .site-footer a { color: var(--on-wine); font-weight: 600; min-height: 44px; display: inline-flex; align-items: center; }
 
 /* Aguayo: the signature woven stripe band */
-.aguayo { height: .75rem; background: linear-gradient(90deg, var(--primary) 0 18%, var(--accent) 18% 30%, var(--teal) 30% 46%, var(--vermilion) 46% 58%, #F6DCE9 58% 64%, var(--primary) 64% 82%, var(--accent) 82% 92%, var(--teal) 92% 100%); }
+.aguayo { height: .75rem; background: linear-gradient(90deg, var(--primary) 0 18%, var(--accent) 18% 30%, var(--teal) 30% 46%, var(--vermilion) 46% 58%, var(--primary-muted) 58% 64%, var(--primary) 64% 82%, var(--accent) 82% 92%, var(--teal) 92% 100%); }
 .aguayo--thick { height: 1.25rem; box-shadow: 0 -1px 0 rgb(255 255 255 / .12) inset; }
 
 /* ===== Buttons ===== */

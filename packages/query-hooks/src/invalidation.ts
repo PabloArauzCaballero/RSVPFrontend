@@ -8,6 +8,7 @@ export const invalidation = {
   templatesChanged: () => [queryKeys.template.all] as const,
   mediaChanged: (celebrationId: string) => [queryKeys.media.list(celebrationId)] as const,
   rsvpChanged: (token: string) => [queryKeys.guest.rsvp(token)] as const,
+  guestsChanged: (celebrationId: string) => [queryKeys.guest.list(celebrationId)] as const,
   giftReservationChanged: (celebrationId: string) => [queryKeys.gift.list(celebrationId)] as const,
   providerChanged: () => [queryKeys.provider.all] as const,
   notificationPreferencesChanged: () => [queryKeys.notification.all] as const

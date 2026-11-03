@@ -5,13 +5,19 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./tailwind-preset": "./tailwind-preset.cjs"
+    "./tailwind-preset": "./tailwind-preset.cjs",
+    "./tailwind-preset-native": "./tailwind-preset-native.cjs",
+    "./create-preset": "./create-preset.cjs",
+    "./tokens.css": "./generated/tokens.css",
+    "./tokens.json": "./generated/tokens.json"
   },
   "scripts": {
-    "build": "tsc --noEmit",
+    "build": "node scripts/generate.mjs --check && tsc --noEmit",
     "lint": "tsc --noEmit",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "generate": "node scripts/generate.mjs",
+    "check:generated": "node scripts/generate.mjs --check"
   },
   "devDependencies": {
     "@rsvp/config-ts": "workspace:*",

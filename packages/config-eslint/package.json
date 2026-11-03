@@ -10,7 +10,15 @@
   "scripts": {
     "build": "node --check base.js && node --check rules/no-literal-strings.js",
     "lint": "node --check base.js && node --check rules/no-literal-strings.js",
-    "test": "node --check base.js",
+    "test": "node --test \"test/*.test.js\"",
     "typecheck": "node --check base.js"
+  },
+  "dependencies": {
+    "@eslint/js": "9.25.1",
+    "@typescript-eslint/parser": "8.32.0",
+    "typescript-eslint": "8.32.0"
+  },
+  "devDependencies": {
+    "eslint": "^9.25.1"
   }
 }

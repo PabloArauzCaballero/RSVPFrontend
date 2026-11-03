@@ -1,0 +1,164 @@
+{
+  "date": "2026-11-03T18:25:06.719Z",
+  "identity": "http://localhost:3200",
+  "app": "http://localhost:8200",
+  "passed": 31,
+  "failed": 0,
+  "results": [
+    {
+      "label": "anonymous visit to a private deep link redirects to /login carrying returnTo",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "label": "wrong credentials against real Identity: neutral error, stays on /login, values kept",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "label": "keyboard: Enter in the password field submits (no pointer)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "label": "offline: a dead network says so instead of blaming the password",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "label": "sign up (real Identity, role HOST) from the deep link flow returns to the page that was asked for",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "label": "duplicate e-mail (409) is explained",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "label": "password shorter than 12 is stopped before the network with a field error",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "label": "REFRESH PROOF: expired bearer -> POST /identity/auth/refresh (real) -> retry with new bearer -> page keeps working",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "label": "PROVIDER who arrived from a deep link to /admin is NOT sent there: role-aware return lands in /portal",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "label": "the Identity JWT really carries roles and organizationIds (contract) ",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "label": "recovery request returns the neutral confirmation for an unknown e-mail (202)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "label": "/rsvp/<token> opens the invitation landing in the app (fallback and universal-link target)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "label": "language switch: English applies at once and survives a reload (explicit choice)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "label": "login @360: no horizontal overflow",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "label": "login @360: axe has no critical/serious violations",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "label": "registro @360: no horizontal overflow",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "label": "registro @360: axe has no critical/serious violations",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "label": "recuperar @360: no horizontal overflow",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "label": "recuperar @360: axe has no critical/serious violations",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "label": "login @768: no horizontal overflow",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "label": "login @768: axe has no critical/serious violations",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "label": "registro @768: no horizontal overflow",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "label": "registro @768: axe has no critical/serious violations",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "label": "recuperar @768: no horizontal overflow",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "label": "recuperar @768: axe has no critical/serious violations",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "label": "login @1280: no horizontal overflow",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "label": "login @1280: axe has no critical/serious violations",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "label": "registro @1280: no horizontal overflow",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "label": "registro @1280: axe has no critical/serious violations",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "label": "recuperar @1280: no horizontal overflow",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "label": "recuperar @1280: axe has no critical/serious violations",
+      "ok": true,
+      "detail": ""
+    }
+  ]
+}

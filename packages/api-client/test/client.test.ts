@@ -22,3 +22,11 @@ describe("createApiClient", () => {
     expect(new Headers(fetchFn.mock.calls[0][1].headers).get("x-correlation-id")).toBe("correlation-42");
   });
 });
+
+describe("bodiless success responses", () => {
+  it("a 202 with an empty body resolves to undefined instead of failing to parse JSON (Identity password recovery)", async () => {
+    const fetchFn = vi.fn(async () => new Response(null, { status: 202, headers: { "content-length": "0" } })) as unknown as typeof fetch;
+    const client = createApiClient({ baseUrl: "http://x", tokenStore: { getAccessToken: async () => null, getRefreshToken: async () => null, setTokens: async () => undefined, clear: async () => undefined }, refreshSession: { refresh: async () => { throw new Error("unused"); } }, fetchFn });
+    await expect(client.request("/identity/auth/password-recovery", { method: "POST", body: { email: "a@b.co" }, auth: false })).resolves.toBeUndefined();
+  });
+});

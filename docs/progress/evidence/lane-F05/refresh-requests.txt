@@ -1,0 +1,3 @@
+GET /celebrations bearer
+POST /identity/auth/refresh 
+GET /celebrations bearer

@@ -63,8 +63,10 @@ export function createApiClient(options: CreateApiClientOptions): ApiClient {
       return send(path, request, true);
     }
     if (!response.ok) throw toApiError(response.status, response.headers.get("x-correlation-id") ?? correlationId, await problemFrom(response));
+    // 204 and bodiless 2xx answers (Identity's 202 on password recovery) carry no JSON to parse.
     if (response.status === 204) return undefined as TResponse;
-    return await response.json() as TResponse;
+    const text = await response.text();
+    return (text ? JSON.parse(text) : undefined) as TResponse;
   };
 
   return {

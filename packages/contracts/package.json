@@ -1,0 +1,26 @@
+{
+  "name": "@rsvp/contracts",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Tipos generados desde los OpenAPI congelados del backend (v1.0.0). Sustituto local hasta que el paquete de GitHub Packages se publique con contenido.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./specs/*": "./specs/*"
+  },
+  "scripts": {
+    "generate": "node scripts/generate.mjs",
+    "check:generated": "node scripts/generate.mjs --check",
+    "build": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@rsvp/config-ts": "workspace:*",
+    "eslint": "^9.25.1",
+    "openapi-typescript": "7.9.1",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.2"
+  }
+}

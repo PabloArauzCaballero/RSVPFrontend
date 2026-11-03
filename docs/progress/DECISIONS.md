@@ -19,3 +19,11 @@
 - Mundo visual: **aguayo boliviano**. Vino profundo `#3A0D2B` como región comprometida, magenta `#8C1D5A` primario, azafrán `#F2A900` acento, turquesa y bermellón de apoyo; lienzo rosa frío `#FBF8FB`, nunca crema.
 - Tipografía web: Bricolage Grotesque (display) y Figtree (texto) vía `next/font`. Nativo conserva la fuente del sistema hasta empaquetarlas con `expo-font`.
 - Corrección: la regla `no-literal-strings` sí existe en `config-eslint` (no habilitada).
+
+## Eje A (Pablo) · plataforma frontend · 2026-11-03
+- **Fuente única de tokens:** `packages/design-tokens/src/*.ts` genera `generated/tokens.json|css` y los presets; se eliminaron los hex duplicados.
+- **Cliente tipado local** `packages/contracts` (openapi-typescript desde los 8 specs) mientras el paquete publicado no exista; romper el contrato rompe `tsc`.
+- **`darkMode` por clase no se usa en el preset** (genera `@cssInterop` que NativeWind nativo no parsea).
+- **Sesión web en memoria** hasta que Identity emita cookie httpOnly; recargar la página cierra la sesión.
+- **Regla `no-literal-strings` habilitada**, con una lista temporal `LEGACY_LITERAL_FILES` (ui, ui-web, components/rsvp) fuera de la regla.
+- **Lighthouse CI** usa `configPath` con `.lighthouserc.json` (el `budgetPath` anterior no aplicaba el umbral) y mide 4 rutas.

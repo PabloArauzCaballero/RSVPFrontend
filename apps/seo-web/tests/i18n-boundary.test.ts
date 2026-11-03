@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
  * come from i18n. Lanes of other axes (RSVP pages, the component catalogue) are not scanned.
  */
 const ROOT = process.cwd();
-const SCANNED = ["app/c/[slug]/page.tsx", "app/c/[slug]/[section]/page.tsx", "app/c/[slug]/not-found.tsx", "app/page.tsx", "app/layout.tsx", "app/proveedores", "components/public-celebration.tsx", "components/provider-directory.tsx"];
+const SCANNED = ["app/c/[slug]/page.tsx", "app/c/[slug]/[section]/page.tsx", "app/c/[slug]/not-found.tsx", "app/page.tsx", "app/layout.tsx", "app/proveedores", "app/rsvp", "components/public-celebration.tsx", "components/provider-directory.tsx"];
 const files = (path: string): string[] => (statSync(path).isDirectory() ? readdirSync(path).flatMap((entry) => files(join(path, entry))) : [path]);
 
 // Letters between a closing ">" (not the one of "=>") and the next "<" or "{": a JSX text node.

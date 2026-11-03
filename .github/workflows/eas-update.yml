@@ -1,0 +1,36 @@
+name: EAS update
+# JavaScript-only patch to an installed build (no store review). Needs EXPO_TOKEN and
+# EXPO_PUBLIC_EAS_PROJECT_ID; without them this workflow cannot run (BLOCKED-EXTERNAL, see
+# docs/progress/evidence/lane-F07/README.md).
+on:
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: EAS channel (matches the build profile)
+        required: true
+        default: preview
+        type: choice
+        options: [preview, production]
+      message:
+        description: Update message
+        required: true
+        type: string
+permissions: { contents: read }
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.channel }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: corepack enable
+      - uses: actions/setup-node@v4
+        with: { node-version-file: .nvmrc, cache: yarn }
+      - run: yarn install --immutable
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - run: eas update --channel ${{ github.event.inputs.channel }} --message "${{ github.event.inputs.message }}" --non-interactive
+        working-directory: apps/universal
+        env:
+          EXPO_PUBLIC_EAS_PROJECT_ID: ${{ vars.EXPO_PUBLIC_EAS_PROJECT_ID }}

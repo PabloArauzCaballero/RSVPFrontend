@@ -1,0 +1,8 @@
+{
+  "roles": [
+    "PROVIDER"
+  ],
+  "organizationIds": [],
+  "iss": "rsvp-identity",
+  "ttlSeconds": 900
+}

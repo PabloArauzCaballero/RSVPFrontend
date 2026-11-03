@@ -1,0 +1,2 @@
+28 tasks
+['@rsvp/api-client', '@rsvp/auth', '@rsvp/celebration-theme', '@rsvp/config-ts', '@rsvp/design-tokens', '@rsvp/i18n', '@rsvp/query-hooks', '@rsvp/ui', '@rsvp/universal']

@@ -1,2 +1,4 @@
 import { Surface } from '@rsvp/ui';
-export default function GuestHome() { return <Surface title="Tu invitación" description="Confirma tu asistencia y descubre los detalles." />; }
+import { useT } from '../../src/platform/providers';
+
+export default function GuestHome() { const t = useT(); return <Surface title={t('stubs.guest.title')} description={t('stubs.guest.description')} />; }
