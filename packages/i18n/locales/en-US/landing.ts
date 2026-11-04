@@ -1,9 +1,9 @@
 /** Public home (landing) and site chrome. */
 export const landingEnUS = {
-  nav: { label: "Main", home: "RSVP, home", providers: "Providers", signIn: "Sign in", create: "Create my celebration" },
+  nav: { label: "Main", home: "DOne, home", providers: "Providers", signIn: "Sign in", create: "Create my celebration" },
   hero: {
-    title: "Your celebration in a single link",
-    body: "Build the site for your wedding, quinceañera or christening. Guests reply from their phone and pick a gift, with no endless message chains.",
+    title: "Invite today. Tomorrow you know who is coming.",
+    body: "Guests reply in one tap, no account needed. You see the list up to date and DOne sends the reminders for you.",
     primary: "Create my celebration",
     secondary: "Find providers"
   },
@@ -12,8 +12,8 @@ export const landingEnUS = {
     names: "Valentina and Mateo",
     when: "Saturday, December 12 · La Paz",
     question: "Will you join us?",
-    yes: "Yes, I'll be there",
-    no: "I can't make it",
+    yes: "I'm in",
+    no: "Can't make it",
     guests: "With 2 companions"
   },
   how: {
@@ -34,5 +34,5 @@ export const landingEnUS = {
     other: "And any other date that deserves an invitation"
   },
   closing: { title: "Start your site today", body: "Pick the type of celebration, add your guests and share the link.", cta: "Create my celebration" },
-  footer: { tagline: "Celebrations that feel personal", providers: "Providers", skip: "Skip to content" }
+  footer: { tagline: "Get a reply in one tap.", providers: "Providers", skip: "Skip to content" }
 };

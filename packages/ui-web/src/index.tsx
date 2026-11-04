@@ -133,7 +133,7 @@ function Overlay({ visible, onClose, title, children, state = 'default', layout 
   return (
     <Dialog.Root open={visible} onOpenChange={(open) => { if (!open) onClose(); }}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-wine/60" />
+        <Dialog.Overlay className="fixed inset-0 z-40 bg-night/60" />
         <Dialog.Content
           aria-describedby={undefined}
           className={cn(

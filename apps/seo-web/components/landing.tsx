@@ -1,6 +1,5 @@
 import type { Translate } from "@rsvp/i18n/server";
 import { appUrl } from "../lib/app-url";
-import { Aguayo } from "./site-chrome";
 
 const stroke = { fill: "none", stroke: "currentColor", strokeWidth: 1.75, strokeLinecap: "round", strokeLinejoin: "round" } as const;
 const Check = () => <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" {...stroke}><path d="M4 12.5 9.5 18 20 6.5" /></svg>;
@@ -38,7 +37,6 @@ export function Landing({ t }: Readonly<{ t: Translate }>) {
           </div>
           <InvitationCard t={t} />
         </div>
-        <Aguayo thick />
       </section>
 
       <section className="how" aria-labelledby="how-title">

@@ -1,13 +1,14 @@
 import type { PropsWithChildren, ReactNode } from "react";
-import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type KeyboardTypeOptions } from "react-native";
+import { ActivityIndicator, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type KeyboardTypeOptions } from "react-native";
 import { ApiError } from "@rsvp/api-client";
-import { colors, radius, spacing, typography } from "@rsvp/design-tokens";
+import { colors, notice, radius, spacing, typography } from "@rsvp/design-tokens";
 import { useAuth } from "../auth/auth-context";
 import { useT } from "../platform/providers";
 
 /** Building blocks shared by the host and admin screens. No copy lives here: callers pass translated text. */
 
 const palette = colors.light;
+const fontFamily = Platform.select({ web: "'Plus Jakarta Sans', 'Avenir Next', 'Segoe UI', system-ui, sans-serif", default: undefined });
 const MIN_TOUCH = 44;
 const MAX_CONTENT_WIDTH = 880;
 const MULTILINE_HEIGHT = 120;
@@ -21,11 +22,11 @@ const STATUS_UNAUTHORIZED = 401;
 export const styles = StyleSheet.create({
   page: { flexGrow: 1, backgroundColor: palette.canvas },
   content: { width: "100%", maxWidth: MAX_CONTENT_WIDTH, alignSelf: "center", padding: spacing[4], gap: spacing[4] },
-  title: { color: palette.text, fontSize: typography.fontSize.xl, lineHeight: typography.lineHeight.xl, fontWeight: "700" },
-  subtitle: { color: palette.text, fontSize: typography.fontSize.lg, fontWeight: "700" },
-  body: { color: palette.text, fontSize: typography.fontSize.base, lineHeight: typography.lineHeight.base },
-  muted: { color: palette.textMuted, fontSize: typography.fontSize.sm, lineHeight: typography.lineHeight.sm },
-  label: { color: palette.text, fontSize: typography.fontSize.sm, fontWeight: "600" },
+  title: { color: palette.text, fontSize: typography.fontSize.xl, lineHeight: typography.lineHeight.xl, fontWeight: "800", letterSpacing: -0.5, fontFamily },
+  subtitle: { color: palette.text, fontSize: typography.fontSize.lg, fontWeight: "700", fontFamily },
+  body: { color: palette.text, fontSize: typography.fontSize.base, lineHeight: typography.lineHeight.base, fontFamily },
+  muted: { color: palette.textMuted, fontSize: typography.fontSize.sm, lineHeight: typography.lineHeight.sm, fontFamily },
+  label: { color: palette.text, fontSize: typography.fontSize.sm, fontWeight: "600", fontFamily },
   input: { minHeight: MIN_TOUCH, borderWidth: 1, borderColor: palette.border, borderRadius: radius.md, paddingHorizontal: spacing[3], color: palette.text, backgroundColor: palette.surface, fontSize: typography.fontSize.base },
   inputError: { borderColor: palette.danger },
   card: { backgroundColor: palette.surface, borderColor: palette.border, borderWidth: 1, borderRadius: radius.lg, padding: spacing[4], gap: spacing[3] },
@@ -33,19 +34,19 @@ export const styles = StyleSheet.create({
   nav: { flexDirection: "row", flexWrap: "wrap", gap: spacing[2] },
   navItem: { minHeight: MIN_TOUCH, justifyContent: "center", paddingHorizontal: spacing[3], borderRadius: radius.md, backgroundColor: palette.surfaceMuted },
   navItemCurrent: { backgroundColor: palette.primaryMuted },
-  button: { minHeight: MIN_TOUCH, alignItems: "center", justifyContent: "center", borderRadius: radius.md, paddingHorizontal: spacing[4], backgroundColor: palette.primary },
+  button: { minHeight: MIN_TOUCH + 4, alignItems: "center", justifyContent: "center", borderRadius: radius.md, paddingHorizontal: spacing[4], backgroundColor: palette.primary },
   buttonSecondary: { backgroundColor: palette.primaryMuted },
   buttonDanger: { backgroundColor: palette.danger },
   buttonDisabled: { opacity: 0.5 },
-  buttonText: { color: palette.onPrimary, fontWeight: "600", fontSize: typography.fontSize.base },
+  buttonText: { color: palette.onPrimary, fontWeight: "700", fontSize: typography.fontSize.base, fontFamily },
   buttonTextSecondary: { color: palette.primary },
   notice: { borderRadius: radius.md, padding: spacing[3], gap: spacing[2] },
-  noticeError: { backgroundColor: "#FDECEA", borderColor: palette.danger, borderWidth: 1 },
+  noticeError: { backgroundColor: notice.dangerBg, borderColor: palette.danger, borderWidth: 1 },
   noticeInfo: { backgroundColor: palette.surfaceMuted },
-  noticeSuccess: { backgroundColor: "#E6F4EA" },
+  noticeSuccess: { backgroundColor: notice.successBg },
   option: { minHeight: MIN_TOUCH, justifyContent: "center", paddingHorizontal: spacing[3], borderWidth: 1, borderColor: palette.border, borderRadius: radius.md, backgroundColor: palette.surface },
   optionSelected: { borderColor: palette.primary, backgroundColor: palette.primaryMuted },
-  overlay: { flex: 1, justifyContent: "center", padding: spacing[4], backgroundColor: "rgba(0,0,0,0.45)" },
+  overlay: { flex: 1, justifyContent: "center", padding: spacing[4], backgroundColor: "rgba(10,16,51,0.6)" },
   dialog: { width: "100%", maxWidth: 520, alignSelf: "center", backgroundColor: palette.surface, borderRadius: radius.lg, padding: spacing[5], gap: spacing[3] }
 });
 

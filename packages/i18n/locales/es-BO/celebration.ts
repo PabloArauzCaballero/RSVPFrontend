@@ -11,6 +11,6 @@ export const celebrationEsBO = {
   notFound: { title: "Esta celebración no está disponible", body: "Puede que el enlace esté mal escrito o que los anfitriones todavía no la hayan publicado.", home: "Ir al inicio" },
   meta: { description: "{{eventType}} · {{date}} · {{venue}}", fallbackDescription: "Toda la información de la celebración en un solo lugar.", sectionTitle: "{{section}} · {{title}}" },
   language: { label: "Idioma", "es-BO": "Español", "en-US": "English" },
-  site: { title: "RSVP · Celebraciones que se sienten personales", description: "Sitios para bodas, quinceaños, bautizos y más, con confirmación de asistencia y lista de regalos.", tagline: "Celebraciones memorables, organizadas en un solo lugar.", directory: "Encuentra proveedores para tu evento" },
+  site: { title: "DOne · Celebraciones que se sienten personales", description: "Sitios para bodas, quinceaños, bautizos y más, con confirmación de asistencia y lista de regalos.", tagline: "Celebraciones memorables, organizadas en un solo lugar.", directory: "Encuentra proveedores para tu evento" },
   errors: { unavailable: "No pudimos cargar esta página. Inténtalo de nuevo en unos minutos." }
 } as const;

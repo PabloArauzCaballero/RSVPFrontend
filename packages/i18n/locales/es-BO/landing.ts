@@ -1,9 +1,9 @@
 /** Public home (landing) and site chrome. */
 export const landingEsBO = {
-  nav: { label: "Principal", home: "RSVP, inicio", providers: "Proveedores", signIn: "Ingresar", create: "Crear mi celebración" },
+  nav: { label: "Principal", home: "DOne, inicio", providers: "Proveedores", signIn: "Ingresar", create: "Crear mi celebración" },
   hero: {
-    title: "Tu celebración en un solo enlace",
-    body: "Crea el sitio de tu boda, quinceañero o bautizo. Tus invitados confirman desde el teléfono y eligen un regalo, sin cadenas interminables de mensajes.",
+    title: "Invitas hoy. Mañana sabes quién viene.",
+    body: "Tus invitados responden en un toque, sin crear cuenta. Tú ves la lista al día y DOne manda los recordatorios por ti.",
     primary: "Crear mi celebración",
     secondary: "Encontrar proveedores"
   },
@@ -12,8 +12,8 @@ export const landingEsBO = {
     names: "Valentina y Mateo",
     when: "Sábado 12 de diciembre · La Paz",
     question: "¿Nos acompañas?",
-    yes: "Sí, asistiré",
-    no: "No podré ir",
+    yes: "Voy",
+    no: "No puedo",
     guests: "Con 2 acompañantes"
   },
   how: {
@@ -34,5 +34,5 @@ export const landingEsBO = {
     other: "Y cualquier otra fecha que merezca una invitación"
   },
   closing: { title: "Empieza tu sitio hoy", body: "Elige el tipo de celebración, agrega a tus invitados y comparte el enlace.", cta: "Crear mi celebración" },
-  footer: { tagline: "Celebraciones que se sienten personales", providers: "Proveedores", skip: "Saltar al contenido" }
+  footer: { tagline: "Que te respondan en un toque.", providers: "Proveedores", skip: "Saltar al contenido" }
 };

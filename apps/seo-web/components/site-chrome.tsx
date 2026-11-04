@@ -1,8 +1,16 @@
 import type { Translate } from "@rsvp/i18n/server";
+import { logo } from "@rsvp/design-tokens";
 import { appUrl } from "../lib/app-url";
 
-export function Aguayo({ thick = false }: Readonly<{ thick?: boolean }>) {
-  return <div className={thick ? "aguayo aguayo--thick" : "aguayo"} aria-hidden="true" />;
+/** DOne logotype: mark in the brand blue (white on the night footer), "One" in the text colour. */
+export function Logo({ label = "DOne", onDark = false }: Readonly<{ label?: string; onDark?: boolean }>) {
+  const [x, y, w, h] = logo.viewBox.split(" ");
+  return (
+    <svg viewBox={`${x} ${y} ${w} ${h}`} role="img" aria-label={label}>
+      <path fill={onDark ? "#FFFFFF" : "var(--primary)"} d={logo.mark} />
+      <path fill={onDark ? "#FFFFFF" : "var(--text)"} d={logo.word} />
+    </svg>
+  );
 }
 
 export function SiteHeader({ t }: Readonly<{ t: Translate }>) {
@@ -10,7 +18,7 @@ export function SiteHeader({ t }: Readonly<{ t: Translate }>) {
     <header className="site-header">
       <a className="site-skip" href="#contenido">{t("landing.footer.skip")}</a>
       <div className="site-header__bar">
-        <a className="site-logo" href="/" aria-label={t("landing.nav.home")}>RSVP<span aria-hidden="true">.</span></a>
+        <a className="site-logo" href="/"><Logo label={t("landing.nav.home")} /></a>
         <nav className="site-nav" aria-label={t("landing.nav.label")}>
           <a href="/proveedores">{t("landing.nav.providers")}</a>
           <a href={appUrl("/login")}>{t("landing.nav.signIn")}</a>
@@ -24,9 +32,8 @@ export function SiteHeader({ t }: Readonly<{ t: Translate }>) {
 export function SiteFooter({ t }: Readonly<{ t: Translate }>) {
   return (
     <footer className="site-footer">
-      <Aguayo />
       <div className="site-footer__inner">
-        <p className="site-logo">RSVP<span aria-hidden="true">.</span></p>
+        <p className="site-logo"><Logo onDark /></p>
         <p>{t("landing.footer.tagline")}</p>
         <a href="/proveedores">{t("landing.footer.providers")}</a>
       </div>

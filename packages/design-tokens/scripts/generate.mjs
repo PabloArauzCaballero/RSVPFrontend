@@ -8,14 +8,14 @@ import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const out = join(root, 'generated');
-const { colors, aguayo, wine, onWine } = await import('../src/colors.ts');
+const { colors, brand: namedBrand, night, onNight } = await import('../src/colors.ts');
 const { spacing, radius, shadow } = await import('../src/spacing.ts');
 const { typography } = await import('../src/typography.ts');
 
 const kebab = (name) => name.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
 const rem = (px) => (px === 0 ? '0px' : `${px / 16}rem`);
 const toVars = (palette) => Object.fromEntries(Object.entries(palette).map(([k, v]) => [`--${kebab(k)}`, v]));
-const brand = { wine, 'on-wine': onWine, teal: aguayo[2], vermilion: aguayo[3] };
+const brand = { azul: namedBrand.azul, night, 'on-night': onNight, 'azul-osc': namedBrand.azulOsc, 'azul-cl': namedBrand.azulCl, cielo: namedBrand.cielo };
 
 const light = { ...toVars(colors.light), ...Object.fromEntries(Object.entries(brand).map(([k, v]) => [`--${k}`, v])) };
 const dark = toVars(colors.dark);
