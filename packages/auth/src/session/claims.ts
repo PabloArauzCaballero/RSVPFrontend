@@ -39,7 +39,7 @@ export function parseClaims(accessToken: string | null): AccessTokenClaims {
 
 export function sessionFromTokens(tokens: TokenPair): Session {
   const claims = parseClaims(tokens.accessToken);
-  return { accessToken: tokens.accessToken, refreshToken: tokens.refreshToken, expiresIn: tokens.expiresIn, userId: claims.sub ?? "", roles: claims.roles, organizationIds: claims.organizationIds };
+  return { accessToken: tokens.accessToken, refreshToken: tokens.refreshToken ?? "", expiresIn: tokens.expiresIn, userId: claims.sub ?? "", roles: claims.roles, organizationIds: claims.organizationIds };
 }
 
 export function isExpired(accessToken: string | null, nowMs: number = Date.now()): boolean {

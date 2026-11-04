@@ -8,6 +8,8 @@ export interface IdentityApi {
   register(input: { email: string; password: string; role: "HOST" | "PLANNER" | "PROVIDER" }): Promise<Session>;
   refresh(refreshToken: string, correlationId: string): Promise<TokenPair>;
   logout(refreshToken: string): Promise<void>;
+  /** "cookie": the refresh token is an httpOnly cookie, so a session can be restored with no stored state. */
+  readonly transport?: "body" | "cookie";
 }
 
 type Listener = (state: AuthState) => void;
@@ -36,6 +38,11 @@ export class SessionManager {
   /** Reads the persisted session at start-up and renews it when its access token is stale. */
   async restore(): Promise<AuthState> {
     const session = await this.store.getSession();
+    if (!session && this.identity.transport === "cookie") {
+      // Web reload: memory is empty but the httpOnly cookie may still hold a live refresh token.
+      try { await this.refresh(); } catch { this.publish(null); }
+      return this.state;
+    }
     if (!session) { this.publish(null); return this.state; }
     if (!isExpired(session.accessToken)) { this.publish(session); return this.state; }
     try { await this.refresh(); } catch (error) {
@@ -53,8 +60,8 @@ export class SessionManager {
   refresh(correlationId: string = globalThis.crypto?.randomUUID?.() ?? String(Date.now())): Promise<TokenPair> {
     this.refreshing ??= (async () => {
       const refreshToken = await this.store.getRefreshToken();
-      if (!refreshToken) throw new ApiError(STATUS_UNAUTHORIZED, correlationId, { title: "No refresh token", status: STATUS_UNAUTHORIZED });
-      const tokens = await this.identity.refresh(refreshToken, correlationId);
+      // Identity decides whether a missing token is fatal: native needs it, the cookie transport does not.
+      const tokens = await this.identity.refresh(refreshToken ?? "", correlationId);
       await this.apply(tokens);
       return tokens;
     })().finally(() => { this.refreshing = undefined; });
@@ -70,7 +77,7 @@ export class SessionManager {
   /** Revokes the refresh token remotely and always wipes the local copy, even when the network call fails. */
   async logout(): Promise<void> {
     const refreshToken = await this.store.getRefreshToken();
-    try { if (refreshToken) await this.identity.logout(refreshToken); }
+    try { await this.identity.logout(refreshToken ?? ""); }
     finally { await this.store.clear(); this.publish(null); }
   }
 

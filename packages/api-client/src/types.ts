@@ -12,18 +12,20 @@ export interface RequestOptions<TBody = unknown> {
 
 export interface TokenPair {
   accessToken: string;
-  refreshToken: string;
+  /** Absent when Identity keeps it in an httpOnly cookie (web): scripts never see it. */
+  refreshToken?: string;
   expiresIn: number;
 }
 
 export interface TokenStore {
   getAccessToken(): Promise<string | null>;
-  getRefreshToken(): Promise<string | null>;
+  getRefreshToken(): Promise<string | null>; // null on web: the refresh token lives in an httpOnly cookie
   setTokens(tokens: TokenPair): Promise<void>;
   clear(): Promise<void>;
 }
 
 export interface RefreshSession {
+  /** `refreshToken` is "" when none is held in JS (cookie transport); the implementation decides whether that is fatal. */
   refresh(refreshToken: string, correlationId: string): Promise<TokenPair>;
 }
 

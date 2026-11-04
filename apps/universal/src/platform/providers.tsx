@@ -7,6 +7,7 @@ import { createI18n, resolveLocale, supportedLocales, type AppLocale, type Trans
 import { AuthProvider, StaticAuthProvider, useAuth } from "../auth/auth-context";
 import { readLocalePreference, writeLocalePreference } from "./preferences";
 import { createAppSessionStore, type SessionClaims } from "./session";
+import { secureStorage } from "./secure-storage";
 
 /**
  * Everything a screen needs from the platform, through context: the API client, the session
@@ -40,7 +41,7 @@ const NO_TOKENS = { getAccessToken: async () => null, getRefreshToken: async () 
 /** The real session wiring: stored tokens → SessionManager → api-client with refresh and logout (REQ-F05-01/02/06). */
 export function createAppRuntime(baseUrl = process.env.EXPO_PUBLIC_API_URL ?? DEFAULT_API_URL): AppRuntime {
   const identityClient = createApiClient({ baseUrl, tokenStore: NO_TOKENS, refreshSession: { refresh: async () => { throw new Error("Identity calls are anonymous"); } } });
-  const manager = new SessionManager(createAppSessionStore(), new IdentityClient(identityClient));
+  const manager = new SessionManager(createAppSessionStore(), new IdentityClient(identityClient, secureStorage ? "body" : "cookie"));
   const client = createApiClient({ baseUrl, tokenStore: manager.tokenStore, refreshSession: manager.refreshSession });
   return { manager, client, identityClient };
 }

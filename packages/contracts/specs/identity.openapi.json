@@ -27,7 +27,8 @@
           "201": {
             "description": "Registered and signed in",
             "headers": {
-              "Location": {
+              "Set-Cookie": {
+                "description": "`rsvp_refresh` cookie when `X-Session-Transport: cookie` is sent; cleared (Max-Age=0) on logout.",
                 "schema": {
                   "type": "string"
                 }
@@ -57,7 +58,12 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SessionTransport"
+          }
+        ]
       }
     },
     "/auth/login": {
@@ -70,6 +76,14 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Session"
+                }
+              }
+            },
+            "headers": {
+              "Set-Cookie": {
+                "description": "`rsvp_refresh` cookie when `X-Session-Transport: cookie` is sent; cleared (Max-Age=0) on logout.",
+                "schema": {
+                  "type": "string"
                 }
               }
             }
@@ -90,7 +104,12 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SessionTransport"
+          }
+        ]
       }
     },
     "/auth/refresh": {
@@ -105,25 +124,40 @@
                   "$ref": "#/components/schemas/Session"
                 }
               }
+            },
+            "headers": {
+              "Set-Cookie": {
+                "description": "`rsvp_refresh` cookie when `X-Session-Transport: cookie` is sent; cleared (Max-Age=0) on logout.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
           },
           "422": {
-            "$ref": "#/components/responses/Validation"
+            "$ref": "#/components/responses/Validation",
+            "description": null
           }
         },
         "requestBody": {
-          "required": true,
+          "required": false,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/RefreshRequest"
               }
             }
+          },
+          "description": "Required unless `X-Session-Transport: cookie`, in which case the body is ignored and the cookie is used (401 when the cookie is absent or revoked)."
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SessionTransport"
           }
-        }
+        ]
       }
     },
     "/auth/password-recovery": {
@@ -153,23 +187,37 @@
       "post": {
         "operationId": "logout",
         "requestBody": {
-          "required": true,
+          "required": false,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/LogoutRequest"
               }
             }
-          }
+          },
+          "description": "Required unless `X-Session-Transport: cookie`, in which case the body is ignored and the cookie is used."
         },
         "responses": {
           "204": {
-            "description": "Refresh-token chain revoked"
+            "description": "Refresh-token chain revoked",
+            "headers": {
+              "Set-Cookie": {
+                "description": "`rsvp_refresh` cookie when `X-Session-Transport: cookie` is sent; cleared (Max-Age=0) on logout.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           },
           "422": {
             "$ref": "#/components/responses/Validation"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SessionTransport"
+          }
+        ]
       }
     },
     "/.well-known/jwks.json": {
@@ -474,7 +522,6 @@
         "type": "object",
         "required": [
           "accessToken",
-          "refreshToken",
           "tokenType",
           "expiresIn"
         ],
@@ -485,7 +532,7 @@
           },
           "refreshToken": {
             "type": "string",
-            "description": "Opaque, single use, 30 days."
+            "description": "Opaque, single use, 30 days. Omitted when `X-Session-Transport: cookie` (it is in the httpOnly cookie)."
           },
           "tokenType": {
             "const": "Bearer"
@@ -768,6 +815,20 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "JWT"
+      }
+    },
+    "parameters": {
+      "SessionTransport": {
+        "name": "X-Session-Transport",
+        "in": "header",
+        "required": false,
+        "description": "`cookie` (web): the refresh token travels only in the `rsvp_refresh` cookie (HttpOnly, Secure, SameSite=Strict, Path=/identity/auth, 30 days) and is omitted from bodies. Absent (mobile): the refresh token is in the body. The custom header forces a CORS preflight, which with SameSite=Strict is the CSRF defence.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "cookie"
+          ]
+        }
       }
     }
   }

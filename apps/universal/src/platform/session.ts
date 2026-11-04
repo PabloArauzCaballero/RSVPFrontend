@@ -3,8 +3,8 @@ import { secureStorage } from "./secure-storage";
 
 /**
  * Session at the app boundary. Native keeps tokens in the keychain/keystore (REQ-F05-02). Web
- * keeps them in memory: the httpOnly-cookie design needs Identity to set the cookie, which it
- * does not yet (BLOCKED, see docs/progress/evidence/lane-F05). In development a bearer token
+ * keeps only the access token in memory; the refresh token is an httpOnly cookie that Identity
+ * sets (`IdentityClient` "cookie" transport, REQ-F05-02). In development a bearer token
  * can still be injected with EXPO_PUBLIC_DEV_ACCESS_TOKEN; it is ignored in production builds.
  */
 

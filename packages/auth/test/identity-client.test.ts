@@ -56,4 +56,35 @@ describe("schemas", () => {
     expect(validate(registerSchema, { email: "a@b.co", password: "correct-horse-battery", role: "PROVIDER" }).ok).toBe(true);
   });
   it("recovery only needs an e-mail", () => { expect(validate(recoverySchema, { email: "a@b.co" }).ok).toBe(true); });
+
+  describe("cookie transport (web)", () => {
+    const cookieClient = (fetchFn: typeof fetch): IdentityClient => new IdentityClient(createApiClient({ baseUrl: "http://gw", tokenStore: { getAccessToken: async () => null, getRefreshToken: async () => null, setTokens: async () => undefined, clear: async () => undefined }, refreshSession: { refresh: async () => { throw new Error("unused"); } }, fetchFn }), "cookie");
+    const callOf = (fetchFn: unknown, index = 0): [string, RequestInit] => (fetchFn as ReturnType<typeof vi.fn>).mock.calls[index] as [string, RequestInit];
+    it("login sends the transport header with credentials and builds a session without a refresh token", async () => {
+      const fetchFn = vi.fn(async () => json(200, { accessToken: tokens().accessToken, tokenType: "Bearer", expiresIn: 900 })) as unknown as typeof fetch;
+      const session = await cookieClient(fetchFn).login({ email: "a@b.co", password: "pw" });
+      expect(session.refreshToken).toBe("");
+      const [, init] = callOf(fetchFn);
+      expect(new Headers(init.headers).get("x-session-transport")).toBe("cookie");
+      expect(init.credentials).toBe("include");
+    });
+    it("refresh sends no body and ignores any token passed in", async () => {
+      const fetchFn = vi.fn(async () => json(200, { accessToken: tokens().accessToken, tokenType: "Bearer", expiresIn: 900 })) as unknown as typeof fetch;
+      await cookieClient(fetchFn).refresh("", "corr-1");
+      const [url, init] = callOf(fetchFn);
+      expect(url).toBe("http://gw/identity/auth/refresh");
+      expect(init.body).toBeUndefined();
+      expect(new Headers(init.headers).get("x-session-transport")).toBe("cookie");
+    });
+    it("logout posts with the header and no body; the body transport sends the token and no header", async () => {
+      const fetchFn = vi.fn(async () => json(204, null)) as unknown as typeof fetch;
+      await cookieClient(fetchFn).logout("");
+      expect(callOf(fetchFn)[1].body).toBeUndefined();
+      const nativeFetch = vi.fn(async () => json(204, null)) as unknown as typeof fetch;
+      await clientWith(nativeFetch).logout("r".repeat(40));
+      const [, init] = callOf(nativeFetch);
+      expect(JSON.parse(String(init.body))).toEqual({ refreshToken: "r".repeat(40) });
+      expect(new Headers(init.headers).get("x-session-transport")).toBeNull();
+    });
+  });
 });

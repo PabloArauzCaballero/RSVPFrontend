@@ -270,8 +270,8 @@ export interface components {
             accessToken: string;
             /** @constant */
             expiresIn: 900;
-            /** @description Opaque, single use, 30 days. */
-            refreshToken: string;
+            /** @description Opaque, single use, 30 days. Omitted when `X-Session-Transport: cookie` (it is in the httpOnly cookie). */
+            refreshToken?: string;
             /** @constant */
             tokenType: "Bearer";
         };
@@ -323,7 +323,10 @@ export interface components {
             };
         };
     };
-    parameters: never;
+    parameters: {
+        /** @description `cookie` (web): the refresh token travels only in the `rsvp_refresh` cookie (HttpOnly, Secure, SameSite=Strict, Path=/identity/auth, 30 days) and is omitted from bodies. Absent (mobile): the refresh token is in the body. The custom header forces a CORS preflight, which with SameSite=Strict is the CSRF defence. */
+        SessionTransport: "cookie";
+    };
     requestBodies: never;
     headers: never;
     pathItems: never;
@@ -353,7 +356,10 @@ export interface operations {
     login: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description `cookie` (web): the refresh token travels only in the `rsvp_refresh` cookie (HttpOnly, Secure, SameSite=Strict, Path=/identity/auth, 30 days) and is omitted from bodies. Absent (mobile): the refresh token is in the body. The custom header forces a CORS preflight, which with SameSite=Strict is the CSRF defence. */
+                "X-Session-Transport"?: components["parameters"]["SessionTransport"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -366,6 +372,8 @@ export interface operations {
             /** @description Session */
             200: {
                 headers: {
+                    /** @description `rsvp_refresh` cookie when `X-Session-Transport: cookie` is sent; cleared (Max-Age=0) on logout. */
+                    "Set-Cookie"?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -379,11 +387,15 @@ export interface operations {
     logout: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description `cookie` (web): the refresh token travels only in the `rsvp_refresh` cookie (HttpOnly, Secure, SameSite=Strict, Path=/identity/auth, 30 days) and is omitted from bodies. Absent (mobile): the refresh token is in the body. The custom header forces a CORS preflight, which with SameSite=Strict is the CSRF defence. */
+                "X-Session-Transport"?: components["parameters"]["SessionTransport"];
+            };
             path?: never;
             cookie?: never;
         };
-        requestBody: {
+        /** @description Required unless `X-Session-Transport: cookie`, in which case the body is ignored and the cookie is used. */
+        requestBody?: {
             content: {
                 "application/json": components["schemas"]["LogoutRequest"];
             };
@@ -392,6 +404,8 @@ export interface operations {
             /** @description Refresh-token chain revoked */
             204: {
                 headers: {
+                    /** @description `rsvp_refresh` cookie when `X-Session-Transport: cookie` is sent; cleared (Max-Age=0) on logout. */
+                    "Set-Cookie"?: string;
                     [name: string]: unknown;
                 };
                 content?: never;
@@ -425,11 +439,15 @@ export interface operations {
     refreshSession: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description `cookie` (web): the refresh token travels only in the `rsvp_refresh` cookie (HttpOnly, Secure, SameSite=Strict, Path=/identity/auth, 30 days) and is omitted from bodies. Absent (mobile): the refresh token is in the body. The custom header forces a CORS preflight, which with SameSite=Strict is the CSRF defence. */
+                "X-Session-Transport"?: components["parameters"]["SessionTransport"];
+            };
             path?: never;
             cookie?: never;
         };
-        requestBody: {
+        /** @description Required unless `X-Session-Transport: cookie`, in which case the body is ignored and the cookie is used (401 when the cookie is absent or revoked). */
+        requestBody?: {
             content: {
                 "application/json": components["schemas"]["RefreshRequest"];
             };
@@ -438,6 +456,8 @@ export interface operations {
             /** @description Rotated session. Reusing a consumed refresh token revokes its whole chain and returns 401. */
             200: {
                 headers: {
+                    /** @description `rsvp_refresh` cookie when `X-Session-Transport: cookie` is sent; cleared (Max-Age=0) on logout. */
+                    "Set-Cookie"?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -445,13 +465,17 @@ export interface operations {
                 };
             };
             401: components["responses"]["Unauthorized"];
+            /** @description null */
             422: components["responses"]["Validation"];
         };
     };
     registerUser: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description `cookie` (web): the refresh token travels only in the `rsvp_refresh` cookie (HttpOnly, Secure, SameSite=Strict, Path=/identity/auth, 30 days) and is omitted from bodies. Absent (mobile): the refresh token is in the body. The custom header forces a CORS preflight, which with SameSite=Strict is the CSRF defence. */
+                "X-Session-Transport"?: components["parameters"]["SessionTransport"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -464,7 +488,8 @@ export interface operations {
             /** @description Registered and signed in */
             201: {
                 headers: {
-                    Location?: string;
+                    /** @description `rsvp_refresh` cookie when `X-Session-Transport: cookie` is sent; cleared (Max-Age=0) on logout. */
+                    "Set-Cookie"?: string;
                     [name: string]: unknown;
                 };
                 content: {

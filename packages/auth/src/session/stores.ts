@@ -16,7 +16,7 @@ function storeOver(read: () => Promise<Session | null>, write: (session: Session
     getAccessToken: async () => (await read())?.accessToken ?? null,
     getRefreshToken: async () => (await read())?.refreshToken ?? null,
     setSession: write,
-    setTokens: async (tokens) => { const current = await read(); if (current) await write({ ...current, ...tokens }); },
+    setTokens: async (tokens) => { const current = await read(); if (current) await write({ ...current, ...tokens, refreshToken: tokens.refreshToken ?? current.refreshToken }); },
     clear: remove
   };
 }
@@ -38,8 +38,8 @@ export function createMemorySessionStore(initial: Session | null = null): Sessio
 }
 
 /**
- * Web session. The intended design is an httpOnly cookie set by Identity (no token in JS), which
- * Identity does not issue yet (BLOCKED: backend). Until then the session lives in memory: it is
- * lost on reload and never touches localStorage.
+ * Web session: only the short-lived access token, in memory, never in localStorage. The refresh
+ * token is an httpOnly cookie that Identity sets (`IdentityClient` with the "cookie" transport), so
+ * a reload restores the session with a silent refresh instead of reading anything from storage.
  */
 export function createWebSessionStore(): SessionStore { return createMemorySessionStore(); }

@@ -1,0 +1,1 @@
+rsvp_refresh: httpOnly=true sameSite=Strict path=/identity/auth secure=true; document.cookie does not list it; reload restores the session through POST /identity/auth/refresh

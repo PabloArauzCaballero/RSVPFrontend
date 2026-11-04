@@ -31,8 +31,7 @@ export function createApiClient(options: CreateApiClientOptions): ApiClient {
     if (!refreshInFlight) {
       refreshInFlight = (async () => {
         const refreshToken = await options.tokenStore.getRefreshToken();
-        if (!refreshToken) throw toApiError(401, correlationId, { title: "Missing refresh token", status: 401 });
-        const tokens = await options.refreshSession.refresh(refreshToken, correlationId);
+        const tokens = await options.refreshSession.refresh(refreshToken ?? "", correlationId);
         await options.tokenStore.setTokens(tokens);
       })().finally(() => { refreshInFlight = undefined; });
     }

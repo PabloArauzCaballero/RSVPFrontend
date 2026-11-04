@@ -1,1 +1,1 @@
-POST /identity/auth/logout -> sent refresh token; replay POST /auth/refresh -> HTTP 401
+POST /identity/auth/logout (cookie, no body) -> cookie cleared; replay POST /auth/refresh with the old cookie -> HTTP 401

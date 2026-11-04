@@ -20,9 +20,9 @@ const results = [];
 const log = (label, ok = true, detail = "") => { results.push({ label, ok, detail }); console.log(`${ok ? "  PASS" : "  FAIL"} ${label}${detail ? ` (${detail})` : ""}`); };
 const check = async (label, fn) => { try { await fn(); log(label); } catch (error) { log(label, false, String(error.message).split("\n")[0]); } };
 
-const cors = { "access-control-allow-origin": APP, "access-control-allow-credentials": "true", "access-control-allow-headers": "content-type,authorization,x-correlation-id,accept", "access-control-allow-methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS", "access-control-expose-headers": "x-correlation-id" };
+const cors = { "access-control-allow-origin": APP, "access-control-allow-credentials": "true", "access-control-allow-headers": "content-type,authorization,x-correlation-id,accept,x-session-transport", "access-control-allow-methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS", "access-control-expose-headers": "x-correlation-id" };
 const seen = []; // every request that reached Identity
-let staleOnce = false; // the next authenticated API call is answered 401 (an expired access token), then calls pass
+const staleContexts = new Set(); // browser contexts whose next authenticated API call is answered 401 (an expired access token); per context so another open page cannot consume it
 let offline = false; // simulated dead network: the gateway stand-in aborts instead of forwarding
 
 const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
@@ -36,7 +36,7 @@ async function newPage(width = 1280, height = 900) {
     if (url.pathname.startsWith("/celebrations")) {
       const auth = request.headers()["authorization"] ?? "";
       seen.push(`${request.method()} ${url.pathname} ${auth ? "bearer" : "anon"}`);
-      if (staleOnce && auth) { staleOnce = false; return route.fulfill({ status: 401, headers: { ...cors, "content-type": "application/problem+json" }, body: JSON.stringify({ title: "expired", status: 401 }) }); }
+      if (auth && staleContexts.delete(context)) { return route.fulfill({ status: 401, headers: { ...cors, "content-type": "application/problem+json" }, body: JSON.stringify({ title: "expired", status: 401 }) }); }
       if (url.pathname === "/celebrations") return route.fulfill({ status: 200, headers: { ...cors, "content-type": "application/json" }, body: JSON.stringify({ items: [] }) });
       return route.fulfill({ status: 404, headers: { ...cors, "content-type": "application/problem+json" }, body: JSON.stringify({ title: "Not found", status: 404 }) });
     }
@@ -111,17 +111,18 @@ await check("password shorter than 12 is stopped before the network with a field
   await other.page.goto(`${APP}/registro`); await fill(other.page, "Correo electrónico", `short-${stamp}@example.com`); await fill(other.page, "Contraseña", "corta");
   await other.page.getByRole("button", { name: "Crear cuenta" }).filter({ visible: true }).click();
   await other.page.getByText("La contraseña debe tener al menos 12 caracteres.").waitFor();
-  assert.equal(seen.length, before);
+  // A page load may probe POST /auth/refresh (cookie restore); no other request may leave.
+  assert.deepEqual(seen.slice(before).filter((entry) => !/\/auth\/refresh$/.test(entry)), []);
   await other.context.close();
 });
 
 console.log("\n== Silent refresh (real rotation) and sign-out ==");
 await check("REFRESH PROOF: expired bearer -> POST /identity/auth/refresh (real) -> retry with new bearer -> page keeps working", async () => {
-  const { page } = await newPage();
+  const { page, context } = await newPage();
   await page.goto(`${APP}/login`); await fill(page, "Correo electrónico", hostEmail); await fill(page, "Contraseña", PASSWORD);
   const requests = [];
   page.on("request", (req) => { if (/\/celebrations|\/auth\/refresh/.test(req.url())) requests.push(`${req.method()} ${new URL(req.url()).pathname} ${req.headers()["authorization"] ? "bearer" : ""}`); });
-  staleOnce = true;
+  staleContexts.add(context);
   await page.getByRole("button", { name: "Iniciar sesión" }).filter({ visible: true }).click();
   await waitPath(page, /\/celebraciones/);
   await page.getByText("Todavía no tienes celebraciones. Crea la primera en tres pasos.").waitFor();
@@ -129,15 +130,27 @@ await check("REFRESH PROOF: expired bearer -> POST /identity/auth/refresh (real)
   assert.ok(!/\/login/.test(page.url()));
   writeFileSync(`${OUT}refresh-requests.txt`, requests.join("\n") + "\n");
   await shot(page, "celebraciones-tras-refresh-1280");
-  // Sign out from the UI: remote revocation + local wipe.
+  // The refresh token is an httpOnly cookie: Identity set it, scripts cannot read it, and a reload keeps the session.
+  const cookie = (await page.context().cookies()).find((c) => c.name === "rsvp_refresh");
+  assert.ok(cookie, "Identity did not set the rsvp_refresh cookie");
+  assert.equal(cookie.httpOnly, true); assert.equal(cookie.sameSite, "Strict"); assert.equal(cookie.path, "/identity/auth");
+  assert.equal(await page.evaluate(() => document.cookie.includes("rsvp_refresh")), false, "cookie visible to page scripts");
+  assert.equal(await page.evaluate(() => JSON.stringify([{ ...localStorage }, { ...sessionStorage }]).includes("eyJ")), false, "a token reached web storage");
+  await page.reload();
+  await page.getByText("Todavía no tienes celebraciones. Crea la primera en tres pasos.").waitFor();
+  assert.ok(!/\/login/.test(page.url()), "reload lost the session");
+  writeFileSync(`${OUT}cookie-session.txt`, `rsvp_refresh: httpOnly=${cookie.httpOnly} sameSite=${cookie.sameSite} path=${cookie.path} secure=${cookie.secure}; document.cookie does not list it; reload restores the session through POST /identity/auth/refresh\n`);
+  // Sign out from the UI: remote revocation + cookie cleared. The reload rotated the cookie, so read the live one.
+  const live = (await page.context().cookies()).find((c) => c.name === "rsvp_refresh").value;
   const logout = page.waitForRequest((req) => req.url().endsWith("/identity/auth/logout"));
   await page.getByRole("button", { name: "Cerrar sesión" }).first().click();
-  const sent = await logout; assert.ok(sent.postDataJSON().refreshToken.length >= 32);
+  const sent = await logout; assert.equal(sent.postData(), null); assert.equal(sent.headers()["x-session-transport"], "cookie");
   await waitPath(page, /\/login/);
+  assert.equal((await page.context().cookies()).some((c) => c.name === "rsvp_refresh"), false, "cookie not cleared");
   // REQ-F05-06: the refresh token the app held is dead at Identity, not just forgotten locally.
-  const replay = await fetch(`${IDENTITY}/auth/refresh`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ refreshToken: sent.postDataJSON().refreshToken }) });
+  const replay = await fetch(`${IDENTITY}/auth/refresh`, { method: "POST", headers: { cookie: `rsvp_refresh=${live}`, "x-session-transport": "cookie" } });
   assert.equal(replay.status, 401);
-  writeFileSync(`${OUT}logout-revocation.txt`, `POST /identity/auth/logout -> sent refresh token; replay POST /auth/refresh -> HTTP ${replay.status}\n`);
+  writeFileSync(`${OUT}logout-revocation.txt`, `POST /identity/auth/logout (cookie, no body) -> cookie cleared; replay POST /auth/refresh with the old cookie -> HTTP ${replay.status}\n`);
 });
 
 console.log("\n== Roles ==");

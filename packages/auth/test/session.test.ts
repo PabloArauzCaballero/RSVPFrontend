@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import { ApiError, createApiClient } from "@rsvp/api-client";
-import { SessionManager, createMemorySessionStore, createNativeSessionStore, isExpired, parseClaims, sessionFromTokens, type IdentityApi, type SecureKeyValueStore } from "../src/index.js";
+import { IdentityClient, SessionManager, createMemorySessionStore, createNativeSessionStore, isExpired, parseClaims, sessionFromTokens, type IdentityApi, type SecureKeyValueStore } from "../src/index.js";
 import { fakeJwt, tokens } from "./helpers.js";
+
+const NO_TOKENS = { getAccessToken: async () => null, getRefreshToken: async () => null, setTokens: async () => undefined, clear: async () => undefined };
 
 function identity(overrides: Partial<IdentityApi> = {}): IdentityApi & { [K in keyof IdentityApi]: ReturnType<typeof vi.fn> } {
   return {
@@ -69,8 +71,32 @@ describe("SessionManager", () => {
     await Promise.all([manager.refresh(), manager.refresh(), manager.refresh()]);
     expect(api.refresh).toHaveBeenCalledTimes(1);
   });
-  it("refresh without a refresh token is a 401", async () => {
-    await expect(new SessionManager(createMemorySessionStore(), identity()).refresh()).rejects.toMatchObject({ status: 401 });
+  it("refresh without a refresh token is a 401 on the body transport (native)", async () => {
+    const api = { ...identity(), refresh: (token: string, id: string) => new IdentityClient(createApiClient({ baseUrl: "http://gw", tokenStore: NO_TOKENS, refreshSession: { refresh: async () => { throw new Error("unused"); } }, fetchFn: (async () => { throw new Error("no network call expected"); }) as unknown as typeof fetch })).refresh(token, id) };
+    await expect(new SessionManager(createMemorySessionStore(), api as never).refresh()).rejects.toMatchObject({ status: 401 });
+  });
+  describe("cookie transport (web, REQ-F05-02)", () => {
+    it("restore with an empty memory store renews the session from the httpOnly cookie", async () => {
+      const api = identity({ transport: "cookie", refresh: vi.fn(async () => ({ accessToken: tokens({ roles: ["PLANNER"] }).accessToken, expiresIn: 900 })) });
+      const manager = new SessionManager(createMemorySessionStore(), api);
+      const state = await manager.restore();
+      expect(api.refresh).toHaveBeenCalledWith("", expect.any(String));
+      expect(state).toMatchObject({ status: "authenticated", session: { roles: ["PLANNER"], refreshToken: "" } });
+    });
+    it("restore with a dead cookie is anonymous and does not throw", async () => {
+      const api = identity({ transport: "cookie", refresh: vi.fn(async () => { throw new ApiError(401, "c", { title: "x", status: 401 }); }) });
+      expect((await new SessionManager(createMemorySessionStore(), api).restore()).status).toBe("anonymous");
+    });
+    it("a body-transport manager does not try to restore an empty store", async () => {
+      const api = identity();
+      expect((await new SessionManager(createMemorySessionStore(), api).restore()).status).toBe("anonymous");
+      expect(api.refresh).not.toHaveBeenCalled();
+    });
+    it("a rotated token pair without refreshToken keeps what the store held", async () => {
+      const store = createMemorySessionStore(sessionFromTokens(tokens()));
+      await store.setTokens({ accessToken: "a", expiresIn: 1 });
+      expect(await store.getRefreshToken()).toBe("r".repeat(40));
+    });
   });
   it("REQ-F05-06: logout revokes remotely and clears locally", async () => {
     const store = createMemorySessionStore(sessionFromTokens(tokens())); const api = identity(); const manager = new SessionManager(store, api);
