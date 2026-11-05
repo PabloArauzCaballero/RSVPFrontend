@@ -1,0 +1,11 @@
+# Triaje de los 126 hallazgos moderate/minor de axe en F22-F28
+
+Barrido original (`axe-f22-f28.json`, 2026-11-05 02:50 UTC): 132 combinaciones (22 pantallas x 360/768/1280 x claro/oscuro), 0 critical, 0 serious, 126 moderate/minor. Todos eran reproducibles y ninguno era falso positivo; se corrigieron en el código. Barrido tras las correcciones (2026-11-05 04:08 UTC, mismo guion, backend real): **132 combinaciones, 0 critical, 0 serious, 0 moderate/minor.**
+
+| Regla (impacto) | Hallazgos | Causa | Corrección |
+|---|---|---|---|
+| `region` (moderate) | 102 (17 pantallas x 6) | El contenido de las pantallas de la app Expo web (host, portal, regalos del invitado) no estaba dentro de ningún landmark: el `ScrollView` no declaraba `main`. | `role="main"` en `Screen` (`src/host/ui.tsx`), en el marco de regalos del invitado y del RSVP, y en los estados `Checking` y `Forbidden` del guardia de rutas (`src/auth/route-guard.tsx`). Este último se detectó en el barrido intermedio: un parpadeo de carga sin landmark aparecía al azar en una pantalla distinta cada corrida. |
+| `aria-allowed-role` (minor) | 18 (3 pantallas x 6; en corridas posteriores aparecía también en otras 3 pantallas del portal con datos) | `Notice` y `Banner` usaban `accessibilityRole="summary"` + región viva, que react-native-web pinta como `<section role="region">` (rol redundante no permitido). | Avisos informativos y de éxito con `role="status"`, errores con `role="alert"` (`Notice`, `Banner`). Se quitó `accessibilityLiveRegion` donde el rol ya anuncia. |
+| `heading-order` (moderate) | 6 (Directorio x 6) | Las tarjetas de resultados usaban `<h3>` directamente bajo el `<h1>`. | `<h2>` en `components/provider-directory.tsx` y la regla CSS `.directory-results h2`. |
+
+Cómo se repite: `WORLD=world.json CHROMIUM_PATH=... node apps/universal/scripts/axe-f22-f28.mjs` (`DETAIL=1` imprime el nodo de cada hallazgo; `WIDTHS=` y `SCHEMES=` acotan el barrido; `DRY=1` no escribe el JSON). `world.json` sale de `node apps/seo-web/scripts/live-world.mjs`. La app Expo debe estar exportada con `EXPO_PUBLIC_API_URL=http://localhost:28000` y servida en :8081, y Next en :3000. axe no sustituye una revisión con lector de pantalla ni de teclado, que no se hizo.

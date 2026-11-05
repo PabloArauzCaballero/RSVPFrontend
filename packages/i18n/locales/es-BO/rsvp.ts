@@ -52,7 +52,8 @@ export const rsvpEsBO = {
     restrictedTitle: "Esta celebración solo admite invitados con enlace personal",
     restrictedBody: "Pide a quien te invitó que te envíe tu enlace. Si ya lo tienes, ábrelo desde el mensaje original.",
     doneTitle: "Listo: confirmamos tu asistencia", doneBody: "Guarda tu enlace personal. Es la única forma de cambiar tu respuesta más adelante; no lo guardamos en tu navegador.",
-    replayBody: "Ya habíamos registrado tu respuesta. Si perdiste tu enlace, pide a los anfitriones que te envíen uno nuevo.", linkLabel: "Tu enlace personal"
+    replayBody: "Ya habíamos registrado tu respuesta. Si perdiste tu enlace, pide a los anfitriones que te envíen uno nuevo.", linkLabel: "Tu enlace personal",
+    emailNotice: "No te prometemos un correo de confirmación: que recibas un aviso depende de cómo los anfitriones tengan configurados los suyos. Tu enlace personal es la única constancia segura de tu respuesta."
   },
   app: { title: "Tu invitación", openApp: "Abrir en la app de DOne", openAppHint: "Si tienes la app instalada, ábrela desde aquí." }
 } as const;

@@ -6,7 +6,11 @@ export const adminEsBO = {
   unavailable: "Este módulo usa la API de {{service}}, que todavía no está disponible. Cuando se publique, verás aquí sus datos.",
   sample: { title: "Ana y Luis", story: "Nos conocimos en La Paz y hoy celebramos con quienes queremos.", venue: "Hacienda El Prado", dressCode: "Formal", question: "¿Hay estacionamiento?", answer: "Sí, en el mismo lugar.", ceremony: "Ceremonia", party: "Fiesta" },
   saved: "Guardado.",
-  dashboard: { title: "Resumen", eventTypes: "Tipos de evento activos", templates: "Templates publicados", drafts: "Templates en borrador", count: "{{label}}: {{count}}" },
+  dashboard: { title: "Resumen", eventTypes: "Tipos de evento activos", templates: "Templates publicados", drafts: "Templates en borrador", count: "{{label}}: {{count}}",
+    platform: "Plataforma", providersTitle: "Proveedores y ofertas", accountsTitle: "Cuentas y organizaciones",
+    statuses: { DRAFT: "Borrador", PENDING_VERIFICATION: "En verificación", VERIFIED: "Verificado", SUSPENDED: "Suspendido", REJECTED: "Rechazado" },
+    listingsPublished: "Ofertas publicadas", leadsValid: "Leads válidos", leadsInvalid: "Leads descartados", leadsRecent: "Leads válidos (30 días)", quotes: "Cotizaciones", bookings: "Reservas confirmadas",
+    users: "Cuentas", usersByRole: "Cuentas con rol {{role}}", organizations: "Organizaciones" },
   templates: {
     title: "Templates", new: "Nuevo template", edit: "Editar {{name}}", name: "Nombre", description: "Descripción", tags: "Etiquetas de tipo de evento", tagsHelp: "Separadas por comas, por ejemplo: wedding, anniversary.",
     layout: "Layout", layouts: { classic: "Clásico", minimal: "Minimalista", editorial: "Editorial", festive: "Festivo", corporate: "Corporativo" },

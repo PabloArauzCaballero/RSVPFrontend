@@ -104,6 +104,7 @@ describe("REQ-F21-04 · the five RSVP states, in native components, against the 
     fireEvent.click(screen.getByRole("checkbox"));
     fireEvent.click(screen.getByTestId("rsvp-register"));
     expect(await screen.findByText("Listo: confirmamos tu asistencia")).toBeTruthy();
+    expect(screen.getByTestId("rsvp-email-notice").textContent).toContain("No te prometemos un correo");
     expect((screen.getByLabelText("Tu enlace personal") as HTMLInputElement).value).toMatch(new RegExp(`/c/${open.slug}/rsvp/[A-Za-z0-9_-]{43}$`));
     first.unmount();
     const restricted = createContractMock({ now: () => NOW, unregisteredMode: "RESTRICTED" });

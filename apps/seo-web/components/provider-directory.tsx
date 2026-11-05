@@ -52,7 +52,7 @@ export function ProviderResults({ page, t, locale, path, query = "" }: { readonl
         {page.items.map((card) => (
           <li key={card.listingId} data-listing-id={card.listingId}>
             {card.imageUrl ? <img src={card.imageUrl} alt="" width={320} height={240} loading="lazy" decoding="async" /> : null}
-            <h3><a href={providerHref(card)}>{card.name}</a></h3>
+            <h2><a href={providerHref(card)}>{card.name}</a></h2>
             <p>{t(`directory.category.${card.category}`)} · {card.city}</p>
             {card.verified ? <p className="directory-verified">{t("directory.verified")}</p> : null}
             {price(card, locale) ? <p>{t("directory.priceFrom", { price: price(card, locale) ?? "" })}</p> : null}

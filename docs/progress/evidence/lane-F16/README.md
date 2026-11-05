@@ -9,8 +9,8 @@ Observado: login del anfitrión por UI contra Identity; lista con búsqueda; alt
 El resto de este documento (más abajo) describe la corrida anterior **contra mock de contrato**; los REQ que arriba no figuran como observados en vivo siguen con esa evidencia (mock) y no deben leerse como probados contra servicios reales.
 - Pruebas: `corepack yarn workspace @rsvp/universal test` (150; `test/guests.test.tsx`). Navegador: `node apps/universal/scripts/e2e-guests.mjs` (export web de Expo + Chrome, 360/768/1280, axe) → `e2e-result.json`.
 
-## Límite de la evidencia (leer primero)
-Todo se ejecutó contra `packages/testing/src/contract-mock.ts`: un doble **escrito desde el OpenAPI** (guest-rsvp 1.9.0, notification vigente) y las reglas observables de `http-server.ts`. Acredita la capa frontend frente a respuestas con forma de contrato; **no** acredita que los servicios reales respondan así. No se levantó el backend real. No hay iOS ni Android ni dispositivo. Estado del carril: `TESTED` en web/Expo web; **no `DONE`**.
+## Límite de la evidencia de la corrida con mock (histórico; la corrida contra el backend real está arriba)
+Esta sección describe SOLO la primera corrida (2026-11-04). Desde 2026-11-05 la sección «Contra el BACKEND REAL» cubre lo observado en vivo, y lo que allí no figura sigue sin probarse contra servicios reales. La corrida con mock se ejecutó contra `packages/testing/src/contract-mock.ts`: un doble **escrito desde el OpenAPI** (guest-rsvp 1.9.0, notification vigente) y las reglas observables de `http-server.ts`. Acredita la capa frontend frente a respuestas con forma de contrato; **no** acredita que los servicios reales respondan así (en esa corrida no se levantó el backend; eso ya no vale para lo listado arriba). No hay iOS ni Android ni dispositivo. Estado del carril: `TESTED` en web/Expo web; **no `DONE`**.
 
 | REQ | Estado | Prueba | Capturas |
 |---|---|---|---|

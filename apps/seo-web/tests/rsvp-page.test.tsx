@@ -165,6 +165,7 @@ describe("REQ-F15-05 · A13 RSVP de no registrado", () => {
     fireEvent.click(screen.getByLabelText(/Doy mi consentimiento/));
     fireEvent.click(screen.getByRole("button", { name: "Confirmar mi asistencia" }));
     expect(await screen.findByRole("heading", { name: "Listo: confirmamos tu asistencia" })).toBeTruthy();
+    expect(screen.getByTestId("rsvp-email-notice").textContent).toContain("No te prometemos un correo");
     const link = (screen.getByLabelText("Tu enlace personal") as HTMLInputElement).value;
     const issued = mock.listGuests()[0]!;
     expect(link).toBe(`https://done.example/c/${mock.slug}/rsvp/${issued.token}`);

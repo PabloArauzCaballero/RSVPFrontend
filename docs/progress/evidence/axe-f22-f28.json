@@ -1,15 +1,15 @@
 {
-  "date": "2026-11-05T02:50:14.832Z",
+  "date": "2026-11-05T04:08:14.211Z",
   "totals": {
     "pages": 132,
     "critical": 0,
     "serious": 0,
-    "moderateOrMinor": 126
+    "moderateOrMinor": 0
   },
   "results": [
     {
       "label": "Regalos del invitado (web)",
-      "path": "/c/f22-mw2xeb50/regalos",
+      "path": "/c/f22-mw2zd7pj/regalos",
       "width": 360,
       "scheme": "light",
       "critical": 0,
@@ -19,7 +19,7 @@
     },
     {
       "label": "Microsite del partner",
-      "path": "/p/dulce-sol-mw2xeb50-106bac",
+      "path": "/p/dulce-sol-mw2zd7pj-d3b29d",
       "width": 360,
       "scheme": "light",
       "critical": 0,
@@ -29,7 +29,7 @@
     },
     {
       "label": "Cotizar sin cuenta",
-      "path": "/p/dulce-sol-mw2xeb50-106bac/cotizar?l=d3d0b3d0-6795-4a78-9e6c-0f1afa1145b2",
+      "path": "/p/dulce-sol-mw2zd7pj-d3b29d/cotizar?l=d21a7999-ed05-42af-bfc0-7993bfd353c2",
       "width": 360,
       "scheme": "light",
       "critical": 0,
@@ -39,7 +39,7 @@
     },
     {
       "label": "Agenda",
-      "path": "/p/dulce-sol-mw2xeb50-106bac/agenda",
+      "path": "/p/dulce-sol-mw2zd7pj-d3b29d/agenda",
       "width": 360,
       "scheme": "light",
       "critical": 0,
@@ -54,123 +54,68 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "heading-order",
-          "impact": "moderate",
-          "nodes": 1,
-          "target": "li:nth-child(1) > h3"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Regalos del invitado (app)",
-      "path": "/c/f22-mw2xeb50/regalos/x_idwkvlZGMTHZySafOfZRLnQIkoRcG8fXoghbOyKmY",
+      "path": "/c/f22-mw2zd7pj/regalos/ogQKZVMK07Mal36mhqIEbx9ppuT5l6pwLI2ry_PBZLQ",
       "width": 360,
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 23,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Host regalos + visibilidad",
-      "path": "/regalos?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "path": "/regalos?c=efd92153-e169-4e3d-b17e-fbeb478b1ad3",
       "width": 360,
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 14,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Host catalogo",
-      "path": "/regalos/catalogo?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "path": "/regalos/catalogo?c=efd92153-e169-4e3d-b17e-fbeb478b1ad3",
       "width": 360,
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 24,
-          "target": "h1"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Host externo",
-      "path": "/regalos/externo?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "path": "/regalos/externo?c=efd92153-e169-4e3d-b17e-fbeb478b1ad3",
       "width": 360,
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 8,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Host descubrir proveedores",
-      "path": "/regalos/proveedores?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "path": "/regalos/proveedores?c=efd92153-e169-4e3d-b17e-fbeb478b1ad3",
       "width": 360,
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 49,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Host bandeja de reservas",
-      "path": "/bandeja/regalos?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "path": "/bandeja/regalos?c=efd92153-e169-4e3d-b17e-fbeb478b1ad3",
       "width": 360,
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 2,
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "nodes": 1,
-          "target": "section"
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 3,
-          "target": "h1"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal resumen",
@@ -179,15 +124,8 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 2,
-          "target": ".r-1kihuf0 > h1"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /alta",
@@ -196,15 +134,8 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 7,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /productos",
@@ -213,15 +144,8 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 18,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /servicios",
@@ -230,15 +154,8 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 17,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /entrega",
@@ -247,21 +164,8 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 2,
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "nodes": 1,
-          "target": "section"
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 5,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /perfil",
@@ -270,15 +174,8 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 16,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /documentos",
@@ -287,15 +184,8 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 5,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /destinos",
@@ -304,15 +194,8 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 4,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /agenda",
@@ -321,21 +204,8 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 2,
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "nodes": 1,
-          "target": "section"
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 10,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /leads",
@@ -344,15 +214,8 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 2,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /metricas",
@@ -361,19 +224,12 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 6,
-          "target": ".r-1kihuf0 > h1"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Regalos del invitado (web)",
-      "path": "/c/f22-mw2xeb50/regalos",
+      "path": "/c/f22-mw2zd7pj/regalos",
       "width": 768,
       "scheme": "light",
       "critical": 0,
@@ -383,7 +239,7 @@
     },
     {
       "label": "Microsite del partner",
-      "path": "/p/dulce-sol-mw2xeb50-106bac",
+      "path": "/p/dulce-sol-mw2zd7pj-d3b29d",
       "width": 768,
       "scheme": "light",
       "critical": 0,
@@ -393,7 +249,7 @@
     },
     {
       "label": "Cotizar sin cuenta",
-      "path": "/p/dulce-sol-mw2xeb50-106bac/cotizar?l=d3d0b3d0-6795-4a78-9e6c-0f1afa1145b2",
+      "path": "/p/dulce-sol-mw2zd7pj-d3b29d/cotizar?l=d21a7999-ed05-42af-bfc0-7993bfd353c2",
       "width": 768,
       "scheme": "light",
       "critical": 0,
@@ -403,7 +259,7 @@
     },
     {
       "label": "Agenda",
-      "path": "/p/dulce-sol-mw2xeb50-106bac/agenda",
+      "path": "/p/dulce-sol-mw2zd7pj-d3b29d/agenda",
       "width": 768,
       "scheme": "light",
       "critical": 0,
@@ -418,123 +274,68 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "heading-order",
-          "impact": "moderate",
-          "nodes": 1,
-          "target": "li:nth-child(1) > h3"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Regalos del invitado (app)",
-      "path": "/c/f22-mw2xeb50/regalos/x_idwkvlZGMTHZySafOfZRLnQIkoRcG8fXoghbOyKmY",
+      "path": "/c/f22-mw2zd7pj/regalos/ogQKZVMK07Mal36mhqIEbx9ppuT5l6pwLI2ry_PBZLQ",
       "width": 768,
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 23,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Host regalos + visibilidad",
-      "path": "/regalos?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "path": "/regalos?c=efd92153-e169-4e3d-b17e-fbeb478b1ad3",
       "width": 768,
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 14,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Host catalogo",
-      "path": "/regalos/catalogo?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "path": "/regalos/catalogo?c=efd92153-e169-4e3d-b17e-fbeb478b1ad3",
       "width": 768,
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 24,
-          "target": "h1"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Host externo",
-      "path": "/regalos/externo?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "path": "/regalos/externo?c=efd92153-e169-4e3d-b17e-fbeb478b1ad3",
       "width": 768,
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 8,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Host descubrir proveedores",
-      "path": "/regalos/proveedores?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "path": "/regalos/proveedores?c=efd92153-e169-4e3d-b17e-fbeb478b1ad3",
       "width": 768,
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 49,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Host bandeja de reservas",
-      "path": "/bandeja/regalos?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "path": "/bandeja/regalos?c=efd92153-e169-4e3d-b17e-fbeb478b1ad3",
       "width": 768,
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 2,
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "nodes": 1,
-          "target": "section"
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 3,
-          "target": "h1"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal resumen",
@@ -543,15 +344,8 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 2,
-          "target": ".r-1kihuf0 > h1"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /alta",
@@ -560,15 +354,8 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 7,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /productos",
@@ -577,15 +364,8 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 18,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /servicios",
@@ -594,15 +374,8 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 17,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /entrega",
@@ -611,21 +384,8 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 2,
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "nodes": 1,
-          "target": "section"
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 5,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /perfil",
@@ -634,15 +394,8 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 16,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /documentos",
@@ -651,15 +404,8 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 5,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /destinos",
@@ -668,15 +414,8 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 4,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /agenda",
@@ -685,21 +424,8 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 2,
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "nodes": 1,
-          "target": "section"
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 10,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /leads",
@@ -708,15 +434,8 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 2,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /metricas",
@@ -725,19 +444,12 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 6,
-          "target": ".r-1kihuf0 > h1"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Regalos del invitado (web)",
-      "path": "/c/f22-mw2xeb50/regalos",
+      "path": "/c/f22-mw2zd7pj/regalos",
       "width": 1280,
       "scheme": "light",
       "critical": 0,
@@ -747,7 +459,7 @@
     },
     {
       "label": "Microsite del partner",
-      "path": "/p/dulce-sol-mw2xeb50-106bac",
+      "path": "/p/dulce-sol-mw2zd7pj-d3b29d",
       "width": 1280,
       "scheme": "light",
       "critical": 0,
@@ -757,7 +469,7 @@
     },
     {
       "label": "Cotizar sin cuenta",
-      "path": "/p/dulce-sol-mw2xeb50-106bac/cotizar?l=d3d0b3d0-6795-4a78-9e6c-0f1afa1145b2",
+      "path": "/p/dulce-sol-mw2zd7pj-d3b29d/cotizar?l=d21a7999-ed05-42af-bfc0-7993bfd353c2",
       "width": 1280,
       "scheme": "light",
       "critical": 0,
@@ -767,7 +479,7 @@
     },
     {
       "label": "Agenda",
-      "path": "/p/dulce-sol-mw2xeb50-106bac/agenda",
+      "path": "/p/dulce-sol-mw2zd7pj-d3b29d/agenda",
       "width": 1280,
       "scheme": "light",
       "critical": 0,
@@ -782,123 +494,68 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "heading-order",
-          "impact": "moderate",
-          "nodes": 1,
-          "target": "li:nth-child(1) > h3"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Regalos del invitado (app)",
-      "path": "/c/f22-mw2xeb50/regalos/x_idwkvlZGMTHZySafOfZRLnQIkoRcG8fXoghbOyKmY",
+      "path": "/c/f22-mw2zd7pj/regalos/ogQKZVMK07Mal36mhqIEbx9ppuT5l6pwLI2ry_PBZLQ",
       "width": 1280,
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 23,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Host regalos + visibilidad",
-      "path": "/regalos?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "path": "/regalos?c=efd92153-e169-4e3d-b17e-fbeb478b1ad3",
       "width": 1280,
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 14,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Host catalogo",
-      "path": "/regalos/catalogo?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "path": "/regalos/catalogo?c=efd92153-e169-4e3d-b17e-fbeb478b1ad3",
       "width": 1280,
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 24,
-          "target": "h1"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Host externo",
-      "path": "/regalos/externo?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "path": "/regalos/externo?c=efd92153-e169-4e3d-b17e-fbeb478b1ad3",
       "width": 1280,
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 8,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Host descubrir proveedores",
-      "path": "/regalos/proveedores?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "path": "/regalos/proveedores?c=efd92153-e169-4e3d-b17e-fbeb478b1ad3",
       "width": 1280,
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 49,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Host bandeja de reservas",
-      "path": "/bandeja/regalos?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "path": "/bandeja/regalos?c=efd92153-e169-4e3d-b17e-fbeb478b1ad3",
       "width": 1280,
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 2,
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "nodes": 1,
-          "target": "section"
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 3,
-          "target": "h1"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal resumen",
@@ -907,15 +564,8 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 2,
-          "target": ".r-1kihuf0 > h1"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /alta",
@@ -924,15 +574,8 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 7,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /productos",
@@ -941,15 +584,8 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 18,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /servicios",
@@ -958,15 +594,8 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 17,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /entrega",
@@ -975,21 +604,8 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 2,
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "nodes": 1,
-          "target": "section"
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 5,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /perfil",
@@ -998,15 +614,8 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 16,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /documentos",
@@ -1015,15 +624,8 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 5,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /destinos",
@@ -1032,15 +634,8 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 4,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /agenda",
@@ -1049,21 +644,8 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 2,
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "nodes": 1,
-          "target": "section"
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 10,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /leads",
@@ -1072,15 +654,8 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 2,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /metricas",
@@ -1089,19 +664,12 @@
       "scheme": "light",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 6,
-          "target": ".r-1kihuf0 > h1"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Regalos del invitado (web)",
-      "path": "/c/f22-mw2xeb50/regalos",
+      "path": "/c/f22-mw2zd7pj/regalos",
       "width": 360,
       "scheme": "dark",
       "critical": 0,
@@ -1111,7 +679,7 @@
     },
     {
       "label": "Microsite del partner",
-      "path": "/p/dulce-sol-mw2xeb50-106bac",
+      "path": "/p/dulce-sol-mw2zd7pj-d3b29d",
       "width": 360,
       "scheme": "dark",
       "critical": 0,
@@ -1121,7 +689,7 @@
     },
     {
       "label": "Cotizar sin cuenta",
-      "path": "/p/dulce-sol-mw2xeb50-106bac/cotizar?l=d3d0b3d0-6795-4a78-9e6c-0f1afa1145b2",
+      "path": "/p/dulce-sol-mw2zd7pj-d3b29d/cotizar?l=d21a7999-ed05-42af-bfc0-7993bfd353c2",
       "width": 360,
       "scheme": "dark",
       "critical": 0,
@@ -1131,7 +699,7 @@
     },
     {
       "label": "Agenda",
-      "path": "/p/dulce-sol-mw2xeb50-106bac/agenda",
+      "path": "/p/dulce-sol-mw2zd7pj-d3b29d/agenda",
       "width": 360,
       "scheme": "dark",
       "critical": 0,
@@ -1146,123 +714,68 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "heading-order",
-          "impact": "moderate",
-          "nodes": 1,
-          "target": "li:nth-child(1) > h3"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Regalos del invitado (app)",
-      "path": "/c/f22-mw2xeb50/regalos/x_idwkvlZGMTHZySafOfZRLnQIkoRcG8fXoghbOyKmY",
+      "path": "/c/f22-mw2zd7pj/regalos/ogQKZVMK07Mal36mhqIEbx9ppuT5l6pwLI2ry_PBZLQ",
       "width": 360,
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 23,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Host regalos + visibilidad",
-      "path": "/regalos?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "path": "/regalos?c=efd92153-e169-4e3d-b17e-fbeb478b1ad3",
       "width": 360,
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 14,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Host catalogo",
-      "path": "/regalos/catalogo?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "path": "/regalos/catalogo?c=efd92153-e169-4e3d-b17e-fbeb478b1ad3",
       "width": 360,
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 24,
-          "target": "h1"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Host externo",
-      "path": "/regalos/externo?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "path": "/regalos/externo?c=efd92153-e169-4e3d-b17e-fbeb478b1ad3",
       "width": 360,
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 8,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Host descubrir proveedores",
-      "path": "/regalos/proveedores?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "path": "/regalos/proveedores?c=efd92153-e169-4e3d-b17e-fbeb478b1ad3",
       "width": 360,
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 49,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Host bandeja de reservas",
-      "path": "/bandeja/regalos?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "path": "/bandeja/regalos?c=efd92153-e169-4e3d-b17e-fbeb478b1ad3",
       "width": 360,
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 2,
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "nodes": 1,
-          "target": "section"
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 3,
-          "target": "h1"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal resumen",
@@ -1271,15 +784,8 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 2,
-          "target": ".r-1kihuf0 > h1"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /alta",
@@ -1288,15 +794,8 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 7,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /productos",
@@ -1305,15 +804,8 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 18,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /servicios",
@@ -1322,15 +814,8 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 17,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /entrega",
@@ -1339,21 +824,8 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 2,
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "nodes": 1,
-          "target": "section"
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 5,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /perfil",
@@ -1362,15 +834,8 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 16,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /documentos",
@@ -1379,15 +844,8 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 5,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /destinos",
@@ -1396,15 +854,8 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 4,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /agenda",
@@ -1413,21 +864,8 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 2,
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "nodes": 1,
-          "target": "section"
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 10,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /leads",
@@ -1436,15 +874,8 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 2,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /metricas",
@@ -1453,19 +884,12 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 6,
-          "target": ".r-1kihuf0 > h1"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Regalos del invitado (web)",
-      "path": "/c/f22-mw2xeb50/regalos",
+      "path": "/c/f22-mw2zd7pj/regalos",
       "width": 768,
       "scheme": "dark",
       "critical": 0,
@@ -1475,7 +899,7 @@
     },
     {
       "label": "Microsite del partner",
-      "path": "/p/dulce-sol-mw2xeb50-106bac",
+      "path": "/p/dulce-sol-mw2zd7pj-d3b29d",
       "width": 768,
       "scheme": "dark",
       "critical": 0,
@@ -1485,7 +909,7 @@
     },
     {
       "label": "Cotizar sin cuenta",
-      "path": "/p/dulce-sol-mw2xeb50-106bac/cotizar?l=d3d0b3d0-6795-4a78-9e6c-0f1afa1145b2",
+      "path": "/p/dulce-sol-mw2zd7pj-d3b29d/cotizar?l=d21a7999-ed05-42af-bfc0-7993bfd353c2",
       "width": 768,
       "scheme": "dark",
       "critical": 0,
@@ -1495,7 +919,7 @@
     },
     {
       "label": "Agenda",
-      "path": "/p/dulce-sol-mw2xeb50-106bac/agenda",
+      "path": "/p/dulce-sol-mw2zd7pj-d3b29d/agenda",
       "width": 768,
       "scheme": "dark",
       "critical": 0,
@@ -1510,123 +934,68 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "heading-order",
-          "impact": "moderate",
-          "nodes": 1,
-          "target": "li:nth-child(1) > h3"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Regalos del invitado (app)",
-      "path": "/c/f22-mw2xeb50/regalos/x_idwkvlZGMTHZySafOfZRLnQIkoRcG8fXoghbOyKmY",
+      "path": "/c/f22-mw2zd7pj/regalos/ogQKZVMK07Mal36mhqIEbx9ppuT5l6pwLI2ry_PBZLQ",
       "width": 768,
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 23,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Host regalos + visibilidad",
-      "path": "/regalos?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "path": "/regalos?c=efd92153-e169-4e3d-b17e-fbeb478b1ad3",
       "width": 768,
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 14,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Host catalogo",
-      "path": "/regalos/catalogo?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "path": "/regalos/catalogo?c=efd92153-e169-4e3d-b17e-fbeb478b1ad3",
       "width": 768,
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 24,
-          "target": "h1"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Host externo",
-      "path": "/regalos/externo?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "path": "/regalos/externo?c=efd92153-e169-4e3d-b17e-fbeb478b1ad3",
       "width": 768,
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 8,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Host descubrir proveedores",
-      "path": "/regalos/proveedores?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "path": "/regalos/proveedores?c=efd92153-e169-4e3d-b17e-fbeb478b1ad3",
       "width": 768,
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 49,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Host bandeja de reservas",
-      "path": "/bandeja/regalos?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "path": "/bandeja/regalos?c=efd92153-e169-4e3d-b17e-fbeb478b1ad3",
       "width": 768,
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 2,
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "nodes": 1,
-          "target": "section"
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 3,
-          "target": "h1"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal resumen",
@@ -1635,15 +1004,8 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 2,
-          "target": ".r-1kihuf0 > h1"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /alta",
@@ -1652,15 +1014,8 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 7,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /productos",
@@ -1669,15 +1024,8 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 18,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /servicios",
@@ -1686,15 +1034,8 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 17,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /entrega",
@@ -1703,21 +1044,8 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 2,
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "nodes": 1,
-          "target": "section"
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 5,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /perfil",
@@ -1726,15 +1054,8 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 16,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /documentos",
@@ -1743,15 +1064,8 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 5,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /destinos",
@@ -1760,15 +1074,8 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 4,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /agenda",
@@ -1777,21 +1084,8 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 2,
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "nodes": 1,
-          "target": "section"
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 10,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /leads",
@@ -1800,15 +1094,8 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 2,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /metricas",
@@ -1817,19 +1104,12 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 6,
-          "target": ".r-1kihuf0 > h1"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Regalos del invitado (web)",
-      "path": "/c/f22-mw2xeb50/regalos",
+      "path": "/c/f22-mw2zd7pj/regalos",
       "width": 1280,
       "scheme": "dark",
       "critical": 0,
@@ -1839,7 +1119,7 @@
     },
     {
       "label": "Microsite del partner",
-      "path": "/p/dulce-sol-mw2xeb50-106bac",
+      "path": "/p/dulce-sol-mw2zd7pj-d3b29d",
       "width": 1280,
       "scheme": "dark",
       "critical": 0,
@@ -1849,7 +1129,7 @@
     },
     {
       "label": "Cotizar sin cuenta",
-      "path": "/p/dulce-sol-mw2xeb50-106bac/cotizar?l=d3d0b3d0-6795-4a78-9e6c-0f1afa1145b2",
+      "path": "/p/dulce-sol-mw2zd7pj-d3b29d/cotizar?l=d21a7999-ed05-42af-bfc0-7993bfd353c2",
       "width": 1280,
       "scheme": "dark",
       "critical": 0,
@@ -1859,7 +1139,7 @@
     },
     {
       "label": "Agenda",
-      "path": "/p/dulce-sol-mw2xeb50-106bac/agenda",
+      "path": "/p/dulce-sol-mw2zd7pj-d3b29d/agenda",
       "width": 1280,
       "scheme": "dark",
       "critical": 0,
@@ -1874,123 +1154,68 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "heading-order",
-          "impact": "moderate",
-          "nodes": 1,
-          "target": "li:nth-child(1) > h3"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Regalos del invitado (app)",
-      "path": "/c/f22-mw2xeb50/regalos/x_idwkvlZGMTHZySafOfZRLnQIkoRcG8fXoghbOyKmY",
+      "path": "/c/f22-mw2zd7pj/regalos/ogQKZVMK07Mal36mhqIEbx9ppuT5l6pwLI2ry_PBZLQ",
       "width": 1280,
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 23,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Host regalos + visibilidad",
-      "path": "/regalos?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "path": "/regalos?c=efd92153-e169-4e3d-b17e-fbeb478b1ad3",
       "width": 1280,
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 14,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Host catalogo",
-      "path": "/regalos/catalogo?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "path": "/regalos/catalogo?c=efd92153-e169-4e3d-b17e-fbeb478b1ad3",
       "width": 1280,
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 24,
-          "target": "h1"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Host externo",
-      "path": "/regalos/externo?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "path": "/regalos/externo?c=efd92153-e169-4e3d-b17e-fbeb478b1ad3",
       "width": 1280,
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 8,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Host descubrir proveedores",
-      "path": "/regalos/proveedores?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "path": "/regalos/proveedores?c=efd92153-e169-4e3d-b17e-fbeb478b1ad3",
       "width": 1280,
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 49,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Host bandeja de reservas",
-      "path": "/bandeja/regalos?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "path": "/bandeja/regalos?c=efd92153-e169-4e3d-b17e-fbeb478b1ad3",
       "width": 1280,
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 2,
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "nodes": 1,
-          "target": "section"
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 3,
-          "target": "h1"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal resumen",
@@ -1999,15 +1224,8 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 2,
-          "target": ".r-1kihuf0 > h1"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /alta",
@@ -2016,15 +1234,8 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 7,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /productos",
@@ -2033,15 +1244,8 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 18,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /servicios",
@@ -2050,15 +1254,8 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 17,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /entrega",
@@ -2067,21 +1264,8 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 2,
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "nodes": 1,
-          "target": "section"
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 5,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /perfil",
@@ -2090,15 +1274,8 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 16,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /documentos",
@@ -2107,15 +1284,8 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 5,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /destinos",
@@ -2124,15 +1294,8 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 4,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /agenda",
@@ -2141,21 +1304,8 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 2,
-      "violations": [
-        {
-          "id": "aria-allowed-role",
-          "impact": "minor",
-          "nodes": 1,
-          "target": "section"
-        },
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 10,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /leads",
@@ -2164,15 +1314,8 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 2,
-          "target": ".r-adyw6z"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     },
     {
       "label": "Portal /metricas",
@@ -2181,15 +1324,8 @@
       "scheme": "dark",
       "critical": 0,
       "serious": 0,
-      "moderateOrMinor": 1,
-      "violations": [
-        {
-          "id": "region",
-          "impact": "moderate",
-          "nodes": 6,
-          "target": ".r-1kihuf0 > h1"
-        }
-      ]
+      "moderateOrMinor": 0,
+      "violations": []
     }
   ]
 }

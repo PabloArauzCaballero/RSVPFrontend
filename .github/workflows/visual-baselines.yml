@@ -1,0 +1,36 @@
+name: visual-baselines
+# Generates the LINUX Playwright baselines for the public web screens (F08-F28). It never commits and never approves anything:
+# it uploads the PNGs as an artifact so a person can look at them, then commit them in a PR. See docs/runbooks/visual-baselines.md.
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "generate = write new baselines (artifact); compare = fail on any pixel difference against the committed -linux baselines"
+        default: compare
+        type: choice
+        options: [compare, generate]
+jobs:
+  visual:
+    runs-on: ubuntu-24.04
+    env:
+      VISUAL_PLATFORM: linux
+    steps:
+      - uses: actions/checkout@v4
+      - run: corepack enable
+      - uses: actions/setup-node@v4
+        with: { node-version-file: .nvmrc, cache: yarn }
+      - run: yarn install --immutable
+      - run: yarn playwright install --with-deps chromium
+      - name: Playwright (generate)
+        if: inputs.mode == 'generate'
+        run: yarn workspace @rsvp/seo-web test:visual --update-snapshots
+      - name: Playwright (compare)
+        if: inputs.mode != 'generate'
+        run: yarn workspace @rsvp/seo-web test:visual
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: visual-baselines-linux
+          path: |
+            apps/seo-web/e2e/__screenshots__/**/*-linux.png
+            apps/seo-web/test-results/**

@@ -16,6 +16,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/organizations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Every organization with its members */
+        get: operations["adminListOrganizations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Account and organization counts */
+        get: operations["adminSummary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Accounts, optionally filtered by an e-mail fragment */
+        get: operations["adminListUsers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/login": {
         parameters: {
             query?: never;
@@ -237,6 +288,46 @@ export interface components {
             /** @enum {string} */
             role: "HOST" | "PLANNER";
         };
+        AdminOrganization: {
+            /** Format: uuid */
+            id: string;
+            members: {
+                email: string;
+                role: string;
+                /** Format: uuid */
+                userId: string;
+            }[];
+            name: string;
+            /** Format: uuid */
+            ownerUserId: string;
+        };
+        AdminSummary: {
+            organizations: {
+                total?: number;
+            };
+            users: {
+                byRole?: {
+                    [key: string]: number;
+                };
+                total?: number;
+            };
+        };
+        AdminUser: {
+            /** Format: date-time */
+            createdAt: string;
+            email: string;
+            /** Format: uuid */
+            id: string;
+            roles: string[];
+            /** @enum {string} */
+            status: "ACTIVE" | "SUSPENDED";
+        };
+        AdminUserPage: {
+            items: components["schemas"]["AdminUser"][];
+            page: number;
+            size: number;
+            total: number;
+        };
         CreateOrganizationRequest: {
             name: string;
         };
@@ -424,6 +515,82 @@ export interface operations {
                     "application/json": components["schemas"]["Jwks"];
                 };
             };
+        };
+    };
+    adminListOrganizations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["AdminOrganization"][];
+                    };
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    adminSummary: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminSummary"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    adminListUsers: {
+        parameters: {
+            query?: {
+                /** @description Zero-based page */
+                page?: number;
+                /** @description Case-insensitive e-mail fragment, up to 120 characters */
+                query?: string;
+                /** @description 1..100, default 50 */
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUserPage"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            422: components["responses"]["Validation"];
         };
     };
     login: {

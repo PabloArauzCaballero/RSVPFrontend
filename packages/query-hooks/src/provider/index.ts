@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ApiClient } from "@rsvp/api-client";
 import { providerService } from "./api.js";
-import type { ProviderDiscoveryQuery, DocumentInput, MicrositeInput, Availability, BookingRequestInput, BookingStatus, CreateListingInput, LeadConfig, QuoteInput, RegisterProviderInput } from "./types.js";
+import type { Fulfillment, ProviderDiscoveryQuery, DocumentInput, MicrositeInput, Availability, BookingRequestInput, BookingStatus, CreateListingInput, LeadConfig, QuoteInput, RegisterProviderInput } from "./types.js";
 export * from "./types.js";
 export { providerService } from "./api.js";
 import { cachePolicy } from "../policy.js";
@@ -75,6 +75,11 @@ export function useCreateOwnListing(client: ApiClient, providerId: string, local
 export function usePublishListing(client: ApiClient, providerId: string, locale: string) {
   const queryClient = useQueryClient();
   return useMutation({ mutationFn: (listingId: string) => providerService(client).publishListing(providerId, listingId, locale), onSuccess: () => queryClient.invalidateQueries({ queryKey: P(providerId, "listings") }) });
+}
+/** EXPECTED contract (not in provider-catalog 2.1.0): edit the delivery conditions of an existing offer. */
+export function useUpdateFulfillment(client: ApiClient, providerId: string, locale: string) {
+  const queryClient = useQueryClient();
+  return useMutation({ mutationFn: ({ listingId, fulfillment }: { listingId: string; fulfillment: Fulfillment }) => providerService(client).updateFulfillment(providerId, listingId, fulfillment, locale), onSuccess: () => queryClient.invalidateQueries({ queryKey: P(providerId, "listings") }) });
 }
 export function useLeads(client: ApiClient, providerId: string | undefined) {
   return useQuery({ queryKey: P(providerId ?? "", "leads"), queryFn: () => providerService(client).leads(providerId ?? ""), ...live, enabled: Boolean(providerId) });

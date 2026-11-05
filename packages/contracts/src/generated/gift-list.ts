@@ -79,6 +79,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/celebrations/{celebrationId}/items/{giftItemId}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reject a proposed external gift (host): PROPOSED -> REJECTED */
+        post: operations["rejectExternalGift"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/celebrations/{celebrationId}/items/{giftItemId}/reservations": {
         parameters: {
             query?: never;
@@ -624,6 +641,37 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Gift approved (emits gift.external-gift.approved.v1) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GiftItem"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["GiftConflict"];
+            503: components["responses"]["DependencyUnavailable"];
+        };
+    };
+    rejectExternalGift: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Echoed in the response header and in problem.correlationId; generated when absent. */
+                "X-Correlation-Id"?: components["parameters"]["CorrelationId"];
+            };
+            path: {
+                celebrationId: components["parameters"]["CelebrationId"];
+                giftItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Gift rejected (emits gift.external-gift.rejected.v1) */
             200: {
                 headers: {
                     [name: string]: unknown;

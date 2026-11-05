@@ -17,7 +17,7 @@ import { useApiClient, useLocale, useT } from "../platform/providers";
 type Outcome = { readonly kind: "reserved"; readonly item: GiftItem; readonly status: GiftReservation["status"] } | { readonly kind: "taken"; readonly item: GiftItem };
 
 function Frame({ children }: { readonly children: ReactNode }): ReactNode {
-  return <ScrollView style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">{children}<LanguageSwitch /></ScrollView>;
+  return <ScrollView role="main" style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">{children}<LanguageSwitch /></ScrollView>;
 }
 
 function blockerFor(error: unknown, t: ReturnType<typeof useT>): { title: string; body: string } | null {
