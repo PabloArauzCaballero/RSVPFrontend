@@ -7,7 +7,7 @@ Nivel: `TESTED` + verificado en Chrome real (360/768/1280) contra Kong/Gift List
 | REQ-F22-01 filtros precio/origen/disponibilidad | PASS | `A14-catalogo-*.png`, `A14-filtrado-1280.png`; `tests/gifts.test.tsx` |
 | REQ-F22-02 catalogados antes que externos | PASS, medido en el DOM renderizado y con datos reales (`CATALOGED > CATALOGED > CATALOGED > EXTERNAL`) | `live-run-f22.json`, test |
 | REQ-F22-03 detalle con precio en su moneda y enlace por `/r/…?surface=GIFT_LIST` | PASS | `A15-detalle-1280.png` |
-| REQ-F22-04 solicitar reserva sin cuenta | **PARCIAL**: formulario, Bearer del enlace e Idempotency-Key listos; el backend rechaza el token del enlace (401). Probado en vivo con JWT de colaborador VIEWER. Doble clic = 1 POST. | `A16-reservar-360.png`, `A14-token-de-enlace-rechazado-360.png` |
+| REQ-F22-04 solicitar reserva sin cuenta | **PARCIAL**: formulario, Bearer del enlace e Idempotency-Key listos; el backend rechazaba el token del enlace (401) en esta primera corrida; **obsoleto desde Gift List 1.2.0**: la reserva sin cuenta con el token opaco ya funciona en vivo (ver la sección de cierre). Probado en vivo con JWT de colaborador VIEWER. Doble clic = 1 POST. | `A16-reservar-360.png`, `A14-token-de-enlace-rechazado-360.png` |
 | REQ-F22-05 pendiente / confirmada según el modo | PASS (RESTRICTED -> PENDING_REVIEW, AUTO_ACCEPT -> COMMITTED) | `A17-pendiente-360.png`, `A18-confirmada-360.png` |
 | REQ-F22-06 409 GIFT_NOT_AVAILABLE con alternativas | PASS en vivo (2 alternativas reales, lista refrescada) | `A19-ya-tomado-360/1280.png` |
 

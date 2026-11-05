@@ -224,6 +224,29 @@ describe("REQ-F28-03 · services and products have their own screens, delivery t
     expect(row.textContent).toMatch(/Plazo: 3 días/);
     expect(screen.getByTestId("delivery-s1").textContent).toMatch(/no declara condiciones/);
   });
+  it("editing sends the EXPECTED PUT .../fulfillment and refreshes the terms", async () => {
+    await withProvider();
+    const { client, calls } = fakeClient(providerHandlers({ [`GET /providers/${PID}/listings`]: () => listings, [`PUT /providers/${PID}/listings/p1/fulfillment`]: () => listings.items[0] }));
+    renderApp(<DeliveryScreen />, client, HOST);
+    fireEvent.click(await screen.findByTestId("delivery-edit-p1"));
+    type("Zonas de cobertura", "la-paz, el-alto"); type("Plazo (días de anticipación)", "5");
+    fireEvent.click(screen.getByTestId("delivery-save-p1"));
+    expect(await screen.findByText("Condiciones guardadas.")).toBeTruthy();
+    const put = calls.find((call) => call.method === "PUT");
+    expect(put?.body).toMatchObject({ responsible: "PROVIDER", coverageZones: ["la-paz", "el-alto"], leadTimeDays: 5, transportCostMinor: 5000, conditions: { "es-BO": "Montaje incluido" } });
+  });
+  it("validates before sending, and tells the truth when the server has no such route (nothing saved)", async () => {
+    await withProvider();
+    const { client, calls } = fakeClient(providerHandlers({ [`GET /providers/${PID}/listings`]: () => listings }));
+    renderApp(<DeliveryScreen />, client, HOST);
+    fireEvent.click(await screen.findByTestId("delivery-edit-p1"));
+    type("Zonas de cobertura", ""); fireEvent.click(screen.getByTestId("delivery-save-p1"));
+    expect(await screen.findByText(/al menos una zona/)).toBeTruthy();
+    expect(calls.some((call) => call.method === "PUT")).toBe(false);
+    type("Zonas de cobertura", "la-paz"); fireEvent.click(screen.getByTestId("delivery-save-p1"));
+    expect(await screen.findByText(/todavía no permite editar las condiciones/)).toBeTruthy();
+    expect(screen.queryByText("Condiciones guardadas.")).toBeNull();
+  });
 });
 
 describe("REQ-F28-04 · destinations and UTM need at least one destination", () => {

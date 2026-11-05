@@ -54,7 +54,7 @@ const codeQuality = tseslint.config(
 );
 
 export default [
-  { ignores: ["**/dist/**", "**/.next/**", "**/.next-*/**", "**/test-results/**", "**/playwright-report/**", "**/node_modules/**", "**/web-build/**", "**/.expo/**", "**/coverage/**"] },
+  { ignores: ["**/dist/**", "**/.next/**", "**/.next-*/**", "**/test-results/**", "**/playwright-report/**", "**/node_modules/**", "**/web-build/**", "**/web-build-*/**", "**/.expo/**", "**/coverage/**"] },
   ...codeQuality,
   {
     files: SCREEN_FILES,

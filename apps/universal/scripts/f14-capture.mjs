@@ -1,6 +1,8 @@
 // F14 visual proof: serves the exported web app (web-build, built with EXPO_PUBLIC_DEV_ACCESS_TOKEN of an ADMIN
 // and EXPO_PUBLIC_API_URL=http://localhost:28000) and captures the seven new admin modules.
-//   "real"  = no interception: whatever the live gateway answers (the admin endpoints are not published yet).
+//   OBSOLETE for the real backend: the admin endpoints are published now (provider-catalog 2.2.0, identity 1.1.0); use f14-live.mjs for
+//   real evidence. This script only produces the "datos" (sample data, Playwright routes) and the 401/403/empty/reject-dialog states.
+//   "real"  = no interception: whatever the live gateway answers (it answered errors when the endpoints did not exist yet).
 //   "datos" = the expected contract answered by Playwright routes with SAMPLE data (not backend data).
 //   CHROMIUM_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" node scripts/f14-capture.mjs
 import { createServer } from "node:http";

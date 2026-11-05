@@ -1,0 +1,124 @@
+{
+  "date": "2026-11-05T04:09:06.417Z",
+  "surface": "Expo web export in Chrome, REAL backend through Kong, bootstrap ADMIN",
+  "checks": [
+    {
+      "id": "E1",
+      "detail": "dashboard shows listingsPublished=82 and users=151 from /providers/admin/summary and /identity/admin/summary"
+    },
+    {
+      "id": "E7",
+      "detail": "verify from the UI -> POST /providers/{id}/verify 200 -> provider VERIFIED in the API; it left the PENDING queue"
+    },
+    {
+      "id": "E9",
+      "detail": "search by e-mail finds the account registered a moment ago (GET /identity/admin/users?query=)"
+    },
+    {
+      "id": "REQ-F14-06",
+      "detail": "a PROVIDER session reaches /admin/verificacion and sees no data"
+    },
+    {
+      "id": "gateway",
+      "detail": "9 distinct admin calls, all 2xx: GET /identity/admin/organizations 200 | GET /identity/admin/summary 200 | GET /identity/admin/users 200 | GET /providers/admin/categories 200 | GET /providers/admin/geography 200 | GET /providers/admin/metrics/leads 200 | GET /providers/admin/moderation 200 | GET /providers/admin/summary 200 | GET /providers/admin/verification-queue 200"
+    }
+  ],
+  "axe": [
+    {
+      "screen": "E1-resumen",
+      "width": 1280,
+      "violations": []
+    },
+    {
+      "screen": "E5-categorias",
+      "width": 1280,
+      "violations": []
+    },
+    {
+      "screen": "E6-geografia",
+      "width": 1280,
+      "violations": []
+    },
+    {
+      "screen": "E7-verificacion",
+      "width": 1280,
+      "violations": []
+    },
+    {
+      "screen": "E8-moderacion",
+      "width": 1280,
+      "violations": []
+    },
+    {
+      "screen": "E9-usuarios",
+      "width": 1280,
+      "violations": []
+    },
+    {
+      "screen": "E10-organizaciones",
+      "width": 1280,
+      "violations": []
+    },
+    {
+      "screen": "E11-metricas",
+      "width": 1280,
+      "violations": []
+    },
+    {
+      "screen": "E1-resumen",
+      "width": 360,
+      "violations": []
+    },
+    {
+      "screen": "E5-categorias",
+      "width": 360,
+      "violations": []
+    },
+    {
+      "screen": "E6-geografia",
+      "width": 360,
+      "violations": []
+    },
+    {
+      "screen": "E7-verificacion",
+      "width": 360,
+      "violations": []
+    },
+    {
+      "screen": "E8-moderacion",
+      "width": 360,
+      "violations": []
+    },
+    {
+      "screen": "E9-usuarios",
+      "width": 360,
+      "violations": []
+    },
+    {
+      "screen": "E10-organizaciones",
+      "width": 360,
+      "violations": []
+    },
+    {
+      "screen": "E11-metricas",
+      "width": 360,
+      "violations": []
+    }
+  ],
+  "consoleErrors": [
+    "http://localhost:8081/login Failed to load resource: the server responded with a status of 401 ()",
+    "http://localhost:8081/login Failed to load resource: the server responded with a status of 401 ()",
+    "http://localhost:8081/login Failed to load resource: the server responded with a status of 401 ()"
+  ],
+  "gateway": [
+    "GET /identity/admin/organizations 200",
+    "GET /identity/admin/summary 200",
+    "GET /identity/admin/users 200",
+    "GET /providers/admin/categories 200",
+    "GET /providers/admin/geography 200",
+    "GET /providers/admin/metrics/leads 200",
+    "GET /providers/admin/moderation 200",
+    "GET /providers/admin/summary 200",
+    "GET /providers/admin/verification-queue 200"
+  ]
+}

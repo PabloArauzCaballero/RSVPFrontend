@@ -168,6 +168,6 @@ export function TextLink({ label, onPress }: { readonly label: string; readonly 
 }
 
 export function Banner({ kind, children }: PropsWithChildren<{ readonly kind: "error" | "success" }>): ReactNode {
-  return <View accessibilityRole={kind === "error" ? "alert" : "summary"} accessibilityLiveRegion="polite" style={[authStyles.banner, kind === "success" && authStyles.bannerOk]}><Text style={authStyles.bannerText}>{children}</Text></View>;
+  return <View role={kind === "error" ? "alert" : "status"} style={[authStyles.banner, kind === "success" && authStyles.bannerOk]}><Text style={authStyles.bannerText}>{children}</Text></View>;
 }
 

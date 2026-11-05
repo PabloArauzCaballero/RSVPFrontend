@@ -1,6 +1,7 @@
 // F15 browser run: the REAL Next.js RSVP pages (next build + next start) in Chrome, against a contract-shaped mock of the
 // guest-rsvp / celebration public read (packages/testing/src/contract-mock.ts). It proves the web layer end to end against
 // the contract; it does NOT prove the real backend services (see evidence README).
+// Mock run only. The REAL-backend run (Kong :28000) for this lane is apps/seo-web/scripts/e2e-live-rsvp.mjs.
 //   CHROMIUM_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" node apps/seo-web/scripts/e2e-rsvp.mjs
 // Writes screenshots (360/768/1280) and e2e-result.json into docs/progress/evidence/lane-F15/.
 import { spawn } from "node:child_process";

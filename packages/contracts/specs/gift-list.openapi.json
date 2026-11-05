@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "RSVP Gift List API",
-    "version": "1.2.0",
-    "description": "Gift lists, gifts and reservations (lanes 25-28). Authentication: RS256 JWT validated against Identity JWKS. Host ownership is decided by the Celebration service, never by identifiers sent in the body. Cross-tenant identifiers answer 404. Errors are RFC 9457 problem+json with a stable `code`. 1.1.0 is backward compatible with 1.0.0 (adds celebration-scoped paths and schemas; the sketched 1.0.0 paths /items/{giftItemId}/reservations and /reservations/{reservationId}/approve are now celebration-scoped, they were never served). 1.2.0 (additive): guests without an account authenticate with the opaque credential of their invitation link (Bearer, 43 base64url characters, same value Guest issues); Gift List validates it against Guest (GET /rsvp/celebrations/{id}/guest) and takes guestId and tenant from that validation, never from the body. A credential of another celebration answers 404, unknown/expired/revoked 401, Guest rate limit 429 with Retry-After. Credential holders may list gifts and reserve; every host action stays 403. Reservations accept Idempotency-Key. A guest holds at most GIFT_MAX_ACTIVE_RESERVATIONS_PER_GUEST (default 5) pending/committed reservations (422 RESERVATION_LIMIT_REACHED). New GET/PUT /gift-settings controls who may see the requester (REQ-F23-06)."
+    "version": "1.3.0",
+    "description": "Gift lists, gifts and reservations (lanes 25-28). Authentication: RS256 JWT validated against Identity JWKS. Host ownership is decided by the Celebration service, never by identifiers sent in the body. Cross-tenant identifiers answer 404. Errors are RFC 9457 problem+json with a stable `code`. 1.1.0 is backward compatible with 1.0.0 (adds celebration-scoped paths and schemas; the sketched 1.0.0 paths /items/{giftItemId}/reservations and /reservations/{reservationId}/approve are now celebration-scoped, they were never served). 1.2.0 (additive): guests without an account authenticate with the opaque credential of their invitation link (Bearer, 43 base64url characters, same value Guest issues); Gift List validates it against Guest (GET /rsvp/celebrations/{id}/guest) and takes guestId and tenant from that validation, never from the body. A credential of another celebration answers 404, unknown/expired/revoked 401, Guest rate limit 429 with Retry-After. Credential holders may list gifts and reserve; every host action stays 403. Reservations accept Idempotency-Key. A guest holds at most GIFT_MAX_ACTIVE_RESERVATIONS_PER_GUEST (default 5) pending/committed reservations (422 RESERVATION_LIMIT_REACHED). New GET/PUT /gift-settings controls who may see the requester (REQ-F23-06). 1.3.0 (additive): POST /celebrations/{id}/items/{giftItemId}/reject lets the host decline a PROPOSED external gift (PROPOSED -> REJECTED, emits gift.external-gift.rejected.v1)."
   },
   "servers": [
     {
@@ -267,6 +267,61 @@
         "responses": {
           "200": {
             "description": "Gift approved (emits gift.external-gift.approved.v1)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiftItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/GiftConflict"
+          },
+          "503": {
+            "$ref": "#/components/responses/DependencyUnavailable"
+          }
+        }
+      }
+    },
+    "/celebrations/{celebrationId}/items/{giftItemId}/reject": {
+      "post": {
+        "operationId": "rejectExternalGift",
+        "summary": "Reject a proposed external gift (host): PROPOSED -> REJECTED",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CelebrationId"
+          },
+          {
+            "name": "giftItemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Gift rejected (emits gift.external-gift.rejected.v1)",
             "content": {
               "application/json": {
                 "schema": {

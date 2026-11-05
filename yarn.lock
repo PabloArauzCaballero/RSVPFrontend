@@ -5299,7 +5299,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vitest/coverage-v8@npm:^3.1.2":
+"@vitest/coverage-v8@npm:3.2.7, @vitest/coverage-v8@npm:^3.1.2":
   version: 3.2.7
   resolution: "@vitest/coverage-v8@npm:3.2.7"
   dependencies:
@@ -12620,6 +12620,7 @@ __metadata:
     "@colbymchenry/codegraph": "npm:1.6.2"
     "@playwright/test": "npm:1.62.1"
     "@types/node": "npm:22.15.3"
+    "@vitest/coverage-v8": "npm:3.2.7"
     eslint: "npm:9.25.1"
     lighthouse: "npm:12.8.2"
     playwright: "npm:1.62.1"

@@ -40,7 +40,7 @@ const initialDraft = (state: RsvpState): Draft => ({ status: state.status === "P
 
 function Frame({ children }: { readonly children: ReactNode }): ReactNode {
   return (
-    <ScrollView style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <ScrollView role="main" style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
       {children}
       <LanguageSwitch />
     </ScrollView>
@@ -321,6 +321,7 @@ function PublicRegistrationForm({ view, slug, hosts, contact }: { readonly view:
               {copied ? <Notice kind="success">{t("rsvp.actions.copied")}</Notice> : null}
             </>
           ) : <Text style={styles.body}>{t("rsvp.unregistered.replayBody")}</Text>}
+          <Text style={styles.muted} testID="rsvp-email-notice">{t("rsvp.unregistered.emailNotice")}</Text>
         </View>
       </Frame>
     );

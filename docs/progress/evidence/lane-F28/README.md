@@ -5,7 +5,7 @@ Nivel: `TESTED` + Chrome real (app Expo web :8081, login real con rol PROVIDER) 
 | REQ | Resultado |
 |---|---|
 | REQ-F28-01 alta, estado de verificación | PASS: alta real -> Borrador -> oferta -> enviar -> "En verificación". La **carga de documentos no existe** en el servicio (nota en pantalla). Verificar exige ADMIN (fuera del portal) |
-| REQ-F28-02 editor del microsite | **NO HECHO** (sin endpoint de contenido del microsite) |
+| REQ-F28-02 editor del microsite | ~~NO HECHO~~ (obsoleto: `/portal/perfil` con `GET/PUT /providers/{id}/microsite`, PASS en vivo, ver más abajo) |
 | REQ-F28-03 servicios y productos | PASS: crear con entrega + publicar (productos y servicios en una sola pantalla) |
 | REQ-F28-04 destinos y UTM, al menos uno | PASS (validación y PUT /lead-config real) |
 | REQ-F28-05 condiciones de entrega | PASS, dentro del formulario de oferta (sin pantalla propia) |
@@ -45,3 +45,6 @@ Guion Chrome contra Kong: `apps/universal/scripts/e2e-live-portal-profile.mjs` -
 - **Pantallas propias**: Productos `/portal/productos` (D6), Servicios `/portal/servicios` (D5) y Condiciones de entrega `/portal/entrega` (D8, solo lectura: el contrato no tiene PUT de una oferta, las condiciones se fijan al crear) (`H1`, `H2`, `H3`).
 - **CTR coherente**: 4 `POST /providers/impressions` (202) antes de 3 clics 302 por `/r/`: totals `impressions 0 -> 12`, `clicks 1 -> 4`, `ctr 0.3333` (`D13-metricas-*`, `D12-leads-*`). Nota honesta: los clics se hicieron por HTTP sin agente de navegador, por lo que el backend los cuenta como `invalidLeads` (4), `validLeads` = 0.
 - axe en 132 combinaciones pantalla x 360/768/1280 x claro/oscuro (web y Expo web, `axe-f22-f28.json`, script `apps/universal/scripts/axe-f22-f28.mjs`): **0 critical, 0 serious** tras corregir (antes 6 critical / 11 serious: `aria-required-children` en destinos, contraste del placeholder y etiquetas blancas en esquema oscuro). Quedan 126 hallazgos moderate/minor sin triar.
+
+## Actualización 2026-11-05 · edición de condiciones de entrega
+El contrato (provider-catalog 2.2.0) sigue sin edición de una oferta. `/portal/entrega` ya incluye el formulario de edición contra el contrato **esperado** `PUT /providers/{id}/listings/{listingId}/fulfillment`; si el servidor responde 404/405/501 la pantalla dice que no se guardó nada. Probado solo con cliente simulado (`gifts-portal.test.tsx`: guardado, validación previa y ruta inexistente); **no** contra el servidor real. Dependencia concreta de backend en `docs/progress/BLOCKERS.md`.

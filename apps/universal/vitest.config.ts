@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 
 // Component-level E2E flows render whole screens in jsdom and take 8–11 s on slower machines.
 const TEST_TIMEOUT_MS = 20_000;
-const MIN_LINE_COVERAGE_PERCENT = 75;
+const MIN_LINE_COVERAGE_PERCENT = 85;
 
 const stub = (name: string): string => fileURLToPath(new URL(`./test/stubs/${name}.ts`, import.meta.url));
 
@@ -18,7 +18,7 @@ export default defineConfig({
       provider: "v8",
       include: ["src/**"],
       exclude: ["src/platform/pick-image*.ts", "src/platform/pick-document.ts", "src/platform/route.ts"],
-      thresholds: { lines: MIN_LINE_COVERAGE_PERCENT }
+      thresholds: { lines: MIN_LINE_COVERAGE_PERCENT, statements: MIN_LINE_COVERAGE_PERCENT }
     }
   },
   resolve: {
