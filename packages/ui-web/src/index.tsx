@@ -7,7 +7,7 @@ import { cn } from './cn';
 import { defaultStrings, type UiStrings } from './strings';
 
 export { cn } from './cn';
-export { defaultStrings, type UiStrings } from './strings';
+export { defaultStrings, stringsFor, type UiStrings } from './strings';
 
 export type State = 'default' | 'loading' | 'error' | 'empty' | 'disabled';
 export const componentStates: State[] = ['default', 'loading', 'error', 'empty', 'disabled'];
@@ -51,6 +51,35 @@ export type ButtonProps = PropsWithChildren<{
   /** Same name as the native package; `onClick` stays available for DOM-style callers. */
   onPress?: () => void;
 } & VariantProps<typeof buttonVariants> & ButtonHTMLAttributes<HTMLButtonElement>>;
+
+const LISTING_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export type PartnerDestination = 'OFFICIAL_SITE' | 'LANDING' | 'WHATSAPP' | 'PHONE' | 'EMAIL' | 'INSTAGRAM' | 'PRODUCT_PAGE';
+export type PartnerSurface = 'PUBLIC_SITE' | 'SEARCH' | 'CELEBRATION_SITE' | 'GIFT_LIST' | 'EMAIL' | 'APP' | 'QUOTE_FORM';
+/** The only way to point at a partner: the redirector `/r/{listingId}`, which records the lead and answers 302. Never the partner URL. */
+export function partnerRedirectHref(listingId: string, options: { destination?: PartnerDestination; surface?: PartnerSurface; celebrationId?: string } = {}): string {
+  if (!LISTING_ID.test(listingId)) throw new Error('PartnerLink needs a listing id (UUID), never a partner URL');
+  const query = new URLSearchParams();
+  if (options.destination) query.set('destination', options.destination);
+  if (options.surface) query.set('surface', options.surface);
+  if (options.celebrationId) query.set('celebrationId', options.celebrationId);
+  const text = query.toString();
+  return `/r/${encodeURIComponent(listingId)}${text ? `?${text}` : ''}`;
+}
+
+/**
+ * A link to a partner. It takes a listing id, not a URL, so a direct partner link is impossible by construction; the rel is always
+ * `sponsored nofollow` and the disclaimer travels with the link (visible, and tied to it with aria-describedby).
+ */
+export function PartnerLink({ listingId, destination, surface, celebrationId, children, className, disclaimer = true }: PropsWithChildren<{ listingId: string; destination?: PartnerDestination; surface?: PartnerSurface; celebrationId?: string; className?: string; disclaimer?: boolean }>) {
+  const t = useStrings();
+  const id = useId();
+  return (
+    <span className="inline-flex flex-col gap-1">
+      <a href={partnerRedirectHref(listingId, { destination, surface, celebrationId })} rel="sponsored nofollow noopener" aria-describedby={disclaimer ? id : undefined} className={cn(buttonVariants({ variant: 'secondary' }), className)}>{children}</a>
+      {disclaimer ? <span id={id} className="text-xs text-text-muted">{t.partnerDisclaimer}</span> : null}
+    </span>
+  );
+}
 
 export function Button({ children, variant, state = 'default', className, onPress, onClick, ...props }: ButtonProps) {
   const t = useStrings();
@@ -202,41 +231,42 @@ export function FileUpload({ label, fileName, onSelect, state = 'default', error
   );
 }
 
-const demoRows = [['Invitación', 'Activa']];
 export function ComponentCatalog() {
+  const t = useStrings();
+  const demoRows = [[t.catalogRowName, t.catalogRowStatus]];
   const [checked, setChecked] = useState(false);
   const [choice, setChoice] = useState('uno');
   const [modal, setModal] = useState(false);
   const [sheet, setSheet] = useState(false);
   const [toast, setToast] = useState(false);
-  const options = [{ label: 'Opción uno', value: 'uno' }, { label: 'Opción dos', value: 'dos' }];
+  const options = [{ label: t.catalogOptionOne, value: 'uno' }, { label: t.catalogOptionTwo, value: 'dos' }];
   return (
-    <main className="mx-auto grid w-[min(100%-2rem,70rem)] gap-6 py-8 text-text">
-      <h1 className="font-display text-3xl font-bold">Catálogo de componentes</h1>
-      <Card><p>Primitivas web sobre los tokens compartidos. Cada fila es un estado.</p></Card>
-      <section aria-labelledby="cat-actions" className="grid gap-3"><h2 id="cat-actions" className="font-display text-xl font-bold">Acciones</h2>
+    <main className="mx-auto grid w-[min(100%-2rem,70rem)] grid-cols-1 gap-6 py-8 text-text [&>*]:min-w-0">
+      <h1 className="font-display text-[clamp(1.75rem,7vw,3rem)] font-bold">{t.catalogTitle}</h1>
+      <Card><p>{t.catalogIntro}</p></Card>
+      <section aria-labelledby="cat-actions" className="grid gap-3"><h2 id="cat-actions" className="font-display text-xl font-bold">{t.catalogActions}</h2>
         <div className="flex flex-wrap gap-3">
           {(['primary', 'secondary', 'ghost', 'danger'] as const).map((variant) => <Button key={variant} variant={variant} onPress={() => setToast(true)}>{variant}</Button>)}
-          <Button state="loading">Guardar</Button><Button state="disabled">Bloqueado</Button>
+          <Button state="loading">{t.catalogSave}</Button><Button state="disabled">{t.catalogBlocked}</Button>
         </div>
-        <div className="flex flex-wrap gap-3"><Button variant="secondary" onPress={() => setModal(true)}>Abrir diálogo</Button><Button variant="secondary" onPress={() => setSheet(true)}>Abrir panel</Button></div>
+        <div className="flex flex-wrap gap-3"><Button variant="secondary" onPress={() => setModal(true)}>{t.catalogOpenDialog}</Button><Button variant="secondary" onPress={() => setSheet(true)}>{t.catalogOpenPanel}</Button></div>
       </section>
       {componentStates.map((state) => (
-        <section key={state} aria-label={`Estado ${state}`} className="grid gap-3"><h2 className="font-display text-xl font-bold">Estado: {state}</h2>
-          <div className="grid gap-4 md:grid-cols-2">
-            <Input label="Nombre" placeholder="Escribe tu nombre" state={state} error={state === 'error' ? 'Escribe tu nombre completo.' : undefined} />
-            <Select label="Opción" value={choice} onChange={setChoice} options={options} state={state} error={state === 'error' ? 'Elige una opción.' : undefined} />
-            <Checkbox label="Acepto los términos" value={checked} onChange={setChecked} state={state} error={state === 'error' ? 'Debes aceptar.' : undefined} />
-            <DatePicker label="Fecha" state={state} />
-            <FileUpload label="Adjunto" state={state} />
-            <Card state={state}><p>Contenido de la tarjeta</p></Card>
+        <section key={state} aria-label={`${t.catalogState} ${state}`} className="grid gap-3"><h2 className="font-display text-xl font-bold">{t.catalogState} {state}</h2>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 [&>*]:min-w-0">
+            <Input label={t.catalogName} placeholder={t.catalogNamePlaceholder} state={state} error={state === 'error' ? t.catalogNameError : undefined} />
+            <Select label={t.catalogOption} value={choice} onChange={setChoice} options={options} state={state} error={state === 'error' ? t.catalogOptionError : undefined} />
+            <Checkbox label={t.catalogTerms} value={checked} onChange={setChecked} state={state} error={state === 'error' ? t.catalogTermsError : undefined} />
+            <DatePicker label={t.catalogDate} state={state} />
+            <FileUpload label={t.catalogAttachment} state={state} />
+            <Card state={state}><p>{t.catalogCard}</p></Card>
           </div>
-          <Table columns={['Nombre', 'Estado']} rows={demoRows} state={state} />
+          <Table columns={[t.catalogColName, t.catalogColStatus]} rows={demoRows} state={state} />
         </section>
       ))}
-      <Modal visible={modal} onClose={() => setModal(false)} title="Confirmación"><p>Revisa esta acción antes de continuar.</p></Modal>
-      <Sheet visible={sheet} onClose={() => setSheet(false)} title="Panel"><p>Contenido del panel.</p></Sheet>
-      <Toast visible={toast} message="Acción completada" tone="success" onDismiss={() => setToast(false)} />
+      <Modal visible={modal} onClose={() => setModal(false)} title={t.catalogDialog}><p>{t.catalogDialogBody}</p></Modal>
+      <Sheet visible={sheet} onClose={() => setSheet(false)} title={t.catalogPanel}><p>{t.catalogPanelBody}</p></Sheet>
+      <Toast visible={toast} message={t.catalogDone} tone="success" onDismiss={() => setToast(false)} />
     </main>
   );
 }

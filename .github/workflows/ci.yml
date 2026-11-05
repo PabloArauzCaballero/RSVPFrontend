@@ -15,4 +15,6 @@ jobs:
         with: { node-version-file: .nvmrc, cache: yarn }
       - run: yarn install --immutable
       - run: yarn harness:validate
+      - run: yarn lint:code  # ESLint over the whole repo, including rsvp/no-literal-strings (REQ-F06-06)
+      - run: yarn workspace @rsvp/contracts check:generated
       - run: yarn turbo run build lint typecheck test --affected

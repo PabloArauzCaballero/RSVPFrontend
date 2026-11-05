@@ -14,3 +14,9 @@ Ver F01: darkMode con selector de atributo rompia la compilacion nativa. Ademas 
 
 ## No cubierto
 Capturas iOS/Android; nota: seo-web no sigue el esquema del sistema (solo `data-theme=dark`), por decision de no alterar la landing.
+
+## Actualización 2026-11-04
+
+- **Snapshots visuales con línea base (REQ-F02-02/F03-06):** `apps/seo-web/playwright.config.ts` y `e2e/catalogo.visual.spec.ts` (`yarn workspace @rsvp/seo-web test:visual`, Chrome vía `CHROMIUM_PATH`). `toHaveScreenshot` sobre `/catalogo` en claro/oscuro a 360/768/1280 más la landing a 360/1280. Línea base en `apps/seo-web/e2e/__screenshots__/` (generada en macOS con Chrome; **no** se agregó a CI porque el render en Linux difiere y habría falsos positivos: pendiente generar la línea base en el runner). Segunda corrida contra la línea base: 7/7 verdes. La línea base la generó el mismo agente que la compara: falta aprobación humana.
+- **Defecto hallado por la comprobación de desborde:** `/catalogo` desbordaba 27 px a 360 px (h1 de 56 px, `componentes` no cabe) y los hijos de grid no tenían `min-w-0`. Corregido en `packages/ui-web/src/index.tsx`.
+- Bundles nativos iOS/Android compilan (ver F01). Capturas nativas reales: BLOQUEADO (sin simulador/dispositivo en este entorno).

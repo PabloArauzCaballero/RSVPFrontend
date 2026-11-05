@@ -1,3 +1,4 @@
+import { PERSONAL_LINK_PATHS } from "./index.js";
 /**
  * Values consumed by deployment automation to publish the verification files.
  * Bundle identifiers are environment-specific and must match the signed apps.
@@ -18,7 +19,7 @@ export function verificationConfigFromEnvironment(environment: Record<string, st
 }
 
 export function appleAssociation(config: LinkVerificationConfig): string {
-  return JSON.stringify({ applinks: { apps: [], details: [{ appID: config.appleAppId, paths: ["/rsvp/*"] }] } });
+  return JSON.stringify({ applinks: { apps: [], details: [{ appID: config.appleAppId, paths: [...PERSONAL_LINK_PATHS] }] } });
 }
 
 export function androidAssetLinks(config: LinkVerificationConfig): string {

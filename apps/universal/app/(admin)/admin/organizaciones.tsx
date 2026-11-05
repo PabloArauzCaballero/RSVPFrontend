@@ -1,5 +1,5 @@
-import { PendingModuleScreen } from '../../../src/admin/other-screens';
+import { OrganizationsScreen } from '../../../src/admin/insight';
 import { useHostRoute } from '../../../src/platform/route';
 
 /** E10 · Organizaciones. */
-export default function Route() { const { onNavigate } = useHostRoute(); return <PendingModuleScreen module="organizations" onNavigate={onNavigate} />; }
+export default function Route() { const { onNavigate } = useHostRoute(); return <OrganizationsScreen onNavigate={onNavigate} />; }

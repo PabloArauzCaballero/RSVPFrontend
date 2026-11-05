@@ -61,7 +61,12 @@ export function createApiClient(options: CreateApiClientOptions): ApiClient {
       catch (error) { await options.tokenStore.clear(); await options.onUnauthorized?.(); throw error; }
       return send(path, request, true);
     }
-    if (!response.ok) throw toApiError(response.status, response.headers.get("x-correlation-id") ?? correlationId, await problemFrom(response));
+    if (!response.ok) {
+      const failure = toApiError(response.status, response.headers.get("x-correlation-id") ?? correlationId, await problemFrom(response));
+      const retryAfter = Number(response.headers.get("retry-after"));
+      if (Number.isFinite(retryAfter) && retryAfter > 0) failure.retryAfterSeconds = retryAfter;
+      throw failure;
+    }
     // 204 and bodiless 2xx answers (Identity's 202 on password recovery) carry no JSON to parse.
     if (response.status === 204) return undefined as TResponse;
     const text = await response.text();

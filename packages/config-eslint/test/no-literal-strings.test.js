@@ -31,7 +31,7 @@ test("translated text, dynamic values, punctuation, symbols and brand names pass
 });
 
 test("catalogs and the declared legacy debt list are exempt, tests are not scanned", async () => {
-  assert.deepEqual(await lintSource("export const A = () => <Text>Hola</Text>;", "packages/ui/src/index.tsx"), []);
+  assert.deepEqual(await lintSource("export const A = () => <Text>Hola</Text>;", "apps/seo-web/components/rsvp/x.tsx"), []);
   assert.deepEqual(await lintSource("export const A = () => <Text>Hola</Text>;", "apps/universal/test/x.test.tsx"), []);
 });
 

@@ -5,13 +5,14 @@ import { spacing } from '@rsvp/design-tokens';
 import { useTheme } from './theme';
 
 export { UiProvider, useTheme, type ColorScheme } from './theme';
-export { defaultStrings, type UiStrings } from './strings';
+import { DateField } from './date-field';
+export { defaultStrings, stringsFor, type UiStrings } from './strings';
 
 export type State = 'default' | 'loading' | 'error' | 'empty' | 'disabled';
 export const componentStates: State[] = ['default', 'loading', 'error', 'empty', 'disabled'];
 const unavailable = (state: State) => state === 'disabled' || state === 'loading';
 
-function StateHint({ state, error }: { state?: State; error?: string }) {
+export function StateHint({ state, error }: { state?: State; error?: string }) {
   const { palette, styles, strings } = useTheme();
   if (state === 'loading') return <ActivityIndicator accessibilityLabel={strings.loading} color={palette.primary} />;
   if (state === 'empty') return <Text accessibilityRole="text" style={styles.body}>{strings.empty}</Text>;
@@ -26,7 +27,7 @@ export function Surface({ title, description }: { title: string; description: st
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
-export function Button({ children, onPress, variant = 'primary', state = 'default', accessibilityLabel, className }: PropsWithChildren<{ onPress?: () => void; variant?: ButtonVariant; state?: State; accessibilityLabel?: string; className?: string }>) {
+export function Button({ children, onPress, variant = 'primary', state = 'default', accessibilityLabel, className, testID }: PropsWithChildren<{ onPress?: () => void; variant?: ButtonVariant; state?: State; accessibilityLabel?: string; className?: string; testID?: string }>) {
   const { palette, styles, strings } = useTheme();
   const disabled = unavailable(state);
   const variantStyle = variant === 'secondary' ? styles.buttonSecondary : variant === 'ghost' ? styles.buttonGhost : variant === 'danger' ? styles.buttonDanger : undefined;
@@ -40,6 +41,7 @@ export function Button({ children, onPress, variant = 'primary', state = 'defaul
       disabled={disabled}
       onPress={onPress}
       className={className}
+      testID={testID}
       style={[styles.button, variantStyle, disabled && styles.buttonDisabled]}
     >
       {state === 'loading' ? <ActivityIndicator color={spinner} accessibilityLabel={strings.loading} /> : <Text style={[styles.buttonText, textStyle]}>{children}</Text>}
@@ -153,9 +155,9 @@ export function Table({ columns, rows, state = 'default', emptyMessage }: { colu
   );
 }
 
-/** Native fallback: typed ISO date (AAAA-MM-DD). A platform picker belongs behind this same API. */
+/** ISO `YYYY-MM-DD` value. iOS/Android open the system picker (`date-field.native.tsx`); web and tests type the date. */
 export function DatePicker({ label, value, onChange, state = 'default', error }: { label: string; value?: string; onChange?: (value: string) => void; state?: State; error?: string }) {
-  return <Input label={label} value={value} onChangeText={onChange} placeholder="AAAA-MM-DD" keyboardType="numbers-and-punctuation" state={state} error={error} />;
+  return <DateField label={label} value={value} onChange={onChange} state={state} error={error} />;
 }
 
 export function FileUpload({ label, fileName, onSelect, state = 'default', error }: { label: string; fileName?: string; onSelect?: () => void; state?: State; error?: string }) {
@@ -171,43 +173,42 @@ export function FileUpload({ label, fileName, onSelect, state = 'default', error
 }
 
 export function SwitchWithConsequence({ label, value, consequence, pendingCount = 0, onChange }: { label: string; value: boolean; consequence: string; pendingCount?: number; onChange: (value: boolean) => void }) {
-  const { styles } = useTheme();
+  const { styles, strings } = useTheme();
   const [confirmation, setConfirmation] = useState<boolean | null>(null);
   const requestedValue = confirmation ?? value;
-  return <Card><View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing[3] }}><View style={{ flex: 1 }}><Text style={styles.label}>{label}</Text><Text style={styles.body}>{consequence}</Text></View><Switch accessibilityLabel={label} value={requestedValue} onValueChange={setConfirmation} /></View>{confirmation !== null && confirmation !== value ? <View style={{ gap: spacing[2] }}><Text accessibilityRole="alert" style={styles.body}>{pendingCount > 0 ? `Hay ${pendingCount} solicitudes pendientes; este cambio no las modifica.` : 'El cambio solo afectará las solicitudes futuras.'}</Text><Button onPress={() => { onChange(confirmation); setConfirmation(null); }}>Confirmar cambio</Button><Button variant="secondary" onPress={() => setConfirmation(null)}>Cancelar</Button></View> : null}</Card>;
+  return <Card><View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing[3] }}><View style={{ flex: 1 }}><Text style={styles.label}>{label}</Text><Text style={styles.body}>{consequence}</Text></View><Switch accessibilityLabel={label} value={requestedValue} onValueChange={setConfirmation} /></View>{confirmation !== null && confirmation !== value ? <View style={{ gap: spacing[2] }}><Text accessibilityRole="alert" style={styles.body}>{pendingCount > 0 ? `Hay ${pendingCount} solicitudes pendientes; este cambio no las modifica.` : 'El cambio solo afectará las solicitudes futuras.'}</Text><Button onPress={() => { onChange(confirmation); setConfirmation(null); }}>{strings.confirmChange}</Button><Button variant="secondary" onPress={() => setConfirmation(null)}>{strings.cancel}</Button></View> : null}</Card>;
 }
 
-const demoRows = [['Invitación', 'Activa']];
-
 export function ComponentCatalog() {
-  const { styles } = useTheme();
+  const { styles, strings: t } = useTheme();
+  const demoRows = [[t.catalogRowName, t.catalogRowStatus]];
   const [checked, setChecked] = useState(false); const [selected, setSelected] = useState('uno');
   const [modal, setModal] = useState(false); const [sheet, setSheet] = useState(false); const [toast, setToast] = useState(false);
-  const options = [{ label: 'Opción uno', value: 'uno' }, { label: 'Opción dos', value: 'dos' }];
+  const options = [{ label: t.catalogOptionOne, value: 'uno' }, { label: t.catalogOptionTwo, value: 'dos' }];
   return (
     <ScrollView contentContainerStyle={styles.page}>
-      <Text accessibilityRole="header" style={styles.title}>Catálogo de componentes</Text>
-      <View testID="nw-probe" className="rounded-lg border border-border bg-surface-muted p-4"><Text style={styles.body}>Cada bloque es un estado. Mismos tokens en claro y oscuro.</Text></View>
+      <Text accessibilityRole="header" style={styles.title}>{t.catalogTitle}</Text>
+      <View testID="nw-probe" className="rounded-lg border border-border bg-surface-muted p-4"><Text style={styles.body}>{t.catalogIntro}</Text></View>
       <View className="flex-row flex-wrap gap-3">
         {(['primary', 'secondary', 'ghost', 'danger'] as const).map((variant) => <Button key={variant} variant={variant} onPress={() => setToast(true)}>{variant}</Button>)}
       </View>
-      <View className="flex-row flex-wrap gap-3"><Button variant="secondary" onPress={() => setModal(true)}>Abrir diálogo</Button><Button variant="secondary" onPress={() => setSheet(true)}>Abrir panel</Button></View>
+      <View className="flex-row flex-wrap gap-3"><Button variant="secondary" onPress={() => setModal(true)}>{t.catalogOpenDialog}</Button><Button variant="secondary" onPress={() => setSheet(true)}>{t.catalogOpenPanel}</Button></View>
       {componentStates.map((state) => (
-        <View key={state} className="gap-3" accessibilityLabel={`Estado ${state}`}>
-          <Text accessibilityRole="header" style={styles.title}>Estado: {state}</Text>
-          <Button state={state}>Acción</Button>
-          <Input label="Nombre" placeholder="Escribe tu nombre" state={state} error={state === 'error' ? 'Escribe tu nombre completo.' : undefined} />
-          <Select label="Opción" value={selected} onChange={setSelected} options={options} state={state} error={state === 'error' ? 'Elige una opción.' : undefined} />
-          <Checkbox label="Acepto los términos" value={checked} onChange={setChecked} state={state} error={state === 'error' ? 'Debes aceptar.' : undefined} />
-          <DatePicker label="Fecha" state={state} />
-          <FileUpload label="Adjunto" state={state} />
-          <Card state={state}><Text style={styles.body}>Contenido de la tarjeta</Text></Card>
-          <Table columns={['Nombre', 'Estado']} rows={demoRows} state={state} />
+        <View key={state} className="gap-3" accessibilityLabel={`${t.catalogState} ${state}`}>
+          <Text accessibilityRole="header" style={styles.title}>{t.catalogState} {state}</Text>
+          <Button state={state}>{t.action}</Button>
+          <Input label={t.catalogName} placeholder={t.catalogNamePlaceholder} state={state} error={state === 'error' ? t.catalogNameError : undefined} />
+          <Select label={t.catalogOption} value={selected} onChange={setSelected} options={options} state={state} error={state === 'error' ? t.catalogOptionError : undefined} />
+          <Checkbox label={t.catalogTerms} value={checked} onChange={setChecked} state={state} error={state === 'error' ? t.catalogTermsError : undefined} />
+          <DatePicker label={t.catalogDate} state={state} />
+          <FileUpload label={t.catalogAttachment} state={state} />
+          <Card state={state}><Text style={styles.body}>{t.catalogCard}</Text></Card>
+          <Table columns={[t.catalogColName, t.catalogColStatus]} rows={demoRows} state={state} />
         </View>
       ))}
-      <Sheet visible={sheet} onClose={() => setSheet(false)} title="Panel"><Text style={styles.body}>Contenido del panel.</Text></Sheet>
-      <Modal visible={modal} onClose={() => setModal(false)} title="Confirmación"><Text style={styles.body}>Revisa esta acción antes de continuar.</Text></Modal>
-      <Toast visible={toast} tone="success" message="Acción completada" onDismiss={() => setToast(false)} />
+      <Sheet visible={sheet} onClose={() => setSheet(false)} title={t.catalogPanel}><Text style={styles.body}>{t.catalogPanelBody}</Text></Sheet>
+      <Modal visible={modal} onClose={() => setModal(false)} title={t.catalogDialog}><Text style={styles.body}>{t.catalogDialogBody}</Text></Modal>
+      <Toast visible={toast} tone="success" message={t.catalogDone} onDismiss={() => setToast(false)} />
     </ScrollView>
   );
 }

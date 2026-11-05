@@ -1,8 +1,9 @@
-/** Default copy (es-BO). Apps pass their i18n catalog through <UiProvider strings>; nothing here is domain data. */
-export interface UiStrings {
-  action: string; loading: string; empty: string; genericError: string; close: string; emptyTable: string; chooseFile: string; dismiss: string;
-}
-export const defaultStrings: UiStrings = {
-  action: 'Acción', loading: 'Cargando…', empty: 'No hay información disponible.', genericError: 'No se pudo completar la acción.',
-  close: 'Cerrar', emptyTable: 'No hay registros.', chooseFile: 'Seleccionar archivo', dismiss: 'Descartar aviso'
-};
+import { resources, type AppLocale } from '@rsvp/i18n/server';
+
+/**
+ * Primitive copy comes from the shared i18n catalog (`ui.*`, es-BO and en-US). Apps choose the
+ * language with `stringsFor(locale)` or override single entries through <UiProvider strings>.
+ */
+export type UiStrings = { [K in keyof (typeof resources)['es-BO']['ui']]: string };
+export const stringsFor = (locale: AppLocale): UiStrings => resources[locale].ui;
+export const defaultStrings: UiStrings = stringsFor('es-BO');

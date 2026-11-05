@@ -13,3 +13,12 @@ neg.txt (contrato roto): `test/contract.test.ts(14,77): error TS2345: Argument o
 
 ## No cubierto
 Migrar `celebrationApi` al cliente de contrato (usa rutas string); MSW; cobertura 85 %.
+
+## Actualización 2026-11-04
+
+| REQ | Estado | Artefacto |
+|---|---|---|
+| REQ-F04-02 | PASS en el runtime real de la app | `apps/universal/test/session-refresh.test.ts` (MSW sobre `createAppRuntime`): 401 -> un solo refresh -> reintento con el token rotado y roles nuevos; 3 peticiones concurrentes comparten un refresh; refresh rechazado devuelve 401 sin bucle |
+| REQ-F04-06 | PASS (hooks con MSW y UI) | `packages/query-hooks/test/msw-hooks.test.tsx` (7 tests, cliente `fetch` real, solo la red simulada: 401/403/409/422 tipados, If-Match, bearer y correlation id, lectura pública sin credenciales); `apps/universal/test/error-states.test.tsx` (5 tests): 401 "Tu sesión expiró" con botón "Iniciar sesión de nuevo" que vuelve a la página, 403, 409 con "Ver la versión nueva", 422 con el detalle |
+
+MSW (`@rsvp/testing` re-exporta `setupServer`, `http`, `HttpResponse`) instalado y usado. Límite: si el refresh falla por red (no 401), el cliente propaga ese error y el botón de reingreso no aparece; el refresh con 401 sí. Cliente generado: ver F01 (rutas de provider y gift migradas al contrato v2/v1.1).

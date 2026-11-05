@@ -4,7 +4,7 @@
     "version": "0.1.0", "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "web": { "bundler": "metro", "output": "single" },
-    "plugins": ["expo-router"],
+    "plugins": ["expo-router", ["expo-notifications", { "color": "#1F3BFF" }]],
     "experiments": { "typedRoutes": true }
   }
 }

@@ -1,10 +1,3406 @@
 {
-  "openapi": "3.1.0", "info": {"title": "RSVP Guest and RSVP API", "version": "1.0.0"}, "servers": [{"url": "http://localhost:8000/guests"}],
-  "paths": {
-    "/health": {"get": {"responses": {"200": {"description": "Healthy"}}}},
-    "/celebrations/{celebrationId}/guests": {"post": {"operationId": "registerGuest", "responses": {"201": {"description": "Guest registered"}, "404": {"$ref": "#/components/responses/NotFound"}, "422": {"$ref": "#/components/responses/Validation"}}}},
-    "/rsvp/{token}": {"get": {"operationId": "getRsvpByToken", "responses": {"200": {"description": "RSVP"}, "401": {"$ref": "#/components/responses/Unauthorized"}, "404": {"$ref": "#/components/responses/NotFound"}}}, "patch": {"operationId": "respondToRsvp", "responses": {"200": {"description": "RSVP updated"}, "401": {"$ref": "#/components/responses/Unauthorized"}, "409": {"$ref": "#/components/responses/RsvpWindowClosed"}, "422": {"$ref": "#/components/responses/Validation"}}}}
+  "openapi": "3.1.0",
+  "info": {
+    "title": "RSVP Guest and RSVP API",
+    "version": "1.10.0",
+    "description": "Additive lanes 17/18/19: guest management, opaque credentials and token-authenticated RSVP. Public APIs use Authorization Bearer, never a token in the URL. Lane 20 adds companion counts, scoped host decisions and public registration with safe approval defaults. Lane 21 adds host-only event-driven read models with freshness metadata and tenant-scoped replay operations documented in the service runbook. 1.9.0: optional email plus E.164 phone (at least one contact), explicit consent origin, respondedAt, group listing and reassignment, authoritative open companion-request total, paginated catering report, canonical invitation URL on token issue (see docs/ACCESS_TOKENS.md). Compatibility: Guest.email and GuestListItem.email may now be null (clients must tolerate null); every previously valid request remains valid. 1.10.0: POST /rsvp/resolve (credential -> celebrationId and slug, for legacy /rsvp/{token} links) and GET /rsvp/celebrations/{id}/public-settings (whether public registration of unregistered guests is enabled). Both public, additive, no-store."
   },
-  "components": {"schemas": {"Problem": {"type": "object", "required": ["type", "title", "status"], "properties": {"type": {"type": "string"}, "title": {"type": "string"}, "status": {"type": "integer"}}}}, "responses": {"Unauthorized": {"description": "Unknown or revoked token"}, "NotFound": {"description": "Tenant-scoped resource not found"}, "Validation": {"description": "Invalid RSVP input"}, "RsvpWindowClosed": {"description": "RSVP deadline elapsed"}}}
+  "servers": [
+    {
+      "url": "http://localhost:8000/guests"
+    },
+    {
+      "url": "http://localhost:3002",
+      "description": "Local host process"
+    }
+  ],
+  "security": [
+    {
+      "bearer": []
+    }
+  ],
+  "paths": {
+    "/celebrations/{celebrationId}/guests/{guestId}/access-token": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CelebrationId"
+        },
+        {
+          "name": "guestId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "post": {
+        "operationId": "issueGuestAccessToken",
+        "description": "Owner/co-host only. Issue or replace the only active token; a replacement atomically revokes its predecessor (reissue policy: every issuance invalidates the previous link at once, so a host resends by issuing again). Default TTL 7 days (604800 s), configurable from 60 s to 30 days. The raw token and the canonical url are returned once with no-store and are never persisted. resend=true requires the canonical url (503 if the web origin or slug is unknown).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "ttlSeconds": {
+                    "type": "integer",
+                    "minimum": 60,
+                    "maximum": 2592000,
+                    "default": 604800
+                  },
+                  "resend": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Re-issue to resend the invitation and require the canonical url in the response."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Credential issued once",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssuedGuestToken"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "413": {
+            "$ref": "#/components/responses/TooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedType"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          },
+          "503": {
+            "$ref": "#/components/responses/Dependency"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "revokeGuestAccessToken",
+        "description": "Owner/co-host only. Revoke immediately, idempotently; no token required in URL/body.",
+        "responses": {
+          "204": {
+            "description": "Access revoked (or already revoked)"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          },
+          "503": {
+            "$ref": "#/components/responses/Dependency"
+          }
+        }
+      }
+    },
+    "/rsvp/celebrations/{celebrationId}/guest": {
+      "servers": [
+        {
+          "url": "http://localhost:8000"
+        },
+        {
+          "url": "http://localhost:3002"
+        }
+      ],
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CelebrationId"
+        }
+      ],
+      "get": {
+        "operationId": "readGuestTokenResource",
+        "security": [
+          {
+            "guestToken": []
+          }
+        ],
+        "description": "No user account/JWT. Present the opaque magic-link credential in Authorization: Bearer. Missing, unknown, expired or revoked => identical 401; otherwise-valid foreign token => 404. No public guest list. Fixed UTC minute: Kong 30 requests/IP; service <=30/peer, shared persistently across instances. X-Forwarded-For is not trusted by the service.",
+        "responses": {
+          "200": {
+            "description": "Minimal credential-scoped resource",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Referrer-Policy": {
+                "schema": {
+                  "const": "no-referrer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuestTokenResource"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "description": "Rate limited",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 60
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "message"
+                  ],
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          },
+          "503": {
+            "$ref": "#/components/responses/Dependency"
+          }
+        }
+      }
+    },
+    "/rsvp/celebrations/{celebrationId}/rsvp": {
+      "servers": [
+        {
+          "url": "http://localhost:8000"
+        },
+        {
+          "url": "http://localhost:3002"
+        }
+      ],
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CelebrationId"
+        }
+      ],
+      "get": {
+        "operationId": "readGuestRsvp",
+        "security": [
+          {
+            "guestToken": []
+          }
+        ],
+        "description": "Read only the RSVP belonging to the opaque guest token. A guest without a saved response receives PENDING. Deadline and its display use the celebration IANA time zone.",
+        "responses": {
+          "200": {
+            "description": "Current RSVP state",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Referrer-Policy": {
+                "schema": {
+                  "const": "no-referrer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RsvpState"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "description": "Rate limited",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 60
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          },
+          "503": {
+            "$ref": "#/components/responses/Dependency"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createGuestRsvp",
+        "security": [
+          {
+            "guestToken": []
+          }
+        ],
+        "description": "Create one RSVP per guest. A repeated request with the same Idempotency-Key and body returns the current state without a second outbox event. A second create with a new key returns 409.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RsvpResponse"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "RSVP created",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Referrer-Policy": {
+                "schema": {
+                  "const": "no-referrer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RsvpState"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/TooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedType"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          },
+          "429": {
+            "description": "Rate limited",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 60
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          },
+          "503": {
+            "$ref": "#/components/responses/Dependency"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateGuestRsvp",
+        "security": [
+          {
+            "guestToken": []
+          }
+        ],
+        "description": "Change status or optional dietary/message fields before the deadline. Idempotent changes do not create duplicate outbox events.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RsvpResponse"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "RSVP updated",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Referrer-Policy": {
+                "schema": {
+                  "const": "no-referrer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RsvpState"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/TooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedType"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          },
+          "429": {
+            "description": "Rate limited",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 60
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          },
+          "503": {
+            "$ref": "#/components/responses/Dependency"
+          }
+        }
+      }
+    },
+    "/celebrations/{celebrationId}/rsvps": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CelebrationId"
+        }
+      ],
+      "get": {
+        "operationId": "listHostRsvps",
+        "description": "Owner/co-host only. Paginated RSVP details for the host summary; dietary notes and messages are never returned to read-only actors.",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000,
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Host RSVP summary page",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HostRsvpPage"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          },
+          "503": {
+            "$ref": "#/components/responses/Dependency"
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Healthy"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        }
+      }
+    },
+    "/celebrations/{celebrationId}/guests": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CelebrationId"
+        }
+      ],
+      "post": {
+        "operationId": "registerGuest",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterGuest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Guest registered with effective locale",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Guest"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "413": {
+            "$ref": "#/components/responses/TooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedType"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          },
+          "503": {
+            "$ref": "#/components/responses/Dependency"
+          }
+        }
+      },
+      "get": {
+        "operationId": "listGuests",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000,
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tenant-scoped page",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "items",
+                    "limit",
+                    "offset"
+                  ],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Guest"
+                      }
+                    },
+                    "limit": {
+                      "type": "integer"
+                    },
+                    "offset": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          },
+          "503": {
+            "$ref": "#/components/responses/Dependency"
+          }
+        }
+      }
+    },
+    "/celebrations/{celebrationId}/guests/{guestId}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CelebrationId"
+        },
+        {
+          "name": "guestId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "get": {
+        "operationId": "getGuest",
+        "responses": {
+          "200": {
+            "description": "Guest, or identical 404 for unknown/foreign guest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Guest"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          },
+          "503": {
+            "$ref": "#/components/responses/Dependency"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "changeGuestGroup",
+        "description": "MANAGE only. Moves a guest to another group of the same celebration (or out of any group with null). Atomically emits guest.guest.group-changed.v1 and updates the projected guest list. A no-op change emits nothing. A foreign or unknown group or guest is an identical 404.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeGuestGroup"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Guest with its new group",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Guest"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "413": {
+            "$ref": "#/components/responses/TooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedType"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          },
+          "503": {
+            "$ref": "#/components/responses/Dependency"
+          }
+        }
+      }
+    },
+    "/celebrations/{celebrationId}/groups": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CelebrationId"
+        }
+      ],
+      "post": {
+        "operationId": "createGuestGroup",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Group created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuestGroup"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "413": {
+            "$ref": "#/components/responses/TooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedType"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          },
+          "503": {
+            "$ref": "#/components/responses/Dependency"
+          }
+        }
+      },
+      "get": {
+        "operationId": "listGuestGroups",
+        "description": "MANAGE only. Groups of the celebration with member counts, ordered by name.",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000,
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Page of groups",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuestGroupPage"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          },
+          "503": {
+            "$ref": "#/components/responses/Dependency"
+          }
+        }
+      }
+    },
+    "/celebrations/{celebrationId}/groups/{groupId}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CelebrationId"
+        },
+        {
+          "name": "groupId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "get": {
+        "operationId": "getGuestGroup",
+        "responses": {
+          "200": {
+            "description": "Group and its member IDs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuestGroup"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          },
+          "503": {
+            "$ref": "#/components/responses/Dependency"
+          }
+        }
+      }
+    },
+    "/celebrations/{celebrationId}/guest-settings": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CelebrationId"
+        }
+      ],
+      "get": {
+        "operationId": "getGuestDefaults",
+        "responses": {
+          "200": {
+            "description": "Service-owned companions default and authoritative celebration locale",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuestDefaults"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          },
+          "503": {
+            "$ref": "#/components/responses/Dependency"
+          }
+        }
+      },
+      "put": {
+        "operationId": "setGuestDefaults",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "defaultAllowedCompanions"
+                ],
+                "properties": {
+                  "defaultAllowedCompanions": {
+                    "$ref": "#/components/schemas/Companions"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Defaults updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuestDefaults"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "413": {
+            "$ref": "#/components/responses/TooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedType"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          },
+          "503": {
+            "$ref": "#/components/responses/Dependency"
+          }
+        }
+      }
+    },
+    "/celebrations/{celebrationId}/guests/import": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CelebrationId"
+        }
+      ],
+      "post": {
+        "operationId": "importGuestsCsv",
+        "description": "Partial validation: invalid rows are reported and all accepted rows plus their outbox commit together in one transaction. A storage failure rolls back the accepted set and returns an error. Up to 1000 data rows and 1 MiB JSON body. Errors never echo personal input; empty CSV or invalid header returns a report without writes. CSV header: name, locale, allowedCompanions and at least one of email or phone (E.164); optional groupId. Imported guests record consent channel HOST_CSV and the importing host as the recorder.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "csv"
+                ],
+                "properties": {
+                  "csv": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Partial import report, including row errors",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CsvReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "413": {
+            "$ref": "#/components/responses/TooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedType"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          },
+          "503": {
+            "$ref": "#/components/responses/Dependency"
+          }
+        }
+      }
+    },
+    "/rsvp/{token}": {
+      "parameters": [
+        {
+          "name": "token",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "get": {
+        "security": [],
+        "operationId": "getRsvpByToken",
+        "responses": {
+          "200": {
+            "description": "RSVP"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "patch": {
+        "security": [],
+        "operationId": "respondToRsvp",
+        "responses": {
+          "200": {
+            "description": "RSVP updated"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "409": {
+            "$ref": "#/components/responses/RsvpWindowClosed"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          }
+        }
+      }
+    },
+    "/celebrations/{celebrationId}/companion-requests": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CelebrationId"
+        }
+      ],
+      "get": {
+        "operationId": "listPendingCompanionRequests",
+        "description": "MANAGE-only pending inbox; never includes another celebration or erased guest.",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000,
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pending requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionRequestPage"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          },
+          "503": {
+            "$ref": "#/components/responses/Dependency"
+          }
+        }
+      }
+    },
+    "/celebrations/{celebrationId}/companion-requests/{requestId}/decision": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CelebrationId"
+        },
+        {
+          "name": "requestId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "post": {
+        "operationId": "resolveCompanionRequest",
+        "description": "MANAGE-only; APPROVED adopts the requested total, REJECTED keeps the permitted count. Same decision replays without events; opposite decision or stale/cancelled request returns 409. Deadline also applies.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "decision"
+                ],
+                "properties": {
+                  "decision": {
+                    "enum": [
+                      "APPROVED",
+                      "REJECTED"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanionRequest"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/TooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedType"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          },
+          "503": {
+            "$ref": "#/components/responses/Dependency"
+          }
+        }
+      }
+    },
+    "/rsvp/celebrations/{celebrationId}/unregistered": {
+      "servers": [
+        {
+          "url": "http://localhost:8000"
+        },
+        {
+          "url": "http://localhost:3002"
+        }
+      ],
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CelebrationId"
+        }
+      ],
+      "post": {
+        "operationId": "confirmUnregistered",
+        "security": [],
+        "description": "Published celebrations with effective unregisteredRsvpMode=AUTO_ACCEPT only. Unknown, draft, archived, missing settings and RESTRICTED receive the same 403 before body validation. Creates Guest, CONFIRMED RSVP, hash-only token and outbox atomically. Required Idempotency-Key deduplicates concurrent submissions; replay returns only ACCEPTED and accessToken=null. Raw token is returned once: the client must save it for future edits; if its first response is lost, request a new magic link from the host. Does not identify/link an existing guest by email.",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[!-~]+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnregisteredConfirmation"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Accepted or replayed receipt; no-store/no-referrer; credential only on the first response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationReceipt"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/TooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/UnsupportedType"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          },
+          "429": {
+            "description": "Shared public RSVP limit exceeded",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          },
+          "503": {
+            "$ref": "#/components/responses/Dependency"
+          }
+        }
+      }
+    },
+    "/celebrations/{celebrationId}/guest-summary": {
+      "get": {
+        "operationId": "getGuestSummary",
+        "description": "Owner/co-host (MANAGE) only. Reads persisted projections without querying write models. Freshness reports pending events and stale=true when oldest pending event exceeds the 5-second healthy-operation target; outages may exceed that target. updatedAt is the stored projection time, not request time. Never cached.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CelebrationId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Persisted host read model",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuestSummary"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          },
+          "503": {
+            "$ref": "#/components/responses/Dependency"
+          }
+        }
+      }
+    },
+    "/celebrations/{celebrationId}/guest-list": {
+      "get": {
+        "operationId": "getGuestReadList",
+        "description": "Owner/co-host (MANAGE) only. Reads persisted projections without querying write models. Freshness reports pending events and stale=true when oldest pending event exceeds the 5-second healthy-operation target; outages may exceed that target. updatedAt is the stored projection time, not request time. Never cached.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CelebrationId"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PENDING",
+                "CONFIRMED",
+                "DECLINED"
+              ]
+            }
+          },
+          {
+            "name": "groupId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000,
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Persisted host read model",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuestReadList"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          },
+          "503": {
+            "$ref": "#/components/responses/Dependency"
+          }
+        }
+      }
+    },
+    "/celebrations/{celebrationId}/guests/{guestId}/erasure": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CelebrationId"
+        },
+        {
+          "name": "guestId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "delete": {
+        "operationId": "requestGuestErasure",
+        "description": "MANAGE only. Irreversible local erasure, transactional outbox; 202 does not certify downstream completion. Repeating as host returns the same requestId.",
+        "responses": {
+          "202": {
+            "description": "Local identity erased, downstream erasure queued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErasureReceipt"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          },
+          "503": {
+            "$ref": "#/components/responses/Dependency"
+          }
+        }
+      }
+    },
+    "/rsvp/celebrations/{celebrationId}/erasure": {
+      "servers": [
+        {
+          "url": "http://localhost:8000"
+        },
+        {
+          "url": "http://localhost:3002"
+        }
+      ],
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CelebrationId"
+        }
+      ],
+      "delete": {
+        "operationId": "requestOwnGuestErasure",
+        "description": "Erase only the guest authenticated by the opaque Bearer credential. The credential is invalidated immediately; another request with it returns 401.",
+        "responses": {
+          "202": {
+            "description": "Local identity erased, downstream erasure queued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErasureReceipt"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "description": "Rate limited",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 60
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "message"
+                  ],
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          },
+          "503": {
+            "$ref": "#/components/responses/Dependency"
+          }
+        },
+        "security": [
+          {
+            "guestToken": []
+          }
+        ]
+      }
+    },
+    "/celebrations/{celebrationId}/retention-settings": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CelebrationId"
+        }
+      ],
+      "get": {
+        "operationId": "getGuestRetention",
+        "description": "MANAGE only. null means no approved retention schedule.",
+        "responses": {
+          "200": {
+            "description": "Retention policy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetentionSettings"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "503": {
+            "$ref": "#/components/responses/Dependency"
+          }
+        }
+      },
+      "put": {
+        "operationId": "configureGuestRetention",
+        "description": "MANAGE only. null means no approved retention schedule.",
+        "responses": {
+          "200": {
+            "description": "Retention policy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetentionSettings"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          },
+          "503": {
+            "$ref": "#/components/responses/Dependency"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "retentionDays"
+                ],
+                "properties": {
+                  "retentionDays": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 36500
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/celebrations/{celebrationId}/catering-report": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CelebrationId"
+        }
+      ],
+      "get": {
+        "operationId": "getCateringReport",
+        "description": "MANAGE only. Keyset-paginated export of dietary needs (and optionally the free-text message) for the caterer, read from the authoritative RSVP rows. Contains no name, email or phone; erased guests are excluded. Never cached.",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "PENDING",
+                "CONFIRMED",
+                "DECLINED"
+              ],
+              "default": "CONFIRMED"
+            }
+          },
+          {
+            "name": "withNotesOnly",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            },
+            "description": "Only rows with non-empty dietary notes (or message when includeMessage=true)."
+          },
+          {
+            "name": "includeMessage",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500,
+              "default": 100
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Page of the report",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CateringReport"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          },
+          "503": {
+            "$ref": "#/components/responses/Dependency"
+          }
+        }
+      }
+    },
+    "/rsvp/resolve": {
+      "post": {
+        "operationId": "resolveGuestCredential",
+        "security": [
+          {
+            "guestToken": []
+          }
+        ],
+        "description": "Resolves an opaque credential to its celebration, without a slug in the URL. Returns nothing else (no guest id, name or contact). Missing, malformed, unknown, expired, revoked or erased-guest credential => the same 401. Failed attempts spend a per-origin budget; valid ones a per-credential budget (30/minute, shared with the other credential routes).",
+        "responses": {
+          "200": {
+            "description": "Celebration of the credential",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResolvedCredential"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "description": "Rate limited",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 60
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "message"
+                  ],
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          },
+          "503": {
+            "$ref": "#/components/responses/Dependency"
+          }
+        }
+      }
+    },
+    "/rsvp/celebrations/{celebrationId}/public-settings": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/CelebrationId"
+        }
+      ],
+      "get": {
+        "operationId": "getPublicRegistrationSettings",
+        "security": [],
+        "description": "Lets the form know before submitting whether POST .../unregistered can succeed. Always 200 for any id (no existence oracle); per-origin budget.",
+        "responses": {
+          "200": {
+            "description": "Effective public registration state",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicRegistrationSettings"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 60
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "message"
+                  ],
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          },
+          "503": {
+            "$ref": "#/components/responses/Dependency"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "guestToken": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "Opaque base64url, 32 random bytes (43 characters)"
+      },
+      "bearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT RS256"
+      }
+    },
+    "parameters": {
+      "CelebrationId": {
+        "name": "celebrationId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "IdempotencyKey": {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[!-~]+$"
+        }
+      }
+    },
+    "schemas": {
+      "IssuedGuestToken": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "token",
+          "expiresAt"
+        ],
+        "properties": {
+          "token": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{43}$",
+            "description": "Secret returned once; never persist or log in clear text"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Canonical invitation URL ${PUBLIC_WEB_ORIGIN}/c/{slug}/rsvp/{token}. Present only in this issuing response (never stored or re-readable) when the web origin and the celebration slug are known; always present with resend=true."
+          }
+        },
+        "description": "The URL carries the secret in the path of a front-end route only; it must not be logged, indexed or sent to analytics."
+      },
+      "GuestTokenResource": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "guestId",
+          "celebrationId",
+          "allowedCompanions"
+        ],
+        "properties": {
+          "guestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "celebrationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "allowedCompanions": {
+            "$ref": "#/components/schemas/Companions"
+          },
+          "preferredLocale": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Explicit guest language, or null for current celebration default; exposed only to the valid guest credential."
+          }
+        }
+      },
+      "RsvpResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "CONFIRMED",
+              "DECLINED"
+            ]
+          },
+          "dietaryNotes": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000
+          },
+          "requestedCompanions": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          }
+        }
+      },
+      "RsvpState": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "guestId",
+          "celebrationId",
+          "status",
+          "dietaryNotes",
+          "message",
+          "version",
+          "updatedAt",
+          "deadline",
+          "timeZone",
+          "editable",
+          "requestedCompanions",
+          "approvedCompanions",
+          "respondedAt"
+        ],
+        "properties": {
+          "guestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "celebrationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "CONFIRMED",
+              "DECLINED"
+            ]
+          },
+          "dietaryNotes": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "updatedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "deadline": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "timeZone": {
+            "type": "string"
+          },
+          "editable": {
+            "type": "boolean"
+          },
+          "requestedCompanions": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          },
+          "approvedCompanions": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          },
+          "respondedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Instant of the first response; null if still PENDING or for legacy rows whose first answer was not recorded."
+          }
+        }
+      },
+      "HostRsvpSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "guestId",
+          "celebrationId",
+          "status",
+          "dietaryNotes",
+          "message",
+          "version",
+          "updatedAt",
+          "requestedCompanions",
+          "approvedCompanions",
+          "respondedAt"
+        ],
+        "properties": {
+          "guestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "celebrationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "CONFIRMED",
+              "DECLINED"
+            ]
+          },
+          "dietaryNotes": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "updatedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "requestedCompanions": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          },
+          "approvedCompanions": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          },
+          "respondedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Instant of the first response; null if still PENDING or for legacy rows whose first answer was not recorded."
+          }
+        }
+      },
+      "HostRsvpPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "items",
+          "limit",
+          "offset"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HostRsvpSummary"
+            }
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "offset": {
+            "type": "integer"
+          }
+        }
+      },
+      "Problem": {
+        "type": "object",
+        "required": [
+          "type",
+          "title",
+          "status"
+        ],
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "code": {
+            "type": "string"
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "field": {
+            "type": "string"
+          }
+        }
+      },
+      "Companions": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+      },
+      "RegisterGuest": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "email",
+            "maxLength": 254
+          },
+          "locale": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 35,
+            "description": "BCP 47; null/empty/omitted follows the celebration defaultLocale at read time"
+          },
+          "allowedCompanions": {
+            "$ref": "#/components/schemas/Companions"
+          },
+          "groupId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^\\+[1-9][0-9]{7,14}$",
+            "description": "E.164 (+ country code and number, 8 to 15 digits). Spaces, dots, dashes and parentheses are stripped on input."
+          }
+        },
+        "anyOf": [
+          {
+            "required": [
+              "email"
+            ],
+            "properties": {
+              "email": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          {
+            "required": [
+              "phone"
+            ],
+            "properties": {
+              "phone": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        ],
+        "description": "At least one contact (email or phone) is required. The host attests the consent: the response records who and how."
+      },
+      "Guest": {
+        "type": "object",
+        "required": [
+          "id",
+          "celebrationId",
+          "name",
+          "email",
+          "locale",
+          "allowedCompanions",
+          "groupId",
+          "consentGivenAt",
+          "phone",
+          "consent"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "celebrationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "locale": {
+            "type": "string"
+          },
+          "allowedCompanions": {
+            "$ref": "#/components/schemas/Companions"
+          },
+          "groupId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "consentGivenAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "preferredLocale": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Explicit recipient locale; null uses current celebration defaultLocale."
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^\\+[1-9][0-9]{7,14}$",
+            "description": "E.164 (+ country code and number, 8 to 15 digits). Spaces, dots, dashes and parentheses are stripped on input."
+          },
+          "consent": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "source",
+              "channel",
+              "recordedBy",
+              "givenAt"
+            ],
+            "properties": {
+              "source": {
+                "enum": [
+                  "HOST_RECORDED",
+                  "GUEST_EXPLICIT",
+                  "LEGACY_UNSPECIFIED"
+                ]
+              },
+              "channel": {
+                "enum": [
+                  "HOST_FORM",
+                  "HOST_CSV",
+                  "PUBLIC_FORM",
+                  "UNKNOWN"
+                ],
+                "description": "How consent was captured."
+              },
+              "recordedBy": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uuid",
+                "description": "Who recorded it: the host user, or the guest itself for the public form. null for legacy data and after erasure."
+              },
+              "givenAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        }
+      },
+      "GuestGroup": {
+        "type": "object",
+        "required": [
+          "id",
+          "celebrationId",
+          "name",
+          "memberIds"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "celebrationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "memberIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
+      "GuestDefaults": {
+        "type": "object",
+        "required": [
+          "defaultAllowedCompanions",
+          "defaultLocale"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "defaultAllowedCompanions": {
+            "$ref": "#/components/schemas/Companions"
+          },
+          "defaultLocale": {
+            "type": "string"
+          }
+        }
+      },
+      "CsvReport": {
+        "type": "object",
+        "required": [
+          "mode",
+          "totalRows",
+          "importedCount",
+          "failedCount",
+          "imported",
+          "errors"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "const": "partial"
+          },
+          "totalRows": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "importedCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "failedCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "imported": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "line",
+                "guestId"
+              ],
+              "properties": {
+                "line": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "guestId": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "line",
+                "field",
+                "reason"
+              ],
+              "properties": {
+                "line": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "field": {
+                  "type": "string"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ClosedRsvpWindowProblem": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Problem"
+          },
+          {
+            "type": "object",
+            "required": [
+              "deadline",
+              "deadlineLocal",
+              "timeZone",
+              "locale"
+            ],
+            "properties": {
+              "code": {
+                "const": "RsvpWindowClosed"
+              },
+              "deadline": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "deadlineLocal": {
+                "type": "string"
+              },
+              "timeZone": {
+                "type": "string"
+              },
+              "locale": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "CompanionRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "guestId",
+          "celebrationId",
+          "requestedCompanions",
+          "allowedCompanions",
+          "settingsVersion",
+          "status",
+          "createdAt",
+          "resolvedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "guestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "celebrationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "requestedCompanions": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          },
+          "allowedCompanions": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          },
+          "settingsVersion": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "status": {
+            "enum": [
+              "PENDING_REVIEW",
+              "APPROVED",
+              "REJECTED",
+              "CANCELLED"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "resolvedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "CompanionRequestPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "items",
+          "limit",
+          "offset"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CompanionRequest"
+            }
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "offset": {
+            "type": "integer"
+          }
+        }
+      },
+      "UnregisteredConfirmation": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "email",
+          "consent"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254
+          },
+          "locale": {
+            "type": "string"
+          },
+          "consent": {
+            "const": true
+          },
+          "requestedCompanions": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          },
+          "dietaryNotes": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000
+          }
+        }
+      },
+      "RegistrationReceipt": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "receipt",
+          "replayed",
+          "accessToken"
+        ],
+        "properties": {
+          "receipt": {
+            "const": "ACCEPTED"
+          },
+          "replayed": {
+            "type": "boolean"
+          },
+          "accessToken": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "token",
+                  "expiresAt"
+                ],
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  },
+                  "expiresAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      "ProjectionFreshness": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "updatedAt",
+          "lastEventAt",
+          "pendingEvents",
+          "oldestPendingAt",
+          "stale",
+          "consistencyWindowSeconds"
+        ],
+        "properties": {
+          "updatedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "lastEventAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "pendingEvents": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "oldestPendingAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "stale": {
+            "type": "boolean"
+          },
+          "consistencyWindowSeconds": {
+            "type": "integer",
+            "const": 5
+          }
+        }
+      },
+      "GuestSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "celebrationId",
+          "total",
+          "confirmed",
+          "declined",
+          "pending",
+          "companions",
+          "freshness",
+          "openCompanionRequests"
+        ],
+        "properties": {
+          "celebrationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "confirmed": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "declined": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "pending": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "companions": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "freshness": {
+            "$ref": "#/components/schemas/ProjectionFreshness"
+          },
+          "openCompanionRequests": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Authoritative total of open (PENDING_REVIEW) companion requests of the whole celebration; not the size of any page."
+          }
+        }
+      },
+      "GuestListItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "guestId",
+          "celebrationId",
+          "name",
+          "email",
+          "locale",
+          "groupId",
+          "status",
+          "allowedCompanions",
+          "requestedCompanions",
+          "approvedCompanions",
+          "phone"
+        ],
+        "properties": {
+          "guestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "celebrationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "email"
+          },
+          "locale": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "groupId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "status": {
+            "enum": [
+              "PENDING",
+              "CONFIRMED",
+              "DECLINED"
+            ]
+          },
+          "allowedCompanions": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "requestedCompanions": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "approvedCompanions": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^\\+[1-9][0-9]{7,14}$",
+            "description": "E.164 (+ country code and number, 8 to 15 digits). Spaces, dots, dashes and parentheses are stripped on input."
+          }
+        }
+      },
+      "GuestReadList": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset",
+          "freshness"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GuestListItem"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "freshness": {
+            "$ref": "#/components/schemas/ProjectionFreshness"
+          }
+        }
+      },
+      "ErasureReceipt": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "erased",
+          "requestId"
+        ],
+        "properties": {
+          "erased": {
+            "type": "boolean"
+          },
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "RetentionSettings": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "retentionDays",
+          "basis",
+          "configured"
+        ],
+        "properties": {
+          "retentionDays": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 36500
+          },
+          "basis": {
+            "const": "REGISTERED_AT_UTC"
+          },
+          "configured": {
+            "type": "boolean"
+          }
+        }
+      },
+      "GuestGroupSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "celebrationId",
+          "name",
+          "memberCount"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "celebrationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "memberCount": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "GuestGroupPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "items",
+          "limit",
+          "offset"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GuestGroupSummary"
+            }
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "offset": {
+            "type": "integer"
+          }
+        }
+      },
+      "ChangeGuestGroup": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "groupId"
+        ],
+        "properties": {
+          "groupId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Target group of the same celebration, or null to leave the current group."
+          }
+        }
+      },
+      "CateringItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "guestId",
+          "groupId",
+          "status",
+          "partySize",
+          "dietaryNotes"
+        ],
+        "properties": {
+          "guestId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Opaque key; the report never carries name, email or phone."
+          },
+          "groupId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "status": {
+            "enum": [
+              "PENDING",
+              "CONFIRMED",
+              "DECLINED"
+            ]
+          },
+          "partySize": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "1 + approved companions for CONFIRMED; 0 otherwise."
+          },
+          "dietaryNotes": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000,
+            "description": "Only with includeMessage=true."
+          }
+        }
+      },
+      "CateringReport": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "items",
+          "limit",
+          "nextCursor"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CateringItem"
+            }
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Pass as cursor for the next page; null on the last page."
+          }
+        }
+      },
+      "ResolvedCredential": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "celebrationId",
+          "slug"
+        ],
+        "properties": {
+          "celebrationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "slug": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Public slug projected from Celebration events or a host call; null when not yet known (use celebrationId routes)."
+          }
+        }
+      },
+      "PublicRegistrationSettings": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "unregisteredRsvpMode",
+          "publicRegistrationEnabled"
+        ],
+        "properties": {
+          "unregisteredRsvpMode": {
+            "enum": [
+              "AUTO_ACCEPT",
+              "RESTRICTED"
+            ]
+          },
+          "publicRegistrationEnabled": {
+            "type": "boolean",
+            "description": "True only for a published celebration whose effective unregisteredRsvpMode is AUTO_ACCEPT. Unknown, draft, archived and RESTRICTED celebrations answer identically (RESTRICTED/false)."
+          }
+        }
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Missing/invalid bearer or unknown/revoked guest token",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Actor can read but cannot manage this celebration",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource missing or outside the actor/celebration scope",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "Validation": {
+        "description": "Invalid input, field identified",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "BadRequest": {
+        "description": "Malformed JSON",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "TooLarge": {
+        "description": "Request exceeds 1 MiB",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "UnsupportedType": {
+        "description": "Send application/json",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "Internal": {
+        "description": "Internal failure, no private details",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "Dependency": {
+        "description": "Required upstream, versioned RSVP configuration or policy synchronization unavailable",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "RsvpAlreadyExists, IdempotencyConflict or RsvpWindowClosed. A closed-window problem contains deadline (UTC), deadlineLocal, timeZone and locale; title is localized. CompanionRequestResolved for a completed or superseded request.",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "RsvpWindowClosed": {
+        "description": "RSVP deadline elapsed; title is localized and identifies the local deadline",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/ClosedRsvpWindowProblem"
+            }
+          }
+        }
+      }
+    }
+  }
 }
-

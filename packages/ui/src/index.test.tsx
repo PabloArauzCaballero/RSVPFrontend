@@ -116,3 +116,17 @@ describe('REQ-F03-05: catalog', () => {
     expect(screen.getAllByLabelText('Nombre').length).toBeGreaterThanOrEqual(4);
   });
 });
+
+describe('REQ-F06-02 · primitive copy comes from the i18n catalog', () => {
+  it('es-BO by default, en-US through stringsFor, in the native and the web primitives', () => {
+    const { stringsFor } = native;
+    const view = render(<UiProvider strings={stringsFor('en-US')}><DatePicker label="Date" /><Table columns={['A']} rows={[]} /><native.ComponentCatalog /></UiProvider>);
+    expect(screen.getAllByPlaceholderText('YYYY-MM-DD')[0]).toBeTruthy();
+    expect(screen.getAllByText('No records.')[0]).toBeTruthy();
+    expect(screen.getAllByText('Component catalog')[0]).toBeTruthy();
+    view.unmount();
+    render(<web.UiProvider strings={web.stringsFor('en-US')}><web.ComponentCatalog /></web.UiProvider>);
+    expect(screen.getAllByText('Component catalog')[0]).toBeTruthy();
+    expect(web.defaultStrings.close).toBe('Cerrar');
+  });
+});

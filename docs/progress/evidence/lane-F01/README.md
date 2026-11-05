@@ -14,3 +14,10 @@
 
 ## No cubierto
 iOS/Android en simulador o dispositivo; clon limpio siguiendo solo el README; versiones fijadas (no revisado); cobertura 85 %/75 %; 3 corridas CI; revision por otro eje.
+
+## Actualización 2026-11-04 (cierre de lo solucionable)
+
+- **Contratos (REQ-F01-05 sustituto local):** `yarn workspace @rsvp/contracts generate` volvió a vendorizar los specs del backend vivo: guest-rsvp 1.9.0, notification 1.2.1, gift-list 1.1.0, provider-catalog 2.0.0 (rutas ahora con prefijo `/providers` y `/celebrations/{id}/...` en gift-list). El tipado por contrato detectó el cambio: `query-hooks` dejó de compilar y se corrigieron las rutas de provider y gift (`src/provider/index.ts`, `src/gift/index.ts`). Los specs siguen cambiando en el backend: `check:generated` falla en cuanto difieren, por diseño. El paquete publicado en GitHub Packages sigue BLOQUEADO (externo).
+- **Native:** `expo export --platform ios --platform android` compila con el selector de fecha nativo (`.hbc` iOS 4.67 MB, Android 4.68 MB). Sin simulador ni dispositivo: no se declara ejecución nativa.
+- **Lint:** `eslint . --max-warnings 0` es parte de CI (`.github/workflows/ci.yml`, paso `yarn lint:code`) y ahora ignora `.next-*`, `test-results`.
+- Los tests que lanzan procesos (contracts, design-tokens) tienen `testTimeout` de 60 s (fallaban por timeout de 5 s bajo `turbo` en paralelo).

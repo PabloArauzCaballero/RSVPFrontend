@@ -53,6 +53,16 @@ export interface ProviderCard {
   readonly summary?: string;
   readonly priceFrom?: { readonly amountMinor: number; readonly currency: string };
   readonly imageUrl?: string;
+  /** Destinations enabled for the listing (WHATSAPP, PHONE, EMAIL, INSTAGRAM, OFFICIAL_SITE, LANDING, PRODUCT_PAGE); each is reached through /r/{listingId}. */
+  readonly destinations?: readonly string[];
+  /** Cities or areas the provider serves (F25 coverage zone). */
+  readonly coverage?: readonly string[];
+  readonly address?: string;
+  readonly hours?: readonly string[];
+  /** Present in the Provider Catalog 2.0.0 card: who fulfils, coverage zones, transport cost and lead time (F25-04). */
+  readonly fulfillment?: { readonly responsible: string; readonly coverageZones: readonly string[]; readonly transportCostMinor?: number; readonly leadTimeDays: number; readonly conditions: string; readonly disclaimer: string };
+  /** Not in the public card today; resolved through the listing when absent (lib/catalog.ts). */
+  readonly providerId?: string;
 }
 
 export interface ProviderPage {
@@ -70,14 +80,46 @@ export interface ProviderQuery {
   readonly verifiedOnly?: boolean;
   readonly maxPriceMinor?: number;
   readonly date?: string;
+  /** Provider microsite lookup (F25): returns only that provider's verified listings. */
+  readonly slug?: string;
+  /** Proximity filter (F24 REQ-04): listings within `radiusKm` of the point, nearest first. Wins over `city`. */
+  readonly near?: GeoFilter;
   readonly page?: number;
+}
+
+export interface GeoFilter { readonly lat: number; readonly lng: number; readonly radiusKm: number }
+
+export const DEFAULT_RADIUS_KM = 25;
+export const RADIUS_OPTIONS_KM = [5, 10, 25, 50, 100] as const;
+const GEO_DECIMALS = 2;
+const MAX_LAT = 90;
+const MAX_LNG = 180;
+const MAX_RADIUS_KM = 200;
+
+/**
+ * Reads ?lat=&lng=&radio= (km). Anything out of range is ignored so the page falls back to the city filter.
+ * Coordinates are rounded to about 1 km: enough for "near me", and the browser's exact position is never sent.
+ */
+export function parseGeo(lat: string | undefined, lng: string | undefined, radius: string | undefined): GeoFilter | undefined {
+  if (!lat || !lng) return undefined;
+  const latitude = Number(lat);
+  const longitude = Number(lng);
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || Math.abs(latitude) > MAX_LAT || Math.abs(longitude) > MAX_LNG) return undefined;
+  const parsedRadius = Number(radius);
+  const radiusKm = Number.isFinite(parsedRadius) && parsedRadius > 0 && parsedRadius <= MAX_RADIUS_KM ? parsedRadius : DEFAULT_RADIUS_KM;
+  return { lat: Number(latitude.toFixed(GEO_DECIMALS)), lng: Number(longitude.toFixed(GEO_DECIMALS)), radiusKm };
 }
 
 /** Builds the query of GET /providers (consumer contract in docs/contracts/provider-search.md). */
 export function providerSearchPath(query: ProviderQuery): string {
   const params = new URLSearchParams();
   if (query.category) params.set("category", query.category);
-  if (query.city) params.set("city", query.city);
+  if (query.slug) params.set("slug", query.slug);
+  if (query.near) {
+    params.set("lat", String(query.near.lat));
+    params.set("lng", String(query.near.lng));
+    params.set("radiusKm", String(query.near.radiusKm));
+  } else if (query.city) params.set("city", query.city);
   if (query.verifiedOnly) params.set("verified", "true");
   if (query.maxPriceMinor !== undefined) params.set("maxPriceMinor", String(query.maxPriceMinor));
   if (query.date) params.set("availableOn", query.date);

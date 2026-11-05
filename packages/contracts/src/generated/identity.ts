@@ -119,7 +119,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** Organizations the caller belongs to (ADMIN: all) */
+        get: operations["listOrganizations"];
         put?: never;
         /** Create an organization; the caller becomes its owner and a PLANNER member (needs MANAGE_ORGANIZATION: PLANNER or ADMIN) */
         post: operations["createOrganization"];
@@ -157,6 +158,57 @@ export interface paths {
         put?: never;
         /** Add an existing account as HOST or PLANNER member (owner or ADMIN). The member's next access token lists the organization. */
         post: operations["addOrganizationMember"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List accounts, paginated (ADMIN only) */
+        get: operations["listUsers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read one account (ADMIN only) */
+        get: operations["getUser"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/{id}/roles/{role}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Grant a platform role, idempotent (ADMIN only). The first ADMIN comes from the operator command IDENTITY_BOOTSTRAP_ADMIN_EMAIL */
+        put: operations["grantUserRole"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -228,6 +280,13 @@ export interface components {
             /** Format: uuid */
             userId: string;
         };
+        OrganizationSummary: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** Format: uuid */
+            ownerUserId: string;
+        };
         PasswordRecoveryRequest: {
             /** Format: email */
             email: string;
@@ -274,6 +333,20 @@ export interface components {
             refreshToken?: string;
             /** @constant */
             tokenType: "Bearer";
+        };
+        User: {
+            /** Format: date-time */
+            createdAt?: string | null;
+            email: string;
+            /** Format: uuid */
+            id: string;
+            roles: ("ADMIN" | "HOST" | "PLANNER" | "PROVIDER")[];
+        };
+        UserPage: {
+            items: components["schemas"]["User"][];
+            page: number;
+            size: number;
+            total: number;
         };
     };
     responses: {
@@ -518,6 +591,29 @@ export interface operations {
             };
         };
     };
+    listOrganizations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Organizations */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["OrganizationSummary"][];
+                    };
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
     createOrganization: {
         parameters: {
             query?: never;
@@ -598,6 +694,84 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
+            422: components["responses"]["Validation"];
+        };
+    };
+    listUsers: {
+        parameters: {
+            query?: {
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of users */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserPage"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            422: components["responses"]["Validation"];
+        };
+    };
+    getUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The user */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    grantUserRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                role: "ADMIN" | "HOST" | "PLANNER" | "PROVIDER";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The user with its roles */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
             422: components["responses"]["Validation"];
         };
     };

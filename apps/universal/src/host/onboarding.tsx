@@ -45,7 +45,7 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
   const [hosts, setHosts] = useState<Record<string, string>>({});
   const [invalid, setInvalid] = useState<string | null>(null);
   const type = types.data?.items.find((item) => item.code === (typeCode ?? existing.data?.eventTypeCode));
-  if (!canUseHostWorkspace(claims.roles)) return <Screen title={t("host.onboarding.title")}><Notice kind="error">{t("host.common.accessDenied")}</Notice></Screen>;
+  if (!canUseHostWorkspace(claims)) return <Screen title={t("host.onboarding.title")}><Notice kind="error">{t("host.common.accessDenied")}</Notice></Screen>;
 
   const submit = (): void => {
     const eventDate = toWallClock(when);

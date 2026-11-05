@@ -1,8 +1,11 @@
 import type { PropsWithChildren, ReactNode } from "react";
-import { ActivityIndicator, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type KeyboardTypeOptions } from "react-native";
+import { ActivityIndicator, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, type KeyboardTypeOptions } from "react-native";
+import { usePathname, useRouter, type Href } from "expo-router";
 import { ApiError } from "@rsvp/api-client";
+import { Button, Input } from "@rsvp/ui";
 import { colors, notice, radius, spacing, typography } from "@rsvp/design-tokens";
 import { useAuth } from "../auth/auth-context";
+import { loginHref } from "../auth/routes";
 import { useT } from "../platform/providers";
 
 /** Building blocks shared by the host and admin screens. No copy lives here: callers pass translated text. */
@@ -96,11 +99,9 @@ export interface FieldProps {
 export function Field({ label, value, onChange, help, error, multiline, placeholder, keyboardType, testID }: FieldProps): ReactNode {
   return (
     <View style={{ gap: spacing[1] }}>
-      <Text style={styles.label}>{label}</Text>
-      <TextInput accessibilityLabel={label} accessibilityHint={help} value={value} onChangeText={onChange} placeholder={placeholder} keyboardType={keyboardType} testID={testID}
-        multiline={multiline} style={[styles.input, multiline && { minHeight: MULTILINE_HEIGHT, paddingVertical: spacing[2], textAlignVertical: "top" }, error ? styles.inputError : null]} />
+      <Input label={label} accessibilityHint={help} value={value} onChangeText={onChange} placeholder={placeholder} keyboardType={keyboardType} testID={testID} error={error}
+        multiline={multiline} style={multiline ? { minHeight: MULTILINE_HEIGHT, paddingVertical: spacing[2], textAlignVertical: "top" } : undefined} />
       {help ? <Text style={styles.muted}>{help}</Text> : null}
-      {error ? <Text accessibilityRole="alert" style={[styles.muted, { color: palette.danger }]}>{error}</Text> : null}
     </View>
   );
 }
@@ -121,14 +122,9 @@ export function ChoiceGroup<TValue extends string>({ label, choices, value, onCh
   );
 }
 
+/** Host and admin actions are the shared `@rsvp/ui` Button; only the busy/disabled vocabulary is adapted here. */
 export function ActionButton({ label, onPress, variant = "primary", busy = false, disabled = false, testID }: { readonly label: string; readonly onPress: () => void; readonly variant?: "primary" | "secondary" | "danger"; readonly busy?: boolean; readonly disabled?: boolean; readonly testID?: string }): ReactNode {
-  const inactive = busy || disabled;
-  return (
-    <Pressable accessibilityRole="button" accessibilityLabel={label} aria-disabled={inactive} aria-busy={busy} disabled={inactive} onPress={onPress} testID={testID}
-      style={[styles.button, variant === "secondary" && styles.buttonSecondary, variant === "danger" && styles.buttonDanger, inactive && styles.buttonDisabled]}>
-      {busy ? <ActivityIndicator aria-label={label} color={variant === "secondary" ? palette.primary : palette.onPrimary} /> : <Text style={[styles.buttonText, variant === "secondary" && styles.buttonTextSecondary]}>{label}</Text>}
-    </Pressable>
-  );
+  return <Button accessibilityLabel={label} variant={variant} state={busy ? "loading" : disabled ? "disabled" : "default"} onPress={onPress} testID={testID}>{label}</Button>;
 }
 
 export function Notice({ kind = "info", children }: PropsWithChildren<{ readonly kind?: "info" | "error" | "success" }>): ReactNode {
@@ -152,13 +148,22 @@ export function errorMessage(error: unknown, t: ReturnType<typeof useT>): string
 
 export const isConflict = (error: unknown): boolean => error instanceof ApiError && error.status === STATUS_CONFLICT;
 
+export const isUnauthorized = (error: unknown): boolean => error instanceof ApiError && error.status === STATUS_UNAUTHORIZED;
+
+/**
+ * Failure notice with the next step per status (REQ-F04-06): 409 offers a reload, 401 (the silent
+ * refresh already failed) offers signing in again and comes back to this page, 403/422/404 explain.
+ */
 export function ErrorNotice({ error, onReload }: { readonly error: unknown; readonly onReload?: () => void }): ReactNode {
   const t = useT();
+  const router = useRouter();
+  const pathname = usePathname();
   if (!error) return null;
   return (
     <Notice kind="error">
       <Text style={styles.body}>{errorMessage(error, t)}</Text>
       {isConflict(error) && onReload ? <ActionButton variant="secondary" label={t("host.common.reload")} onPress={onReload} /> : null}
+      {isUnauthorized(error) ? <ActionButton variant="secondary" label={t("errors.signInAgain")} onPress={() => router.replace(loginHref(pathname) as Href)} /> : null}
     </Notice>
   );
 }

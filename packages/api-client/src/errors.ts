@@ -14,6 +14,8 @@ export class ApiError extends Error {
   public readonly status: number;
   public readonly problem?: ProblemDetails;
   public readonly correlationId: string;
+  /** Seconds from the Retry-After header (429/503), when the server sent one. */
+  public retryAfterSeconds?: number;
 
   public constructor(status: number, correlationId: string, problem?: ProblemDetails) {
     super(problem?.title ?? `HTTP ${status}`);

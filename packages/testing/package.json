@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./contract-mock": "./src/contract-mock.ts",
+    "./contract-server": "./src/contract-server.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",
@@ -17,6 +19,7 @@
   },
   "devDependencies": {
     "@rsvp/config-ts": "workspace:*",
+    "@types/node": "^22.15.3",
     "eslint": "^9.25.1",
     "typescript": "^5.8.3",
     "vitest": "^3.1.2"

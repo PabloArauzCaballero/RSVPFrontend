@@ -1,7 +1,9 @@
 import type { Translate } from "@rsvp/i18n/server";
+import { ImpressionTracker } from "./impression-tracker";
+import { NearMeButton } from "./near-me";
 import { itemListJsonLd, jsonLdScript } from "../lib/json-ld";
 import { siteUrl } from "../lib/metadata";
-import { pageCount, PROVIDER_CATEGORIES, PROVIDER_CITIES, type ProviderCard, type ProviderPage } from "../lib/providers";
+import { pageCount, PROVIDER_CATEGORIES, PROVIDER_CITIES, RADIUS_OPTIONS_KM, type ProviderCard, type ProviderPage } from "../lib/providers";
 
 const DIRECTORY = "/proveedores";
 const MINOR_UNIT_DIGITS = 2;
@@ -45,9 +47,10 @@ export function ProviderResults({ page, t, locale, path, query = "" }: { readonl
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
       <p className="directory-count">{t("directory.results", { count: page.total })}</p>
+      <ImpressionTracker surface="SEARCH">
       <ul className="directory-results">
         {page.items.map((card) => (
-          <li key={card.listingId}>
+          <li key={card.listingId} data-listing-id={card.listingId}>
             {card.imageUrl ? <img src={card.imageUrl} alt="" width={320} height={240} loading="lazy" decoding="async" /> : null}
             <h3><a href={providerHref(card)}>{card.name}</a></h3>
             <p>{t(`directory.category.${card.category}`)} · {card.city}</p>
@@ -57,6 +60,7 @@ export function ProviderResults({ page, t, locale, path, query = "" }: { readonl
           </li>
         ))}
       </ul>
+      </ImpressionTracker>
       {pages > 1 ? (
         <nav aria-label={t("directory.pagination.label")} className="directory-pagination">
           {page.page > 1 ? <a rel="prev" href={href(page.page - 1)}>{t("directory.pagination.previous")}</a> : null}
@@ -86,6 +90,12 @@ export function CityLinks({ t, categorySlug, categoryCode, onlyFeatured = false 
   );
 }
 
+function clearLocationHref(values: Readonly<Record<string, string>>): string {
+  const params = new URLSearchParams(Object.entries(values).filter(([key, value]) => value && !["lat", "lng", "radio"].includes(key)));
+  const search = params.toString();
+  return search ? `${DIRECTORY}/buscar?${search}` : `${DIRECTORY}/buscar`;
+}
+
 export function SearchForm({ t, values }: { readonly t: Translate; readonly values: Readonly<Record<string, string>> }) {
   return (
     <form action={`${DIRECTORY}/buscar`} method="get" className="directory-search">
@@ -106,6 +116,15 @@ export function SearchForm({ t, values }: { readonly t: Translate; readonly valu
         <label>{t("directory.filters.maxPrice")}<input type="number" name="precioMax" min={0} step={1} inputMode="numeric" defaultValue={values["precioMax"] ?? ""} /></label>
         <label>{t("directory.filters.date")}<input type="date" name="fecha" defaultValue={values["fecha"] ?? ""} /></label>
         <label className="directory-check"><input type="checkbox" name="verificado" value="1" defaultChecked={values["verificado"] === "1"} />{t("directory.filters.verifiedOnly")}</label>
+        <label>{t("search.radius")}
+          <select name="radio" defaultValue={values["radio"] || "25"}>
+            {RADIUS_OPTIONS_KM.map((km) => <option key={km} value={km}>{t("search.radiusOption", { km })}</option>)}
+          </select>
+        </label>
+        <input type="hidden" name="lat" defaultValue={values["lat"] ?? ""} />
+        <input type="hidden" name="lng" defaultValue={values["lng"] ?? ""} />
+        <NearMeButton labels={{ use: t("search.nearMe.use"), locating: t("search.nearMe.locating"), denied: t("search.nearMe.denied") }} />
+        {values["lat"] && values["lng"] ? <p className="directory-nearme-active" role="status">{t("search.nearMe.active", { km: values["radio"] || "25" })} <a href={clearLocationHref(values)}>{t("search.nearMe.clear")}</a></p> : null}
         <button type="submit" className="rsvp-button">{t("directory.filters.submit")}</button>
       </fieldset>
     </form>

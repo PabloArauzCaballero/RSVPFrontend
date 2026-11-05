@@ -1,3 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Tailwind preflight paints placeholders #9ca3af (2.4:1); keep the muted text token (WCAG AA). */
+input::placeholder,
+textarea::placeholder { color: #5a6380; opacity: 1; }

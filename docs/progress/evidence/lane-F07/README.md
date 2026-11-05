@@ -10,3 +10,9 @@
 | REQ-F07-06 Lighthouse CI, umbral 95 | PARTIAL | `lighthouse-local.txt`: Lighthouse 12.8.2 sobre `next start` (:3200) | SEO = 1 en `/`, `/proveedores`, `/proveedores/salones`, `/proveedores/salones/la-paz` tras el rediseño. Defecto corregido: `lighthouse.yml` pasaba `.lighthouserc.json` como `budgetPath` (el umbral no se aplicaba); ahora usa `configPath` y mide las 4 rutas. **No se ejecutó `lhci`** (descarga bloqueada por el entorno) ni el workflow en GitHub; las rutas `/c/<slug>` necesitan backend y quedan fuera |
 
 No cubierto: ninguna corrida real en GitHub Actions, builds instalables iOS/Android, 3 corridas seguidas de CI.
+
+## Actualización 2026-11-04
+
+- `ci.yml` ahora ejecuta `yarn lint:code` (ESLint real de toda la raíz) y `contracts check:generated` antes de `turbo run build lint typecheck test --affected`. Los scripts `lint` de cada workspace siguen siendo `tsc --noEmit` (el lint de código corre una vez en la raíz, no por paquete: decisión deliberada para no duplicar).
+- `lighthouse.yml`: `configPath: ./.lighthouserc.json` con `assert.assertions["categories:seo"] = error >= 0.95` sobre 4 rutas indexables (`/`, `/proveedores`, `/proveedores/salones`, `/proveedores/salones/la-paz`). Las mediciones locales posteriores al rediseño están en `lane-F08` y `lane-F24`.
+- **Solo ejecutable en GitHub Actions (no verificado aquí):** las corridas de `ci.yml`, `lighthouse.yml` (`treosh/lighthouse-ci-action`), `eas-build.yml`, `eas-update.yml`; branch protection; 3 corridas verdes seguidas; el baseline de `test:visual` en Linux. BLOQUEOS externos: `EXPO_TOKEN`, proyecto EAS, credenciales Apple/Google, `EXPO_ASC_APP_ID`.

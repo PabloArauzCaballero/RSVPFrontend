@@ -34,3 +34,14 @@ Nota de build: `expo export` cachea `EXPO_PUBLIC_*`; al cambiar `EXPO_PUBLIC_API
 `auth-e2e.mjs` adaptado y ejecutado en Chrome contra Identity real (Spring `bootRun`, Postgres/Redis efímeros, app exportada con `EXPO_PUBLIC_API_URL`): **31/31 pasos, 3 corridas seguidas** (`auth-e2e.log`). Pasos nuevos o cambiados: la cookie `rsvp_refresh` existe con `httpOnly`, `SameSite=Strict`, `Path=/identity/auth`, `Secure`; `document.cookie` no la lista y ningún token llega a `localStorage`/`sessionStorage`; **recargar la página conserva la sesión** (restore por cookie); logout sin cuerpo, cookie borrada y el token viejo da 401 en Identity (`cookie-session.txt`, `logout-revocation.txt`). La bandera `staleOnce` del script pasó a ser por contexto: era global y daba un falso fallo intermitente. La pasarela del script sigue siendo un stand-in, pero el CORS con credenciales y el `Set-Cookie` se comprobaron aparte contra **Kong real** (ver evidencia del carril 07).
 
 `corepack yarn turbo typecheck test lint`: 65/65. Cada carga de la web hace un `POST /auth/refresh` de sondeo (401 si no hay cookie). REQ-F05-02 pasa a PASS en web; iOS/Android siguen sin ejecutarse.
+
+## CORS con credenciales contra Kong real (2026-11-04)
+
+`apps/universal/scripts/auth-e2e-kong.mjs`: la app web exportada con `EXPO_PUBLIC_API_URL=http://localhost:28000`, servida en `:8081` (el plugin CORS de Kong solo permite `http://localhost:3000` y `:8081`), en Chrome real y **sin ningún intermediario**. 6/6 pasos (`auth-e2e-kong.log`, `auth-e2e-kong-result.json`, capturas `kong-*.png`):
+
+- Preflight `OPTIONS /identity/auth/refresh` 200 con `Access-Control-Allow-Origin: http://localhost:8081` y `Allow-Credentials: true`; todas las respuestas posteriores (register 201, refresh 200/401, logout 204, login 401) traen ambas cabeceras.
+- Registro por la UI funciona entre orígenes; Identity fijó la cookie `rsvp_refresh` (httpOnly, SameSite=Strict, Path=/identity/auth, Secure) a través de Kong; `document.cookie` no la lista; ningún token en web storage.
+- Recargar la página restaura la sesión con `POST /identity/auth/refresh` (credentials: include).
+- Cerrar sesión: `POST /identity/auth/logout` 204 y la cookie desaparece. Contraseña errónea: 401 neutro (no un fallo CORS).
+
+Origen `http://localhost:8200` (el de la corrida previa) NO está permitido por Kong: la app debe servirse en 3000 o 8081. El repliegue web `/rsvp/<token>` ya existe; resolver el token es del carril F15/F21 (otro agente). REQ-F05-02 web: ahora observado contra gateway real. Siguen BLOQUEADOS: universal links (dominio verificado), dispositivos.

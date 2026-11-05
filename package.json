@@ -26,6 +26,7 @@
   "devDependencies": {
     "@axe-core/playwright": "4.11.0",
     "@colbymchenry/codegraph": "1.6.2",
+    "@playwright/test": "1.62.1",
     "@types/node": "22.15.3",
     "eslint": "9.25.1",
     "lighthouse": "12.8.2",

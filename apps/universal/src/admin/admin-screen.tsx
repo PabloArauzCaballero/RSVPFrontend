@@ -33,10 +33,14 @@ export function AdminScreen({ title, current, onNavigate, children }: PropsWithC
   return <Screen title={title} nav={adminNav(t)} current={current} onNavigate={onNavigate}>{children}</Screen>;
 }
 
-/** A module whose backend API is owned by another lane and not published yet: say so, invent nothing. */
-export function UnavailableModule({ service }: { readonly service: string }): ReactNode {
-  const t = useT();
-  return <Notice>{t("admin.unavailable", { service })}</Notice>;
-}
-
 export const splitList = (value: string): string[] => value.split(",").map((item) => item.trim()).filter(Boolean);
+
+/** Renders `Inner` only for ADMIN, so a non-admin never triggers the screen's requests (REQ-F14-06). */
+export function adminOnly<TProps extends object>(Inner: (props: TProps) => ReactNode): (props: TProps) => ReactNode {
+  return function AdminOnly(props: TProps): ReactNode {
+    const t = useT();
+    const claims = useClaims();
+    if (!isPlatformAdmin(claims.roles)) return <Screen title={t("admin.title")}><Notice kind="error">{t("admin.denied")}</Notice></Screen>;
+    return <Inner {...props} />;
+  };
+}

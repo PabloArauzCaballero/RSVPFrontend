@@ -14,3 +14,8 @@
 - **BLOQUEADO-EXTERNO:** `@rsvp/contracts` publicado (hoy `packages/contracts` generado en local con openapi-typescript); dominio y firma para universal/app links (F05-04); `EXPO_TOKEN`, projectId y cuentas para EAS/TestFlight/Update (F07-03…05); ~~cookie httpOnly de sesión web~~ **implementada 2026-11-03** y VERIFIED en web (Identity real + Kong real, 2026-11-03).
 - **Depende de backend por construir:** los OpenAPI de guests, gifts, providers y notifications no declaran cuerpos ni respuestas; resolver un token de invitación necesita el servicio Guest.
 - Sin ejecutar: simulador/dispositivo iOS y Android, `lhci` y workflows en GitHub Actions, cobertura ≥85 %.
+
+## Actualización 2026-11-04 (F15–F21, eje Miguel)
+- **Backend (pedidos concretos):** (1) resolver token → celebración sin slug para enlaces legados `/rsvp/{token}`; (2) notification: campo leído/no leído y "marcar leída", horario de silencio y preferencias por tipo de evento (F18-04/05/06); (3) exponer públicamente el modo `unregisteredRsvpMode` (hoy el formulario A13 solo descubre el 403 al enviar); (4) canal de contacto del anfitrión para "a quién escribir" (hoy solo nombres); (5) CORS de Kong: orígenes de producción y de los puertos locales de seo-web/universal (hoy solo `localhost:3000` y `:8081`); (6) límite de Kong 30/min por IP puede afectar redes compartidas.
+- **BLOCKED-EXTERNAL:** push físico y recepción (F19/F20), verificación de universal/app links en iPhone y Android (dominio, appId, firma, builds EAS), capturas nativas.
+- La prueba contra el backend real de guest-rsvp (Docker) no se ejecutó en esta pasada.

@@ -7,9 +7,10 @@ export const invalidation = {
   eventTypesChanged: () => [queryKeys.eventType.all] as const,
   templatesChanged: () => [queryKeys.template.all] as const,
   mediaChanged: (celebrationId: string) => [queryKeys.media.list(celebrationId)] as const,
-  rsvpChanged: (token: string) => [queryKeys.guest.rsvp(token)] as const,
-  guestsChanged: (celebrationId: string) => [queryKeys.guest.list(celebrationId)] as const,
+  rsvpChanged: (celebrationId: string, fingerprint: string) => [queryKeys.guest.rsvp(celebrationId, fingerprint)] as const,
+  /** Host-side read models derived from the guest list and RSVPs (list, summary, requests, exports). */
+  guestsChanged: (celebrationId: string) => [queryKeys.guest.lists(celebrationId), queryKeys.guest.summary(celebrationId), queryKeys.guest.companionRequests(celebrationId), queryKeys.guest.rsvps(celebrationId)] as const,
   giftReservationChanged: (celebrationId: string) => [queryKeys.gift.list(celebrationId)] as const,
   providerChanged: () => [queryKeys.provider.all] as const,
-  notificationPreferencesChanged: () => [queryKeys.notification.all] as const
+  notificationPreferencesChanged: (celebrationId: string) => [queryKeys.notification.preferences(celebrationId)] as const
 };

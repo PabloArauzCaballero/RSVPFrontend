@@ -297,8 +297,11 @@ export interface components {
             isCover?: boolean;
             sizeBytes?: number;
             sortOrder?: number;
-            /** @enum {string} */
-            status?: "PENDING_UPLOAD" | "PROCESSED" | "REJECTED" | "DELETED";
+            /**
+             * @description PROCESSING while the variant worker has not finished; REJECTED if the image could not be decoded after retries.
+             * @enum {string}
+             */
+            status?: "PENDING_UPLOAD" | "PROCESSING" | "PROCESSED" | "REJECTED" | "DELETED";
             /** @description Presigned GET URLs */
             variants?: {
                 full?: string;
@@ -835,8 +838,8 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Verified and PROCESSED with thumb, medium, full and webp variants */
-            200: {
+            /** @description Upload verified and queued. The asset is PROCESSING; a worker builds the thumb, medium, full and webp variants outside this request. Poll GET /celebrations/{celebrationId}/assets until status is PROCESSED (or REJECTED); template.media-variants.generated.v1 is published when done. */
+            202: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -853,7 +856,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Stored object does not match declared type/size, or is not an image */
+            /** @description Stored object does not match declared type/size, or is not an image (cheap header check done in the request) */
             422: {
                 headers: {
                     [name: string]: unknown;

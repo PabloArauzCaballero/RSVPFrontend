@@ -4,6 +4,7 @@ import { I18nextProvider, useTranslation } from "react-i18next";
 import { createApiClient, type ApiClient } from "@rsvp/api-client";
 import { IdentityClient, SessionManager } from "@rsvp/auth";
 import { createI18n, resolveLocale, supportedLocales, type AppLocale, type Translate } from "@rsvp/i18n";
+import { UiProvider, stringsFor } from "@rsvp/ui";
 import { AuthProvider, StaticAuthProvider, useAuth } from "../auth/auth-context";
 import { readLocalePreference, writeLocalePreference } from "./preferences";
 import { createAppSessionStore, type SessionClaims } from "./session";
@@ -70,7 +71,8 @@ export function AppProviders({ children, client, claims, runtime, locale, queryC
   const setLocale = useCallback((next: AppLocale) => { setChosen(next); void writeLocalePreference(next); }, []);
   const i18n = useMemo(() => createI18n(resolvedLocale), [resolvedLocale]);
   const platform = useMemo<Platform>(() => ({ client: client ?? app?.client ?? createAppClient(), locale: resolvedLocale, setLocale }), [client, app, resolvedLocale, setLocale]);
-  const body = <PlatformContext.Provider value={platform}>{children}</PlatformContext.Provider>;
+  // The host, guest and portal screens are built on the light palette only; until they have a dark theme the primitives must not follow the system scheme (white labels on a light page failed contrast at 1.07:1).
+  const body = <PlatformContext.Provider value={platform}><UiProvider scheme="light" strings={stringsFor(resolvedLocale)}>{children}</UiProvider></PlatformContext.Provider>;
   return (
     <QueryClientProvider client={queries}>
       <I18nextProvider i18n={i18n}>

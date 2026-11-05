@@ -16,9 +16,7 @@ export const ALLOWED_LITERALS = ["RSVP", "· /c/"];
  */
 export const LEGACY_LITERAL_FILES = [
   "apps/seo-web/app/c/[[]slug]/rsvp/[[]token]/page.tsx", // F15/F16 guest RSVP page
-  "apps/seo-web/components/rsvp/**", // F15/F16 RSVP form and status
-  "packages/ui/src/**", // F02 native primitives (default Spanish labels)
-  "packages/ui-web/src/**" // F03 web primitives (default Spanish labels)
+  "apps/seo-web/components/rsvp/**" // F15/F16 RSVP form and status
 ];
 
 /** Every file that renders visible text for people. */
@@ -56,7 +54,7 @@ const codeQuality = tseslint.config(
 );
 
 export default [
-  { ignores: ["**/dist/**", "**/.next/**", "**/node_modules/**", "**/web-build/**", "**/.expo/**", "**/coverage/**"] },
+  { ignores: ["**/dist/**", "**/.next/**", "**/.next-*/**", "**/test-results/**", "**/playwright-report/**", "**/node_modules/**", "**/web-build/**", "**/.expo/**", "**/coverage/**"] },
   ...codeQuality,
   {
     files: SCREEN_FILES,

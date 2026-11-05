@@ -1,16 +1,3929 @@
 {
-  "openapi":"3.1.0",
-  "info":{"title":"RSVP Provider Catalog API","version":"1.0.0"},
-  "servers":[{"url":"http://localhost:8000/providers"}],
-  "paths":{
-    "/health":{"get":{"responses":{"200":{"description":"Healthy"}}}},
-    "/":{"get":{"operationId":"searchProviders","parameters":[{"name":"coverage","in":"query","schema":{"type":"string"}}],"responses":{"200":{"description":"Verified published listings only"}}},"post":{"operationId":"registerProvider","responses":{"201":{"description":"Provider created"},"422":{"$ref":"#/components/responses/Validation"}}}},
-    "/{providerId}/verify":{"post":{"operationId":"verifyProvider","responses":{"200":{"description":"Provider verified"},"403":{"$ref":"#/components/responses/Forbidden"},"409":{"$ref":"#/components/responses/Conflict"}}}},
-    "/{providerId}/listings":{"post":{"operationId":"createListing","responses":{"201":{"description":"Listing created"},"422":{"$ref":"#/components/responses/Validation"}}}},
-    "/r/{listingId}":{"get":{"operationId":"resolveListingRedirect","parameters":[{"name":"listingId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}},{"name":"destination","in":"query","required":true,"schema":{"type":"string","enum":["OFFICIAL_SITE","LANDING","WHATSAPP","PHONE","EMAIL","INSTAGRAM","PRODUCT_PAGE"]}}],"responses":{"302":{"description":"Temporary redirect. A permanent 301 is forbidden because it bypasses future lead tracking."},"404":{"$ref":"#/components/responses/NotFound"}}}},
-    "/{providerId}/calendar":{"get":{"operationId":"getProviderCalendar","responses":{"200":{"description":"Monthly availability in provider time zone"}}}},
-    "/{providerId}/bookings":{"post":{"operationId":"requestBooking","responses":{"201":{"description":"Booking requested"},"409":{"description":"No capacity remains"},"422":{"description":"Date is outside availability or blocked"}}}},
-    "/{providerId}/quotes":{"post":{"operationId":"requestQuote","responses":{"201":{"description":"Quote requested"},"422":{"$ref":"#/components/responses/Validation"}}}}
+  "openapi": "3.1.0",
+  "info": {
+    "title": "RSVP Provider Catalog API",
+    "version": "2.1.0",
+    "description": "2.0.0: real service (port 3005). Paths now include the gateway prefixes (/providers, /r) and /listings; bodies and responses are defined. GET /providers keeps the query contract of RSVPFrontend seo-web (category, city, verified, maxPriceMinor, availableOn, page, pageSize) and adds coverage, near and locale. Errors are RFC 9457 problems. Disclaimer: RSVP brokers contact, it does not deliver the service. 2.1.0 (additive): ProviderCard adds providerId, providerName, destinations, address and hours and GET /providers accepts ?slug=; GET /providers/mine; microsite profile (GET/PUT /providers/{id}/microsite, REQ-F28-02); verification documents with presigned upload to object storage (/providers/{id}/documents...); POST /providers/impressions returns {recorded, ignored}; POST /providers/{id}/quotes accepts anonymous requests only when the deployment enables them (captcha or open mode, with per-address and per-contact caps); GET /listings text search matches any word, accent-insensitively, by title, category or description."
   },
-  "components":{"schemas":{"Problem":{"type":"object","required":["type","title","status"],"properties":{"type":{"type":"string"},"title":{"type":"string"},"status":{"type":"integer"}}}},"responses":{"NotFound":{"description":"Verified listing or enabled destination not found"},"Validation":{"description":"Invalid request or missing fulfillment"},"Forbidden":{"description":"Provider owner or administrator role required"},"Conflict":{"description":"Invalid state transition or exhausted capacity"}}}
+  "servers": [
+    {
+      "url": "http://localhost:8000"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "health",
+        "summary": "Liveness",
+        "tags": [
+          "provider-catalog"
+        ],
+        "responses": {
+          "200": {
+            "description": "Healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/providers/health": {
+      "get": {
+        "operationId": "healthPrefixed",
+        "summary": "Liveness through the gateway prefix",
+        "tags": [
+          "provider-catalog"
+        ],
+        "responses": {
+          "200": {
+            "description": "Healthy"
+          }
+        }
+      }
+    },
+    "/providers/ready": {
+      "get": {
+        "operationId": "ready",
+        "summary": "Readiness (Postgres and broker)",
+        "tags": [
+          "provider-catalog"
+        ],
+        "responses": {
+          "200": {
+            "description": "Ready"
+          },
+          "500": {
+            "$ref": "#/components/responses/Internal"
+          }
+        }
+      }
+    },
+    "/providers": {
+      "get": {
+        "operationId": "searchProviders",
+        "summary": "Public search of VERIFIED providers with published listings",
+        "tags": [
+          "provider-catalog"
+        ],
+        "responses": {
+          "200": {
+            "description": "Ranked page. Score = verified + location tier (city>department>country) + plan - cap penalty; a provider over its monthly cap ranks lower but is never hidden.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderPage"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          }
+        },
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Category code (CATERING) or slug (catering)."
+          },
+          {
+            "name": "city",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "City slug; filters strictly."
+          },
+          {
+            "name": "near",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "City slug used only as ranking/proximity origin, without filtering."
+          },
+          {
+            "name": "verified",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Accepted for compatibility; every result is verified."
+          },
+          {
+            "name": "maxPriceMinor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "description": ""
+          },
+          {
+            "name": "availableOn",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": ""
+          },
+          {
+            "name": "coverage",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Coverage zone declared in fulfillment."
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "description": ""
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 12
+            },
+            "description": ""
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "es-BO",
+                "en-US"
+              ]
+            },
+            "description": "Overrides Accept-Language."
+          },
+          {
+            "name": "slug",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]+$",
+              "maxLength": 80
+            },
+            "description": "Provider slug; returns only that provider's published listings (empty page when unknown or not VERIFIED)."
+          }
+        ]
+      },
+      "post": {
+        "operationId": "registerProvider",
+        "summary": "Register a provider (role PROVIDER or ADMIN); the caller becomes the owner",
+        "tags": [
+          "provider-catalog"
+        ],
+        "responses": {
+          "201": {
+            "description": "Provider created in DRAFT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Provider"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterProvider"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/providers/categories": {
+      "get": {
+        "operationId": "listCategories",
+        "summary": "Eleven categories with translations",
+        "tags": [
+          "provider-catalog"
+        ],
+        "responses": {
+          "200": {
+            "description": "Categories",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryList"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "es-BO",
+                "en-US"
+              ]
+            },
+            "description": "Overrides Accept-Language."
+          }
+        ]
+      }
+    },
+    "/providers/geo": {
+      "get": {
+        "operationId": "listGeo",
+        "summary": "Bolivia departments and main cities with coordinates and source",
+        "tags": [
+          "provider-catalog"
+        ],
+        "responses": {
+          "200": {
+            "description": "Cities",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeoList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/providers/impressions": {
+      "post": {
+        "operationId": "recordImpressions",
+        "summary": "Record that listings were shown (feeds the metrics projection)",
+        "tags": [
+          "provider-catalog"
+        ],
+        "responses": {
+          "202": {
+            "description": "Recorded. `recorded` listings produced an impression event; `ignored` were skipped.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "recorded",
+                    "ignored"
+                  ],
+                  "properties": {
+                    "recorded": {
+                      "type": "integer"
+                    },
+                    "ignored": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImpressionsRequest"
+              }
+            }
+          }
+        },
+        "description": "Called by the directory once per rendered page. Metrics: impressions are projected per provider/day/category; GET /providers/{id}/metrics returns totals {impressions, clicks, validLeads, invalidLeads, ctr} where ctr = clicks / impressions (4 decimals, 0 without impressions) and, with groupBy, the same per day, category or destination. Rate limited per client address."
+      }
+    },
+    "/providers/me/bookings": {
+      "get": {
+        "operationId": "listMyBookings",
+        "summary": "Booking requests made by the caller",
+        "tags": [
+          "provider-catalog"
+        ],
+        "responses": {
+          "200": {
+            "description": "Bookings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingList"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/providers/{providerId}": {
+      "get": {
+        "operationId": "getProvider",
+        "summary": "Provider (full view for owner/admin; public view only if VERIFIED)",
+        "tags": [
+          "provider-catalog"
+        ],
+        "responses": {
+          "200": {
+            "description": "Provider",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Provider"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        },
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "updateProvider",
+        "summary": "Rename; plan changes are admin-only",
+        "tags": [
+          "provider-catalog"
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Provider"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          }
+        },
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProvider"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/providers/{providerId}/submit": {
+      "post": {
+        "operationId": "submitProvider",
+        "summary": "DRAFT or SUSPENDED -> PENDING_VERIFICATION",
+        "tags": [
+          "provider-catalog"
+        ],
+        "responses": {
+          "200": {
+            "description": "Provider",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Provider"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        },
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/providers/{providerId}/verify": {
+      "post": {
+        "operationId": "verifyProvider",
+        "summary": "PENDING_VERIFICATION -> VERIFIED (administrator only)",
+        "tags": [
+          "provider-catalog"
+        ],
+        "responses": {
+          "200": {
+            "description": "Provider verified",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Provider"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        },
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/providers/{providerId}/suspend": {
+      "post": {
+        "operationId": "suspendProvider",
+        "summary": "Withdraw from search without deleting listings or leads",
+        "tags": [
+          "provider-catalog"
+        ],
+        "responses": {
+          "200": {
+            "description": "Provider suspended",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Provider"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        },
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/providers/{providerId}/lead-config": {
+      "put": {
+        "operationId": "configureLeads",
+        "summary": "Destinations, UTM template, dedupe window, monthly cap and billing model",
+        "tags": [
+          "provider-catalog"
+        ],
+        "responses": {
+          "200": {
+            "description": "Provider",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Provider"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          }
+        },
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LeadConfig"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/providers/{providerId}/leads": {
+      "get": {
+        "operationId": "listLeads",
+        "summary": "Raw leads (valid and invalid) for auditing",
+        "tags": [
+          "provider-catalog"
+        ],
+        "responses": {
+          "200": {
+            "description": "Leads",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeadList"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        },
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "description": ""
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "description": ""
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/providers/{providerId}/listings": {
+      "get": {
+        "operationId": "listOwnListings",
+        "summary": "Own listings, published or not",
+        "tags": [
+          "provider-catalog"
+        ],
+        "responses": {
+          "200": {
+            "description": "Listings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Listing"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        },
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "es-BO",
+                "en-US"
+              ]
+            },
+            "description": "Overrides Accept-Language."
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "createListing",
+        "summary": "Create an unpublished listing",
+        "tags": [
+          "provider-catalog"
+        ],
+        "responses": {
+          "201": {
+            "description": "Listing created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Listing"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          }
+        },
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "es-BO",
+                "en-US"
+              ]
+            },
+            "description": "Overrides Accept-Language."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateListing"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/providers/{providerId}/listings/{listingId}/publish": {
+      "post": {
+        "operationId": "publishListing",
+        "summary": "Publish; destinations and fulfillment are mandatory (422, message translated by locale)",
+        "tags": [
+          "provider-catalog"
+        ],
+        "responses": {
+          "200": {
+            "description": "Published",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Listing"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          }
+        },
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "listingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "es-BO",
+                "en-US"
+              ]
+            },
+            "description": "Overrides Accept-Language."
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/providers/{providerId}/metrics": {
+      "get": {
+        "operationId": "getMetrics",
+        "summary": "Partner metrics projected from events",
+        "tags": [
+          "provider-catalog"
+        ],
+        "responses": {
+          "200": {
+            "description": "Metrics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Metrics"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          }
+        },
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": ""
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": ""
+          },
+          {
+            "name": "groupBy",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "day",
+                "category",
+                "destination"
+              ]
+            },
+            "description": ""
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/providers/{providerId}/availability": {
+      "get": {
+        "operationId": "getAvailability",
+        "summary": "Own recurring rules and blackouts",
+        "tags": [
+          "provider-catalog"
+        ],
+        "responses": {
+          "200": {
+            "description": "Availability",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Availability"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        },
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "operationId": "setAvailability",
+        "summary": "Replace rules, blackouts and capacityPerDay (rules are local time in the provider time zone)",
+        "tags": [
+          "provider-catalog"
+        ],
+        "responses": {
+          "200": {
+            "description": "Availability",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Availability"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          }
+        },
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AvailabilityInput"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/providers/{providerId}/calendar": {
+      "get": {
+        "operationId": "getProviderCalendar",
+        "summary": "One month of availability in the provider time zone",
+        "tags": [
+          "provider-catalog"
+        ],
+        "responses": {
+          "200": {
+            "description": "Calendar",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Calendar"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          }
+        },
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "month",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+            },
+            "description": "YYYY-MM; defaults to the current month."
+          }
+        ]
+      }
+    },
+    "/providers/{providerId}/bookings": {
+      "get": {
+        "operationId": "listProviderBookings",
+        "summary": "Booking requests of the provider (owner only)",
+        "tags": [
+          "provider-catalog"
+        ],
+        "responses": {
+          "200": {
+            "description": "Bookings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingList"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        },
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/BookingStatus"
+            },
+            "description": ""
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "requestBooking",
+        "summary": "Request a date; capacity is enforced atomically",
+        "tags": [
+          "provider-catalog"
+        ],
+        "responses": {
+          "201": {
+            "description": "Booking requested",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Booking"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "description": "No capacity remains for the date",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Date is blocked, outside the recurring rules or hours (provider time zone), or in the past",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BookingRequest"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/providers/{providerId}/bookings/{bookingId}/confirm": {
+      "post": {
+        "operationId": "confirmBooking",
+        "summary": "Provider confirms",
+        "tags": [
+          "provider-catalog"
+        ],
+        "responses": {
+          "200": {
+            "description": "Booking",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Booking"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        },
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "bookingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/providers/{providerId}/bookings/{bookingId}/reject": {
+      "post": {
+        "operationId": "rejectBooking",
+        "summary": "Provider rejects",
+        "tags": [
+          "provider-catalog"
+        ],
+        "responses": {
+          "200": {
+            "description": "Booking",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Booking"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        },
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "bookingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/providers/{providerId}/bookings/{bookingId}/cancel": {
+      "post": {
+        "operationId": "cancelBooking",
+        "summary": "Requester or provider cancels a REQUESTED or CONFIRMED booking",
+        "tags": [
+          "provider-catalog"
+        ],
+        "responses": {
+          "200": {
+            "description": "Booking",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Booking"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        },
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "bookingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/providers/{providerId}/quotes": {
+      "post": {
+        "operationId": "requestQuote",
+        "summary": "Persist a quote request, create a form lead and emit QuoteRequested (signed in, or anonymous where enabled)",
+        "tags": [
+          "provider-catalog"
+        ],
+        "responses": {
+          "201": {
+            "description": "Quote requested",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteReceipt"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "es-BO",
+                "en-US"
+              ]
+            },
+            "description": "Overrides Accept-Language."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuoteInput"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {}
+        ],
+        "description": "Decision (DECISIONS.md 2026-11-05): quotes may be anonymous only when PROVIDER_ANON_QUOTES is `captcha` (default when a captcha verifier is configured) or `open` (local development). Anonymous requests need contact.email, are limited to 5 per hour per client address (429 + Retry-After) and 3 per day per contact e-mail and provider (429 QUOTE_LIMIT_REACHED), reject a filled honeypot `website` (422 QUOTE_REJECTED) and, in captcha mode, a valid captchaToken (403 CAPTCHA_FAILED). With mode `off` (default without a verifier) anonymous requests answer 401 ANONYMOUS_QUOTES_DISABLED. Date requests (bookings) always require an account."
+      }
+    },
+    "/listings": {
+      "get": {
+        "operationId": "searchListings",
+        "summary": "Published listings of verified providers by title (consumed by gift-list-service)",
+        "tags": [
+          "provider-catalog"
+        ],
+        "responses": {
+          "200": {
+            "description": "Listings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ListingSummary"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          }
+        },
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            },
+            "description": ""
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "SERVICE",
+                "PRODUCT"
+              ]
+            },
+            "description": ""
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 10
+            },
+            "description": ""
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "es-BO",
+                "en-US"
+              ]
+            },
+            "description": "Overrides Accept-Language."
+          }
+        ]
+      }
+    },
+    "/listings/{listingId}": {
+      "get": {
+        "operationId": "getListing",
+        "summary": "Published listing of a VERIFIED provider (consumed by gift-list-service); 404 otherwise",
+        "tags": [
+          "provider-catalog"
+        ],
+        "responses": {
+          "200": {
+            "description": "Listing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListingSummary"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        },
+        "parameters": [
+          {
+            "name": "listingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "es-BO",
+                "en-US"
+              ]
+            },
+            "description": "Overrides Accept-Language."
+          }
+        ]
+      }
+    },
+    "/r/{listingId}": {
+      "get": {
+        "operationId": "resolveListingRedirect",
+        "summary": "Persist a lead and redirect with 302 (never 301) adding UTM and correlationId",
+        "tags": [
+          "provider-catalog"
+        ],
+        "responses": {
+          "302": {
+            "description": "Temporary redirect to the partner destination. A permanent 301 is forbidden because browsers would cache it and bypass lead counting.",
+            "headers": {
+              "Location": {
+                "schema": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "parameters": [
+          {
+            "name": "listingId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "destination",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Destination"
+            }
+          },
+          {
+            "name": "sessionId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Visitor session; derived from IP and user agent when absent."
+          },
+          {
+            "name": "surface",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PUBLIC_SITE",
+                "SEARCH",
+                "CELEBRATION_SITE",
+                "GIFT_LIST",
+                "EMAIL",
+                "APP",
+                "QUOTE_FORM"
+              ]
+            },
+            "description": ""
+          },
+          {
+            "name": "celebrationId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": ""
+          },
+          {
+            "name": "guestId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Requires celebrationId."
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": ""
+          },
+          {
+            "name": "country",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z]{2}$"
+            },
+            "description": ""
+          },
+          {
+            "name": "city",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": ""
+          },
+          {
+            "name": "ref",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Referrer; defaults to the Referer header."
+          },
+          {
+            "name": "correlationId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": ""
+          }
+        ]
+      }
+    },
+    "/providers/mine": {
+      "get": {
+        "operationId": "listMyProviders",
+        "summary": "Providers owned by the caller, in any status",
+        "tags": [
+          "provider-catalog"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Oldest first; empty list when the caller has none",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "items"
+                  ],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Provider"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/providers/{providerId}/microsite": {
+      "get": {
+        "operationId": "getMicrosite",
+        "summary": "Public profile (public once VERIFIED; owner/admin also see the draft)",
+        "tags": [
+          "provider-catalog"
+        ],
+        "security": [
+          {},
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Version 0 with empty fields when never saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsite"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateMicrosite",
+        "summary": "Replace the profile: description, gallery (media references), hours, social networks, address (owner/admin)",
+        "tags": [
+          "provider-catalog"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The `version` you loaded, e.g. \"3\". A stale value answers 409 MICROSITE_VERSION_CONFLICT with details.currentVersion; absent means last writer wins."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MicrositeInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved; ETag carries the new version",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microsite"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          }
+        }
+      }
+    },
+    "/providers/{providerId}/documents": {
+      "get": {
+        "operationId": "listDocuments",
+        "summary": "Verification documents (owner/admin)",
+        "tags": [
+          "provider-catalog"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Documents",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "items"
+                  ],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ProviderDocument"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "post": {
+        "operationId": "registerDocument",
+        "summary": "Step 1 of 3: register the document metadata and get a presigned PUT URL",
+        "tags": [
+          "provider-catalog"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "description": "Flow: (1) this call; (2) PUT the file bytes to upload.url with upload.headers directly against the object store (MinIO/S3), no bearer token; (3) POST .../documents/{documentId}/complete so the service verifies the object exists, matches the declared type and is not larger than sizeBytes (otherwise it is discarded). The storage key is derived from ids; documents are never public.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "PENDING_UPLOAD",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentRegistration"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          },
+          "503": {
+            "description": "STORAGE_NOT_CONFIGURED (no object store in this environment) or STORAGE_UNAVAILABLE",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/providers/{providerId}/documents/{documentId}": {
+      "delete": {
+        "operationId": "deleteDocument",
+        "summary": "Delete a document and its file (owner/admin)",
+        "tags": [
+          "provider-catalog"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted (also when it did not exist)"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/providers/{providerId}/documents/{documentId}/complete": {
+      "post": {
+        "operationId": "completeDocument",
+        "summary": "Step 3 of 3: confirm the upload (idempotent)",
+        "tags": [
+          "provider-catalog"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "UPLOADED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderDocument"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "description": "UPLOAD_NOT_FOUND: nothing was uploaded yet or the link expired",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          }
+        }
+      }
+    },
+    "/providers/{providerId}/documents/{documentId}/download": {
+      "get": {
+        "operationId": "downloadDocument",
+        "summary": "Presigned GET (5 minutes) for the owner or an administrator reviewing the verification",
+        "tags": [
+          "provider-catalog"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Document with download link",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentDownload"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "RS256, keys from Identity JWKS; roles claim must include PROVIDER (or ADMIN)."
+      }
+    },
+    "schemas": {
+      "Problem": {
+        "type": "object",
+        "required": [
+          "type",
+          "title",
+          "status"
+        ],
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string",
+            "description": "Localized by locale/Accept-Language when a translation exists."
+          },
+          "status": {
+            "type": "integer"
+          },
+          "code": {
+            "type": "string"
+          },
+          "correlationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "Destination": {
+        "type": "string",
+        "enum": [
+          "OFFICIAL_SITE",
+          "LANDING",
+          "WHATSAPP",
+          "PHONE",
+          "EMAIL",
+          "INSTAGRAM",
+          "PRODUCT_PAGE"
+        ]
+      },
+      "ProviderStatus": {
+        "type": "string",
+        "enum": [
+          "DRAFT",
+          "PENDING_VERIFICATION",
+          "VERIFIED",
+          "SUSPENDED"
+        ]
+      },
+      "Plan": {
+        "type": "string",
+        "enum": [
+          "FREE",
+          "FEATURED",
+          "PREMIUM"
+        ]
+      },
+      "BookingStatus": {
+        "type": "string",
+        "enum": [
+          "REQUESTED",
+          "CONFIRMED",
+          "REJECTED",
+          "CANCELLED",
+          "EXPIRED"
+        ]
+      },
+      "Money": {
+        "type": "object",
+        "required": [
+          "amountMinor",
+          "currency"
+        ],
+        "properties": {
+          "amountMinor": {
+            "type": "integer"
+          },
+          "currency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$"
+          }
+        }
+      },
+      "Fulfillment": {
+        "type": "object",
+        "required": [
+          "responsible",
+          "coverageZones",
+          "leadTimeDays",
+          "conditions"
+        ],
+        "properties": {
+          "responsible": {
+            "type": "string",
+            "enum": [
+              "PROVIDER",
+              "CUSTOMER"
+            ]
+          },
+          "coverageZones": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            }
+          },
+          "transportCostMinor": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "leadTimeDays": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "conditions": {
+            "type": "object",
+            "description": "Locale -> text (es-BO, en-US...).",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "minProperties": 1
+          }
+        }
+      },
+      "FulfillmentView": {
+        "type": "object",
+        "required": [
+          "responsible",
+          "coverageZones",
+          "leadTimeDays",
+          "conditions",
+          "disclaimer"
+        ],
+        "properties": {
+          "responsible": {
+            "type": "string"
+          },
+          "coverageZones": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "transportCostMinor": {
+            "type": "integer"
+          },
+          "leadTimeDays": {
+            "type": "integer"
+          },
+          "conditions": {
+            "type": "string",
+            "description": "Resolved for the request locale."
+          },
+          "disclaimer": {
+            "type": "string",
+            "description": "Platform disclaimer in the request locale."
+          }
+        }
+      },
+      "RegisterProvider": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "slug": {
+            "type": "string"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/Plan"
+          },
+          "currency": {
+            "type": "string",
+            "default": "BOB",
+            "pattern": "^[A-Z]{3}$"
+          },
+          "timeZone": {
+            "type": "string",
+            "default": "America/La_Paz",
+            "description": "IANA identifier."
+          }
+        }
+      },
+      "UpdateProvider": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/Plan"
+          }
+        }
+      },
+      "Provider": {
+        "type": "object",
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "status",
+          "plan",
+          "currency",
+          "timeZone",
+          "version"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ProviderStatus"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/Plan"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "timeZone": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "leadConfig": {
+            "$ref": "#/components/schemas/LeadConfig"
+          }
+        }
+      },
+      "LeadConfig": {
+        "type": "object",
+        "required": [
+          "enabledDestinations",
+          "utmSource",
+          "utmMedium",
+          "dedupeMinutes",
+          "monthlyCap",
+          "billingModel"
+        ],
+        "properties": {
+          "enabledDestinations": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/Destination"
+            }
+          },
+          "utmSource": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,64}$"
+          },
+          "utmMedium": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,64}$"
+          },
+          "utmCampaign": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,64}$"
+          },
+          "dedupeMinutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1440
+          },
+          "monthlyCap": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "0 = no cap."
+          },
+          "billingModel": {
+            "type": "string",
+            "enum": [
+              "CPC",
+              "CPA",
+              "FLAT",
+              "COMMISSION"
+            ]
+          }
+        }
+      },
+      "CreateListing": {
+        "type": "object",
+        "required": [
+          "type",
+          "category",
+          "city",
+          "titles",
+          "destinations"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "SERVICE",
+              "PRODUCT"
+            ]
+          },
+          "category": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string",
+            "description": "City slug from /providers/geo."
+          },
+          "titles": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "descriptions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "destinations": {
+            "type": "object",
+            "description": "Destination -> URL (https; tel: for PHONE; mailto: for EMAIL).",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "fulfillment": {
+            "$ref": "#/components/schemas/Fulfillment"
+          },
+          "priceFromMinor": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "imageUrl": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      },
+      "Listing": {
+        "type": "object",
+        "required": [
+          "id",
+          "providerId",
+          "type",
+          "category",
+          "city",
+          "title",
+          "published",
+          "disclaimer"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "providerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "titles": {
+            "type": "object"
+          },
+          "descriptions": {
+            "type": "object"
+          },
+          "destinations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Destination"
+            }
+          },
+          "published": {
+            "type": "boolean"
+          },
+          "priceFromMinor": {
+            "type": "integer"
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "fulfillment": {
+            "$ref": "#/components/schemas/FulfillmentView"
+          },
+          "disclaimer": {
+            "type": "string"
+          }
+        }
+      },
+      "ListingSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "providerId",
+          "providerStatus",
+          "published",
+          "title"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "providerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "providerStatus": {
+            "$ref": "#/components/schemas/ProviderStatus"
+          },
+          "published": {
+            "type": "boolean"
+          },
+          "type": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "priceFrom": {
+            "$ref": "#/components/schemas/Money"
+          }
+        }
+      },
+      "ProviderCard": {
+        "type": "object",
+        "required": [
+          "listingId",
+          "providerSlug",
+          "name",
+          "category",
+          "city",
+          "department",
+          "verified",
+          "providerId",
+          "providerName",
+          "destinations"
+        ],
+        "properties": {
+          "listingId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "providerSlug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "department": {
+            "type": "string"
+          },
+          "verified": {
+            "type": "boolean"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "priceFrom": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "score": {
+            "type": "integer"
+          },
+          "capReached": {
+            "type": "boolean"
+          },
+          "fulfillment": {
+            "$ref": "#/components/schemas/FulfillmentView"
+          },
+          "providerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The business (provider) that owns the offer"
+          },
+          "providerName": {
+            "type": "string",
+            "description": "`name` is the title of the offer; this is the business name"
+          },
+          "destinations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Destination"
+            },
+            "description": "Enabled redirect destinations; contact only through GET /r/{listingId}?destination=..."
+          },
+          "address": {
+            "$ref": "#/components/schemas/BusinessAddress"
+          },
+          "hours": {
+            "$ref": "#/components/schemas/BusinessHours"
+          }
+        }
+      },
+      "ProviderPage": {
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProviderCard"
+            }
+          },
+          "total": {
+            "type": "integer"
+          },
+          "page": {
+            "type": "integer"
+          },
+          "pageSize": {
+            "type": "integer"
+          }
+        }
+      },
+      "CategoryList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "slug": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "names": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "GeoList": {
+        "type": "object",
+        "properties": {
+          "country": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "slug": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "department": {
+                  "type": "string"
+                },
+                "departmentCode": {
+                  "type": "string"
+                },
+                "capital": {
+                  "type": "boolean"
+                },
+                "latitude": {
+                  "type": "number"
+                },
+                "longitude": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ImpressionsRequest": {
+        "type": "object",
+        "required": [
+          "listingIds"
+        ],
+        "properties": {
+          "listingIds": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 50,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "surface": {
+            "type": "string"
+          }
+        },
+        "description": "A whole directory page in one request: 1 to 50 distinct listing ids (duplicates collapse). Ids that are unknown, unpublished or of a non-VERIFIED provider are skipped, not rejected."
+      },
+      "Lead": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "listingId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "REDIRECT",
+              "FORM"
+            ]
+          },
+          "destination": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "valid": {
+            "type": "boolean"
+          },
+          "billable": {
+            "type": "boolean"
+          },
+          "invalidReason": {
+            "type": "string",
+            "enum": [
+              "dup",
+              "bot"
+            ]
+          },
+          "correlationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "context": {
+            "type": "object"
+          },
+          "utm": {
+            "type": "object"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "LeadList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Lead"
+            }
+          },
+          "total": {
+            "type": "integer"
+          }
+        }
+      },
+      "MetricTotals": {
+        "type": "object",
+        "properties": {
+          "impressions": {
+            "type": "integer"
+          },
+          "clicks": {
+            "type": "integer"
+          },
+          "validLeads": {
+            "type": "integer"
+          },
+          "invalidLeads": {
+            "type": "integer"
+          },
+          "ctr": {
+            "type": "number",
+            "description": "clicks / impressions"
+          }
+        }
+      },
+      "Metrics": {
+        "type": "object",
+        "properties": {
+          "providerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/MetricTotals"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "AvailabilityInput": {
+        "type": "object",
+        "required": [
+          "capacityPerDay",
+          "rules"
+        ],
+        "properties": {
+          "capacityPerDay": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "weekdays",
+                "start",
+                "end"
+              ],
+              "properties": {
+                "weekdays": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 6
+                  },
+                  "description": "0 = Sunday."
+                },
+                "start": {
+                  "type": "string",
+                  "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                },
+                "end": {
+                  "type": "string",
+                  "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                }
+              }
+            }
+          },
+          "blackouts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "start"
+              ],
+              "properties": {
+                "start": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "end": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Availability": {
+        "type": "object",
+        "properties": {
+          "providerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "timeZone": {
+            "type": "string"
+          },
+          "capacityPerDay": {
+            "type": "integer"
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "weekdays",
+                "start",
+                "end"
+              ],
+              "properties": {
+                "weekdays": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 6
+                  },
+                  "description": "0 = Sunday."
+                },
+                "start": {
+                  "type": "string",
+                  "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                },
+                "end": {
+                  "type": "string",
+                  "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                }
+              }
+            }
+          },
+          "blackouts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "start"
+              ],
+              "properties": {
+                "start": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "end": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "version": {
+            "type": "integer"
+          }
+        }
+      },
+      "Calendar": {
+        "type": "object",
+        "properties": {
+          "providerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "timeZone": {
+            "type": "string"
+          },
+          "month": {
+            "type": "string"
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "weekday": {
+                  "type": "integer"
+                },
+                "available": {
+                  "type": "boolean"
+                },
+                "remaining": {
+                  "type": "integer"
+                },
+                "reason": {
+                  "type": "string",
+                  "enum": [
+                    "BLACKOUT",
+                    "NO_RULE",
+                    "OUTSIDE_HOURS",
+                    "FULL"
+                  ]
+                },
+                "windows": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "BookingRequest": {
+        "type": "object",
+        "description": "Provide startsAt (UTC instant) or date (+ optional time in the provider time zone).",
+        "properties": {
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "time": {
+            "type": "string"
+          },
+          "listingId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "Booking": {
+        "type": "object",
+        "required": [
+          "id",
+          "providerId",
+          "requesterId",
+          "date",
+          "status",
+          "expiresAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "providerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "requesterId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "$ref": "#/components/schemas/BookingStatus"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "listingId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer"
+          }
+        }
+      },
+      "BookingList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Booking"
+            }
+          }
+        }
+      },
+      "QuoteInput": {
+        "type": "object",
+        "required": [
+          "listingIds",
+          "eventDate",
+          "guestCount",
+          "contact"
+        ],
+        "properties": {
+          "listingIds": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "eventDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "guestCount": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "budgetMinor": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "eventCity": {
+            "type": "string"
+          },
+          "contact": {
+            "type": "object",
+            "required": [
+              "name",
+              "email"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "phone": {
+                "type": "string"
+              }
+            }
+          },
+          "message": {
+            "type": "string"
+          },
+          "locale": {
+            "type": "string"
+          },
+          "captchaToken": {
+            "type": "string",
+            "maxLength": 2048,
+            "description": "Anonymous requests only, when the deployment runs PROVIDER_ANON_QUOTES=captcha"
+          },
+          "website": {
+            "type": "string",
+            "description": "Honeypot for anonymous requests: must be empty or absent (a filled value is rejected as a bot)."
+          }
+        }
+      },
+      "QuoteReceipt": {
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "leadId",
+          "disclaimer",
+          "listings"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "providerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "REQUESTED"
+            ]
+          },
+          "leadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "locale": {
+            "type": "string"
+          },
+          "disclaimer": {
+            "type": "string"
+          },
+          "listings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "listingId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "fulfillment": {
+                  "$ref": "#/components/schemas/FulfillmentView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "BusinessAddress": {
+        "type": "object",
+        "required": [
+          "line"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "line": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "city": {
+            "type": "string",
+            "description": "City slug (GET /providers/geo)"
+          },
+          "reference": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "latitude": {
+            "type": "number"
+          },
+          "longitude": {
+            "type": "number",
+            "description": "latitude and longitude go together"
+          }
+        }
+      },
+      "BusinessHours": {
+        "type": "object",
+        "required": [
+          "weekly"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "weekly": {
+            "type": "array",
+            "maxItems": 14,
+            "items": {
+              "type": "object",
+              "required": [
+                "weekdays",
+                "opens",
+                "closes"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "weekdays": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 6,
+                    "description": "0 = Sunday"
+                  }
+                },
+                "opens": {
+                  "type": "string",
+                  "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                },
+                "closes": {
+                  "type": "string",
+                  "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+                  "description": "Local time of the provider (provider.timeZone); opens < closes"
+                }
+              }
+            }
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 300
+          }
+        }
+      },
+      "MicrositeInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Whole-document replace: send the full profile every time.",
+        "properties": {
+          "descriptions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "maxLength": 2000
+            },
+            "description": "locale -> text, at most 8 locales"
+          },
+          "gallery": {
+            "type": "array",
+            "maxItems": 12,
+            "items": {
+              "type": "object",
+              "required": [
+                "mediaId",
+                "url"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "mediaId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "Media asset id in Template-Media"
+                },
+                "url": {
+                  "type": "string",
+                  "description": "https URL or a /media/ path; never javascript: or data:"
+                },
+                "alt": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string",
+                    "maxLength": 200
+                  }
+                }
+              }
+            }
+          },
+          "hours": {
+            "$ref": "#/components/schemas/BusinessHours"
+          },
+          "social": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "website": {
+                "type": "string",
+                "format": "uri"
+              },
+              "instagram": {
+                "type": "string",
+                "format": "uri"
+              },
+              "facebook": {
+                "type": "string",
+                "format": "uri"
+              },
+              "tiktok": {
+                "type": "string",
+                "format": "uri"
+              },
+              "youtube": {
+                "type": "string",
+                "format": "uri"
+              },
+              "whatsapp": {
+                "type": "string",
+                "pattern": "^\\+?[0-9]{6,15}$"
+              }
+            }
+          },
+          "address": {
+            "$ref": "#/components/schemas/BusinessAddress"
+          }
+        }
+      },
+      "Microsite": {
+        "type": "object",
+        "required": [
+          "providerId",
+          "version",
+          "descriptions",
+          "gallery",
+          "hours",
+          "social",
+          "address"
+        ],
+        "properties": {
+          "providerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "0 until the first save; also the ETag and the If-Match value"
+          },
+          "descriptions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "gallery": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "mediaId",
+                "url"
+              ],
+              "properties": {
+                "mediaId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "url": {
+                  "type": "string"
+                },
+                "alt": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "hours": {
+            "$ref": "#/components/schemas/BusinessHours"
+          },
+          "social": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "address": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BusinessAddress"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "DocumentInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "fileName",
+          "contentType",
+          "sizeBytes"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "IDENTITY",
+              "BUSINESS_REGISTRATION",
+              "TAX_ID",
+              "ADDRESS_PROOF",
+              "OTHER"
+            ]
+          },
+          "fileName": {
+            "type": "string",
+            "maxLength": 160,
+            "description": "Display name only; no path separators"
+          },
+          "contentType": {
+            "type": "string",
+            "enum": [
+              "application/pdf",
+              "image/jpeg",
+              "image/png",
+              "image/webp"
+            ]
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10485760
+          }
+        }
+      },
+      "ProviderDocument": {
+        "type": "object",
+        "required": [
+          "id",
+          "providerId",
+          "kind",
+          "fileName",
+          "contentType",
+          "sizeBytes",
+          "status",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "providerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING_UPLOAD",
+              "UPLOADED"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "uploadedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "DocumentRegistration": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ProviderDocument"
+          },
+          {
+            "type": "object",
+            "required": [
+              "upload"
+            ],
+            "properties": {
+              "upload": {
+                "type": "object",
+                "required": [
+                  "method",
+                  "url",
+                  "headers",
+                  "expiresAt"
+                ],
+                "properties": {
+                  "method": {
+                    "const": "PUT"
+                  },
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Presigned (AWS SigV4, 10 minutes). PUT the raw file bytes to it from the browser, sending exactly `headers`."
+                  },
+                  "headers": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "expiresAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "DocumentDownload": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ProviderDocument"
+          },
+          {
+            "type": "object",
+            "required": [
+              "download"
+            ],
+            "properties": {
+              "download": {
+                "type": "object",
+                "required": [
+                  "url",
+                  "expiresAt"
+                ],
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Presigned GET, 5 minutes"
+                  },
+                  "expiresAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "responses": {
+      "NotFound": {
+        "description": "Resource not found (or not visible to the caller)",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "Validation": {
+        "description": "Invalid request, missing fulfillment or destination",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Role or ownership requirement not met",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Missing or invalid RS256 bearer token",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "Invalid state transition",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "RateLimited": {
+        "description": "Too many requests",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "Internal": {
+        "description": "Unexpected failure",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      }
+    }
+  }
 }

@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import { render, type RenderResult } from "@testing-library/react";
 import { QueryClient } from "@tanstack/react-query";
-import { toApiError, type ApiClient, type RequestOptions } from "@rsvp/api-client";
+import { createApiClient, toApiError, type ApiClient, type RequestOptions } from "@rsvp/api-client";
+import { MOCK_HOST_JWT, type ContractMock } from "@rsvp/testing/contract-mock";
 import type { Celebration, Template, TranslatedEventType } from "@rsvp/query-hooks";
 import { AppProviders } from "../src/platform/providers";
 import type { SessionClaims } from "../src/platform/session";
@@ -35,9 +36,9 @@ export const HOST: SessionClaims = { userId: "u-host", roles: ["HOST"], organiza
 export const ADMIN: SessionClaims = { userId: "u-admin", roles: ["ADMIN"], organizationIds: [] };
 export const GUEST: SessionClaims = { userId: "u-guest", roles: ["GUEST"], organizationIds: [] };
 
-export function renderApp(ui: ReactNode, client: ApiClient, claims: SessionClaims = HOST): RenderResult {
+export function renderApp(ui: ReactNode, client: ApiClient, claims: SessionClaims = HOST, locale: "es-BO" | "en-US" = "es-BO"): RenderResult {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
-  return render(<AppProviders client={client} claims={claims} locale="es-BO" queryClient={queryClient}>{ui}</AppProviders>);
+  return render(<AppProviders client={client} claims={claims} locale={locale} queryClient={queryClient}>{ui}</AppProviders>);
 }
 
 export const WEDDING: TranslatedEventType = {
@@ -66,4 +67,25 @@ export function baseHandlers(celebration: Celebration = CELEBRATION): Record<str
     [`GET /celebrations/${celebration.id}`]: () => celebration,
     "GET /celebrations/event-types": () => ({ items: [WEDDING, QUINCE] })
   };
+}
+
+/**
+ * Host screens against the contract-shaped mock of guest-rsvp/notification (packages/testing): the celebration
+ * itself (another service) comes from the fixture, everything under /guests, /notifications and /rsvp from the mock,
+ * through the real api-client (Bearer, errors, Retry-After, Idempotency-Key).
+ */
+export function contractClient(mock: ContractMock, celebration: Celebration = { ...CELEBRATION, id: mock.celebrationId, settings: { ...CELEBRATION.settings, rsvpDeadline: "2026-12-10T03:59:00.000Z" } }): { readonly client: ApiClient; readonly celebration: Celebration } {
+  const real = createApiClient({
+    baseUrl: "http://gw.test", fetchFn: mock.fetch,
+    tokenStore: { getAccessToken: async () => MOCK_HOST_JWT, getRefreshToken: async () => null, setTokens: async () => undefined, clear: async () => undefined },
+    refreshSession: { refresh: async () => { throw new Error("no refresh"); } }
+  });
+  const client: ApiClient = {
+    request: async <TResponse,>(path: string, options?: RequestOptions<unknown>): Promise<TResponse> => {
+      if (path === `/celebrations/${celebration.id}`) return celebration as TResponse;
+      if (path.startsWith("/celebrations/event-types")) return { items: [WEDDING] } as TResponse;
+      return real.request<TResponse>(path, options as RequestOptions<never>);
+    }
+  };
+  return { client, celebration };
 }

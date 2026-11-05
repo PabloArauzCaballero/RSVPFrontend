@@ -33,12 +33,3 @@ export async function loadPublicSlugs(client: ApiClient = publicClient()): Promi
   const page = await client.request<{ readonly items: readonly PublicSlug[] }>(`/celebrations/public?limit=${SITEMAP_PAGE}`, { auth: false });
   return page.items;
 }
-
-/**
- * @deprecated Title from the slug only, kept for the RSVP pages of lane F15 until they load
- * the celebration with `loadPublicPage`. Never use it for anything a guest relies on.
- */
-export function celebrationFor(slug: string): { readonly slug: string; readonly title: string } {
-  const displayName = slug.split("-").filter(Boolean).map((part) => `${part[0]?.toUpperCase() ?? ""}${part.slice(1)}`).join(" ");
-  return { slug, title: `${displayName} | RSVP` };
-}

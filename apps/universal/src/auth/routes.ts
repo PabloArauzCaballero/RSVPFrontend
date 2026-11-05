@@ -6,7 +6,8 @@ export const HOME_BY_GROUP: Readonly<Record<RouteGroup, string>> = { auth: AUTH_
 
 const ADMIN_PREFIX = "/admin";
 const PROVIDER_PREFIX = "/portal";
-const GUEST_PREFIXES = ["/invitacion", "/rsvp"] as const;
+/** `/c/{slug}/rsvp/{token}` is the canonical personal link; `/rsvp/{token}` the legacy one. */
+const GUEST_PREFIXES = ["/invitacion", "/rsvp", "/c"] as const;
 const AUTH_PATHS: readonly string[] = Object.values(AUTH_ROUTES);
 
 function startsWithSegment(path: string, prefix: string): boolean { return path === prefix || path.startsWith(`${prefix}/`) || path.startsWith(`${prefix}?`); }
@@ -16,6 +17,8 @@ export function groupOfPath(path: string): RouteGroup {
   if (AUTH_PATHS.some((candidate) => startsWithSegment(path, candidate))) return "auth";
   if (startsWithSegment(path, ADMIN_PREFIX)) return "admin";
   if (startsWithSegment(path, PROVIDER_PREFIX)) return "provider";
+  // `/rsvp/reporte` is the host's report; every other `/rsvp/*` is a guest link.
+  if (startsWithSegment(path, "/rsvp/reporte")) return "host";
   if (GUEST_PREFIXES.some((prefix) => startsWithSegment(path, prefix))) return "guest";
   return "host";
 }

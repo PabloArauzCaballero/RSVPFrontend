@@ -1,4 +1,5 @@
-import { Surface } from '@rsvp/ui';
-import { useT } from '../../src/platform/providers';
+import { SummaryScreen } from '../../src/host/guests/summary-screen';
+import { useHostRoute } from '../../src/platform/route';
 
-export default function HostHome() { const t = useT(); return <Surface title={t('stubs.host.title')} description={t('stubs.host.description')} />; }
+/** C6 · Resumen RSVP del panel. */
+export default function SummaryRoute() { const { celebrationId, onNavigate } = useHostRoute(); return <SummaryScreen celebrationId={celebrationId} onNavigate={onNavigate} />; }

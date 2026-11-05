@@ -449,7 +449,7 @@ export interface components {
             userId: string;
         };
         CreateCelebration: {
-            /** @description Free content keyed by field. `eventDate` and keys ending in `At` are instants: send an offset (stored as is) or a wall clock YYYY-MM-DDTHH:mm (read in the celebration timeZone). */
+            /** @description Free content keyed by field. `eventDate` and keys ending in `At` are instants: send an offset (stored as is) or a wall clock YYYY-MM-DDTHH:mm (read in the celebration timeZone). Optional `hostContact` {email?, phone? (E.164), consentPublic: true} is validated; see info.description (1.1.0). */
             content?: {
                 [key: string]: unknown;
             };
@@ -469,7 +469,7 @@ export interface components {
             };
         };
         EditCelebration: {
-            /** @description Merged by key; null removes a key */
+            /** @description Merged by key; null removes a key Optional `hostContact` {email?, phone? (E.164), consentPublic: true} is validated; see info.description (1.1.0). */
             content?: {
                 [key: string]: unknown;
             };
@@ -513,6 +513,11 @@ export interface components {
         Problem: {
             code?: string;
             correlationId?: string;
+            /** @description Actionable sentence per missing field, localized by Accept-Language (es-BO default, en-US). Clients show it as is; `missingFields` keeps the stable machine keys. */
+            missingFieldMessages?: {
+                field: string;
+                message: string;
+            }[];
             /** @description Present on 422 PUBLISH_REQUIREMENTS_MISSING: exactly the fields the event type still requires */
             missingFields?: string[];
             status: number;
@@ -525,7 +530,7 @@ export interface components {
             availableLocales?: string[];
             /** Format: uuid */
             celebrationId?: string;
-            /** @description Free content keyed by field. `eventDate` and keys ending in `At` are instants: send an offset (stored as is) or a wall clock YYYY-MM-DDTHH:mm (read in the celebration timeZone). */
+            /** @description Free content keyed by field. `eventDate` and keys ending in `At` are instants: send an offset (stored as is) or a wall clock YYYY-MM-DDTHH:mm (read in the celebration timeZone). Optional `hostContact` {email?, phone? (E.164), consentPublic: true} is validated; see info.description (1.1.0). */
             content?: {
                 [key: string]: unknown;
             };
@@ -557,6 +562,11 @@ export interface components {
             updatedAt: string;
         };
         PublishCheck: {
+            /** @description Actionable sentence per missing field, localized by Accept-Language (es-BO default, en-US). Clients show it as is; `missingFields` keeps the stable machine keys. */
+            missingFieldMessages: {
+                field: string;
+                message: string;
+            }[];
             missingFields: string[];
             ready: boolean;
             status: string;
@@ -1380,7 +1390,10 @@ export interface operations {
     publishCheck: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description es-BO (default) or en-US for missingFieldMessages */
+                "Accept-Language"?: string;
+            };
             path: {
                 celebrationId: components["parameters"]["CelebrationId"];
             };

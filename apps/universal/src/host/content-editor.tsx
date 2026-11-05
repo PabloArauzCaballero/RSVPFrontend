@@ -14,6 +14,8 @@ const BUILT_IN_FIELDS = ["title", "subtitle", "eventDate", "venueName"];
 const VENUE_KINDS = ["ceremony", "reception", "other"] as const;
 const RECOMMENDATION_KINDS = ["lodging", "transport", "other"] as const;
 const PATH_SEPARATOR = ".";
+/** Rows are kept as typed while editing (a freshly added row is empty); blank ones are dropped when saving. */
+const REQUIRED_ROW_FIELD: Readonly<Record<string, string>> = { venues: "name", faq: "question", recommendations: "name" };
 
 type Draft = Record<string, unknown>;
 type Row = Readonly<Record<string, string>>;
@@ -29,6 +31,7 @@ export function fieldLabel(t: Translate, field: string, fallbackKey = "host.edit
   return label === key ? t(fallbackKey, { field }) : label;
 }
 
+const ROW_KEYS: Readonly<Record<string, readonly string[]>> = { venues: ["key", "kind", "name", "address"], faq: ["question", "answer"], recommendations: ["kind", "name", "description", "listingId"] };
 const rows = (value: unknown, keys: readonly string[]): Row[] => asRecords(value).map((item) => Object.fromEntries(keys.map((key) => [key, asText(item[key])])));
 const compact = (items: readonly Row[], required: string): Row[] => items.filter((item) => item[required]?.trim()).map((item) => Object.fromEntries(Object.entries(item).filter(([, value]) => value.trim())));
 
@@ -96,8 +99,10 @@ function Editor({ loaded, section, onSaved }: { readonly loaded: Loaded; readonl
     const originalDate = wallClockAt(celebration, "eventDate");
     const unchangedDate = originalDate.date === eventDate.date && originalDate.time === eventDate.time;
     const unchangedSchedule = JSON.stringify(scheduleDraft(celebration)) === JSON.stringify(schedule);
+    const compacted = Object.fromEntries(Object.entries(REQUIRED_ROW_FIELD).filter(([key]) => Array.isArray(draft[key])).map(([key, required]) => [key, compact(rows(draft[key], ROW_KEYS[key] ?? []), required)]));
     const next: Draft = {
       ...draft,
+      ...compacted,
       ...(unchangedDate ? {} : { eventDate: date.value }),
       ...(unchangedSchedule ? {} : { schedule: items.value })
     };
@@ -128,7 +133,7 @@ function Editor({ loaded, section, onSaved }: { readonly loaded: Loaded; readonl
     ),
     lugares: () => (
       <Section title={t("host.editor.sections.venues")}>
-        <ListEditor t={t} items={rows(draft["venues"], ["key", "kind", "name", "address"])} onChange={(items) => set("venues", compact(items.map((item, index) => ({ ...item, key: item["key"] || newItemId(`venue${index}`) })), "name"))}
+        <ListEditor t={t} items={rows(draft["venues"], ["key", "kind", "name", "address"])} onChange={(items) => set("venues", items.map((item, index) => ({ ...item, key: item["key"] || newItemId(`venue${index}`) })))}
           itemLabel={(n) => t("host.editor.venues.item", { n })} addLabel={t("host.editor.venues.add")}
           fields={[{ key: "name", label: t("host.editor.venues.name") }, { key: "address", label: t("host.editor.venues.address") }, { key: "kind", label: t("host.editor.venues.kind"), choices: VENUE_KINDS.map((kind) => ({ value: kind, label: t(`host.editor.venues.kinds.${kind}`) })) }]} />
       </Section>
@@ -152,12 +157,12 @@ function Editor({ loaded, section, onSaved }: { readonly loaded: Loaded; readonl
           <Field label={t("host.editor.extra.dressCode")} value={text("dressCode")} onChange={(value) => set("dressCode", value)} multiline />
         </Section>
         <Section title={t("host.editor.extra.faq")}>
-          <ListEditor t={t} items={rows(draft["faq"], ["question", "answer"])} onChange={(items) => set("faq", compact(items, "question"))} itemLabel={(n) => t("host.editor.extra.item", { n })} addLabel={t("host.editor.extra.addFaq")}
+          <ListEditor t={t} items={rows(draft["faq"], ["question", "answer"])} onChange={(items) => set("faq", items)} itemLabel={(n) => t("host.editor.extra.item", { n })} addLabel={t("host.editor.extra.addFaq")}
             fields={[{ key: "question", label: t("host.editor.extra.question") }, { key: "answer", label: t("host.editor.extra.answer"), multiline: true }]} />
         </Section>
         <Section title={t("host.editor.extra.recommendations")}>
           <Text style={styles.muted}>{t("host.editor.extra.listingHelp")}</Text>
-          <ListEditor t={t} items={rows(draft["recommendations"], ["kind", "name", "description", "listingId"])} onChange={(items) => set("recommendations", compact(items, "name"))} itemLabel={(n) => t("host.editor.extra.item", { n })} addLabel={t("host.editor.extra.addRecommendation")}
+          <ListEditor t={t} items={rows(draft["recommendations"], ["kind", "name", "description", "listingId"])} onChange={(items) => set("recommendations", items)} itemLabel={(n) => t("host.editor.extra.item", { n })} addLabel={t("host.editor.extra.addRecommendation")}
             fields={[{ key: "name", label: t("host.editor.extra.recommendationName") }, { key: "description", label: t("host.editor.extra.recommendationDescription"), multiline: true }, { key: "listingId", label: t("host.editor.extra.listingId") }, { key: "kind", label: t("host.editor.extra.recommendationKind"), choices: RECOMMENDATION_KINDS.map((kind) => ({ value: kind, label: t(`host.editor.extra.kinds.${kind}`) })) }]} />
         </Section>
       </>

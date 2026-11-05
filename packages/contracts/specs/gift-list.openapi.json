@@ -1,1 +1,1273 @@
-{"openapi":"3.1.0","info":{"title":"RSVP Gift List API","version":"1.0.0"},"servers":[{"url":"http://localhost:8000/gifts"}],"paths":{"/health":{"get":{"responses":{"200":{"description":"Healthy"}}}},"/celebrations/{celebrationId}/items":{"get":{"operationId":"listGiftItems","parameters":[{"$ref":"#/components/parameters/CelebrationId"}],"responses":{"200":{"description":"Gift items"},"404":{"$ref":"#/components/responses/NotFound"}}},"post":{"operationId":"addGiftItem","parameters":[{"$ref":"#/components/parameters/CelebrationId"}],"responses":{"201":{"description":"Gift item added"},"422":{"$ref":"#/components/responses/Validation"}}}},"/items/{giftItemId}/reservations":{"post":{"operationId":"reserveGift","responses":{"201":{"description":"Reserved or pending review"},"409":{"$ref":"#/components/responses/GiftNotAvailable"},"422":{"$ref":"#/components/responses/Validation"}}}},"/reservations/{reservationId}/approve":{"post":{"operationId":"approveReservation","responses":{"200":{"description":"Committed"},"403":{"$ref":"#/components/responses/Forbidden"},"409":{"$ref":"#/components/responses/GiftNotAvailable"}}}}},"components":{"parameters":{"CelebrationId":{"name":"celebrationId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}},"schemas":{"Problem":{"type":"object","required":["type","title","status"],"properties":{"type":{"type":"string"},"title":{"type":"string"},"status":{"type":"integer"}}}},"responses":{"NotFound":{"description":"Not found"},"Forbidden":{"description":"Host role required"},"Validation":{"description":"Invalid request"},"GiftNotAvailable":{"description":"Gift unavailable"}}}}
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "RSVP Gift List API",
+    "version": "1.2.0",
+    "description": "Gift lists, gifts and reservations (lanes 25-28). Authentication: RS256 JWT validated against Identity JWKS. Host ownership is decided by the Celebration service, never by identifiers sent in the body. Cross-tenant identifiers answer 404. Errors are RFC 9457 problem+json with a stable `code`. 1.1.0 is backward compatible with 1.0.0 (adds celebration-scoped paths and schemas; the sketched 1.0.0 paths /items/{giftItemId}/reservations and /reservations/{reservationId}/approve are now celebration-scoped, they were never served). 1.2.0 (additive): guests without an account authenticate with the opaque credential of their invitation link (Bearer, 43 base64url characters, same value Guest issues); Gift List validates it against Guest (GET /rsvp/celebrations/{id}/guest) and takes guestId and tenant from that validation, never from the body. A credential of another celebration answers 404, unknown/expired/revoked 401, Guest rate limit 429 with Retry-After. Credential holders may list gifts and reserve; every host action stays 403. Reservations accept Idempotency-Key. A guest holds at most GIFT_MAX_ACTIVE_RESERVATIONS_PER_GUEST (default 5) pending/committed reservations (422 RESERVATION_LIMIT_REACHED). New GET/PUT /gift-settings controls who may see the requester (REQ-F23-06)."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000/gifts"
+    }
+  ],
+  "security": [
+    {
+      "bearer": []
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "getHealth",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Healthy: database and broker reachable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "status"
+                  ],
+                  "properties": {
+                    "status": {
+                      "const": "ok"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/DependencyUnavailable"
+          }
+        }
+      }
+    },
+    "/celebrations/{celebrationId}/gift-list": {
+      "post": {
+        "operationId": "createGiftList",
+        "summary": "Create the celebration's gift list (host)",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CelebrationId"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Gift list created (emits gift.list.created.v1)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiftList"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "description": "The celebration already has a list",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                },
+                "example": {
+                  "type": "https://rsvp.example/problems/gift-list-exists",
+                  "title": "A celebration can only have one gift list.",
+                  "status": 409,
+                  "code": "GIFT_LIST_EXISTS"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/DependencyUnavailable"
+          }
+        }
+      }
+    },
+    "/celebrations/{celebrationId}/items": {
+      "get": {
+        "operationId": "listGiftItems",
+        "summary": "List gifts: cataloged first, then external; proposals visible to the host only",
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "guestCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CelebrationId"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Gift items",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiftItemList"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/DependencyUnavailable"
+          }
+        },
+        "description": "Order is stable: source CATALOGED before EXTERNAL, then creation time, then id. Hosts also see PROPOSED/REJECTED items; guests see only AVAILABLE, PENDING_REVIEW and COMMITTED. With a guest credential the same rules apply (REQ-F22 public list for invitees): catalogued first, proposals hidden. `reservedByName` is present only when the host allows the viewer to see the requester (GET/PUT /gift-settings)."
+      },
+      "post": {
+        "operationId": "addGiftItem",
+        "summary": "Add a cataloged gift (host) or an external gift (any member)",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CelebrationId"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Gift created. EXTERNAL gifts are PROPOSED when externalGiftMode=RESTRICTED (emits gift.external-gift.proposed.v1), otherwise AVAILABLE (gift.item.added.v1)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiftItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "description": "partnerPriorityEnabled: the partner catalog must be checked first; resend with partnerSuggestionsAcknowledged=true",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                },
+                "example": {
+                  "type": "https://rsvp.example/problems/partner-catalog-first",
+                  "title": "Check the partner catalog before adding an external gift.",
+                  "status": 409,
+                  "code": "PARTNER_CATALOG_FIRST",
+                  "suggestions": [
+                    {
+                      "productListingId": "0f0f0f0f-0f0f-4f0f-8f0f-0f0f0f0f0f0f",
+                      "title": "Batidora"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          },
+          "503": {
+            "$ref": "#/components/responses/DependencyUnavailable"
+          }
+        },
+        "description": "CATALOGED requires an existing, published ProductListing of a VERIFIED provider (checked against Provider Catalog over HTTP): otherwise 422 CATALOG_PRODUCT_UNAVAILABLE. EXTERNAL requires a valid http(s) URL: otherwise 422 INVALID_EXTERNAL_URL.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/AddCatalogedGiftRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/AddExternalGiftRequest"
+                  }
+                ],
+                "discriminator": {
+                  "propertyName": "source"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/celebrations/{celebrationId}/items/{giftItemId}/approve": {
+      "post": {
+        "operationId": "approveExternalGift",
+        "summary": "Approve a proposed external gift (host): PROPOSED -> AVAILABLE",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CelebrationId"
+          },
+          {
+            "name": "giftItemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Gift approved (emits gift.external-gift.approved.v1)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiftItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/GiftConflict"
+          },
+          "503": {
+            "$ref": "#/components/responses/DependencyUnavailable"
+          }
+        }
+      }
+    },
+    "/celebrations/{celebrationId}/items/{giftItemId}/reservations": {
+      "post": {
+        "operationId": "reserveGift",
+        "summary": "Reserve a gift (guest with a link credential, or a member JWT)",
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "guestCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CelebrationId"
+          },
+          {
+            "name": "giftItemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[\\x21-\\x7e]+$"
+            },
+            "description": "Replays the stored reservation (201 with Idempotency-Replayed: true) when the same actor repeats the request for the same gift; another gift with the same key is 422 IDEMPOTENCY_KEY_REUSED. Keys are scoped to (celebration, actor)."
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "AUTO_ACCEPT: status COMMITTED (gift.reservation.auto-committed.v1). RESTRICTED or unknown settings: PENDING_REVIEW (gift.reservation.requested.v1)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiftReservation"
+                }
+              }
+            },
+            "headers": {
+              "Idempotency-Replayed": {
+                "description": "true when the response replays a previous request with the same Idempotency-Key",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "true"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/GiftNotAvailable"
+          },
+          "422": {
+            "description": "Invalid request: VALIDATION_FAILED (also for guestId or any unknown field in the body), IDEMPOTENCY_KEY_REUSED, RESERVATION_LIMIT_REACHED",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/DependencyUnavailable"
+          }
+        },
+        "description": "Concurrency-safe: the transition is UPDATE ... WHERE id = ? AND version = ?. With N simultaneous requests exactly one receives 201 and the others 409 GIFT_NOT_AVAILABLE. The guest is identified by the server: with a link credential, guestId is the one Guest returned for that credential; with a member JWT it is the JWT sub. The body never carries identity.",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReserveGiftRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/celebrations/{celebrationId}/reservations": {
+      "get": {
+        "operationId": "listReservations",
+        "summary": "List reservations (host)",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CelebrationId"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ReservationStatus"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reservations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReservationList"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          },
+          "503": {
+            "$ref": "#/components/responses/DependencyUnavailable"
+          }
+        }
+      }
+    },
+    "/celebrations/{celebrationId}/reservations/{reservationId}/approve": {
+      "post": {
+        "operationId": "approveReservation",
+        "summary": "Confirm a pending reservation (host)",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CelebrationId"
+          },
+          {
+            "name": "reservationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Committed (emits gift.reservation.confirmed.v1)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiftReservation"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "description": "Not pending, or the gift changed concurrently",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                },
+                "example": {
+                  "type": "https://rsvp.example/problems/reservation-not-pending",
+                  "title": "Reservation is not pending review.",
+                  "status": 409,
+                  "code": "RESERVATION_NOT_PENDING"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/DependencyUnavailable"
+          }
+        }
+      }
+    },
+    "/celebrations/{celebrationId}/reservations/{reservationId}/reject": {
+      "post": {
+        "operationId": "rejectReservation",
+        "summary": "Reject a pending reservation (host); the gift returns to AVAILABLE",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CelebrationId"
+          },
+          {
+            "name": "reservationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rejected (emits gift.reservation.rejected.v1 and gift.item.released.v1)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiftReservation"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "description": "Not pending",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                },
+                "example": {
+                  "type": "https://rsvp.example/problems/reservation-not-pending",
+                  "title": "Reservation is not pending review.",
+                  "status": 409,
+                  "code": "RESERVATION_NOT_PENDING"
+                }
+              }
+            }
+          },
+          "503": {
+            "$ref": "#/components/responses/DependencyUnavailable"
+          }
+        }
+      }
+    },
+    "/celebrations/{celebrationId}/gift-settings": {
+      "get": {
+        "operationId": "getGiftSettings",
+        "summary": "Requester visibility preferences (host)",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CelebrationId"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current preferences",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiftSettings"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "503": {
+            "$ref": "#/components/responses/DependencyUnavailable"
+          }
+        }
+      },
+      "put": {
+        "operationId": "putGiftSettings",
+        "summary": "Show or hide who reserved a gift (host) - REQ-F23-06",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CelebrationId"
+          },
+          {
+            "$ref": "#/components/parameters/CorrelationId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGiftSettingsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved; version increments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiftSettings"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          },
+          "503": {
+            "$ref": "#/components/responses/DependencyUnavailable"
+          }
+        },
+        "description": "Takes effect on the next read and is not retroactive for events already published (they carry only ids). Hidden requesters are nulled in GET /reservations and in approve/reject responses; `reservedByName` is omitted from the host list."
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT (RS256, Identity JWKS)"
+      },
+      "guestCredential": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Opaque guest link credential issued by Guest/RSVP (POST /guests/celebrations/{id}/guests/{guestId}/access-token). Not a JWT; no account needed."
+      }
+    },
+    "parameters": {
+      "CelebrationId": {
+        "name": "celebrationId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "CorrelationId": {
+        "name": "X-Correlation-Id",
+        "in": "header",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "description": "Echoed in the response header and in problem.correlationId; generated when absent."
+      }
+    },
+    "schemas": {
+      "Problem": {
+        "type": "object",
+        "required": [
+          "type",
+          "title",
+          "status"
+        ],
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "description": "Stable machine code, for example GIFT_NOT_AVAILABLE, HOST_REQUIRED, GIFT_LIST_EXISTS, INVALID_GIFT_TRANSITION, CATALOG_PRODUCT_UNAVAILABLE, INVALID_EXTERNAL_URL, INVALID_MONEY, PARTNER_CATALOG_FIRST, RESERVATION_NOT_PENDING"
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "suggestions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartnerSuggestion"
+            },
+            "description": "Only on 409 PARTNER_CATALOG_FIRST"
+          }
+        },
+        "additionalProperties": true
+      },
+      "Money": {
+        "type": "object",
+        "required": [
+          "amountMinor",
+          "currency"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "amountMinor": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Integer minor units; never a float"
+          },
+          "currency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$",
+            "examples": [
+              "BOB",
+              "USD"
+            ]
+          }
+        }
+      },
+      "GiftSource": {
+        "type": "string",
+        "enum": [
+          "CATALOGED",
+          "EXTERNAL"
+        ]
+      },
+      "GiftItemStatus": {
+        "type": "string",
+        "enum": [
+          "AVAILABLE",
+          "PROPOSED",
+          "PENDING_REVIEW",
+          "COMMITTED",
+          "REJECTED"
+        ]
+      },
+      "ReservationStatus": {
+        "type": "string",
+        "enum": [
+          "PENDING_REVIEW",
+          "COMMITTED",
+          "REJECTED"
+        ]
+      },
+      "GiftList": {
+        "type": "object",
+        "required": [
+          "id",
+          "celebrationId",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "celebrationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "GiftItem": {
+        "type": "object",
+        "required": [
+          "id",
+          "listId",
+          "celebrationId",
+          "title",
+          "price",
+          "source",
+          "status",
+          "version",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "listId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "celebrationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "price": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "source": {
+            "$ref": "#/components/schemas/GiftSource"
+          },
+          "status": {
+            "$ref": "#/components/schemas/GiftItemStatus"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Optimistic-lock counter"
+          },
+          "productListingId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "providerId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "externalUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reservedByName": {
+            "type": "string",
+            "description": "Display name of the active requester; present only when the host allows this viewer (host or other guests) to see it"
+          }
+        }
+      },
+      "GiftItemList": {
+        "type": "object",
+        "required": [
+          "items",
+          "partnerPriorityEnabled"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GiftItem"
+            }
+          },
+          "partnerPriorityEnabled": {
+            "type": "boolean",
+            "description": "From celebration.settings.updated.v1; when true, external gifts require acknowledging partner suggestions first"
+          }
+        }
+      },
+      "AddCatalogedGiftRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source",
+          "title",
+          "price",
+          "productListingId"
+        ],
+        "properties": {
+          "source": {
+            "const": "CATALOGED"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000
+          },
+          "price": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "productListingId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "AddExternalGiftRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source",
+          "title",
+          "price",
+          "url"
+        ],
+        "properties": {
+          "source": {
+            "const": "EXTERNAL"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000
+          },
+          "price": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "maxLength": 2048,
+            "description": "http or https"
+          },
+          "partnerSuggestionsAcknowledged": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ReserveGiftRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "guestDisplayName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 120
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 500
+          }
+        }
+      },
+      "GiftReservation": {
+        "type": "object",
+        "required": [
+          "id",
+          "itemId",
+          "celebrationId",
+          "status",
+          "requestedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "celebrationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "guestId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Null after guest erasure"
+          },
+          "guestDisplayName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/ReservationStatus"
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "resolvedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "resolvedBy": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "requesterHidden": {
+            "type": "boolean",
+            "description": "true when the host chose not to see who asked: guestId, guestDisplayName and message are null"
+          }
+        }
+      },
+      "ReservationList": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GiftReservation"
+            }
+          }
+        }
+      },
+      "PartnerSuggestion": {
+        "type": "object",
+        "required": [
+          "productListingId",
+          "title"
+        ],
+        "properties": {
+          "productListingId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
+      "GiftSettings": {
+        "type": "object",
+        "required": [
+          "showRequesterToHost",
+          "showRequesterToGuests",
+          "version"
+        ],
+        "properties": {
+          "showRequesterToHost": {
+            "type": "boolean",
+            "description": "default true"
+          },
+          "showRequesterToGuests": {
+            "type": "boolean",
+            "description": "default false"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "0 until the host saves once"
+          }
+        }
+      },
+      "UpdateGiftSettingsRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "showRequesterToHost",
+          "showRequesterToGuests"
+        ],
+        "properties": {
+          "showRequesterToHost": {
+            "type": "boolean"
+          },
+          "showRequesterToGuests": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Missing, malformed, expired or non-RS256 token",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            },
+            "example": {
+              "type": "https://rsvp.example/problems/unauthorized",
+              "title": "Unauthorized",
+              "status": 401,
+              "code": "UNAUTHORIZED"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Unknown resource, or one that belongs to another celebration (existence is never disclosed)",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Host role required (HOST_REQUIRED) or the guest identity was erased (GUEST_ERASED)",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            },
+            "example": {
+              "type": "https://rsvp.example/problems/host-required",
+              "title": "Only the host of the celebration can do this.",
+              "status": 403,
+              "code": "HOST_REQUIRED"
+            }
+          }
+        }
+      },
+      "Validation": {
+        "description": "Invalid request (INVALID_MONEY, INVALID_EXTERNAL_URL, CATALOG_PRODUCT_UNAVAILABLE, VALIDATION_FAILED, INVALID_TITLE)",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "GiftNotAvailable": {
+        "description": "The gift is no longer available",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            },
+            "example": {
+              "type": "https://rsvp.example/problems/gift-not-available",
+              "title": "This gift is no longer available; please choose another one.",
+              "status": 409,
+              "code": "GIFT_NOT_AVAILABLE",
+              "suggestion": "LIST_ALTERNATIVES"
+            }
+          }
+        }
+      },
+      "GiftConflict": {
+        "description": "Forbidden transition (INVALID_GIFT_TRANSITION) or concurrent change (GIFT_NOT_AVAILABLE)",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "DependencyUnavailable": {
+        "description": "Celebration or Provider Catalog is unavailable (fail closed)",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "RateLimited": {
+        "description": "Too many requests (the Guest service throttles credential checks); retry after the indicated seconds",
+        "headers": {
+          "Retry-After": {
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      }
+    }
+  }
+}

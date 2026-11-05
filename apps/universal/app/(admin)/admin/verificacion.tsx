@@ -1,4 +1,4 @@
-import { VerificationScreen } from '../../../src/admin/other-screens';
+import { VerificationScreen } from '../../../src/admin/queues';
 import { useHostRoute } from '../../../src/platform/route';
 
 /** E7 · Verificación de proveedores. */

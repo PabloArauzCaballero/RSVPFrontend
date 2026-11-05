@@ -12,10 +12,15 @@
     "noEmit": true
   },
   "include": [
-    "next-env.d.ts",
+    ".next-e2e/types/**/*.ts",
+    ".next-f10-fx/types/**/*.ts",
+    ".next-f10/types/**/*.ts",
+    ".next-f22/types/**/*.ts",
     ".next/types/**/*.ts",
     "app",
-    "tests"
+    "next-env.d.ts",
+    "tests",
+    ".next-live/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

@@ -14,3 +14,9 @@ Textos por defecto salen de `UiProvider strings` (es-BO por defecto): las apps p
 
 ## No cubierto
 Sheet/Modal nativos con foco real, animaciones (no se agregaron), pantallas del anfitrion siguen con `apps/universal/src/host/ui.tsx` propio (no migradas).
+
+## Actualización 2026-11-04
+
+- **Selector de fecha nativo (REQ-F03-01):** `packages/ui/src/date-field.native.tsx` usa `@react-native-community/datetimepicker` 8.4.4 (versión de Expo SDK 54; también declarado en `apps/universal`). Contrato de valor sin cambios (`YYYY-MM-DD`, sin desfase de zona). Web/tests conservan el campo tipeado (`date-field.tsx`). Test con el módulo simulado (`date-field.native.test.tsx`, 2 tests) y el bundle iOS/Android compila. El selector real no se abrió en un dispositivo.
+- **Pantallas reales migradas a `@rsvp/ui`:** `ActionButton` y `Field` de `apps/universal/src/host/ui.tsx` (usados por anfitrión y admin) ahora envuelven `Button` e `Input` de `@rsvp/ui`; `AppProviders` monta `UiProvider` con el idioma activo. Los 102 tests de universal siguen verdes. Quedan en `host/ui.tsx` Notice, ChoiceGroup, Section, ConfirmDialog (sin equivalente en `@rsvp/ui` todavía).
+- Accesibilidad nativa: roles/labels de `@rsvp/ui` ya estaban asertados en react-native-web; el selector nativo expone `button` con etiqueta "<campo>: <valor>". VoiceOver/TalkBack: no probados.

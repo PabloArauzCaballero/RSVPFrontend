@@ -57,7 +57,10 @@ export interface CelebrationContent {
   readonly venues: readonly Venue[];
   readonly faq: readonly FaqItem[];
   readonly recommendations: readonly Recommendation[];
+  /** `hostContact` the hosts agreed to publish (`consentPublic: true`); absent otherwise. This is who a guest writes to. */
+  readonly hostContact?: HostContact;
 }
+export interface HostContact { readonly email?: string; readonly phone?: string }
 
 type Unknown = Readonly<Record<string, unknown>>;
 const isRecord = (value: unknown): value is Unknown => typeof value === "object" && value !== null && !Array.isArray(value);
@@ -97,8 +100,16 @@ export function readContent(view: Pick<PublicCelebrationView, "content" | "event
     faq: records(content["faq"]).map((item) => ({ question: text(item["question"]), answer: text(item["answer"]) })).filter((item) => item.question && item.answer),
     recommendations: records(content["recommendations"])
       .map((item) => ({ kind: oneOf(item["kind"], recommendationKinds, RecommendationKind.Other), name: text(item["name"]), description: optionalText(item["description"]), listingId: optionalText(item["listingId"]) }))
-      .filter((item) => item.name)
+      .filter((item) => item.name),
+    hostContact: readHostContact(content["hostContact"])
   };
+}
+
+function readHostContact(value: unknown): HostContact | undefined {
+  if (!isRecord(value) || value["consentPublic"] !== true) return undefined;
+  const email = optionalText(value["email"]);
+  const phone = optionalText(value["phone"]);
+  return email || phone ? { ...(email ? { email } : {}), ...(phone ? { phone } : {}) } : undefined;
 }
 
 /** Whether a section has something to show; empty sections are never rendered (no gaps). */

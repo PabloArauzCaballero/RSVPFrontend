@@ -3,8 +3,8 @@ import { Linking, Text, View } from "react-native";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { celebrationApi, useAdminEventTypes, useAdminTemplates } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../platform/providers";
-import { ActionButton, ConfirmDialog, ErrorNotice, Field, Loading, Notice, Section, styles } from "../host/ui";
-import { ADMIN_ROUTES, AdminScreen, UnavailableModule, type AdminRoute } from "./admin-screen";
+import { ActionButton, ConfirmDialog, ErrorNotice, Loading, Notice, Section, styles } from "../host/ui";
+import { AdminScreen } from "./admin-screen";
 
 type Nav = { readonly onNavigate: (href: string) => void };
 
@@ -67,39 +67,6 @@ export function OperationsScreen({ onNavigate }: Nav): ReactNode {
         <ActionButton variant="secondary" label={t("admin.operations.rabbit")} onPress={() => { void Linking.openURL(RABBIT_URL); }} />
       </View>
       <ConfirmDialog visible={confirm} title={t("admin.operations.replay")} body={t("admin.operations.replayConfirm")} confirmLabel={t("host.common.confirm")} onCancel={() => setConfirm(false)} onConfirm={() => { setConfirm(false); replay.mutate(); }} />
-    </AdminScreen>
-  );
-}
-
-/** E7 · Verification queue. Verifying uses POST /providers/{id}/verify from the provider-catalog contract. */
-export function VerificationScreen({ onNavigate }: Nav): ReactNode {
-  const t = useT();
-  const client = useApiClient();
-  const [providerId, setProviderId] = useState("");
-  const verify = useMutation({ mutationFn: (id: string) => client.request<unknown>(`/providers/${encodeURIComponent(id)}/verify`, { method: "POST" }) });
-  return (
-    <AdminScreen title={t("admin.verification.title")} current="verification" onNavigate={onNavigate}>
-      <UnavailableModule service="provider-catalog-service" />
-      <Field label={t("admin.verification.providerId")} value={providerId} onChange={setProviderId} />
-      <ActionButton label={t("admin.verification.verify")} disabled={!providerId.trim()} busy={verify.isPending} onPress={() => verify.mutate(providerId.trim())} />
-      {verify.isSuccess ? <Notice kind="success">{t("admin.verification.done")}</Notice> : null}
-      <ErrorNotice error={verify.error} />
-    </AdminScreen>
-  );
-}
-
-const OWNERS: Readonly<Partial<Record<AdminRoute, string>>> = {
-  categories: "provider-catalog-service", geography: "provider-catalog-service", moderation: "provider-catalog-service · gift-list-service",
-  users: "identity-service", organizations: "identity-service", metrics: "provider-catalog-service"
-};
-
-/** E5, E6, E8, E9, E10, E11 · Modules whose APIs belong to other lanes and are not published yet. */
-export function PendingModuleScreen({ module, onNavigate }: Nav & { readonly module: keyof typeof OWNERS & AdminRoute }): ReactNode {
-  const t = useT();
-  return (
-    <AdminScreen title={t(`admin.${module}.title`)} current={module} onNavigate={onNavigate}>
-      <UnavailableModule service={OWNERS[module] ?? module} />
-      <ActionButton variant="secondary" label={t("admin.nav.dashboard")} onPress={() => onNavigate(ADMIN_ROUTES.dashboard)} />
     </AdminScreen>
   );
 }

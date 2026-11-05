@@ -4,7 +4,7 @@ import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { EventTypeDefinition, Template, TranslatedEventType } from "@rsvp/query-hooks";
 import { definitionOf, EventTypesScreen, formOf } from "../src/admin/event-types";
-import { DashboardScreen, OperationsScreen, PendingModuleScreen, VerificationScreen } from "../src/admin/other-screens";
+import { DashboardScreen, OperationsScreen } from "../src/admin/other-screens";
 import { TemplatesAdminScreen } from "../src/admin/templates";
 import { OnboardingScreen } from "../src/host/onboarding";
 import { ADMIN, fakeClient, GUEST, HOST, renderApp, TEMPLATES, WEDDING, type Handler } from "./support";
@@ -15,8 +15,8 @@ const type = (label: string, value: string): void => { fireEvent.change(screen.g
 describe("REQ-F14-06 · only ADMIN reaches administration", () => {
   it.each([["HOST", HOST], ["GUEST", GUEST]] as const)("%s sees access denied on every module", (_role, claims) => {
     const { client } = fakeClient({});
-    renderApp(<><DashboardScreen onNavigate={navigate} /><EventTypesScreen onNavigate={navigate} /><TemplatesAdminScreen onNavigate={navigate} /><OperationsScreen onNavigate={navigate} /><VerificationScreen onNavigate={navigate} /><PendingModuleScreen module="users" onNavigate={navigate} /></>, client, claims);
-    expect(screen.getAllByText("Acceso denegado: esta área es solo para administradores de la plataforma.")).toHaveLength(6);
+    renderApp(<><DashboardScreen onNavigate={navigate} /><EventTypesScreen onNavigate={navigate} /><TemplatesAdminScreen onNavigate={navigate} /><OperationsScreen onNavigate={navigate} /></>, client, claims);
+    expect(screen.getAllByText("Acceso denegado: esta área es solo para administradores de la plataforma.")).toHaveLength(4);
   });
 });
 
@@ -100,21 +100,15 @@ describe("E2, E3, E7, E12", () => {
     expect(await screen.findByText("Proyección reconstruida: 42 eventos aplicados.")).toBeTruthy();
     expect(calls.some((call) => call.method === "POST")).toBe(true);
   });
-
-  it("modules of other lanes say which service is missing instead of inventing data", () => {
-    const { client } = fakeClient({});
-    renderApp(<PendingModuleScreen module="metrics" onNavigate={navigate} />, client, ADMIN);
-    expect(screen.getByText(/provider-catalog-service/)).toBeTruthy();
-  });
 });
 
 describe("no hand-written copy in lane B screens", () => {
   const files = (path: string): string[] => (statSync(path).isDirectory() ? readdirSync(path).flatMap((entry) => files(join(path, entry))) : [path]);
   // Letters between ">" (not "=>") and "<" or "{": a JSX text node. Matches ">Guardar<"; rejects ">{t("x")}<" and "=> a < b".
   const JSX_TEXT = /(?<![=])>\s*([^<>{}\s·&|/,;:()[\]-][^<>{}]*?)\s*</g;
-  it("every JSX text node in src/host and src/admin is a translation", () => {
+  it("every JSX text node in src/host, src/admin, src/guest and src/push is a translation", () => {
     const root = process.cwd();
-    const offenders = ["src/host", "src/admin"].flatMap((dir) => files(join(root, dir))).filter((file) => file.endsWith(".tsx")).flatMap((file) => {
+    const offenders = ["src/host", "src/admin", "src/guest", "src/push"].flatMap((dir) => files(join(root, dir))).filter((file) => file.endsWith(".tsx")).flatMap((file) => {
       const source = readFileSync(file, "utf8").replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, "");
       return [...source.matchAll(JSX_TEXT)].map((match) => match[1] ?? "").filter((text) => /\p{L}/u.test(text)).map((text) => `${relative(root, file)}: "${text}"`);
     });

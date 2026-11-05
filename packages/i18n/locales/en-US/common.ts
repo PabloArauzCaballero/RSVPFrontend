@@ -18,8 +18,16 @@ export const enUS = {
   language: { label: "Language", "es-BO": "Español", "en-US": "English" },
   invitation: {
     title: "Open your invitation", body: "This link is meant for the DOne app. If you have it installed, open it from here; otherwise you can continue in the browser.", openApp: "Open in the DOne app",
-    pendingTitle: "We cannot show your invitation details yet", pendingBody: "The invitations service is not available yet. Keep this link and try again later, or ask whoever invited you to send it again.", appTitle: "Your invitation", appBody: "You opened your personal invitation link. You will be able to confirm your attendance here once the invitations service is available.", invalidTitle: "This link is not valid", invalidBody: "Make sure you opened the full link that was shared with you.", home: "Go to the home page"
+    pendingTitle: "This link uses an older format", pendingBody: "The celebration name is missing from the link. Ask whoever invited you to send the updated link, or open it from the DOne app, which can resolve it.", appTitle: "Your invitation", appBody: "This link uses an older format and does not say which celebration it belongs to. Ask whoever invited you for the updated link.", invalidTitle: "This link is not valid", invalidBody: "Make sure you opened the full link that was shared with you.", home: "Go to the home page"
   },
   stubs: { host: { title: "Host dashboard", description: "Manage your celebration from one place." }, provider: { title: "Provider portal", description: "Review and answer your requests." }, guest: { title: "Your invitation", description: "Confirm your attendance and see the details." } },
-  errors: { unauthorized: "Your session has expired.", forbidden: "You do not have permission to perform this action.", conflict: "This resource changed. Refresh and try again.", validation: "Check the information you entered." }
+  ui: {
+    partnerDisclaimer: "Sponsored link: opening it takes you out of DOne. DOne connects you, but does not provide or guarantee the provider's service.", action: "Action", loading: "Loading…", empty: "No information available.", genericError: "The action could not be completed.", close: "Close", emptyTable: "No records.", chooseFile: "Choose file", dismiss: "Dismiss notice",
+    datePlaceholder: "YYYY-MM-DD", confirmChange: "Confirm change", cancel: "Cancel",
+    catalogTitle: "Component catalog", catalogIntro: "Each block is a state. Same tokens in light and dark.", catalogActions: "Actions", catalogState: "State:", catalogSave: "Save", catalogBlocked: "Blocked",
+    catalogOpenDialog: "Open dialog", catalogOpenPanel: "Open panel", catalogName: "Name", catalogNamePlaceholder: "Type your name", catalogNameError: "Type your full name.", catalogOption: "Option", catalogOptionOne: "Option one", catalogOptionTwo: "Option two", catalogOptionError: "Choose an option.",
+    catalogTerms: "I accept the terms", catalogTermsError: "You must accept.", catalogDate: "Date", catalogAttachment: "Attachment", catalogCard: "Card content", catalogRowName: "Invitation", catalogRowStatus: "Active", catalogColName: "Name", catalogColStatus: "Status",
+    catalogPanel: "Panel", catalogPanelBody: "Panel content.", catalogDialog: "Confirmation", catalogDialogBody: "Review this action before continuing.", catalogDone: "Action completed"
+  },
+  errors: { unauthorized: "Your session has expired.", signInAgain: "Sign in again", forbidden: "You do not have permission to perform this action.", conflict: "This resource changed. Refresh and try again.", validation: "Check the information you entered." }
 } as const;

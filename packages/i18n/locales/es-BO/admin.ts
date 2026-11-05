@@ -24,13 +24,29 @@ export const adminEsBO = {
     templateTags: "Etiquetas de templates compatibles", translations: "Traducciones", name: "Nombre ({{locale}})", description: "Descripción ({{locale}})", roleLabel: "{{role}} ({{locale}})",
     save: "Guardar tipo de evento", savedHelp: "Ya se puede usar en celebraciones nuevas, sin desplegar."
   },
-  categories: { title: "Categorías de proveedor" },
-  geography: { title: "Geografía" },
-  verification: { title: "Cola de verificación de proveedores", providerId: "Identificador del proveedor", verify: "Verificar", reject: "Rechazar", suspend: "Suspender", done: "Proveedor actualizado." },
-  moderation: { title: "Moderación de microsites y regalos externos" },
-  users: { title: "Usuarios y roles" },
-  organizations: { title: "Organizaciones" },
-  metrics: { title: "Métricas de leads" },
+  errors: { unauthorized: "Tu sesión terminó. Vuelve a iniciar sesión.", forbidden: "Tu cuenta no tiene permiso para esta operación.", notFound: "Este módulo todavía no está disponible en el servidor o el elemento ya no existe. Inténtalo de nuevo más tarde.", conflict: "Otra persona ya resolvió este elemento. Recarga la lista para ver el estado actual.", invalid: "El servidor rechazó los datos. Revísalos e inténtalo de nuevo.", generic: "No se pudo completar la acción. Revisa tu conexión e inténtalo de nuevo." },
+  common: { reason: "Motivo", reasonRequired: "Escribe el motivo: queda registrado y lo ve el proveedor.", reasonOn: "Motivo: {{reason}}", filter: "Mostrar", name: "Nombre ({{locale}})", nameRequired: "Escribe al menos un nombre.", code: "Código", codeHelp: "Mayúsculas, números y guiones bajos, por ejemplo FOTOGRAFIA.", codeInvalid: "Usa de 2 a 40 caracteres: mayúsculas, números o guion bajo, empezando con una letra.", state: "Estado", active: "Activo", inactive: "Inactivo", save: "Guardar", editItem: "Editar {{name}}" },
+  categories: { title: "Categorías de proveedor", new: "Nueva categoría", edit: "Editar {{code}}", list: "Categorías existentes", empty: "Todavía no hay categorías. Crea la primera con el formulario." },
+  geography: { title: "Geografía", new: "Nueva ubicación", edit: "Editar {{code}}", list: "Países, regiones y ciudades", empty: "Todavía no hay ubicaciones. Crea la primera con el formulario.", kind: "Tipo", kinds: { COUNTRY: "País", REGION: "Región", CITY: "Ciudad" }, parent: "Código de la ubicación superior", parentHelp: "Una ciudad cuelga de una región o país; una región, de un país.", parentRequired: "Indica a qué ubicación pertenece." },
+  verification: {
+    title: "Cola de verificación de proveedores", statuses: { PENDING: "Pendientes", VERIFIED: "Verificados", REJECTED: "Rechazados", SUSPENDED: "Suspendidos" },
+    submitted: "Enviado el {{when}}", verify: "Verificar", reject: "Rechazar", suspend: "Suspender",
+    verifyNamed: "Verificar a {{name}}", rejectNamed: "Rechazar a {{name}}", suspendNamed: "Suspender a {{name}}",
+    rejectTitle: "Rechazar a {{name}}", rejectBody: "El proveedor no aparecerá en el buscador. Escribe el motivo para que pueda corregir su solicitud.",
+    suspendTitle: "Suspender a {{name}}", suspendBody: "El proveedor deja de aparecer en el buscador y no recibe nuevos leads hasta que lo verifiques de nuevo.",
+    empty: "No hay proveedores en estado «{{status}}».", done: "Proveedor actualizado."
+  },
+  moderation: {
+    title: "Moderación de microsites y regalos externos", statuses: { PENDING: "Pendientes", APPROVED: "Aprobados", REJECTED: "Rechazados" }, kinds: { MICROSITE: "Microsite", EXTERNAL_GIFT: "Regalo externo" },
+    empty: "No hay propuestas en estado «{{status}}».", done: "Decisión registrada.", open: "Abrir {{name}}", approveNamed: "Aprobar {{name}}", rejectNamed: "Rechazar {{name}}",
+    reject: "Rechazar", rejectTitle: "Rechazar {{name}}", rejectBody: "Quien lo propuso verá el motivo. Escríbelo con claridad."
+  },
+  users: { title: "Usuarios y roles", search: "Buscar usuario", searchHelp: "Por correo electrónico. Déjalo vacío para ver todos.", searchAction: "Buscar", empty: "No hay usuarios que coincidan.", noRoles: "Sin roles", statuses: { ACTIVE: "Activo", SUSPENDED: "Suspendido" } },
+  organizations: { title: "Organizaciones", lookup: "Consultar una organización", id: "Identificador de la organización", idHelp: "El identificador completo (UUID) de la organización.", lookupAction: "Consultar", empty: "Todavía no hay organizaciones registradas.", owner: "Responsable: {{id}}", members: "Miembros: {{count}}" },
+  metrics: {
+    title: "Métricas de leads", groupBy: "Agrupar por", groups: { partner: "Partner", category: "Categoría" }, from: "Desde", to: "Hasta", dateHelp: "Formato AAAA-MM-DD, en UTC.", invalidRange: "Revisa las fechas: usa AAAA-MM-DD y que «Desde» no sea posterior a «Hasta».",
+    empty: "No hay leads en este periodo.", total: "Leads en el periodo: {{count}}", columns: { name: "Nombre", leads: "Leads", quotes: "Cotiz.", bookings: "Reserv." }
+  },
   operations: {
     title: "Estado operativo", services: "Servicios", healthy: "Disponible", down: "No responde",
     replay: "Reconstruir la proyección pública", replayConfirm: "Se borrará y reconstruirá desde el historial de eventos. Los sitios siguen disponibles durante el proceso.",

@@ -1,0 +1,37 @@
+/* F22 · public gift list. Calm card grid; one primary action per card. */
+.gifts { width: min(100% - 2rem, 70rem); margin: 0 auto; padding: clamp(1.5rem, 5vw, 3rem) 0 4rem; display: grid; gap: 1.25rem; }
+.gifts h1 { margin: 0; font-size: clamp(1.8rem, 6vw, 2.75rem); line-height: 1.1; }
+.gifts h2 { margin: 0; font-size: 1.25rem; }
+.gifts__intro { margin: 0; color: var(--text-muted); max-width: 42rem; }
+.gifts__filters { display: flex; flex-wrap: wrap; gap: .75rem 1rem; align-items: end; padding: 1rem; border: 1px solid var(--border); border-radius: .75rem; background: var(--surface); }
+.gifts__filters label { display: grid; gap: .3rem; font-weight: 650; font-size: .9rem; }
+.gifts__filters input[type="number"], .gifts__filters select { min-height: 2.75rem; padding: .5rem .7rem; border: 1px solid var(--border); border-radius: .5rem; background: var(--canvas); color: var(--text); min-width: 9rem; }
+.gifts__check { display: flex !important; align-items: center; gap: .5rem; min-height: 2.75rem; }
+.gifts__check input { width: 1.25rem; height: 1.25rem; accent-color: var(--primary); }
+.gifts__count { margin: 0; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.gifts__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); gap: 1rem; list-style: none; padding: 0; margin: 0; }
+.gift-card { display: grid; gap: .5rem; align-content: start; padding: 1.1rem; border: 1px solid var(--border); border-radius: .875rem; background: var(--surface); }
+.gift-card--partner { border-color: color-mix(in srgb, var(--primary) 45%, var(--border)); }
+.gift-card h3 { margin: 0; font-size: 1.1rem; }
+.gift-card h3 a { color: var(--text); text-decoration: none; }
+.gift-card h3 a:hover { text-decoration: underline; }
+.gift-card__price { margin: 0; font-size: 1.25rem; font-weight: 750; font-variant-numeric: tabular-nums; }
+.gift-card__desc { margin: 0; color: var(--text-muted); font-size: .95rem; }
+.gift-badge { width: fit-content; padding: .2rem .65rem; border-radius: 999px; font-size: .8rem; font-weight: 700; background: var(--primary-muted); color: var(--primary); }
+.gift-badge--pending { background: var(--accent-muted); color: var(--text); }
+.gift-badge--taken { background: var(--surface-muted); color: var(--text-muted); }
+.gift-card__actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .25rem; align-items: center; }
+.gifts__notice { padding: 1.1rem 1.25rem; border-radius: .75rem; border: 1px solid var(--border); background: var(--surface-muted); display: grid; gap: .6rem; }
+.gifts__notice h2 { margin: 0; }
+.gifts__notice p { margin: 0; }
+.gifts__notice--warn { border-color: var(--warning, var(--accent)); }
+.gifts__notice--ok { border-color: var(--primary); background: var(--primary-muted); }
+.gift-dialog { width: min(100% - 2rem, 30rem); border: 1px solid var(--border); border-radius: 1rem; padding: 0; background: var(--surface); color: var(--text); box-shadow: var(--shadow-card); }
+.gift-dialog::backdrop { background: rgb(10 16 51 / .55); }
+.gift-dialog form, .gift-dialog > div { display: grid; gap: 1rem; padding: 1.25rem; }
+.gift-dialog h2 { margin: 0; }
+.gift-dialog input, .gift-dialog textarea { width: 100%; min-height: 2.75rem; padding: .6rem .8rem; border: 1px solid var(--border); border-radius: .5rem; background: var(--canvas); color: var(--text); font-size: 1rem; }
+.gift-dialog textarea { min-height: 5.5rem; resize: vertical; }
+.gift-skeleton { height: 9rem; border-radius: .875rem; background: linear-gradient(90deg, var(--surface-muted), var(--surface), var(--surface-muted)); background-size: 200% 100%; animation: gift-shimmer 1.4s linear infinite; }
+@keyframes gift-shimmer { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .gift-skeleton { animation: none; } }

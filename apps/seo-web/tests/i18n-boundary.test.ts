@@ -4,10 +4,10 @@ import { describe, expect, it } from "vitest";
 
 /**
  * "Ninguna cadena de texto escrita a mano" for lane B's public surfaces: JSX text nodes must
- * come from i18n. Lanes of other axes (RSVP pages, the component catalogue) are not scanned.
+ * come from i18n. The RSVP pages (F15) are scanned too; the component catalogue is not.
  */
 const ROOT = process.cwd();
-const SCANNED = ["app/c/[slug]/page.tsx", "app/c/[slug]/[section]/page.tsx", "app/c/[slug]/not-found.tsx", "app/page.tsx", "app/layout.tsx", "app/proveedores", "app/rsvp", "components/public-celebration.tsx", "components/provider-directory.tsx"];
+const SCANNED = ["app/c/[slug]/page.tsx", "app/c/[slug]/[section]/page.tsx", "app/c/[slug]/not-found.tsx", "app/page.tsx", "app/layout.tsx", "app/proveedores", "app/rsvp", "app/c/[slug]/rsvp", "components/rsvp", "components/public-celebration.tsx", "components/provider-directory.tsx"];
 const files = (path: string): string[] => (statSync(path).isDirectory() ? readdirSync(path).flatMap((entry) => files(join(path, entry))) : [path]);
 
 // Letters between a closing ">" (not the one of "=>") and the next "<" or "{": a JSX text node.

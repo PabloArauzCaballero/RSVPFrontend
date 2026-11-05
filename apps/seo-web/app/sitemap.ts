@@ -1,11 +1,12 @@
 import type { MetadataRoute } from "next";
 import { loadPublicSlugs, type PublicSlug } from "../lib/celebration";
 import { celebrationPath, siteUrl } from "../lib/metadata";
+import { loadPartnerSlugs } from "../lib/partner";
 import { PROVIDER_CATEGORIES } from "../lib/providers";
 
 /**
- * Only public, indexable routes (REQ-F08-05): the home, the provider directory and every
- * published celebration. Regenerated at most every 5 minutes, so a newly published
+ * Only public, indexable routes (REQ-F08-05): the home, the provider directory, every verified
+ * partner microsite and every published celebration. Regenerated at most every 5 minutes, so a newly published
  * celebration appears without a deploy.
  */
 export const revalidate = 300;
@@ -15,6 +16,14 @@ async function publishedSlugs(): Promise<readonly PublicSlug[]> {
     return await loadPublicSlugs();
   } catch {
     // The sitemap must still answer when the API is briefly unreachable; the next revalidation retries.
+    return [];
+  }
+}
+
+async function partnerSlugs(): Promise<readonly string[]> {
+  try {
+    return await loadPartnerSlugs();
+  } catch {
     return [];
   }
 }
@@ -29,5 +38,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     alternates: { languages: Object.fromEntries(item.supportedLocales.map((locale) => [locale, `${base}${celebrationPath(item.slug)}?lang=${locale}`])) }
   }));
   const directory = [{ url: `${base}/proveedores`, changeFrequency: "daily" as const, priority: 0.9 }, ...PROVIDER_CATEGORIES.map((category) => ({ url: `${base}/proveedores/${category.slug}`, changeFrequency: "daily" as const, priority: 0.8 }))];
-  return [{ url: base, changeFrequency: "weekly", priority: 1 }, ...directory, ...celebrations];
+  // Partner microsites (/p/{slug}) are indexable; /r/ (redirector), /proveedores/buscar and guest links are not listed.
+  const partners = (await partnerSlugs()).map((slug) => ({ url: `${base}/p/${encodeURIComponent(slug)}`, changeFrequency: "weekly" as const, priority: 0.6 }));
+  return [{ url: base, changeFrequency: "weekly", priority: 1 }, ...directory, ...partners, ...celebrations];
 }

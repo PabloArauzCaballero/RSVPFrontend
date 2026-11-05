@@ -1,5 +1,5 @@
-import { PendingModuleScreen } from '../../../src/admin/other-screens';
+import { MetricsScreen } from '../../../src/admin/insight';
 import { useHostRoute } from '../../../src/platform/route';
 
 /** E11 · Métricas. */
-export default function Route() { const { onNavigate } = useHostRoute(); return <PendingModuleScreen module="metrics" onNavigate={onNavigate} />; }
+export default function Route() { const { onNavigate } = useHostRoute(); return <MetricsScreen onNavigate={onNavigate} />; }

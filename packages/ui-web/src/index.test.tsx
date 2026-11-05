@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import axe from 'axe-core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { Button, Card, Checkbox, ComponentCatalog, DatePicker, FileUpload, Input, Modal, Select, Sheet, Table, Toast, UiProvider, componentStates } from './index';
+import { Button, Card, PartnerLink, partnerRedirectHref, Checkbox, ComponentCatalog, DatePicker, FileUpload, Input, Modal, Select, Sheet, Table, Toast, UiProvider, componentStates } from './index';
 
 afterEach(cleanup);
 
@@ -115,5 +115,23 @@ describe('REQ-F03-05/03: catalog renders every primitive and passes axe (structu
     for (const state of componentStates) expect(screen.getByRole('heading', { name: `Estado: ${state}` })).toBeTruthy();
     const result = await axe.run(container, { rules: { 'color-contrast': { enabled: false }, region: { enabled: false } } });
     expect(result.violations.filter((v) => v.impact === 'critical' || v.impact === 'serious').map((v) => `${v.id}: ${v.nodes[0]?.html}`)).toEqual([]);
+  });
+});
+
+describe('PartnerLink: always through /r/{listingId}', () => {
+  const ID = '0685d3fd-e1dc-454b-837e-a24d8861f086';
+  it('points at the redirector with rel sponsored nofollow and a described disclaimer', () => {
+    render(<PartnerLink listingId={ID} destination="WHATSAPP" surface="GIFT_LIST" celebrationId="c1">Ver en la tienda</PartnerLink>);
+    const link = screen.getByRole('link', { name: 'Ver en la tienda' });
+    expect(link.getAttribute('href')).toBe(`/r/${ID}?destination=WHATSAPP&surface=GIFT_LIST&celebrationId=c1`);
+    expect(link.getAttribute('rel')).toBe('sponsored nofollow noopener');
+    expect(document.getElementById(link.getAttribute('aria-describedby') ?? '')?.textContent).toMatch(/no presta ni garantiza/);
+  });
+  it('refuses a partner URL instead of a listing id', () => {
+    expect(() => partnerRedirectHref('https://tienda.example/x')).toThrow(/listing id/);
+  });
+  it('has no axe violations', async () => {
+    const { container } = render(<PartnerLink listingId={ID}>Abrir</PartnerLink>);
+    expect((await axe.run(container)).violations).toEqual([]);
   });
 });

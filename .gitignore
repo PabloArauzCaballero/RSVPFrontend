@@ -14,3 +14,5 @@ coverage
 *.err.log
 .env.local
 .codegraph/
+web-build-e2e
+web-build-live

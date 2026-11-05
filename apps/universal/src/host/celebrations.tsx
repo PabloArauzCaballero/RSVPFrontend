@@ -13,7 +13,7 @@ export function CelebrationsScreen({ onNavigate }: { readonly onNavigate: (href:
   const client = useApiClient();
   const claims = useClaims();
   const query = useMyCelebrations(client);
-  if (!canUseHostWorkspace(claims.roles)) return <Screen title={t("host.picker.title")}><Notice kind="error">{t("host.common.accessDenied")}</Notice></Screen>;
+  if (!canUseHostWorkspace(claims)) return <Screen title={t("host.picker.title")}><Notice kind="error">{t("host.common.accessDenied")}</Notice></Screen>;
   const items = query.data?.items ?? [];
   return (
     <Screen title={t("host.picker.title")}>

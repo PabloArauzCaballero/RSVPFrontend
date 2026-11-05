@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { QueryClient } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createApiClient, type ApiClient } from "@rsvp/api-client";
+import { createContractMock, MOCK_VALID_TOKEN } from "@rsvp/testing/contract-mock";
 import { IdentityClient, SessionManager, createMemorySessionStore, createNativeSessionStore, sessionFromTokens, type Role } from "@rsvp/auth";
 import { LanguageSwitch } from "../src/auth/auth-ui";
 import { InvitationLinkScreen } from "../src/auth/invitation-link";
@@ -277,6 +278,21 @@ describe("REQ-F05-04/05 · invitation link", () => {
     expect(screen.getByText("Tu invitación")).toBeTruthy(); view.unmount();
     render(<AppProviders client={client} locale="en-US"><InvitationLinkScreen token="abc" /></AppProviders>);
     expect(screen.getByText("Your invitation")).toBeTruthy();
+  });
+  it("resolves the credential with POST /rsvp/resolve and moves to the canonical route", async () => {
+    const mock = createContractMock();
+    mock.addGuest({ name: "Marta", token: MOCK_VALID_TOKEN });
+    const onResolved = vi.fn();
+    const client = createApiClient({ baseUrl: "http://gw.test", fetchFn: mock.fetch, tokenStore: { getAccessToken: async () => null, getRefreshToken: async () => null, setTokens: async () => undefined, clear: async () => undefined }, refreshSession: { refresh: async () => { throw new Error("none"); } } });
+    render(<AppProviders client={client} locale="es-BO"><InvitationLinkScreen token={MOCK_VALID_TOKEN} onResolved={onResolved} /></AppProviders>);
+    await waitFor(() => expect(onResolved).toHaveBeenCalledWith(`/c/${mock.slug}/rsvp/${MOCK_VALID_TOKEN}`));
+    expect(mock.state.log[0]).toMatchObject({ method: "POST", path: "/rsvp/resolve" });
+  });
+  it("an unknown credential (401) is the invalid link screen", async () => {
+    const mock = createContractMock();
+    const client = createApiClient({ baseUrl: "http://gw.test", fetchFn: mock.fetch, tokenStore: { getAccessToken: async () => null, getRefreshToken: async () => null, setTokens: async () => undefined, clear: async () => undefined }, refreshSession: { refresh: async () => { throw new Error("none"); } } });
+    render(<AppProviders client={client} locale="es-BO"><InvitationLinkScreen token={"x".repeat(43)} /></AppProviders>);
+    expect(await screen.findByText("Este enlace no es válido")).toBeTruthy();
   });
   it("a missing token is reported as an invalid link", () => {
     render(<AppProviders client={fakeClient({}).client} locale="es-BO"><InvitationLinkScreen token="  " /></AppProviders>);
