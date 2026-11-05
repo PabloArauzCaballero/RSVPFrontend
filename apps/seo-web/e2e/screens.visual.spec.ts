@@ -14,7 +14,7 @@ const SCREENS: readonly { readonly name: string; readonly path: string; readonly
   { name: "directorio-busqueda", path: "/proveedores/buscar?categoria=catering", lane: "F24" },
   { name: "directorio-categoria", path: "/proveedores/catering", lane: "F24" }
 ];
-const WIDTHS = [360, 1280] as const;
+const WIDTHS = [360, 768, 1280] as const;
 
 for (const screen of SCREENS) {
   for (const width of WIDTHS) {
