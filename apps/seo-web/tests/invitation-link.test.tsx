@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { createApiClient } from "@rsvp/api-client";
 import { createContractMock, MOCK_VALID_TOKEN } from "@rsvp/testing/contract-mock";
-import { appleAssociation, magicLinkUrl, nativeMagicLink, parseMagicLink, personalLinkUrl } from "@rsvp/auth";
+import { appleAssociation, magicLinkUrl, personalLinkUrl } from "@rsvp/auth";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const accept = vi.hoisted(() => ({ value: "es-BO" as string | null }));
