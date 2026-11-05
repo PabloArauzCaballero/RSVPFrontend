@@ -1,0 +1,11 @@
+#!/bin/sh
+# Bloquea pushes directos a ramas protegidas. Instalar con: git config core.hooksPath .githooks
+# No se debe saltar con --no-verify (ver .agents/skills/rsvp-pr-gate/SKILL.md).
+protected='^refs/heads/(dev|main)$'
+while read local_ref local_sha remote_ref remote_sha; do
+  if echo "$remote_ref" | grep -Eq "$protected"; then
+    echo "ERROR: push directo a ${remote_ref#refs/heads/} prohibido. Cree una rama y abra un Pull Request (skill rsvp-pr-gate)." >&2
+    exit 1
+  fi
+done
+exit 0

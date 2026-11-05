@@ -48,6 +48,9 @@ for (const name of skillNames) {
     }
   }
 }
+if (!skillNames.includes('rsvp-pr-gate')) errors.push('Falta la skill obligatoria rsvp-pr-gate');
+if (!readFileSync(join(root, 'AGENTS.md'), 'utf8').includes('rsvp-pr-gate')) errors.push('AGENTS.md debe exigir rsvp-pr-gate');
+if (!existsSync(join(root, '.githooks/pre-push'))) errors.push('Falta .githooks/pre-push');
 if (!skillNames.includes('rsvp-motion-design') || !skillNames.includes('rsvp-accessible-states') || !skillNames.includes('rsvp-evidence')) errors.push('Faltan skills RSVP de diseño o evidencia');
 const adapters = spawnSync(process.execPath, ['scripts/sync-claude-skill-adapters.mjs', '--check'], { cwd: root, encoding: 'utf8' });
 if (adapters.status !== 0) errors.push(adapters.stderr.trim() || 'Adaptadores Claude desactualizados');
