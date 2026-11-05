@@ -22,7 +22,9 @@
     "graph:sync": "codegraph sync",
     "graph:probe": "node scripts/probe-codegraph-mcp.mjs",
     "lint:code": "eslint . --max-warnings 0",
-    "hooks:install": "git config core.hooksPath .githooks"
+    "hooks:install": "git config core.hooksPath .githooks",
+    "assets:generate": "node scripts/generate-brand-assets.mjs",
+    "assets:check": "node scripts/generate-brand-assets.mjs --check"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.11.0",
