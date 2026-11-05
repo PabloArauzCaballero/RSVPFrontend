@@ -1,0 +1,54 @@
+{
+  "date": "2026-11-05T01:40:23.164Z",
+  "consoleErrors": [],
+  "results": [
+    {
+      "lane": "F28",
+      "id": "REQ-F28-01a",
+      "text": "alta real (POST /providers) -> ficha en Borrador con la nota de documentos",
+      "status": "PASS"
+    },
+    {
+      "lane": "F28",
+      "id": "REQ-F28-03",
+      "text": "crear oferta con condiciones de entrega (201 borrador) y publicarla (200)",
+      "status": "PASS"
+    },
+    {
+      "lane": "F28",
+      "id": "REQ-F28-01b",
+      "text": "enviar a verificacion (POST /submit) -> estado 'En verificacion' real; verificar requiere ADMIN (fuera del portal)",
+      "status": "PASS"
+    },
+    {
+      "lane": "F28",
+      "id": "REQ-F28-06a",
+      "text": "leads reales: cotizaciones FORM (F26) y clics REDIRECT (F27) separados",
+      "status": "PASS"
+    },
+    {
+      "lane": "F28",
+      "id": "REQ-F28-06b",
+      "text": "metricas reales del periodo (GET /metrics): Impresiones | 0 | Clics | 2 | CTR | 0% | Leads válidos | 2 | Leads descartados | 0",
+      "status": "PASS"
+    },
+    {
+      "lane": "F28",
+      "id": "REQ-F28-04",
+      "text": "al menos un destino obligatorio (validacion) y guardado real PUT /lead-config",
+      "status": "PASS"
+    },
+    {
+      "lane": "F28",
+      "id": "agenda",
+      "text": "disponibilidad guardada con PUT /availability (dia bloqueado agregado)",
+      "status": "PASS"
+    },
+    {
+      "lane": "F28",
+      "id": "bookings",
+      "text": "confirmar una solicitud de fecha recibida (POST /bookings/{id}/confirm)",
+      "status": "PASS"
+    }
+  ]
+}

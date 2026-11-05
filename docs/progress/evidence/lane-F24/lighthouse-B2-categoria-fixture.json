@@ -1,0 +1,96 @@
+{
+  "tool": "lighthouse 12.8.2",
+  "mode": "fixture",
+  "url": "http://localhost:3318/proveedores/salones",
+  "route": "/proveedores/salones",
+  "fetchTime": "2026-11-05T00:35:38.119Z",
+  "formFactor": "mobile (360x800, simulated throttling)",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+  "scores": {
+    "performance": 0.99,
+    "accessibility": 0.98,
+    "best-practices": 1,
+    "seo": 1
+  },
+  "metrics": {
+    "first-contentful-paint": 769.488,
+    "largest-contentful-paint": 1949.894,
+    "total-blocking-time": 80,
+    "cumulative-layout-shift": 0.004939557291666666,
+    "speed-index": 769.488
+  },
+  "failedAudits": {
+    "performance": [
+      {
+        "id": "largest-contentful-paint",
+        "score": 0.97,
+        "title": "Largest Contentful Paint"
+      },
+      {
+        "id": "total-blocking-time",
+        "score": 0.99,
+        "title": "Total Blocking Time"
+      },
+      {
+        "id": "cache-insight",
+        "score": 0.5,
+        "title": "Use efficient cache lifetimes"
+      },
+      {
+        "id": "lcp-discovery-insight",
+        "score": 0,
+        "title": "LCP request discovery"
+      },
+      {
+        "id": "legacy-javascript-insight",
+        "score": 0.5,
+        "title": "Legacy JavaScript"
+      },
+      {
+        "id": "interactive",
+        "score": 0.99,
+        "title": "Time to Interactive"
+      },
+      {
+        "id": "max-potential-fid",
+        "score": 0.9,
+        "title": "Max Potential First Input Delay"
+      },
+      {
+        "id": "unused-javascript",
+        "score": 0,
+        "title": "Reduce unused JavaScript"
+      },
+      {
+        "id": "legacy-javascript",
+        "score": 0.5,
+        "title": "Avoid serving legacy JavaScript to modern browsers"
+      },
+      {
+        "id": "uses-long-cache-ttl",
+        "score": 0.5,
+        "title": "Serve static assets with an efficient cache policy"
+      },
+      {
+        "id": "lcp-lazy-loaded",
+        "score": 0,
+        "title": "Largest Contentful Paint image was lazily loaded"
+      },
+      {
+        "id": "bf-cache",
+        "score": 0,
+        "title": "Page prevented back/forward cache restoration"
+      }
+    ],
+    "accessibility": [
+      {
+        "id": "heading-order",
+        "score": 0,
+        "title": "Heading elements are not in a sequentially-descending order"
+      }
+    ],
+    "best-practices": [],
+    "seo": []
+  },
+  "note": "Fixture API (scripts/fixture-api.mjs); local next start, not CI."
+}

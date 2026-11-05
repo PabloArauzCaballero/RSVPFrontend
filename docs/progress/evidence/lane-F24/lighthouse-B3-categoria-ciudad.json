@@ -1,0 +1,65 @@
+{
+  "tool": "lighthouse 12.8.2",
+  "mode": "live",
+  "url": "http://localhost:3317/proveedores/salones/santa-cruz",
+  "route": "/proveedores/salones/santa-cruz",
+  "fetchTime": "2026-11-05T00:43:06.235Z",
+  "formFactor": "mobile (360x800, simulated throttling)",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+  "scores": {
+    "performance": 1,
+    "accessibility": 1,
+    "best-practices": 1,
+    "seo": 1
+  },
+  "metrics": {
+    "first-contentful-paint": 806.9929999999999,
+    "largest-contentful-paint": 1256.993,
+    "total-blocking-time": 78,
+    "cumulative-layout-shift": 0,
+    "speed-index": 1129.751599996996
+  },
+  "failedAudits": {
+    "performance": [
+      {
+        "id": "total-blocking-time",
+        "score": 0.99,
+        "title": "Total Blocking Time"
+      },
+      {
+        "id": "legacy-javascript-insight",
+        "score": 0.5,
+        "title": "Legacy JavaScript"
+      },
+      {
+        "id": "interactive",
+        "score": 0.99,
+        "title": "Time to Interactive"
+      },
+      {
+        "id": "max-potential-fid",
+        "score": 0.9,
+        "title": "Max Potential First Input Delay"
+      },
+      {
+        "id": "unused-javascript",
+        "score": 0.5,
+        "title": "Reduce unused JavaScript"
+      },
+      {
+        "id": "legacy-javascript",
+        "score": 0.5,
+        "title": "Avoid serving legacy JavaScript to modern browsers"
+      },
+      {
+        "id": "bf-cache",
+        "score": 0,
+        "title": "Page prevented back/forward cache restoration"
+      }
+    ],
+    "accessibility": [],
+    "best-practices": [],
+    "seo": []
+  },
+  "note": "Live gateway on :28000; local next start, not CI."
+}

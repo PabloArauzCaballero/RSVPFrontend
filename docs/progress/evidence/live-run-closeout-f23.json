@@ -1,0 +1,30 @@
+{
+  "date": "2026-11-05T02:22:21.283Z",
+  "consoleErrors": [],
+  "results": [
+    {
+      "lane": "F23",
+      "id": "REQ-F23-01",
+      "text": "el anfitrion aprueba en la bandeja (UI) la reserva hecha sin cuenta -> regalo COMMITTED en el backend",
+      "status": "PASS"
+    },
+    {
+      "lane": "F23",
+      "id": "REQ-F23-06a",
+      "text": "el switch escribe PUT /gift-settings (showRequesterToHost=false, version 4) y se relee del backend",
+      "status": "PASS"
+    },
+    {
+      "lane": "F23",
+      "id": "REQ-F23-06c",
+      "text": "con showRequesterToHost=false la bandeja muestra 'Nombre oculto por tu ajuste' (API: requesterHidden=true, sin guestDisplayName) y aprobar sigue funcionando",
+      "status": "PASS"
+    },
+    {
+      "lane": "F23",
+      "id": "REQ-F23-05",
+      "text": "descubrir proveedores desde el panel con GET /providers (tarjeta ampliada: oferta, negocio, plazo, cobertura, deslinde); filtro de categoria; destino por /r/0685d3fd-e1dc-454b-837e-a24d8861f086?destination=WHATSAPP&surface=APP&celebrationId=188460ef-a892-4be1-b592-26a3c096161b; agregar como regalo CATALOGED",
+      "status": "PASS"
+    }
+  ]
+}

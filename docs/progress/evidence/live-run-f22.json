@@ -1,0 +1,54 @@
+{
+  "date": "2026-11-05T01:12:42.757Z",
+  "consoleErrors": [],
+  "results": [
+    {
+      "lane": "F22",
+      "id": "401",
+      "text": "sin credencial: estado claro 'Abre tu enlace' (Gift List exige bearer; SSR anónimo da 401)",
+      "status": "PASS"
+    },
+    {
+      "lane": "F22",
+      "id": "401-link",
+      "text": "el token opaco del enlace de invitado es rechazado por Gift List en vivo (401) -> mensaje 'Tu enlace venció'",
+      "status": "PASS"
+    },
+    {
+      "lane": "F22",
+      "id": "REQ-F22-02",
+      "text": "orden renderizado: CATALOGED > CATALOGED > CATALOGED > EXTERNAL",
+      "status": "PASS"
+    },
+    {
+      "lane": "F22",
+      "id": "REQ-F22-01",
+      "text": "filtros por precio, origen y disponibilidad funcionan sobre datos reales",
+      "status": "PASS"
+    },
+    {
+      "lane": "F22",
+      "id": "REQ-F22-05a",
+      "text": "doble clic -> 1 POST con Idempotency-Key; 201 COMMITTED muestra 'Regalo reservado'",
+      "status": "PASS"
+    },
+    {
+      "lane": "F22",
+      "id": "REQ-F22-06",
+      "text": "409 GIFT_NOT_AVAILABLE: mensaje claro + 2 alternativas reales y lista refrescada",
+      "status": "PASS"
+    },
+    {
+      "lane": "F22",
+      "id": "REQ-F22-05b",
+      "text": "modo RESTRICTED -> 201 PENDING_REVIEW muestra 'Solicitud enviada'",
+      "status": "PASS"
+    },
+    {
+      "lane": "F22",
+      "id": "REQ-F22-03",
+      "text": "detalle con precio en BOB y enlace al partner por /r/…",
+      "status": "PASS"
+    }
+  ]
+}

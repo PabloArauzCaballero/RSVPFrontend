@@ -1,0 +1,41 @@
+{
+  "date": "2026-11-05T01:57:30.053Z",
+  "surface": "Chrome real; web http://localhost:3000, app http://localhost:8200, backend http://localhost:28000 (Kong)",
+  "celebration": {
+    "id": "aaca29bb-be90-4e46-b1cd-8b44f9a72124",
+    "slug": "f15-mw2w9ucw"
+  },
+  "checks": [
+    {
+      "id": "REQ-F18-01 bandeja del servidor",
+      "text": "the notices the service created for the host appear in C31 with the server's unread count; mark-all POSTs .../read and readAt comes back",
+      "status": "FAIL",
+      "observed": "the backend produced no host notification within 45 s (companionRequested/celebrationPublished): UI shows the empty state, flow not observable"
+    },
+    {
+      "id": "REQ-F18-03/04 canales",
+      "text": "toggling PUSH off in the UI is PATCHed and the API returns channels.PUSH=false",
+      "status": "PASS",
+      "observed": "PUSH undefined -> true"
+    },
+    {
+      "id": "REQ-F18-06 horario de silencio",
+      "text": "quiet hours 23→7 are validated, PATCHed and read back; reverting restores the service default",
+      "status": "PASS",
+      "observed": "initial \"Silencio de 22:00 a 8:00 · Horario del servicio\"; saved {\"start\":23,\"end\":7,\"source\":\"RECIPIENT\"}; restored {\"start\":22,\"end\":8,\"source\":\"DEFAULT\"}"
+    },
+    {
+      "id": "REQ-F18-03 tipos de evento",
+      "text": "muting 'companionRequested' in the UI is stored in eventTypes",
+      "status": "PASS",
+      "observed": "eventTypes after: {\"celebrationPublished\":true,\"companionRequested\":false,\"giftRequested\":true,\"leadCapReached\":true}"
+    }
+  ],
+  "axe": [
+    {
+      "screen": "preferencias",
+      "violations": []
+    }
+  ],
+  "consoleErrors": []
+}

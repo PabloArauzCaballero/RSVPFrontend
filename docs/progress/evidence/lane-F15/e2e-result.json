@@ -1,0 +1,74 @@
+{
+  "date": "2026-11-05T01:00:11.429Z",
+  "surface": "Next.js (next build + next start) in Chrome, contract mock",
+  "checks": [
+    {
+      "id": "REQ-F15-01",
+      "text": "form rendered with the real celebration at 360/768/1280, no horizontal scroll, axe clean",
+      "status": "PASS"
+    },
+    {
+      "id": "REQ-F15-01",
+      "text": "a keyboard-only confirmation reached the (mock) API once and focus moved to the new heading",
+      "status": "PASS"
+    },
+    {
+      "id": "REQ-F15-02",
+      "text": "confirmed state with deadline countdown; edit goes through PATCH and shows the new answer",
+      "status": "PASS"
+    },
+    {
+      "id": "REQ-F15-03",
+      "text": "closed screen says when it closed (celebration zone) and whom to write to; no controls to edit",
+      "status": "PASS"
+    },
+    {
+      "id": "REQ-F15-04",
+      "text": "invalid token shows no celebration data at 360/768/1280",
+      "status": "PASS"
+    },
+    {
+      "id": "REQ-F15-05",
+      "text": "AUTO_ACCEPT registers (one-time link shown, not stored); RESTRICTED answers 403 with the explanation",
+      "status": "PASS"
+    },
+    {
+      "id": "REQ-F15-06",
+      "text": "offline send kept the fields, the draft survived a reload, the retry created exactly one RSVP",
+      "status": "PASS"
+    },
+    {
+      "id": "REQ-F15 (privacy)",
+      "text": "noindex + no-referrer + no-store; server HTML has no celebration data; no API URL carries a token",
+      "status": "PASS"
+    },
+    {
+      "id": "i18n/console",
+      "text": "en-US renders; no console errors across the run",
+      "status": "PASS"
+    }
+  ],
+  "axe": [
+    {
+      "screen": "A9",
+      "violations": []
+    },
+    {
+      "screen": "A10",
+      "violations": []
+    },
+    {
+      "screen": "A11",
+      "violations": []
+    },
+    {
+      "screen": "A12",
+      "violations": []
+    },
+    {
+      "screen": "A13",
+      "violations": []
+    }
+  ],
+  "status": "PASS"
+}

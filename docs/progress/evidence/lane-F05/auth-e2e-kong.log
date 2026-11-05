@@ -1,0 +1,18 @@
+PASS the app reaches the gateway from its origin (the real preflight is the first OPTIONS in the exchange list below)
+PASS register through the UI: cross-origin credentialed POST succeeds (no CORS error), roles land the host
+  cookie: httpOnly=true sameSite=Strict path=/identity/auth secure=true domain=localhost
+PASS Identity set the httpOnly refresh cookie through Kong; scripts cannot read it; no token in web storage
+PASS reload restores the session through POST /identity/auth/refresh (credentials: include) and stays signed in
+PASS sign out revokes: POST /identity/auth/logout 2xx and the cookie is gone
+PASS a wrong password through the gateway is a neutral 401, not a CORS failure
+
+exchanges seen by Chrome:
+OPTIONS /identity/auth/refresh 200 ACAO=http://localhost:8081 ACAC=true
+POST /identity/auth/refresh 401 ACAO=http://localhost:8081 ACAC=true
+POST /identity/auth/register 201 ACAO=http://localhost:8081 ACAC=true
+GET /celebrations 200 ACAO=http://localhost:8081 ACAC=true
+POST /identity/auth/refresh 200 ACAO=http://localhost:8081 ACAC=true
+GET /celebrations 200 ACAO=http://localhost:8081 ACAC=true
+POST /identity/auth/logout 204 ACAO=http://localhost:8081 ACAC=true
+POST /identity/auth/refresh 401 ACAO=http://localhost:8081 ACAC=true
+POST /identity/auth/login 401 ACAO=http://localhost:8081 ACAC=true

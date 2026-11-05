@@ -1,0 +1,41 @@
+{
+  "date": "2026-11-05T01:57:30.053Z",
+  "surface": "Chrome real; web http://localhost:3000, app http://localhost:8200, backend http://localhost:28000 (Kong)",
+  "celebration": {
+    "id": "aaca29bb-be90-4e46-b1cd-8b44f9a72124",
+    "slug": "f15-mw2w9ucw"
+  },
+  "checks": [
+    {
+      "id": "REQ-F21-04 formulario",
+      "text": "the personal link renders in the app at 360/768/1280 (axe clean)",
+      "status": "PASS",
+      "observed": null
+    },
+    {
+      "id": "REQ-F21-04 enviar",
+      "text": "confirming in the app is stored by the real Guest service",
+      "status": "PASS",
+      "observed": "host sees CONFIRMED for 5cf225ec…"
+    },
+    {
+      "id": "REQ-F21-03 enlace legado",
+      "text": "/rsvp/{token} in the app resolves with POST /rsvp/resolve and moves to /c/{slug}/rsvp/{token}",
+      "status": "PASS",
+      "observed": null
+    },
+    {
+      "id": "REQ-F21-04 token inválido",
+      "text": "an unknown credential is the generic screen in the app",
+      "status": "PASS",
+      "observed": null
+    }
+  ],
+  "axe": [
+    {
+      "screen": "F1-rsvp-invitado",
+      "violations": []
+    }
+  ],
+  "consoleErrors": []
+}

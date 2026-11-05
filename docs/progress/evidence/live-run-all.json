@@ -1,0 +1,144 @@
+{
+  "date": "2026-11-05T01:33:15.105Z",
+  "consoleErrors": [],
+  "results": [
+    {
+      "lane": "F22",
+      "id": "401",
+      "text": "sin credencial: estado claro 'Abre tu enlace' (Gift List exige bearer; SSR anónimo da 401)",
+      "status": "PASS"
+    },
+    {
+      "lane": "F22",
+      "id": "401-link",
+      "text": "el token opaco del enlace de invitado es rechazado por Gift List en vivo (401) -> mensaje 'Tu enlace venció'",
+      "status": "PASS"
+    },
+    {
+      "lane": "F22",
+      "id": "REQ-F22-02",
+      "text": "orden renderizado: CATALOGED > CATALOGED > CATALOGED > EXTERNAL",
+      "status": "PASS"
+    },
+    {
+      "lane": "F22",
+      "id": "REQ-F22-01",
+      "text": "filtros por precio, origen y disponibilidad funcionan sobre datos reales",
+      "status": "PASS"
+    },
+    {
+      "lane": "F22",
+      "id": "REQ-F22-05a",
+      "text": "doble clic -> 1 POST con Idempotency-Key; 201 COMMITTED muestra 'Regalo reservado'",
+      "status": "PASS"
+    },
+    {
+      "lane": "F22",
+      "id": "REQ-F22-06",
+      "text": "409 GIFT_NOT_AVAILABLE: mensaje claro + 2 alternativas reales y lista refrescada",
+      "status": "PASS"
+    },
+    {
+      "lane": "F22",
+      "id": "REQ-F22-05b",
+      "text": "modo RESTRICTED -> 201 PENDING_REVIEW muestra 'Solicitud enviada'",
+      "status": "PASS"
+    },
+    {
+      "lane": "F22",
+      "id": "REQ-F22-03",
+      "text": "detalle con precio en BOB y enlace al partner por /r/…",
+      "status": "PASS"
+    },
+    {
+      "lane": "F26",
+      "id": "REQ-F26-01",
+      "text": "carrito de intención con items, fecha, invitados, presupuesto; fulfillment (responsable, cobertura, plazo) visible por oferta; validación accesible",
+      "status": "PASS"
+    },
+    {
+      "lane": "F26",
+      "id": "401",
+      "text": "sin sesión Provider Catalog responde 401 y la pantalla pide iniciar sesión conservando lo escrito",
+      "status": "PASS"
+    },
+    {
+      "lane": "F26",
+      "id": "REQ-F26-02",
+      "text": "201 QuoteReceipt: confirmacion con numero de solicitud y deslinde (la copia por correo NO se verifico: no hay evidencia de envio)",
+      "status": "PASS"
+    },
+    {
+      "lane": "F26",
+      "id": "REQ-F26-06",
+      "text": "la cotizacion genero 1 lead(s) kind=FORM visibles para el proveedor",
+      "status": "PASS"
+    },
+    {
+      "lane": "F26",
+      "id": "REQ-F26-03",
+      "text": "calendario mensual con dias libres/bloqueados (feriado) en la hora del proveedor",
+      "status": "PASS"
+    },
+    {
+      "lane": "F26",
+      "id": "REQ-F26-05a",
+      "text": "422 fecha bloqueada: 'el proveedor la bloqueó, elige otro día'",
+      "status": "PASS"
+    },
+    {
+      "lane": "F26",
+      "id": "REQ-F26-05b",
+      "text": "409 sin cupo: mensaje distinto al 422 y calendario refrescado (dia pasa a 'sin cupo')",
+      "status": "PASS"
+    },
+    {
+      "lane": "F26",
+      "id": "REQ-F26-04",
+      "text": "201: fecha solicitada con vencimiento en la zona del proveedor",
+      "status": "PASS"
+    },
+    {
+      "lane": "F25",
+      "id": "REQ-F25-01/02/05",
+      "text": "portada con nombre real del proveedor (GET /providers/{id}), JSON-LD LocalBusiness con areaServed real y deslinde antes del contacto",
+      "status": "PASS"
+    },
+    {
+      "lane": "F25",
+      "id": "REQ-F25-03",
+      "text": "catalogo con 3 ofertas y precio en BOB",
+      "status": "PASS"
+    },
+    {
+      "lane": "F25",
+      "id": "REQ-F25-04",
+      "text": "detalle con fulfillment real visible: responsable, cobertura, traslado Bs 50,00, plazo 3 dias, condiciones y deslinde",
+      "status": "PASS"
+    },
+    {
+      "lane": "F25",
+      "id": "REQ-F25-06",
+      "text": "proveedor desconocido: 404 controlado",
+      "status": "PASS"
+    },
+    {
+      "lane": "F27",
+      "id": "REQ-F27-06",
+      "text": "escaneo DOM de 14 rutas publicas (con datos reales): 0 enlaces directos a partner; 6 enlaces salen por /r/",
+      "status": "PASS"
+    },
+    {
+      "lane": "F27",
+      "id": "REQ-F27-02/03/04",
+      "text": "GET /r/{listingId} -> 302 a https://wa.me con utm_campaign y correlationId conservados",
+      "status": "PASS"
+    },
+    {
+      "lane": "F27",
+      "id": "404",
+      "text": "listing inexistente: pagina de error clara (404), sin 301",
+      "status": "PASS"
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "date": "2026-11-05T02:51:20.627Z",
+  "surface": "Expo web export in Chrome, contract mock",
+  "status": "PASS",
+  "checks": [
+    {
+      "id": "REQ-F21-03/04/06",
+      "text": "same link renders the RSVP states in the Expo web app; confirms through the contract; token not stored. iOS/Android and universal-link verification NOT exercised",
+      "status": "PASS"
+    }
+  ],
+  "axe": [
+    {
+      "screen": "C6-resumen",
+      "violations": []
+    },
+    {
+      "screen": "C19-lista",
+      "violations": []
+    },
+    {
+      "screen": "C20-alta",
+      "violations": []
+    },
+    {
+      "screen": "C22-grupos",
+      "violations": []
+    },
+    {
+      "screen": "C26-bandeja",
+      "violations": []
+    },
+    {
+      "screen": "C24-reporte",
+      "violations": []
+    },
+    {
+      "screen": "C31-notificaciones",
+      "violations": []
+    },
+    {
+      "screen": "preferencias",
+      "violations": []
+    },
+    {
+      "screen": "F1-rsvp-invitado",
+      "violations": []
+    }
+  ]
+}

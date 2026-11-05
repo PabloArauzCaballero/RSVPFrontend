@@ -1,0 +1,90 @@
+{
+  "tool": "lighthouse 12.8.2",
+  "mode": "fixture",
+  "url": "http://localhost:3318/c/fixture-ana-y-luis/faq",
+  "route": "/c/fixture-ana-y-luis/faq",
+  "fetchTime": "2026-11-05T00:34:58.170Z",
+  "formFactor": "mobile (360x800, simulated throttling)",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+  "scores": {
+    "performance": 0.92,
+    "accessibility": 1,
+    "best-practices": 1,
+    "seo": 1
+  },
+  "metrics": {
+    "first-contentful-paint": 2614.3188,
+    "largest-contentful-paint": 2764.3188,
+    "total-blocking-time": 0,
+    "cumulative-layout-shift": 0.001840745985243056,
+    "speed-index": 2614.3188
+  },
+  "failedAudits": {
+    "performance": [
+      {
+        "id": "first-contentful-paint",
+        "score": 0.63,
+        "title": "First Contentful Paint"
+      },
+      {
+        "id": "largest-contentful-paint",
+        "score": 0.84,
+        "title": "Largest Contentful Paint"
+      },
+      {
+        "id": "speed-index",
+        "score": 0.97,
+        "title": "Speed Index"
+      },
+      {
+        "id": "legacy-javascript-insight",
+        "score": 0.5,
+        "title": "Legacy JavaScript"
+      },
+      {
+        "id": "network-dependency-tree-insight",
+        "score": 0,
+        "title": "Network dependency tree"
+      },
+      {
+        "id": "render-blocking-insight",
+        "score": 0,
+        "title": "Render blocking requests"
+      },
+      {
+        "id": "interactive",
+        "score": 0.97,
+        "title": "Time to Interactive"
+      },
+      {
+        "id": "render-blocking-resources",
+        "score": 0,
+        "title": "Eliminate render-blocking resources"
+      },
+      {
+        "id": "unused-javascript",
+        "score": 0.5,
+        "title": "Reduce unused JavaScript"
+      },
+      {
+        "id": "legacy-javascript",
+        "score": 0.5,
+        "title": "Avoid serving legacy JavaScript to modern browsers"
+      },
+      {
+        "id": "largest-contentful-paint-element",
+        "score": 0,
+        "title": "Largest Contentful Paint element"
+      },
+      {
+        "id": "bf-cache",
+        "score": 0,
+        "title": "Page prevented back/forward cache restoration"
+      }
+    ],
+    "accessibility": [],
+    "best-practices": [],
+    "seo": []
+  },
+  "note": "Fixture API (scripts/fixture-api.mjs); local next start, not CI."
+}

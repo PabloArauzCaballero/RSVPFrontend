@@ -1,0 +1,30 @@
+{
+  "date": "2026-11-05T02:00:23.564Z",
+  "cardsOnPage": 15,
+  "pagesWalked": 2,
+  "ownListingsFoundOnScreen": true,
+  "ownListingsReported": 1,
+  "impressionPosts": 2,
+  "distinctIdsReported": 15,
+  "statuses": [
+    202,
+    202
+  ],
+  "bodiesOnlyListingIdsAndSurface": true,
+  "noCookieOrAuthHeader": true,
+  "clickStatus": 302,
+  "metricsBefore": {
+    "impressions": 1,
+    "clicks": 2,
+    "validLeads": 1,
+    "invalidLeads": 1,
+    "ctr": 2
+  },
+  "metricsAfter": {
+    "impressions": 2,
+    "clicks": 3,
+    "validLeads": 1,
+    "invalidLeads": 2,
+    "ctr": 1.5
+  }
+}

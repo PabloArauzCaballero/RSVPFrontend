@@ -1,0 +1,173 @@
+{
+  "date": "2026-11-05T02:29:30.782Z",
+  "consoleErrors": [],
+  "results": [
+    {
+      "lane": "F22",
+      "id": "REQ-F22-04a",
+      "text": "la lista carga en el navegador con el token opaco del enlace como Bearer (200); el fragmento #t= se borra de la URL; sin SSR anonimo",
+      "status": "PASS"
+    },
+    {
+      "lane": "F22",
+      "id": "REQ-F22-04b",
+      "text": "invitado A reserva sin cuenta: doble clic = 1 POST con Idempotency-Key, Bearer = token del enlace, 201 COMMITTED",
+      "status": "PASS"
+    },
+    {
+      "lane": "F22",
+      "id": "REQ-F22-05",
+      "text": "otro invitado, mismo regalo: 409 GIFT_NOT_AVAILABLE -> 'Alguien se adelanto' con alternativas disponibles",
+      "status": "PASS"
+    },
+    {
+      "lane": "F22",
+      "id": "REQ-F23-06b",
+      "text": "reservedByName aparece a los invitados solo con showRequesterToGuests=true y desaparece al apagarlo (PUT /gift-settings)",
+      "status": "PASS"
+    },
+    {
+      "lane": "F22",
+      "id": "REQ-F22-04c",
+      "text": "token de otra celebracion: 404 sin datos (GET y POST) y pantalla 'enlace de otra celebracion'; token desconocido: 401 'Tu enlace vencio'",
+      "status": "PASS"
+    },
+    {
+      "lane": "F22",
+      "id": "REQ-F22-04d",
+      "text": "modo RESTRICTED: 201 PENDING_REVIEW -> 'Solicitud enviada'",
+      "status": "PASS"
+    },
+    {
+      "lane": "F23",
+      "id": "REQ-F23-01",
+      "text": "el anfitrion aprueba en la bandeja (UI) la reserva hecha sin cuenta -> regalo COMMITTED en el backend",
+      "status": "PASS"
+    },
+    {
+      "lane": "F23",
+      "id": "REQ-F23-06a",
+      "text": "el switch escribe PUT /gift-settings (showRequesterToHost=false, version 4) y se relee del backend",
+      "status": "PASS"
+    },
+    {
+      "lane": "F23",
+      "id": "REQ-F23-06c",
+      "text": "con showRequesterToHost=false la bandeja muestra 'Nombre oculto por tu ajuste' (API: requesterHidden=true, sin guestDisplayName) y aprobar sigue funcionando",
+      "status": "PASS"
+    },
+    {
+      "lane": "F23",
+      "id": "REQ-F23-05",
+      "text": "descubrir proveedores desde el panel con GET /providers (tarjeta ampliada: oferta, negocio, plazo, cobertura, deslinde); filtro de categoria; destino por /r/0685d3fd-e1dc-454b-837e-a24d8861f086?destination=WHATSAPP&surface=APP&celebrationId=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7; agregar como regalo CATALOGED",
+      "status": "PASS"
+    },
+    {
+      "lane": "F21",
+      "id": "REQ-F21-05b",
+      "text": "el boton 'Ver en la tienda del aliado' abre /r/d3d0b3d0-6795-4a78-9e6c-0f1afa1145b2?surface=GIFT_LIST&celebrationId=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7 (redirector), nunca la URL del partner",
+      "status": "PASS"
+    },
+    {
+      "lane": "F21",
+      "id": "REQ-F21-05a",
+      "text": "lista de regalos dentro de la app (Expo web) cargada con el token del enlace como Bearer (200), sin cuenta",
+      "status": "PASS"
+    },
+    {
+      "lane": "F21",
+      "id": "REQ-F21-05c",
+      "text": "409 al reservar un regalo ya tomado: aviso y alternativas, en la app",
+      "status": "PASS"
+    },
+    {
+      "lane": "F21",
+      "id": "REQ-F21-05d",
+      "text": "reserva con 201 desde la app, sin cuenta",
+      "status": "PASS"
+    },
+    {
+      "lane": "F21",
+      "id": "REQ-F21-06",
+      "text": "token de otra celebracion en la app: 404 sin datos de regalos",
+      "status": "PASS"
+    },
+    {
+      "lane": "F28",
+      "id": "REQ-F28-03",
+      "text": "pantallas propias de Productos (D6) y Servicios (D5): cada una lista solo su tipo, datos reales",
+      "status": "PASS"
+    },
+    {
+      "lane": "F28",
+      "id": "REQ-F28-05",
+      "text": "pantalla propia de Condiciones de entrega (D8): responsable, cobertura, traslado y plazo de cada oferta, datos reales",
+      "status": "PASS"
+    },
+    {
+      "lane": "F28",
+      "id": "REQ-F28-01c",
+      "text": "registrar (201) -> PUT a MinIO http://localhost:29000/provider-documents/providers/106bac8c-0ce7-45bd-a14f-1c76118edd74/documents/… (status 200,status 200) -> completar -> 'Recibido' (PDF y PNG); el backend lista 2 documentos UPLOADED",
+      "status": "PASS"
+    },
+    {
+      "lane": "F28",
+      "id": "REQ-F28-06c",
+      "text": "impresiones POST /providers/impressions (202,202,202,202) antes de 3 clics 302 por /r/: totals {\"impressions\":0,\"clicks\":1,\"validLeads\":0,\"invalidLeads\":1,\"ctr\":0} -> {\"impressions\":12,\"clicks\":4,\"validLeads\":0,\"invalidLeads\":4,\"ctr\":0.3333} (CTR=0.3333)",
+      "status": "PASS"
+    },
+    {
+      "lane": "F26",
+      "id": "REQ-F26-01a",
+      "text": "cotizar sin sesion: POST /quotes sin Authorization -> 201 'Solicitud enviada' (modo open local)",
+      "status": "PASS"
+    },
+    {
+      "lane": "F26",
+      "id": "REQ-F26-01b",
+      "text": "honeypot 'website' fuera de pantalla; si se llena el backend responde 422 QUOTE_REJECTED y la UI lo dice",
+      "status": "PASS"
+    },
+    {
+      "lane": "F26",
+      "id": "REQ-F26-01c",
+      "text": "429 QUOTE_LIMIT_REACHED al 4.o envio con el mismo correo (201,201,201,429); la UI explica el limite",
+      "status": "PASS"
+    },
+    {
+      "lane": "F26",
+      "id": "REQ-F26-01d",
+      "text": "429 por direccion tras 1 envios mas (429; Retry-After=3596); la UI espera y explica",
+      "status": "PASS"
+    },
+    {
+      "lane": "F26",
+      "id": "REQ-F26-04",
+      "text": "pedir fecha sigue requiriendo cuenta: 401 -> 'Inicia sesion para solicitar una fecha'",
+      "status": "PASS"
+    }
+  ],
+  "metrics": {
+    "before": {
+      "impressions": 0,
+      "clicks": 1,
+      "validLeads": 0,
+      "invalidLeads": 1,
+      "ctr": 0
+    },
+    "after": {
+      "impressions": 12,
+      "clicks": 4,
+      "validLeads": 0,
+      "invalidLeads": 4,
+      "ctr": 0.3333
+    },
+    "impressions": [
+      202,
+      202,
+      202,
+      202
+    ],
+    "clicks": 3
+  }
+}

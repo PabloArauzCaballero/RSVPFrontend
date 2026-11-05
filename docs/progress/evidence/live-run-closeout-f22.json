@@ -1,0 +1,42 @@
+{
+  "date": "2026-11-05T02:21:58.526Z",
+  "consoleErrors": [],
+  "results": [
+    {
+      "lane": "F22",
+      "id": "REQ-F22-04a",
+      "text": "la lista carga en el navegador con el token opaco del enlace como Bearer (200); el fragmento #t= se borra de la URL; sin SSR anonimo",
+      "status": "PASS"
+    },
+    {
+      "lane": "F22",
+      "id": "REQ-F22-04b",
+      "text": "invitado A reserva sin cuenta: doble clic = 1 POST con Idempotency-Key, Bearer = token del enlace, 201 COMMITTED",
+      "status": "PASS"
+    },
+    {
+      "lane": "F22",
+      "id": "REQ-F22-05",
+      "text": "otro invitado, mismo regalo: 409 GIFT_NOT_AVAILABLE -> 'Alguien se adelanto' con alternativas disponibles",
+      "status": "PASS"
+    },
+    {
+      "lane": "F22",
+      "id": "REQ-F23-06b",
+      "text": "reservedByName aparece a los invitados solo con showRequesterToGuests=true y desaparece al apagarlo (PUT /gift-settings)",
+      "status": "PASS"
+    },
+    {
+      "lane": "F22",
+      "id": "REQ-F22-04c",
+      "text": "token de otra celebracion: 404 sin datos (GET y POST) y pantalla 'enlace de otra celebracion'; token desconocido: 401 'Tu enlace vencio'",
+      "status": "PASS"
+    },
+    {
+      "lane": "F22",
+      "id": "REQ-F22-04d",
+      "text": "modo RESTRICTED: 201 PENDING_REVIEW -> 'Solicitud enviada'",
+      "status": "PASS"
+    }
+  ]
+}

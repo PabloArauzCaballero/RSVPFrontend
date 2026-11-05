@@ -1,0 +1,89 @@
+{
+  "date": "2026-11-05T01:33:14.366Z",
+  "routes": [
+    {
+      "path": "/",
+      "links": 10,
+      "viaRedirector": 0,
+      "direct": []
+    },
+    {
+      "path": "/proveedores",
+      "links": 24,
+      "viaRedirector": 0,
+      "direct": []
+    },
+    {
+      "path": "/proveedores/decoracion",
+      "links": 30,
+      "viaRedirector": 0,
+      "direct": []
+    },
+    {
+      "path": "/proveedores/decoracion/la-paz",
+      "links": 9,
+      "viaRedirector": 0,
+      "direct": []
+    },
+    {
+      "path": "/proveedores/buscar?q=torta",
+      "links": 22,
+      "viaRedirector": 0,
+      "direct": []
+    },
+    {
+      "path": "/catalogo",
+      "links": 6,
+      "viaRedirector": 0,
+      "direct": []
+    },
+    {
+      "path": "/p/dulce-sol-mw2vejaa-0779e6",
+      "links": 12,
+      "viaRedirector": 1,
+      "direct": []
+    },
+    {
+      "path": "/p/dulce-sol-mw2vejaa-0779e6/catalogo",
+      "links": 12,
+      "viaRedirector": 0,
+      "direct": []
+    },
+    {
+      "path": "/p/dulce-sol-mw2vejaa-0779e6/catalogo/5c2b7260-afc9-46d0-bcd1-1f589b02ca17",
+      "links": 13,
+      "viaRedirector": 1,
+      "direct": []
+    },
+    {
+      "path": "/p/dulce-sol-mw2vejaa-0779e6/cotizar",
+      "links": 6,
+      "viaRedirector": 0,
+      "direct": []
+    },
+    {
+      "path": "/p/dulce-sol-mw2vejaa-0779e6/agenda",
+      "links": 7,
+      "viaRedirector": 0,
+      "direct": []
+    },
+    {
+      "path": "/c/f22-mw2vejaa",
+      "links": 9,
+      "viaRedirector": 0,
+      "direct": []
+    },
+    {
+      "path": "/c/f22-mw2vejaa/regalos",
+      "links": 15,
+      "viaRedirector": 3,
+      "direct": []
+    },
+    {
+      "path": "/c/f22-mw2vejaa/regalos/4ddb6875-a121-4686-b020-99a1e94f8898",
+      "links": 8,
+      "viaRedirector": 1,
+      "direct": []
+    }
+  ]
+}

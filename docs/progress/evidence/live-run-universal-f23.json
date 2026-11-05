@@ -1,0 +1,60 @@
+{
+  "date": "2026-11-05T01:36:00.578Z",
+  "consoleErrors": [
+    "Access to fetch at 'http://localhost:28000/listings?type=PRODUCT&limit=20&locale=es-BO' from origin 'http://localhost:8081' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: It does not have HTTP ok status.",
+    "Access to fetch at 'http://localhost:28000/listings?type=PRODUCT&limit=20&locale=es-BO' from origin 'http://localhost:8081' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: It does not have HTTP ok status.",
+    "Access to fetch at 'http://localhost:28000/listings?type=PRODUCT&limit=20&locale=es-BO' from origin 'http://localhost:8081' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: It does not have HTTP ok status.",
+    "Access to fetch at 'http://localhost:28000/listings?type=PRODUCT&limit=20&locale=es-BO' from origin 'http://localhost:8081' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: It does not have HTTP ok status.",
+    "Access to fetch at 'http://localhost:28000/listings?q=torta&type=PRODUCT&limit=20&locale=es-BO' from origin 'http://localhost:8081' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: It does not have HTTP ok status."
+  ],
+  "results": [
+    {
+      "lane": "F23",
+      "id": "REQ-F23-04",
+      "text": "estado de cada regalo (disponible / propuesto) con catalogados primero, datos reales",
+      "status": "PASS"
+    },
+    {
+      "lane": "F23",
+      "id": "REQ-F23-04b",
+      "text": "aprobar una propuesta externa (POST /items/{id}/approve) la deja Disponible",
+      "status": "PASS"
+    },
+    {
+      "lane": "F23",
+      "id": "REQ-F23-01",
+      "text": "bandeja con quien lo pidio; aprobar -> el regalo queda COMMITTED en el backend",
+      "status": "PASS"
+    },
+    {
+      "lane": "F23",
+      "id": "409",
+      "text": "rechazar una reserva ya resuelta por otro: aviso claro y lista refrescada",
+      "status": "PASS"
+    },
+    {
+      "lane": "F23",
+      "id": "REQ-F23-02",
+      "text": "buscar (el gateway no enruta GET /listings: aviso + catalogo publico) y agregar un producto CATALOGED real (201)",
+      "status": "PASS"
+    },
+    {
+      "lane": "F23",
+      "id": "REQ-F23-03",
+      "text": "regalo externo: 409 PARTNER_CATALOG_FIRST muestra la fricción; 'agregar de todos modos' reenvia con acknowledged y queda PROPOSED",
+      "status": "PASS"
+    },
+    {
+      "lane": "F23",
+      "id": "switch",
+      "text": "el switch del modo externo escribe externalGiftMode=AUTO_ACCEPT en Celebration (PUT /settings con If-Match)",
+      "status": "PASS"
+    },
+    {
+      "lane": "F23",
+      "id": "403/404",
+      "text": "un usuario ajeno a la celebracion ve un aviso (sin datos), no un error en blanco",
+      "status": "PASS"
+    }
+  ]
+}

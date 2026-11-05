@@ -1,0 +1,70 @@
+{
+  "tool": "lighthouse 12.8.2",
+  "mode": "live",
+  "url": "http://localhost:3317/c/guest-live-fd68a47a",
+  "route": "/c/guest-live-fd68a47a",
+  "fetchTime": "2026-11-05T00:38:31.989Z",
+  "formFactor": "mobile (360x800, simulated throttling)",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+  "scores": {
+    "performance": 0.99,
+    "accessibility": 1,
+    "best-practices": 1,
+    "seo": 1
+  },
+  "metrics": {
+    "first-contentful-paint": 790.6769999999999,
+    "largest-contentful-paint": 1849.677,
+    "total-blocking-time": 33.5,
+    "cumulative-layout-shift": 0,
+    "speed-index": 2072.2137999972047
+  },
+  "failedAudits": {
+    "performance": [
+      {
+        "id": "largest-contentful-paint",
+        "score": 0.98,
+        "title": "Largest Contentful Paint"
+      },
+      {
+        "id": "speed-index",
+        "score": 0.99,
+        "title": "Speed Index"
+      },
+      {
+        "id": "document-latency-insight",
+        "score": 0,
+        "title": "Document request latency"
+      },
+      {
+        "id": "legacy-javascript-insight",
+        "score": 0.5,
+        "title": "Legacy JavaScript"
+      },
+      {
+        "id": "max-potential-fid",
+        "score": 0.93,
+        "title": "Max Potential First Input Delay"
+      },
+      {
+        "id": "unused-javascript",
+        "score": 0,
+        "title": "Reduce unused JavaScript"
+      },
+      {
+        "id": "server-response-time",
+        "score": 0,
+        "title": "Reduce initial server response time"
+      },
+      {
+        "id": "legacy-javascript",
+        "score": 0.5,
+        "title": "Avoid serving legacy JavaScript to modern browsers"
+      }
+    ],
+    "accessibility": [],
+    "best-practices": [],
+    "seo": []
+  },
+  "note": "Live gateway on :28000; local next start, not CI."
+}

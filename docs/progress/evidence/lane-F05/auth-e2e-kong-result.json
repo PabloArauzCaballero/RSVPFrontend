@@ -1,0 +1,104 @@
+{
+  "app": "http://localhost:8081",
+  "api": "http://localhost:28000",
+  "results": [
+    {
+      "label": "the app reaches the gateway from its origin (the real preflight is the first OPTIONS in the exchange list below)",
+      "ok": true
+    },
+    {
+      "label": "register through the UI: cross-origin credentialed POST succeeds (no CORS error), roles land the host",
+      "ok": true
+    },
+    {
+      "label": "Identity set the httpOnly refresh cookie through Kong; scripts cannot read it; no token in web storage",
+      "ok": true
+    },
+    {
+      "label": "reload restores the session through POST /identity/auth/refresh (credentials: include) and stays signed in",
+      "ok": true
+    },
+    {
+      "label": "sign out revokes: POST /identity/auth/logout 2xx and the cookie is gone",
+      "ok": true
+    },
+    {
+      "label": "a wrong password through the gateway is a neutral 401, not a CORS failure",
+      "ok": true
+    }
+  ],
+  "exchanges": [
+    {
+      "method": "OPTIONS",
+      "path": "/identity/auth/refresh",
+      "status": 200,
+      "acao": "http://localhost:8081",
+      "acac": "true",
+      "setCookie": false
+    },
+    {
+      "method": "POST",
+      "path": "/identity/auth/refresh",
+      "status": 401,
+      "acao": "http://localhost:8081",
+      "acac": "true",
+      "setCookie": false
+    },
+    {
+      "method": "POST",
+      "path": "/identity/auth/register",
+      "status": 201,
+      "acao": "http://localhost:8081",
+      "acac": "true",
+      "setCookie": false
+    },
+    {
+      "method": "GET",
+      "path": "/celebrations",
+      "status": 200,
+      "acao": "http://localhost:8081",
+      "acac": "true",
+      "setCookie": false
+    },
+    {
+      "method": "POST",
+      "path": "/identity/auth/refresh",
+      "status": 200,
+      "acao": "http://localhost:8081",
+      "acac": "true",
+      "setCookie": false
+    },
+    {
+      "method": "GET",
+      "path": "/celebrations",
+      "status": 200,
+      "acao": "http://localhost:8081",
+      "acac": "true",
+      "setCookie": false
+    },
+    {
+      "method": "POST",
+      "path": "/identity/auth/logout",
+      "status": 204,
+      "acao": "http://localhost:8081",
+      "acac": "true",
+      "setCookie": false
+    },
+    {
+      "method": "POST",
+      "path": "/identity/auth/refresh",
+      "status": 401,
+      "acao": "http://localhost:8081",
+      "acac": "true",
+      "setCookie": false
+    },
+    {
+      "method": "POST",
+      "path": "/identity/auth/login",
+      "status": 401,
+      "acao": "http://localhost:8081",
+      "acac": "true",
+      "setCookie": false
+    }
+  ]
+}

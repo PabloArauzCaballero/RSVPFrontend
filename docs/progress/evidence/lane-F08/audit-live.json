@@ -1,0 +1,417 @@
+{
+  "mode": "live",
+  "base": "http://localhost:3317",
+  "api": "http://localhost:28000",
+  "slug": "guest-live-fd68a47a",
+  "at": "2026-11-05T00:37:45.244Z",
+  "routes": [
+    {
+      "lane": "lane-F08",
+      "name": "home",
+      "path": "/",
+      "indexable": true,
+      "status": 200,
+      "axe": {
+        "360": [],
+        "768": [],
+        "1280": []
+      },
+      "screenshots": [
+        "lane-F08/home-360.png",
+        "lane-F08/home-768.png",
+        "lane-F08/home-1280.png"
+      ],
+      "keyboard": "a:Saltar al contenido",
+      "lighthouse": {
+        "seo": 1,
+        "accessibility": 1,
+        "performance": 0.99,
+        "bestPractices": 1
+      },
+      "lighthouseFile": "lane-F08/lighthouse-home.json"
+    },
+    {
+      "lane": "lane-F10",
+      "name": "A1-portada",
+      "path": "/c/guest-live-fd68a47a",
+      "indexable": true,
+      "status": 200,
+      "axe": {
+        "360": [],
+        "768": [],
+        "1280": []
+      },
+      "screenshots": [
+        "lane-F10/A1-portada-360.png",
+        "lane-F10/A1-portada-768.png",
+        "lane-F10/A1-portada-1280.png"
+      ],
+      "keyboard": "a:Saltar al contenido",
+      "lighthouse": {
+        "seo": 1,
+        "accessibility": 1,
+        "performance": 0.99,
+        "bestPractices": 1
+      },
+      "lighthouseFile": "lane-F10/lighthouse-A1-portada.json"
+    },
+    {
+      "lane": "lane-F10",
+      "name": "A1-portada-en",
+      "path": "/c/guest-live-fd68a47a?lang=en-US",
+      "indexable": false,
+      "status": 200,
+      "axe": {
+        "360": [],
+        "768": [],
+        "1280": []
+      },
+      "screenshots": [
+        "lane-F10/A1-portada-en-360.png",
+        "lane-F10/A1-portada-en-768.png",
+        "lane-F10/A1-portada-en-1280.png"
+      ],
+      "keyboard": "a:Saltar al contenido",
+      "lighthouse": {
+        "seo": 1,
+        "accessibility": 1,
+        "performance": 1,
+        "bestPractices": 1
+      },
+      "lighthouseFile": "lane-F10/lighthouse-A1-portada-en.json"
+    },
+    {
+      "lane": "lane-F10",
+      "name": "A2-historia",
+      "path": "/c/guest-live-fd68a47a/historia",
+      "indexable": true,
+      "optional": true,
+      "status": 404,
+      "axe": {},
+      "screenshots": [],
+      "keyboard": null,
+      "lighthouse": null,
+      "skipped": "section has no content in this celebration (correct 404)"
+    },
+    {
+      "lane": "lane-F10",
+      "name": "A3-itinerario",
+      "path": "/c/guest-live-fd68a47a/itinerario",
+      "indexable": true,
+      "optional": true,
+      "status": 404,
+      "axe": {},
+      "screenshots": [],
+      "keyboard": null,
+      "lighthouse": null,
+      "skipped": "section has no content in this celebration (correct 404)"
+    },
+    {
+      "lane": "lane-F10",
+      "name": "A4-lugares",
+      "path": "/c/guest-live-fd68a47a/lugares",
+      "indexable": true,
+      "optional": true,
+      "status": 200,
+      "axe": {
+        "360": [],
+        "768": [],
+        "1280": []
+      },
+      "screenshots": [
+        "lane-F10/A4-lugares-360.png",
+        "lane-F10/A4-lugares-768.png",
+        "lane-F10/A4-lugares-1280.png"
+      ],
+      "keyboard": "a:Saltar al contenido",
+      "lighthouse": {
+        "seo": 1,
+        "accessibility": 1,
+        "performance": 0.9,
+        "bestPractices": 1
+      },
+      "lighthouseFile": "lane-F10/lighthouse-A4-lugares.json"
+    },
+    {
+      "lane": "lane-F10",
+      "name": "A5-galeria",
+      "path": "/c/guest-live-fd68a47a/galeria",
+      "indexable": true,
+      "optional": true,
+      "status": 404,
+      "axe": {},
+      "screenshots": [],
+      "keyboard": null,
+      "lighthouse": null,
+      "skipped": "section has no content in this celebration (correct 404)"
+    },
+    {
+      "lane": "lane-F10",
+      "name": "A6-dress-code",
+      "path": "/c/guest-live-fd68a47a/dress-code",
+      "indexable": true,
+      "optional": true,
+      "status": 404,
+      "axe": {},
+      "screenshots": [],
+      "keyboard": null,
+      "lighthouse": null,
+      "skipped": "section has no content in this celebration (correct 404)"
+    },
+    {
+      "lane": "lane-F10",
+      "name": "A7-faq",
+      "path": "/c/guest-live-fd68a47a/faq",
+      "indexable": true,
+      "optional": true,
+      "status": 404,
+      "axe": {},
+      "screenshots": [],
+      "keyboard": null,
+      "lighthouse": null,
+      "skipped": "section has no content in this celebration (correct 404)"
+    },
+    {
+      "lane": "lane-F10",
+      "name": "A8-recomendaciones",
+      "path": "/c/guest-live-fd68a47a/recomendaciones",
+      "indexable": true,
+      "optional": true,
+      "status": 404,
+      "axe": {},
+      "screenshots": [],
+      "keyboard": null,
+      "lighthouse": null,
+      "skipped": "section has no content in this celebration (correct 404)"
+    },
+    {
+      "lane": "lane-F10",
+      "name": "A21-no-publicada",
+      "path": "/c/esta-celebracion-no-existe",
+      "indexable": false,
+      "expected": 404,
+      "status": 404,
+      "axe": {
+        "360": [],
+        "768": [],
+        "1280": []
+      },
+      "screenshots": [
+        "lane-F10/A21-no-publicada-360.png",
+        "lane-F10/A21-no-publicada-768.png",
+        "lane-F10/A21-no-publicada-1280.png"
+      ],
+      "keyboard": "a:Saltar al contenido",
+      "lighthouse": null
+    },
+    {
+      "lane": "lane-F24",
+      "name": "B1-directorio",
+      "path": "/proveedores",
+      "indexable": true,
+      "status": 200,
+      "axe": {
+        "360": [],
+        "768": [],
+        "1280": []
+      },
+      "screenshots": [
+        "lane-F24/B1-directorio-360.png",
+        "lane-F24/B1-directorio-768.png",
+        "lane-F24/B1-directorio-1280.png"
+      ],
+      "keyboard": "a:Saltar al contenido",
+      "lighthouse": {
+        "seo": 1,
+        "accessibility": 1,
+        "performance": 1,
+        "bestPractices": 1
+      },
+      "lighthouseFile": "lane-F24/lighthouse-B1-directorio.json"
+    },
+    {
+      "lane": "lane-F24",
+      "name": "B2-categoria",
+      "path": "/proveedores/salones",
+      "indexable": true,
+      "status": 200,
+      "axe": {
+        "360": [],
+        "768": [],
+        "1280": []
+      },
+      "screenshots": [
+        "lane-F24/B2-categoria-360.png",
+        "lane-F24/B2-categoria-768.png",
+        "lane-F24/B2-categoria-1280.png"
+      ],
+      "keyboard": "a:Saltar al contenido",
+      "lighthouse": {
+        "seo": 1,
+        "accessibility": 1,
+        "performance": 1,
+        "bestPractices": 1
+      },
+      "lighthouseFile": "lane-F24/lighthouse-B2-categoria.json"
+    },
+    {
+      "lane": "lane-F24",
+      "name": "B3-categoria-ciudad",
+      "path": "/proveedores/salones/santa-cruz",
+      "indexable": true,
+      "status": 200,
+      "axe": {
+        "360": [],
+        "768": [],
+        "1280": []
+      },
+      "screenshots": [
+        "lane-F24/B3-categoria-ciudad-360.png",
+        "lane-F24/B3-categoria-ciudad-768.png",
+        "lane-F24/B3-categoria-ciudad-1280.png"
+      ],
+      "keyboard": "a:Saltar al contenido",
+      "lighthouse": {
+        "seo": 1,
+        "accessibility": 1,
+        "performance": 1,
+        "bestPractices": 1
+      },
+      "lighthouseFile": "lane-F24/lighthouse-B3-categoria-ciudad.json"
+    },
+    {
+      "lane": "lane-F24",
+      "name": "B4-buscar",
+      "path": "/proveedores/buscar?ciudad=la-paz&verificado=1",
+      "indexable": false,
+      "status": 200,
+      "axe": {
+        "360": [],
+        "768": [],
+        "1280": []
+      },
+      "screenshots": [
+        "lane-F24/B4-buscar-360.png",
+        "lane-F24/B4-buscar-768.png",
+        "lane-F24/B4-buscar-1280.png"
+      ],
+      "keyboard": "a:Saltar al contenido",
+      "lighthouse": {
+        "seo": 0.63,
+        "accessibility": 1,
+        "performance": 1,
+        "bestPractices": 1
+      },
+      "lighthouseFile": "lane-F24/lighthouse-B4-buscar.json"
+    },
+    {
+      "lane": "lane-F24",
+      "name": "B4-buscar-cerca",
+      "path": "/proveedores/buscar?lat=-16.5&lng=-68.15&radio=10",
+      "indexable": false,
+      "status": 200,
+      "axe": {
+        "360": [],
+        "768": [],
+        "1280": []
+      },
+      "screenshots": [
+        "lane-F24/B4-buscar-cerca-360.png",
+        "lane-F24/B4-buscar-cerca-768.png",
+        "lane-F24/B4-buscar-cerca-1280.png"
+      ],
+      "keyboard": "a:Saltar al contenido",
+      "lighthouse": {
+        "seo": 0.63,
+        "accessibility": 1,
+        "performance": 1,
+        "bestPractices": 1
+      },
+      "lighthouseFile": "lane-F24/lighthouse-B4-buscar-cerca.json"
+    },
+    {
+      "lane": "lane-F25",
+      "name": "B5-microsite",
+      "path": "/p/hotel-andino",
+      "indexable": false,
+      "expected": 200,
+      "status": 200,
+      "axe": {
+        "360": [],
+        "768": [],
+        "1280": []
+      },
+      "screenshots": [
+        "lane-F25/B5-microsite-360.png",
+        "lane-F25/B5-microsite-768.png",
+        "lane-F25/B5-microsite-1280.png"
+      ],
+      "keyboard": "a:Saltar al contenido",
+      "lighthouse": {
+        "seo": 0.63,
+        "accessibility": 1,
+        "performance": 0.99,
+        "bestPractices": 1
+      },
+      "lighthouseFile": "lane-F24/lighthouse-B5-microsite.json"
+    },
+    {
+      "lane": "lane-F25",
+      "name": "B14-partner-no-existe",
+      "path": "/p/no-existe",
+      "indexable": false,
+      "expected": 200,
+      "status": 200,
+      "axe": {
+        "360": [],
+        "768": [],
+        "1280": []
+      },
+      "screenshots": [
+        "lane-F25/B14-partner-no-existe-360.png",
+        "lane-F25/B14-partner-no-existe-768.png",
+        "lane-F25/B14-partner-no-existe-1280.png"
+      ],
+      "keyboard": "a:Saltar al contenido",
+      "lighthouse": {
+        "seo": 0.63,
+        "accessibility": 1,
+        "performance": 0.99,
+        "bestPractices": 1
+      },
+      "lighthouseFile": "lane-F24/lighthouse-B14-partner-no-existe.json"
+    }
+  ],
+  "checks": {
+    "geolocationGranted": {
+      "url": "http://localhost:3317/proveedores/buscar?categoria=&ciudad=santa-cruz&precioMax=&fecha=&radio=25&lat=-16.49&lng=-68.12",
+      "lat": "-16.49",
+      "lng": "-68.12",
+      "radio": "25",
+      "activeNotice": "Mostrando proveedores a menos de 25 km de ti. Quitar ubicación",
+      "results": 0
+    },
+    "geolocationDenied": {
+      "url": "http://localhost:3317/proveedores/buscar?ciudad=la-paz",
+      "message": "No pudimos obtener tu ubicación. Elige una ciudad para continuar.",
+      "cityStillSelected": "la-paz"
+    },
+    "redirector": {
+      "status": 503,
+      "location": null,
+      "correlationId": "11111111-2222-4333-8444-555555555555",
+      "robots": "noindex, nofollow",
+      "cacheControl": "no-store",
+      "body": "error page with link back (catalogue not reachable behind the gateway)"
+    },
+    "sitemap": {
+      "partners": [],
+      "hasRedirector": false,
+      "hasSearch": false
+    },
+    "robots": {
+      "disallowsRedirector": true,
+      "text": "User-Agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api\nDisallow: /panel\nDisallow: /catalogo\nDisallow: /r/\nDisallow: /c/*/rsvp\nDisallow: /rsvp/\nDisallow: /proveedores/buscar\n\nHost: http://localhost:3317\nSitemap: http://localhost:3317/sitemap.xml\n"
+    }
+  }
+}

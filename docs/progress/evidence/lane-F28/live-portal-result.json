@@ -1,0 +1,72 @@
+{
+  "date": "2026-11-05T02:06:24.615Z",
+  "surface": "Chrome real; app http://localhost:8200; backend http://localhost:28000",
+  "checks": [
+    {
+      "id": "login",
+      "text": "provider signs in through the UI",
+      "status": "PASS",
+      "observed": null
+    },
+    {
+      "id": "mine",
+      "text": "the portal finds the provider with GET /providers/mine (nothing remembered on this device)",
+      "status": "PASS",
+      "observed": "Verificado"
+    },
+    {
+      "id": "F28-02",
+      "text": "microsite editor: validation, save with If-Match, version rises, API returns the profile",
+      "status": "PASS",
+      "observed": "Versión 4 -> API version 5; hours [{\"opens\":\"09:00\",\"closes\":\"18:00\",\"weekdays\":[1,2,3,4,5]}]"
+    },
+    {
+      "id": "F28-02 conflicto",
+      "text": "a stale version is refused (409) and the UI says so",
+      "status": "PASS",
+      "observed": null
+    },
+    {
+      "id": "documentos",
+      "text": "verification document: register -> PUT to the presigned URL -> complete; listed as Recibido",
+      "status": "FAIL",
+      "observed": "BLOCKED by environment: register answered 201 (1x) but the presigned PUT URL points to http://localhost:9000 while MinIO is published on :29000 (host is part of the signature, so it cannot be rewritten); the UI shows the retryable upload error"
+    }
+  ],
+  "axe": [
+    {
+      "screen": "portal-resumen",
+      "violations": []
+    },
+    {
+      "screen": "microsite",
+      "violations": []
+    }
+  ],
+  "requests": [
+    "POST /identity/auth/refresh 401",
+    "POST /identity/auth/login 200",
+    "POST /identity/auth/refresh 200",
+    "GET /providers/mine 200",
+    "GET /providers/179b272b-72df-41c0-a6a0-369ebd4917e7 200",
+    "GET /providers/179b272b-72df-41c0-a6a0-369ebd4917e7/listings 200",
+    "GET /providers/179b272b-72df-41c0-a6a0-369ebd4917e7/metrics 200",
+    "POST /identity/auth/refresh 200",
+    "GET /providers/mine 200",
+    "GET /providers/179b272b-72df-41c0-a6a0-369ebd4917e7 200",
+    "GET /providers/179b272b-72df-41c0-a6a0-369ebd4917e7/microsite 200",
+    "PUT /providers/179b272b-72df-41c0-a6a0-369ebd4917e7/microsite 200",
+    "POST /identity/auth/refresh 200",
+    "GET /providers/mine 200",
+    "GET /providers/179b272b-72df-41c0-a6a0-369ebd4917e7 200",
+    "GET /providers/179b272b-72df-41c0-a6a0-369ebd4917e7/microsite 200",
+    "PUT /providers/179b272b-72df-41c0-a6a0-369ebd4917e7/microsite 409",
+    "GET /providers/179b272b-72df-41c0-a6a0-369ebd4917e7/microsite 200",
+    "POST /identity/auth/refresh 200",
+    "GET /providers/mine 200",
+    "GET /providers/179b272b-72df-41c0-a6a0-369ebd4917e7 200",
+    "GET /providers/179b272b-72df-41c0-a6a0-369ebd4917e7/documents 200",
+    "POST /providers/179b272b-72df-41c0-a6a0-369ebd4917e7/documents 201",
+    "GET /providers/179b272b-72df-41c0-a6a0-369ebd4917e7/documents 200"
+  ]
+}

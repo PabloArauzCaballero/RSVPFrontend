@@ -1,0 +1,3 @@
+# Evidencia · F19 Push (solo parte de código) · 2026-11-04
+Pantalla de permisos (`/permisos-push`) y registro de dispositivo con `expo-notifications` + `expo-device` (`apps/universal/src/push`). Pruebas: `test/push.test.ts` (permiso concedido → token Expo con projectId EAS → `POST /notifications/celebrations/{id}/devices`; denegado; simulador/web no soportado; sin projectId; fallo de token) y captura `permisos-push-web-no-soportado-360.png`.
+**No verificado**: recepción real, builds EAS, credenciales APNs/FCM, dispositivo físico. `REQ-F19-*` siguen `BLOCKED-EXTERNAL`. Plugin `expo-notifications` añadido a la config.

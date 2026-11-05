@@ -1,0 +1,47 @@
+{
+  "date": "2026-11-05T01:57:30.052Z",
+  "surface": "Chrome real; web http://localhost:3000, app http://localhost:8200, backend http://localhost:28000 (Kong)",
+  "celebration": {
+    "id": "aaca29bb-be90-4e46-b1cd-8b44f9a72124",
+    "slug": "f15-mw2w9ucw"
+  },
+  "checks": [
+    {
+      "id": "login",
+      "text": "the host signs in through the UI against Identity (Kong) and lands in the workspace",
+      "status": "PASS",
+      "observed": null
+    },
+    {
+      "id": "REQ-F16-01 lista",
+      "text": "C19 lists the real guests with server paging and search",
+      "status": "PASS",
+      "observed": null
+    },
+    {
+      "id": "REQ-F16-02 alta + sync",
+      "text": "registering one guest in the UI saves it and calls PUT /notifications/.../recipients exactly once",
+      "status": "PASS",
+      "observed": "guest saved; PUT recipients x1 -> 200"
+    },
+    {
+      "id": "REQ-F16-03 importación + sync",
+      "text": "CSV import reports per row and calls the bulk PUT once",
+      "status": "PASS",
+      "observed": "2 importados, 1 con error, de 3 filas.; PUT recipients x1 -> 200"
+    },
+    {
+      "id": "REQ-F16-05 enlace",
+      "text": "issuing a link shows it masked; the secret is not in the DOM",
+      "status": "PASS",
+      "observed": "Enlace: http://localhost:3000/c/f15-mw2w9ucw/rsvp/jAda…l2sI"
+    }
+  ],
+  "axe": [
+    {
+      "screen": "C19-lista",
+      "violations": []
+    }
+  ],
+  "consoleErrors": []
+}

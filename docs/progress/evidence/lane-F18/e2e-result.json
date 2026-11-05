@@ -1,0 +1,55 @@
+{
+  "date": "2026-11-05T02:51:20.627Z",
+  "surface": "Expo web export in Chrome, contract mock",
+  "status": "PASS",
+  "checks": [
+    {
+      "id": "REQ-F18-01/05",
+      "text": "3 unread → mark all → 0 unread, persisted across reload (readAt is server-side, notification 1.4.0: POST ./read; not per-device)",
+      "status": "PASS"
+    },
+    {
+      "id": "REQ-F18-03/04",
+      "text": "switching PUSH off is PATCHed to the notification contract and read back",
+      "status": "PASS"
+    }
+  ],
+  "axe": [
+    {
+      "screen": "C6-resumen",
+      "violations": []
+    },
+    {
+      "screen": "C19-lista",
+      "violations": []
+    },
+    {
+      "screen": "C20-alta",
+      "violations": []
+    },
+    {
+      "screen": "C22-grupos",
+      "violations": []
+    },
+    {
+      "screen": "C26-bandeja",
+      "violations": []
+    },
+    {
+      "screen": "C24-reporte",
+      "violations": []
+    },
+    {
+      "screen": "C31-notificaciones",
+      "violations": []
+    },
+    {
+      "screen": "preferencias",
+      "violations": []
+    },
+    {
+      "screen": "F1-rsvp-invitado",
+      "violations": []
+    }
+  ]
+}

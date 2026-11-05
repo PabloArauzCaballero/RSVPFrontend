@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-05T01:22:34.633Z",
+  "consoleErrors": [],
+  "results": [
+    {
+      "lane": "F27",
+      "id": "REQ-F27-06",
+      "text": "escaneo DOM de 14 rutas publicas (con datos reales): 0 enlaces directos a partner; 6 enlaces salen por /r/",
+      "status": "PASS"
+    },
+    {
+      "lane": "F27",
+      "id": "REQ-F27-02/03/04",
+      "text": "GET /r/{listingId} -> 302 a https://wa.me con utm_campaign y correlationId conservados",
+      "status": "PASS"
+    },
+    {
+      "lane": "F27",
+      "id": "404",
+      "text": "listing inexistente: pagina de error clara (404), sin 301",
+      "status": "PASS"
+    }
+  ]
+}

@@ -1,0 +1,2195 @@
+{
+  "date": "2026-11-05T02:50:14.832Z",
+  "totals": {
+    "pages": 132,
+    "critical": 0,
+    "serious": 0,
+    "moderateOrMinor": 126
+  },
+  "results": [
+    {
+      "label": "Regalos del invitado (web)",
+      "path": "/c/f22-mw2xeb50/regalos",
+      "width": 360,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 0,
+      "violations": []
+    },
+    {
+      "label": "Microsite del partner",
+      "path": "/p/dulce-sol-mw2xeb50-106bac",
+      "width": 360,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 0,
+      "violations": []
+    },
+    {
+      "label": "Cotizar sin cuenta",
+      "path": "/p/dulce-sol-mw2xeb50-106bac/cotizar?l=d3d0b3d0-6795-4a78-9e6c-0f1afa1145b2",
+      "width": 360,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 0,
+      "violations": []
+    },
+    {
+      "label": "Agenda",
+      "path": "/p/dulce-sol-mw2xeb50-106bac/agenda",
+      "width": 360,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 0,
+      "violations": []
+    },
+    {
+      "label": "Directorio",
+      "path": "/proveedores/buscar?categoria=catering",
+      "width": 360,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "heading-order",
+          "impact": "moderate",
+          "nodes": 1,
+          "target": "li:nth-child(1) > h3"
+        }
+      ]
+    },
+    {
+      "label": "Regalos del invitado (app)",
+      "path": "/c/f22-mw2xeb50/regalos/x_idwkvlZGMTHZySafOfZRLnQIkoRcG8fXoghbOyKmY",
+      "width": 360,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 23,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Host regalos + visibilidad",
+      "path": "/regalos?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "width": 360,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 14,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Host catalogo",
+      "path": "/regalos/catalogo?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "width": 360,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 24,
+          "target": "h1"
+        }
+      ]
+    },
+    {
+      "label": "Host externo",
+      "path": "/regalos/externo?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "width": 360,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 8,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Host descubrir proveedores",
+      "path": "/regalos/proveedores?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "width": 360,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 49,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Host bandeja de reservas",
+      "path": "/bandeja/regalos?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "width": 360,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 2,
+      "violations": [
+        {
+          "id": "aria-allowed-role",
+          "impact": "minor",
+          "nodes": 1,
+          "target": "section"
+        },
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 3,
+          "target": "h1"
+        }
+      ]
+    },
+    {
+      "label": "Portal resumen",
+      "path": "/portal",
+      "width": 360,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 2,
+          "target": ".r-1kihuf0 > h1"
+        }
+      ]
+    },
+    {
+      "label": "Portal /alta",
+      "path": "/portal/alta",
+      "width": 360,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 7,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /productos",
+      "path": "/portal/productos",
+      "width": 360,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 18,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /servicios",
+      "path": "/portal/servicios",
+      "width": 360,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 17,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /entrega",
+      "path": "/portal/entrega",
+      "width": 360,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 2,
+      "violations": [
+        {
+          "id": "aria-allowed-role",
+          "impact": "minor",
+          "nodes": 1,
+          "target": "section"
+        },
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 5,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /perfil",
+      "path": "/portal/perfil",
+      "width": 360,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 16,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /documentos",
+      "path": "/portal/documentos",
+      "width": 360,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 5,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /destinos",
+      "path": "/portal/destinos",
+      "width": 360,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 4,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /agenda",
+      "path": "/portal/agenda",
+      "width": 360,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 2,
+      "violations": [
+        {
+          "id": "aria-allowed-role",
+          "impact": "minor",
+          "nodes": 1,
+          "target": "section"
+        },
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 10,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /leads",
+      "path": "/portal/leads",
+      "width": 360,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 2,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /metricas",
+      "path": "/portal/metricas",
+      "width": 360,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 6,
+          "target": ".r-1kihuf0 > h1"
+        }
+      ]
+    },
+    {
+      "label": "Regalos del invitado (web)",
+      "path": "/c/f22-mw2xeb50/regalos",
+      "width": 768,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 0,
+      "violations": []
+    },
+    {
+      "label": "Microsite del partner",
+      "path": "/p/dulce-sol-mw2xeb50-106bac",
+      "width": 768,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 0,
+      "violations": []
+    },
+    {
+      "label": "Cotizar sin cuenta",
+      "path": "/p/dulce-sol-mw2xeb50-106bac/cotizar?l=d3d0b3d0-6795-4a78-9e6c-0f1afa1145b2",
+      "width": 768,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 0,
+      "violations": []
+    },
+    {
+      "label": "Agenda",
+      "path": "/p/dulce-sol-mw2xeb50-106bac/agenda",
+      "width": 768,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 0,
+      "violations": []
+    },
+    {
+      "label": "Directorio",
+      "path": "/proveedores/buscar?categoria=catering",
+      "width": 768,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "heading-order",
+          "impact": "moderate",
+          "nodes": 1,
+          "target": "li:nth-child(1) > h3"
+        }
+      ]
+    },
+    {
+      "label": "Regalos del invitado (app)",
+      "path": "/c/f22-mw2xeb50/regalos/x_idwkvlZGMTHZySafOfZRLnQIkoRcG8fXoghbOyKmY",
+      "width": 768,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 23,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Host regalos + visibilidad",
+      "path": "/regalos?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "width": 768,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 14,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Host catalogo",
+      "path": "/regalos/catalogo?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "width": 768,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 24,
+          "target": "h1"
+        }
+      ]
+    },
+    {
+      "label": "Host externo",
+      "path": "/regalos/externo?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "width": 768,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 8,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Host descubrir proveedores",
+      "path": "/regalos/proveedores?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "width": 768,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 49,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Host bandeja de reservas",
+      "path": "/bandeja/regalos?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "width": 768,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 2,
+      "violations": [
+        {
+          "id": "aria-allowed-role",
+          "impact": "minor",
+          "nodes": 1,
+          "target": "section"
+        },
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 3,
+          "target": "h1"
+        }
+      ]
+    },
+    {
+      "label": "Portal resumen",
+      "path": "/portal",
+      "width": 768,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 2,
+          "target": ".r-1kihuf0 > h1"
+        }
+      ]
+    },
+    {
+      "label": "Portal /alta",
+      "path": "/portal/alta",
+      "width": 768,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 7,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /productos",
+      "path": "/portal/productos",
+      "width": 768,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 18,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /servicios",
+      "path": "/portal/servicios",
+      "width": 768,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 17,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /entrega",
+      "path": "/portal/entrega",
+      "width": 768,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 2,
+      "violations": [
+        {
+          "id": "aria-allowed-role",
+          "impact": "minor",
+          "nodes": 1,
+          "target": "section"
+        },
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 5,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /perfil",
+      "path": "/portal/perfil",
+      "width": 768,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 16,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /documentos",
+      "path": "/portal/documentos",
+      "width": 768,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 5,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /destinos",
+      "path": "/portal/destinos",
+      "width": 768,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 4,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /agenda",
+      "path": "/portal/agenda",
+      "width": 768,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 2,
+      "violations": [
+        {
+          "id": "aria-allowed-role",
+          "impact": "minor",
+          "nodes": 1,
+          "target": "section"
+        },
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 10,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /leads",
+      "path": "/portal/leads",
+      "width": 768,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 2,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /metricas",
+      "path": "/portal/metricas",
+      "width": 768,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 6,
+          "target": ".r-1kihuf0 > h1"
+        }
+      ]
+    },
+    {
+      "label": "Regalos del invitado (web)",
+      "path": "/c/f22-mw2xeb50/regalos",
+      "width": 1280,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 0,
+      "violations": []
+    },
+    {
+      "label": "Microsite del partner",
+      "path": "/p/dulce-sol-mw2xeb50-106bac",
+      "width": 1280,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 0,
+      "violations": []
+    },
+    {
+      "label": "Cotizar sin cuenta",
+      "path": "/p/dulce-sol-mw2xeb50-106bac/cotizar?l=d3d0b3d0-6795-4a78-9e6c-0f1afa1145b2",
+      "width": 1280,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 0,
+      "violations": []
+    },
+    {
+      "label": "Agenda",
+      "path": "/p/dulce-sol-mw2xeb50-106bac/agenda",
+      "width": 1280,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 0,
+      "violations": []
+    },
+    {
+      "label": "Directorio",
+      "path": "/proveedores/buscar?categoria=catering",
+      "width": 1280,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "heading-order",
+          "impact": "moderate",
+          "nodes": 1,
+          "target": "li:nth-child(1) > h3"
+        }
+      ]
+    },
+    {
+      "label": "Regalos del invitado (app)",
+      "path": "/c/f22-mw2xeb50/regalos/x_idwkvlZGMTHZySafOfZRLnQIkoRcG8fXoghbOyKmY",
+      "width": 1280,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 23,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Host regalos + visibilidad",
+      "path": "/regalos?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "width": 1280,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 14,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Host catalogo",
+      "path": "/regalos/catalogo?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "width": 1280,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 24,
+          "target": "h1"
+        }
+      ]
+    },
+    {
+      "label": "Host externo",
+      "path": "/regalos/externo?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "width": 1280,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 8,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Host descubrir proveedores",
+      "path": "/regalos/proveedores?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "width": 1280,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 49,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Host bandeja de reservas",
+      "path": "/bandeja/regalos?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "width": 1280,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 2,
+      "violations": [
+        {
+          "id": "aria-allowed-role",
+          "impact": "minor",
+          "nodes": 1,
+          "target": "section"
+        },
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 3,
+          "target": "h1"
+        }
+      ]
+    },
+    {
+      "label": "Portal resumen",
+      "path": "/portal",
+      "width": 1280,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 2,
+          "target": ".r-1kihuf0 > h1"
+        }
+      ]
+    },
+    {
+      "label": "Portal /alta",
+      "path": "/portal/alta",
+      "width": 1280,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 7,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /productos",
+      "path": "/portal/productos",
+      "width": 1280,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 18,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /servicios",
+      "path": "/portal/servicios",
+      "width": 1280,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 17,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /entrega",
+      "path": "/portal/entrega",
+      "width": 1280,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 2,
+      "violations": [
+        {
+          "id": "aria-allowed-role",
+          "impact": "minor",
+          "nodes": 1,
+          "target": "section"
+        },
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 5,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /perfil",
+      "path": "/portal/perfil",
+      "width": 1280,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 16,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /documentos",
+      "path": "/portal/documentos",
+      "width": 1280,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 5,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /destinos",
+      "path": "/portal/destinos",
+      "width": 1280,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 4,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /agenda",
+      "path": "/portal/agenda",
+      "width": 1280,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 2,
+      "violations": [
+        {
+          "id": "aria-allowed-role",
+          "impact": "minor",
+          "nodes": 1,
+          "target": "section"
+        },
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 10,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /leads",
+      "path": "/portal/leads",
+      "width": 1280,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 2,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /metricas",
+      "path": "/portal/metricas",
+      "width": 1280,
+      "scheme": "light",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 6,
+          "target": ".r-1kihuf0 > h1"
+        }
+      ]
+    },
+    {
+      "label": "Regalos del invitado (web)",
+      "path": "/c/f22-mw2xeb50/regalos",
+      "width": 360,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 0,
+      "violations": []
+    },
+    {
+      "label": "Microsite del partner",
+      "path": "/p/dulce-sol-mw2xeb50-106bac",
+      "width": 360,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 0,
+      "violations": []
+    },
+    {
+      "label": "Cotizar sin cuenta",
+      "path": "/p/dulce-sol-mw2xeb50-106bac/cotizar?l=d3d0b3d0-6795-4a78-9e6c-0f1afa1145b2",
+      "width": 360,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 0,
+      "violations": []
+    },
+    {
+      "label": "Agenda",
+      "path": "/p/dulce-sol-mw2xeb50-106bac/agenda",
+      "width": 360,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 0,
+      "violations": []
+    },
+    {
+      "label": "Directorio",
+      "path": "/proveedores/buscar?categoria=catering",
+      "width": 360,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "heading-order",
+          "impact": "moderate",
+          "nodes": 1,
+          "target": "li:nth-child(1) > h3"
+        }
+      ]
+    },
+    {
+      "label": "Regalos del invitado (app)",
+      "path": "/c/f22-mw2xeb50/regalos/x_idwkvlZGMTHZySafOfZRLnQIkoRcG8fXoghbOyKmY",
+      "width": 360,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 23,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Host regalos + visibilidad",
+      "path": "/regalos?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "width": 360,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 14,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Host catalogo",
+      "path": "/regalos/catalogo?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "width": 360,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 24,
+          "target": "h1"
+        }
+      ]
+    },
+    {
+      "label": "Host externo",
+      "path": "/regalos/externo?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "width": 360,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 8,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Host descubrir proveedores",
+      "path": "/regalos/proveedores?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "width": 360,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 49,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Host bandeja de reservas",
+      "path": "/bandeja/regalos?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "width": 360,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 2,
+      "violations": [
+        {
+          "id": "aria-allowed-role",
+          "impact": "minor",
+          "nodes": 1,
+          "target": "section"
+        },
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 3,
+          "target": "h1"
+        }
+      ]
+    },
+    {
+      "label": "Portal resumen",
+      "path": "/portal",
+      "width": 360,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 2,
+          "target": ".r-1kihuf0 > h1"
+        }
+      ]
+    },
+    {
+      "label": "Portal /alta",
+      "path": "/portal/alta",
+      "width": 360,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 7,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /productos",
+      "path": "/portal/productos",
+      "width": 360,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 18,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /servicios",
+      "path": "/portal/servicios",
+      "width": 360,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 17,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /entrega",
+      "path": "/portal/entrega",
+      "width": 360,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 2,
+      "violations": [
+        {
+          "id": "aria-allowed-role",
+          "impact": "minor",
+          "nodes": 1,
+          "target": "section"
+        },
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 5,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /perfil",
+      "path": "/portal/perfil",
+      "width": 360,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 16,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /documentos",
+      "path": "/portal/documentos",
+      "width": 360,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 5,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /destinos",
+      "path": "/portal/destinos",
+      "width": 360,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 4,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /agenda",
+      "path": "/portal/agenda",
+      "width": 360,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 2,
+      "violations": [
+        {
+          "id": "aria-allowed-role",
+          "impact": "minor",
+          "nodes": 1,
+          "target": "section"
+        },
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 10,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /leads",
+      "path": "/portal/leads",
+      "width": 360,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 2,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /metricas",
+      "path": "/portal/metricas",
+      "width": 360,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 6,
+          "target": ".r-1kihuf0 > h1"
+        }
+      ]
+    },
+    {
+      "label": "Regalos del invitado (web)",
+      "path": "/c/f22-mw2xeb50/regalos",
+      "width": 768,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 0,
+      "violations": []
+    },
+    {
+      "label": "Microsite del partner",
+      "path": "/p/dulce-sol-mw2xeb50-106bac",
+      "width": 768,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 0,
+      "violations": []
+    },
+    {
+      "label": "Cotizar sin cuenta",
+      "path": "/p/dulce-sol-mw2xeb50-106bac/cotizar?l=d3d0b3d0-6795-4a78-9e6c-0f1afa1145b2",
+      "width": 768,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 0,
+      "violations": []
+    },
+    {
+      "label": "Agenda",
+      "path": "/p/dulce-sol-mw2xeb50-106bac/agenda",
+      "width": 768,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 0,
+      "violations": []
+    },
+    {
+      "label": "Directorio",
+      "path": "/proveedores/buscar?categoria=catering",
+      "width": 768,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "heading-order",
+          "impact": "moderate",
+          "nodes": 1,
+          "target": "li:nth-child(1) > h3"
+        }
+      ]
+    },
+    {
+      "label": "Regalos del invitado (app)",
+      "path": "/c/f22-mw2xeb50/regalos/x_idwkvlZGMTHZySafOfZRLnQIkoRcG8fXoghbOyKmY",
+      "width": 768,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 23,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Host regalos + visibilidad",
+      "path": "/regalos?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "width": 768,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 14,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Host catalogo",
+      "path": "/regalos/catalogo?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "width": 768,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 24,
+          "target": "h1"
+        }
+      ]
+    },
+    {
+      "label": "Host externo",
+      "path": "/regalos/externo?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "width": 768,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 8,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Host descubrir proveedores",
+      "path": "/regalos/proveedores?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "width": 768,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 49,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Host bandeja de reservas",
+      "path": "/bandeja/regalos?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "width": 768,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 2,
+      "violations": [
+        {
+          "id": "aria-allowed-role",
+          "impact": "minor",
+          "nodes": 1,
+          "target": "section"
+        },
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 3,
+          "target": "h1"
+        }
+      ]
+    },
+    {
+      "label": "Portal resumen",
+      "path": "/portal",
+      "width": 768,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 2,
+          "target": ".r-1kihuf0 > h1"
+        }
+      ]
+    },
+    {
+      "label": "Portal /alta",
+      "path": "/portal/alta",
+      "width": 768,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 7,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /productos",
+      "path": "/portal/productos",
+      "width": 768,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 18,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /servicios",
+      "path": "/portal/servicios",
+      "width": 768,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 17,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /entrega",
+      "path": "/portal/entrega",
+      "width": 768,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 2,
+      "violations": [
+        {
+          "id": "aria-allowed-role",
+          "impact": "minor",
+          "nodes": 1,
+          "target": "section"
+        },
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 5,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /perfil",
+      "path": "/portal/perfil",
+      "width": 768,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 16,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /documentos",
+      "path": "/portal/documentos",
+      "width": 768,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 5,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /destinos",
+      "path": "/portal/destinos",
+      "width": 768,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 4,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /agenda",
+      "path": "/portal/agenda",
+      "width": 768,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 2,
+      "violations": [
+        {
+          "id": "aria-allowed-role",
+          "impact": "minor",
+          "nodes": 1,
+          "target": "section"
+        },
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 10,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /leads",
+      "path": "/portal/leads",
+      "width": 768,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 2,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /metricas",
+      "path": "/portal/metricas",
+      "width": 768,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 6,
+          "target": ".r-1kihuf0 > h1"
+        }
+      ]
+    },
+    {
+      "label": "Regalos del invitado (web)",
+      "path": "/c/f22-mw2xeb50/regalos",
+      "width": 1280,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 0,
+      "violations": []
+    },
+    {
+      "label": "Microsite del partner",
+      "path": "/p/dulce-sol-mw2xeb50-106bac",
+      "width": 1280,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 0,
+      "violations": []
+    },
+    {
+      "label": "Cotizar sin cuenta",
+      "path": "/p/dulce-sol-mw2xeb50-106bac/cotizar?l=d3d0b3d0-6795-4a78-9e6c-0f1afa1145b2",
+      "width": 1280,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 0,
+      "violations": []
+    },
+    {
+      "label": "Agenda",
+      "path": "/p/dulce-sol-mw2xeb50-106bac/agenda",
+      "width": 1280,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 0,
+      "violations": []
+    },
+    {
+      "label": "Directorio",
+      "path": "/proveedores/buscar?categoria=catering",
+      "width": 1280,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "heading-order",
+          "impact": "moderate",
+          "nodes": 1,
+          "target": "li:nth-child(1) > h3"
+        }
+      ]
+    },
+    {
+      "label": "Regalos del invitado (app)",
+      "path": "/c/f22-mw2xeb50/regalos/x_idwkvlZGMTHZySafOfZRLnQIkoRcG8fXoghbOyKmY",
+      "width": 1280,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 23,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Host regalos + visibilidad",
+      "path": "/regalos?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "width": 1280,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 14,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Host catalogo",
+      "path": "/regalos/catalogo?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "width": 1280,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 24,
+          "target": "h1"
+        }
+      ]
+    },
+    {
+      "label": "Host externo",
+      "path": "/regalos/externo?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "width": 1280,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 8,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Host descubrir proveedores",
+      "path": "/regalos/proveedores?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "width": 1280,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 49,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Host bandeja de reservas",
+      "path": "/bandeja/regalos?c=c38c3a3b-c5bd-4152-82e2-a5fc7966c4b7",
+      "width": 1280,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 2,
+      "violations": [
+        {
+          "id": "aria-allowed-role",
+          "impact": "minor",
+          "nodes": 1,
+          "target": "section"
+        },
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 3,
+          "target": "h1"
+        }
+      ]
+    },
+    {
+      "label": "Portal resumen",
+      "path": "/portal",
+      "width": 1280,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 2,
+          "target": ".r-1kihuf0 > h1"
+        }
+      ]
+    },
+    {
+      "label": "Portal /alta",
+      "path": "/portal/alta",
+      "width": 1280,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 7,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /productos",
+      "path": "/portal/productos",
+      "width": 1280,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 18,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /servicios",
+      "path": "/portal/servicios",
+      "width": 1280,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 17,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /entrega",
+      "path": "/portal/entrega",
+      "width": 1280,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 2,
+      "violations": [
+        {
+          "id": "aria-allowed-role",
+          "impact": "minor",
+          "nodes": 1,
+          "target": "section"
+        },
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 5,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /perfil",
+      "path": "/portal/perfil",
+      "width": 1280,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 16,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /documentos",
+      "path": "/portal/documentos",
+      "width": 1280,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 5,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /destinos",
+      "path": "/portal/destinos",
+      "width": 1280,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 4,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /agenda",
+      "path": "/portal/agenda",
+      "width": 1280,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 2,
+      "violations": [
+        {
+          "id": "aria-allowed-role",
+          "impact": "minor",
+          "nodes": 1,
+          "target": "section"
+        },
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 10,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /leads",
+      "path": "/portal/leads",
+      "width": 1280,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 2,
+          "target": ".r-adyw6z"
+        }
+      ]
+    },
+    {
+      "label": "Portal /metricas",
+      "path": "/portal/metricas",
+      "width": 1280,
+      "scheme": "dark",
+      "critical": 0,
+      "serious": 0,
+      "moderateOrMinor": 1,
+      "violations": [
+        {
+          "id": "region",
+          "impact": "moderate",
+          "nodes": 6,
+          "target": ".r-1kihuf0 > h1"
+        }
+      ]
+    }
+  ]
+}

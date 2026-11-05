@@ -1,0 +1,54 @@
+{
+  "date": "2026-11-05T01:21:53.943Z",
+  "consoleErrors": [],
+  "results": [
+    {
+      "lane": "F26",
+      "id": "REQ-F26-01",
+      "text": "carrito de intención con items, fecha, invitados, presupuesto; fulfillment (responsable, cobertura, plazo) visible por oferta; validación accesible",
+      "status": "PASS"
+    },
+    {
+      "lane": "F26",
+      "id": "401",
+      "text": "sin sesión Provider Catalog responde 401 y la pantalla pide iniciar sesión conservando lo escrito",
+      "status": "PASS"
+    },
+    {
+      "lane": "F26",
+      "id": "REQ-F26-02",
+      "text": "201 QuoteReceipt: confirmacion con numero de solicitud, deslinde y aviso de copia por correo",
+      "status": "PASS"
+    },
+    {
+      "lane": "F26",
+      "id": "REQ-F26-06",
+      "text": "la cotizacion genero 2 lead(s) kind=FORM visibles para el proveedor",
+      "status": "PASS"
+    },
+    {
+      "lane": "F26",
+      "id": "REQ-F26-03",
+      "text": "calendario mensual con dias libres/bloqueados (feriado) en la hora del proveedor",
+      "status": "PASS"
+    },
+    {
+      "lane": "F26",
+      "id": "REQ-F26-05a",
+      "text": "422 fecha bloqueada: 'el proveedor la bloqueó, elige otro día'",
+      "status": "PASS"
+    },
+    {
+      "lane": "F26",
+      "id": "REQ-F26-05b",
+      "text": "409 sin cupo: mensaje distinto al 422 y calendario refrescado (dia pasa a 'sin cupo')",
+      "status": "PASS"
+    },
+    {
+      "lane": "F26",
+      "id": "REQ-F26-04",
+      "text": "201: fecha solicitada con vencimiento en la zona del proveedor",
+      "status": "PASS"
+    }
+  ]
+}

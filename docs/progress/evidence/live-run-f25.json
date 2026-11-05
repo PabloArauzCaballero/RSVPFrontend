@@ -1,0 +1,30 @@
+{
+  "date": "2026-11-05T01:18:20.556Z",
+  "consoleErrors": [],
+  "results": [
+    {
+      "lane": "F25",
+      "id": "REQ-F25-01/02/05",
+      "text": "portada con nombre real del proveedor (GET /providers/{id}), JSON-LD LocalBusiness con areaServed real y deslinde antes del contacto",
+      "status": "PASS"
+    },
+    {
+      "lane": "F25",
+      "id": "REQ-F25-03",
+      "text": "catalogo con 3 ofertas y precio en BOB",
+      "status": "PASS"
+    },
+    {
+      "lane": "F25",
+      "id": "REQ-F25-04",
+      "text": "detalle con fulfillment real visible: responsable, cobertura, traslado Bs 50,00, plazo 3 dias, condiciones y deslinde",
+      "status": "PASS"
+    },
+    {
+      "lane": "F25",
+      "id": "REQ-F25-06",
+      "text": "proveedor desconocido: 404 controlado",
+      "status": "PASS"
+    }
+  ]
+}

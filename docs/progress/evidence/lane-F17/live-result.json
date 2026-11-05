@@ -1,0 +1,49 @@
+{
+  "date": "2026-11-05T01:57:30.053Z",
+  "surface": "Chrome real; web http://localhost:3000, app http://localhost:8200, backend http://localhost:28000 (Kong)",
+  "celebration": {
+    "id": "aaca29bb-be90-4e46-b1cd-8b44f9a72124",
+    "slug": "f15-mw2w9ucw"
+  },
+  "checks": [
+    {
+      "id": "REQ-F17-01 resumen",
+      "text": "C6 shows the same numbers as GET /guests/.../guest-summary (read model, after the projection catches up)",
+      "status": "PASS",
+      "observed": "API total=4 confirmed=3 pending=1 openCompanionRequests=1; UI equal"
+    },
+    {
+      "id": "REQ-F17-03 bandeja",
+      "text": "C26 lists Beto's request; approving it in the UI is POSTed and the API reads APPROVED",
+      "status": "PASS",
+      "observed": "request left the inbox; Beto approvedCompanions=1 (requested 3)"
+    },
+    {
+      "id": "REQ-F17-02 reporte",
+      "text": "C24 lists answers and the CSV downloads from the browser without the caterer file leaking contacts",
+      "status": "PASS",
+      "observed": "catering rows=3"
+    },
+    {
+      "id": "REQ-F17-04 resumen tras cambios",
+      "text": "after the approval and new guests the summary matches the API again",
+      "status": "PASS",
+      "observed": "total=8 confirmed=3 openCompanionRequests=0"
+    }
+  ],
+  "axe": [
+    {
+      "screen": "C6-resumen",
+      "violations": []
+    },
+    {
+      "screen": "C26-bandeja",
+      "violations": []
+    },
+    {
+      "screen": "C24-reporte",
+      "violations": []
+    }
+  ],
+  "consoleErrors": []
+}

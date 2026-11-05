@@ -1,0 +1,70 @@
+{
+  "date": "2026-11-05T02:51:20.626Z",
+  "surface": "Expo web export in Chrome, contract mock",
+  "status": "PASS",
+  "checks": [
+    {
+      "id": "REQ-F16-01",
+      "text": "60 guests: 50 per page with server paging, search, empty-filtered state; no horizontal scroll at 360/768/1280",
+      "status": "PASS"
+    },
+    {
+      "id": "REQ-F16-02",
+      "text": "validation on save, phone-only guest accepted (E.164), saved and visible to the mock",
+      "status": "PASS"
+    },
+    {
+      "id": "REQ-F16-03",
+      "text": "CSV with 3 bad rows: 1 imported; each error shown with line number, field and reason",
+      "status": "PASS"
+    },
+    {
+      "id": "REQ-F16-04",
+      "text": "groups listed from the backend with member counts; create works; moving a guest is on the guest page",
+      "status": "PASS"
+    },
+    {
+      "id": "REQ-F16-05/06",
+      "text": "link issued, shown masked (abcd…wxyz), full secret absent from the DOM, revoke asks for confirmation",
+      "status": "PASS"
+    }
+  ],
+  "axe": [
+    {
+      "screen": "C6-resumen",
+      "violations": []
+    },
+    {
+      "screen": "C19-lista",
+      "violations": []
+    },
+    {
+      "screen": "C20-alta",
+      "violations": []
+    },
+    {
+      "screen": "C22-grupos",
+      "violations": []
+    },
+    {
+      "screen": "C26-bandeja",
+      "violations": []
+    },
+    {
+      "screen": "C24-reporte",
+      "violations": []
+    },
+    {
+      "screen": "C31-notificaciones",
+      "violations": []
+    },
+    {
+      "screen": "preferencias",
+      "violations": []
+    },
+    {
+      "screen": "F1-rsvp-invitado",
+      "violations": []
+    }
+  ]
+}

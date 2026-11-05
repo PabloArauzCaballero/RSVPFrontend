@@ -1,0 +1,83 @@
+{
+  "date": "2026-11-05T01:57:30.052Z",
+  "surface": "Chrome real; web http://localhost:3000, app http://localhost:8200, backend http://localhost:28000 (Kong)",
+  "celebration": {
+    "id": "aaca29bb-be90-4e46-b1cd-8b44f9a72124",
+    "slug": "f15-mw2w9ucw"
+  },
+  "checks": [
+    {
+      "id": "REQ-F15-01 formulario",
+      "text": "personal link renders the real celebration at 360/768/1280, no horizontal scroll, axe clean",
+      "status": "PASS",
+      "observed": null
+    },
+    {
+      "id": "REQ-F15-01 enviar",
+      "text": "confirms with 1 companion and diet; the host API then lists the RSVP as CONFIRMED",
+      "status": "PASS",
+      "observed": "host sees status=CONFIRMED requestedCompanions=1"
+    },
+    {
+      "id": "REQ-F15-02 editar",
+      "text": "reload keeps the answer; editing sends PATCH and the host sees the new value",
+      "status": "PASS",
+      "observed": "PATCH 200; host sees requestedCompanions=2"
+    },
+    {
+      "id": "REQ-F15-04 token inválido",
+      "text": "an unknown token shows the same screen with no celebration data at 360/768/1280 (axe clean)",
+      "status": "PASS",
+      "observed": null
+    },
+    {
+      "id": "REQ-F15-01 enlace legado",
+      "text": "/rsvp/{token} (sin ?c=) llama POST /rsvp/resolve y termina en /c/{slug}/rsvp/{token}",
+      "status": "PASS",
+      "observed": "POST /rsvp/resolve 200"
+    },
+    {
+      "id": "REQ-F15-04 legado inválido",
+      "text": "/rsvp/{token desconocido} muestra el enlace no disponible (401 de resolve)",
+      "status": "PASS",
+      "observed": null
+    },
+    {
+      "id": "REQ-F15-02 acompañantes",
+      "text": "asking for more companions than allowed leaves a PENDING_REVIEW request for the host",
+      "status": "PASS",
+      "observed": "request status=PENDING_REVIEW"
+    },
+    {
+      "id": "REQ-F15-05 no registrado",
+      "text": "AUTO_ACCEPT: public-settings first, the form registers a guest and shows the personal link once",
+      "status": "PASS",
+      "observed": "public-settings 200; guest visible to the host with status CONFIRMED"
+    },
+    {
+      "id": "REQ-F15-05 restringido",
+      "text": "RESTRICTED: public-settings says so, the form never appears and hostContact is shown",
+      "status": "PASS",
+      "observed": "contact line: Correo de contacto: anayluis@example.com"
+    }
+  ],
+  "axe": [
+    {
+      "screen": "A9-formulario",
+      "violations": []
+    },
+    {
+      "screen": "A12-token-invalido",
+      "violations": []
+    },
+    {
+      "screen": "A13-no-registrado",
+      "violations": []
+    },
+    {
+      "screen": "A13-restringido",
+      "violations": []
+    }
+  ],
+  "consoleErrors": []
+}
