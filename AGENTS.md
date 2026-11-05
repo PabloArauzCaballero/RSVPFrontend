@@ -12,6 +12,12 @@ Claude Code y Gemini CLI ejecutan `scripts/reload-skills.mjs` antes de cada prom
 
 El catálogo de [Marketing Skills](docs/engineering/marketing-skills-source.json) es vendorizado y pertenece a Corey Haines (MIT). Su contenido no altera las reglas de ingeniería, seguridad y evidencia de RSVP. Para trabajo de marketing, lee también `.agents/product-marketing.md` cuando exista; valida hipótesis, cifras, precios y recomendaciones actuales con fuentes pertinentes.
 
+## Regla de ramas y PR (obligatoria, sin excepción)
+
+- **Prohibido commit o push directo a `dev`/`main`.** Todo entra por rama + Pull Request que el dueño aprueba. Nunca `--force`, `--no-verify` ni eludir la protección de rama, los hooks o los checks. Un agente no aprueba ni hace merge de su propio PR.
+- Antes de abrir un PR aplica [`rsvp-pr-gate`](.agents/skills/rsvp-pr-gate/SKILL.md): revisión del diff, lint/typecheck/build/contratos/gitleaks en verde, pruebas de integración contra servicios reales, recorrido en entorno real (gateway Docker en backend; Playwright con Chrome real contra el backend real en frontend), casos negativos, reversión y evidencia pegada en el PR. Sin esa evidencia no hay PR.
+- **Solo soluciones de largo plazo:** causa raíz, sin parches, sin debilitar pruebas, sin `skip`/`only`, sin ignores sin motivo ni `TODO` sin issue. Activa los hooks locales con `yarn hooks:install`.
+
 ## Obligatorio
 
 - **Vertical slice obligatorio:** usa [`rsvp-vertical-slice`](.agents/skills/rsvp-vertical-slice/SKILL.md) en toda planificación, ejecución o revisión de carril; la [revisión del plan](docs/plan/revision-vertical-slice-2026-10-16.md) prevalece sobre listas históricas por capas. Cada entrega debe tener resultado observable, prueba y evidencia.

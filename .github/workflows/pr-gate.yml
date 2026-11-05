@@ -1,0 +1,60 @@
+name: PR gate
+on:
+  pull_request:
+    branches: [dev, main]
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+permissions:
+  contents: read
+  pull-requests: read
+concurrency:
+  group: pr-gate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  gate:
+    name: PR gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Description carries the mandatory evidence
+        env:
+          BODY: ${{ github.event.pull_request.body }}
+        run: |
+          set -euo pipefail
+          fail() { echo "::error::$1"; exit 1; }
+          [ -n "${BODY// }" ] || fail "La descripción del PR está vacía: use la plantilla."
+          for heading in "## Causa raíz y solución de largo plazo" "## Evidencia de regresión" "## Reversión"; do
+            grep -qF "$heading" <<<"$BODY" || fail "Falta la sección obligatoria: $heading"
+          done
+          if grep -qE '^\s*- \[ \]' <<<"$BODY"; then fail "Hay casillas sin marcar en la descripción del PR."; fi
+          grep -qE '^\s*- \[x\]' <<<"$BODY" || fail "No hay casillas de la lista marcadas."
+          grep -qiE 'exit (code )?0|código de salida|passed|pass\b|verde' <<<"$BODY" || fail "La evidencia no incluye resultados observados de comandos."
+      - name: Forbidden shortcuts in the diff
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          diff_added() { git diff --unified=0 "$BASE...$HEAD" -- . ':(exclude)docs/**' ':(exclude).github/workflows/pr-gate.yml' ':(exclude).agents/**' ':(exclude)**/*.md' | grep -E '^\+[^+]' || true; }
+          added="$(diff_added)"
+          bad=0
+          check() { # $1 regex, $2 message, $3 optional regex that EXCUSES a line
+            hits="$(grep -nE "$1" <<<"$added" || true)"
+            if [ -n "${3:-}" ] && [ -n "$hits" ]; then hits="$(grep -vE "$3" <<<"$hits" || true)"; fi
+            if [ -n "$hits" ]; then echo "::error::$2"; echo "$hits" | head -5; bad=1; fi
+          }
+          check '\.(only|skip)\(|\b(xit|xdescribe|xtest|fit|fdescribe)\(' 'Prohibido añadir test.only/.skip/xit/fit.'
+          check '@ts-ignore|@ts-nocheck' 'Prohibido @ts-ignore/@ts-nocheck.'
+          check 'eslint-disable' 'eslint-disable requiere motivo: "eslint-disable-next-line <regla> -- <motivo>".' ' -- .{8,}'
+          check '(TODO|FIXME|HACK|XXX)' 'TODO/FIXME/HACK sin issue enlazado (#123).' '#[0-9]+'
+          check '(--no-verify|core\.hooksPath[ =]+/dev/null)' 'Prohibido saltar hooks.'
+          [ "$bad" = 0 ] || exit 1
+      - name: No generated or secret-bearing artifacts
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          files="$(git diff --name-only "$BASE...$HEAD")"
+          if grep -E '(^|/)(node_modules|\.next[^/]*|web-build[^/]*|dist|\.venv|__pycache__)/|\.sqlite3?$|\.pem$|(^|/)\.env($|\.)' <<<"$files" | grep -vE '\.env\.example$' ; then
+            echo "::error::El PR incluye artefactos de build, bases locales, claves o .env."; exit 1; fi

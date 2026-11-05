@@ -21,7 +21,8 @@
     "graph:status": "codegraph status",
     "graph:sync": "codegraph sync",
     "graph:probe": "node scripts/probe-codegraph-mcp.mjs",
-    "lint:code": "eslint . --max-warnings 0"
+    "lint:code": "eslint . --max-warnings 0",
+    "hooks:install": "git config core.hooksPath .githooks"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.11.0",
