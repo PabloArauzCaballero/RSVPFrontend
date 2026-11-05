@@ -2,9 +2,11 @@ import { useState, type ReactNode } from "react";
 import { Linking, Text, View } from "react-native";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { celebrationApi, useAdminEventTypes, useAdminTemplates } from "@rsvp/query-hooks";
+import { useIdentitySummary, useProviderSummary } from "@rsvp/query-hooks/admin";
 import { useApiClient, useT } from "../platform/providers";
 import { ActionButton, ConfirmDialog, ErrorNotice, Loading, Notice, Section, styles } from "../host/ui";
 import { AdminScreen } from "./admin-screen";
+import { AdminErrorNotice } from "./shared";
 
 type Nav = { readonly onNavigate: (href: string) => void };
 
@@ -24,7 +26,47 @@ export function DashboardScreen({ onNavigate }: Nav): ReactNode {
         <Text style={styles.body}>{count(t("admin.dashboard.templates"), templates.data?.items.filter((item) => item.status === "PUBLISHED").length)}</Text>
         <Text style={styles.body}>{count(t("admin.dashboard.drafts"), templates.data?.items.filter((item) => item.status === "DRAFT").length)}</Text>
       </Section>
+      <PlatformSummary />
     </AdminScreen>
+  );
+}
+
+/** E1 · Platform summary: one read per service (provider-catalog and identity). Each card fails on its own, so a missing service never blanks the page. */
+function PlatformSummary(): ReactNode {
+  const t = useT();
+  const client = useApiClient();
+  const providers = useProviderSummary(client);
+  const identity = useIdentitySummary(client);
+  const line = (label: string, value: number): string => t("admin.dashboard.count", { label, count: value });
+  return (
+    <>
+      <Section title={`${t("admin.dashboard.platform")} · ${t("admin.dashboard.providersTitle")}`}>
+        {providers.isPending ? <Loading /> : null}
+        {providers.error ? <AdminErrorNotice error={providers.error} /> : null}
+        {providers.data ? (
+          <>
+            {Object.entries(providers.data.providersByStatus).map(([status, count]) => <Text key={status} style={styles.body}>{line(t(`admin.dashboard.statuses.${status}`), count)}</Text>)}
+            <Text style={styles.body}>{line(t("admin.dashboard.listingsPublished"), providers.data.listingsPublished)}</Text>
+            <Text style={styles.body}>{line(t("admin.dashboard.leadsValid"), providers.data.leads.valid)}</Text>
+            <Text style={styles.body}>{line(t("admin.dashboard.leadsInvalid"), providers.data.leads.invalid)}</Text>
+            <Text style={styles.body}>{line(t("admin.dashboard.leadsRecent"), providers.data.leads.last30Days)}</Text>
+            <Text style={styles.body}>{line(t("admin.dashboard.quotes"), providers.data.quotes)}</Text>
+            <Text style={styles.body}>{line(t("admin.dashboard.bookings"), providers.data.bookingsConfirmed)}</Text>
+          </>
+        ) : null}
+      </Section>
+      <Section title={`${t("admin.dashboard.platform")} · ${t("admin.dashboard.accountsTitle")}`}>
+        {identity.isPending ? <Loading /> : null}
+        {identity.error ? <AdminErrorNotice error={identity.error} /> : null}
+        {identity.data ? (
+          <>
+            <Text style={styles.body}>{line(t("admin.dashboard.users"), identity.data.users.total)}</Text>
+            {Object.entries(identity.data.users.byRole).map(([role, count]) => <Text key={role} style={styles.body}>{t("admin.dashboard.count", { label: t("admin.dashboard.usersByRole", { role }), count })}</Text>)}
+            <Text style={styles.body}>{line(t("admin.dashboard.organizations"), identity.data.organizations.total)}</Text>
+          </>
+        ) : null}
+      </Section>
+    </>
   );
 }
 

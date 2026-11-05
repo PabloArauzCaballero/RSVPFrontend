@@ -376,7 +376,7 @@ export interface components {
             /** Format: date-time */
             availableAt: string;
             /** @enum {unknown} */
-            channel: "EMAIL" | "SMS" | "WHATSAPP" | "PUSH";
+            channel: "EMAIL" | "SMS" | "WHATSAPP" | "PUSH" | "INBOX";
             /** Format: date-time */
             createdAt: string;
             /** Format: uuid */

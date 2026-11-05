@@ -1,6 +1,7 @@
 // F16/F17/F18/F21 browser run: the REAL universal web app (expo export) in Chrome against a contract-shaped mock of
 // guest-rsvp + notification + the celebration read (packages/testing/src/contract-mock.ts). Proves the app layer against
 // the contract; it does NOT prove the real services, and nothing here runs on iOS or Android.
+// Mock run only (kept for the regression of mock-only paths). The REAL-backend run (Kong :28000) is apps/seo-web/scripts/e2e-live-rsvp.mjs and apps/universal/scripts/e2e-live-closeout.mjs.
 //   CHROMIUM_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" node apps/universal/scripts/e2e-guests.mjs
 import { createServer } from "node:http";
 import { spawn } from "node:child_process";

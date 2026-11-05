@@ -240,6 +240,7 @@ function UnregisteredForm({ client, view, slug, t, locale, siteOrigin, hosts, co
             </div>
           </>
         ) : <p>{t('rsvp.unregistered.replayBody')}</p>}
+        <p className="rsvp-hint" data-testid="rsvp-email-notice">{t('rsvp.unregistered.emailNotice')}</p>
       </section>
     );
   }

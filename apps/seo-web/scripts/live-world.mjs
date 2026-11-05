@@ -1,10 +1,9 @@
 // Seeds a REAL world on the local backend (Kong :28000) for the F22-F28 browser runs: a published celebration with a
 // gift list, a registered PROVIDER with listings, availability and a guest with a single-use link token.
 //   node apps/seo-web/scripts/live-world.mjs > world.json        (API_URL overrides the gateway)
-// Registration, celebration, gifts, listings and tokens go through HTTP. There is NO HTTP path to verify a provider
-// (POST /providers/{id}/verify needs ADMIN, which Identity only grants by operator config), so the script flips
-// provider.status to VERIFIED in the local provider_db through `docker exec`. Local development stack only.
-import { execFileSync } from "node:child_process";
+// Registration, celebration, gifts, listings, tokens and provider verification go through HTTP. Verifying needs an ADMIN:
+// start Identity with IDENTITY_BOOTSTRAP_ADMIN_EMAIL=$E2E_ADMIN_EMAIL (default e2e-admin@example.test, registered here
+// if missing) and restart it once; see RSVPBackend apps/identity-service/README.md. Local development stack only.
 
 const API = process.env.API_URL ?? "http://localhost:28000";
 const stamp = Date.now().toString(36);
@@ -37,7 +36,12 @@ for (const [index, listing] of listings.entries()) {
 }
 await call("PUT", `/providers/${providerRow.id}/availability`, { token: provider.accessToken, body: { capacityPerDay: 1, rules: [{ weekdays: [0, 1, 2, 3, 4, 5, 6], start: "08:00", end: "20:00" }], blackouts: [{ start: nextMonthDay(10), reason: "Feriado" }] } });
 await call("POST", `/providers/${providerRow.id}/submit`, { token: provider.accessToken });
-execFileSync("docker", ["exec", "rsvp-infra-it-postgres-1", "psql", "-U", "postgres", "-d", "provider_db", "-c", `update provider set status='VERIFIED' where id='${providerRow.id}'`], { stdio: "ignore" });
+const adminEmail = process.env.E2E_ADMIN_EMAIL ?? "e2e-admin@example.test";
+const adminPassword = process.env.E2E_ADMIN_PASSWORD ?? "Correct-horse-9battery";
+await call("POST", "/identity/auth/register", { body: { email: adminEmail, password: adminPassword, role: "HOST" } }).catch(() => undefined); // 409 when it already exists
+const admin = await call("POST", "/identity/auth/login", { body: { email: adminEmail, password: adminPassword } });
+if (!(JSON.parse(Buffer.from(admin.accessToken.split(".")[1], "base64url").toString()).roles ?? []).includes("ADMIN")) throw new Error(`${adminEmail} is not ADMIN: start Identity with IDENTITY_BOOTSTRAP_ADMIN_EMAIL=${adminEmail} and restart it`);
+await call("POST", `/providers/${providerRow.id}/verify`, { token: admin.accessToken });
 
 const slug = `f22-${stamp}`;
 const celebration = await call("POST", "/celebrations", { token: host.accessToken, body: { slug, eventTypeCode: "WEDDING", content: { title: "Ana y Luis", eventDate: "2027-05-20T18:00", venueName: "Salon Los Pinos", hosts: { BRIDE: "Ana", GROOM: "Luis" } } } });

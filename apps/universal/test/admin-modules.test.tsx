@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { CategoriesScreen, GeographyScreen } from "../src/admin/catalog";
 import { MetricsScreen, OrganizationsScreen, UsersScreen } from "../src/admin/insight";
 import { ModerationScreen, VerificationScreen } from "../src/admin/queues";
+import { DashboardScreen } from "../src/admin/other-screens";
 import { ADMIN, fakeClient, GUEST, HOST, HttpFailure, renderApp, type Handler } from "./support";
 
 const navigate = vi.fn();
@@ -226,5 +227,44 @@ describe("REQ-F14-01 · categories, geography, users, organizations", () => {
     type("Identificador de la organización", "nope");
     fireEvent.click(screen.getByTestId("org-lookup"));
     expect(await screen.findByText(/todavía no está disponible en el servidor/)).toBeTruthy();
+  });
+});
+
+describe("E1 · platform summary on the dashboard", () => {
+  const providerSummary = { providersByStatus: { DRAFT: 2, PENDING_VERIFICATION: 1, VERIFIED: 4, SUSPENDED: 0, REJECTED: 1 }, listingsPublished: 9, leads: { valid: 30, invalid: 3, last30Days: 12 }, quotes: 7, bookingsConfirmed: 5 };
+  const identitySummary = { users: { total: 25, byRole: { ADMIN: 1, HOST: 20, PROVIDER: 4 } }, organizations: { total: 3 } };
+
+  it("shows the provider and account counters from the two services", async () => {
+    const { client, calls } = fakeClient({
+      "GET /providers/admin/summary": () => providerSummary, "GET /identity/admin/summary": () => identitySummary,
+      "GET /celebrations/admin/event-types": () => ({ items: [] }), "GET /media/admin/templates": () => ({ items: [] })
+    });
+    renderApp(<DashboardScreen onNavigate={navigate} />, client, ADMIN);
+    expect(await screen.findByText("Verificado: 4")).toBeTruthy();
+    expect(screen.getByText("En verificación: 1")).toBeTruthy();
+    expect(screen.getByText("Ofertas publicadas: 9")).toBeTruthy();
+    expect(screen.getByText("Leads válidos (30 días): 12")).toBeTruthy();
+    expect(screen.getByText("Reservas confirmadas: 5")).toBeTruthy();
+    expect(await screen.findByText("Cuentas: 25")).toBeTruthy();
+    expect(screen.getByText("Cuentas con rol HOST: 20")).toBeTruthy();
+    expect(screen.getByText("Organizaciones: 3")).toBeTruthy();
+    expect(calls.filter((call) => call.path.endsWith("/summary")).map((call) => call.path).sort()).toEqual(["/identity/admin/summary", "/providers/admin/summary"]);
+  });
+
+  it("one service failing does not blank the other card; a 403 says so", async () => {
+    const { client } = fakeClient({
+      "GET /providers/admin/summary": () => providerSummary, "GET /identity/admin/summary": () => new HttpFailure(403),
+      "GET /celebrations/admin/event-types": () => ({ items: [] }), "GET /media/admin/templates": () => ({ items: [] })
+    });
+    renderApp(<DashboardScreen onNavigate={navigate} />, client, ADMIN);
+    expect(await screen.findByText("Verificado: 4")).toBeTruthy();
+    expect((await screen.findAllByText(/no tienes permiso|Acceso denegado|permiso/i)).length).toBeGreaterThan(0);
+    expect(screen.queryByText("Cuentas: 25")).toBeNull();
+  });
+
+  it("HOST never triggers the summary requests", () => {
+    const { client, calls } = fakeClient({});
+    renderApp(<DashboardScreen onNavigate={navigate} />, client, HOST);
+    expect(calls.filter((call) => call.path.endsWith("/summary"))).toHaveLength(0);
   });
 });

@@ -10,7 +10,8 @@
     "build": "tsc --noEmit",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "zod": "^3.24.2"

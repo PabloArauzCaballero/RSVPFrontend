@@ -59,7 +59,7 @@ export function Screen({ title, nav, current, onNavigate, children }: PropsWithC
   const t = useT();
   const auth = useAuth();
   return (
-    <ScrollView style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <ScrollView role="main" style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
       {nav?.length || auth.state.status === "authenticated" ? (
         <View role="navigation" aria-label={t("host.nav.label")} style={styles.nav}>
           {(nav ?? []).map((item) => (
@@ -129,7 +129,7 @@ export function ActionButton({ label, onPress, variant = "primary", busy = false
 
 export function Notice({ kind = "info", children }: PropsWithChildren<{ readonly kind?: "info" | "error" | "success" }>): ReactNode {
   const tone = { info: styles.noticeInfo, error: styles.noticeError, success: styles.noticeSuccess }[kind];
-  return <View accessibilityRole={kind === "error" ? "alert" : "summary"} accessibilityLiveRegion="polite" style={[styles.notice, tone]}>{typeof children === "string" ? <Text style={styles.body}>{children}</Text> : children}</View>;
+  return <View role={kind === "error" ? "alert" : "status"} style={[styles.notice, tone]}>{typeof children === "string" ? <Text style={styles.body}>{children}</Text> : children}</View>;
 }
 
 /** Translates an API failure into what the person can do about it. */

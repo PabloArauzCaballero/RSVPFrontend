@@ -54,6 +54,19 @@ const json = (res, status, body, headers = {}) => { res.writeHead(status, { "con
 createServer((req, res) => {
   const url = new URL(req.url ?? "/", `http://localhost:${PORT}`);
   const path = url.pathname;
+  // The browser calls the API directly from another origin (like the gateway in production): without CORS the client
+  // screens baselined an offline error instead of the real state.
+  const origin = req.headers.origin;
+  if (origin && /^http:\/\/localhost:\d+$/.test(origin)) {
+    res.setHeader("access-control-allow-origin", origin);
+    res.setHeader("access-control-allow-credentials", "true");
+    res.setHeader("access-control-allow-headers", "authorization,content-type,idempotency-key,if-match,accept-language,x-correlation-id");
+    res.setHeader("access-control-allow-methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+    res.setHeader("vary", "origin");
+  }
+  if (req.method === "OPTIONS") { res.writeHead(204); return res.end(); }
+  // Gift List through the gateway: a visitor without the link credential gets the same 401 the real service answers.
+  if (/^\/gifts\/celebrations\/[^/]+\/items$/.test(path) && !req.headers.authorization) return json(res, 401, { type: "https://rsvp.example/problems/Unauthorized", title: "A valid credential is required", status: 401, code: "Unauthorized" });
   if (path.startsWith("/img/")) { res.writeHead(200, { "content-type": "image/svg+xml", "cache-control": "public, max-age=3600" }); return res.end(image(Number(path.match(/(\d+)/)?.[1] ?? 1) * 70)); }
   if (path === "/celebrations/public") return json(res, 200, { items: [{ slug: SLUG, updatedAt: "2026-11-01T00:00:00Z", supportedLocales: ["es-BO", "en-US"] }] });
   if (path === `/celebrations/public/${SLUG}`) return json(res, 200, view);
@@ -61,6 +74,7 @@ createServer((req, res) => {
   if (path === "/media/templates/t-classic") return json(res, 200, template);
   if (path === `/media/public/celebrations/${view.celebrationId}/assets`) return json(res, 200, { items: gallery });
   if (path === "/providers" || path === "/providers/") return json(res, 200, search(url.searchParams));
+  if (path === `/rsvp/celebrations/${view.celebrationId}/public-settings`) return json(res, 200, { unregisteredRsvpMode: "AUTO_ACCEPT", publicRegistrationEnabled: true });
   const redirect = path.match(/^\/r\/([0-9a-f-]{36})$/);
   if (redirect) {
     const cid = req.headers["x-correlation-id"] ?? "none";

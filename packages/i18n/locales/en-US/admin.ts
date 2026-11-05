@@ -9,7 +9,11 @@ export const adminEnUS: DeepStrings<typeof adminEsBO> = {
   unavailable: "This module uses the {{service}} API, which is not available yet. Its data will show here once it is published.",
   sample: { title: "Ana & Luis", story: "We met in La Paz and today we celebrate with the people we love.", venue: "Hacienda El Prado", dressCode: "Formal", question: "Is there parking?", answer: "Yes, at the venue.", ceremony: "Ceremony", party: "Party" },
   saved: "Saved.",
-  dashboard: { title: "Overview", eventTypes: "Active event types", templates: "Published templates", drafts: "Draft templates", count: "{{label}}: {{count}}" },
+  dashboard: { title: "Overview", eventTypes: "Active event types", templates: "Published templates", drafts: "Draft templates", count: "{{label}}: {{count}}",
+    platform: "Platform", providersTitle: "Providers and offers", accountsTitle: "Accounts and organizations",
+    statuses: { DRAFT: "Draft", PENDING_VERIFICATION: "Pending verification", VERIFIED: "Verified", SUSPENDED: "Suspended", REJECTED: "Rejected" },
+    listingsPublished: "Published offers", leadsValid: "Valid leads", leadsInvalid: "Discarded leads", leadsRecent: "Valid leads (30 days)", quotes: "Quotes", bookings: "Confirmed bookings",
+    users: "Accounts", usersByRole: "Accounts with role {{role}}", organizations: "Organizations" },
   templates: {
     title: "Templates", new: "New template", edit: "Edit {{name}}", name: "Name", description: "Description", tags: "Event type tags", tagsHelp: "Comma separated, for example: wedding, anniversary.",
     layout: "Layout", layouts: { classic: "Classic", minimal: "Minimal", editorial: "Editorial", festive: "Festive", corporate: "Corporate" },

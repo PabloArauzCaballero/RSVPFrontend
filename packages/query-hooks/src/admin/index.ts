@@ -2,10 +2,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ApiClient } from "@rsvp/api-client";
 
 /**
- * Platform-admin hooks (F14). Endpoints marked EXPECTED are not in the published OpenAPI specs yet
- * (provider-catalog exposes only register/verify/listings; identity only organizations). They follow the
- * conventions of `/celebrations/admin/*` and are the contract the backend lanes must publish. Until then
- * the gateway answers 404/503 and every screen shows its error state; nothing is invented client-side.
+ * Platform-admin hooks (F14). The `/providers/admin/*` routes are published in provider-catalog 2.2.0 and `/identity/admin/*` in
+ * identity 1.1.0 (Kong strips the service prefix). The interfaces below are hand-written copies of those schemas, kept because the
+ * generated paths are service-relative; every call is ADMIN-only (401 without a session, 403 to any other role) and every screen
+ * shows both states. Nothing is invented client-side.
  */
 
 export const adminKeys = {
@@ -19,7 +19,9 @@ export const adminKeys = {
   leads: (params: string) => ["admin", "metrics", "leads", params] as const,
   users: (search: string) => ["admin", "users", search] as const,
   organizations: ["admin", "organizations"] as const,
-  organization: (id: string) => ["admin", "organizations", id] as const
+  organization: (id: string) => ["admin", "organizations", id] as const,
+  providerSummary: ["admin", "summary", "providers"] as const,
+  identitySummary: ["admin", "summary", "identity"] as const
 } as const;
 
 /** Admin data is operational: always re-check quickly. */
@@ -42,7 +44,7 @@ export function useUpsertCategory(client: ApiClient) {
 
 // ---- Geography · EXPECTED GET /providers/admin/geography, PUT /providers/admin/geography/{code}
 export type GeoKind = "COUNTRY" | "REGION" | "CITY";
-export interface GeoEntry { readonly code: string; readonly kind: GeoKind; readonly parentCode: string | null; readonly names: Readonly<Record<string, string>>; readonly active: boolean }
+export interface GeoEntry { readonly code: string; readonly kind: GeoKind; readonly parentCode: string | null; readonly names: Readonly<Record<string, string>>; readonly active: boolean; /** WGS84; required by the server only when a CITY is created. */ readonly latitude?: number; readonly longitude?: number }
 export function useAdminGeography(client: ApiClient) {
   return useQuery({ queryKey: adminKeys.geography, queryFn: () => client.request<Items<GeoEntry>>("/providers/admin/geography"), ...FRESH });
 }
@@ -74,7 +76,7 @@ export function useVerificationAction(client: ApiClient) {
 // ---- Moderation · EXPECTED GET /providers/admin/moderation?status=, POST /providers/admin/moderation/{id}/approve|reject
 export type ModerationKind = "MICROSITE" | "EXTERNAL_GIFT";
 export type ModerationStatus = "PENDING" | "APPROVED" | "REJECTED";
-export interface ModerationItem { readonly id: string; readonly kind: ModerationKind; readonly title: string; readonly url?: string | null; readonly submittedBy: string; readonly submittedAt: string; readonly status: ModerationStatus; readonly reason?: string | null }
+export interface ModerationItem { readonly id: string; readonly providerId?: string; readonly kind: ModerationKind; readonly title: string; readonly url?: string | null; readonly submittedBy: string; readonly submittedAt: string; readonly status: ModerationStatus; readonly reason?: string | null }
 export function useModerationQueue(client: ApiClient, status: ModerationStatus = "PENDING") {
   return useQuery({ queryKey: adminKeys.moderation(status), queryFn: () => client.request<Items<ModerationItem>>(`/providers/admin/moderation?status=${status}`), ...FRESH });
 }
@@ -98,18 +100,29 @@ export function useLeadMetrics(client: ApiClient, { groupBy, from, to, enabled =
 }
 
 // ---- Users · EXPECTED GET /identity/admin/users?query=
+export interface UsersPage extends Items<AdminUser> { readonly page?: number; readonly size?: number; readonly total?: number }
 export interface AdminUser { readonly id: string; readonly email: string; readonly roles: readonly string[]; readonly status: "ACTIVE" | "SUSPENDED"; readonly createdAt: string }
 export function useAdminUsers(client: ApiClient, search: string) {
   const query = search.trim();
-  return useQuery({ queryKey: adminKeys.users(query), queryFn: () => client.request<Items<AdminUser>>(`/identity/admin/users${query ? `?query=${encodeURIComponent(query)}` : ""}`), ...FRESH });
+  return useQuery({ queryKey: adminKeys.users(query), queryFn: () => client.request<UsersPage>(`/identity/admin/users${query ? `?query=${encodeURIComponent(query)}` : ""}`), ...FRESH });
 }
 
 // ---- Organizations · GET /identity/organizations/{id} is PUBLISHED (members and ADMIN); EXPECTED GET /identity/admin/organizations
-export interface OrganizationMember { readonly userId: string; readonly role?: string; readonly [key: string]: unknown }
+export interface OrganizationMember { readonly userId: string; readonly email?: string; readonly role?: string; readonly [key: string]: unknown }
 export interface Organization { readonly id: string; readonly name: string; readonly ownerUserId: string; readonly members: readonly OrganizationMember[] }
 export function useAdminOrganizations(client: ApiClient) {
   return useQuery({ queryKey: adminKeys.organizations, queryFn: () => client.request<Items<Organization>>("/identity/admin/organizations"), ...FRESH, retry: false });
 }
 export function useOrganization(client: ApiClient, id: string) {
   return useQuery({ queryKey: adminKeys.organization(id), queryFn: () => client.request<Organization>(`/identity/organizations/${encodeURIComponent(id)}`), ...FRESH, enabled: Boolean(id), retry: false });
+}
+
+// ---- E1 platform summary · GET /providers/admin/summary (provider-catalog 2.2.0) and GET /identity/admin/summary (identity 1.1.0): two services, two reads, joined on the screen
+export interface ProviderSummary { readonly providersByStatus: Readonly<Record<string, number>>; readonly listingsPublished: number; readonly leads: { readonly valid: number; readonly invalid: number; readonly last30Days: number }; readonly quotes: number; readonly bookingsConfirmed: number }
+export interface IdentitySummary { readonly users: { readonly total: number; readonly byRole: Readonly<Record<string, number>> }; readonly organizations: { readonly total: number } }
+export function useProviderSummary(client: ApiClient) {
+  return useQuery({ queryKey: adminKeys.providerSummary, queryFn: () => client.request<ProviderSummary>("/providers/admin/summary"), ...FRESH, retry: false });
+}
+export function useIdentitySummary(client: ApiClient) {
+  return useQuery({ queryKey: adminKeys.identitySummary, queryFn: () => client.request<IdentitySummary>("/identity/admin/summary"), ...FRESH, retry: false });
 }

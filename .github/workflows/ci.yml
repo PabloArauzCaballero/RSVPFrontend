@@ -18,3 +18,5 @@ jobs:
       - run: yarn lint:code  # ESLint over the whole repo, including rsvp/no-literal-strings (REQ-F06-06)
       - run: yarn workspace @rsvp/contracts check:generated
       - run: yarn turbo run build lint typecheck test --affected
+      # Coverage gate: lines/statements >= 85 % in the packages with logic and both apps (vitest thresholds fail the job below it).
+      - run: yarn test:coverage

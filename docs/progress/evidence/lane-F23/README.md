@@ -8,8 +8,8 @@ Nivel: `TESTED` + Chrome real (app Expo web :8081, login por la pantalla real) c
 | REQ-F23-02 armar desde el catálogo (buscar y añadir) | PASS con el respaldo (el gateway no enruta `/listings`; la UI lo avisa) | `C27-*.png` |
 | REQ-F23-03 externo con fricción | PASS: 409 `PARTNER_CATALOG_FIRST` -> pantalla de fricción -> "agregar de todos modos" -> PROPOSED. Las sugerencias llegaron vacías del backend | `C28-*.png` |
 | REQ-F23-04 estado de cada regalo, aprobar propuesta | PASS | `C29-estado-regalos-*.png` |
-| REQ-F23-05 descubrir proveedores desde el panel | **NO HECHO** | n/a |
-| REQ-F23-06 visibilidad del solicitante configurable | **NO HECHO**: el contrato no tiene ese ajuste; se muestra el nombre que el invitado dio | n/a |
+| REQ-F23-05 descubrir proveedores desde el panel | ~~NO HECHO~~ (obsoleto: hecho el 2026-11-04 con `GET /providers`, ver la sección de cierre más abajo) | n/a |
+| REQ-F23-06 visibilidad del solicitante configurable | ~~NO HECHO~~ (obsoleto: `gift-settings` + `requesterHidden` ya están, ver cierre). Texto original: el contrato no tenía ese ajuste; se muestra el nombre que el invitado dio | n/a |
 
 Switch del modo externo y `partnerPriorityEnabled` en `/regalos/externo` (PUT settings con If-Match, verificado en el backend). 403/404 de un usuario ajeno: aviso sin datos (`C29-no-miembro-1280.png`). Pantallas añadidas al menú del anfitrión (`routes.ts`). Sin iOS/Android, sin axe medido.
 

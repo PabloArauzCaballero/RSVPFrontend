@@ -55,7 +55,8 @@ export const rsvpEnUS: DeepStrings<typeof rsvpEsBO> = {
     restrictedTitle: "This celebration only accepts guests with a personal link",
     restrictedBody: "Ask whoever invited you to send your link. If you already have it, open it from the original message.",
     doneTitle: "Done: your attendance is confirmed", doneBody: "Keep your personal link. It is the only way to change your reply later; we do not store it in your browser.",
-    replayBody: "We had already recorded your reply. If you lost your link, ask the hosts to send you a new one.", linkLabel: "Your personal link"
+    replayBody: "We had already recorded your reply. If you lost your link, ask the hosts to send you a new one.", linkLabel: "Your personal link",
+    emailNotice: "We do not promise a confirmation email: whether you get a notice depends on how the hosts have set theirs up. Your personal link is the only reliable proof of your reply."
   },
   app: { title: "Your invitation", openApp: "Open in the DOne app", openAppHint: "If you have the app installed, open it from here." }
 };

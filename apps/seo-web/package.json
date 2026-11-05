@@ -10,7 +10,8 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "coverage": "vitest run --coverage",
-    "test:visual": "playwright test"
+    "test:visual": "playwright test",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@rsvp/api-client": "workspace:*",

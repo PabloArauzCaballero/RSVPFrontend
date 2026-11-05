@@ -27,7 +27,7 @@ export function currentLocation(pathname: string, params: Readonly<Record<string
 export function Checking(): ReactNode {
   const t = useT();
   return (
-    <View style={authStyles.centered} accessibilityLiveRegion="polite">
+    <View role="main" style={authStyles.centered} accessibilityLiveRegion="polite">
       <ActivityIndicator accessibilityLabel={t("auth.guard.checking")} color={palette.primary} />
       <Text style={{ color: palette.textMuted, fontSize: typography.fontSize.base }}>{t("auth.guard.checking")}</Text>
     </View>
@@ -39,7 +39,7 @@ function Forbidden({ home }: { readonly home: string | null }): ReactNode {
   const auth = useAuth();
   const goTo = useNavigateTo();
   return (
-    <View style={authStyles.centered}>
+    <View role="main" style={authStyles.centered}>
       <View style={{ width: "100%", maxWidth: 420, gap: spacing[4] }}>
         <Text accessibilityRole="header" aria-level={1} style={authStyles.title}>{t("auth.guard.forbiddenTitle")}</Text>
         <Text style={authStyles.intro}>{home ? t("auth.guard.forbiddenBody") : t("auth.guard.noRole")}</Text>

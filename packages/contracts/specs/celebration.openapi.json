@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "RSVP Celebration API",
-    "version": "1.1.0",
-    "description": "Celebration Site Service (lanes 10-15). Behind Kong at /celebrations. Errors are RFC 9457 problems. 1.1.0: optional public host contact in content.hostContact ({email?, phone? E.164, consentPublic: true}); refused without consent (422 HOST_CONTACT_CONSENT_REQUIRED) or channel (INVALID_HOST_CONTACT), null removes it, never translatable. It is public once published (GET /public/{slug}) so guests past the RSVP deadline know whom to write to."
+    "version": "1.2.0",
+    "description": "Celebration Site Service (lanes 10-15). Behind Kong at /celebrations. Errors are RFC 9457 problems. 1.1.0: optional public host contact in content.hostContact ({email?, phone? E.164, consentPublic: true}); refused without consent (422 HOST_CONTACT_CONSENT_REQUIRED) or channel (INVALID_HOST_CONTACT), null removes it, never translatable. It is public once published (GET /public/{slug}) so guests past the RSVP deadline know whom to write to. 1.2.0 (additive): GET /celebrations/admin/summary, ADMIN only, celebrations per status for the platform dashboard."
   },
   "servers": [
     {
@@ -1873,6 +1873,67 @@
           },
           "404": {
             "description": "Not found or not yours (cross-tenant access is always 404, never 403)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/celebrations/admin/summary": {
+      "get": {
+        "operationId": "adminCelebrationSummary",
+        "summary": "Celebration counts per status (ADMIN)",
+        "responses": {
+          "200": {
+            "description": "Counts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "total",
+                    "byStatus"
+                  ],
+                  "properties": {
+                    "total": {
+                      "type": "integer"
+                    },
+                    "byStatus": {
+                      "type": "object",
+                      "properties": {
+                        "DRAFT": {
+                          "type": "integer"
+                        },
+                        "PUBLISHED": {
+                          "type": "integer"
+                        },
+                        "ARCHIVED": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid RS256 bearer token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not an admin",
             "content": {
               "application/problem+json": {
                 "schema": {

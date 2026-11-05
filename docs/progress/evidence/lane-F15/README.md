@@ -10,8 +10,8 @@ El resto de este documento (más abajo) describe la corrida anterior **contra mo
 - Pruebas: `corepack yarn workspace @rsvp/seo-web test` (76; `tests/rsvp-page.test.tsx` 22 con RTL), `@rsvp/query-hooks` (43), `@rsvp/forms` (5), `@rsvp/auth` (71).
 - Navegador real: `node apps/seo-web/scripts/e2e-rsvp.mjs` (next build + next start + Chrome, 360/768/1280, axe sin críticos/serios, sin scroll horizontal, sin errores de consola) → `e2e-result.json`.
 
-## Límite de la evidencia (leer primero)
-Todo se ejecutó contra `packages/testing/src/contract-mock.ts`: un doble **escrito desde el OpenAPI** (guest-rsvp 1.9.0, notification vigente) y las reglas observables de `http-server.ts`. Acredita la capa frontend frente a respuestas con forma de contrato; **no** acredita que los servicios reales respondan así. No se levantó el backend real. No hay iOS ni Android ni dispositivo. Estado del carril: `TESTED` en web/Expo web; **no `DONE`**.
+## Límite de la evidencia de la corrida con mock (histórico; la corrida contra el backend real está arriba)
+Esta sección describe SOLO la primera corrida (2026-11-04). Desde 2026-11-05 la sección «Contra el BACKEND REAL» cubre lo observado en vivo, y lo que allí no figura sigue sin probarse contra servicios reales. La corrida con mock se ejecutó contra `packages/testing/src/contract-mock.ts`: un doble **escrito desde el OpenAPI** (guest-rsvp 1.9.0, notification vigente) y las reglas observables de `http-server.ts`. Acredita la capa frontend frente a respuestas con forma de contrato; **no** acredita que los servicios reales respondan así (en esa corrida no se levantó el backend; eso ya no vale para lo listado arriba). No hay iOS ni Android ni dispositivo. Estado del carril: `TESTED` en web/Expo web; **no `DONE`**.
 
 Enlace único: `${origin}/c/{slug}/rsvp/{token}` (`personalLinkUrl`, `packages/auth/src/deep-links`); `/rsvp/{token}` redirige si trae `?c=slug`; sin slug no se puede resolver (ver BLOCKERS). Slug→celebrationId con `GET /celebrations/public/{slug}` (no `celebrationFor`, eliminado).
 
