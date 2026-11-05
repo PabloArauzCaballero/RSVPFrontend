@@ -35,7 +35,8 @@ jobs:
           HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
-          diff_added() { git diff --unified=0 "$BASE...$HEAD" -- . ':(exclude)docs/**' ':(exclude).github/workflows/pr-gate.yml' ':(exclude).agents/**' ':(exclude)**/*.md' | grep -E '^\+[^+]' || true; }
+          # Only executable code and pipeline definitions: prose (docs, rules, templates) legitimately names the forbidden shortcuts.
+          diff_added() { git diff --unified=0 "$BASE...$HEAD" -- '*.ts' '*.tsx' '*.js' '*.jsx' '*.mjs' '*.cjs' '*.py' '*.java' '*.kt' '*.kts' '*.yml' '*.yaml' 'package.json' ':(exclude).github/workflows/pr-gate.yml' | grep -E '^\+[^+]' || true; }
           added="$(diff_added)"
           bad=0
           check() { # $1 regex, $2 message, $3 optional regex that EXCUSES a line
