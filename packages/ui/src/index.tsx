@@ -92,7 +92,7 @@ export function Checkbox({ label, value, onChange, state = 'default', error }: {
   const disabled = unavailable(state);
   return (
     <View>
-      <Pressable accessibilityRole="checkbox" accessibilityLabel={label} accessibilityState={{ checked: value, disabled }} disabled={disabled} style={[styles.checkboxRow, disabled && styles.buttonDisabled]} onPress={() => onChange?.(!value)}>
+      <Pressable accessibilityRole="checkbox" accessibilityLabel={label} aria-checked={value} accessibilityState={{ checked: value, disabled }} disabled={disabled} style={[styles.checkboxRow, disabled && styles.buttonDisabled]} onPress={() => onChange?.(!value)}>
         <View style={[styles.checkbox, value && styles.selected]}>{value && <View style={{ width: 6, height: 12, marginTop: -2, borderRightWidth: 2.5, borderBottomWidth: 2.5, borderColor: palette.onPrimary, transform: [{ rotate: '45deg' }] }} />}</View>
         <Text style={styles.body}>{label}</Text>
       </Pressable>

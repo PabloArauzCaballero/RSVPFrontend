@@ -3,7 +3,7 @@ import { Text, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
 import { useConfigureLeads, type Destination, type LeadConfig, type Provider } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../platform/providers";
-import { ActionButton, ChoiceGroup, ErrorNotice, Field, Notice, Section, styles } from "../host/ui";
+import { ActionButton, ChoiceGroup, ErrorNotice, Field, Notice, Section, ToggleChip, styles } from "../host/ui";
 import { PortalScreen } from "./frame";
 
 const DESTINATIONS: readonly Destination[] = ["OFFICIAL_SITE", "LANDING", "WHATSAPP", "PHONE", "EMAIL", "INSTAGRAM", "PRODUCT_PAGE"];
@@ -44,7 +44,7 @@ function Destinations({ provider }: { readonly provider: Provider }): ReactNode 
         <View style={styles.row} role="group" aria-label={t("portal.destinations.enabled")}>
           {DESTINATIONS.map((destination) => {
             const on = enabled.includes(destination);
-            return <ActionButton key={destination} variant={on ? "primary" : "secondary"} label={`${on ? "✓ " : ""}${t(`portal.destinations.destination.${destination}`)}`} onPress={() => toggle(destination)} testID={`destination-${destination}`} />;
+            return <ToggleChip key={destination} on={on} label={t(`portal.destinations.destination.${destination}`)} onPress={() => toggle(destination)} testID={`destination-${destination}`} />;
           })}
         </View>
       </Section>

@@ -100,7 +100,7 @@ export function AuthLayout({ title, intro, children }: PropsWithChildren<{ reado
           <View />
         </View>
       ) : null}
-      <ScrollView style={[authStyles.panel, wide && authStyles.panelWide]} contentContainerStyle={[authStyles.panelContent, wide && authStyles.panelContentWide]} keyboardShouldPersistTaps="handled">
+      <ScrollView role="main" tabIndex={0} style={[authStyles.panel, wide && authStyles.panelWide]} contentContainerStyle={[authStyles.panelContent, wide && authStyles.panelContentWide]} keyboardShouldPersistTaps="handled">
         {wide ? null : (
           <View style={authStyles.cover}>
             {ghost(220, -50, -60)}

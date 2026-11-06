@@ -22,10 +22,11 @@ function LegendItem({ testID, label, value, swatch }: { readonly testID: string;
 }
 
 /** The answer so far as one stacked bar (the kit's progress pattern): confirmed, declined, and what is still open. */
-function ResponseBar({ confirmed, declined, total, label }: { readonly confirmed: number; readonly declined: number; readonly total: number; readonly label: string }): ReactNode {
+/** Decorative: the headline and the legend already say every number, so assistive technology skips the bar. */
+function ResponseBar({ confirmed, declined, total }: { readonly confirmed: number; readonly declined: number; readonly total: number }): ReactNode {
   const share = (n: number): `${number}%` => `${total ? (n / total) * 100 : 0}%`;
   return (
-    <View accessibilityRole="progressbar" accessibilityLabel={label} accessibilityValue={{ min: 0, max: total, now: confirmed + declined }} style={{ height: 14, borderRadius: radius.full, backgroundColor: brand.bruma, overflow: "hidden", flexDirection: "row" }}>
+    <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ height: 14, borderRadius: radius.full, backgroundColor: brand.bruma, overflow: "hidden", flexDirection: "row" }}>
       <View style={{ width: share(confirmed), backgroundColor: brand.azul }} />
       <View style={{ width: share(declined), backgroundColor: brand.noche }} />
     </View>
@@ -58,7 +59,7 @@ function SummaryBody({ celebration, onNavigate }: { readonly celebration: Celebr
       {data.total === 0 ? <Notice>{t("guests.summary.empty")}</Notice> : null}
       <View style={[styles.card, { gap: spacing[4] }]} accessibilityRole="summary">
         <Text accessibilityRole="header" style={[styles.title, { fontSize: 28, lineHeight: 32 }]}>{t("guests.summary.headline", { confirmed: data.confirmed, total: data.total })}</Text>
-        <ResponseBar confirmed={data.confirmed} declined={data.declined} total={data.total} label={t("guests.summary.barLabel")} />
+        <ResponseBar confirmed={data.confirmed} declined={data.declined} total={data.total} />
         <View style={{ flexDirection: "row", flexWrap: "wrap", columnGap: spacing[6], rowGap: spacing[2] }}>
           <LegendItem testID="count-confirmed" label={t("guests.summary.confirmed")} value={data.confirmed} swatch={brand.azul} />
           <LegendItem testID="count-pending" label={t("guests.summary.pending")} value={data.pending} swatch={brand.niebla} />

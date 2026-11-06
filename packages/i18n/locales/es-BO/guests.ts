@@ -40,7 +40,7 @@ export const guestsEsBO = {
     }
   },
   summary: {
-    title: "Resumen de invitados", headline: "{{confirmed}} de {{total}} confirmaron", barLabel: "Respuestas recibidas", confirmed: "Confirmados", pending: "Sin responder", declined: "No asisten", companions: "Acompañantes", total: "Invitados",
+    title: "Resumen de invitados", headline: "{{confirmed}} de {{total}} confirmaron", confirmed: "Confirmados", pending: "Sin responder", declined: "No asisten", companions: "Acompañantes", total: "Invitados",
     daysToDeadline: "{{count}} días para cerrar las respuestas", deadlineToday: "Las respuestas cierran hoy", deadlinePassed: "Las respuestas ya cerraron", noDeadline: "Sin fecha límite de respuesta",
     openRequests: "{{count}} solicitudes de acompañantes por revisar", noRequests: "Sin solicitudes de acompañantes pendientes", reviewRequests: "Revisar solicitudes", viewReport: "Ver reporte", viewGuests: "Ver invitados", empty: "Cuando agregues invitados verás aquí cuántos confirmaron."
   },

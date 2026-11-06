@@ -1,3 +1,4 @@
+import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import { ANON_SCREENS, WIDTHS } from "./screens";
 
@@ -10,11 +11,17 @@ for (const screen of ANON_SCREENS) {
       await page.emulateMedia({ colorScheme: "light", reducedMotion: "reduce" });
       await page.goto(screen.path, { waitUntil: "networkidle" });
       await page.evaluate(() => document.fonts.ready);
-      await expect(page.locator("[role=main], [role=alert], [role=status]").first()).toBeVisible();
-      // Indeterminate spinners only: the response bar is a progressbar with a value. Failed requests retry with backoff before showing their error state.
+      // Wait out indeterminate spinners (a progressbar with no value). Failed requests retry with backoff before they show their error state.
       await expect(page.locator("[role=progressbar]:not([aria-valuenow])")).toHaveCount(0, { timeout: 30_000 });
+      await expect(page.locator("[role=main], [role=alert], [role=status]").first()).toBeVisible();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
       await expect(page).toHaveScreenshot(`${screen.name}-${width}.png`);
+      // Accessibility on the phone and the desktop layouts: no critical or serious WCAG 2.1 A/AA violations.
+      if (width !== 768) {
+        const { violations } = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+        const blocking = violations.filter((violation) => violation.impact === "critical" || violation.impact === "serious");
+        expect(blocking.map((violation) => `${violation.id} (${violation.nodes.length}): ${violation.nodes[0]?.html.slice(0, 120)}`)).toEqual([]);
+      }
     });
   }
 }

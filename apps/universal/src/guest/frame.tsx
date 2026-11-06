@@ -24,7 +24,7 @@ const s = StyleSheet.create({
 
 export function GuestFrame({ kicker, children }: PropsWithChildren<{ readonly kicker?: string }>): ReactNode {
   return (
-    <ScrollView role="main" style={s.page} contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+    <ScrollView role="main" tabIndex={0} style={s.page} contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
       <View style={s.cover}>
         <View pointerEvents="none" style={{ position: "absolute", right: -40, bottom: -70, opacity: 0.12 }}><Logo variant="mark" tone="white" height={260} decorative /></View>
         <View style={s.coverInner}>

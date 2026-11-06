@@ -225,7 +225,7 @@ async function f28() {
       assert.match(totals, /Impresiones/);
       record("F28", "REQ-F28-06b", `metricas reales del periodo (GET /metrics): ${totals.replace(/\n+/g, " | ").slice(0, 120)}`);
       await go(page, "/portal/destinos");
-      const enabledNow = page.locator('[data-testid^="destination-"]', { hasText: "✓" });
+      const enabledNow = page.locator('[data-testid^="destination-"][aria-checked="true"]');
       while (await enabledNow.count()) await enabledNow.first().click();
       await page.getByTestId("destinations-save").click();
       await page.getByText("Elige al menos un destino.").waitFor();

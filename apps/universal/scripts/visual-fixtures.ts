@@ -8,12 +8,15 @@ type Reply = { readonly status: number; readonly headers?: Readonly<Record<strin
 type Request = { readonly method: string; readonly path: string };
 const ok = (body: unknown): Reply => ({ status: 200, headers: { "content-type": "application/json" }, body });
 const P = "p-1";
+/** Listing ids are UUIDs in the contract (partner links are built from them and reject anything else). */
+const L1 = "11111111-1111-4111-8111-111111111111";
+const L2 = "22222222-2222-4222-8222-222222222222";
 const NOW = "2026-11-04T15:00:00.000Z";
 
 const provider = { id: P, slug: "foto-altiplano", name: "Foto Altiplano", status: "VERIFIED", plan: "FREE", currency: "BOB", timeZone: "America/La_Paz", version: 3, leadConfig: { mode: "REDIRECT" } };
 const listings = [
-  { id: "l-1", providerId: P, type: "SERVICE", category: "FOTOGRAFIA", city: "La Paz", title: "Cobertura de boda", published: true, priceFromMinor: 450000 },
-  { id: "l-2", providerId: P, type: "PRODUCT", category: "FOTOGRAFIA", city: "La Paz", title: "Álbum de 40 páginas", published: false, priceFromMinor: 90000 }
+  { id: L1, providerId: P, type: "SERVICE", category: "FOTOGRAFIA", city: "La Paz", title: "Cobertura de boda", published: true, priceFromMinor: 450000 },
+  { id: L2, providerId: P, type: "PRODUCT", category: "FOTOGRAFIA", city: "La Paz", title: "Álbum de 40 páginas", published: false, priceFromMinor: 90000 }
 ];
 const templates = [
   { id: "t-classic", name: "Clásico marfil", status: "PUBLISHED", version: 1, publishedAt: NOW, eventTypeTags: ["wedding"], layout: "classic", theme: { palette: { canvas: "#FFFBF4", surface: "#FFFFFF", text: "#302C28", accent: "#865E36", muted: "#6F665D" }, typography: { heading: "Georgia, serif", body: "Arial, sans-serif" }, sectionStyle: "bands" }, sectionOrder: ["story", "schedule", "venues", "faq", "rsvp"] },
@@ -21,14 +24,14 @@ const templates = [
   { id: "t-draft", name: "Festivo (borrador)", status: "DRAFT", version: 1, publishedAt: null, eventTypeTags: ["quinceanera"], layout: "festive", theme: { palette: { canvas: "#FFF4F8", surface: "#FFFFFF", text: "#3A1730", accent: "#C2185B", muted: "#7A5A6E" }, typography: { heading: "Georgia, serif", body: "Arial, sans-serif" }, sectionStyle: "cards" }, sectionOrder: ["story", "rsvp"] }
 ];
 const gifts = [
-  { id: "g-1", listId: "gl-1", celebrationId: MOCK_CELEBRATION_ID, title: "Juego de copas", description: null, price: { amountMinor: 18000, currency: "BOB" }, source: "CATALOGED", status: "AVAILABLE", version: 1, productListingId: "l-2", providerId: P, externalUrl: null, createdAt: NOW },
+  { id: "g-1", listId: "gl-1", celebrationId: MOCK_CELEBRATION_ID, title: "Juego de copas", description: null, price: { amountMinor: 18000, currency: "BOB" }, source: "CATALOGED", status: "AVAILABLE", version: 1, productListingId: L2, providerId: P, externalUrl: null, createdAt: NOW },
   { id: "g-2", listId: "gl-1", celebrationId: MOCK_CELEBRATION_ID, title: "Licuadora", description: "Cualquier marca", price: { amountMinor: 35000, currency: "BOB" }, source: "EXTERNAL", status: "COMMITTED", version: 2, productListingId: null, providerId: null, externalUrl: "https://example.com/licuadora", createdAt: NOW },
-  { id: "g-3", listId: "gl-1", celebrationId: MOCK_CELEBRATION_ID, title: "Torta de bodas", description: null, price: { amountMinor: 60000, currency: "BOB" }, source: "CATALOGED", status: "PENDING_REVIEW", version: 1, productListingId: "l-2", providerId: P, externalUrl: null, createdAt: NOW }
+  { id: "g-3", listId: "gl-1", celebrationId: MOCK_CELEBRATION_ID, title: "Torta de bodas", description: null, price: { amountMinor: 60000, currency: "BOB" }, source: "CATALOGED", status: "PENDING_REVIEW", version: 1, productListingId: L2, providerId: P, externalUrl: null, createdAt: NOW }
 ];
 const reservations = [
   { id: "r-1", itemId: "g-3", celebrationId: MOCK_CELEBRATION_ID, guestId: "x", guestDisplayName: "Marta Quispe", message: "¡Con cariño!", status: "PENDING_REVIEW", requestedAt: NOW, resolvedAt: null, resolvedBy: null }
 ];
-const card = { listingId: "l-1", providerSlug: "foto-altiplano", name: "Cobertura de boda", category: "FOTOGRAFIA", city: "La Paz", department: "La Paz", verified: true, providerId: P, providerName: "Foto Altiplano", destinations: [], summary: "Dos fotógrafos, entrega en 15 días.", priceFrom: { amountMinor: 450000, currency: "BOB" } };
+const card = { listingId: L1, providerSlug: "foto-altiplano", name: "Cobertura de boda", category: "FOTOGRAFIA", city: "La Paz", department: "La Paz", verified: true, providerId: P, providerName: "Foto Altiplano", destinations: [], summary: "Dos fotógrafos, entrega en 15 días.", priceFrom: { amountMinor: 450000, currency: "BOB" } };
 const days = Array.from({ length: 30 }, (_, i) => ({ date: `2026-11-${String(i + 1).padStart(2, "0")}`, weekday: (i + 6) % 7, available: i % 7 !== 0, remaining: 2 }));
 
 const routes: readonly (readonly [RegExp, (request: Request) => Reply])[] = [
@@ -36,11 +39,11 @@ const routes: readonly (readonly [RegExp, (request: Request) => Reply])[] = [
   [/^\/providers\/mine$/, () => ok({ items: [provider] })],
   [new RegExp(`^/providers/${P}$`), () => ok(provider)],
   [new RegExp(`^/providers/${P}/listings`), () => ok({ items: listings })],
-  [new RegExp(`^/providers/${P}/leads`), () => ok({ total: 2, items: [{ id: "ld-1", listingId: "l-1", kind: "FORM", valid: true, billable: true, occurredAt: NOW }, { id: "ld-2", listingId: "l-1", kind: "REDIRECT", destination: "WHATSAPP", valid: false, invalidReason: "dup", occurredAt: NOW }] })],
+  [new RegExp(`^/providers/${P}/leads`), () => ok({ total: 2, items: [{ id: "ld-1", listingId: L1, kind: "FORM", valid: true, billable: true, occurredAt: NOW }, { id: "ld-2", listingId: L1, kind: "REDIRECT", destination: "WHATSAPP", valid: false, invalidReason: "dup", occurredAt: NOW }] })],
   [new RegExp(`^/providers/${P}/metrics`), () => ok({ providerId: P, from: "2026-10-07", to: "2026-11-06", totals: { impressions: 1240, clicks: 96, validLeads: 14, invalidLeads: 2, ctr: 0.077 }, rows: [] })],
   [new RegExp(`^/providers/${P}/availability`), () => ok({ providerId: P, timeZone: "America/La_Paz", capacityPerDay: 2, rules: [{ weekdays: [1, 2, 3, 4, 5], start: "09:00", end: "18:00" }], blackouts: [], version: 1 })],
   [new RegExp(`^/providers/${P}/calendar`), () => ok({ providerId: P, timeZone: "America/La_Paz", month: "2026-11", days })],
-  [new RegExp(`^/providers/${P}/bookings`), () => ok({ items: [{ id: "b-1", providerId: P, requesterId: "u-9", date: "2026-11-21", status: "PENDING", expiresAt: "2026-11-10T00:00:00Z", listingId: "l-1" }] })],
+  [new RegExp(`^/providers/${P}/bookings`), () => ok({ items: [{ id: "b-1", providerId: P, requesterId: "u-9", date: "2026-11-21", status: "PENDING", expiresAt: "2026-11-10T00:00:00Z", listingId: L1 }] })],
   [new RegExp(`^/providers/${P}/microsite`), () => ok({ providerId: P, version: 1, descriptions: { "es-BO": "Fotografía de bodas en La Paz." }, gallery: [], hours: { weekly: [{ weekdays: [1, 2, 3, 4, 5], opens: "09:00", closes: "18:00" }] }, social: {}, address: { line: "Av. Arce 2000", city: "La Paz" } })],
   [new RegExp(`^/providers/${P}/documents`), () => ok({ items: [{ id: "d-1", providerId: P, kind: "IDENTITY", fileName: "ci.pdf", contentType: "application/pdf", sizeBytes: 204800, status: "UPLOADED", createdAt: NOW, uploadedAt: NOW }] })],
   [/^\/providers(\?.*)?$/, () => ok({ items: [card], total: 1, page: 1, pageSize: 6 })],

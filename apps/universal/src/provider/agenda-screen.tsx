@@ -5,7 +5,7 @@ import { ApiError } from "@rsvp/api-client";
 import { formatCelebrationDate } from "@rsvp/i18n";
 import { useAvailability, useDecideBooking, useProviderBookings, useSetAvailability, type Blackout, type Provider } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../platform/providers";
-import { ActionButton, ErrorNotice, Field, Loading, Notice, Section, styles } from "../host/ui";
+import { ActionButton, ErrorNotice, Field, Loading, Notice, Section, ToggleChip, styles } from "../host/ui";
 import { PortalScreen } from "./frame";
 
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -74,7 +74,7 @@ function Agenda({ provider }: { readonly provider: Provider }): ReactNode {
       <Section title={t("portal.agenda.title")}>
         <Field label={t("portal.agenda.capacity")} value={capacity} onChange={setCapacity} keyboardType="number-pad" testID="agenda-capacity" />
         <Text style={styles.label}>{t("portal.agenda.weekdays")}</Text>
-        <View style={styles.row}>{[0, 1, 2, 3, 4, 5, 6].map((day) => <ActionButton key={day} variant={days.includes(day) ? "primary" : "secondary"} label={`${days.includes(day) ? "✓ " : ""}${labelOf(day)}`} onPress={() => setDays((current) => current.includes(day) ? current.filter((item) => item !== day) : [...current, day])} testID={`weekday-${day}`} />)}</View>
+        <View style={styles.row}>{[0, 1, 2, 3, 4, 5, 6].map((day) => <ToggleChip key={day} on={days.includes(day)} label={labelOf(day)} onPress={() => setDays((current) => current.includes(day) ? current.filter((item) => item !== day) : [...current, day])} testID={`weekday-${day}`} />)}</View>
         <View style={styles.row}><Field label={t("portal.agenda.start")} value={start} onChange={setStart} testID="agenda-start" /><Field label={t("portal.agenda.end")} value={end} onChange={setEnd} testID="agenda-end" /></View>
         <Text accessibilityRole="header" style={styles.subtitle}>{t("portal.agenda.blackouts")}</Text>
         {blackouts.map((item, index) => (

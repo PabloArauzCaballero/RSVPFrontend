@@ -195,14 +195,14 @@ export function Screen({ title, nav, current, onNavigate, children }: PropsWithC
             <Text accessibilityRole="header" aria-level={1} style={s.title}>{title}</Text>
           </View>
         </View>
-        <ScrollView role="main" style={s.scroll} contentContainerStyle={[s.content, s.contentWide]} keyboardShouldPersistTaps="handled">{children}</ScrollView>
+        <ScrollView role="main" tabIndex={0} style={s.scroll} contentContainerStyle={[s.content, s.contentWide]} keyboardShouldPersistTaps="handled">{children}</ScrollView>
       </View>
     );
     if (items.length === 0) return <View style={s.root}><BareFrame>{main}</BareFrame></View>;
     return <View style={[s.root, s.rootWide]}><Sidebar nav={items} current={current} onNavigate={onNavigate} />{main}</View>;
   }
   const body = (
-    <ScrollView role="main" style={s.scroll} contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+    <ScrollView role="main" tabIndex={0} style={s.scroll} contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
       <View style={s.mHeader}>
         <Text accessibilityRole="header" aria-level={1} style={s.mTitle}>{title}</Text>
       </View>

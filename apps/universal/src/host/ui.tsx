@@ -107,6 +107,16 @@ export function ChoiceGroup<TValue extends string>({ label, choices, value, onCh
   );
 }
 
+/** An on/off option in a group (destinations, weekdays). On is the filled outline, a drawn tick and a heavier label: never colour alone. */
+export function ToggleChip({ label, on, onPress, testID }: { readonly label: string; readonly on: boolean; readonly onPress: () => void; readonly testID?: string }): ReactNode {
+  return (
+    <Pressable role="checkbox" aria-checked={on} accessibilityLabel={label} onPress={onPress} {...(testID ? { testID } : {})} style={[styles.choice, { flexDirection: "row", alignItems: "center", gap: spacing[2] }, on && styles.choiceSelected]}>
+      {on ? <View style={{ width: 5, height: 10, marginTop: -2, borderRightWidth: 2, borderBottomWidth: 2, borderColor: palette.primary, transform: [{ rotate: "45deg" }] }} /> : null}
+      <Text style={[styles.body, on && { fontWeight: "700" }]}>{label}</Text>
+    </Pressable>
+  );
+}
+
 /** Host and admin actions are the shared `@rsvp/ui` Button; only the busy/disabled vocabulary is adapted here. */
 export function ActionButton({ label, onPress, variant = "primary", busy = false, disabled = false, testID }: { readonly label: string; readonly onPress: () => void; readonly variant?: "primary" | "secondary" | "danger"; readonly busy?: boolean; readonly disabled?: boolean; readonly testID?: string }): ReactNode {
   return <Button accessibilityLabel={label} variant={variant} state={busy ? "loading" : disabled ? "disabled" : "default"} onPress={onPress} testID={testID}>{label}</Button>;
