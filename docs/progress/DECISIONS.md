@@ -27,3 +27,12 @@
 - **Sesión web en memoria** hasta que Identity emita cookie httpOnly; recargar la página cierra la sesión.
 - **Regla `no-literal-strings` habilitada**, con una lista temporal `LEGACY_LITERAL_FILES` (ui, ui-web, components/rsvp) fuera de la regla.
 - **Lighthouse CI** usa `configPath` con `.lighthouserc.json` (el `budgetPath` anterior no aplicaba el umbral) y mide 4 rutas.
+
+## Rediseño con el DOne Brand Kit v3 · 2026-11-06
+- **Marcos, no pantallas sueltas.** Las pantallas autenticadas pasan por un único `Screen` (`apps/universal/src/host/shell.tsx`): menú lateral noche con secciones (≥ 960 px) o barra superior + pestañas + «Más» (móvil). Invitado: `GuestFrame`; ingreso: `AuthLayout`. Cambiar el marco cambia todas las pantallas a la vez. Reglas y prohibiciones en `DESIGN.md`.
+- **`Logo` es el SVG real** (`packages/ui/src/logo*.tsx`); nativo usa `react-native-svg`. Prohibido texto o glifos como logo o icono.
+- **Tipografía nativa empaquetada** (`expo-font` + `@expo-google-fonts/plus-jakarta-sans`). React Native elige archivo por familia, no por `fontWeight`: `src/platform/fonts.native.ts` asigna la familia según el peso del estilo una sola vez, para que ninguna pantalla nombre una familia.
+- **Token `fieldBorder`** (3:1, WCAG 1.4.11) para contornos de campos; `border` queda para divisores.
+- **Causa raíz de campos sin estilo:** `Input` dejaba que un `style` recibido (p. ej. de `Field`) pisara todo su estilo base. Ahora lo combina.
+- **Compuerta visual de la app Expo** (`apps/universal/e2e`, `yarn workspace @rsvp/universal test:visual`): 51 rutas × 390/768/1440 px contra el servidor de contrato (`scripts/visual-mock.ts` + `visual-fixtures.ts`). Antes no existía ninguna prueba visual de host, admin, portal ni invitado. Al agregar una pantalla, se agrega a `e2e/screens.ts`.
+- **Área segura:** la aplica solo `SafeFrame` en la raíz (PR #7); el marco nuevo no suma insets.
