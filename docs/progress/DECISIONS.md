@@ -36,3 +36,11 @@
 - **Causa raíz de campos sin estilo:** `Input` dejaba que un `style` recibido (p. ej. de `Field`) pisara todo su estilo base. Ahora lo combina.
 - **Compuerta visual de la app Expo** (`apps/universal/e2e`, `yarn workspace @rsvp/universal test:visual`): 51 rutas × 390/768/1440 px contra el servidor de contrato (`scripts/visual-mock.ts` + `visual-fixtures.ts`). Antes no existía ninguna prueba visual de host, admin, portal ni invitado. Al agregar una pantalla, se agrega a `e2e/screens.ts`.
 - **Área segura:** la aplica solo `SafeFrame` en la raíz (PR #7); el marco nuevo no suma insets.
+
+## Botones, errores y CRUD por pantalla · 2026-11-06
+- **Solo se ofrece lo que el backend soporta.** Cada botón de CRUD se contrastó con los contratos OpenAPI: si hay operación y faltaba el botón, se creó; si no hay operación (editar/borrar regalo, oferta, grupo, usuario…), no hay botón y queda como brecha de backend en `docs/progress/evidence/botones-crud-2026-11-06.md`. No se simula lo que el servidor no hace.
+- **Un solo módulo contra el doble envío** (`apps/universal/src/platform/single-flight.ts`): `isPending` cambia un render tarde, así que un doble clic llega dos veces al manejador. Tres guardas con nombre propio: `useSingleFlight` (callback con `release`), `useSingleFlightGate` (`begin`/`end`) y `useSingleMutation` (envuelve una mutación). Se rechazó bloquear dentro de `ActionButton`: no puede saber si una pulsación inicia una escritura y rompía 19 pruebas de pantallas con pasos intermedios.
+- **Errores por código, no por estado.** `errorMessage`/`ErrorNotice` distinguen 429 (con `Retry-After`), 5xx, red caída y los 409 por `problem.code` (`SLUG_TAKEN`, `CELEBRATION_ARCHIVED`, `INVALID_TRANSITION`…): un 409 ya no significa siempre «alguien guardó cambios».
+- **Límites en cliente iguales o más estrictos que el servidor**, porque el backend acepta, por ejemplo, un título de 20 000 caracteres.
+- **El refresh de sesión sigue corriendo en rutas de invitado**: con cookie httpOnly no se sabe si hay sesión, y omitirlo dejaría sin sesión a un anfitrión que abre un enlace de invitado. El 401 anónimo en consola es esperado.
+- **Plurales:** el i18n no tiene plurales; los textos con contador se redactan sin depender del número («Acompañantes permitidos: N»).
