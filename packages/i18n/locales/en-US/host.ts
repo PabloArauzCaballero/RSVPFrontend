@@ -15,6 +15,7 @@ export const hostEnUS: DeepStrings<typeof hostEsBO> = {
     noCelebration: "Choose a celebration to continue.",
     chooseCelebration: "Choose a celebration"
   },
+  navGroups: { guests: "Guests", gifts: "Gifts", celebration: "My celebration", account: "Account" },
   nav: { label: "Dashboard sections", celebrations: "My celebrations", editor: "Content", gallery: "Gallery", translations: "Translations", templates: "Templates", preview: "Preview", publish: "Publish", settings: "Settings", modes: "Control modes" },
   picker: { title: "My celebrations", empty: "You have no celebrations yet. Create your first one in three steps.", create: "Create a celebration", open: "Open {{title}}", untitled: "Untitled", status: { DRAFT: "Draft", PUBLISHED: "Published", ARCHIVED: "Archived" } },
   onboarding: {

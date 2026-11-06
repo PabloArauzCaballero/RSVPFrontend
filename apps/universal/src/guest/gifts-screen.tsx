@@ -1,11 +1,11 @@
 import { useMemo, useRef, useState, type ReactNode } from "react";
-import { Linking, ScrollView, Text, View } from "react-native";
+import { Linking, Text, View } from "react-native";
 import { ApiError } from "@rsvp/api-client";
 import type { PublicCelebrationView } from "@rsvp/celebration-theme";
 import { spacing } from "@rsvp/design-tokens";
 import { formatMinor } from "@rsvp/i18n";
 import { catalogedFirst, guestVisible, isGiftTaken, newIdempotencyKey, useCelebrationBySlug, useGiftList, useReserveGiftItem, type GiftItem, type GiftReservation } from "@rsvp/query-hooks";
-import { LanguageSwitch } from "../auth/auth-ui";
+import { GuestFrame } from "./frame";
 import { ActionButton, ConfirmDialog, ErrorNotice, Field, Loading, Notice, styles } from "../host/ui";
 import { partnerRedirectUrl } from "../platform/partner-link";
 import { useApiClient, useLocale, useT } from "../platform/providers";
@@ -17,7 +17,7 @@ import { useApiClient, useLocale, useT } from "../platform/providers";
 type Outcome = { readonly kind: "reserved"; readonly item: GiftItem; readonly status: GiftReservation["status"] } | { readonly kind: "taken"; readonly item: GiftItem };
 
 function Frame({ children }: { readonly children: ReactNode }): ReactNode {
-  return <ScrollView role="main" style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">{children}<LanguageSwitch /></ScrollView>;
+  return <GuestFrame>{children}</GuestFrame>;
 }
 
 function blockerFor(error: unknown, t: ReturnType<typeof useT>): { title: string; body: string } | null {

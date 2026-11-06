@@ -1,12 +1,36 @@
 import type { ReactNode } from "react";
 import { Text, View } from "react-native";
+import { brand, colors, radius } from "@rsvp/design-tokens";
 import { spacing } from "@rsvp/design-tokens";
 import { countdownTo, useGuestSummary, type Celebration } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
-import { ActionButton, Loading, Notice, Section, styles } from "../ui";
-import { CountTile, FreshnessLine, RetryNotice } from "./parts";
+import { ActionButton, Loading, Notice, styles } from "../ui";
+import { FreshnessLine, RetryNotice } from "./parts";
+
+const palette = colors.light;
+
+/** One legend entry: a swatch, the word and the number. The swatch never carries the meaning alone. */
+function LegendItem({ testID, label, value, swatch }: { readonly testID: string; readonly label: string; readonly value: number; readonly swatch: string }): ReactNode {
+  return (
+    <View testID={testID} accessible accessibilityLabel={`${label}: ${value}`} style={{ flexDirection: "row", alignItems: "center", gap: spacing[2] }}>
+      <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: swatch }} />
+      <Text style={[styles.body, { fontVariant: ["tabular-nums"] }]}><Text style={{ fontWeight: "800" }}>{value}</Text> {label}</Text>
+    </View>
+  );
+}
+
+/** The answer so far as one stacked bar (the kit's progress pattern): confirmed, declined, and what is still open. */
+function ResponseBar({ confirmed, declined, total, label }: { readonly confirmed: number; readonly declined: number; readonly total: number; readonly label: string }): ReactNode {
+  const share = (n: number): `${number}%` => `${total ? (n / total) * 100 : 0}%`;
+  return (
+    <View accessibilityRole="progressbar" accessibilityLabel={label} accessibilityValue={{ min: 0, max: total, now: confirmed + declined }} style={{ height: 14, borderRadius: radius.full, backgroundColor: brand.bruma, overflow: "hidden", flexDirection: "row" }}>
+      <View style={{ width: share(confirmed), backgroundColor: brand.azul }} />
+      <View style={{ width: share(declined), backgroundColor: brand.noche }} />
+    </View>
+  );
+}
 
 /** C6 · Panel cover: the backend's numbers as they are (no client-side recount) and how fresh they are (REQ-F17-01/04/06). */
 
@@ -32,14 +56,18 @@ function SummaryBody({ celebration, onNavigate }: { readonly celebration: Celebr
   return (
     <View style={{ gap: spacing[4] }}>
       {data.total === 0 ? <Notice>{t("guests.summary.empty")}</Notice> : null}
-      <View style={styles.row} accessibilityRole="summary">
-        <CountTile testID="count-confirmed" label={t("guests.summary.confirmed")} value={data.confirmed} />
-        <CountTile testID="count-pending" label={t("guests.summary.pending")} value={data.pending} />
-        <CountTile testID="count-declined" label={t("guests.summary.declined")} value={data.declined} />
-        <CountTile testID="count-companions" label={t("guests.summary.companions")} value={data.companions} />
-        <CountTile testID="count-total" label={t("guests.summary.total")} value={data.total} />
+      <View style={[styles.card, { gap: spacing[4] }]} accessibilityRole="summary">
+        <Text accessibilityRole="header" style={[styles.title, { fontSize: 28, lineHeight: 32 }]}>{t("guests.summary.headline", { confirmed: data.confirmed, total: data.total })}</Text>
+        <ResponseBar confirmed={data.confirmed} declined={data.declined} total={data.total} label={t("guests.summary.barLabel")} />
+        <View style={{ flexDirection: "row", flexWrap: "wrap", columnGap: spacing[6], rowGap: spacing[2] }}>
+          <LegendItem testID="count-confirmed" label={t("guests.summary.confirmed")} value={data.confirmed} swatch={brand.azul} />
+          <LegendItem testID="count-pending" label={t("guests.summary.pending")} value={data.pending} swatch={brand.niebla} />
+          <LegendItem testID="count-declined" label={t("guests.summary.declined")} value={data.declined} swatch={brand.noche} />
+          <LegendItem testID="count-companions" label={t("guests.summary.companions")} value={data.companions} swatch={brand.ambar} />
+          <LegendItem testID="count-total" label={t("guests.summary.total")} value={data.total} swatch={palette.border} />
+        </View>
       </View>
-      <Section title={t("guests.summary.title")}>
+      <View style={styles.card}>
         <Text style={styles.body}>{deadlineLine(celebration, t, Date.now())}</Text>
         <Text testID="open-requests" style={styles.body}>{open ? t("guests.summary.openRequests", { count: open }) : t("guests.summary.noRequests")}</Text>
         <View style={styles.row}>
@@ -48,7 +76,7 @@ function SummaryBody({ celebration, onNavigate }: { readonly celebration: Celebr
           <ActionButton variant="secondary" label={t("guests.summary.viewReport")} onPress={go(HOST_ROUTES.report)} />
         </View>
         <FreshnessLine freshness={data.freshness} timeZone={celebration.timeZone} onRefresh={() => { void summary.refetch(); }} />
-      </Section>
+      </View>
     </View>
   );
 }

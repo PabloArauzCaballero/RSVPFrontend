@@ -1,5 +1,5 @@
 export const esBO = {
-  common: { loading: "Cargando…", retry: "Reintentar", cancel: "Cancelar", save: "Guardar", signOut: "Cerrar sesión", empty: "No hay resultados." },
+  common: { loading: "Cargando…", retry: "Reintentar", cancel: "Cancelar", save: "Guardar", signOut: "Cerrar sesión", more: "Más", close: "Cerrar", empty: "No hay resultados." },
   auth: {
     email: "Correo electrónico", password: "Contraseña", signIn: "Iniciar sesión", register: "Crear cuenta", forgotPassword: "¿Olvidaste tu contraseña?",
     signInTitle: "Entra a tu cuenta", signInIntro: "Organiza tu celebración o gestiona tus servicios para eventos.",
@@ -9,7 +9,7 @@ export const esBO = {
     signingIn: "Entrando…", creating: "Creando cuenta…",
     backToSignIn: "Volver a iniciar sesión", noAccount: "¿Aún no tienes cuenta?", haveAccount: "¿Ya tienes una cuenta?",
     role: "Quiero usar DOne como", roleHost: "Anfitrión", roleHostHint: "Organizo mi propia celebración", rolePlanner: "Organizador de eventos", rolePlannerHint: "Gestiono celebraciones de otras personas", roleProvider: "Proveedor", roleProviderHint: "Ofrezco servicios para celebraciones",
-    passwordHint: "Al menos 12 caracteres.", showPassword: "Mostrar contraseña", hidePassword: "Ocultar contraseña", brandPitch: "Invitas hoy. Mañana sabes quién viene.",
+    passwordHint: "Al menos 12 caracteres.", showPassword: "Mostrar contraseña", hidePassword: "Ocultar contraseña", brandPitch: "Invitas hoy. Mañana sabes quién viene.", brandBody: "Confirmación de asistencia para bodas, fiestas y eventos. El invitado responde en un toque y tú ves la lista al día.",
     sessionEnded: "Tu sesión terminó. Inicia sesión para continuar.",
     validation: { required: "Este campo es obligatorio.", invalidEmail: "Escribe un correo válido, por ejemplo nombre@correo.com.", passwordShort: "La contraseña debe tener al menos 12 caracteres.", passwordBytes: "La contraseña es demasiado larga. Usa una más corta.", tooLong: "El texto es demasiado largo." },
     failure: { invalidCredentials: "El correo o la contraseña no coinciden. Revísalos e inténtalo de nuevo.", emailTaken: "Ya existe una cuenta con este correo. Inicia sesión o recupera tu contraseña.", validation: "Revisa los datos marcados e inténtalo de nuevo.", offline: "No hay conexión con el servidor. Revisa tu internet y vuelve a intentarlo.", unavailable: "El servicio de cuentas no responde por ahora. Inténtalo en unos minutos.", unknown: "No pudimos completar la acción. Inténtalo de nuevo." },

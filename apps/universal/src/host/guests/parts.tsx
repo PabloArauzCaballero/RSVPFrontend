@@ -1,12 +1,11 @@
 import type { ReactNode } from "react";
 import { Text, View } from "react-native";
-import { colors, spacing } from "@rsvp/design-tokens";
+import { spacing } from "@rsvp/design-tokens";
+import { Chip, type ChipTone } from "@rsvp/ui";
 import { formatCelebrationDate } from "@rsvp/i18n";
 import type { ProjectionFreshness, RsvpStatus } from "@rsvp/query-hooks";
 import { useLocale, useT } from "../../platform/providers";
 import { ActionButton, ErrorNotice, Notice, styles } from "../ui";
-
-const palette = colors.light;
 
 /** Error with the way out: the system notice (403/409/422/…) plus a retry. */
 export function RetryNotice({ error, onRetry, onReload }: { readonly error: unknown; readonly onRetry: () => void; readonly onReload?: () => void }): ReactNode {
@@ -31,21 +30,12 @@ export function FreshnessLine({ freshness, timeZone, now = Date.now(), onRefresh
   );
 }
 
-const STATUS_COLOR: Readonly<Record<RsvpStatus, string>> = { CONFIRMED: palette.success, DECLINED: palette.textMuted, PENDING: palette.warning };
+const STATUS_TONE: Readonly<Record<RsvpStatus, ChipTone>> = { CONFIRMED: "yes", DECLINED: "no", PENDING: "wait" };
 
 /** The word always accompanies the colour: status is never colour alone. */
 export function StatusBadge({ status }: { readonly status: RsvpStatus }): ReactNode {
   const t = useT();
-  return <Text style={[styles.label, { color: STATUS_COLOR[status] }]}>{t(`guests.status.${status}`)}</Text>;
-}
-
-export function CountTile({ label, value, testID }: { readonly label: string; readonly value: number; readonly testID?: string }): ReactNode {
-  return (
-    <View testID={testID} accessible accessibilityLabel={`${label}: ${value}`} style={[styles.card, { flexGrow: 1, flexBasis: 140, gap: spacing[1] }]}>
-      <Text style={[styles.title, { fontVariant: ["tabular-nums"] }]}>{value}</Text>
-      <Text style={styles.muted}>{label}</Text>
-    </View>
-  );
+  return <Chip tone={STATUS_TONE[status]}>{t(`guests.status.${status}`)}</Chip>;
 }
 
 export const REQUIRED_ISSUES = ["companions", "tooLong", "required", "email", "contact", "phone"] as const;

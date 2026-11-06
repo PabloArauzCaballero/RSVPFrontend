@@ -4,6 +4,7 @@ import { useCelebration, useEventTypes, type Celebration, type TranslatedEventTy
 import { useApiClient, useClaims, useLocale, useT } from "../platform/providers";
 import type { SessionClaims } from "../platform/session";
 import { ActionButton, ErrorNotice, Loading, Notice, Screen, styles } from "./ui";
+import { asText } from "./content-draft";
 import { HOST_ROUTES, hostNav, type HostRoute } from "./routes";
 
 /** Who may open the host workspace: hosts and planners only (REQ-F13-05). The API re-checks everything. */
@@ -50,5 +51,5 @@ export function CelebrationScreen({ celebrationId, onNavigate, current, title, m
   const celebration = query.data;
   if (manage && celebration.access === "READ") return frame(<Notice kind="error">{t("host.common.forbidden")}</Notice>);
   const eventType = types.data?.items.find((type) => type.code === celebration.eventTypeCode);
-  return frame(<>{eventType ? <Text style={styles.muted}>{eventType.name}</Text> : null}{children({ celebration, eventType, refetch: () => { void query.refetch(); } })}</>);
+  return frame(<>{eventType ? <Text style={[styles.body, { fontWeight: "600" }]}>{[asText(celebration.content["title"]), eventType.name].filter(Boolean).join(" · ")}</Text> : null}{children({ celebration, eventType, refetch: () => { void query.refetch(); } })}</>);
 }

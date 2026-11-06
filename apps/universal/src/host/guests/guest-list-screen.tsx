@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
+import { Avatar } from "@rsvp/ui";
 import { useGuestList, type GuestListFilters, type RsvpStatus } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
@@ -62,10 +63,14 @@ function ListBody({ celebrationId, timeZone, onNavigate }: { readonly celebratio
           {data.items.length === 0 ? <Notice>{filtered ? t("guests.list.emptyFiltered") : t("guests.list.empty")}</Notice> : (
             <View role="list" style={{ gap: spacing[2] }}>
               {data.items.map((guest) => (
-                <Pressable key={guest.guestId} role="listitem" accessibilityRole="button" accessibilityLabel={t("guests.list.open", { name: guest.name })} onPress={() => onNavigate(withCelebration(guestDetailPath(guest.guestId), celebrationId))} style={[styles.card, { gap: spacing[1] }]}>
-                  <Text style={styles.subtitle}>{guest.name}</Text>
-                  <Text style={styles.muted}>{guest.email ?? guest.phone ?? ""}</Text>
-                  <View style={styles.row}><StatusBadge status={guest.status} /><Text style={styles.muted}>{t("guests.list.companions", { count: guest.allowedCompanions })}</Text></View>
+                <Pressable key={guest.guestId} role="listitem" accessibilityRole="button" accessibilityLabel={t("guests.list.open", { name: guest.name })} onPress={() => onNavigate(withCelebration(guestDetailPath(guest.guestId), celebrationId))} style={[styles.card, { flexDirection: "row", alignItems: "center", gap: spacing[3], paddingVertical: spacing[3] }]}>
+                  <Avatar name={guest.name} size={44} />
+                  <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+                    <Text style={styles.subtitle} numberOfLines={1}>{guest.name}</Text>
+                    <Text style={styles.muted} numberOfLines={1}>{guest.email ?? guest.phone ?? ""}</Text>
+                    <Text style={styles.muted}>{t("guests.list.companions", { count: guest.allowedCompanions })}</Text>
+                    <View style={{ paddingTop: spacing[1] }}><StatusBadge status={guest.status} /></View>
+                  </View>
                 </Pressable>
               ))}
             </View>

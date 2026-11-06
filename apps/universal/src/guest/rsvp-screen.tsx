@@ -1,17 +1,18 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, Linking, Text, View } from "react-native";
 import { router } from "expo-router";
 import { ApiError } from "@rsvp/api-client";
 import { nativeMagicLink, personalLinkOrigin, personalLinkUrl } from "@rsvp/auth";
 import { readContent, type HostContact, type PublicCelebrationView } from "@rsvp/celebration-theme";
 import { colors, spacing } from "@rsvp/design-tokens";
+import { Checkbox, Chip } from "@rsvp/ui";
 import { rsvpSchema, unregisteredRsvpSchema } from "@rsvp/forms";
 import { formatCelebrationDate, type Translate } from "@rsvp/i18n";
 import {
   classifyRsvpError, countdownTo, newIdempotencyKey, rsvpScreenFor, useCelebrationBySlug, useGuestResource, useGuestRsvp, usePublicRegistrationSettings, useRegisterUnregistered, useSaveGuestRsvp,
   type Countdown as CountdownValue, type RsvpFailure, type RsvpState
 } from "@rsvp/query-hooks";
-import { LanguageSwitch } from "../auth/auth-ui";
+import { GuestFrame } from "./frame";
 import { ActionButton, ChoiceGroup, Field, Notice, styles } from "../host/ui";
 import { useApiClient, useLocale, useT } from "../platform/providers";
 import { copyText } from "../platform/clipboard";
@@ -38,17 +39,12 @@ function issueMessages(issues: readonly { path: (string | number)[]; message: st
 }
 const initialDraft = (state: RsvpState): Draft => ({ status: state.status === "PENDING" ? "" : state.status, requestedCompanions: String(state.requestedCompanions), dietaryNotes: state.dietaryNotes ?? "", message: state.message ?? "" });
 
-function Frame({ children }: { readonly children: ReactNode }): ReactNode {
-  return (
-    <ScrollView role="main" style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-      {children}
-      <LanguageSwitch />
-    </ScrollView>
-  );
+function Frame({ kicker, children }: { readonly kicker?: string; readonly children: ReactNode }): ReactNode {
+  return <GuestFrame {...(kicker ? { kicker } : {})}>{children}</GuestFrame>;
 }
 
 function Heading({ children }: { readonly children: string }): ReactNode {
-  return <Text accessibilityRole="header" aria-level={1} style={styles.title}>{children}</Text>;
+  return <Text accessibilityRole="header" aria-level={1} style={[styles.title, { fontSize: 30, lineHeight: 33, letterSpacing: -0.9 }]}>{children}</Text>;
 }
 
 function Loading(): ReactNode {
@@ -92,7 +88,7 @@ function AnswerSummary({ state }: { readonly state: RsvpState }): ReactNode {
   const waiting = state.status === "CONFIRMED" ? Math.max(0, state.requestedCompanions - state.approvedCompanions) : 0;
   return (
     <View accessibilityLabel={t("rsvp.summary.label")} style={{ gap: spacing[1] }}>
-      <Text style={[styles.label, { color: palette.primary }]}>{t(`rsvp.status.${state.status}`)}</Text>
+      <Chip tone={state.status === "CONFIRMED" ? "yes" : state.status === "DECLINED" ? "no" : "wait"}>{t(`rsvp.status.${state.status}`)}</Chip>
       {state.status === "CONFIRMED" ? <Text style={styles.body}>{t("rsvp.summary.companions", { count: state.approvedCompanions })}</Text> : null}
       {waiting ? <Text style={styles.body}>{t("rsvp.summary.pendingCompanions", { count: waiting })}</Text> : null}
       {state.dietaryNotes ? <Text style={styles.body}>{t("rsvp.summary.dietary", { value: state.dietaryNotes })}</Text> : null}
@@ -196,8 +192,8 @@ export function GuestRsvpScreen({ slug, token }: GuestRsvpScreenProps): ReactNod
   if (rsvp.isPending) return <Loading />;
   const state = rsvp.data;
   const screen = closed ? "closed" : rsvpScreenFor(state);
-  const header = <Text style={styles.muted}>{t("rsvp.page.invitationTo", { title: content.title })}</Text>;
-  if (screen === "closed") return <Frame>{header}<Closed info={closed ?? {}} state={state} hosts={hosts} contact={content.hostContact} /></Frame>;
+  const kicker = t("rsvp.page.invitationTo", { title: content.title });
+  if (screen === "closed") return <Frame kicker={kicker}><Closed info={closed ?? {}} state={state} hosts={hosts} contact={content.hostContact} /></Frame>;
 
   const form = (
     <AnswerForm key={editing ? "edit" : "first"} celebrationId={view.celebrationId} token={token} state={state} allowed={resource.data?.allowedCompanions} mode={screen === "guest" ? "first" : "edit"}
@@ -205,11 +201,10 @@ export function GuestRsvpScreen({ slug, token }: GuestRsvpScreenProps): ReactNod
       onSaved={(next) => { setEditing(false); setNotice(next.status === "DECLINED" ? t("rsvp.success.declined") : screen === "guest" ? t("rsvp.success.confirmed") : t("rsvp.success.saved")); }} />
   );
   if (screen === "guest") {
-    return <Frame>{header}<View style={styles.card}><Heading>{t("rsvp.guest.title")}</Heading><Text style={styles.body}>{t("rsvp.guest.intro")}</Text><DeadlineLine state={state} /><CountdownLine deadline={state.deadline} />{form}</View></Frame>;
+    return <Frame kicker={kicker}><View style={styles.card}><Heading>{t("rsvp.guest.title")}</Heading><Text style={styles.body}>{t("rsvp.guest.intro")}</Text><DeadlineLine state={state} /><CountdownLine deadline={state.deadline} />{form}</View></Frame>;
   }
   return (
-    <Frame>
-      {header}
+    <Frame kicker={kicker}>
       <View style={styles.card}>
         <Heading>{state.status === "DECLINED" ? t("rsvp.confirmed.titleDeclined") : t("rsvp.confirmed.title")}</Heading>
         {notice ? <Notice kind="success">{notice}</Notice> : null}
@@ -328,17 +323,14 @@ function PublicRegistrationForm({ view, slug, hosts, contact }: { readonly view:
   }
   const busy = register.isPending;
   return (
-    <Frame>
-      <Text style={styles.muted}>{t("rsvp.page.invitationTo", { title })}</Text>
+    <Frame kicker={t("rsvp.page.invitationTo", { title })}>
       <View style={styles.card}>
         <Heading>{t("rsvp.unregistered.title")}</Heading>
         <Text style={styles.body}>{t("rsvp.unregistered.intro")}</Text>
         <Field label={t("rsvp.form.name")} value={draft.name} onChange={(name) => setDraft({ ...draft, name })} error={errors.name} />
         <Field label={t("rsvp.form.email")} keyboardType="email-address" help={t("rsvp.form.emailHelp")} value={draft.email} onChange={(email) => setDraft({ ...draft, email })} error={errors.email} />
         <AnswerFields draft={draft} askAttendance={false} errors={errors} onChange={(patch) => setDraft({ ...draft, ...patch })} />
-        <Pressable accessibilityRole="checkbox" aria-checked={draft.consent} accessibilityLabel={t("rsvp.form.consent")} onPress={() => setDraft({ ...draft, consent: !draft.consent })} style={[styles.option, draft.consent && styles.optionSelected]}>
-          <Text style={styles.body}>{draft.consent ? "☑ " : "☐ "}{t("rsvp.form.consent")}</Text>
-        </Pressable>
+        <Checkbox label={t("rsvp.form.consent")} value={draft.consent} onChange={(consent) => setDraft({ ...draft, consent })} />
         {errors.consent ? <Text accessibilityRole="alert" style={[styles.muted, { color: palette.danger }]}>{errors.consent}</Text> : null}
         {failure ? <FailureNotice failure={failure} busy={busy} onRetry={() => { void submit(); }} /> : null}
         <ActionButton testID="rsvp-register" label={busy ? t("rsvp.form.submitting") : t("rsvp.form.register")} busy={busy} onPress={() => { void submit(); }} />

@@ -43,7 +43,7 @@ export const guestsEnUS: DeepStrings<typeof guestsEsBO> = {
     }
   },
   summary: {
-    title: "Guest summary", confirmed: "Confirmed", pending: "Not answered", declined: "Not attending", companions: "Companions", total: "Guests",
+    title: "Guest summary", headline: "{{confirmed}} of {{total}} confirmed", barLabel: "Replies received", confirmed: "Confirmed", pending: "Not answered", declined: "Not attending", companions: "Companions", total: "Guests",
     daysToDeadline: "{{count}} days until replies close", deadlineToday: "Replies close today", deadlinePassed: "Replies are closed", noDeadline: "No reply deadline",
     openRequests: "{{count}} companion requests to review", noRequests: "No companion requests pending", reviewRequests: "Review requests", viewReport: "View report", viewGuests: "View guests", empty: "Once you add guests you will see here how many confirmed."
   },

@@ -1,11 +1,12 @@
 import type { PropsWithChildren } from 'react';
 import { useState } from 'react';
-import { ActivityIndicator, Modal as NativeModal, Pressable, ScrollView, Switch, Text, TextInput, View, type ViewStyle } from 'react-native';
-import { spacing } from '@rsvp/design-tokens';
+import { ActivityIndicator, Modal as NativeModal, Pressable, ScrollView, Switch, Text, TextInput, View, useWindowDimensions, type ViewStyle } from 'react-native';
+import { brand, radius, spacing } from '@rsvp/design-tokens';
 import { useTheme } from './theme';
 
 export { UiProvider, useTheme, type ColorScheme } from './theme';
 import { DateField } from './date-field';
+export { Logo, type LogoProps, type LogoTone } from './logo';
 export { defaultStrings, stringsFor, type UiStrings } from './strings';
 
 export type State = 'default' | 'loading' | 'error' | 'empty' | 'disabled';
@@ -27,8 +28,12 @@ export function Surface({ title, description }: { title: string; description: st
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
-export function Button({ children, onPress, variant = 'primary', state = 'default', accessibilityLabel, className, testID }: PropsWithChildren<{ onPress?: () => void; variant?: ButtonVariant; state?: State; accessibilityLabel?: string; className?: string; testID?: string }>) {
+const WIDE_BUTTONS = 640;
+
+/** Full width on a phone (a thumb target), content width from 640 px up, unless `block`. */
+export function Button({ children, onPress, variant = 'primary', state = 'default', accessibilityLabel, className, testID, block = false }: PropsWithChildren<{ onPress?: () => void; variant?: ButtonVariant; state?: State; accessibilityLabel?: string; className?: string; testID?: string; block?: boolean }>) {
   const { palette, styles, strings } = useTheme();
+  const { width } = useWindowDimensions();
   const disabled = unavailable(state);
   const variantStyle = variant === 'secondary' ? styles.buttonSecondary : variant === 'ghost' ? styles.buttonGhost : variant === 'danger' ? styles.buttonDanger : undefined;
   const textStyle = variant === 'secondary' || variant === 'ghost' ? styles.buttonTextSecondary : variant === 'danger' ? styles.buttonTextDanger : undefined;
@@ -42,21 +47,21 @@ export function Button({ children, onPress, variant = 'primary', state = 'defaul
       onPress={onPress}
       className={className}
       testID={testID}
-      style={[styles.button, variantStyle, disabled && styles.buttonDisabled]}
+      style={[styles.button, width >= WIDE_BUTTONS && !block && { alignSelf: 'flex-start' }, variantStyle, disabled && styles.buttonDisabled]}
     >
       {state === 'loading' ? <ActivityIndicator color={spinner} accessibilityLabel={strings.loading} /> : <Text style={[styles.buttonText, textStyle]}>{children}</Text>}
     </Pressable>
   );
 }
 
-export function Input({ label, error, state = 'default', ...props }: { label: string; error?: string; state?: State } & React.ComponentProps<typeof TextInput>) {
+export function Input({ label, error, state = 'default', style, ...props }: { label: string; error?: string; state?: State } & React.ComponentProps<typeof TextInput>) {
   const { palette, styles } = useTheme();
   const disabled = unavailable(state);
   const invalid = state === 'error' || Boolean(error);
   return (
     <View>
       <Text style={styles.label}>{label}</Text>
-      {state === 'empty' ? <StateHint state={state} /> : <TextInput accessibilityLabel={label} accessibilityState={{ disabled }} aria-invalid={invalid || undefined} editable={!disabled} placeholderTextColor={palette.textMuted} style={[styles.input, invalid && styles.inputError]} {...props} />}
+      {state === 'empty' ? <StateHint state={state} /> : <TextInput accessibilityLabel={label} accessibilityState={{ disabled }} aria-invalid={invalid || undefined} editable={!disabled} placeholderTextColor={palette.textMuted} style={[styles.input, invalid && styles.inputError, style]} {...props} />}
       <StateHint state={state === 'empty' ? undefined : state} error={error} />
     </View>
   );
@@ -88,7 +93,7 @@ export function Checkbox({ label, value, onChange, state = 'default', error }: {
   return (
     <View>
       <Pressable accessibilityRole="checkbox" accessibilityLabel={label} accessibilityState={{ checked: value, disabled }} disabled={disabled} style={[styles.checkboxRow, disabled && styles.buttonDisabled]} onPress={() => onChange?.(!value)}>
-        <View style={[styles.checkbox, value && styles.selected]}>{value && <Text style={{ color: palette.onPrimary }}>✓</Text>}</View>
+        <View style={[styles.checkbox, value && styles.selected]}>{value && <View style={{ width: 6, height: 12, marginTop: -2, borderRightWidth: 2.5, borderBottomWidth: 2.5, borderColor: palette.onPrimary, transform: [{ rotate: '45deg' }] }} />}</View>
         <Text style={styles.body}>{label}</Text>
       </Pressable>
       <StateHint state={state === 'empty' ? undefined : state} error={error} />
@@ -177,6 +182,38 @@ export function SwitchWithConsequence({ label, value, consequence, pendingCount 
   const [confirmation, setConfirmation] = useState<boolean | null>(null);
   const requestedValue = confirmation ?? value;
   return <Card><View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing[3] }}><View style={{ flex: 1 }}><Text style={styles.label}>{label}</Text><Text style={styles.body}>{consequence}</Text></View><Switch accessibilityLabel={label} value={requestedValue} onValueChange={setConfirmation} /></View>{confirmation !== null && confirmation !== value ? <View style={{ gap: spacing[2] }}><Text accessibilityRole="alert" style={styles.body}>{pendingCount > 0 ? `Hay ${pendingCount} solicitudes pendientes; este cambio no las modifica.` : 'El cambio solo afectará las solicitudes futuras.'}</Text><Button onPress={() => { onChange(confirmation); setConfirmation(null); }}>{strings.confirmChange}</Button><Button variant="secondary" onPress={() => setConfirmation(null)}>{strings.cancel}</Button></View> : null}</Card>;
+}
+
+export type ChipTone = 'yes' | 'maybe' | 'wait' | 'no';
+const CHIP: Record<ChipTone, { bg: string; fg: string; dot: string; border?: string }> = {
+  yes: { bg: brand.bruma, fg: brand.azulOsc, dot: brand.azul },
+  maybe: { bg: '#FFF2D6', fg: '#6B4500', dot: brand.ambar },
+  wait: { bg: brand.nube, fg: brand.pizarra, dot: brand.niebla, border: brand.linea },
+  no: { bg: '#ECEEF4', fg: brand.noche, dot: brand.noche }
+};
+
+/** RSVP status pill from the kit: a dot and a word, never colour alone. */
+export function Chip({ tone, children }: PropsWithChildren<{ tone: ChipTone }>) {
+  const c = CHIP[tone];
+  return (
+    <View accessibilityRole="text" style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 7, height: 30, paddingHorizontal: 12, borderRadius: radius.full, backgroundColor: c.bg, borderWidth: c.border ? 1 : 0, borderColor: c.border }}>
+      <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: c.dot }} />
+      <Text style={{ color: c.fg, fontSize: 13, fontWeight: '700' }}>{children}</Text>
+    </View>
+  );
+}
+
+const AVATARS = [{ bg: brand.azul, fg: '#FFFFFF' }, { bg: brand.ambar, fg: brand.noche }, { bg: brand.noche, fg: '#FFFFFF' }, { bg: brand.cielo, fg: brand.noche }];
+const initials = (name: string) => name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase() ?? '').join('');
+
+/** Initials on one of the four brand grounds, picked from the name so the same person keeps the same colour. */
+export function Avatar({ name, size = 36 }: { name: string; size?: number }) {
+  const c = AVATARS[[...name].reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % AVATARS.length]!;
+  return (
+    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: c.bg, alignItems: 'center', justifyContent: 'center' }}>
+      <Text style={{ color: c.fg, fontSize: Math.round(size * 0.36), fontWeight: '800' }}>{initials(name)}</Text>
+    </View>
+  );
 }
 
 export function ComponentCatalog() {

@@ -4,7 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { celebrationApi, useAdminEventTypes, useAdminTemplates } from "@rsvp/query-hooks";
 import { useIdentitySummary, useProviderSummary } from "@rsvp/query-hooks/admin";
 import { useApiClient, useT } from "../platform/providers";
-import { ActionButton, ConfirmDialog, ErrorNotice, Loading, Notice, Section, styles } from "../host/ui";
+import { ActionButton, ConfirmDialog,  Loading, Notice, Section, styles } from "../host/ui";
 import { AdminScreen } from "./admin-screen";
 import { AdminErrorNotice } from "./shared";
 
@@ -20,7 +20,7 @@ export function DashboardScreen({ onNavigate }: Nav): ReactNode {
   return (
     <AdminScreen title={t("admin.dashboard.title")} current="dashboard" onNavigate={onNavigate}>
       {types.isPending || templates.isPending ? <Loading /> : null}
-      <ErrorNotice error={types.error ?? templates.error} />
+      <AdminErrorNotice error={types.error ?? templates.error} />
       <Section title={t("admin.nav.eventTypes")}><Text style={styles.body}>{count(t("admin.dashboard.eventTypes"), types.data?.items.filter((item) => item.status === "ACTIVE").length)}</Text></Section>
       <Section title={t("admin.nav.templates")}>
         <Text style={styles.body}>{count(t("admin.dashboard.templates"), templates.data?.items.filter((item) => item.status === "PUBLISHED").length)}</Text>
@@ -102,7 +102,7 @@ export function OperationsScreen({ onNavigate }: Nav): ReactNode {
       <Section title={t("admin.operations.replay")}>
         <ActionButton label={t("admin.operations.replay")} busy={replay.isPending} onPress={() => setConfirm(true)} testID="replay" />
         {replay.data ? <Notice kind="success">{t("admin.operations.replayDone", { count: replay.data.applied })}</Notice> : null}
-        <ErrorNotice error={replay.error} />
+        <AdminErrorNotice error={replay.error} />
       </Section>
       <View style={styles.row}>
         <ActionButton variant="secondary" label={t("admin.operations.grafana")} onPress={() => { void Linking.openURL(GRAFANA_URL); }} />

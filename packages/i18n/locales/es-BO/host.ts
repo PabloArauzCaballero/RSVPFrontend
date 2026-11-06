@@ -12,6 +12,7 @@ export const hostEsBO = {
     noCelebration: "Elige una celebración para continuar.",
     chooseCelebration: "Elegir celebración"
   },
+  navGroups: { guests: "Invitados", gifts: "Regalos", celebration: "Mi celebración", account: "Cuenta" },
   nav: { label: "Secciones del panel", celebrations: "Mis celebraciones", editor: "Contenido", gallery: "Galería", translations: "Traducciones", templates: "Templates", preview: "Vista previa", publish: "Publicar", settings: "Configuración", modes: "Modos de control" },
   picker: { title: "Mis celebraciones", empty: "Todavía no tienes celebraciones. Crea la primera en tres pasos.", create: "Crear celebración", open: "Abrir {{title}}", untitled: "Sin título", status: { DRAFT: "Borrador", PUBLISHED: "Publicada", ARCHIVED: "Archivada" } },
   onboarding: {

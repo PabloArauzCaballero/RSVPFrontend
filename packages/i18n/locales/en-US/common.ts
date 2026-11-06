@@ -1,5 +1,5 @@
 export const enUS = {
-  common: { loading: "Loading…", retry: "Try again", cancel: "Cancel", save: "Save", signOut: "Sign out", empty: "There are no results." },
+  common: { loading: "Loading…", retry: "Try again", cancel: "Cancel", save: "Save", signOut: "Sign out", more: "More", close: "Close", empty: "There are no results." },
   auth: {
     email: "Email", password: "Password", signIn: "Sign in", register: "Create account", forgotPassword: "Forgot your password?",
     signInTitle: "Sign in to your account", signInIntro: "Plan your celebration or manage your event services.",
@@ -9,7 +9,7 @@ export const enUS = {
     signingIn: "Signing in…", creating: "Creating account…",
     backToSignIn: "Back to sign in", noAccount: "Do not have an account yet?", haveAccount: "Already have an account?",
     role: "I want to use DOne as", roleHost: "Host", roleHostHint: "I organise my own celebration", rolePlanner: "Event planner", rolePlannerHint: "I manage celebrations for other people", roleProvider: "Provider", roleProviderHint: "I offer services for celebrations",
-    passwordHint: "At least 12 characters.", showPassword: "Show password", hidePassword: "Hide password", brandPitch: "Invite today. Tomorrow you know who is coming.",
+    passwordHint: "At least 12 characters.", showPassword: "Show password", hidePassword: "Hide password", brandPitch: "Invite today. Tomorrow you know who is coming.", brandBody: "RSVPs for weddings, parties and events. Guests answer in one tap and you see the list up to date.",
     sessionEnded: "Your session ended. Sign in to continue.",
     validation: { required: "This field is required.", invalidEmail: "Enter a valid email, for example name@mail.com.", passwordShort: "The password must have at least 12 characters.", passwordBytes: "The password is too long. Use a shorter one.", tooLong: "The text is too long." },
     failure: { invalidCredentials: "The email and password do not match. Check them and try again.", emailTaken: "An account with this email already exists. Sign in or reset your password.", validation: "Check the highlighted fields and try again.", offline: "Cannot reach the server. Check your internet connection and try again.", unavailable: "The accounts service is not responding right now. Try again in a few minutes.", unknown: "We could not complete the action. Try again." },

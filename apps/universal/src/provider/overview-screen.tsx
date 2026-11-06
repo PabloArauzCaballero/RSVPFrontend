@@ -7,7 +7,7 @@ import { createApiClientForPublicRead } from "./public-client";
 import { useApiClient, useClaims, useLocale, useT } from "../platform/providers";
 import { ActionButton, ErrorNotice, Field, Loading, Notice, Section, styles } from "../host/ui";
 import { PortalScreen, useProviderId } from "./frame";
-import { RangeCards, lastDays } from "./metrics-screen";
+import { RangeTotals, lastDays } from "./metrics-screen";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -38,7 +38,7 @@ function Overview({ provider, refetch }: { readonly provider: Provider; readonly
         {provider.status === "DRAFT" ? <ActionButton label={submit.isPending ? t("portal.status.submitting") : t("portal.status.submit")} busy={submit.isPending} disabled={!sendable || submit.isPending} onPress={() => submit.mutate(undefined, { onSuccess: () => { setDone(true); refetch(); } })} testID="submit-verification" /> : null}
       </Section>
       <Section title={t("portal.home.last30")}>
-        {metrics.isPending ? <Loading /> : metrics.isError ? <ErrorNotice error={metrics.error} onReload={() => { void metrics.refetch(); }} /> : <RangeCards totals={metrics.data.totals} />}
+        {metrics.isPending ? <Loading /> : metrics.isError ? <ErrorNotice error={metrics.error} onReload={() => { void metrics.refetch(); }} /> : <RangeTotals bare totals={metrics.data.totals} />}
       </Section>
     </View>
   );

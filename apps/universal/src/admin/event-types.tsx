@@ -3,7 +3,8 @@ import { Pressable, Text, View } from "react-native";
 import { supportedLocales } from "@rsvp/i18n";
 import { useAdminEventTypes, useUpsertEventType, type EventTypeDefinition, type SectionId } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../platform/providers";
-import { ActionButton, ChoiceGroup, ErrorNotice, Field, Loading, Notice, Section, styles } from "../host/ui";
+import { ActionButton, ChoiceGroup,  Field, Loading, Notice, Section, styles } from "../host/ui";
+import { AdminErrorNotice } from "./shared";
 import { AdminScreen, splitList } from "./admin-screen";
 
 /** E4 · Create or edit an event type from the UI; it is usable at once, without a deploy (REQ-F14-02). */
@@ -83,7 +84,7 @@ function Editor({ initial, onSaved }: { readonly initial: Form; readonly onSaved
           ))}
         </View>
       ))}
-      <ErrorNotice error={save.error} />
+      <AdminErrorNotice error={save.error} />
       {save.isSuccess ? <Notice kind="success">{`${t("admin.saved")} ${t("admin.eventTypes.savedHelp")}`}</Notice> : null}
       <ActionButton label={t("admin.eventTypes.save")} busy={save.isPending} onPress={() => save.mutate(definitionOf(form), { onSuccess: onSaved })} testID="save-event-type" />
     </Section>
@@ -99,7 +100,7 @@ export function EventTypesScreen({ onNavigate }: { readonly onNavigate: (href: s
   return (
     <AdminScreen title={t("admin.eventTypes.title")} current="eventTypes" onNavigate={onNavigate}>
       {list.isPending ? <Loading /> : null}
-      <ErrorNotice error={list.error} />
+      <AdminErrorNotice error={list.error} />
       <ChoiceGroup label={t("admin.eventTypes.title")} value={editing ?? ""} onChange={(value) => setEditing(value || null)}
         choices={[{ value: "", label: t("admin.eventTypes.new") }, ...(list.data?.items ?? []).map((item) => ({ value: item.code, label: `${item.code} · ${t(`admin.eventTypes.statuses.${item.status}`)}` }))]} />
       <Editor key={editing ?? "new"} initial={current ? formOf(current) : EMPTY} onSaved={() => { void list.refetch(); }} />

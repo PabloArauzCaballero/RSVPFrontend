@@ -12,9 +12,11 @@
     "lint": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:visual": "playwright test"
   },
   "dependencies": {
+    "@expo-google-fonts/plus-jakarta-sans": "^0.4.2",
     "@react-native-community/datetimepicker": "8.4.4",
     "@rsvp/api-client": "workspace:*",
     "@rsvp/auth": "workspace:*",
@@ -29,6 +31,7 @@
     "expo-constants": "~18.0.0",
     "expo-device": "~8.0.10",
     "expo-document-picker": "~14.0.7",
+    "expo-font": "~14.0.0",
     "expo-image-picker": "~17.0.8",
     "expo-linking": "~8.0.0",
     "expo-notifications": "~0.32.16",
@@ -44,6 +47,7 @@
     "react-native-reanimated": "~4.1.1",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
+    "react-native-svg": "15.12.1",
     "react-native-web": "^0.21.0",
     "react-native-worklets": "0.5.1"
   },

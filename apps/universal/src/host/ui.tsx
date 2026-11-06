@@ -1,10 +1,9 @@
 import type { PropsWithChildren, ReactNode } from "react";
-import { ActivityIndicator, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, type KeyboardTypeOptions } from "react-native";
+import { ActivityIndicator, Modal, Platform, Pressable, StyleSheet, Text, View, type KeyboardTypeOptions } from "react-native";
 import { usePathname, useRouter, type Href } from "expo-router";
 import { ApiError } from "@rsvp/api-client";
 import { Button, Input } from "@rsvp/ui";
 import { colors, notice, radius, spacing, typography } from "@rsvp/design-tokens";
-import { useAuth } from "../auth/auth-context";
 import { loginHref } from "../auth/routes";
 import { useT } from "../platform/providers";
 
@@ -14,6 +13,7 @@ const palette = colors.light;
 const fontFamily = Platform.select({ web: "'Plus Jakarta Sans', 'Avenir Next', 'Segoe UI', system-ui, sans-serif", default: undefined });
 const MIN_TOUCH = 44;
 const MAX_CONTENT_WIDTH = 880;
+const SECTION_MAX_WIDTH = 720;
 const MULTILINE_HEIGHT = 120;
 const STATUS_CONFLICT = 409;
 const STATUS_FORBIDDEN = 403;
@@ -26,62 +26,40 @@ export const styles = StyleSheet.create({
   page: { flexGrow: 1, backgroundColor: palette.canvas },
   content: { width: "100%", maxWidth: MAX_CONTENT_WIDTH, alignSelf: "center", padding: spacing[4], gap: spacing[4] },
   title: { color: palette.text, fontSize: typography.fontSize.xl, lineHeight: typography.lineHeight.xl, fontWeight: "800", letterSpacing: -0.5, fontFamily },
-  subtitle: { color: palette.text, fontSize: typography.fontSize.lg, fontWeight: "700", fontFamily },
+  subtitle: { color: palette.text, fontSize: typography.fontSize.lg, fontWeight: "800", letterSpacing: -0.3, fontFamily },
   body: { color: palette.text, fontSize: typography.fontSize.base, lineHeight: typography.lineHeight.base, fontFamily },
   muted: { color: palette.textMuted, fontSize: typography.fontSize.sm, lineHeight: typography.lineHeight.sm, fontFamily },
-  label: { color: palette.text, fontSize: typography.fontSize.sm, fontWeight: "600", fontFamily },
-  input: { minHeight: MIN_TOUCH, borderWidth: 1, borderColor: palette.border, borderRadius: radius.md, paddingHorizontal: spacing[3], color: palette.text, backgroundColor: palette.surface, fontSize: typography.fontSize.base },
+  label: { color: palette.text, fontSize: typography.fontSize.sm, fontWeight: "700", fontFamily },
+  input: { minHeight: MIN_TOUCH + 8, borderWidth: 1.5, borderColor: palette.fieldBorder, borderRadius: radius.md, paddingHorizontal: spacing[3], color: palette.text, backgroundColor: palette.surface, fontSize: typography.fontSize.base },
   inputError: { borderColor: palette.danger },
-  card: { backgroundColor: palette.surface, borderColor: palette.border, borderWidth: 1, borderRadius: radius.lg, padding: spacing[4], gap: spacing[3] },
+  card: { backgroundColor: palette.surface, borderColor: palette.border, borderWidth: 1, borderRadius: radius.lg, padding: spacing[5], gap: spacing[3] },
   row: { flexDirection: "row", flexWrap: "wrap", gap: spacing[2], alignItems: "center" },
   nav: { flexDirection: "row", flexWrap: "wrap", gap: spacing[2] },
-  navItem: { minHeight: MIN_TOUCH, justifyContent: "center", paddingHorizontal: spacing[3], borderRadius: radius.md, backgroundColor: palette.surfaceMuted },
-  navItemCurrent: { backgroundColor: palette.primaryMuted },
-  button: { minHeight: MIN_TOUCH + 4, alignItems: "center", justifyContent: "center", borderRadius: radius.md, paddingHorizontal: spacing[4], backgroundColor: palette.primary },
+  navItem: { minHeight: MIN_TOUCH, justifyContent: "center", paddingHorizontal: spacing[4], borderRadius: radius.full, backgroundColor: palette.surface, borderWidth: 1.5, borderColor: palette.border },
+  navItemCurrent: { backgroundColor: palette.primaryMuted, borderColor: palette.primary },
+  button: { minHeight: MIN_TOUCH + 8, alignItems: "center", justifyContent: "center", borderRadius: radius.md, paddingHorizontal: spacing[4], backgroundColor: palette.primary },
   buttonSecondary: { backgroundColor: palette.primaryMuted },
   buttonDanger: { backgroundColor: palette.danger },
   buttonDisabled: { opacity: 0.5 },
   buttonText: { color: palette.onPrimary, fontWeight: "700", fontSize: typography.fontSize.base, fontFamily },
   buttonTextSecondary: { color: palette.primary },
-  notice: { borderRadius: radius.md, padding: spacing[3], gap: spacing[2] },
+  notice: { borderRadius: radius.md, padding: spacing[4], gap: spacing[2] },
   noticeError: { backgroundColor: notice.dangerBg, borderColor: palette.danger, borderWidth: 1 },
   noticeInfo: { backgroundColor: palette.surfaceMuted },
   noticeSuccess: { backgroundColor: notice.successBg },
-  option: { minHeight: MIN_TOUCH, justifyContent: "center", paddingHorizontal: spacing[3], borderWidth: 1, borderColor: palette.border, borderRadius: radius.md, backgroundColor: palette.surface },
+  option: { minHeight: MIN_TOUCH + 8, justifyContent: "center", paddingHorizontal: spacing[4], borderWidth: 1.5, borderColor: palette.fieldBorder, borderRadius: radius.md, backgroundColor: palette.surface },
+  choice: { minHeight: MIN_TOUCH, justifyContent: "center", paddingHorizontal: spacing[4], borderWidth: 1.5, borderColor: palette.fieldBorder, borderRadius: radius.full, backgroundColor: palette.surface },
+  choiceSelected: { borderColor: palette.primary, backgroundColor: palette.primaryMuted },
   optionSelected: { borderColor: palette.primary, backgroundColor: palette.primaryMuted },
   overlay: { flex: 1, justifyContent: "center", padding: spacing[4], backgroundColor: "rgba(10,16,51,0.6)" },
   dialog: { width: "100%", maxWidth: 520, alignSelf: "center", backgroundColor: palette.surface, borderRadius: radius.lg, padding: spacing[5], gap: spacing[3] }
 });
 
-export interface NavItem { readonly key: string; readonly label: string; readonly href: string }
+export { Screen, type NavItem } from "./shell";
 
-export function Screen({ title, nav, current, onNavigate, children }: PropsWithChildren<{ readonly title: string; readonly nav?: readonly NavItem[]; readonly current?: string; readonly onNavigate?: (href: string) => void }>): ReactNode {
-  const t = useT();
-  const auth = useAuth();
-  return (
-    <ScrollView role="main" style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-      {nav?.length || auth.state.status === "authenticated" ? (
-        <View role="navigation" aria-label={t("host.nav.label")} style={styles.nav}>
-          {(nav ?? []).map((item) => (
-            <Pressable key={item.key} role="link" aria-current={item.key === current ? "page" : undefined} onPress={() => onNavigate?.(item.href)} style={[styles.navItem, item.key === current && styles.navItemCurrent]}>
-              <Text style={styles.label}>{item.label}</Text>
-            </Pressable>
-          ))}
-          {auth.state.status === "authenticated" ? (
-            <Pressable role="button" accessibilityLabel={t("common.signOut")} onPress={() => { void auth.signOut(); }} style={styles.navItem}>
-              <Text style={styles.label}>{t("common.signOut")}</Text>
-            </Pressable>
-          ) : null}
-        </View>
-      ) : null}
-      <Text accessibilityRole="header" style={styles.title}>{title}</Text>
-      {children}
-    </ScrollView>
-  );
-}
-
+/** A form or settings block. Capped at a readable measure so fields never stretch across a wide screen. */
 export function Section({ title, children }: PropsWithChildren<{ readonly title: string }>): ReactNode {
-  return <View style={styles.card}><Text accessibilityRole="header" style={styles.subtitle}>{title}</Text>{children}</View>;
+  return <View style={[styles.card, { maxWidth: SECTION_MAX_WIDTH }]}><Text accessibilityRole="header" style={styles.subtitle}>{title}</Text>{children}</View>;
 }
 
 export interface FieldProps {
@@ -109,15 +87,22 @@ export function Field({ label, value, onChange, help, error, multiline, placehol
 export interface Choice<TValue extends string> { readonly value: TValue; readonly label: string; readonly description?: string }
 
 export function ChoiceGroup<TValue extends string>({ label, choices, value, onChange }: { readonly label: string; readonly choices: readonly Choice<TValue>[]; readonly value: TValue | null; readonly onChange: (value: TValue) => void }): ReactNode {
+  // Short labels read as one wrapped row of options; a choice that needs an explanation gets its own row.
+  const described = choices.some((choice) => choice.description);
   return (
     <View accessibilityRole="radiogroup" accessibilityLabel={label} style={{ gap: spacing[2] }}>
       <Text style={styles.label}>{label}</Text>
-      {choices.map((choice) => (
-        <Pressable key={choice.value} accessibilityRole="radio" aria-checked={choice.value === value} accessibilityLabel={choice.label} onPress={() => onChange(choice.value)} style={[styles.option, choice.value === value && styles.optionSelected]}>
-          <Text style={styles.body}>{choice.label}</Text>
-          {choice.description ? <Text style={styles.muted}>{choice.description}</Text> : null}
-        </Pressable>
-      ))}
+      <View style={described ? { gap: spacing[2] } : styles.row}>
+        {choices.map((choice) => {
+          const selected = choice.value === value;
+          return (
+            <Pressable key={choice.value} accessibilityRole="radio" aria-checked={selected} accessibilityLabel={choice.label} onPress={() => onChange(choice.value)} style={[described ? styles.option : styles.choice, selected && (described ? styles.optionSelected : styles.choiceSelected)]}>
+              <Text style={[styles.body, selected && { fontWeight: "700" }]}>{choice.label}</Text>
+              {choice.description ? <Text style={styles.muted}>{choice.description}</Text> : null}
+            </Pressable>
+          );
+        })}
+      </View>
     </View>
   );
 }

@@ -56,10 +56,10 @@ const NAV: readonly { readonly key: HostRoute; readonly label: string; readonly 
   { key: "guests", label: "guests.nav.guests", path: HOST_ROUTES.guests },
   { key: "report", label: "guests.nav.report", path: HOST_ROUTES.report },
   { key: "requests", label: "guests.nav.requests", path: HOST_ROUTES.requests },
-  { key: "gifts", label: "gifts.host.nav", path: HOST_ROUTES.gifts },
-  { key: "giftInbox", label: "gifts.host.inbox.title", path: HOST_ROUTES.giftInbox },
   { key: "notifications", label: "guests.nav.notifications", path: HOST_ROUTES.notifications },
   { key: "preferences", label: "guests.nav.preferences", path: HOST_ROUTES.preferences },
+  { key: "gifts", label: "gifts.host.nav", path: HOST_ROUTES.gifts },
+  { key: "giftInbox", label: "gifts.host.inbox.title", path: HOST_ROUTES.giftInbox },
   { key: "editor", label: "host.nav.editor", path: editorPath("general") },
   { key: "gallery", label: "host.nav.gallery", path: HOST_ROUTES.gallery },
   { key: "translations", label: "host.nav.translations", path: HOST_ROUTES.translations },
@@ -71,6 +71,16 @@ const NAV: readonly { readonly key: HostRoute; readonly label: string; readonly 
   { key: "celebrations", label: "host.nav.celebrations", path: HOST_ROUTES.celebrations }
 ];
 
+const NAV_GROUP: Readonly<Partial<Record<HostRoute, string>>> = {
+  summary: "guests", guests: "guests", report: "guests", requests: "guests", notifications: "guests", preferences: "guests",
+  gifts: "gifts", giftInbox: "gifts",
+  editor: "celebration", gallery: "celebration", translations: "celebration", templates: "celebration", preview: "celebration", publish: "celebration", settings: "celebration", modes: "celebration",
+  celebrations: "account"
+};
+
 export function hostNav(t: Translate, celebrationId: string | undefined): NavItem[] {
-  return NAV.map((item) => ({ key: item.key, label: t(item.label), href: item.key === "celebrations" ? item.path : withCelebration(item.path, celebrationId) }));
+  return NAV.map((item) => {
+    const group = NAV_GROUP[item.key];
+    return { key: item.key, label: t(item.label), href: item.key === "celebrations" ? item.path : withCelebration(item.path, celebrationId), ...(group ? { group: t(`host.navGroups.${group}`) } : {}) };
+  });
 }

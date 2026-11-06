@@ -5,7 +5,8 @@ import { CelebrationNativeRenderer } from "@rsvp/celebration-theme/native";
 import { useAdminTemplates, useSaveTemplate, useTemplateTransition, type LayoutId, type SectionId, type Template, type TemplateInput, type TemplateTheme } from "@rsvp/query-hooks";
 import type { Translate } from "@rsvp/i18n";
 import { useApiClient, useLocale, useT } from "../platform/providers";
-import { ActionButton, ChoiceGroup, ConfirmDialog, ErrorNotice, Field, Loading, Notice, Section, styles } from "../host/ui";
+import { ActionButton, ChoiceGroup, ConfirmDialog,  Field, Loading, Notice, Section, styles } from "../host/ui";
+import { AdminErrorNotice } from "./shared";
 import { AdminScreen, splitList } from "./admin-screen";
 import { SECTION_IDS } from "./event-types";
 
@@ -77,7 +78,7 @@ function Editor({ template, onSaved }: { readonly template: Template | undefined
       </View>
       <Text style={styles.label}>{t("admin.templates.preview")}</Text>
       <View style={[styles.card, { maxHeight: PREVIEW_HEIGHT, overflow: "hidden", padding: 0 }]}><CelebrationNativeRenderer theme={preview} view={sampleView(t, locale)} t={t} /></View>
-      <ErrorNotice error={save.error ?? transition.error} />
+      <AdminErrorNotice error={save.error ?? transition.error} />
       {save.isSuccess || transition.isSuccess ? <Notice kind="success">{t("admin.saved")}</Notice> : null}
       <View style={styles.row}>
         <ActionButton label={t("host.common.save")} busy={save.isPending} onPress={() => save.mutate({ target: template, input }, { onSuccess: onSaved })} testID="save-template" />
@@ -99,7 +100,7 @@ export function TemplatesAdminScreen({ onNavigate }: { readonly onNavigate: (hre
   return (
     <AdminScreen title={t("admin.templates.title")} current="templates" onNavigate={onNavigate}>
       {list.isPending ? <Loading /> : null}
-      <ErrorNotice error={list.error} />
+      <AdminErrorNotice error={list.error} />
       <ChoiceGroup label={t("admin.templates.title")} value={editing} onChange={setEditing}
         choices={[{ value: "", label: t("admin.templates.new") }, ...(list.data?.items ?? []).map((item) => ({ value: item.id, label: `${item.name} · ${t(`admin.templates.status.${item.status}`)}` }))]} />
       <Editor key={`${editing}-${current?.version ?? 0}`} template={current} onSaved={() => { void list.refetch(); }} />
