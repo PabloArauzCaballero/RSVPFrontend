@@ -4,7 +4,8 @@ import { colors, spacing } from "@rsvp/design-tokens";
 import { formatNumber } from "@rsvp/i18n";
 import { useMetrics, type MetricTotals, type Provider } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../platform/providers";
-import { ActionButton, ChoiceGroup, ErrorNotice, Field, Loading, Notice, Section, styles } from "../host/ui";
+import { ActionButton, ChoiceGroup, Field, Loading, Notice, Section, styles } from "../host/ui";
+import { PortalErrorNotice as ErrorNotice } from "./errors";
 import { PortalScreen } from "./frame";
 
 const palette = colors.light;

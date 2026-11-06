@@ -1,13 +1,16 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
 import { guestSchema } from "@rsvp/forms";
-import { useGuestGroups, useRegisterGuest } from "@rsvp/query-hooks";
+import { hostGuestsApi, useGuestDefaults, useGuestGroups, useRegisterGuest } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
-import { ActionButton, ChoiceGroup, ErrorNotice, Field, Notice, Section } from "../ui";
-import { formErrors } from "./parts";
+import { ActionButton, ChoiceGroup, ConfirmDialog, Field, Notice, Section } from "../ui";
+import { FailureNotice, formErrors } from "./parts";
+import { useSingleFlightGate } from "../../platform/single-flight";
+
+type NewGuest = Parameters<ReturnType<typeof useRegisterGuest>["mutate"]>[0];
 
 /** C20 · Add one guest, with validation as you leave the field and on save (REQ-F16-02). The group is chosen here: the contract assigns it at creation. */
 
@@ -20,17 +23,51 @@ function Form({ celebrationId, onNavigate, groupId }: { readonly celebrationId: 
   const [group, setGroup] = useState<string>(groupId ?? "");
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [saved, setSaved] = useState(false);
+  const [duplicate, setDuplicate] = useState<{ readonly name: string; readonly input: NewGuest } | null>(null);
+  const [checking, setChecking] = useState(false);
+  const defaults = useGuestDefaults(client, celebrationId);
+  const flight = useSingleFlightGate();
+  // The celebration's default companions pre-fill the field once, and never over something the host already typed.
+  const defaultCompanions = defaults.data?.defaultAllowedCompanions;
+  const applied = useRef(false);
+  useEffect(() => {
+    if (defaultCompanions === undefined || applied.current) return;
+    applied.current = true;
+    setDraft((current) => (current.allowedCompanions === "0" ? { ...current, allowedCompanions: String(defaultCompanions) } : current));
+  }, [defaultCompanions]);
   const parsed = guestSchema.safeParse({ ...draft, ...(group ? { groupId: group } : {}) });
   const errors = parsed.success ? {} : formErrors(parsed.error.issues, t);
   const shown = (field: string): string | undefined => (touched[field] ? errors[field] : undefined);
   const touch = (field: string) => setTouched((current) => ({ ...current, [field]: true }));
   const groups = groupList.data?.items ?? [];
 
+  const send = (input: NewGuest): void => {
+    setDuplicate(null);
+    register.mutate(input, {
+      onSuccess: () => { setSaved(true); setDraft({ name: "", email: "", phone: "", allowedCompanions: draft.allowedCompanions }); setTouched({}); },
+      onSettled: flight.end
+    });
+  };
+  /** The backend accepts the same contact twice; a double entry is almost always a slip, so ask before creating it. */
+  const findDuplicate = async (input: { readonly email?: string | null; readonly phone?: string | null }): Promise<string | null> => {
+    const contact = input.email ?? input.phone;
+    if (!contact) return null;
+    try {
+      const found = await hostGuestsApi(client).list(celebrationId, { search: contact, limit: 5 });
+      const same = found.items.find((item) => (input.email && item.email?.toLowerCase() === input.email.toLowerCase()) || (input.phone && item.phone === input.phone));
+      return same?.name ?? null;
+    } catch { return null; }
+  };
   const submit = (): void => {
     setTouched({ name: true, email: true, phone: true, allowedCompanions: true });
-    if (!parsed.success) return;
-    register.mutate({ name: parsed.data.name, ...(parsed.data.email ? { email: parsed.data.email } : {}), ...(parsed.data.phone ? { phone: parsed.data.phone } : {}), allowedCompanions: parsed.data.allowedCompanions, ...(parsed.data.groupId ? { groupId: parsed.data.groupId } : {}) }, {
-      onSuccess: () => { setSaved(true); setDraft({ name: "", email: "", phone: "", allowedCompanions: draft.allowedCompanions }); setTouched({}); }
+    if (!parsed.success || !flight.begin()) return;
+    const input = { name: parsed.data.name, ...(parsed.data.email ? { email: parsed.data.email } : {}), ...(parsed.data.phone ? { phone: parsed.data.phone } : {}), allowedCompanions: parsed.data.allowedCompanions, ...(parsed.data.groupId ? { groupId: parsed.data.groupId } : {}) };
+    setChecking(true);
+    void findDuplicate(input).then((name) => {
+      setChecking(false);
+      if (name === null) { send(input); return; }
+      flight.end();
+      setDuplicate({ name, input });
     });
   };
   return (
@@ -41,11 +78,13 @@ function Form({ celebrationId, onNavigate, groupId }: { readonly celebrationId: 
         <Field label={t("guests.form.phone")} help={t("guests.form.phoneHelp")} keyboardType="phone-pad" value={draft.phone} error={shown("phone")} onChange={(phone) => { setSaved(false); touch("phone"); setDraft({ ...draft, phone }); }} testID="guest-phone" />
         <Field label={t("guests.form.companions")} help={t("guests.form.companionsHelp")} keyboardType="number-pad" value={draft.allowedCompanions} error={shown("allowedCompanions")} onChange={(allowedCompanions) => { setSaved(false); touch("allowedCompanions"); setDraft({ ...draft, allowedCompanions }); }} />
         {groups.length ? <ChoiceGroup label={t("guests.form.group")} value={group} onChange={setGroup} choices={[{ value: "", label: t("guests.form.noGroup") }, ...groups.map((item) => ({ value: item.id, label: item.name }))]} /> : null}
-        <ErrorNotice error={register.error} />
+        <FailureNotice error={register.error} onRetry={submit} />
         {saved ? <Notice kind="success">{t("guests.form.saved")}</Notice> : null}
-        <ActionButton label={register.isPending ? t("guests.form.saving") : t("guests.form.save")} busy={register.isPending} onPress={submit} testID="save-guest" />
+        <ActionButton label={register.isPending || checking ? t("guests.form.saving") : t("guests.form.save")} busy={register.isPending || checking} onPress={submit} testID="save-guest" />
         <ActionButton variant="secondary" label={t("guests.form.back")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.guests, celebrationId))} />
       </Section>
+      <ConfirmDialog visible={duplicate !== null} title={t("guests.form.duplicateTitle")} body={t("guests.form.duplicateBody", { name: duplicate?.name ?? "" })} confirmLabel={t("guests.form.duplicateConfirm")}
+        onConfirm={() => { if (duplicate && flight.begin()) send(duplicate.input); }} onCancel={() => setDuplicate(null)} />
     </View>
   );
 }

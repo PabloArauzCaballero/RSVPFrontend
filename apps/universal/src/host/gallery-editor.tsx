@@ -4,7 +4,8 @@ import { useDeleteMedia, useMediaAssets, useReorderMedia, useUploadMedia, type M
 import { pickImage as defaultPick, type PickedImage } from "../platform/pick-image";
 import { useApiClient, useT } from "../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "./gate";
-import { ActionButton, ErrorNotice, Loading, Notice, styles } from "./ui";
+import { CelebrationErrorNotice } from "./celebration-errors";
+import { ActionButton, ConfirmDialog, Loading, Notice, styles } from "./ui";
 
 /** C12 · Upload straight to object storage with progress, reorder and choose the cover (REQ-F11-05). */
 
@@ -37,12 +38,15 @@ function Gallery({ celebrationId, pick }: { readonly celebrationId: string; read
   const remove = useDeleteMedia(client, celebrationId);
   const [progress, setProgress] = useState<{ readonly name: string; readonly fraction: number } | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
+  const [toDelete, setToDelete] = useState<string | null>(null);
+  const [done, setDone] = useState<string | null>(null);
   const items: readonly MediaAsset[] = (assets.data?.items ?? []).filter((asset) => asset.status === "PROCESSED");
   const ids = items.map((asset) => asset.id);
   const cover = items.find((asset) => asset.isCover)?.id ?? null;
 
   const add = async (): Promise<void> => {
     setProblem(null);
+    setDone(null);
     const image = await pick();
     if (!image) return;
     const issue = imageProblem(image);
@@ -64,7 +68,8 @@ function Gallery({ celebrationId, pick }: { readonly celebrationId: string; read
         </View>
       ) : null}
       {problem ? <Notice kind="error">{problem}</Notice> : null}
-      <ErrorNotice error={assets.error ?? reorder.error ?? remove.error} />
+      <CelebrationErrorNotice error={upload.error ?? assets.error ?? reorder.error ?? remove.error} onReload={() => { void assets.refetch(); }} />
+      {done ? <Notice kind="success">{done}</Notice> : null}
       {assets.isPending ? <Loading /> : null}
       {assets.isSuccess && !items.length ? <Notice>{t("host.gallery.empty")}</Notice> : null}
       {items.map((asset, index) => (
@@ -73,14 +78,16 @@ function Gallery({ celebrationId, pick }: { readonly celebrationId: string; read
           <View style={{ flex: 1, gap: 8 }}>
             <Text style={styles.body}>{t("host.gallery.photo", { n: index + 1 })}{asset.id === cover ? ` · ${t("host.gallery.cover")}` : ""}</Text>
             <View style={styles.row}>
-              <ActionButton variant="secondary" label={t("host.common.moveUp")} disabled={!index} onPress={() => reorder.mutate({ assetIds: move(ids, index, -1), coverAssetId: cover })} />
-              <ActionButton variant="secondary" label={t("host.common.moveDown")} disabled={index === items.length - 1} onPress={() => reorder.mutate({ assetIds: move(ids, index, 1), coverAssetId: cover })} />
-              {asset.id === cover ? null : <ActionButton variant="secondary" label={t("host.gallery.makeCover")} onPress={() => reorder.mutate({ assetIds: ids, coverAssetId: asset.id })} />}
-              <ActionButton variant="danger" label={t("host.gallery.delete")} onPress={() => remove.mutate(asset.id)} />
+              <ActionButton variant="secondary" label={t("host.common.moveUp")} disabled={!index} busy={reorder.isPending} onPress={() => reorder.mutate({ assetIds: move(ids, index, -1), coverAssetId: cover }, { onSuccess: () => setDone(t("host.gallery.orderSaved")) })} />
+              <ActionButton variant="secondary" label={t("host.common.moveDown")} disabled={index === items.length - 1} busy={reorder.isPending} onPress={() => reorder.mutate({ assetIds: move(ids, index, 1), coverAssetId: cover }, { onSuccess: () => setDone(t("host.gallery.orderSaved")) })} />
+              {asset.id === cover ? null : <ActionButton variant="secondary" label={t("host.gallery.makeCover")} testID={`cover-${asset.id}`} onPress={() => reorder.mutate({ assetIds: ids, coverAssetId: asset.id }, { onSuccess: () => setDone(t("host.gallery.orderSaved")) })} />}
+              <ActionButton variant="danger" label={t("host.gallery.delete")} testID={`delete-${asset.id}`} onPress={() => { remove.reset(); setToDelete(asset.id); }} />
             </View>
           </View>
         </View>
       ))}
+      <ConfirmDialog visible={toDelete !== null} danger title={t("host.gallery.deleteTitle")} body={t("host.gallery.deleteBody")} confirmLabel={t("host.gallery.delete")} onCancel={() => setToDelete(null)}
+        onConfirm={() => { const id = toDelete; setToDelete(null); if (id) remove.mutate(id, { onSuccess: () => setDone(t("host.gallery.deleted")) }); }} />
     </View>
   );
 }
@@ -88,7 +95,7 @@ function Gallery({ celebrationId, pick }: { readonly celebrationId: string; read
 export function GalleryEditorScreen({ celebrationId, onNavigate, pick = defaultPick }: ScreenProps & { readonly pick?: () => Promise<PickedImage | null> }): ReactNode {
   const t = useT();
   return (
-    <CelebrationScreen celebrationId={celebrationId} onNavigate={onNavigate} current="gallery" title={t("host.gallery.title")}>
+    <CelebrationScreen celebrationId={celebrationId} onNavigate={onNavigate} current="gallery" editable title={t("host.gallery.title")}>
       {({ celebration }) => <Gallery celebrationId={celebration.id} pick={pick} />}
     </CelebrationScreen>
   );

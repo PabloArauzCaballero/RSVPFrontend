@@ -257,7 +257,7 @@ describe("REQ-F16-05/06 · C23 detail and personal link", () => {
   it("unknown guest: 404 reads as not found", async () => {
     const { mock, client } = world();
     renderApp(<GuestDetailScreen celebrationId={mock.celebrationId} guestId="00000000-0000-4000-8000-00000000ffff" onNavigate={navigate} />, client);
-    expect(await screen.findByText(/No encontramos esta celebración o no tienes acceso/)).toBeTruthy();
+    expect(await screen.findByText(/No encontramos a este invitado/)).toBeTruthy();
   });
 });
 

@@ -1,5 +1,11 @@
 /** Gestión de invitados, resumen RSVP, solicitudes de acompañantes y avisos del anfitrión (F16–F18). */
 export const guestsEsBO = {
+  errors: {
+    rateLimited: "Hay demasiadas solicitudes seguidas. Espera un momento e inténtalo de nuevo.",
+    rateLimitedWait: "Hay demasiadas solicitudes seguidas. Vuelve a intentarlo en {{seconds}} s.",
+    unavailable: "El servicio no está disponible por ahora. Tus datos siguen aquí: inténtalo de nuevo en unos minutos.",
+    offline: "No hay conexión con el servidor. Revisa tu internet e inténtalo de nuevo; tus datos siguen aquí."
+  },
   nav: { summary: "Resumen", guests: "Invitados", report: "Reporte RSVP", requests: "Acompañantes", notifications: "Avisos", preferences: "Preferencias de avisos" },
   status: { PENDING: "Sin responder", CONFIRMED: "Confirmó", DECLINED: "No asistirá" },
   fresh: {
@@ -11,10 +17,11 @@ export const guestsEsBO = {
     title: "Invitados", search: "Buscar por nombre o correo", filterLabel: "Filtrar por respuesta", all: "Todos",
     empty: "Todavía no hay invitados. Agrega el primero o importa tu lista desde un CSV.", emptyFiltered: "Ningún invitado coincide con esta búsqueda.",
     add: "Agregar invitado", import: "Importar CSV", groups: "Grupos", page: "Mostrando {{from}}–{{to}} de {{total}}", prev: "Anterior", next: "Siguiente",
-    companions: "{{count}} acompañantes permitidos", open: "Abrir a {{name}}", retry: "Reintentar"
+    companions: "Acompañantes permitidos: {{count}}", open: "Abrir a {{name}}", retry: "Reintentar", settings: "Ajustes de invitados", groupFilter: "Filtrar por grupo", allGroups: "Todos los grupos"
   },
   form: {
     title: "Agregar invitado", name: "Nombre", email: "Correo electrónico", emailHelp: "Se usa para enviarle su invitación.", companions: "Acompañantes permitidos", companionsHelp: "Cuántas personas más puede traer sin pedir aprobación.",
+    duplicateTitle: "¿Agregar de todos modos?", duplicateBody: "Ya hay un invitado con este mismo contacto: {{name}}. Si lo agregas, tendrás dos fichas y dos enlaces distintos.", duplicateConfirm: "Agregar de todos modos",
     group: "Grupo familiar", noGroup: "Sin grupo", save: "Guardar invitado", saving: "Guardando…", saved: "Invitado agregado.", another: "Agregar otro", back: "Volver a la lista",
     phone: "Teléfono (WhatsApp)", phoneHelp: "Opcional si escribes un correo. Con código de país.",
     errors: { contact: "Escribe un correo o un teléfono.", phone: "Escribe el teléfono con código de país, por ejemplo +59171234567.", companions: "Escribe un número entero, de 0 en adelante.", tooLong: "El texto es demasiado largo.", required: "Este campo es obligatorio.", email: "Escribe un correo válido, por ejemplo nombre@correo.com." }
@@ -22,7 +29,7 @@ export const guestsEsBO = {
   import: {
     title: "Importar invitados", intro: "Pega el contenido de tu CSV o elige el archivo. La primera fila debe ser:", header: "name,email,phone,locale,allowedCompanions,groupId",
     headerNote: "groupId es opcional. Escribe al menos un correo o un teléfono (con código de país) por fila. Hasta 1000 filas. Las filas válidas se importan aunque otras tengan errores.", csvLabel: "Contenido del CSV", chooseFile: "Elegir archivo CSV",
-    run: "Importar", running: "Importando…", empty: "Pega o elige un CSV primero.", fileTooBig: "El archivo supera 1 MB.", result: "Resultado de la importación",
+    run: "Importar", running: "Importando…", empty: "Pega o elige un CSV primero.", fileTooBig: "El archivo supera 1 MB.", tooManyRows: "El CSV tiene más de 1000 filas. Divídelo en archivos más pequeños.", result: "Resultado de la importación",
     summary: "{{imported}} importados, {{failed}} con error, de {{total}} filas.", errorsTitle: "Filas con error", line: "Línea {{line}}", field: "Campo: {{field}}", none: "Todas las filas se importaron.", again: "Importar otro archivo", viewList: "Ver invitados"
   },
   groups: {
@@ -31,6 +38,10 @@ export const guestsEsBO = {
   },
   detail: {
     title: "Invitado", groupTitle: "Grupo familiar", groupNone: "Sin grupo", groupSaved: "Grupo actualizado.", phone: "Teléfono", email: "Correo", companions: "Acompañantes permitidos", locale: "Idioma", group: "Grupo", consent: "Consentimiento dado el {{date}}", missing: "No encontramos a este invitado.",
+    erase: {
+      title: "Eliminar invitado", intro: "Borra a este invitado, su enlace y sus respuestas de esta celebración. No se puede deshacer.",
+      action: "Eliminar invitado", confirmTitle: "¿Eliminar a {{name}}?", confirmBody: "Se borran sus datos personales, su enlace y sus respuestas. Los avisos y reportes dejarán de incluirlo. Esta acción no se puede deshacer.", confirm: "Eliminar para siempre"
+    },
     link: {
       title: "Enlace personal", intro: "Cada invitado tiene un enlace único. Cópialo o compártelo: no se muestra completo para que nadie lo vea en una pantalla compartida.",
       none: "Aún no generaste un enlace para este invitado.", issue: "Generar enlace", reissue: "Reemitir enlace", revoke: "Revocar enlace", copy: "Copiar enlace", copied: "Enlace copiado.", copyFailed: "No pudimos copiar. Usa Compartir.",
@@ -38,6 +49,13 @@ export const guestsEsBO = {
       once: "Por seguridad, el enlace completo solo existe en esta pantalla mientras no la cierres. Si lo pierdes, reemítelo.",
       revokeTitle: "¿Revocar este enlace?", revokeBody: "El invitado dejará de poder abrirlo de inmediato. Puedes generar uno nuevo cuando quieras.", reissueTitle: "¿Reemitir el enlace?", reissueBody: "El enlace anterior dejará de funcionar y se generará uno nuevo.", revoked: "Enlace revocado.", working: "Un momento…"
     }
+  },
+  settings: {
+    title: "Ajustes de invitados", save: "Guardar",
+    defaultsTitle: "Acompañantes por defecto", defaultsIntro: "Cuántos acompañantes se permiten a cada invitado nuevo. Puedes cambiarlo en cada ficha al agregar.", defaultCompanions: "Acompañantes por defecto", defaultCompanionsHelp: "Un número entero, de 0 en adelante.", defaultsSaved: "Guardado: {{count}} acompañantes por defecto.",
+    retentionTitle: "Conservación de datos", retentionIntro: "Después de este plazo, contado desde el registro de cada invitado, sus datos personales se eliminan.", retentionCurrent: "Los datos se conservan {{count}} días desde el registro.", retentionNone: "Sin plazo definido: los datos se conservan hasta que los elimines.",
+    retentionDays: "Días de conservación", retentionHelp: "De 1 a 36500. Déjalo vacío para no definir un plazo.", retentionInvalid: "Escribe un número entero entre 1 y 36500.", retentionSaved: "Plazo de conservación guardado.", retentionClear: "Quitar el plazo",
+    retentionConfirmTitle: "¿Guardar este plazo?", retentionConfirmBody: "Los datos de cada invitado se eliminarán {{count}} días después de su registro. Esto no se puede deshacer.", clearTitle: "¿Quitar el plazo?", clearBody: "Los datos de los invitados se conservarán hasta que los elimines tú."
   },
   summary: {
     title: "Resumen de invitados", headline: "{{confirmed}} de {{total}} confirmaron", confirmed: "Confirmados", pending: "Sin responder", declined: "No asisten", companions: "Acompañantes", total: "Invitados",
@@ -69,6 +87,12 @@ export const guestsEsBO = {
   push: {
     title: "Avisos push en este dispositivo", intro: "Te avisamos cuando alguien confirme o pida acompañantes. Puedes desactivarlos cuando quieras desde Preferencias de avisos.",
     enable: "Activar avisos push", registering: "Activando…", enabled: "Este dispositivo recibirá avisos push.", denied: "Los avisos están bloqueados. Actívalos en los ajustes del sistema para este app.", openSettings: "Abrir ajustes",
-    unsupported: "Los avisos push necesitan un teléfono real con la app instalada. Este entorno no los admite.", failed: "No pudimos activar los avisos. Inténtalo de nuevo.", noProject: "Falta configurar el proyecto de notificaciones de la app.", disable: "Quitar este dispositivo", removed: "Dispositivo quitado.", preferences: "Preferencias de avisos"
+    unsupported: "Los avisos push necesitan un teléfono real con la app instalada. Este entorno no los admite.", failed: "No pudimos activar los avisos. Inténtalo de nuevo.", noProject: "Falta configurar el proyecto de notificaciones de la app.", disable: "Quitar este dispositivo", removed: "Dispositivo quitado.", preferences: "Preferencias de avisos",
+    devicesTitle: "Dispositivos registrados", devicesEmpty: "Todavía no hay dispositivos registrados para recibir avisos push.", platform: { ios: "iPhone", android: "Android" },
+    deviceStatus: { ACTIVE: "Activo", REVOKED: "Quitado", INVALID: "Inválido" }, registeredOn: "registrado el {{date}}", inactiveReason: "Este dispositivo ya no recibe avisos; vuelve a activarlo desde el teléfono.",
+    test: "Enviar aviso de prueba", testQueued: "Aviso de prueba en camino.", removeTitle: "¿Quitar este dispositivo?", removeBody: "Dejará de recibir avisos push de esta celebración. Puedes activarlo otra vez desde el teléfono.",
+    deliveriesTitle: "Envíos recientes", deliveriesIntro: "Qué pasó con cada aviso push enviado a tus dispositivos.", deliveriesEmpty: "Todavía no se envió ningún aviso push.",
+    delivery: { PENDING: "En cola", SENDING: "Enviando", TICKETED: "Entregado al servicio de push", ACCEPTED: "Aceptado por el dispositivo", RETRY: "Reintentando", FAILED: "No se pudo enviar", UNCERTAIN: "Sin confirmar", DEFERRED: "Pospuesto", SUPPRESSED: "Omitido según tus preferencias", CANCELLED: "Cancelado" },
+    attempts: "{{count}} intentos · disponible desde {{date}}", lastError: "Detalle: {{detail}}"
   }
 } as const;

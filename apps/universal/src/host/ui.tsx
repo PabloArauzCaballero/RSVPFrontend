@@ -20,6 +20,7 @@ const STATUS_FORBIDDEN = 403;
 const STATUS_NOT_FOUND = 404;
 const STATUS_INVALID = 422;
 const STATUS_BAD_REQUEST = 400;
+const STATUS_TOO_MANY = 429;
 const STATUS_UNAUTHORIZED = 401;
 
 export const styles = StyleSheet.create({
@@ -72,13 +73,17 @@ export interface FieldProps {
   readonly placeholder?: string;
   readonly keyboardType?: KeyboardTypeOptions;
   readonly testID?: string;
+  /** Enter in a single-line field. */
+  readonly onSubmit?: () => void;
+  readonly maxLength?: number;
+  readonly editable?: boolean;
 }
 
-export function Field({ label, value, onChange, help, error, multiline, placeholder, keyboardType, testID }: FieldProps): ReactNode {
+export function Field({ label, value, onChange, help, error, multiline, placeholder, keyboardType, testID, onSubmit, maxLength, editable = true }: FieldProps): ReactNode {
   return (
     <View style={{ gap: spacing[1] }}>
-      <Input label={label} accessibilityHint={help} value={value} onChangeText={onChange} placeholder={placeholder} keyboardType={keyboardType} testID={testID} error={error}
-        multiline={multiline} style={multiline ? { minHeight: MULTILINE_HEIGHT, paddingVertical: spacing[2], textAlignVertical: "top" } : undefined} />
+      <Input label={label} accessibilityHint={help} value={value} onChangeText={onChange} placeholder={placeholder} keyboardType={keyboardType} testID={testID} error={error} state={editable ? "default" : "disabled"}
+        multiline={multiline} maxLength={maxLength} autoCapitalize={keyboardType === "email-address" ? "none" : undefined} autoCorrect={keyboardType === "email-address" ? false : undefined} onSubmitEditing={multiline ? undefined : onSubmit} returnKeyType={onSubmit && !multiline ? "go" : undefined} style={multiline ? { minHeight: MULTILINE_HEIGHT, paddingVertical: spacing[2], textAlignVertical: "top" } : undefined} />
       {help ? <Text style={styles.muted}>{help}</Text> : null}
     </View>
   );
@@ -86,7 +91,7 @@ export function Field({ label, value, onChange, help, error, multiline, placehol
 
 export interface Choice<TValue extends string> { readonly value: TValue; readonly label: string; readonly description?: string }
 
-export function ChoiceGroup<TValue extends string>({ label, choices, value, onChange }: { readonly label: string; readonly choices: readonly Choice<TValue>[]; readonly value: TValue | null; readonly onChange: (value: TValue) => void }): ReactNode {
+export function ChoiceGroup<TValue extends string>({ label, choices, value, onChange, disabled = false }: { readonly label: string; readonly choices: readonly Choice<TValue>[]; readonly value: TValue | null; readonly onChange: (value: TValue) => void; /** Blocks changes while a request that depends on the choice is in flight. */ readonly disabled?: boolean }): ReactNode {
   // Short labels read as one wrapped row of options; a choice that needs an explanation gets its own row.
   const described = choices.some((choice) => choice.description);
   return (
@@ -96,7 +101,7 @@ export function ChoiceGroup<TValue extends string>({ label, choices, value, onCh
         {choices.map((choice) => {
           const selected = choice.value === value;
           return (
-            <Pressable key={choice.value} accessibilityRole="radio" aria-checked={selected} accessibilityLabel={choice.label} onPress={() => onChange(choice.value)} style={[described ? styles.option : styles.choice, selected && (described ? styles.optionSelected : styles.choiceSelected)]}>
+            <Pressable key={choice.value} accessibilityRole="radio" aria-checked={selected} aria-disabled={disabled} disabled={disabled} accessibilityLabel={choice.label} onPress={() => onChange(choice.value)} style={[described ? styles.option : styles.choice, selected && (described ? styles.optionSelected : styles.choiceSelected), disabled && styles.buttonDisabled]}>
               <Text style={[styles.body, selected && { fontWeight: "700" }]}>{choice.label}</Text>
               {choice.description ? <Text style={styles.muted}>{choice.description}</Text> : null}
             </Pressable>
@@ -108,9 +113,9 @@ export function ChoiceGroup<TValue extends string>({ label, choices, value, onCh
 }
 
 /** An on/off option in a group (destinations, weekdays). On is the filled outline, a drawn tick and a heavier label: never colour alone. */
-export function ToggleChip({ label, on, onPress, testID }: { readonly label: string; readonly on: boolean; readonly onPress: () => void; readonly testID?: string }): ReactNode {
+export function ToggleChip({ label, on, onPress, testID, disabled = false }: { readonly label: string; readonly on: boolean; readonly onPress: () => void; readonly testID?: string; readonly disabled?: boolean }): ReactNode {
   return (
-    <Pressable role="checkbox" aria-checked={on} accessibilityLabel={label} onPress={onPress} {...(testID ? { testID } : {})} style={[styles.choice, { flexDirection: "row", alignItems: "center", gap: spacing[2] }, on && styles.choiceSelected]}>
+    <Pressable role="checkbox" aria-checked={on} aria-disabled={disabled} disabled={disabled} accessibilityLabel={label} onPress={onPress} {...(testID ? { testID } : {})} style={[styles.choice, { flexDirection: "row", alignItems: "center", gap: spacing[2] }, on && styles.choiceSelected, disabled && styles.buttonDisabled]}>
       {on ? <View style={{ width: 5, height: 10, marginTop: -2, borderRightWidth: 2, borderBottomWidth: 2, borderColor: palette.primary, transform: [{ rotate: "45deg" }] }} /> : null}
       <Text style={[styles.body, on && { fontWeight: "700" }]}>{label}</Text>
     </Pressable>
@@ -128,20 +133,30 @@ export function Notice({ kind = "info", children }: PropsWithChildren<{ readonly
 }
 
 /** Translates an API failure into what the person can do about it. */
+const SERVER_ERROR_CLASS = 5;
+const isServerError = (status: number): boolean => Math.floor(status / 100) === SERVER_ERROR_CLASS;
+/** 409 codes that are not "someone saved first": each has its own wording under `host.errors`. */
+const CONFLICT_CODE_KEY: Readonly<Record<string, string>> = { SLUG_TAKEN: "slugTaken", SLUG_IMMUTABLE: "slugImmutable", CELEBRATION_ARCHIVED: "archived", INVALID_TRANSITION: "invalidTransition" };
+
 export function errorMessage(error: unknown, t: ReturnType<typeof useT>): string {
-  if (!(error instanceof ApiError)) return t("host.common.error");
+  if (!(error instanceof ApiError)) return error instanceof TypeError ? t("host.errors.network") : t("host.common.error");
+  const conflictKey = error.status === STATUS_CONFLICT ? CONFLICT_CODE_KEY[error.problem?.code ?? ""] : undefined;
+  if (conflictKey) return t(`host.errors.${conflictKey}`);
+  if (isServerError(error.status)) return t("host.errors.server");
   const byStatus: Readonly<Record<number, () => string>> = {
     [STATUS_UNAUTHORIZED]: () => t("errors.unauthorized"),
     [STATUS_CONFLICT]: () => t("host.common.conflict"),
     [STATUS_FORBIDDEN]: () => t("host.common.forbidden"),
     [STATUS_NOT_FOUND]: () => t("host.common.notFound"),
     [STATUS_INVALID]: () => t("host.common.invalid", { detail: error.problem?.title ?? "" }),
-    [STATUS_BAD_REQUEST]: () => t("host.common.invalid", { detail: error.problem?.title ?? "" })
+    [STATUS_BAD_REQUEST]: () => t("host.common.invalid", { detail: error.problem?.title ?? "" }),
+    [STATUS_TOO_MANY]: () => (error.retryAfterSeconds ? t("errors.tooManyWait", { seconds: Math.ceil(error.retryAfterSeconds) }) : t("errors.tooMany"))
   };
   return byStatus[error.status]?.() ?? t("host.common.error");
 }
 
-export const isConflict = (error: unknown): boolean => error instanceof ApiError && error.status === STATUS_CONFLICT;
+/** A stale-version conflict (the reload makes sense); other 409 codes are final answers about the request itself. */
+export const isConflict = (error: unknown): boolean => error instanceof ApiError && error.status === STATUS_CONFLICT && !CONFLICT_CODE_KEY[error.problem?.code ?? ""];
 
 export const isUnauthorized = (error: unknown): boolean => error instanceof ApiError && error.status === STATUS_UNAUTHORIZED;
 
@@ -168,18 +183,19 @@ export function Loading(): ReactNode {
   return <View style={{ padding: spacing[4] }}><ActivityIndicator aria-label={t("host.common.loading")} color={palette.primary} /></View>;
 }
 
-export function ConfirmDialog({ visible, title, body, confirmLabel, danger, onConfirm, onCancel, children }: PropsWithChildren<{ readonly visible: boolean; readonly title: string; readonly body: string; readonly confirmLabel: string; readonly danger?: boolean; readonly onConfirm: () => void; readonly onCancel: () => void }>): ReactNode {
+/** `busy` shows the confirm button as loading and refuses a second confirm, Cancel and Escape until the request ends. */
+export function ConfirmDialog({ visible, title, body, confirmLabel, danger, busy = false, confirmTestID, cancelTestID, onConfirm, onCancel, children }: PropsWithChildren<{ readonly visible: boolean; readonly title: string; readonly body: string; readonly confirmLabel: string; readonly danger?: boolean; readonly busy?: boolean; readonly confirmTestID?: string; readonly cancelTestID?: string; readonly onConfirm: () => void; readonly onCancel: () => void }>): ReactNode {
   const t = useT();
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={busy ? () => undefined : onCancel}>
       <View style={styles.overlay}>
         <View accessibilityViewIsModal accessibilityRole="alert" style={styles.dialog}>
           <Text accessibilityRole="header" style={styles.subtitle}>{title}</Text>
           <Text style={styles.body}>{body}</Text>
           {children}
           <View style={styles.row}>
-            <ActionButton label={confirmLabel} variant={danger ? "danger" : "primary"} onPress={onConfirm} />
-            <ActionButton label={t("host.common.cancel")} variant="secondary" onPress={onCancel} />
+            <ActionButton label={confirmLabel} variant={danger ? "danger" : "primary"} busy={busy} onPress={onConfirm} {...(confirmTestID ? { testID: confirmTestID } : {})} />
+            <ActionButton label={t("host.common.cancel")} variant="secondary" disabled={busy} onPress={onCancel} {...(cancelTestID ? { testID: cancelTestID } : {})} />
           </View>
         </View>
       </View>

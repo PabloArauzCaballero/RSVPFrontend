@@ -21,12 +21,20 @@ export function wallClockAt(celebration: Pick<Celebration, "localTimes">, path: 
   return local ? { date: local.date, time: local.time } : EMPTY;
 }
 
+/** YYYY-MM-DD that exists in the calendar (rejects 2027-13-45 and 2027-02-30). */
+export function isCalendarDate(value: string): boolean {
+  if (!DATE.test(value)) return false;
+  const [year, month, day] = value.split("-").map(Number) as [number, number, number];
+  const parsed = new Date(Date.UTC(year, month - 1, day));
+  return parsed.getUTCFullYear() === year && parsed.getUTCMonth() === month - 1 && parsed.getUTCDate() === day;
+}
+
 export type WallClockResult = { readonly ok: true; readonly value: string | null } | { readonly ok: false };
 
 /** Both empty → no value; both valid → YYYY-MM-DDTHH:mm; anything else is invalid. */
 export function toWallClock({ date, time }: WallClock): WallClockResult {
   if (!date.trim() && !time.trim()) return { ok: true, value: null };
-  return DATE.test(date.trim()) && TIME.test(time.trim()) ? { ok: true, value: `${date.trim()}T${time.trim()}` } : { ok: false };
+  return isCalendarDate(date.trim()) && TIME.test(time.trim()) ? { ok: true, value: `${date.trim()}T${time.trim()}` } : { ok: false };
 }
 
 /** Top-level keys whose value changed; removed keys map to null (the API deletes them). */

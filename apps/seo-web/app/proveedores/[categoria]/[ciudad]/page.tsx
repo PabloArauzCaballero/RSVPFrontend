@@ -38,7 +38,7 @@ export default async function CategoryCityPage({ params, searchParams }: Props) 
   const found = await resolve(params);
   if (!found) notFound();
   const page = pageParam((await searchParams).page);
-  const results = await searchProviders({ category: found.category.code, city: found.city.name, verifiedOnly: true, page });
+  const results = await searchProviders({ category: found.category.code, city: found.city.slug, verifiedOnly: true, page });
   const name = t(`directory.category.${found.category.code}`);
   const values = { category: name, city: found.city.name };
   return (

@@ -31,8 +31,8 @@ export function PartnerMicrosite({ partner, t, locale }: { readonly partner: Par
       <header className="partner-hero">
         {partner.imageUrl ? <img src={partner.imageUrl} alt="" width={960} height={540} decoding="async" fetchPriority="high" /> : null}
         <div>
-          <p className="partner-eyebrow">{category} · {partner.city}</p>
           <h1>{partner.name}</h1>
+          <p className="partner-eyebrow">{category} · {partner.city}</p>
           <p className="directory-verified">{t("directory.verified")}</p>
         </div>
       </header>

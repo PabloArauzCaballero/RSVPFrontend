@@ -10,7 +10,25 @@ export const hostEsBO = {
     accessDenied: "Esta sección es solo para anfitriones y planners.",
     invalid: "Revisa este dato: {{detail}}",
     noCelebration: "Elige una celebración para continuar.",
-    chooseCelebration: "Elegir celebración"
+    chooseCelebration: "Elegir celebración",
+    archivedReadOnly: "Esta celebración está archivada: solo se puede consultar. Para seguir editando, crea una celebración nueva."
+  },
+  errors: {
+    slugTaken: "Esa dirección ya la usa otra celebración. Elige otra distinta.",
+    slugImmutable: "La dirección ya no se puede cambiar porque el sitio se publicó o se archivó.",
+    archived: "Esta celebración está archivada y ya no admite cambios.",
+    invalidTransition: "Esa acción ya no corresponde al estado actual de la celebración. Actualiza la página para ver el estado vigente.",
+    rateLimited: "Hiciste demasiadas acciones seguidas. Espera {{seconds}} segundos y vuelve a intentarlo; tus cambios siguen aquí.",
+    rateLimitedNoWait: "Hiciste demasiadas acciones seguidas. Espera un momento y vuelve a intentarlo; tus cambios siguen aquí.",
+    server: "El servidor no respondió como esperábamos. Inténtalo de nuevo en unos minutos; tus cambios siguen aquí.",
+    network: "No hay conexión con el servidor. Revisa tu internet e inténtalo de nuevo; tus cambios siguen aquí."
+  },
+  limits: {
+    fieldsTooLong: "hay campos que superan el máximo de caracteres.",
+    tooLong: "Quita {{count}} caracteres: el máximo es {{max}}.",
+    slugLength: "La dirección debe tener entre 3 y 80 caracteres.",
+    slugPattern: "Usa solo minúsculas, números y guiones sueltos, sin guion al inicio ni al final.",
+    userId: "Escribe un identificador de usuario válido (formato UUID)."
   },
   navGroups: { guests: "Invitados", gifts: "Regalos", celebration: "Mi celebración", account: "Cuenta" },
   nav: { label: "Secciones del panel", celebrations: "Mis celebraciones", editor: "Contenido", gallery: "Galería", translations: "Traducciones", templates: "Templates", preview: "Vista previa", publish: "Publicar", settings: "Configuración", modes: "Modos de control" },
@@ -28,7 +46,7 @@ export const hostEsBO = {
   editor: {
     title: "Contenido", unsavedHint: "Los cambios no guardados se mantienen si falla la conexión.",
     sections: { general: "Datos generales", hosts: "Anfitriones", venues: "Lugares", story: "Historia", schedule: "Itinerario", sections: "Otras secciones" },
-    general: { title: "Nombre de la celebración", subtitle: "Frase de bienvenida", eventDate: "Fecha", eventTime: "Hora", venueName: "Lugar principal", extraField: "Dato adicional: {{field}}" },
+    general: { slug: "Dirección del sitio", slugLocked: "La dirección ya no se puede cambiar porque el sitio se publicó o se archivó.", title: "Nombre de la celebración", subtitle: "Frase de bienvenida", eventDate: "Fecha", eventTime: "Hora", venueName: "Lugar principal", extraField: "Dato adicional: {{field}}" },
     hosts: { help: "Los roles salen del tipo de evento: {{eventType}}." },
     venues: { name: "Nombre del lugar", address: "Dirección", kind: "Tipo", kinds: { ceremony: "Ceremonia", reception: "Recepción", other: "Otro" }, add: "Agregar lugar", item: "Lugar {{n}}" },
     story: { label: "Su historia", help: "Separa los párrafos con una línea en blanco." },
@@ -38,6 +56,7 @@ export const hostEsBO = {
   gallery: {
     title: "Galería", help: "Las fotos se suben directo al almacenamiento y se generan versiones optimizadas. Formatos JPG, PNG o WebP de hasta 10 MB.",
     add: "Agregar foto", uploading: "Subiendo {{name}}… {{percent}} %", cover: "Portada", makeCover: "Usar como portada", delete: "Eliminar", empty: "Todavía no hay fotos.",
+    deleteTitle: "Eliminar foto", deleteBody: "La foto se quitará de tu sitio. Esta acción no se puede deshacer.", deleted: "Foto eliminada.", orderSaved: "Orden guardado.",
     photo: "Foto {{n}}", invalidType: "Ese archivo no es una imagen JPG, PNG o WebP.", tooLarge: "La imagen supera los 10 MB.", failed: "No se pudo subir {{name}}. Inténtalo de nuevo.",
     unsupportedPlatform: "La subida de fotos está disponible en la versión web y en la app con permiso de galería.", reorderFailed: "No se pudo guardar el nuevo orden."
   },
@@ -47,7 +66,7 @@ export const hostEsBO = {
     fields: { title: "Nombre", subtitle: "Frase de bienvenida", story: "Historia", dressCode: "Código de vestimenta" }, faqItem: "Pregunta {{n}}", scheduleItem: "Actividad {{n}}"
   },
   templates: { title: "Templates", help: "Solo aparecen los compatibles con {{eventType}}.", current: "En uso", apply: "Usar este template", preserved: "Tu contenido se conserva al cambiar de template.", empty: "No hay templates compatibles todavía.", preview: "Vista previa de {{name}}" },
-  preview: { title: "Vista previa", devices: { mobile: "Móvil", tablet: "Tableta", desktop: "Escritorio" }, device: "Tamaño", openPublic: "Abrir el sitio público", notPublished: "Así verán tu sitio cuando lo publiques." },
+  preview: { title: "Vista previa", devices: { mobile: "Móvil", tablet: "Tableta", desktop: "Escritorio" }, device: "Tamaño", openPublic: "Abrir el sitio público", templateFallback: "Mientras tanto la vista previa usa el diseño básico, no el template elegido.", notPublished: "Así verán tu sitio cuando lo publiques." },
   publish: {
     title: "Publicar", ready: "Todo listo para publicar.", missing: "Antes de publicar, completa:",
     fields: { title: "El nombre de la celebración", subtitle: "La frase de bienvenida", eventDate: "La fecha del evento", venueName: "El lugar principal", childName: "El nombre de quien se bautiza", companyName: "El nombre de la empresa", celebrantName: "El nombre de la celebrante", host: "El nombre de: {{role}}", other: "El dato «{{field}}»" },
@@ -58,9 +77,15 @@ export const hostEsBO = {
     share: "Compartir", link: "Enlace público", copy: "Copiar enlace", copied: "Enlace copiado.", whatsappPreview: "Así se verá en WhatsApp"
   },
   settings: {
-    title: "Configuración", languages: "Idiomas del sitio", defaultLanguage: "Idioma principal", timeZone: "Zona horaria", currency: "Moneda",
+    title: "Configuración", saved: "Configuración guardada.", languages: "Idiomas del sitio", defaultLanguage: "Idioma principal", timeZone: "Zona horaria", currency: "Moneda",
     deadline: { label: "Fecha límite para confirmar", date: "Fecha (AAAA-MM-DD)", time: "Hora (HH:MM)", help: "Hora local del evento ({{timeZone}}).", none: "Sin fecha límite.", clear: "Quitar fecha límite",
       past: "Esa fecha ya pasó: los invitados ya no podrán responder ni cambiar su respuesta.", effect: "Los invitados podrán responder hasta el {{date}} ({{zone}})." }
+  },
+  settingsExtra: {
+    eventType: { label: "Tipo de celebración", help: "Cambiarlo cambia los anfitriones y los datos que se piden para publicar. Tu contenido se conserva.", locked: "El tipo solo se puede cambiar mientras la celebración es un borrador.", save: "Cambiar tipo" },
+    team: { title: "Equipo", help: "Personas con acceso a esta celebración. Un coanfitrión puede editar; una persona con permiso de lectura solo consulta.", empty: "Por ahora solo tú tienes acceso.",
+      roles: { CO_HOST: "Coanfitrión", VIEWER: "Solo lectura" }, userId: "Identificador de la persona (UUID)", role: "Permiso", add: "Dar acceso", remove: "Quitar acceso", removeTitle: "Quitar acceso", removeBody: "Esta persona dejará de ver tu celebración.", added: "Acceso guardado.", removed: "Acceso quitado." },
+    audit: { title: "Historial de cambios", empty: "Todavía no hay cambios registrados.", item: "{{action}} · {{at}}" }
   },
   modes: {
     title: "Modos de control", help: "Decide qué se aprueba solo y qué pasa por tu revisión. Puedes cambiarlo cuando quieras.",
@@ -73,6 +98,7 @@ export const hostEsBO = {
       extraCompanionMode: { label: "Acompañantes extra", AUTO_ACCEPT: "Si un invitado pide más acompañantes de los que le diste, se aprobarán solos.", RESTRICTED: "Los acompañantes de más quedarán pendientes hasta que los apruebes." },
       externalGiftMode: { label: "Regalos fuera del catálogo", AUTO_ACCEPT: "Los regalos externos que se propongan aparecerán en la lista sin revisión.", RESTRICTED: "Los regalos externos propuestos esperarán tu aprobación antes de aparecer." }
     },
-    partnerPriority: { label: "Destacar regalos de partners", help: "Los regalos de proveedores verificados se muestran primero en tu lista." }
+    saved: "Modo actualizado.",
+    partnerPriority: { enable: "Activar", disable: "Desactivar", label: "Destacar regalos de partners", help: "Los regalos de proveedores verificados se muestran primero en tu lista." }
   }
 } as const;

@@ -5,8 +5,11 @@ import { useCreateGuestGroup, useGuestGroups } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
-import { ActionButton, ErrorNotice, Field, Loading, Notice, Section, styles } from "../ui";
-import { RetryNotice } from "./parts";
+import { ActionButton, Field, Loading, Notice, Section, styles } from "../ui";
+import { FailureNotice, RetryNotice } from "./parts";
+import { useSingleFlightGate } from "../../platform/single-flight";
+
+const MAX_GROUP_NAME = 200;
 
 /**
  * C22 · Family groups (contract v1.9.0: list with member counts, create). A guest is moved between groups from
@@ -21,18 +24,22 @@ function GroupsBody({ celebrationId, onNavigate }: { readonly celebrationId: str
   const [name, setName] = useState("");
   const [problem, setProblem] = useState("");
   const [lastCreated, setLastCreated] = useState("");
+  const flight = useSingleFlightGate();
 
   const submit = (): void => {
-    if (!name.trim()) { setProblem(t("guests.form.errors.required")); return; }
+    const clean = name.trim();
+    if (!clean) { setProblem(t("guests.form.errors.required")); return; }
+    if (clean.length > MAX_GROUP_NAME) { setProblem(t("guests.form.errors.tooLong")); return; }
+    if (!flight.begin()) return;
     setProblem("");
-    create.mutate(name.trim(), { onSuccess: (group) => { setLastCreated(group.name); setName(""); } });
+    create.mutate(clean, { onSuccess: (group) => { setLastCreated(group.name); setName(""); }, onSettled: flight.end });
   };
   return (
     <View style={{ gap: spacing[4] }}>
       <Section title={t("guests.groups.title")}>
         <Text style={styles.body}>{t("guests.groups.intro")}</Text>
         <Field label={t("guests.groups.name")} value={name} onChange={(value) => { setName(value); setProblem(""); setLastCreated(""); }} error={problem || undefined} testID="group-name" />
-        <ErrorNotice error={create.error} />
+        <FailureNotice error={create.error} onRetry={submit} />
         {lastCreated ? <Notice kind="success">{t("guests.groups.created", { name: lastCreated })}</Notice> : null}
         <ActionButton label={create.isPending ? t("guests.groups.creating") : t("guests.groups.create")} busy={create.isPending} onPress={submit} testID="create-group" />
       </Section>

@@ -7,6 +7,7 @@ import { useApiClient, useT } from "../platform/providers";
 import { ActionButton, ConfirmDialog,  Loading, Notice, Section, styles } from "../host/ui";
 import { AdminScreen } from "./admin-screen";
 import { AdminErrorNotice } from "./shared";
+import { useSingleMutation } from "../platform/single-flight";
 
 type Nav = { readonly onNavigate: (href: string) => void };
 
@@ -92,6 +93,7 @@ export function OperationsScreen({ onNavigate }: Nav): ReactNode {
     refetchInterval: 15_000
   });
   const replay = useMutation({ mutationFn: () => celebrationApi(client).replayPublicProjection() });
+  const replayOnce = useSingleMutation(replay);
   const [confirm, setConfirm] = useState(false);
   return (
     <AdminScreen title={t("admin.operations.title")} current="operations" onNavigate={onNavigate}>
@@ -102,13 +104,13 @@ export function OperationsScreen({ onNavigate }: Nav): ReactNode {
       <Section title={t("admin.operations.replay")}>
         <ActionButton label={t("admin.operations.replay")} busy={replay.isPending} onPress={() => setConfirm(true)} testID="replay" />
         {replay.data ? <Notice kind="success">{t("admin.operations.replayDone", { count: replay.data.applied })}</Notice> : null}
-        <AdminErrorNotice error={replay.error} />
+        <AdminErrorNotice error={replay.error} onRetry={() => replayOnce()} />
       </Section>
       <View style={styles.row}>
         <ActionButton variant="secondary" label={t("admin.operations.grafana")} onPress={() => { void Linking.openURL(GRAFANA_URL); }} />
         <ActionButton variant="secondary" label={t("admin.operations.rabbit")} onPress={() => { void Linking.openURL(RABBIT_URL); }} />
       </View>
-      <ConfirmDialog visible={confirm} title={t("admin.operations.replay")} body={t("admin.operations.replayConfirm")} confirmLabel={t("host.common.confirm")} onCancel={() => setConfirm(false)} onConfirm={() => { setConfirm(false); replay.mutate(); }} />
+      <ConfirmDialog visible={confirm} title={t("admin.operations.replay")} body={t("admin.operations.replayConfirm")} confirmLabel={t("host.common.confirm")} onCancel={() => setConfirm(false)} onConfirm={() => { setConfirm(false); replayOnce(); }} />
     </AdminScreen>
   );
 }

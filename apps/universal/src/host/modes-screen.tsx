@@ -3,7 +3,9 @@ import { Text, View } from "react-native";
 import { useUpdateSettings, type ApprovalMode, type Celebration } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "./gate";
-import { ActionButton, ConfirmDialog, ErrorNotice, Notice, Section, styles } from "./ui";
+import { useSingleFlight } from "../platform/single-flight";
+import { CelebrationErrorNotice } from "./celebration-errors";
+import { ActionButton, ConfirmDialog, Notice, Section, styles } from "./ui";
 
 /**
  * C18 · The four AUTO_ACCEPT / RESTRICTED switches. Each one explains what happens before it
@@ -20,13 +22,14 @@ function Modes({ celebration, refetch }: { readonly celebration: Celebration; re
   const t = useT();
   const client = useApiClient();
   const update = useUpdateSettings(client, celebration.id);
+  const once = useSingleFlight();
   const [pending, setPending] = useState<Pending>(null);
   const valueLabel = (value: ApprovalMode): string => t(`host.modes.values.${value}`);
   const confirm = (): void => {
     if (!pending) return;
     const patch = pending.kind === "mode" ? { [pending.key]: pending.value } : { partnerPriorityEnabled: pending.value };
     setPending(null);
-    update.mutate({ target: celebration, patch }, { onSuccess: refetch });
+    once((release) => update.mutate({ target: celebration, patch }, { onSuccess: refetch, onSettled: release }));
   };
   const dialogBody = pending?.kind === "mode" ? t(`host.modes.switches.${pending.key}.${pending.value}`) : t("host.modes.partnerPriority.help");
 
@@ -41,15 +44,16 @@ function Modes({ celebration, refetch }: { readonly celebration: Celebration; re
           <Section key={key} title={t(`host.modes.switches.${key}.label`)}>
             <Text style={styles.label}>{t("host.modes.current", { value: valueLabel(value) })}</Text>
             <Text style={styles.body}>{t(`host.modes.switches.${key}.${value}`)}</Text>
-            <ActionButton variant="secondary" label={t("host.modes.change", { value: valueLabel(next) })} onPress={() => setPending({ kind: "mode", key, value: next })} testID={`switch-${key}`} />
+            <ActionButton variant="secondary" busy={update.isPending} label={t("host.modes.change", { value: valueLabel(next) })} onPress={() => setPending({ kind: "mode", key, value: next })} testID={`switch-${key}`} />
           </Section>
         );
       })}
       <Section title={t("host.modes.partnerPriority.label")}>
         <Text style={styles.body}>{t("host.modes.partnerPriority.help")}</Text>
-        <ActionButton variant="secondary" label={celebration.settings.partnerPriorityEnabled ? t("host.common.remove") : t("host.common.add")} onPress={() => setPending({ kind: "partner", value: !celebration.settings.partnerPriorityEnabled })} />
+        <ActionButton variant="secondary" label={celebration.settings.partnerPriorityEnabled ? t("host.modes.partnerPriority.disable") : t("host.modes.partnerPriority.enable")} testID="switch-partnerPriority" onPress={() => setPending({ kind: "partner", value: !celebration.settings.partnerPriorityEnabled })} />
       </Section>
-      <ErrorNotice error={update.error} onReload={refetch} />
+      {update.isSuccess ? <Notice kind="success">{t("host.modes.saved")}</Notice> : null}
+      <CelebrationErrorNotice error={update.error} onReload={refetch} />
       <ConfirmDialog visible={pending !== null} title={pending?.kind === "mode" ? t("host.modes.confirmTitle", { value: valueLabel(pending.value) }) : t("host.modes.partnerPriority.label")}
         body={dialogBody} confirmLabel={t("host.modes.confirm")} onConfirm={confirm} onCancel={() => setPending(null)}>
         <Notice>{t("host.modes.nonRetroactive")}</Notice>
@@ -61,7 +65,7 @@ function Modes({ celebration, refetch }: { readonly celebration: Celebration; re
 export function ModesScreen({ celebrationId, onNavigate }: ScreenProps): ReactNode {
   const t = useT();
   return (
-    <CelebrationScreen celebrationId={celebrationId} onNavigate={onNavigate} current="modes" title={t("host.modes.title")}>
+    <CelebrationScreen celebrationId={celebrationId} onNavigate={onNavigate} current="modes" editable title={t("host.modes.title")}>
       {({ celebration, refetch }) => <Modes celebration={celebration} refetch={refetch} />}
     </CelebrationScreen>
   );

@@ -8,6 +8,7 @@ import { useApiClient, useLocale, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { ActionButton, ErrorNotice, Loading, Notice, styles } from "../ui";
 import { RetryNotice } from "../guests/parts";
+import { useSingleFlightGate } from "../../platform/single-flight";
 
 /** C25 · Pending reservations: who asked, which gift, approve or reject; a reservation somebody already decided (409) refreshes the list. */
 function InboxBody({ celebrationId, timeZone }: { readonly celebrationId: string; readonly timeZone: string }): ReactNode {
@@ -17,10 +18,13 @@ function InboxBody({ celebrationId, timeZone }: { readonly celebrationId: string
   const reservations = useHostReservations(client, celebrationId, "PENDING_REVIEW");
   const gifts = useGiftList(client, celebrationId);
   const decide = useDecideReservation(client, celebrationId);
+  const flight = useSingleFlightGate();
   const [notice, setNotice] = useState<{ kind: "success" | "info"; text: string } | null>(null);
   const resolve = (reservation: GiftReservation, decision: "approve" | "reject"): void => {
     setNotice(null);
+    if (!flight.begin()) return;
     decide.mutate({ reservationId: reservation.id, decision }, {
+      onSettled: flight.end,
       onSuccess: () => setNotice({ kind: "success", text: decision === "approve" ? t("gifts.host.inbox.approved") : t("gifts.host.inbox.rejected") }),
       onError: (error) => { if (error instanceof ApiError && error.status === 409) setNotice({ kind: "info", text: t("gifts.host.inbox.stale") }); }
     });

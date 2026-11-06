@@ -18,7 +18,8 @@ const FORM_WIDTH = 400;
 const displayFamily = Platform.select({ web: "'Plus Jakarta Sans', 'Avenir Next', 'Segoe UI', system-ui, sans-serif", default: undefined });
 const textFamily = Platform.select({ web: "'Plus Jakarta Sans', 'Avenir Next', 'Segoe UI', system-ui, sans-serif", default: undefined });
 /** react-native-web understands outline styles that the native types do not declare. */
-const focusRing = Platform.select({ web: { outlineColor: palette.primary, outlineWidth: 2, outlineOffset: 2 }, default: {} }) as object;
+export const authFocusRing = Platform.select({ web: { outlineColor: palette.primary, outlineWidth: 2, outlineOffset: 2 }, default: {} }) as object;
+const focusRing = authFocusRing;
 
 export const authStyles = StyleSheet.create({
   root: { flex: 1, backgroundColor: palette.canvas },
@@ -158,9 +159,11 @@ export function AuthField({ label, value, onChange, error, hint, secret = false,
   );
 }
 
-export function SubmitButton({ label, busyLabel, busy, onPress, testID }: { readonly label: string; readonly busyLabel: string; readonly busy: boolean; readonly onPress: () => void; readonly testID?: string }): ReactNode {
+/** `blocked` keeps the label but refuses presses (a 429 cooldown); `busy` also swaps the label. */
+export function SubmitButton({ label, busyLabel, busy, blocked = false, onPress, testID }: { readonly label: string; readonly busyLabel: string; readonly busy: boolean; readonly blocked?: boolean; readonly onPress: () => void; readonly testID?: string }): ReactNode {
+  const unavailable = busy || blocked;
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={busy ? busyLabel : label} aria-busy={busy} aria-disabled={busy} disabled={busy} onPress={onPress} testID={testID} style={[authStyles.primary, busy && authStyles.primaryBusy, focusRing]}>
+    <Pressable accessibilityRole="button" accessibilityLabel={busy ? busyLabel : label} aria-busy={busy} aria-disabled={unavailable} disabled={unavailable} onPress={onPress} testID={testID} style={[authStyles.primary, unavailable && authStyles.primaryBusy, focusRing]}>
       <Text style={authStyles.primaryText}>{busy ? busyLabel : label}</Text>
     </Pressable>
   );

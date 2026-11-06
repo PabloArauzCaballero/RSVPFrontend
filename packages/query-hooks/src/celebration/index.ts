@@ -47,6 +47,15 @@ export function useSelectTemplate(client: ApiClient, id: string) {
   const invalidate = useInvalidate();
   return useMutation({ mutationFn: ({ target, templateId }: { readonly target: Versioned; readonly templateId: string }) => celebrationApi(client).selectTemplate(target, templateId), onSuccess: () => invalidate(invalidation.celebrationChanged(id)) });
 }
+/** Grants or changes a collaborator's role (CO_HOST edits, VIEWER only reads). Sends the version as If-Match. */
+export function useSetCollaborator(client: ApiClient, id: string) {
+  const invalidate = useInvalidate();
+  return useMutation({ mutationFn: ({ target, userId, role }: { readonly target: Versioned; readonly userId: string; readonly role: "CO_HOST" | "VIEWER" }) => celebrationApi(client).setCollaborator(target, userId, role), onSuccess: () => invalidate(invalidation.celebrationChanged(id)) });
+}
+export function useRemoveCollaborator(client: ApiClient, id: string) {
+  const invalidate = useInvalidate();
+  return useMutation({ mutationFn: ({ target, userId }: { readonly target: Versioned; readonly userId: string }) => celebrationApi(client).removeCollaborator(target, userId), onSuccess: () => invalidate(invalidation.celebrationChanged(id)) });
+}
 export function useAuditLog(client: ApiClient, id: string) {
   return useQuery({ queryKey: queryKeys.celebration.audit(id), queryFn: () => celebrationApi(client).audit(id), ...cachePolicy.celebration, enabled: Boolean(id) });
 }

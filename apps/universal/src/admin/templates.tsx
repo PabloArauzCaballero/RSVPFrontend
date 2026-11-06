@@ -9,6 +9,7 @@ import { ActionButton, ChoiceGroup, ConfirmDialog,  Field, Loading, Notice, Sect
 import { AdminErrorNotice } from "./shared";
 import { AdminScreen, splitList } from "./admin-screen";
 import { SECTION_IDS } from "./event-types";
+import { useSingleMutation } from "../platform/single-flight";
 
 /** E3 · Templates as rows: create, edit, publish and archive, with a live preview of the theme. */
 
@@ -45,7 +46,9 @@ function Editor({ template, onSaved }: { readonly template: Template | undefined
   const client = useApiClient();
   const locale = useLocale();
   const save = useSaveTemplate(client);
+  const saveOnce = useSingleMutation(save);
   const transition = useTemplateTransition(client);
+  const transitionOnce = useSingleMutation(transition);
   const [form, setForm] = useState<TemplateInput>(template ? inputOf(template) : BLANK);
   const [tags, setTags] = useState(form.eventTypeTags.join(", "));
   const [confirmArchive, setConfirmArchive] = useState(false);
@@ -78,15 +81,15 @@ function Editor({ template, onSaved }: { readonly template: Template | undefined
       </View>
       <Text style={styles.label}>{t("admin.templates.preview")}</Text>
       <View style={[styles.card, { maxHeight: PREVIEW_HEIGHT, overflow: "hidden", padding: 0 }]}><CelebrationNativeRenderer theme={preview} view={sampleView(t, locale)} t={t} /></View>
-      <AdminErrorNotice error={save.error ?? transition.error} />
+      <AdminErrorNotice error={save.error ?? transition.error} onRetry={() => saveOnce({ target: template, input }, { onSuccess: onSaved })} />
       {save.isSuccess || transition.isSuccess ? <Notice kind="success">{t("admin.saved")}</Notice> : null}
       <View style={styles.row}>
-        <ActionButton label={t("host.common.save")} busy={save.isPending} onPress={() => save.mutate({ target: template, input }, { onSuccess: onSaved })} testID="save-template" />
-        {template?.status === "DRAFT" ? <ActionButton variant="secondary" label={t("admin.templates.publish")} busy={transition.isPending} onPress={() => transition.mutate({ target: template, action: "publish" }, { onSuccess: onSaved })} /> : null}
+        <ActionButton label={t("host.common.save")} busy={save.isPending} onPress={() => saveOnce({ target: template, input }, { onSuccess: onSaved })} testID="save-template" />
+        {template?.status === "DRAFT" ? <ActionButton variant="secondary" label={t("admin.templates.publish")} busy={transition.isPending} onPress={() => transitionOnce({ target: template, action: "publish" }, { onSuccess: onSaved })} /> : null}
         {template && template.status !== "ARCHIVED" ? <ActionButton variant="danger" label={t("admin.templates.archive")} onPress={() => setConfirmArchive(true)} /> : null}
       </View>
       <ConfirmDialog visible={confirmArchive} danger title={t("admin.templates.archive")} body={t("admin.templates.archiveConfirm")} confirmLabel={t("admin.templates.archive")}
-        onCancel={() => setConfirmArchive(false)} onConfirm={() => { setConfirmArchive(false); if (template) transition.mutate({ target: template, action: "archive" }, { onSuccess: onSaved }); }} />
+        onCancel={() => setConfirmArchive(false)} onConfirm={() => { setConfirmArchive(false); if (template) transitionOnce({ target: template, action: "archive" }, { onSuccess: onSaved }); }} />
     </Section>
   );
 }
@@ -100,7 +103,7 @@ export function TemplatesAdminScreen({ onNavigate }: { readonly onNavigate: (hre
   return (
     <AdminScreen title={t("admin.templates.title")} current="templates" onNavigate={onNavigate}>
       {list.isPending ? <Loading /> : null}
-      <AdminErrorNotice error={list.error} />
+      <AdminErrorNotice error={list.error} onRetry={() => { void list.refetch(); }} onReload={() => { void list.refetch(); }} />
       <ChoiceGroup label={t("admin.templates.title")} value={editing} onChange={setEditing}
         choices={[{ value: "", label: t("admin.templates.new") }, ...(list.data?.items ?? []).map((item) => ({ value: item.id, label: `${item.name} · ${t(`admin.templates.status.${item.status}`)}` }))]} />
       <Editor key={`${editing}-${current?.version ?? 0}`} template={current} onSaved={() => { void list.refetch(); }} />

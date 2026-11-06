@@ -15,6 +15,7 @@ import {
 import { GuestFrame } from "./frame";
 import { ActionButton, ChoiceGroup, Field, Notice, styles } from "../host/ui";
 import { useApiClient, useLocale, useT } from "../platform/providers";
+import { useSingleFlightGate } from "../platform/single-flight";
 import { copyText } from "../platform/clipboard";
 
 /**
@@ -227,6 +228,7 @@ function AnswerForm({ celebrationId, token, state, allowed, mode, onSaved, onClo
   const [errors, setErrors] = useState<Errors>({});
   const [failure, setFailure] = useState<RsvpFailure | null>(null);
   const attempt = useRef<{ payload: string; key: string } | null>(null);
+  const flight = useSingleFlightGate();
 
   async function submit(): Promise<void> {
     const parsed = rsvpSchema.safeParse(draft);
@@ -236,6 +238,7 @@ function AnswerForm({ celebrationId, token, state, allowed, mode, onSaved, onClo
     const input = { status: parsed.data.status, requestedCompanions: declined ? 0 : parsed.data.requestedCompanions, dietaryNotes: parsed.data.dietaryNotes || null, message: parsed.data.message || null };
     const payload = JSON.stringify(input);
     if (attempt.current?.payload !== payload) attempt.current = { payload, key: newIdempotencyKey() };
+    if (!flight.begin()) return;
     try {
       const next = await save.mutateAsync({ current: state, input, idempotencyKey: attempt.current.key });
       setFailure(null);
@@ -245,7 +248,7 @@ function AnswerForm({ celebrationId, token, state, allowed, mode, onSaved, onClo
       if (failed.kind === "closed") onClosed(failed);
       else if (failed.kind === "invalid") onInvalid();
       else setFailure(failed);
-    }
+    } finally { flight.end(); }
   }
   const busy = save.isPending;
   return (
@@ -286,6 +289,7 @@ function PublicRegistrationForm({ view, slug, hosts, contact }: { readonly view:
   const [receipt, setReceipt] = useState<{ link: string | null } | null>(null);
   const [copied, setCopied] = useState(false);
   const attempt = useRef<{ payload: string; key: string } | null>(null);
+  const flight = useSingleFlightGate();
   const title = useMemo(() => readContent(view).title, [view]);
 
   async function submit(): Promise<void> {
@@ -295,11 +299,12 @@ function PublicRegistrationForm({ view, slug, hosts, contact }: { readonly view:
     const input = { name: parsed.data.name, email: parsed.data.email, locale, consent: true as const, requestedCompanions: parsed.data.requestedCompanions, dietaryNotes: parsed.data.dietaryNotes || null, message: parsed.data.message || null };
     const payload = JSON.stringify(input);
     if (attempt.current?.payload !== payload) attempt.current = { payload, key: newIdempotencyKey() };
+    if (!flight.begin()) return;
     try {
       const response = await register.mutateAsync({ input, idempotencyKey: attempt.current.key });
       setFailure(null);
       setReceipt({ link: response.accessToken ? personalLinkUrl(personalLinkOrigin({ EXPO_PUBLIC_SITE_URL: process.env.EXPO_PUBLIC_SITE_URL, RSVP_PUBLIC_ORIGIN: process.env.EXPO_PUBLIC_RSVP_ORIGIN }), slug, response.accessToken.token).url : null });
-    } catch (error) { setFailure(classifyRsvpError(error)); }
+    } catch (error) { setFailure(classifyRsvpError(error)); } finally { flight.end(); }
   }
 
   if (failure?.kind === "restricted") return <RestrictedNotice hosts={hosts} contact={contact} />;
@@ -332,6 +337,7 @@ function PublicRegistrationForm({ view, slug, hosts, contact }: { readonly view:
         <AnswerFields draft={draft} askAttendance={false} errors={errors} onChange={(patch) => setDraft({ ...draft, ...patch })} />
         <Checkbox label={t("rsvp.form.consent")} value={draft.consent} onChange={(consent) => setDraft({ ...draft, consent })} />
         {errors.consent ? <Text accessibilityRole="alert" style={[styles.muted, { color: palette.danger }]}>{errors.consent}</Text> : null}
+        {Object.keys(errors).length ? <Text accessibilityRole="alert" style={[styles.muted, { color: palette.danger }]}>{t("rsvp.errors.summary")}</Text> : null}
         {failure ? <FailureNotice failure={failure} busy={busy} onRetry={() => { void submit(); }} /> : null}
         <ActionButton testID="rsvp-register" label={busy ? t("rsvp.form.submitting") : t("rsvp.form.register")} busy={busy} onPress={() => { void submit(); }} />
       </View>

@@ -3,15 +3,17 @@ import { Text, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
 import { formatCelebrationDate } from "@rsvp/i18n";
 import { personalLinkPath } from "@rsvp/auth";
-import { maskSecret, useChangeGuestGroup, useGuestDetail, useGuestGroups, useGuestList, useIssueGuestToken, useRevokeGuestToken, type Celebration } from "@rsvp/query-hooks";
+import { ApiError } from "@rsvp/api-client";
+import { maskSecret, useChangeGuestGroup, useEraseGuest, useGuestDetail, useGuestGroups, useGuestList, useIssueGuestToken, useRevokeGuestToken, type Celebration } from "@rsvp/query-hooks";
 import { copyText } from "../../platform/clipboard";
 import { useApiClient, useLocale, useT } from "../../platform/providers";
 import { shareText } from "../../platform/share";
 import { siteOrigin } from "../../platform/site-origin";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
-import { ActionButton, ChoiceGroup, ConfirmDialog, ErrorNotice, Loading, Notice, Section, styles } from "../ui";
-import { RetryNotice, StatusBadge } from "./parts";
+import { ActionButton, ChoiceGroup, ConfirmDialog, Loading, Notice, Section, styles } from "../ui";
+import { FailureNotice, RetryNotice, StatusBadge } from "./parts";
+import { useSingleFlightGate } from "../../platform/single-flight";
 
 /**
  * C23 · Guest detail and personal link. The secret exists only in this component's state, once, and is never
@@ -29,11 +31,14 @@ function LinkSection({ celebration, guestId }: { readonly celebration: Celebrati
   const [issued, setIssued] = useState<Issued | null>(null);
   const [confirm, setConfirm] = useState<"revoke" | "reissue" | null>(null);
   const [message, setMessage] = useState("");
+  const flight = useSingleFlightGate();
 
   const origin = siteOrigin();
   const generate = (): void => {
+    if (!flight.begin()) return;
     setMessage("");
     issue.mutate(guestId, {
+      onSettled: flight.end,
       // The backend's canonical URL when it sent one; otherwise the same format built here from the configured origin.
       onSuccess: (token) => setIssued({ url: token.url ?? `${origin}${personalLinkPath(celebration.slug, token.token)}`, masked: `${origin}/c/${celebration.slug}/rsvp/${maskSecret(token.token)}`, expiresAt: token.expiresAt })
     });
@@ -49,7 +54,7 @@ function LinkSection({ celebration, guestId }: { readonly celebration: Celebrati
     const action = confirm;
     setConfirm(null);
     if (action === "reissue") generate();
-    if (action === "revoke") revoke.mutate(guestId, { onSuccess: () => { setIssued(null); setMessage(t("guests.detail.link.revoked")); } });
+    if (action === "revoke" && flight.begin()) { setMessage(""); revoke.mutate(guestId, { onSuccess: () => { setIssued(null); setMessage(t("guests.detail.link.revoked")); }, onSettled: flight.end }); }
   };
 
   return (
@@ -71,7 +76,7 @@ function LinkSection({ celebration, guestId }: { readonly celebration: Celebrati
         <ActionButton variant="danger" label={t("guests.detail.link.revoke")} busy={revoke.isPending} onPress={() => setConfirm("revoke")} testID="revoke-link" />
       </View>
       {message ? <Notice kind="success">{message}</Notice> : null}
-      <ErrorNotice error={issue.error ?? revoke.error} />
+      <FailureNotice error={issue.error ?? revoke.error} />
       <ConfirmDialog visible={confirm !== null} danger title={confirm === "reissue" ? t("guests.detail.link.reissueTitle") : t("guests.detail.link.revokeTitle")} body={confirm === "reissue" ? t("guests.detail.link.reissueBody") : t("guests.detail.link.revokeBody")}
         confirmLabel={confirm === "reissue" ? t("guests.detail.link.reissue") : t("guests.detail.link.revoke")} onConfirm={confirmed} onCancel={() => setConfirm(null)} />
     </Section>
@@ -87,10 +92,32 @@ function GroupSection({ celebrationId, guestId, groupId }: { readonly celebratio
   if (!groups.data || groups.data.items.length === 0) return null;
   return (
     <Section title={t("guests.detail.groupTitle")}>
-      <ChoiceGroup label={t("guests.detail.group")} value={current ?? ""} onChange={(value) => change.mutate({ guestId, groupId: value || null }, { onSuccess: () => setCurrent(value || null) })}
+      <ChoiceGroup label={t("guests.detail.group")} value={current ?? ""} onChange={(value) => { if (change.isPending || value === (current ?? "")) return; change.mutate({ guestId, groupId: value || null }, { onSuccess: () => setCurrent(value || null) }); }}
         choices={[{ value: "", label: t("guests.detail.groupNone") }, ...groups.data.items.map((group) => ({ value: group.id, label: `${group.name} (${group.memberCount})` }))]} />
       {change.isSuccess ? <Notice kind="success">{t("guests.detail.groupSaved")}</Notice> : null}
-      <ErrorNotice error={change.error} />
+      <FailureNotice error={change.error} />
+    </Section>
+  );
+}
+
+/** Irreversible removal of a guest and their data (the backend's `erasure`); there is no soft delete, so the dialog says so. */
+function EraseSection({ celebration, guestId, name, onDone }: { readonly celebration: Celebration; readonly guestId: string; readonly name: string; readonly onDone: () => void }): ReactNode {
+  const t = useT();
+  const client = useApiClient();
+  const erase = useEraseGuest(client, celebration.id);
+  const flight = useSingleFlightGate();
+  const [confirm, setConfirm] = useState(false);
+  const run = (): void => {
+    setConfirm(false);
+    if (!flight.begin()) return;
+    erase.mutate(guestId, { onSuccess: onDone, onSettled: flight.end });
+  };
+  return (
+    <Section title={t("guests.detail.erase.title")}>
+      <Text style={styles.body}>{t("guests.detail.erase.intro")}</Text>
+      <FailureNotice error={erase.error} onRetry={() => setConfirm(true)} />
+      <ActionButton variant="danger" label={t("guests.detail.erase.action")} busy={erase.isPending} onPress={() => setConfirm(true)} testID="erase-guest" />
+      <ConfirmDialog visible={confirm} danger title={t("guests.detail.erase.confirmTitle", { name })} body={t("guests.detail.erase.confirmBody")} confirmLabel={t("guests.detail.erase.confirm")} onConfirm={run} onCancel={() => setConfirm(false)} />
     </Section>
   );
 }
@@ -102,6 +129,9 @@ function DetailBody({ celebration, guestId, onNavigate }: { readonly celebration
   const guest = useGuestDetail(client, celebration.id, guestId);
   const status = useGuestList(client, celebration.id, { search: guest.data?.name ?? "", limit: 100 });
   if (guest.isPending) return <Loading />;
+  if (guest.isError && guest.error instanceof ApiError && guest.error.status === 404) {
+    return <View style={{ gap: spacing[2] }}><Notice kind="error">{t("guests.detail.missing")}</Notice><ActionButton variant="secondary" label={t("guests.form.back")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.guests, celebration.id))} /></View>;
+  }
   if (guest.isError) return <RetryNotice error={guest.error} onRetry={() => { void guest.refetch(); }} />;
   const data = guest.data;
   const row = status.data?.items.find((item) => item.guestId === guestId);
@@ -117,6 +147,7 @@ function DetailBody({ celebration, guestId, onNavigate }: { readonly celebration
       </Section>
       <GroupSection celebrationId={celebration.id} guestId={guestId} groupId={data.groupId} />
       <LinkSection celebration={celebration} guestId={guestId} />
+      <EraseSection celebration={celebration} guestId={guestId} name={data.name} onDone={() => onNavigate(withCelebration(HOST_ROUTES.guests, celebration.id))} />
       <ActionButton variant="secondary" label={t("guests.form.back")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.guests, celebration.id))} />
     </View>
   );

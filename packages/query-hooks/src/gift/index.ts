@@ -84,7 +84,12 @@ export function useAddGift(client: ApiClient, celebrationId: string) {
 }
 export function useApproveExternalGift(client: ApiClient, celebrationId: string) {
   const queryClient = useQueryClient();
-  return useMutation({ mutationFn: (giftItemId: string) => giftService(client).approveExternal(celebrationId, giftItemId), onSuccess: () => refetchAll(queryClient, invalidation.giftReservationChanged(celebrationId)) });
+  return useMutation({ mutationFn: (giftItemId: string) => giftService(client).approveExternal(celebrationId, giftItemId), onSettled: () => refetchAll(queryClient, invalidation.giftReservationChanged(celebrationId)) });
+}
+/** Host rejects a PROPOSED external gift (PROPOSED -> REJECTED). 409 when somebody already decided it. */
+export function useRejectExternalGift(client: ApiClient, celebrationId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({ mutationFn: (giftItemId: string) => giftService(client).rejectExternal(celebrationId, giftItemId), onSettled: () => refetchAll(queryClient, invalidation.giftReservationChanged(celebrationId)) });
 }
 export const partnerSuggestionsOf = suggestionsOf;
 

@@ -6,11 +6,26 @@ import { formatCelebrationDate } from "@rsvp/i18n";
 import type { ProjectionFreshness, RsvpStatus } from "@rsvp/query-hooks";
 import { useLocale, useT } from "../../platform/providers";
 import { ActionButton, ErrorNotice, Notice, styles } from "../ui";
+import { classifyFailure } from "./failure";
 
-/** Error with the way out: the system notice (403/409/422/…) plus a retry. */
+/**
+ * Error with the way out: 429 says how long to wait, a down service or no network says so and offers the retry,
+ * and the other statuses (401/403/404/409/422) keep the system notice. The state is never lost: the retry re-asks.
+ */
+export function FailureNotice({ error, onRetry, onReload }: { readonly error: unknown; readonly onRetry?: () => void; readonly onReload?: () => void }): ReactNode {
+  const t = useT();
+  if (!error) return null;
+  const failure = classifyFailure(error);
+  if (failure.kind === "api") return <ErrorNotice error={error} onReload={onReload ?? onRetry} />;
+  const text = failure.kind === "rateLimited" ? (failure.waitSeconds ? t("guests.errors.rateLimitedWait", { seconds: failure.waitSeconds }) : t("guests.errors.rateLimited")) : failure.kind === "unavailable" ? t("guests.errors.unavailable") : t("guests.errors.offline");
+  return <Notice kind="error"><Text style={styles.body}>{text}</Text>{onRetry ? <ActionButton variant="secondary" label={t("guests.list.retry")} onPress={onRetry} /> : null}</Notice>;
+}
+
+/** A failed read: the notice plus an explicit retry (the notice itself already offers one for network and rate-limit failures). */
 export function RetryNotice({ error, onRetry, onReload }: { readonly error: unknown; readonly onRetry: () => void; readonly onReload?: () => void }): ReactNode {
   const t = useT();
-  return <View style={{ gap: spacing[2] }}><ErrorNotice error={error} onReload={onReload ?? onRetry} /><ActionButton variant="secondary" label={t("guests.list.retry")} onPress={onRetry} /></View>;
+  const own = classifyFailure(error).kind !== "api";
+  return <View style={{ gap: spacing[2] }}><FailureNotice error={error} onRetry={onRetry} {...(onReload ? { onReload } : {})} />{own ? null : <ActionButton variant="secondary" label={t("guests.list.retry")} onPress={onRetry} />}</View>;
 }
 
 /**

@@ -34,5 +34,6 @@ export const landingEsBO = {
     other: "Y cualquier otra fecha que merezca una invitación"
   },
   closing: { title: "Empieza tu sitio hoy", body: "Elige el tipo de celebración, agrega a tus invitados y comparte el enlace.", cta: "Crear mi celebración" },
+  error: { title: "No pudimos cargar esta página", body: "El servicio no respondió. No es algo que hayas hecho tú: inténtalo de nuevo en unos segundos.", retry: "Reintentar", home: "Ir al inicio" },
   footer: { tagline: "Que te respondan en un toque.", providers: "Proveedores", skip: "Saltar al contenido" }
 };

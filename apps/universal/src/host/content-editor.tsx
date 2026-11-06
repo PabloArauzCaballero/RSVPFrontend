@@ -6,7 +6,10 @@ import { useApiClient, useT } from "../platform/providers";
 import { CelebrationScreen, type Loaded, type ScreenProps } from "./gate";
 import { asRecord, asRecords, asText, contentPatch, newItemId, scheduleContent, scheduleDraft, toWallClock, wallClockAt, type ScheduleDraft } from "./content-draft";
 import { EDITOR_SECTIONS, editorPath, editorSectionLabel, withCelebration, type EditorSection } from "./routes";
-import { ActionButton, ChoiceGroup, ErrorNotice, Field, Notice, Section, styles } from "./ui";
+import { useSingleFlight } from "../platform/single-flight";
+import { CelebrationErrorNotice } from "./celebration-errors";
+import { contentOverLimit, LIMITS, overLimit, slugProblem } from "./limits";
+import { ActionButton, ChoiceGroup, Field, Notice, Section, styles } from "./ui";
 
 /** C7–C11 · Hosts, venues, story, schedule and other sections. Saving never loses what was typed. */
 
@@ -35,7 +38,13 @@ const ROW_KEYS: Readonly<Record<string, readonly string[]>> = { venues: ["key", 
 const rows = (value: unknown, keys: readonly string[]): Row[] => asRecords(value).map((item) => Object.fromEntries(keys.map((key) => [key, asText(item[key])])));
 const compact = (items: readonly Row[], required: string): Row[] => items.filter((item) => item[required]?.trim()).map((item) => Object.fromEntries(Object.entries(item).filter(([, value]) => value.trim())));
 
-function ListEditor({ items, onChange, fields, itemLabel, addLabel, t }: { readonly items: readonly Row[]; readonly onChange: (items: Row[]) => void; readonly fields: readonly { readonly key: string; readonly label: string; readonly multiline?: boolean; readonly choices?: readonly { readonly value: string; readonly label: string }[] }[]; readonly itemLabel: (n: number) => string; readonly addLabel: string; readonly t: Translate }): ReactNode {
+/** Field error text when the value is over its limit; spread into a Field. */
+function limitError(t: Translate, value: string, max: number | undefined): { readonly error?: string } {
+  const excess = max === undefined ? null : overLimit(value, max);
+  return excess === null || max === undefined ? {} : { error: t("host.limits.tooLong", { count: excess, max }) };
+}
+
+function ListEditor({ items, onChange, fields, itemLabel, addLabel, t }: { readonly items: readonly Row[]; readonly onChange: (items: Row[]) => void; readonly fields: readonly { readonly key: string; readonly label: string; readonly multiline?: boolean; readonly max?: number; readonly choices?: readonly { readonly value: string; readonly label: string }[] }[]; readonly itemLabel: (n: number) => string; readonly addLabel: string; readonly t: Translate }): ReactNode {
   const update = (index: number, key: string, value: string): void => onChange(items.map((item, position) => (position === index ? { ...item, [key]: value } : item)));
   const move = (index: number, delta: number): void => {
     const target = index + delta;
@@ -52,7 +61,7 @@ function ListEditor({ items, onChange, fields, itemLabel, addLabel, t }: { reado
           <Text style={styles.label}>{itemLabel(index + 1)}</Text>
           {fields.map((field) => field.choices
             ? <ChoiceGroup key={field.key} label={field.label} choices={field.choices} value={item[field.key] ?? null} onChange={(value) => update(index, field.key, value)} />
-            : <Field key={field.key} label={field.label} value={item[field.key] ?? ""} multiline={field.multiline} onChange={(value) => update(index, field.key, value)} />)}
+            : <Field key={field.key} label={field.label} value={item[field.key] ?? ""} multiline={field.multiline} {...limitError(t, item[field.key] ?? "", field.max)} onChange={(value) => update(index, field.key, value)} />)}
           <View style={styles.row}>
             <ActionButton variant="secondary" label={t("host.common.moveUp")} onPress={() => move(index, -1)} disabled={!index} />
             <ActionButton variant="secondary" label={t("host.common.moveDown")} onPress={() => move(index, 1)} disabled={index === items.length - 1} />
@@ -77,8 +86,9 @@ function SectionTabs({ current, celebrationId, onNavigate, t }: { readonly curre
   );
 }
 
-function Editor({ loaded, section, onSaved }: { readonly loaded: Loaded; readonly section: EditorSection; readonly onSaved: () => void }): ReactNode {
+function Editor({ loaded, section, onSaved }: { readonly loaded: Loaded; readonly section: EditorSection; readonly onSaved: (saved: boolean) => void }): ReactNode {
   const t = useT();
+  const once = useSingleFlight();
   const client = useApiClient();
   const { celebration, eventType } = loaded;
   const mutation = useEditCelebration(client, celebration.id);
@@ -86,6 +96,9 @@ function Editor({ loaded, section, onSaved }: { readonly loaded: Loaded; readonl
   const [eventDate, setEventDate] = useState(() => wallClockAt(celebration, "eventDate"));
   const [schedule, setSchedule] = useState<ScheduleDraft[]>(() => scheduleDraft(celebration));
   const [invalid, setInvalid] = useState<string | null>(null);
+  const [slug, setSlug] = useState(celebration.slug);
+  const slugEditable = celebration.status === "DRAFT";
+  const slugIssue = slugEditable && slug !== celebration.slug ? slugProblem(slug) : null;
   const text = (key: string): string => asText(draft[key]);
   const set = (key: string, value: unknown): void => setDraft((current) => ({ ...current, [key]: value }));
   const hosts = asRecord(draft["hosts"]);
@@ -94,6 +107,8 @@ function Editor({ loaded, section, onSaved }: { readonly loaded: Loaded; readonl
     setInvalid(null);
     const date = toWallClock(eventDate);
     const items = scheduleContent(schedule);
+    if (slugIssue) { setInvalid(t("host.editor.general.slug")); return; }
+    if (contentOverLimit(draft, schedule, extraFields(eventType)) > 0) { setInvalid(t("host.limits.fieldsTooLong")); return; }
     if (!date.ok) { setInvalid(t("host.editor.general.eventDate")); return; }
     if (!items.ok) { setInvalid(t("host.editor.schedule.item", { n: items.index + 1 })); return; }
     const originalDate = wallClockAt(celebration, "eventDate");
@@ -107,40 +122,44 @@ function Editor({ loaded, section, onSaved }: { readonly loaded: Loaded; readonl
       ...(unchangedSchedule ? {} : { schedule: items.value })
     };
     const patch = contentPatch(celebration.content, next);
-    if (!Object.keys(patch).length) { onSaved(); return; }
-    mutation.mutate({ target: celebration, patch: { content: patch } }, { onSuccess: onSaved });
+    const slugChanged = slugEditable && slug !== celebration.slug;
+    if (!Object.keys(patch).length && !slugChanged) { onSaved(true); return; }
+    onSaved(false);
+    once((release) => { mutation.mutateAsync({ target: celebration, patch: { ...(slugChanged ? { slug } : {}), ...(Object.keys(patch).length ? { content: patch } : {}) } }).then(() => onSaved(true), () => undefined).finally(release); });
   };
 
   const bodies: Readonly<Record<EditorSection, () => ReactNode>> = {
     general: () => (
       <Section title={t("host.editor.sections.general")}>
-        <Field label={t("host.editor.general.title")} value={text("title")} onChange={(value) => set("title", value)} />
-        <Field label={t("host.editor.general.subtitle")} value={text("subtitle")} onChange={(value) => set("subtitle", value)} />
+        <Field label={t("host.editor.general.slug")} value={slug} onChange={(value) => setSlug(value.toLowerCase())} testID="slug"
+          help={celebration.status === "DRAFT" ? t("host.onboarding.slugHelp", { url: `/c/${slug}` }) : t("host.editor.general.slugLocked")} {...(slugIssue ? { error: t(`host.limits.slug${slugIssue === "length" ? "Length" : "Pattern"}`) } : {})} />
+        <Field label={t("host.editor.general.title")} value={text("title")} {...limitError(t, text("title"), LIMITS.title)} onChange={(value) => set("title", value)} testID="field-title" />
+        <Field label={t("host.editor.general.subtitle")} value={text("subtitle")} {...limitError(t, text("subtitle"), LIMITS.subtitle)} onChange={(value) => set("subtitle", value)} />
         <View style={styles.row}>
           <View style={{ flexGrow: 1 }}><Field label={t("host.onboarding.dateLabel")} value={eventDate.date} onChange={(value) => setEventDate((current) => ({ ...current, date: value }))} keyboardType="numbers-and-punctuation" /></View>
           <View style={{ flexGrow: 1 }}><Field label={t("host.onboarding.timeLabel")} value={eventDate.time} onChange={(value) => setEventDate((current) => ({ ...current, time: value }))} keyboardType="numbers-and-punctuation" /></View>
         </View>
         <Text style={styles.muted}>{t("host.editor.schedule.zoneHelp", { timeZone: celebration.timeZone })}</Text>
-        <Field label={t("host.editor.general.venueName")} value={text("venueName")} onChange={(value) => set("venueName", value)} />
-        {extraFields(eventType).map((field) => <Field key={field} label={fieldLabel(t, field)} value={text(field)} onChange={(value) => set(field, value)} />)}
+        <Field label={t("host.editor.general.venueName")} value={text("venueName")} {...limitError(t, text("venueName"), LIMITS.venueName)} onChange={(value) => set("venueName", value)} />
+        {extraFields(eventType).map((field) => <Field key={field} label={fieldLabel(t, field)} value={text(field)} {...limitError(t, text(field), LIMITS.extraField)} onChange={(value) => set(field, value)} />)}
       </Section>
     ),
     anfitriones: () => (
       <Section title={t("host.editor.sections.hosts")}>
         <Text style={styles.muted}>{t("host.editor.hosts.help", { eventType: eventType?.name ?? celebration.eventTypeCode })}</Text>
-        {(eventType?.hostRoles ?? []).map((role) => <Field key={role.role} label={role.label} value={asText(hosts[role.role])} onChange={(value) => set("hosts", { ...hosts, [role.role]: value })} />)}
+        {(eventType?.hostRoles ?? []).map((role) => <Field key={role.role} label={role.label} value={asText(hosts[role.role])} {...limitError(t, asText(hosts[role.role]), LIMITS.hostName)} onChange={(value) => set("hosts", { ...hosts, [role.role]: value })} />)}
       </Section>
     ),
     lugares: () => (
       <Section title={t("host.editor.sections.venues")}>
         <ListEditor t={t} items={rows(draft["venues"], ["key", "kind", "name", "address"])} onChange={(items) => set("venues", items.map((item, index) => ({ ...item, key: item["key"] || newItemId(`venue${index}`) })))}
           itemLabel={(n) => t("host.editor.venues.item", { n })} addLabel={t("host.editor.venues.add")}
-          fields={[{ key: "name", label: t("host.editor.venues.name") }, { key: "address", label: t("host.editor.venues.address") }, { key: "kind", label: t("host.editor.venues.kind"), choices: VENUE_KINDS.map((kind) => ({ value: kind, label: t(`host.editor.venues.kinds.${kind}`) })) }]} />
+          fields={[{ key: "name", label: t("host.editor.venues.name"), max: LIMITS.venueName }, { key: "address", label: t("host.editor.venues.address"), max: LIMITS.venueAddress }, { key: "kind", label: t("host.editor.venues.kind"), choices: VENUE_KINDS.map((kind) => ({ value: kind, label: t(`host.editor.venues.kinds.${kind}`) })) }]} />
       </Section>
     ),
     historia: () => (
       <Section title={t("host.editor.sections.story")}>
-        <Field label={t("host.editor.story.label")} help={t("host.editor.story.help")} value={text("story")} onChange={(value) => set("story", value)} multiline />
+        <Field label={t("host.editor.story.label")} help={t("host.editor.story.help")} value={text("story")} {...limitError(t, text("story"), LIMITS.story)} onChange={(value) => set("story", value)} multiline />
       </Section>
     ),
     itinerario: () => (
@@ -148,22 +167,22 @@ function Editor({ loaded, section, onSaved }: { readonly loaded: Loaded; readonl
         <Text style={styles.muted}>{t("host.editor.schedule.zoneHelp", { timeZone: celebration.timeZone })}</Text>
         <ListEditor t={t} items={schedule.map(({ id: _id, ...item }) => item)} onChange={(items) => setSchedule(items.map((item, index) => ({ id: schedule[index]?.id ?? newItemId("s"), title: item["title"] ?? "", description: item["description"] ?? "", date: item["date"] ?? "", time: item["time"] ?? "" })))}
           itemLabel={(n) => t("host.editor.schedule.item", { n })} addLabel={t("host.editor.schedule.add")}
-          fields={[{ key: "title", label: t("host.editor.schedule.title") }, { key: "date", label: t("host.onboarding.dateLabel") }, { key: "time", label: t("host.onboarding.timeLabel") }, { key: "description", label: t("host.editor.schedule.description"), multiline: true }]} />
+          fields={[{ key: "title", label: t("host.editor.schedule.title"), max: LIMITS.scheduleTitle }, { key: "date", label: t("host.onboarding.dateLabel") }, { key: "time", label: t("host.onboarding.timeLabel") }, { key: "description", label: t("host.editor.schedule.description"), multiline: true, max: LIMITS.scheduleDescription }]} />
       </Section>
     ),
     secciones: () => (
       <>
         <Section title={t("host.editor.extra.dressCode")}>
-          <Field label={t("host.editor.extra.dressCode")} value={text("dressCode")} onChange={(value) => set("dressCode", value)} multiline />
+          <Field label={t("host.editor.extra.dressCode")} value={text("dressCode")} {...limitError(t, text("dressCode"), LIMITS.dressCode)} onChange={(value) => set("dressCode", value)} multiline />
         </Section>
         <Section title={t("host.editor.extra.faq")}>
           <ListEditor t={t} items={rows(draft["faq"], ["question", "answer"])} onChange={(items) => set("faq", items)} itemLabel={(n) => t("host.editor.extra.item", { n })} addLabel={t("host.editor.extra.addFaq")}
-            fields={[{ key: "question", label: t("host.editor.extra.question") }, { key: "answer", label: t("host.editor.extra.answer"), multiline: true }]} />
+            fields={[{ key: "question", label: t("host.editor.extra.question"), max: LIMITS.faqQuestion }, { key: "answer", label: t("host.editor.extra.answer"), multiline: true, max: LIMITS.faqAnswer }]} />
         </Section>
         <Section title={t("host.editor.extra.recommendations")}>
           <Text style={styles.muted}>{t("host.editor.extra.listingHelp")}</Text>
           <ListEditor t={t} items={rows(draft["recommendations"], ["kind", "name", "description", "listingId"])} onChange={(items) => set("recommendations", items)} itemLabel={(n) => t("host.editor.extra.item", { n })} addLabel={t("host.editor.extra.addRecommendation")}
-            fields={[{ key: "name", label: t("host.editor.extra.recommendationName") }, { key: "description", label: t("host.editor.extra.recommendationDescription"), multiline: true }, { key: "listingId", label: t("host.editor.extra.listingId") }, { key: "kind", label: t("host.editor.extra.recommendationKind"), choices: RECOMMENDATION_KINDS.map((kind) => ({ value: kind, label: t(`host.editor.extra.kinds.${kind}`) })) }]} />
+            fields={[{ key: "name", label: t("host.editor.extra.recommendationName"), max: LIMITS.recommendationName }, { key: "description", label: t("host.editor.extra.recommendationDescription"), multiline: true, max: LIMITS.recommendationDescription }, { key: "listingId", label: t("host.editor.extra.listingId") }, { key: "kind", label: t("host.editor.extra.recommendationKind"), choices: RECOMMENDATION_KINDS.map((kind) => ({ value: kind, label: t(`host.editor.extra.kinds.${kind}`) })) }]} />
         </Section>
       </>
     )
@@ -173,7 +192,7 @@ function Editor({ loaded, section, onSaved }: { readonly loaded: Loaded; readonl
     <>
       {bodies[section]()}
       {invalid ? <Notice kind="error">{t("host.common.invalid", { detail: invalid })}</Notice> : null}
-      <ErrorNotice error={mutation.error} onReload={loaded.refetch} />
+      <CelebrationErrorNotice error={mutation.error} onReload={loaded.refetch} />
       <Text style={styles.muted}>{t("host.editor.unsavedHint")}</Text>
       <ActionButton label={mutation.isPending ? t("host.common.saving") : t("host.common.save")} busy={mutation.isPending} onPress={save} testID="save-content" />
     </>
@@ -182,15 +201,15 @@ function Editor({ loaded, section, onSaved }: { readonly loaded: Loaded; readonl
 
 export function ContentEditorScreen({ celebrationId, onNavigate, section }: ScreenProps & { readonly section: EditorSection }): ReactNode {
   const t = useT();
-  const [savedVersion, setSavedVersion] = useState<number | null>(null);
+  const [saved, setSaved] = useState(false);
   return (
-    <CelebrationScreen celebrationId={celebrationId} onNavigate={onNavigate} current="editor" title={t("host.editor.title")}>
+    <CelebrationScreen celebrationId={celebrationId} onNavigate={onNavigate} current="editor" editable title={t("host.editor.title")}>
       {(loaded) => (
         <>
           <SectionTabs current={section} celebrationId={loaded.celebration.id} onNavigate={onNavigate} t={t} />
-          {savedVersion !== null && savedVersion <= loaded.celebration.version ? <Notice kind="success">{t("host.common.saved")}</Notice> : null}
+          {saved ? <Notice kind="success">{t("host.common.saved")}</Notice> : null}
           {/* Keyed by version: after a save or a reload the form restarts from the stored content. */}
-          <Editor key={`${section}-${loaded.celebration.version}`} loaded={loaded} section={section} onSaved={() => setSavedVersion(loaded.celebration.version + 1)} />
+          <Editor key={`${section}-${loaded.celebration.version}`} loaded={loaded} section={section} onSaved={setSaved} />
         </>
       )}
     </CelebrationScreen>

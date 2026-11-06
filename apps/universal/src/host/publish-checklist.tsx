@@ -9,7 +9,10 @@ import { asText } from "./content-draft";
 import { fieldLabel } from "./content-editor";
 import { publicUrl } from "./device-preview";
 import { editorPath, withCelebration, type EditorSection } from "./routes";
-import { ActionButton, ConfirmDialog, ErrorNotice, Field, Loading, Notice, Section, styles } from "./ui";
+import { useSingleFlight } from "../platform/single-flight";
+import { CelebrationErrorNotice } from "./celebration-errors";
+import { LIMITS, overLimit } from "./limits";
+import { ActionButton, ConfirmDialog, Field, Loading, Notice, Section, styles } from "./ui";
 
 /** C16 · What is still missing (from the event type, via the API), publish and unpublish with confirmation, share. */
 
@@ -32,12 +35,13 @@ export function taskFor(field: string, eventType: TranslatedEventType | undefine
 
 type Dialog = "publish" | "unpublish" | "archive" | null;
 
-function Checklist({ celebration, eventType, onNavigate }: { readonly celebration: Celebration; readonly eventType: TranslatedEventType | undefined; readonly onNavigate: (href: string) => void }): ReactNode {
+function Checklist({ celebration, eventType, onNavigate, refetch }: { readonly celebration: Celebration; readonly eventType: TranslatedEventType | undefined; readonly onNavigate: (href: string) => void; readonly refetch: () => void }): ReactNode {
   const t = useT();
   const client = useApiClient();
   const check = usePublishCheck(client, celebration.id);
   const action = usePublicationAction(client, celebration.id);
   const media = useMediaAssets(client, celebration.id);
+  const once = useSingleFlight();
   const [dialog, setDialog] = useState<Dialog>(null);
   const [reason, setReason] = useState("");
   const [copied, setCopied] = useState(false);
@@ -49,10 +53,12 @@ function Checklist({ celebration, eventType, onNavigate }: { readonly celebratio
   const description = [eventType?.name, eventDate ? formatDate(eventDate, celebration.timeZone, celebration.defaultLocale) : "", asText(celebration.content["venueName"])].filter(Boolean).join(" · ");
   const cover = media.data?.items.find((asset) => asset.isCover)?.variants.medium;
 
+  const reasonExcess = overLimit(reason, LIMITS.reason);
   const run = (kind: Exclude<Dialog, null>): void => {
+    if (kind === "unpublish" && reasonExcess !== null) return;
     setDialog(null);
     const actions = { publish: { kind: "publish" as const }, unpublish: { kind: "unpublish" as const, reason: reason.trim() || null }, archive: { kind: "archive" as const } };
-    action.mutate({ target: celebration, action: actions[kind] });
+    once((release) => action.mutate({ target: celebration, action: actions[kind] }, { onSettled: release }));
   };
   const share = async (): Promise<void> => {
     const clipboard = Platform.OS === "web" ? globalThis.navigator?.clipboard : undefined;
@@ -65,7 +71,8 @@ function Checklist({ celebration, eventType, onNavigate }: { readonly celebratio
       <Notice kind={celebration.status === "PUBLISHED" ? "success" : "info"}>{t(`host.publish.status.${celebration.status}`)}</Notice>
       {check.isPending ? <Loading /> : null}
       {celebration.status === "DRAFT" ? (
-        <Section title={missing.length ? t("host.publish.missing") : t("host.publish.ready")}>
+        <Section title={missing.length ? t("host.publish.missing") : check.isSuccess ? t("host.publish.ready") : t("host.publish.title")}>
+          {check.isError && !fromError.length ? <><CelebrationErrorNotice error={check.error} /><ActionButton variant="secondary" label={t("host.common.retry")} onPress={() => { void check.refetch(); }} testID="retry-check" /></> : null}
           {missing.map((field) => {
             const task = taskFor(field, eventType, t);
             return (
@@ -75,10 +82,10 @@ function Checklist({ celebration, eventType, onNavigate }: { readonly celebratio
               </View>
             );
           })}
-          <ActionButton label={t("host.publish.publish")} disabled={Boolean(missing.length)} busy={action.isPending} onPress={() => setDialog("publish")} testID="publish" />
+          <ActionButton label={t("host.publish.publish")} disabled={Boolean(missing.length) || !check.isSuccess} busy={action.isPending} onPress={() => setDialog("publish")} testID="publish" />
         </Section>
       ) : null}
-      <ErrorNotice error={fromError.length ? null : action.error} />
+      <CelebrationErrorNotice error={fromError.length ? null : action.error} onReload={() => { void check.refetch(); refetch(); }} />
       {celebration.status !== "ARCHIVED" ? (
         <Section title={t("host.publish.share")}>
           <Text selectable style={styles.body} accessibilityLabel={t("host.publish.link")}>{url}</Text>
@@ -96,12 +103,12 @@ function Checklist({ celebration, eventType, onNavigate }: { readonly celebratio
         </Section>
       ) : null}
       <View style={styles.row}>
-        {celebration.status === "PUBLISHED" ? <ActionButton variant="secondary" label={t("host.publish.unpublish")} onPress={() => setDialog("unpublish")} testID="unpublish" /> : null}
-        {celebration.status !== "ARCHIVED" ? <ActionButton variant="danger" label={t("host.publish.archive")} onPress={() => setDialog("archive")} testID="archive" /> : null}
+        {celebration.status === "PUBLISHED" ? <ActionButton variant="secondary" busy={action.isPending} label={t("host.publish.unpublish")} onPress={() => setDialog("unpublish")} testID="unpublish" /> : null}
+        {celebration.status !== "ARCHIVED" ? <ActionButton variant="danger" busy={action.isPending} label={t("host.publish.archive")} onPress={() => setDialog("archive")} testID="archive" /> : null}
       </View>
       <ConfirmDialog visible={dialog === "publish"} title={t("host.publish.publish")} body={t("host.publish.publishConfirm")} confirmLabel={t("host.publish.publish")} onConfirm={() => run("publish")} onCancel={() => setDialog(null)} />
       <ConfirmDialog visible={dialog === "unpublish"} title={t("host.publish.unpublish")} body={t("host.publish.unpublishConfirm")} confirmLabel={t("host.publish.unpublish")} onConfirm={() => run("unpublish")} onCancel={() => setDialog(null)}>
-        <Field label={t("host.publish.reasonLabel")} value={reason} onChange={setReason} />
+        <Field label={t("host.publish.reasonLabel")} value={reason} onChange={setReason} {...(reasonExcess !== null ? { error: t("host.limits.tooLong", { count: reasonExcess, max: LIMITS.reason }) } : {})} />
       </ConfirmDialog>
       <ConfirmDialog visible={dialog === "archive"} danger title={t("host.publish.archive")} body={t("host.publish.archiveConfirm")} confirmLabel={t("host.publish.archive")} onConfirm={() => run("archive")} onCancel={() => setDialog(null)} />
     </View>
@@ -112,7 +119,7 @@ export function PublishScreen({ celebrationId, onNavigate }: ScreenProps): React
   const t = useT();
   return (
     <CelebrationScreen celebrationId={celebrationId} onNavigate={onNavigate} current="publish" title={t("host.publish.title")}>
-      {({ celebration, eventType }) => <Checklist celebration={celebration} eventType={eventType} onNavigate={onNavigate} />}
+      {({ celebration, eventType, refetch }) => <Checklist celebration={celebration} eventType={eventType} onNavigate={onNavigate} refetch={refetch} />}
     </CelebrationScreen>
   );
 }

@@ -12,7 +12,7 @@ import { CAPTCHA_SITE_KEY, QuoteCaptcha } from './quote-captcha';
 import './provider.css';
 
 export interface QuoteOffer { readonly listingId: string; readonly title: string; readonly priceFrom?: { readonly amountMinor: number; readonly currency: string }; readonly fulfillment?: { readonly responsible: string; readonly coverageZones: readonly string[]; readonly leadTimeDays: number; readonly transportCostMinor?: number } }
-export interface QuoteCartProps { readonly slug: string; readonly providerId: string; readonly providerName: string; readonly timeZone: string; readonly offers: readonly QuoteOffer[]; readonly preselected?: string; readonly locale: AppLocale; readonly today: string }
+export interface QuoteCartProps { readonly slug: string; readonly providerId: string; readonly providerName: string; readonly timeZone: string; readonly offers: readonly QuoteOffer[]; readonly preselected?: string; readonly locale: AppLocale; readonly today: string; /** Identity of each city is its slug: Provider Catalog rejects any other `eventCity` (422 "eventCity must be a city slug"). */ readonly cities: readonly { readonly slug: string; readonly name: string }[] }
 
 export function QuoteCart(props: QuoteCartProps) {
   const [client] = useState(() => new QueryClient({ defaultOptions: { mutations: { retry: false } } }));
@@ -20,7 +20,7 @@ export function QuoteCart(props: QuoteCartProps) {
 }
 
 /** B8 · intent cart (items, date, guests, budget) and B9 · sent confirmation. */
-function QuoteBody({ slug, providerId, providerName, offers, preselected, locale, today }: QuoteCartProps) {
+function QuoteBody({ slug, providerId, providerName, offers, preselected, locale, today, cities }: QuoteCartProps) {
   const t = useMemo(() => createTranslator(locale), [locale]);
   const api = useMemo(() => createVisitorClient(), []);
   const quote = useQuote(api, providerId, locale);
@@ -88,7 +88,13 @@ function QuoteBody({ slug, providerId, providerName, offers, preselected, locale
         <Field id="eventDate" label={t('quote.eventDate')} type="date" min={today} error={err('eventDate')} />
         <Field id="guestCount" label={t('quote.guests')} type="number" min={1} inputMode="numeric" error={err('guestCount')} />
         <Field id="budget" label={t('quote.budget')} type="number" min={0} inputMode="decimal" help={t('quote.budgetHelp')} error={err('budget')} />
-        <Field id="eventCity" label={t('quote.city')} type="text" />
+        <div className="rsvp-field">
+          <label htmlFor="eventCity">{t('quote.city')}</label>
+          <select id="eventCity" name="eventCity" defaultValue="">
+            <option value="">{t('directory.filters.any')}</option>
+            {cities.map((city) => <option key={city.slug} value={city.slug}>{city.name}</option>)}
+          </select>
+        </div>
         <Field id="name" label={t('quote.name')} type="text" autoComplete="name" error={err('name')} />
         <Field id="email" label={t('quote.email')} type="email" autoComplete="email" error={err('email')} />
         <Field id="phone" label={t('quote.phone')} type="tel" autoComplete="tel" />

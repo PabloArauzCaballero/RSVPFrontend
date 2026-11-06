@@ -1,16 +1,17 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Switch, Text, View } from "react-native";
 import { colors, spacing } from "@rsvp/design-tokens";
 import { formatMinor } from "@rsvp/i18n";
-import { catalogedFirst, useApproveExternalGift, useGiftList, useGiftSettings, useUpdateGiftSettings, type GiftItem } from "@rsvp/query-hooks";
+import { catalogedFirst, useApproveExternalGift, useGiftList, useRejectExternalGift, useGiftSettings, useUpdateGiftSettings, type GiftItem } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
-import { ActionButton, ErrorNotice, Loading, Notice, Section, styles } from "../ui";
+import { ActionButton, ConfirmDialog, ErrorNotice, Loading, Notice, Section, styles } from "../ui";
 import { RetryNotice } from "../guests/parts";
+import { useSingleFlightGate } from "../../platform/single-flight";
 
 /** C29 · Status of each gift (available, pending, committed, proposed) with the doors to the catalog, the external gift and the inbox. */
-function GiftRow({ item, currencyLocale, onApprove, approving }: { readonly item: GiftItem; readonly currencyLocale: ReturnType<typeof useLocale>; readonly onApprove: (id: string) => void; readonly approving: boolean }): ReactNode {
+function GiftRow({ item, currencyLocale, onApprove, onReject, approving, rejecting, locked }: { readonly item: GiftItem; readonly currencyLocale: ReturnType<typeof useLocale>; readonly onApprove: (id: string) => void; readonly onReject: (item: GiftItem) => void; readonly approving: boolean; readonly rejecting: boolean; readonly locked: boolean }): ReactNode {
   const t = useT();
   return (
     <View testID={`gift-${item.id}`} style={[styles.card, { gap: spacing[1] }]}>
@@ -18,7 +19,12 @@ function GiftRow({ item, currencyLocale, onApprove, approving }: { readonly item
       <Text style={styles.body}>{formatMinor(item.price.amountMinor, item.price.currency, currencyLocale)} · {item.source === "CATALOGED" ? t("gifts.host.list.fromPartner") : t("gifts.host.list.external")}</Text>
       <Text style={styles.label} testID={`gift-status-${item.id}`}>{t(`gifts.host.status.${item.status}`)}</Text>
       {item.reservedByName ? <Text style={styles.muted} testID={`gift-by-${item.id}`}>{t("gifts.host.list.reservedBy", { name: item.reservedByName })}</Text> : null}
-      {item.status === "PROPOSED" ? <ActionButton label={approving ? t("gifts.host.approvingProposal") : t("gifts.host.approveProposal")} busy={approving} onPress={() => onApprove(item.id)} testID={`approve-proposal-${item.id}`} /> : null}
+      {item.status === "PROPOSED" ? (
+        <View style={styles.row}>
+          <ActionButton label={approving ? t("gifts.host.approvingProposal") : t("gifts.host.approveProposal")} busy={approving} disabled={locked} onPress={() => onApprove(item.id)} testID={`approve-proposal-${item.id}`} />
+          <ActionButton variant="danger" label={rejecting ? t("gifts.host.rejectingProposal") : t("gifts.host.rejectProposal")} busy={rejecting} disabled={locked} onPress={() => onReject(item)} testID={`reject-proposal-${item.id}`} />
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -62,6 +68,11 @@ function GiftsBody({ celebrationId, onNavigate }: { readonly celebrationId: stri
   const client = useApiClient();
   const list = useGiftList(client, celebrationId);
   const approve = useApproveExternalGift(client, celebrationId);
+  const reject = useRejectExternalGift(client, celebrationId);
+  const [rejectTarget, setRejectTarget] = useState<GiftItem | null>(null);
+  const [rejected, setRejected] = useState<string | null>(null);
+  const locked = approve.isPending || reject.isPending;
+  const flight = useSingleFlightGate();
   const go = (path: string) => () => onNavigate(withCelebration(path, celebrationId));
   if (list.isPending) return <Loading />;
   if (list.isError) return <RetryNotice error={list.error} onRetry={() => { void list.refetch(); }} />;
@@ -77,8 +88,13 @@ function GiftsBody({ celebrationId, onNavigate }: { readonly celebrationId: stri
       </View>
       <RequesterVisibility celebrationId={celebrationId} />
       <ErrorNotice error={approve.error} onReload={() => { void list.refetch(); }} />
+      <ErrorNotice error={reject.error} onReload={() => { void list.refetch(); }} />
+      {rejected ? <Notice kind="success">{t("gifts.host.proposalRejected", { title: rejected })}</Notice> : null}
       <Text accessibilityRole="header" style={styles.subtitle}>{t("gifts.host.list.title")}</Text>
-      {items.length === 0 ? <Notice>{t("gifts.host.list.empty")}</Notice> : items.map((item) => <GiftRow key={item.id} item={item} currencyLocale={locale} onApprove={(id) => approve.mutate(id)} approving={approve.isPending && approve.variables === item.id} />)}
+      {items.length === 0 ? <Notice>{t("gifts.host.list.empty")}</Notice> : items.map((item) => <GiftRow key={item.id} item={item} currencyLocale={locale} onApprove={(id) => { setRejected(null); reject.reset(); if (flight.begin()) approve.mutate(id, { onSettled: flight.end }); }} onReject={(target) => { setRejected(null); approve.reset(); reject.reset(); setRejectTarget(target); }} approving={approve.isPending && approve.variables === item.id} rejecting={reject.isPending && reject.variables === item.id} locked={locked} />)}
+      <ConfirmDialog visible={rejectTarget !== null} danger title={t("gifts.host.rejectConfirm.title")} body={rejectTarget ? t("gifts.host.rejectConfirm.body", { title: rejectTarget.title }) : ""} confirmLabel={t("gifts.host.rejectProposal")}
+        onCancel={() => setRejectTarget(null)}
+        onConfirm={() => { const target = rejectTarget; setRejectTarget(null); if (target && flight.begin()) reject.mutate(target.id, { onSuccess: () => setRejected(target.title), onSettled: flight.end }); }} />
     </View>
   );
 }

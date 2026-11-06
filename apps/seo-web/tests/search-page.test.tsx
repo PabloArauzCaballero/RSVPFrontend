@@ -43,7 +43,7 @@ describe("REQ-F24-04 · search page, proximity filter", () => {
     const cases: Record<string, string>[] = [{ ciudad: "la-paz" }, { ciudad: "la-paz", lat: "abc", lng: "-68" }, { ciudad: "la-paz", lat: "95", lng: "10" }, { ciudad: "la-paz", lat: "-16" }];
     for (const search of cases) {
       const { asked, document } = await render(search);
-      expect(asked[0]?.searchParams.get("city")).toBe("La Paz");
+      expect(asked[0]?.searchParams.get("city")).toBe("la-paz");
       expect(asked[0]?.searchParams.has("lat")).toBe(false);
       expect(document.querySelector(".directory-nearme-active")).toBeNull();
     }

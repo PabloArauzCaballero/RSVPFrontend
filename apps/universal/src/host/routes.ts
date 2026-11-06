@@ -27,7 +27,9 @@ export const HOST_ROUTES = {
   giftCatalog: "/regalos/catalogo",
   giftProviders: "/regalos/proveedores",
   giftExternal: "/regalos/externo",
-  giftInbox: "/bandeja/regalos"
+  giftInbox: "/bandeja/regalos",
+  organizations: "/organizaciones",
+  guestSettings: "/invitados/ajustes"
 } as const;
 export type HostRoute = keyof typeof HOST_ROUTES;
 
@@ -68,19 +70,20 @@ const NAV: readonly { readonly key: HostRoute; readonly label: string; readonly 
   { key: "publish", label: "host.nav.publish", path: HOST_ROUTES.publish },
   { key: "settings", label: "host.nav.settings", path: HOST_ROUTES.settings },
   { key: "modes", label: "host.nav.modes", path: HOST_ROUTES.modes },
-  { key: "celebrations", label: "host.nav.celebrations", path: HOST_ROUTES.celebrations }
+  { key: "celebrations", label: "host.nav.celebrations", path: HOST_ROUTES.celebrations },
+  { key: "organizations", label: "org.nav", path: HOST_ROUTES.organizations }
 ];
 
 const NAV_GROUP: Readonly<Partial<Record<HostRoute, string>>> = {
   summary: "guests", guests: "guests", report: "guests", requests: "guests", notifications: "guests", preferences: "guests",
   gifts: "gifts", giftInbox: "gifts",
   editor: "celebration", gallery: "celebration", translations: "celebration", templates: "celebration", preview: "celebration", publish: "celebration", settings: "celebration", modes: "celebration",
-  celebrations: "account"
+  celebrations: "account", organizations: "account"
 };
 
 export function hostNav(t: Translate, celebrationId: string | undefined): NavItem[] {
   return NAV.map((item) => {
     const group = NAV_GROUP[item.key];
-    return { key: item.key, label: t(item.label), href: item.key === "celebrations" ? item.path : withCelebration(item.path, celebrationId), ...(group ? { group: t(`host.navGroups.${group}`) } : {}) };
+    return { key: item.key, label: t(item.label), href: item.key === "celebrations" || item.key === "organizations" ? item.path : withCelebration(item.path, celebrationId), ...(group ? { group: t(`host.navGroups.${group}`) } : {}) };
   });
 }

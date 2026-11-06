@@ -6,7 +6,8 @@ import { spacing } from "@rsvp/design-tokens";
 import { formatMinor } from "@rsvp/i18n";
 import { catalogedFirst, guestVisible, isGiftTaken, newIdempotencyKey, useCelebrationBySlug, useGiftList, useReserveGiftItem, type GiftItem, type GiftReservation } from "@rsvp/query-hooks";
 import { GuestFrame } from "./frame";
-import { ActionButton, ConfirmDialog, ErrorNotice, Field, Loading, Notice, styles } from "../host/ui";
+import { ActionButton, ConfirmDialog, Field, Loading, Notice, styles } from "../host/ui";
+import { MESSAGE_MAX, NAME_MAX, reserveFailureKind, reserveFieldErrors, isRetryable } from "./reserve-rules";
 import { partnerRedirectUrl } from "../platform/partner-link";
 import { useApiClient, useLocale, useT } from "../platform/providers";
 
@@ -30,6 +31,11 @@ function blockerFor(error: unknown, t: ReturnType<typeof useT>): { title: string
   return { title: t("gifts.error.unavailableTitle"), body: t("gifts.error.unavailableBody") };
 }
 
+const RESERVE_ERROR_KEY = {
+  limit: "gifts.error.limit", expired: "gifts.error.expiredBody", forbidden: "gifts.error.forbiddenBody", notFound: "gifts.error.otherBody", busy: "gifts.error.busyBody",
+  validation: "gifts.error.validation", offline: "gifts.error.offline", generic: "gifts.error.generic"
+} as const;
+
 export function GuestGiftsScreen({ slug, token }: { readonly slug: string; readonly token: string }): ReactNode {
   const t = useT();
   const locale = useLocale();
@@ -41,6 +47,7 @@ export function GuestGiftsScreen({ slug, token }: { readonly slug: string; reado
   const [target, setTarget] = useState<GiftItem | null>(null);
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<ReturnType<typeof reserveFieldErrors>>({});
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const keys = useRef(new Map<string, string>());
   const inFlight = useRef(false);
@@ -53,6 +60,9 @@ export function GuestGiftsScreen({ slug, token }: { readonly slug: string; reado
   const keyFor = (itemId: string): string => { let key = keys.current.get(itemId); if (!key) { key = newIdempotencyKey(); keys.current.set(itemId, key); } return key; };
   const submit = (): void => {
     if (!target || inFlight.current) return;
+    const invalid = reserveFieldErrors({ name, message });
+    setFieldErrors(invalid);
+    if (invalid.name || invalid.message) return;
     inFlight.current = true;
     const item = target;
     reserve.mutate({ giftItemId: item.id, input: { ...(name.trim() ? { guestDisplayName: name.trim() } : {}), ...(message.trim() ? { message: message.trim() } : {}) }, idempotencyKey: keyFor(item.id) }, {
@@ -65,6 +75,9 @@ export function GuestGiftsScreen({ slug, token }: { readonly slug: string; reado
   if (celebration.isPending || (celebrationId && list.isPending)) return <Frame><Loading /></Frame>;
   if (celebration.isError) return <Frame><Notice kind="error">{t("gifts.notFound.title")}</Notice></Frame>;
   const blocker = list.isError ? blockerFor(list.error, t) : null;
+  const failedKind = reserve.isError ? reserveFailureKind(reserve.error) : null;
+  const retryAfter = reserve.error instanceof ApiError ? reserve.error.retryAfterSeconds : undefined;
+  const listStatus = list.error instanceof ApiError ? list.error.status : 0;
   const rawTitle = celebration.data.content?.["title"];
   const title = typeof rawTitle === "string" && rawTitle ? rawTitle : slug;
 
@@ -86,7 +99,6 @@ export function GuestGiftsScreen({ slug, token }: { readonly slug: string; reado
     );
   };
 
-  const limit = reserve.error instanceof ApiError && reserve.error.problem?.code === "RESERVATION_LIMIT_REACHED";
   return (
     <Frame>
       <Text accessibilityRole="header" aria-level={1} style={styles.title}>{t("gifts.title")}</Text>
@@ -100,14 +112,24 @@ export function GuestGiftsScreen({ slug, token }: { readonly slug: string; reado
           {alternatives.length === 0 ? <Notice>{t("gifts.outcome.takenNone")}</Notice> : <><Text style={styles.subtitle}>{t("gifts.outcome.takenAlternatives")}</Text>{alternatives.map(card)}</>}
         </View>
       ) : null}
-      {blocker ? <Notice kind="error"><Text style={styles.subtitle}>{blocker.title}</Text>{"\n"}{blocker.body}</Notice> : null}
+      {blocker ? (
+        <Notice kind="error">
+          <Text style={styles.subtitle}>{blocker.title}</Text>{"\n"}{blocker.body}
+          {listStatus !== 401 && listStatus !== 403 && listStatus !== 404 ? <ActionButton variant="secondary" label={t("gifts.error.retry")} onPress={() => { void list.refetch(); }} testID="gifts-retry" /> : null}
+        </Notice>
+      ) : null}
       {list.data && items.length === 0 ? <Notice>{t("gifts.empty.title")}</Notice> : null}
       {partner.length ? <><Text accessibilityRole="header" style={styles.subtitle}>{t("gifts.group.partner")}</Text>{partner.map(card)}</> : null}
       {other.length ? <><Text accessibilityRole="header" style={styles.subtitle}>{t("gifts.group.other")}</Text>{other.map(card)}</> : null}
-      <ConfirmDialog visible={target !== null} title={t("gifts.reserve.title")} body={target ? `${target.title}. ${t("gifts.reserve.intro")}` : ""} confirmLabel={reserve.isPending ? t("gifts.reserve.submitting") : t("gifts.reserve.submit")} onConfirm={submit} onCancel={() => { setTarget(null); reserve.reset(); }}>
-        <Field label={t("gifts.reserve.name")} value={name} onChange={setName} help={t("gifts.reserve.nameHelp")} testID="reserve-name" />
-        <Field label={t("gifts.reserve.message")} value={message} onChange={setMessage} help={t("gifts.reserve.messageHelp")} multiline testID="reserve-message" />
-        {reserve.isError && !isGiftTaken(reserve.error) ? (limit ? <Notice kind="error">{t("gifts.error.limit")}</Notice> : <ErrorNotice error={reserve.error} />) : null}
+      <ConfirmDialog visible={target !== null} title={t("gifts.reserve.title")} body={target ? `${target.title}. ${t("gifts.reserve.intro")}` : ""} confirmLabel={reserve.isPending ? t("gifts.reserve.submitting") : t("gifts.reserve.submit")} onConfirm={submit} onCancel={() => { setTarget(null); setFieldErrors({}); reserve.reset(); }}>
+        <Field label={t("gifts.reserve.name")} value={name} onChange={(next) => { setName(next); setFieldErrors({}); }} help={t("gifts.reserve.nameHelp")} error={fieldErrors.name ? t("gifts.error.nameTooLong", { max: NAME_MAX }) : undefined} testID="reserve-name" />
+        <Field label={t("gifts.reserve.message")} value={message} onChange={(next) => { setMessage(next); setFieldErrors({}); }} help={t("gifts.reserve.messageHelp")} error={fieldErrors.message ? t("gifts.error.messageTooLong", { max: MESSAGE_MAX }) : undefined} multiline testID="reserve-message" />
+        {failedKind && failedKind !== "taken" ? (
+          <Notice kind="error">
+            <Text testID="reserve-error" style={styles.body}>{failedKind === "busy" && retryAfter ? t("gifts.error.busyWait", { seconds: retryAfter }) : t(RESERVE_ERROR_KEY[failedKind])}</Text>
+            {isRetryable(failedKind) ? <Text style={styles.muted}>{t("gifts.error.retryHint")}</Text> : null}
+          </Notice>
+        ) : null}
       </ConfirmDialog>
     </Frame>
   );

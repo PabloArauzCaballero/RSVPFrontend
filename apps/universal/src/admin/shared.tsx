@@ -3,13 +3,25 @@ import { Text } from "react-native";
 import { ApiError } from "@rsvp/api-client";
 import { ActionButton, ConfirmDialog, Field, Loading, Notice, styles } from "../host/ui";
 import { useLocale, useT } from "../platform/providers";
+import { failureKind, isRetryable } from "../provider/errors";
 
 const MESSAGE_BY_STATUS: Readonly<Record<number, string>> = { 401: "unauthorized", 403: "forbidden", 404: "notFound", 409: "conflict", 400: "invalid", 422: "invalid" };
 
 /** Admin wording for an API failure (the host copy talks about celebrations). 409 offers the reload. */
-export function AdminErrorNotice({ error, onReload }: { readonly error: unknown; readonly onReload?: () => void }): ReactNode {
+export function AdminErrorNotice({ error, onReload, onRetry }: { readonly error: unknown; readonly onReload?: () => void; readonly onRetry?: () => void }): ReactNode {
   const t = useT();
   if (!error) return null;
+  const kind = failureKind(error);
+  if (kind !== "other") {
+    const seconds = error instanceof ApiError ? error.retryAfterSeconds : undefined;
+    const retry = onRetry ?? onReload;
+    return (
+      <Notice kind="error">
+        <Text style={styles.body}>{kind === "rateLimited" ? (seconds ? t("admin.errors.rateLimited", { seconds }) : t("admin.errors.rateLimitedNoWait")) : t(`admin.errors.${kind}`)}</Text>
+        {isRetryable(kind) && retry ? <ActionButton variant="secondary" label={t("host.common.retry")} onPress={retry} testID="error-retry" /> : null}
+      </Notice>
+    );
+  }
   const key = error instanceof ApiError ? MESSAGE_BY_STATUS[error.status] ?? "generic" : "generic";
   return (
     <Notice kind="error">

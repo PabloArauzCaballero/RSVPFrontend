@@ -4,11 +4,14 @@ import { spacing } from "@rsvp/design-tokens";
 import { formatMinor } from "@rsvp/i18n";
 import { useCreateOwnListing, useOwnListings, usePublishListing, type CreateListingInput, type Provider } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../platform/providers";
-import { ActionButton, ChoiceGroup, ErrorNotice, Field, Loading, Notice, Section, styles } from "../host/ui";
+import { ActionButton, ChoiceGroup, Field, Loading, Notice, Section, styles } from "../host/ui";
+import { PortalErrorNotice as ErrorNotice } from "./errors";
 import { parseMinor } from "../host/gifts/money";
 import { PortalScreen } from "./frame";
+import { useSingleMutation } from "../platform/single-flight";
 
 const CATEGORIES = ["VENUE", "CATERING", "PHOTOGRAPHY", "MUSIC", "DECORATION", "MAKEUP", "TRANSPORT", "INVITATIONS", "WEDDING_PLANNER", "ACCOMMODATION", "HONEYMOON"] as const;
+const MAX_TITLE = 120;
 const HTTPS = /^https:\/\/[^\s]+$/i;
 type Kind = "SERVICE" | "PRODUCT";
 
@@ -19,7 +22,9 @@ function Listings({ provider, kind }: { readonly provider: Provider; readonly ki
   const client = useApiClient();
   const listings = useOwnListings(client, provider.id, locale);
   const create = useCreateOwnListing(client, provider.id, locale);
+  const createOnce = useSingleMutation(create);
   const publish = usePublishListing(client, provider.id, locale);
+  const publishOnce = useSingleMutation(publish);
   const visible = (listings.data?.items ?? []).filter((listing) => listing.type === kind);
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
@@ -34,7 +39,6 @@ function Listings({ provider, kind }: { readonly provider: Provider; readonly ki
   const [conditions, setConditions] = useState("");
   const [errors, setErrors] = useState<readonly string[]>([]);
   const [created, setCreated] = useState(false);
-
   const submit = (): void => {
     const found: string[] = [];
     const destinations: Record<string, string> = {};
@@ -45,6 +49,7 @@ function Listings({ provider, kind }: { readonly provider: Provider; readonly ki
     const transportMinor = transport.trim() ? parseMinor(transport) : undefined;
     const leadDays = Number(lead);
     if (!name.trim()) found.push(t("portal.services.errors.name"));
+    else if (name.trim().length > MAX_TITLE) found.push(t("portal.services.errors.nameLong"));
     if (Object.keys(destinations).length === 0) found.push(t("portal.services.errors.destination"));
     else if (Object.values(destinations).some((url) => !HTTPS.test(url))) found.push(t("portal.services.errors.url"));
     if (zones.length === 0) found.push(t("portal.services.errors.coverage"));
@@ -59,7 +64,7 @@ function Listings({ provider, kind }: { readonly provider: Provider; readonly ki
       ...(typeof priceMinor === "number" ? { priceFromMinor: priceMinor } : {})
     };
     setCreated(false);
-    create.mutate(body, { onSuccess: () => { setCreated(true); setName(""); setPrice(""); } });
+    createOnce(body, { onSuccess: () => { setCreated(true); setName(""); setPrice(""); } });
   };
 
   return (
@@ -70,10 +75,11 @@ function Listings({ provider, kind }: { readonly provider: Provider; readonly ki
           <Text style={styles.subtitle}>{listing.title}</Text>
           <Text style={styles.body}>{t(`portal.services.type.${listing.type === "SERVICE" ? "SERVICE" : "PRODUCT"}`)}{listing.priceFromMinor !== undefined ? ` · ${formatMinor(listing.priceFromMinor, provider.currency, locale)}` : ""}</Text>
           <Text style={styles.label} testID={`listing-state-${listing.id}`}>{listing.published ? t("portal.services.published") : t("portal.services.draft")}</Text>
-          {!listing.published ? <ActionButton label={publish.isPending && publish.variables === listing.id ? t("portal.services.publishing") : t("portal.services.publish")} busy={publish.isPending && publish.variables === listing.id} disabled={publish.isPending} onPress={() => publish.mutate(listing.id)} testID={`publish-${listing.id}`} /> : null}
+          {!listing.published && !listing.fulfillment ? <Text style={styles.muted} testID={`publish-blocked-${listing.id}`}>{t("portal.services.needsTerms")}</Text> : null}
+          {!listing.published ? <ActionButton label={publish.isPending && publish.variables === listing.id ? t("portal.services.publishing") : t("portal.services.publish")} busy={publish.isPending && publish.variables === listing.id} disabled={publish.isPending || !listing.fulfillment} onPress={() => publishOnce(listing.id)} testID={`publish-${listing.id}`} /> : null}
         </View>
       ))}
-      <ErrorNotice error={publish.error} />
+      <ErrorNotice error={publish.error} onRetry={() => { if (publish.variables) publishOnce(publish.variables); }} />
       <Section title={t("portal.services.new.title")}>
         <Field label={t("portal.services.new.name")} value={name} onChange={setName} testID="listing-name" />
         <ChoiceGroup<string> label={t("portal.services.new.category")} value={category} onChange={setCategory} choices={CATEGORIES.map((value) => ({ value, label: t(`directory.category.${value}`) }))} />
@@ -90,7 +96,7 @@ function Listings({ provider, kind }: { readonly provider: Provider; readonly ki
         <Field label={t("portal.services.new.conditions")} value={conditions} onChange={setConditions} multiline testID="listing-conditions" />
         {errors.length ? <Notice kind="error">{errors.map((message) => <Text key={message} style={styles.body}>{message}</Text>)}</Notice> : null}
         {created ? <Notice kind="success">{t("portal.services.new.created")}</Notice> : null}
-        <ErrorNotice error={create.error} />
+        <ErrorNotice error={create.error} onRetry={submit} />
         <ActionButton label={create.isPending ? t("portal.services.new.creating") : t("portal.services.new.submit")} busy={create.isPending} disabled={create.isPending} onPress={submit} testID="listing-submit" />
       </Section>
     </View>
