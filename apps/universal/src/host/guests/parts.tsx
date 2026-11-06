@@ -1,17 +1,31 @@
 import type { ReactNode } from "react";
 import { Text, View } from "react-native";
-import { colors, spacing } from "@rsvp/design-tokens";
+import { spacing } from "@rsvp/design-tokens";
+import { Chip, type ChipTone } from "@rsvp/ui";
 import { formatCelebrationDate } from "@rsvp/i18n";
 import type { ProjectionFreshness, RsvpStatus } from "@rsvp/query-hooks";
 import { useLocale, useT } from "../../platform/providers";
 import { ActionButton, ErrorNotice, Notice, styles } from "../ui";
+import { classifyFailure } from "./failure";
 
-const palette = colors.light;
+/**
+ * Error with the way out: 429 says how long to wait, a down service or no network says so and offers the retry,
+ * and the other statuses (401/403/404/409/422) keep the system notice. The state is never lost: the retry re-asks.
+ */
+export function FailureNotice({ error, onRetry, onReload }: { readonly error: unknown; readonly onRetry?: () => void; readonly onReload?: () => void }): ReactNode {
+  const t = useT();
+  if (!error) return null;
+  const failure = classifyFailure(error);
+  if (failure.kind === "api") return <ErrorNotice error={error} onReload={onReload ?? onRetry} />;
+  const text = failure.kind === "rateLimited" ? (failure.waitSeconds ? t("guests.errors.rateLimitedWait", { seconds: failure.waitSeconds }) : t("guests.errors.rateLimited")) : failure.kind === "unavailable" ? t("guests.errors.unavailable") : t("guests.errors.offline");
+  return <Notice kind="error"><Text style={styles.body}>{text}</Text>{onRetry ? <ActionButton variant="secondary" label={t("guests.list.retry")} onPress={onRetry} /> : null}</Notice>;
+}
 
-/** Error with the way out: the system notice (403/409/422/…) plus a retry. */
+/** A failed read: the notice plus an explicit retry (the notice itself already offers one for network and rate-limit failures). */
 export function RetryNotice({ error, onRetry, onReload }: { readonly error: unknown; readonly onRetry: () => void; readonly onReload?: () => void }): ReactNode {
   const t = useT();
-  return <View style={{ gap: spacing[2] }}><ErrorNotice error={error} onReload={onReload ?? onRetry} /><ActionButton variant="secondary" label={t("guests.list.retry")} onPress={onRetry} /></View>;
+  const own = classifyFailure(error).kind !== "api";
+  return <View style={{ gap: spacing[2] }}><FailureNotice error={error} onRetry={onRetry} {...(onReload ? { onReload } : {})} />{own ? null : <ActionButton variant="secondary" label={t("guests.list.retry")} onPress={onRetry} />}</View>;
 }
 
 /**
@@ -31,21 +45,12 @@ export function FreshnessLine({ freshness, timeZone, now = Date.now(), onRefresh
   );
 }
 
-const STATUS_COLOR: Readonly<Record<RsvpStatus, string>> = { CONFIRMED: palette.success, DECLINED: palette.textMuted, PENDING: palette.warning };
+const STATUS_TONE: Readonly<Record<RsvpStatus, ChipTone>> = { CONFIRMED: "yes", DECLINED: "no", PENDING: "wait" };
 
 /** The word always accompanies the colour: status is never colour alone. */
 export function StatusBadge({ status }: { readonly status: RsvpStatus }): ReactNode {
   const t = useT();
-  return <Text style={[styles.label, { color: STATUS_COLOR[status] }]}>{t(`guests.status.${status}`)}</Text>;
-}
-
-export function CountTile({ label, value, testID }: { readonly label: string; readonly value: number; readonly testID?: string }): ReactNode {
-  return (
-    <View testID={testID} accessible accessibilityLabel={`${label}: ${value}`} style={[styles.card, { flexGrow: 1, flexBasis: 140, gap: spacing[1] }]}>
-      <Text style={[styles.title, { fontVariant: ["tabular-nums"] }]}>{value}</Text>
-      <Text style={styles.muted}>{label}</Text>
-    </View>
-  );
+  return <Chip tone={STATUS_TONE[status]}>{t(`guests.status.${status}`)}</Chip>;
 }
 
 export const REQUIRED_ISSUES = ["companions", "tooLong", "required", "email", "contact", "phone"] as const;

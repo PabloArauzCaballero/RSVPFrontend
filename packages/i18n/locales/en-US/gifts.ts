@@ -32,6 +32,7 @@ export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
     forbiddenTitle: "You cannot reserve gifts here", forbiddenBody: "Your invitation has no permission for this list. Ask the hosts for a new link.",
     expiredTitle: "Your link expired", expiredBody: "The personal link is no longer valid. Ask the hosts to send you a new one.",
     unavailableTitle: "We could not load the gifts", unavailableBody: "The gift service is not responding right now. Nothing was lost: try again.",
+    offline: "No connection. Check your internet and try again; your message is still here.", nameTooLong: "The name can be up to {{max}} characters.", messageTooLong: "The message can be up to {{max}} characters.", busyWait: "We received too many requests in a row. Wait {{seconds}} seconds and try again.", retryHint: "You can press Reserve again: it will not reserve twice.",
     retry: "Try again", validation: "Check the data: the name or the message is too long.", generic: "We could not reserve the gift. Try again."
   },
   empty: { title: "No gifts yet", body: "The hosts have not added gifts yet. Come back soon.", filtered: "No gift matches these filters." },
@@ -42,6 +43,7 @@ export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
     status: { AVAILABLE: "Available", PROPOSED: "Proposed, to review", PENDING_REVIEW: "Reservation pending", COMMITTED: "Committed", REJECTED: "Rejected" },
     visibility: { title: "Who sees who reserved", intro: "Choose whether the names of people who reserve show in your dashboard and in your guests' list.", host: "Show the name in my dashboard", hostHelp: "If you turn it off, you will see reservations without the name.", guests: "Show the name to other guests", guestsHelp: "Off by default: guests only see that the gift is reserved.", saved: "Preference saved. It applies from now on." },
     approveProposal: "Approve proposal", approvingProposal: "Approving…",
+    rejectProposal: "Reject proposal", rejectingProposal: "Rejecting…", proposalRejected: "Proposal rejected: {{title}}.", rejectConfirm: { title: "Reject this proposal?", body: "“{{title}}” will not be shown to your guests. You cannot undo this from here." },
     inbox: { title: "Pending reservations", intro: "Approve or reject your guests' reservations.", empty: "There are no pending reservations.", requester: "Requested by: {{name}}", hidden: "Name hidden by your setting", hiddenHelp: "You can show names again under Gifts, \"Who sees who reserved\".", anonymous: "A guest", approve: "Approve", reject: "Reject", approved: "Reservation approved.", rejected: "Reservation rejected.", stale: "This reservation was no longer pending; we refreshed the list.", gift: "Gift: {{title}}", requestedAt: "Requested on {{date}}" },
     providers: {
       title: "Discover providers", intro: "Browse verified providers with their offer, coverage and opening hours. Add the product you like to your list.",
@@ -49,14 +51,14 @@ export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
       by: "By {{name}}", leadTime: "Lead time: {{days}} days", coverage: "Coverage: {{zones}}", transport: "Delivery from {{price}}", address: "Address: {{address}}", hours: "Hours: {{hours}}",
       disclaimer: "DOne connects you with the provider; it does not provide or guarantee the service. Agree price, delivery and timing with them.", none: "No provider matches these filters.", count: "{{count}} results", page: "Page {{page}} of {{pages}}"
     },
-    catalog: { title: "Add from the catalog", intro: "Search products from verified providers and add them to your list.", search: "Search products", searchPlaceholder: "Cake, tableware, flowers…", add: "Add to the list", adding: "Adding…", added: "Added: {{title}}", none: "We found no products for that search.", fallbackNote: "Product search is not available yet; showing the public provider catalog.", unavailable: "Product unavailable", unavailableBody: "That product is no longer available in the catalog. Choose another.", priceFrom: "From {{price}}" },
+    catalog: { alreadyListed: "Already on your list.", title: "Add from the catalog", intro: "Search products from verified providers and add them to your list.", search: "Search products", searchPlaceholder: "Cake, tableware, flowers…", add: "Add to the list", adding: "Adding…", added: "Added: {{title}}", none: "We found no products for that search.", fallbackNote: "Product search is not available yet; showing the public provider catalog.", unavailable: "Product unavailable", unavailableBody: "That product is no longer available in the catalog. Choose another.", priceFrom: "From {{price}}" },
     external: {
       title: "Add an external gift", intro: "A gift from another store has no DOne partner behind it. Before adding it, check whether a partner offers something similar.",
       modeLabel: "Who can add external gifts", modeAuto: "They are published right away", modeRestricted: "I review them before publishing", modeSaved: "Mode saved.",
       priorityLabel: "Show partners first", priorityHelp: "When on, we suggest partner products before allowing an external gift.",
       name: "Gift name", url: "Store link", price: "Price (Bs.)", priceHelp: "Numbers only, for example 150.50", submit: "Add external gift", submitAnyway: "Add anyway",
       suggestionsTitle: "Before you continue, look at these partner products", suggestionsBody: "Your list puts partner products first. You can add one of these or continue with your external gift.", useSuggestion: "Add this one",
-      added: "External gift added.", proposed: "Gift proposed: it waits for your approval.", invalidUrl: "Enter a valid link starting with http:// or https://.", invalidMoney: "Enter a valid price, for example 150.50.", required: "Fill in the name, the link and the price."
+      added: "External gift added.", proposed: "Gift proposed: it waits for your approval.", invalidUrl: "Enter a valid link starting with http:// or https://.", titleTooLong: "The name can be up to {{max}} characters.", invalidMoney: "Enter a valid price, for example 150.50.", required: "Fill in the name, the link and the price."
     },
     errors: { forbidden: "Only the hosts of this celebration can manage gifts.", conflict: "This list changed while you were editing. We refreshed it.", validation: "Check the gift data.", retry: "Try again" }
   }

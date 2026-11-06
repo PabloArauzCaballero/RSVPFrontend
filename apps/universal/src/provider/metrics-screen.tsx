@@ -1,12 +1,14 @@
 import { useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
-import { spacing } from "@rsvp/design-tokens";
+import { colors, spacing } from "@rsvp/design-tokens";
 import { formatNumber } from "@rsvp/i18n";
 import { useMetrics, type MetricTotals, type Provider } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../platform/providers";
-import { ActionButton, ChoiceGroup, ErrorNotice, Field, Loading, Notice, Section, styles } from "../host/ui";
+import { ActionButton, ChoiceGroup, Field, Loading, Notice, Section, styles } from "../host/ui";
+import { PortalErrorNotice as ErrorNotice } from "./errors";
 import { PortalScreen } from "./frame";
 
+const palette = colors.light;
 const DAY_MS = 86_400_000;
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -17,10 +19,12 @@ export function lastDays(days: number, timeZone: string, now: Date = new Date())
 }
 export const validRange = (from: string, to: string): boolean => ISO.test(from) && ISO.test(to) && from <= to && !Number.isNaN(Date.parse(from)) && !Number.isNaN(Date.parse(to));
 
-export function RangeCards({ totals }: { readonly totals: MetricTotals }): ReactNode {
+/** The period's totals as one list: the label on the left, the figure on the right, a hairline between rows. */
+/** `bare` drops the container when the list already sits inside a section (no card in a card). */
+export function RangeTotals({ totals, bare = false }: { readonly totals: MetricTotals; readonly bare?: boolean }): ReactNode {
   const t = useT();
   const locale = useLocale();
-  const cells: readonly [string, string][] = [
+  const rows: readonly [string, string][] = [
     [t("portal.metrics.impressions"), formatNumber(totals.impressions, locale)],
     [t("portal.metrics.clicks"), formatNumber(totals.clicks, locale)],
     [t("portal.metrics.ctr"), new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 1 }).format(totals.ctr)],
@@ -28,8 +32,13 @@ export function RangeCards({ totals }: { readonly totals: MetricTotals }): React
     [t("portal.metrics.invalidLeads"), formatNumber(totals.invalidLeads, locale)]
   ];
   return (
-    <View style={[styles.row, { gap: spacing[3] }]} testID="metric-totals">
-      {cells.map(([label, value]) => <View key={label} style={[styles.card, { minWidth: 140, flexGrow: 1 }]} accessible accessibilityLabel={`${label}: ${value}`}><Text style={styles.muted}>{label}</Text><Text style={styles.title}>{value}</Text></View>)}
+    <View style={[bare ? { maxWidth: 560 } : [styles.card, { gap: 0, paddingVertical: spacing[2], maxWidth: 560 }]]} testID="metric-totals">
+      {rows.map(([label, value], index) => (
+        <View key={label} accessible accessibilityLabel={`${label}: ${value}`} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", gap: spacing[3], paddingVertical: spacing[3], borderTopWidth: index === 0 ? 0 : 1, borderTopColor: palette.border }}>
+          <Text style={styles.body}>{label}</Text>
+          <Text style={[styles.subtitle, { fontVariant: ["tabular-nums"] }]}>{value}</Text>
+        </View>
+      ))}
     </View>
   );
 }
@@ -63,7 +72,7 @@ function Metrics({ provider }: { readonly provider: Provider }): ReactNode {
       <ErrorNotice error={metrics.error} onReload={() => { void metrics.refetch(); }} />
       {metrics.data ? (
         <>
-          <RangeCards totals={metrics.data.totals} />
+          <RangeTotals totals={metrics.data.totals} />
           <Section title={t("portal.metrics.groupsTitle", { group: t(`portal.metrics.group.${group}`) })}>
             {rows.length === 0 ? <Notice>{t("portal.metrics.empty")}</Notice> : rows.map((row, index) => (
               <Text key={index} style={styles.body} testID="metric-row">{Object.entries(row).map(([key, value]) => `${key}: ${String(value)}`).join(" · ")}</Text>

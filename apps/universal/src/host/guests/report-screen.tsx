@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Pressable, Text, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
 import { buildCateringCsv, buildRsvpReportCsv, hostGuestsApi, CATERING_COLUMNS, RSVP_REPORT_COLUMNS, useGuestList, useHostRsvps, type RsvpStatus } from "@rsvp/query-hooks";
@@ -8,6 +8,8 @@ import { CelebrationScreen, type ScreenProps } from "../gate";
 import { guestDetailPath, withCelebration } from "../routes";
 import { ActionButton, Loading, Notice, styles } from "../ui";
 import { FreshnessLine, RetryNotice, StatusBadge } from "./parts";
+import { useSingleFlightGate } from "../../platform/single-flight";
+import { lastPageOffset } from "./paging";
 
 /** C24 · RSVP report (companions, diets, messages) and its safe CSV export for the venue and the caterer (REQ-F17-02/05). */
 
@@ -25,7 +27,9 @@ function ReportBody({ celebrationId, timeZone, slug, onNavigate }: { readonly ce
   const [exportMessage, setExportMessage] = useState<{ kind: "success" | "error"; text: string } | null>(null);
   const byGuest = new Map((rsvps.data?.items ?? []).map((item) => [item.guestId, item]));
 
+  const flight = useSingleFlightGate();
   const exportCsv = async (kind: "full" | "catering" = "full"): Promise<void> => {
+    if (!flight.begin()) return;
     setExporting(true); setExportMessage(null);
     try {
       if (kind === "catering") {
@@ -41,12 +45,15 @@ function ReportBody({ celebrationId, timeZone, slug, onNavigate }: { readonly ce
       const name = `rsvp-${slug}-${new Date().toISOString().slice(0, 10)}.csv`;
       const outcome = await saveTextFile(name, csv);
       setExportMessage(outcome === "failed" ? { kind: "error", text: t("guests.report.exportFailed") } : { kind: "success", text: t("guests.report.exported", { name }) });
-    } catch { setExportMessage({ kind: "error", text: t("guests.report.exportFailed") }); } finally { setExporting(false); }
+    } catch { setExportMessage({ kind: "error", text: t("guests.report.exportFailed") }); } finally { setExporting(false); flight.end(); }
   };
 
   const data = list.data;
   const to = data ? data.offset + data.items.length : 0;
-  const paged = Math.max(0, (data?.total ?? 0) - PAGE) !== 0;
+  useEffect(() => {
+    if (list.data && !list.isFetching && list.data.items.length === 0 && offset > 0) setOffset(lastPageOffset(list.data.total, PAGE));
+  }, [list.data, list.isFetching, offset]);
+  const paged = Math.max(0, (data?.total ?? 0) - PAGE) !== 0 || offset !== 0;
   return (
     <View style={{ gap: spacing[4] }}>
       <Text style={styles.body}>{t("guests.report.intro")}</Text>

@@ -5,7 +5,10 @@ import { useEditCelebration, type Celebration } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "./gate";
 import { asRecord, asRecords, asText, scheduleDraft } from "./content-draft";
-import { ActionButton, ChoiceGroup, ErrorNotice, Field, Notice, Section, styles } from "./ui";
+import { useSingleFlight } from "../platform/single-flight";
+import { CelebrationErrorNotice } from "./celebration-errors";
+import { LIMITS, overLimit } from "./limits";
+import { ActionButton, ChoiceGroup, Field, Notice, Section, styles } from "./ui";
 
 /** C13 · The same content in each language of the site (REQ-F11-03). Times are never translated. */
 
@@ -16,8 +19,9 @@ export function translatableLocales(celebration: Pick<Celebration, "supportedLoc
   return celebration.supportedLocales.filter((locale) => locale !== celebration.defaultLocale);
 }
 
-function Translations({ celebration, refetch }: { readonly celebration: Celebration; readonly refetch: () => void }): ReactNode {
+function Translations({ celebration, refetch, onSaved }: { readonly celebration: Celebration; readonly refetch: () => void; readonly onSaved: (saved: boolean) => void }): ReactNode {
   const t = useT();
+  const once = useSingleFlight();
   const client = useApiClient();
   const mutation = useEditCelebration(client, celebration.id);
   const locales = translatableLocales(celebration);
@@ -30,10 +34,12 @@ function Translations({ celebration, refetch }: { readonly celebration: Celebrat
   const faqDraft = asRecords(current["faq"]);
   const labels = asRecord(current["scheduleLabels"]);
 
+  const tooLong = Object.values(current).some((value) => typeof value === "string" && overLimit(value, LIMITS.translation) !== null);
   const save = (): void => {
-    if (!locale) return;
+    if (!locale || tooLong) return;
+    onSaved(false);
     const cleaned = Object.fromEntries(Object.entries(current).filter(([, value]) => (typeof value === "string" ? value.trim() : value !== undefined)));
-    mutation.mutate({ target: celebration, patch: { translations: { [locale]: Object.keys(cleaned).length ? cleaned : null } } });
+    once((release) => { mutation.mutateAsync({ target: celebration, patch: { translations: { [locale]: Object.keys(cleaned).length ? cleaned : null } } }).then(() => onSaved(true), () => undefined).finally(release); });
   };
 
   return (
@@ -52,7 +58,7 @@ function Translations({ celebration, refetch }: { readonly celebration: Celebrat
           <ChoiceGroup label={t("host.translations.language")} value={locale} onChange={setLocale} choices={locales.map((code) => ({ value: code, label: t(`celebration.language.${code}`) }))} />
           <Section title={t(`celebration.language.${locale ?? ""}`)}>
             {TEXT_FIELDS.map((field) => (
-              <Field key={field} label={t(`host.translations.fields.${field}`)} value={asText(current[field])} onChange={(value) => set(field, value)} multiline={field === "story"}
+              <Field key={field} label={t(`host.translations.fields.${field}`)} value={asText(current[field])} onChange={(value) => set(field, value)} multiline={field === "story"} {...(overLimit(asText(current[field]), LIMITS.translation) !== null ? { error: t("host.limits.tooLong", { count: overLimit(asText(current[field]), LIMITS.translation) ?? 0, max: LIMITS.translation }) } : {})}
                 help={asText(celebration.content[field]) ? t("host.translations.original", { text: asText(celebration.content[field]) }) : undefined} />
             ))}
             {faq.map((item, index) => (
@@ -69,9 +75,8 @@ function Translations({ celebration, refetch }: { readonly celebration: Celebrat
                 onChange={(value) => set("scheduleLabels", { ...labels, [item.id]: { title: value } })} />
             ))}
           </Section>
-          <ErrorNotice error={mutation.error} onReload={refetch} />
-          {mutation.isSuccess ? <Notice kind="success">{t("host.common.saved")}</Notice> : null}
-          <ActionButton label={mutation.isPending ? t("host.common.saving") : t("host.common.save")} busy={mutation.isPending} onPress={save} testID="save-translation" />
+          <CelebrationErrorNotice error={mutation.error} onReload={refetch} />
+          <ActionButton label={mutation.isPending ? t("host.common.saving") : t("host.common.save")} busy={mutation.isPending} disabled={tooLong} onPress={save} testID="save-translation" />
         </>
       )}
     </View>
@@ -80,9 +85,11 @@ function Translations({ celebration, refetch }: { readonly celebration: Celebrat
 
 export function TranslationEditorScreen({ celebrationId, onNavigate }: ScreenProps): ReactNode {
   const t = useT();
+  // The form restarts from the stored content after each save (keyed by version), so the confirmation lives here.
+  const [saved, setSaved] = useState(false);
   return (
-    <CelebrationScreen celebrationId={celebrationId} onNavigate={onNavigate} current="translations" title={t("host.translations.title")}>
-      {({ celebration, refetch }) => <Translations key={celebration.version} celebration={celebration} refetch={refetch} />}
+    <CelebrationScreen celebrationId={celebrationId} onNavigate={onNavigate} current="translations" editable title={t("host.translations.title")}>
+      {({ celebration, refetch }) => <>{saved ? <Notice kind="success">{t("host.common.saved")}</Notice> : null}<Translations key={celebration.version} celebration={celebration} refetch={refetch} onSaved={setSaved} /></>}
     </CelebrationScreen>
   );
 }

@@ -6,7 +6,8 @@ import { partnerSuggestionsOf, problemCode, useAddGift, useUpdateSettings, type 
 import { useApiClient, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { ActionButton, ChoiceGroup, ErrorNotice, Field, Notice, Section, styles } from "../ui";
-import { isHttpUrl, parseMinor } from "./money";
+import { useSingleFlightGate } from "../../platform/single-flight";
+import { isHttpUrl, parseMinor, TITLE_MAX } from "./money";
 
 /**
  * C28 · External gift with deliberate friction. With partner priority on, the first attempt answers 409 PARTNER_CATALOG_FIRST with
@@ -18,6 +19,7 @@ function ExternalBody({ celebration, refetch }: { readonly celebration: Celebrat
   const client = useApiClient();
   const settings = useUpdateSettings(client, celebration.id);
   const add = useAddGift(client, celebration.id);
+  const flight = useSingleFlightGate();
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [price, setPrice] = useState("");
@@ -29,11 +31,14 @@ function ExternalBody({ celebration, refetch }: { readonly celebration: Celebrat
     setDone(null);
     const minor = parseMinor(price);
     if (!title.trim() || !url.trim() || !price.trim()) return setError(t("gifts.host.external.required"));
+    if (title.trim().length > TITLE_MAX) return setError(t("gifts.host.external.titleTooLong", { max: TITLE_MAX }));
     if (!isHttpUrl(url)) return setError(t("gifts.host.external.invalidUrl"));
     if (minor === null) return setError(t("gifts.host.external.invalidMoney"));
     setError(null);
+    if (!flight.begin()) return;
     add.mutate({ source: "EXTERNAL", title: title.trim(), price: { amountMinor: minor, currency: celebration.currency }, url: url.trim(), ...(acknowledged ? { partnerSuggestionsAcknowledged: true } : {}) }, {
       onSuccess: (item) => { setSuggestions([]); setTitle(""); setUrl(""); setPrice(""); setDone(item.status === "PROPOSED" ? t("gifts.host.external.proposed") : t("gifts.host.external.added")); },
+      onSettled: flight.end,
       onError: (failure) => { if (failure instanceof ApiError && failure.status === 409 && problemCode(failure) === "PARTNER_CATALOG_FIRST") setSuggestions(partnerSuggestionsOf(failure)); }
     });
   };
@@ -64,7 +69,7 @@ function ExternalBody({ celebration, refetch }: { readonly celebration: Celebrat
             {suggestions.map((suggestion) => (
               <View key={suggestion.productListingId} style={styles.row} testID={`suggestion-${suggestion.productListingId}`}>
                 <Text style={styles.body}>{suggestion.title}</Text>
-                <ActionButton variant="secondary" label={t("gifts.host.external.useSuggestion")} onPress={() => add.mutate({ source: "CATALOGED", title: suggestion.title, price: { amountMinor: parseMinor(price) ?? 0, currency: celebration.currency }, productListingId: suggestion.productListingId }, { onSuccess: () => { setSuggestions([]); setDone(t("gifts.host.catalog.added", { title: suggestion.title })); } })} />
+                <ActionButton variant="secondary" label={t("gifts.host.external.useSuggestion")} onPress={() => { if (flight.begin()) add.mutate({ source: "CATALOGED", title: suggestion.title, price: { amountMinor: parseMinor(price) ?? 0, currency: celebration.currency }, productListingId: suggestion.productListingId }, { onSuccess: () => { setSuggestions([]); setDone(t("gifts.host.catalog.added", { title: suggestion.title })); }, onSettled: flight.end }); }} />
               </View>
             ))}
           </Notice>

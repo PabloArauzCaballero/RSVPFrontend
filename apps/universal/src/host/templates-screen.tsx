@@ -7,7 +7,7 @@ import { TemplateGallery } from "./template-gallery";
 export function TemplatesScreen({ celebrationId, onNavigate }: ScreenProps): ReactNode {
   const t = useT();
   return (
-    <CelebrationScreen celebrationId={celebrationId} onNavigate={onNavigate} current="templates" title={t("host.templates.title")}>
+    <CelebrationScreen celebrationId={celebrationId} onNavigate={onNavigate} current="templates" editable title={t("host.templates.title")}>
       {({ celebration, eventType, refetch }) => <TemplateGallery celebration={celebration} eventType={eventType} onApplied={refetch} />}
     </CelebrationScreen>
   );

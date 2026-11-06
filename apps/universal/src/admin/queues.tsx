@@ -5,6 +5,7 @@ import { useApiClient, useT } from "../platform/providers";
 import { ActionButton, ChoiceGroup, Notice, styles } from "../host/ui";
 import { AdminScreen, adminOnly } from "./admin-screen";
 import { AdminErrorNotice, QueryBoundary, ReasonDialog, useStamp } from "./shared";
+import { useSingleMutation } from "../platform/single-flight";
 
 /** E7 verification queue (REQ-F14-03) and E8 moderation (REQ-F14-04): act on a row, reject/suspend need a reason. */
 
@@ -12,7 +13,9 @@ type Nav = { readonly onNavigate: (href: string) => void };
 
 const VERIFICATION_STATUSES: readonly VerificationStatus[] = ["PENDING", "VERIFIED", "REJECTED", "SUSPENDED"];
 const ACTIONS_BY_STATUS: Readonly<Record<VerificationStatus, readonly VerificationAction[]>> = {
-  PENDING: ["verify", "reject"], VERIFIED: ["suspend"], REJECTED: ["verify"], SUSPENDED: ["verify"]
+  // provider-catalog only moves PENDING to VERIFIED/REJECTED and VERIFIED to SUSPENDED (any other transition answers 409): a rejected
+  // provider is resubmitted by its owner, and nothing reinstates a suspended one yet, so those two states offer no button.
+  PENDING: ["verify", "reject"], VERIFIED: ["suspend"], REJECTED: [], SUSPENDED: []
 };
 
 function VerificationRow({ item, busy, onVerify, onAsk }: { readonly item: VerificationItem; readonly busy: boolean; readonly onVerify: () => void; readonly onAsk: (action: "reject" | "suspend") => void }): ReactNode {
@@ -23,8 +26,9 @@ function VerificationRow({ item, busy, onVerify, onAsk }: { readonly item: Verif
       <Text accessibilityRole="header" style={styles.subtitle}>{item.name}</Text>
       <Text style={styles.muted}>{`${item.category} · ${item.city} · ${t("admin.verification.submitted", { when: stamp(item.submittedAt) })}`}</Text>
       {item.reason ? <Text style={styles.muted}>{t("admin.common.reasonOn", { reason: item.reason })}</Text> : null}
+      {(ACTIONS_BY_STATUS[item.status] ?? []).length === 0 ? <Text style={styles.muted} testID={`no-action-${item.providerId}`}>{t(item.status === "REJECTED" ? "admin.verification.noActionRejected" : "admin.verification.noActionSuspended")}</Text> : null}
       <View style={styles.row}>
-        {ACTIONS_BY_STATUS[item.status].map((action) => (
+        {(ACTIONS_BY_STATUS[item.status] ?? []).map((action) => (
           <ActionButton key={action} variant={action === "verify" ? "primary" : "danger"} busy={busy} label={t(`admin.verification.${action}Named`, { name: item.name })}
             onPress={() => (action === "verify" ? onVerify() : onAsk(action))} testID={`${action}-${item.providerId}`} />
         ))}
@@ -39,6 +43,7 @@ function VerificationScreenContent({ onNavigate }: Nav): ReactNode {
   const [status, setStatus] = useState<VerificationStatus>("PENDING");
   const queue = useVerificationQueue(client, status);
   const act = useVerificationAction(client);
+  const actOnce = useSingleMutation(act);
   const [asking, setAsking] = useState<{ readonly item: VerificationItem; readonly action: "reject" | "suspend" } | null>(null);
   return (
     <AdminScreen title={t("admin.verification.title")} current="verification" onNavigate={onNavigate}>
@@ -48,12 +53,12 @@ function VerificationScreenContent({ onNavigate }: Nav): ReactNode {
       <QueryBoundary query={queue} empty={t("admin.verification.empty", { status: t(`admin.verification.statuses.${status}`) })}>
         {(data) => <>{data.items.map((item) => (
           <VerificationRow key={item.providerId} item={item} busy={act.isPending && act.variables?.providerId === item.providerId}
-            onVerify={() => act.mutate({ providerId: item.providerId, action: "verify" })} onAsk={(action) => setAsking({ item, action })} />
+            onVerify={() => actOnce({ providerId: item.providerId, action: "verify" })} onAsk={(action) => setAsking({ item, action })} />
         ))}</>}
       </QueryBoundary>
       <ReasonDialog visible={asking !== null} title={asking ? t(`admin.verification.${asking.action}Title`, { name: asking.item.name }) : ""} body={asking ? t(`admin.verification.${asking.action}Body`) : ""}
         confirmLabel={asking ? t(`admin.verification.${asking.action}`) : ""} onCancel={() => setAsking(null)}
-        onConfirm={(reason) => { if (asking) act.mutate({ providerId: asking.item.providerId, action: asking.action, reason }); setAsking(null); }} />
+        onConfirm={(reason) => { if (asking) actOnce({ providerId: asking.item.providerId, action: asking.action, reason }); setAsking(null); }} />
     </AdminScreen>
   );
 }
@@ -85,6 +90,7 @@ function ModerationScreenContent({ onNavigate }: Nav): ReactNode {
   const [status, setStatus] = useState<ModerationStatus>("PENDING");
   const queue = useModerationQueue(client, status);
   const decide = useModerationDecision(client);
+  const decideOnce = useSingleMutation(decide);
   const [rejecting, setRejecting] = useState<ModerationItem | null>(null);
   return (
     <AdminScreen title={t("admin.moderation.title")} current="moderation" onNavigate={onNavigate}>
@@ -94,11 +100,11 @@ function ModerationScreenContent({ onNavigate }: Nav): ReactNode {
       <QueryBoundary query={queue} empty={t("admin.moderation.empty", { status: t(`admin.moderation.statuses.${status}`) })}>
         {(data) => <>{data.items.map((item) => (
           <ModerationRow key={item.id} item={item} busy={decide.isPending && decide.variables?.id === item.id}
-            onApprove={() => decide.mutate({ id: item.id, decision: "approve" })} onReject={() => setRejecting(item)} />
+            onApprove={() => decideOnce({ id: item.id, decision: "approve" })} onReject={() => setRejecting(item)} />
         ))}</>}
       </QueryBoundary>
       <ReasonDialog visible={rejecting !== null} title={rejecting ? t("admin.moderation.rejectTitle", { name: rejecting.title }) : ""} body={t("admin.moderation.rejectBody")} confirmLabel={t("admin.moderation.reject")}
-        onCancel={() => setRejecting(null)} onConfirm={(reason) => { if (rejecting) decide.mutate({ id: rejecting.id, decision: "reject", reason }); setRejecting(null); }} />
+        onCancel={() => setRejecting(null)} onConfirm={(reason) => { if (rejecting) decideOnce({ id: rejecting.id, decision: "reject", reason }); setRejecting(null); }} />
     </AdminScreen>
   );
 }

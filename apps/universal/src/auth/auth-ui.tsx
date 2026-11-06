@@ -1,6 +1,7 @@
 import { useState, type PropsWithChildren, type ReactNode } from "react";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions, type TextInputProps } from "react-native";
-import { brand, colors, night, notice, onNight, radius, spacing, typography } from "@rsvp/design-tokens";
+import { brand, colors, notice, onNight, radius, spacing, typography } from "@rsvp/design-tokens";
+import { Logo } from "@rsvp/ui";
 import type { AppLocale } from "@rsvp/i18n";
 import { useLocalePreference, useT } from "../platform/providers";
 
@@ -14,38 +15,39 @@ const palette = colors.light;
 const MIN_TOUCH = 44;
 const WIDE_BREAKPOINT = 900;
 const FORM_WIDTH = 400;
-const BRAND = "DOne";
 const displayFamily = Platform.select({ web: "'Plus Jakarta Sans', 'Avenir Next', 'Segoe UI', system-ui, sans-serif", default: undefined });
 const textFamily = Platform.select({ web: "'Plus Jakarta Sans', 'Avenir Next', 'Segoe UI', system-ui, sans-serif", default: undefined });
 /** react-native-web understands outline styles that the native types do not declare. */
-const focusRing = Platform.select({ web: { outlineColor: palette.primary, outlineWidth: 2, outlineOffset: 2 }, default: {} }) as object;
+export const authFocusRing = Platform.select({ web: { outlineColor: palette.primary, outlineWidth: 2, outlineOffset: 2 }, default: {} }) as object;
+const focusRing = authFocusRing;
 
 export const authStyles = StyleSheet.create({
   root: { flex: 1, backgroundColor: palette.canvas },
   rootWide: { flexDirection: "row" },
-  brand: { flex: 1, minWidth: 0, overflow: "hidden", backgroundColor: night, padding: spacing[12], justifyContent: "space-between" },
-  wordmark: { color: onNight, fontSize: typography.fontSize["2xl"], lineHeight: typography.lineHeight["2xl"], fontWeight: "800", letterSpacing: -0.5, fontFamily: displayFamily },
-  pitch: { color: onNight, fontSize: 44, lineHeight: 48, fontWeight: "800", letterSpacing: -1, maxWidth: 440, fontFamily: displayFamily },
-  tick: { width: spacing[16], height: spacing[16], borderRadius: radius.lg, backgroundColor: brand.azul, alignItems: "center", justifyContent: "center" },
-  tickText: { color: onNight, fontSize: typography.fontSize["2xl"], fontWeight: "800", fontFamily: displayFamily },
+  brand: { flex: 1, minWidth: 0, overflow: "hidden", backgroundColor: brand.azul, padding: spacing[12], justifyContent: "space-between" },
+  pitchBody: { color: "#D5DCFF", fontSize: 19, lineHeight: 30, maxWidth: 440, fontFamily: textFamily },
+  cover: { backgroundColor: brand.azul, overflow: "hidden", paddingHorizontal: spacing[6], paddingTop: spacing[10], paddingBottom: spacing[12], gap: spacing[6] },
+  coverPitch: { color: onNight, fontSize: 30, lineHeight: 33, fontWeight: "800", letterSpacing: -0.9, maxWidth: 320, fontFamily: displayFamily },
+  columnSheet: { backgroundColor: palette.canvas, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, marginTop: -spacing[6], padding: spacing[6], paddingBottom: spacing[10], maxWidth: undefined },
+  pitch: { color: onNight, fontSize: 56, lineHeight: 58, fontWeight: "800", letterSpacing: -1.8, maxWidth: 520, fontFamily: displayFamily },
   panel: { flex: 1, backgroundColor: palette.canvas },
   panelWide: { flexGrow: 0, flexShrink: 0, flexBasis: "auto", width: 520 },
-  panelContent: { flexGrow: 1, alignItems: "center", paddingHorizontal: spacing[4], paddingVertical: spacing[8] },
+  panelContent: { flexGrow: 1 },
+  panelContentWide: { alignItems: "center", justifyContent: "center", paddingHorizontal: spacing[4], paddingVertical: spacing[8] },
   column: { width: "100%", maxWidth: FORM_WIDTH, gap: spacing[6] },
-    mobileWordmark: { color: brand.azul, fontSize: typography.fontSize.xl, fontWeight: "800", fontFamily: displayFamily },
-  title: { color: palette.text, fontSize: typography.fontSize["2xl"], lineHeight: typography.lineHeight["2xl"], fontWeight: "800", letterSpacing: -0.5, fontFamily: displayFamily },
+  title: { color: palette.text, fontSize: typography.fontSize["2xl"], lineHeight: typography.lineHeight["2xl"], fontWeight: "800", letterSpacing: -1, fontFamily: displayFamily },
   intro: { color: palette.textMuted, fontSize: typography.fontSize.base, lineHeight: typography.lineHeight.base, fontFamily: textFamily },
   form: { gap: spacing[4] },
-  label: { color: palette.text, fontSize: typography.fontSize.sm, fontWeight: "600", fontFamily: textFamily },
+  label: { color: palette.text, fontSize: typography.fontSize.sm, fontWeight: "700", fontFamily: textFamily },
   inputRow: { flexDirection: "row", alignItems: "stretch" },
-  input: { flex: 1, minWidth: 0, minHeight: MIN_TOUCH, borderWidth: 1, borderColor: palette.border, borderRadius: radius.md, paddingHorizontal: spacing[3], color: palette.text, backgroundColor: palette.surface, fontSize: typography.fontSize.base, fontFamily: textFamily },
+  input: { flex: 1, minWidth: 0, minHeight: MIN_TOUCH + 8, borderWidth: 1.5, borderColor: palette.fieldBorder, borderRadius: radius.md, paddingHorizontal: spacing[3], color: palette.text, backgroundColor: palette.surface, fontSize: typography.fontSize.base, fontFamily: textFamily },
   inputWithToggle: { borderTopRightRadius: 0, borderBottomRightRadius: 0 },
   inputError: { borderColor: palette.danger, borderWidth: 2 },
-  toggle: { flexShrink: 0, minWidth: MIN_TOUCH * 1.6, minHeight: MIN_TOUCH, alignItems: "center", justifyContent: "center", borderWidth: 1, borderLeftWidth: 0, borderColor: palette.border, borderTopRightRadius: radius.md, borderBottomRightRadius: radius.md, backgroundColor: palette.surfaceMuted, paddingHorizontal: spacing[3] },
+  toggle: { flexShrink: 0, minWidth: MIN_TOUCH * 1.6, minHeight: MIN_TOUCH + 8, alignItems: "center", justifyContent: "center", borderWidth: 1.5, borderLeftWidth: 0, borderColor: palette.border, borderTopRightRadius: radius.md, borderBottomRightRadius: radius.md, backgroundColor: palette.surfaceMuted, paddingHorizontal: spacing[3] },
   toggleText: { color: palette.primary, fontWeight: "600", fontSize: typography.fontSize.sm, fontFamily: textFamily },
   hint: { color: palette.textMuted, fontSize: typography.fontSize.sm, lineHeight: typography.lineHeight.sm, fontFamily: textFamily },
   fieldError: { color: palette.danger, fontSize: typography.fontSize.sm, lineHeight: typography.lineHeight.sm, fontFamily: textFamily },
-  primary: { minHeight: MIN_TOUCH + 4, alignItems: "center", justifyContent: "center", borderRadius: radius.md, backgroundColor: palette.primary, paddingHorizontal: spacing[4] },
+  primary: { minHeight: MIN_TOUCH + 8, alignItems: "center", justifyContent: "center", borderRadius: radius.md, backgroundColor: palette.primary, paddingHorizontal: spacing[4] },
   primaryBusy: { opacity: 0.75 },
   primaryText: { color: palette.onPrimary, fontSize: typography.fontSize.base, fontWeight: "700", fontFamily: textFamily },
   link: { minHeight: MIN_TOUCH, justifyContent: "center", alignSelf: "flex-start" },
@@ -58,20 +60,11 @@ export const authStyles = StyleSheet.create({
   languages: { flexDirection: "row", gap: spacing[2], alignItems: "center", flexWrap: "wrap" },
   language: { minHeight: MIN_TOUCH, minWidth: MIN_TOUCH, paddingHorizontal: spacing[3], justifyContent: "center", borderRadius: radius.md, borderWidth: 1, borderColor: palette.border },
   languageActive: { backgroundColor: palette.primaryMuted, borderColor: palette.primary },
-  roleOption: { minHeight: MIN_TOUCH + 12, justifyContent: "center", paddingHorizontal: spacing[3], paddingVertical: spacing[2], borderWidth: 1, borderColor: palette.border, borderRadius: radius.md, backgroundColor: palette.surface },
+  roleOption: { minHeight: MIN_TOUCH + 12, justifyContent: "center", paddingHorizontal: spacing[4], paddingVertical: spacing[3], borderWidth: 1.5, borderColor: palette.border, borderRadius: radius.md, backgroundColor: palette.surface },
   roleOptionActive: { borderColor: palette.primary, borderWidth: 2, backgroundColor: palette.primaryMuted },
   roleTitle: { color: palette.text, fontSize: typography.fontSize.base, fontWeight: "700", fontFamily: textFamily },
   centered: { flex: 1, alignItems: "center", justifyContent: "center", padding: spacing[6], backgroundColor: palette.canvas, gap: spacing[4] }
 });
-
-/** The check of the DOne symbol, decorative and hidden from assistive technology. */
-function Tick({ style }: { readonly style: object }): ReactNode {
-  return (
-    <View style={style} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" aria-hidden>
-      <Text style={authStyles.tickText}>✓</Text>
-    </View>
-  );
-}
 
 export function LanguageSwitch(): ReactNode {
   const t = useT();
@@ -87,25 +80,36 @@ export function LanguageSwitch(): ReactNode {
   );
 }
 
-/** Night brand panel beside the form on wide screens; the wordmark above the form on narrow ones. */
+/** Electric-blue brand panel beside the form on wide screens; a blue cover above the form on narrow ones. */
 export function AuthLayout({ title, intro, children }: PropsWithChildren<{ readonly title: string; readonly intro: string }>): ReactNode {
   const t = useT();
   const { width } = useWindowDimensions();
   const wide = width >= WIDE_BREAKPOINT;
+  const ghost = (size: number, right: number, bottom: number): ReactNode => (
+    <View pointerEvents="none" style={{ position: "absolute", right, bottom, opacity: 0.1 }}><Logo variant="mark" tone="white" height={size} decorative /></View>
+  );
   return (
     <View style={[authStyles.root, wide && authStyles.rootWide]}>
       {wide ? (
         <View style={authStyles.brand}>
-          <Text accessibilityElementsHidden aria-hidden style={authStyles.wordmark}>{BRAND}</Text>
-          <View style={{ gap: spacing[8] }}>
-            <Text style={authStyles.pitch}>{t("auth.brandPitch")}</Text>
-            <Tick style={authStyles.tick} />
+          {ghost(560, -90, -120)}
+          <Logo tone="white" height={40} />
+          <View style={{ gap: spacing[5] }}>
+            <Text accessibilityElementsHidden aria-hidden style={authStyles.pitch}>{t("auth.brandPitch")}</Text>
+            <Text accessibilityElementsHidden aria-hidden style={authStyles.pitchBody}>{t("auth.brandBody")}</Text>
           </View>
+          <View />
         </View>
       ) : null}
-      <ScrollView style={[authStyles.panel, wide && authStyles.panelWide]} contentContainerStyle={authStyles.panelContent} keyboardShouldPersistTaps="handled">
-        <View style={authStyles.column}>
-          {wide ? null : <><Text accessibilityElementsHidden aria-hidden style={authStyles.mobileWordmark}>{BRAND}</Text></>}
+      <ScrollView role="main" tabIndex={0} style={[authStyles.panel, wide && authStyles.panelWide]} contentContainerStyle={[authStyles.panelContent, wide && authStyles.panelContentWide]} keyboardShouldPersistTaps="handled">
+        {wide ? null : (
+          <View style={authStyles.cover}>
+            {ghost(220, -50, -60)}
+            <Logo tone="white" height={30} />
+            <Text accessibilityElementsHidden aria-hidden style={authStyles.coverPitch}>{t("auth.brandPitch")}</Text>
+          </View>
+        )}
+        <View style={[authStyles.column, !wide && authStyles.columnSheet]}>
           <View style={{ gap: spacing[2] }}>
             <Text accessibilityRole="header" aria-level={1} style={authStyles.title}>{title}</Text>
             <Text style={authStyles.intro}>{intro}</Text>
@@ -155,9 +159,11 @@ export function AuthField({ label, value, onChange, error, hint, secret = false,
   );
 }
 
-export function SubmitButton({ label, busyLabel, busy, onPress, testID }: { readonly label: string; readonly busyLabel: string; readonly busy: boolean; readonly onPress: () => void; readonly testID?: string }): ReactNode {
+/** `blocked` keeps the label but refuses presses (a 429 cooldown); `busy` also swaps the label. */
+export function SubmitButton({ label, busyLabel, busy, blocked = false, onPress, testID }: { readonly label: string; readonly busyLabel: string; readonly busy: boolean; readonly blocked?: boolean; readonly onPress: () => void; readonly testID?: string }): ReactNode {
+  const unavailable = busy || blocked;
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={busy ? busyLabel : label} aria-busy={busy} aria-disabled={busy} disabled={busy} onPress={onPress} testID={testID} style={[authStyles.primary, busy && authStyles.primaryBusy, focusRing]}>
+    <Pressable accessibilityRole="button" accessibilityLabel={busy ? busyLabel : label} aria-busy={busy} aria-disabled={unavailable} disabled={unavailable} onPress={onPress} testID={testID} style={[authStyles.primary, unavailable && authStyles.primaryBusy, focusRing]}>
       <Text style={authStyles.primaryText}>{busy ? busyLabel : label}</Text>
     </Pressable>
   );

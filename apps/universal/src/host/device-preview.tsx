@@ -4,6 +4,7 @@ import { themeFromTemplate } from "@rsvp/celebration-theme";
 import { CelebrationNativeRenderer } from "@rsvp/celebration-theme/native";
 import { useMediaAssets, useTemplate, type MediaAsset } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../platform/providers";
+import { CelebrationErrorNotice } from "./celebration-errors";
 import { CelebrationScreen, type ScreenProps } from "./gate";
 import { previewView } from "./preview-model";
 import { asTemplateDocument } from "./template-gallery";
@@ -41,6 +42,7 @@ function Preview({ celebration, eventType, device, setDevice, gallery, locale }:
   return (
     <View style={{ gap: 16 }}>
       <ChoiceGroup label={t("host.preview.device")} value={device} onChange={setDevice} choices={(Object.keys(DEVICE_WIDTHS) as Device[]).map((value) => ({ value, label: `${t(`host.preview.devices.${value}`)} · ${DEVICE_WIDTHS[value]} px` }))} />
+      {template.isError ? <><CelebrationErrorNotice error={template.error} /><Notice>{t("host.preview.templateFallback")}</Notice><ActionButton variant="secondary" label={t("host.common.retry")} onPress={() => { void template.refetch(); }} testID="retry-template" /></> : null}
       {celebration.status === "PUBLISHED"
         ? <ActionButton variant="secondary" label={t("host.preview.openPublic")} onPress={() => { void Linking.openURL(publicUrl(celebration.slug)); }} />
         : <Notice>{t("host.preview.notPublished")}</Notice>}

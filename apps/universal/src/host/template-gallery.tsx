@@ -5,7 +5,8 @@ import { CelebrationNativeRenderer } from "@rsvp/celebration-theme/native";
 import { useCompatibleTemplates, useSelectTemplate, type Celebration, type Template, type TranslatedEventType } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../platform/providers";
 import { previewView } from "./preview-model";
-import { ActionButton, ChoiceGroup, ErrorNotice, Loading, Notice, styles } from "./ui";
+import { CelebrationErrorNotice } from "./celebration-errors";
+import { ActionButton, ChoiceGroup, Loading, Notice, styles } from "./ui";
 
 const PREVIEW_MAX_HEIGHT = 520;
 
@@ -27,7 +28,8 @@ export function TemplateGallery({ celebration, eventType, onApplied }: { readonl
     <View style={{ gap: 16 }}>
       <Text style={styles.muted}>{t("host.templates.help", { eventType: eventType?.name ?? celebration.eventTypeCode })}</Text>
       <Notice>{t("host.templates.preserved")}</Notice>
-      <ErrorNotice error={templates.error ?? select.error} />
+      <CelebrationErrorNotice error={templates.error ?? select.error} />
+      {templates.isError ? <ActionButton variant="secondary" label={t("host.common.retry")} onPress={() => { void templates.refetch(); }} testID="retry-templates" /> : null}
       {templates.isSuccess && !items.length ? <Notice>{t("host.templates.empty")}</Notice> : null}
       {items.length ? (
         <ChoiceGroup label={t("host.templates.title")} value={candidate?.id ?? null} onChange={setFocused}

@@ -3,8 +3,10 @@ import { Pressable, Text, View } from "react-native";
 import { supportedLocales } from "@rsvp/i18n";
 import { useAdminEventTypes, useUpsertEventType, type EventTypeDefinition, type SectionId } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../platform/providers";
-import { ActionButton, ChoiceGroup, ErrorNotice, Field, Loading, Notice, Section, styles } from "../host/ui";
+import { ActionButton, ChoiceGroup,  Field, Loading, Notice, Section, styles } from "../host/ui";
+import { AdminErrorNotice } from "./shared";
 import { AdminScreen, splitList } from "./admin-screen";
+import { useSingleMutation } from "../platform/single-flight";
 
 /** E4 · Create or edit an event type from the UI; it is usable at once, without a deploy (REQ-F14-02). */
 
@@ -24,6 +26,18 @@ interface Form {
 }
 
 const EMPTY: Form = { code: "", status: "ACTIVE", defaultLocale: "es-BO", hostRoles: "", sections: ["story", "schedule", "venues", "rsvp"], requiredFields: "title, eventDate, venueName", templateTags: "", names: {}, descriptions: {}, roleLabels: {} };
+
+const EVENT_CODE = /^[A-Z][A-Z0-9_]{1,39}$/;
+/** The rules the Celebration API enforces (400/422 otherwise): UPPER_SNAKE code, one or more roles, sections, tags and a name in the default language. */
+export function eventTypeProblems(form: Form): readonly ("code" | "roles" | "sections" | "tags" | "name")[] {
+  const found: ("code" | "roles" | "sections" | "tags" | "name")[] = [];
+  if (!EVENT_CODE.test(form.code.trim().toUpperCase())) found.push("code");
+  if (splitList(form.hostRoles).length === 0) found.push("roles");
+  if (form.sections.length === 0) found.push("sections");
+  if (splitList(form.templateTags).length === 0) found.push("tags");
+  if (!form.names[form.defaultLocale]?.trim()) found.push("name");
+  return found;
+}
 
 export function formOf(definition: EventTypeDefinition): Form {
   const byLocale = <TValue,>(pick: (translation: EventTypeDefinition["translations"][number]) => TValue | undefined): Record<string, TValue> =>
@@ -53,10 +67,17 @@ function Editor({ initial, onSaved }: { readonly initial: Form; readonly onSaved
   const t = useT();
   const client = useApiClient();
   const save = useUpsertEventType(client);
+  const saveOnce = useSingleMutation(save);
   const [form, setForm] = useState<Form>(initial);
+  const [problems, setProblems] = useState<readonly string[]>([]);
   const set = <TKey extends keyof Form>(key: TKey, value: Form[TKey]): void => setForm((current) => ({ ...current, [key]: value }));
   const roles = splitList(form.hostRoles).map((role) => role.toUpperCase());
   const toggleSection = (section: SectionId): void => set("sections", form.sections.includes(section) ? form.sections.filter((item) => item !== section) : [...form.sections, section]);
+  const submit = (): void => {
+    const found = eventTypeProblems(form);
+    setProblems(found);
+    if (found.length === 0) saveOnce(definitionOf(form), { onSuccess: onSaved });
+  };
   return (
     <Section title={initial.code ? t("admin.eventTypes.edit", { code: initial.code }) : t("admin.eventTypes.new")}>
       <Field label={t("admin.eventTypes.code")} help={t("admin.eventTypes.codeHelp")} value={form.code} onChange={(value) => set("code", value)} testID="event-type-code" />
@@ -83,9 +104,10 @@ function Editor({ initial, onSaved }: { readonly initial: Form; readonly onSaved
           ))}
         </View>
       ))}
-      <ErrorNotice error={save.error} />
+      {problems.length ? <Notice kind="error">{problems.map((key) => <Text key={key} style={styles.body}>{t(`admin.eventTypes.problems.${key}`)}</Text>)}</Notice> : null}
+      <AdminErrorNotice error={save.error} onRetry={submit} />
       {save.isSuccess ? <Notice kind="success">{`${t("admin.saved")} ${t("admin.eventTypes.savedHelp")}`}</Notice> : null}
-      <ActionButton label={t("admin.eventTypes.save")} busy={save.isPending} onPress={() => save.mutate(definitionOf(form), { onSuccess: onSaved })} testID="save-event-type" />
+      <ActionButton label={t("admin.eventTypes.save")} busy={save.isPending} disabled={save.isPending} onPress={submit} testID="save-event-type" />
     </Section>
   );
 }
@@ -99,7 +121,7 @@ export function EventTypesScreen({ onNavigate }: { readonly onNavigate: (href: s
   return (
     <AdminScreen title={t("admin.eventTypes.title")} current="eventTypes" onNavigate={onNavigate}>
       {list.isPending ? <Loading /> : null}
-      <ErrorNotice error={list.error} />
+      <AdminErrorNotice error={list.error} onRetry={() => { void list.refetch(); }} onReload={() => { void list.refetch(); }} />
       <ChoiceGroup label={t("admin.eventTypes.title")} value={editing ?? ""} onChange={(value) => setEditing(value || null)}
         choices={[{ value: "", label: t("admin.eventTypes.new") }, ...(list.data?.items ?? []).map((item) => ({ value: item.code, label: `${item.code} · ${t(`admin.eventTypes.statuses.${item.status}`)}` }))]} />
       <Editor key={editing ?? "new"} initial={current ? formOf(current) : EMPTY} onSaved={() => { void list.refetch(); }} />

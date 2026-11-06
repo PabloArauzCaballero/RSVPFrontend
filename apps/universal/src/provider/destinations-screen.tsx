@@ -3,19 +3,23 @@ import { Text, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
 import { useConfigureLeads, type Destination, type LeadConfig, type Provider } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../platform/providers";
-import { ActionButton, ChoiceGroup, ErrorNotice, Field, Notice, Section, styles } from "../host/ui";
+import { ActionButton, ChoiceGroup, Field, Notice, Section, ToggleChip, styles } from "../host/ui";
+import { PortalErrorNotice as ErrorNotice } from "./errors";
 import { PortalScreen } from "./frame";
+import { useSingleMutation } from "../platform/single-flight";
 
 const DESTINATIONS: readonly Destination[] = ["OFFICIAL_SITE", "LANDING", "WHATSAPP", "PHONE", "EMAIL", "INSTAGRAM", "PRODUCT_PAGE"];
 const UTM = /^[A-Za-z0-9_.-]{1,64}$/;
 const BILLING = ["CPC", "CPA", "FLAT", "COMMISSION"] as const;
 const MAX_DEDUPE = 1440;
+const MAX_CAP = 1_000_000;
 
 /** D7 · Redirect destinations and UTM. At least one destination is mandatory (REQ-F28-04); the UTM fields follow the contract's pattern. */
 function Destinations({ provider }: { readonly provider: Provider }): ReactNode {
   const t = useT();
   const client = useApiClient();
   const save = useConfigureLeads(client, provider.id);
+  const saveOnce = useSingleMutation(save);
   const config = provider.leadConfig;
   const [enabled, setEnabled] = useState<readonly Destination[]>(config?.enabledDestinations ?? ["OFFICIAL_SITE"]);
   const [source, setSource] = useState(config?.utmSource ?? "done");
@@ -32,10 +36,10 @@ function Destinations({ provider }: { readonly provider: Provider }): ReactNode 
     if (enabled.length === 0) found.push(t("portal.destinations.atLeastOne"));
     if (!UTM.test(source) || !UTM.test(medium) || (campaign.trim() && !UTM.test(campaign.trim()))) found.push(t("portal.destinations.utmInvalid"));
     const dedupeMinutes = Number(dedupe); const monthlyCap = Number(cap);
-    if (!Number.isInteger(dedupeMinutes) || dedupeMinutes < 1 || dedupeMinutes > MAX_DEDUPE || !Number.isInteger(monthlyCap) || monthlyCap < 0) found.push(t("portal.destinations.numberInvalid"));
+    if (!Number.isInteger(dedupeMinutes) || dedupeMinutes < 1 || dedupeMinutes > MAX_DEDUPE || !Number.isInteger(monthlyCap) || monthlyCap < 0 || monthlyCap > MAX_CAP) found.push(t("portal.destinations.numberInvalid"));
     setErrors(found);
     if (found.length) return;
-    save.mutate({ enabledDestinations: enabled, utmSource: source, utmMedium: medium, ...(campaign.trim() ? { utmCampaign: campaign.trim() } : {}), dedupeMinutes, monthlyCap, billingModel: billing });
+    saveOnce({ enabledDestinations: enabled, utmSource: source, utmMedium: medium, ...(campaign.trim() ? { utmCampaign: campaign.trim() } : {}), dedupeMinutes, monthlyCap, billingModel: billing });
   };
   return (
     <View style={{ gap: spacing[4] }}>
@@ -44,7 +48,7 @@ function Destinations({ provider }: { readonly provider: Provider }): ReactNode 
         <View style={styles.row} role="group" aria-label={t("portal.destinations.enabled")}>
           {DESTINATIONS.map((destination) => {
             const on = enabled.includes(destination);
-            return <ActionButton key={destination} variant={on ? "primary" : "secondary"} label={`${on ? "✓ " : ""}${t(`portal.destinations.destination.${destination}`)}`} onPress={() => toggle(destination)} testID={`destination-${destination}`} />;
+            return <ToggleChip key={destination} on={on} label={t(`portal.destinations.destination.${destination}`)} onPress={() => toggle(destination)} testID={`destination-${destination}`} />;
           })}
         </View>
       </Section>
@@ -52,13 +56,13 @@ function Destinations({ provider }: { readonly provider: Provider }): ReactNode 
         <Field label={t("portal.destinations.utmSource")} value={source} onChange={setSource} help={t("portal.destinations.utmHelp")} testID="utm-source" />
         <Field label={t("portal.destinations.utmMedium")} value={medium} onChange={setMedium} testID="utm-medium" />
         <Field label={t("portal.destinations.utmCampaign")} value={campaign} onChange={setCampaign} testID="utm-campaign" />
-        <Field label={t("portal.destinations.dedupe")} value={dedupe} onChange={setDedupe} keyboardType="number-pad" />
-        <Field label={t("portal.destinations.cap")} value={cap} onChange={setCap} keyboardType="number-pad" />
+        <Field label={t("portal.destinations.dedupe")} value={dedupe} onChange={setDedupe} keyboardType="number-pad" testID="utm-dedupe" />
+        <Field label={t("portal.destinations.cap")} value={cap} onChange={setCap} keyboardType="number-pad" testID="utm-cap" />
         <ChoiceGroup<LeadConfig["billingModel"]> label={t("portal.destinations.billing")} value={billing} onChange={setBilling} choices={BILLING.map((value) => ({ value, label: value }))} />
       </Section>
       {errors.length ? <Notice kind="error">{errors.map((message) => <Text key={message} style={styles.body}>{message}</Text>)}</Notice> : null}
       {save.isSuccess ? <Notice kind="success">{t("portal.destinations.saved")}</Notice> : null}
-      <ErrorNotice error={save.error} />
+      <ErrorNotice error={save.error} onRetry={submit} />
       <ActionButton label={save.isPending ? t("portal.destinations.saving") : t("portal.destinations.save")} busy={save.isPending} disabled={save.isPending} onPress={submit} testID="destinations-save" />
     </View>
   );

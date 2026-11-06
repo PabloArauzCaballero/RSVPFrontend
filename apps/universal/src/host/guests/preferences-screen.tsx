@@ -3,10 +3,11 @@ import { Switch, Text, View } from "react-native";
 import { colors, spacing } from "@rsvp/design-tokens";
 import { useHostNotificationPreferences, useUpdateHostNotificationPreferences, type NotificationChannel, type NotificationPreferences } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../../platform/providers";
+import { useSingleFlightGate } from "../../platform/single-flight";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
-import { ActionButton, ErrorNotice, Field, Loading, Notice, Section, styles } from "../ui";
-import { RetryNotice } from "./parts";
+import { ActionButton, Field, Loading, Notice, Section, styles } from "../ui";
+import { FailureNotice, RetryNotice } from "./parts";
 
 /**
  * Preferences (REQ-F18-03/04/06): per channel, per event type and the quiet-hours window (contract 1.4.0). Each change is saved to
@@ -53,9 +54,12 @@ function PreferencesBody({ celebrationId, onNavigate }: { readonly celebrationId
   const prefs = useHostNotificationPreferences(client, celebrationId);
   const update = useUpdateHostNotificationPreferences(client, celebrationId);
   const [outcome, setOutcome] = useState<{ readonly result: "saved" | "failed"; readonly area: "toggles" | "quiet" } | null>(null);
+  // `isPending` flips a render late, so two fast taps would send two PATCHes: the gate decides synchronously.
+  const flight = useSingleFlightGate();
   const save = (body: Parameters<typeof update.mutate>[0], area: "toggles" | "quiet" = "toggles"): void => {
+    if (!flight.begin()) return;
     setOutcome(null);
-    update.mutate(body, { onSuccess: () => setOutcome({ result: "saved", area }), onError: () => setOutcome({ result: "failed", area }) });
+    update.mutate(body, { onSuccess: () => setOutcome({ result: "saved", area }), onError: () => setOutcome({ result: "failed", area }), onSettled: flight.end });
   };
   const here = (area: "toggles" | "quiet", result: "saved" | "failed"): boolean => outcome?.area === area && outcome.result === result;
   if (prefs.isPending) return <Loading />;
@@ -76,14 +80,14 @@ function PreferencesBody({ celebrationId, onNavigate }: { readonly celebrationId
                 <Text style={styles.label}>{t(`guests.preferences.${channel}`)}</Text>
                 <Text style={styles.muted}>{on ? t("guests.preferences.on") : t("guests.preferences.off")}</Text>
               </View>
-              <Switch accessibilityLabel={t(`guests.preferences.${channel}`)} testID={`pref-${channel}`} value={on} onValueChange={(value) => toggle(channel, value)}
+              <Switch accessibilityLabel={t(`guests.preferences.${channel}`)} testID={`pref-${channel}`} disabled={update.isPending} value={on} onValueChange={(value) => toggle(channel, value)}
                 trackColor={{ true: palette.primary, false: palette.border }} thumbColor="#FFFFFF" />
             </View>
           );
         })}
         {here("toggles", "saved") ? <Notice kind="success">{t("guests.preferences.saved")}</Notice> : null}
         {here("toggles", "failed") ? <Notice kind="error">{t("guests.preferences.saveFailed")}</Notice> : null}
-        {update.isError ? <ErrorNotice error={update.error} /> : null}
+        {update.isError ? <FailureNotice error={update.error} /> : null}
       </Section>
       <Section title={t("guests.preferences.eventsTitle")}>
         <Text style={styles.body}>{t("guests.preferences.eventsIntro")}</Text>
@@ -92,7 +96,7 @@ function PreferencesBody({ celebrationId, onNavigate }: { readonly celebrationId
           return (
             <View key={key} style={[styles.row, { justifyContent: "space-between", minHeight: 48 }]}>
               <Text style={[styles.label, { flexShrink: 1 }]}>{t(`guests.preferences.event.${key}`)}</Text>
-              <Switch accessibilityLabel={t(`guests.preferences.event.${key}`)} testID={`event-${key}`} value={on} onValueChange={(value) => toggleEvent(key, value)}
+              <Switch accessibilityLabel={t(`guests.preferences.event.${key}`)} testID={`event-${key}`} disabled={update.isPending} value={on} onValueChange={(value) => toggleEvent(key, value)}
                 trackColor={{ true: palette.primary, false: palette.border }} thumbColor="#FFFFFF" />
             </View>
           );

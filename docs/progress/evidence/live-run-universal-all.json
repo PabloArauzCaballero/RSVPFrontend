@@ -1,0 +1,96 @@
+{
+  "date": "2026-11-06T20:43:30.064Z",
+  "consoleErrors": [],
+  "results": [
+    {
+      "lane": "F23",
+      "id": "REQ-F23-04",
+      "text": "estado de cada regalo (disponible / propuesto) con catalogados primero, datos reales",
+      "status": "PASS"
+    },
+    {
+      "lane": "F23",
+      "id": "REQ-F23-04b",
+      "text": "aprobar una propuesta externa (POST /items/{id}/approve) la deja Disponible",
+      "status": "PASS"
+    },
+    {
+      "lane": "F23",
+      "id": "REQ-F23-01",
+      "text": "bandeja con quien lo pidio; aprobar -> el regalo queda COMMITTED en el backend",
+      "status": "PASS"
+    },
+    {
+      "lane": "F23",
+      "id": "409",
+      "text": "rechazar una reserva ya resuelta por otro: aviso claro y lista refrescada",
+      "status": "PASS"
+    },
+    {
+      "lane": "F23",
+      "id": "REQ-F23-02",
+      "text": "buscar (el gateway no enruta GET /listings: aviso + catalogo publico) y agregar un producto CATALOGED real (201)",
+      "status": "PASS"
+    },
+    {
+      "lane": "F23",
+      "id": "REQ-F23-03",
+      "text": "regalo externo: 409 PARTNER_CATALOG_FIRST muestra la fricción; 'agregar de todos modos' reenvia con acknowledged y queda PROPOSED",
+      "status": "PASS"
+    },
+    {
+      "lane": "F23",
+      "id": "switch",
+      "text": "el switch del modo externo escribe externalGiftMode=AUTO_ACCEPT en Celebration (PUT /settings con If-Match)",
+      "status": "PASS"
+    },
+    {
+      "lane": "F23",
+      "id": "403/404",
+      "text": "un usuario ajeno a la celebracion ve un aviso (sin datos), no un error en blanco",
+      "status": "PASS"
+    },
+    {
+      "lane": "F28",
+      "id": "REQ-F28-01a",
+      "text": "alta real (POST /providers) -> ficha en Borrador con la nota de documentos",
+      "status": "PASS"
+    },
+    {
+      "lane": "F28",
+      "id": "REQ-F28-03",
+      "text": "crear oferta con condiciones de entrega (201 borrador) y publicarla (200)",
+      "status": "PASS"
+    },
+    {
+      "lane": "F28",
+      "id": "REQ-F28-01b",
+      "text": "enviar a verificacion (POST /submit) -> estado 'En verificacion' real; verificar requiere ADMIN (fuera del portal)",
+      "status": "PASS"
+    },
+    {
+      "lane": "F28",
+      "id": "REQ-F28-06a",
+      "text": "leads reales: cotizaciones FORM (F26) y clics REDIRECT (F27) separados",
+      "status": "PASS"
+    },
+    {
+      "lane": "F28",
+      "id": "REQ-F28-06b",
+      "text": "metricas reales del periodo (GET /metrics): Impresiones | 0 | Clics | 0 | CTR | 0% | Leads válidos | 0 | Leads descartados | 0",
+      "status": "PASS"
+    },
+    {
+      "lane": "F28",
+      "id": "REQ-F28-04",
+      "text": "al menos un destino obligatorio (validacion) y guardado real PUT /lead-config",
+      "status": "PASS"
+    },
+    {
+      "lane": "F28",
+      "id": "agenda",
+      "text": "disponibilidad guardada con PUT /availability (dia bloqueado agregado)",
+      "status": "PASS"
+    }
+  ]
+}

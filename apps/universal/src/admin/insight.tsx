@@ -1,10 +1,11 @@
 import { useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
-import { useAdminOrganizations, useAdminUsers, useLeadMetrics, useOrganization, type LeadGrouping, type Organization } from "@rsvp/query-hooks/admin";
+import { PLATFORM_ROLES, USERS_PAGE_SIZE, useAdminOrganizations, useAdminUsers, useGrantRole, useLeadMetrics, useOrganization, type AdminUser, type LeadGrouping, type Organization, type PlatformRole } from "@rsvp/query-hooks/admin";
 import { useApiClient, useT } from "../platform/providers";
-import { ActionButton, ChoiceGroup, Field, Loading, Notice, Section, styles } from "../host/ui";
+import { ActionButton, ChoiceGroup, ConfirmDialog, Field, Loading, Notice, Section, styles } from "../host/ui";
 import { AdminScreen, adminOnly } from "./admin-screen";
 import { AdminErrorNotice, QueryBoundary, useStamp } from "./shared";
+import { useSingleMutation } from "../platform/single-flight";
 
 /** E9 users, E10 organizations, E11 lead metrics (REQ-F14-05). */
 
@@ -55,24 +56,61 @@ function MetricsScreenContent({ onNavigate }: Nav): ReactNode {
   );
 }
 
-function UsersScreenContent({ onNavigate }: Nav): ReactNode {
+const MAX_SEARCH = 120;
+
+function UserCard({ user, busy, onGrant }: { readonly user: AdminUser; readonly busy: boolean; readonly onGrant: (role: PlatformRole) => void }): ReactNode {
   const t = useT();
   const stamp = useStamp();
+  return (
+    <View style={styles.card} accessibilityLabel={user.email} testID={`user-${user.id}`}>
+      <Text accessibilityRole="header" style={styles.subtitle}>{user.email}</Text>
+      <Text style={styles.muted}>{`${user.roles.join(", ") || t("admin.users.noRoles")} · ${t(`admin.users.statuses.${user.status}`)} · ${stamp(user.createdAt)}`}</Text>
+      <View style={styles.row}>
+        {PLATFORM_ROLES.map((role) => user.roles.includes(role)
+          ? <Text key={role} style={styles.muted}>{t("admin.users.hasRole", { role })}</Text>
+          : <ActionButton key={role} variant="secondary" busy={busy} disabled={busy} label={t("admin.users.grantNamed", { role, email: user.email })} onPress={() => onGrant(role)} testID={`grant-${role}-${user.id}`} />)}
+      </View>
+    </View>
+  );
+}
+
+function UsersScreenContent({ onNavigate }: Nav): ReactNode {
+  const t = useT();
+  const client = useApiClient();
   const [search, setSearch] = useState("");
   const [applied, setApplied] = useState("");
-  const users = useAdminUsers(useApiClient(), applied);
+  const [page, setPage] = useState(0);
+  const [tooLong, setTooLong] = useState(false);
+  const [asking, setAsking] = useState<{ readonly user: AdminUser; readonly role: PlatformRole } | null>(null);
+  const users = useAdminUsers(client, applied, page);
+  const grant = useGrantRole(client);
+  const grantOnce = useSingleMutation(grant);
+  const pages = Math.max(1, Math.ceil((users.data?.total ?? 0) / USERS_PAGE_SIZE));
+  const run = (): void => {
+    if (search.trim().length > MAX_SEARCH) return setTooLong(true);
+    setTooLong(false); setPage(0); setApplied(search.trim());
+  };
   return (
     <AdminScreen title={t("admin.users.title")} current="users" onNavigate={onNavigate}>
-      <Field label={t("admin.users.search")} help={t("admin.users.searchHelp")} value={search} onChange={setSearch} testID="users-search" />
-      <ActionButton variant="secondary" label={t("admin.users.searchAction")} onPress={() => setApplied(search.trim())} testID="users-search-go" />
+      <Field label={t("admin.users.search")} help={t("admin.users.searchHelp")} value={search} onChange={setSearch} {...(tooLong ? { error: t("admin.errors.invalid") } : {})} testID="users-search" />
+      <ActionButton variant="secondary" label={t("admin.users.searchAction")} onPress={run} testID="users-search-go" />
+      {grant.isSuccess ? <Notice kind="success">{t("admin.users.granted")}</Notice> : null}
+      <AdminErrorNotice error={grant.error} onRetry={() => { if (grant.variables) grantOnce(grant.variables); }} />
       <QueryBoundary query={users} empty={t("admin.users.empty")}>
-        {(data) => <>{data.items.map((user) => (
-          <View key={user.id} style={styles.card} accessibilityLabel={user.email}>
-            <Text accessibilityRole="header" style={styles.subtitle}>{user.email}</Text>
-            <Text style={styles.muted}>{`${user.roles.join(", ") || t("admin.users.noRoles")} · ${t(`admin.users.statuses.${user.status}`)} · ${stamp(user.createdAt)}`}</Text>
-          </View>
-        ))}</>}
+        {(data) => (
+          <>
+            <Text style={styles.muted} testID="users-total">{t("admin.users.total", { count: data.total ?? data.items.length })}</Text>
+            {data.items.map((user) => <UserCard key={user.id} user={user} busy={grant.isPending && grant.variables?.userId === user.id} onGrant={(role) => { grant.reset(); setAsking({ user, role }); }} />)}
+            <View style={styles.row}>
+              <ActionButton variant="secondary" label={t("admin.users.prev")} disabled={page === 0} onPress={() => setPage((current) => Math.max(0, current - 1))} testID="users-prev" />
+              <Text style={styles.body} testID="users-page">{t("admin.users.page", { page: page + 1, pages })}</Text>
+              <ActionButton variant="secondary" label={t("admin.users.next")} disabled={page + 1 >= pages} onPress={() => setPage((current) => current + 1)} testID="users-next" />
+            </View>
+          </>
+        )}
       </QueryBoundary>
+      <ConfirmDialog visible={asking !== null} danger title={asking ? t("admin.users.grantTitle", { role: asking.role, email: asking.user.email }) : ""} body={t("admin.users.grantBody")} confirmLabel={asking ? t("admin.users.grant", { role: asking.role }) : ""}
+        onCancel={() => setAsking(null)} onConfirm={() => { if (asking) grantOnce({ userId: asking.user.id, role: asking.role }); setAsking(null); }} />
     </AdminScreen>
   );
 }

@@ -21,7 +21,7 @@ export default async function SearchPage({ searchParams }: { readonly searchPara
   const effective = near ? { ...values, lat: String(near.lat), lng: String(near.lng), radio: String(near.radiusKm) } : { ...values, lat: "", lng: "", radio: "" };
   const results = await searchProviders({
     category: categoryBySlug(values.categoria)?.code,
-    city: cityBySlug(values.ciudad)?.name,
+    city: cityBySlug(values.ciudad)?.slug,
     near,
     verifiedOnly: values.verificado === "1",
     maxPriceMinor: values.precioMax && Number.isInteger(maxPrice) && maxPrice >= 0 ? maxPrice * MINOR_PER_UNIT : undefined,

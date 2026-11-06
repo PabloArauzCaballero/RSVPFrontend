@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createTranslator, defaultLocale } from "@rsvp/i18n/server";
 import { QuoteCart } from "../../../../components/provider/quote-cart";
+import { PROVIDER_CITIES } from "../../../../lib/providers";
 import { loadPartnerContext, todayIn } from "../../../../lib/partner-context";
 
 /** B8/B9 · Quote request for one or more offers of the partner. Never indexed: it is a form. */
@@ -23,5 +24,5 @@ export default async function QuotePage({ params, searchParams }: Props) {
   if (context.state === "unavailable") return <main className="directory partner"><h1>{t("partner.unavailable.title")}</h1><p role="status">{t("quote.unavailable")}</p></main>;
   const { partner, providerId, profile } = context;
   const offers = partner.listings.map((listing) => ({ listingId: listing.listingId, title: listing.summary ?? listing.name, ...(listing.priceFrom ? { priceFrom: listing.priceFrom } : {}), ...(listing.fulfillment ? { fulfillment: { responsible: listing.fulfillment.responsible, coverageZones: listing.fulfillment.coverageZones, leadTimeDays: listing.fulfillment.leadTimeDays } } : {}) }));
-  return <QuoteCart slug={slug} providerId={providerId} providerName={partner.name} timeZone={profile.timeZone} offers={offers} {...(l ? { preselected: l } : {})} locale={defaultLocale} today={todayIn(profile.timeZone).date} />;
+  return <QuoteCart slug={slug} providerId={providerId} providerName={partner.name} timeZone={profile.timeZone} offers={offers} {...(l ? { preselected: l } : {})} locale={defaultLocale} today={todayIn(profile.timeZone).date} cities={PROVIDER_CITIES.map(({ slug: citySlug, name }) => ({ slug: citySlug, name }))} />;
 }

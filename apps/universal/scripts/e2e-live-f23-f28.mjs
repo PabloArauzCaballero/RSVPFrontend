@@ -107,7 +107,7 @@ async function f23() {
     await go(page, `/regalos/catalogo${c}`);
     await page.getByTestId("catalog-query").fill("torta");
     await page.getByTestId("catalog-search").click();
-    await page.getByText(/catálogo público de proveedores/).waitFor();
+    // The fallback note only exists when the product search is down (viaFallback); with search available the hit itself is the proof.
     const hit = page.locator('[data-testid^="hit-"]').first();
     await hit.waitFor();
     await snap("F23", page, "C27-resultados", 1280);
@@ -225,7 +225,7 @@ async function f28() {
       assert.match(totals, /Impresiones/);
       record("F28", "REQ-F28-06b", `metricas reales del periodo (GET /metrics): ${totals.replace(/\n+/g, " | ").slice(0, 120)}`);
       await go(page, "/portal/destinos");
-      const enabledNow = page.locator('[data-testid^="destination-"]', { hasText: "✓" });
+      const enabledNow = page.locator('[data-testid^="destination-"][aria-checked="true"]');
       while (await enabledNow.count()) await enabledNow.first().click();
       await page.getByTestId("destinations-save").click();
       await page.getByText("Elige al menos un destino.").waitFor();

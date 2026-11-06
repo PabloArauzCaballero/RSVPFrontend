@@ -4,6 +4,7 @@ import { useCelebration, useEventTypes, type Celebration, type TranslatedEventTy
 import { useApiClient, useClaims, useLocale, useT } from "../platform/providers";
 import type { SessionClaims } from "../platform/session";
 import { ActionButton, ErrorNotice, Loading, Notice, Screen, styles } from "./ui";
+import { asText } from "./content-draft";
 import { HOST_ROUTES, hostNav, type HostRoute } from "./routes";
 
 /** Who may open the host workspace: hosts and planners only (REQ-F13-05). The API re-checks everything. */
@@ -32,9 +33,10 @@ export interface Loaded {
 
 /**
  * Loads the celebration (and its event type) for a host screen and handles every state the
- * screen would otherwise repeat: no celebration chosen, loading, not found, read-only.
+ * screen would otherwise repeat: no celebration chosen, loading, not found, read-only. `editable` screens
+ * (content, gallery, translations, templates, settings, modes) are replaced by a notice once archived.
  */
-export function CelebrationScreen({ celebrationId, onNavigate, current, title, manage = true, children }: ScreenProps & { readonly current: HostRoute; readonly title: string; readonly manage?: boolean; readonly children: (loaded: Loaded) => ReactNode }): ReactNode {
+export function CelebrationScreen({ celebrationId, onNavigate, current, title, manage = true, editable = false, children }: ScreenProps & { readonly current: HostRoute; readonly title: string; readonly manage?: boolean; readonly editable?: boolean; readonly children: (loaded: Loaded) => ReactNode }): ReactNode {
   const t = useT();
   const client = useApiClient();
   const locale = useLocale();
@@ -49,6 +51,8 @@ export function CelebrationScreen({ celebrationId, onNavigate, current, title, m
   if (query.isError || !query.data) return frame(<ErrorNotice error={query.error} />);
   const celebration = query.data;
   if (manage && celebration.access === "READ") return frame(<Notice kind="error">{t("host.common.forbidden")}</Notice>);
+  // An archived celebration is read-only for the API (409 CELEBRATION_ARCHIVED): editing screens say so instead of offering buttons that cannot work.
+  if (editable && celebration.status === "ARCHIVED") return frame(<><Notice>{t("host.common.archivedReadOnly")}</Notice><ActionButton label={t("host.common.chooseCelebration")} onPress={() => onNavigate(HOST_ROUTES.celebrations)} /></>);
   const eventType = types.data?.items.find((type) => type.code === celebration.eventTypeCode);
-  return frame(<>{eventType ? <Text style={styles.muted}>{eventType.name}</Text> : null}{children({ celebration, eventType, refetch: () => { void query.refetch(); } })}</>);
+  return frame(<>{eventType ? <Text style={[styles.body, { fontWeight: "600" }]}>{[asText(celebration.content["title"]), eventType.name].filter(Boolean).join(" · ")}</Text> : null}{children({ celebration, eventType, refetch: () => { void query.refetch(); } })}</>);
 }

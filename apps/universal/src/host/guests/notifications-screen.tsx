@@ -7,7 +7,9 @@ import { useApiClient, useLocale, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
 import { ActionButton, Loading, Notice, styles } from "../ui";
-import { RetryNotice } from "./parts";
+import { FailureNotice, RetryNotice } from "./parts";
+import { useSingleFlightGate } from "../../platform/single-flight";
+import { classifyFailure } from "./failure";
 import { notificationTarget } from "./notification-target";
 
 /** C31 / F6 · In-app notification center: unread first, direct action, mark one or all as read. The read state is the server's (`readAt`), shared by every device (REQ-F18-01/02/05). */
@@ -18,13 +20,16 @@ function NotificationsBody({ celebrationId, timeZone, onNavigate }: { readonly c
   const client = useApiClient();
   const inbox = useHostNotifications(client, celebrationId);
   const markRead = useMarkHostNotificationsRead(client, celebrationId);
+  const flight = useSingleFlightGate();
+  /** One batch at a time: a second tap before the first answer would repeat every call. */
+  const mark = (ids: readonly string[]): void => { if (ids.length === 0 || !flight.begin()) return; markRead.mutate(ids, { onSettled: flight.end }); };
   if (inbox.isPending) return <Loading />;
   if (inbox.isError) return <RetryNotice error={inbox.error} onRetry={() => { void inbox.refetch(); }} />;
   const isRead = (item: HostNotification): boolean => item.readAt !== null;
   const items = [...inbox.data.items].sort((a, b) => Number(isRead(a)) - Number(isRead(b)) || Date.parse(b.createdAt) - Date.parse(a.createdAt));
   const unread = items.filter((item) => !isRead(item));
   const open = (item: HostNotification): void => {
-    markRead.mutate([item.id]);
+    mark([item.id]);
     const target = notificationTarget(item.template);
     if (target) onNavigate(withCelebration(target === "requests" ? HOST_ROUTES.requests : HOST_ROUTES.report, celebrationId));
   };
@@ -33,7 +38,7 @@ function NotificationsBody({ celebrationId, timeZone, onNavigate }: { readonly c
       <Text style={styles.body}>{t("guests.notifications.intro")}</Text>
       <View style={styles.row}>
         <Text testID="unread-count" accessibilityLiveRegion="polite" style={styles.label}>{t("guests.notifications.unreadCount", { count: unread.length })}</Text>
-        <ActionButton variant="secondary" label={t("guests.notifications.markAll")} disabled={unread.length === 0} onPress={() => markRead.mutate(unread.map((item) => item.id))} testID="mark-all" />
+        <ActionButton variant="secondary" label={t("guests.notifications.markAll")} busy={markRead.isPending} disabled={unread.length === 0} onPress={() => mark(unread.map((item) => item.id))} testID="mark-all" />
         <ActionButton variant="secondary" label={t("guests.notifications.refresh")} onPress={() => { void inbox.refetch(); }} />
       </View>
       {items.length === 0 ? <Notice>{t("guests.notifications.empty")}</Notice> : (
@@ -48,14 +53,14 @@ function NotificationsBody({ celebrationId, timeZone, onNavigate }: { readonly c
                 <Text style={styles.muted}>{t("guests.notifications.via", { channel: t(`guests.notifications.channel.${item.channel}`), status: t(`guests.notifications.delivery.${item.status}`), date: formatCelebrationDate(item.createdAt, { locale, timeZone }) })}</Text>
                 <View style={styles.row}>
                   {target ? <ActionButton label={t("guests.notifications.open")} onPress={() => open(item)} testID={`open-${item.id}`} /> : null}
-                  {!seen ? <ActionButton variant="secondary" label={t("guests.notifications.markRead")} onPress={() => markRead.mutate([item.id])} testID={`read-${item.id}`} /> : null}
+                  {!seen ? <ActionButton variant="secondary" label={t("guests.notifications.markRead")} onPress={() => mark([item.id])} testID={`read-${item.id}`} /> : null}
                 </View>
               </View>
             );
           })}
         </View>
       )}
-      {markRead.isError ? <Notice kind="error">{t("guests.notifications.markFailed")}</Notice> : null}
+      {markRead.isError ? (classifyFailure(markRead.error).kind === "api" ? <Notice kind="error">{t("guests.notifications.markFailed")}</Notice> : <FailureNotice error={markRead.error} />) : null}
     </View>
   );
 }

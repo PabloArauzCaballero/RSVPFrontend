@@ -2,9 +2,10 @@ import type { ReactNode } from "react";
 import { Text, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
 import { formatCelebrationDate } from "@rsvp/i18n";
-import { useLeads, type Lead, type Provider } from "@rsvp/query-hooks";
+import { useInfiniteLeads, type Lead, type Provider } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../platform/providers";
-import { ActionButton, ErrorNotice, Loading, Notice, Section, styles } from "../host/ui";
+import { ActionButton, Loading, Notice, Section, styles } from "../host/ui";
+import { PortalErrorNotice } from "./errors";
 import { PortalScreen } from "./frame";
 
 function LeadRow({ lead, timeZone }: { readonly lead: Lead; readonly timeZone: string }): ReactNode {
@@ -29,10 +30,11 @@ function LeadRow({ lead, timeZone }: { readonly lead: Lead; readonly timeZone: s
 function Leads({ provider }: { readonly provider: Provider }): ReactNode {
   const t = useT();
   const client = useApiClient();
-  const leads = useLeads(client, provider.id);
+  const leads = useInfiniteLeads(client, provider.id);
   if (leads.isPending) return <Loading />;
-  if (leads.isError) return <View style={{ gap: spacing[2] }}><ErrorNotice error={leads.error} /><ActionButton variant="secondary" label={t("portal.errors.retry")} onPress={() => { void leads.refetch(); }} /></View>;
-  const items = leads.data.items;
+  if (leads.isError && !leads.data) return <PortalErrorNotice error={leads.error} onRetry={() => { void leads.refetch(); }} onReload={() => { void leads.refetch(); }} />;
+  const items = leads.data?.pages.flatMap((page) => page.items) ?? [];
+  const total = leads.data?.pages[0]?.total ?? items.length;
   const quotes = items.filter((lead) => lead.kind === "FORM");
   const clicks = items.filter((lead) => lead.kind !== "FORM");
   return (
@@ -41,6 +43,9 @@ function Leads({ provider }: { readonly provider: Provider }): ReactNode {
       {items.length === 0 ? <Notice>{t("portal.leads.empty")}</Notice> : null}
       <Section title={t("portal.leads.quotesTitle")}>{quotes.length === 0 ? <Notice>{t("portal.leads.quotesEmpty")}</Notice> : quotes.map((lead) => <LeadRow key={lead.id} lead={lead} timeZone={provider.timeZone} />)}</Section>
       <Section title={t("portal.leads.clicksTitle")}>{clicks.length === 0 ? <Notice>{t("portal.leads.empty")}</Notice> : clicks.map((lead) => <LeadRow key={lead.id} lead={lead} timeZone={provider.timeZone} />)}</Section>
+      {items.length > 0 ? <Text style={styles.muted} testID="leads-shown">{t("portal.leads.shown", { shown: items.length, total })}</Text> : null}
+      {leads.isFetchNextPageError ? <PortalErrorNotice error={leads.error} onRetry={() => { void leads.fetchNextPage(); }} /> : null}
+      {leads.hasNextPage ? <ActionButton variant="secondary" label={t("portal.leads.more")} busy={leads.isFetchingNextPage} disabled={leads.isFetchingNextPage} onPress={() => { void leads.fetchNextPage(); }} testID="leads-more" /> : null}
     </View>
   );
 }

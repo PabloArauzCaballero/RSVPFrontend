@@ -1,5 +1,5 @@
 /** Provider Catalog contract 2.0.0 (provider-catalog.openapi.json). */
-export type ProviderStatus = "DRAFT" | "PENDING_VERIFICATION" | "VERIFIED" | "SUSPENDED";
+export type ProviderStatus = "DRAFT" | "PENDING_VERIFICATION" | "VERIFIED" | "REJECTED" | "SUSPENDED";
 export type Destination = "OFFICIAL_SITE" | "LANDING" | "WHATSAPP" | "PHONE" | "EMAIL" | "INSTAGRAM" | "PRODUCT_PAGE";
 export type BookingStatus = "REQUESTED" | "CONFIRMED" | "REJECTED" | "CANCELLED" | "EXPIRED";
 export interface FulfillmentView { readonly responsible: string; readonly coverageZones: readonly string[]; readonly transportCostMinor?: number; readonly leadTimeDays: number; readonly conditions: string; readonly disclaimer: string }
@@ -24,6 +24,9 @@ export interface QuoteInput { readonly listingIds: readonly string[]; readonly e
   readonly captchaToken?: string; readonly website?: string }
 export interface QuoteReceipt { readonly id: string; readonly providerId?: string; readonly status: "REQUESTED"; readonly leadId: string; readonly disclaimer: string; readonly listings: readonly { readonly listingId: string; readonly fulfillment?: FulfillmentView }[] }
 export interface ListingHit { readonly id: string; readonly providerId: string; readonly title: string; readonly type?: string; readonly category?: string; readonly published?: boolean; readonly providerStatus?: ProviderStatus; readonly priceFromMinor?: number; readonly currency?: string }
+/** PATCH /providers/{id}: the owner renames; the plan is admin-only and not offered here. */
+export interface UpdateProviderInput { readonly name: string }
+export const MAX_PROVIDER_NAME = 120;
 export interface RegisterProviderInput { readonly name: string; readonly slug?: string; readonly currency?: string; readonly timeZone?: string }
 
 /** Provider Catalog 2.1.0: microsite and verification documents. */

@@ -9,6 +9,7 @@ import { partnerRedirectUrl } from "../../platform/partner-link";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { ActionButton, ErrorNotice, Field, Loading, Notice, styles } from "../ui";
 import { RetryNotice } from "../guests/parts";
+import { useSingleFlightGate } from "../../platform/single-flight";
 
 const CATEGORIES = ["VENUE", "CATERING", "PHOTOGRAPHY", "MUSIC", "DECORATION", "MAKEUP", "TRANSPORT", "INVITATIONS", "WEDDING_PLANNER", "ACCOMMODATION", "HONEYMOON"] as const;
 const PAGE_SIZE = 6;
@@ -57,6 +58,7 @@ function ProvidersBody({ celebrationId, currency }: { readonly celebrationId: st
   const [added, setAdded] = useState<string | null>(null);
   const discovery = useProviderDiscovery(client, { ...(category ? { category } : {}), ...(committed.city ? { city: committed.city } : {}), ...(committed.maxPriceMinor !== undefined ? { maxPriceMinor: committed.maxPriceMinor } : {}), page, pageSize: PAGE_SIZE });
   const add = useAddGift(client, celebrationId);
+  const flight = useSingleFlightGate();
   const unavailable = add.error instanceof ApiError && problemCode(add.error) === "CATALOG_PRODUCT_UNAVAILABLE";
   const apply = (): void => {
     const price = Number(maxPrice.replace(",", "."));
@@ -65,7 +67,8 @@ function ProvidersBody({ celebrationId, currency }: { readonly celebrationId: st
   };
   const choose = (card: ProviderCard): void => {
     setAdded(null);
-    add.mutate({ source: "CATALOGED", title: card.name, price: { amountMinor: card.priceFrom?.amountMinor ?? 0, currency: card.priceFrom?.currency ?? currency }, productListingId: card.listingId }, { onSuccess: () => setAdded(card.name) });
+    if (!flight.begin()) return;
+    add.mutate({ source: "CATALOGED", title: card.name, price: { amountMinor: card.priceFrom?.amountMinor ?? 0, currency: card.priceFrom?.currency ?? currency }, productListingId: card.listingId }, { onSuccess: () => setAdded(card.name), onSettled: flight.end });
   };
   const total = discovery.data?.total ?? 0;
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
