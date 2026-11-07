@@ -6,7 +6,6 @@ export const guestsEsBO = {
     unavailable: "El servicio no está disponible por ahora. Tus datos siguen aquí: inténtalo de nuevo en unos minutos.",
     offline: "No hay conexión con el servidor. Revisa tu internet e inténtalo de nuevo; tus datos siguen aquí."
   },
-  nav: { summary: "Resumen", guests: "Invitados", report: "Reporte RSVP", requests: "Acompañantes", notifications: "Avisos", preferences: "Preferencias de avisos" },
   status: { PENDING: "Sin responder", CONFIRMED: "Confirmó", DECLINED: "No asistirá" },
   fresh: {
     updated: "Actualizado {{date}}", never: "Aún no hay datos procesados.",

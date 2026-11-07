@@ -30,8 +30,9 @@ export const hostEsBO = {
     slugPattern: "Usa solo minúsculas, números y guiones sueltos, sin guion al inicio ni al final.",
     userId: "Escribe un identificador de usuario válido (formato UUID)."
   },
-  navGroups: { guests: "Invitados", gifts: "Regalos", celebration: "Mi celebración", account: "Cuenta" },
-  nav: { label: "Secciones del panel", celebrations: "Mis celebraciones", editor: "Contenido", gallery: "Galería", translations: "Traducciones", templates: "Templates", preview: "Vista previa", publish: "Publicar", settings: "Configuración", modes: "Modos de control" },
+  nav: { label: "Secciones del panel" },
+  dest: { home: "Inicio", guests: "Invitados", gifts: "Regalos", invitation: "Mi invitación", alerts: "Avisos", settings: "Ajustes" },
+  tabs: { summary: "Resumen", guests: "Quién viene", report: "Respuestas", requests: "Acompañantes", gifts: "Mi lista", giftInbox: "Reservas", editor: "Contenido", gallery: "Galería", translations: "Idiomas", templates: "Plantilla", preview: "Vista previa", notifications: "Bandeja", preferences: "Preferencias", publish: "Publicar", settings: "Configuración", modes: "Modos de control", celebrations: "Mis celebraciones", organizations: "Equipo", label: "Pestañas de la sección" },
   picker: { title: "Mis celebraciones", empty: "Todavía no tienes celebraciones. Crea la primera en tres pasos.", create: "Crear celebración", open: "Abrir {{title}}", untitled: "Sin título", status: { DRAFT: "Borrador", PUBLISHED: "Publicada", ARCHIVED: "Archivada" } },
   onboarding: {
     title: "Crear celebración", step: "Paso {{step}} de 3",

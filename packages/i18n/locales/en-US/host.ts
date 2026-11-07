@@ -33,8 +33,9 @@ export const hostEnUS: DeepStrings<typeof hostEsBO> = {
     slugPattern: "Use only lowercase letters, numbers and single hyphens, with no hyphen at the start or end.",
     userId: "Enter a valid user identifier (UUID format)."
   },
-  navGroups: { guests: "Guests", gifts: "Gifts", celebration: "My celebration", account: "Account" },
-  nav: { label: "Dashboard sections", celebrations: "My celebrations", editor: "Content", gallery: "Gallery", translations: "Translations", templates: "Templates", preview: "Preview", publish: "Publish", settings: "Settings", modes: "Control modes" },
+  nav: { label: "Dashboard sections" },
+  dest: { home: "Home", guests: "Guests", gifts: "Gifts", invitation: "My invitation", alerts: "Notices", settings: "Settings" },
+  tabs: { summary: "Summary", guests: "Who is coming", report: "Replies", requests: "Companions", gifts: "My list", giftInbox: "Reservations", editor: "Content", gallery: "Gallery", translations: "Languages", templates: "Template", preview: "Preview", notifications: "Inbox", preferences: "Preferences", publish: "Publish", settings: "Configuration", modes: "Control modes", celebrations: "My celebrations", organizations: "Team", label: "Section tabs" },
   picker: { title: "My celebrations", empty: "You have no celebrations yet. Create your first one in three steps.", create: "Create a celebration", open: "Open {{title}}", untitled: "Untitled", status: { DRAFT: "Draft", PUBLISHED: "Published", ARCHIVED: "Archived" } },
   onboarding: {
     title: "Create a celebration", step: "Step {{step}} of 3",

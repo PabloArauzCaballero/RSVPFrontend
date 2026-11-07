@@ -6,6 +6,7 @@ export const adminEnUS: DeepStrings<typeof adminEsBO> = {
   title: "Platform administration",
   denied: "Access denied: this area is for platform administrators only.",
   nav: { label: "Administration modules", dashboard: "Overview", templates: "Templates", eventTypes: "Event types", categories: "Categories", geography: "Geography", verification: "Verification", moderation: "Moderation", users: "Users", organizations: "Organizations", metrics: "Metrics", operations: "Operations" },
+  dest: { review: "Review", catalog: "Catalog", people: "People", operation: "Operations" },
   unavailable: "This module uses the {{service}} API, which is not available yet. Its data will show here once it is published.",
   sample: { title: "Ana & Luis", story: "We met in La Paz and today we celebrate with the people we love.", venue: "Hacienda El Prado", dressCode: "Formal", question: "Is there parking?", answer: "Yes, at the venue.", ceremony: "Ceremony", party: "Party" },
   saved: "Saved.",

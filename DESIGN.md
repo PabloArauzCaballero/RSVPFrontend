@@ -15,14 +15,27 @@ Fuente: *DOne Brand Kit v3*. Tokens en `packages/design-tokens/src` (`yarn works
 |---|---|---|
 | Ingreso, registro, recuperar | Persuade | `AuthLayout`: panel azul con el lema (ancho) o portada azul con la hoja sobre ella (móvil) |
 | Invitado (RSVP, regalos) | Persuade | `GuestFrame`: portada azul con logo y la tarjeta subida sobre ella |
-| Anfitrión, admin, proveedor | Operate | `Screen` (`apps/universal/src/host/shell.tsx`): menú lateral noche con secciones (ancho) o barra superior + pestañas inferiores + «Más» (móvil) |
+| Anfitrión, admin, proveedor | Operate | `Screen` (`apps/universal/src/host/shell.tsx`): menú lateral noche con pocos destinos (ancho) o barra superior + barra inferior + «Más» (móvil); bajo el título, las pestañas de la sección (`role=tablist`). Anfitrión 6 destinos, proveedor 5, admin 4 (ver `docs/design/primitives.md`) |
 | Sitio público (`apps/seo-web`) | Persuade | `site-chrome` + `landing`; estilos en `globals.css` |
 
 El área segura de iOS la aplica una sola vez `SafeFrame` en el layout raíz: ningún marco suma insets por su cuenta.
 
+## Personalidad
+
+Idea central: **el toque**. La marca es un cheque dentro de una D; el producto gira en torno a un gesto (invitar, tocar, confirmar). La personalidad es la de alguien que organiza la fiesta contigo: cálida, ágil, sin solemnidad, con el orgullo tranquilo de quien ya tiene todo resuelto. Detalle y planes en `docs/design/upgrade-brief.md`; API en `docs/design/primitives.md`.
+
+- **Voz.** Tuteo boliviano neutro, nunca voseo ni jerga. Frases cortas, verbos de acción, una idea por línea. Habla de personas y momentos («Quién viene», «Tu invitación», «Regalos»), no de módulos. Los hitos se celebran con medida: una frase y un gesto. Los errores no culpan: dicen qué pasó y cómo seguir. Cada pantalla vacía responde qué es esto, por qué importa y cuál es el primer toque.
+- **El toque (el cheque).** El cheque de la D se dibuja con trazo animado (`CheckMark`, `Celebrate`, `SuccessNote`, `Notice kind="success"`) al confirmar, publicar, guardar o responder. Es el único motivo de celebración y se repite en sellos de las ilustraciones.
+- **Ilustración.** Set propio de línea (`Illustration`): trazo grueso y redondeado, azul sobre claro, noche sobre claro o cielo sobre noche, un bloque suave desplazado detrás y una chispa de ámbar como único acento. Solo en estados vacíos, bienvenida y errores amables. SVG inline; nunca emoji, glifos ni clip-art.
+- **Forma.** Esquinas muy redondeadas de la D; la sábana que sube sobre la portada es el gesto de marca y se repite en tarjetas destacadas. Títulos en peso 800 con tracking cerrado (−0.5 a −1.0 px según tamaño).
+- **Movimiento.** Entradas de 150 a 250 ms con salida suave; el cheque dura 250 a 450 ms (hoy 360 ms) y no se repite. Con `prefers-reduced-motion` o Reduce Motion nativo todo aparece sin animar. Sin bucles ni movimiento decorativo.
+- **Navegación.** Pocos destinos (anfitrión 6, proveedor 5, admin 4) y, dentro de cada uno, pestañas de sección. Una acción primaria por pantalla; lo avanzado, detrás de «Más opciones».
+- **Prohibido en la personalidad.** «¡Bienvenido a la plataforma!», «No se pudo completar la acción», «Error 500», «Sin datos», jerga técnica (slug, token, endpoint), signos de exclamación en errores, confeti permanente, mascotas, emoji o glifos como adorno, animación en bucle, ilustración en cada tarjeta. Siguen vigentes todas las prohibiciones de la sección siguiente.
+
 ## Reglas de pantalla (Operate)
 
-- Un título por pantalla (el de `Screen`). Nada de etiqueta o *eyebrow* encima del título, ni repetir el título en la primera tarjeta.
+- Un título por pantalla (el de `Screen`), con a lo sumo una frase cálida debajo (`intro`). Nada de etiqueta o *eyebrow* encima del título, ni repetir el título en la primera tarjeta. Un solo botón primario por pantalla.
+- Cambiar de sección dentro de un destino se hace con las pestañas del marco, no con botones o chips propios.
 - Formularios: `Section` (máx. 720 px), `Field`, `ChoiceGroup`. Botón primario a todo el ancho en móvil y al ancho del contenido desde 640 px.
 - Estado de respuesta: `Chip` (punto + palabra). Personas: `Avatar`. Nunca color solo.
 - Progreso/recuento: barra apilada con leyenda (patrón `progress` del kit). No usar tarjetas «número grande + etiqueta».

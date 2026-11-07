@@ -3,6 +3,7 @@ export const adminEsBO = {
   title: "Administración de la plataforma",
   denied: "Acceso denegado: esta área es solo para administradores de la plataforma.",
   nav: { label: "Módulos de administración", dashboard: "Resumen", templates: "Templates", eventTypes: "Tipos de evento", categories: "Categorías", geography: "Geografía", verification: "Verificación", moderation: "Moderación", users: "Usuarios", organizations: "Organizaciones", metrics: "Métricas", operations: "Operación" },
+  dest: { review: "Revisión", catalog: "Catálogo", people: "Personas", operation: "Operación" },
   unavailable: "Este módulo usa la API de {{service}}, que todavía no está disponible. Cuando se publique, verás aquí sus datos.",
   sample: { title: "Ana y Luis", story: "Nos conocimos en La Paz y hoy celebramos con quienes queremos.", venue: "Hacienda El Prado", dressCode: "Formal", question: "¿Hay estacionamiento?", answer: "Sí, en el mismo lugar.", ceremony: "Ceremonia", party: "Fiesta" },
   saved: "Guardado.",

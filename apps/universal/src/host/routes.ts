@@ -53,37 +53,30 @@ export const editorPath = (section: EditorSection): string => `${HOST_ROUTES.edi
 
 export const guestDetailPath = (guestId: string): string => `${HOST_ROUTES.guests}/${encodeURIComponent(guestId)}`;
 
-const NAV: readonly { readonly key: HostRoute; readonly label: string; readonly path: string }[] = [
-  { key: "summary", label: "guests.nav.summary", path: HOST_ROUTES.summary },
-  { key: "guests", label: "guests.nav.guests", path: HOST_ROUTES.guests },
-  { key: "report", label: "guests.nav.report", path: HOST_ROUTES.report },
-  { key: "requests", label: "guests.nav.requests", path: HOST_ROUTES.requests },
-  { key: "notifications", label: "guests.nav.notifications", path: HOST_ROUTES.notifications },
-  { key: "preferences", label: "guests.nav.preferences", path: HOST_ROUTES.preferences },
-  { key: "gifts", label: "gifts.host.nav", path: HOST_ROUTES.gifts },
-  { key: "giftInbox", label: "gifts.host.inbox.title", path: HOST_ROUTES.giftInbox },
-  { key: "editor", label: "host.nav.editor", path: editorPath("general") },
-  { key: "gallery", label: "host.nav.gallery", path: HOST_ROUTES.gallery },
-  { key: "translations", label: "host.nav.translations", path: HOST_ROUTES.translations },
-  { key: "templates", label: "host.nav.templates", path: HOST_ROUTES.templates },
-  { key: "preview", label: "host.nav.preview", path: HOST_ROUTES.preview },
-  { key: "publish", label: "host.nav.publish", path: HOST_ROUTES.publish },
-  { key: "settings", label: "host.nav.settings", path: HOST_ROUTES.settings },
-  { key: "modes", label: "host.nav.modes", path: HOST_ROUTES.modes },
-  { key: "celebrations", label: "host.nav.celebrations", path: HOST_ROUTES.celebrations },
-  { key: "organizations", label: "org.nav", path: HOST_ROUTES.organizations }
+/**
+ * Host navigation in two levels (brief §2): six destinations, each owning the screens that used to be separate menu
+ * entries. Every existing route stays where it is; a screen reports its own route key as `current` and the frame
+ * works out the destination and the tab. Routes outside the table (guest form, import, groups, guest settings,
+ * push permissions, guest detail) keep reporting their parent tab's key.
+ */
+type HostDestination = "home" | "guests" | "gifts" | "invitation" | "alerts" | "settings";
+const DESTINATIONS: readonly { readonly key: HostDestination; readonly tabs: readonly HostRoute[] }[] = [
+  { key: "home", tabs: ["summary"] },
+  { key: "guests", tabs: ["guests", "report", "requests"] },
+  { key: "gifts", tabs: ["gifts", "giftInbox"] },
+  { key: "invitation", tabs: ["editor", "gallery", "translations", "templates", "preview"] },
+  { key: "alerts", tabs: ["notifications", "preferences"] },
+  { key: "settings", tabs: ["publish", "settings", "modes", "celebrations", "organizations"] }
 ];
 
-const NAV_GROUP: Readonly<Partial<Record<HostRoute, string>>> = {
-  summary: "guests", guests: "guests", report: "guests", requests: "guests", notifications: "guests", preferences: "guests",
-  gifts: "gifts", giftInbox: "gifts",
-  editor: "celebration", gallery: "celebration", translations: "celebration", templates: "celebration", preview: "celebration", publish: "celebration", settings: "celebration", modes: "celebration",
-  celebrations: "account", organizations: "account"
-};
+/** Routes that are not scoped to one celebration (`?c=` would be noise). */
+const ACCOUNT_ROUTES: readonly HostRoute[] = ["celebrations", "organizations"];
+
+const tabPath = (key: HostRoute): string => (key === "editor" ? editorPath("general") : HOST_ROUTES[key]);
 
 export function hostNav(t: Translate, celebrationId: string | undefined): NavItem[] {
-  return NAV.map((item) => {
-    const group = NAV_GROUP[item.key];
-    return { key: item.key, label: t(item.label), href: item.key === "celebrations" || item.key === "organizations" ? item.path : withCelebration(item.path, celebrationId), ...(group ? { group: t(`host.navGroups.${group}`) } : {}) };
+  return DESTINATIONS.map((destination) => {
+    const tabs = destination.tabs.map((key) => ({ key, label: t(`host.tabs.${key}`), href: ACCOUNT_ROUTES.includes(key) ? tabPath(key) : withCelebration(tabPath(key), celebrationId) }));
+    return { key: destination.key, label: t(`host.dest.${destination.key}`), href: tabs[0]?.href ?? HOST_ROUTES.summary, tabs };
   });
 }

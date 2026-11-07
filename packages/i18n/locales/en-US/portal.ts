@@ -4,7 +4,8 @@ import type { portalEsBO } from "../es-BO/portal.js";
 /** Provider portal (F28). */
 export const portalEnUS: DeepStrings<typeof portalEsBO> = {
   label: "Provider portal",
-  nav: { label: "Portal sections", home: "Overview", services: "Services and products", products: "Products", delivery: "Delivery terms", microsite: "Public profile", documents: "Verification documents", destinations: "Contact destinations", agenda: "Schedule and bookings", leads: "Leads and quotes", metrics: "Metrics" },
+  nav: { label: "Portal sections", home: "Overview", services: "Services", products: "Products", delivery: "Delivery", microsite: "Public profile", documents: "Documents", destinations: "Destinations", agenda: "Schedule", leads: "Requests", metrics: "Results" },
+  dest: { overview: "Overview", offers: "Offers", agenda: "Schedule", clients: "Clients", profile: "Profile" },
   microsite: {
     title: "Public profile", intro: "What your customers see on your page. The whole profile is saved each time; if someone else changed it, we warn you before overwriting.",
     descEs: "Description (Spanish)", descEn: "Description (English)", descHelp: "Up to 2000 characters.", website: "Website", instagram: "Instagram", facebook: "Facebook", whatsapp: "WhatsApp (with country code)",

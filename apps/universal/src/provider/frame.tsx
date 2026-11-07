@@ -5,12 +5,24 @@ import { spacing } from "@rsvp/design-tokens";
 import { useMyProviders, useProviderProfile, type Provider } from "@rsvp/query-hooks";
 import { useApiClient, useClaims, useT } from "../platform/providers";
 import { readLocal, writeLocal } from "../platform/local-store";
-import { ActionButton, ErrorNotice, Loading, Notice, Screen } from "../host/ui";
+import type { Translate } from "@rsvp/i18n";
+import { ActionButton, ErrorNotice, Loading, Notice, Screen, type NavItem } from "../host/ui";
 
 /** Provider portal URLs. They live under /portal so the (provider) route guard covers them all. */
 export const PORTAL_ROUTES = { home: "/portal", onboarding: "/portal/alta", services: "/portal/servicios", products: "/portal/productos", delivery: "/portal/entrega", destinations: "/portal/destinos", agenda: "/portal/agenda", leads: "/portal/leads", metrics: "/portal/metricas", microsite: "/portal/perfil", documents: "/portal/documentos" } as const;
 export type PortalRoute = keyof typeof PORTAL_ROUTES;
-const NAV: readonly PortalRoute[] = ["home", "services", "products", "delivery", "microsite", "documents", "destinations", "agenda", "leads", "metrics"];
+/** Provider navigation (brief §2): five destinations; the screens that were separate entries are their tabs. Routes do not move. */
+const NAV: readonly { readonly key: string; readonly tabs: readonly PortalRoute[] }[] = [
+  { key: "overview", tabs: ["home"] },
+  { key: "offers", tabs: ["services", "products", "delivery"] },
+  { key: "agenda", tabs: ["agenda"] },
+  { key: "clients", tabs: ["leads", "metrics"] },
+  { key: "profile", tabs: ["microsite", "documents", "destinations"] }
+];
+export const portalNav = (t: Translate): NavItem[] => NAV.map((destination) => {
+  const tabs = destination.tabs.map((key) => ({ key, label: t(`portal.nav.${key}`), href: PORTAL_ROUTES[key] }));
+  return { key: destination.key, label: t(`portal.dest.${destination.key}`), href: tabs[0]?.href ?? PORTAL_ROUTES.home, tabs };
+});
 
 const storageKey = (userId: string): string => `rsvp.provider.${userId}`;
 
@@ -38,7 +50,7 @@ export function PortalScreen({ title, current, requireProvider = true, children 
   const client = useApiClient();
   const { providerId } = useProviderId();
   const profile = useProviderProfile(client, providerId ?? undefined);
-  const nav = NAV.map((key) => ({ key, label: t(`portal.nav.${key}`), href: PORTAL_ROUTES[key] }));
+  const nav = portalNav(t);
   const frame = (body: ReactNode): ReactNode => <Screen title={title} nav={nav} current={current} onNavigate={(href) => router.push(href as Href)}>{body}</Screen>;
   if (providerId === undefined) return frame(<Loading />);
   if (!providerId) return frame(requireProvider ? <View style={{ gap: spacing[3] }}><Notice>{t("portal.errors.noProvider")}</Notice><ActionButton label={t("portal.errors.goOnboarding")} onPress={() => router.push(PORTAL_ROUTES.onboarding as Href)} testID="go-onboarding" /></View> : children({} as Provider, () => undefined));

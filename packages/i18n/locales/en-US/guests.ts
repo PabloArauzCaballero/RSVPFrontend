@@ -9,7 +9,6 @@ export const guestsEnUS: DeepStrings<typeof guestsEsBO> = {
     unavailable: "The service is not available right now. Your data is still here: try again in a few minutes.",
     offline: "There is no connection to the server. Check your internet and try again; your data is still here."
   },
-  nav: { summary: "Summary", guests: "Guests", report: "RSVP report", requests: "Companions", notifications: "Notices", preferences: "Notice preferences" },
   status: { PENDING: "Not answered", CONFIRMED: "Confirmed", DECLINED: "Not attending" },
   fresh: {
     updated: "Updated {{date}}", never: "No processed data yet.",

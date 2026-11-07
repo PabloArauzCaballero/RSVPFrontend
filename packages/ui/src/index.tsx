@@ -7,6 +7,11 @@ import { useTheme } from './theme';
 export { UiProvider, useTheme, type ColorScheme } from './theme';
 import { DateField } from './date-field';
 export { Logo, type LogoProps, type LogoTone } from './logo';
+export { CheckMark, type CheckMarkProps } from './check-mark';
+export { Illustration, type IllustrationProps } from './illustration';
+export { ILLUSTRATION_NAMES, type IllustrationName, type IllustrationTone } from './illustrations';
+export { EmptyState, PageIntro, SuccessNote, Celebrate, type EmptyStateProps } from './personality';
+export { useReducedMotion, MOTION } from './motion';
 export { defaultStrings, stringsFor, type UiStrings } from './strings';
 
 export type State = 'default' | 'loading' | 'error' | 'empty' | 'disabled';

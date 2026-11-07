@@ -22,8 +22,19 @@ export type AdminRoute = keyof typeof ADMIN_ROUTES;
 
 export const isPlatformAdmin = (roles: readonly string[]): boolean => roles.includes("ADMIN");
 
+/** Admin navigation (brief §2): four destinations; each module is a tab of its group. Routes do not move. */
+const ADMIN_GROUPS: readonly { readonly key: string; readonly tabs: readonly AdminRoute[] }[] = [
+  { key: "review", tabs: ["verification", "moderation"] },
+  { key: "catalog", tabs: ["categories", "geography", "eventTypes", "templates"] },
+  { key: "people", tabs: ["users", "organizations"] },
+  { key: "operation", tabs: ["dashboard", "metrics", "operations"] }
+];
+
 export function adminNav(t: Translate): NavItem[] {
-  return (Object.keys(ADMIN_ROUTES) as AdminRoute[]).map((key) => ({ key, label: t(`admin.nav.${key}`), href: ADMIN_ROUTES[key] }));
+  return ADMIN_GROUPS.map((group) => {
+    const tabs = group.tabs.map((key) => ({ key, label: t(`admin.nav.${key}`), href: ADMIN_ROUTES[key] }));
+    return { key: group.key, label: t(`admin.dest.${group.key}`), href: tabs[0]?.href ?? ADMIN_ROUTES.dashboard, tabs };
+  });
 }
 
 export function AdminScreen({ title, current, onNavigate, children }: PropsWithChildren<{ readonly title: string; readonly current: AdminRoute; readonly onNavigate: (href: string) => void }>): ReactNode {

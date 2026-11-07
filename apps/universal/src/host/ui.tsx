@@ -2,7 +2,7 @@ import type { PropsWithChildren, ReactNode } from "react";
 import { ActivityIndicator, Modal, Platform, Pressable, StyleSheet, Text, View, type KeyboardTypeOptions } from "react-native";
 import { usePathname, useRouter, type Href } from "expo-router";
 import { ApiError } from "@rsvp/api-client";
-import { Button, Input } from "@rsvp/ui";
+import { Button, CheckMark, Input } from "@rsvp/ui";
 import { colors, notice, radius, spacing, typography } from "@rsvp/design-tokens";
 import { loginHref } from "../auth/routes";
 import { useT } from "../platform/providers";
@@ -56,7 +56,9 @@ export const styles = StyleSheet.create({
   dialog: { width: "100%", maxWidth: 520, alignSelf: "center", backgroundColor: palette.surface, borderRadius: radius.lg, padding: spacing[5], gap: spacing[3] }
 });
 
-export { Screen, type NavItem } from "./shell";
+export { Screen, type NavItem, type NavTab } from "./shell";
+/** Personality primitives (docs/design/primitives.md): screens import them from here next to `Screen`, `Section`, `Notice`. */
+export { CheckMark, Celebrate, EmptyState, Illustration, PageIntro, SuccessNote } from "@rsvp/ui";
 
 /** A form or settings block. Capped at a readable measure so fields never stretch across a wide screen. */
 export function Section({ title, children }: PropsWithChildren<{ readonly title: string }>): ReactNode {
@@ -129,7 +131,10 @@ export function ActionButton({ label, onPress, variant = "primary", busy = false
 
 export function Notice({ kind = "info", children }: PropsWithChildren<{ readonly kind?: "info" | "error" | "success" }>): ReactNode {
   const tone = { info: styles.noticeInfo, error: styles.noticeError, success: styles.noticeSuccess }[kind];
-  return <View role={kind === "error" ? "alert" : "status"} style={[styles.notice, tone]}>{typeof children === "string" ? <Text style={styles.body}>{children}</Text> : children}</View>;
+  const content = typeof children === "string" ? <Text style={styles.body}>{children}</Text> : children;
+  // Success carries the drawn check of the D: the one celebratory gesture of the product.
+  if (kind === "success") return <View role="status" style={[styles.notice, tone, { flexDirection: "row", alignItems: "center", gap: spacing[3] }]}><CheckMark size={24} tone="success" /><View style={{ flex: 1, gap: spacing[2] }}>{content}</View></View>;
+  return <View role={kind === "error" ? "alert" : "status"} style={[styles.notice, tone]}>{content}</View>;
 }
 
 /** Translates an API failure into what the person can do about it. */

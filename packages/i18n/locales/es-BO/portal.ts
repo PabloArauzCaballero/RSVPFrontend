@@ -1,7 +1,8 @@
 /** Portal del proveedor (F28): alta, verificación, ofertas, destinos, agenda, leads y métricas. */
 export const portalEsBO = {
   label: "Portal del proveedor",
-  nav: { label: "Secciones del portal", home: "Resumen", services: "Servicios y productos", products: "Productos", delivery: "Condiciones de entrega", microsite: "Perfil público", documents: "Documentos de verificación", destinations: "Destinos de contacto", agenda: "Agenda y reservas", leads: "Leads y cotizaciones", metrics: "Métricas" },
+  nav: { label: "Secciones del portal", home: "Resumen", services: "Servicios", products: "Productos", delivery: "Entrega", microsite: "Perfil público", documents: "Documentos", destinations: "Destinos", agenda: "Agenda", leads: "Solicitudes", metrics: "Resultados" },
+  dest: { overview: "Resumen", offers: "Ofertas", agenda: "Agenda", clients: "Clientes", profile: "Perfil" },
   microsite: {
     title: "Perfil público", intro: "Lo que ven tus clientes en tu página. Se guarda completo cada vez; si alguien más lo cambió, te avisamos antes de pisarlo.",
     descEs: "Descripción (español)", descEn: "Descripción (inglés)", descHelp: "Hasta 2000 caracteres.", website: "Sitio web", instagram: "Instagram", facebook: "Facebook", whatsapp: "WhatsApp (con código de país)",
