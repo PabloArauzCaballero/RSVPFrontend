@@ -22,9 +22,14 @@ describe("site language (middleware + siteI18n)", () => {
     const explicit = middleware(request("/proveedores?lang=en-US", { acceptLanguage: "es-BO" }));
     expect(localeOf(explicit)).toBe("en-US");
     expect(explicit.cookies.get("rsvp-lang")?.value).toBe("en-US");
+    // An invalid ?lang is not a choice: the browser's English is honoured by sending it to the address that declares English (the bad value is replaced).
     const invalid = middleware(request("/proveedores?lang=fr-FR", { acceptLanguage: "en-US" }));
-    expect(localeOf(invalid)).toBe("en-US");
-    expect(invalid.cookies.get("rsvp-lang")).toBeUndefined();
+    expect(invalid.status).toBe(307);
+    expect(invalid.headers.get("location")).toBe("http://localhost:3000/proveedores?lang=en-US");
+    // With a Spanish browser the invalid value is simply ignored and nothing is remembered.
+    const spanish = middleware(request("/proveedores?lang=fr-FR", { acceptLanguage: "es-BO" }));
+    expect(localeOf(spanish)).toBe("es-BO");
+    expect(spanish.cookies.get("rsvp-lang")).toBeUndefined();
   });
 
   it("the cookie beats Accept-Language outside celebration and RSVP pages, never inside them", () => {

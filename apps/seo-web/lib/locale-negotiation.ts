@@ -1,6 +1,8 @@
 /** Edge-safe language negotiation (no i18n runtime): used by middleware.ts and lib/site-locale.ts. */
 export type SiteLocale = "es-BO" | "en-US";
 export const SITE_LOCALES: readonly SiteLocale[] = ["es-BO", "en-US"];
+/** The language of the clean address (what crawlers get). */
+export const DEFAULT_SITE_LOCALE: SiteLocale = "es-BO";
 /** Request header set by middleware.ts: the interface language of this request. */
 export const SITE_LOCALE_HEADER = "x-site-locale";
 /** Request header set by middleware.ts: path and query of the request without `?lang=` (for the language switcher). */
@@ -31,4 +33,12 @@ export function withLanguage(path: string, locale: SiteLocale): string {
   const params = new URLSearchParams(query);
   params.set("lang", locale);
   return `${pathname}?${params.toString()}`;
+}
+
+/** Paths that are pages a person reads. The partner redirector (`/r/`) and well-known files are never redirected by language. */
+const NOT_PAGES = ["/r/", "/.well-known/"] as const;
+
+/** A plain GET navigation to a page (not a prefetch of data, not the redirector, not a well-known file). */
+export function isRedirectable(request: { readonly method: string; readonly nextUrl: { readonly pathname: string } }): boolean {
+  return request.method === "GET" && !NOT_PAGES.some((prefix) => request.nextUrl.pathname.startsWith(prefix));
 }
