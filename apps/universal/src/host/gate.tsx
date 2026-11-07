@@ -36,7 +36,7 @@ export interface Loaded {
  * screen would otherwise repeat: no celebration chosen, loading, not found, read-only. `editable` screens
  * (content, gallery, translations, templates, settings, modes) are replaced by a notice once archived.
  */
-export function CelebrationScreen({ celebrationId, onNavigate, current, title, manage = true, editable = false, children }: ScreenProps & { readonly current: HostRoute; readonly title: string; readonly manage?: boolean; readonly editable?: boolean; readonly children: (loaded: Loaded) => ReactNode }): ReactNode {
+export function CelebrationScreen({ celebrationId, onNavigate, current, title, intro, manage = true, editable = false, children }: ScreenProps & { readonly current: HostRoute; readonly title: string; readonly intro?: string; readonly manage?: boolean; readonly editable?: boolean; readonly children: (loaded: Loaded) => ReactNode }): ReactNode {
   const t = useT();
   const client = useApiClient();
   const locale = useLocale();
@@ -44,7 +44,7 @@ export function CelebrationScreen({ celebrationId, onNavigate, current, title, m
   const query = useCelebration(client, celebrationId ?? "");
   const types = useEventTypes(client, locale);
   const nav = hostNav(t, celebrationId);
-  const frame = (body: ReactNode): ReactNode => <Screen title={title} nav={nav} current={current} onNavigate={onNavigate}>{body}</Screen>;
+  const frame = (body: ReactNode): ReactNode => <Screen title={title} {...(intro ? { intro } : {})} nav={nav} current={current} onNavigate={onNavigate}>{body}</Screen>;
   if (!canUseHostWorkspace(claims)) return frame(<Notice kind="error">{t("host.common.accessDenied")}</Notice>);
   if (!celebrationId) return frame(<><Notice>{t("host.common.noCelebration")}</Notice><ActionButton label={t("host.common.chooseCelebration")} onPress={() => onNavigate(HOST_ROUTES.celebrations)} /></>);
   if (query.isPending) return frame(<Loading />);
