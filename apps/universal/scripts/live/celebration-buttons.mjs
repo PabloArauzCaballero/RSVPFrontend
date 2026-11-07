@@ -10,6 +10,7 @@ const APP = process.env.APP ?? "http://localhost:8100";
 const API = process.env.API ?? "http://localhost:28000";
 const world = JSON.parse(readFileSync(process.env.WORLD, "utf8"));
 const only = process.argv[2];
+const ANCHO = Number(process.env.ANCHO ?? 1280); // 360 / 768 / 1280
 const results = [];
 // The client sends credentials, so a mocked answer needs explicit (non-wildcard) CORS headers, exactly like Kong.
 const CORS = { "access-control-allow-origin": APP, "access-control-allow-credentials": "true", "access-control-allow-headers": "authorization,content-type,if-match,x-correlation-id,accept,accept-language", "access-control-allow-methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS", "access-control-expose-headers": "etag,retry-after,x-correlation-id" };
@@ -47,7 +48,7 @@ const patchAs = async (id, patch) => {
 };
 
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH, args: ["--no-sandbox"] });
-const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, locale: "es-BO" });
+const context = await browser.newContext({ viewport: { width: ANCHO, height: ANCHO < 500 ? 800 : 900 }, locale: "es-BO" });
 context.setDefaultTimeout(15000);
 const page = await context.newPage();
 const consoleErrors = [];
@@ -113,7 +114,7 @@ await check("P1-limit-empty", "celebraciones: usuario sin celebraciones ve el va
   const email = `empty.${stamp}@example.com`;
   const reg = await http("POST", "/identity/auth/register", { body: { email, password: world.password, role: "HOST" } });
   assert.ok([200, 201].includes(reg.status), JSON.stringify(reg.json));
-  const fresh = await context.browser().newContext({ viewport: { width: 1280, height: 900 }, locale: "es-BO" });
+  const fresh = await context.browser().newContext({ viewport: { width: ANCHO, height: ANCHO < 500 ? 800 : 900 }, locale: "es-BO" });
   const p = await fresh.newPage();
   await p.goto(`${APP}/login`);
   await p.getByLabel("Correo electrónico", { exact: true }).filter({ visible: true }).fill(email);

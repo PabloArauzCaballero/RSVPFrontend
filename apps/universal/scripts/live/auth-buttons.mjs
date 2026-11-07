@@ -24,7 +24,8 @@ const cors = (origin) => ({ "access-control-allow-origin": origin, "access-contr
 const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
 
 /** One isolated browser context. `calls` records every request that reached the gateway; `fault` injects a response once or always. */
-async function open(width = 1280, height = 900) {
+const ANCHO = Number(process.env.ANCHO ?? 1280); // 360 | 768 | 1280: the whole matrix runs at this viewport width
+async function open(width = ANCHO, height = 900) {
   const context = await browser.newContext({ viewport: { width, height }, locale: "es-BO", timezoneId: "America/La_Paz" });
   context.setDefaultTimeout(10000);
   const state = { calls: [], faults: [], delayMs: 0 };
@@ -391,10 +392,15 @@ async function signedIn(width, role = "HOST") {
   await waitPath(h.page, role === "PROVIDER" ? /\/portal/ : /\/celebraciones/);
   return { ...h, email };
 }
+/** Below 960 px the sidebar is a bottom bar and "Cerrar sesión" lives in the "Más" sheet; the click goes through the same sheet a person uses. */
+const signOutButton = async (page) => {
+  if (ANCHO < 960) await page.getByRole("button", { name: "Más", exact: true }).filter({ visible: true }).click();
+  return page.getByRole("button", { name: "Cerrar sesión" }).filter({ visible: true });
+};
 {
-  const h = await signedIn(1280);
+  const h = await signedIn(ANCHO);
   await check("sign out (sidebar) · VALID calls POST /auth/logout, lands on /login, private route is guarded afterwards", async () => {
-    await h.page.getByRole("button", { name: "Cerrar sesión" }).filter({ visible: true }).click();
+    await (await signOutButton(h.page)).click();
     await waitPath(h.page, /\/login/);
     assert.ok(h.count("POST /identity/auth/logout") >= 1);
     await navigateInApp(h.page, "/celebraciones");
@@ -403,10 +409,10 @@ async function signedIn(width, role = "HOST") {
   await h.context.close();
 }
 {
-  const h = await signedIn(1280);
+  const h = await signedIn(ANCHO);
   await check("sign out · ERROR logout request fails (network / 500): still signs out locally, no crash", async () => {
     h.state.faults.push({ match: "POST /identity/auth/logout", abort: true });
-    await h.page.getByRole("button", { name: "Cerrar sesión" }).filter({ visible: true }).click();
+    await (await signOutButton(h.page)).click();
     await waitPath(h.page, /\/login/);
     assert.equal(h.errors.length, 0, h.errors.join("|"));
   });
@@ -424,7 +430,7 @@ async function signedIn(width, role = "HOST") {
   await h.context.close();
 }
 {
-  const h = await signedIn(1280);
+  const h = await signedIn(ANCHO);
   await check("guard · HOST opening /portal sees 'sin acceso' with two working buttons (go home, sign out)", async () => {
     await navigateInApp(h.page, "/portal");
     await text(h.page, "No tienes acceso a esta sección").waitFor();
@@ -438,7 +444,7 @@ async function signedIn(width, role = "HOST") {
   await h.context.close();
 }
 {
-  const h = await signedIn(1280);
+  const h = await signedIn(ANCHO);
   await check("session · ERROR expired access token (401 on a private call) refreshes silently; refresh 401 returns to login", async () => {
     h.state.faults.push({ match: "GET /celebration", status: 401, always: false });
     h.state.faults.push({ match: "POST /identity/auth/refresh", status: 401, always: true });
@@ -476,7 +482,7 @@ async function signedIn(width, role = "HOST") {
 console.log("\n== Organizations ==");
 {
   const member = uniq("member"); const memberReg = await registerApi(member, "HOST"); assert.equal(memberReg.status, 201);
-  const h = await signedIn(1280, "PLANNER"); const { page } = h;
+  const h = await signedIn(ANCHO, "PLANNER"); const { page } = h;
   const token = async () => (await apiJson("POST", "/identity/auth/login", { email: h.email, password: PASSWORD })).body.accessToken;
   await navigateInApp(page, "/organizaciones");
   await byId(page, "org-create").waitFor();
@@ -540,7 +546,7 @@ console.log("\n== Organizations ==");
     await text(page, "Esa persona ya es miembro de esta organización.").waitFor();
   });
   await h.context.close();
-  const hostOnly = await signedIn(1280, "HOST");
+  const hostOnly = await signedIn(ANCHO, "HOST");
   await check("organizations · a HOST cannot create (no form, explanation) and the API refuses too (403)", async () => {
     await navigateInApp(hostOnly.page, "/organizaciones");
     await text(hostOnly.page, "Solo las cuentas de organizador de eventos pueden crear organizaciones.").waitFor();

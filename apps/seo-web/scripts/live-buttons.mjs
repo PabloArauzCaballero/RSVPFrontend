@@ -23,7 +23,8 @@ const check = async (id, fn) => {
 const cors = { "access-control-allow-origin": SITE, "access-control-allow-credentials": "true", "access-control-expose-headers": "x-correlation-id,retry-after" };
 const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
 
-async function open(width = 1280, { permissions = [], geolocation } = {}) {
+const ANCHO = Number(process.env.ANCHO ?? 1280); // 360 | 768 | 1280: the whole matrix runs at this viewport width
+async function open(width = ANCHO, { permissions = [], geolocation } = {}) {
   const context = await browser.newContext({ viewport: { width, height: 900 }, locale: "es-BO", timezoneId: "America/La_Paz", permissions, ...(geolocation ? { geolocation } : {}) });
   context.setDefaultTimeout(10000);
   const state = { calls: [], faults: [], delayMs: 0 };
@@ -122,7 +123,7 @@ console.log("\n== Directory and search ==");
   });
   await context.close();
 
-  const geo = await open(1280, { permissions: ["geolocation"], geolocation: { latitude: -16.5, longitude: -68.15 } });
+  const geo = await open(ANCHO, { permissions: ["geolocation"], geolocation: { latitude: -16.5, longitude: -68.15 } });
   await check("near-me button · VALID with permission it fills lat/lng, submits and shows the active-radius status with a clear link", async () => {
     await geo.page.goto(`${SITE}/proveedores/buscar`);
     await geo.page.getByRole("button", { name: /Cerca de mí|ubicación/i }).click();
@@ -130,7 +131,7 @@ console.log("\n== Directory and search ==");
     await geo.page.getByRole("link", { name: /Quitar|Borrar|Limpiar/i }).click(); await geo.page.waitForURL((url) => !/lat=/.test(url.search));
   });
   await geo.context.close();
-  const denied = await open(1280);
+  const denied = await open(ANCHO);
   await check("near-me button · ERROR without permission it explains and keeps the city filter usable", async () => {
     await denied.page.goto(`${SITE}/proveedores/buscar`);
     await denied.page.getByRole("button", { name: /Cerca de mí|ubicación/i }).click();

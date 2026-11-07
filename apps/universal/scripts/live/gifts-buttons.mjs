@@ -51,7 +51,7 @@ async function newGuest(allowedCompanions = 2) {
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH, args: ["--no-sandbox"] });
 const consoleErrors = [];
 const rsvpHits = [];
-async function newPage({ width = 1280, host = false } = {}) {
+async function newPage({ width = Number(process.env.ANCHO ?? 1280), host = false } = {}) {
   const context = await browser.newContext({ viewport: { width, height: 900 }, locale: "es-BO" });
   context.setDefaultTimeout(20000);
   const page = await context.newPage();
@@ -667,8 +667,9 @@ async function guestSuite() {
     await go(page, giftsPath(guest.token));
     const link = page.getByTestId(`partner-${added.json.id}`);
     await link.waitFor();
-    const [popup] = await Promise.all([page.waitForEvent("popup", { timeout: 5000 }).catch(() => null), link.click()]);
-    const url = popup ? popup.url() : page.url();
+    // The redirector answers 302 to the partner's site (external, maybe unreachable from the runner): assert on the request to /r/{listingId}, not on where the popup ends up.
+    const [redirectRequest] = await Promise.all([context.waitForEvent("request", { predicate: (request) => /\/r\//.test(request.url()), timeout: 15000 }), link.click()]);
+    const url = redirectRequest.url();
     assert.match(url, new RegExp(`/r/${listing}`));
     assert.match(url, /surface=GIFT_LIST/);
     await context.close();

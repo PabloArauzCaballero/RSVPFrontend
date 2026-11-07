@@ -1,8 +1,11 @@
 // Button x {error, limit, valid} matrix for the host guests area, in Chrome against the REAL backend (gateway :28000).
-//   WORLD=world.json APP=http://localhost:3000 CHROMIUM_PATH=".../Google Chrome" node apps/universal/scripts/live/guests-buttons.mjs [section ...]
+//   [ANCHO=360|768|1280] WORLD=world.json APP=http://localhost:3000 CHROMIUM_PATH=".../Google Chrome" node apps/universal/scripts/live/guests-buttons.mjs [section ...]
 // Sections: form list detail groups import report requests notifications preferences push settings summary
-import { C, G, N, API, assert, button, go, host, http, isCall, launch, makeGuest, Matrix, noBlank, noOverflow, problem, session, sleep, text, tid, track, waitGuests, WIDTHS, world } from "./lib.mjs";
+import { C, G, N, API, assert, button, go, host, http, isCall, launch, makeGuest, Matrix, noBlank, noOverflow, problem, session as baseSession, sleep, text, tid, track, waitGuests, WIDTHS, world } from "./lib.mjs";
 
+// ANCHO (px) sets the viewport of the main session: 360, 768 or 1280 (default). Explicit widths (layout checks) win.
+const ANCHO = Number(process.env.ANCHO ?? 1280);
+const session = (browser_, email, width = ANCHO) => baseSession(browser_, email, width);
 const only = process.argv.slice(2);
 const wanted = (name) => only.length === 0 || only.includes(name);
 const matrix = new Matrix();
@@ -152,10 +155,14 @@ async function list() {
     const last = (await host("GET", `${G}/guest-list?limit=1&offset=${target - 1}`)).json.items[0];
     assert.equal((await host("DELETE", `${G}/guests/${last.guestId}/erasure`)).status, 202);
     for (let waited = 0; (await readTotal()) > target - 1 && waited < 30; waited += 1) await sleep(500);
-    await button(page, "Actualizar").click(); // the empty page 51-51 disappears: the screen steps back to a page that exists instead of an empty list without a pager
-    await page.waitForFunction(() => /^Mostrando 1.50 de /.test(document.querySelector('[data-testid="page-range"]')?.textContent ?? ""), null, { timeout: 15000 }).catch(async () => { throw new Error(`no retrocedio: ${await page.evaluate(() => document.querySelector('[data-testid="page-range"]')?.textContent ?? document.body.innerText.slice(0, 200))}`); });
-    await button(page, "Actualizar").click(); await page.waitForFunction(() => !document.querySelector('[data-testid="page-range"]') && document.querySelectorAll('[role="listitem"]').length >= 50, null, { timeout: 15000 }).catch(async () => { throw new Error(`total no actualizado: ${await page.evaluate(() => document.querySelector('[data-testid="page-range"]')?.textContent ?? "sin paginador")} (API ${await readTotal()})`); });
-    return `total ${target}: ultima pagina con 1 fila -> borrado por API -> retrocede a la pagina 1 y con 50 exactos el paginador desaparece`;
+    // The emptied last page disappears: the screen steps back to the last page that still exists (page 1 only when the world is small) instead of an empty list without a pager.
+    const remaining = target - 1; const lastStart = Math.floor((remaining - 1) / 50) * 50 + 1;
+    await button(page, "Actualizar").click();
+    await page.waitForFunction(({ start, end }) => new RegExp(`^Mostrando ${start}.${end} de `).test(document.querySelector('[data-testid="page-range"]')?.textContent ?? ""), { start: lastStart, end: remaining }, { timeout: 15000 }).catch(async () => { throw new Error(`no retrocedio: ${await page.evaluate(() => document.querySelector('[data-testid="page-range"]')?.textContent ?? document.body.innerText.slice(0, 200))}`); });
+    await button(page, "Actualizar").click();
+    if (remaining <= 50) await page.waitForFunction(() => !document.querySelector('[data-testid="page-range"]') && document.querySelectorAll('[role="listitem"]').length >= 50, null, { timeout: 15000 }).catch(async () => { throw new Error(`total no actualizado: ${await page.evaluate(() => document.querySelector('[data-testid="page-range"]')?.textContent ?? "sin paginador")} (API ${await readTotal()})`); });
+    else await page.waitForFunction(({ start, end }) => new RegExp(`^Mostrando ${start}.${end} de ${end}$`).test(document.querySelector('[data-testid="page-range"]')?.textContent ?? ""), { start: lastStart, end: remaining }, { timeout: 15000 }).catch(async () => { throw new Error(`total no actualizado: ${await page.evaluate(() => document.querySelector('[data-testid="page-range"]')?.textContent)} (API ${await readTotal()})`); });
+    return `total ${target}: ultima pagina con 1 fila -> borrado por API -> retrocede a ${lastStart}-${remaining} y el total se actualiza (${remaining <= 50 ? "sin paginador" : "paginador conserva el total real"})`;
   });
   await matrix.check(S, "Actualizar (frescura)", "VALIDO relanza la lectura", async () => {
     await open(); const reads = track(page, isCall("GET", /\/guest-list/)); await button(page, "Actualizar").click(); await sleep(800); assert.ok(reads.count() >= 1); reads.stop();

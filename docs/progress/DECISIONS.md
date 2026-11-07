@@ -44,3 +44,7 @@
 - **Límites en cliente iguales o más estrictos que el servidor**, porque el backend acepta, por ejemplo, un título de 20 000 caracteres.
 - **El refresh de sesión sigue corriendo en rutas de invitado**: con cookie httpOnly no se sabe si hay sesión, y omitirlo dejaría sin sesión a un anfitrión que abre un enlace de invitado. El 401 anónimo en consola es esperado.
 - **Plurales:** el i18n no tiene plurales; los textos con contador se redactan sin depender del número («Acompañantes permitidos: N»).
+- **seo-web negocia el idioma** (`middleware.ts`: `?lang=`, cookie `rsvp-lang`, `Accept-Language`, con `Vary`) en vez de duplicar rutas `/en`. Consecuencia: landing, directorio y fichas son dinámicas (sin caché estática); categoría y ciudad siguen estáticas. Reevaluar `/en/...` si el SEO por idioma lo pide.
+- **Las referencias visuales de seo-web fijan `locale: es-BO`**: el idioma del producto es el español y la negociación por `Accept-Language` convertiría en inglés las capturas hechas con el navegador por defecto.
+- **`SwitchRow` único** en `packages/ui` para ajustes de encendido/apagado: la fila completa es el objetivo táctil (56 px) y responde a Espacio y Enter; se descarta el `Switch` nativo (20 px).
+- **Las matrices en vivo excluyen únicamente** los 502/503 de media, plantillas, dispositivos y entregas push, porque esos servicios no se despliegan en el mundo local; cualquier otro error cuenta como fallo.

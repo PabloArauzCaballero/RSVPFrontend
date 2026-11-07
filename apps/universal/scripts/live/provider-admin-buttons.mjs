@@ -14,6 +14,7 @@ const PASSWORD = process.env.PASSWORD ?? "Passw0rd!Passw0rd-live";
 const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL ?? "e2e-admin@example.test";
 const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD ?? "Correct-horse-9battery";
 const only = process.argv[2];
+const WIDTH = Number(process.env.WIDTH ?? 1280); // viewport width for the whole matrix (360 / 768 / 1280)
 const stamp = Date.now().toString(36);
 const rows = [];
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -49,7 +50,7 @@ const blocked = (screen, button, scenario, why) => { rows.push({ screen, button,
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH, args: ["--no-sandbox"] });
 const pageErrors = [];
 let lastPage = null;
-async function session(email, password = PASSWORD, width = 1280) {
+async function session(email, password = PASSWORD, width = WIDTH) {
   const context = await browser.newContext({ viewport: { width, height: width < 500 ? 800 : 1000 }, locale: "es-BO" });
   context.setDefaultTimeout(15000);
   const page = await context.newPage();
