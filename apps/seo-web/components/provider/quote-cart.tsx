@@ -89,9 +89,9 @@ function QuoteBody({ slug, providerId, providerName, offers, preselected, locale
         <div aria-live="polite" data-testid="quote-summary"><strong>{t('quote.summary')}</strong>: {chosen.length ? chosen.map((offer) => offer.title).join(', ') : t('quote.noneSelected')}</div>
         <Field id="eventDate" label={t('quote.eventDate')} type="date" min={today} error={err('eventDate')} />
         <Field id="guestCount" label={t('quote.guests')} type="number" min={1} inputMode="numeric" error={err('guestCount')} />
-        <Field id="budget" label={t('quote.budget')} type="number" min={0} inputMode="decimal" help={t('quote.budgetHelp')} error={err('budget')} />
+        <Field id="budget" label={`${t('quote.budget')} ${t('quote.optional')}`} type="number" min={0} inputMode="decimal" help={t('quote.budgetHelp')} error={err('budget')} />
         <div className="rsvp-field">
-          <label htmlFor="eventCity">{t('quote.city')}</label>
+          <label htmlFor="eventCity">{t('quote.city')} {t('quote.optional')}</label>
           <select id="eventCity" name="eventCity" defaultValue="">
             <option value="">{t('directory.filters.any')}</option>
             {cities.map((city) => <option key={city.slug} value={city.slug}>{city.name}</option>)}
@@ -99,8 +99,8 @@ function QuoteBody({ slug, providerId, providerName, offers, preselected, locale
         </div>
         <Field id="name" label={t('quote.name')} type="text" autoComplete="name" error={err('name')} />
         <Field id="email" label={t('quote.email')} type="email" autoComplete="email" error={err('email')} />
-        <Field id="phone" label={t('quote.phone')} type="tel" autoComplete="tel" />
-        <div className="rsvp-field"><label htmlFor="message">{t('quote.message')}</label><textarea id="message" name="message" rows={4} maxLength={2000} /></div>
+        <Field id="phone" label={`${t('quote.phone')} ${t('quote.optional')}`} type="tel" inputMode="tel" autoComplete="tel" />
+        <div className="rsvp-field"><label htmlFor="message">{t('quote.message')} {t('quote.optional')}</label><textarea id="message" name="message" rows={4} maxLength={2000} /></div>
         <div className="hp-field" aria-hidden="true"><label htmlFor="website">{t('quote.honeypot')}</label><input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" /></div>
         {signedIn ? null : <p className="rsvp-hint" data-testid="quote-anon-note">{t('quote.anonymousNote')}</p>}
         {CAPTCHA_SITE_KEY && !signedIn ? <QuoteCaptcha onToken={onCaptcha} resetKey={captchaReset} label={t('quote.captcha.label')} /> : null}

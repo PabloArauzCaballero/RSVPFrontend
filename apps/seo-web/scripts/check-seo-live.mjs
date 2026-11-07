@@ -12,13 +12,20 @@ const routes = [
 ];
 const REQUIRED = { Organization: ["name", "url"], WebSite: ["name", "url"], FAQPage: ["mainEntity"], BreadcrumbList: ["itemListElement"], LocalBusiness: ["name", "address"], Event: ["name", "startDate", "location"] };
 const attr = (html, re) => html.match(re)?.[1];
-let checks = 0; const fail = [];
+let checks = 0; const fail = []; const titles = new Map();
 for (const { path, types, own } of routes) for (const lang of ["es-BO", "en-US"]) {
   const url = `${SITE}${path}${path.includes("?") ? "&" : "?"}lang=${lang}`;
   const html = await (await fetch(url, { headers: { "accept-language": lang } })).text();
   try {
     assert.equal((html.match(/<h1[ >]/g) ?? []).length, 1, "exactly one h1");
-    assert.ok(attr(html, /<title>([^<]{5,})<\/title>/), "title");
+    const title = attr(html, /<title>([^<]{5,})<\/title>/); assert.ok(title, "title");
+    assert.ok(title.length <= 70, `title ${title.length} chars`);
+    const key = `${lang}|${title}`; assert.ok(!titles.has(key) || titles.get(key) === path, `duplicate title with ${titles.get(key)}`); titles.set(key, path);
+    const description = attr(html, /<meta name="description" content="([^"]*)"/); assert.ok(description && description.length >= 50 && description.length <= 165, `description ${description?.length} chars`);
+    const levels = [...html.matchAll(/<h([1-6])[ >]/g)].map((m) => Number(m[1]));
+    for (let i = 1; i < levels.length; i++) assert.ok(levels[i] <= levels[i - 1] + 1, `heading jumps h${levels[i - 1]} -> h${levels[i]}`);
+    assert.equal([...html.matchAll(/<img\b[^>]*>/g)].filter((m) => !/\balt=/.test(m[0])).length, 0, "every img has an alt attribute");
+    assert.ok(!/<meta name="robots" content="[^"]*noindex/.test(html), "indexable page is not noindex");
     assert.ok(attr(html, /<meta name="description" content="([^"]{30,})"/), "description");
     assert.ok(new RegExp(`<html lang="${lang}"`).test(html) || own, "html lang");
     const canonical = attr(html, /<link rel="canonical" href="([^"]+)"/); assert.ok(canonical, "canonical");
@@ -35,5 +42,23 @@ for (const { path, types, own } of routes) for (const lang of ["es-BO", "en-US"]
     checks++; console.log(`  PASS ${path} ${lang}`);
   } catch (error) { fail.push(`${path} ${lang}: ${error.message}`); console.log(`  FAIL ${path} ${lang}: ${error.message}`); }
 }
+// Crawl files: robots.txt points to the sitemap and every sitemap URL answers 200, is not noindex, and lists itself among its alternates.
+try {
+  const robots = await (await fetch(`${SITE}/robots.txt`)).text();
+  assert.ok(/Sitemap: .*\/sitemap\.xml/.test(robots), "robots.txt names the sitemap");
+  assert.ok(!/Disallow: \/\s*$/m.test(robots), "robots.txt does not block the whole site");
+  const xml = await (await fetch(`${SITE}/sitemap.xml`)).text();
+  const entries = [...xml.matchAll(/<url>([\s\S]*?)<\/url>/g)].map((m) => m[1]);
+  assert.ok(entries.length > 5, "sitemap has entries");
+  for (const entry of entries) {
+    const loc = entry.match(/<loc>([^<]+)<\/loc>/)[1].replaceAll("&amp;", "&");
+    const self = [...entry.matchAll(/hreflang="[^"]+" href="([^"]+)"/g)].map((m) => m[1].replaceAll("&amp;", "&"));
+    if (self.length) assert.ok(self.includes(loc), `sitemap ${loc} lists itself among its alternates`);
+    const res = await fetch(loc.replace(/^https?:\/\/[^/]+/, SITE)); const body = await res.text();
+    assert.equal(res.status, 200, `${loc} -> ${res.status}`);
+    assert.ok(!/<meta name="robots" content="[^"]*noindex/.test(body), `${loc} is in the sitemap but noindex`);
+  }
+  checks++; console.log(`  PASS robots.txt + sitemap (${entries.length} URLs)`);
+} catch (error) { fail.push(`crawl files: ${error.message}`); console.log(`  FAIL crawl files: ${error.message}`); }
 console.log(`${checks} PASS · ${fail.length} FAIL`);
 process.exit(fail.length ? 1 : 0);

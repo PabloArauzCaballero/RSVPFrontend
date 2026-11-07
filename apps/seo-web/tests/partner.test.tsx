@@ -83,6 +83,9 @@ describe("F25 · partner microsite /p/{slug}", () => {
     const ok = await generateMetadata({ params: Promise.resolve({ slug: "hotel-andino" }) });
     expect(ok.title).toBe("Hotel Andino · Hospedaje en La Paz");
     expect(ok.alternates?.canonical).toContain("/p/hotel-andino");
+    // A one-line summary alone is too short for a snippet: the factual sentence is appended (50 to 160 characters).
+    expect(String(ok.description).length).toBeGreaterThanOrEqual(50);
+    expect(String(ok.description).length).toBeLessThanOrEqual(160);
     expect(ok.robots).toMatchObject({ index: true });
     const down = await generateMetadata({ params: Promise.resolve({ slug: "otro" }) });
     expect(down.robots).toMatchObject({ index: false });
@@ -97,11 +100,14 @@ describe("F08 REQ-05 · sitemap.xml", () => {
       if (url.pathname.startsWith("/providers")) return json(200, { items: [card(), card({ listingId: "b", providerSlug: "salon-sol", name: "Salón Sol" }), card({ listingId: "c", providerSlug: "pendiente", verified: false })], total: 3, page: 1, pageSize: 12 });
       return json(404, {});
     }));
-    const urls = (await sitemap()).map((entry) => new URL(entry.url).pathname);
+    const entries = await sitemap();
+    const urls = entries.map((entry) => new URL(entry.url).pathname);
     expect(urls).toEqual(expect.arrayContaining(["/", "/proveedores", "/proveedores/salones", "/p/hotel-andino", "/p/salon-sol", "/c/ana-y-luis"]));
     expect(urls).not.toContain("/p/pendiente");
     expect(urls.filter((path) => path.startsWith("/r/") || path.includes("/rsvp") || path.includes("/buscar") || path.startsWith("/panel") || path.startsWith("/admin") || path === "/catalogo")).toEqual([]);
-    expect(new Set(urls).size).toBe(urls.length);
+    // One entry per language address (es-BO bare, en-US with ?lang=), each listing itself among its alternates (hreflang in the sitemap).
+    expect(new Set(entries.map((entry) => entry.url)).size).toBe(entries.length);
+    for (const entry of entries.filter((candidate) => !candidate.url.includes("/c/"))) expect(Object.values(entry.alternates?.languages ?? {})).toContain(entry.url);
   });
 
   it("still answers when the API is down (no partners, no celebrations, static routes remain)", async () => {

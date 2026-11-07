@@ -7,8 +7,9 @@ export const quoteEsBO = {
   },
   detail: { notFound: "No encontramos esta oferta.", quote: "Pedir cotización", agenda: "Ver disponibilidad", priceFrom: "Desde {{price}}" },
   quote: {
+    optional: "(opcional)",
     title: "Pedir cotización a {{name}}", meta: "Cotiza con {{name}}: elige servicios, fecha e invitados.", intro: "Elige lo que te interesa y cuenta cómo será tu evento. {{name}} recibe todo junto y te responde por correo.",
-    items: "¿Qué quieres cotizar?", itemsHelp: "Elige al menos una oferta.", eventDate: "Fecha del evento", guests: "Cantidad de invitados", budget: "Presupuesto aproximado (Bs.)", budgetHelp: "Opcional.",
+    items: "¿Qué quieres cotizar?", itemsHelp: "Elige al menos una oferta.", eventDate: "Fecha del evento", guests: "Cantidad de invitados", budget: "Presupuesto aproximado (Bs.)", budgetHelp: "Una cifra aproximada basta.",
     city: "Ciudad del evento", name: "Tu nombre", email: "Tu correo", phone: "Teléfono", message: "Mensaje", submit: "Enviar solicitud", submitting: "Enviando…",
     summary: "Tu selección", noneSelected: "Aún no elegiste ninguna oferta.", fulfillmentFor: "Entrega de {{title}}",
     anonymousNote: "No necesitas una cuenta: el proveedor te responde al correo que indiques. Para solicitar una fecha sí necesitas iniciar sesión.", honeypot: "Sitio web (déjalo vacío)",

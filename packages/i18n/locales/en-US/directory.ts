@@ -22,7 +22,7 @@ export const directoryEnUS: DeepStrings<typeof directoryEsBO> = {
   empty: "No vendors are published here yet.",
   emptyHint: "Try another city or category, or remove a filter.",
   emptyAction: "See all categories",
-  unavailable: "We could not load vendors right now, and it was not something you did. Try again in a few minutes.",
+  unavailable: "We could not load vendors right now. Try again in a few minutes.",
   retry: "Try again",
   results_one: "{{count}} result",
   results_other: "{{count}} results",
@@ -39,6 +39,10 @@ export const directoryEnUS: DeepStrings<typeof directoryEsBO> = {
     replyTitle: "Get their reply",
     replyBody: "The vendor answers at the email you gave."
   },
+  intro_one: "{{count}} verified vendor is listed under {{category}} in {{place}}.",
+  intro_other: "{{count}} verified vendors are listed under {{category}} in {{place}}.",
+  otherCities: "This category in other cities",
+  otherCategories: "Other categories in {{city}}",
   trust: "“Verified” means the vendor has passed DOne’s verification. DOne does not provide or guarantee the service: you agree price, coverage and timing with the vendor.",
   breadcrumb: { label: "Breadcrumb", home: "Home", directory: "Vendors" }
 };

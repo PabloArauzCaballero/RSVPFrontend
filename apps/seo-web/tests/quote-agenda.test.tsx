@@ -65,9 +65,9 @@ describe("REQ-F26-01/02 · quote cart and sent confirmation", () => {
     let body: Record<string, unknown> = {};
     vi.stubGlobal("fetch", vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => { body = JSON.parse(String(init?.body)); return window.sessionStorage.getItem("rsvp.visitor.token") ? json(201, { id: "3ac2bdf8-db0f-4350-805c-0c70214ba5e8", status: "REQUESTED", leadId: "l", disclaimer: "Deslinde", listings: [] }) : json(401, { type: "x", title: "t", status: 401 }); }));
     cart(); fill();
-    fireEvent.change(screen.getByLabelText("Presupuesto aproximado (Bs.)"), { target: { value: "5000" } });
+    fireEvent.change(screen.getByLabelText(/Presupuesto aproximado \(Bs\.\)/), { target: { value: "5000" } });
     // Provider Catalog only accepts a city SLUG as eventCity (422 "eventCity must be a city slug"): the field is a list of slugs, not free text.
-    fireEvent.change(screen.getByLabelText("Ciudad del evento"), { target: { value: "la-paz" } });
+    fireEvent.change(screen.getByLabelText(/Ciudad del evento/), { target: { value: "la-paz" } });
     fireEvent.click(screen.getByRole("button", { name: "Enviar solicitud" }));
     expect(await screen.findByText("Inicia sesión para enviar tu solicitud")).toBeTruthy();
     expect((screen.getByLabelText("Tu nombre") as HTMLInputElement).value).toBe("Ana");

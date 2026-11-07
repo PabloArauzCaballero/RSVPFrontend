@@ -5,6 +5,10 @@ import type { partnerEsBO } from "../es-BO/partner.js";
 export const partnerEnUS: DeepStrings<typeof partnerEsBO> = {
   meta: { title: "{{name}} · {{category}} in {{city}}", description: "{{name}}: verified {{category}} in {{city}}. See their services and coverage area, and contact them directly." },
   about: "About the vendor",
+  factLead_one: "{{name}} is a {{category}} vendor in {{city}}, verified by DOne. It lists {{count}} service.",
+  factLead_other: "{{name}} is a {{category}} vendor in {{city}}, verified by DOne. It lists {{count}} services.",
+  factLeadNone: "{{name}} is a {{category}} vendor in {{city}}, verified by DOne.",
+  imageAlt: "{{name}}, {{category}} in {{city}}",
   noSummary: "This vendor has not added a description yet.",
   coverage: "Coverage area",
   noCoverage: "Serves {{city}}. Ask the vendor whether they reach other areas.",
@@ -19,7 +23,7 @@ export const partnerEnUS: DeepStrings<typeof partnerEsBO> = {
   destination: { WHATSAPP: "Message on WhatsApp", PHONE: "Call", EMAIL: "Send an email", INSTAGRAM: "View Instagram", OFFICIAL_SITE: "Visit their website" },
   backToDirectory: "Back to vendors",
   notFound: { title: "We could not find this vendor", body: "The page does not exist or the vendor is no longer available. Browse other verified vendors." },
-  unavailable: { title: "We could not load this vendor", body: "The catalogue did not respond, and it was not something you did. Try again in a few minutes." },
+  unavailable: { title: "We could not load this vendor", body: "The catalogue did not respond. Try again in a few minutes." },
   redirect: {
     back: "Go back",
     invalid: { title: "This link is not valid", body: "We could not read the vendor link. Go back to the previous page and try again." },

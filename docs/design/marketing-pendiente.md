@@ -17,6 +17,13 @@ Regla (`product-marketing`, `copywriting`): el sitio solo afirma lo que el produ
 | Competidores / comparativas | Sin investigación | Lista de competidores y fuentes (`competitors`) |
 | Idiomas de cada celebración | El sitio está en es-BO y en-US; cada celebración publica los que configure | Confirmar el alcance de idiomas por celebración |
 
+| Páginas legales (privacidad, términos, cookies) y contacto de DOne | No existen en el sitio; `seo-audit` (E-E-A-T) y `launch` (site QA) las exigen, y `directory-submissions` las pide como requisito. El texto legal no lo puedo redactar yo | Texto legal revisado por quien corresponda y un correo o canal oficial de contacto |
+| `NEXT_PUBLIC_SITE_URL` de producción | Si falta, canonicals, hreflang y sitemap apuntan a `http://localhost:3000` (valor por defecto en `lib/metadata.ts`) | Confirmar el dominio de producción y que la variable está definida en el despliegue (punto de `launch`/site QA) |
+| Umbral para indexar páginas categoría × ciudad | Hoy se indexa con 1 o más proveedores verificados; el umbral correcto es una decisión con datos | Demanda de búsqueda por combinación y proveedores publicados por ciudad (Search Console tras el lanzamiento) |
+| `llms.txt`, `pricing.md`, páginas «alternativas» o comparativas | No hay precios ni competidores validados; un archivo para IA repetiría esta página sin dato nuevo | Precios publicados y lista de competidores con fuente y fecha (`competitors`) |
+| Medición (conversión de «Crear mi celebración», cotización enviada, RSVP completado) | No hay analítica instalada en el sitio | Decisión de herramienta y consentimiento (ver `conversion-tracking`) |
+| Voz del cliente (frases reales de anfitriones, invitados y proveedores) | El copy parte de hechos del producto, no de investigación; los roles «organizas / respondes / sirves» son hipótesis | 5 a 10 entrevistas por rol (`customer-research`, modo 3) y su síntesis con nivel de confianza |
+
 ## Qué sí se dice hoy y de dónde sale
 
 - Los invitados responden sin cuenta: `rsvp.guest.intro` y el flujo `/rsvp`.

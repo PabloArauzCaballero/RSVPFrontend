@@ -10,8 +10,9 @@ export const quoteEnUS: DeepStrings<typeof quoteEsBO> = {
   },
   detail: { notFound: "We could not find this offer.", quote: "Request a quote", agenda: "See availability", priceFrom: "From {{price}}" },
   quote: {
+    optional: "(optional)",
     title: "Request a quote from {{name}}", meta: "Get a quote from {{name}}: pick services, date and guests.", intro: "Choose what interests you and tell us how your event will be. {{name}} gets it all together and replies by email.",
-    items: "What do you want quoted?", itemsHelp: "Choose at least one offer.", eventDate: "Event date", guests: "Number of guests", budget: "Approximate budget (Bs.)", budgetHelp: "Optional.",
+    items: "What do you want quoted?", itemsHelp: "Choose at least one offer.", eventDate: "Event date", guests: "Number of guests", budget: "Approximate budget (Bs.)", budgetHelp: "A rough figure is enough.",
     city: "Event city", name: "Your name", email: "Your email", phone: "Phone", message: "Message", submit: "Send request", submitting: "Sending…",
     summary: "Your selection", noneSelected: "You have not chosen an offer yet.", fulfillmentFor: "Delivery of {{title}}",
     anonymousNote: "You do not need an account: the vendor replies to the email you give. Requesting a date does require signing in.", honeypot: "Website (leave empty)",

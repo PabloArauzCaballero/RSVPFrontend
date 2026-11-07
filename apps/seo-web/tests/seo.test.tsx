@@ -119,7 +119,7 @@ describe("metadata and crawling", () => {
     const metadata = celebrationMetadata(VIEW, GALLERY, t);
     expect(metadata.title).toBe("Ana y Luis");
     expect(metadata.description).toBe("Boda · sábado, 19 de diciembre de 2026 · Hacienda El Prado");
-    expect(metadata.alternates?.canonical).toMatch(/\/c\/ana-y-luis$/);
+    expect(metadata.alternates?.canonical).toMatch(/\/c\/ana-y-luis\?lang=es-BO$/);
     expect(Object.keys(metadata.alternates?.languages ?? {})).toEqual(["es-BO", "en-US"]);
     expect(metadata.openGraph).toMatchObject({ type: "website", locale: "es_BO", images: [{ url: GALLERY[0]?.variants.full, width: 1920, height: 1280 }] });
     expect(celebrationMetadata(VIEW, GALLERY, t, { id: "faq", path: "faq" }).title).toBe("Preguntas frecuentes · Ana y Luis");

@@ -5,9 +5,12 @@ import { PartnerLink, type PartnerDestination } from "@rsvp/ui-web";
 import type { Partner } from "../lib/partner";
 import { CheckMark } from "./brand/check-mark";
 import { DOutline, OfflineArt } from "./brand/illustrations";
+import { cityBySlug, PROVIDER_CATEGORIES } from "../lib/providers";
 import { Breadcrumbs } from "./provider-directory";
 
 const MINOR_UNIT_DIGITS = 2;
+/** Coverage zones arrive as city slugs ("la-paz"); known cities are shown by name. */
+const zoneName = (zone: string): string => cityBySlug(zone)?.name ?? zone;
 
 function money(amountMinor: number, currency: string, locale: string): string {
   const digits = Math.abs(amountMinor).toString().padStart(MINOR_UNIT_DIGITS + 1, "0");
@@ -22,22 +25,24 @@ function money(amountMinor: number, currency: string, locale: string): string {
 export function PartnerMicrosite({ partner, t, locale }: { readonly partner: Partner; readonly t: Translate; readonly locale: string }) {
   const category = t(`directory.category.${partner.category}`);
   const base = `/p/${encodeURIComponent(partner.slug)}`;
+  const categorySlug = PROVIDER_CATEGORIES.find((entry) => entry.code === partner.category)?.slug;
+  const facts = { name: partner.name, category: category.toLocaleLowerCase(locale), city: partner.city };
   const jsonLd = {
     ...localBusinessJsonLd({ name: partner.name, url: `${siteUrl()}${base}`, category, offers: partner.listings.map((listing) => ({ name: listing.name, description: listing.summary, priceFrom: listing.priceFrom })) }),
     ...(partner.imageUrl ? { image: partner.imageUrl } : {}),
     ...(partner.summary ? { description: partner.summary } : {}),
     address: { "@type": "PostalAddress", ...(partner.address ? { streetAddress: partner.address } : {}), addressLocality: partner.city, addressRegion: partner.department, addressCountry: "BO" },
     ...(partner.hours.length ? { openingHours: partner.hours } : {}),
-    ...(partner.coverage.length ? { areaServed: partner.coverage.map((name) => ({ "@type": "City", name })) } : {})
+    ...(partner.coverage.length ? { areaServed: partner.coverage.map((zone) => ({ "@type": "City", name: zoneName(zone) })) } : {})
   };
   return (
     <main className="partner-page">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
       <header className="top partner-top">
         <div className="top__inner">
-          <Breadcrumbs t={t} items={[{ label: partner.name }]} />
+          <Breadcrumbs t={t} items={[...(categorySlug ? [{ label: category, href: `/proveedores/${categorySlug}` }] : []), { label: partner.name }]} />
           <div className="partner-hero">
-            <div className="partner-hero__media">{partner.imageUrl ? <img src={partner.imageUrl} alt="" width={960} height={540} decoding="async" fetchPriority="high" /> : <DOutline />}</div>
+            <div className="partner-hero__media">{partner.imageUrl ? <img src={partner.imageUrl} alt={t("partner.imageAlt", { name: partner.name, category, city: partner.city })} width={960} height={540} decoding="async" fetchPriority="high" /> : <DOutline />}</div>
             <div className="partner-hero__text">
               <h1>{partner.name}</h1>
               <p className="partner-eyebrow">{category} · {partner.city}</p>
@@ -82,12 +87,13 @@ export function PartnerMicrosite({ partner, t, locale }: { readonly partner: Par
         <div className="partner-twin">
           <section aria-labelledby="partner-about" className="partner-section">
             <h2 id="partner-about">{t("partner.about")}</h2>
+            <p>{partner.listings.length ? t("partner.factLead", { ...facts, count: partner.listings.length }) : t("partner.factLeadNone", facts)}</p>
             <p>{partner.summary ?? t("partner.noSummary")}</p>
           </section>
 
           <section aria-labelledby="partner-coverage" className="partner-section">
             <h2 id="partner-coverage">{t("partner.coverage")}</h2>
-            {partner.coverage.length ? <ul className="directory-links directory-links--cities">{partner.coverage.map((area) => <li key={area}><span>{area}</span></li>)}</ul> : <p>{t("partner.noCoverage", { city: partner.city })}</p>}
+            {partner.coverage.length ? <ul className="directory-links directory-links--cities">{partner.coverage.map((area) => <li key={area}><span>{zoneName(area)}</span></li>)}</ul> : <p>{t("partner.noCoverage", { city: partner.city })}</p>}
             {partner.address ? <p>{partner.address}</p> : null}
             {partner.hours.length ? <ul className="partner-hours">{partner.hours.map((line) => <li key={line}>{line}</li>)}</ul> : null}
           </section>

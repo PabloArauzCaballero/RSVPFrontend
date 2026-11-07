@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { siteI18n } from "../../../../lib/site-locale";
-import { PageTop, ProviderResults } from "../../../../components/provider-directory";
+import { CategoryLinks, CityLinks, PageTop, ProviderResults } from "../../../../components/provider-directory";
 import { routeMetadata } from "../../../../lib/seo";
 import { isSupported } from "../../../../lib/locale-negotiation";
 import { categoryBySlug, cityBySlug, pageParam, PROVIDER_CATEGORIES, PROVIDER_CITIES, searchProviders } from "../../../../lib/providers";
@@ -49,7 +49,9 @@ export default async function CategoryCityPage({ params, searchParams }: Props) 
     <main className="dir-page">
       <PageTop t={t} items={[{ label: name, href: `/proveedores/${found.category.slug}` }, { label: found.city.name }]} title={t("directory.cityTitle", values)} lead={t("directory.cityDescription", values)} />
       <div className="dir-body">
-        <ProviderResults page={results} t={t} locale={locale} path={`/proveedores/${found.category.slug}/${found.city.slug}`} query={page > 1 ? `page=${page}` : ""} />
+        <ProviderResults page={results} t={t} locale={locale} path={`/proveedores/${found.category.slug}/${found.city.slug}`} query={page > 1 ? `page=${page}` : ""} summary={results.available && results.total > 0 ? t("directory.intro", { count: results.total, category: name.toLocaleLowerCase(locale), place: found.city.name }) : undefined} />
+        <section aria-labelledby="dir-other-cities"><h2 id="dir-other-cities">{t("directory.otherCities")}</h2><CityLinks t={t} categorySlug={found.category.slug} categoryCode={found.category.code} exclude={found.city.slug} /></section>
+        <section aria-labelledby="dir-other-categories"><h2 id="dir-other-categories">{t("directory.otherCategories", { city: found.city.name })}</h2><CategoryLinks t={t} citySlug={found.city.slug} exclude={found.category.slug} /></section>
       </div>
     </main>
   );

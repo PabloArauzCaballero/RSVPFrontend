@@ -19,7 +19,7 @@ export const directoryEsBO = {
   empty: "Todavía no hay proveedores publicados aquí.",
   emptyHint: "Prueba con otra ciudad o categoría, o quita algún filtro.",
   emptyAction: "Ver todas las categorías",
-  unavailable: "No pudimos cargar los proveedores en este momento, y no fue por algo que hiciste. Prueba otra vez en unos minutos.",
+  unavailable: "No pudimos cargar los proveedores en este momento. Prueba otra vez en unos minutos.",
   retry: "Reintentar",
   results_one: "{{count}} resultado",
   results_other: "{{count}} resultados",
@@ -36,6 +36,10 @@ export const directoryEsBO = {
     replyTitle: "Recibe su respuesta",
     replyBody: "El proveedor te responde al correo que indicaste."
   },
+  intro_one: "Hay {{count}} proveedor verificado de {{category}} en {{place}}.",
+  intro_other: "Hay {{count}} proveedores verificados de {{category}} en {{place}}.",
+  otherCities: "Esta categoría en otras ciudades",
+  otherCategories: "Otras categorías en {{city}}",
   trust: "«Verificado» quiere decir que el proveedor pasó la verificación de DOne. DOne no presta ni garantiza el servicio: precio, cobertura y plazos los acuerdas con el proveedor.",
   breadcrumb: { label: "Ruta de navegación", home: "Inicio", directory: "Proveedores" }
 } as const;

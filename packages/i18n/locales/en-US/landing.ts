@@ -7,7 +7,7 @@ export const landingEnUS = {
   nav: { label: "Main", home: "DOne, home", providers: "Vendors", signIn: "Sign in", create: "Create my celebration" },
   hero: {
     title: "Invite today. Tomorrow you know who is coming.",
-    body: "Each guest replies with their personal link, in one tap and with no account. You see the list, always up to date.",
+    body: "DOne is where you invite people to your wedding, quinceañera or christening and see who is coming. Each guest replies with their personal link, in one tap and with no account.",
     primary: "Create my celebration",
     secondary: "Find vendors"
   },
@@ -35,7 +35,7 @@ export const landingEnUS = {
     hostBody: "Your invitation, the list of who is coming and the gifts, all in one place.",
     hostLink: "Create my celebration",
     guestTitle: "You reply",
-    guestBody: "Open your personal link and reply in one tap. No account needed. If you change your mind, update your reply while the deadline is still open.",
+    guestBody: "Open your personal link and reply in one tap. If you change your mind, update your reply while the deadline is still open.",
     providerTitle: "You serve",
     providerBody: "Show your services and your availability, and receive quote requests from people planning a celebration.",
     providerLink: "List my services",
@@ -69,7 +69,7 @@ export const landingEnUS = {
     languageA: "Bolivian Spanish and English."
   },
   closing: { title: "Your first invitation starts with one tap", body: "Pick the type of celebration, add your guests and share the link.", cta: "Create my celebration" },
-  error: { title: "We could not load this page", body: "The service did not respond, and it was not something you did. Try again in a few seconds.", retry: "Try again", home: "Go to the home page" },
+  error: { title: "We could not load this page", body: "The service did not respond just now. Try again in a few seconds.", retry: "Try again", home: "Go to the home page" },
   notFound: { title: "This page does not exist", body: "The link may have a typo, or the page may be gone. From the home page you can reach everything else.", home: "Go to the home page" },
   footer: { tagline: "Get a reply in one tap.", providers: "Vendors", skip: "Skip to content", explore: "Explore", create: "Create my celebration" }
 };

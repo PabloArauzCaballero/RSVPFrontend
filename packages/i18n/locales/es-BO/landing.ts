@@ -7,7 +7,7 @@ export const landingEsBO = {
   nav: { label: "Principal", home: "DOne, inicio", providers: "Proveedores", signIn: "Ingresar", create: "Crear mi celebración" },
   hero: {
     title: "Invitas hoy. Mañana sabes quién viene.",
-    body: "Cada invitado responde con su enlace personal, en un toque y sin crear cuenta. Tú ves la lista al día.",
+    body: "DOne es donde invitas a tu boda, quinceañero o bautizo y ves quién viene. Cada invitado responde con su enlace personal, en un toque y sin crear cuenta.",
     primary: "Crear mi celebración",
     secondary: "Buscar proveedores"
   },
@@ -35,7 +35,7 @@ export const landingEsBO = {
     hostBody: "Tu invitación, la lista de quién viene y los regalos, en un solo lugar.",
     hostLink: "Crear mi celebración",
     guestTitle: "Tú respondes",
-    guestBody: "Abre tu enlace personal y responde en un toque. No necesitas cuenta. Si cambias de idea, cambias tu respuesta mientras el plazo siga abierto.",
+    guestBody: "Abre tu enlace personal y responde en un toque. Si cambias de idea, cambias tu respuesta mientras el plazo siga abierto.",
     providerTitle: "Tú sirves",
     providerBody: "Muestra tus servicios y tu disponibilidad, y recibe solicitudes de cotización de quienes organizan.",
     providerLink: "Publicar mis servicios",
@@ -69,7 +69,7 @@ export const landingEsBO = {
     languageA: "En español de Bolivia y en inglés."
   },
   closing: { title: "Tu primera invitación empieza con un toque", body: "Elige el tipo de celebración, agrega a tus invitados y comparte el enlace.", cta: "Crear mi celebración" },
-  error: { title: "No pudimos cargar esta página", body: "El servicio no respondió, y no fue por algo que hiciste. Prueba otra vez en unos segundos.", retry: "Reintentar", home: "Ir al inicio" },
+  error: { title: "No pudimos cargar esta página", body: "El servicio no respondió ahora mismo. Prueba otra vez en unos segundos.", retry: "Reintentar", home: "Ir al inicio" },
   notFound: { title: "Esta página no existe", body: "Puede que el enlace tenga un error o que la página ya no esté. Desde el inicio puedes llegar a todo lo demás.", home: "Ir al inicio" },
   footer: { tagline: "Que te respondan en un toque.", providers: "Proveedores", skip: "Saltar al contenido", explore: "Explorar", create: "Crear mi celebración" }
 };

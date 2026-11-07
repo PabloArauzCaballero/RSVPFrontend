@@ -55,7 +55,7 @@ export function PageTop({ t, items, title, lead }: { readonly t: Translate; read
   );
 }
 
-export function ProviderResults({ page, t, locale, path, query = "" }: { readonly page: ProviderPage; readonly t: Translate; readonly locale: string; readonly path: string; readonly query?: string }) {
+export function ProviderResults({ page, t, locale, path, query = "", summary }: { readonly page: ProviderPage; readonly t: Translate; readonly locale: string; readonly path: string; readonly query?: string; readonly summary?: string }) {
   if (!page.available) {
     return (
       <div role="status" className="directory-status state">
@@ -86,7 +86,7 @@ export function ProviderResults({ page, t, locale, path, query = "" }: { readonl
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
-      <p className="directory-count">{t("directory.results", { count: page.total })}</p>
+      <p className="directory-count">{summary ?? t("directory.results", { count: page.total })}</p>
       <ImpressionTracker surface="SEARCH">
       <ul className="directory-results">
         {page.items.map((card) => (
@@ -131,18 +131,18 @@ export function QuoteSteps({ t }: { readonly t: Translate }) {
   );
 }
 
-export function CategoryLinks({ t }: { readonly t: Translate }) {
+export function CategoryLinks({ t, citySlug, exclude }: { readonly t: Translate; readonly citySlug?: string; readonly exclude?: string }) {
   return (
     <ul className="directory-links directory-links--categories">
-      {PROVIDER_CATEGORIES.map((category) => <li key={category.slug}><a href={`${DIRECTORY}/${category.slug}`}>{t(`directory.category.${category.code}`)}</a></li>)}
+      {PROVIDER_CATEGORIES.filter((category) => category.slug !== exclude).map((category) => <li key={category.slug}><a href={citySlug ? `${DIRECTORY}/${category.slug}/${citySlug}` : `${DIRECTORY}/${category.slug}`}>{t(`directory.category.${category.code}`)}</a></li>)}
     </ul>
   );
 }
 
-export function CityLinks({ t, categorySlug, categoryCode, onlyFeatured = false }: { readonly t: Translate; readonly categorySlug: string; readonly categoryCode: string; readonly onlyFeatured?: boolean }) {
+export function CityLinks({ t, categorySlug, categoryCode, onlyFeatured = false, exclude }: { readonly t: Translate; readonly categorySlug: string; readonly categoryCode: string; readonly onlyFeatured?: boolean; readonly exclude?: string }) {
   return (
     <ul className="directory-links">
-      {PROVIDER_CITIES.filter((city) => !onlyFeatured || city.featured).map((city) => (
+      {PROVIDER_CITIES.filter((city) => (!onlyFeatured || city.featured) && city.slug !== exclude).map((city) => (
         <li key={city.slug}><a href={`${DIRECTORY}/${categorySlug}/${city.slug}`}>{t("directory.cityTitle", { category: t(`directory.category.${categoryCode}`), city: city.name })}</a></li>
       ))}
     </ul>

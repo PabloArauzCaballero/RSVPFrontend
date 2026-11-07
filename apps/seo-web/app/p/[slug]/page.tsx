@@ -9,6 +9,8 @@ import { loadPartner } from "../../../lib/partner";
 /** B5 · Partner microsite: the indexable destination for partners without a site of their own. */
 export const revalidate = 300;
 
+const MIN_SUMMARY = 70;
+
 interface Props { readonly params: Promise<{ readonly slug: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -19,7 +21,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (lookup.state !== "ok") return { title: t("partner.notFound.title"), robots: { index: false, follow: false } };
   const { partner } = lookup;
   const values = { name: partner.name, category: t(`directory.category.${partner.category}`), city: partner.city };
-  const description = (partner.summary ?? t("partner.meta.description", values)).slice(0, 160);
+  const generic = t("partner.meta.description", values);
+  // A one-line summary is too short to be a useful snippet: the factual sentence follows it, up to 160 characters.
+  const description = (partner.summary && partner.summary.length >= MIN_SUMMARY ? partner.summary : partner.summary ? `${partner.summary.replace(/[.\s]+$/, "")}. ${generic}` : generic).slice(0, 160);
   return routeMetadata({ path: `/p/${encodeURIComponent(slug)}`, locale: isSupported(locale) ? locale : "es-BO", title: t("partner.meta.title", values), description, image: partner.imageUrl ? { url: partner.imageUrl, alt: partner.name } : undefined });
 }
 

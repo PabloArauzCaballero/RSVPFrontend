@@ -41,7 +41,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
     <main className="dir-page">
       <PageTop t={t} items={[{ label: name }]} title={t("directory.categoryTitle", { category: name })} lead={t("directory.categoryDescription", { category: name })} />
       <div className="dir-body">
-        <ProviderResults page={results} t={t} locale={locale} path={`/proveedores/${category.slug}`} query={page > 1 ? `page=${page}` : ""} />
+        <ProviderResults page={results} t={t} locale={locale} path={`/proveedores/${category.slug}`} query={page > 1 ? `page=${page}` : ""} summary={results.available && results.total > 0 ? t("directory.intro", { count: results.total, category: name.toLocaleLowerCase(locale), place: "Bolivia" }) : undefined} />
         <section aria-labelledby="dir-cities"><h2 id="dir-cities">{t("directory.citiesHeading")}</h2><CityLinks t={t} categorySlug={category.slug} categoryCode={category.code} /></section>
       </div>
     </main>
