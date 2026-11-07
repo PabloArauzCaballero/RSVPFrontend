@@ -60,9 +60,9 @@ async function newPage({ width = Number(process.env.ANCHO ?? 1280), host = false
   page.on("request", (r) => { if (r.url().includes("/rsvp/")) rsvpHits.push(Date.now()); });
   if (host) {
     await page.goto(`${APP}/login`);
-    await page.getByLabel("Correo electrónico", { exact: true }).filter({ visible: true }).fill(world.host.email);
+    await page.getByLabel(/^(Correo electrónico|Correo)$/).filter({ visible: true }).fill(world.host.email);
     await page.getByLabel("Contraseña", { exact: true }).filter({ visible: true }).fill(world.password);
-    await page.getByRole("button", { name: "Iniciar sesión" }).filter({ visible: true }).click();
+    await page.getByRole("button", { name: /^(Iniciar sesión|Entrar)$/ }).filter({ visible: true }).click();
     await page.waitForURL((url) => !url.pathname.startsWith("/login"), { timeout: 20000 });
   }
   return { page, context };
@@ -75,7 +75,7 @@ const HC = `?c=${C}`;
 const label = (page, text) => page.getByLabel(text, { exact: true }).filter({ visible: true }).first();
 const button = (page, name) => page.getByRole("button", { name, exact: true }).filter({ visible: true }).first();
 /** The dialog confirm is "Reservar regalo" (the cards say "Reservar"). */
-const confirmReserve = (page) => page.getByRole("button", { name: "Reservar regalo", exact: true }).filter({ visible: true }).first();
+const confirmReserve = (page) => page.getByTestId("reserve-confirm");
 const seen = (page, text) => page.getByText(text).filter({ visible: true }).first().waitFor({ state: "visible" });
 
 /** Records one cell of the matrix. `fn` throws on a failed assertion. */
@@ -117,9 +117,9 @@ async function hostSuite() {
     const { page, context } = await fresh({ host: true });
     await page.route("**/gifts/celebrations/*/items", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items: [], partnerPriorityEnabled: false }) }));
     await go(page, `/regalos${HC}`);
-    await seen(page, "Todavía no agregaste regalos.");
+    await seen(page, "Tu lista empieza con un regalo");
     await context.close();
-    return "items:[] -> 'Todavía no agregaste regalos.'";
+    return "items:[] -> 'Tu lista empieza con un regalo'";
   });
   await check("host /regalos", "list (load)", "VALID statuses match GET /items", async () => {
     await setSettings({ externalGiftMode: "AUTO_ACCEPT" });
@@ -193,7 +193,7 @@ async function hostSuite() {
     await go(page, `/regalos${HC}`);
     await page.getByTestId(`reject-proposal-${g.id}`).click();
     await seen(page, "¿Rechazar esta propuesta?");
-    await button(page, "Cancelar").click();
+    await button(page, /^(Cancelar|Dejarlo como está)$/).click();
     await sleep(300);
     assert.equal(calls, 0);
     assert.equal((await gifts()).find((i) => i.id === g.id).status, "PROPOSED");
@@ -273,7 +273,7 @@ async function hostSuite() {
     assert.equal(await page.getByTestId("external-title").inputValue(), title);
     down = false;
     await page.getByTestId("external-submit").click();
-    await page.getByText(/Regalo (externo agregado|propuesto)/).first().waitFor();
+    await page.getByText(/Regalo (de tienda agregado|propuesto)/).first().waitFor();
     const found = (await gifts()).filter((i) => i.title === title);
     assert.equal(found.length, 1);
     await context.close();
@@ -285,7 +285,7 @@ async function hostSuite() {
     await go(page, `/regalos/externo${HC}`);
     await page.getByTestId("external-title").fill(title); await page.getByTestId("external-url").fill("https://a.example/d"); await page.getByTestId("external-price").fill("0,01");
     await page.getByTestId("external-submit").dblclick();
-    await page.getByText(/Regalo (externo agregado|propuesto)/).first().waitFor();
+    await page.getByText(/Regalo (de tienda agregado|propuesto)/).first().waitFor();
     await sleep(800);
     const found = (await gifts()).filter((i) => i.title === title);
     assert.equal(found.length, 1, `created ${found.length}`);
@@ -300,7 +300,7 @@ async function hostSuite() {
     await go(page, `/regalos/externo${HC}`);
     await page.getByTestId("external-title").fill(title); await page.getByTestId("external-url").fill("https://tienda.example/v"); await page.getByTestId("external-price").fill("320.50");
     await page.getByTestId("external-submit").click();
-    await seen(page, /queda pendiente de tu aprobación/);
+    await seen(page, /queda por revisar/);
     const g = (await gifts()).find((i) => i.title === title);
     assert.equal(g.status, "PROPOSED"); assert.equal(g.price.amountMinor, 32050); assert.equal(g.externalUrl, "https://tienda.example/v");
     await context.close();
@@ -313,28 +313,39 @@ async function hostSuite() {
     await go(page, `/regalos/externo${HC}`);
     await page.getByTestId("external-title").fill(title); await page.getByTestId("external-url").fill("https://tienda.example/t"); await page.getByTestId("external-price").fill("100");
     await page.getByTestId("external-submit").click();
-    await seen(page, /Antes de continuar/);
+    await seen(page, /Antes de seguir/);
     assert.equal((await gifts()).filter((i) => i.title === title).length, 0);
     await button(page, "Agregar de todos modos").click();
-    await page.getByText(/Regalo externo agregado/).first().waitFor();
+    await page.getByText(/Regalo de tienda agregado/).first().waitFor();
     const g = (await gifts()).find((i) => i.title === title);
     assert.ok(g && g.status === "AVAILABLE");
     await context.close();
     return "409 PARTNER_CATALOG_FIRST then acknowledged POST 201 · GET AVAILABLE";
   });
-  await check("host /regalos/externo", "mode choices (externalGiftMode, partnerPriority)", "VALID persisted in GET /celebrations; ERROR 409 stale version -> reload", async () => {
+  // The two settings behind «primero los aliados» live in Control modes (one place per setting); the add-a-gift flow states them and links there.
+  await check("host /regalos/externo", "rule note + go-modes", "VALID the store origin states the live rule/mode (GET /celebrations) and go-modes opens /modos; ERROR 409 stale version in /modos -> reload offered", async () => {
     await setSettings({ externalGiftMode: "RESTRICTED", partnerPriorityEnabled: false });
     const { page, context } = await fresh({ host: true });
     await go(page, `/regalos/externo${HC}`);
-    await page.getByRole("radio", { name: "Se publican al instante" }).click();
-    await seen(page, "Modo guardado.");
-    assert.equal((await settingsNow()).externalGiftMode, "AUTO_ACCEPT");
+    await seen(page, /Tus regalos de tienda quedan por revisar/);
+    await seen(page, /Puedes agregar regalos de cualquier tienda sin pasos previos/);
+    await setSettings({ externalGiftMode: "AUTO_ACCEPT", partnerPriorityEnabled: true });
+    await go(page, `/regalos/externo${HC}`);
+    await seen(page, "Primero los aliados");
+    await seen(page, /Tus regalos de tienda aparecen en la lista al instante/);
+    await page.getByTestId("go-modes").click();
+    await page.waitForURL(/\/modos/);
+    await page.getByTestId("switch-externalGiftMode").click();
+    await page.getByRole("button", { name: "Sí, cambiar" }).click();
+    await seen(page, "Modo actualizado.");
+    assert.equal((await settingsNow()).externalGiftMode, "RESTRICTED");
     // someone else changes settings -> the page's version is stale
-    await setSettings({ partnerPriorityEnabled: true });
-    await page.getByRole("radio", { name: "Los reviso antes de publicarlos" }).click();
+    await setSettings({ partnerPriorityEnabled: false });
+    await page.getByTestId("switch-externalGiftMode").click();
+    await page.getByRole("button", { name: "Sí, cambiar" }).click();
     await page.getByText(/cambi[óo]|actualiza|conflict|Recargar/i).first().waitFor();
     await context.close();
-    return "PUT settings -> GET AUTO_ACCEPT; stale If-Match -> notice";
+    return "rule note matches GET; /modos PUT -> GET RESTRICTED; stale If-Match -> notice";
   });
 
   // ---- Catalog (C27)
@@ -378,7 +389,7 @@ async function hostSuite() {
     await page.route("**/gifts/celebrations/*/items", (route) => (route.request().method() === "POST" ? route.fulfill({ status: 422, contentType: "application/problem+json", body: JSON.stringify({ title: "gone", status: 422, code: "CATALOG_PRODUCT_UNAVAILABLE" }) }) : route.continue()));
     if (await page.getByTestId(`add-${id}`).isEnabled()) {
       await page.getByTestId(`add-${id}`).click();
-      await seen(page, /ya no est[áa] disponible|no disponible|unavailable/i);
+      await seen(page, /ya no est[áa] (disponible|en el cat[áa]logo)|no disponible|unavailable/i);
     }
     await context.close();
     return "422 -> unavailable message";
@@ -449,7 +460,7 @@ async function hostSuite() {
     const { page, context } = await fresh({ host: true });
     await page.route("**/gifts/celebrations/*/reservations**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items: [] }) }));
     await go(page, `/bandeja/regalos${HC}`);
-    await seen(page, "No hay reservas pendientes.");
+    await seen(page, /No hay reservas pendientes/);
     await context.close();
     const { page: p2, context: c2 } = await fresh({ host: true });
     let fail = true;
@@ -467,6 +478,7 @@ async function hostSuite() {
   await check("host /regalos", "visibility-showRequesterTo{Host,Guests}", "VALID switch persisted (+GET gift-settings); ERROR network down -> notice", async () => {
     const { page, context } = await fresh({ host: true });
     await go(page, `/regalos${HC}`);
+    await page.getByTestId("more-gifts").click();
     const sw = page.getByTestId("visibility-showRequesterToGuests");
     await sw.waitFor();
     const before = (await http("GET", `/gifts/celebrations/${C}/gift-settings`, { token: hostToken })).json.showRequesterToGuests;
@@ -491,10 +503,10 @@ async function guestSuite() {
   const giftsPath = (token) => `/c/${SLUG}/regalos/${token}`;
 
   // ---- Gifts (guest)
-  await check("guest gifts", "list (load)", "ERROR 401 bad credential -> 'Tu enlace venció', no retry loop", async () => {
+  await check("guest gifts", "list (load)", "ERROR 401 bad credential -> 'Tu enlace ya no funciona', no retry loop", async () => {
     const { page, context } = await fresh();
     await go(page, giftsPath("not-a-real-token-0123456789abcdefghijklmnopqrstuv"));
-    await seen(page, "Tu enlace venció");
+    await seen(page, "Tu enlace ya no funciona");
     await context.close();
     return "garbage token -> 401 -> expired notice";
   });
@@ -505,7 +517,7 @@ async function guestSuite() {
     const t = await http("POST", `/guests/celebrations/${other.json.id}/guests/${g.json.id}/access-token`, { token: hostToken, body: {} });
     const { page, context } = await fresh();
     await go(page, giftsPath(t.json.token));
-    await page.getByText(/otra celebraci[óo]n|No puedes|venció/).first().waitFor();
+    await page.getByText(/otra celebraci[óo]n|No puedes|ya no funciona/).first().waitFor();
     await context.close();
     return "foreign credential -> blocker notice";
   });
@@ -533,7 +545,7 @@ async function guestSuite() {
     await page.getByTestId("reserve-name").fill("Carla Prueba");
     await page.getByTestId("reserve-message").fill("¡Felicidades!");
     await confirmReserve(page).dblclick();
-    await seen(page, "¡Regalo reservado!");
+    await seen(page, "Regalo reservado");
     assert.equal(posts, 1, `POSTs ${posts}`);
     const mine = (await reservations()).filter((r) => r.itemId === g.id);
     assert.equal(mine.length, 1); assert.equal(mine[0].status, "COMMITTED"); assert.equal(mine[0].guestDisplayName, "Carla Prueba"); assert.equal(mine[0].message, "¡Felicidades!");
@@ -548,7 +560,7 @@ async function guestSuite() {
     await go(page, giftsPath(guest.token));
     await page.getByTestId(`reserve-${g.id}`).click();
     await confirmReserve(page).click();
-    await seen(page, "¡Regalo reservado!");
+    await seen(page, "Regalo reservado");
     assert.equal((await reservations()).filter((r) => r.itemId === g.id).length, 1);
     await context.close();
     return "empty name+message accepted · 1 reservation in GET";
@@ -572,7 +584,7 @@ async function guestSuite() {
     assert.equal(posts, 0);
     await page.getByTestId("reserve-message").fill("m".repeat(500));
     await confirmReserve(page).click();
-    await seen(page, "¡Regalo reservado!");
+    await seen(page, "Regalo reservado");
     const mine = (await reservations()).find((r) => r.itemId === g1.id);
     assert.equal(mine.guestDisplayName.length, 120); assert.equal(mine.message.length, 500);
     await context.close();
@@ -604,10 +616,10 @@ async function guestSuite() {
     await confirmReserve(page).click();
     await page.getByTestId("reserve-error").waitFor();
     const text = await page.getByTestId("reserve-error").innerText();
-    assert.match(text, /demasiadas solicitudes/i);
+    assert.match(text, /muchas solicitudes/i);
     limited = false;
     await confirmReserve(page).click();
-    await seen(page, "¡Regalo reservado!");
+    await seen(page, "Regalo reservado");
     await context.close();
     return `429 message: "${text.slice(0, 70)}" then retry -> 201`;
   });
@@ -626,7 +638,7 @@ async function guestSuite() {
     assert.equal(await page.getByTestId("reserve-message").inputValue(), "sigue aquí");
     down = false;
     await confirmReserve(page).click();
-    await seen(page, "¡Regalo reservado!");
+    await seen(page, "Regalo reservado");
     assert.equal((await reservations()).filter((r) => r.itemId === g.id).length, 1);
     await context.close();
     return "abort -> 'Sin conexión'; retry -> 1 reservation";
@@ -683,7 +695,7 @@ async function guestSuite() {
     await go(page, giftsPath(guest.token));
     await page.getByTestId(`reserve-${g.id}`).click();
     await confirmReserve(page).click();
-    await seen(page, "Solicitud enviada");
+    await seen(page, "Reserva enviada");
     await page.getByTestId(`reserve-${g.id}`).waitFor({ state: "detached" });
     assert.equal((await reservations("PENDING_REVIEW")).some((r) => r.itemId === g.id), true);
     await context.close();
@@ -695,7 +707,7 @@ async function guestSuite() {
   await check("guest rsvp", "open link", "ERROR invalid/garbage token -> invalid screen, no celebration data", async () => {
     const { page, context } = await fresh();
     await goRsvp(page, rsvpPath("garbage-token-0123456789abcdefghijklmnopqrstuvwxyz"));
-    await seen(page, "Este enlace no está disponible");
+    await seen(page, "Este enlace ya no funciona");
     await context.close();
     return "401 -> invalid screen";
   });
@@ -708,47 +720,51 @@ async function guestSuite() {
     const retry = page.getByRole("button", { name: "Reintentar" }).filter({ visible: true }).first();
     await retry.waitFor();
     down = false; await retry.click();
-    await seen(page, "¿Podrás acompañarnos?");
+    await seen(page, "¿Nos acompañas?");
     await context.close();
     return "abort -> Reintentar -> form";
   });
-  await check("guest rsvp", "rsvp-submit", "LIMIT empty status, companions -1 / 1.5 / abc, notes too long -> inline errors, no request", async () => {
+  await check("guest rsvp", "rsvp-submit", "LIMIT empty status, stepper floor at 0, notes too long -> inline errors, no request", async () => {
     const guest = await newGuest();
     const { page, context } = await fresh();
     let writes = 0;
     page.on("request", (r) => { if (["POST", "PATCH"].includes(r.method()) && r.url().includes("/rsvp/celebrations")) writes += 1; });
     await goRsvp(page, rsvpPath(guest.token));
-    await seen(page, "¿Podrás acompañarnos?");
+    await seen(page, "¿Nos acompañas?");
     await page.getByTestId("rsvp-submit").click();
     await seen(page, "Revisa los campos marcados.");
-    await page.getByRole("radio", { name: "Sí, asistiré" }).click();
-    for (const bad of ["-1", "1.5", "abc"]) { await label(page, "Acompañantes").fill(bad); await page.getByTestId("rsvp-submit").click(); await seen(page, /número entero/); }
-    await label(page, "Acompañantes").fill("0");
-    await label(page, "Restricciones alimentarias").fill("a".repeat(2001));
+    await page.getByRole("radio", { name: "Voy" }).click();
+    // The stepper cannot express -1, 1.5 or text: the minus is disabled at 0 and a tap on plus gives a whole number.
+    assert.equal(await page.getByTestId("companions-minus").getAttribute("aria-disabled"), "true");
+    await page.getByTestId("companions-plus").click(); assert.equal((await page.getByTestId("companions-count").innerText()).trim(), "1");
+    await page.getByTestId("companions-minus").click(); assert.equal((await page.getByTestId("companions-count").innerText()).trim(), "0");
+    await page.getByTestId("rsvp-extras").click();
+    await label(page, "Restricción alimentaria (opcional)").fill("a".repeat(2001));
     await page.getByTestId("rsvp-submit").click();
-    await seen(page, "El texto es demasiado largo.");
+    await seen(page, "Es demasiado largo.");
     assert.equal(writes, 0);
     await context.close();
-    return "5 invalid drafts, 0 writes";
+    return "empty status + notes too long -> inline errors; stepper floor 0; 0 writes";
   });
   await check("guest rsvp", "rsvp-submit", "VALID confirm with 1 companion + dietary + message (+GET), then edit before deadline", async () => {
     const guest = await newGuest(2);
     const { page, context } = await fresh();
     await goRsvp(page, rsvpPath(guest.token));
-    await page.getByRole("radio", { name: "Sí, asistiré" }).click();
-    await label(page, "Acompañantes").fill("1");
-    await label(page, "Restricciones alimentarias").fill("Sin gluten");
-    await label(page, "Mensaje para los anfitriones (opcional)").fill("Nos vemos");
+    await page.getByRole("radio", { name: "Voy" }).click();
+    await page.getByTestId("companions-plus").click();
+    await page.getByTestId("rsvp-extras").click();
+    await label(page, "Restricción alimentaria (opcional)").fill("Sin gluten");
+    await label(page, "Mensaje para quien te invita (opcional)").fill("Nos vemos");
     await page.getByTestId("rsvp-submit").dblclick();
-    await seen(page, "Tu asistencia está confirmada");
+    await seen(page, "Listo, estás dentro.");
     const state = await http("GET", `/rsvp/celebrations/${C}/rsvp`, { token: guest.token });
     assert.equal(state.status, 200);
     assert.equal(state.json.status, "CONFIRMED"); assert.equal(state.json.dietaryNotes, "Sin gluten"); assert.equal(state.json.message, "Nos vemos"); assert.equal(state.json.requestedCompanions, 1);
     // edit: decline
     await button(page, "Cambiar mi respuesta").click();
-    await page.getByRole("radio", { name: "No podré asistir" }).click();
+    await page.getByRole("radio", { name: "No puedo" }).click();
     await page.getByTestId("rsvp-submit").click();
-    await seen(page, "Registramos que no podrás asistir");
+    await seen(page, "Quedó registrado que no podrás venir");
     const after = await http("GET", `/rsvp/celebrations/${C}/rsvp`, { token: guest.token });
     assert.equal(after.json.status, "DECLINED"); assert.equal(after.json.requestedCompanions, 0);
     await context.close();
@@ -762,7 +778,7 @@ async function guestSuite() {
     page.on("request", (r) => { if (["POST", "PATCH"].includes(r.method()) && r.url().includes("/rsvp/celebrations")) writes += 1; });
     await goRsvp(page, rsvpPath(guest.token));
     await button(page, "Cambiar mi respuesta").click();
-    await button(page, "Cancelar").click();
+    await button(page, "Dejarlo como está").click();
     await button(page, "Cambiar mi respuesta").waitFor();
     assert.equal(writes, 0);
     await context.close();
@@ -772,17 +788,18 @@ async function guestSuite() {
     const guest = await newGuest(1);
     const { page, context } = await fresh();
     await goRsvp(page, rsvpPath(guest.token));
-    await page.getByRole("radio", { name: "Sí, asistiré" }).click();
-    await label(page, "Acompañantes").fill("1");
-    await label(page, "Restricciones alimentarias").fill("Vegano");
+    await page.getByRole("radio", { name: "Voy" }).click();
+    await page.getByTestId("companions-plus").click();
+    await page.getByTestId("rsvp-extras").click();
+    await label(page, "Restricción alimentaria (opcional)").fill("Vegano");
     let down = true;
     await page.route("**/rsvp/celebrations/*/rsvp", (route) => (down && route.request().method() === "POST" ? route.abort() : route.continue()));
     await page.getByTestId("rsvp-submit").click();
-    await seen(page, /No hay conexión/);
-    assert.equal(await label(page, "Restricciones alimentarias").inputValue(), "Vegano");
+    await seen(page, /Sin conexión por ahora/);
+    assert.equal(await label(page, "Restricción alimentaria (opcional)").inputValue(), "Vegano");
     down = false;
     await page.getByRole("button", { name: "Reintentar" }).filter({ visible: true }).first().click();
-    await seen(page, "Tu asistencia está confirmada");
+    await seen(page, "Listo, estás dentro.");
     const state = await http("GET", `/rsvp/celebrations/${C}/rsvp`, { token: guest.token });
     assert.equal(state.json.dietaryNotes, "Vegano");
     await context.close();
@@ -792,24 +809,24 @@ async function guestSuite() {
     const guest = await newGuest(1);
     const { page, context } = await fresh();
     await goRsvp(page, rsvpPath(guest.token));
-    await page.getByRole("radio", { name: "No podré asistir" }).click();
+    await page.getByRole("radio", { name: "No puedo" }).click();
     await page.route("**/rsvp/celebrations/*/rsvp", (route) => (route.request().method() === "POST" ? route.fulfill({ status: 429, headers: { "retry-after": "12", "access-control-expose-headers": "retry-after", "content-type": "application/problem+json" }, body: JSON.stringify({ title: "Too many", status: 429 }) }) : route.continue()));
     await page.getByTestId("rsvp-submit").click();
-    await seen(page, /Espera 12 segundos/);
+    await seen(page, /Espera 12 s/);
     await context.close();
-    return "429 -> 'Espera 12 segundos…'";
+    return "429 -> 'Espera 12 s…'";
   });
   await check("guest rsvp", "rsvp-submit", "ERROR 409 conflict and 422 validation messages", async () => {
     const guest = await newGuest(1);
     const { page, context } = await fresh();
     await goRsvp(page, rsvpPath(guest.token));
-    await page.getByRole("radio", { name: "No podré asistir" }).click();
+    await page.getByRole("radio", { name: "No puedo" }).click();
     let status = 409;
     await page.route("**/rsvp/celebrations/*/rsvp", (route) => (route.request().method() === "POST" ? route.fulfill({ status, contentType: "application/problem+json", body: JSON.stringify({ title: "x", status }) }) : route.continue()));
     await page.getByTestId("rsvp-submit").click();
-    await seen(page, /ya se envió con otros datos/);
+    await seen(page, /cambió mientras la editabas/);
     status = 422; await page.getByTestId("rsvp-submit").click();
-    await seen(page, /no aceptó algunos datos/);
+    await seen(page, /Algunos datos no se aceptaron/);
     await context.close();
     return "409 and 422 each show their own message";
   });
@@ -817,10 +834,10 @@ async function guestSuite() {
     const guest = await newGuest(1);
     const { page, context } = await fresh();
     await goRsvp(page, rsvpPath(guest.token));
-    await page.getByRole("radio", { name: "No podré asistir" }).click();
+    await page.getByRole("radio", { name: "No puedo" }).click();
     await http("DELETE", `/guests/celebrations/${C}/guests/${guest.id}/access-token`, { token: hostToken });
     await page.getByTestId("rsvp-submit").click();
-    await seen(page, "Este enlace no está disponible");
+    await seen(page, "Este enlace ya no funciona");
     await context.close();
     return "revoked (DELETE access-token 204) -> save 401 -> invalid screen";
   });
@@ -833,7 +850,7 @@ async function guestSuite() {
     await sleep(6000);
     await page.reload(); await page.waitForLoadState("networkidle");
     const closed = await page.getByText("El plazo para responder terminó").first().isVisible().catch(() => false);
-    if (!closed) { await button(page, "Cambiar mi respuesta").click(); await page.getByRole("radio", { name: "No podré asistir" }).click(); await page.getByTestId("rsvp-submit").click(); await seen(page, "El plazo para responder terminó"); }
+    if (!closed) { await button(page, "Cambiar mi respuesta").click(); await page.getByRole("radio", { name: "No puedo" }).click(); await page.getByTestId("rsvp-submit").click(); await seen(page, "El plazo para responder terminó"); }
     assert.equal(await page.getByTestId("rsvp-submit").count(), 0);
     await context.close();
     await setSettings({ rsvpDeadline: null });
@@ -845,7 +862,7 @@ async function guestSuite() {
     if (!settings.json.publicRegistrationEnabled) {
       const { page, context } = await fresh();
       await goRsvp(page, `/c/${SLUG}/rsvp`);
-      await seen(page, "Esta celebración solo admite invitados con enlace personal");
+      await seen(page, "Esta celebración solo recibe respuestas con enlace personal");
       await context.close();
       await setSettings({ unregisteredRsvpMode: "AUTO_ACCEPT" });
     }
@@ -853,19 +870,19 @@ async function guestSuite() {
     let writes = 0;
     page.on("request", (r) => { if (r.method() === "POST" && r.url().includes("/unregistered")) writes += 1; });
     await goRsvp(page, `/c/${SLUG}/rsvp`);
-    await seen(page, "Confirma tu asistencia");
-    await button(page, "Confirmar mi asistencia").click();
+    await seen(page, "Confirma que vienes");
+    await button(page, "Confirmar que voy").click();
     await seen(page, "Revisa los campos marcados.");
-    await label(page, "Tu nombre").fill("Pedro Público"); await label(page, "Tu correo electrónico").fill("no-es-correo");
-    await button(page, "Confirmar mi asistencia").click(); await seen(page, /correo válido/);
+    await label(page, "Tu nombre").fill("Pedro Público"); await label(page, "Tu correo").fill("no-es-correo");
+    await button(page, "Confirmar que voy").click(); await seen(page, /Revisa el correo/);
     const email = `pub-${crypto.randomUUID().slice(0, 8)}@example.test`;
-    await label(page, "Tu correo electrónico").fill(email);
-    await button(page, "Confirmar mi asistencia").click(); await seen(page, "Necesitamos tu consentimiento");
+    await label(page, "Tu correo").fill(email);
+    await button(page, "Confirmar que voy").click(); await seen(page, "Necesitamos tu permiso");
     assert.equal(writes, 0);
     await page.getByRole("checkbox").first().click();
     // two clicks dispatched on the same element: a real dblclick can land on the language switch once the receipt screen replaces the form
-    await button(page, "Confirmar mi asistencia").evaluate((el) => { el.click(); el.click(); });
-    await seen(page, "Listo: confirmamos tu asistencia");
+    await button(page, "Confirmar que voy").evaluate((el) => { el.click(); el.click(); });
+    await seen(page, "Listo, estás dentro.");
     assert.equal(writes, 1, `writes ${writes}`);
     const guests = await http("GET", `/guests/celebrations/${C}/guests`, { token: hostToken });
     const mine = (guests.json.items ?? guests.json).find((g) => g.email === email || g.name === "Pedro Público");
@@ -880,7 +897,7 @@ async function guestSuite() {
     await goRsvp(page, rsvpPath(guest.token));
     await page.getByTestId("open-gifts").click();
     await page.waitForURL(/\/regalos\//);
-    await seen(page, "Lista de regalos");
+    await seen(page, "Cada persona puede tener un máximo");
     await context.close();
     return "open-gifts -> /c/{slug}/regalos/{token}";
   });

@@ -164,6 +164,15 @@ if (PHASES.includes("flows")) {
     let current = null;
     const step = async (name, fn) => { try { const evidence = await fn(); record({ key, width, locale, scheme: "light", route: name, check: "g-flow", status: "PASS", evidence: evidence ?? "" }); } catch (error) { const seen = await current?.locator("body").innerText().catch(() => ""); record({ key, width, locale, scheme: "light", route: name, check: "g-flow", status: "FAIL", evidence: `${String(error?.message ?? error).split("\n")[0].slice(0, 200)} | screen: ${String(seen).replace(/\s+/g, " ").slice(-260)}` }); } };
     const tid = (page, id) => page.getByTestId(id).filter({ visible: true }).first();
+/** Admin queues show 10 rows and "Show more": reveal the row of an action before touching it. */
+const reveal = async (page, testId) => {
+  let idle = 0;
+  for (let i = 0; i < 60 && !(await tid(page, testId).isVisible().catch(() => false)); i += 1) {
+    const more = tid(page, "admin-show-more");
+    if (!(await more.isVisible().catch(() => false))) { idle += 1; if (idle > 8) break; await page.waitForTimeout(500); continue; }
+    idle = 0; await more.click();
+  }
+};
     const go = async (page, path) => { await page.goto(`${APP}${path}`); await page.waitForLoadState("networkidle").catch(() => undefined); };
     const poll = async (fn, what) => { const started = Date.now(); for (;;) { const value = await fn(); if (value) return value; if (Date.now() - started > 15000) throw new Error(`timeout waiting for ${what}`); await sleep(400); } };
     const P = await newProvider(`fp${width}`, { verify: true, listings: 0 });
@@ -171,7 +180,7 @@ if (PHASES.includes("flows")) {
     const listings = async () => (await http("GET", `/providers/${P.providerId}/listings`, { token: P.owner.token })).json.items;
     const { page, context } = await open(flags, P.owner.email); current = page;
     await step("portal: create offer", async () => {
-      await go(page, "/portal/servicios"); await tid(page, "listing-name").waitFor();
+      await go(page, "/portal/servicios"); await tid(page, "offer-new").click(); await tid(page, "listing-name").waitFor();
       await tid(page, "listing-name").fill("Flow cake"); await tid(page, "listing-whatsapp").fill("https://wa.me/59171111111"); await tid(page, "listing-coverage").fill("la-paz, el-alto"); await tid(page, "listing-lead").fill("2"); await tid(page, "listing-conditions").fill("Delivery included"); await tid(page, "listing-price").fill("150,50");
       await tid(page, "listing-submit").click();
       const created = await poll(async () => (await listings()).find((l) => l.title === "Flow cake"), "listing in GET");
@@ -199,12 +208,12 @@ if (PHASES.includes("flows")) {
       return `GET availability capacityPerDay ${av.capacityPerDay}`;
     });
     await step("portal: rename", async () => {
-      await go(page, "/portal"); await tid(page, "rename-open").click(); await tid(page, "rename-name").fill(`Renamed ${stamp}`); await tid(page, "rename-save").click();
+      await go(page, "/portal"); await tid(page, "more-options").click(); await tid(page, "rename-open").click(); await tid(page, "rename-name").fill(`Renamed ${stamp}`); await tid(page, "rename-save").click();
       await poll(async () => (await own()).name === `Renamed ${stamp}`, "new name");
       return "GET name updated";
     });
     await step("portal: ERROR network down (rename)", async () => {
-      await go(page, "/portal"); await tid(page, "rename-open").click(); await tid(page, "rename-name").fill("Offline name");
+      await go(page, "/portal"); await tid(page, "more-options").click(); await tid(page, "rename-open").click(); await tid(page, "rename-name").fill("Offline name");
       const handler = (route) => route.abort("connectionfailed"); await page.route(/\/providers\/[^/]+$/, handler);
       try {
         await tid(page, "rename-save").click();
@@ -221,8 +230,8 @@ if (PHASES.includes("flows")) {
     const grantee = await register(`fg${width}`, "HOST");
     const adm = await open(flags, ADMIN_EMAIL, ADMIN_PASSWORD); current = adm.page;
     await step("admin: verify provider", async () => {
-      await go(adm.page, "/admin/verificacion"); await tid(adm.page, `verify-${pend.providerId}`).waitFor();
-      await tid(adm.page, `verify-${pend.providerId}`).click();
+      await go(adm.page, "/admin/verificacion"); await reveal(adm.page, `verify-${pend.providerId}`); await tid(adm.page, `verify-${pend.providerId}`).waitFor();
+      await reveal(adm.page, `verify-${pend.providerId}`); await tid(adm.page, `verify-${pend.providerId}`).click();
       await poll(async () => (await http("GET", `/providers/${pend.providerId}`, { token: await getAdminToken() })).json.status === "VERIFIED", "VERIFIED");
       return "GET status VERIFIED";
     });
@@ -236,9 +245,9 @@ if (PHASES.includes("flows")) {
     });
     await step("admin: ERROR network down (verify)", async () => {
       const pend2 = await newProvider(`fe${width}`, { verify: false, listings: 1 });
-      await go(adm.page, "/admin/verificacion"); await tid(adm.page, `verify-${pend2.providerId}`).waitFor();
+      await go(adm.page, "/admin/verificacion"); await reveal(adm.page, `verify-${pend2.providerId}`); await tid(adm.page, `verify-${pend2.providerId}`).waitFor();
       const handler = (route) => route.abort("connectionfailed"); await adm.page.route(/\/verify$/, handler);
-      try { await tid(adm.page, `verify-${pend2.providerId}`).click(); await adm.page.getByText(/No hay conexión con el servidor|Cannot reach the server/).filter({ visible: true }).first().waitFor(); } finally { await adm.page.unroute(/\/verify$/, handler); }
+      try { await reveal(adm.page, `verify-${pend2.providerId}`); await tid(adm.page, `verify-${pend2.providerId}`).click(); await adm.page.getByText(/No hay conexión con el servidor|Cannot reach the server/).filter({ visible: true }).first().waitFor(); } finally { await adm.page.unroute(/\/verify$/, handler); }
       assert.equal((await http("GET", `/providers/${pend2.providerId}`, { token: await getAdminToken() })).json.status, "PENDING_VERIFICATION");
       return "notice shown, GET still PENDING_VERIFICATION";
     });

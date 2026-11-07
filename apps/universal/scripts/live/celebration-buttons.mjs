@@ -66,11 +66,11 @@ const notBlank = async () => assert.ok((await page.locator("body").innerText()).
 const settle = () => page.waitForLoadState("networkidle").catch(() => undefined);
 async function login(email) {
   await page.goto(`${APP}/login`);
-  const emailField = page.getByLabel("Correo electrónico", { exact: true }).filter({ visible: true });
+  const emailField = page.getByLabel(/^(Correo electrónico|Correo)$/).filter({ visible: true });
   if (!(await emailField.first().waitFor({ timeout: 4000 }).then(() => true, () => false))) return; // already signed in
   await emailField.fill(email);
   await page.getByLabel("Contraseña", { exact: true }).filter({ visible: true }).fill(world.password);
-  await page.getByRole("button", { name: "Iniciar sesión" }).filter({ visible: true }).click();
+  await page.getByRole("button", { name: /^(Iniciar sesión|Entrar)$/ }).filter({ visible: true }).click();
   await page.waitForURL((url) => !url.pathname.startsWith("/login"));
 }
 /** Abort every API call that matches while fn runs (network down). */
@@ -117,65 +117,85 @@ await check("P1-limit-empty", "celebraciones: usuario sin celebraciones ve el va
   const fresh = await context.browser().newContext({ viewport: { width: ANCHO, height: ANCHO < 500 ? 800 : 900 }, locale: "es-BO" });
   const p = await fresh.newPage();
   await p.goto(`${APP}/login`);
-  await p.getByLabel("Correo electrónico", { exact: true }).filter({ visible: true }).fill(email);
+  await p.getByLabel(/^(Correo electrónico|Correo)$/).filter({ visible: true }).fill(email);
   await p.getByLabel("Contraseña", { exact: true }).filter({ visible: true }).fill(world.password);
-  await p.getByRole("button", { name: "Iniciar sesión" }).filter({ visible: true }).click();
+  await p.getByRole("button", { name: /^(Iniciar sesión|Entrar)$/ }).filter({ visible: true }).click();
   await p.waitForURL((url) => !url.pathname.startsWith("/login"));
   await p.goto(`${APP}/celebraciones`);
-  await p.getByText(/Todavía no tienes celebraciones/).first().waitFor();
+  await p.getByText(/Aquí vivirán tus celebraciones/).first().waitFor();
   await p.getByTestId("create-celebration").waitFor();
   await fresh.close();
 });
 
 // ---------------------------------------------------------------- ONBOARDING (create flow)
-await check("P2-valid", "onboarding: crear celebracion (next, create, finish) y GET confirma borrador con titulo, slug y anfitriones", async () => {
+const SLUG_FIELD = "Enlace de tu invitación";
+const CREATE = "Crear mi invitación";
+await check("P2-valid", "onboarding: 3 pasos (tipo, quien y cuando, nombre y enlace), vista previa en vivo y GET confirma borrador con titulo sugerido, slug, fecha y anfitriones", async () => {
   await go("/celebraciones");
   await page.getByTestId("create-celebration").click();
   await page.getByText(/¿Qué vas a celebrar\?/).first().waitFor();
-  assert.equal(await page.getByTestId("onboarding-next").first().isDisabled?.().catch(() => false) || false, false === true ? true : await page.getByTestId("onboarding-next").first().getAttribute("aria-disabled") === "true");
+  assert.equal(await page.getByTestId("onboarding-next").first().getAttribute("aria-disabled"), "true");
   await page.getByRole("radio", { name: /Boda/ }).first().click();
   await page.getByTestId("onboarding-next").click();
-  const slug = `onb-${stamp}`;
-  await field("Nombre de la celebración").fill("Ana y Luis");
-  await field("Dirección del sitio").fill(slug);
+  await field("Novia").fill("Ana");
+  await field("Novio").fill("Luis");
   await field("Fecha (AAAA-MM-DD)").fill("2027-08-14");
   await field("Hora (HH:MM)").fill("17:30");
-  await field("Novia").fill("Ana").catch(() => undefined);
-  await btn("Crear borrador").click();
-  await page.waitForURL(/\/onboarding\/3\?c=/);
+  await page.getByRole("region", { name: "Así va quedando" }).filter({ visible: true }).first().getByText("Ana").first().waitFor();
+  await page.getByTestId("onboarding-next").click();
+  assert.equal(await field("Nombre de la celebración").inputValue(), "Ana y Luis");
+  const slug = `onb-${stamp}`;
+  await field(SLUG_FIELD).fill(slug);
+  await btn(CREATE).click();
+  await page.waitForURL(/\/onboarding\/listo\?c=/);
+  await text(/Tu invitación está lista/).waitFor();
   const id = new URL(page.url()).searchParams.get("c");
   const stored = await get(id);
   assert.equal(stored.slug, slug); assert.equal(stored.status, "DRAFT"); assert.equal(stored.content.title, "Ana y Luis");
+  assert.equal(stored.content.hosts.BRIDE, "Ana"); assert.equal(stored.content.hosts.GROOM, "Luis");
   assert.equal(stored.localTimes.eventDate.date, "2027-08-14"); assert.equal(stored.localTimes.eventDate.time, "17:30");
   await page.getByTestId("onboarding-finish").click();
   await page.waitForURL(/\/editor\/general/);
 });
+/** Event type -> (no hosts, no date) -> name and link step. */
 async function onboardingDetails() {
   await go("/onboarding/1");
   await page.getByRole("radio", { name: /Boda/ }).first().click();
   await page.getByTestId("onboarding-next").click();
+  await page.getByTestId("onboarding-next").click();
 }
-await check("P2-limit", "onboarding: titulo de 121 caracteres y slug de 2 caracteres se bloquean sin enviar POST", async () => {
+await check("P2-limit", "onboarding: titulo de 121 caracteres y enlace de 2 caracteres se bloquean sin enviar POST", async () => {
   await onboardingDetails();
   const before = count("POST", "/celebrations");
   await field("Nombre de la celebración").fill("x".repeat(121));
-  await text(/Quita 1 caracteres: el máximo es 120/).waitFor();
-  await field("Dirección del sitio").fill("ab");
+  await text(/Quita 1 carácter: el máximo es 120/).waitFor();
+  await field(SLUG_FIELD).fill("ab");
   await text(/entre 3 y 80 caracteres/).waitFor();
-  await field("Fecha (AAAA-MM-DD)").fill("2027-08-14"); await field("Hora (HH:MM)").fill("17:30");
-  await btn("Crear borrador").click();
-  await text(/Revisa este dato/).waitFor();
+  await btn(CREATE).click();
+  await text(/Quita 1 carácter: el máximo es 120/).waitFor();
   assert.equal(count("POST", "/celebrations"), before);
 });
-await check("P2-limit-double", "onboarding: doble clic en Crear borrador envia un unico POST y crea una unica celebracion", async () => {
+await check("P2-limit-date", "onboarding: una fecha invalida o sin hora detiene el paso 2 con el motivo y sin enviar POST", async () => {
+  await go("/onboarding/1");
+  await page.getByRole("radio", { name: /Boda/ }).first().click();
+  await page.getByTestId("onboarding-next").click();
+  const before = count("POST", "/celebrations");
+  await field("Fecha (AAAA-MM-DD)").fill("2027-13-45");
+  await page.getByTestId("onboarding-next").click();
+  await text(/Revisa la fecha/).waitFor();
+  await field("Fecha (AAAA-MM-DD)").fill("2027-08-14");
+  await page.getByTestId("onboarding-next").click();
+  await text(/Revisa la hora/).waitFor();
+  assert.equal(count("POST", "/celebrations"), before);
+});
+await check("P2-limit-double", "onboarding: doble clic en Crear mi invitación envia un unico POST y crea una unica celebracion", async () => {
   await onboardingDetails();
   const slug = `dbl-${stamp}`;
   await field("Nombre de la celebración").fill("Doble clic");
-  await field("Dirección del sitio").fill(slug);
-  await field("Fecha (AAAA-MM-DD)").fill("2027-08-14"); await field("Hora (HH:MM)").fill("17:30");
+  await field(SLUG_FIELD).fill(slug);
   const before = count("POST", "/celebrations");
-  await btn("Crear borrador").dblclick();
-  await page.waitForURL(/\/onboarding\/3\?c=/);
+  await btn(CREATE).dblclick();
+  await page.waitForURL(/\/onboarding\/listo\?c=/);
   assert.equal(count("POST", "/celebrations") - before, 1);
   const mine = (await http("GET", "/celebrations?limit=100", { token: await token() })).json.items.filter((item) => item.slug === slug);
   assert.equal(mine.length, 1);
@@ -183,37 +203,33 @@ await check("P2-limit-double", "onboarding: doble clic en Crear borrador envia u
 await check("P2-error-slug", "onboarding: slug repetido -> 409 SLUG_TAKEN con mensaje propio (no 'alguien guardo')", async () => {
   await onboardingDetails();
   await field("Nombre de la celebración").fill("Repetida");
-  await field("Dirección del sitio").fill(listed.slug);
-  await field("Fecha (AAAA-MM-DD)").fill("2027-08-14"); await field("Hora (HH:MM)").fill("17:30");
-  await btn("Crear borrador").click();
-  await text(/Esa dirección ya la usa otra celebración/).waitFor();
+  await field(SLUG_FIELD).fill(listed.slug);
+  await btn(CREATE).click();
+  await text(/Ese enlace ya lo usa otra celebración/).waitFor();
   assert.equal(await page.getByText(/Alguien guardó cambios/).count(), 0);
 });
 await check("P2-error-network", "onboarding: red caida muestra error, conserva lo escrito y reintentar crea una sola", async () => {
   await onboardingDetails();
   const slug = `net-${stamp}`;
   await field("Nombre de la celebración").fill("Sin red");
-  await field("Dirección del sitio").fill(slug);
-  await field("Fecha (AAAA-MM-DD)").fill("2027-08-14"); await field("Hora (HH:MM)").fill("17:30");
-  await offline("**/celebrations", async () => { await btn("Crear borrador").click(); await text(/No hay conexión con el servidor/).waitFor(); });
+  await field(SLUG_FIELD).fill(slug);
+  await offline("**/celebrations", async () => { await btn(CREATE).click(); await text(/No hay conexión con el servidor/).waitFor(); });
   assert.equal(await field("Nombre de la celebración").inputValue(), "Sin red");
-  await btn("Crear borrador").click();
-  await page.waitForURL(/\/onboarding\/3\?c=/);
+  await btn(CREATE).click();
+  await page.waitForURL(/\/onboarding\/listo\?c=/);
   assert.equal((await http("GET", "/celebrations?limit=100", { token: await token() })).json.items.filter((item) => item.slug === slug).length, 1);
 });
 await check("P2-error-403", "onboarding: 422 del servidor (tipo invalido) se explica", async () => {
   await onboardingDetails();
   await field("Nombre de la celebración").fill("Rechazada");
-  await field("Dirección del sitio").fill(`rej-${stamp}`);
-  await field("Fecha (AAAA-MM-DD)").fill("2027-08-14"); await field("Hora (HH:MM)").fill("17:30");
-  await respond("**/celebrations", 422, { title: "Unknown event type", status: 422, code: "INVALID_EVENT_TYPE" }, {}, async () => { await btn("Crear borrador").click(); await text(/Revisa este dato: Unknown event type/).waitFor(); });
+  await field(SLUG_FIELD).fill(`rej-${stamp}`);
+  await respond("**/celebrations", 422, { title: "Unknown event type", status: 422, code: "INVALID_EVENT_TYPE" }, {}, async () => { await btn(CREATE).click(); await text(/Revisa este dato: Unknown event type/).waitFor(); });
 });
 await check("P2-error-429", "onboarding: 429 con Retry-After muestra los segundos de espera", async () => {
   await onboardingDetails();
   await field("Nombre de la celebración").fill("Throttled");
-  await field("Dirección del sitio").fill(`thr-${stamp}`);
-  await field("Fecha (AAAA-MM-DD)").fill("2027-08-14"); await field("Hora (HH:MM)").fill("17:30");
-  await respond("**/celebrations", 429, { title: "Too many requests", status: 429 }, { "retry-after": "7" }, async () => { await btn("Crear borrador").click(); await text(/Espera 7 segundos/).waitFor(); });
+  await field(SLUG_FIELD).fill(`thr-${stamp}`);
+  await respond("**/celebrations", 429, { title: "Too many requests", status: 429 }, { "retry-after": "7" }, async () => { await btn(CREATE).click(); await text(/Espera 7 segundos/).waitFor(); });
 });
 
 // ---------------------------------------------------------------- EDITOR (save-content per section)
@@ -235,9 +251,9 @@ await check("P3-general-limit", "editor general: 121 caracteres bloquean el guar
   await edUrl("general");
   const before = count("PATCH", `/celebrations/${ed.id}`);
   await field("Nombre de la celebración").fill("y".repeat(121));
-  await text(/Quita 1 caracteres/).waitFor();
+  await text(/Quita 1 carácter/).waitFor();
   await page.getByTestId("save-content").click();
-  await text(/Revisa este dato: hay campos que superan/).waitFor();
+  await text(/Hay textos demasiado largos/).waitFor();
   assert.equal(count("PATCH", `/celebrations/${ed.id}`), before);
   await field("Nombre de la celebración").fill("y".repeat(120));
   await page.getByTestId("save-content").click();
@@ -249,7 +265,7 @@ await check("P3-general-empty-date", "editor general: fecha invalida (limite) se
   const before = count("PATCH", `/celebrations/${ed.id}`);
   await field("Fecha (AAAA-MM-DD)").fill("2027-13-45");
   await page.getByTestId("save-content").click();
-  await text(/Revisa este dato/).waitFor();
+  await text(/Revisa la fecha/).waitFor();
   assert.equal(count("PATCH", `/celebrations/${ed.id}`), before);
 });
 await check("P3-general-double", "editor general: doble clic en Guardar envia un solo PATCH", async () => {
@@ -298,15 +314,15 @@ await check("P3-general-403", "editor general: 403 explica que solo anfitriones 
 await check("P3-slug", "editor general: cambiar la direccion (borrador) se guarda; invalida y repetida se rechazan con motivo", async () => {
   await edUrl("general");
   const slug = ed.slug + "-b";
-  await field("Dirección del sitio").fill("Mala Direccion");
+  await field(SLUG_FIELD).fill("Mala Direccion");
   await text(/minúsculas, números y guiones/).waitFor();
   const before = count("PATCH", `/celebrations/${ed.id}`);
   await page.getByTestId("save-content").click();
   assert.equal(count("PATCH", `/celebrations/${ed.id}`), before);
-  await field("Dirección del sitio").fill(listed.slug);
+  await field(SLUG_FIELD).fill(listed.slug);
   await page.getByTestId("save-content").click();
-  await text(/Esa dirección ya la usa otra celebración/).waitFor();
-  await field("Dirección del sitio").fill(slug);
+  await text(/Ese enlace ya lo usa otra celebración/).waitFor();
+  await field(SLUG_FIELD).fill(slug);
   await page.getByTestId("save-content").click();
   await text(/Cambios guardados/).waitFor();
   assert.equal((await get(ed.id)).slug, slug);
@@ -318,7 +334,7 @@ await check("P3-hosts", "editor anfitriones: guardar nombres; GET lo confirma; v
   let stored = await get(ed.id); assert.equal(stored.content.hosts.BRIDE, "Ana María"); assert.equal(stored.content.hosts.GROOM, "Luis Fernando");
   await edUrl("anfitriones");
   await field("Novio").fill("w".repeat(81));
-  await text(/Quita 1 caracteres: el máximo es 80/).waitFor();
+  await text(/Quita 1 carácter: el máximo es 80/).waitFor();
   await field("Novio").fill("Luis Fernando");
 });
 await check("P3-venues", "editor lugares: agregar dos, reordenar, quitar uno; GET confirma orden y contenido", async () => {
@@ -354,7 +370,7 @@ await check("P3-story", "editor historia: guardar parrafos, limite 5000 y 5001",
   assert.equal((await get(ed.id)).content.story, "Primer párrafo.\n\nSegundo párrafo.");
   await edUrl("historia");
   await field("Su historia").fill("s".repeat(5001));
-  await text(/Quita 1 caracteres: el máximo es 5000/).waitFor();
+  await text(/Quita 1 carácter: el máximo es 5000/).waitFor();
 });
 await check("P3-schedule", "editor itinerario: agregar actividad, guardar con hora local; GET confirma; quitar la elimina", async () => {
   await edUrl("itinerario");
@@ -416,7 +432,7 @@ await check("P4-translations", "traducciones: agregar idioma, guardar titulo tra
   assert.equal((await get(tr.id)).translations["en-US"].title, "After outage");
   // limit: 5001 chars blocks, then clear everything removes the translation
   await field("Nombre").fill("z".repeat(5001));
-  await text(/Quita 1 caracteres/).waitFor();
+  await text(/Quita 1 carácter/).waitFor();
   assert.equal(await page.getByTestId("save-translation").first().getAttribute("aria-disabled"), "true");
   await field("Nombre").fill("");
   await page.getByTestId("save-translation").click(); await text(/Cambios guardados/).waitFor();
@@ -440,20 +456,20 @@ await check("P5-check-error", "publicar: si GET publish-check falla NO dice 'tod
   await offline(`**/celebrations/${c.id}/publish-check`, async () => {
     await open("/publicar", c.id);
     await text(/No hay conexión con el servidor/).waitFor();
-    assert.equal(await page.getByText(/Todo listo para publicar/).count(), 0);
+    assert.equal(await page.getByText(/lista para publicar/).count(), 0);
     assert.equal(await page.getByTestId("publish").first().getAttribute("aria-disabled"), "true");
   });
   await page.getByTestId("retry-check").click();
-  await text(/Todo listo para publicar/).waitFor();
+  await text(/lista para publicar/).waitFor();
 });
 const pub = await draft(completeContent);
 await check("P5-publish-valid", "publicar: confirmar publica (doble clic = 1 POST) y GET devuelve PUBLISHED; 409 con version vieja", async () => {
   await open("/publicar", pub.id);
-  await text(/Todo listo para publicar/).waitFor();
+  await text(/lista para publicar/).waitFor();
   await page.getByTestId("publish").click();
   const before = count("POST", `/celebrations/${pub.id}/publish`);
   await page.getByRole("button", { name: "Publicar celebración", exact: true }).last().dblclick();
-  await text(/Publicada: cualquiera con el enlace/).waitFor();
+  await text(/Tu invitación ya está publicada/).waitFor();
   assert.equal(count("POST", `/celebrations/${pub.id}/publish`) - before, 1);
   const stored = await get(pub.id); assert.equal(stored.status, "PUBLISHED");
   let publicStatus = 0;
@@ -463,7 +479,7 @@ await check("P5-publish-valid", "publicar: confirmar publica (doble clic = 1 POS
 await check("P5-publish-409", "publicar: version vieja -> 409 con mensaje de versión y recarga; transicion invalida -> mensaje propio", async () => {
   const c = await draft(completeContent);
   await open("/publicar", c.id);
-  await text(/Todo listo para publicar/).waitFor();
+  await text(/lista para publicar/).waitFor();
   await patchAs(c.id, { content: { subtitle: "otro cambio" } });
   await page.getByTestId("publish").click();
   await page.getByRole("button", { name: "Publicar celebración", exact: true }).last().click();
@@ -472,13 +488,13 @@ await check("P5-publish-409", "publicar: version vieja -> 409 con mensaje de ver
   await page.waitForTimeout(800);
   await page.getByTestId("publish").click();
   await page.getByRole("button", { name: "Publicar celebración", exact: true }).last().click();
-  await text(/Publicada: cualquiera con el enlace/).waitFor();
+  await text(/Tu invitación ya está publicada/).waitFor();
   assert.equal((await get(c.id)).status, "PUBLISHED");
 });
 await check("P5-publish-network", "publicar: red caida al publicar -> error claro, sigue en borrador, reintentar publica", async () => {
   const c = await draft(completeContent);
   await open("/publicar", c.id);
-  await text(/Todo listo para publicar/).waitFor();
+  await text(/lista para publicar/).waitFor();
   await offline(`**/celebrations/${c.id}/publish`, async () => {
     await page.getByTestId("publish").click();
     await page.getByRole("button", { name: "Publicar celebración", exact: true }).last().click();
@@ -487,7 +503,7 @@ await check("P5-publish-network", "publicar: red caida al publicar -> error clar
   assert.equal((await get(c.id)).status, "DRAFT");
   await page.getByTestId("publish").click();
   await page.getByRole("button", { name: "Publicar celebración", exact: true }).last().click();
-  await text(/Publicada: cualquiera con el enlace/).waitFor();
+  await text(/Tu invitación ya está publicada/).waitFor();
   assert.equal((await get(c.id)).status, "PUBLISHED");
 });
 await check("P5-unpublish", "despublicar: cancelar no envia nada; confirmar con motivo (200 max) despublica; GET lo confirma", async () => {
@@ -495,12 +511,13 @@ await check("P5-unpublish", "despublicar: cancelar no envia nada; confirmar con 
   const cur = await get(c.id);
   assert.equal((await http("POST", `/celebrations/${c.id}/publish`, { token: await token(), version: cur.version })).status, 200);
   await open("/publicar", c.id);
+  await page.getByTestId("more-publish").click();
   await page.getByTestId("unpublish").click();
   await btn("Cancelar").click();
   assert.equal(count("POST", `/celebrations/${c.id}/unpublish`), 0);
   await page.getByTestId("unpublish").click();
   await field("Motivo (opcional)").fill("r".repeat(201));
-  await text(/Quita 1 caracteres/).waitFor();
+  await text(/Quita 1 carácter/).waitFor();
   await page.getByRole("button", { name: "Despublicar", exact: true }).last().click();
   assert.equal(count("POST", `/celebrations/${c.id}/unpublish`), 0, "over-limit reason is not sent");
   await field("Motivo (opcional)").fill("Corrección de datos");
@@ -513,6 +530,7 @@ await check("P5-unpublish", "despublicar: cancelar no envia nada; confirmar con 
 await check("P5-archive", "archivar: ConfirmDialog; GET = ARCHIVED; luego editar/ajustes/modos muestran solo-lectura y no ofrecen guardar; 409 por doble archivo se explica", async () => {
   const c = await draft(completeContent);
   await open("/publicar", c.id);
+  await page.getByTestId("more-publish").click();
   await page.getByTestId("archive").click();
   await btn("Cancelar").click();
   assert.equal((await get(c.id)).status, "DRAFT");
@@ -522,13 +540,14 @@ await check("P5-archive", "archivar: ConfirmDialog; GET = ARCHIVED; luego editar
   assert.equal((await get(c.id)).status, "ARCHIVED");
   for (const route of ["/editor/general", "/editor/galeria", "/editor/traducciones", "/templates", "/configuracion", "/modos"]) {
     await open(route, c.id);
-    await text(/Esta celebración está archivada: solo se puede consultar/).waitFor();
+    await text(/Esta celebración está archivada/).waitFor();
     assert.equal(await page.getByTestId("save-content").count(), 0);
   }
   // another tab archived it first -> publish page of a stale draft: archive again explains the state
   const c2 = await draft(completeContent);
   await open("/publicar", c2.id);
-  await text(/Todo listo/).waitFor();
+  await text(/lista para publicar/).waitFor();
+  await page.getByTestId("more-publish").click();
   const cur = await get(c2.id);
   await http("POST", `/celebrations/${c2.id}/archive`, { token: await token(), version: cur.version });
   await page.getByTestId("archive").click();
@@ -575,6 +594,7 @@ await check("P6-deadline", "ajustes: fecha limite guardar/quitar (GET confirma);
 });
 await check("P6-eventtype", "ajustes: cambiar tipo (borrador) con confirmacion; GET confirma; cancelar no envia", async () => {
   await open("/configuracion", st.id);
+  await page.getByTestId("more-settings").click();
   assert.equal(await page.getByTestId("save-event-type").first().getAttribute("aria-disabled"), "true");
   await page.getByRole("radio", { name: /Quinceañera|Cumpleaños/ }).first().click();
   const picked = await page.getByRole("radio", { checked: true }).evaluateAll((nodes) => nodes.map((n) => n.getAttribute("aria-label")));
@@ -588,6 +608,7 @@ await check("P6-eventtype", "ajustes: cambiar tipo (borrador) con confirmacion; 
 });
 await check("P6-team", "ajustes equipo: UUID invalido bloqueado; dar acceso (GET confirma); quitar con ConfirmDialog (GET confirma)", async () => {
   await open("/configuracion", st.id);
+  await page.getByTestId("more-settings").click();
   const user = "11111111-1111-4111-8111-" + String(Date.now()).padStart(12, "0").slice(-12);
   await field("Identificador de la persona (UUID)").fill("no-es-uuid");
   await text(/identificador de usuario válido/).waitFor();
@@ -607,8 +628,9 @@ await check("P6-team", "ajustes equipo: UUID invalido bloqueado; dar acceso (GET
 });
 await check("P6-audit", "ajustes historial: lista las acciones reales del audit log", async () => {
   await open("/configuracion", st.id);
+  await page.getByTestId("more-settings").click();
   await text(/Historial de cambios/).waitFor();
-  await text(/CREATED/).waitFor();
+  await text(/Creaste la celebración/).waitFor();
 });
 
 // ---------------------------------------------------------------- MODOS

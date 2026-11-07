@@ -1,11 +1,26 @@
 // Button x {error, limit, valid} matrix for the host guests area, in Chrome against the REAL backend (gateway :28000).
 //   [ANCHO=360|768|1280] WORLD=world.json APP=http://localhost:3000 CHROMIUM_PATH=".../Google Chrome" node apps/universal/scripts/live/guests-buttons.mjs [section ...]
 // Sections: form list detail groups import report requests notifications preferences push settings summary
-import { C, G, N, API, assert, button, go, host, http, isCall, launch, makeGuest, Matrix, noBlank, noOverflow, problem, session as baseSession, sleep, text, tid, track, waitGuests, WIDTHS, world } from "./lib.mjs";
+import { APP, C, G, N, API, assert, button, go, host, http, isCall, launch, makeGuest, Matrix, noBlank, noOverflow, problem, sleep, text, tid, track, waitGuests, WIDTHS, world } from "./lib.mjs";
 
 // ANCHO (px) sets the viewport of the main session: 360, 768 or 1280 (default). Explicit widths (layout checks) win.
 const ANCHO = Number(process.env.ANCHO ?? 1280);
-const session = (browser_, email, width = ANCHO) => baseSession(browser_, email, width);
+/** Own sign-in (same flow as lib.mjs) that accepts the current login labels: "Correo"/"Correo electrónico" and "Entrar"/"Iniciar sesión". */
+async function session(browser_, email, width = ANCHO) {
+  const context = await browser_.newContext({ viewport: { width, height: width < 500 ? 800 : 900 }, locale: "es-BO", acceptDownloads: true });
+  context.setDefaultTimeout(15000);
+  await context.grantPermissions(["clipboard-read", "clipboard-write"], { origin: APP }).catch(() => undefined);
+  const page = await context.newPage();
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(`pageerror: ${error.message}`));
+  page.on("console", (message) => { if (message.type() === "error" && !/Failed to load resource|net::ERR|status of (4|5)\d\d/.test(message.text())) errors.push(message.text()); });
+  await page.goto(`${APP}/login`);
+  await page.getByLabel(/^Correo( electrónico)?$/).filter({ visible: true }).fill(email);
+  await page.getByLabel("Contraseña", { exact: true }).filter({ visible: true }).fill(world.password);
+  await page.getByRole("button", { name: /^(Entrar|Iniciar sesión)$/ }).filter({ visible: true }).click();
+  await page.waitForURL((url) => !url.pathname.startsWith("/login"), { timeout: 20000 });
+  return { page, context, errors };
+}
 const only = process.argv.slice(2);
 const wanted = (name) => only.length === 0 || only.includes(name);
 const matrix = new Matrix();
@@ -15,6 +30,9 @@ const { page, context, errors } = await session(browser, world.host.email);
 const GUEST_POST = /\/guests\/celebrations\/[^/]+\/guests$/;
 const listGuests = (search, count = 1) => waitGuests(search, count);
 const type = async (page_, id, value) => { await tid(page_, id).fill(value); };
+const ADDED = /ya está en tu lista/; // "<nombre> ya está en tu lista."
+/** "Más opciones" (progressive disclosure): open the disclosure with this testID before reaching what it hides. */
+const openMore = async (page_, id) => { const toggle = tid(page_, id); if ((await toggle.getAttribute("aria-expanded")) !== "true") await toggle.click(); };
 const unrouteAll = () => page.unrouteAll({ behavior: "ignoreErrors" });
 
 const newRequest = async (tag) => {
@@ -42,7 +60,7 @@ async function form() {
     await fill("n".repeat(201), `lim201.${stamp}@example.com`); await tid(page, "save-guest").click(); await sleep(500);
     assert.equal(posts.count(), 0); await text(page, "El texto es demasiado largo.").waitFor(); posts.stop();
     const name = "m".repeat(200); await fill(name, `lim200.${stamp}@example.com`); await tid(page, "save-guest").click();
-    await text(page, "Invitado agregado.").waitFor();
+    await text(page, ADDED).waitFor();
     const found = (await listGuests(`lim200.${stamp}@example.com`))[0]; assert.equal(found.name.length, 200); return `GET guest-list: name.length=200`;
   });
   await matrix.check(S, "save-guest", "LIMITE acompanantes -1 / abc / 2147483648 invalidos; 2147483647 valido", async () => {
@@ -51,7 +69,7 @@ async function form() {
       await fill("Borde Acomp", `bad.${stamp}@example.com`, "", bad); await tid(page, "save-guest").click(); await sleep(400);
       assert.equal(posts.count(), 0, `sent for ${bad}`); await text(page, "Escribe un número entero, de 0 en adelante.").waitFor(); posts.stop();
     }
-    await open(); await fill("Borde Max", `max.${stamp}@example.com`, "", "2147483647"); await tid(page, "save-guest").click(); await text(page, "Invitado agregado.").waitFor();
+    await open(); await fill("Borde Max", `max.${stamp}@example.com`, "", "2147483647"); await tid(page, "save-guest").click(); await text(page, ADDED).waitFor();
     const found = (await listGuests(`max.${stamp}@example.com`))[0]; assert.equal(found.allowedCompanions, 2147483647); return "GET: allowedCompanions=2147483647";
   });
   await matrix.check(S, "save-guest", "LIMITE correo y telefono invalidos; solo telefono E.164 valido", async () => {
@@ -60,29 +78,29 @@ async function form() {
     await fill("Contacto Malo", "", "123"); await tid(page, "save-guest").click(); await text(page, /código de país/).waitFor();
     assert.equal(posts.count(), 0); posts.stop();
     const phone = `+5917${String(Date.now()).slice(-7)}`;
-    await fill("Solo Telefono", "", phone); await tid(page, "save-guest").click(); await text(page, "Invitado agregado.").waitFor();
+    await fill("Solo Telefono", "", phone); await tid(page, "save-guest").click(); await text(page, ADDED).waitFor();
     const found = (await listGuests("Solo Telefono")).find((g) => g.phone === phone); assert.ok(found, "persisted by phone"); return `GET guest-list: phone=${phone}`;
   });
   await matrix.check(S, "save-guest", "LIMITE doble clic con la peticion en vuelo: una sola creacion", async () => {
     await open(); await page.route(GUEST_POST, async (route) => { await sleep(1500); await route.continue(); });
     const posts = track(page, isCall("POST", GUEST_POST)); const email = `dbl.${stamp}@example.com`;
-    await fill("Doble Clic", email); await tid(page, "save-guest").dblclick(); await text(page, "Invitado agregado.").waitFor();
+    await fill("Doble Clic", email); await tid(page, "save-guest").dblclick(); await text(page, ADDED).waitFor();
     await unrouteAll(); posts.stop(); assert.equal(posts.count(), 1, `POSTs=${posts.count()}`);
     const n = (await listGuests(`dbl.${stamp}@example.com`)).length; assert.equal(n, 1); return "1 POST, GET guest-list: 1 registro";
   });
   await matrix.check(S, "save-guest", "LIMITE contacto duplicado: pide confirmacion; cancelar no crea; confirmar crea", async () => {
-    await open(); const email = `dup.${stamp}@example.com`; await fill("Duplicado Uno", email); await tid(page, "save-guest").click(); await text(page, "Invitado agregado.").waitFor(); await listGuests(`dup.${stamp}@example.com`, 1);
+    await open(); const email = `dup.${stamp}@example.com`; await fill("Duplicado Uno", email); await tid(page, "save-guest").click(); await text(page, ADDED).waitFor(); await listGuests(`dup.${stamp}@example.com`, 1);
     const posts = track(page, isCall("POST", GUEST_POST));
     await fill("Duplicado Dos", email); await tid(page, "save-guest").click(); await text(page, "¿Agregar de todos modos?").waitFor();
     await button(page, "Cancelar").click(); await sleep(400); assert.equal(posts.count(), 0); assert.equal((await listGuests(`dup.${stamp}@example.com`, 1)).length, 1);
-    await tid(page, "save-guest").click(); await text(page, "¿Agregar de todos modos?").waitFor(); await button(page, "Agregar de todos modos").click(); await text(page, "Invitado agregado.").waitFor();
+    await tid(page, "save-guest").click(); await text(page, "¿Agregar de todos modos?").waitFor(); await button(page, "Agregar de todos modos").click(); await text(page, ADDED).waitFor();
     posts.stop(); assert.equal(posts.count(), 1); assert.equal((await listGuests(`dup.${stamp}@example.com`, 2)).length, 2); return "cancelar=0 POST; confirmar=1 POST; GET: 2 fichas";
   });
   await matrix.check(S, "save-guest", "ERROR red caida: mensaje claro, datos intactos, reintento exitoso", async () => {
     await open(); const email = `net.${stamp}@example.com`; await fill("Red Caida", email);
     await page.route(GUEST_POST, (route) => route.abort("failed")); await tid(page, "save-guest").click();
     await text(page, /No hay conexión con el servidor/).waitFor(); assert.equal(await tid(page, "guest-name").inputValue(), "Red Caida");
-    await unrouteAll(); await button(page, "Reintentar").click(); await text(page, "Invitado agregado.").waitFor();
+    await unrouteAll(); await button(page, "Reintentar").click(); await text(page, ADDED).waitFor();
     assert.equal((await listGuests(`net.${stamp}@example.com`)).length, 1); return "TypeError->offline; reintento 201; GET: 1 registro";
   });
   for (const [status, expected] of [[429, /demasiadas solicitudes seguidas\. Vuelve a intentarlo en 7 s/], [503, /servicio no está disponible/], [403, /solo los anfitriones/], [422, /Revisa este dato/], [409, /Alguien guardó cambios|cambió/]]) {
@@ -105,7 +123,7 @@ async function form() {
     const group = (await host("POST", `${G}/groups`, { name: `Fam ${stamp}` })).json;
     await open(); await fill("Valido Completo", `ok.${stamp}@example.com`, "+59171234567", "2");
     await page.getByRole("radio", { name: `Fam ${stamp}`, exact: true }).filter({ visible: true }).first().click();
-    await tid(page, "save-guest").click(); await text(page, "Invitado agregado.").waitFor();
+    await tid(page, "save-guest").click(); await text(page, ADDED).waitFor();
     const found = (await listGuests(`ok.${stamp}@example.com`))[0]; const detail = (await host("GET", `${G}/guests/${found.guestId}`)).json;
     assert.equal(detail.allowedCompanions, 2); assert.equal(detail.groupId, group.id); assert.equal(detail.phone, "+59171234567"); return `GET /guests/${found.guestId}: companions=2 groupId ok phone ok`;
   });
@@ -119,28 +137,30 @@ async function form() {
 /* ------------------------------------------------------------------ list */
 async function list() {
   const S = "Invitados (lista)";
+  await makeGuest(`semilla${stamp}`); // the list shows its empty state (without search or filters) when nobody is on it
   const open = async () => { await go(page, "/invitados"); await tid(page, "add-guest").waitFor(); await tid(page, "guest-search").waitFor(); };
-  await matrix.check(S, "add-guest / Importar CSV / Grupos / Ajustes", "VALIDO navegan a su pantalla", async () => {
-    for (const [click, path] of [[() => tid(page, "add-guest").click(), "/invitados/nuevo"], [() => button(page, "Importar CSV").click(), "/invitados/importar"], [() => button(page, "Grupos").click(), "/invitados/grupos"], [() => tid(page, "guest-settings").click(), "/invitados/ajustes"]]) {
+  await matrix.check(S, "add-guest / Más opciones: Importar CSV, Grupos, Ajustes", "VALIDO navegan a su pantalla; lo secundario esta tras 'Más opciones'", async () => {
+    await open(); assert.equal(await button(page, "Importar CSV").count(), 0, "Importar CSV must stay hidden until 'Más opciones' opens");
+    for (const [click, path] of [[() => tid(page, "add-guest").click(), "/invitados/nuevo"], [async () => { await openMore(page, "guests-more"); await button(page, "Importar CSV").click(); }, "/invitados/importar"], [async () => { await openMore(page, "guests-more"); await button(page, "Grupos").click(); }, "/invitados/grupos"], [async () => { await openMore(page, "guests-more"); await tid(page, "guest-settings").click(); }, "/invitados/ajustes"]]) {
       await open(); await click(); await page.waitForURL((u) => u.pathname === path); await noBlank(page, path);
     }
   });
   await matrix.check(S, "guest-search", "VALIDO busca; LIMITE sin resultados y 200+ caracteres", async () => {
     await makeGuest(`buscar${stamp}`); await open(); await tid(page, "guest-search").fill(`Live buscar${stamp}`);
     await text(page, `Live buscar${stamp}`).waitFor();
-    await tid(page, "guest-search").fill(`zzz-${stamp}`); await text(page, "Ningún invitado coincide con esta búsqueda.").waitFor();
+    await tid(page, "guest-search").fill(`zzz-${stamp}`); await text(page, /No encontramos a nadie con esa búsqueda/).waitFor();
     await tid(page, "guest-search").fill("x".repeat(400)); assert.ok((await tid(page, "guest-search").inputValue()).length <= 200); await sleep(600); await noBlank(page, "long search");
   });
   await matrix.check(S, "filtros de respuesta", "VALIDO filtra por estado y vacio filtrado", async () => {
     await open(); await page.getByRole("radio", { name: "Confirmó", exact: true }).filter({ visible: true }).first().click(); await sleep(800);
     const confirmed = (await host("GET", `${G}/guest-list?status=CONFIRMED&limit=1`)).json.total;
-    if (confirmed === 0) await text(page, "Ningún invitado coincide con esta búsqueda.").waitFor(); else await text(page, /Mostrando|Confirmó/).waitFor();
+    if (confirmed === 0) await text(page, /No encontramos a nadie con esa búsqueda/).waitFor(); else await text(page, /Mostrando|Confirmó/).waitFor();
     return `GET status=CONFIRMED total=${confirmed}`;
   });
   await matrix.check(S, "lista", "ERROR red caida / 429 / 503 con reintento", async () => {
     for (const [mode, expected] of [["abort", /No hay conexión/], [429, /demasiadas solicitudes.*5 s/], [503, /no está disponible/]]) {
       await page.route(/\/guest-list/, (route) => (mode === "abort" ? route.abort("failed") : route.fulfill(problem(mode, "x", mode === 429 ? { "retry-after": "5" } : {}))));
-      await go(page, "/invitados"); await text(page, expected).waitFor({ timeout: 20000 }); await unrouteAll(); await button(page, "Reintentar").click(); await text(page, /Live|Mostrando|Todavía no hay/).waitFor();
+      await go(page, "/invitados"); await text(page, expected).waitFor({ timeout: 20000 }); await unrouteAll(); await button(page, "Reintentar").click(); await text(page, /Live|Mostrando|Aquí verás quién viene/).waitFor();
     }
   });
   await matrix.check(S, "paginacion Anterior/Siguiente", "LIMITE bordes: ultima pagina con 1 fila, deshabilitados en extremos, pagina que desaparece retrocede", async () => {
@@ -187,7 +207,8 @@ async function detail() {
   const guestResource = async (url) => { const token = url.split("/").pop(); return http("GET", `/rsvp/celebrations/${C}/guest`, { token }); };
   await matrix.check(S, "issue-link", "VALIDO emite, enmascara, copia: el enlace copiado abre el RSVP (GET)", async () => {
     const guest = await makeGuest("link"); await open(guest); await tid(page, "issue-link").click(); await tid(page, "masked-link").waitFor();
-    assert.match(await tid(page, "masked-link").innerText(), /…/); await tid(page, "copy-link").click(); await text(page, "Enlace copiado.").waitFor();
+    assert.match(await tid(page, "masked-link").innerText(), /…/);
+    const auto = await page.evaluate(() => navigator.clipboard.readText()); assert.match(auto, /\/rsvp\//, "one tap: the link is already on the clipboard after generating it"); await tid(page, "copy-link").click(); await text(page, "Enlace copiado.").waitFor();
     const copied = await page.evaluate(() => navigator.clipboard.readText()); const res = await guestResource(copied); assert.equal(res.status, 200, `guest resource ${res.status}`); return "GET /rsvp/.../guest con el token copiado: 200";
   });
   await matrix.check(S, "issue-link", "LIMITE doble clic: una sola emision", async () => {
@@ -204,18 +225,18 @@ async function detail() {
   await matrix.check(S, "revoke-link", "VALIDO confirma y revoca: el token ya no abre el RSVP (GET); cancelar no llama", async () => {
     const guest = await makeGuest("revoke"); await open(guest); await tid(page, "issue-link").click(); await tid(page, "masked-link").waitFor(); await tid(page, "copy-link").click();
     const copied = await page.evaluate(() => navigator.clipboard.readText()); assert.equal((await guestResource(copied)).status, 200);
-    const deletes = track(page, isCall("DELETE", TOKEN_POST)); await tid(page, "revoke-link").click(); await text(page, "¿Revocar este enlace?").waitFor(); await button(page, "Cancelar").click(); await sleep(400); assert.equal(deletes.count(), 0);
-    await tid(page, "revoke-link").click(); await page.getByRole("alert").getByRole("button", { name: "Revocar enlace" }).click(); await text(page, "Enlace revocado.").waitFor(); deletes.stop();
+    const deletes = track(page, isCall("DELETE", TOKEN_POST)); await openMore(page, "guest-more"); await tid(page, "revoke-link").click(); await text(page, "¿Revocar este enlace?").waitFor(); await button(page, "Cancelar").click(); await sleep(400); assert.equal(deletes.count(), 0);
+    await openMore(page, "guest-more"); await tid(page, "revoke-link").click(); await page.getByRole("alert").getByRole("button", { name: "Revocar enlace" }).click(); await text(page, "Enlace revocado.").waitFor(); deletes.stop();
     const after = await guestResource(copied); assert.ok([401, 404].includes(after.status), `after revoke ${after.status}`); return `DELETE 1; token despues: ${after.status}`;
   });
   await matrix.check(S, "revoke-link", "ERROR red y 404 (sin enlace emitido)", async () => {
     const guest = await makeGuest("revoke404"); await open(guest);
-    await tid(page, "revoke-link").click(); await page.getByRole("alert").getByRole("button", { name: "Revocar enlace" }).click(); await text(page, /No encontramos|Enlace revocado/).waitFor();
-    await page.route(TOKEN_POST, (route) => route.abort("failed")); await tid(page, "revoke-link").click(); await page.getByRole("alert").getByRole("button", { name: "Revocar enlace" }).click(); await text(page, /No hay conexión/).waitFor(); await unrouteAll();
+    await openMore(page, "guest-more"); await tid(page, "revoke-link").click(); await page.getByRole("alert").getByRole("button", { name: "Revocar enlace" }).click(); await text(page, /No encontramos|Enlace revocado/).waitFor();
+    await page.route(TOKEN_POST, (route) => route.abort("failed")); await openMore(page, "guest-more"); await tid(page, "revoke-link").click(); await page.getByRole("alert").getByRole("button", { name: "Revocar enlace" }).click(); await text(page, /No hay conexión/).waitFor(); await unrouteAll();
   });
   await matrix.check(S, "Reemitir enlace", "VALIDO invalida el anterior y emite otro", async () => {
     const guest = await makeGuest("reissue"); await open(guest); await tid(page, "issue-link").click(); await tid(page, "masked-link").waitFor(); await tid(page, "copy-link").click();
-    const first = await page.evaluate(() => navigator.clipboard.readText()); await button(page, "Reemitir enlace").click(); await page.getByRole("alert").getByRole("button", { name: "Reemitir enlace" }).click();
+    const first = await page.evaluate(() => navigator.clipboard.readText()); await openMore(page, "guest-more"); await button(page, "Reemitir enlace").click(); await page.getByRole("alert").getByRole("button", { name: "Reemitir enlace" }).click();
     await sleep(1200); await tid(page, "copy-link").click(); const second = await page.evaluate(() => navigator.clipboard.readText());
     assert.notEqual(first, second); assert.equal((await guestResource(second)).status, 200); const old = await guestResource(first); assert.ok([401, 404].includes(old.status)); return `anterior=${old.status}, nuevo=200`;
   });
@@ -231,14 +252,14 @@ async function detail() {
   });
   await matrix.check(S, "erase-guest", "VALIDO: cancelar no llama; confirmar borra (DELETE 202) y GET da 404", async () => {
     const guest = await makeGuest("erase"); await open(guest); const dels = track(page, isCall("DELETE", /\/erasure$/));
-    await tid(page, "erase-guest").click(); await text(page, new RegExp(`¿Eliminar a ${guest.name}`)).waitFor(); await button(page, "Cancelar").click(); await sleep(400); assert.equal(dels.count(), 0);
-    await tid(page, "erase-guest").click(); await button(page, "Eliminar para siempre").dblclick(); await page.waitForURL(/\/invitados\?/); dels.stop(); assert.equal(dels.count(), 1);
+    await openMore(page, "guest-more"); await tid(page, "erase-guest").click(); await text(page, new RegExp(`¿Eliminar a ${guest.name}`)).waitFor(); await button(page, "Cancelar").click(); await sleep(400); assert.equal(dels.count(), 0);
+    await openMore(page, "guest-more"); await tid(page, "erase-guest").click(); await button(page, "Eliminar para siempre").dblclick(); await page.waitForURL(/\/invitados\?/); dels.stop(); assert.equal(dels.count(), 1);
     assert.equal((await host("GET", `${G}/guests/${guest.id}`)).status, 404); return "DELETE 1 (doble clic), GET guest: 404";
   });
   await matrix.check(S, "erase-guest", "ERROR red / 403 / 429: el invitado sigue existiendo y se puede reintentar", async () => {
     const guest = await makeGuest("eraseerr"); await open(guest);
     for (const [mode, expected] of [["abort", /No hay conexión/], [403, /solo los anfitriones/], [429, /demasiadas solicitudes/]]) {
-      await page.route(/\/erasure$/, (route) => (mode === "abort" ? route.abort("failed") : route.fulfill(problem(mode)))); await tid(page, "erase-guest").click(); await button(page, "Eliminar para siempre").click(); await text(page, expected).waitFor(); await unrouteAll();
+      await page.route(/\/erasure$/, (route) => (mode === "abort" ? route.abort("failed") : route.fulfill(problem(mode)))); await openMore(page, "guest-more"); await tid(page, "erase-guest").click(); await button(page, "Eliminar para siempre").click(); await text(page, expected).waitFor(); await unrouteAll();
       assert.equal((await host("GET", `${G}/guests/${guest.id}`)).status, 200);
     }
   });
@@ -284,7 +305,7 @@ async function groups() {
   await matrix.check(S, "lista de grupos", "ERROR lectura 503 con reintento; VACIO texto", async () => {
     await page.route(/\/groups\?/, (route) => route.fulfill(problem(503))); await go(page, "/invitados/grupos"); await text(page, /no está disponible/).waitFor(); await unrouteAll(); await button(page, "Reintentar").first().click(); await text(page, /integrantes/).first().waitFor();
   });
-  await matrix.check(S, "Agregar invitado", "VALIDO navega", async () => { await open(); await button(page, "Agregar invitado").click(); await page.waitForURL(/\/invitados\/nuevo/); });
+  await matrix.check(S, "Volver a la lista", "VALIDO navega", async () => { await open(); await button(page, "Volver a la lista").click(); await page.waitForURL((u) => u.pathname === "/invitados"); });
   matrix.gap(S, "Editar / Borrar grupo", "CRUD", "Backend solo expone POST/GET /groups y GET /groups/{id}; sin PUT/PATCH/DELETE de grupo. No hay botones (la nota 'Para mover a un invitado abre su ficha' explica el unico cambio posible).");
 }
 
@@ -297,7 +318,7 @@ async function importSection() {
   await matrix.check(S, "run-import", "LIMITE vacio no envia", async () => { await open(); const posts = track(page, isCall("POST", IMPORT)); await tid(page, "run-import").click(); await text(page, "Pega o elige un CSV primero.").waitFor(); assert.equal(posts.count(), 0); });
   await matrix.check(S, "run-import", "LIMITE solo encabezado y encabezado invalido: error del backend legible", async () => {
     await open(); await tid(page, "csv-input").fill(header); await tid(page, "run-import").click(); await sleep(1500); await noBlank(page, "header only");
-    const first = await page.evaluate(() => document.body.innerText); await tid(page, "csv-input").fill("foo,bar\n1,2"); await tid(page, "run-import").click(); await sleep(1500); await noBlank(page, "bad header");
+    const first = await page.evaluate(() => document.body.innerText); await button(page, "Importar otro archivo").click(); await tid(page, "csv-input").fill("foo,bar\n1,2"); await tid(page, "run-import").click(); await sleep(1500); await noBlank(page, "bad header");
     return /Revisa este dato|importados/.test(first) ? "mensaje mostrado" : "sin importados";
   });
   await matrix.check(S, "run-import", "VALIDO parcial: 2 filas buenas, 1 mala con linea y motivo; GET confirma 2", async () => {
@@ -322,7 +343,7 @@ async function importSection() {
   });
   await matrix.check(S, "run-import", "ERROR red / 403 / 413 / 429 / 503", async () => {
     await open(); await tid(page, "csv-input").fill(`${header}\nErr ${stamp},err.${stamp}@example.com,,es-BO,0,`);
-    for (const [mode, expected] of [["abort", /No hay conexión/], [403, /solo los anfitriones/], [413, /Revisa este dato|No se pudo completar/], [429, /demasiadas solicitudes/], [503, /no está disponible/]]) {
+    for (const [mode, expected] of [["abort", /No hay conexión/], [403, /solo los anfitriones/], [413, /Revisa este dato|No se pudo completar|Algo no salió como esperábamos/], [429, /demasiadas solicitudes/], [503, /no está disponible/]]) {
       await page.route(IMPORT, (route) => (mode === "abort" ? route.abort("failed") : route.fulfill(problem(mode)))); await tid(page, "run-import").click(); await text(page, expected).waitFor(); await unrouteAll();
     }
     assert.equal((await listGuests(`err.${stamp}@example.com`, 0)).length, 0); await tid(page, "run-import").click(); await tid(page, "import-summary").waitFor(); assert.equal((await listGuests(`err.${stamp}@example.com`)).length, 1);
@@ -353,11 +374,11 @@ async function report() {
     return `${name}: ${lines.length - 1} filas = GET total ${total}`;
   });
   await matrix.check(S, "export-catering", "VALIDO descarga sin nombres ni correos", async () => {
-    await open(); const { name, body } = await download("export-catering"); assert.ok(!/@example\.com/.test(body), "no emails"); assert.match(name, /^catering-/); return `${name}: ${body.trim().split("\r\n").length - 1} filas`;
+    await open(); await openMore(page, "report-more"); const { name, body } = await download("export-catering"); assert.ok(!/@example\.com/.test(body), "no emails"); assert.match(name, /^catering-/); return `${name}: ${body.trim().split("\r\n").length - 1} filas`;
   });
   await matrix.check(S, "export-csv / export-catering", "ERROR red/503 en la lectura: mensaje y reintento posible", async () => {
     await open(); await page.route(/\/guest-list/, (route) => route.abort("failed")); await tid(page, "export-csv").click(); await text(page, "No pudimos preparar el archivo. Inténtalo de nuevo.").waitFor(); await unrouteAll();
-    await page.route(/\/catering-report/, (route) => route.fulfill(problem(503))); await tid(page, "export-catering").click(); await text(page, "No pudimos preparar el archivo. Inténtalo de nuevo.").waitFor(); await unrouteAll();
+    await page.route(/\/catering-report/, (route) => route.fulfill(problem(503))); await openMore(page, "report-more"); await tid(page, "export-catering").click(); await text(page, "No pudimos preparar el archivo. Inténtalo de nuevo.").waitFor(); await unrouteAll();
     await download("export-catering");
   });
   await matrix.check(S, "export-csv", "LIMITE doble clic: un solo recorrido de exportacion", async () => {
@@ -366,10 +387,10 @@ async function report() {
   });
   await matrix.check(S, "filtros", "VALIDO + LIMITE: vacio por filtro, mensaje 'Todavía no hay respuestas'", async () => {
     await open(); await page.getByRole("radio", { name: "No asistirá", exact: true }).filter({ visible: true }).first().click(); await sleep(900);
-    const declined = (await host("GET", `${G}/guest-list?status=DECLINED&limit=1`)).json.total; if (declined === 0) await text(page, "Todavía no hay respuestas para mostrar.").waitFor(); return `GET DECLINED total=${declined}`;
+    const declined = (await host("GET", `${G}/guest-list?status=DECLINED&limit=1`)).json.total; if (declined === 0) await text(page, /Nadie ha dado esa respuesta todavía/).waitFor(); return `GET DECLINED total=${declined}`;
   });
   await matrix.check(S, "lista del reporte", "ERROR 429 / 503 con reintento", async () => {
-    for (const [mode, expected] of [[429, /demasiadas solicitudes/], [503, /no está disponible/]]) { await page.route(/\/guest-list/, (route) => route.fulfill(problem(mode))); await go(page, "/rsvp/reporte"); await text(page, expected).waitFor(); await unrouteAll(); await button(page, "Reintentar").first().click(); await page.getByRole("button", { name: /^Abrir a / }).first().or(text(page, /Todavía no hay respuestas/)).waitFor(); }
+    for (const [mode, expected] of [[429, /demasiadas solicitudes/], [503, /no está disponible/]]) { await page.route(/\/guest-list/, (route) => route.fulfill(problem(mode))); await go(page, "/rsvp/reporte"); await text(page, expected).waitFor(); await unrouteAll(); await button(page, "Reintentar").first().click(); await page.getByRole("button", { name: /^Abrir a / }).first().or(text(page, /Aquí aparecerán las respuestas/)).waitFor(); }
   });
   await matrix.check(S, "ficha desde fila", "VALIDO", async () => { await open(); await page.getByRole("button", { name: /^Abrir a / }).first().click(); await page.waitForURL(/\/invitados\/[0-9a-f-]{36}/); });
 }
@@ -403,7 +424,7 @@ async function requests() {
   await matrix.check(S, "Abrir invitado", "VALIDO", async () => { const { request } = await newRequest("open"); await open(); await page.locator(`[data-testid="request-${request.id}"]`).getByRole("button", { name: "Abrir invitado" }).click(); await page.waitForURL(/\/invitados\/[0-9a-f-]{36}/); });
   await matrix.check(S, "lista", "VACIO y ERROR lectura 503 con reintento", async () => {
     await page.route(/\/companion-requests/, (route) => route.fulfill(problem(503))); await open(); await text(page, /no está disponible/).waitFor(); await unrouteAll(); await button(page, "Reintentar").first().click(); await sleep(800); await noBlank(page, "requests retry");
-    await page.route(/\/companion-requests/, (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items: [], total: 0, limit: 100, offset: 0 }) })); await open(); await text(page, "No hay solicitudes pendientes.").waitFor(); await unrouteAll();
+    await page.route(/\/companion-requests/, (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items: [], total: 0, limit: 100, offset: 0 }) })); await open(); await text(page, "Todo al día").waitFor(); await unrouteAll();
   });
 }
 
@@ -455,10 +476,10 @@ async function notifications() {
 async function preferences() {
   const S = "Preferencias de avisos";
   const PATCH = /\/notifications\/celebrations\/[^/]+\/preferences$/;
-  const open = async () => { await go(page, "/preferencias"); await tid(page, "quiet-save").waitFor(); };
+  const open = async () => { await go(page, "/preferencias"); await tid(page, "prefs-more").waitFor(); await openMore(page, "prefs-more"); await tid(page, "quiet-save").waitFor(); };
   const prefs = async () => (await host("GET", `${N}/preferences`)).json;
   await matrix.check(S, "pref-EMAIL/SMS/WHATSAPP/PUSH", "VALIDO conmutan y persisten (GET channels)", async () => {
-    await open(); for (const channel of ["EMAIL", "WHATSAPP"]) { const was = (await prefs()).channels?.[channel] === true; await tid(page, `pref-${channel}`).click(); await text(page, "Preferencia guardada.").waitFor(); await sleep(400); assert.equal((await prefs()).channels[channel], !was); await page.reload(); await tid(page, "quiet-save").waitFor(); }
+    await open(); for (const channel of ["EMAIL", "WHATSAPP"]) { const was = (await prefs()).channels?.[channel] === true; await tid(page, `pref-${channel}`).click(); await text(page, "Preferencia guardada.").waitFor(); await sleep(400); assert.equal((await prefs()).channels[channel], !was); await page.reload(); await tid(page, "prefs-more").waitFor(); await openMore(page, "prefs-more"); await tid(page, "quiet-save").waitFor(); }
   });
   await matrix.check(S, "pref-EMAIL", "ERROR red/503/429: el interruptor vuelve atras y avisa", async () => {
     await open(); const was = (await prefs()).channels?.EMAIL === true;
@@ -486,21 +507,22 @@ async function preferences() {
     await tid(page, "quiet-save").click(); await text(page, "No se pudo guardar; volvimos al valor anterior.").waitFor(); await unrouteAll(); assert.equal((await prefs()).quietHours.source, "DEFAULT");
   });
   await matrix.check(S, "lectura", "ERROR 503 con reintento", async () => {
-    await page.route(PATCH, (route) => route.fulfill(problem(503))); await go(page, "/preferencias"); await text(page, /no está disponible/).waitFor(); await unrouteAll(); await button(page, "Reintentar").first().click(); await tid(page, "quiet-save").waitFor();
+    await page.route(PATCH, (route) => route.fulfill(problem(503))); await go(page, "/preferencias"); await text(page, /no está disponible/).waitFor(); await unrouteAll(); await button(page, "Reintentar").first().click(); await tid(page, "prefs-more").waitFor(); await openMore(page, "prefs-more"); await tid(page, "quiet-save").waitFor();
   });
-  await matrix.check(S, "Configurar avisos en este dispositivo", "VALIDO navega", async () => { await open(); await button(page, "Configurar avisos en este dispositivo").click(); await page.waitForURL(/\/permisos-push/); });
+  await matrix.check(S, "Configurar avisos en este dispositivo", "VALIDO navega", async () => { await go(page, "/preferencias"); await tid(page, "pref-PUSH").waitFor(); await button(page, "Configurar avisos en este dispositivo").click(); await page.waitForURL(/\/permisos-push/); });
 }
 
 /* ------------------------------------------------------------------ push */
 async function push() {
   const S = "Permisos push";
   const open = async () => { await go(page, "/permisos-push"); await sleep(1500); };
+  const openAdvanced = async () => { await open(); await openMore(page, "push-more"); };
   const devices = await host("GET", `${N}/devices`);
   await matrix.check(S, "enable-push", "LIMITE navegador web: sin telefono, el boton no existe y se explica por que", async () => {
     await open(); await text(page, /necesitan un teléfono real/).waitFor(); assert.equal(await tid(page, "enable-push").count(), 0);
   });
   await matrix.check(S, "dispositivos / envios", `ERROR backend ${devices.status}: aviso claro (no en blanco) y Reintentar`, async () => {
-    await open(); await noBlank(page, "push"); if (devices.status === 503) { await text(page, /no está disponible/).first().waitFor(); await button(page, "Reintentar").first().click(); await sleep(800); await noBlank(page, "push retry"); return "503 'Push registration is not configured' -> aviso de servicio no disponible + Reintentar"; }
+    await openAdvanced(); await noBlank(page, "push"); if (devices.status === 503) { await text(page, /no está disponible/).first().waitFor(); await button(page, "Reintentar").first().click(); await sleep(800); await noBlank(page, "push retry"); return "503 'Push registration is not configured' -> aviso de servicio no disponible + Reintentar"; }
     return `dispositivos ${devices.status}`;
   });
   await matrix.check(S, "dispositivos (con datos simulados)", "VALIDO/LIMITE lista, probar, quitar con confirmacion, envios", async () => {
@@ -511,7 +533,7 @@ async function push() {
       if (request.method() === "DELETE") { state = []; return route.fulfill({ status: 204 }); }
       if (/test$/.test(request.url())) { await sleep(800); return route.fulfill({ status: 202, contentType: "application/json", body: JSON.stringify({ notificationId: id, deviceId: id, status: "PENDING" }) }); } return route.continue(); });
     await page.route(/push-deliveries/, (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items: [{ id, notificationId: id, deviceId: id, deviceVersion: 1, status: "RETRY", attempts: 2, receiptChecks: 0, availableAt: "2026-11-02T10:00:00Z", lastError: "timeout" }] }) }));
-    await open(); await tid(page, `device-${id}`).waitFor(); await text(page, "Reintentando").waitFor(); await text(page, /Detalle: timeout/).waitFor();
+    await openAdvanced(); await tid(page, `device-${id}`).waitFor(); await text(page, "Reintentando").waitFor(); await text(page, /Detalle: timeout/).waitFor();
     const tests = track(page, isCall("POST", /\/test$/)); await tid(page, `test-${id}`).dblclick(); await text(page, "Aviso de prueba en camino.").waitFor(); tests.stop(); assert.equal(tests.count(), 1);
     await tid(page, `remove-${id}`).click(); await text(page, "¿Quitar este dispositivo?").waitFor(); await button(page, "Cancelar").click(); await sleep(300); assert.ok(!calls.some((c) => c.startsWith("DELETE")));
     await tid(page, `remove-${id}`).click(); await page.getByRole("alert").getByRole("button", { name: "Quitar este dispositivo" }).click(); await text(page, "Todavía no hay dispositivos registrados para recibir avisos push.").waitFor(); await unrouteAll();
@@ -524,7 +546,7 @@ async function push() {
 async function settings() {
   const S = "Ajustes de invitados";
   const PUT = (name) => new RegExp(`/${name}$`);
-  const open = async () => { await go(page, "/invitados/ajustes"); await tid(page, "save-defaults").waitFor(); await tid(page, "save-retention").waitFor(); };
+  const open = async () => { await go(page, "/invitados/ajustes"); await tid(page, "save-defaults").waitFor(); await tid(page, "settings-more").waitFor(); assert.equal(await tid(page, "save-retention").count(), 0, "retention stays behind Más opciones"); await openMore(page, "settings-more"); await tid(page, "save-retention").waitFor(); };
   await matrix.check(S, "save-defaults", "LIMITE -1 / abc / 2147483648 / vacio invalidos sin llamada; 0 y 2147483647 validos", async () => {
     await open(); const puts = track(page, isCall("PUT", PUT("guest-settings")));
     for (const bad of ["-1", "abc", "2147483648", ""]) { await tid(page, "default-companions").fill(bad); assert.equal(await tid(page, "save-defaults").isDisabled(), true, `enabled for ${bad}`); }
@@ -559,17 +581,32 @@ async function settings() {
 
 /* --------------------------------------------------------------- summary */
 async function summary() {
-  const S = "Inicio (resumen)";
+  const S = "Inicio (panel)";
+  await makeGuest(`panel${stamp}`); // the panel hides the answer bar and legend while nobody is on the list
   const open = async () => { await go(page, "/inicio"); await sleep(1200); };
+  const celebration = async () => (await host("GET", `/celebrations/${C}`)).json;
+  /** Same celebration read, but as published: the panel's branches after publishing are driven by the real guests, requests and reservations. */
+  const asPublished = async () => page.route(new RegExp(`/celebrations/${C}$`), async (route) => { if (route.request().method() !== "GET") return route.continue(); const real = await route.fetch(); const body = await real.json(); await route.fulfill({ response: real, json: { ...body, status: "PUBLISHED" } }); });
   await matrix.check(S, "contadores", "VALIDO coinciden con GET guest-summary", async () => {
-    await open(); const data = (await host("GET", `${G}/guest-summary`)).json; const read = async (id) => Number((await tid(page, id).getAttribute("aria-label")).split(": ")[1]);
+    // The summary is a read model: compare the screen with the API once both settled (the guest made above takes a few seconds to count).
+    const read = async (id) => Number((await tid(page, id).getAttribute("aria-label")).split(": ")[1]); let data;
+    for (let attempt = 0; attempt < 8; attempt += 1) { await open(); data = (await host("GET", `${G}/guest-summary`)).json; if ((await read("count-total")) === data.total) break; await sleep(2000); }
     assert.equal(await read("count-total"), data.total); assert.equal(await read("count-confirmed"), data.confirmed); assert.equal(await read("count-pending"), data.pending); return `total=${data.total} confirmed=${data.confirmed}`;
   });
-  await matrix.check(S, "Ver invitados / Ver reporte / Revisar solicitudes", "VALIDO navegan", async () => {
-    for (const [name, path] of [["Ver invitados", "/invitados"], ["Ver reporte", "/rsvp/reporte"]]) { await open(); await button(page, name).click(); await page.waitForURL((u) => u.pathname === path); }
-    await open(); const review = button(page, "Revisar solicitudes"); if (await review.count()) { await review.click(); await page.waitForURL(/\/bandeja\/acompanantes/); }
+  await matrix.check(S, "siguiente paso", "VALIDO borrador: 'Publica tu invitación' (o 'Termina…' si falta algo) y lleva a Publicar", async () => {
+    const draft = (await celebration()).status === "DRAFT"; if (!draft) return "el mundo ya esta publicado: rama cubierta por las pruebas de componente y por 'publicado' abajo";
+    await open(); await tid(page, "next-step").waitFor(); assert.match(await tid(page, "next-step").innerText(), /Publica tu invitación|Termina tu invitación/);
+    assert.equal(await tid(page, "step-published").getAttribute("aria-label").then((l) => /borrador/.test(l)), true); await tid(page, "next-step-action").click(); await page.waitForURL((u) => u.pathname === "/publicar");
   });
-  await matrix.check(S, "Actualizar", "ERROR red/429/503 con reintento; vacio", async () => {
+  await matrix.check(S, "siguiente paso", "VALIDO publicado con solicitudes abiertas: 'Revisa N solicitud(es)' lleva a Acompañantes", async () => {
+    await newRequest("panel"); await asPublished(); await open(); await tid(page, "next-step").waitFor(); assert.match(await tid(page, "next-step").innerText(), /Revisa \d+ solicitud/);
+    await tid(page, "next-step-action").click(); await page.waitForURL((u) => u.pathname === "/bandeja/acompanantes"); await unrouteAll();
+  });
+  await matrix.check(S, "Ver quién viene", "VALIDO enlace tranquilo a la lista; sin botones duplicados de Ver reporte / Ver invitados", async () => {
+    await open(); assert.equal(await button(page, "Ver reporte").count(), 0)
+    await button(page, "Ver quién viene").click(); await page.waitForURL((u) => u.pathname === "/invitados");
+  });
+  await matrix.check(S, "Actualizar", "ERROR red/429/503 con reintento; relee", async () => {
     for (const [mode, expected] of [["abort", /No hay conexión/], [429, /demasiadas solicitudes/], [503, /no está disponible/]]) { await page.route(/guest-summary/, (route) => (mode === "abort" ? route.abort("failed") : route.fulfill(problem(mode)))); await go(page, "/inicio"); await text(page, expected).waitFor({ timeout: 20000 }); await unrouteAll(); await button(page, "Reintentar").first().click(); await tid(page, "count-total").waitFor(); }
     await open(); const reads = track(page, isCall("GET", /guest-summary/)); await button(page, "Actualizar").click(); await sleep(700); assert.ok(reads.count() >= 1); reads.stop();
   });

@@ -66,7 +66,7 @@ const rsvpHits = [];
 /** Kong limits /rsvp to 30/min per IP: wait until this run has used fewer than 14 in the last 60 s. */
 async function rsvpBudget() { for (;;) { const now = Date.now(); if (rsvpHits.filter((t) => now - t < 60_000).length < 14) return; await sleep(3000); } }
 
-const LOGIN = { email: /^(Correo electrónico|Email)$/, password: /^(Contraseña|Password)$/, submit: /^(Iniciar sesión|Sign in)$/ };
+const LOGIN = { email: /^(Correo electrónico|Correo|Email)$/, password: /^(Contraseña|Password)$/, submit: /^(Iniciar sesión|Entrar|Sign in)$/ };
 async function newSession({ width, lang, scheme, signedIn }) {
   const context = await browser.newContext({ viewport: { width, height: width < 500 ? 800 : 900 }, locale: lang, colorScheme: scheme });
   context.setDefaultTimeout(25000);
@@ -161,7 +161,7 @@ async function openDialog(page, id) {
     await page.locator(`[data-testid="${id}"]`).click();
     if (await page.getByTestId("reserve-confirm").waitFor({ timeout: 4000 }).then(() => true, () => false)) return;
   }
-  throw new Error("reserve dialog did not open");
+  throw new Error("reserve form did not open");
 }
 
 async function pagesSuite() {
@@ -201,8 +201,8 @@ async function pagesSuite() {
             if (id) {
               await openDialog(page, id);
               await sleep(500);
-              await scan(page, errors, "guest gifts reserve dialog", ctx);
-            } else { rows.push({ label: "guest gifts reserve dialog", ...ctx, status: "FAIL", fails: ["no AVAILABLE gift with a reserve button"] }); console.log(`FAIL guest gifts reserve dialog | no reserve button`); }
+              await scan(page, errors, "guest gifts reserve form", ctx);
+            } else { rows.push({ label: "guest gifts reserve form", ...ctx, status: "FAIL", fails: ["no AVAILABLE gift with a reserve button"] }); console.log(`FAIL guest gifts reserve form | no reserve button`); }
           }
         } catch (error) { rows.push({ label, ...ctx, status: "FAIL", fails: [String(error.message).split("\n")[0]] }); console.log(`FAIL ${label} | ${width} ${lang} ${scheme} | ${String(error.message).split("\n")[0]}`); }
       }

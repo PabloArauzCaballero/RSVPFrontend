@@ -45,9 +45,9 @@ export async function session(browser, email, width = 1280) {
   page.on("pageerror", (error) => errors.push(`pageerror: ${error.message}`));
   page.on("console", (message) => { if (message.type() === "error" && !/Failed to load resource|net::ERR|status of (4|5)\d\d/.test(message.text())) errors.push(message.text()); });
   await page.goto(`${APP}/login`);
-  await page.getByLabel("Correo electrónico", { exact: true }).filter({ visible: true }).fill(email);
+  await page.getByLabel(/^(Correo electrónico|Correo)$/).filter({ visible: true }).fill(email);
   await page.getByLabel("Contraseña", { exact: true }).filter({ visible: true }).fill(world.password);
-  await page.getByRole("button", { name: "Iniciar sesión" }).filter({ visible: true }).click();
+  await page.getByRole("button", { name: /^(Iniciar sesión|Entrar)$/ }).filter({ visible: true }).click();
   await page.waitForURL((url) => !url.pathname.startsWith("/login"), { timeout: 20000 });
   return { page, context, errors };
 }

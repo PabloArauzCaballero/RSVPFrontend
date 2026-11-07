@@ -20,13 +20,13 @@ const ROUTE_FILTER = process.env.ROUTES?.split(",");
 const stamp = Date.now().toString(36);
 
 const ROUTES = [
-  ["/celebraciones", false], ["/onboarding/1", false], [`/onboarding/3?c=${C}`, true],
+  ["/celebraciones", false], ["/onboarding/1", false], [`/onboarding/listo?c=${C}`, true],
   ["/editor/general", true], ["/editor/anfitriones", true], ["/editor/lugares", true], ["/editor/historia", true],
   ["/editor/itinerario", true], ["/editor/secciones", true], ["/editor/galeria", true], ["/editor/traducciones", true],
   ["/preview", true], ["/publicar", true], ["/configuracion", true], ["/modos", true], ["/templates", true]
 ].filter(([route]) => !ROUTE_FILTER || ROUTE_FILTER.some((part) => route.includes(part)));
 
-const LOGIN = { "es-BO": { email: "Correo electrónico", password: "Contraseña", submit: "Iniciar sesión" }, "en-US": { email: "Email", password: "Password", submit: "Sign in" } };
+const LOGIN = { "es-BO": { email: /^(Correo electrónico|Correo)$/, password: "Contraseña", submit: /^(Iniciar sesión|Entrar)$/ }, "en-US": { email: "Email", password: "Password", submit: "Sign in" } };
 const RAW_KEY = /\b(?:host|celebration|common|auth|errors|guests|gifts|admin|provider|portal|landing|ui)\.[a-zA-Z][a-zA-Z0-9]*(?:\.[a-zA-Z0-9_]+)+\b/g;
 const SPANISH = /\b(Guardar|Guardando|Cancelar|Cargando|Reintentar|Publicar|Despublicar|Siguiente|Atrás|Volver|Anfitriones|Configuración|Plantillas|Eliminar|Archivar|Continuar|Cerrar|Agregar|Añadir|Aceptar|Idioma|Fecha|Hora|Título|Subtítulo|Historia|Itinerario|Celebraciones|Vista previa|Traducciones|Galería|Lugares)\b/;
 const KNOWN_NOISE = (url, status) => (status === 401 && /\/auth\/refresh/.test(url)) || ([502, 503].includes(status) && /\/(media|templates)\b/.test(url));
@@ -62,7 +62,7 @@ async function openSession(browser, width, locale, colorScheme) {
   page.on("response", (response) => { if (response.status() >= 400 && response.url().startsWith(API) && !KNOWN_NOISE(response.url(), response.status())) state.badResponses.push(`${response.status()} ${response.request().method()} ${new URL(response.url()).pathname}`); });
   await page.goto(`${APP}/login`);
   const labels = LOGIN[locale];
-  await page.getByLabel(labels.email, { exact: true }).filter({ visible: true }).fill(world.host.email);
+  await page.getByLabel(labels.email, typeof labels.email === "string" ? { exact: true } : {}).filter({ visible: true }).fill(world.host.email);
   await page.getByLabel(labels.password, { exact: true }).filter({ visible: true }).fill(world.password);
   await page.getByRole("button", { name: labels.submit }).filter({ visible: true }).click();
   await page.waitForURL((url) => !url.pathname.startsWith("/login"), { timeout: 30000 });
@@ -139,9 +139,10 @@ if (process.env.FLOWS !== "0") for (const width of WIDTHS) {
     await page.goto(`${APP}/onboarding/1`); await settle(page);
     await page.getByRole("radio").filter({ visible: true }).first().click();
     await tid("onboarding-next").click();
+    await tid("onboarding-next").click();
     await tid("onboarding-title").fill(title);
     await tid("onboarding-create").click();
-    await page.waitForURL(/\/onboarding\/3\?c=/);
+    await page.waitForURL(/\/onboarding\/listo\?c=/);
     const id = new URL(page.url()).searchParams.get("c");
     const created = await get(id);
     assert.equal(created.content.title, title);
@@ -171,6 +172,7 @@ if (process.env.FLOWS !== "0") for (const width of WIDTHS) {
     await page.locator("[role=alert] button").filter({ visible: true }).first().click();
     for (let i = 0; i < 30 && (await get(c.id)).status !== "PUBLISHED"; i++) await page.waitForTimeout(300);
     assert.equal((await get(c.id)).status, "PUBLISHED");
+    await tid("more-publish").click();
     await tid("unpublish").click();
     await page.locator("[role=alert] button").filter({ visible: true }).first().click();
     for (let i = 0; i < 30 && (await get(c.id)).status !== "DRAFT"; i++) await page.waitForTimeout(300);

@@ -12,7 +12,6 @@ const LOCALES = list("LOCALES", ["es-BO", "en-US"]);
 const SCHEMES = list("SCHEMES", ["light", "dark"]);
 const only = process.env.ROUTES ? process.env.ROUTES.split(",") : null;
 const stamp = Date.now().toString(36);
-const LABELS = { "es-BO": { email: "Correo electrónico", password: "Contraseña", signIn: "Iniciar sesión" }, "en-US": { email: "Email", password: "Password", signIn: "Sign in" } };
 
 // Known benign noise only: the anonymous session refresh (401) and the media/push backends that are not part of this environment (502/503).
 const benign = (status, url) => (status === 401 && /\/identity\/auth\/refresh/.test(url)) || ((status === 502 || status === 503) && /\/(media|templates|push)\b|\/notifications\/.*push|push-|\/notifications\/celebrations\/[^/]+\/devices/.test(url));
@@ -42,11 +41,11 @@ async function open(width, locale, scheme) {
   page.on("pageerror", (error) => bag.errors.push(`pageerror: ${error.message}`));
   page.on("console", (message) => { if (message.type() === "error" && !/Failed to load resource/.test(message.text())) bag.errors.push(`console.error: ${message.text().slice(0, 200)}`); });
   page.on("response", (response) => { if (response.status() >= 400 && !benign(response.status(), response.url())) bag.bad.push(`${response.status()} ${response.request().method()} ${response.url().replace(/\?.*/, "")}`); });
-  const L = LABELS[locale];
   await page.goto(`${APP}/login`);
-  await page.getByLabel(L.email, { exact: true }).filter({ visible: true }).fill(world.host.email);
-  await page.getByLabel(L.password, { exact: true }).filter({ visible: true }).fill(world.password);
-  await page.getByRole("button", { name: L.signIn }).filter({ visible: true }).click();
+  // The login screen's current labels ("Correo"/"Entrar") and the earlier ones both work.
+  await page.getByLabel(/^(Correo( electrónico)?|Email)$/).filter({ visible: true }).fill(world.host.email);
+  await page.getByLabel(/^(Contraseña|Password)$/).filter({ visible: true }).fill(world.password);
+  await page.getByRole("button", { name: /^(Entrar|Iniciar sesión|Sign in)$/ }).filter({ visible: true }).click();
   await page.waitForURL((url) => !url.pathname.startsWith("/login"), { timeout: 30000 });
   return { context, page, bag };
 }

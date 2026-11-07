@@ -66,15 +66,15 @@ const registerApi = (email, role = "HOST", password = PASSWORD) => apiJson("POST
 const rolesOf = (token) => JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString()).roles;
 
 const MSG = {
-  invalid: "El correo o la contraseña no coinciden. Revísalos e inténtalo de nuevo.",
-  required: "Este campo es obligatorio.",
-  badEmail: /Escribe un correo válido/,
-  short: "La contraseña debe tener al menos 12 caracteres.",
-  bytes: "La contraseña es demasiado larga. Usa una más corta.",
-  taken: /Ya existe una cuenta con este correo/,
-  offline: /No hay conexión con el servidor/,
-  unavailable: /no responde por ahora/,
-  recovered: /Si existe una cuenta con ese correo/
+  invalid: "Ese correo y esa contraseña no coinciden. Revísalos o recupera tu contraseña.",
+  required: "Falta este dato.",
+  badEmail: /Revisa el correo: debe verse como/,
+  short: "Usa al menos 12 caracteres. Una frase corta funciona bien.",
+  bytes: "Esa contraseña es muy larga. Prueba con una más corta.",
+  taken: /No pudimos crear la cuenta con esos datos/,
+  offline: /Sin conexión por ahora/,
+  unavailable: /no responden por ahora/,
+  recovered: /Si hay una cuenta con ese correo/
 };
 
 // ---------------------------------------------------------------- LOGIN
@@ -102,8 +102,8 @@ const loginUser = uniq("login"); const first = await registerApi(loginUser); ass
     h.state.faults.push({ match: "POST /identity/auth/login", status: 429, headers: { "retry-after": "3" }, title: "Too Many Requests" });
     await fillId(page, "login-email", loginUser); await fillId(page, "login-password", PASSWORD);
     await byId(page, "login-submit").click();
-    await text(page, /Demasiados intentos/).waitFor();
-    assert.match(await text(page, /Demasiados intentos/).innerText(), /\d/);
+    await text(page, /Hubo muchos intentos/).waitFor();
+    assert.match(await text(page, /Hubo muchos intentos/).innerText(), /\d/);
     assert.equal(await byId(page, "login-submit").getAttribute("aria-disabled"), "true", "blocked during cooldown");
     const before = h.count("POST /identity/auth/login");
     await byId(page, "login-submit").click({ force: true }).catch(() => undefined);
@@ -113,7 +113,7 @@ const loginUser = uniq("login"); const first = await registerApi(loginUser); ass
   await check("login-submit · ERROR 403 forbidden: clear message, no crash", async () => {
     h.state.faults.push({ match: "POST /identity/auth/login", status: 403 });
     await byId(page, "login-submit").click();
-    await text(page, /Tu cuenta no puede realizar esta acción/).waitFor();
+    await text(page, /Esta cuenta no puede hacer eso/).waitFor();
   });
   await check("login-submit · ERROR 500: service message, retry works", async () => {
     h.state.faults.push({ match: "POST /identity/auth/login", status: 503 });
@@ -138,11 +138,11 @@ const loginUser = uniq("login"); const first = await registerApi(loginUser); ass
     await fillId(page, "login-email", "no-arroba"); await fillId(page, "login-password", "x");
     await byId(page, "login-submit").click(); await text(page, MSG.badEmail).waitFor();
     await fillId(page, "login-email", `${"a".repeat(310)}@example.com`);
-    await byId(page, "login-submit").click(); await text(page, "El texto es demasiado largo.").waitFor();
+    await byId(page, "login-submit").click(); await text(page, "Es demasiado largo.").waitFor();
   });
   await check("login-submit · LIMIT 129-char password rejected client-side; 128-char reaches the server and gets neutral 401", async () => {
     await fillId(page, "login-email", loginUser); await fillId(page, "login-password", "p".repeat(129));
-    await byId(page, "login-submit").click(); await text(page, "El texto es demasiado largo.").waitFor();
+    await byId(page, "login-submit").click(); await text(page, "Es demasiado largo.").waitFor();
     await fillId(page, "login-password", "p".repeat(128));
     await byId(page, "login-submit").click(); await text(page, MSG.invalid).waitFor();
   });
@@ -184,10 +184,10 @@ const loginUser = uniq("login"); const first = await registerApi(loginUser); ass
   });
   await check("show/hide password toggle · LIMIT switches the field type and keeps the value", async () => {
     await fillId(page, "login-password", "visible-secret-1");
-    const toggle = vis(page, 'button[aria-label="Mostrar contraseña"], [role="button"][aria-label="Mostrar contraseña"]').first();
+    const toggle = vis(page, 'button[aria-label="Mostrar"], [role="button"][aria-label="Mostrar"]').first();
     await toggle.click();
     assert.notEqual(await byId(page, "login-password").getAttribute("type"), "password");
-    await vis(page, '[aria-label="Ocultar contraseña"]').first().click();
+    await vis(page, '[aria-label="Ocultar"]').first().click();
     assert.equal(await byId(page, "login-password").getAttribute("type"), "password");
     assert.equal(await byId(page, "login-password").inputValue(), "visible-secret-1");
   });
@@ -208,17 +208,17 @@ console.log("\n== Login links ==");
   const h = await open(); const { page } = h;
   await go(page, "/login");
   await check("forgot password link → /recuperar and back link → /login", async () => {
-    await page.getByRole("link", { name: "¿Olvidaste tu contraseña?" }).filter({ visible: true }).click();
+    await page.getByRole("link", { name: "Olvidé mi contraseña" }).filter({ visible: true }).click();
     await waitPath(page, /\/recuperar/);
-    await page.getByRole("link", { name: "Volver a iniciar sesión" }).filter({ visible: true }).click();
+    await page.getByRole("link", { name: "Volver a entrar" }).filter({ visible: true }).click();
     await waitPath(page, /\/login/);
   });
   await check("create account link carries returnTo and the register 'sign in' link returns it", async () => {
     await go(page, "/login?returnTo=%2Feditor%2Fgeneral%3Fc%3Dabc");
-    await text(page, "Tu sesión terminó. Inicia sesión para continuar.").waitFor();
-    await page.getByRole("link", { name: "Crear cuenta" }).filter({ visible: true }).click();
+    await text(page, "Tu sesión terminó. Entra otra vez para seguir.").waitFor();
+    await page.getByRole("link", { name: "Crear mi cuenta" }).filter({ visible: true }).click();
     await waitPath(page, /\/registro\?returnTo=/);
-    await page.getByRole("link", { name: "Iniciar sesión" }).filter({ visible: true }).click();
+    await page.getByRole("link", { name: "Entrar" }).filter({ visible: true }).click();
     await waitPath(page, /\/login\?returnTo=/);
   });
   await check("returnTo open redirect attempt (//evil.example) is ignored after sign-in", async () => {
@@ -234,7 +234,7 @@ console.log("\n== Login links ==");
     await text(h2.page, "Sign in").waitFor();
     assert.equal(await h2.page.getByRole("radio", { name: "English" }).filter({ visible: true }).getAttribute("aria-checked"), "true");
     await h2.page.getByRole("radio", { name: "Español" }).filter({ visible: true }).click();
-    await text(h2.page, "Iniciar sesión").waitFor();
+    await text(h2.page, "Entrar").waitFor();
     await h2.context.close();
   });
   await h.context.close();
@@ -262,12 +262,12 @@ console.log("\n== Register ==");
   await check("register-submit · ERROR 422 from server surfaces a retryable validation message", async () => {
     h.state.faults.push({ match: "POST /identity/auth/register", status: 422 });
     await fillId(page, "register-email", uniq("v422"));
-    await byId(page, "register-submit").click(); await text(page, /Revisa los datos/).waitFor();
+    await byId(page, "register-submit").click(); await text(page, /Algunos datos no son válidos/).waitFor();
   });
   await check("register-submit · ERROR 429 + Retry-After blocks and recovers", async () => {
     h.state.faults.push({ match: "POST /identity/auth/register", status: 429, headers: { "retry-after": "2" } });
     await byId(page, "register-submit").click();
-    await text(page, /Demasiados intentos/).waitFor();
+    await text(page, /Hubo muchos intentos/).waitFor();
     await page.waitForFunction(() => [...document.querySelectorAll('[data-testid="register-submit"]')].some((e) => e.offsetParent && e.getAttribute("aria-disabled") !== "true"), null, { timeout: 8000 });
   });
   await check("register-submit · ERROR network down shows offline message", async () => {
@@ -299,7 +299,7 @@ console.log("\n== Register ==");
     await fillId(page, "register-email", email); await fillId(page, "register-password", "a".repeat(72));
     const before = h.count("POST /identity/auth/register");
     await byId(page, "register-submit").dblclick();
-    await waitPath(page, /\/celebraciones/);
+    await waitPath(page, /\/onboarding\/1/);
     h.state.delayMs = 0;
     assert.equal(h.count("POST /identity/auth/register") - before, 1);
     assert.equal((await apiJson("POST", "/identity/auth/login", { email, password: "a".repeat(72) })).status, 200, "72-byte password works for login");
@@ -311,12 +311,12 @@ console.log("\n== Register ==");
   await go(page, "/registro"); await byId(page, "register-submit").waitFor();
   await check("role radios · only HOST, PLANNER, PROVIDER offered (ADMIN never self-service); exactly one selected", async () => {
     const rows = await page.locator('[role="radio"]').evaluateAll((els) => els.filter((e) => e.offsetParent).map((e) => [e.getAttribute("aria-label") ?? "", e.getAttribute("aria-checked")]));
-    const roles = rows.filter(([name]) => /Anfitrión|Organizador de eventos|Proveedor|Administrador/.test(name));
+    const roles = rows.filter(([name]) => /Organizo una celebración|Ayudo a organizar|Ofrezco servicios|Administrador/.test(name));
     assert.equal(roles.length, 3, JSON.stringify(rows)); assert.ok(!roles.some(([name]) => /Administrador/.test(name)));
     assert.equal(roles.filter(([, checked]) => checked === "true").length, 1);
   });
-  await check("register-submit · VALID per role: HOST/PLANNER → /celebraciones, PROVIDER → /portal; token roles match; Enter submits", async () => {
-    for (const [role, label, path] of [["PLANNER", /Organizador de eventos/, /\/celebraciones/], ["PROVIDER", /Proveedor/, /\/portal/]]) {
+  await check("register-submit · VALID per role: HOST/PLANNER → /onboarding/1 (first step of the invitation), PROVIDER → /portal; token roles match; Enter submits", async () => {
+    for (const [role, label, path] of [["PLANNER", /Ayudo a organizar/, /\/onboarding\/1/], ["PROVIDER", /Ofrezco servicios/, /\/portal/]]) {
       const hh = await open(); await go(hh.page, "/registro");
       const email = uniq(role.toLowerCase());
       await fillId(hh.page, "register-email", email); await fillId(hh.page, "register-password", PASSWORD);
@@ -353,7 +353,7 @@ console.log("\n== Recovery ==");
   await check("recover-submit · ERROR 429 clears the success banner, names the wait and blocks until elapsed", async () => {
     h.state.faults.push({ match: "POST /identity/auth/password-recovery", status: 429, headers: { "retry-after": "2" } });
     await byId(page, "recover-submit").click();
-    await text(page, /Demasiados intentos/).waitFor();
+    await text(page, /Hubo muchos intentos/).waitFor();
     assert.equal(await vis(page, '[role="status"]').filter({ hasText: MSG.recovered }).count(), 0, "success banner must not coexist with the failure");
   });
   await check("recover-submit · ERROR network down: offline message; retry afterwards works", async () => {
@@ -433,11 +433,11 @@ const signOutButton = async (page) => {
   const h = await signedIn(ANCHO);
   await check("guard · HOST opening /portal sees 'sin acceso' with two working buttons (go home, sign out)", async () => {
     await navigateInApp(h.page, "/portal");
-    await text(h.page, "No tienes acceso a esta sección").waitFor();
+    await text(h.page, "Esta sección es de otra cuenta").waitFor();
     await h.page.getByRole("button", { name: "Ir a mi espacio" }).filter({ visible: true }).click();
     await waitPath(h.page, /\/celebraciones/);
     await navigateInApp(h.page, "/admin");
-    await text(h.page, "No tienes acceso a esta sección").waitFor();
+    await text(h.page, "Esta sección es de otra cuenta").waitFor();
     await h.page.getByRole("button", { name: "Cerrar sesión" }).filter({ visible: true }).last().click();
     await waitPath(h.page, /\/login/);
   });

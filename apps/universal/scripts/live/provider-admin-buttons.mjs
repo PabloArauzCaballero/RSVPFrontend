@@ -57,9 +57,9 @@ async function session(email, password = PASSWORD, width = WIDTH) {
   lastPage = page;
   page.on("pageerror", (error) => pageErrors.push(`${email}: ${error.message}`));
   await page.goto(`${APP}/login`);
-  await page.getByLabel("Correo electrónico", { exact: true }).filter({ visible: true }).fill(email);
+  await page.getByLabel("Correo", { exact: true }).filter({ visible: true }).fill(email);
   await page.getByLabel("Contraseña", { exact: true }).filter({ visible: true }).fill(password);
-  await page.getByRole("button", { name: "Iniciar sesión" }).filter({ visible: true }).click();
+  await page.getByRole("button", { name: "Entrar" }).filter({ visible: true }).click();
   await page.waitForURL((url) => !url.pathname.startsWith("/login"), { timeout: 20000 });
   return { page, context };
 }
@@ -67,7 +67,19 @@ const go = async (page, path) => { await page.goto(`${APP}${path}`); await page.
 const id = (page, testId) => page.getByTestId(testId).filter({ visible: true }).first();
 const text = (page, pattern) => page.getByText(pattern).filter({ visible: true }).first();
 const fill = (page, testId, value) => id(page, testId).fill(String(value));
-const click = (page, testId) => id(page, testId).click();
+/** Admin queues show 10 rows and "Ver más": reveal the row of a given action before touching it. */
+const reveal = async (page, testId) => {
+  let idle = 0;
+  for (let i = 0; i < 60 && !(await id(page, testId).isVisible().catch(() => false)); i += 1) {
+    const more = id(page, "admin-show-more");
+    if (!(await more.isVisible().catch(() => false))) { idle += 1; if (idle > 8) break; await page.waitForTimeout(500); continue; }
+    idle = 0;
+    await more.click();
+  }
+};
+const click = async (page, testId) => { if (/^(verify|approve|suspend)-/.test(testId)) await reveal(page, testId); await id(page, testId).click(); };
+/** Admin rows keep the negative action behind "Otras acciones": open every visible row menu. */
+const revealActions = (page) => page.getByRole("button", { name: "Otras acciones" }).filter({ visible: true }).evaluateAll((buttons) => buttons.forEach((button) => button.click()));
 const isDisabled = async (locator) => locator.evaluate((node) => node.hasAttribute("disabled") || node.getAttribute("aria-disabled") === "true");
 const dialogButton = (page, title, name) => page.locator("[role=alert]").filter({ hasText: title }).last().getByRole("button", { name, exact: true });
 /** Counts requests that match; used to prove one click sends one request. */
@@ -113,6 +125,7 @@ async function portal() {
   {
     const { page, context } = await session(A.owner.email);
     await go(page, "/portal");
+    await click(page, "more-options");
     await id(page, "rename-open").waitFor();
     await step("Resumen", "rename-save", "ERROR red caida: mensaje, reintento y el texto se conserva", async () => {
       await click(page, "rename-open"); await fill(page, "rename-name", "Nombre sin red");
@@ -155,6 +168,7 @@ async function portal() {
       const other = await session(intruder.email);
       await other.page.evaluate(([key, value]) => localStorage.setItem(key, value), [`rsvp.provider.${intruder.id}`, A.providerId]);
       await go(other.page, "/portal");
+      await click(other.page, "more-options");
       await id(other.page, "rename-open").waitFor();
       await click(other.page, "rename-open"); await fill(other.page, "rename-name", "Robo"); await click(other.page, "rename-save");
       await text(other.page, /Solo el titular de la ficha o un administrador/).waitFor();
@@ -210,9 +224,10 @@ async function portal() {
       return "POST 201; GET /providers/mine: 1 ficha DRAFT con 120 caracteres";
     });
     await step("Resumen", "submit-verification", "LIMITE sin ofertas: deshabilitado con motivo visible", async () => {
-      await text(page, "Antes de enviar, crea al menos una oferta.").waitFor();
-      assert.equal(await isDisabled(id(page, "submit-verification")), true);
-      return "boton deshabilitado + nota 'crea al menos una oferta'";
+      await text(page, "Crea una oferta para poder enviarla.").waitFor();
+      assert.equal(await page.getByTestId("submit-verification").count(), 0, "sin ofertas no se ofrece enviar a verificacion");
+      await id(page, "step-offer-action").waitFor();
+      return "sin ofertas no hay boton de enviar; nota 'crea una oferta' y la accion primaria es crear la primera oferta";
     });
     await context.close();
   }
@@ -221,8 +236,9 @@ async function portal() {
   {
     const { page, context } = await session(A.owner.email);
     await go(page, "/portal/servicios");
+    await click(page, "offer-new");
     await id(page, "listing-submit").waitFor();
-    const fillValid = async (name) => { await fill(page, "listing-name", name); await fill(page, "listing-whatsapp", "https://wa.me/59171111111"); await fill(page, "listing-coverage", "la-paz, el-alto"); await fill(page, "listing-lead", "0"); await fill(page, "listing-conditions", "Entrega incluida"); };
+    const fillValid = async (name) => { if (!(await id(page, "listing-name").isVisible().catch(() => false))) await click(page, "offer-new"); await fill(page, "listing-name", name); await fill(page, "listing-whatsapp", "https://wa.me/59171111111"); await fill(page, "listing-coverage", "la-paz, el-alto"); await fill(page, "listing-lead", "0"); await fill(page, "listing-conditions", "Entrega incluida"); };
     await step("Servicios", "listing-submit", "LIMITE formulario vacio: errores locales, ningun POST", async () => {
       const posts = counter(page, "POST", /\/listings/);
       await click(page, "listing-submit");
@@ -241,6 +257,7 @@ async function portal() {
     });
     await step("Servicios", "listing-submit", "ERROR 422 del servidor (ciudad inexistente): detalle visible, datos conservados", async () => {
       await fillValid("Ciudad mala"); await fill(page, "listing-price", ""); await fill(page, "listing-lead", "1");
+      if (!(await id(page, "listing-city").isVisible().catch(() => false))) await click(page, "offer-more");
       await page.getByLabel("Ciudad", { exact: true }).filter({ visible: true }).fill("atlantis");
       await click(page, "listing-submit");
       await text(page, /Unknown city/).waitFor();
@@ -249,6 +266,7 @@ async function portal() {
       return "POST 422 'Unknown city.' mostrado; GET: la oferta no existe; formulario intacto";
     });
     await step("Servicios", "listing-submit", "ERROR red caida", async () => {
+      if (!(await id(page, "listing-city").isVisible().catch(() => false))) await click(page, "offer-more");
       await page.getByLabel("Ciudad", { exact: true }).filter({ visible: true }).fill("la-paz");
       await offline(page, /\/listings/, async () => { await click(page, "listing-submit"); await text(page, /No hay conexión con el servidor/).waitFor(); });
       assert.ok(!(await ownListings(A)).some((l) => l.title === "Ciudad mala"));
@@ -472,9 +490,9 @@ async function portal() {
     await step("Agenda", "(lista)", "LIMITE lista vacia", async () => {
       const empty = await verifiedProvider("empty", { listings: false });
       const other = await session(empty.owner.email);
-      await go(other.page, "/portal/agenda"); await text(other.page, "No tienes solicitudes de fecha.").waitFor();
+      await go(other.page, "/portal/agenda"); await text(other.page, "Sin fechas por responder").waitFor();
       await other.context.close();
-      return "proveedor sin solicitudes -> 'No tienes solicitudes de fecha.'";
+      return "proveedor sin solicitudes -> 'Sin fechas por responder' + texto guia";
     });
     await context.close();
   }
@@ -511,7 +529,7 @@ async function portal() {
     await step("Leads", "(lista)", "LIMITE lista vacia", async () => {
       const empty = await verifiedProvider("empty2", { listings: false });
       const other = await session(empty.owner.email);
-      await go(other.page, "/portal/leads"); await text(other.page, "Todavía no tienes leads.").waitFor();
+      await go(other.page, "/portal/leads"); await text(other.page, "Aún no te han escrito").waitFor();
       assert.equal(await other.page.getByTestId("leads-more").count(), 0);
       await other.context.close();
       return "sin leads -> estado vacio, sin 'Cargar mas'";
@@ -615,7 +633,7 @@ async function portal() {
     });
     await step("Documentos", "document-upload", "ERROR 503 STORAGE_NOT_CONFIGURED: mensaje claro, estado recuperable", async () => {
       await choose("ci.pdf", "application/pdf", 2048); await click(page, "document-upload");
-      await text(page, /almacenamiento de documentos no está activo/).waitFor();
+      await text(page, /documentos no están disponibles por ahora/).waitFor();
       assert.equal((await http("GET", `/providers/${A.providerId}/documents`, { token: A.owner.token })).json.items.length, 0);
       await id(page, "document-upload").waitFor();
       return "POST /documents 503 STORAGE_NOT_CONFIGURED -> aviso con Reintentar; GET: 0 documentos";
@@ -635,7 +653,7 @@ async function portal() {
         assert.equal(deletes.length, 0);
         await click(page, `document-delete-${docId}`);
         await dialogButton(page, "¿Eliminar este documento?", "Eliminar").click();
-        await text(page, /almacenamiento de documentos no está activo/).waitFor();
+        await text(page, /documentos no están disponibles por ahora/).waitFor();
         assert.equal(deletes.length, 1);
         assert.equal((await http("GET", `/providers/${A.providerId}/documents`, { token: A.owner.token })).json.items.length, 1);
         await id(page, `document-${docId}`).waitFor();
@@ -643,7 +661,7 @@ async function portal() {
       });
       await step("Documentos", "document-view-{id}", "ERROR 503 al pedir la URL de descarga: aviso, sin abrir nada", async () => {
         await click(page, `document-view-${docId}`);
-        await text(page, /almacenamiento de documentos no está activo/).waitFor();
+        await text(page, /documentos no están disponibles por ahora/).waitFor();
         return "GET .../download 503 -> aviso";
       });
       blocked("Documentos", "document-delete-{id} / document-view-{id}", "VALIDO", "borrar y descargar responden 503 STORAGE_NOT_CONFIGURED en este mundo (sin almacenamiento de objetos); el camino feliz solo esta cubierto por vitest (DELETE 204 simulado)");
@@ -675,7 +693,7 @@ async function portal() {
       await page.route(/\/providers\/[^/]+\/lead-config/, (route) => route.continue({ headers: { ...route.request().headers(), authorization: "Bearer manipulado.invalido.token" } }));
       await context.clearCookies();
       await click(page, "destinations-save");
-      await page.waitForFunction(() => /\/login/.test(location.pathname) || /sesión terminó|Tu sesión expiró|Iniciar sesión/i.test(document.body.innerText), null, { timeout: 15000 });
+      await page.waitForFunction(() => /\/login/.test(location.pathname) || /sesión terminó|Tu sesión expiró|Entra a DOne/i.test(document.body.innerText), null, { timeout: 15000 });
       assert.ok((await page.locator("body").innerText()).length > 20, "pantalla en blanco");
       return `tras 401 real: ${new URL(page.url()).pathname} con acceso a iniciar sesion, sin crash`;
     });
@@ -717,7 +735,7 @@ async function admin() {
     const [v1, v2, v3] = [await mk("v1"), await mk("v2"), await mk("v3")];
     const status = async (p) => (await http("GET", `/providers/${p.id}`, { token: adminToken })).json;
     await go(page, "/admin/verificacion");
-    await id(page, `verify-${v1.id}`).waitFor();
+    await reveal(page, `verify-${v1.id}`); await id(page, `verify-${v1.id}`).waitFor();
     await step("Verificacion", "verify-{id}", "ERROR red caida", async () => {
       await offline(page, /\/verify$/, async () => { await click(page, `verify-${v1.id}`); await text(page, /No hay conexión con el servidor/).waitFor(); });
       assert.equal((await status(v1)).status, "PENDING_VERIFICATION");
@@ -730,9 +748,9 @@ async function admin() {
       return "POST verify 409 INVALID_PROVIDER_TRANSITION -> mensaje accionable";
     });
     await step("Verificacion", "verify-{id}", "VALIDO verificar con doble clic = un POST; GET VERIFIED", async () => {
-      await go(page, "/admin/verificacion"); await id(page, `verify-${v1.id}`).waitFor();
+      await go(page, "/admin/verificacion"); await reveal(page, `verify-${v1.id}`); await id(page, `verify-${v1.id}`).waitFor();
       const posts = counter(page, "POST", /\/verify$/);
-      await id(page, `verify-${v1.id}`).dblclick();
+      await reveal(page, `verify-${v1.id}`); await id(page, `verify-${v1.id}`).dblclick();
       await text(page, "Proveedor actualizado.").waitFor();
       assert.equal(posts.length, 1, `POST enviados: ${posts.length}`);
       assert.equal((await status(v1)).status, "VERIFIED");
@@ -740,6 +758,7 @@ async function admin() {
     });
     await step("Verificacion", "reject-{id}", "LIMITE motivo vacio y 501 caracteres", async () => {
       const posts = counter(page, "POST", /\/reject$/);
+      await reveal(page, `verify-${v2.id}`); await revealActions(page);
       await click(page, `reject-${v2.id}`);
       await dialogButton(page, `Rechazar a ${v2.name}`, "Rechazar").click();
       await text(page, /Escribe el motivo/).waitFor();
@@ -757,7 +776,7 @@ async function admin() {
     });
     await step("Verificacion", "(filtro Rechazados)", "LIMITE estado terminal: sin botones, con razon visible", async () => {
       await page.getByRole("radio", { name: "Rechazados" }).click();
-      await id(page, `no-action-${v2.id}`).waitFor();
+      await reveal(page, `no-action-${v2.id}`); await id(page, `no-action-${v2.id}`).waitFor();
       assert.equal(await page.getByTestId(`verify-${v2.id}`).count(), 0);
       const direct = await http("POST", `/providers/${v2.id}/verify`, { token: adminToken });
       assert.equal(direct.status, 409);
@@ -765,7 +784,7 @@ async function admin() {
     });
     await step("Verificacion", "suspend-{id}", "VALIDO suspender un VERIFICADO con motivo; GET SUSPENDED", async () => {
       await page.getByRole("radio", { name: "Verificados" }).click();
-      await id(page, `suspend-${v1.id}`).waitFor();
+      await reveal(page, `suspend-${v1.id}`); await id(page, `suspend-${v1.id}`).waitFor();
       await click(page, `suspend-${v1.id}`);
       await page.getByTestId("admin-reason").filter({ visible: true }).fill("Abuso reiterado");
       await dialogButton(page, `Suspender a ${v1.name}`, "Suspender").click();
@@ -779,7 +798,7 @@ async function admin() {
       const seen = counter(h.page, "GET", /localhost:28000.*\/admin\//);
       await go(h.page, "/admin/verificacion");
       const body = await h.page.locator("body").innerText();
-      assert.ok(/No tienes acceso|Acceso denegado|denegado/i.test(body) || !/\/admin/.test(new URL(h.page.url()).pathname), body.slice(0, 120));
+      assert.ok(/No tienes acceso|Acceso denegado|denegado|otra cuenta|no se puede abrir/i.test(body) || !/\/admin/.test(new URL(h.page.url()).pathname), body.slice(0, 120));
       assert.equal(seen.length, 0);
       const api403 = await http("GET", "/providers/admin/verification-queue?status=PENDING", { token: host.token });
       assert.equal(api403.status, 403);
@@ -799,7 +818,7 @@ async function admin() {
     } catch (error) { seeded = false; blocked("Moderacion", "approve/reject", "VALIDO", `no se pudo sembrar por SQL: ${String(error.message).split("\n")[0]}`); }
     await go(page, "/admin/moderacion");
     if (seeded) {
-      await id(page, `approve-${items[0]}`).waitFor();
+      await reveal(page, `approve-${items[0]}`); await id(page, `approve-${items[0]}`).waitFor();
       const item = async (itemId) => (await http("GET", "/providers/admin/moderation?status=PENDING", { token: adminToken })).json.items.find((i) => i.id === itemId);
       await step("Moderacion", "approve-{id}", "ERROR red caida", async () => {
         await offline(page, /moderation\/.+\/approve/, async () => { await click(page, `approve-${items[0]}`); await text(page, /No hay conexión con el servidor/).waitFor(); });
@@ -808,7 +827,7 @@ async function admin() {
       });
       await step("Moderacion", "approve-{id}", "VALIDO aprobar; GET APPROVED", async () => {
         const posts = counter(page, "POST", /approve$/);
-        await id(page, `approve-${items[0]}`).dblclick();
+        await reveal(page, `approve-${items[0]}`); await id(page, `approve-${items[0]}`).dblclick();
         await text(page, "Decisión registrada.").waitFor();
         assert.equal(posts.length, 1);
         const approved = (await http("GET", "/providers/admin/moderation?status=APPROVED", { token: adminToken })).json.items.some((i) => i.id === items[0]);
@@ -816,6 +835,7 @@ async function admin() {
         return "POST approve 200; GET status=APPROVED lo incluye";
       });
       await step("Moderacion", "reject-{id}", "LIMITE motivo vacio, luego 500 caracteres; GET REJECTED", async () => {
+        await reveal(page, `approve-${items[1]}`); await revealActions(page);
         await click(page, `reject-${items[1]}`);
         await dialogButton(page, `Rechazar`, "Rechazar").click().catch(() => undefined);
         await text(page, /Escribe el motivo/).waitFor();
@@ -944,7 +964,7 @@ async function admin() {
       await click(page, "save-geo"); await text(page, /necesita latitud y longitud/).waitFor();
       await fill(page, "geo-latitude", "200"); await fill(page, "geo-longitude", "-68"); await click(page, "save-geo"); await text(page, /necesita latitud y longitud/).waitFor();
       assert.equal(puts.length, 0);
-      await fill(page, "geo-latitude", "-16.5"); await fill(page, "geo-parent", "NOPE"); await click(page, "save-geo"); await text(page, /rechazó los datos/).waitFor();
+      await fill(page, "geo-latitude", "-16.5"); await fill(page, "geo-parent", "NOPE"); await click(page, "save-geo"); await text(page, /ubicación superior no encaja/).waitFor();
       return "local: coordenadas; servidor 422 INVALID_PARENT -> mensaje";
     });
     await step("Geografia", "save-geo", "VALIDO crear ciudad (slug en minuscula) con coordenadas; GET", async () => {
@@ -1057,7 +1077,7 @@ async function admin() {
       await click(page, "replay"); await dialogButton(page, "Reconstruir la proyección pública", "Cancelar").click(); await sleep(300);
       assert.equal(posts.length, 0);
       await click(page, "replay"); await dialogButton(page, "Reconstruir la proyección pública", "Confirmar").last().click();
-      await text(page, /Proyección reconstruida: \d+ eventos aplicados/).waitFor();
+      await text(page, /Proyección reconstruida: \d+ eventos aplicados/).waitFor({ timeout: 90_000 }); // el replay recorre todas las celebraciones sembradas: ~17 s medidos con el mundo demo
       assert.equal(posts.length, 1);
       return "POST replay 200; mensaje con el contador real";
     });
