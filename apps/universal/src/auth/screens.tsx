@@ -24,6 +24,7 @@ function fieldMessages(t: Translator, errors: FieldErrors): FieldErrors {
   return Object.fromEntries(Object.entries(errors).map(([field, key]) => [field, t(`auth.validation.${key}`)]));
 }
 
+/** Feedback sits under the submit button: appearing or clearing it moves only what is below the button, never the button a second tap is aimed at. */
 function FailureBanner({ submit }: { readonly submit: AuthSubmit }): ReactNode {
   const t = useT();
   const { status, waitSeconds } = submit;
@@ -49,10 +50,10 @@ export function LoginScreen({ onNavigate, returnTo = null }: AuthScreenProps): R
   return (
     <AuthLayout title={t("auth.signInTitle")} intro={returnTo ? t("auth.sessionEnded") : t("auth.signInIntro")}>
       <View style={authStyles.form}>
-        <FailureBanner submit={submitState} />
         <AuthField label={t("auth.email")} value={email} onChange={setEmail} error={errors["email"]} autoComplete="email" keyboardType="email-address" textContentType="emailAddress" returnKeyType="go" onSubmitEditing={() => { void submit(); }} editable={!busy} testID="login-email" />
         <AuthField label={t("auth.password")} value={password} onChange={setPassword} error={errors["password"]} secret autoComplete="current-password" textContentType="password" returnKeyType="go" onSubmitEditing={() => { void submit(); }} editable={!busy} testID="login-password" />
         <SubmitButton label={t("auth.signIn")} busyLabel={t("auth.signingIn")} busy={busy} blocked={submitState.waitSeconds > 0} onPress={() => { void submit(); }} testID="login-submit" />
+        <FailureBanner submit={submitState} />
       </View>
       <View>
         <TextLink label={t("auth.forgotPassword")} onPress={() => onNavigate(AUTH_ROUTES.recover)} />
@@ -86,7 +87,6 @@ export function RegisterScreen({ onNavigate, returnTo = null }: AuthScreenProps)
   return (
     <AuthLayout title={t("auth.registerTitle")} intro={t("auth.registerIntro")}>
       <View style={authStyles.form}>
-        <FailureBanner submit={submitState} />
         <AuthField label={t("auth.email")} value={email} onChange={setEmail} error={errors["email"]} autoComplete="email" keyboardType="email-address" textContentType="emailAddress" returnKeyType="go" onSubmitEditing={() => { void submit(); }} editable={!busy} testID="register-email" />
         <AuthField label={t("auth.password")} value={password} onChange={setPassword} error={errors["password"]} hint={t("auth.passwordHint")} secret autoComplete="new-password" textContentType="newPassword" returnKeyType="go" onSubmitEditing={() => { void submit(); }} editable={!busy} testID="register-password" />
         <View accessibilityRole="radiogroup" accessibilityLabel={t("auth.role")} style={{ gap: spacing[2] }}>
@@ -96,6 +96,7 @@ export function RegisterScreen({ onNavigate, returnTo = null }: AuthScreenProps)
           ))}
         </View>
         <SubmitButton label={t("auth.register")} busyLabel={t("auth.creating")} busy={busy} blocked={submitState.waitSeconds > 0} onPress={() => { void submit(); }} testID="register-submit" />
+        <FailureBanner submit={submitState} />
       </View>
       <View style={authStyles.switchRow}>
         <Text style={authStyles.switchLead}>{t("auth.haveAccount")}</Text>
@@ -128,10 +129,10 @@ export function RecoveryScreen({ onNavigate }: AuthScreenProps): ReactNode {
   return (
     <AuthLayout title={t("auth.recoverTitle")} intro={t("auth.recoverIntro")}>
       <View style={authStyles.form}>
-        {submitState.status.kind === "sent" ? <Banner kind="success">{t("auth.recoverSent")}</Banner> : null}
-        <FailureBanner submit={submitState} />
         <AuthField label={t("auth.email")} value={email} onChange={setEmail} error={errors["email"]} autoComplete="email" keyboardType="email-address" textContentType="emailAddress" returnKeyType="go" onSubmitEditing={() => { void submit(); }} editable={!busy} testID="recover-email" />
         <SubmitButton label={t("auth.recoverSend")} busyLabel={t("common.loading")} busy={busy} blocked={submitState.waitSeconds > 0} onPress={() => { void submit(); }} testID="recover-submit" />
+        {submitState.status.kind === "sent" ? <Banner kind="success">{t("auth.recoverSent")}</Banner> : null}
+        <FailureBanner submit={submitState} />
       </View>
       <TextLink label={t("auth.backToSignIn")} onPress={() => onNavigate(AUTH_ROUTES.login)} />
     </AuthLayout>

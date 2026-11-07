@@ -1,4 +1,5 @@
-import type { Translate } from "@rsvp/i18n/server";
+import type { AppLocale, Translate } from "@rsvp/i18n/server";
+import { supportedLocales } from "@rsvp/i18n/server";
 import { logo } from "@rsvp/design-tokens";
 import { appUrl } from "../lib/app-url";
 
@@ -29,13 +30,16 @@ export function SiteHeader({ t }: Readonly<{ t: Translate }>) {
   );
 }
 
-export function SiteFooter({ t }: Readonly<{ t: Translate }>) {
+export function SiteFooter({ t, locale }: Readonly<{ t: Translate; locale: AppLocale }>) {
   return (
     <footer className="site-footer">
       <div className="site-footer__inner">
         <p className="site-logo"><Logo onDark /></p>
         <p>{t("landing.footer.tagline")}</p>
         <a href="/proveedores">{t("landing.footer.providers")}</a>
+        <nav className="site-languages" aria-label={t("language.label")}>
+          {supportedLocales.map((option) => <a key={option} href={`?lang=${option}`} lang={option} hrefLang={option} {...(option === locale ? { "aria-current": "true" as const } : {})}>{t(`language.${option}`)}</a>)}
+        </nav>
       </div>
     </footer>
   );

@@ -1,21 +1,24 @@
 import type { Metadata } from "next";
-import { createTranslator, defaultLocale } from "@rsvp/i18n/server";
+import { siteI18n } from "../../lib/site-locale";
 import { Breadcrumbs, CategoryLinks, SearchForm } from "../../components/provider-directory";
 import { siteUrl } from "../../lib/metadata";
 import { PROVIDER_CITIES } from "../../lib/providers";
 
 /** B1 · Directory home: categories, featured cities and the search form. */
 export const revalidate = 3600;
-const t = createTranslator(defaultLocale);
 
-export const metadata: Metadata = {
-  title: t("directory.title"),
-  description: t("directory.description"),
-  alternates: { canonical: `${siteUrl()}/proveedores` },
-  openGraph: { type: "website", title: t("directory.title"), description: t("directory.description"), url: `${siteUrl()}/proveedores` }
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await siteI18n();
+  return {
+    title: t("directory.title"),
+    description: t("directory.description"),
+    alternates: { canonical: `${siteUrl()}/proveedores` },
+    openGraph: { type: "website", title: t("directory.title"), description: t("directory.description"), url: `${siteUrl()}/proveedores` }
+  };
+}
 
-export default function DirectoryHome() {
+export default async function DirectoryHome() {
+  const { t } = await siteI18n();
   return (
     <main className="directory">
       <Breadcrumbs t={t} items={[]} />

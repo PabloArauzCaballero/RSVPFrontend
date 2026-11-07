@@ -444,6 +444,24 @@ describe("REQ-F18 · notifications center and preferences", () => {
     expect((mock.state.notifications as { readAt: string | null }[]).every((item) => item.readAt !== null)).toBe(true);
   });
 
+  it("mark-all: two taps in the same frame send each read once", async () => {
+    const { mock, client, id } = world((m) => { m.state.notifications.push(notice(1, "rsvp.companion.requested", "2026-12-04T10:00:00Z"), notice(2, "rsvp.confirmed", "2026-12-04T11:00:00Z")); });
+    renderApp(<NotificationsScreen celebrationId={id} onNavigate={navigate} />, client);
+    expect((await screen.findByTestId("unread-count")).textContent).toBe("2 sin leer");
+    fireEvent.click(screen.getByTestId("mark-all")); fireEvent.click(screen.getByTestId("mark-all"));
+    await waitFor(() => expect(screen.getByTestId("unread-count").textContent).toBe("0 sin leer"));
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(mock.state.log.filter((call) => call.method === "POST")).toHaveLength(2);
+  });
+
+  it("known host templates render the app's own copy (the person's language), unknown ones keep the server's text", async () => {
+    const { client, id } = world((m) => { m.state.notifications.push(notice(1, "hostRsvpConfirmed", "2026-12-04T10:00:00Z"), notice(2, "someFutureTemplate", "2026-12-04T09:00:00Z")); });
+    renderApp(<NotificationsScreen celebrationId={id} onNavigate={navigate} />, client);
+    expect((await screen.findAllByText(/Un invitado confirmó su asistencia/)).length).toBe(2); // subject and body, both from the app
+    expect(screen.queryByText(/Aviso 1/)).toBeNull();
+    expect(screen.getAllByText(/Aviso 2/).length).toBeGreaterThan(0);
+  });
+
   it("helpers: targets never guess", () => {
     expect(notificationTarget("rsvp.companion.requested")).toBe("requests");
     expect(notificationTarget("guest.rsvp.confirmed")).toBe("report");
@@ -463,23 +481,23 @@ describe("REQ-F18 · notifications center and preferences", () => {
   it("REQ-F18-03/04 · switching a channel off is written to the backend and read back", async () => {
     const { mock, client, id } = world();
     renderApp(<PreferencesScreen celebrationId={id} onNavigate={navigate} />, client);
-    const pushSwitch = await screen.findByRole("switch", { name: "Notificaciones push" }) as HTMLInputElement;
-    expect(pushSwitch.checked).toBe(true);
+    const pushSwitch = await screen.findByRole("switch", { name: "Notificaciones push" });
+    expect(pushSwitch.getAttribute("aria-checked")).toBe("true");
     fireEvent.click(pushSwitch);
     expect(await screen.findByText("Preferencia guardada.")).toBeTruthy();
     expect(mock.state.preferences["PUSH"]).toBe(false);
     expect(mock.state.log.find((call) => call.method === "PATCH")?.body).toEqual({ channels: { PUSH: false } });
-    await waitFor(() => expect((screen.getByRole("switch", { name: "Notificaciones push" }) as HTMLInputElement).checked).toBe(false));
+    await waitFor(() => expect((screen.getByRole("switch", { name: "Notificaciones push" })).getAttribute("aria-checked")).toBe("false"));
   });
 
   it("REQ-F18-05 · a failed save reverts the switch and says so", async () => {
     const { mock, client, id } = world();
     renderApp(<PreferencesScreen celebrationId={id} onNavigate={navigate} />, client);
-    const email = await screen.findByRole("switch", { name: "Correo electrónico" }) as HTMLInputElement;
+    const email = await screen.findByRole("switch", { name: "Correo electrónico" });
     mock.state.failNext.push({ status: 503, body: { type: "x", title: "down", status: 503 }, headers: { "content-type": "application/problem+json" } });
     fireEvent.click(email);
     expect(await screen.findByText("No se pudo guardar; volvimos al valor anterior.")).toBeTruthy();
-    await waitFor(() => expect((screen.getByRole("switch", { name: "Correo electrónico" }) as HTMLInputElement).checked).toBe(true));
+    await waitFor(() => expect((screen.getByRole("switch", { name: "Correo electrónico" })).getAttribute("aria-checked")).toBe("true"));
     expect(mock.state.preferences["EMAIL"]).toBe(true);
   });
 
@@ -504,12 +522,12 @@ describe("REQ-F18 · notifications center and preferences", () => {
   it("REQ-F18-03 · event types are switched per type (unlisted means on) and written as eventTypes", async () => {
     const { mock, client, id } = world();
     renderApp(<PreferencesScreen celebrationId={id} onNavigate={navigate} />, client);
-    const toggle = await screen.findByRole("switch", { name: "Un invitado pide más acompañantes" }) as HTMLInputElement;
-    expect(toggle.checked).toBe(true);
+    const toggle = await screen.findByRole("switch", { name: "Un invitado pide más acompañantes" });
+    expect(toggle.getAttribute("aria-checked")).toBe("true");
     fireEvent.click(toggle);
     await waitFor(() => expect(mock.state.eventTypes["companionRequested"]).toBe(false));
     expect(mock.state.log.find((call) => call.method === "PATCH")?.body).toEqual({ eventTypes: { companionRequested: false } });
-    await waitFor(() => expect((screen.getByRole("switch", { name: "Un invitado pide más acompañantes" }) as HTMLInputElement).checked).toBe(false));
+    await waitFor(() => expect((screen.getByRole("switch", { name: "Un invitado pide más acompañantes" })).getAttribute("aria-checked")).toBe("false"));
   });
 });
 

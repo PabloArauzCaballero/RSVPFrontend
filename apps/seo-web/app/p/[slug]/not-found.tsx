@@ -1,9 +1,9 @@
-import { createTranslator, defaultLocale } from "@rsvp/i18n/server";
+import { siteI18n } from "../../../lib/site-locale";
 
 /** B14 · Partner not verified, suspended or unknown: a controlled 404 with a way back, nothing about the partner. */
-const t = createTranslator(defaultLocale);
 
-export default function PartnerNotFound() {
+export default async function PartnerNotFound() {
+  const { t } = await siteI18n();
   return (
     <main className="directory partner">
       <h1>{t("partner.notFound.title")}</h1>

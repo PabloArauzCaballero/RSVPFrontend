@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Linking, ScrollView, View } from "react-native";
+import { Linking, Pressable, ScrollView, View } from "react-native";
 import { themeFromTemplate } from "@rsvp/celebration-theme";
 import { CelebrationNativeRenderer } from "@rsvp/celebration-theme/native";
 import { useMediaAssets, useTemplate, type MediaAsset } from "@rsvp/query-hooks";
@@ -47,9 +47,9 @@ function Preview({ celebration, eventType, device, setDevice, gallery, locale }:
         ? <ActionButton variant="secondary" label={t("host.preview.openPublic")} onPress={() => { void Linking.openURL(publicUrl(celebration.slug)); }} />
         : <Notice>{t("host.preview.notPublished")}</Notice>}
       <ScrollView horizontal contentContainerStyle={{ paddingBottom: 8 }}>
-        <View testID={`preview-${device}`} style={[styles.card, { width: DEVICE_WIDTHS[device], padding: 0, overflow: "hidden" }]}>
+        <Pressable testID={`preview-${device}`} role="region" aria-label={t("host.preview.frame")} style={[styles.card, { width: DEVICE_WIDTHS[device], padding: 0, overflow: "hidden" }]}>
           <CelebrationNativeRenderer theme={theme} view={previewView(celebration, eventType, locale)} gallery={images} t={t} />
-        </View>
+        </Pressable>
       </ScrollView>
     </View>
   );

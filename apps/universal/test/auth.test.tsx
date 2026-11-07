@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createApiClient, type ApiClient } from "@rsvp/api-client";
@@ -8,6 +8,7 @@ import { LanguageSwitch } from "../src/auth/auth-ui";
 import { InvitationLinkScreen } from "../src/auth/invitation-link";
 import { RedirectIfSignedIn, RouteGuard, currentLocation } from "../src/auth/route-guard";
 import { AUTH_ROUTES, destinationAfterSignIn, groupOfPath, homeFor, loginHref } from "../src/auth/routes";
+import { NotFoundScreen } from "../src/auth/not-found-screen";
 import { LoginScreen, RecoveryScreen, RegisterScreen } from "../src/auth/screens";
 import { AppProviders, createAppRuntime, useClaims, useLocale, type AppRuntime } from "../src/platform/providers";
 import { claimsOf, createAppSessionStore } from "../src/platform/session";
@@ -297,5 +298,21 @@ describe("REQ-F05-04/05 · invitation link", () => {
   it("a missing token is reported as an invalid link", () => {
     render(<AppProviders client={fakeClient({}).client} locale="es-BO"><InvitationLinkScreen token="  " /></AppProviders>);
     expect(screen.getByText("Este enlace no es válido")).toBeTruthy();
+  });
+});
+
+describe("unmatched address", () => {
+  it("says so in the person's language and offers the way back (es-BO and en-US)", () => {
+    const go = vi.fn();
+    setup(<NotFoundScreen onNavigate={go} />);
+    expect(screen.getByText("No encontramos esta página")).toBeTruthy();
+    fireEvent.click(screen.getByRole("link", { name: "Ir al inicio" }));
+    expect(go).toHaveBeenCalledWith("/");
+    cleanup();
+    const { client } = fakeClient({});
+    const manager = new SessionManager(createMemorySessionStore(), new IdentityClient(client));
+    render(<AppProviders runtime={{ manager, client, identityClient: client }} locale="en-US" queryClient={new QueryClient()}><NotFoundScreen onNavigate={go} /></AppProviders>);
+    expect(screen.getByText("We could not find this page")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Go to the start page" })).toBeTruthy();
   });
 });

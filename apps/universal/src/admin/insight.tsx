@@ -110,7 +110,7 @@ function UsersScreenContent({ onNavigate }: Nav): ReactNode {
         )}
       </QueryBoundary>
       <ConfirmDialog visible={asking !== null} danger title={asking ? t("admin.users.grantTitle", { role: asking.role, email: asking.user.email }) : ""} body={t("admin.users.grantBody")} confirmLabel={asking ? t("admin.users.grant", { role: asking.role }) : ""}
-        onCancel={() => setAsking(null)} onConfirm={() => { if (asking) grantOnce({ userId: asking.user.id, role: asking.role }); setAsking(null); }} />
+        confirmTestID="grant-confirm" cancelTestID="grant-cancel" onCancel={() => setAsking(null)} onConfirm={() => { if (asking) grantOnce({ userId: asking.user.id, role: asking.role }); setAsking(null); }} />
     </AdminScreen>
   );
 }

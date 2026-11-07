@@ -1,7 +1,7 @@
 import type { PropsWithChildren } from 'react';
 import { useState } from 'react';
-import { ActivityIndicator, Modal as NativeModal, Pressable, ScrollView, Switch, Text, TextInput, View, useWindowDimensions, type ViewStyle } from 'react-native';
-import { brand, radius, spacing } from '@rsvp/design-tokens';
+import { ActivityIndicator, Modal as NativeModal, Platform, Pressable, ScrollView, Switch, Text, TextInput, View, useWindowDimensions, type ViewStyle } from 'react-native';
+import { brand, radius, spacing, typography } from '@rsvp/design-tokens';
 import { useTheme } from './theme';
 
 export { UiProvider, useTheme, type ColorScheme } from './theme';
@@ -76,7 +76,7 @@ export function Select({ label, options, value, onChange, state = 'default', err
       {state === 'empty' ? <StateHint state={state} /> : (
         <View accessibilityRole="radiogroup" accessibilityLabel={label} style={styles.picker}>
           {options.map((option) => (
-            <Pressable key={option.value} accessibilityRole="radio" accessibilityLabel={option.label} accessibilityState={{ checked: value === option.value, disabled }} disabled={disabled} onPress={() => onChange?.(option.value)} style={[styles.option, value === option.value && styles.optionSelected]}>
+            <Pressable key={option.value} accessibilityRole="radio" accessibilityLabel={option.label} aria-checked={value === option.value} accessibilityState={{ checked: value === option.value, disabled }} disabled={disabled} onPress={() => onChange?.(option.value)} style={[styles.option, value === option.value && styles.optionSelected]}>
               <Text style={styles.body}>{option.label}</Text>
             </Pressable>
           ))}
@@ -98,6 +98,37 @@ export function Checkbox({ label, value, onChange, state = 'default', error }: {
       </Pressable>
       <StateHint state={state === 'empty' ? undefined : state} error={error} />
     </View>
+  );
+}
+
+const SWITCH_ROW_MIN_HEIGHT = 56;
+const TRACK = { width: 44, height: 26, radius: 13, knob: 22 };
+/** react-native-web understands outline styles that the native types do not declare. */
+const focusRing = (color: string): object => (Platform.select({ web: { outlineColor: color, outlineWidth: 2, outlineOffset: 2 }, default: {} }) as object);
+
+/**
+ * On/off setting as a whole row (WAI-ARIA switch): the row is the touch target (56 px high, never the 20 px native Switch),
+ * the track is only the picture of the state. Space and Enter toggle on the web, as does a tap; disabled rows ignore all three.
+ */
+export function SwitchRow({ label, hint, value, onChange, disabled = false, testID }: { label: string; hint?: string; value: boolean; onChange?: (value: boolean) => void; disabled?: boolean; testID?: string }) {
+  const { palette, styles } = useTheme();
+  const toggle = () => { if (!disabled) onChange?.(!value); };
+  // rn-web's Pressable answers Enter and touch but not the space bar; a switch must answer it too.
+  const keyboard = { onKeyDown: (event: { key: string; preventDefault: () => void }) => { if (event.key === ' ' || event.key === 'Spacebar') { event.preventDefault(); toggle(); } } };
+  return (
+    <Pressable
+      accessibilityRole="switch" role="switch" aria-checked={value} aria-disabled={disabled} accessibilityLabel={label} accessibilityState={{ checked: value, disabled }}
+      disabled={disabled} focusable={!disabled} tabIndex={disabled ? -1 : 0} onPress={toggle} {...(testID ? { testID } : {})} {...(keyboard as object)}
+      style={[{ minHeight: SWITCH_ROW_MIN_HEIGHT, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing[3] }, disabled && styles.buttonDisabled, focusRing(palette.primary)]}
+    >
+      <View style={{ flexShrink: 1 }}>
+        <Text style={styles.body}>{label}</Text>
+        {hint ? <Text style={[styles.body, { fontSize: typography.fontSize.sm, lineHeight: typography.lineHeight.sm }]}>{hint}</Text> : null}
+      </View>
+      <View style={{ width: TRACK.width, height: TRACK.height, borderRadius: TRACK.radius, padding: 2, justifyContent: 'center', backgroundColor: value ? palette.primary : palette.border }}>
+        <View style={{ width: TRACK.knob, height: TRACK.knob, borderRadius: TRACK.knob / 2, backgroundColor: value ? palette.onPrimary : palette.surface, alignSelf: value ? 'flex-end' : 'flex-start' }} />
+      </View>
+    </Pressable>
   );
 }
 
@@ -217,7 +248,7 @@ export function Avatar({ name, size = 36 }: { name: string; size?: number }) {
 }
 
 export function ComponentCatalog() {
-  const { styles, strings: t } = useTheme();
+  const { styles, palette, strings: t } = useTheme();
   const demoRows = [[t.catalogRowName, t.catalogRowStatus]];
   const [checked, setChecked] = useState(false); const [selected, setSelected] = useState('uno');
   const [modal, setModal] = useState(false); const [sheet, setSheet] = useState(false); const [toast, setToast] = useState(false);
@@ -225,7 +256,8 @@ export function ComponentCatalog() {
   return (
     <ScrollView contentContainerStyle={styles.page}>
       <Text accessibilityRole="header" style={styles.title}>{t.catalogTitle}</Text>
-      <View testID="nw-probe" className="rounded-lg border border-border bg-surface-muted p-4"><Text style={styles.body}>{t.catalogIntro}</Text></View>
+      {/* NativeWind classes carry the shape; the colours come from the active theme so text and surface always flip together (light, dark). */}
+      <View testID="nw-probe" className="rounded-lg border p-4" style={{ backgroundColor: palette.surfaceMuted, borderColor: palette.border }}><Text style={styles.body}>{t.catalogIntro}</Text></View>
       <View className="flex-row flex-wrap gap-3">
         {(['primary', 'secondary', 'ghost', 'danger'] as const).map((variant) => <Button key={variant} variant={variant} onPress={() => setToast(true)}>{variant}</Button>)}
       </View>

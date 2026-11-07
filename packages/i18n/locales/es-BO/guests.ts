@@ -75,8 +75,18 @@ export const guestsEsBO = {
   notifications: {
     title: "Avisos", intro: "Mensajes que el sistema te envió o intentó enviarte sobre esta celebración.", empty: "Todavía no tienes avisos.", unread: "Sin leer", read: "Leído",
     markRead: "Marcar como leído", markAll: "Marcar todos como leídos", unreadCount: "{{count}} sin leer", open: "Abrir", refresh: "Actualizar", markFailed: "No se pudo marcar como leído; volvimos al estado anterior.",
-    channel: { EMAIL: "Correo", SMS: "SMS", WHATSAPP: "WhatsApp", PUSH: "Notificación push" },
+    channel: { EMAIL: "Correo", SMS: "SMS", WHATSAPP: "WhatsApp", PUSH: "Notificación push", INBOX: "Bandeja" },
     delivery: { PENDING: "En cola", SENDING: "Enviando", SENT: "Enviado", DEFERRED: "Pospuesto", SUPPRESSED: "Omitido según tus preferencias", FAILED: "No se pudo enviar", UNCERTAIN: "Sin confirmar", CANCELLED: "Cancelado", RETRY: "Reintentando" },
+    templates: {
+      companionRequested: { subject: "Solicitud de acompañantes", text: "Tienes una solicitud de acompañantes pendiente de revisión en tu panel." },
+      giftRequested: { subject: "Solicitud de regalo", text: "Tienes una reserva de regalo pendiente de revisión en tu panel." },
+      leadCapReached: { subject: "Límite de contactos alcanzado", text: "Alcanzaste el límite de contactos configurado. Revisa los detalles en tu panel." },
+      celebrationPublished: { subject: "Celebración publicada", text: "Tu celebración ya está publicada. Puedes consultar su estado en tu panel." },
+      pushTest: { subject: "Prueba de notificación", text: "Se está comprobando la configuración de notificaciones de este dispositivo." },
+      hostRsvpConfirmed: { subject: "Un invitado confirmó su asistencia", text: "Un invitado confirmó su asistencia. Revisa el detalle en tu panel de invitados." },
+      hostRsvpDeclined: { subject: "Un invitado no podrá asistir", text: "Un invitado respondió que no asistirá. Revisa el detalle en tu panel de invitados." },
+      hostRsvpChanged: { subject: "Un invitado cambió su respuesta", text: "Un invitado actualizó su respuesta de asistencia. Revisa el detalle en tu panel de invitados." }
+    },
     via: "Por {{channel}} · {{status}} · {{date}}"
   },
   preferences: {

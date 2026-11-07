@@ -78,8 +78,18 @@ export const guestsEnUS: DeepStrings<typeof guestsEsBO> = {
   notifications: {
     title: "Notices", intro: "Messages the system sent or tried to send you about this celebration.", empty: "You have no notices yet.", unread: "Unread", read: "Read",
     markRead: "Mark as read", markAll: "Mark all as read", unreadCount: "{{count}} unread", open: "Open", refresh: "Refresh", markFailed: "It could not be marked as read; we restored the previous state.",
-    channel: { EMAIL: "Email", SMS: "SMS", WHATSAPP: "WhatsApp", PUSH: "Push notification" },
+    channel: { EMAIL: "Email", SMS: "SMS", WHATSAPP: "WhatsApp", PUSH: "Push notification", INBOX: "In-app inbox" },
     delivery: { PENDING: "Queued", SENDING: "Sending", SENT: "Sent", DEFERRED: "Deferred", SUPPRESSED: "Skipped by your preferences", FAILED: "Could not be sent", UNCERTAIN: "Unconfirmed", CANCELLED: "Cancelled", RETRY: "Retrying" },
+    templates: {
+      companionRequested: { subject: "Companion request", text: "A companion request is waiting for your review in your dashboard." },
+      giftRequested: { subject: "Gift reservation request", text: "A gift reservation is waiting for your review in your dashboard." },
+      leadCapReached: { subject: "Contact limit reached", text: "You reached your configured contact limit. Check the details in your dashboard." },
+      celebrationPublished: { subject: "Celebration published", text: "Your celebration is now published. You can check its status in your dashboard." },
+      pushTest: { subject: "Notification test", text: "The notification setup for this device is being checked." },
+      hostRsvpConfirmed: { subject: "A guest confirmed attendance", text: "A guest confirmed they will attend. See the details in your guest dashboard." },
+      hostRsvpDeclined: { subject: "A guest cannot attend", text: "A guest replied that they will not attend. See the details in your guest dashboard." },
+      hostRsvpChanged: { subject: "A guest changed their reply", text: "A guest updated their RSVP. See the details in your guest dashboard." }
+    },
     via: "By {{channel}} · {{status}} · {{date}}"
   },
   preferences: {

@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { colors } from '@rsvp/design-tokens';
 import * as native from './index';
 import * as web from '../../ui-web/src/index';
-import { Button, Card, Checkbox, ComponentCatalog, DatePicker, FileUpload, Input, Modal, Select, Sheet, Table, Toast, UiProvider, componentStates } from './index';
+import { Button, Card, Checkbox, ComponentCatalog, SwitchRow, DatePicker, FileUpload, Input, Modal, Select, Sheet, Table, Toast, UiProvider, componentStates } from './index';
 
 afterEach(cleanup);
 
@@ -60,6 +60,28 @@ describe('behaviour and accessibility roles (REQ-F03-03)', () => {
     fireEvent.click(screen.getByRole('checkbox', { name: 'Acepto' }));
     expect(change.mock.calls.map((c) => c[0])).toEqual(['b', false]);
     expect(screen.getAllByRole('alert').map((n) => n.textContent)).toEqual(['Guardado', 'Falló']);
+  });
+
+  it('every radio states whether it is checked (aria-required-attr: axe rates a radio without it critical)', () => {
+    render(<Select label="Tipo" value="a" options={[{ label: 'A', value: 'a' }, { label: 'B', value: 'b' }]} />);
+    expect(screen.getByRole('radio', { name: 'A' }).getAttribute('aria-checked')).toBe('true');
+    expect(screen.getByRole('radio', { name: 'B' }).getAttribute('aria-checked')).toBe('false');
+  });
+
+  it('SwitchRow is a WAI-ARIA switch: role, aria-checked, tap, Space and Enter-capable, 56 px row, disabled ignores input', () => {
+    const change = vi.fn();
+    const { rerender } = render(<SwitchRow label="Email" hint="Avisos" value={false} onChange={change} testID="sw" />);
+    const row = screen.getByRole('switch', { name: 'Email' });
+    expect(row.getAttribute('aria-checked')).toBe('false');
+    expect(row.getAttribute('tabindex')).toBe('0');
+    fireEvent.click(row);
+    fireEvent.keyDown(row, { key: ' ' });
+    expect(change.mock.calls.map((c) => c[0])).toEqual([true, true]);
+    rerender(<SwitchRow label="Email" value onChange={change} disabled />);
+    const off = screen.getByRole('switch', { name: 'Email' });
+    expect(off.getAttribute('aria-checked')).toBe('true');
+    fireEvent.click(off); fireEvent.keyDown(off, { key: ' ' });
+    expect(change).toHaveBeenCalledTimes(2);
   });
 
   it('Sheet and Modal render titled content, an empty state hides children, and Cerrar closes', () => {

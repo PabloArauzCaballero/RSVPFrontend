@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { createTranslator, defaultLocale } from "@rsvp/i18n/server";
+import { siteI18n } from "../../../lib/site-locale";
 import { Breadcrumbs, CityLinks, ProviderResults } from "../../../components/provider-directory";
 import { siteUrl } from "../../../lib/metadata";
 import { categoryBySlug, pageParam, PROVIDER_CATEGORIES, searchProviders } from "../../../lib/providers";
 
 /** B2 · Listing by category, server-rendered, with crawlable ?page=N pagination. */
 export const revalidate = 300;
-const t = createTranslator(defaultLocale);
 
 interface Props {
   readonly params: Promise<{ readonly categoria: string }>;
@@ -19,6 +18,7 @@ export function generateStaticParams() {
 }
 
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
+  const { t } = await siteI18n();
   const category = categoryBySlug((await params).categoria);
   if (!category) return { robots: { index: false } };
   const page = pageParam((await searchParams).page);
@@ -28,6 +28,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 }
 
 export default async function CategoryPage({ params, searchParams }: Props) {
+  const { t, locale } = await siteI18n();
   const category = categoryBySlug((await params).categoria);
   if (!category) notFound();
   const page = pageParam((await searchParams).page);
@@ -38,7 +39,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
       <Breadcrumbs t={t} items={[{ label: name }]} />
       <h1>{t("directory.categoryTitle", { category: name })}</h1>
       <p>{t("directory.categoryDescription", { category: name })}</p>
-      <ProviderResults page={results} t={t} locale={defaultLocale} path={`/proveedores/${category.slug}`} query={page > 1 ? `page=${page}` : ""} />
+      <ProviderResults page={results} t={t} locale={locale} path={`/proveedores/${category.slug}`} query={page > 1 ? `page=${page}` : ""} />
       <h2>{t("directory.citiesHeading")}</h2>
       <CityLinks t={t} categorySlug={category.slug} categoryCode={category.code} />
     </main>

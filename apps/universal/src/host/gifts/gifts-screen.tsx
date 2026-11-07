@@ -1,6 +1,7 @@
+import { SwitchRow } from "@rsvp/ui";
 import { useState, type ReactNode } from "react";
-import { Switch, Text, View } from "react-native";
-import { colors, spacing } from "@rsvp/design-tokens";
+import { Text, View } from "react-native";
+import { spacing } from "@rsvp/design-tokens";
 import { formatMinor } from "@rsvp/i18n";
 import { catalogedFirst, useApproveExternalGift, useGiftList, useRejectExternalGift, useGiftSettings, useUpdateGiftSettings, type GiftItem } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../../platform/providers";
@@ -46,15 +47,8 @@ function RequesterVisibility({ celebrationId }: { readonly celebrationId: string
     <Section title={t("gifts.host.visibility.title")}>
       <Text style={styles.body}>{t("gifts.host.visibility.intro")}</Text>
       {rows.map((row) => (
-        <View key={row.key} style={[styles.row, { justifyContent: "space-between", minHeight: 48 }]}>
-          <View style={{ flexShrink: 1 }}>
-            <Text style={styles.label}>{row.label}</Text>
-            <Text style={styles.muted}>{row.help}</Text>
-          </View>
-          <Switch accessibilityLabel={row.label} testID={`visibility-${row.key}`} value={current[row.key]} disabled={update.isPending}
-            onValueChange={(value) => update.mutate({ showRequesterToHost: current.showRequesterToHost, showRequesterToGuests: current.showRequesterToGuests, [row.key]: value }, { onSuccess: () => { void settings.refetch(); } })}
-            trackColor={{ true: colors.light.primary, false: colors.light.border }} thumbColor="#FFFFFF" />
-        </View>
+        <SwitchRow key={row.key} label={row.label} hint={row.help} value={current[row.key]} disabled={update.isPending} testID={`visibility-${row.key}`}
+          onChange={() => update.mutate({ showRequesterToHost: current.showRequesterToHost, showRequesterToGuests: current.showRequesterToGuests, [row.key]: !current[row.key] }, { onSuccess: () => { void settings.refetch(); } })} />
       ))}
       {update.isSuccess ? <Notice kind="success">{t("gifts.host.visibility.saved")}</Notice> : null}
       {update.isError ? <ErrorNotice error={update.error} /> : null}

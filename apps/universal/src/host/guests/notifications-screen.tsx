@@ -10,7 +10,7 @@ import { ActionButton, Loading, Notice, styles } from "../ui";
 import { FailureNotice, RetryNotice } from "./parts";
 import { useSingleFlightGate } from "../../platform/single-flight";
 import { classifyFailure } from "./failure";
-import { notificationTarget } from "./notification-target";
+import { knownNoticeTemplate, notificationTarget } from "./notification-target";
 
 /** C31 / F6 · In-app notification center: unread first, direct action, mark one or all as read. The read state is the server's (`readAt`), shared by every device (REQ-F18-01/02/05). */
 
@@ -46,10 +46,13 @@ function NotificationsBody({ celebrationId, timeZone, onNavigate }: { readonly c
           {items.map((item) => {
             const seen = isRead(item);
             const target = notificationTarget(item.template);
+            const own = knownNoticeTemplate(item.template);
+            const subject = own ? t(`guests.notifications.templates.${own}.subject`) : item.subject;
+            const body = own ? t(`guests.notifications.templates.${own}.text`) : item.text;
             return (
-              <View key={item.id} role="listitem" testID={`notice-${item.id}`} style={[styles.card, { gap: spacing[1] }, seen && { opacity: 0.8 }]}>
-                <Text style={styles.subtitle}>{seen ? t("guests.notifications.read") : t("guests.notifications.unread")} · {item.subject}</Text>
-                <Text style={styles.body}>{item.text}</Text>
+              <View key={item.id} role="listitem" testID={`notice-${item.id}`} style={[styles.card, { gap: spacing[1] },]}>
+                <Text style={styles.subtitle}>{seen ? t("guests.notifications.read") : t("guests.notifications.unread")} · {subject}</Text>
+                <Text style={styles.body}>{body}</Text>
                 <Text style={styles.muted}>{t("guests.notifications.via", { channel: t(`guests.notifications.channel.${item.channel}`), status: t(`guests.notifications.delivery.${item.status}`), date: formatCelebrationDate(item.createdAt, { locale, timeZone }) })}</Text>
                 <View style={styles.row}>
                   {target ? <ActionButton label={t("guests.notifications.open")} onPress={() => open(item)} testID={`open-${item.id}`} /> : null}

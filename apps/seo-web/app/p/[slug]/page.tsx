@@ -1,17 +1,17 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { createTranslator, defaultLocale } from "@rsvp/i18n/server";
+import { siteI18n } from "../../../lib/site-locale";
 import { PartnerMicrosite, PartnerUnavailable } from "../../../components/partner-microsite";
 import { siteUrl } from "../../../lib/metadata";
 import { loadPartner } from "../../../lib/partner";
 
 /** B5 · Partner microsite: the indexable destination for partners without a site of their own. */
 export const revalidate = 300;
-const t = createTranslator(defaultLocale);
 
 interface Props { readonly params: Promise<{ readonly slug: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { t } = await siteI18n();
   const { slug } = await params;
   const lookup = await loadPartner(slug);
   // Unknown, unverified, suspended or unreachable: nothing to index and nothing revealed.
@@ -31,9 +31,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function PartnerPage({ params }: Props) {
+  const { t, locale } = await siteI18n();
   const { slug } = await params;
   const lookup = await loadPartner(slug);
   if (lookup.state === "not-found") notFound();
   if (lookup.state === "unavailable") return <PartnerUnavailable t={t} />;
-  return <PartnerMicrosite partner={lookup.partner} t={t} locale={defaultLocale} />;
+  return <PartnerMicrosite partner={lookup.partner} t={t} locale={locale} />;
 }

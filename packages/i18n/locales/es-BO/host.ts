@@ -66,7 +66,7 @@ export const hostEsBO = {
     fields: { title: "Nombre", subtitle: "Frase de bienvenida", story: "Historia", dressCode: "Código de vestimenta" }, faqItem: "Pregunta {{n}}", scheduleItem: "Actividad {{n}}"
   },
   templates: { title: "Templates", help: "Solo aparecen los compatibles con {{eventType}}.", current: "En uso", apply: "Usar este template", preserved: "Tu contenido se conserva al cambiar de template.", empty: "No hay templates compatibles todavía.", preview: "Vista previa de {{name}}" },
-  preview: { title: "Vista previa", devices: { mobile: "Móvil", tablet: "Tableta", desktop: "Escritorio" }, device: "Tamaño", openPublic: "Abrir el sitio público", templateFallback: "Mientras tanto la vista previa usa el diseño básico, no el template elegido.", notPublished: "Así verán tu sitio cuando lo publiques." },
+  preview: { title: "Vista previa", devices: { mobile: "Móvil", tablet: "Tableta", desktop: "Escritorio" }, device: "Tamaño", frame: "Vista previa de tu celebración", openPublic: "Abrir el sitio público", templateFallback: "Mientras tanto la vista previa usa el diseño básico, no el template elegido.", notPublished: "Así verán tu sitio cuando lo publiques." },
   publish: {
     title: "Publicar", ready: "Todo listo para publicar.", missing: "Antes de publicar, completa:",
     fields: { title: "El nombre de la celebración", subtitle: "La frase de bienvenida", eventDate: "La fecha del evento", venueName: "El lugar principal", childName: "El nombre de quien se bautiza", companyName: "El nombre de la empresa", celebrantName: "El nombre de la celebrante", host: "El nombre de: {{role}}", other: "El dato «{{field}}»" },

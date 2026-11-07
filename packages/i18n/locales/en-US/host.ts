@@ -69,7 +69,7 @@ export const hostEnUS: DeepStrings<typeof hostEsBO> = {
     fields: { title: "Name", subtitle: "Welcome line", story: "Story", dressCode: "Dress code" }, faqItem: "Question {{n}}", scheduleItem: "Activity {{n}}"
   },
   templates: { title: "Templates", help: "Only templates compatible with {{eventType}} are shown.", current: "In use", apply: "Use this template", preserved: "Your content is kept when you change templates.", empty: "There are no compatible templates yet.", preview: "Preview of {{name}}" },
-  preview: { title: "Preview", devices: { mobile: "Mobile", tablet: "Tablet", desktop: "Desktop" }, device: "Size", openPublic: "Open the public site", templateFallback: "Meanwhile the preview uses the basic design, not the chosen template.", notPublished: "This is how your site will look once published." },
+  preview: { title: "Preview", devices: { mobile: "Mobile", tablet: "Tablet", desktop: "Desktop" }, device: "Size", frame: "Preview of your celebration", openPublic: "Open the public site", templateFallback: "Meanwhile the preview uses the basic design, not the chosen template.", notPublished: "This is how your site will look once published." },
   publish: {
     title: "Publish", ready: "Everything is ready to publish.", missing: "Before publishing, complete:",
     fields: { title: "The celebration name", subtitle: "The welcome line", eventDate: "The event date", venueName: "The main venue", childName: "The name of the child being baptised", companyName: "The company name", celebrantName: "The name of the celebrant", host: "The name of: {{role}}", other: "The field “{{field}}”" },

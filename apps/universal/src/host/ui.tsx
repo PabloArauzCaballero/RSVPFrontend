@@ -89,7 +89,7 @@ export function Field({ label, value, onChange, help, error, multiline, placehol
   );
 }
 
-export interface Choice<TValue extends string> { readonly value: TValue; readonly label: string; readonly description?: string }
+export interface Choice<TValue extends string> { readonly value: TValue; readonly label: string; readonly description?: string; /** Language-independent handle for browser and device tests. */ readonly testID?: string }
 
 export function ChoiceGroup<TValue extends string>({ label, choices, value, onChange, disabled = false }: { readonly label: string; readonly choices: readonly Choice<TValue>[]; readonly value: TValue | null; readonly onChange: (value: TValue) => void; /** Blocks changes while a request that depends on the choice is in flight. */ readonly disabled?: boolean }): ReactNode {
   // Short labels read as one wrapped row of options; a choice that needs an explanation gets its own row.
@@ -101,7 +101,7 @@ export function ChoiceGroup<TValue extends string>({ label, choices, value, onCh
         {choices.map((choice) => {
           const selected = choice.value === value;
           return (
-            <Pressable key={choice.value} accessibilityRole="radio" aria-checked={selected} aria-disabled={disabled} disabled={disabled} accessibilityLabel={choice.label} onPress={() => onChange(choice.value)} style={[described ? styles.option : styles.choice, selected && (described ? styles.optionSelected : styles.choiceSelected), disabled && styles.buttonDisabled]}>
+            <Pressable key={choice.value} {...(choice.testID ? { testID: choice.testID } : {})} accessibilityRole="radio" aria-checked={selected} aria-disabled={disabled} disabled={disabled} accessibilityLabel={choice.label} onPress={() => onChange(choice.value)} style={[described ? styles.option : styles.choice, selected && (described ? styles.optionSelected : styles.choiceSelected), disabled && styles.buttonDisabled]}>
               <Text style={[styles.body, selected && { fontWeight: "700" }]}>{choice.label}</Text>
               {choice.description ? <Text style={styles.muted}>{choice.description}</Text> : null}
             </Pressable>

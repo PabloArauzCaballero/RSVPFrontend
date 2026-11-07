@@ -1,18 +1,21 @@
 import type { Metadata } from "next";
-import { createTranslator, defaultLocale } from "@rsvp/i18n/server";
+import { siteI18n } from "../../../lib/site-locale";
 import { Breadcrumbs, ProviderResults, SearchForm } from "../../../components/provider-directory";
 import { categoryBySlug, cityBySlug, pageParam, parseGeo, searchProviders } from "../../../lib/providers";
 
 /** B4 · Filtered results. Filter combinations are endless, so this page is not indexed (but its links are followed). */
-const t = createTranslator(defaultLocale);
 const MINOR_PER_UNIT = 100;
 
-export const metadata: Metadata = { title: t("directory.searchTitle"), description: t("directory.searchDescription"), robots: { index: false, follow: true } };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await siteI18n();
+  return { title: t("directory.searchTitle"), description: t("directory.searchDescription"), robots: { index: false, follow: true } };
+}
 
 type Params = Readonly<Record<string, string | string[] | undefined>>;
 const first = (value: string | string[] | undefined): string => (Array.isArray(value) ? value[0] ?? "" : value ?? "");
 
 export default async function SearchPage({ searchParams }: { readonly searchParams: Promise<Params> }) {
+  const { t, locale } = await siteI18n();
   const params = await searchParams;
   const values = { categoria: first(params["categoria"]), ciudad: first(params["ciudad"]), precioMax: first(params["precioMax"]), fecha: first(params["fecha"]), verificado: first(params["verificado"]), lat: first(params["lat"]), lng: first(params["lng"]), radio: first(params["radio"]) };
   const maxPrice = Number(values.precioMax);
@@ -34,7 +37,7 @@ export default async function SearchPage({ searchParams }: { readonly searchPara
       <Breadcrumbs t={t} items={[{ label: t("directory.searchTitle") }]} />
       <h1>{t("directory.searchTitle")}</h1>
       <SearchForm t={t} values={effective} />
-      <ProviderResults page={results} t={t} locale={defaultLocale} path="/proveedores/buscar" query={query} />
+      <ProviderResults page={results} t={t} locale={locale} path="/proveedores/buscar" query={query} />
     </main>
   );
 }

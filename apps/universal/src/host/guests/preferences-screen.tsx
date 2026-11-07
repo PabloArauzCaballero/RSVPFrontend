@@ -1,7 +1,8 @@
 import { useState, type ReactNode } from "react";
-import { Switch, Text, View } from "react-native";
-import { colors, spacing } from "@rsvp/design-tokens";
+import { Text, View } from "react-native";
+import { spacing } from "@rsvp/design-tokens";
 import { useHostNotificationPreferences, useUpdateHostNotificationPreferences, type NotificationChannel, type NotificationPreferences } from "@rsvp/query-hooks";
+import { SwitchRow } from "@rsvp/ui";
 import { useApiClient, useT } from "../../platform/providers";
 import { useSingleFlightGate } from "../../platform/single-flight";
 import { CelebrationScreen, type ScreenProps } from "../gate";
@@ -17,7 +18,6 @@ import { FailureNotice, RetryNotice } from "./parts";
 export const CHANNELS: readonly NotificationChannel[] = ["EMAIL", "WHATSAPP", "SMS", "PUSH"];
 /** Template keys a host can mute (contract 1.4.0 `EventTypePreferences`). Unlisted types are enabled. */
 export const HOST_EVENT_TYPES = ["celebrationPublished", "companionRequested", "giftRequested", "leadCapReached"] as const;
-const palette = colors.light;
 const HOUR = /^(?:[0-9]|1[0-9]|2[0-3])$/;
 
 function QuietHours({ quiet, busy, onSave, error, saved }: { readonly quiet: NotificationPreferences["quietHours"]; readonly busy: boolean; readonly saved: boolean; readonly onSave: (value: { start: number; end: number } | null) => void; readonly error: boolean }): ReactNode {
@@ -75,14 +75,7 @@ function PreferencesBody({ celebrationId, onNavigate }: { readonly celebrationId
         {CHANNELS.map((channel) => {
           const on = channels[channel] === true;
           return (
-            <View key={channel} style={[styles.row, { justifyContent: "space-between", minHeight: 48 }]}>
-              <View style={{ flexShrink: 1 }}>
-                <Text style={styles.label}>{t(`guests.preferences.${channel}`)}</Text>
-                <Text style={styles.muted}>{on ? t("guests.preferences.on") : t("guests.preferences.off")}</Text>
-              </View>
-              <Switch accessibilityLabel={t(`guests.preferences.${channel}`)} testID={`pref-${channel}`} disabled={update.isPending} value={on} onValueChange={(value) => toggle(channel, value)}
-                trackColor={{ true: palette.primary, false: palette.border }} thumbColor="#FFFFFF" />
-            </View>
+            <SwitchRow key={channel} label={t(`guests.preferences.${channel}`)} hint={on ? t("guests.preferences.on") : t("guests.preferences.off")} value={on} disabled={update.isPending} testID={`pref-${channel}`} onChange={(value) => toggle(channel, value)} />
           );
         })}
         {here("toggles", "saved") ? <Notice kind="success">{t("guests.preferences.saved")}</Notice> : null}
@@ -94,11 +87,7 @@ function PreferencesBody({ celebrationId, onNavigate }: { readonly celebrationId
         {HOST_EVENT_TYPES.map((key) => {
           const on = eventTypes[key] !== false;
           return (
-            <View key={key} style={[styles.row, { justifyContent: "space-between", minHeight: 48 }]}>
-              <Text style={[styles.label, { flexShrink: 1 }]}>{t(`guests.preferences.event.${key}`)}</Text>
-              <Switch accessibilityLabel={t(`guests.preferences.event.${key}`)} testID={`event-${key}`} disabled={update.isPending} value={on} onValueChange={(value) => toggleEvent(key, value)}
-                trackColor={{ true: palette.primary, false: palette.border }} thumbColor="#FFFFFF" />
-            </View>
+            <SwitchRow key={key} label={t(`guests.preferences.event.${key}`)} value={on} disabled={update.isPending} testID={`event-${key}`} onChange={(value) => toggleEvent(key, value)} />
           );
         })}
       </Section>

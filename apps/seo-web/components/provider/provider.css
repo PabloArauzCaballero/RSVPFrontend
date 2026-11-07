@@ -13,6 +13,8 @@
 .quote-item input { width: 1.25rem; height: 1.25rem; margin-top: .2rem; accent-color: var(--primary); }
 .quote-item small { grid-column: 2; color: var(--text-muted); }
 .agenda-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .25rem; margin: 0; padding: 0; list-style: none; }
+/* 7 cells x 44 px + gaps must fit a 328 px column (360 px screen): tighter gap below 26rem. */
+@media (max-width: 26rem) { .agenda-grid { gap: 1px; } }
 .agenda-head { text-align: center; font-size: .8rem; font-weight: 700; color: var(--text-muted); }
 .agenda-day { min-height: 2.75rem; width: 100%; border: 1px solid var(--border); border-radius: .5rem; background: var(--surface); color: var(--text); font-weight: 650; font-variant-numeric: tabular-nums; cursor: pointer; }
 .agenda-day[data-state="free"] { background: var(--primary-muted); border-color: var(--primary); }

@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { createTranslator, defaultLocale } from "@rsvp/i18n/server";
+import { siteI18n } from "../../../../lib/site-locale";
 import { Breadcrumbs, ProviderResults } from "../../../../components/provider-directory";
 import { siteUrl } from "../../../../lib/metadata";
 import { categoryBySlug, cityBySlug, pageParam, PROVIDER_CATEGORIES, PROVIDER_CITIES, searchProviders } from "../../../../lib/providers";
 
 /** B3 · Long-tail landing: "salones de eventos en Santa Cruz de la Sierra", with its own metadata. */
 export const revalidate = 300;
-const t = createTranslator(defaultLocale);
 
 interface Props {
   readonly params: Promise<{ readonly categoria: string; readonly ciudad: string }>;
@@ -26,6 +25,7 @@ async function resolve(params: Props["params"]) {
 }
 
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
+  const { t } = await siteI18n();
   const found = await resolve(params);
   if (!found) return { robots: { index: false } };
   const page = pageParam((await searchParams).page);
@@ -35,6 +35,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 }
 
 export default async function CategoryCityPage({ params, searchParams }: Props) {
+  const { t, locale } = await siteI18n();
   const found = await resolve(params);
   if (!found) notFound();
   const page = pageParam((await searchParams).page);
@@ -46,7 +47,7 @@ export default async function CategoryCityPage({ params, searchParams }: Props) 
       <Breadcrumbs t={t} items={[{ label: name, href: `/proveedores/${found.category.slug}` }, { label: found.city.name }]} />
       <h1>{t("directory.cityTitle", values)}</h1>
       <p>{t("directory.cityDescription", values)}</p>
-      <ProviderResults page={results} t={t} locale={defaultLocale} path={`/proveedores/${found.category.slug}/${found.city.slug}`} query={page > 1 ? `page=${page}` : ""} />
+      <ProviderResults page={results} t={t} locale={locale} path={`/proveedores/${found.category.slug}/${found.city.slug}`} query={page > 1 ? `page=${page}` : ""} />
     </main>
   );
 }

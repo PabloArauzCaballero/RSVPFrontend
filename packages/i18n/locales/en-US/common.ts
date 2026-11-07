@@ -15,6 +15,7 @@ export const enUS = {
     failure: { invalidCredentials: "The email and password do not match. Check them and try again.", emailTaken: "An account with this email already exists. Sign in or reset your password.", validation: "Check the highlighted fields and try again.", offline: "Cannot reach the server. Check your internet connection and try again.", unavailable: "The accounts service is not responding right now. Try again in a few minutes.", unknown: "We could not complete the action. Try again.", forbidden: "Your account cannot do this. If you think this is a mistake, contact support.", rateLimited: "Too many attempts. Wait {{seconds}} s and try again.", rateLimitedNoWait: "Too many attempts. Wait a moment and try again." },
     guard: { checking: "Checking your session…", forbiddenTitle: "You do not have access to this section", forbiddenBody: "Your account has no permission for this area. Sign in with another account or go back to your space.", goHome: "Go to my space", noRole: "Your account has no role assigned yet." }
   },
+  notFound: { title: "We could not find this page", intro: "The link may be mistyped, or the page no longer exists.", home: "Go to the start page" },
   language: { label: "Language", "es-BO": "Español", "en-US": "English" },
   invitation: {
     title: "Open your invitation", body: "This link is meant for the DOne app. If you have it installed, open it from here; otherwise you can continue in the browser.", openApp: "Open in the DOne app",

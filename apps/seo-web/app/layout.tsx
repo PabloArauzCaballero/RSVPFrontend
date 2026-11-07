@@ -1,32 +1,37 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
-import { createTranslator, defaultLocale } from "@rsvp/i18n/server";
+import "@rsvp/design-tokens/tokens.css";
 import "@rsvp/celebration-theme/styles.css";
 import "./globals.css";
 import { siteUrl } from "../lib/metadata";
+import { siteI18n } from "../lib/site-locale";
 import { SiteFooter, SiteHeader } from "../components/site-chrome";
 
 const text = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"], variable: "--font-text", display: "swap" });
 
-const t = createTranslator(defaultLocale);
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await siteI18n();
+  return {
+    metadataBase: new URL(siteUrl()),
+    title: { default: t("celebration.site.title"), template: "%s · DOne" },
+    description: t("celebration.site.description"),
+    applicationName: "DOne",
+    // Declared explicitly so the 404 page (which gets no file-based icon links) does not make browsers ask for /favicon.ico.
+    icons: { icon: [{ url: "/icon.svg", type: "image/svg+xml" }], apple: [{ url: "/apple-icon.png", sizes: "180x180" }] },
+    formatDetection: { telephone: false }
+  };
+}
 
-export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl()),
-  title: { default: t("celebration.site.title"), template: "%s · DOne" },
-  description: t("celebration.site.description"),
-  applicationName: "DOne",
-  formatDetection: { telephone: false }
-};
+export const viewport: Viewport = { width: "device-width", initialScale: 1, colorScheme: "light dark" };
 
-export const viewport: Viewport = { width: "device-width", initialScale: 1 };
-
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const { t, locale } = await siteI18n();
   return (
-    <html lang={defaultLocale} className={text.variable}>
+    <html lang={locale} className={text.variable}>
       <body>
         <SiteHeader t={t} />
         <div id="contenido">{children}</div>
-        <SiteFooter t={t} />
+        <SiteFooter t={t} locale={locale} />
       </body>
     </html>
   );

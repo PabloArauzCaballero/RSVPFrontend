@@ -15,6 +15,7 @@ export const esBO = {
     failure: { invalidCredentials: "El correo o la contraseña no coinciden. Revísalos e inténtalo de nuevo.", emailTaken: "Ya existe una cuenta con este correo. Inicia sesión o recupera tu contraseña.", validation: "Revisa los datos marcados e inténtalo de nuevo.", offline: "No hay conexión con el servidor. Revisa tu internet y vuelve a intentarlo.", unavailable: "El servicio de cuentas no responde por ahora. Inténtalo en unos minutos.", unknown: "No pudimos completar la acción. Inténtalo de nuevo.", forbidden: "Tu cuenta no puede realizar esta acción. Si crees que es un error, escribe a soporte.", rateLimited: "Demasiados intentos. Espera {{seconds}} s e inténtalo de nuevo.", rateLimitedNoWait: "Demasiados intentos. Espera un momento e inténtalo de nuevo." },
     guard: { checking: "Verificando tu sesión…", forbiddenTitle: "No tienes acceso a esta sección", forbiddenBody: "Tu cuenta no tiene permisos para esta área. Entra con otra cuenta o vuelve a tu espacio.", goHome: "Ir a mi espacio", noRole: "Tu cuenta aún no tiene un rol asignado." }
   },
+  notFound: { title: "No encontramos esta página", intro: "El enlace puede estar mal escrito o la página ya no existe.", home: "Ir al inicio" },
   language: { label: "Idioma", "es-BO": "Español", "en-US": "English" },
   invitation: {
     title: "Abre tu invitación", body: "Este enlace está pensado para la app de DOne. Si la tienes instalada, ábrela desde aquí; si no, puedes continuar en el navegador.", openApp: "Abrir en la app de DOne",

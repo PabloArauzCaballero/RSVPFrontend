@@ -1,9 +1,8 @@
-import { createTranslator, defaultLocale } from "@rsvp/i18n/server";
 import { Landing } from "../components/landing";
-
-export const revalidate = 3600;
+import { siteI18n } from "../lib/site-locale";
 
 /** Public home for hosts: the offer, a working sample of the invitation, and the way in. */
-export default function Home() {
-  return <Landing t={createTranslator(defaultLocale)} />;
+export default async function Home() {
+  const { t } = await siteI18n();
+  return <Landing t={t} />;
 }

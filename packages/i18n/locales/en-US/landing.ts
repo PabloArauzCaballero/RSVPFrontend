@@ -35,5 +35,6 @@ export const landingEnUS = {
   },
   closing: { title: "Start your site today", body: "Pick the type of celebration, add your guests and share the link.", cta: "Create my celebration" },
   error: { title: "We could not load this page", body: "The service did not respond. It is not something you did: try again in a few seconds.", retry: "Try again", home: "Go to the home page" },
+  notFound: { title: "We could not find this page", body: "The link may be mistyped, or the page no longer exists.", home: "Go to the home page" },
   footer: { tagline: "Get a reply in one tap.", providers: "Providers", skip: "Skip to content" }
 };
