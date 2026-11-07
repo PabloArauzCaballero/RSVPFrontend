@@ -2,6 +2,8 @@ import type { AppLocale, Translate } from "@rsvp/i18n/server";
 import { supportedLocales } from "@rsvp/i18n/server";
 import { logo } from "@rsvp/design-tokens";
 import { appUrl } from "../lib/app-url";
+import { withLanguage } from "../lib/locale-negotiation";
+import { DOutline } from "./brand/illustrations";
 
 /** DOne logotype: mark in the brand blue (white on the night footer), "One" in the text colour. */
 export function Logo({ label = "DOne", onDark = false }: Readonly<{ label?: string; onDark?: boolean }>) {
@@ -30,16 +32,31 @@ export function SiteHeader({ t }: Readonly<{ t: Translate }>) {
   );
 }
 
-export function SiteFooter({ t, locale }: Readonly<{ t: Translate; locale: AppLocale }>) {
+/** Language selector: a real link per language that keeps the page, its filters and its pagination (the address is rebuilt, not just `?lang=`). */
+export function LanguageSwitch({ t, locale, path }: Readonly<{ t: Translate; locale: AppLocale; path: string }>) {
+  return (
+    <nav className="site-languages" aria-label={t("language.label")}>
+      {supportedLocales.map((option) => (
+        <a key={option} href={withLanguage(path, option)} lang={option} hrefLang={option} rel="alternate" {...(option === locale ? { "aria-current": "true" as const } : {})}>{t(`language.${option}`)}</a>
+      ))}
+    </nav>
+  );
+}
+
+export function SiteFooter({ t, locale, path = "/" }: Readonly<{ t: Translate; locale: AppLocale; path?: string }>) {
   return (
     <footer className="site-footer">
+      <DOutline className="site-footer__ghost" />
       <div className="site-footer__inner">
-        <p className="site-logo"><Logo onDark /></p>
-        <p>{t("landing.footer.tagline")}</p>
-        <a href="/proveedores">{t("landing.footer.providers")}</a>
-        <nav className="site-languages" aria-label={t("language.label")}>
-          {supportedLocales.map((option) => <a key={option} href={`?lang=${option}`} lang={option} hrefLang={option} {...(option === locale ? { "aria-current": "true" as const } : {})}>{t(`language.${option}`)}</a>)}
-        </nav>
+        <p className="site-footer__line">{t("landing.footer.tagline")}</p>
+        <div className="site-footer__cols">
+          <p className="site-logo"><Logo onDark /></p>
+          <nav aria-label={t("landing.footer.explore")} className="site-footer__links">
+            <a href="/proveedores">{t("landing.footer.providers")}</a>
+            <a href={appUrl("/login")}>{t("landing.footer.create")}</a>
+          </nav>
+          <LanguageSwitch t={t} locale={locale} path={path} />
+        </div>
       </div>
     </footer>
   );

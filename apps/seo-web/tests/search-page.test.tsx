@@ -60,7 +60,7 @@ describe("REQ-F24-04 · search page, proximity filter", () => {
   it("empty and unavailable states are announced, not silent", async () => {
     expect((await render({ ciudad: "oruro" }, () => page([]))).document.querySelector('[role="status"].directory-status')?.textContent).toContain("Todavía no hay proveedores");
     const down = await render({ ciudad: "oruro" }, () => new Response("{}", { status: 503 }));
-    expect(down.document.querySelector('[role="status"].directory-status')?.textContent).toContain("no está disponible");
+    expect(down.document.querySelector('[role="status"].directory-status')?.textContent).toContain("No pudimos cargar los proveedores");
   });
 
   it("parseGeo bounds and the query builder", () => {

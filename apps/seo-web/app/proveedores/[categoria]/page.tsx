@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { siteI18n } from "../../../lib/site-locale";
-import { Breadcrumbs, CityLinks, ProviderResults } from "../../../components/provider-directory";
-import { siteUrl } from "../../../lib/metadata";
+import { CityLinks, PageTop, ProviderResults } from "../../../components/provider-directory";
 import { categoryBySlug, pageParam, PROVIDER_CATEGORIES, searchProviders } from "../../../lib/providers";
+import { routeMetadata } from "../../../lib/seo";
+import { isSupported } from "../../../lib/locale-negotiation";
 
 /** B2 · Listing by category, server-rendered, with crawlable ?page=N pagination. */
 export const revalidate = 300;
@@ -18,13 +19,15 @@ export function generateStaticParams() {
 }
 
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
-  const { t } = await siteI18n();
+  const { t, locale } = await siteI18n();
   const category = categoryBySlug((await params).categoria);
   if (!category) return { robots: { index: false } };
   const page = pageParam((await searchParams).page);
   const name = t(`directory.category.${category.code}`);
-  const url = `${siteUrl()}/proveedores/${category.slug}${page > 1 ? `?page=${page}` : ""}`;
-  return { title: t("directory.categoryTitle", { category: name }), description: t("directory.categoryDescription", { category: name }), alternates: { canonical: url }, openGraph: { type: "website", url, title: t("directory.categoryTitle", { category: name }) } };
+  const results = await searchProviders({ category: category.code, verifiedOnly: true, page });
+  const metadata = routeMetadata({ path: `/proveedores/${category.slug}`, locale: isSupported(locale) ? locale : "es-BO", query: page > 1 ? { page: String(page) } : {}, title: t("directory.categoryTitle", { category: name }), description: t("directory.categoryDescription", { category: name }) });
+  // A category with nothing published is a thin page: it stays reachable but out of the index until it has providers.
+  return results.available && results.items.length === 0 ? { ...metadata, robots: { index: false, follow: true } } : metadata;
 }
 
 export default async function CategoryPage({ params, searchParams }: Props) {
@@ -35,13 +38,12 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   const results = await searchProviders({ category: category.code, verifiedOnly: true, page });
   const name = t(`directory.category.${category.code}`);
   return (
-    <main className="directory">
-      <Breadcrumbs t={t} items={[{ label: name }]} />
-      <h1>{t("directory.categoryTitle", { category: name })}</h1>
-      <p>{t("directory.categoryDescription", { category: name })}</p>
-      <ProviderResults page={results} t={t} locale={locale} path={`/proveedores/${category.slug}`} query={page > 1 ? `page=${page}` : ""} />
-      <h2>{t("directory.citiesHeading")}</h2>
-      <CityLinks t={t} categorySlug={category.slug} categoryCode={category.code} />
+    <main className="dir-page">
+      <PageTop t={t} items={[{ label: name }]} title={t("directory.categoryTitle", { category: name })} lead={t("directory.categoryDescription", { category: name })} />
+      <div className="dir-body">
+        <ProviderResults page={results} t={t} locale={locale} path={`/proveedores/${category.slug}`} query={page > 1 ? `page=${page}` : ""} />
+        <section aria-labelledby="dir-cities"><h2 id="dir-cities">{t("directory.citiesHeading")}</h2><CityLinks t={t} categorySlug={category.slug} categoryCode={category.code} /></section>
+      </div>
     </main>
   );
 }

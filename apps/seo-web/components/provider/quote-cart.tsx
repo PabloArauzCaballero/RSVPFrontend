@@ -1,5 +1,6 @@
 'use client';
 
+import { CheckMark } from '../brand/check-mark';
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { ApiError } from '@rsvp/api-client';
 import { createTranslator, formatMinor, type AppLocale } from '@rsvp/i18n/server';
@@ -58,6 +59,7 @@ function QuoteBody({ slug, providerId, providerName, offers, preselected, locale
   if (receipt) {
     return (
       <main className="directory partner" data-testid="quote-sent">
+        <CheckMark size={64} className="sent__check" />
         <h1 tabIndex={-1} ref={(node) => node?.focus()}>{t('quote.sent.title')}</h1>
         <p role="status">{t('quote.sent.body', { name: providerName, id: receipt.id.slice(0, 8) })}</p>
         <p>{t('quote.sent.copy')}</p>

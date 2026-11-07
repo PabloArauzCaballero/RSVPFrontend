@@ -162,7 +162,7 @@ describe("provider directory (F24)", () => {
     const { client } = clientFor({ "/providers": json(503, { title: "Down", status: 503 }) });
     const result = await searchProviders({ category: "VENUE" }, client);
     expect(result).toMatchObject({ available: false, items: [] });
-    expect(renderToStaticMarkup(<ProviderResults page={result} t={t} locale="es-BO" path="/proveedores/salones" />)).toContain("no está disponible");
+    expect(renderToStaticMarkup(<ProviderResults page={result} t={t} locale="es-BO" path="/proveedores/salones" />)).toContain("No pudimos cargar los proveedores");
   });
 
   it("REQ-F24-05 · listings carry ItemList JSON-LD, prices without floats, and crawlable pagination", async () => {

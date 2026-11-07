@@ -170,7 +170,7 @@ console.log("\n== Provider page and partner redirector ==");
     assert.ok(hrefs.some(({ href }) => /^\/r\//.test(href ?? "")));
   });
   await check("provider page · VALID quote / agenda / catalogue buttons navigate", async () => {
-    for (const [name, path] of [[/Pedir cotización/, /cotizar/], [/disponibilidad/i, /agenda/], [/condiciones y precio/i, /catalogo/]]) {
+    for (const [name, path] of [[/Pedir cotización/, /cotizar/], [/disponibilidad/i, /agenda/], [/catálogo completo/i, /catalogo/]]) {
       await page.goto(`${SITE}/p/${slug}`); await page.getByRole("link", { name }).first().click(); await page.waitForURL(path);
     }
   });

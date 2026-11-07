@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { siteI18n } from "../../../../lib/site-locale";
-import { Breadcrumbs, ProviderResults } from "../../../../components/provider-directory";
-import { siteUrl } from "../../../../lib/metadata";
+import { PageTop, ProviderResults } from "../../../../components/provider-directory";
+import { routeMetadata } from "../../../../lib/seo";
+import { isSupported } from "../../../../lib/locale-negotiation";
 import { categoryBySlug, cityBySlug, pageParam, PROVIDER_CATEGORIES, PROVIDER_CITIES, searchProviders } from "../../../../lib/providers";
 
 /** B3 · Long-tail landing: "salones de eventos en Santa Cruz de la Sierra", with its own metadata. */
@@ -25,13 +26,15 @@ async function resolve(params: Props["params"]) {
 }
 
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
-  const { t } = await siteI18n();
+  const { t, locale } = await siteI18n();
   const found = await resolve(params);
   if (!found) return { robots: { index: false } };
   const page = pageParam((await searchParams).page);
   const values = { category: t(`directory.category.${found.category.code}`), city: found.city.name };
-  const url = `${siteUrl()}/proveedores/${found.category.slug}/${found.city.slug}${page > 1 ? `?page=${page}` : ""}`;
-  return { title: t("directory.cityTitle", values), description: t("directory.cityDescription", values), alternates: { canonical: url }, openGraph: { type: "website", url, title: t("directory.cityTitle", values) } };
+  const results = await searchProviders({ category: found.category.code, city: found.city.slug, verifiedOnly: true, page });
+  const metadata = routeMetadata({ path: `/proveedores/${found.category.slug}/${found.city.slug}`, locale: isSupported(locale) ? locale : "es-BO", query: page > 1 ? { page: String(page) } : {}, title: t("directory.cityTitle", values), description: t("directory.cityDescription", values) });
+  // 99 category x city pages exist; only those with providers are worth indexing (no thin pages).
+  return results.available && results.items.length === 0 ? { ...metadata, robots: { index: false, follow: true } } : metadata;
 }
 
 export default async function CategoryCityPage({ params, searchParams }: Props) {
@@ -43,11 +46,11 @@ export default async function CategoryCityPage({ params, searchParams }: Props) 
   const name = t(`directory.category.${found.category.code}`);
   const values = { category: name, city: found.city.name };
   return (
-    <main className="directory">
-      <Breadcrumbs t={t} items={[{ label: name, href: `/proveedores/${found.category.slug}` }, { label: found.city.name }]} />
-      <h1>{t("directory.cityTitle", values)}</h1>
-      <p>{t("directory.cityDescription", values)}</p>
-      <ProviderResults page={results} t={t} locale={locale} path={`/proveedores/${found.category.slug}/${found.city.slug}`} query={page > 1 ? `page=${page}` : ""} />
+    <main className="dir-page">
+      <PageTop t={t} items={[{ label: name, href: `/proveedores/${found.category.slug}` }, { label: found.city.name }]} title={t("directory.cityTitle", values)} lead={t("directory.cityDescription", values)} />
+      <div className="dir-body">
+        <ProviderResults page={results} t={t} locale={locale} path={`/proveedores/${found.category.slug}/${found.city.slug}`} query={page > 1 ? `page=${page}` : ""} />
+      </div>
     </main>
   );
 }

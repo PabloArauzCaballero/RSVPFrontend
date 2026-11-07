@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { addressText } from "../lib/partner";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createApiClient, type ApiClient } from "@rsvp/api-client";
 import { createTranslator } from "@rsvp/i18n/server";
@@ -115,5 +116,14 @@ describe("F08 REQ-05 · sitemap.xml", () => {
     const slugs = await loadPartnerSlugs(client((url) => { seen.push(url.searchParams.get("page") ?? ""); return json(200, { items: [card({ providerSlug: `p${url.searchParams.get("page")}` })], total: 30, page: 1, pageSize: 12 }); }));
     expect(seen).toEqual(["1", "2", "3"]);
     expect(slugs).toEqual(["p1", "p2", "p3"]);
+  });
+});
+
+describe("address shapes from the catalogue", () => {
+  it("text stays text; an object is reduced to its line so the page never renders an object", () => {
+    expect(addressText("Calle Comercio 123")).toBe("Calle Comercio 123");
+    expect(addressText({ city: "La Paz", line: "Av. Arce 2000", latitude: -16.5, longitude: -68.1, reference: "frente a la plaza" })).toBe("Av. Arce 2000, frente a la plaza");
+    expect(addressText({ city: "La Paz" })).toBeUndefined();
+    expect(addressText(undefined)).toBeUndefined();
   });
 });

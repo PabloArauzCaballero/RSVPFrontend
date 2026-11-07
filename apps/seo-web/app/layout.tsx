@@ -4,7 +4,7 @@ import "@rsvp/design-tokens/tokens.css";
 import "@rsvp/celebration-theme/styles.css";
 import "./globals.css";
 import { siteUrl } from "../lib/metadata";
-import { siteI18n } from "../lib/site-locale";
+import { siteI18n, siteRequestPath } from "../lib/site-locale";
 import { SiteFooter, SiteHeader } from "../components/site-chrome";
 
 const text = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"], variable: "--font-text", display: "swap" });
@@ -26,12 +26,13 @@ export const viewport: Viewport = { width: "device-width", initialScale: 1, colo
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const { t, locale } = await siteI18n();
+  const path = await siteRequestPath();
   return (
     <html lang={locale} className={text.variable}>
       <body>
         <SiteHeader t={t} />
         <div id="contenido">{children}</div>
-        <SiteFooter t={t} locale={locale} />
+        <SiteFooter t={t} locale={locale} path={path} />
       </body>
     </html>
   );

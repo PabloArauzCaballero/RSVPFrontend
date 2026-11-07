@@ -1,5 +1,6 @@
 'use client';
 
+import { CheckMark } from '../brand/check-mark';
 import { personalLinkUrl } from '@rsvp/auth';
 import { ApiError, type ApiClient } from '@rsvp/api-client';
 import { readContent, type HostContact, type PublicCelebrationView } from '@rsvp/celebration-theme';
@@ -98,6 +99,7 @@ function Flow({ slug, token, locale, siteOrigin, client: injected }: Props): Rea
     <>
       {header}
       <section className="rsvp-card" aria-labelledby="rsvp-title">
+        {state.status === 'CONFIRMED' ? <CheckMark size={56} className="rsvp-check" /> : null}
         <StateHeading id="rsvp-title">{state.status === 'DECLINED' ? t('rsvp.confirmed.titleDeclined') : t('rsvp.confirmed.title')}</StateHeading>
         {notice ? <p className="rsvp-notice rsvp-notice--success" role="status">{notice}</p> : null}
         <AnswerSummary state={state} locale={locale} t={t} />
@@ -229,6 +231,7 @@ function UnregisteredForm({ client, view, slug, t, locale, siteOrigin, hosts, co
   if (receipt) {
     return (
       <section className="rsvp-card" aria-labelledby="rsvp-done-title">
+        <CheckMark size={56} className="rsvp-check" />
         <StateHeading id="rsvp-done-title">{t('rsvp.unregistered.doneTitle')}</StateHeading>
         {receipt.link ? (
           <>

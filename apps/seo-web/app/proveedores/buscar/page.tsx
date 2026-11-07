@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { siteI18n } from "../../../lib/site-locale";
-import { Breadcrumbs, ProviderResults, SearchForm } from "../../../components/provider-directory";
+import { PageTop, ProviderResults, SearchForm } from "../../../components/provider-directory";
 import { categoryBySlug, cityBySlug, pageParam, parseGeo, searchProviders } from "../../../lib/providers";
 
 /** B4 · Filtered results. Filter combinations are endless, so this page is not indexed (but its links are followed). */
@@ -33,11 +33,12 @@ export default async function SearchPage({ searchParams }: { readonly searchPara
   });
   const query = new URLSearchParams(Object.entries(effective).filter(([, value]) => value)).toString();
   return (
-    <main className="directory">
-      <Breadcrumbs t={t} items={[{ label: t("directory.searchTitle") }]} />
-      <h1>{t("directory.searchTitle")}</h1>
-      <SearchForm t={t} values={effective} />
-      <ProviderResults page={results} t={t} locale={locale} path="/proveedores/buscar" query={query} />
+    <main className="dir-page">
+      <PageTop t={t} items={[{ label: t("directory.searchTitle") }]} title={t("directory.searchTitle")} lead={t("directory.searchDescription")} />
+      <div className="dir-body">
+        <SearchForm t={t} values={effective} />
+        <ProviderResults page={results} t={t} locale={locale} path="/proveedores/buscar" query={query} />
+      </div>
     </main>
   );
 }
