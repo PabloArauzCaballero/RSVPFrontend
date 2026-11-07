@@ -104,7 +104,7 @@ export const guestsEnUS: DeepStrings<typeof guestsEsBO> = {
     title: "Inbox", intro: "What needs your attention in this celebration.", emptyTitle: "Your inbox is quiet", empty: "Requests and replies that need your attention land here.", unread: "Unread", read: "Read",
     markRead: "Mark as read", markAll: "Mark all as read", unreadCount: "{{count}} unread", open: "Open", refresh: "Refresh", markFailed: "It could not be marked as read; we restored the previous state.",
     channel: { EMAIL: "Email", SMS: "SMS", WHATSAPP: "WhatsApp", PUSH: "Push notification", INBOX: "In-app inbox" },
-    delivery: { PENDING: "Queued", SENDING: "Sending", SENT: "Sent", DEFERRED: "Deferred", SUPPRESSED: "Skipped by your preferences", FAILED: "Could not be sent", UNCERTAIN: "Unconfirmed", CANCELLED: "Cancelled", RETRY: "Retrying" },
+    delivery: { PENDING: "Queued", SENDING: "Sending", SENT: "Sent", DEFERRED: "Deferred", SUPPRESSED: "Skipped by your preferences", FAILED: "Could not be sent", UNCERTAIN: "Unconfirmed", CANCELLED: "Canceled", RETRY: "Retrying" },
     templates: {
       companionRequested: { subject: "Companion request", text: "A guest asks to bring more people. Approve or reject it from your dashboard." },
       giftRequested: { subject: "Gift reservation request", text: "Someone wants to reserve a gift. Review it from your dashboard." },
@@ -118,7 +118,7 @@ export const guestsEnUS: DeepStrings<typeof guestsEsBO> = {
     via: "By {{channel}} · {{status}} · {{date}}"
   },
   preferences: {
-    title: "How you want to hear", intro: "Choose where notices reach you. We honour your choice when sending.", channelsTitle: "Channels",
+    title: "How you want to hear", intro: "Choose where notices reach you. We honor your choice when sending.", channelsTitle: "Channels",
     EMAIL: "Email", SMS: "SMS", WHATSAPP: "WhatsApp", PUSH: "Push notifications", saved: "Preference saved.", saveFailed: "It could not be saved; we restored the previous value.", on: "On", off: "Off",
     quietTitle: "Quiet hours", quietIntro: "During this window, in your celebration's time, notices wait and arrive when it ends. None are lost.", quietStart: "From (hour, 0–23)", quietEnd: "Until (hour, 0–23)", quietSave: "Save quiet hours", quietDefault: "Use the service's hours", quietCurrent: "Quiet from {{start}}:00 to {{end}}:00", quietOff: "No quiet hours", quietSourceDefault: "Service hours", quietSourceMine: "Your hours", quietInvalid: "Enter whole hours between 0 and 23.", eventsTitle: "Which notices you want", eventsIntro: "The ones you do not change stay on.", event: { celebrationPublished: "My celebration was published", companionRequested: "A guest asks for more companions", giftRequested: "Someone asks to reserve a gift", leadCapReached: "A vendor reached its inquiry cap" }, pushSetup: "Set up notices on this device"
   },
@@ -131,7 +131,7 @@ export const guestsEnUS: DeepStrings<typeof guestsEsBO> = {
     deviceStatus: { ACTIVE: "Active", REVOKED: "Removed", INVALID: "Invalid" }, registeredOn: "registered on {{date}}", inactiveReason: "This device no longer receives notices; turn it on again from the phone.",
     test: "Send a test notice", testQueued: "Test notice on its way.", removeTitle: "Remove this device?", removeBody: "It will stop receiving push notices for this celebration. You can turn it on again from the phone.",
     deliveriesTitle: "Recent deliveries", deliveriesIntro: "What happened to each push notice sent to your devices.", deliveriesEmpty: "No push notice has been sent yet.",
-    delivery: { PENDING: "Queued", SENDING: "Sending", TICKETED: "Handed to the push service", ACCEPTED: "Accepted by the device", RETRY: "Retrying", FAILED: "Could not be sent", UNCERTAIN: "Unconfirmed", DEFERRED: "Deferred", SUPPRESSED: "Skipped per your preferences", CANCELLED: "Cancelled" },
+    delivery: { PENDING: "Queued", SENDING: "Sending", TICKETED: "Handed to the push service", ACCEPTED: "Accepted by the device", RETRY: "Retrying", FAILED: "Could not be sent", UNCERTAIN: "Unconfirmed", DEFERRED: "Deferred", SUPPRESSED: "Skipped per your preferences", CANCELLED: "Canceled" },
     attempts: "{{count}} attempts · available from {{date}}", lastError: "Detail: {{detail}}"
   }
 };

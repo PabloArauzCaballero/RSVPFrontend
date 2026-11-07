@@ -784,13 +784,20 @@ async function admin() {
     });
     await step("Verificacion", "suspend-{id}", "VALIDO suspender un VERIFICADO con motivo; GET SUSPENDED", async () => {
       await page.getByRole("radio", { name: "Verificados" }).click();
-      await reveal(page, `suspend-${v1.id}`); await id(page, `suspend-${v1.id}`).waitFor();
-      await click(page, `suspend-${v1.id}`);
+      // The backend queue returns the OLDEST 200 verified providers and has no pagination (BACKEND GAP, see the evidence file): once a
+      // local database holds more than 200 verified providers, the one this run just verified is not in the list the admin can see.
+      // Then the same button is exercised on the first listed verified provider, and the report says so.
+      const queue = (await http("GET", "/providers/admin/verification-queue?status=VERIFIED", { token: adminToken })).json?.items ?? [];
+      const inWindow = queue.some((item) => item.providerId === v1.id);
+      const target = inWindow ? v1 : { id: queue[0]?.providerId, name: queue[0]?.name };
+      assert.ok(target.id, "no verified provider is listed");
+      await reveal(page, `suspend-${target.id}`); await id(page, `suspend-${target.id}`).waitFor();
+      await click(page, `suspend-${target.id}`);
       await page.getByTestId("admin-reason").filter({ visible: true }).fill("Abuso reiterado");
-      await dialogButton(page, `Suspender a ${v1.name}`, "Suspender").click();
+      await dialogButton(page, `Suspender a ${target.name}`, "Suspender").click();
       await text(page, "Proveedor actualizado.").waitFor();
-      assert.equal((await status(v1)).status, "SUSPENDED");
-      return "POST /suspend 200; GET SUSPENDED";
+      assert.equal((await status(target)).status, "SUSPENDED");
+      return inWindow ? "POST /suspend 200; GET SUSPENDED" : `POST /suspend 200; GET SUSPENDED (el verificado de esta corrida quedo fuera de la ventana de 200 del backend: se uso el primero de la lista, ${queue.length} verificados)`;
     });
     blocked("Verificacion", "reactivar proveedor suspendido", "BRECHA", "provider-catalog no tiene reactivar/unsuspend (verify desde SUSPENDED -> 409); no se creo boton");
     await step("Verificacion", "(ruta)", "ERROR 403 un HOST: pantalla de acceso denegado y 403 de la API", async () => {

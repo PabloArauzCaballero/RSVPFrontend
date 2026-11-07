@@ -38,9 +38,9 @@ async function session(email, width = 1280) {
   const page = await context.newPage();
   page.on("console", (message) => { if (message.type() === "error" && !/Failed to load resource/.test(message.text())) consoleErrors.push(message.text()); });
   await page.goto(`${APP}/login`);
-  await page.getByLabel("Correo electrónico", { exact: true }).filter({ visible: true }).fill(email);
+  await page.getByLabel(/^(Correo electrónico|Correo)$/).filter({ visible: true }).fill(email);
   await page.getByLabel("Contraseña", { exact: true }).filter({ visible: true }).fill(world.password);
-  await page.getByRole("button", { name: "Iniciar sesión" }).filter({ visible: true }).click();
+  await page.getByRole("button", { name: /^(Iniciar sesión|Entrar)$/ }).filter({ visible: true }).click();
   await page.waitForURL((url) => !url.pathname.startsWith("/login"), { timeout: 20000 });
   return { page, context };
 }
@@ -64,7 +64,7 @@ async function f23() {
     const { page, context } = await session(world.host.email);
     await go(page, `/regalos${c}`);
     await page.getByTestId(`gift-${world.giftItems[0]}`).waitFor();
-    const proposed = page.locator('[data-testid^="gift-status-"]', { hasText: "Propuesto" });
+    const proposed = page.locator('[data-testid^="gift-status-"]', { hasText: /^(Propuesto|Por revisar)$/ });
     assert.ok(await proposed.count() >= 1, "a PROPOSED external gift is shown to the host");
     const first = await page.locator('[data-testid^="gift-status-"]').first().innerText();
     assert.match(first, /Disponible|Comprometido/);
@@ -111,7 +111,7 @@ async function f23() {
     const hit = page.locator('[data-testid^="hit-"]').first();
     await hit.waitFor();
     await snap("F23", page, "C27-resultados", 1280);
-    await hit.getByRole("button", { name: "Agregar a la lista" }).click();
+    await hit.getByRole("button", { name: /^(Agregar a la lista|Agregar a mi lista)$/ }).click();
     await page.getByText(/^Agregado:/).waitFor();
     const items = (await http("GET", `/gifts/celebrations/${world.celebration.id}/items`, { token: hostToken })).json.items;
     assert.ok(items.filter((i) => i.source === "CATALOGED").length >= 4, "cataloged gift created");
@@ -128,14 +128,20 @@ async function f23() {
     await page.getByTestId("external-url").fill("https://tienda.example/oster");
     await page.getByTestId("external-price").fill("320");
     await page.getByTestId("external-submit").click();
-    await page.getByText(/Antes de continuar/).waitFor();
+    await page.getByText(/Antes de (continuar|seguir)/).waitFor();
     await snap("F23", page, "C28-fricción-409-partner-first", 1280);
     await page.getByRole("button", { name: "Agregar de todos modos" }).click();
-    await page.getByText(/queda pendiente de tu aprobación/).waitFor();
+    await page.getByText(/queda (pendiente de tu aprobación|por revisar)/).waitFor();
     await snap("F23", page, "C28-propuesto", 1280);
     record("F23", "REQ-F23-03", "regalo externo: 409 PARTNER_CATALOG_FIRST muestra la fricción; 'agregar de todos modos' reenvia con acknowledged y queda PROPOSED");
-    await page.getByRole("radio", { name: "Se publican al instante" }).click();
-    await page.getByText("Modo guardado.").waitFor();
+    // The two settings that govern external gifts now live only in "Modos de control" (one place per datum).
+    await go(page, `/modos${c}`);
+    const current = (await http("GET", `/celebrations/${world.celebration.id}`, { token: hostToken })).json.settings.externalGiftMode;
+    if (current !== "AUTO_ACCEPT") {
+      await page.getByTestId("switch-externalGiftMode").click();
+      await page.getByRole("button", { name: "Sí, cambiar" }).click();
+      await page.getByText(/Modo actualizado/).waitFor();
+    }
     const settings = (await http("GET", `/celebrations/${world.celebration.id}`, { token: hostToken })).json.settings;
     assert.equal(settings.externalGiftMode, "AUTO_ACCEPT");
     record("F23", "switch", "el switch del modo externo escribe externalGiftMode=AUTO_ACCEPT en Celebration (PUT /settings con If-Match)");
@@ -164,7 +170,7 @@ async function f28() {
   {
     const { page, context } = await session(fresh, 360);
     await go(page, "/portal");
-    await page.getByText("Primero registra tu negocio.").waitFor();
+    await page.getByText(/^Primero registra tu negocio/).waitFor();
     await snap("F28", page, "D1-sin-ficha", 360);
     await page.getByTestId("go-onboarding").click();
     await page.getByTestId("provider-name").fill(`Pasteles Luna ${stamp}`);
@@ -175,6 +181,8 @@ async function f28() {
     await snap("F28", page, "D2-borrador", 360);
     record("F28", "REQ-F28-01a", "alta real (POST /providers) -> ficha en Borrador con la nota de documentos");
     await go(page, "/portal/servicios");
+    // Offers are one list now: the short form opens from "Nueva oferta" (testID offer-new).
+    if (!(await page.getByTestId("listing-name").isVisible().catch(() => false))) await page.getByTestId("offer-new").click();
     await page.getByTestId("listing-name").fill("Torta de chocolate");
     await page.getByTestId("listing-whatsapp").fill("https://wa.me/59171111111");
     await page.getByTestId("listing-coverage").fill("la-paz, el-alto");
@@ -210,7 +218,7 @@ async function f28() {
     await go(page, "/portal/alta"); await page.getByTestId("provider-code").fill(world.provider.id); await page.getByTestId("provider-connect").click(); await page.getByTestId("provider-status").waitFor();
     await page.getByTestId("metric-totals").waitFor();
     await noOverflow(page, `portal-${width}`); await snap("F28", page, "D2-verificado-resumen", width);
-    await go(page, "/portal/leads"); await page.getByText("Cotizaciones recibidas").waitFor(); await page.waitForSelector('[data-testid^="lead-"]'); await noOverflow(page, `leads-${width}`); await snap("F28", page, "D12-leads", width);
+    await go(page, "/portal/leads"); await page.getByText(/^(Cotizaciones recibidas|Solicitudes)$/).first().waitFor(); await page.waitForSelector('[data-testid^="lead-"]'); await noOverflow(page, `leads-${width}`); await snap("F28", page, "D12-leads", width);
     await go(page, "/portal/metricas"); await page.getByTestId("metric-totals").waitFor(); await noOverflow(page, `metricas-${width}`); await snap("F28", page, "D13-metricas", width);
     await go(page, "/portal/destinos"); await page.getByTestId("destinations-save").waitFor(); await noOverflow(page, `destinos-${width}`); await snap("F28", page, "D7-destinos", width);
     await go(page, "/portal/agenda"); await page.getByTestId("agenda-save").waitFor(); await noOverflow(page, `agenda-${width}`); await snap("F28", page, "D9-agenda", width);
@@ -218,11 +226,11 @@ async function f28() {
     if (width === 1280) {
       await go(page, "/portal/leads");
       const text = await page.locator("body").innerText();
-      assert.match(text, /Cotización/); assert.match(text, /Clic/);
+      assert.match(text, /Cotizaci/); assert.match(text, /Clic|Toques/);
       record("F28", "REQ-F28-06a", "leads reales: cotizaciones FORM (F26) y clics REDIRECT (F27) separados");
       await go(page, "/portal/metricas");
       const totals = await page.getByTestId("metric-totals").innerText();
-      assert.match(totals, /Impresiones/);
+      assert.match(totals, /Impresiones|Veces que te vieron/);
       record("F28", "REQ-F28-06b", `metricas reales del periodo (GET /metrics): ${totals.replace(/\n+/g, " | ").slice(0, 120)}`);
       await go(page, "/portal/destinos");
       const enabledNow = page.locator('[data-testid^="destination-"][aria-checked="true"]');

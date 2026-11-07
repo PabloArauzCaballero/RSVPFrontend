@@ -96,7 +96,7 @@ function Overview({ provider, refetch }: { readonly provider: Provider; readonly
         </View>
         <Text style={styles.muted}>{t("portal.home.journey.progress", { done: doneCount, total: 3 })}</Text>
         <Text style={styles.body}>{t(`portal.status.${provider.status}.body`)}</Text>
-        <View style={{ height: 8, borderRadius: 999, backgroundColor: palette.primaryMuted, overflow: "hidden" }} accessibilityRole="progressbar" accessibilityLabel={t("portal.home.journey.title")} accessibilityValue={{ min: 0, max: 3, now: doneCount }}>
+        <View style={{ height: 8, borderRadius: 999, backgroundColor: palette.primaryMuted, overflow: "hidden" }} role="progressbar" aria-label={t("portal.home.journey.title")} aria-valuemin={0} aria-valuemax={3} aria-valuenow={doneCount}>
           <View style={{ height: 8, width: `${Math.round((doneCount / 3) * 100)}%`, backgroundColor: palette.primary }} />
         </View>
         <Step testID="step-profile" done title={t("portal.home.journey.profile.title")} body={t("portal.home.journey.profile.done", { name: provider.name })} />

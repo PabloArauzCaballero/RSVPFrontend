@@ -13,7 +13,7 @@ export const partnerEnUS: DeepStrings<typeof partnerEsBO> = {
   coverage: "Coverage area",
   noCoverage: "Serves {{city}}. Ask the vendor whether they reach other areas.",
   services: "What they offer",
-  catalogLink: "See the full catalogue",
+  catalogLink: "See the full catalog",
   verifiedHint: "Passed DOne’s verification",
   noServices: "This vendor has not published services yet. Message them to ask what they offer.",
   contact: "Talk to the vendor directly",
@@ -23,7 +23,7 @@ export const partnerEnUS: DeepStrings<typeof partnerEsBO> = {
   destination: { WHATSAPP: "Message on WhatsApp", PHONE: "Call", EMAIL: "Send an email", INSTAGRAM: "View Instagram", OFFICIAL_SITE: "Visit their website" },
   backToDirectory: "Back to vendors",
   notFound: { title: "We could not find this vendor", body: "The page does not exist or the vendor is no longer available. Browse other verified vendors." },
-  unavailable: { title: "We could not load this vendor", body: "The catalogue did not respond. Try again in a few minutes." },
+  unavailable: { title: "We could not load this vendor", body: "The catalog did not respond. Try again in a few minutes." },
   redirect: {
     back: "Go back",
     invalid: { title: "This link is not valid", body: "We could not read the vendor link. Go back to the previous page and try again." },

@@ -18,7 +18,7 @@ export const adminEnUS: DeepStrings<typeof adminEsBO> = {
   templates: {
     title: "Invitation templates", intro: "The designs hosts choose for their invitation.", new: "New template", edit: "Edit {{name}}", name: "Name", description: "Description", tags: "Event type tags", tagsHelp: "Comma separated, for example: wedding, anniversary.",
     layout: "Layout", layouts: { classic: "Classic", minimal: "Minimal", editorial: "Editorial", festive: "Festive", corporate: "Corporate" },
-    palette: "Palette", colors: { canvas: "Background", surface: "Surface", text: "Text", accent: "Accent", muted: "Secondary" }, colorHelp: "Hex colour, for example #865E36.",
+    palette: "Palette", colors: { canvas: "Background", surface: "Surface", text: "Text", accent: "Accent", muted: "Secondary" }, colorHelp: "Hex color, for example #865E36.",
     headingFont: "Heading font", bodyFont: "Body font", sectionStyle: "Section style", styles: { plain: "Plain", cards: "Cards", bands: "Bands" },
     sectionOrder: "Sections and order", include: "Include {{section}}",
     publish: "Publish", archive: "Archive", archiveConfirm: "Archiving is final: the template is no longer offered.",

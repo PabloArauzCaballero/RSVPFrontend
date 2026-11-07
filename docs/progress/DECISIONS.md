@@ -48,3 +48,13 @@
 - **Las referencias visuales de seo-web fijan `locale: es-BO`**: el idioma del producto es el español y la negociación por `Accept-Language` convertiría en inglés las capturas hechas con el navegador por defecto.
 - **`SwitchRow` único** en `packages/ui` para ajustes de encendido/apagado: la fila completa es el objetivo táctil (56 px) y responde a Espacio y Enter; se descarta el `Switch` nativo (20 px).
 - **Las matrices en vivo excluyen únicamente** los 502/503 de media, plantillas, dispositivos y entregas push, porque esos servicios no se despliegan en el mundo local; cualquier otro error cuenta como fallo.
+
+## Personalidad, simplificación y datos de demostración · 2026-11-07
+- **El cheque de la D es el único gesto de celebración** (`CheckMark`/`Celebrate`): se dibuja una vez por hito (confirmar, publicar, guardar, primer invitado) y respeta reduced-motion. Ninguna otra animación decorativa ni en bucle.
+- **Un destino por sustantivo, no por pantalla:** el anfitrión pasa de 17 a 6 destinos, el proveedor a 5 y el admin a 4, con pestañas de sección. Las rutas no se mueven (enlaces compartidos) y varias pantallas comparten pestaña (p. ej. servicios, productos y entrega son una sola lista de ofertas).
+- **Una acción primaria por pantalla;** lo demás, tras «Más opciones» o como enlace. La acción cambia con el siguiente paso real (Inicio, regalos con reservas por revisar, publicar con datos pendientes).
+- **Solo se ofrece lo que el backend soporta.** Las fusiones no inventan operaciones; las brechas siguen documentadas.
+- **Las referencias visuales usan un reloj fijo** (`e2e/clock.ts` + `now` del servidor de contrato): el plazo, la frescura y las cuentas atrás se calculan a partir de «ahora» y una captura que se mueve con el reloj real caduca.
+- **en-US es americano** («organizing», «canceled», «catalog»).
+- **Nueva claves de i18n por espacio, sin cambiar valores que usa seo-web** (`rsvp.invite.*`, `gifts.guest.*`): seo-web migra cuando quiera; la app Expo ya usa las nuevas.
+- **seo-web sigue negociando idioma por `?lang=`/cookie/`Accept-Language`** (no `/en/`): `seo-audit` recomienda subdirectorios; se deja como decisión del dueño por tocar el middleware y enlaces ya compartidos.

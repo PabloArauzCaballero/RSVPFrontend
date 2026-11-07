@@ -8,7 +8,7 @@ export const enUS = {
     recoverSend: "Send instructions", recoverSent: "Done. If there is an account with that email, the instructions are on their way.",
     signingIn: "Signing in…", creating: "Creating your account…",
     backToSignIn: "Back to sign in", noAccount: "No account yet?", haveAccount: "Already have an account?",
-    role: "What will you do on DOne?", roleHost: "I am organising a celebration", roleHostHint: "I create my invitation and see who is coming.", roleProvider: "I offer services", roleProviderHint: "I get requests from people who organise.", rolePlanner: "I help organise", rolePlannerHint: "I run celebrations for other people.",
+    role: "What will you do on DOne?", roleHost: "I am organizing a celebration", roleHostHint: "I create my invitation and see who is coming.", roleProvider: "I offer services", roleProviderHint: "I get requests from people who organize.", rolePlanner: "I help organize", rolePlannerHint: "I run celebrations for other people.",
     passwordHint: "At least 12 characters. A phrase you will remember works.", showPassword: "Show", hidePassword: "Hide", brandPitch: "Invite today. Tomorrow you know who is coming.", brandBody: "Your guests answer in one tap, no account needed. You see the list up to date.",
     sessionEnded: "Your session ended. Sign in again to continue.",
     validation: { required: "This is missing.", invalidEmail: "Check the email: it should look like name@mail.com.", passwordShort: "Use at least 12 characters. A short phrase works well.", passwordBytes: "That password is too long. Try a shorter one.", tooLong: "That is too long." },

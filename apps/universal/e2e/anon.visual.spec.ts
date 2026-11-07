@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { VISUAL_NOW } from "./clock";
 import { ANON_SCREENS, WIDTHS } from "./screens";
 
 // Visual gate of the Expo app (anon session). Baselines are machine output until a person reviews them in the PR
@@ -9,6 +10,8 @@ for (const screen of ANON_SCREENS) {
     test(`${screen.name} ${width}px`, async ({ page }) => {
       await page.setViewportSize({ width, height: width < 600 ? 844 : 900 });
       await page.emulateMedia({ colorScheme: "light", reducedMotion: "reduce" });
+      // Same instant as the visual server's clock: the app computes countdowns and "x days left" from Date.now().
+      await page.clock.setFixedTime(VISUAL_NOW);
       await page.goto(screen.path, { waitUntil: "networkidle" });
       await page.evaluate(() => document.fonts.ready);
       // Wait out indeterminate spinners (a progressbar with no value). Failed requests retry with backoff before they show their error state.

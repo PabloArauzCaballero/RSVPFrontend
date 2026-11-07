@@ -1,5 +1,5 @@
 {
-  "date": "2026-11-07T00:04:06.863Z",
+  "date": "2026-11-07T20:05:05.498Z",
   "consoleErrors": [],
   "results": [
     {
@@ -77,7 +77,7 @@
     {
       "lane": "F28",
       "id": "REQ-F28-06b",
-      "text": "metricas reales del periodo (GET /metrics): Impresiones | 0 | Clics | 0 | CTR | 0% | Leads válidos | 0 | Leads descartados | 0",
+      "text": "metricas reales del periodo (GET /metrics): Aún no hay datos en este periodo. Cuando las parejas vean y toquen tu ficha, aparecerán aquí. | Veces que te vieron | 0 ",
       "status": "PASS"
     },
     {
