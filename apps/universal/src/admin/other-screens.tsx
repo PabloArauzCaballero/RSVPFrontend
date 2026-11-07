@@ -4,7 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { celebrationApi, useAdminEventTypes, useAdminTemplates } from "@rsvp/query-hooks";
 import { useIdentitySummary, useProviderSummary } from "@rsvp/query-hooks/admin";
 import { useApiClient, useT } from "../platform/providers";
-import { ActionButton, ConfirmDialog,  Loading, Notice, Section, styles } from "../host/ui";
+import { ActionButton, ConfirmDialog, Loading, Notice, PageIntro, Section, styles } from "../host/ui";
 import { AdminScreen } from "./admin-screen";
 import { AdminErrorNotice } from "./shared";
 import { useSingleMutation } from "../platform/single-flight";
@@ -20,12 +20,16 @@ export function DashboardScreen({ onNavigate }: Nav): ReactNode {
   const count = (label: string, value: number | undefined): string => t("admin.dashboard.count", { label, count: value ?? 0 });
   return (
     <AdminScreen title={t("admin.dashboard.title")} current="dashboard" onNavigate={onNavigate}>
+      <PageIntro>{t("admin.dashboard.intro")}</PageIntro>
       {types.isPending || templates.isPending ? <Loading /> : null}
-      <AdminErrorNotice error={types.error ?? templates.error} />
-      <Section title={t("admin.nav.eventTypes")}><Text style={styles.body}>{count(t("admin.dashboard.eventTypes"), types.data?.items.filter((item) => item.status === "ACTIVE").length)}</Text></Section>
+      <Section title={t("admin.nav.eventTypes")}>{types.error ? <AdminErrorNotice error={types.error} onRetry={() => { void types.refetch(); }} /> : <Text style={styles.body}>{count(t("admin.dashboard.eventTypes"), types.data?.items.filter((item) => item.status === "ACTIVE").length)}</Text>}</Section>
       <Section title={t("admin.nav.templates")}>
-        <Text style={styles.body}>{count(t("admin.dashboard.templates"), templates.data?.items.filter((item) => item.status === "PUBLISHED").length)}</Text>
-        <Text style={styles.body}>{count(t("admin.dashboard.drafts"), templates.data?.items.filter((item) => item.status === "DRAFT").length)}</Text>
+        {templates.error ? <Notice>{t("admin.dashboard.templatesDown")}</Notice> : (
+          <>
+            <Text style={styles.body}>{count(t("admin.dashboard.templates"), templates.data?.items.filter((item) => item.status === "PUBLISHED").length)}</Text>
+            <Text style={styles.body}>{count(t("admin.dashboard.drafts"), templates.data?.items.filter((item) => item.status === "DRAFT").length)}</Text>
+          </>
+        )}
       </Section>
       <PlatformSummary />
     </AdminScreen>
@@ -97,6 +101,7 @@ export function OperationsScreen({ onNavigate }: Nav): ReactNode {
   const [confirm, setConfirm] = useState(false);
   return (
     <AdminScreen title={t("admin.operations.title")} current="operations" onNavigate={onNavigate}>
+      <PageIntro>{t("admin.operations.intro")}</PageIntro>
       <Section title={t("admin.operations.services")}>
         {health.isPending ? <Loading /> : null}
         {(health.data ?? []).map((service) => <Text key={service.name} style={styles.body}>{`${service.name}: ${service.up ? t("admin.operations.healthy") : t("admin.operations.down")}`}</Text>)}

@@ -1,7 +1,7 @@
 import { useState, type PropsWithChildren, type ReactNode } from "react";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions, type TextInputProps } from "react-native";
 import { brand, colors, notice, onNight, radius, spacing, typography } from "@rsvp/design-tokens";
-import { Logo } from "@rsvp/ui";
+import { CheckMark, Illustration, Logo, type IllustrationName } from "@rsvp/ui";
 import type { AppLocale } from "@rsvp/i18n";
 import { useLocalePreference, useT } from "../platform/providers";
 
@@ -50,7 +50,7 @@ export const authStyles = StyleSheet.create({
   primary: { minHeight: MIN_TOUCH + 8, alignItems: "center", justifyContent: "center", borderRadius: radius.md, backgroundColor: palette.primary, paddingHorizontal: spacing[4] },
   primaryBusy: { opacity: 0.75 },
   primaryText: { color: palette.onPrimary, fontSize: typography.fontSize.base, fontWeight: "700", fontFamily: textFamily },
-  link: { minHeight: MIN_TOUCH, justifyContent: "center", alignSelf: "flex-start" },
+  link: { minHeight: MIN_TOUCH, minWidth: MIN_TOUCH, justifyContent: "center", alignSelf: "flex-start" },
   linkText: { color: palette.primary, fontSize: typography.fontSize.sm, fontWeight: "600", textDecorationLine: "underline", fontFamily: textFamily },
   switchRow: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: spacing[1] },
   switchLead: { color: palette.textMuted, fontSize: typography.fontSize.sm, fontFamily: textFamily },
@@ -81,7 +81,7 @@ export function LanguageSwitch(): ReactNode {
 }
 
 /** Electric-blue brand panel beside the form on wide screens; a blue cover above the form on narrow ones. */
-export function AuthLayout({ title, intro, children }: PropsWithChildren<{ readonly title: string; readonly intro: string }>): ReactNode {
+export function AuthLayout({ title, intro, illustration = "invitation", children }: PropsWithChildren<{ readonly title: string; readonly intro: string; /** Line illustration on the blue panel or cover; decorative. */ readonly illustration?: IllustrationName }>): ReactNode {
   const t = useT();
   const { width } = useWindowDimensions();
   const wide = width >= WIDE_BREAKPOINT;
@@ -95,6 +95,7 @@ export function AuthLayout({ title, intro, children }: PropsWithChildren<{ reado
           {ghost(560, -90, -120)}
           <Logo tone="white" height={40} />
           <View style={{ gap: spacing[5] }}>
+            <Illustration name={illustration} tone="onDark" size={148} />
             <Text accessibilityElementsHidden aria-hidden style={authStyles.pitch}>{t("auth.brandPitch")}</Text>
             <Text accessibilityElementsHidden aria-hidden style={authStyles.pitchBody}>{t("auth.brandBody")}</Text>
           </View>
@@ -105,7 +106,10 @@ export function AuthLayout({ title, intro, children }: PropsWithChildren<{ reado
         {wide ? null : (
           <View style={authStyles.cover}>
             {ghost(220, -50, -60)}
-            <Logo tone="white" height={30} />
+            <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" }}>
+              <Logo tone="white" height={30} />
+              <Illustration name={illustration} tone="onDark" size={76} />
+            </View>
             <Text accessibilityElementsHidden aria-hidden style={authStyles.coverPitch}>{t("auth.brandPitch")}</Text>
           </View>
         )}
@@ -173,7 +177,13 @@ export function TextLink({ label, onPress }: { readonly label: string; readonly 
   return <Pressable accessibilityRole="link" accessibilityLabel={label} onPress={onPress} style={[authStyles.link, focusRing]}><Text style={authStyles.linkText}>{label}</Text></Pressable>;
 }
 
+/** Errors say what happened and how to go on; success draws the check of the D before the words. */
 export function Banner({ kind, children }: PropsWithChildren<{ readonly kind: "error" | "success" }>): ReactNode {
-  return <View role={kind === "error" ? "alert" : "status"} style={[authStyles.banner, kind === "success" && authStyles.bannerOk]}><Text style={authStyles.bannerText}>{children}</Text></View>;
+  return (
+    <View role={kind === "error" ? "alert" : "status"} style={[authStyles.banner, kind === "success" && authStyles.bannerOk, kind === "success" && { flexDirection: "row", alignItems: "center", gap: spacing[3] }]}>
+      {kind === "success" ? <CheckMark size={28} tone="success" /> : null}
+      <Text style={[authStyles.bannerText, kind === "success" && { flex: 1 }]}>{children}</Text>
+    </View>
+  );
 }
 

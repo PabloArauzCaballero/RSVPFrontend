@@ -24,7 +24,7 @@ describe("REQ-F13-01 · C17 saves languages, time zone and currency", () => {
     expect(screen.getByRole("radio", { name: "America/La_Paz" }).getAttribute("aria-checked")).toBe("true");
     expect(screen.getByRole("radio", { name: "BOB" }).getAttribute("aria-checked")).toBe("true");
     // Drop English, change zone and currency.
-    fireEvent.click(screen.getByRole("button", { name: "English" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "English" }));
     fireEvent.click(screen.getByRole("radio", { name: "America/Lima" }));
     fireEvent.click(screen.getByRole("radio", { name: "USD" }));
     fireEvent.click(screen.getByTestId("save-settings"));
@@ -38,7 +38,7 @@ describe("REQ-F13-01 · C17 saves languages, time zone and currency", () => {
     const { client, calls } = fakeClient({ ...baseHandlers({ ...CELEBRATION, supportedLocales: ["es-BO"] }), "PATCH /celebrations/c-1": () => { throw new Error("boom"); } });
     renderApp(<SettingsScreen celebrationId="c-1" onNavigate={navigate} />, client);
     await screen.findByTestId("save-settings");
-    fireEvent.click(screen.getByRole("button", { name: "English" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "English" }));
     fireEvent.click(screen.getByRole("radio", { name: "English" }));
     fireEvent.click(screen.getByRole("radio", { name: "EUR" }));
     fireEvent.click(screen.getByTestId("save-settings"));
@@ -118,6 +118,7 @@ describe("REQ-F12-05 · unpublish and archive ask for confirmation", () => {
   it("unpublish: nothing is sent until confirmed; the optional reason travels with the version", async () => {
     const { client, calls } = fakeClient(handlers({ "POST /celebrations/c-1/unpublish": () => ({ ...CELEBRATION, status: "DRAFT" }) }));
     renderApp(<PublishScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    fireEvent.click(await screen.findByTestId("more-publish"));
     fireEvent.click(await screen.findByTestId("unpublish"));
     expect(screen.getByText(/El sitio dejará de verse/)).toBeTruthy();
     expect(calls.some((call) => call.method === "POST")).toBe(false);
@@ -132,6 +133,7 @@ describe("REQ-F12-05 · unpublish and archive ask for confirmation", () => {
   it("cancelling the dialog sends nothing", async () => {
     const { client, calls } = fakeClient(handlers());
     renderApp(<PublishScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    fireEvent.click(await screen.findByTestId("more-publish"));
     fireEvent.click(await screen.findByTestId("unpublish"));
     fireEvent.click(screen.getByText("Cancelar"));
     expect(calls.some((call) => call.method === "POST")).toBe(false);
@@ -140,6 +142,7 @@ describe("REQ-F12-05 · unpublish and archive ask for confirmation", () => {
   it("archive warns it is definitive and then posts to /archive", async () => {
     const { client, calls } = fakeClient(handlers({ "POST /celebrations/c-1/archive": () => ({ ...CELEBRATION, status: "ARCHIVED" }) }));
     renderApp(<PublishScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    fireEvent.click(await screen.findByTestId("more-publish"));
     fireEvent.click(await screen.findByTestId("archive"));
     expect(screen.getByText(/Archivar es definitivo/)).toBeTruthy();
     expect(calls.some((call) => call.method === "POST")).toBe(false);

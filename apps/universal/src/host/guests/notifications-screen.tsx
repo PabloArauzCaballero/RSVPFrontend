@@ -1,13 +1,15 @@
 import type { ReactNode } from "react";
 import { Text, View } from "react-native";
-import { spacing } from "@rsvp/design-tokens";
+import { colors, radius, spacing } from "@rsvp/design-tokens";
 import { formatCelebrationDate } from "@rsvp/i18n";
 import { useHostNotifications, useMarkHostNotificationsRead, type HostNotification } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
-import { ActionButton, Loading, Notice, styles } from "../ui";
-import { FailureNotice, RetryNotice } from "./parts";
+import { ActionButton, EmptyState, Loading, Notice, styles } from "../ui";
+import { FailureNotice, RetryNotice, TextAction } from "./parts";
+
+const palette = colors.light;
 import { useSingleFlightGate } from "../../platform/single-flight";
 import { classifyFailure } from "./failure";
 import { knownNoticeTemplate, notificationTarget } from "./notification-target";
@@ -35,28 +37,27 @@ function NotificationsBody({ celebrationId, timeZone, onNavigate }: { readonly c
   };
   return (
     <View style={{ gap: spacing[4] }}>
-      <Text style={styles.body}>{t("guests.notifications.intro")}</Text>
       <View style={styles.row}>
-        <Text testID="unread-count" accessibilityLiveRegion="polite" style={styles.label}>{t("guests.notifications.unreadCount", { count: unread.length })}</Text>
+        <Text testID="unread-count" accessibilityLiveRegion="polite" style={[styles.label, { fontSize: 16 }]}>{t("guests.notifications.unreadCount", { count: unread.length })}</Text>
         <ActionButton variant="secondary" label={t("guests.notifications.markAll")} busy={markRead.isPending} disabled={unread.length === 0} onPress={() => mark(unread.map((item) => item.id))} testID="mark-all" />
-        <ActionButton variant="secondary" label={t("guests.notifications.refresh")} onPress={() => { void inbox.refetch(); }} />
+        <TextAction label={t("guests.notifications.refresh")} onPress={() => { void inbox.refetch(); }} />
       </View>
-      {items.length === 0 ? <Notice>{t("guests.notifications.empty")}</Notice> : (
-        <View role="list" style={{ gap: spacing[2] }}>
-          {items.map((item) => {
+      {items.length === 0 ? <EmptyState illustration="invitation" title={t("guests.notifications.emptyTitle")} body={t("guests.notifications.empty")} /> : (
+        <View role="list" style={{ borderRadius: radius.lg, borderWidth: 1, borderColor: palette.border, backgroundColor: palette.surface, overflow: "hidden" }}>
+          {items.map((item, index) => {
             const seen = isRead(item);
             const target = notificationTarget(item.template);
             const own = knownNoticeTemplate(item.template);
             const subject = own ? t(`guests.notifications.templates.${own}.subject`) : item.subject;
             const body = own ? t(`guests.notifications.templates.${own}.text`) : item.text;
             return (
-              <View key={item.id} role="listitem" testID={`notice-${item.id}`} style={[styles.card, { gap: spacing[1] },]}>
-                <Text style={styles.subtitle}>{seen ? t("guests.notifications.read") : t("guests.notifications.unread")} · {subject}</Text>
+              <View key={item.id} role="listitem" testID={`notice-${item.id}`} style={[{ gap: spacing[1], padding: spacing[4] }, index > 0 ? { borderTopWidth: 1, borderTopColor: palette.border } : null, seen ? { backgroundColor: palette.surfaceMuted } : null]}>
+                <Text style={[styles.subtitle, { fontSize: 17, fontWeight: seen ? "600" : "800" }]}>{seen ? t("guests.notifications.read") : t("guests.notifications.unread")} · {subject}</Text>
                 <Text style={styles.body}>{body}</Text>
                 <Text style={styles.muted}>{t("guests.notifications.via", { channel: t(`guests.notifications.channel.${item.channel}`), status: t(`guests.notifications.delivery.${item.status}`), date: formatCelebrationDate(item.createdAt, { locale, timeZone }) })}</Text>
                 <View style={styles.row}>
-                  {target ? <ActionButton label={t("guests.notifications.open")} onPress={() => open(item)} testID={`open-${item.id}`} /> : null}
-                  {!seen ? <ActionButton variant="secondary" label={t("guests.notifications.markRead")} onPress={() => mark([item.id])} testID={`read-${item.id}`} /> : null}
+                  {target ? <ActionButton variant="secondary" label={t("guests.notifications.open")} onPress={() => open(item)} testID={`open-${item.id}`} /> : null}
+                  {!seen ? <TextAction label={t("guests.notifications.markRead")} onPress={() => mark([item.id])} testID={`read-${item.id}`} /> : null}
                 </View>
               </View>
             );
@@ -70,5 +71,5 @@ function NotificationsBody({ celebrationId, timeZone, onNavigate }: { readonly c
 
 export function NotificationsScreen(props: ScreenProps): ReactNode {
   const t = useT();
-  return <CelebrationScreen {...props} current="notifications" title={t("guests.notifications.title")}>{({ celebration }) => <NotificationsBody celebrationId={celebration.id} timeZone={celebration.timeZone} onNavigate={props.onNavigate} />}</CelebrationScreen>;
+  return <CelebrationScreen {...props} current="notifications" title={t("guests.notifications.title")} intro={t("guests.notifications.intro")}>{({ celebration }) => <NotificationsBody celebrationId={celebration.id} timeZone={celebration.timeZone} onNavigate={props.onNavigate} />}</CelebrationScreen>;
 }

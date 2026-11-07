@@ -1,25 +1,25 @@
 export const enUS = {
   common: { loading: "Loading…", retry: "Try again", cancel: "Cancel", save: "Save", signOut: "Sign out", more: "More", close: "Close", empty: "There are no results." },
   auth: {
-    email: "Email", password: "Password", signIn: "Sign in", register: "Create account", forgotPassword: "Forgot your password?",
-    signInTitle: "Sign in to your account", signInIntro: "Plan your celebration or manage your event services.",
-    registerTitle: "Create your account", registerIntro: "Choose how you will use RSVP. It takes a minute.",
-    recoverTitle: "Reset your password", recoverIntro: "Enter your account email and we will send you the instructions.",
-    recoverSend: "Send instructions", recoverSent: "If an account exists for that email, you will receive instructions to set a new password.",
-    signingIn: "Signing in…", creating: "Creating account…",
-    backToSignIn: "Back to sign in", noAccount: "Do not have an account yet?", haveAccount: "Already have an account?",
-    role: "I want to use DOne as", roleHost: "Host", roleHostHint: "I organise my own celebration", rolePlanner: "Event planner", rolePlannerHint: "I manage celebrations for other people", roleProvider: "Provider", roleProviderHint: "I offer services for celebrations",
-    passwordHint: "At least 12 characters.", showPassword: "Show password", hidePassword: "Hide password", brandPitch: "Invite today. Tomorrow you know who is coming.", brandBody: "RSVPs for weddings, parties and events. Guests answer in one tap and you see the list up to date.",
-    sessionEnded: "Your session ended. Sign in to continue.",
-    validation: { required: "This field is required.", invalidEmail: "Enter a valid email, for example name@mail.com.", passwordShort: "The password must have at least 12 characters.", passwordBytes: "The password is too long. Use a shorter one.", tooLong: "The text is too long." },
-    failure: { invalidCredentials: "The email and password do not match. Check them and try again.", emailTaken: "An account with this email already exists. Sign in or reset your password.", validation: "Check the highlighted fields and try again.", offline: "Cannot reach the server. Check your internet connection and try again.", unavailable: "The accounts service is not responding right now. Try again in a few minutes.", unknown: "We could not complete the action. Try again.", forbidden: "Your account cannot do this. If you think this is a mistake, contact support.", rateLimited: "Too many attempts. Wait {{seconds}} s and try again.", rateLimitedNoWait: "Too many attempts. Wait a moment and try again." },
-    guard: { checking: "Checking your session…", forbiddenTitle: "You do not have access to this section", forbiddenBody: "Your account has no permission for this area. Sign in with another account or go back to your space.", goHome: "Go to my space", noRole: "Your account has no role assigned yet." }
+    email: "Email", password: "Password", signIn: "Sign in", register: "Create my account", forgotPassword: "I forgot my password",
+    signInTitle: "Sign in to DOne", signInIntro: "Pick up your invitation or your services where you left them.",
+    registerTitle: "Create your account", registerIntro: "Tell us what you will do and you are in within a minute.",
+    recoverTitle: "Reset your password", recoverIntro: "Type your email and we will send you the instructions.",
+    recoverSend: "Send instructions", recoverSent: "Done. If there is an account with that email, the instructions are on their way.",
+    signingIn: "Signing in…", creating: "Creating your account…",
+    backToSignIn: "Back to sign in", noAccount: "No account yet?", haveAccount: "Already have an account?",
+    role: "What will you do on DOne?", roleHost: "I am organising a celebration", roleHostHint: "I create my invitation and see who is coming.", roleProvider: "I offer services", roleProviderHint: "I get requests from people who organise.", rolePlanner: "I help organise", rolePlannerHint: "I run celebrations for other people.",
+    passwordHint: "At least 12 characters. A phrase you will remember works.", showPassword: "Show", hidePassword: "Hide", brandPitch: "Invite today. Tomorrow you know who is coming.", brandBody: "Your guests answer in one tap, no account needed. You see the list up to date.",
+    sessionEnded: "Your session ended. Sign in again to continue.",
+    validation: { required: "This is missing.", invalidEmail: "Check the email: it should look like name@mail.com.", passwordShort: "Use at least 12 characters. A short phrase works well.", passwordBytes: "That password is too long. Try a shorter one.", tooLong: "That is too long." },
+    failure: { invalidCredentials: "That email and password do not match. Check them or reset your password.", emailTaken: "We could not create the account with those details. Try another email, or sign in if you already have an account.", validation: "Some details are not valid. Check the marked fields.", offline: "No connection right now. Check your internet and try again.", unavailable: "Accounts are not responding right now. Try again in a few minutes.", unknown: "Something did not go as expected. Try again.", forbidden: "This account cannot do that. If you think this is a mistake, write to us.", rateLimited: "There were a lot of attempts. You can try again in {{seconds}} s.", rateLimitedNoWait: "There were a lot of attempts. Wait a moment and try again." },
+    guard: { checking: "Opening your space…", forbiddenTitle: "This section belongs to another account", forbiddenBody: "This account cannot open it. Sign in with the right one or go back to your space.", goHome: "Go to my space", noRole: "Your account has no role yet. Whoever manages DOne can assign one." }
   },
-  notFound: { title: "We could not find this page", intro: "The link may be mistyped, or the page no longer exists.", home: "Go to the start page" },
+  notFound: { title: "This page does not exist", intro: "The link may be incomplete. Go back to the start and we will pick up from there.", home: "Go to the start" },
   language: { label: "Language", "es-BO": "Español", "en-US": "English" },
   invitation: {
     title: "Open your invitation", body: "This link is meant for the DOne app. If you have it installed, open it from here; otherwise you can continue in the browser.", openApp: "Open in the DOne app",
-    pendingTitle: "This link uses an older format", pendingBody: "The celebration name is missing from the link. Ask whoever invited you to send the updated link, or open it from the DOne app, which can resolve it.", appTitle: "Your invitation", appBody: "This link uses an older format and does not say which celebration it belongs to. Ask whoever invited you for the updated link.", invalidTitle: "This link is not valid", invalidBody: "Make sure you opened the full link that was shared with you.", home: "Go to the home page"
+    pendingTitle: "This link uses an older format", pendingBody: "The celebration name is missing from the link. Ask whoever invited you to send the updated link, or open it from the DOne app, which can resolve it.", appTitle: "Opening your invitation", appBody: "This link uses an older format and does not say which celebration it belongs to. Ask whoever invited you for the updated link.", invalidTitle: "This link does not open", invalidBody: "A piece of it may be missing, or it may have expired. Ask whoever invited you for a new one.", home: "Go to the home page"
   },
   stubs: { host: { title: "Host dashboard", description: "Manage your celebration from one place." }, provider: { title: "Provider portal", description: "Review and answer your requests." }, guest: { title: "Your invitation", description: "Confirm your attendance and see the details." } },
   ui: {

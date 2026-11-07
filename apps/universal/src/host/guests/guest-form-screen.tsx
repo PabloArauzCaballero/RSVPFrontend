@@ -2,13 +2,14 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
 import { guestSchema } from "@rsvp/forms";
-import { hostGuestsApi, useGuestDefaults, useGuestGroups, useRegisterGuest } from "@rsvp/query-hooks";
+import { hostGuestsApi, useGuestDefaults, useGuestGroups, useGuestList, useRegisterGuest } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
-import { ActionButton, ChoiceGroup, ConfirmDialog, Field, Notice, Section } from "../ui";
-import { FailureNotice, formErrors } from "./parts";
+import { ActionButton, Celebrate, ChoiceGroup, ConfirmDialog, Field, styles, SuccessNote } from "../ui";
+import { FailureNotice, formErrors, TextAction } from "./parts";
 import { useSingleFlightGate } from "../../platform/single-flight";
+import { rememberGuest } from "./recent-guests";
 
 type NewGuest = Parameters<ReturnType<typeof useRegisterGuest>["mutate"]>[0];
 
@@ -22,10 +23,12 @@ function Form({ celebrationId, onNavigate, groupId }: { readonly celebrationId: 
   const [draft, setDraft] = useState({ name: "", email: "", phone: "", allowedCompanions: "0" });
   const [group, setGroup] = useState<string>(groupId ?? "");
   const [touched, setTouched] = useState<Record<string, boolean>>({});
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState<{ readonly name: string; readonly first: boolean } | null>(null);
   const [duplicate, setDuplicate] = useState<{ readonly name: string; readonly input: NewGuest } | null>(null);
   const [checking, setChecking] = useState(false);
   const defaults = useGuestDefaults(client, celebrationId);
+  // The list the host sees tells whether this is the first guest: that one earns a milestone, the next ones a line.
+  const existing = useGuestList(client, celebrationId, { limit: 1 });
   const flight = useSingleFlightGate();
   // The celebration's default companions pre-fill the field once, and never over something the host already typed.
   const defaultCompanions = defaults.data?.defaultAllowedCompanions;
@@ -42,9 +45,10 @@ function Form({ celebrationId, onNavigate, groupId }: { readonly celebrationId: 
   const groups = groupList.data?.items ?? [];
 
   const send = (input: NewGuest): void => {
+    const parsedName = draft.name.trim();
     setDuplicate(null);
     register.mutate(input, {
-      onSuccess: () => { setSaved(true); setDraft({ name: "", email: "", phone: "", allowedCompanions: draft.allowedCompanions }); setTouched({}); },
+      onSuccess: () => { rememberGuest({ celebrationId, name: parsedName, email: (input as { email?: string | null }).email ?? null, phone: (input as { phone?: string | null }).phone ?? null, at: Date.now() }); setSaved({ name: parsedName, first: existing.data?.total === 0 }); setDraft({ name: "", email: "", phone: "", allowedCompanions: draft.allowedCompanions }); setTouched({}); },
       onSettled: flight.end
     });
   };
@@ -72,17 +76,22 @@ function Form({ celebrationId, onNavigate, groupId }: { readonly celebrationId: 
   };
   return (
     <View style={{ gap: spacing[4] }}>
-      <Section title={t("guests.form.title")}>
-        <Field label={t("guests.form.name")} value={draft.name} error={shown("name")} onChange={(name) => { setSaved(false); touch("name"); setDraft({ ...draft, name }); }} testID="guest-name" />
-        <Field label={t("guests.form.email")} help={t("guests.form.emailHelp")} keyboardType="email-address" value={draft.email} error={shown("email")} onChange={(email) => { setSaved(false); touch("email"); setDraft({ ...draft, email }); }} testID="guest-email" />
-        <Field label={t("guests.form.phone")} help={t("guests.form.phoneHelp")} keyboardType="phone-pad" value={draft.phone} error={shown("phone")} onChange={(phone) => { setSaved(false); touch("phone"); setDraft({ ...draft, phone }); }} testID="guest-phone" />
-        <Field label={t("guests.form.companions")} help={t("guests.form.companionsHelp")} keyboardType="number-pad" value={draft.allowedCompanions} error={shown("allowedCompanions")} onChange={(allowedCompanions) => { setSaved(false); touch("allowedCompanions"); setDraft({ ...draft, allowedCompanions }); }} />
+      {saved?.first ? (
+        <Celebrate title={t("guests.form.firstTitle")} body={t("guests.form.firstBody")}>
+          <ActionButton label={t("guests.form.firstAction")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.guests, celebrationId))} />
+        </Celebrate>
+      ) : null}
+      <View style={[styles.card, { maxWidth: 720 }]}>
+        <Field label={t("guests.form.name")} value={draft.name} error={shown("name")} onChange={(name) => { setSaved(null); touch("name"); setDraft({ ...draft, name }); }} testID="guest-name" />
+        <Field label={t("guests.form.email")} help={t("guests.form.emailHelp")} keyboardType="email-address" value={draft.email} error={shown("email")} onChange={(email) => { setSaved(null); touch("email"); setDraft({ ...draft, email }); }} testID="guest-email" />
+        <Field label={t("guests.form.phone")} help={t("guests.form.phoneHelp")} keyboardType="phone-pad" value={draft.phone} error={shown("phone")} onChange={(phone) => { setSaved(null); touch("phone"); setDraft({ ...draft, phone }); }} testID="guest-phone" />
+        <Field label={t("guests.form.companions")} help={t("guests.form.companionsHelp")} keyboardType="number-pad" value={draft.allowedCompanions} error={shown("allowedCompanions")} onChange={(allowedCompanions) => { setSaved(null); touch("allowedCompanions"); setDraft({ ...draft, allowedCompanions }); }} />
         {groups.length ? <ChoiceGroup label={t("guests.form.group")} value={group} onChange={setGroup} choices={[{ value: "", label: t("guests.form.noGroup") }, ...groups.map((item) => ({ value: item.id, label: item.name }))]} /> : null}
         <FailureNotice error={register.error} onRetry={submit} />
-        {saved ? <Notice kind="success">{t("guests.form.saved")}</Notice> : null}
+        {saved ? <SuccessNote message={t("guests.form.saved", { name: saved.name })} {...(saved.first ? {} : { detail: t("guests.form.savedDetail") })} /> : null}
         <ActionButton label={register.isPending || checking ? t("guests.form.saving") : t("guests.form.save")} busy={register.isPending || checking} onPress={submit} testID="save-guest" />
-        <ActionButton variant="secondary" label={t("guests.form.back")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.guests, celebrationId))} />
-      </Section>
+        <TextAction label={t("guests.form.back")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.guests, celebrationId))} />
+      </View>
       <ConfirmDialog visible={duplicate !== null} title={t("guests.form.duplicateTitle")} body={t("guests.form.duplicateBody", { name: duplicate?.name ?? "" })} confirmLabel={t("guests.form.duplicateConfirm")}
         onConfirm={() => { if (duplicate && flight.begin()) send(duplicate.input); }} onCancel={() => setDuplicate(null)} />
     </View>
@@ -91,5 +100,5 @@ function Form({ celebrationId, onNavigate, groupId }: { readonly celebrationId: 
 
 export function GuestFormScreen(props: ScreenProps & { readonly groupId?: string }): ReactNode {
   const t = useT();
-  return <CelebrationScreen {...props} current="guests" title={t("guests.form.title")}>{({ celebration }) => <Form celebrationId={celebration.id} onNavigate={props.onNavigate} groupId={props.groupId} />}</CelebrationScreen>;
+  return <CelebrationScreen {...props} current="guests" title={t("guests.form.title")} intro={t("guests.form.intro")}>{({ celebration }) => <Form celebrationId={celebration.id} onNavigate={props.onNavigate} groupId={props.groupId} />}</CelebrationScreen>;
 }

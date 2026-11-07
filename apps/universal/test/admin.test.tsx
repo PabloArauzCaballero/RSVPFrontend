@@ -58,6 +58,7 @@ describe("REQ-F14-02 · event type editor", () => {
     fireEvent.click(await screen.findByRole("radio", { name: "Graduación" }));
     fireEvent.click(screen.getByTestId("onboarding-next"));
     type("Graduada o graduado", "Sofía");
+    fireEvent.click(screen.getByTestId("onboarding-next")); // the name and link are the third short step
     type("Nombre de la celebración", "Grado de Sofía");
     fireEvent.click(screen.getByTestId("onboarding-create"));
     await waitFor(() => expect(calls.find((call) => call.method === "POST")?.body).toMatchObject({ eventTypeCode: "GRADUACION", content: { hosts: { GRADUATE: "Sofía" } } }));
@@ -105,13 +106,24 @@ describe("E2, E3, E7, E12", () => {
 describe("no hand-written copy in lane B screens", () => {
   const files = (path: string): string[] => (statSync(path).isDirectory() ? readdirSync(path).flatMap((entry) => files(join(path, entry))) : [path]);
   // Letters between ">" (not "=>") and "<" or "{": a JSX text node. Matches ">Guardar<"; rejects ">{t("x")}<" and "=> a < b".
-  const JSX_TEXT = /(?<![=])>\s*([^<>{}\s·&|/,;:()[\]-][^<>{}]*?)\s*</g;
+  // Also rejects what is code, not text: a comparison (">= WIDE ?", "> 0;") starts with "=" or a digit and runs into a statement (";") or a
+  // ternary ("shown ?"). A JSX text node never contains ";" and never ends with a space before "?".
+  const JSX_TEXT = /(?<![=])>\s*([^<>{}\s·&|/,;:()[\]=-][^<>{};]*?)\s*</g;
+  const isCode = (text: string): boolean => /\s\?$/.test(text) || /^\d+\s*$/.test(text);
+  const handWritten = (source: string): string[] => [...source.matchAll(JSX_TEXT)].map((match) => match[1] ?? "").filter((text) => /\p{L}/u.test(text) && !isCode(text));
   it("every JSX text node in src/host, src/admin, src/guest and src/push is a translation", () => {
     const root = process.cwd();
     const offenders = ["src/host", "src/admin", "src/guest", "src/push"].flatMap((dir) => files(join(root, dir))).filter((file) => file.endsWith(".tsx")).flatMap((file) => {
       const source = readFileSync(file, "utf8").replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, "");
-      return [...source.matchAll(JSX_TEXT)].map((match) => match[1] ?? "").filter((text) => /\p{L}/u.test(text)).map((text) => `${relative(root, file)}: "${text}"`);
+      return handWritten(source).map((text) => `${relative(root, file)}: "${text}"`);
     });
     expect(offenders).toEqual([]);
+  });
+  it("the detector still catches real hand-written text and ignores comparisons", () => {
+    expect(handWritten("<Text>Guardar</Text>")).toEqual(["Guardar"]);
+    expect(handWritten('<Text accessibilityRole="header">Hola mundo</Text>')).toEqual(["Hola mundo"]);
+    expect(handWritten("if (width >= WIDE ? 1 : 2) { return <View/>; }")).toEqual([]);
+    expect(handWritten("const n = items.length > 0;\n return (<View/>)")).toEqual([]);
+    expect(handWritten("{shown > shown ? <A/> : null}")).toEqual([]);
   });
 });

@@ -33,7 +33,7 @@ describe("REQ-F14-03 · verification queue", () => {
     renderApp(<VerificationScreen onNavigate={navigate} />, client, ADMIN);
     expect(await screen.findByText("Foto Altiplano")).toBeTruthy();
     expect(screen.getByText("Catering Sol")).toBeTruthy();
-    expect(screen.getAllByText(/Enviado el .*2026.* UTC/)).toHaveLength(2);
+    expect(screen.getAllByText(/Enviado el .*2026/)).toHaveLength(2);
     fireEvent.click(screen.getByRole("button", { name: "Verificar a Foto Altiplano" }));
     expect(await screen.findByText("Proveedor actualizado.")).toBeTruthy();
     await waitFor(() => expect(screen.queryByText("Foto Altiplano")).toBeNull());
@@ -43,6 +43,7 @@ describe("REQ-F14-03 · verification queue", () => {
   it("rejecting needs a reason: empty is refused in place, then the reason is sent", async () => {
     const { client, calls } = fakeClient({ ...queue(PROVIDERS), "POST /providers/p-2/reject": () => ({}) });
     renderApp(<VerificationScreen onNavigate={navigate} />, client, ADMIN);
+    fireEvent.click((await screen.findAllByRole("button", { name: "Otras acciones" }))[1]!);
     fireEvent.click(await screen.findByRole("button", { name: "Rechazar a Catering Sol" }));
     fireEvent.click(screen.getByRole("button", { name: "Rechazar" }));
     expect(await screen.findByText(/Escribe el motivo: queda/)).toBeTruthy();
@@ -104,6 +105,7 @@ describe("REQ-F14-04 · moderation of microsites and external gifts", () => {
     expect(screen.getByText(/Regalo externo/)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Aprobar Sitio de Foto Altiplano" }));
     expect(await screen.findByText("Decisión registrada.")).toBeTruthy();
+    fireEvent.click(screen.getAllByRole("button", { name: "Otras acciones" }).at(-1)!);
     fireEvent.click(screen.getByRole("button", { name: "Rechazar Licuadora en tienda externa" }));
     fireEvent.click(screen.getByRole("button", { name: "Rechazar" }));
     expect(await screen.findByText(/Escribe el motivo: queda/)).toBeTruthy();

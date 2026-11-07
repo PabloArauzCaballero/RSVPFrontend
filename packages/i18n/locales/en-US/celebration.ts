@@ -4,7 +4,7 @@ import type { celebrationEsBO } from "../es-BO/celebration.js";
 /** Public celebration site (F08, F10) and theme engine (F09). Same keys as es-BO, checked by type and by test. */
 export const celebrationEnUS: DeepStrings<typeof celebrationEsBO> = {
   sections: { story: "Our story", schedule: "Schedule", venues: "Venues", gallery: "Gallery", dressCode: "Dress code", faq: "FAQ", recommendations: "Recommendations", gifts: "Gifts", rsvp: "RSVP" },
-  hero: { countdown_one: "{{count}} day to go", countdown_other: "{{count}} days to go", today: "It's today!" },
+  hero: { countdown_one: "{{count}} day to go", countdown_other: "{{count}} days to go", today: "It's today" },
   nav: { label: "Celebration sections", home: "Home" },
   schedule: { zoneNote: "Times are in the event's local time ({{zone}})." },
   venues: { howToGetThere: "Get directions", kind: { ceremony: "Ceremony", reception: "Reception", other: "Venue" } },

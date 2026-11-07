@@ -12,7 +12,10 @@ import { editorPath, withCelebration, type EditorSection } from "./routes";
 import { useSingleFlight } from "../platform/single-flight";
 import { CelebrationErrorNotice } from "./celebration-errors";
 import { LIMITS, overLimit } from "./limits";
-import { ActionButton, ConfirmDialog, Field, Loading, Notice, Section, styles } from "./ui";
+import { spacing } from "@rsvp/design-tokens";
+import { Row, RowList } from "./gifts/offer-row";
+import { MoreOptions } from "./more-options";
+import { ActionButton, Celebrate, CheckMark, ConfirmDialog, Field, Loading, Notice, styles } from "./ui";
 
 /** C16 · What is still missing (from the event type, via the API), publish and unpublish with confirmation, share. */
 
@@ -66,31 +69,61 @@ function Checklist({ celebration, eventType, onNavigate, refetch }: { readonly c
     await Share.share({ message: `${title} ${url}`, url });
   };
 
+  const draft = celebration.status === "DRAFT";
+  const ready = draft && check.isSuccess && !missing.length;
+  const justPublished = action.isSuccess && action.variables?.action.kind === "publish";
   return (
-    <View style={{ gap: 16 }}>
-      <Notice kind={celebration.status === "PUBLISHED" ? "success" : "info"}>{t(`host.publish.status.${celebration.status}`)}</Notice>
-      {check.isPending ? <Loading /> : null}
-      {celebration.status === "DRAFT" ? (
-        <Section title={missing.length ? t("host.publish.missing") : check.isSuccess ? t("host.publish.ready") : t("host.publish.title")}>
+    <View style={{ gap: spacing[5] }}>
+      {check.isPending && draft ? <Loading /> : null}
+      {justPublished ? (
+        <Celebrate title={t("host.publish.done.title")} body={t("host.publish.done.body")} />
+      ) : (
+        <Notice kind="info">{t(`host.publish.status.${celebration.status}`)}</Notice>
+      )}
+      {draft ? (
+        <View style={{ gap: spacing[3], maxWidth: 720 }}>
           {check.isError && !fromError.length ? <><CelebrationErrorNotice error={check.error} /><ActionButton variant="secondary" label={t("host.common.retry")} onPress={() => { void check.refetch(); }} testID="retry-check" /></> : null}
-          {missing.map((field) => {
-            const task = taskFor(field, eventType, t);
-            return (
-              <View key={field} style={[styles.row, { justifyContent: "space-between" }]} accessibilityRole="summary">
-                <Text style={[styles.body, { flex: 1 }]}>{task.label}</Text>
-                <ActionButton variant="secondary" label={t("host.publish.goTo")} onPress={() => onNavigate(withCelebration(editorPath(task.section), celebration.id))} />
+          {missing.length ? (
+            <>
+              <Text accessibilityRole="header" aria-level={2} style={styles.subtitle}>{t("host.publish.missing")}</Text>
+              <Text style={styles.muted} accessibilityLiveRegion="polite">{t("host.publish.pending", { count: missing.length })}</Text>
+              <RowList>
+                {missing.map((field, index) => {
+                  const task = taskFor(field, eventType, t);
+                  return (
+                    <Row key={field} first={index === 0}>
+                      <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: spacing[2] }}>
+                        <Text style={[styles.body, { flexGrow: 1, flexShrink: 1, flexBasis: 160 }]}>{task.label}</Text>
+                        <ActionButton variant="secondary" label={t("host.publish.goTo")} onPress={() => onNavigate(withCelebration(editorPath(task.section), celebration.id))} />
+                      </View>
+                    </Row>
+                  );
+                })}
+              </RowList>
+            </>
+          ) : ready ? (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[3] }}>
+              <CheckMark size={36} tone="success" />
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text accessibilityRole="header" aria-level={2} style={styles.subtitle}>{t("host.publish.ready")}</Text>
+                <Text style={styles.muted}>{t("host.publish.readyBody")}</Text>
               </View>
-            );
-          })}
-          <ActionButton label={t("host.publish.publish")} disabled={Boolean(missing.length) || !check.isSuccess} busy={action.isPending} onPress={() => setDialog("publish")} testID="publish" />
-        </Section>
+            </View>
+          ) : null}
+          <View style={styles.row}><ActionButton label={t("host.publish.publish")} disabled={Boolean(missing.length) || !check.isSuccess} busy={action.isPending} onPress={() => setDialog("publish")} testID="publish" /></View>
+        </View>
       ) : null}
       <CelebrationErrorNotice error={fromError.length ? null : action.error} onReload={() => { void check.refetch(); refetch(); }} />
       {celebration.status !== "ARCHIVED" ? (
-        <Section title={t("host.publish.share")}>
-          <Text selectable style={styles.body} accessibilityLabel={t("host.publish.link")}>{url}</Text>
-          <ActionButton variant="secondary" label={t("host.publish.copy")} onPress={() => { void share(); }} />
-          {copied ? <Notice kind="success">{t("host.publish.copied")}</Notice> : null}
+        <View style={{ gap: spacing[3], maxWidth: 720 }}>
+          {celebration.status === "PUBLISHED" ? (
+            <>
+              <Text accessibilityRole="header" aria-level={2} style={styles.subtitle}>{t("host.publish.share")}</Text>
+              <Text selectable style={styles.body} accessibilityLabel={t("host.publish.link")}>{url}</Text>
+              <View style={styles.row}><ActionButton label={t("host.publish.copy")} onPress={() => { void share(); }} testID="copy-link" /></View>
+              {copied ? <Notice kind="success">{t("host.publish.copied")}</Notice> : null}
+            </>
+          ) : null}
           <Text style={styles.label}>{t("host.publish.whatsappPreview")}</Text>
           <View style={[styles.card, { maxWidth: OG_WIDTH, padding: 0, overflow: "hidden" }]} testID="whatsapp-card">
             {cover ? <Image source={{ uri: cover }} style={{ width: OG_WIDTH, height: OG_HEIGHT }} accessibilityIgnoresInvertColors /> : null}
@@ -100,12 +133,16 @@ function Checklist({ celebration, eventType, onNavigate, refetch }: { readonly c
               <Text style={styles.muted}>{url}</Text>
             </View>
           </View>
-        </Section>
+        </View>
       ) : null}
-      <View style={styles.row}>
-        {celebration.status === "PUBLISHED" ? <ActionButton variant="secondary" busy={action.isPending} label={t("host.publish.unpublish")} onPress={() => setDialog("unpublish")} testID="unpublish" /> : null}
-        {celebration.status !== "ARCHIVED" ? <ActionButton variant="danger" busy={action.isPending} label={t("host.publish.archive")} onPress={() => setDialog("archive")} testID="archive" /> : null}
-      </View>
+      {celebration.status !== "ARCHIVED" ? (
+        <MoreOptions label={t("host.publish.more")} testID="more-publish">
+          <View style={styles.row}>
+            {celebration.status === "PUBLISHED" ? <ActionButton variant="secondary" busy={action.isPending} label={t("host.publish.unpublish")} onPress={() => setDialog("unpublish")} testID="unpublish" /> : null}
+            <ActionButton variant="danger" busy={action.isPending} label={t("host.publish.archive")} onPress={() => setDialog("archive")} testID="archive" />
+          </View>
+        </MoreOptions>
+      ) : null}
       <ConfirmDialog visible={dialog === "publish"} title={t("host.publish.publish")} body={t("host.publish.publishConfirm")} confirmLabel={t("host.publish.publish")} onConfirm={() => run("publish")} onCancel={() => setDialog(null)} />
       <ConfirmDialog visible={dialog === "unpublish"} title={t("host.publish.unpublish")} body={t("host.publish.unpublishConfirm")} confirmLabel={t("host.publish.unpublish")} onConfirm={() => run("unpublish")} onCancel={() => setDialog(null)}>
         <Field label={t("host.publish.reasonLabel")} value={reason} onChange={setReason} {...(reasonExcess !== null ? { error: t("host.limits.tooLong", { count: reasonExcess, max: LIMITS.reason }) } : {})} />
@@ -118,7 +155,7 @@ function Checklist({ celebration, eventType, onNavigate, refetch }: { readonly c
 export function PublishScreen({ celebrationId, onNavigate }: ScreenProps): ReactNode {
   const t = useT();
   return (
-    <CelebrationScreen celebrationId={celebrationId} onNavigate={onNavigate} current="publish" title={t("host.publish.title")}>
+    <CelebrationScreen celebrationId={celebrationId} onNavigate={onNavigate} current="publish" title={t("host.publish.title")} intro={t("host.publish.intro")}>
       {({ celebration, eventType, refetch }) => <Checklist celebration={celebration} eventType={eventType} onNavigate={onNavigate} refetch={refetch} />}
     </CelebrationScreen>
   );

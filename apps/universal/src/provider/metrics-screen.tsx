@@ -4,7 +4,7 @@ import { colors, spacing } from "@rsvp/design-tokens";
 import { formatNumber } from "@rsvp/i18n";
 import { useMetrics, type MetricTotals, type Provider } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../platform/providers";
-import { ActionButton, ChoiceGroup, Field, Loading, Notice, Section, styles } from "../host/ui";
+import { ActionButton, ChoiceGroup, EmptyState, Field, Loading, Notice, PageIntro, styles } from "../host/ui";
 import { PortalErrorNotice as ErrorNotice } from "./errors";
 import { PortalScreen } from "./frame";
 
@@ -19,36 +19,44 @@ export function lastDays(days: number, timeZone: string, now: Date = new Date())
 }
 export const validRange = (from: string, to: string): boolean => ISO.test(from) && ISO.test(to) && from <= to && !Number.isNaN(Date.parse(from)) && !Number.isNaN(Date.parse(to));
 
-/** The period's totals as one list: the label on the left, the figure on the right, a hairline between rows. */
+/** The period's totals as one list: label, figure and a bar scaled to the largest count (CTR is a ratio, so it has no bar). */
 /** `bare` drops the container when the list already sits inside a section (no card in a card). */
 export function RangeTotals({ totals, bare = false }: { readonly totals: MetricTotals; readonly bare?: boolean }): ReactNode {
   const t = useT();
   const locale = useLocale();
-  const rows: readonly [string, string][] = [
-    [t("portal.metrics.impressions"), formatNumber(totals.impressions, locale)],
-    [t("portal.metrics.clicks"), formatNumber(totals.clicks, locale)],
-    [t("portal.metrics.ctr"), new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 1 }).format(totals.ctr)],
-    [t("portal.metrics.validLeads"), formatNumber(totals.validLeads, locale)],
-    [t("portal.metrics.invalidLeads"), formatNumber(totals.invalidLeads, locale)]
+  const rows: readonly { readonly label: string; readonly value: string; readonly count?: number; readonly tone?: string }[] = [
+    { label: t("portal.metrics.impressions"), value: formatNumber(totals.impressions, locale), count: totals.impressions },
+    { label: t("portal.metrics.clicks"), value: formatNumber(totals.clicks, locale), count: totals.clicks },
+    { label: t("portal.metrics.ctr"), value: new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 1 }).format(totals.ctr) },
+    { label: t("portal.metrics.validLeads"), value: formatNumber(totals.validLeads, locale), count: totals.validLeads, tone: palette.success },
+    { label: t("portal.metrics.invalidLeads"), value: formatNumber(totals.invalidLeads, locale), count: totals.invalidLeads, tone: palette.textMuted }
   ];
+  const max = Math.max(1, ...rows.map((row) => row.count ?? 0));
+  const noData = totals.impressions + totals.clicks + totals.validLeads + totals.invalidLeads === 0;
   return (
-    <View style={[bare ? { maxWidth: 560 } : [styles.card, { gap: 0, paddingVertical: spacing[2], maxWidth: 560 }]]} testID="metric-totals">
-      {rows.map(([label, value], index) => (
-        <View key={label} accessible accessibilityLabel={`${label}: ${value}`} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", gap: spacing[3], paddingVertical: spacing[3], borderTopWidth: index === 0 ? 0 : 1, borderTopColor: palette.border }}>
-          <Text style={styles.body}>{label}</Text>
-          <Text style={[styles.subtitle, { fontVariant: ["tabular-nums"] }]}>{value}</Text>
+    <View style={bare ? { maxWidth: 560 } : [{ maxWidth: 560 }]} testID="metric-totals">
+      {noData ? <Text style={[styles.muted, { paddingBottom: spacing[2] }]} testID="metrics-no-data">{t("portal.metrics.noData")}</Text> : null}
+      {rows.map((row, index) => (
+        <View key={row.label} accessible accessibilityLabel={`${row.label}: ${row.value}`} style={{ gap: spacing[1], paddingVertical: spacing[3], borderTopWidth: index === 0 ? 0 : 1, borderTopColor: palette.border }}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", gap: spacing[3] }}>
+            <Text style={styles.body}>{row.label}</Text>
+            <Text style={[styles.subtitle, { fontVariant: ["tabular-nums"] }]}>{row.value}</Text>
+          </View>
+          {row.count !== undefined ? <View style={{ height: 6, borderRadius: 999, backgroundColor: palette.primaryMuted, overflow: "hidden" }}><View style={{ height: 6, width: `${Math.max(row.count > 0 ? 2 : 0, Math.round((row.count / max) * 100))}%`, backgroundColor: row.tone ?? palette.primary }} /></View> : null}
         </View>
       ))}
     </View>
   );
 }
 
+const FIELDS: readonly string[] = ["day", "category", "destination", "impressions", "clicks", "validLeads", "invalidLeads", "leads"];
 type Group = "day" | "category" | "destination";
 
 /** D13 · Lead metrics by period, grouped by day, category or destination. */
 function Metrics({ provider }: { readonly provider: Provider }): ReactNode {
   const t = useT();
   const client = useApiClient();
+  const locale = useLocale();
   const initial = lastDays(30, provider.timeZone);
   const [from, setFrom] = useState(initial.from);
   const [to, setTo] = useState(initial.to);
@@ -60,7 +68,7 @@ function Metrics({ provider }: { readonly provider: Provider }): ReactNode {
   const rows = (metrics.data?.groups ?? metrics.data?.rows ?? []) as readonly Record<string, unknown>[];
   return (
     <View style={{ gap: spacing[4] }}>
-      <Text style={styles.body}>{t("portal.metrics.intro")}</Text>
+      <PageIntro>{t("portal.metrics.intro")}</PageIntro>
       <View style={styles.row}>
         <Field label={t("portal.metrics.from")} value={from} onChange={setFrom} testID="metrics-from" />
         <Field label={t("portal.metrics.to")} value={to} onChange={setTo} testID="metrics-to" />
@@ -73,11 +81,12 @@ function Metrics({ provider }: { readonly provider: Provider }): ReactNode {
       {metrics.data ? (
         <>
           <RangeTotals totals={metrics.data.totals} />
-          <Section title={t("portal.metrics.groupsTitle", { group: t(`portal.metrics.group.${group}`) })}>
-            {rows.length === 0 ? <Notice>{t("portal.metrics.empty")}</Notice> : rows.map((row, index) => (
-              <Text key={index} style={styles.body} testID="metric-row">{Object.entries(row).map(([key, value]) => `${key}: ${String(value)}`).join(" · ")}</Text>
+          <View style={{ maxWidth: 720 }}>
+            <Text accessibilityRole="header" style={styles.subtitle}>{t("portal.metrics.groupsTitle", { group: t(`portal.metrics.group.${group}`).toLowerCase() })}</Text>
+            {rows.length === 0 ? <EmptyState illustration="emptySearch" title={t("portal.metrics.emptyTitle")} body={t("portal.metrics.empty")} /> : rows.map((row, index) => (
+              <Text key={index} style={[styles.body, { paddingVertical: spacing[2], borderTopWidth: 1, borderTopColor: palette.border }]} testID="metric-row">{Object.entries(row).map(([key, value]) => `${FIELDS.includes(key) ? t(`portal.metrics.field.${key}`) : key}: ${typeof value === "number" ? formatNumber(value, locale) : String(value)}`).join(" · ")}</Text>
             ))}
-          </Section>
+          </View>
         </>
       ) : null}
     </View>

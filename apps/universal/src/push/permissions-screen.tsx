@@ -4,7 +4,7 @@ import { spacing } from "@rsvp/design-tokens";
 import { formatCelebrationDate } from "@rsvp/i18n";
 import { useHostDevices, usePushDeliveries, useRegisterHostDevice, useTestHostDevice, useUnregisterHostDevice, type RegisteredDevice } from "@rsvp/query-hooks";
 import { CelebrationScreen, type ScreenProps } from "../host/gate";
-import { FailureNotice, RetryNotice } from "../host/guests/parts";
+import { FailureNotice, MoreOptions, RetryNotice, TextAction } from "../host/guests/parts";
 import { useSingleFlightGate } from "../platform/single-flight";
 import { HOST_ROUTES, withCelebration } from "../host/routes";
 import { ActionButton, ConfirmDialog, Loading, Notice, Section, styles } from "../host/ui";
@@ -103,8 +103,7 @@ function PermissionBody({ celebrationId, timeZone, onNavigate }: { readonly cele
   const registered = outcome?.kind === "registered";
   return (
     <View style={{ gap: spacing[4] }}>
-      <Section title={t("guests.push.title")}>
-        <Text style={styles.body}>{t("guests.push.intro")}</Text>
+      <View style={[styles.card, { maxWidth: 720 }]}>
         {permission === "unsupported" ? <Notice>{t("guests.push.unsupported")}</Notice> : null}
         {permission === "denied" ? <><Notice kind="error">{t("guests.push.denied")}</Notice><ActionButton variant="secondary" label={t("guests.push.openSettings")} onPress={() => { void Linking.openSettings(); }} /></> : null}
         {registered || (permission === "granted" && active.length > 0) ? <Notice kind="success">{t("guests.push.enabled")}</Notice> : null}
@@ -112,21 +111,23 @@ function PermissionBody({ celebrationId, timeZone, onNavigate }: { readonly cele
         {outcome?.kind === "no-project" ? <Notice kind="error">{t("guests.push.noProject")}</Notice> : null}
         <FailureNotice error={register.error} />
         {permission === "undetermined" || permission === "granted" ? <ActionButton testID="enable-push" label={busy ? t("guests.push.registering") : t("guests.push.enable")} busy={busy} onPress={() => { void enable(); }} /> : null}
-      </Section>
-      <Section title={t("guests.push.devicesTitle")}>
-        {devices.isPending ? <Loading /> : null}
-        {devices.isError ? <RetryNotice error={devices.error} onRetry={() => { void devices.refetch(); }} /> : null}
-        {devices.data ? (list.length === 0 ? <Notice>{t("guests.push.devicesEmpty")}</Notice> : (
-          <View role="list" style={{ gap: spacing[2] }}>{list.map((device) => <DeviceRow key={device.id} celebrationId={celebrationId} device={device} timeZone={timeZone} />)}</View>
-        )) : null}
-      </Section>
-      <Deliveries celebrationId={celebrationId} timeZone={timeZone} />
-      <ActionButton variant="secondary" label={t("guests.push.preferences")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.preferences, celebrationId))} />
+        <TextAction label={t("guests.push.preferences")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.preferences, celebrationId))} />
+      </View>
+      <MoreOptions label={t("guests.push.advanced")} testID="push-more">
+        <Section title={t("guests.push.devicesTitle")}>
+          {devices.isPending ? <Loading /> : null}
+          {devices.isError ? <RetryNotice error={devices.error} onRetry={() => { void devices.refetch(); }} /> : null}
+          {devices.data ? (list.length === 0 ? <Notice>{t("guests.push.devicesEmpty")}</Notice> : (
+            <View role="list" style={{ gap: spacing[2] }}>{list.map((device) => <DeviceRow key={device.id} celebrationId={celebrationId} device={device} timeZone={timeZone} />)}</View>
+          )) : null}
+        </Section>
+        <Deliveries celebrationId={celebrationId} timeZone={timeZone} />
+      </MoreOptions>
     </View>
   );
 }
 
 export function PushPermissionsScreen(props: ScreenProps): ReactNode {
   const t = useT();
-  return <CelebrationScreen {...props} current="preferences" title={t("guests.push.title")}>{({ celebration }) => <PermissionBody celebrationId={celebration.id} timeZone={celebration.timeZone} onNavigate={props.onNavigate} />}</CelebrationScreen>;
+  return <CelebrationScreen {...props} current="preferences" title={t("guests.push.title")} intro={t("guests.push.intro")}>{({ celebration }) => <PermissionBody celebrationId={celebration.id} timeZone={celebration.timeZone} onNavigate={props.onNavigate} />}</CelebrationScreen>;
 }

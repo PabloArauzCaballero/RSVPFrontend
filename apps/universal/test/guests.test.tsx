@@ -11,7 +11,7 @@ import { notificationTarget } from "../src/host/guests/notification-target";
 import { PreferencesScreen } from "../src/host/guests/preferences-screen";
 import { ReportScreen } from "../src/host/guests/report-screen";
 import { RequestsScreen } from "../src/host/guests/requests-screen";
-import { SummaryScreen } from "../src/host/guests/summary-screen";
+import { nextStep, SummaryScreen } from "../src/host/guests/summary-screen";
 import { PushPermissionsScreen } from "../src/push/permissions-screen";
 import { enablePush } from "../src/push/register";
 import { clipboard } from "./stubs/expo-clipboard";
@@ -69,17 +69,22 @@ describe("REQ-F16-01 · C19 guest list (read model, search, filter, paging, stat
   it("empty, filtered-empty, error with retry, and 403", async () => {
     const empty = world();
     const view = renderApp(<GuestListScreen celebrationId={empty.id} onNavigate={navigate} />, empty.client);
-    expect(await screen.findByText(/Todavía no hay invitados/)).toBeTruthy();
+    expect(await screen.findByText("Aquí verás quién viene")).toBeTruthy();
+    expect(screen.queryByTestId("guest-search")).toBeNull();
     fireEvent.click(screen.getByTestId("add-guest"));
     expect(navigate).toHaveBeenCalledWith(`/invitados/nuevo?c=${empty.id}`);
-    fireEvent.change(screen.getByTestId("guest-search"), { target: { value: "zzz" } });
-    expect(await screen.findByText("Ningún invitado coincide con esta búsqueda.")).toBeTruthy();
     view.unmount();
+
+    const some = world((m) => { m.addGuest({ name: "Ana Pérez" }); });
+    const filtered = renderApp(<GuestListScreen celebrationId={some.id} onNavigate={navigate} />, some.client);
+    fireEvent.change(await screen.findByTestId("guest-search"), { target: { value: "zzz" } });
+    expect(await screen.findByText(/No encontramos a nadie con esa búsqueda/)).toBeTruthy();
+    filtered.unmount();
 
     const broken = world((m) => { m.state.failNext.push({ status: 503, body: { type: "x", title: "down", status: 503 }, headers: { "content-type": "application/problem+json" } }); });
     renderApp(<GuestListScreen celebrationId={broken.id} onNavigate={navigate} />, broken.client);
     fireEvent.click(await screen.findByRole("button", { name: "Reintentar" }));
-    expect(await screen.findByText(/Todavía no hay invitados/)).toBeTruthy();
+    expect(await screen.findByText("Aquí verás quién viene")).toBeTruthy();
   });
 
   it("403: a reader of the celebration (not a manager) sees the system's no-permission notice and no list calls", async () => {
@@ -117,7 +122,8 @@ describe("REQ-F16-02 · C20 add one guest", () => {
     type("Correo electrónico", "luz@example.com");
     type("Acompañantes permitidos", "2");
     fireEvent.click(screen.getByTestId("save-guest"));
-    expect(await screen.findByText("Invitado agregado.")).toBeTruthy();
+    expect(await screen.findByText(/ya está en tu lista/)).toBeTruthy();
+    expect(screen.getByText("Ya tienes a tu primer invitado")).toBeTruthy();
     expect(mock.state.log.find((call) => call.method === "POST")).toMatchObject({ path: `/guests/celebrations/${id}/guests`, body: { name: "Luz Mamani", email: "luz@example.com", allowedCompanions: 2 } });
     expect(mock.listGuests()[0]?.name).toBe("Luz Mamani");
   });
@@ -134,7 +140,7 @@ describe("REQ-F16-02 · C20 add one guest", () => {
     expect(await screen.findByText(/Escribe el teléfono con código de país/)).toBeTruthy();
     type("Teléfono (WhatsApp)", "+591 7123-4567");
     fireEvent.click(screen.getByTestId("save-guest"));
-    expect(await screen.findByText("Invitado agregado.")).toBeTruthy();
+    expect(await screen.findByText(/ya está en tu lista/)).toBeTruthy();
     expect(mock.state.log.find((call) => call.method === "POST")?.body).toMatchObject({ name: "Sin contacto", phone: "+59171234567" });
     expect(mock.state.log.find((call) => call.method === "POST")?.body).not.toHaveProperty("email");
   });
@@ -151,9 +157,9 @@ describe("REQ-F16-03 · C21 CSV import with per-line report", () => {
     fireEvent.change(screen.getByTestId("csv-input"), { target: { value: csv } });
     fireEvent.click(screen.getByTestId("run-import"));
     expect((await screen.findByTestId("import-summary")).textContent).toBe("1 importados, 3 con error, de 4 filas.");
-    expect(within(screen.getByTestId("import-error-3")).getByText("Línea 3 · Campo: name")).toBeTruthy();
-    expect(within(screen.getByTestId("import-error-4")).getByText("Email is invalid")).toBeTruthy();
-    expect(within(screen.getByTestId("import-error-5")).getByText("Must be a non-negative integer")).toBeTruthy();
+    expect(within(screen.getByTestId("import-error-3")).getByText("Línea 3 · Campo: nombre")).toBeTruthy();
+    expect(within(screen.getByTestId("import-error-4")).getByText("El correo no es válido.")).toBeTruthy();
+    expect(within(screen.getByTestId("import-error-5")).getByText("Los acompañantes son un número entero, de 0 en adelante.")).toBeTruthy();
     expect(mock.listGuests().map((guest) => guest.name)).toEqual(["Ana"]);
   });
 
@@ -187,7 +193,7 @@ describe("REQ-F16-04 · C22 groups (contract v1.9.0)", () => {
     type("Correo electrónico", "nuevo@example.com");
     fireEvent.click(await screen.findByRole("radio", { name: "Familia Quispe" }));
     fireEvent.click(screen.getByTestId("save-guest"));
-    await screen.findByText("Invitado agregado.");
+    await screen.findByText(/ya está en tu lista/);
     expect(mock.state.log.filter((call) => call.method === "POST").at(-1)?.body).toMatchObject({ groupId });
     expect(mock.state.groups.get(groupId)?.memberIds).toHaveLength(1);
     cleanup();
@@ -233,6 +239,7 @@ describe("REQ-F16-05/06 · C23 detail and personal link", () => {
     await detail(mock, client, "00000000-0000-4000-8000-0000000000aa");
     fireEvent.click(screen.getByTestId("issue-link"));
     await screen.findByTestId("masked-link");
+    fireEvent.click(screen.getByTestId("guest-more"));
     fireEvent.click(screen.getByTestId("revoke-link"));
     expect(await screen.findByText("¿Revocar este enlace?")).toBeTruthy();
     expect(mock.state.log.some((call) => call.method === "DELETE")).toBe(false);
@@ -248,6 +255,7 @@ describe("REQ-F16-05/06 · C23 detail and personal link", () => {
     fireEvent.click(screen.getByTestId("issue-link"));
     await screen.findByTestId("masked-link");
     const first = mock.listGuests()[0]!.token;
+    fireEvent.click(screen.getByTestId("guest-more"));
     fireEvent.click(screen.getByRole("button", { name: "Reemitir enlace" }));
     expect(await screen.findByText("¿Reemitir el enlace?")).toBeTruthy();
     fireEvent.click(within(screen.getByRole("alert")).getByRole("button", { name: "Reemitir enlace" }));
@@ -273,18 +281,20 @@ describe("REQ-F17-01/04/06 · C6 summary shows the backend numbers and how fresh
     expect(screen.getByTestId("count-declined").getAttribute("aria-label")).toBe("No asisten: 1");
     expect(screen.getByTestId("count-companions").getAttribute("aria-label")).toBe("Acompañantes: 2");
     expect(screen.getByTestId("count-total").getAttribute("aria-label")).toBe("Invitados: 4");
-    expect(screen.getByText("5 días para cerrar las respuestas")).toBeTruthy();
-    expect(await screen.findByText("1 solicitudes de acompañantes por revisar")).toBeTruthy();
+    expect(screen.getByText("Quedan 5 días para cerrar las respuestas")).toBeTruthy();
+    // The celebration is still a draft: publishing comes first, and the open request stays visible as a line.
+    expect(await screen.findByText("1 solicitud de acompañantes por revisar")).toBeTruthy();
     expect(screen.getByText(/Actualizado/)).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Revisar solicitudes" }));
-    expect(navigate).toHaveBeenCalledWith(`/bandeja/acompanantes?c=${id}`);
+    expect(within(screen.getByTestId("next-step")).getByText("Publica tu invitación")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("next-step-action"));
+    expect(navigate).toHaveBeenCalledWith(`/publicar?c=${id}`);
     expect(mock.state.log.every((call) => call.method === "GET")).toBe(true);
   });
 
   it("says out loud when the projection lags or is stale (eventual consistency)", async () => {
     const lag = world((m) => { m.addGuest({ name: "A" }); m.state.pendingEvents = 3; });
     const view = renderApp(<SummaryScreen celebrationId={lag.id} onNavigate={navigate} />, lag.client);
-    expect(await screen.findByText("Los datos pueden tardar unos segundos en reflejar los últimos cambios (3 pendientes de procesar).")).toBeTruthy();
+    expect(await screen.findByText("Los últimos cambios pueden tardar unos segundos en verse (3 por procesar).")).toBeTruthy();
     view.unmount();
     const stale = world((m) => { m.addGuest({ name: "A" }); m.state.pendingEvents = 3; m.state.stale = true; });
     renderApp(<SummaryScreen celebrationId={stale.id} onNavigate={navigate} />, stale.client);
@@ -294,12 +304,12 @@ describe("REQ-F17-01/04/06 · C6 summary shows the backend numbers and how fresh
   it("empty celebration explains itself; error offers retry", async () => {
     const empty = world();
     const view = renderApp(<SummaryScreen celebrationId={empty.id} onNavigate={navigate} />, empty.client);
-    expect(await screen.findByText("Cuando agregues invitados verás aquí cuántos confirmaron.")).toBeTruthy();
+    expect(await screen.findByText("Cuando agregues invitados verás aquí quién responde")).toBeTruthy();
     view.unmount();
     const broken = world((m) => { m.state.failNext.push({ status: 500, body: { type: "x", title: "boom", status: 500 }, headers: { "content-type": "application/problem+json" } }); });
     renderApp(<SummaryScreen celebrationId={broken.id} onNavigate={navigate} />, broken.client);
     fireEvent.click(await screen.findByRole("button", { name: "Reintentar" }));
-    expect(await screen.findByText("Cuando agregues invitados verás aquí cuántos confirmaron.")).toBeTruthy();
+    expect(await screen.findByText("Cuando agregues invitados verás aquí quién responde")).toBeTruthy();
   });
 
   it("the guest who confirms through the public link shows up in the host's count after a refresh (slice: confirm → count, no duplicates)", async () => {
@@ -313,6 +323,40 @@ describe("REQ-F17-01/04/06 · C6 summary shows the backend numbers and how fresh
     fireEvent.click(screen.getByRole("button", { name: "Actualizar" }));
     await waitFor(() => expect(screen.getByTestId("count-confirmed").getAttribute("aria-label")).toBe("Confirmados: 1"));
     expect(screen.getByTestId("count-total").getAttribute("aria-label")).toBe("Invitados: 1");
+  });
+});
+
+describe("Inicio · the next best step", () => {
+  const base = { published: true, ready: null, missing: 0, total: 5, pending: 0, openRequests: 0, pendingGifts: 0 } as const;
+  it("picks exactly one step, in the order of the brief", () => {
+    expect(nextStep({ ...base, published: false })).toEqual({ kind: "publish" });
+    expect(nextStep({ ...base, published: false, ready: true })).toEqual({ kind: "publish" });
+    expect(nextStep({ ...base, published: false, ready: false, missing: 2 })).toEqual({ kind: "finish", missing: 2 });
+    expect(nextStep({ ...base, total: 0 })).toEqual({ kind: "addGuests" });
+    expect(nextStep({ ...base, openRequests: 3, pendingGifts: 1, pending: 2 })).toEqual({ kind: "requests", count: 3 });
+    expect(nextStep({ ...base, pendingGifts: 1, pending: 2 })).toEqual({ kind: "gifts", count: 1 });
+    expect(nextStep({ ...base, pending: 2 })).toEqual({ kind: "pending", count: 2 });
+    expect(nextStep(base)).toEqual({ kind: "done" });
+  });
+
+  it("a published celebration with nobody on the list asks for the first guests; one with open requests asks to review them", async () => {
+    const empty = world();
+    const published = { ...empty.celebration, status: "PUBLISHED" as const };
+    const emptyClient = contractClient(empty.mock, published).client;
+    const view = renderApp(<SummaryScreen celebrationId={empty.id} onNavigate={navigate} />, emptyClient);
+    expect(await screen.findByText("Aquí verás quién viene")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("next-step-action"));
+    expect(navigate).toHaveBeenCalledWith(`/invitados/nuevo?c=${empty.id}`);
+    view.unmount();
+
+    const busy = world((m) => {
+      m.addGuest({ name: "A", status: "CONFIRMED" }); m.addGuest({ name: "B" });
+      m.state.requests.set("r1", { id: "r1", guestId: "x", requestedCompanions: 4, allowedCompanions: 1, status: "PENDING_REVIEW", createdAt: NOW.toISOString(), resolvedAt: null });
+    });
+    renderApp(<SummaryScreen celebrationId={busy.id} onNavigate={navigate} />, contractClient(busy.mock, { ...busy.celebration, status: "PUBLISHED" }).client);
+    expect(await screen.findByText("Revisa 1 solicitud")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("next-step-action"));
+    expect(navigate).toHaveBeenLastCalledWith(`/bandeja/acompanantes?c=${busy.id}`);
   });
 });
 
@@ -331,7 +375,7 @@ describe("REQ-F17-03 · C26 companion requests", () => {
     fireEvent.click(screen.getByTestId("approve-req-1"));
     expect(await screen.findByText("Solicitud aprobada.")).toBeTruthy();
     expect(mock.state.log.find((call) => call.method === "POST")).toMatchObject({ path: `/guests/celebrations/${id}/companion-requests/req-1/decision`, body: { decision: "APPROVED" } });
-    await waitFor(() => expect(screen.getByText("No hay solicitudes pendientes.")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("Todo al día")).toBeTruthy());
     expect(mock.listGuests()[0]?.approvedCompanions).toBe(4);
   });
 
@@ -350,13 +394,13 @@ describe("REQ-F17-03 · C26 companion requests", () => {
     mock.state.requests.get("req-1")!.status = "REJECTED";
     fireEvent.click(screen.getByTestId("approve-req-1"));
     expect(await screen.findByText("Esta solicitud ya estaba resuelta o cambió. Actualizamos la lista.")).toBeTruthy();
-    await waitFor(() => expect(screen.getByText("No hay solicitudes pendientes.")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("Todo al día")).toBeTruthy());
   });
 
   it("empty inbox", async () => {
     const { client, id } = world();
     renderApp(<RequestsScreen celebrationId={id} onNavigate={navigate} />, client);
-    expect(await screen.findByText("No hay solicitudes pendientes.")).toBeTruthy();
+    expect(await screen.findByText("Todo al día")).toBeTruthy();
   });
 });
 
@@ -395,6 +439,7 @@ describe("REQ-F17-02/05 · C24 report and safe CSV export", () => {
       m.addGuest({ name: "Otro", status: "CONFIRMED", dietaryNotes: "Vegetariano", version: 1 });
     });
     renderApp(<ReportScreen celebrationId={id} onNavigate={navigate} />, client);
+    fireEvent.click(await screen.findByTestId("report-more"));
     fireEvent.click(await screen.findByTestId("export-catering"));
     await waitFor(() => expect(saved.files).toHaveLength(1));
     const csv = saved.files[0]!.text;
@@ -408,11 +453,11 @@ describe("REQ-F17-02/05 · C24 report and safe CSV export", () => {
   it("empty report and a failing export say so", async () => {
     const empty = world();
     const view = renderApp(<ReportScreen celebrationId={empty.id} onNavigate={navigate} />, empty.client);
-    expect(await screen.findByText("Todavía no hay respuestas para mostrar.")).toBeTruthy();
+    expect(await screen.findByText("Aquí aparecerán las respuestas")).toBeTruthy();
     view.unmount();
     const { mock, client, id } = world((m) => { m.addGuest({ name: "A" }); });
     renderApp(<ReportScreen celebrationId={id} onNavigate={navigate} />, client);
-    await screen.findByText("A");
+    await screen.findByLabelText("Abrir a A");
     mock.state.failNext.push({ status: 500, body: { type: "x", title: "boom", status: 500 }, headers: { "content-type": "application/problem+json" } });
     fireEvent.click(screen.getByTestId("export-csv"));
     expect(await screen.findByText("No pudimos preparar el archivo. Inténtalo de nuevo.")).toBeTruthy();
@@ -457,7 +502,7 @@ describe("REQ-F18 · notifications center and preferences", () => {
   it("known host templates render the app's own copy (the person's language), unknown ones keep the server's text", async () => {
     const { client, id } = world((m) => { m.state.notifications.push(notice(1, "hostRsvpConfirmed", "2026-12-04T10:00:00Z"), notice(2, "someFutureTemplate", "2026-12-04T09:00:00Z")); });
     renderApp(<NotificationsScreen celebrationId={id} onNavigate={navigate} />, client);
-    expect((await screen.findAllByText(/Un invitado confirmó su asistencia/)).length).toBe(2); // subject and body, both from the app
+    expect((await screen.findAllByText(/Un invitado confirmó|Alguien confirmó que viene/)).length).toBe(2); // subject and body, both from the app
     expect(screen.queryByText(/Aviso 1/)).toBeNull();
     expect(screen.getAllByText(/Aviso 2/).length).toBeGreaterThan(0);
   });
@@ -471,7 +516,7 @@ describe("REQ-F18 · notifications center and preferences", () => {
   it("empty and error states", async () => {
     const empty = world();
     const view = renderApp(<NotificationsScreen celebrationId={empty.id} onNavigate={navigate} />, empty.client);
-    expect(await screen.findByText("Todavía no tienes avisos.")).toBeTruthy();
+    expect(await screen.findByText("Tu bandeja está tranquila")).toBeTruthy();
     view.unmount();
     const broken = world((m) => { m.state.failNext.push({ status: 503, body: { type: "x", title: "down", status: 503 }, headers: { "content-type": "application/problem+json" } }); });
     renderApp(<NotificationsScreen celebrationId={broken.id} onNavigate={navigate} />, broken.client);
@@ -504,6 +549,7 @@ describe("REQ-F18 · notifications center and preferences", () => {
   it("REQ-F18-06 · quiet hours are read, validated, saved and restored to the service default", async () => {
     const { mock, client, id } = world();
     renderApp(<PreferencesScreen celebrationId={id} onNavigate={navigate} />, client);
+    fireEvent.click(await screen.findByTestId("prefs-more"));
     expect((await screen.findByTestId("quiet-current")).textContent).toContain("Silencio de 22:00 a 8:00 · Horario del servicio");
     fireEvent.change(screen.getByLabelText("Desde (hora, 0–23)"), { target: { value: "23" } });
     fireEvent.change(screen.getByLabelText("Hasta (hora, 0–23)"), { target: { value: "25" } });

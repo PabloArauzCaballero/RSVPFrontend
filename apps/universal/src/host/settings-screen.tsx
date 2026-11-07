@@ -9,7 +9,9 @@ import { CURRENCIES, TIME_ZONES } from "./onboarding";
 import { useSingleFlight } from "../platform/single-flight";
 import { CelebrationErrorNotice } from "./celebration-errors";
 import { AuditSection, EventTypeSection, TeamSection } from "./settings-extras";
-import { ActionButton, ChoiceGroup, Field, Notice, Section, styles } from "./ui";
+import { spacing } from "@rsvp/design-tokens";
+import { MoreOptions } from "./more-options";
+import { ActionButton, ChoiceGroup, Field, Notice, Section, styles, ToggleChip } from "./ui";
 
 /** C17 · Languages, time zone, currency and RSVP deadline, with a preview of the effect (REQ-F13-01/06). */
 
@@ -41,7 +43,7 @@ function zoneName(timeZone: string, locale: string): string {
   return new Intl.DateTimeFormat(locale, { timeZone, timeZoneName: "short" }).formatToParts(new Date()).find((part) => part.type === ZONE_NAME_PART)?.value ?? timeZone;
 }
 
-function SettingsForm({ celebration, refetch, onSaved }: { readonly celebration: Celebration; readonly refetch: () => void; readonly onSaved: (message: string | null) => void }): ReactNode {
+function SettingsForm({ celebration, refetch, onSaved, moreOpen, onMoreOpen }: { readonly celebration: Celebration; readonly refetch: () => void; readonly onSaved: (message: string | null) => void; readonly moreOpen: boolean; readonly onMoreOpen: (open: boolean) => void }): ReactNode {
   const t = useT();
   const client = useApiClient();
   const once = useSingleFlight();
@@ -72,12 +74,12 @@ function SettingsForm({ celebration, refetch, onSaved }: { readonly celebration:
   };
 
   return (
-    <View style={{ gap: 16 }}>
-      <Section title={t("host.settings.title")}>
+    <View style={{ gap: spacing[5] }}>
+      <Section title={t("host.settings.general")}>
         <Text style={styles.label}>{t("host.settings.languages")}</Text>
         <View style={styles.row}>
           {supportedLocales.map((code) => (
-            <ActionButton key={code} variant={languages.includes(code) ? "primary" : "secondary"} label={t(`celebration.language.${code}`)}
+            <ToggleChip key={code} label={t(`celebration.language.${code}`)} on={languages.includes(code)}
               onPress={() => setLanguages((current) => (current.includes(code) ? current.filter((item) => item !== code || code === defaultLocale) : [...current, code]))} />
           ))}
         </View>
@@ -98,13 +100,15 @@ function SettingsForm({ celebration, refetch, onSaved }: { readonly celebration:
         {invalid ? <Notice kind="error">{t("host.common.invalid", { detail: t("host.settings.deadline.label") })}</Notice> : null}
         <CelebrationErrorNotice error={settings.error} onReload={refetch} />
         <View style={styles.row}>
-          <ActionButton label={t("host.common.save")} busy={settings.isPending} onPress={() => saveDeadline(false)} testID="save-deadline" />
+          <ActionButton variant="secondary" label={t("host.common.save")} busy={settings.isPending} onPress={() => saveDeadline(false)} testID="save-deadline" />
           {celebration.settings.rsvpDeadline ? <ActionButton variant="secondary" label={t("host.settings.deadline.clear")} onPress={() => saveDeadline(true)} /> : null}
         </View>
       </Section>
-      <EventTypeSection celebration={celebration} onSaved={onSaved} />
-      <TeamSection celebration={celebration} onSaved={onSaved} />
-      <AuditSection celebrationId={celebration.id} />
+      <MoreOptions label={t("host.settings.more")} testID="more-settings" open={moreOpen} onOpenChange={onMoreOpen}>
+        <EventTypeSection celebration={celebration} onSaved={onSaved} />
+        <TeamSection celebration={celebration} onSaved={onSaved} />
+        <AuditSection celebrationId={celebration.id} timeZone={celebration.timeZone} />
+      </MoreOptions>
     </View>
   );
 }
@@ -113,9 +117,11 @@ export function SettingsScreen({ celebrationId, onNavigate }: ScreenProps): Reac
   const t = useT();
   // The form restarts from the stored values after every save (keyed by version), so the confirmation lives here.
   const [saved, setSaved] = useState<string | null>(null);
+  // The form restarts after every save; whether «Más opciones» is open must outlive that.
+  const [moreOpen, setMoreOpen] = useState(false);
   return (
-    <CelebrationScreen celebrationId={celebrationId} onNavigate={onNavigate} current="settings" editable title={t("host.settings.title")}>
-      {({ celebration, refetch }) => <>{saved ? <Notice kind="success">{saved}</Notice> : null}<SettingsForm key={celebration.version} celebration={celebration} refetch={refetch} onSaved={setSaved} /></>}
+    <CelebrationScreen celebrationId={celebrationId} onNavigate={onNavigate} current="settings" editable title={t("host.settings.title")} intro={t("host.settings.intro")}>
+      {({ celebration, refetch }) => <>{saved ? <Notice kind="success">{saved}</Notice> : null}<SettingsForm key={celebration.version} celebration={celebration} refetch={refetch} onSaved={setSaved} moreOpen={moreOpen} onMoreOpen={setMoreOpen} /></>}
     </CelebrationScreen>
   );
 }

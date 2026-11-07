@@ -1,10 +1,12 @@
 import { useState, type ReactNode } from "react";
 import { Text } from "react-native";
 import { ApiError } from "@rsvp/api-client";
-import { ActionButton, ConfirmDialog, Field, Loading, Notice, styles } from "../host/ui";
+import { ActionButton, ConfirmDialog, EmptyState, Field, Loading, Notice, styles } from "../host/ui";
 import { useLocale, useT } from "../platform/providers";
 import { failureKind, isRetryable } from "../provider/errors";
 
+/** Backend codes that have their own copy under admin.errors.code. */
+const CODED: readonly string[] = ["INVALID_PARENT", "INVALID_TRANSITION", "OUTSIDE_AVAILABILITY", "CODE_TAKEN"];
 const MESSAGE_BY_STATUS: Readonly<Record<number, string>> = { 401: "unauthorized", 403: "forbidden", 404: "notFound", 409: "conflict", 400: "invalid", 422: "invalid" };
 
 /** Admin wording for an API failure (the host copy talks about celebrations). 409 offers the reload. */
@@ -22,6 +24,8 @@ export function AdminErrorNotice({ error, onReload, onRetry }: { readonly error:
       </Notice>
     );
   }
+  const code = error instanceof ApiError ? error.problem?.code ?? "" : "";
+  if (CODED.includes(code)) return <Notice kind="error"><Text style={styles.body}>{t(`admin.errors.code.${code}`)}</Text></Notice>;
   const key = error instanceof ApiError ? MESSAGE_BY_STATUS[error.status] ?? "generic" : "generic";
   return (
     <Notice kind="error">
@@ -47,7 +51,7 @@ export function QueryBoundary<TData extends { readonly items: readonly unknown[]
       </>
     );
   }
-  if (!query.data || query.data.items.length === 0) return <Notice>{empty}</Notice>;
+  if (!query.data || query.data.items.length === 0) return <EmptyState illustration="emptySearch" title={t("admin.common.emptyTitle")} body={empty} />;
   return <>{children(query.data)}</>;
 }
 
@@ -68,12 +72,12 @@ export function ReasonDialog({ visible, title, body, confirmLabel, onConfirm, on
   );
 }
 
-/** Instants from the platform are shown in UTC and say so: an admin works across cities. */
+/** Instants from the platform are shown in the viewer's own time zone with a short format. */
 export function useStamp(): (iso: string) => string {
   const locale = useLocale();
   return (iso) => {
     const date = new Date(iso);
     if (Number.isNaN(date.getTime())) return iso;
-    return `${new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }).format(date)} UTC`;
+    return new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(date);
   };
 }

@@ -3,7 +3,7 @@ import { Text, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
 import { useConfigureLeads, type Destination, type LeadConfig, type Provider } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../platform/providers";
-import { ActionButton, ChoiceGroup, Field, Notice, Section, ToggleChip, styles } from "../host/ui";
+import { ActionButton, ChoiceGroup, Field, Notice, PageIntro, Section, ToggleChip, styles } from "../host/ui";
 import { PortalErrorNotice as ErrorNotice } from "./errors";
 import { PortalScreen } from "./frame";
 import { useSingleMutation } from "../platform/single-flight";
@@ -43,7 +43,7 @@ function Destinations({ provider }: { readonly provider: Provider }): ReactNode 
   };
   return (
     <View style={{ gap: spacing[4] }}>
-      <Text style={styles.body}>{t("portal.destinations.intro")}</Text>
+      <PageIntro>{t("portal.destinations.intro")}</PageIntro>
       <Section title={t("portal.destinations.enabled")}>
         <View style={styles.row} role="group" aria-label={t("portal.destinations.enabled")}>
           {DESTINATIONS.map((destination) => {

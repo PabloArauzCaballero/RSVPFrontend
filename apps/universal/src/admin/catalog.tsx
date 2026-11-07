@@ -3,7 +3,7 @@ import { Text, View } from "react-native";
 import { supportedLocales } from "@rsvp/i18n";
 import { useAdminCategories, useAdminGeography, useUpsertCategory, useUpsertGeoEntry, type GeoEntry, type GeoKind, type ProviderCategory } from "@rsvp/query-hooks/admin";
 import { useApiClient, useLocale, useT } from "../platform/providers";
-import { ActionButton, ChoiceGroup, Field, Notice, Section, styles } from "../host/ui";
+import { ActionButton, ChoiceGroup, Field, Notice, PageIntro, Section, styles } from "../host/ui";
 import { AdminScreen, adminOnly } from "./admin-screen";
 import { AdminErrorNotice, QueryBoundary } from "./shared";
 import { useSingleMutation } from "../platform/single-flight";
@@ -74,6 +74,7 @@ function CategoriesScreenContent({ onNavigate }: Nav): ReactNode {
   const current = list.data?.items.find((item) => item.code === editing) ?? null;
   return (
     <AdminScreen title={t("admin.categories.title")} current="categories" onNavigate={onNavigate}>
+      <PageIntro>{t("admin.categories.intro")}</PageIntro>
       <QueryBoundary query={list} empty={t("admin.categories.empty")}>
         {(data) => (
           <Section title={t("admin.categories.list")}>
@@ -148,6 +149,7 @@ function GeographyScreenContent({ onNavigate }: Nav): ReactNode {
   const current = list.data?.items.find((item) => item.code === editing) ?? null;
   return (
     <AdminScreen title={t("admin.geography.title")} current="geography" onNavigate={onNavigate}>
+      <PageIntro>{t("admin.geography.intro")}</PageIntro>
       <QueryBoundary query={list} empty={t("admin.geography.empty")}>
         {(data) => (
           <Section title={t("admin.geography.list")}>

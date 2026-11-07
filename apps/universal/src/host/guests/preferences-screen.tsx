@@ -8,7 +8,7 @@ import { useSingleFlightGate } from "../../platform/single-flight";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
 import { ActionButton, Field, Loading, Notice, Section, styles } from "../ui";
-import { FailureNotice, RetryNotice } from "./parts";
+import { FailureNotice, MoreOptions, RetryNotice, TextAction } from "./parts";
 
 /**
  * Preferences (REQ-F18-03/04/06): per channel, per event type and the quiet-hours window (contract 1.4.0). Each change is saved to
@@ -70,7 +70,6 @@ function PreferencesBody({ celebrationId, onNavigate }: { readonly celebrationId
   const toggle = (channel: NotificationChannel, value: boolean): void => save({ channels: { [channel]: value } });
   return (
     <View style={{ gap: spacing[4] }}>
-      <Text style={styles.body}>{t("guests.preferences.intro")}</Text>
       <Section title={t("guests.preferences.channelsTitle")}>
         {CHANNELS.map((channel) => {
           const on = channels[channel] === true;
@@ -81,6 +80,7 @@ function PreferencesBody({ celebrationId, onNavigate }: { readonly celebrationId
         {here("toggles", "saved") ? <Notice kind="success">{t("guests.preferences.saved")}</Notice> : null}
         {here("toggles", "failed") ? <Notice kind="error">{t("guests.preferences.saveFailed")}</Notice> : null}
         {update.isError ? <FailureNotice error={update.error} /> : null}
+        <TextAction label={t("guests.preferences.pushSetup")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.push, celebrationId))} />
       </Section>
       <Section title={t("guests.preferences.eventsTitle")}>
         <Text style={styles.body}>{t("guests.preferences.eventsIntro")}</Text>
@@ -91,13 +91,14 @@ function PreferencesBody({ celebrationId, onNavigate }: { readonly celebrationId
           );
         })}
       </Section>
-      <QuietHours key={`${prefs.data.quietHours.start}-${prefs.data.quietHours.end}-${prefs.data.quietHours.source}`} quiet={prefs.data.quietHours} busy={update.isPending} error={here("quiet", "failed")} saved={here("quiet", "saved")} onSave={(value) => save({ quietHours: value }, "quiet")} />
-      <ActionButton variant="secondary" label={t("guests.preferences.pushSetup")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.push, celebrationId))} />
+      <MoreOptions label={t("guests.more")} testID="prefs-more">
+        <QuietHours key={`${prefs.data.quietHours.start}-${prefs.data.quietHours.end}-${prefs.data.quietHours.source}`} quiet={prefs.data.quietHours} busy={update.isPending} error={here("quiet", "failed")} saved={here("quiet", "saved")} onSave={(value) => save({ quietHours: value }, "quiet")} />
+      </MoreOptions>
     </View>
   );
 }
 
 export function PreferencesScreen(props: ScreenProps): ReactNode {
   const t = useT();
-  return <CelebrationScreen {...props} current="preferences" title={t("guests.preferences.title")}>{({ celebration }) => <PreferencesBody celebrationId={celebration.id} onNavigate={props.onNavigate} />}</CelebrationScreen>;
+  return <CelebrationScreen {...props} current="preferences" title={t("guests.preferences.title")} intro={t("guests.preferences.intro")}>{({ celebration }) => <PreferencesBody celebrationId={celebration.id} onNavigate={props.onNavigate} />}</CelebrationScreen>;
 }

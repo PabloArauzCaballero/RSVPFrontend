@@ -4,7 +4,7 @@ import { ApiError } from "@rsvp/api-client";
 import { spacing } from "@rsvp/design-tokens";
 import { useMicrosite, useSaveMicrosite, type Microsite, type MicrositeInput, type Provider } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../platform/providers";
-import { ActionButton, Field, Loading, Notice, Section, styles } from "../host/ui";
+import { ActionButton, Field, Loading, Notice, PageIntro, Section, styles } from "../host/ui";
 import { PortalErrorNotice as ErrorNotice } from "./errors";
 import { PortalScreen } from "./frame";
 import { useSingleMutation } from "../platform/single-flight";
@@ -86,7 +86,7 @@ function Editor({ microsite, providerId, onReload }: { readonly microsite: Micro
   };
   return (
     <View style={{ gap: spacing[4] }}>
-      <Text style={styles.body}>{t("portal.microsite.intro")}</Text>
+      <PageIntro>{t("portal.microsite.intro")}</PageIntro>
       <Text style={styles.muted} testID="microsite-version">{t("portal.microsite.version", { version: microsite.version })}</Text>
       <Section title={t("portal.microsite.title")}>
         <Field label={t("portal.microsite.descEs")} help={t("portal.microsite.descHelp")} multiline value={form.es} onChange={(es) => set({ es })} error={text("es")} testID="microsite-desc-es" />

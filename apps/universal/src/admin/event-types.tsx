@@ -3,7 +3,7 @@ import { Pressable, Text, View } from "react-native";
 import { supportedLocales } from "@rsvp/i18n";
 import { useAdminEventTypes, useUpsertEventType, type EventTypeDefinition, type SectionId } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../platform/providers";
-import { ActionButton, ChoiceGroup,  Field, Loading, Notice, Section, styles } from "../host/ui";
+import { ActionButton, ChoiceGroup, Field, Loading, Notice, PageIntro, Section, styles } from "../host/ui";
 import { AdminErrorNotice } from "./shared";
 import { AdminScreen, splitList } from "./admin-screen";
 import { useSingleMutation } from "../platform/single-flight";
@@ -120,6 +120,7 @@ export function EventTypesScreen({ onNavigate }: { readonly onNavigate: (href: s
   const current = list.data?.items.find((item) => item.code === editing);
   return (
     <AdminScreen title={t("admin.eventTypes.title")} current="eventTypes" onNavigate={onNavigate}>
+      <PageIntro>{t("admin.eventTypes.intro")}</PageIntro>
       {list.isPending ? <Loading /> : null}
       <AdminErrorNotice error={list.error} onRetry={() => { void list.refetch(); }} onReload={() => { void list.refetch(); }} />
       <ChoiceGroup label={t("admin.eventTypes.title")} value={editing ?? ""} onChange={(value) => setEditing(value || null)}

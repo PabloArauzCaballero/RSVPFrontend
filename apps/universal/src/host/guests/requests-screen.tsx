@@ -6,8 +6,9 @@ import { pendingRequests, useCompanionRequests, useGuestDetail, useResolveCompan
 import { useApiClient, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { guestDetailPath, withCelebration } from "../routes";
-import { ActionButton, Loading, Notice, styles } from "../ui";
-import { FailureNotice, RetryNotice } from "./parts";
+import { Avatar } from "@rsvp/ui";
+import { ActionButton, EmptyState, Loading, Notice, styles } from "../ui";
+import { FailureNotice, RetryNotice, TextAction } from "./parts";
 import { useSingleFlightGate } from "../../platform/single-flight";
 
 /** C26 · Companion requests inbox: approve or reject with one tap; a request someone else already decided refreshes the list (REQ-F17-03). */
@@ -17,13 +18,18 @@ function RequestCard({ request, celebrationId, busy, locked, onDecide, onOpen }:
   const client = useApiClient();
   const guest = useGuestDetail(client, celebrationId, request.guestId);
   return (
-    <View testID={`request-${request.id}`} style={[styles.card, { gap: spacing[2] }]}>
-      <Text style={styles.subtitle}>{guest.data?.name ?? t("guests.requests.guest")}</Text>
-      <Text style={styles.body}>{t("guests.requests.ask", { requested: request.requestedCompanions, allowed: request.allowedCompanions })}</Text>
+    <View testID={`request-${request.id}`} style={[styles.card, { gap: spacing[3] }]}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[3] }}>
+        <Avatar name={guest.data?.name ?? t("guests.requests.guest")} size={44} />
+        <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+          <Text style={styles.subtitle} numberOfLines={2}>{guest.data?.name ?? t("guests.requests.guest")}</Text>
+          <Text style={styles.body}>{t("guests.requests.ask", { requested: request.requestedCompanions, allowed: request.allowedCompanions })}</Text>
+        </View>
+      </View>
       <View style={styles.row}>
         <ActionButton label={busy === "APPROVED" ? t("guests.requests.approving") : t("guests.requests.approve")} busy={busy === "APPROVED"} disabled={busy !== null || locked} onPress={() => onDecide("APPROVED")} testID={`approve-${request.id}`} />
-        <ActionButton variant="danger" label={busy === "REJECTED" ? t("guests.requests.rejecting") : t("guests.requests.reject")} busy={busy === "REJECTED"} disabled={busy !== null || locked} onPress={() => onDecide("REJECTED")} testID={`reject-${request.id}`} />
-        <ActionButton variant="secondary" label={t("guests.requests.open")} onPress={onOpen} />
+        <ActionButton variant="secondary" label={busy === "REJECTED" ? t("guests.requests.rejecting") : t("guests.requests.reject")} busy={busy === "REJECTED"} disabled={busy !== null || locked} onPress={() => onDecide("REJECTED")} testID={`reject-${request.id}`} />
+        <TextAction label={t("guests.requests.open")} onPress={onOpen} />
       </View>
     </View>
   );
@@ -53,10 +59,9 @@ function RequestsBody({ celebrationId, onNavigate }: { readonly celebrationId: s
   const conflict = decide.error instanceof ApiError && decide.error.status === 409;
   return (
     <View style={{ gap: spacing[4] }}>
-      <Text style={styles.body}>{t("guests.requests.intro")}</Text>
       {notice ? <Notice kind={notice.kind}>{notice.text}</Notice> : null}
       {decide.isError && !conflict ? <FailureNotice error={decide.error} /> : null}
-      {open.length === 0 ? <Notice>{t("guests.requests.empty")}</Notice> : open.map((request) => (
+      {open.length === 0 ? <EmptyState illustration="invitation" title={t("guests.requests.emptyTitle")} body={t("guests.requests.empty")} /> : open.map((request) => (
         <RequestCard key={request.id} request={request} celebrationId={celebrationId} busy={pendingId === request.id ? (decide.variables?.decision ?? null) : null} locked={pendingId !== null}
           onDecide={(decision) => resolve(request, decision)} onOpen={() => onNavigate(withCelebration(guestDetailPath(request.guestId), celebrationId))} />
       ))}
@@ -66,5 +71,5 @@ function RequestsBody({ celebrationId, onNavigate }: { readonly celebrationId: s
 
 export function RequestsScreen(props: ScreenProps): ReactNode {
   const t = useT();
-  return <CelebrationScreen {...props} current="requests" title={t("guests.requests.title")}>{({ celebration }) => <RequestsBody celebrationId={celebration.id} onNavigate={props.onNavigate} />}</CelebrationScreen>;
+  return <CelebrationScreen {...props} current="requests" title={t("guests.requests.title")} intro={t("guests.requests.intro")}>{({ celebration }) => <RequestsBody celebrationId={celebration.id} onNavigate={props.onNavigate} />}</CelebrationScreen>;
 }

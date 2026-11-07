@@ -1,48 +1,75 @@
 import { useState, type ReactNode } from "react";
-import { Text, View } from "react-native";
+import { Text, View, useWindowDimensions } from "react-native";
 import { themeFromTemplate, type TemplateDocument } from "@rsvp/celebration-theme";
-import { CelebrationNativeRenderer } from "@rsvp/celebration-theme/native";
+import { spacing } from "@rsvp/design-tokens";
 import { useCompatibleTemplates, useSelectTemplate, type Celebration, type Template, type TranslatedEventType } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../platform/providers";
 import { previewView } from "./preview-model";
+import { PreviewFrame } from "./preview-stage";
 import { CelebrationErrorNotice } from "./celebration-errors";
-import { ActionButton, ChoiceGroup, Loading, Notice, styles } from "./ui";
+import { LoadFailed } from "./load-failed";
+import { ActionBar } from "./save-bar";
+import { ActionButton, ChoiceGroup, EmptyState, Loading, styles, SuccessNote } from "./ui";
 
-const PREVIEW_MAX_HEIGHT = 520;
+const WIDE = 960;
+const LIST_WIDTH = 320;
+const PREVIEW_WIDTH = 360;
+const PREVIEW_HEIGHT = 560;
+const PREVIEW_HEIGHT_NARROW = 420;
 
 /** Template documents from the API are TemplateDocument-compatible by contract. */
 export const asTemplateDocument = (template: Template): TemplateDocument => template as unknown as TemplateDocument;
 
-/** Only templates compatible with the event type; switching keeps every byte of content (REQ-F12-01/02). */
-export function TemplateGallery({ celebration, eventType, onApplied }: { readonly celebration: Celebration; readonly eventType: TranslatedEventType | undefined; readonly onApplied?: () => void }): ReactNode {
+/**
+ * Pick a style and see the invitation in it at once, with the host's own words and date. Only templates compatible with
+ * the event type are offered; switching keeps every byte of content (REQ-F12-01/02).
+ */
+export function TemplateGallery({ celebration, eventType, onApplied, onSeeFull }: { readonly celebration: Celebration; readonly eventType: TranslatedEventType | undefined; readonly onApplied?: () => void; readonly onSeeFull?: () => void }): ReactNode {
   const t = useT();
   const client = useApiClient();
   const locale = useLocale();
+  const { width } = useWindowDimensions();
   const templates = useCompatibleTemplates(client, eventType?.compatibleTemplateTags ?? []);
   const select = useSelectTemplate(client, celebration.id);
   const items = templates.data?.items ?? [];
   const [focused, setFocused] = useState<string | null>(celebration.templateId);
+  const [applied, setApplied] = useState<string | null>(null);
   const candidate = items.find((template) => template.id === (focused ?? items[0]?.id));
+  const wide = width >= WIDE;
   if (templates.isPending && eventType) return <Loading />;
+  if (templates.isError) return <LoadFailed title={t("host.templates.loadFailedTitle")} error={templates.error} onRetry={() => { void templates.refetch(); }} testID="retry-templates" />;
+  if (templates.isSuccess && !items.length) return <EmptyState illustration="invitation" title={t("host.templates.emptyTitle")} body={t("host.templates.emptyBody")} />;
+
+  const choices = items.map((template) => ({ value: template.id, label: template.id === celebration.templateId ? `${template.name} · ${t("host.templates.current")}` : template.name, ...(wide ? { description: template.description } : {}) }));
+  const actions = (
+    <View style={{ gap: spacing[3] }}>
+      <CelebrationErrorNotice error={select.error} />
+      {applied ? <SuccessNote message={t("host.templates.applied", { name: applied })} /> : null}
+      <View style={styles.row}>
+        {candidate && candidate.id !== celebration.templateId ? (
+          <ActionButton label={t("host.templates.apply")} busy={select.isPending} testID="apply-template" onPress={() => select.mutate({ target: celebration, templateId: candidate.id }, { onSuccess: () => { setApplied(candidate.name); onApplied?.(); } })} />
+        ) : null}
+        {onSeeFull ? <ActionButton variant="secondary" label={t("host.templates.seeFull")} onPress={onSeeFull} /> : null}
+      </View>
+    </View>
+  );
+  const picker = (
+    <View style={{ gap: spacing[3], width: wide ? LIST_WIDTH : "100%" }}>
+      <ChoiceGroup label={t("host.templates.list")} value={candidate?.id ?? null} onChange={(id) => { setFocused(id); setApplied(null); }} choices={choices} />
+      {!wide && candidate?.description ? <Text style={styles.muted}>{candidate.description}</Text> : null}
+      {wide ? actions : null}
+    </View>
+  );
+  const stage = candidate ? (
+    <View style={{ gap: spacing[3], width: wide ? PREVIEW_WIDTH : "100%" }}>
+      <PreviewFrame device="mobile" theme={themeFromTemplate(asTemplateDocument(candidate), eventType?.enabledSections ?? [])} view={previewView(celebration, eventType, locale)} label={t("host.templates.preview", { name: candidate.name })} height={wide ? PREVIEW_HEIGHT : PREVIEW_HEIGHT_NARROW} />
+    </View>
+  ) : null;
   return (
-    <View style={{ gap: 16 }}>
-      <Text style={styles.muted}>{t("host.templates.help", { eventType: eventType?.name ?? celebration.eventTypeCode })}</Text>
-      <Notice>{t("host.templates.preserved")}</Notice>
-      <CelebrationErrorNotice error={templates.error ?? select.error} />
-      {templates.isError ? <ActionButton variant="secondary" label={t("host.common.retry")} onPress={() => { void templates.refetch(); }} testID="retry-templates" /> : null}
-      {templates.isSuccess && !items.length ? <Notice>{t("host.templates.empty")}</Notice> : null}
-      {items.length ? (
-        <ChoiceGroup label={t("host.templates.title")} value={candidate?.id ?? null} onChange={setFocused}
-          choices={items.map((template) => ({ value: template.id, label: template.id === celebration.templateId ? `${template.name} · ${t("host.templates.current")}` : template.name, description: template.description }))} />
-      ) : null}
-      {candidate ? (
-        <View style={[styles.card, { maxHeight: PREVIEW_MAX_HEIGHT, overflow: "hidden" }]} accessibilityLabel={t("host.templates.preview", { name: candidate.name })}>
-          <CelebrationNativeRenderer theme={themeFromTemplate(asTemplateDocument(candidate), eventType?.enabledSections ?? [])} view={previewView(celebration, eventType, locale)} t={t} />
-        </View>
-      ) : null}
-      {candidate && candidate.id !== celebration.templateId ? (
-        <ActionButton label={t("host.templates.apply")} busy={select.isPending} testID="apply-template" onPress={() => select.mutate({ target: celebration, templateId: candidate.id }, { onSuccess: () => onApplied?.() })} />
-      ) : null}
+    <View style={{ gap: spacing[4] }}>
+      <Text style={styles.muted}>{t("host.templates.preserved")}</Text>
+      {wide ? <View style={{ flexDirection: "row", gap: spacing[8], alignItems: "flex-start" }}>{picker}{stage}</View> : <>{picker}{stage}</>}
+      {wide ? null : <ActionBar>{actions}</ActionBar>}
     </View>
   );
 }

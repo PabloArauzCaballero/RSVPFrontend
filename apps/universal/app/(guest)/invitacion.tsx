@@ -1,4 +1,4 @@
-import { Surface } from '@rsvp/ui';
-import { useT } from '../../src/platform/providers';
+import { InvitationLinkScreen } from '../../src/auth/invitation-link';
 
-export default function GuestHome() { const t = useT(); return <Surface title={t('stubs.guest.title')} description={t('stubs.guest.description')} />; }
+/** `/invitacion` without a personal link: says kindly that the link is needed and whom to ask for it. */
+export default function GuestHome() { return <InvitationLinkScreen token={undefined} />; }

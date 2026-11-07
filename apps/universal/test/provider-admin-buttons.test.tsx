@@ -87,6 +87,7 @@ describe("provider · rename (PATCH /providers/{id})", () => {
     let name = "Dulce Sol";
     const { client, calls } = fakeClient(portal({ [`GET /providers/${PID}`]: () => ({ ...profile, name }), [`PATCH /providers/${PID}`]: (call) => { name = (call.body as { name: string }).name; return { ...profile, name, version: 2 }; } }));
     renderApp(<OverviewScreen />, client, HOST);
+    fireEvent.click(await screen.findByTestId("more-options"));
     fireEvent.click(await screen.findByTestId("rename-open"));
     type("Nombre del negocio", "   "); fireEvent.click(screen.getByTestId("rename-save"));
     expect(await screen.findByText("Escribe el nombre de tu negocio.")).toBeTruthy();
@@ -104,6 +105,7 @@ describe("provider · rename (PATCH /providers/{id})", () => {
     let mode: "403" | "net" = "403";
     const { client } = fakeClient(portal({ [`PATCH /providers/${PID}`]: () => { if (mode === "403") return new HttpFailure(403, { code: "PROVIDER_OWNER_REQUIRED" }); throw new TypeError("Failed to fetch"); } }));
     renderApp(<OverviewScreen />, client, HOST);
+    fireEvent.click(await screen.findByTestId("more-options"));
     fireEvent.click(await screen.findByTestId("rename-open"));
     type("Nombre del negocio", "Otro"); fireEvent.click(screen.getByTestId("rename-save"));
     expect(await screen.findByText(/Solo el titular de la ficha o un administrador/)).toBeTruthy();
@@ -138,7 +140,7 @@ describe("provider · documents delete", () => {
     const again = (await screen.findAllByText("¿Eliminar este documento?")).pop()!.closest("[role=alert]") as HTMLElement;
     fireEvent.click(within(again).getByRole("button", { name: "Eliminar" }));
     expect(await screen.findByText("Documento eliminado.")).toBeTruthy();
-    await waitFor(() => expect(screen.getByText("Todavía no subiste documentos.")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("Sube el primero para que el equipo lo revise junto con tu ficha.")).toBeTruthy());
     expect(calls.filter((call) => call.method === "DELETE")).toHaveLength(1);
   });
   it("a delete that the server rejects shows the reason and keeps the document", async () => {
@@ -216,7 +218,7 @@ describe("provider · leads pagination", () => {
     await withProvider();
     const empty = fakeClient(portal({ [`GET /providers/${PID}/leads`]: () => ({ items: [], total: 0 }) }));
     const first = renderApp(<LeadsScreen />, empty.client, HOST);
-    expect(await screen.findByText("Aún no recibes cotizaciones.")).toBeTruthy();
+    expect(await screen.findByText("Cuando una pareja toque tu contacto o pida una cotización, aparecerá aquí.")).toBeTruthy();
     expect(screen.queryByTestId("leads-more")).toBeNull();
     first.unmount();
     let limited = true;
@@ -225,7 +227,7 @@ describe("provider · leads pagination", () => {
     expect(await screen.findByText(/Espera 35 segundos/)).toBeTruthy();
     limited = false;
     fireEvent.click(screen.getByTestId("error-retry"));
-    expect(await screen.findByText("Aún no recibes cotizaciones.")).toBeTruthy();
+    expect(await screen.findByText("Cuando una pareja toque tu contacto o pida una cotización, aparecerá aquí.")).toBeTruthy();
   });
 });
 
@@ -308,5 +310,39 @@ describe("provider · one click, one request", () => {
     fail = false;
     fireEvent.click(screen.getByTestId("publish-l1"));
     await waitFor(() => expect(calls.filter((call) => call.method === "POST")).toHaveLength(2));
+  });
+});
+
+describe("provider · ready-to-sell journey and agenda priorities", () => {
+  it("DRAFT without offers: progress 1 of 3, the primary action is to create the first offer and there is no way to submit", async () => {
+    await withProvider();
+    const { client } = fakeClient(portal({ [`GET /providers/${PID}`]: () => ({ ...profile, status: "DRAFT" }) }));
+    renderApp(<OverviewScreen />, client, HOST);
+    expect(await screen.findByText("1 de 3 pasos")).toBeTruthy();
+    expect(await screen.findByTestId("step-offer-action")).toBeTruthy();
+    expect(screen.queryByTestId("submit-verification")).toBeNull();
+    expect(screen.getByText("Crea una oferta para poder enviarla.")).toBeTruthy();
+  });
+  it("PENDING_VERIFICATION celebrates once with a calm line and promises no timeline", async () => {
+    await withProvider();
+    const { client } = fakeClient(portal({ [`GET /providers/${PID}`]: () => ({ ...profile, status: "PENDING_VERIFICATION" }), [`GET /providers/${PID}/listings`]: () => ({ items: [{ id: "l1", providerId: PID, type: "SERVICE", category: "DECORATION", city: "la-paz", title: "Torta", published: false }] }) }));
+    renderApp(<OverviewScreen />, client, HOST);
+    expect(await screen.findByText("Ficha enviada")).toBeTruthy();
+    expect(await screen.findByText("3 de 3 pasos")).toBeTruthy();
+    expect(screen.queryByTestId("submit-verification")).toBeNull();
+  });
+  it("agenda puts the date requests that need an answer before everything else", async () => {
+    await withProvider();
+    const { client } = fakeClient(portal({
+      [`GET /providers/${PID}/availability`]: () => ({ providerId: PID, capacityPerDay: 1, rules: [], blackouts: [] }),
+      [`GET /providers/${PID}/bookings`]: () => ({ items: [
+        { id: "b1", providerId: PID, date: "2027-01-10", status: "CONFIRMED", expiresAt: "2027-01-11T00:00:00Z" },
+        { id: "b2", providerId: PID, date: "2027-01-12", status: "REQUESTED", expiresAt: "2027-01-13T00:00:00Z" }
+      ] })
+    }));
+    renderApp(<AgendaScreen />, client, HOST);
+    expect(await screen.findByText("1 fecha por confirmar")).toBeTruthy();
+    const order = screen.getAllByTestId(/^booking-b[12]$/).map((node) => node.getAttribute("data-testid"));
+    expect(order).toEqual(["booking-b2", "booking-b1"]);
   });
 });

@@ -1,35 +1,46 @@
 import type { PropsWithChildren, ReactNode } from "react";
 import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
-import { brand, colors, radius, spacing } from "@rsvp/design-tokens";
+import { brand, colors, onNight, radius, spacing } from "@rsvp/design-tokens";
 import { Logo } from "@rsvp/ui";
 import { LanguageSwitch } from "../auth/auth-ui";
 
 /**
- * Frame of every guest screen: an electric-blue cover with the logo and, when known, the
- * invitation line, and the content card pulled up over it. Guests arrive from a link on a phone,
- * so the column is narrow and centred on wide screens.
+ * Frame of every guest screen (mode Persuade): an electric-blue cover with the logo and, when known, the invitation
+ * itself (its title as the page heading, who invites underneath), and the sheet pulled up over it. Guests arrive from a
+ * link on a phone, so the column is narrow and centred on wide screens.
  */
 
 const palette = colors.light;
 const fontFamily = Platform.select({ web: "'Plus Jakarta Sans', 'Avenir Next', 'Segoe UI', system-ui, sans-serif", default: undefined });
+const COLUMN = 560;
 
 const s = StyleSheet.create({
-  page: { flexGrow: 1, backgroundColor: palette.canvas },
-  cover: { backgroundColor: brand.azul, overflow: "hidden", paddingTop: spacing[6], paddingBottom: spacing[12], paddingHorizontal: spacing[4] },
-  coverInner: { width: "100%", maxWidth: 560, alignSelf: "center", gap: spacing[6] },
-  kicker: { color: "#D5DCFF", fontSize: 16, lineHeight: 22, fontWeight: "600", fontFamily },
-  sheet: { flexGrow: 1, backgroundColor: palette.canvas, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, marginTop: -spacing[6] },
-  body: { width: "100%", maxWidth: 560, alignSelf: "center", paddingHorizontal: spacing[4], paddingTop: spacing[6], paddingBottom: spacing[10], gap: spacing[4] }
+  page: { flexGrow: 1, backgroundColor: brand.azul },
+  cover: { backgroundColor: brand.azul, overflow: "hidden", paddingTop: spacing[6], paddingBottom: spacing[16], paddingHorizontal: spacing[5] },
+  coverInner: { width: "100%", maxWidth: COLUMN, alignSelf: "center", gap: spacing[6] },
+  heading: { color: onNight, fontSize: 36, lineHeight: 38, fontWeight: "800", letterSpacing: -1.1, fontFamily },
+  lead: { color: "#D5DCFF", fontSize: 18, lineHeight: 26, fontWeight: "600", fontFamily },
+  meta: { color: "#D5DCFF", fontSize: 16, lineHeight: 24, fontFamily },
+  sheet: { flexGrow: 1, backgroundColor: palette.canvas, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, marginTop: -spacing[8] },
+  body: { width: "100%", maxWidth: COLUMN, alignSelf: "center", paddingHorizontal: spacing[5], paddingTop: spacing[8], paddingBottom: spacing[10], gap: spacing[6] }
 });
 
-export function GuestFrame({ kicker, children }: PropsWithChildren<{ readonly kicker?: string }>): ReactNode {
+export interface GuestFrameProps { readonly heading?: string; readonly lead?: string; /** Date and place, one line. */ readonly meta?: string }
+
+export function GuestFrame({ heading, lead, meta, children }: PropsWithChildren<GuestFrameProps>): ReactNode {
   return (
     <ScrollView role="main" tabIndex={0} style={s.page} contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
       <View style={s.cover}>
         <View pointerEvents="none" style={{ position: "absolute", right: -40, bottom: -70, opacity: 0.12 }}><Logo variant="mark" tone="white" height={260} decorative /></View>
         <View style={s.coverInner}>
           <Logo tone="white" height={28} />
-          {kicker ? <Text style={s.kicker}>{kicker}</Text> : null}
+          {heading ? (
+            <View style={{ gap: spacing[2] }}>
+              <Text accessibilityRole="header" aria-level={1} style={s.heading}>{heading}</Text>
+              {lead ? <Text style={s.lead}>{lead}</Text> : null}
+              {meta ? <Text style={s.meta}>{meta}</Text> : null}
+            </View>
+          ) : null}
         </View>
       </View>
       <View style={s.sheet}>

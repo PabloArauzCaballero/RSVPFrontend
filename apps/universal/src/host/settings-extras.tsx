@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
 import { useAssignEventType, useAuditLog, useEventTypes, useRemoveCollaborator, useSetCollaborator, type Celebration } from "@rsvp/query-hooks";
+import { formatCelebrationDate, type Translate } from "@rsvp/i18n";
 import { useApiClient, useLocale, useT } from "../platform/providers";
 import { CelebrationErrorNotice } from "./celebration-errors";
 import { useSingleFlight } from "../platform/single-flight";
@@ -74,7 +75,12 @@ export function TeamSection({ celebration, onSaved }: { readonly celebration: Ce
   );
 }
 
-export function AuditSection({ celebrationId }: { readonly celebrationId: string }): ReactNode {
+const AUDIT_ACTIONS = ["CREATED", "TYPE_ASSIGNED", "CONFIGURED", "SETTINGS_UPDATED", "PUBLISHED", "UNPUBLISHED", "ARCHIVED", "TEMPLATE_SELECTED"];
+
+/** The history stores a machine code per change; the person reads a sentence, and an unknown code still reads as a change. */
+const auditLabel = (t: Translate, action: string): string => t(`host.settingsExtra.audit.actions.${AUDIT_ACTIONS.includes(action) ? action : "other"}`);
+
+export function AuditSection({ celebrationId, timeZone }: { readonly celebrationId: string; readonly timeZone: string }): ReactNode {
   const t = useT();
   const client = useApiClient();
   const locale = useLocale();
@@ -85,7 +91,7 @@ export function AuditSection({ celebrationId }: { readonly celebrationId: string
       {audit.isPending ? <Loading /> : null}
       <CelebrationErrorNotice error={audit.error} />
       {audit.isSuccess && !items.length ? <Notice>{t("host.settingsExtra.audit.empty")}</Notice> : null}
-      {items.map((entry) => <Text key={entry.id} style={styles.body}>{t("host.settingsExtra.audit.item", { action: entry.action, at: new Date(entry.at).toLocaleString(locale) })}</Text>)}
+      {items.map((entry) => <Text key={entry.id} style={styles.body}>{t("host.settingsExtra.audit.item", { action: auditLabel(t, entry.action), at: formatCelebrationDate(entry.at, { locale, timeZone }) })}</Text>)}
     </Section>
   );
 }

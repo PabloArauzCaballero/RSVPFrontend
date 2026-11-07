@@ -6,7 +6,7 @@ import { useApiClient, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
 import { ActionButton, ConfirmDialog, Field, Loading, Notice, Section, styles } from "../ui";
-import { FailureNotice, RetryNotice } from "./parts";
+import { FailureNotice, MoreOptions, RetryNotice, TextAction } from "./parts";
 import { useSingleFlightGate } from "../../platform/single-flight";
 import { parseCompanions, parseRetentionDays } from "./settings-input";
 
@@ -92,13 +92,13 @@ function SettingsBody({ celebrationId, onNavigate }: { readonly celebrationId: s
   return (
     <View style={{ gap: spacing[4] }}>
       <DefaultsSection celebrationId={celebrationId} />
-      <RetentionSection celebrationId={celebrationId} />
-      <ActionButton variant="secondary" label={t("guests.form.back")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.guests, celebrationId))} />
+      <MoreOptions label={t("guests.more")} testID="settings-more"><RetentionSection celebrationId={celebrationId} /></MoreOptions>
+      <TextAction label={t("guests.form.back")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.guests, celebrationId))} />
     </View>
   );
 }
 
 export function GuestSettingsScreen(props: ScreenProps): ReactNode {
   const t = useT();
-  return <CelebrationScreen {...props} current="guests" title={t("guests.settings.title")}>{({ celebration }) => <SettingsBody celebrationId={celebration.id} onNavigate={props.onNavigate} />}</CelebrationScreen>;
+  return <CelebrationScreen {...props} current="guests" title={t("guests.settings.title")} intro={t("guests.settings.intro")}>{({ celebration }) => <SettingsBody celebrationId={celebration.id} onNavigate={props.onNavigate} />}</CelebrationScreen>;
 }

@@ -59,3 +59,29 @@ describe("settings input", () => {
     for (const bad of ["0", "36501", "-3", "1.5", "abc"]) expect(parseRetentionDays(bad)).toBe("invalid");
   });
 });
+
+describe("recent guests (the list is a read model: a new guest shows as appearing until it is listed)", () => {
+  const NOW = 1_000_000;
+  const mine = { celebrationId: "c1", name: "Luz Mamani", email: "luz@example.com", phone: null, at: NOW };
+  it("stays visible until the list has it, matched by email, phone or name", async () => {
+    const { rememberGuest, notYetListed, forgetRecentGuests } = await import("../src/host/guests/recent-guests");
+    forgetRecentGuests();
+    rememberGuest(mine);
+    expect(notYetListed("c1", [], NOW + 1000)).toHaveLength(1);
+    expect(notYetListed("other", [], NOW + 1000)).toHaveLength(0);
+    expect(notYetListed("c1", [{ name: "x", email: "LUZ@example.com" }], NOW + 1000)).toHaveLength(0);
+    rememberGuest({ ...mine, name: "Solo Teléfono", email: null, phone: "+59171234567", at: NOW });
+    expect(notYetListed("c1", [{ name: "otro", phone: "+59171234567" }], NOW + 1000).map((guest) => guest.name)).toEqual(["Luz Mamani"]);
+    expect(notYetListed("c1", [], NOW + 61_000)).toHaveLength(0);
+  });
+});
+
+describe("import reasons (the backend's English sentences never reach the screen)", () => {
+  it("maps known sentences to a key and everything else to the neutral one", async () => {
+    const { reasonKey } = await import("../src/host/guests/import-reasons");
+    expect(reasonKey("email must be valid")).toBe("email");
+    expect(reasonKey("Provide at least one contact: email or phone")).toBe("contact");
+    expect(reasonKey("Header must contain name,locale,allowedCompanions and at least one of email or phone")).toBe("header");
+    expect(reasonKey("something unforeseen")).toBe("other");
+  });
+});

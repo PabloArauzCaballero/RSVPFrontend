@@ -1,13 +1,15 @@
 import { useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
-import { spacing } from "@rsvp/design-tokens";
+import { useRouter, type Href } from "expo-router";
+import { colors, spacing } from "@rsvp/design-tokens";
+import { Chip } from "@rsvp/ui";
 import { ApiError } from "@rsvp/api-client";
 import { MAX_PROVIDER_NAME, providerService, useMetrics, useOwnListings, useRegisterProviderAccount, useSubmitProvider, useUpdateProvider, type Provider } from "@rsvp/query-hooks";
 import { createApiClientForPublicRead } from "./public-client";
 import { useApiClient, useClaims, useLocale, useT } from "../platform/providers";
-import { ActionButton, Field, Loading, Notice, Section, styles } from "../host/ui";
+import { ActionButton, Celebrate, CheckMark, Field, Illustration, Loading, Notice, PageIntro, Section, styles } from "../host/ui";
 import { PortalErrorNotice as ErrorNotice } from "./errors";
-import { PortalScreen, useProviderId } from "./frame";
+import { PORTAL_ROUTES, PortalScreen, useProviderId } from "./frame";
 import { RangeTotals, lastDays } from "./metrics-screen";
 import { useSingleMutation } from "../platform/single-flight";
 
@@ -43,38 +45,85 @@ function RenameProvider({ provider }: { readonly provider: Provider }): ReactNod
   );
 }
 
-/** D2 · Verification status (D3) and the next step; the summary of the last 30 days. */
+const palette = colors.light;
+const STEP_ICON = 28;
+
+/** One step of the "ready to sell" path: a drawn check when done, an empty ring when it is still to do. */
+function Step({ done, title, body, children, testID }: { readonly done: boolean; readonly title: string; readonly body: string; readonly children?: ReactNode; readonly testID: string }): ReactNode {
+  return (
+    <View style={{ flexDirection: "row", gap: spacing[3], paddingVertical: spacing[3] }} testID={testID} accessible accessibilityLabel={`${title}. ${body}`}>
+      <View style={{ width: STEP_ICON, alignItems: "center" }}>
+        {done ? <CheckMark size={STEP_ICON} tone="success" play={false} /> : <View style={{ width: STEP_ICON - 4, height: STEP_ICON - 4, marginTop: 2, borderRadius: 999, borderWidth: 2, borderColor: palette.fieldBorder }} />}
+      </View>
+      <View style={{ flex: 1, gap: spacing[1] }}>
+        <Text style={styles.label}>{title}</Text>
+        <Text style={styles.muted}>{body}</Text>
+        {children}
+      </View>
+    </View>
+  );
+}
+
+/**
+ * D2 · "Ready to sell": the profile, the first offer and the verification as one visible path, one primary action at a time.
+ * The progress only counts what the backend confirms (provider exists, own listings exist, status left DRAFT/REJECTED).
+ */
 function Overview({ provider, refetch }: { readonly provider: Provider; readonly refetch: () => void }): ReactNode {
   const t = useT();
   const locale = useLocale();
+  const router = useRouter();
   const client = useApiClient();
   const submit = useSubmitProvider(client, provider.id);
   const submitOnce = useSingleMutation(submit);
   const listings = useOwnListings(client, provider.id, locale);
   const range = lastDays(30, provider.timeZone);
   const metrics = useMetrics(client, provider.id, range.from, range.to);
-  const [done, setDone] = useState(false);
+  const [more, setMore] = useState(false);
   const hasListing = (listings.data?.items.length ?? 0) > 0;
   const resubmittable = provider.status === "DRAFT" || provider.status === "REJECTED";
-  const sendable = resubmittable && hasListing;
+  const sent = !resubmittable;
+  const doneCount = 1 + (hasListing ? 1 : 0) + (sent ? 1 : 0);
+  const tone = provider.status === "VERIFIED" ? "yes" : provider.status === "PENDING_VERIFICATION" ? "maybe" : provider.status === "DRAFT" ? "wait" : "no";
+  const milestone = provider.status === "PENDING_VERIFICATION" ? "PENDING_VERIFICATION" : resubmittable && hasListing ? "offer" : null;
   return (
-    <View style={{ gap: spacing[4] }}>
-      <Text style={styles.body}>{t("portal.home.intro")}</Text>
-      <Section title={t("portal.status.title")}>
-        <Text style={styles.subtitle} testID="provider-status">{t(`portal.status.${provider.status}.label`)}</Text>
+    <View style={{ gap: spacing[5] }}>
+      <PageIntro>{t("portal.home.intro")}</PageIntro>
+      {milestone ? <Celebrate title={t(`portal.home.milestone.${milestone}.title`)} body={t(`portal.home.milestone.${milestone}.body`)} /> : null}
+      <View style={{ gap: spacing[2], maxWidth: 720 }}>
+        <View style={[styles.row, { justifyContent: "space-between" }]}>
+          <Text accessibilityRole="header" style={styles.subtitle}>{t("portal.home.journey.title")}</Text>
+          <View style={styles.row} testID="provider-status"><Chip tone={tone}>{t(`portal.status.${provider.status}.label`)}</Chip></View>
+        </View>
+        <Text style={styles.muted}>{t("portal.home.journey.progress", { done: doneCount, total: 3 })}</Text>
         <Text style={styles.body}>{t(`portal.status.${provider.status}.body`)}</Text>
-        <Text style={styles.muted}>{provider.name} · {t("portal.home.plan", { plan: provider.plan })} · {t("portal.home.zone", { zone: provider.timeZone })}</Text>
-        <Text style={styles.muted}>{t("portal.home.slug", { slug: provider.slug })}</Text>
-        <RenameProvider provider={provider} />
-        {resubmittable ? <Notice>{t("portal.status.documentsNote")}</Notice> : null}
-        {resubmittable && !hasListing && listings.data ? <Notice>{t("portal.status.needsListing")}</Notice> : null}
-        {done ? <Notice kind="success">{t("portal.status.submitted")}</Notice> : null}
-        <ErrorNotice error={submit.error} onReload={refetch} />
-        {resubmittable ? <ActionButton label={submit.isPending ? t("portal.status.submitting") : t("portal.status.submit")} busy={submit.isPending} disabled={!sendable || submit.isPending} onPress={() => submitOnce(undefined, { onSuccess: () => { setDone(true); refetch(); } })} testID="submit-verification" /> : null}
-      </Section>
-      <Section title={t("portal.home.last30")}>
+        <View style={{ height: 8, borderRadius: 999, backgroundColor: palette.primaryMuted, overflow: "hidden" }} accessibilityRole="progressbar" accessibilityLabel={t("portal.home.journey.title")} accessibilityValue={{ min: 0, max: 3, now: doneCount }}>
+          <View style={{ height: 8, width: `${Math.round((doneCount / 3) * 100)}%`, backgroundColor: palette.primary }} />
+        </View>
+        <Step testID="step-profile" done title={t("portal.home.journey.profile.title")} body={t("portal.home.journey.profile.done", { name: provider.name })} />
+        <Step testID="step-offer" done={hasListing} title={t("portal.home.journey.offer.title")} body={t(hasListing ? "portal.home.journey.offer.done" : "portal.home.journey.offer.todo")}>
+          {!hasListing && listings.data ? <ActionButton label={t("portal.home.journey.offer.action")} onPress={() => router.push(PORTAL_ROUTES.services as Href)} testID="step-offer-action" /> : null}
+        </Step>
+        <Step testID="step-verify" done={sent} title={t("portal.home.journey.verify.title")} body={t(sent ? "portal.home.journey.verify.done" : "portal.home.journey.verify.todo")}>
+          {resubmittable && hasListing ? <Notice>{t("portal.status.documentsNote")}</Notice> : null}
+          {resubmittable && !hasListing && listings.data ? <Text style={styles.muted}>{t("portal.status.needsListing")}</Text> : null}
+          <ErrorNotice error={submit.error} onReload={refetch} />
+          {resubmittable && hasListing ? <ActionButton label={submit.isPending ? t("portal.status.submitting") : t("portal.status.submit")} busy={submit.isPending} disabled={submit.isPending} onPress={() => submitOnce(undefined, { onSuccess: refetch })} testID="submit-verification" /> : null}
+        </Step>
+      </View>
+      <View style={{ gap: spacing[2], maxWidth: 560 }}>
+        <Text accessibilityRole="header" style={styles.subtitle}>{t("portal.home.last30")}</Text>
         {metrics.isPending ? <Loading /> : metrics.isError ? <ErrorNotice error={metrics.error} onReload={() => { void metrics.refetch(); }} /> : <RangeTotals bare totals={metrics.data.totals} />}
-      </Section>
+      </View>
+      <View style={{ gap: spacing[2], maxWidth: 560 }}>
+        <ActionButton variant="secondary" label={t(more ? "portal.home.less" : "portal.home.more")} onPress={() => setMore((current) => !current)} testID="more-options" />
+        {more ? (
+          <View style={{ gap: spacing[2] }}>
+            <Text style={styles.muted}>{provider.name} · {t("portal.home.plan", { plan: provider.plan })} · {t("portal.home.zone", { zone: provider.timeZone })}</Text>
+            <Text style={styles.muted}>{t("portal.home.slug", { slug: provider.slug })}</Text>
+            <RenameProvider provider={provider} />
+          </View>
+        ) : null}
+      </View>
     </View>
   );
 }
@@ -118,7 +167,7 @@ export function OnboardingScreen({ onDone }: { readonly onDone: () => void }): R
     <PortalScreen title={t("portal.onboarding.title")} current="home" requireProvider={false}>
       {() => (
         <View style={{ gap: spacing[4] }}>
-          <Text style={styles.body}>{t("portal.onboarding.intro")}</Text>
+          <View style={[styles.row, { gap: spacing[4], flexWrap: "nowrap" }]}><Illustration name="provider" size="md" /><View style={{ flex: 1 }}><PageIntro>{t("portal.onboarding.intro")}</PageIntro></View></View>
           <Section title={t("portal.onboarding.title")}>
             <Field label={t("portal.onboarding.name")} value={name} onChange={setName} help={t("portal.onboarding.nameHelp")} testID="provider-name" />
             {error ? <Notice kind="error">{error}</Notice> : null}

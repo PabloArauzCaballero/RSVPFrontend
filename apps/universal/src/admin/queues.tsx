@@ -1,13 +1,23 @@
 import { useState, type ReactNode } from "react";
 import { Linking, Text, View } from "react-native";
 import { useModerationDecision, useModerationQueue, useVerificationAction, useVerificationQueue, type ModerationItem, type ModerationStatus, type VerificationAction, type VerificationItem, type VerificationStatus } from "@rsvp/query-hooks/admin";
+import { colors, spacing } from "@rsvp/design-tokens";
+import { Button, Chip } from "@rsvp/ui";
 import { useApiClient, useT } from "../platform/providers";
-import { ActionButton, ChoiceGroup, Notice, styles } from "../host/ui";
+import { ActionButton, ChoiceGroup, Notice, PageIntro, styles } from "../host/ui";
 import { AdminScreen, adminOnly } from "./admin-screen";
 import { AdminErrorNotice, QueryBoundary, ReasonDialog, useStamp } from "./shared";
 import { useSingleMutation } from "../platform/single-flight";
 
 /** E7 verification queue (REQ-F14-03) and E8 moderation (REQ-F14-04): act on a row, reject/suspend need a reason. */
+
+const rowStyle = { gap: spacing[2], paddingVertical: spacing[4], borderTopWidth: 1, borderTopColor: colors.light.border, maxWidth: 720 } as const;
+
+const PAGE = 10;
+function ShowMore({ total, shown, onMore }: { readonly total: number; readonly shown: number; readonly onMore: () => void }): ReactNode {
+  const t = useT();
+  return total > shown ? <ActionButton variant="secondary" label={t("admin.dashboard.showMore", { count: total - shown })} onPress={onMore} testID="admin-show-more" /> : null;
+}
 
 type Nav = { readonly onNavigate: (href: string) => void };
 
@@ -18,21 +28,35 @@ const ACTIONS_BY_STATUS: Readonly<Record<VerificationStatus, readonly Verificati
   PENDING: ["verify", "reject"], VERIFIED: ["suspend"], REJECTED: [], SUSPENDED: []
 };
 
+/** A row = who, state, when, and one visible action. The other (negative) actions sit behind "More" so a long queue stays scannable. */
+function RowActions({ primary, secondary }: { readonly primary: ReactNode; readonly secondary: ReactNode }): ReactNode {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  return (
+    <View style={{ gap: spacing[2] }}>
+      <View style={styles.row}>{primary}{secondary ? <ActionButton variant="secondary" label={t(open ? "admin.dashboard.less" : "admin.dashboard.more")} onPress={() => setOpen((current) => !current)} /> : null}</View>
+      {open ? <View style={styles.row}>{secondary}</View> : null}
+    </View>
+  );
+}
+
 function VerificationRow({ item, busy, onVerify, onAsk }: { readonly item: VerificationItem; readonly busy: boolean; readonly onVerify: () => void; readonly onAsk: (action: "reject" | "suspend") => void }): ReactNode {
   const t = useT();
   const stamp = useStamp();
+  const actions = ACTIONS_BY_STATUS[item.status] ?? [];
+  const state = busy ? "loading" : "default";
+  const button = (action: VerificationAction): ReactNode => (
+    <Button key={action} variant={action === "verify" ? "primary" : "danger"} state={state} accessibilityLabel={t(`admin.verification.${action}Named`, { name: item.name })} onPress={() => (action === "verify" ? onVerify() : onAsk(action))} testID={`${action}-${item.providerId}`}>{t(`admin.verification.${action}`)}</Button>
+  );
+  const first = actions[0];
+  const rest = actions.slice(1);
   return (
-    <View style={styles.card} accessibilityLabel={item.name}>
-      <Text accessibilityRole="header" style={styles.subtitle}>{item.name}</Text>
+    <View style={rowStyle} accessibilityLabel={item.name}>
+      <View style={[styles.row, { justifyContent: "space-between", flexWrap: "nowrap" }]}><Text accessibilityRole="header" style={[styles.subtitle, { flex: 1, flexShrink: 1, overflowWrap: "anywhere" } as object]}>{item.name}</Text><Chip tone={item.status === "VERIFIED" ? "yes" : item.status === "PENDING" ? "maybe" : "no"}>{t(`admin.verification.state.${item.status}`)}</Chip></View>
       <Text style={styles.muted}>{`${item.category} · ${item.city} · ${t("admin.verification.submitted", { when: stamp(item.submittedAt) })}`}</Text>
       {item.reason ? <Text style={styles.muted}>{t("admin.common.reasonOn", { reason: item.reason })}</Text> : null}
-      {(ACTIONS_BY_STATUS[item.status] ?? []).length === 0 ? <Text style={styles.muted} testID={`no-action-${item.providerId}`}>{t(item.status === "REJECTED" ? "admin.verification.noActionRejected" : "admin.verification.noActionSuspended")}</Text> : null}
-      <View style={styles.row}>
-        {(ACTIONS_BY_STATUS[item.status] ?? []).map((action) => (
-          <ActionButton key={action} variant={action === "verify" ? "primary" : "danger"} busy={busy} label={t(`admin.verification.${action}Named`, { name: item.name })}
-            onPress={() => (action === "verify" ? onVerify() : onAsk(action))} testID={`${action}-${item.providerId}`} />
-        ))}
-      </View>
+      {actions.length === 0 ? <Text style={styles.muted} testID={`no-action-${item.providerId}`}>{t(item.status === "REJECTED" ? "admin.verification.noActionRejected" : "admin.verification.noActionSuspended")}</Text> : null}
+      {first ? <RowActions primary={button(first)} secondary={rest.length ? rest.map(button) : null} /> : null}
     </View>
   );
 }
@@ -41,20 +65,22 @@ function VerificationScreenContent({ onNavigate }: Nav): ReactNode {
   const t = useT();
   const client = useApiClient();
   const [status, setStatus] = useState<VerificationStatus>("PENDING");
+  const [shown, setShown] = useState(PAGE);
   const queue = useVerificationQueue(client, status);
   const act = useVerificationAction(client);
   const actOnce = useSingleMutation(act);
   const [asking, setAsking] = useState<{ readonly item: VerificationItem; readonly action: "reject" | "suspend" } | null>(null);
   return (
     <AdminScreen title={t("admin.verification.title")} current="verification" onNavigate={onNavigate}>
-      <ChoiceGroup label={t("admin.common.filter")} value={status} onChange={(next) => { act.reset(); setStatus(next); }} choices={VERIFICATION_STATUSES.map((value) => ({ value, label: t(`admin.verification.statuses.${value}`) }))} />
+      <PageIntro>{t("admin.verification.intro")}</PageIntro>
+      <ChoiceGroup label={t("admin.common.filter")} value={status} onChange={(next) => { act.reset(); setShown(PAGE); setStatus(next); }} choices={VERIFICATION_STATUSES.map((value) => ({ value, label: t(`admin.verification.statuses.${value}`) }))} />
       {act.isSuccess ? <Notice kind="success">{t("admin.verification.done")}</Notice> : null}
       <AdminErrorNotice error={act.error} onReload={() => { act.reset(); void queue.refetch(); }} />
       <QueryBoundary query={queue} empty={t("admin.verification.empty", { status: t(`admin.verification.statuses.${status}`) })}>
-        {(data) => <>{data.items.map((item) => (
+        {(data) => <>{data.items.slice(0, shown).map((item) => (
           <VerificationRow key={item.providerId} item={item} busy={act.isPending && act.variables?.providerId === item.providerId}
             onVerify={() => actOnce({ providerId: item.providerId, action: "verify" })} onAsk={(action) => setAsking({ item, action })} />
-        ))}</>}
+        ))}<ShowMore total={data.items.length} shown={shown} onMore={() => setShown((current) => current + PAGE)} /></>}
       </QueryBoundary>
       <ReasonDialog visible={asking !== null} title={asking ? t(`admin.verification.${asking.action}Title`, { name: asking.item.name }) : ""} body={asking ? t(`admin.verification.${asking.action}Body`) : ""}
         confirmLabel={asking ? t(`admin.verification.${asking.action}`) : ""} onCancel={() => setAsking(null)}
@@ -68,17 +94,17 @@ const MODERATION_STATUSES: readonly ModerationStatus[] = ["PENDING", "APPROVED",
 function ModerationRow({ item, busy, onApprove, onReject }: { readonly item: ModerationItem; readonly busy: boolean; readonly onApprove: () => void; readonly onReject: () => void }): ReactNode {
   const t = useT();
   const stamp = useStamp();
+  const state = busy ? "loading" : "default";
   return (
-    <View style={styles.card} accessibilityLabel={item.title}>
-      <Text accessibilityRole="header" style={styles.subtitle}>{item.title}</Text>
-      <Text style={styles.muted}>{`${t(`admin.moderation.kinds.${item.kind}`)} · ${item.submittedBy} · ${stamp(item.submittedAt)}`}</Text>
+    <View style={rowStyle} accessibilityLabel={item.title}>
+      <View style={[styles.row, { justifyContent: "space-between", flexWrap: "nowrap" }]}><Text accessibilityRole="header" style={[styles.subtitle, { flex: 1, flexShrink: 1, overflowWrap: "anywhere" } as object]}>{item.title}</Text><Chip tone={item.status === "APPROVED" ? "yes" : item.status === "PENDING" ? "maybe" : "no"}>{t(`admin.moderation.state.${item.status}`)}</Chip></View>
+      <Text style={styles.muted}>{`${t(`admin.moderation.kinds.${item.kind}`)} · ${stamp(item.submittedAt)}`}</Text>
       {item.url ? <ActionButton variant="secondary" label={t("admin.moderation.open", { name: item.title })} onPress={() => { void Linking.openURL(item.url ?? ""); }} /> : null}
       {item.reason ? <Text style={styles.muted}>{t("admin.common.reasonOn", { reason: item.reason })}</Text> : null}
       {item.status === "PENDING" ? (
-        <View style={styles.row}>
-          <ActionButton busy={busy} label={t("admin.moderation.approveNamed", { name: item.title })} onPress={onApprove} testID={`approve-${item.id}`} />
-          <ActionButton busy={busy} variant="danger" label={t("admin.moderation.rejectNamed", { name: item.title })} onPress={onReject} testID={`reject-${item.id}`} />
-        </View>
+        <RowActions
+          primary={<Button variant="primary" state={state} accessibilityLabel={t("admin.moderation.approveNamed", { name: item.title })} onPress={onApprove} testID={`approve-${item.id}`}>{t("admin.moderation.approve")}</Button>}
+          secondary={<Button variant="danger" state={state} accessibilityLabel={t("admin.moderation.rejectNamed", { name: item.title })} onPress={onReject} testID={`reject-${item.id}`}>{t("admin.moderation.reject")}</Button>} />
       ) : null}
     </View>
   );
@@ -88,20 +114,22 @@ function ModerationScreenContent({ onNavigate }: Nav): ReactNode {
   const t = useT();
   const client = useApiClient();
   const [status, setStatus] = useState<ModerationStatus>("PENDING");
+  const [shown, setShown] = useState(PAGE);
   const queue = useModerationQueue(client, status);
   const decide = useModerationDecision(client);
   const decideOnce = useSingleMutation(decide);
   const [rejecting, setRejecting] = useState<ModerationItem | null>(null);
   return (
     <AdminScreen title={t("admin.moderation.title")} current="moderation" onNavigate={onNavigate}>
-      <ChoiceGroup label={t("admin.common.filter")} value={status} onChange={(next) => { decide.reset(); setStatus(next); }} choices={MODERATION_STATUSES.map((value) => ({ value, label: t(`admin.moderation.statuses.${value}`) }))} />
+      <PageIntro>{t("admin.moderation.intro")}</PageIntro>
+      <ChoiceGroup label={t("admin.common.filter")} value={status} onChange={(next) => { decide.reset(); setShown(PAGE); setStatus(next); }} choices={MODERATION_STATUSES.map((value) => ({ value, label: t(`admin.moderation.statuses.${value}`) }))} />
       {decide.isSuccess ? <Notice kind="success">{t("admin.moderation.done")}</Notice> : null}
       <AdminErrorNotice error={decide.error} onReload={() => { decide.reset(); void queue.refetch(); }} />
       <QueryBoundary query={queue} empty={t("admin.moderation.empty", { status: t(`admin.moderation.statuses.${status}`) })}>
-        {(data) => <>{data.items.map((item) => (
+        {(data) => <>{data.items.slice(0, shown).map((item) => (
           <ModerationRow key={item.id} item={item} busy={decide.isPending && decide.variables?.id === item.id}
             onApprove={() => decideOnce({ id: item.id, decision: "approve" })} onReject={() => setRejecting(item)} />
-        ))}</>}
+        ))}<ShowMore total={data.items.length} shown={shown} onMore={() => setShown((current) => current + PAGE)} /></>}
       </QueryBoundary>
       <ReasonDialog visible={rejecting !== null} title={rejecting ? t("admin.moderation.rejectTitle", { name: rejecting.title }) : ""} body={t("admin.moderation.rejectBody")} confirmLabel={t("admin.moderation.reject")}
         onCancel={() => setRejecting(null)} onConfirm={(reason) => { if (rejecting) decideOnce({ id: rejecting.id, decision: "reject", reason }); setRejecting(null); }} />

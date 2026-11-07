@@ -2,7 +2,7 @@ import { useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
 import { PLATFORM_ROLES, USERS_PAGE_SIZE, useAdminOrganizations, useAdminUsers, useGrantRole, useLeadMetrics, useOrganization, type AdminUser, type LeadGrouping, type Organization, type PlatformRole } from "@rsvp/query-hooks/admin";
 import { useApiClient, useT } from "../platform/providers";
-import { ActionButton, ChoiceGroup, ConfirmDialog, Field, Loading, Notice, Section, styles } from "../host/ui";
+import { ActionButton, ChoiceGroup, ConfirmDialog, Field, Loading, Notice, PageIntro, Section, styles } from "../host/ui";
 import { AdminScreen, adminOnly } from "./admin-screen";
 import { AdminErrorNotice, QueryBoundary, useStamp } from "./shared";
 import { useSingleMutation } from "../platform/single-flight";
@@ -26,6 +26,7 @@ function MetricsScreenContent({ onNavigate }: Nav): ReactNode {
   const metrics = useLeadMetrics(useApiClient(), { groupBy, from, to, enabled: valid });
   return (
     <AdminScreen title={t("admin.metrics.title")} current="metrics" onNavigate={onNavigate}>
+      <PageIntro>{t("admin.metrics.intro")}</PageIntro>
       <ChoiceGroup label={t("admin.metrics.groupBy")} value={groupBy} onChange={setGroupBy} choices={(["partner", "category"] as const).map((value) => ({ value, label: t(`admin.metrics.groups.${value}`) }))} />
       <View style={styles.row}>
         <View style={{ flexGrow: 1, minWidth: 180 }}><Field label={t("admin.metrics.from")} help={t("admin.metrics.dateHelp")} value={from} onChange={setFrom} testID="metrics-from" /></View>
@@ -63,7 +64,7 @@ function UserCard({ user, busy, onGrant }: { readonly user: AdminUser; readonly 
   const stamp = useStamp();
   return (
     <View style={styles.card} accessibilityLabel={user.email} testID={`user-${user.id}`}>
-      <Text accessibilityRole="header" style={styles.subtitle}>{user.email}</Text>
+      <Text accessibilityRole="header" style={[styles.subtitle, { flexShrink: 1, overflowWrap: "anywhere" } as object]}>{user.email}</Text>
       <Text style={styles.muted}>{`${user.roles.join(", ") || t("admin.users.noRoles")} · ${t(`admin.users.statuses.${user.status}`)} · ${stamp(user.createdAt)}`}</Text>
       <View style={styles.row}>
         {PLATFORM_ROLES.map((role) => user.roles.includes(role)
@@ -92,6 +93,7 @@ function UsersScreenContent({ onNavigate }: Nav): ReactNode {
   };
   return (
     <AdminScreen title={t("admin.users.title")} current="users" onNavigate={onNavigate}>
+      <PageIntro>{t("admin.users.intro")}</PageIntro>
       <Field label={t("admin.users.search")} help={t("admin.users.searchHelp")} value={search} onChange={setSearch} {...(tooLong ? { error: t("admin.errors.invalid") } : {})} testID="users-search" />
       <ActionButton variant="secondary" label={t("admin.users.searchAction")} onPress={run} testID="users-search-go" />
       {grant.isSuccess ? <Notice kind="success">{t("admin.users.granted")}</Notice> : null}
@@ -135,6 +137,7 @@ function OrganizationsScreenContent({ onNavigate }: Nav): ReactNode {
   const found = useOrganization(client, lookup);
   return (
     <AdminScreen title={t("admin.organizations.title")} current="organizations" onNavigate={onNavigate}>
+      <PageIntro>{t("admin.organizations.intro")}</PageIntro>
       <Section title={t("admin.organizations.lookup")}>
         <Field label={t("admin.organizations.id")} help={t("admin.organizations.idHelp")} value={id} onChange={setId} testID="org-id" />
         <ActionButton label={t("admin.organizations.lookupAction")} disabled={!id.trim()} onPress={() => setLookup(id.trim())} testID="org-lookup" />

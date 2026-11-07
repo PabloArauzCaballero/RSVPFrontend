@@ -103,7 +103,7 @@ describe("errorMessage · every failure gets its own next step", () => {
   const problem = (status: number, code?: string) => toApiError(status, "t", { title: "x", status, ...(code ? { code } : {}) });
   it("maps 409 by problem code, 429 with its wait, 5xx and a dead network", () => {
     renderApp(<Grab />, fakeClient({}).client);
-    expect(errorMessage(problem(409, "SLUG_TAKEN"), translate)).toMatch(/dirección/);
+    expect(errorMessage(problem(409, "SLUG_TAKEN"), translate)).toMatch(/enlace/);
     expect(errorMessage(problem(409, "CELEBRATION_ARCHIVED"), translate)).toMatch(/archivada/);
     expect(errorMessage(problem(409, "VERSION_CONFLICT"), translate)).toMatch(/Alguien guardó/);
     const limited = problem(429); limited.retryAfterSeconds = 7;

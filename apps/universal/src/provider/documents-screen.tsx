@@ -4,7 +4,7 @@ import { spacing } from "@rsvp/design-tokens";
 import { DOCUMENT_TYPES, MAX_DOCUMENT_BYTES, useDeleteDocument, useDocumentDownload, useProviderDocuments, useUploadDocument, type DocumentContentType, type DocumentKind, type Provider } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../platform/providers";
 import { pickDocument, type PickedImage } from "../platform/pick-document";
-import { ActionButton, ChoiceGroup, ConfirmDialog, Loading, Notice, Section, styles } from "../host/ui";
+import { ActionButton, ChoiceGroup, ConfirmDialog, EmptyState, Loading, Notice, PageIntro, Section, styles } from "../host/ui";
 import { PortalErrorNotice as ErrorNotice } from "./errors";
 import { PortalScreen } from "./frame";
 import { useSingleMutation } from "../platform/single-flight";
@@ -57,7 +57,7 @@ function Documents({ provider }: { readonly provider: Provider }): ReactNode {
   };
   return (
     <View style={{ gap: spacing[4] }}>
-      <Text style={styles.body}>{t("portal.documents.intro")}</Text>
+      <PageIntro>{t("portal.documents.intro")}</PageIntro>
       <Section title={t("portal.documents.upload")}>
         <ChoiceGroup label={t("portal.documents.kind")} value={kind} onChange={setKind} choices={KINDS.map((value) => ({ value, label: t(`portal.documents.kinds.${value}`) }))} />
         <View style={styles.row}>
@@ -73,7 +73,7 @@ function Documents({ provider }: { readonly provider: Provider }): ReactNode {
       {removed ? <Notice kind="success">{t("portal.documents.deleted")}</Notice> : null}
       <ErrorNotice error={remove.error ?? open.error} onRetry={() => { if (remove.error && remove.variables) removeOnce(remove.variables); else if (open.variables) openOnce(open.variables); }} />
       <ConfirmDialog visible={deleting !== null} danger title={t("portal.documents.deleteTitle")} body={t("portal.documents.deleteBody")} confirmLabel={t("portal.documents.delete")} onCancel={() => setDeleting(null)} onConfirm={() => { const id = deleting; setDeleting(null); if (id) removeOnce(id, { onSuccess: () => setRemoved(true) }); }} />
-      {list.isPending ? <Loading /> : list.isError ? <ErrorNotice error={list.error} onReload={() => { void list.refetch(); }} /> : list.data.items.length === 0 ? <Notice>{t("portal.documents.empty")}</Notice> : (
+      {list.isPending ? <Loading /> : list.isError ? <ErrorNotice error={list.error} onReload={() => { void list.refetch(); }} /> : list.data.items.length === 0 ? <EmptyState illustration="provider" title={t("portal.documents.emptyTitle")} body={t("portal.documents.empty")} /> : (
         <View role="list" style={{ gap: spacing[2] }}>
           {list.data.items.map((item) => (
             <View key={item.id} role="listitem" testID={`document-${item.id}`} style={[styles.card, { gap: spacing[1] }]}>

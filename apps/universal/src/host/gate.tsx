@@ -3,7 +3,7 @@ import { Text } from "react-native";
 import { useCelebration, useEventTypes, type Celebration, type TranslatedEventType } from "@rsvp/query-hooks";
 import { useApiClient, useClaims, useLocale, useT } from "../platform/providers";
 import type { SessionClaims } from "../platform/session";
-import { ActionButton, ErrorNotice, Loading, Notice, Screen, styles } from "./ui";
+import { ActionButton, EmptyState, ErrorNotice, Loading, Notice, Screen, styles } from "./ui";
 import { asText } from "./content-draft";
 import { HOST_ROUTES, hostNav, type HostRoute } from "./routes";
 
@@ -46,13 +46,13 @@ export function CelebrationScreen({ celebrationId, onNavigate, current, title, i
   const nav = hostNav(t, celebrationId);
   const frame = (body: ReactNode): ReactNode => <Screen title={title} {...(intro ? { intro } : {})} nav={nav} current={current} onNavigate={onNavigate}>{body}</Screen>;
   if (!canUseHostWorkspace(claims)) return frame(<Notice kind="error">{t("host.common.accessDenied")}</Notice>);
-  if (!celebrationId) return frame(<><Notice>{t("host.common.noCelebration")}</Notice><ActionButton label={t("host.common.chooseCelebration")} onPress={() => onNavigate(HOST_ROUTES.celebrations)} /></>);
+  if (!celebrationId) return frame(<EmptyState illustration="invitation" title={t("host.common.noCelebrationTitle")} body={t("host.common.noCelebrationBody")} action={<ActionButton label={t("host.common.chooseCelebration")} onPress={() => onNavigate(HOST_ROUTES.celebrations)} />} />);
   if (query.isPending) return frame(<Loading />);
   if (query.isError || !query.data) return frame(<ErrorNotice error={query.error} />);
   const celebration = query.data;
   if (manage && celebration.access === "READ") return frame(<Notice kind="error">{t("host.common.forbidden")}</Notice>);
   // An archived celebration is read-only for the API (409 CELEBRATION_ARCHIVED): editing screens say so instead of offering buttons that cannot work.
-  if (editable && celebration.status === "ARCHIVED") return frame(<><Notice>{t("host.common.archivedReadOnly")}</Notice><ActionButton label={t("host.common.chooseCelebration")} onPress={() => onNavigate(HOST_ROUTES.celebrations)} /></>);
+  if (editable && celebration.status === "ARCHIVED") return frame(<EmptyState illustration="invitation" tone="night" title={t("host.common.archivedTitle")} body={t("host.common.archivedBody")} action={<ActionButton label={t("host.common.chooseCelebration")} onPress={() => onNavigate(HOST_ROUTES.celebrations)} />} />);
   const eventType = types.data?.items.find((type) => type.code === celebration.eventTypeCode);
   return frame(<>{eventType ? <Text style={[styles.body, { fontWeight: "600" }]}>{[asText(celebration.content["title"]), eventType.name].filter(Boolean).join(" · ")}</Text> : null}{children({ celebration, eventType, refetch: () => { void query.refetch(); } })}</>);
 }

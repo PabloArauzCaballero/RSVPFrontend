@@ -1,7 +1,8 @@
 import { useState, type ReactNode } from "react";
 import { Pressable, Text, View } from "react-native";
 import { loginSchema, recoverySchema, registerSchema, validate, type Role } from "@rsvp/auth";
-import { spacing } from "@rsvp/design-tokens";
+import { colors, spacing } from "@rsvp/design-tokens";
+import { CheckMark } from "@rsvp/ui";
 import { useT } from "../platform/providers";
 import { useAuth } from "./auth-context";
 import { AuthField, AuthLayout, Banner, SubmitButton, TextLink, authFocusRing, authStyles } from "./auth-ui";
@@ -18,6 +19,7 @@ type Navigate = (href: string) => void;
 export interface AuthScreenProps { readonly onNavigate: Navigate; readonly returnTo?: string | null }
 type FieldErrors = Readonly<Record<string, string>>;
 type Translator = ReturnType<typeof useT>;
+const palette = colors.light;
 
 /** Translates validation keys (`auth.validation.<key>`). Unknown server-side keys fall back to the generic message. */
 function fieldMessages(t: Translator, errors: FieldErrors): FieldErrors {
@@ -66,10 +68,11 @@ export function LoginScreen({ onNavigate, returnTo = null }: AuthScreenProps): R
   );
 }
 
+/** Said as what the person does, not as a system role: organise, offer services, help organise. */
 const SELF_SERVICE_ROLES: readonly { readonly role: Extract<Role, "HOST" | "PLANNER" | "PROVIDER">; readonly title: string; readonly hint: string }[] = [
   { role: "HOST", title: "auth.roleHost", hint: "auth.roleHostHint" },
-  { role: "PLANNER", title: "auth.rolePlanner", hint: "auth.rolePlannerHint" },
-  { role: "PROVIDER", title: "auth.roleProvider", hint: "auth.roleProviderHint" }
+  { role: "PROVIDER", title: "auth.roleProvider", hint: "auth.roleProviderHint" },
+  { role: "PLANNER", title: "auth.rolePlanner", hint: "auth.rolePlannerHint" }
 ];
 
 export function RegisterScreen({ onNavigate, returnTo = null }: AuthScreenProps): ReactNode {
@@ -85,16 +88,16 @@ export function RegisterScreen({ onNavigate, returnTo = null }: AuthScreenProps)
     await submitState.run(async () => { await auth.register(checked.value); return { kind: "busy" }; });
   };
   return (
-    <AuthLayout title={t("auth.registerTitle")} intro={t("auth.registerIntro")}>
+    <AuthLayout title={t("auth.registerTitle")} intro={t("auth.registerIntro")} illustration="calendar">
       <View style={authStyles.form}>
-        <AuthField label={t("auth.email")} value={email} onChange={setEmail} error={errors["email"]} autoComplete="email" keyboardType="email-address" textContentType="emailAddress" returnKeyType="go" onSubmitEditing={() => { void submit(); }} editable={!busy} testID="register-email" />
-        <AuthField label={t("auth.password")} value={password} onChange={setPassword} error={errors["password"]} hint={t("auth.passwordHint")} secret autoComplete="new-password" textContentType="newPassword" returnKeyType="go" onSubmitEditing={() => { void submit(); }} editable={!busy} testID="register-password" />
         <View accessibilityRole="radiogroup" accessibilityLabel={t("auth.role")} style={{ gap: spacing[2] }}>
           <Text style={authStyles.label}>{t("auth.role")}</Text>
           {SELF_SERVICE_ROLES.map((option) => (
-            <ChoiceRow key={option.role} title={t(option.title)} hint={t(option.hint)} selected={role === option.role} disabled={busy} onSelect={() => setRole(option.role)} />
+            <ChoiceRow key={option.role} testID={`register-role-${option.role}`} title={t(option.title)} hint={t(option.hint)} selected={role === option.role} disabled={busy} onSelect={() => setRole(option.role)} />
           ))}
         </View>
+        <AuthField label={t("auth.email")} value={email} onChange={setEmail} error={errors["email"]} autoComplete="email" keyboardType="email-address" textContentType="emailAddress" returnKeyType="go" onSubmitEditing={() => { void submit(); }} editable={!busy} testID="register-email" />
+        <AuthField label={t("auth.password")} value={password} onChange={setPassword} error={errors["password"]} hint={t("auth.passwordHint")} secret autoComplete="new-password" textContentType="newPassword" returnKeyType="go" onSubmitEditing={() => { void submit(); }} editable={!busy} testID="register-password" />
         <SubmitButton label={t("auth.register")} busyLabel={t("auth.creating")} busy={busy} blocked={submitState.waitSeconds > 0} onPress={() => { void submit(); }} testID="register-submit" />
         <FailureBanner submit={submitState} />
       </View>
@@ -106,11 +109,16 @@ export function RegisterScreen({ onNavigate, returnTo = null }: AuthScreenProps)
   );
 }
 
-function ChoiceRow({ title, hint, selected, disabled = false, onSelect }: { readonly title: string; readonly hint: string; readonly selected: boolean; readonly disabled?: boolean; readonly onSelect: () => void }): ReactNode {
+function ChoiceRow({ title, hint, selected, disabled = false, onSelect, testID }: { readonly testID?: string; readonly title: string; readonly hint: string; readonly selected: boolean; readonly disabled?: boolean; readonly onSelect: () => void }): ReactNode {
   return (
-    <Pressable accessibilityRole="radio" aria-checked={selected} aria-disabled={disabled} disabled={disabled} accessibilityLabel={`${title}. ${hint}`} onPress={onSelect} style={[authStyles.roleOption, selected && authStyles.roleOptionActive, disabled && authStyles.primaryBusy, authFocusRing]}>
-      <Text style={authStyles.roleTitle}>{title}</Text>
-      <Text style={authStyles.hint}>{hint}</Text>
+    <Pressable accessibilityRole="radio" aria-checked={selected} aria-disabled={disabled} disabled={disabled} accessibilityLabel={`${title}. ${hint}`} onPress={onSelect} testID={testID} style={[authStyles.roleOption, { flexDirection: "row", alignItems: "center", gap: spacing[3] }, selected && authStyles.roleOptionActive, disabled && authStyles.primaryBusy, authFocusRing]}>
+      <View style={{ flex: 1 }}>
+        <Text style={authStyles.roleTitle}>{title}</Text>
+        <Text style={authStyles.hint}>{hint}</Text>
+      </View>
+      <View style={{ width: 28, height: 28, borderRadius: 14, borderWidth: 2, borderColor: selected ? palette.primary : palette.fieldBorder, backgroundColor: selected ? palette.primary : "transparent", alignItems: "center", justifyContent: "center" }}>
+        {selected ? <CheckMark size={16} tone="white" /> : null}
+      </View>
     </Pressable>
   );
 }

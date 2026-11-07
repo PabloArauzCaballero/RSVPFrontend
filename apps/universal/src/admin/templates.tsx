@@ -5,7 +5,7 @@ import { CelebrationNativeRenderer } from "@rsvp/celebration-theme/native";
 import { useAdminTemplates, useSaveTemplate, useTemplateTransition, type LayoutId, type SectionId, type Template, type TemplateInput, type TemplateTheme } from "@rsvp/query-hooks";
 import type { Translate } from "@rsvp/i18n";
 import { useApiClient, useLocale, useT } from "../platform/providers";
-import { ActionButton, ChoiceGroup, ConfirmDialog,  Field, Loading, Notice, Section, styles } from "../host/ui";
+import { ActionButton, ChoiceGroup, ConfirmDialog, Field, Loading, Notice, PageIntro, Section, styles } from "../host/ui";
 import { AdminErrorNotice } from "./shared";
 import { AdminScreen, splitList } from "./admin-screen";
 import { SECTION_IDS } from "./event-types";
@@ -102,6 +102,7 @@ export function TemplatesAdminScreen({ onNavigate }: { readonly onNavigate: (hre
   const current = list.data?.items.find((item) => item.id === editing);
   return (
     <AdminScreen title={t("admin.templates.title")} current="templates" onNavigate={onNavigate}>
+      <PageIntro>{t("admin.templates.intro")}</PageIntro>
       {list.isPending ? <Loading /> : null}
       <AdminErrorNotice error={list.error} onRetry={() => { void list.refetch(); }} onReload={() => { void list.refetch(); }} />
       <ChoiceGroup label={t("admin.templates.title")} value={editing} onChange={setEditing}

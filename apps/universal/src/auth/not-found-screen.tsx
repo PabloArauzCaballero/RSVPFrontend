@@ -7,7 +7,7 @@ import { AuthLayout, TextLink, authStyles } from "./auth-ui";
 export function NotFoundScreen({ onNavigate }: { readonly onNavigate: (href: string) => void }): ReactNode {
   const t = useT();
   return (
-    <AuthLayout title={t("notFound.title")} intro={t("notFound.intro")}>
+    <AuthLayout title={t("notFound.title")} intro={t("notFound.intro")} illustration="emptySearch">
       <View style={authStyles.form}>
         <TextLink label={t("notFound.home")} onPress={() => onNavigate("/")} />
       </View>

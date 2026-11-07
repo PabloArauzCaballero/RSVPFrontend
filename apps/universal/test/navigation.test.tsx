@@ -35,7 +35,8 @@ describe("two-level navigation", () => {
   it("provider: five destinations covering all ten portal routes; admin: four groups covering all modules", () => {
     const portal = portalNav(t);
     expect(portal.map((item) => item.key)).toEqual(["overview", "offers", "agenda", "clients", "profile"]);
-    expect(tabKeys(portal).sort()).toEqual((Object.keys(PORTAL_ROUTES) as string[]).filter((key) => key !== "onboarding").sort());
+    // Services, products and delivery terms are one list of offers: the two extra routes stay for shared links and light the "services" tab.
+    expect(tabKeys(portal).sort()).toEqual((Object.keys(PORTAL_ROUTES) as string[]).filter((key) => !["onboarding", "products", "delivery"].includes(key)).sort());
     const admin = adminNav(t);
     expect(admin.map((item) => item.key)).toEqual(["review", "catalog", "people", "operation"]);
     expect(tabKeys(admin).sort()).toEqual(Object.keys(ADMIN_ROUTES).sort());

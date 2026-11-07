@@ -1,31 +1,59 @@
 import { useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
-import { spacing } from "@rsvp/design-tokens";
+import { colors, spacing } from "@rsvp/design-tokens";
 import { formatMinor } from "@rsvp/i18n";
-import { useCreateOwnListing, useOwnListings, usePublishListing, type CreateListingInput, type Provider } from "@rsvp/query-hooks";
+import { Chip } from "@rsvp/ui";
+import { useCreateOwnListing, useOwnListings, usePublishListing, type CreateListingInput, type OwnListing, type Provider } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../platform/providers";
-import { ActionButton, ChoiceGroup, Field, Loading, Notice, Section, styles } from "../host/ui";
+import { ActionButton, ChoiceGroup, EmptyState, Field, Loading, Notice, PageIntro, Section, SuccessNote, styles } from "../host/ui";
 import { PortalErrorNotice as ErrorNotice } from "./errors";
 import { parseMinor } from "../host/gifts/money";
-import { PortalScreen } from "./frame";
+import { PortalScreen, type PortalRoute } from "./frame";
 import { useSingleMutation } from "../platform/single-flight";
 
+const palette = colors.light;
 const CATEGORIES = ["VENUE", "CATERING", "PHOTOGRAPHY", "MUSIC", "DECORATION", "MAKEUP", "TRANSPORT", "INVITATIONS", "WEDDING_PLANNER", "ACCOMMODATION", "HONEYMOON"] as const;
 const MAX_TITLE = 120;
 const HTTPS = /^https:\/\/[^\s]+$/i;
 type Kind = "SERVICE" | "PRODUCT";
 
-/** D5/D6 · Services and products: create (with delivery conditions, D8) and publish. */
-function Listings({ provider, kind }: { readonly provider: Provider; readonly kind: Kind }): ReactNode {
+/** One offer as a row: the name, its state, and the delivery terms the guests will read, all in one place (no separate screen). */
+function OfferRow({ provider, listing, publishing, onPublish }: { readonly provider: Provider; readonly listing: OwnListing; readonly publishing: boolean; readonly onPublish: () => void }): ReactNode {
+  const t = useT();
+  const locale = useLocale();
+  const f = listing.fulfillment;
+  return (
+    <View style={{ gap: spacing[2], paddingVertical: spacing[4], borderTopWidth: 1, borderTopColor: palette.border }} testID={`listing-${listing.id}`}>
+      <View style={[styles.row, { justifyContent: "space-between", flexWrap: "nowrap" }]}>
+        <Text accessibilityRole="header" style={[styles.subtitle, { flex: 1 }]}>{listing.title}</Text>
+        <View testID={`listing-state-${listing.id}`}><Chip tone={listing.published ? "yes" : "wait"}>{listing.published ? t("portal.services.published") : t("portal.services.draft")}</Chip></View>
+      </View>
+      <Text style={styles.muted}>{t(`portal.services.type.${listing.type === "SERVICE" ? "SERVICE" : "PRODUCT"}`)}{listing.priceFromMinor !== undefined ? ` · ${formatMinor(listing.priceFromMinor, provider.currency, locale)}` : ""}</Text>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", columnGap: spacing[4], rowGap: spacing[1] }} testID={`delivery-${listing.id}`}>
+        {f ? (
+          <>
+            <Text style={styles.muted}>{t("portal.delivery.responsible", { who: f.responsible === "PROVIDER" ? t("portal.services.new.responsibleProvider") : t("portal.services.new.responsibleCustomer") })}</Text>
+            <Text style={styles.muted}>{t("portal.delivery.coverage", { zones: f.coverageZones.join(", ") || "-" })}</Text>
+            <Text style={styles.muted}>{t("portal.delivery.transport", { price: f.transportCostMinor === undefined ? t("portal.delivery.noTransport") : formatMinor(f.transportCostMinor, provider.currency, locale) })}</Text>
+            <Text style={styles.muted}>{t("portal.delivery.lead", { days: f.leadTimeDays })}</Text>
+            {f.conditions ? <Text style={[styles.body, { width: "100%" }]}>{f.conditions}</Text> : null}
+          </>
+        ) : <Notice kind="error">{t("portal.delivery.missing")}</Notice>}
+      </View>
+      {!listing.published && !listing.fulfillment ? <Text style={styles.muted} testID={`publish-blocked-${listing.id}`}>{t("portal.services.needsTerms")}</Text> : null}
+      {!listing.published ? <View style={styles.row}><ActionButton variant="secondary" label={publishing ? t("portal.services.publishing") : t("portal.services.publish")} busy={publishing} disabled={!listing.fulfillment || publishing} onPress={onPublish} testID={`publish-${listing.id}`} /></View> : null}
+    </View>
+  );
+}
+
+/** Short form with progressive disclosure: what you offer, how they reach you, how you deliver. City, a second contact and transport hide behind "More options". */
+function NewOffer({ providerId, onClose, onCreated }: { readonly providerId: string; readonly onClose: () => void; readonly onCreated: () => void }): ReactNode {
   const t = useT();
   const locale = useLocale();
   const client = useApiClient();
-  const listings = useOwnListings(client, provider.id, locale);
-  const create = useCreateOwnListing(client, provider.id, locale);
+  const create = useCreateOwnListing(client, providerId, locale);
   const createOnce = useSingleMutation(create);
-  const publish = usePublishListing(client, provider.id, locale);
-  const publishOnce = useSingleMutation(publish);
-  const visible = (listings.data?.items ?? []).filter((listing) => listing.type === kind);
+  const [kind, setKind] = useState<Kind>("SERVICE");
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState<string>("DECORATION");
@@ -37,8 +65,8 @@ function Listings({ provider, kind }: { readonly provider: Provider; readonly ki
   const [transport, setTransport] = useState("");
   const [lead, setLead] = useState("");
   const [conditions, setConditions] = useState("");
+  const [more, setMore] = useState(false);
   const [errors, setErrors] = useState<readonly string[]>([]);
-  const [created, setCreated] = useState(false);
   const submit = (): void => {
     const found: string[] = [];
     const destinations: Record<string, string> = {};
@@ -63,53 +91,80 @@ function Listings({ provider, kind }: { readonly provider: Provider; readonly ki
       fulfillment: { responsible, coverageZones: zones, ...(typeof transportMinor === "number" ? { transportCostMinor: transportMinor } : {}), leadTimeDays: leadDays, conditions: { [locale]: conditions.trim() } },
       ...(typeof priceMinor === "number" ? { priceFromMinor: priceMinor } : {})
     };
-    setCreated(false);
-    createOnce(body, { onSuccess: () => { setCreated(true); setName(""); setPrice(""); } });
+    createOnce(body, { onSuccess: () => { setName(""); setPrice(""); onCreated(); } });
   };
+  return (
+    <Section title={t("portal.services.new.title")}>
+      <ChoiceGroup<Kind> label={t("portal.services.new.kind")} value={kind} onChange={setKind} choices={[{ value: "SERVICE", label: t("portal.services.type.SERVICE") }, { value: "PRODUCT", label: t("portal.services.type.PRODUCT") }]} />
+      <Field label={t("portal.services.new.name")} value={name} onChange={setName} testID="listing-name" />
+      <ChoiceGroup<string> label={t("portal.services.new.category")} value={category} onChange={setCategory} choices={CATEGORIES.map((value) => ({ value, label: t(`directory.category.${value}`) }))} />
+      <Field label={t("portal.services.new.price")} value={price} onChange={setPrice} help={t("portal.services.new.priceHelp")} keyboardType="decimal-pad" testID="listing-price" />
+      <Field label={t("portal.services.new.whatsapp")} value={whatsapp} onChange={setWhatsapp} help={t("portal.services.new.destinationsHelp")} keyboardType="url" testID="listing-whatsapp" />
+      <Text accessibilityRole="header" style={styles.subtitle}>{t("portal.services.new.fulfillmentTitle")}</Text>
+      <ChoiceGroup<"PROVIDER" | "CUSTOMER"> label={t("portal.services.new.responsible")} value={responsible} onChange={setResponsible} choices={[{ value: "PROVIDER", label: t("portal.services.new.responsibleProvider") }, { value: "CUSTOMER", label: t("portal.services.new.responsibleCustomer") }]} />
+      <Field label={t("portal.services.new.coverage")} value={coverage} onChange={setCoverage} help={t("portal.services.new.coverageHelp")} testID="listing-coverage" />
+      <Field label={t("portal.services.new.lead")} value={lead} onChange={setLead} keyboardType="number-pad" testID="listing-lead" />
+      <Field label={t("portal.services.new.conditions")} value={conditions} onChange={setConditions} multiline testID="listing-conditions" />
+      <ActionButton variant="secondary" label={t(more ? "portal.home.less" : "portal.home.more")} onPress={() => setMore((current) => !current)} testID="offer-more" />
+      {more ? (
+        <View style={{ gap: spacing[3] }}>
+          <Field label={t("portal.services.new.city")} value={city} onChange={setCity} testID="listing-city" />
+          <Field label={t("portal.services.new.site")} value={site} onChange={setSite} keyboardType="url" testID="listing-site" />
+          <Field label={t("portal.services.new.transport")} value={transport} onChange={setTransport} keyboardType="decimal-pad" testID="listing-transport" />
+        </View>
+      ) : null}
+      {errors.length ? <Notice kind="error">{errors.map((message) => <Text key={message} style={styles.body}>{message}</Text>)}</Notice> : null}
+      <ErrorNotice error={create.error} onRetry={submit} />
+      <View style={styles.row}>
+        <ActionButton label={create.isPending ? t("portal.services.new.creating") : t("portal.services.new.submit")} busy={create.isPending} disabled={create.isPending} onPress={submit} testID="listing-submit" />
+        <ActionButton variant="secondary" label={t("portal.services.new.cancel")} disabled={create.isPending} onPress={onClose} testID="offer-new-close" />
+      </View>
+    </Section>
+  );
+}
 
+/**
+ * D5/D6/D8 · Offers: services, products and their delivery terms as ONE list with a state (draft / published).
+ * The backend has no edit, archive or delete of an offer (provider-catalog), so the row offers only "Publish".
+ */
+function Offers({ provider }: { readonly provider: Provider }): ReactNode {
+  const t = useT();
+  const locale = useLocale();
+  const client = useApiClient();
+  const listings = useOwnListings(client, provider.id, locale);
+  const publish = usePublishListing(client, provider.id, locale);
+  const publishOnce = useSingleMutation(publish);
+  const [adding, setAdding] = useState(false);
+  const [created, setCreated] = useState(false);
+  const items = listings.data?.items ?? [];
   return (
     <View style={{ gap: spacing[4] }}>
-      <Text style={styles.body}>{t(kind === "PRODUCT" ? "portal.products.intro" : "portal.services.intro")}</Text>
-      {listings.isPending ? <Loading /> : listings.isError ? <ErrorNotice error={listings.error} onReload={() => { void listings.refetch(); }} /> : visible.length === 0 ? <Notice>{t(kind === "PRODUCT" ? "portal.products.empty" : "portal.services.empty")}</Notice> : visible.map((listing) => (
-        <View key={listing.id} style={[styles.card, { gap: spacing[1] }]} testID={`listing-${listing.id}`}>
-          <Text style={styles.subtitle}>{listing.title}</Text>
-          <Text style={styles.body}>{t(`portal.services.type.${listing.type === "SERVICE" ? "SERVICE" : "PRODUCT"}`)}{listing.priceFromMinor !== undefined ? ` · ${formatMinor(listing.priceFromMinor, provider.currency, locale)}` : ""}</Text>
-          <Text style={styles.label} testID={`listing-state-${listing.id}`}>{listing.published ? t("portal.services.published") : t("portal.services.draft")}</Text>
-          {!listing.published && !listing.fulfillment ? <Text style={styles.muted} testID={`publish-blocked-${listing.id}`}>{t("portal.services.needsTerms")}</Text> : null}
-          {!listing.published ? <ActionButton label={publish.isPending && publish.variables === listing.id ? t("portal.services.publishing") : t("portal.services.publish")} busy={publish.isPending && publish.variables === listing.id} disabled={publish.isPending || !listing.fulfillment} onPress={() => publishOnce(listing.id)} testID={`publish-${listing.id}`} /> : null}
+      <PageIntro>{t("portal.services.intro")}</PageIntro>
+      {created ? <SuccessNote message={t("portal.services.new.created")} /> : null}
+      {adding ? <NewOffer providerId={provider.id} onClose={() => setAdding(false)} onCreated={() => { setCreated(true); setAdding(false); }} /> : null}
+      {listings.isPending ? <Loading /> : listings.isError ? <ErrorNotice error={listings.error} onReload={() => { void listings.refetch(); }} onRetry={() => { void listings.refetch(); }} /> : items.length === 0 ? (
+        adding ? null : <EmptyState illustration="provider" title={t("portal.services.emptyTitle")} body={t("portal.services.empty")} action={<ActionButton label={t("portal.services.emptyAction")} onPress={() => { setCreated(false); setAdding(true); }} testID="offer-new" />} />
+      ) : (
+        <View style={{ maxWidth: 720 }}>
+          <View style={[styles.row, { justifyContent: "space-between", paddingBottom: spacing[2] }]}>
+            <Text accessibilityRole="header" style={styles.subtitle}>{t("portal.services.listTitle", { count: items.length })}</Text>
+            {adding ? null : <ActionButton label={t("portal.services.add")} onPress={() => { setCreated(false); setAdding(true); }} testID="offer-new" />}
+          </View>
+          {items.map((listing) => <OfferRow key={listing.id} provider={provider} listing={listing} publishing={publish.isPending && publish.variables === listing.id} onPublish={() => publishOnce(listing.id)} />)}
+          <Notice>{t("portal.delivery.fixedNote")}</Notice>
         </View>
-      ))}
+      )}
       <ErrorNotice error={publish.error} onRetry={() => { if (publish.variables) publishOnce(publish.variables); }} />
-      <Section title={t("portal.services.new.title")}>
-        <Field label={t("portal.services.new.name")} value={name} onChange={setName} testID="listing-name" />
-        <ChoiceGroup<string> label={t("portal.services.new.category")} value={category} onChange={setCategory} choices={CATEGORIES.map((value) => ({ value, label: t(`directory.category.${value}`) }))} />
-        <Field label={t("portal.services.new.city")} value={city} onChange={setCity} />
-        <Field label={t("portal.services.new.price")} value={price} onChange={setPrice} help={t("portal.services.new.priceHelp")} keyboardType="decimal-pad" testID="listing-price" />
-        <Text style={styles.label}>{t("portal.services.new.destinationsHelp")}</Text>
-        <Field label={t("portal.services.new.whatsapp")} value={whatsapp} onChange={setWhatsapp} keyboardType="url" testID="listing-whatsapp" />
-        <Field label={t("portal.services.new.site")} value={site} onChange={setSite} keyboardType="url" testID="listing-site" />
-        <Text accessibilityRole="header" style={styles.subtitle}>{t("portal.services.new.fulfillmentTitle")}</Text>
-        <ChoiceGroup<"PROVIDER" | "CUSTOMER"> label={t("portal.services.new.responsible")} value={responsible} onChange={setResponsible} choices={[{ value: "PROVIDER", label: t("portal.services.new.responsibleProvider") }, { value: "CUSTOMER", label: t("portal.services.new.responsibleCustomer") }]} />
-        <Field label={t("portal.services.new.coverage")} value={coverage} onChange={setCoverage} help={t("portal.services.new.coverageHelp")} testID="listing-coverage" />
-        <Field label={t("portal.services.new.transport")} value={transport} onChange={setTransport} keyboardType="decimal-pad" testID="listing-transport" />
-        <Field label={t("portal.services.new.lead")} value={lead} onChange={setLead} keyboardType="number-pad" testID="listing-lead" />
-        <Field label={t("portal.services.new.conditions")} value={conditions} onChange={setConditions} multiline testID="listing-conditions" />
-        {errors.length ? <Notice kind="error">{errors.map((message) => <Text key={message} style={styles.body}>{message}</Text>)}</Notice> : null}
-        {created ? <Notice kind="success">{t("portal.services.new.created")}</Notice> : null}
-        <ErrorNotice error={create.error} onRetry={submit} />
-        <ActionButton label={create.isPending ? t("portal.services.new.creating") : t("portal.services.new.submit")} busy={create.isPending} disabled={create.isPending} onPress={submit} testID="listing-submit" />
-      </Section>
     </View>
   );
 }
 
-export function ServicesScreen(): ReactNode {
+const offersScreen = (current: PortalRoute) => function OffersScreen(): ReactNode {
   const t = useT();
-  return <PortalScreen title={t("portal.services.title")} current="services">{(provider) => <Listings provider={provider} kind="SERVICE" />}</PortalScreen>;
-}
+  return <PortalScreen title={t("portal.services.title")} current={current}>{(provider) => <Offers provider={provider} />}</PortalScreen>;
+};
 
-/** D6 · Products (the offers a host can add to a gift list). */
-export function ProductsScreen(): ReactNode {
-  const t = useT();
-  return <PortalScreen title={t("portal.products.title")} current="products">{(provider) => <Listings provider={provider} kind="PRODUCT" />}</PortalScreen>;
-}
+/** The three old entries (services, products, delivery) open the same list; the routes stay so shared links keep working. */
+export const ServicesScreen = offersScreen("services");
+export const ProductsScreen = offersScreen("products");
+export const DeliveryScreen = offersScreen("delivery");

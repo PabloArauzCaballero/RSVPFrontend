@@ -14,7 +14,7 @@ export type PortalRoute = keyof typeof PORTAL_ROUTES;
 /** Provider navigation (brief §2): five destinations; the screens that were separate entries are their tabs. Routes do not move. */
 const NAV: readonly { readonly key: string; readonly tabs: readonly PortalRoute[] }[] = [
   { key: "overview", tabs: ["home"] },
-  { key: "offers", tabs: ["services", "products", "delivery"] },
+  { key: "offers", tabs: ["services"] },
   { key: "agenda", tabs: ["agenda"] },
   { key: "clients", tabs: ["leads", "metrics"] },
   { key: "profile", tabs: ["microsite", "documents", "destinations"] }
@@ -51,7 +51,9 @@ export function PortalScreen({ title, current, requireProvider = true, children 
   const { providerId } = useProviderId();
   const profile = useProviderProfile(client, providerId ?? undefined);
   const nav = portalNav(t);
-  const frame = (body: ReactNode): ReactNode => <Screen title={title} nav={nav} current={current} onNavigate={(href) => router.push(href as Href)}>{body}</Screen>;
+  // Services, products and delivery terms are one list of offers: the three routes stay (shared links) and light the one tab.
+  const active: PortalRoute = current === "products" || current === "delivery" ? "services" : current;
+  const frame = (body: ReactNode): ReactNode => <Screen title={title} nav={nav} current={active} onNavigate={(href) => router.push(href as Href)}>{body}</Screen>;
   if (providerId === undefined) return frame(<Loading />);
   if (!providerId) return frame(requireProvider ? <View style={{ gap: spacing[3] }}><Notice>{t("portal.errors.noProvider")}</Notice><ActionButton label={t("portal.errors.goOnboarding")} onPress={() => router.push(PORTAL_ROUTES.onboarding as Href)} testID="go-onboarding" /></View> : children({} as Provider, () => undefined));
   if (profile.isPending) return frame(<Loading />);

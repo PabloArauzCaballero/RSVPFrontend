@@ -7,5 +7,5 @@ export default function RegisterRoute() {
   const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
   const router = useRouter();
   const back = typeof returnTo === 'string' ? returnTo : null;
-  return <RedirectIfSignedIn returnTo={back}><RegisterScreen returnTo={back} onNavigate={(href) => router.push(href as Href)} /></RedirectIfSignedIn>;
+  return <RedirectIfSignedIn returnTo={back} newAccount><RegisterScreen returnTo={back} onNavigate={(href) => router.push(href as Href)} /></RedirectIfSignedIn>;
 }

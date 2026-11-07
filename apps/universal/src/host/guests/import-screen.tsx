@@ -6,10 +6,11 @@ import { canPickTextFile, pickTextFile } from "../../platform/files";
 import { useApiClient, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
-import { ActionButton, Field, Notice, Section, styles } from "../ui";
-import { FailureNotice } from "./parts";
+import { ActionButton, Celebrate, Field, styles } from "../ui";
+import { FailureNotice, TextAction } from "./parts";
 import { useSingleFlightGate } from "../../platform/single-flight";
 import { csvLimitProblem, MAX_CSV_BYTES } from "./csv-limits";
+import { isImportField, reasonKey } from "./import-reasons";
 
 /** C21 · CSV import. Valid rows go in, invalid rows come back with their line number and reason (REQ-F16-03). */
 
@@ -18,20 +19,20 @@ export { MAX_CSV_BYTES };
 export function ImportReport({ report }: { readonly report: CsvReport }): ReactNode {
   const t = useT();
   return (
-    <Section title={t("guests.import.result")}>
-      <Text testID="import-summary" accessibilityLiveRegion="polite" style={styles.body}>{t("guests.import.summary", { imported: report.importedCount, failed: report.failedCount, total: report.totalRows })}</Text>
-      {report.errors.length === 0 ? <Notice kind="success">{t("guests.import.none")}</Notice> : (
+    <View style={{ gap: spacing[4] }}>
+      <Text testID="import-summary" accessibilityRole="header" accessibilityLiveRegion="polite" style={styles.subtitle}>{t("guests.import.summary", { imported: report.importedCount, failed: report.failedCount, total: report.totalRows })}</Text>
+      {report.errors.length === 0 ? <Celebrate title={t("guests.import.celebrateTitle")} body={t("guests.import.celebrateBody")} /> : (
         <View style={{ gap: spacing[2] }}>
           <Text accessibilityRole="header" style={styles.label}>{t("guests.import.errorsTitle")}</Text>
           {report.errors.map((error) => (
             <View key={`${error.line}-${error.field}-${error.reason}`} testID={`import-error-${error.line}`} accessible style={[styles.notice, styles.noticeError]}>
-              <Text style={styles.label}>{t("guests.import.line", { line: error.line })} · {t("guests.import.field", { field: error.field })}</Text>
-              <Text style={styles.body}>{error.reason}</Text>
+              <Text style={styles.label}>{t("guests.import.line", { line: error.line })} · {t("guests.import.field", { field: isImportField(error.field) ? t(`guests.import.fields.${error.field}`) : error.field })}</Text>
+              <Text style={styles.body}>{t(`guests.import.reasons.${reasonKey(error.reason)}`)}</Text>
             </View>
           ))}
         </View>
       )}
-    </Section>
+    </View>
   );
 }
 
@@ -59,25 +60,31 @@ function ImportBody({ celebrationId, onNavigate }: { readonly celebrationId: str
   };
   return (
     <View style={{ gap: spacing[4] }}>
-      <Section title={t("guests.import.title")}>
-        <Text style={styles.body}>{t("guests.import.intro")}</Text>
-        <Text selectable style={[styles.body, { fontFamily: "monospace" }]}>{t("guests.import.header")}</Text>
-        <Text style={styles.muted}>{t("guests.import.headerNote")}</Text>
-        {canPickTextFile ? <ActionButton variant="secondary" label={t("guests.import.chooseFile")} onPress={() => { void choose(); }} /> : null}
-        <Field label={t("guests.import.csvLabel")} multiline value={csv} onChange={(value) => { setCsv(value); setProblem(""); }} error={problem || undefined} testID="csv-input" />
-        <FailureNotice error={run.error} onRetry={submit} />
-        <ActionButton label={run.isPending ? t("guests.import.running") : t("guests.import.run")} busy={run.isPending} onPress={submit} testID="run-import" />
-      </Section>
-      {run.data ? <ImportReport report={run.data} /> : null}
-      {run.data ? <View style={styles.row}>
-        <ActionButton variant="secondary" label={t("guests.import.again")} onPress={() => { run.reset(); setCsv(""); }} />
-        <ActionButton label={t("guests.import.viewList")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.guests, celebrationId))} />
-      </View> : null}
+      {run.data ? (
+        <>
+          <ImportReport report={run.data} />
+          <View style={styles.row}>
+            <ActionButton label={t("guests.import.viewList")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.guests, celebrationId))} />
+            <ActionButton variant="secondary" label={t("guests.import.again")} onPress={() => { run.reset(); setCsv(""); }} />
+          </View>
+        </>
+      ) : (
+        <View style={[styles.card, { maxWidth: 720 }]}>
+          <Text style={styles.body}>{t("guests.import.steps")}</Text>
+          <Text selectable style={[styles.body, { fontFamily: "monospace", fontWeight: "700" }]}>{t("guests.import.header")}</Text>
+          <Text style={styles.muted}>{t("guests.import.headerNote")}</Text>
+          {canPickTextFile ? <ActionButton variant="secondary" label={t("guests.import.chooseFile")} onPress={() => { void choose(); }} /> : null}
+          <Field label={t("guests.import.csvLabel")} multiline value={csv} onChange={(value) => { setCsv(value); setProblem(""); }} error={problem || undefined} testID="csv-input" />
+          <FailureNotice error={run.error} onRetry={submit} />
+          <ActionButton label={run.isPending ? t("guests.import.running") : t("guests.import.run")} busy={run.isPending} onPress={submit} testID="run-import" />
+          <TextAction label={t("guests.form.back")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.guests, celebrationId))} />
+        </View>
+      )}
     </View>
   );
 }
 
 export function ImportGuestsScreen(props: ScreenProps): ReactNode {
   const t = useT();
-  return <CelebrationScreen {...props} current="guests" title={t("guests.import.title")}>{({ celebration }) => <ImportBody celebrationId={celebration.id} onNavigate={props.onNavigate} />}</CelebrationScreen>;
+  return <CelebrationScreen {...props} current="guests" title={t("guests.import.title")} intro={t("guests.import.intro")}>{({ celebration }) => <ImportBody celebrationId={celebration.id} onNavigate={props.onNavigate} />}</CelebrationScreen>;
 }
