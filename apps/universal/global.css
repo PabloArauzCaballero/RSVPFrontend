@@ -2,9 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Tailwind preflight paints placeholders #9ca3af (2.4:1); keep the muted text token (WCAG AA). */
+/* Tailwind preflight paints placeholders #9ca3af (2.4:1); keep the muted text token of the active scheme (WCAG AA). The variables come from the token preset and flip with `html[data-theme]`. */
 input::placeholder,
-textarea::placeholder { color: #5a6380; opacity: 1; }
+textarea::placeholder { color: var(--text-muted); opacity: 1; }
 
 /* Web focus for text fields: the kit's blue border with a soft halo (the ring is not a colour-only cue: the border thickens too). */
-input:focus, textarea:focus { border-color: #1f3bff !important; box-shadow: 0 0 0 4px #e9edff; outline: none; }
+input:focus, textarea:focus { border-color: var(--primary) !important; box-shadow: 0 0 0 4px var(--primary-muted); outline: none; }

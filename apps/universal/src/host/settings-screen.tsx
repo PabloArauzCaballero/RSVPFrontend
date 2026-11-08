@@ -12,6 +12,7 @@ import { AuditSection, EventTypeSection, TeamSection } from "./settings-extras";
 import { spacing } from "@rsvp/design-tokens";
 import { MoreOptions } from "./more-options";
 import { ActionButton, ChoiceGroup, Field, Notice, Section, styles, ToggleChip } from "./ui";
+import { ThemeChoice } from "./theme-choice";
 
 /** C17 · Languages, time zone, currency and RSVP deadline, with a preview of the effect (REQ-F13-01/06). */
 
@@ -104,6 +105,7 @@ function SettingsForm({ celebration, refetch, onSaved, moreOpen, onMoreOpen }: {
           {celebration.settings.rsvpDeadline ? <ActionButton variant="secondary" label={t("host.settings.deadline.clear")} onPress={() => saveDeadline(true)} /> : null}
         </View>
       </Section>
+      <Section title={t("theme.title")}><ThemeChoice /></Section>
       <MoreOptions label={t("host.settings.more")} testID="more-settings" open={moreOpen} onOpenChange={onMoreOpen}>
         <EventTypeSection celebration={celebration} onSaved={onSaved} />
         <TeamSection celebration={celebration} onSaved={onSaved} />

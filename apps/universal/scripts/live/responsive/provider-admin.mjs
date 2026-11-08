@@ -4,12 +4,13 @@
 // Env: WIDTHS=360,768,1280  LOCALES=es-BO,en-US  SCHEMES=light,dark  PHASES=sweep,flows  FLOW_WIDTHS=1280  OUT=<file.json>  DETAIL=1
 // Sweep (every route x width x locale x scheme): (a) no pageerror / console.error / unexpected 4xx-5xx, (b) no horizontal scroll,
 // (c) no raw i18n keys, no Spanish literals under en-US, (d) axe WCAG 2.0/2.1 A+AA without serious/critical, (e) touch targets >= 44 px at 360,
-// (f) the theme under `dark` (portal and admin use a fixed LIGHT palette: reported, not asserted to flip).
+// (f) the theme follows the scheme: effective background dark under `dark`, light under `light` (asserted).
 // Flows (en-US, by testID, language independent): valid end-to-end writes verified with a direct GET + one network-error flow.
 import { readFileSync, writeFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
 import AxeBuilder from "@axe-core/playwright";
+import { followsScheme, sampleSurface } from "./scheme.mjs";
 
 const APP = process.env.APP ?? "http://localhost:3200";
 const API = process.env.API ?? "http://localhost:28000";
@@ -131,10 +132,9 @@ async function sweepRoute(ctx, route, key, flags) {
       const { total, small } = await page.evaluate(SMALL_TARGETS);
       if (small.length) fail("e-touch44", `${small.length}/${total}: ${small.slice(0, 5).join(" | ")}`); else pass("e-touch44", `${total} targets`);
     }
-    if (scheme === "dark") {
-      const bg = await page.evaluate(() => { const c = getComputedStyle(document.body).backgroundColor; const el = document.elementFromPoint(Math.min(40, innerWidth / 2), Math.min(300, innerHeight / 2)); return { body: c, probe: el ? getComputedStyle(el).backgroundColor : "" }; });
-      record({ key: `${key} ${route}`, width, locale, scheme, route, check: "f-theme", status: "PASS", evidence: `fondo ${bg.probe || bg.body} (paleta clara fija: no sigue el esquema)` });
-    }
+    // (f) the app follows the scheme: the effective background is dark under `dark` and light under `light` (axe above covers the contrast)
+    const surface = followsScheme(scheme, await sampleSurface(page));
+    if (surface.ok) pass("f-theme", surface.evidence); else fail("f-theme", surface.evidence);
   } catch (error) { fail("sweep-exception", String(error?.message ?? error).split("\n")[0].slice(0, 200)); }
 }
 

@@ -64,3 +64,12 @@ export const ANON_SCREENS: readonly VisualScreen[] = [
 ];
 
 export const WIDTHS = [390, 768, 1440] as const;
+
+/**
+ * Dark scheme: a representative subset (home, guests, gifts, publishing, settings, portal, admin, the invitation a guest opens,
+ * sign-in), not every route; the light gate above already walks them all. Two widths: phone and desktop.
+ */
+const pick = (screens: readonly VisualScreen[], names: readonly string[]): readonly VisualScreen[] => names.map((name) => screens.find((screen) => screen.name === name) ?? (() => { throw new Error(`Unknown visual screen ${name}`); })());
+export const DARK_AUTHED_SCREENS = pick(AUTHED_SCREENS, ["host-resumen", "host-invitados", "host-regalos", "host-editor-general", "host-publicar", "host-configuracion", "portal-inicio", "portal-servicios", "admin-resumen", "admin-verificacion", "guest-rsvp", "guest-regalos"]);
+export const DARK_ANON_SCREENS = pick(ANON_SCREENS, ["auth-login", "auth-registro", "guest-rsvp-publico"]);
+export const DARK_WIDTHS = [390, 1440] as const;

@@ -2,9 +2,10 @@ import { useState, type ReactNode } from "react";
 import { ScrollView, View, type LayoutChangeEvent } from "react-native";
 import type { CelebrationTheme, GalleryImage, PublicCelebrationView } from "@rsvp/celebration-theme";
 import { CelebrationNativeRenderer } from "@rsvp/celebration-theme/native";
-import { colors, radius } from "@rsvp/design-tokens";
+import { radius } from "@rsvp/design-tokens";
 import { useT } from "../platform/providers";
 import { ChoiceGroup } from "./ui";
+import { livePalette } from "../platform/theme";
 
 /**
  * The invitation as guests see it, framed at a device width and scaled down to fit the space it has. Shared by the
@@ -15,7 +16,7 @@ export const DEVICE_WIDTHS = { mobile: 360, tablet: 768, desktop: 1280 } as cons
 export type Device = keyof typeof DEVICE_WIDTHS;
 const DEVICES = Object.keys(DEVICE_WIDTHS) as Device[];
 const FRAME_HEIGHT: Readonly<Record<Device, number>> = { mobile: 560, tablet: 520, desktop: 480 };
-const palette = colors.light;
+const palette = livePalette;
 
 /** How much a device-wide frame shrinks to fit `available` pixels (never grows past real size). */
 export function fitScale(deviceWidth: number, available: number | null): number {

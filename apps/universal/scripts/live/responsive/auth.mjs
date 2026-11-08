@@ -5,11 +5,12 @@
 // Per route x width x language x scheme: (a) no pageerror/console.error (the anonymous refresh 401 is the only exclusion),
 // (b) no horizontal scroll, (c) no raw i18n key or other-language string, (d) axe WCAG 2.1 A/AA without serious/critical,
 // (e) controls >= 44 px at 360. Then, in en-US, valid end-to-end flows driven by testID/role and verified against the API,
-// plus one network-down flow. Also reports whether the app has a dark theme at all (measured, not assumed).
+// plus one network-down flow. Also asserts that the effective background follows the colour scheme (dark under `dark`, light under `light`).
 import { readFileSync, writeFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
 import { axeSeriousOrCritical, en, es, horizontalScroll, i18nLeaks, smallTargets, watchErrors } from "./probe.mjs";
+import { changedBetween, followsScheme, sampleSurface } from "./scheme.mjs";
 
 const API = process.env.API ?? "http://localhost:28000";
 const APP = process.env.APP ?? "http://localhost:8081";
@@ -84,14 +85,18 @@ for (const scheme of SCHEMES) for (const lang of LANGS) for (const width of WIDT
   await ctx.close();
 }
 
-// ------------------------------------------------------------------ 2. how dark is the app really
-console.log("\n== Dark theme measurement ==");
-{
-  const probe = async (scheme) => { const { ctx, page } = await context(1280, "en-US", scheme); await page.goto(`${APP}/login`); await settle(page); const colors = await page.evaluate(() => ({ body: getComputedStyle(document.body).backgroundColor, main: getComputedStyle(document.querySelector("[role=main]") ?? document.body).backgroundColor, theme: document.documentElement.getAttribute("data-theme"), mq: matchMedia("(prefers-color-scheme: dark)").matches })); await ctx.close(); return colors; };
-  const light = await probe("light"), dark = await probe("dark");
-  const same = JSON.stringify({ ...light, mq: 0 }) === JSON.stringify({ ...dark, mq: 0 });
-  console.log(`  light=${JSON.stringify(light)}\n  dark=${JSON.stringify(dark)}\n  => Expo auth/shell ${same ? "uses a FIXED LIGHT palette (colorScheme dark changes nothing)" : "reacts to the dark scheme"}`);
-  rows.push({ area: "theme", route: "login", status: "INFO", failures: [], note: same ? "fixed light palette: dark scheme renders identically to light" : "reacts to dark scheme", light, dark });
+// ------------------------------------------------------------------ 2. the app follows the colour scheme
+console.log("\n== Dark theme: the effective background changes with colorScheme ==");
+for (const route of ["/login", "/registro", "/recuperar"]) {
+  const measure = async (scheme) => { const { ctx, page } = await context(1280, "en-US", scheme); await page.goto(`${APP}${route}`); await settle(page); const surface = await sampleSurface(page); const checks = { follows: followsScheme(scheme, surface), axe: await axeSeriousOrCritical(page) }; await ctx.close(); return { surface, checks }; };
+  const light = await measure("light"), dark = await measure("dark");
+  const changed = changedBetween(light.surface, dark.surface);
+  const failures = [];
+  if (!light.checks.follows.ok) failures.push(`light: ${light.checks.follows.evidence}`);
+  if (!dark.checks.follows.ok) failures.push(`dark: ${dark.checks.follows.evidence}`);
+  if (!changed.ok) failures.push(`the background does not change: ${changed.evidence}`);
+  for (const [scheme, run] of [["light", light], ["dark", dark]]) if (run.checks.axe.length) failures.push(`axe ${scheme}: ${run.checks.axe.join(" ; ")}`);
+  record("theme", route, 1280, "en-US", "light|dark", failures);
 }
 
 // ------------------------------------------------------------------ 3. signed-in: organizations + the shell on every host route
@@ -114,7 +119,7 @@ for (const scheme of SCHEMES) for (const lang of LANGS) for (const width of WIDT
     record("org", "/organizaciones", width, lang, scheme, failures);
     await ctx.close();
   }
-  if (process.env.FRAME === "0" || scheme === "dark") continue; // dark is fixed-light: the sweep runs once per language and width
+  if (process.env.FRAME === "0") continue; // the shell sweep runs in both schemes
   { // shell sweep as HOST on every host route (frame: overflow, targets, axe; contents belong to their owners and are labelled)
     const { ctx, page, errors } = await context(width, lang, scheme);
     await signIn(page, world?.host.email ?? planner, world ? world.password : PASSWORD);
@@ -127,7 +132,7 @@ for (const scheme of SCHEMES) for (const lang of LANGS) for (const width of WIDT
     }
     await ctx.close();
   }
-  if (process.env.FRAME === "0" || scheme === "dark") continue;
+  if (process.env.FRAME === "0") continue;
   { // portal frame as PROVIDER
     const { ctx, page, errors } = await context(width, lang, scheme);
     await signIn(page, provider);

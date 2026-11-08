@@ -1,8 +1,8 @@
 import { useState, type ReactNode } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
-import { brand, colors, radius, spacing, typography } from "@rsvp/design-tokens";
-import { CheckMark } from "@rsvp/ui";
-import { Field, styles } from "../host/ui";
+import { brand, radius, spacing, typography } from "@rsvp/design-tokens";
+import { CheckMark, useColors, useThemedStyles, type Palette } from "@rsvp/ui";
+import { Field, useStyles } from "../host/ui";
 import { useT } from "../platform/providers";
 
 /**
@@ -10,18 +10,18 @@ import { useT } from "../platform/providers";
  * a dietary restriction or a message. Everything optional stays folded away so the common answer takes two taps.
  */
 
-const palette = colors.light;
 const fontFamily = Platform.select({ web: "'Plus Jakarta Sans', 'Avenir Next', 'Segoe UI', system-ui, sans-serif", default: undefined });
 const MIN_TOUCH = 44;
 /** The contract sets no maximum; this only keeps the stepper from running away. */
 const STEPPER_MAX = 20;
-const focusRing = Platform.select({ web: { outlineColor: palette.primary, outlineWidth: 2, outlineOffset: 2 }, default: {} }) as object;
+const ringFor = (color: string): object => Platform.select({ web: { outlineColor: color, outlineWidth: 2, outlineOffset: 2 }, default: {} }) as object;
 
-const s = StyleSheet.create({
+const createStyles = (palette: Palette, scheme: "light" | "dark") => StyleSheet.create({
   answers: { flexDirection: "row", gap: spacing[3] },
   answer: { flex: 1, minHeight: 76, borderRadius: radius.lg, borderWidth: 1.5, borderColor: palette.fieldBorder, backgroundColor: palette.surface, alignItems: "center", justifyContent: "center", gap: spacing[1], paddingHorizontal: spacing[3] },
   answerYes: { backgroundColor: brand.azul, borderColor: brand.azul },
-  answerNo: { backgroundColor: brand.noche, borderColor: brand.noche },
+  /* On the dark page a night fill would vanish: the refusal lifts to the raised surface with its outline. */
+  answerNo: scheme === "dark" ? { backgroundColor: palette.surfaceMuted, borderColor: palette.fieldBorder } : { backgroundColor: brand.noche, borderColor: brand.noche },
   answerText: { color: palette.text, fontSize: 20, lineHeight: 24, fontWeight: "800", letterSpacing: -0.4, fontFamily },
   answerTextOn: { color: "#FFFFFF" },
   ring: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: "#FFFFFF", alignItems: "center", justifyContent: "center" },
@@ -39,6 +39,10 @@ export type Attendance = "" | "CONFIRMED" | "DECLINED";
 
 /** "Voy" / "No puedo": two large taps. The selection is a filled shape plus a mark, never colour alone. */
 export function AttendanceChoice({ value, onChange, error }: { readonly value: Attendance; readonly onChange: (next: "CONFIRMED" | "DECLINED") => void; readonly error?: string | undefined }): ReactNode {
+  const s = useThemedStyles(createStyles);
+  const styles = useStyles();
+  const palette = useColors();
+  const focusRing = ringFor(palette.primary);
   const t = useT();
   const yes = value === "CONFIRMED";
   const no = value === "DECLINED";
@@ -61,6 +65,10 @@ export function AttendanceChoice({ value, onChange, error }: { readonly value: A
 
 /** How many come along. The invitation says how many it includes; asking for more is allowed and the host decides. */
 export function CompanionsStepper({ value, onChange, allowed, error }: { readonly value: string; readonly onChange: (next: string) => void; readonly allowed: number | undefined; readonly error?: string | undefined }): ReactNode {
+  const s = useThemedStyles(createStyles);
+  const styles = useStyles();
+  const palette = useColors();
+  const focusRing = ringFor(palette.primary);
   const t = useT();
   const parsed = Number(value);
   const count = Number.isInteger(parsed) && parsed >= 0 ? parsed : 0;
@@ -81,6 +89,9 @@ export function CompanionsStepper({ value, onChange, allowed, error }: { readonl
 
 /** Dietary restriction and message: folded away unless there is already something written. */
 export function ExtrasFields({ dietaryNotes, message, onChange, errors }: { readonly dietaryNotes: string; readonly message: string; readonly onChange: (patch: { dietaryNotes?: string; message?: string }) => void; readonly errors: { readonly dietaryNotes?: string | undefined; readonly message?: string | undefined } }): ReactNode {
+  const s = useThemedStyles(createStyles);
+  const palette = useColors();
+  const focusRing = ringFor(palette.primary);
   const t = useT();
   const [open, setOpen] = useState(() => Boolean(dietaryNotes || message));
   const shown = open || Boolean(errors.dietaryNotes || errors.message);

@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
-import { colors, radius, spacing } from "@rsvp/design-tokens";
+import { radius, spacing } from "@rsvp/design-tokens";
 import { useCreateGuestGroup, useGuestGroups } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
@@ -8,6 +8,7 @@ import { HOST_ROUTES, withCelebration } from "../routes";
 import { ActionButton, EmptyState, Field, Loading, SuccessNote, styles } from "../ui";
 import { FailureNotice, RetryNotice, TextAction } from "./parts";
 import { useSingleFlightGate } from "../../platform/single-flight";
+import { livePalette } from "../../platform/theme";
 
 const MAX_GROUP_NAME = 200;
 
@@ -34,7 +35,7 @@ function GroupsBody({ celebrationId, onNavigate }: { readonly celebrationId: str
     setProblem("");
     create.mutate(clean, { onSuccess: (group) => { setLastCreated(group.name); setName(""); }, onSettled: flight.end });
   };
-  const palette = colors.light;
+  const palette = livePalette;
   const items = groups.data?.items ?? [];
   const form = (
     <View style={[styles.card, { maxWidth: 720 }]}>

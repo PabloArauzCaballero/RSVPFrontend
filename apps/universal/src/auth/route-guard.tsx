@@ -2,13 +2,14 @@ import { useRef, type PropsWithChildren, type ReactNode } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { Redirect, useGlobalSearchParams, usePathname, useRouter, type Href } from "expo-router";
 import { decideRoute, safeReturnTo, type RouteGroup } from "@rsvp/auth";
-import { colors, typography } from "@rsvp/design-tokens";
+import { typography } from "@rsvp/design-tokens";
 import { useT } from "../platform/providers";
 import { useAuth } from "./auth-context";
 import { AuthLayout, authStyles, SubmitButton } from "./auth-ui";
 import { destinationAfterSignIn, firstStepFor, homeFor, loginHref } from "./routes";
+import { livePalette } from "../platform/theme";
 
-const palette = colors.light;
+const palette = livePalette;
 
 /** The path the person was trying to open, with its query, so sign-in can bring them back to it. */
 export function currentLocation(pathname: string, params: Readonly<Record<string, string | string[] | undefined>>): string {

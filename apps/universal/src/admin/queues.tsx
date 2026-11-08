@@ -1,17 +1,18 @@
 import { useState, type ReactNode } from "react";
 import { Linking, Text, View } from "react-native";
 import { useModerationDecision, useModerationQueue, useVerificationAction, useVerificationQueue, type ModerationItem, type ModerationStatus, type VerificationAction, type VerificationItem, type VerificationStatus } from "@rsvp/query-hooks/admin";
-import { colors, spacing } from "@rsvp/design-tokens";
+import { spacing } from "@rsvp/design-tokens";
 import { Button, Chip } from "@rsvp/ui";
 import { useApiClient, useT } from "../platform/providers";
 import { ActionButton, ChoiceGroup, Notice, PageIntro, styles } from "../host/ui";
 import { AdminScreen, adminOnly } from "./admin-screen";
 import { AdminErrorNotice, QueryBoundary, ReasonDialog, useStamp } from "./shared";
 import { useSingleMutation } from "../platform/single-flight";
+import { livePalette } from "../platform/theme";
 
 /** E7 verification queue (REQ-F14-03) and E8 moderation (REQ-F14-04): act on a row, reject/suspend need a reason. */
 
-const rowStyle = { gap: spacing[2], paddingVertical: spacing[4], borderTopWidth: 1, borderTopColor: colors.light.border, maxWidth: 720 } as const;
+const rowStyle = (): object => ({ gap: spacing[2], paddingVertical: spacing[4], borderTopWidth: 1, borderTopColor: livePalette.border, maxWidth: 720 });
 
 const PAGE = 10;
 function ShowMore({ total, shown, onMore }: { readonly total: number; readonly shown: number; readonly onMore: () => void }): ReactNode {
@@ -51,7 +52,7 @@ function VerificationRow({ item, busy, onVerify, onAsk }: { readonly item: Verif
   const first = actions[0];
   const rest = actions.slice(1);
   return (
-    <View style={rowStyle} accessibilityLabel={item.name}>
+    <View style={rowStyle()} accessibilityLabel={item.name}>
       <View style={[styles.row, { justifyContent: "space-between", flexWrap: "nowrap" }]}><Text accessibilityRole="header" style={[styles.subtitle, { flex: 1, flexShrink: 1, overflowWrap: "anywhere" } as object]}>{item.name}</Text><Chip tone={item.status === "VERIFIED" ? "yes" : item.status === "PENDING" ? "maybe" : "no"}>{t(`admin.verification.state.${item.status}`)}</Chip></View>
       <Text style={styles.muted}>{`${item.category} · ${item.city} · ${t("admin.verification.submitted", { when: stamp(item.submittedAt) })}`}</Text>
       {item.reason ? <Text style={styles.muted}>{t("admin.common.reasonOn", { reason: item.reason })}</Text> : null}
@@ -96,7 +97,7 @@ function ModerationRow({ item, busy, onApprove, onReject }: { readonly item: Mod
   const stamp = useStamp();
   const state = busy ? "loading" : "default";
   return (
-    <View style={rowStyle} accessibilityLabel={item.title}>
+    <View style={rowStyle()} accessibilityLabel={item.title}>
       <View style={[styles.row, { justifyContent: "space-between", flexWrap: "nowrap" }]}><Text accessibilityRole="header" style={[styles.subtitle, { flex: 1, flexShrink: 1, overflowWrap: "anywhere" } as object]}>{item.title}</Text><Chip tone={item.status === "APPROVED" ? "yes" : item.status === "PENDING" ? "maybe" : "no"}>{t(`admin.moderation.state.${item.status}`)}</Chip></View>
       <Text style={styles.muted}>{`${t(`admin.moderation.kinds.${item.kind}`)} · ${stamp(item.submittedAt)}`}</Text>
       {item.url ? <ActionButton variant="secondary" label={t("admin.moderation.open", { name: item.title })} onPress={() => { void Linking.openURL(item.url ?? ""); }} /> : null}

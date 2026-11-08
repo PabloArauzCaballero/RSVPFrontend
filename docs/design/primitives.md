@@ -49,7 +49,7 @@ Ilustración de línea propia: trazo grueso redondeado, un bloque suave desplaza
 <Illustration name="success" label="Listo" />            // con label deja de ser decorativa
 ```
 
-Nombres: `invitation` (sobre) · `gift` · `calendar` · `table` (mesa y personas) · `provider` (ficha) · `offline` (conexión caída) · `emptySearch` (lupa vacía) · `success`. Tonos: `brand` (azul sobre claro), `night` (noche sobre claro), `onDark` (cielo sobre noche). Las formas viven en `packages/ui/src/illustrations.ts`; para agregar una, dibújala en la rejilla de 120 con las capas `soft | line | solid | knock | accent | accentFill`.
+Nombres (32): los 8 originales (`invitation`, `gift`, `calendar`, `table`, `provider`, `offline`, `emptySearch`, `success`) y 24 por situación; lista, idea y pantalla de cada una en `identidad-visual.md` §7 y §8. Tonos: `brand` (azul sobre claro), `night` (noche sobre claro), `onDark` (cielo sobre noche), `onBrand` (blanco sobre el azul) y `auto` (sigue el modo claro/oscuro; úsalo en las pantallas). Las formas viven en `packages/ui/src/illustrations.ts`; para agregar una, ver `identidad-visual.md` §9.
 
 ## EmptyState
 
@@ -98,3 +98,40 @@ Barra inferior móvil: caben cinco espacios. Si destinos + «Más» (con sesión
 - Una pantalla vacía hereda `EmptyState`; un error recuperable usa `ErrorNotice`; un guardado usa `Notice kind="success"` o `SuccessNote`; un hito usa `Celebrate`.
 - No animes nada más que el cheque. Sin movimiento decorativo en bucle.
 - Ilustraciones solo en estados vacíos, bienvenida y errores amables; no como adorno de cada tarjeta.
+
+## Identidad
+
+Recursos de marca además de las ilustraciones. Todo sale de `@rsvp/ui` (web y nativo comparten las formas; `.native.tsx` solo cambia el dibujo). Son **decorativos** (`aria-hidden`); el texto vecino lleva el significado. Dirección, tonos y tabla de uso: `identidad-visual.md`. Revisión visual: ruta de desarrollo `/identidad`.
+
+```tsx
+<WeavePattern tone="onBrand" />                        // rellena el contenedor (absoluto), no recibe puntero
+<BrandBand tone="night" art="ready">…texto blanco…</BrandBand>   // banda noche o azul; el arte a la derecha desde 720 px
+<HeroArt variant="cover" tone="onBrand" style={{ height: 220 }} /> // cover | auth | ready; se recorta al cuadro
+<MomentBackdrop variant="confirmed" />                 // confirmed | published; detrás de Celebrate, estático
+<AvatarMark name="Flores y Eventos Sol" size={48} />    // avatar con la forma de la D, para proveedor sin foto
+<Illustration name="verified" tone="auto" size="lg" />
+```
+
+- `WeavePattern`: rombos escalonados de 1.25 px, opacidad 0.10 a 0.20 según el tono. Úsalo solo en portada del invitado, panel de acceso y bandas noche/«Listo para vender»; nunca bajo formularios o tablas.
+- `HeroArt` y `MomentBackdrop` llenan el cuadro que les des (`slice`): dale ancho y alto. `ready` está pensado para bandas anchas (≥ 2.5 : 1).
+- `AvatarMark` toma el color del nombre (cuatro fondos semánticos, claro y oscuro). Sin foto del proveedor, nunca un círculo gris.
+- Sin animación en ninguno: el movimiento lo pone solo `CheckMark`.
+- `IdentityCatalog` (la página `/identidad`) muestra todo en claro y oscuro; añadir un recurso nuevo implica mostrarlo ahí.
+
+## Movimiento
+
+Infraestructura de `@rsvp/ui` para que la app se sienta viva sin cansar. Inventario, tokens, mediciones y parches de integración: `docs/design/motion.md`. Solo se anima `transform` y `opacity`; con `prefers-reduced-motion` o Reduce Motion nativo todo aparece en su estado final y el orden de lectura no cambia.
+
+```tsx
+<Enter from="down" play={visible}>…</Enter>                       // entrada con dirección (up | down | left | right | none); FadeSlide es un alias
+<Stagger>{rows.map((r) => <Row key={r.id} {...r} />)}</Stagger>    // 40 ms entre filas, tope de 8
+<PressFeedback accessibilityLabel="Guardar" onPress={save}>…</PressFeedback>   // escala 0.97, área de 44 px intacta
+{loading ? <SkeletonList count={5} row={{ minHeight: 64 }} label={t("guests.loading")} /> : <List />}
+<StepTransition step={step} announce="Paso 2 de 3: Quién y cuándo">…</StepTransition>   // alta en 3 pasos
+<ScreenTransition routeKey={current} groupKey={destination}>{children}</ScreenTransition> // contenido de Screen
+```
+
+- Esqueleto: pasa a `SkeletonRow` la altura (`minHeight`) de la fila real para que cargar no mueva la página; es el único bucle y solo mientras carga.
+- `ScreenTransition` también lleva el scroll arriba y el foco al `h1` tras navegar; la primera pantalla de la sesión no anima ni roba el foco.
+- Los textos (`announce`, `label`) los traduce quien llama; por defecto `SkeletonList` usa `ui.loading`.
+- No animes nada más sin pasar la puerta de frecuencia y propósito de `motion.md`: el cheque sigue siendo la única animación de celebración.

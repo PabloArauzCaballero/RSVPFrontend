@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
-import { colors, spacing } from "@rsvp/design-tokens";
+import { spacing } from "@rsvp/design-tokens";
 import { Chip } from "@rsvp/ui";
 import { ApiError } from "@rsvp/api-client";
 import { MAX_PROVIDER_NAME, providerService, useMetrics, useOwnListings, useRegisterProviderAccount, useSubmitProvider, useUpdateProvider, type Provider } from "@rsvp/query-hooks";
@@ -12,6 +12,7 @@ import { PortalErrorNotice as ErrorNotice } from "./errors";
 import { PORTAL_ROUTES, PortalScreen, useProviderId } from "./frame";
 import { RangeTotals, lastDays } from "./metrics-screen";
 import { useSingleMutation } from "../platform/single-flight";
+import { livePalette } from "../platform/theme";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -45,7 +46,7 @@ function RenameProvider({ provider }: { readonly provider: Provider }): ReactNod
   );
 }
 
-const palette = colors.light;
+const palette = livePalette;
 const STEP_ICON = 28;
 
 /** One step of the "ready to sell" path: a drawn check when done, an empty ring when it is still to do. */

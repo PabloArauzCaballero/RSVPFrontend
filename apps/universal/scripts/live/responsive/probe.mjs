@@ -113,3 +113,4 @@ export function watchErrors(page, { expectNotFoundFor } = {}) {
   });
   return errors;
 }
+export { sampleSurface, followsScheme, changedBetween } from "./scheme.mjs";

@@ -1,17 +1,19 @@
 import type { PropsWithChildren } from 'react';
 import { useState } from 'react';
 import { ActivityIndicator, Modal as NativeModal, Platform, Pressable, ScrollView, Switch, Text, TextInput, View, useWindowDimensions, type ViewStyle } from 'react-native';
-import { brand, radius, spacing, typography } from '@rsvp/design-tokens';
+import { avatars, chips, radius, spacing, typography } from '@rsvp/design-tokens';
 import { useTheme } from './theme';
 
-export { UiProvider, useTheme, type ColorScheme } from './theme';
+export { UiProvider, useTheme, useColors, useThemedStyles, type ColorScheme, type Palette } from './theme';
 import { DateField } from './date-field';
 export { Logo, type LogoProps, type LogoTone } from './logo';
-export { CheckMark, type CheckMarkProps } from './check-mark';
+export { CheckMark, type CheckMarkProps } from './scheme-check';
 export { Illustration, type IllustrationProps } from './illustration';
 export { ILLUSTRATION_NAMES, type IllustrationName, type IllustrationTone } from './illustrations';
+export * from './identity';
 export { EmptyState, PageIntro, SuccessNote, Celebrate, type EmptyStateProps } from './personality';
 export { useReducedMotion, MOTION } from './motion';
+export * from './motion-kit';
 export { defaultStrings, stringsFor, type UiStrings } from './strings';
 
 export type State = 'default' | 'loading' | 'error' | 'empty' | 'disabled';
@@ -221,16 +223,10 @@ export function SwitchWithConsequence({ label, value, consequence, pendingCount 
 }
 
 export type ChipTone = 'yes' | 'maybe' | 'wait' | 'no';
-const CHIP: Record<ChipTone, { bg: string; fg: string; dot: string; border?: string }> = {
-  yes: { bg: brand.bruma, fg: brand.azulOsc, dot: brand.azul },
-  maybe: { bg: '#FFF2D6', fg: '#6B4500', dot: brand.ambar },
-  wait: { bg: brand.nube, fg: brand.pizarra, dot: brand.niebla, border: brand.linea },
-  no: { bg: '#ECEEF4', fg: brand.noche, dot: brand.noche }
-};
-
 /** RSVP status pill from the kit: a dot and a word, never colour alone. */
 export function Chip({ tone, children }: PropsWithChildren<{ tone: ChipTone }>) {
-  const c = CHIP[tone];
+  const { scheme } = useTheme();
+  const c: { bg: string; fg: string; dot: string; border?: string } = chips[scheme][tone];
   return (
     <View accessibilityRole="text" style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 7, height: 30, paddingHorizontal: 12, borderRadius: radius.full, backgroundColor: c.bg, borderWidth: c.border ? 1 : 0, borderColor: c.border }}>
       <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: c.dot }} />
@@ -239,12 +235,13 @@ export function Chip({ tone, children }: PropsWithChildren<{ tone: ChipTone }>) 
   );
 }
 
-const AVATARS = [{ bg: brand.azul, fg: '#FFFFFF' }, { bg: brand.ambar, fg: brand.noche }, { bg: brand.noche, fg: '#FFFFFF' }, { bg: brand.cielo, fg: brand.noche }];
 const initials = (name: string) => name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase() ?? '').join('');
 
 /** Initials on one of the four brand grounds, picked from the name so the same person keeps the same colour. */
 export function Avatar({ name, size = 36 }: { name: string; size?: number }) {
-  const c = AVATARS[[...name].reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % AVATARS.length]!;
+  const { scheme } = useTheme();
+  const grounds = avatars[scheme];
+  const c = grounds[[...name].reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % grounds.length]!;
   return (
     <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: c.bg, alignItems: 'center', justifyContent: 'center' }}>
       <Text style={{ color: c.fg, fontSize: Math.round(size * 0.36), fontWeight: '800' }}>{initials(name)}</Text>

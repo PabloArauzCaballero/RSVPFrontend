@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Text, View } from "react-native";
-import { colors, radius, spacing } from "@rsvp/design-tokens";
+import { radius, spacing } from "@rsvp/design-tokens";
 import { formatCelebrationDate } from "@rsvp/i18n";
 import { useHostNotifications, useMarkHostNotificationsRead, type HostNotification } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../../platform/providers";
@@ -9,10 +9,11 @@ import { HOST_ROUTES, withCelebration } from "../routes";
 import { ActionButton, EmptyState, Loading, Notice, styles } from "../ui";
 import { FailureNotice, RetryNotice, TextAction } from "./parts";
 
-const palette = colors.light;
+const palette = livePalette;
 import { useSingleFlightGate } from "../../platform/single-flight";
 import { classifyFailure } from "./failure";
 import { knownNoticeTemplate, notificationTarget } from "./notification-target";
+import { livePalette } from "../../platform/theme";
 
 /** C31 / F6 · In-app notification center: unread first, direct action, mark one or all as read. The read state is the server's (`readAt`), shared by every device (REQ-F18-01/02/05). */
 

@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
-import { colors, spacing } from "@rsvp/design-tokens";
+import { spacing } from "@rsvp/design-tokens";
 import { Chip } from "@rsvp/ui";
 import { ApiError } from "@rsvp/api-client";
 import { formatCelebrationDate } from "@rsvp/i18n";
@@ -11,6 +11,7 @@ import { PortalErrorNotice as ErrorNotice } from "./errors";
 import { TIME, blackoutProblem, validCapacity } from "./agenda-rules";
 import { PortalScreen } from "./frame";
 import { useSingleMutation } from "../platform/single-flight";
+import { livePalette } from "../platform/theme";
 
 
 /** D9/D10 · Availability rules and blackouts (the public calendar is computed from them), and the date requests received. */
@@ -83,7 +84,7 @@ function Agenda({ provider }: { readonly provider: Provider }): ReactNode {
         {bookings.isPending ? <Loading /> : bookings.isError ? <ErrorNotice error={bookings.error} onReload={() => { void bookings.refetch(); }} /> : bookings.data.items.length === 0 ? <EmptyState illustration="calendar" title={t("portal.agenda.bookingsEmptyTitle")} body={t("portal.agenda.bookingsEmpty")} /> : [...bookings.data.items].sort((a, b) => Number(b.status === "REQUESTED") - Number(a.status === "REQUESTED")).map((booking) => {
           const busy = decide.isPending && decide.variables?.bookingId === booking.id ? decide.variables.action : null;
           return (
-            <View key={booking.id} style={{ gap: spacing[1], paddingVertical: spacing[3], borderTopWidth: 1, borderTopColor: colors.light.border }} testID={`booking-${booking.id}`}>
+            <View key={booking.id} style={{ gap: spacing[1], paddingVertical: spacing[3], borderTopWidth: 1, borderTopColor: livePalette.border }} testID={`booking-${booking.id}`}>
               <Text style={styles.subtitle}>{t("portal.agenda.date", { date: booking.date })}</Text>
               <View style={styles.row}><Chip tone={booking.status === "CONFIRMED" ? "yes" : booking.status === "REQUESTED" ? "maybe" : "no"}>{t(`portal.agenda.status.${booking.status}`)}</Chip></View>
               <Text style={styles.muted}>{t("portal.agenda.expires", { when: formatCelebrationDate(booking.expiresAt, { locale, timeZone: provider.timeZone }) })}</Text>

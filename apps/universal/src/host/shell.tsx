@@ -1,9 +1,10 @@
 import { useRef, useState, type PropsWithChildren, type ReactNode } from "react";
 import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
-import { brand, colors, radius, spacing } from "@rsvp/design-tokens";
-import { Logo, PageIntro } from "@rsvp/ui";
+import { brand, radius, spacing } from "@rsvp/design-tokens";
+import { Logo, PageIntro, useColors, useThemedStyles, type Palette } from "@rsvp/ui";
 import { useAuth } from "../auth/auth-context";
 import { useT } from "../platform/providers";
+import { useThemePreference } from "../platform/theme";
 
 /**
  * Frame of every signed-in screen (host, admin, provider). Wide screens: a night sidebar with the
@@ -15,14 +16,15 @@ import { useT } from "../platform/providers";
  * built centrally (`hostNav`, `adminNav`, the portal frame); a screen only says which route key is `current`.
  */
 
-const palette = colors.light;
 const fontFamily = Platform.select({ web: "'Plus Jakarta Sans', 'Avenir Next', 'Segoe UI', system-ui, sans-serif", default: undefined });
 const WIDE = 960;
 const SIDEBAR = 264;
 const MAX_CONTENT = 1040;
 const MIN_TOUCH = 44;
 const BAR_SLOTS = 5;
-const focusRing = Platform.select({ web: { outlineColor: brand.cielo, outlineWidth: 2, outlineOffset: -2 }, default: {} }) as object;
+const ring = (color: string): object => Platform.select({ web: { outlineColor: color, outlineWidth: 2, outlineOffset: -2 }, default: {} }) as object;
+/** Focus ring on the night regions. */
+const focusRing = ring(brand.cielo);
 
 /** A screen inside a destination. `key` is the route key a screen passes as `current`. */
 export interface NavTab { readonly key: string; readonly label: string; readonly href: string }
@@ -37,7 +39,8 @@ export function barSplit(count: number, signedIn: boolean): number {
   return count + (signedIn ? 1 : 0) <= BAR_SLOTS ? count : BAR_SLOTS - 1;
 }
 
-const s = StyleSheet.create({
+/** Frame styles of one palette (light or dark). The night regions (sidebar, top bars, title block) use brand colours and stay the same in both. */
+const createShellStyles = (palette: Palette) => StyleSheet.create({
   root: { flex: 1, backgroundColor: palette.canvas },
   rootWide: { flexDirection: "row" },
   sidebar: { width: SIDEBAR, flexShrink: 0, backgroundColor: brand.noche, paddingTop: spacing[6], paddingBottom: spacing[4], paddingHorizontal: spacing[3] },
@@ -68,20 +71,29 @@ const s = StyleSheet.create({
   tabBar: { flexDirection: "row", backgroundColor: palette.surface, borderTopWidth: 1, borderTopColor: palette.border },
   tab: { flex: 1, minHeight: 56, alignItems: "center", justifyContent: "center", gap: 4, paddingHorizontal: 2 },
   tabDot: { width: 20, height: 3, borderRadius: 2, backgroundColor: "transparent" },
-  tabDotActive: { backgroundColor: brand.azul },
+  tabDotActive: { backgroundColor: palette.primary },
   tabText: { color: palette.textMuted, fontSize: 11, fontWeight: "700", fontFamily },
-  tabTextActive: { color: brand.azul },
-  overlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(10,16,51,0.6)" },
+  tabTextActive: { color: palette.primary },
+  overlay: { flex: 1, justifyContent: "flex-end", backgroundColor: palette.scrim },
   sheet: { backgroundColor: palette.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: spacing[4], paddingBottom: spacing[6], gap: spacing[1], maxHeight: "85%" },
   grabber: { alignSelf: "center", width: 40, height: 4, borderRadius: 2, backgroundColor: palette.border, marginBottom: spacing[3] },
   sheetItem: { minHeight: 52, justifyContent: "center", paddingHorizontal: spacing[3], borderRadius: radius.md },
   sheetItemActive: { backgroundColor: palette.primaryMuted },
   sheetText: { color: palette.text, fontSize: 16, fontWeight: "600", fontFamily },
-  sheetTextActive: { color: brand.azul, fontWeight: "700" },
+  sheetTextActive: { color: palette.primary, fontWeight: "700" },
   tabs: { flexDirection: "row", gap: spacing[1], paddingRight: spacing[4] },
   mTabsRow: { paddingHorizontal: spacing[5] },
+  themeRow: { flexDirection: "row", gap: spacing[1], padding: 3, borderRadius: radius.full, borderWidth: 1, borderColor: palette.border },
+  themeRowNight: { borderColor: "#2B3578" },
+  themeOption: { flex: 1, minHeight: MIN_TOUCH, minWidth: MIN_TOUCH, alignItems: "center", justifyContent: "center", paddingHorizontal: spacing[2], borderRadius: radius.full },
+  themeOptionOn: { backgroundColor: palette.primaryMuted },
+  themeOptionOnNight: { backgroundColor: brand.medianoche },
+  themeText: { color: palette.textMuted, fontSize: 13, fontWeight: "600", fontFamily },
+  themeTextOn: { color: palette.text, fontWeight: "800" },
+  themeTextNight: { color: brand.niebla },
+  themeTextOnNight: { color: "#FFFFFF", fontWeight: "800" },
   sectionTab: { minHeight: MIN_TOUCH, minWidth: MIN_TOUCH, justifyContent: "center", paddingHorizontal: spacing[4], borderBottomWidth: 3, borderBottomColor: "transparent" },
-  sectionTabActive: { borderBottomColor: brand.azul },
+  sectionTabActive: { borderBottomColor: palette.primary },
   sectionTabText: { color: palette.textMuted, fontSize: 15, fontWeight: "600", fontFamily },
   sectionTabTextActive: { color: palette.text, fontWeight: "800" },
   mSectionTab: { minHeight: MIN_TOUCH, minWidth: MIN_TOUCH, justifyContent: "center", paddingHorizontal: spacing[4], borderRadius: radius.full },
@@ -95,6 +107,8 @@ const s = StyleSheet.create({
  * on narrow screens, Left/Right/Home/End move the focus. Selecting a tab navigates to its route.
  */
 function SectionTabs({ tabs, current, onNavigate, dark }: { readonly tabs: readonly NavTab[]; readonly current?: string; readonly onNavigate?: (href: string) => void; readonly dark: boolean }): ReactNode {
+  const s = useThemedStyles(createShellStyles);
+  const surfaceRing = ring(useColors().primary);
   const t = useT();
   const refs = useRef<(View | null)[]>([]);
   const activeIndex = Math.max(0, tabs.findIndex((tab) => tab.key === current));
@@ -113,7 +127,7 @@ function SectionTabs({ tabs, current, onNavigate, dark }: { readonly tabs: reado
           const box = dark ? [s.mSectionTab, active && s.mSectionTabActive] : [s.sectionTab, active && s.sectionTabActive];
           const text = dark ? [s.mSectionTabText, active && s.mSectionTabTextActive] : [s.sectionTabText, active && s.sectionTabTextActive];
           return (
-            <Pressable key={tab.key} ref={(node) => { refs.current[index] = node; }} role="tab" aria-selected={active} aria-current={active ? "page" : undefined} onPress={() => onNavigate?.(tab.href)} {...({ onKeyDown: (event: { key: string; preventDefault: () => void }) => onKey(event, index) } as object)} style={[...box, focusRing]}>
+            <Pressable key={tab.key} ref={(node) => { refs.current[index] = node; }} role="tab" aria-selected={active} aria-current={active ? "page" : undefined} onPress={() => onNavigate?.(tab.href)} {...({ onKeyDown: (event: { key: string; preventDefault: () => void }) => onKey(event, index) } as object)} style={[...box, dark ? focusRing : surfaceRing]}>
               <Text numberOfLines={1} style={text}>{tab.label}</Text>
             </Pressable>
           );
@@ -123,7 +137,28 @@ function SectionTabs({ tabs, current, onNavigate, dark }: { readonly tabs: reado
   );
 }
 
+/** System · Light · Dark in one compact row (the full form, with its explanation, lives in Settings). */
+function ThemeSwitch({ onNight = false }: { readonly onNight?: boolean }): ReactNode {
+  const t = useT();
+  const s = useThemedStyles(createShellStyles);
+  const surfaceRing = ring(useColors().primary);
+  const { preference, setPreference, options } = useThemePreference();
+  return (
+    <View role="radiogroup" aria-label={t("theme.label")} style={[s.themeRow, onNight && s.themeRowNight]}>
+      {options.map((option) => {
+        const on = option === preference;
+        return (
+          <Pressable key={option} role="radio" aria-checked={on} accessibilityLabel={t(`theme.${option}`)} testID={`theme-switch-${option}`} onPress={() => setPreference(option)} style={[s.themeOption, on && (onNight ? s.themeOptionOnNight : s.themeOptionOn), onNight ? focusRing : surfaceRing]}>
+            <Text numberOfLines={1} style={[s.themeText, onNight && s.themeTextNight, on && (onNight ? s.themeTextOnNight : s.themeTextOn)]}>{t(`theme.${option}`)}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
 function Sidebar({ nav, current, onNavigate }: { readonly nav: readonly NavItem[]; readonly current?: string; readonly onNavigate?: (href: string) => void }): ReactNode {
+  const s = useThemedStyles(createShellStyles);
   const t = useT();
   const auth = useAuth();
   return (
@@ -140,6 +175,7 @@ function Sidebar({ nav, current, onNavigate }: { readonly nav: readonly NavItem[
           );
         })}
       </ScrollView>
+      <View style={{ marginTop: spacing[2] }}><ThemeSwitch onNight /></View>
       {auth.state.status === "authenticated" ? (
         <Pressable role="button" accessibilityLabel={t("common.signOut")} onPress={() => { void auth.signOut(); }} style={[s.signOut, focusRing]}>
           <Text style={s.sidebarText}>{t("common.signOut")}</Text>
@@ -150,6 +186,8 @@ function Sidebar({ nav, current, onNavigate }: { readonly nav: readonly NavItem[
 }
 
 function MobileFrame({ nav, current, onNavigate, children }: PropsWithChildren<{ readonly nav: readonly NavItem[]; readonly current?: string; readonly onNavigate?: (href: string) => void }>): ReactNode {
+  const s = useThemedStyles(createShellStyles);
+  const tabRing = ring(useColors().primary);
   const t = useT();
   const auth = useAuth();
   const [open, setOpen] = useState(false);
@@ -173,14 +211,14 @@ function MobileFrame({ nav, current, onNavigate, children }: PropsWithChildren<{
           {tabs.map((item) => {
             const active = isCurrentDestination(item, current);
             return (
-              <Pressable key={item.key} role="link" aria-current={active ? "page" : undefined} onPress={() => go(item.href)} style={[s.tab, focusRing]}>
+              <Pressable key={item.key} role="link" aria-current={active ? "page" : undefined} onPress={() => go(item.href)} style={[s.tab, tabRing]}>
                 <View style={[s.tabDot, active && s.tabDotActive]} />
                 <Text numberOfLines={1} style={[s.tabText, active && s.tabTextActive]}>{item.label}</Text>
               </Pressable>
             );
           })}
           {overflow || signedIn ? (
-            <Pressable role="button" aria-expanded={open} accessibilityLabel={t("common.more")} onPress={() => setOpen(true)} style={[s.tab, focusRing]}>
+            <Pressable role="button" aria-expanded={open} accessibilityLabel={t("common.more")} onPress={() => setOpen(true)} style={[s.tab, tabRing]}>
               <View style={[s.tabDot, hiddenActive && s.tabDotActive]} />
               <Text style={[s.tabText, hiddenActive && s.tabTextActive]}>{t("common.more")}</Text>
             </Pressable>
@@ -200,6 +238,7 @@ function MobileFrame({ nav, current, onNavigate, children }: PropsWithChildren<{
                   </Pressable>
                 );
               })}
+              <View style={{ paddingHorizontal: spacing[3], paddingVertical: spacing[2] }}><ThemeSwitch /></View>
               {signedIn ? (
                 <Pressable role="button" accessibilityLabel={t("common.signOut")} onPress={() => { setOpen(false); void auth.signOut(); }} style={s.sheetItem}>
                   <Text style={s.sheetText}>{t("common.signOut")}</Text>
@@ -215,6 +254,7 @@ function MobileFrame({ nav, current, onNavigate, children }: PropsWithChildren<{
 
 /** Focused flows without sections (onboarding, access denied): the logo and sign-out, nothing else. */
 function BareFrame({ children }: PropsWithChildren): ReactNode {
+  const s = useThemedStyles(createShellStyles);
   const t = useT();
   const auth = useAuth();
   return (
@@ -239,6 +279,7 @@ function BareFrame({ children }: PropsWithChildren): ReactNode {
  * under the title when `nav` has one with two or more tabs; a screen never builds its own.
  */
 export function Screen({ title, intro, nav, current, onNavigate, children }: PropsWithChildren<{ readonly title: string; readonly intro?: string; readonly nav?: readonly NavItem[]; readonly current?: string; readonly onNavigate?: (href: string) => void }>): ReactNode {
+  const s = useThemedStyles(createShellStyles);
   const { width } = useWindowDimensions();
   const wide = width >= WIDE;
   const items = nav ?? [];

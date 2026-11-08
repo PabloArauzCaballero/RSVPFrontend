@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Pressable, Text, View } from "react-native";
-import { colors, radius, spacing } from "@rsvp/design-tokens";
+import { radius, spacing } from "@rsvp/design-tokens";
 import { Avatar } from "@rsvp/ui";
 import { buildCateringCsv, buildRsvpReportCsv, hostGuestsApi, CATERING_COLUMNS, RSVP_REPORT_COLUMNS, useGuestList, useGuestSummary, useHostRsvps, type RsvpStatus } from "@rsvp/query-hooks";
 import { saveTextFile } from "../../platform/files";
@@ -10,9 +10,10 @@ import { guestDetailPath, HOST_ROUTES, withCelebration } from "../routes";
 import { ActionButton, EmptyState, Loading, Notice, styles } from "../ui";
 import { FreshnessLine, MoreOptions, RetryNotice, StatusBadge, TextAction } from "./parts";
 
-const palette = colors.light;
+const palette = livePalette;
 import { useSingleFlightGate } from "../../platform/single-flight";
 import { lastPageOffset } from "./paging";
+import { livePalette } from "../../platform/theme";
 
 /** C24 · RSVP report (companions, diets, messages) and its safe CSV export for the venue and the caterer (REQ-F17-02/05). */
 

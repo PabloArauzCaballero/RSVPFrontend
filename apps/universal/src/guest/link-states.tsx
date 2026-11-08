@@ -1,17 +1,18 @@
 import type { PropsWithChildren, ReactNode } from "react";
 import { Platform, Text, View } from "react-native";
-import { colors, spacing, typography } from "@rsvp/design-tokens";
+import { spacing, typography } from "@rsvp/design-tokens";
 import { Illustration, type IllustrationName } from "@rsvp/ui";
 import { useT } from "../platform/providers";
 import { ActionButton } from "../host/ui";
 import { GuestFrame, type GuestFrameProps } from "./frame";
+import { livePalette } from "../platform/theme";
 
 /**
  * The gentle dead ends of the guest journey (link expired, no connection, closed answers): an illustration, what
  * happened without blaming anyone, and the one thing to do next. Shared by the invitation, the answer and the gift list.
  */
 
-const palette = colors.light;
+const palette = livePalette;
 const fontFamily = Platform.select({ web: "'Plus Jakarta Sans', 'Avenir Next', 'Segoe UI', system-ui, sans-serif", default: undefined });
 
 export function LinkState({ illustration, title, body, action, frame, children }: PropsWithChildren<{ readonly illustration: IllustrationName; readonly title: string; readonly body?: string; readonly action?: string; /** Keeps the invitation on the cover; the state title then drops to level 2. */ readonly frame?: GuestFrameProps }>): ReactNode {

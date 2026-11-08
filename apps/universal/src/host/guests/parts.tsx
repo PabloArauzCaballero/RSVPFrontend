@@ -1,15 +1,16 @@
 import { useState, type ReactNode } from "react";
 import { Platform, Pressable, ScrollView, Text, View } from "react-native";
 import { ApiError } from "@rsvp/api-client";
-import { colors, radius, spacing } from "@rsvp/design-tokens";
+import { radius, spacing } from "@rsvp/design-tokens";
 import { Chip, type ChipTone } from "@rsvp/ui";
 import { formatCelebrationDate } from "@rsvp/i18n";
 import type { ProjectionFreshness, RsvpStatus } from "@rsvp/query-hooks";
 import { useLocale, useT } from "../../platform/providers";
 import { ActionButton, ErrorNotice, Notice, styles } from "../ui";
 import { classifyFailure } from "./failure";
+import { livePalette } from "../../platform/theme";
 
-const palette = colors.light;
+const palette = livePalette;
 const MIN_TOUCH = 44;
 const fontFamily = Platform.select({ web: "'Plus Jakarta Sans', 'Avenir Next', 'Segoe UI', system-ui, sans-serif", default: undefined });
 

@@ -41,5 +41,9 @@ export const enUS = {
     ownerOnly: "Only the owner can add members.",
     validation: { nameRequired: "Enter a name for the organization.", nameTooLong: "The name can have up to 120 characters.", emailRequired: "Enter the account email.", emailInvalid: "Enter a valid email, for example name@mail.com." },
     errors: { cannotAdd: "We could not add that email. Check it is spelled correctly and that the person already has a DOne account.", notFound: "We could not find this organization. Refresh the list and try again.", conflict: "That person is already a member of this organization.", forbidden: "You do not have permission for this action in this organization." }
+  },
+  theme: {
+    title: "Appearance", label: "App theme", system: "System", light: "Light", dark: "Dark",
+    help: "\"System\" follows your device. The invitation your guests see does not change."
   }
 } as const;

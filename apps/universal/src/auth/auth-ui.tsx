@@ -1,9 +1,10 @@
 import { useState, type PropsWithChildren, type ReactNode } from "react";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions, type TextInputProps } from "react-native";
-import { brand, colors, notice, onNight, radius, spacing, typography } from "@rsvp/design-tokens";
-import { CheckMark, Illustration, Logo, type IllustrationName } from "@rsvp/ui";
+import { brand, colors, onNight, radius, spacing, typography, type ColorTheme } from "@rsvp/design-tokens";
+import { CheckMark, Illustration, Logo, useTheme, type IllustrationName } from "@rsvp/ui";
 import type { AppLocale } from "@rsvp/i18n";
 import { useLocalePreference, useT } from "../platform/providers";
+import { currentScheme } from "../platform/theme";
 
 /**
  * Building blocks of the sign-in, sign-up and recovery screens. Visual world: DOne Brand Kit v3.
@@ -11,17 +12,22 @@ import { useLocalePreference, useT } from "../platform/providers";
  * dark. Copy always arrives translated.
  */
 
-const palette = colors.light;
 const MIN_TOUCH = 44;
 const WIDE_BREAKPOINT = 900;
 const FORM_WIDTH = 400;
 const displayFamily = Platform.select({ web: "'Plus Jakarta Sans', 'Avenir Next', 'Segoe UI', system-ui, sans-serif", default: undefined });
 const textFamily = Platform.select({ web: "'Plus Jakarta Sans', 'Avenir Next', 'Segoe UI', system-ui, sans-serif", default: undefined });
 /** react-native-web understands outline styles that the native types do not declare. */
-export const authFocusRing = Platform.select({ web: { outlineColor: palette.primary, outlineWidth: 2, outlineOffset: 2 }, default: {} }) as object;
-const focusRing = authFocusRing;
+const ringFor = (color: string): object => Platform.select({ web: { outlineColor: color, outlineWidth: 2, outlineOffset: 2 }, default: {} }) as object;
+const focusRings = { light: ringFor(colors.light.primary), dark: ringFor(colors.dark.primary) } as const;
+/** Focus ring of the active scheme (blue on light, sky on dark). */
+export function useAuthFocusRing(): object {
+  return focusRings[useTheme().scheme];
+}
 
-export const authStyles = StyleSheet.create({
+/** Auth style sheet of one palette. The blue cover and panel are brand regions and stay the same in both schemes. */
+function createAuthStyles(palette: (typeof colors)[ColorTheme]) {
+  return StyleSheet.create({
   root: { flex: 1, backgroundColor: palette.canvas },
   rootWide: { flexDirection: "row" },
   brand: { flex: 1, minWidth: 0, overflow: "hidden", backgroundColor: brand.azul, padding: spacing[12], justifyContent: "space-between" },
@@ -54,8 +60,8 @@ export const authStyles = StyleSheet.create({
   linkText: { color: palette.primary, fontSize: typography.fontSize.sm, fontWeight: "600", textDecorationLine: "underline", fontFamily: textFamily },
   switchRow: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: spacing[1] },
   switchLead: { color: palette.textMuted, fontSize: typography.fontSize.sm, fontFamily: textFamily },
-  banner: { borderRadius: radius.md, padding: spacing[3], backgroundColor: notice.dangerBg, borderWidth: 1, borderColor: palette.danger },
-  bannerOk: { backgroundColor: notice.successBg, borderColor: palette.success },
+  banner: { borderRadius: radius.md, padding: spacing[3], backgroundColor: palette.dangerBg, borderWidth: 1, borderColor: palette.danger },
+  bannerOk: { backgroundColor: palette.successBg, borderColor: palette.success },
   bannerText: { color: palette.text, fontSize: typography.fontSize.sm, lineHeight: typography.lineHeight.sm, fontFamily: textFamily },
   languages: { flexDirection: "row", gap: spacing[2], alignItems: "center", flexWrap: "wrap" },
   language: { minHeight: MIN_TOUCH, minWidth: MIN_TOUCH, paddingHorizontal: spacing[3], justifyContent: "center", borderRadius: radius.md, borderWidth: 1, borderColor: palette.border },
@@ -64,9 +70,30 @@ export const authStyles = StyleSheet.create({
   roleOptionActive: { borderColor: palette.primary, borderWidth: 2, backgroundColor: palette.primaryMuted },
   roleTitle: { color: palette.text, fontSize: typography.fontSize.base, fontWeight: "700", fontFamily: textFamily },
   centered: { flex: 1, alignItems: "center", justifyContent: "center", padding: spacing[6], backgroundColor: palette.canvas, gap: spacing[4] }
+  });
+}
+
+type AuthStyles = ReturnType<typeof createAuthStyles>;
+const sheets: Readonly<Record<ColorTheme, AuthStyles>> = { light: createAuthStyles(colors.light), dark: createAuthStyles(colors.dark) };
+
+/** The auth styles for the active scheme. Call it in the component that draws. */
+export function useAuthStyles(): AuthStyles {
+  return sheets[useTheme().scheme];
+}
+
+/** The same sheet read at render time from the theme store, for screens that still import `authStyles`; new code calls `useAuthStyles()`. */
+export const authStyles: AuthStyles = Object.defineProperties({} as AuthStyles, Object.fromEntries(
+  (Object.keys(sheets.light) as (keyof AuthStyles)[]).map((key) => [key, { enumerable: true, get: () => sheets[currentScheme()][key] }])
+));
+export const authFocusRing: object = Object.defineProperties({}, {
+  outlineColor: { enumerable: true, get: () => (focusRings[currentScheme()] as Record<string, unknown>).outlineColor },
+  outlineWidth: { enumerable: true, get: () => (focusRings[currentScheme()] as Record<string, unknown>).outlineWidth },
+  outlineOffset: { enumerable: true, get: () => (focusRings[currentScheme()] as Record<string, unknown>).outlineOffset }
 });
 
 export function LanguageSwitch(): ReactNode {
+  const authStyles = useAuthStyles();
+  const focusRing = useAuthFocusRing();
   const t = useT();
   const { locale, setLocale, options } = useLocalePreference();
   return (
@@ -82,6 +109,7 @@ export function LanguageSwitch(): ReactNode {
 
 /** Electric-blue brand panel beside the form on wide screens; a blue cover above the form on narrow ones. */
 export function AuthLayout({ title, intro, illustration = "invitation", children }: PropsWithChildren<{ readonly title: string; readonly intro: string; /** Line illustration on the blue panel or cover; decorative. */ readonly illustration?: IllustrationName }>): ReactNode {
+  const authStyles = useAuthStyles();
   const t = useT();
   const { width } = useWindowDimensions();
   const wide = width >= WIDE_BREAKPOINT;
@@ -139,6 +167,8 @@ export interface AuthFieldProps extends Pick<TextInputProps, "autoComplete" | "k
 
 /** Visible label, error tied to the field, and for passwords a reveal toggle (a 44 px target, never colour alone). */
 export function AuthField({ label, value, onChange, error, hint, secret = false, editable = true, testID, ...input }: AuthFieldProps): ReactNode {
+  const authStyles = useAuthStyles();
+  const focusRing = useAuthFocusRing();
   const t = useT();
   const [revealed, setRevealed] = useState(false);
   const errorId = `${testID ?? label}-error`;
@@ -165,6 +195,8 @@ export function AuthField({ label, value, onChange, error, hint, secret = false,
 
 /** `blocked` keeps the label but refuses presses (a 429 cooldown); `busy` also swaps the label. */
 export function SubmitButton({ label, busyLabel, busy, blocked = false, onPress, testID }: { readonly label: string; readonly busyLabel: string; readonly busy: boolean; readonly blocked?: boolean; readonly onPress: () => void; readonly testID?: string }): ReactNode {
+  const authStyles = useAuthStyles();
+  const focusRing = useAuthFocusRing();
   const unavailable = busy || blocked;
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={busy ? busyLabel : label} aria-busy={busy} aria-disabled={unavailable} disabled={unavailable} onPress={onPress} testID={testID} style={[authStyles.primary, unavailable && authStyles.primaryBusy, focusRing]}>
@@ -174,11 +206,14 @@ export function SubmitButton({ label, busyLabel, busy, blocked = false, onPress,
 }
 
 export function TextLink({ label, onPress }: { readonly label: string; readonly onPress: () => void }): ReactNode {
+  const authStyles = useAuthStyles();
+  const focusRing = useAuthFocusRing();
   return <Pressable accessibilityRole="link" accessibilityLabel={label} onPress={onPress} style={[authStyles.link, focusRing]}><Text style={authStyles.linkText}>{label}</Text></Pressable>;
 }
 
 /** Errors say what happened and how to go on; success draws the check of the D before the words. */
 export function Banner({ kind, children }: PropsWithChildren<{ readonly kind: "error" | "success" }>): ReactNode {
+  const authStyles = useAuthStyles();
   return (
     <View role={kind === "error" ? "alert" : "status"} style={[authStyles.banner, kind === "success" && authStyles.bannerOk, kind === "success" && { flexDirection: "row", alignItems: "center", gap: spacing[3] }]}>
       {kind === "success" ? <CheckMark size={28} tone="success" /> : null}

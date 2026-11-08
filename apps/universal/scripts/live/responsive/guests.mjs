@@ -2,6 +2,7 @@
 // real session through the login screen against the REAL gateway, Chrome real.
 //   WORLD=world.json APP=http://localhost:8100 API=http://localhost:28000 CHROMIUM_PATH=".../Google Chrome" \
 //     [WIDTHS=360,768] [LOCALES=en-US] [SCHEMES=dark] [ROUTES=/inicio,/invitados] [OUT=file.json] node apps/universal/scripts/live/responsive/guests.mjs
+import { followsScheme, sampleSurface } from "./scheme.mjs";
 import { writeFileSync } from "node:fs";
 import AxeBuilder from "@axe-core/playwright";
 import { APP, C, G, assert, host, http, isCall, launch, makeGuest, sleep, tid, track, waitGuests, world } from "../lib.mjs";
@@ -84,11 +85,8 @@ async function routeChecks(width, locale, scheme) {
         .filter((item) => item.h < 44));
       record(width, locale, scheme, R, "(e) objetivos tactiles >=44px", small.length === 0, small.slice(0, 4).map((s) => `${s.label}=${s.h}px`).join(" ; "));
     }
-    if (scheme === "dark") {
-      // Informative: do these screens follow the OS scheme? (they use a fixed light palette by design)
-      const m = body.bg.match(/\d+/g)?.map(Number) ?? [255, 255, 255];
-      record(width, locale, scheme, R, "(f) fondo en dark (informativo: paleta clara fija si es claro)", true, `bg=${body.bg} ${m[0] + m[1] + m[2] > 600 ? "TEMA CLARO FIJO (no sigue el esquema)" : "oscuro"}`);
-    }
+    const surface = followsScheme(scheme, await sampleSurface(page));
+    record(width, locale, scheme, R, "(f) el fondo efectivo sigue el esquema", surface.ok, surface.evidence);
   }
   await context.close();
 }

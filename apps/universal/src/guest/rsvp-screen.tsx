@@ -4,7 +4,7 @@ import { router } from "expo-router";
 import { ApiError } from "@rsvp/api-client";
 import { nativeMagicLink, personalLinkOrigin, personalLinkUrl } from "@rsvp/auth";
 import { readContent, type HostContact, type PublicCelebrationView } from "@rsvp/celebration-theme";
-import { colors, spacing } from "@rsvp/design-tokens";
+import { spacing } from "@rsvp/design-tokens";
 import { Celebrate, Checkbox, CheckMark, Chip } from "@rsvp/ui";
 import { rsvpSchema, unregisteredRsvpSchema } from "@rsvp/forms";
 import { formatCelebrationDate, type AppLocale, type Translate } from "@rsvp/i18n";
@@ -19,6 +19,7 @@ import { ActionButton, Field, Notice, styles } from "../host/ui";
 import { useApiClient, useLocale, useT } from "../platform/providers";
 import { useSingleFlightGate } from "../platform/single-flight";
 import { copyText } from "../platform/clipboard";
+import { livePalette } from "../platform/theme";
 
 /**
  * The guest's whole journey in one place (F21-04, mode Persuade): the invitation on the cover, the answer under it
@@ -26,7 +27,7 @@ import { copyText } from "../platform/clipboard";
  * Same contract calls as the web page; the personal token lives only in component memory and the Authorization header.
  */
 
-const palette = colors.light;
+const palette = livePalette;
 /** From here a wait is told in minutes. */
 const LONG_WAIT_SECONDS = 90;
 interface Draft { status: Attendance; requestedCompanions: string; dietaryNotes: string; message: string }

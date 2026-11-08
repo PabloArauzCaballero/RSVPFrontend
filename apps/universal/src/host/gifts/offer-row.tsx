@@ -1,12 +1,13 @@
 import type { PropsWithChildren, ReactNode } from "react";
 import { View } from "react-native";
-import { colors, radius, spacing } from "@rsvp/design-tokens";
+import { radius, spacing } from "@rsvp/design-tokens";
+import { livePalette } from "../../platform/theme";
 
 /**
  * One surface holding a list of rows divided by hairlines: the shape of "a list of things" in the gifts area.
  * It replaces a stack of identical cards; the row owns its own padding and the list owns the border and the corners.
  */
-const palette = colors.light;
+const palette = livePalette;
 
 export function RowList({ children }: PropsWithChildren): ReactNode {
   return <View style={{ backgroundColor: palette.surface, borderColor: palette.border, borderWidth: 1, borderRadius: radius.lg, overflow: "hidden" }}>{children}</View>;

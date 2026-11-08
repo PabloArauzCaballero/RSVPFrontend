@@ -30,7 +30,9 @@ export default defineConfig({
   use: { launchOptions: { ...(executablePath ? { executablePath } : {}) } },
   projects: [
     { name: "authed", testMatch: /authed\.visual\.spec\.ts/, use: { baseURL: `http://localhost:${AUTHED_PORT}` } },
-    { name: "anon", testMatch: /anon\.visual\.spec\.ts/, use: { baseURL: `http://localhost:${ANON_PORT}` } }
+    { name: "anon", testMatch: /anon\.visual\.spec\.ts/, use: { baseURL: `http://localhost:${ANON_PORT}` } },
+    { name: "authed-dark", testMatch: /authed\.dark\.visual\.spec\.ts/, use: { baseURL: `http://localhost:${AUTHED_PORT}` } },
+    { name: "anon-dark", testMatch: /anon\.dark\.visual\.spec\.ts/, use: { baseURL: `http://localhost:${ANON_PORT}` } }
   ],
   webServer: [
     { command: "npx vite-node scripts/visual-mock.ts", url: `http://localhost:${MOCK_PORT}/celebrations`, reuseExistingServer: true, timeout: 60_000, env: { MOCK_PORT: String(MOCK_PORT) }, ignoreHTTPSErrors: true },

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Text, View } from "react-native";
-import { colors, spacing } from "@rsvp/design-tokens";
+import { spacing } from "@rsvp/design-tokens";
 import { Chip } from "@rsvp/ui";
 import { formatCelebrationDate } from "@rsvp/i18n";
 import { useInfiniteLeads, type Lead, type Provider } from "@rsvp/query-hooks";
@@ -8,6 +8,7 @@ import { useApiClient, useLocale, useT } from "../platform/providers";
 import { ActionButton, EmptyState, Loading, Notice, PageIntro, styles } from "../host/ui";
 import { PortalErrorNotice } from "./errors";
 import { PortalScreen } from "./frame";
+import { livePalette } from "../platform/theme";
 
 function LeadRow({ lead, timeZone }: { readonly lead: Lead; readonly timeZone: string }): ReactNode {
   const t = useT();
@@ -15,7 +16,7 @@ function LeadRow({ lead, timeZone }: { readonly lead: Lead; readonly timeZone: s
   const context = lead.context ?? {};
   const surface = typeof context["surface"] === "string" ? context["surface"] : undefined;
   return (
-    <View style={{ gap: spacing[1], paddingVertical: spacing[3], borderTopWidth: 1, borderTopColor: colors.light.border }} testID={`lead-${lead.id}`}>
+    <View style={{ gap: spacing[1], paddingVertical: spacing[3], borderTopWidth: 1, borderTopColor: livePalette.border }} testID={`lead-${lead.id}`}>
       <View style={[styles.row, { justifyContent: "space-between", flexWrap: "nowrap" }]}><Text style={[styles.label, { flex: 1 }]}>{t(`portal.leads.kind.${lead.kind}`)}</Text><Chip tone={lead.valid ? "yes" : "no"}>{lead.valid ? t("portal.leads.valid") : t(`portal.leads.invalid.${lead.invalidReason ?? "bot"}`)}</Chip></View>
       <Text style={styles.muted}>{formatCelebrationDate(lead.occurredAt, { locale, timeZone })}</Text>
       {lead.destination ? <Text style={styles.body}>{t("portal.leads.destination", { destination: lead.destination })}</Text> : null}

@@ -3,7 +3,7 @@ import { ActivityIndicator, Linking, Pressable, Text, View } from "react-native"
 import { router } from "expo-router";
 import { ApiError } from "@rsvp/api-client";
 import type { PublicCelebrationView } from "@rsvp/celebration-theme";
-import { colors, spacing } from "@rsvp/design-tokens";
+import { spacing } from "@rsvp/design-tokens";
 import { formatMinor } from "@rsvp/i18n";
 import { Chip, EmptyState, SuccessNote } from "@rsvp/ui";
 import { catalogedFirst, guestVisible, isGiftTaken, newIdempotencyKey, useCelebrationBySlug, useGiftList, useReserveGiftItem, type GiftItem, type GiftReservation } from "@rsvp/query-hooks";
@@ -13,6 +13,7 @@ import { ActionButton, Field, Notice, styles } from "../host/ui";
 import { MESSAGE_MAX, NAME_MAX, reserveFailureKind, reserveFieldErrors, isRetryable } from "./reserve-rules";
 import { partnerRedirectUrl } from "../platform/partner-link";
 import { useApiClient, useLocale, useT } from "../platform/providers";
+import { livePalette } from "../platform/theme";
 
 /**
  * F21-05 · The guest's gift list inside the app (mode Persuade, the optional last step of the journey). No account: the
@@ -21,7 +22,7 @@ import { useApiClient, useLocale, useT } from "../platform/providers";
  */
 type Outcome = { readonly kind: "reserved"; readonly item: GiftItem; readonly status: GiftReservation["status"] } | { readonly kind: "taken"; readonly item: GiftItem };
 
-const palette = colors.light;
+const palette = livePalette;
 /** From here a wait is told in minutes (anonymous requests can be held for ~50 minutes). */
 const LONG_WAIT_SECONDS = 90;
 

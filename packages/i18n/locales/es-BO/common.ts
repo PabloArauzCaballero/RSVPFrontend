@@ -41,5 +41,9 @@ export const esBO = {
     ownerOnly: "Solo el propietario puede agregar miembros.",
     validation: { nameRequired: "Escribe un nombre para la organización.", nameTooLong: "El nombre admite hasta 120 caracteres.", emailRequired: "Escribe el correo de la cuenta.", emailInvalid: "Escribe un correo válido, por ejemplo nombre@correo.com." },
     errors: { cannotAdd: "No pudimos agregar ese correo. Revisa que esté bien escrito y que la persona ya tenga una cuenta en DOne.", notFound: "No encontramos esta organización. Actualiza la lista e inténtalo de nuevo.", conflict: "Esa persona ya es miembro de esta organización.", forbidden: "No tienes permiso para esta acción en esta organización." }
+  },
+  theme: {
+    title: "Apariencia", label: "Tema de la app", system: "Sistema", light: "Claro", dark: "Oscuro",
+    help: "«Sistema» sigue el modo de tu dispositivo. La invitación que ven tus invitados no cambia."
   }
 } as const;

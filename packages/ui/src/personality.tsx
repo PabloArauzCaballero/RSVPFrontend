@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Platform, Text, View } from 'react-native';
-import { brand, notice, radius, spacing, typography } from '@rsvp/design-tokens';
-import { CheckMark } from './check-mark';
+import { brand, radius, spacing, typography } from '@rsvp/design-tokens';
+import { CheckMark } from './scheme-check';
 import { Illustration } from './illustration';
 import type { IllustrationName, IllustrationTone } from './illustrations';
 import { useTheme } from './theme';
@@ -28,11 +28,11 @@ export interface EmptyStateProps {
 }
 
 /** An empty screen that answers three questions: what is this, why does it matter, what is the first tap. Not a card; it sits on the page. */
-export function EmptyState({ illustration, title, body, action, tone = 'brand' }: EmptyStateProps) {
-  const { palette } = useTheme();
+export function EmptyState({ illustration, title, body, action, tone }: EmptyStateProps) {
+  const { palette, scheme } = useTheme();
   return (
     <View style={{ alignItems: 'center', gap: spacing[3], paddingVertical: spacing[8], paddingHorizontal: spacing[4], maxWidth: READABLE, alignSelf: 'center', width: '100%' }}>
-      <Illustration name={illustration} tone={tone} size="lg" />
+      <Illustration name={illustration} tone={tone ?? (scheme === 'dark' ? 'onDark' : 'brand')} size="lg" />
       <Text accessibilityRole="header" aria-level={2} style={{ color: palette.text, fontSize: typography.fontSize.xl, lineHeight: typography.lineHeight.xl, fontWeight: '800', letterSpacing: -0.5, textAlign: 'center', fontFamily }}>{title}</Text>
       <Text style={{ color: palette.textMuted, fontSize: typography.fontSize.base, lineHeight: typography.lineHeight.base, textAlign: 'center', fontFamily }}>{body}</Text>
       {action ? <View style={{ alignSelf: 'stretch', alignItems: 'center', marginTop: spacing[2] }}>{action}</View> : null}
@@ -44,7 +44,7 @@ export function EmptyState({ illustration, title, body, action, tone = 'brand' }
 export function SuccessNote({ message, detail, play = true }: { message: string; detail?: string; play?: boolean }) {
   const { palette } = useTheme();
   return (
-    <View role="status" style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[3], padding: spacing[4], borderRadius: radius.md, backgroundColor: notice.successBg, minHeight: 44 }}>
+    <View role="status" style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[3], padding: spacing[4], borderRadius: radius.md, backgroundColor: palette.successBg, minHeight: 44 }}>
       <CheckMark size={28} tone="success" play={play} />
       <View style={{ flex: 1, gap: 2 }}>
         <Text style={{ color: palette.text, fontSize: typography.fontSize.base, fontWeight: '700', fontFamily }}>{message}</Text>

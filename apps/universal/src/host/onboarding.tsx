@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Text, View, useWindowDimensions } from "react-native";
 import { themeFromTemplate } from "@rsvp/celebration-theme";
-import { brand, radius, spacing } from "@rsvp/design-tokens";
+import { radius, spacing } from "@rsvp/design-tokens";
 import { useCelebration, useCreateCelebration, useEventTypes, type Celebration, type TranslatedEventType } from "@rsvp/query-hooks";
 import { useApiClient, useClaims, useLocale, useT } from "../platform/providers";
 import { canUseHostWorkspace } from "./gate";
@@ -14,6 +14,7 @@ import { CenteredActions, LoadFailed } from "./load-failed";
 import { previewView, type PreviewSource } from "./preview-model";
 import { PreviewFrame } from "./preview-stage";
 import { ActionButton, Celebrate, ChoiceGroup, Field, Illustration, Loading, Notice, Screen, styles } from "./ui";
+import { livePalette as palette } from "../platform/theme";
 
 /**
  * Guided sign-up (docs/design/upgrade-brief.md §2): what you celebrate, who and when, name and link, in three short
@@ -70,7 +71,7 @@ function StepProgress({ step }: { readonly step: number }): ReactNode {
   return (
     <View role="progressbar" aria-label={t("host.onboarding.progress")} aria-valuemin={1} aria-valuemax={LAST} aria-valuenow={step} aria-valuetext={`${t("host.onboarding.step", { step })}: ${name}`} style={{ gap: spacing[2] }}>
       <View style={{ flexDirection: "row", gap: spacing[1] }}>
-        {STEPS.map((key, index) => <View key={key} style={{ flex: 1, height: 6, borderRadius: radius.full, backgroundColor: index < step ? brand.azul : brand.bruma }} />)}
+        {STEPS.map((key, index) => <View key={key} style={{ flex: 1, height: 6, borderRadius: radius.full, backgroundColor: index < step ? palette.primary : palette.primaryMuted }} />)}
       </View>
       <Text style={styles.label}>{`${t("host.onboarding.step", { step })} · ${name}`}</Text>
     </View>

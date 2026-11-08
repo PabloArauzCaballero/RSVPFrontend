@@ -14,7 +14,7 @@ export function createStyles(palette: Palette) {
     help: { color: palette.danger, fontSize: typography.fontSize.sm, marginTop: spacing[1] },
     button: { minHeight: 52, minWidth: 44, alignItems: 'center', justifyContent: 'center', borderRadius: radius.md, paddingHorizontal: spacing[5], backgroundColor: palette.primary },
     buttonSecondary: { backgroundColor: palette.primaryMuted },
-    buttonGhost: { backgroundColor: palette.surface, borderWidth: 1.5, borderColor: palette.border },
+    buttonGhost: { backgroundColor: palette.surface, borderWidth: 1.5, borderColor: palette.fieldBorder },
     buttonDanger: { backgroundColor: palette.danger },
     buttonDisabled: { opacity: 0.55 },
     buttonText: { color: palette.onPrimary, fontSize: typography.fontSize.base, fontWeight: '700' },
@@ -23,7 +23,7 @@ export function createStyles(palette: Palette) {
     input: { minHeight: 52, borderWidth: 1.5, borderColor: palette.fieldBorder, borderRadius: radius.md, paddingHorizontal: spacing[4], color: palette.text, backgroundColor: palette.surface, fontSize: typography.fontSize.base },
     inputError: { borderColor: palette.danger, borderWidth: 2 },
     card: { backgroundColor: palette.surface, borderColor: palette.border, borderWidth: 1, borderRadius: radius.lg, padding: spacing[5], gap: spacing[2] },
-    overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(10,16,51,0.6)' },
+    overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: palette.scrim },
     sheet: { backgroundColor: palette.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: spacing[5], gap: spacing[3], width: '100%', maxWidth: 640, alignSelf: 'center' },
     modal: { margin: spacing[4], marginTop: 'auto', marginBottom: 'auto', backgroundColor: palette.surface, borderRadius: radius.lg, padding: spacing[5], gap: spacing[3], maxWidth: 520, alignSelf: 'center', width: '90%' },
     toast: { backgroundColor: palette.text, borderRadius: radius.md, padding: spacing[3], minHeight: 44, justifyContent: 'center' },
@@ -65,4 +65,22 @@ export function useTheme(): ThemeValue {
   const { scheme, strings } = useContext(ThemeContext);
   const resolved: ColorScheme = scheme ?? (system === 'dark' ? 'dark' : 'light');
   return useMemo(() => build(resolved, strings), [resolved, strings]);
+}
+
+/** The active palette: the shortest way for a component to read a colour token. */
+export function useColors(): Palette {
+  return useTheme().palette;
+}
+
+const sheets = new WeakMap<object, Partial<Record<ColorScheme, unknown>>>();
+
+/**
+ * Style sheet derived from the active palette, built once per scheme and shared by every component that uses the same
+ * `factory` (declare it at module level). Never create a `StyleSheet` at module level from a palette: it would freeze one scheme.
+ */
+export function useThemedStyles<TStyles>(factory: (palette: Palette, scheme: ColorScheme) => TStyles): TStyles {
+  const { scheme, palette } = useTheme();
+  const perScheme = sheets.get(factory) ?? {};
+  sheets.set(factory, perScheme);
+  return (perScheme[scheme] ??= factory(palette, scheme)) as TStyles;
 }

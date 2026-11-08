@@ -1,7 +1,7 @@
 import type { PropsWithChildren, ReactNode } from "react";
 import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
-import { brand, colors, onNight, radius, spacing } from "@rsvp/design-tokens";
-import { Logo } from "@rsvp/ui";
+import { brand, onNight, radius, spacing } from "@rsvp/design-tokens";
+import { Logo, useThemedStyles, type Palette } from "@rsvp/ui";
 import { LanguageSwitch } from "../auth/auth-ui";
 
 /**
@@ -10,11 +10,11 @@ import { LanguageSwitch } from "../auth/auth-ui";
  * link on a phone, so the column is narrow and centred on wide screens.
  */
 
-const palette = colors.light;
 const fontFamily = Platform.select({ web: "'Plus Jakarta Sans', 'Avenir Next', 'Segoe UI', system-ui, sans-serif", default: undefined });
 const COLUMN = 560;
 
-const s = StyleSheet.create({
+/** The blue cover is a brand region and stays the same in both schemes; the sheet that rises over it follows the theme. */
+const createFrameStyles = (palette: Palette) => StyleSheet.create({
   page: { flexGrow: 1, backgroundColor: brand.azul },
   cover: { backgroundColor: brand.azul, overflow: "hidden", paddingTop: spacing[6], paddingBottom: spacing[16], paddingHorizontal: spacing[5] },
   coverInner: { width: "100%", maxWidth: COLUMN, alignSelf: "center", gap: spacing[6] },
@@ -28,6 +28,7 @@ const s = StyleSheet.create({
 export interface GuestFrameProps { readonly heading?: string; readonly lead?: string; /** Date and place, one line. */ readonly meta?: string }
 
 export function GuestFrame({ heading, lead, meta, children }: PropsWithChildren<GuestFrameProps>): ReactNode {
+  const s = useThemedStyles(createFrameStyles);
   return (
     <ScrollView role="main" tabIndex={0} style={s.page} contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
       <View style={s.cover}>

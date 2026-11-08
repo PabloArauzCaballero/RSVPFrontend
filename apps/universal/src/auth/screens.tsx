@@ -1,13 +1,14 @@
 import { useState, type ReactNode } from "react";
 import { Pressable, Text, View } from "react-native";
 import { loginSchema, recoverySchema, registerSchema, validate, type Role } from "@rsvp/auth";
-import { colors, spacing } from "@rsvp/design-tokens";
+import { spacing } from "@rsvp/design-tokens";
 import { CheckMark } from "@rsvp/ui";
 import { useT } from "../platform/providers";
 import { useAuth } from "./auth-context";
 import { AuthField, AuthLayout, Banner, SubmitButton, TextLink, authFocusRing, authStyles } from "./auth-ui";
 import { AUTH_ROUTES, loginHref } from "./routes";
 import { IDLE, useAuthSubmit, type AuthSubmit } from "./use-auth-submit";
+import { livePalette } from "../platform/theme";
 
 /**
  * Sign-in, sign-up and recovery against the real Identity service (REQ-F05-01). Navigation after
@@ -19,7 +20,7 @@ type Navigate = (href: string) => void;
 export interface AuthScreenProps { readonly onNavigate: Navigate; readonly returnTo?: string | null }
 type FieldErrors = Readonly<Record<string, string>>;
 type Translator = ReturnType<typeof useT>;
-const palette = colors.light;
+const palette = livePalette;
 
 /** Translates validation keys (`auth.validation.<key>`). Unknown server-side keys fall back to the generic message. */
 function fieldMessages(t: Translator, errors: FieldErrors): FieldErrors {

@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
 import { Platform, Text, View } from "react-native";
-import { colors, spacing } from "@rsvp/design-tokens";
+import { spacing } from "@rsvp/design-tokens";
 import { CheckMark } from "@rsvp/ui";
 import { useT } from "../platform/providers";
 import { CelebrationErrorNotice } from "./celebration-errors";
 import { ActionButton, Notice, styles } from "./ui";
+import { livePalette } from "../platform/theme";
 
 /**
  * The save bar of the editing screens. It stays at the bottom of the page and always says where the work stands:
@@ -12,7 +13,7 @@ import { ActionButton, Notice, styles } from "./ui";
  */
 
 const STICKY = Platform.select({ web: { position: "sticky", bottom: 0 }, default: {} }) as object;
-const palette = colors.light;
+const palette = livePalette;
 
 /** A bar pinned to the bottom of the page (web) that keeps the action of the screen within reach. */
 export function ActionBar({ children }: { readonly children: ReactNode }): ReactNode {

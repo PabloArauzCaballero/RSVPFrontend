@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
-import { colors, spacing } from "@rsvp/design-tokens";
+import { spacing } from "@rsvp/design-tokens";
 import { formatMinor } from "@rsvp/i18n";
 import { Chip } from "@rsvp/ui";
 import { useCreateOwnListing, useOwnListings, usePublishListing, type CreateListingInput, type OwnListing, type Provider } from "@rsvp/query-hooks";
@@ -10,8 +10,9 @@ import { PortalErrorNotice as ErrorNotice } from "./errors";
 import { parseMinor } from "../host/gifts/money";
 import { PortalScreen, type PortalRoute } from "./frame";
 import { useSingleMutation } from "../platform/single-flight";
+import { livePalette } from "../platform/theme";
 
-const palette = colors.light;
+const palette = livePalette;
 const CATEGORIES = ["VENUE", "CATERING", "PHOTOGRAPHY", "MUSIC", "DECORATION", "MAKEUP", "TRANSPORT", "INVITATIONS", "WEDDING_PLANNER", "ACCOMMODATION", "HONEYMOON"] as const;
 const MAX_TITLE = 120;
 const HTTPS = /^https:\/\/[^\s]+$/i;

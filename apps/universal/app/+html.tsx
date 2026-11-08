@@ -1,5 +1,6 @@
 import { ScrollViewStyleReset } from 'expo-router/html';
 import type { PropsWithChildren } from 'react';
+import { themeBootCss, themeBootScript } from '../src/platform/theme-boot';
 
 /** Web document shell: brand font (Plus Jakarta Sans, one family) with system fallbacks. */
 export default function Root({ children }: PropsWithChildren) {
@@ -13,7 +14,9 @@ export default function Root({ children }: PropsWithChildren) {
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" />
         <ScrollViewStyleReset />
-        <style dangerouslySetInnerHTML={{ __html: 'body{background:#F6F7FB;color:#0A1033;font-family:"Plus Jakarta Sans","Avenir Next","Segoe UI",system-ui,sans-serif}::selection{background:#8FA6FF;color:#0A1033}' }} />
+        <meta name="color-scheme" content="light dark" />
+        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+        <style dangerouslySetInnerHTML={{ __html: themeBootCss }} />
       </head>
       <body>{children}</body>
     </html>

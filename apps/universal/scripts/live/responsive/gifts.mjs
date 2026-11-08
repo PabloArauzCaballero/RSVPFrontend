@@ -3,8 +3,9 @@
 // Env: WIDTHS=360,768,1280  LANGS=es-BO,en-US  SCHEMES=light,dark  RESULTS=out.json  GREP=text
 // pages: every route of the area x width x language x scheme, signed in through the login screen (host) and with the link credential (guest):
 //   (a) no pageerror / console.error (the anonymous 401 of the session refresh is excluded) (b) no horizontal scroll (c) no raw i18n keys, no Spanish UI literals in en-US
-//   (d) axe WCAG 2.1 A/AA without serious/critical (e) touch targets >= 44 px high at 360 (f) dark: background probe (host fixed light, guest reported).
+//   (d) axe WCAG 2.1 A/AA without serious/critical (e) touch targets >= 44 px high at 360 (f) the effective background follows the colour scheme (asserted for host and guest).
 // flows: en-US, valid end-to-end flows driven by testID with a direct GET after each one, plus one network-down flow.
+import { followsScheme, sampleSurface } from "./scheme.mjs";
 import { readFileSync, writeFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
@@ -130,6 +131,7 @@ async function probe(page) {
 
 async function scan(page, errors, label, { lang, width, scheme, ignoreResourceErrors = false }) {
   const p = await probe(page);
+  const follow = followsScheme(scheme, await sampleSurface(page));
   const axe = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
   const bad = axe.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
   const shownErrors = ignoreResourceErrors ? errors.filter((e) => !/Failed to load resource/.test(e)) : errors;
@@ -142,7 +144,9 @@ async function scan(page, errors, label, { lang, width, scheme, ignoreResourceEr
     noSpanishInEn: [spanish.length === 0, spanish.join(", ")],
     axe: [bad.length === 0, bad.map((v) => `${v.id}(${v.nodes.length}) ${v.nodes[0]?.target?.join(" ")} :: ${(v.nodes[0]?.failureSummary ?? "").split("\n")[1] ?? ""}`).join("; ")],
     touch44: width === 360 ? [p.small.length === 0, p.small.slice(0, 6).join(", ")] : [true, "n/a (>360)"],
-    notBlank: [p.text.trim().length > 30, "blank page"]
+    notBlank: [p.text.trim().length > 30, "blank page"],
+    // The effective background follows the scheme (dark under `dark`, light under `light`); axe above covers the contrast in that scheme.
+    theme: [follow.ok, follow.evidence]
   };
   const fails = Object.entries(checks).filter(([, [ok]]) => !ok);
   rows.push({ label, width, lang, scheme, bg: p.bg, lum: Number(p.lum.toFixed(2)), status: fails.length ? "FAIL" : "PASS", fails: fails.map(([k, [, detail]]) => `${k}: ${detail}`) });

@@ -8,9 +8,10 @@ import { asText } from "./content-draft";
 import { editorPath, HOST_ROUTES, hostNav, withCelebration } from "./routes";
 import { CelebrationErrorNotice } from "./celebration-errors";
 import { formatDate } from "@rsvp/celebration-theme";
-import { colors, spacing } from "@rsvp/design-tokens";
+import { spacing } from "@rsvp/design-tokens";
 import { RowList } from "./gifts/offer-row";
 import { ActionButton, EmptyState, Loading, Notice, Screen, styles } from "./ui";
+import { livePalette } from "../platform/theme";
 
 /** C2 · Choose a celebration or create a new one. */
 export function CelebrationsScreen({ onNavigate }: { readonly onNavigate: (href: string) => void }): ReactNode {
@@ -36,7 +37,7 @@ export function CelebrationsScreen({ onNavigate }: { readonly onNavigate: (href:
             const eventDate = asText(celebration.content["eventDate"]);
             return (
               <Pressable key={celebration.id} accessibilityRole="link" testID={`celebration-${celebration.id}`} accessibilityLabel={t("host.picker.open", { title })} onPress={() => onNavigate(withCelebration(editorPath("general"), celebration.id))}
-                style={{ flexDirection: "row", alignItems: "center", gap: spacing[4], minHeight: 72, paddingVertical: spacing[3], paddingHorizontal: spacing[4], borderTopWidth: index === 0 ? 0 : 1, borderTopColor: colors.light.border }}>
+                style={{ flexDirection: "row", alignItems: "center", gap: spacing[4], minHeight: 72, paddingVertical: spacing[3], paddingHorizontal: spacing[4], borderTopWidth: index === 0 ? 0 : 1, borderTopColor: livePalette.border }}>
                 <Avatar name={title} size={48} />
                 <View style={{ flex: 1, gap: 2 }}>
                   <Text style={styles.subtitle}>{title}</Text>

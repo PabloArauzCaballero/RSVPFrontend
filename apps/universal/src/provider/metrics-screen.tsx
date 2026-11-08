@@ -1,14 +1,15 @@
 import { useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
-import { colors, spacing } from "@rsvp/design-tokens";
+import { spacing } from "@rsvp/design-tokens";
 import { formatNumber } from "@rsvp/i18n";
 import { useMetrics, type MetricTotals, type Provider } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../platform/providers";
 import { ActionButton, ChoiceGroup, EmptyState, Field, Loading, Notice, PageIntro, styles } from "../host/ui";
 import { PortalErrorNotice as ErrorNotice } from "./errors";
 import { PortalScreen } from "./frame";
+import { livePalette } from "../platform/theme";
 
-const palette = colors.light;
+const palette = livePalette;
 const DAY_MS = 86_400_000;
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 

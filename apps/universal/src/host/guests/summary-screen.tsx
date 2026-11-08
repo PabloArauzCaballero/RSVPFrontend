@@ -1,14 +1,15 @@
 import type { ReactNode } from "react";
 import { Text, View } from "react-native";
-import { brand, colors, radius, spacing } from "@rsvp/design-tokens";
+import { brand, radius, spacing } from "@rsvp/design-tokens";
 import { countdownTo, useGuestSummary, useHostReservations, usePublishCheck, type Celebration } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
 import { ActionButton, Celebrate, CheckMark, EmptyState, Loading, styles } from "../ui";
 import { FreshnessLine, RetryNotice, TextAction } from "./parts";
+import { livePalette } from "../../platform/theme";
 
-const palette = colors.light;
+const palette = livePalette;
 
 /** What the host should do next, as one value. The first rule that applies wins; the order is the order of the brief. */
 export type NextStep =
@@ -58,9 +59,9 @@ function LegendItem({ testID, label, value, swatch }: { readonly testID: string;
 function ResponseBar({ confirmed, declined, total }: { readonly confirmed: number; readonly declined: number; readonly total: number }): ReactNode {
   const share = (n: number): `${number}%` => `${total ? (n / total) * 100 : 0}%`;
   return (
-    <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ height: 14, borderRadius: radius.full, backgroundColor: brand.bruma, overflow: "hidden", flexDirection: "row" }}>
-      <View style={{ width: share(confirmed), backgroundColor: brand.azul }} />
-      <View style={{ width: share(declined), backgroundColor: brand.noche }} />
+    <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ height: 14, borderRadius: radius.full, backgroundColor: palette.primaryMuted, overflow: "hidden", flexDirection: "row" }}>
+      <View style={{ width: share(confirmed), backgroundColor: palette.primary }} />
+      <View style={{ width: share(declined), backgroundColor: palette.text }} />
     </View>
   );
 }
@@ -135,9 +136,9 @@ function SummaryBody({ celebration, onNavigate }: { readonly celebration: Celebr
           <View style={{ gap: spacing[3] }}>
             <ResponseBar confirmed={data.confirmed} declined={data.declined} total={data.total} />
             <View style={{ flexDirection: "row", flexWrap: "wrap", columnGap: spacing[6], rowGap: spacing[2] }}>
-              <LegendItem testID="count-confirmed" label={t("guests.summary.confirmed")} value={data.confirmed} swatch={brand.azul} />
+              <LegendItem testID="count-confirmed" label={t("guests.summary.confirmed")} value={data.confirmed} swatch={palette.primary} />
               <LegendItem testID="count-pending" label={t("guests.summary.pending")} value={data.pending} swatch={brand.niebla} />
-              <LegendItem testID="count-declined" label={t("guests.summary.declined")} value={data.declined} swatch={brand.noche} />
+              <LegendItem testID="count-declined" label={t("guests.summary.declined")} value={data.declined} swatch={palette.text} />
               <LegendItem testID="count-companions" label={t("guests.summary.companions")} value={data.companions} swatch={brand.ambar} />
               <LegendItem testID="count-total" label={t("guests.summary.total")} value={data.total} swatch={palette.border} />
             </View>

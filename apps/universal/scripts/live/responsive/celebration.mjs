@@ -4,6 +4,7 @@
 // (f) whether the theme answers to the colour scheme. Then (g) en-US end-to-end flows driven by testID and verified with a GET.
 //   WORLD=w.json APP=http://localhost:8200 API=http://localhost:28000 CHROMIUM_PATH=... node apps/universal/scripts/live/responsive/celebration.mjs
 //   Optional: WIDTHS=360,768 LANGS=en-US SCHEMES=dark ROUTES=publicar,modos FLOWS=0|1 OUT=file.json
+import { followsScheme, sampleSurface } from "./scheme.mjs";
 import { readFileSync, writeFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
@@ -121,7 +122,7 @@ for (const width of WIDTHS) for (const lang of LANGS) for (const scheme of SCHEM
     // (e)
     if (width === 360) { const small = await page.evaluate(SMALL_TARGETS); record(cell, "e-touch-44", small.length === 0, small.slice(0, 5).join(", ")); }
     // (f)
-    if (route === "/modos") themeProbe[`${lang}|${scheme}|${width}`] = await page.evaluate(() => getComputedStyle(document.body).backgroundColor + " / " + getComputedStyle(document.documentElement).backgroundColor);
+    { const surface = await sampleSurface(page); const verdict = followsScheme(scheme, surface); record(cell, "f-theme", verdict.ok, verdict.evidence); if (route === "/modos") themeProbe[`${lang}|${scheme}|${width}`] = verdict.evidence; }
   }
   await context.close();
 }

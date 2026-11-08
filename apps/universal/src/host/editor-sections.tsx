@@ -1,12 +1,13 @@
 import type { ReactNode } from "react";
 import { Platform, Pressable, Text, View } from "react-native";
 import type { TranslatedEventType } from "@rsvp/query-hooks";
-import { brand, colors, radius, spacing } from "@rsvp/design-tokens";
+import { brand, radius, spacing } from "@rsvp/design-tokens";
 import { CheckMark } from "@rsvp/ui";
 import { useT } from "../platform/providers";
 import { asRecord, asRecords, asText, type ScheduleDraft, type WallClock } from "./content-draft";
 import { EDITOR_SECTIONS, editorSectionLabel, type EditorSection } from "./routes";
 import { styles } from "./ui";
+import { livePalette } from "../platform/theme";
 
 /**
  * The parts of the invitation as one list with their progress ("4 of 6 parts ready"). It replaces the second row of
@@ -18,7 +19,7 @@ export type SectionState = "ready" | "missing" | "optional";
 const MARKER = 24;
 const TICK = 14;
 const HOST_PREFIX = "hosts.";
-const palette = colors.light;
+const palette = livePalette;
 const focusRing = Platform.select({ web: { outlineColor: brand.cielo, outlineWidth: 2, outlineOffset: -2 }, default: {} }) as object;
 
 const filled = (value: unknown): boolean => asText(value).trim().length > 0;
@@ -66,7 +67,7 @@ export function EditorProgress({ done, total }: { readonly done: number; readonl
   return (
     <View role="progressbar" aria-label={t("host.editor.list")} aria-valuemin={0} aria-valuemax={total} aria-valuenow={done} aria-valuetext={t("host.editor.progress", { done, total })} style={{ gap: spacing[2] }}>
       <View style={{ flexDirection: "row", gap: spacing[1] }}>
-        {EDITOR_SECTIONS.map((section, index) => <View key={section} style={{ flex: 1, height: 6, borderRadius: radius.full, backgroundColor: index < done ? brand.azul : brand.bruma }} />)}
+        {EDITOR_SECTIONS.map((section, index) => <View key={section} style={{ flex: 1, height: 6, borderRadius: radius.full, backgroundColor: index < done ? palette.primary : palette.primaryMuted }} />)}
       </View>
       <Text style={styles.label}>{t("host.editor.progress", { done, total })}</Text>
     </View>
@@ -79,7 +80,7 @@ export function SectionRow({ section, state, current, onPress }: { readonly sect
   const status = t(`host.editor.status.${state}`);
   return (
     <Pressable role="link" aria-current={current ? "page" : undefined} accessibilityLabel={`${name}, ${status}`} onPress={onPress}
-      style={[{ minHeight: 56, flexDirection: "row", alignItems: "center", gap: spacing[3], paddingHorizontal: spacing[3], paddingVertical: spacing[2], borderRadius: radius.md, backgroundColor: current ? brand.bruma : "transparent" }, focusRing]}>
+      style={[{ minHeight: 56, flexDirection: "row", alignItems: "center", gap: spacing[3], paddingHorizontal: spacing[3], paddingVertical: spacing[2], borderRadius: radius.md, backgroundColor: current ? palette.primaryMuted : "transparent" }, focusRing]}>
       <Marker state={state} />
       <View style={{ flex: 1 }}>
         <Text style={[styles.body, { fontWeight: current ? "800" : "600" }]}>{name}</Text>

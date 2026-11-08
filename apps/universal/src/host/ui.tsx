@@ -2,14 +2,14 @@ import type { PropsWithChildren, ReactNode } from "react";
 import { ActivityIndicator, Modal, Platform, Pressable, StyleSheet, Text, View, type KeyboardTypeOptions } from "react-native";
 import { usePathname, useRouter, type Href } from "expo-router";
 import { ApiError } from "@rsvp/api-client";
-import { Button, CheckMark, Input } from "@rsvp/ui";
-import { colors, notice, radius, spacing, typography } from "@rsvp/design-tokens";
+import { Button, CheckMark, Input, useColors, useTheme } from "@rsvp/ui";
+import { colors, radius, spacing, typography, type ColorTheme } from "@rsvp/design-tokens";
 import { loginHref } from "../auth/routes";
 import { useT } from "../platform/providers";
+import { currentScheme } from "../platform/theme";
 
 /** Building blocks shared by the host and admin screens. No copy lives here: callers pass translated text. */
 
-const palette = colors.light;
 const fontFamily = Platform.select({ web: "'Plus Jakarta Sans', 'Avenir Next', 'Segoe UI', system-ui, sans-serif", default: undefined });
 const MIN_TOUCH = 44;
 const MAX_CONTENT_WIDTH = 880;
@@ -23,7 +23,9 @@ const STATUS_BAD_REQUEST = 400;
 const STATUS_TOO_MANY = 429;
 const STATUS_UNAUTHORIZED = 401;
 
-export const styles = StyleSheet.create({
+/** Style sheet of one palette. Never build it at module level from a single palette: it is created once per scheme below. */
+function createHostStyles(palette: (typeof colors)[ColorTheme]) {
+  return StyleSheet.create({
   page: { flexGrow: 1, backgroundColor: palette.canvas },
   content: { width: "100%", maxWidth: MAX_CONTENT_WIDTH, alignSelf: "center", padding: spacing[4], gap: spacing[4] },
   title: { color: palette.text, fontSize: typography.fontSize.xl, lineHeight: typography.lineHeight.xl, fontWeight: "800", letterSpacing: -0.5, fontFamily },
@@ -45,16 +47,33 @@ export const styles = StyleSheet.create({
   buttonText: { color: palette.onPrimary, fontWeight: "700", fontSize: typography.fontSize.base, fontFamily },
   buttonTextSecondary: { color: palette.primary },
   notice: { borderRadius: radius.md, padding: spacing[4], gap: spacing[2] },
-  noticeError: { backgroundColor: notice.dangerBg, borderColor: palette.danger, borderWidth: 1 },
+  noticeError: { backgroundColor: palette.dangerBg, borderColor: palette.danger, borderWidth: 1 },
   noticeInfo: { backgroundColor: palette.surfaceMuted },
-  noticeSuccess: { backgroundColor: notice.successBg },
+  noticeSuccess: { backgroundColor: palette.successBg },
   option: { minHeight: MIN_TOUCH + 8, justifyContent: "center", paddingHorizontal: spacing[4], borderWidth: 1.5, borderColor: palette.fieldBorder, borderRadius: radius.md, backgroundColor: palette.surface },
   choice: { minHeight: MIN_TOUCH, justifyContent: "center", paddingHorizontal: spacing[4], borderWidth: 1.5, borderColor: palette.fieldBorder, borderRadius: radius.full, backgroundColor: palette.surface },
   choiceSelected: { borderColor: palette.primary, backgroundColor: palette.primaryMuted },
   optionSelected: { borderColor: palette.primary, backgroundColor: palette.primaryMuted },
-  overlay: { flex: 1, justifyContent: "center", padding: spacing[4], backgroundColor: "rgba(10,16,51,0.6)" },
+  overlay: { flex: 1, justifyContent: "center", padding: spacing[4], backgroundColor: palette.scrim },
   dialog: { width: "100%", maxWidth: 520, alignSelf: "center", backgroundColor: palette.surface, borderRadius: radius.lg, padding: spacing[5], gap: spacing[3] }
-});
+  });
+}
+
+type HostStyles = ReturnType<typeof createHostStyles>;
+const sheets: Readonly<Record<ColorTheme, HostStyles>> = { light: createHostStyles(colors.light), dark: createHostStyles(colors.dark) };
+
+/** The shared host/admin/provider styles for the active scheme. Call it in the component that draws. */
+export function useStyles(): HostStyles {
+  return sheets[useTheme().scheme];
+}
+
+/**
+ * The same sheet read at render time from the app's theme store, so a screen that still imports `styles` follows the
+ * scheme (the tree remounts when it changes). New code calls `useStyles()`; this view goes away once every screen has moved.
+ */
+export const styles: HostStyles = Object.defineProperties({} as HostStyles, Object.fromEntries(
+  (Object.keys(sheets.light) as (keyof HostStyles)[]).map((key) => [key, { enumerable: true, get: () => sheets[currentScheme()][key] }])
+));
 
 export { Screen, type NavItem, type NavTab } from "./shell";
 /** Personality primitives (docs/design/primitives.md): screens import them from here next to `Screen`, `Section`, `Notice`. */
@@ -62,6 +81,7 @@ export { CheckMark, Celebrate, EmptyState, Illustration, PageIntro, SuccessNote 
 
 /** A form or settings block. Capped at a readable measure so fields never stretch across a wide screen. */
 export function Section({ title, children }: PropsWithChildren<{ readonly title: string }>): ReactNode {
+  const styles = useStyles();
   return <View style={[styles.card, { maxWidth: SECTION_MAX_WIDTH }]}><Text accessibilityRole="header" style={styles.subtitle}>{title}</Text>{children}</View>;
 }
 
@@ -82,6 +102,7 @@ export interface FieldProps {
 }
 
 export function Field({ label, value, onChange, help, error, multiline, placeholder, keyboardType, testID, onSubmit, maxLength, editable = true }: FieldProps): ReactNode {
+  const styles = useStyles();
   return (
     <View style={{ gap: spacing[1] }}>
       <Input label={label} accessibilityHint={help} value={value} onChangeText={onChange} placeholder={placeholder} keyboardType={keyboardType} testID={testID} error={error} state={editable ? "default" : "disabled"}
@@ -94,6 +115,7 @@ export function Field({ label, value, onChange, help, error, multiline, placehol
 export interface Choice<TValue extends string> { readonly value: TValue; readonly label: string; readonly description?: string; /** Language-independent handle for browser and device tests. */ readonly testID?: string }
 
 export function ChoiceGroup<TValue extends string>({ label, choices, value, onChange, disabled = false }: { readonly label: string; readonly choices: readonly Choice<TValue>[]; readonly value: TValue | null; readonly onChange: (value: TValue) => void; /** Blocks changes while a request that depends on the choice is in flight. */ readonly disabled?: boolean }): ReactNode {
+  const styles = useStyles();
   // Short labels read as one wrapped row of options; a choice that needs an explanation gets its own row.
   const described = choices.some((choice) => choice.description);
   return (
@@ -116,6 +138,8 @@ export function ChoiceGroup<TValue extends string>({ label, choices, value, onCh
 
 /** An on/off option in a group (destinations, weekdays). On is the filled outline, a drawn tick and a heavier label: never colour alone. */
 export function ToggleChip({ label, on, onPress, testID, disabled = false }: { readonly label: string; readonly on: boolean; readonly onPress: () => void; readonly testID?: string; readonly disabled?: boolean }): ReactNode {
+  const styles = useStyles();
+  const palette = useColors();
   return (
     <Pressable role="checkbox" aria-checked={on} aria-disabled={disabled} disabled={disabled} accessibilityLabel={label} onPress={onPress} {...(testID ? { testID } : {})} style={[styles.choice, { flexDirection: "row", alignItems: "center", gap: spacing[2] }, on && styles.choiceSelected, disabled && styles.buttonDisabled]}>
       {on ? <View style={{ width: 5, height: 10, marginTop: -2, borderRightWidth: 2, borderBottomWidth: 2, borderColor: palette.primary, transform: [{ rotate: "45deg" }] }} /> : null}
@@ -130,6 +154,7 @@ export function ActionButton({ label, onPress, variant = "primary", busy = false
 }
 
 export function Notice({ kind = "info", children }: PropsWithChildren<{ readonly kind?: "info" | "error" | "success" }>): ReactNode {
+  const styles = useStyles();
   const tone = { info: styles.noticeInfo, error: styles.noticeError, success: styles.noticeSuccess }[kind];
   const content = typeof children === "string" ? <Text style={styles.body}>{children}</Text> : children;
   // Success carries the drawn check of the D: the one celebratory gesture of the product.
@@ -170,6 +195,7 @@ export const isUnauthorized = (error: unknown): boolean => error instanceof ApiE
  * refresh already failed) offers signing in again and comes back to this page, 403/422/404 explain.
  */
 export function ErrorNotice({ error, onReload }: { readonly error: unknown; readonly onReload?: () => void }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const router = useRouter();
   const pathname = usePathname();
@@ -184,12 +210,14 @@ export function ErrorNotice({ error, onReload }: { readonly error: unknown; read
 }
 
 export function Loading(): ReactNode {
+  const palette = useColors();
   const t = useT();
   return <View style={{ padding: spacing[4] }}><ActivityIndicator aria-label={t("host.common.loading")} color={palette.primary} /></View>;
 }
 
 /** `busy` shows the confirm button as loading and refuses a second confirm, Cancel and Escape until the request ends. */
 export function ConfirmDialog({ visible, title, body, confirmLabel, danger, busy = false, confirmTestID, cancelTestID, onConfirm, onCancel, children }: PropsWithChildren<{ readonly visible: boolean; readonly title: string; readonly body: string; readonly confirmLabel: string; readonly danger?: boolean; readonly busy?: boolean; readonly confirmTestID?: string; readonly cancelTestID?: string; readonly onConfirm: () => void; readonly onCancel: () => void }>): ReactNode {
+  const styles = useStyles();
   const t = useT();
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={busy ? () => undefined : onCancel}>

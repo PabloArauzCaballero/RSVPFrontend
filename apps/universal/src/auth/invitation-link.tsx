@@ -2,15 +2,15 @@ import { useEffect, type ReactNode } from "react";
 import { ActivityIndicator, Text, View } from "react-native";
 import { ApiError } from "@rsvp/api-client";
 import { personalLinkPath } from "@rsvp/auth";
-import { colors } from "@rsvp/design-tokens";
 import { useResolveGuestCredential } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../platform/providers";
 import { GuestFrame } from "../guest/frame";
 import { InvalidLink, LinkState, OfflineState } from "../guest/link-states";
 import { styles } from "../host/ui";
+import { livePalette } from "../platform/theme";
 
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const palette = colors.light;
+const palette = livePalette;
 
 /**
  * Landing of the personal invitation link (`https://<domain>/rsvp/<token>` or `rsvp://rsvp/<token>`), public: guests arrive

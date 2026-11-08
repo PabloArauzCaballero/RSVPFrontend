@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
-import { colors, radius, spacing } from "@rsvp/design-tokens";
+import { radius, spacing } from "@rsvp/design-tokens";
 import { Avatar, Chip } from "@rsvp/ui";
 import { useGuestGroups, useGuestList, type GuestListFilters, type RsvpStatus } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../../platform/providers";
@@ -11,8 +11,9 @@ import { CompactPicker, FreshnessLine, MoreOptions, RetryNotice, StatusBadge, Te
 import { GUEST_SETTINGS_PATH } from "./settings-input";
 import { lastPageOffset } from "./paging";
 import { notYetListed } from "./recent-guests";
+import { livePalette } from "../../platform/theme";
 
-const palette = colors.light;
+const palette = livePalette;
 
 /** C19 · Guest list: server-side search, status filter and paging, so 500 guests stay as light as 5 (REQ-F16-01). */
 
