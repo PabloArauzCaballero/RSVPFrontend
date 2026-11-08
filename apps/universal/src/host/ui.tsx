@@ -92,14 +92,16 @@ export interface FieldProps {
   readonly onSubmit?: () => void;
   readonly maxLength?: number;
   readonly editable?: boolean;
+  /** Data, not prose (a CSV, a code): the mono face. It also keeps a very long unbroken paste fast: kerning a 200 000-character run in Geist took seconds. */
+  readonly mono?: boolean;
 }
 
-export function Field({ label, value, onChange, help, error, multiline, placeholder, keyboardType, testID, onSubmit, maxLength, editable = true }: FieldProps): ReactNode {
+export function Field({ label, value, onChange, help, error, multiline, placeholder, keyboardType, testID, onSubmit, maxLength, editable = true, mono = false }: FieldProps): ReactNode {
   const styles = useStyles();
   return (
     <View style={{ gap: spacing[1] }}>
       <Input label={label} accessibilityHint={help} value={value} onChangeText={onChange} placeholder={placeholder} keyboardType={keyboardType} testID={testID} error={error} state={editable ? "default" : "disabled"}
-        multiline={multiline} maxLength={maxLength} autoCapitalize={keyboardType === "email-address" ? "none" : undefined} autoCorrect={keyboardType === "email-address" ? false : undefined} onSubmitEditing={multiline ? undefined : onSubmit} returnKeyType={onSubmit && !multiline ? "go" : undefined} style={multiline ? { minHeight: MULTILINE_HEIGHT, paddingVertical: spacing[2], textAlignVertical: "top" } : undefined} />
+        multiline={multiline} maxLength={maxLength} autoCapitalize={keyboardType === "email-address" ? "none" : undefined} autoCorrect={keyboardType === "email-address" ? false : undefined} onSubmitEditing={multiline ? undefined : onSubmit} returnKeyType={onSubmit && !multiline ? "go" : undefined} style={[multiline ? { minHeight: MULTILINE_HEIGHT, paddingVertical: spacing[2], textAlignVertical: "top" as const } : null, mono ? { fontFamily: fonts.mono } : null]} />
       {help ? <Text style={styles.muted}>{help}</Text> : null}
     </View>
   );

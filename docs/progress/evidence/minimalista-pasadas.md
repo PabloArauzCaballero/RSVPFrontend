@@ -20,3 +20,11 @@ Hallazgos (los tres peores):
 
 Corregido en esta pasada: (2) la ilustración de los estados vacíos baja de 148 a 104 px (`EmptyState`). Pendiente: (1) y (3).
 Verificación: `packages/ui` 229/229 y typecheck limpio; ver `Pasada 0`.
+
+## Pasada 2
+
+Corregido:
+1. **Callejón «Elige una celebración» con una sola celebración** (hallazgo 1 de la pasada 1). `CelebrationScreen` (`host/gate.tsx`) consulta `useMyCelebrations` cuando no hay `?c=`; con exactamente una celebración navega directo a la pantalla pedida con su `?c=`, con esqueleto mientras carga. Con 0 o varias, sigue el estado «Elige una celebración». `useMyCelebrations` acepta `{ enabled }` (compatible hacia atrás). Prueba nueva en `test/host.test.tsx` (una celebración → navega; varias → pregunta) y aserción existente ajustada a asíncrona.
+2. **Pestañas cortadas en móvil** (hallazgo 3): se mantiene por diseño. La fila de pestañas se desplaza y el chevron avisa de que hay más; cortar el rótulo es la señal. No se cambia.
+
+Verificación: `apps/universal` y `packages/query-hooks` con `tsc` limpio; `host.test.tsx` 23/23. Suite completa de la app en la corrida final de la pasada.

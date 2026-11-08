@@ -1,10 +1,10 @@
 import { createContext, useContext, useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { SkeletonList } from "@rsvp/ui";
-import { useCelebration, useEventTypes, type Celebration, type TranslatedEventType } from "@rsvp/query-hooks";
+import { useCelebration, useEventTypes, useMyCelebrations, type Celebration, type TranslatedEventType } from "@rsvp/query-hooks";
 import { useApiClient, useClaims, useLocale, useT } from "../platform/providers";
 import type { SessionClaims } from "../platform/session";
 import { ActionButton, EmptyState, ErrorNotice, Notice, Screen } from "./ui";
-import { HOST_ROUTES, hostNav, type HostRoute } from "./routes";
+import { HOST_ROUTES, hostNav, withCelebration, type HostRoute } from "./routes";
 
 /** Who may open the host workspace: hosts and planners only (REQ-F13-05). The API re-checks everything. */
 const HOST_ROLES: readonly string[] = ["HOST", "PLANNER"];
@@ -73,6 +73,10 @@ export function CelebrationScreen({ celebrationId, onNavigate, current, title, i
   const claims = useClaims();
   const query = useCelebration(client, celebrationId ?? "");
   const types = useEventTypes(client, locale);
+  // With no celebration chosen, a person who has exactly one open celebration goes straight to it instead of a dead-end "choose one".
+  const mine = useMyCelebrations(client, { enabled: !celebrationId });
+  const onlyOne = !celebrationId && mine.isSuccess && mine.data.items.length === 1 ? mine.data.items[0]?.id : undefined;
+  useEffect(() => { if (onlyOne) onNavigate(withCelebration(HOST_ROUTES[current], onlyOne)); }, [onlyOne, current, onNavigate]);
   const nav = hostNav(t, celebrationId);
   const [store] = useState(() => new HeaderStore());
   const slotted = useSyncExternalStore(store.subscribe, store.presence, store.presence);
@@ -83,6 +87,7 @@ export function CelebrationScreen({ celebrationId, onNavigate, current, title, i
     return <Screen title={title} {...(intro ? { intro } : {})} nav={nav} current={current} onNavigate={onNavigate} {...(actions ? { actions } : {})} {...(menu ? { menu } : {})} {...(status ? { status } : {})}>{body}</Screen>;
   };
   if (!canUseHostWorkspace(claims)) return frame(<Notice kind="error">{t("host.common.accessDenied")}</Notice>);
+  if (!celebrationId && (mine.isPending || onlyOne)) return frame(<SkeletonList count={3} row={{ minHeight: 64, avatar: false, trailing: false }} label={t("host.common.loading")} />);
   if (!celebrationId) return frame(<EmptyState illustration="invitation" title={t("host.common.noCelebrationTitle")} body={t("host.common.noCelebrationBody")} action={<ActionButton label={t("host.common.chooseCelebration")} onPress={() => onNavigate(HOST_ROUTES.celebrations)} />} />);
   if (query.isPending) return frame(<SkeletonList count={3} row={{ minHeight: 64, avatar: false, trailing: false }} label={t("host.common.loading")} />);
   if (query.isError || !query.data) return frame(<ErrorNotice error={query.error} />);

@@ -77,7 +77,7 @@ function ImportBody({ celebrationId, onNavigate }: { readonly celebrationId: str
           <Text selectable style={[styles.body, { fontFamily: fonts.mono, fontWeight: "600" }]}>{t("guests.import.header")}</Text>
           <Text style={styles.muted}>{t("guests.import.headerNote")}</Text>
           {canPickTextFile ? <ActionButton variant="secondary" label={t("guests.import.chooseFile")} onPress={() => { void choose(); }} /> : null}
-          <Field label={t("guests.import.csvLabel")} multiline value={csv} onChange={(value) => { setCsv(value); setProblem(""); }} error={problem || undefined} testID="csv-input" />
+          <Field label={t("guests.import.csvLabel")} multiline mono value={csv} onChange={(value) => { setCsv(value); setProblem(""); }} error={problem || undefined} testID="csv-input" />
           <FailureNotice error={run.error} onRetry={submit} />
         </View>
       )}

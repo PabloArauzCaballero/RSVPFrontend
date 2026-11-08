@@ -180,6 +180,13 @@ describe("C7–C11 · content editor", () => {
     expect(await screen.findByLabelText("El nombre de quien se bautiza")).toBeTruthy();
   });
 
+  it("with exactly one celebration and none chosen, goes straight to it instead of asking to choose", async () => {
+    const only = fakeClient({ ...baseHandlers(CELEBRATION), "GET /celebrations": () => ({ items: [CELEBRATION] }) });
+    const go = vi.fn();
+    renderApp(<ContentEditorScreen section="general" onNavigate={go} />, only.client);
+    await waitFor(() => expect(go).toHaveBeenCalledWith(`/editor?c=${CELEBRATION.id}`));
+    expect(screen.queryByText("Elige una celebración")).toBeNull();
+  });
   it("states: loading, not found, read-only, no celebration chosen, and roles", async () => {
     const missing = fakeClient({ "GET /celebrations/event-types": () => ({ items: [] }) });
     renderApp(<ContentEditorScreen section="general" celebrationId="nope" onNavigate={navigate} />, missing.client);
@@ -188,8 +195,9 @@ describe("C7–C11 · content editor", () => {
     const readOnly = fakeClient(baseHandlers({ ...CELEBRATION, access: "READ" }));
     renderApp(<ContentEditorScreen section="general" celebrationId="c-1" onNavigate={navigate} />, readOnly.client);
     expect(await screen.findByText(/solo los anfitriones o el planner/)).toBeTruthy();
-    renderApp(<ContentEditorScreen section="general" onNavigate={navigate} />, readOnly.client);
-    expect(screen.getByText("Elige una celebración")).toBeTruthy();
+    const several = fakeClient({ ...baseHandlers(CELEBRATION), "GET /celebrations": () => ({ items: [CELEBRATION, { ...CELEBRATION, id: "c-2" }] }) });
+    renderApp(<ContentEditorScreen section="general" onNavigate={navigate} />, several.client);
+    expect(await screen.findByText("Elige una celebración")).toBeTruthy();
     renderApp(<ModesScreen celebrationId="c-1" onNavigate={navigate} />, readOnly.client, GUEST);
     expect(screen.getAllByText("Esta sección es solo para anfitriones y planners.").length).toBeGreaterThan(0);
   });

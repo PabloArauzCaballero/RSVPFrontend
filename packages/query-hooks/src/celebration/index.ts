@@ -22,8 +22,8 @@ export function useCelebration<T = Celebration>(client: ApiClient, id: string) {
 export function usePublicCelebration<T>(client: ApiClient, slug: string) {
   return useQuery({ queryKey: queryKeys.celebration.public(slug), queryFn: () => client.request<T>(`/celebrations/public/${slug}`, { auth: false }), ...cachePolicy.celebration, enabled: Boolean(slug) });
 }
-export function useMyCelebrations(client: ApiClient) {
-  return useQuery({ queryKey: queryKeys.celebration.all, queryFn: () => celebrationApi(client).list(), ...cachePolicy.celebration });
+export function useMyCelebrations(client: ApiClient, options: { readonly enabled?: boolean } = {}) {
+  return useQuery({ queryKey: queryKeys.celebration.all, queryFn: () => celebrationApi(client).list(), ...cachePolicy.celebration, enabled: options.enabled ?? true });
 }
 export function useCreateCelebration<TResponse = Celebration, TInput = CreateCelebrationInput>(client: ApiClient) {
   const invalidate = useInvalidate();
