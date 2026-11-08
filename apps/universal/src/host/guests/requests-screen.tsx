@@ -6,9 +6,9 @@ import { pendingRequests, useCompanionRequests, useGuestDetail, useResolveCompan
 import { useApiClient, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { guestDetailPath, withCelebration } from "../routes";
-import { Avatar } from "@rsvp/ui";
+import { Avatar, PressFeedback } from "@rsvp/ui";
 import { ActionButton, EmptyState, Notice, useStyles } from "../ui";
-import { FailureNotice, RetryNotice, TextAction, BlockSkeleton } from "./parts";
+import { FailureNotice, RetryNotice, BlockSkeleton } from "./parts";
 import { useSingleFlightGate } from "../../platform/single-flight";
 
 /** C26 · Companion requests inbox: approve or reject with one tap; a request someone else already decided refreshes the list (REQ-F17-03). */
@@ -19,18 +19,19 @@ function RequestCard({ request, celebrationId, busy, locked, onDecide, onOpen }:
   const client = useApiClient();
   const guest = useGuestDetail(client, celebrationId, request.guestId);
   return (
-    <View testID={`request-${request.id}`} style={[styles.card, { gap: spacing[3] }]}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[3] }}>
-        <Avatar name={guest.data?.name ?? t("guests.requests.guest")} size={44} />
-        <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-          <Text style={styles.subtitle} numberOfLines={2}>{guest.data?.name ?? t("guests.requests.guest")}</Text>
-          <Text style={styles.body}>{t("guests.requests.ask", { requested: request.requestedCompanions, allowed: request.allowedCompanions })}</Text>
+    <View testID={`request-${request.id}`} style={[styles.card, { flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: spacing[3] }]}>
+      <PressFeedback accessibilityLabel={t("guests.requests.open")} onPress={onOpen} style={{ flexGrow: 1, flexShrink: 1, flexBasis: 260, minWidth: 0 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[3], minHeight: 44 }}>
+          <Avatar name={guest.data?.name ?? t("guests.requests.guest")} size={44} />
+          <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+            <Text style={styles.subtitle} numberOfLines={2}>{guest.data?.name ?? t("guests.requests.guest")}</Text>
+            <Text style={styles.muted}>{t("guests.requests.ask", { requested: request.requestedCompanions, allowed: request.allowedCompanions })}</Text>
+          </View>
         </View>
-      </View>
+      </PressFeedback>
       <View style={styles.row}>
         <ActionButton label={busy === "APPROVED" ? t("guests.requests.approving") : t("guests.requests.approve")} busy={busy === "APPROVED"} disabled={busy !== null || locked} onPress={() => onDecide("APPROVED")} testID={`approve-${request.id}`} />
         <ActionButton variant="secondary" label={busy === "REJECTED" ? t("guests.requests.rejecting") : t("guests.requests.reject")} busy={busy === "REJECTED"} disabled={busy !== null || locked} onPress={() => onDecide("REJECTED")} testID={`reject-${request.id}`} />
-        <TextAction label={t("guests.requests.open")} onPress={onOpen} />
       </View>
     </View>
   );

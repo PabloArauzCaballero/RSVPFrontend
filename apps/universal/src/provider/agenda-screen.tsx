@@ -1,18 +1,21 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
-import { Chip, Stagger, useColors } from "@rsvp/ui";
+import { Button, Chip, Stagger, useColors } from "@rsvp/ui";
 import { ApiError } from "@rsvp/api-client";
 import { formatCelebrationDate } from "@rsvp/i18n";
 import { useAvailability, useDecideBooking, useProviderBookings, useSetAvailability, type Blackout, type Provider } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../platform/providers";
-import { ActionButton, ConfirmDialog, EmptyState, Field, PageIntro, Notice, Section, ToggleChip, useStyles } from "../host/ui";
+import { ActionButton, ConfirmDialog, EmptyState, Field, OverflowMenu, PageIntro, Notice, Section, ToggleChip, useStyles } from "../host/ui";
 import { PortalErrorNotice as ErrorNotice } from "./errors";
 import { TIME, blackoutProblem, validCapacity } from "./agenda-rules";
-import { PortalScreen } from "./frame";
+import { PortalScreen, usePortalHeader } from "./frame";
 import { useSingleMutation } from "../platform/single-flight";
-import { RowsSkeleton, StickyActions } from "./parts";
+import { RowsSkeleton } from "./parts";
 
+
+/** A calendar day (YYYY-MM-DD, no zone) as people read it: «lunes, 30 de noviembre de 2026». */
+const dayLabel = (day: string, locale: string): string => new Intl.DateTimeFormat(locale, { dateStyle: "full", timeZone: "UTC" }).format(new Date(`${day}T12:00:00Z`));
 
 /** D9/D10 · Availability rules and blackouts (the public calendar is computed from them), and the date requests received. */
 function Agenda({ provider }: { readonly provider: Provider }): ReactNode {
@@ -66,6 +69,7 @@ function Agenda({ provider }: { readonly provider: Provider }): ReactNode {
     setNotice(null);
     saveOnce({ capacityPerDay: slots, rules: days.length ? [{ weekdays: [...days].sort(), start, end }] : [], blackouts }, { onSuccess: () => setNotice({ kind: "success", text: t("portal.agenda.saved") }) });
   };
+  usePortalHeader({ label: save.isPending ? t("portal.agenda.saving") : t("portal.agenda.save"), busy: save.isPending, disabled: save.isPending, onPress: submit, testID: "agenda-save" });
   const resolve = (bookingId: string, action: "confirm" | "reject" | "cancel"): void => {
     setNotice(null);
     decideOnce({ bookingId, action }, {
@@ -87,11 +91,17 @@ function Agenda({ provider }: { readonly provider: Provider }): ReactNode {
           const busy = decide.isPending && decide.variables?.bookingId === booking.id ? decide.variables.action : null;
           return (
             <View key={booking.id} style={{ gap: spacing[1], paddingVertical: spacing[3], borderTopWidth: 1, borderTopColor: palette.border }} testID={`booking-${booking.id}`}>
-              <Text style={styles.subtitle}>{t("portal.agenda.date", { date: booking.date })}</Text>
-              <View style={styles.row}><Chip tone={booking.status === "CONFIRMED" ? "yes" : booking.status === "REQUESTED" ? "maybe" : "no"}>{t(`portal.agenda.status.${booking.status}`)}</Chip></View>
+              <View style={[styles.row, { justifyContent: "space-between", alignItems: "center", flexWrap: "nowrap" }]}>
+                <Text style={[styles.subtitle, { flex: 1 }]}>{t("portal.agenda.date", { date: dayLabel(booking.date, locale) })}</Text>
+                <Chip tone={booking.status === "CONFIRMED" ? "yes" : booking.status === "REQUESTED" ? "maybe" : "no"}>{t(`portal.agenda.status.${booking.status}`)}</Chip>
+              </View>
               <Text style={styles.muted}>{t("portal.agenda.expires", { when: formatCelebrationDate(booking.expiresAt, { locale, timeZone: provider.timeZone }) })}</Text>
-              {booking.status === "REQUESTED" ? <View style={styles.row}><ActionButton label={t("portal.agenda.confirm")} busy={busy === "confirm"} disabled={busy !== null} onPress={() => resolve(booking.id, "confirm")} testID={`confirm-${booking.id}`} /><ActionButton variant="danger" label={t("portal.agenda.reject")} busy={busy === "reject"} disabled={busy !== null} onPress={() => setAsking({ id: booking.id, action: "reject" })} testID={`reject-${booking.id}`} /></View> : null}
-              {booking.status === "CONFIRMED" ? <ActionButton variant="secondary" label={t("portal.agenda.cancel")} busy={busy === "cancel"} disabled={busy !== null} onPress={() => setAsking({ id: booking.id, action: "cancel" })} testID={`cancel-${booking.id}`} /> : null}
+              {booking.status === "REQUESTED" || booking.status === "CONFIRMED" ? (
+                <View style={[styles.row, { alignItems: "center" }]}>
+                  {booking.status === "REQUESTED" ? <ActionButton variant="secondary" label={t("portal.agenda.confirm")} busy={busy === "confirm"} disabled={busy !== null} onPress={() => resolve(booking.id, "confirm")} testID={`confirm-${booking.id}`} /> : null}
+                  <OverflowMenu label={t("portal.agenda.rowMenu", { date: dayLabel(booking.date, locale) })} items={[booking.status === "REQUESTED" ? { key: "reject", label: t("portal.agenda.reject"), destructive: true, disabled: busy !== null, onPress: () => setAsking({ id: booking.id, action: "reject" }) } : { key: "cancel", label: t("portal.agenda.cancel"), destructive: true, disabled: busy !== null, onPress: () => setAsking({ id: booking.id, action: "cancel" }) }]} />
+                </View>
+              ) : null}
             </View>
           );
         })}</Stagger>}
@@ -105,13 +115,12 @@ function Agenda({ provider }: { readonly provider: Provider }): ReactNode {
         <View style={styles.row}><Field label={t("portal.agenda.start")} value={start} onChange={setStart} testID="agenda-start" /><Field label={t("portal.agenda.end")} value={end} onChange={setEnd} testID="agenda-end" /></View>
         <Text accessibilityRole="header" style={styles.subtitle}>{t("portal.agenda.blackouts")}</Text>
         {blackouts.map((item, index) => (
-          <View key={`${item.start}-${index}`} style={styles.row} testID={`blackout-${item.start}`}><Text style={styles.body}>{item.start}{item.end && item.end !== item.start ? ` → ${item.end}` : ""}{item.reason ? ` · ${item.reason}` : ""}</Text><ActionButton variant="secondary" label={t("portal.agenda.removeBlackout")} onPress={() => setBlackouts((current) => current.filter((_, position) => position !== index))} testID={`blackout-remove-${item.start}`} /></View>
+          <View key={`${item.start}-${index}`} style={styles.row} testID={`blackout-${item.start}`}><Text style={styles.body}>{item.start}{item.end && item.end !== item.start ? ` → ${item.end}` : ""}{item.reason ? ` · ${item.reason}` : ""}</Text><Button variant="ghost" accessibilityLabel={t("portal.agenda.removeBlackout")} state="default" onPress={() => setBlackouts((current) => current.filter((_, position) => position !== index))} testID={`blackout-remove-${item.start}`}>{t("portal.agenda.removeBlackout")}</Button></View>
         ))}
         <View style={styles.row}><Field label={t("portal.agenda.blackoutDate")} value={newDate} onChange={setNewDate} testID="blackout-date" /><Field label={t("portal.agenda.blackoutEnd")} value={newEnd} onChange={setNewEnd} testID="blackout-end" /><Field label={t("portal.agenda.blackoutReason")} value={newReason} onChange={setNewReason} testID="blackout-reason" /></View>
         <ActionButton variant="secondary" label={t("portal.agenda.addBlackout")} onPress={addBlackout} testID="blackout-add" />
         {errors.length ? <Notice kind="error">{errors.map((message) => <Text key={message} style={styles.body}>{message}</Text>)}</Notice> : null}
         <ErrorNotice error={save.error} onRetry={submit} />
-        <StickyActions ground="surface"><ActionButton label={save.isPending ? t("portal.agenda.saving") : t("portal.agenda.save")} busy={save.isPending} disabled={save.isPending} onPress={submit} testID="agenda-save" /></StickyActions>
       </Section>
       <ConfirmDialog visible={asking !== null} danger title={asking ? t(`portal.agenda.${asking.action}Title`) : ""} body={asking ? t(`portal.agenda.${asking.action}Body`) : ""} confirmLabel={asking ? t(`portal.agenda.${asking.action}`) : ""} onCancel={() => setAsking(null)} onConfirm={() => { if (asking) resolve(asking.id, asking.action); setAsking(null); }} />
     </View>

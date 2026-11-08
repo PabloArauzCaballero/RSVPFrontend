@@ -331,9 +331,10 @@ async function hostSuite() {
     await seen(page, /Puedes agregar regalos de cualquier tienda sin pasos previos/);
     await setSettings({ externalGiftMode: "AUTO_ACCEPT", partnerPriorityEnabled: true });
     await go(page, `/regalos/externo${HC}`);
-    await seen(page, "Primero los aliados");
+    await seen(page, /te mostramos productos parecidos de aliados/);
     await seen(page, /Tus regalos de tienda aparecen en la lista al instante/);
-    await page.getByTestId("go-modes").click();
+    await page.getByRole("button", { name: "Más opciones", exact: true }).filter({ visible: true }).first().click();
+    await page.getByRole("menuitem", { name: "Cambiar en Modos de control" }).click();
     await page.waitForURL(/\/modos/);
     await page.getByTestId("switch-externalGiftMode").click();
     await page.getByRole("button", { name: "Sí, cambiar" }).click();

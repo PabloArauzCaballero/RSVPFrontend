@@ -3,11 +3,10 @@ import { Pressable, Text, View } from "react-native";
 import { supportedLocales } from "@rsvp/i18n";
 import { useAdminEventTypes, useUpsertEventType, type EventTypeDefinition, type SectionId } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../platform/providers";
-import { ActionButton, ChoiceGroup, Field, Notice, PageIntro, Section, useStyles } from "../host/ui";
+import { ChoiceGroup, Field, FilterSelect, Notice, PageIntro, Section, useStyles } from "../host/ui";
 import { RowsSkeleton } from "../provider/parts";
 import { AdminErrorNotice, AdminListError, Stack } from "./shared";
-import { StickyActions } from "../provider/parts";
-import { AdminScreen, splitList } from "./admin-screen";
+import { AdminScreen, splitList, useHeaderSlot } from "./admin-screen";
 import { useSingleMutation } from "../platform/single-flight";
 
 /** E4 · Create or edit an event type from the UI; it is usable at once, without a deploy (REQ-F14-02). */
@@ -81,6 +80,7 @@ function Editor({ initial, onSaved }: { readonly initial: Form; readonly onSaved
     setProblems(found);
     if (found.length === 0) saveOnce(definitionOf(form), { onSuccess: onSaved });
   };
+  useHeaderSlot({ primary: { label: t("admin.eventTypes.save"), onPress: submit, testID: "save-event-type", busy: save.isPending, disabled: save.isPending } });
   return (
     <Section title={initial.code ? t("admin.eventTypes.edit", { code: initial.code }) : t("admin.eventTypes.new")}>
       <Field label={t("admin.eventTypes.code")} help={t("admin.eventTypes.codeHelp")} value={form.code} onChange={(value) => set("code", value)} testID="event-type-code" />
@@ -110,7 +110,6 @@ function Editor({ initial, onSaved }: { readonly initial: Form; readonly onSaved
       {problems.length ? <Notice kind="error">{problems.map((key) => <Text key={key} style={styles.body}>{t(`admin.eventTypes.problems.${key}`)}</Text>)}</Notice> : null}
       <AdminErrorNotice error={save.error} onRetry={submit} />
       {save.isSuccess ? <Notice kind="success">{`${t("admin.saved")} ${t("admin.eventTypes.savedHelp")}`}</Notice> : null}
-      <StickyActions ground="surface"><ActionButton label={t("admin.eventTypes.save")} busy={save.isPending} disabled={save.isPending} onPress={submit} testID="save-event-type" /></StickyActions>
     </Section>
   );
 }
@@ -128,8 +127,8 @@ export function EventTypesScreen({ onNavigate }: { readonly onNavigate: (href: s
       <PageIntro>{t("admin.eventTypes.intro")}</PageIntro>
       {list.isPending ? <RowsSkeleton count={3} minHeight={72} trailing={false} /> : null}
       <AdminListError error={list.error} retryTestID="error-retry" onRetry={() => { void list.refetch(); }} />
-      <ChoiceGroup label={t("admin.eventTypes.title")} value={editing ?? ""} onChange={(value) => setEditing(value || null)}
-        choices={[{ value: "", label: t("admin.eventTypes.new") }, ...(list.data?.items ?? []).map((item) => ({ value: item.code, label: `${item.translations.find((tr) => tr.locale === locale)?.name ?? item.translations[0]?.name ?? item.code} · ${t(`admin.eventTypes.statuses.${item.status}`)}` }))]} />
+      <FilterSelect label={t("admin.eventTypes.title")} value={editing ?? ""} onChange={(value) => setEditing(value || null)}
+        options={[{ value: "", label: t("admin.eventTypes.new") }, ...(list.data?.items ?? []).map((item) => ({ value: item.code, label: `${item.translations.find((tr) => tr.locale === locale)?.name ?? item.translations[0]?.name ?? item.code} · ${t(`admin.eventTypes.statuses.${item.status}`)}` }))]} />
       <Editor key={editing ?? "new"} initial={current ? formOf(current) : EMPTY} onSaved={() => { void list.refetch(); }} />
       </Stack>
     </AdminScreen>

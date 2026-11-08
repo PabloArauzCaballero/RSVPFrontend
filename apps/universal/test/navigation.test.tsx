@@ -1,7 +1,8 @@
-import { fireEvent, screen, within } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { act, fireEvent, screen, within } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { adminNav, ADMIN_ROUTES } from "../src/admin/admin-screen";
 import { HOST_ROUTES, hostNav, type HostRoute } from "../src/host/routes";
+import { ActionButton, OverflowMenu } from "../src/host/ui";
 import { barSplit, isCurrentDestination, Screen } from "../src/host/shell";
 import { portalNav, PORTAL_ROUTES } from "../src/provider/frame";
 import { baseHandlers, fakeClient, renderApp } from "./support";
@@ -83,5 +84,47 @@ describe("Screen shows the section tabs of the active destination", () => {
     renderApp(<Screen title="Invitados" nav={hostNav(t, "c-1")} current="report" onNavigate={() => undefined}><span>cuerpo</span></Screen>, client);
     expect(screen.queryByTestId("tabs-fade-left")).toBeNull();
     expect(screen.queryByTestId("tabs-fade-right")).toBeNull();
+  });
+});
+
+describe("Screen header actions", () => {
+  const nav = hostNav(t, "c-1");
+  // react-native-web reads `documentElement.clientWidth` (0 in jsdom, so every other test renders the narrow layout).
+  const setWidth = (width: number): void => { Object.defineProperty(document.documentElement, "clientWidth", { configurable: true, value: width }); act(() => { window.dispatchEvent(new Event("resize")); }); };
+  afterEach(() => setWidth(0));
+
+  it("wide: the primary action and the overflow menu sit in the header next to the title, with no sticky bar", () => {
+    setWidth(1280);
+    const { client } = fakeClient({ ...baseHandlers() });
+    const onAdd = vi.fn();
+    renderApp(<Screen title="Invitados" nav={nav} current="guests" onNavigate={() => undefined} actions={<ActionButton label="Agregar invitado" onPress={onAdd} />} menu={<OverflowMenu items={[{ key: "import", label: "Importar", onPress: () => undefined }]} />}><span>cuerpo</span></Screen>, client);
+    const title = screen.getByRole("heading", { level: 1, name: "Invitados" });
+    const add = screen.getByRole("button", { name: "Agregar invitado" });
+    const more = screen.getByRole("button", { name: "Más opciones" });
+    expect(screen.queryByTestId("screen-sticky-actions")).toBeNull();
+    expect(title.closest("div")?.parentElement?.parentElement?.contains(add)).toBe(true);
+    expect(more.compareDocumentPosition(add) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    fireEvent.click(add);
+    expect(onAdd).toHaveBeenCalledTimes(1);
+  });
+
+  it("narrow: the menu stays in the header and the primary action moves into the sticky bar after the content", () => {
+    setWidth(390);
+    const { client } = fakeClient({ ...baseHandlers() });
+    renderApp(<Screen title="Invitados" nav={nav} current="guests" onNavigate={() => undefined} actions={<ActionButton label="Agregar invitado" onPress={() => undefined} />} menu={<OverflowMenu items={[{ key: "import", label: "Importar", onPress: () => undefined }]} />}><span>cuerpo</span></Screen>, client);
+    const bar = screen.getByTestId("screen-sticky-actions");
+    expect(within(bar).getByRole("button", { name: "Agregar invitado" })).toBeTruthy();
+    expect(within(bar).queryByRole("button", { name: "Más opciones" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Más opciones" })).toBeTruthy();
+    expect(screen.getByText("cuerpo").compareDocumentPosition(bar) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    setWidth(0);
+  });
+
+  it("without actions or menu the header is unchanged", () => {
+    setWidth(1280);
+    const { client } = fakeClient({ ...baseHandlers() });
+    renderApp(<Screen title="Inicio" nav={nav} current="summary" onNavigate={() => undefined}><span>cuerpo</span></Screen>, client);
+    expect(screen.queryByTestId("screen-sticky-actions")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Más opciones" })).toBeNull();
   });
 });

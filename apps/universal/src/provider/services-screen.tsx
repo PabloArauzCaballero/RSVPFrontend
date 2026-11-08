@@ -5,10 +5,10 @@ import { formatMinor } from "@rsvp/i18n";
 import { Chip, Enter, Stagger, useColors } from "@rsvp/ui";
 import { useCreateOwnListing, useOwnListings, usePublishListing, type CreateListingInput, type OwnListing, type Provider } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../platform/providers";
-import { ActionButton, ChoiceGroup, EmptyState, Field, Illustration, Notice, PageIntro, Section, SuccessNote, useStyles } from "../host/ui";
+import { ActionButton, ChoiceGroup, EmptyState, Field, FilterSelect, Illustration, Notice, OverflowMenu, PageIntro, Section, SuccessNote, useStyles } from "../host/ui";
 import { PortalErrorNotice as ErrorNotice, PortalErrorState } from "./errors";
 import { parseMinor } from "../host/gifts/money";
-import { PortalScreen, type PortalRoute } from "./frame";
+import { PortalScreen, usePortalHeader, type PortalRoute } from "./frame";
 import { useSingleMutation } from "../platform/single-flight";
 import { MoreToggle, RowsSkeleton, StickyActions } from "./parts";
 
@@ -17,33 +17,31 @@ const MAX_TITLE = 120;
 const HTTPS = /^https:\/\/[^\s]+$/i;
 type Kind = "SERVICE" | "PRODUCT";
 
-/** One offer as a row: the name, its state, and the delivery terms the guests will read, all in one place (no separate screen). */
+/** One offer as a row: the name, its state and ONE line of delivery terms. "Publicar" lives in the row's "⋯" menu (a draft without terms shows it off, with the reason under the terms). */
 function OfferRow({ provider, listing, publishing, onPublish }: { readonly provider: Provider; readonly listing: OwnListing; readonly publishing: boolean; readonly onPublish: () => void }): ReactNode {
   const t = useT();
   const locale = useLocale();
   const styles = useStyles();
   const palette = useColors();
   const f = listing.fulfillment;
+  const terms = f ? [
+    t("portal.delivery.responsible", { who: f.responsible === "PROVIDER" ? t("portal.services.new.responsibleProvider") : t("portal.services.new.responsibleCustomer") }),
+    t("portal.delivery.coverage", { zones: f.coverageZones.join(", ") || "-" }),
+    t("portal.delivery.transport", { price: f.transportCostMinor === undefined ? t("portal.delivery.noTransport") : formatMinor(f.transportCostMinor, provider.currency, locale) }),
+    t("portal.delivery.lead", { days: f.leadTimeDays })
+  ].join(" · ") : null;
   return (
-    <View style={{ gap: spacing[2], paddingVertical: spacing[4], borderTopWidth: 1, borderTopColor: palette.border }} testID={`listing-${listing.id}`}>
-      <View style={[styles.row, { justifyContent: "space-between", flexWrap: "nowrap" }]}>
+    <View style={{ gap: spacing[1], paddingVertical: spacing[4], borderTopWidth: 1, borderTopColor: palette.border }} testID={`listing-${listing.id}`}>
+      <View style={[styles.row, { justifyContent: "space-between", alignItems: "center", flexWrap: "nowrap" }]}>
         <Text accessibilityRole="header" style={[styles.subtitle, { flex: 1 }]}>{listing.title}</Text>
         <View testID={`listing-state-${listing.id}`}><Chip tone={listing.published ? "yes" : "wait"}>{listing.published ? t("portal.services.published") : t("portal.services.draft")}</Chip></View>
+        {listing.published ? null : <OverflowMenu label={t("portal.services.rowMenu", { title: listing.title })} items={[{ key: "publish", label: publishing ? t("portal.services.publishing") : t("portal.services.publish"), disabled: !listing.fulfillment || publishing, onPress: onPublish }]} />}
       </View>
       <Text style={styles.muted}>{t(`portal.services.type.${listing.type === "SERVICE" ? "SERVICE" : "PRODUCT"}`)}{listing.priceFromMinor !== undefined ? ` · ${formatMinor(listing.priceFromMinor, provider.currency, locale)}` : ""}</Text>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", columnGap: spacing[4], rowGap: spacing[1] }} testID={`delivery-${listing.id}`}>
-        {f ? (
-          <>
-            <Text style={styles.muted}>{t("portal.delivery.responsible", { who: f.responsible === "PROVIDER" ? t("portal.services.new.responsibleProvider") : t("portal.services.new.responsibleCustomer") })}</Text>
-            <Text style={styles.muted}>{t("portal.delivery.coverage", { zones: f.coverageZones.join(", ") || "-" })}</Text>
-            <Text style={styles.muted}>{t("portal.delivery.transport", { price: f.transportCostMinor === undefined ? t("portal.delivery.noTransport") : formatMinor(f.transportCostMinor, provider.currency, locale) })}</Text>
-            <Text style={styles.muted}>{t("portal.delivery.lead", { days: f.leadTimeDays })}</Text>
-            {f.conditions ? <Text style={[styles.body, { width: "100%" }]}>{f.conditions}</Text> : null}
-          </>
-        ) : <Notice kind="error">{t("portal.delivery.missing")}</Notice>}
+      <View style={{ gap: spacing[1] }} testID={`delivery-${listing.id}`}>
+        {terms ? <><Text style={styles.muted}>{terms}</Text>{f?.conditions ? <Text style={styles.body}>{f.conditions}</Text> : null}</> : listing.published ? <Notice kind="error">{t("portal.delivery.missing")}</Notice> : null}
       </View>
       {!listing.published && !listing.fulfillment ? <Text style={styles.muted} testID={`publish-blocked-${listing.id}`}>{t("portal.services.needsTerms")}</Text> : null}
-      {!listing.published ? <View style={styles.row}><ActionButton variant="secondary" label={publishing ? t("portal.services.publishing") : t("portal.services.publish")} busy={publishing} disabled={!listing.fulfillment || publishing} onPress={onPublish} testID={`publish-${listing.id}`} /></View> : null}
     </View>
   );
 }
@@ -100,7 +98,7 @@ function NewOffer({ providerId, onClose, onCreated }: { readonly providerId: str
     <Section title={t("portal.services.new.title")}>
       <ChoiceGroup<Kind> label={t("portal.services.new.kind")} value={kind} onChange={setKind} choices={[{ value: "SERVICE", label: t("portal.services.type.SERVICE") }, { value: "PRODUCT", label: t("portal.services.type.PRODUCT") }]} />
       <Field label={t("portal.services.new.name")} value={name} onChange={setName} testID="listing-name" />
-      <ChoiceGroup<string> label={t("portal.services.new.category")} value={category} onChange={setCategory} choices={CATEGORIES.map((value) => ({ value, label: t(`directory.category.${value}`) }))} />
+      <View style={{ gap: spacing[1] }}><Text style={styles.label}>{t("portal.services.new.category")}</Text><FilterSelect label={t("portal.services.new.category")} value={category} onChange={setCategory} options={CATEGORIES.map((value) => ({ value, label: t(`directory.category.${value}`) }))} testID="listing-category" /></View>
       <Field label={t("portal.services.new.price")} value={price} onChange={setPrice} help={t("portal.services.new.priceHelp")} keyboardType="decimal-pad" testID="listing-price" />
       <Field label={t("portal.services.new.whatsapp")} value={whatsapp} onChange={setWhatsapp} help={t("portal.services.new.destinationsHelp")} keyboardType="url" testID="listing-whatsapp" />
       <Text accessibilityRole="header" style={styles.subtitle}>{t("portal.services.new.fulfillmentTitle")}</Text>
@@ -128,7 +126,8 @@ function NewOffer({ providerId, onClose, onCreated }: { readonly providerId: str
 
 /**
  * D5/D6/D8 · Offers: services, products and their delivery terms as ONE list with a state (draft / published).
- * The backend has no edit, archive or delete of an offer (provider-catalog), so the row offers only "Publish".
+ * «Nueva oferta» is the single primary action (top right of the header, bottom bar on a phone) and hides while the form is open, which has its own bar.
+ * The backend has no edit, archive or delete of an offer (provider-catalog), so the row offers only "Publish", inside its menu.
  */
 function Offers({ provider }: { readonly provider: Provider }): ReactNode {
   const t = useT();
@@ -141,22 +140,20 @@ function Offers({ provider }: { readonly provider: Provider }): ReactNode {
   const [adding, setAdding] = useState(false);
   const [created, setCreated] = useState(false);
   const items = listings.data?.items ?? [];
+  const open = (): void => { setCreated(false); setAdding(true); };
+  usePortalHeader(adding || !listings.data ? undefined : { label: t("portal.services.add"), onPress: open, testID: "offer-new" });
   return (
     <View style={{ gap: spacing[4] }}>
       <PageIntro>{t("portal.services.intro")}</PageIntro>
       {created ? <SuccessNote message={t("portal.services.new.created")} /> : null}
       {adding ? <NewOffer providerId={provider.id} onClose={() => setAdding(false)} onCreated={() => { setCreated(true); setAdding(false); }} /> : null}
-      {listings.isPending ? <RowsSkeleton count={3} minHeight={132} /> : listings.isError ? <PortalErrorState error={listings.error} onRetry={() => { void listings.refetch(); }} /> : items.length === 0 ? (
-        adding ? null : <EmptyState illustration="noOffers" title={t("portal.services.emptyTitle")} body={t("portal.services.empty")} action={<ActionButton label={t("portal.services.emptyAction")} onPress={() => { setCreated(false); setAdding(true); }} testID="offer-new" />} />
+      {listings.isPending ? <RowsSkeleton count={3} minHeight={110} /> : listings.isError ? <PortalErrorState error={listings.error} onRetry={() => { void listings.refetch(); }} /> : items.length === 0 ? (
+        adding ? null : <EmptyState illustration="noOffers" title={t("portal.services.emptyTitle")} body={t("portal.services.empty")} />
       ) : (
         <View style={{ maxWidth: 720 }}>
-          <View style={[styles.row, { justifyContent: "space-between", paddingBottom: spacing[2] }]}>
-            <Text accessibilityRole="header" style={styles.subtitle}>{t("portal.services.listTitle", { count: items.length })}</Text>
-            {adding ? null : <ActionButton label={t("portal.services.add")} onPress={() => { setCreated(false); setAdding(true); }} testID="offer-new" />}
-          </View>
           {publish.isSuccess ? <Enter key={String(publish.submittedAt)} from="down"><View style={[styles.row, { flexWrap: "nowrap", paddingBottom: spacing[3] }]} testID="offer-published"><Illustration name="offerPublished" tone="auto" size="sm" /><View style={{ flex: 1 }}><SuccessNote message={t("portal.services.publishedNote")} detail={t("portal.services.publishedDetail")} /></View></View></Enter> : null}
           <Stagger>{items.map((listing) => <OfferRow key={listing.id} provider={provider} listing={listing} publishing={publish.isPending && publish.variables === listing.id} onPublish={() => publishOnce(listing.id)} />)}</Stagger>
-          <Notice>{t("portal.delivery.fixedNote")}</Notice>
+          <Text style={[styles.muted, { paddingTop: spacing[3] }]}>{t("portal.delivery.fixedNote")}</Text>
         </View>
       )}
       <ErrorNotice error={publish.error} onRetry={() => { if (publish.variables) publishOnce(publish.variables); }} />

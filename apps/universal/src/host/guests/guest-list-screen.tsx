@@ -6,8 +6,8 @@ import { useGuestGroups, useGuestList, type GuestListFilters, type RsvpStatus } 
 import { useApiClient, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { guestDetailPath, HOST_ROUTES, withCelebration } from "../routes";
-import { ActionButton, EmptyState, useStyles } from "../ui";
-import { CompactPicker, FreshnessLine, GUEST_ROW_HEIGHT, GuestListSkeleton, GuestRow, MoreOptions, RetryNotice, StatusFilter, TextAction } from "./parts";
+import { ActionButton, EmptyState, FilterSelect, OverflowMenu, useStyles } from "../ui";
+import { FreshnessLine, GUEST_ROW_HEIGHT, GuestListSkeleton, GuestRow, RetryNotice, TextAction } from "./parts";
 import { GUEST_SETTINGS_PATH } from "./settings-input";
 import { lastPageOffset } from "./paging";
 import { notYetListed } from "./recent-guests";
@@ -32,7 +32,8 @@ function GroupFilter({ celebrationId, value, onChange }: { readonly celebrationI
   const groups = useGuestGroups(useApiClient(), celebrationId);
   const items = groups.data?.items ?? [];
   if (items.length === 0 && value === "") return null;
-  return <CompactPicker testID="group-filter" label={t("guests.list.groupFilter")} value={value} onChange={onChange} options={[{ value: "", label: t("guests.list.allGroups") }, ...items.map((item) => ({ value: item.id, label: `${item.name} (${item.memberCount})` }))]} />;
+  // Group names can be long: the picker is capped so the three controls keep one row on a wide screen.
+  return <View style={{ maxWidth: 240, flexShrink: 1, minWidth: 0 }}><FilterSelect testID="group-filter" label={t("guests.list.groupFilter")} value={value} onChange={onChange} options={[{ value: "", label: t("guests.list.allGroups") }, ...items.map((item) => ({ value: item.id, label: item.name, count: item.memberCount }))]} /></View>;
 }
 
 function ListBody({ celebrationId, timeZone, onNavigate }: { readonly celebrationId: string; readonly timeZone: string; readonly onNavigate: (href: string) => void }): ReactNode {
@@ -68,33 +69,22 @@ function ListBody({ celebrationId, timeZone, onNavigate }: { readonly celebratio
     return () => clearTimeout(timer);
   }, [appearing.length, tick, refetch]);
   const empty = Boolean(data) && !list.isError && data?.total === 0 && !filtered && appearing.length === 0;
-  const addGuest = <ActionButton label={t("guests.list.add")} onPress={go(HOST_ROUTES.guestNew)} testID="add-guest" />;
   return (
     <View style={{ gap: spacing[4] }}>
-      <View style={{ gap: spacing[2] }}>
-        {empty ? null : <View style={{ alignItems: "flex-start" }}>{addGuest}</View>}
-        <MoreOptions label={t("guests.more")} testID="guests-more">
-          <View style={styles.row}>
-            <ActionButton variant="secondary" label={t("guests.list.import")} onPress={go(HOST_ROUTES.guestImport)} />
-            <ActionButton variant="secondary" label={t("guests.list.groups")} onPress={go(HOST_ROUTES.guestGroups)} />
-            <ActionButton variant="secondary" label={t("guests.list.settings")} onPress={go(GUEST_SETTINGS_PATH)} testID="guest-settings" />
-          </View>
-        </MoreOptions>
-      </View>
       {empty ? null : (
-        <>
-          <View>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: spacing[3] }}>
+          <View style={{ flexGrow: 1, flexBasis: 240, minWidth: 0 }}>
             <TextInput accessibilityLabel={t("guests.list.search")} placeholder={t("guests.list.search")} placeholderTextColor={palette.textMuted} value={search} onChangeText={(value) => { setSearch(value); setOffset(0); }} autoCapitalize="none" returnKeyType="search" maxLength={SEARCH_MAX} style={styles.input} testID="guest-search" />
           </View>
-          <StatusFilter label={t("guests.list.filterLabel")} value={status} onChange={(value) => { setStatus(value as RsvpStatus | "ALL"); setOffset(0); }} options={FILTERS.map((value) => ({ value, label: value === "ALL" ? t("guests.list.all") : t(`guests.status.${value}`) }))} />
+          <FilterSelect testID="status-filter" label={t("guests.list.filterLabel")} value={status} onChange={(value) => { setStatus(value as RsvpStatus | "ALL"); setOffset(0); }} options={FILTERS.map((value) => ({ value, label: value === "ALL" ? t("guests.list.all") : t(`guests.status.${value}`) }))} />
           {data ? <GroupFilter celebrationId={celebrationId} value={group} onChange={(value) => { setGroup(value); setOffset(0); }} /> : null}
-        </>
+        </View>
       )}
       {list.isPending ? <GuestListSkeleton /> : null}
       {list.isError ? <RetryNotice error={list.error} onRetry={() => { void list.refetch(); }} /> : null}
       {data && !list.isError ? (
         <View style={{ gap: spacing[3] }} accessibilityLiveRegion="polite">
-          {empty ? <EmptyState illustration="guestsEmpty" title={t("guests.list.emptyTitle")} body={t("guests.list.empty")} action={<View style={{ alignItems: "center", gap: spacing[1] }}>{addGuest}<TextAction label={t("guests.list.import")} onPress={go(HOST_ROUTES.guestImport)} /></View>} />
+          {empty ? <EmptyState illustration="guestsEmpty" title={t("guests.list.emptyTitle")} body={t("guests.list.empty")} action={<TextAction label={t("guests.list.import")} onPress={go(HOST_ROUTES.guestImport)} />} />
             : data.items.length === 0 && appearing.length === 0 ? <EmptyState illustration="emptySearch" title={t("guests.list.emptyFilteredTitle")} body={t("guests.list.emptyFiltered")} /> : (
             <View role="list" style={{ borderRadius: radius.lg, borderWidth: 1, borderColor: palette.border, backgroundColor: palette.surface, overflow: "hidden" }}>
               {appearing.map((guest) => (
@@ -133,6 +123,18 @@ function ListBody({ celebrationId, timeZone, onNavigate }: { readonly celebratio
 
 export function GuestListScreen(props: ScreenProps): ReactNode {
   const t = useT();
-  return <CelebrationScreen {...props} current="guests" title={t("guests.list.title")} intro={t("guests.list.intro")}>{({ celebration }) => <ListBody celebrationId={celebration.id} timeZone={celebration.timeZone} onNavigate={props.onNavigate} />}</CelebrationScreen>;
+  const go = (path: string, celebrationId: string) => () => props.onNavigate(withCelebration(path, celebrationId));
+  return (
+    <CelebrationScreen {...props} current="guests" title={t("guests.list.title")} intro={t("guests.list.intro")}
+      actions={({ celebration }) => <ActionButton label={t("guests.list.add")} onPress={go(HOST_ROUTES.guestNew, celebration.id)} testID="add-guest" />}
+      menu={({ celebration }) => (
+        <OverflowMenu label={t("guests.more")} testID="guests-more" items={[
+          { key: "import", label: t("guests.list.import"), onPress: go(HOST_ROUTES.guestImport, celebration.id) },
+          { key: "groups", label: t("guests.list.groups"), onPress: go(HOST_ROUTES.guestGroups, celebration.id) },
+          { key: "settings", label: t("guests.list.settings"), testID: "guest-settings", onPress: go(GUEST_SETTINGS_PATH, celebration.id) }
+        ]} />
+      )}>
+      {({ celebration }) => <ListBody celebrationId={celebration.id} timeZone={celebration.timeZone} onNavigate={props.onNavigate} />}
+    </CelebrationScreen>
+  );
 }
-

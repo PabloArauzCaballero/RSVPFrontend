@@ -268,7 +268,7 @@ export function GuestRsvpScreen({ slug, token }: GuestRsvpScreenProps): ReactNod
         {saved === "first" ? null : <DeadlineLine state={state} />}
         <CountdownLine deadline={state.deadline} />
       </View>
-      {editing ? form : <View style={{ gap: spacing[2] }}><ActionButton variant="secondary" label={t("rsvp.invite.edit")} onPress={() => { setSaved(null); setEditing(true); }} testID="rsvp-edit" />{saved === "first" ? null : <Text style={styles.muted}>{t("rsvp.invite.editHint")}</Text>}</View>}
+      {editing ? form : <ActionButton variant="secondary" label={t("rsvp.invite.edit")} onPress={() => { setSaved(null); setEditing(true); }} testID="rsvp-edit" />}
     </GuestFrame>
   );
 }
@@ -316,10 +316,10 @@ function AnswerForm({ celebrationId, token, state, allowed, mode, onSaved, onClo
       {draft.status ? <ExtrasFields dietaryNotes={draft.dietaryNotes} message={draft.message} onChange={change} errors={errors} /> : null}
       {Object.keys(errors).length ? <Text accessibilityRole="alert" style={[styles.muted, { color: palette.danger }]}>{t("rsvp.invite.errors.summary")}</Text> : null}
       {failure ? <FailureNotice failure={failure} busy={busy} onRetry={() => { void submit(); }} /> : null}
-      <View style={{ gap: spacing[2] }}>
+      <StickyActions>
         <ActionButton testID="rsvp-submit" label={label} busy={busy} onPress={() => { void submit(); }} />
         {onCancel ? <ActionButton variant="secondary" label={t("rsvp.invite.cancelEdit")} disabled={busy} onPress={onCancel} testID="rsvp-cancel-edit" /> : null}
-      </View>
+      </StickyActions>
     </View>
   );
 }

@@ -2,11 +2,11 @@ import type { ReactNode } from "react";
 import { Text, View } from "react-native";
 import { brand, onNight, radius, spacing } from "@rsvp/design-tokens";
 import { BrandBand, Enter, Illustration, Skeleton, SkeletonList, useColors } from "@rsvp/ui";
-import { countdownTo, useGuestSummary, useHostReservations, usePublishCheck, type Celebration } from "@rsvp/query-hooks";
+import { countdownTo, useCelebration, useGuestSummary, useHostReservations, usePublishCheck, type Celebration } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
-import { ActionButton, CheckMark, EmptyState, useStyles } from "../ui";
+import { ActionButton, EmptyState, useStyles } from "../ui";
 import { FreshnessLine, RetryNotice, TextAction } from "./parts";
 
 
@@ -68,23 +68,6 @@ function ResponseBar({ confirmed, declined, total }: { readonly confirmed: numbe
   );
 }
 
-/** A milestone of the celebration: the drawn check when reached, an empty ring when not. The words say the state too. */
-function StepRow({ done, title, detail, testID }: { readonly done: boolean; readonly title: string; readonly detail: string; readonly testID?: string }): ReactNode {
-  const styles = useStyles();
-  const palette = useColors();
-  return (
-    <View {...(testID ? { testID } : {})} accessible accessibilityLabel={`${title}: ${detail}`} style={{ flexDirection: "row", alignItems: "center", gap: spacing[3], minHeight: 44 }}>
-      <View style={{ width: 28, height: 28, alignItems: "center", justifyContent: "center" }}>
-        {done ? <CheckMark size={28} tone="brand" /> : <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: palette.fieldBorder }} />}
-      </View>
-      <View style={{ flex: 1, minWidth: 0 }}>
-        <Text style={[styles.label, { fontSize: 16 }]}>{title}</Text>
-        <Text style={styles.muted}>{detail}</Text>
-      </View>
-    </View>
-  );
-}
-
 function deadlineLine(celebration: Celebration, t: ReturnType<typeof useT>, now: number): string {
   const deadline = celebration.settings.rsvpDeadline;
   if (!deadline) return t("guests.summary.noDeadline");
@@ -93,8 +76,8 @@ function deadlineLine(celebration: Celebration, t: ReturnType<typeof useT>, now:
   return !left || left.days === 0 ? t("guests.summary.deadlineToday") : t("guests.summary.daysToDeadline", { count: left.days });
 }
 
-/** The one thing to do now: a night band with the woven texture, its single primary button, and a soft entrance each time the step changes. */
-function NextCard({ step, onGo, t }: { readonly step: Exclude<NextStep, { kind: "done" | "addGuests" }>; readonly onGo: () => void; readonly t: ReturnType<typeof useT> }): ReactNode {
+/** The one thing to do now, said in a night band with the woven texture and a soft entrance each time the step changes. Its button lives in the header (top right), where every screen keeps its single primary action. */
+function NextCard({ step, t }: { readonly step: Exclude<NextStep, { kind: "done" | "addGuests" }>; readonly t: ReturnType<typeof useT> }): ReactNode {
   const palette = useColors();
   const base = `guests.summary.next.${step.kind}`;
   const count = step.kind === "finish" ? step.missing : step.kind === "publish" ? 0 : step.count;
@@ -106,7 +89,6 @@ function NextCard({ step, onGo, t }: { readonly step: Exclude<NextStep, { kind: 
         <BrandBand tone="night" art="ready" style={{ borderWidth: 1, borderColor: palette.border }}>
           <Text accessibilityRole="header" aria-level={2} style={{ color: onNight, fontSize: 28, lineHeight: 32, fontWeight: "800", letterSpacing: -0.7 }}>{title}</Text>
           <Text style={{ color: brand.niebla, fontSize: 16, lineHeight: 24, maxWidth: 520 }}>{body}</Text>
-          <View style={{ alignItems: "flex-start", paddingTop: spacing[2] }}><ActionButton label={t(`${base}.action`)} onPress={onGo} testID="next-step-action" /></View>
         </BrandBand>
       </View>
     </Enter>
@@ -126,16 +108,26 @@ function SummarySkeleton(): ReactNode {
   );
 }
 
-function SummaryBody({ celebration, onNavigate }: { readonly celebration: Celebration; readonly onNavigate: (href: string) => void }): ReactNode {
+/** The panel's reads and the one next step, lifted to the screen so the header can carry the step's button while the body explains it. */
+function useSummary(celebrationId: string | undefined, status: Celebration["status"] | undefined) {
+  const client = useApiClient();
+  const id = celebrationId ?? "";
+  const summary = useGuestSummary(client, id);
+  // Support reads never block the panel: if one fails, its step is simply left out.
+  const published = status !== "DRAFT";
+  const check = usePublishCheck(client, published ? "" : id);
+  const gifts = useHostReservations(client, id, "PENDING_REVIEW");
+  const data = summary.data;
+  const step = data && status ? nextStep({ published, ready: check.data ? check.data.ready : null, missing: check.data?.missingFields.length ?? 0, total: data.total, pending: data.pending, openRequests: data.openCompanionRequests, pendingGifts: gifts.data?.items.length ?? 0 }) : null;
+  return { summary, step };
+}
+type SummaryState = ReturnType<typeof useSummary>;
+
+function SummaryBody({ celebration, state, onNavigate }: { readonly celebration: Celebration; readonly state: SummaryState; readonly onNavigate: (href: string) => void }): ReactNode {
   const styles = useStyles();
   const palette = useColors();
   const t = useT();
-  const client = useApiClient();
-  const summary = useGuestSummary(client, celebration.id);
-  const published = celebration.status !== "DRAFT";
-  // Support reads never block the panel: if one fails, its step is simply left out.
-  const check = usePublishCheck(client, published ? "" : celebration.id);
-  const gifts = useHostReservations(client, celebration.id, "PENDING_REVIEW");
+  const { summary, step } = state;
   const go = (path: string) => () => onNavigate(withCelebration(path, celebration.id));
   if (summary.isPending) return <SummarySkeleton />;
   if (summary.isError) return <RetryNotice error={summary.error} onRetry={() => { void summary.refetch(); }} />;
@@ -143,12 +135,11 @@ function SummaryBody({ celebration, onNavigate }: { readonly celebration: Celebr
   // Authoritative total from the read model (contract v1.9.0), not the size of a page of requests.
   const open = data.openCompanionRequests;
   const answered = data.confirmed + data.declined;
-  const step = nextStep({ published, ready: check.data ? check.data.ready : null, missing: check.data?.missingFields.length ?? 0, total: data.total, pending: data.pending, openRequests: open, pendingGifts: gifts.data?.items.length ?? 0 });
   return (
     <View style={{ gap: spacing[5] }}>
-      {step.kind === "addGuests" ? <Enter key="addGuests" from="down"><EmptyState illustration="welcomeHost" title={t("guests.summary.welcome.title")} body={t("guests.summary.welcome.body")} action={<ActionButton label={t("guests.summary.welcome.action")} onPress={go(STEP_ROUTE.addGuests)} testID="next-step-action" />} /></Enter> : null}
-      {step.kind === "done" ? <Enter key="done" from="down"><View role="status"><EmptyState illustration="success" title={t("guests.summary.next.done.title")} body={t("guests.summary.next.done.body")} /></View></Enter> : null}
-      {answered === 1 && step.kind !== "addGuests" && step.kind !== "done" ? (
+      {step?.kind === "addGuests" ? <Enter key="addGuests" from="down"><EmptyState illustration="welcomeHost" title={t("guests.summary.welcome.title")} body={t("guests.summary.welcome.body")} /></Enter> : null}
+      {step?.kind === "done" ? <Enter key="done" from="down"><View role="status"><EmptyState illustration="success" title={t("guests.summary.next.done.title")} body={t("guests.summary.next.done.body")} /></View></Enter> : null}
+      {answered === 1 && step && step.kind !== "addGuests" && step.kind !== "done" ? (
         <Enter from="down">
           <View testID="first-reply" role="status" style={{ flexDirection: "row", alignItems: "center", gap: spacing[4] }}>
             <Illustration name="firstReply" tone="auto" size="sm" />
@@ -156,36 +147,43 @@ function SummaryBody({ celebration, onNavigate }: { readonly celebration: Celebr
           </View>
         </Enter>
       ) : null}
-      {step.kind !== "addGuests" && step.kind !== "done" ? <NextCard step={step} t={t} onGo={go(STEP_ROUTE[step.kind])} /> : null}
-      <View style={[styles.card, { gap: spacing[4] }]}>
-        <Text accessibilityRole="header" aria-level={2} style={styles.subtitle}>{t("guests.summary.progressTitle")}</Text>
-        <View style={{ gap: spacing[1] }}>
-          <StepRow testID="step-published" done={published} title={t("guests.summary.steps.published")} detail={published ? t("guests.summary.steps.publishedDone") : t("guests.summary.steps.publishedTodo")} />
-          <StepRow testID="step-guests" done={data.total > 0} title={t("guests.summary.steps.guests")} detail={data.total > 0 ? t("guests.summary.steps.guestsSome", { count: data.total }) : t("guests.summary.steps.guestsNone")} />
-          <StepRow testID="step-answers" done={data.total > 0 && data.pending === 0} title={t("guests.summary.steps.answers")} detail={data.total > 0 ? t("guests.summary.steps.answersSome", { answered, total: data.total }) : t("guests.summary.steps.answersNone")} />
-        </View>
-        {data.total > 0 ? (
-          <View style={{ gap: spacing[3] }}>
-            <ResponseBar confirmed={data.confirmed} declined={data.declined} total={data.total} />
-            <View style={{ flexDirection: "row", flexWrap: "wrap", columnGap: spacing[6], rowGap: spacing[2] }}>
-              <LegendItem testID="count-confirmed" label={t("guests.summary.confirmed")} value={data.confirmed} swatch={palette.primary} />
-              <LegendItem testID="count-pending" label={t("guests.summary.pending")} value={data.pending} swatch={palette.surfaceMuted} />
-              <LegendItem testID="count-declined" label={t("guests.summary.declined")} value={data.declined} swatch={palette.textMuted} />
-              <LegendItem testID="count-companions" label={t("guests.summary.companions")} value={data.companions} swatch={brand.ambar} />
-              <LegendItem testID="count-total" label={t("guests.summary.total")} value={data.total} swatch={palette.surface} />
-            </View>
+      {step && step.kind !== "addGuests" && step.kind !== "done" ? <NextCard step={step} t={t} /> : null}
+      {step?.kind === "addGuests" ? null : (
+        <View style={[styles.card, { gap: spacing[4] }]}>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", columnGap: spacing[4] }}>
+            <Text accessibilityRole="header" aria-level={2} style={styles.subtitle}>{t("guests.summary.progressTitle")}</Text>
+            {data.total > 0 ? <TextAction label={t("guests.summary.viewGuests")} onPress={go(HOST_ROUTES.guests)} /> : null}
           </View>
-        ) : null}
-        <Text style={styles.muted}>{deadlineLine(celebration, t, Date.now())}</Text>
-        {open && step.kind !== "requests" ? <Text testID="open-requests" style={styles.muted}>{t("guests.summary.openRequests", { count: open })}</Text> : null}
-        {data.total > 0 ? <TextAction label={t("guests.summary.viewGuests")} onPress={go(HOST_ROUTES.guests)} /> : null}
-        <FreshnessLine freshness={data.freshness} timeZone={celebration.timeZone} onRefresh={() => { void summary.refetch(); }} />
-      </View>
+          <Text testID="step-answers" style={[styles.label, { fontSize: 16 }]}>{data.total > 0 ? t("guests.summary.steps.answersSome", { answered, total: data.total }) : t("guests.summary.steps.answersNone")}</Text>
+          {data.total > 0 ? (
+            <View style={{ gap: spacing[3] }}>
+              <ResponseBar confirmed={data.confirmed} declined={data.declined} total={data.total} />
+              <View style={{ flexDirection: "row", flexWrap: "wrap", columnGap: spacing[6], rowGap: spacing[2] }}>
+                <LegendItem testID="count-confirmed" label={t("guests.summary.confirmed")} value={data.confirmed} swatch={palette.primary} />
+                <LegendItem testID="count-pending" label={t("guests.summary.pending")} value={data.pending} swatch={palette.surfaceMuted} />
+                <LegendItem testID="count-declined" label={t("guests.summary.declined")} value={data.declined} swatch={palette.textMuted} />
+                <LegendItem testID="count-companions" label={t("guests.summary.companions")} value={data.companions} swatch={brand.ambar} />
+                <LegendItem testID="count-total" label={t("guests.summary.total")} value={data.total} swatch={palette.surface} />
+              </View>
+            </View>
+          ) : null}
+          <Text style={styles.muted}>{deadlineLine(celebration, t, Date.now())}</Text>
+          {open && step?.kind !== "requests" ? <Text testID="open-requests" style={styles.muted}>{t("guests.summary.openRequests", { count: open })}</Text> : null}
+          <FreshnessLine freshness={data.freshness} timeZone={celebration.timeZone} onRefresh={() => { void summary.refetch(); }} />
+        </View>
+      )}
     </View>
   );
 }
 
 export function SummaryScreen(props: ScreenProps): ReactNode {
   const t = useT();
-  return <CelebrationScreen {...props} current="summary" title={t("guests.summary.title")} intro={t("guests.summary.intro")}>{({ celebration }) => <SummaryBody celebration={celebration} onNavigate={props.onNavigate} />}</CelebrationScreen>;
+  const client = useApiClient();
+  const celebration = useCelebration(client, props.celebrationId ?? "").data;
+  const state = useSummary(props.celebrationId, celebration?.status);
+  const { step } = state;
+  const action = step && step.kind !== "done"
+    ? <ActionButton label={step.kind === "addGuests" ? t("guests.summary.welcome.action") : t(`guests.summary.next.${step.kind}.action`)} onPress={() => props.onNavigate(withCelebration(STEP_ROUTE[step.kind], props.celebrationId))} testID="next-step-action" />
+    : undefined;
+  return <CelebrationScreen {...props} current="summary" title={t("guests.summary.title")} intro={t("guests.summary.intro")} actions={action}>{({ celebration: loaded }) => <SummaryBody celebration={loaded} state={state} onNavigate={props.onNavigate} />}</CelebrationScreen>;
 }

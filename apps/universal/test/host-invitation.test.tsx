@@ -39,10 +39,12 @@ describe("parts of the invitation and their progress", () => {
   it("the save bar says where the work stands and the preview shows what was typed before saving", async () => {
     const { client, calls } = fakeClient({ ...baseHandlers(), "PATCH /celebrations/c-1": () => ({ ...CELEBRATION, version: 4 }) });
     renderApp(<ContentEditorScreen section="general" celebrationId="c-1" onNavigate={navigate} />, client);
-    expect(await screen.findByText("Todo guardado.")).toBeTruthy();
+    await screen.findByTestId("save-content");
+    expect(screen.queryByText("Tienes cambios sin guardar.")).toBeNull();
     fireEvent.change(screen.getByLabelText("Nombre de la celebración"), { target: { value: "Boda de Ana y Luis" } });
     expect(screen.getByText("Tienes cambios sin guardar.")).toBeTruthy();
-    fireEvent.click(screen.getByTestId("view-preview"));
+    fireEvent.click(screen.getByRole("button", { name: "Más opciones" }));
+    fireEvent.click(await screen.findByTestId("view-preview"));
     expect(await screen.findByRole("dialog", { name: "Así la ven tus invitados" })).toBeTruthy();
     await waitFor(() => expect(screen.getByTestId("preview-mobile").textContent).toContain("Boda de Ana y Luis"));
     expect(calls.some((call) => call.method === "PATCH")).toBe(false);
@@ -91,7 +93,8 @@ describe("photos, languages and styles: empty and failed states", () => {
     expect(screen.getByTestId("preview-mobile").textContent).toContain("Ana y Luis");
     fireEvent.click(screen.getByTestId("apply-template"));
     expect(await screen.findByText("Listo, tu invitación ahora usa Minimalista.")).toBeTruthy();
-    fireEvent.click(screen.getByText("Verlo a tamaño real"));
+    fireEvent.click(screen.getByRole("button", { name: "Más opciones" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Verlo a tamaño real" }));
     expect(navigate).toHaveBeenCalledWith("/preview?c=c-1");
   });
 

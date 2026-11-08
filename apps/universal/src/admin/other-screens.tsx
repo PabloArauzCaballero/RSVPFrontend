@@ -6,7 +6,7 @@ import { useIdentitySummary, useProviderSummary } from "@rsvp/query-hooks/admin"
 import { spacing } from "@rsvp/design-tokens";
 import { Illustration, Stagger, useColors } from "@rsvp/ui";
 import { useApiClient, useT } from "../platform/providers";
-import { ActionButton, ConfirmDialog, Notice, PageIntro, Section, useStyles } from "../host/ui";
+import { ActionButton, ConfirmDialog, Notice, OverflowMenu, PageIntro, Section, useStyles } from "../host/ui";
 import { AdminScreen } from "./admin-screen";
 import { AdminErrorNotice, Stack } from "./shared";
 import { useSingleMutation } from "../platform/single-flight";
@@ -137,7 +137,12 @@ export function OperationsScreen({ onNavigate }: Nav): ReactNode {
   const replayOnce = useSingleMutation(replay);
   const [confirm, setConfirm] = useState(false);
   return (
-    <AdminScreen title={t("admin.operations.title")} current="operations" onNavigate={onNavigate}>
+    <AdminScreen title={t("admin.operations.title")} current="operations" onNavigate={onNavigate}
+      actions={<ActionButton label={t("admin.operations.replay")} busy={replay.isPending} onPress={() => setConfirm(true)} testID="replay" />}
+      menu={<OverflowMenu label={t("admin.dashboard.more")} items={[
+        { key: "grafana", label: t("admin.operations.grafana"), onPress: () => { void Linking.openURL(GRAFANA_URL); } },
+        { key: "rabbit", label: t("admin.operations.rabbit"), onPress: () => { void Linking.openURL(RABBIT_URL); } }
+      ]} />}>
       <Stack>
       <PageIntro>{t("admin.operations.intro")}</PageIntro>
       <Section title={t("admin.operations.services")}>
@@ -153,15 +158,8 @@ export function OperationsScreen({ onNavigate }: Nav): ReactNode {
         ) : null}
         <Stagger>{(health.data ?? []).map((service) => <StateRow key={service.name} ok={service.up} text={`${service.name}: ${service.up ? t("admin.operations.healthy") : t("admin.operations.down")}`} />)}</Stagger>
       </Section>
-      <Section title={t("admin.operations.replay")}>
-        <ActionButton label={t("admin.operations.replay")} busy={replay.isPending} onPress={() => setConfirm(true)} testID="replay" />
-        {replay.data ? <Notice kind="success">{t("admin.operations.replayDone", { count: replay.data.applied })}</Notice> : null}
-        <AdminErrorNotice error={replay.error} onRetry={() => replayOnce()} />
-      </Section>
-      <View style={styles.row}>
-        <ActionButton variant="secondary" label={t("admin.operations.grafana")} onPress={() => { void Linking.openURL(GRAFANA_URL); }} />
-        <ActionButton variant="secondary" label={t("admin.operations.rabbit")} onPress={() => { void Linking.openURL(RABBIT_URL); }} />
-      </View>
+      {replay.data ? <Notice kind="success">{t("admin.operations.replayDone", { count: replay.data.applied })}</Notice> : null}
+      <AdminErrorNotice error={replay.error} onRetry={() => replayOnce()} />
       <ConfirmDialog visible={confirm} title={t("admin.operations.replay")} body={t("admin.operations.replayConfirm")} confirmLabel={t("host.common.confirm")} onCancel={() => setConfirm(false)} onConfirm={() => { setConfirm(false); replayOnce(); }} />
       </Stack>
     </AdminScreen>

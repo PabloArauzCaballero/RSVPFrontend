@@ -3,7 +3,7 @@ import { Text, View } from "react-native";
 import { supportedLocales } from "@rsvp/i18n";
 import { useEditCelebration, useUpdateSettings, type Celebration } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../platform/providers";
-import { CelebrationScreen, type ScreenProps } from "./gate";
+import { CelebrationScreen, useScreenHeader, type ScreenProps } from "./gate";
 import { toWallClock, wallClockAt } from "./content-draft";
 import { CURRENCIES, TIME_ZONES } from "./onboarding";
 import { useSingleFlight } from "../platform/single-flight";
@@ -11,7 +11,7 @@ import { CelebrationErrorNotice } from "./celebration-errors";
 import { AuditSection, EventTypeSection, TeamSection } from "./settings-extras";
 import { spacing } from "@rsvp/design-tokens";
 import { MoreOptions } from "./more-options";
-import { ActionButton, ChoiceGroup, Field, Notice, Section, ToggleChip, useStyles } from "./ui";
+import { ActionButton, ChoiceGroup, Field, FilterSelect, Notice, Section, ToggleChip, useStyles } from "./ui";
 import { ThemeChoice } from "./theme-choice";
 
 /** C17 · Languages, time zone, currency and RSVP deadline, with a preview of the effect (REQ-F13-01/06). */
@@ -61,19 +61,37 @@ function SettingsForm({ celebration, refetch, onSaved, moreOpen, onMoreOpen }: {
   const entered = wall.ok ? wall.value : null;
   const zones = TIME_ZONES.includes(celebration.timeZone as (typeof TIME_ZONES)[number]) ? [...TIME_ZONES] : [...TIME_ZONES, celebration.timeZone];
 
-  const saveGeneral = (): void => {
-    onSaved(null);
-    const supported = languages.includes(defaultLocale) ? languages : [...languages, defaultLocale];
-    once((release) => { edit.mutateAsync({ target: celebration, patch: { supportedLocales: supported, defaultLocale, timeZone, currency } }).then(() => { onSaved(t("host.settings.saved")); refetch(); }, () => undefined).finally(release); });
-  };
-  // `entered` is null both for an empty form and for text that is not a date: only the explicit clear button may send null.
-  const saveDeadline = (clear: boolean): void => {
-    if (!clear && !wall.ok) { setInvalid(true); return; }
-    const value = clear ? null : entered;
+  const generalChanged = defaultLocale !== celebration.defaultLocale || timeZone !== celebration.timeZone || currency !== celebration.currency
+    || [...languages].sort().join() !== [...celebration.supportedLocales].sort().join();
+  const original = deadlineClock(celebration);
+  const deadlineChanged = deadline.date !== original.date || deadline.time !== original.time;
+
+  // One «Guardar» for the whole screen: the celebration (languages, zone, currency) and the deadline are two API calls, sent in turn
+  // with the version the first one returned, and only the ones that changed.
+  const save = (): void => {
+    if (deadlineChanged && !wall.ok) { setInvalid(true); return; }
     setInvalid(false);
     onSaved(null);
-    once((release) => { settings.mutateAsync({ target: celebration, patch: { rsvpDeadline: value } }).then(() => { onSaved(t("host.settings.saved")); refetch(); }, () => undefined).finally(release); });
+    once((release) => {
+      void (async () => {
+        let target: Celebration = celebration;
+        if (generalChanged) {
+          const supported = languages.includes(defaultLocale) ? languages : [...languages, defaultLocale];
+          target = await edit.mutateAsync({ target, patch: { supportedLocales: supported, defaultLocale, timeZone, currency } });
+        }
+        if (deadlineChanged) await settings.mutateAsync({ target, patch: { rsvpDeadline: entered } });
+        onSaved(t("host.settings.saved"));
+        refetch();
+      })().catch(() => undefined).finally(release);
+    });
   };
+  const clearDeadline = (): void => {
+    setInvalid(false);
+    onSaved(null);
+    once((release) => { settings.mutateAsync({ target: celebration, patch: { rsvpDeadline: null } }).then(() => { onSaved(t("host.settings.saved")); refetch(); }, () => undefined).finally(release); });
+  };
+  const busy = edit.isPending || settings.isPending;
+  useScreenHeader({ actions: <ActionButton label={busy ? t("host.common.saving") : t("host.common.save")} busy={busy} onPress={save} testID="save-settings" /> });
 
   return (
     <View style={{ gap: spacing[5] }}>
@@ -85,29 +103,33 @@ function SettingsForm({ celebration, refetch, onSaved, moreOpen, onMoreOpen }: {
               onPress={() => setLanguages((current) => (current.includes(code) ? current.filter((item) => item !== code || code === defaultLocale) : [...current, code]))} />
           ))}
         </View>
-        <ChoiceGroup label={t("host.settings.defaultLanguage")} value={defaultLocale} onChange={setDefaultLocale} choices={languages.map((code) => ({ value: code, label: t(`celebration.language.${code}`) }))} />
-        <ChoiceGroup label={t("host.settings.timeZone")} value={timeZone} onChange={setTimeZone} choices={zones.map((zone) => ({ value: zone, label: zone }))} />
-        <ChoiceGroup label={t("host.settings.currency")} value={currency} onChange={setCurrency} choices={CURRENCIES.map((code) => ({ value: code, label: code }))} />
-        <CelebrationErrorNotice error={edit.error} onReload={refetch} />
-        <ActionButton label={t("host.common.save")} busy={edit.isPending} onPress={saveGeneral} testID="save-settings" />
+        {languages.length > 1 ? <ChoiceGroup label={t("host.settings.defaultLanguage")} value={defaultLocale} onChange={setDefaultLocale} choices={languages.map((code) => ({ value: code, label: t(`celebration.language.${code}`) }))} /> : null}
       </Section>
       <Section title={t("host.settings.deadline.label")}>
         <View style={styles.row}>
           <View style={{ flexGrow: 1 }}><Field label={t("host.settings.deadline.date")} value={deadline.date} onChange={(date) => setDeadline((current) => ({ ...current, date }))} /></View>
           <View style={{ flexGrow: 1 }}><Field label={t("host.settings.deadline.time")} value={deadline.time} onChange={(time) => setDeadline((current) => ({ ...current, time }))} /></View>
         </View>
-        <Text style={styles.muted}>{t("host.settings.deadline.help", { timeZone: celebration.timeZone })}</Text>
-        {entered ? <Notice>{t("host.settings.deadline.effect", { date: entered.replace("T", " "), zone: zoneName(celebration.timeZone, celebration.defaultLocale) })}</Notice> : <Notice>{t("host.settings.deadline.none")}</Notice>}
-        {deadlinePassed(entered, celebration.timeZone) ? <Notice kind="error">{t("host.settings.deadline.past")}</Notice> : null}
+        <Text style={styles.muted}>{t("host.settings.deadline.help", { timeZone })}</Text>
+        {entered ? <Notice>{t("host.settings.deadline.effect", { date: entered.replace("T", " "), zone: zoneName(timeZone, celebration.defaultLocale) })}</Notice> : null}
+        {deadlinePassed(entered, timeZone) ? <Notice kind="error">{t("host.settings.deadline.past")}</Notice> : null}
         {invalid ? <Notice kind="error">{t("host.common.invalid", { detail: t("host.settings.deadline.label") })}</Notice> : null}
-        <CelebrationErrorNotice error={settings.error} onReload={refetch} />
-        <View style={styles.row}>
-          <ActionButton variant="secondary" label={t("host.common.save")} busy={settings.isPending} onPress={() => saveDeadline(false)} testID="save-deadline" />
-          {celebration.settings.rsvpDeadline ? <ActionButton variant="secondary" label={t("host.settings.deadline.clear")} onPress={() => saveDeadline(true)} /> : null}
-        </View>
+        {celebration.settings.rsvpDeadline ? <View style={styles.row}><ActionButton variant="secondary" label={t("host.settings.deadline.clear")} onPress={clearDeadline} testID="clear-deadline" /></View> : null}
       </Section>
+      <CelebrationErrorNotice error={edit.error ?? settings.error} onReload={refetch} />
       <Section title={t("theme.title")}><ThemeChoice /></Section>
       <MoreOptions label={t("host.settings.more")} testID="more-settings" open={moreOpen} onOpenChange={onMoreOpen}>
+        <Section title={t("host.settings.format")}>
+          <Text style={styles.muted}>{t("host.settings.formatHelp")}</Text>
+          <View style={{ gap: spacing[1], alignItems: "flex-start" }}>
+            <Text style={styles.label}>{t("host.settings.timeZone")}</Text>
+            <FilterSelect label={t("host.settings.timeZone")} value={timeZone} onChange={setTimeZone} options={zones.map((zone) => ({ value: zone, label: zone.replaceAll("_", " ") }))} testID="settings-time-zone" />
+          </View>
+          <View style={{ gap: spacing[1], alignItems: "flex-start" }}>
+            <Text style={styles.label}>{t("host.settings.currency")}</Text>
+            <FilterSelect label={t("host.settings.currency")} value={currency} onChange={setCurrency} options={CURRENCIES.map((code) => ({ value: code, label: code }))} testID="settings-currency" />
+          </View>
+        </Section>
         <EventTypeSection celebration={celebration} onSaved={onSaved} />
         <TeamSection celebration={celebration} onSaved={onSaved} />
         <AuditSection celebrationId={celebration.id} timeZone={celebration.timeZone} />

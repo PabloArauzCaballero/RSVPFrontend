@@ -4,7 +4,7 @@ import { missingFieldsOf, useMediaAssets, usePublicationAction, usePublishCheck,
 import type { Translate } from "@rsvp/i18n";
 import { formatDate } from "@rsvp/celebration-theme";
 import { useApiClient, useT } from "../platform/providers";
-import { CelebrationScreen, type ScreenProps } from "./gate";
+import { CelebrationScreen, useScreenHeader, type ScreenProps } from "./gate";
 import { asText } from "./content-draft";
 import { fieldLabel } from "./content-editor";
 import { publicUrl } from "./device-preview";
@@ -15,8 +15,7 @@ import { LIMITS, overLimit } from "./limits";
 import { radius, spacing } from "@rsvp/design-tokens";
 import { Enter, Illustration, MomentBackdrop, SkeletonList, Stagger } from "@rsvp/ui";
 import { Row, RowList } from "./gifts/offer-row";
-import { MoreOptions } from "./more-options";
-import { ActionButton, Celebrate, CheckMark, ConfirmDialog, Field, Notice, useStyles } from "./ui";
+import { ActionButton, Celebrate, CheckMark, ConfirmDialog, Field, Notice, OverflowMenu, useStyles } from "./ui";
 
 /** C16 · What is still missing (from the event type, via the API), publish and unpublish with confirmation, share. */
 
@@ -74,6 +73,17 @@ function Checklist({ celebration, eventType, onNavigate, refetch }: { readonly c
   const draft = celebration.status === "DRAFT";
   const ready = draft && check.isSuccess && !missing.length;
   const justPublished = action.isSuccess && action.variables?.action.kind === "publish";
+  // One action per state, top right (a fixed bar on a phone): publish a draft, copy the link of a published page. The rest is in «⋯».
+  const menuItems = [
+    ...(celebration.status === "PUBLISHED" ? [{ key: "unpublish", label: t("host.publish.unpublish"), onPress: () => setDialog("unpublish"), disabled: action.isPending, testID: "unpublish" }] : []),
+    { key: "archive", label: t("host.publish.archive"), onPress: () => setDialog("archive"), destructive: true, disabled: action.isPending, testID: "archive" }
+  ];
+  useScreenHeader({
+    actions: draft
+      ? <ActionButton label={t("host.publish.publish")} disabled={Boolean(missing.length) || !check.isSuccess} busy={action.isPending} onPress={() => setDialog("publish")} testID="publish" />
+      : celebration.status === "PUBLISHED" ? <ActionButton label={t("host.publish.copy")} onPress={() => { void share(); }} testID="copy-link" /> : null,
+    menu: celebration.status !== "ARCHIVED" ? <OverflowMenu testID="more-publish" items={menuItems} /> : null
+  });
   return (
     <View style={{ gap: spacing[5] }}>
       {check.isPending && draft ? <SkeletonList count={3} row={{ minHeight: 64, avatar: false, trailing: false }} label={t("host.common.loading")} /> : null}
@@ -117,7 +127,6 @@ function Checklist({ celebration, eventType, onNavigate, refetch }: { readonly c
               </View>
             </View>
           ) : null}
-          <View style={styles.row}><ActionButton label={t("host.publish.publish")} disabled={Boolean(missing.length) || !check.isSuccess} busy={action.isPending} onPress={() => setDialog("publish")} testID="publish" /></View>
         </View>
       ) : null}
       <CelebrationErrorNotice error={fromError.length ? null : action.error} onReload={() => { void check.refetch(); refetch(); }} />
@@ -130,7 +139,6 @@ function Checklist({ celebration, eventType, onNavigate, refetch }: { readonly c
                 <Text accessibilityRole="header" aria-level={2} style={styles.subtitle}>{t("host.publish.share")}</Text>
                 {justPublished ? null : <Text style={styles.muted}>{t("host.publish.status.PUBLISHED")}</Text>}
                 <Text selectable style={styles.body} accessibilityLabel={t("host.publish.link")}>{url}</Text>
-                <View style={styles.row}><ActionButton label={t("host.publish.copy")} onPress={() => { void share(); }} testID="copy-link" /></View>
                 {copied ? <Notice kind="success">{t("host.publish.copied")}</Notice> : null}
               </View>
             </View>
@@ -145,14 +153,6 @@ function Checklist({ celebration, eventType, onNavigate, refetch }: { readonly c
             </View>
           </View>
         </View>
-      ) : null}
-      {celebration.status !== "ARCHIVED" ? (
-        <MoreOptions label={t("host.publish.more")} testID="more-publish">
-          <View style={styles.row}>
-            {celebration.status === "PUBLISHED" ? <ActionButton variant="secondary" busy={action.isPending} label={t("host.publish.unpublish")} onPress={() => setDialog("unpublish")} testID="unpublish" /> : null}
-            <ActionButton variant="danger" busy={action.isPending} label={t("host.publish.archive")} onPress={() => setDialog("archive")} testID="archive" />
-          </View>
-        </MoreOptions>
       ) : null}
       <ConfirmDialog visible={dialog === "publish"} title={t("host.publish.publish")} body={t("host.publish.publishConfirm")} confirmLabel={t("host.publish.publish")} onConfirm={() => run("publish")} onCancel={() => setDialog(null)} />
       <ConfirmDialog visible={dialog === "unpublish"} title={t("host.publish.unpublish")} body={t("host.publish.unpublishConfirm")} confirmLabel={t("host.publish.unpublish")} onConfirm={() => run("unpublish")} onCancel={() => setDialog(null)}>

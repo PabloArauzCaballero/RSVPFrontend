@@ -61,8 +61,9 @@ describe("C2–C5 · picker and onboarding", () => {
     type("Nombre de la celebración", "XV de María");
     expect(field("Enlace de tu invitación").value).toBe("xv-de-maria");
     expect(calls.some((call) => call.method === "POST")).toBe(false);
-    fireEvent.click(screen.getByText("Cambiar zona horaria, idioma o moneda"));
-    fireEvent.click(screen.getByRole("radio", { name: "La Paz" }));
+    // zone, language and currency are under «Más opciones», as a selector, with the device's values already chosen
+    fireEvent.click(screen.getByTestId("onboarding-more"));
+    fireEvent.change(screen.getByTestId("onboarding-time-zone"), { target: { value: "America/La_Paz" } });
     fireEvent.click(screen.getByTestId("onboarding-create"));
     await waitFor(() => expect(navigate).toHaveBeenCalledWith("/onboarding/listo?c=c-new"));
     const created = calls.find((call) => call.method === "POST");
@@ -209,7 +210,10 @@ describe("C12 · gallery", () => {
     const assets = [{ id: "a1", isCover: true }, { id: "a2", isCover: false }].map((asset, index) => ({ ...asset, celebrationId: "c-1", filename: "f", contentType: "image/png", sizeBytes: 1, status: "PROCESSED" as const, width: 1, height: 1, sortOrder: index, variants: { thumb: "http://x/t.webp" } }));
     const { client, calls } = fakeClient({ ...baseHandlers(), "GET /media/celebrations/c-1/assets": () => ({ items: assets }), "PUT /media/celebrations/c-1/assets/order": () => ({ items: assets }) });
     renderApp(<GalleryEditorScreen celebrationId="c-1" onNavigate={navigate} pick={vi.fn()} />, client);
-    fireEvent.click(await screen.findByText("Usar como portada"));
+    // the cover is chosen from the photo's own «⋯» menu (only the photo that is not already the cover offers it)
+    const menu = await screen.findAllByRole("button", { name: /^Más opciones: / });
+    fireEvent.click(menu[1] as HTMLElement);
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Usar como portada" }));
     await waitFor(() => expect(calls.find((call) => call.method === "PUT")?.body).toEqual({ assetIds: ["a1", "a2"], coverAssetId: "a2" }));
   });
 });
@@ -277,8 +281,10 @@ describe("C17–C18 · settings and switches", () => {
     type((await screen.findByLabelText("Fecha (AAAA-MM-DD)")).getAttribute("aria-label") ?? "", "2020-01-01");
     type("Hora (HH:MM)", "10:00");
     expect(screen.getByText(/Esa fecha ya pasó/)).toBeTruthy();
-    fireEvent.click(screen.getByTestId("save-deadline"));
+    fireEvent.click(screen.getByTestId("save-settings"));
     await waitFor(() => expect(calls.find((call) => call.method === "PUT")?.body).toEqual({ rsvpDeadline: "2020-01-01T10:00" }));
+    // the single «Guardar» sends only what changed: the languages, zone and currency did not, so there is no PATCH
+    expect(calls.some((call) => call.method === "PATCH")).toBe(false);
   });
 
   it("REQ-F13-02/03/04 · each switch explains the consequence, needs confirmation and says it is not retroactive", async () => {

@@ -14,7 +14,8 @@ import { LIMITS, overLimit, slugProblem } from "./limits";
 import { CenteredActions, LoadFailed } from "./load-failed";
 import { previewView, type PreviewSource } from "./preview-model";
 import { PreviewFrame } from "./preview-stage";
-import { ActionButton, Celebrate, ChoiceGroup, Field, Illustration, Notice, Screen, useStyles } from "./ui";
+import { MoreOptions } from "./more-options";
+import { ActionButton, Celebrate, ChoiceGroup, Field, FilterSelect, Illustration, Notice, Screen, useStyles } from "./ui";
 
 /**
  * Guided sign-up (docs/design/upgrade-brief.md §2): what you celebrate, who and when, name and link, in three short
@@ -66,7 +67,7 @@ export function suggestedTitle(type: TranslatedEventType | undefined, hosts: Rea
 }
 
 /** Three segments that fill as the host moves on; the words say where they are, the bar shows how far is left. */
-function StepProgress({ step }: { readonly step: number }): ReactNode {
+function StepProgress({ step, onBack }: { readonly step: number; readonly onBack?: () => void }): ReactNode {
   const t = useT();
   const palette = useColors();
   const styles = useStyles();
@@ -76,7 +77,10 @@ function StepProgress({ step }: { readonly step: number }): ReactNode {
       <View style={{ flexDirection: "row", gap: spacing[1] }}>
         {STEPS.map((key, index) => <View key={key} style={{ flex: 1, height: 6, borderRadius: radius.full, backgroundColor: index < step ? palette.primary : palette.primaryMuted }} />)}
       </View>
-      <Text style={styles.label}>{`${t("host.onboarding.step", { step })} · ${name}`}</Text>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 44 }}>
+        <Text style={styles.label}>{`${t("host.onboarding.step", { step })} · ${name}`}</Text>
+        {onBack ? <PressFeedback accessibilityRole="button" accessibilityLabel={t("host.common.back")} onPress={onBack} testID="onboarding-back" style={{ minHeight: 44, minWidth: 44, justifyContent: "center", alignItems: "flex-end", paddingHorizontal: spacing[2] }}><Text style={[styles.label, { color: palette.primary }]}>{t("host.common.back")}</Text></PressFeedback> : null}
+      </View>
     </View>
   );
 }
@@ -102,7 +106,6 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
   const [timeZone, setTimeZone] = useState(deviceTimeZone());
   const [currency, setCurrency] = useState<string>(() => defaultCurrency(deviceTimeZone()));
   const [language, setLanguage] = useState<string>(locale);
-  const [showDefaults, setShowDefaults] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(true);
   const [hosts, setHosts] = useState<Record<string, string>>({});
   const [tried, setTried] = useState(false);
@@ -184,7 +187,6 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
         {types.isError ? <LoadFailed title={t("host.onboarding.typeTitle")} error={types.error} onRetry={() => { void types.refetch(); }} /> : null}
         <ChoiceGroup label={t("host.onboarding.typeLabel")} value={typeCode} onChange={(code) => { if (code !== typeCode) setHosts({}); setTypeCode(code); }} choices={(types.data?.items ?? []).map((item) => ({ value: item.code, label: item.name }))} />
         {type?.description ? <Text style={styles.muted}>{type.description}</Text> : null}
-        <ActionButton label={t("host.common.next")} disabled={!typeCode} onPress={goWho} testID="onboarding-next" />
       </View>
     ),
     who: () => (
@@ -197,10 +199,6 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
           <View style={{ flexGrow: 1, flexBasis: 120 }}><Field label={t("host.onboarding.timeLabel")} value={when.time} onChange={(time) => setWhen((current) => ({ ...current, time }))} keyboardType="numbers-and-punctuation" {...(tried && dateProblem === "timeInvalid" ? { error: t("host.onboarding.timeInvalid") } : {})} /></View>
         </View>
         <Text style={styles.muted}>{t("host.onboarding.dateHelp")}</Text>
-        <View style={styles.row}>
-          <ActionButton variant="secondary" label={t("host.common.back")} onPress={() => setStep(1)} />
-          <ActionButton label={t("host.common.next")} onPress={goName} testID="onboarding-next" />
-        </View>
       </View>
     ),
     name: () => (
@@ -210,30 +208,36 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
           onChange={(value) => { setTitleEdited(true); setTitle(value); }} />
         <Field label={t("host.onboarding.slugLabel")} help={t("host.onboarding.slugHelp", { url: `/c/${effectiveSlug}` })} value={effectiveSlug} testID="onboarding-slug" {...(effectiveSlug && slugIssue ? { error: t(`host.limits.slug${slugIssue === "length" ? "Length" : "Pattern"}`) } : {})}
           onChange={(value) => { setSlugEdited(true); setSlug(value.toLowerCase()); }} />
+        {/* Zone, language and currency come from the device and the zone: nobody has to decide them to get an invitation. */}
         <View style={{ gap: spacing[2] }}>
           <Text style={styles.muted}>{t("host.onboarding.defaultsSummary", { timeZone: zoneLabel(timeZone), language: t(`celebration.language.${language}`), currency })}</Text>
-          <ActionButton variant="secondary" label={showDefaults ? t("host.onboarding.defaultsHide") : t("host.onboarding.defaultsChange")} onPress={() => setShowDefaults((open) => !open)} />
-          {showDefaults ? (
-            <View style={{ gap: spacing[4] }}>
-              <ChoiceGroup label={t("host.onboarding.timeZoneLabel")} value={timeZone} onChange={(zone) => { setTimeZone(zone); setCurrency(defaultCurrency(zone)); }} choices={zoneChoices().map((zone) => ({ value: zone, label: zoneLabel(zone) }))} />
+          <MoreOptions label={t("ui.moreOptions")} testID="onboarding-more">
+            <View style={{ gap: spacing[1], alignItems: "flex-start" }}>
+              <Text style={styles.label}>{t("host.onboarding.timeZoneLabel")}</Text>
+              <FilterSelect label={t("host.onboarding.timeZoneLabel")} value={timeZone} onChange={(zone) => { setTimeZone(zone); setCurrency(defaultCurrency(zone)); }} options={zoneChoices().map((zone) => ({ value: zone, label: zoneLabel(zone) }))} testID="onboarding-time-zone" />
               <Text style={styles.muted}>{t("host.onboarding.timeZoneHelp")}</Text>
-              <ChoiceGroup label={t("host.onboarding.languageLabel")} value={language} onChange={setLanguage} choices={LANGUAGES.map((value) => ({ value, label: t(`celebration.language.${value}`) }))} />
-              <ChoiceGroup label={t("host.onboarding.currencyLabel")} value={currency} onChange={setCurrency} choices={CURRENCIES.map((value) => ({ value, label: value }))} />
             </View>
-          ) : null}
+            <ChoiceGroup label={t("host.onboarding.languageLabel")} value={language} onChange={setLanguage} choices={LANGUAGES.map((value) => ({ value, label: t(`celebration.language.${value}`) }))} />
+            <View style={{ gap: spacing[1], alignItems: "flex-start" }}>
+              <Text style={styles.label}>{t("host.onboarding.currencyLabel")}</Text>
+              <FilterSelect label={t("host.onboarding.currencyLabel")} value={currency} onChange={setCurrency} options={CURRENCIES.map((value) => ({ value, label: value }))} testID="onboarding-currency" />
+            </View>
+          </MoreOptions>
         </View>
         <CelebrationErrorNotice error={create.error} />
-        <View style={styles.row}>
-          <ActionButton variant="secondary" label={t("host.common.back")} onPress={() => setStep(2)} />
-          <ActionButton label={t("host.onboarding.create")} busy={create.isPending} onPress={submit} testID="onboarding-create" />
-        </View>
       </View>
     )
   };
 
+  // The step's one action sits where every screen keeps it (top right; a fixed bar on a phone); going back is a quiet link above the step.
+  const primary = step === 1
+    ? <ActionButton label={t("host.common.next")} disabled={!typeCode} onPress={goWho} testID="onboarding-next" />
+    : step === 2
+      ? <ActionButton label={t("host.common.next")} onPress={goName} testID="onboarding-next" />
+      : <ActionButton label={t("host.onboarding.create")} busy={create.isPending} onPress={submit} testID="onboarding-create" />;
   const form = (
     <View style={{ gap: spacing[5], flex: wide ? 1 : undefined, width: "100%" }}>
-      <StepProgress step={step} />
+      <StepProgress step={step} {...(step > 1 ? { onBack: () => setStep(step - 1) } : {})} />
       {!wide && step > 1 ? (
         <Enter from="down" key="preview">
           <View style={{ gap: spacing[2] }}>
@@ -248,7 +252,7 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
     </View>
   );
   return (
-    <Screen title={t("host.onboarding.title")} intro={t("host.onboarding.intro")}>
+    <Screen title={t("host.onboarding.title")} intro={t("host.onboarding.intro")} actions={primary}>
       {wide ? (
         <View style={{ flexDirection: "row", gap: spacing[8], alignItems: "flex-start" }}>
           {form}

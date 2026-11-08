@@ -9,9 +9,8 @@ import { asRecord, asRecords, asText, scheduleDraft } from "./content-draft";
 import { useSingleFlight } from "../platform/single-flight";
 import { CelebrationErrorNotice } from "./celebration-errors";
 import { LIMITS, overLimit } from "./limits";
-import { CenteredActions } from "./load-failed";
-import { SaveBar } from "./save-bar";
-import { ActionButton, ChoiceGroup, EmptyState, Field, useStyles } from "./ui";
+import { useSaveHeader } from "./save-bar";
+import { ChoiceGroup, EmptyState, Field, OverflowMenu, useStyles } from "./ui";
 
 /** C13 · The same content in each language of the site (REQ-F11-03). Times are never translated. */
 
@@ -64,25 +63,30 @@ function Translations({ celebration, refetch, saved, onSaved }: { readonly celeb
     const cleaned = clean(current);
     once((release) => { mutation.mutateAsync({ target: celebration, patch: { translations: { [locale]: Object.keys(cleaned).length ? cleaned : null } } }).then(() => onSaved(true), () => undefined).finally(release); });
   };
-  const addButtons = missing.map((code) => (
-    <ActionButton key={code} variant={locales.length ? "secondary" : "primary"} label={`${t("host.translations.addLanguage")}: ${t(`celebration.language.${code}`)}`} busy={mutation.isPending}
-      onPress={() => mutation.mutate({ target: celebration, patch: { supportedLocales: [...celebration.supportedLocales, code] } }, { onSuccess: refetch })} />
-  ));
+  const addLanguage = (code: string): void => mutation.mutate({ target: celebration, patch: { supportedLocales: [...celebration.supportedLocales, code] } }, { onSuccess: refetch });
+  const addLabel = (code: string): string => `${t("host.translations.addLanguage")}: ${t(`celebration.language.${code}`)}`;
+  // Nothing to translate yet: adding the first language is the screen's one action. Afterwards «Guardar» is, and extra languages go to «⋯».
+  const firstMissing = missing[0];
+  const extra = (locales.length ? missing : missing.slice(1)).map((code) => ({ key: code, label: addLabel(code), onPress: () => addLanguage(code), disabled: mutation.isPending }));
+  const menu = extra.length ? <OverflowMenu items={extra} /> : undefined;
+  useSaveHeader({
+    ...(locales.length
+      ? { dirty, saved, busy: mutation.isPending, disabled: tooLong, error: mutation.error, onReload: refetch, onSave: save, saveTestID: "save-translation" }
+      : { dirty: false, saved: false, busy: mutation.isPending, disabled: !firstMissing, error: mutation.error, onReload: refetch, onSave: () => { if (firstMissing) addLanguage(firstMissing); }, saveTestID: "add-language", ...(firstMissing ? { label: addLabel(firstMissing) } : {}) }),
+    ...(menu ? { menu } : {})
+  });
 
   if (!locales.length) {
     return (
       <View style={{ gap: spacing[4] }}>
-        <EmptyState illustration="welcomeGuest" title={t("host.translations.emptyTitle")} body={t("host.translations.emptyBody")} action={<CenteredActions>{addButtons}</CenteredActions>} />
+        <EmptyState illustration="welcomeGuest" title={t("host.translations.emptyTitle")} body={t("host.translations.emptyBody")} />
         <CelebrationErrorNotice error={mutation.error} onReload={refetch} />
       </View>
     );
   }
   return (
     <View style={{ gap: spacing[4] }}>
-      <View style={[styles.row, { justifyContent: "space-between" }]}>
-        <ChoiceGroup label={t("host.translations.language")} value={locale} onChange={setLocale} choices={locales.map((code) => ({ value: code, label: t(`celebration.language.${code}`) }))} />
-        {addButtons.length ? <View style={styles.row}>{addButtons}</View> : null}
-      </View>
+      {locales.length > 1 ? <ChoiceGroup label={t("host.translations.language")} value={locale} onChange={setLocale} choices={locales.map((code) => ({ value: code, label: t(`celebration.language.${code}`) }))} /> : null}
       <View style={{ gap: spacing[4], maxWidth: 720 }}>
         <View style={{ gap: spacing[1] }}>
           <Text accessibilityRole="header" aria-level={2} style={styles.subtitle}>{t(`celebration.language.${locale ?? ""}`)}</Text>
@@ -106,7 +110,6 @@ function Translations({ celebration, refetch, saved, onSaved }: { readonly celeb
             onChange={(value) => set("scheduleLabels", { ...labels, [item.id]: { title: value } })} />
         ))}
       </View>
-      <SaveBar dirty={dirty} saved={saved} busy={mutation.isPending} disabled={tooLong} error={mutation.error} onReload={refetch} onSave={save} saveTestID="save-translation" />
     </View>
   );
 }

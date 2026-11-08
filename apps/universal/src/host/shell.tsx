@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type PropsWithChildren, type ReactNode } from "react";
 import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type LayoutChangeEvent, type ViewStyle } from "react-native";
 import { brand, radius, spacing } from "@rsvp/design-tokens";
-import { Logo, OverlayEnter, PageIntro, PressFeedback, ScreenTransition, WeavePattern, overlayAnimation, useColors, useThemedStyles, type Palette } from "@rsvp/ui";
+import { Logo, OverlayEnter, PageIntro, PressFeedback, ScreenTransition, StickyActions, WeavePattern, overlayAnimation, useColors, useThemedStyles, type Palette } from "@rsvp/ui";
 import { useAuth } from "../auth/auth-context";
 import { useT } from "../platform/providers";
 import { useThemePreference } from "../platform/theme";
@@ -18,6 +18,9 @@ import { useThemePreference } from "../platform/theme";
 
 const fontFamily = Platform.select({ web: "'Plus Jakarta Sans', 'Avenir Next', 'Segoe UI', system-ui, sans-serif", default: undefined });
 const WIDE = 960;
+/** From this width the primary action sits in the header; below it, in the sticky bottom bar. */
+// Below the desktop shell the header scrolls away with the page, so the primary action lives in the sticky bar.
+const ACTIONS_IN_HEADER = WIDE;
 const SIDEBAR = 264;
 const MAX_CONTENT = 1040;
 const MIN_TOUCH = 44;
@@ -65,6 +68,10 @@ const createShellStyles = (palette: Palette) => StyleSheet.create({
   bandTabs: { width: "100%", maxWidth: MAX_CONTENT, alignSelf: "center", paddingHorizontal: spacing[8] },
   /* Narrow: the title sits on the night block and the content rises over it as a rounded sheet. */
   mHeader: { backgroundColor: brand.noche, paddingHorizontal: spacing[5], paddingTop: spacing[2], paddingBottom: spacing[10], gap: spacing[2], overflow: "hidden" },
+  /* Title (and intro) on the left, menu + primary action on the right, centred on the first title line. */
+  headRow: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: spacing[4] },
+  headText: { flex: 1, minWidth: 0, gap: spacing[2] },
+  headActions: { flexDirection: "row", alignItems: "center", gap: spacing[2], flexShrink: 0, minHeight: 52, marginTop: -7 },
   mTabs: { marginHorizontal: -spacing[5], marginTop: spacing[2] },
   mTitle: { color: "#FFFFFF", fontSize: 30, lineHeight: 34, fontWeight: "800", letterSpacing: -0.9, fontFamily },
   mSheet: { flexGrow: 1, backgroundColor: palette.canvas, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, marginTop: -spacing[6], paddingHorizontal: spacing[4], paddingTop: spacing[5], paddingBottom: spacing[10], gap: spacing[4] },
@@ -329,8 +336,12 @@ function BareFrame({ children }: PropsWithChildren): ReactNode {
 /**
  * `intro` is the optional warm line under the title (`PageIntro`). The tab bar of the active destination appears
  * under the title when `nav` has one with two or more tabs; a screen never builds its own.
+ * `actions` is the screen's single primary action (one button) and `menu` its secondary actions (`OverflowMenu`).
+ * From 768 px both sit at the right of the header, aligned with the title (`menu` then `actions`). Below 768 px
+ * `menu` stays at the top right and `actions` moves to a `StickyActions` bar at the foot of the content.
+ * `status` is the one line that says where the work stands (see the prop).
  */
-export function Screen({ title, intro, nav, current, onNavigate, children }: PropsWithChildren<{ readonly title: string; readonly intro?: string; readonly nav?: readonly NavItem[]; readonly current?: string; readonly onNavigate?: (href: string) => void }>): ReactNode {
+export function Screen({ title, intro, nav, current, onNavigate, actions, menu, status, children }: PropsWithChildren<{ readonly title: string; readonly intro?: string; readonly nav?: readonly NavItem[]; readonly current?: string; readonly onNavigate?: (href: string) => void; readonly actions?: ReactNode; readonly menu?: ReactNode; /** One short line about the work in progress ("unsaved changes", "saved"). Sits above the sticky action bar below 768 px and at the top of the content from 768 px. */ readonly status?: ReactNode }>): ReactNode {
   const s = useThemedStyles(createShellStyles);
   const { width } = useWindowDimensions();
   const wide = width >= WIDE;
@@ -338,15 +349,21 @@ export function Screen({ title, intro, nav, current, onNavigate, children }: Pro
   const destination = items.find((item) => isCurrentDestination(item, current));
   const sectionTabs = destination?.tabs;
   // A change of destination fades in with a short rise, sibling tabs only fade; scroll returns to the top and focus goes to the h1 (docs/design/motion.md).
-  const content = <ScreenTransition routeKey={current ?? title} groupKey={destination?.key}>{children}</ScreenTransition>;
+  const actionsInHeader = width >= ACTIONS_IN_HEADER;
+  const content = <ScreenTransition routeKey={current ?? title} groupKey={destination?.key}>{status && actionsInHeader ? status : null}{children}</ScreenTransition>;
+  const headerActions = menu || (actions && actionsInHeader) ? <View style={s.headActions}>{menu}{actionsInHeader ? actions : null}</View> : null;
+  const stickyActions = actions && !actionsInHeader ? <StickyActions testID="screen-sticky-actions" {...(status ? { summary: status } : {})}>{actions}</StickyActions> : null;
   const tabs = sectionTabs && sectionTabs.length > 1 ? sectionTabs : undefined;
   if (wide) {
     const main = (
       <View style={s.scroll}>
         <View style={s.band}>
-          <View style={s.bandInner}>
-            <Text accessibilityRole="header" aria-level={1} style={s.title}>{title}</Text>
-            {intro ? <PageIntro>{intro}</PageIntro> : null}
+          <View style={[s.bandInner, s.headRow]}>
+            <View style={s.headText}>
+              <Text accessibilityRole="header" aria-level={1} style={s.title}>{title}</Text>
+              {intro ? <PageIntro>{intro}</PageIntro> : null}
+            </View>
+            {headerActions}
           </View>
           {tabs ? <View style={s.bandTabs}><SectionTabs tabs={tabs} current={current} onNavigate={onNavigate} dark={false} /></View> : null}
         </View>
@@ -359,11 +376,16 @@ export function Screen({ title, intro, nav, current, onNavigate, children }: Pro
   const body = (
     <ScrollView role="main" tabIndex={0} style={s.scroll} contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
       <View style={s.mHeader}>
-        <Text accessibilityRole="header" aria-level={1} style={s.mTitle}>{title}</Text>
-        {intro ? <PageIntro tone="onDark">{intro}</PageIntro> : null}
+        <View style={s.headRow}>
+          <View style={s.headText}>
+            <Text accessibilityRole="header" aria-level={1} style={s.mTitle}>{title}</Text>
+            {intro ? <PageIntro tone="onDark">{intro}</PageIntro> : null}
+          </View>
+          {headerActions}
+        </View>
         {tabs ? <View style={s.mTabs}><SectionTabs tabs={tabs} current={current} onNavigate={onNavigate} dark /></View> : null}
       </View>
-      <View style={s.mSheet}>{content}</View>
+      <View style={s.mSheet}>{content}{stickyActions}</View>
     </ScrollView>
   );
   if (items.length === 0) return <View style={s.root}><BareFrame>{body}</BareFrame></View>;

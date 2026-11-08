@@ -38,7 +38,6 @@ await check("mine", "the portal finds the provider with GET /providers/mine (not
 await check("F28-02", "microsite editor: validation, save with If-Match, version rises, API returns the profile", async () => {
   await page.goto(`${APP}/portal/perfil`, { waitUntil: "domcontentloaded" });
   await page.getByTestId("microsite-save").waitFor({ timeout: 25000 });
-  const v0 = await page.getByTestId("microsite-version").textContent();
   await page.getByTestId("microsite-website").fill("http://inseguro.example");
   await page.getByTestId("microsite-save").click();
   await page.getByText("Escribe una dirección completa que empiece por https://.").waitFor();
@@ -55,7 +54,7 @@ await check("F28-02", "microsite editor: validation, save with If-Match, version
   await checkAxe("microsite");
   const live = await (await fetch(`${API}/providers/${world.provider.id}/microsite`, { headers: { authorization: `Bearer ${await token()}` } })).json();
   if (live.descriptions["es-BO"] !== "Tortas y mesas de dulces hechas a mano en La Paz." || live.social.website !== "https://example.com/dulce-sol") throw new Error(JSON.stringify(live).slice(0, 200));
-  return `${v0} -> API version ${live.version}; hours ${JSON.stringify(live.hours.weekly)}`;
+  return `API version ${live.version}; hours ${JSON.stringify(live.hours.weekly)}`;
 });
 await check("F28-02 conflicto", "a stale version is refused (409) and the UI says so", async () => {
   await page.goto(`${APP}/portal/perfil`, { waitUntil: "domcontentloaded" });

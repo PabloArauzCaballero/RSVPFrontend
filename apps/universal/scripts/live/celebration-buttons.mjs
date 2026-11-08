@@ -60,6 +60,9 @@ const count = (method, pathPart) => requests.filter((line) => line.startsWith(`$
 const go = async (path) => { await page.goto(`${APP}${path}`); await page.waitForLoadState("networkidle").catch(() => undefined); };
 const open = (section, id) => go(`${section}?c=${id}`);
 const btn = (name) => page.getByRole("button", { name, exact: true }).filter({ visible: true });
+// Row actions (move, remove, make cover, delete) live in each row's «⋯» menu, named «Más opciones: <row>»; page actions in the header's «⋯».
+const rowMenu = (nth = 0) => page.getByRole("button", { name: /^Más opciones: / }).filter({ visible: true }).nth(nth);
+const rowAction = async (action, nth = 0) => { await rowMenu(nth).click(); await page.getByRole("menuitem", { name: action, exact: true }).click(); };
 const field = (label) => page.getByLabel(label, { exact: true }).filter({ visible: true }).first();
 const text = (re) => page.getByText(re).filter({ visible: true }).first();
 const notBlank = async () => assert.ok((await page.locator("body").innerText()).trim().length > 40, "blank screen");
@@ -343,17 +346,17 @@ await check("P3-venues", "editor lugares: agregar dos, reordenar, quitar uno; GE
   await field("Nombre del lugar").fill("Iglesia"); await field("Dirección").fill("Calle 1");
   await btn("Agregar lugar").click();
   await page.getByLabel("Nombre del lugar", { exact: true }).filter({ visible: true }).nth(1).fill("Salón");
-  await btn("Subir").nth(1).click();
+  await rowAction("Subir", 1);
   await page.getByTestId("save-content").click(); await text(/Cambios guardados/).waitFor();
   let stored = await get(ed.id);
   assert.deepEqual(stored.content.venues.map((v) => v.name), ["Salón", "Iglesia"]);
   await edUrl("lugares");
-  await btn("Quitar").first().click();
+  await rowAction("Quitar", 0);
   await page.getByTestId("save-content").click(); await text(/Cambios guardados/).waitFor();
   stored = await get(ed.id);
   assert.deepEqual(stored.content.venues.map((v) => v.name), ["Iglesia"]);
   await edUrl("lugares");
-  await btn("Quitar").first().click();
+  await rowAction("Quitar", 0);
   await page.getByTestId("save-content").click(); await text(/Cambios guardados/).waitFor();
   assert.deepEqual((await get(ed.id)).content.venues ?? [], []);
 });
@@ -382,7 +385,7 @@ await check("P3-schedule", "editor itinerario: agregar actividad, guardar con ho
   assert.equal(stored.content.schedule.length, 1); assert.equal(stored.content.schedule[0].title, "Ceremonia");
   assert.equal(stored.localTimes[`schedule.${stored.content.schedule[0].id}`]?.time ?? "16:00", "16:00");
   await edUrl("itinerario");
-  await btn("Quitar").first().click();
+  await rowAction("Quitar", 0);
   await page.getByTestId("save-content").click(); await text(/Cambios guardados/).waitFor();
   assert.deepEqual((await get(ed.id)).content.schedule ?? [], []);
 });
@@ -393,7 +396,7 @@ await check("P3-sections", "editor otras secciones: vestimenta, FAQ (agregar/sub
   await field("Pregunta").fill("¿Hay estacionamiento?"); await field("Respuesta").fill("Sí");
   await btn("Agregar pregunta").click();
   await page.getByLabel("Pregunta", { exact: true }).filter({ visible: true }).nth(1).fill("¿Niños?");
-  await btn("Subir").nth(1).click();
+  await rowAction("Subir", 1);
   await btn("Agregar recomendación").click();
   await page.getByLabel("Nombre", { exact: true }).filter({ visible: true }).first().fill("Hotel Sol");
   await page.getByTestId("save-content").click(); await text(/Cambios guardados/).waitFor();
@@ -401,7 +404,7 @@ await check("P3-sections", "editor otras secciones: vestimenta, FAQ (agregar/sub
   assert.equal(stored.content.dressCode, "Formal"); assert.deepEqual(stored.content.faq.map((q) => q.question), ["¿Niños?", "¿Hay estacionamiento?"]);
   assert.equal(stored.content.recommendations[0].name, "Hotel Sol");
   await edUrl("secciones");
-  await btn("Quitar").first().click();
+  await rowAction("Quitar", 0);
   await page.getByTestId("save-content").click(); await text(/Cambios guardados/).waitFor();
   stored = await get(ed.id);
   assert.equal(stored.content.faq.length, 1);
@@ -468,7 +471,9 @@ await check("P5-publish-valid", "publicar: confirmar publica (doble clic = 1 POS
   await text(/lista para publicar/).waitFor();
   await page.getByTestId("publish").click();
   const before = count("POST", `/celebrations/${pub.id}/publish`);
-  await page.getByRole("button", { name: "Publicar celebración", exact: true }).last().dblclick();
+  // Two activations of the confirm button in the same frame. Done on the element, not at its coordinates: once the dialog closes the second
+  // pointer click would land on whatever is under it (the section tabs), which is not what this check is about.
+  await page.getByRole("button", { name: "Publicar celebración", exact: true }).last().evaluate((el) => { el.click(); el.click(); });
   await text(/Tu invitación ya está publicada/).waitFor();
   assert.equal(count("POST", `/celebrations/${pub.id}/publish`) - before, 1);
   const stored = await get(pub.id); assert.equal(stored.status, "PUBLISHED");
@@ -515,6 +520,7 @@ await check("P5-unpublish", "despublicar: cancelar no envia nada; confirmar con 
   await page.getByTestId("unpublish").click();
   await btn("Cancelar").click();
   assert.equal(count("POST", `/celebrations/${c.id}/unpublish`), 0);
+  await page.getByTestId("more-publish").click();
   await page.getByTestId("unpublish").click();
   await field("Motivo (opcional)").fill("r".repeat(201));
   await text(/Quita 1 carácter/).waitFor();
@@ -534,6 +540,7 @@ await check("P5-archive", "archivar: ConfirmDialog; GET = ARCHIVED; luego editar
   await page.getByTestId("archive").click();
   await btn("Cancelar").click();
   assert.equal((await get(c.id)).status, "DRAFT");
+  await page.getByTestId("more-publish").click();
   await page.getByTestId("archive").click();
   await page.getByRole("button", { name: "Archivar", exact: true }).last().click();
   await text(/Archivada\./).waitFor();
@@ -557,35 +564,36 @@ await check("P5-archive", "archivar: ConfirmDialog; GET = ARCHIVED; luego editar
 
 // ---------------------------------------------------------------- AJUSTES (configuracion)
 const st = await draft(completeContent);
-await check("P6-settings-general", "ajustes: idiomas/zona/moneda guardan (GET confirma) con aviso de exito; 409 y red caida", async () => {
+await check("P6-settings-general", "ajustes: idiomas/zona/moneda (en «Más opciones», como selector) guardan (GET confirma) con aviso de exito; 409 y red caida", async () => {
   await open("/configuracion", st.id);
-  await page.getByRole("radio", { name: "America/Lima" }).click();
-  await page.getByRole("radio", { name: "USD" }).click();
+  await page.getByTestId("more-settings").click();
+  await page.getByTestId("settings-time-zone").selectOption("America/Lima");
+  await page.getByTestId("settings-currency").selectOption("USD");
   await page.getByTestId("save-settings").click();
   await text(/Configuración guardada/).waitFor();
   const stored = await get(st.id); assert.equal(stored.timeZone, "America/Lima"); assert.equal(stored.currency, "USD");
-  await page.getByRole("radio", { name: "BOB" }).click();
+  await page.getByTestId("settings-currency").selectOption("BOB");
   await patchAs(st.id, { content: { subtitle: "x" } });
   await page.getByTestId("save-settings").click();
   await text(/Alguien guardó cambios/).waitFor();
   await btn("Ver la versión nueva").click();
   await page.waitForTimeout(800);
-  await page.getByRole("radio", { name: "BOB" }).click();
+  await page.getByTestId("settings-currency").selectOption("BOB");
   await offline(`**/celebrations/${st.id}`, async () => { await page.getByTestId("save-settings").click(); await text(/No hay conexión con el servidor/).waitFor(); });
   await page.getByTestId("save-settings").click();
   await text(/Configuración guardada/).waitFor();
   assert.equal((await get(st.id)).currency, "BOB");
 });
-await check("P6-deadline", "ajustes: fecha limite guardar/quitar (GET confirma); invalida se bloquea; 429 con espera", async () => {
+await check("P6-deadline", "ajustes: fecha limite guardar/quitar (GET confirma); invalida se bloquea; 429 con espera (un solo Guardar)", async () => {
   await open("/configuracion", st.id);
   const before = count("PUT", "/settings");
   await field("Fecha (AAAA-MM-DD)").first().fill("garbage");
-  await page.getByTestId("save-deadline").click();
+  await page.getByTestId("save-settings").click();
   await text(/Revisa este dato/).waitFor();
   assert.equal(count("PUT", "/settings"), before);
   await field("Fecha (AAAA-MM-DD)").first().fill("2027-05-01"); await page.getByLabel("Hora (HH:MM)", { exact: true }).filter({ visible: true }).first().fill("20:00");
-  await respond(`**/celebrations/${st.id}/settings`, 429, { title: "slow down", status: 429 }, { "retry-after": "3" }, async () => { await page.getByTestId("save-deadline").click(); await text(/Espera 3 segundos/).waitFor(); });
-  await page.getByTestId("save-deadline").click();
+  await respond(`**/celebrations/${st.id}/settings`, 429, { title: "slow down", status: 429 }, { "retry-after": "3" }, async () => { await page.getByTestId("save-settings").click(); await text(/Espera 3 segundos/).waitFor(); });
+  await page.getByTestId("save-settings").click();
   await text(/Configuración guardada/).waitFor();
   let stored = await get(st.id); assert.equal(new Date(stored.settings.rsvpDeadline).toISOString(), "2027-05-02T01:00:00.000Z", "20:00 in America/Lima (-05:00, set by the previous check) stored as an instant"); await page.reload(); await page.waitForLoadState("networkidle"); assert.equal(await field("Fecha (AAAA-MM-DD)").inputValue(), "2027-05-01", "the form shows it back in the celebration zone");
   await btn("Quitar fecha límite").click();
@@ -725,13 +733,18 @@ await check("P8-gallery-mock", "galeria (MOCK, backend no desplegado): subir, po
   try {
     await open("/editor/galeria", gl.id);
     await text(/Foto 2/).waitFor();
+    await rowMenu(1).click();
     await page.getByTestId("cover-bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb").click();
     await text(/Orden guardado/).waitFor();
-    await btn("Bajar").first().click();
-    await text(/Orden guardado/).waitFor();
+    await rowAction("Bajar", 0);
+    for (let i = 0; i < 40 && calls.filter((call) => call.startsWith("PUT")).length < 2; i++) await page.waitForTimeout(100);
+    assert.equal(calls.filter((call) => call.startsWith("PUT")).length, 2, "cover and move each sent their PUT");
+    await page.waitForTimeout(400);
+    await rowMenu(1).click();
     await page.getByTestId("delete-aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa").click();
     await btn("Cancelar").click();
     assert.ok(!calls.some((call) => call.startsWith("DELETE")));
+    await rowMenu(1).click();
     await page.getByTestId("delete-aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa").click();
     await page.getByRole("button", { name: "Eliminar", exact: true }).last().click();
     await text(/Foto eliminada/).waitFor();

@@ -7,8 +7,8 @@ import { useApiClient, useT } from "../../platform/providers";
 import { useSingleFlightGate } from "../../platform/single-flight";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
-import { ActionButton, Field, Notice, Section, useStyles } from "../ui";
-import { FailureNotice, MoreOptions, RetryNotice, TextAction, BlockSkeleton } from "./parts";
+import { ActionButton, Field, Notice, OverflowMenu, Section, useStyles } from "../ui";
+import { FailureNotice, MoreOptions, RetryNotice, BlockSkeleton } from "./parts";
 
 /**
  * Preferences (REQ-F18-03/04/06): per channel, per event type and the quiet-hours window (contract 1.4.0). Each change is saved to
@@ -32,24 +32,26 @@ function QuietHours({ quiet, busy, onSave, error, saved }: { readonly quiet: Not
     onSave({ start: Number(start), end: Number(end) });
   };
   return (
-    <Section title={t("guests.preferences.quietTitle")}>
+    <View style={[styles.card, { gap: spacing[4] }]}>
       <Text style={styles.body}>{t("guests.preferences.quietIntro")}</Text>
       <Text testID="quiet-current" style={styles.label}>
         {quiet.start === quiet.end ? t("guests.preferences.quietOff") : t("guests.preferences.quietCurrent", { start: quiet.start, end: quiet.end })} · {quiet.source === "DEFAULT" ? t("guests.preferences.quietSourceDefault") : t("guests.preferences.quietSourceMine")}
       </Text>
-      <Field label={t("guests.preferences.quietStart")} value={start} onChange={setStart} keyboardType="number-pad" testID="quiet-start" />
-      <Field label={t("guests.preferences.quietEnd")} value={end} onChange={setEnd} keyboardType="number-pad" testID="quiet-end" error={invalid ? t("guests.preferences.quietInvalid") : undefined} />
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing[3] }}>
+        <View style={{ flexGrow: 1, flexBasis: 160, minWidth: 0 }}><Field label={t("guests.preferences.quietStart")} value={start} onChange={setStart} keyboardType="number-pad" testID="quiet-start" /></View>
+        <View style={{ flexGrow: 1, flexBasis: 160, minWidth: 0 }}><Field label={t("guests.preferences.quietEnd")} value={end} onChange={setEnd} keyboardType="number-pad" testID="quiet-end" error={invalid ? t("guests.preferences.quietInvalid") : undefined} /></View>
+      </View>
       <View style={styles.row}>
         <ActionButton label={t("guests.preferences.quietSave")} onPress={save} busy={busy} testID="quiet-save" />
         <ActionButton variant="secondary" label={t("guests.preferences.quietDefault")} onPress={() => onSave(null)} disabled={busy || quiet.source === "DEFAULT"} testID="quiet-default" />
       </View>
       {saved ? <Notice kind="success">{t("guests.preferences.saved")}</Notice> : null}
       {error ? <Notice kind="error">{t("guests.preferences.saveFailed")}</Notice> : null}
-    </Section>
+    </View>
   );
 }
 
-function PreferencesBody({ celebrationId, onNavigate }: { readonly celebrationId: string; readonly onNavigate: (href: string) => void }): ReactNode {
+function PreferencesBody({ celebrationId }: { readonly celebrationId: string }): ReactNode {
   const styles = useStyles();
   const t = useT();
   const client = useApiClient();
@@ -76,13 +78,12 @@ function PreferencesBody({ celebrationId, onNavigate }: { readonly celebrationId
         {CHANNELS.map((channel) => {
           const on = channels[channel] === true;
           return (
-            <SwitchRow key={channel} label={t(`guests.preferences.${channel}`)} hint={on ? t("guests.preferences.on") : t("guests.preferences.off")} value={on} disabled={update.isPending} testID={`pref-${channel}`} onChange={(value) => toggle(channel, value)} />
+            <SwitchRow key={channel} label={t(`guests.preferences.${channel}`)} value={on} disabled={update.isPending} testID={`pref-${channel}`} onChange={(value) => toggle(channel, value)} />
           );
         })}
         {here("toggles", "saved") ? <Notice kind="success">{t("guests.preferences.saved")}</Notice> : null}
         {here("toggles", "failed") ? <Notice kind="error">{t("guests.preferences.saveFailed")}</Notice> : null}
         {update.isError ? <FailureNotice error={update.error} /> : null}
-        <TextAction label={t("guests.preferences.pushSetup")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.push, celebrationId))} />
       </Section>
       <Section title={t("guests.preferences.eventsTitle")}>
         <Text style={styles.body}>{t("guests.preferences.eventsIntro")}</Text>
@@ -93,7 +94,7 @@ function PreferencesBody({ celebrationId, onNavigate }: { readonly celebrationId
           );
         })}
       </Section>
-      <MoreOptions label={t("guests.more")} testID="prefs-more">
+      <MoreOptions label={t("guests.preferences.quietTitle")} testID="prefs-more">
         <QuietHours key={`${prefs.data.quietHours.start}-${prefs.data.quietHours.end}-${prefs.data.quietHours.source}`} quiet={prefs.data.quietHours} busy={update.isPending} error={here("quiet", "failed")} saved={here("quiet", "saved")} onSave={(value) => save({ quietHours: value }, "quiet")} />
       </MoreOptions>
     </View>
@@ -102,5 +103,11 @@ function PreferencesBody({ celebrationId, onNavigate }: { readonly celebrationId
 
 export function PreferencesScreen(props: ScreenProps): ReactNode {
   const t = useT();
-  return <CelebrationScreen {...props} current="preferences" title={t("guests.preferences.title")} intro={t("guests.preferences.intro")}>{({ celebration }) => <PreferencesBody celebrationId={celebration.id} onNavigate={props.onNavigate} />}</CelebrationScreen>;
+  const toPush = (celebrationId: string) => () => props.onNavigate(withCelebration(HOST_ROUTES.push, celebrationId));
+  return (
+    <CelebrationScreen {...props} current="preferences" title={t("guests.preferences.title")} intro={t("guests.preferences.intro")}
+      menu={({ celebration }) => <OverflowMenu label={t("guests.more")} testID="preferences-more" items={[{ key: "push", label: t("guests.preferences.pushSetup"), onPress: toPush(celebration.id) }]} />}>
+      {({ celebration }) => <PreferencesBody celebrationId={celebration.id} />}
+    </CelebrationScreen>
+  );
 }

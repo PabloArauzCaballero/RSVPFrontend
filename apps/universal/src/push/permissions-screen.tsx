@@ -4,11 +4,11 @@ import { spacing } from "@rsvp/design-tokens";
 import { formatCelebrationDate } from "@rsvp/i18n";
 import { useHostDevices, usePushDeliveries, useRegisterHostDevice, useTestHostDevice, useUnregisterHostDevice, type RegisteredDevice } from "@rsvp/query-hooks";
 import { CelebrationScreen, type ScreenProps } from "../host/gate";
-import { FailureNotice, MoreOptions, RetryNotice, TextAction } from "../host/guests/parts";
+import { FailureNotice, MoreOptions, RetryNotice } from "../host/guests/parts";
 import { useSingleFlightGate } from "../platform/single-flight";
 import { HOST_ROUTES, withCelebration } from "../host/routes";
 import { BlockSkeleton } from "../host/guests/parts";
-import { ActionButton, EmptyState, ConfirmDialog, Notice, Section, useStyles } from "../host/ui";
+import { ActionButton, EmptyState, ConfirmDialog, Notice, OverflowMenu, Section, useStyles } from "../host/ui";
 import { useApiClient, useLocale, useT } from "../platform/providers";
 import { currentPermission, enablePush, type PushOutcome, type PushPermission } from "./register";
 
@@ -81,11 +81,12 @@ function Deliveries({ celebrationId, timeZone }: { readonly celebrationId: strin
   );
 }
 
-function PermissionBody({ celebrationId, timeZone, onNavigate }: { readonly celebrationId: string; readonly timeZone: string; readonly onNavigate: (href: string) => void }): ReactNode {
-  const t = useT();
+/** Permission, registration and devices, lifted to the screen: the header owns the one action ("Activar avisos push" or "Abrir ajustes"), the body explains the state. */
+function usePushState(celebrationId: string | undefined) {
   const client = useApiClient();
-  const register = useRegisterHostDevice(client, celebrationId);
-  const devices = useHostDevices(client, celebrationId);
+  const id = celebrationId ?? "";
+  const register = useRegisterHostDevice(client, id);
+  const devices = useHostDevices(client, id);
   const [permission, setPermission] = useState<PushPermission | null>(null);
   const [outcome, setOutcome] = useState<PushOutcome | null>(null);
   const [busy, setBusy] = useState(false);
@@ -103,20 +104,19 @@ function PermissionBody({ celebrationId, timeZone, onNavigate }: { readonly cele
   };
   const list = devices.data?.items ?? [];
   const active = list.filter((device) => device.status === "ACTIVE");
-  const registered = outcome?.kind === "registered";
-  const enabledNow = registered || (permission === "granted" && active.length > 0);
+  const enabledNow = outcome?.kind === "registered" || (permission === "granted" && active.length > 0);
+  return { register, devices, permission, outcome, busy, enable, list, enabledNow };
+}
+type PushState = ReturnType<typeof usePushState>;
+
+function PermissionBody({ celebrationId, timeZone, push }: { readonly celebrationId: string; readonly timeZone: string; readonly push: PushState }): ReactNode {
+  const t = useT();
+  const { register, devices, permission, outcome, list, enabledNow } = push;
   return (
     <View style={{ gap: spacing[4] }}>
       <EmptyState illustration={permission === "unsupported" ? "offline" : permission === "denied" ? "noAccess" : enabledNow ? "success" : "invitation"}
         title={t(`guests.push.state.${permission === "unsupported" ? "unsupported" : permission === "denied" ? "denied" : enabledNow ? "enabled" : "ready"}`)}
-        body={permission === "unsupported" ? t("guests.push.unsupported") : permission === "denied" ? t("guests.push.denied") : enabledNow ? t("guests.push.enabled") : t("guests.push.intro")}
-        action={(
-          <View style={{ alignItems: "center", gap: spacing[2] }}>
-            {permission === "denied" ? <ActionButton variant="secondary" label={t("guests.push.openSettings")} onPress={() => { void Linking.openSettings(); }} /> : null}
-            {(permission === "undetermined" || permission === "granted") && !enabledNow ? <ActionButton testID="enable-push" label={busy ? t("guests.push.registering") : t("guests.push.enable")} busy={busy} onPress={() => { void enable(); }} /> : null}
-            <TextAction label={t("guests.push.preferences")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.preferences, celebrationId))} />
-          </View>
-        )} />
+        body={permission === "unsupported" ? t("guests.push.unsupported") : permission === "denied" ? t("guests.push.denied") : enabledNow ? t("guests.push.enabled") : t("guests.push.readyBody")} />
       {outcome?.kind === "failed" ? <Notice kind="error">{t("guests.push.failed")}</Notice> : null}
       {outcome?.kind === "no-project" ? <Notice kind="error">{t("guests.push.noProject")}</Notice> : null}
       <FailureNotice error={register.error} />
@@ -136,5 +136,14 @@ function PermissionBody({ celebrationId, timeZone, onNavigate }: { readonly cele
 
 export function PushPermissionsScreen(props: ScreenProps): ReactNode {
   const t = useT();
-  return <CelebrationScreen {...props} current="preferences" title={t("guests.push.title")} intro={t("guests.push.intro")}>{({ celebration }) => <PermissionBody celebrationId={celebration.id} timeZone={celebration.timeZone} onNavigate={props.onNavigate} />}</CelebrationScreen>;
+  const push = usePushState(props.celebrationId);
+  const canEnable = (push.permission === "undetermined" || push.permission === "granted") && !push.enabledNow;
+  return (
+    <CelebrationScreen {...props} current="preferences" title={t("guests.push.title")} intro={t("guests.push.intro")}
+      actions={push.permission === "denied" ? <ActionButton label={t("guests.push.openSettings")} onPress={() => { void Linking.openSettings(); }} />
+        : canEnable ? <ActionButton testID="enable-push" label={push.busy ? t("guests.push.registering") : t("guests.push.enable")} busy={push.busy} onPress={() => { void push.enable(); }} /> : undefined}
+      menu={({ celebration }) => <OverflowMenu label={t("guests.more")} testID="push-menu" items={[{ key: "preferences", label: t("guests.push.preferences"), onPress: () => props.onNavigate(withCelebration(HOST_ROUTES.preferences, celebration.id)) }]} />}>
+      {({ celebration }) => <PermissionBody celebrationId={celebration.id} timeZone={celebration.timeZone} push={push} />}
+    </CelebrationScreen>
+  );
 }

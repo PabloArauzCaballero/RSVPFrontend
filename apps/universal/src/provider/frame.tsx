@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import { spacing } from "@rsvp/design-tokens";
@@ -6,7 +6,7 @@ import { useMyProviders, useProviderProfile, type Provider } from "@rsvp/query-h
 import { useApiClient, useClaims, useT } from "../platform/providers";
 import { readLocal, writeLocal } from "../platform/local-store";
 import type { Translate } from "@rsvp/i18n";
-import { ActionButton, ErrorNotice, Loading, Notice, Screen, type NavItem } from "../host/ui";
+import { ActionButton, ErrorNotice, Loading, Notice, OverflowMenu, Screen, type NavItem } from "../host/ui";
 
 /** Provider portal URLs. They live under /portal so the (provider) route guard covers them all. */
 export const PORTAL_ROUTES = { home: "/portal", onboarding: "/portal/alta", services: "/portal/servicios", products: "/portal/productos", delivery: "/portal/entrega", destinations: "/portal/destinos", agenda: "/portal/agenda", leads: "/portal/leads", metrics: "/portal/metricas", microsite: "/portal/perfil", documents: "/portal/documentos" } as const;
@@ -43,6 +43,33 @@ export function useProviderId(): { readonly providerId: string | null | undefine
   return { providerId: chosen, providers, remember };
 }
 
+/** The one primary action of a screen (top right of the header; bottom bar on a phone). */
+export interface HeaderPrimary { readonly label: string; readonly onPress: () => void; readonly testID?: string; readonly busy?: boolean; readonly disabled?: boolean }
+/** A secondary action, kept behind the "⋯" menu. */
+export interface HeaderMenuItem { readonly key: string; readonly label: string; readonly onPress: () => void; readonly destructive?: boolean; readonly disabled?: boolean }
+interface HeaderSpec { readonly primary?: HeaderPrimary | undefined; readonly menu?: readonly HeaderMenuItem[] | undefined }
+const HeaderSlot = createContext<((spec: HeaderSpec | null) => void) | null>(null);
+
+/**
+ * A screen body declares its header actions here and the frame renders them in `Screen` (`actions` + `menu`). Only the plain data
+ * (labels, flags) is compared, so a handler that changes every render never loops; the latest handler is always the one called.
+ */
+export function usePortalHeader(primary: HeaderPrimary | undefined, menu?: readonly HeaderMenuItem[]): void {
+  const set = useContext(HeaderSlot);
+  const latest = useRef({ primary, menu });
+  latest.current = { primary, menu };
+  const signature = JSON.stringify([primary ? [primary.label, primary.testID, primary.busy, primary.disabled] : null, (menu ?? []).map((item) => [item.key, item.label, item.destructive, item.disabled])]);
+  useEffect(() => {
+    if (!set) return undefined;
+    const current = latest.current;
+    set({
+      primary: current.primary ? { ...current.primary, onPress: () => latest.current.primary?.onPress() } : undefined,
+      menu: (current.menu ?? []).map((item, index) => ({ ...item, onPress: () => latest.current.menu?.[index]?.onPress() }))
+    });
+    return () => set(null);
+  }, [signature, set]);
+}
+
 /** Frame of every portal screen: navigation, loading of the provider, and the "register first" state. Children receive the provider. */
 export function PortalScreen({ title, current, requireProvider = true, children }: { readonly title: string; readonly current: PortalRoute; readonly requireProvider?: boolean; readonly children: (provider: Provider, refetch: () => void) => ReactNode }): ReactNode {
   const t = useT();
@@ -53,7 +80,10 @@ export function PortalScreen({ title, current, requireProvider = true, children 
   const nav = portalNav(t);
   // Services, products and delivery terms are one list of offers: the three routes stay (shared links) and light the one tab.
   const active: PortalRoute = current === "products" || current === "delivery" ? "services" : current;
-  const frame = (body: ReactNode): ReactNode => <Screen title={title} nav={nav} current={active} onNavigate={(href) => router.push(href as Href)}>{body}</Screen>;
+  const [header, setHeader] = useState<HeaderSpec | null>(null);
+  const actions = header?.primary ? <ActionButton label={header.primary.label} onPress={header.primary.onPress} busy={header.primary.busy ?? false} disabled={header.primary.disabled ?? false} {...(header.primary.testID ? { testID: header.primary.testID } : {})} /> : undefined;
+  const menu = header?.menu?.length ? <OverflowMenu testID="more-options" items={header.menu} /> : undefined;
+  const frame = (body: ReactNode): ReactNode => <HeaderSlot.Provider value={setHeader}><Screen title={title} nav={nav} current={active} onNavigate={(href) => router.push(href as Href)} {...(actions ? { actions } : {})} {...(menu ? { menu } : {})}>{body}</Screen></HeaderSlot.Provider>;
   if (providerId === undefined) return frame(<Loading />);
   if (!providerId) return frame(requireProvider ? <View style={{ gap: spacing[3] }}><Notice>{t("portal.errors.noProvider")}</Notice><ActionButton label={t("portal.errors.goOnboarding")} onPress={() => router.push(PORTAL_ROUTES.onboarding as Href)} testID="go-onboarding" /></View> : children({} as Provider, () => undefined));
   if (profile.isPending) return frame(<Loading />);

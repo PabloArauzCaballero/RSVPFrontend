@@ -7,8 +7,8 @@ import { saveTextFile } from "../../platform/files";
 import { useApiClient, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { guestDetailPath, HOST_ROUTES, withCelebration } from "../routes";
-import { ActionButton, EmptyState, Notice, useStyles } from "../ui";
-import { FreshnessLine, GuestListSkeleton, GuestRow, MoreOptions, RetryNotice, StatusFilter, TextAction } from "./parts";
+import { ActionButton, EmptyState, FilterSelect, Notice, OverflowMenu, useStyles } from "../ui";
+import { FreshnessLine, GuestListSkeleton, GuestRow, RetryNotice, TextAction } from "./parts";
 
 import { useSingleFlightGate } from "../../platform/single-flight";
 import { lastPageOffset } from "./paging";
@@ -18,40 +18,47 @@ import { lastPageOffset } from "./paging";
 const PAGE = 50;
 const FILTERS: readonly (RsvpStatus | "ALL")[] = ["ALL", "CONFIRMED", "PENDING", "DECLINED"];
 
-function ReportBody({ celebrationId, timeZone, slug, onNavigate }: { readonly celebrationId: string; readonly timeZone: string; readonly slug: string; readonly onNavigate: (href: string) => void }): ReactNode {
-  const styles = useStyles();
-  const palette = useColors();
+type ExportKind = "full" | "catering";
+type ExportMessage = { kind: "success" | "error"; text: string } | null;
+
+/** The CSV export, shared by the header action ("Exportar CSV"), the menu ("Exportar para catering") and the notice in the body. One run at a time. */
+function useReportExport(celebrationId: string | undefined, status: RsvpStatus | "ALL") {
   const t = useT();
   const client = useApiClient();
-  const [status, setStatus] = useState<RsvpStatus | "ALL">("ALL");
-  const [offset, setOffset] = useState(0);
-  const list = useGuestList(client, celebrationId, { limit: PAGE, offset, ...(status === "ALL" ? {} : { status }) });
-  const rsvps = useHostRsvps(client, celebrationId);
-  const open = useGuestSummary(client, celebrationId).data?.openCompanionRequests ?? 0;
   const [exporting, setExporting] = useState(false);
-  const [exportMessage, setExportMessage] = useState<{ kind: "success" | "error"; text: string } | null>(null);
-  const byGuest = new Map((rsvps.data?.items ?? []).map((item) => [item.guestId, item]));
-
+  const [message, setMessage] = useState<ExportMessage>(null);
   const flight = useSingleFlightGate();
-  const exportCsv = async (kind: "full" | "catering" = "full"): Promise<void> => {
-    if (!flight.begin()) return;
-    setExporting(true); setExportMessage(null);
+  const run = async (kind: ExportKind, slug: string): Promise<void> => {
+    if (!celebrationId || !flight.begin()) return;
+    setExporting(true); setMessage(null);
+    const done = (name: string, outcome: Awaited<ReturnType<typeof saveTextFile>>, note = ""): void => setMessage(outcome === "failed" ? { kind: "error", text: t("guests.report.exportFailed") } : { kind: "success", text: `${t("guests.report.exported", { name })}${note ? ` ${note}` : ""}` });
     try {
       if (kind === "catering") {
         const header = CATERING_COLUMNS.map((column) => t(`guests.report.columns.${{ guestKey: "guestKey", group: "group", status: "status", partySize: "partySize", dietaryNotes: "dietary", message: "message" }[column]}`));
         const csv = await buildCateringCsv(hostGuestsApi(client), celebrationId, header, { withNotesOnly: false, includeMessage: false });
         const name = `catering-${slug}-${new Date().toISOString().slice(0, 10)}.csv`;
-        const outcome = await saveTextFile(name, csv);
-        setExportMessage(outcome === "failed" ? { kind: "error", text: t("guests.report.exportFailed") } : { kind: "success", text: t("guests.report.exported", { name }) });
+        done(name, await saveTextFile(name, csv), t("guests.report.exportCateringNote"));
         return;
       }
       const header = RSVP_REPORT_COLUMNS.map((column) => t(`guests.report.columns.${{ name: "name", email: "email", phone: "phone", status: "status", allowedCompanions: "allowed", requestedCompanions: "requested", approvedCompanions: "approved", dietaryNotes: "dietary", message: "message" }[column]}`));
       const csv = await buildRsvpReportCsv(hostGuestsApi(client), celebrationId, header, status === "ALL" ? undefined : status);
       const name = `rsvp-${slug}-${new Date().toISOString().slice(0, 10)}.csv`;
-      const outcome = await saveTextFile(name, csv);
-      setExportMessage(outcome === "failed" ? { kind: "error", text: t("guests.report.exportFailed") } : { kind: "success", text: t("guests.report.exported", { name }) });
-    } catch { setExportMessage({ kind: "error", text: t("guests.report.exportFailed") }); } finally { setExporting(false); flight.end(); }
+      done(name, await saveTextFile(name, csv));
+    } catch { setMessage({ kind: "error", text: t("guests.report.exportFailed") }); } finally { setExporting(false); flight.end(); }
   };
+  return { exporting, message, run };
+}
+
+function ReportBody({ celebrationId, timeZone, status, onStatus, exportMessage, onNavigate }: { readonly celebrationId: string; readonly timeZone: string; readonly status: RsvpStatus | "ALL"; readonly onStatus: (value: RsvpStatus | "ALL") => void; readonly exportMessage: ExportMessage; readonly onNavigate: (href: string) => void }): ReactNode {
+  const styles = useStyles();
+  const palette = useColors();
+  const t = useT();
+  const client = useApiClient();
+  const [offset, setOffset] = useState(0);
+  const list = useGuestList(client, celebrationId, { limit: PAGE, offset, ...(status === "ALL" ? {} : { status }) });
+  const rsvps = useHostRsvps(client, celebrationId);
+  const open = useGuestSummary(client, celebrationId).data?.openCompanionRequests ?? 0;
+  const byGuest = new Map((rsvps.data?.items ?? []).map((item) => [item.guestId, item]));
 
   const data = list.data;
   const to = data ? data.offset + data.items.length : 0;
@@ -68,17 +75,8 @@ function ReportBody({ celebrationId, timeZone, slug, onNavigate }: { readonly ce
           <TextAction label={t("guests.report.requestsAction")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.requests, celebrationId))} />
         </View>
       ) : null}
-      <View style={{ gap: spacing[2] }}>
-        <View style={{ alignItems: "flex-start" }}><ActionButton label={exporting ? t("guests.report.exporting") : t("guests.report.export")} busy={exporting} onPress={() => { void exportCsv(); }} testID="export-csv" /></View>
-        <MoreOptions label={t("guests.more")} testID="report-more">
-          <View style={{ gap: spacing[2], alignItems: "flex-start" }}>
-            <ActionButton variant="secondary" label={t("guests.report.exportCatering")} disabled={exporting} onPress={() => { void exportCsv("catering"); }} testID="export-catering" />
-            <Text style={styles.muted}>{t("guests.report.exportCateringNote")}</Text>
-          </View>
-        </MoreOptions>
-        {exportMessage ? <Notice kind={exportMessage.kind}>{exportMessage.text}</Notice> : null}
-      </View>
-      <StatusFilter label={t("guests.report.filterLabel")} value={status} onChange={(value) => { setStatus(value as RsvpStatus | "ALL"); setOffset(0); }} options={FILTERS.map((value) => ({ value, label: value === "ALL" ? t("guests.list.all") : t(`guests.status.${value}`) }))} />
+      {exportMessage ? <Notice kind={exportMessage.kind}>{exportMessage.text}</Notice> : null}
+      <FilterSelect testID="status-filter" label={t("guests.report.filterLabel")} value={status} onChange={(value) => { onStatus(value as RsvpStatus | "ALL"); setOffset(0); }} options={FILTERS.map((value) => ({ value, label: value === "ALL" ? t("guests.list.all") : t(`guests.status.${value}`) }))} />
       {list.isPending ? <GuestListSkeleton /> : null}
       {list.isError ? <RetryNotice error={list.error} onRetry={() => { void list.refetch(); }} /> : null}
       {data && !list.isError ? (
@@ -120,5 +118,13 @@ function ReportBody({ celebrationId, timeZone, slug, onNavigate }: { readonly ce
 
 export function ReportScreen(props: ScreenProps): ReactNode {
   const t = useT();
-  return <CelebrationScreen {...props} current="report" title={t("guests.report.title")} intro={t("guests.report.intro")}>{({ celebration }) => <ReportBody celebrationId={celebration.id} timeZone={celebration.timeZone} slug={celebration.slug} onNavigate={props.onNavigate} />}</CelebrationScreen>;
+  const [status, setStatus] = useState<RsvpStatus | "ALL">("ALL");
+  const exporter = useReportExport(props.celebrationId, status);
+  return (
+    <CelebrationScreen {...props} current="report" title={t("guests.report.title")} intro={t("guests.report.intro")}
+      actions={({ celebration }) => <ActionButton label={exporter.exporting ? t("guests.report.exporting") : t("guests.report.export")} busy={exporter.exporting} onPress={() => { void exporter.run("full", celebration.slug); }} testID="export-csv" />}
+      menu={({ celebration }) => <OverflowMenu label={t("guests.more")} testID="report-more" items={[{ key: "catering", label: t("guests.report.exportCatering"), testID: "export-catering", disabled: exporter.exporting, onPress: () => { void exporter.run("catering", celebration.slug); } }]} />}>
+      {({ celebration }) => <ReportBody celebrationId={celebration.id} timeZone={celebration.timeZone} status={status} onStatus={setStatus} exportMessage={exporter.message} onNavigate={props.onNavigate} />}
+    </CelebrationScreen>
+  );
 }

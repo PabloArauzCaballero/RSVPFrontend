@@ -33,6 +33,10 @@ const type = async (page_, id, value) => { await tid(page_, id).fill(value); };
 const ADDED = /ya está en tu lista/; // "<nombre> ya está en tu lista."
 /** "Más opciones" (progressive disclosure): open the disclosure with this testID before reaching what it hides. */
 const openMore = async (page_, id) => { const toggle = tid(page_, id); if ((await toggle.getAttribute("aria-expanded")) !== "true") await toggle.click(); };
+/** An item of a "⋯" overflow menu (role=menuitem): open the menu with `openMore` first. */
+const menuItem = (page_, name) => page_.getByRole("menuitem", { name, exact: true }).filter({ visible: true }).first();
+/** A filter select (native <select>): choose by value (REPLY/status code or group id). */
+const pick = async (page_, id, value) => { await tid(page_, id).selectOption(value); };
 const unrouteAll = () => page.unrouteAll({ behavior: "ignoreErrors" });
 
 const newRequest = async (tag) => {
@@ -122,7 +126,7 @@ async function form() {
   await matrix.check(S, "save-guest", "VALIDO con grupo: persistido", async () => {
     const group = (await host("POST", `${G}/groups`, { name: `Fam ${stamp}` })).json;
     await open(); await fill("Valido Completo", `ok.${stamp}@example.com`, "+59171234567", "2");
-    await page.getByRole("radio", { name: `Fam ${stamp}`, exact: true }).filter({ visible: true }).first().click();
+    await pick(page, "guest-group", group.id);
     await tid(page, "save-guest").click(); await text(page, ADDED).waitFor();
     const found = (await listGuests(`ok.${stamp}@example.com`))[0]; const detail = (await host("GET", `${G}/guests/${found.guestId}`)).json;
     assert.equal(detail.allowedCompanions, 2); assert.equal(detail.groupId, group.id); assert.equal(detail.phone, "+59171234567"); return `GET /guests/${found.guestId}: companions=2 groupId ok phone ok`;
@@ -140,8 +144,8 @@ async function list() {
   await makeGuest(`semilla${stamp}`); // the list shows its empty state (without search or filters) when nobody is on it
   const open = async () => { await go(page, "/invitados"); await tid(page, "add-guest").waitFor(); await tid(page, "guest-search").waitFor(); };
   await matrix.check(S, "add-guest / Más opciones: Importar CSV, Grupos, Ajustes", "VALIDO navegan a su pantalla; lo secundario esta tras 'Más opciones'", async () => {
-    await open(); assert.equal(await button(page, "Importar CSV").count(), 0, "Importar CSV must stay hidden until 'Más opciones' opens");
-    for (const [click, path] of [[() => tid(page, "add-guest").click(), "/invitados/nuevo"], [async () => { await openMore(page, "guests-more"); await button(page, "Importar CSV").click(); }, "/invitados/importar"], [async () => { await openMore(page, "guests-more"); await button(page, "Grupos").click(); }, "/invitados/grupos"], [async () => { await openMore(page, "guests-more"); await tid(page, "guest-settings").click(); }, "/invitados/ajustes"]]) {
+    await open(); assert.equal(await menuItem(page, "Importar CSV").count(), 0, "Importar CSV must stay hidden until the 'Más opciones' menu opens");
+    for (const [click, path] of [[() => tid(page, "add-guest").click(), "/invitados/nuevo"], [async () => { await openMore(page, "guests-more"); await menuItem(page, "Importar CSV").click(); }, "/invitados/importar"], [async () => { await openMore(page, "guests-more"); await menuItem(page, "Grupos").click(); }, "/invitados/grupos"], [async () => { await openMore(page, "guests-more"); await tid(page, "guest-settings").click(); }, "/invitados/ajustes"]]) {
       await open(); await click(); await page.waitForURL((u) => u.pathname === path); await noBlank(page, path);
     }
   });
@@ -152,7 +156,7 @@ async function list() {
     await tid(page, "guest-search").fill("x".repeat(400)); assert.ok((await tid(page, "guest-search").inputValue()).length <= 200); await sleep(600); await noBlank(page, "long search");
   });
   await matrix.check(S, "filtros de respuesta", "VALIDO filtra por estado y vacio filtrado", async () => {
-    await open(); await page.getByRole("radio", { name: "Confirmó", exact: true }).filter({ visible: true }).first().click(); await sleep(800);
+    await open(); await pick(page, "status-filter", "CONFIRMED"); await sleep(800);
     const confirmed = (await host("GET", `${G}/guest-list?status=CONFIRMED&limit=1`)).json.total;
     if (confirmed === 0) await text(page, /No encontramos a nadie con esa búsqueda/).waitFor(); else await text(page, /Mostrando|Confirmó/).waitFor();
     return `GET status=CONFIRMED total=${confirmed}`;
@@ -236,18 +240,18 @@ async function detail() {
   });
   await matrix.check(S, "Reemitir enlace", "VALIDO invalida el anterior y emite otro", async () => {
     const guest = await makeGuest("reissue"); await open(guest); await tid(page, "issue-link").click(); await tid(page, "masked-link").waitFor(); await tid(page, "copy-link").click();
-    const first = await page.evaluate(() => navigator.clipboard.readText()); await openMore(page, "guest-more"); await button(page, "Reemitir enlace").click(); await page.getByRole("alert").getByRole("button", { name: "Reemitir enlace" }).click();
+    const first = await page.evaluate(() => navigator.clipboard.readText()); await openMore(page, "guest-more"); await menuItem(page, "Reemitir enlace").click(); await page.getByRole("alert").getByRole("button", { name: "Reemitir enlace" }).click();
     await sleep(1200); await tid(page, "copy-link").click(); const second = await page.evaluate(() => navigator.clipboard.readText());
     assert.notEqual(first, second); assert.equal((await guestResource(second)).status, 200); const old = await guestResource(first); assert.ok([401, 404].includes(old.status)); return `anterior=${old.status}, nuevo=200`;
   });
-  await matrix.check(S, "grupo (ChoiceGroup)", "VALIDO cambia y quita grupo (GET); ERROR red revierte", async () => {
+  await matrix.check(S, "grupo (selector)", "VALIDO cambia y quita grupo (GET); ERROR red revierte", async () => {
     const group = (await host("POST", `${G}/groups`, { name: `Mover ${stamp}` })).json; const guest = await makeGuest("move"); await open(guest);
-    await page.getByRole("radio", { name: new RegExp(`Mover ${stamp}`) }).filter({ visible: true }).first().click(); await text(page, "Grupo actualizado.").waitFor();
+    await pick(page, "guest-group", group.id); await text(page, "Grupo actualizado.").waitFor();
     assert.equal((await host("GET", `${G}/guests/${guest.id}`)).json.groupId, group.id);
-    await page.getByRole("radio", { name: "Sin grupo", exact: true }).filter({ visible: true }).first().click(); await page.waitForFunction(() => document.body.innerText.includes("Grupo actualizado."));
+    await pick(page, "guest-group", ""); await page.waitForFunction(() => document.body.innerText.includes("Grupo actualizado."));
     await sleep(500); assert.equal((await host("GET", `${G}/guests/${guest.id}`)).json.groupId, null);
     await page.route(new RegExp(`/guests/${guest.id}$`), (route) => (route.request().method() === "PATCH" ? route.abort("failed") : route.continue()));
-    await page.getByRole("radio", { name: new RegExp(`Mover ${stamp}`) }).filter({ visible: true }).first().click(); await text(page, /No hay conexión/).waitFor(); await unrouteAll();
+    await pick(page, "guest-group", group.id); await text(page, /No hay conexión/).waitFor(); await unrouteAll();
     assert.equal((await host("GET", `${G}/guests/${guest.id}`)).json.groupId, null);
   });
   await matrix.check(S, "erase-guest", "VALIDO: cancelar no llama; confirmar borra (DELETE 202) y GET da 404", async () => {
@@ -366,7 +370,7 @@ async function importSection() {
 async function report() {
   const S = "Reporte RSVP";
   const open = async () => { await go(page, "/rsvp/reporte"); await tid(page, "export-csv").waitFor(); };
-  const download = async (id) => { const [file] = await Promise.all([page.waitForEvent("download"), tid(page, id).click()]); const path = await file.path(); const { readFileSync } = await import("node:fs"); return { name: file.suggestedFilename(), body: readFileSync(path, "utf8") }; };
+  const download = async (id) => { if (id === "export-catering") await openMore(page, "report-more"); /* a menu closes once an item is chosen */ const [file] = await Promise.all([page.waitForEvent("download"), tid(page, id).click()]); const path = await file.path(); const { readFileSync } = await import("node:fs"); return { name: file.suggestedFilename(), body: readFileSync(path, "utf8") }; };
   await matrix.check(S, "export-csv", "VALIDO descarga CSV con todas las filas del backend; formulas neutralizadas", async () => {
     await host("POST", `${G}/guests`, { name: `=1+1 ${stamp}`, email: `formula.${stamp}@example.com`, allowedCompanions: 0 });
     await open(); const { name, body } = await download("export-csv"); const total = (await host("GET", `${G}/guest-list?limit=1`)).json.total;
@@ -386,7 +390,7 @@ async function report() {
     const downloads = []; page.on("download", (d) => downloads.push(d)); await tid(page, "export-csv").dblclick(); await page.waitForEvent("download", { timeout: 60000 }); await sleep(2500); await unrouteAll(); reads.stop(); assert.equal(downloads.length, 1, `downloads=${downloads.length}`);
   });
   await matrix.check(S, "filtros", "VALIDO + LIMITE: vacio por filtro, mensaje 'Todavía no hay respuestas'", async () => {
-    await open(); await page.getByRole("radio", { name: "No asistirá", exact: true }).filter({ visible: true }).first().click(); await sleep(900);
+    await open(); await pick(page, "status-filter", "DECLINED"); await sleep(900);
     const declined = (await host("GET", `${G}/guest-list?status=DECLINED&limit=1`)).json.total; if (declined === 0) await text(page, /Nadie ha dado esa respuesta todavía/).waitFor(); return `GET DECLINED total=${declined}`;
   });
   await matrix.check(S, "lista del reporte", "ERROR 429 / 503 con reintento", async () => {
@@ -466,7 +470,7 @@ async function notifications() {
     await open(); const target = await page.locator('[data-testid^="open-"]').first(); if ((await target.count()) === 0) return "ningun aviso con destino (solo plantillas companionRequested/RSVP los tienen); sin ejecutar"; await target.click(); await sleep(1200); await noBlank(page, "open notification");
   });
   await matrix.check(S, "Actualizar", "VALIDO relee; ERROR 503 -> reintento", async () => {
-    await open(); const reads = track(page, isCall("GET", /\/notifications\?/)); await button(page, "Actualizar").click(); await sleep(800); assert.ok(reads.count() >= 1); reads.stop();
+    await open(); const reads = track(page, isCall("GET", /\/notifications\?/)); await openMore(page, "notifications-more"); await menuItem(page, "Actualizar").click(); await sleep(800); assert.ok(reads.count() >= 1); reads.stop();
     await page.route(/\/notifications\/celebrations\/[^/]+\/notifications\?/, (route) => route.fulfill(problem(503))); await go(page, "/notificaciones"); await text(page, /no está disponible/).waitFor(); await unrouteAll(); await button(page, "Reintentar").first().click(); await text(page, /sin leer/).waitFor();
   });
   matrix.gap(S, "Marcar todos (endpoint)", "CRUD", "Backend marca de a una (POST .../{id}/read); 'Marcar todos' hace N llamadas secuenciales. Sin endpoint masivo ni paginacion/cursor de bandeja (solo limit).");
@@ -509,7 +513,7 @@ async function preferences() {
   await matrix.check(S, "lectura", "ERROR 503 con reintento", async () => {
     await page.route(PATCH, (route) => route.fulfill(problem(503))); await go(page, "/preferencias"); await text(page, /no está disponible/).waitFor(); await unrouteAll(); await button(page, "Reintentar").first().click(); await tid(page, "prefs-more").waitFor(); await openMore(page, "prefs-more"); await tid(page, "quiet-save").waitFor();
   });
-  await matrix.check(S, "Configurar avisos en este dispositivo", "VALIDO navega", async () => { await go(page, "/preferencias"); await tid(page, "pref-PUSH").waitFor(); await button(page, "Configurar avisos en este dispositivo").click(); await page.waitForURL(/\/permisos-push/); });
+  await matrix.check(S, "Configurar avisos en este dispositivo", "VALIDO navega", async () => { await go(page, "/preferencias"); await tid(page, "pref-PUSH").waitFor(); await openMore(page, "preferences-more"); await menuItem(page, "Configurar avisos en este dispositivo").click(); await page.waitForURL(/\/permisos-push/); });
 }
 
 /* ------------------------------------------------------------------ push */
@@ -539,7 +543,7 @@ async function push() {
     await tid(page, `remove-${id}`).click(); await page.getByRole("alert").getByRole("button", { name: "Quitar este dispositivo" }).click(); await text(page, "Todavía no hay dispositivos registrados para recibir avisos push.").waitFor(); await unrouteAll();
     return "simulado en el navegador: el backend de este entorno no tiene push configurado (503); no hay prueba contra servicio real";
   });
-  await matrix.check(S, "Preferencias de avisos", "VALIDO navega", async () => { await open(); await button(page, "Preferencias de avisos").first().click(); await page.waitForURL(/\/preferencias/); });
+  await matrix.check(S, "Preferencias de avisos", "VALIDO navega", async () => { await open(); await openMore(page, "push-menu"); await menuItem(page, "Preferencias de avisos").click(); await page.waitForURL(/\/preferencias/); });
 }
 
 /* -------------------------------------------------------------- settings */
@@ -596,7 +600,7 @@ async function summary() {
   await matrix.check(S, "siguiente paso", "VALIDO borrador: 'Publica tu invitación' (o 'Termina…' si falta algo) y lleva a Publicar", async () => {
     const draft = (await celebration()).status === "DRAFT"; if (!draft) return "el mundo ya esta publicado: rama cubierta por las pruebas de componente y por 'publicado' abajo";
     await open(); await tid(page, "next-step").waitFor(); assert.match(await tid(page, "next-step").innerText(), /Publica tu invitación|Termina tu invitación/);
-    assert.equal(await tid(page, "step-published").getAttribute("aria-label").then((l) => /borrador/.test(l)), true); await tid(page, "next-step-action").click(); await page.waitForURL((u) => u.pathname === "/publicar");
+    assert.match(await tid(page, "next-step").innerText(), /no pueden abrirla ni responder|para poder publicarla/); /* the draft state is now said by the next-step band itself (the old "step-published" row was a repeat) */ await tid(page, "next-step-action").click(); await page.waitForURL((u) => u.pathname === "/publicar");
   });
   await matrix.check(S, "siguiente paso", "VALIDO publicado con solicitudes abiertas: 'Revisa N solicitud(es)' lleva a Acompañantes", async () => {
     await newRequest("panel"); await asPublished(); await open(); await tid(page, "next-step").waitFor(); assert.match(await tid(page, "next-step").innerText(), /Revisa \d+ solicitud/);

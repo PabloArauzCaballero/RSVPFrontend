@@ -5,9 +5,9 @@ import { formatNumber } from "@rsvp/i18n";
 import { Stagger, useColors } from "@rsvp/ui";
 import { useMetrics, type MetricTotals, type Provider } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../platform/providers";
-import { ActionButton, ChoiceGroup, EmptyState, Field, Notice, PageIntro, useStyles } from "../host/ui";
+import { ChoiceGroup, EmptyState, Field, FilterSelect, Notice, PageIntro, useStyles } from "../host/ui";
 import { PortalErrorNotice as ErrorNotice } from "./errors";
-import { PortalScreen } from "./frame";
+import { PortalScreen, usePortalHeader } from "./frame";
 import { RowsSkeleton } from "./parts";
 
 const DAY_MS = 86_400_000;
@@ -66,9 +66,15 @@ export function RangeTotals({ totals }: { readonly totals: MetricTotals }): Reac
 
 const FIELDS: readonly string[] = ["day", "category", "destination", "impressions", "clicks", "validLeads", "invalidLeads", "leads"];
 type Group = "day" | "category" | "destination";
+type Period = "d7" | "d30" | "d90" | "custom";
+const PERIOD_DAYS: Readonly<Record<Exclude<Period, "custom">, number>> = { d7: 7, d30: 30, d90: 90 };
 const reachOf = (row: Record<string, unknown>): number => (typeof row["impressions"] === "number" ? row["impressions"] : typeof row["clicks"] === "number" ? row["clicks"] : 0);
 
-/** D13 · Lead metrics by period, grouped by day, category or destination. */
+/**
+ * D13 · Lead metrics by period, grouped by day, category or destination.
+ * The period is a selector (last 7 / 30 / 90 days or a custom range): presets apply at once; only «Personalizado» shows the two dates,
+ * and then «Ver resultados» is the one primary action of the header.
+ */
 function Metrics({ provider }: { readonly provider: Provider }): ReactNode {
   const t = useT();
   const client = useApiClient();
@@ -76,25 +82,33 @@ function Metrics({ provider }: { readonly provider: Provider }): ReactNode {
   const styles = useStyles();
   const palette = useColors();
   const initial = lastDays(30, provider.timeZone);
+  const [period, setPeriod] = useState<Period>("d30");
   const [from, setFrom] = useState(initial.from);
   const [to, setTo] = useState(initial.to);
-  const [applied, setApplied] = useState(initial);
+  const [custom, setCustom] = useState(initial);
   const [group, setGroup] = useState<Group>("day");
   const [error, setError] = useState<string | null>(null);
+  const applied = period === "custom" ? custom : lastDays(PERIOD_DAYS[period], provider.timeZone);
   const metrics = useMetrics(client, provider.id, applied.from, applied.to, group);
-  const apply = (): void => { if (!validRange(from, to)) return setError(t("portal.metrics.dateInvalid")); setError(null); setApplied({ from, to }); };
+  const apply = (): void => { if (!validRange(from, to)) return setError(t("portal.metrics.dateInvalid")); setError(null); setCustom({ from, to }); };
+  usePortalHeader(period === "custom" ? { label: t("portal.metrics.apply"), onPress: apply, testID: "metrics-apply" } : undefined);
   const rows = (metrics.data?.groups ?? metrics.data?.rows ?? []) as readonly Record<string, unknown>[];
   const peak = Math.max(1, ...rows.map(reachOf));
   return (
     <View style={{ gap: spacing[4] }}>
       <PageIntro>{t("portal.metrics.intro")}</PageIntro>
-      <View style={styles.row}>
-        <Field label={t("portal.metrics.from")} value={from} onChange={setFrom} testID="metrics-from" />
-        <Field label={t("portal.metrics.to")} value={to} onChange={setTo} testID="metrics-to" />
+      <View style={{ gap: spacing[1], maxWidth: 360 }}>
+        <Text style={styles.label}>{t("portal.metrics.period")}</Text>
+        <FilterSelect<Period> label={t("portal.metrics.period")} value={period} onChange={(next) => { setPeriod(next); setError(null); }} options={(["d7", "d30", "d90", "custom"] as const).map((value) => ({ value, label: t(`portal.metrics.periods.${value}`) }))} testID="metrics-period" />
       </View>
+      {period === "custom" ? (
+        <View style={styles.row}>
+          <Field label={t("portal.metrics.from")} value={from} onChange={setFrom} testID="metrics-from" />
+          <Field label={t("portal.metrics.to")} value={to} onChange={setTo} testID="metrics-to" />
+        </View>
+      ) : null}
       <ChoiceGroup<Group> label={t("portal.metrics.groupBy")} value={group} onChange={setGroup} choices={(["day", "category", "destination"] as const).map((value) => ({ value, label: t(`portal.metrics.group.${value}`) }))} />
       {error ? <Notice kind="error">{error}</Notice> : null}
-      <ActionButton label={t("portal.metrics.apply")} onPress={apply} testID="metrics-apply" />
       {metrics.isPending ? <RowsSkeleton count={4} minHeight={52} trailing={false} /> : null}
       <ErrorNotice error={metrics.error} onReload={() => { void metrics.refetch(); }} />
       {metrics.data ? (

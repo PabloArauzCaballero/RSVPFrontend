@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Linking, Pressable, ScrollView, Text, View } from "react-native";
+import { Linking, Text, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
 import { ApiError } from "@rsvp/api-client";
 import { formatMinor } from "@rsvp/i18n";
@@ -10,14 +10,13 @@ import { MoreOptions } from "../more-options";
 import { Hint, Row, RowList } from "./offer-row";
 import { GiftErrorNotice } from "./gift-errors";
 import { SkeletonList, Stagger } from "@rsvp/ui";
-import { ActionButton, Field, Notice, useStyles } from "../ui";
+import { ActionButton, Field, FilterSelect, Notice, useStyles } from "../ui";
 import { RetryNotice } from "../guests/parts";
 import { useSingleFlightGate } from "../../platform/single-flight";
 
 const CATEGORIES = ["VENUE", "CATERING", "PHOTOGRAPHY", "MUSIC", "DECORATION", "MAKEUP", "TRANSPORT", "INVITATIONS", "WEDDING_PLANNER", "ACCOMMODATION", "HONEYMOON"] as const;
 const PAGE_SIZE = 6;
 const CENTS = 100;
-const MIN_TOUCH = 44;
 
 /** REQ-F23-05 · One offer: what it is, who sells it, what it costs and how long it takes; address, hours and the provider's own links stay behind «Ver detalles». */
 function ProviderOffer({ card, celebrationId, adding, first, onAdd }: { readonly card: ProviderCard; readonly celebrationId: string; readonly adding: boolean; readonly first: boolean; readonly onAdd: (card: ProviderCard) => void }): ReactNode {
@@ -85,16 +84,9 @@ export function ProvidersPanel({ celebrationId, currency, onSeeList }: { readonl
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   return (
     <View style={{ gap: spacing[4] }}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing[2], paddingRight: spacing[4] }}>
-      <View accessibilityRole="radiogroup" accessibilityLabel={t("gifts.host.providers.category")} style={[styles.row, { flexWrap: "nowrap" }]}>
-        {[undefined, ...CATEGORIES].map((code) => (
-          <Pressable key={code ?? "all"} accessibilityRole="radio" aria-checked={category === code} accessibilityLabel={code ? t(`directory.category.${code}`) : t("gifts.host.providers.allCategories")} testID={`category-${code ?? "all"}`}
-            onPress={() => { setCategory(code); setPage(1); }} style={[styles.choice, category === code ? styles.choiceSelected : null, { minHeight: MIN_TOUCH }]}>
-            <Text style={[styles.body, category === code && { fontWeight: "700" }]}>{code ? t(`directory.category.${code}`) : t("gifts.host.providers.allCategories")}</Text>
-          </Pressable>
-        ))}
-      </View>
-      </ScrollView>
+      <FilterSelect label={t("gifts.host.providers.category")} value={category ?? "ALL"} testID="provider-category"
+        options={[{ value: "ALL", label: t("gifts.host.providers.allCategories") }, ...CATEGORIES.map((code) => ({ value: code as string, label: t(`directory.category.${code}`) }))]}
+        onChange={(code) => { setCategory(code === "ALL" ? undefined : code); setPage(1); }} />
       <MoreOptions label={t("gifts.host.providers.moreFilters")} testID="more-provider-filters">
         <Field label={t("gifts.host.providers.city")} value={city} onChange={setCity} help={t("gifts.host.providers.cityHelp")} onSubmit={apply} testID="providers-city" />
         <Field label={t("gifts.host.providers.maxPrice")} value={maxPrice} onChange={setMaxPrice} keyboardType="decimal-pad" onSubmit={apply} testID="providers-max-price" />

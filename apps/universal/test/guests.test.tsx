@@ -44,10 +44,10 @@ describe("REQ-F16-01 · C19 guest list (read model, search, filter, paging, stat
     renderApp(<GuestListScreen celebrationId={id} onNavigate={navigate} />, client);
     expect(await screen.findByLabelText("Abrir a Ana Pérez")).toBeTruthy();
     expect(screen.getByLabelText("Abrir a Beto Ramos")).toBeTruthy();
-    fireEvent.click(screen.getByRole("radio", { name: "Confirmó" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Filtrar por respuesta" }), { target: { value: "CONFIRMED" } });
     await waitFor(() => expect(screen.queryByLabelText("Abrir a Beto Ramos")).toBeNull());
     expect(mock.state.log.some((call) => call.path.includes("status=CONFIRMED"))).toBe(true);
-    fireEvent.click(screen.getByRole("radio", { name: "Todos" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Filtrar por respuesta" }), { target: { value: "ALL" } });
     fireEvent.change(screen.getByTestId("guest-search"), { target: { value: "carla" } });
     expect(await screen.findByLabelText("Abrir a Carla Vega")).toBeTruthy();
     await waitFor(() => expect(screen.queryByLabelText("Abrir a Ana Pérez")).toBeNull());
@@ -191,7 +191,7 @@ describe("REQ-F16-04 · C22 groups (contract v1.9.0)", () => {
     await screen.findByTestId("guest-name");
     type("Nombre", "Nuevo");
     type("Correo electrónico", "nuevo@example.com");
-    fireEvent.click(await screen.findByRole("radio", { name: "Familia Quispe" }));
+    fireEvent.change(await screen.findByRole("combobox", { name: "Grupo familiar" }), { target: { value: groupId } });
     fireEvent.click(screen.getByTestId("save-guest"));
     await screen.findByText(/ya está en tu lista/);
     expect(mock.state.log.filter((call) => call.method === "POST").at(-1)?.body).toMatchObject({ groupId });
@@ -199,7 +199,7 @@ describe("REQ-F16-04 · C22 groups (contract v1.9.0)", () => {
     cleanup();
 
     renderApp(<GuestDetailScreen celebrationId={id} guestId="00000000-0000-4000-8000-0000000000aa" onNavigate={navigate} />, client);
-    fireEvent.click(await screen.findByRole("radio", { name: "Familia Quispe (1)" }));
+    fireEvent.change(await screen.findByRole("combobox", { name: "Grupo familiar" }), { target: { value: groupId } });
     expect(await screen.findByText("Grupo actualizado.")).toBeTruthy();
     expect(mock.state.log.find((call) => call.method === "PATCH")).toMatchObject({ path: `/guests/celebrations/${id}/guests/00000000-0000-4000-8000-0000000000aa`, body: { groupId } });
     expect(mock.state.groups.get(groupId)?.memberIds).toHaveLength(2);
@@ -256,7 +256,7 @@ describe("REQ-F16-05/06 · C23 detail and personal link", () => {
     await screen.findByTestId("masked-link");
     const first = mock.listGuests()[0]!.token;
     fireEvent.click(screen.getByTestId("guest-more"));
-    fireEvent.click(screen.getByRole("button", { name: "Reemitir enlace" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Reemitir enlace" }));
     expect(await screen.findByText("¿Reemitir el enlace?")).toBeTruthy();
     fireEvent.click(within(screen.getByRole("alert")).getByRole("button", { name: "Reemitir enlace" }));
     await waitFor(() => expect(mock.listGuests()[0]!.token).not.toBe(first));
@@ -413,9 +413,9 @@ describe("REQ-F17-02/05 · C24 report and safe CSV export", () => {
     });
     renderApp(<ReportScreen celebrationId={id} onNavigate={navigate} />, client);
     expect(await screen.findByText("Dieta: +cmd|' /C calc'!A0")).toBeTruthy();
-    fireEvent.click(screen.getByRole("radio", { name: "Confirmó" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Filtrar por respuesta" }), { target: { value: "CONFIRMED" } });
     await waitFor(() => expect(screen.queryByText("-Sin responder")).toBeNull());
-    fireEvent.click(screen.getByRole("radio", { name: "Todos" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Filtrar por respuesta" }), { target: { value: "ALL" } });
     await screen.findByText("-Sin responder");
     fireEvent.click(screen.getByTestId("export-csv"));
     await waitFor(() => expect(saved.files).toHaveLength(1));
@@ -517,9 +517,14 @@ describe("REQ-F18 · notifications center and preferences", () => {
     const empty = world();
     const view = renderApp(<NotificationsScreen celebrationId={empty.id} onNavigate={navigate} />, empty.client);
     expect(await screen.findByText("Tu bandeja está tranquila")).toBeTruthy();
+    // A failed inbox read says so and offers the retry; it is reached from the menu's "Actualizar" once the list was loaded.
     view.unmount();
-    const broken = world((m) => { m.state.failNext.push({ status: 503, body: { type: "x", title: "down", status: 503 }, headers: { "content-type": "application/problem+json" } }); });
-    renderApp(<NotificationsScreen celebrationId={broken.id} onNavigate={navigate} />, broken.client);
+    const flaky = world();
+    renderApp(<NotificationsScreen celebrationId={flaky.id} onNavigate={navigate} />, flaky.client);
+    await screen.findByText("Tu bandeja está tranquila");
+    flaky.mock.state.failNext.push({ status: 503, body: { type: "x", title: "down", status: 503 }, headers: { "content-type": "application/problem+json" } });
+    fireEvent.click(screen.getByRole("button", { name: "Más opciones" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Actualizar" }));
     expect(await screen.findByRole("button", { name: "Reintentar" })).toBeTruthy();
   });
 
@@ -590,5 +595,99 @@ describe("REQ-F19-01 (code path only) · push permission and device registration
     expect(await screen.findByText(/necesitan un teléfono real/)).toBeTruthy();
     expect(screen.queryByTestId("enable-push")).toBeNull();
     expect(registered).toHaveLength(0);
+  });
+});
+
+describe("Reorganización · una acción primaria arriba a la derecha, secundarias en «⋯», filtros en selector", () => {
+  const ids = (list: readonly HTMLElement[]): string[] => list.map((node) => node.getAttribute("aria-label") ?? node.textContent ?? "");
+
+  it("lista: «Agregar invitado» es la única acción visible y lo demás vive en el menú «Más opciones»", async () => {
+    const { client, id } = world((m) => { m.addGuest({ name: "Ana Pérez" }); });
+    renderApp(<GuestListScreen celebrationId={id} onNavigate={navigate} />, client);
+    await screen.findByLabelText("Abrir a Ana Pérez");
+    expect(screen.getAllByRole("button", { name: "Agregar invitado" })).toHaveLength(1);
+    expect(screen.queryByRole("menuitem")).toBeNull(); // closed: nothing to tab through
+    expect(screen.queryByRole("button", { name: "Importar CSV" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Más opciones" }));
+    expect(ids(screen.getAllByRole("menuitem"))).toEqual(["Importar CSV", "Grupos", "Ajustes de invitados"]);
+    fireEvent.click(screen.getByRole("menuitem", { name: "Grupos" }));
+    expect(navigate).toHaveBeenCalledWith(`/invitados/grupos?c=${id}`);
+    fireEvent.click(screen.getByTestId("add-guest"));
+    expect(navigate).toHaveBeenLastCalledWith(`/invitados/nuevo?c=${id}`);
+  });
+
+  it("lista: la respuesta se filtra con un selector de cuatro opciones, no con fichas", async () => {
+    const { client, id } = world((m) => { m.addGuest({ name: "Ana Pérez" }); });
+    renderApp(<GuestListScreen celebrationId={id} onNavigate={navigate} />, client);
+    const select = await screen.findByRole("combobox", { name: "Filtrar por respuesta" });
+    expect(Array.from((select as HTMLSelectElement).options).map((option) => option.textContent)).toEqual(["Todos", "Sin responder", "Confirmó", "No asistirá"]);
+    expect(screen.queryByRole("radio")).toBeNull();
+  });
+
+  it("respuestas: «Exportar CSV» arriba a la derecha y «Exportar para el catering» en el menú", async () => {
+    const { client, id } = world((m) => { m.addGuest({ name: "Ana Pérez", status: "CONFIRMED", version: 1 }); });
+    renderApp(<ReportScreen celebrationId={id} onNavigate={navigate} />, client);
+    await screen.findByTestId("export-csv");
+    expect(screen.queryByTestId("export-catering")).toBeNull();
+    fireEvent.click(screen.getByTestId("report-more"));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Exportar para el catering" }));
+    await waitFor(() => expect(saved.files.at(-1)?.name).toMatch(/^catering-/));
+    expect(await screen.findByText(/no lleva nombres ni contactos/)).toBeTruthy(); // the note that sat under the old button now rides on the confirmation
+  });
+
+  it("bandeja: «Marcar todos como leídos» es la acción de la cabecera y la fila abre su destino sin botón «Abrir»", async () => {
+    const { client, id } = world((m) => { m.state.notifications.push({ id: "00000000-0000-4000-8000-000000000101", eventId: "00000000-0000-4000-8000-000000000201", channel: "INBOX", template: "hostRsvpConfirmed", locale: "es-BO", status: "SENT", attempts: 1, availableAt: NOW.toISOString(), createdAt: NOW.toISOString(), subject: "x", text: "y", readAt: null } as never); });
+    renderApp(<NotificationsScreen celebrationId={id} onNavigate={navigate} />, client);
+    await screen.findByTestId("unread-count");
+    expect(screen.queryByRole("button", { name: "Abrir" })).toBeNull();
+    expect(screen.getByRole("button", { name: /^Abrir: Un invitado confirmó/ })).toBeTruthy();
+    expect(screen.getAllByTestId("mark-all")).toHaveLength(1);
+  });
+
+  it("acompañantes: el nombre abre la ficha y las dos decisiones son los únicos botones de la tarjeta", async () => {
+    const { client, id } = world((m) => {
+      const guest = m.addGuest({ name: "Marta Quispe", status: "CONFIRMED", requestedCompanions: 4, approvedCompanions: 1, allowedCompanions: 1 });
+      m.state.requests.set("req-1", { id: "req-1", guestId: guest.id, requestedCompanions: 4, allowedCompanions: 1, status: "PENDING_REVIEW", createdAt: NOW.toISOString(), resolvedAt: null });
+    });
+    renderApp(<RequestsScreen celebrationId={id} onNavigate={navigate} />, client);
+    const card = await screen.findByTestId("request-req-1");
+    expect(ids(within(card).getAllByRole("button"))).toEqual(["Abrir invitado", "Aprobar", "Rechazar"]);
+    fireEvent.click(within(card).getByRole("button", { name: "Abrir invitado" }));
+    expect(navigate).toHaveBeenCalledWith(expect.stringMatching(/^\/invitados\/[^?]+\?c=/));
+  });
+
+  it("preferencias: los interruptores no repiten su estado en texto y «Configurar avisos» está en el menú", async () => {
+    const { client, id } = world();
+    renderApp(<PreferencesScreen celebrationId={id} onNavigate={navigate} />, client);
+    await screen.findByRole("switch", { name: "Correo electrónico" });
+    expect(screen.queryByText("Activado")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Más opciones" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Configurar avisos en este dispositivo" }));
+    expect(navigate).toHaveBeenCalledWith(`/permisos-push?c=${id}`);
+  });
+
+  it("ficha: la cabecera pasa de «Generar y copiar enlace» a «Copiar enlace»; reemitir sólo aparece con enlace y revocar/eliminar están en el menú", async () => {
+    const { mock, client } = world((m) => { m.addGuest({ name: "Marta Quispe", id: "00000000-0000-4000-8000-0000000000aa" }); });
+    renderApp(<GuestDetailScreen celebrationId={mock.celebrationId} guestId="00000000-0000-4000-8000-0000000000aa" onNavigate={navigate} />, client);
+    await screen.findByTestId("issue-link");
+    expect(screen.queryByTestId("copy-link")).toBeNull();
+    fireEvent.click(screen.getByTestId("guest-more"));
+    expect(ids(screen.getAllByRole("menuitem"))).toEqual(["Revocar enlace", "Eliminar invitado"]);
+    fireEvent.click(screen.getByTestId("guest-more"));
+    fireEvent.click(screen.getByTestId("issue-link"));
+    await screen.findByTestId("masked-link");
+    expect(screen.queryByTestId("issue-link")).toBeNull();
+    expect(screen.getAllByTestId("copy-link")).toHaveLength(1);
+    fireEvent.click(screen.getByTestId("guest-more"));
+    expect(ids(screen.getAllByRole("menuitem"))).toEqual(["Reemitir enlace", "Revocar enlace", "Eliminar invitado"]);
+  });
+
+  it("inicio: el botón del siguiente paso está en la cabecera y la banda sólo lo explica", async () => {
+    const { client, id } = world((m) => { m.addGuest({ name: "A" }); });
+    renderApp(<SummaryScreen celebrationId={id} onNavigate={navigate} />, client);
+    const band = await screen.findByTestId("next-step");
+    expect(within(band).queryByRole("button")).toBeNull();
+    expect(screen.getAllByTestId("next-step-action")).toHaveLength(1);
+    expect(screen.queryByTestId("step-published")).toBeNull();
   });
 });

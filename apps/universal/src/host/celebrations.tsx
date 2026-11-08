@@ -27,8 +27,8 @@ export function CelebrationsScreen({ onNavigate }: { readonly onNavigate: (href:
   const create = <ActionButton label={t("host.picker.create")} onPress={() => onNavigate(`${HOST_ROUTES.onboarding}/1`)} testID="create-celebration" />;
   const empty = query.isSuccess && !items.length;
   return (
-    <Screen title={t("host.picker.title")} intro={t("host.picker.intro")} nav={nav} current="celebrations" onNavigate={onNavigate}>
-      {empty ? <EmptyState illustration="welcomeHost" title={t("host.picker.emptyTitle")} body={t("host.picker.emptyBody")} action={create} /> : <View style={styles.row}>{create}</View>}
+    <Screen title={t("host.picker.title")} intro={t("host.picker.intro")} nav={nav} current="celebrations" onNavigate={onNavigate} actions={create}>
+      {empty ? <EmptyState illustration="welcomeHost" title={t("host.picker.emptyTitle")} body={t("host.picker.emptyBody")} /> : null}
       {query.isPending ? <SkeletonList count={3} row={{ minHeight: 72, trailing: true }} label={t("host.common.loading")} /> : null}
       {query.isError ? <><CelebrationErrorNotice error={query.error} /><ActionButton variant="secondary" label={t("host.common.retry")} onPress={() => { void query.refetch(); }} testID="retry-list" /></> : null}
       {items.length ? (

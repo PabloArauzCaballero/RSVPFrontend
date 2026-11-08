@@ -4,7 +4,7 @@ import { useModerationDecision, useModerationQueue, useVerificationAction, useVe
 import { spacing } from "@rsvp/design-tokens";
 import { AvatarMark, Button, Chip, Stagger, useColors } from "@rsvp/ui";
 import { useApiClient, useT } from "../platform/providers";
-import { ActionButton, ChoiceGroup, Notice, PageIntro, useStyles } from "../host/ui";
+import { ActionButton, ChoiceGroup, FilterSelect, Notice, OverflowMenu, PageIntro, useStyles } from "../host/ui";
 import { AdminScreen, adminOnly } from "./admin-screen";
 import { AdminErrorNotice, QueryBoundary, ReasonDialog, useStamp, Stack } from "./shared";
 import { useSingleMutation } from "../platform/single-flight";
@@ -32,17 +32,12 @@ const ACTIONS_BY_STATUS: Readonly<Record<VerificationStatus, readonly Verificati
   PENDING: ["verify", "reject"], VERIFIED: ["suspend"], REJECTED: [], SUSPENDED: []
 };
 
-/** A row = who, state, when, and one visible action. The other (negative) actions sit behind "More" so a long queue stays scannable. */
-function RowActions({ primary, secondary }: { readonly primary: ReactNode; readonly secondary: ReactNode }): ReactNode {
+/** A row = who, state, when, and one visible action. The other (negative) actions sit behind the "⋯" menu so a long queue stays scannable. */
+function RowActions({ primary, items }: { readonly primary?: ReactNode; readonly items: readonly { readonly key: string; readonly label: string; readonly onPress: () => void; readonly testID: string; readonly destructive: boolean }[] }): ReactNode {
   const t = useT();
   const styles = useStyles();
-  const [open, setOpen] = useState(false);
-  return (
-    <View style={{ gap: spacing[2] }}>
-      <View style={styles.row}>{primary}{secondary ? <ActionButton variant="secondary" label={t(open ? "admin.dashboard.less" : "admin.dashboard.more")} onPress={() => setOpen((current) => !current)} /> : null}</View>
-      {open ? <View style={styles.row}>{secondary}</View> : null}
-    </View>
-  );
+  if (!primary && items.length === 0) return null;
+  return <View style={[styles.row, { flexWrap: "nowrap" }]}>{primary}<OverflowMenu label={t("admin.dashboard.more")} items={items} /></View>;
 }
 
 function VerificationRow({ item, busy, onVerify, onAsk }: { readonly item: VerificationItem; readonly busy: boolean; readonly onVerify: () => void; readonly onAsk: (action: "reject" | "suspend") => void }): ReactNode {
@@ -52,6 +47,7 @@ function VerificationRow({ item, busy, onVerify, onAsk }: { readonly item: Verif
   const rowStyle = useRowStyle();
   const actions = ACTIONS_BY_STATUS[item.status] ?? [];
   const state = busy ? "loading" : "default";
+  const label = (action: VerificationAction): string => t(`admin.verification.${action}Named`, { name: item.name });
   const button = (action: VerificationAction): ReactNode => (
     <Button key={action} variant={action === "verify" ? "primary" : "danger"} state={state} accessibilityLabel={t(`admin.verification.${action}Named`, { name: item.name })} onPress={() => (action === "verify" ? onVerify() : onAsk(action))} testID={`${action}-${item.providerId}`}>{t(`admin.verification.${action}`)}</Button>
   );
@@ -63,7 +59,7 @@ function VerificationRow({ item, busy, onVerify, onAsk }: { readonly item: Verif
       <Text style={styles.muted}>{`${item.category} · ${item.city} · ${t("admin.verification.submitted", { when: stamp(item.submittedAt) })}`}</Text>
       {item.reason ? <Text style={styles.muted}>{t("admin.common.reasonOn", { reason: item.reason })}</Text> : null}
       {actions.length === 0 ? <Text style={styles.muted} testID={`no-action-${item.providerId}`}>{t(item.status === "REJECTED" ? "admin.verification.noActionRejected" : "admin.verification.noActionSuspended")}</Text> : null}
-      {first ? <RowActions primary={button(first)} secondary={rest.length ? rest.map(button) : null} /> : null}
+      {first ? <RowActions primary={button(first)} items={rest.map((action) => ({ key: action, label: label(action), onPress: () => onAsk(action as "reject" | "suspend"), testID: `${action}-${item.providerId}`, destructive: true }))} /> : null}
     </View>
   );
 }
@@ -81,7 +77,7 @@ function VerificationScreenContent({ onNavigate }: Nav): ReactNode {
     <AdminScreen title={t("admin.verification.title")} current="verification" onNavigate={onNavigate}>
       <Stack>
       <PageIntro>{t("admin.verification.intro")}</PageIntro>
-      <ChoiceGroup label={t("admin.common.filter")} value={status} onChange={(next) => { act.reset(); setShown(PAGE); setStatus(next); }} choices={VERIFICATION_STATUSES.map((value) => ({ value, label: t(`admin.verification.statuses.${value}`) }))} />
+      <FilterSelect label={t("admin.common.filter")} value={status} onChange={(next) => { act.reset(); setShown(PAGE); setStatus(next); }} options={VERIFICATION_STATUSES.map((value) => ({ value, label: t(`admin.verification.statuses.${value}`) }))} />
       {act.isSuccess ? <Notice kind="success">{t("admin.verification.done")}</Notice> : null}
       <AdminErrorNotice error={act.error} onReload={() => { act.reset(); void queue.refetch(); }} />
       <QueryBoundary query={queue} avatar illustration={status === "PENDING" ? "nothingPending" : "emptySearch"} {...(status === "PENDING" ? { emptyTitle: t("admin.common.allClearTitle") } : {})} empty={t("admin.verification.empty", { status: t(`admin.verification.statuses.${status}`) })}>
@@ -110,13 +106,13 @@ function ModerationRow({ item, busy, onApprove, onReject }: { readonly item: Mod
     <View style={rowStyle} accessibilityLabel={item.title}>
       <View style={[styles.row, { justifyContent: "space-between", flexWrap: "nowrap" }]}><Text accessibilityRole="header" style={[styles.subtitle, { flex: 1, flexShrink: 1, overflowWrap: "anywhere" } as object]}>{item.title}</Text><Chip tone={item.status === "APPROVED" ? "yes" : item.status === "PENDING" ? "maybe" : "no"}>{t(`admin.moderation.state.${item.status}`)}</Chip></View>
       <Text style={styles.muted}>{`${t(`admin.moderation.kinds.${item.kind}`)} · ${stamp(item.submittedAt)}`}</Text>
-      {item.url ? <ActionButton variant="secondary" label={t("admin.moderation.open", { name: item.title })} onPress={() => { void Linking.openURL(item.url ?? ""); }} /> : null}
       {item.reason ? <Text style={styles.muted}>{t("admin.common.reasonOn", { reason: item.reason })}</Text> : null}
-      {item.status === "PENDING" ? (
-        <RowActions
-          primary={<Button variant="primary" state={state} accessibilityLabel={t("admin.moderation.approveNamed", { name: item.title })} onPress={onApprove} testID={`approve-${item.id}`}>{t("admin.moderation.approve")}</Button>}
-          secondary={<Button variant="danger" state={state} accessibilityLabel={t("admin.moderation.rejectNamed", { name: item.title })} onPress={onReject} testID={`reject-${item.id}`}>{t("admin.moderation.reject")}</Button>} />
-      ) : null}
+      <RowActions
+        primary={item.status === "PENDING" ? <Button variant="primary" state={state} accessibilityLabel={t("admin.moderation.approveNamed", { name: item.title })} onPress={onApprove} testID={`approve-${item.id}`}>{t("admin.moderation.approve")}</Button> : null}
+        items={[
+          ...(item.url ? [{ key: "open", label: t("admin.moderation.open", { name: item.title }), onPress: () => { void Linking.openURL(item.url ?? ""); }, testID: `open-${item.id}`, destructive: false }] : []),
+          ...(item.status === "PENDING" ? [{ key: "reject", label: t("admin.moderation.rejectNamed", { name: item.title }), onPress: onReject, testID: `reject-${item.id}`, destructive: true }] : [])
+        ]} />
     </View>
   );
 }

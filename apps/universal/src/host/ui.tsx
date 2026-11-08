@@ -68,7 +68,7 @@ export function useStyles(): HostStyles {
 
 export { Screen, type NavItem, type NavTab } from "./shell";
 /** Personality primitives (docs/design/primitives.md): screens import them from here next to `Screen`, `Section`, `Notice`. */
-export { CheckMark, Celebrate, EmptyState, Illustration, PageIntro, StickyActions, SuccessNote } from "@rsvp/ui";
+export { CheckMark, Celebrate, EmptyState, FILTER_SELECT_THRESHOLD, FilterSelect, Illustration, OverflowMenu, PageIntro, StickyActions, SuccessNote, type FilterOption, type OverflowMenuItem } from "@rsvp/ui";
 
 /** A form or settings block. Capped at a readable measure so fields never stretch across a wide screen. */
 export function Section({ title, children }: PropsWithChildren<{ readonly title: string }>): ReactNode {

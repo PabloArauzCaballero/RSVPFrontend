@@ -9,8 +9,8 @@ import { previewView } from "./preview-model";
 import { PreviewFrame } from "./preview-stage";
 import { CelebrationErrorNotice } from "./celebration-errors";
 import { LoadFailed } from "./load-failed";
-import { ActionBar } from "./save-bar";
-import { ActionButton, ChoiceGroup, EmptyState, SuccessNote, useStyles } from "./ui";
+import { useScreenHeader } from "./gate";
+import { ActionButton, ChoiceGroup, EmptyState, OverflowMenu, SuccessNote, useStyles } from "./ui";
 
 const WIDE = 960;
 const LIST_WIDTH = 320;
@@ -38,6 +38,12 @@ export function TemplateGallery({ celebration, eventType, onApplied, onSeeFull }
   const [applied, setApplied] = useState<string | null>(null);
   const candidate = items.find((template) => template.id === (focused ?? items[0]?.id));
   const wide = width >= WIDE;
+  const canApply = Boolean(candidate && candidate.id !== celebration.templateId);
+  // «Aplicar este estilo» is the screen's one action (top right; a fixed bar on a phone); the full preview is a secondary one.
+  useScreenHeader({
+    actions: canApply && candidate ? <ActionButton label={t("host.templates.apply")} busy={select.isPending} testID="apply-template" onPress={() => select.mutate({ target: celebration, templateId: candidate.id }, { onSuccess: () => { setApplied(candidate.name); onApplied?.(); } })} /> : null,
+    menu: onSeeFull ? <OverflowMenu items={[{ key: "full", label: t("host.templates.seeFull"), onPress: onSeeFull }]} /> : null
+  });
   if (templates.isPending && eventType) {
     return (
       <SkeletonList label={t("host.common.loading")}>
@@ -52,23 +58,17 @@ export function TemplateGallery({ celebration, eventType, onApplied, onSeeFull }
   if (templates.isSuccess && !items.length) return <EmptyState illustration="published" title={t("host.templates.emptyTitle")} body={t("host.templates.emptyBody")} />;
 
   const choices = items.map((template) => ({ value: template.id, label: template.id === celebration.templateId ? `${template.name} · ${t("host.templates.current")}` : template.name, ...(wide ? { description: template.description } : {}) }));
-  const actions = (
+  const feedback = (
     <View style={{ gap: spacing[3] }}>
       <CelebrationErrorNotice error={select.error} />
       {applied ? <Enter from="up" key={applied}><SuccessNote message={t("host.templates.applied", { name: applied })} /></Enter> : null}
-      <View style={styles.row}>
-        {candidate && candidate.id !== celebration.templateId ? (
-          <ActionButton label={t("host.templates.apply")} busy={select.isPending} testID="apply-template" onPress={() => select.mutate({ target: celebration, templateId: candidate.id }, { onSuccess: () => { setApplied(candidate.name); onApplied?.(); } })} />
-        ) : null}
-        {onSeeFull ? <ActionButton variant="secondary" label={t("host.templates.seeFull")} onPress={onSeeFull} /> : null}
-      </View>
     </View>
   );
   const picker = (
     <View style={{ gap: spacing[3], width: wide ? LIST_WIDTH : "100%" }}>
       <ChoiceGroup label={t("host.templates.list")} value={candidate?.id ?? null} onChange={(id) => { setFocused(id); setApplied(null); }} choices={choices} />
       {!wide && candidate?.description ? <Text style={styles.muted}>{candidate.description}</Text> : null}
-      {wide ? actions : null}
+      {wide ? feedback : null}
     </View>
   );
   const stage = candidate ? (
@@ -81,7 +81,7 @@ export function TemplateGallery({ celebration, eventType, onApplied, onSeeFull }
       <Text style={styles.muted}>{t("host.templates.preserved")}</Text>
       {/* Narrow screens put the invitation first so a tap on a style changes what is already in view. */}
       {wide ? <View style={{ flexDirection: "row", gap: spacing[8], alignItems: "flex-start" }}>{picker}{stage}</View> : <>{stage}{picker}</>}
-      {wide ? null : <ActionBar>{actions}</ActionBar>}
+      {wide ? null : feedback}
     </View>
   );
 }

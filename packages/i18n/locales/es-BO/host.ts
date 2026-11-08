@@ -48,7 +48,7 @@ export const hostEsBO = {
     dateLabel: "Fecha (AAAA-MM-DD)", timeLabel: "Hora (HH:MM)", dateHelp: "Ejemplo: 2027-08-14. ¿Aún no la tienes? Déjala vacía y agrégala después.",
     nameTitle: "Ponle nombre y enlace", titleLabel: "Nombre de la celebración", titlePlaceholder: "Ana y Luis", titleHelp: "Es lo primero que verán tus invitados.",
     slugLabel: "Enlace de tu invitación", slugHelp: "Así lo recibirán tus invitados: {{url}}. Solo minúsculas, números y guiones.",
-    defaultsSummary: "Ya lo dejamos listo: hora de {{timeZone}}, {{language}} y {{currency}}.", defaultsChange: "Cambiar zona horaria, idioma o moneda", defaultsHide: "Ocultar estos ajustes",
+    defaultsSummary: "Ya lo dejamos listo: hora de {{timeZone}}, {{language}} y {{currency}}.",
     timeZoneLabel: "Zona horaria del evento", timeZoneHelp: "Tus invitados verán las horas en esta zona, estén donde estén.", languageLabel: "Idioma principal", currencyLabel: "Moneda",
     titleRequired: "Escribe el nombre de tu celebración.", dateInvalid: "Revisa la fecha: usa AAAA-MM-DD, por ejemplo 2027-08-14.", timeInvalid: "Revisa la hora: usa HH:MM, por ejemplo 17:30.",
     previewTitle: "Así va quedando", previewHint: "Cambia mientras escribes.", previewShow: "Ver cómo queda", previewHide: "Ocultar", previewFallbackTitle: "Tu celebración",
@@ -58,7 +58,7 @@ export const hostEsBO = {
   editor: {
     title: "Tu invitación", intro: "Completa cada parte a tu ritmo y mira cómo queda sin salir de aquí.",
     progress: "{{done}} de {{total}} partes listas", list: "Partes de tu invitación", status: { ready: "Lista", missing: "Falta algo", optional: "Opcional" },
-    save: "Guardar cambios", clean: "Todo guardado.", dirty: "Tienes cambios sin guardar.", viewPreview: "Ver cómo queda", previewTitle: "Así la ven tus invitados", closePreview: "Cerrar vista previa", previewDraftNote: "Incluye lo que escribiste, aunque aún no lo hayas guardado.",
+    save: "Guardar cambios", dirty: "Tienes cambios sin guardar.", viewPreview: "Ver cómo queda", previewTitle: "Así la ven tus invitados", closePreview: "Cerrar vista previa", previewDraftNote: "Incluye lo que escribiste, aunque aún no lo hayas guardado.",
     sections: { general: "Lo básico", hosts: "Quiénes", venues: "Dónde", story: "Historia", schedule: "Programa", sections: "Más detalles" },
     about: { general: "Lo primero que ven tus invitados.", anfitriones: "Los nombres que aparecen en la invitación.", lugares: "Dónde será: ceremonia, recepción u otro lugar.", historia: "Cuenta cómo empezó todo.", itinerario: "Qué pasa y a qué hora.", secciones: "Vestimenta, preguntas frecuentes y recomendaciones." },
     general: { slug: "Enlace de tu invitación", slugLocked: "El enlace ya no se puede cambiar porque la invitación se publicó o se archivó.", title: "Nombre de la celebración", subtitle: "Frase de bienvenida", eventDate: "Fecha", eventTime: "Hora", venueName: "Lugar principal", extraField: "Dato adicional: {{field}}" },
@@ -101,7 +101,7 @@ export const hostEsBO = {
     share: "Comparte el enlace", link: "Enlace público", copy: "Copiar enlace", copied: "Enlace copiado.", whatsappPreview: "Así se verá en WhatsApp"
   },
   settings: {
-    title: "Configuración", intro: "Idiomas, hora y moneda de tu celebración.", general: "Idiomas y formato", saved: "Configuración guardada.", languages: "Idiomas del sitio", defaultLanguage: "Idioma principal", timeZone: "Zona horaria", currency: "Moneda", more: "Más opciones",
+    title: "Configuración", intro: "Idiomas y fecha límite de tu celebración.", general: "Idiomas", saved: "Configuración guardada.", languages: "Idiomas del sitio", defaultLanguage: "Idioma principal", timeZone: "Zona horaria", currency: "Moneda", more: "Más opciones", format: "Hora y moneda", formatHelp: "Ya vienen con lo habitual de tu zona. Cámbialas solo si tu celebración es en otro lugar.",
     deadline: { label: "Fecha límite para confirmar", date: "Fecha (AAAA-MM-DD)", time: "Hora (HH:MM)", help: "Hora local del evento ({{timeZone}}).", none: "Sin fecha límite: tus invitados responden cuando quieran.", clear: "Quitar fecha límite",
       past: "Esa fecha ya pasó: tus invitados ya no podrán responder ni cambiar su respuesta.", effect: "Tus invitados podrán responder hasta el {{date}} ({{zone}})." }
   },

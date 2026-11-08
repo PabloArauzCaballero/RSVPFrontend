@@ -40,7 +40,8 @@ const futureDay = (days) => new Date(Date.now() + days * 86_400_000).toISOString
 // ---------- matrix ----------
 async function step(screen, button, scenario, fn) {
   const row = { screen, button, scenario };
-  try { row.status = "PASS"; row.evidence = (await fn()) ?? ""; } catch (error) { row.status = "FAIL"; const seen = await lastPage?.locator("body").innerText().catch(() => ""); row.evidence = `${String(error?.message ?? error).split("\n")[0].slice(0, 200)} | pantalla: ${String(seen).replace(/\s+/g, " ").slice(-260)}`; }
+  try { row.status = "PASS"; row.evidence = (await fn()) ?? ""; } catch (error) { row.status = "FAIL"; const seen = await lastPage?.locator("body").innerText().catch(() => "");
+    if (process.env.FAILSHOTS) await lastPage?.screenshot({ path: `${process.env.FAILSHOTS}/${rows.length}-${screen}-${button}`.replace(/[^\w./-]+/g, "_") + ".png" }).catch(() => undefined); row.evidence = `${String(error?.message ?? error).split("\n")[0].slice(0, 200)} | pantalla: ${String(seen).replace(/\s+/g, " ").slice(-260)}`; }
   rows.push(row);
   console.log(`  ${row.status} ${screen} | ${button} | ${scenario} | ${row.evidence}`);
 }
@@ -81,7 +82,31 @@ const reveal = async (page, testId) => {
     await more.click();
   }
 };
-const click = async (page, testId) => { if (/^(verify|approve|suspend)-/.test(testId)) await reveal(page, testId); await id(page, testId).click(); };
+/** Granting a role lives in the user row's "Otras acciones" menu: open it when its item is not showing yet. */
+const openGrantMenu = async (page, testId) => {
+  const match = testId.match(/^grant-[A-Z]+-(.+)$/);
+  if (match && !(await id(page, testId).isVisible().catch(() => false))) await id(page, `user-${match[1]}`).getByRole("button", { name: "Otras acciones" }).click();
+};
+const pickStatus = (page, label) => page.getByLabel("Mostrar", { exact: true }).filter({ visible: true }).selectOption({ label });
+/** Record pickers with many options are a select now: choose the option whose text matches. */
+const pickOption = async (page, label, pattern) => {
+  const select = page.getByLabel(label, { exact: true }).filter({ visible: true });
+  const value = await select.evaluate((el, source) => [...el.options].find((o) => new RegExp(source).test(o.textContent ?? ""))?.value, pattern.source);
+  assert.ok(value !== undefined, `no option matches ${pattern}`);
+  await select.selectOption(value);
+};
+/** Secondary actions sit behind a "⋯" menu (OverflowMenu has no testIDs: they are found by role and accessible name). */
+const openMenu = async (page, scopeTestId, trigger) => {
+  const scope = scopeTestId ? page.getByTestId(scopeTestId).filter({ visible: true }).first() : page;
+  const button = scope.getByRole("button", { name: trigger }).filter({ visible: true }).first();
+  // a person scrolls the row to the middle of the screen before opening its menu: on a phone the bottom action bar would otherwise cover the popover
+  await button.evaluate((node) => node.scrollIntoView({ block: "center" }));
+  await button.click();
+};
+const menuItem = (page, name) => page.getByRole("menuitem", { name, exact: true }).filter({ visible: true }).first();
+const menuClick = async (page, scopeTestId, trigger, name) => { await openMenu(page, scopeTestId, trigger); await menuItem(page, name).click(); };
+const openRename = (page) => menuClick(page, null, "Más opciones", "Cambiar el nombre");
+const click = async (page, testId) => { if (/^(verify|approve|suspend)-/.test(testId)) await reveal(page, testId); await openGrantMenu(page, testId); await id(page, testId).click(); };
 /** Admin rows keep the negative action behind "Otras acciones": open every visible row menu. */
 const revealActions = (page) => page.getByRole("button", { name: "Otras acciones" }).filter({ visible: true }).evaluateAll((buttons) => buttons.forEach((button) => button.click()));
 const isDisabled = async (locator) => locator.evaluate((node) => node.hasAttribute("disabled") || node.getAttribute("aria-disabled") === "true");
@@ -129,10 +154,9 @@ async function portal() {
   {
     const { page, context } = await session(A.owner.email);
     await go(page, "/portal");
-    await click(page, "more-options");
-    await id(page, "rename-open").waitFor();
+    await id(page, "more-options").waitFor();
     await step("Resumen", "rename-save", "ERROR red caida: mensaje, reintento y el texto se conserva", async () => {
-      await click(page, "rename-open"); await fill(page, "rename-name", "Nombre sin red");
+      await openRename(page); await fill(page, "rename-name", "Nombre sin red");
       await offline(page, /\/providers\/[^/]+$/, async () => { await click(page, "rename-save"); await text(page, /No hay conexión con el servidor/).waitFor(); });
       assert.equal(await id(page, "rename-name").inputValue(), "Nombre sin red");
       assert.equal((await getProvider(A)).name, `Dulce a ${stamp}`);
@@ -141,7 +165,7 @@ async function portal() {
     });
     await step("Resumen", "rename-save", "LIMITE vacio y 121 caracteres: error local, ningun PATCH", async () => {
       const patches = counter(page, "PATCH", /\/providers\//);
-      await click(page, "rename-open"); await fill(page, "rename-name", "   "); await click(page, "rename-save");
+      await openRename(page); await fill(page, "rename-name", "   "); await click(page, "rename-save");
       await text(page, "Escribe el nombre de tu negocio.").waitFor();
       await fill(page, "rename-name", "x".repeat(121)); await click(page, "rename-save");
       await text(page, "El nombre admite hasta 120 caracteres.").waitFor();
@@ -161,7 +185,7 @@ async function portal() {
       return `1 PATCH 200; GET /providers/{id}.name tiene ${name.length} caracteres`;
     });
     await step("Resumen", "rename-save", "VALIDO renombrar y ver el nombre nuevo", async () => {
-      await click(page, "rename-open"); await fill(page, "rename-name", `Dulce Nuevo ${stamp}`); await click(page, "rename-save");
+      await openRename(page); await fill(page, "rename-name", `Dulce Nuevo ${stamp}`); await click(page, "rename-save");
       await text(page, "Nombre actualizado.").waitFor();
       await text(page, new RegExp(`Dulce Nuevo ${stamp} · Plan`)).waitFor();
       assert.equal((await getProvider(A)).name, `Dulce Nuevo ${stamp}`);
@@ -172,9 +196,8 @@ async function portal() {
       const other = await session(intruder.email);
       await other.page.evaluate(([key, value]) => localStorage.setItem(key, value), [`rsvp.provider.${intruder.id}`, A.providerId]);
       await go(other.page, "/portal");
-      await click(other.page, "more-options");
-      await id(other.page, "rename-open").waitFor();
-      await click(other.page, "rename-open"); await fill(other.page, "rename-name", "Robo"); await click(other.page, "rename-save");
+      await id(other.page, "more-options").waitFor();
+      await openRename(other.page); await fill(other.page, "rename-name", "Robo"); await click(other.page, "rename-save");
       await text(other.page, /Solo el titular de la ficha o un administrador/).waitFor();
       assert.equal((await getProvider(A)).name, `Dulce Nuevo ${stamp}`);
       await other.context.close();
@@ -297,21 +320,25 @@ async function portal() {
     await step("Servicios", "publish-{id}", "LIMITE oferta sin condiciones: deshabilitado con motivo", async () => {
       await go(page, "/portal/productos");
       await go(page, "/portal/servicios");
-      await id(page, `publish-${A.listings.noTerms}`).waitFor();
-      assert.equal(await isDisabled(id(page, `publish-${A.listings.noTerms}`)), true);
+      await id(page, `listing-${A.listings.noTerms}`).waitFor();
+      await openMenu(page, `listing-${A.listings.noTerms}`, /^Más opciones de /);
+      assert.equal(await isDisabled(menuItem(page, "Publicar")), true);
+      await page.keyboard.press("Escape");
       await id(page, `publish-blocked-${A.listings.noTerms}`).waitFor();
       const direct = await http("POST", `/providers/${A.providerId}/listings/${A.listings.noTerms}/publish`, { token: A.owner.token });
       assert.equal(direct.status, 422); assert.equal(direct.json.code, "FULFILLMENT_REQUIRED");
       return "UI deshabilitado con motivo; el backend confirma 422 FULFILLMENT_REQUIRED";
     });
     await step("Servicios", "publish-{id}", "ERROR red caida", async () => {
-      await offline(page, /\/publish/, async () => { await click(page, `publish-${cheap.id}`); await text(page, /No hay conexión con el servidor/).waitFor(); });
+      await offline(page, /\/publish/, async () => { await menuClick(page, `listing-${cheap.id}`, /^Más opciones de /, "Publicar"); await text(page, /No hay conexión con el servidor/).waitFor(); });
       assert.equal((await ownListings(A)).find((l) => l.id === cheap.id).published, false);
       return "red caida -> aviso; GET published=false";
     });
     await step("Servicios", "publish-{id}", "VALIDO publicar con doble clic = un POST; GET published=true", async () => {
       const posts = counter(page, "POST", /\/publish/);
-      await id(page, `publish-${cheap.id}`).dblclick();
+      await openMenu(page, `listing-${cheap.id}`, /^Más opciones de /);
+      // the item leaves the DOM after its first activation, so two activations in the same frame are dispatched straight to it
+      await menuItem(page, "Publicar").evaluate((node) => { node.click(); node.click(); });
       await page.getByTestId(`listing-state-${cheap.id}`).filter({ hasText: "Publicado" }).waitFor();
       assert.equal(posts.length, 1, `POST enviados: ${posts.length}`);
       assert.equal((await ownListings(A)).find((l) => l.id === cheap.id).published, true);
@@ -464,24 +491,24 @@ async function portal() {
     });
     await step("Agenda", "reject-{id}", "VALIDO pide confirmacion; Cancelar no envia; Rechazar -> GET REJECTED", async () => {
       const posts = counter(page, "POST", /\/reject/);
-      await click(page, `reject-${b3}`);
+      await menuClick(page, `booking-${b3}`, /^Más opciones de la solicitud/, "Rechazar");
       await dialogButton(page, "¿Rechazar esta solicitud?", "Cancelar").click();
       await sleep(300); assert.equal(posts.length, 0);
-      await click(page, `reject-${b3}`);
+      await menuClick(page, `booking-${b3}`, /^Más opciones de la solicitud/, "Rechazar");
       await dialogButton(page, "¿Rechazar esta solicitud?", "Rechazar").click();
       await text(page, "Solicitud actualizada.").waitFor();
       assert.equal(await state(b3), "REJECTED"); assert.equal(posts.length, 1);
       return "ConfirmDialog; 1 POST /reject 200; GET REJECTED";
     });
     await step("Agenda", "cancel-{id}", "VALIDO cancelar reserva confirmada con ConfirmDialog; GET CANCELLED", async () => {
-      await click(page, `cancel-${b1}`);
+      await menuClick(page, `booking-${b1}`, /^Más opciones de la solicitud/, "Cancelar reserva");
       await dialogButton(page, "¿Cancelar esta reserva?", "Cancelar reserva").click();
       await text(page, "Solicitud actualizada.").waitFor();
       assert.equal(await state(b1), "CANCELLED");
       return "POST /cancel 200; GET CANCELLED";
     });
     await step("Agenda", "reject/cancel/confirm", "LIMITE estado terminal: una reserva CANCELLED/REJECTED ya no ofrece acciones", async () => {
-      assert.equal(await page.getByTestId(`confirm-${b1}`).count(), 0); assert.equal(await page.getByTestId(`cancel-${b1}`).count(), 0); assert.equal(await page.getByTestId(`reject-${b3}`).count(), 0);
+      assert.equal(await page.getByTestId(`confirm-${b1}`).count(), 0); for (const done of [b1, b3]) assert.equal(await page.getByTestId(`booking-${done}`).getByRole("button", { name: /^Más opciones/ }).count(), 0, `una reserva terminal (${done}) no ofrece acciones`);
       const again = await http("POST", `/providers/${A.providerId}/bookings/${b1}/confirm`, { token: A.owner.token });
       assert.equal(again.status, 409);
       return "sin botones en estados terminales; el backend responde 409 a confirmar una CANCELLED";
@@ -546,6 +573,8 @@ async function portal() {
   {
     const { page, context } = await session(A.owner.email);
     await go(page, "/portal/metricas");
+    await id(page, "metrics-period").waitFor();
+    await id(page, "metrics-period").selectOption({ label: "Personalizado" });
     await id(page, "metrics-apply").waitFor();
     await step("Metricas", "metrics-apply", "LIMITE fechas invalidas / desde>hasta: error local, sin peticion", async () => {
       const gets = counter(page, "GET", /\/metrics/);
@@ -649,13 +678,13 @@ async function portal() {
     try { sql(`insert into provider_document (id, provider_id, kind, file_name, content_type, size_bytes, storage_key, status, uploaded_at) values ('${docId}','${A.providerId}','IDENTITY','ci-sql.pdf','application/pdf',2048,'e2e/${docId}','UPLOADED', now())`); } catch (error) { seededDoc = false; blocked("Documentos", "document-delete-{id}", "VALIDO", `no se pudo sembrar un documento por SQL: ${String(error.message).split("\n")[0]}`); }
     if (seededDoc) {
       await go(page, "/portal/documentos");
-      await id(page, `document-delete-${docId}`).waitFor();
+      await id(page, `document-${docId}`).waitFor();
       await step("Documentos", "document-delete-{id}", "ERROR 503 STORAGE_NOT_CONFIGURED al borrar: Cancelar no envia, el documento se conserva y se explica", async () => {
         const deletes = counter(page, "DELETE", /documents/);
-        await click(page, `document-delete-${docId}`);
+        await menuClick(page, `document-${docId}`, /^Más opciones de /, "Eliminar");
         await dialogButton(page, "¿Eliminar este documento?", "Cancelar").click(); await sleep(300);
         assert.equal(deletes.length, 0);
-        await click(page, `document-delete-${docId}`);
+        await menuClick(page, `document-${docId}`, /^Más opciones de /, "Eliminar");
         await dialogButton(page, "¿Eliminar este documento?", "Eliminar").click();
         await text(page, /documentos no están disponibles por ahora/).waitFor();
         assert.equal(deletes.length, 1);
@@ -779,7 +808,7 @@ async function admin() {
       return "POST /reject 200; GET REJECTED";
     });
     await step("Verificacion", "(filtro Rechazados)", "LIMITE estado terminal: sin botones, con razon visible", async () => {
-      await page.getByRole("radio", { name: "Rechazados" }).click();
+      await pickStatus(page, "Rechazados");
       await reveal(page, `no-action-${v2.id}`); await id(page, `no-action-${v2.id}`).waitFor();
       assert.equal(await page.getByTestId(`verify-${v2.id}`).count(), 0);
       const direct = await http("POST", `/providers/${v2.id}/verify`, { token: adminToken });
@@ -787,7 +816,7 @@ async function admin() {
       return "antes ofrecia 'Verificar' que siempre daba 409; ahora sin boton y con nota (backend: 409 INVALID_PROVIDER_TRANSITION)";
     });
     await step("Verificacion", "suspend-{id}", "VALIDO suspender un VERIFICADO con motivo; GET SUSPENDED", async () => {
-      await page.getByRole("radio", { name: "Verificados" }).click();
+      await pickStatus(page, "Verificados");
       // The backend queue returns the OLDEST 200 verified providers and has no pagination (BACKEND GAP, see the evidence file): once a
       // local database holds more than 200 verified providers, the one this run just verified is not in the list the admin can see.
       // Then the same button is exercised on the first listed verified provider, and the report says so.
@@ -895,7 +924,7 @@ async function admin() {
     });
     await step("Usuarios", "grant-{ROLE}-{id}", "VALIDO dar rol con ConfirmDialog (Cancelar no envia); GET roles", async () => {
       await fill(page, "users-search", target.email); await click(page, "users-search-go");
-      await id(page, `grant-PLANNER-${target.id}`).waitFor();
+      await openGrantMenu(page, `grant-PLANNER-${target.id}`); await id(page, `grant-PLANNER-${target.id}`).waitFor();
       const puts = counter(page, "PUT", /roles\//);
       await click(page, `grant-PLANNER-${target.id}`);
       await dialogButton(page, `¿Dar el rol PLANNER a ${target.email}?`, "Cancelar").click(); await sleep(300);
@@ -1031,7 +1060,7 @@ async function admin() {
       assert.equal(puts.length, 1, `PUT enviados: ${puts.length}`);
       const created = (await http("GET", "/celebrations/admin/event-types", { token: adminToken })).json.items.find((t) => t.code === code);
       assert.equal(created.status, "ACTIVE"); assert.deepEqual(created.hostRoles, ["HOST1"]);
-      await page.getByRole("radio", { name: new RegExp(`^Evento prueba ${stamp} · `) }).click(); // the list shows the localized name, not the code
+      await pickOption(page, "Tipos de evento", new RegExp(`^Evento prueba ${stamp} · `)); // the list shows the localized name, not the code
       await page.getByRole("radio", { name: "Retirado", exact: true }).click();
       await click(page, "save-event-type"); await text(page, /Guardado\./).waitFor();
       const retired = (await http("GET", "/celebrations/admin/event-types", { token: adminToken })).json.items.find((t) => t.code === code);

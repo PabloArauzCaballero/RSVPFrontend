@@ -165,13 +165,14 @@ describe("REQ-F23-03 · external gift with explicit friction (PARTNER_CATALOG_FI
     renderApp(<ExternalScreen celebrationId="c-1" onNavigate={navigate} />, client);
     expect(await screen.findByText(/Puedes agregar regalos de cualquier tienda sin pasos previos/)).toBeTruthy();
     expect(screen.getByText(/Tus regalos de tienda quedan por revisar/)).toBeTruthy();
-    fireEvent.click(screen.getByTestId("go-modes"));
+    // changing the rule lives in the header's «⋯» menu, not in a second button inside the page
+    fireEvent.click(screen.getByRole("button", { name: "Más opciones" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Cambiar en Modos de control" }));
     expect(navigate).toHaveBeenCalledWith("/modos?c=c-1");
     cleanup();
     const priority = fakeClient({ ...baseHandlers({ ...CELEBRATION, settings: { ...CELEBRATION.settings, partnerPriorityEnabled: true } }) });
     renderApp(<ExternalScreen celebrationId="c-1" onNavigate={navigate} />, priority.client);
-    expect(await screen.findByText("Primero los aliados")).toBeTruthy();
-    expect(screen.getByText(/te mostramos productos parecidos de aliados/)).toBeTruthy();
+    expect(await screen.findByText(/te mostramos productos parecidos de aliados/)).toBeTruthy();
   });
   it("the three origins are one flow: switching origin keeps the screen and shows that origin's form", async () => {
     const { client } = fakeClient(handlers({ "GET /providers": () => ({ items: [], total: 0, page: 1, pageSize: 6 }) }));
@@ -181,7 +182,7 @@ describe("REQ-F23-03 · external gift with explicit friction (PARTNER_CATALOG_FI
     expect(await screen.findByTestId("external-title")).toBeTruthy();
     expect(screen.queryByTestId("catalog-query")).toBeNull();
     fireEvent.click(screen.getByTestId("origin-provider"));
-    expect(await screen.findByTestId("category-all")).toBeTruthy();
+    expect(await screen.findByTestId("provider-category")).toBeTruthy();
   });
 
 });
@@ -221,8 +222,12 @@ describe("REQ-F28-03/05 · services with delivery conditions", () => {
     renderApp(<ProductsScreen />, client, HOST);
     expect((await screen.findByTestId("listing-state-l1")).textContent).toBe("Borrador");
     expect(screen.getByTestId("publish-blocked-l2").textContent).toMatch(/condiciones de entrega/);
-    fireEvent.click(screen.getByTestId("publish-l2"));
-    fireEvent.click(screen.getByTestId("publish-l1"));
+    // "Publicar" lives in each row's "⋯" menu: off (with the reason shown) for l2, usable for l1
+    fireEvent.click(within(screen.getByTestId("listing-l2")).getByRole("button", { name: /Más opciones/ }));
+    expect((await screen.findByRole("menuitem", { name: "Publicar" })).getAttribute("aria-disabled")).toBe("true");
+    fireEvent.click(within(screen.getByTestId("listing-l2")).getByRole("button", { name: /Más opciones/ }));
+    fireEvent.click(within(screen.getByTestId("listing-l1")).getByRole("button", { name: /Más opciones/ }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Publicar" }));
     await waitFor(() => expect(calls.some((call) => call.path.endsWith("/l1/publish"))).toBe(true));
     expect(calls.some((call) => call.path.endsWith("/l2/publish"))).toBe(false);
     fireEvent.click(screen.getByTestId("offer-new"));
@@ -265,7 +270,9 @@ describe("REQ-F28-03 · services, products and delivery terms are ONE list of of
     expect(row.textContent).toMatch(/Entrega a cargo de: Yo \(el proveedor\)/);
     expect(row.textContent).toMatch(/Cobertura: la-paz/);
     expect(row.textContent).toMatch(/Plazo: 3 días/);
-    expect(screen.getByTestId("delivery-s1").textContent).toMatch(/no declara condiciones/);
+    // an offer without terms is flagged once (the reason it cannot be published), not twice
+    expect(screen.getByTestId("publish-blocked-s1").textContent).toMatch(/declara sus condiciones de entrega/);
+    expect(screen.getByTestId("delivery-s1").textContent).not.toMatch(/Cobertura/);
   });
   it("has no edit button: provider-catalog has no route to edit an offer, and the screen says how to change the terms", async () => {
     await withProvider();
@@ -306,6 +313,7 @@ describe("REQ-F28-06 · lead metrics", () => {
     expect(within(totals).getByLabelText(/Veces que te vieron: 1.?200/)).toBeTruthy();
     expect(within(totals).getByLabelText(/Toques por cada vista: 5/)).toBeTruthy();
     expect(within(totals).getByLabelText(/Solicitudes válidas: 25/)).toBeTruthy();
+    fireEvent.change(screen.getByTestId("metrics-period"), { target: { value: "custom" } });
     type("Desde (AAAA-MM-DD)", "2026-13-40");
     fireEvent.click(screen.getByTestId("metrics-apply"));
     expect(await screen.findByText(/formato AAAA-MM-DD/)).toBeTruthy();

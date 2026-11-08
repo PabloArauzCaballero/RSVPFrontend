@@ -5,9 +5,9 @@ import { Stagger, useColors } from "@rsvp/ui";
 import { DOCUMENT_TYPES, MAX_DOCUMENT_BYTES, useDeleteDocument, useDocumentDownload, useProviderDocuments, useUploadDocument, type DocumentContentType, type DocumentKind, type Provider } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../platform/providers";
 import { pickDocument, type PickedImage } from "../platform/pick-document";
-import { ActionButton, ChoiceGroup, ConfirmDialog, EmptyState, Notice, PageIntro, Section, useStyles } from "../host/ui";
+import { ActionButton, ConfirmDialog, EmptyState, FilterSelect, Notice, OverflowMenu, PageIntro, useStyles } from "../host/ui";
 import { PortalErrorNotice as ErrorNotice, PortalErrorState } from "./errors";
-import { PortalScreen } from "./frame";
+import { PortalScreen, usePortalHeader } from "./frame";
 import { RowsSkeleton } from "./parts";
 import { useSingleMutation } from "../platform/single-flight";
 
@@ -59,11 +59,12 @@ function Documents({ provider }: { readonly provider: Provider }): ReactNode {
       { onSuccess: () => { setDone(true); setFile(null); } }
     );
   };
+  usePortalHeader({ label: upload.isPending ? t("portal.documents.uploading") : t("portal.documents.upload"), busy: upload.isPending, disabled: upload.isPending, onPress: send, testID: "document-upload" });
   return (
     <View style={{ gap: spacing[4] }}>
       <PageIntro>{t("portal.documents.intro")}</PageIntro>
-      <Section title={t("portal.documents.upload")}>
-        <ChoiceGroup label={t("portal.documents.kind")} value={kind} onChange={setKind} choices={KINDS.map((value) => ({ value, label: t(`portal.documents.kinds.${value}`) }))} />
+      <View style={{ gap: spacing[3], maxWidth: 720 }}>
+        <View style={{ gap: spacing[1], maxWidth: 360 }}><Text style={styles.label}>{t("portal.documents.kind")}</Text><FilterSelect<DocumentKind> label={t("portal.documents.kind")} value={kind} onChange={setKind} options={KINDS.map((value) => ({ value, label: t(`portal.documents.kinds.${value}`) }))} testID="document-kind" /></View>
         <View style={styles.row}>
           <ActionButton variant="secondary" label={t("portal.documents.choose")} onPress={() => { void choose(); }} testID="document-choose" />
           {file ? <Text style={styles.muted} testID="document-chosen">{file.name} · {t("portal.documents.size", { kb: Math.max(1, Math.round(file.size / BYTES_PER_KB)) })}</Text> : null}
@@ -72,8 +73,7 @@ function Documents({ provider }: { readonly provider: Provider }): ReactNode {
         {putFailed ? <Notice kind="error">{t("portal.documents.putFailed")}</Notice> : null}
         {upload.isError && !putFailed ? <ErrorNotice error={upload.error} onRetry={send} /> : null}
         {done ? <Notice kind="success">{t("portal.documents.uploaded")}</Notice> : null}
-        <ActionButton label={upload.isPending ? t("portal.documents.uploading") : t("portal.documents.upload")} busy={upload.isPending} disabled={upload.isPending} onPress={send} testID="document-upload" />
-      </Section>
+      </View>
       {removed ? <Notice kind="success">{t("portal.documents.deleted")}</Notice> : null}
       <ErrorNotice error={remove.error ?? open.error} onRetry={() => { if (remove.error && remove.variables) removeOnce(remove.variables); else if (open.variables) openOnce(open.variables); }} />
       <ConfirmDialog visible={deleting !== null} danger title={t("portal.documents.deleteTitle")} body={t("portal.documents.deleteBody")} confirmLabel={t("portal.documents.delete")} onCancel={() => setDeleting(null)} onConfirm={() => { const id = deleting; setDeleting(null); if (id) removeOnce(id, { onSuccess: () => setRemoved(true) }); }} />
@@ -83,9 +83,9 @@ function Documents({ provider }: { readonly provider: Provider }): ReactNode {
             <View key={item.id} role="listitem" testID={`document-${item.id}`} style={{ gap: spacing[1], paddingVertical: spacing[3], borderTopWidth: 1, borderTopColor: palette.border }}>
               <Text style={styles.subtitle}>{t(`portal.documents.kinds.${item.kind}`)} · {item.fileName}</Text>
               <Text style={styles.muted}>{t(`portal.documents.status.${item.status}`)} · {t("portal.documents.size", { kb: Math.max(1, Math.round(item.sizeBytes / BYTES_PER_KB)) })}</Text>
-              <View style={styles.row}>
+              <View style={[styles.row, { alignItems: "center" }]}>
                 {item.status === "UPLOADED" ? <ActionButton variant="secondary" label={open.isPending && open.variables === item.id ? t("portal.documents.opening") : t("portal.documents.download")} busy={open.isPending && open.variables === item.id} disabled={open.isPending} onPress={() => openOnce(item.id, { onSuccess: (file) => { void Linking.openURL(file.download.url); } })} testID={`document-view-${item.id}`} /> : null}
-                <ActionButton variant="danger" label={t("portal.documents.delete")} disabled={remove.isPending} busy={remove.isPending && remove.variables === item.id} onPress={() => { setRemoved(false); remove.reset(); setDeleting(item.id); }} testID={`document-delete-${item.id}`} />
+                <OverflowMenu label={t("portal.documents.rowMenu", { name: item.fileName })} items={[{ key: "delete", label: t("portal.documents.delete"), destructive: true, disabled: remove.isPending, onPress: () => { setRemoved(false); remove.reset(); setDeleting(item.id); } }]} />
               </View>
             </View>
           ))}</Stagger>

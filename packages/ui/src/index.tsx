@@ -16,6 +16,8 @@ export { ILLUSTRATION_NAMES, type IllustrationName, type IllustrationTone } from
 export * from './identity';
 export { EmptyState, PageIntro, SuccessNote, Celebrate, type EmptyStateProps } from './personality';
 export { StickyActions, type StickyActionsProps } from './sticky-actions';
+export { OverflowMenu, type OverflowMenuItem, type OverflowMenuProps } from './overflow-menu';
+export { FilterSelect, FILTER_SELECT_THRESHOLD, type FilterOption, type FilterSelectProps } from './filter-select';
 export { ButtonAlignContext, pressVisual } from './press-visual';
 export { useReducedMotion, MOTION } from './motion';
 export * from './motion-kit';

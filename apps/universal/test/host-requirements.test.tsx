@@ -21,12 +21,14 @@ describe("REQ-F13-01 · C17 saves languages, time zone and currency", () => {
     renderApp(<SettingsScreen celebrationId="c-1" onNavigate={navigate} />, client);
     // Starts from the stored values: both languages on, es-BO default, La Paz, BOB.
     await screen.findByTestId("save-settings");
-    expect(screen.getByRole("radio", { name: "America/La_Paz" }).getAttribute("aria-checked")).toBe("true");
-    expect(screen.getByRole("radio", { name: "BOB" }).getAttribute("aria-checked")).toBe("true");
+    // Zone and currency are under «Más opciones», as selectors that already show the stored values.
+    fireEvent.click(screen.getByTestId("more-settings"));
+    expect((screen.getByTestId("settings-time-zone") as HTMLSelectElement).value).toBe("America/La_Paz");
+    expect((screen.getByTestId("settings-currency") as HTMLSelectElement).value).toBe("BOB");
     // Drop English, change zone and currency.
     fireEvent.click(screen.getByRole("checkbox", { name: "English" }));
-    fireEvent.click(screen.getByRole("radio", { name: "America/Lima" }));
-    fireEvent.click(screen.getByRole("radio", { name: "USD" }));
+    fireEvent.change(screen.getByTestId("settings-time-zone"), { target: { value: "America/Lima" } });
+    fireEvent.change(screen.getByTestId("settings-currency"), { target: { value: "USD" } });
     fireEvent.click(screen.getByTestId("save-settings"));
     await waitFor(() => expect(calls.some((call) => call.method === "PATCH")).toBe(true));
     const patch = calls.find((call) => call.method === "PATCH");
@@ -40,12 +42,13 @@ describe("REQ-F13-01 · C17 saves languages, time zone and currency", () => {
     await screen.findByTestId("save-settings");
     fireEvent.click(screen.getByRole("checkbox", { name: "English" }));
     fireEvent.click(screen.getByRole("radio", { name: "English" }));
-    fireEvent.click(screen.getByRole("radio", { name: "EUR" }));
+    fireEvent.click(screen.getByTestId("more-settings"));
+    fireEvent.change(screen.getByTestId("settings-currency"), { target: { value: "EUR" } });
     fireEvent.click(screen.getByTestId("save-settings"));
     await waitFor(() => expect(calls.some((call) => call.method === "PATCH")).toBe(true));
     expect(calls.find((call) => call.method === "PATCH")?.body).toMatchObject({ supportedLocales: ["es-BO", "en-US"], defaultLocale: "en-US", currency: "EUR" });
     expect((await screen.findAllByRole("alert")).length).toBeGreaterThan(0);
-    expect(screen.getByRole("radio", { name: "EUR" }).getAttribute("aria-checked")).toBe("true");
+    expect((screen.getByTestId("settings-currency") as HTMLSelectElement).value).toBe("EUR");
   });
 });
 
@@ -83,7 +86,8 @@ describe("REQ-F11-02 · C8/C10/C11 screens: venues, schedule, extra sections", (
     expect(screen.getByRole("alert").textContent).toContain("Actividad 2");
     expect(calls.some((call) => call.method === "PATCH")).toBe(false);
     fireEvent.change(screen.getAllByLabelText("Hora (HH:MM)")[1] as HTMLElement, { target: { value: "23:30" } });
-    fireEvent.click(screen.getAllByText("Subir")[1] as HTMLElement);
+    fireEvent.click(screen.getAllByRole("button", { name: /^Más opciones: Actividad/ })[1] as HTMLElement);
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Subir" }));
     fireEvent.click(screen.getByTestId("save-content"));
     await waitFor(() => expect(calls.some((call) => call.method === "PATCH")).toBe(true));
     const schedule = (calls.find((call) => call.method === "PATCH")?.body as { content: { schedule: { title: string; startsAt: string }[] } }).content.schedule;

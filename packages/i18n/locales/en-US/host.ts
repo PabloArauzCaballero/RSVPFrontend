@@ -51,7 +51,7 @@ export const hostEnUS: DeepStrings<typeof hostEsBO> = {
     dateLabel: "Date (YYYY-MM-DD)", timeLabel: "Time (HH:MM)", dateHelp: "Example: 2027-08-14. No date yet? Leave it empty and add it later.",
     nameTitle: "Give it a name and a link", titleLabel: "Celebration name", titlePlaceholder: "Ana and Luis", titleHelp: "It's the first thing your guests see.",
     slugLabel: "Your invitation's link", slugHelp: "This is how your guests will get it: {{url}}. Lowercase letters, numbers and hyphens only.",
-    defaultsSummary: "Already set for you: {{timeZone}} time, {{language}} and {{currency}}.", defaultsChange: "Change time zone, language or currency", defaultsHide: "Hide these settings",
+    defaultsSummary: "Already set for you: {{timeZone}} time, {{language}} and {{currency}}.",
     timeZoneLabel: "Event time zone", timeZoneHelp: "Your guests see times in this zone, wherever they are.", languageLabel: "Main language", currencyLabel: "Currency",
     titleRequired: "Write your celebration's name.", dateInvalid: "Check the date: use YYYY-MM-DD, for example 2027-08-14.", timeInvalid: "Check the time: use HH:MM, for example 17:30.",
     previewTitle: "How it's shaping up", previewHint: "It changes as you type.", previewShow: "See how it looks", previewHide: "Hide", previewFallbackTitle: "Your celebration",
@@ -61,7 +61,7 @@ export const hostEnUS: DeepStrings<typeof hostEsBO> = {
   editor: {
     title: "Your invitation", intro: "Fill in each part at your own pace and see how it looks without leaving.",
     progress: "{{done}} of {{total}} parts ready", list: "Parts of your invitation", status: { ready: "Ready", missing: "Something's missing", optional: "Optional" },
-    save: "Save changes", clean: "Everything is saved.", dirty: "You have unsaved changes.", viewPreview: "See how it looks", previewTitle: "How your guests see it", closePreview: "Close preview", previewDraftNote: "It includes what you typed, even if you haven't saved it yet.",
+    save: "Save changes", dirty: "You have unsaved changes.", viewPreview: "See how it looks", previewTitle: "How your guests see it", closePreview: "Close preview", previewDraftNote: "It includes what you typed, even if you haven't saved it yet.",
     sections: { general: "The basics", hosts: "Who", venues: "Where", story: "Story", schedule: "Schedule", sections: "More details" },
     about: { general: "The first thing your guests see.", anfitriones: "The names shown on the invitation.", lugares: "Where it happens: ceremony, reception or another place.", historia: "Tell how it all began.", itinerario: "What happens, and when.", secciones: "Dress code, FAQ and recommendations." },
     general: { slug: "Your invitation's link", slugLocked: "The link can no longer be changed because the invitation was published or archived.", title: "Celebration name", subtitle: "Welcome line", eventDate: "Date", eventTime: "Time", venueName: "Main venue", extraField: "Extra detail: {{field}}" },
@@ -104,7 +104,7 @@ export const hostEnUS: DeepStrings<typeof hostEsBO> = {
     share: "Share the link", link: "Public link", copy: "Copy link", copied: "Link copied.", whatsappPreview: "How it looks on WhatsApp"
   },
   settings: {
-    title: "Settings", intro: "Languages, time and currency for your celebration.", general: "Languages and format", saved: "Settings saved.", languages: "Site languages", defaultLanguage: "Main language", timeZone: "Time zone", currency: "Currency", more: "More options",
+    title: "Settings", intro: "Languages and RSVP deadline for your celebration.", general: "Languages", saved: "Settings saved.", languages: "Site languages", defaultLanguage: "Main language", timeZone: "Time zone", currency: "Currency", more: "More options", format: "Time and currency", formatHelp: "They already match your area. Change them only if your celebration is somewhere else.",
     deadline: { label: "RSVP deadline", date: "Date (YYYY-MM-DD)", time: "Time (HH:MM)", help: "Event local time ({{timeZone}}).", none: "No deadline: your guests reply whenever they like.", clear: "Remove deadline",
       past: "That date has passed: your guests can no longer reply or change their answer.", effect: "Your guests can reply until {{date}} ({{zone}})." }
   },

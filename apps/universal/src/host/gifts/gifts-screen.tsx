@@ -6,7 +6,7 @@ import { ApiError } from "@rsvp/api-client";
 import { formatMinor } from "@rsvp/i18n";
 import { catalogedFirst, useApproveExternalGift, useGiftList, useHostReservations, useRejectExternalGift, useGiftSettings, useUpdateGiftSettings, type GiftItem } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../../platform/providers";
-import { CelebrationScreen, type ScreenProps } from "../gate";
+import { CelebrationScreen, useScreenHeader, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
 import { GiftErrorNotice } from "./gift-errors";
 import { ActionButton, ConfirmDialog, EmptyState, ErrorNotice, Loading, Notice, useStyles } from "../ui";
@@ -87,31 +87,30 @@ function GiftsBody({ celebrationId, onNavigate }: { readonly celebrationId: stri
   const locked = approve.isPending || reject.isPending;
   const flight = useSingleFlightGate();
   const go = (path: string) => () => onNavigate(withCelebration(path, celebrationId));
+  // «Agregar regalo» is the screen's one action, always in the same place; the people waiting are a message, not a second primary.
+  useScreenHeader({ actions: <ActionButton label={t("gifts.host.list.add")} onPress={go(HOST_ROUTES.giftCatalog)} testID="go-add" /> });
   if (list.isPending) return <SkeletonList count={4} row={{ minHeight: 76, avatar: false, trailing: true }} label={t("host.common.loading")} />;
   // A celebration that never had a gift gets 404 GIFT_LIST_NOT_FOUND: that is the empty list, not a failure.
   const noListYet = list.isError && list.error instanceof ApiError && list.error.status === NOT_FOUND;
   if (list.isError && !noListYet) return <RetryNotice error={list.error} onRetry={() => { void list.refetch(); }} />;
   const items = list.data ? catalogedFirst(list.data.items) : [];
   const waiting = reservations.data?.items.filter((entry) => entry.status === "PENDING_REVIEW").length ?? 0;
-  // One primary action at a time: answering the people waiting comes before adding more gifts.
-  const add = <ActionButton variant={waiting > 0 ? "secondary" : "primary"} label={t("gifts.host.list.add")} onPress={go(HOST_ROUTES.giftCatalog)} testID="go-add" />;
   return (
     <View style={{ gap: spacing[4] }}>
       {waiting > 0 ? (
         <Notice kind="info">
           <Text style={styles.subtitle}>{t("gifts.host.list.pending", { count: waiting })}</Text>
           <Text style={styles.body}>{t("gifts.host.list.pendingBody")}</Text>
-          <View style={styles.row}><ActionButton label={t("gifts.host.list.pendingAction")} onPress={go(HOST_ROUTES.giftInbox)} testID="go-inbox" /></View>
+          <View style={styles.row}><ActionButton variant="secondary" label={t("gifts.host.list.pendingAction")} onPress={go(HOST_ROUTES.giftInbox)} testID="go-inbox" /></View>
         </Notice>
       ) : null}
       <GiftErrorNotice error={approve.error} onReload={() => { void list.refetch(); }} />
       <GiftErrorNotice error={reject.error} onReload={() => { void list.refetch(); }} />
       {rejected ? <Notice kind="success">{t("gifts.host.proposalRejected", { title: rejected })}</Notice> : null}
       {items.length === 0 ? (
-        <EmptyState illustration="noGifts" title={t("gifts.host.list.emptyTitle")} body={t("gifts.host.list.emptyBody")} action={add} />
+        <EmptyState illustration="noGifts" title={t("gifts.host.list.emptyTitle")} body={t("gifts.host.list.emptyBody")} />
       ) : (
         <>
-          <View style={styles.row}>{add}</View>
           <RowList>
             <Stagger>{items.map((item, index) => <GiftRow key={item.id} first={index === 0} item={item} currencyLocale={locale} onApprove={(id) => { setRejected(null); reject.reset(); if (flight.begin()) approve.mutate(id, { onSettled: flight.end }); }} onReject={(target) => { setRejected(null); approve.reset(); reject.reset(); setRejectTarget(target); }} approving={approve.isPending && approve.variables === item.id} rejecting={reject.isPending && reject.variables === item.id} locked={locked} />)}</Stagger>
           </RowList>

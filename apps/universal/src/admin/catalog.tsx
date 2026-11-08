@@ -4,8 +4,7 @@ import { supportedLocales } from "@rsvp/i18n";
 import { useAdminCategories, useAdminGeography, useUpsertCategory, useUpsertGeoEntry, type GeoEntry, type GeoKind, type ProviderCategory } from "@rsvp/query-hooks/admin";
 import { useApiClient, useLocale, useT } from "../platform/providers";
 import { ActionButton, ChoiceGroup, Field, Notice, PageIntro, Section, useStyles } from "../host/ui";
-import { StickyActions } from "../provider/parts";
-import { AdminScreen, adminOnly } from "./admin-screen";
+import { AdminScreen, adminOnly, useHeaderSlot } from "./admin-screen";
 import { AdminErrorNotice, QueryBoundary, Stack } from "./shared";
 import { useSingleMutation } from "../platform/single-flight";
 
@@ -40,7 +39,7 @@ function useDisplayName(): (names: Names, fallback: string) => string {
   return (names, fallback) => names[locale] ?? Object.values(names)[0] ?? fallback;
 }
 
-function CategoryEditor({ initial }: { readonly initial: ProviderCategory | null }): ReactNode {
+function CategoryEditor({ initial, onNew }: { readonly initial: ProviderCategory | null; readonly onNew: () => void }): ReactNode {
   const t = useT();
   const save = useUpsertCategory(useApiClient());
   const saveOnce = useSingleMutation(save);
@@ -55,6 +54,7 @@ function CategoryEditor({ initial }: { readonly initial: ProviderCategory | null
     setInvalid(false);
     saveOnce({ code: cleanCode, names: cleanNames, active });
   };
+  useHeaderSlot({ primary: { label: t("admin.common.save"), onPress: submit, testID: "save-category", busy: save.isPending, disabled: save.isPending }, items: initial ? [{ key: "new", label: t("admin.categories.new"), onPress: onNew }] : [] });
   return (
     <Section title={initial ? t("admin.categories.edit", { code: initial.code }) : t("admin.categories.new")}>
       <Field label={t("admin.common.code")} help={t("admin.common.codeHelp")} value={code} onChange={setCode} testID="category-code" {...(invalid && !CODE.test(code.trim().toUpperCase()) ? { error: t("admin.common.codeInvalid") } : {})} />
@@ -62,7 +62,6 @@ function CategoryEditor({ initial }: { readonly initial: ProviderCategory | null
       <ActiveChoice value={active} onChange={setActive} />
       <AdminErrorNotice error={save.error} onRetry={submit} />
       {save.isSuccess ? <Notice kind="success">{t("admin.saved")}</Notice> : null}
-      <StickyActions ground="surface"><ActionButton label={t("admin.common.save")} busy={save.isPending} disabled={save.isPending} onPress={submit} testID="save-category" /></StickyActions>
     </Section>
   );
 }
@@ -90,8 +89,7 @@ function CategoriesScreenContent({ onNavigate }: Nav): ReactNode {
           </Section>
         )}
       </QueryBoundary>
-      {editing ? <ActionButton variant="secondary" label={t("admin.categories.new")} onPress={() => setEditing(null)} /> : null}
-      <CategoryEditor key={editing ?? "new"} initial={current} />
+      <CategoryEditor key={editing ?? "new"} initial={current} onNew={() => setEditing(null)} />
       </Stack>
     </AdminScreen>
   );
@@ -100,7 +98,7 @@ function CategoriesScreenContent({ onNavigate }: Nav): ReactNode {
 const KINDS: readonly GeoKind[] = ["REGION", "CITY"];
 export const inRange = (value: string, limit: number): boolean => value.trim() !== "" && Number.isFinite(Number(value)) && Math.abs(Number(value)) <= limit;
 
-export function GeoEditor({ initial }: { readonly initial: GeoEntry | null }): ReactNode {
+export function GeoEditor({ initial, onNew }: { readonly initial: GeoEntry | null; readonly onNew?: () => void }): ReactNode {
   const t = useT();
   const save = useUpsertGeoEntry(useApiClient());
   const saveOnce = useSingleMutation(save);
@@ -124,6 +122,7 @@ export function GeoEditor({ initial }: { readonly initial: GeoEntry | null }): R
     setInvalid(false);
     saveOnce({ code: cleanCode, kind, parentCode: parent.trim().toUpperCase(), names: cleanNames, active, ...(isCity && hasCoords ? { latitude: Number(latitude), longitude: Number(longitude) } : {}) });
   };
+  useHeaderSlot({ primary: { label: t("admin.common.save"), onPress: submit, testID: "save-geo", busy: save.isPending, disabled: readOnly || save.isPending }, items: initial && onNew ? [{ key: "new", label: t("admin.geography.new"), onPress: onNew }] : [] });
   return (
     <Section title={initial ? t("admin.geography.edit", { code: initial.code }) : t("admin.geography.new")}>
       {readOnly ? <Notice>{t("admin.geography.countryReadOnly")}</Notice> : null}
@@ -140,7 +139,6 @@ export function GeoEditor({ initial }: { readonly initial: GeoEntry | null }): R
       <ActiveChoice value={active} onChange={setActive} />
       <AdminErrorNotice error={save.error} onRetry={submit} />
       {save.isSuccess ? <Notice kind="success">{t("admin.saved")}</Notice> : null}
-      <StickyActions ground="surface"><ActionButton label={t("admin.common.save")} busy={save.isPending} disabled={readOnly || save.isPending} onPress={submit} testID="save-geo" /></StickyActions>
     </Section>
   );
 }
@@ -168,8 +166,7 @@ function GeographyScreenContent({ onNavigate }: Nav): ReactNode {
           </Section>
         )}
       </QueryBoundary>
-      {editing ? <ActionButton variant="secondary" label={t("admin.geography.new")} onPress={() => setEditing(null)} /> : null}
-      <GeoEditor key={editing ?? "new"} initial={current} />
+      <GeoEditor key={editing ?? "new"} initial={current} onNew={() => setEditing(null)} />
       </Stack>
     </AdminScreen>
   );

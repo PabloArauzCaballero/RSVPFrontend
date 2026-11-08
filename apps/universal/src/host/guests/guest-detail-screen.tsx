@@ -5,15 +5,15 @@ import { Avatar } from "@rsvp/ui";
 import { formatCelebrationDate } from "@rsvp/i18n";
 import { personalLinkPath } from "@rsvp/auth";
 import { ApiError } from "@rsvp/api-client";
-import { maskSecret, useChangeGuestGroup, useEraseGuest, useGuestDetail, useGuestGroups, useGuestList, useIssueGuestToken, useRevokeGuestToken, type Celebration } from "@rsvp/query-hooks";
+import { maskSecret, useCelebration, useChangeGuestGroup, useEraseGuest, useGuestDetail, useGuestGroups, useGuestList, useIssueGuestToken, useRevokeGuestToken, type Celebration } from "@rsvp/query-hooks";
 import { copyText } from "../../platform/clipboard";
 import { useApiClient, useLocale, useT } from "../../platform/providers";
 import { shareText } from "../../platform/share";
 import { siteOrigin } from "../../platform/site-origin";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
-import { ActionButton, Celebrate, ChoiceGroup, ConfirmDialog, Notice, useStyles } from "../ui";
-import { FailureNotice, MoreOptions, RetryNotice, StatusBadge, TextAction, BlockSkeleton } from "./parts";
+import { ActionButton, Celebrate, FilterSelect, ConfirmDialog, Notice, OverflowMenu, useStyles } from "../ui";
+import { FailureNotice, RetryNotice, StatusBadge, TextAction, BlockSkeleton } from "./parts";
 import { useSingleFlightGate } from "../../platform/single-flight";
 
 /**
@@ -24,11 +24,11 @@ import { useSingleFlightGate } from "../../platform/single-flight";
 interface Issued { readonly url: string; readonly masked: string; readonly expiresAt: string }
 
 /** State and actions of the guest's link, shared by the link block (copy, share) and the "Más opciones" block (reissue, revoke). */
-function useGuestLink(celebration: Celebration, guestId: string) {
+function useGuestLink(celebration: Celebration | undefined, guestId: string) {
   const t = useT();
   const client = useApiClient();
-  const issue = useIssueGuestToken(client, celebration.id);
-  const revoke = useRevokeGuestToken(client, celebration.id);
+  const issue = useIssueGuestToken(client, celebration?.id ?? "");
+  const revoke = useRevokeGuestToken(client, celebration?.id ?? "");
   const [issued, setIssued] = useState<Issued | null>(null);
   const [confirm, setConfirm] = useState<"revoke" | "reissue" | null>(null);
   const [message, setMessage] = useState("");
@@ -36,14 +36,15 @@ function useGuestLink(celebration: Celebration, guestId: string) {
 
   const origin = siteOrigin();
   const generate = (): void => {
-    if (!flight.begin()) return;
+    if (!celebration || !flight.begin()) return;
     setMessage("");
     issue.mutate(guestId, {
       onSettled: flight.end,
       // The backend's canonical URL when it sent one; otherwise the same format built here from the configured origin.
       onSuccess: (token) => {
-        const url = token.url ?? `${origin}${personalLinkPath(celebration.slug, token.token)}`;
-        setIssued({ url, masked: `${origin}/c/${celebration.slug}/rsvp/${maskSecret(token.token)}`, expiresAt: token.expiresAt });
+        const slug = celebration?.slug ?? "";
+        const url = token.url ?? `${origin}${personalLinkPath(slug, token.token)}`;
+        setIssued({ url, masked: `${origin}/c/${slug}/rsvp/${maskSecret(token.token)}`, expiresAt: token.expiresAt });
         // One tap: the link is on the clipboard as soon as it exists. If the platform refuses, "Copiar enlace" is right there.
         void copyText(url).then((copied) => { if (copied) setMessage(t("guests.detail.link.copied")); });
       }
@@ -52,8 +53,8 @@ function useGuestLink(celebration: Celebration, guestId: string) {
   const copy = async (): Promise<void> => { if (issued) setMessage((await copyText(issued.url)) ? t("guests.detail.link.copied") : t("guests.detail.link.copyFailed")); };
   const share = async (): Promise<void> => {
     if (!issued) return;
-    const title = celebration.content["title"];
-    const outcome = await shareText({ title: t("guests.detail.link.shareTitle"), message: `${t("guests.detail.link.shareText", { title: typeof title === "string" ? title : celebration.slug })} ${issued.url}` });
+    const title = celebration?.content["title"];
+    const outcome = await shareText({ title: t("guests.detail.link.shareTitle"), message: `${t("guests.detail.link.shareText", { title: typeof title === "string" ? title : celebration?.slug ?? "" })} ${issued.url}` });
     if (outcome === "unsupported") setMessage((await copyText(issued.url)) ? t("guests.detail.link.copied") : t("guests.detail.link.copyFailed"));
   };
   const confirmed = (): void => {
@@ -62,11 +63,11 @@ function useGuestLink(celebration: Celebration, guestId: string) {
     if (action === "reissue") generate();
     if (action === "revoke" && flight.begin()) { setMessage(""); revoke.mutate(guestId, { onSuccess: () => { setIssued(null); setMessage(t("guests.detail.link.revoked")); }, onSettled: flight.end }); }
   };
-  return { issue, revoke, issued, confirm, setConfirm, message, generate, copy, share, confirmed, timeZone: celebration.timeZone };
+  return { issue, revoke, issued, confirm, setConfirm, message, generate, copy, share, confirmed, timeZone: celebration?.timeZone ?? "UTC" };
 }
 type GuestLink = ReturnType<typeof useGuestLink>;
 
-/** The link itself: one primary action at a time. Not issued: "Generar enlace". Issued: the milestone with Copy first. */
+/** The link itself. Its one primary action ("Generar y copiar enlace", then "Copiar enlace") lives in the header; here the link is explained, masked and can be shared. */
 function LinkSection({ link, name }: { readonly link: GuestLink; readonly name: string }): ReactNode {
   const styles = useStyles();
   const t = useT();
@@ -82,35 +83,14 @@ function LinkSection({ link, name }: { readonly link: GuestLink; readonly name: 
           <Text style={styles.muted}>{t("guests.detail.link.expires", { date: formatCelebrationDate(issued.expiresAt, { locale, timeZone: link.timeZone }) })}</Text>
           <Text style={styles.muted}>{t("guests.detail.link.once")}</Text>
           <View style={styles.row}>
-            <ActionButton label={t("guests.detail.link.copy")} onPress={() => { void link.copy(); }} testID="copy-link" />
             <ActionButton variant="secondary" label={t("guests.detail.link.share")} onPress={() => { void link.share(); }} testID="share-link" />
           </View>
         </Celebrate>
-      ) : (
-        <>
-          <Text style={styles.muted}>{t("guests.detail.link.none")}</Text>
-          <ActionButton label={t("guests.detail.link.issue")} busy={issue.isPending} onPress={link.generate} testID="issue-link" />
-        </>
-      )}
+      ) : <Text style={styles.muted}>{t("guests.detail.link.none")}</Text>}
       {message ? <Notice kind="success">{message}</Notice> : null}
       <FailureNotice error={issue.error ?? revoke.error} />
       <ConfirmDialog visible={confirm !== null} danger title={confirm === "reissue" ? t("guests.detail.link.reissueTitle") : t("guests.detail.link.revokeTitle")} body={confirm === "reissue" ? t("guests.detail.link.reissueBody") : t("guests.detail.link.revokeBody")}
         confirmLabel={confirm === "reissue" ? t("guests.detail.link.reissue") : t("guests.detail.link.revoke")} onConfirm={link.confirmed} onCancel={() => link.setConfirm(null)} />
-    </View>
-  );
-}
-
-/** Reissue and revoke are the rare moves: they live behind "Más opciones" with the removal. */
-function LinkAdmin({ link }: { readonly link: GuestLink }): ReactNode {
-  const styles = useStyles();
-  const t = useT();
-  return (
-    <View style={{ gap: spacing[2] }}>
-      <Text style={styles.label}>{t("guests.detail.link.manage")}</Text>
-      <View style={styles.row}>
-        {link.issued ? <ActionButton variant="secondary" label={t("guests.detail.link.reissue")} onPress={() => link.setConfirm("reissue")} /> : null}
-        <ActionButton variant="danger" label={t("guests.detail.link.revoke")} busy={link.revoke.isPending} onPress={() => link.setConfirm("revoke")} testID="revoke-link" />
-      </View>
     </View>
   );
 }
@@ -125,45 +105,36 @@ function GroupSection({ celebrationId, guestId, groupId }: { readonly celebratio
   if (!groups.data || groups.data.items.length === 0) return null;
   return (
     <View style={[styles.card, { maxWidth: 720 }]}>
-      <ChoiceGroup label={t("guests.detail.groupTitle")} value={current ?? ""} onChange={(value) => { if (change.isPending || value === (current ?? "")) return; change.mutate({ guestId, groupId: value || null }, { onSuccess: () => setCurrent(value || null) }); }}
-        choices={[{ value: "", label: t("guests.detail.groupNone") }, ...groups.data.items.map((group) => ({ value: group.id, label: `${group.name} (${group.memberCount})` }))]} />
+      <Text style={styles.label}>{t("guests.detail.groupTitle")}</Text>
+      <FilterSelect testID="guest-group" label={t("guests.detail.groupTitle")} value={current ?? ""}
+        onChange={(value) => { if (change.isPending || value === (current ?? "")) return; change.mutate({ guestId, groupId: value || null }, { onSuccess: () => setCurrent(value || null) }); }}
+        options={[{ value: "", label: t("guests.detail.groupNone") }, ...groups.data.items.map((group) => ({ value: group.id, label: group.name, count: group.memberCount }))]} />
       {change.isSuccess ? <Notice kind="success">{t("guests.detail.groupSaved")}</Notice> : null}
       <FailureNotice error={change.error} />
     </View>
   );
 }
 
-/** Irreversible removal of a guest and their data (the backend's `erasure`); there is no soft delete, so the dialog says so. */
-function EraseSection({ celebration, guestId, name, onDone }: { readonly celebration: Celebration; readonly guestId: string; readonly name: string; readonly onDone: () => void }): ReactNode {
-  const styles = useStyles();
-  const t = useT();
+/** Irreversible removal of a guest and their data (the backend's `erasure`); there is no soft delete, so the dialog says so. Opened from the header menu. */
+function useEraseFlow(celebration: Celebration | undefined, guestId: string, onDone: () => void) {
   const client = useApiClient();
-  const erase = useEraseGuest(client, celebration.id);
+  const erase = useEraseGuest(client, celebration?.id ?? "");
   const flight = useSingleFlightGate();
   const [confirm, setConfirm] = useState(false);
   const run = (): void => {
     setConfirm(false);
-    if (!flight.begin()) return;
+    if (!celebration || !flight.begin()) return;
     erase.mutate(guestId, { onSuccess: onDone, onSettled: flight.end });
   };
-  return (
-    <View style={{ gap: spacing[2] }}>
-      <Text style={styles.label}>{t("guests.detail.erase.title")}</Text>
-      <Text style={styles.muted}>{t("guests.detail.erase.intro")}</Text>
-      <FailureNotice error={erase.error} onRetry={() => setConfirm(true)} />
-      <View style={{ alignItems: "flex-start" }}><ActionButton variant="danger" label={t("guests.detail.erase.action")} busy={erase.isPending} onPress={() => setConfirm(true)} testID="erase-guest" /></View>
-      <ConfirmDialog visible={confirm} danger title={t("guests.detail.erase.confirmTitle", { name })} body={t("guests.detail.erase.confirmBody")} confirmLabel={t("guests.detail.erase.confirm")} onConfirm={run} onCancel={() => setConfirm(false)} />
-    </View>
-  );
+  return { erase, confirm, setConfirm, run };
 }
+type EraseFlow = ReturnType<typeof useEraseFlow>;
 
-function DetailBody({ celebration, guestId, onNavigate }: { readonly celebration: Celebration; readonly guestId: string; readonly onNavigate: (href: string) => void }): ReactNode {
+function DetailBody({ celebration, guestId, guest, link, eraser, onNavigate }: { readonly celebration: Celebration; readonly guestId: string; readonly guest: ReturnType<typeof useGuestDetail>; readonly link: GuestLink; readonly eraser: EraseFlow; readonly onNavigate: (href: string) => void }): ReactNode {
   const styles = useStyles();
   const t = useT();
   const locale = useLocale();
   const client = useApiClient();
-  const guest = useGuestDetail(client, celebration.id, guestId);
-  const link = useGuestLink(celebration, guestId);
   const status = useGuestList(client, celebration.id, { search: guest.data?.name ?? "", limit: 100 });
   if (guest.isPending) return <BlockSkeleton />;
   if (guest.isError && guest.error instanceof ApiError && guest.error.status === 404) {
@@ -188,21 +159,37 @@ function DetailBody({ celebration, guestId, onNavigate }: { readonly celebration
       </View>
       <LinkSection link={link} name={data.name} />
       <GroupSection celebrationId={celebration.id} guestId={guestId} groupId={data.groupId} />
-      <MoreOptions label={t("guests.more")} testID="guest-more">
-        <LinkAdmin link={link} />
-        <EraseSection celebration={celebration} guestId={guestId} name={data.name} onDone={back} />
-      </MoreOptions>
+      <FailureNotice error={eraser.erase.error} onRetry={() => eraser.setConfirm(true)} />
+      <ConfirmDialog visible={eraser.confirm} danger title={t("guests.detail.erase.confirmTitle", { name: data.name })} body={t("guests.detail.erase.confirmBody")} confirmLabel={t("guests.detail.erase.confirm")} onConfirm={eraser.run} onCancel={() => eraser.setConfirm(false)} />
       <TextAction label={t("guests.form.back")} onPress={back} />
     </View>
   );
 }
 
+/** The link and the removal are lifted here so the header can carry the one primary action and the "⋯" menu while the body explains the result. One tree for every state: the frame never remounts when the celebration arrives. */
 export function GuestDetailScreen(props: ScreenProps & { readonly guestId?: string }): ReactNode {
   const t = useT();
+  const client = useApiClient();
+  const guestId = props.guestId ?? "";
+  const celebration = useCelebration(client, props.celebrationId ?? "").data;
+  const guest = useGuestDetail(client, celebration?.id ?? "", guestId);
+  const link = useGuestLink(celebration, guestId);
+  const eraser = useEraseFlow(celebration, guestId, () => props.onNavigate(withCelebration(HOST_ROUTES.guests, props.celebrationId)));
+  const ready = Boolean(guest.data);
+  const primary = link.issued
+    ? <ActionButton label={t("guests.detail.link.copy")} onPress={() => { void link.copy(); }} testID="copy-link" />
+    : <ActionButton label={t("guests.detail.link.issue")} busy={link.issue.isPending} onPress={link.generate} testID="issue-link" />;
   return (
-    <CelebrationScreen {...props} current="guests" title={t("guests.detail.title")} intro={t("guests.detail.intro")}>
-      {({ celebration }) => (props.guestId ? <DetailBody celebration={celebration} guestId={props.guestId} onNavigate={props.onNavigate} /> : <Notice kind="error">{t("guests.detail.missing")}</Notice>)}
+    <CelebrationScreen {...props} current="guests" title={t("guests.detail.title")} intro={t("guests.detail.intro")}
+      actions={ready ? primary : undefined}
+      menu={ready ? (
+        <OverflowMenu label={t("guests.more")} testID="guest-more" items={[
+          ...(link.issued ? [{ key: "reissue", label: t("guests.detail.link.reissue"), onPress: () => link.setConfirm("reissue") }] : []),
+          { key: "revoke", label: t("guests.detail.link.revoke"), testID: "revoke-link", destructive: true, disabled: link.revoke.isPending, onPress: () => link.setConfirm("revoke") },
+          { key: "erase", label: t("guests.detail.erase.action"), testID: "erase-guest", destructive: true, disabled: eraser.erase.isPending, onPress: () => eraser.setConfirm(true) }
+        ]} />
+      ) : undefined}>
+      {({ celebration: loaded }) => (props.guestId ? <DetailBody celebration={loaded} guestId={guestId} guest={guest} link={link} eraser={eraser} onNavigate={props.onNavigate} /> : <Notice kind="error">{t("guests.detail.missing")}</Notice>)}
     </CelebrationScreen>
   );
 }
-

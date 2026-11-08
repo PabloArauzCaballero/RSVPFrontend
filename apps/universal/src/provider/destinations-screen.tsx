@@ -3,11 +3,11 @@ import { Text, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
 import { useConfigureLeads, type Destination, type LeadConfig, type Provider } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../platform/providers";
-import { ActionButton, ChoiceGroup, Field, Notice, PageIntro, Section, ToggleChip, useStyles } from "../host/ui";
+import { ChoiceGroup, Field, Notice, PageIntro, Section, ToggleChip, useStyles } from "../host/ui";
 import { PortalErrorNotice as ErrorNotice } from "./errors";
-import { PortalScreen } from "./frame";
+import { PortalScreen, usePortalHeader } from "./frame";
 import { useSingleMutation } from "../platform/single-flight";
-import { MoreToggle, StickyActions } from "./parts";
+import { MoreToggle } from "./parts";
 
 const DESTINATIONS: readonly Destination[] = ["OFFICIAL_SITE", "LANDING", "WHATSAPP", "PHONE", "EMAIL", "INSTAGRAM", "PRODUCT_PAGE"];
 const UTM = /^[A-Za-z0-9_.-]{1,64}$/;
@@ -45,6 +45,7 @@ function Destinations({ provider }: { readonly provider: Provider }): ReactNode 
     if (found.length) return;
     saveOnce({ enabledDestinations: enabled, utmSource: source, utmMedium: medium, ...(campaign.trim() ? { utmCampaign: campaign.trim() } : {}), dedupeMinutes, monthlyCap, billingModel: billing });
   };
+  usePortalHeader({ label: save.isPending ? t("portal.destinations.saving") : t("portal.destinations.save"), busy: save.isPending, disabled: save.isPending, onPress: submit, testID: "destinations-save" });
   return (
     <View style={{ gap: spacing[4] }}>
       <PageIntro>{t("portal.destinations.intro")}</PageIntro>
@@ -70,7 +71,6 @@ function Destinations({ provider }: { readonly provider: Provider }): ReactNode 
       {errors.length ? <Notice kind="error">{errors.map((message) => <Text key={message} style={styles.body}>{message}</Text>)}</Notice> : null}
       {save.isSuccess ? <Notice kind="success">{t("portal.destinations.saved")}</Notice> : null}
       <ErrorNotice error={save.error} onRetry={submit} />
-      <StickyActions><ActionButton label={save.isPending ? t("portal.destinations.saving") : t("portal.destinations.save")} busy={save.isPending} disabled={save.isPending} onPress={submit} testID="destinations-save" /></StickyActions>
     </View>
   );
 }

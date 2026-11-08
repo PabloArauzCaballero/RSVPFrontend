@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { View } from "react-native";
+import { Text, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
 import { Enter, StickyActions } from "@rsvp/ui";
 import { guestSchema } from "@rsvp/forms";
@@ -7,7 +7,7 @@ import { hostGuestsApi, useGuestDefaults, useGuestGroups, useGuestList, useRegis
 import { useApiClient, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
-import { ActionButton, Celebrate, ChoiceGroup, ConfirmDialog, Field, useStyles, SuccessNote } from "../ui";
+import { ActionButton, Celebrate, ConfirmDialog, Field, FilterSelect, useStyles, SuccessNote } from "../ui";
 import { FailureNotice, formErrors, TextAction } from "./parts";
 import { useSingleFlightGate } from "../../platform/single-flight";
 import { rememberGuest } from "./recent-guests";
@@ -88,7 +88,12 @@ function Form({ celebrationId, onNavigate, groupId }: { readonly celebrationId: 
         <Field label={t("guests.form.email")} help={t("guests.form.emailHelp")} keyboardType="email-address" value={draft.email} error={shown("email")} onChange={(email) => { setSaved(null); touch("email"); setDraft({ ...draft, email }); }} testID="guest-email" />
         <Field label={t("guests.form.phone")} help={t("guests.form.phoneHelp")} keyboardType="phone-pad" value={draft.phone} error={shown("phone")} onChange={(phone) => { setSaved(null); touch("phone"); setDraft({ ...draft, phone }); }} testID="guest-phone" />
         <Field label={t("guests.form.companions")} help={t("guests.form.companionsHelp")} keyboardType="number-pad" value={draft.allowedCompanions} error={shown("allowedCompanions")} onChange={(allowedCompanions) => { setSaved(null); touch("allowedCompanions"); setDraft({ ...draft, allowedCompanions }); }} />
-        {groups.length ? <ChoiceGroup label={t("guests.form.group")} value={group} onChange={setGroup} choices={[{ value: "", label: t("guests.form.noGroup") }, ...groups.map((item) => ({ value: item.id, label: item.name }))]} /> : null}
+        {groups.length ? (
+          <View style={{ gap: spacing[2] }}>
+            <Text style={styles.label}>{t("guests.form.group")}</Text>
+            <FilterSelect testID="guest-group" label={t("guests.form.group")} value={group} onChange={setGroup} options={[{ value: "", label: t("guests.form.noGroup") }, ...groups.map((item) => ({ value: item.id, label: item.name }))]} />
+          </View>
+        ) : null}
         <FailureNotice error={register.error} onRetry={submit} />
         {saved ? <SuccessNote message={t("guests.form.saved", { name: saved.name })} {...(saved.first ? {} : { detail: t("guests.form.savedDetail") })} /> : null}
       </View>

@@ -44,7 +44,7 @@ describe("REQ-F14-03 · verification queue", () => {
     const { client, calls } = fakeClient({ ...queue(PROVIDERS), "POST /providers/p-2/reject": () => ({}) });
     renderApp(<VerificationScreen onNavigate={navigate} />, client, ADMIN);
     fireEvent.click((await screen.findAllByRole("button", { name: "Otras acciones" }))[1]!);
-    fireEvent.click(await screen.findByRole("button", { name: "Rechazar a Catering Sol" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Rechazar a Catering Sol" }));
     fireEvent.click(screen.getByRole("button", { name: "Rechazar" }));
     expect(await screen.findByText(/Escribe el motivo: queda/)).toBeTruthy();
     expect(calls.some((call) => call.method === "POST")).toBe(false);
@@ -109,7 +109,7 @@ describe("REQ-F14-04 · moderation of microsites and external gifts", () => {
     fireEvent.click(screen.getByRole("button", { name: "Aprobar Sitio de Foto Altiplano" }));
     expect(await screen.findByText("Decisión registrada.")).toBeTruthy();
     fireEvent.click(screen.getAllByRole("button", { name: "Otras acciones" }).at(-1)!);
-    fireEvent.click(screen.getByRole("button", { name: "Rechazar Licuadora en tienda externa" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Rechazar Licuadora en tienda externa" }));
     fireEvent.click(screen.getByRole("button", { name: "Rechazar" }));
     expect(await screen.findByText(/Escribe el motivo: queda/)).toBeTruthy();
     type("Motivo", "El enlace no es una tienda");

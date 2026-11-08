@@ -92,7 +92,7 @@ function Members({ organization, isOwner }: { readonly organization: Organizatio
           <ChoiceGroup label={t("org.roleLabel")} value={role} onChange={setRole} disabled={add.isPending} choices={[{ value: "HOST", label: t("org.memberHost") }, { value: "PLANNER", label: t("org.memberPlanner") }]} />
           {add.isError ? <Notice kind="error">{memberError(add.error, t)}</Notice> : null}
           {done ? <Notice kind="success">{t("org.added")}</Notice> : null}
-          <ActionButton label={add.isPending ? t("org.adding") : t("org.add")} busy={add.isPending} onPress={submit} testID="org-member-add" />
+          <ActionButton variant="secondary" label={add.isPending ? t("org.adding") : t("org.add")} busy={add.isPending} onPress={submit} testID="org-member-add" />
         </View>
       ) : <Text style={styles.muted}>{t("org.ownerOnly")}</Text>}
     </Section>

@@ -92,6 +92,51 @@ Para mover una pantalla a otro destino se edita únicamente la tabla (`DESTINATI
 
 Barra inferior móvil: caben cinco espacios. Si destinos + «Más» (con sesión iniciada) caben, se muestran todos; si no, cuatro y el resto detrás de «Más» junto a «Cerrar sesión».
 
+## Cabecera de página: acción primaria, menú «⋯» y filtros (tanda 3)
+
+**Dónde vive.** El espacio de acciones es del marco `Screen` (`apps/universal/src/host/shell.tsx`), no de `PageIntro`: `PageIntro` es solo una frase bajo el título y no conoce el ancho ni la barra fija. `Screen` ya posee la cabecera, el ancho y el contenido, así que decide la ubicación. Lo usan anfitrión, proveedor y admin.
+
+```tsx
+<Screen title={t("guests.list.title")} nav={nav} current="guests" onNavigate={go}
+  actions={<ActionButton label={t("guests.add")} onPress={add} />}
+  menu={<OverflowMenu items={[{ key: "import", label: t("guests.import"), onPress: importGuests }]} />}>…</Screen>
+```
+
+- `actions?: ReactNode`: la acción primaria única de la pantalla (un solo botón). `menu?: ReactNode`: las secundarias (`OverflowMenu`).
+- Desde 768 px: `[⋯][acción primaria]` arriba a la derecha de la cabecera, alineados con el título (`headRow`/`headActions` en shell.tsx). El título y la intro ocupan el resto y envuelven sin chocar.
+- Menos de 768 px: el `⋯` queda arriba a la derecha junto al título y la acción primaria pasa a `StickyActions` al pie del contenido (`testID="screen-sticky-actions"`). No pongas tu propio `StickyActions` además de `actions`.
+- Formularios con su propio «Guardar»: no pases `actions`; siguen usando `StickyActions` como antes. Sin `actions` ni `menu` la cabecera no cambia.
+
+- `status?: ReactNode`: una línea sobre el trabajo en curso («Tienes cambios sin guardar», «Cambios guardados»). Desde 768 px va arriba del contenido; en móvil, sobre la barra fija.
+- **Pantallas del anfitrión con estado propio** (editor, idiomas, estilo, galería, publicar, ajustes, regalos): el cuerpo publica su cabecera con `useScreenHeader({ actions, menu, status })` (`apps/universal/src/host/gate.tsx`); los guardados usan `useSaveHeader` (`save-bar.tsx`). Se guarda en un almacén externo, así que publicar no vuelve a pintar el marco ni hace bucles. Fuera de `CelebrationScreen` no hace nada.
+- `CelebrationScreen` ya no pinta la línea «nombre · tipo» bajo el título: el contexto vive en el menú lateral e Inicio.
+
+### OverflowMenu
+
+```ts
+interface OverflowMenuItem { key: string; label: string; onPress: () => void; destructive?: boolean; disabled?: boolean }
+interface OverflowMenuProps { items: readonly OverflowMenuItem[]; label?: string; testID?: string }
+```
+
+- Botón «⋯» de 44 × 44 px con nombre accesible `ui.moreOptions` («Más opciones» / «More options»); `label` lo sustituye. Sin `items` no dibuja nada. Los textos de los ítems los traduce quien llama.
+- Web: `aria-haspopup="menu"`, `aria-expanded`, panel `role="menu"` con `role="menuitem"` de 44 px. Al abrir el foco va al primer ítem activo; flechas Arriba/Abajo (circular, saltan los deshabilitados), Inicio/Fin, Escape cierra y devuelve el foco al botón, Tab o pulsar fuera cierran. Foco visible con contorno de 2 px. Las acciones destructivas usan `palette.danger`.
+- Nativo: hoja modal con los mismos ítems (`menuitem`); el fondo cierra.
+- Tema claro/oscuro por `palette`. Sin animación propia.
+
+### FilterSelect
+
+```ts
+interface FilterOption<T extends string = string> { value: T; label: string; count?: number }
+interface FilterSelectProps<T extends string = string> { label: string; options: readonly FilterOption<T>[]; value: T; onChange: (value: T) => void; testID?: string }
+const FILTER_SELECT_THRESHOLD = 3;
+```
+
+- Regla: con más de 3 opciones (`FILTER_SELECT_THRESHOLD`) el filtro es un `FilterSelect`; con 3 o menos se quedan los chips (`ToggleChip`).
+- `label` es el nombre accesible (traducido, p. ej. «Filtrar invitados»). El conteo opcional se muestra «Sin responder (5)». Controlado: `value` manda.
+- Web: `<select>` nativo (teclado, selector del móvil y lector de pantalla gratis), 44 px de alto como mínimo, `color-scheme` y colores del tema, flecha propia. Nativo: botón `combobox` que abre una hoja con `radiogroup` de ítems de 44 px.
+- `OverflowMenu`, `FilterSelect`, `OverflowMenuItem` y `FilterOption` se importan también desde `apps/universal/src/host/ui.tsx`.
+- Copia nueva: `ui.moreOptions` en `packages/i18n/locales/{es-BO,en-US}/common.ts`.
+
 ## Reglas de uso
 
 - Un botón primario por pantalla; lo demás es secundario o enlace.

@@ -1,15 +1,16 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
 import { Chip, Stagger, useColors } from "@rsvp/ui";
 import { formatCelebrationDate } from "@rsvp/i18n";
 import { useInfiniteLeads, type Lead, type Provider } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../platform/providers";
-import { ActionButton, EmptyState, Notice, PageIntro, useStyles } from "../host/ui";
+import { ActionButton, ChoiceGroup, EmptyState, Notice, PageIntro, useStyles } from "../host/ui";
 import { PortalErrorNotice, PortalErrorState } from "./errors";
 import { PortalScreen } from "./frame";
 import { RowsSkeleton } from "./parts";
 
+type Kind = "all" | "quote" | "click";
 const KNOWN_DESTINATIONS: readonly string[] = ["OFFICIAL_SITE", "LANDING", "WHATSAPP", "PHONE", "EMAIL", "INSTAGRAM", "PRODUCT_PAGE"];
 const KNOWN_SURFACES: readonly string[] = ["SEARCH", "DIRECTORY", "MICROSITE", "PROFILE", "LISTING"];
 
@@ -42,18 +43,22 @@ function Leads({ provider }: { readonly provider: Provider }): ReactNode {
   const client = useApiClient();
   const styles = useStyles();
   const leads = useInfiniteLeads(client, provider.id);
+  const [kind, setKind] = useState<Kind>("all");
   if (leads.isPending) return <View style={{ gap: spacing[4] }}><PageIntro>{t("portal.leads.intro")}</PageIntro><RowsSkeleton count={4} minHeight={92} /></View>;
   if (leads.isError && !leads.data) return <PortalErrorState error={leads.error} onRetry={() => { void leads.refetch(); }} />;
   const items = leads.data?.pages.flatMap((page) => page.items) ?? [];
   const total = leads.data?.pages[0]?.total ?? items.length;
   const quotes = items.filter((lead) => lead.kind === "FORM");
-  const clicks = items.filter((lead) => lead.kind !== "FORM");
+  const shown = kind === "all" ? items : kind === "quote" ? quotes : items.filter((lead) => lead.kind !== "FORM");
   return (
     <View style={{ gap: spacing[4] }}>
       <PageIntro>{t("portal.leads.intro")}</PageIntro>
-      {items.length === 0 ? <EmptyState illustration="emptySearch" title={t("portal.leads.emptyTitle")} body={t("portal.leads.empty")} /> : null}
-      {items.length === 0 ? null : <View style={{ maxWidth: 720 }}><Text accessibilityRole="header" style={styles.subtitle}>{t("portal.leads.quotesTitle")}</Text>{quotes.length === 0 ? <Notice>{t("portal.leads.quotesEmpty")}</Notice> : <Stagger>{quotes.map((lead) => <LeadRow key={lead.id} lead={lead} timeZone={provider.timeZone} />)}</Stagger>}</View>}
-      {items.length === 0 ? null : <View style={{ maxWidth: 720 }}><Text accessibilityRole="header" style={styles.subtitle}>{t("portal.leads.clicksTitle")}</Text>{clicks.length === 0 ? <Notice>{t("portal.leads.clicksEmpty")}</Notice> : <Stagger>{clicks.map((lead) => <LeadRow key={lead.id} lead={lead} timeZone={provider.timeZone} />)}</Stagger>}</View>}
+      {items.length === 0 ? <EmptyState illustration="emptySearch" title={t("portal.leads.emptyTitle")} body={t("portal.leads.empty")} /> : (
+        <View style={{ maxWidth: 720, gap: spacing[2] }}>
+          <ChoiceGroup<Kind> label={t("portal.leads.filter")} value={kind} onChange={setKind} choices={[{ value: "all", label: t("portal.leads.filters.all") }, { value: "quote", label: t("portal.leads.filters.quote") }, { value: "click", label: t("portal.leads.filters.click") }]} />
+          {shown.length === 0 ? <Notice>{t(kind === "quote" ? "portal.leads.quotesEmpty" : "portal.leads.clicksEmpty")}</Notice> : <Stagger>{shown.map((lead) => <LeadRow key={lead.id} lead={lead} timeZone={provider.timeZone} />)}</Stagger>}
+        </View>
+      )}
       {items.length > 0 ? <Text style={styles.muted} testID="leads-shown">{t("portal.leads.shown", { shown: items.length, total })}</Text> : null}
       {leads.isFetchNextPageError ? <PortalErrorNotice error={leads.error} onRetry={() => { void leads.fetchNextPage(); }} /> : null}
       {leads.hasNextPage ? <ActionButton variant="secondary" label={t("portal.leads.more")} busy={leads.isFetchingNextPage} disabled={leads.isFetchingNextPage} onPress={() => { void leads.fetchNextPage(); }} testID="leads-more" /> : null}

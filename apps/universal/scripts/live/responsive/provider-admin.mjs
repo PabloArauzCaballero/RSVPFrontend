@@ -163,6 +163,8 @@ if (PHASES.includes("flows")) {
     const flags = { width, locale, scheme: "light" }; const key = `flows ${width}/en-US/light`;
     let current = null;
     const step = async (name, fn) => { try { const evidence = await fn(); record({ key, width, locale, scheme: "light", route: name, check: "g-flow", status: "PASS", evidence: evidence ?? "" }); } catch (error) { const seen = await current?.locator("body").innerText().catch(() => ""); record({ key, width, locale, scheme: "light", route: name, check: "g-flow", status: "FAIL", evidence: `${String(error?.message ?? error).split("\n")[0].slice(0, 200)} | screen: ${String(seen).replace(/\s+/g, " ").slice(-260)}` }); } };
+    // OverflowMenu items carry no testID: the "⋯" trigger and its items are found by role and accessible name (en-US flows).
+    const menuClick = async (page, trigger, name, scope) => { await (scope ? tid(page, scope) : page).getByRole("button", { name: trigger }).filter({ visible: true }).first().evaluate((node) => node.scrollIntoView({ block: "center" })); await (scope ? tid(page, scope) : page).getByRole("button", { name: trigger }).filter({ visible: true }).first().click(); await page.getByRole("menuitem", { name, exact: true }).filter({ visible: true }).first().click(); };
     const tid = (page, id) => page.getByTestId(id).filter({ visible: true }).first();
 /** Admin queues show 10 rows and "Show more": reveal the row of an action before touching it. */
 const reveal = async (page, testId) => {
@@ -189,7 +191,7 @@ const reveal = async (page, testId) => {
     });
     await step("portal: publish offer", async () => {
       const created = (await listings()).find((l) => l.title === "Flow cake");
-      await tid(page, `publish-${created.id}`).click();
+      await menuClick(page, /^More options for /, "Publish", `listing-${created.id}`);
       await poll(async () => (await listings()).find((l) => l.id === created.id)?.published, "published=true");
       return "GET published=true";
     });
@@ -208,12 +210,12 @@ const reveal = async (page, testId) => {
       return `GET availability capacityPerDay ${av.capacityPerDay}`;
     });
     await step("portal: rename", async () => {
-      await go(page, "/portal"); await tid(page, "more-options").click(); await tid(page, "rename-open").click(); await tid(page, "rename-name").fill(`Renamed ${stamp}`); await tid(page, "rename-save").click();
+      await go(page, "/portal"); await menuClick(page, "More options", "Change the name"); await tid(page, "rename-name").fill(`Renamed ${stamp}`); await tid(page, "rename-save").click();
       await poll(async () => (await own()).name === `Renamed ${stamp}`, "new name");
       return "GET name updated";
     });
     await step("portal: ERROR network down (rename)", async () => {
-      await go(page, "/portal"); await tid(page, "more-options").click(); await tid(page, "rename-open").click(); await tid(page, "rename-name").fill("Offline name");
+      await go(page, "/portal"); await menuClick(page, "More options", "Change the name"); await tid(page, "rename-name").fill("Offline name");
       const handler = (route) => route.abort("connectionfailed"); await page.route(/\/providers\/[^/]+$/, handler);
       try {
         await tid(page, "rename-save").click();
@@ -238,6 +240,7 @@ const reveal = async (page, testId) => {
     await step("admin: grant role", async () => {
       await go(adm.page, "/admin/usuarios"); await tid(adm.page, "users-search").waitFor();
       await tid(adm.page, "users-search").fill(grantee.email); await tid(adm.page, "users-search-go").click();
+      await tid(adm.page, `user-${grantee.id}`).getByRole("button", { name: "Other actions" }).click(); // the roles to grant sit in the row's "⋯" menu
       await tid(adm.page, `grant-PLANNER-${grantee.id}`).click();
       await tid(adm.page, "grant-confirm").click();
       const roles = await poll(async () => { const r = (await http("GET", `/identity/admin/users?query=${encodeURIComponent(grantee.email)}`, { token: await getAdminToken() })).json.items[0].roles; return r.includes("PLANNER") ? r : null; }, "PLANNER role");

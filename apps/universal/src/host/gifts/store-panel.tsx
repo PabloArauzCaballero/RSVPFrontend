@@ -1,12 +1,12 @@
 import { useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
-import { StickyActions } from "@rsvp/ui";
 import { ApiError } from "@rsvp/api-client";
 import { partnerSuggestionsOf, problemCode, useAddGift, type Celebration, type PartnerSuggestion } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../../platform/providers";
+import { useScreenHeader } from "../gate";
 import { GiftErrorNotice } from "./gift-errors";
-import { ActionButton, Field, Notice, useStyles } from "../ui";
+import { ActionButton, Field, Notice, OverflowMenu, useStyles } from "../ui";
 import { useSingleFlightGate } from "../../platform/single-flight";
 import { isHttpUrl, parseMinor, TITLE_MAX } from "./money";
 import { Row, RowList } from "./offer-row";
@@ -49,6 +49,11 @@ export function StorePanel({ celebration, onSeeList, onChangeRule }: { readonly 
   const priority = celebration.settings.partnerPriorityEnabled;
   const mode = celebration.settings.externalGiftMode;
 
+  // «Agregar regalo» is the screen's one action (top right; a fixed bar on a phone); the rule of partners-first is changed from «⋯».
+  useScreenHeader({
+    actions: <ActionButton label={partnerFirst ? t("gifts.host.store.submitAnyway") : t("gifts.host.store.submit")} variant={partnerFirst ? "secondary" : "primary"} busy={add.isPending} disabled={add.isPending} onPress={() => send(partnerFirst)} testID="external-submit" />,
+    menu: <OverflowMenu items={[{ key: "rule", label: t("gifts.host.store.ruleChange"), onPress: onChangeRule, testID: "go-modes" }]} />
+  });
   return (
     <View style={{ gap: spacing[4] }}>
       <Field label={t("gifts.host.store.name")} value={title} onChange={setTitle} testID="external-title" />
@@ -72,15 +77,7 @@ export function StorePanel({ celebration, onSeeList, onChangeRule }: { readonly 
           </RowList>
         </Notice>
       ) : <GiftErrorNotice error={add.error} />}
-      <Notice kind="info">
-        {priority ? <Text accessibilityRole="header" aria-level={3} style={styles.subtitle}>{t("gifts.host.store.ruleTitle")}</Text> : null}
-        <Text style={styles.body}>{priority ? t("gifts.host.store.ruleOn") : t("gifts.host.store.ruleOff")}</Text>
-        <Text style={styles.muted}>{t(`gifts.host.store.mode${mode}`)}</Text>
-        <View style={styles.row}><ActionButton variant="secondary" label={t("gifts.host.store.ruleChange")} onPress={onChangeRule} testID="go-modes" /></View>
-      </Notice>
-      <StickyActions>
-        <ActionButton label={partnerFirst ? t("gifts.host.store.submitAnyway") : t("gifts.host.store.submit")} variant={partnerFirst ? "secondary" : "primary"} busy={add.isPending} disabled={add.isPending} onPress={() => send(partnerFirst)} testID="external-submit" />
-      </StickyActions>
+      <Text style={styles.muted}>{priority ? t("gifts.host.store.ruleOn") : t("gifts.host.store.ruleOff")} {t(`gifts.host.store.mode${mode}`)}</Text>
     </View>
   );
 }

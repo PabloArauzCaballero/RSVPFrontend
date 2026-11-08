@@ -80,7 +80,7 @@ function InboxBody({ celebrationId, timeZone, onSeeList }: { readonly celebratio
                 {reservation.message ? <Text style={styles.muted}>“{reservation.message}”</Text> : null}
                 <Text style={styles.muted}>{t("gifts.host.inbox.requestedAt", { date: formatCelebrationDate(reservation.requestedAt, { locale, timeZone }) })}</Text>
                 <View style={styles.row}>
-                  <ActionButton label={t("gifts.host.inbox.approve")} busy={busy === "approve"} disabled={busy !== null} onPress={() => resolve(reservation, "approve")} testID={`approve-${reservation.id}`} />
+                  <ActionButton variant="secondary" label={t("gifts.host.inbox.approve")} busy={busy === "approve"} disabled={busy !== null} onPress={() => resolve(reservation, "approve")} testID={`approve-${reservation.id}`} />
                   <ActionButton variant="secondary" label={t("gifts.host.inbox.reject")} busy={busy === "reject"} disabled={busy !== null} onPress={() => resolve(reservation, "reject")} testID={`reject-${reservation.id}`} />
                 </View>
               </Row>

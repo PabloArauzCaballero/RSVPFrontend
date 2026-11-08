@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { ApiError, toApiError, type ApiClient, type RequestOptions } from "@rsvp/api-client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { UsersScreen } from "../src/admin/insight";
@@ -21,6 +21,11 @@ const navigate = vi.fn();
 const type = (label: string, value: string): void => { fireEvent.change(screen.getByLabelText(label), { target: { value } }); };
 const profile = { id: PID, slug: "dulce-sol", name: "Dulce Sol", status: "VERIFIED", plan: "FREE", currency: "BOB", timeZone: "America/La_Paz", version: 1, ownerId: "u-host" };
 const portal = (extra: Record<string, Handler> = {}): Record<string, Handler> => ({ [`GET /providers/${PID}`]: () => profile, [`GET /providers/${PID}/listings`]: () => ({ items: [] }), [`GET /providers/${PID}/metrics`]: () => ({ providerId: PID, from: "", to: "", totals: { impressions: 0, clicks: 0, validLeads: 0, invalidLeads: 0, ctr: 0 } }), ...extra });
+/** Secondary actions live behind a "⋯" menu: open the trigger named `trigger` (inside `scope`) and return the menu item named `item`. */
+const menuItem = async (trigger: string | RegExp, item: string, scope: { readonly findByRole: typeof screen.findByRole } = screen): Promise<HTMLElement> => {
+  fireEvent.click(await scope.findByRole("button", { name: trigger }));
+  return screen.findByRole("menuitem", { name: item });
+};
 const withProvider = async (): Promise<void> => { await writeLocal("rsvp.provider.u-host", PID); };
 /** A client that keeps the query string (the shared fake drops it) and can fail with Retry-After. */
 function rawClient(routes: Readonly<Record<string, (path: string, options: RequestOptions<unknown>) => unknown>>): { readonly client: ApiClient; readonly paths: string[] } {
@@ -87,8 +92,7 @@ describe("provider · rename (PATCH /providers/{id})", () => {
     let name = "Dulce Sol";
     const { client, calls } = fakeClient(portal({ [`GET /providers/${PID}`]: () => ({ ...profile, name }), [`PATCH /providers/${PID}`]: (call) => { name = (call.body as { name: string }).name; return { ...profile, name, version: 2 }; } }));
     renderApp(<OverviewScreen />, client, HOST);
-    fireEvent.click(await screen.findByTestId("more-options"));
-    fireEvent.click(await screen.findByTestId("rename-open"));
+    fireEvent.click(await menuItem(/^Más opciones$/, "Cambiar el nombre"));
     type("Nombre del negocio", "   "); fireEvent.click(screen.getByTestId("rename-save"));
     expect(await screen.findByText("Escribe el nombre de tu negocio.")).toBeTruthy();
     type("Nombre del negocio", "x".repeat(121)); fireEvent.click(screen.getByTestId("rename-save"));
@@ -105,8 +109,7 @@ describe("provider · rename (PATCH /providers/{id})", () => {
     let mode: "403" | "net" = "403";
     const { client } = fakeClient(portal({ [`PATCH /providers/${PID}`]: () => { if (mode === "403") return new HttpFailure(403, { code: "PROVIDER_OWNER_REQUIRED" }); throw new TypeError("Failed to fetch"); } }));
     renderApp(<OverviewScreen />, client, HOST);
-    fireEvent.click(await screen.findByTestId("more-options"));
-    fireEvent.click(await screen.findByTestId("rename-open"));
+    fireEvent.click(await menuItem(/^Más opciones$/, "Cambiar el nombre"));
     type("Nombre del negocio", "Otro"); fireEvent.click(screen.getByTestId("rename-save"));
     expect(await screen.findByText(/Solo el titular de la ficha o un administrador/)).toBeTruthy();
     mode = "net"; fireEvent.click(screen.getByTestId("rename-save"));
@@ -132,11 +135,11 @@ describe("provider · documents delete", () => {
     let docs = [doc];
     const { client, calls } = fakeClient(portal({ [`GET /providers/${PID}/documents`]: () => ({ items: docs }), [`DELETE /providers/${PID}/documents/d-1`]: () => { docs = []; return undefined; } }));
     renderApp(<DocumentsScreen />, client, HOST);
-    fireEvent.click(await screen.findByTestId("document-delete-d-1"));
+    fireEvent.click(await menuItem(/Más opciones de ci\.pdf/, "Eliminar"));
     const dialog = (await screen.findByText("¿Eliminar este documento?")).closest("[role=alert]") as HTMLElement;
     fireEvent.click(within(dialog).getByRole("button", { name: "Cancelar" }));
     expect(calls.some((call) => call.method === "DELETE")).toBe(false);
-    fireEvent.click(screen.getByTestId("document-delete-d-1"));
+    fireEvent.click(await menuItem(/Más opciones de ci\.pdf/, "Eliminar"));
     const again = (await screen.findAllByText("¿Eliminar este documento?")).pop()!.closest("[role=alert]") as HTMLElement;
     fireEvent.click(within(again).getByRole("button", { name: "Eliminar" }));
     expect(await screen.findByText("Documento eliminado.")).toBeTruthy();
@@ -147,7 +150,7 @@ describe("provider · documents delete", () => {
     await withProvider();
     const { client } = fakeClient(portal({ [`GET /providers/${PID}/documents`]: () => ({ items: [doc] }), [`DELETE /providers/${PID}/documents/d-1`]: () => new HttpFailure(403, { code: "PROVIDER_OWNER_REQUIRED" }) }));
     renderApp(<DocumentsScreen />, client, HOST);
-    fireEvent.click(await screen.findByTestId("document-delete-d-1"));
+    fireEvent.click(await menuItem(/Más opciones de ci\.pdf/, "Eliminar"));
     const dialog = (await screen.findByText("¿Eliminar este documento?")).closest("[role=alert]") as HTMLElement;
     fireEvent.click(within(dialog).getByRole("button", { name: "Eliminar" }));
     expect(await screen.findByText(/Solo el titular de la ficha o un administrador/)).toBeTruthy();
@@ -186,16 +189,17 @@ describe("provider · agenda", () => {
     const booking = (id: string, status: string) => ({ id, providerId: PID, requesterId: "u", date: "2027-03-08", status, expiresAt: "2027-03-01T00:00:00Z" });
     const { client, calls } = fakeClient(portal({ [`GET /providers/${PID}/availability`]: () => availability, [`GET /providers/${PID}/bookings`]: () => ({ items: [booking("b1", "REQUESTED"), booking("b2", "CONFIRMED")] }), [`POST /providers/${PID}/bookings/b1/reject`]: () => booking("b1", "REJECTED"), [`POST /providers/${PID}/bookings/b2/cancel`]: () => booking("b2", "CANCELLED") }));
     renderApp(<AgendaScreen />, client, HOST);
-    fireEvent.click(await screen.findByTestId("reject-b1"));
+    await screen.findByTestId("booking-b1");
+    fireEvent.click(await menuItem(/Más opciones/, "Rechazar", within(screen.getByTestId("booking-b1"))));
     const reject = (await screen.findByText("¿Rechazar esta solicitud?")).closest("[role=alert]") as HTMLElement;
     expect(calls.some((call) => call.path.endsWith("/reject"))).toBe(false);
     fireEvent.click(within(reject).getByRole("button", { name: "Cancelar" }));
     expect(calls.some((call) => call.path.endsWith("/reject"))).toBe(false);
-    fireEvent.click(screen.getByTestId("reject-b1"));
+    fireEvent.click(await menuItem(/Más opciones/, "Rechazar", within(screen.getByTestId("booking-b1"))));
     const again = (await screen.findAllByText("¿Rechazar esta solicitud?")).pop()!.closest("[role=alert]") as HTMLElement;
     fireEvent.click(within(again).getByRole("button", { name: "Rechazar" }));
     await waitFor(() => expect(calls.filter((call) => call.path.endsWith("/b1/reject"))).toHaveLength(1));
-    fireEvent.click(screen.getByTestId("cancel-b2"));
+    fireEvent.click(await menuItem(/Más opciones/, "Cancelar reserva", within(screen.getByTestId("booking-b2"))));
     const cancel = (await screen.findByText("¿Cancelar esta reserva?")).closest("[role=alert]") as HTMLElement;
     fireEvent.click(within(cancel).getByRole("button", { name: "Cancelar reserva" }));
     await waitFor(() => expect(calls.filter((call) => call.path.endsWith("/b2/cancel"))).toHaveLength(1));
@@ -242,7 +246,8 @@ describe("admin · users grant role", () => {
     expect(screen.queryByTestId("grant-HOST-u-1")).toBeNull();
     expect(screen.getByTestId("users-page").textContent).toBe("Página 1 de 3");
     expect((screen.getByTestId("users-prev") as HTMLElement).getAttribute("aria-disabled")).toBe("true");
-    fireEvent.click(screen.getByTestId("grant-PLANNER-u-1"));
+    fireEvent.click(screen.getByRole("button", { name: "Otras acciones" }));
+    fireEvent.click(await screen.findByTestId("grant-PLANNER-u-1"));
     const dialog = (await screen.findByText("¿Dar el rol PLANNER a ana@example.com?")).closest("[role=alert]") as HTMLElement;
     expect(seen().some((path) => path.startsWith("PUT"))).toBe(false);
     fireEvent.click(within(dialog).getByRole("button", { name: "Dar rol PLANNER" }));
@@ -254,6 +259,7 @@ describe("admin · users grant role", () => {
   it("403 on grant explains and offers nothing destructive; search over 120 characters is refused locally", async () => {
     const { client, calls } = fakeClient({ "GET /identity/admin/users": () => ({ items: [user], total: 1 }), "PUT /identity/users/u-1/roles/ADMIN": () => new HttpFailure(403) });
     renderApp(<UsersScreen onNavigate={navigate} />, client, ADMIN);
+    fireEvent.click(await screen.findByRole("button", { name: "Otras acciones" }));
     fireEvent.click(await screen.findByTestId("grant-ADMIN-u-1"));
     const dialog = (await screen.findByText("¿Dar el rol ADMIN a ana@example.com?")).closest("[role=alert]") as HTMLElement;
     fireEvent.click(within(dialog).getByRole("button", { name: "Dar rol ADMIN" }));
@@ -269,10 +275,10 @@ describe("admin · verification offers only transitions the catalog accepts", ()
     const row = (status: string) => ({ providerId: `p-${status}`, name: `Prov ${status}`, category: "X", city: "La Paz", submittedAt: "2026-11-01T15:00:00Z", status, reason: "motivo" });
     const { client } = rawClient({ "GET /providers/admin/verification-queue": (path) => ({ items: [row(new URL(path, "http://x").searchParams.get("status") ?? "")] }) });
     renderApp(<VerificationScreen onNavigate={navigate} />, client, ADMIN);
-    fireEvent.click(await screen.findByRole("radio", { name: "Rechazados" }));
+    fireEvent.change(await screen.findByRole("combobox", { name: "Mostrar" }), { target: { value: "REJECTED" } });
     expect(await screen.findByTestId("no-action-p-REJECTED")).toBeTruthy();
     expect(screen.queryByRole("button", { name: /Verificar a/ })).toBeNull();
-    fireEvent.click(screen.getByRole("radio", { name: "Suspendidos" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Mostrar" }), { target: { value: "SUSPENDED" } });
     expect(await screen.findByTestId("no-action-p-SUSPENDED")).toBeTruthy();
     expect(screen.queryByRole("button", { name: /Verificar a/ })).toBeNull();
   });
@@ -303,12 +309,12 @@ describe("provider · one click, one request", () => {
     let fail = true;
     const { client, calls } = fakeClient(portal({ [`GET /providers/${PID}/listings`]: () => ({ items: [draft] }), [`POST /providers/${PID}/listings/l1/publish`]: () => { if (fail) return new HttpFailure(503); return { ...draft, published: true }; } }));
     renderApp(<ProductsScreen />, client, HOST);
-    const button = await screen.findByTestId("publish-l1");
-    fireEvent.click(button); fireEvent.click(button);
+    const item = await menuItem(/Más opciones de Torta/, "Publicar");
+    act(() => { item.click(); item.click(); }); // two activations before React re-renders: the single-flight guard sends one request
     await screen.findByText(/El servicio no está disponible por ahora/);
     expect(calls.filter((call) => call.method === "POST")).toHaveLength(1);
     fail = false;
-    fireEvent.click(screen.getByTestId("publish-l1"));
+    fireEvent.click(await menuItem(/Más opciones de Torta/, "Publicar"));
     await waitFor(() => expect(calls.filter((call) => call.method === "POST")).toHaveLength(2));
   });
 });

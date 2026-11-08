@@ -1,12 +1,9 @@
-import type { ReactNode } from "react";
-import { Text } from "react-native";
-import { spacing } from "@rsvp/design-tokens";
+import { createContext, useContext, useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { SkeletonList } from "@rsvp/ui";
 import { useCelebration, useEventTypes, type Celebration, type TranslatedEventType } from "@rsvp/query-hooks";
 import { useApiClient, useClaims, useLocale, useT } from "../platform/providers";
 import type { SessionClaims } from "../platform/session";
-import { ActionButton, EmptyState, ErrorNotice, Notice, Screen, useStyles } from "./ui";
-import { asText } from "./content-draft";
+import { ActionButton, EmptyState, ErrorNotice, Notice, Screen } from "./ui";
 import { HOST_ROUTES, hostNav, type HostRoute } from "./routes";
 
 /** Who may open the host workspace: hosts and planners only (REQ-F13-05). The API re-checks everything. */
@@ -20,6 +17,37 @@ const HOST_ROLES: readonly string[] = ["HOST", "PLANNER"];
 export function canUseHostWorkspace(claims: Pick<SessionClaims, "userId" | "roles">): boolean {
   if (claims.userId === null) return false;
   return !claims.roles.length || claims.roles.some((role) => HOST_ROLES.includes(role));
+}
+
+
+/**
+ * The header of a screen (primary action, «⋯» menu, status line) is owned by `Screen`, but the state that decides what it
+ * shows (dirty, busy, the chosen origin) lives in the screen's body. The body publishes its parts with
+ * `useScreenHeader`; they are held in an external store so publishing never re-renders the frame or loops.
+ */
+interface HeaderParts { readonly actions: ReactNode; readonly menu: ReactNode; readonly status: ReactNode }
+const NO_PARTS: HeaderParts = { actions: null, menu: null, status: null };
+
+class HeaderStore {
+  parts: HeaderParts = NO_PARTS;
+  private readonly listeners = new Set<() => void>();
+  subscribe = (listener: () => void): (() => void) => { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; };
+  snapshot = (): HeaderParts => this.parts;
+  presence = (): string => `${this.parts.actions ? "a" : "-"}${this.parts.menu ? "m" : "-"}${this.parts.status ? "s" : "-"}`;
+  set(parts: HeaderParts): void { this.parts = parts; this.listeners.forEach((listener) => listener()); }
+}
+const HeaderContext = createContext<HeaderStore | null>(null);
+
+/** Publish the header parts of the screen this component is in; removed again when it unmounts. */
+export function useScreenHeader({ actions = null, menu = null, status = null }: { readonly actions?: ReactNode; readonly menu?: ReactNode; readonly status?: ReactNode }): void {
+  const store = useContext(HeaderContext);
+  useEffect(() => { store?.set({ actions, menu, status }); });
+  useEffect(() => () => { store?.set(NO_PARTS); }, [store]);
+}
+
+function HeaderOutlet({ store, part }: { readonly store: HeaderStore; readonly part: keyof HeaderParts }): ReactNode {
+  const parts = useSyncExternalStore(store.subscribe, store.snapshot, store.snapshot);
+  return <>{parts[part]}</>;
 }
 
 export interface ScreenProps {
@@ -38,8 +66,7 @@ export interface Loaded {
  * screen would otherwise repeat: no celebration chosen, loading, not found, read-only. `editable` screens
  * (content, gallery, translations, templates, settings, modes) are replaced by a notice once archived.
  */
-export function CelebrationScreen({ celebrationId, onNavigate, current, title, intro, manage = true, editable = false, children }: ScreenProps & { readonly current: HostRoute; readonly title: string; readonly intro?: string; readonly manage?: boolean; readonly editable?: boolean; readonly children: (loaded: Loaded) => ReactNode }): ReactNode {
-  const styles = useStyles();
+export function CelebrationScreen({ celebrationId, onNavigate, current, title, intro, manage = true, editable = false, actions, menu, children }: ScreenProps & { readonly current: HostRoute; readonly title: string; readonly intro?: string; /** The screen's single primary action (top right of the header; a sticky bar below 768 px). Shown only once the celebration has loaded. */ readonly actions?: ReactNode | ((loaded: Loaded) => ReactNode); /** Secondary actions (`OverflowMenu`), top right next to the primary one. */ readonly menu?: ReactNode | ((loaded: Loaded) => ReactNode); readonly manage?: boolean; readonly editable?: boolean; readonly children: (loaded: Loaded) => ReactNode }): ReactNode {
   const t = useT();
   const client = useApiClient();
   const locale = useLocale();
@@ -47,7 +74,14 @@ export function CelebrationScreen({ celebrationId, onNavigate, current, title, i
   const query = useCelebration(client, celebrationId ?? "");
   const types = useEventTypes(client, locale);
   const nav = hostNav(t, celebrationId);
-  const frame = (body: ReactNode): ReactNode => <Screen title={title} {...(intro ? { intro } : {})} nav={nav} current={current} onNavigate={onNavigate}>{body}</Screen>;
+  const [store] = useState(() => new HeaderStore());
+  const slotted = useSyncExternalStore(store.subscribe, store.presence, store.presence);
+  const frame = (body: ReactNode, header?: { readonly actions?: ReactNode; readonly menu?: ReactNode }): ReactNode => {
+    const actions = header?.actions ?? (slotted.includes("a") ? <HeaderOutlet store={store} part="actions" /> : null);
+    const menu = header?.menu ?? (slotted.includes("m") ? <HeaderOutlet store={store} part="menu" /> : null);
+    const status = slotted.includes("s") ? <HeaderOutlet store={store} part="status" /> : null;
+    return <Screen title={title} {...(intro ? { intro } : {})} nav={nav} current={current} onNavigate={onNavigate} {...(actions ? { actions } : {})} {...(menu ? { menu } : {})} {...(status ? { status } : {})}>{body}</Screen>;
+  };
   if (!canUseHostWorkspace(claims)) return frame(<Notice kind="error">{t("host.common.accessDenied")}</Notice>);
   if (!celebrationId) return frame(<EmptyState illustration="invitation" title={t("host.common.noCelebrationTitle")} body={t("host.common.noCelebrationBody")} action={<ActionButton label={t("host.common.chooseCelebration")} onPress={() => onNavigate(HOST_ROUTES.celebrations)} />} />);
   if (query.isPending) return frame(<SkeletonList count={3} row={{ minHeight: 64, avatar: false, trailing: false }} label={t("host.common.loading")} />);
@@ -57,5 +91,8 @@ export function CelebrationScreen({ celebrationId, onNavigate, current, title, i
   // An archived celebration is read-only for the API (409 CELEBRATION_ARCHIVED): editing screens say so instead of offering buttons that cannot work.
   if (editable && celebration.status === "ARCHIVED") return frame(<EmptyState illustration="invitation" tone="auto" title={t("host.common.archivedTitle")} body={t("host.common.archivedBody")} action={<ActionButton label={t("host.common.chooseCelebration")} onPress={() => onNavigate(HOST_ROUTES.celebrations)} />} />);
   const eventType = types.data?.items.find((type) => type.code === celebration.eventTypeCode);
-  return frame(<>{eventType ? <Text style={[styles.body, { fontWeight: "600", marginBottom: spacing[2] }]}>{[asText(celebration.content["title"]), eventType.name].filter(Boolean).join(" · ")}</Text> : null}{children({ celebration, eventType, refetch: () => { void query.refetch(); } })}</>);
+  const loaded: Loaded = { celebration, eventType, refetch: () => { void query.refetch(); } };
+  const resolve = (slot: ReactNode | ((loaded: Loaded) => ReactNode)): ReactNode => (typeof slot === "function" ? slot(loaded) : slot);
+  // The celebration's name is not repeated under the title: the side menu and Inicio already say which one this is.
+  return frame(<HeaderContext.Provider value={store}>{children(loaded)}</HeaderContext.Provider>, { actions: resolve(actions), menu: resolve(menu) });
 }

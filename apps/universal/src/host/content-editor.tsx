@@ -8,7 +8,7 @@ import { useApiClient, useLocale, useT } from "../platform/providers";
 import { CelebrationScreen, type Loaded, type ScreenProps } from "./gate";
 import { asRecord, asRecords, asText, contentPatch, isCalendarDate, newItemId, scheduleContent, scheduleDraft, toWallClock, wallClockAt, type ScheduleDraft } from "./content-draft";
 import { EDITOR_SECTIONS, editorPath, editorSectionLabel, withCelebration, type EditorSection } from "./routes";
-import { SaveBar } from "./save-bar";
+import { useSaveHeader } from "./save-bar";
 import { EditorProgress, readyCount, SectionRow, sectionStates } from "./editor-sections";
 import { previewView } from "./preview-model";
 import { PreviewStage } from "./preview-stage";
@@ -16,7 +16,7 @@ import { asTemplateDocument } from "./template-gallery";
 import { useSingleFlight } from "../platform/single-flight";
 import { contentOverLimit, LIMITS, overLimit, slugProblem } from "./limits";
 import { Enter } from "@rsvp/ui";
-import { ActionButton, ChoiceGroup, Field, useStyles } from "./ui";
+import { ActionButton, ChoiceGroup, Field, OverflowMenu, useStyles } from "./ui";
 
 /** C7–C11 · Hosts, venues, story, schedule and other sections. Saving never loses what was typed. */
 
@@ -66,15 +66,17 @@ function ListEditor({ items, onChange, fields, itemLabel, addLabel, t }: { reado
     <View style={{ gap: 12 }}>
       {items.map((item, index) => (
         <View key={`${index}-${fields[0]?.key}`} style={styles.card} accessibilityLabel={itemLabel(index + 1)}>
-          <Text style={styles.label}>{itemLabel(index + 1)}</Text>
+          <View style={[styles.row, { justifyContent: "space-between", flexWrap: "nowrap" }]}>
+            <Text style={styles.label}>{itemLabel(index + 1)}</Text>
+            <OverflowMenu label={`${t("ui.moreOptions")}: ${itemLabel(index + 1)}`} items={[
+              { key: "up", label: t("host.common.moveUp"), onPress: () => move(index, -1), disabled: !index },
+              { key: "down", label: t("host.common.moveDown"), onPress: () => move(index, 1), disabled: index === items.length - 1 },
+              { key: "remove", label: t("host.common.remove"), onPress: () => onChange(items.filter((_, position) => position !== index)), destructive: true }
+            ]} />
+          </View>
           {fields.map((field) => field.choices
             ? <ChoiceGroup key={field.key} label={field.label} choices={field.choices} value={item[field.key] ?? null} onChange={(value) => update(index, field.key, value)} />
             : <Field key={field.key} label={field.label} value={item[field.key] ?? ""} multiline={field.multiline} {...limitError(t, item[field.key] ?? "", field.max)} onChange={(value) => update(index, field.key, value)} />)}
-          <View style={styles.row}>
-            <ActionButton variant="secondary" label={t("host.common.moveUp")} onPress={() => move(index, -1)} disabled={!index} />
-            <ActionButton variant="secondary" label={t("host.common.moveDown")} onPress={() => move(index, 1)} disabled={index === items.length - 1} />
-            <ActionButton variant="secondary" label={t("host.common.remove")} onPress={() => onChange(items.filter((_, position) => position !== index))} />
-          </View>
         </View>
       ))}
       <ActionButton variant="secondary" label={addLabel} onPress={() => onChange([...items, Object.fromEntries(fields.map((field) => [field.key, field.choices?.[0]?.value ?? ""]))])} />
@@ -249,10 +251,8 @@ function Editor({ loaded, section, saved, onSaved, onNavigate }: { readonly load
     )
   };
 
-  const saveBar = (
-    <SaveBar dirty={dirty} saved={saved} busy={mutation.isPending} invalid={invalid} error={mutation.error} onReload={loaded.refetch} onSave={save} saveTestID="save-content"
-      aside={<ActionButton variant="secondary" label={t("host.editor.viewPreview")} onPress={() => setPreviewing(true)} testID="view-preview" />} />
-  );
+  useSaveHeader({ dirty, saved, busy: mutation.isPending, invalid, error: mutation.error, onReload: loaded.refetch, onSave: save, saveTestID: "save-content",
+    menu: <OverflowMenu items={[{ key: "preview", label: t("host.editor.viewPreview"), onPress: () => setPreviewing(true), testID: "view-preview" }]} /> });
   const list = (
     <View role="navigation" aria-label={t("host.editor.list")} style={{ gap: spacing[1] }}>
       {EDITOR_SECTIONS.map((item) => (
@@ -272,7 +272,6 @@ function Editor({ loaded, section, saved, onSaved, onNavigate }: { readonly load
           <Enter from="down" key={section} grow><View style={{ flex: 1, minWidth: 0, gap: spacing[4] }}>{bodies[section]()}</View></Enter>
         </View>
       ) : list}
-      {saveBar}
       {previewing ? <DraftPreview celebration={celebration} eventType={eventType} content={current.ok ? current.content : draft} slug={slug} onClose={() => setPreviewing(false)} /> : null}
     </View>
   );

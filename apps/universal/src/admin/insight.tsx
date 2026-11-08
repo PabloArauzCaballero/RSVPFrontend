@@ -2,9 +2,9 @@ import { useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
 import { PLATFORM_ROLES, USERS_PAGE_SIZE, useAdminOrganizations, useAdminUsers, useGrantRole, useLeadMetrics, useOrganization, type AdminUser, type LeadGrouping, type Organization, type PlatformRole } from "@rsvp/query-hooks/admin";
 import { spacing } from "@rsvp/design-tokens";
-import { AvatarMark, Button, Stagger, useColors } from "@rsvp/ui";
+import { AvatarMark, Stagger, useColors } from "@rsvp/ui";
 import { useApiClient, useT } from "../platform/providers";
-import { ActionButton, ChoiceGroup, ConfirmDialog, Field, Loading, Notice, PageIntro, Section, useStyles } from "../host/ui";
+import { ActionButton, ChoiceGroup, ConfirmDialog, Field, Loading, Notice, OverflowMenu, PageIntro, Section, useStyles } from "../host/ui";
 import { AdminScreen, adminOnly } from "./admin-screen";
 import { AdminErrorNotice, QueryBoundary, useStamp, Stack } from "./shared";
 import { useSingleMutation } from "../platform/single-flight";
@@ -85,11 +85,7 @@ function UserCard({ user, busy, onGrant }: { readonly user: AdminUser; readonly 
           <Text accessibilityRole="header" style={[styles.subtitle, { flexShrink: 1, overflowWrap: "anywhere" } as object]}>{user.email}</Text>
           <Text style={styles.muted}>{`${user.roles.join(", ") || t("admin.users.noRoles")} · ${t(`admin.users.statuses.${user.status}`)} · ${stamp(user.createdAt)}`}</Text>
         </View>
-      </View>
-      <View style={styles.row}>
-        {PLATFORM_ROLES.map((role) => user.roles.includes(role)
-          ? <Text key={role} style={styles.muted}>{t("admin.users.hasRole", { role })}</Text>
-          : <Button key={role} variant="secondary" state={busy ? "loading" : "default"} accessibilityLabel={t("admin.users.grantNamed", { role, email: user.email })} onPress={() => onGrant(role)} testID={`grant-${role}-${user.id}`}>{t("admin.users.grant", { role })}</Button>)}
+        <OverflowMenu label={t("admin.dashboard.more")} items={PLATFORM_ROLES.filter((role) => !user.roles.includes(role)).map((role) => ({ key: role, label: t("admin.users.grant", { role }), testID: `grant-${role}-${user.id}`, disabled: busy, onPress: () => onGrant(role) }))} />
       </View>
     </View>
   );

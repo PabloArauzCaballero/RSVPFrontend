@@ -1,47 +1,55 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import { brand, onNight, spacing } from "@rsvp/design-tokens";
 import { AvatarMark, BrandBand, Chip, Enter, Stagger, useColors } from "@rsvp/ui";
 import { ApiError } from "@rsvp/api-client";
+import { formatNumber } from "@rsvp/i18n";
 import { MAX_PROVIDER_NAME, providerService, useMetrics, useOwnListings, useRegisterProviderAccount, useSubmitProvider, useUpdateProvider, type Provider } from "@rsvp/query-hooks";
 import { createApiClientForPublicRead } from "./public-client";
 import { useApiClient, useClaims, useLocale, useT } from "../platform/providers";
 import { ActionButton, Celebrate, CheckMark, EmptyState, Field, Illustration, Notice, PageIntro, useStyles } from "../host/ui";
+import { Button } from "@rsvp/ui";
 import { PortalErrorNotice as ErrorNotice } from "./errors";
-import { PORTAL_ROUTES, PortalScreen, useProviderId } from "./frame";
-import { RangeTotals, lastDays } from "./metrics-screen";
+import { PORTAL_ROUTES, PortalScreen, usePortalHeader, useProviderId } from "./frame";
+import { lastDays } from "./metrics-screen";
 import { useSingleMutation } from "../platform/single-flight";
-import { MoreToggle, Moment, RowsSkeleton, useFirstTime } from "./parts";
+import { Moment, useFirstTime } from "./parts";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** Rename the business (PATCH /providers/{id}). The plan is admin-only and is not offered. */
-function RenameProvider({ provider }: { readonly provider: Provider }): ReactNode {
+/** Rename the business (PATCH /providers/{id}); opened from the "⋯" menu of the header. The plan is admin-only and is not offered. */
+function RenameProvider({ provider, open, onClose }: { readonly provider: Provider; readonly open: boolean; readonly onClose: () => void }): ReactNode {
+  const t = useT();
+  const [saved, setSaved] = useState(false);
+  useEffect(() => { if (open) setSaved(false); }, [open]);
+  if (!open) return saved ? <Notice kind="success">{t("portal.rename.saved")}</Notice> : null;
+  // The form is mounted only while open, so its fields start from the current name with no effect that could overwrite what was just typed.
+  return <RenameForm provider={provider} onClose={onClose} onSaved={() => setSaved(true)} />;
+}
+
+function RenameForm({ provider, onClose, onSaved }: { readonly provider: Provider; readonly onClose: () => void; readonly onSaved: () => void }): ReactNode {
   const t = useT();
   const styles = useStyles();
   const update = useUpdateProvider(useApiClient(), provider.id);
   const updateOnce = useSingleMutation(update);
-  const [open, setOpen] = useState(false);
   const [name, setName] = useState(provider.name);
   const [problem, setProblem] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
   const submit = (): void => {
     const next = name.trim();
     if (!next) return setProblem(t("portal.rename.required"));
     if (next.length > MAX_PROVIDER_NAME) return setProblem(t("portal.rename.tooLong"));
-    setProblem(null); setSaved(false);
-    if (next === provider.name) { setOpen(false); return; }
-    updateOnce({ name: next }, { onSuccess: () => { setSaved(true); setOpen(false); } });
+    setProblem(null);
+    if (next === provider.name) { onClose(); return; }
+    updateOnce({ name: next }, { onSuccess: () => { onSaved(); onClose(); } });
   };
-  if (!open) return <View style={{ gap: spacing[2] }}>{saved ? <Notice kind="success">{t("portal.rename.saved")}</Notice> : null}<ActionButton variant="secondary" label={t("portal.rename.action")} onPress={() => { setName(provider.name); setSaved(false); update.reset(); setOpen(true); }} testID="rename-open" /></View>;
   return (
-    <View style={{ gap: spacing[2] }}>
+    <View style={{ gap: spacing[2], maxWidth: 560 }}>
       <Field label={t("portal.rename.field")} value={name} onChange={setName} {...(problem ? { error: problem } : {})} testID="rename-name" />
       <ErrorNotice error={update.error} onRetry={submit} />
       <View style={styles.row}>
         <ActionButton label={update.isPending ? t("portal.rename.saving") : t("portal.rename.save")} busy={update.isPending} disabled={update.isPending} onPress={submit} testID="rename-save" />
-        <ActionButton variant="secondary" label={t("portal.rename.cancel")} disabled={update.isPending} onPress={() => { setOpen(false); setProblem(null); }} testID="rename-cancel" />
+        <ActionButton variant="secondary" label={t("portal.rename.cancel")} disabled={update.isPending} onPress={onClose} testID="rename-cancel" />
       </View>
     </View>
   );
@@ -68,7 +76,8 @@ function Step({ done, title, body, children, testID }: { readonly done: boolean;
 }
 
 /**
- * D2 · "Ready to sell": the profile, the first offer and the verification as one visible path, one primary action at a time.
+ * D2 · "Ready to sell": the profile, the first offer and the verification as one visible path.
+ * The ONE primary action sits at the top right of the header (create the first offer, or send to verification); renaming lives in its "⋯" menu.
  * The progress only counts what the backend confirms (provider exists, own listings exist, status left DRAFT/REJECTED).
  */
 function Overview({ provider, refetch }: { readonly provider: Provider; readonly refetch: () => void }): ReactNode {
@@ -82,7 +91,7 @@ function Overview({ provider, refetch }: { readonly provider: Provider; readonly
   const listings = useOwnListings(client, provider.id, locale);
   const range = lastDays(30, provider.timeZone);
   const metrics = useMetrics(client, provider.id, range.from, range.to);
-  const [more, setMore] = useState(false);
+  const [renaming, setRenaming] = useState(false);
   const hasListing = (listings.data?.items.length ?? 0) > 0;
   const resubmittable = provider.status === "DRAFT" || provider.status === "REJECTED";
   const sent = !resubmittable;
@@ -91,41 +100,36 @@ function Overview({ provider, refetch }: { readonly provider: Provider; readonly
   const tone = provider.status === "VERIFIED" ? "yes" : provider.status === "PENDING_VERIFICATION" ? "maybe" : provider.status === "DRAFT" ? "wait" : "no";
   const firstVerified = useFirstTime(`rsvp.provider.${provider.id}.verified-seen`, provider.status === "VERIFIED");
   const milestone = provider.status === "PENDING_VERIFICATION" ? "PENDING_VERIFICATION" : resubmittable && hasListing ? "offer" : firstVerified ? "VERIFIED" : null;
+  const primary = suspended || !listings.data ? undefined
+    : !hasListing ? { label: t("portal.home.journey.offer.action"), onPress: () => router.push(PORTAL_ROUTES.services as Href), testID: "step-offer-action" }
+    : resubmittable ? { label: submit.isPending ? t("portal.status.submitting") : t("portal.status.submit"), busy: submit.isPending, disabled: submit.isPending, onPress: () => submitOnce(undefined, { onSuccess: refetch }), testID: "submit-verification" }
+    : undefined;
+  usePortalHeader(primary, [{ key: "rename", label: t("portal.rename.action"), onPress: () => setRenaming(true) }]);
+  const totals = metrics.data?.totals;
   return (
     <View style={{ gap: spacing[5] }}>
       <ReadyBand provider={provider} tone={tone} doneCount={doneCount} celebrating={Boolean(milestone)} />
+      <RenameProvider provider={provider} open={renaming} onClose={() => setRenaming(false)} />
       {milestone ? <Enter key={milestone} from="down"><Moment variant={milestone === "VERIFIED" ? "published" : "confirmed"}><Celebrate title={t(`portal.home.milestone.${milestone}.title`)} body={t(`portal.home.milestone.${milestone}.body`)} /></Moment></Enter> : null}
       {suspended ? <EmptyState illustration="suspended" title={t("portal.status.SUSPENDED.label")} body={t("portal.status.SUSPENDED.body")} /> : (
         <View style={{ maxWidth: 720 }}>
           <Stagger>
             <Step key="profile" testID="step-profile" done title={t("portal.home.journey.profile.title")} body={t("portal.home.journey.profile.done", { name: provider.name })} />
-            <Step key="offer" testID="step-offer" done={hasListing} title={t("portal.home.journey.offer.title")} body={t(hasListing ? "portal.home.journey.offer.done" : "portal.home.journey.offer.todo")}>
-              {!hasListing && listings.data ? <Illustration name="welcomeProvider" tone="auto" size="md" /> : null}
-              {!hasListing && listings.data ? <ActionButton label={t("portal.home.journey.offer.action")} onPress={() => router.push(PORTAL_ROUTES.services as Href)} testID="step-offer-action" /> : null}
-            </Step>
+            <Step key="offer" testID="step-offer" done={hasListing} title={t("portal.home.journey.offer.title")} body={t(hasListing ? "portal.home.journey.offer.done" : "portal.home.journey.offer.todo")} />
             <Step key="verify" testID="step-verify" done={sent} title={t("portal.home.journey.verify.title")} body={t(sent ? "portal.home.journey.verify.done" : "portal.home.journey.verify.todo")}>
               {resubmittable && hasListing ? <Notice>{t("portal.status.documentsNote")}</Notice> : null}
               {resubmittable && !hasListing && listings.data ? <Text style={styles.muted}>{t("portal.status.needsListing")}</Text> : null}
               <ErrorNotice error={submit.error} onReload={refetch} />
-              {resubmittable && hasListing ? <ActionButton label={submit.isPending ? t("portal.status.submitting") : t("portal.status.submit")} busy={submit.isPending} disabled={submit.isPending} onPress={() => submitOnce(undefined, { onSuccess: refetch })} testID="submit-verification" /> : null}
             </Step>
           </Stagger>
         </View>
       )}
-      <View style={{ gap: spacing[2], maxWidth: 560 }}>
-        <Text accessibilityRole="header" style={styles.subtitle}>{t("portal.home.last30")}</Text>
-        {metrics.isPending ? <RowsSkeleton count={3} minHeight={52} trailing={false} /> : metrics.isError ? <ErrorNotice error={metrics.error} onReload={() => { void metrics.refetch(); }} /> : <RangeTotals totals={metrics.data.totals} />}
-      </View>
-      <View style={{ gap: spacing[2], maxWidth: 560 }}>
-        <MoreToggle label={t(more ? "portal.home.less" : "portal.home.more")} onPress={() => setMore((current) => !current)} testID="more-options" />
-        {more ? (
-          <View style={{ gap: spacing[2] }}>
-            <Text style={styles.muted}>{provider.name} · {t("portal.home.plan", { plan: provider.plan })} · {t("portal.home.zone", { zone: provider.timeZone })}</Text>
-            <Text style={styles.muted}>{t("portal.home.slug", { slug: provider.slug })}</Text>
-            <RenameProvider provider={provider} />
-          </View>
-        ) : null}
-      </View>
+      {totals && provider.status === "VERIFIED" ? (
+        <View style={[styles.row, { maxWidth: 720, alignItems: "center" }]} testID="home-last30">
+          <Text style={[styles.muted, { flex: 1 }]}>{t("portal.home.last30Summary", { valid: formatNumber(totals.validLeads, locale), views: formatNumber(totals.impressions, locale) })}</Text>
+          <Button variant="ghost" accessibilityLabel={t("portal.home.last30Link")} onPress={() => router.push(PORTAL_ROUTES.metrics as Href)} testID="home-last30-link" state="default">{t("portal.home.last30Link")}</Button>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -141,7 +145,7 @@ function ReadyBand({ provider, tone, doneCount, celebrating = false }: { readonl
         <AvatarMark name={provider.name} size={52} />
         <View style={{ flex: 1, gap: 2 }}>
           <Text accessibilityRole="header" style={BAND_TITLE}>{t("portal.home.journey.title")}</Text>
-          <Text numberOfLines={1} style={{ color: brand.niebla, fontSize: 14, fontWeight: "600" }}>{provider.name}</Text>
+          <Text numberOfLines={2} style={{ color: brand.niebla, fontSize: 14, fontWeight: "600" }}>{provider.name} · {t("portal.home.plan", { plan: provider.plan })} · {provider.timeZone}</Text>
         </View>
       </View>
       <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[2], flexWrap: "wrap" }} testID="provider-status"><Chip tone={tone}>{t(`portal.status.${provider.status}.label`)}</Chip></View>
@@ -162,8 +166,13 @@ export function OverviewScreen(): ReactNode {
   return <PortalScreen title={t("portal.home.title")} current="home">{(provider, refetch) => <Overview provider={provider} refetch={refetch} />}</PortalScreen>;
 }
 
-/** D1 · Sign-up of the business and connecting an existing profile. */
+/** D1 · Sign-up of the business and connecting an existing profile. The primary action («Crear mi ficha») sits in the header. */
 export function OnboardingScreen({ onDone }: { readonly onDone: () => void }): ReactNode {
+  const t = useT();
+  return <PortalScreen title={t("portal.onboarding.title")} current="home" requireProvider={false}>{() => <OnboardingBody onDone={onDone} />}</PortalScreen>;
+}
+
+function OnboardingBody({ onDone }: { readonly onDone: () => void }): ReactNode {
   const t = useT();
   const styles = useStyles();
   const palette = useColors();
@@ -194,25 +203,21 @@ export function OnboardingScreen({ onDone }: { readonly onDone: () => void }): R
       await remember(provider.id); onDone();
     } catch (failure) { setError(failure instanceof ApiError && failure.status === 404 ? t("portal.onboarding.notFound") : t("portal.errors.generic")); } finally { setConnecting(false); }
   };
+  usePortalHeader({ label: register.isPending ? t("portal.onboarding.creating") : t("portal.onboarding.submit"), busy: register.isPending, disabled: register.isPending, onPress: create, testID: "provider-create" });
   return (
-    <PortalScreen title={t("portal.onboarding.title")} current="home" requireProvider={false}>
-      {() => (
-        <View style={{ gap: spacing[4] }}>
-          <View style={[styles.row, { gap: spacing[4], flexWrap: "nowrap" }]}><Illustration name="welcomeProvider" tone="auto" size="md" /><View style={{ flex: 1 }}><PageIntro>{t("portal.onboarding.intro")}</PageIntro></View></View>
-          <View style={{ gap: spacing[3], maxWidth: 560 }}>
-            <Field label={t("portal.onboarding.name")} value={name} onChange={setName} help={t("portal.onboarding.nameHelp")} testID="provider-name" />
-            {error ? <Notice kind="error">{error}</Notice> : null}
-            <ErrorNotice error={register.error} onRetry={create} />
-            <ActionButton label={register.isPending ? t("portal.onboarding.creating") : t("portal.onboarding.submit")} busy={register.isPending} disabled={register.isPending} onPress={create} testID="provider-create" />
-          </View>
-          <View style={{ gap: spacing[3], maxWidth: 560, paddingTop: spacing[4], borderTopWidth: 1, borderTopColor: palette.border }}>
-            <Text accessibilityRole="header" style={styles.subtitle}>{t("portal.onboarding.existingTitle")}</Text>
-            <Text style={styles.body}>{t("portal.onboarding.existingBody")}</Text>
-            <Field label={t("portal.onboarding.existingId")} value={code} onChange={setCode} testID="provider-code" />
-            <ActionButton variant="secondary" label={t("portal.onboarding.connect")} busy={connecting} disabled={connecting} onPress={() => { void connect(); }} testID="provider-connect" />
-          </View>
-        </View>
-      )}
-    </PortalScreen>
+    <View style={{ gap: spacing[4] }}>
+      <View style={[styles.row, { gap: spacing[4], flexWrap: "nowrap" }]}><Illustration name="welcomeProvider" tone="auto" size="md" /><View style={{ flex: 1 }}><PageIntro>{t("portal.onboarding.intro")}</PageIntro></View></View>
+      <View style={{ gap: spacing[3], maxWidth: 560 }}>
+        <Field label={t("portal.onboarding.name")} value={name} onChange={setName} help={t("portal.onboarding.nameHelp")} testID="provider-name" />
+        {error ? <Notice kind="error">{error}</Notice> : null}
+        <ErrorNotice error={register.error} onRetry={create} />
+      </View>
+      <View style={{ gap: spacing[3], maxWidth: 560, paddingTop: spacing[4], borderTopWidth: 1, borderTopColor: palette.border }}>
+        <Text accessibilityRole="header" style={styles.subtitle}>{t("portal.onboarding.existingTitle")}</Text>
+        <Text style={styles.body}>{t("portal.onboarding.existingBody")}</Text>
+        <Field label={t("portal.onboarding.existingId")} value={code} onChange={setCode} testID="provider-code" />
+        <ActionButton variant="secondary" label={t("portal.onboarding.connect")} busy={connecting} disabled={connecting} onPress={() => { void connect(); }} testID="provider-connect" />
+      </View>
+    </View>
   );
 }
