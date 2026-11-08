@@ -2,7 +2,7 @@ import { useState, type PropsWithChildren, type ReactNode } from "react";
 import { Modal, Pressable, StyleSheet, Text, View, type KeyboardTypeOptions } from "react-native";
 import { usePathname, useRouter, type Href } from "expo-router";
 import { ApiError } from "@rsvp/api-client";
-import { Button, CheckMark, Enter, fonts, Input, OverlayEnter, overlayAnimation, pressVisual, SkeletonList, useColors, useReducedMotion, useTheme } from "@rsvp/ui";
+import { Button, CheckMark, Enter, fonts, Input, NoticeMark, OverlayEnter, overlayAnimation, pressVisual, SkeletonList, useColors, useReducedMotion, useTheme } from "@rsvp/ui";
 import { colors, radius, spacing, typography, type ColorTheme } from "@rsvp/design-tokens";
 import { loginHref } from "../auth/routes";
 import { useT } from "../platform/providers";
@@ -158,7 +158,8 @@ export function Notice({ kind = "info", children }: PropsWithChildren<{ readonly
   const content = typeof children === "string" ? <Text style={styles.body}>{children}</Text> : children;
   // Success carries the drawn check of the D: the one celebratory gesture of the product.
   if (kind === "success") return <Enter from="down"><View role="status" style={[styles.notice, tone, { flexDirection: "row", alignItems: "center", gap: spacing[3] }]}><CheckMark size={24} tone="success" /><View style={{ flex: 1, gap: spacing[2] }}>{content}</View></View></Enter>;
-  return <Enter from="down"><View role={kind === "error" ? "alert" : "status"} style={[styles.notice, tone]}>{content}</View></Enter>;
+  // Errors and information pair the same way: one drawn mark (a disc with a stem and a dot) beside the words, top-aligned with the first line.
+  return <Enter from="down"><View role={kind === "error" ? "alert" : "status"} style={[styles.notice, tone, { flexDirection: "row", alignItems: "flex-start", gap: spacing[3] }]}><View style={{ paddingTop: 1 }}><NoticeMark tone={kind === "error" ? "error" : "info"} /></View><View style={{ flex: 1, minWidth: 0, gap: spacing[2] }}>{content}</View></View></Enter>;
 }
 
 /** Translates an API failure into what the person can do about it. */

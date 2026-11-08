@@ -1,7 +1,7 @@
 import { useState, type PropsWithChildren, type ReactNode } from "react";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions, type TextInputProps } from "react-native";
 import { colors, radius, spacing, typography, type ColorTheme } from "@rsvp/design-tokens";
-import { CheckMark, Enter, Illustration, Logo, PressFeedback, fonts, useTheme, type IllustrationName } from "@rsvp/ui";
+import { CheckMark, Enter, Illustration, Logo, NoticeMark, PressFeedback, fonts, useTheme, type IllustrationName } from "@rsvp/ui";
 import type { AppLocale } from "@rsvp/i18n";
 import { useLocalePreference, useT } from "../platform/providers";
 
@@ -190,13 +190,13 @@ export function TextLink({ label, onPress }: { readonly label: string; readonly 
   return <Pressable accessibilityRole="link" accessibilityLabel={label} onPress={onPress} style={[authStyles.link, focusRing]}><Text style={authStyles.linkText}>{label}</Text></Pressable>;
 }
 
-/** Errors say what happened and how to go on; success draws the check of the D before the words. */
+/** Errors say what happened and how to go on. Every banner pairs one drawn mark with its words: the D's check for success, the disc with a stem and a dot for an error. */
 export function Banner({ kind, children }: PropsWithChildren<{ readonly kind: "error" | "success" }>): ReactNode {
   const authStyles = useAuthStyles();
   return (
-    <View role={kind === "error" ? "alert" : "status"} style={[authStyles.banner, kind === "success" && authStyles.bannerOk, kind === "success" && { flexDirection: "row", alignItems: "center", gap: spacing[3] }]}>
-      {kind === "success" ? <CheckMark size={28} tone="success" /> : null}
-      <Text style={[authStyles.bannerText, kind === "success" && { flex: 1 }]}>{children}</Text>
+    <View role={kind === "error" ? "alert" : "status"} style={[authStyles.banner, kind === "success" && authStyles.bannerOk, { flexDirection: "row", alignItems: "flex-start", gap: spacing[3] }]}>
+      <View style={{ paddingTop: 1 }}>{kind === "success" ? <CheckMark size={24} tone="success" /> : <NoticeMark tone="error" />}</View>
+      <Text style={[authStyles.bannerText, { flex: 1 }]}>{children}</Text>
     </View>
   );
 }

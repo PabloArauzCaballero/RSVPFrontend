@@ -90,3 +90,15 @@ Corregido:
 Pendiente (visto, no corregido): en la invitación pública, el cuerpo del texto sale en una sans de sistema y los títulos en el serif verde de la plantilla; es la paleta y la tipografía de cada plantilla del anfitrión (`packages/celebration-theme`), fuera del sistema de la marca. Decisión de producto, no de espaciado.
 
 Verificación: `apps/seo-web` typecheck y lint limpios, 130/130 pruebas.
+
+## Pasada 8 (a pedido del dueño: «disciplina icono–texto»)
+
+El dueño señaló, con una captura del acceso, que el aviso de error era una caja roja de texto sin icono mientras el de éxito sí llevaba el cheque dibujado: no había una regla común entre icono y texto.
+
+Regla nueva: **todo aviso lleva un icono dibujado junto a sus palabras**, del mismo lenguaje (disco, trazo de punta redonda, 24 px, alineado con la primera línea de texto). Éxito: el cheque de la D. Error: disco con tallo y punto (`!`) en el color de peligro del esquema. Información: lo mismo (`i`) en tinta.
+- `packages/ui`: componente `NoticeMark` (web y nativo), exportado, con prueba (`notice-mark.test.tsx`: caja de 48, 24 px, decorativo, un trazo y dos círculos, color de peligro en claro y oscuro).
+- `Notice` (anfitrión, proveedor, admin) y `Banner` (acceso) lo usan; el éxito del acceso pasa de 28 a 24 px para igualar.
+- Verificado a ojo con el error real del acceso (contraseña equivocada), 1280 claro y 390 oscuro.
+
+Verificación: `apps/universal` 331/331 con `tsc` limpio; `packages/ui` con la prueba nueva.
+Nota para el usuario: la contraseña de las cuentas demo es `Demo-Bolivia-2026!` (con el «!» final); sin él, el acceso responde «no coinciden».
