@@ -1,6 +1,7 @@
 /** Inicio, invitados, respuestas, solicitudes de acompañantes y avisos del anfitrión (F16–F18). Voz del brief: tuteo, frases cortas, sin exclamaciones en errores. */
 export const guestsEsBO = {
   more: "Más opciones",
+  loading: "Cargando…",
   errors: {
     invalid: "Revisa este dato y vuelve a intentarlo.", invalidField: { name: "Revisa este dato: el nombre debe tener entre 1 y 200 caracteres.", email: "Revisa este dato: escribe un correo válido.", phone: "Revisa este dato: escribe el teléfono con código de país.", contact: "Revisa este dato: falta un correo o un teléfono.", allowedCompanions: "Revisa este dato: los acompañantes son un número entero, de 0 en adelante.", groupId: "Revisa este dato: ese grupo ya no existe.", locale: "Revisa este dato: el idioma no es válido.", retentionDays: "Revisa este dato: los días van de 1 a 36500.", csv: "Revisa este dato: el archivo no tiene el formato esperado." },
     rateLimited: "Hay demasiadas solicitudes seguidas. Espera un momento y vuelve a intentarlo.",
@@ -34,6 +35,9 @@ export const guestsEsBO = {
       done: { title: "Ya respondieron todos", body: "Tu lista está completa. Cuando algo cambie, te avisamos aquí." }
     },
     viewGuests: "Ver quién viene",
+    firstReply: { title: "Llegó tu primera respuesta", body: "Así empieza: cada toque de un invitado aparece aquí al instante." },
+    welcome: { title: "Aquí verás quién viene", body: "Agrega a tus primeros invitados y comparte su enlace personal. Ellos responden en un toque.", action: "Agregar invitados" },
+    allDone: "Todo al día",
     daysToDeadline_one: "Queda {{count}} día para cerrar las respuestas", daysToDeadline_other: "Quedan {{count}} días para cerrar las respuestas",
     deadlineToday: "Las respuestas cierran hoy", deadlinePassed: "Las respuestas ya cerraron", noDeadline: "Sin fecha límite de respuesta",
     openRequests_one: "{{count}} solicitud de acompañantes por revisar", openRequests_other: "{{count}} solicitudes de acompañantes por revisar"
@@ -112,7 +116,7 @@ export const guestsEsBO = {
       hostRsvpDeclined: { subject: "Un invitado no podrá asistir", text: "Alguien respondió que no asistirá. Mira el detalle en Respuestas." },
       hostRsvpChanged: { subject: "Un invitado cambió su respuesta", text: "Alguien actualizó su respuesta. Mira el detalle en Respuestas." }
     },
-    via: "Por {{channel}} · {{status}} · {{date}}"
+    via: "Por {{channel}} · {{status}} · {{date}}", viewedAt: "{{date}}"
   },
   preferences: {
     title: "Cómo quieres enterarte", intro: "Elige por dónde llegan los avisos. Los respetamos al enviarlos.", channelsTitle: "Canales",
@@ -124,6 +128,7 @@ export const guestsEsBO = {
     enable: "Activar avisos push", registering: "Activando…", enabled: "Este dispositivo recibirá avisos push.", denied: "Los avisos están bloqueados. Actívalos en los ajustes del sistema para esta app.", openSettings: "Abrir ajustes",
     unsupported: "Los avisos push necesitan un teléfono real con la app instalada. Este entorno no los admite.", failed: "No pudimos activar los avisos. Inténtalo de nuevo.", noProject: "Falta configurar el proyecto de notificaciones de la app.", disable: "Quitar este dispositivo", preferences: "Preferencias de avisos",
     advanced: "Dispositivos y envíos",
+    state: { ready: "Avisos al instante", enabled: "Este teléfono ya recibe avisos", denied: "Los avisos están apagados", unsupported: "Aquí no hay avisos push" },
     devicesTitle: "Dispositivos registrados", devicesEmpty: "Todavía no hay dispositivos registrados para recibir avisos push.", platform: { ios: "iPhone", android: "Android" },
     deviceStatus: { ACTIVE: "Activo", REVOKED: "Quitado", INVALID: "Inválido" }, registeredOn: "registrado el {{date}}", inactiveReason: "Este dispositivo ya no recibe avisos; vuelve a activarlo desde el teléfono.",
     test: "Enviar aviso de prueba", testQueued: "Aviso de prueba en camino.", removeTitle: "¿Quitar este dispositivo?", removeBody: "Dejará de recibir avisos push de esta celebración. Puedes activarlo otra vez desde el teléfono.",

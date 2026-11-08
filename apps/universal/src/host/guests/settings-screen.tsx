@@ -5,8 +5,8 @@ import { useConfigureGuestRetention, useGuestDefaults, useGuestRetention, useSet
 import { useApiClient, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
-import { ActionButton, ConfirmDialog, Field, Loading, Notice, Section, styles } from "../ui";
-import { FailureNotice, MoreOptions, RetryNotice, TextAction } from "./parts";
+import { ActionButton, ConfirmDialog, Field, Notice, Section, useStyles } from "../ui";
+import { FailureNotice, MoreOptions, RetryNotice, TextAction, BlockSkeleton } from "./parts";
 import { useSingleFlightGate } from "../../platform/single-flight";
 import { parseCompanions, parseRetentionDays } from "./settings-input";
 
@@ -18,6 +18,7 @@ export { GUEST_SETTINGS_PATH } from "./settings-input";
  */
 
 function DefaultsSection({ celebrationId }: { readonly celebrationId: string }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const client = useApiClient();
   const defaults = useGuestDefaults(client, celebrationId);
@@ -25,7 +26,7 @@ function DefaultsSection({ celebrationId }: { readonly celebrationId: string }):
   const flight = useSingleFlightGate();
   const [draft, setDraft] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
-  if (defaults.isPending) return <Loading />;
+  if (defaults.isPending) return <BlockSkeleton />;
   if (defaults.isError) return <RetryNotice error={defaults.error} onRetry={() => { void defaults.refetch(); }} />;
   const value = draft ?? String(defaults.data.defaultAllowedCompanions);
   const parsed = parseCompanions(value);
@@ -51,6 +52,7 @@ function retentionLine(settings: RetentionSettings, t: ReturnType<typeof useT>):
 }
 
 function RetentionSection({ celebrationId }: { readonly celebrationId: string }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const client = useApiClient();
   const retention = useGuestRetention(client, celebrationId);
@@ -59,7 +61,7 @@ function RetentionSection({ celebrationId }: { readonly celebrationId: string })
   const [draft, setDraft] = useState<string | null>(null);
   const [pending, setPending] = useState<number | null | undefined>(undefined);
   const [saved, setSaved] = useState(false);
-  if (retention.isPending) return <Loading />;
+  if (retention.isPending) return <BlockSkeleton />;
   if (retention.isError) return <RetryNotice error={retention.error} onRetry={() => { void retention.refetch(); }} />;
   const value = draft ?? (retention.data.retentionDays === null ? "" : String(retention.data.retentionDays));
   const parsed = parseRetentionDays(value);

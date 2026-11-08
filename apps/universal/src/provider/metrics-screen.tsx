@@ -2,16 +2,17 @@ import { useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
 import { formatNumber } from "@rsvp/i18n";
+import { Stagger, useColors } from "@rsvp/ui";
 import { useMetrics, type MetricTotals, type Provider } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../platform/providers";
-import { ActionButton, ChoiceGroup, EmptyState, Field, Loading, Notice, PageIntro, styles } from "../host/ui";
+import { ActionButton, ChoiceGroup, EmptyState, Field, Notice, PageIntro, useStyles } from "../host/ui";
 import { PortalErrorNotice as ErrorNotice } from "./errors";
 import { PortalScreen } from "./frame";
-import { livePalette } from "../platform/theme";
+import { RowsSkeleton } from "./parts";
 
-const palette = livePalette;
 const DAY_MS = 86_400_000;
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
+const BAR = 8;
 
 /** [today - days, today] as calendar dates in the PROVIDER's zone. */
 export function lastDays(days: number, timeZone: string, now: Date = new Date()): { readonly from: string; readonly to: string } {
@@ -20,11 +21,22 @@ export function lastDays(days: number, timeZone: string, now: Date = new Date())
 }
 export const validRange = (from: string, to: string): boolean => ISO.test(from) && ISO.test(to) && from <= to && !Number.isNaN(Date.parse(from)) && !Number.isNaN(Date.parse(to));
 
+/** A rounded bar scaled to `ratio` (0..1). Decorative: the figure beside it says the same in text. Track and fill are palette roles, so dark mode keeps the contrast. */
+function Bar({ ratio, color, height = BAR }: { readonly ratio: number; readonly color: string; readonly height?: number }): ReactNode {
+  const palette = useColors();
+  return (
+    <View aria-hidden style={{ height, borderRadius: 999, backgroundColor: palette.primaryMuted, overflow: "hidden" }}>
+      <View style={{ height, borderRadius: 999, width: `${Math.max(ratio > 0 ? 2 : 0, Math.round(ratio * 100))}%`, backgroundColor: color }} />
+    </View>
+  );
+}
+
 /** The period's totals as one list: label, figure and a bar scaled to the largest count (CTR is a ratio, so it has no bar). */
-/** `bare` drops the container when the list already sits inside a section (no card in a card). */
-export function RangeTotals({ totals, bare = false }: { readonly totals: MetricTotals; readonly bare?: boolean }): ReactNode {
+export function RangeTotals({ totals }: { readonly totals: MetricTotals }): ReactNode {
   const t = useT();
   const locale = useLocale();
+  const styles = useStyles();
+  const palette = useColors();
   const rows: readonly { readonly label: string; readonly value: string; readonly count?: number; readonly tone?: string }[] = [
     { label: t("portal.metrics.impressions"), value: formatNumber(totals.impressions, locale), count: totals.impressions },
     { label: t("portal.metrics.clicks"), value: formatNumber(totals.clicks, locale), count: totals.clicks },
@@ -35,29 +47,34 @@ export function RangeTotals({ totals, bare = false }: { readonly totals: MetricT
   const max = Math.max(1, ...rows.map((row) => row.count ?? 0));
   const noData = totals.impressions + totals.clicks + totals.validLeads + totals.invalidLeads === 0;
   return (
-    <View style={bare ? { maxWidth: 560 } : [{ maxWidth: 560 }]} testID="metric-totals">
+    <View style={{ maxWidth: 560 }} testID="metric-totals">
       {noData ? <Text style={[styles.muted, { paddingBottom: spacing[2] }]} testID="metrics-no-data">{t("portal.metrics.noData")}</Text> : null}
-      {rows.map((row, index) => (
-        <View key={row.label} accessible accessibilityLabel={`${row.label}: ${row.value}`} style={{ gap: spacing[1], paddingVertical: spacing[3], borderTopWidth: index === 0 ? 0 : 1, borderTopColor: palette.border }}>
-          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", gap: spacing[3] }}>
-            <Text style={styles.body}>{row.label}</Text>
-            <Text style={[styles.subtitle, { fontVariant: ["tabular-nums"] }]}>{row.value}</Text>
+      <Stagger>
+        {rows.map((row, index) => (
+          <View key={row.label} accessible accessibilityLabel={`${row.label}: ${row.value}`} style={{ gap: spacing[2], paddingVertical: spacing[3], borderTopWidth: index === 0 ? 0 : 1, borderTopColor: palette.border }}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", gap: spacing[3] }}>
+              <Text style={[styles.body, { flex: 1 }]}>{row.label}</Text>
+              <Text style={[styles.subtitle, { fontVariant: ["tabular-nums"] }]}>{row.value}</Text>
+            </View>
+            {row.count !== undefined && !noData ? <Bar ratio={row.count / max} color={row.tone ?? palette.primary} /> : null}
           </View>
-          {row.count !== undefined ? <View style={{ height: 6, borderRadius: 999, backgroundColor: palette.primaryMuted, overflow: "hidden" }}><View style={{ height: 6, width: `${Math.max(row.count > 0 ? 2 : 0, Math.round((row.count / max) * 100))}%`, backgroundColor: row.tone ?? palette.primary }} /></View> : null}
-        </View>
-      ))}
+        ))}
+      </Stagger>
     </View>
   );
 }
 
 const FIELDS: readonly string[] = ["day", "category", "destination", "impressions", "clicks", "validLeads", "invalidLeads", "leads"];
 type Group = "day" | "category" | "destination";
+const reachOf = (row: Record<string, unknown>): number => (typeof row["impressions"] === "number" ? row["impressions"] : typeof row["clicks"] === "number" ? row["clicks"] : 0);
 
 /** D13 · Lead metrics by period, grouped by day, category or destination. */
 function Metrics({ provider }: { readonly provider: Provider }): ReactNode {
   const t = useT();
   const client = useApiClient();
   const locale = useLocale();
+  const styles = useStyles();
+  const palette = useColors();
   const initial = lastDays(30, provider.timeZone);
   const [from, setFrom] = useState(initial.from);
   const [to, setTo] = useState(initial.to);
@@ -67,6 +84,7 @@ function Metrics({ provider }: { readonly provider: Provider }): ReactNode {
   const metrics = useMetrics(client, provider.id, applied.from, applied.to, group);
   const apply = (): void => { if (!validRange(from, to)) return setError(t("portal.metrics.dateInvalid")); setError(null); setApplied({ from, to }); };
   const rows = (metrics.data?.groups ?? metrics.data?.rows ?? []) as readonly Record<string, unknown>[];
+  const peak = Math.max(1, ...rows.map(reachOf));
   return (
     <View style={{ gap: spacing[4] }}>
       <PageIntro>{t("portal.metrics.intro")}</PageIntro>
@@ -77,16 +95,28 @@ function Metrics({ provider }: { readonly provider: Provider }): ReactNode {
       <ChoiceGroup<Group> label={t("portal.metrics.groupBy")} value={group} onChange={setGroup} choices={(["day", "category", "destination"] as const).map((value) => ({ value, label: t(`portal.metrics.group.${value}`) }))} />
       {error ? <Notice kind="error">{error}</Notice> : null}
       <ActionButton label={t("portal.metrics.apply")} onPress={apply} testID="metrics-apply" />
-      {metrics.isPending ? <Loading /> : null}
+      {metrics.isPending ? <RowsSkeleton count={4} minHeight={52} trailing={false} /> : null}
       <ErrorNotice error={metrics.error} onReload={() => { void metrics.refetch(); }} />
       {metrics.data ? (
         <>
           <RangeTotals totals={metrics.data.totals} />
           <View style={{ maxWidth: 720 }}>
             <Text accessibilityRole="header" style={styles.subtitle}>{t("portal.metrics.groupsTitle", { group: t(`portal.metrics.group.${group}`).toLowerCase() })}</Text>
-            {rows.length === 0 ? <EmptyState illustration="emptySearch" title={t("portal.metrics.emptyTitle")} body={t("portal.metrics.empty")} /> : rows.map((row, index) => (
-              <Text key={index} style={[styles.body, { paddingVertical: spacing[2], borderTopWidth: 1, borderTopColor: palette.border }]} testID="metric-row">{Object.entries(row).map(([key, value]) => `${FIELDS.includes(key) ? t(`portal.metrics.field.${key}`) : key}: ${typeof value === "number" ? formatNumber(value, locale) : String(value)}`).join(" · ")}</Text>
-            ))}
+            {rows.length === 0 ? <EmptyState illustration="emptySearch" title={t("portal.metrics.emptyTitle")} body={t("portal.metrics.empty")} /> : (
+              <Stagger>
+                {rows.map((row, index) => {
+                  const title = String(row[group] ?? Object.values(row).find((value) => typeof value === "string") ?? "");
+                  const figures = Object.entries(row).filter(([key, value]) => key !== group && value !== title).map(([key, value]) => `${FIELDS.includes(key) ? t(`portal.metrics.field.${key}`) : key}: ${typeof value === "number" ? formatNumber(value, locale) : String(value)}`);
+                  return (
+                    <View key={`${title}-${index}`} style={{ gap: spacing[1], paddingVertical: spacing[3], borderTopWidth: 1, borderTopColor: palette.border }} testID="metric-row">
+                      <Text style={styles.label}>{title}</Text>
+                      {figures.length ? <Text style={styles.muted}>{figures.join(" · ")}</Text> : null}
+                      {reachOf(row) > 0 ? <Bar ratio={reachOf(row) / peak} color={palette.primary} height={6} /> : null}
+                    </View>
+                  );
+                })}
+              </Stagger>
+            )}
           </View>
         </>
       ) : null}

@@ -58,3 +58,11 @@
 - **en-US es americano** («organizing», «canceled», «catalog»).
 - **Nueva claves de i18n por espacio, sin cambiar valores que usa seo-web** (`rsvp.invite.*`, `gifts.guest.*`): seo-web migra cuando quiera; la app Expo ya usa las nuevas.
 - **seo-web sigue negociando idioma por `?lang=`/cookie/`Accept-Language`** (no `/en/`): `seo-audit` recomienda subdirectorios; se deja como decisión del dueño por tocar el middleware y enlaces ya compartidos.
+
+## Modo oscuro, movimiento e identidad ampliada · 2026-11-08
+- **El oscuro se compone, no se invierte:** escala de superficies noche < canvas < surface < surfaceMuted, acento cielo, ámbar solo «quizá» y avisos; contraste medido por pares en pruebas. Regiones de marca iguales en ambos modos.
+- **Una sola fuente de tema:** `useColors()` / `useStyles()` / `useThemedStyles()`; sin `colors.light` ni hex sueltos en pantallas, sin exports estáticos. Las ilustraciones usan el tono semántico `auto`.
+- **El movimiento pasa la puerta de frecuencia y propósito** (`docs/design/motion.md`): se anima lo que orienta (cambio de destino, pasos, listas, tocar, cargar), no lo que se usa decenas de veces al día (resaltado de pestaña) ni lo decorativo. Tokens en `packages/ui` (no en `design-tokens`: son comportamiento, no valores de marca).
+- **Los esqueletos son `role=status` + `aria-busy`:** toda prueba que espere carga debe esperar también `[aria-busy=true]`.
+- **Sin hápticos hasta tener dispositivo para verificarlos.**
+- **Las referencias visuales oscuras se añaden como suites separadas** (`*.dark.visual.spec.ts`, 15 rutas) en vez de duplicar las 159 claras.

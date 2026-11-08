@@ -4,6 +4,7 @@ import type { guestsEsBO } from "../es-BO/guests.js";
 /** Home, guests, replies, companion requests and host notices (F16–F18). Same voice as es-BO: warm, short, no exclamation marks in errors. */
 export const guestsEnUS: DeepStrings<typeof guestsEsBO> = {
   more: "More options",
+  loading: "Loading…",
   errors: {
     invalid: "Check this detail and try again.", invalidField: { name: "Check this detail: the name must be 1 to 200 characters.", email: "Check this detail: enter a valid email.", phone: "Check this detail: enter the phone with country code.", contact: "Check this detail: an email or a phone number is missing.", allowedCompanions: "Check this detail: companions are a whole number, 0 or more.", groupId: "Check this detail: that group no longer exists.", locale: "Check this detail: the language is not valid.", retentionDays: "Check this detail: days go from 1 to 36500.", csv: "Check this detail: the file is not in the expected format." },
     rateLimited: "There are too many requests in a row. Wait a moment and try again.",
@@ -36,6 +37,9 @@ export const guestsEnUS: DeepStrings<typeof guestsEsBO> = {
       pending: { title_one: "{{count}} person has not replied", title_other: "{{count}} people have not replied", body: "See who has not answered and send their link again.", action: "See who is missing" },
       done: { title: "Everyone has replied", body: "Your list is complete. When something changes, you will see it here." }
     },
+    firstReply: { title: "Your first reply is in", body: "This is how it starts: every tap from a guest shows up here right away." },
+    welcome: { title: "Here is where you will see who is coming", body: "Add your first guests and share their personal link. They reply in one tap.", action: "Add guests" },
+    allDone: "All caught up",
     viewGuests: "See who is coming",
     daysToDeadline_one: "{{count}} day left until replies close", daysToDeadline_other: "{{count}} days left until replies close",
     deadlineToday: "Replies close today", deadlinePassed: "Replies are closed", noDeadline: "No reply deadline",
@@ -115,7 +119,7 @@ export const guestsEnUS: DeepStrings<typeof guestsEsBO> = {
       hostRsvpDeclined: { subject: "A guest cannot attend", text: "Someone replied that they will not attend. See the details in Replies." },
       hostRsvpChanged: { subject: "A guest changed their reply", text: "Someone updated their reply. See the details in Replies." }
     },
-    via: "By {{channel}} · {{status}} · {{date}}"
+    via: "By {{channel}} · {{status}} · {{date}}", viewedAt: "{{date}}"
   },
   preferences: {
     title: "How you want to hear", intro: "Choose where notices reach you. We honor your choice when sending.", channelsTitle: "Channels",
@@ -126,6 +130,7 @@ export const guestsEnUS: DeepStrings<typeof guestsEsBO> = {
     title: "Notices on this device", intro: "We tell you when someone confirms or asks for companions. You can turn them off any time in Preferences.",
     enable: "Turn on push notices", registering: "Turning on…", enabled: "This device will receive push notices.", denied: "Notices are blocked. Turn them on in the system settings for this app.", openSettings: "Open settings",
     unsupported: "Push notices need a real phone with the app installed. This environment does not support them.", failed: "We could not turn notices on. Try again.", noProject: "The app's notification project is not configured.", disable: "Remove this device", preferences: "Notice preferences",
+    state: { ready: "Instant alerts", enabled: "This phone already gets alerts", denied: "Alerts are turned off", unsupported: "No push alerts here" },
     advanced: "Devices and deliveries",
     devicesTitle: "Registered devices", devicesEmpty: "No devices are registered for push notices yet.", platform: { ios: "iPhone", android: "Android" },
     deviceStatus: { ACTIVE: "Active", REVOKED: "Removed", INVALID: "Invalid" }, registeredOn: "registered on {{date}}", inactiveReason: "This device no longer receives notices; turn it on again from the phone.",

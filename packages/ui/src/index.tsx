@@ -1,8 +1,11 @@
 import type { PropsWithChildren } from 'react';
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import { ActivityIndicator, Modal as NativeModal, Platform, Pressable, ScrollView, Switch, Text, TextInput, View, useWindowDimensions, type ViewStyle } from 'react-native';
 import { avatars, chips, radius, spacing, typography } from '@rsvp/design-tokens';
 import { useTheme } from './theme';
+import { ButtonAlignContext, pressVisual } from './press-visual';
+import { Enter } from './enter';
+import { useReducedMotion } from './motion';
 
 export { UiProvider, useTheme, useColors, useThemedStyles, type ColorScheme, type Palette } from './theme';
 import { DateField } from './date-field';
@@ -12,6 +15,8 @@ export { Illustration, type IllustrationProps } from './illustration';
 export { ILLUSTRATION_NAMES, type IllustrationName, type IllustrationTone } from './illustrations';
 export * from './identity';
 export { EmptyState, PageIntro, SuccessNote, Celebrate, type EmptyStateProps } from './personality';
+export { StickyActions, type StickyActionsProps } from './sticky-actions';
+export { ButtonAlignContext, pressVisual } from './press-visual';
 export { useReducedMotion, MOTION } from './motion';
 export * from './motion-kit';
 export { defaultStrings, stringsFor, type UiStrings } from './strings';
@@ -41,10 +46,14 @@ const WIDE_BUTTONS = 640;
 export function Button({ children, onPress, variant = 'primary', state = 'default', accessibilityLabel, className, testID, block = false }: PropsWithChildren<{ onPress?: () => void; variant?: ButtonVariant; state?: State; accessibilityLabel?: string; className?: string; testID?: string; block?: boolean }>) {
   const { palette, styles, strings } = useTheme();
   const { width } = useWindowDimensions();
+  const align = useContext(ButtonAlignContext);
+  const reduced = useReducedMotion();
+  const [pressed, setPressed] = useState(false);
   const disabled = unavailable(state);
   const variantStyle = variant === 'secondary' ? styles.buttonSecondary : variant === 'ghost' ? styles.buttonGhost : variant === 'danger' ? styles.buttonDanger : undefined;
   const textStyle = variant === 'secondary' || variant === 'ghost' ? styles.buttonTextSecondary : variant === 'danger' ? styles.buttonTextDanger : undefined;
   const spinner = variant === 'primary' ? palette.onPrimary : variant === 'danger' ? palette.onDanger : palette.primary;
+  const place = width >= WIDE_BUTTONS && !block ? { alignSelf: align === 'center' ? 'center' : 'flex-start' } as const : undefined;
   return (
     <Pressable
       accessibilityRole="button"
@@ -52,11 +61,15 @@ export function Button({ children, onPress, variant = 'primary', state = 'defaul
       accessibilityState={{ disabled, busy: state === 'loading' }}
       disabled={disabled}
       onPress={onPress}
+      onPressIn={() => setPressed(true)}
+      onPressOut={() => setPressed(false)}
       className={className}
       testID={testID}
-      style={[styles.button, width >= WIDE_BUTTONS && !block && { alignSelf: 'flex-start' }, variantStyle, disabled && styles.buttonDisabled]}
+      style={place}
     >
-      {state === 'loading' ? <ActivityIndicator color={spinner} accessibilityLabel={strings.loading} /> : <Text style={[styles.buttonText, textStyle]}>{children}</Text>}
+      <View style={[styles.button, variantStyle, disabled && styles.buttonDisabled, pressVisual(pressed && !disabled, reduced)]}>
+        {state === 'loading' ? <ActivityIndicator color={spinner} accessibilityLabel={strings.loading} /> : <Text style={[styles.buttonText, textStyle]}>{children}</Text>}
+      </View>
     </Pressable>
   );
 }
@@ -144,17 +157,31 @@ export function Card({ children, state = 'default', style, className }: PropsWit
   return <View accessibilityRole="summary" className={className} style={[styles.card, style]}><StateHint state={state} />{state === 'default' || state === 'disabled' ? children : null}</View>;
 }
 
+/**
+ * Web draws the opening with `Enter` (opacity + a short rise, reduced-motion aware) and turns the platform animation off;
+ * native keeps its own (slide for a sheet, fade for a dialog), which already follows the system's Reduce Motion.
+ */
+export const overlayAnimation = (native: 'slide' | 'fade'): 'none' | 'slide' | 'fade' => (Platform.OS === 'web' ? 'none' : native);
+
+/** Opening motion of a sheet or dialog on web; a plain wrapper on native. Keeps the width of a sheet (full) and of a dialog (centred). */
+export function OverlayEnter({ from, children }: PropsWithChildren<{ from: 'down' | 'none' }>) {
+  if (Platform.OS !== 'web') return <>{children}</>;
+  return <Enter from={from} distance={from === 'down' ? 24 : 8} grow={from === 'none'}>{children}</Enter>;
+}
+
 type OverlayProps = PropsWithChildren<{ visible: boolean; onClose: () => void; title: string; state?: State }>;
 
 export function Sheet({ visible, onClose, title, children, state = 'default' }: OverlayProps) {
   const { styles, strings } = useTheme();
   return (
-    <NativeModal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <NativeModal visible={visible} transparent animationType={overlayAnimation('slide')} onRequestClose={onClose}>
       <Pressable accessibilityLabel={strings.close} style={styles.overlay} onPress={onClose}>
-        <Pressable accessibilityViewIsModal style={styles.sheet} onPress={(event) => event.stopPropagation()}>
-          <Text accessibilityRole="header" style={styles.title}>{title}</Text><StateHint state={state} />{state === 'default' && children}
-          <Button variant="secondary" onPress={onClose}>{strings.close}</Button>
-        </Pressable>
+        <OverlayEnter from="down">
+          <Pressable accessibilityViewIsModal style={styles.sheet} onPress={(event) => event.stopPropagation()}>
+            <Text accessibilityRole="header" style={styles.title}>{title}</Text><StateHint state={state} />{state === 'default' && children}
+            <Button variant="secondary" onPress={onClose}>{strings.close}</Button>
+          </Pressable>
+        </OverlayEnter>
       </Pressable>
     </NativeModal>
   );
@@ -163,11 +190,11 @@ export function Sheet({ visible, onClose, title, children, state = 'default' }: 
 export function Modal({ visible, onClose, title, children, state = 'default' }: OverlayProps) {
   const { styles, strings } = useTheme();
   return (
-    <NativeModal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.overlay}><View accessibilityViewIsModal style={styles.modal}>
+    <NativeModal visible={visible} transparent animationType={overlayAnimation('fade')} onRequestClose={onClose}>
+      <View style={styles.overlay}><OverlayEnter from="none"><View accessibilityViewIsModal style={styles.modal}>
         <Text accessibilityRole="header" style={styles.title}>{title}</Text><StateHint state={state} />{state === 'default' && children}
         <Button variant="secondary" onPress={onClose}>{strings.close}</Button>
-      </View></View>
+      </View></OverlayEnter></View>
     </NativeModal>
   );
 }

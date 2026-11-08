@@ -2,17 +2,20 @@ import { useState, type ReactNode } from "react";
 import { Linking, Text, View } from "react-native";
 import { useModerationDecision, useModerationQueue, useVerificationAction, useVerificationQueue, type ModerationItem, type ModerationStatus, type VerificationAction, type VerificationItem, type VerificationStatus } from "@rsvp/query-hooks/admin";
 import { spacing } from "@rsvp/design-tokens";
-import { Button, Chip } from "@rsvp/ui";
+import { AvatarMark, Button, Chip, Stagger, useColors } from "@rsvp/ui";
 import { useApiClient, useT } from "../platform/providers";
-import { ActionButton, ChoiceGroup, Notice, PageIntro, styles } from "../host/ui";
+import { ActionButton, ChoiceGroup, Notice, PageIntro, useStyles } from "../host/ui";
 import { AdminScreen, adminOnly } from "./admin-screen";
-import { AdminErrorNotice, QueryBoundary, ReasonDialog, useStamp } from "./shared";
+import { AdminErrorNotice, QueryBoundary, ReasonDialog, useStamp, Stack } from "./shared";
 import { useSingleMutation } from "../platform/single-flight";
-import { livePalette } from "../platform/theme";
 
 /** E7 verification queue (REQ-F14-03) and E8 moderation (REQ-F14-04): act on a row, reject/suspend need a reason. */
 
-const rowStyle = (): object => ({ gap: spacing[2], paddingVertical: spacing[4], borderTopWidth: 1, borderTopColor: livePalette.border, maxWidth: 720 });
+/** A compact queue row: a hairline between rows (no card), readable at 360 px. */
+function useRowStyle(): object {
+  const palette = useColors();
+  return { gap: spacing[2], paddingVertical: spacing[4], borderTopWidth: 1, borderTopColor: palette.border, maxWidth: 720 };
+}
 
 const PAGE = 10;
 function ShowMore({ total, shown, onMore }: { readonly total: number; readonly shown: number; readonly onMore: () => void }): ReactNode {
@@ -32,6 +35,7 @@ const ACTIONS_BY_STATUS: Readonly<Record<VerificationStatus, readonly Verificati
 /** A row = who, state, when, and one visible action. The other (negative) actions sit behind "More" so a long queue stays scannable. */
 function RowActions({ primary, secondary }: { readonly primary: ReactNode; readonly secondary: ReactNode }): ReactNode {
   const t = useT();
+  const styles = useStyles();
   const [open, setOpen] = useState(false);
   return (
     <View style={{ gap: spacing[2] }}>
@@ -44,6 +48,8 @@ function RowActions({ primary, secondary }: { readonly primary: ReactNode; reado
 function VerificationRow({ item, busy, onVerify, onAsk }: { readonly item: VerificationItem; readonly busy: boolean; readonly onVerify: () => void; readonly onAsk: (action: "reject" | "suspend") => void }): ReactNode {
   const t = useT();
   const stamp = useStamp();
+  const styles = useStyles();
+  const rowStyle = useRowStyle();
   const actions = ACTIONS_BY_STATUS[item.status] ?? [];
   const state = busy ? "loading" : "default";
   const button = (action: VerificationAction): ReactNode => (
@@ -52,8 +58,8 @@ function VerificationRow({ item, busy, onVerify, onAsk }: { readonly item: Verif
   const first = actions[0];
   const rest = actions.slice(1);
   return (
-    <View style={rowStyle()} accessibilityLabel={item.name}>
-      <View style={[styles.row, { justifyContent: "space-between", flexWrap: "nowrap" }]}><Text accessibilityRole="header" style={[styles.subtitle, { flex: 1, flexShrink: 1, overflowWrap: "anywhere" } as object]}>{item.name}</Text><Chip tone={item.status === "VERIFIED" ? "yes" : item.status === "PENDING" ? "maybe" : "no"}>{t(`admin.verification.state.${item.status}`)}</Chip></View>
+    <View style={rowStyle} accessibilityLabel={item.name}>
+      <View style={[styles.row, { justifyContent: "space-between", flexWrap: "nowrap", gap: spacing[3] }]}><View style={{ flexShrink: 0 }}><AvatarMark name={item.name} size={40} /></View><Text accessibilityRole="header" style={[styles.subtitle, { flex: 1, flexShrink: 1, overflowWrap: "anywhere" } as object]}>{item.name}</Text><Chip tone={item.status === "VERIFIED" ? "yes" : item.status === "PENDING" ? "maybe" : "no"}>{t(`admin.verification.state.${item.status}`)}</Chip></View>
       <Text style={styles.muted}>{`${item.category} · ${item.city} · ${t("admin.verification.submitted", { when: stamp(item.submittedAt) })}`}</Text>
       {item.reason ? <Text style={styles.muted}>{t("admin.common.reasonOn", { reason: item.reason })}</Text> : null}
       {actions.length === 0 ? <Text style={styles.muted} testID={`no-action-${item.providerId}`}>{t(item.status === "REJECTED" ? "admin.verification.noActionRejected" : "admin.verification.noActionSuspended")}</Text> : null}
@@ -73,19 +79,21 @@ function VerificationScreenContent({ onNavigate }: Nav): ReactNode {
   const [asking, setAsking] = useState<{ readonly item: VerificationItem; readonly action: "reject" | "suspend" } | null>(null);
   return (
     <AdminScreen title={t("admin.verification.title")} current="verification" onNavigate={onNavigate}>
+      <Stack>
       <PageIntro>{t("admin.verification.intro")}</PageIntro>
       <ChoiceGroup label={t("admin.common.filter")} value={status} onChange={(next) => { act.reset(); setShown(PAGE); setStatus(next); }} choices={VERIFICATION_STATUSES.map((value) => ({ value, label: t(`admin.verification.statuses.${value}`) }))} />
       {act.isSuccess ? <Notice kind="success">{t("admin.verification.done")}</Notice> : null}
       <AdminErrorNotice error={act.error} onReload={() => { act.reset(); void queue.refetch(); }} />
-      <QueryBoundary query={queue} empty={t("admin.verification.empty", { status: t(`admin.verification.statuses.${status}`) })}>
-        {(data) => <>{data.items.slice(0, shown).map((item) => (
+      <QueryBoundary query={queue} avatar illustration={status === "PENDING" ? "nothingPending" : "emptySearch"} {...(status === "PENDING" ? { emptyTitle: t("admin.common.allClearTitle") } : {})} empty={t("admin.verification.empty", { status: t(`admin.verification.statuses.${status}`) })}>
+        {(data) => <><Stagger>{data.items.slice(0, shown).map((item) => (
           <VerificationRow key={item.providerId} item={item} busy={act.isPending && act.variables?.providerId === item.providerId}
             onVerify={() => actOnce({ providerId: item.providerId, action: "verify" })} onAsk={(action) => setAsking({ item, action })} />
-        ))}<ShowMore total={data.items.length} shown={shown} onMore={() => setShown((current) => current + PAGE)} /></>}
+        ))}</Stagger><ShowMore total={data.items.length} shown={shown} onMore={() => setShown((current) => current + PAGE)} /></>}
       </QueryBoundary>
       <ReasonDialog visible={asking !== null} title={asking ? t(`admin.verification.${asking.action}Title`, { name: asking.item.name }) : ""} body={asking ? t(`admin.verification.${asking.action}Body`) : ""}
         confirmLabel={asking ? t(`admin.verification.${asking.action}`) : ""} onCancel={() => setAsking(null)}
         onConfirm={(reason) => { if (asking) actOnce({ providerId: asking.item.providerId, action: asking.action, reason }); setAsking(null); }} />
+      </Stack>
     </AdminScreen>
   );
 }
@@ -95,9 +103,11 @@ const MODERATION_STATUSES: readonly ModerationStatus[] = ["PENDING", "APPROVED",
 function ModerationRow({ item, busy, onApprove, onReject }: { readonly item: ModerationItem; readonly busy: boolean; readonly onApprove: () => void; readonly onReject: () => void }): ReactNode {
   const t = useT();
   const stamp = useStamp();
+  const styles = useStyles();
+  const rowStyle = useRowStyle();
   const state = busy ? "loading" : "default";
   return (
-    <View style={rowStyle()} accessibilityLabel={item.title}>
+    <View style={rowStyle} accessibilityLabel={item.title}>
       <View style={[styles.row, { justifyContent: "space-between", flexWrap: "nowrap" }]}><Text accessibilityRole="header" style={[styles.subtitle, { flex: 1, flexShrink: 1, overflowWrap: "anywhere" } as object]}>{item.title}</Text><Chip tone={item.status === "APPROVED" ? "yes" : item.status === "PENDING" ? "maybe" : "no"}>{t(`admin.moderation.state.${item.status}`)}</Chip></View>
       <Text style={styles.muted}>{`${t(`admin.moderation.kinds.${item.kind}`)} · ${stamp(item.submittedAt)}`}</Text>
       {item.url ? <ActionButton variant="secondary" label={t("admin.moderation.open", { name: item.title })} onPress={() => { void Linking.openURL(item.url ?? ""); }} /> : null}
@@ -122,18 +132,20 @@ function ModerationScreenContent({ onNavigate }: Nav): ReactNode {
   const [rejecting, setRejecting] = useState<ModerationItem | null>(null);
   return (
     <AdminScreen title={t("admin.moderation.title")} current="moderation" onNavigate={onNavigate}>
+      <Stack>
       <PageIntro>{t("admin.moderation.intro")}</PageIntro>
       <ChoiceGroup label={t("admin.common.filter")} value={status} onChange={(next) => { decide.reset(); setShown(PAGE); setStatus(next); }} choices={MODERATION_STATUSES.map((value) => ({ value, label: t(`admin.moderation.statuses.${value}`) }))} />
       {decide.isSuccess ? <Notice kind="success">{t("admin.moderation.done")}</Notice> : null}
       <AdminErrorNotice error={decide.error} onReload={() => { decide.reset(); void queue.refetch(); }} />
-      <QueryBoundary query={queue} empty={t("admin.moderation.empty", { status: t(`admin.moderation.statuses.${status}`) })}>
-        {(data) => <>{data.items.slice(0, shown).map((item) => (
+      <QueryBoundary query={queue} illustration={status === "PENDING" ? "nothingPending" : "emptySearch"} {...(status === "PENDING" ? { emptyTitle: t("admin.common.allClearTitle") } : {})} empty={t("admin.moderation.empty", { status: t(`admin.moderation.statuses.${status}`) })}>
+        {(data) => <><Stagger>{data.items.slice(0, shown).map((item) => (
           <ModerationRow key={item.id} item={item} busy={decide.isPending && decide.variables?.id === item.id}
             onApprove={() => decideOnce({ id: item.id, decision: "approve" })} onReject={() => setRejecting(item)} />
-        ))}<ShowMore total={data.items.length} shown={shown} onMore={() => setShown((current) => current + PAGE)} /></>}
+        ))}</Stagger><ShowMore total={data.items.length} shown={shown} onMore={() => setShown((current) => current + PAGE)} /></>}
       </QueryBoundary>
       <ReasonDialog visible={rejecting !== null} title={rejecting ? t("admin.moderation.rejectTitle", { name: rejecting.title }) : ""} body={t("admin.moderation.rejectBody")} confirmLabel={t("admin.moderation.reject")}
         onCancel={() => setRejecting(null)} onConfirm={(reason) => { if (rejecting) decideOnce({ id: rejecting.id, decision: "reject", reason }); setRejecting(null); }} />
+      </Stack>
     </AdminScreen>
   );
 }

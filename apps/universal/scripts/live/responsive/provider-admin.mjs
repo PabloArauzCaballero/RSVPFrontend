@@ -195,7 +195,7 @@ const reveal = async (page, testId) => {
     });
     await step("portal: save destinations", async () => {
       await go(page, "/portal/destinos"); await tid(page, "destinations-save").waitFor();
-      await tid(page, "destination-WHATSAPP").click(); await tid(page, "utm-campaign").fill("flow_en"); await tid(page, "utm-dedupe").fill("90"); await tid(page, "utm-cap").fill("500");
+      await tid(page, "destination-WHATSAPP").click(); await tid(page, "destinations-more").click(); await tid(page, "utm-campaign").fill("flow_en"); await tid(page, "utm-dedupe").fill("90"); await tid(page, "utm-cap").fill("500");
       await tid(page, "destinations-save").click();
       const lc = (await poll(async () => { const p = await own(); return p.leadConfig?.utmCampaign === "flow_en" ? p : null; }, "leadConfig")).leadConfig;
       assert.ok(lc.enabledDestinations.length >= 1); assert.equal(lc.dedupeMinutes, 90); assert.equal(lc.monthlyCap, 500);

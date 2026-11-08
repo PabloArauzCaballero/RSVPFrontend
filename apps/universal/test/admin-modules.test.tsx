@@ -88,7 +88,10 @@ describe("REQ-F14-03 · verification queue", () => {
   it("shows a loading indicator while the queue is pending", () => {
     const { client } = fakeClient({ "GET /providers/admin/verification-queue": () => new Promise(() => undefined) });
     renderApp(<VerificationScreen onNavigate={navigate} />, client, ADMIN);
-    expect(screen.getByLabelText("Cargando…")).toBeTruthy();
+    // The skeleton has the shape of the rows and announces the loading as a busy status region.
+    const status = screen.getByRole("status");
+    expect(status.getAttribute("aria-busy")).toBe("true");
+    expect(within(status).getByText("Cargando…")).toBeTruthy();
   });
 });
 

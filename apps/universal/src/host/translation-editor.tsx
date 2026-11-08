@@ -11,7 +11,7 @@ import { CelebrationErrorNotice } from "./celebration-errors";
 import { LIMITS, overLimit } from "./limits";
 import { CenteredActions } from "./load-failed";
 import { SaveBar } from "./save-bar";
-import { ActionButton, ChoiceGroup, EmptyState, Field, styles } from "./ui";
+import { ActionButton, ChoiceGroup, EmptyState, Field, useStyles } from "./ui";
 
 /** C13 · The same content in each language of the site (REQ-F11-03). Times are never translated. */
 
@@ -41,6 +41,7 @@ const clean = (overrides: Overrides): Overrides => Object.fromEntries(Object.ent
 
 function Translations({ celebration, refetch, saved, onSaved }: { readonly celebration: Celebration; readonly refetch: () => void; readonly saved: boolean; readonly onSaved: (saved: boolean) => void }): ReactNode {
   const t = useT();
+  const styles = useStyles();
   const once = useSingleFlight();
   const client = useApiClient();
   const mutation = useEditCelebration(client, celebration.id);
@@ -71,7 +72,7 @@ function Translations({ celebration, refetch, saved, onSaved }: { readonly celeb
   if (!locales.length) {
     return (
       <View style={{ gap: spacing[4] }}>
-        <EmptyState illustration="invitation" title={t("host.translations.emptyTitle")} body={t("host.translations.emptyBody")} action={<CenteredActions>{addButtons}</CenteredActions>} />
+        <EmptyState illustration="welcomeGuest" title={t("host.translations.emptyTitle")} body={t("host.translations.emptyBody")} action={<CenteredActions>{addButtons}</CenteredActions>} />
         <CelebrationErrorNotice error={mutation.error} onReload={refetch} />
       </View>
     );

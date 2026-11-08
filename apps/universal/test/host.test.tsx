@@ -120,8 +120,18 @@ describe("C2–C5 · picker and onboarding", () => {
     renderApp(<OnboardingScreen step={1} celebrationId="c-1" onNavigate={navigate} />, client);
     expect(await screen.findByText("Tu invitación está lista")).toBeTruthy();
     expect(screen.getByTestId("preview-mobile").textContent).toContain("Ana y Luis");
+    // The milestone has its own backdrop (rings of light behind the drawn check) and no loop.
+    expect(document.querySelector('[data-illustration="moment-confirmed"]')).not.toBeNull();
     fireEvent.click(screen.getByTestId("onboarding-finish"));
     expect(navigate).toHaveBeenCalledWith("/editor/general?c=c-1");
+  });
+
+  it("a gallery that fails with a server error shows the cracked-server drawing and a retry", async () => {
+    const server = fakeClient({ ...baseHandlers(), "GET /media/celebrations/c-1/assets": () => new HttpFailure(502, {}) });
+    renderApp(<GalleryEditorScreen celebrationId="c-1" onNavigate={navigate} />, server.client);
+    expect(await screen.findByTestId("retry-gallery")).toBeTruthy();
+    expect(document.querySelector('[data-illustration="serverError"]')).not.toBeNull();
+    expect(document.querySelector('[data-illustration="offline"]')).toBeNull();
   });
 });
 
@@ -171,7 +181,7 @@ describe("C7–C11 · content editor", () => {
   it("states: loading, not found, read-only, no celebration chosen, and roles", async () => {
     const missing = fakeClient({ "GET /celebrations/event-types": () => ({ items: [] }) });
     renderApp(<ContentEditorScreen section="general" celebrationId="nope" onNavigate={navigate} />, missing.client);
-    expect(screen.getAllByRole("progressbar").length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("status").length).toBeGreaterThan(0);
     expect(await screen.findByText(/No encontramos esta celebración/)).toBeTruthy();
     const readOnly = fakeClient(baseHandlers({ ...CELEBRATION, access: "READ" }));
     renderApp(<ContentEditorScreen section="general" celebrationId="c-1" onNavigate={navigate} />, readOnly.client);

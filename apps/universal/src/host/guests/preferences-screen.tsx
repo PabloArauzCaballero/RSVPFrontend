@@ -7,8 +7,8 @@ import { useApiClient, useT } from "../../platform/providers";
 import { useSingleFlightGate } from "../../platform/single-flight";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
-import { ActionButton, Field, Loading, Notice, Section, styles } from "../ui";
-import { FailureNotice, MoreOptions, RetryNotice, TextAction } from "./parts";
+import { ActionButton, Field, Notice, Section, useStyles } from "../ui";
+import { FailureNotice, MoreOptions, RetryNotice, TextAction, BlockSkeleton } from "./parts";
 
 /**
  * Preferences (REQ-F18-03/04/06): per channel, per event type and the quiet-hours window (contract 1.4.0). Each change is saved to
@@ -21,6 +21,7 @@ export const HOST_EVENT_TYPES = ["celebrationPublished", "companionRequested", "
 const HOUR = /^(?:[0-9]|1[0-9]|2[0-3])$/;
 
 function QuietHours({ quiet, busy, onSave, error, saved }: { readonly quiet: NotificationPreferences["quietHours"]; readonly busy: boolean; readonly saved: boolean; readonly onSave: (value: { start: number; end: number } | null) => void; readonly error: boolean }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const [start, setStart] = useState(String(quiet.start));
   const [end, setEnd] = useState(String(quiet.end));
@@ -49,6 +50,7 @@ function QuietHours({ quiet, busy, onSave, error, saved }: { readonly quiet: Not
 }
 
 function PreferencesBody({ celebrationId, onNavigate }: { readonly celebrationId: string; readonly onNavigate: (href: string) => void }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const client = useApiClient();
   const prefs = useHostNotificationPreferences(client, celebrationId);
@@ -62,7 +64,7 @@ function PreferencesBody({ celebrationId, onNavigate }: { readonly celebrationId
     update.mutate(body, { onSuccess: () => setOutcome({ result: "saved", area }), onError: () => setOutcome({ result: "failed", area }), onSettled: flight.end });
   };
   const here = (area: "toggles" | "quiet", result: "saved" | "failed"): boolean => outcome?.area === area && outcome.result === result;
-  if (prefs.isPending) return <Loading />;
+  if (prefs.isPending) return <BlockSkeleton />;
   if (prefs.isError) return <RetryNotice error={prefs.error} onRetry={() => { void prefs.refetch(); }} />;
   const channels = prefs.data.channels ?? {};
   const eventTypes = prefs.data.eventTypes ?? {};

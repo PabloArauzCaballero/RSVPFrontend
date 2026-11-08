@@ -6,14 +6,16 @@ import { formatMinor } from "@rsvp/i18n";
 import { problemCode, useAddGift, useGiftList, useListingSearch, type ListingHit } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../../platform/providers";
 import { alreadyListed } from "./money";
-import { Row, RowList } from "./offer-row";
+import { Hint, Row, RowList } from "./offer-row";
 import { GiftErrorNotice } from "./gift-errors";
-import { ActionButton, Field, Loading, Notice, styles } from "../ui";
+import { SkeletonList, Stagger } from "@rsvp/ui";
+import { ActionButton, Field, Notice, useStyles } from "../ui";
 import { RetryNotice } from "../guests/parts";
 import { useSingleFlightGate } from "../../platform/single-flight";
 
 /** C27 · «Del catálogo»: search listings (GET /listings?q=), then add the chosen product as a CATALOGED gift. */
 export function CatalogPanel({ celebrationId, currency, onSeeList }: { readonly celebrationId: string; readonly currency: string; readonly onSeeList: () => void }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const locale = useLocale();
   const client = useApiClient();
@@ -39,14 +41,14 @@ export function CatalogPanel({ celebrationId, currency, onSeeList }: { readonly 
       <ActionButton label={t("gifts.host.catalog.search")} onPress={run} testID="catalog-search" />
       {added ? <Notice kind="success"><Text style={styles.body}>{t("gifts.host.catalog.added", { title: added })}</Text><ActionButton variant="secondary" label={t("gifts.host.add.seeList")} onPress={onSeeList} testID="see-list" /></Notice> : null}
       {unavailable ? <Notice kind="error">{t("gifts.host.catalog.unavailableBody")}</Notice> : <GiftErrorNotice error={add.error} />}
-      {!search.data && !search.isFetching && !search.isError ? <Text style={styles.muted}>{t("gifts.host.catalog.prompt")}</Text> : null}
-      {search.isFetching && !search.data ? <Loading /> : null}
+      {!search.data && !search.isFetching && !search.isError ? <Hint illustration="searching">{t("gifts.host.catalog.prompt")}</Hint> : null}
+      {search.isFetching && !search.data ? <SkeletonList count={3} row={{ minHeight: 120, avatar: false, trailing: false }} label={t("host.common.loading")} /> : null}
       {search.isError ? <RetryNotice error={search.error} onRetry={() => { void search.refetch(); }} /> : null}
       {search.data?.viaFallback ? <Notice>{t("gifts.host.catalog.fallbackNote")}</Notice> : null}
-      {search.data && items.length === 0 ? <Notice>{t("gifts.host.catalog.none")}</Notice> : null}
+      {search.data && items.length === 0 ? <Hint illustration="emptySearch">{t("gifts.host.catalog.none")}</Hint> : null}
       {items.length ? (
         <RowList>
-          {items.map((hit, index) => {
+          <Stagger>{items.map((hit, index) => {
             const listed = alreadyListed(list.data?.items ?? [], hit.id);
             const adding = add.isPending && add.variables?.source === "CATALOGED" && add.variables.productListingId === hit.id;
             return (
@@ -57,7 +59,7 @@ export function CatalogPanel({ celebrationId, currency, onSeeList }: { readonly 
                 <View style={styles.row}><ActionButton variant="secondary" label={adding ? t("gifts.host.catalog.adding") : t("gifts.host.catalog.add")} busy={adding} disabled={add.isPending || listed} onPress={() => choose(hit)} testID={`add-${hit.id}`} /></View>
               </Row>
             );
-          })}
+          })}</Stagger>
         </RowList>
       ) : null}
     </View>

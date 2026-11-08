@@ -3,13 +3,12 @@ import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { Redirect, useGlobalSearchParams, usePathname, useRouter, type Href } from "expo-router";
 import { decideRoute, safeReturnTo, type RouteGroup } from "@rsvp/auth";
 import { typography } from "@rsvp/design-tokens";
+import { useColors } from "@rsvp/ui";
 import { useT } from "../platform/providers";
 import { useAuth } from "./auth-context";
-import { AuthLayout, authStyles, SubmitButton } from "./auth-ui";
+import { AuthLayout, useAuthStyles, SubmitButton } from "./auth-ui";
 import { destinationAfterSignIn, firstStepFor, homeFor, loginHref } from "./routes";
-import { livePalette } from "../platform/theme";
 
-const palette = livePalette;
 
 /** The path the person was trying to open, with its query, so sign-in can bring them back to it. */
 export function currentLocation(pathname: string, params: Readonly<Record<string, string | string[] | undefined>>): string {
@@ -26,7 +25,9 @@ export function currentLocation(pathname: string, params: Readonly<Record<string
 }
 
 export function Checking(): ReactNode {
+  const authStyles = useAuthStyles();
   const t = useT();
+  const palette = useColors();
   return (
     <View role="main" style={authStyles.centered} accessibilityLiveRegion="polite">
       <ActivityIndicator accessibilityLabel={t("auth.guard.checking")} color={palette.primary} />
@@ -36,11 +37,12 @@ export function Checking(): ReactNode {
 }
 
 function Forbidden({ home }: { readonly home: string | null }): ReactNode {
+  const authStyles = useAuthStyles();
   const t = useT();
   const auth = useAuth();
   const goTo = useNavigateTo();
   return (
-    <AuthLayout title={t("auth.guard.forbiddenTitle")} intro={home ? t("auth.guard.forbiddenBody") : t("auth.guard.noRole")} illustration="provider">
+    <AuthLayout title={t("auth.guard.forbiddenTitle")} intro={home ? t("auth.guard.forbiddenBody") : t("auth.guard.noRole")} illustration="noAccess">
       <View style={authStyles.form}>
         {home ? <SubmitButton label={t("auth.guard.goHome")} busyLabel={t("auth.guard.goHome")} busy={false} onPress={() => goTo(home)} testID="forbidden-home" /> : null}
         <Pressable accessibilityRole="button" accessibilityLabel={t("common.signOut")} onPress={() => { void auth.signOut(); }} style={authStyles.link}><Text style={authStyles.linkText}>{t("common.signOut")}</Text></Pressable>

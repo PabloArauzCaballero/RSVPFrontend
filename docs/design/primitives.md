@@ -135,3 +135,38 @@ Infraestructura de `@rsvp/ui` para que la app se sienta viva sin cansar. Inventa
 - `ScreenTransition` también lleva el scroll arriba y el foco al `h1` tras navegar; la primera pantalla de la sesión no anima ni roba el foco.
 - Los textos (`announce`, `label`) los traduce quien llama; por defecto `SkeletonList` usa `ui.loading`.
 - No animes nada más sin pasar la puerta de frecuencia y propósito de `motion.md`: el cheque sigue siendo la única animación de celebración.
+
+
+## Marco y móvil (tanda 2)
+
+### StickyActions
+
+Barra de acción fija al pie para formularios largos en móvil. Un botón primario y, como mucho, una acción secundaria; apilados a ancho completo en el teléfono.
+
+```tsx
+import { ActionButton, StickyActions } from "../host/ui";
+<StickyActions summary={<Text style={styles.muted}>{t("guests.form.unsaved")}</Text>}>
+  <ActionButton label={t("common.save")} onPress={save} busy={saving} />
+  <ActionButton variant="secondary" label={t("common.cancel")} onPress={back} />
+</StickyActions>
+```
+
+- Web: `position: sticky; bottom: 0` dentro del área que hace scroll, `padding-bottom: max(12px, env(safe-area-inset-bottom))` (respeta la barra de inicio), borde superior y superficie opaca. Ocupa su propio espacio en el flujo: no tapa el último campo ni el teclado del navegador.
+- Nativo: va en el flujo tras el formulario con el mismo estilo; el teclado lo gestiona el `ScrollView` de la pantalla (`keyboardShouldPersistTaps="handled"`). No hay barra flotante nativa todavía.
+- Ponla como último hijo del formulario, fuera de cualquier `Section`. No la uses en pantallas cortas: allí el botón va tras el último campo.
+
+### Botón, centrado y feedback
+
+`Button` (y por tanto `ActionButton`) escala a 0,97 al pulsar (atenúa a 0,72 con Reduce Motion) sin encoger el área táctil: el `Pressable` guarda el área y la vista interior se escala. `EmptyState`, `Celebrate` y `StickyActions` centran su botón desde 640 px mediante `ButtonAlignContext`; fuera de ellos sigue al inicio de la fila. `ToggleChip` usa el mismo feedback (`pressVisual`).
+
+### Aperturas
+
+- `Sheet`, `Modal` y `ConfirmDialog` abren en web con `Enter` (hoja: `from="down"`, diálogo: fundido) y desactivan la animación de plataforma; en nativo conservan la suya (deslizar / fundido), que ya respeta el ajuste del sistema. Primitivos: `OverlayEnter` y `overlayAnimation`.
+- `Notice` entra con `Enter from="down"` (ligero, 220 ms; sin movimiento con Reduce Motion).
+
+### Navegación
+
+- Pestañas de sección: si no caben, un desvanecido en el borde con más contenido (`tabs-fade-left` / `tabs-fade-right`, decorativos) y la pestaña activa se trae a la vista al entrar y al cambiar de ancho. Las flechas del teclado siguen moviendo el foco, y el navegador lo desplaza a la vista.
+- Barra inferior: cada destino es un `PressFeedback` de 56 px, con la raya activa de 24 × 4 y relleno para el área segura inferior. La hoja «Más» abre con `Enter` y respeta el área segura.
+- Menú lateral (≥ 960 px): `WeavePattern tone="onDark"` abajo, difuminado, a 70 % de opacidad, bajo el selector de tema.
+- Hápticos: `expo-haptics` no está en el repositorio; no se añadió una dependencia nueva sin acuerdo. Ver NEEDS.

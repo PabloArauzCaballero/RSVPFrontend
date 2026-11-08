@@ -5,6 +5,7 @@ import { CheckMark } from './scheme-check';
 import { Illustration } from './illustration';
 import type { IllustrationName, IllustrationTone } from './illustrations';
 import { useTheme } from './theme';
+import { ButtonAlignContext } from './press-visual';
 
 const fontFamily = Platform.select({ web: "'Plus Jakarta Sans', 'Avenir Next', 'Segoe UI', system-ui, sans-serif", default: undefined });
 const READABLE = 520;
@@ -35,7 +36,7 @@ export function EmptyState({ illustration, title, body, action, tone }: EmptySta
       <Illustration name={illustration} tone={tone ?? (scheme === 'dark' ? 'onDark' : 'brand')} size="lg" />
       <Text accessibilityRole="header" aria-level={2} style={{ color: palette.text, fontSize: typography.fontSize.xl, lineHeight: typography.lineHeight.xl, fontWeight: '800', letterSpacing: -0.5, textAlign: 'center', fontFamily }}>{title}</Text>
       <Text style={{ color: palette.textMuted, fontSize: typography.fontSize.base, lineHeight: typography.lineHeight.base, textAlign: 'center', fontFamily }}>{body}</Text>
-      {action ? <View style={{ alignSelf: 'stretch', alignItems: 'center', marginTop: spacing[2] }}>{action}</View> : null}
+      {action ? <View style={{ alignSelf: 'stretch', alignItems: 'center', marginTop: spacing[2] }}><ButtonAlignContext.Provider value="center">{action}</ButtonAlignContext.Provider></View> : null}
     </View>
   );
 }
@@ -64,7 +65,7 @@ export function Celebrate({ title, body, play = true, children }: { title: strin
       </View>
       <Text accessibilityRole="header" aria-level={2} style={{ color: palette.text, fontSize: 28, lineHeight: 32, fontWeight: '800', letterSpacing: -0.7, textAlign: 'center', fontFamily }}>{title}</Text>
       {body ? <Text style={{ color: palette.textMuted, fontSize: typography.fontSize.base, lineHeight: typography.lineHeight.base, textAlign: 'center', fontFamily }}>{body}</Text> : null}
-      {children}
+      <ButtonAlignContext.Provider value="center">{children}</ButtonAlignContext.Provider>
     </View>
   );
 }

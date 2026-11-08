@@ -1,3 +1,4 @@
+import { Stagger, useColors } from "@rsvp/ui";
 import { useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
 import { radius, spacing } from "@rsvp/design-tokens";
@@ -5,10 +6,9 @@ import { useCreateGuestGroup, useGuestGroups } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
-import { ActionButton, EmptyState, Field, Loading, SuccessNote, styles } from "../ui";
-import { FailureNotice, RetryNotice, TextAction } from "./parts";
+import { ActionButton, EmptyState, Field, SuccessNote, useStyles } from "../ui";
+import { FailureNotice, RetryNotice, TextAction, BlockSkeleton } from "./parts";
 import { useSingleFlightGate } from "../../platform/single-flight";
-import { livePalette } from "../../platform/theme";
 
 const MAX_GROUP_NAME = 200;
 
@@ -18,6 +18,8 @@ const MAX_GROUP_NAME = 200;
  */
 
 function GroupsBody({ celebrationId, onNavigate }: { readonly celebrationId: string; readonly onNavigate: (href: string) => void }): ReactNode {
+  const styles = useStyles();
+  const palette = useColors();
   const t = useT();
   const client = useApiClient();
   const create = useCreateGuestGroup(client, celebrationId);
@@ -35,7 +37,6 @@ function GroupsBody({ celebrationId, onNavigate }: { readonly celebrationId: str
     setProblem("");
     create.mutate(clean, { onSuccess: (group) => { setLastCreated(group.name); setName(""); }, onSettled: flight.end });
   };
-  const palette = livePalette;
   const items = groups.data?.items ?? [];
   const form = (
     <View style={[styles.card, { maxWidth: 720 }]}>
@@ -48,17 +49,19 @@ function GroupsBody({ celebrationId, onNavigate }: { readonly celebrationId: str
   return (
     <View style={{ gap: spacing[4] }}>
       {form}
-      {groups.isPending ? <Loading /> : null}
+      {groups.isPending ? <BlockSkeleton /> : null}
       {groups.isError ? <RetryNotice error={groups.error} onRetry={() => { void groups.refetch(); }} /> : null}
       {groups.data && items.length === 0 ? <EmptyState illustration="table" title={t("guests.groups.emptyTitle")} body={t("guests.groups.empty")} /> : null}
       {items.length > 0 ? (
         <View role="list" style={{ borderRadius: radius.lg, borderWidth: 1, borderColor: palette.border, backgroundColor: palette.surface, overflow: "hidden" }}>
+          <Stagger>
           {items.map((group, index) => (
             <View key={group.id} role="listitem" style={[{ gap: 2, paddingVertical: spacing[3], paddingHorizontal: spacing[4], minHeight: 60, justifyContent: "center" }, index > 0 ? { borderTopWidth: 1, borderTopColor: palette.border } : null]}>
               <Text style={styles.subtitle}>{group.name}</Text>
               <Text style={styles.muted}>{t("guests.groups.members", { count: group.memberCount })}</Text>
             </View>
           ))}
+          </Stagger>
         </View>
       ) : null}
       <Text style={styles.muted}>{t("guests.groups.limit")}</Text>

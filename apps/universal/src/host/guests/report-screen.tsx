@@ -1,19 +1,17 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import { radius, spacing } from "@rsvp/design-tokens";
-import { Avatar } from "@rsvp/ui";
+import { Stagger, useColors } from "@rsvp/ui";
 import { buildCateringCsv, buildRsvpReportCsv, hostGuestsApi, CATERING_COLUMNS, RSVP_REPORT_COLUMNS, useGuestList, useGuestSummary, useHostRsvps, type RsvpStatus } from "@rsvp/query-hooks";
 import { saveTextFile } from "../../platform/files";
 import { useApiClient, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { guestDetailPath, HOST_ROUTES, withCelebration } from "../routes";
-import { ActionButton, EmptyState, Loading, Notice, styles } from "../ui";
-import { FreshnessLine, MoreOptions, RetryNotice, StatusBadge, TextAction } from "./parts";
+import { ActionButton, EmptyState, Notice, useStyles } from "../ui";
+import { FreshnessLine, GuestListSkeleton, GuestRow, MoreOptions, RetryNotice, StatusFilter, TextAction } from "./parts";
 
-const palette = livePalette;
 import { useSingleFlightGate } from "../../platform/single-flight";
 import { lastPageOffset } from "./paging";
-import { livePalette } from "../../platform/theme";
 
 /** C24 · RSVP report (companions, diets, messages) and its safe CSV export for the venue and the caterer (REQ-F17-02/05). */
 
@@ -21,6 +19,8 @@ const PAGE = 50;
 const FILTERS: readonly (RsvpStatus | "ALL")[] = ["ALL", "CONFIRMED", "PENDING", "DECLINED"];
 
 function ReportBody({ celebrationId, timeZone, slug, onNavigate }: { readonly celebrationId: string; readonly timeZone: string; readonly slug: string; readonly onNavigate: (href: string) => void }): ReactNode {
+  const styles = useStyles();
+  const palette = useColors();
   const t = useT();
   const client = useApiClient();
   const [status, setStatus] = useState<RsvpStatus | "ALL">("ALL");
@@ -78,36 +78,30 @@ function ReportBody({ celebrationId, timeZone, slug, onNavigate }: { readonly ce
         </MoreOptions>
         {exportMessage ? <Notice kind={exportMessage.kind}>{exportMessage.text}</Notice> : null}
       </View>
-      <View accessibilityRole="radiogroup" accessibilityLabel={t("guests.report.filterLabel")} style={styles.row}>
-        {FILTERS.map((value) => (
-          <Pressable key={value} accessibilityRole="radio" aria-checked={status === value} accessibilityLabel={value === "ALL" ? t("guests.list.all") : t(`guests.status.${value}`)} onPress={() => { setStatus(value); setOffset(0); }} style={[styles.navItem, status === value && styles.navItemCurrent]}>
-            <Text style={styles.label}>{value === "ALL" ? t("guests.list.all") : t(`guests.status.${value}`)}</Text>
-          </Pressable>
-        ))}
-      </View>
-      {list.isPending ? <Loading /> : null}
+      <StatusFilter label={t("guests.report.filterLabel")} value={status} onChange={(value) => { setStatus(value as RsvpStatus | "ALL"); setOffset(0); }} options={FILTERS.map((value) => ({ value, label: value === "ALL" ? t("guests.list.all") : t(`guests.status.${value}`) }))} />
+      {list.isPending ? <GuestListSkeleton /> : null}
       {list.isError ? <RetryNotice error={list.error} onRetry={() => { void list.refetch(); }} /> : null}
       {data && !list.isError ? (
         <View style={{ gap: spacing[3] }}>
-          {data.items.length === 0 ? <EmptyState illustration="invitation" title={filtered ? t("guests.list.emptyFilteredTitle") : t("guests.report.emptyTitle")} body={filtered ? t("guests.report.emptyFiltered") : t("guests.report.empty")} /> : (
+          {data.items.length === 0 ? <EmptyState illustration={filtered ? "emptySearch" : "table"} title={filtered ? t("guests.list.emptyFilteredTitle") : t("guests.report.emptyTitle")} body={filtered ? t("guests.report.emptyFiltered") : t("guests.report.empty")} /> : (
             <View role="list" style={{ borderRadius: radius.lg, borderWidth: 1, borderColor: palette.border, backgroundColor: palette.surface, overflow: "hidden" }}>
-              {data.items.map((guest, index) => {
-                const answer = byGuest.get(guest.guestId);
-                return (
-                  <View key={guest.guestId} role="listitem" style={index > 0 ? { borderTopWidth: 1, borderTopColor: palette.border } : undefined}>
-                    <Pressable accessibilityRole="button" accessibilityLabel={t("guests.list.open", { name: guest.name })} onPress={() => onNavigate(withCelebration(guestDetailPath(guest.guestId), celebrationId))} style={{ flexDirection: "row", alignItems: "flex-start", gap: spacing[3], minHeight: 68, paddingVertical: spacing[3], paddingHorizontal: spacing[4] }}>
-                      <Avatar name={guest.name} size={44} />
-                      <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-                        <Text style={styles.subtitle} numberOfLines={2}>{guest.name}</Text>
-                        {guest.status === "CONFIRMED" && guest.requestedCompanions > 0 ? <Text style={styles.muted}>{t("guests.report.requested", { requested: guest.requestedCompanions, approved: guest.approvedCompanions })}</Text> : null}
-                        {answer?.dietaryNotes ? <Text style={styles.body}>{t("guests.report.dietary", { value: answer.dietaryNotes })}</Text> : null}
-                        {answer?.message ? <Text style={styles.body}>{t("guests.report.message", { value: answer.message })}</Text> : null}
-                      </View>
-                      <StatusBadge status={guest.status} />
-                    </Pressable>
-                  </View>
-                );
-              })}
+              <Stagger>
+                {data.items.map((guest, index) => {
+                  const answer = byGuest.get(guest.guestId);
+                  const extra = (
+                    <>
+                      {guest.status === "CONFIRMED" && guest.requestedCompanions > 0 ? <Text style={styles.muted}>{t("guests.report.requested", { requested: guest.requestedCompanions, approved: guest.approvedCompanions })}</Text> : null}
+                      {answer?.dietaryNotes ? <Text style={styles.body}>{t("guests.report.dietary", { value: answer.dietaryNotes })}</Text> : null}
+                      {answer?.message ? <Text style={styles.body}>{t("guests.report.message", { value: answer.message })}</Text> : null}
+                    </>
+                  );
+                  return (
+                    <View key={guest.guestId} role="listitem" style={index > 0 ? { borderTopWidth: 1, borderTopColor: palette.border } : undefined}>
+                      <GuestRow name={guest.name} status={guest.status} label={t("guests.list.open", { name: guest.name })} onPress={() => onNavigate(withCelebration(guestDetailPath(guest.guestId), celebrationId))} extra={extra} />
+                    </View>
+                  );
+                })}
+              </Stagger>
             </View>
           )}
           {paged ? (

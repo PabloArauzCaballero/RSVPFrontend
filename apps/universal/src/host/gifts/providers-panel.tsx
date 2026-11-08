@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Linking, Pressable, Text, View } from "react-native";
+import { Linking, Pressable, ScrollView, Text, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
 import { ApiError } from "@rsvp/api-client";
 import { formatMinor } from "@rsvp/i18n";
@@ -7,9 +7,10 @@ import { problemCode, useAddGift, useProviderDiscovery, type ProviderCard } from
 import { useApiClient, useLocale, useT } from "../../platform/providers";
 import { partnerRedirectUrl } from "../../platform/partner-link";
 import { MoreOptions } from "../more-options";
-import { Row, RowList } from "./offer-row";
+import { Hint, Row, RowList } from "./offer-row";
 import { GiftErrorNotice } from "./gift-errors";
-import { ActionButton, Field, Loading, Notice, styles } from "../ui";
+import { SkeletonList, Stagger } from "@rsvp/ui";
+import { ActionButton, Field, Notice, useStyles } from "../ui";
 import { RetryNotice } from "../guests/parts";
 import { useSingleFlightGate } from "../../platform/single-flight";
 
@@ -20,6 +21,7 @@ const MIN_TOUCH = 44;
 
 /** REQ-F23-05 · One offer: what it is, who sells it, what it costs and how long it takes; address, hours and the provider's own links stay behind «Ver detalles». */
 function ProviderOffer({ card, celebrationId, adding, first, onAdd }: { readonly card: ProviderCard; readonly celebrationId: string; readonly adding: boolean; readonly first: boolean; readonly onAdd: (card: ProviderCard) => void }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const locale = useLocale();
   const fulfillment = card.fulfillment;
@@ -56,6 +58,7 @@ function ProviderOffer({ card, celebrationId, adding, first, onAdd }: { readonly
 
 /** «De un proveedor»: browse verified providers by category, city and price, and add one of their offers as a CATALOGED gift. */
 export function ProvidersPanel({ celebrationId, currency, onSeeList }: { readonly celebrationId: string; readonly currency: string; readonly onSeeList: () => void }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const client = useApiClient();
   const [category, setCategory] = useState<string | undefined>(undefined);
@@ -82,7 +85,8 @@ export function ProvidersPanel({ celebrationId, currency, onSeeList }: { readonl
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   return (
     <View style={{ gap: spacing[4] }}>
-      <View accessibilityRole="radiogroup" accessibilityLabel={t("gifts.host.providers.category")} style={[styles.row, { flexWrap: "wrap" }]}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing[2], paddingRight: spacing[4] }}>
+      <View accessibilityRole="radiogroup" accessibilityLabel={t("gifts.host.providers.category")} style={[styles.row, { flexWrap: "nowrap" }]}>
         {[undefined, ...CATEGORIES].map((code) => (
           <Pressable key={code ?? "all"} accessibilityRole="radio" aria-checked={category === code} accessibilityLabel={code ? t(`directory.category.${code}`) : t("gifts.host.providers.allCategories")} testID={`category-${code ?? "all"}`}
             onPress={() => { setCategory(code); setPage(1); }} style={[styles.choice, category === code ? styles.choiceSelected : null, { minHeight: MIN_TOUCH }]}>
@@ -90,6 +94,7 @@ export function ProvidersPanel({ celebrationId, currency, onSeeList }: { readonl
           </Pressable>
         ))}
       </View>
+      </ScrollView>
       <MoreOptions label={t("gifts.host.providers.moreFilters")} testID="more-provider-filters">
         <Field label={t("gifts.host.providers.city")} value={city} onChange={setCity} help={t("gifts.host.providers.cityHelp")} onSubmit={apply} testID="providers-city" />
         <Field label={t("gifts.host.providers.maxPrice")} value={maxPrice} onChange={setMaxPrice} keyboardType="decimal-pad" onSubmit={apply} testID="providers-max-price" />
@@ -98,13 +103,13 @@ export function ProvidersPanel({ celebrationId, currency, onSeeList }: { readonl
       <Text style={styles.muted}>{t("gifts.host.providers.disclaimer")}</Text>
       {added ? <Notice kind="success"><Text style={styles.body}>{t("gifts.host.catalog.added", { title: added })}</Text><ActionButton variant="secondary" label={t("gifts.host.add.seeList")} onPress={onSeeList} testID="see-list" /></Notice> : null}
       {unavailable ? <Notice kind="error">{t("gifts.host.catalog.unavailableBody")}</Notice> : <GiftErrorNotice error={add.error} />}
-      {discovery.isPending ? <Loading /> : null}
+      {discovery.isPending ? <SkeletonList count={3} row={{ minHeight: 150, avatar: false, trailing: false }} label={t("host.common.loading")} /> : null}
       {discovery.isError ? <RetryNotice error={discovery.error} onRetry={() => { void discovery.refetch(); }} /> : null}
-      {discovery.data && discovery.data.items.length === 0 ? <Notice>{t("gifts.host.providers.none")}</Notice> : null}
+      {discovery.data && discovery.data.items.length === 0 ? <Hint illustration="emptySearch">{t("gifts.host.providers.none")}</Hint> : null}
       {discovery.data ? <Text style={styles.muted} accessibilityLiveRegion="polite">{t("gifts.host.providers.count", { count: total })}</Text> : null}
       {discovery.data?.items.length ? (
         <RowList>
-          {discovery.data.items.map((card, index) => <ProviderOffer key={card.listingId} first={index === 0} card={card} celebrationId={celebrationId} adding={add.isPending && add.variables?.source === "CATALOGED" && add.variables.productListingId === card.listingId} onAdd={choose} />)}
+          <Stagger>{discovery.data.items.map((card, index) => <ProviderOffer key={card.listingId} first={index === 0} card={card} celebrationId={celebrationId} adding={add.isPending && add.variables?.source === "CATALOGED" && add.variables.productListingId === card.listingId} onAdd={choose} />)}</Stagger>
         </RowList>
       ) : null}
       {pages > 1 ? (

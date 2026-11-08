@@ -9,7 +9,8 @@ import { previewView } from "./preview-model";
 import { PreviewStage, DEVICE_WIDTHS, type Device } from "./preview-stage";
 import { asTemplateDocument } from "./template-gallery";
 import { HOST_ROUTES, withCelebration } from "./routes";
-import { ActionButton, Notice, styles } from "./ui";
+import { Enter } from "@rsvp/ui";
+import { ActionButton, Notice, useStyles } from "./ui";
 
 /** C15 · The real invitation at phone, tablet and desktop width, without leaving the dashboard. */
 
@@ -35,6 +36,7 @@ export function DevicePreviewScreen({ celebrationId, onNavigate }: ScreenProps):
 
 function Preview({ celebration, eventType, device, setDevice, gallery, locale, onNavigate }: { readonly celebration: Celebration; readonly eventType: TranslatedEventType | undefined; readonly device: Device; readonly setDevice: (device: Device) => void; readonly gallery: readonly MediaAsset[]; readonly locale: string; readonly onNavigate: (href: string) => void }): ReactNode {
   const t = useT();
+  const styles = useStyles();
   const client = useApiClient();
   const template = useTemplate(client, celebration.templateId);
   const theme = themeFromTemplate(template.data ? asTemplateDocument(template.data) : null, eventType?.enabledSections ?? []);
@@ -46,7 +48,7 @@ function Preview({ celebration, eventType, device, setDevice, gallery, locale, o
         <ActionButton variant="secondary" label={t("host.preview.changeStyle")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.templates, celebration.id))} />
         {celebration.status === "PUBLISHED" ? <ActionButton variant="secondary" label={t("host.preview.openPublic")} onPress={() => { void Linking.openURL(publicUrl(celebration.slug)); }} /> : null}
       </View>
-      {celebration.status === "PUBLISHED" ? null : <Notice>{t("host.preview.notPublished")}</Notice>}
+      {celebration.status === "PUBLISHED" ? null : <Enter from="up"><Notice>{t("host.preview.notPublished")}</Notice></Enter>}
       <PreviewStage theme={theme} view={previewView(celebration, eventType, locale)} gallery={images} label={t("host.preview.frame")} device={device} onDevice={setDevice} />
     </View>
   );

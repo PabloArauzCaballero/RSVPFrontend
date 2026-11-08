@@ -3,13 +3,14 @@ import { Text, View, useWindowDimensions } from "react-native";
 import { themeFromTemplate, type TemplateDocument } from "@rsvp/celebration-theme";
 import { spacing } from "@rsvp/design-tokens";
 import { useCompatibleTemplates, useSelectTemplate, type Celebration, type Template, type TranslatedEventType } from "@rsvp/query-hooks";
+import { Enter, SkeletonList, Skeleton } from "@rsvp/ui";
 import { useApiClient, useLocale, useT } from "../platform/providers";
 import { previewView } from "./preview-model";
 import { PreviewFrame } from "./preview-stage";
 import { CelebrationErrorNotice } from "./celebration-errors";
 import { LoadFailed } from "./load-failed";
 import { ActionBar } from "./save-bar";
-import { ActionButton, ChoiceGroup, EmptyState, Loading, styles, SuccessNote } from "./ui";
+import { ActionButton, ChoiceGroup, EmptyState, SuccessNote, useStyles } from "./ui";
 
 const WIDE = 960;
 const LIST_WIDTH = 320;
@@ -26,6 +27,7 @@ export const asTemplateDocument = (template: Template): TemplateDocument => temp
  */
 export function TemplateGallery({ celebration, eventType, onApplied, onSeeFull }: { readonly celebration: Celebration; readonly eventType: TranslatedEventType | undefined; readonly onApplied?: () => void; readonly onSeeFull?: () => void }): ReactNode {
   const t = useT();
+  const styles = useStyles();
   const client = useApiClient();
   const locale = useLocale();
   const { width } = useWindowDimensions();
@@ -36,15 +38,24 @@ export function TemplateGallery({ celebration, eventType, onApplied, onSeeFull }
   const [applied, setApplied] = useState<string | null>(null);
   const candidate = items.find((template) => template.id === (focused ?? items[0]?.id));
   const wide = width >= WIDE;
-  if (templates.isPending && eventType) return <Loading />;
+  if (templates.isPending && eventType) {
+    return (
+      <SkeletonList label={t("host.common.loading")}>
+        <View style={{ flexDirection: wide ? "row" : "column", gap: spacing[6] }}>
+          <View style={{ gap: spacing[2], width: wide ? LIST_WIDTH : "100%" }}>{[0, 1, 2, 3].map((slot) => <Skeleton key={slot} height={52} radius={26} />)}</View>
+          <View style={{ width: wide ? PREVIEW_WIDTH : "100%", alignItems: "center" }}><Skeleton width={wide ? PREVIEW_WIDTH : "100%"} height={wide ? PREVIEW_HEIGHT : PREVIEW_HEIGHT_NARROW} radius={24} /></View>
+        </View>
+      </SkeletonList>
+    );
+  }
   if (templates.isError) return <LoadFailed title={t("host.templates.loadFailedTitle")} error={templates.error} onRetry={() => { void templates.refetch(); }} testID="retry-templates" />;
-  if (templates.isSuccess && !items.length) return <EmptyState illustration="invitation" title={t("host.templates.emptyTitle")} body={t("host.templates.emptyBody")} />;
+  if (templates.isSuccess && !items.length) return <EmptyState illustration="published" title={t("host.templates.emptyTitle")} body={t("host.templates.emptyBody")} />;
 
   const choices = items.map((template) => ({ value: template.id, label: template.id === celebration.templateId ? `${template.name} · ${t("host.templates.current")}` : template.name, ...(wide ? { description: template.description } : {}) }));
   const actions = (
     <View style={{ gap: spacing[3] }}>
       <CelebrationErrorNotice error={select.error} />
-      {applied ? <SuccessNote message={t("host.templates.applied", { name: applied })} /> : null}
+      {applied ? <Enter from="up" key={applied}><SuccessNote message={t("host.templates.applied", { name: applied })} /></Enter> : null}
       <View style={styles.row}>
         {candidate && candidate.id !== celebration.templateId ? (
           <ActionButton label={t("host.templates.apply")} busy={select.isPending} testID="apply-template" onPress={() => select.mutate({ target: celebration, templateId: candidate.id }, { onSuccess: () => { setApplied(candidate.name); onApplied?.(); } })} />
@@ -68,7 +79,8 @@ export function TemplateGallery({ celebration, eventType, onApplied, onSeeFull }
   return (
     <View style={{ gap: spacing[4] }}>
       <Text style={styles.muted}>{t("host.templates.preserved")}</Text>
-      {wide ? <View style={{ flexDirection: "row", gap: spacing[8], alignItems: "flex-start" }}>{picker}{stage}</View> : <>{picker}{stage}</>}
+      {/* Narrow screens put the invitation first so a tap on a style changes what is already in view. */}
+      {wide ? <View style={{ flexDirection: "row", gap: spacing[8], alignItems: "flex-start" }}>{picker}{stage}</View> : <>{stage}{picker}</>}
       {wide ? null : <ActionBar>{actions}</ActionBar>}
     </View>
   );

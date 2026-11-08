@@ -51,7 +51,7 @@ export const hostEsBO = {
     defaultsSummary: "Ya lo dejamos listo: hora de {{timeZone}}, {{language}} y {{currency}}.", defaultsChange: "Cambiar zona horaria, idioma o moneda", defaultsHide: "Ocultar estos ajustes",
     timeZoneLabel: "Zona horaria del evento", timeZoneHelp: "Tus invitados verán las horas en esta zona, estén donde estén.", languageLabel: "Idioma principal", currencyLabel: "Moneda",
     titleRequired: "Escribe el nombre de tu celebración.", dateInvalid: "Revisa la fecha: usa AAAA-MM-DD, por ejemplo 2027-08-14.", timeInvalid: "Revisa la hora: usa HH:MM, por ejemplo 17:30.",
-    previewTitle: "Así va quedando", previewHint: "Cambia mientras escribes.", previewFallbackTitle: "Tu celebración",
+    previewTitle: "Así va quedando", previewHint: "Cambia mientras escribes.", previewShow: "Ver cómo queda", previewHide: "Ocultar", previewFallbackTitle: "Tu celebración",
     create: "Crear mi invitación", readyTitle: "Tu invitación está lista", readyBody: "Por ahora es un borrador: solo tú la ves. Completa lo que falta y publícala cuando quieras.",
     finish: "Completar mi invitación", chooseStyle: "Elegir otro estilo"
   },

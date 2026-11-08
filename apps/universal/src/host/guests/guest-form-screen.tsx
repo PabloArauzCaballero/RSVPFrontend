@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
+import { Enter, StickyActions } from "@rsvp/ui";
 import { guestSchema } from "@rsvp/forms";
 import { hostGuestsApi, useGuestDefaults, useGuestGroups, useGuestList, useRegisterGuest } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
-import { ActionButton, Celebrate, ChoiceGroup, ConfirmDialog, Field, styles, SuccessNote } from "../ui";
+import { ActionButton, Celebrate, ChoiceGroup, ConfirmDialog, Field, useStyles, SuccessNote } from "../ui";
 import { FailureNotice, formErrors, TextAction } from "./parts";
 import { useSingleFlightGate } from "../../platform/single-flight";
 import { rememberGuest } from "./recent-guests";
@@ -16,6 +17,7 @@ type NewGuest = Parameters<ReturnType<typeof useRegisterGuest>["mutate"]>[0];
 /** C20 · Add one guest, with validation as you leave the field and on save (REQ-F16-02). The group is chosen here: the contract assigns it at creation. */
 
 function Form({ celebrationId, onNavigate, groupId }: { readonly celebrationId: string; readonly onNavigate: (href: string) => void; readonly groupId?: string }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const client = useApiClient();
   const register = useRegisterGuest(client, celebrationId);
@@ -77,9 +79,9 @@ function Form({ celebrationId, onNavigate, groupId }: { readonly celebrationId: 
   return (
     <View style={{ gap: spacing[4] }}>
       {saved?.first ? (
-        <Celebrate title={t("guests.form.firstTitle")} body={t("guests.form.firstBody")}>
+        <Enter from="down"><Celebrate title={t("guests.form.firstTitle")} body={t("guests.form.firstBody")}>
           <ActionButton label={t("guests.form.firstAction")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.guests, celebrationId))} />
-        </Celebrate>
+        </Celebrate></Enter>
       ) : null}
       <View style={[styles.card, { maxWidth: 720 }]}>
         <Field label={t("guests.form.name")} value={draft.name} error={shown("name")} onChange={(name) => { setSaved(null); touch("name"); setDraft({ ...draft, name }); }} testID="guest-name" />
@@ -89,9 +91,11 @@ function Form({ celebrationId, onNavigate, groupId }: { readonly celebrationId: 
         {groups.length ? <ChoiceGroup label={t("guests.form.group")} value={group} onChange={setGroup} choices={[{ value: "", label: t("guests.form.noGroup") }, ...groups.map((item) => ({ value: item.id, label: item.name }))]} /> : null}
         <FailureNotice error={register.error} onRetry={submit} />
         {saved ? <SuccessNote message={t("guests.form.saved", { name: saved.name })} {...(saved.first ? {} : { detail: t("guests.form.savedDetail") })} /> : null}
+      </View>
+      <StickyActions>
         <ActionButton label={register.isPending || checking ? t("guests.form.saving") : t("guests.form.save")} busy={register.isPending || checking} onPress={submit} testID="save-guest" />
         <TextAction label={t("guests.form.back")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.guests, celebrationId))} />
-      </View>
+      </StickyActions>
       <ConfirmDialog visible={duplicate !== null} title={t("guests.form.duplicateTitle")} body={t("guests.form.duplicateBody", { name: duplicate?.name ?? "" })} confirmLabel={t("guests.form.duplicateConfirm")}
         onConfirm={() => { if (duplicate && flight.begin()) send(duplicate.input); }} onCancel={() => setDuplicate(null)} />
     </View>

@@ -77,4 +77,11 @@ describe("Screen shows the section tabs of the active destination", () => {
     renderApp(<Screen title="Inicio" nav={hostNav(t, "c-1")} current="summary" onNavigate={() => undefined}><span>cuerpo</span></Screen>, client);
     expect(screen.queryByRole("tablist")).toBeNull();
   });
+
+  it("draws no overflow fade while the tabs fit (the fades appear only with scrollable content)", () => {
+    const { client } = fakeClient({ ...baseHandlers() });
+    renderApp(<Screen title="Invitados" nav={hostNav(t, "c-1")} current="report" onNavigate={() => undefined}><span>cuerpo</span></Screen>, client);
+    expect(screen.queryByTestId("tabs-fade-left")).toBeNull();
+    expect(screen.queryByTestId("tabs-fade-right")).toBeNull();
+  });
 });

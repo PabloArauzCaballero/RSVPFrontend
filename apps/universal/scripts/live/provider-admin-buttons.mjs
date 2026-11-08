@@ -66,7 +66,11 @@ async function session(email, password = PASSWORD, width = WIDTH) {
 const go = async (page, path) => { await page.goto(`${APP}${path}`); await page.waitForLoadState("networkidle").catch(() => undefined); };
 const id = (page, testId) => page.getByTestId(testId).filter({ visible: true }).first();
 const text = (page, pattern) => page.getByText(pattern).filter({ visible: true }).first();
-const fill = (page, testId, value) => id(page, testId).fill(String(value));
+// Campaign tracking lives behind "More options" in Contacto; open it the first time a field of it is needed.
+const fill = async (page, testId, value) => {
+  if (/^utm-/.test(testId) && !(await id(page, testId).isVisible().catch(() => false))) await id(page, "destinations-more").click();
+  await id(page, testId).fill(String(value));
+};
 /** Admin queues show 10 rows and "Ver más": reveal the row of a given action before touching it. */
 const reveal = async (page, testId) => {
   let idle = 0;
@@ -1014,7 +1018,7 @@ async function admin() {
       return "0 PUT; el backend tambien rechaza (400 compatibleTemplateTags/hostRoles >=1, 422 sin traduccion por defecto)";
     });
     await step("Tipos de evento", "save-event-type", "ERROR codigo en minusculas aceptado por la UI se normaliza; red caida", async () => {
-      await fill(page, "event-type-code", code.toLowerCase()); await fill(page, "event-type-roles", "HOST1"); await fill(page, "event-type-tags", "wedding"); await fill(page, "event-type-name-es-BO", "Evento prueba");
+      await fill(page, "event-type-code", code.toLowerCase()); await fill(page, "event-type-roles", "HOST1"); await fill(page, "event-type-tags", "wedding"); await fill(page, "event-type-name-es-BO", `Evento prueba ${stamp}`);
       await offline(page, /admin\/event-types\//, async () => { await click(page, "save-event-type"); await text(page, /No hay conexión con el servidor/).waitFor(); });
       assert.ok(!(await http("GET", "/celebrations/admin/event-types", { token: adminToken })).json.items.some((t) => t.code === code));
       return "red caida -> aviso; GET: el tipo no existe";
@@ -1027,7 +1031,7 @@ async function admin() {
       assert.equal(puts.length, 1, `PUT enviados: ${puts.length}`);
       const created = (await http("GET", "/celebrations/admin/event-types", { token: adminToken })).json.items.find((t) => t.code === code);
       assert.equal(created.status, "ACTIVE"); assert.deepEqual(created.hostRoles, ["HOST1"]);
-      await page.getByRole("radio", { name: new RegExp(`^${code}`) }).click();
+      await page.getByRole("radio", { name: new RegExp(`^Evento prueba ${stamp} · `) }).click(); // the list shows the localized name, not the code
       await page.getByRole("radio", { name: "Retirado", exact: true }).click();
       await click(page, "save-event-type"); await text(page, /Guardado\./).waitFor();
       const retired = (await http("GET", "/celebrations/admin/event-types", { token: adminToken })).json.items.find((t) => t.code === code);

@@ -1,12 +1,14 @@
 import { useState, type ReactNode } from "react";
 import { Linking, Text, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
+import { Stagger, useColors } from "@rsvp/ui";
 import { DOCUMENT_TYPES, MAX_DOCUMENT_BYTES, useDeleteDocument, useDocumentDownload, useProviderDocuments, useUploadDocument, type DocumentContentType, type DocumentKind, type Provider } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../platform/providers";
 import { pickDocument, type PickedImage } from "../platform/pick-document";
-import { ActionButton, ChoiceGroup, ConfirmDialog, EmptyState, Loading, Notice, PageIntro, Section, styles } from "../host/ui";
-import { PortalErrorNotice as ErrorNotice } from "./errors";
+import { ActionButton, ChoiceGroup, ConfirmDialog, EmptyState, Notice, PageIntro, Section, useStyles } from "../host/ui";
+import { PortalErrorNotice as ErrorNotice, PortalErrorState } from "./errors";
 import { PortalScreen } from "./frame";
+import { RowsSkeleton } from "./parts";
 import { useSingleMutation } from "../platform/single-flight";
 
 const KINDS: readonly DocumentKind[] = ["IDENTITY", "BUSINESS_REGISTRATION", "TAX_ID", "ADDRESS_PROOF", "OTHER"];
@@ -23,6 +25,8 @@ export function documentProblem(file: Pick<PickedImage, "type" | "size"> | null)
 /** D4 · Verification documents: register, PUT to the presigned URL (no bearer, the headers the service returned), complete. Private by contract. */
 function Documents({ provider }: { readonly provider: Provider }): ReactNode {
   const t = useT();
+  const styles = useStyles();
+  const palette = useColors();
   const client = useApiClient();
   const list = useProviderDocuments(client, provider.id);
   const upload = useUploadDocument(client, provider.id);
@@ -73,10 +77,10 @@ function Documents({ provider }: { readonly provider: Provider }): ReactNode {
       {removed ? <Notice kind="success">{t("portal.documents.deleted")}</Notice> : null}
       <ErrorNotice error={remove.error ?? open.error} onRetry={() => { if (remove.error && remove.variables) removeOnce(remove.variables); else if (open.variables) openOnce(open.variables); }} />
       <ConfirmDialog visible={deleting !== null} danger title={t("portal.documents.deleteTitle")} body={t("portal.documents.deleteBody")} confirmLabel={t("portal.documents.delete")} onCancel={() => setDeleting(null)} onConfirm={() => { const id = deleting; setDeleting(null); if (id) removeOnce(id, { onSuccess: () => setRemoved(true) }); }} />
-      {list.isPending ? <Loading /> : list.isError ? <ErrorNotice error={list.error} onReload={() => { void list.refetch(); }} /> : list.data.items.length === 0 ? <EmptyState illustration="provider" title={t("portal.documents.emptyTitle")} body={t("portal.documents.empty")} /> : (
-        <View role="list" style={{ gap: spacing[2] }}>
-          {list.data.items.map((item) => (
-            <View key={item.id} role="listitem" testID={`document-${item.id}`} style={[styles.card, { gap: spacing[1] }]}>
+      {list.isPending ? <RowsSkeleton count={2} minHeight={96} /> : list.isError ? <PortalErrorState error={list.error} onRetry={() => { void list.refetch(); }} /> : list.data.items.length === 0 ? <EmptyState illustration="provider" title={t("portal.documents.emptyTitle")} body={t("portal.documents.empty")} /> : (
+        <View role="list" style={{ maxWidth: 720 }}>
+          <Stagger>{list.data.items.map((item) => (
+            <View key={item.id} role="listitem" testID={`document-${item.id}`} style={{ gap: spacing[1], paddingVertical: spacing[3], borderTopWidth: 1, borderTopColor: palette.border }}>
               <Text style={styles.subtitle}>{t(`portal.documents.kinds.${item.kind}`)} · {item.fileName}</Text>
               <Text style={styles.muted}>{t(`portal.documents.status.${item.status}`)} · {t("portal.documents.size", { kb: Math.max(1, Math.round(item.sizeBytes / BYTES_PER_KB)) })}</Text>
               <View style={styles.row}>
@@ -84,7 +88,7 @@ function Documents({ provider }: { readonly provider: Provider }): ReactNode {
                 <ActionButton variant="danger" label={t("portal.documents.delete")} disabled={remove.isPending} busy={remove.isPending && remove.variables === item.id} onPress={() => { setRemoved(false); remove.reset(); setDeleting(item.id); }} testID={`document-delete-${item.id}`} />
               </View>
             </View>
-          ))}
+          ))}</Stagger>
         </View>
       )}
     </View>

@@ -1,15 +1,14 @@
 import { useState, type ReactNode } from "react";
 import { Image, Text, View } from "react-native";
 import { radius, spacing } from "@rsvp/design-tokens";
-import { CheckMark } from "@rsvp/ui";
+import { CheckMark, Enter, Skeleton, SkeletonList, useColors } from "@rsvp/ui";
 import { useDeleteMedia, useMediaAssets, useReorderMedia, useUploadMedia, type MediaAsset } from "@rsvp/query-hooks";
 import { pickImage as defaultPick, type PickedImage } from "../platform/pick-image";
 import { useApiClient, useT } from "../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "./gate";
 import { CelebrationErrorNotice } from "./celebration-errors";
 import { CenteredActions, LoadFailed } from "./load-failed";
-import { ActionButton, ConfirmDialog, EmptyState, Loading, Notice, styles } from "./ui";
-import { livePalette as palette } from "../platform/theme";
+import { ActionButton, ConfirmDialog, EmptyState, Notice, useStyles } from "./ui";
 
 /** C12 · Upload straight to object storage with progress, reorder and choose the cover (REQ-F11-05). */
 
@@ -18,6 +17,8 @@ export const MAX_BYTES = 10_485_760;
 const TILE = 200;
 const TILE_MAX = 260;
 const PERCENT = 100;
+const MAX_STAGGER = 7;
+const STAGGER_MS = 40;
 
 export type ImageProblem = "invalidType" | "tooLarge" | null;
 
@@ -36,6 +37,8 @@ function move(ids: readonly string[], index: number, delta: number): string[] {
 
 function Gallery({ celebrationId, pick }: { readonly celebrationId: string; readonly pick: () => Promise<PickedImage | null> }): ReactNode {
   const t = useT();
+  const palette = useColors();
+  const styles = useStyles();
   const client = useApiClient();
   const assets = useMediaAssets(client, celebrationId);
   const upload = useUploadMedia(client, celebrationId);
@@ -71,7 +74,13 @@ function Gallery({ celebrationId, pick }: { readonly celebrationId: string; read
   return (
     <View style={{ gap: spacing[4] }}>
       {failedLoad ? <LoadFailed title={t("host.gallery.loadFailedTitle")} error={assets.error} onRetry={() => { void assets.refetch(); }} testID="retry-gallery" /> : null}
-      {assets.isPending ? <Loading /> : null}
+      {assets.isPending ? (
+        <SkeletonList label={t("host.common.loading")}>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing[4] }}>
+            {[0, 1, 2].map((slot) => <View key={slot} style={{ flexGrow: 1, flexBasis: TILE, maxWidth: TILE_MAX }}><Skeleton height={TILE} radius={radius.lg} /></View>)}
+          </View>
+        </SkeletonList>
+      ) : null}
       {empty ? <EmptyState illustration="invitation" title={t("host.gallery.emptyTitle")} body={t("host.gallery.emptyBody")} action={<CenteredActions>{addButton}</CenteredActions>} /> : null}
       {items.length || failedLoad ? (
         <View style={{ gap: spacing[2], alignItems: "flex-start" }}>
@@ -91,7 +100,9 @@ function Gallery({ celebrationId, pick }: { readonly celebrationId: string; read
       {done ? <Notice kind="success">{done}</Notice> : null}
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing[4] }}>
         {items.map((asset, index) => (
-          <View key={asset.id} style={{ flexGrow: 1, flexBasis: TILE, maxWidth: TILE_MAX, gap: spacing[2] }} accessibilityLabel={t("host.gallery.photo", { n: index + 1 })}>
+          <View key={asset.id} style={{ flexGrow: 1, flexBasis: TILE, maxWidth: TILE_MAX }} accessibilityLabel={t("host.gallery.photo", { n: index + 1 })}>
+            <Enter from="down" delay={Math.min(index, MAX_STAGGER) * STAGGER_MS}>
+            <View style={{ gap: spacing[2] }}>
             <View style={{ aspectRatio: 1, borderRadius: radius.lg, overflow: "hidden", backgroundColor: palette.primaryMuted }}>
               {asset.variants.thumb ? <Image source={{ uri: asset.variants.thumb }} style={{ width: "100%", height: "100%" }} resizeMode="cover" accessibilityIgnoresInvertColors /> : null}
             </View>
@@ -107,6 +118,8 @@ function Gallery({ celebrationId, pick }: { readonly celebrationId: string; read
               {asset.id === cover ? null : <ActionButton variant="secondary" label={t("host.gallery.makeCover")} testID={`cover-${asset.id}`} onPress={() => reorder.mutate({ assetIds: ids, coverAssetId: asset.id }, saved())} />}
               <ActionButton variant="danger" label={t("host.gallery.delete")} testID={`delete-${asset.id}`} onPress={() => { remove.reset(); setToDelete(asset.id); }} />
             </View>
+            </View>
+            </Enter>
           </View>
         ))}
       </View>

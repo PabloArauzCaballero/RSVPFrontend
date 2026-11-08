@@ -8,7 +8,7 @@ import { CelebrationErrorNotice } from "./celebration-errors";
 import { Chip } from "@rsvp/ui";
 import { spacing } from "@rsvp/design-tokens";
 import { Row, RowList } from "./gifts/offer-row";
-import { ActionButton, ConfirmDialog, Notice, styles } from "./ui";
+import { ActionButton, ConfirmDialog, Notice, useStyles } from "./ui";
 
 /**
  * C18 · The four AUTO_ACCEPT / RESTRICTED switches. Each one explains what happens before it
@@ -22,6 +22,7 @@ const OTHER: Readonly<Record<ApprovalMode, ApprovalMode>> = { AUTO_ACCEPT: "REST
 type Pending = { readonly kind: "mode"; readonly key: SwitchKey; readonly value: ApprovalMode } | { readonly kind: "partner"; readonly value: boolean } | null;
 
 function Modes({ celebration, refetch }: { readonly celebration: Celebration; readonly refetch: () => void }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const client = useApiClient();
   const update = useUpdateSettings(client, celebration.id);

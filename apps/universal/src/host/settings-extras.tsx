@@ -6,7 +6,7 @@ import { useApiClient, useLocale, useT } from "../platform/providers";
 import { CelebrationErrorNotice } from "./celebration-errors";
 import { useSingleFlight } from "../platform/single-flight";
 import { isUserId } from "./limits";
-import { ActionButton, ChoiceGroup, ConfirmDialog, Field, Loading, Notice, Section, styles } from "./ui";
+import { ActionButton, ChoiceGroup, ConfirmDialog, Field, Loading, Notice, Section, useStyles } from "./ui";
 
 /** C17 · Celebration type, team (collaborators) and change history. Each one is a real Celebration API operation. */
 
@@ -14,6 +14,7 @@ const ROLES = ["CO_HOST", "VIEWER"] as const;
 type Role = (typeof ROLES)[number];
 
 export function EventTypeSection({ celebration, onSaved }: { readonly celebration: Celebration; readonly onSaved: (message: string | null) => void }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const client = useApiClient();
   const locale = useLocale();
@@ -37,6 +38,7 @@ export function EventTypeSection({ celebration, onSaved }: { readonly celebratio
 }
 
 export function TeamSection({ celebration, onSaved }: { readonly celebration: Celebration; readonly onSaved: (message: string | null) => void }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const client = useApiClient();
   const once = useSingleFlight();
@@ -81,6 +83,7 @@ const AUDIT_ACTIONS = ["CREATED", "TYPE_ASSIGNED", "CONFIGURED", "SETTINGS_UPDAT
 const auditLabel = (t: Translate, action: string): string => t(`host.settingsExtra.audit.actions.${AUDIT_ACTIONS.includes(action) ? action : "other"}`);
 
 export function AuditSection({ celebrationId, timeZone }: { readonly celebrationId: string; readonly timeZone: string }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const client = useApiClient();
   const locale = useLocale();

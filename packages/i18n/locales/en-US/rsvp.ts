@@ -64,19 +64,19 @@ export const rsvpEnUS: DeepStrings<typeof rsvpEsBO> = {
     loading: "Opening your invitation…",
     hostedBy: "{{hosts}} invite you",
     question: "Are you coming?",
-    lead: "Answer with one tap. No account needed.",
+    lead: "One tap to answer. No account or password.",
     yes: "I am in", no: "Cannot make it", chooseOne: "Choose an option to continue.",
     companions: "How many are coming with you?", companionsAdd: "Add a companion", companionsRemove: "Remove a companion", companionsCount: "{{count}} companions",
     companionsIncluded: "Included in your invitation: {{count}}. If you ask for more, your hosts decide.",
     extrasOpen: "Add a dietary restriction or a message", extrasClose: "Hide restriction and message",
     dietary: "Dietary restriction (optional)", dietaryHelp: "Allergies, vegetarian, gluten-free…", message: "Message for your hosts (optional)",
     submitYes: "Confirm I am coming", submitNo: "Let them know I cannot", submitNone: "Send answer", submitting: "Sending…", save: "Save changes", cancelEdit: "Leave it as it is",
-    deadlineOpen: "You can answer or change your answer until {{date}} ({{timeZone}} time).", deadlineNone: "You can change your answer whenever you like.",
+    deadlineOpen: "You can change your answer until {{date}} ({{timeZone}} time).", deadlineNone: "You can change your answer whenever you like.",
     countdown: "{{days}} d {{hours}} h {{minutes}} min left", countdownLabel: "Time left to answer",
     doneTitle: "Done, you are in.", doneBodyUntil: "Your answer is saved. You can change it until {{date}}.", doneBodyAnytime: "Your answer is saved. You can change it whenever you like.",
     declinedTitle: "Thanks for letting them know.", declinedBody: "It is noted that you cannot come. If you change your mind, you can change your answer.",
     savedNote: "Changes saved.",
-    giftsCta: "See the gift list", giftsHint: "If you would like to give something, reserve one from the list in one tap.",
+    giftsCta: "See the gift list", giftsHint: "Want to give a gift? Reserve one in a tap.",
     againTitleYes: "Your attendance is confirmed", againTitleNo: "It is noted that you cannot come", edit: "Change my answer", editHint: "You can change it until the deadline.",
     summaryLabel: "Your answer", summaryCompanions: "Approved companions: {{count}}", summaryPending: "{{count}} to approve: your hosts decide", summaryDietary: "Dietary restriction: {{value}}", summaryMessage: "Your message: {{value}}", summaryUpdated: "Updated on {{date}}",
     closedTitle: "The time to answer is over", closedOn: "Answers closed on {{date}} ({{timeZone}} time).", closedGeneric: "Your hosts closed the answers.",
@@ -99,7 +99,7 @@ export const rsvpEnUS: DeepStrings<typeof rsvpEsBO> = {
       restrictedTitle: "This celebration only takes answers with a personal link", restrictedBody: "Ask whoever invited you for yours. If you already have it, open it from the original message.",
       doneTitle: "Done, you are in.", doneBody: "Keep your personal link: it is the only way to change your answer later. We do not store it in your browser.",
       replayBody: "We already had your answer. If you lost your link, ask whoever invited you for a new one.", linkLabel: "Your personal link", copyLink: "Copy link", copied: "Link copied.",
-      emailNotice: "You may not get a confirmation email: it depends on how your hosts set theirs up. Your link is your proof."
+      emailNotice: "A confirmation email may not arrive. Your link is your proof: keep it."
     }
   }
 };

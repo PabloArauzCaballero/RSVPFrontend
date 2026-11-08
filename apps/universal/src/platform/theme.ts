@@ -30,10 +30,3 @@ export function useThemeHydration(): void {
   useEffect(() => { void themeStore.hydrate(); }, []);
 }
 
-/**
- * The active palette read at render time, for screens that keep a module-level `palette` name. It follows the scheme of
- * the theme store (the tree remounts when it changes). In a component prefer `useColors()`; never read it at module level.
- */
-export const livePalette = Object.defineProperties({} as (typeof colors)[ColorTheme], Object.fromEntries(
-  (Object.keys(colors.light) as (keyof (typeof colors)["light"])[]).map((key) => [key, { enumerable: true, get: () => colors[currentScheme()][key] }])
-));

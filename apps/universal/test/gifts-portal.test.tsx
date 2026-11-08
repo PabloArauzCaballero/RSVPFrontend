@@ -287,6 +287,7 @@ describe("REQ-F28-04 · destinations and UTM need at least one destination", () 
     fireEvent.click(screen.getByTestId("destinations-save"));
     expect(await screen.findByText("Elige al menos un destino.")).toBeTruthy();
     fireEvent.click(screen.getByTestId("destination-WHATSAPP"));
+    fireEvent.click(screen.getByTestId("destinations-more"));
     type("Origen de la campaña", "bad source!");
     fireEvent.click(screen.getByTestId("destinations-save"));
     expect((await screen.findAllByText(/solo letras/i)).length).toBeGreaterThan(0);

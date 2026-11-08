@@ -1,22 +1,24 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
-import { Chip } from "@rsvp/ui";
+import { Chip, Stagger, useColors } from "@rsvp/ui";
 import { ApiError } from "@rsvp/api-client";
 import { formatCelebrationDate } from "@rsvp/i18n";
 import { useAvailability, useDecideBooking, useProviderBookings, useSetAvailability, type Blackout, type Provider } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../platform/providers";
-import { ActionButton, ConfirmDialog, EmptyState, Field, PageIntro, Loading, Notice, Section, ToggleChip, styles } from "../host/ui";
+import { ActionButton, ConfirmDialog, EmptyState, Field, PageIntro, Notice, Section, ToggleChip, useStyles } from "../host/ui";
 import { PortalErrorNotice as ErrorNotice } from "./errors";
 import { TIME, blackoutProblem, validCapacity } from "./agenda-rules";
 import { PortalScreen } from "./frame";
 import { useSingleMutation } from "../platform/single-flight";
-import { livePalette } from "../platform/theme";
+import { RowsSkeleton, StickyActions } from "./parts";
 
 
 /** D9/D10 · Availability rules and blackouts (the public calendar is computed from them), and the date requests received. */
 function Agenda({ provider }: { readonly provider: Provider }): ReactNode {
   const t = useT();
+  const styles = useStyles();
+  const palette = useColors();
   const locale = useLocale();
   const client = useApiClient();
   const availability = useAvailability(client, provider.id);
@@ -81,18 +83,18 @@ function Agenda({ provider }: { readonly provider: Provider }): ReactNode {
       <PageIntro>{t("portal.agenda.intro", { zone: provider.timeZone })}</PageIntro>
       {notice ? <Notice kind={notice.kind}>{notice.text}</Notice> : null}
       <View style={{ gap: spacing[1], maxWidth: 720 }}><Text accessibilityRole="header" style={styles.subtitle}>{pending > 0 ? t("portal.agenda.bookingsPending", { count: pending }) : t("portal.agenda.bookings")}</Text>
-        {bookings.isPending ? <Loading /> : bookings.isError ? <ErrorNotice error={bookings.error} onReload={() => { void bookings.refetch(); }} /> : bookings.data.items.length === 0 ? <EmptyState illustration="calendar" title={t("portal.agenda.bookingsEmptyTitle")} body={t("portal.agenda.bookingsEmpty")} /> : [...bookings.data.items].sort((a, b) => Number(b.status === "REQUESTED") - Number(a.status === "REQUESTED")).map((booking) => {
+        {bookings.isPending ? <RowsSkeleton count={2} minHeight={120} trailing /> : bookings.isError ? <ErrorNotice error={bookings.error} onReload={() => { void bookings.refetch(); }} /> : bookings.data.items.length === 0 ? <EmptyState illustration="freeAgenda" title={t("portal.agenda.bookingsEmptyTitle")} body={t("portal.agenda.bookingsEmpty")} /> : <Stagger>{[...bookings.data.items].sort((a, b) => Number(b.status === "REQUESTED") - Number(a.status === "REQUESTED")).map((booking) => {
           const busy = decide.isPending && decide.variables?.bookingId === booking.id ? decide.variables.action : null;
           return (
-            <View key={booking.id} style={{ gap: spacing[1], paddingVertical: spacing[3], borderTopWidth: 1, borderTopColor: livePalette.border }} testID={`booking-${booking.id}`}>
+            <View key={booking.id} style={{ gap: spacing[1], paddingVertical: spacing[3], borderTopWidth: 1, borderTopColor: palette.border }} testID={`booking-${booking.id}`}>
               <Text style={styles.subtitle}>{t("portal.agenda.date", { date: booking.date })}</Text>
               <View style={styles.row}><Chip tone={booking.status === "CONFIRMED" ? "yes" : booking.status === "REQUESTED" ? "maybe" : "no"}>{t(`portal.agenda.status.${booking.status}`)}</Chip></View>
               <Text style={styles.muted}>{t("portal.agenda.expires", { when: formatCelebrationDate(booking.expiresAt, { locale, timeZone: provider.timeZone }) })}</Text>
               {booking.status === "REQUESTED" ? <View style={styles.row}><ActionButton label={t("portal.agenda.confirm")} busy={busy === "confirm"} disabled={busy !== null} onPress={() => resolve(booking.id, "confirm")} testID={`confirm-${booking.id}`} /><ActionButton variant="danger" label={t("portal.agenda.reject")} busy={busy === "reject"} disabled={busy !== null} onPress={() => setAsking({ id: booking.id, action: "reject" })} testID={`reject-${booking.id}`} /></View> : null}
-              {booking.status === "CONFIRMED" ? <ActionButton variant="danger" label={t("portal.agenda.cancel")} busy={busy === "cancel"} disabled={busy !== null} onPress={() => setAsking({ id: booking.id, action: "cancel" })} testID={`cancel-${booking.id}`} /> : null}
+              {booking.status === "CONFIRMED" ? <ActionButton variant="secondary" label={t("portal.agenda.cancel")} busy={busy === "cancel"} disabled={busy !== null} onPress={() => setAsking({ id: booking.id, action: "cancel" })} testID={`cancel-${booking.id}`} /> : null}
             </View>
           );
-        })}
+        })}</Stagger>}
         {decide.isError && !conflict ? <ErrorNotice error={decide.error} onRetry={() => { if (decide.variables) decideOnce(decide.variables); }} /> : null}
       </View>
       {availability.isError && !(availability.error instanceof ApiError && availability.error.status === 404) ? <ErrorNotice error={availability.error} onReload={() => { void availability.refetch(); }} /> : null}
@@ -109,7 +111,7 @@ function Agenda({ provider }: { readonly provider: Provider }): ReactNode {
         <ActionButton variant="secondary" label={t("portal.agenda.addBlackout")} onPress={addBlackout} testID="blackout-add" />
         {errors.length ? <Notice kind="error">{errors.map((message) => <Text key={message} style={styles.body}>{message}</Text>)}</Notice> : null}
         <ErrorNotice error={save.error} onRetry={submit} />
-        <ActionButton label={save.isPending ? t("portal.agenda.saving") : t("portal.agenda.save")} busy={save.isPending} disabled={save.isPending} onPress={submit} testID="agenda-save" />
+        <StickyActions ground="surface"><ActionButton label={save.isPending ? t("portal.agenda.saving") : t("portal.agenda.save")} busy={save.isPending} disabled={save.isPending} onPress={submit} testID="agenda-save" /></StickyActions>
       </Section>
       <ConfirmDialog visible={asking !== null} danger title={asking ? t(`portal.agenda.${asking.action}Title`) : ""} body={asking ? t(`portal.agenda.${asking.action}Body`) : ""} confirmLabel={asking ? t(`portal.agenda.${asking.action}`) : ""} onCancel={() => setAsking(null)} onConfirm={() => { if (asking) resolve(asking.id, asking.action); setAsking(null); }} />
     </View>

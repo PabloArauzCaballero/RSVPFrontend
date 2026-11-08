@@ -12,8 +12,8 @@ import { shareText } from "../../platform/share";
 import { siteOrigin } from "../../platform/site-origin";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
-import { ActionButton, Celebrate, ChoiceGroup, ConfirmDialog, Loading, Notice, styles } from "../ui";
-import { FailureNotice, MoreOptions, RetryNotice, StatusBadge, TextAction } from "./parts";
+import { ActionButton, Celebrate, ChoiceGroup, ConfirmDialog, Notice, useStyles } from "../ui";
+import { FailureNotice, MoreOptions, RetryNotice, StatusBadge, TextAction, BlockSkeleton } from "./parts";
 import { useSingleFlightGate } from "../../platform/single-flight";
 
 /**
@@ -68,6 +68,7 @@ type GuestLink = ReturnType<typeof useGuestLink>;
 
 /** The link itself: one primary action at a time. Not issued: "Generar enlace". Issued: the milestone with Copy first. */
 function LinkSection({ link, name }: { readonly link: GuestLink; readonly name: string }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const locale = useLocale();
   const { issued, issue, revoke, confirm, message } = link;
@@ -101,6 +102,7 @@ function LinkSection({ link, name }: { readonly link: GuestLink; readonly name: 
 
 /** Reissue and revoke are the rare moves: they live behind "Más opciones" with the removal. */
 function LinkAdmin({ link }: { readonly link: GuestLink }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   return (
     <View style={{ gap: spacing[2] }}>
@@ -114,6 +116,7 @@ function LinkAdmin({ link }: { readonly link: GuestLink }): ReactNode {
 }
 
 function GroupSection({ celebrationId, guestId, groupId }: { readonly celebrationId: string; readonly guestId: string; readonly groupId: string | null }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const client = useApiClient();
   const groups = useGuestGroups(client, celebrationId);
@@ -132,6 +135,7 @@ function GroupSection({ celebrationId, guestId, groupId }: { readonly celebratio
 
 /** Irreversible removal of a guest and their data (the backend's `erasure`); there is no soft delete, so the dialog says so. */
 function EraseSection({ celebration, guestId, name, onDone }: { readonly celebration: Celebration; readonly guestId: string; readonly name: string; readonly onDone: () => void }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const client = useApiClient();
   const erase = useEraseGuest(client, celebration.id);
@@ -154,13 +158,14 @@ function EraseSection({ celebration, guestId, name, onDone }: { readonly celebra
 }
 
 function DetailBody({ celebration, guestId, onNavigate }: { readonly celebration: Celebration; readonly guestId: string; readonly onNavigate: (href: string) => void }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const locale = useLocale();
   const client = useApiClient();
   const guest = useGuestDetail(client, celebration.id, guestId);
   const link = useGuestLink(celebration, guestId);
   const status = useGuestList(client, celebration.id, { search: guest.data?.name ?? "", limit: 100 });
-  if (guest.isPending) return <Loading />;
+  if (guest.isPending) return <BlockSkeleton />;
   if (guest.isError && guest.error instanceof ApiError && guest.error.status === 404) {
     return <View style={{ gap: spacing[2] }}><Notice kind="error">{t("guests.detail.missing")}</Notice><TextAction label={t("guests.form.back")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.guests, celebration.id))} /></View>;
   }

@@ -1,15 +1,14 @@
 import type { ReactNode } from "react";
 import { Text, View } from "react-native";
-import { brand, radius, spacing } from "@rsvp/design-tokens";
+import { brand, onNight, radius, spacing } from "@rsvp/design-tokens";
+import { BrandBand, Enter, Illustration, Skeleton, SkeletonList, useColors } from "@rsvp/ui";
 import { countdownTo, useGuestSummary, useHostReservations, usePublishCheck, type Celebration } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
-import { ActionButton, Celebrate, CheckMark, EmptyState, Loading, styles } from "../ui";
+import { ActionButton, CheckMark, EmptyState, useStyles } from "../ui";
 import { FreshnessLine, RetryNotice, TextAction } from "./parts";
-import { livePalette } from "../../platform/theme";
 
-const palette = livePalette;
 
 /** What the host should do next, as one value. The first rule that applies wins; the order is the order of the brief. */
 export type NextStep =
@@ -47,9 +46,11 @@ const STEP_ROUTE: Readonly<Record<Exclude<NextStep["kind"], "done">, string>> = 
 
 /** One legend entry: a swatch, the word and the number. The swatch never carries the meaning alone. */
 function LegendItem({ testID, label, value, swatch }: { readonly testID: string; readonly label: string; readonly value: number; readonly swatch: string }): ReactNode {
+  const palette = useColors();
+  const styles = useStyles();
   return (
     <View testID={testID} accessible accessibilityLabel={`${label}: ${value}`} style={{ flexDirection: "row", alignItems: "center", gap: spacing[2] }}>
-      <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: swatch }} />
+      <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: swatch, borderWidth: 1, borderColor: palette.fieldBorder }} />
       <Text style={[styles.body, { fontVariant: ["tabular-nums"] }]}><Text style={{ fontWeight: "800" }}>{value}</Text> {label}</Text>
     </View>
   );
@@ -57,6 +58,7 @@ function LegendItem({ testID, label, value, swatch }: { readonly testID: string;
 
 /** The answer so far as one stacked bar (the kit's progress pattern): confirmed, declined, and what is still open. Decorative: the legend says every number. */
 function ResponseBar({ confirmed, declined, total }: { readonly confirmed: number; readonly declined: number; readonly total: number }): ReactNode {
+  const palette = useColors();
   const share = (n: number): `${number}%` => `${total ? (n / total) * 100 : 0}%`;
   return (
     <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ height: 14, borderRadius: radius.full, backgroundColor: palette.primaryMuted, overflow: "hidden", flexDirection: "row" }}>
@@ -68,6 +70,8 @@ function ResponseBar({ confirmed, declined, total }: { readonly confirmed: numbe
 
 /** A milestone of the celebration: the drawn check when reached, an empty ring when not. The words say the state too. */
 function StepRow({ done, title, detail, testID }: { readonly done: boolean; readonly title: string; readonly detail: string; readonly testID?: string }): ReactNode {
+  const styles = useStyles();
+  const palette = useColors();
   return (
     <View {...(testID ? { testID } : {})} accessible accessibilityLabel={`${title}: ${detail}`} style={{ flexDirection: "row", alignItems: "center", gap: spacing[3], minHeight: 44 }}>
       <View style={{ width: 28, height: 28, alignItems: "center", justifyContent: "center" }}>
@@ -89,22 +93,42 @@ function deadlineLine(celebration: Celebration, t: ReturnType<typeof useT>, now:
   return !left || left.days === 0 ? t("guests.summary.deadlineToday") : t("guests.summary.daysToDeadline", { count: left.days });
 }
 
-/** The featured card: the one thing to do now, on the night colour with its single primary button. */
+/** The one thing to do now: a night band with the woven texture, its single primary button, and a soft entrance each time the step changes. */
 function NextCard({ step, onGo, t }: { readonly step: Exclude<NextStep, { kind: "done" | "addGuests" }>; readonly onGo: () => void; readonly t: ReturnType<typeof useT> }): ReactNode {
+  const palette = useColors();
   const base = `guests.summary.next.${step.kind}`;
   const count = step.kind === "finish" ? step.missing : step.kind === "publish" ? 0 : step.count;
   const title = step.kind === "publish" ? t(`${base}.title`) : step.kind === "finish" ? t(`${base}.title`) : t(`${base}.title`, { count });
   const body = step.kind === "finish" ? t(`${base}.body`, { count }) : t(`${base}.body`);
   return (
-    <View testID="next-step" style={{ backgroundColor: brand.noche, borderRadius: radius.xl, padding: spacing[6], gap: spacing[3] }}>
-      <Text accessibilityRole="header" aria-level={2} style={{ color: "#FFFFFF", fontSize: 28, lineHeight: 32, fontWeight: "800", letterSpacing: -0.7 }}>{title}</Text>
-      <Text style={{ color: brand.niebla, fontSize: 16, lineHeight: 24, maxWidth: 520 }}>{body}</Text>
-      <View style={{ alignItems: "flex-start", paddingTop: spacing[2] }}><ActionButton label={t(`${base}.action`)} onPress={onGo} testID="next-step-action" /></View>
-    </View>
+    <Enter key={step.kind} from="down">
+      <View testID="next-step">
+        <BrandBand tone="night" art="ready" style={{ borderWidth: 1, borderColor: palette.border }}>
+          <Text accessibilityRole="header" aria-level={2} style={{ color: onNight, fontSize: 28, lineHeight: 32, fontWeight: "800", letterSpacing: -0.7 }}>{title}</Text>
+          <Text style={{ color: brand.niebla, fontSize: 16, lineHeight: 24, maxWidth: 520 }}>{body}</Text>
+          <View style={{ alignItems: "flex-start", paddingTop: spacing[2] }}><ActionButton label={t(`${base}.action`)} onPress={onGo} testID="next-step-action" /></View>
+        </BrandBand>
+      </View>
+    </Enter>
+  );
+}
+
+/** What the panel looks like while it loads: the band, the progress rows and the bar, at their real heights. */
+function SummarySkeleton(): ReactNode {
+  const t = useT();
+  return (
+    <SkeletonList label={t("guests.loading")}>
+      <View style={{ gap: spacing[5] }}>
+        <Skeleton height={184} radius={radius.xl} />
+        <View style={{ gap: spacing[3] }}><Skeleton width="40%" height={22} /><Skeleton height={44} /><Skeleton height={44} /><Skeleton height={44} /><Skeleton height={16} radius={8} /></View>
+      </View>
+    </SkeletonList>
   );
 }
 
 function SummaryBody({ celebration, onNavigate }: { readonly celebration: Celebration; readonly onNavigate: (href: string) => void }): ReactNode {
+  const styles = useStyles();
+  const palette = useColors();
   const t = useT();
   const client = useApiClient();
   const summary = useGuestSummary(client, celebration.id);
@@ -113,7 +137,7 @@ function SummaryBody({ celebration, onNavigate }: { readonly celebration: Celebr
   const check = usePublishCheck(client, published ? "" : celebration.id);
   const gifts = useHostReservations(client, celebration.id, "PENDING_REVIEW");
   const go = (path: string) => () => onNavigate(withCelebration(path, celebration.id));
-  if (summary.isPending) return <Loading />;
+  if (summary.isPending) return <SummarySkeleton />;
   if (summary.isError) return <RetryNotice error={summary.error} onRetry={() => { void summary.refetch(); }} />;
   const data = summary.data;
   // Authoritative total from the read model (contract v1.9.0), not the size of a page of requests.
@@ -122,8 +146,16 @@ function SummaryBody({ celebration, onNavigate }: { readonly celebration: Celebr
   const step = nextStep({ published, ready: check.data ? check.data.ready : null, missing: check.data?.missingFields.length ?? 0, total: data.total, pending: data.pending, openRequests: open, pendingGifts: gifts.data?.items.length ?? 0 });
   return (
     <View style={{ gap: spacing[5] }}>
-      {step.kind === "addGuests" ? <EmptyState illustration="table" title={t("guests.summary.next.addGuests.title")} body={t("guests.summary.next.addGuests.body")} action={<ActionButton label={t("guests.summary.next.addGuests.action")} onPress={go(STEP_ROUTE.addGuests)} testID="next-step-action" />} /> : null}
-      {step.kind === "done" ? <Celebrate title={t("guests.summary.next.done.title")} body={t("guests.summary.next.done.body")} /> : null}
+      {step.kind === "addGuests" ? <Enter key="addGuests" from="down"><EmptyState illustration="welcomeHost" title={t("guests.summary.welcome.title")} body={t("guests.summary.welcome.body")} action={<ActionButton label={t("guests.summary.welcome.action")} onPress={go(STEP_ROUTE.addGuests)} testID="next-step-action" />} /></Enter> : null}
+      {step.kind === "done" ? <Enter key="done" from="down"><View role="status"><EmptyState illustration="success" title={t("guests.summary.next.done.title")} body={t("guests.summary.next.done.body")} /></View></Enter> : null}
+      {answered === 1 && step.kind !== "addGuests" && step.kind !== "done" ? (
+        <Enter from="down">
+          <View testID="first-reply" role="status" style={{ flexDirection: "row", alignItems: "center", gap: spacing[4] }}>
+            <Illustration name="firstReply" tone="auto" size="sm" />
+            <View style={{ flex: 1, minWidth: 0, gap: 2 }}><Text style={styles.subtitle}>{t("guests.summary.firstReply.title")}</Text><Text style={styles.muted}>{t("guests.summary.firstReply.body")}</Text></View>
+          </View>
+        </Enter>
+      ) : null}
       {step.kind !== "addGuests" && step.kind !== "done" ? <NextCard step={step} t={t} onGo={go(STEP_ROUTE[step.kind])} /> : null}
       <View style={[styles.card, { gap: spacing[4] }]}>
         <Text accessibilityRole="header" aria-level={2} style={styles.subtitle}>{t("guests.summary.progressTitle")}</Text>
@@ -137,10 +169,10 @@ function SummaryBody({ celebration, onNavigate }: { readonly celebration: Celebr
             <ResponseBar confirmed={data.confirmed} declined={data.declined} total={data.total} />
             <View style={{ flexDirection: "row", flexWrap: "wrap", columnGap: spacing[6], rowGap: spacing[2] }}>
               <LegendItem testID="count-confirmed" label={t("guests.summary.confirmed")} value={data.confirmed} swatch={palette.primary} />
-              <LegendItem testID="count-pending" label={t("guests.summary.pending")} value={data.pending} swatch={brand.niebla} />
-              <LegendItem testID="count-declined" label={t("guests.summary.declined")} value={data.declined} swatch={palette.text} />
+              <LegendItem testID="count-pending" label={t("guests.summary.pending")} value={data.pending} swatch={palette.surfaceMuted} />
+              <LegendItem testID="count-declined" label={t("guests.summary.declined")} value={data.declined} swatch={palette.textMuted} />
               <LegendItem testID="count-companions" label={t("guests.summary.companions")} value={data.companions} swatch={brand.ambar} />
-              <LegendItem testID="count-total" label={t("guests.summary.total")} value={data.total} swatch={palette.border} />
+              <LegendItem testID="count-total" label={t("guests.summary.total")} value={data.total} swatch={palette.surface} />
             </View>
           </View>
         ) : null}

@@ -1,19 +1,17 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { Text, TextInput, View } from "react-native";
 import { radius, spacing } from "@rsvp/design-tokens";
-import { Avatar, Chip } from "@rsvp/ui";
+import { Avatar, Chip, Stagger, useColors } from "@rsvp/ui";
 import { useGuestGroups, useGuestList, type GuestListFilters, type RsvpStatus } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { guestDetailPath, HOST_ROUTES, withCelebration } from "../routes";
-import { ActionButton, EmptyState, Loading, styles } from "../ui";
-import { CompactPicker, FreshnessLine, MoreOptions, RetryNotice, StatusBadge, TextAction } from "./parts";
+import { ActionButton, EmptyState, useStyles } from "../ui";
+import { CompactPicker, FreshnessLine, GUEST_ROW_HEIGHT, GuestListSkeleton, GuestRow, MoreOptions, RetryNotice, StatusFilter, TextAction } from "./parts";
 import { GUEST_SETTINGS_PATH } from "./settings-input";
 import { lastPageOffset } from "./paging";
 import { notYetListed } from "./recent-guests";
-import { livePalette } from "../../platform/theme";
 
-const palette = livePalette;
 
 /** C19 · Guest list: server-side search, status filter and paging, so 500 guests stay as light as 5 (REQ-F16-01). */
 
@@ -38,6 +36,8 @@ function GroupFilter({ celebrationId, value, onChange }: { readonly celebrationI
 }
 
 function ListBody({ celebrationId, timeZone, onNavigate }: { readonly celebrationId: string; readonly timeZone: string; readonly onNavigate: (href: string) => void }): ReactNode {
+  const styles = useStyles();
+  const palette = useColors();
   const t = useT();
   const client = useApiClient();
   const [search, setSearch] = useState("");
@@ -83,30 +83,22 @@ function ListBody({ celebrationId, timeZone, onNavigate }: { readonly celebratio
       </View>
       {empty ? null : (
         <>
-          <View style={{ gap: spacing[1] }}>
-            <Text style={styles.label}>{t("guests.list.search")}</Text>
-            <TextInput accessibilityLabel={t("guests.list.search")} value={search} onChangeText={(value) => { setSearch(value); setOffset(0); }} autoCapitalize="none" returnKeyType="search" maxLength={SEARCH_MAX} style={styles.input} testID="guest-search" />
+          <View>
+            <TextInput accessibilityLabel={t("guests.list.search")} placeholder={t("guests.list.search")} placeholderTextColor={palette.textMuted} value={search} onChangeText={(value) => { setSearch(value); setOffset(0); }} autoCapitalize="none" returnKeyType="search" maxLength={SEARCH_MAX} style={styles.input} testID="guest-search" />
           </View>
-          <View accessibilityRole="radiogroup" accessibilityLabel={t("guests.list.filterLabel")} style={styles.row}>
-            {FILTERS.map((value) => (
-              <Pressable key={value} accessibilityRole="radio" aria-checked={status === value} accessibilityLabel={value === "ALL" ? t("guests.list.all") : t(`guests.status.${value}`)} onPress={() => { setStatus(value); setOffset(0); }}
-                style={[styles.navItem, status === value && styles.navItemCurrent]}>
-                <Text style={styles.label}>{value === "ALL" ? t("guests.list.all") : t(`guests.status.${value}`)}</Text>
-              </Pressable>
-            ))}
-          </View>
+          <StatusFilter label={t("guests.list.filterLabel")} value={status} onChange={(value) => { setStatus(value as RsvpStatus | "ALL"); setOffset(0); }} options={FILTERS.map((value) => ({ value, label: value === "ALL" ? t("guests.list.all") : t(`guests.status.${value}`) }))} />
           {data ? <GroupFilter celebrationId={celebrationId} value={group} onChange={(value) => { setGroup(value); setOffset(0); }} /> : null}
         </>
       )}
-      {list.isPending ? <Loading /> : null}
+      {list.isPending ? <GuestListSkeleton /> : null}
       {list.isError ? <RetryNotice error={list.error} onRetry={() => { void list.refetch(); }} /> : null}
       {data && !list.isError ? (
         <View style={{ gap: spacing[3] }} accessibilityLiveRegion="polite">
-          {empty ? <EmptyState illustration="table" title={t("guests.list.emptyTitle")} body={t("guests.list.empty")} action={<View style={{ alignItems: "center", gap: spacing[1] }}>{addGuest}<TextAction label={t("guests.list.import")} onPress={go(HOST_ROUTES.guestImport)} /></View>} />
+          {empty ? <EmptyState illustration="guestsEmpty" title={t("guests.list.emptyTitle")} body={t("guests.list.empty")} action={<View style={{ alignItems: "center", gap: spacing[1] }}>{addGuest}<TextAction label={t("guests.list.import")} onPress={go(HOST_ROUTES.guestImport)} /></View>} />
             : data.items.length === 0 && appearing.length === 0 ? <EmptyState illustration="emptySearch" title={t("guests.list.emptyFilteredTitle")} body={t("guests.list.emptyFiltered")} /> : (
             <View role="list" style={{ borderRadius: radius.lg, borderWidth: 1, borderColor: palette.border, backgroundColor: palette.surface, overflow: "hidden" }}>
               {appearing.map((guest) => (
-                <View key={`new-${guest.at}-${guest.name}`} role="listitem" testID="appearing-guest" style={{ flexDirection: "row", alignItems: "center", gap: spacing[3], minHeight: 68, paddingVertical: spacing[3], paddingHorizontal: spacing[4], borderBottomWidth: 1, borderBottomColor: palette.border }}>
+                <View key={`new-${guest.at}-${guest.name}`} role="listitem" testID="appearing-guest" style={{ flexDirection: "row", alignItems: "center", gap: spacing[3], minHeight: GUEST_ROW_HEIGHT, paddingVertical: spacing[3], paddingHorizontal: spacing[4], borderBottomWidth: 1, borderBottomColor: palette.border }}>
                   <Avatar name={guest.name} size={44} />
                   <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
                     <Text style={styles.subtitle} numberOfLines={2}>{guest.name}</Text>
@@ -115,18 +107,14 @@ function ListBody({ celebrationId, timeZone, onNavigate }: { readonly celebratio
                   <Chip tone="wait">{t("guests.list.appearing")}</Chip>
                 </View>
               ))}
-              {data.items.map((guest, index) => (
-                <View key={guest.guestId} role="listitem" style={index > 0 || appearing.length > 0 ? { borderTopWidth: 1, borderTopColor: palette.border } : undefined}>
-                  <Pressable accessibilityRole="button" accessibilityLabel={t("guests.list.open", { name: guest.name })} onPress={() => onNavigate(withCelebration(guestDetailPath(guest.guestId), celebrationId))} style={{ flexDirection: "row", alignItems: "center", gap: spacing[3], minHeight: 68, paddingVertical: spacing[3], paddingHorizontal: spacing[4] }}>
-                    <Avatar name={guest.name} size={44} />
-                    <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-                      <Text style={styles.subtitle} numberOfLines={2}>{guest.name}</Text>
-                      <Text style={styles.muted} numberOfLines={1}>{[guest.email ?? guest.phone, guest.allowedCompanions > 0 ? t("guests.list.companions", { count: guest.allowedCompanions }) : null].filter(Boolean).join(" · ")}</Text>
-                    </View>
-                    <StatusBadge status={guest.status} />
-                  </Pressable>
-                </View>
-              ))}
+              <Stagger>
+                {data.items.map((guest, index) => (
+                  <View key={guest.guestId} role="listitem" style={index > 0 || appearing.length > 0 ? { borderTopWidth: 1, borderTopColor: palette.border } : undefined}>
+                    <GuestRow name={guest.name} status={guest.status} label={t("guests.list.open", { name: guest.name })} onPress={() => onNavigate(withCelebration(guestDetailPath(guest.guestId), celebrationId))}
+                      detail={[guest.email ?? guest.phone, guest.allowedCompanions > 0 ? t("guests.list.companions", { count: guest.allowedCompanions }) : null].filter(Boolean).join(" · ")} />
+                  </View>
+                ))}
+              </Stagger>
             </View>
           )}
           {paged ? (

@@ -15,7 +15,8 @@ import { PreviewStage } from "./preview-stage";
 import { asTemplateDocument } from "./template-gallery";
 import { useSingleFlight } from "../platform/single-flight";
 import { contentOverLimit, LIMITS, overLimit, slugProblem } from "./limits";
-import { ActionButton, ChoiceGroup, Field, styles } from "./ui";
+import { Enter } from "@rsvp/ui";
+import { ActionButton, ChoiceGroup, Field, useStyles } from "./ui";
 
 /** C7–C11 · Hosts, venues, story, schedule and other sections. Saving never loses what was typed. */
 
@@ -51,6 +52,7 @@ function limitError(t: Translate, value: string, max: number | undefined): { rea
 }
 
 function ListEditor({ items, onChange, fields, itemLabel, addLabel, t }: { readonly items: readonly Row[]; readonly onChange: (items: Row[]) => void; readonly fields: readonly { readonly key: string; readonly label: string; readonly multiline?: boolean; readonly max?: number; readonly choices?: readonly { readonly value: string; readonly label: string }[] }[]; readonly itemLabel: (n: number) => string; readonly addLabel: string; readonly t: Translate }): ReactNode {
+  const styles = useStyles();
   const update = (index: number, key: string, value: string): void => onChange(items.map((item, position) => (position === index ? { ...item, [key]: value } : item)));
   const move = (index: number, delta: number): void => {
     const target = index + delta;
@@ -93,6 +95,7 @@ const TIME_BASIS = 120;
 /** A part of the invitation: its name, one line about it and its fields, laid on the page rather than in a card of its own. */
 function Part({ section, children }: { readonly section: EditorSection; readonly children: ReactNode }): ReactNode {
   const t = useT();
+  const styles = useStyles();
   const { width } = useWindowDimensions();
   return (
     <View style={{ gap: spacing[4], maxWidth: PART_MAX_WIDTH }}>
@@ -107,12 +110,14 @@ function Part({ section, children }: { readonly section: EditorSection; readonly
 }
 
 function SubHeading({ children }: { readonly children: string }): ReactNode {
+  const styles = useStyles();
   return <Text accessibilityRole="header" aria-level={3} style={[styles.label, { fontSize: SUBHEADING_SIZE }]}>{children}</Text>;
 }
 
 /** The invitation as the guest page would show it right now, including what is typed and not saved yet. */
 function DraftPreview({ celebration, eventType, content, slug, onClose }: { readonly celebration: Celebration; readonly eventType: TranslatedEventType | undefined; readonly content: Draft; readonly slug: string; readonly onClose: () => void }): ReactNode {
   const t = useT();
+  const styles = useStyles();
   const client = useApiClient();
   const locale = useLocale();
   const template = useTemplate(client, celebration.templateId);
@@ -139,6 +144,7 @@ function DraftPreview({ celebration, eventType, content, slug, onClose }: { read
 
 function Editor({ loaded, section, saved, onSaved, onNavigate }: { readonly loaded: Loaded; readonly section: EditorSection; readonly saved: boolean; readonly onSaved: (saved: boolean) => void; readonly onNavigate: (href: string) => void }): ReactNode {
   const t = useT();
+  const styles = useStyles();
   const once = useSingleFlight();
   const client = useApiClient();
   const { width } = useWindowDimensions();
@@ -252,7 +258,7 @@ function Editor({ loaded, section, saved, onSaved, onNavigate }: { readonly load
       {EDITOR_SECTIONS.map((item) => (
         <View key={item}>
           <SectionRow section={item} state={states[item]} current={item === section} onPress={() => go(item)} />
-          {!wide && item === section ? <View style={{ paddingVertical: spacing[4], paddingHorizontal: spacing[2] }}>{bodies[item]()}</View> : null}
+          {!wide && item === section ? <Enter from="down" key={item}><View style={{ paddingVertical: spacing[4], paddingHorizontal: spacing[2] }}>{bodies[item]()}</View></Enter> : null}
         </View>
       ))}
     </View>
@@ -263,7 +269,7 @@ function Editor({ loaded, section, saved, onSaved, onNavigate }: { readonly load
       {wide ? (
         <View style={{ flexDirection: "row", gap: spacing[8], alignItems: "flex-start" }}>
           <View style={{ width: LIST_WIDTH }}>{list}</View>
-          <View style={{ flex: 1, minWidth: 0, gap: spacing[4] }}>{bodies[section]()}</View>
+          <Enter from="down" key={section} grow><View style={{ flex: 1, minWidth: 0, gap: spacing[4] }}>{bodies[section]()}</View></Enter>
         </View>
       ) : list}
       {saveBar}

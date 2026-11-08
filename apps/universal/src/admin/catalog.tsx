@@ -3,9 +3,10 @@ import { Text, View } from "react-native";
 import { supportedLocales } from "@rsvp/i18n";
 import { useAdminCategories, useAdminGeography, useUpsertCategory, useUpsertGeoEntry, type GeoEntry, type GeoKind, type ProviderCategory } from "@rsvp/query-hooks/admin";
 import { useApiClient, useLocale, useT } from "../platform/providers";
-import { ActionButton, ChoiceGroup, Field, Notice, PageIntro, Section, styles } from "../host/ui";
+import { ActionButton, ChoiceGroup, Field, Notice, PageIntro, Section, useStyles } from "../host/ui";
+import { StickyActions } from "../provider/parts";
 import { AdminScreen, adminOnly } from "./admin-screen";
-import { AdminErrorNotice, QueryBoundary } from "./shared";
+import { AdminErrorNotice, QueryBoundary, Stack } from "./shared";
 import { useSingleMutation } from "../platform/single-flight";
 
 /** E5 categories and E6 geography: catalogs of provider-catalog-service, edited in place (REQ-F14-01). */
@@ -61,12 +62,13 @@ function CategoryEditor({ initial }: { readonly initial: ProviderCategory | null
       <ActiveChoice value={active} onChange={setActive} />
       <AdminErrorNotice error={save.error} onRetry={submit} />
       {save.isSuccess ? <Notice kind="success">{t("admin.saved")}</Notice> : null}
-      <ActionButton label={t("admin.common.save")} busy={save.isPending} disabled={save.isPending} onPress={submit} testID="save-category" />
+      <StickyActions ground="surface"><ActionButton label={t("admin.common.save")} busy={save.isPending} disabled={save.isPending} onPress={submit} testID="save-category" /></StickyActions>
     </Section>
   );
 }
 
 function CategoriesScreenContent({ onNavigate }: Nav): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const list = useAdminCategories(useApiClient());
   const display = useDisplayName();
@@ -74,6 +76,7 @@ function CategoriesScreenContent({ onNavigate }: Nav): ReactNode {
   const current = list.data?.items.find((item) => item.code === editing) ?? null;
   return (
     <AdminScreen title={t("admin.categories.title")} current="categories" onNavigate={onNavigate}>
+      <Stack>
       <PageIntro>{t("admin.categories.intro")}</PageIntro>
       <QueryBoundary query={list} empty={t("admin.categories.empty")}>
         {(data) => (
@@ -89,6 +92,7 @@ function CategoriesScreenContent({ onNavigate }: Nav): ReactNode {
       </QueryBoundary>
       {editing ? <ActionButton variant="secondary" label={t("admin.categories.new")} onPress={() => setEditing(null)} /> : null}
       <CategoryEditor key={editing ?? "new"} initial={current} />
+      </Stack>
     </AdminScreen>
   );
 }
@@ -136,12 +140,13 @@ export function GeoEditor({ initial }: { readonly initial: GeoEntry | null }): R
       <ActiveChoice value={active} onChange={setActive} />
       <AdminErrorNotice error={save.error} onRetry={submit} />
       {save.isSuccess ? <Notice kind="success">{t("admin.saved")}</Notice> : null}
-      <ActionButton label={t("admin.common.save")} busy={save.isPending} disabled={readOnly || save.isPending} onPress={submit} testID="save-geo" />
+      <StickyActions ground="surface"><ActionButton label={t("admin.common.save")} busy={save.isPending} disabled={readOnly || save.isPending} onPress={submit} testID="save-geo" /></StickyActions>
     </Section>
   );
 }
 
 function GeographyScreenContent({ onNavigate }: Nav): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const list = useAdminGeography(useApiClient());
   const display = useDisplayName();
@@ -149,6 +154,7 @@ function GeographyScreenContent({ onNavigate }: Nav): ReactNode {
   const current = list.data?.items.find((item) => item.code === editing) ?? null;
   return (
     <AdminScreen title={t("admin.geography.title")} current="geography" onNavigate={onNavigate}>
+      <Stack>
       <PageIntro>{t("admin.geography.intro")}</PageIntro>
       <QueryBoundary query={list} empty={t("admin.geography.empty")}>
         {(data) => (
@@ -164,6 +170,7 @@ function GeographyScreenContent({ onNavigate }: Nav): ReactNode {
       </QueryBoundary>
       {editing ? <ActionButton variant="secondary" label={t("admin.geography.new")} onPress={() => setEditing(null)} /> : null}
       <GeoEditor key={editing ?? "new"} initial={current} />
+      </Stack>
     </AdminScreen>
   );
 }

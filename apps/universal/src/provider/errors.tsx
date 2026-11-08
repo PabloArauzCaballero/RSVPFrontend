@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Text } from "react-native";
 import { ApiError } from "@rsvp/api-client";
 import { useT } from "../platform/providers";
-import { ActionButton, ErrorNotice, Notice, styles } from "../host/ui";
+import { ActionButton, EmptyState, ErrorNotice, Notice, useStyles } from "../host/ui";
 
 /**
  * Failure notice for the provider portal and the admin screens. The shared ErrorNotice words every 5xx as "an error" and does not
@@ -35,8 +35,20 @@ export function failureKind(error: unknown): FailureKind {
 /** Whether trying the same request again can succeed without the person changing anything. */
 export const isRetryable = (kind: FailureKind): boolean => kind === "network" || kind === "rateLimited" || kind === "unavailable" || kind === "server";
 
+/** Whole-section failure (a list that could not load): the amiable picture for the kind of failure, what happened and one way to try again. */
+export function PortalErrorState({ error, onRetry }: { readonly error: unknown; readonly onRetry: () => void }): ReactNode {
+  const t = useT();
+  if (!error) return null;
+  const kind = failureKind(error);
+  if (kind === "other" || kind === "rateLimited") return <PortalErrorNotice error={error} onReload={onRetry} onRetry={onRetry} />;
+  const illustration = kind === "network" ? "offline" : kind === "server" ? "serverError" : "maintenance";
+  const title = t(`portal.errors.state.${kind === "network" || kind === "server" || kind === "storage" ? kind : "unavailable"}`);
+  return <EmptyState illustration={illustration} title={title} body={t(`portal.errors.${kind}`)} action={isRetryable(kind) ? <ActionButton variant="secondary" label={t("portal.errors.retry")} onPress={onRetry} testID="error-retry" /> : undefined} />;
+}
+
 export function PortalErrorNotice({ error, onReload, onRetry }: { readonly error: unknown; readonly onReload?: () => void; readonly onRetry?: () => void }): ReactNode {
   const t = useT();
+  const styles = useStyles();
   if (!error) return null;
   const kind = failureKind(error);
   if (kind === "other") return <ErrorNotice error={error} {...(onReload ? { onReload } : {})} />;

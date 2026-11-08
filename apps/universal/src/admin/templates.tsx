@@ -5,8 +5,9 @@ import { CelebrationNativeRenderer } from "@rsvp/celebration-theme/native";
 import { useAdminTemplates, useSaveTemplate, useTemplateTransition, type LayoutId, type SectionId, type Template, type TemplateInput, type TemplateTheme } from "@rsvp/query-hooks";
 import type { Translate } from "@rsvp/i18n";
 import { useApiClient, useLocale, useT } from "../platform/providers";
-import { ActionButton, ChoiceGroup, ConfirmDialog, Field, Loading, Notice, PageIntro, Section, styles } from "../host/ui";
-import { AdminErrorNotice } from "./shared";
+import { ActionButton, ChoiceGroup, ConfirmDialog, Field, Notice, PageIntro, Section, useStyles } from "../host/ui";
+import { RowsSkeleton } from "../provider/parts";
+import { AdminErrorNotice, AdminListError, Stack } from "./shared";
 import { AdminScreen, splitList } from "./admin-screen";
 import { SECTION_IDS } from "./event-types";
 import { useSingleMutation } from "../platform/single-flight";
@@ -42,6 +43,7 @@ export function sampleView(t: Translate, locale: string): PublicCelebrationView 
 const inputOf = (template: Template): TemplateInput => ({ name: template.name, description: template.description, eventTypeTags: template.eventTypeTags, layout: template.layout, theme: template.theme, sectionOrder: template.sectionOrder });
 
 function Editor({ template, onSaved }: { readonly template: Template | undefined; readonly onSaved: () => void }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const client = useApiClient();
   const locale = useLocale();
@@ -102,12 +104,14 @@ export function TemplatesAdminScreen({ onNavigate }: { readonly onNavigate: (hre
   const current = list.data?.items.find((item) => item.id === editing);
   return (
     <AdminScreen title={t("admin.templates.title")} current="templates" onNavigate={onNavigate}>
+      <Stack>
       <PageIntro>{t("admin.templates.intro")}</PageIntro>
-      {list.isPending ? <Loading /> : null}
-      <AdminErrorNotice error={list.error} onRetry={() => { void list.refetch(); }} onReload={() => { void list.refetch(); }} />
+      {list.isPending ? <RowsSkeleton count={3} minHeight={72} trailing={false} /> : null}
+      <AdminListError error={list.error} retryTestID="error-retry" onRetry={() => { void list.refetch(); }} />
       <ChoiceGroup label={t("admin.templates.title")} value={editing} onChange={setEditing}
         choices={[{ value: "", label: t("admin.templates.new") }, ...(list.data?.items ?? []).map((item) => ({ value: item.id, label: `${item.name} · ${t(`admin.templates.status.${item.status}`)}` }))]} />
       <Editor key={`${editing}-${current?.version ?? 0}`} template={current} onSaved={() => { void list.refetch(); }} />
+      </Stack>
     </AdminScreen>
   );
 }

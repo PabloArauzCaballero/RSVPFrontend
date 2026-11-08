@@ -1,11 +1,12 @@
 import { useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
+import { StickyActions } from "@rsvp/ui";
 import { ApiError } from "@rsvp/api-client";
 import { partnerSuggestionsOf, problemCode, useAddGift, type Celebration, type PartnerSuggestion } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../../platform/providers";
 import { GiftErrorNotice } from "./gift-errors";
-import { ActionButton, Field, Notice, styles } from "../ui";
+import { ActionButton, Field, Notice, useStyles } from "../ui";
 import { useSingleFlightGate } from "../../platform/single-flight";
 import { isHttpUrl, parseMinor, TITLE_MAX } from "./money";
 import { Row, RowList } from "./offer-row";
@@ -17,6 +18,7 @@ import { Row, RowList } from "./offer-row";
  * here the panel says what they currently do and links there.
  */
 export function StorePanel({ celebration, onSeeList, onChangeRule }: { readonly celebration: Celebration; readonly onSeeList: () => void; readonly onChangeRule: () => void }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const client = useApiClient();
   const add = useAddGift(client, celebration.id);
@@ -49,12 +51,6 @@ export function StorePanel({ celebration, onSeeList, onChangeRule }: { readonly 
 
   return (
     <View style={{ gap: spacing[4] }}>
-      <Notice kind="info">
-        {priority ? <Text accessibilityRole="header" aria-level={3} style={styles.subtitle}>{t("gifts.host.store.ruleTitle")}</Text> : null}
-        <Text style={styles.body}>{priority ? t("gifts.host.store.ruleOn") : t("gifts.host.store.ruleOff")}</Text>
-        <Text style={styles.muted}>{t(`gifts.host.store.mode${mode}`)}</Text>
-        <View style={styles.row}><ActionButton variant="secondary" label={t("gifts.host.store.ruleChange")} onPress={onChangeRule} testID="go-modes" /></View>
-      </Notice>
       <Field label={t("gifts.host.store.name")} value={title} onChange={setTitle} testID="external-title" />
       <Field label={t("gifts.host.store.url")} value={url} onChange={setUrl} keyboardType="url" testID="external-url" />
       <Field label={t("gifts.host.store.price", { currency: celebration.currency })} value={price} onChange={setPrice} help={t("gifts.host.store.priceHelp")} keyboardType="decimal-pad" testID="external-price" />
@@ -76,7 +72,15 @@ export function StorePanel({ celebration, onSeeList, onChangeRule }: { readonly 
           </RowList>
         </Notice>
       ) : <GiftErrorNotice error={add.error} />}
-      <ActionButton label={partnerFirst ? t("gifts.host.store.submitAnyway") : t("gifts.host.store.submit")} variant={partnerFirst ? "secondary" : "primary"} busy={add.isPending} disabled={add.isPending} onPress={() => send(partnerFirst)} testID="external-submit" />
+      <Notice kind="info">
+        {priority ? <Text accessibilityRole="header" aria-level={3} style={styles.subtitle}>{t("gifts.host.store.ruleTitle")}</Text> : null}
+        <Text style={styles.body}>{priority ? t("gifts.host.store.ruleOn") : t("gifts.host.store.ruleOff")}</Text>
+        <Text style={styles.muted}>{t(`gifts.host.store.mode${mode}`)}</Text>
+        <View style={styles.row}><ActionButton variant="secondary" label={t("gifts.host.store.ruleChange")} onPress={onChangeRule} testID="go-modes" /></View>
+      </Notice>
+      <StickyActions>
+        <ActionButton label={partnerFirst ? t("gifts.host.store.submitAnyway") : t("gifts.host.store.submit")} variant={partnerFirst ? "secondary" : "primary"} busy={add.isPending} disabled={add.isPending} onPress={() => send(partnerFirst)} testID="external-submit" />
+      </StickyActions>
     </View>
   );
 }

@@ -1,9 +1,17 @@
 import { useState, type ReactNode } from "react";
-import { Text } from "react-native";
+import { Text, View } from "react-native";
+import { spacing } from "@rsvp/design-tokens";
 import { ApiError } from "@rsvp/api-client";
-import { ActionButton, ConfirmDialog, EmptyState, Field, Loading, Notice, styles } from "../host/ui";
+import { ActionButton, ConfirmDialog, EmptyState, Field, Notice, useStyles } from "../host/ui";
+import type { IllustrationName } from "@rsvp/ui";
 import { useLocale, useT } from "../platform/providers";
 import { failureKind, isRetryable } from "../provider/errors";
+import { RowsSkeleton } from "../provider/parts";
+
+/** The body of an admin screen: one rhythm between the intro, the filters and the list. */
+export function Stack({ children }: { readonly children: ReactNode }): ReactNode {
+  return <View style={{ gap: spacing[4] }}>{children}</View>;
+}
 
 /** Backend codes that have their own copy under admin.errors.code. */
 const CODED: readonly string[] = ["INVALID_PARENT", "INVALID_TRANSITION", "OUTSIDE_AVAILABILITY", "CODE_TAKEN"];
@@ -12,6 +20,7 @@ const MESSAGE_BY_STATUS: Readonly<Record<number, string>> = { 401: "unauthorized
 /** Admin wording for an API failure (the host copy talks about celebrations). 409 offers the reload. */
 export function AdminErrorNotice({ error, onReload, onRetry }: { readonly error: unknown; readonly onReload?: () => void; readonly onRetry?: () => void }): ReactNode {
   const t = useT();
+  const styles = useStyles();
   if (!error) return null;
   const kind = failureKind(error);
   if (kind !== "other") {
@@ -35,23 +44,41 @@ export function AdminErrorNotice({ error, onReload, onRetry }: { readonly error:
   );
 }
 
-/** Loading / error (403, 409, 5xx with retry) / empty / data, in one place so every admin list behaves alike. */
-export function QueryBoundary<TData extends { readonly items: readonly unknown[] }>({ query, empty, children }: {
+/** Pictures for a whole list that failed: the one that says what kind of failure it was. Only failures worth retrying get one; the rest stay a notice. */
+const FAILURE_ART: Readonly<Record<string, IllustrationName>> = { network: "offline", server: "serverError", unavailable: "maintenance", rateLimited: "maintenance" };
+
+/** Failure of a whole list: the picture for the kind of failure (offline, server, maintenance) with one retry; other failures stay a notice with its next step. */
+export function AdminListError({ error, onRetry, retryTestID = "admin-retry" }: { readonly error: unknown; readonly onRetry: () => void; readonly retryTestID?: string }): ReactNode {
+  const t = useT();
+  if (!error) return null;
+  const kind = failureKind(error);
+  const art = FAILURE_ART[kind];
+  if (art && kind !== "rateLimited") {
+    return <EmptyState illustration={art} title={t(`admin.errors.state.${kind}`)} body={t(`admin.errors.${kind}`)} action={<ActionButton variant="secondary" label={t("host.common.retry")} onPress={onRetry} testID={retryTestID} />} />;
+  }
+  return (
+    <>
+      <AdminErrorNotice error={error} onReload={onRetry} />
+      <ActionButton variant="secondary" label={t("host.common.retry")} onPress={onRetry} testID={retryTestID} />
+    </>
+  );
+}
+
+/** Loading (row-shaped skeleton) / error (403, 409, 5xx with retry) / empty / data, in one place so every admin list behaves alike. */
+export function QueryBoundary<TData extends { readonly items: readonly unknown[] }>({ query, empty, emptyTitle, illustration = "emptySearch", skeletonRows = 4, avatar = false, children }: {
   readonly query: { readonly isPending: boolean; readonly error: unknown; readonly data: TData | undefined; readonly refetch: () => unknown };
   readonly empty: string;
+  /** Replaces "Nothing here" when the empty list is good news (a clear queue). */
+  readonly emptyTitle?: string;
+  readonly illustration?: IllustrationName;
+  readonly skeletonRows?: number;
+  readonly avatar?: boolean;
   readonly children: (data: TData) => ReactNode;
 }): ReactNode {
   const t = useT();
-  if (query.isPending) return <Loading />;
-  if (query.error) {
-    return (
-      <>
-        <AdminErrorNotice error={query.error} onReload={() => { void query.refetch(); }} />
-        <ActionButton variant="secondary" label={t("host.common.retry")} onPress={() => { void query.refetch(); }} testID="admin-retry" />
-      </>
-    );
-  }
-  if (!query.data || query.data.items.length === 0) return <EmptyState illustration="emptySearch" title={t("admin.common.emptyTitle")} body={empty} />;
+  if (query.isPending) return <RowsSkeleton count={skeletonRows} minHeight={88} avatar={avatar} />;
+  if (query.error) return <AdminListError error={query.error} onRetry={() => { void query.refetch(); }} />;
+  if (!query.data || query.data.items.length === 0) return <EmptyState illustration={illustration} title={emptyTitle ?? t("admin.common.emptyTitle")} body={empty} />;
   return <>{children(query.data)}</>;
 }
 

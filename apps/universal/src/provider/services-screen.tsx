@@ -2,17 +2,16 @@ import { useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
 import { formatMinor } from "@rsvp/i18n";
-import { Chip } from "@rsvp/ui";
+import { Chip, Enter, Stagger, useColors } from "@rsvp/ui";
 import { useCreateOwnListing, useOwnListings, usePublishListing, type CreateListingInput, type OwnListing, type Provider } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../platform/providers";
-import { ActionButton, ChoiceGroup, EmptyState, Field, Loading, Notice, PageIntro, Section, SuccessNote, styles } from "../host/ui";
-import { PortalErrorNotice as ErrorNotice } from "./errors";
+import { ActionButton, ChoiceGroup, EmptyState, Field, Illustration, Notice, PageIntro, Section, SuccessNote, useStyles } from "../host/ui";
+import { PortalErrorNotice as ErrorNotice, PortalErrorState } from "./errors";
 import { parseMinor } from "../host/gifts/money";
 import { PortalScreen, type PortalRoute } from "./frame";
 import { useSingleMutation } from "../platform/single-flight";
-import { livePalette } from "../platform/theme";
+import { MoreToggle, RowsSkeleton, StickyActions } from "./parts";
 
-const palette = livePalette;
 const CATEGORIES = ["VENUE", "CATERING", "PHOTOGRAPHY", "MUSIC", "DECORATION", "MAKEUP", "TRANSPORT", "INVITATIONS", "WEDDING_PLANNER", "ACCOMMODATION", "HONEYMOON"] as const;
 const MAX_TITLE = 120;
 const HTTPS = /^https:\/\/[^\s]+$/i;
@@ -22,6 +21,8 @@ type Kind = "SERVICE" | "PRODUCT";
 function OfferRow({ provider, listing, publishing, onPublish }: { readonly provider: Provider; readonly listing: OwnListing; readonly publishing: boolean; readonly onPublish: () => void }): ReactNode {
   const t = useT();
   const locale = useLocale();
+  const styles = useStyles();
+  const palette = useColors();
   const f = listing.fulfillment;
   return (
     <View style={{ gap: spacing[2], paddingVertical: spacing[4], borderTopWidth: 1, borderTopColor: palette.border }} testID={`listing-${listing.id}`}>
@@ -50,6 +51,7 @@ function OfferRow({ provider, listing, publishing, onPublish }: { readonly provi
 /** Short form with progressive disclosure: what you offer, how they reach you, how you deliver. City, a second contact and transport hide behind "More options". */
 function NewOffer({ providerId, onClose, onCreated }: { readonly providerId: string; readonly onClose: () => void; readonly onCreated: () => void }): ReactNode {
   const t = useT();
+  const styles = useStyles();
   const locale = useLocale();
   const client = useApiClient();
   const create = useCreateOwnListing(client, providerId, locale);
@@ -102,13 +104,13 @@ function NewOffer({ providerId, onClose, onCreated }: { readonly providerId: str
       <Field label={t("portal.services.new.price")} value={price} onChange={setPrice} help={t("portal.services.new.priceHelp")} keyboardType="decimal-pad" testID="listing-price" />
       <Field label={t("portal.services.new.whatsapp")} value={whatsapp} onChange={setWhatsapp} help={t("portal.services.new.destinationsHelp")} keyboardType="url" testID="listing-whatsapp" />
       <Text accessibilityRole="header" style={styles.subtitle}>{t("portal.services.new.fulfillmentTitle")}</Text>
-      <ChoiceGroup<"PROVIDER" | "CUSTOMER"> label={t("portal.services.new.responsible")} value={responsible} onChange={setResponsible} choices={[{ value: "PROVIDER", label: t("portal.services.new.responsibleProvider") }, { value: "CUSTOMER", label: t("portal.services.new.responsibleCustomer") }]} />
       <Field label={t("portal.services.new.coverage")} value={coverage} onChange={setCoverage} help={t("portal.services.new.coverageHelp")} testID="listing-coverage" />
       <Field label={t("portal.services.new.lead")} value={lead} onChange={setLead} keyboardType="number-pad" testID="listing-lead" />
       <Field label={t("portal.services.new.conditions")} value={conditions} onChange={setConditions} multiline testID="listing-conditions" />
-      <ActionButton variant="secondary" label={t(more ? "portal.home.less" : "portal.home.more")} onPress={() => setMore((current) => !current)} testID="offer-more" />
+      <MoreToggle label={t(more ? "portal.home.less" : "portal.home.more")} onPress={() => setMore((current) => !current)} testID="offer-more" />
       {more ? (
         <View style={{ gap: spacing[3] }}>
+          <ChoiceGroup<"PROVIDER" | "CUSTOMER"> label={t("portal.services.new.responsible")} value={responsible} onChange={setResponsible} choices={[{ value: "PROVIDER", label: t("portal.services.new.responsibleProvider") }, { value: "CUSTOMER", label: t("portal.services.new.responsibleCustomer") }]} />
           <Field label={t("portal.services.new.city")} value={city} onChange={setCity} testID="listing-city" />
           <Field label={t("portal.services.new.site")} value={site} onChange={setSite} keyboardType="url" testID="listing-site" />
           <Field label={t("portal.services.new.transport")} value={transport} onChange={setTransport} keyboardType="decimal-pad" testID="listing-transport" />
@@ -116,10 +118,10 @@ function NewOffer({ providerId, onClose, onCreated }: { readonly providerId: str
       ) : null}
       {errors.length ? <Notice kind="error">{errors.map((message) => <Text key={message} style={styles.body}>{message}</Text>)}</Notice> : null}
       <ErrorNotice error={create.error} onRetry={submit} />
-      <View style={styles.row}>
+      <StickyActions ground="surface">
         <ActionButton label={create.isPending ? t("portal.services.new.creating") : t("portal.services.new.submit")} busy={create.isPending} disabled={create.isPending} onPress={submit} testID="listing-submit" />
         <ActionButton variant="secondary" label={t("portal.services.new.cancel")} disabled={create.isPending} onPress={onClose} testID="offer-new-close" />
-      </View>
+      </StickyActions>
     </Section>
   );
 }
@@ -130,6 +132,7 @@ function NewOffer({ providerId, onClose, onCreated }: { readonly providerId: str
  */
 function Offers({ provider }: { readonly provider: Provider }): ReactNode {
   const t = useT();
+  const styles = useStyles();
   const locale = useLocale();
   const client = useApiClient();
   const listings = useOwnListings(client, provider.id, locale);
@@ -143,15 +146,16 @@ function Offers({ provider }: { readonly provider: Provider }): ReactNode {
       <PageIntro>{t("portal.services.intro")}</PageIntro>
       {created ? <SuccessNote message={t("portal.services.new.created")} /> : null}
       {adding ? <NewOffer providerId={provider.id} onClose={() => setAdding(false)} onCreated={() => { setCreated(true); setAdding(false); }} /> : null}
-      {listings.isPending ? <Loading /> : listings.isError ? <ErrorNotice error={listings.error} onReload={() => { void listings.refetch(); }} onRetry={() => { void listings.refetch(); }} /> : items.length === 0 ? (
-        adding ? null : <EmptyState illustration="provider" title={t("portal.services.emptyTitle")} body={t("portal.services.empty")} action={<ActionButton label={t("portal.services.emptyAction")} onPress={() => { setCreated(false); setAdding(true); }} testID="offer-new" />} />
+      {listings.isPending ? <RowsSkeleton count={3} minHeight={132} /> : listings.isError ? <PortalErrorState error={listings.error} onRetry={() => { void listings.refetch(); }} /> : items.length === 0 ? (
+        adding ? null : <EmptyState illustration="noOffers" title={t("portal.services.emptyTitle")} body={t("portal.services.empty")} action={<ActionButton label={t("portal.services.emptyAction")} onPress={() => { setCreated(false); setAdding(true); }} testID="offer-new" />} />
       ) : (
         <View style={{ maxWidth: 720 }}>
           <View style={[styles.row, { justifyContent: "space-between", paddingBottom: spacing[2] }]}>
             <Text accessibilityRole="header" style={styles.subtitle}>{t("portal.services.listTitle", { count: items.length })}</Text>
             {adding ? null : <ActionButton label={t("portal.services.add")} onPress={() => { setCreated(false); setAdding(true); }} testID="offer-new" />}
           </View>
-          {items.map((listing) => <OfferRow key={listing.id} provider={provider} listing={listing} publishing={publish.isPending && publish.variables === listing.id} onPublish={() => publishOnce(listing.id)} />)}
+          {publish.isSuccess ? <Enter key={String(publish.submittedAt)} from="down"><View style={[styles.row, { flexWrap: "nowrap", paddingBottom: spacing[3] }]} testID="offer-published"><Illustration name="offerPublished" tone="auto" size="sm" /><View style={{ flex: 1 }}><SuccessNote message={t("portal.services.publishedNote")} detail={t("portal.services.publishedDetail")} /></View></View></Enter> : null}
+          <Stagger>{items.map((listing) => <OfferRow key={listing.id} provider={provider} listing={listing} publishing={publish.isPending && publish.variables === listing.id} onPublish={() => publishOnce(listing.id)} />)}</Stagger>
           <Notice>{t("portal.delivery.fixedNote")}</Notice>
         </View>
       )}
@@ -162,7 +166,7 @@ function Offers({ provider }: { readonly provider: Provider }): ReactNode {
 
 const offersScreen = (current: PortalRoute) => function OffersScreen(): ReactNode {
   const t = useT();
-  return <PortalScreen title={t("portal.services.title")} current={current}>{(provider) => <Offers provider={provider} />}</PortalScreen>;
+  return <PortalScreen title={t(current === "services" ? "portal.services.title" : `portal.nav.${current}`)} current={current}>{(provider) => <Offers provider={provider} />}</PortalScreen>;
 };
 
 /** The three old entries (services, products, delivery) open the same list; the routes stay so shared links keep working. */

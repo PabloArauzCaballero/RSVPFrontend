@@ -1,4 +1,4 @@
-import { Chip, SwitchRow } from "@rsvp/ui";
+import { Chip, SkeletonList, Stagger, SwitchRow } from "@rsvp/ui";
 import { useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
@@ -9,7 +9,7 @@ import { useApiClient, useLocale, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
 import { GiftErrorNotice } from "./gift-errors";
-import { ActionButton, ConfirmDialog, EmptyState, ErrorNotice, Loading, Notice, styles } from "../ui";
+import { ActionButton, ConfirmDialog, EmptyState, ErrorNotice, Loading, Notice, useStyles } from "../ui";
 import { MoreOptions } from "../more-options";
 import { Row, RowList } from "./offer-row";
 import { RetryNotice } from "../guests/parts";
@@ -22,6 +22,7 @@ const NOT_FOUND = 404;
 
 /** C29 · One gift: title, price and origin, its status as a chip (a dot and a word) and, for a proposal, the two decisions. */
 function GiftRow({ item, first, currencyLocale, onApprove, onReject, approving, rejecting, locked }: { readonly item: GiftItem; readonly first: boolean; readonly currencyLocale: ReturnType<typeof useLocale>; readonly onApprove: (id: string) => void; readonly onReject: (item: GiftItem) => void; readonly approving: boolean; readonly rejecting: boolean; readonly locked: boolean }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   return (
     <Row first={first} testID={`gift-${item.id}`}>
@@ -45,6 +46,7 @@ function GiftRow({ item, first, currencyLocale, onApprove, onReject, approving, 
 
 /** REQ-F23-06 · who may see who reserved. Guests default to not seeing the name; the host sees it unless they turn it off. */
 function RequesterVisibility({ celebrationId }: { readonly celebrationId: string }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const client = useApiClient();
   const settings = useGiftSettings(client, celebrationId);
@@ -71,6 +73,7 @@ function RequesterVisibility({ celebrationId }: { readonly celebrationId: string
 }
 
 function GiftsBody({ celebrationId, onNavigate }: { readonly celebrationId: string; readonly onNavigate: (href: string) => void }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const locale = useLocale();
   const client = useApiClient();
@@ -84,7 +87,7 @@ function GiftsBody({ celebrationId, onNavigate }: { readonly celebrationId: stri
   const locked = approve.isPending || reject.isPending;
   const flight = useSingleFlightGate();
   const go = (path: string) => () => onNavigate(withCelebration(path, celebrationId));
-  if (list.isPending) return <Loading />;
+  if (list.isPending) return <SkeletonList count={4} row={{ minHeight: 76, avatar: false, trailing: true }} label={t("host.common.loading")} />;
   // A celebration that never had a gift gets 404 GIFT_LIST_NOT_FOUND: that is the empty list, not a failure.
   const noListYet = list.isError && list.error instanceof ApiError && list.error.status === NOT_FOUND;
   if (list.isError && !noListYet) return <RetryNotice error={list.error} onRetry={() => { void list.refetch(); }} />;
@@ -105,12 +108,12 @@ function GiftsBody({ celebrationId, onNavigate }: { readonly celebrationId: stri
       <GiftErrorNotice error={reject.error} onReload={() => { void list.refetch(); }} />
       {rejected ? <Notice kind="success">{t("gifts.host.proposalRejected", { title: rejected })}</Notice> : null}
       {items.length === 0 ? (
-        <EmptyState illustration="gift" title={t("gifts.host.list.emptyTitle")} body={t("gifts.host.list.emptyBody")} action={add} />
+        <EmptyState illustration="noGifts" title={t("gifts.host.list.emptyTitle")} body={t("gifts.host.list.emptyBody")} action={add} />
       ) : (
         <>
           <View style={styles.row}>{add}</View>
           <RowList>
-            {items.map((item, index) => <GiftRow key={item.id} first={index === 0} item={item} currencyLocale={locale} onApprove={(id) => { setRejected(null); reject.reset(); if (flight.begin()) approve.mutate(id, { onSettled: flight.end }); }} onReject={(target) => { setRejected(null); approve.reset(); reject.reset(); setRejectTarget(target); }} approving={approve.isPending && approve.variables === item.id} rejecting={reject.isPending && reject.variables === item.id} locked={locked} />)}
+            <Stagger>{items.map((item, index) => <GiftRow key={item.id} first={index === 0} item={item} currencyLocale={locale} onApprove={(id) => { setRejected(null); reject.reset(); if (flight.begin()) approve.mutate(id, { onSettled: flight.end }); }} onReject={(target) => { setRejected(null); approve.reset(); reject.reset(); setRejectTarget(target); }} approving={approve.isPending && approve.variables === item.id} rejecting={reject.isPending && reject.variables === item.id} locked={locked} />)}</Stagger>
           </RowList>
         </>
       )}

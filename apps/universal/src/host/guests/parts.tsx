@@ -1,21 +1,20 @@
 import { useState, type ReactNode } from "react";
-import { Platform, Pressable, ScrollView, Text, View } from "react-native";
+import { Platform, Pressable, ScrollView, Text, View, useWindowDimensions } from "react-native";
 import { ApiError } from "@rsvp/api-client";
 import { radius, spacing } from "@rsvp/design-tokens";
-import { Chip, type ChipTone } from "@rsvp/ui";
+import { Avatar, Chip, PressFeedback, SkeletonList, useColors, type ChipTone } from "@rsvp/ui";
 import { formatCelebrationDate } from "@rsvp/i18n";
 import type { ProjectionFreshness, RsvpStatus } from "@rsvp/query-hooks";
 import { useLocale, useT } from "../../platform/providers";
-import { ActionButton, ErrorNotice, Notice, styles } from "../ui";
+import { ActionButton, ErrorNotice, Notice, useStyles } from "../ui";
 import { classifyFailure } from "./failure";
-import { livePalette } from "../../platform/theme";
 
-const palette = livePalette;
 const MIN_TOUCH = 44;
 const fontFamily = Platform.select({ web: "'Plus Jakarta Sans', 'Avenir Next', 'Segoe UI', system-ui, sans-serif", default: undefined });
 
 /** A quiet action: text in the brand blue, underlined, 44 px tall. For the third and fourth actions of a screen so the primary one stays alone. */
 export function TextAction({ label, onPress, testID, disabled = false }: { readonly label: string; readonly onPress: () => void; readonly testID?: string; readonly disabled?: boolean }): ReactNode {
+  const palette = useColors();
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={label} aria-disabled={disabled} disabled={disabled} onPress={onPress} {...(testID ? { testID } : {})}
       style={{ minHeight: MIN_TOUCH, justifyContent: "center", alignSelf: "flex-start", paddingHorizontal: spacing[1], opacity: disabled ? 0.5 : 1 }}>
@@ -29,6 +28,7 @@ export function TextAction({ label, onPress, testID, disabled = false }: { reado
  * so a closed block makes no requests. The button reports `aria-expanded`.
  */
 export function MoreOptions({ label, testID, children }: { readonly label: string; readonly testID?: string; readonly children: ReactNode }): ReactNode {
+  const palette = useColors();
   const [open, setOpen] = useState(false);
   return (
     <View style={{ gap: spacing[3] }}>
@@ -58,6 +58,7 @@ const VALIDATION_FIELDS: readonly string[] = ["name", "email", "phone", "contact
  * and the other statuses (401/403/404/409/422) keep the system notice. The state is never lost: the retry re-asks.
  */
 export function FailureNotice({ error, onRetry, onReload }: { readonly error: unknown; readonly onRetry?: () => void; readonly onReload?: () => void }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   if (!error) return null;
   const failure = classifyFailure(error);
@@ -79,6 +80,7 @@ export function RetryNotice({ error, onRetry, onReload }: { readonly error: unkn
  * still waiting to be applied, that the numbers may lag. Times are shown in the celebration zone.
  */
 export function FreshnessLine({ freshness, timeZone, now = Date.now(), onRefresh }: { readonly freshness: ProjectionFreshness; readonly timeZone: string; readonly now?: number; readonly onRefresh?: () => void }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const locale = useLocale();
   const lagSeconds = freshness.oldestPendingAt ? Math.max(0, Math.round((now - Date.parse(freshness.oldestPendingAt)) / 1000)) : 0;
@@ -112,6 +114,7 @@ export function formErrors(issues: readonly { path: (string | number)[]; message
 
 /** A compact picker for long option lists (many family groups): one 44 px trigger that names the current choice and opens a scrollable list. */
 export function CompactPicker({ label, value, options, onChange, testID }: { readonly label: string; readonly value: string; readonly options: readonly { readonly value: string; readonly label: string }[]; readonly onChange: (value: string) => void; readonly testID?: string }): ReactNode {
+  const palette = useColors();
   const [open, setOpen] = useState(false);
   const current = options.find((option) => option.value === value)?.label ?? options[0]?.label ?? "";
   return (
@@ -136,4 +139,54 @@ export function CompactPicker({ label, value, options, onChange, testID }: { rea
       ) : null}
     </View>
   );
+}
+
+/** Placeholder with the shape of a guest row (avatar, two lines, status), so loading never moves the page. */
+export function GuestListSkeleton({ count = 5 }: { readonly count?: number }): ReactNode {
+  const t = useT();
+  return <SkeletonList count={count} row={{ minHeight: GUEST_ROW_HEIGHT }} label={t("guests.loading")} />;
+}
+
+export const GUEST_ROW_HEIGHT = 68;
+
+const NARROW = 480;
+
+/** One guest of a list: avatar, name, a line of detail and the answer. The whole row is one 68 px target with press feedback. On a phone the answer drops under the name so long names keep their width. */
+export function GuestRow({ name, detail, status, label, onPress, extra }: { readonly name: string; readonly detail?: string; readonly status: RsvpStatus; readonly label: string; readonly onPress: () => void; readonly extra?: ReactNode }): ReactNode {
+  const styles = useStyles();
+  const narrow = useWindowDimensions().width < NARROW;
+  return (
+    <PressFeedback accessibilityLabel={label} onPress={onPress}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[3], minHeight: GUEST_ROW_HEIGHT, paddingVertical: spacing[3], paddingHorizontal: spacing[4] }}>
+        <Avatar name={name} size={44} />
+        <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+          <Text style={styles.subtitle} numberOfLines={2}>{name}</Text>
+          {detail ? <Text style={styles.muted} numberOfLines={1}>{detail}</Text> : null}
+          {extra}
+          {narrow ? <View style={{ alignSelf: "flex-start", paddingTop: spacing[1] }}><StatusBadge status={status} /></View> : null}
+        </View>
+        {narrow ? null : <StatusBadge status={status} />}
+      </View>
+    </PressFeedback>
+  );
+}
+
+/** The answer filter as 44 px chips that wrap onto a second line on a phone: nothing is ever cut off without a cue. */
+export function StatusFilter({ label, options, value, onChange }: { readonly label: string; readonly options: readonly { readonly value: string; readonly label: string }[]; readonly value: string; readonly onChange: (value: string) => void }): ReactNode {
+  const styles = useStyles();
+  return (
+    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing[2] }}>
+      {options.map((option) => (
+        <Pressable key={option.value} accessibilityRole="radio" aria-checked={value === option.value} accessibilityLabel={option.label} onPress={() => onChange(option.value)} style={[styles.navItem, value === option.value && styles.navItemCurrent]}>
+          <Text style={[styles.label, value === option.value && { fontWeight: "800" }]}>{option.label}</Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
+/** Placeholder for a settings or detail block: a few text rows, no avatar. Replaces the spinner so the page keeps its height. */
+export function BlockSkeleton({ count = 3 }: { readonly count?: number }): ReactNode {
+  const t = useT();
+  return <SkeletonList count={count} row={{ minHeight: 56, avatar: false, trailing: false }} label={t("guests.loading")} />;
 }

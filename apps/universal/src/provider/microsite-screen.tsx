@@ -2,12 +2,14 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
 import { ApiError } from "@rsvp/api-client";
 import { spacing } from "@rsvp/design-tokens";
+import { Illustration, type IllustrationName } from "@rsvp/ui";
 import { useMicrosite, useSaveMicrosite, type Microsite, type MicrositeInput, type Provider } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../platform/providers";
-import { ActionButton, Field, Loading, Notice, PageIntro, Section, styles } from "../host/ui";
+import { ActionButton, Field, Notice, PageIntro, Section, useStyles } from "../host/ui";
 import { PortalErrorNotice as ErrorNotice } from "./errors";
 import { PortalScreen } from "./frame";
 import { useSingleMutation } from "../platform/single-flight";
+import { MoreToggle, RowsSkeleton, StickyActions } from "./parts";
 
 const HOUR = /^([01]\d|2[0-3]):[0-5]\d$/;
 const PHONE = /^\+?[0-9]{6,15}$/;
@@ -63,8 +65,32 @@ export function mergeMicrosite(input: MicrositeInput, loaded: Microsite): Micros
   };
 }
 
-function Editor({ microsite, providerId, onReload }: { readonly microsite: Microsite; readonly providerId: string; readonly onReload: () => void }): ReactNode {
+/** Fields kept behind "More options": the second language, the other networks, the weekly hours and the reference. The first four are what couples read first. */
+const ADVANCED: readonly (keyof Form)[] = ["en", "instagram", "facebook", "reference", "days", "opens", "closes", "note"];
+const hasAdvanced = (form: Form): boolean => ADVANCED.some((key) => form[key].trim() !== "");
+
+const STATE_ART: Readonly<Record<string, IllustrationName>> = { PENDING_VERIFICATION: "verifying", VERIFIED: "verified", SUSPENDED: "suspended" };
+
+/** Where the business stands (verifying, verified, suspended), once, above the profile it is about. Draft and rejected have no picture: the Resumen owns that path. */
+function ProfileState({ provider }: { readonly provider: Provider }): ReactNode {
   const t = useT();
+  const styles = useStyles();
+  const art = STATE_ART[provider.status];
+  if (!art) return null;
+  return (
+    <View style={[styles.row, { flexWrap: "nowrap", gap: spacing[4], maxWidth: 720 }]} testID="profile-state">
+      <Illustration name={art} tone="auto" size="md" />
+      <View style={{ flex: 1, gap: spacing[1] }}>
+        <Text accessibilityRole="header" style={styles.subtitle}>{t(`portal.status.${provider.status}.label`)}</Text>
+        <Text style={styles.muted}>{t(`portal.status.${provider.status}.body`)}</Text>
+      </View>
+    </View>
+  );
+}
+
+function Editor({ microsite, providerId, provider, onReload }: { readonly microsite: Microsite; readonly providerId: string; readonly provider: Provider; readonly onReload: () => void }): ReactNode {
+  const t = useT();
+  const styles = useStyles();
   const client = useApiClient();
   const save = useSaveMicrosite(client, providerId);
   const saveOnce = useSingleMutation(save);
@@ -72,12 +98,14 @@ function Editor({ microsite, providerId, onReload }: { readonly microsite: Micro
   const [errors, setErrors] = useState<Partial<Record<keyof Form, string>>>({});
   const [saved, setSaved] = useState<number | null>(null);
   const [conflict, setConflict] = useState(false);
+  const [more, setMore] = useState(() => hasAdvanced(toForm(microsite)));
   useEffect(() => { setForm(toForm(microsite)); }, [microsite.version]);
   const set = (patch: Partial<Form>): void => { setForm((current) => ({ ...current, ...patch })); setSaved(null); };
   const text = (key: keyof Form): string | undefined => (errors[key] ? t(errors[key] as string) : undefined);
   const submit = (): void => {
     const result = validateMicrosite(form);
     setErrors(result.errors); setConflict(false);
+    if (ADVANCED.some((key) => result.errors[key])) setMore(true);
     if (Object.keys(result.errors).length) return;
     saveOnce({ input: mergeMicrosite(result.input, microsite), version: microsite.version }, {
       onSuccess: (next) => setSaved(next.version),
@@ -86,26 +114,32 @@ function Editor({ microsite, providerId, onReload }: { readonly microsite: Micro
   };
   return (
     <View style={{ gap: spacing[4] }}>
+      <ProfileState provider={provider} />
       <PageIntro>{t("portal.microsite.intro")}</PageIntro>
       <Text style={styles.muted} testID="microsite-version">{t("portal.microsite.version", { version: microsite.version })}</Text>
       <Section title={t("portal.microsite.title")}>
         <Field label={t("portal.microsite.descEs")} help={t("portal.microsite.descHelp")} multiline value={form.es} onChange={(es) => set({ es })} error={text("es")} testID="microsite-desc-es" />
-        <Field label={t("portal.microsite.descEn")} multiline value={form.en} onChange={(en) => set({ en })} error={text("en")} testID="microsite-desc-en" />
         <Field label={t("portal.microsite.website")} value={form.website} onChange={(website) => set({ website })} error={text("website")} testID="microsite-website" />
-        <Field label={t("portal.microsite.instagram")} value={form.instagram} onChange={(instagram) => set({ instagram })} error={text("instagram")} />
-        <Field label={t("portal.microsite.facebook")} value={form.facebook} onChange={(facebook) => set({ facebook })} error={text("facebook")} />
         <Field label={t("portal.microsite.whatsapp")} keyboardType="phone-pad" value={form.whatsapp} onChange={(whatsapp) => set({ whatsapp })} error={text("whatsapp")} />
         <Field label={t("portal.microsite.address")} help={t("portal.microsite.addressHelp")} value={form.line} onChange={(line) => set({ line })} testID="microsite-address" />
-        <Field label={t("portal.microsite.reference")} value={form.reference} onChange={(reference) => set({ reference })} />
-        <Field label={t("portal.microsite.hoursDays")} value={form.days} onChange={(days) => set({ days })} error={text("days")} testID="microsite-days" />
-        <Field label={t("portal.microsite.hoursOpens")} value={form.opens} onChange={(opens) => set({ opens })} error={text("opens")} testID="microsite-opens" />
-        <Field label={t("portal.microsite.hoursCloses")} value={form.closes} onChange={(closes) => set({ closes })} testID="microsite-closes" />
-        <Field label={t("portal.microsite.hoursNote")} value={form.note} onChange={(note) => set({ note })} />
+        <MoreToggle label={t(more ? "portal.home.less" : "portal.home.more")} onPress={() => setMore((current) => !current)} testID="microsite-more" />
+        {more ? (
+          <View style={{ gap: spacing[3] }}>
+            <Field label={t("portal.microsite.descEn")} multiline value={form.en} onChange={(en) => set({ en })} error={text("en")} testID="microsite-desc-en" />
+            <Field label={t("portal.microsite.instagram")} value={form.instagram} onChange={(instagram) => set({ instagram })} error={text("instagram")} />
+            <Field label={t("portal.microsite.facebook")} value={form.facebook} onChange={(facebook) => set({ facebook })} error={text("facebook")} />
+            <Field label={t("portal.microsite.reference")} value={form.reference} onChange={(reference) => set({ reference })} />
+            <Field label={t("portal.microsite.hoursDays")} value={form.days} onChange={(days) => set({ days })} error={text("days")} testID="microsite-days" />
+            <Field label={t("portal.microsite.hoursOpens")} value={form.opens} onChange={(opens) => set({ opens })} error={text("opens")} testID="microsite-opens" />
+            <Field label={t("portal.microsite.hoursCloses")} value={form.closes} onChange={(closes) => set({ closes })} testID="microsite-closes" />
+            <Field label={t("portal.microsite.hoursNote")} value={form.note} onChange={(note) => set({ note })} />
+          </View>
+        ) : null}
         {Object.keys(errors).length ? <Notice kind="error">{t("portal.microsite.invalid")}</Notice> : null}
         {conflict ? <Notice kind="error">{t("portal.microsite.conflict")}</Notice> : null}
         {save.isError && !conflict ? <ErrorNotice error={save.error} onRetry={submit} /> : null}
         {saved !== null ? <Notice kind="success">{t("portal.microsite.saved", { version: saved })}</Notice> : null}
-        <ActionButton label={save.isPending ? t("portal.microsite.saving") : t("portal.microsite.save")} busy={save.isPending} disabled={save.isPending} onPress={submit} testID="microsite-save" />
+        <StickyActions ground="surface"><ActionButton label={save.isPending ? t("portal.microsite.saving") : t("portal.microsite.save")} busy={save.isPending} disabled={save.isPending} onPress={submit} testID="microsite-save" /></StickyActions>
       </Section>
     </View>
   );
@@ -115,9 +149,9 @@ function Editor({ microsite, providerId, onReload }: { readonly microsite: Micro
 function Microsites({ provider }: { readonly provider: Provider }): ReactNode {
   const client = useApiClient();
   const microsite = useMicrosite(client, provider.id);
-  if (microsite.isPending) return <Loading />;
+  if (microsite.isPending) return <RowsSkeleton count={3} minHeight={96} trailing={false} />;
   if (microsite.isError) return <ErrorNotice error={microsite.error} onRetry={() => { void microsite.refetch(); }} onReload={() => { void microsite.refetch(); }} />;
-  return <Editor microsite={microsite.data} providerId={provider.id} onReload={() => { void microsite.refetch(); }} />;
+  return <Editor microsite={microsite.data} provider={provider} providerId={provider.id} onReload={() => { void microsite.refetch(); }} />;
 }
 
 export function MicrositeScreen(): ReactNode {

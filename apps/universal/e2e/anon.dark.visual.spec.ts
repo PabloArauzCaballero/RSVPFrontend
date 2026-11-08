@@ -14,6 +14,8 @@ for (const screen of DARK_ANON_SCREENS) {
       await page.goto(screen.path, { waitUntil: "networkidle" });
       await page.evaluate(() => document.fonts.ready);
       await expect(page.locator("[role=progressbar]:not([aria-valuenow])")).toHaveCount(0, { timeout: 30_000 });
+      // Skeletons are role=status with aria-busy: wait for them too, or the baseline would capture the placeholder.
+      await expect(page.locator("[aria-busy=true]")).toHaveCount(0, { timeout: 30_000 });
       await expect(page.locator("[role=main], [role=alert], [role=status]").first()).toBeVisible();
       expect(await page.evaluate(() => document.documentElement.getAttribute("data-theme"))).toBe("dark");
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);

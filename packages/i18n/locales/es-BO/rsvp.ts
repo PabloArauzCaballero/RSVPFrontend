@@ -61,19 +61,19 @@ export const rsvpEsBO = {
     loading: "Abriendo tu invitación…",
     hostedBy: "Te invitan {{hosts}}",
     question: "¿Nos acompañas?",
-    lead: "Responde con un toque. No necesitas cuenta.",
+    lead: "Un toque para responder. Sin cuenta ni contraseña.",
     yes: "Voy", no: "No puedo", chooseOne: "Elige una opción para continuar.",
     companions: "¿Cuántos te acompañan?", companionsAdd: "Agregar un acompañante", companionsRemove: "Quitar un acompañante", companionsCount: "{{count}} acompañantes",
     companionsIncluded: "Incluidos en tu invitación: {{count}}. Si pides más, quien te invita decide.",
     extrasOpen: "Añadir una restricción alimentaria o un mensaje", extrasClose: "Ocultar restricción y mensaje",
     dietary: "Restricción alimentaria (opcional)", dietaryHelp: "Alergias, vegetariano, sin gluten…", message: "Mensaje para quien te invita (opcional)",
     submitYes: "Confirmar que voy", submitNo: "Avisar que no puedo", submitNone: "Enviar respuesta", submitting: "Enviando…", save: "Guardar cambios", cancelEdit: "Dejarlo como está",
-    deadlineOpen: "Puedes responder o cambiar tu respuesta hasta el {{date}} (hora de {{timeZone}}).", deadlineNone: "Puedes cambiar tu respuesta cuando quieras.",
+    deadlineOpen: "Puedes cambiar tu respuesta hasta el {{date}} (hora de {{timeZone}}).", deadlineNone: "Puedes cambiar tu respuesta cuando quieras.",
     countdown: "Quedan {{days}} d {{hours}} h {{minutes}} min", countdownLabel: "Tiempo que queda para responder",
     doneTitle: "Listo, estás dentro.", doneBodyUntil: "Quedó tu respuesta. Puedes cambiarla hasta el {{date}}.", doneBodyAnytime: "Quedó tu respuesta. Puedes cambiarla cuando quieras.",
     declinedTitle: "Gracias por avisar.", declinedBody: "Quedó registrado que no podrás venir. Si cambias de idea, puedes cambiar tu respuesta.",
     savedNote: "Cambios guardados.",
-    giftsCta: "Ver la lista de regalos", giftsHint: "Si quieres regalar algo, reserva uno de la lista en un toque.",
+    giftsCta: "Ver la lista de regalos", giftsHint: "¿Quieres regalar algo? Reserva uno en un toque.",
     againTitleYes: "Tu asistencia está confirmada", againTitleNo: "Quedó registrado que no podrás venir", edit: "Cambiar mi respuesta", editHint: "Puedes cambiarla hasta que cierre el plazo.",
     summaryLabel: "Tu respuesta", summaryCompanions: "Acompañantes aprobados: {{count}}", summaryPending: "{{count}} por aprobar: lo decide quien te invita", summaryDietary: "Restricción alimentaria: {{value}}", summaryMessage: "Tu mensaje: {{value}}", summaryUpdated: "Actualizada el {{date}}",
     closedTitle: "El plazo para responder terminó", closedOn: "Las respuestas cerraron el {{date}} (hora de {{timeZone}}).", closedGeneric: "Quien te invitó cerró las respuestas.",
@@ -96,7 +96,7 @@ export const rsvpEsBO = {
       restrictedTitle: "Esta celebración solo recibe respuestas con enlace personal", restrictedBody: "Pídele el tuyo a quien te invitó. Si ya lo tienes, ábrelo desde el mensaje original.",
       doneTitle: "Listo, estás dentro.", doneBody: "Guarda tu enlace personal: es la única forma de cambiar tu respuesta después. No lo guardamos en tu navegador.",
       replayBody: "Ya teníamos tu respuesta. Si perdiste tu enlace, pídele uno nuevo a quien te invitó.", linkLabel: "Tu enlace personal", copyLink: "Copiar enlace", copied: "Enlace copiado.",
-      emailNotice: "Puede que no te llegue un correo de confirmación: depende de cómo lo configuraron quienes te invitan. Tu enlace es tu constancia."
+      emailNotice: "Quizá no llegue un correo de confirmación. Tu enlace es tu constancia: guárdalo."
     }
   }
 } as const;

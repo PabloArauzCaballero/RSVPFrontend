@@ -11,7 +11,7 @@ import { CelebrationErrorNotice } from "./celebration-errors";
 import { AuditSection, EventTypeSection, TeamSection } from "./settings-extras";
 import { spacing } from "@rsvp/design-tokens";
 import { MoreOptions } from "./more-options";
-import { ActionButton, ChoiceGroup, Field, Notice, Section, styles, ToggleChip } from "./ui";
+import { ActionButton, ChoiceGroup, Field, Notice, Section, ToggleChip, useStyles } from "./ui";
 import { ThemeChoice } from "./theme-choice";
 
 /** C17 · Languages, time zone, currency and RSVP deadline, with a preview of the effect (REQ-F13-01/06). */
@@ -45,6 +45,7 @@ function zoneName(timeZone: string, locale: string): string {
 }
 
 function SettingsForm({ celebration, refetch, onSaved, moreOpen, onMoreOpen }: { readonly celebration: Celebration; readonly refetch: () => void; readonly onSaved: (message: string | null) => void; readonly moreOpen: boolean; readonly onMoreOpen: (open: boolean) => void }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const client = useApiClient();
   const once = useSingleFlight();

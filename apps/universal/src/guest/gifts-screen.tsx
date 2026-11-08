@@ -1,19 +1,18 @@
 import { useMemo, useRef, useState, type ReactNode } from "react";
-import { ActivityIndicator, Linking, Pressable, Text, View } from "react-native";
+import { Linking, Pressable, Text, View } from "react-native";
 import { router } from "expo-router";
 import { ApiError } from "@rsvp/api-client";
 import type { PublicCelebrationView } from "@rsvp/celebration-theme";
 import { spacing } from "@rsvp/design-tokens";
 import { formatMinor } from "@rsvp/i18n";
-import { Chip, EmptyState, SuccessNote } from "@rsvp/ui";
+import { Chip, EmptyState, Illustration, Skeleton, Stagger, SuccessNote, useColors } from "@rsvp/ui";
 import { catalogedFirst, guestVisible, isGiftTaken, newIdempotencyKey, useCelebrationBySlug, useGiftList, useReserveGiftItem, type GiftItem, type GiftReservation } from "@rsvp/query-hooks";
 import { GuestFrame, type GuestFrameProps } from "./frame";
 import { LinkState, OfflineState } from "./link-states";
-import { ActionButton, Field, Notice, styles } from "../host/ui";
+import { ActionButton, Field, Notice, useStyles } from "../host/ui";
 import { MESSAGE_MAX, NAME_MAX, reserveFailureKind, reserveFieldErrors, isRetryable } from "./reserve-rules";
 import { partnerRedirectUrl } from "../platform/partner-link";
 import { useApiClient, useLocale, useT } from "../platform/providers";
-import { livePalette } from "../platform/theme";
 
 /**
  * F21-05 · The guest's gift list inside the app (mode Persuade, the optional last step of the journey). No account: the
@@ -22,7 +21,6 @@ import { livePalette } from "../platform/theme";
  */
 type Outcome = { readonly kind: "reserved"; readonly item: GiftItem; readonly status: GiftReservation["status"] } | { readonly kind: "taken"; readonly item: GiftItem };
 
-const palette = livePalette;
 /** From here a wait is told in minutes (anonymous requests can be held for ~50 minutes). */
 const LONG_WAIT_SECONDS = 90;
 
@@ -32,16 +30,18 @@ const RESERVE_ERROR_KEY = {
 } as const;
 
 /** Why the list could not open, with the one thing to do about it. */
-function blockerFor(status: number, retryAfter: number | undefined, t: ReturnType<typeof useT>): { illustration: "invitation" | "offline" | "emptySearch"; title: string; body: string } {
-  if (status === 401) return { illustration: "invitation", title: t("gifts.guest.error.expiredTitle"), body: t("gifts.guest.error.expiredBody") };
-  if (status === 404) return { illustration: "invitation", title: t("gifts.guest.error.otherTitle"), body: t("gifts.guest.error.otherBody") };
-  if (status === 403) return { illustration: "invitation", title: t("gifts.guest.error.forbiddenTitle"), body: t("gifts.guest.error.forbiddenBody") };
+function blockerFor(status: number, retryAfter: number | undefined, t: ReturnType<typeof useT>): { illustration: "linkExpired" | "noAccess" | "offline" | "notFound"; title: string; body: string } {
+  if (status === 401) return { illustration: "linkExpired", title: t("gifts.guest.error.expiredTitle"), body: t("gifts.guest.error.expiredBody") };
+  if (status === 404) return { illustration: "linkExpired", title: t("gifts.guest.error.otherTitle"), body: t("gifts.guest.error.otherBody") };
+  if (status === 403) return { illustration: "noAccess", title: t("gifts.guest.error.forbiddenTitle"), body: t("gifts.guest.error.forbiddenBody") };
   if (status === 429) return { illustration: "offline", title: t("gifts.guest.error.busyTitle"), body: retryAfter && retryAfter >= LONG_WAIT_SECONDS ? t("gifts.guest.error.busyMinutes", { minutes: Math.ceil(retryAfter / 60) }) : t("gifts.guest.error.busyBody") };
   return { illustration: "offline", title: t("gifts.guest.error.unavailableTitle"), body: t("gifts.guest.error.unavailableBody") };
 }
 
 export function GuestGiftsScreen({ slug, token }: { readonly slug: string; readonly token: string }): ReactNode {
+  const styles = useStyles();
   const t = useT();
+  const palette = useColors();
   const locale = useLocale();
   const client = useApiClient();
   const celebration = useCelebrationBySlug<PublicCelebrationView>(client, slug);
@@ -78,12 +78,19 @@ export function GuestGiftsScreen({ slug, token }: { readonly slug: string; reado
   };
 
   if (celebration.isPending || (celebrationId && list.isPending)) {
-    return <GuestFrame><View accessibilityLiveRegion="polite" style={styles.row}><ActivityIndicator color={palette.primary} /><Text style={styles.muted}>{t("gifts.guest.loading")}</Text></View></GuestFrame>;
+    return (
+      <GuestFrame>
+        <View accessibilityLiveRegion="polite" style={{ gap: spacing[4] }}>
+          {[0, 1, 2].map((n) => <View key={n} style={{ gap: spacing[2], minHeight: 112 }}><Skeleton width="60%" height={18} /><Skeleton width="90%" height={14} /><Skeleton width={140} height={44} radius={12} /></View>)}
+          <Text style={styles.muted}>{t("gifts.guest.loading")}</Text>
+        </View>
+      </GuestFrame>
+    );
   }
   if (celebration.isError) {
     const gone = celebration.error instanceof ApiError && celebration.error.status === 404;
     if (!gone) return <OfflineState onRetry={() => { void celebration.refetch(); }} />;
-    return <LinkState illustration="emptySearch" title={t("gifts.guest.error.notFoundTitle")} body={t("gifts.guest.error.notFoundBody")} />;
+    return <LinkState illustration="notFound" title={t("gifts.guest.error.notFoundTitle")} body={t("gifts.guest.error.notFoundBody")} />;
   }
   const rawTitle = celebration.data.content?.["title"];
   const title = typeof rawTitle === "string" && rawTitle ? rawTitle : slug;
@@ -104,7 +111,8 @@ export function GuestGiftsScreen({ slug, token }: { readonly slug: string; reado
   const reservedInList = outcome?.kind === "reserved" && items.some((item) => item.id === outcome.item.id);
 
   const reservedNote = (reserved: Extract<Outcome, { kind: "reserved" }>): ReactNode => (
-    <View testID="gift-reserved">
+    <View testID="gift-reserved" style={{ gap: spacing[2], alignItems: "center" }}>
+      <Illustration name="giftReserved" size="md" />
       <SuccessNote
         message={reserved.status === "COMMITTED" ? t("gifts.guest.done.confirmedTitle") : t("gifts.guest.done.pendingTitle")}
         detail={t(reserved.status === "COMMITTED" ? "gifts.guest.done.confirmedBody" : "gifts.guest.done.pendingBody", { title: reserved.item.title })}
@@ -176,9 +184,9 @@ export function GuestGiftsScreen({ slug, token }: { readonly slug: string; reado
         </Pressable>
       </View>
       {outcome?.kind === "reserved" && !reservedInList ? reservedNote(outcome) : null}
-      {list.data && items.length === 0 ? <EmptyState illustration="gift" title={t("gifts.guest.empty.title")} body={t("gifts.guest.empty.body")} /> : null}
-      {partner.length ? <View><Text accessibilityRole="header" aria-level={2} style={styles.title}>{t("gifts.guest.groupPartner")}</Text>{partner.map(row)}</View> : null}
-      {other.length ? <View><Text accessibilityRole="header" aria-level={2} style={styles.title}>{t("gifts.guest.groupOther")}</Text>{other.map(row)}</View> : null}
+      {list.data && items.length === 0 ? <EmptyState illustration="noGifts" title={t("gifts.guest.empty.title")} body={t("gifts.guest.empty.body")} /> : null}
+      {partner.length ? <View><Text accessibilityRole="header" aria-level={2} style={styles.title}>{t("gifts.guest.groupPartner")}</Text><Stagger>{partner.map(row)}</Stagger></View> : null}
+      {other.length ? <View><Text accessibilityRole="header" aria-level={2} style={styles.title}>{t("gifts.guest.groupOther")}</Text><Stagger>{other.map(row)}</Stagger></View> : null}
     </GuestFrame>
   );
 }

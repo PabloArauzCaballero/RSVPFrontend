@@ -7,13 +7,14 @@ import { useApiClient, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { guestDetailPath, withCelebration } from "../routes";
 import { Avatar } from "@rsvp/ui";
-import { ActionButton, EmptyState, Loading, Notice, styles } from "../ui";
-import { FailureNotice, RetryNotice, TextAction } from "./parts";
+import { ActionButton, EmptyState, Notice, useStyles } from "../ui";
+import { FailureNotice, RetryNotice, TextAction, BlockSkeleton } from "./parts";
 import { useSingleFlightGate } from "../../platform/single-flight";
 
 /** C26 · Companion requests inbox: approve or reject with one tap; a request someone else already decided refreshes the list (REQ-F17-03). */
 
 function RequestCard({ request, celebrationId, busy, locked, onDecide, onOpen }: { readonly request: CompanionRequest; readonly celebrationId: string; readonly busy: CompanionDecision | null; readonly locked: boolean; readonly onDecide: (decision: CompanionDecision) => void; readonly onOpen: () => void }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const client = useApiClient();
   const guest = useGuestDetail(client, celebrationId, request.guestId);
@@ -53,7 +54,7 @@ function RequestsBody({ celebrationId, onNavigate }: { readonly celebrationId: s
       onSettled: () => { setPendingId(null); flight.end(); }
     });
   };
-  if (requests.isPending) return <Loading />;
+  if (requests.isPending) return <BlockSkeleton />;
   if (requests.isError) return <RetryNotice error={requests.error} onRetry={() => { void requests.refetch(); }} />;
   const open = pendingRequests(requests.data.items);
   const conflict = decide.error instanceof ApiError && decide.error.status === 409;
@@ -61,7 +62,7 @@ function RequestsBody({ celebrationId, onNavigate }: { readonly celebrationId: s
     <View style={{ gap: spacing[4] }}>
       {notice ? <Notice kind={notice.kind}>{notice.text}</Notice> : null}
       {decide.isError && !conflict ? <FailureNotice error={decide.error} /> : null}
-      {open.length === 0 ? <EmptyState illustration="invitation" title={t("guests.requests.emptyTitle")} body={t("guests.requests.empty")} /> : open.map((request) => (
+      {open.length === 0 ? <EmptyState illustration="nothingPending" title={t("guests.requests.emptyTitle")} body={t("guests.requests.empty")} /> : open.map((request) => (
         <RequestCard key={request.id} request={request} celebrationId={celebrationId} busy={pendingId === request.id ? (decide.variables?.decision ?? null) : null} locked={pendingId !== null}
           onDecide={(decision) => resolve(request, decision)} onOpen={() => onNavigate(withCelebration(guestDetailPath(request.guestId), celebrationId))} />
       ))}

@@ -1,3 +1,4 @@
+import { Stagger, useColors } from "@rsvp/ui";
 import type { ReactNode } from "react";
 import { Text, View } from "react-native";
 import { radius, spacing } from "@rsvp/design-tokens";
@@ -6,18 +7,18 @@ import { useHostNotifications, useMarkHostNotificationsRead, type HostNotificati
 import { useApiClient, useLocale, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
-import { ActionButton, EmptyState, Loading, Notice, styles } from "../ui";
-import { FailureNotice, RetryNotice, TextAction } from "./parts";
+import { ActionButton, EmptyState, Notice, useStyles } from "../ui";
+import { FailureNotice, RetryNotice, TextAction, BlockSkeleton } from "./parts";
 
-const palette = livePalette;
 import { useSingleFlightGate } from "../../platform/single-flight";
 import { classifyFailure } from "./failure";
 import { knownNoticeTemplate, notificationTarget } from "./notification-target";
-import { livePalette } from "../../platform/theme";
 
 /** C31 / F6 · In-app notification center: unread first, direct action, mark one or all as read. The read state is the server's (`readAt`), shared by every device (REQ-F18-01/02/05). */
 
 function NotificationsBody({ celebrationId, timeZone, onNavigate }: { readonly celebrationId: string; readonly timeZone: string; readonly onNavigate: (href: string) => void }): ReactNode {
+  const styles = useStyles();
+  const palette = useColors();
   const t = useT();
   const locale = useLocale();
   const client = useApiClient();
@@ -26,7 +27,7 @@ function NotificationsBody({ celebrationId, timeZone, onNavigate }: { readonly c
   const flight = useSingleFlightGate();
   /** One batch at a time: a second tap before the first answer would repeat every call. */
   const mark = (ids: readonly string[]): void => { if (ids.length === 0 || !flight.begin()) return; markRead.mutate(ids, { onSettled: flight.end }); };
-  if (inbox.isPending) return <Loading />;
+  if (inbox.isPending) return <BlockSkeleton />;
   if (inbox.isError) return <RetryNotice error={inbox.error} onRetry={() => { void inbox.refetch(); }} />;
   const isRead = (item: HostNotification): boolean => item.readAt !== null;
   const items = [...inbox.data.items].sort((a, b) => Number(isRead(a)) - Number(isRead(b)) || Date.parse(b.createdAt) - Date.parse(a.createdAt));
@@ -43,8 +44,9 @@ function NotificationsBody({ celebrationId, timeZone, onNavigate }: { readonly c
         <ActionButton variant="secondary" label={t("guests.notifications.markAll")} busy={markRead.isPending} disabled={unread.length === 0} onPress={() => mark(unread.map((item) => item.id))} testID="mark-all" />
         <TextAction label={t("guests.notifications.refresh")} onPress={() => { void inbox.refetch(); }} />
       </View>
-      {items.length === 0 ? <EmptyState illustration="invitation" title={t("guests.notifications.emptyTitle")} body={t("guests.notifications.empty")} /> : (
+      {items.length === 0 ? <EmptyState illustration="calendar" title={t("guests.notifications.emptyTitle")} body={t("guests.notifications.empty")} /> : (
         <View role="list" style={{ borderRadius: radius.lg, borderWidth: 1, borderColor: palette.border, backgroundColor: palette.surface, overflow: "hidden" }}>
+          <Stagger>
           {items.map((item, index) => {
             const seen = isRead(item);
             const target = notificationTarget(item.template);
@@ -55,7 +57,7 @@ function NotificationsBody({ celebrationId, timeZone, onNavigate }: { readonly c
               <View key={item.id} role="listitem" testID={`notice-${item.id}`} style={[{ gap: spacing[1], padding: spacing[4] }, index > 0 ? { borderTopWidth: 1, borderTopColor: palette.border } : null, seen ? { backgroundColor: palette.surfaceMuted } : null]}>
                 <Text style={[styles.subtitle, { fontSize: 17, fontWeight: seen ? "600" : "800" }]}>{seen ? t("guests.notifications.read") : t("guests.notifications.unread")} · {subject}</Text>
                 <Text style={styles.body}>{body}</Text>
-                <Text style={styles.muted}>{t("guests.notifications.via", { channel: t(`guests.notifications.channel.${item.channel}`), status: t(`guests.notifications.delivery.${item.status}`), date: formatCelebrationDate(item.createdAt, { locale, timeZone }) })}</Text>
+                <Text style={styles.muted}>{item.channel === "INBOX" ? t("guests.notifications.viewedAt", { date: formatCelebrationDate(item.createdAt, { locale, timeZone }) }) : t("guests.notifications.via", { channel: t(`guests.notifications.channel.${item.channel}`), status: t(`guests.notifications.delivery.${item.status}`), date: formatCelebrationDate(item.createdAt, { locale, timeZone }) })}</Text>
                 <View style={styles.row}>
                   {target ? <ActionButton variant="secondary" label={t("guests.notifications.open")} onPress={() => open(item)} testID={`open-${item.id}`} /> : null}
                   {!seen ? <TextAction label={t("guests.notifications.markRead")} onPress={() => mark([item.id])} testID={`read-${item.id}`} /> : null}
@@ -63,6 +65,7 @@ function NotificationsBody({ celebrationId, timeZone, onNavigate }: { readonly c
               </View>
             );
           })}
+          </Stagger>
         </View>
       )}
       {markRead.isError ? (classifyFailure(markRead.error).kind === "api" ? <Notice kind="error">{t("guests.notifications.markFailed")}</Notice> : <FailureNotice error={markRead.error} />) : null}

@@ -7,7 +7,8 @@ import { CelebrationScreen, type ScreenProps } from "../host/gate";
 import { FailureNotice, MoreOptions, RetryNotice, TextAction } from "../host/guests/parts";
 import { useSingleFlightGate } from "../platform/single-flight";
 import { HOST_ROUTES, withCelebration } from "../host/routes";
-import { ActionButton, ConfirmDialog, Loading, Notice, Section, styles } from "../host/ui";
+import { BlockSkeleton } from "../host/guests/parts";
+import { ActionButton, EmptyState, ConfirmDialog, Notice, Section, useStyles } from "../host/ui";
 import { useApiClient, useLocale, useT } from "../platform/providers";
 import { currentPermission, enablePush, type PushOutcome, type PushPermission } from "./register";
 
@@ -17,6 +18,7 @@ import { currentPermission, enablePush, type PushOutcome, type PushPermission } 
  */
 
 function DeviceRow({ celebrationId, device, timeZone }: { readonly celebrationId: string; readonly device: RegisteredDevice; readonly timeZone: string }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const locale = useLocale();
   const client = useApiClient();
@@ -53,6 +55,7 @@ function DeviceRow({ celebrationId, device, timeZone }: { readonly celebrationId
 }
 
 function Deliveries({ celebrationId, timeZone }: { readonly celebrationId: string; readonly timeZone: string }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const locale = useLocale();
   const client = useApiClient();
@@ -60,7 +63,7 @@ function Deliveries({ celebrationId, timeZone }: { readonly celebrationId: strin
   return (
     <Section title={t("guests.push.deliveriesTitle")}>
       <Text style={styles.body}>{t("guests.push.deliveriesIntro")}</Text>
-      {deliveries.isPending ? <Loading /> : null}
+      {deliveries.isPending ? <BlockSkeleton /> : null}
       {deliveries.isError ? <RetryNotice error={deliveries.error} onRetry={() => { void deliveries.refetch(); }} /> : null}
       {deliveries.data ? (deliveries.data.items.length === 0 ? <Notice>{t("guests.push.deliveriesEmpty")}</Notice> : (
         <View role="list" style={{ gap: spacing[2] }}>
@@ -101,21 +104,25 @@ function PermissionBody({ celebrationId, timeZone, onNavigate }: { readonly cele
   const list = devices.data?.items ?? [];
   const active = list.filter((device) => device.status === "ACTIVE");
   const registered = outcome?.kind === "registered";
+  const enabledNow = registered || (permission === "granted" && active.length > 0);
   return (
     <View style={{ gap: spacing[4] }}>
-      <View style={[styles.card, { maxWidth: 720 }]}>
-        {permission === "unsupported" ? <Notice>{t("guests.push.unsupported")}</Notice> : null}
-        {permission === "denied" ? <><Notice kind="error">{t("guests.push.denied")}</Notice><ActionButton variant="secondary" label={t("guests.push.openSettings")} onPress={() => { void Linking.openSettings(); }} /></> : null}
-        {registered || (permission === "granted" && active.length > 0) ? <Notice kind="success">{t("guests.push.enabled")}</Notice> : null}
-        {outcome?.kind === "failed" ? <Notice kind="error">{t("guests.push.failed")}</Notice> : null}
-        {outcome?.kind === "no-project" ? <Notice kind="error">{t("guests.push.noProject")}</Notice> : null}
-        <FailureNotice error={register.error} />
-        {permission === "undetermined" || permission === "granted" ? <ActionButton testID="enable-push" label={busy ? t("guests.push.registering") : t("guests.push.enable")} busy={busy} onPress={() => { void enable(); }} /> : null}
-        <TextAction label={t("guests.push.preferences")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.preferences, celebrationId))} />
-      </View>
+      <EmptyState illustration={permission === "unsupported" ? "offline" : permission === "denied" ? "noAccess" : enabledNow ? "success" : "invitation"}
+        title={t(`guests.push.state.${permission === "unsupported" ? "unsupported" : permission === "denied" ? "denied" : enabledNow ? "enabled" : "ready"}`)}
+        body={permission === "unsupported" ? t("guests.push.unsupported") : permission === "denied" ? t("guests.push.denied") : enabledNow ? t("guests.push.enabled") : t("guests.push.intro")}
+        action={(
+          <View style={{ alignItems: "center", gap: spacing[2] }}>
+            {permission === "denied" ? <ActionButton variant="secondary" label={t("guests.push.openSettings")} onPress={() => { void Linking.openSettings(); }} /> : null}
+            {(permission === "undetermined" || permission === "granted") && !enabledNow ? <ActionButton testID="enable-push" label={busy ? t("guests.push.registering") : t("guests.push.enable")} busy={busy} onPress={() => { void enable(); }} /> : null}
+            <TextAction label={t("guests.push.preferences")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.preferences, celebrationId))} />
+          </View>
+        )} />
+      {outcome?.kind === "failed" ? <Notice kind="error">{t("guests.push.failed")}</Notice> : null}
+      {outcome?.kind === "no-project" ? <Notice kind="error">{t("guests.push.noProject")}</Notice> : null}
+      <FailureNotice error={register.error} />
       <MoreOptions label={t("guests.push.advanced")} testID="push-more">
         <Section title={t("guests.push.devicesTitle")}>
-          {devices.isPending ? <Loading /> : null}
+          {devices.isPending ? <BlockSkeleton /> : null}
           {devices.isError ? <RetryNotice error={devices.error} onRetry={() => { void devices.refetch(); }} /> : null}
           {devices.data ? (list.length === 0 ? <Notice>{t("guests.push.devicesEmpty")}</Notice> : (
             <View role="list" style={{ gap: spacing[2] }}>{list.map((device) => <DeviceRow key={device.id} celebrationId={celebrationId} device={device} timeZone={timeZone} />)}</View>

@@ -4,7 +4,7 @@ import { ApiError } from "@rsvp/api-client";
 import { ORGANIZATION_NAME_MAX, useAddOrganizationMember, useCreateOrganization, useMyOrganizations, useOrganizationDetail, type OrganizationMemberRole, type OrganizationSummary } from "@rsvp/query-hooks";
 import { useApiClient, useClaims, useT } from "../platform/providers";
 import { hostNav } from "../host/routes";
-import { ActionButton, ChoiceGroup, ErrorNotice, Field, Loading, Notice, Screen, Section, errorMessage, styles } from "../host/ui";
+import { ActionButton, ChoiceGroup, ErrorNotice, Field, Loading, Notice, Screen, Section, errorMessage, useStyles } from "../host/ui";
 
 /**
  * Organizations (identity.openapi.json): create one (PLANNER or ADMIN), see the ones you belong to and add an
@@ -57,6 +57,7 @@ function CreateOrganization({ onCreated }: { readonly onCreated: (organization: 
 }
 
 function Members({ organization, isOwner }: { readonly organization: OrganizationSummary; readonly isOwner: boolean }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const client = useApiClient();
   const detail = useOrganizationDetail(client, organization.id);
@@ -99,6 +100,7 @@ function Members({ organization, isOwner }: { readonly organization: Organizatio
 }
 
 export function OrganizationsScreen({ onNavigate }: { readonly onNavigate: (href: string) => void }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const claims = useClaims();
   const list = useMyOrganizations(useApiClient());

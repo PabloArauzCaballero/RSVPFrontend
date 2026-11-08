@@ -1,10 +1,9 @@
 import { useState, type PropsWithChildren, type ReactNode } from "react";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions, type TextInputProps } from "react-native";
 import { brand, colors, onNight, radius, spacing, typography, type ColorTheme } from "@rsvp/design-tokens";
-import { CheckMark, Illustration, Logo, useTheme, type IllustrationName } from "@rsvp/ui";
+import { CheckMark, Enter, HeroArt, Illustration, Logo, PressFeedback, WeavePattern, useTheme, type IllustrationName } from "@rsvp/ui";
 import type { AppLocale } from "@rsvp/i18n";
 import { useLocalePreference, useT } from "../platform/providers";
-import { currentScheme } from "../platform/theme";
 
 /**
  * Building blocks of the sign-in, sign-up and recovery screens. Visual world: DOne Brand Kit v3.
@@ -32,8 +31,8 @@ function createAuthStyles(palette: (typeof colors)[ColorTheme]) {
   rootWide: { flexDirection: "row" },
   brand: { flex: 1, minWidth: 0, overflow: "hidden", backgroundColor: brand.azul, padding: spacing[12], justifyContent: "space-between" },
   pitchBody: { color: "#D5DCFF", fontSize: 19, lineHeight: 30, maxWidth: 440, fontFamily: textFamily },
-  cover: { backgroundColor: brand.azul, overflow: "hidden", paddingHorizontal: spacing[6], paddingTop: spacing[10], paddingBottom: spacing[12], gap: spacing[6] },
-  coverPitch: { color: onNight, fontSize: 30, lineHeight: 33, fontWeight: "800", letterSpacing: -0.9, maxWidth: 320, fontFamily: displayFamily },
+  cover: { backgroundColor: brand.azul, overflow: "hidden", paddingHorizontal: spacing[6], paddingTop: spacing[5], paddingBottom: spacing[10], gap: spacing[3] },
+  coverPitch: { color: onNight, fontSize: 22, lineHeight: 25, fontWeight: "800", letterSpacing: -0.9, maxWidth: 320, fontFamily: displayFamily },
   columnSheet: { backgroundColor: palette.canvas, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, marginTop: -spacing[6], padding: spacing[6], paddingBottom: spacing[10], maxWidth: undefined },
   pitch: { color: onNight, fontSize: 56, lineHeight: 58, fontWeight: "800", letterSpacing: -1.8, maxWidth: 520, fontFamily: displayFamily },
   panel: { flex: 1, backgroundColor: palette.canvas },
@@ -81,15 +80,6 @@ export function useAuthStyles(): AuthStyles {
   return sheets[useTheme().scheme];
 }
 
-/** The same sheet read at render time from the theme store, for screens that still import `authStyles`; new code calls `useAuthStyles()`. */
-export const authStyles: AuthStyles = Object.defineProperties({} as AuthStyles, Object.fromEntries(
-  (Object.keys(sheets.light) as (keyof AuthStyles)[]).map((key) => [key, { enumerable: true, get: () => sheets[currentScheme()][key] }])
-));
-export const authFocusRing: object = Object.defineProperties({}, {
-  outlineColor: { enumerable: true, get: () => (focusRings[currentScheme()] as Record<string, unknown>).outlineColor },
-  outlineWidth: { enumerable: true, get: () => (focusRings[currentScheme()] as Record<string, unknown>).outlineWidth },
-  outlineOffset: { enumerable: true, get: () => (focusRings[currentScheme()] as Record<string, unknown>).outlineOffset }
-});
 
 export function LanguageSwitch(): ReactNode {
   const authStyles = useAuthStyles();
@@ -113,14 +103,17 @@ export function AuthLayout({ title, intro, illustration = "invitation", children
   const t = useT();
   const { width } = useWindowDimensions();
   const wide = width >= WIDE_BREAKPOINT;
-  const ghost = (size: number, right: number, bottom: number): ReactNode => (
-    <View pointerEvents="none" style={{ position: "absolute", right, bottom, opacity: 0.1 }}><Logo variant="mark" tone="white" height={size} decorative /></View>
+  const art = (width: `${number}%`): ReactNode => (
+    <>
+      <WeavePattern tone="onBrand" />
+      <View pointerEvents="none" style={{ position: "absolute", top: 0, bottom: 0, right: 0, width, opacity: 0.4 }}><HeroArt variant="auth" tone="onBrand" /></View>
+    </>
   );
   return (
     <View style={[authStyles.root, wide && authStyles.rootWide]}>
       {wide ? (
         <View style={authStyles.brand}>
-          {ghost(560, -90, -120)}
+          {art("50%")}
           <Logo tone="white" height={40} />
           <View style={{ gap: spacing[5] }}>
             <Illustration name={illustration} tone="onDark" size={148} />
@@ -133,19 +126,19 @@ export function AuthLayout({ title, intro, illustration = "invitation", children
       <ScrollView role="main" tabIndex={0} style={[authStyles.panel, wide && authStyles.panelWide]} contentContainerStyle={[authStyles.panelContent, wide && authStyles.panelContentWide]} keyboardShouldPersistTaps="handled">
         {wide ? null : (
           <View style={authStyles.cover}>
-            {ghost(220, -50, -60)}
+            {art("70%")}
             <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" }}>
               <Logo tone="white" height={30} />
-              <Illustration name={illustration} tone="onDark" size={76} />
+              <Illustration name={illustration} tone="onDark" size={56} />
             </View>
             <Text accessibilityElementsHidden aria-hidden style={authStyles.coverPitch}>{t("auth.brandPitch")}</Text>
           </View>
         )}
         <View style={[authStyles.column, !wide && authStyles.columnSheet]}>
-          <View style={{ gap: spacing[2] }}>
+          <Enter from="down"><View style={{ gap: spacing[2] }}>
             <Text accessibilityRole="header" aria-level={1} style={authStyles.title}>{title}</Text>
             <Text style={authStyles.intro}>{intro}</Text>
-          </View>
+          </View></Enter>
           {children}
           <LanguageSwitch />
         </View>
@@ -199,9 +192,11 @@ export function SubmitButton({ label, busyLabel, busy, blocked = false, onPress,
   const focusRing = useAuthFocusRing();
   const unavailable = busy || blocked;
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={busy ? busyLabel : label} aria-busy={busy} aria-disabled={unavailable} disabled={unavailable} onPress={onPress} testID={testID} style={[authStyles.primary, unavailable && authStyles.primaryBusy, focusRing]}>
-      <Text style={authStyles.primaryText}>{busy ? busyLabel : label}</Text>
-    </Pressable>
+    <PressFeedback accessibilityLabel={busy ? busyLabel : label} aria-busy={busy} aria-disabled={unavailable} disabled={unavailable} onPress={onPress} testID={testID} style={[{ borderRadius: radius.md }, focusRing]}>
+      <View style={[authStyles.primary, unavailable && authStyles.primaryBusy]}>
+        <Text style={authStyles.primaryText}>{busy ? busyLabel : label}</Text>
+      </View>
+    </PressFeedback>
   );
 }
 

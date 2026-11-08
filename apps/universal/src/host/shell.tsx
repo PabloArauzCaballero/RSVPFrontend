@@ -1,7 +1,7 @@
-import { useRef, useState, type PropsWithChildren, type ReactNode } from "react";
-import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { useEffect, useRef, useState, type PropsWithChildren, type ReactNode } from "react";
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type LayoutChangeEvent, type ViewStyle } from "react-native";
 import { brand, radius, spacing } from "@rsvp/design-tokens";
-import { Logo, PageIntro, ScreenTransition, useColors, useThemedStyles, type Palette } from "@rsvp/ui";
+import { Logo, OverlayEnter, PageIntro, PressFeedback, ScreenTransition, WeavePattern, overlayAnimation, useColors, useThemedStyles, type Palette } from "@rsvp/ui";
 import { useAuth } from "../auth/auth-context";
 import { useT } from "../platform/providers";
 import { useThemePreference } from "../platform/theme";
@@ -43,7 +43,8 @@ export function barSplit(count: number, signedIn: boolean): number {
 const createShellStyles = (palette: Palette) => StyleSheet.create({
   root: { flex: 1, backgroundColor: palette.canvas },
   rootWide: { flexDirection: "row" },
-  sidebar: { width: SIDEBAR, flexShrink: 0, backgroundColor: brand.noche, paddingTop: spacing[6], paddingBottom: spacing[4], paddingHorizontal: spacing[3] },
+  sidebar: { width: SIDEBAR, flexShrink: 0, overflow: "hidden", backgroundColor: brand.noche, paddingTop: spacing[6], paddingBottom: spacing[4], paddingHorizontal: spacing[3] },
+  sidebarWeave: { position: "absolute", left: 0, right: 0, bottom: 0, height: 200, opacity: 0.7, overflow: "hidden", ...(Platform.OS === "web" ? ({ maskImage: "linear-gradient(to top, #000 35%, transparent)", WebkitMaskImage: "linear-gradient(to top, #000 35%, transparent)" } as object) : null) },
   sidebarLogo: { paddingHorizontal: spacing[3], paddingBottom: spacing[6] },
   sidebarList: { flex: 1 },
   sidebarItem: { minHeight: MIN_TOUCH, flexDirection: "row", alignItems: "center", gap: spacing[3], paddingHorizontal: spacing[3], borderRadius: radius.md, marginBottom: 2 },
@@ -68,14 +69,15 @@ const createShellStyles = (palette: Palette) => StyleSheet.create({
   mTitle: { color: "#FFFFFF", fontSize: 30, lineHeight: 34, fontWeight: "800", letterSpacing: -0.9, fontFamily },
   mSheet: { flexGrow: 1, backgroundColor: palette.canvas, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, marginTop: -spacing[6], paddingHorizontal: spacing[4], paddingTop: spacing[5], paddingBottom: spacing[10], gap: spacing[4] },
   title: { color: palette.text, fontSize: 34, lineHeight: 38, fontWeight: "800", letterSpacing: -1, fontFamily },
-  tabBar: { flexDirection: "row", backgroundColor: palette.surface, borderTopWidth: 1, borderTopColor: palette.border },
-  tab: { flex: 1, minHeight: 56, alignItems: "center", justifyContent: "center", gap: 4, paddingHorizontal: 2 },
-  tabDot: { width: 20, height: 3, borderRadius: 2, backgroundColor: "transparent" },
+  tabBar: { flexDirection: "row", backgroundColor: palette.surface, borderTopWidth: 1, borderTopColor: palette.border, ...(Platform.OS === "web" ? ({ paddingBottom: "env(safe-area-inset-bottom)" } as object) : null) },
+  tab: { flex: 1, minHeight: 56 },
+  tabInner: { alignItems: "center", justifyContent: "center", gap: 4, paddingHorizontal: 2 },
+  tabDot: { width: 24, height: 4, borderRadius: 2, backgroundColor: "transparent" },
   tabDotActive: { backgroundColor: palette.primary },
   tabText: { color: palette.textMuted, fontSize: 11, fontWeight: "700", fontFamily },
   tabTextActive: { color: palette.primary },
   overlay: { flex: 1, justifyContent: "flex-end", backgroundColor: palette.scrim },
-  sheet: { backgroundColor: palette.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: spacing[4], paddingBottom: spacing[6], gap: spacing[1], maxHeight: "85%" },
+  sheet: { backgroundColor: palette.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: spacing[4], paddingBottom: spacing[6], ...(Platform.OS === "web" ? ({ paddingBottom: "max(24px, env(safe-area-inset-bottom))" } as object) : null), gap: spacing[1], maxHeight: "85%" },
   grabber: { alignSelf: "center", width: 40, height: 4, borderRadius: 2, backgroundColor: palette.border, marginBottom: spacing[3] },
   sheetItem: { minHeight: 52, justifyContent: "center", paddingHorizontal: spacing[3], borderRadius: radius.md },
   sheetItemActive: { backgroundColor: palette.primaryMuted },
@@ -102,16 +104,47 @@ const createShellStyles = (palette: Palette) => StyleSheet.create({
   mSectionTabTextActive: { color: brand.noche, fontWeight: "800" }
 });
 
+const FADE_WIDTH = 28;
+const EDGE_SLACK = 4;
+
+/** Soft edge over a horizontal scroller: tells that there is more on that side. Decorative, never takes touches. */
+function EdgeFade({ side, color }: { readonly side: "left" | "right"; readonly color: string }): ReactNode {
+  const direction = side === "left" ? "to right" : "to left";
+  const style = Platform.select<object>({
+    web: { backgroundImage: `linear-gradient(${direction}, ${color}, transparent)` },
+    default: { backgroundColor: color, opacity: 0.85 }
+  });
+  return <View aria-hidden pointerEvents="none" testID={`tabs-fade-${side}`} style={[{ position: "absolute", top: 0, bottom: 0, width: FADE_WIDTH, [side]: 0 } as ViewStyle, style as ViewStyle]} />;
+}
+
 /**
  * The screens of the active destination as a tab list (`role=tablist`): 44 px targets, visible focus, horizontal scroll
- * on narrow screens, Left/Right/Home/End move the focus. Selecting a tab navigates to its route.
+ * on narrow screens, Left/Right/Home/End move the focus. Selecting a tab navigates to its route. When the list overflows,
+ * a fade shows on the side that has more, and the active tab is brought into view.
  */
 function SectionTabs({ tabs, current, onNavigate, dark }: { readonly tabs: readonly NavTab[]; readonly current?: string; readonly onNavigate?: (href: string) => void; readonly dark: boolean }): ReactNode {
   const s = useThemedStyles(createShellStyles);
-  const surfaceRing = ring(useColors().primary);
+  const palette = useColors();
+  const surfaceRing = ring(palette.primary);
   const t = useT();
   const refs = useRef<(View | null)[]>([]);
+  const scroller = useRef<ScrollView>(null);
+  const spans = useRef<{ x: number; w: number }[]>([]);
+  const [metrics, setMetrics] = useState({ x: 0, view: 0, content: 0 });
   const activeIndex = Math.max(0, tabs.findIndex((tab) => tab.key === current));
+  const ground = dark ? brand.noche : palette.surface;
+  const hidden = metrics.content - metrics.view; // px outside the viewport
+  const moreLeft = metrics.x >= EDGE_SLACK;
+  const moreRight = hidden - metrics.x >= EDGE_SLACK;
+  const reveal = (): void => {
+    const span = spans.current[activeIndex];
+    if (!span || metrics.view === 0) return;
+    const pad = FADE_WIDTH + 8;
+    if (span.x < metrics.x + pad) scroller.current?.scrollTo({ x: Math.max(0, span.x - pad), animated: false });
+    else if (span.x + span.w > metrics.x + metrics.view - pad) scroller.current?.scrollTo({ x: span.x + span.w - metrics.view + pad, animated: false });
+  };
+  // Only when the active tab or the width changes: scrolling by hand must not fight this.
+  useEffect(reveal, [activeIndex, metrics.view, metrics.content]);
   const onKey = (event: { key: string; preventDefault: () => void }, index: number): void => {
     const last = tabs.length - 1;
     const next = event.key === "ArrowRight" ? (index === last ? 0 : index + 1) : event.key === "ArrowLeft" ? (index === 0 ? last : index - 1) : event.key === "Home" ? 0 : event.key === "End" ? last : -1;
@@ -120,20 +153,33 @@ function SectionTabs({ tabs, current, onNavigate, dark }: { readonly tabs: reado
     refs.current[next]?.focus();
   };
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={dark ? s.mTabsRow : undefined}>
-      <View role="tablist" aria-label={t("host.tabs.label")} style={s.tabs}>
-        {tabs.map((tab, index) => {
-          const active = index === activeIndex;
-          const box = dark ? [s.mSectionTab, active && s.mSectionTabActive] : [s.sectionTab, active && s.sectionTabActive];
-          const text = dark ? [s.mSectionTabText, active && s.mSectionTabTextActive] : [s.sectionTabText, active && s.sectionTabTextActive];
-          return (
-            <Pressable key={tab.key} ref={(node) => { refs.current[index] = node; }} role="tab" aria-selected={active} aria-current={active ? "page" : undefined} onPress={() => onNavigate?.(tab.href)} {...({ onKeyDown: (event: { key: string; preventDefault: () => void }) => onKey(event, index) } as object)} style={[...box, dark ? focusRing : surfaceRing]}>
-              <Text numberOfLines={1} style={text}>{tab.label}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
-    </ScrollView>
+    <View>
+      <ScrollView
+        ref={scroller}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        scrollEventThrottle={32}
+        onScroll={(event) => { const x = event.nativeEvent.contentOffset.x; setMetrics((m) => (Math.abs(m.x - x) < 2 ? m : { ...m, x })); }}
+        onLayout={(event: LayoutChangeEvent) => { const view = event.nativeEvent.layout.width; setMetrics((m) => (m.view === view ? m : { ...m, view })); }}
+        onContentSizeChange={(content) => setMetrics((m) => (m.content === content ? m : { ...m, content }))}
+        contentContainerStyle={dark ? s.mTabsRow : undefined}
+      >
+        <View role="tablist" aria-label={t("host.tabs.label")} style={s.tabs}>
+          {tabs.map((tab, index) => {
+            const active = index === activeIndex;
+            const box = dark ? [s.mSectionTab, active && s.mSectionTabActive] : [s.sectionTab, active && s.sectionTabActive];
+            const text = dark ? [s.mSectionTabText, active && s.mSectionTabTextActive] : [s.sectionTabText, active && s.sectionTabTextActive];
+            return (
+              <Pressable key={tab.key} ref={(node) => { refs.current[index] = node; }} onLayout={(event) => { const { x, width } = event.nativeEvent.layout; spans.current[index] = { x, w: width }; }} role="tab" aria-selected={active} aria-current={active ? "page" : undefined} onPress={() => onNavigate?.(tab.href)} {...({ onKeyDown: (event: { key: string; preventDefault: () => void }) => onKey(event, index) } as object)} style={[...box, dark ? focusRing : surfaceRing]}>
+                <Text numberOfLines={1} style={text}>{tab.label}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </ScrollView>
+      {moreLeft ? <EdgeFade side="left" color={ground} /> : null}
+      {moreRight ? <EdgeFade side="right" color={ground} /> : null}
+    </View>
   );
 }
 
@@ -163,6 +209,8 @@ function Sidebar({ nav, current, onNavigate }: { readonly nav: readonly NavItem[
   const auth = useAuth();
   return (
     <View style={s.sidebar}>
+      {/* The brand's weave closes the menu: low, quiet and under everything, so the destinations stay the loudest thing. */}
+      <View aria-hidden pointerEvents="none" style={s.sidebarWeave}><WeavePattern tone="onDark" /></View>
       <View style={s.sidebarLogo}><Logo tone="onDark" height={30} /></View>
       <ScrollView role="navigation" aria-label={t("host.nav.label")} style={s.sidebarList}>
         {nav.map((item) => {
@@ -211,23 +259,27 @@ function MobileFrame({ nav, current, onNavigate, children }: PropsWithChildren<{
           {tabs.map((item) => {
             const active = isCurrentDestination(item, current);
             return (
-              <Pressable key={item.key} role="link" aria-current={active ? "page" : undefined} onPress={() => go(item.href)} style={[s.tab, tabRing]}>
-                <View style={[s.tabDot, active && s.tabDotActive]} />
-                <Text numberOfLines={1} style={[s.tabText, active && s.tabTextActive]}>{item.label}</Text>
-              </Pressable>
+              <PressFeedback key={item.key} accessibilityRole="link" aria-current={active ? "page" : undefined} onPress={() => go(item.href)} style={[s.tab, tabRing]}>
+                <View style={s.tabInner}>
+                  <View style={[s.tabDot, active && s.tabDotActive]} />
+                  <Text numberOfLines={1} style={[s.tabText, active && s.tabTextActive]}>{item.label}</Text>
+                </View>
+              </PressFeedback>
             );
           })}
           {overflow || signedIn ? (
-            <Pressable role="button" aria-expanded={open} accessibilityLabel={t("common.more")} onPress={() => setOpen(true)} style={[s.tab, tabRing]}>
-              <View style={[s.tabDot, hiddenActive && s.tabDotActive]} />
-              <Text style={[s.tabText, hiddenActive && s.tabTextActive]}>{t("common.more")}</Text>
-            </Pressable>
+            <PressFeedback accessibilityRole="button" aria-expanded={open} accessibilityLabel={t("common.more")} onPress={() => setOpen(true)} style={[s.tab, tabRing]}>
+              <View style={s.tabInner}>
+                <View style={[s.tabDot, hiddenActive && s.tabDotActive]} />
+                <Text style={[s.tabText, hiddenActive && s.tabTextActive]}>{t("common.more")}</Text>
+              </View>
+            </PressFeedback>
           ) : null}
         </View>
       ) : null}
-      <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
+      <Modal visible={open} transparent animationType={overlayAnimation("slide")} onRequestClose={() => setOpen(false)}>
         <Pressable accessibilityLabel={t("common.close")} style={s.overlay} onPress={() => setOpen(false)}>
-          <Pressable accessibilityViewIsModal style={s.sheet} onPress={(event) => event.stopPropagation()}>
+          <OverlayEnter from="down"><Pressable accessibilityViewIsModal style={s.sheet} onPress={(event) => event.stopPropagation()}>
             <View style={s.grabber} />
             <ScrollView>
               {rest.map((item) => {
@@ -245,7 +297,7 @@ function MobileFrame({ nav, current, onNavigate, children }: PropsWithChildren<{
                 </Pressable>
               ) : null}
             </ScrollView>
-          </Pressable>
+          </Pressable></OverlayEnter>
         </Pressable>
       </Modal>
     </>

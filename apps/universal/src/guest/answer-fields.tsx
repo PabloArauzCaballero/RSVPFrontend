@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { brand, radius, spacing, typography } from "@rsvp/design-tokens";
-import { CheckMark, useColors, useThemedStyles, type Palette } from "@rsvp/ui";
+import { CheckMark, PressFeedback, useColors, useThemedStyles, type Palette } from "@rsvp/ui";
 import { Field, useStyles } from "../host/ui";
 import { useT } from "../platform/providers";
 
@@ -18,7 +18,8 @@ const ringFor = (color: string): object => Platform.select({ web: { outlineColor
 
 const createStyles = (palette: Palette, scheme: "light" | "dark") => StyleSheet.create({
   answers: { flexDirection: "row", gap: spacing[3] },
-  answer: { flex: 1, minHeight: 76, borderRadius: radius.lg, borderWidth: 1.5, borderColor: palette.fieldBorder, backgroundColor: palette.surface, alignItems: "center", justifyContent: "center", gap: spacing[1], paddingHorizontal: spacing[3] },
+  answerSlot: { flex: 1, minHeight: 76, borderRadius: radius.lg },
+  answer: { flexGrow: 1, minHeight: 76, borderRadius: radius.lg, borderWidth: 1.5, borderColor: scheme === "dark" ? palette.textMuted : palette.fieldBorder, backgroundColor: palette.surface, alignItems: "center", justifyContent: "center", gap: spacing[1], paddingHorizontal: spacing[3] },
   answerYes: { backgroundColor: brand.azul, borderColor: brand.azul },
   /* On the dark page a night fill would vanish: the refusal lifts to the raised surface with its outline. */
   answerNo: scheme === "dark" ? { backgroundColor: palette.surfaceMuted, borderColor: palette.fieldBorder } : { backgroundColor: brand.noche, borderColor: brand.noche },
@@ -49,14 +50,18 @@ export function AttendanceChoice({ value, onChange, error }: { readonly value: A
   return (
     <View style={{ gap: spacing[2] }}>
       <View accessibilityRole="radiogroup" accessibilityLabel={t("rsvp.invite.question")} style={s.answers}>
-        <Pressable accessibilityRole="radio" aria-checked={yes} accessibilityLabel={t("rsvp.invite.yes")} onPress={() => onChange("CONFIRMED")} testID="answer-yes" style={[s.answer, yes && s.answerYes, focusRing]}>
-          {yes ? <CheckMark size={24} tone="white" /> : null}
-          <Text style={[s.answerText, yes && s.answerTextOn]}>{t("rsvp.invite.yes")}</Text>
-        </Pressable>
-        <Pressable accessibilityRole="radio" aria-checked={no} accessibilityLabel={t("rsvp.invite.no")} onPress={() => onChange("DECLINED")} testID="answer-no" style={[s.answer, no && s.answerNo, focusRing]}>
-          {no ? <View style={s.ring}><View style={s.ringDot} /></View> : null}
-          <Text style={[s.answerText, no && s.answerTextOn]}>{t("rsvp.invite.no")}</Text>
-        </Pressable>
+        <PressFeedback accessibilityRole="radio" aria-checked={yes} accessibilityLabel={t("rsvp.invite.yes")} onPress={() => onChange("CONFIRMED")} testID="answer-yes" style={[s.answerSlot, focusRing]}>
+          <View style={[s.answer, yes && s.answerYes]}>
+            {yes ? <CheckMark size={24} tone="white" /> : null}
+            <Text style={[s.answerText, yes && s.answerTextOn]}>{t("rsvp.invite.yes")}</Text>
+          </View>
+        </PressFeedback>
+        <PressFeedback accessibilityRole="radio" aria-checked={no} accessibilityLabel={t("rsvp.invite.no")} onPress={() => onChange("DECLINED")} testID="answer-no" style={[s.answerSlot, focusRing]}>
+          <View style={[s.answer, no && s.answerNo]}>
+            {no ? <View style={s.ring}><View style={s.ringDot} /></View> : null}
+            <Text style={[s.answerText, no && s.answerTextOn]}>{t("rsvp.invite.no")}</Text>
+          </View>
+        </PressFeedback>
       </View>
       {error ? <Text accessibilityRole="alert" style={[styles.muted, { color: palette.danger }]}>{error}</Text> : null}
     </View>

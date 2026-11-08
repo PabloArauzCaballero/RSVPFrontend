@@ -1,12 +1,11 @@
-import type { PropsWithChildren, ReactNode } from "react";
-import { ActivityIndicator, Modal, Platform, Pressable, StyleSheet, Text, View, type KeyboardTypeOptions } from "react-native";
+import { useState, type PropsWithChildren, type ReactNode } from "react";
+import { Modal, Platform, Pressable, StyleSheet, Text, View, type KeyboardTypeOptions } from "react-native";
 import { usePathname, useRouter, type Href } from "expo-router";
 import { ApiError } from "@rsvp/api-client";
-import { Button, CheckMark, Input, useColors, useTheme } from "@rsvp/ui";
+import { Button, CheckMark, Enter, Input, OverlayEnter, overlayAnimation, pressVisual, SkeletonList, useColors, useReducedMotion, useTheme } from "@rsvp/ui";
 import { colors, radius, spacing, typography, type ColorTheme } from "@rsvp/design-tokens";
 import { loginHref } from "../auth/routes";
 import { useT } from "../platform/providers";
-import { currentScheme } from "../platform/theme";
 
 /** Building blocks shared by the host and admin screens. No copy lives here: callers pass translated text. */
 
@@ -67,17 +66,9 @@ export function useStyles(): HostStyles {
   return sheets[useTheme().scheme];
 }
 
-/**
- * The same sheet read at render time from the app's theme store, so a screen that still imports `styles` follows the
- * scheme (the tree remounts when it changes). New code calls `useStyles()`; this view goes away once every screen has moved.
- */
-export const styles: HostStyles = Object.defineProperties({} as HostStyles, Object.fromEntries(
-  (Object.keys(sheets.light) as (keyof HostStyles)[]).map((key) => [key, { enumerable: true, get: () => sheets[currentScheme()][key] }])
-));
-
 export { Screen, type NavItem, type NavTab } from "./shell";
 /** Personality primitives (docs/design/primitives.md): screens import them from here next to `Screen`, `Section`, `Notice`. */
-export { CheckMark, Celebrate, EmptyState, Illustration, PageIntro, SuccessNote } from "@rsvp/ui";
+export { CheckMark, Celebrate, EmptyState, Illustration, PageIntro, StickyActions, SuccessNote } from "@rsvp/ui";
 
 /** A form or settings block. Capped at a readable measure so fields never stretch across a wide screen. */
 export function Section({ title, children }: PropsWithChildren<{ readonly title: string }>): ReactNode {
@@ -140,10 +131,14 @@ export function ChoiceGroup<TValue extends string>({ label, choices, value, onCh
 export function ToggleChip({ label, on, onPress, testID, disabled = false }: { readonly label: string; readonly on: boolean; readonly onPress: () => void; readonly testID?: string; readonly disabled?: boolean }): ReactNode {
   const styles = useStyles();
   const palette = useColors();
+  const reduced = useReducedMotion();
+  const [pressed, setPressed] = useState(false);
   return (
-    <Pressable role="checkbox" aria-checked={on} aria-disabled={disabled} disabled={disabled} accessibilityLabel={label} onPress={onPress} {...(testID ? { testID } : {})} style={[styles.choice, { flexDirection: "row", alignItems: "center", gap: spacing[2] }, on && styles.choiceSelected, disabled && styles.buttonDisabled]}>
-      {on ? <View style={{ width: 5, height: 10, marginTop: -2, borderRightWidth: 2, borderBottomWidth: 2, borderColor: palette.primary, transform: [{ rotate: "45deg" }] }} /> : null}
-      <Text style={[styles.body, on && { fontWeight: "700" }]}>{label}</Text>
+    <Pressable role="checkbox" aria-checked={on} aria-disabled={disabled} disabled={disabled} accessibilityLabel={label} onPress={onPress} onPressIn={() => setPressed(true)} onPressOut={() => setPressed(false)} {...(testID ? { testID } : {})}>
+      <View style={[styles.choice, { flexDirection: "row", alignItems: "center", gap: spacing[2] }, on && styles.choiceSelected, disabled && styles.buttonDisabled, pressVisual(pressed && !disabled, reduced)]}>
+        {on ? <View style={{ width: 5, height: 10, marginTop: -2, borderRightWidth: 2, borderBottomWidth: 2, borderColor: palette.primary, transform: [{ rotate: "45deg" }] }} /> : null}
+        <Text style={[styles.body, on && { fontWeight: "700" }]}>{label}</Text>
+      </View>
     </Pressable>
   );
 }
@@ -158,8 +153,8 @@ export function Notice({ kind = "info", children }: PropsWithChildren<{ readonly
   const tone = { info: styles.noticeInfo, error: styles.noticeError, success: styles.noticeSuccess }[kind];
   const content = typeof children === "string" ? <Text style={styles.body}>{children}</Text> : children;
   // Success carries the drawn check of the D: the one celebratory gesture of the product.
-  if (kind === "success") return <View role="status" style={[styles.notice, tone, { flexDirection: "row", alignItems: "center", gap: spacing[3] }]}><CheckMark size={24} tone="success" /><View style={{ flex: 1, gap: spacing[2] }}>{content}</View></View>;
-  return <View role={kind === "error" ? "alert" : "status"} style={[styles.notice, tone]}>{content}</View>;
+  if (kind === "success") return <Enter from="down"><View role="status" style={[styles.notice, tone, { flexDirection: "row", alignItems: "center", gap: spacing[3] }]}><CheckMark size={24} tone="success" /><View style={{ flex: 1, gap: spacing[2] }}>{content}</View></View></Enter>;
+  return <Enter from="down"><View role={kind === "error" ? "alert" : "status"} style={[styles.notice, tone]}>{content}</View></Enter>;
 }
 
 /** Translates an API failure into what the person can do about it. */
@@ -209,10 +204,10 @@ export function ErrorNotice({ error, onReload }: { readonly error: unknown; read
   );
 }
 
+/** Loading state of a whole screen or section: rows shaped like the content that is coming (never a lone spinner). */
 export function Loading(): ReactNode {
-  const palette = useColors();
   const t = useT();
-  return <View style={{ padding: spacing[4] }}><ActivityIndicator aria-label={t("host.common.loading")} color={palette.primary} /></View>;
+  return <SkeletonList count={3} row={{ minHeight: 64 }} label={t("host.common.loading")} />;
 }
 
 /** `busy` shows the confirm button as loading and refuses a second confirm, Cancel and Escape until the request ends. */
@@ -220,9 +215,9 @@ export function ConfirmDialog({ visible, title, body, confirmLabel, danger, busy
   const styles = useStyles();
   const t = useT();
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={busy ? () => undefined : onCancel}>
+    <Modal visible={visible} transparent animationType={overlayAnimation("fade")} onRequestClose={busy ? () => undefined : onCancel}>
       <View style={styles.overlay}>
-        <View accessibilityViewIsModal accessibilityRole="alert" style={styles.dialog}>
+        <OverlayEnter from="none"><View accessibilityViewIsModal accessibilityRole="alert" style={styles.dialog}>
           <Text accessibilityRole="header" style={styles.subtitle}>{title}</Text>
           <Text style={styles.body}>{body}</Text>
           {children}
@@ -230,7 +225,7 @@ export function ConfirmDialog({ visible, title, body, confirmLabel, danger, busy
             <ActionButton label={confirmLabel} variant={danger ? "danger" : "primary"} busy={busy} onPress={onConfirm} {...(confirmTestID ? { testID: confirmTestID } : {})} />
             <ActionButton label={t("host.common.cancel")} variant="secondary" disabled={busy} onPress={onCancel} {...(cancelTestID ? { testID: cancelTestID } : {})} />
           </View>
-        </View>
+        </View></OverlayEnter>
       </View>
     </Modal>
   );

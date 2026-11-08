@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Text, View, useWindowDimensions } from "react-native";
 import { themeFromTemplate } from "@rsvp/celebration-theme";
-import { StepTransition } from "@rsvp/ui";
+import { Enter, MomentBackdrop, PressFeedback, Skeleton, SkeletonList, StepTransition, useColors } from "@rsvp/ui";
 import { radius, spacing } from "@rsvp/design-tokens";
 import { useCelebration, useCreateCelebration, useEventTypes, type Celebration, type TranslatedEventType } from "@rsvp/query-hooks";
 import { useApiClient, useClaims, useLocale, useT } from "../platform/providers";
@@ -14,8 +14,7 @@ import { LIMITS, overLimit, slugProblem } from "./limits";
 import { CenteredActions, LoadFailed } from "./load-failed";
 import { previewView, type PreviewSource } from "./preview-model";
 import { PreviewFrame } from "./preview-stage";
-import { ActionButton, Celebrate, ChoiceGroup, Field, Illustration, Loading, Notice, Screen, styles } from "./ui";
-import { livePalette as palette } from "../platform/theme";
+import { ActionButton, Celebrate, ChoiceGroup, Field, Illustration, Notice, Screen, useStyles } from "./ui";
 
 /**
  * Guided sign-up (docs/design/upgrade-brief.md §2): what you celebrate, who and when, name and link, in three short
@@ -39,6 +38,7 @@ const MAX_PREVIEW_NAMES = 2;
 const PREVIEW_NARROW = 220;
 const PREVIEW_WIDE = 480;
 const PREVIEW_READY = 400;
+const READY_WIDTH = 560;
 
 export function deviceTimeZone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -68,6 +68,8 @@ export function suggestedTitle(type: TranslatedEventType | undefined, hosts: Rea
 /** Three segments that fill as the host moves on; the words say where they are, the bar shows how far is left. */
 function StepProgress({ step }: { readonly step: number }): ReactNode {
   const t = useT();
+  const palette = useColors();
+  const styles = useStyles();
   const name = t(`host.onboarding.stepLabels.${STEPS[step - 1] ?? "type"}`);
   return (
     <View role="progressbar" aria-label={t("host.onboarding.progress")} aria-valuemin={1} aria-valuemax={LAST} aria-valuenow={step} aria-valuetext={`${t("host.onboarding.step", { step })}: ${name}`} style={{ gap: spacing[2] }}>
@@ -81,6 +83,8 @@ function StepProgress({ step }: { readonly step: number }): ReactNode {
 
 export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate }: { readonly step: number; readonly celebrationId?: string; readonly onNavigate: (href: string) => void }): ReactNode {
   const t = useT();
+  const styles = useStyles();
+  const palette = useColors();
   const client = useApiClient();
   const locale = useLocale();
   const claims = useClaims();
@@ -99,6 +103,7 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
   const [currency, setCurrency] = useState<string>(() => defaultCurrency(deviceTimeZone()));
   const [language, setLanguage] = useState<string>(locale);
   const [showDefaults, setShowDefaults] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(true);
   const [hosts, setHosts] = useState<Record<string, string>>({});
   const [tried, setTried] = useState(false);
   const once = useSingleFlight();
@@ -140,18 +145,24 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
   if (celebrationId) {
     return (
       <Screen title={t("host.onboarding.title")}>
-        {existing.isPending ? <Loading /> : null}
+        {existing.isPending ? <SkeletonList label={t("host.common.loading")}><View style={{ gap: spacing[4], alignItems: "center" }}><Skeleton width={96} height={96} radius={radius.xl} /><Skeleton width="60%" height={24} /><Skeleton width={PREVIEW_WIDTH} height={PREVIEW_READY} radius={radius.xl} /></View></SkeletonList> : null}
         {existing.data ? (
           <View style={{ gap: spacing[5] }}>
-            <Celebrate title={t("host.onboarding.readyTitle")} body={t("host.onboarding.readyBody")}>
-              <CenteredActions>
-                <ActionButton label={t("host.onboarding.finish")} onPress={() => onNavigate(withCelebration(editorPath("general"), celebrationId))} testID="onboarding-finish" />
-                <ActionButton variant="secondary" label={t("host.onboarding.chooseStyle")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.templates, celebrationId))} testID="onboarding-style" />
-              </CenteredActions>
-            </Celebrate>
-            <View style={{ width: "100%", maxWidth: PREVIEW_WIDTH, alignSelf: "center" }}>
-              <PreviewFrame device="mobile" theme={themeFromTemplate(null, type?.enabledSections ?? [])} view={previewView(existing.data, type, existing.data.defaultLocale)} label={t("host.onboarding.previewTitle")} height={PREVIEW_READY} />
+            {/* The moment: rings of light behind the drawn check; the only celebration of the sign-up. */}
+            <View style={{ width: "100%", maxWidth: READY_WIDTH, alignSelf: "center", overflow: "hidden", borderRadius: radius.xl, paddingVertical: spacing[6], paddingHorizontal: spacing[4], backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border }}>
+              <MomentBackdrop variant="confirmed" />
+              <Celebrate title={t("host.onboarding.readyTitle")} body={t("host.onboarding.readyBody")}>
+                <CenteredActions>
+                  <ActionButton label={t("host.onboarding.finish")} onPress={() => onNavigate(withCelebration(editorPath("general"), celebrationId))} testID="onboarding-finish" />
+                  <ActionButton variant="secondary" label={t("host.onboarding.chooseStyle")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.templates, celebrationId))} testID="onboarding-style" />
+                </CenteredActions>
+              </Celebrate>
             </View>
+            <Enter from="down" delay={120}>
+              <View style={{ width: "100%", maxWidth: PREVIEW_WIDTH, alignSelf: "center" }}>
+                <PreviewFrame device="mobile" theme={themeFromTemplate(null, type?.enabledSections ?? [])} view={previewView(existing.data, type, existing.data.defaultLocale)} label={t("host.onboarding.previewTitle")} height={PREVIEW_READY} />
+              </View>
+            </Enter>
           </View>
         ) : null}
       </Screen>
@@ -163,13 +174,13 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
     type: () => (
       <View style={{ gap: spacing[4] }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[4] }}>
-          <Illustration name="invitation" size="md" />
+          <Illustration name="welcomeHost" tone="auto" size="md" />
           <View style={{ flex: 1, gap: spacing[1] }}>
             <Text accessibilityRole="header" style={styles.subtitle}>{t("host.onboarding.typeTitle")}</Text>
             <Text style={styles.muted}>{t("host.onboarding.typeHelp")}</Text>
           </View>
         </View>
-        {types.isPending ? <Loading /> : null}
+        {types.isPending ? <SkeletonList label={t("host.common.loading")}><View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing[2] }}>{[120, 96, 140, 110, 128].map((width, index) => <Skeleton key={index} width={width} height={44} radius={radius.full} />)}</View></SkeletonList> : null}
         {types.isError ? <LoadFailed title={t("host.onboarding.typeTitle")} error={types.error} onRetry={() => { void types.refetch(); }} /> : null}
         <ChoiceGroup label={t("host.onboarding.typeLabel")} value={typeCode} onChange={(code) => { if (code !== typeCode) setHosts({}); setTypeCode(code); }} choices={(types.data?.items ?? []).map((item) => ({ value: item.code, label: item.name }))} />
         {type?.description ? <Text style={styles.muted}>{type.description}</Text> : null}
@@ -223,7 +234,16 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
   const form = (
     <View style={{ gap: spacing[5], flex: wide ? 1 : undefined, width: "100%" }}>
       <StepProgress step={step} />
-      {!wide && step > 1 ? <View style={{ gap: spacing[2] }}><Text style={styles.label}>{t("host.onboarding.previewTitle")}</Text>{live(PREVIEW_NARROW)}</View> : null}
+      {!wide && step > 1 ? (
+        <Enter from="down" key="preview">
+          <View style={{ gap: spacing[2] }}>
+            <PressFeedback accessibilityRole="button" accessibilityLabel={previewOpen ? t("host.onboarding.previewHide") : t("host.onboarding.previewShow")} aria-expanded={previewOpen} onPress={() => setPreviewOpen((open) => !open)} style={{ alignSelf: "flex-start", justifyContent: "center" }}>
+              <Text style={[styles.label, { color: palette.primary }]}>{`${t("host.onboarding.previewTitle")} · ${previewOpen ? t("host.onboarding.previewHide") : t("host.onboarding.previewShow")}`}</Text>
+            </PressFeedback>
+            {previewOpen ? live(PREVIEW_NARROW) : null}
+          </View>
+        </Enter>
+      ) : null}
       <StepTransition step={step} announce={`${t("host.onboarding.step", { step })}: ${t(`host.onboarding.stepLabels.${stepName}`)}`}>{bodies[stepName]()}</StepTransition>
     </View>
   );
@@ -233,11 +253,13 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
         <View style={{ flexDirection: "row", gap: spacing[8], alignItems: "flex-start" }}>
           {form}
           {typeCode ? (
+            <Enter from="left">
             <View style={{ width: PREVIEW_WIDTH, gap: spacing[2] }}>
               <Text accessibilityRole="header" aria-level={2} style={styles.subtitle}>{t("host.onboarding.previewTitle")}</Text>
               <Text style={styles.muted}>{t("host.onboarding.previewHint")}</Text>
               {live(PREVIEW_WIDE)}
             </View>
+            </Enter>
           ) : null}
         </View>
       ) : form}

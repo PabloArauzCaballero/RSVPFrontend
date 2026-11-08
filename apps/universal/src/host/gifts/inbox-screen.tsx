@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
+import { Illustration, SkeletonList, Stagger } from "@rsvp/ui";
 import { spacing } from "@rsvp/design-tokens";
 import { ApiError } from "@rsvp/api-client";
 import { formatCelebrationDate } from "@rsvp/i18n";
@@ -7,7 +8,7 @@ import { useDecideReservation, useGiftList, useGuestDetail, useGuestGroups, useH
 import { useApiClient, useLocale, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { GiftErrorNotice } from "./gift-errors";
-import { ActionButton, EmptyState, Loading, Notice, styles } from "../ui";
+import { ActionButton, EmptyState, Notice, useStyles } from "../ui";
 import { HOST_ROUTES, withCelebration } from "../routes";
 import { Row, RowList } from "./offer-row";
 import { RetryNotice } from "../guests/parts";
@@ -16,6 +17,7 @@ import { useSingleFlightGate } from "../../platform/single-flight";
 
 /** Who asked, in full: among dozens of guests a first name alone is not enough. The display name the guest typed stays as the fallback; the guest record adds the full name and the group when the guest list can be read. */
 function Requester({ reservation, celebrationId }: { readonly reservation: GiftReservation; readonly celebrationId: string }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const client = useApiClient();
   const visible = !reservation.requesterHidden && Boolean(reservation.guestId);
@@ -38,6 +40,7 @@ function Requester({ reservation, celebrationId }: { readonly reservation: GiftR
 
 /** C25 · Pending reservations: who asked, which gift, approve or reject; a reservation somebody already decided (409) refreshes the list. */
 function InboxBody({ celebrationId, timeZone, onSeeList }: { readonly celebrationId: string; readonly timeZone: string; readonly onSeeList: () => void }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const locale = useLocale();
   const client = useApiClient();
@@ -45,29 +48,29 @@ function InboxBody({ celebrationId, timeZone, onSeeList }: { readonly celebratio
   const gifts = useGiftList(client, celebrationId);
   const decide = useDecideReservation(client, celebrationId);
   const flight = useSingleFlightGate();
-  const [notice, setNotice] = useState<{ kind: "success" | "info"; text: string } | null>(null);
+  const [notice, setNotice] = useState<{ kind: "success" | "info"; text: string; approved?: boolean } | null>(null);
   const resolve = (reservation: GiftReservation, decision: "approve" | "reject"): void => {
     setNotice(null);
     if (!flight.begin()) return;
     decide.mutate({ reservationId: reservation.id, decision }, {
       onSettled: flight.end,
-      onSuccess: () => setNotice({ kind: "success", text: decision === "approve" ? t("gifts.host.inbox.approved") : t("gifts.host.inbox.rejected") }),
+      onSuccess: () => setNotice({ kind: "success", text: decision === "approve" ? t("gifts.host.inbox.approved") : t("gifts.host.inbox.rejected"), approved: decision === "approve" }),
       onError: (error) => { if (error instanceof ApiError && error.status === 409) setNotice({ kind: "info", text: t("gifts.host.inbox.stale") }); }
     });
   };
-  if (reservations.isPending) return <Loading />;
+  if (reservations.isPending) return <SkeletonList count={3} row={{ minHeight: 132, avatar: false, lines: 2, trailing: false }} label={t("host.common.loading")} />;
   if (reservations.isError) return <RetryNotice error={reservations.error} onRetry={() => { void reservations.refetch(); }} />;
   const open = reservations.data.items.filter((entry) => entry.status === "PENDING_REVIEW");
   const conflict = decide.error instanceof ApiError && decide.error.status === 409;
   return (
     <View style={{ gap: spacing[4] }}>
-      {notice ? <Notice kind={notice.kind}>{notice.text}</Notice> : null}
+      {notice ? <Notice kind={notice.kind}>{notice.approved ? <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[3] }}><Illustration name="giftReserved" tone="auto" size="sm" /><Text style={[styles.body, { flex: 1 }]}>{notice.text}</Text></View> : <Text style={styles.body}>{notice.text}</Text>}</Notice> : null}
       {decide.isError && !conflict ? <GiftErrorNotice error={decide.error} /> : null}
       {open.length === 0 ? (
-        <EmptyState illustration="gift" title={t("gifts.host.inbox.emptyTitle")} body={t("gifts.host.inbox.emptyBody")} action={<ActionButton variant="secondary" label={t("gifts.host.inbox.emptyAction")} onPress={onSeeList} testID="back-to-list" />} />
+        <EmptyState illustration="success" title={t("gifts.host.inbox.emptyTitle")} body={t("gifts.host.inbox.emptyBody")} action={<ActionButton variant="secondary" label={t("gifts.host.inbox.emptyAction")} onPress={onSeeList} testID="back-to-list" />} />
       ) : (
         <RowList>
-          {open.map((reservation, index) => {
+          <Stagger>{open.map((reservation, index) => {
             const gift = gifts.data?.items.find((item) => item.id === reservation.itemId);
             const busy = decide.isPending && decide.variables?.reservationId === reservation.id ? decide.variables.decision : null;
             return (
@@ -82,7 +85,7 @@ function InboxBody({ celebrationId, timeZone, onSeeList }: { readonly celebratio
                 </View>
               </Row>
             );
-          })}
+          })}</Stagger>
         </RowList>
       )}
     </View>
