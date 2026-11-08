@@ -39,3 +39,16 @@ Corregido:
 3. **Barra fija de acción blanca sobre el lienzo hueso bajo 960 px** (hallazgo del carril del anfitrión): se mantiene. Es la misma superficie blanca con borde superior que la barra inferior de navegación; separa la barra del contenido y es coherente. No se cambia.
 
 Verificación: `packages/design-tokens` 80/80, `packages/ui` 229/229, `apps/universal` 331/331 con `tsc` limpio. Compilación re-exportada y vista en localhost:8081.
+
+## Pasada 4
+
+Capturas reales de pantallas aún no revisadas a ojo (1280 y 390, claro y oscuro): Inicio, Publicar, Configuración, Mi invitación, Regalos, proveedor.
+
+Corregido:
+1. **Inicio ya no decía de qué celebración era.** Tras quitar la línea repetida bajo los títulos (pasada del carril de reorganización), Inicio quedó titulado «Tu celebración» y el nombre real («Lucía Flores y Daniel Choque») no aparecía en ninguna parte de la app. `CelebrationScreen` acepta `heading`, que sustituye al título una vez cargada la celebración; Inicio lo usa con el título de la celebración. La subfrase («Invitas hoy. Mañana sabes quién viene.») se mantiene. Aserción nueva en `test/guests.test.tsx`.
+
+Revisado y sin cambio:
+2. **Publicar:** contenido corto alineado a la izquierda, con mucho aire a la derecha; es el estado «publicada» (enlace + cómo se verá en WhatsApp). Correcto para el estado; no hay nada que quitar.
+3. **Configuración:** las tarjetas miden 720 px y la cabecera 896 px. Es a propósito (medida de lectura de formulario); se conserva.
+
+Verificación: `apps/universal` `tsc` limpio; `guests.test.tsx` 45/45 y `host.test.tsx` 24/24.

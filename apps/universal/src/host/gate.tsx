@@ -66,7 +66,7 @@ export interface Loaded {
  * screen would otherwise repeat: no celebration chosen, loading, not found, read-only. `editable` screens
  * (content, gallery, translations, templates, settings, modes) are replaced by a notice once archived.
  */
-export function CelebrationScreen({ celebrationId, onNavigate, current, title, intro, manage = true, editable = false, actions, menu, children }: ScreenProps & { readonly current: HostRoute; readonly title: string; readonly intro?: string; /** The screen's single primary action (top right of the header; a sticky bar below 768 px). Shown only once the celebration has loaded. */ readonly actions?: ReactNode | ((loaded: Loaded) => ReactNode); /** Secondary actions (`OverflowMenu`), top right next to the primary one. */ readonly menu?: ReactNode | ((loaded: Loaded) => ReactNode); readonly manage?: boolean; readonly editable?: boolean; readonly children: (loaded: Loaded) => ReactNode }): ReactNode {
+export function CelebrationScreen({ celebrationId, onNavigate, current, title, heading, intro, manage = true, editable = false, actions, menu, children }: ScreenProps & { readonly current: HostRoute; readonly title: string; /** Replaces `title` once the celebration has loaded (Inicio shows the celebration's own name). */ readonly heading?: (loaded: Loaded) => string; readonly intro?: string; /** The screen's single primary action (top right of the header; a sticky bar below 768 px). Shown only once the celebration has loaded. */ readonly actions?: ReactNode | ((loaded: Loaded) => ReactNode); /** Secondary actions (`OverflowMenu`), top right next to the primary one. */ readonly menu?: ReactNode | ((loaded: Loaded) => ReactNode); readonly manage?: boolean; readonly editable?: boolean; readonly children: (loaded: Loaded) => ReactNode }): ReactNode {
   const t = useT();
   const client = useApiClient();
   const locale = useLocale();
@@ -80,11 +80,11 @@ export function CelebrationScreen({ celebrationId, onNavigate, current, title, i
   const nav = hostNav(t, celebrationId);
   const [store] = useState(() => new HeaderStore());
   const slotted = useSyncExternalStore(store.subscribe, store.presence, store.presence);
-  const frame = (body: ReactNode, header?: { readonly actions?: ReactNode; readonly menu?: ReactNode }): ReactNode => {
+  const frame = (body: ReactNode, header?: { readonly actions?: ReactNode; readonly menu?: ReactNode }, screenTitle: string = title): ReactNode => {
     const actions = header?.actions ?? (slotted.includes("a") ? <HeaderOutlet store={store} part="actions" /> : null);
     const menu = header?.menu ?? (slotted.includes("m") ? <HeaderOutlet store={store} part="menu" /> : null);
     const status = slotted.includes("s") ? <HeaderOutlet store={store} part="status" /> : null;
-    return <Screen title={title} {...(intro ? { intro } : {})} nav={nav} current={current} onNavigate={onNavigate} {...(actions ? { actions } : {})} {...(menu ? { menu } : {})} {...(status ? { status } : {})}>{body}</Screen>;
+    return <Screen title={screenTitle} {...(intro ? { intro } : {})} nav={nav} current={current} onNavigate={onNavigate} {...(actions ? { actions } : {})} {...(menu ? { menu } : {})} {...(status ? { status } : {})}>{body}</Screen>;
   };
   if (!canUseHostWorkspace(claims)) return frame(<Notice kind="error">{t("host.common.accessDenied")}</Notice>);
   if (!celebrationId && (mine.isPending || onlyOne)) return frame(<SkeletonList count={3} row={{ minHeight: 64, avatar: false, trailing: false }} label={t("host.common.loading")} />);
@@ -99,5 +99,5 @@ export function CelebrationScreen({ celebrationId, onNavigate, current, title, i
   const loaded: Loaded = { celebration, eventType, refetch: () => { void query.refetch(); } };
   const resolve = (slot: ReactNode | ((loaded: Loaded) => ReactNode)): ReactNode => (typeof slot === "function" ? slot(loaded) : slot);
   // The celebration's name is not repeated under the title: the side menu and Inicio already say which one this is.
-  return frame(<HeaderContext.Provider value={store}>{children(loaded)}</HeaderContext.Provider>, { actions: resolve(actions), menu: resolve(menu) });
+  return frame(<HeaderContext.Provider value={store}>{children(loaded)}</HeaderContext.Provider>, { actions: resolve(actions), menu: resolve(menu) }, heading?.(loaded) || title);
 }

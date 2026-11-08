@@ -5,6 +5,7 @@ import { CheckMark, Enter, Skeleton, SkeletonList, fonts, useColors, useTheme } 
 import { countdownTo, useCelebration, useGuestSummary, useHostReservations, usePublishCheck, type Celebration } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
+import { asText } from "../content-draft";
 import { HOST_ROUTES, withCelebration } from "../routes";
 import { ActionButton, EmptyState, useStyles } from "../ui";
 import { FreshnessLine, RetryNotice, TextAction } from "./parts";
@@ -185,5 +186,5 @@ export function SummaryScreen(props: ScreenProps): ReactNode {
   const action = step && step.kind !== "done"
     ? <ActionButton label={step.kind === "addGuests" ? t("guests.summary.welcome.action") : t(`guests.summary.next.${step.kind}.action`)} onPress={() => props.onNavigate(withCelebration(STEP_ROUTE[step.kind], props.celebrationId))} testID="next-step-action" />
     : undefined;
-  return <CelebrationScreen {...props} current="summary" title={t("guests.summary.title")} intro={t("guests.summary.intro")} actions={action}>{({ celebration: loaded }) => <SummaryBody celebration={loaded} state={state} onNavigate={props.onNavigate} />}</CelebrationScreen>;
+  return <CelebrationScreen {...props} current="summary" title={t("guests.summary.title")} heading={(loaded) => asText(loaded.celebration.content["title"])} intro={t("guests.summary.intro")} actions={action}>{({ celebration: loaded }) => <SummaryBody celebration={loaded} state={state} onNavigate={props.onNavigate} />}</CelebrationScreen>;
 }

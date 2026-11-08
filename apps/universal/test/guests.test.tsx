@@ -285,6 +285,8 @@ describe("REQ-F17-01/04/06 · C6 summary shows the backend numbers and how fresh
     // The celebration is still a draft: publishing comes first, and the open request stays visible as a line.
     expect(await screen.findByText("1 solicitud de acompañantes por revisar")).toBeTruthy();
     expect(screen.getByText(/Actualizado/)).toBeTruthy();
+    // Inicio is headed by the celebration's own name, not a generic "Tu celebración" (the name is not repeated on other screens).
+    expect(screen.queryByRole("heading", { name: "Tu celebración" })).toBeNull();
     expect(within(screen.getByTestId("next-step")).getByText("Publica tu invitación")).toBeTruthy();
     fireEvent.click(screen.getByTestId("next-step-action"));
     expect(navigate).toHaveBeenCalledWith(`/publicar?c=${id}`);
