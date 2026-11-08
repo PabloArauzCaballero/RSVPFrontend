@@ -111,7 +111,8 @@ function Overview({ provider, refetch }: { readonly provider: Provider; readonly
       <ReadyHeader provider={provider} tone={tone} doneCount={doneCount} celebrating={Boolean(milestone)} />
       <RenameProvider provider={provider} open={renaming} onClose={() => setRenaming(false)} />
       {milestone ? <Enter key={milestone} from="down"><Moment><Celebrate title={t(`portal.home.milestone.${milestone}.title`)} body={t(`portal.home.milestone.${milestone}.body`)} /></Moment></Enter> : null}
-      {suspended ? <EmptyState illustration="suspended" title={t("portal.status.SUSPENDED.label")} body={t("portal.status.SUSPENDED.body")} /> : (
+      {suspended ? <EmptyState illustration="suspended" title={t("portal.status.SUSPENDED.label")} body={t("portal.status.SUSPENDED.body")} /> : provider.status === "VERIFIED" ? null : (
+        // Once verified the path is finished: the header already says "3 of 3" and "Verified", so the three done steps are not listed again.
         <View style={{ maxWidth: 720 }}>
           <Stagger>
             <Step key="profile" testID="step-profile" done title={t("portal.home.journey.profile.title")} body={t("portal.home.journey.profile.done", { name: provider.name })} />

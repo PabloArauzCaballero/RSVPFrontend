@@ -52,3 +52,16 @@ Revisado y sin cambio:
 3. **Configuración:** las tarjetas miden 720 px y la cabecera 896 px. Es a propósito (medida de lectura de formulario); se conserva.
 
 Verificación: `apps/universal` `tsc` limpio; `guests.test.tsx` 45/45 y `host.test.tsx` 24/24.
+
+## Pasada 5
+
+Capturas reales (Playwright, 1280 y 390): Regalos, portal del proveedor, acceso. Nota de método: `chrome --headless --window-size=390` no baja de ~500 px de ancho de maqueta y recorta la captura; produce falsos desbordes (login y 404 «cortados»). Las capturas de la pasada usan Playwright con viewport real; las de `--window-size` solo valen para páginas de ancho fijo.
+
+Corregido:
+1. **Resumen del proveedor verificado repetía tres veces lo mismo.** «Listo para vender · 3 de 3 pasos · Verificado», la tarjeta «Tu ficha ya es pública» y la lista de los tres pasos ya hechos. Con el proveedor verificado el camino terminó: se quita la lista de pasos (la cabecera ya dice «3 de 3» y «Verificado»). Mientras el camino sigue abierto (borrador, pendiente) los pasos se listan como antes. Aserciones nuevas en `test/provider-reorganization.test.tsx` para los dos estados.
+
+Revisado y sin cambio:
+2. **Regalos 1280:** lista con estado en píldora pastel, aviso de reservas por revisar y acción primaria arriba a la derecha; sin hallazgos.
+3. **Invitación pública (`/c/{slug}`):** vive en `apps/seo-web` (:3000), no en la app Expo; no se revisó en esta pasada (queda para la pasada 6 junto con el sitio público, que necesita su servidor). El admin tampoco se revisó a ojo en esta pasada.
+
+Verificación: `apps/universal` `tsc` limpio; `provider-reorganization` 8/8.
