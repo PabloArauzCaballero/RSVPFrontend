@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Text, View } from "react-native";
 import { useMyCelebrations } from "@rsvp/query-hooks";
 import { AvatarMark, Chip, PressFeedback, SkeletonList, Stagger, useColors } from "@rsvp/ui";
@@ -13,7 +13,7 @@ import { RowList } from "./gifts/offer-row";
 import { ActionButton, EmptyState, Notice, Screen, useStyles } from "./ui";
 
 /** C2 · Choose a celebration or create a new one. */
-export function CelebrationsScreen({ onNavigate }: { readonly onNavigate: (href: string) => void }): ReactNode {
+export function CelebrationsScreen({ onNavigate, openOnly = false }: { readonly onNavigate: (href: string) => void; /** Entering the app: with exactly one celebration, open its Inicio instead of a list of one. */ readonly openOnly?: boolean }): ReactNode {
   const styles = useStyles();
   const palette = useColors();
   const t = useT();
@@ -21,6 +21,8 @@ export function CelebrationsScreen({ onNavigate }: { readonly onNavigate: (href:
   const client = useApiClient();
   const claims = useClaims();
   const query = useMyCelebrations(client);
+  const only = openOnly && query.isSuccess && query.data.items.length === 1 ? query.data.items[0]?.id : undefined;
+  useEffect(() => { if (only) onNavigate(withCelebration(HOST_ROUTES.summary, only)); }, [only, onNavigate]);
   if (!canUseHostWorkspace(claims)) return <Screen title={t("host.picker.title")}><Notice kind="error">{t("host.common.accessDenied")}</Notice></Screen>;
   const items = query.data?.items ?? [];
   const nav = hostNav(t, undefined);

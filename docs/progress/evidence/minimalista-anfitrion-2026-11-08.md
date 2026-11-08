@@ -38,4 +38,34 @@ Alcance: `apps/universal/src/host/**` (marco, navegación lateral e inferior, In
 
 ## Prueba y resultados
 
-_(se completa abajo con las ejecuciones)_
+Entorno: backend real (Kong :28000, servicios locales, datos demo de `docs/runbooks/datos-demo.md`), app exportada propia (puerto 8400/8500), Chrome real. Mundos nuevos creados con `apps/seo-web/scripts/live-world.mjs`.
+
+| Prueba | Resultado |
+|---|---|
+| `tsc --noEmit` en `src/host` y `src/push` | Sin errores (los errores restantes del paquete son de `auth`, `guest`, `provider` y `platform`, fuera de alcance) |
+| Pruebas de componentes (`host*`, `guests*`, `gifts-portal`, `navigation`, `error-states`, `celebration-limits`, `push`, `theme`) | Todas en verde (173 + `host-minimalist`) |
+| `host.test.tsx` | Una aserción cambiada por una equivalente: el fondo `moment-confirmed` ya no existe; ahora se exige la región `role=status` con el cheque y que no haya `data-illustration^="moment-"` |
+| `host-minimalist.test.ts` (nuevo) | Vigila `host/` y `push/`: sin fuente antigua, sin peso 800, sin tokens `brand`/`onNight`, sin primitivas eliminadas, sin degradados, sin hex crudos. Encontró un degradado real en el aviso de desborde de pestañas |
+| `guests-buttons.mjs` 360 | 95 PASS, 4 BRECHA, 1 FAIL («read-<id> error de red»: «no more unread notifications», carrera de datos: los avisos sembrados llegan de forma asíncrona y el aserto anterior los consumió) |
+| `guests-buttons.mjs` 768 | 96 PASS, 4 BRECHA, 0 FAIL |
+| `guests-buttons.mjs` 1280 | 95 PASS, 4 BRECHA, 1 FAIL («mark-all 429/503»: el botón queda deshabilitado si no quedan avisos sin leer; mismo origen de datos que el anterior, el aserto pasa en la corrida aislada) |
+| `gifts-buttons.mjs` 768 | 52/52 |
+| `celebration-buttons.mjs` 360 / 768 / 1280 | 48/48 en los tres |
+| `gifts-buttons.mjs` 1280 y 360 | Con un FAIL solo a 1280 (estado `/Disponible/`: la píldora se dibuja en mayúsculas y `innerText` lo refleja; aserto cambiado a `/Disponible/i`). A 360 no se repitió la lectura final tras ese cambio: **no verificado con la compilación final** |
+| Barridos responsive 360 / 768 / 1280 × es/en × claro/oscuro | Primera pasada: `guests` con 7 FAIL, `celebration` 18, `gifts` 4, todos «el fondo efectivo sigue el esquema» a 360 oscuro: la sonda contaba como superficie clara el botón primario de ancho completo (en oscuro el primario es claro por diseño). La sonda `responsive/scheme.mjs` ya excluye controles (`button`, `[role=button]`) y se repitió a 360 oscuro: `celebration` 196/0 FAIL, `gifts` 29/29, `guests` sin FAIL. Las otras combinaciones (axe, 44 px, claves i18n, scroll horizontal) pasaron en la primera pasada; no se repitieron completas tras el último cambio |
+| Rendimiento del campo CSV | El FAIL «más de 1 MiB» (`fill` > 15 s) era real: el kerning de Geist sobre un tramo sin cortes de 200 000 caracteres tardaba 6,9 s (195 ms en Arial). Causa raíz: se añadió `mono` a `Field` y el CSV usa `fonts.mono` (282 ms). Tras eso la sección pasó a 360 y 768 |
+
+Entorno: el servicio de regalos (:3004) cayó dos veces por un heartbeat de RabbitMQ; se reinició con `ensure-backend.sh` y se repitieron las ejecuciones afectadas.
+
+## Hallazgos de la revisión visual (rúbrica 0 a 2)
+Jerarquía 2, alineación 2, espaciado 2, consistencia con el sistema 2, contraste 2 (axe sin serious/critical), densidad 2, estados 2 (la gestión de plantillas muestra el error por el servicio de plantillas no levantado; no se pudo ver la galería con datos), pulido 1. Total 15/16, aprobada con nits.
+- Nit: avatares con pastel rojo en filas de invitados (de `@rsvp/ui`) se confunden con el estado «no asistirá»; sugerir a Base evitar el rojo en avatares.
+- Nit: `AvatarMark` de la lista de celebraciones tiene esquinas planas a la izquierda y redondeadas a la derecha.
+- Nit: bajo 960 px (incluye 768) la barra fija de acción queda blanca sobre el lienzo hueso.
+
+## No probado
+- Nativo (iOS/Android): no se ejecutó.
+- Galería de plantillas con datos (servicio de plantillas no disponible) y fotos.
+- Matriz `gifts-buttons` completa a 360 y 1280 con la compilación final.
+- Barrido responsive completo tras la última corrección del campo CSV.
+

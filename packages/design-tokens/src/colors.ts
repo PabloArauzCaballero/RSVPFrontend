@@ -66,10 +66,13 @@ export const chips = {
   }
 } as const;
 
-/** Avatar grounds: a pastel and its ink, never a saturated block. */
+/**
+ * Avatar grounds: calm neutrals and one blue, never green, yellow or red. Those three already mean "confirmed", "maybe" and
+ * "not attending" in every list that shows an avatar next to a reply pill, so a person's initials must not borrow them.
+ */
 export const avatars = {
-  light: [tones.light.green, tones.light.blue, tones.light.yellow, tones.light.red],
-  dark: [tones.dark.green, tones.dark.blue, tones.dark.yellow, tones.dark.red]
+  light: [tones.light.blue, tones.light.gray, { bg: '#EAE6DB', fg: '#4A463B' }, { bg: '#E4E8EE', fg: '#3B4452' }],
+  dark: [tones.dark.blue, tones.dark.gray, { bg: '#2F2C25', fg: '#D9D3C3' }, { bg: '#252A33', fg: '#C9D2E0' }]
 } as const;
 
 export type ColorTheme = keyof typeof colors;

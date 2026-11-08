@@ -28,3 +28,14 @@ Corregido:
 2. **Pestañas cortadas en móvil** (hallazgo 3): se mantiene por diseño. La fila de pestañas se desplaza y el chevron avisa de que hay más; cortar el rótulo es la señal. No se cambia.
 
 Verificación: `apps/universal` y `packages/query-hooks` con `tsc` limpio; `host.test.tsx` 23/23. Suite completa de la app en la corrida final de la pasada.
+
+## Pasada 3
+
+Capturas reales (1280 y 390, claro y oscuro) de acceso, Invitados, Mis celebraciones, Regalos, Publicar, Ajustes y proveedor, con la compilación de la pasada 2.
+
+Corregido:
+1. **Avatares con el color de un estado** (hallazgo del carril del anfitrión). Los fondos de avatar usaban verde, amarillo y rojo pastel, los mismos de «Confirmó», «Quizá» y «No asistirá»; una fila con iniciales en rojo junto a una píldora verde se leía como contradicción. `avatars` pasa a neutros cálidos y un azul (`packages/design-tokens/src/colors.ts`), con el contraste AA comprobado por `contrast.test.ts`.
+2. **La persona con una sola celebración aterrizaba en «Mis celebraciones» (una lista de uno)** al entrar. `app/index.tsx` envía a los anfitriones a `/celebraciones?entrar=1`; con exactamente una celebración, `CelebrationsScreen` abre su Inicio. Con varias o ninguna, y al entrar por la pestaña, sigue la lista. Prueba nueva en `test/host.test.tsx`.
+3. **Barra fija de acción blanca sobre el lienzo hueso bajo 960 px** (hallazgo del carril del anfitrión): se mantiene. Es la misma superficie blanca con borde superior que la barra inferior de navegación; separa la barra del contenido y es coherente. No se cambia.
+
+Verificación: `packages/design-tokens` 80/80, `packages/ui` 229/229, `apps/universal` 331/331 con `tsc` limpio. Compilación re-exportada y vista en localhost:8081.

@@ -180,6 +180,16 @@ describe("C7–C11 · content editor", () => {
     expect(await screen.findByLabelText("El nombre de quien se bautiza")).toBeTruthy();
   });
 
+  it("entering the app with exactly one celebration opens its Inicio; the list itself stays a list", async () => {
+    const only = fakeClient({ ...baseHandlers(CELEBRATION), "GET /celebrations": () => ({ items: [CELEBRATION] }) });
+    const go = vi.fn();
+    renderApp(<CelebrationsScreen onNavigate={go} openOnly />, only.client);
+    await waitFor(() => expect(go).toHaveBeenCalledWith(`/inicio?c=${CELEBRATION.id}`));
+    const stay = vi.fn();
+    renderApp(<CelebrationsScreen onNavigate={stay} />, only.client);
+    expect(await screen.findAllByText(/Mis celebraciones/)).not.toHaveLength(0);
+    expect(stay).not.toHaveBeenCalled();
+  });
   it("with exactly one celebration and none chosen, goes straight to it instead of asking to choose", async () => {
     const only = fakeClient({ ...baseHandlers(CELEBRATION), "GET /celebrations": () => ({ items: [CELEBRATION] }) });
     const go = vi.fn();
