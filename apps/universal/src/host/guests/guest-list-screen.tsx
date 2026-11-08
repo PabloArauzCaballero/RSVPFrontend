@@ -88,7 +88,7 @@ function ListBody({ celebrationId, timeZone, onNavigate }: { readonly celebratio
             : data.items.length === 0 && appearing.length === 0 ? <EmptyState illustration="emptySearch" title={t("guests.list.emptyFilteredTitle")} body={t("guests.list.emptyFiltered")} /> : (
             <View role="list" style={{ borderRadius: radius.lg, borderWidth: 1, borderColor: palette.border, backgroundColor: palette.surface, overflow: "hidden" }}>
               {appearing.map((guest) => (
-                <View key={`new-${guest.at}-${guest.name}`} role="listitem" testID="appearing-guest" style={{ flexDirection: "row", alignItems: "center", gap: spacing[3], minHeight: GUEST_ROW_HEIGHT, paddingVertical: spacing[3], paddingHorizontal: spacing[4], borderBottomWidth: 1, borderBottomColor: palette.border }}>
+                <View key={`new-${guest.at}-${guest.name}`} role="listitem" testID="appearing-guest" style={{ flexDirection: "row", alignItems: "center", gap: spacing[4], minHeight: GUEST_ROW_HEIGHT, paddingVertical: spacing[4], paddingHorizontal: spacing[6], borderBottomWidth: 1, borderBottomColor: palette.border }}>
                   <Avatar name={guest.name} size={44} />
                   <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
                     <Text style={styles.itemTitle} numberOfLines={2}>{guest.name}</Text>

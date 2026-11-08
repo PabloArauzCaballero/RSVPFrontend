@@ -15,7 +15,7 @@ export function RowList({ children }: PropsWithChildren): ReactNode {
 /** A row of a `RowList`. `first` removes the divider above it. */
 export function Row({ first = false, testID, children }: PropsWithChildren<{ readonly first?: boolean; readonly testID?: string }>): ReactNode {
   const palette = useColors();
-  return <View {...(testID ? { testID } : {})} style={{ gap: spacing[2], paddingVertical: spacing[4], paddingHorizontal: spacing[4], borderTopWidth: first ? 0 : 1, borderTopColor: palette.border }}>{children}</View>;
+  return <View {...(testID ? { testID } : {})} style={{ gap: spacing[2], paddingVertical: spacing[5], paddingHorizontal: spacing[6], borderTopWidth: first ? 0 : 1, borderTopColor: palette.border }}>{children}</View>;
 }
 
 /** A short quiet line: «search to begin» and «nothing found» inside a panel, where a full empty state would be too much. */

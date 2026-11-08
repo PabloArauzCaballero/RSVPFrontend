@@ -147,7 +147,7 @@ export function GuestListSkeleton({ count = 5 }: { readonly count?: number }): R
   return <SkeletonList count={count} row={{ minHeight: GUEST_ROW_HEIGHT }} label={t("guests.loading")} />;
 }
 
-export const GUEST_ROW_HEIGHT = 68;
+export const GUEST_ROW_HEIGHT = 84;
 
 const NARROW = 480;
 
@@ -157,9 +157,9 @@ export function GuestRow({ name, detail, status, label, onPress, extra }: { read
   const narrow = useWindowDimensions().width < NARROW;
   return (
     <PressFeedback accessibilityLabel={label} onPress={onPress}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[3], minHeight: GUEST_ROW_HEIGHT, paddingVertical: spacing[3], paddingHorizontal: spacing[4] }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[4], minHeight: GUEST_ROW_HEIGHT, paddingVertical: spacing[4], paddingHorizontal: spacing[6] }}>
         <Avatar name={name} size={44} />
-        <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+        <View style={{ flex: 1, minWidth: 0, gap: spacing[1] }}>
           <Text style={styles.itemTitle} numberOfLines={2}>{name}</Text>
           {detail ? <Text style={styles.muted} numberOfLines={1}>{detail}</Text> : null}
           {extra}

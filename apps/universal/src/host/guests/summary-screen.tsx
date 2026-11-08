@@ -168,9 +168,12 @@ function SummaryBody({ celebration, state, onNavigate }: { readonly celebration:
               </View>
             </View>
           ) : null}
-          <Text style={styles.muted}>{deadlineLine(celebration, t, Date.now())}</Text>
-          {open && step?.kind !== "requests" ? <Text testID="open-requests" style={styles.muted}>{t("guests.summary.openRequests", { count: open })}</Text> : null}
-          <FreshnessLine freshness={data.freshness} timeZone={celebration.timeZone} onRefresh={() => { void summary.refetch(); }} />
+          {/* The small print belongs together: one block with tight lines, set apart from the numbers above it. */}
+          <View style={{ gap: spacing[1], paddingTop: spacing[2] }}>
+            <Text style={styles.muted}>{deadlineLine(celebration, t, Date.now())}</Text>
+            {open && step?.kind !== "requests" ? <Text testID="open-requests" style={styles.muted}>{t("guests.summary.openRequests", { count: open })}</Text> : null}
+            <FreshnessLine freshness={data.freshness} timeZone={celebration.timeZone} onRefresh={() => { void summary.refetch(); }} />
+          </View>
         </View>
       )}
     </View>

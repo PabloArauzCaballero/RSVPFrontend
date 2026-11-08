@@ -65,3 +65,16 @@ Revisado y sin cambio:
 3. **Invitación pública (`/c/{slug}`):** vive en `apps/seo-web` (:3000), no en la app Expo; no se revisó en esta pasada (queda para la pasada 6 junto con el sitio público, que necesita su servidor). El admin tampoco se revisó a ojo en esta pasada.
 
 Verificación: `apps/universal` `tsc` limpio; `provider-reorganization` 8/8.
+
+## Pasada 6 (a pedido del dueño: «que se sienta premium, los espacios están horribles»)
+
+Skill reaplicada: `visual-hierarchy-composition` (proximidad: más espacio *entre* grupos que *dentro*; espaciado como sistema por tokens; whitespace generoso para producto premium) junto con `minimalist-ui` (macro-espacio primero). Revisado con capturas reales (Playwright, 1280 y 390).
+
+Ritmo de espaciado anterior vs. nuevo (todo con tokens `spacing`, sin valores sueltos):
+- Margen lateral del contenido en escritorio: 32 → 48. Relleno superior de la cabecera: 48 → 64. Separación entre secciones: 32 → 40. Título → subtítulo: 8 → 12; subtítulo → pestañas: 24 → 32. Separación entre pestañas: 4 → 12.
+- Tarjetas: relleno 24 → 32, separación interna 16 → 20. Filas de lista: 16×16 → 20×24; filas de invitados: 68 → 84 px de alto, 12×16 → 16×24 de relleno, hueco nombre/dato 2 → 4.
+- Menú lateral: logo → ítems 32 → 48; separación entre ítems 2 → 4.
+- Móvil: margen lateral 16 → 20, separación entre bloques 24 → 32, relleno superior 16 → 24; cabecera, pestañas y hoja alineadas al mismo margen.
+- Inicio, «Cómo vas»: la letra pequeña (plazo, última actualización, solicitudes) es un solo bloque con líneas pegadas y separado de las cifras, en vez de tres líneas con el mismo hueco que todo lo demás.
+
+Método: servidor de desarrollo de Expo en :8081 con vigilancia de archivos (en modo `CI=1` no recarga y mostraba código viejo).

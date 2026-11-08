@@ -36,7 +36,7 @@ function createHostStyles(palette: (typeof colors)[ColorTheme]) {
   label: { color: palette.text, fontSize: typography.fontSize.sm, fontWeight: "600", fontFamily },
   input: { minHeight: MIN_TOUCH + 4, borderWidth: 1, borderColor: palette.fieldBorder, borderRadius: radius.md, paddingHorizontal: spacing[3], color: palette.text, backgroundColor: palette.surface, fontSize: typography.fontSize.base, fontFamily },
   inputError: { borderColor: palette.danger },
-  card: { backgroundColor: palette.surface, borderColor: palette.border, borderWidth: 1, borderRadius: radius.lg, padding: spacing[6], gap: spacing[4] },
+  card: { backgroundColor: palette.surface, borderColor: palette.border, borderWidth: 1, borderRadius: radius.lg, padding: spacing[8], gap: spacing[5] },
   row: { flexDirection: "row", flexWrap: "wrap", gap: spacing[2], alignItems: "center" },
   nav: { flexDirection: "row", flexWrap: "wrap", gap: spacing[2] },
   navItem: { minHeight: MIN_TOUCH, justifyContent: "center", paddingHorizontal: spacing[4], borderRadius: radius.md, backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.fieldBorder },
