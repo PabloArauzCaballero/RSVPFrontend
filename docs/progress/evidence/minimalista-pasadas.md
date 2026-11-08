@@ -78,3 +78,15 @@ Ritmo de espaciado anterior vs. nuevo (todo con tokens `spacing`, sin valores su
 - Inicio, «Cómo vas»: la letra pequeña (plazo, última actualización, solicitudes) es un solo bloque con líneas pegadas y separado de las cifras, en vez de tres líneas con el mismo hueco que todo lo demás.
 
 Método: servidor de desarrollo de Expo en :8081 con vigilancia de archivos (en modo `CI=1` no recarga y mostraba código viejo).
+
+## Pasada 7 (sitio público)
+
+Skills reaplicadas: `minimalist-ui`, `visual-hierarchy-composition`, `marketing-loops` (la invitación es el bucle viral: el logo y el enlace «Crear mi celebración» del pie se quedan; la navegación de venta y el titular no). Capturas reales de página completa con Playwright (1280 y 390) de landing, directorio e invitación pública, contra el backend real.
+
+Corregido:
+1. **«Quinceañe-ros» partido a mitad de palabra** en las tres celdas de tipos de celebración de la landing (`hyphens: auto` con una tipografía demasiado grande para el ancho de la celda). Tamaño `clamp(1.5rem, 2.9vw, 2.6rem)` y sin guionado: las tres palabras caben enteras.
+2. **La invitación de un invitado mostraba la navegación de ventas de DOne** («Proveedores · Ingresar · Crear mi celebración») y un titular de marca enorme en el pie, compitiendo con la invitación. `PublicCelebration` marca la página con `data-quiet-chrome` y `globals.css` oculta `.site-nav` y `.site-footer__line` solo ahí (`body:has(...)`); verificado en el navegador: invitación `display: none`, landing `flex`/`block`.
+
+Pendiente (visto, no corregido): en la invitación pública, el cuerpo del texto sale en una sans de sistema y los títulos en el serif verde de la plantilla; es la paleta y la tipografía de cada plantilla del anfitrión (`packages/celebration-theme`), fuera del sistema de la marca. Decisión de producto, no de espaciado.
+
+Verificación: `apps/seo-web` typecheck y lint limpios, 130/130 pruebas.

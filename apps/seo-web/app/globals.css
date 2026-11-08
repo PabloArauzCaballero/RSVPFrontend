@@ -164,7 +164,7 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 .types { padding: var(--section) 0 0; }
 .types h2 { max-width: none; }
 .types__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; }
-.types__list li { display: flex; align-items: flex-end; min-height: 9rem; padding: clamp(1.25rem, 3vw, 2rem); border: 1px solid var(--border); border-radius: var(--radius-cell); background: var(--surface); font-family: var(--font-head); font-weight: 500; font-size: clamp(1.9rem, 5.5vw, 3.5rem); line-height: 1.02; letter-spacing: -.03em; min-width: 0; overflow-wrap: break-word; hyphens: auto; }
+.types__list li { display: flex; align-items: flex-end; min-height: 9rem; padding: clamp(1.25rem, 3vw, 2rem); border: 1px solid var(--border); border-radius: var(--radius-cell); background: var(--surface); font-family: var(--font-head); font-weight: 500; font-size: clamp(1.5rem, 2.9vw, 2.6rem); line-height: 1.05; letter-spacing: -.03em; min-width: 0; overflow-wrap: normal; hyphens: none; }
 .types__list li:nth-child(2) { background: var(--tone-yellow-bg); border-color: transparent; }
 @media (min-width: 48rem) { .types__list { grid-template-columns: repeat(3, minmax(0, 1fr)); } .types__list li { min-height: 14rem; font-size: clamp(1.5rem, 3.4vw, 3rem); } }
 .types__other { margin: 1.5rem 0 0; color: var(--text-muted); font-size: 1.05rem; }
@@ -380,3 +380,6 @@ html:has(.rsvp-shell, .rsvp-status) body { overflow-x: clip; }
 /* Dark scheme: images sit back a little so a bright photo does not outshine the page. */
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .result__thumb img, :root:not([data-theme="light"]) .partner-hero__media img { filter: saturate(.65) sepia(.14) brightness(.88); } }
 [data-theme="dark"] .result__thumb img, [data-theme="dark"] .partner-hero__media img { filter: saturate(.65) sepia(.14) brightness(.88); }
+
+/* Invitation pages: no sales navigation or pitch around a guest's invitation; the logo and the footer link stay. */
+body:has([data-quiet-chrome]) .site-nav, body:has([data-quiet-chrome]) .site-footer__line { display: none; }
