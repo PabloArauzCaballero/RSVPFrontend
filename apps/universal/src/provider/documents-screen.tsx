@@ -63,7 +63,7 @@ function Documents({ provider }: { readonly provider: Provider }): ReactNode {
   return (
     <View style={{ gap: spacing[4] }}>
       <PageIntro>{t("portal.documents.intro")}</PageIntro>
-      <View style={{ gap: spacing[3], maxWidth: 720 }}>
+      <View style={{ gap: spacing[3] }}>
         <View style={{ gap: spacing[1], maxWidth: 360 }}><Text style={styles.label}>{t("portal.documents.kind")}</Text><FilterSelect<DocumentKind> label={t("portal.documents.kind")} value={kind} onChange={setKind} options={KINDS.map((value) => ({ value, label: t(`portal.documents.kinds.${value}`) }))} testID="document-kind" /></View>
         <View style={styles.row}>
           <ActionButton variant="secondary" label={t("portal.documents.choose")} onPress={() => { void choose(); }} testID="document-choose" />
@@ -78,7 +78,7 @@ function Documents({ provider }: { readonly provider: Provider }): ReactNode {
       <ErrorNotice error={remove.error ?? open.error} onRetry={() => { if (remove.error && remove.variables) removeOnce(remove.variables); else if (open.variables) openOnce(open.variables); }} />
       <ConfirmDialog visible={deleting !== null} danger title={t("portal.documents.deleteTitle")} body={t("portal.documents.deleteBody")} confirmLabel={t("portal.documents.delete")} onCancel={() => setDeleting(null)} onConfirm={() => { const id = deleting; setDeleting(null); if (id) removeOnce(id, { onSuccess: () => setRemoved(true) }); }} />
       {list.isPending ? <RowsSkeleton count={2} minHeight={96} /> : list.isError ? <PortalErrorState error={list.error} onRetry={() => { void list.refetch(); }} /> : list.data.items.length === 0 ? <EmptyState illustration="provider" title={t("portal.documents.emptyTitle")} body={t("portal.documents.empty")} /> : (
-        <View role="list" style={{ maxWidth: 720 }}>
+        <View role="list">
           <Stagger>{list.data.items.map((item) => (
             <View key={item.id} role="listitem" testID={`document-${item.id}`} style={{ gap: spacing[1], paddingVertical: spacing[3], borderTopWidth: 1, borderTopColor: palette.border }}>
               <Text style={styles.subtitle}>{t(`portal.documents.kinds.${item.kind}`)} · {item.fileName}</Text>

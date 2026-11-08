@@ -107,13 +107,13 @@ function Overview({ provider, refetch }: { readonly provider: Provider; readonly
   usePortalHeader(primary, [{ key: "rename", label: t("portal.rename.action"), onPress: () => setRenaming(true) }]);
   const totals = metrics.data?.totals;
   return (
-    <View style={{ gap: spacing[5] }}>
+    <View style={{ gap: spacing[8] }}>
       <ReadyHeader provider={provider} tone={tone} doneCount={doneCount} celebrating={Boolean(milestone)} />
       <RenameProvider provider={provider} open={renaming} onClose={() => setRenaming(false)} />
       {milestone ? <Enter key={milestone} from="down"><Moment><Celebrate title={t(`portal.home.milestone.${milestone}.title`)} body={t(`portal.home.milestone.${milestone}.body`)} /></Moment></Enter> : null}
       {suspended ? <EmptyState illustration="suspended" title={t("portal.status.SUSPENDED.label")} body={t("portal.status.SUSPENDED.body")} /> : provider.status === "VERIFIED" ? null : (
         // Once verified the path is finished: the header already says "3 of 3" and "Verified", so the three done steps are not listed again.
-        <View style={{ maxWidth: 720 }}>
+        <View>
           <Stagger>
             <Step key="profile" testID="step-profile" done title={t("portal.home.journey.profile.title")} body={t("portal.home.journey.profile.done", { name: provider.name })} />
             <Step key="offer" testID="step-offer" done={hasListing} title={t("portal.home.journey.offer.title")} body={t(hasListing ? "portal.home.journey.offer.done" : "portal.home.journey.offer.todo")} />
@@ -126,7 +126,7 @@ function Overview({ provider, refetch }: { readonly provider: Provider; readonly
         </View>
       )}
       {totals && provider.status === "VERIFIED" ? (
-        <View style={[styles.row, { maxWidth: 720, alignItems: "center" }]} testID="home-last30">
+        <View style={[styles.row, { alignItems: "center" }]} testID="home-last30">
           <Text style={[styles.muted, { flex: 1 }]}>{t("portal.home.last30Summary", { valid: formatNumber(totals.validLeads, locale), views: formatNumber(totals.impressions, locale) })}</Text>
           <Button variant="ghost" accessibilityLabel={t("portal.home.last30Link")} onPress={() => router.push(PORTAL_ROUTES.metrics as Href)} testID="home-last30-link" state="default">{t("portal.home.last30Link")}</Button>
         </View>
@@ -141,7 +141,7 @@ function ReadyHeader({ provider, tone, doneCount, celebrating = false }: { reado
   const styles = useStyles();
   const palette = useColors();
   return (
-    <View style={{ maxWidth: 720, gap: spacing[5], padding: spacing[8], backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, borderRadius: radius.lg }}>
+    <View style={{ gap: spacing[5], padding: spacing[8], backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, borderRadius: radius.lg }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[4] }}>
         <AvatarMark name={provider.name} size={52} />
         <View style={{ flex: 1, gap: spacing[1] }}>

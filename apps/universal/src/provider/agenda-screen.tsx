@@ -83,14 +83,14 @@ function Agenda({ provider }: { readonly provider: Provider }): ReactNode {
 
   const pending = (bookings.data?.items ?? []).filter((booking) => booking.status === "REQUESTED").length;
   return (
-    <View style={{ gap: spacing[5] }}>
+    <View style={{ gap: spacing[8] }}>
       <PageIntro>{t("portal.agenda.intro", { zone: provider.timeZone })}</PageIntro>
       {notice ? <Notice kind={notice.kind}>{notice.text}</Notice> : null}
-      <View style={{ gap: spacing[1], maxWidth: 720 }}><Text accessibilityRole="header" style={styles.subtitle}>{pending > 0 ? t("portal.agenda.bookingsPending", { count: pending }) : t("portal.agenda.bookings")}</Text>
+      <View style={{ gap: spacing[1] }}><Text accessibilityRole="header" style={styles.subtitle}>{pending > 0 ? t("portal.agenda.bookingsPending", { count: pending }) : t("portal.agenda.bookings")}</Text>
         {bookings.isPending ? <RowsSkeleton count={2} minHeight={120} trailing /> : bookings.isError ? <ErrorNotice error={bookings.error} onReload={() => { void bookings.refetch(); }} /> : bookings.data.items.length === 0 ? <EmptyState illustration="freeAgenda" title={t("portal.agenda.bookingsEmptyTitle")} body={t("portal.agenda.bookingsEmpty")} /> : <Stagger>{[...bookings.data.items].sort((a, b) => Number(b.status === "REQUESTED") - Number(a.status === "REQUESTED")).map((booking) => {
           const busy = decide.isPending && decide.variables?.bookingId === booking.id ? decide.variables.action : null;
           return (
-            <View key={booking.id} style={{ gap: spacing[1], paddingVertical: spacing[3], borderTopWidth: 1, borderTopColor: palette.border }} testID={`booking-${booking.id}`}>
+            <View key={booking.id} style={{ gap: spacing[2], paddingVertical: spacing[5], borderTopWidth: 1, borderTopColor: palette.border }} testID={`booking-${booking.id}`}>
               <View style={[styles.row, { justifyContent: "space-between", alignItems: "center", flexWrap: "nowrap" }]}>
                 <Text style={[styles.subtitle, { flex: 1 }]}>{t("portal.agenda.date", { date: dayLabel(booking.date, locale) })}</Text>
                 <Chip tone={booking.status === "CONFIRMED" ? "yes" : booking.status === "REQUESTED" ? "maybe" : "no"}>{t(`portal.agenda.status.${booking.status}`)}</Chip>
@@ -113,7 +113,7 @@ function Agenda({ provider }: { readonly provider: Provider }): ReactNode {
         <Text style={styles.label}>{t("portal.agenda.weekdays")}</Text>
         <View style={styles.row}>{[0, 1, 2, 3, 4, 5, 6].map((day) => <ToggleChip key={day} on={days.includes(day)} label={labelOf(day)} onPress={() => setDays((current) => current.includes(day) ? current.filter((item) => item !== day) : [...current, day])} testID={`weekday-${day}`} />)}</View>
         <View style={styles.row}><Field label={t("portal.agenda.start")} value={start} onChange={setStart} testID="agenda-start" /><Field label={t("portal.agenda.end")} value={end} onChange={setEnd} testID="agenda-end" /></View>
-        <Text accessibilityRole="header" style={styles.subtitle}>{t("portal.agenda.blackouts")}</Text>
+        <Text accessibilityRole="header" style={[styles.subtitle, { marginTop: spacing[6] }]}>{t("portal.agenda.blackouts")}</Text>
         {blackouts.map((item, index) => (
           <View key={`${item.start}-${index}`} style={styles.row} testID={`blackout-${item.start}`}><Text style={styles.body}>{item.start}{item.end && item.end !== item.start ? ` → ${item.end}` : ""}{item.reason ? ` · ${item.reason}` : ""}</Text><Button variant="ghost" accessibilityLabel={t("portal.agenda.removeBlackout")} state="default" onPress={() => setBlackouts((current) => current.filter((_, position) => position !== index))} testID={`blackout-remove-${item.start}`}>{t("portal.agenda.removeBlackout")}</Button></View>
         ))}

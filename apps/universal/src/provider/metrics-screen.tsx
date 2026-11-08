@@ -114,7 +114,7 @@ function Metrics({ provider }: { readonly provider: Provider }): ReactNode {
       {metrics.data ? (
         <>
           <RangeTotals totals={metrics.data.totals} />
-          <View style={{ maxWidth: 720 }}>
+          <View>
             <Text accessibilityRole="header" style={styles.subtitle}>{t("portal.metrics.groupsTitle", { group: t(`portal.metrics.group.${group}`).toLowerCase() })}</Text>
             {rows.length === 0 ? <EmptyState illustration="emptySearch" title={t("portal.metrics.emptyTitle")} body={t("portal.metrics.empty")} /> : (
               <Stagger>

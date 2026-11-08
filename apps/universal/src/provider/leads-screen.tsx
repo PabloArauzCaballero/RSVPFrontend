@@ -54,7 +54,7 @@ function Leads({ provider }: { readonly provider: Provider }): ReactNode {
     <View style={{ gap: spacing[4] }}>
       <PageIntro>{t("portal.leads.intro")}</PageIntro>
       {items.length === 0 ? <EmptyState illustration="emptySearch" title={t("portal.leads.emptyTitle")} body={t("portal.leads.empty")} /> : (
-        <View style={{ maxWidth: 720, gap: spacing[2] }}>
+        <View style={{ gap: spacing[2] }}>
           <ChoiceGroup<Kind> label={t("portal.leads.filter")} value={kind} onChange={setKind} choices={[{ value: "all", label: t("portal.leads.filters.all") }, { value: "quote", label: t("portal.leads.filters.quote") }, { value: "click", label: t("portal.leads.filters.click") }]} />
           {shown.length === 0 ? <Notice>{t(kind === "quote" ? "portal.leads.quotesEmpty" : "portal.leads.clicksEmpty")}</Notice> : <Stagger>{shown.map((lead) => <LeadRow key={lead.id} lead={lead} timeZone={provider.timeZone} />)}</Stagger>}
         </View>

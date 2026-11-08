@@ -102,3 +102,12 @@ Regla nueva: **todo aviso lleva un icono dibujado junto a sus palabras**, del mi
 
 Verificación: `apps/universal` 331/331 con `tsc` limpio; `packages/ui` con la prueba nueva.
 Nota para el usuario: la contraseña de las cuentas demo es `Demo-Bolivia-2026!` (con el «!» final); sin él, el acceso responde «no coinciden».
+
+### Pasada 8, segunda parte: ritmo del portal del proveedor
+
+Capturas reales del portal (Resumen, Ofertas, Agenda) con el ritmo de la pasada 6 aún sin aplicar mostraban: título, tipo, entrega y descripción de cada oferta pegados sin aire; «Fechas pedidas» y «Días bloqueados» sin separación; y el contenido en una columna de 720 px bajo una cabecera de 864 px, de modo que líneas y etiquetas terminaban lejos del borde del botón primario.
+- Filas de oferta y de reserva: relleno vertical 16 → 24 (reserva 12 → 20), hueco entre líneas 4 → 8, el bloque de entrega separado 12.
+- Secciones del portal: 16/20 → 24/32 de separación (Ofertas, Agenda, Resumen); «Días bloqueados» con 24 de margen superior.
+- Una sola medida: se quita el tope de 720 px de listas y tarjetas del portal (`maxWidth: 720` en 9 pantallas), que ahora usan el ancho de la cabecera; los formularios llenan su tarjeta.
+
+Verificación: `apps/universal` 331/331 y `tsc` limpio; capturas reales a 1280 revisadas.

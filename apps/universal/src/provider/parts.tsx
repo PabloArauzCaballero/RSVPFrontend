@@ -16,7 +16,7 @@ export function RowsSkeleton({ count = 4, minHeight = 76, avatar = false, traili
 /** A milestone sits on a plain card with a 1 px edge (the drawn check is the only thing that moves). */
 export function Moment({ children }: PropsWithChildren): ReactNode {
   const palette = useColors();
-  return <View style={{ borderRadius: radius.lg, maxWidth: 720, width: "100%", backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border }}>{children}</View>;
+  return <View style={{ borderRadius: radius.lg, width: "100%", backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border }}>{children}</View>;
 }
 
 /** True once per device for `key` (a milestone is celebrated the first time it is seen, not on every visit). Starts false so nothing flashes. */

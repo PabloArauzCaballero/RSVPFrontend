@@ -95,7 +95,7 @@ function Editor({ microsite, providerId, onReload }: { readonly microsite: Micro
   return (
     <View style={{ gap: spacing[4] }}>
       <PageIntro>{t("portal.microsite.intro")}</PageIntro>
-      <View style={{ gap: spacing[3], maxWidth: 720 }}>
+      <View style={{ gap: spacing[3] }}>
         <Field label={t("portal.microsite.descEs")} help={t("portal.microsite.descHelp")} multiline value={form.es} onChange={(es) => set({ es })} error={text("es")} testID="microsite-desc-es" />
         <Field label={t("portal.microsite.website")} value={form.website} onChange={(website) => set({ website })} error={text("website")} testID="microsite-website" />
         <Field label={t("portal.microsite.whatsapp")} keyboardType="phone-pad" value={form.whatsapp} onChange={(whatsapp) => set({ whatsapp })} error={text("whatsapp")} />
