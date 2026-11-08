@@ -32,6 +32,14 @@ Idea central: **el toque**. La marca es un cheque dentro de una D; el producto g
 - **Navegación.** Pocos destinos (anfitrión 6, proveedor 5, admin 4) y, dentro de cada uno, pestañas de sección. Una acción primaria por pantalla; lo avanzado, detrás de «Más opciones».
 - **Prohibido en la personalidad.** «¡Bienvenido a la plataforma!», «No se pudo completar la acción», «Error 500», «Sin datos», jerga técnica (slug, token, endpoint), signos de exclamación en errores, confeti permanente, mascotas, emoji o glifos como adorno, animación en bucle, ilustración en cada tarjeta. Siguen vigentes todas las prohibiciones de la sección siguiente.
 
+## Modo oscuro
+
+- **Compuesto, no invertido.** Escala de elevación por superficie: noche de marca `#0A1033` < canvas `#0E1540` < surface `#18215A` < surfaceMuted `#212C6E`; el azul acento pasa a cielo `#8FA6FF`; el ámbar sigue siendo solo «quizá» y avisos. Las regiones de marca (banda noche del menú, portada azul del invitado y del acceso) son iguales en ambos modos. En oscuro la elevación se marca con una superficie más clara, no con sombra.
+- **Esquema:** sigue al sistema por defecto y se puede forzar Sistema · Claro · Oscuro (Ajustes → Configuración y menú). Se aplica antes del primer pintado en web (sin parpadeo) y se persiste con try/catch.
+- **Contraste medido:** `packages/design-tokens/src/contrast.test.ts` comprueba 71 pares en claro y oscuro (texto 4.5:1, componentes 3:1, chips y avatares). Un color nuevo entra con su par probado.
+- **Estilos:** nunca `colors.light` ni hex sueltos en pantallas: `useColors()` / `useStyles()` / `useThemedStyles()`. Las ilustraciones usan el tono semántico `auto`.
+- **Excepción:** la vista previa del dispositivo y la invitación del invitado siguen el tema de la celebración del anfitrión; no se oscurecen.
+
 ## Reglas de pantalla (Operate)
 
 - Un título por pantalla (el de `Screen`), con a lo sumo una frase cálida debajo (`intro`). Nada de etiqueta o *eyebrow* encima del título, ni repetir el título en la primera tarjeta. Un solo botón primario por pantalla.

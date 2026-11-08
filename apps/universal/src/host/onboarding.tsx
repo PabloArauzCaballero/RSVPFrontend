@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Text, View, useWindowDimensions } from "react-native";
 import { themeFromTemplate } from "@rsvp/celebration-theme";
+import { StepTransition } from "@rsvp/ui";
 import { radius, spacing } from "@rsvp/design-tokens";
 import { useCelebration, useCreateCelebration, useEventTypes, type Celebration, type TranslatedEventType } from "@rsvp/query-hooks";
 import { useApiClient, useClaims, useLocale, useT } from "../platform/providers";
@@ -223,7 +224,7 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
     <View style={{ gap: spacing[5], flex: wide ? 1 : undefined, width: "100%" }}>
       <StepProgress step={step} />
       {!wide && step > 1 ? <View style={{ gap: spacing[2] }}><Text style={styles.label}>{t("host.onboarding.previewTitle")}</Text>{live(PREVIEW_NARROW)}</View> : null}
-      {bodies[stepName]()}
+      <StepTransition step={step} announce={`${t("host.onboarding.step", { step })}: ${t(`host.onboarding.stepLabels.${stepName}`)}`}>{bodies[stepName]()}</StepTransition>
     </View>
   );
   return (

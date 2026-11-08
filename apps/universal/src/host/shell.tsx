@@ -1,7 +1,7 @@
 import { useRef, useState, type PropsWithChildren, type ReactNode } from "react";
 import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { brand, radius, spacing } from "@rsvp/design-tokens";
-import { Logo, PageIntro, useColors, useThemedStyles, type Palette } from "@rsvp/ui";
+import { Logo, PageIntro, ScreenTransition, useColors, useThemedStyles, type Palette } from "@rsvp/ui";
 import { useAuth } from "../auth/auth-context";
 import { useT } from "../platform/providers";
 import { useThemePreference } from "../platform/theme";
@@ -283,7 +283,10 @@ export function Screen({ title, intro, nav, current, onNavigate, children }: Pro
   const { width } = useWindowDimensions();
   const wide = width >= WIDE;
   const items = nav ?? [];
-  const sectionTabs = items.find((item) => isCurrentDestination(item, current))?.tabs;
+  const destination = items.find((item) => isCurrentDestination(item, current));
+  const sectionTabs = destination?.tabs;
+  // A change of destination fades in with a short rise, sibling tabs only fade; scroll returns to the top and focus goes to the h1 (docs/design/motion.md).
+  const content = <ScreenTransition routeKey={current ?? title} groupKey={destination?.key}>{children}</ScreenTransition>;
   const tabs = sectionTabs && sectionTabs.length > 1 ? sectionTabs : undefined;
   if (wide) {
     const main = (
@@ -295,7 +298,7 @@ export function Screen({ title, intro, nav, current, onNavigate, children }: Pro
           </View>
           {tabs ? <View style={s.bandTabs}><SectionTabs tabs={tabs} current={current} onNavigate={onNavigate} dark={false} /></View> : null}
         </View>
-        <ScrollView role="main" tabIndex={0} style={s.scroll} contentContainerStyle={[s.content, s.contentWide]} keyboardShouldPersistTaps="handled">{children}</ScrollView>
+        <ScrollView role="main" tabIndex={0} style={s.scroll} contentContainerStyle={[s.content, s.contentWide]} keyboardShouldPersistTaps="handled">{content}</ScrollView>
       </View>
     );
     if (items.length === 0) return <View style={s.root}><BareFrame>{main}</BareFrame></View>;
@@ -308,7 +311,7 @@ export function Screen({ title, intro, nav, current, onNavigate, children }: Pro
         {intro ? <PageIntro tone="onDark">{intro}</PageIntro> : null}
         {tabs ? <View style={s.mTabs}><SectionTabs tabs={tabs} current={current} onNavigate={onNavigate} dark /></View> : null}
       </View>
-      <View style={s.mSheet}>{children}</View>
+      <View style={s.mSheet}>{content}</View>
     </ScrollView>
   );
   if (items.length === 0) return <View style={s.root}><BareFrame>{body}</BareFrame></View>;

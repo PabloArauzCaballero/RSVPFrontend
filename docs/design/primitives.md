@@ -96,7 +96,7 @@ Barra inferior móvil: caben cinco espacios. Si destinos + «Más» (con sesión
 
 - Un botón primario por pantalla; lo demás es secundario o enlace.
 - Una pantalla vacía hereda `EmptyState`; un error recuperable usa `ErrorNotice`; un guardado usa `Notice kind="success"` o `SuccessNote`; un hito usa `Celebrate`.
-- No animes nada más que el cheque. Sin movimiento decorativo en bucle.
+- El cheque es la única animación de celebración. Lo demás se mueve solo si pasa la puerta de frecuencia y propósito de `motion.md` (transición de pantalla, pasos del alta, listas, feedback al tocar, esqueletos). Sin movimiento decorativo en bucle.
 - Ilustraciones solo en estados vacíos, bienvenida y errores amables; no como adorno de cada tarjeta.
 
 ## Identidad
