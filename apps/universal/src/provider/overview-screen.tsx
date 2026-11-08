@@ -1,8 +1,8 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
-import { brand, onNight, spacing } from "@rsvp/design-tokens";
-import { AvatarMark, BrandBand, Chip, Enter, Stagger, useColors } from "@rsvp/ui";
+import { radius, spacing } from "@rsvp/design-tokens";
+import { AvatarMark, Chip, Enter, Stagger, fonts, useColors } from "@rsvp/ui";
 import { ApiError } from "@rsvp/api-client";
 import { formatNumber } from "@rsvp/i18n";
 import { MAX_PROVIDER_NAME, providerService, useMetrics, useOwnListings, useRegisterProviderAccount, useSubmitProvider, useUpdateProvider, type Provider } from "@rsvp/query-hooks";
@@ -108,9 +108,9 @@ function Overview({ provider, refetch }: { readonly provider: Provider; readonly
   const totals = metrics.data?.totals;
   return (
     <View style={{ gap: spacing[5] }}>
-      <ReadyBand provider={provider} tone={tone} doneCount={doneCount} celebrating={Boolean(milestone)} />
+      <ReadyHeader provider={provider} tone={tone} doneCount={doneCount} celebrating={Boolean(milestone)} />
       <RenameProvider provider={provider} open={renaming} onClose={() => setRenaming(false)} />
-      {milestone ? <Enter key={milestone} from="down"><Moment variant={milestone === "VERIFIED" ? "published" : "confirmed"}><Celebrate title={t(`portal.home.milestone.${milestone}.title`)} body={t(`portal.home.milestone.${milestone}.body`)} /></Moment></Enter> : null}
+      {milestone ? <Enter key={milestone} from="down"><Moment><Celebrate title={t(`portal.home.milestone.${milestone}.title`)} body={t(`portal.home.milestone.${milestone}.body`)} /></Moment></Enter> : null}
       {suspended ? <EmptyState illustration="suspended" title={t("portal.status.SUSPENDED.label")} body={t("portal.status.SUSPENDED.body")} /> : (
         <View style={{ maxWidth: 720 }}>
           <Stagger>
@@ -134,30 +134,30 @@ function Overview({ provider, refetch }: { readonly provider: Provider; readonly
   );
 }
 
-const BAND_TITLE = { color: onNight, fontSize: 24, lineHeight: 28, fontWeight: "800", letterSpacing: -0.6 } as const;
-
-/** "Ready to sell": the night band of the brand with the business, its state and how far the path has come. */
-function ReadyBand({ provider, tone, doneCount, celebrating = false }: { readonly provider: Provider; readonly tone: "yes" | "maybe" | "wait" | "no"; readonly doneCount: number; readonly celebrating?: boolean }): ReactNode {
+/** "Ready to sell": the business, its state and how far the path has come, on a plain card with a 1 px edge (no colour field). */
+function ReadyHeader({ provider, tone, doneCount, celebrating = false }: { readonly provider: Provider; readonly tone: "yes" | "maybe" | "wait" | "no"; readonly doneCount: number; readonly celebrating?: boolean }): ReactNode {
   const t = useT();
+  const styles = useStyles();
+  const palette = useColors();
   return (
-    <BrandBand tone="night" art="ready" style={{ maxWidth: 720 }}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[3] }}>
+    <View style={{ maxWidth: 720, gap: spacing[5], padding: spacing[8], backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, borderRadius: radius.lg }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[4] }}>
         <AvatarMark name={provider.name} size={52} />
-        <View style={{ flex: 1, gap: 2 }}>
-          <Text accessibilityRole="header" style={BAND_TITLE}>{t("portal.home.journey.title")}</Text>
-          <Text numberOfLines={2} style={{ color: brand.niebla, fontSize: 14, fontWeight: "600" }}>{provider.name} · {t("portal.home.plan", { plan: provider.plan })} · {provider.timeZone}</Text>
+        <View style={{ flex: 1, gap: spacing[1] }}>
+          <Text accessibilityRole="header" style={[styles.subtitle, { fontSize: 28, lineHeight: 31, letterSpacing: -0.8 }]}>{t("portal.home.journey.title")}</Text>
+          <Text numberOfLines={2} style={styles.muted}>{provider.name} · {t("portal.home.plan", { plan: provider.plan })} · {provider.timeZone}</Text>
         </View>
       </View>
       <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[2], flexWrap: "wrap" }} testID="provider-status"><Chip tone={tone}>{t(`portal.status.${provider.status}.label`)}</Chip></View>
-      {/* While a milestone is celebrated just below, it already says the same thing: the band keeps the state and the progress, not the prose twice. */}
-      {provider.status === "SUSPENDED" || celebrating ? null : <Text style={{ color: onNight, fontSize: 15, lineHeight: 22 }}>{t(`portal.status.${provider.status}.body`)}</Text>}
-      <View style={{ gap: spacing[1] }}>
-        <Text style={{ color: brand.niebla, fontSize: 13, fontWeight: "700" }}>{t("portal.home.journey.progress", { done: doneCount, total: 3 })}</Text>
-        <View style={{ height: 8, borderRadius: 999, backgroundColor: brand.medianoche, overflow: "hidden" }} role="progressbar" aria-label={t("portal.home.journey.title")} aria-valuemin={0} aria-valuemax={3} aria-valuenow={doneCount}>
-          <View style={{ height: 8, width: `${Math.round((doneCount / 3) * 100)}%`, backgroundColor: brand.cielo }} />
+      {/* While a milestone is celebrated just below, it already says the same thing: the card keeps the state and the progress, not the prose twice. */}
+      {provider.status === "SUSPENDED" || celebrating ? null : <Text style={[styles.body, { color: palette.text }]}>{t(`portal.status.${provider.status}.body`)}</Text>}
+      <View style={{ gap: spacing[2] }}>
+        <Text style={[styles.label, { fontFamily: fonts.mono, fontWeight: "400" }]}>{t("portal.home.journey.progress", { done: doneCount, total: 3 })}</Text>
+        <View style={{ height: 4, borderRadius: radius.full, backgroundColor: palette.surfaceMuted, overflow: "hidden" }} role="progressbar" aria-label={t("portal.home.journey.title")} aria-valuemin={0} aria-valuemax={3} aria-valuenow={doneCount}>
+          <View style={{ height: 4, width: `${Math.round((doneCount / 3) * 100)}%`, backgroundColor: palette.primary }} />
         </View>
       </View>
-    </BrandBand>
+    </View>
   );
 }
 

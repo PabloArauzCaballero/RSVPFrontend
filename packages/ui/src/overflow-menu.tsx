@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 import { Modal, Platform, Pressable, Text, View } from 'react-native';
-import { radius, spacing, typography } from '@rsvp/design-tokens';
+import { radius, shadow, spacing, typography } from '@rsvp/design-tokens';
+import { fonts } from './fonts';
 import { useTheme } from './theme';
 
 export interface OverflowMenuItem {
@@ -103,7 +104,7 @@ export function OverflowMenu({ items, label, testID }: OverflowMenuProps) {
       {...(web ? ({ onKeyDown: (event: KeyEvent) => onKey(event, index), tabIndex: -1 } as object) : {})}
       style={[{ minHeight: TOUCH, justifyContent: 'center', paddingHorizontal: spacing[4], opacity: item.disabled ? 0.5 : 1 }, focusStyle]}
     >
-      <Text style={{ color: item.destructive ? palette.danger : palette.text, fontSize: typography.fontSize.base, fontWeight: '600' }}>{item.label}</Text>
+      <Text style={{ color: item.destructive ? palette.danger : palette.text, fontFamily: fonts.sans, fontSize: typography.fontSize.base, fontWeight: '500' }}>{item.label}</Text>
     </Pressable>
   ));
 
@@ -118,18 +119,18 @@ export function OverflowMenu({ items, label, testID }: OverflowMenuProps) {
         testID={testID}
         onPress={toggle}
         {...(web ? ({ onKeyDown: (event: KeyEvent) => { if (event.key === 'Escape' && open) close(true); } } as object) : {})}
-        style={[{ width: TOUCH, minHeight: TOUCH, alignItems: 'center', justifyContent: 'center', borderRadius: radius.md, borderWidth: 1.5, borderColor: palette.fieldBorder, backgroundColor: palette.surface }, web ? ({ outlineColor: palette.primary, outlineWidth: 2, outlineOffset: 2 } as object) : {}]}
+        style={[{ width: TOUCH, minHeight: TOUCH, alignItems: 'center', justifyContent: 'center', borderRadius: radius.button, borderWidth: 1, borderColor: palette.fieldBorder, backgroundColor: palette.surface }, web ? ({ outlineColor: palette.primary, outlineWidth: 2, outlineOffset: 2 } as object) : {}]}
       >
-        <Text aria-hidden style={{ color: palette.text, fontSize: 22, lineHeight: 24, fontWeight: '800' }}>{'⋯'}</Text>
+        <View aria-hidden importantForAccessibility="no-hide-descendants" accessibilityElementsHidden style={{ flexDirection: 'row', gap: 3 }}>{[0, 1, 2].map((dot) => <View key={dot} style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: palette.text }} />)}</View>
       </Pressable>
       {web ? (
         open && anchor ? portal(
-          <View ref={(node) => { menu.current = node as unknown as typeof menu.current; }} role="menu" aria-label={name} style={{ position: 'fixed', ...(anchor.top !== undefined ? { top: anchor.top } : { bottom: anchor.bottom }), right: anchor.right, minWidth: 200, zIndex: 1000, backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, borderRadius: radius.md, paddingVertical: spacing[1], boxShadow: '0 8px 24px rgba(10,16,51,0.18)' } as object}>{list}</View>
+          <View ref={(node) => { menu.current = node as unknown as typeof menu.current; }} role="menu" aria-label={name} style={{ position: 'fixed', ...(anchor.top !== undefined ? { top: anchor.top } : { bottom: anchor.bottom }), right: anchor.right, minWidth: 200, zIndex: 1000, backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, borderRadius: radius.md, paddingVertical: spacing[1], boxShadow: shadow.lg } as object}>{list}</View>
         ) : null
       ) : (
         <Modal transparent visible={open} animationType="fade" onRequestClose={() => close(true)}>
           <Pressable accessibilityLabel={strings.close} style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: palette.scrim }} onPress={() => close(true)}>
-            <View role="menu" accessibilityLabel={name} style={{ backgroundColor: palette.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: spacing[3], paddingBottom: spacing[6] }}>{list}</View>
+            <View role="menu" accessibilityLabel={name} style={{ backgroundColor: palette.surface, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg, borderWidth: 1, borderColor: palette.border, padding: spacing[3], paddingBottom: spacing[6] }}>{list}</View>
           </Pressable>
         </Modal>
       )}

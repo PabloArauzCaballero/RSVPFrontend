@@ -90,7 +90,7 @@ function Gallery({ celebrationId, pick }: { readonly celebrationId: string; read
       {progress ? (
         <View role="progressbar" aria-label={progress.name} aria-valuemin={0} aria-valuemax={PERCENT} aria-valuenow={Math.round(progress.fraction * PERCENT)} style={{ gap: spacing[1] }}>
           <Text style={styles.body}>{t("host.gallery.uploading", { name: progress.name, percent: Math.round(progress.fraction * PERCENT) })}</Text>
-          <View style={{ height: 6, borderRadius: radius.full, backgroundColor: palette.primaryMuted, overflow: "hidden" }}><View style={{ width: `${Math.round(progress.fraction * PERCENT)}%`, height: 6, backgroundColor: palette.primary }} /></View>
+          <View style={{ height: 4, borderRadius: radius.full, backgroundColor: palette.border, overflow: "hidden" }}><View style={{ width: `${Math.round(progress.fraction * PERCENT)}%`, height: 4, backgroundColor: palette.primary }} /></View>
         </View>
       ) : null}
       {problem ? <Notice kind="error">{problem}</Notice> : null}
@@ -106,8 +106,8 @@ function Gallery({ celebrationId, pick }: { readonly celebrationId: string; read
             </View>
             <View style={[styles.row, { justifyContent: "space-between", flexWrap: "nowrap" }]}>
               <View style={[styles.row, { flex: 1, gap: spacing[2] }]}>
-                <Text style={[styles.body, { fontWeight: "700" }]}>{t("host.gallery.photo", { n: index + 1 })}</Text>
-                {asset.id === cover ? <View style={[styles.row, { gap: spacing[1] }]}><CheckMark size={18} tone="brand" play={false} /><Text style={[styles.label, { color: palette.primary }]}>{t("host.gallery.cover")}</Text></View> : null}
+                <Text style={[styles.body, { fontWeight: "600" }]}>{t("host.gallery.photo", { n: index + 1 })}</Text>
+                {asset.id === cover ? <View style={[styles.row, { gap: spacing[1] }]}><CheckMark size={18} tone="success" play={false} /><Text style={[styles.label, { color: palette.primary }]}>{t("host.gallery.cover")}</Text></View> : null}
               </View>
               <OverflowMenu label={`${t("ui.moreOptions")}: ${t("host.gallery.photo", { n: index + 1 })}`} items={[
                 ...(asset.id === cover ? [] : [{ key: "cover", label: t("host.gallery.makeCover"), onPress: () => reorder.mutate({ assetIds: ids, coverAssetId: asset.id }, saved()), testID: `cover-${asset.id}` }]),

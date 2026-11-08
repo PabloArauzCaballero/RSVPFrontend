@@ -6,7 +6,7 @@ import { MOTION, cssEase } from './motion';
 export const ButtonAlignContext = createContext<'start' | 'center'>('start');
 
 /**
- * Visual of a pressed control: scales to 0.97 (dims to 0.72 under Reduce Motion). Apply it to an inner view so the
+ * Visual of a pressed control: scales to 0.98 (dims to 0.72 under Reduce Motion). Apply it to an inner view so the
  * pressable area keeps its size. `transition*` is web-only and ignored by native views.
  */
 export function pressVisual(active: boolean, reduced: boolean): ViewStyle {

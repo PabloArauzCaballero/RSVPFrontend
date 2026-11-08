@@ -33,7 +33,7 @@ export function PreviewFrame({ device, theme, view, gallery = [], label, height 
   const onLayout = (event: LayoutChangeEvent): void => setAvailable(event.nativeEvent.layout.width);
   return (
     <View onLayout={onLayout} style={{ width: "100%", alignItems: "center" }}>
-      <View testID={`preview-${device}`} role="region" aria-label={label} style={{ width: width * scale, height: frameHeight * scale, overflow: "hidden", borderRadius: radius.xl, borderWidth: 1.5, borderColor: palette.border, backgroundColor: theme.palette.canvas }}>
+      <View testID={`preview-${device}`} role="region" aria-label={label} style={{ width: width * scale, height: frameHeight * scale, overflow: "hidden", borderRadius: radius.lg, borderWidth: 1, borderColor: palette.border, backgroundColor: theme.palette.canvas }}>
         <View style={{ width, height: frameHeight, transform: [{ scale }], transformOrigin: "top left" }}>
           <ScrollView style={{ flex: 1 }} nestedScrollEnabled>
             <CelebrationNativeRenderer theme={theme} view={view} gallery={gallery} t={t} />

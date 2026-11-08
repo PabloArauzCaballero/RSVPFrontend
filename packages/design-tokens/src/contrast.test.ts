@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { avatars, brand, chips, colors, type ColorToken } from './colors';
+import { avatars, chips, colors, tones, type ColorToken } from './colors';
 
 const channel = (hex: string, at: number) => parseInt(hex.slice(at, at + 2), 16) / 255;
 const linear = (v: number) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
@@ -37,14 +37,18 @@ describe.each(['light', 'dark'] as const)('WCAG AA contrast, %s palette', (schem
 });
 
 describe('dark palette is composed, not inverted', () => {
-  it('stacks elevation by lighter surfaces: night region < canvas < surface < surfaceMuted', () => {
-    const l = (hex: string) => luminance(hex);
-    expect(l(brand.noche)).toBeLessThan(l(colors.dark.canvas));
-    expect(l(colors.dark.canvas)).toBeLessThan(l(colors.dark.surface));
-    expect(l(colors.dark.surface)).toBeLessThan(l(colors.dark.surfaceMuted));
+  it('stacks elevation by lighter surfaces: canvas < surface < surfaceMuted', () => {
+    expect(luminance(colors.dark.canvas)).toBeLessThan(luminance(colors.dark.surface));
+    expect(luminance(colors.dark.surface)).toBeLessThan(luminance(colors.dark.surfaceMuted));
   });
-  it('keeps amber for "maybe" and notices only, and blue as the accent', () => {
-    expect(colors.dark.accent).toBe(brand.ambar);
-    expect(colors.dark.primary).toBe(brand.cielo);
+  it('keeps the ink as the action colour in both schemes (no hue on primary actions)', () => {
+    expect(colors.light.primary).toBe('#111111');
+    expect(colors.dark.primary).toBe(colors.dark.text);
+  });
+});
+
+describe.each(['light', 'dark'] as const)('pastel tones, %s', (scheme) => {
+  it.each(Object.entries(tones[scheme]))('%s text is readable on its ground', (_name, tone) => {
+    expect(contrast(tone.fg, tone.bg)).toBeGreaterThanOrEqual(TEXT);
   });
 });

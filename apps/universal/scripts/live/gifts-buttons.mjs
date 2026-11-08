@@ -127,7 +127,8 @@ async function hostSuite() {
     const { page, context } = await fresh({ host: true });
     await go(page, `/regalos${HC}`);
     await page.getByTestId(`gift-${g.id}`).waitFor();
-    assert.match(await page.getByTestId(`gift-status-${g.id}`).innerText(), /Disponible/);
+    // The status pill is drawn in capitals (minimalist brief: small uppercase tag), and innerText reports the rendered case.
+    assert.match(await page.getByTestId(`gift-status-${g.id}`).innerText(), /Disponible/i);
     assert.equal((await gifts()).find((i) => i.id === g.id).status, "AVAILABLE");
     await context.close();
     await setSettings({ externalGiftMode: "RESTRICTED" });

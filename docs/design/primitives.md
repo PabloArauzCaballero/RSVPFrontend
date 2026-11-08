@@ -1,26 +1,41 @@
-# Primitivos de personalidad y navegación
+# Primitivos del sistema minimalista (rama `feat/diseno-minimalista`)
 
-Para los agentes que construyen pantallas. Todo sale de `@rsvp/ui` (web y nativo; `.native.tsx` dibuja lo mismo con `react-native-svg`). Las pantallas de anfitrión, proveedor y admin importan además desde `apps/universal/src/host/ui.tsx`, que reexporta estos primitivos junto a `Screen`, `Section`, `Notice`. La voz y las prohibiciones están en `DESIGN.md` (sección «Personalidad») y en `upgrade-brief.md`.
+## Aviso para quien migra pantallas (publicado primero)
+
+**Fuentes.** `import { fonts } from "@rsvp/ui"` -> `fonts.sans` (interfaz y cuerpo, Geist), `fonts.display` (titulares, Newsreader 500, tracking `-0.02em` a `-0.03em`, interlineado 1.1), `fonts.mono` (codigos y metadatos, Geist Mono). Sustituye las constantes `fontFamily = Platform.select({ web: "'Plus Jakarta Sans'..." })` de `host/shell.tsx`, `host/ui.tsx` y `host/more-options.tsx`. En nativo devuelven la fuente de plataforma.
+
+**Exports eliminados** de `@rsvp/ui` (sin reemplazo; quita el uso): `BrandBand`, `WeavePattern`, `HeroArt`, `MomentBackdrop` y sus tipos `HeroVariant`/`MomentVariant`, el módulo `brand-art` y `pattern`. Desaparecen también los tonos de marca: `LogoTone` pasa a `'auto' | 'ink' | 'onDark'`, `IllustrationTone` a `'auto' | 'ink' | 'onDark'`, y `CheckMark` a `tone?: 'ink' | 'success'` (se adapta solo al esquema). `ILLUSTRATION_COLORS` se sustituye por la función `illustrationColors(tone, pastel)`.
+
+**Nuevos.** `fonts` (`sans`, `display`, `mono`), `useTones()` (pares pastel `{ red, blue, green, yellow, gray }` con `bg` y `fg` del esquema activo; para etiquetas, fondos de icono y estados), `tracking(size, em)` (interletrado en px para nativo), `ILLUSTRATION_PASTEL`, prop `pastel` en `Illustration`, prop `ground` en `CheckMark`. `Palette`/`useColors()` ya no tienen `brand`, `night` ni `onNight`: usa `palette.canvas|surface|surfaceMuted|text|textMuted|primary|onPrimary|border|fieldBorder|danger|success|warning|dangerBg|successBg`.
+
+**Sin cambios de nombre**: las 32 ilustraciones (`ILLUSTRATION_NAMES`), `Button` (`primary|secondary|ghost|danger`), `Chip`, `Avatar`, `AvatarMark`, `EmptyState`, `PageIntro`, `SuccessNote`, `Celebrate`, `OverflowMenu`, `FilterSelect`, `StickyActions`, `Enter`/`Stagger`/`PressFeedback`/`SkeletonList`/`StepTransition`/`ScreenTransition`, `SwitchRow`, `Logo`. Solo cambia su aspecto (ver abajo). Los nombres accesibles no cambian.
+
+**Cómo cambian los botones.** `primary` = fondo tinta, texto `onPrimary`, radio 6, sin sombra. `secondary` = sin relleno, borde 1 px `fieldBorder`. `ghost` = solo texto subrayado (terciaria). `danger` = fondo pastel rojo, borde y texto `danger` (el rojo nunca es un bloque sólido). Alto mínimo 48 px.
+
+Las secciones siguientes se han reescrito para el sistema minimalista (`docs/design/minimalista-brief.md`).
+
+---
 
 ## CheckMark
 
-El cheque de la D dibujado con un trazo animado. Es la única animación «de celebración» del producto.
+El cheque de la D: un trazo de tinta sobre un disco verde pastel, dibujado con trazo animado. Es la única animación «de celebración» del producto.
 
 ```tsx
-<CheckMark />                                   // 48 px, azul, se dibuja al montarse
-<CheckMark size={28} tone="success" />          // success | brand | white | onDark
+<CheckMark />                                   // 48 px, tinta sobre verde pastel, se dibuja al montarse
+<CheckMark size={28} tone="success" />          // ink (por defecto) | success (cheque verde sobre el mismo disco)
+<CheckMark ground={false} />                    // sin disco, cuando ya está sobre un fondo pastel
 <CheckMark play={saved} onDone={() => ...} />   // se dibuja cada vez que play pasa de false a true
 <CheckMark label="Guardado" />                  // sin label es decorativo (aria-hidden)
 ```
 
-- Web: `stroke-dashoffset` con transición CSS de 360 ms, `cubic-bezier(0.22, 1, 0.36, 1)`. Nativo: `Animated` sobre `strokeDashoffset`, `Easing.out(cubic)`, 360 ms. Sin bucles.
+- Los colores salen de `tones` y del texto del esquema (claro y oscuro los resuelve `CheckMark`; la pantalla nunca nombra un color).
+- Web: `stroke-dashoffset` con transición CSS de 360 ms, `cubic-bezier(0.16, 1, 0.3, 1)`. Nativo: `Animated` sobre `strokeDashoffset`, `Easing.out(cubic)`, 360 ms. Sin bucles.
 - `prefers-reduced-motion` (web) y `AccessibilityInfo.isReduceMotionEnabled` (nativo): aparece ya dibujado, sin transición. Hasta que el nativo responde se muestra quieto.
 - Si `play` cambia a mitad de trazo, el efecto se cancela y vuelve a empezar (interrumpible).
-- Duración y reduced-motion: `MOTION` y `useReducedMotion()` también se exportan.
 
 ## Celebrate
 
-Un hito (publicaste, quedó guardado para siempre): insignia azul de esquinas redondas con el cheque blanco, título 800 y una línea. Región `role="status"`. Úsalo una vez por hito, no para cada guardado.
+Un hito (publicaste, quedó guardado para siempre): el cheque de 72 px, un titular serif (Newsreader 500, 34 px) y una línea. Región `role="status"`. Úsalo una vez por hito, no para cada guardado. Sin insignia de color ni bloque saturado.
 
 ```tsx
 <Celebrate title="Tu invitación ya está publicada" body="Comparte el enlace y mañana sabrás quién viene.">
@@ -30,7 +45,7 @@ Un hito (publicaste, quedó guardado para siempre): insignia azul de esquinas re
 
 ## SuccessNote
 
-Confirmación en línea (cheque verde dibujado + frase). Es lo que `Notice kind="success"` dibuja ahora; usa `SuccessNote` cuando quieras además un detalle.
+Confirmación en línea: tarjeta de superficie con borde de 1 px, cheque verde dibujado y frase. Es lo que `Notice kind="success"` dibuja; usa `SuccessNote` cuando quieras además un detalle.
 
 ```tsx
 <SuccessNote message="Guardado" detail="Tus invitados ya ven el cambio." />
@@ -40,16 +55,17 @@ Una frase corta en pasado, sin signos de exclamación.
 
 ## Illustration
 
-Ilustración de línea propia: trazo grueso redondeado, un bloque suave desplazado detrás (el «desajuste» lúdico), el sello con el cheque donde encaja y una chispa de ámbar como único acento. Decorativa por defecto (`aria-hidden`).
+Ilustración de línea de tinta, trazo de 3,5 sobre una rejilla de 120, con UNA forma pastel desplazada detrás (el único color) y, donde encaja, el sello con el cheque. Sin chispas ni acento de segundo color. Decorativa por defecto (`aria-hidden`).
 
 ```tsx
-<Illustration name="invitation" />                       // brand, 104 px
-<Illustration name="gift" tone="night" size="sm" />      // sm 64 · md 104 · lg 148 · o un número
-<Illustration name="offline" tone="onDark" size={120} /> // sobre fondo noche
+<Illustration name="invitation" />                       // auto: tinta en claro, tinta clara en oscuro; 104 px
+<Illustration name="gift" size="sm" />                   // sm 64 · md 104 · lg 148 · o un número
+<Illustration name="gift" pastel="blue" />               // cambia el pastel del grupo (red | blue | green | yellow | gray)
+<Illustration name="offline" tone="onDark" size={120} /> // fuerza tinta clara (fondo oscuro fijo)
 <Illustration name="success" label="Listo" />            // con label deja de ser decorativa
 ```
 
-Nombres (32): los 8 originales (`invitation`, `gift`, `calendar`, `table`, `provider`, `offline`, `emptySearch`, `success`) y 24 por situación; lista, idea y pantalla de cada una en `identidad-visual.md` §7 y §8. Tonos: `brand` (azul sobre claro), `night` (noche sobre claro), `onDark` (cielo sobre noche), `onBrand` (blanco sobre el azul) y `auto` (sigue el modo claro/oscuro; úsalo en las pantallas). Las formas viven en `packages/ui/src/illustrations.ts`; para agregar una, ver `identidad-visual.md` §9.
+Nombres (32): los 8 originales (`invitation`, `gift`, `calendar`, `table`, `provider`, `offline`, `emptySearch`, `success`) y 24 por situación (`guestsEmpty`, `firstReply`, `noGifts`, `giftReserved`, `published`, `deadlineClosed`, `welcomeHost`, `linkExpired`, `welcomeGuest`, `noOffers`, `offerPublished`, `freeAgenda`, `newClient`, `verifying`, `verified`, `suspended`, `welcomeProvider`, `nothingPending`, `importDone`, `noAccess`, `searching`, `serverError`, `maintenance`, `notFound`). Tonos: `auto` (por defecto; úsalo en las pantallas), `ink`, `onDark`. El pastel sale del grupo (`ILLUSTRATION_PASTEL`: anfitrión amarillo, invitado azul, proveedor verde, admin y sistema gris, acceso rojo). Las formas viven en `packages/ui/src/illustrations.ts`; una nueva lleva exactamente una capa `soft`, el resto `line`/`solid` (tinta).
 
 ## EmptyState
 
@@ -74,7 +90,7 @@ Una frase cálida bajo el título, opcional, una sola idea (≤ 90 caracteres). 
 <Screen title={t("guests.list.title")} intro={t("guests.list.intro")} nav={nav} current="guests" onNavigate={go}>…</Screen>
 ```
 
-Con `CelebrationScreen` (gate.tsx) todavía no hay `intro`; la oleada 2 lo agrega en `gate.tsx` o usa `<PageIntro>` como primer hijo. `PageIntro tone="onDark"` es para fondos noche.
+Con `CelebrationScreen` (gate.tsx) todavía no hay `intro`; la oleada 2 lo agrega en `gate.tsx` o usa `<PageIntro>` como primer hijo. `PageIntro tone="onDark"` es para fondos oscuros fijos (usa el color de texto del esquema oscuro).
 
 ## Navegación: destinos y pestañas
 
@@ -146,22 +162,28 @@ const FILTER_SELECT_THRESHOLD = 3;
 
 ## Identidad
 
-Recursos de marca además de las ilustraciones. Todo sale de `@rsvp/ui` (web y nativo comparten las formas; `.native.tsx` solo cambia el dibujo). Son **decorativos** (`aria-hidden`); el texto vecino lleva el significado. Dirección, tonos y tabla de uso: `identidad-visual.md`. Revisión visual: ruta de desarrollo `/identidad`.
+Recursos de marca además de las ilustraciones; todo sale de `@rsvp/ui` y comparte formas entre web y nativo. Son decorativos (`aria-hidden`); el texto vecino lleva el significado. Revisión visual: ruta de desarrollo `/identidad` (`IdentityCatalog`: ilustraciones, logo, cheque y avatares en claro y oscuro).
 
 ```tsx
-<WeavePattern tone="onBrand" />                        // rellena el contenedor (absoluto), no recibe puntero
-<BrandBand tone="night" art="ready">…texto blanco…</BrandBand>   // banda noche o azul; el arte a la derecha desde 720 px
-<HeroArt variant="cover" tone="onBrand" style={{ height: 220 }} /> // cover | auth | ready; se recorta al cuadro
-<MomentBackdrop variant="confirmed" />                 // confirmed | published; detrás de Celebrate, estático
-<AvatarMark name="Flores y Eventos Sol" size={48} />    // avatar con la forma de la D, para proveedor sin foto
-<Illustration name="verified" tone="auto" size="lg" />
+<Logo />                                              // palabra + marca en tinta (auto: tinta clara en oscuro)
+<Logo variant="mark" height={32} tone="onDark" />      // tone: auto | ink | onDark
+<AvatarMark name="Flores y Eventos Sol" size={48} />   // forma de la D, pastel + tinta, color estable por nombre
+<Avatar name="Marta Quispe" />                         // círculo pequeño, iniciales sobre pastel (peso 600)
+<Chip tone="yes">Confirmó</Chip>                       // píldora pequeña, mayúsculas, punto + palabra
 ```
 
-- `WeavePattern`: rombos escalonados de 1.25 px, opacidad 0.10 a 0.20 según el tono. Úsalo solo en portada del invitado, panel de acceso y bandas noche/«Listo para vender»; nunca bajo formularios o tablas.
-- `HeroArt` y `MomentBackdrop` llenan el cuadro que les des (`slice`): dale ancho y alto. `ready` está pensado para bandas anchas (≥ 2.5 : 1).
-- `AvatarMark` toma el color del nombre (cuatro fondos semánticos, claro y oscuro). Sin foto del proveedor, nunca un círculo gris.
-- Sin animación en ninguno: el movimiento lo pone solo `CheckMark`.
-- `IdentityCatalog` (la página `/identidad`) muestra todo en claro y oscuro; añadir un recurso nuevo implica mostrarlo ahí.
+- No hay patrones, bandas, portadas ni fondos decorativos: el aire y el titular serif hacen el trabajo.
+- Etiquetas de estado: píldora (`radius.full`) solo para etiquetas pequeñas y avatares; nunca para contenedores grandes ni botones primarios.
+
+## Tipografía
+
+```tsx
+import { fonts, tracking } from "@rsvp/ui";
+<Text style={{ fontFamily: fonts.display, fontWeight: "500", fontSize: 34, lineHeight: 38, letterSpacing: tracking(34, -0.02) }}>…</Text>
+```
+
+- `fonts.display` (Newsreader 500) solo en titulares y citas; `fonts.sans` (Geist 400 a 600; 700 como máximo) en interfaz y cuerpo; `fonts.mono` (Geist Mono) en códigos y metadatos. Nunca 800 ni Inter/Roboto/Open Sans.
+- `styles.title` (de `useTheme().styles`) ya es serif 500 de 22 px; `styles.label` es la etiqueta pequeña en mayúsculas (12 px, interletrado 0,05em) de los campos; `styles.body` es Geist 16/26.
 
 ## Movimiento
 
@@ -169,8 +191,8 @@ Infraestructura de `@rsvp/ui` para que la app se sienta viva sin cansar. Inventa
 
 ```tsx
 <Enter from="down" play={visible}>…</Enter>                       // entrada con dirección (up | down | left | right | none); FadeSlide es un alias
-<Stagger>{rows.map((r) => <Row key={r.id} {...r} />)}</Stagger>    // 40 ms entre filas, tope de 8
-<PressFeedback accessibilityLabel="Guardar" onPress={save}>…</PressFeedback>   // escala 0.97, área de 44 px intacta
+<Stagger>{rows.map((r) => <Row key={r.id} {...r} />)}</Stagger>    // 70 ms entre filas, tope de 8
+<PressFeedback accessibilityLabel="Guardar" onPress={save}>…</PressFeedback>   // escala 0.98, área de 44 px intacta
 {loading ? <SkeletonList count={5} row={{ minHeight: 64 }} label={t("guests.loading")} /> : <List />}
 <StepTransition step={step} announce="Paso 2 de 3: Quién y cuándo">…</StepTransition>   // alta en 3 pasos
 <ScreenTransition routeKey={current} groupKey={destination}>{children}</ScreenTransition> // contenido de Screen
@@ -202,16 +224,15 @@ import { ActionButton, StickyActions } from "../host/ui";
 
 ### Botón, centrado y feedback
 
-`Button` (y por tanto `ActionButton`) escala a 0,97 al pulsar (atenúa a 0,72 con Reduce Motion) sin encoger el área táctil: el `Pressable` guarda el área y la vista interior se escala. `EmptyState`, `Celebrate` y `StickyActions` centran su botón desde 640 px mediante `ButtonAlignContext`; fuera de ellos sigue al inicio de la fila. `ToggleChip` usa el mismo feedback (`pressVisual`).
+`Button` (y por tanto `ActionButton`) escala a 0,98 al pulsar (atenúa a 0,72 con Reduce Motion) sin encoger el área táctil: el `Pressable` guarda el área y la vista interior se escala. `EmptyState`, `Celebrate` y `StickyActions` centran su botón desde 640 px mediante `ButtonAlignContext`; fuera de ellos sigue al inicio de la fila. `ToggleChip` usa el mismo feedback (`pressVisual`).
 
 ### Aperturas
 
 - `Sheet`, `Modal` y `ConfirmDialog` abren en web con `Enter` (hoja: `from="down"`, diálogo: fundido) y desactivan la animación de plataforma; en nativo conservan la suya (deslizar / fundido), que ya respeta el ajuste del sistema. Primitivos: `OverlayEnter` y `overlayAnimation`.
-- `Notice` entra con `Enter from="down"` (ligero, 220 ms; sin movimiento con Reduce Motion).
+- `Notice` entra con `Enter from="down"` (12 px y fundido, `MOTION.enterMs`; sin movimiento con Reduce Motion). Las hojas, diálogos y menús usan `MOTION.overlayMs` (240 ms): responden a un toque.
 
 ### Navegación
 
 - Pestañas de sección: si no caben, un desvanecido en el borde con más contenido (`tabs-fade-left` / `tabs-fade-right`, decorativos) y la pestaña activa se trae a la vista al entrar y al cambiar de ancho. Las flechas del teclado siguen moviendo el foco, y el navegador lo desplaza a la vista.
-- Barra inferior: cada destino es un `PressFeedback` de 56 px, con la raya activa de 24 × 4 y relleno para el área segura inferior. La hoja «Más» abre con `Enter` y respeta el área segura.
-- Menú lateral (≥ 960 px): `WeavePattern tone="onDark"` abajo, difuminado, a 70 % de opacidad, bajo el selector de tema.
+- Barra inferior: cada destino es un `PressFeedback` de 56 px, con el activo marcado por el fondo `surfaceMuted` y el texto en tinta y relleno para el área segura inferior. La hoja «Más» abre con `Enter` y respeta el área segura.
 - Hápticos: `expo-haptics` no está en el repositorio; no se añadió una dependencia nueva sin acuerdo. Ver NEEDS.

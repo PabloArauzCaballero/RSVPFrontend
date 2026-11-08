@@ -171,7 +171,7 @@ describe('shared primitives of the frame (A6)', () => {
 
   it('pressVisual scales on press and only dims under Reduce Motion', async () => {
     const { pressVisual } = await import('./index');
-    expect(pressVisual(true, false)).toMatchObject({ transform: 'scale(0.97)' });
+    expect(pressVisual(true, false)).toMatchObject({ transform: 'scale(0.98)' });
     expect(pressVisual(false, false)).toMatchObject({ transform: 'none' });
     expect(pressVisual(true, true)).toEqual({ opacity: 0.72 });
   });

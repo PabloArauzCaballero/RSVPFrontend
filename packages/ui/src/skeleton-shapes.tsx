@@ -11,7 +11,7 @@ export interface SkeletonProps {
 }
 
 /** A quiet block that stands for text or an image while data loads. Decorative: the group announces the loading. */
-export function Skeleton({ width = '100%', height = 14, radius: corner = 6, circle = false }: SkeletonProps) {
+export function Skeleton({ width = '100%', height = 14, radius: corner = 4, circle = false }: SkeletonProps) {
   const { palette } = useTheme();
   return <View aria-hidden style={{ width: circle ? height : width, height, borderRadius: circle ? radius.full : corner, backgroundColor: palette.surfaceMuted }} />;
 }

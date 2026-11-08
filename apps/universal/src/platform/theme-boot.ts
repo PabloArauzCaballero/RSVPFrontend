@@ -1,4 +1,4 @@
-import { brand, colors } from "@rsvp/design-tokens";
+import { colors, tones } from "@rsvp/design-tokens";
 import { THEME_STORAGE_KEY } from "./theme-core";
 
 /**
@@ -8,4 +8,4 @@ import { THEME_STORAGE_KEY } from "./theme-core";
  */
 export const themeBootScript = `(function(){try{var p=null;try{p=localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)})}catch(e){}var d=p==="dark"||(p!=="light"&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches);var r=document.documentElement;r.setAttribute("data-theme",d?"dark":"light");r.style.colorScheme=d?"dark":"light"}catch(e){}})();`;
 
-export const themeBootCss = `body{background:${colors.light.canvas};color:${colors.light.text};font-family:"Plus Jakarta Sans","Avenir Next","Segoe UI",system-ui,sans-serif}html[data-theme="dark"] body{background:${colors.dark.canvas};color:${colors.dark.text}}::selection{background:${brand.cielo};color:${brand.noche}}`;
+export const themeBootCss = `body{background:${colors.light.canvas};color:${colors.light.text};font-family:"Geist","Helvetica Neue","Segoe UI",system-ui,sans-serif}html[data-theme="dark"] body{background:${colors.dark.canvas};color:${colors.dark.text}}::selection{background:${tones.light.blue.bg};color:${tones.light.blue.fg}}html[data-theme="dark"] ::selection{background:${tones.dark.blue.bg};color:${tones.dark.blue.fg}}`;

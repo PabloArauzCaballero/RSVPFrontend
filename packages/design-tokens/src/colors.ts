@@ -1,62 +1,77 @@
 /**
- * DOne palette (Brand Kit v3): electric blue on a near-black night blue. One blue, amber only
- * for "maybe" and notices. Proportion: 45 light, 30 night, 20 blue, 5 amber.
+ * DOne palette, minimalist system (skill `minimalist-ui`): warm monochrome with scarce, washed-out pastels.
+ * Colour carries meaning only (a reply state, an error, a notice); everything else is ink on bone.
  * `fieldBorder` is the outline of inputs (3:1 against the surface, WCAG 1.4.11); `border` is only for decorative dividers.
- * Contrast (WCAG): white on azul 6.7:1, white on noche 18.5:1, cielo on noche 8.0:1, noche on ambar 10.1:1.
+ * Verified pair by pair in `contrast.test.ts`.
  */
 export const colors = {
   light: {
-    canvas: '#F6F7FB', surface: '#FFFFFF', surfaceMuted: '#E9EDFF',
-    text: '#0A1033', textMuted: '#5A6380', primary: '#1F3BFF',
-    onPrimary: '#FFFFFF', primaryMuted: '#E9EDFF', border: '#DFE3F0', fieldBorder: '#7F89B0',
-    accent: '#FFB020', onAccent: '#0A1033', accentMuted: '#FFEFC9',
-    danger: '#B3261E', onDanger: '#FFFFFF', success: '#146C43', warning: '#7A5800',
-    dangerBg: '#FDECEA', successBg: '#E6F4EA', scrim: 'rgba(10,16,51,0.6)'
+    canvas: '#F7F6F3', surface: '#FFFFFF', surfaceMuted: '#F1EFEA',
+    text: '#111111', textMuted: '#6A6965', primary: '#111111',
+    onPrimary: '#FFFFFF', primaryMuted: '#EFEDE8', border: '#EAEAEA', fieldBorder: '#85847F',
+    accent: '#FBF3DB', onAccent: '#5E4000', accentMuted: '#F6EBC8',
+    danger: '#9F2F2D', onDanger: '#FFFFFF', success: '#346538', warning: '#7A5200',
+    dangerBg: '#FDEBEC', successBg: '#EDF3EC', scrim: 'rgba(17,17,17,0.5)'
   },
   dark: {
-    canvas: '#0E1540', surface: '#18215A', surfaceMuted: '#212C6E',
-    text: '#FFFFFF', textMuted: '#B4BDDF', primary: '#8FA6FF',
-    onPrimary: '#0A1033', primaryMuted: '#2A357F', border: '#2F3A80', fieldBorder: '#7380C4',
-    accent: '#FFB020', onAccent: '#0A1033', accentMuted: '#5C4300',
-    danger: '#FFB4AB', onDanger: '#690005', success: '#6DDBA0', warning: '#F5C051',
-    dangerBg: '#40181F', successBg: '#0F3D2B', scrim: 'rgba(3,6,24,0.72)'
+    canvas: '#151514', surface: '#1E1E1C', surfaceMuted: '#272725',
+    text: '#EDECE8', textMuted: '#A3A29D', primary: '#EDECE8',
+    onPrimary: '#111111', primaryMuted: '#2C2C2A', border: '#333331', fieldBorder: '#7A7974',
+    accent: '#E6C66B', onAccent: '#2A2000', accentMuted: '#3A3012',
+    danger: '#F2B8B5', onDanger: '#3A0B0A', success: '#9ED6A3', warning: '#E6C66B',
+    dangerBg: '#3A1D1D', successBg: '#1B2E1F', scrim: 'rgba(0,0,0,0.7)'
   }
 } as const;
 
-/** Named brand colours, straight from the kit. */
-export const brand = {
-  azul: '#1F3BFF', azulOsc: '#172DCC', azulCl: '#4A63FF', noche: '#0A1033', medianoche: '#141C4D',
-  cielo: '#8FA6FF', bruma: '#E9EDFF', nube: '#F6F7FB', pizarra: '#5A6380', niebla: '#A9B3D6', linea: '#DFE3F0', ambar: '#FFB020'
-} as const;
-/** Deep night used for committed hero, footer and brand regions (same in light and dark). */
-export const night = brand.noche;
-/** Readable text on the night ground (same in light and dark). */
-export const onNight = '#FFFFFF';
-/** Light-only tints; prefer the scheme-aware `dangerBg` / `successBg` palette tokens. */
-export const notice = { dangerBg: '#FDECEA', successBg: '#E6F4EA' } as const;
+/** The two anchor neutrals, for the few places that need them outside a scheme (the app icon, print, e-mail). */
+export const ink = '#111111';
+export const bone = '#F7F6F3';
 
 /**
- * RSVP status pills and avatar grounds per scheme. Dark is composed, not inverted: pills sit on a lighter night surface
- * with a sky or amber dot, so the dot and the word still carry the state (never colour alone).
+ * Washed-out pastel pairs (background + the readable text that goes on it) for tags, status pills and icon grounds.
+ * The only place hue appears besides danger/success text.
+ */
+export const tones = {
+  light: {
+    red: { bg: '#FDEBEC', fg: '#9F2F2D' },
+    blue: { bg: '#E1F3FE', fg: '#1F6C9F' },
+    green: { bg: '#EDF3EC', fg: '#346538' },
+    yellow: { bg: '#FBF3DB', fg: '#7A5200' },
+    gray: { bg: '#F1EFEA', fg: '#5F5E5A' }
+  },
+  dark: {
+    red: { bg: '#3A1D1D', fg: '#F7C9C6' },
+    blue: { bg: '#14293A', fg: '#A9D4F0' },
+    green: { bg: '#1B2E1F', fg: '#BFE3C3' },
+    yellow: { bg: '#3A3012', fg: '#F0D88A' },
+    gray: { bg: '#272725', fg: '#A3A29D' }
+  }
+} as const;
+
+/**
+ * RSVP status pills per scheme. The word always carries the state; the dot repeats it and is never the only cue.
  */
 export const chips = {
   light: {
-    yes: { bg: brand.bruma, fg: brand.azulOsc, dot: brand.azul },
-    maybe: { bg: '#FFF2D6', fg: '#6B4500', dot: brand.ambar },
-    wait: { bg: brand.nube, fg: brand.pizarra, dot: brand.niebla, border: brand.linea },
-    no: { bg: '#ECEEF4', fg: brand.noche, dot: brand.noche }
+    yes: { bg: tones.light.green.bg, fg: tones.light.green.fg, dot: '#346538' },
+    maybe: { bg: tones.light.yellow.bg, fg: tones.light.yellow.fg, dot: '#956400' },
+    wait: { bg: tones.light.gray.bg, fg: tones.light.gray.fg, dot: '#A3A29D', border: '#EAEAEA' },
+    no: { bg: tones.light.red.bg, fg: tones.light.red.fg, dot: '#9F2F2D' }
   },
   dark: {
-    yes: { bg: '#2A357F', fg: '#DDE4FF', dot: brand.cielo },
-    maybe: { bg: '#4A3600', fg: '#FFD98A', dot: brand.ambar },
-    wait: { bg: '#18215A', fg: '#B4BDDF', dot: brand.niebla, border: '#4A559B' },
-    no: { bg: '#2B3377', fg: '#FFFFFF', dot: '#FFFFFF' }
+    yes: { bg: tones.dark.green.bg, fg: tones.dark.green.fg, dot: '#9ED6A3' },
+    maybe: { bg: tones.dark.yellow.bg, fg: tones.dark.yellow.fg, dot: '#E6C66B' },
+    wait: { bg: tones.dark.gray.bg, fg: tones.dark.gray.fg, dot: '#7A7974', border: '#333331' },
+    no: { bg: tones.dark.red.bg, fg: tones.dark.red.fg, dot: '#F2B8B5' }
   }
 } as const;
+
+/** Avatar grounds: a pastel and its ink, never a saturated block. */
 export const avatars = {
-  light: [{ bg: brand.azul, fg: '#FFFFFF' }, { bg: brand.ambar, fg: brand.noche }, { bg: brand.noche, fg: '#FFFFFF' }, { bg: brand.cielo, fg: brand.noche }],
-  dark: [{ bg: brand.azulCl, fg: '#FFFFFF' }, { bg: brand.ambar, fg: brand.noche }, { bg: '#2B3377', fg: '#FFFFFF' }, { bg: brand.cielo, fg: brand.noche }]
+  light: [tones.light.green, tones.light.blue, tones.light.yellow, tones.light.red],
+  dark: [tones.dark.green, tones.dark.blue, tones.dark.yellow, tones.dark.red]
 } as const;
 
 export type ColorTheme = keyof typeof colors;
 export type ColorToken = keyof typeof colors.light;
+export type ToneName = keyof typeof tones.light;

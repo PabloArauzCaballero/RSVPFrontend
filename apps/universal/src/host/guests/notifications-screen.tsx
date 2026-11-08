@@ -62,7 +62,7 @@ function NotificationsBody({ timeZone, celebrationId, inbox: { inbox, markRead, 
               <View style={{ flexDirection: "row", alignItems: "flex-start", gap: spacing[3], flex: 1, minWidth: 0 }}>
                 <View aria-hidden style={{ width: 10, height: 10, marginTop: 7, borderRadius: 5, backgroundColor: seen ? "transparent" : palette.primary }} />
                 <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-                  <Text style={[styles.subtitle, { fontSize: 17, fontWeight: seen ? "600" : "800" }]}>{subject}</Text>
+                  <Text style={[styles.itemTitle, { fontSize: 17, fontWeight: seen ? "400" : "600" }]}>{subject}</Text>
                   <Text style={styles.body}>{body}</Text>
                   <Text style={styles.muted}>{seen ? meta : `${t("guests.notifications.unread")} · ${meta}`}</Text>
                 </View>

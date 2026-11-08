@@ -91,7 +91,7 @@ function ListBody({ celebrationId, timeZone, onNavigate }: { readonly celebratio
                 <View key={`new-${guest.at}-${guest.name}`} role="listitem" testID="appearing-guest" style={{ flexDirection: "row", alignItems: "center", gap: spacing[3], minHeight: GUEST_ROW_HEIGHT, paddingVertical: spacing[3], paddingHorizontal: spacing[4], borderBottomWidth: 1, borderBottomColor: palette.border }}>
                   <Avatar name={guest.name} size={44} />
                   <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-                    <Text style={styles.subtitle} numberOfLines={2}>{guest.name}</Text>
+                    <Text style={styles.itemTitle} numberOfLines={2}>{guest.name}</Text>
                     <Text style={styles.muted} numberOfLines={1}>{guest.email ?? guest.phone ?? ""}</Text>
                   </View>
                   <Chip tone="wait">{t("guests.list.appearing")}</Chip>

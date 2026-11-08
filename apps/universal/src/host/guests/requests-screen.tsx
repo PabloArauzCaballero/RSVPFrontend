@@ -24,7 +24,7 @@ function RequestCard({ request, celebrationId, busy, locked, onDecide, onOpen }:
         <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[3], minHeight: 44 }}>
           <Avatar name={guest.data?.name ?? t("guests.requests.guest")} size={44} />
           <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-            <Text style={styles.subtitle} numberOfLines={2}>{guest.data?.name ?? t("guests.requests.guest")}</Text>
+            <Text style={styles.itemTitle} numberOfLines={2}>{guest.data?.name ?? t("guests.requests.guest")}</Text>
             <Text style={styles.muted}>{t("guests.requests.ask", { requested: request.requestedCompanions, allowed: request.allowedCompanions })}</Text>
           </View>
         </View>

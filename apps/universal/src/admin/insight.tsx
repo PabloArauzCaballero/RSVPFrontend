@@ -45,7 +45,7 @@ function MetricsScreenContent({ onNavigate }: Nav): ReactNode {
               <Text accessibilityRole="header" style={styles.subtitle}>{t("admin.metrics.total", { count: data.total })}</Text>
               <View role="table" aria-label={t("admin.metrics.groups." + groupBy)}>
                 <View role="row" style={TABLE_ROW}>
-                  {(["name", "leads", "quotes", "bookings"] as const).map((column) => <Text key={column} role="columnheader" style={[styles.muted, { fontWeight: "700" }, column === "name" ? NAME_CELL : NUMBER_CELL]}>{t(`admin.metrics.columns.${column}`)}</Text>)}
+                  {(["name", "leads", "quotes", "bookings"] as const).map((column) => <Text key={column} role="columnheader" style={[styles.muted, { fontWeight: "600" }, column === "name" ? NAME_CELL : NUMBER_CELL]}>{t(`admin.metrics.columns.${column}`)}</Text>)}
                 </View>
                 <Stagger>
                   {data.items.map((row) => (

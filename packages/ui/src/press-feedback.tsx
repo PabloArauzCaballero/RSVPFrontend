@@ -11,7 +11,7 @@ export interface PressFeedbackProps extends Omit<PressableProps, 'children' | 's
 }
 
 /**
- * Press feedback: the content scales to 0.97 on press-in (90 ms) and returns in 160 ms, in the ease-out of the product.
+ * Press feedback: the content scales to 0.98 on press-in (90 ms) and returns in 160 ms, in the ease-out of the product.
  * The scale lives on an inner view, so the pressable area (44 px minimum) never shrinks. With Reduce Motion there is no
  * scale: the content dims to 0.72 instead, so the press is still seen. No hover motion (touch fires false hovers).
  */

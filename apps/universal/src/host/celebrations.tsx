@@ -41,7 +41,7 @@ export function CelebrationsScreen({ onNavigate }: { readonly onNavigate: (href:
                 <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[4], minHeight: 72, paddingVertical: spacing[3], paddingHorizontal: spacing[4], borderTopWidth: index === 0 ? 0 : 1, borderTopColor: palette.border }}>
                   <AvatarMark name={title} size={48} />
                   <View style={{ flex: 1, gap: 2 }}>
-                    <Text style={styles.subtitle}>{title}</Text>
+                    <Text style={styles.itemTitle}>{title}</Text>
                     <Text style={styles.muted}>{eventDate ? formatDate(eventDate, celebration.timeZone, locale) : t("host.picker.noDate")}</Text>
                   </View>
                   <Chip tone={celebration.status === "PUBLISHED" ? "yes" : celebration.status === "DRAFT" ? "maybe" : "wait"}>{t(`host.picker.status.${celebration.status}`)}</Chip>

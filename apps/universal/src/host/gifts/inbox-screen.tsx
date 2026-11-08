@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
-import { Illustration, SkeletonList, Stagger } from "@rsvp/ui";
+import { SkeletonList, Stagger } from "@rsvp/ui";
 import { spacing } from "@rsvp/design-tokens";
 import { ApiError } from "@rsvp/api-client";
 import { formatCelebrationDate } from "@rsvp/i18n";
@@ -64,7 +64,7 @@ function InboxBody({ celebrationId, timeZone, onSeeList }: { readonly celebratio
   const conflict = decide.error instanceof ApiError && decide.error.status === 409;
   return (
     <View style={{ gap: spacing[4] }}>
-      {notice ? <Notice kind={notice.kind}>{notice.approved ? <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[3] }}><Illustration name="giftReserved" tone="auto" size="sm" /><Text style={[styles.body, { flex: 1 }]}>{notice.text}</Text></View> : <Text style={styles.body}>{notice.text}</Text>}</Notice> : null}
+      {notice ? <Notice kind={notice.kind}><Text style={styles.body}>{notice.text}</Text></Notice> : null}
       {decide.isError && !conflict ? <GiftErrorNotice error={decide.error} /> : null}
       {open.length === 0 ? (
         <EmptyState illustration="success" title={t("gifts.host.inbox.emptyTitle")} body={t("gifts.host.inbox.emptyBody")} action={<ActionButton variant="secondary" label={t("gifts.host.inbox.emptyAction")} onPress={onSeeList} testID="back-to-list" />} />
@@ -75,7 +75,7 @@ function InboxBody({ celebrationId, timeZone, onSeeList }: { readonly celebratio
             const busy = decide.isPending && decide.variables?.reservationId === reservation.id ? decide.variables.decision : null;
             return (
               <Row key={reservation.id} first={index === 0} testID={`reservation-${reservation.id}`}>
-                <Text style={styles.subtitle}>{t("gifts.host.inbox.gift", { title: gift?.title ?? reservation.itemId.slice(0, 8) })}</Text>
+                <Text style={styles.itemTitle}>{t("gifts.host.inbox.gift", { title: gift?.title ?? reservation.itemId.slice(0, 8) })}</Text>
                 <Requester reservation={reservation} celebrationId={celebrationId} />
                 {reservation.message ? <Text style={styles.muted}>“{reservation.message}”</Text> : null}
                 <Text style={styles.muted}>{t("gifts.host.inbox.requestedAt", { date: formatCelebrationDate(reservation.requestedAt, { locale, timeZone }) })}</Text>

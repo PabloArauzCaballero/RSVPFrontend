@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { radius, spacing } from '@rsvp/design-tokens';
-import { Avatar, Chip, Enter, PressFeedback, ScreenTransition, SkeletonList, Stagger, StepTransition, useTheme } from '@rsvp/ui';
+import { Avatar, Chip, Enter, PressFeedback, ScreenTransition, SkeletonList, Stagger, StepTransition, fonts, useTheme } from '@rsvp/ui';
 import { useT } from '../../src/platform/providers';
 
 /**
@@ -18,7 +18,7 @@ function Trigger({ label, onPress, testID }: { label: string; onPress: () => voi
   return (
     <PressFeedback testID={testID} accessibilityLabel={label} onPress={onPress} style={{ alignSelf: 'flex-start' }}>
       <View style={{ minHeight: 44, paddingHorizontal: spacing[5], borderRadius: radius.md, backgroundColor: palette.primary, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ color: palette.onPrimary, fontWeight: '700' }}>{label}</Text>
+        <Text style={{ color: palette.onPrimary, fontWeight: '500' }}>{label}</Text>
       </View>
     </PressFeedback>
   );
@@ -37,7 +37,7 @@ export default function MotionDemo(): ReactNode {
   const body = { color: palette.text, fontSize: 16 };
   return (
     <ScrollView role="main" style={{ flex: 1, backgroundColor: palette.canvas }} contentContainerStyle={{ padding: spacing[4], gap: spacing[6], maxWidth: 720, width: '100%', alignSelf: 'center' }}>
-      <Text accessibilityRole="header" aria-level={1} style={{ color: palette.text, fontSize: 28, fontWeight: '800' }}>{t('host.onboarding.title')}</Text>
+      <Text accessibilityRole="header" aria-level={1} style={{ color: palette.text, fontSize: 28, fontWeight: '500', fontFamily: fonts.display }}>{t('host.onboarding.title')}</Text>
 
       <View style={{ gap: spacing[3] }}>
         <Trigger testID="demo-toggle-enter" label={shown ? t('host.common.remove') : t('host.common.add')} onPress={() => setShown((value) => !value)} />
@@ -60,7 +60,7 @@ export default function MotionDemo(): ReactNode {
             ? Array.from({ length: 5 }, (_, index) => (
                 <View key={index} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[3], height: ROW_HEIGHT, paddingVertical: spacing[2] }}>
                   <Avatar name={`${index} ${index}`} />
-                  <View style={{ flex: 1, gap: spacing[1] }}><Text style={[body, { fontWeight: '700' }]}>{index + 1}</Text><Text style={{ color: palette.textMuted, fontSize: 14 }}>{t('host.onboarding.progress')}</Text></View>
+                  <View style={{ flex: 1, gap: spacing[1] }}><Text style={[body, { fontWeight: '600' }]}>{index + 1}</Text><Text style={{ color: palette.textMuted, fontSize: 14 }}>{t('host.onboarding.progress')}</Text></View>
                   <Chip tone="yes">{t('host.common.add')}</Chip>
                 </View>
               ))

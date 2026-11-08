@@ -2,7 +2,9 @@ import { act, cleanup, render, screen } from '@testing-library/react';
 import axe from 'axe-core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Button, Celebrate, CheckMark, EmptyState, ILLUSTRATION_NAMES, Illustration, PageIntro, SuccessNote, UiProvider } from './index';
+import { colors, ink } from '@rsvp/design-tokens';
 import { CHECK_LENGTH } from './check-geometry';
+import { ILLUSTRATION_GROUPS, ILLUSTRATION_PASTEL, illustrationColors } from './illustrations';
 
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.unstubAllGlobals(); });
 
@@ -45,20 +47,20 @@ describe('CheckMark', () => {
 });
 
 describe('Illustration', () => {
-  it.each(ILLUSTRATION_NAMES)('%s is a decorative SVG in brand colours, sized by token', (name) => {
+  it.each(ILLUSTRATION_NAMES)('%s is a decorative SVG in ink and a pastel, sized by token', (name) => {
     const { container } = render(<Illustration name={name} size="sm" />);
     const svg = container.querySelector('svg') as SVGElement;
     expect(svg.getAttribute('aria-hidden')).toBe('true');
     expect(svg.getAttribute('width')).toBe('64');
     expect(svg.querySelectorAll('path').length).toBeGreaterThan(2);
     const colours = [...svg.querySelectorAll('path')].flatMap((path) => [path.getAttribute('stroke'), path.getAttribute('fill')]).filter((value) => value && value !== 'none');
-    for (const colour of colours) expect(['#1F3BFF', '#E9EDFF', '#FFFFFF', '#FFB020']).toContain(colour);
+    for (const colour of colours) expect(Object.values(illustrationColors('ink', ILLUSTRATION_PASTEL[ILLUSTRATION_GROUPS[name]]))).toContain(colour);
   });
 
   it('switches palette per tone and exposes a name only when asked', () => {
-    const { container } = render(<><Illustration name="gift" tone="night" size={40} /><Illustration name="gift" tone="onDark" label="Regalo" /></>);
-    expect(container.querySelector('svg[width="40"] path[stroke="#0A1033"]')).toBeTruthy();
-    expect(screen.getByRole('img', { name: 'Regalo' }).querySelector('path[stroke="#8FA6FF"]')).toBeTruthy();
+    const { container } = render(<><Illustration name="gift" tone="ink" size={40} /><Illustration name="gift" tone="onDark" label="Regalo" /></>);
+    expect(container.querySelector(`svg[width="40"] path[stroke="${ink}"]`)).toBeTruthy();
+    expect(screen.getByRole('img', { name: 'Regalo' }).querySelector(`path[stroke="${colors.dark.text}"]`)).toBeTruthy();
   });
 });
 

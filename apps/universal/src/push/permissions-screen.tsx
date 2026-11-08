@@ -40,7 +40,7 @@ function DeviceRow({ celebrationId, device, timeZone }: { readonly celebrationId
   };
   return (
     <View role="listitem" testID={`device-${device.id}`} style={[styles.card, { gap: spacing[2] }]}>
-      <Text style={styles.subtitle}>{t(`guests.push.platform.${device.platform}`)}</Text>
+      <Text style={styles.itemTitle}>{t(`guests.push.platform.${device.platform}`)}</Text>
       <Text style={styles.muted}>{t(`guests.push.deviceStatus.${device.status}`)} · {t("guests.push.registeredOn", { date: formatCelebrationDate(device.createdAt, { locale, timeZone }) })}</Text>
       {sent ? <Notice kind="success">{t("guests.push.testQueued")}</Notice> : null}
       <FailureNotice error={test.error ?? unregister.error} />

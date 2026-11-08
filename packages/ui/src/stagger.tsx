@@ -11,7 +11,7 @@ export interface StaggerProps {
 }
 
 /**
- * A list that arrives as a list: each row enters 40 ms after the previous one, up to `max` rows (8 by default, 320 ms in
+ * A list that arrives as a list: each row enters 70 ms after the previous one, up to `max` rows (8 by default, 560 ms in
  * total). Rows keep their `key`, so a refetch that only updates data does not replay it; a row added later enters on its own.
  * Never blocks interaction: rows are in the tree and readable from the first frame.
  */

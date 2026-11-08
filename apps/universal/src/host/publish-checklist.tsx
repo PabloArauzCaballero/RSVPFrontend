@@ -13,7 +13,7 @@ import { useSingleFlight } from "../platform/single-flight";
 import { CelebrationErrorNotice } from "./celebration-errors";
 import { LIMITS, overLimit } from "./limits";
 import { radius, spacing } from "@rsvp/design-tokens";
-import { Enter, Illustration, MomentBackdrop, SkeletonList, Stagger } from "@rsvp/ui";
+import { Enter, SkeletonList, Stagger, useColors } from "@rsvp/ui";
 import { Row, RowList } from "./gifts/offer-row";
 import { ActionButton, Celebrate, CheckMark, ConfirmDialog, Field, Notice, OverflowMenu, useStyles } from "./ui";
 
@@ -40,6 +40,7 @@ type Dialog = "publish" | "unpublish" | "archive" | null;
 
 function Checklist({ celebration, eventType, onNavigate, refetch }: { readonly celebration: Celebration; readonly eventType: TranslatedEventType | undefined; readonly onNavigate: (href: string) => void; readonly refetch: () => void }): ReactNode {
   const styles = useStyles();
+  const palette = useColors();
   const t = useT();
   const client = useApiClient();
   const check = usePublishCheck(client, celebration.id);
@@ -85,12 +86,11 @@ function Checklist({ celebration, eventType, onNavigate, refetch }: { readonly c
     menu: celebration.status !== "ARCHIVED" ? <OverflowMenu testID="more-publish" items={menuItems} /> : null
   });
   return (
-    <View style={{ gap: spacing[5] }}>
+    <View style={{ gap: spacing[6] }}>
       {check.isPending && draft ? <SkeletonList count={3} row={{ minHeight: 64, avatar: false, trailing: false }} label={t("host.common.loading")} /> : null}
       {justPublished ? (
         <Enter from="none">
-          <View testID="published-moment" style={{ position: "relative", overflow: "hidden", borderRadius: radius.lg, minHeight: 340, paddingHorizontal: spacing[8], paddingTop: spacing[12], paddingBottom: spacing[6], justifyContent: "center", alignItems: "center" }}>
-            <MomentBackdrop variant="published" />
+          <View testID="published-moment" style={{ borderRadius: radius.lg, borderWidth: 1, borderColor: palette.border, backgroundColor: palette.surface, minHeight: 280, paddingHorizontal: spacing[8], paddingVertical: spacing[12], justifyContent: "center", alignItems: "center" }}>
             <Celebrate title={t("host.publish.done.title")} body={t("host.publish.done.body")} />
           </View>
         </Enter>
@@ -134,7 +134,6 @@ function Checklist({ celebration, eventType, onNavigate, refetch }: { readonly c
         <View style={{ gap: spacing[3], maxWidth: 720 }}>
           {celebration.status === "PUBLISHED" ? (
             <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: spacing[4] }}>
-              {justPublished ? null : <Illustration name="published" tone="auto" size="md" />}
               <View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 260, gap: spacing[2] }}>
                 <Text accessibilityRole="header" aria-level={2} style={styles.subtitle}>{t("host.publish.share")}</Text>
                 {justPublished ? null : <Text style={styles.muted}>{t("host.publish.status.PUBLISHED")}</Text>}

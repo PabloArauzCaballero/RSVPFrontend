@@ -9,7 +9,7 @@ describe('design tokens', () => {
   });
   it('exposes the required token scales', () => {
     expect(spacing[4]).toBe(16);
-    expect(radius.lg).toBe(20);
+    expect(radius.lg).toBe(12);
     expect(typography.fontSize.base).toBe(16);
   });
 });

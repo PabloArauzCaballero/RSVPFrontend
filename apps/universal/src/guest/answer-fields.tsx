@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
-import { brand, radius, spacing, typography } from "@rsvp/design-tokens";
-import { CheckMark, PressFeedback, useColors, useThemedStyles, type Palette } from "@rsvp/ui";
+import { radius, spacing, typography } from "@rsvp/design-tokens";
+import { CheckMark, PressFeedback, fonts, useColors, useThemedStyles, type Palette } from "@rsvp/ui";
 import { Field, useStyles } from "../host/ui";
 import { useT } from "../platform/providers";
 
@@ -10,30 +10,29 @@ import { useT } from "../platform/providers";
  * a dietary restriction or a message. Everything optional stays folded away so the common answer takes two taps.
  */
 
-const fontFamily = Platform.select({ web: "'Plus Jakarta Sans', 'Avenir Next', 'Segoe UI', system-ui, sans-serif", default: undefined });
+const fontFamily = fonts.sans;
 const MIN_TOUCH = 44;
 /** The contract sets no maximum; this only keeps the stepper from running away. */
 const STEPPER_MAX = 20;
 const ringFor = (color: string): object => Platform.select({ web: { outlineColor: color, outlineWidth: 2, outlineOffset: 2 }, default: {} }) as object;
 
-const createStyles = (palette: Palette, scheme: "light" | "dark") => StyleSheet.create({
+const createStyles = (palette: Palette) => StyleSheet.create({
   answers: { flexDirection: "row", gap: spacing[3] },
-  answerSlot: { flex: 1, minHeight: 76, borderRadius: radius.lg },
-  answer: { flexGrow: 1, minHeight: 76, borderRadius: radius.lg, borderWidth: 1.5, borderColor: scheme === "dark" ? palette.textMuted : palette.fieldBorder, backgroundColor: palette.surface, alignItems: "center", justifyContent: "center", gap: spacing[1], paddingHorizontal: spacing[3] },
-  answerYes: { backgroundColor: brand.azul, borderColor: brand.azul },
-  /* On the dark page a night fill would vanish: the refusal lifts to the raised surface with its outline. */
-  answerNo: scheme === "dark" ? { backgroundColor: palette.surfaceMuted, borderColor: palette.fieldBorder } : { backgroundColor: brand.noche, borderColor: brand.noche },
-  answerText: { color: palette.text, fontSize: 20, lineHeight: 24, fontWeight: "800", letterSpacing: -0.4, fontFamily },
-  answerTextOn: { color: "#FFFFFF" },
-  ring: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: "#FFFFFF", alignItems: "center", justifyContent: "center" },
-  ringDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: "#FFFFFF" },
-  stepper: { flexDirection: "row", alignItems: "center", gap: spacing[3] },
-  step: { width: 48, height: 48, borderRadius: 24, borderWidth: 1.5, borderColor: palette.fieldBorder, backgroundColor: palette.surface, alignItems: "center", justifyContent: "center" },
+  answerSlot: { flex: 1, minHeight: 72, borderRadius: radius.md },
+  answer: { flexGrow: 1, minHeight: 72, borderRadius: radius.md, borderWidth: 1, borderColor: palette.fieldBorder, backgroundColor: palette.surface, alignItems: "center", justifyContent: "center", gap: spacing[1], paddingHorizontal: spacing[3] },
+  /* Both answers fill with ink when chosen; the mark (a drawn tick or a ring) tells them apart, never the colour. */
+  answerOn: { backgroundColor: palette.primary, borderColor: palette.primary },
+  answerText: { color: palette.text, fontSize: 22, lineHeight: 26, fontWeight: "500", letterSpacing: -0.4, fontFamily: fonts.display },
+  answerTextOn: { color: palette.onPrimary },
+  ring: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: palette.onPrimary, alignItems: "center", justifyContent: "center" },
+  ringDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: palette.onPrimary },
+  stepper: { flexDirection: "row", alignItems: "center", gap: spacing[4] },
+  step: { width: 48, height: 48, borderRadius: radius.md, borderWidth: 1, borderColor: palette.fieldBorder, backgroundColor: palette.surface, alignItems: "center", justifyContent: "center" },
   stepOff: { opacity: 0.4 },
-  stepGlyph: { color: palette.primary, fontSize: 24, lineHeight: 26, fontWeight: "700", fontFamily },
-  count: { minWidth: 40, textAlign: "center", color: palette.text, fontSize: 28, lineHeight: 32, fontWeight: "800", fontFamily },
+  stepGlyph: { color: palette.text, fontSize: 24, lineHeight: 26, fontWeight: "500", fontFamily },
+  count: { minWidth: 40, textAlign: "center", color: palette.text, fontSize: 32, lineHeight: 36, fontWeight: "500", letterSpacing: -0.6, fontFamily: fonts.display },
   toggle: { minHeight: MIN_TOUCH, justifyContent: "center", alignSelf: "flex-start" },
-  toggleText: { color: palette.primary, fontSize: typography.fontSize.base, fontWeight: "700", textDecorationLine: "underline", fontFamily }
+  toggleText: { color: palette.text, fontSize: typography.fontSize.base, fontWeight: "500", textDecorationLine: "underline", fontFamily }
 });
 
 export type Attendance = "" | "CONFIRMED" | "DECLINED";
@@ -51,13 +50,13 @@ export function AttendanceChoice({ value, onChange, error }: { readonly value: A
     <View style={{ gap: spacing[2] }}>
       <View accessibilityRole="radiogroup" accessibilityLabel={t("rsvp.invite.question")} style={s.answers}>
         <PressFeedback accessibilityRole="radio" aria-checked={yes} accessibilityLabel={t("rsvp.invite.yes")} onPress={() => onChange("CONFIRMED")} testID="answer-yes" style={[s.answerSlot, focusRing]}>
-          <View style={[s.answer, yes && s.answerYes]}>
-            {yes ? <CheckMark size={24} tone="white" /> : null}
+          <View style={[s.answer, yes && s.answerOn]}>
+            {yes ? <CheckMark size={28} /> : null}
             <Text style={[s.answerText, yes && s.answerTextOn]}>{t("rsvp.invite.yes")}</Text>
           </View>
         </PressFeedback>
         <PressFeedback accessibilityRole="radio" aria-checked={no} accessibilityLabel={t("rsvp.invite.no")} onPress={() => onChange("DECLINED")} testID="answer-no" style={[s.answerSlot, focusRing]}>
-          <View style={[s.answer, no && s.answerNo]}>
+          <View style={[s.answer, no && s.answerOn]}>
             {no ? <View style={s.ring}><View style={s.ringDot} /></View> : null}
             <Text style={[s.answerText, no && s.answerTextOn]}>{t("rsvp.invite.no")}</Text>
           </View>

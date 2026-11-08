@@ -121,8 +121,9 @@ describe("C2–C5 · picker and onboarding", () => {
     renderApp(<OnboardingScreen step={1} celebrationId="c-1" onNavigate={navigate} />, client);
     expect(await screen.findByText("Tu invitación está lista")).toBeTruthy();
     expect(screen.getByTestId("preview-mobile").textContent).toContain("Ana y Luis");
-    // The milestone has its own backdrop (rings of light behind the drawn check) and no loop.
-    expect(document.querySelector('[data-illustration="moment-confirmed"]')).not.toBeNull();
+    // The milestone is a quiet status region with the drawn check: the decorative backdrop of the old identity is gone.
+    expect(screen.getByText("Tu invitación está lista").closest('[role="status"]')).not.toBeNull();
+    expect(document.querySelector('[data-illustration^="moment-"]')).toBeNull();
     fireEvent.click(screen.getByTestId("onboarding-finish"));
     expect(navigate).toHaveBeenCalledWith("/editor/general?c=c-1");
   });

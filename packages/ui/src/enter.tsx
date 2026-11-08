@@ -4,7 +4,7 @@ import { VIEW_BASE, revealStyle, useReveal } from './motion-reveal';
 
 export interface EnterProps {
   children?: ReactNode;
-  /** Where it comes from. `down` (default) rises 8 px; `none` is a pure fade. */
+  /** Where it comes from. `down` (default) rises 12 px; `none` is a pure fade. */
   from?: MotionDirection;
   /** Wait before entering, in ms (Stagger sets it). */
   delay?: number;
@@ -20,7 +20,7 @@ export interface EnterProps {
 }
 
 /**
- * Entrance with direction (opacity + transform only, ~220 ms, strong ease-out, once). Web draws it with a CSS transition,
+ * Entrance with direction (opacity + transform only, ~500 ms, soft ease-out, once). Web draws it with a CSS transition,
  * so it is interruptible; under `prefers-reduced-motion` the content is in its final state on the first paint.
  * Reading order never changes: the content is in the DOM from the first frame.
  */

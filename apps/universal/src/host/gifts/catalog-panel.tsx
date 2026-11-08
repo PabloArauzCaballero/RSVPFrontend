@@ -41,11 +41,11 @@ export function CatalogPanel({ celebrationId, currency, onSeeList }: { readonly 
       <ActionButton label={t("gifts.host.catalog.search")} onPress={run} testID="catalog-search" />
       {added ? <Notice kind="success"><Text style={styles.body}>{t("gifts.host.catalog.added", { title: added })}</Text><ActionButton variant="secondary" label={t("gifts.host.add.seeList")} onPress={onSeeList} testID="see-list" /></Notice> : null}
       {unavailable ? <Notice kind="error">{t("gifts.host.catalog.unavailableBody")}</Notice> : <GiftErrorNotice error={add.error} />}
-      {!search.data && !search.isFetching && !search.isError ? <Hint illustration="searching">{t("gifts.host.catalog.prompt")}</Hint> : null}
+      {!search.data && !search.isFetching && !search.isError ? <Hint>{t("gifts.host.catalog.prompt")}</Hint> : null}
       {search.isFetching && !search.data ? <SkeletonList count={3} row={{ minHeight: 120, avatar: false, trailing: false }} label={t("host.common.loading")} /> : null}
       {search.isError ? <RetryNotice error={search.error} onRetry={() => { void search.refetch(); }} /> : null}
       {search.data?.viaFallback ? <Notice>{t("gifts.host.catalog.fallbackNote")}</Notice> : null}
-      {search.data && items.length === 0 ? <Hint illustration="emptySearch">{t("gifts.host.catalog.none")}</Hint> : null}
+      {search.data && items.length === 0 ? <Hint>{t("gifts.host.catalog.none")}</Hint> : null}
       {items.length ? (
         <RowList>
           <Stagger>{items.map((hit, index) => {
@@ -53,7 +53,7 @@ export function CatalogPanel({ celebrationId, currency, onSeeList }: { readonly 
             const adding = add.isPending && add.variables?.source === "CATALOGED" && add.variables.productListingId === hit.id;
             return (
               <Row key={hit.id} first={index === 0} testID={`hit-${hit.id}`}>
-                <Text style={styles.subtitle}>{hit.title}</Text>
+                <Text style={styles.itemTitle}>{hit.title}</Text>
                 {hit.priceFromMinor !== undefined ? <Text style={styles.body}>{t("gifts.host.catalog.priceFrom", { price: formatMinor(hit.priceFromMinor, hit.currency ?? currency, locale) })}</Text> : null}
                 {listed ? <Text style={styles.muted} testID={`listed-${hit.id}`}>{t("gifts.host.catalog.alreadyListed")}</Text> : null}
                 <View style={styles.row}><ActionButton variant="secondary" label={adding ? t("gifts.host.catalog.adding") : t("gifts.host.catalog.add")} busy={adding} disabled={add.isPending || listed} onPress={() => choose(hit)} testID={`add-${hit.id}`} /></View>

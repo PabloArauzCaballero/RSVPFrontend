@@ -57,7 +57,7 @@ function GroupsBody({ celebrationId, onNavigate }: { readonly celebrationId: str
           <Stagger>
           {items.map((group, index) => (
             <View key={group.id} role="listitem" style={[{ gap: 2, paddingVertical: spacing[3], paddingHorizontal: spacing[4], minHeight: 60, justifyContent: "center" }, index > 0 ? { borderTopWidth: 1, borderTopColor: palette.border } : null]}>
-              <Text style={styles.subtitle}>{group.name}</Text>
+              <Text style={styles.itemTitle}>{group.name}</Text>
               <Text style={styles.muted}>{t("guests.groups.members", { count: group.memberCount })}</Text>
             </View>
           ))}

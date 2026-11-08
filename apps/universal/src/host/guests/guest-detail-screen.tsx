@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
-import { Avatar } from "@rsvp/ui";
+import { Avatar, fonts } from "@rsvp/ui";
 import { formatCelebrationDate } from "@rsvp/i18n";
 import { personalLinkPath } from "@rsvp/auth";
 import { ApiError } from "@rsvp/api-client";
@@ -79,7 +79,7 @@ function LinkSection({ link, name }: { readonly link: GuestLink; readonly name: 
       <Text style={styles.body}>{t("guests.detail.link.intro")}</Text>
       {issued ? (
         <Celebrate title={t("guests.detail.link.readyTitle", { name })} body={t("guests.detail.link.readyBody")}>
-          <Text selectable={false} testID="masked-link" style={[styles.body, { fontFamily: "monospace" }]}>{t("guests.detail.link.masked", { value: issued.masked })}</Text>
+          <Text selectable={false} testID="masked-link" style={[styles.body, { fontFamily: fonts.mono }]}>{t("guests.detail.link.masked", { value: issued.masked })}</Text>
           <Text style={styles.muted}>{t("guests.detail.link.expires", { date: formatCelebrationDate(issued.expiresAt, { locale, timeZone: link.timeZone }) })}</Text>
           <Text style={styles.muted}>{t("guests.detail.link.once")}</Text>
           <View style={styles.row}>
@@ -149,7 +149,7 @@ function DetailBody({ celebration, guestId, guest, link, eraser, onNavigate }: {
       <View style={[styles.card, { maxWidth: 720, flexDirection: "row", alignItems: "center", gap: spacing[4] }]}>
         <Avatar name={data.name} size={64} />
         <View style={{ flex: 1, minWidth: 0, gap: spacing[1] }}>
-          <Text accessibilityRole="header" aria-level={2} style={[styles.title, { fontSize: 24, lineHeight: 28 }]}>{data.name}</Text>
+          <Text accessibilityRole="header" aria-level={2} style={[styles.title, { fontSize: 28, lineHeight: 32 }]}>{data.name}</Text>
           {row ? <View style={{ alignSelf: "flex-start" }}><StatusBadge status={row.status} /></View> : null}
           {data.email ? <Text style={styles.body}>{t("guests.detail.email")}: {data.email}</Text> : null}
           {data.phone ? <Text style={styles.body}>{t("guests.detail.phone")}: {data.phone}</Text> : null}

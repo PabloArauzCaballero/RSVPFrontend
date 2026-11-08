@@ -48,8 +48,8 @@ export function TemplateGallery({ celebration, eventType, onApplied, onSeeFull }
     return (
       <SkeletonList label={t("host.common.loading")}>
         <View style={{ flexDirection: wide ? "row" : "column", gap: spacing[6] }}>
-          <View style={{ gap: spacing[2], width: wide ? LIST_WIDTH : "100%" }}>{[0, 1, 2, 3].map((slot) => <Skeleton key={slot} height={52} radius={26} />)}</View>
-          <View style={{ width: wide ? PREVIEW_WIDTH : "100%", alignItems: "center" }}><Skeleton width={wide ? PREVIEW_WIDTH : "100%"} height={wide ? PREVIEW_HEIGHT : PREVIEW_HEIGHT_NARROW} radius={24} /></View>
+          <View style={{ gap: spacing[2], width: wide ? LIST_WIDTH : "100%" }}>{[0, 1, 2, 3].map((slot) => <Skeleton key={slot} height={52} radius={8} />)}</View>
+          <View style={{ width: wide ? PREVIEW_WIDTH : "100%", alignItems: "center" }}><Skeleton width={wide ? PREVIEW_WIDTH : "100%"} height={wide ? PREVIEW_HEIGHT : PREVIEW_HEIGHT_NARROW} radius={12} /></View>
         </View>
       </SkeletonList>
     );

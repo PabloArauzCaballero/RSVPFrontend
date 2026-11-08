@@ -6,7 +6,7 @@ import type { PressFeedbackProps } from './press-feedback';
 const OUT = Easing.bezier(EASE.out[0], EASE.out[1], EASE.out[2], EASE.out[3]);
 
 /**
- * Native: scale 0.97 with `Animated` on the native driver; the scale sits on an inner view so the 44 pt hit area is intact.
+ * Native: scale 0.98 with `Animated` on the native driver; the scale sits on an inner view so the 44 pt hit area is intact.
  * Press-in animates from the current value, so a quick second tap never jumps. Reduce Motion dims instead of scaling.
  */
 export function PressFeedback({ children, style, minTarget = true, accessibilityRole = 'button', onPressIn, onPressOut, disabled, ...rest }: PressFeedbackProps) {

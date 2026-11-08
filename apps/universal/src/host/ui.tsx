@@ -1,15 +1,16 @@
 import { useState, type PropsWithChildren, type ReactNode } from "react";
-import { Modal, Platform, Pressable, StyleSheet, Text, View, type KeyboardTypeOptions } from "react-native";
+import { Modal, Pressable, StyleSheet, Text, View, type KeyboardTypeOptions } from "react-native";
 import { usePathname, useRouter, type Href } from "expo-router";
 import { ApiError } from "@rsvp/api-client";
-import { Button, CheckMark, Enter, Input, OverlayEnter, overlayAnimation, pressVisual, SkeletonList, useColors, useReducedMotion, useTheme } from "@rsvp/ui";
+import { Button, CheckMark, Enter, fonts, Input, OverlayEnter, overlayAnimation, pressVisual, SkeletonList, useColors, useReducedMotion, useTheme } from "@rsvp/ui";
 import { colors, radius, spacing, typography, type ColorTheme } from "@rsvp/design-tokens";
 import { loginHref } from "../auth/routes";
 import { useT } from "../platform/providers";
 
 /** Building blocks shared by the host and admin screens. No copy lives here: callers pass translated text. */
 
-const fontFamily = Platform.select({ web: "'Plus Jakarta Sans', 'Avenir Next', 'Segoe UI', system-ui, sans-serif", default: undefined });
+const fontFamily = fonts.sans;
+const fontDisplay = fonts.display;
 const MIN_TOUCH = 44;
 const MAX_CONTENT_WIDTH = 880;
 const SECTION_MAX_WIDTH = 720;
@@ -26,35 +27,36 @@ const STATUS_UNAUTHORIZED = 401;
 function createHostStyles(palette: (typeof colors)[ColorTheme]) {
   return StyleSheet.create({
   page: { flexGrow: 1, backgroundColor: palette.canvas },
-  content: { width: "100%", maxWidth: MAX_CONTENT_WIDTH, alignSelf: "center", padding: spacing[4], gap: spacing[4] },
-  title: { color: palette.text, fontSize: typography.fontSize.xl, lineHeight: typography.lineHeight.xl, fontWeight: "800", letterSpacing: -0.5, fontFamily },
-  subtitle: { color: palette.text, fontSize: typography.fontSize.lg, fontWeight: "800", letterSpacing: -0.3, fontFamily },
+  content: { width: "100%", maxWidth: MAX_CONTENT_WIDTH, alignSelf: "center", padding: spacing[4], gap: spacing[6] },
+  title: { color: palette.text, fontSize: typography.fontSize["2xl"], lineHeight: typography.lineHeight["2xl"], fontWeight: "500", letterSpacing: -0.7, fontFamily: fontDisplay },
+  subtitle: { color: palette.text, fontSize: typography.fontSize.xl, lineHeight: typography.lineHeight.xl, fontWeight: "500", letterSpacing: -0.4, fontFamily: fontDisplay },
+  itemTitle: { color: palette.text, fontSize: typography.fontSize.base, lineHeight: 22, fontWeight: "600", fontFamily },
   body: { color: palette.text, fontSize: typography.fontSize.base, lineHeight: typography.lineHeight.base, fontFamily },
-  muted: { color: palette.textMuted, fontSize: typography.fontSize.sm, lineHeight: typography.lineHeight.sm, fontFamily },
-  label: { color: palette.text, fontSize: typography.fontSize.sm, fontWeight: "700", fontFamily },
-  input: { minHeight: MIN_TOUCH + 8, borderWidth: 1.5, borderColor: palette.fieldBorder, borderRadius: radius.md, paddingHorizontal: spacing[3], color: palette.text, backgroundColor: palette.surface, fontSize: typography.fontSize.base },
+  muted: { color: palette.textMuted, fontSize: typography.fontSize.sm, lineHeight: typography.lineHeight.sm + 2, fontFamily },
+  label: { color: palette.text, fontSize: typography.fontSize.sm, fontWeight: "600", fontFamily },
+  input: { minHeight: MIN_TOUCH + 4, borderWidth: 1, borderColor: palette.fieldBorder, borderRadius: radius.md, paddingHorizontal: spacing[3], color: palette.text, backgroundColor: palette.surface, fontSize: typography.fontSize.base, fontFamily },
   inputError: { borderColor: palette.danger },
-  card: { backgroundColor: palette.surface, borderColor: palette.border, borderWidth: 1, borderRadius: radius.lg, padding: spacing[5], gap: spacing[3] },
+  card: { backgroundColor: palette.surface, borderColor: palette.border, borderWidth: 1, borderRadius: radius.lg, padding: spacing[6], gap: spacing[4] },
   row: { flexDirection: "row", flexWrap: "wrap", gap: spacing[2], alignItems: "center" },
   nav: { flexDirection: "row", flexWrap: "wrap", gap: spacing[2] },
-  navItem: { minHeight: MIN_TOUCH, justifyContent: "center", paddingHorizontal: spacing[4], borderRadius: radius.full, backgroundColor: palette.surface, borderWidth: 1.5, borderColor: palette.border },
-  navItemCurrent: { backgroundColor: palette.primaryMuted, borderColor: palette.primary },
-  button: { minHeight: MIN_TOUCH + 8, alignItems: "center", justifyContent: "center", borderRadius: radius.md, paddingHorizontal: spacing[4], backgroundColor: palette.primary },
-  buttonSecondary: { backgroundColor: palette.primaryMuted },
+  navItem: { minHeight: MIN_TOUCH, justifyContent: "center", paddingHorizontal: spacing[4], borderRadius: radius.md, backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.fieldBorder },
+  navItemCurrent: { backgroundColor: palette.surfaceMuted, borderColor: palette.text },
+  button: { minHeight: MIN_TOUCH + 4, alignItems: "center", justifyContent: "center", borderRadius: radius.button, paddingHorizontal: spacing[4], backgroundColor: palette.primary },
+  buttonSecondary: { backgroundColor: "transparent", borderWidth: 1, borderColor: palette.fieldBorder },
   buttonDanger: { backgroundColor: palette.danger },
   buttonDisabled: { opacity: 0.5 },
-  buttonText: { color: palette.onPrimary, fontWeight: "700", fontSize: typography.fontSize.base, fontFamily },
-  buttonTextSecondary: { color: palette.primary },
-  notice: { borderRadius: radius.md, padding: spacing[4], gap: spacing[2] },
-  noticeError: { backgroundColor: palette.dangerBg, borderColor: palette.danger, borderWidth: 1 },
+  buttonText: { color: palette.onPrimary, fontWeight: "600", fontSize: typography.fontSize.base, fontFamily },
+  buttonTextSecondary: { color: palette.text },
+  notice: { borderRadius: radius.md, padding: spacing[4], gap: spacing[2], borderWidth: 1, borderColor: palette.border },
+  noticeError: { backgroundColor: palette.dangerBg, borderColor: palette.danger },
   noticeInfo: { backgroundColor: palette.surfaceMuted },
   noticeSuccess: { backgroundColor: palette.successBg },
-  option: { minHeight: MIN_TOUCH + 8, justifyContent: "center", paddingHorizontal: spacing[4], borderWidth: 1.5, borderColor: palette.fieldBorder, borderRadius: radius.md, backgroundColor: palette.surface },
-  choice: { minHeight: MIN_TOUCH, justifyContent: "center", paddingHorizontal: spacing[4], borderWidth: 1.5, borderColor: palette.fieldBorder, borderRadius: radius.full, backgroundColor: palette.surface },
-  choiceSelected: { borderColor: palette.primary, backgroundColor: palette.primaryMuted },
-  optionSelected: { borderColor: palette.primary, backgroundColor: palette.primaryMuted },
+  option: { minHeight: MIN_TOUCH + 4, justifyContent: "center", paddingHorizontal: spacing[4], paddingVertical: spacing[3], borderWidth: 1, borderColor: palette.fieldBorder, borderRadius: radius.md, backgroundColor: palette.surface },
+  choice: { minHeight: MIN_TOUCH, justifyContent: "center", paddingHorizontal: spacing[4], borderWidth: 1, borderColor: palette.fieldBorder, borderRadius: radius.md, backgroundColor: palette.surface },
+  choiceSelected: { borderColor: palette.text, backgroundColor: palette.surfaceMuted },
+  optionSelected: { borderColor: palette.text, backgroundColor: palette.surfaceMuted },
   overlay: { flex: 1, justifyContent: "center", padding: spacing[4], backgroundColor: palette.scrim },
-  dialog: { width: "100%", maxWidth: 520, alignSelf: "center", backgroundColor: palette.surface, borderRadius: radius.lg, padding: spacing[5], gap: spacing[3] }
+  dialog: { width: "100%", maxWidth: 520, alignSelf: "center", backgroundColor: palette.surface, borderColor: palette.border, borderWidth: 1, borderRadius: radius.lg, padding: spacing[6], gap: spacing[4] }
   });
 }
 
@@ -117,7 +119,7 @@ export function ChoiceGroup<TValue extends string>({ label, choices, value, onCh
           const selected = choice.value === value;
           return (
             <Pressable key={choice.value} {...(choice.testID ? { testID: choice.testID } : {})} accessibilityRole="radio" aria-checked={selected} aria-disabled={disabled} disabled={disabled} accessibilityLabel={choice.label} onPress={() => onChange(choice.value)} style={[described ? styles.option : styles.choice, selected && (described ? styles.optionSelected : styles.choiceSelected), disabled && styles.buttonDisabled]}>
-              <Text style={[styles.body, selected && { fontWeight: "700" }]}>{choice.label}</Text>
+              <Text style={[styles.body, selected && { fontWeight: "600" }]}>{choice.label}</Text>
               {choice.description ? <Text style={styles.muted}>{choice.description}</Text> : null}
             </Pressable>
           );
@@ -137,7 +139,7 @@ export function ToggleChip({ label, on, onPress, testID, disabled = false }: { r
     <Pressable role="checkbox" aria-checked={on} aria-disabled={disabled} disabled={disabled} accessibilityLabel={label} onPress={onPress} onPressIn={() => setPressed(true)} onPressOut={() => setPressed(false)} {...(testID ? { testID } : {})}>
       <View style={[styles.choice, { flexDirection: "row", alignItems: "center", gap: spacing[2] }, on && styles.choiceSelected, disabled && styles.buttonDisabled, pressVisual(pressed && !disabled, reduced)]}>
         {on ? <View style={{ width: 5, height: 10, marginTop: -2, borderRightWidth: 2, borderBottomWidth: 2, borderColor: palette.primary, transform: [{ rotate: "45deg" }] }} /> : null}
-        <Text style={[styles.body, on && { fontWeight: "700" }]}>{label}</Text>
+        <Text style={[styles.body, on && { fontWeight: "600" }]}>{label}</Text>
       </View>
     </Pressable>
   );

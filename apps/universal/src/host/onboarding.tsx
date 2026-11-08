@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Text, View, useWindowDimensions } from "react-native";
 import { themeFromTemplate } from "@rsvp/celebration-theme";
-import { Enter, MomentBackdrop, PressFeedback, Skeleton, SkeletonList, StepTransition, useColors } from "@rsvp/ui";
+import { Enter, PressFeedback, Skeleton, SkeletonList, StepTransition, useColors } from "@rsvp/ui";
 import { radius, spacing } from "@rsvp/design-tokens";
 import { useCelebration, useCreateCelebration, useEventTypes, type Celebration, type TranslatedEventType } from "@rsvp/query-hooks";
 import { useApiClient, useClaims, useLocale, useT } from "../platform/providers";
@@ -75,7 +75,7 @@ function StepProgress({ step, onBack }: { readonly step: number; readonly onBack
   return (
     <View role="progressbar" aria-label={t("host.onboarding.progress")} aria-valuemin={1} aria-valuemax={LAST} aria-valuenow={step} aria-valuetext={`${t("host.onboarding.step", { step })}: ${name}`} style={{ gap: spacing[2] }}>
       <View style={{ flexDirection: "row", gap: spacing[1] }}>
-        {STEPS.map((key, index) => <View key={key} style={{ flex: 1, height: 6, borderRadius: radius.full, backgroundColor: index < step ? palette.primary : palette.primaryMuted }} />)}
+        {STEPS.map((key, index) => <View key={key} style={{ flex: 1, height: 4, borderRadius: radius.full, backgroundColor: index < step ? palette.primary : palette.border }} />)}
       </View>
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 44 }}>
         <Text style={styles.label}>{`${t("host.onboarding.step", { step })} · ${name}`}</Text>
@@ -152,8 +152,7 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
         {existing.data ? (
           <View style={{ gap: spacing[5] }}>
             {/* The moment: rings of light behind the drawn check; the only celebration of the sign-up. */}
-            <View style={{ width: "100%", maxWidth: READY_WIDTH, alignSelf: "center", overflow: "hidden", borderRadius: radius.xl, paddingVertical: spacing[6], paddingHorizontal: spacing[4], backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border }}>
-              <MomentBackdrop variant="confirmed" />
+            <View style={{ width: "100%", maxWidth: READY_WIDTH, alignSelf: "center", borderRadius: radius.lg, paddingVertical: spacing[10], paddingHorizontal: spacing[6], backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border }}>
               <Celebrate title={t("host.onboarding.readyTitle")} body={t("host.onboarding.readyBody")}>
                 <CenteredActions>
                   <ActionButton label={t("host.onboarding.finish")} onPress={() => onNavigate(withCelebration(editorPath("general"), celebrationId))} testID="onboarding-finish" />
@@ -183,7 +182,7 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
             <Text style={styles.muted}>{t("host.onboarding.typeHelp")}</Text>
           </View>
         </View>
-        {types.isPending ? <SkeletonList label={t("host.common.loading")}><View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing[2] }}>{[120, 96, 140, 110, 128].map((width, index) => <Skeleton key={index} width={width} height={44} radius={radius.full} />)}</View></SkeletonList> : null}
+        {types.isPending ? <SkeletonList label={t("host.common.loading")}><View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing[2] }}>{[120, 96, 140, 110, 128].map((width, index) => <Skeleton key={index} width={width} height={44} radius={radius.md} />)}</View></SkeletonList> : null}
         {types.isError ? <LoadFailed title={t("host.onboarding.typeTitle")} error={types.error} onRetry={() => { void types.refetch(); }} /> : null}
         <ChoiceGroup label={t("host.onboarding.typeLabel")} value={typeCode} onChange={(code) => { if (code !== typeCode) setHosts({}); setTypeCode(code); }} choices={(types.data?.items ?? []).map((item) => ({ value: item.code, label: item.name }))} />
         {type?.description ? <Text style={styles.muted}>{type.description}</Text> : null}

@@ -1,33 +1,32 @@
 import { useEffect, useRef, useState, type PropsWithChildren, type ReactNode } from "react";
 import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type LayoutChangeEvent, type ViewStyle } from "react-native";
-import { brand, radius, spacing } from "@rsvp/design-tokens";
-import { Logo, OverlayEnter, PageIntro, PressFeedback, ScreenTransition, StickyActions, WeavePattern, overlayAnimation, useColors, useThemedStyles, type Palette } from "@rsvp/ui";
+import { radius, spacing } from "@rsvp/design-tokens";
+import { Logo, OverlayEnter, PageIntro, PressFeedback, ScreenTransition, StickyActions, fonts, overlayAnimation, useColors, useThemedStyles, type Palette } from "@rsvp/ui";
 import { useAuth } from "../auth/auth-context";
 import { useT } from "../platform/providers";
 import { useThemePreference } from "../platform/theme";
 
 /**
- * Frame of every signed-in screen (host, admin, provider). Wide screens: a night sidebar with the
- * logo, the destinations and sign-out. Narrow screens: a night top bar and a bottom bar with the
- * main destinations plus "More" (the rest and sign-out). One layout is mounted at a time.
+ * Frame of every signed-in screen (host, admin, provider), laid out like a printed invitation: warm paper canvas, ink,
+ * hairlines. Wide screens: a light sidebar with the logo, the destinations and sign-out. Narrow screens: a light top bar
+ * on the canvas and a bottom bar with the main destinations plus "More" (the rest and sign-out). One layout is mounted at a time.
  *
  * Navigation has two levels (docs/design/upgrade-brief.md §2): few destinations in the sidebar / bottom bar, and
  * `SectionTabs` under the title with the screens of the active destination. Both come from one `NavItem[]`
  * built centrally (`hostNav`, `adminNav`, the portal frame); a screen only says which route key is `current`.
  */
 
-const fontFamily = Platform.select({ web: "'Plus Jakarta Sans', 'Avenir Next', 'Segoe UI', system-ui, sans-serif", default: undefined });
+const fontFamily = fonts.sans;
+const fontDisplay = fonts.display;
 const WIDE = 960;
 /** From this width the primary action sits in the header; below it, in the sticky bottom bar. */
 // Below the desktop shell the header scrolls away with the page, so the primary action lives in the sticky bar.
 const ACTIONS_IN_HEADER = WIDE;
-const SIDEBAR = 264;
-const MAX_CONTENT = 1040;
+const SIDEBAR = 248;
+const MAX_CONTENT = 960;
 const MIN_TOUCH = 44;
 const BAR_SLOTS = 5;
 const ring = (color: string): object => Platform.select({ web: { outlineColor: color, outlineWidth: 2, outlineOffset: -2 }, default: {} }) as object;
-/** Focus ring on the night regions. */
-const focusRing = ring(brand.cielo);
 
 /** A screen inside a destination. `key` is the route key a screen passes as `current`. */
 export interface NavTab { readonly key: string; readonly label: string; readonly href: string }
@@ -42,86 +41,74 @@ export function barSplit(count: number, signedIn: boolean): number {
   return count + (signedIn ? 1 : 0) <= BAR_SLOTS ? count : BAR_SLOTS - 1;
 }
 
-/** Frame styles of one palette (light or dark). The night regions (sidebar, top bars, title block) use brand colours and stay the same in both. */
+/** Frame styles of one palette (light or dark): paper canvas, 1 px hairlines, ink text, no shadows. */
 const createShellStyles = (palette: Palette) => StyleSheet.create({
   root: { flex: 1, backgroundColor: palette.canvas },
   rootWide: { flexDirection: "row" },
-  sidebar: { width: SIDEBAR, flexShrink: 0, overflow: "hidden", backgroundColor: brand.noche, paddingTop: spacing[6], paddingBottom: spacing[4], paddingHorizontal: spacing[3] },
-  sidebarWeave: { position: "absolute", left: 0, right: 0, bottom: 0, height: 200, opacity: 0.7, overflow: "hidden", ...(Platform.OS === "web" ? ({ maskImage: "linear-gradient(to top, #000 35%, transparent)", WebkitMaskImage: "linear-gradient(to top, #000 35%, transparent)" } as object) : null) },
-  sidebarLogo: { paddingHorizontal: spacing[3], paddingBottom: spacing[6] },
+  sidebar: { width: SIDEBAR, flexShrink: 0, backgroundColor: palette.surface, borderRightWidth: 1, borderRightColor: palette.border, paddingTop: spacing[8], paddingBottom: spacing[4], paddingHorizontal: spacing[4] },
+  sidebarLogo: { paddingHorizontal: spacing[3], paddingBottom: spacing[8] },
   sidebarList: { flex: 1 },
-  sidebarItem: { minHeight: MIN_TOUCH, flexDirection: "row", alignItems: "center", gap: spacing[3], paddingHorizontal: spacing[3], borderRadius: radius.md, marginBottom: 2 },
-  sidebarItemActive: { backgroundColor: brand.medianoche },
-  bar: { width: 3, height: 18, borderRadius: 2, backgroundColor: "transparent" },
-  barActive: { backgroundColor: brand.azulCl },
-  sidebarText: { color: brand.niebla, fontSize: 15, fontWeight: "600", fontFamily },
-  sidebarTextActive: { color: "#FFFFFF", fontWeight: "700" },
-  signOut: { minHeight: MIN_TOUCH, justifyContent: "center", paddingHorizontal: spacing[3], borderRadius: radius.md, borderTopWidth: 1, borderTopColor: "#1E2760", marginTop: spacing[2] },
-  topBar: { height: 52, flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: spacing[5], backgroundColor: brand.noche },
+  sidebarItem: { minHeight: MIN_TOUCH, flexDirection: "row", alignItems: "center", paddingHorizontal: spacing[3], borderRadius: radius.md, marginBottom: 2 },
+  sidebarItemActive: { backgroundColor: palette.surfaceMuted },
+  sidebarText: { color: palette.textMuted, fontSize: 15, fontWeight: "500", fontFamily },
+  sidebarTextActive: { color: palette.text, fontWeight: "600" },
+  signOut: { minHeight: MIN_TOUCH, justifyContent: "center", paddingHorizontal: spacing[3], borderRadius: radius.md, borderTopWidth: 1, borderTopColor: palette.border, marginTop: spacing[2] },
+  topBar: { height: 56, flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: spacing[5], backgroundColor: palette.canvas, borderBottomWidth: 1, borderBottomColor: palette.border },
   scroll: { flex: 1 },
-  content: { width: "100%", maxWidth: MAX_CONTENT, alignSelf: "center", paddingHorizontal: spacing[4], paddingTop: spacing[5], paddingBottom: spacing[10], gap: spacing[4] },
-  contentWide: { paddingHorizontal: spacing[8], paddingTop: spacing[10], gap: spacing[5] },
-  header: { gap: spacing[1], paddingBottom: spacing[1] },
-  /* Wide: a fixed white band with the page title, aligned to the content column. */
-  band: { backgroundColor: palette.surface, borderBottomWidth: 1, borderBottomColor: palette.border },
-  bandInner: { width: "100%", maxWidth: MAX_CONTENT, alignSelf: "center", paddingHorizontal: spacing[8], paddingTop: spacing[8], paddingBottom: spacing[6], gap: spacing[2] },
+  content: { width: "100%", maxWidth: MAX_CONTENT, alignSelf: "center", paddingHorizontal: spacing[4], paddingTop: spacing[5], paddingBottom: spacing[16], gap: spacing[6] },
+  contentWide: { paddingHorizontal: spacing[8], paddingTop: spacing[8], gap: spacing[8] },
+  /* Wide: the page title on the canvas, aligned to the content column, a hairline under it. */
+  band: { borderBottomWidth: 1, borderBottomColor: palette.border },
+  bandInner: { width: "100%", maxWidth: MAX_CONTENT, alignSelf: "center", paddingHorizontal: spacing[8], paddingTop: spacing[12], paddingBottom: spacing[6], gap: spacing[2] },
   bandTabs: { width: "100%", maxWidth: MAX_CONTENT, alignSelf: "center", paddingHorizontal: spacing[8] },
-  /* Narrow: the title sits on the night block and the content rises over it as a rounded sheet. */
-  mHeader: { backgroundColor: brand.noche, paddingHorizontal: spacing[5], paddingTop: spacing[2], paddingBottom: spacing[10], gap: spacing[2], overflow: "hidden" },
+  /* Narrow: the title opens the scrolling page, on the canvas. */
+  mHeader: { paddingHorizontal: spacing[4], paddingTop: spacing[8], paddingBottom: spacing[2], gap: spacing[3] },
   /* Title (and intro) on the left, menu + primary action on the right, centred on the first title line. */
   headRow: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: spacing[4] },
-  headText: { flex: 1, minWidth: 0, gap: spacing[2] },
-  headActions: { flexDirection: "row", alignItems: "center", gap: spacing[2], flexShrink: 0, minHeight: 52, marginTop: -7 },
-  mTabs: { marginHorizontal: -spacing[5], marginTop: spacing[2] },
-  mTitle: { color: "#FFFFFF", fontSize: 30, lineHeight: 34, fontWeight: "800", letterSpacing: -0.9, fontFamily },
-  mSheet: { flexGrow: 1, backgroundColor: palette.canvas, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, marginTop: -spacing[6], paddingHorizontal: spacing[4], paddingTop: spacing[5], paddingBottom: spacing[10], gap: spacing[4] },
-  title: { color: palette.text, fontSize: 34, lineHeight: 38, fontWeight: "800", letterSpacing: -1, fontFamily },
+  headText: { flex: 1, minWidth: 0, gap: spacing[3] },
+  headActions: { flexDirection: "row", alignItems: "center", gap: spacing[2], flexShrink: 0, minHeight: 52, marginTop: -4 },
+  mTabs: { marginHorizontal: -spacing[4], marginTop: spacing[1] },
+  mTitle: { color: palette.text, fontSize: 32, lineHeight: 36, fontWeight: "500", letterSpacing: -0.9, fontFamily: fontDisplay },
+  mSheet: { flexGrow: 1, paddingHorizontal: spacing[4], paddingTop: spacing[4], paddingBottom: spacing[10], gap: spacing[6] },
+  title: { color: palette.text, fontSize: 44, lineHeight: 48, fontWeight: "500", letterSpacing: -1.2, fontFamily: fontDisplay },
   tabBar: { flexDirection: "row", backgroundColor: palette.surface, borderTopWidth: 1, borderTopColor: palette.border, ...(Platform.OS === "web" ? ({ paddingBottom: "env(safe-area-inset-bottom)" } as object) : null) },
   tab: { flex: 1, minHeight: 56 },
-  tabInner: { alignItems: "center", justifyContent: "center", gap: 4, paddingHorizontal: 2 },
-  tabDot: { width: 24, height: 4, borderRadius: 2, backgroundColor: "transparent" },
+  tabInner: { alignItems: "center", justifyContent: "center", gap: 6, paddingHorizontal: 0 },
+  tabDot: { width: 20, height: 2, borderRadius: 1, backgroundColor: "transparent" },
   tabDotActive: { backgroundColor: palette.primary },
-  tabText: { color: palette.textMuted, fontSize: 11, fontWeight: "700", fontFamily },
-  tabTextActive: { color: palette.primary },
+  tabText: { color: palette.textMuted, fontSize: 11, fontWeight: "500", fontFamily },
+  tabTextActive: { color: palette.text, fontWeight: "600" },
   overlay: { flex: 1, justifyContent: "flex-end", backgroundColor: palette.scrim },
-  sheet: { backgroundColor: palette.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: spacing[4], paddingBottom: spacing[6], ...(Platform.OS === "web" ? ({ paddingBottom: "max(24px, env(safe-area-inset-bottom))" } as object) : null), gap: spacing[1], maxHeight: "85%" },
+  sheet: { backgroundColor: palette.surface, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg, borderWidth: 1, borderColor: palette.border, padding: spacing[4], paddingBottom: spacing[6], ...(Platform.OS === "web" ? ({ paddingBottom: "max(24px, env(safe-area-inset-bottom))" } as object) : null), gap: spacing[1], maxHeight: "85%" },
   grabber: { alignSelf: "center", width: 40, height: 4, borderRadius: 2, backgroundColor: palette.border, marginBottom: spacing[3] },
   sheetItem: { minHeight: 52, justifyContent: "center", paddingHorizontal: spacing[3], borderRadius: radius.md },
-  sheetItemActive: { backgroundColor: palette.primaryMuted },
-  sheetText: { color: palette.text, fontSize: 16, fontWeight: "600", fontFamily },
-  sheetTextActive: { color: palette.primary, fontWeight: "700" },
+  sheetItemActive: { backgroundColor: palette.surfaceMuted },
+  sheetText: { color: palette.text, fontSize: 16, fontWeight: "500", fontFamily },
+  sheetTextActive: { color: palette.text, fontWeight: "600" },
   tabs: { flexDirection: "row", gap: spacing[1], paddingRight: spacing[4] },
-  mTabsRow: { paddingHorizontal: spacing[5] },
-  themeRow: { flexDirection: "row", gap: spacing[1], padding: 3, borderRadius: radius.full, borderWidth: 1, borderColor: palette.border },
-  themeRowNight: { borderColor: "#2B3578" },
-  themeOption: { flex: 1, minHeight: MIN_TOUCH, minWidth: MIN_TOUCH, alignItems: "center", justifyContent: "center", paddingHorizontal: spacing[2], borderRadius: radius.full },
-  themeOptionOn: { backgroundColor: palette.primaryMuted },
-  themeOptionOnNight: { backgroundColor: brand.medianoche },
-  themeText: { color: palette.textMuted, fontSize: 13, fontWeight: "600", fontFamily },
-  themeTextOn: { color: palette.text, fontWeight: "800" },
-  themeTextNight: { color: brand.niebla },
-  themeTextOnNight: { color: "#FFFFFF", fontWeight: "800" },
-  sectionTab: { minHeight: MIN_TOUCH, minWidth: MIN_TOUCH, justifyContent: "center", paddingHorizontal: spacing[4], borderBottomWidth: 3, borderBottomColor: "transparent" },
+  mTabsRow: { paddingHorizontal: spacing[4] },
+  themeRow: { flexDirection: "row", gap: spacing[1], padding: 3, borderRadius: radius.md, borderWidth: 1, borderColor: palette.border },
+  themeOption: { flex: 1, minHeight: MIN_TOUCH, minWidth: MIN_TOUCH, alignItems: "center", justifyContent: "center", paddingHorizontal: 2, borderRadius: radius.sm },
+  themeOptionOn: { backgroundColor: palette.surfaceMuted },
+  themeText: { color: palette.textMuted, fontSize: 12, fontWeight: "500", fontFamily },
+  themeTextOn: { color: palette.text, fontWeight: "600" },
+  sectionTab: { minHeight: MIN_TOUCH, minWidth: MIN_TOUCH, justifyContent: "center", paddingHorizontal: spacing[4], borderBottomWidth: 2, borderBottomColor: "transparent" },
   sectionTabActive: { borderBottomColor: palette.primary },
-  sectionTabText: { color: palette.textMuted, fontSize: 15, fontWeight: "600", fontFamily },
-  sectionTabTextActive: { color: palette.text, fontWeight: "800" },
-  mSectionTab: { minHeight: MIN_TOUCH, minWidth: MIN_TOUCH, justifyContent: "center", paddingHorizontal: spacing[4], borderRadius: radius.full },
-  mSectionTabActive: { backgroundColor: "#FFFFFF" },
-  mSectionTabText: { color: brand.niebla, fontSize: 14, fontWeight: "600", fontFamily },
-  mSectionTabTextActive: { color: brand.noche, fontWeight: "800" }
+  sectionTabText: { color: palette.textMuted, fontSize: 15, fontWeight: "500", fontFamily },
+  sectionTabTextActive: { color: palette.text, fontWeight: "600" }
 });
 
-const FADE_WIDTH = 28;
+const FADE_WIDTH = 24;
 const EDGE_SLACK = 4;
 
-/** Soft edge over a horizontal scroller: tells that there is more on that side. Decorative, never takes touches. */
+/** Edge cue over a horizontal scroller: a solid strip on the canvas with a drawn chevron on the side that has more. Decorative, never takes touches, no gradient. */
 function EdgeFade({ side, color }: { readonly side: "left" | "right"; readonly color: string }): ReactNode {
-  const direction = side === "left" ? "to right" : "to left";
-  const style = Platform.select<object>({
-    web: { backgroundImage: `linear-gradient(${direction}, ${color}, transparent)` },
-    default: { backgroundColor: color, opacity: 0.85 }
-  });
-  return <View aria-hidden pointerEvents="none" testID={`tabs-fade-${side}`} style={[{ position: "absolute", top: 0, bottom: 0, width: FADE_WIDTH, [side]: 0 } as ViewStyle, style as ViewStyle]} />;
+  const palette = useColors();
+  return (
+    <View aria-hidden pointerEvents="none" testID={`tabs-fade-${side}`} style={{ position: "absolute", top: 0, bottom: 0, width: FADE_WIDTH, [side]: 0, backgroundColor: color, alignItems: "center", justifyContent: "center" } as ViewStyle}>
+      <View style={{ width: 7, height: 7, borderTopWidth: 1.5, borderRightWidth: 1.5, borderColor: palette.textMuted, transform: [{ rotate: side === "right" ? "45deg" : "-135deg" }] }} />
+    </View>
+  );
 }
 
 /**
@@ -129,17 +116,17 @@ function EdgeFade({ side, color }: { readonly side: "left" | "right"; readonly c
  * on narrow screens, Left/Right/Home/End move the focus. Selecting a tab navigates to its route. When the list overflows,
  * a fade shows on the side that has more, and the active tab is brought into view.
  */
-function SectionTabs({ tabs, current, onNavigate, dark }: { readonly tabs: readonly NavTab[]; readonly current?: string; readonly onNavigate?: (href: string) => void; readonly dark: boolean }): ReactNode {
+function SectionTabs({ tabs, current, onNavigate, inset }: { readonly tabs: readonly NavTab[]; readonly current?: string; readonly onNavigate?: (href: string) => void; readonly inset: boolean }): ReactNode {
   const s = useThemedStyles(createShellStyles);
   const palette = useColors();
-  const surfaceRing = ring(palette.primary);
+  const tabRing = ring(palette.primary);
   const t = useT();
   const refs = useRef<(View | null)[]>([]);
   const scroller = useRef<ScrollView>(null);
   const spans = useRef<{ x: number; w: number }[]>([]);
   const [metrics, setMetrics] = useState({ x: 0, view: 0, content: 0 });
   const activeIndex = Math.max(0, tabs.findIndex((tab) => tab.key === current));
-  const ground = dark ? brand.noche : palette.surface;
+  const ground = palette.canvas;
   const hidden = metrics.content - metrics.view; // px outside the viewport
   const moreLeft = metrics.x >= EDGE_SLACK;
   const moreRight = hidden - metrics.x >= EDGE_SLACK;
@@ -169,15 +156,15 @@ function SectionTabs({ tabs, current, onNavigate, dark }: { readonly tabs: reado
         onScroll={(event) => { const x = event.nativeEvent.contentOffset.x; setMetrics((m) => (Math.abs(m.x - x) < 2 ? m : { ...m, x })); }}
         onLayout={(event: LayoutChangeEvent) => { const view = event.nativeEvent.layout.width; setMetrics((m) => (m.view === view ? m : { ...m, view })); }}
         onContentSizeChange={(content) => setMetrics((m) => (m.content === content ? m : { ...m, content }))}
-        contentContainerStyle={dark ? s.mTabsRow : undefined}
+        contentContainerStyle={inset ? s.mTabsRow : undefined}
       >
         <View role="tablist" aria-label={t("host.tabs.label")} style={s.tabs}>
           {tabs.map((tab, index) => {
             const active = index === activeIndex;
-            const box = dark ? [s.mSectionTab, active && s.mSectionTabActive] : [s.sectionTab, active && s.sectionTabActive];
-            const text = dark ? [s.mSectionTabText, active && s.mSectionTabTextActive] : [s.sectionTabText, active && s.sectionTabTextActive];
+            const box = [s.sectionTab, active && s.sectionTabActive];
+            const text = [s.sectionTabText, active && s.sectionTabTextActive];
             return (
-              <Pressable key={tab.key} ref={(node) => { refs.current[index] = node; }} onLayout={(event) => { const { x, width } = event.nativeEvent.layout; spans.current[index] = { x, w: width }; }} role="tab" aria-selected={active} aria-current={active ? "page" : undefined} onPress={() => onNavigate?.(tab.href)} {...({ onKeyDown: (event: { key: string; preventDefault: () => void }) => onKey(event, index) } as object)} style={[...box, dark ? focusRing : surfaceRing]}>
+              <Pressable key={tab.key} ref={(node) => { refs.current[index] = node; }} onLayout={(event) => { const { x, width } = event.nativeEvent.layout; spans.current[index] = { x, w: width }; }} role="tab" aria-selected={active} aria-current={active ? "page" : undefined} onPress={() => onNavigate?.(tab.href)} {...({ onKeyDown: (event: { key: string; preventDefault: () => void }) => onKey(event, index) } as object)} style={[...box, tabRing]}>
                 <Text numberOfLines={1} style={text}>{tab.label}</Text>
               </Pressable>
             );
@@ -191,18 +178,18 @@ function SectionTabs({ tabs, current, onNavigate, dark }: { readonly tabs: reado
 }
 
 /** System · Light · Dark in one compact row (the full form, with its explanation, lives in Settings). */
-function ThemeSwitch({ onNight = false }: { readonly onNight?: boolean }): ReactNode {
+function ThemeSwitch(): ReactNode {
   const t = useT();
   const s = useThemedStyles(createShellStyles);
   const surfaceRing = ring(useColors().primary);
   const { preference, setPreference, options } = useThemePreference();
   return (
-    <View role="radiogroup" aria-label={t("theme.label")} style={[s.themeRow, onNight && s.themeRowNight]}>
+    <View role="radiogroup" aria-label={t("theme.label")} style={s.themeRow}>
       {options.map((option) => {
         const on = option === preference;
         return (
-          <Pressable key={option} role="radio" aria-checked={on} accessibilityLabel={t(`theme.${option}`)} testID={`theme-switch-${option}`} onPress={() => setPreference(option)} style={[s.themeOption, on && (onNight ? s.themeOptionOnNight : s.themeOptionOn), onNight ? focusRing : surfaceRing]}>
-            <Text numberOfLines={1} style={[s.themeText, onNight && s.themeTextNight, on && (onNight ? s.themeTextOnNight : s.themeTextOn)]}>{t(`theme.${option}`)}</Text>
+          <Pressable key={option} role="radio" aria-checked={on} accessibilityLabel={t(`theme.${option}`)} testID={`theme-switch-${option}`} onPress={() => setPreference(option)} style={[s.themeOption, on && s.themeOptionOn, surfaceRing]}>
+            <Text numberOfLines={1} style={[s.themeText, on && s.themeTextOn]}>{t(`theme.${option}`)}</Text>
           </Pressable>
         );
       })}
@@ -214,25 +201,23 @@ function Sidebar({ nav, current, onNavigate }: { readonly nav: readonly NavItem[
   const s = useThemedStyles(createShellStyles);
   const t = useT();
   const auth = useAuth();
+  const ringColor = ring(useColors().primary);
   return (
     <View style={s.sidebar}>
-      {/* The brand's weave closes the menu: low, quiet and under everything, so the destinations stay the loudest thing. */}
-      <View aria-hidden pointerEvents="none" style={s.sidebarWeave}><WeavePattern tone="onDark" /></View>
-      <View style={s.sidebarLogo}><Logo tone="onDark" height={30} /></View>
+      <View style={s.sidebarLogo}><Logo tone="auto" height={28} /></View>
       <ScrollView role="navigation" aria-label={t("host.nav.label")} style={s.sidebarList}>
         {nav.map((item) => {
           const active = isCurrentDestination(item, current);
           return (
-            <Pressable key={item.key} role="link" aria-current={active ? "page" : undefined} onPress={() => onNavigate?.(item.href)} style={[s.sidebarItem, active && s.sidebarItemActive, focusRing]}>
-              <View style={[s.bar, active && s.barActive]} />
+            <Pressable key={item.key} role="link" aria-current={active ? "page" : undefined} onPress={() => onNavigate?.(item.href)} style={[s.sidebarItem, active && s.sidebarItemActive, ringColor]}>
               <Text style={[s.sidebarText, active && s.sidebarTextActive]}>{item.label}</Text>
             </Pressable>
           );
         })}
       </ScrollView>
-      <View style={{ marginTop: spacing[2] }}><ThemeSwitch onNight /></View>
+      <View style={{ marginTop: spacing[2] }}><ThemeSwitch /></View>
       {auth.state.status === "authenticated" ? (
-        <Pressable role="button" accessibilityLabel={t("common.signOut")} onPress={() => { void auth.signOut(); }} style={[s.signOut, focusRing]}>
+        <Pressable role="button" accessibilityLabel={t("common.signOut")} onPress={() => { void auth.signOut(); }} style={[s.signOut, ringColor]}>
           <Text style={s.sidebarText}>{t("common.signOut")}</Text>
         </Pressable>
       ) : null}
@@ -255,10 +240,8 @@ function MobileFrame({ nav, current, onNavigate, children }: PropsWithChildren<{
   const go = (href: string): void => { setOpen(false); onNavigate?.(href); };
   return (
     <>
-      <View style={{ backgroundColor: brand.noche }}>
-        <View style={s.topBar}>
-          <Logo tone="onDark" height={26} />
-        </View>
+      <View style={s.topBar}>
+        <Logo tone="auto" height={24} />
       </View>
       {children}
       {nav.length ? (
@@ -314,19 +297,18 @@ function MobileFrame({ nav, current, onNavigate, children }: PropsWithChildren<{
 /** Focused flows without sections (onboarding, access denied): the logo and sign-out, nothing else. */
 function BareFrame({ children }: PropsWithChildren): ReactNode {
   const s = useThemedStyles(createShellStyles);
+  const palette = useColors();
   const t = useT();
   const auth = useAuth();
   return (
     <>
-      <View style={{ backgroundColor: brand.noche }}>
-        <View style={s.topBar}>
-          <Logo tone="onDark" height={26} />
-          {auth.state.status === "authenticated" ? (
-            <Pressable role="button" accessibilityLabel={t("common.signOut")} onPress={() => { void auth.signOut(); }} style={[{ minHeight: MIN_TOUCH, justifyContent: "center" }, focusRing]}>
-              <Text style={s.sidebarText}>{t("common.signOut")}</Text>
-            </Pressable>
-          ) : null}
-        </View>
+      <View style={s.topBar}>
+        <Logo tone="auto" height={24} />
+        {auth.state.status === "authenticated" ? (
+          <Pressable role="button" accessibilityLabel={t("common.signOut")} onPress={() => { void auth.signOut(); }} style={[{ minHeight: MIN_TOUCH, justifyContent: "center" }, ring(palette.primary)]}>
+            <Text style={s.sidebarText}>{t("common.signOut")}</Text>
+          </Pressable>
+        ) : null}
       </View>
       {children}
     </>
@@ -365,7 +347,7 @@ export function Screen({ title, intro, nav, current, onNavigate, actions, menu, 
             </View>
             {headerActions}
           </View>
-          {tabs ? <View style={s.bandTabs}><SectionTabs tabs={tabs} current={current} onNavigate={onNavigate} dark={false} /></View> : null}
+          {tabs ? <View style={s.bandTabs}><SectionTabs tabs={tabs} current={current} onNavigate={onNavigate} inset={false} /></View> : null}
         </View>
         <ScrollView role="main" tabIndex={0} style={s.scroll} contentContainerStyle={[s.content, s.contentWide]} keyboardShouldPersistTaps="handled">{content}</ScrollView>
       </View>
@@ -379,11 +361,11 @@ export function Screen({ title, intro, nav, current, onNavigate, actions, menu, 
         <View style={s.headRow}>
           <View style={s.headText}>
             <Text accessibilityRole="header" aria-level={1} style={s.mTitle}>{title}</Text>
-            {intro ? <PageIntro tone="onDark">{intro}</PageIntro> : null}
+            {intro ? <PageIntro>{intro}</PageIntro> : null}
           </View>
           {headerActions}
         </View>
-        {tabs ? <View style={s.mTabs}><SectionTabs tabs={tabs} current={current} onNavigate={onNavigate} dark /></View> : null}
+        {tabs ? <View style={s.mTabs}><SectionTabs tabs={tabs} current={current} onNavigate={onNavigate} inset /></View> : null}
       </View>
       <View style={s.mSheet}>{content}{stickyActions}</View>
     </ScrollView>

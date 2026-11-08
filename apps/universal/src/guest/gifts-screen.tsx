@@ -112,7 +112,7 @@ export function GuestGiftsScreen({ slug, token }: { readonly slug: string; reado
 
   const reservedNote = (reserved: Extract<Outcome, { kind: "reserved" }>): ReactNode => (
     <View testID="gift-reserved" style={{ gap: spacing[2], alignItems: "center" }}>
-      <Illustration name="giftReserved" size="md" />
+      <Illustration name="giftReserved" tone="auto" size="md" />
       <SuccessNote
         message={reserved.status === "COMMITTED" ? t("gifts.guest.done.confirmedTitle") : t("gifts.guest.done.pendingTitle")}
         detail={t(reserved.status === "COMMITTED" ? "gifts.guest.done.confirmedBody" : "gifts.guest.done.pendingBody", { title: reserved.item.title })}
@@ -146,7 +146,7 @@ export function GuestGiftsScreen({ slug, token }: { readonly slug: string; reado
       <View key={item.id} testID={`gift-${item.id}`} style={{ gap: spacing[2], paddingVertical: spacing[4], borderBottomWidth: 1, borderBottomColor: palette.border }}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", gap: spacing[3] }}>
           <Text accessibilityRole="header" aria-level={3} style={[styles.subtitle, { flex: 1 }]}>{item.title}</Text>
-          <Text style={[styles.body, { fontWeight: "700" }]}>{formatMinor(item.price.amountMinor, item.price.currency, locale)}</Text>
+          <Text style={[styles.body, { fontWeight: "600", fontVariant: ["tabular-nums"] }]}>{formatMinor(item.price.amountMinor, item.price.currency, locale)}</Text>
         </View>
         {item.description ? <Text style={styles.muted}>{item.description}</Text> : null}
         {item.status !== "AVAILABLE" ? <Chip tone={item.status === "PENDING_REVIEW" ? "wait" : "yes"}>{t(`gifts.guest.status.${item.status}`)}</Chip> : null}
@@ -158,7 +158,7 @@ export function GuestGiftsScreen({ slug, token }: { readonly slug: string; reado
             {alternatives.length === 0 ? <Text style={styles.muted}>{t("gifts.guest.taken.none")}</Text> : (
               <View style={{ gap: spacing[1] }}>
                 <Text style={styles.label}>{t("gifts.guest.taken.alternatives")}</Text>
-                {alternatives.map((alt) => <Pressable key={alt.id} accessibilityRole="button" accessibilityLabel={t("gifts.guest.reserveFor", { title: alt.title })} onPress={() => open(alt)} testID={`alt-${alt.id}`} style={{ minHeight: 44, justifyContent: "center" }}><Text style={[styles.body, { color: palette.primary, fontWeight: "700", textDecorationLine: "underline" }]}>{alt.title}</Text></Pressable>)}
+                {alternatives.map((alt) => <Pressable key={alt.id} accessibilityRole="button" accessibilityLabel={t("gifts.guest.reserveFor", { title: alt.title })} onPress={() => open(alt)} testID={`alt-${alt.id}`} style={{ minHeight: 44, justifyContent: "center" }}><Text style={[styles.body, { color: palette.primary, fontWeight: "600", textDecorationLine: "underline" }]}>{alt.title}</Text></Pressable>)}
               </View>
             )}
           </View>
@@ -180,13 +180,13 @@ export function GuestGiftsScreen({ slug, token }: { readonly slug: string; reado
         <Text style={styles.body}>{t("gifts.guest.intro")}</Text>
         <Text style={styles.muted}>{t("gifts.guest.rule")}</Text>
         <Pressable accessibilityRole="link" accessibilityLabel={t("gifts.guest.backToRsvp")} onPress={() => { router.push(`/c/${encodeURIComponent(slug)}/rsvp/${encodeURIComponent(token)}` as never); }} testID="gifts-back" style={{ minHeight: 44, justifyContent: "center", alignSelf: "flex-start" }}>
-          <Text style={[styles.body, { color: palette.primary, fontWeight: "700", textDecorationLine: "underline" }]}>{t("gifts.guest.backToRsvp")}</Text>
+          <Text style={[styles.body, { color: palette.primary, fontWeight: "600", textDecorationLine: "underline" }]}>{t("gifts.guest.backToRsvp")}</Text>
         </Pressable>
       </View>
       {outcome?.kind === "reserved" && !reservedInList ? reservedNote(outcome) : null}
       {list.data && items.length === 0 ? <EmptyState illustration="noGifts" title={t("gifts.guest.empty.title")} body={t("gifts.guest.empty.body")} /> : null}
-      {partner.length ? <View><Text accessibilityRole="header" aria-level={2} style={styles.title}>{t("gifts.guest.groupPartner")}</Text><Stagger>{partner.map(row)}</Stagger></View> : null}
-      {other.length ? <View><Text accessibilityRole="header" aria-level={2} style={styles.title}>{t("gifts.guest.groupOther")}</Text><Stagger>{other.map(row)}</Stagger></View> : null}
+      {partner.length ? <View><Text accessibilityRole="header" aria-level={2} style={styles.subtitle}>{t("gifts.guest.groupPartner")}</Text><Stagger>{partner.map(row)}</Stagger></View> : null}
+      {other.length ? <View><Text accessibilityRole="header" aria-level={2} style={styles.subtitle}>{t("gifts.guest.groupOther")}</Text><Stagger>{other.map(row)}</Stagger></View> : null}
     </GuestFrame>
   );
 }

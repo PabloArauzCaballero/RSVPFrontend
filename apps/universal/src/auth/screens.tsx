@@ -129,9 +129,7 @@ function ChoiceRow({ title, hint, selected, disabled = false, onSelect, testID }
         <Text style={authStyles.roleTitle}>{title}</Text>
         {selected ? <Text style={authStyles.hint}>{hint}</Text> : null}
       </View>
-      <View style={{ width: 28, height: 28, borderRadius: 14, borderWidth: 2, borderColor: selected ? palette.primary : palette.fieldBorder, backgroundColor: selected ? palette.primary : "transparent", alignItems: "center", justifyContent: "center" }}>
-        {selected ? <CheckMark size={16} tone="white" /> : null}
-      </View>
+      {selected ? <CheckMark size={28} /> : <View style={{ width: 28, height: 28, borderRadius: 14, borderWidth: 1, borderColor: palette.fieldBorder }} />}
     </Pressable>
   );
 }

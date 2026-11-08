@@ -1,6 +1,7 @@
 import type { Translate } from "@rsvp/i18n/server";
 import { CheckMark } from "./brand/check-mark";
-import { DOutline, EmptyArt, OfflineArt } from "./brand/illustrations";
+import { EmptyArt, OfflineArt } from "./brand/illustrations";
+import { Monogram } from "./brand/monogram";
 import { ImpressionTracker } from "./impression-tracker";
 import { NearMeButton } from "./near-me";
 import { breadcrumbJsonLd, itemListJsonLd, jsonLdScript } from "../lib/json-ld";
@@ -42,7 +43,7 @@ export function Breadcrumbs({ t, items }: { readonly t: Translate; readonly item
   );
 }
 
-/** Blue band that opens every directory page: where you are, the one thing this page is about, and what to do. */
+/** Plain heading block that opens every directory page: where you are, the one thing this page is about, and what to do. */
 export function PageTop({ t, items, title, lead }: { readonly t: Translate; readonly items: readonly { readonly label: string; readonly href?: string }[]; readonly title: string; readonly lead?: string }) {
   return (
     <header className="top">
@@ -91,7 +92,7 @@ export function ProviderResults({ page, t, locale, path, query = "", summary }: 
       <ul className="directory-results">
         {page.items.map((card) => (
           <li key={card.listingId} data-listing-id={card.listingId}>
-            <div className="result__thumb">{card.imageUrl ? <img src={card.imageUrl} alt="" width={320} height={240} loading="lazy" decoding="async" /> : <DOutline />}</div>
+            <div className="result__thumb">{card.imageUrl ? <img src={card.imageUrl} alt="" width={320} height={240} loading="lazy" decoding="async" /> : <Monogram name={card.name} />}</div>
             <div className="result__body">
               <h2><a href={providerHref(card)}>{card.name}</a></h2>
               <p className="result__meta">{t(`directory.category.${card.category}`)} · {card.city}</p>

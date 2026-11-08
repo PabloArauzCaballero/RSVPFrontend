@@ -5,7 +5,7 @@ import { ApiError } from "@rsvp/api-client";
 import { nativeMagicLink, personalLinkOrigin, personalLinkUrl } from "@rsvp/auth";
 import { readContent, type HostContact, type PublicCelebrationView } from "@rsvp/celebration-theme";
 import { spacing } from "@rsvp/design-tokens";
-import { Celebrate, Checkbox, CheckMark, Chip, Enter, MomentBackdrop, Skeleton, StickyActions, useColors } from "@rsvp/ui";
+import { Celebrate, Checkbox, CheckMark, Chip, Enter, Skeleton, StickyActions, useColors } from "@rsvp/ui";
 import { rsvpSchema, unregisteredRsvpSchema } from "@rsvp/forms";
 import { formatCelebrationDate, type AppLocale, type Translate } from "@rsvp/i18n";
 import {
@@ -58,14 +58,9 @@ function coverFor(view: PublicCelebrationView, locale: AppLocale, t: Translate):
   return { heading: content.title || t("rsvp.page.title"), ...(hosts.length ? { lead: t("rsvp.invite.hostedBy", { hosts: hostList(hosts, locale) }) } : {}), ...(meta ? { meta } : {}) };
 }
 
-/** The rings of the confirmation, softened so the words laid over them keep their contrast. */
-function SoftBackdrop(): ReactNode {
-  return <View pointerEvents="none" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, opacity: 0.45 }}><MomentBackdrop variant="confirmed" /></View>;
-}
-
 function Question({ children }: { readonly children: string }): ReactNode {
   const styles = useStyles();
-  return <Text accessibilityRole="header" aria-level={2} style={[styles.title, { fontSize: 28, lineHeight: 31, letterSpacing: -0.8 }]}>{children}</Text>;
+  return <Text accessibilityRole="header" aria-level={2} style={[styles.title, { fontSize: 30, lineHeight: 33, letterSpacing: -0.9 }]}>{children}</Text>;
 }
 
 function Loading(): ReactNode {
@@ -75,7 +70,7 @@ function Loading(): ReactNode {
     <GuestFrame>
       <View accessibilityLiveRegion="polite" style={{ gap: spacing[3] }}>
         <Skeleton width="70%" height={28} /><Skeleton width="100%" height={16} /><Skeleton width="85%" height={16} />
-        <View style={{ flexDirection: "row", gap: spacing[3], marginTop: spacing[3] }}><View style={{ flex: 1 }}><Skeleton height={76} radius={16} /></View><View style={{ flex: 1 }}><Skeleton height={76} radius={16} /></View></View>
+        <View style={{ flexDirection: "row", gap: spacing[3], marginTop: spacing[3] }}><View style={{ flex: 1 }}><Skeleton height={72} radius={8} /></View><View style={{ flex: 1 }}><Skeleton height={72} radius={8} /></View></View>
         <Text style={styles.muted}>{t("rsvp.invite.loading")}</Text>
       </View>
     </GuestFrame>
@@ -130,8 +125,8 @@ function HostContactLines({ hosts, contact }: { readonly hosts: readonly string[
   return (
     <View style={{ gap: spacing[1], alignItems: "center" }}>
       <Text style={[styles.body, { textAlign: "center" }]}>{hosts.length ? t("rsvp.invite.contact", { hosts: hostList(hosts, locale) }) : t("rsvp.invite.contactGeneric")}</Text>
-      {contact?.email ? <Text testID="host-contact-email" accessibilityRole="link" style={[styles.body, { fontWeight: "700", textDecorationLine: "underline" }]} onPress={() => { void Linking.openURL(`mailto:${contact.email}`); }}>{t("rsvp.invite.contactEmail")} {contact.email}</Text> : null}
-      {contact?.phone ? <Text testID="host-contact-phone" accessibilityRole="link" style={[styles.body, { fontWeight: "700", textDecorationLine: "underline" }]} onPress={() => { void Linking.openURL(`tel:${contact.phone}`); }}>{t("rsvp.invite.contactPhone")} {contact.phone}</Text> : null}
+      {contact?.email ? <Text testID="host-contact-email" accessibilityRole="link" style={[styles.body, { fontWeight: "600", textDecorationLine: "underline" }]} onPress={() => { void Linking.openURL(`mailto:${contact.email}`); }}>{t("rsvp.invite.contactEmail")} {contact.email}</Text> : null}
+      {contact?.phone ? <Text testID="host-contact-phone" accessibilityRole="link" style={[styles.body, { fontWeight: "600", textDecorationLine: "underline" }]} onPress={() => { void Linking.openURL(`tel:${contact.phone}`); }}>{t("rsvp.invite.contactPhone")} {contact.phone}</Text> : null}
     </View>
   );
 }
@@ -249,15 +244,14 @@ export function GuestRsvpScreen({ slug, token }: GuestRsvpScreenProps): ReactNod
           {declined ? (
             <LinkState illustration="welcomeGuest" title={t("rsvp.invite.declinedTitle")} body={t("rsvp.invite.declinedBody")} frame={cover} />
           ) : (
-            <View style={{ overflow: "hidden", borderRadius: 24, paddingVertical: spacing[4] }}>
-              <SoftBackdrop />
+            <View style={{ paddingVertical: spacing[2] }}>
               <Celebrate title={t("rsvp.invite.doneTitle")} body={state.deadline ? t("rsvp.invite.doneBodyUntil", { date: formatCelebrationDate(state.deadline, { locale, timeZone: state.timeZone }) }) : t("rsvp.invite.doneBodyAnytime")} />
             </View>
           )}
         </View>
       ) : (
         <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[3] }}>
-          <CheckMark size={32} tone={declined ? "brand" : "success"} />
+          <CheckMark size={32} tone={declined ? "ink" : "success"} />
           <View style={{ flex: 1 }}><Question>{declined ? t("rsvp.invite.againTitleNo") : t("rsvp.invite.againTitleYes")}</Question></View>
         </View>
       )}
@@ -377,8 +371,7 @@ function PublicRegistrationForm({ view, slug, cover, hosts, contact }: { readonl
   if (receipt) {
     return (
       <GuestFrame {...cover}>
-        <View style={{ overflow: "hidden", borderRadius: 24, paddingVertical: spacing[4] }}>
-          <SoftBackdrop />
+        <View style={{ paddingVertical: spacing[2] }}>
           <Celebrate title={t("rsvp.invite.open.doneTitle")} body={receipt.link ? t("rsvp.invite.open.doneBody") : t("rsvp.invite.open.replayBody")} />
         </View>
         {receipt.link ? (

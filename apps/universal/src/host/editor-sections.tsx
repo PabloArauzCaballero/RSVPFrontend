@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import { Platform, Text, View } from "react-native";
 import type { TranslatedEventType } from "@rsvp/query-hooks";
-import { brand, radius, spacing } from "@rsvp/design-tokens";
-import { CheckMark, PressFeedback, useColors } from "@rsvp/ui";
+import { radius, spacing, tones } from "@rsvp/design-tokens";
+import { CheckMark, PressFeedback, fonts, useColors, useTheme } from "@rsvp/ui";
 import { useT } from "../platform/providers";
 import { asRecord, asRecords, asText, type ScheduleDraft, type WallClock } from "./content-draft";
 import { EDITOR_SECTIONS, editorSectionLabel, type EditorSection } from "./routes";
@@ -18,7 +18,7 @@ export type SectionState = "ready" | "missing" | "optional";
 const MARKER = 24;
 const TICK = 14;
 const HOST_PREFIX = "hosts.";
-const focusRing = Platform.select({ web: { outlineColor: brand.cielo, outlineWidth: 2, outlineOffset: -2 }, default: {} }) as object;
+const focusRing = (color: string): object => Platform.select({ web: { outlineColor: color, outlineWidth: 2, outlineOffset: -2 }, default: {} }) as object;
 
 const filled = (value: unknown): boolean => asText(value).trim().length > 0;
 const hasRows = (value: unknown, key: string): boolean => asRecords(value).some((row) => filled(row[key]));
@@ -52,10 +52,11 @@ export const readyCount = (states: Readonly<Record<EditorSection, SectionState>>
 
 function Marker({ state }: { readonly state: SectionState }): ReactNode {
   const palette = useColors();
+  const { scheme } = useTheme();
   const ready = state === "ready";
   return (
-    <View style={{ width: MARKER, height: MARKER, borderRadius: radius.full, alignItems: "center", justifyContent: "center", backgroundColor: ready ? brand.azul : "transparent", borderWidth: 2, borderColor: ready ? palette.primary : state === "missing" ? brand.ambar : palette.fieldBorder }}>
-      {ready ? <CheckMark size={TICK} tone="white" play={false} /> : null}
+    <View style={{ width: MARKER, height: MARKER, borderRadius: radius.full, alignItems: "center", justifyContent: "center", backgroundColor: ready ? tones[scheme].green.bg : "transparent", borderWidth: 1, borderColor: ready ? tones[scheme].green.fg : state === "missing" ? tones[scheme].yellow.fg : palette.fieldBorder }}>
+      {ready ? <CheckMark size={TICK} tone="success" play={false} /> : null}
     </View>
   );
 }
@@ -68,7 +69,7 @@ export function EditorProgress({ done, total }: { readonly done: number; readonl
   return (
     <View role="progressbar" aria-label={t("host.editor.list")} aria-valuemin={0} aria-valuemax={total} aria-valuenow={done} aria-valuetext={t("host.editor.progress", { done, total })} style={{ gap: spacing[2] }}>
       <View style={{ flexDirection: "row", gap: spacing[1] }}>
-        {EDITOR_SECTIONS.map((section, index) => <View key={section} style={{ flex: 1, height: 6, borderRadius: radius.full, backgroundColor: index < done ? palette.primary : palette.primaryMuted }} />)}
+        {EDITOR_SECTIONS.map((section, index) => <View key={section} style={{ flex: 1, height: 4, borderRadius: radius.full, backgroundColor: index < done ? palette.primary : palette.border }} />)}
       </View>
       <Text style={styles.label}>{t("host.editor.progress", { done, total })}</Text>
     </View>
@@ -83,11 +84,11 @@ export function SectionRow({ section, state, current, onPress }: { readonly sect
   const status = t(`host.editor.status.${state}`);
   return (
     <PressFeedback accessibilityRole="link" role="link" aria-current={current ? "page" : undefined} accessibilityLabel={`${name}, ${status}`} onPress={onPress}
-      style={[{ minHeight: 56, justifyContent: "center", paddingHorizontal: spacing[3], paddingVertical: spacing[2], borderRadius: radius.md, backgroundColor: current ? palette.primaryMuted : "transparent" }, focusRing]}>
+      style={[{ minHeight: 56, justifyContent: "center", paddingHorizontal: spacing[3], paddingVertical: spacing[2], borderRadius: radius.md, backgroundColor: current ? palette.surfaceMuted : "transparent" }, focusRing(palette.primary)]}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[3] }}>
         <Marker state={state} />
         <View style={{ flex: 1 }}>
-          <Text style={[styles.body, { fontWeight: current ? "800" : "600" }]}>{name}</Text>
+          <Text style={[styles.body, { fontWeight: current ? "600" : "500", fontFamily: fonts.sans }]}>{name}</Text>
           <Text style={styles.muted}>{status}</Text>
         </View>
       </View>

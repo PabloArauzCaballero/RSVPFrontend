@@ -6,5 +6,5 @@
 input::placeholder,
 textarea::placeholder { color: var(--text-muted); opacity: 1; }
 
-/* Web focus for text fields: the kit's blue border with a soft halo (the ring is not a colour-only cue: the border thickens too). */
+/* Web focus for text fields: the ink border with a soft neutral halo (the ring is not a colour-only cue: the border thickens too). */
 input:focus, textarea:focus { border-color: var(--primary) !important; box-shadow: 0 0 0 4px var(--primary-muted); outline: none; }

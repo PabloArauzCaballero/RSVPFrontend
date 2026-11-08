@@ -97,7 +97,7 @@ export function ProvidersPanel({ celebrationId, currency, onSeeList }: { readonl
       {unavailable ? <Notice kind="error">{t("gifts.host.catalog.unavailableBody")}</Notice> : <GiftErrorNotice error={add.error} />}
       {discovery.isPending ? <SkeletonList count={3} row={{ minHeight: 150, avatar: false, trailing: false }} label={t("host.common.loading")} /> : null}
       {discovery.isError ? <RetryNotice error={discovery.error} onRetry={() => { void discovery.refetch(); }} /> : null}
-      {discovery.data && discovery.data.items.length === 0 ? <Hint illustration="emptySearch">{t("gifts.host.providers.none")}</Hint> : null}
+      {discovery.data && discovery.data.items.length === 0 ? <Hint>{t("gifts.host.providers.none")}</Hint> : null}
       {discovery.data ? <Text style={styles.muted} accessibilityLiveRegion="polite">{t("gifts.host.providers.count", { count: total })}</Text> : null}
       {discovery.data?.items.length ? (
         <RowList>

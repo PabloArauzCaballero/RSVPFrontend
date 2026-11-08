@@ -56,7 +56,7 @@ function Panel({ groupKey, focusHeading, resetScroll, children }: Omit<ScreenTra
 }
 
 /**
- * Wraps the content of `Screen`. Every navigation fades the new content in (140 ms between sibling tabs, 200 ms with a 6 px
+ * Wraps the content of `Screen`. Every navigation fades the new content in (220 ms between sibling tabs, 360 ms with a 6 px
  * rise between destinations), puts scroll back at the top and moves focus to the level-1 heading, so keyboard and screen
  * reader users land where a sighted user looks. The very first screen of the session is left alone: no animation and no
  * focus theft. Under Reduce Motion the content is there at once, but scroll and focus still move.

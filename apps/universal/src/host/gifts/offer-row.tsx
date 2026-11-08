@@ -1,7 +1,7 @@
 import type { PropsWithChildren, ReactNode } from "react";
 import { Text, View } from "react-native";
 import { radius, spacing, typography } from "@rsvp/design-tokens";
-import { Illustration, useColors, type IllustrationName } from "@rsvp/ui";
+import { fonts, useColors } from "@rsvp/ui";
 
 /**
  * One surface holding a list of rows divided by hairlines: the shape of "a list of things" in the gifts area.
@@ -18,13 +18,10 @@ export function Row({ first = false, testID, children }: PropsWithChildren<{ rea
   return <View {...(testID ? { testID } : {})} style={{ gap: spacing[2], paddingVertical: spacing[4], paddingHorizontal: spacing[4], borderTopWidth: first ? 0 : 1, borderTopColor: palette.border }}>{children}</View>;
 }
 
-/** A short line with its small illustration: «search to begin» and «nothing found» inside a panel, where a full empty state would be too much. */
-export function Hint({ illustration, children }: PropsWithChildren<{ readonly illustration: IllustrationName }>): ReactNode {
+/** A short quiet line: «search to begin» and «nothing found» inside a panel, where a full empty state would be too much. */
+export function Hint({ children }: PropsWithChildren): ReactNode {
   const palette = useColors();
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[3] }}>
-      <Illustration name={illustration} tone="auto" size="sm" />
-      <Text style={{ flex: 1, color: palette.textMuted, fontSize: typography.fontSize.base, lineHeight: typography.lineHeight.base }}>{children}</Text>
-    </View>
+    <Text style={{ color: palette.textMuted, fontSize: typography.fontSize.base, lineHeight: typography.lineHeight.base, paddingVertical: spacing[2], fontFamily: fonts.sans }}>{children}</Text>
   );
 }

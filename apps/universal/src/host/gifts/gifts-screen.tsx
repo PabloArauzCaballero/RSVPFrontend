@@ -28,7 +28,7 @@ function GiftRow({ item, first, currencyLocale, onApprove, onReject, approving, 
     <Row first={first} testID={`gift-${item.id}`}>
       <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: spacing[2] }}>
         <View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 200, gap: 2 }}>
-          <Text style={styles.subtitle}>{item.title}</Text>
+          <Text style={styles.itemTitle}>{item.title}</Text>
           <Text style={styles.body}>{formatMinor(item.price.amountMinor, item.price.currency, currencyLocale)} · {item.source === "CATALOGED" ? t("gifts.host.list.fromPartner") : t("gifts.host.list.external")}</Text>
           {item.reservedByName ? <Text style={styles.muted} testID={`gift-by-${item.id}`}>{t("gifts.host.list.reservedBy", { name: item.reservedByName })}</Text> : null}
         </View>
@@ -99,7 +99,7 @@ function GiftsBody({ celebrationId, onNavigate }: { readonly celebrationId: stri
     <View style={{ gap: spacing[4] }}>
       {waiting > 0 ? (
         <Notice kind="info">
-          <Text style={styles.subtitle}>{t("gifts.host.list.pending", { count: waiting })}</Text>
+          <Text style={styles.itemTitle}>{t("gifts.host.list.pending", { count: waiting })}</Text>
           <Text style={styles.body}>{t("gifts.host.list.pendingBody")}</Text>
           <View style={styles.row}><ActionButton variant="secondary" label={t("gifts.host.list.pendingAction")} onPress={go(HOST_ROUTES.giftInbox)} testID="go-inbox" /></View>
         </Notice>

@@ -119,7 +119,7 @@ export function OrganizationsScreen({ onNavigate }: { readonly onNavigate: (href
         {list.isSuccess && !items.length ? <Text style={styles.muted}>{t("org.empty")}</Text> : null}
         {items.map((organization) => (
           <Pressable key={organization.id} accessibilityRole="button" aria-pressed={organization.id === selectedId} accessibilityLabel={t("org.open", { name: organization.name })} testID={`org-${organization.id}`} onPress={() => setSelectedId(organization.id)} style={[styles.option, organization.id === selectedId && styles.optionSelected]}>
-            <Text style={[styles.body, { fontWeight: "700" }]}>{organization.name}</Text>
+            <Text style={[styles.body, { fontWeight: "600" }]}>{organization.name}</Text>
             {organization.ownerUserId === claims.userId ? <Text style={styles.muted}>{t("org.owner")}</Text> : null}
           </Pressable>
         ))}

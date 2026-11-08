@@ -31,7 +31,7 @@ function Panel({ dir, announce, children }: PanelProps) {
 
 /**
  * The 3-step flow: the new step slides in from the side you are heading to (forward from the right, back from the left,
- * 24 px, 240 ms, strong ease-out) while fading in; the old step is replaced at once (leaving is faster than arriving).
+ * 16 px, 420 ms, soft ease-out) while fading in; the old step is replaced at once (leaving is faster than arriving).
  * The first step is never animated. On every change focus moves to the step (a labelled group, so the screen reader reads
  * `announce`) instead of being lost when the pressed button disappears. Under Reduce Motion the step just swaps.
  */

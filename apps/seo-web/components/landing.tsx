@@ -2,7 +2,6 @@ import type { Translate } from "@rsvp/i18n/server";
 import { appUrl } from "../lib/app-url";
 import { faqJsonLd, jsonLdScript, siteGraphJsonLd } from "../lib/json-ld";
 import { CheckMark } from "./brand/check-mark";
-import { CreateArt, DOutline, SeeArt, ShareArt } from "./brand/illustrations";
 
 /** What the sample invitation shows: the card a guest opens, with the check of the "Voy" button drawn once. */
 function InvitationCard({ t }: Readonly<{ t: Translate }>) {
@@ -30,27 +29,26 @@ export function Landing({ t, locale }: Readonly<{ t: Translate; locale: string }
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(faqJsonLd(faq)) }} />
 
       <section className="hero" aria-labelledby="hero-title">
-        <DOutline className="hero__ghost" />
         <div className="hero__inner">
           <div className="hero__copy">
             <h1 id="hero-title">{t("landing.hero.title")}</h1>
             <p>{t("landing.hero.body")}</p>
             <div className="hero__actions">
-              <a className="btn btn--accent" href={create}>{t("landing.hero.primary")}</a>
-              <a className="textlink textlink--onblue" href="/proveedores">{t("landing.hero.secondary")}</a>
+              <a className="btn btn--solid" href={create}>{t("landing.hero.primary")}</a>
+              <a className="textlink" href="/proveedores">{t("landing.hero.secondary")}</a>
             </div>
           </div>
           <InvitationCard t={t} />
         </div>
       </section>
 
-      <section className="sheet steps" aria-labelledby="how-title">
+      <section className="steps" aria-labelledby="how-title">
         <div className="wrap">
           <h2 id="how-title">{t("landing.how.title")}</h2>
           <ol className="steps__list">
-            <li><CreateArt className="steps__art" /><h3>{t("landing.how.createTitle")}</h3><p>{t("landing.how.createBody")}</p></li>
-            <li><ShareArt className="steps__art" /><h3>{t("landing.how.shareTitle")}</h3><p>{t("landing.how.shareBody")}</p></li>
-            <li><SeeArt className="steps__art" /><h3>{t("landing.how.seeTitle")}</h3><p>{t("landing.how.seeBody")}</p></li>
+            <li><h3>{t("landing.how.createTitle")}</h3><p>{t("landing.how.createBody")}</p></li>
+            <li><h3>{t("landing.how.shareTitle")}</h3><p>{t("landing.how.shareBody")}</p></li>
+            <li><h3>{t("landing.how.seeTitle")}</h3><p>{t("landing.how.seeBody")}</p></li>
           </ol>
         </div>
       </section>
@@ -61,7 +59,7 @@ export function Landing({ t, locale }: Readonly<{ t: Translate; locale: string }
           <div className="roles__host">
             <h3>{t("landing.roles.hostTitle")}</h3>
             <p>{t("landing.roles.hostBody")}</p>
-            <a className="textlink textlink--onblue" href={create}>{t("landing.roles.hostLink")}</a>
+            <a className="textlink" href={create}>{t("landing.roles.hostLink")}</a>
           </div>
           <div className="roles__guest">
             <h3>{t("landing.roles.guestTitle")}</h3>
@@ -78,7 +76,7 @@ export function Landing({ t, locale }: Readonly<{ t: Translate; locale: string }
       <section className="facts wrap" aria-labelledby="facts-title">
         <h2 id="facts-title">{t("landing.facts.title")}</h2>
         <ul className="facts__list">
-          {(["noAccount", "giftOnce", "verified"] as const).map((key) => <li key={key}><CheckMark size={28} className="facts__check" /><span>{t(`landing.facts.${key}`)}</span></li>)}
+          {(["noAccount", "giftOnce", "verified"] as const).map((key) => <li key={key}><span className="facts__mark"><CheckMark size={18} className="facts__check" draw={false} /></span><span>{t(`landing.facts.${key}`)}</span></li>)}
         </ul>
         <p className="facts__limit">{t("landing.facts.limit")}</p>
       </section>
@@ -106,10 +104,10 @@ export function Landing({ t, locale }: Readonly<{ t: Translate; locale: string }
 
       <section className="closing" aria-labelledby="closing-title">
         <div className="closing__inner">
-          <CheckMark size={72} className="closing__check" />
+          <span className="closing__mark"><CheckMark size={40} className="closing__check" /></span>
           <h2 id="closing-title">{t("landing.closing.title")}</h2>
           <p>{t("landing.closing.body")}</p>
-          <a className="btn btn--accent" href={create}>{t("landing.closing.cta")}</a>
+          <a className="btn btn--solid" href={create}>{t("landing.closing.cta")}</a>
         </div>
       </section>
     </main>

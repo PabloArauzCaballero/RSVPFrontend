@@ -204,7 +204,8 @@ async function portal() {
       return "PATCH 403 PROVIDER_OWNER_REQUIRED con mensaje accionable; GET: nombre intacto";
     });
     await step("Resumen", "submit-verification", "VALIDO el proveedor VERIFICADO no ofrece reenviar", async () => {
-      assert.equal(await id(page, "provider-status").innerText(), "Verificado");
+      // The pill is drawn in capitals by CSS (minimalist tags); the text of the node stays "Verificado", so compare the DOM text exactly.
+      assert.equal(((await id(page, "provider-status").textContent()) ?? "").trim(), "Verificado");
       assert.equal(await page.getByTestId("submit-verification").count(), 0);
       return "estado Verificado, sin boton de envio";
     });

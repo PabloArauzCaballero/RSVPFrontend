@@ -1,43 +1,49 @@
 # Sistema de diseño de DOne (RSVP)
 
-Fuente: *DOne Brand Kit v3*. Tokens en `packages/design-tokens/src` (`yarn workspace @rsvp/design-tokens generate`). Este documento manda sobre el gusto de quien edite: si algo no está aquí, se decide y se agrega aquí en el mismo PR.
+Rediseño minimalista (rama `feat/diseno-minimalista`). Tokens en `packages/design-tokens/src` (`yarn workspace @rsvp/design-tokens generate`). Este documento manda sobre el gusto de quien edite: si algo no está aquí, se decide y se agrega aquí en el mismo PR.
 
-## Identidad
+## Identidad (sistema minimalista, «papel de invitación»)
 
-- Un azul (`azul #1F3BFF`), una noche (`noche #0A1033`), ámbar solo para "quizá" y avisos. Proporción: 45 % claro, 30 % noche, 20 % azul, 5 % ámbar.
-- Una familia tipográfica: **Plus Jakarta Sans** (400 a 800). Web la carga de Google Fonts; nativo usa la del sistema hasta empaquetarla con `expo-font`.
-- Logo siempre con `Logo` de `@rsvp/ui` (SVG real; no texto ni glifos). Sobre azul `tone="white"`, sobre noche `tone="onDark"`.
-- Mensaje de marca: «Invitas hoy. Mañana sabes quién viene.»
+Brief y reglas: `docs/design/minimalista-brief.md`; fuente de criterio: skill `minimalist-ui` más Impeccable y UI/UX Pro Max. Donde choquen, mandan AGENTS.md (contraste AA, objetivos de 44 px, foco visible, movimiento reducido, i18n, modo oscuro).
+
+- **Idea.** DOne organiza eventos; el diseño es el de una buena invitación impresa: papel cálido, tinta, mucho aire, un titular serif con carácter y nada que compita con el nombre del evento. El color solo significa algo (estado de una respuesta, error, aviso).
+- **Lienzo y tinta.** `canvas` hueso cálido `#F7F6F3`, `surface` blanco, texto `#111111`, secundario `textMuted`. Oscuro compuesto en carbón cálido `#151514` (no invertido). Proporción: casi todo es neutro; el pastel ocupa una fracción pequeña.
+- **Color.** Solo pasteles apagados de `tones` (rojo, azul, verde, amarillo, gris) para etiquetas, estados, avatares, fondos de icono y la forma de las ilustraciones; `danger`, `success` y `warning` solo como texto o aviso. Nunca bloques saturados, degradados, neón ni vidrio.
+- **Tipografía.** Dos familias y una de metadatos: **Newsreader** 500 (titulares, tracking −0,02 a −0,03em, interlineado 1,1), **Geist** 400 a 600 (interfaz y cuerpo, interlineado ~1,6) y **Geist Mono** (códigos y metadatos). Pilas centralizadas en `packages/ui/src/fonts.ts` (`fonts.sans|display|mono`); web carga las caras de Google Fonts en `apps/universal/app/+html.tsx`, nativo usa la fuente de plataforma hasta empaquetarlas con `expo-font`. Prohibidos Inter, Roboto, Open Sans y el peso 800.
+- **Formas.** Tarjetas con borde de 1 px (`border`), radio 8 a 12 y relleno generoso (24 a 40); botones de radio 6; etiquetas de estado en píldora pequeña en mayúsculas con interletrado 0,05em. Nada de píldoras en contenedores grandes ni botones principales. Sombras prácticamente ninguna: un borde separa; solo elevación ultradifusa (`shadow.md/lg`, < 0,06) en menús y diálogos.
+- **Botones.** Primario: tinta con texto `onPrimary`, sin sombra, `scale(0.98)` al pulsar. Secundario: borde 1 px, sin relleno. Terciario: texto subrayado. Peligro: fondo pastel rojo con texto `danger`.
+- **Logo.** Siempre `Logo` de `@rsvp/ui` (SVG real): marca y palabra en una sola tinta; `tone="auto"` sigue el esquema (tinta clara sobre oscuro).
+- **Iconos.** Un solo set de trazo uniforme; ningún glifo de texto ni emoji como icono (el menú «Más opciones» dibuja tres puntos, el selector su flecha).
+- **Ilustración.** Solo en estados vacíos y bienvenida: línea de tinta de 3,5 sobre fondo plano con UNA forma pastel desplazada (`Illustration`, 32 láminas). Cuando no aporte nada, texto y espacio.
+- **Movimiento.** Casi invisible: entrada `translateY(12px)` más opacidad en ~500 ms con `cubic-bezier(0.16,1,0.3,1)`, cascada de 70 ms en listas, `scale(0.98)` al pulsar, hojas y menús en 240 ms. El cheque (tinta sobre verde pastel) es la única animación de celebración. Solo `transform` y `opacity`; con `prefers-reduced-motion` o Reduce Motion todo aparece en su estado final.
+- **Mensaje de marca:** «Invitas hoy. Mañana sabes quién viene.»
 
 ## Superficies y modo
 
 | Superficie | Modo | Marco |
 |---|---|---|
-| Ingreso, registro, recuperar | Persuade | `AuthLayout`: panel azul con el lema (ancho) o portada azul con la hoja sobre ella (móvil) |
-| Invitado (RSVP, regalos) | Persuade | `GuestFrame`: portada azul con logo y la tarjeta subida sobre ella |
-| Anfitrión, admin, proveedor | Operate | `Screen` (`apps/universal/src/host/shell.tsx`): menú lateral noche con pocos destinos (ancho) o barra superior + barra inferior + «Más» (móvil); bajo el título, las pestañas de la sección (`role=tablist`). Anfitrión 6 destinos, proveedor 5, admin 4 (ver `docs/design/primitives.md`) |
+| Ingreso, registro, recuperar | Persuade | `AuthLayout` sobre `canvas`: titular serif y columna de 720 a 960 px, sin paneles de color |
+| Invitado (RSVP, regalos) | Persuade | `GuestFrame`: el nombre del evento como titular serif sobre papel |
+| Anfitrión, admin, proveedor | Operate | `Screen` (`apps/universal/src/host/shell.tsx`): barra lateral clara (superficie) con ítems de texto y activo en `surfaceMuted` (ancho) o cabecera clara + barra inferior de 5 destinos (móvil); bajo el título, las pestañas de la sección (`role=tablist`). Anfitrión 6 destinos, proveedor 5, admin 4 (ver `docs/design/primitives.md`) |
 | Sitio público (`apps/seo-web`) | Persuade | `site-chrome` + `landing`; estilos en `globals.css` |
 
 El área segura de iOS la aplica una sola vez `SafeFrame` en el layout raíz: ningún marco suma insets por su cuenta.
 
 ## Personalidad
 
-Idea central: **el toque**. La marca es un cheque dentro de una D; el producto gira en torno a un gesto (invitar, tocar, confirmar). La personalidad es la de alguien que organiza la fiesta contigo: cálida, ágil, sin solemnidad, con el orgullo tranquilo de quien ya tiene todo resuelto. Detalle y planes en `docs/design/upgrade-brief.md`; API en `docs/design/primitives.md`.
+La marca es un cheque dentro de una D; el producto gira en torno a un gesto (invitar, tocar, confirmar). La personalidad es la de alguien que organiza la fiesta contigo: cálida, ágil, sin solemnidad. Voz en `docs/design/voz-y-copy.md`; API en `docs/design/primitives.md`.
 
 - **Voz.** Tuteo boliviano neutro, nunca voseo ni jerga. Frases cortas, verbos de acción, una idea por línea. Habla de personas y momentos («Quién viene», «Tu invitación», «Regalos»), no de módulos. Los hitos se celebran con medida: una frase y un gesto. Los errores no culpan: dicen qué pasó y cómo seguir. Cada pantalla vacía responde qué es esto, por qué importa y cuál es el primer toque.
-- **El toque (el cheque).** El cheque de la D se dibuja con trazo animado (`CheckMark`, `Celebrate`, `SuccessNote`, `Notice kind="success"`) al confirmar, publicar, guardar o responder. Es el único motivo de celebración y se repite en sellos de las ilustraciones.
-- **Ilustración.** Set propio de línea (`Illustration`): trazo grueso y redondeado, azul sobre claro, noche sobre claro o cielo sobre noche, un bloque suave desplazado detrás y una chispa de ámbar como único acento. Solo en estados vacíos, bienvenida y errores amables. SVG inline; nunca emoji, glifos ni clip-art.
-- **Forma.** Esquinas muy redondeadas de la D; la sábana que sube sobre la portada es el gesto de marca y se repite en tarjetas destacadas. Títulos en peso 800 con tracking cerrado (−0.5 a −1.0 px según tamaño).
-- **Movimiento.** Entradas de 150 a 250 ms con salida suave; el cheque dura 250 a 450 ms (hoy 360 ms) y no se repite. Con `prefers-reduced-motion` o Reduce Motion nativo todo aparece sin animar. Sin bucles ni movimiento decorativo.
-- **Navegación.** Pocos destinos (anfitrión 6, proveedor 5, admin 4) y, dentro de cada uno, pestañas de sección. Una acción primaria por pantalla; lo avanzado, detrás de «Más opciones».
-- **Prohibido en la personalidad.** «¡Bienvenido a la plataforma!», «No se pudo completar la acción», «Error 500», «Sin datos», jerga técnica (slug, token, endpoint), signos de exclamación en errores, confeti permanente, mascotas, emoji o glifos como adorno, animación en bucle, ilustración en cada tarjeta. Siguen vigentes todas las prohibiciones de la sección siguiente.
+- **El toque (el cheque).** `CheckMark`, `Celebrate`, `SuccessNote` y `Notice kind="success"` dibujan el cheque al confirmar, publicar, guardar o responder. Es el único motivo de celebración.
+- **Navegación.** Pocos destinos (anfitrión 6, proveedor 5, admin 4) y, dentro de cada uno, pestañas de sección. Una acción primaria por pantalla (arriba a la derecha; barra fija en móvil bajo 960 px); lo avanzado, detrás de «Más opciones» (`OverflowMenu`).
+- **Prohibido en la personalidad.** «¡Bienvenido a la plataforma!», «No se pudo completar la acción», «Error 500», «Sin datos», jerga técnica (slug, token, endpoint), signos de exclamación en errores, confeti permanente, mascotas, emoji o glifos como adorno, animación en bucle, ilustración en cada tarjeta, clichés de IA («Seamless», «Elevate») y «Lorem ipsum».
 
 ## Modo oscuro
 
-- **Compuesto, no invertido.** Escala de elevación por superficie: noche de marca `#0A1033` < canvas `#0E1540` < surface `#18215A` < surfaceMuted `#212C6E`; el azul acento pasa a cielo `#8FA6FF`; el ámbar sigue siendo solo «quizá» y avisos. Las regiones de marca (banda noche del menú, portada azul del invitado y del acceso) son iguales en ambos modos. En oscuro la elevación se marca con una superficie más clara, no con sombra.
+- **Compuesto, no invertido.** Escala de elevación por superficie en carbón cálido: canvas `#151514` < surface `#1E1E1C` < surfaceMuted `#272725`; texto `#EDECE8`; la acción primaria es tinta clara con texto oscuro; los pasteles pasan a su versión oscura de `tones.dark`. En oscuro la elevación se marca con una superficie más clara, no con sombra.
 - **Esquema:** sigue al sistema por defecto y se puede forzar Sistema · Claro · Oscuro (Ajustes → Configuración y menú). Se aplica antes del primer pintado en web (sin parpadeo) y se persiste con try/catch.
-- **Contraste medido:** `packages/design-tokens/src/contrast.test.ts` comprueba 71 pares en claro y oscuro (texto 4.5:1, componentes 3:1, chips y avatares). Un color nuevo entra con su par probado.
-- **Estilos:** nunca `colors.light` ni hex sueltos en pantallas: `useColors()` / `useStyles()` / `useThemedStyles()`. Las ilustraciones usan el tono semántico `auto`.
+- **Contraste medido:** `packages/design-tokens/src/contrast.test.ts` comprueba los pares en claro y oscuro (texto 4.5:1, componentes 3:1, tonos, chips y avatares); `packages/ui/src/minimalist.test.tsx` repite los que componen las primitivas. Un color nuevo entra con su par probado.
+- **Estilos:** nunca `colors.light` ni hex sueltos en pantallas: `useColors()` / `useStyles()` / `useThemedStyles()`. Las ilustraciones y el logo usan el tono `auto`; el pastel sale de `useTones()`.
 - **Excepción:** la vista previa del dispositivo y la invitación del invitado siguen el tema de la celebración del anfitrión; no se oscurecen.
 
 ## Reglas de pantalla (Operate)

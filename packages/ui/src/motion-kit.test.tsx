@@ -12,8 +12,10 @@ beforeEach(() => { vi.useFakeTimers(); resetScreenHistory(); });
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.unstubAllGlobals(); });
 
 describe('tokens', () => {
-  it('keep every duration inside the brief: entrances 150-250 ms, press under 200, exits faster than entrances', () => {
-    for (const ms of [MOTION.enterMs, MOTION.stepMs, MOTION.screenMs]) { expect(ms).toBeGreaterThanOrEqual(150); expect(ms).toBeLessThanOrEqual(250); }
+  it('keep every duration inside the brief: entrances 400-600 ms, overlays and screens quicker, press under 200, exits faster than entrances', () => {
+    for (const ms of [MOTION.enterMs, MOTION.stepMs]) { expect(ms).toBeGreaterThanOrEqual(400); expect(ms).toBeLessThanOrEqual(600); }
+    expect(MOTION.overlayMs).toBeLessThanOrEqual(300);
+    expect(MOTION.screenMs).toBeLessThanOrEqual(400);
     expect(MOTION.sectionMs).toBeLessThan(MOTION.screenMs);
     expect(MOTION.exitMs).toBeLessThan(MOTION.enterMs);
     expect(MOTION.pressInMs).toBeLessThanOrEqual(MOTION.pressOutMs);
@@ -23,7 +25,7 @@ describe('tokens', () => {
   });
 
   it('uses strong ease-out curves, never ease-in', () => {
-    expect(cssEase('out')).toBe('cubic-bezier(0.23, 1, 0.32, 1)');
+    expect(cssEase('out')).toBe('cubic-bezier(0.16, 1, 0.3, 1)');
     expect(EASE.out[0]).toBeGreaterThan(0.1);
     expect(EASE.out[1]).toBe(1);
   });
@@ -36,9 +38,9 @@ describe('tokens', () => {
     expect(offsetFor('none', 24)).toEqual({ x: 0, y: 0 });
   });
 
-  it('caps the stagger: 40 ms per row, 8 rows, then no delay at all', () => {
+  it('caps the stagger: 70 ms per row, 8 rows, then no delay at all', () => {
     expect(staggerDelay(0)).toBe(0);
-    expect(staggerDelay(7)).toBe(280);
+    expect(staggerDelay(7)).toBe(490);
     expect(staggerDelay(8)).toBeUndefined();
     expect(staggerDelay(200)).toBeUndefined();
   });
@@ -51,7 +53,7 @@ describe('Enter', () => {
     const { container } = render(<Enter testID="e" onDone={onDone}>Hola</Enter>);
     const node = el(container, '[data-testid="e"]');
     expect(node.style.opacity).toBe('0');
-    expect(node.style.transform).toBe('translate(0px, 8px)');
+    expect(node.style.transform).toBe('translate(0px, 12px)');
     await frames(100);
     expect(node.style.opacity).toBe('1');
     expect(node.style.transform).toBe('none');
@@ -113,14 +115,14 @@ describe('Enter', () => {
 describe('Stagger', () => {
   const rows = (n: number) => Array.from({ length: n }, (_, i) => <li key={i} data-row={i}>fila {i}</li>);
 
-  it('animates at most 8 rows, 40 ms apart; the tail appears in place', async () => {
+  it('animates at most 8 rows, 70 ms apart; the tail appears in place', async () => {
     matchMedia(false);
     const { container } = render(<ul><Stagger>{rows(30)}</Stagger></ul>);
     const wrappers = container.querySelectorAll('[data-enter]');
     expect(wrappers).toHaveLength(8);
     await frames(100);
     const delays = [...wrappers].map((node) => (node as HTMLElement).style.transitionDelay);
-    expect(delays).toEqual(['', '40ms', '80ms', '120ms', '160ms', '200ms', '240ms', '280ms']);
+    expect(delays).toEqual(['', '70ms', '140ms', '210ms', '280ms', '350ms', '420ms', '490ms']);
     expect(container.querySelectorAll('[data-row]')).toHaveLength(30);
     expect(container.querySelectorAll('[data-row="29"]')).toHaveLength(1);
     expect(el(container, '[data-row="29"]').closest('[data-enter]')).toBeNull();
@@ -159,12 +161,12 @@ describe('PressFeedback', () => {
     expect(inner.style.transitionDuration).toBe(`${MOTION.pressOutMs}ms`);
   });
 
-  it('presses in at 0.97 in 90 ms, releases in 160 ms, and ignores presses while disabled', () => {
+  it('presses in at 0.98 in 90 ms, releases in 160 ms, and ignores presses while disabled', () => {
     matchMedia(false);
     const { container, rerender } = render(<PressFeedback accessibilityLabel="Guardar"><span>x</span></PressFeedback>);
     const button = screen.getByRole('button', { name: 'Guardar' });
     fireEvent.keyDown(button, { key: ' ' });
-    expect(innerOf(container).style.transform).toBe('scale(0.97)');
+    expect(innerOf(container).style.transform).toBe('scale(0.98)');
     expect(innerOf(container).style.transitionDuration).toBe(`${MOTION.pressInMs}ms`);
     fireEvent.keyUp(button, { key: ' ' });
     expect(innerOf(container).style.transform).toBe('none');
@@ -196,7 +198,7 @@ describe('SkeletonList', () => {
     const css = document.head.querySelector('style[data-href="rsvp-motion-skeleton"]')?.textContent ?? document.querySelector('style')?.textContent ?? '';
     expect(css).toContain('infinite');
     expect(css).toContain('prefers-reduced-motion:reduce');
-    expect(css).toMatch(/opacity:1\}to\{opacity:0\.55/);
+    expect(css).toMatch(/opacity:1\}to\{opacity:0\.6/);
     const result = await axe.run(container, { rules: { 'color-contrast': { enabled: false }, region: { enabled: false } } });
     expect(result.violations.map((v) => v.id)).toEqual([]);
   });
@@ -230,7 +232,7 @@ describe('StepTransition', () => {
     rerender(<StepTransition step={2} announce="Paso 2 de 3: Fecha">dos</StepTransition>);
     let panel = el(container, '[data-step-direction]');
     expect(panel.getAttribute('data-step-direction')).toBe('forward');
-    expect(panel.style.transform).toBe('translate(24px, 0px)');
+    expect(panel.style.transform).toBe('translate(16px, 0px)');
     expect(panel.style.opacity).toBe('0');
     await frames(100);
     expect(panel.style.transform).toBe('none');
@@ -238,7 +240,7 @@ describe('StepTransition', () => {
     rerender(<StepTransition step={1}>uno</StepTransition>);
     panel = el(container, '[data-step-direction]');
     expect(panel.getAttribute('data-step-direction')).toBe('back');
-    expect(panel.style.transform).toBe('translate(-24px, 0px)');
+    expect(panel.style.transform).toBe('translate(-16px, 0px)');
   });
 
   it('keeps focus in the flow: the new step is a labelled group and receives focus', () => {

@@ -1,58 +1,61 @@
 import type { PropsWithChildren, ReactNode } from "react";
-import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
-import { brand, onNight, radius, spacing } from "@rsvp/design-tokens";
-import { ButtonAlignContext, Enter, HeroArt, Logo, WeavePattern, useThemedStyles, type Palette } from "@rsvp/ui";
+import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { radius, spacing } from "@rsvp/design-tokens";
+import { ButtonAlignContext, Enter, Logo, fonts, useThemedStyles, type Palette } from "@rsvp/ui";
 import { LanguageSwitch } from "../auth/auth-ui";
 
 /**
- * Frame of every guest screen (mode Persuade): an electric-blue cover with the logo and, when known, the invitation
- * itself (its title as the page heading, who invites underneath), and the sheet pulled up over it. Guests arrive from a
- * link on a phone, so the column is narrow and centred on wide screens.
+ * Frame of every guest screen (mode Persuade): the invitation as a sheet of paper. A bone page, the sheet in white with a
+ * 1 px edge, the logo small in ink, the name of the event in a large serif with air around it, who invites and when and
+ * where underneath, then the answer. No bands, arcs or colour fields: nothing competes with the name of the event.
+ * Guests arrive from a link on a phone, so the column is narrow and centred on wide screens.
  */
 
-const fontFamily = Platform.select({ web: "'Plus Jakarta Sans', 'Avenir Next', 'Segoe UI', system-ui, sans-serif", default: undefined });
-const COLUMN = 560;
+const COLUMN = 640;
+/** Under this the sheet uses less padding and a smaller title. */
+const COMPACT = 520;
 
-/** The blue cover is a brand region and stays the same in both schemes; the sheet that rises over it follows the theme. */
 const createFrameStyles = (palette: Palette) => StyleSheet.create({
-  page: { flexGrow: 1, backgroundColor: brand.azul },
-  cover: { backgroundColor: brand.azul, overflow: "hidden", minHeight: 150, paddingTop: spacing[6], paddingBottom: spacing[16], paddingHorizontal: spacing[5] },
-  art: { position: "absolute", right: -18, bottom: 0, top: 0, width: "40%" },
-  coverInner: { width: "100%", maxWidth: COLUMN, alignSelf: "center", gap: spacing[6] },
-  heading: { color: onNight, fontSize: 36, lineHeight: 38, fontWeight: "800", letterSpacing: -1.1, fontFamily },
-  lead: { color: "#D5DCFF", fontSize: 18, lineHeight: 26, fontWeight: "600", fontFamily },
-  meta: { color: "#D5DCFF", fontSize: 16, lineHeight: 24, fontFamily },
-  sheet: { flexGrow: 1, backgroundColor: palette.canvas, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, marginTop: -spacing[8] },
-  body: { width: "100%", maxWidth: COLUMN, alignSelf: "center", paddingHorizontal: spacing[5], paddingTop: spacing[8], paddingBottom: spacing[10], gap: spacing[6] }
+  page: { flexGrow: 1, backgroundColor: palette.canvas },
+  inner: { width: "100%", maxWidth: COLUMN, alignSelf: "center", paddingHorizontal: spacing[4], paddingTop: spacing[6], paddingBottom: spacing[16], gap: spacing[8] },
+  top: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: spacing[2] },
+  sheet: { backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, borderRadius: radius.lg },
+  cover: { gap: spacing[4] },
+  rule: { height: 1, backgroundColor: palette.border },
+  heading: { color: palette.text, fontWeight: "500", fontFamily: fonts.display },
+  lead: { color: palette.text, fontSize: 18, lineHeight: 28, fontFamily: fonts.sans },
+  meta: { color: palette.textMuted, fontSize: 13, lineHeight: 21, fontFamily: fonts.mono },
+  body: { gap: spacing[6] }
 });
 
 export interface GuestFrameProps { readonly heading?: string; readonly lead?: string; /** Date and place, one line. */ readonly meta?: string }
 
 export function GuestFrame({ heading, lead, meta, children }: PropsWithChildren<GuestFrameProps>): ReactNode {
   const s = useThemedStyles(createFrameStyles);
+  const { width } = useWindowDimensions();
+  const compact = width < COMPACT;
+  const pad = compact ? spacing[6] : spacing[12];
+  const size = compact ? 40 : 56;
   return (
     <ScrollView role="main" tabIndex={0} style={s.page} contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-      <View style={s.cover}>
-        <WeavePattern tone="onBrand" />
-        <View pointerEvents="none" style={s.art}><HeroArt variant="cover" tone="onBrand" /></View>
-        <View style={s.coverInner}>
-          <Logo tone="white" height={28} />
+      <View style={s.inner}>
+        <View style={s.top}><Logo tone="auto" height={26} /></View>
+        <View style={[s.sheet, { padding: pad, gap: spacing[8] }]}>
           {heading ? (
             <Enter from="down">
-              <View style={{ gap: spacing[2] }}>
-                <Text accessibilityRole="header" aria-level={1} style={s.heading}>{heading}</Text>
+              <View style={s.cover}>
+                <Text accessibilityRole="header" aria-level={1} style={[s.heading, { fontSize: size, lineHeight: Math.round(size * 1.08), letterSpacing: -size * 0.03 }]}>{heading}</Text>
                 {lead ? <Text style={s.lead}>{lead}</Text> : null}
                 {meta ? <Text style={s.meta}>{meta}</Text> : null}
               </View>
             </Enter>
           ) : null}
+          {heading ? <View style={s.rule} /> : null}
+          <View style={s.body}>
+            <ButtonAlignContext.Provider value="center">{children}</ButtonAlignContext.Provider>
+          </View>
         </View>
-      </View>
-      <View style={s.sheet}>
-        <View style={s.body}>
-          <ButtonAlignContext.Provider value="center">{children}</ButtonAlignContext.Provider>
-          <LanguageSwitch />
-        </View>
+        <LanguageSwitch />
       </View>
     </ScrollView>
   );

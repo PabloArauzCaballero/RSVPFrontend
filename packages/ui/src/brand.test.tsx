@@ -6,7 +6,7 @@ afterEach(cleanup);
 
 describe('DOne brand primitives', () => {
   it('Logo draws the wordmark and the symbol as labelled SVG, or hides itself when decorative', () => {
-    const { container } = render(<><Logo /><Logo variant="mark" tone="white" label="Símbolo" /><Logo decorative /></>);
+    const { container } = render(<><Logo /><Logo variant="mark" tone="onDark" label="Símbolo" /><Logo decorative /></>);
     expect(screen.getByRole('img', { name: 'DOne' })).toBeTruthy();
     expect(screen.getByRole('img', { name: 'Símbolo' }).getAttribute('viewBox')).toBe('0 0 86 100');
     expect(container.querySelectorAll('svg[aria-hidden="true"]')).toHaveLength(1);

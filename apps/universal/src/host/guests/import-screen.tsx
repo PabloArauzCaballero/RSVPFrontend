@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
-import { Enter, Illustration, StickyActions } from "@rsvp/ui";
+import { Enter, StickyActions, fonts } from "@rsvp/ui";
 import { useImportGuests, type CsvReport } from "@rsvp/query-hooks";
 import { canPickTextFile, pickTextFile } from "../../platform/files";
 import { useApiClient, useT } from "../../platform/providers";
@@ -22,7 +22,6 @@ export function ImportReport({ report }: { readonly report: CsvReport }): ReactN
   const t = useT();
   return (
     <Enter from="down"><View style={{ gap: spacing[4] }}>
-      {report.importedCount > 0 ? <Illustration name="importDone" tone="auto" size="md" /> : null}
       <Text testID="import-summary" accessibilityRole="header" accessibilityLiveRegion="polite" style={styles.subtitle}>{t("guests.import.summary", { imported: report.importedCount, failed: report.failedCount, total: report.totalRows })}</Text>
       {report.errors.length === 0 ? <Celebrate title={t("guests.import.celebrateTitle")} body={t("guests.import.celebrateBody")} /> : (
         <View style={{ gap: spacing[2] }}>
@@ -75,7 +74,7 @@ function ImportBody({ celebrationId, onNavigate }: { readonly celebrationId: str
       ) : (
         <View style={[styles.card, { maxWidth: 720 }]}>
           <Text style={styles.body}>{t("guests.import.steps")}</Text>
-          <Text selectable style={[styles.body, { fontFamily: "monospace", fontWeight: "700" }]}>{t("guests.import.header")}</Text>
+          <Text selectable style={[styles.body, { fontFamily: fonts.mono, fontWeight: "600" }]}>{t("guests.import.header")}</Text>
           <Text style={styles.muted}>{t("guests.import.headerNote")}</Text>
           {canPickTextFile ? <ActionButton variant="secondary" label={t("guests.import.chooseFile")} onPress={() => { void choose(); }} /> : null}
           <Field label={t("guests.import.csvLabel")} multiline value={csv} onChange={(value) => { setCsv(value); setProblem(""); }} error={problem || undefined} testID="csv-input" />

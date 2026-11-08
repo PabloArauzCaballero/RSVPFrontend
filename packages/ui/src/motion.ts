@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 
 /**
- * Motion tokens of DOne (rsvp-motion-design, docs/design/motion.md). Everything animated in the product reads from
- * here: durations in milliseconds, distances in px, scales as ratios. Only `transform` and `opacity` are ever
- * animated. The check (`checkMs`, `popMs`) is the single celebratory gesture; the rest is functional motion.
+ * Motion tokens of DOne (minimalist system, brief `minimalista-brief.md`): motion is nearly invisible. Entrances rise 12 px while
+ * fading in over ~500 ms with `cubic-bezier(0.16, 1, 0.3, 1)`; lists cascade 70 ms per row; a press scales to 0.98.
+ * Durations in milliseconds, distances in px, scales as ratios. Only `transform` and `opacity` are ever animated.
+ * The check (`checkMs`) is the single celebratory gesture; the rest is functional motion.
  */
 export const MOTION = {
   /** The check of the D draws itself (the one celebratory animation). */
@@ -12,26 +13,28 @@ export const MOTION = {
   /** Press feedback: instant on press-in, slightly slower release (animate-expo, emil-design-eng: 100-160 ms). */
   pressInMs: 90,
   pressOutMs: 160,
-  pressScale: 0.97,
+  pressScale: 0.98,
   /** With Reduce Motion the scale is replaced by this opacity so the press stays legible without movement. */
   pressReducedOpacity: 0.72,
-  /** Entrances (lists, cards, the next step on Inicio): 150-250 ms, eased out; exits are faster than entrances. */
-  enterMs: 220,
-  exitMs: 150,
-  enterDistance: 8,
+  /** Entrances (lists, cards, the next step on Inicio): 400-600 ms, soft ease-out; exits are faster than entrances. Overlays use `overlayMs`. */
+  enterMs: 500,
+  exitMs: 160,
+  enterDistance: 12,
+  /** Sheets, dialogs and menus open quickly: they answer a tap. */
+  overlayMs: 240,
   /** Steps of the 3-step flow: a direction-aware slide, the only place that moves sideways. */
-  stepMs: 240,
-  stepDistance: 24,
+  stepMs: 420,
+  stepDistance: 16,
   /** Screen changes: a fade; a short rise only when the destination changes (peers never slide). */
-  screenMs: 200,
-  sectionMs: 140,
+  screenMs: 360,
+  sectionMs: 220,
   screenDistance: 6,
-  /** Lists: 40 ms between rows, at most 8 rows animate (320 ms of delay in total); the rest appear in place. */
-  staggerMs: 40,
+  /** Lists: 70 ms between rows, at most 8 rows animate (560 ms of delay in total); the rest appear in place. */
+  staggerMs: 70,
   staggerMax: 8,
   /** Loading skeleton: one slow opacity pulse on the whole group (the only loop, only while loading). */
   skeletonMs: 1400,
-  skeletonLow: 0.55
+  skeletonLow: 0.6
 } as const;
 
 /** Minimum touch target in px (WCAG 2.2 AA 2.5.8 with margin; the product rule is 44). */
@@ -39,7 +42,7 @@ export const MIN_TARGET = 44;
 
 /** Curves as cubic-bezier control points. `out` is the strong ease-out for entering/exiting; `inOut` for movement on screen. */
 export const EASE = {
-  out: [0.23, 1, 0.32, 1],
+  out: [0.16, 1, 0.3, 1],
   inOut: [0.77, 0, 0.175, 1]
 } as const;
 

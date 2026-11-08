@@ -3,15 +3,14 @@ import { supportedLocales } from "@rsvp/i18n/server";
 import { logo } from "@rsvp/design-tokens";
 import { appUrl } from "../lib/app-url";
 import { withLanguage } from "../lib/locale-negotiation";
-import { DOutline } from "./brand/illustrations";
 
-/** DOne logotype: mark in the brand blue (white on the night footer), "One" in the text colour. */
-export function Logo({ label = "DOne", onDark = false }: Readonly<{ label?: string; onDark?: boolean }>) {
+/** DOne logotype: mark and word in ink on light, in the text colour on the dark scheme (one variable does both). */
+export function Logo({ label = "DOne" }: Readonly<{ label?: string }>) {
   const [x, y, w, h] = logo.viewBox.split(" ");
   return (
     <svg viewBox={`${x} ${y} ${w} ${h}`} role="img" aria-label={label}>
-      <path fill={onDark ? "#FFFFFF" : "var(--primary)"} d={logo.mark} />
-      <path fill={onDark ? "#FFFFFF" : "var(--text)"} d={logo.word} />
+      <path fill="var(--text)" d={logo.mark} />
+      <path fill="var(--text)" d={logo.word} />
     </svg>
   );
 }
@@ -46,11 +45,10 @@ export function LanguageSwitch({ t, locale, path }: Readonly<{ t: Translate; loc
 export function SiteFooter({ t, locale, path = "/" }: Readonly<{ t: Translate; locale: AppLocale; path?: string }>) {
   return (
     <footer className="site-footer">
-      <DOutline className="site-footer__ghost" />
       <div className="site-footer__inner">
         <p className="site-footer__line">{t("landing.footer.tagline")}</p>
         <div className="site-footer__cols">
-          <p className="site-logo"><Logo onDark /></p>
+          <p className="site-logo"><Logo /></p>
           <nav aria-label={t("landing.footer.explore")} className="site-footer__links">
             <a href="/proveedores">{t("landing.footer.providers")}</a>
             <a href={appUrl("/login")}>{t("landing.footer.create")}</a>

@@ -34,9 +34,9 @@ describe('theme-derived primitives', () => {
     expect(background(screen.getByText('Quizá').parentElement as Element)).toBe(rgb(chips.light.maybe.bg));
   });
 
-  it('SuccessNote tints with the scheme success ground and EmptyState keeps readable text tokens', () => {
+  it('SuccessNote sits on the scheme surface with a pastel green tick and EmptyState keeps readable text tokens', () => {
     render(<UiProvider scheme="dark"><SuccessNote message="Guardado" /><EmptyState illustration="gift" title="Aquí verás tus regalos" body="Agrega el primero." /></UiProvider>);
-    expect(background(screen.getByRole('status'))).toBe(rgb(colors.dark.successBg));
+    expect(background(screen.getByRole('status'))).toBe(rgb(colors.dark.surface));
     expect(getComputedStyle(screen.getByText('Aquí verás tus regalos')).color).toBe(rgb(colors.dark.text));
   });
 

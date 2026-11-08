@@ -1,11 +1,12 @@
-import { brand, colors } from '@rsvp/design-tokens';
+import { colors, ink, tones, type ToneName } from '@rsvp/design-tokens';
 
 /**
- * Line illustrations of DOne. Thick rounded strokes on a 120-unit grid, an offset "soft" block behind the line
- * (the playful misregistration) and, where it fits, the check of the symbol. One data source for web and native.
+ * Line illustrations of DOne (minimalist system): a continuous ink line on a flat ground with ONE offset geometric shape in a
+ * muted pastel from `tones`. Used only in empty states and welcomes. Thin rounded strokes on a 120-unit grid; the seal keeps the
+ * check of the symbol. One data source for web and native.
  *
- * Shape vocabulary (see docs/design/identidad-visual.md): the D (a rounded rectangle closed by a half circle), the check,
- * the envelope, the arch (door, window, invitation card). Amber is the single accent: a spark or one filled detail.
+ * Shape vocabulary: the D (a rounded rectangle closed by a half circle), the check, the envelope, the arch (door, window,
+ * invitation card). No second accent colour and no sparkles: the pastel shape is the only colour.
  */
 export type IllustrationName =
   // Original set
@@ -22,13 +23,13 @@ export type IllustrationName =
   | 'noAccess' | 'searching' | 'serverError' | 'maintenance' | 'notFound';
 
 /**
- * Semantic tone, never a hex. `brand` blue lines on a light ground, `night` for quieter spots, `onDark` over the night ground,
- * `onBrand` over the electric blue (bands, covers) and `auto` follows the active colour scheme (brand in light, onDark in dark).
+ * Semantic tone, never a hex. `ink` draws dark ink on a light ground, `onDark` draws light ink on a dark ground and `auto`
+ * follows the active colour scheme (use it in screens). The pastel shape is chosen per illustration group (see `ILLUSTRATION_PASTEL`).
  */
-export type IllustrationTone = 'brand' | 'night' | 'onDark' | 'onBrand' | 'auto';
+export type IllustrationTone = 'auto' | 'ink' | 'onDark';
 export type ResolvedTone = Exclude<IllustrationTone, 'auto'>;
 /** `knockFill` is a small filled detail in the ground colour of its seal (the glyph inside a solid disc). */
-export type Layer = 'soft' | 'line' | 'solid' | 'knock' | 'knockFill' | 'accent' | 'accentFill';
+export type Layer = 'soft' | 'line' | 'solid' | 'knock' | 'knockFill' | 'accent' | 'accentFill' | 'spark';
 /** `w` overrides the stroke width (small glyphs inside seals); `o` is the opacity (patterns). */
 export interface Shape { readonly d: string; readonly layer: Layer; readonly w?: number; readonly o?: number }
 
@@ -43,22 +44,27 @@ export const ILLUSTRATION_GROUPS: Record<IllustrationName, IllustrationGroup> = 
 };
 export const ILLUSTRATION_NAMES = Object.keys(ILLUSTRATION_GROUPS) as IllustrationName[];
 export const ILLUSTRATION_VIEWBOX = 120;
-export const ILLUSTRATION_STROKE = 6;
+export const ILLUSTRATION_STROKE = 3.5;
 export const ILLUSTRATION_SIZES = { sm: 64, md: 104, lg: 148 } as const;
 
+/** The pastel of each group: the one hue an illustration carries. */
+export const ILLUSTRATION_PASTEL: Record<IllustrationGroup, ToneName> = { host: 'yellow', guest: 'blue', provider: 'green', admin: 'gray', access: 'red', system: 'gray' };
+
 /**
- * Colour per layer. Amber is only ever the small accent. `knock` is the glyph inside a solid shape: it is the colour of the
- * shape's opposite (white on blue, night on sky), so it never depends on the ground the illustration sits on.
- * `soft` in dark is the raised night surface (visible on both the night canvas and the raised card).
+ * Colour per layer. `soft` is the single pastel shape; every line, solid and accent is ink. `knock` is the glyph inside a
+ * solid ink shape (the ground colour), so it contrasts with the ink whatever sits behind the illustration. `softEdge` is the
+ * readable text colour of the pastel pair, drawn as a faint hairline so the flat pastel keeps an edge on a bone ground.
  */
-export const ILLUSTRATION_COLORS: Record<ResolvedTone, Record<Layer, string>> = {
-  brand: { soft: brand.bruma, line: brand.azul, solid: brand.azul, knock: '#FFFFFF', knockFill: '#FFFFFF', accent: brand.ambar, accentFill: brand.ambar },
-  night: { soft: brand.bruma, line: brand.noche, solid: brand.noche, knock: '#FFFFFF', knockFill: '#FFFFFF', accent: brand.ambar, accentFill: brand.ambar },
-  onDark: { soft: colors.dark.surfaceMuted, line: brand.cielo, solid: brand.cielo, knock: brand.noche, knockFill: brand.noche, accent: brand.ambar, accentFill: brand.ambar },
-  onBrand: { soft: brand.azulOsc, line: '#FFFFFF', solid: '#FFFFFF', knock: brand.azul, knockFill: brand.azul, accent: brand.ambar, accentFill: brand.ambar }
-};
+export type IllustrationColors = Record<Layer | 'softEdge', string>;
+export function illustrationColors(tone: ResolvedTone, pastel: ToneName): IllustrationColors {
+  const dark = tone === 'onDark';
+  const line = dark ? colors.dark.text : ink;
+  const knock = dark ? colors.dark.canvas : colors.light.canvas;
+  const pair = (dark ? tones.dark : tones.light)[pastel];
+  return { soft: pair.bg, softEdge: pair.fg, line, solid: line, knock, knockFill: knock, accent: line, accentFill: line, spark: 'none' };
+}
 export const isFillLayer = (layer: Layer): boolean => layer === 'soft' || layer === 'solid' || layer === 'accentFill' || layer === 'knockFill';
-export const resolveTone = (tone: IllustrationTone, scheme: 'light' | 'dark'): ResolvedTone => (tone === 'auto' ? (scheme === 'dark' ? 'onDark' : 'brand') : tone);
+export const resolveTone = (tone: IllustrationTone, scheme: 'light' | 'dark'): ResolvedTone => (tone === 'auto' ? (scheme === 'dark' ? 'onDark' : 'ink') : tone);
 
 const n = (value: number): string => String(Math.round(value * 100) / 100);
 export const circle = (cx: number, cy: number, r: number): string => `M${n(cx - r)} ${n(cy)}a${n(r)} ${n(r)} 0 1 0 ${n(2 * r)} 0a${n(r)} ${n(r)} 0 1 0 ${n(-2 * r)} 0Z`;
@@ -77,16 +83,17 @@ export const archCard = (x: number, y: number, w: number, h: number, r = 12): st
   `M${n(x)} ${n(y + h - r)}V${n(y + w / 2)}a${n(w / 2)} ${n(w / 2)} 0 0 1 ${n(w)} 0V${n(y + h - r)}a${n(r)} ${n(r)} 0 0 1 ${n(-r)} ${n(r)}H${n(x + r)}a${n(r)} ${n(r)} 0 0 1 ${n(-r)} ${n(-r)}Z`;
 /** The tick of the symbol, centred on (cx, cy); `k` scales it (the seal uses 15/15 = 1). */
 export const check = (cx: number, cy: number, k: number): string => poly([[cx - 7 * k, cy], [cx - 2 * k, cy + 5 * k], [cx + 7 * k, cy - 6 * k]]);
-const spark = (cx: number, cy: number, s = 6): Shape => ({ layer: 'accent', d: `M${n(cx)} ${n(cy - s)}V${n(cy + s)}M${n(cx - s)} ${n(cy)}H${n(cx + s)}` });
+/** Sparkles of the previous identity: kept in the data so the shapes stay put, never drawn (see `ILLUSTRATIONS`). */
+const spark = (cx: number, cy: number, s = 6): Shape => ({ layer: 'spark', d: `M${n(cx)} ${n(cy - s)}V${n(cy + s)}M${n(cx - s)} ${n(cy)}H${n(cx + s)}` });
 /** The seal: a solid disc with the knocked-out check of the symbol. */
 const seal = (cx: number, cy: number, r: number): Shape[] => {
   const k = r / 15;
   return [{ layer: 'solid', d: circle(cx, cy, r) }, { layer: 'knock', d: check(cx, cy, k) }];
 };
-/** The D as a mark: solid with the check knocked out, as in the logo. */
+/** The D as a mark: the outline of the D with the tick of the logo inside, all in ink line. */
 const dMark = (x: number, y: number, h: number): Shape[] => [
-  { layer: 'solid', d: dShape(x, y, h) },
-  { layer: 'knock', d: check(x + 0.43 * h, y + 0.5 * h, h / 28), w: Math.max(3, h * 0.1) }
+  { layer: 'line', d: dShape(x, y, h) },
+  { layer: 'line', d: check(x + 0.43 * h, y + 0.5 * h, h / 28), w: Math.max(3, h * 0.07) }
 ];
 /** A pill whose axis runs from (x1, y1) to (x2, y2): the rounded link of a chain. */
 const capsule = (x1: number, y1: number, x2: number, y2: number, r: number): string => {
@@ -101,7 +108,7 @@ const arcAt = (cx: number, cy: number, r: number, from: number, to: number): str
 const lerp = (a: Pt, b: Pt, t: number): Pt => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
 const quad = (a: Pt, b: Pt, c: Pt, t: number): Pt => lerp(lerp(a, b, t), lerp(b, c, t), t);
 /** A pennant hanging from point `p`. */
-const flag = (p: Pt, layer: 'line' | 'solid' | 'accentFill'): Shape => ({ layer, d: poly([[p[0] - 9, p[1] + 2], [p[0] + 9, p[1] + 2], [p[0], p[1] + 20]], true) });
+const flag = (p: Pt, layer: 'line'): Shape => ({ layer, d: poly([[p[0] - 9, p[1] + 2], [p[0] + 9, p[1] + 2], [p[0], p[1] + 20]], true) });
 const offset = (d: string, dx: number, dy: number): string => d.replace(/^M([\d.-]+) ([\d.-]+)/, (_m, x: string, y: string) => `M${n(Number(x) + dx)} ${n(Number(y) + dy)}`);
 
 const GIFT: readonly Shape[] = [
@@ -114,7 +121,7 @@ const GIFT: readonly Shape[] = [
 const TAG = poly([[24, 22], [58, 22], [98, 62], [62, 98], [24, 60]], true);
 const VERIFY_D = { x: 24, y: 18, h: 84 };
 
-export const ILLUSTRATIONS: Record<IllustrationName, readonly Shape[]> = {
+const RAW: Record<IllustrationName, readonly Shape[]> = {
   invitation: [
     { layer: 'soft', d: rect(18, 38, 96, 68, 16) },
     { layer: 'line', d: 'M32 32V26a8 8 0 0 1 8-8H76a8 8 0 0 1 8 8V32' },
@@ -135,7 +142,7 @@ export const ILLUSTRATIONS: Record<IllustrationName, readonly Shape[]> = {
     { layer: 'soft', d: ellipse(66, 90, 44, 14) },
     { layer: 'line', d: ellipse(60, 86, 44, 14) },
     { layer: 'line', d: circle(28, 42, 10) },
-    { layer: 'accentFill', d: circle(60, 30, 11) },
+    { layer: 'line', d: circle(60, 30, 11) },
     { layer: 'line', d: circle(92, 42, 10) },
     { layer: 'line', d: 'M12 70C12 56 44 56 44 70M44 60C44 48 76 48 76 60M76 70C76 56 108 56 108 70' },
     spark(104, 14, 5)
@@ -225,7 +232,7 @@ export const ILLUSTRATIONS: Record<IllustrationName, readonly Shape[]> = {
     const at = (t: number): Pt => quad(a, b, c, t);
     return [
       { layer: 'line', d: `M${a[0]} ${a[1]}Q${b[0]} ${b[1]} ${c[0]} ${c[1]}` },
-      flag(at(0.16), 'solid'), flag(at(0.38), 'line'), flag(at(0.62), 'accentFill'), flag(at(0.84), 'solid'),
+      flag(at(0.16), 'line'), flag(at(0.38), 'line'), flag(at(0.62), 'line'), flag(at(0.84), 'line'),
       { layer: 'soft', d: dShape(44, 54, 56) },
       ...dMark(35.9, 48, 56)
     ];
@@ -234,8 +241,7 @@ export const ILLUSTRATIONS: Record<IllustrationName, readonly Shape[]> = {
   // ---- Guest -----------------------------------------------------------------------------------------------------
   /** A chain whose links came apart: the link no longer works. */
   linkExpired: [
-    { layer: 'soft', d: capsule(24, 106, 50, 80, 14) },
-    { layer: 'soft', d: capsule(82, 52, 108, 26, 14) },
+    { layer: 'soft', d: capsule(24, 106, 50, 80, 14) + capsule(82, 52, 108, 26, 14) },
     { layer: 'line', d: capsule(18, 100, 44, 74, 14) },
     { layer: 'line', d: capsule(76, 46, 102, 20, 14) },
     { layer: 'accent', d: 'M52 52L68 68' },
@@ -272,7 +278,7 @@ export const ILLUSTRATIONS: Record<IllustrationName, readonly Shape[]> = {
     { layer: 'line', d: rect(16, 26, 88, 78, 16) },
     { layer: 'line', d: 'M16 50H104M40 16V34M80 16V34' },
     { layer: 'solid', d: [[36, 68], [60, 68], [84, 68], [36, 86], [60, 86]].map(([x, y]) => circle(x!, y!, 3.5)).join('') },
-    { layer: 'accentFill', d: circle(84, 86, 6) }
+    { layer: 'line', d: circle(84, 86, 6) }
   ],
   /** A person with the plus: a new client. */
   newClient: [
@@ -294,7 +300,7 @@ export const ILLUSTRATIONS: Record<IllustrationName, readonly Shape[]> = {
       { layer: 'soft', d: dShape(x + 6, y + 6, h) },
       { layer: 'line', d: dShape(x, y, h) },
       { layer: 'line', w: 7, d: poly([p0, p1]) },
-      { layer: 'accentFill', d: dots.map(([dx, dy]) => circle(dx, dy, 3.6)).join('') }
+      { layer: 'line', d: dots.map(([dx, dy]) => circle(dx, dy, 3.6)).join('') }
     ];
   })(),
   /** The D, solid, with the check knocked out: verified. */
@@ -308,11 +314,11 @@ export const ILLUSTRATIONS: Record<IllustrationName, readonly Shape[]> = {
     { layer: 'soft', d: circle(60, 60, 38) },
     { layer: 'line', d: circle(54, 54, 38) },
     { layer: 'line', d: 'M44 40V68M64 40V68' },
-    { layer: 'accentFill', d: circle(100, 20, 4.5) }
+    { layer: 'line', d: circle(100, 20, 4.5) }
   ],
   /** The stall: awning and counter. */
   welcomeProvider: [
-    { layer: 'accentFill', d: 'M40 14H60V38a12 12 0 0 1-24 0Z' },
+    { layer: 'line', d: 'M40 14H60V38a12 12 0 0 1-24 0Z' },
     { layer: 'soft', d: rect(24, 64, 84, 44, 10) },
     { layer: 'line', d: 'M20 14H100L108 38H12Z' },
     { layer: 'line', d: 'M12 38a12 12 0 0 0 24 0a12 12 0 0 0 24 0a12 12 0 0 0 24 0a12 12 0 0 0 24 0' },
@@ -337,17 +343,17 @@ export const ILLUSTRATIONS: Record<IllustrationName, readonly Shape[]> = {
     { layer: 'line', d: rect(18, 12, 66, 88, 12) },
     { layer: 'line', d: circle(36, 36, 6.5) }, { layer: 'line', d: 'M50 36H70' },
     { layer: 'line', d: circle(36, 58, 6.5) }, { layer: 'line', d: 'M50 58H70' },
-    { layer: 'accentFill', d: circle(36, 80, 6.5) }, { layer: 'line', d: 'M50 80H62' },
+    { layer: 'line', d: circle(36, 80, 6.5) }, { layer: 'line', d: 'M50 80H62' },
     ...seal(88, 92, 17)
   ],
 
   // ---- Access and system -----------------------------------------------------------------------------------------
-  /** A closed padlock with an amber keyhole: you do not have access here. */
+  /** A closed padlock with a keyhole: you do not have access here. */
   noAccess: [
     { layer: 'soft', d: rect(32, 56, 68, 54, 14) },
     { layer: 'line', d: rect(26, 50, 68, 54, 14) },
     { layer: 'line', d: 'M40 50V38a20 20 0 0 1 40 0V50' },
-    { layer: 'accentFill', d: circle(60, 74, 7) },
+    { layer: 'line', d: circle(60, 74, 7) },
     { layer: 'line', d: 'M60 78V90' },
     spark(104, 20, 6)
   ],
@@ -370,7 +376,7 @@ export const ILLUSTRATIONS: Record<IllustrationName, readonly Shape[]> = {
     { layer: 'solid', d: circle(34, 85, 3.5) }, { layer: 'line', d: 'M50 85H72' },
     { layer: 'accent', d: 'M62 44L54 53L66 60L58 70' }
   ],
-  /** A traffic cone with amber stripes: back soon. */
+  /** A traffic cone with two stripes: back soon. */
   maintenance: [
     { layer: 'soft', d: poly([[58, 20], [74, 20], [96, 104], [36, 104]], true) },
     { layer: 'line', d: poly([[52, 14], [68, 14], [90, 98], [30, 98]], true) },
@@ -382,8 +388,13 @@ export const ILLUSTRATIONS: Record<IllustrationName, readonly Shape[]> = {
     { layer: 'soft', d: circle(64, 64, 40) },
     { layer: 'line', d: circle(58, 58, 40) },
     { layer: 'line', d: 'M58 22V27M58 89V94M22 58H27M89 58H94' },
-    { layer: 'accentFill', d: poly([[58, 30], [70, 58], [46, 58]], true) },
+    { layer: 'line', d: poly([[58, 30], [70, 58], [46, 58]], true) },
     { layer: 'line', d: poly([[46, 58], [58, 86], [70, 58]]) },
     { layer: 'solid', d: circle(58, 58, 3) }
   ]
 };
+
+/** The shapes of each illustration, without the sparkles. */
+export const ILLUSTRATIONS = Object.fromEntries(
+  (Object.entries(RAW) as [IllustrationName, readonly Shape[]][]).map(([name, shapes]) => [name, shapes.filter((shape) => shape.layer !== 'spark')])
+) as unknown as Record<IllustrationName, readonly Shape[]>;

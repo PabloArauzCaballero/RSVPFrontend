@@ -26,7 +26,7 @@ export function useSaveHeader({ dirty, saved, busy, invalid, error, onReload, on
   const line = dirty
     ? <Text style={styles.body}>{t("host.editor.dirty")}</Text>
     : saved
-      ? <Enter from="up" key="saved"><View role="status" style={[styles.row, { gap: spacing[2] }]}><CheckMark size={22} tone="success" /><Text style={[styles.body, { fontWeight: "700" }]}>{t("host.common.saved")}</Text></View></Enter>
+      ? <Enter from="up" key="saved"><View role="status" style={[styles.row, { gap: spacing[2] }]}><CheckMark size={22} tone="success" /><Text style={[styles.body, { fontWeight: "600" }]}>{t("host.common.saved")}</Text></View></Enter>
       : null;
   const status = invalid || error || line ? (
     <View style={{ gap: spacing[2] }}>

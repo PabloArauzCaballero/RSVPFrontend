@@ -4,7 +4,8 @@ import { siteUrl } from "../lib/metadata";
 import { PartnerLink, type PartnerDestination } from "@rsvp/ui-web";
 import type { Partner } from "../lib/partner";
 import { CheckMark } from "./brand/check-mark";
-import { DOutline, OfflineArt } from "./brand/illustrations";
+import { OfflineArt } from "./brand/illustrations";
+import { Monogram } from "./brand/monogram";
 import { cityBySlug, PROVIDER_CATEGORIES } from "../lib/providers";
 import { Breadcrumbs } from "./provider-directory";
 
@@ -42,14 +43,14 @@ export function PartnerMicrosite({ partner, t, locale }: { readonly partner: Par
         <div className="top__inner">
           <Breadcrumbs t={t} items={[...(categorySlug ? [{ label: category, href: `/proveedores/${categorySlug}` }] : []), { label: partner.name }]} />
           <div className="partner-hero">
-            <div className="partner-hero__media">{partner.imageUrl ? <img src={partner.imageUrl} alt={t("partner.imageAlt", { name: partner.name, category, city: partner.city })} width={960} height={540} decoding="async" fetchPriority="high" /> : <DOutline />}</div>
+            <div className="partner-hero__media">{partner.imageUrl ? <img src={partner.imageUrl} alt={t("partner.imageAlt", { name: partner.name, category, city: partner.city })} width={960} height={540} decoding="async" fetchPriority="high" /> : <Monogram name={partner.name} />}</div>
             <div className="partner-hero__text">
               <h1>{partner.name}</h1>
               <p className="partner-eyebrow">{category} · {partner.city}</p>
-              <p className="directory-verified directory-verified--onblue" title={t("partner.verifiedHint")}><CheckMark size={16} />{t("directory.verified")}</p>
+              <p className="directory-verified" title={t("partner.verifiedHint")}><CheckMark size={16} />{t("directory.verified")}</p>
               <div className="partner-cta">
-                <a className="btn btn--accent" href={`${base}/cotizar`}>{t("detail.quote")}</a>
-                <a className="textlink textlink--onblue" href={`${base}/agenda`}>{t("detail.agenda")}</a>
+                <a className="btn btn--solid" href={`${base}/cotizar`}>{t("detail.quote")}</a>
+                <a className="textlink" href={`${base}/agenda`}>{t("detail.agenda")}</a>
               </div>
             </div>
           </div>

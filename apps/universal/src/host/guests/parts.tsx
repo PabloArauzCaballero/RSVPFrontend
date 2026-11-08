@@ -1,8 +1,8 @@
 import { useState, type ReactNode } from "react";
-import { Platform, Pressable, ScrollView, Text, View, useWindowDimensions } from "react-native";
+import { Pressable, ScrollView, Text, View, useWindowDimensions } from "react-native";
 import { ApiError } from "@rsvp/api-client";
 import { radius, spacing } from "@rsvp/design-tokens";
-import { Avatar, Chip, PressFeedback, SkeletonList, useColors, type ChipTone } from "@rsvp/ui";
+import { Avatar, Chip, PressFeedback, SkeletonList, fonts, useColors, type ChipTone } from "@rsvp/ui";
 import { formatCelebrationDate } from "@rsvp/i18n";
 import type { ProjectionFreshness, RsvpStatus } from "@rsvp/query-hooks";
 import { useLocale, useT } from "../../platform/providers";
@@ -10,15 +10,15 @@ import { ActionButton, ErrorNotice, Notice, useStyles } from "../ui";
 import { classifyFailure } from "./failure";
 
 const MIN_TOUCH = 44;
-const fontFamily = Platform.select({ web: "'Plus Jakarta Sans', 'Avenir Next', 'Segoe UI', system-ui, sans-serif", default: undefined });
+const fontFamily = fonts.sans;
 
-/** A quiet action: text in the brand blue, underlined, 44 px tall. For the third and fourth actions of a screen so the primary one stays alone. */
+/** A quiet action: ink text, underlined, 44 px tall. For the third and fourth actions of a screen so the primary one stays alone. */
 export function TextAction({ label, onPress, testID, disabled = false }: { readonly label: string; readonly onPress: () => void; readonly testID?: string; readonly disabled?: boolean }): ReactNode {
   const palette = useColors();
   return (
     <Pressable accessibilityRole="button" accessibilityLabel={label} aria-disabled={disabled} disabled={disabled} onPress={onPress} {...(testID ? { testID } : {})}
-      style={{ minHeight: MIN_TOUCH, justifyContent: "center", alignSelf: "flex-start", paddingHorizontal: spacing[1], opacity: disabled ? 0.5 : 1 }}>
-      <Text style={{ color: palette.primary, fontWeight: "700", fontSize: 15, textDecorationLine: "underline", fontFamily }}>{label}</Text>
+      style={{ minHeight: MIN_TOUCH, justifyContent: "center", alignSelf: "flex-start", paddingHorizontal: 0, opacity: disabled ? 0.5 : 1 }}>
+      <Text style={{ color: palette.primary, fontWeight: "600", fontSize: 15, textDecorationLine: "underline", fontFamily }}>{label}</Text>
     </Pressable>
   );
 }
@@ -34,7 +34,7 @@ export function MoreOptions({ label, testID, children }: { readonly label: strin
     <View style={{ gap: spacing[3] }}>
       <Pressable accessibilityRole="button" accessibilityLabel={label} aria-expanded={open} onPress={() => setOpen((current) => !current)} {...(testID ? { testID } : {})}
         style={{ minHeight: MIN_TOUCH, flexDirection: "row", alignItems: "center", gap: spacing[2], alignSelf: "flex-start", paddingHorizontal: spacing[1] }}>
-        <Text style={{ color: palette.primary, fontWeight: "700", fontSize: 15, fontFamily }}>{label}</Text>
+        <Text style={{ color: palette.primary, fontWeight: "600", fontSize: 15, fontFamily }}>{label}</Text>
         <View style={{ width: 8, height: 8, marginTop: open ? 3 : -3, borderRightWidth: 2, borderBottomWidth: 2, borderColor: palette.primary, transform: [{ rotate: open ? "225deg" : "45deg" }] }} />
       </Pressable>
       {open ? <View style={{ gap: spacing[4] }}>{children}</View> : null}
@@ -119,9 +119,9 @@ export function CompactPicker({ label, value, options, onChange, testID }: { rea
   const current = options.find((option) => option.value === value)?.label ?? options[0]?.label ?? "";
   return (
     <View style={{ gap: spacing[2] }}>
-      <Text style={{ color: palette.text, fontSize: 14, fontWeight: "700", fontFamily }}>{label}</Text>
+      <Text style={{ color: palette.text, fontSize: 14, fontWeight: "600", fontFamily }}>{label}</Text>
       <Pressable accessibilityRole="button" accessibilityLabel={`${label}: ${current}`} aria-haspopup="listbox" aria-expanded={open} onPress={() => setOpen((state) => !state)} {...(testID ? { testID } : {})}
-        style={{ minHeight: MIN_TOUCH, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing[3], paddingHorizontal: spacing[3], paddingVertical: spacing[2], borderWidth: 1.5, borderColor: palette.fieldBorder, borderRadius: radius.md, backgroundColor: palette.surface }}>
+        style={{ minHeight: MIN_TOUCH, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing[3], paddingHorizontal: spacing[3], paddingVertical: spacing[2], borderWidth: 1, borderColor: palette.fieldBorder, borderRadius: radius.md, backgroundColor: palette.surface }}>
         <Text numberOfLines={2} style={{ flex: 1, color: palette.text, fontSize: 16, fontFamily }}>{current}</Text>
         <View style={{ width: 8, height: 8, marginTop: open ? 3 : -3, borderRightWidth: 2, borderBottomWidth: 2, borderColor: palette.primary, transform: [{ rotate: open ? "225deg" : "45deg" }] }} />
       </Pressable>
@@ -131,7 +131,7 @@ export function CompactPicker({ label, value, options, onChange, testID }: { rea
             {options.map((option) => (
               <Pressable key={option.value} accessibilityRole="radio" aria-checked={option.value === value} accessibilityLabel={option.label} onPress={() => { onChange(option.value); setOpen(false); }}
                 style={{ minHeight: MIN_TOUCH, justifyContent: "center", paddingHorizontal: spacing[3], paddingVertical: spacing[2], backgroundColor: option.value === value ? palette.primaryMuted : palette.surface }}>
-                <Text style={{ color: palette.text, fontSize: 16, fontWeight: option.value === value ? "700" : "400", fontFamily }}>{option.label}</Text>
+                <Text style={{ color: palette.text, fontSize: 16, fontWeight: option.value === value ? "600" : "400", fontFamily }}>{option.label}</Text>
               </Pressable>
             ))}
           </ScrollView>
@@ -160,7 +160,7 @@ export function GuestRow({ name, detail, status, label, onPress, extra }: { read
       <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[3], minHeight: GUEST_ROW_HEIGHT, paddingVertical: spacing[3], paddingHorizontal: spacing[4] }}>
         <Avatar name={name} size={44} />
         <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-          <Text style={styles.subtitle} numberOfLines={2}>{name}</Text>
+          <Text style={styles.itemTitle} numberOfLines={2}>{name}</Text>
           {detail ? <Text style={styles.muted} numberOfLines={1}>{detail}</Text> : null}
           {extra}
           {narrow ? <View style={{ alignSelf: "flex-start", paddingTop: spacing[1] }}><StatusBadge status={status} /></View> : null}
@@ -178,7 +178,7 @@ export function StatusFilter({ label, options, value, onChange }: { readonly lab
     <View accessibilityRole="radiogroup" accessibilityLabel={label} style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing[2] }}>
       {options.map((option) => (
         <Pressable key={option.value} accessibilityRole="radio" aria-checked={value === option.value} accessibilityLabel={option.label} onPress={() => onChange(option.value)} style={[styles.navItem, value === option.value && styles.navItemCurrent]}>
-          <Text style={[styles.label, value === option.value && { fontWeight: "800" }]}>{option.label}</Text>
+          <Text style={[styles.label, value === option.value && { fontWeight: "600" }]}>{option.label}</Text>
         </Pressable>
       ))}
     </View>

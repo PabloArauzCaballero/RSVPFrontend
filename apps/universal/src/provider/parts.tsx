@@ -1,9 +1,9 @@
 import { useEffect, useState, type PropsWithChildren, type ReactNode } from "react";
-import { Platform, View, useWindowDimensions } from "react-native";
+import { Platform, View } from "react-native";
 import { radius, spacing } from "@rsvp/design-tokens";
 import { useT } from "../platform/providers";
 import { readLocal, writeLocal } from "../platform/local-store";
-import { MomentBackdrop, Button, SkeletonList, useColors, type MomentBackdropProps } from "@rsvp/ui";
+import { Button, SkeletonList, useColors } from "@rsvp/ui";
 
 /** Shared pieces of the provider portal and the admin screens: nothing here carries copy except the loading label. */
 
@@ -13,17 +13,10 @@ export function RowsSkeleton({ count = 4, minHeight = 76, avatar = false, traili
   return <SkeletonList count={count} row={{ minHeight, avatar, trailing, lines: 2 }} label={t("host.common.loading")} />;
 }
 
-/** A milestone sits on the still backdrop of the brand (the check is the only thing that moves). */
-export function Moment({ variant, children }: PropsWithChildren<{ readonly variant: MomentBackdropProps["variant"] }>): ReactNode {
-  const { width } = useWindowDimensions();
+/** A milestone sits on a plain card with a 1 px edge (the drawn check is the only thing that moves). */
+export function Moment({ children }: PropsWithChildren): ReactNode {
   const palette = useColors();
-  // The art needs room around the text: under 720 px the check and the words stand alone so nothing crosses the lines.
-  return (
-    <View style={{ position: "relative", overflow: "hidden", borderRadius: radius.xl, maxWidth: 720, width: "100%", ...(width >= 720 ? { backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border } : null) }}>
-      {width >= 720 ? <MomentBackdrop variant={variant} /> : null}
-      {children}
-    </View>
-  );
+  return <View style={{ borderRadius: radius.lg, maxWidth: 720, width: "100%", backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border }}>{children}</View>;
 }
 
 /** True once per device for `key` (a milestone is celebrated the first time it is seen, not on every visit). Starts false so nothing flashes. */
