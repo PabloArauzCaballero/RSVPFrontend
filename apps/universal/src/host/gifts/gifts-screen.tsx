@@ -69,9 +69,9 @@ function GiftRow({ item, first, currencyLocale, onApprove, onReject, approving, 
 function GiftFigure({ label, value, testID }: { readonly label: string; readonly value: number; readonly testID: string }): ReactNode {
   const palette = useColors();
   return (
-    <View testID={testID} accessible accessibilityLabel={`${label}: ${value}`} style={{ flexGrow: 1, flexBasis: 150, minWidth: 0, backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, borderRadius: radius.lg, padding: spacing[6], gap: spacing[2] }}>
-      <Text style={{ color: palette.textMuted, fontSize: 12, lineHeight: 16, fontWeight: "600", letterSpacing: 0.6, textTransform: "uppercase", fontFamily: fonts.sans }}>{label}</Text>
-      <CountUp value={value} numberOfLines={1} style={{ color: palette.text, fontSize: 32, lineHeight: 36, fontWeight: "500", letterSpacing: -0.8, fontFamily: fonts.display, fontVariant: ["tabular-nums"] }} />
+    <View testID={testID} accessible accessibilityLabel={`${label}: ${value}`} style={{ flexGrow: 1, flexBasis: 0, minWidth: 0, gap: spacing[1] }}>
+      <CountUp value={value} numberOfLines={1} style={{ color: palette.text, fontSize: 28, lineHeight: 32, fontWeight: "500", letterSpacing: -0.6, fontFamily: fonts.display, fontVariant: ["tabular-nums"] }} />
+      <Text style={{ color: palette.textMuted, fontSize: 12, lineHeight: 16, fontWeight: "500", fontFamily: fonts.sans }} numberOfLines={1} adjustsFontSizeToFit>{label}</Text>
     </View>
   );
 }
@@ -79,12 +79,13 @@ function GiftFigure({ label, value, testID }: { readonly label: string; readonly
 /** The list at a glance: how many gifts, and how many are open, taken or waiting for the host. */
 function GiftFigures({ items }: { readonly items: readonly GiftItem[] }): ReactNode {
   const t = useT();
+  const palette = useColors();
   const live = items.filter((item) => item.status !== "REJECTED");
   const available = live.filter((item) => item.status === "AVAILABLE").length;
   const reserved = live.filter((item) => item.status === "COMMITTED").length;
   const review = live.filter((item) => item.status === "PROPOSED" || item.status === "PENDING_REVIEW").length;
   return (
-    <View testID="gift-figures" style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing[4] }}>
+    <View testID="gift-figures" style={{ flexDirection: "row", gap: spacing[2], backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, borderRadius: radius.lg, paddingVertical: spacing[4], paddingHorizontal: spacing[4] }}>
       <GiftFigure testID="gift-count" label={t("gifts.host.figures.gifts")} value={live.length} />
       <GiftFigure testID="gift-available" label={t("gifts.host.figures.available")} value={available} />
       <GiftFigure testID="gift-reserved" label={t("gifts.host.figures.reserved")} value={reserved} />

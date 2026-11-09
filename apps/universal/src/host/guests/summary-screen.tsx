@@ -46,6 +46,11 @@ const STEP_ROUTE: Readonly<Record<Exclude<NextStep["kind"], "done">, string>> = 
 };
 
 /** One legend entry: a swatch, the word and the number. The swatch never carries the meaning alone. */
+/** Phones give back the room a 390 px screen cannot spare: cards pad 20 instead of 32. */
+function useCardPad(large: number): number {
+  return useWindowDimensions().width < 600 ? spacing[5] : large;
+}
+
 function LegendItem({ testID, label, value, swatch }: { readonly testID: string; readonly label: string; readonly value: number; readonly swatch: string }): ReactNode {
   const palette = useColors();
   const styles = useStyles();
@@ -89,13 +94,14 @@ function deadlineLine(celebration: Celebration, t: ReturnType<typeof useT>, now:
 /** The one thing to do now, said as a plain card with a serif title and a soft entrance each time the step changes. Its button lives in the header (top right), where every screen keeps its single primary action. */
 function NextCard({ step, t }: { readonly step: Exclude<NextStep, { kind: "done" | "addGuests" }>; readonly t: ReturnType<typeof useT> }): ReactNode {
   const palette = useColors();
+  const pad = useCardPad(spacing[8]);
   const base = `guests.summary.next.${step.kind}`;
   const count = step.kind === "finish" ? step.missing : step.kind === "publish" ? 0 : step.count;
   const title = step.kind === "publish" ? t(`${base}.title`) : step.kind === "finish" ? t(`${base}.title`) : t(`${base}.title`, { count });
   const body = step.kind === "finish" ? t(`${base}.body`, { count }) : t(`${base}.body`);
   return (
     <Enter key={step.kind} from="down">
-      <View testID="next-step" style={{ backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, borderRadius: radius.lg, padding: spacing[8], gap: spacing[3] }}>
+      <View testID="next-step" style={{ backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, borderRadius: radius.lg, padding: pad, gap: spacing[3] }}>
         <Text accessibilityRole="header" aria-level={2} style={{ color: palette.text, fontSize: 30, lineHeight: 34, fontWeight: "500", letterSpacing: -0.8, fontFamily: fonts.display, maxWidth: 560 }}>{title}</Text>
         <Text style={{ color: palette.textMuted, fontSize: 16, lineHeight: 26, maxWidth: 520, fontFamily: fonts.sans }}>{body}</Text>
       </View>
@@ -106,10 +112,11 @@ function NextCard({ step, t }: { readonly step: Exclude<NextStep, { kind: "done"
 /** One number of the answer, as a tile: the word, the figure in the serif, and its share of the guests. The swatch repeats the word and is never the only cue. */
 function StatTile({ testID, label, value, total, swatch }: { readonly testID: string; readonly label: string; readonly value: number; readonly total?: number; readonly swatch: string }): ReactNode {
   const palette = useColors();
+  const pad = useCardPad(spacing[6]);
   const t = useT();
   const share = total ? Math.round((value / total) * 100) : null;
   return (
-    <View testID={testID} accessible accessibilityLabel={`${label}: ${value}`} style={{ flexGrow: 1, flexBasis: 150, backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, borderRadius: radius.lg, padding: spacing[6], gap: spacing[3], minWidth: 0 }}>
+    <View testID={testID} accessible accessibilityLabel={`${label}: ${value}`} style={{ flexGrow: 1, flexBasis: 150, backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, borderRadius: radius.lg, padding: pad, gap: spacing[3], minWidth: 0 }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[2] }}>
         <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: swatch }} />
         <Text style={{ color: palette.textMuted, fontSize: 12, lineHeight: 16, fontWeight: "600", letterSpacing: 0.6, textTransform: "uppercase", fontFamily: fonts.sans }}>{label}</Text>
@@ -123,6 +130,7 @@ function StatTile({ testID, label, value, total, swatch }: { readonly testID: st
 /** The celebration at a glance: when and where, how many days are left, and how many guests there are. */
 function EventHero({ celebration, total, answered, t }: { readonly celebration: Celebration; readonly total: number; readonly answered: number; readonly t: ReturnType<typeof useT> }): ReactNode {
   const palette = useColors();
+  const pad = useCardPad(spacing[8]);
   const locale = useLocale();
   const narrow = useWindowDimensions().width < 640;
   const eventDate = asText(celebration.content["eventDate"]);
@@ -132,7 +140,7 @@ function EventHero({ celebration, total, answered, t }: { readonly celebration: 
   const dateLabel = Number.isFinite(when) ? new Intl.DateTimeFormat(locale === "en-US" ? "en-US" : "es-BO", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(when).replace(/^./, (first) => first.toUpperCase()) : "";
   if (!dateLabel && !venue && total === 0) return null;
   return (
-    <View testID="event-hero" style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "flex-end", justifyContent: "space-between", gap: spacing[6], backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, borderRadius: radius.lg, padding: spacing[8] }}>
+    <View testID="event-hero" style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "flex-end", justifyContent: "space-between", gap: spacing[6], backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, borderRadius: radius.lg, padding: pad }}>
       <View style={{ gap: spacing[2], flexShrink: 1, minWidth: 220 }}>
         {dateLabel ? <Text style={{ color: palette.text, fontSize: 20, lineHeight: 28, fontFamily: fonts.display, fontWeight: "500", letterSpacing: -0.3 }}>{dateLabel}</Text> : null}
         {venue ? <Text style={{ color: palette.textMuted, fontSize: 15, lineHeight: 22, fontFamily: fonts.sans }}>{venue}</Text> : null}

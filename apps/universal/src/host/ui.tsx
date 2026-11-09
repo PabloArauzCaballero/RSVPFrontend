@@ -1,5 +1,5 @@
 import { useState, type PropsWithChildren, type ReactNode } from "react";
-import { Modal, Pressable, StyleSheet, Text, View, type KeyboardTypeOptions } from "react-native";
+import { Modal, Pressable, StyleSheet, Text, View, useWindowDimensions, type KeyboardTypeOptions } from "react-native";
 import { usePathname, useRouter, type Href } from "expo-router";
 import { ApiError } from "@rsvp/api-client";
 import { Button, CheckMark, Enter, fonts, Input, NoticeMark, OverlayEnter, overlayAnimation, pressVisual, SkeletonList, useColors, useReducedMotion, useTheme } from "@rsvp/ui";
@@ -24,7 +24,7 @@ const STATUS_TOO_MANY = 429;
 const STATUS_UNAUTHORIZED = 401;
 
 /** Style sheet of one palette. Never build it at module level from a single palette: it is created once per scheme below. */
-function createHostStyles(palette: (typeof colors)[ColorTheme]) {
+function createHostStyles(palette: (typeof colors)[ColorTheme], compact: boolean) {
   return StyleSheet.create({
   page: { flexGrow: 1, backgroundColor: palette.canvas },
   content: { width: "100%", maxWidth: MAX_CONTENT_WIDTH, alignSelf: "center", padding: spacing[4], gap: spacing[6] },
@@ -36,7 +36,7 @@ function createHostStyles(palette: (typeof colors)[ColorTheme]) {
   label: { color: palette.text, fontSize: typography.fontSize.sm, fontWeight: "600", fontFamily },
   input: { minHeight: MIN_TOUCH + 4, borderWidth: 1, borderColor: palette.fieldBorder, borderRadius: radius.md, paddingHorizontal: spacing[3], color: palette.text, backgroundColor: palette.surface, fontSize: typography.fontSize.base, fontFamily },
   inputError: { borderColor: palette.danger },
-  card: { backgroundColor: palette.surface, borderColor: palette.border, borderWidth: 1, borderRadius: radius.lg, padding: spacing[8], gap: spacing[5] },
+  card: { backgroundColor: palette.surface, borderColor: palette.border, borderWidth: 1, borderRadius: radius.lg, padding: compact ? spacing[5] : spacing[8], gap: compact ? spacing[4] : spacing[5] },
   row: { flexDirection: "row", flexWrap: "wrap", gap: spacing[3], alignItems: "center" },
   nav: { flexDirection: "row", flexWrap: "wrap", gap: spacing[2] },
   navItem: { minHeight: MIN_TOUCH, justifyContent: "center", paddingHorizontal: spacing[4], borderRadius: radius.md, backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.fieldBorder },
@@ -61,11 +61,17 @@ function createHostStyles(palette: (typeof colors)[ColorTheme]) {
 }
 
 type HostStyles = ReturnType<typeof createHostStyles>;
-const sheets: Readonly<Record<ColorTheme, HostStyles>> = { light: createHostStyles(colors.light), dark: createHostStyles(colors.dark) };
+const sheets: Readonly<Record<ColorTheme, Readonly<Record<"compact" | "regular", HostStyles>>>> = {
+  light: { compact: createHostStyles(colors.light, true), regular: createHostStyles(colors.light, false) },
+  dark: { compact: createHostStyles(colors.dark, true), regular: createHostStyles(colors.dark, false) }
+};
+/** Phones: cards give back the room a 390 px screen cannot spare. */
+const COMPACT_BELOW = 600;
 
 /** The shared host/admin/provider styles for the active scheme. Call it in the component that draws. */
 export function useStyles(): HostStyles {
-  return sheets[useTheme().scheme];
+  const { width } = useWindowDimensions();
+  return sheets[useTheme().scheme][width < COMPACT_BELOW ? "compact" : "regular"];
 }
 
 export { Screen, type NavItem, type NavTab } from "./shell";

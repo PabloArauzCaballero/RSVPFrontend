@@ -33,7 +33,7 @@ function GroupFilter({ celebrationId, value, onChange }: { readonly celebrationI
   const items = groups.data?.items ?? [];
   if (items.length === 0 && value === "") return null;
   // Group names can be long: the picker is capped so the three controls keep one row on a wide screen.
-  return <View style={{ maxWidth: 240, flexShrink: 1, minWidth: 0 }}><FilterSelect testID="group-filter" label={t("guests.list.groupFilter")} value={value} onChange={onChange} options={[{ value: "", label: t("guests.list.allGroups") }, ...items.map((item) => ({ value: item.id, label: item.name, count: item.memberCount }))]} /></View>;
+  return <View style={{ flex: 1, minWidth: 0 }}><FilterSelect testID="group-filter" label={t("guests.list.groupFilter")} value={value} onChange={onChange} options={[{ value: "", label: t("guests.list.allGroups") }, ...items.map((item) => ({ value: item.id, label: item.name, count: item.memberCount }))]} /></View>;
 }
 
 /** The whole guest list in one line of figures (a dot repeats each word, never replaces it). Hidden until the summary has answered. */
@@ -103,8 +103,12 @@ function ListBody({ celebrationId, timeZone, onNavigate }: { readonly celebratio
           <View style={{ flexGrow: 1, flexBasis: 240, minWidth: 0 }}>
             <TextInput accessibilityLabel={t("guests.list.search")} placeholder={t("guests.list.search")} placeholderTextColor={palette.textMuted} value={search} onChangeText={(value) => { setSearch(value); setOffset(0); }} autoCapitalize="none" returnKeyType="search" maxLength={SEARCH_MAX} style={styles.input} testID="guest-search" />
           </View>
+          <View style={{ flexDirection: "row", gap: spacing[3], flexGrow: 1, flexBasis: 320, minWidth: 0 }}>
+            <View style={{ flex: 1, minWidth: 0 }}>
           <FilterSelect testID="status-filter" label={t("guests.list.filterLabel")} value={status} onChange={(value) => { setStatus(value as RsvpStatus | "ALL"); setOffset(0); }} options={FILTERS.map((value) => ({ value, label: value === "ALL" ? t("guests.list.all") : t(`guests.status.${value}`), ...(counts[value] !== undefined ? { count: counts[value] } : {}) }))} />
+            </View>
           {data ? <GroupFilter celebrationId={celebrationId} value={group} onChange={(value) => { setGroup(value); setOffset(0); }} /> : null}
+          </View>
         </View>
       )}
       {list.isPending ? <GuestListSkeleton /> : null}
