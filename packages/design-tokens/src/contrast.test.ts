@@ -41,9 +41,9 @@ describe('dark palette is composed, not inverted', () => {
     expect(luminance(colors.dark.canvas)).toBeLessThan(luminance(colors.dark.surface));
     expect(luminance(colors.dark.surface)).toBeLessThan(luminance(colors.dark.surfaceMuted));
   });
-  it('keeps the ink as the action colour in both schemes (no hue on primary actions)', () => {
+  it('keeps the ink as the action colour on light and a warm gold on dark (a bone-white button glares on the dark canvas)', () => {
     expect(colors.light.primary).toBe('#111111');
-    expect(colors.dark.primary).toBe(colors.dark.text);
+    expect(colors.dark.primary).toBe('#D9B65A');
   });
 });
 

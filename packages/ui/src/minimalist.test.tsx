@@ -15,7 +15,7 @@ const contrast = (a: string, b: string): number => { const [hi, lo] = [luminance
 describe('fonts', () => {
   it('exposes the three stacks of the system, web names first with a safe fallback', () => {
     expect(fonts.sans).toMatch(/^'Geist',.*sans-serif$/);
-    expect(fonts.display).toMatch(/^'Newsreader',.*serif$/);
+    expect(fonts.display).toMatch(/^'Geist',.*sans-serif$/);
     expect(fonts.mono).toMatch(/^'Geist Mono',.*monospace$/);
     for (const stack of [fonts.sans, fonts.display, fonts.mono]) expect(stack).not.toMatch(/Inter|Roboto|Open Sans|Jakarta/);
   });
