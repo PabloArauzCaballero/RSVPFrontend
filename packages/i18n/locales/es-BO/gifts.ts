@@ -63,7 +63,7 @@ export const giftsEsBO = {
   },
   host: {
     title: "Regalos", intro: "Lo que agregues aquí lo ven tus invitados y lo reservan con un toque.", nav: "Regalos",
-    list: {
+    figures: { gifts: "Regalos", available: "Disponibles", reserved: "Reservados", review: "Por revisar" }, list: {
       emptyTitle: "Tu lista empieza con un regalo", emptyBody: "Elige productos de nuestros aliados o enlaza uno de tu tienda favorita. Tus invitados lo reservan y nadie regala lo mismo dos veces.",
       add: "Agregar regalo", fromPartner: "De un aliado", external: "De una tienda", reservedBy: "Reservado por {{name}}",
       more: "Más opciones", pending: "Reservas por revisar: {{count}}", pendingBody: "Tus invitados esperan tu respuesta.", pendingAction: "Revisar reservas"

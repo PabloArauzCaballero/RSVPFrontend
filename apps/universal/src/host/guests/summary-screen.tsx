@@ -1,7 +1,7 @@
-import type { ReactNode } from "react";
-import { Text, View, useWindowDimensions } from "react-native";
+import { useEffect, useState, type ReactNode } from "react";
+import { Text, View, useWindowDimensions, type ViewStyle } from "react-native";
 import { chips, radius, spacing } from "@rsvp/design-tokens";
-import { CheckMark, Enter, Skeleton, SkeletonList, fonts, useColors, useTheme } from "@rsvp/ui";
+import { CheckMark, CountUp, Enter, Skeleton, SkeletonList, fonts, useColors, useReducedMotion, useTheme } from "@rsvp/ui";
 import { countdownTo, useCelebration, useGuestSummary, useHostReservations, usePublishCheck, type Celebration } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
@@ -63,10 +63,17 @@ function ResponseBar({ confirmed, declined, total }: { readonly confirmed: numbe
   const { scheme } = useTheme();
   const { yes, no } = { yes: chips[scheme].yes.dot, no: chips[scheme].no.dot };
   const share = (n: number): `${number}%` => `${total ? (n / total) * 100 : 0}%`;
+  // The bar draws itself from the left once, on arrival; a changed figure re-draws it softly. Only transform animates.
+  const reduced = useReducedMotion();
+  const [drawn, setDrawn] = useState(reduced);
+  useEffect(() => { const id = setTimeout(() => setDrawn(true), 60); return () => clearTimeout(id); }, []);
+  const reveal = { transform: drawn ? "scaleX(1)" : "scaleX(0)", transformOrigin: "left center", transitionProperty: "transform", transitionDuration: reduced ? "0ms" : "900ms", transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)" } as ViewStyle;
   return (
     <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ height: 8, borderRadius: radius.full, backgroundColor: palette.surfaceMuted, overflow: "hidden", flexDirection: "row" }}>
-      <View style={{ width: share(confirmed), backgroundColor: yes }} />
-      <View style={{ width: share(declined), backgroundColor: no }} />
+      <View style={[{ flex: 1, flexDirection: "row" }, reveal]}>
+        <View style={{ width: share(confirmed), backgroundColor: yes }} />
+        <View style={{ width: share(declined), backgroundColor: no }} />
+      </View>
     </View>
   );
 }
@@ -107,7 +114,7 @@ function StatTile({ testID, label, value, total, swatch }: { readonly testID: st
         <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: swatch }} />
         <Text style={{ color: palette.textMuted, fontSize: 12, lineHeight: 16, fontWeight: "600", letterSpacing: 0.6, textTransform: "uppercase", fontFamily: fonts.sans }}>{label}</Text>
       </View>
-      <Text style={{ color: palette.text, fontSize: 44, lineHeight: 46, fontWeight: "500", letterSpacing: -1.2, fontFamily: fonts.display, fontVariant: ["tabular-nums"] }}>{value}</Text>
+      <CountUp value={value} style={{ color: palette.text, fontSize: 44, lineHeight: 46, fontWeight: "500", letterSpacing: -1.2, fontFamily: fonts.display, fontVariant: ["tabular-nums"] }} />
       <Text style={{ color: palette.textMuted, fontSize: 13, lineHeight: 18, fontFamily: fonts.sans }}>{share === null ? " " : t("guests.summary.shareOfGuests", { percent: share })}</Text>
     </View>
   );
@@ -133,7 +140,7 @@ function EventHero({ celebration, total, answered, t }: { readonly celebration: 
       </View>
       {days !== null && days >= 0 ? (
         <View testID="days-left" style={{ alignItems: narrow ? "flex-start" : "flex-end" }}>
-          <Text style={{ color: palette.text, fontSize: 64, lineHeight: 64, fontWeight: "500", letterSpacing: -2, fontFamily: fonts.display, fontVariant: ["tabular-nums"] }}>{days}</Text>
+          <CountUp value={days} durationMs={900} style={{ color: palette.text, fontSize: 64, lineHeight: 64, fontWeight: "500", letterSpacing: -2, fontFamily: fonts.display, fontVariant: ["tabular-nums"] }} />
           <Text style={{ color: palette.textMuted, fontSize: 13, lineHeight: 18, fontWeight: "600", letterSpacing: 0.6, textTransform: "uppercase", fontFamily: fonts.sans }}>{t("guests.summary.daysLeft", { count: days })}</Text>
         </View>
       ) : null}

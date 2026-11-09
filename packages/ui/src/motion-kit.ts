@@ -6,3 +6,4 @@ export { PressFeedback, type PressFeedbackProps } from './press-feedback';
 export { Skeleton, SkeletonRow, SkeletonList, type SkeletonProps, type SkeletonRowProps, type SkeletonListProps } from './skeleton';
 export { StepTransition, type StepDirection, type StepTransitionProps } from './step-transition';
 export { ScreenTransition, resetScreenHistory, type ScreenTransitionProps } from './screen-transition';
+export { CountUp, type CountUpProps } from './count-up';

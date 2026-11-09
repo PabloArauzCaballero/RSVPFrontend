@@ -89,7 +89,7 @@ export function useGuestList(client: ApiClient, celebrationId: string, filters: 
   return useQuery({ queryKey: queryKeys.guest.list(celebrationId, filters), queryFn: ({ signal }) => hostGuestsApi(client).list(celebrationId, filters, signal), enabled: Boolean(celebrationId), placeholderData: keepPreviousData, ...cachePolicy.guest });
 }
 export function useGuestSummary(client: ApiClient, celebrationId: string) {
-  return useQuery({ queryKey: queryKeys.guest.summary(celebrationId), queryFn: () => hostGuestsApi(client).summary(celebrationId), enabled: Boolean(celebrationId), ...cachePolicy.guest });
+  return useQuery({ queryKey: queryKeys.guest.summary(celebrationId), queryFn: () => hostGuestsApi(client).summary(celebrationId), enabled: Boolean(celebrationId), refetchInterval: 30_000, refetchIntervalInBackground: false, ...cachePolicy.guest });
 }
 export function useHostRsvps(client: ApiClient, celebrationId: string) {
   return useQuery({ queryKey: queryKeys.guest.rsvps(celebrationId), queryFn: () => hostGuestsApi(client).rsvps(celebrationId, { limit: 1000, offset: 0 }), enabled: Boolean(celebrationId), ...cachePolicy.guest });

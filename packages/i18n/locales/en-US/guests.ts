@@ -47,7 +47,7 @@ export const guestsEnUS: DeepStrings<typeof guestsEsBO> = {
     openRequests_one: "{{count}} companion request to review", openRequests_other: "{{count}} companion requests to review"
   },
   list: {
-    title: "Who is coming", intro: "Your guest list, with each reply next to the name.", search: "Search by name or email", filterLabel: "Filter by reply", all: "All",
+    title: "Who is coming", intro: "Your guest list, with each reply next to the name.", totalGuests_one: "{{count}} guest", totalGuests_other: "{{count}} guests", search: "Search by name or email", filterLabel: "Filter by reply", all: "All",
     emptyTitle: "Here you will see who is coming", empty: "Add the first people and send them their link. Their replies show up here.", appearing: "Appearing…", emptyFilteredTitle: "No matches", emptyFiltered: "We could not find anyone with that search. Try another name or email.",
     add: "Add guest", import: "Import CSV", groups: "Groups", page: "Showing {{from}}–{{to}} of {{total}}", prev: "Previous", next: "Next",
     companions: "Companions allowed: {{count}}", open: "Open {{name}}", retry: "Try again", settings: "Guest settings", groupFilter: "Filter by group", allGroups: "All groups"

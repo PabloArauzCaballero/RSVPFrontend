@@ -66,7 +66,7 @@ export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
   },
   host: {
     title: "Gifts", intro: "What you add here your guests see and reserve with one tap.", nav: "Gifts",
-    list: {
+    figures: { gifts: "Gifts", available: "Available", reserved: "Reserved", review: "To review" }, list: {
       emptyTitle: "Your list starts with one gift", emptyBody: "Pick products from our partners or link one from your favorite store. Guests reserve it, so nobody gives the same thing twice.",
       add: "Add a gift", fromPartner: "From a partner", external: "From a store", reservedBy: "Reserved by {{name}}",
       more: "More options", pending: "Reservations to review: {{count}}", pendingBody: "Your guests are waiting for your answer.", pendingAction: "Review reservations"

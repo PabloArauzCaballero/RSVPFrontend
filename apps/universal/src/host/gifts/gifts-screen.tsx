@@ -1,7 +1,7 @@
-import { Chip, SkeletonList, Stagger, SwitchRow } from "@rsvp/ui";
+import { Chip, CountUp, SkeletonList, Stagger, SwitchRow, fonts, useColors } from "@rsvp/ui";
 import { useState, type ReactNode } from "react";
-import { Text, View } from "react-native";
-import { spacing } from "@rsvp/design-tokens";
+import { Text, View, useWindowDimensions } from "react-native";
+import { radius, spacing } from "@rsvp/design-tokens";
 import { ApiError } from "@rsvp/api-client";
 import { formatMinor } from "@rsvp/i18n";
 import { catalogedFirst, useApproveExternalGift, useGiftList, useHostReservations, useRejectExternalGift, useGiftSettings, useUpdateGiftSettings, type GiftItem } from "@rsvp/query-hooks";
@@ -20,27 +20,76 @@ const STATUS_TONE: Readonly<Record<GiftItem["status"], ChipTone>> = { AVAILABLE:
 
 const NOT_FOUND = 404;
 
-/** C29 · One gift: title, price and origin, its status as a chip (a dot and a word) and, for a proposal, the two decisions. */
+/** A square monogram: the first letter of the gift on a quiet ground, so every row has a face before it has a photo. */
+function Monogram({ title }: { readonly title: string }): ReactNode {
+  const palette = useColors();
+  return (
+    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: 48, height: 48, borderRadius: radius.md, backgroundColor: palette.surfaceMuted, borderWidth: 1, borderColor: palette.border, alignItems: "center", justifyContent: "center" }}>
+      <Text style={{ color: palette.text, fontSize: 22, lineHeight: 26, fontWeight: "500", fontFamily: fonts.display }}>{title.trim().charAt(0).toUpperCase()}</Text>
+    </View>
+  );
+}
+
+/** C29 · One gift: a monogram, the title with its origin, the price set apart on the right, the status as a chip and, for a proposal, the two decisions. */
 function GiftRow({ item, first, currencyLocale, onApprove, onReject, approving, rejecting, locked }: { readonly item: GiftItem; readonly first: boolean; readonly currencyLocale: ReturnType<typeof useLocale>; readonly onApprove: (id: string) => void; readonly onReject: (item: GiftItem) => void; readonly approving: boolean; readonly rejecting: boolean; readonly locked: boolean }): ReactNode {
   const styles = useStyles();
+  const palette = useColors();
   const t = useT();
+  const narrow = useWindowDimensions().width < 520;
+  const origin = item.source === "CATALOGED" ? t("gifts.host.list.fromPartner") : t("gifts.host.list.external");
+  const price = formatMinor(item.price.amountMinor, item.price.currency, currencyLocale);
   return (
     <Row first={first} testID={`gift-${item.id}`}>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: spacing[2] }}>
-        <View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 200, gap: 2 }}>
-          <Text style={styles.itemTitle}>{item.title}</Text>
-          <Text style={styles.body}>{formatMinor(item.price.amountMinor, item.price.currency, currencyLocale)} · {item.source === "CATALOGED" ? t("gifts.host.list.fromPartner") : t("gifts.host.list.external")}</Text>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[4] }}>
+        <Monogram title={item.title} />
+        <View style={{ flex: 1, minWidth: 0, gap: spacing[1] }}>
+          <Text style={styles.itemTitle} numberOfLines={2}>{item.title}</Text>
+          <Text style={styles.muted} numberOfLines={1}>{origin}{narrow ? ` · ${price}` : ""}</Text>
           {item.reservedByName ? <Text style={styles.muted} testID={`gift-by-${item.id}`}>{t("gifts.host.list.reservedBy", { name: item.reservedByName })}</Text> : null}
+          {narrow ? <View testID={`gift-status-${item.id}`} style={{ alignSelf: "flex-start", paddingTop: spacing[1] }}><Chip tone={STATUS_TONE[item.status]}>{t(`gifts.host.status.${item.status}`)}</Chip></View> : null}
         </View>
-        <View testID={`gift-status-${item.id}`}><Chip tone={STATUS_TONE[item.status]}>{t(`gifts.host.status.${item.status}`)}</Chip></View>
+        {narrow ? null : (
+          <View style={{ alignItems: "flex-end", gap: spacing[2] }}>
+            <Text style={{ color: palette.text, fontSize: 20, lineHeight: 24, fontWeight: "500", letterSpacing: -0.3, fontFamily: fonts.display, fontVariant: ["tabular-nums"] }}>{price}</Text>
+            <View testID={`gift-status-${item.id}`}><Chip tone={STATUS_TONE[item.status]}>{t(`gifts.host.status.${item.status}`)}</Chip></View>
+          </View>
+        )}
       </View>
       {item.status === "PROPOSED" ? (
-        <View style={styles.row}>
+        <View style={[styles.row, { paddingLeft: narrow ? 0 : 48 + spacing[4], paddingTop: spacing[2] }]}>
           <ActionButton variant="secondary" label={approving ? t("gifts.host.approvingProposal") : t("gifts.host.approveProposal")} busy={approving} disabled={locked} onPress={() => onApprove(item.id)} testID={`approve-proposal-${item.id}`} />
           <ActionButton variant="secondary" label={rejecting ? t("gifts.host.rejectingProposal") : t("gifts.host.rejectProposal")} busy={rejecting} disabled={locked} onPress={() => onReject(item)} testID={`reject-proposal-${item.id}`} />
         </View>
       ) : null}
     </Row>
+  );
+}
+
+/** One figure of the gift list: the word, the number in the serif and, when it adds something, a line under it. */
+function GiftFigure({ label, value, testID }: { readonly label: string; readonly value: number; readonly testID: string }): ReactNode {
+  const palette = useColors();
+  return (
+    <View testID={testID} accessible accessibilityLabel={`${label}: ${value}`} style={{ flexGrow: 1, flexBasis: 150, minWidth: 0, backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, borderRadius: radius.lg, padding: spacing[6], gap: spacing[2] }}>
+      <Text style={{ color: palette.textMuted, fontSize: 12, lineHeight: 16, fontWeight: "600", letterSpacing: 0.6, textTransform: "uppercase", fontFamily: fonts.sans }}>{label}</Text>
+      <CountUp value={value} numberOfLines={1} style={{ color: palette.text, fontSize: 32, lineHeight: 36, fontWeight: "500", letterSpacing: -0.8, fontFamily: fonts.display, fontVariant: ["tabular-nums"] }} />
+    </View>
+  );
+}
+
+/** The list at a glance: how many gifts, and how many are open, taken or waiting for the host. */
+function GiftFigures({ items }: { readonly items: readonly GiftItem[] }): ReactNode {
+  const t = useT();
+  const live = items.filter((item) => item.status !== "REJECTED");
+  const available = live.filter((item) => item.status === "AVAILABLE").length;
+  const reserved = live.filter((item) => item.status === "COMMITTED").length;
+  const review = live.filter((item) => item.status === "PROPOSED" || item.status === "PENDING_REVIEW").length;
+  return (
+    <View testID="gift-figures" style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing[4] }}>
+      <GiftFigure testID="gift-count" label={t("gifts.host.figures.gifts")} value={live.length} />
+      <GiftFigure testID="gift-available" label={t("gifts.host.figures.available")} value={available} />
+      <GiftFigure testID="gift-reserved" label={t("gifts.host.figures.reserved")} value={reserved} />
+      {review > 0 ? <GiftFigure testID="gift-review" label={t("gifts.host.figures.review")} value={review} /> : null}
+    </View>
   );
 }
 
@@ -111,6 +160,7 @@ function GiftsBody({ celebrationId, onNavigate }: { readonly celebrationId: stri
         <EmptyState illustration="noGifts" title={t("gifts.host.list.emptyTitle")} body={t("gifts.host.list.emptyBody")} />
       ) : (
         <>
+          <GiftFigures items={items} />
           <RowList>
             <Stagger>{items.map((item, index) => <GiftRow key={item.id} first={index === 0} item={item} currencyLocale={locale} onApprove={(id) => { setRejected(null); reject.reset(); if (flight.begin()) approve.mutate(id, { onSettled: flight.end }); }} onReject={(target) => { setRejected(null); approve.reset(); reject.reset(); setRejectTarget(target); }} approving={approve.isPending && approve.variables === item.id} rejecting={reject.isPending && reject.variables === item.id} locked={locked} />)}</Stagger>
           </RowList>

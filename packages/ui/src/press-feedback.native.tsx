@@ -9,7 +9,7 @@ const OUT = Easing.bezier(EASE.out[0], EASE.out[1], EASE.out[2], EASE.out[3]);
  * Native: scale 0.98 with `Animated` on the native driver; the scale sits on an inner view so the 44 pt hit area is intact.
  * Press-in animates from the current value, so a quick second tap never jumps. Reduce Motion dims instead of scaling.
  */
-export function PressFeedback({ children, style, minTarget = true, accessibilityRole = 'button', onPressIn, onPressOut, disabled, ...rest }: PressFeedbackProps) {
+export function PressFeedback({ children, style, minTarget = true, hoverTint: _hover, accessibilityRole = 'button', onPressIn, onPressOut, disabled, ...rest }: PressFeedbackProps) {
   const reduced = useReducedMotion();
   const level = useRef(new Animated.Value(0)).current;
   const to = (value: number, duration: number): void => { Animated.timing(level, { toValue: value, duration, easing: OUT, useNativeDriver: true }).start(); };

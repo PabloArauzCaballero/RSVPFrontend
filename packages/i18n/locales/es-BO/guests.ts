@@ -44,7 +44,7 @@ export const guestsEsBO = {
     openRequests_one: "{{count}} solicitud de acompañantes por revisar", openRequests_other: "{{count}} solicitudes de acompañantes por revisar"
   },
   list: {
-    title: "Quién viene", intro: "Tu lista de invitados, con su respuesta al lado.", search: "Buscar por nombre o correo", filterLabel: "Filtrar por respuesta", all: "Todos",
+    title: "Quién viene", intro: "Tu lista de invitados, con su respuesta al lado.", totalGuests_one: "{{count}} invitado", totalGuests_other: "{{count}} invitados", search: "Buscar por nombre o correo", filterLabel: "Filtrar por respuesta", all: "Todos",
     emptyTitle: "Aquí verás quién viene", empty: "Agrega a las primeras personas y mándales su enlace. Sus respuestas aparecen aquí.", appearing: "Apareciendo…", emptyFilteredTitle: "No hay coincidencias", emptyFiltered: "No encontramos a nadie con esa búsqueda. Prueba con otro nombre o correo.",
     add: "Agregar invitado", import: "Importar CSV", groups: "Grupos", page: "Mostrando {{from}}–{{to}} de {{total}}", prev: "Anterior", next: "Siguiente",
     companions: "Acompañantes permitidos: {{count}}", open: "Abrir a {{name}}", retry: "Reintentar", settings: "Ajustes de invitados", groupFilter: "Filtrar por grupo", allGroups: "Todos los grupos"

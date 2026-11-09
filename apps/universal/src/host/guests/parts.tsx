@@ -156,7 +156,7 @@ export function GuestRow({ name, detail, status, label, onPress, extra }: { read
   const styles = useStyles();
   const narrow = useWindowDimensions().width < NARROW;
   return (
-    <PressFeedback accessibilityLabel={label} onPress={onPress}>
+    <PressFeedback accessibilityLabel={label} onPress={onPress} hoverTint>
       <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[4], minHeight: GUEST_ROW_HEIGHT, paddingVertical: spacing[4], paddingHorizontal: spacing[6] }}>
         <Avatar name={name} size={44} />
         <View style={{ flex: 1, minWidth: 0, gap: spacing[1] }}>

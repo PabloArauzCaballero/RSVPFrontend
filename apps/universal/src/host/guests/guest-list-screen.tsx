@@ -1,8 +1,8 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Text, TextInput, View } from "react-native";
-import { radius, spacing } from "@rsvp/design-tokens";
-import { Avatar, Chip, Stagger, useColors } from "@rsvp/ui";
-import { useGuestGroups, useGuestList, type GuestListFilters, type RsvpStatus } from "@rsvp/query-hooks";
+import { chips, radius, spacing } from "@rsvp/design-tokens";
+import { Avatar, Chip, Stagger, useColors, useTheme } from "@rsvp/ui";
+import { useGuestGroups, useGuestList, useGuestSummary, type GuestListFilters, type RsvpStatus } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { guestDetailPath, HOST_ROUTES, withCelebration } from "../routes";
@@ -36,6 +36,29 @@ function GroupFilter({ celebrationId, value, onChange }: { readonly celebrationI
   return <View style={{ maxWidth: 240, flexShrink: 1, minWidth: 0 }}><FilterSelect testID="group-filter" label={t("guests.list.groupFilter")} value={value} onChange={onChange} options={[{ value: "", label: t("guests.list.allGroups") }, ...items.map((item) => ({ value: item.id, label: item.name, count: item.memberCount }))]} /></View>;
 }
 
+/** The whole guest list in one line of figures (a dot repeats each word, never replaces it). Hidden until the summary has answered. */
+function TotalsStrip({ total, confirmed, pending, declined }: { readonly total: number; readonly confirmed: number; readonly pending: number; readonly declined: number }): ReactNode {
+  const { scheme } = useTheme();
+  const t = useT();
+  const styles = useStyles();
+  const items: readonly { readonly key: string; readonly label: string; readonly value: number; readonly dot: string }[] = [
+    { key: "yes", label: t("guests.status.CONFIRMED"), value: confirmed, dot: chips[scheme].yes.dot },
+    { key: "wait", label: t("guests.status.PENDING"), value: pending, dot: chips[scheme].wait.dot },
+    { key: "no", label: t("guests.status.DECLINED"), value: declined, dot: chips[scheme].no.dot }
+  ];
+  return (
+    <View testID="guest-totals" style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", columnGap: spacing[6], rowGap: spacing[2] }}>
+      <Text style={[styles.label, { fontVariant: ["tabular-nums"] }]}>{t("guests.list.totalGuests", { count: total })}</Text>
+      {items.map((item) => (
+        <View key={item.key} accessible accessibilityLabel={`${item.label}: ${item.value}`} style={{ flexDirection: "row", alignItems: "center", gap: spacing[2] }}>
+          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: item.dot }} />
+          <Text style={[styles.muted, { fontVariant: ["tabular-nums"] }]}>{item.value} {item.label.toLowerCase()}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
 function ListBody({ celebrationId, timeZone, onNavigate }: { readonly celebrationId: string; readonly timeZone: string; readonly onNavigate: (href: string) => void }): ReactNode {
   const styles = useStyles();
   const palette = useColors();
@@ -48,6 +71,9 @@ function ListBody({ celebrationId, timeZone, onNavigate }: { readonly celebratio
   const term = useDebounced(search.trim(), SEARCH_DEBOUNCE_MS);
   const filters: GuestListFilters = { limit: PAGE_SIZE, offset, ...(status === "ALL" ? {} : { status }), ...(group ? { groupId: group } : {}), ...(term ? { search: term } : {}) };
   const list = useGuestList(client, celebrationId, filters);
+  // The totals per answer come from the summary read model: the picker shows how many guests each choice would list.
+  const summary = useGuestSummary(client, celebrationId).data;
+  const counts: Readonly<Record<RsvpStatus | "ALL", number | undefined>> = { ALL: summary?.total, PENDING: summary?.pending, CONFIRMED: summary?.confirmed, DECLINED: summary?.declined };
   const go = (path: string) => () => onNavigate(withCelebration(path, celebrationId));
   const filtered = status !== "ALL" || term !== "" || group !== "";
 
@@ -71,12 +97,13 @@ function ListBody({ celebrationId, timeZone, onNavigate }: { readonly celebratio
   const empty = Boolean(data) && !list.isError && data?.total === 0 && !filtered && appearing.length === 0;
   return (
     <View style={{ gap: spacing[4] }}>
+      {empty || !summary || summary.total === 0 ? null : <TotalsStrip total={summary.total} confirmed={summary.confirmed} pending={summary.pending} declined={summary.declined} />}
       {empty ? null : (
         <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: spacing[3] }}>
           <View style={{ flexGrow: 1, flexBasis: 240, minWidth: 0 }}>
             <TextInput accessibilityLabel={t("guests.list.search")} placeholder={t("guests.list.search")} placeholderTextColor={palette.textMuted} value={search} onChangeText={(value) => { setSearch(value); setOffset(0); }} autoCapitalize="none" returnKeyType="search" maxLength={SEARCH_MAX} style={styles.input} testID="guest-search" />
           </View>
-          <FilterSelect testID="status-filter" label={t("guests.list.filterLabel")} value={status} onChange={(value) => { setStatus(value as RsvpStatus | "ALL"); setOffset(0); }} options={FILTERS.map((value) => ({ value, label: value === "ALL" ? t("guests.list.all") : t(`guests.status.${value}`) }))} />
+          <FilterSelect testID="status-filter" label={t("guests.list.filterLabel")} value={status} onChange={(value) => { setStatus(value as RsvpStatus | "ALL"); setOffset(0); }} options={FILTERS.map((value) => ({ value, label: value === "ALL" ? t("guests.list.all") : t(`guests.status.${value}`), ...(counts[value] !== undefined ? { count: counts[value] } : {}) }))} />
           {data ? <GroupFilter celebrationId={celebrationId} value={group} onChange={(value) => { setGroup(value); setOffset(0); }} /> : null}
         </View>
       )}
