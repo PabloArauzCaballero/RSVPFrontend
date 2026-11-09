@@ -1,43 +1,51 @@
 import { useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
+import { Enter, StickyActions, fonts } from "@rsvp/ui";
 import { useImportGuests, type CsvReport } from "@rsvp/query-hooks";
 import { canPickTextFile, pickTextFile } from "../../platform/files";
 import { useApiClient, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
-import { ActionButton, ErrorNotice, Field, Notice, Section, styles } from "../ui";
+import { ActionButton, Celebrate, Field, useStyles } from "../ui";
+import { FailureNotice, TextAction } from "./parts";
+import { useSingleFlightGate } from "../../platform/single-flight";
+import { csvLimitProblem, MAX_CSV_BYTES } from "./csv-limits";
+import { isImportField, reasonKey } from "./import-reasons";
 
 /** C21 · CSV import. Valid rows go in, invalid rows come back with their line number and reason (REQ-F16-03). */
 
-export const MAX_CSV_BYTES = 1024 * 1024;
+export { MAX_CSV_BYTES };
 
 export function ImportReport({ report }: { readonly report: CsvReport }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   return (
-    <Section title={t("guests.import.result")}>
-      <Text testID="import-summary" accessibilityLiveRegion="polite" style={styles.body}>{t("guests.import.summary", { imported: report.importedCount, failed: report.failedCount, total: report.totalRows })}</Text>
-      {report.errors.length === 0 ? <Notice kind="success">{t("guests.import.none")}</Notice> : (
+    <Enter from="down"><View style={{ gap: spacing[4] }}>
+      <Text testID="import-summary" accessibilityRole="header" accessibilityLiveRegion="polite" style={styles.subtitle}>{t("guests.import.summary", { imported: report.importedCount, failed: report.failedCount, total: report.totalRows })}</Text>
+      {report.errors.length === 0 ? <Celebrate title={t("guests.import.celebrateTitle")} body={t("guests.import.celebrateBody")} /> : (
         <View style={{ gap: spacing[2] }}>
           <Text accessibilityRole="header" style={styles.label}>{t("guests.import.errorsTitle")}</Text>
           {report.errors.map((error) => (
             <View key={`${error.line}-${error.field}-${error.reason}`} testID={`import-error-${error.line}`} accessible style={[styles.notice, styles.noticeError]}>
-              <Text style={styles.label}>{t("guests.import.line", { line: error.line })} · {t("guests.import.field", { field: error.field })}</Text>
-              <Text style={styles.body}>{error.reason}</Text>
+              <Text style={styles.label}>{t("guests.import.line", { line: error.line })} · {t("guests.import.field", { field: isImportField(error.field) ? t(`guests.import.fields.${error.field}`) : error.field })}</Text>
+              <Text style={styles.body}>{t(`guests.import.reasons.${reasonKey(error.reason)}`)}</Text>
             </View>
           ))}
         </View>
       )}
-    </Section>
+    </View></Enter>
   );
 }
 
 function ImportBody({ celebrationId, onNavigate }: { readonly celebrationId: string; readonly onNavigate: (href: string) => void }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const client = useApiClient();
   const run = useImportGuests(client, celebrationId);
   const [csv, setCsv] = useState("");
   const [problem, setProblem] = useState("");
+  const flight = useSingleFlightGate();
 
   const choose = async (): Promise<void> => {
     const file = await pickTextFile();
@@ -47,30 +55,43 @@ function ImportBody({ celebrationId, onNavigate }: { readonly celebrationId: str
   };
   const submit = (): void => {
     if (!csv.trim()) { setProblem(t("guests.import.empty")); return; }
+    const limit = csvLimitProblem(csv);
+    if (limit) { setProblem(t(`guests.import.${limit}`)); return; }
+    if (!flight.begin()) return;
     setProblem("");
-    run.mutate(csv);
+    run.mutate(csv, { onSettled: flight.end });
   };
   return (
     <View style={{ gap: spacing[4] }}>
-      <Section title={t("guests.import.title")}>
-        <Text style={styles.body}>{t("guests.import.intro")}</Text>
-        <Text selectable style={[styles.body, { fontFamily: "monospace" }]}>{t("guests.import.header")}</Text>
-        <Text style={styles.muted}>{t("guests.import.headerNote")}</Text>
-        {canPickTextFile ? <ActionButton variant="secondary" label={t("guests.import.chooseFile")} onPress={() => { void choose(); }} /> : null}
-        <Field label={t("guests.import.csvLabel")} multiline value={csv} onChange={(value) => { setCsv(value); setProblem(""); }} error={problem || undefined} testID="csv-input" />
-        <ErrorNotice error={run.error} />
-        <ActionButton label={run.isPending ? t("guests.import.running") : t("guests.import.run")} busy={run.isPending} onPress={submit} testID="run-import" />
-      </Section>
-      {run.data ? <ImportReport report={run.data} /> : null}
-      {run.data ? <View style={styles.row}>
-        <ActionButton variant="secondary" label={t("guests.import.again")} onPress={() => { run.reset(); setCsv(""); }} />
-        <ActionButton label={t("guests.import.viewList")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.guests, celebrationId))} />
-      </View> : null}
+      {run.data ? (
+        <>
+          <ImportReport report={run.data} />
+          <View style={styles.row}>
+            <ActionButton icon="arrow" label={t("guests.import.viewList")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.guests, celebrationId))} />
+            <ActionButton icon="refresh" variant="secondary" label={t("guests.import.again")} onPress={() => { run.reset(); setCsv(""); }} />
+          </View>
+        </>
+      ) : (
+        <View style={[styles.card, { maxWidth: 720 }]}>
+          <Text style={styles.body}>{t("guests.import.steps")}</Text>
+          <Text selectable style={[styles.body, { fontFamily: fonts.mono, fontWeight: "600" }]}>{t("guests.import.header")}</Text>
+          <Text style={styles.muted}>{t("guests.import.headerNote")}</Text>
+          {canPickTextFile ? <ActionButton icon="plus" variant="secondary" label={t("guests.import.chooseFile")} onPress={() => { void choose(); }} /> : null}
+          <Field label={t("guests.import.csvLabel")} multiline mono value={csv} onChange={(value) => { setCsv(value); setProblem(""); }} error={problem || undefined} testID="csv-input" />
+          <FailureNotice error={run.error} onRetry={submit} />
+        </View>
+      )}
+      {run.data ? null : (
+        <StickyActions>
+          <ActionButton label={run.isPending ? t("guests.import.running") : t("guests.import.run")} busy={run.isPending} onPress={submit} testID="run-import" />
+          <TextAction label={t("guests.form.back")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.guests, celebrationId))} />
+        </StickyActions>
+      )}
     </View>
   );
 }
 
 export function ImportGuestsScreen(props: ScreenProps): ReactNode {
   const t = useT();
-  return <CelebrationScreen {...props} current="guests" title={t("guests.import.title")}>{({ celebration }) => <ImportBody celebrationId={celebration.id} onNavigate={props.onNavigate} />}</CelebrationScreen>;
+  return <CelebrationScreen {...props} current="guests" title={t("guests.import.title")} intro={t("guests.import.intro")}>{({ celebration }) => <ImportBody celebrationId={celebration.id} onNavigate={props.onNavigate} />}</CelebrationScreen>;
 }

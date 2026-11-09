@@ -17,7 +17,8 @@ export const adminKeys = {
   moderation: (status: string) => ["admin", "moderation", status] as const,
   moderationAll: ["admin", "moderation"] as const,
   leads: (params: string) => ["admin", "metrics", "leads", params] as const,
-  users: (search: string) => ["admin", "users", search] as const,
+  users: (search: string, page = 0) => ["admin", "users", search, page] as const,
+  usersAll: ["admin", "users"] as const,
   organizations: ["admin", "organizations"] as const,
   organization: (id: string) => ["admin", "organizations", id] as const,
   providerSummary: ["admin", "summary", "providers"] as const,
@@ -102,9 +103,22 @@ export function useLeadMetrics(client: ApiClient, { groupBy, from, to, enabled =
 // ---- Users · EXPECTED GET /identity/admin/users?query=
 export interface UsersPage extends Items<AdminUser> { readonly page?: number; readonly size?: number; readonly total?: number }
 export interface AdminUser { readonly id: string; readonly email: string; readonly roles: readonly string[]; readonly status: "ACTIVE" | "SUSPENDED"; readonly createdAt: string }
-export function useAdminUsers(client: ApiClient, search: string) {
+export const USERS_PAGE_SIZE = 25;
+export type PlatformRole = "ADMIN" | "HOST" | "PLANNER" | "PROVIDER";
+export const PLATFORM_ROLES: readonly PlatformRole[] = ["ADMIN", "HOST", "PLANNER", "PROVIDER"];
+/** GET /identity/admin/users?query=&page=&size= (zero-based page, size 1..100, query up to 120 characters). */
+export function useAdminUsers(client: ApiClient, search: string, page = 0) {
   const query = search.trim();
-  return useQuery({ queryKey: adminKeys.users(query), queryFn: () => client.request<UsersPage>(`/identity/admin/users${query ? `?query=${encodeURIComponent(query)}` : ""}`), ...FRESH });
+  const params = new URLSearchParams({ page: String(page), size: String(USERS_PAGE_SIZE), ...(query ? { query } : {}) }).toString();
+  return useQuery({ queryKey: adminKeys.users(query, page), queryFn: () => client.request<UsersPage>(`/identity/admin/users?${params}`), ...FRESH, placeholderData: (previous) => previous });
+}
+/** PUT /identity/users/{id}/roles/{role} (ADMIN only, idempotent). Identity has no revoke route, so there is no hook for it. */
+export function useGrantRole(client: ApiClient) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId, role }: { readonly userId: string; readonly role: PlatformRole }) => client.request<{ readonly id: string; readonly email: string; readonly roles: readonly string[] }>(`/identity/users/${encodeURIComponent(userId)}/roles/${role}`, { method: "PUT" }),
+    onSuccess: () => Promise.all([queryClient.invalidateQueries({ queryKey: adminKeys.usersAll }), queryClient.invalidateQueries({ queryKey: adminKeys.identitySummary })])
+  });
 }
 
 // ---- Organizations · GET /identity/organizations/{id} is PUBLISHED (members and ADMIN); EXPECTED GET /identity/admin/organizations

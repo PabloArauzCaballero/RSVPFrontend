@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type PropsWithChildren, type ReactNode } from "react";
+import { createContext, Fragment, useCallback, useContext, useEffect, useMemo, useState, type PropsWithChildren, type ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { I18nextProvider, useTranslation } from "react-i18next";
 import { createApiClient, type ApiClient } from "@rsvp/api-client";
@@ -9,6 +9,7 @@ import { AuthProvider, StaticAuthProvider, useAuth } from "../auth/auth-context"
 import { readLocalePreference, writeLocalePreference } from "./preferences";
 import { createAppSessionStore, type SessionClaims } from "./session";
 import { secureStorage } from "./secure-storage";
+import { useScheme, useThemeHydration } from "./theme";
 
 /**
  * Everything a screen needs from the platform, through context: the API client, the session
@@ -71,8 +72,10 @@ export function AppProviders({ children, client, claims, runtime, locale, queryC
   const setLocale = useCallback((next: AppLocale) => { setChosen(next); void writeLocalePreference(next); }, []);
   const i18n = useMemo(() => createI18n(resolvedLocale), [resolvedLocale]);
   const platform = useMemo<Platform>(() => ({ client: client ?? app?.client ?? createAppClient(), locale: resolvedLocale, setLocale }), [client, app, resolvedLocale, setLocale]);
-  // The host, guest and portal screens are built on the light palette only; until they have a dark theme the primitives must not follow the system scheme (white labels on a light page failed contrast at 1.07:1).
-  const body = <PlatformContext.Provider value={platform}><UiProvider scheme="light" strings={stringsFor(resolvedLocale)}>{children}</UiProvider></PlatformContext.Provider>;
+  // The scheme is the person's choice or the system's. Style sheets are chosen per scheme at render time, so a change remounts the tree once (rare, and the stored choice makes it a start-up event on native).
+  const scheme = useScheme();
+  useThemeHydration();
+  const body = <PlatformContext.Provider value={platform}><UiProvider scheme={scheme} strings={stringsFor(resolvedLocale)}><Fragment key={scheme}>{children}</Fragment></UiProvider></PlatformContext.Provider>;
   return (
     <QueryClientProvider client={queries}>
       <I18nextProvider i18n={i18n}>

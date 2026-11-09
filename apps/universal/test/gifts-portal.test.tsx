@@ -34,12 +34,26 @@ describe("REQ-F23-04 · status of each gift", () => {
     renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
     await screen.findByTestId("gift-Torta");
     expect(screen.getByTestId("gift-status-Torta").textContent).toBe("Disponible");
-    expect(screen.getByTestId("gift-status-Licuadora").textContent).toBe("Propuesto, por revisar");
-    expect(screen.getByTestId("gift-status-Mesa").textContent).toBe("Comprometido");
+    expect(screen.getByTestId("gift-status-Licuadora").textContent).toBe("Por revisar");
+    expect(screen.getByTestId("gift-status-Mesa").textContent).toBe("Reservado");
     const order = screen.getAllByTestId(/^gift-(Torta|Licuadora|Mesa)$/).map((node) => node.getAttribute("data-testid"));
     expect(order).toEqual(["gift-Torta", "gift-Mesa", "gift-Licuadora"]);
     fireEvent.click(screen.getByTestId("approve-proposal-Licuadora"));
     await waitFor(() => expect(calls.some((call) => call.path.endsWith("/items/Licuadora/approve") && call.method === "POST")).toBe(true));
+  });
+  it("backend problem codes reach the host in their own language, never the English title", async () => {
+    const { client } = fakeClient(handlers({ "GET /gifts/celebrations/c-1/items": () => GIFTS, "POST /gifts/celebrations/c-1/items/Licuadora/approve": () => new HttpFailure(409, { code: "GIFT_NOT_AVAILABLE", title: "Gift is not available" }) }));
+    renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    fireEvent.click(await screen.findByTestId("approve-proposal-Licuadora"));
+    expect(await screen.findByText(/Alguien se te adelantó/)).toBeTruthy();
+    expect(screen.queryByText(/Gift is not available/)).toBeNull();
+  });
+  it("a celebration that never had a gift (404 on the list) shows the empty state with the single action, not an error", async () => {
+    const { client } = fakeClient(handlers({ "GET /gifts/celebrations/c-1/items": () => new HttpFailure(404, { code: "GIFT_LIST_NOT_FOUND" }) }));
+    renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    expect(await screen.findByText("Tu lista empieza con un regalo")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("go-add"));
+    expect(navigate).toHaveBeenCalledWith("/regalos/catalogo?c=c-1");
   });
   it("403 on the list shows the forbidden notice with a retry", async () => {
     const { client } = fakeClient(handlers({ "GET /gifts/celebrations/c-1/items": () => new HttpFailure(403) }));
@@ -50,6 +64,14 @@ describe("REQ-F23-04 · status of each gift", () => {
 
 describe("REQ-F23-01 · pending reservations inbox", () => {
   const RES = { items: [{ id: "r1", itemId: "Torta", celebrationId: "c-1", guestDisplayName: "Marta", message: "Felicidades", status: "PENDING_REVIEW", requestedAt: "2026-11-02T15:00:00Z" }] };
+  it("names the requester in full, with the group, when the guest record can be read", async () => {
+    const withGuest = { items: [{ ...RES.items[0], guestId: "g-1", guestDisplayName: "Óscar" }] };
+    const { client } = fakeClient(handlers({ "GET /gifts/celebrations/c-1/reservations": () => withGuest, "GET /gifts/celebrations/c-1/items": () => GIFTS, "GET /guests/celebrations/c-1/guests/g-1": () => ({ id: "g-1", name: "Óscar Mamani Condori", groupId: "gr-1" }), "GET /guests/celebrations/c-1/groups": () => ({ items: [{ id: "gr-1", name: "Familia Mamani Apaza" }] }) }));
+    renderApp(<GiftInboxScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    expect(await screen.findByText("Solicitó: Óscar Mamani Condori")).toBeTruthy();
+    expect(await screen.findByText("Grupo: Familia Mamani Apaza")).toBeTruthy();
+    expect(screen.getByText("Se anotó como: Óscar")).toBeTruthy();
+  });
   it("shows who asked and approves", async () => {
     const { client, calls } = fakeClient(handlers({ "GET /gifts/celebrations/c-1/reservations": () => RES, "GET /gifts/celebrations/c-1/items": () => GIFTS, "POST /gifts/celebrations/c-1/reservations/r1/approve": () => ({ ...RES.items[0], status: "COMMITTED" }) }));
     renderApp(<GiftInboxScreen celebrationId="c-1" onNavigate={navigate} />, client);
@@ -68,7 +90,7 @@ describe("REQ-F23-01 · pending reservations inbox", () => {
   it("empty inbox and 403", async () => {
     const empty = fakeClient(handlers({ "GET /gifts/celebrations/c-1/reservations": () => ({ items: [] }), "GET /gifts/celebrations/c-1/items": () => GIFTS }));
     renderApp(<GiftInboxScreen celebrationId="c-1" onNavigate={navigate} />, empty.client);
-    expect(await screen.findByText("No hay reservas pendientes.")).toBeTruthy();
+    expect(await screen.findByText("No hay reservas pendientes")).toBeTruthy();
     cleanup();
     const denied = fakeClient(handlers({ "GET /gifts/celebrations/c-1/reservations": () => new HttpFailure(403), "GET /gifts/celebrations/c-1/items": () => GIFTS }));
     renderApp(<GiftInboxScreen celebrationId="c-1" onNavigate={navigate} />, denied.client);
@@ -102,7 +124,7 @@ describe("REQ-F23-02 · build the list from the partner catalog", () => {
     await screen.findByTestId("catalog-query");
     fireEvent.click(screen.getByTestId("catalog-search"));
     fireEvent.click(await screen.findByTestId(`add-${LISTING}`));
-    expect(await screen.findByText(/ya no está disponible en el catálogo/)).toBeTruthy();
+    expect(await screen.findByText(/ya no está en el catálogo/)).toBeTruthy();
   });
 });
 
@@ -112,13 +134,13 @@ describe("REQ-F23-03 · external gift with explicit friction (PARTNER_CATALOG_FI
     const { client, calls } = fakeClient(handlers({ "POST /gifts/celebrations/c-1/items": (call) => { attempts += 1; return (call.body as { partnerSuggestionsAcknowledged?: boolean }).partnerSuggestionsAcknowledged ? gift("ext", { source: "EXTERNAL", status: "PROPOSED" }) : new HttpFailure(409, { code: "PARTNER_CATALOG_FIRST", suggestions: [{ productListingId: LISTING, title: "Batidora" }] }); } }));
     renderApp(<ExternalScreen celebrationId="c-1" onNavigate={navigate} />, client);
     await screen.findByTestId("external-title");
-    type("Nombre del regalo", "Licuadora"); type("Enlace de la tienda", "https://tienda.example/l"); type("Precio (Bs.)", "150.50");
+    type("Nombre del regalo", "Licuadora"); type("Enlace de la tienda", "https://tienda.example/l"); type("Precio (BOB)", "150.50");
     fireEvent.click(screen.getByTestId("external-submit"));
     expect(await screen.findByText("Batidora")).toBeTruthy();
-    expect(screen.getByText(/Antes de continuar/)).toBeTruthy();
+    expect(screen.getByText(/Antes de seguir/)).toBeTruthy();
     expect(calls.filter((call) => call.method === "POST")[0]?.body).toMatchObject({ source: "EXTERNAL", price: { amountMinor: 15050, currency: "BOB" } });
     fireEvent.click(screen.getByTestId("external-submit"));
-    expect(await screen.findByText(/queda pendiente de tu aprobación/)).toBeTruthy();
+    expect(await screen.findByText(/queda por revisar/)).toBeTruthy();
     expect(attempts).toBe(2);
     expect(calls.filter((call) => call.method === "POST")[1]?.body).toMatchObject({ partnerSuggestionsAcknowledged: true });
   });
@@ -126,10 +148,10 @@ describe("REQ-F23-03 · external gift with explicit friction (PARTNER_CATALOG_FI
     const { client, calls } = fakeClient(handlers({}));
     renderApp(<ExternalScreen celebrationId="c-1" onNavigate={navigate} />, client);
     await screen.findByTestId("external-title");
-    type("Nombre del regalo", "X"); type("Enlace de la tienda", "ftp://x"); type("Precio (Bs.)", "10");
+    type("Nombre del regalo", "X"); type("Enlace de la tienda", "ftp://x"); type("Precio (BOB)", "10");
     fireEvent.click(screen.getByTestId("external-submit"));
     expect(await screen.findByText(/enlace válido/)).toBeTruthy();
-    type("Enlace de la tienda", "https://x.example"); type("Precio (Bs.)", "diez");
+    type("Enlace de la tienda", "https://x.example"); type("Precio (BOB)", "diez");
     fireEvent.click(screen.getByTestId("external-submit"));
     expect(await screen.findByText(/precio válido/)).toBeTruthy();
     expect(calls.filter((call) => call.method === "POST")).toHaveLength(0);
@@ -138,13 +160,31 @@ describe("REQ-F23-03 · external gift with explicit friction (PARTNER_CATALOG_FI
     expect(parseMinor("150.50")).toBe(15050); expect(parseMinor("150,5")).toBe(15050); expect(parseMinor("150")).toBe(15000); expect(parseMinor("1.234")).toBeNull(); expect(parseMinor("-1")).toBeNull();
     expect(isHttpUrl("https://a.example/x")).toBe(true); expect(isHttpUrl("javascript:alert(1)")).toBe(false);
   });
-  it("the external-mode switch writes the celebration settings with If-Match", async () => {
-    const { client, calls } = fakeClient(handlers({ "PUT /celebrations/c-1/settings": () => CELEBRATION }));
+  it("«De una tienda» states the partners-first rule and the current mode, and points to Control modes instead of duplicating the switches", async () => {
+    const { client } = fakeClient(handlers({}));
     renderApp(<ExternalScreen celebrationId="c-1" onNavigate={navigate} />, client);
-    fireEvent.click(await screen.findByRole("radio", { name: "Se publican al instante" }));
-    await waitFor(() => expect(calls.find((call) => call.method === "PUT")?.body).toEqual({ externalGiftMode: "AUTO_ACCEPT" }));
-    expect(calls.find((call) => call.method === "PUT")?.headers.get("if-match")).toBeTruthy();
+    expect(await screen.findByText(/Puedes agregar regalos de cualquier tienda sin pasos previos/)).toBeTruthy();
+    expect(screen.getByText(/Tus regalos de tienda quedan por revisar/)).toBeTruthy();
+    // changing the rule lives in the header's «⋯» menu, not in a second button inside the page
+    fireEvent.click(screen.getByRole("button", { name: "Más opciones" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Cambiar en Modos de control" }));
+    expect(navigate).toHaveBeenCalledWith("/modos?c=c-1");
+    cleanup();
+    const priority = fakeClient({ ...baseHandlers({ ...CELEBRATION, settings: { ...CELEBRATION.settings, partnerPriorityEnabled: true } }) });
+    renderApp(<ExternalScreen celebrationId="c-1" onNavigate={navigate} />, priority.client);
+    expect(await screen.findByText(/te mostramos productos parecidos de aliados/)).toBeTruthy();
   });
+  it("the three origins are one flow: switching origin keeps the screen and shows that origin's form", async () => {
+    const { client } = fakeClient(handlers({ "GET /providers": () => ({ items: [], total: 0, page: 1, pageSize: 6 }) }));
+    renderApp(<CatalogScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    await screen.findByTestId("catalog-query");
+    fireEvent.click(screen.getByTestId("origin-store"));
+    expect(await screen.findByTestId("external-title")).toBeTruthy();
+    expect(screen.queryByTestId("catalog-query")).toBeNull();
+    fireEvent.click(screen.getByTestId("origin-provider"));
+    expect(await screen.findByTestId("provider-category")).toBeTruthy();
+  });
+
 });
 
 const profile = { id: PID, slug: "dulce-sol-4f0f2d", name: "Dulce Sol", status: "DRAFT", plan: "FREE", currency: "BOB", timeZone: "America/La_Paz", version: 1, ownerId: "u-host" };
@@ -155,14 +195,14 @@ describe("REQ-F28-01 · onboarding, verification and status", () => {
   it("without a registered provider the portal asks to register first", async () => {
     const { client } = fakeClient({});
     renderApp(<OverviewScreen />, client, HOST);
-    expect(await screen.findByText("Primero registra tu negocio.")).toBeTruthy();
+    expect(await screen.findByText("Primero registra tu negocio para ver esta sección.")).toBeTruthy();
   });
   it("DRAFT with a listing can be submitted for verification; the documents pointer is shown", async () => {
     await withProvider();
     const { client, calls } = fakeClient(providerHandlers({ [`GET /providers/${PID}/listings`]: () => ({ items: [{ id: "l1", providerId: PID, type: "PRODUCT", category: "DECORATION", city: "la-paz", title: "Torta", published: true }] }), [`GET /providers/${PID}/metrics`]: () => ({ providerId: PID, from: "a", to: "b", totals: { impressions: 100, clicks: 10, validLeads: 4, invalidLeads: 1, ctr: 0.1 } }), [`POST /providers/${PID}/submit`]: () => ({ ...profile, status: "PENDING_VERIFICATION" }) }));
     renderApp(<OverviewScreen />, client, HOST);
     expect((await screen.findByTestId("provider-status")).textContent).toBe("Borrador");
-    expect(screen.getByText(/Sube tus documentos en la sección Documentos de verificación/)).toBeTruthy();
+    expect(await screen.findByText(/Puedes subir tus documentos en Perfil/)).toBeTruthy();
     await waitFor(() => expect((screen.getByTestId("submit-verification") as HTMLButtonElement).disabled ?? false).toBe(false));
     fireEvent.click(screen.getByTestId("submit-verification"));
     await waitFor(() => expect(calls.some((call) => call.method === "POST" && call.path.endsWith("/submit"))).toBe(true));
@@ -178,12 +218,20 @@ describe("REQ-F28-01 · onboarding, verification and status", () => {
 describe("REQ-F28-03/05 · services with delivery conditions", () => {
   it("lists real listings, publishes a draft and validates the form (coverage, conditions, destination)", async () => {
     await withProvider();
-    const { client, calls } = fakeClient(providerHandlers({ [`GET /providers/${PID}/listings`]: () => ({ items: [{ id: "l1", providerId: PID, type: "PRODUCT", category: "DECORATION", city: "la-paz", title: "Torta", published: false, priceFromMinor: 45000 }] }), [`POST /providers/${PID}/listings/l1/publish`]: () => ({}) }));
+    const { client, calls } = fakeClient(providerHandlers({ [`GET /providers/${PID}/listings`]: () => ({ items: [{ id: "l1", providerId: PID, type: "PRODUCT", category: "DECORATION", city: "la-paz", title: "Torta", published: false, priceFromMinor: 45000, fulfillment: { responsible: "PROVIDER", coverageZones: ["la-paz"], leadTimeDays: 1, conditions: "ok", disclaimer: "d" } }, { id: "l2", providerId: PID, type: "PRODUCT", category: "DECORATION", city: "la-paz", title: "Sin condiciones", published: false }] }), [`POST /providers/${PID}/listings/l1/publish`]: () => ({}) }));
     renderApp(<ProductsScreen />, client, HOST);
     expect((await screen.findByTestId("listing-state-l1")).textContent).toBe("Borrador");
-    fireEvent.click(screen.getByTestId("publish-l1"));
+    expect(screen.getByTestId("publish-blocked-l2").textContent).toMatch(/condiciones de entrega/);
+    // "Publicar" lives in each row's "⋯" menu: off (with the reason shown) for l2, usable for l1
+    fireEvent.click(within(screen.getByTestId("listing-l2")).getByRole("button", { name: /Más opciones/ }));
+    expect((await screen.findByRole("menuitem", { name: "Publicar" })).getAttribute("aria-disabled")).toBe("true");
+    fireEvent.click(within(screen.getByTestId("listing-l2")).getByRole("button", { name: /Más opciones/ }));
+    fireEvent.click(within(screen.getByTestId("listing-l1")).getByRole("button", { name: /Más opciones/ }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Publicar" }));
     await waitFor(() => expect(calls.some((call) => call.path.endsWith("/l1/publish"))).toBe(true));
-    fireEvent.click(screen.getByTestId("listing-submit"));
+    expect(calls.some((call) => call.path.endsWith("/l2/publish"))).toBe(false);
+    fireEvent.click(screen.getByTestId("offer-new"));
+    fireEvent.click(await screen.findByTestId("listing-submit"));
     expect(await screen.findByText(/nombre de la oferta/)).toBeTruthy();
     expect(screen.getByText(/al menos un destino/)).toBeTruthy();
     expect(screen.getByText(/zona de cobertura/)).toBeTruthy();
@@ -193,26 +241,26 @@ describe("REQ-F28-03/05 · services with delivery conditions", () => {
     await withProvider();
     const { client, calls } = fakeClient(providerHandlers({ [`GET /providers/${PID}/listings`]: () => ({ items: [] }), [`POST /providers/${PID}/listings`]: () => ({ id: "n" }) }));
     renderApp(<ProductsScreen />, client, HOST);
-    await screen.findByText("Aún no creaste productos.");
+    fireEvent.click(await screen.findByTestId("offer-new"));
+    fireEvent.click(await screen.findByText("Producto"));
+    fireEvent.click(screen.getByTestId("offer-more"));
     type("Nombre", "Torta"); type("WhatsApp (enlace https://wa.me/…)", "https://wa.me/59170000000"); type("Zonas de cobertura", "la-paz, el-alto"); type("Costo de traslado (Bs.)", "50"); type("Plazo (días de anticipación)", "3"); type("Condiciones", "Montaje incluido"); type("Precio desde (Bs.)", "450");
     fireEvent.click(screen.getByTestId("listing-submit"));
     await waitFor(() => expect(calls.find((call) => call.method === "POST")?.body).toMatchObject({ type: "PRODUCT", priceFromMinor: 45000, destinations: { WHATSAPP: "https://wa.me/59170000000" }, fulfillment: { responsible: "PROVIDER", coverageZones: ["la-paz", "el-alto"], transportCostMinor: 5000, leadTimeDays: 3 } }));
   });
 });
 
-describe("REQ-F28-03 · services and products have their own screens, delivery terms too", () => {
+describe("REQ-F28-03 · services, products and delivery terms are ONE list of offers", () => {
   const listings = { items: [{ id: "p1", providerId: PID, type: "PRODUCT", category: "DECORATION", city: "la-paz", title: "Torta", published: true, fulfillment: { responsible: "PROVIDER", coverageZones: ["la-paz"], leadTimeDays: 3, transportCostMinor: 5000, conditions: "Montaje incluido", disclaimer: "d" } }, { id: "s1", providerId: PID, type: "SERVICE", category: "CATERING", city: "la-paz", title: "Catering", published: false }] };
-  it("Products shows only products, Services only services", async () => {
+  it("Services, Products and Delivery open the same list: every offer, with its state and terms", async () => {
     await withProvider();
-    const { client } = fakeClient(providerHandlers({ [`GET /providers/${PID}/listings`]: () => listings }));
-    const first = renderApp(<ProductsScreen />, client, HOST);
-    expect(await screen.findByTestId("listing-p1")).toBeTruthy();
-    expect(screen.queryByTestId("listing-s1")).toBeNull();
-    first.unmount();
-    const { client: second } = fakeClient(providerHandlers({ [`GET /providers/${PID}/listings`]: () => listings }));
-    renderApp(<ServicesScreen />, second, HOST);
-    expect(await screen.findByTestId("listing-s1")).toBeTruthy();
-    expect(screen.queryByTestId("listing-p1")).toBeNull();
+    for (const Screen of [ServicesScreen, ProductsScreen, DeliveryScreen]) {
+      const { client } = fakeClient(providerHandlers({ [`GET /providers/${PID}/listings`]: () => listings }));
+      const view = renderApp(<Screen />, client, HOST);
+      expect(await screen.findByTestId("listing-p1")).toBeTruthy();
+      expect(screen.getByTestId("listing-s1")).toBeTruthy();
+      view.unmount();
+    }
   });
   it("Delivery lists each offer's terms and flags an offer with none", async () => {
     await withProvider();
@@ -222,30 +270,18 @@ describe("REQ-F28-03 · services and products have their own screens, delivery t
     expect(row.textContent).toMatch(/Entrega a cargo de: Yo \(el proveedor\)/);
     expect(row.textContent).toMatch(/Cobertura: la-paz/);
     expect(row.textContent).toMatch(/Plazo: 3 días/);
-    expect(screen.getByTestId("delivery-s1").textContent).toMatch(/no declara condiciones/);
+    // an offer without terms is flagged once (the reason it cannot be published), not twice
+    expect(screen.getByTestId("publish-blocked-s1").textContent).toMatch(/declara sus condiciones de entrega/);
+    expect(screen.getByTestId("delivery-s1").textContent).not.toMatch(/Cobertura/);
   });
-  it("editing sends the EXPECTED PUT .../fulfillment and refreshes the terms", async () => {
-    await withProvider();
-    const { client, calls } = fakeClient(providerHandlers({ [`GET /providers/${PID}/listings`]: () => listings, [`PUT /providers/${PID}/listings/p1/fulfillment`]: () => listings.items[0] }));
-    renderApp(<DeliveryScreen />, client, HOST);
-    fireEvent.click(await screen.findByTestId("delivery-edit-p1"));
-    type("Zonas de cobertura", "la-paz, el-alto"); type("Plazo (días de anticipación)", "5");
-    fireEvent.click(screen.getByTestId("delivery-save-p1"));
-    expect(await screen.findByText("Condiciones guardadas.")).toBeTruthy();
-    const put = calls.find((call) => call.method === "PUT");
-    expect(put?.body).toMatchObject({ responsible: "PROVIDER", coverageZones: ["la-paz", "el-alto"], leadTimeDays: 5, transportCostMinor: 5000, conditions: { "es-BO": "Montaje incluido" } });
-  });
-  it("validates before sending, and tells the truth when the server has no such route (nothing saved)", async () => {
+  it("has no edit button: provider-catalog has no route to edit an offer, and the screen says how to change the terms", async () => {
     await withProvider();
     const { client, calls } = fakeClient(providerHandlers({ [`GET /providers/${PID}/listings`]: () => listings }));
     renderApp(<DeliveryScreen />, client, HOST);
-    fireEvent.click(await screen.findByTestId("delivery-edit-p1"));
-    type("Zonas de cobertura", ""); fireEvent.click(screen.getByTestId("delivery-save-p1"));
-    expect(await screen.findByText(/al menos una zona/)).toBeTruthy();
+    await screen.findByTestId("delivery-p1");
+    expect(screen.queryByTestId("delivery-edit-p1")).toBeNull();
+    expect(screen.getByText(/el servidor todavía no permite editarlas/)).toBeTruthy();
     expect(calls.some((call) => call.method === "PUT")).toBe(false);
-    type("Zonas de cobertura", "la-paz"); fireEvent.click(screen.getByTestId("delivery-save-p1"));
-    expect(await screen.findByText(/todavía no permite editar las condiciones/)).toBeTruthy();
-    expect(screen.queryByText("Condiciones guardadas.")).toBeNull();
   });
 });
 
@@ -258,10 +294,11 @@ describe("REQ-F28-04 · destinations and UTM need at least one destination", () 
     fireEvent.click(screen.getByTestId("destinations-save"));
     expect(await screen.findByText("Elige al menos un destino.")).toBeTruthy();
     fireEvent.click(screen.getByTestId("destination-WHATSAPP"));
-    type("utm_source", "bad source!");
+    fireEvent.click(screen.getByTestId("destinations-more"));
+    type("Origen de la campaña", "bad source!");
     fireEvent.click(screen.getByTestId("destinations-save"));
     expect((await screen.findAllByText(/solo letras/i)).length).toBeGreaterThan(0);
-    type("utm_source", "done");
+    type("Origen de la campaña", "done");
     fireEvent.click(screen.getByTestId("destinations-save"));
     await waitFor(() => expect(calls.find((call) => call.method === "PUT")?.body).toMatchObject({ enabledDestinations: ["WHATSAPP"], utmSource: "done", billingModel: "CPC" }));
   });
@@ -273,9 +310,10 @@ describe("REQ-F28-06 · lead metrics", () => {
     const { client, calls } = fakeClient(providerHandlers({ [`GET /providers/${PID}/metrics`]: () => ({ providerId: PID, from: "a", to: "b", totals: { impressions: 1200, clicks: 60, validLeads: 25, invalidLeads: 5, ctr: 0.05 }, groups: [{ key: "WHATSAPP", clicks: 40 }] }) }));
     renderApp(<MetricsScreen />, client, HOST);
     const totals = await screen.findByTestId("metric-totals");
-    expect(within(totals).getByLabelText(/Impresiones: 1.?200/)).toBeTruthy();
-    expect(within(totals).getByLabelText(/CTR: 5/)).toBeTruthy();
-    expect(within(totals).getByLabelText(/Leads válidos: 25/)).toBeTruthy();
+    expect(within(totals).getByLabelText(/Veces que te vieron: 1.?200/)).toBeTruthy();
+    expect(within(totals).getByLabelText(/Toques por cada vista: 5/)).toBeTruthy();
+    expect(within(totals).getByLabelText(/Solicitudes válidas: 25/)).toBeTruthy();
+    fireEvent.change(screen.getByTestId("metrics-period"), { target: { value: "custom" } });
     type("Desde (AAAA-MM-DD)", "2026-13-40");
     fireEvent.click(screen.getByTestId("metrics-apply"));
     expect(await screen.findByText(/formato AAAA-MM-DD/)).toBeTruthy();
@@ -334,7 +372,10 @@ describe("REQ-F23-05 · discover providers from the panel", () => {
     const { client, calls } = fakeClient(handlers({ "GET /providers": () => ({ items: [card], total: 1, page: 1, pageSize: 6 }), "POST /gifts/celebrations/c-1/items": () => gift("n1") }));
     renderApp(<ProvidersScreen celebrationId="c-1" onNavigate={navigate} />, client);
     const row = await screen.findByTestId(`provider-${LISTING}`);
-    expect(row.textContent).toMatch(/De Dulce Sol/); expect(row.textContent).toMatch(/Plazo: 3 días/); expect(row.textContent).toMatch(/Av\. Arce 100/); expect(row.textContent).toMatch(/09:00-18:00/);
+    expect(row.textContent).toMatch(/De Dulce Sol/); expect(row.textContent).toMatch(/Plazo: 3 días/);
+    expect(row.textContent).not.toMatch(/Av\. Arce 100/);
+    fireEvent.click(screen.getByTestId(`details-${LISTING}`));
+    expect(row.textContent).toMatch(/Av\. Arce 100/); expect(row.textContent).toMatch(/09:00-18:00/);
     fireEvent.click(screen.getByTestId(`add-provider-${LISTING}`));
     expect(await screen.findByText("Agregado: Torta de bodas")).toBeTruthy();
     expect(calls.find((call) => call.method === "POST")?.body).toMatchObject({ source: "CATALOGED", productListingId: LISTING });
@@ -352,8 +393,39 @@ describe("REQ-F21-05 · gifts inside the guest app with the link credential", ()
     }));
     renderApp(<GuestGiftsScreen slug="ana-luis" token={TOKEN} />, client);
     fireEvent.click(await screen.findByTestId("reserve-Torta"));
-    fireEvent.click(await screen.findByRole("button", { name: "Reservar regalo" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Confirmar reserva" }));
     expect(await screen.findByTestId("gift-taken")).toBeTruthy();
+    expect(screen.getByText("Alguien se adelantó")).toBeTruthy();
+    expect(screen.getByText("Otros regalos disponibles")).toBeTruthy();
     expect(seen.every((value) => value === `Bearer ${TOKEN}`)).toBe(true);
+  });
+  it("reserves in the row itself (no dialog), draws the check, and explains the per-person limit when it is reached", async () => {
+    const TOKEN = "T".repeat(43);
+    const { client } = fakeClient(handlers({
+      "GET /celebrations/public/ana-luis": () => ({ celebrationId: "c-1", slug: "ana-luis", content: { title: "Ana y Luis" } }),
+      "GET /gifts/celebrations/c-1/items": () => ({ items: [gift("Torta"), gift("Mesa")], partnerPriorityEnabled: true }),
+      "POST /gifts/celebrations/c-1/items/Torta/reservations": () => ({ id: "r1", itemId: "Torta", celebrationId: "c-1", status: "COMMITTED", requestedAt: "2026-11-02T15:00:00Z" }),
+      "POST /gifts/celebrations/c-1/items/Mesa/reservations": () => new HttpFailure(422, { code: "RESERVATION_LIMIT_REACHED", title: "limit", status: 422 })
+    }));
+    renderApp(<GuestGiftsScreen slug="ana-luis" token={TOKEN} />, client);
+    expect(await screen.findByText("Cada persona puede tener un máximo de regalos reservados a la vez.")).toBeTruthy();
+    fireEvent.click(await screen.findByTestId("reserve-Torta"));
+    expect(screen.queryByRole("alert", { name: /Reservar/ })).toBeNull();
+    fireEvent.click(screen.getByTestId("reserve-confirm"));
+    expect(await screen.findByTestId("gift-reserved")).toBeTruthy();
+    expect(screen.getByText("Regalo reservado")).toBeTruthy();
+    fireEvent.click(await screen.findByTestId("reserve-Mesa"));
+    fireEvent.click(screen.getByTestId("reserve-confirm"));
+    expect((await screen.findByTestId("reserve-error")).textContent).toMatch(/máximo de regalos que una persona puede reservar/);
+  });
+  it("an expired link is a calm dead end that says whom to ask", async () => {
+    const { client } = fakeClient(handlers({
+      "GET /celebrations/public/ana-luis": () => ({ celebrationId: "c-1", slug: "ana-luis", content: { title: "Ana y Luis" } }),
+      "GET /gifts/celebrations/c-1/items": () => new HttpFailure(401)
+    }));
+    renderApp(<GuestGiftsScreen slug="ana-luis" token={"T".repeat(43)} />, client);
+    expect(await screen.findByText("Tu enlace ya no funciona")).toBeTruthy();
+    expect(screen.getByText("Pídele uno nuevo a quien te invitó.")).toBeTruthy();
+    expect(screen.queryByTestId("gifts-retry")).toBeNull();
   });
 });

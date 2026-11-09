@@ -35,6 +35,11 @@ export type PublicRegistrationSettings = Guest["PublicRegistrationSettings"];
 export type NotificationChannel = keyof NonNullable<NotificationPreferences["channels"]>;
 export type HostNotification = NotificationComponents["schemas"]["Notification"];
 export type DeviceRegistration = NotificationComponents["schemas"]["DeviceRegistration"];
+export type GuestDefaults = Guest["GuestDefaults"];
+export type RetentionSettings = Guest["RetentionSettings"];
+export type ErasureReceipt = Guest["ErasureReceipt"];
+export type PushDelivery = NotificationComponents["schemas"]["PushDelivery"];
+export type PushTest = NotificationComponents["schemas"]["PushTest"];
 export type RegisteredDevice = NotificationComponents["schemas"]["Device"];
 
 /** The part of GET /celebrations/public/{slug} the RSVP flow needs (the full view lives in @rsvp/celebration-theme). */

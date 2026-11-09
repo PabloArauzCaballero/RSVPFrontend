@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { UiProvider, useTheme } from "@rsvp/ui";
+import { colors } from "@rsvp/design-tokens";
 
 // The native module is replaced by a probe that records the props SafeFrame passes: the real insets only exist on a device.
 vi.mock("react-native-safe-area-context", () => ({
@@ -30,6 +31,6 @@ describe("SafeFrame · native safe area (found on iPhone: content sat under the 
   it("uses the dark canvas in the dark scheme, so the bands match the screen behind them", () => {
     render(<UiProvider scheme="dark"><SafeFrame><span>oscuro</span></SafeFrame></UiProvider>);
     const dark = screen.getByTestId("safe-area").dataset.bg;
-    expect(dark).toBe("#0A1033");
+    expect(dark).toBe(colors.dark.canvas);
   });
 });

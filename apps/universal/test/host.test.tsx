@@ -1,11 +1,11 @@
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ContentEditorScreen } from "../src/host/content-editor";
 import { contentPatch, scheduleContent, slugify, toWallClock } from "../src/host/content-draft";
-import { CelebrationsScreen } from "../src/host/celebrations";
+import { CelebrationsScreen, forgetAutoOpen } from "../src/host/celebrations";
 import { GalleryEditorScreen, imageProblem } from "../src/host/gallery-editor";
 import { ModesScreen } from "../src/host/modes-screen";
-import { OnboardingScreen } from "../src/host/onboarding";
+import { defaultCurrency, OnboardingScreen, suggestedTitle, zoneLabel } from "../src/host/onboarding";
 import { PublishScreen, taskFor } from "../src/host/publish-checklist";
 import { deadlinePassed, nowInZone, SettingsScreen } from "../src/host/settings-screen";
 import { TemplatesScreen } from "../src/host/templates-screen";
@@ -24,6 +24,8 @@ describe("editing helpers", () => {
     expect(toWallClock({ date: "", time: "" })).toEqual({ ok: true, value: null });
     expect(toWallClock({ date: "19/12/2026", time: "7pm" })).toEqual({ ok: false });
     expect(contentPatch({ title: "A", story: "x" }, { title: "B", story: "" })).toEqual({ title: "B", story: null });
+    // The API returns object keys sorted; the same rows typed in another order are not a change.
+    expect(contentPatch({ faq: [{ answer: "Sí", question: "¿Niños?" }] }, { faq: [{ question: "¿Niños?", answer: "Sí" }] })).toEqual({});
     expect(scheduleContent([{ id: "s", title: "Fiesta", description: "", date: "2026-12-19", time: "23:30" }])).toEqual({ ok: true, value: [{ id: "s", title: "Fiesta", startsAt: "2026-12-19T23:30" }] });
     expect(scheduleContent([{ id: "s", title: "Fiesta", description: "", date: "", time: "" }])).toEqual({ ok: false, index: 0 });
     expect(slugify("Ana & Luis Quinceañera 2026")).toBe("ana-luis-quinceanera-2026");
@@ -38,9 +40,10 @@ describe("C2–C5 · picker and onboarding", () => {
     expect(navigate).toHaveBeenCalledWith("/editor/general?c=c-1");
   });
 
-  it("REQ-F11-04 · host fields come from the event type: a wedding asks for the couple, a quinceañera for the celebrant", async () => {
+  it("REQ-F11-04 · three short steps: host fields come from the event type, the title and link are suggested from them, and nothing is sent until the last step", async () => {
     const { client, calls } = fakeClient({ "GET /celebrations/event-types": () => ({ items: [WEDDING, QUINCE] }), "POST /celebrations": () => ({ ...CELEBRATION, id: "c-new" }) });
     renderApp(<OnboardingScreen step={1} onNavigate={navigate} />, client);
+    expect((await screen.findByTestId("onboarding-next")).getAttribute("aria-disabled")).toBe("true");
     fireEvent.click(await screen.findByRole("radio", { name: "Boda" }));
     fireEvent.click(screen.getByTestId("onboarding-next"));
     expect(screen.getByLabelText("Novia")).toBeTruthy();
@@ -50,27 +53,100 @@ describe("C2–C5 · picker and onboarding", () => {
     fireEvent.click(screen.getByTestId("onboarding-next"));
     expect(screen.queryByLabelText("Novia")).toBeNull();
     type("Quinceañera", "María");
-    type("Nombre de la celebración", "XV de María");
     type("Fecha (AAAA-MM-DD)", "2027-01-10");
     type("Hora (HH:MM)", "20:00");
-    fireEvent.click(screen.getByRole("radio", { name: "America/La_Paz" }));
+    fireEvent.click(screen.getByTestId("onboarding-next"));
+    expect(field("Nombre de la celebración").value).toBe("María");
+    expect(field("Enlace de tu invitación").value).toBe("maria");
+    type("Nombre de la celebración", "XV de María");
+    expect(field("Enlace de tu invitación").value).toBe("xv-de-maria");
+    expect(calls.some((call) => call.method === "POST")).toBe(false);
+    // zone, language and currency are under «Más opciones», as a selector, with the device's values already chosen
+    fireEvent.click(screen.getByTestId("onboarding-more"));
+    fireEvent.change(screen.getByTestId("onboarding-time-zone"), { target: { value: "America/La_Paz" } });
     fireEvent.click(screen.getByTestId("onboarding-create"));
-    await waitFor(() => expect(navigate).toHaveBeenCalledWith("/onboarding/3?c=c-new"));
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith("/onboarding/listo?c=c-new"));
     const created = calls.find((call) => call.method === "POST");
-    expect(created?.body).toMatchObject({ slug: "xv-de-maria", eventTypeCode: "QUINCEANERA", timeZone: "America/La_Paz", content: { title: "XV de María", eventDate: "2027-01-10T20:00", hosts: { CELEBRANT: "María" } } });
+    expect(created?.body).toMatchObject({ slug: "xv-de-maria", eventTypeCode: "QUINCEANERA", timeZone: "America/La_Paz", currency: "BOB", content: { title: "XV de María", eventDate: "2027-01-10T20:00", hosts: { CELEBRANT: "María" } } });
   });
 
-  it("an invalid date stops creation with a clear message and keeps the form", async () => {
+  it("the invitation draws itself while the host types: the preview shows the title and names as they are written", async () => {
+    const { client } = fakeClient({ "GET /celebrations/event-types": () => ({ items: [WEDDING] }) });
+    renderApp(<OnboardingScreen step={1} onNavigate={navigate} />, client);
+    fireEvent.click(await screen.findByRole("radio", { name: "Boda" }));
+    fireEvent.click(screen.getByTestId("onboarding-next"));
+    type("Novia", "Ana");
+    type("Novio", "Luis");
+    const frame = screen.getAllByTestId("preview-mobile")[0] as HTMLElement;
+    expect(frame.textContent).toContain("Ana");
+    fireEvent.click(screen.getByTestId("onboarding-next"));
+    expect(field("Nombre de la celebración").value).toBe("Ana y Luis");
+    type("Nombre de la celebración", "Boda de Ana y Luis");
+    await waitFor(() => expect((screen.getAllByTestId("preview-mobile")[0] as HTMLElement).textContent).toContain("Boda de Ana y Luis"));
+  });
+
+  it("an invalid date stops the step with a clear message under the field and keeps what was typed", async () => {
     const { client, calls } = fakeClient({ "GET /celebrations/event-types": () => ({ items: [WEDDING] }) });
     renderApp(<OnboardingScreen step={1} onNavigate={navigate} />, client);
     fireEvent.click(await screen.findByRole("radio", { name: "Boda" }));
     fireEvent.click(screen.getByTestId("onboarding-next"));
-    type("Nombre de la celebración", "Ana y Luis");
+    type("Novia", "Ana");
     type("Fecha (AAAA-MM-DD)", "19/12/2026");
-    fireEvent.click(screen.getByTestId("onboarding-create"));
-    expect(screen.getByRole("alert").textContent).toContain("Fecha");
-    expect(field("Nombre de la celebración").value).toBe("Ana y Luis");
+    fireEvent.click(screen.getByTestId("onboarding-next"));
+    expect(screen.getByText(/Revisa la fecha/)).toBeTruthy();
+    expect(field("Novia").value).toBe("Ana");
+    expect(screen.queryByLabelText("Nombre de la celebración")).toBeNull();
+    type("Fecha (AAAA-MM-DD)", "2026-12-19");
+    fireEvent.click(screen.getByTestId("onboarding-next"));
+    expect(screen.getByText(/Revisa la hora/)).toBeTruthy();
     expect(calls.some((call) => call.method === "POST")).toBe(false);
+  });
+
+  it("a name that is too long or a link that is too short blocks creating, with the reason next to the field", async () => {
+    const { client, calls } = fakeClient({ "GET /celebrations/event-types": () => ({ items: [WEDDING] }) });
+    renderApp(<OnboardingScreen step={1} onNavigate={navigate} />, client);
+    fireEvent.click(await screen.findByRole("radio", { name: "Boda" }));
+    fireEvent.click(screen.getByTestId("onboarding-next"));
+    fireEvent.click(screen.getByTestId("onboarding-next"));
+    type("Nombre de la celebración", "x".repeat(121));
+    expect(screen.getByText("Quita 1 carácter: el máximo es 120.")).toBeTruthy();
+    type("Enlace de tu invitación", "ab");
+    expect(screen.getByText(/entre 3 y 80 caracteres/)).toBeTruthy();
+    fireEvent.click(screen.getByTestId("onboarding-create"));
+    expect(calls.some((call) => call.method === "POST")).toBe(false);
+  });
+
+  it("once created, the host lands on a celebration of the milestone with the next step and the invitation as it looks", async () => {
+    const { client } = fakeClient({ ...baseHandlers(), "GET /celebrations/c-1": () => CELEBRATION });
+    renderApp(<OnboardingScreen step={1} celebrationId="c-1" onNavigate={navigate} />, client);
+    expect(await screen.findByText("Tu invitación está lista")).toBeTruthy();
+    expect(screen.getByTestId("preview-mobile").textContent).toContain("Ana y Luis");
+    // The milestone is a quiet status region with the drawn check: the decorative backdrop of the old identity is gone.
+    expect(screen.getByText("Tu invitación está lista").closest('[role="status"]')).not.toBeNull();
+    expect(document.querySelector('[data-illustration^="moment-"]')).toBeNull();
+    fireEvent.click(screen.getByTestId("onboarding-finish"));
+    expect(navigate).toHaveBeenCalledWith("/editor/general?c=c-1");
+  });
+
+  it("a gallery that fails with a server error shows the cracked-server drawing and a retry", async () => {
+    const server = fakeClient({ ...baseHandlers(), "GET /media/celebrations/c-1/assets": () => new HttpFailure(502, {}) });
+    renderApp(<GalleryEditorScreen celebrationId="c-1" onNavigate={navigate} />, server.client);
+    expect(await screen.findByTestId("retry-gallery")).toBeTruthy();
+    expect(document.querySelector('[data-illustration="serverError"]')).not.toBeNull();
+    expect(document.querySelector('[data-illustration="offline"]')).toBeNull();
+  });
+});
+
+describe("guided sign-up defaults", () => {
+  it("proposes a title from the hosts, a currency from the time zone and the city of a zone", () => {
+    const join = (first: string, second: string): string => `${first} y ${second}`;
+    expect(suggestedTitle(WEDDING, { BRIDE: "Ana", GROOM: "Luis" }, join)).toBe("Ana y Luis");
+    expect(suggestedTitle(WEDDING, { GROOM: " Luis " }, join)).toBe("Luis");
+    expect(suggestedTitle(WEDDING, {}, join)).toBe("");
+    expect(suggestedTitle(undefined, { BRIDE: "Ana" }, join)).toBe("");
+    expect(defaultCurrency("America/Lima")).toBe("PEN");
+    expect(defaultCurrency("Asia/Tokyo")).toBe("BOB");
+    expect(zoneLabel("America/Argentina/Buenos_Aires")).toBe("Buenos Aires");
   });
 });
 
@@ -104,16 +180,36 @@ describe("C7–C11 · content editor", () => {
     expect(await screen.findByLabelText("El nombre de quien se bautiza")).toBeTruthy();
   });
 
+  it("arriving with exactly one celebration opens its Inicio once; coming back to the list on purpose shows the list", async () => {
+    forgetAutoOpen();
+    const only = fakeClient({ ...baseHandlers(CELEBRATION), "GET /celebrations": () => ({ items: [CELEBRATION] }) });
+    const go = vi.fn();
+    renderApp(<CelebrationsScreen onNavigate={go} />, only.client);
+    await waitFor(() => expect(go).toHaveBeenCalledWith(`/inicio?c=${CELEBRATION.id}`));
+    cleanup();
+    const back = vi.fn();
+    renderApp(<CelebrationsScreen onNavigate={back} />, only.client);
+    expect(await screen.findAllByText(/Mis celebraciones/)).not.toHaveLength(0);
+    expect(back).not.toHaveBeenCalled();
+  });
+  it("with exactly one celebration and none chosen, goes straight to it instead of asking to choose", async () => {
+    const only = fakeClient({ ...baseHandlers(CELEBRATION), "GET /celebrations": () => ({ items: [CELEBRATION] }) });
+    const go = vi.fn();
+    renderApp(<ContentEditorScreen section="general" onNavigate={go} />, only.client);
+    await waitFor(() => expect(go).toHaveBeenCalledWith(`/editor/general?c=${CELEBRATION.id}`));
+    expect(screen.queryByText("Elige una celebración")).toBeNull();
+  });
   it("states: loading, not found, read-only, no celebration chosen, and roles", async () => {
     const missing = fakeClient({ "GET /celebrations/event-types": () => ({ items: [] }) });
     renderApp(<ContentEditorScreen section="general" celebrationId="nope" onNavigate={navigate} />, missing.client);
-    expect(screen.getAllByRole("progressbar").length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("status").length).toBeGreaterThan(0);
     expect(await screen.findByText(/No encontramos esta celebración/)).toBeTruthy();
     const readOnly = fakeClient(baseHandlers({ ...CELEBRATION, access: "READ" }));
     renderApp(<ContentEditorScreen section="general" celebrationId="c-1" onNavigate={navigate} />, readOnly.client);
     expect(await screen.findByText(/solo los anfitriones o el planner/)).toBeTruthy();
-    renderApp(<ContentEditorScreen section="general" onNavigate={navigate} />, readOnly.client);
-    expect(screen.getByText("Elige una celebración para continuar.")).toBeTruthy();
+    const several = fakeClient({ ...baseHandlers(CELEBRATION), "GET /celebrations": () => ({ items: [CELEBRATION, { ...CELEBRATION, id: "c-2" }] }) });
+    renderApp(<ContentEditorScreen section="general" onNavigate={navigate} />, several.client);
+    expect(await screen.findByText("Elige una celebración")).toBeTruthy();
     renderApp(<ModesScreen celebrationId="c-1" onNavigate={navigate} />, readOnly.client, GUEST);
     expect(screen.getAllByText("Esta sección es solo para anfitriones y planners.").length).toBeGreaterThan(0);
   });
@@ -135,7 +231,10 @@ describe("C12 · gallery", () => {
     const assets = [{ id: "a1", isCover: true }, { id: "a2", isCover: false }].map((asset, index) => ({ ...asset, celebrationId: "c-1", filename: "f", contentType: "image/png", sizeBytes: 1, status: "PROCESSED" as const, width: 1, height: 1, sortOrder: index, variants: { thumb: "http://x/t.webp" } }));
     const { client, calls } = fakeClient({ ...baseHandlers(), "GET /media/celebrations/c-1/assets": () => ({ items: assets }), "PUT /media/celebrations/c-1/assets/order": () => ({ items: assets }) });
     renderApp(<GalleryEditorScreen celebrationId="c-1" onNavigate={navigate} pick={vi.fn()} />, client);
-    fireEvent.click(await screen.findByText("Usar como portada"));
+    // the cover is chosen from the photo's own «⋯» menu (only the photo that is not already the cover offers it)
+    const menu = await screen.findAllByRole("button", { name: /^Más opciones: / });
+    fireEvent.click(menu[1] as HTMLElement);
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Usar como portada" }));
     await waitFor(() => expect(calls.find((call) => call.method === "PUT")?.body).toEqual({ assetIds: ["a1", "a2"], coverAssetId: "a2" }));
   });
 });
@@ -157,7 +256,7 @@ describe("C13–C16 · translations, templates, preview, publishing", () => {
     fireEvent.click(screen.getByTestId("apply-template"));
     await waitFor(() => expect(calls.find((call) => call.method === "PUT")?.body).toEqual({ templateId: "t-minimal" }));
     expect(calls.find((call) => call.path === "/media/templates")).toBeTruthy();
-    expect(screen.getByText("Tu contenido se conserva al cambiar de template.")).toBeTruthy();
+    expect(screen.getByText("Cambiar de estilo no borra nada de lo que escribiste.")).toBeTruthy();
   });
 
   it("REQ-F12-03 · preview at the three widths", async () => {
@@ -185,7 +284,7 @@ describe("C13–C16 · translations, templates, preview, publishing", () => {
   it("publishing with everything ready, after confirming", async () => {
     const { client, calls } = fakeClient({ ...baseHandlers(), "GET /celebrations/c-1/publish-check": () => ({ ready: true, missingFields: [], status: "DRAFT", version: 3 }), "GET /media/celebrations/c-1/assets": () => ({ items: [] }), "POST /celebrations/c-1/publish": () => ({ ...CELEBRATION, status: "PUBLISHED" }) });
     renderApp(<PublishScreen celebrationId="c-1" onNavigate={navigate} />, client);
-    await screen.findByText("Todo listo para publicar.");
+    await screen.findByText("Tu celebración está lista para publicar.");
     fireEvent.click(screen.getByTestId("publish"));
     fireEvent.click(screen.getAllByText("Publicar celebración").at(-1) as HTMLElement);
     await waitFor(() => expect(calls.find((call) => call.method === "POST")?.headers.get("if-match")).toBe('"3"'));
@@ -203,18 +302,20 @@ describe("C17–C18 · settings and switches", () => {
     type((await screen.findByLabelText("Fecha (AAAA-MM-DD)")).getAttribute("aria-label") ?? "", "2020-01-01");
     type("Hora (HH:MM)", "10:00");
     expect(screen.getByText(/Esa fecha ya pasó/)).toBeTruthy();
-    fireEvent.click(screen.getByTestId("save-deadline"));
+    fireEvent.click(screen.getByTestId("save-settings"));
     await waitFor(() => expect(calls.find((call) => call.method === "PUT")?.body).toEqual({ rsvpDeadline: "2020-01-01T10:00" }));
+    // the single «Guardar» sends only what changed: the languages, zone and currency did not, so there is no PATCH
+    expect(calls.some((call) => call.method === "PATCH")).toBe(false);
   });
 
   it("REQ-F13-02/03/04 · each switch explains the consequence, needs confirmation and says it is not retroactive", async () => {
     const { client, calls } = fakeClient({ ...baseHandlers(), "PUT /celebrations/c-1/settings": () => CELEBRATION });
     renderApp(<ModesScreen celebrationId="c-1" onNavigate={navigate} />, client);
-    expect(await screen.findByText(/Cada reserva te llegará a la bandeja/)).toBeTruthy();
-    expect(screen.getAllByText(/seguirán pendientes/).length).toBe(1);
+    expect(await screen.findByText(/Cada reserva te llegará a Reservas/)).toBeTruthy();
+    expect(screen.getAllByText(/sigue esperando/).length).toBe(1);
     fireEvent.click(screen.getByTestId("switch-giftReservationMode"));
     expect(screen.getByText(/quedará comprometido al instante/)).toBeTruthy();
-    expect(screen.getAllByText(/seguirán pendientes/).length).toBe(2);
+    expect(screen.getAllByText(/sigue esperando/).length).toBe(2);
     expect(calls.some((call) => call.method === "PUT")).toBe(false);
     fireEvent.click(screen.getByText("Sí, cambiar"));
     await waitFor(() => expect(calls.find((call) => call.method === "PUT")?.body).toEqual({ giftReservationMode: "AUTO_ACCEPT" }));

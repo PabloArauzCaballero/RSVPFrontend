@@ -3,6 +3,7 @@ import type { ApiClient } from "@rsvp/api-client";
 import { cachePolicy } from "../policy.js";
 import { queryKeys } from "../keys.js";
 import { hostNotificationsApi } from "../guest/api.js";
+import { newIdempotencyKey } from "../guest/rsvp-flow.js";
 import type { DeviceRegistration, HostNotification, NotificationPreferences, NotificationPreferencesPatch } from "../guest/types.js";
 
 /** GET /notifications/celebrations/{id}/notifications: delivery records addressed to the host; `readAt` is the server's read state (contract 1.4.0). */
@@ -80,4 +81,17 @@ export function useRegisterHostDevice(client: ApiClient, celebrationId: string) 
 export function useUnregisterHostDevice(client: ApiClient, celebrationId: string) {
   const queryClient = useQueryClient();
   return useMutation({ mutationFn: (deviceId: string) => hostNotificationsApi(client).unregisterDevice(celebrationId, deviceId), onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.notification.devices(celebrationId) }) });
+}
+
+/** GET .../push-deliveries: what happened to each push sent to the host's devices (status, attempts, last error). */
+export function usePushDeliveries(client: ApiClient, celebrationId: string) {
+  return useQuery({ queryKey: [...queryKeys.notification.devices(celebrationId), "deliveries"] as const, queryFn: () => hostNotificationsApi(client).pushDeliveries(celebrationId), enabled: Boolean(celebrationId), retry: false, ...cachePolicy.notification });
+}
+/** POST .../devices/{id}/test: one key per press, so a double click queues a single test push. */
+export function useTestHostDevice(client: ApiClient, celebrationId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (deviceId: string) => hostNotificationsApi(client).testDevice(celebrationId, deviceId, newIdempotencyKey()),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: [...queryKeys.notification.devices(celebrationId), "deliveries"] })
+  });
 }

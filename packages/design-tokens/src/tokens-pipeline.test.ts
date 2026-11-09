@@ -42,12 +42,12 @@ describe('REQ-F02-01/05: one source for every consumer', () => {
     cpSync(join(root, 'src'), join(dir, 'src'), { recursive: true });
     cpSync(join(root, 'scripts'), join(dir, 'scripts'), { recursive: true });
     const file = join(dir, 'src/colors.ts');
-    writeFileSync(file, readFileSync(file, 'utf8').replace("primary: '#1F3BFF'", "primary: '#123456'"));
+    writeFileSync(file, readFileSync(file, 'utf8').replace("primary: '#0B0B0C'", "primary: '#123456'"));
     execFileSync('node', ['scripts/generate.mjs'], { cwd: dir, stdio: 'pipe' });
     expect(readFileSync(join(dir, 'generated/tokens.css'), 'utf8')).toContain('--primary: #123456;');
     expect(JSON.parse(readFileSync(join(dir, 'generated/tokens.json'), 'utf8')).light['--primary']).toBe('#123456');
     // Negative: the repo copy is untouched and now reports drift against the mutated source.
-    expect(readFileSync(join(root, 'generated/tokens.css'), 'utf8')).toContain('--primary: #1F3BFF;');
+    expect(readFileSync(join(root, 'generated/tokens.css'), 'utf8')).toContain('--primary: #0B0B0C;');
     expect(() => execFileSync('node', ['scripts/generate.mjs', '--check'], { cwd: dir, stdio: 'pipe' })).not.toThrow();
     writeFileSync(join(dir, 'generated/tokens.css'), '/* tampered */');
     expect(() => execFileSync('node', ['scripts/generate.mjs', '--check'], { cwd: dir, stdio: 'pipe' })).toThrow();

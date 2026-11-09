@@ -16,3 +16,6 @@ coverage
 .codegraph/
 web-build-e2e
 web-build-live
+
+# Poblador de datos de demostración: ids de la última corrida (sin tokens)
+apps/universal/scripts/seed/.last-run.json

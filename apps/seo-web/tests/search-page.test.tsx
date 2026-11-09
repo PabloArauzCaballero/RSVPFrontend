@@ -43,7 +43,7 @@ describe("REQ-F24-04 · search page, proximity filter", () => {
     const cases: Record<string, string>[] = [{ ciudad: "la-paz" }, { ciudad: "la-paz", lat: "abc", lng: "-68" }, { ciudad: "la-paz", lat: "95", lng: "10" }, { ciudad: "la-paz", lat: "-16" }];
     for (const search of cases) {
       const { asked, document } = await render(search);
-      expect(asked[0]?.searchParams.get("city")).toBe("La Paz");
+      expect(asked[0]?.searchParams.get("city")).toBe("la-paz");
       expect(asked[0]?.searchParams.has("lat")).toBe(false);
       expect(document.querySelector(".directory-nearme-active")).toBeNull();
     }
@@ -60,7 +60,7 @@ describe("REQ-F24-04 · search page, proximity filter", () => {
   it("empty and unavailable states are announced, not silent", async () => {
     expect((await render({ ciudad: "oruro" }, () => page([]))).document.querySelector('[role="status"].directory-status')?.textContent).toContain("Todavía no hay proveedores");
     const down = await render({ ciudad: "oruro" }, () => new Response("{}", { status: 503 }));
-    expect(down.document.querySelector('[role="status"].directory-status')?.textContent).toContain("no está disponible");
+    expect(down.document.querySelector('[role="status"].directory-status')?.textContent).toContain("No pudimos cargar los proveedores");
   });
 
   it("parseGeo bounds and the query builder", () => {

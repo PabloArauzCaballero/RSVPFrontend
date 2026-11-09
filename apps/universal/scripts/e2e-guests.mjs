@@ -102,7 +102,7 @@ try {
     await page.getByLabel("Abrir a Carla Vega").waitFor();
     await shot("F16", "C19-busqueda", 360, page);
     await page.getByTestId("guest-search").fill("zzzz");
-    await page.getByText("Ningún invitado coincide con esta búsqueda.").waitFor();
+    await page.getByText(/No encontramos a nadie con esa búsqueda/).waitFor();
     await shot("F16", "C19-vacio-filtrado", 360, page);
     await context.close(); }
   { const { page, context } = await open(1280, `/invitados${c}`);
@@ -121,7 +121,7 @@ try {
     await page.getByTestId("guest-name").fill("Nueva Invitada");
     await page.getByTestId("guest-phone").fill("+591 7123-4567");
     await page.getByTestId("save-guest").click();
-    await page.getByText("Invitado agregado.").waitFor();
+    await page.getByText(/ya está en tu lista/).waitFor();
     assert.ok([...mock.state.guests.values()].some((guest) => guest.phone === "+59171234567"));
     await shot("F16", "C20-guardado", 360, page);
     await context.close(); }
@@ -183,6 +183,7 @@ try {
     const text = (await readFileSyncStream(download)).replace(/^﻿/, "");
     writeFileSync(join(root, "lane-F17", "reporte-rsvp-ejemplo.csv"), text);
     assert.ok(text.startsWith("Nombre,Correo,Teléfono,Respuesta"));
+    await page.getByTestId("report-more").click();
     const [cateringDownload] = await Promise.all([page.waitForEvent("download"), page.getByTestId("export-catering").click()]);
     const catering = (await readFileSyncStream(cateringDownload)).replace(/^﻿/, "");
     writeFileSync(join(root, "lane-F17", "catering-ejemplo.csv"), catering);

@@ -5,6 +5,7 @@ import type { AppLocale, Translate } from '@rsvp/i18n/server';
 import type { HostContact } from '@rsvp/celebration-theme';
 import { countdownTo, type Countdown as CountdownValue, type RsvpState } from '@rsvp/query-hooks';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { LostArt } from '../brand/illustrations';
 
 /** Moves keyboard and screen-reader focus to the heading of the state that just appeared. */
 export function StateHeading({ children, id }: { children: ReactNode; id?: string }): ReactNode {
@@ -24,6 +25,7 @@ export function LoadingView({ t }: { t: Translate }): ReactNode {
 export function InvalidView({ t }: { t: Translate }): ReactNode {
   return (
     <section className="rsvp-card rsvp-card--quiet" aria-labelledby="rsvp-invalid-title">
+      <LostArt className="state__art" />
       <StateHeading id="rsvp-invalid-title">{t('rsvp.invalid.title')}</StateHeading>
       <p>{t('rsvp.invalid.body')}</p>
       <p className="rsvp-hint">{t('rsvp.invalid.hint')}</p>

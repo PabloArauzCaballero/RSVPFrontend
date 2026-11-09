@@ -39,3 +39,13 @@ export function loginHref(returnTo: string | null): string {
   const safe = safeReturnTo(returnTo);
   return safe && groupOfPath(safe) !== "auth" ? `${AUTH_ROUTES.login}?returnTo=${encodeURIComponent(safe)}` : AUTH_ROUTES.login;
 }
+
+/**
+ * Where a brand-new account lands: the next best step for its role. Hosts and planners start the invitation (the
+ * three-step setup), providers open their portal. Anyone else goes to their usual home.
+ */
+export function firstStepFor(roles: readonly Role[]): string | null {
+  const group = homeGroupFor(roles);
+  if (group === "host") return "/onboarding/1";
+  return group ? HOME_BY_GROUP[group] : null;
+}

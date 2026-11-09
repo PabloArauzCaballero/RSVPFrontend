@@ -8,14 +8,14 @@ import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const out = join(root, 'generated');
-const { colors, brand: namedBrand, night, onNight } = await import('../src/colors.ts');
+const { colors, ink, bone } = await import('../src/colors.ts');
 const { spacing, radius, shadow } = await import('../src/spacing.ts');
 const { typography } = await import('../src/typography.ts');
 
 const kebab = (name) => name.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
 const rem = (px) => (px === 0 ? '0px' : `${px / 16}rem`);
 const toVars = (palette) => Object.fromEntries(Object.entries(palette).map(([k, v]) => [`--${kebab(k)}`, v]));
-const brand = { azul: namedBrand.azul, night, 'on-night': onNight, 'azul-osc': namedBrand.azulOsc, 'azul-cl': namedBrand.azulCl, cielo: namedBrand.cielo };
+const brand = { ink, bone };
 
 const light = { ...toVars(colors.light), ...Object.fromEntries(Object.entries(brand).map(([k, v]) => [`--${k}`, v])) };
 const dark = toVars(colors.dark);
@@ -27,7 +27,8 @@ const tokens = {
   boxShadow: shadow,
   fontFamily: {
     sans: [typography.fontFamily.sans, 'system-ui', 'sans-serif'],
-    display: [typography.fontFamily.display, typography.fontFamily.sans, 'system-ui', 'sans-serif']
+    display: [typography.fontFamily.display, 'Georgia', 'serif'],
+    mono: [typography.fontFamily.mono, 'ui-monospace', 'monospace']
   },
   fontSize: Object.fromEntries(Object.entries(typography.fontSize).map(([k, v]) => [k, [rem(v), { lineHeight: rem(typography.lineHeight[k]) }]]))
 };
