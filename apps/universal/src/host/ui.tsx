@@ -37,7 +37,7 @@ function createHostStyles(palette: (typeof colors)[ColorTheme]) {
   input: { minHeight: MIN_TOUCH + 4, borderWidth: 1, borderColor: palette.fieldBorder, borderRadius: radius.md, paddingHorizontal: spacing[3], color: palette.text, backgroundColor: palette.surface, fontSize: typography.fontSize.base, fontFamily },
   inputError: { borderColor: palette.danger },
   card: { backgroundColor: palette.surface, borderColor: palette.border, borderWidth: 1, borderRadius: radius.lg, padding: spacing[8], gap: spacing[5] },
-  row: { flexDirection: "row", flexWrap: "wrap", gap: spacing[2], alignItems: "center" },
+  row: { flexDirection: "row", flexWrap: "wrap", gap: spacing[3], alignItems: "center" },
   nav: { flexDirection: "row", flexWrap: "wrap", gap: spacing[2] },
   navItem: { minHeight: MIN_TOUCH, justifyContent: "center", paddingHorizontal: spacing[4], borderRadius: radius.md, backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.fieldBorder },
   navItemCurrent: { backgroundColor: palette.surfaceMuted, borderColor: palette.text },
@@ -114,7 +114,7 @@ export function ChoiceGroup<TValue extends string>({ label, choices, value, onCh
   // Short labels read as one wrapped row of options; a choice that needs an explanation gets its own row.
   const described = choices.some((choice) => choice.description);
   return (
-    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={{ gap: spacing[2] }}>
+    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={{ gap: spacing[3] }}>
       <Text style={styles.label}>{label}</Text>
       <View style={described ? { gap: spacing[2] } : styles.row}>
         {choices.map((choice) => {

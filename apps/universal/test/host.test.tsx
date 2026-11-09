@@ -1,8 +1,8 @@
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ContentEditorScreen } from "../src/host/content-editor";
 import { contentPatch, scheduleContent, slugify, toWallClock } from "../src/host/content-draft";
-import { CelebrationsScreen } from "../src/host/celebrations";
+import { CelebrationsScreen, forgetAutoOpen } from "../src/host/celebrations";
 import { GalleryEditorScreen, imageProblem } from "../src/host/gallery-editor";
 import { ModesScreen } from "../src/host/modes-screen";
 import { defaultCurrency, OnboardingScreen, suggestedTitle, zoneLabel } from "../src/host/onboarding";
@@ -180,21 +180,23 @@ describe("C7–C11 · content editor", () => {
     expect(await screen.findByLabelText("El nombre de quien se bautiza")).toBeTruthy();
   });
 
-  it("entering the app with exactly one celebration opens its Inicio; the list itself stays a list", async () => {
+  it("arriving with exactly one celebration opens its Inicio once; coming back to the list on purpose shows the list", async () => {
+    forgetAutoOpen();
     const only = fakeClient({ ...baseHandlers(CELEBRATION), "GET /celebrations": () => ({ items: [CELEBRATION] }) });
     const go = vi.fn();
-    renderApp(<CelebrationsScreen onNavigate={go} openOnly />, only.client);
+    renderApp(<CelebrationsScreen onNavigate={go} />, only.client);
     await waitFor(() => expect(go).toHaveBeenCalledWith(`/inicio?c=${CELEBRATION.id}`));
-    const stay = vi.fn();
-    renderApp(<CelebrationsScreen onNavigate={stay} />, only.client);
+    cleanup();
+    const back = vi.fn();
+    renderApp(<CelebrationsScreen onNavigate={back} />, only.client);
     expect(await screen.findAllByText(/Mis celebraciones/)).not.toHaveLength(0);
-    expect(stay).not.toHaveBeenCalled();
+    expect(back).not.toHaveBeenCalled();
   });
   it("with exactly one celebration and none chosen, goes straight to it instead of asking to choose", async () => {
     const only = fakeClient({ ...baseHandlers(CELEBRATION), "GET /celebrations": () => ({ items: [CELEBRATION] }) });
     const go = vi.fn();
     renderApp(<ContentEditorScreen section="general" onNavigate={go} />, only.client);
-    await waitFor(() => expect(go).toHaveBeenCalledWith(`/editor?c=${CELEBRATION.id}`));
+    await waitFor(() => expect(go).toHaveBeenCalledWith(`/editor/general?c=${CELEBRATION.id}`));
     expect(screen.queryByText("Elige una celebración")).toBeNull();
   });
   it("states: loading, not found, read-only, no celebration chosen, and roles", async () => {

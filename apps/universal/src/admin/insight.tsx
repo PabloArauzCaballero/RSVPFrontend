@@ -78,7 +78,7 @@ function UserCard({ user, busy, onGrant }: { readonly user: AdminUser; readonly 
   const styles = useStyles();
   const palette = useColors();
   return (
-    <View style={{ gap: spacing[2], paddingVertical: spacing[4], borderTopWidth: 1, borderTopColor: palette.border }} accessibilityLabel={user.email} testID={`user-${user.id}`}>
+    <View style={{ gap: spacing[3], paddingVertical: spacing[6], borderTopWidth: 1, borderTopColor: palette.border }} accessibilityLabel={user.email} testID={`user-${user.id}`}>
       <View style={[styles.row, { flexWrap: "nowrap", gap: spacing[3] }]}>
         <View style={{ flexShrink: 0 }}><AvatarMark name={user.email.split("@")[0] ?? user.email} size={40} /></View>
         <View style={{ flex: 1, gap: 2 }}>
@@ -141,7 +141,7 @@ function OrganizationCard({ organization }: { readonly organization: Organizatio
   const styles = useStyles();
   const palette = useColors();
   return (
-    <View style={{ gap: spacing[1], paddingVertical: spacing[4], borderTopWidth: 1, borderTopColor: palette.border }} accessibilityLabel={organization.name}>
+    <View style={{ gap: spacing[2], paddingVertical: spacing[6], borderTopWidth: 1, borderTopColor: palette.border }} accessibilityLabel={organization.name}>
       <Text accessibilityRole="header" style={styles.subtitle}>{organization.name}</Text>
       <Text style={styles.muted}>{`${t("admin.organizations.owner", { id: organization.ownerUserId })} · ${t("admin.organizations.members", { count: organization.members.length })}`}</Text>
       {organization.members.map((member) => <Text key={member.userId} style={styles.body}>{`${member.userId}${member.role ? ` · ${member.role}` : ""}`}</Text>)}

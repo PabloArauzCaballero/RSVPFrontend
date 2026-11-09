@@ -13,7 +13,11 @@ import { RowList } from "./gifts/offer-row";
 import { ActionButton, EmptyState, Notice, Screen, useStyles } from "./ui";
 
 /** C2 · Choose a celebration or create a new one. */
-export function CelebrationsScreen({ onNavigate, openOnly = false }: { readonly onNavigate: (href: string) => void; /** Entering the app: with exactly one celebration, open its Inicio instead of a list of one. */ readonly openOnly?: boolean }): ReactNode {
+/** The person this tab already opened a celebration for on arrival: a list of one is skipped once per sign-in, never when they come back to the list on purpose. */
+let autoOpenedFor: string | null = null;
+export const forgetAutoOpen = (): void => { autoOpenedFor = null; };
+
+export function CelebrationsScreen({ onNavigate }: { readonly onNavigate: (href: string) => void }): ReactNode {
   const styles = useStyles();
   const palette = useColors();
   const t = useT();
@@ -21,8 +25,11 @@ export function CelebrationsScreen({ onNavigate, openOnly = false }: { readonly 
   const client = useApiClient();
   const claims = useClaims();
   const query = useMyCelebrations(client);
-  const only = openOnly && query.isSuccess && query.data.items.length === 1 ? query.data.items[0]?.id : undefined;
-  useEffect(() => { if (only) onNavigate(withCelebration(HOST_ROUTES.summary, only)); }, [only, onNavigate]);
+  // Arriving (sign-in, first load) with exactly one celebration opens its Inicio instead of a list of one; going back to the list later shows it.
+  const userId = claims.userId;
+  const only = userId !== null && autoOpenedFor !== userId && query.isSuccess && query.data.items.length === 1 ? query.data.items[0]?.id : undefined;
+  useEffect(() => { if (only && userId) { autoOpenedFor = userId; onNavigate(withCelebration(HOST_ROUTES.summary, only)); } }, [only, userId, onNavigate]);
+  useEffect(() => { if (userId && query.isSuccess && autoOpenedFor !== userId) autoOpenedFor = userId; }, [userId, query.isSuccess]);
   if (!canUseHostWorkspace(claims)) return <Screen title={t("host.picker.title")}><Notice kind="error">{t("host.common.accessDenied")}</Notice></Screen>;
   const items = query.data?.items ?? [];
   const nav = hostNav(t, undefined);

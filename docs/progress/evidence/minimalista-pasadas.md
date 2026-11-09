@@ -126,3 +126,16 @@ Hallazgos de método (no de diseño):
 - La pantalla de Regalos mostró «El servicio no está disponible»: el servicio de regalos del backend local cayó otra vez (heartbeat de RabbitMQ, brecha de backend ya declarada). Reiniciado con `ensure-backend.sh` y repetidas las capturas.
 
 Verificación: `apps/universal` 331/331 y `packages/ui` en verde.
+
+## Pasada 10
+
+Capturas reales de Mi invitación (editor), alta (paso 1) y admin (resumen, verificación, usuarios), 1280 y 390, claro y oscuro.
+
+Corregido:
+1. **«Mi invitación» abría «Esta página no existe».** Defecto real mío de la pasada 2: la apertura automática de la única celebración armaba la dirección con `HOST_ROUTES[current]`, que para el editor es `/editor` (no existe; el editor vive en `/editor/{sección}`). Causa raíz: dos funciones distintas producían direcciones de pantalla. Ahora una sola, `routePath(key)` (`host/routes.ts`), la usan el menú y la apertura automática. La prueba de la pasada 2 daba por buena la dirección rota (`/editor?c=…`); corregida a `/editor/general?c=…`, y nueva `test/host-routes-exist.test.ts`: toda dirección de la tabla `HOST_ROUTES` debe corresponder a un archivo de ruta real (28 comprobaciones). Verificado en la app real: «Mi invitación» abre el editor.
+2. **La entrada directa a Inicio (pasada 3) no se activaba tras iniciar sesión**, solo al abrir la app con sesión ya iniciada: dependía de un `?entrar=1` que solo añadía `app/index.tsx`, y el inicio de sesión navega por otra vía. Ahora la regla vive en la lista de celebraciones: con exactamente una celebración, la primera visita de cada persona abre su Inicio (`forgetAutoOpen` para pruebas); volver a la lista a propósito la muestra. Prueba actualizada. Verificado en la app real: tras iniciar sesión la dirección es `/inicio?c=…`.
+3. **Admin y alta con el ritmo anterior:** el cuerpo del admin pasa de una columna de 720 px a la medida de la página (mismos bordes que la cabecera y su acción), filas de cola/usuarios/organizaciones con relleno 16 → 24 y hueco entre bloques 16 → 24; las fichas de elección del alta (tipo de celebración) y toda fila de botones pasan de 8 a 12 de separación.
+
+Hallazgo de datos (no de diseño): el catálogo de tipos de celebración del backend local tiene cinco entradas «Evento prueba» de corridas de pruebas anteriores, visibles en el paso 1 del alta. Es suciedad de la base temporal; no se toca desde el frontend.
+
+Verificación: `apps/universal` 359/359 con `tsc` limpio.

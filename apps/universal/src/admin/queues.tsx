@@ -14,7 +14,7 @@ import { useSingleMutation } from "../platform/single-flight";
 /** A compact queue row: a hairline between rows (no card), readable at 360 px. */
 function useRowStyle(): object {
   const palette = useColors();
-  return { gap: spacing[2], paddingVertical: spacing[4], borderTopWidth: 1, borderTopColor: palette.border, maxWidth: 720 };
+  return { gap: spacing[3], paddingVertical: spacing[6], borderTopWidth: 1, borderTopColor: palette.border };
 }
 
 const PAGE = 10;

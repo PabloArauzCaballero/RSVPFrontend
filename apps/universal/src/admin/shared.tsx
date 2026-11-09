@@ -8,9 +8,9 @@ import { useLocale, useT } from "../platform/providers";
 import { failureKind, isRetryable } from "../provider/errors";
 import { RowsSkeleton } from "../provider/parts";
 
-/** The body of an admin screen: one rhythm between the intro, the filters and the list, on one readable measure (720 px) so selects and rows share edges. */
+/** The body of an admin screen: one rhythm between the intro, the filters and the list, on the page measure (the same edges as the header and its primary action). */
 export function Stack({ children }: { readonly children: ReactNode }): ReactNode {
-  return <View style={{ gap: spacing[4], width: "100%", maxWidth: 720 }}>{children}</View>;
+  return <View style={{ gap: spacing[6], width: "100%" }}>{children}</View>;
 }
 
 /** Backend codes that have their own copy under admin.errors.code. */

@@ -4,7 +4,7 @@ import { useCelebration, useEventTypes, useMyCelebrations, type Celebration, typ
 import { useApiClient, useClaims, useLocale, useT } from "../platform/providers";
 import type { SessionClaims } from "../platform/session";
 import { ActionButton, EmptyState, ErrorNotice, Notice, Screen } from "./ui";
-import { HOST_ROUTES, hostNav, withCelebration, type HostRoute } from "./routes";
+import { HOST_ROUTES, hostNav, routePath, withCelebration, type HostRoute } from "./routes";
 
 /** Who may open the host workspace: hosts and planners only (REQ-F13-05). The API re-checks everything. */
 const HOST_ROLES: readonly string[] = ["HOST", "PLANNER"];
@@ -76,7 +76,7 @@ export function CelebrationScreen({ celebrationId, onNavigate, current, title, h
   // With no celebration chosen, a person who has exactly one open celebration goes straight to it instead of a dead-end "choose one".
   const mine = useMyCelebrations(client, { enabled: !celebrationId });
   const onlyOne = !celebrationId && mine.isSuccess && mine.data.items.length === 1 ? mine.data.items[0]?.id : undefined;
-  useEffect(() => { if (onlyOne) onNavigate(withCelebration(HOST_ROUTES[current], onlyOne)); }, [onlyOne, current, onNavigate]);
+  useEffect(() => { if (onlyOne) onNavigate(withCelebration(routePath(current), onlyOne)); }, [onlyOne, current, onNavigate]);
   const nav = hostNav(t, celebrationId);
   const [store] = useState(() => new HeaderStore());
   const slotted = useSyncExternalStore(store.subscribe, store.presence, store.presence);

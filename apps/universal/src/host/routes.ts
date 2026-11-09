@@ -72,7 +72,9 @@ const DESTINATIONS: readonly { readonly key: HostDestination; readonly tabs: rea
 /** Routes that are not scoped to one celebration (`?c=` would be noise). */
 const ACCOUNT_ROUTES: readonly HostRoute[] = ["celebrations", "organizations"];
 
-const tabPath = (key: HostRoute): string => (key === "editor" ? editorPath("general") : HOST_ROUTES[key]);
+/** The address a screen key opens: the editor has no page of its own, it opens on its first section. */
+export const routePath = (key: HostRoute): string => (key === "editor" ? editorPath("general") : HOST_ROUTES[key]);
+const tabPath = routePath;
 
 export function hostNav(t: Translate, celebrationId: string | undefined): NavItem[] {
   return DESTINATIONS.map((destination) => {
