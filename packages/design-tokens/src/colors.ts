@@ -6,9 +6,9 @@
  */
 export const colors = {
   light: {
-    canvas: '#F7F6F3', surface: '#FFFFFF', surfaceMuted: '#F1EFEA',
-    text: '#111111', textMuted: '#6A6965', primary: '#111111',
-    onPrimary: '#FFFFFF', primaryMuted: '#EFEDE8', border: '#EAEAEA', fieldBorder: '#85847F',
+    canvas: '#FFFFFF', surface: '#FFFFFF', surfaceMuted: '#F7F7F8',
+    text: '#0B0B0C', textMuted: '#6B6B70', primary: '#0B0B0C',
+    onPrimary: '#FFFFFF', primaryMuted: '#EFEFF1', border: '#E8E8EA', fieldBorder: '#85858B',
     accent: '#FBF3DB', onAccent: '#5E4000', accentMuted: '#F6EBC8',
     danger: '#9F2F2D', onDanger: '#FFFFFF', success: '#346538', warning: '#7A5200',
     dangerBg: '#FDEBEC', successBg: '#EDF3EC', scrim: 'rgba(17,17,17,0.5)'
@@ -24,8 +24,8 @@ export const colors = {
 } as const;
 
 /** The two anchor neutrals, for the few places that need them outside a scheme (the app icon, print, e-mail). */
-export const ink = '#111111';
-export const bone = '#F7F6F3';
+export const ink = '#0B0B0C';
+export const bone = '#FFFFFF';
 
 /**
  * Washed-out pastel pairs (background + the readable text that goes on it) for tags, status pills and icon grounds.
