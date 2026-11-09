@@ -71,5 +71,5 @@ export const landingEnUS = {
   closing: { title: "Your first invitation starts with one tap", body: "Pick the type of celebration, add your guests and share the link.", cta: "Create my celebration" },
   error: { title: "We could not load this page", body: "The service did not respond just now. Try again in a few seconds.", retry: "Try again", home: "Go to the home page" },
   notFound: { title: "This page does not exist", body: "The link may have a typo, or the page may be gone. From the home page you can reach everything else.", home: "Go to the home page" },
-  footer: { tagline: "Get a reply in one tap.", providers: "Vendors", skip: "Skip to content", explore: "Explore", create: "Create my celebration" }
+  footer: { tagline: "Get a reply in one tap.", providers: "Vendors", skip: "Skip to content", explore: "Explore", create: "Create my celebration", privacy: "Privacy", terms: "Terms", support: "Support" }
 };

@@ -42,7 +42,9 @@ Te avisamos cuando alguien confirma, pide acompañantes o reserva un regalo.
 Claro y oscuro, en español e inglés.
 ```
 
-- **URL de asistencia:** **PENDIENTE** (una página real; ver §6).
+- **URL de asistencia:** `https://<DOMINIO>/soporte`
+- **URL de privacidad:** `https://<DOMINIO>/privacidad`
+- **Términos (opcional):** `https://<DOMINIO>/terminos`
 - **URL de marketing (opcional):** el sitio público de DOne.
 - **Copyright:** `2026 DOne`
 
@@ -54,7 +56,7 @@ Claro y oscuro, en español e inglés.
 
 ## 4. Privacidad (App Privacy)
 
-- **URL de la política de privacidad: PENDIENTE y obligatoria.** El sitio público (`apps/seo-web`) no tiene hoy una página de privacidad ni de términos; hay que crearla y publicarla antes de enviar a revisión (TestFlight interno no la exige).
+- **URL de la política de privacidad:** `https://<DOMINIO>/privacidad`. Ya existe en `apps/seo-web` (es-BO y en-US, con `?lang=en-US`), con la estructura internacional (GDPR art. 13, CCPA/CPRA, COPPA y guía 5.1.1 de Apple). Es un texto de trabajo: debe revisarlo un abogado para la entidad que opere el servicio antes del lanzamiento público.
 - ¿Rastrea a los usuarios (ATT)? **No.** No se usan SDK de publicidad ni de análisis de terceros.
 - Datos recopilados, vinculados a la persona y **no** usados para rastreo:
   - Información de contacto: nombre, correo, teléfono (anfitrión e invitados). Finalidad: funcionalidad de la app.
@@ -77,12 +79,23 @@ La app usa la cámara/fotos solo para subir imágenes a la galería de la invita
 
 **PENDIENTE:** crear una cuenta de anfitrión de demostración en el backend de TEST con una celebración de ejemplo, y poner aquí sus credenciales. Sin ella, la revisión se rechaza.
 
-## 6. Pendientes que bloquean la revisión pública (no TestFlight)
+## 6. Variables de despliegue del sitio (Coolify)
 
-1. Página de privacidad y de asistencia publicadas.
-2. Cuenta de demostración para el revisor.
-3. Dominio propio para la API: hoy es `https://rsvp-api.161.97.85.216.sslip.io` (TEST). Para producción hace falta un registro DNS A creado por el dueño.
-4. Dominio de enlaces universales (`EXPO_PUBLIC_LINK_DOMAIN`) y `apple-app-site-association` verificado.
+Se leen en cada petición; no están en el repositorio.
+
+| Variable | Valor |
+|---|---|
+| `CONTACT_EMAIL` | Buzón público de contacto y de solicitudes de eliminación. **Obligatoria**: sin ella las páginas dicen «escríbenos desde la ayuda de la app». |
+| `LEGAL_ENTITY` | Nombre legal de quien opera DOne (por defecto «DOne»). |
+| `EXPO_PUBLIC_API_URL` | Gateway https del backend (ya está en `eas.json`; cambiarla al dominio propio). |
+| `EXPO_PUBLIC_LINK_DOMAIN` | Dominio de enlaces universales. |
+
+## 6b. Pendientes que bloquean la revisión pública (no TestFlight)
+
+1. **Eliminación de cuenta dentro de la app (guía 5.1.1(v) de Apple).** Hoy no existe: identity-service solo expone listar, leer y asignar roles de usuarios. Hay que añadir un endpoint de borrado/anonimización en el backend y una pantalla en Configuración. Apple rechaza apps con registro de cuenta sin esta función. Es un cambio aparte, con su PR en cada repositorio.
+2. Cuenta de demostración para el revisor (§5).
+3. Dominio propio para la API y el sitio, y `apple-app-site-association` verificado.
+4. Revisión legal del texto de privacidad y términos.
 
 ## 7. Capturas (6,9": 1320 × 2868)
 

@@ -383,3 +383,14 @@ html:has(.rsvp-shell, .rsvp-status) body { overflow-x: clip; }
 
 /* Invitation pages: no sales navigation or pitch around a guest's invitation; the logo and the footer link stay. */
 body:has([data-quiet-chrome]) .site-nav, body:has([data-quiet-chrome]) .site-footer__line { display: none; }
+
+/* ===== Legal pages (privacy, terms, support): a calm reading column, 65 characters, no decoration. ===== */
+.legal { width: var(--wrap); max-width: 46rem; margin: 0 auto; padding: clamp(2.5rem, 7vw, 5rem) 0; }
+.legal__title { margin: 0 0 1rem; font-family: var(--font-head); font-weight: 500; letter-spacing: -.025em; line-height: 1.1; font-size: clamp(2rem, 6vw, 3.25rem); }
+.legal__intro { margin: 0 0 2.5rem; color: var(--text-muted); line-height: 1.6; }
+.legal__section { padding-top: 1.75rem; border-top: 1px solid var(--border); margin-top: 1.75rem; }
+.legal__section h2 { margin: 0 0 .75rem; font-size: 1.15rem; font-weight: 600; letter-spacing: -.01em; }
+.legal__section p, .legal__section li { line-height: 1.65; }
+.legal__section p { margin: 0 0 .75rem; }
+.legal__section ul { margin: 0 0 .75rem; padding-left: 1.25rem; display: grid; gap: .4rem; list-style: disc; }
+.legal__section li::marker { color: var(--text-muted); }

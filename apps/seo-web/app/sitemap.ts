@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { loadPublicSlugs, type PublicSlug } from "../lib/celebration";
 import { celebrationPath, siteUrl } from "../lib/metadata";
+import { LEGAL_PATH } from "../lib/legal-content";
 import { loadPartnerSlugs } from "../lib/partner";
 import { PROVIDER_CATEGORIES, searchProviders } from "../lib/providers";
 import { alternatesFor, localizedUrl } from "../lib/seo";
@@ -51,5 +52,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const directory = [...siteEntries("/proveedores", "daily", 0.9), ...(await indexableCategories()).flatMap((category) => siteEntries(`/proveedores/${category.slug}`, "daily", 0.8))];
   // Partner microsites (/p/{slug}) are indexable; /r/ (redirector), /proveedores/buscar and guest links are not listed.
   const partners = (await partnerSlugs()).flatMap((slug) => siteEntries(`/p/${encodeURIComponent(slug)}`, "weekly", 0.6));
-  return [...siteEntries("/", "weekly", 1), ...directory, ...partners, ...celebrations];
+  const legal = Object.values(LEGAL_PATH).flatMap((path) => siteEntries(path, "weekly", 0.3));
+  return [...siteEntries("/", "weekly", 1), ...directory, ...legal, ...partners, ...celebrations];
 }
