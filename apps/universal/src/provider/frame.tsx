@@ -44,7 +44,7 @@ export function useProviderId(): { readonly providerId: string | null | undefine
 }
 
 /** The one primary action of a screen (top right of the header; bottom bar on a phone). */
-export interface HeaderPrimary { readonly label: string; readonly onPress: () => void; readonly testID?: string; readonly busy?: boolean; readonly disabled?: boolean }
+export interface HeaderPrimary { readonly icon?: string; readonly label: string; readonly onPress: () => void; readonly testID?: string; readonly busy?: boolean; readonly disabled?: boolean }
 /** A secondary action, kept behind the "⋯" menu. */
 export interface HeaderMenuItem { readonly key: string; readonly label: string; readonly onPress: () => void; readonly destructive?: boolean; readonly disabled?: boolean }
 interface HeaderSpec { readonly primary?: HeaderPrimary | undefined; readonly menu?: readonly HeaderMenuItem[] | undefined }
@@ -58,7 +58,7 @@ export function usePortalHeader(primary: HeaderPrimary | undefined, menu?: reado
   const set = useContext(HeaderSlot);
   const latest = useRef({ primary, menu });
   latest.current = { primary, menu };
-  const signature = JSON.stringify([primary ? [primary.label, primary.testID, primary.busy, primary.disabled] : null, (menu ?? []).map((item) => [item.key, item.label, item.destructive, item.disabled])]);
+  const signature = JSON.stringify([primary ? [primary.icon, primary.label, primary.testID, primary.busy, primary.disabled] : null, (menu ?? []).map((item) => [item.key, item.label, item.destructive, item.disabled])]);
   useEffect(() => {
     if (!set) return undefined;
     const current = latest.current;
@@ -81,7 +81,7 @@ export function PortalScreen({ title, current, requireProvider = true, children 
   // Services, products and delivery terms are one list of offers: the three routes stay (shared links) and light the one tab.
   const active: PortalRoute = current === "products" || current === "delivery" ? "services" : current;
   const [header, setHeader] = useState<HeaderSpec | null>(null);
-  const actions = header?.primary ? <ActionButton label={header.primary.label} onPress={header.primary.onPress} busy={header.primary.busy ?? false} disabled={header.primary.disabled ?? false} {...(header.primary.testID ? { testID: header.primary.testID } : {})} /> : undefined;
+  const actions = header?.primary ? <ActionButton {...(header.primary.icon ? { icon: header.primary.icon } : {})} label={header.primary.label} onPress={header.primary.onPress} busy={header.primary.busy ?? false} disabled={header.primary.disabled ?? false} {...(header.primary.testID ? { testID: header.primary.testID } : {})} /> : undefined;
   const menu = header?.menu?.length ? <OverflowMenu testID="more-options" items={header.menu} /> : undefined;
   const frame = (body: ReactNode): ReactNode => <HeaderSlot.Provider value={setHeader}><Screen title={title} nav={nav} current={active} onNavigate={(href) => router.push(href as Href)} {...(actions ? { actions } : {})} {...(menu ? { menu } : {})}>{body}</Screen></HeaderSlot.Provider>;
   if (providerId === undefined) return frame(<Loading />);

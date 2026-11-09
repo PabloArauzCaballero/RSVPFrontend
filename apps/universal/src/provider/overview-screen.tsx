@@ -101,7 +101,7 @@ function Overview({ provider, refetch }: { readonly provider: Provider; readonly
   const firstVerified = useFirstTime(`rsvp.provider.${provider.id}.verified-seen`, provider.status === "VERIFIED");
   const milestone = provider.status === "PENDING_VERIFICATION" ? "PENDING_VERIFICATION" : resubmittable && hasListing ? "offer" : firstVerified ? "VERIFIED" : null;
   const primary = suspended || !listings.data ? undefined
-    : !hasListing ? { label: t("portal.home.journey.offer.action"), onPress: () => router.push(PORTAL_ROUTES.services as Href), testID: "step-offer-action" }
+    : !hasListing ? { icon: "plus", label: t("portal.home.journey.offer.action"), onPress: () => router.push(PORTAL_ROUTES.services as Href), testID: "step-offer-action" }
     : resubmittable ? { label: submit.isPending ? t("portal.status.submitting") : t("portal.status.submit"), busy: submit.isPending, disabled: submit.isPending, onPress: () => submitOnce(undefined, { onSuccess: refetch }), testID: "submit-verification" }
     : undefined;
   usePortalHeader(primary, [{ key: "rename", label: t("portal.rename.action"), onPress: () => setRenaming(true) }]);
@@ -207,7 +207,7 @@ function OnboardingBody({ onDone }: { readonly onDone: () => void }): ReactNode 
       await remember(provider.id); onDone();
     } catch (failure) { setError(failure instanceof ApiError && failure.status === 404 ? t("portal.onboarding.notFound") : t("portal.errors.generic")); } finally { setConnecting(false); }
   };
-  usePortalHeader({ label: register.isPending ? t("portal.onboarding.creating") : t("portal.onboarding.submit"), busy: register.isPending, disabled: register.isPending, onPress: create, testID: "provider-create" });
+  usePortalHeader({ icon: "plus", label: register.isPending ? t("portal.onboarding.creating") : t("portal.onboarding.submit"), busy: register.isPending, disabled: register.isPending, onPress: create, testID: "provider-create" });
   return (
     <View style={{ gap: spacing[4] }}>
       <View style={[styles.row, { gap: spacing[4], flexWrap: "nowrap" }]}><Illustration name="welcomeProvider" tone="auto" size="md" /><View style={{ flex: 1 }}><PageIntro>{t("portal.onboarding.intro")}</PageIntro></View></View>

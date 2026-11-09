@@ -144,7 +144,7 @@ function Offers({ provider }: { readonly provider: Provider }): ReactNode {
   const [created, setCreated] = useState(false);
   const items = listings.data?.items ?? [];
   const open = (): void => { setCreated(false); setAdding(true); };
-  usePortalHeader(adding || !listings.data ? undefined : { label: t("portal.services.add"), onPress: open, testID: "offer-new" });
+  usePortalHeader(adding || !listings.data ? undefined : { icon: "plus", label: t("portal.services.add"), onPress: open, testID: "offer-new" });
   return (
     <View style={{ gap: spacing[6] }}>
       <PageIntro>{t("portal.services.intro")}</PageIntro>

@@ -59,7 +59,7 @@ function Documents({ provider }: { readonly provider: Provider }): ReactNode {
       { onSuccess: () => { setDone(true); setFile(null); } }
     );
   };
-  usePortalHeader({ label: upload.isPending ? t("portal.documents.uploading") : t("portal.documents.upload"), busy: upload.isPending, disabled: upload.isPending, onPress: send, testID: "document-upload" });
+  usePortalHeader({ icon: "upload", label: upload.isPending ? t("portal.documents.uploading") : t("portal.documents.upload"), busy: upload.isPending, disabled: upload.isPending, onPress: send, testID: "document-upload" });
   return (
     <View style={{ gap: spacing[4] }}>
       <PageIntro>{t("portal.documents.intro")}</PageIntro>

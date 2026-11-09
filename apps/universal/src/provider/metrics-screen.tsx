@@ -91,7 +91,7 @@ function Metrics({ provider }: { readonly provider: Provider }): ReactNode {
   const applied = period === "custom" ? custom : lastDays(PERIOD_DAYS[period], provider.timeZone);
   const metrics = useMetrics(client, provider.id, applied.from, applied.to, group);
   const apply = (): void => { if (!validRange(from, to)) return setError(t("portal.metrics.dateInvalid")); setError(null); setCustom({ from, to }); };
-  usePortalHeader(period === "custom" ? { label: t("portal.metrics.apply"), onPress: apply, testID: "metrics-apply" } : undefined);
+  usePortalHeader(period === "custom" ? { icon: "refresh", label: t("portal.metrics.apply"), onPress: apply, testID: "metrics-apply" } : undefined);
   const rows = (metrics.data?.groups ?? metrics.data?.rows ?? []) as readonly Record<string, unknown>[];
   const peak = Math.max(1, ...rows.map(reachOf));
   return (

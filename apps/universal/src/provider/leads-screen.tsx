@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
-import { spacing } from "@rsvp/design-tokens";
-import { Chip, Stagger, useColors } from "@rsvp/ui";
+import { radius, spacing } from "@rsvp/design-tokens";
+import { Chip, Stagger, depth, useColors, useTheme } from "@rsvp/ui";
 import { formatCelebrationDate } from "@rsvp/i18n";
 import { useInfiniteLeads, type Lead, type Provider } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../platform/providers";
@@ -19,13 +19,14 @@ function LeadRow({ lead, timeZone }: { readonly lead: Lead; readonly timeZone: s
   const locale = useLocale();
   const styles = useStyles();
   const palette = useColors();
+  const { scheme } = useTheme();
   const context = lead.context ?? {};
   const surface = typeof context["surface"] === "string" ? context["surface"] : undefined;
   // Internal codes (QUOTE_FORM and the like) are not copy: only destinations and surfaces the couple would recognize are shown.
   const destination = lead.destination && KNOWN_DESTINATIONS.includes(lead.destination) ? lead.destination : undefined;
   const surfaceKnown = surface !== undefined && KNOWN_SURFACES.includes(surface);
   return (
-    <View style={{ gap: spacing[1], paddingVertical: spacing[3], borderTopWidth: 1, borderTopColor: palette.border }} testID={`lead-${lead.id}`}>
+    <View style={{ gap: spacing[1], padding: spacing[5], marginBottom: spacing[3], backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, borderRadius: radius.lg, ...depth(scheme) }} testID={`lead-${lead.id}`}>
       <View style={[styles.row, { justifyContent: "space-between", flexWrap: "nowrap" }]}><Text style={[styles.label, { flex: 1 }]}>{t(`portal.leads.kind.${lead.kind}`)}</Text><Chip tone={lead.valid ? "yes" : "no"}>{lead.valid ? t("portal.leads.valid") : t(`portal.leads.invalid.${lead.invalidReason ?? "bot"}`)}</Chip></View>
       <Text style={styles.muted}>{formatCelebrationDate(lead.occurredAt, { locale, timeZone })}</Text>
       {destination ? <Text style={styles.body}>{t("portal.leads.destination", { destination: t(`portal.destinations.destination.${destination}`) })}</Text> : null}

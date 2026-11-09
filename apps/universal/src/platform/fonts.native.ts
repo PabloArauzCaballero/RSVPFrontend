@@ -1,6 +1,6 @@
 import { Text, TextInput } from "react-native";
 import { brandFamilyFor } from "./font-weights";
-import { useFonts, PlusJakartaSans_400Regular, PlusJakartaSans_500Medium, PlusJakartaSans_600SemiBold, PlusJakartaSans_700Bold, PlusJakartaSans_800ExtraBold } from "@expo-google-fonts/plus-jakarta-sans";
+import { useFonts, Geist_400Regular, Geist_500Medium, Geist_600SemiBold, Geist_700Bold } from "@expo-google-fonts/geist";
 
 /**
  * iOS and Android: the brand face is bundled (not the system font). React Native picks a font file by family name,
@@ -29,7 +29,7 @@ export function installBrandFont(): void {
 
 /** Loads the font files and installs the weight mapping. False until the files are ready (keep the splash up). */
 export function useBrandFonts(): boolean {
-  const [loaded, error] = useFonts({ PlusJakartaSans_400Regular, PlusJakartaSans_500Medium, PlusJakartaSans_600SemiBold, PlusJakartaSans_700Bold, PlusJakartaSans_800ExtraBold });
+  const [loaded, error] = useFonts({ Geist_400Regular, Geist_500Medium, Geist_600SemiBold, Geist_700Bold });
   const ready = loaded || Boolean(error);
   if (loaded) installBrandFont();
   return ready;

@@ -1775,10 +1775,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@expo-google-fonts/plus-jakarta-sans@npm:^0.4.2":
+"@expo-google-fonts/geist@npm:0.4.2":
   version: 0.4.2
-  resolution: "@expo-google-fonts/plus-jakarta-sans@npm:0.4.2"
-  checksum: 10c0/a2c90e344dd974c6f332b3285173ac28b0de5e37517d5ea959117578ae02550720ab233417d7da42637db7ebbfded86648814198795ca35bd2b49fc164084bb7
+  resolution: "@expo-google-fonts/geist@npm:0.4.2"
+  checksum: 10c0/7e0f3ffa39dcef590aa85c17a58f64dee858d68ebe5638e45ea06260a49c2e6c5c62b245e73cb9d26c321d30ad956ca3d7370fbeede4efab0632d93488426b6a
   languageName: node
   linkType: hard
 
@@ -4665,7 +4665,7 @@ __metadata:
   resolution: "@rsvp/universal@workspace:apps/universal"
   dependencies:
     "@babel/core": "npm:^7.27.1"
-    "@expo-google-fonts/plus-jakarta-sans": "npm:^0.4.2"
+    "@expo-google-fonts/geist": "npm:0.4.2"
     "@react-native-community/datetimepicker": "npm:8.4.4"
     "@rsvp/api-client": "workspace:*"
     "@rsvp/auth": "workspace:*"

@@ -1,9 +1,9 @@
 import { StyleSheet, type TextStyle } from "react-native";
 
-/** React Native picks a font file by family name, not by `fontWeight`: this maps the weight a style asks for to the bundled Plus Jakarta Sans file. */
+/** React Native picks a font file by family name, not by `fontWeight`: this maps the weight a style asks for to the bundled Geist file (the same face the web uses; Geist has no 800 or 900 in the bundle, so those use Bold). */
 const FAMILY: Readonly<Record<string, string>> = {
-  "400": "PlusJakartaSans_400Regular", "500": "PlusJakartaSans_500Medium", "600": "PlusJakartaSans_600SemiBold",
-  "700": "PlusJakartaSans_700Bold", "800": "PlusJakartaSans_800ExtraBold", "900": "PlusJakartaSans_800ExtraBold"
+  "400": "Geist_400Regular", "500": "Geist_500Medium", "600": "Geist_600SemiBold",
+  "700": "Geist_700Bold", "800": "Geist_700Bold", "900": "Geist_700Bold"
 };
 const ALIAS: Readonly<Record<string, string>> = { normal: "400", bold: "700" };
 
