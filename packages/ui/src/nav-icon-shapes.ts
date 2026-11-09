@@ -48,6 +48,7 @@ const upload: readonly NavShape[] = [{ t: 'path', d: 'M12 16 V5 M8 9 L12 5 L16 9
 export const NAV_ICONS: Readonly<Record<string, readonly NavShape[]>> = {
   home, guests: people, gifts: gift, invitation: envelope, alerts: bell, settings: sliders,
   overview: home, offers: tag, agenda: calendar, clients: people, profile: user,
-  review: shield, catalog: grid, people, operation: sliders, more
+  review: shield, catalog: grid, people, operation: sliders, more,
+  plus, check, close, trash, arrow, back, refresh, copy, logout, moon, search, share, upload
 };
 export const NAV_ICON_STROKE = 1.75;

@@ -3,7 +3,7 @@ import { Linking, Text, View } from "react-native";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { celebrationApi, useAdminEventTypes, useAdminTemplates } from "@rsvp/query-hooks";
 import { useIdentitySummary, useProviderSummary } from "@rsvp/query-hooks/admin";
-import { radius, spacing } from "@rsvp/design-tokens";
+import { spacing } from "@rsvp/design-tokens";
 import { Illustration, Stagger, useColors } from "@rsvp/ui";
 import { useApiClient, useT } from "../platform/providers";
 import { ActionButton, ConfirmDialog, Notice, OverflowMenu, PageIntro, Section, useStyles } from "../host/ui";

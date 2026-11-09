@@ -45,18 +45,6 @@ const STEP_ROUTE: Readonly<Record<Exclude<NextStep["kind"], "done">, string>> = 
   publish: HOST_ROUTES.publish, finish: HOST_ROUTES.publish, addGuests: HOST_ROUTES.guestNew, requests: HOST_ROUTES.requests, gifts: HOST_ROUTES.giftInbox, pending: HOST_ROUTES.guests
 };
 
-/** One legend entry: a swatch, the word and the number. The swatch never carries the meaning alone. */
-function LegendItem({ testID, label, value, swatch }: { readonly testID: string; readonly label: string; readonly value: number; readonly swatch: string }): ReactNode {
-  const palette = useColors();
-  const styles = useStyles();
-  return (
-    <View testID={testID} accessible accessibilityLabel={`${label}: ${value}`} style={{ flexDirection: "row", alignItems: "center", gap: spacing[2] }}>
-      <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: swatch, borderWidth: 1, borderColor: palette.fieldBorder }} />
-      <Text style={[styles.body, { fontVariant: ["tabular-nums"] }]}><Text style={{ fontWeight: "600" }}>{value}</Text> {label}</Text>
-    </View>
-  );
-}
-
 /** The answer so far as one stacked bar (the kit's progress pattern): confirmed, declined, and what is still open. Decorative: the legend says every number. */
 function ResponseBar({ confirmed, declined, total }: { readonly confirmed: number; readonly declined: number; readonly total: number }): ReactNode {
   const palette = useColors();

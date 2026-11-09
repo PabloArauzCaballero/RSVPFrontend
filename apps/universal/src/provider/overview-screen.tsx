@@ -4,7 +4,6 @@ import { useRouter, type Href } from "expo-router";
 import { radius, spacing } from "@rsvp/design-tokens";
 import { AvatarMark, Chip, Enter, Stagger, fonts, useColors } from "@rsvp/ui";
 import { ApiError } from "@rsvp/api-client";
-import { formatNumber } from "@rsvp/i18n";
 import { MAX_PROVIDER_NAME, providerService, useMetrics, useOwnListings, useRegisterProviderAccount, useSubmitProvider, useUpdateProvider, type Provider } from "@rsvp/query-hooks";
 import { createApiClientForPublicRead } from "./public-client";
 import { useApiClient, useClaims, useLocale, useT } from "../platform/providers";

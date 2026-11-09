@@ -1,4 +1,4 @@
-import { Chip, CountUp, SkeletonList, Stagger, SwitchRow, fonts, useColors } from "@rsvp/ui";
+import { Chip, SkeletonList, Stagger, SwitchRow, fonts, useColors } from "@rsvp/ui";
 import { useState, type ReactNode } from "react";
 import { Text, View, useWindowDimensions } from "react-native";
 import { radius, spacing } from "@rsvp/design-tokens";

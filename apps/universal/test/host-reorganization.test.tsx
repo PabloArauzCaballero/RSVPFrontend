@@ -4,7 +4,7 @@ import { GiftsScreen } from "../src/host/gifts/gifts-screen";
 import { PublishScreen } from "../src/host/publish-checklist";
 import { SettingsScreen } from "../src/host/settings-screen";
 import { CelebrationsScreen } from "../src/host/celebrations";
-import { baseHandlers, CELEBRATION, fakeClient, renderApp } from "./support";
+import { baseHandlers, fakeClient, renderApp } from "./support";
 
 /** The owner's rule applied to gifts, invitation and settings: one primary action in the header, the rest in «⋯», nothing repeated. */
 const navigate = vi.fn();
