@@ -17,7 +17,7 @@ import { ActionButton, EmptyState, Notice, Screen, useStyles } from "./ui";
 let autoOpenedFor: string | null = null;
 export const forgetAutoOpen = (): void => { autoOpenedFor = null; };
 
-export function CelebrationsScreen({ onNavigate }: { readonly onNavigate: (href: string) => void }): ReactNode {
+export function CelebrationsScreen({ onNavigate, autoOpen = true }: { readonly onNavigate: (href: string) => void; readonly autoOpen?: boolean }): ReactNode {
   const styles = useStyles();
   const palette = useColors();
   const t = useT();
@@ -27,7 +27,7 @@ export function CelebrationsScreen({ onNavigate }: { readonly onNavigate: (href:
   const query = useMyCelebrations(client);
   // Arriving (sign-in, first load) with exactly one celebration opens its Inicio instead of a list of one; going back to the list later shows it.
   const userId = claims.userId;
-  const only = userId !== null && autoOpenedFor !== userId && query.isSuccess && query.data.items.length === 1 ? query.data.items[0]?.id : undefined;
+  const only = autoOpen && userId !== null && autoOpenedFor !== userId && query.isSuccess && query.data.items.length === 1 ? query.data.items[0]?.id : undefined;
   useEffect(() => { if (only && userId) { autoOpenedFor = userId; onNavigate(withCelebration(HOST_ROUTES.summary, only)); } }, [only, userId, onNavigate]);
   useEffect(() => { if (userId && query.isSuccess && autoOpenedFor !== userId) autoOpenedFor = userId; }, [userId, query.isSuccess]);
   if (!canUseHostWorkspace(claims)) return <Screen title={t("host.picker.title")}><Notice kind="error">{t("host.common.accessDenied")}</Notice></Screen>;

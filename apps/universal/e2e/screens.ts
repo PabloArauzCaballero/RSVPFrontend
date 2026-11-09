@@ -5,7 +5,7 @@ const C = `?c=${MOCK_CELEBRATION_ID}`;
 export interface VisualScreen { readonly name: string; readonly path: string }
 
 export const AUTHED_SCREENS: readonly VisualScreen[] = [
-  { name: "host-celebraciones", path: "/celebraciones" },
+  { name: "host-celebraciones", path: "/celebraciones?lista=1" },
   { name: "host-resumen", path: `/inicio${C}` },
   { name: "host-invitados", path: `/invitados${C}` },
   { name: "host-invitado-nuevo", path: `/invitados/nuevo${C}` },
