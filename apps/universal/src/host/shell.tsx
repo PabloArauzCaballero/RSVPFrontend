@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type PropsWithChildren, type ReactNode } from "react";
 import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type LayoutChangeEvent, type ViewStyle } from "react-native";
 import { radius, spacing } from "@rsvp/design-tokens";
-import { Logo, OverlayEnter, PageIntro, PressFeedback, ScreenTransition, StickyActions, fonts, overlayAnimation, useColors, useThemedStyles, type Palette } from "@rsvp/ui";
+import { Logo, NavIcon, OverlayEnter, PageIntro, PressFeedback, ScreenTransition, StickyActions, fonts, overlayAnimation, useColors, useThemedStyles, type Palette } from "@rsvp/ui";
 import { useAuth } from "../auth/auth-context";
 import { useT } from "../platform/providers";
 import { useThemePreference } from "../platform/theme";
@@ -48,7 +48,7 @@ const createShellStyles = (palette: Palette) => StyleSheet.create({
   sidebar: { width: SIDEBAR, flexShrink: 0, backgroundColor: palette.surface, borderRightWidth: 1, borderRightColor: palette.border, paddingTop: spacing[8], paddingBottom: spacing[4], paddingHorizontal: spacing[4] },
   sidebarLogo: { paddingHorizontal: spacing[3], paddingBottom: spacing[12] },
   sidebarList: { flex: 1 },
-  sidebarItem: { minHeight: MIN_TOUCH, flexDirection: "row", alignItems: "center", paddingHorizontal: spacing[3], borderRadius: radius.md, marginBottom: spacing[1] },
+  sidebarItem: { minHeight: MIN_TOUCH, flexDirection: "row", alignItems: "center", gap: spacing[3], paddingHorizontal: spacing[3], borderRadius: radius.md, marginBottom: spacing[1] },
   sidebarItemActive: { backgroundColor: palette.surfaceMuted },
   sidebarText: { color: palette.textMuted, fontSize: 15, fontWeight: "500", fontFamily },
   sidebarTextActive: { color: palette.text, fontWeight: "600" },
@@ -72,8 +72,8 @@ const createShellStyles = (palette: Palette) => StyleSheet.create({
   mSheet: { flexGrow: 1, paddingHorizontal: spacing[5], paddingTop: spacing[6], paddingBottom: spacing[12], gap: spacing[8] },
   title: { color: palette.text, fontSize: 44, lineHeight: 48, fontWeight: "500", letterSpacing: -1.2, fontFamily: fontDisplay },
   tabBar: { flexDirection: "row", backgroundColor: palette.surface, borderTopWidth: 1, borderTopColor: palette.border, ...(Platform.OS === "web" ? ({ paddingBottom: "env(safe-area-inset-bottom)" } as object) : null) },
-  tab: { flex: 1, minHeight: 56 },
-  tabInner: { alignItems: "center", justifyContent: "center", gap: 6, paddingHorizontal: 0 },
+  tab: { flex: 1, minHeight: 64 },
+  tabInner: { alignItems: "center", justifyContent: "center", gap: 4, paddingHorizontal: 0 },
   tabDot: { width: 20, height: 2, borderRadius: 1, backgroundColor: "transparent" },
   tabDotActive: { backgroundColor: palette.primary },
   tabText: { color: palette.textMuted, fontSize: 11, fontWeight: "500", fontFamily },
@@ -201,7 +201,8 @@ function Sidebar({ nav, current, onNavigate }: { readonly nav: readonly NavItem[
   const s = useThemedStyles(createShellStyles);
   const t = useT();
   const auth = useAuth();
-  const ringColor = ring(useColors().primary);
+  const palette = useColors();
+  const ringColor = ring(palette.primary);
   return (
     <View style={s.sidebar}>
       <View style={s.sidebarLogo}><Logo tone="auto" height={28} /></View>
@@ -210,6 +211,7 @@ function Sidebar({ nav, current, onNavigate }: { readonly nav: readonly NavItem[
           const active = isCurrentDestination(item, current);
           return (
             <Pressable key={item.key} role="link" aria-current={active ? "page" : undefined} onPress={() => onNavigate?.(item.href)} style={[s.sidebarItem, active && s.sidebarItemActive, ringColor]}>
+              <NavIcon name={item.key} size={20} color={active ? palette.text : palette.textMuted} />
               <Text style={[s.sidebarText, active && s.sidebarTextActive]}>{item.label}</Text>
             </Pressable>
           );
@@ -227,7 +229,8 @@ function Sidebar({ nav, current, onNavigate }: { readonly nav: readonly NavItem[
 
 function MobileFrame({ nav, current, onNavigate, children }: PropsWithChildren<{ readonly nav: readonly NavItem[]; readonly current?: string; readonly onNavigate?: (href: string) => void }>): ReactNode {
   const s = useThemedStyles(createShellStyles);
-  const tabRing = ring(useColors().primary);
+  const palette = useColors();
+  const tabRing = ring(palette.primary);
   const t = useT();
   const auth = useAuth();
   const [open, setOpen] = useState(false);
@@ -252,6 +255,7 @@ function MobileFrame({ nav, current, onNavigate, children }: PropsWithChildren<{
               <PressFeedback key={item.key} accessibilityRole="link" aria-current={active ? "page" : undefined} onPress={() => go(item.href)} style={[s.tab, tabRing]}>
                 <View style={s.tabInner}>
                   <View style={[s.tabDot, active && s.tabDotActive]} />
+                  <NavIcon name={item.key} size={22} color={active ? palette.text : palette.textMuted} />
                   <Text numberOfLines={1} style={[s.tabText, active && s.tabTextActive]}>{item.label}</Text>
                 </View>
               </PressFeedback>
@@ -261,6 +265,7 @@ function MobileFrame({ nav, current, onNavigate, children }: PropsWithChildren<{
             <PressFeedback accessibilityRole="button" aria-expanded={open} accessibilityLabel={t("common.more")} onPress={() => setOpen(true)} style={[s.tab, tabRing]}>
               <View style={s.tabInner}>
                 <View style={[s.tabDot, hiddenActive && s.tabDotActive]} />
+                <NavIcon name="more" size={22} color={hiddenActive ? palette.text : palette.textMuted} />
                 <Text style={[s.tabText, hiddenActive && s.tabTextActive]}>{t("common.more")}</Text>
               </View>
             </PressFeedback>

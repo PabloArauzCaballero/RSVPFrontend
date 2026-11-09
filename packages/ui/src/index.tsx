@@ -13,6 +13,7 @@ import { DateField } from './date-field';
 export { Logo, type LogoProps, type LogoTone } from './logo';
 export { CheckMark, type CheckMarkProps } from './scheme-check';
 export { NoticeMark, type NoticeMarkProps, type NoticeMarkTone } from './notice-mark';
+export { NavIcon, type NavIconProps } from './nav-icon';
 export { Illustration, type IllustrationProps } from './illustration';
 export { ILLUSTRATION_NAMES, type IllustrationName, type IllustrationTone } from './illustrations';
 export * from './identity';

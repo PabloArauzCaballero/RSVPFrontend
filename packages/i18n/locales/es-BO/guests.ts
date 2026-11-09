@@ -38,6 +38,7 @@ export const guestsEsBO = {
     firstReply: { title: "Llegó tu primera respuesta", body: "Así empieza: cada toque de un invitado aparece aquí al instante." },
     welcome: { title: "Aquí verás quién viene", body: "Agrega a tus primeros invitados y comparte su enlace personal. Ellos responden en un toque.", action: "Agregar invitados" },
     allDone: "Todo al día",
+    shareOfGuests: "{{percent}} % de tus invitados", heroGuests: "{{total}} invitados · {{answered}} ya respondieron", daysLeft_one: "día para la fiesta", daysLeft_other: "días para la fiesta",
     daysToDeadline_one: "Queda {{count}} día para cerrar las respuestas", daysToDeadline_other: "Quedan {{count}} días para cerrar las respuestas",
     deadlineToday: "Las respuestas cierran hoy", deadlinePassed: "Las respuestas ya cerraron", noDeadline: "Sin fecha límite de respuesta",
     openRequests_one: "{{count}} solicitud de acompañantes por revisar", openRequests_other: "{{count}} solicitudes de acompañantes por revisar"

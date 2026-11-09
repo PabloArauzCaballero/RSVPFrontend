@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
-import { Text, View } from "react-native";
+import { Text, View, useWindowDimensions } from "react-native";
 import { chips, radius, spacing } from "@rsvp/design-tokens";
 import { CheckMark, Enter, Skeleton, SkeletonList, fonts, useColors, useTheme } from "@rsvp/ui";
 import { countdownTo, useCelebration, useGuestSummary, useHostReservations, usePublishCheck, type Celebration } from "@rsvp/query-hooks";
-import { useApiClient, useT } from "../../platform/providers";
+import { useApiClient, useLocale, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { asText } from "../content-draft";
 import { HOST_ROUTES, withCelebration } from "../routes";
@@ -96,6 +96,51 @@ function NextCard({ step, t }: { readonly step: Exclude<NextStep, { kind: "done"
   );
 }
 
+/** One number of the answer, as a tile: the word, the figure in the serif, and its share of the guests. The swatch repeats the word and is never the only cue. */
+function StatTile({ testID, label, value, total, swatch }: { readonly testID: string; readonly label: string; readonly value: number; readonly total?: number; readonly swatch: string }): ReactNode {
+  const palette = useColors();
+  const t = useT();
+  const share = total ? Math.round((value / total) * 100) : null;
+  return (
+    <View testID={testID} accessible accessibilityLabel={`${label}: ${value}`} style={{ flexGrow: 1, flexBasis: 150, backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, borderRadius: radius.lg, padding: spacing[6], gap: spacing[3], minWidth: 0 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[2] }}>
+        <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: swatch }} />
+        <Text style={{ color: palette.textMuted, fontSize: 12, lineHeight: 16, fontWeight: "600", letterSpacing: 0.6, textTransform: "uppercase", fontFamily: fonts.sans }}>{label}</Text>
+      </View>
+      <Text style={{ color: palette.text, fontSize: 44, lineHeight: 46, fontWeight: "500", letterSpacing: -1.2, fontFamily: fonts.display, fontVariant: ["tabular-nums"] }}>{value}</Text>
+      <Text style={{ color: palette.textMuted, fontSize: 13, lineHeight: 18, fontFamily: fonts.sans }}>{share === null ? " " : t("guests.summary.shareOfGuests", { percent: share })}</Text>
+    </View>
+  );
+}
+
+/** The celebration at a glance: when and where, how many days are left, and how many guests there are. */
+function EventHero({ celebration, total, answered, t }: { readonly celebration: Celebration; readonly total: number; readonly answered: number; readonly t: ReturnType<typeof useT> }): ReactNode {
+  const palette = useColors();
+  const locale = useLocale();
+  const narrow = useWindowDimensions().width < 640;
+  const eventDate = asText(celebration.content["eventDate"]);
+  const venue = asText(celebration.content["venueName"]);
+  const when = eventDate ? Date.parse(eventDate) : Number.NaN;
+  const days = Number.isFinite(when) ? Math.ceil((when - Date.now()) / 86_400_000) : null;
+  const dateLabel = Number.isFinite(when) ? new Intl.DateTimeFormat(locale === "en-US" ? "en-US" : "es-BO", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(when).replace(/^./, (first) => first.toUpperCase()) : "";
+  if (!dateLabel && !venue && total === 0) return null;
+  return (
+    <View testID="event-hero" style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "flex-end", justifyContent: "space-between", gap: spacing[6], backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, borderRadius: radius.lg, padding: spacing[8] }}>
+      <View style={{ gap: spacing[2], flexShrink: 1, minWidth: 220 }}>
+        {dateLabel ? <Text style={{ color: palette.text, fontSize: 20, lineHeight: 28, fontFamily: fonts.display, fontWeight: "500", letterSpacing: -0.3 }}>{dateLabel}</Text> : null}
+        {venue ? <Text style={{ color: palette.textMuted, fontSize: 15, lineHeight: 22, fontFamily: fonts.sans }}>{venue}</Text> : null}
+        <Text testID="count-total" accessible accessibilityLabel={`${t("guests.summary.total")}: ${total}`} style={{ color: palette.textMuted, fontSize: 14, lineHeight: 20, fontFamily: fonts.sans, paddingTop: spacing[2] }}>{t("guests.summary.heroGuests", { total, answered })}</Text>
+      </View>
+      {days !== null && days >= 0 ? (
+        <View testID="days-left" style={{ alignItems: narrow ? "flex-start" : "flex-end" }}>
+          <Text style={{ color: palette.text, fontSize: 64, lineHeight: 64, fontWeight: "500", letterSpacing: -2, fontFamily: fonts.display, fontVariant: ["tabular-nums"] }}>{days}</Text>
+          <Text style={{ color: palette.textMuted, fontSize: 13, lineHeight: 18, fontWeight: "600", letterSpacing: 0.6, textTransform: "uppercase", fontFamily: fonts.sans }}>{t("guests.summary.daysLeft", { count: days })}</Text>
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
 /** What the panel looks like while it loads: the band, the progress rows and the bar, at their real heights. */
 function SummarySkeleton(): ReactNode {
   const t = useT();
@@ -150,31 +195,31 @@ function SummaryBody({ celebration, state, onNavigate }: { readonly celebration:
       ) : null}
       {step && step.kind !== "addGuests" && step.kind !== "done" ? <NextCard step={step} t={t} /> : null}
       {step?.kind === "addGuests" ? null : (
-        <View style={styles.card}>
-          <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", columnGap: spacing[4] }}>
-            <Text accessibilityRole="header" aria-level={2} style={styles.subtitle}>{t("guests.summary.progressTitle")}</Text>
-            {data.total > 0 ? <TextAction label={t("guests.summary.viewGuests")} onPress={go(HOST_ROUTES.guests)} /> : null}
-          </View>
-          <Text testID="step-answers" style={[styles.label, { fontSize: 16 }]}>{data.total > 0 ? t("guests.summary.steps.answersSome", { answered, total: data.total }) : t("guests.summary.steps.answersNone")}</Text>
+        <>
+          <EventHero celebration={celebration} total={data.total} answered={answered} t={t} />
           {data.total > 0 ? (
-            <View style={{ gap: spacing[3] }}>
-              <ResponseBar confirmed={data.confirmed} declined={data.declined} total={data.total} />
-              <View style={{ flexDirection: "row", flexWrap: "wrap", columnGap: spacing[6], rowGap: spacing[2] }}>
-                <LegendItem testID="count-confirmed" label={t("guests.summary.confirmed")} value={data.confirmed} swatch={chips[scheme].yes.dot} />
-                <LegendItem testID="count-pending" label={t("guests.summary.pending")} value={data.pending} swatch={chips[scheme].wait.dot} />
-                <LegendItem testID="count-declined" label={t("guests.summary.declined")} value={data.declined} swatch={chips[scheme].no.dot} />
-                <LegendItem testID="count-companions" label={t("guests.summary.companions")} value={data.companions} swatch={chips[scheme].maybe.dot} />
-                <LegendItem testID="count-total" label={t("guests.summary.total")} value={data.total} swatch="transparent" />
-              </View>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing[4] }}>
+              <StatTile testID="count-confirmed" label={t("guests.summary.confirmed")} value={data.confirmed} total={data.total} swatch={chips[scheme].yes.dot} />
+              <StatTile testID="count-pending" label={t("guests.summary.pending")} value={data.pending} total={data.total} swatch={chips[scheme].wait.dot} />
+              <StatTile testID="count-declined" label={t("guests.summary.declined")} value={data.declined} total={data.total} swatch={chips[scheme].no.dot} />
+              <StatTile testID="count-companions" label={t("guests.summary.companions")} value={data.companions} swatch={chips[scheme].maybe.dot} />
             </View>
           ) : null}
-          {/* The small print belongs together: one block with tight lines, set apart from the numbers above it. */}
-          <View style={{ gap: spacing[1], paddingTop: spacing[2] }}>
-            <Text style={styles.muted}>{deadlineLine(celebration, t, Date.now())}</Text>
-            {open && step?.kind !== "requests" ? <Text testID="open-requests" style={styles.muted}>{t("guests.summary.openRequests", { count: open })}</Text> : null}
-            <FreshnessLine freshness={data.freshness} timeZone={celebration.timeZone} onRefresh={() => { void summary.refetch(); }} />
+          <View style={styles.card}>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", columnGap: spacing[4] }}>
+              <Text accessibilityRole="header" aria-level={2} style={styles.subtitle}>{t("guests.summary.progressTitle")}</Text>
+              {data.total > 0 ? <TextAction label={t("guests.summary.viewGuests")} onPress={go(HOST_ROUTES.guests)} /> : null}
+            </View>
+            <Text testID="step-answers" style={[styles.label, { fontSize: 16 }]}>{data.total > 0 ? t("guests.summary.steps.answersSome", { answered, total: data.total }) : t("guests.summary.steps.answersNone")}</Text>
+            {data.total > 0 ? <ResponseBar confirmed={data.confirmed} declined={data.declined} total={data.total} /> : null}
+            {/* The small print belongs together: one block with tight lines, set apart from the numbers above it. */}
+            <View style={{ gap: spacing[1], paddingTop: spacing[2] }}>
+              <Text style={styles.muted}>{deadlineLine(celebration, t, Date.now())}</Text>
+              {open && step?.kind !== "requests" ? <Text testID="open-requests" style={styles.muted}>{t("guests.summary.openRequests", { count: open })}</Text> : null}
+              <FreshnessLine freshness={data.freshness} timeZone={celebration.timeZone} onRefresh={() => { void summary.refetch(); }} />
+            </View>
           </View>
-        </View>
+        </>
       )}
     </View>
   );

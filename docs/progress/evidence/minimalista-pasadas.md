@@ -139,3 +139,12 @@ Corregido:
 Hallazgo de datos (no de diseño): el catálogo de tipos de celebración del backend local tiene cinco entradas «Evento prueba» de corridas de pruebas anteriores, visibles en el paso 1 del alta. Es suciedad de la base temporal; no se toca desde el frontend.
 
 Verificación: `apps/universal` 359/359 con `tsc` limpio.
+
+## Pasada 11 (a pedido del dueño: «se siente vacío, le falta calidad»)
+
+Diagnóstico: al quitar lo decorativo (pasadas 1-3) varias pantallas quedaron planas y con poca información a la vista: menús solo de texto, Inicio con una tarjeta de texto y una barra. Respuesta alineada con `minimalist-ui` (rejillas bento, jerarquía tipográfica, «las secciones no deben sentirse vacías») y `iconography-imagery`: más contenido útil y detalle, no adorno.
+- **Iconos de navegación** (`NavIcon`, web y nativo, un solo trazo de 1,75 sobre 24 unidades, sin relleno) en el menú lateral y en la barra inferior móvil de anfitrión, proveedor y admin (16 iconos por clave de destino, con prueba).
+- **Inicio rediseñado como panel** (`host/guests/summary-screen.tsx`): tarjeta del evento (fecha, lugar, invitados y respondieron, y los días que faltan en serif grande), cuatro teselas de cifras (Confirmados, Sin responder, No asisten, Acompañantes) con su porcentaje, y la barra de avance. Se elimina la leyenda duplicada: cada cifra vive en un solo sitio y conserva sus `testID` y nombres accesibles. Claves i18n nuevas en es-BO y en-US.
+- Defectos propios vistos en captura y corregidos al momento: la fecha salía «De Enero De» (mayúscula en cada palabra), la cuenta de días alineada a la derecha en móvil, y la pestaña «Más» sin icono.
+
+Verificación: `apps/universal` 359/359, `packages/ui` y `i18n` en verde, `tsc` limpio; capturas reales a 1280 y 390.

@@ -41,6 +41,7 @@ export const guestsEnUS: DeepStrings<typeof guestsEsBO> = {
     welcome: { title: "Here is where you will see who is coming", body: "Add your first guests and share their personal link. They reply in one tap.", action: "Add guests" },
     allDone: "All caught up",
     viewGuests: "See who is coming",
+    shareOfGuests: "{{percent}}% of your guests", heroGuests: "{{total}} guests · {{answered}} replied", daysLeft_one: "day to go", daysLeft_other: "days to go",
     daysToDeadline_one: "{{count}} day left until replies close", daysToDeadline_other: "{{count}} days left until replies close",
     deadlineToday: "Replies close today", deadlinePassed: "Replies are closed", noDeadline: "No reply deadline",
     openRequests_one: "{{count}} companion request to review", openRequests_other: "{{count}} companion requests to review"
