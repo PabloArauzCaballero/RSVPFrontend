@@ -1,0 +1,18 @@
+# App universal (Expo) exportada a web estatica y servida con nginx. EXPO_PUBLIC_* se incrustan al exportar.
+# Build desde la raiz del repo: docker build -f deploy/Dockerfile.universal .
+FROM node:24.18.1-bookworm-slim AS build
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0 NODE_OPTIONS=--max-old-space-size=3072 CI=1
+WORKDIR /workspace
+RUN corepack enable && corepack prepare yarn@4.10.3 --activate
+COPY . .
+RUN yarn install --immutable
+ARG EXPO_PUBLIC_API_URL
+ARG EXPO_PUBLIC_SITE_URL
+ARG EXPO_PUBLIC_RSVP_ORIGIN
+ENV EXPO_PUBLIC_API_URL=$EXPO_PUBLIC_API_URL EXPO_PUBLIC_SITE_URL=$EXPO_PUBLIC_SITE_URL EXPO_PUBLIC_RSVP_ORIGIN=$EXPO_PUBLIC_RSVP_ORIGIN
+RUN yarn workspace @rsvp/universal build
+
+FROM nginx:1.27-alpine
+COPY deploy/nginx-spa.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /workspace/apps/universal/web-build /usr/share/nginx/html
+EXPOSE 80

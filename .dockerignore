@@ -1,0 +1,7 @@
+node_modules
+.git
+.next
+.expo
+web-build
+.turbo
+coverage
