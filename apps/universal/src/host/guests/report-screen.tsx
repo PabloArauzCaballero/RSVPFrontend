@@ -104,9 +104,9 @@ function ReportBody({ celebrationId, timeZone, status, onStatus, exportMessage, 
           )}
           {paged ? (
             <View style={styles.row}>
-              <ActionButton variant="secondary" label={t("guests.list.prev")} disabled={data.offset === 0} onPress={() => setOffset(Math.max(0, offset - PAGE))} />
+              <ActionButton icon="back" variant="secondary" label={t("guests.list.prev")} disabled={data.offset === 0} onPress={() => setOffset(Math.max(0, offset - PAGE))} />
               <Text style={styles.muted}>{t("guests.list.page", { from: data.offset + 1, to, total: data.total })}</Text>
-              <ActionButton variant="secondary" label={t("guests.list.next")} disabled={to >= data.total} onPress={() => setOffset(offset + PAGE)} />
+              <ActionButton icon="arrow" variant="secondary" label={t("guests.list.next")} disabled={to >= data.total} onPress={() => setOffset(offset + PAGE)} />
             </View>
           ) : null}
           <FreshnessLine freshness={data.freshness} timeZone={timeZone} onRefresh={() => { void list.refetch(); void rsvps.refetch(); }} />

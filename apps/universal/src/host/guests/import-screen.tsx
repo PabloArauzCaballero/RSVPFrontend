@@ -67,8 +67,8 @@ function ImportBody({ celebrationId, onNavigate }: { readonly celebrationId: str
         <>
           <ImportReport report={run.data} />
           <View style={styles.row}>
-            <ActionButton label={t("guests.import.viewList")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.guests, celebrationId))} />
-            <ActionButton variant="secondary" label={t("guests.import.again")} onPress={() => { run.reset(); setCsv(""); }} />
+            <ActionButton icon="arrow" label={t("guests.import.viewList")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.guests, celebrationId))} />
+            <ActionButton icon="refresh" variant="secondary" label={t("guests.import.again")} onPress={() => { run.reset(); setCsv(""); }} />
           </View>
         </>
       ) : (
@@ -76,7 +76,7 @@ function ImportBody({ celebrationId, onNavigate }: { readonly celebrationId: str
           <Text style={styles.body}>{t("guests.import.steps")}</Text>
           <Text selectable style={[styles.body, { fontFamily: fonts.mono, fontWeight: "600" }]}>{t("guests.import.header")}</Text>
           <Text style={styles.muted}>{t("guests.import.headerNote")}</Text>
-          {canPickTextFile ? <ActionButton variant="secondary" label={t("guests.import.chooseFile")} onPress={() => { void choose(); }} /> : null}
+          {canPickTextFile ? <ActionButton icon="plus" variant="secondary" label={t("guests.import.chooseFile")} onPress={() => { void choose(); }} /> : null}
           <Field label={t("guests.import.csvLabel")} multiline mono value={csv} onChange={(value) => { setCsv(value); setProblem(""); }} error={problem || undefined} testID="csv-input" />
           <FailureNotice error={run.error} onRetry={submit} />
         </View>

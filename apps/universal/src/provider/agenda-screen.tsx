@@ -98,7 +98,7 @@ function Agenda({ provider }: { readonly provider: Provider }): ReactNode {
               <Text style={styles.muted}>{t("portal.agenda.expires", { when: formatCelebrationDate(booking.expiresAt, { locale, timeZone: provider.timeZone }) })}</Text>
               {booking.status === "REQUESTED" || booking.status === "CONFIRMED" ? (
                 <View style={[styles.row, { alignItems: "center" }]}>
-                  {booking.status === "REQUESTED" ? <ActionButton variant="secondary" label={t("portal.agenda.confirm")} busy={busy === "confirm"} disabled={busy !== null} onPress={() => resolve(booking.id, "confirm")} testID={`confirm-${booking.id}`} /> : null}
+                  {booking.status === "REQUESTED" ? <ActionButton icon="check" variant="secondary" label={t("portal.agenda.confirm")} busy={busy === "confirm"} disabled={busy !== null} onPress={() => resolve(booking.id, "confirm")} testID={`confirm-${booking.id}`} /> : null}
                   <OverflowMenu label={t("portal.agenda.rowMenu", { date: dayLabel(booking.date, locale) })} items={[booking.status === "REQUESTED" ? { key: "reject", label: t("portal.agenda.reject"), destructive: true, disabled: busy !== null, onPress: () => setAsking({ id: booking.id, action: "reject" }) } : { key: "cancel", label: t("portal.agenda.cancel"), destructive: true, disabled: busy !== null, onPress: () => setAsking({ id: booking.id, action: "cancel" }) }]} />
                 </View>
               ) : null}
@@ -118,7 +118,7 @@ function Agenda({ provider }: { readonly provider: Provider }): ReactNode {
           <View key={`${item.start}-${index}`} style={styles.row} testID={`blackout-${item.start}`}><Text style={styles.body}>{item.start}{item.end && item.end !== item.start ? ` → ${item.end}` : ""}{item.reason ? ` · ${item.reason}` : ""}</Text><Button variant="ghost" accessibilityLabel={t("portal.agenda.removeBlackout")} state="default" onPress={() => setBlackouts((current) => current.filter((_, position) => position !== index))} testID={`blackout-remove-${item.start}`}>{t("portal.agenda.removeBlackout")}</Button></View>
         ))}
         <View style={styles.row}><Field label={t("portal.agenda.blackoutDate")} value={newDate} onChange={setNewDate} testID="blackout-date" /><Field label={t("portal.agenda.blackoutEnd")} value={newEnd} onChange={setNewEnd} testID="blackout-end" /><Field label={t("portal.agenda.blackoutReason")} value={newReason} onChange={setNewReason} testID="blackout-reason" /></View>
-        <ActionButton variant="secondary" label={t("portal.agenda.addBlackout")} onPress={addBlackout} testID="blackout-add" />
+        <ActionButton icon="plus" variant="secondary" label={t("portal.agenda.addBlackout")} onPress={addBlackout} testID="blackout-add" />
         {errors.length ? <Notice kind="error">{errors.map((message) => <Text key={message} style={styles.body}>{message}</Text>)}</Notice> : null}
         <ErrorNotice error={save.error} onRetry={submit} />
       </Section>

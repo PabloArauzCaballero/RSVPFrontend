@@ -41,7 +41,7 @@ export function TemplateGallery({ celebration, eventType, onApplied, onSeeFull }
   const canApply = Boolean(candidate && candidate.id !== celebration.templateId);
   // «Aplicar este estilo» is the screen's one action (top right; a fixed bar on a phone); the full preview is a secondary one.
   useScreenHeader({
-    actions: canApply && candidate ? <ActionButton label={t("host.templates.apply")} busy={select.isPending} testID="apply-template" onPress={() => select.mutate({ target: celebration, templateId: candidate.id }, { onSuccess: () => { setApplied(candidate.name); onApplied?.(); } })} /> : null,
+    actions: canApply && candidate ? <ActionButton icon="check" label={t("host.templates.apply")} busy={select.isPending} testID="apply-template" onPress={() => select.mutate({ target: celebration, templateId: candidate.id }, { onSuccess: () => { setApplied(candidate.name); onApplied?.(); } })} /> : null,
     menu: onSeeFull ? <OverflowMenu items={[{ key: "full", label: t("host.templates.seeFull"), onPress: onSeeFull }]} /> : null
   });
   if (templates.isPending && eventType) {

@@ -80,7 +80,7 @@ function Form({ celebrationId, onNavigate, groupId }: { readonly celebrationId: 
     <View style={{ gap: spacing[4] }}>
       {saved?.first ? (
         <Enter from="down"><Celebrate title={t("guests.form.firstTitle")} body={t("guests.form.firstBody")}>
-          <ActionButton label={t("guests.form.firstAction")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.guests, celebrationId))} />
+          <ActionButton icon="check" label={t("guests.form.firstAction")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.guests, celebrationId))} />
         </Celebrate></Enter>
       ) : null}
       <View style={[styles.card, { maxWidth: 720 }]}>

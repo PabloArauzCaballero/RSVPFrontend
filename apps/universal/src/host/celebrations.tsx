@@ -33,13 +33,13 @@ export function CelebrationsScreen({ onNavigate }: { readonly onNavigate: (href:
   if (!canUseHostWorkspace(claims)) return <Screen title={t("host.picker.title")}><Notice kind="error">{t("host.common.accessDenied")}</Notice></Screen>;
   const items = query.data?.items ?? [];
   const nav = hostNav(t, undefined);
-  const create = <ActionButton label={t("host.picker.create")} onPress={() => onNavigate(`${HOST_ROUTES.onboarding}/1`)} testID="create-celebration" />;
+  const create = <ActionButton icon="plus" label={t("host.picker.create")} onPress={() => onNavigate(`${HOST_ROUTES.onboarding}/1`)} testID="create-celebration" />;
   const empty = query.isSuccess && !items.length;
   return (
     <Screen title={t("host.picker.title")} intro={t("host.picker.intro")} nav={nav} current="celebrations" onNavigate={onNavigate} actions={create}>
       {empty ? <EmptyState illustration="welcomeHost" title={t("host.picker.emptyTitle")} body={t("host.picker.emptyBody")} /> : null}
       {query.isPending ? <SkeletonList count={3} row={{ minHeight: 72, trailing: true }} label={t("host.common.loading")} /> : null}
-      {query.isError ? <><CelebrationErrorNotice error={query.error} /><ActionButton variant="secondary" label={t("host.common.retry")} onPress={() => { void query.refetch(); }} testID="retry-list" /></> : null}
+      {query.isError ? <><CelebrationErrorNotice error={query.error} /><ActionButton icon="refresh" variant="secondary" label={t("host.common.retry")} onPress={() => { void query.refetch(); }} testID="retry-list" /></> : null}
       {items.length ? (
         <RowList>
           <Stagger>{items.map((celebration, index) => {

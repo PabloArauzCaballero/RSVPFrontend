@@ -77,7 +77,7 @@ function Members({ organization, isOwner }: { readonly organization: Organizatio
   return (
     <Section title={t("org.membersTitle", { name: organization.name })}>
       {detail.isPending ? <Loading /> : null}
-      {detail.isError ? <><ErrorNotice error={detail.error} /><ActionButton variant="secondary" label={t("org.retry")} onPress={() => { void detail.refetch(); }} testID="org-members-retry" /></> : null}
+      {detail.isError ? <><ErrorNotice error={detail.error} /><ActionButton icon="refresh" variant="secondary" label={t("org.retry")} onPress={() => { void detail.refetch(); }} testID="org-members-retry" /></> : null}
       {detail.isSuccess && !detail.data.members.length ? <Text style={styles.muted}>{t("org.noMembers")}</Text> : null}
       {detail.isSuccess ? detail.data.members.map((member) => (
         <View key={member.userId} style={styles.row}>
@@ -115,7 +115,7 @@ export function OrganizationsScreen({ onNavigate }: { readonly onNavigate: (href
       {canCreate ? <CreateOrganization onCreated={(organization) => setSelectedId(organization.id)} /> : <Notice>{t("org.plannerOnly")}</Notice>}
       <Section title={t("org.listTitle")}>
         {list.isPending ? <Loading /> : null}
-        {list.isError ? <><ErrorNotice error={list.error} /><ActionButton variant="secondary" label={t("org.retry")} onPress={() => { void list.refetch(); }} testID="org-retry" /></> : null}
+        {list.isError ? <><ErrorNotice error={list.error} /><ActionButton icon="refresh" variant="secondary" label={t("org.retry")} onPress={() => { void list.refetch(); }} testID="org-retry" /></> : null}
         {list.isSuccess && !items.length ? <Text style={styles.muted}>{t("org.empty")}</Text> : null}
         {items.map((organization) => (
           <Pressable key={organization.id} accessibilityRole="button" aria-pressed={organization.id === selectedId} accessibilityLabel={t("org.open", { name: organization.name })} testID={`org-${organization.id}`} onPress={() => setSelectedId(organization.id)} style={[styles.option, organization.id === selectedId && styles.optionSelected]}>

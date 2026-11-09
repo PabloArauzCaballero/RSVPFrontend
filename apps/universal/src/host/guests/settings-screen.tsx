@@ -80,7 +80,7 @@ function RetentionSection({ celebrationId }: { readonly celebrationId: string })
       <FailureNotice error={save.error} onRetry={() => { if (parsed !== "invalid") setPending(parsed); }} />
       {saved ? <Notice kind="success">{t("guests.settings.retentionSaved")}</Notice> : null}
       <View style={styles.row}>
-        <ActionButton label={t("guests.settings.save")} busy={save.isPending} disabled={parsed === "invalid" || parsed === null} onPress={() => { if (parsed !== "invalid") setPending(parsed); }} testID="save-retention" />
+        <ActionButton icon="check" label={t("guests.settings.save")} busy={save.isPending} disabled={parsed === "invalid" || parsed === null} onPress={() => { if (parsed !== "invalid") setPending(parsed); }} testID="save-retention" />
         <ActionButton variant="secondary" label={t("guests.settings.retentionClear")} disabled={save.isPending || retention.data.retentionDays === null} onPress={() => setPending(null)} testID="clear-retention" />
       </View>
       <ConfirmDialog visible={pending !== undefined} danger={pending !== null} title={pending === null ? t("guests.settings.clearTitle") : t("guests.settings.retentionConfirmTitle")}

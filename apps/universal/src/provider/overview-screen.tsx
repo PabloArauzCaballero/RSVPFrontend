@@ -50,7 +50,7 @@ function RenameForm({ provider, onClose, onSaved }: { readonly provider: Provide
       <ErrorNotice error={update.error} onRetry={submit} />
       <View style={styles.row}>
         <ActionButton label={update.isPending ? t("portal.rename.saving") : t("portal.rename.save")} busy={update.isPending} disabled={update.isPending} onPress={submit} testID="rename-save" />
-        <ActionButton variant="secondary" label={t("portal.rename.cancel")} disabled={update.isPending} onPress={onClose} testID="rename-cancel" />
+        <ActionButton icon="close" variant="secondary" label={t("portal.rename.cancel")} disabled={update.isPending} onPress={onClose} testID="rename-cancel" />
       </View>
     </View>
   );
@@ -221,7 +221,7 @@ function OnboardingBody({ onDone }: { readonly onDone: () => void }): ReactNode 
         <Text accessibilityRole="header" style={styles.subtitle}>{t("portal.onboarding.existingTitle")}</Text>
         <Text style={styles.body}>{t("portal.onboarding.existingBody")}</Text>
         <Field label={t("portal.onboarding.existingId")} value={code} onChange={setCode} testID="provider-code" />
-        <ActionButton variant="secondary" label={t("portal.onboarding.connect")} busy={connecting} disabled={connecting} onPress={() => { void connect(); }} testID="provider-connect" />
+        <ActionButton icon="check" variant="secondary" label={t("portal.onboarding.connect")} busy={connecting} disabled={connecting} onPress={() => { void connect(); }} testID="provider-connect" />
       </View>
     </View>
   );

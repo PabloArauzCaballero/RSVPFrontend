@@ -88,13 +88,13 @@ export function CelebrationScreen({ celebrationId, onNavigate, current, title, h
   };
   if (!canUseHostWorkspace(claims)) return frame(<Notice kind="error">{t("host.common.accessDenied")}</Notice>);
   if (!celebrationId && (mine.isPending || onlyOne)) return frame(<SkeletonList count={3} row={{ minHeight: 64, avatar: false, trailing: false }} label={t("host.common.loading")} />);
-  if (!celebrationId) return frame(<EmptyState illustration="invitation" title={t("host.common.noCelebrationTitle")} body={t("host.common.noCelebrationBody")} action={<ActionButton label={t("host.common.chooseCelebration")} onPress={() => onNavigate(HOST_ROUTES.celebrations)} />} />);
+  if (!celebrationId) return frame(<EmptyState illustration="invitation" title={t("host.common.noCelebrationTitle")} body={t("host.common.noCelebrationBody")} action={<ActionButton icon="plus" label={t("host.common.chooseCelebration")} onPress={() => onNavigate(HOST_ROUTES.celebrations)} />} />);
   if (query.isPending) return frame(<SkeletonList count={3} row={{ minHeight: 64, avatar: false, trailing: false }} label={t("host.common.loading")} />);
   if (query.isError || !query.data) return frame(<ErrorNotice error={query.error} />);
   const celebration = query.data;
   if (manage && celebration.access === "READ") return frame(<Notice kind="error">{t("host.common.forbidden")}</Notice>);
   // An archived celebration is read-only for the API (409 CELEBRATION_ARCHIVED): editing screens say so instead of offering buttons that cannot work.
-  if (editable && celebration.status === "ARCHIVED") return frame(<EmptyState illustration="invitation" tone="auto" title={t("host.common.archivedTitle")} body={t("host.common.archivedBody")} action={<ActionButton label={t("host.common.chooseCelebration")} onPress={() => onNavigate(HOST_ROUTES.celebrations)} />} />);
+  if (editable && celebration.status === "ARCHIVED") return frame(<EmptyState illustration="invitation" tone="auto" title={t("host.common.archivedTitle")} body={t("host.common.archivedBody")} action={<ActionButton icon="plus" label={t("host.common.chooseCelebration")} onPress={() => onNavigate(HOST_ROUTES.celebrations)} />} />);
   const eventType = types.data?.items.find((type) => type.code === celebration.eventTypeCode);
   const loaded: Loaded = { celebration, eventType, refetch: () => { void query.refetch(); } };
   const resolve = (slot: ReactNode | ((loaded: Loaded) => ReactNode)): ReactNode => (typeof slot === "function" ? slot(loaded) : slot);

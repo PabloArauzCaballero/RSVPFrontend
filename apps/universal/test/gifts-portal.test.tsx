@@ -353,7 +353,6 @@ describe("REQ-F23-06 · who sees the requester", () => {
       "PUT /gifts/celebrations/c-1/gift-settings": ({ body }) => { put.push(body); return { ...(body as object), version: 1 }; }
     }));
     renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
-    fireEvent.click(await screen.findByTestId("more-gifts"));
     const guests = await screen.findByRole("switch", { name: "Mostrar el nombre a otros invitados" });
     fireEvent.click(guests);
     await waitFor(() => expect(put).toEqual([{ showRequesterToHost: true, showRequesterToGuests: true }]));

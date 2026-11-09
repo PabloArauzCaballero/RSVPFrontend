@@ -11,7 +11,6 @@ import { HOST_ROUTES, withCelebration } from "../routes";
 import { GiftErrorNotice } from "./gift-errors";
 import { ActionButton, ConfirmDialog, EmptyState, ErrorNotice, Loading, Notice, useStyles } from "../ui";
 import { Figure } from "../figures";
-import { MoreOptions } from "../more-options";
 import { Row, RowList } from "./offer-row";
 import { RetryNotice } from "../guests/parts";
 import { useSingleFlightGate } from "../../platform/single-flight";
@@ -59,7 +58,7 @@ function GiftRow({ item, first, currencyLocale, onApprove, onReject, approving, 
       {item.status === "PROPOSED" ? (
         <View style={[styles.row, { paddingLeft: narrow ? 0 : 48 + spacing[4], paddingTop: spacing[2] }]}>
           <ActionButton variant="secondary" label={approving ? t("gifts.host.approvingProposal") : t("gifts.host.approveProposal")} busy={approving} disabled={locked} onPress={() => onApprove(item.id)} testID={`approve-proposal-${item.id}`} />
-          <ActionButton variant="secondary" label={rejecting ? t("gifts.host.rejectingProposal") : t("gifts.host.rejectProposal")} busy={rejecting} disabled={locked} onPress={() => onReject(item)} testID={`reject-proposal-${item.id}`} />
+          <ActionButton icon="close" variant="secondary" label={rejecting ? t("gifts.host.rejectingProposal") : t("gifts.host.rejectProposal")} busy={rejecting} disabled={locked} onPress={() => onReject(item)} testID={`reject-proposal-${item.id}`} />
         </View>
       ) : null}
     </Row>
@@ -127,7 +126,7 @@ function GiftsBody({ celebrationId, onNavigate }: { readonly celebrationId: stri
   const flight = useSingleFlightGate();
   const go = (path: string) => () => onNavigate(withCelebration(path, celebrationId));
   // «Agregar regalo» is the screen's one action, always in the same place; the people waiting are a message, not a second primary.
-  useScreenHeader({ actions: <ActionButton label={t("gifts.host.list.add")} onPress={go(HOST_ROUTES.giftCatalog)} testID="go-add" /> });
+  useScreenHeader({ actions: <ActionButton icon="plus" label={t("gifts.host.list.add")} onPress={go(HOST_ROUTES.giftCatalog)} testID="go-add" /> });
   if (list.isPending) return <SkeletonList count={4} row={{ minHeight: 76, avatar: false, trailing: true }} label={t("host.common.loading")} />;
   // A celebration that never had a gift gets 404 GIFT_LIST_NOT_FOUND: that is the empty list, not a failure.
   const noListYet = list.isError && list.error instanceof ApiError && list.error.status === NOT_FOUND;
@@ -140,23 +139,26 @@ function GiftsBody({ celebrationId, onNavigate }: { readonly celebrationId: stri
         <Notice kind="info">
           <Text style={styles.itemTitle}>{t("gifts.host.list.pending", { count: waiting })}</Text>
           <Text style={styles.body}>{t("gifts.host.list.pendingBody")}</Text>
-          <View style={styles.row}><ActionButton variant="secondary" label={t("gifts.host.list.pendingAction")} onPress={go(HOST_ROUTES.giftInbox)} testID="go-inbox" /></View>
+          <View style={styles.row}><ActionButton icon="arrow" variant="secondary" label={t("gifts.host.list.pendingAction")} onPress={go(HOST_ROUTES.giftInbox)} testID="go-inbox" /></View>
         </Notice>
       ) : null}
       <GiftErrorNotice error={approve.error} onReload={() => { void list.refetch(); }} />
       <GiftErrorNotice error={reject.error} onReload={() => { void list.refetch(); }} />
       {rejected ? <Notice kind="success">{t("gifts.host.proposalRejected", { title: rejected })}</Notice> : null}
       {items.length === 0 ? (
-        <EmptyState illustration="noGifts" title={t("gifts.host.list.emptyTitle")} body={t("gifts.host.list.emptyBody")} />
+        <>
+          <EmptyState illustration="noGifts" title={t("gifts.host.list.emptyTitle")} body={t("gifts.host.list.emptyBody")} />
+          <RequesterVisibility celebrationId={celebrationId} />
+        </>
       ) : (
         <>
           <GiftFigures items={items} />
+          <RequesterVisibility celebrationId={celebrationId} />
           <RowList>
             <Stagger>{items.map((item, index) => <GiftRow key={item.id} first={index === 0} item={item} currencyLocale={locale} onApprove={(id) => { setRejected(null); reject.reset(); if (flight.begin()) approve.mutate(id, { onSettled: flight.end }); }} onReject={(target) => { setRejected(null); approve.reset(); reject.reset(); setRejectTarget(target); }} approving={approve.isPending && approve.variables === item.id} rejecting={reject.isPending && reject.variables === item.id} locked={locked} />)}</Stagger>
           </RowList>
         </>
       )}
-      <MoreOptions label={t("gifts.host.list.more")} testID="more-gifts"><RequesterVisibility celebrationId={celebrationId} /></MoreOptions>
       <ConfirmDialog visible={rejectTarget !== null} danger title={t("gifts.host.rejectConfirm.title")} body={rejectTarget ? t("gifts.host.rejectConfirm.body", { title: rejectTarget.title }) : ""} confirmLabel={t("gifts.host.rejectProposal")}
         onCancel={() => setRejectTarget(null)}
         onConfirm={() => { const target = rejectTarget; setRejectTarget(null); if (target && flight.begin()) reject.mutate(target.id, { onSuccess: () => setRejected(target.title), onSettled: flight.end }); }} />

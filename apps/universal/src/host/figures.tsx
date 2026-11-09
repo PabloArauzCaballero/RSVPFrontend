@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Text, View } from "react-native";
 import { radius, spacing } from "@rsvp/design-tokens";
-import { CountUp, fonts, useColors } from "@rsvp/ui";
+import { CountUp, depth, fonts, useColors, useTheme } from "@rsvp/ui";
 import { useStyles } from "./ui";
 
 /**
@@ -11,8 +11,9 @@ import { useStyles } from "./ui";
  */
 export function Figure({ label, value, note, dot, testID }: { readonly label: string; readonly value: number; readonly note?: string; readonly dot?: string; readonly testID?: string }): ReactNode {
   const palette = useColors();
+  const { scheme } = useTheme();
   return (
-    <View {...(testID ? { testID } : {})} accessible accessibilityLabel={`${label}: ${value}`} style={{ flexGrow: 1, flexBasis: 150, minWidth: 0, backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, borderRadius: radius.lg, padding: spacing[6], gap: spacing[2] }}>
+    <View {...(testID ? { testID } : {})} accessible accessibilityLabel={`${label}: ${value}`} style={{ flexGrow: 1, flexBasis: 150, minWidth: 0, backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, borderRadius: radius.lg, padding: spacing[6], gap: spacing[2], ...depth(scheme) }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[2] }}>
         {dot ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: dot }} /> : null}
         <Text numberOfLines={2} style={{ flexShrink: 1, color: palette.textMuted, fontSize: 12, lineHeight: 16, fontWeight: "600", letterSpacing: 0.6, textTransform: "uppercase", fontFamily: fonts.sans }}>{label}</Text>

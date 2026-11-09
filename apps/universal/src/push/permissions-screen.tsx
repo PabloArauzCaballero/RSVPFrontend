@@ -45,8 +45,8 @@ function DeviceRow({ celebrationId, device, timeZone }: { readonly celebrationId
       {sent ? <Notice kind="success">{t("guests.push.testQueued")}</Notice> : null}
       <FailureNotice error={test.error ?? unregister.error} />
       <View style={styles.row}>
-        <ActionButton variant="secondary" label={t("guests.push.test")} busy={test.isPending} disabled={!active} onPress={sendTest} testID={`test-${device.id}`} />
-        <ActionButton variant="danger" label={t("guests.push.disable")} busy={unregister.isPending} disabled={!active} onPress={() => setConfirm(true)} testID={`remove-${device.id}`} />
+        <ActionButton icon="check" variant="secondary" label={t("guests.push.test")} busy={test.isPending} disabled={!active} onPress={sendTest} testID={`test-${device.id}`} />
+        <ActionButton icon="check" variant="danger" label={t("guests.push.disable")} busy={unregister.isPending} disabled={!active} onPress={() => setConfirm(true)} testID={`remove-${device.id}`} />
       </View>
       {active ? null : <Text style={styles.muted}>{t("guests.push.inactiveReason")}</Text>}
       <ConfirmDialog visible={confirm} danger title={t("guests.push.removeTitle")} body={t("guests.push.removeBody")} confirmLabel={t("guests.push.disable")} onConfirm={remove} onCancel={() => setConfirm(false)} />
@@ -76,7 +76,7 @@ function Deliveries({ celebrationId, timeZone }: { readonly celebrationId: strin
           ))}
         </View>
       )) : null}
-      <View style={styles.row}><ActionButton variant="secondary" label={t("guests.notifications.refresh")} busy={deliveries.isFetching && !deliveries.isPending} onPress={() => { void deliveries.refetch(); }} testID="refresh-deliveries" /></View>
+      <View style={styles.row}><ActionButton icon="refresh" variant="secondary" label={t("guests.notifications.refresh")} busy={deliveries.isFetching && !deliveries.isPending} onPress={() => { void deliveries.refetch(); }} testID="refresh-deliveries" /></View>
     </Section>
   );
 }
@@ -140,7 +140,7 @@ export function PushPermissionsScreen(props: ScreenProps): ReactNode {
   const canEnable = (push.permission === "undetermined" || push.permission === "granted") && !push.enabledNow;
   return (
     <CelebrationScreen {...props} current="preferences" title={t("guests.push.title")} intro={t("guests.push.intro")}
-      actions={push.permission === "denied" ? <ActionButton label={t("guests.push.openSettings")} onPress={() => { void Linking.openSettings(); }} />
+      actions={push.permission === "denied" ? <ActionButton icon="arrow" label={t("guests.push.openSettings")} onPress={() => { void Linking.openSettings(); }} />
         : canEnable ? <ActionButton testID="enable-push" label={push.busy ? t("guests.push.registering") : t("guests.push.enable")} busy={push.busy} onPress={() => { void push.enable(); }} /> : undefined}
       menu={({ celebration }) => <OverflowMenu label={t("guests.more")} testID="push-menu" items={[{ key: "preferences", label: t("guests.push.preferences"), onPress: () => props.onNavigate(withCelebration(HOST_ROUTES.preferences, celebration.id)) }]} />}>
       {({ celebration }) => <PermissionBody celebrationId={celebration.id} timeZone={celebration.timeZone} push={push} />}

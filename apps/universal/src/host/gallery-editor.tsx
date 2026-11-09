@@ -71,7 +71,7 @@ function Gallery({ celebrationId, pick }: { readonly celebrationId: string; read
   const addPhoto = (): void => { void add(); };
   useScreenHeader(failedLoad
     ? { menu: <OverflowMenu items={[{ key: "add", label: t("host.gallery.add"), onPress: addPhoto, disabled: upload.isPending, testID: "add-photo" }]} /> }
-    : { actions: <ActionButton label={t("host.gallery.add")} onPress={addPhoto} busy={upload.isPending} testID="add-photo" /> });
+    : { actions: <ActionButton icon="plus" label={t("host.gallery.add")} onPress={addPhoto} busy={upload.isPending} testID="add-photo" /> });
   const empty = assets.isSuccess && !items.length;
   const saved = (): { readonly onSuccess: () => void } => ({ onSuccess: () => setDone(t("host.gallery.orderSaved")) });
 

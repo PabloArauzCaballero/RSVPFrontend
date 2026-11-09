@@ -113,7 +113,7 @@ function UsersScreenContent({ onNavigate }: Nav): ReactNode {
       <Stack>
       <PageIntro>{t("admin.users.intro")}</PageIntro>
       <Field label={t("admin.users.search")} help={t("admin.users.searchHelp")} value={search} onChange={setSearch} {...(tooLong ? { error: t("admin.errors.invalid") } : {})} testID="users-search" />
-      <ActionButton variant="secondary" label={t("admin.users.searchAction")} onPress={run} testID="users-search-go" />
+      <ActionButton icon="search" variant="secondary" label={t("admin.users.searchAction")} onPress={run} testID="users-search-go" />
       {grant.isSuccess ? <Notice kind="success">{t("admin.users.granted")}</Notice> : null}
       <AdminErrorNotice error={grant.error} onRetry={() => { if (grant.variables) grantOnce(grant.variables); }} />
       <QueryBoundary query={users} avatar empty={t("admin.users.empty")}>
@@ -122,9 +122,9 @@ function UsersScreenContent({ onNavigate }: Nav): ReactNode {
             <Text style={styles.muted} testID="users-total">{t("admin.users.total", { count: data.total ?? data.items.length })}</Text>
             <Stagger>{data.items.map((user) => <UserCard key={user.id} user={user} busy={grant.isPending && grant.variables?.userId === user.id} onGrant={(role) => { grant.reset(); setAsking({ user, role }); }} />)}</Stagger>
             <View style={styles.row}>
-              <ActionButton variant="secondary" label={t("admin.users.prev")} disabled={page === 0} onPress={() => setPage((current) => Math.max(0, current - 1))} testID="users-prev" />
+              <ActionButton icon="back" variant="secondary" label={t("admin.users.prev")} disabled={page === 0} onPress={() => setPage((current) => Math.max(0, current - 1))} testID="users-prev" />
               <Text style={styles.body} testID="users-page">{t("admin.users.page", { page: page + 1, pages })}</Text>
-              <ActionButton variant="secondary" label={t("admin.users.next")} disabled={page + 1 >= pages} onPress={() => setPage((current) => current + 1)} testID="users-next" />
+              <ActionButton icon="arrow" variant="secondary" label={t("admin.users.next")} disabled={page + 1 >= pages} onPress={() => setPage((current) => current + 1)} testID="users-next" />
             </View>
           </>
         )}

@@ -155,8 +155,8 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
             <View style={{ width: "100%", maxWidth: READY_WIDTH, alignSelf: "center", borderRadius: radius.lg, paddingVertical: spacing[10], paddingHorizontal: spacing[6], backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border }}>
               <Celebrate title={t("host.onboarding.readyTitle")} body={t("host.onboarding.readyBody")}>
                 <CenteredActions>
-                  <ActionButton label={t("host.onboarding.finish")} onPress={() => onNavigate(withCelebration(editorPath("general"), celebrationId))} testID="onboarding-finish" />
-                  <ActionButton variant="secondary" label={t("host.onboarding.chooseStyle")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.templates, celebrationId))} testID="onboarding-style" />
+                  <ActionButton icon="check" label={t("host.onboarding.finish")} onPress={() => onNavigate(withCelebration(editorPath("general"), celebrationId))} testID="onboarding-finish" />
+                  <ActionButton icon="plus" variant="secondary" label={t("host.onboarding.chooseStyle")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.templates, celebrationId))} testID="onboarding-style" />
                 </CenteredActions>
               </Celebrate>
             </View>
@@ -230,10 +230,10 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
 
   // The step's one action sits where every screen keeps it (top right; a fixed bar on a phone); going back is a quiet link above the step.
   const primary = step === 1
-    ? <ActionButton label={t("host.common.next")} disabled={!typeCode} onPress={goWho} testID="onboarding-next" />
+    ? <ActionButton icon="arrow" label={t("host.common.next")} disabled={!typeCode} onPress={goWho} testID="onboarding-next" />
     : step === 2
-      ? <ActionButton label={t("host.common.next")} onPress={goName} testID="onboarding-next" />
-      : <ActionButton label={t("host.onboarding.create")} busy={create.isPending} onPress={submit} testID="onboarding-create" />;
+      ? <ActionButton icon="arrow" label={t("host.common.next")} onPress={goName} testID="onboarding-next" />
+      : <ActionButton icon="plus" label={t("host.onboarding.create")} busy={create.isPending} onPress={submit} testID="onboarding-create" />;
   const form = (
     <View style={{ gap: spacing[5], flex: wide ? 1 : undefined, width: "100%" }}>
       <StepProgress step={step} {...(step > 1 ? { onBack: () => setStep(step - 1) } : {})} />

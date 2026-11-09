@@ -43,7 +43,7 @@ export const enUS = {
     errors: { cannotAdd: "We could not add that email. Check it is spelled correctly and that the person already has a DOne account.", notFound: "We could not find this organization. Refresh the list and try again.", conflict: "That person is already a member of this organization.", forbidden: "You do not have permission for this action in this organization." }
   },
   theme: {
-    title: "Appearance", label: "App theme", system: "System", light: "Light", dark: "Dark",
+    title: "Appearance", label: "App theme", darkMode: "Dark mode", system: "System", light: "Light", dark: "Dark",
     help: "\"System\" follows your device. The invitation your guests see does not change."
   }
 } as const;

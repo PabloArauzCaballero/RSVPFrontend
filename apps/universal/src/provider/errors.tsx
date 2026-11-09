@@ -43,7 +43,7 @@ export function PortalErrorState({ error, onRetry }: { readonly error: unknown; 
   if (kind === "other" || kind === "rateLimited") return <PortalErrorNotice error={error} onReload={onRetry} onRetry={onRetry} />;
   const illustration = kind === "network" ? "offline" : kind === "server" ? "serverError" : "maintenance";
   const title = t(`portal.errors.state.${kind === "network" || kind === "server" || kind === "storage" ? kind : "unavailable"}`);
-  return <EmptyState illustration={illustration} title={title} body={t(`portal.errors.${kind}`)} action={isRetryable(kind) ? <ActionButton variant="secondary" label={t("portal.errors.retry")} onPress={onRetry} testID="error-retry" /> : undefined} />;
+  return <EmptyState illustration={illustration} title={title} body={t(`portal.errors.${kind}`)} action={isRetryable(kind) ? <ActionButton icon="refresh" variant="secondary" label={t("portal.errors.retry")} onPress={onRetry} testID="error-retry" /> : undefined} />;
 }
 
 export function PortalErrorNotice({ error, onReload, onRetry }: { readonly error: unknown; readonly onReload?: () => void; readonly onRetry?: () => void }): ReactNode {
@@ -58,7 +58,7 @@ export function PortalErrorNotice({ error, onReload, onRetry }: { readonly error
   return (
     <Notice kind="error">
       <Text style={styles.body}>{message}</Text>
-      {isRetryable(kind) && retry ? <ActionButton variant="secondary" label={t("portal.errors.retry")} onPress={retry} testID="error-retry" /> : null}
+      {isRetryable(kind) && retry ? <ActionButton icon="refresh" variant="secondary" label={t("portal.errors.retry")} onPress={retry} testID="error-retry" /> : null}
     </Notice>
   );
 }

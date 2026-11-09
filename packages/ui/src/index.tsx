@@ -6,9 +6,10 @@ import { fonts } from './fonts';
 import { useTheme } from './theme';
 import { ButtonAlignContext, pressVisual } from './press-visual';
 import { Enter } from './enter';
+import { NavIcon } from './nav-icon';
 import { useReducedMotion, MOTION } from './motion';
 
-export { UiProvider, useTheme, useColors, useTones, useThemedStyles, tracking, type ColorScheme, type Palette, type Tones } from './theme';
+export { UiProvider, useTheme, useColors, useTones, useThemedStyles, tracking, depth, type ColorScheme, type Palette, type Tones } from './theme';
 import { DateField } from './date-field';
 export { Logo, type LogoProps, type LogoTone } from './logo';
 export { CheckMark, type CheckMarkProps } from './scheme-check';
@@ -46,18 +47,30 @@ export function Surface({ title, description }: { title: string; description: st
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
+/** House rule: a button is always icon + text. When the caller names no icon, the variant brings a neutral one. */
+const VARIANT_ICON: Record<ButtonVariant, string> = { primary: 'check', secondary: 'arrow', ghost: 'arrow', danger: 'trash' };
+
 const WIDE_BUTTONS = 640;
 
+/** Under a mouse a button rises a hair: a soft shadow in light, a slightly brighter face in dark. Touch never hovers, so nothing moves on a phone. */
+const hoverLift = (variant: ButtonVariant, scheme: 'light' | 'dark'): ViewStyle => (
+  scheme === 'dark'
+    ? ({ opacity: variant === 'primary' ? 0.92 : 1, boxShadow: variant === 'primary' ? '0 6px 20px -8px rgb(255 255 255 / 0.25)' : 'inset 0 0 0 1px rgb(255 255 255 / 0.14)' } as unknown as ViewStyle)
+    : ({ boxShadow: '0 8px 20px -10px rgb(11 11 12 / 0.45)' } as unknown as ViewStyle)
+);
+
 /** Full width on a phone (a thumb target), content width from 640 px up, unless `block`. */
-export function Button({ children, onPress, variant = 'primary', state = 'default', accessibilityLabel, className, testID, block = false }: PropsWithChildren<{ onPress?: () => void; variant?: ButtonVariant; state?: State; accessibilityLabel?: string; className?: string; testID?: string; block?: boolean }>) {
-  const { palette, styles, strings } = useTheme();
+export function Button({ children, onPress, variant = 'primary', state = 'default', accessibilityLabel, className, testID, block = false, icon }: PropsWithChildren<{ icon?: string; onPress?: () => void; variant?: ButtonVariant; state?: State; accessibilityLabel?: string; className?: string; testID?: string; block?: boolean }>) {
+  const { palette, styles, strings, scheme } = useTheme();
   const { width } = useWindowDimensions();
   const align = useContext(ButtonAlignContext);
   const reduced = useReducedMotion();
   const [pressed, setPressed] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const disabled = unavailable(state);
   const variantStyle = variant === 'secondary' ? styles.buttonSecondary : variant === 'ghost' ? styles.buttonGhost : variant === 'danger' ? styles.buttonDanger : undefined;
   const textStyle = variant === 'secondary' ? styles.buttonTextSecondary : variant === 'ghost' ? styles.buttonTextGhost : variant === 'danger' ? styles.buttonTextDanger : undefined;
+  const iconColor = variant === 'primary' ? palette.onPrimary : variant === 'danger' ? palette.danger : palette.text;
   const spinner = variant === 'primary' ? palette.onPrimary : variant === 'danger' ? palette.danger : palette.text;
   const place = width >= WIDE_BUTTONS && !block ? { alignSelf: align === 'center' ? 'center' : 'flex-start' } as const : undefined;
   return (
@@ -69,12 +82,14 @@ export function Button({ children, onPress, variant = 'primary', state = 'defaul
       onPress={onPress}
       onPressIn={() => setPressed(true)}
       onPressOut={() => setPressed(false)}
+      onHoverIn={() => setHovered(true)}
+      onHoverOut={() => setHovered(false)}
       className={className}
       testID={testID}
       style={place}
     >
-      <View style={[styles.button, variantStyle, disabled && styles.buttonDisabled, pressVisual(pressed && !disabled, reduced)]}>
-        {state === 'loading' ? <ActivityIndicator color={spinner} accessibilityLabel={strings.loading} /> : <Text style={[styles.buttonText, textStyle]}>{children}</Text>}
+      <View style={[styles.button, variantStyle, disabled && styles.buttonDisabled, pressVisual(pressed && !disabled, reduced), hovered && !pressed && !disabled && !reduced && variant !== 'ghost' ? hoverLift(variant, scheme) : null]}>
+        {state === 'loading' ? <ActivityIndicator color={spinner} accessibilityLabel={strings.loading} /> : <><NavIcon name={icon ?? VARIANT_ICON[variant]} size={18} color={iconColor} /><Text style={[styles.buttonText, textStyle]}>{children}</Text></>}
       </View>
     </Pressable>
   );

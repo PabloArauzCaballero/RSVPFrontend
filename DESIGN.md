@@ -64,3 +64,7 @@ Eyebrows sobre títulos; tarjetas iguales de icono+título+texto como estructura
 1. `yarn workspace @rsvp/universal test:visual` recorre **todas** las rutas de `apps/universal/e2e/screens.ts` a 390, 768 y 1440 px contra el servidor de contrato. Al agregar una pantalla, agrégala a esa lista.
 2. `yarn workspace @rsvp/seo-web test:visual` para el sitio público.
 3. Las imágenes base son salida de máquina hasta que una persona las revise en el PR (`docs/runbooks/visual-baselines.md`).
+
+## Regla de botones
+
+Todo botón lleva **icono + texto**, siempre. `Button` y `ActionButton` aceptan `icon` (nombre del set de `NavIcon`); si no se indica, la variante pone uno neutro (primario `check`, secundario `arrow`, peligro `trash`), pero lo correcto es nombrar el icono que describe la acción. Nunca un botón solo de texto. Las preferencias de encendido/apagado (modo oscuro, visibilidad de nombres) son interruptores (`SwitchRow`), no botones.

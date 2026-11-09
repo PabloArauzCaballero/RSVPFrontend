@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import axe from 'axe-core';
 import { afterEach, describe, expect, it } from 'vitest';
-import { colors, ink, tones } from '@rsvp/design-tokens';
+import { colors, ink, shadow, tones } from '@rsvp/design-tokens';
 import { Avatar, AvatarMark, Button, Celebrate, CheckMark, Checkbox, Chip, EmptyState, Input, Logo, Select, SwitchRow, Toast, UiProvider, fonts, useTones } from './index';
 import { LOGO_TONES } from './logo';
 import { createStyles } from './theme';
@@ -56,11 +56,13 @@ describe('pairs composed by the primitives', () => {
     expect(contrast(palette.fieldBorder, palette.surface)).toBeGreaterThanOrEqual(3);
   });
 
-  it('styles carry the system: 1 px borders, no shadows on cards or buttons, sans titles at 500, 10 px 44 px-tall buttons, small uppercase labels', () => {
+  it('styles carry the system: 1 px borders, cards with soft depth and flat buttons, sans titles at 500, 10 px 44 px-tall buttons, small uppercase labels', () => {
     const styles = createStyles(colors.light, 'light');
     const flat = (style: object): Record<string, unknown> => style as Record<string, unknown>;
     expect(flat(styles.card).borderWidth).toBe(1);
-    expect(flat(styles.card)).not.toHaveProperty('boxShadow');
+    expect(flat(styles.card).boxShadow).toBe(shadow.md);
+    expect(flat(createStyles(colors.dark, 'dark').card).boxShadow).toMatch(/^inset 0 1px 0/);
+    expect(flat(styles.button)).not.toHaveProperty('boxShadow');
     expect(flat(styles.button).borderRadius).toBe(10);
     expect(flat(styles.button).minHeight).toBe(44);
     expect(flat(styles.buttonText).fontSize).toBe(15);

@@ -114,7 +114,7 @@ function SettingsForm({ celebration, refetch, onSaved, moreOpen, onMoreOpen }: {
         {entered ? <Notice>{t("host.settings.deadline.effect", { date: entered.replace("T", " "), zone: zoneName(timeZone, celebration.defaultLocale) })}</Notice> : null}
         {deadlinePassed(entered, timeZone) ? <Notice kind="error">{t("host.settings.deadline.past")}</Notice> : null}
         {invalid ? <Notice kind="error">{t("host.common.invalid", { detail: t("host.settings.deadline.label") })}</Notice> : null}
-        {celebration.settings.rsvpDeadline ? <View style={styles.row}><ActionButton variant="secondary" label={t("host.settings.deadline.clear")} onPress={clearDeadline} testID="clear-deadline" /></View> : null}
+        {celebration.settings.rsvpDeadline ? <View style={styles.row}><ActionButton icon="close" variant="secondary" label={t("host.settings.deadline.clear")} onPress={clearDeadline} testID="clear-deadline" /></View> : null}
       </Section>
       <CelebrationErrorNotice error={edit.error ?? settings.error} onReload={refetch} />
       <Section title={t("theme.title")}><ThemeChoice /></Section>

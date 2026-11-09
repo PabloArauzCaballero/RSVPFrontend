@@ -38,8 +38,8 @@ export function CatalogPanel({ celebrationId, currency, onSeeList }: { readonly 
   return (
     <View style={{ gap: spacing[4] }}>
       <Field label={t("gifts.host.catalog.searchLabel")} value={query} onChange={setQuery} onSubmit={run} placeholder={t("gifts.host.catalog.searchPlaceholder")} testID="catalog-query" />
-      <ActionButton label={t("gifts.host.catalog.search")} onPress={run} testID="catalog-search" />
-      {added ? <Notice kind="success"><Text style={styles.body}>{t("gifts.host.catalog.added", { title: added })}</Text><ActionButton variant="secondary" label={t("gifts.host.add.seeList")} onPress={onSeeList} testID="see-list" /></Notice> : null}
+      <ActionButton icon="search" label={t("gifts.host.catalog.search")} onPress={run} testID="catalog-search" />
+      {added ? <Notice kind="success"><Text style={styles.body}>{t("gifts.host.catalog.added", { title: added })}</Text><ActionButton icon="plus" variant="secondary" label={t("gifts.host.add.seeList")} onPress={onSeeList} testID="see-list" /></Notice> : null}
       {unavailable ? <Notice kind="error">{t("gifts.host.catalog.unavailableBody")}</Notice> : <GiftErrorNotice error={add.error} />}
       {!search.data && !search.isFetching && !search.isError ? <Hint>{t("gifts.host.catalog.prompt")}</Hint> : null}
       {search.isFetching && !search.data ? <SkeletonList count={3} row={{ minHeight: 120, avatar: false, trailing: false }} label={t("host.common.loading")} /> : null}

@@ -22,13 +22,13 @@ export interface StickyActionsProps {
 export function StickyActions({ children, summary, testID }: StickyActionsProps) {
   const { palette } = useTheme();
   const stick = Platform.OS === 'web'
-    ? ({ position: 'sticky', bottom: 0, zIndex: 5, paddingBottom: 'max(12px, env(safe-area-inset-bottom))' } as unknown as ViewStyle)
+    ? ({ position: 'sticky', bottom: 0, zIndex: 5, paddingBottom: 'max(12px, env(safe-area-inset-bottom))', backdropFilter: 'saturate(180%) blur(20px)', WebkitBackdropFilter: 'saturate(180%) blur(20px)' } as unknown as ViewStyle)
     : { paddingBottom: spacing[3] };
   return (
     <View
       role="group"
       testID={testID}
-      style={[{ backgroundColor: palette.canvas, borderTopWidth: 1, borderTopColor: palette.border, paddingTop: spacing[3], paddingHorizontal: spacing[4], gap: spacing[2], marginHorizontal: -spacing[4] }, stick]}
+      style={[{ backgroundColor: Platform.OS === 'web' ? `${palette.canvas}E6` : palette.canvas, borderTopWidth: 1, borderTopColor: palette.border, paddingTop: spacing[3], paddingHorizontal: spacing[4], gap: spacing[2], marginHorizontal: -spacing[4] }, stick]}
     >
       {summary}
       <ButtonAlignContext.Provider value="center">

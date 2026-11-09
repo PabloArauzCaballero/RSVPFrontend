@@ -29,7 +29,7 @@ export function AdminErrorNotice({ error, onReload, onRetry }: { readonly error:
     return (
       <Notice kind="error">
         <Text style={styles.body}>{kind === "rateLimited" ? (seconds ? t("admin.errors.rateLimited", { seconds }) : t("admin.errors.rateLimitedNoWait")) : t(`admin.errors.${kind}`)}</Text>
-        {isRetryable(kind) && retry ? <ActionButton variant="secondary" label={t("host.common.retry")} onPress={retry} testID="error-retry" /> : null}
+        {isRetryable(kind) && retry ? <ActionButton icon="refresh" variant="secondary" label={t("host.common.retry")} onPress={retry} testID="error-retry" /> : null}
       </Notice>
     );
   }
@@ -39,7 +39,7 @@ export function AdminErrorNotice({ error, onReload, onRetry }: { readonly error:
   return (
     <Notice kind="error">
       <Text style={styles.body}>{t(`admin.errors.${key}`)}</Text>
-      {key === "conflict" && onReload ? <ActionButton variant="secondary" label={t("host.common.reload")} onPress={onReload} /> : null}
+      {key === "conflict" && onReload ? <ActionButton icon="refresh" variant="secondary" label={t("host.common.reload")} onPress={onReload} /> : null}
     </Notice>
   );
 }
@@ -54,12 +54,12 @@ export function AdminListError({ error, onRetry, retryTestID = "admin-retry" }: 
   const kind = failureKind(error);
   const art = FAILURE_ART[kind];
   if (art && kind !== "rateLimited") {
-    return <EmptyState illustration={art} title={t(`admin.errors.state.${kind}`)} body={t(`admin.errors.${kind}`)} action={<ActionButton variant="secondary" label={t("host.common.retry")} onPress={onRetry} testID={retryTestID} />} />;
+    return <EmptyState illustration={art} title={t(`admin.errors.state.${kind}`)} body={t(`admin.errors.${kind}`)} action={<ActionButton icon="refresh" variant="secondary" label={t("host.common.retry")} onPress={onRetry} testID={retryTestID} />} />;
   }
   return (
     <>
       <AdminErrorNotice error={error} onReload={onRetry} />
-      <ActionButton variant="secondary" label={t("host.common.retry")} onPress={onRetry} testID={retryTestID} />
+      <ActionButton icon="refresh" variant="secondary" label={t("host.common.retry")} onPress={onRetry} testID={retryTestID} />
     </>
   );
 }

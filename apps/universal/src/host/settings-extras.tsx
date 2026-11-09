@@ -30,7 +30,7 @@ export function EventTypeSection({ celebration, onSaved }: { readonly celebratio
       <CelebrationErrorNotice error={types.error} />
       <ChoiceGroup label={t("host.settingsExtra.eventType.label")} value={code} onChange={draft ? setCode : () => undefined} choices={(types.data?.items ?? []).map((type) => ({ value: type.code, label: type.name }))} />
       <CelebrationErrorNotice error={assign.error} />
-      <ActionButton label={t("host.settingsExtra.eventType.save")} disabled={!draft || code === celebration.eventTypeCode} busy={assign.isPending} onPress={() => setConfirming(true)} testID="save-event-type" />
+      <ActionButton icon="check" label={t("host.settingsExtra.eventType.save")} disabled={!draft || code === celebration.eventTypeCode} busy={assign.isPending} onPress={() => setConfirming(true)} testID="save-event-type" />
       <ConfirmDialog visible={confirming} title={t("host.settingsExtra.eventType.label")} body={t("host.settingsExtra.eventType.help")} confirmLabel={t("host.settingsExtra.eventType.save")} onCancel={() => setConfirming(false)}
         onConfirm={() => { setConfirming(false); onSaved(null); assign.mutateAsync({ target: celebration, code }).then(() => onSaved(t("host.settings.saved")), () => undefined); }} />
     </Section>
@@ -64,13 +64,13 @@ export function TeamSection({ celebration, onSaved }: { readonly celebration: Ce
             <Text selectable style={styles.body}>{member.userId}</Text>
             <Text style={styles.muted}>{t(`host.settingsExtra.team.roles.${member.role}`)}</Text>
           </View>
-          <ActionButton variant="danger" label={t("host.settingsExtra.team.remove")} busy={remove.isPending && removing === member.userId} onPress={() => { remove.reset(); setRemoving(member.userId); }} testID={`remove-member-${member.userId}`} />
+          <ActionButton icon="close" variant="danger" label={t("host.settingsExtra.team.remove")} busy={remove.isPending && removing === member.userId} onPress={() => { remove.reset(); setRemoving(member.userId); }} testID={`remove-member-${member.userId}`} />
         </View>
       ))}
       <Field label={t("host.settingsExtra.team.userId")} value={userId} onChange={setUserId} testID="member-user-id" {...(invalid ? { error: t("host.limits.userId") } : {})} />
       <ChoiceGroup label={t("host.settingsExtra.team.role")} value={role} onChange={setRole} choices={ROLES.map((value) => ({ value, label: t(`host.settingsExtra.team.roles.${value}`) }))} />
       <CelebrationErrorNotice error={set.error ?? remove.error} />
-      <ActionButton label={t("host.settingsExtra.team.add")} disabled={!isUserId(trimmed)} busy={set.isPending} onPress={add} testID="add-member" />
+      <ActionButton icon="plus" label={t("host.settingsExtra.team.add")} disabled={!isUserId(trimmed)} busy={set.isPending} onPress={add} testID="add-member" />
       <ConfirmDialog visible={removing !== null && !remove.isPending} danger title={t("host.settingsExtra.team.removeTitle")} body={t("host.settingsExtra.team.removeBody")} confirmLabel={t("host.settingsExtra.team.remove")} onCancel={() => setRemoving(null)}
         onConfirm={() => { const target = removing; onSaved(null); if (target) remove.mutateAsync({ target: celebration, userId: target }).then(() => onSaved(t("host.settingsExtra.team.removed")), () => undefined).finally(() => setRemoving(null)); }} />
     </Section>

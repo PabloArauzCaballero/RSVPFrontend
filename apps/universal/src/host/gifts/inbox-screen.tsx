@@ -67,7 +67,7 @@ function InboxBody({ celebrationId, timeZone, onSeeList }: { readonly celebratio
       {notice ? <Notice kind={notice.kind}><Text style={styles.body}>{notice.text}</Text></Notice> : null}
       {decide.isError && !conflict ? <GiftErrorNotice error={decide.error} /> : null}
       {open.length === 0 ? (
-        <EmptyState illustration="success" title={t("gifts.host.inbox.emptyTitle")} body={t("gifts.host.inbox.emptyBody")} action={<ActionButton variant="secondary" label={t("gifts.host.inbox.emptyAction")} onPress={onSeeList} testID="back-to-list" />} />
+        <EmptyState illustration="success" title={t("gifts.host.inbox.emptyTitle")} body={t("gifts.host.inbox.emptyBody")} action={<ActionButton icon="arrow" variant="secondary" label={t("gifts.host.inbox.emptyAction")} onPress={onSeeList} testID="back-to-list" />} />
       ) : (
         <RowList>
           <Stagger>{open.map((reservation, index) => {
@@ -80,8 +80,8 @@ function InboxBody({ celebrationId, timeZone, onSeeList }: { readonly celebratio
                 {reservation.message ? <Text style={styles.muted}>“{reservation.message}”</Text> : null}
                 <Text style={styles.muted}>{t("gifts.host.inbox.requestedAt", { date: formatCelebrationDate(reservation.requestedAt, { locale, timeZone }) })}</Text>
                 <View style={styles.row}>
-                  <ActionButton variant="secondary" label={t("gifts.host.inbox.approve")} busy={busy === "approve"} disabled={busy !== null} onPress={() => resolve(reservation, "approve")} testID={`approve-${reservation.id}`} />
-                  <ActionButton variant="secondary" label={t("gifts.host.inbox.reject")} busy={busy === "reject"} disabled={busy !== null} onPress={() => resolve(reservation, "reject")} testID={`reject-${reservation.id}`} />
+                  <ActionButton icon="check" variant="secondary" label={t("gifts.host.inbox.approve")} busy={busy === "approve"} disabled={busy !== null} onPress={() => resolve(reservation, "approve")} testID={`approve-${reservation.id}`} />
+                  <ActionButton icon="close" variant="secondary" label={t("gifts.host.inbox.reject")} busy={busy === "reject"} disabled={busy !== null} onPress={() => resolve(reservation, "reject")} testID={`reject-${reservation.id}`} />
                 </View>
               </Row>
             );

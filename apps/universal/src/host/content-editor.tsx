@@ -132,7 +132,7 @@ function DraftPreview({ celebration, eventType, content, slug, onClose }: { read
         <View accessibilityViewIsModal role="dialog" aria-label={t("host.editor.previewTitle")} style={[styles.dialog, { maxWidth: PREVIEW_DIALOG_WIDTH, maxHeight: "92%" }]}>
           <View style={[styles.row, { justifyContent: "space-between" }]}>
             <Text accessibilityRole="header" style={styles.subtitle}>{t("host.editor.previewTitle")}</Text>
-            <ActionButton variant="secondary" label={t("host.editor.closePreview")} onPress={onClose} testID="close-preview" />
+            <ActionButton icon="close" variant="secondary" label={t("host.editor.closePreview")} onPress={onClose} testID="close-preview" />
           </View>
           <Text style={styles.muted}>{t("host.editor.previewDraftNote")}</Text>
           <ScrollView>

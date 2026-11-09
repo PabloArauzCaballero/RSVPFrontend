@@ -81,8 +81,8 @@ function Checklist({ celebration, eventType, onNavigate, refetch }: { readonly c
   ];
   useScreenHeader({
     actions: draft
-      ? <ActionButton label={t("host.publish.publish")} disabled={Boolean(missing.length) || !check.isSuccess} busy={action.isPending} onPress={() => setDialog("publish")} testID="publish" />
-      : celebration.status === "PUBLISHED" ? <ActionButton label={t("host.publish.copy")} onPress={() => { void share(); }} testID="copy-link" /> : null,
+      ? <ActionButton icon="check" label={t("host.publish.publish")} disabled={Boolean(missing.length) || !check.isSuccess} busy={action.isPending} onPress={() => setDialog("publish")} testID="publish" />
+      : celebration.status === "PUBLISHED" ? <ActionButton icon="copy" label={t("host.publish.copy")} onPress={() => { void share(); }} testID="copy-link" /> : null,
     menu: celebration.status !== "ARCHIVED" ? <OverflowMenu testID="more-publish" items={menuItems} /> : null
   });
   return (
@@ -99,7 +99,7 @@ function Checklist({ celebration, eventType, onNavigate, refetch }: { readonly c
       ) : null}
       {draft ? (
         <View style={{ gap: spacing[3], maxWidth: 720 }}>
-          {check.isError && !fromError.length ? <><CelebrationErrorNotice error={check.error} /><ActionButton variant="secondary" label={t("host.common.retry")} onPress={() => { void check.refetch(); }} testID="retry-check" /></> : null}
+          {check.isError && !fromError.length ? <><CelebrationErrorNotice error={check.error} /><ActionButton icon="refresh" variant="secondary" label={t("host.common.retry")} onPress={() => { void check.refetch(); }} testID="retry-check" /></> : null}
           {missing.length ? (
             <>
               <Text accessibilityRole="header" aria-level={2} style={styles.subtitle}>{t("host.publish.missing")}</Text>
@@ -111,7 +111,7 @@ function Checklist({ celebration, eventType, onNavigate, refetch }: { readonly c
                     <Row key={field} first={index === 0}>
                       <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: spacing[2] }}>
                         <Text style={[styles.body, { flexGrow: 1, flexShrink: 1, flexBasis: 160 }]}>{task.label}</Text>
-                        <ActionButton variant="secondary" label={t("host.publish.goTo")} onPress={() => onNavigate(withCelebration(editorPath(task.section), celebration.id))} />
+                        <ActionButton icon="arrow" variant="secondary" label={t("host.publish.goTo")} onPress={() => onNavigate(withCelebration(editorPath(task.section), celebration.id))} />
                       </View>
                     </Row>
                   );

@@ -1,7 +1,7 @@
 import type { PropsWithChildren, ReactNode } from "react";
 import { Text, View } from "react-native";
 import { radius, spacing, typography } from "@rsvp/design-tokens";
-import { fonts, useColors } from "@rsvp/ui";
+import { depth, fonts, useColors, useTheme } from "@rsvp/ui";
 
 /**
  * One surface holding a list of rows divided by hairlines: the shape of "a list of things" in the gifts area.
@@ -9,7 +9,8 @@ import { fonts, useColors } from "@rsvp/ui";
  */
 export function RowList({ children }: PropsWithChildren): ReactNode {
   const palette = useColors();
-  return <View style={{ backgroundColor: palette.surface, borderColor: palette.border, borderWidth: 1, borderRadius: radius.lg, overflow: "hidden" }}>{children}</View>;
+  const { scheme } = useTheme();
+  return <View style={{ backgroundColor: palette.surface, borderColor: palette.border, borderWidth: 1, borderRadius: radius.lg, overflow: "hidden", ...depth(scheme) }}>{children}</View>;
 }
 
 /** A row of a `RowList`. `first` removes the divider above it. */

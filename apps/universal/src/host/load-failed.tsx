@@ -16,5 +16,5 @@ export function LoadFailed({ title, error, onRetry, testID }: { readonly title: 
   const kind = errorKind(error);
   // Nothing was typed here, so "what you wrote is still here" would be noise: the load messages only say what happened and how to go on.
   const body = kind === "server" ? t("host.errors.serverLoad") : kind === "network" ? t("host.errors.networkLoad") : errorMessage(error, t);
-  return <EmptyState illustration={kind === "server" ? "serverError" : "offline"} title={title} body={body} action={<CenteredActions><ActionButton label={t("host.common.retry")} onPress={onRetry} {...(testID ? { testID } : {})} /></CenteredActions>} />;
+  return <EmptyState illustration={kind === "server" ? "serverError" : "offline"} title={title} body={body} action={<CenteredActions><ActionButton icon="refresh" label={t("host.common.retry")} onPress={onRetry} {...(testID ? { testID } : {})} /></CenteredActions>} />;
 }

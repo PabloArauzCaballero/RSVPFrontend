@@ -43,7 +43,7 @@ export const esBO = {
     errors: { cannotAdd: "No pudimos agregar ese correo. Revisa que esté bien escrito y que la persona ya tenga una cuenta en DOne.", notFound: "No encontramos esta organización. Actualiza la lista e inténtalo de nuevo.", conflict: "Esa persona ya es miembro de esta organización.", forbidden: "No tienes permiso para esta acción en esta organización." }
   },
   theme: {
-    title: "Apariencia", label: "Tema de la app", system: "Sistema", light: "Claro", dark: "Oscuro",
+    title: "Apariencia", label: "Tema de la app", darkMode: "Modo oscuro", system: "Sistema", light: "Claro", dark: "Oscuro",
     help: "«Sistema» sigue el modo de tu dispositivo. La invitación que ven tus invitados no cambia."
   }
 } as const;

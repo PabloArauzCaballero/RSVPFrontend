@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Text, TextInput, View } from "react-native";
 import { chips, radius, spacing } from "@rsvp/design-tokens";
-import { Avatar, Chip, Stagger, useColors, useTheme } from "@rsvp/ui";
+import { Avatar, Chip, Stagger, depth, useColors, useTheme } from "@rsvp/ui";
 import { useGuestGroups, useGuestList, useGuestSummary, type GuestListFilters, type RsvpStatus } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
@@ -62,6 +62,7 @@ function TotalsStrip({ total, confirmed, pending, declined }: { readonly total: 
 function ListBody({ celebrationId, timeZone, onNavigate }: { readonly celebrationId: string; readonly timeZone: string; readonly onNavigate: (href: string) => void }): ReactNode {
   const styles = useStyles();
   const palette = useColors();
+  const { scheme } = useTheme();
   const t = useT();
   const client = useApiClient();
   const [search, setSearch] = useState("");
@@ -113,7 +114,7 @@ function ListBody({ celebrationId, timeZone, onNavigate }: { readonly celebratio
         <View style={{ gap: spacing[3] }} accessibilityLiveRegion="polite">
           {empty ? <EmptyState illustration="guestsEmpty" title={t("guests.list.emptyTitle")} body={t("guests.list.empty")} action={<TextAction label={t("guests.list.import")} onPress={go(HOST_ROUTES.guestImport)} />} />
             : data.items.length === 0 && appearing.length === 0 ? <EmptyState illustration="emptySearch" title={t("guests.list.emptyFilteredTitle")} body={t("guests.list.emptyFiltered")} /> : (
-            <View role="list" style={{ borderRadius: radius.lg, borderWidth: 1, borderColor: palette.border, backgroundColor: palette.surface, overflow: "hidden" }}>
+            <View role="list" style={{ borderRadius: radius.lg, borderWidth: 1, borderColor: palette.border, backgroundColor: palette.surface, overflow: "hidden", ...depth(scheme) }}>
               {appearing.map((guest) => (
                 <View key={`new-${guest.at}-${guest.name}`} role="listitem" testID="appearing-guest" style={{ flexDirection: "row", alignItems: "center", gap: spacing[4], minHeight: GUEST_ROW_HEIGHT, paddingVertical: spacing[4], paddingHorizontal: spacing[6], borderBottomWidth: 1, borderBottomColor: palette.border }}>
                   <Avatar name={guest.name} size={44} />
@@ -136,9 +137,9 @@ function ListBody({ celebrationId, timeZone, onNavigate }: { readonly celebratio
           )}
           {paged ? (
             <View style={styles.row}>
-              <ActionButton variant="secondary" label={t("guests.list.prev")} disabled={data.offset === 0} onPress={() => setOffset(Math.max(0, offset - PAGE_SIZE))} />
+              <ActionButton icon="back" variant="secondary" label={t("guests.list.prev")} disabled={data.offset === 0} onPress={() => setOffset(Math.max(0, offset - PAGE_SIZE))} />
               <Text style={styles.muted} testID="page-range">{t("guests.list.page", { from, to, total: data.total })}</Text>
-              <ActionButton variant="secondary" label={t("guests.list.next")} disabled={to >= data.total} onPress={() => setOffset(offset + PAGE_SIZE)} />
+              <ActionButton icon="arrow" variant="secondary" label={t("guests.list.next")} disabled={to >= data.total} onPress={() => setOffset(offset + PAGE_SIZE)} />
             </View>
           ) : null}
           <FreshnessLine freshness={data.freshness} timeZone={timeZone} onRefresh={() => { void list.refetch(); }} />
@@ -153,7 +154,7 @@ export function GuestListScreen(props: ScreenProps): ReactNode {
   const go = (path: string, celebrationId: string) => () => props.onNavigate(withCelebration(path, celebrationId));
   return (
     <CelebrationScreen {...props} current="guests" title={t("guests.list.title")} intro={t("guests.list.intro")}
-      actions={({ celebration }) => <ActionButton label={t("guests.list.add")} onPress={go(HOST_ROUTES.guestNew, celebration.id)} testID="add-guest" />}
+      actions={({ celebration }) => <ActionButton icon="plus" label={t("guests.list.add")} onPress={go(HOST_ROUTES.guestNew, celebration.id)} testID="add-guest" />}
       menu={({ celebration }) => (
         <OverflowMenu label={t("guests.more")} testID="guests-more" items={[
           { key: "import", label: t("guests.list.import"), onPress: go(HOST_ROUTES.guestImport, celebration.id) },

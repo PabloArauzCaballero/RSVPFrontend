@@ -90,10 +90,10 @@ export function ProvidersPanel({ celebrationId, currency, onSeeList }: { readonl
       <MoreOptions label={t("gifts.host.providers.moreFilters")} testID="more-provider-filters">
         <Field label={t("gifts.host.providers.city")} value={city} onChange={setCity} help={t("gifts.host.providers.cityHelp")} onSubmit={apply} testID="providers-city" />
         <Field label={t("gifts.host.providers.maxPrice")} value={maxPrice} onChange={setMaxPrice} keyboardType="decimal-pad" onSubmit={apply} testID="providers-max-price" />
-        <ActionButton variant="secondary" label={t("gifts.host.providers.search")} onPress={apply} testID="providers-search" />
+        <ActionButton icon="search" variant="secondary" label={t("gifts.host.providers.search")} onPress={apply} testID="providers-search" />
       </MoreOptions>
       <Text style={styles.muted}>{t("gifts.host.providers.disclaimer")}</Text>
-      {added ? <Notice kind="success"><Text style={styles.body}>{t("gifts.host.catalog.added", { title: added })}</Text><ActionButton variant="secondary" label={t("gifts.host.add.seeList")} onPress={onSeeList} testID="see-list" /></Notice> : null}
+      {added ? <Notice kind="success"><Text style={styles.body}>{t("gifts.host.catalog.added", { title: added })}</Text><ActionButton icon="plus" variant="secondary" label={t("gifts.host.add.seeList")} onPress={onSeeList} testID="see-list" /></Notice> : null}
       {unavailable ? <Notice kind="error">{t("gifts.host.catalog.unavailableBody")}</Notice> : <GiftErrorNotice error={add.error} />}
       {discovery.isPending ? <SkeletonList count={3} row={{ minHeight: 150, avatar: false, trailing: false }} label={t("host.common.loading")} /> : null}
       {discovery.isError ? <RetryNotice error={discovery.error} onRetry={() => { void discovery.refetch(); }} /> : null}
@@ -106,9 +106,9 @@ export function ProvidersPanel({ celebrationId, currency, onSeeList }: { readonl
       ) : null}
       {pages > 1 ? (
         <View style={styles.row}>
-          <ActionButton variant="secondary" label={t("directory.pagination.previous")} disabled={page <= 1} onPress={() => setPage(page - 1)} testID="providers-prev" />
+          <ActionButton icon="back" variant="secondary" label={t("directory.pagination.previous")} disabled={page <= 1} onPress={() => setPage(page - 1)} testID="providers-prev" />
           <Text style={styles.muted}>{t("gifts.host.providers.page", { page, pages })}</Text>
-          <ActionButton variant="secondary" label={t("directory.pagination.next")} disabled={page >= pages} onPress={() => setPage(page + 1)} testID="providers-next" />
+          <ActionButton icon="arrow" variant="secondary" label={t("directory.pagination.next")} disabled={page >= pages} onPress={() => setPage(page + 1)} testID="providers-next" />
         </View>
       ) : null}
     </View>

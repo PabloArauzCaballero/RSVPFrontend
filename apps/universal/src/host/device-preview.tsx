@@ -45,13 +45,13 @@ function Preview({ celebration, eventType, device, setDevice, gallery, locale, o
   // One action: open the public page once it exists, otherwise go and publish. Changing the style is secondary.
   useScreenHeader({
     actions: published
-      ? <ActionButton label={t("host.preview.openPublic")} onPress={() => { void Linking.openURL(publicUrl(celebration.slug)); }} testID="open-public" />
-      : celebration.status === "DRAFT" ? <ActionButton label={t("host.publish.publish")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.publish, celebration.id))} testID="go-publish" /> : null,
+      ? <ActionButton icon="arrow" label={t("host.preview.openPublic")} onPress={() => { void Linking.openURL(publicUrl(celebration.slug)); }} testID="open-public" />
+      : celebration.status === "DRAFT" ? <ActionButton icon="check" label={t("host.publish.publish")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.publish, celebration.id))} testID="go-publish" /> : null,
     menu: <OverflowMenu items={[{ key: "style", label: t("host.preview.changeStyle"), onPress: () => onNavigate(withCelebration(HOST_ROUTES.templates, celebration.id)) }]} />
   });
   return (
     <View style={{ gap: spacing[4] }}>
-      {template.isError ? <Notice><Text style={styles.body}>{t("host.preview.templateFallback")}</Text><ActionButton variant="secondary" label={t("host.common.retry")} onPress={() => { void template.refetch(); }} testID="retry-template" /></Notice> : null}
+      {template.isError ? <Notice><Text style={styles.body}>{t("host.preview.templateFallback")}</Text><ActionButton icon="refresh" variant="secondary" label={t("host.common.retry")} onPress={() => { void template.refetch(); }} testID="retry-template" /></Notice> : null}
       {celebration.status === "PUBLISHED" ? null : <Enter from="up"><Notice>{t("host.preview.notPublished")}</Notice></Enter>}
       <PreviewStage theme={theme} view={previewView(celebration, eventType, locale)} gallery={images} label={t("host.preview.frame")} device={device} onDevice={setDevice} />
     </View>

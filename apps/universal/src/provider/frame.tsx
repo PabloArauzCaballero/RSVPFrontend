@@ -85,7 +85,7 @@ export function PortalScreen({ title, current, requireProvider = true, children 
   const menu = header?.menu?.length ? <OverflowMenu testID="more-options" items={header.menu} /> : undefined;
   const frame = (body: ReactNode): ReactNode => <HeaderSlot.Provider value={setHeader}><Screen title={title} nav={nav} current={active} onNavigate={(href) => router.push(href as Href)} {...(actions ? { actions } : {})} {...(menu ? { menu } : {})}>{body}</Screen></HeaderSlot.Provider>;
   if (providerId === undefined) return frame(<Loading />);
-  if (!providerId) return frame(requireProvider ? <View style={{ gap: spacing[3] }}><Notice>{t("portal.errors.noProvider")}</Notice><ActionButton label={t("portal.errors.goOnboarding")} onPress={() => router.push(PORTAL_ROUTES.onboarding as Href)} testID="go-onboarding" /></View> : children({} as Provider, () => undefined));
+  if (!providerId) return frame(requireProvider ? <View style={{ gap: spacing[3] }}><Notice>{t("portal.errors.noProvider")}</Notice><ActionButton icon="arrow" label={t("portal.errors.goOnboarding")} onPress={() => router.push(PORTAL_ROUTES.onboarding as Href)} testID="go-onboarding" /></View> : children({} as Provider, () => undefined));
   if (profile.isPending) return frame(<Loading />);
   if (profile.isError || !profile.data) return frame(<ErrorNotice error={profile.error} onReload={() => { void profile.refetch(); }} />);
   return frame(children(profile.data, () => { void profile.refetch(); }));

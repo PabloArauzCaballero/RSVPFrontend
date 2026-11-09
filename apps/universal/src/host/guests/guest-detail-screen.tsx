@@ -83,7 +83,7 @@ function LinkSection({ link, name }: { readonly link: GuestLink; readonly name: 
           <Text style={styles.muted}>{t("guests.detail.link.expires", { date: formatCelebrationDate(issued.expiresAt, { locale, timeZone: link.timeZone }) })}</Text>
           <Text style={styles.muted}>{t("guests.detail.link.once")}</Text>
           <View style={styles.row}>
-            <ActionButton variant="secondary" label={t("guests.detail.link.share")} onPress={() => { void link.share(); }} testID="share-link" />
+            <ActionButton icon="share" variant="secondary" label={t("guests.detail.link.share")} onPress={() => { void link.share(); }} testID="share-link" />
           </View>
         </Celebrate>
       ) : <Text style={styles.muted}>{t("guests.detail.link.none")}</Text>}
@@ -177,8 +177,8 @@ export function GuestDetailScreen(props: ScreenProps & { readonly guestId?: stri
   const eraser = useEraseFlow(celebration, guestId, () => props.onNavigate(withCelebration(HOST_ROUTES.guests, props.celebrationId)));
   const ready = Boolean(guest.data);
   const primary = link.issued
-    ? <ActionButton label={t("guests.detail.link.copy")} onPress={() => { void link.copy(); }} testID="copy-link" />
-    : <ActionButton label={t("guests.detail.link.issue")} busy={link.issue.isPending} onPress={link.generate} testID="issue-link" />;
+    ? <ActionButton icon="copy" label={t("guests.detail.link.copy")} onPress={() => { void link.copy(); }} testID="copy-link" />
+    : <ActionButton icon="check" label={t("guests.detail.link.issue")} busy={link.issue.isPending} onPress={link.generate} testID="issue-link" />;
   return (
     <CelebrationScreen {...props} current="guests" title={t("guests.detail.title")} intro={t("guests.detail.intro")}
       actions={ready ? primary : undefined}

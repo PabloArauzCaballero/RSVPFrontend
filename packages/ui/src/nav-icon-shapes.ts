@@ -31,6 +31,20 @@ const grid: readonly NavShape[] = [
 
 const more: readonly NavShape[] = [{ t: 'circle', cx: 5.5, cy: 12, r: 1.4 }, { t: 'circle', cx: 12, cy: 12, r: 1.4 }, { t: 'circle', cx: 18.5, cy: 12, r: 1.4 }];
 
+const plus: readonly NavShape[] = [{ t: 'path', d: 'M12 5 V19 M5 12 H19' }];
+const check: readonly NavShape[] = [{ t: 'path', d: 'M5 12.5 L10 17.5 L19 7' }];
+const close: readonly NavShape[] = [{ t: 'path', d: 'M6 6 L18 18 M18 6 L6 18' }];
+const trash: readonly NavShape[] = [{ t: 'path', d: 'M4.5 7 H19.5 M9.5 7 V4.5 H14.5 V7' }, { t: 'path', d: 'M6.5 7 L7.5 19 A1 1 0 0 0 8.5 20 H15.5 A1 1 0 0 0 16.5 19 L17.5 7' }];
+const arrow: readonly NavShape[] = [{ t: 'path', d: 'M5 12 H19 M13 6 L19 12 L13 18' }];
+const back: readonly NavShape[] = [{ t: 'path', d: 'M19 12 H5 M11 6 L5 12 L11 18' }];
+const refresh: readonly NavShape[] = [{ t: 'path', d: 'M19.5 12 A7.5 7.5 0 1 1 17 6.4' }, { t: 'path', d: 'M19 3.5 V7.5 H15' }];
+const copy: readonly NavShape[] = [{ t: 'rect', x: 8.5, y: 8.5, w: 11, h: 11, rx: 2 }, { t: 'path', d: 'M15.5 8.5 V6.5 A2 2 0 0 0 13.5 4.5 H6.5 A2 2 0 0 0 4.5 6.5 V13.5 A2 2 0 0 0 6.5 15.5 H8.5' }];
+const logout: readonly NavShape[] = [{ t: 'path', d: 'M10 4.5 H6.5 A2 2 0 0 0 4.5 6.5 V17.5 A2 2 0 0 0 6.5 19.5 H10' }, { t: 'path', d: 'M10 12 H20 M16 8 L20 12 L16 16' }];
+const moon: readonly NavShape[] = [{ t: 'path', d: 'M19.5 14.5 A8 8 0 1 1 9.5 4.5 A6.5 6.5 0 0 0 19.5 14.5 Z' }];
+const search: readonly NavShape[] = [{ t: 'circle', cx: 11, cy: 11, r: 6.5 }, { t: 'path', d: 'M16 16 L20 20' }];
+const share: readonly NavShape[] = [{ t: 'path', d: 'M12 15 V4.5 M8 8.5 L12 4.5 L16 8.5' }, { t: 'path', d: 'M5 13 V18 A1.5 1.5 0 0 0 6.5 19.5 H17.5 A1.5 1.5 0 0 0 19 18 V13' }];
+const upload: readonly NavShape[] = [{ t: 'path', d: 'M12 16 V5 M8 9 L12 5 L16 9 M5 19.5 H19' }];
+
 export const NAV_ICONS: Readonly<Record<string, readonly NavShape[]>> = {
   home, guests: people, gifts: gift, invitation: envelope, alerts: bell, settings: sliders,
   overview: home, offers: tag, agenda: calendar, clients: people, profile: user,

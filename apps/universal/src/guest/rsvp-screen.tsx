@@ -163,7 +163,7 @@ function FailureNotice({ failure, onRetry, busy }: { readonly failure: RsvpFailu
   return (
     <Notice kind="error">
       <Text style={styles.body}>{messages[failure.kind] ?? t("rsvp.invite.errors.unknown")}</Text>
-      {retryable ? <ActionButton variant="secondary" label={t("rsvp.invite.retry")} disabled={busy} onPress={onRetry} testID="rsvp-retry" /> : null}
+      {retryable ? <ActionButton icon="refresh" variant="secondary" label={t("rsvp.invite.retry")} disabled={busy} onPress={onRetry} testID="rsvp-retry" /> : null}
       <Text style={styles.muted}>{t("rsvp.invite.kept")}</Text>
     </Notice>
   );
@@ -178,7 +178,7 @@ function GiftsLink({ client, celebrationId, slug, token }: { readonly client: Re
   if (empty) return null;
   return (
     <Enter from="down"><View style={{ alignSelf: "stretch", gap: spacing[2] }}>
-      <ActionButton label={t("rsvp.invite.giftsCta")} onPress={() => { router.push(`/c/${encodeURIComponent(slug)}/regalos/${encodeURIComponent(token)}` as never); }} testID="open-gifts" />
+      <ActionButton icon="arrow" label={t("rsvp.invite.giftsCta")} onPress={() => { router.push(`/c/${encodeURIComponent(slug)}/regalos/${encodeURIComponent(token)}` as never); }} testID="open-gifts" />
       <Text style={[styles.muted, { textAlign: "center" }]}>{t("rsvp.invite.giftsHint")}</Text>
     </View></Enter>
   );
@@ -312,7 +312,7 @@ function AnswerForm({ celebrationId, token, state, allowed, mode, onSaved, onClo
       {failure ? <FailureNotice failure={failure} busy={busy} onRetry={() => { void submit(); }} /> : null}
       <StickyActions>
         <ActionButton testID="rsvp-submit" label={label} busy={busy} onPress={() => { void submit(); }} />
-        {onCancel ? <ActionButton variant="secondary" label={t("rsvp.invite.cancelEdit")} disabled={busy} onPress={onCancel} testID="rsvp-cancel-edit" /> : null}
+        {onCancel ? <ActionButton icon="close" variant="secondary" label={t("rsvp.invite.cancelEdit")} disabled={busy} onPress={onCancel} testID="rsvp-cancel-edit" /> : null}
       </StickyActions>
     </View>
   );
@@ -377,7 +377,7 @@ function PublicRegistrationForm({ view, slug, cover, hosts, contact }: { readonl
         {receipt.link ? (
           <View style={{ gap: spacing[3] }}>
             <Field label={t("rsvp.invite.open.linkLabel")} value={receipt.link} onChange={() => undefined} />
-            <ActionButton label={t("rsvp.invite.open.copyLink")} onPress={() => { void copyText(receipt.link ?? "").then(setCopied); }} testID="rsvp-copy-link" />
+            <ActionButton icon="copy" label={t("rsvp.invite.open.copyLink")} onPress={() => { void copyText(receipt.link ?? "").then(setCopied); }} testID="rsvp-copy-link" />
             {copied ? <Notice kind="success">{t("rsvp.invite.open.copied")}</Notice> : null}
           </View>
         ) : null}

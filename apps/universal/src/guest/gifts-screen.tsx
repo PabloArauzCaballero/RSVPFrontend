@@ -101,8 +101,8 @@ export function GuestGiftsScreen({ slug, token }: { readonly slug: string; reado
     const retryable = listStatus !== 401 && listStatus !== 403 && listStatus !== 404;
     return (
       <LinkState illustration={blocker.illustration} title={blocker.title} body={blocker.body} frame={cover}>
-        {retryable ? <ActionButton variant="secondary" label={t("gifts.guest.error.retry")} onPress={() => { void list.refetch(); }} testID="gifts-retry" /> : null}
-        <ActionButton variant="secondary" label={t("gifts.guest.backToRsvp")} onPress={() => { router.push(`/c/${encodeURIComponent(slug)}/rsvp/${encodeURIComponent(token)}` as never); }} testID="gifts-back" />
+        {retryable ? <ActionButton icon="refresh" variant="secondary" label={t("gifts.guest.error.retry")} onPress={() => { void list.refetch(); }} testID="gifts-retry" /> : null}
+        <ActionButton icon="back" variant="secondary" label={t("gifts.guest.backToRsvp")} onPress={() => { router.push(`/c/${encodeURIComponent(slug)}/rsvp/${encodeURIComponent(token)}` as never); }} testID="gifts-back" />
       </LinkState>
     );
   }
@@ -134,7 +134,7 @@ export function GuestGiftsScreen({ slug, token }: { readonly slug: string; reado
       ) : null}
       <View style={{ gap: spacing[2] }}>
         <ActionButton label={reserve.isPending ? t("gifts.guest.form.submitting") : t("gifts.guest.form.submit")} busy={reserve.isPending} onPress={submit} testID="reserve-confirm" />
-        <ActionButton variant="secondary" label={t("gifts.guest.form.cancel")} disabled={reserve.isPending} onPress={() => { setTarget(null); setFieldErrors({}); reserve.reset(); }} testID="reserve-cancel" />
+        <ActionButton icon="close" variant="secondary" label={t("gifts.guest.form.cancel")} disabled={reserve.isPending} onPress={() => { setTarget(null); setFieldErrors({}); reserve.reset(); }} testID="reserve-cancel" />
       </View>
     </View>
   );
@@ -165,8 +165,8 @@ export function GuestGiftsScreen({ slug, token }: { readonly slug: string; reado
         ) : null}
         {opened ? form(item) : (
           <View style={styles.row}>
-            {item.status === "AVAILABLE" ? <ActionButton label={t("gifts.guest.reserve")} onPress={() => open(item)} testID={`reserve-${item.id}`} /> : null}
-            {viaPartner ? <ActionButton variant="secondary" label={t("gifts.guest.viaPartner")} onPress={() => { void Linking.openURL(viaPartner); }} testID={`partner-${item.id}`} /> : null}
+            {item.status === "AVAILABLE" ? <ActionButton icon="check" label={t("gifts.guest.reserve")} onPress={() => open(item)} testID={`reserve-${item.id}`} /> : null}
+            {viaPartner ? <ActionButton icon="arrow" variant="secondary" label={t("gifts.guest.viaPartner")} onPress={() => { void Linking.openURL(viaPartner); }} testID={`partner-${item.id}`} /> : null}
           </View>
         )}
         {viaPartner && !opened ? <Text style={styles.muted}>{t("gifts.guest.partnerNote")}</Text> : null}

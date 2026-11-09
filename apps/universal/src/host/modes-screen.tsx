@@ -62,7 +62,7 @@ function Modes({ celebration, refetch }: { readonly celebration: Celebration; re
             <Chip tone={partnerOn ? "yes" : "wait"}>{partnerOn ? t("host.modes.partnerPriority.on") : t("host.modes.partnerPriority.off")}</Chip>
           </View>
           <Text style={[styles.body, { maxWidth: 640 }]}>{t("host.modes.partnerPriority.help")}</Text>
-          <View style={styles.row}><ActionButton variant="secondary" label={partnerOn ? t("host.modes.partnerPriority.disable") : t("host.modes.partnerPriority.enable")} testID="switch-partnerPriority" onPress={() => setPending({ kind: "partner", value: !partnerOn })} /></View>
+          <View style={styles.row}><ActionButton icon="check" variant="secondary" label={partnerOn ? t("host.modes.partnerPriority.disable") : t("host.modes.partnerPriority.enable")} testID="switch-partnerPriority" onPress={() => setPending({ kind: "partner", value: !partnerOn })} /></View>
         </Row>
       </RowList>
       {update.isSuccess ? <Notice kind="success">{t("host.modes.saved")}</Notice> : null}

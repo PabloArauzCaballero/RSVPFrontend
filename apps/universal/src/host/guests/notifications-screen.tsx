@@ -88,7 +88,7 @@ export function NotificationsScreen(props: ScreenProps): ReactNode {
   const state = useInbox(props.celebrationId);
   return (
     <CelebrationScreen {...props} current="notifications" title={t("guests.notifications.title")} intro={t("guests.notifications.intro")}
-      actions={<ActionButton label={t("guests.notifications.markAll")} busy={state.markRead.isPending} disabled={state.unread.length === 0} onPress={() => state.mark(state.unread.map((item) => item.id))} testID="mark-all" />}
+      actions={<ActionButton icon="check" label={t("guests.notifications.markAll")} busy={state.markRead.isPending} disabled={state.unread.length === 0} onPress={() => state.mark(state.unread.map((item) => item.id))} testID="mark-all" />}
       menu={<OverflowMenu label={t("guests.more")} testID="notifications-more" items={[{ key: "refresh", label: t("guests.notifications.refresh"), onPress: () => { void state.inbox.refetch(); } }]} />}>
       {({ celebration }) => <NotificationsBody celebrationId={celebration.id} timeZone={celebration.timeZone} inbox={state} onNavigate={props.onNavigate} />}
     </CelebrationScreen>

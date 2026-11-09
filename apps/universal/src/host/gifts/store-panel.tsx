@@ -60,7 +60,7 @@ export function StorePanel({ celebration, onSeeList, onChangeRule }: { readonly 
       <Field label={t("gifts.host.store.url")} value={url} onChange={setUrl} keyboardType="url" testID="external-url" />
       <Field label={t("gifts.host.store.price", { currency: celebration.currency })} value={price} onChange={setPrice} help={t("gifts.host.store.priceHelp")} keyboardType="decimal-pad" testID="external-price" />
       {error ? <Notice kind="error">{error}</Notice> : null}
-      {done ? <Notice kind="success"><Text style={styles.body}>{done}</Text><ActionButton variant="secondary" label={t("gifts.host.add.seeList")} onPress={onSeeList} testID="see-list" /></Notice> : null}
+      {done ? <Notice kind="success"><Text style={styles.body}>{done}</Text><ActionButton icon="plus" variant="secondary" label={t("gifts.host.add.seeList")} onPress={onSeeList} testID="see-list" /></Notice> : null}
       {partnerFirst ? (
         <Notice kind="info">
           <Text accessibilityRole="header" aria-level={3} style={styles.subtitle}>{t("gifts.host.store.suggestionsTitle")}</Text>
@@ -70,7 +70,7 @@ export function StorePanel({ celebration, onSeeList, onChangeRule }: { readonly 
               <Row key={suggestion.productListingId} first={index === 0} testID={`suggestion-${suggestion.productListingId}`}>
                 <Text style={styles.body}>{suggestion.title}</Text>
                 <View style={styles.row}>
-                  <ActionButton variant="secondary" label={t("gifts.host.store.useSuggestion")} onPress={() => { if (flight.begin()) add.mutate({ source: "CATALOGED", title: suggestion.title, price: { amountMinor: parseMinor(price) ?? 0, currency: celebration.currency }, productListingId: suggestion.productListingId }, { onSuccess: () => { setSuggestions([]); setDone(t("gifts.host.catalog.added", { title: suggestion.title })); }, onSettled: flight.end }); }} />
+                  <ActionButton icon="check" variant="secondary" label={t("gifts.host.store.useSuggestion")} onPress={() => { if (flight.begin()) add.mutate({ source: "CATALOGED", title: suggestion.title, price: { amountMinor: parseMinor(price) ?? 0, currency: celebration.currency }, productListingId: suggestion.productListingId }, { onSuccess: () => { setSuggestions([]); setDone(t("gifts.host.catalog.added", { title: suggestion.title })); }, onSettled: flight.end }); }} />
                 </View>
               </Row>
             ))}

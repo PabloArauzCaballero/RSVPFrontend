@@ -31,7 +31,7 @@ function RequestCard({ request, celebrationId, busy, locked, onDecide, onOpen }:
       </PressFeedback>
       <View style={styles.row}>
         <ActionButton label={busy === "APPROVED" ? t("guests.requests.approving") : t("guests.requests.approve")} busy={busy === "APPROVED"} disabled={busy !== null || locked} onPress={() => onDecide("APPROVED")} testID={`approve-${request.id}`} />
-        <ActionButton variant="secondary" label={busy === "REJECTED" ? t("guests.requests.rejecting") : t("guests.requests.reject")} busy={busy === "REJECTED"} disabled={busy !== null || locked} onPress={() => onDecide("REJECTED")} testID={`reject-${request.id}`} />
+        <ActionButton icon="close" variant="secondary" label={busy === "REJECTED" ? t("guests.requests.rejecting") : t("guests.requests.reject")} busy={busy === "REJECTED"} disabled={busy !== null || locked} onPress={() => onDecide("REJECTED")} testID={`reject-${request.id}`} />
       </View>
     </View>
   );

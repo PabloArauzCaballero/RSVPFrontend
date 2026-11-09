@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type PropsWithChildren, type ReactNode } from "react";
 import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type LayoutChangeEvent, type ViewStyle } from "react-native";
 import { radius, spacing } from "@rsvp/design-tokens";
-import { Logo, NavIcon, OverlayEnter, PageIntro, PressFeedback, ScreenTransition, StickyActions, fonts, overlayAnimation, useColors, useThemedStyles, type Palette } from "@rsvp/ui";
+import { Logo, NavIcon, OverlayEnter, PageIntro, PressFeedback, ScreenTransition, SwitchRow, StickyActions, fonts, overlayAnimation, useColors, useThemedStyles, type Palette } from "@rsvp/ui";
 import { useAuth } from "../auth/auth-context";
 import { useT } from "../platform/providers";
 import { useThemePreference } from "../platform/theme";
@@ -52,7 +52,7 @@ const createShellStyles = (palette: Palette) => StyleSheet.create({
   sidebarItemActive: { backgroundColor: palette.primaryMuted },
   sidebarText: { color: palette.textMuted, fontSize: 15, fontWeight: "500", fontFamily },
   sidebarTextActive: { color: palette.text, fontWeight: "600" },
-  signOut: { minHeight: MIN_TOUCH, justifyContent: "center", paddingHorizontal: spacing[3], borderRadius: radius.md, borderTopWidth: 1, borderTopColor: palette.border, marginTop: spacing[2] },
+  signOut: { minHeight: MIN_TOUCH, flexDirection: "row", alignItems: "center", gap: spacing[3], paddingHorizontal: spacing[3], borderRadius: radius.md, borderTopWidth: 1, borderTopColor: palette.border, marginTop: spacing[2] },
   topBar: { height: 56, flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: spacing[5], backgroundColor: palette.canvas, borderBottomWidth: 1, borderBottomColor: palette.border },
   scroll: { flex: 1 },
   content: { width: "100%", maxWidth: MAX_CONTENT, alignSelf: "center", paddingHorizontal: spacing[4], paddingTop: spacing[5], paddingBottom: spacing[16], gap: spacing[6] },
@@ -71,7 +71,7 @@ const createShellStyles = (palette: Palette) => StyleSheet.create({
   mTitle: { color: palette.text, fontSize: 32, lineHeight: 36, fontWeight: "500", letterSpacing: -0.9, fontFamily: fontDisplay },
   mSheet: { flexGrow: 1, paddingHorizontal: spacing[5], paddingTop: spacing[6], paddingBottom: spacing[12], gap: spacing[8] },
   title: { color: palette.text, fontSize: 40, lineHeight: 44, fontWeight: "600", letterSpacing: -1.4, fontFamily: fontDisplay },
-  tabBar: { flexDirection: "row", backgroundColor: palette.surface, borderTopWidth: 1, borderTopColor: palette.border, ...(Platform.OS === "web" ? ({ paddingBottom: "env(safe-area-inset-bottom)" } as object) : null) },
+  tabBar: { flexDirection: "row", backgroundColor: Platform.OS === "web" ? `${palette.surface}E6` : palette.surface, borderTopWidth: 1, borderTopColor: palette.border, ...(Platform.OS === "web" ? ({ paddingBottom: "env(safe-area-inset-bottom)", backdropFilter: "saturate(180%) blur(20px)", WebkitBackdropFilter: "saturate(180%) blur(20px)" } as object) : null) },
   tab: { flex: 1, minHeight: 64 },
   tabInner: { alignItems: "center", justifyContent: "center", gap: 4, paddingHorizontal: 0 },
   tabDot: { width: 20, height: 2, borderRadius: 1, backgroundColor: "transparent" },
@@ -177,22 +177,13 @@ function SectionTabs({ tabs, current, onNavigate, inset }: { readonly tabs: read
   );
 }
 
-/** System · Light · Dark in one compact row (the full form, with its explanation, lives in Settings). */
+/** Dark mode as one switch (the full System · Light · Dark choice, with its explanation, lives in Settings). */
 function ThemeSwitch(): ReactNode {
   const t = useT();
-  const s = useThemedStyles(createShellStyles);
-  const surfaceRing = ring(useColors().primary);
-  const { preference, setPreference, options } = useThemePreference();
+  const { scheme, setPreference } = useThemePreference();
   return (
-    <View role="radiogroup" aria-label={t("theme.label")} style={s.themeRow}>
-      {options.map((option) => {
-        const on = option === preference;
-        return (
-          <Pressable key={option} role="radio" aria-checked={on} accessibilityLabel={t(`theme.${option}`)} testID={`theme-switch-${option}`} onPress={() => setPreference(option)} style={[s.themeOption, on && s.themeOptionOn, surfaceRing]}>
-            <Text numberOfLines={1} style={[s.themeText, on && s.themeTextOn]}>{t(`theme.${option}`)}</Text>
-          </Pressable>
-        );
-      })}
+    <View style={{ paddingHorizontal: spacing[3] }}>
+      <SwitchRow label={t("theme.darkMode")} value={scheme === "dark"} testID="theme-switch-dark" onChange={(on) => setPreference(on ? "dark" : "light")} />
     </View>
   );
 }
@@ -220,6 +211,7 @@ function Sidebar({ nav, current, onNavigate }: { readonly nav: readonly NavItem[
       <View style={{ marginTop: spacing[2] }}><ThemeSwitch /></View>
       {auth.state.status === "authenticated" ? (
         <Pressable role="button" accessibilityLabel={t("common.signOut")} onPress={() => { void auth.signOut(); }} style={[s.signOut, ringColor]}>
+          <NavIcon name="logout" size={20} color={palette.textMuted} />
           <Text style={s.sidebarText}>{t("common.signOut")}</Text>
         </Pressable>
       ) : null}

@@ -42,8 +42,8 @@ function QuietHours({ quiet, busy, onSave, error, saved }: { readonly quiet: Not
         <View style={{ flexGrow: 1, flexBasis: 160, minWidth: 0 }}><Field label={t("guests.preferences.quietEnd")} value={end} onChange={setEnd} keyboardType="number-pad" testID="quiet-end" error={invalid ? t("guests.preferences.quietInvalid") : undefined} /></View>
       </View>
       <View style={styles.row}>
-        <ActionButton label={t("guests.preferences.quietSave")} onPress={save} busy={busy} testID="quiet-save" />
-        <ActionButton variant="secondary" label={t("guests.preferences.quietDefault")} onPress={() => onSave(null)} disabled={busy || quiet.source === "DEFAULT"} testID="quiet-default" />
+        <ActionButton icon="check" label={t("guests.preferences.quietSave")} onPress={save} busy={busy} testID="quiet-save" />
+        <ActionButton icon="check" variant="secondary" label={t("guests.preferences.quietDefault")} onPress={() => onSave(null)} disabled={busy || quiet.source === "DEFAULT"} testID="quiet-default" />
       </View>
       {saved ? <Notice kind="success">{t("guests.preferences.saved")}</Notice> : null}
       {error ? <Notice kind="error">{t("guests.preferences.saveFailed")}</Notice> : null}

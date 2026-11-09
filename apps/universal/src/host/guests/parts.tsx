@@ -65,14 +65,14 @@ export function FailureNotice({ error, onRetry, onReload }: { readonly error: un
   if (failure.kind === "api" && error instanceof ApiError && (error.status === 400 || error.status === 422)) return <Notice kind="error"><Text style={styles.body}>{validationMessage(error, t)}</Text></Notice>;
   if (failure.kind === "api") return <ErrorNotice error={error} onReload={onReload ?? onRetry} />;
   const text = failure.kind === "rateLimited" ? (failure.waitSeconds ? t("guests.errors.rateLimitedWait", { seconds: failure.waitSeconds }) : t("guests.errors.rateLimited")) : failure.kind === "unavailable" ? t("guests.errors.unavailable") : t("guests.errors.offline");
-  return <Notice kind="error"><Text style={styles.body}>{text}</Text>{onRetry ? <ActionButton variant="secondary" label={t("guests.list.retry")} onPress={onRetry} /> : null}</Notice>;
+  return <Notice kind="error"><Text style={styles.body}>{text}</Text>{onRetry ? <ActionButton icon="refresh" variant="secondary" label={t("guests.list.retry")} onPress={onRetry} /> : null}</Notice>;
 }
 
 /** A failed read: the notice plus an explicit retry (the notice itself already offers one for network and rate-limit failures). */
 export function RetryNotice({ error, onRetry, onReload }: { readonly error: unknown; readonly onRetry: () => void; readonly onReload?: () => void }): ReactNode {
   const t = useT();
   const own = classifyFailure(error).kind !== "api";
-  return <View style={{ gap: spacing[2] }}><FailureNotice error={error} onRetry={onRetry} {...(onReload ? { onReload } : {})} />{own ? null : <ActionButton variant="secondary" label={t("guests.list.retry")} onPress={onRetry} />}</View>;
+  return <View style={{ gap: spacing[2] }}><FailureNotice error={error} onRetry={onRetry} {...(onReload ? { onReload } : {})} />{own ? null : <ActionButton icon="refresh" variant="secondary" label={t("guests.list.retry")} onPress={onRetry} />}</View>;
 }
 
 /**

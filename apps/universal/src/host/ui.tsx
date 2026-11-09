@@ -148,8 +148,8 @@ export function ToggleChip({ label, on, onPress, testID, disabled = false }: { r
 }
 
 /** Host and admin actions are the shared `@rsvp/ui` Button; only the busy/disabled vocabulary is adapted here. */
-export function ActionButton({ label, onPress, variant = "primary", busy = false, disabled = false, testID }: { readonly label: string; readonly onPress: () => void; readonly variant?: "primary" | "secondary" | "danger"; readonly busy?: boolean; readonly disabled?: boolean; readonly testID?: string }): ReactNode {
-  return <Button accessibilityLabel={label} variant={variant} state={busy ? "loading" : disabled ? "disabled" : "default"} onPress={onPress} testID={testID}>{label}</Button>;
+export function ActionButton({ label, onPress, variant = "primary", busy = false, disabled = false, testID, icon }: { readonly icon?: string; readonly label: string; readonly onPress: () => void; readonly variant?: "primary" | "secondary" | "danger"; readonly busy?: boolean; readonly disabled?: boolean; readonly testID?: string }): ReactNode {
+  return <Button accessibilityLabel={label} icon={icon} variant={variant} state={busy ? "loading" : disabled ? "disabled" : "default"} onPress={onPress} testID={testID}>{label}</Button>;
 }
 
 export function Notice({ kind = "info", children }: PropsWithChildren<{ readonly kind?: "info" | "error" | "success" }>): ReactNode {
@@ -203,7 +203,7 @@ export function ErrorNotice({ error, onReload }: { readonly error: unknown; read
   return (
     <Notice kind="error">
       <Text style={styles.body}>{errorMessage(error, t)}</Text>
-      {isConflict(error) && onReload ? <ActionButton variant="secondary" label={t("host.common.reload")} onPress={onReload} /> : null}
+      {isConflict(error) && onReload ? <ActionButton icon="refresh" variant="secondary" label={t("host.common.reload")} onPress={onReload} /> : null}
       {isUnauthorized(error) ? <ActionButton variant="secondary" label={t("errors.signInAgain")} onPress={() => router.replace(loginHref(pathname) as Href)} /> : null}
     </Notice>
   );
@@ -228,7 +228,7 @@ export function ConfirmDialog({ visible, title, body, confirmLabel, danger, busy
           {children}
           <View style={styles.row}>
             <ActionButton label={confirmLabel} variant={danger ? "danger" : "primary"} busy={busy} onPress={onConfirm} {...(confirmTestID ? { testID: confirmTestID } : {})} />
-            <ActionButton label={t("host.common.cancel")} variant="secondary" disabled={busy} onPress={onCancel} {...(cancelTestID ? { testID: cancelTestID } : {})} />
+            <ActionButton icon="close" label={t("host.common.cancel")} variant="secondary" disabled={busy} onPress={onCancel} {...(cancelTestID ? { testID: cancelTestID } : {})} />
           </View>
         </View></OverlayEnter>
       </View>

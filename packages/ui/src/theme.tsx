@@ -9,6 +9,9 @@ export type ColorScheme = 'light' | 'dark';
 export type Tones = (typeof tones)[ColorTheme];
 
 /** Letter-spacing in px from an `em` value, because native needs numbers. */
+/** Resting depth of a surface (card, tile, list): light mode lifts it with a hairline and a long soft shadow; dark mode adds a faint top highlight, the way an edge catches light. */
+export const depth = (scheme: ColorScheme): { boxShadow: string } => ({ boxShadow: scheme === 'dark' ? 'inset 0 1px 0 rgb(255 255 255 / 0.05)' : shadow.md });
+
 export const tracking = (size: number, em: number): number => Math.round(size * em * 100) / 100;
 
 export function createStyles(palette: Palette, scheme: ColorScheme = palette === colors.dark ? 'dark' : 'light') {
@@ -20,7 +23,7 @@ export function createStyles(palette: Palette, scheme: ColorScheme = palette ===
     /** Small uppercase label: field labels, table heads. */
     label: { color: palette.text, fontFamily: fonts.sans, fontSize: typography.fontSize.xs, lineHeight: typography.lineHeight.xs, fontWeight: '600', letterSpacing: tracking(typography.fontSize.xs, 0.05), textTransform: 'uppercase', marginBottom: spacing[2] },
     help: { color: palette.danger, fontFamily: fonts.sans, fontSize: typography.fontSize.sm, lineHeight: typography.lineHeight.sm, marginTop: spacing[1] },
-    button: { minHeight: 44, minWidth: 44, alignItems: 'center', justifyContent: 'center', borderRadius: radius.control, borderWidth: 1, borderColor: palette.primary, paddingHorizontal: spacing[5], backgroundColor: palette.primary },
+    button: { flexDirection: 'row', gap: spacing[2], minHeight: 44, minWidth: 44, alignItems: 'center', justifyContent: 'center', borderRadius: radius.control, borderWidth: 1, borderColor: palette.primary, paddingHorizontal: spacing[5], backgroundColor: palette.primary },
     buttonSecondary: { backgroundColor: 'transparent', borderColor: palette.fieldBorder },
     buttonGhost: { backgroundColor: 'transparent', borderColor: 'transparent', paddingHorizontal: spacing[2] },
     buttonDanger: { backgroundColor: tone.red.bg, borderColor: palette.danger },
@@ -31,7 +34,7 @@ export function createStyles(palette: Palette, scheme: ColorScheme = palette ===
     buttonTextDanger: { color: palette.danger },
     input: { minHeight: 48, borderWidth: 1, borderColor: palette.fieldBorder, borderRadius: radius.button, paddingHorizontal: spacing[4], color: palette.text, backgroundColor: palette.surface, fontFamily: fonts.sans, fontSize: typography.fontSize.base },
     inputError: { borderColor: palette.danger },
-    card: { backgroundColor: palette.surface, borderColor: palette.border, borderWidth: 1, borderRadius: radius.lg, padding: spacing[6], gap: spacing[2] },
+    card: { backgroundColor: palette.surface, borderColor: palette.border, borderWidth: 1, borderRadius: radius.lg, padding: spacing[6], gap: spacing[2], ...depth(scheme) },
     overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: palette.scrim },
     sheet: { backgroundColor: palette.surface, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg, borderWidth: 1, borderColor: palette.border, padding: spacing[6], gap: spacing[3], width: '100%', maxWidth: 640, alignSelf: 'center' },
     modal: { margin: spacing[4], marginTop: 'auto', marginBottom: 'auto', backgroundColor: palette.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: palette.border, boxShadow: shadow.lg, padding: spacing[6], gap: spacing[3], maxWidth: 520, alignSelf: 'center', width: '90%' },

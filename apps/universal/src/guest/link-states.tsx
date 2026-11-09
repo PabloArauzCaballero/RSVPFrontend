@@ -38,7 +38,7 @@ export function OfflineState({ onRetry, unavailable = false }: { readonly onRetr
   const t = useT();
   return (
     <LinkState illustration="offline" title={unavailable ? t("rsvp.invite.unavailableTitle") : t("rsvp.invite.offlineTitle")} body={unavailable ? t("rsvp.invite.unavailableBody") : t("rsvp.invite.offlineBody")}>
-      <ActionButton label={t("rsvp.invite.retry")} onPress={onRetry} testID="guest-retry" />
+      <ActionButton icon="refresh" label={t("rsvp.invite.retry")} onPress={onRetry} testID="guest-retry" />
     </LinkState>
   );
 }

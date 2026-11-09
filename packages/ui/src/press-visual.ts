@@ -11,5 +11,5 @@ export const ButtonAlignContext = createContext<'start' | 'center'>('start');
  */
 export function pressVisual(active: boolean, reduced: boolean): ViewStyle {
   if (reduced) return { opacity: active ? MOTION.pressReducedOpacity : 1 };
-  return { transform: active ? `scale(${MOTION.pressScale})` : 'none', transitionProperty: 'transform', transitionDuration: `${active ? MOTION.pressInMs : MOTION.pressOutMs}ms`, transitionTimingFunction: cssEase('out') } as unknown as ViewStyle;
+  return { transform: active ? `scale(${MOTION.pressScale})` : 'none', transitionProperty: 'transform, box-shadow, opacity, background-color', transitionDuration: `${active ? MOTION.pressInMs : MOTION.pressOutMs}ms`, transitionTimingFunction: cssEase('out') } as unknown as ViewStyle;
 }
