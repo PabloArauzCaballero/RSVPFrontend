@@ -52,10 +52,11 @@ describe("provider reorganisation · one primary action in the header", () => {
     expect(await screen.findByText("Falta un paso: enviar tu ficha a verificación.")).toBeTruthy();
     expect(screen.queryByText("Aún no es pública. Completa los pasos y envíala a verificación.")).toBeNull(); // the milestone already says it: the band does not repeat it
   });
-  it("Resumen: a verified provider has no primary action, a one-line summary instead of the five-row metrics, and no internal slug", async () => {
+  it("Resumen: a verified provider has no primary action, figure tiles for the last 30 days instead of the five-row metrics, and no internal slug", async () => {
     const { client } = fakeClient(portal({ [`GET /providers/${PID}/listings`]: () => ({ items: [listing("l1", true)] }) }));
     renderApp(<OverviewScreen />, client, HOST);
-    expect(await screen.findByText("Últimos 30 días: 3 solicitudes válidas y 12 veces que te vieron.")).toBeTruthy();
+    expect(await screen.findByLabelText("Solicitudes válidas: 3")).toBeTruthy();
+    expect(screen.getByLabelText("Veces que te vieron: 12")).toBeTruthy();
     expect(screen.queryByTestId("submit-verification")).toBeNull();
     expect(screen.queryByTestId("step-offer-action")).toBeNull();
     // The path is finished: the three done steps are not listed again under the "3 of 3" header.

@@ -15,8 +15,8 @@ export const colors = {
   },
   dark: {
     canvas: '#151514', surface: '#1E1E1C', surfaceMuted: '#272725',
-    text: '#EDECE8', textMuted: '#A3A29D', primary: '#D9B65A',
-    onPrimary: '#1A1400', primaryMuted: '#2C2C2A', border: '#333331', fieldBorder: '#7A7974',
+    text: '#EDECE8', textMuted: '#A3A29D', primary: '#82A8F5',
+    onPrimary: '#0A1A3C', primaryMuted: '#2C2C2A', border: '#333331', fieldBorder: '#7A7974',
     accent: '#E6C66B', onAccent: '#2A2000', accentMuted: '#3A3012',
     danger: '#F2B8B5', onDanger: '#3A0B0A', success: '#9ED6A3', warning: '#E6C66B',
     dangerBg: '#3A1D1D', successBg: '#1B2E1F', scrim: 'rgba(0,0,0,0.7)'

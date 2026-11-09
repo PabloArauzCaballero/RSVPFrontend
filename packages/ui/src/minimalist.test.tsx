@@ -56,12 +56,14 @@ describe('pairs composed by the primitives', () => {
     expect(contrast(palette.fieldBorder, palette.surface)).toBeGreaterThanOrEqual(3);
   });
 
-  it('styles carry the system: 1 px borders, no shadows on cards or buttons, serif titles at 500, 6 px buttons, small uppercase labels', () => {
+  it('styles carry the system: 1 px borders, no shadows on cards or buttons, sans titles at 500, 10 px 44 px-tall buttons, small uppercase labels', () => {
     const styles = createStyles(colors.light, 'light');
     const flat = (style: object): Record<string, unknown> => style as Record<string, unknown>;
     expect(flat(styles.card).borderWidth).toBe(1);
     expect(flat(styles.card)).not.toHaveProperty('boxShadow');
-    expect(flat(styles.button).borderRadius).toBe(6);
+    expect(flat(styles.button).borderRadius).toBe(10);
+    expect(flat(styles.button).minHeight).toBe(44);
+    expect(flat(styles.buttonText).fontSize).toBe(15);
     expect(flat(styles.button).backgroundColor).toBe(ink);
     expect(flat(styles.input).borderWidth).toBe(1);
     expect(flat(styles.title).fontWeight).toBe('500');

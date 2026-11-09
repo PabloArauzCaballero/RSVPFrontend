@@ -10,6 +10,7 @@ import { CelebrationScreen, useScreenHeader, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
 import { GiftErrorNotice } from "./gift-errors";
 import { ActionButton, ConfirmDialog, EmptyState, ErrorNotice, Loading, Notice, useStyles } from "../ui";
+import { Figure } from "../figures";
 import { MoreOptions } from "../more-options";
 import { Row, RowList } from "./offer-row";
 import { RetryNotice } from "../guests/parts";
@@ -65,17 +66,6 @@ function GiftRow({ item, first, currencyLocale, onApprove, onReject, approving, 
   );
 }
 
-/** One figure of the gift list: the word, the number in the serif and, when it adds something, a line under it. */
-function GiftFigure({ label, value, testID }: { readonly label: string; readonly value: number; readonly testID: string }): ReactNode {
-  const palette = useColors();
-  return (
-    <View testID={testID} accessible accessibilityLabel={`${label}: ${value}`} style={{ flexGrow: 1, flexBasis: 150, minWidth: 0, backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, borderRadius: radius.lg, padding: spacing[6], gap: spacing[2] }}>
-      <Text style={{ color: palette.textMuted, fontSize: 12, lineHeight: 16, fontWeight: "600", letterSpacing: 0.6, textTransform: "uppercase", fontFamily: fonts.sans }}>{label}</Text>
-      <CountUp value={value} numberOfLines={1} style={{ color: palette.text, fontSize: 32, lineHeight: 36, fontWeight: "500", letterSpacing: -0.8, fontFamily: fonts.display, fontVariant: ["tabular-nums"] }} />
-    </View>
-  );
-}
-
 /** The list at a glance: how many gifts, and how many are open, taken or waiting for the host. */
 function GiftFigures({ items }: { readonly items: readonly GiftItem[] }): ReactNode {
   const t = useT();
@@ -85,10 +75,10 @@ function GiftFigures({ items }: { readonly items: readonly GiftItem[] }): ReactN
   const review = live.filter((item) => item.status === "PROPOSED" || item.status === "PENDING_REVIEW").length;
   return (
     <View testID="gift-figures" style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing[4] }}>
-      <GiftFigure testID="gift-count" label={t("gifts.host.figures.gifts")} value={live.length} />
-      <GiftFigure testID="gift-available" label={t("gifts.host.figures.available")} value={available} />
-      <GiftFigure testID="gift-reserved" label={t("gifts.host.figures.reserved")} value={reserved} />
-      {review > 0 ? <GiftFigure testID="gift-review" label={t("gifts.host.figures.review")} value={review} /> : null}
+      <Figure testID="gift-count" label={t("gifts.host.figures.gifts")} value={live.length} />
+      <Figure testID="gift-available" label={t("gifts.host.figures.available")} value={available} />
+      <Figure testID="gift-reserved" label={t("gifts.host.figures.reserved")} value={reserved} />
+      {review > 0 ? <Figure testID="gift-review" label={t("gifts.host.figures.review")} value={review} /> : null}
     </View>
   );
 }

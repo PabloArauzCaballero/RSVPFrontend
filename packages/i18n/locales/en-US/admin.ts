@@ -10,7 +10,7 @@ export const adminEnUS: DeepStrings<typeof adminEsBO> = {
   unavailable: "This module uses the {{service}} API, which is not available yet. Its data will show here once it is published.",
   sample: { title: "Ana & Luis", story: "We met in La Paz and today we celebrate with the people we love.", venue: "Hacienda El Prado", dressCode: "Formal", question: "Is there parking?", answer: "Yes, at the venue.", ceremony: "Ceremony", party: "Party" },
   saved: "Saved.",
-  dashboard: { title: "Overview", intro: "How the platform is doing today.", templatesDown: "Templates are not responding for now. The rest of the overview is still available.", more: "Other actions", less: "Hide", showMore: "Show more ({{count}} left)", eventTypes: "Active event types", templates: "Published templates", drafts: "Draft templates", count: "{{label}}: {{count}}",
+  dashboard: { activityTitle: "Activity", title: "Overview", intro: "How the platform is doing today.", templatesDown: "Templates are not responding for now. The rest of the overview is still available.", more: "Other actions", less: "Hide", showMore: "Show more ({{count}} left)", eventTypes: "Active event types", templates: "Published templates", drafts: "Draft templates", count: "{{label}}: {{count}}",
     platform: "Platform", providersTitle: "Providers and offers", accountsTitle: "Accounts and organizations",
     statuses: { DRAFT: "Draft", PENDING_VERIFICATION: "Pending verification", VERIFIED: "Verified", SUSPENDED: "Suspended", REJECTED: "Rejected" },
     listingsPublished: "Published offers", leadsValid: "Valid leads", leadsInvalid: "Discarded leads", leadsRecent: "Valid leads (30 days)", quotes: "Quotes", bookings: "Confirmed bookings",

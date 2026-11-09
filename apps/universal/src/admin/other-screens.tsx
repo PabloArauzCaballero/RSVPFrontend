@@ -7,30 +7,13 @@ import { radius, spacing } from "@rsvp/design-tokens";
 import { Illustration, Stagger, useColors } from "@rsvp/ui";
 import { useApiClient, useT } from "../platform/providers";
 import { ActionButton, ConfirmDialog, Notice, OverflowMenu, PageIntro, Section, useStyles } from "../host/ui";
+import { Figure, FigureGroup } from "../host/figures";
 import { AdminScreen } from "./admin-screen";
 import { AdminErrorNotice, Stack } from "./shared";
 import { useSingleMutation } from "../platform/single-flight";
 import { RowsSkeleton } from "../provider/parts";
 
 type Nav = { readonly onNavigate: (href: string) => void };
-
-/** A group of figures as a bento tile: a 1 px edge, the heading, then one line per figure ("label: count") with a hairline between them. */
-function StatGroup({ title, children }: { readonly title: string; readonly children: ReactNode }): ReactNode {
-  const styles = useStyles();
-  const palette = useColors();
-  return (
-    <View style={{ flexGrow: 1, flexBasis: 300, minWidth: 260, gap: spacing[2], padding: spacing[6], backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, borderRadius: radius.lg }}>
-      <Text accessibilityRole="header" style={styles.subtitle}>{title}</Text>
-      {children}
-    </View>
-  );
-}
-
-function StatRow({ text }: { readonly text: string }): ReactNode {
-  const styles = useStyles();
-  const palette = useColors();
-  return <Text style={[styles.body, { paddingVertical: spacing[2], borderTopWidth: 1, borderTopColor: palette.border, fontVariant: ["tabular-nums"] }]}>{text}</Text>;
-}
 
 /** Dot plus the word: the state never rests on colour alone. */
 function StateRow({ text, ok }: { readonly text: string; readonly ok: boolean }): ReactNode {
@@ -50,24 +33,21 @@ export function DashboardScreen({ onNavigate }: Nav): ReactNode {
   const client = useApiClient();
   const types = useAdminEventTypes(client);
   const templates = useAdminTemplates(client);
-  const count = (label: string, value: number | undefined): string => t("admin.dashboard.count", { label, count: value ?? 0 });
   return (
     <AdminScreen title={t("admin.dashboard.title")} current="dashboard" onNavigate={onNavigate}>
       <Stack>
       <PageIntro>{t("admin.dashboard.intro")}</PageIntro>
       {types.isPending || templates.isPending ? <RowsSkeleton count={2} minHeight={64} trailing={false} /> : null}
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing[4], alignItems: "flex-start" }}>
-        <StatGroup title={t("admin.nav.eventTypes")}>{types.error ? <AdminErrorNotice error={types.error} onRetry={() => { void types.refetch(); }} /> : <StatRow text={count(t("admin.dashboard.eventTypes"), types.data?.items.filter((item) => item.status === "ACTIVE").length)} />}</StatGroup>
-        <StatGroup title={t("admin.nav.templates")}>
-          {templates.error ? <Notice>{t("admin.dashboard.templatesDown")}</Notice> : (
-            <>
-              <StatRow text={count(t("admin.dashboard.templates"), templates.data?.items.filter((item) => item.status === "PUBLISHED").length)} />
-              <StatRow text={count(t("admin.dashboard.drafts"), templates.data?.items.filter((item) => item.status === "DRAFT").length)} />
-            </>
-          )}
-        </StatGroup>
-        <PlatformSummary />
-      </View>
+      <FigureGroup title={t("admin.nav.eventTypes")}>{types.error ? <AdminErrorNotice error={types.error} onRetry={() => { void types.refetch(); }} /> : <Figure testID="fig-event-types" label={t("admin.dashboard.eventTypes")} value={types.data?.items.filter((item) => item.status === "ACTIVE").length ?? 0} />}</FigureGroup>
+      <FigureGroup title={t("admin.nav.templates")}>
+        {templates.error ? <Notice>{t("admin.dashboard.templatesDown")}</Notice> : (
+          <>
+            <Figure testID="fig-templates" label={t("admin.dashboard.templates")} value={templates.data?.items.filter((item) => item.status === "PUBLISHED").length ?? 0} />
+            <Figure testID="fig-drafts" label={t("admin.dashboard.drafts")} value={templates.data?.items.filter((item) => item.status === "DRAFT").length ?? 0} />
+          </>
+        )}
+      </FigureGroup>
+      <PlatformSummary />
       </Stack>
     </AdminScreen>
   );
@@ -77,37 +57,42 @@ export function DashboardScreen({ onNavigate }: Nav): ReactNode {
 function PlatformSummary(): ReactNode {
   const t = useT();
   const client = useApiClient();
+  const palette = useColors();
   const providers = useProviderSummary(client);
   const identity = useIdentitySummary(client);
-  const line = (label: string, value: number): string => t("admin.dashboard.count", { label, count: value });
+  const statusDot: Readonly<Record<string, string>> = { VERIFIED: palette.success, PENDING_VERIFICATION: palette.warning, REJECTED: palette.danger, SUSPENDED: palette.danger, DRAFT: palette.textMuted };
   return (
     <>
-      <StatGroup title={`${t("admin.dashboard.platform")} · ${t("admin.dashboard.providersTitle")}`}>
+      <FigureGroup title={`${t("admin.dashboard.platform")} · ${t("admin.dashboard.providersTitle")}`}>
         {providers.isPending ? <RowsSkeleton count={3} minHeight={40} trailing={false} /> : null}
         {providers.error ? <AdminErrorNotice error={providers.error} /> : null}
         {providers.data ? (
           <>
-            {Object.entries(providers.data.providersByStatus).map(([status, count]) => <StatRow key={status} text={line(t(`admin.dashboard.statuses.${status}`), count)} />)}
-            <StatRow text={line(t("admin.dashboard.listingsPublished"), providers.data.listingsPublished)} />
-            <StatRow text={line(t("admin.dashboard.leadsValid"), providers.data.leads.valid)} />
-            <StatRow text={line(t("admin.dashboard.leadsInvalid"), providers.data.leads.invalid)} />
-            <StatRow text={line(t("admin.dashboard.leadsRecent"), providers.data.leads.last30Days)} />
-            <StatRow text={line(t("admin.dashboard.quotes"), providers.data.quotes)} />
-            <StatRow text={line(t("admin.dashboard.bookings"), providers.data.bookingsConfirmed)} />
+            {Object.entries(providers.data.providersByStatus).map(([status, count]) => <Figure key={status} label={t(`admin.dashboard.statuses.${status}`)} value={count} {...(statusDot[status] ? { dot: statusDot[status] } : {})} />)}
           </>
         ) : null}
-      </StatGroup>
-      <StatGroup title={`${t("admin.dashboard.platform")} · ${t("admin.dashboard.accountsTitle")}`}>
+      </FigureGroup>
+      {providers.data ? (
+        <FigureGroup title={t("admin.dashboard.activityTitle")}>
+          <Figure label={t("admin.dashboard.listingsPublished")} value={providers.data.listingsPublished} />
+          <Figure label={t("admin.dashboard.leadsValid")} value={providers.data.leads.valid} />
+          <Figure label={t("admin.dashboard.leadsInvalid")} value={providers.data.leads.invalid} />
+          <Figure label={t("admin.dashboard.leadsRecent")} value={providers.data.leads.last30Days} />
+          <Figure label={t("admin.dashboard.quotes")} value={providers.data.quotes} />
+          <Figure label={t("admin.dashboard.bookings")} value={providers.data.bookingsConfirmed} />
+        </FigureGroup>
+      ) : null}
+      <FigureGroup title={`${t("admin.dashboard.platform")} · ${t("admin.dashboard.accountsTitle")}`}>
         {identity.isPending ? <RowsSkeleton count={3} minHeight={40} trailing={false} /> : null}
         {identity.error ? <AdminErrorNotice error={identity.error} /> : null}
         {identity.data ? (
           <>
-            <StatRow text={line(t("admin.dashboard.users"), identity.data.users.total)} />
-            {Object.entries(identity.data.users.byRole).map(([role, count]) => <StatRow key={role} text={t("admin.dashboard.count", { label: t("admin.dashboard.usersByRole", { role }), count })} />)}
-            <StatRow text={line(t("admin.dashboard.organizations"), identity.data.organizations.total)} />
+            <Figure label={t("admin.dashboard.users")} value={identity.data.users.total} />
+            {Object.entries(identity.data.users.byRole).map(([role, count]) => <Figure key={role} label={t("admin.dashboard.usersByRole", { role })} value={count} />)}
+            <Figure label={t("admin.dashboard.organizations")} value={identity.data.organizations.total} />
           </>
         ) : null}
-      </StatGroup>
+      </FigureGroup>
     </>
   );
 }

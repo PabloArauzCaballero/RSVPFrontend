@@ -7,7 +7,7 @@ export const adminEsBO = {
   unavailable: "Este módulo usa la API de {{service}}, que todavía no está disponible. Cuando se publique, verás aquí sus datos.",
   sample: { title: "Ana y Luis", story: "Nos conocimos en La Paz y hoy celebramos con quienes queremos.", venue: "Hacienda El Prado", dressCode: "Formal", question: "¿Hay estacionamiento?", answer: "Sí, en el mismo lugar.", ceremony: "Ceremonia", party: "Fiesta" },
   saved: "Guardado.",
-  dashboard: { title: "Resumen", intro: "Cómo va la plataforma hoy.", templatesDown: "Las plantillas no responden por ahora. El resto del resumen sigue disponible.", more: "Otras acciones", less: "Ocultar", showMore: "Ver más ({{count}} restantes)", eventTypes: "Tipos de evento activos", templates: "Templates publicados", drafts: "Templates en borrador", count: "{{label}}: {{count}}",
+  dashboard: { activityTitle: "Actividad", title: "Resumen", intro: "Cómo va la plataforma hoy.", templatesDown: "Las plantillas no responden por ahora. El resto del resumen sigue disponible.", more: "Otras acciones", less: "Ocultar", showMore: "Ver más ({{count}} restantes)", eventTypes: "Tipos de evento activos", templates: "Templates publicados", drafts: "Templates en borrador", count: "{{label}}: {{count}}",
     platform: "Plataforma", providersTitle: "Proveedores y ofertas", accountsTitle: "Cuentas y organizaciones",
     statuses: { DRAFT: "Borrador", PENDING_VERIFICATION: "En verificación", VERIFIED: "Verificado", SUSPENDED: "Suspendido", REJECTED: "Rechazado" },
     listingsPublished: "Ofertas publicadas", leadsValid: "Leads válidos", leadsInvalid: "Leads descartados", leadsRecent: "Leads válidos (30 días)", quotes: "Cotizaciones", bookings: "Reservas confirmadas",

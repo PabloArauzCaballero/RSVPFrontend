@@ -258,14 +258,14 @@ describe("E1 · platform summary on the dashboard", () => {
       "GET /celebrations/admin/event-types": () => ({ items: [] }), "GET /media/admin/templates": () => ({ items: [] })
     });
     renderApp(<DashboardScreen onNavigate={navigate} />, client, ADMIN);
-    expect(await screen.findByText("Verificado: 4")).toBeTruthy();
-    expect(screen.getByText("En verificación: 1")).toBeTruthy();
-    expect(screen.getByText("Ofertas publicadas: 9")).toBeTruthy();
-    expect(screen.getByText("Leads válidos (30 días): 12")).toBeTruthy();
-    expect(screen.getByText("Reservas confirmadas: 5")).toBeTruthy();
-    expect(await screen.findByText("Cuentas: 25")).toBeTruthy();
-    expect(screen.getByText("Cuentas con rol HOST: 20")).toBeTruthy();
-    expect(screen.getByText("Organizaciones: 3")).toBeTruthy();
+    expect(await screen.findByLabelText("Verificado: 4")).toBeTruthy();
+    expect(screen.getByLabelText("En verificación: 1")).toBeTruthy();
+    expect(screen.getByLabelText("Ofertas publicadas: 9")).toBeTruthy();
+    expect(screen.getByLabelText("Leads válidos (30 días): 12")).toBeTruthy();
+    expect(screen.getByLabelText("Reservas confirmadas: 5")).toBeTruthy();
+    expect(await screen.findByLabelText("Cuentas: 25")).toBeTruthy();
+    expect(screen.getByLabelText("Cuentas con rol HOST: 20")).toBeTruthy();
+    expect(screen.getByLabelText("Organizaciones: 3")).toBeTruthy();
     expect(calls.filter((call) => call.path.endsWith("/summary")).map((call) => call.path).sort()).toEqual(["/identity/admin/summary", "/providers/admin/summary"]);
   });
 
@@ -275,9 +275,9 @@ describe("E1 · platform summary on the dashboard", () => {
       "GET /celebrations/admin/event-types": () => ({ items: [] }), "GET /media/admin/templates": () => ({ items: [] })
     });
     renderApp(<DashboardScreen onNavigate={navigate} />, client, ADMIN);
-    expect(await screen.findByText("Verificado: 4")).toBeTruthy();
+    expect(await screen.findByLabelText("Verificado: 4")).toBeTruthy();
     expect((await screen.findAllByText(/no tienes permiso|Acceso denegado|permiso/i)).length).toBeGreaterThan(0);
-    expect(screen.queryByText("Cuentas: 25")).toBeNull();
+    expect(screen.queryByLabelText("Cuentas: 25")).toBeNull();
   });
 
   it("HOST never triggers the summary requests", () => {

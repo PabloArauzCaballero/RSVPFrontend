@@ -15,6 +15,7 @@ import { PORTAL_ROUTES, PortalScreen, usePortalHeader, useProviderId } from "./f
 import { lastDays } from "./metrics-screen";
 import { useSingleMutation } from "../platform/single-flight";
 import { Moment, useFirstTime } from "./parts";
+import { Figure, FigureGroup } from "../host/figures";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -126,10 +127,13 @@ function Overview({ provider, refetch }: { readonly provider: Provider; readonly
         </View>
       )}
       {totals && provider.status === "VERIFIED" ? (
-        <View style={[styles.row, { alignItems: "center" }]} testID="home-last30">
-          <Text style={[styles.muted, { flex: 1 }]}>{t("portal.home.last30Summary", { valid: formatNumber(totals.validLeads, locale), views: formatNumber(totals.impressions, locale) })}</Text>
-          <Button variant="ghost" accessibilityLabel={t("portal.home.last30Link")} onPress={() => router.push(PORTAL_ROUTES.metrics as Href)} testID="home-last30-link" state="default">{t("portal.home.last30Link")}</Button>
-        </View>
+        <FigureGroup title={t("portal.home.last30Title")} testID="home-last30">
+          <Figure label={t("portal.metrics.validLeads")} value={totals.validLeads} />
+          <Figure label={t("portal.metrics.impressions")} value={totals.impressions} />
+          <Figure label={t("portal.metrics.clicks")} value={totals.clicks} />
+          <Figure label={t("portal.home.offersCount")} value={listings.data?.items.length ?? 0} />
+          <View style={{ width: "100%", alignItems: "flex-start" }}><Button variant="ghost" accessibilityLabel={t("portal.home.last30Link")} onPress={() => router.push(PORTAL_ROUTES.metrics as Href)} testID="home-last30-link" state="default">{t("portal.home.last30Link")}</Button></View>
+        </FigureGroup>
       ) : null}
     </View>
   );

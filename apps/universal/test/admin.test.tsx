@@ -70,9 +70,9 @@ describe("E2, E3, E7, E12", () => {
   it("dashboard counts come from the live lists", async () => {
     const { client } = fakeClient({ "GET /celebrations/admin/event-types": () => ({ items: [{ status: "ACTIVE" }, { status: "RETIRED" }] }), "GET /media/admin/templates": () => ({ items: [...TEMPLATES, { ...TEMPLATES[0], id: "d", status: "DRAFT" }] }) });
     renderApp(<DashboardScreen onNavigate={navigate} />, client, ADMIN);
-    expect(await screen.findByText("Tipos de evento activos: 1")).toBeTruthy();
-    expect(screen.getByText("Templates publicados: 2")).toBeTruthy();
-    expect(screen.getByText("Templates en borrador: 1")).toBeTruthy();
+    expect(await screen.findByLabelText("Tipos de evento activos: 1")).toBeTruthy();
+    expect(screen.getByLabelText("Templates publicados: 2")).toBeTruthy();
+    expect(screen.getByLabelText("Templates en borrador: 1")).toBeTruthy();
   });
 
   it("templates: create, then publish and archive (with confirmation) with If-Match", async () => {
