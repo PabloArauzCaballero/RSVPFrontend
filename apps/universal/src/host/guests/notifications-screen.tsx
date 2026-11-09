@@ -61,7 +61,7 @@ function NotificationsBody({ timeZone, celebrationId, inbox: { inbox, markRead, 
             const text = (
               <View style={{ flexDirection: "row", alignItems: "flex-start", gap: spacing[3], flex: 1, minWidth: 0 }}>
                 <View aria-hidden style={{ width: 10, height: 10, marginTop: 7, borderRadius: 5, backgroundColor: seen ? "transparent" : palette.primary }} />
-                <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+                <View style={{ flex: 1, minWidth: 0, gap: spacing[1] }}>
                   <Text style={[styles.itemTitle, { fontSize: 17, fontWeight: seen ? "400" : "600" }]}>{subject}</Text>
                   <Text style={styles.body}>{body}</Text>
                   <Text style={styles.muted}>{seen ? meta : `${t("guests.notifications.unread")} · ${meta}`}</Text>
@@ -69,7 +69,7 @@ function NotificationsBody({ timeZone, celebrationId, inbox: { inbox, markRead, 
               </View>
             );
             return (
-              <View key={item.id} role="listitem" testID={`notice-${item.id}`} style={[{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: spacing[2], paddingVertical: spacing[3], paddingHorizontal: spacing[4] }, index > 0 ? { borderTopWidth: 1, borderTopColor: palette.border } : null, seen ? { backgroundColor: palette.surfaceMuted } : null]}>
+              <View key={item.id} role="listitem" testID={`notice-${item.id}`} style={[{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: spacing[3], paddingVertical: spacing[5], paddingHorizontal: spacing[6] }, index > 0 ? { borderTopWidth: 1, borderTopColor: palette.border } : null, seen ? { backgroundColor: palette.surfaceMuted } : null]}>
                 {target ? <PressFeedback accessibilityLabel={`${t("guests.notifications.open")}: ${subject}`} onPress={() => open(item)} testID={`open-${item.id}`} style={{ flexGrow: 1, flexShrink: 1, flexBasis: 260, minWidth: 0 }}>{text}</PressFeedback> : <View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 260, minWidth: 0 }}>{text}</View>}
                 {seen ? null : <TextAction label={t("guests.notifications.markRead")} onPress={() => mark([item.id])} testID={`read-${item.id}`} />}
               </View>

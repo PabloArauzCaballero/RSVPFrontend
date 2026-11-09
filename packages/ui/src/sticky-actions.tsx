@@ -28,7 +28,7 @@ export function StickyActions({ children, summary, testID }: StickyActionsProps)
     <View
       role="group"
       testID={testID}
-      style={[{ backgroundColor: palette.surface, borderTopWidth: 1, borderTopColor: palette.border, paddingTop: spacing[3], paddingHorizontal: spacing[4], gap: spacing[2], marginHorizontal: -spacing[4] }, stick]}
+      style={[{ backgroundColor: palette.canvas, borderTopWidth: 1, borderTopColor: palette.border, paddingTop: spacing[3], paddingHorizontal: spacing[4], gap: spacing[2], marginHorizontal: -spacing[4] }, stick]}
     >
       {summary}
       <ButtonAlignContext.Provider value="center">

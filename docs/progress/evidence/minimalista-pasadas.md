@@ -111,3 +111,18 @@ Capturas reales del portal (Resumen, Ofertas, Agenda) con el ritmo de la pasada 
 - Una sola medida: se quita el tope de 720 px de listas y tarjetas del portal (`maxWidth: 720` en 9 pantallas), que ahora usan el ancho de la cabecera; los formularios llenan su tarjeta.
 
 Verificación: `apps/universal` 331/331 y `tsc` limpio; capturas reales a 1280 revisadas.
+
+## Pasada 9
+
+Capturas reales del anfitrión y el proveedor (1280 y 390, claro y oscuro) entregadas al dueño en `~/Downloads/DOne-pantallas-reales/`.
+
+Corregido:
+1. **Bandeja de avisos apretada:** filas con relleno 12×16 y líneas pegadas; ahora 20×24 con hueco 12 entre bloques y 4 entre título y texto (ritmo de la pasada 6).
+2. **Modos de control:** la nota de arriba (14 px, tenue) quedaba pegada a la primera tarjeta; separación entre bloques 16 → 24.
+3. **Barra fija inferior (móvil) como bloque blanco flotando sobre el hueso:** ahora toma el color del lienzo con su filo superior de 1 px, de modo que el botón primario queda sobre el mismo fondo que la pantalla y solo la barra de navegación inferior es superficie blanca.
+
+Hallazgos de método (no de diseño):
+- Seis capturas móviles en oscuro salieron como pantalla de acceso («Tu sesión terminó»): el inicio de sesión en una ventana nueva aún no había terminado. Detectadas por tamaños de archivo idénticos y repetidas con espera de 8 s antes de dar las capturas.
+- La pantalla de Regalos mostró «El servicio no está disponible»: el servicio de regalos del backend local cayó otra vez (heartbeat de RabbitMQ, brecha de backend ya declarada). Reiniciado con `ensure-backend.sh` y repetidas las capturas.
+
+Verificación: `apps/universal` 331/331 y `packages/ui` en verde.

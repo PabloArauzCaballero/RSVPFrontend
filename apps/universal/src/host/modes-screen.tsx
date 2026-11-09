@@ -39,7 +39,7 @@ function Modes({ celebration, refetch }: { readonly celebration: Celebration; re
 
   const partnerOn = celebration.settings.partnerPriorityEnabled;
   return (
-    <View style={{ gap: spacing[4] }}>
+    <View style={{ gap: spacing[6] }}>
       <Text style={[styles.muted, { maxWidth: 720 }]}>{t("host.modes.help")} {t("host.modes.nonRetroactive")}</Text>
       <RowList>
         {SWITCHES.map((key, index) => {
