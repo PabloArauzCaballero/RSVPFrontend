@@ -14,9 +14,9 @@ export const colors = {
     dangerBg: '#FDEBEC', successBg: '#EDF3EC', scrim: 'rgba(17,17,17,0.5)'
   },
   dark: {
-    canvas: '#151514', surface: '#1E1E1C', surfaceMuted: '#272725',
-    text: '#EDECE8', textMuted: '#A3A29D', primary: '#82A8F5',
-    onPrimary: '#0A1A3C', primaryMuted: '#2C2C2A', border: '#333331', fieldBorder: '#7A7974',
+    canvas: '#0A0A0B', surface: '#111113', surfaceMuted: '#17171A',
+    text: '#F4F4F5', textMuted: '#9C9CA5', primary: '#F4F4F5',
+    onPrimary: '#0A0A0B', primaryMuted: '#1F1F23', border: '#25252A', fieldBorder: '#7C7C85',
     accent: '#E6C66B', onAccent: '#2A2000', accentMuted: '#3A3012',
     danger: '#F2B8B5', onDanger: '#3A0B0A', success: '#9ED6A3', warning: '#E6C66B',
     dangerBg: '#3A1D1D', successBg: '#1B2E1F', scrim: 'rgba(0,0,0,0.7)'
@@ -44,7 +44,7 @@ export const tones = {
     blue: { bg: '#14293A', fg: '#A9D4F0' },
     green: { bg: '#1B2E1F', fg: '#BFE3C3' },
     yellow: { bg: '#3A3012', fg: '#F0D88A' },
-    gray: { bg: '#272725', fg: '#A3A29D' }
+    gray: { bg: '#1B1B1F', fg: '#9C9CA5' }
   }
 } as const;
 
@@ -61,7 +61,7 @@ export const chips = {
   dark: {
     yes: { bg: tones.dark.green.bg, fg: tones.dark.green.fg, dot: '#9ED6A3' },
     maybe: { bg: tones.dark.yellow.bg, fg: tones.dark.yellow.fg, dot: '#E6C66B' },
-    wait: { bg: tones.dark.gray.bg, fg: tones.dark.gray.fg, dot: '#7A7974', border: '#333331' },
+    wait: { bg: tones.dark.gray.bg, fg: tones.dark.gray.fg, dot: '#7C7C85', border: '#25252A' },
     no: { bg: tones.dark.red.bg, fg: tones.dark.red.fg, dot: '#F2B8B5' }
   }
 } as const;

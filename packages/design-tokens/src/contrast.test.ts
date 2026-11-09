@@ -41,9 +41,9 @@ describe('dark palette is composed, not inverted', () => {
     expect(luminance(colors.dark.canvas)).toBeLessThan(luminance(colors.dark.surface));
     expect(luminance(colors.dark.surface)).toBeLessThan(luminance(colors.dark.surfaceMuted));
   });
-  it('keeps the ink as the action colour on light and a soft blue on dark (a bone-white button glares and a gold one looks cheap on the dark canvas)', () => {
+  it('keeps the ink as the action colour on light and its mirror (near-white) on dark', () => {
     expect(colors.light.primary).toBe('#0B0B0C');
-    expect(colors.dark.primary).toBe('#82A8F5');
+    expect(colors.dark.primary).toBe(colors.dark.text);
   });
 });
 
