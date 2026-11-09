@@ -1,9 +1,43 @@
 {
-  "cli": { "version": ">= 16.0.0", "appVersionSource": "remote" },
-  "build": {
-    "development": { "developmentClient": true, "distribution": "internal", "channel": "development" },
-    "preview": { "distribution": "internal", "channel": "preview", "android": { "buildType": "apk" }, "ios": { "simulator": false } },
-    "production": { "autoIncrement": true, "channel": "production" }
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "remote"
   },
-  "submit": { "production": { "ios": { "ascAppId": "${EXPO_ASC_APP_ID}" }, "android": { "track": "internal" } } }
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "channel": "development"
+    },
+    "preview": {
+      "distribution": "internal",
+      "channel": "preview",
+      "android": {
+        "buildType": "apk"
+      },
+      "ios": {
+        "simulator": false
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://rsvp-api.161.97.85.216.sslip.io"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "channel": "production",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://rsvp-api.161.97.85.216.sslip.io"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "ascAppId": "${EXPO_ASC_APP_ID}"
+      },
+      "android": {
+        "track": "internal"
+      }
+    }
+  }
 }
