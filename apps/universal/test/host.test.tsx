@@ -53,8 +53,12 @@ describe("C2–C5 · picker and onboarding", () => {
     fireEvent.click(screen.getByTestId("onboarding-next"));
     expect(screen.queryByLabelText("Novia")).toBeNull();
     type("Quinceañera", "María");
-    type("Fecha (AAAA-MM-DD)", "2027-01-10");
-    type("Hora (HH:MM)", "20:00");
+    // the date and the time are the device's pickers, never a format to type
+    expect(field("Fecha").getAttribute("type")).toBe("date");
+    expect(field("Hora").getAttribute("type")).toBe("time");
+    type("Fecha", "2027-01-10");
+    type("Hora", "20:00");
+    type("Lugar principal", "Salón Las Palmas");
     fireEvent.click(screen.getByTestId("onboarding-next"));
     expect(field("Nombre de la celebración").value).toBe("María");
     expect(field("Enlace de tu invitación").value).toBe("maria");
@@ -67,7 +71,50 @@ describe("C2–C5 · picker and onboarding", () => {
     fireEvent.click(screen.getByTestId("onboarding-create"));
     await waitFor(() => expect(navigate).toHaveBeenCalledWith("/onboarding/listo?c=c-new"));
     const created = calls.find((call) => call.method === "POST");
-    expect(created?.body).toMatchObject({ slug: "xv-de-maria", eventTypeCode: "QUINCEANERA", timeZone: "America/La_Paz", currency: "BOB", content: { title: "XV de María", eventDate: "2027-01-10T20:00", hosts: { CELEBRANT: "María" } } });
+    expect(created?.body).toMatchObject({ slug: "xv-de-maria", eventTypeCode: "QUINCEANERA", timeZone: "America/La_Paz", currency: "BOB", content: { title: "XV de María", eventDate: "2027-01-10T20:00", venueName: "Salón Las Palmas", hosts: { CELEBRANT: "María" } } });
+  });
+
+  it("asks for everything the event type needs to publish: its own fields and the venue travel with the creation, blank ones do not", async () => {
+    const { client, calls } = fakeClient({ "GET /celebrations/event-types": () => ({ items: [WEDDING, BAUTIZO] }), "POST /celebrations": () => ({ ...CELEBRATION, id: "c-new" }) });
+    renderApp(<OnboardingScreen step={1} onNavigate={navigate} />, client);
+    fireEvent.click(await screen.findByRole("radio", { name: "Boda" }));
+    fireEvent.click(screen.getByTestId("onboarding-next"));
+    expect(screen.queryByTestId("onboarding-childName")).toBeNull();
+    type("Lugar principal", "Iglesia San Roque");
+    fireEvent.click(screen.getByText("Atrás"));
+    fireEvent.click(screen.getByRole("radio", { name: "Bautizo" }));
+    fireEvent.click(screen.getByTestId("onboarding-next"));
+    // the venue survives the change of type; the type's own field appears with its label
+    expect(field("Lugar principal").value).toBe("Iglesia San Roque");
+    type("Madre o padre", "Lucía");
+    type("El nombre de quien se bautiza", "Mateo");
+    fireEvent.click(screen.getByTestId("onboarding-next"));
+    fireEvent.click(screen.getByTestId("onboarding-create"));
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith("/onboarding/listo?c=c-new"));
+    const body = calls.find((call) => call.method === "POST")?.body as { content: Record<string, unknown> };
+    expect(body.content).toEqual({ title: "Lucía", venueName: "Iglesia San Roque", childName: "Mateo", hosts: { PARENT: "Lucía" } });
+  });
+
+  it("the way back sits beside the progress bar, never inside it (a control inside a progressbar is unreachable for assistive technology)", async () => {
+    const { client } = fakeClient({ "GET /celebrations/event-types": () => ({ items: [WEDDING] }) });
+    renderApp(<OnboardingScreen step={1} onNavigate={navigate} />, client);
+    fireEvent.click(await screen.findByRole("radio", { name: "Boda" }));
+    fireEvent.click(screen.getByTestId("onboarding-next"));
+    const bar = screen.getByRole("progressbar", { name: "Tus pasos" });
+    expect(bar.getAttribute("aria-valuenow")).toBe("2");
+    expect(bar.querySelector("[role='button'], button")).toBeNull();
+    expect(screen.getByTestId("onboarding-back")).toBeTruthy();
+  });
+
+  it("a venue longer than the limit stops the step with the reason next to the field", async () => {
+    const { client } = fakeClient({ "GET /celebrations/event-types": () => ({ items: [WEDDING] }) });
+    renderApp(<OnboardingScreen step={1} onNavigate={navigate} />, client);
+    fireEvent.click(await screen.findByRole("radio", { name: "Boda" }));
+    fireEvent.click(screen.getByTestId("onboarding-next"));
+    type("Lugar principal", "x".repeat(121));
+    fireEvent.click(screen.getByTestId("onboarding-next"));
+    expect(screen.getByText(/120/)).toBeTruthy();
+    expect(screen.queryByLabelText("Nombre de la celebración")).toBeNull();
   });
 
   it("the invitation draws itself while the host types: the preview shows the title and names as they are written", async () => {
@@ -85,20 +132,21 @@ describe("C2–C5 · picker and onboarding", () => {
     await waitFor(() => expect((screen.getAllByTestId("preview-mobile")[0] as HTMLElement).textContent).toContain("Boda de Ana y Luis"));
   });
 
-  it("an invalid date stops the step with a clear message under the field and keeps what was typed", async () => {
+  it("half a date (a time without its day, or a day without its time) stops the step with a clear message and keeps what was typed", async () => {
     const { client, calls } = fakeClient({ "GET /celebrations/event-types": () => ({ items: [WEDDING] }) });
     renderApp(<OnboardingScreen step={1} onNavigate={navigate} />, client);
     fireEvent.click(await screen.findByRole("radio", { name: "Boda" }));
     fireEvent.click(screen.getByTestId("onboarding-next"));
     type("Novia", "Ana");
-    type("Fecha (AAAA-MM-DD)", "19/12/2026");
+    type("Hora", "20:00");
     fireEvent.click(screen.getByTestId("onboarding-next"));
-    expect(screen.getByText(/Revisa la fecha/)).toBeTruthy();
+    expect(screen.getByText("Elige también la fecha.")).toBeTruthy();
     expect(field("Novia").value).toBe("Ana");
     expect(screen.queryByLabelText("Nombre de la celebración")).toBeNull();
-    type("Fecha (AAAA-MM-DD)", "2026-12-19");
+    type("Fecha", "2026-12-19");
+    type("Hora", "");
     fireEvent.click(screen.getByTestId("onboarding-next"));
-    expect(screen.getByText(/Revisa la hora/)).toBeTruthy();
+    expect(screen.getByText("Elige también la hora.")).toBeTruthy();
     expect(calls.some((call) => call.method === "POST")).toBe(false);
   });
 
@@ -155,7 +203,7 @@ describe("C7–C11 · content editor", () => {
     const { client, calls } = fakeClient({ ...baseHandlers(), "PATCH /celebrations/c-1": () => ({ ...CELEBRATION, version: 4 }) });
     renderApp(<ContentEditorScreen section="general" celebrationId="c-1" onNavigate={navigate} />, client);
     type(await screen.findByLabelText("Nombre de la celebración").then((node) => node.getAttribute("aria-label") ?? ""), "Ana & Luis");
-    type("Hora (HH:MM)", "20:30");
+    type("Hora", "20:30");
     fireEvent.click(screen.getByTestId("save-content"));
     await waitFor(() => expect(calls.some((call) => call.method === "PATCH")).toBe(true));
     const patch = calls.find((call) => call.method === "PATCH");
@@ -299,8 +347,8 @@ describe("C17–C18 · settings and switches", () => {
     expect(deadlinePassed("2026-12-19T23:59", "America/La_Paz", new Date("2026-12-20T03:30:00Z"))).toBe(false);
     const { client, calls } = fakeClient({ ...baseHandlers(), "PUT /celebrations/c-1/settings": () => CELEBRATION });
     renderApp(<SettingsScreen celebrationId="c-1" onNavigate={navigate} />, client);
-    type((await screen.findByLabelText("Fecha (AAAA-MM-DD)")).getAttribute("aria-label") ?? "", "2020-01-01");
-    type("Hora (HH:MM)", "10:00");
+    type((await screen.findByLabelText("Fecha")).getAttribute("aria-label") ?? "", "2020-01-01");
+    type("Hora", "10:00");
     expect(screen.getByText(/Esa fecha ya pasó/)).toBeTruthy();
     fireEvent.click(screen.getByTestId("save-settings"));
     await waitFor(() => expect(calls.find((call) => call.method === "PUT")?.body).toEqual({ rsvpDeadline: "2020-01-01T10:00" }));

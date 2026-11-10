@@ -70,7 +70,7 @@ describe("REQ-F11-02 · C8/C10/C11 screens: venues, schedule, extra sections", (
     expect(venues[0]).toMatchObject({ name: "Iglesia San Francisco", address: "Plaza San Francisco", kind: "reception" });
   });
 
-  it("C10 schedule: rows in the celebration's wall clock, reorder, and a malformed time is refused before any request", async () => {
+  it("C10 schedule: rows in the celebration's wall clock, reorder, and an activity with a day but no time is refused before any request", async () => {
     const { client, calls } = fakeClient({ ...baseHandlers(), "PATCH /celebrations/c-1": () => ({ ...CELEBRATION, version: 4 }) });
     renderApp(<ContentEditorScreen section="itinerario" celebrationId="c-1" onNavigate={navigate} />, client);
     await screen.findByLabelText("Actividad 1");
@@ -80,12 +80,13 @@ describe("REQ-F11-02 · C8/C10/C11 screens: venues, schedule, extra sections", (
     const titles = screen.getAllByLabelText("Actividad");
     expect(titles).toHaveLength(2);
     fireEvent.change(titles[1] as HTMLElement, { target: { value: "Fiesta" } });
-    fireEvent.change(screen.getAllByLabelText("Fecha (AAAA-MM-DD)")[1] as HTMLElement, { target: { value: "2026-12-19" } });
-    fireEvent.change(screen.getAllByLabelText("Hora (HH:MM)")[1] as HTMLElement, { target: { value: "7pm" } });
+    fireEvent.change(screen.getAllByLabelText("Fecha")[1] as HTMLElement, { target: { value: "2026-12-19" } });
+    // the clock control cannot hold "7pm": an activity with a day and no time is what is left to refuse
+    expect((screen.getAllByLabelText("Hora")[1] as HTMLElement).getAttribute("type")).toBe("time");
     fireEvent.click(screen.getByTestId("save-content"));
     expect(screen.getByRole("alert").textContent).toContain("Actividad 2");
     expect(calls.some((call) => call.method === "PATCH")).toBe(false);
-    fireEvent.change(screen.getAllByLabelText("Hora (HH:MM)")[1] as HTMLElement, { target: { value: "23:30" } });
+    fireEvent.change(screen.getAllByLabelText("Hora")[1] as HTMLElement, { target: { value: "23:30" } });
     fireEvent.click(screen.getAllByRole("button", { name: /^Más opciones: Actividad/ })[1] as HTMLElement);
     fireEvent.click(await screen.findByRole("menuitem", { name: "Subir" }));
     fireEvent.click(screen.getByTestId("save-content"));

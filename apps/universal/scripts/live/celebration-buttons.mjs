@@ -142,8 +142,8 @@ await check("P2-valid", "onboarding: 3 pasos (tipo, quien y cuando, nombre y enl
   await page.getByTestId("onboarding-next").click();
   await field("Novia").fill("Ana");
   await field("Novio").fill("Luis");
-  await field("Fecha (AAAA-MM-DD)").fill("2027-08-14");
-  await field("Hora (HH:MM)").fill("17:30");
+  await field("Fecha").fill("2027-08-14");
+  await field("Hora").fill("17:30");
   await page.getByRole("region", { name: "Así va quedando" }).filter({ visible: true }).first().getByText("Ana").first().waitFor();
   await page.getByTestId("onboarding-next").click();
   assert.equal(await field("Nombre de la celebración").inputValue(), "Ana y Luis");
@@ -183,12 +183,14 @@ await check("P2-limit-date", "onboarding: una fecha invalida o sin hora detiene 
   await page.getByRole("radio", { name: /Boda/ }).first().click();
   await page.getByTestId("onboarding-next").click();
   const before = count("POST", "/celebrations");
-  await field("Fecha (AAAA-MM-DD)").fill("2027-13-45");
+  // the date and the time are the browser's pickers: the only invalid state left is half a date
+  assert.equal(await field("Fecha").getAttribute("type"), "date"); assert.equal(await field("Hora").getAttribute("type"), "time");
+  await field("Hora").fill("17:30");
   await page.getByTestId("onboarding-next").click();
-  await text(/Revisa la fecha/).waitFor();
-  await field("Fecha (AAAA-MM-DD)").fill("2027-08-14");
+  await text("Elige también la fecha.").waitFor();
+  await field("Fecha").fill("2027-08-14"); await field("Hora").fill("");
   await page.getByTestId("onboarding-next").click();
-  await text(/Revisa la hora/).waitFor();
+  await text("Elige también la hora.").waitFor();
   assert.equal(count("POST", "/celebrations"), before);
 });
 await check("P2-limit-double", "onboarding: doble clic en Crear mi invitación envia un unico POST y crea una unica celebracion", async () => {
@@ -243,7 +245,7 @@ await check("P3-general-valid", "editor general: guardar titulo, subtitulo, luga
   await field("Nombre de la celebración").fill("Boda editada");
   await field("Frase de bienvenida").fill("Los esperamos");
   await field("Lugar principal").fill("Hacienda Sol");
-  await field("Fecha (AAAA-MM-DD)").fill("2027-09-01");
+  await field("Fecha").fill("2027-09-01");
   await page.getByTestId("save-content").click();
   await text(/Cambios guardados/).waitFor();
   const stored = await get(ed.id);
@@ -266,9 +268,9 @@ await check("P3-general-limit", "editor general: 121 caracteres bloquean el guar
 await check("P3-general-empty-date", "editor general: fecha invalida (limite) se rechaza antes de enviar", async () => {
   await edUrl("general");
   const before = count("PATCH", `/celebrations/${ed.id}`);
-  await field("Fecha (AAAA-MM-DD)").fill("2027-13-45");
+  await field("Hora").fill("");
   await page.getByTestId("save-content").click();
-  await text(/Revisa la fecha/).waitFor();
+  await text("Elige también la hora.").waitFor();
   assert.equal(count("PATCH", `/celebrations/${ed.id}`), before);
 });
 await check("P3-general-double", "editor general: doble clic en Guardar envia un solo PATCH", async () => {
@@ -378,8 +380,8 @@ await check("P3-story", "editor historia: guardar parrafos, limite 5000 y 5001",
 await check("P3-schedule", "editor itinerario: agregar actividad, guardar con hora local; GET confirma; quitar la elimina", async () => {
   await edUrl("itinerario");
   await btn("Agregar actividad").click();
-  await field("Actividad").fill("Ceremonia"); await page.getByLabel("Fecha (AAAA-MM-DD)", { exact: true }).filter({ visible: true }).last().fill("2027-09-01");
-  await page.getByLabel("Hora (HH:MM)", { exact: true }).filter({ visible: true }).last().fill("16:00");
+  await field("Actividad").fill("Ceremonia"); await page.getByLabel("Fecha", { exact: true }).filter({ visible: true }).last().fill("2027-09-01");
+  await page.getByLabel("Hora", { exact: true }).filter({ visible: true }).last().fill("16:00");
   await page.getByTestId("save-content").click(); await text(/Cambios guardados/).waitFor();
   let stored = await get(ed.id);
   assert.equal(stored.content.schedule.length, 1); assert.equal(stored.content.schedule[0].title, "Ceremonia");
@@ -587,15 +589,15 @@ await check("P6-settings-general", "ajustes: idiomas/zona/moneda (en «Más opci
 await check("P6-deadline", "ajustes: fecha limite guardar/quitar (GET confirma); invalida se bloquea; 429 con espera (un solo Guardar)", async () => {
   await open("/configuracion", st.id);
   const before = count("PUT", "/settings");
-  await field("Fecha (AAAA-MM-DD)").first().fill("garbage");
+  await field("Hora").first().fill("20:00");
   await page.getByTestId("save-settings").click();
   await text(/Revisa este dato/).waitFor();
   assert.equal(count("PUT", "/settings"), before);
-  await field("Fecha (AAAA-MM-DD)").first().fill("2027-05-01"); await page.getByLabel("Hora (HH:MM)", { exact: true }).filter({ visible: true }).first().fill("20:00");
+  await field("Fecha").first().fill("2027-05-01"); await page.getByLabel("Hora", { exact: true }).filter({ visible: true }).first().fill("20:00");
   await respond(`**/celebrations/${st.id}/settings`, 429, { title: "slow down", status: 429 }, { "retry-after": "3" }, async () => { await page.getByTestId("save-settings").click(); await text(/Espera 3 segundos/).waitFor(); });
   await page.getByTestId("save-settings").click();
   await text(/Configuración guardada/).waitFor();
-  let stored = await get(st.id); assert.equal(new Date(stored.settings.rsvpDeadline).toISOString(), "2027-05-02T01:00:00.000Z", "20:00 in America/Lima (-05:00, set by the previous check) stored as an instant"); await page.reload(); await page.waitForLoadState("networkidle"); assert.equal(await field("Fecha (AAAA-MM-DD)").inputValue(), "2027-05-01", "the form shows it back in the celebration zone");
+  let stored = await get(st.id); assert.equal(new Date(stored.settings.rsvpDeadline).toISOString(), "2027-05-02T01:00:00.000Z", "20:00 in America/Lima (-05:00, set by the previous check) stored as an instant"); await page.reload(); await page.waitForLoadState("networkidle"); assert.equal(await field("Fecha").inputValue(), "2027-05-01", "the form shows it back in the celebration zone");
   await btn("Quitar fecha límite").click();
   await text(/Configuración guardada/).waitFor();
   stored = await get(st.id); assert.equal(stored.settings.rsvpDeadline, null);

@@ -41,16 +41,16 @@ export const hostEsBO = {
   onboarding: {
     joinNames: "{{first}} y {{second}}",
     title: "Crea tu invitación", intro: "Tres pasos cortos y tu invitación ya tiene su enlace.",
-    step: "Paso {{step}} de 3", stepLabels: { type: "Qué celebras", who: "Quién y cuándo", name: "Nombre y enlace" }, progress: "Tus pasos",
+    step: "Paso {{step}} de 3", stepLabels: { type: "Qué celebras", who: "Quién, cuándo y dónde", name: "Nombre y enlace" }, progress: "Tus pasos",
     typeLabel: "Elige una opción",
     typeTitle: "¿Qué vas a celebrar?", typeHelp: "Con esto preparamos los textos y las secciones que mejor le quedan.",
-    whoTitle: "¿Quiénes son y cuándo es?", hostsHelp: "Escribe los nombres como quieres que se lean en la invitación.",
-    dateLabel: "Fecha (AAAA-MM-DD)", timeLabel: "Hora (HH:MM)", dateHelp: "Ejemplo: 2027-08-14. ¿Aún no la tienes? Déjala vacía y agrégala después.",
+    whoTitle: "¿Quiénes son, cuándo y dónde es?", hostsHelp: "Escribe los nombres como quieres que se lean en la invitación.",
+    dateLabel: "Fecha", timeLabel: "Hora", venuePlaceholder: "Salón Las Palmas", dateHelp: "Con estos datos tu invitación queda lista para publicar. ¿Aún no tienes la fecha o el lugar? Déjalos vacíos y agrégalos después.",
     nameTitle: "Ponle nombre y enlace", titleLabel: "Nombre de la celebración", titlePlaceholder: "Ana y Luis", titleHelp: "Es lo primero que verán tus invitados.",
     slugLabel: "Enlace de tu invitación", slugHelp: "Así lo recibirán tus invitados: {{url}}. Solo minúsculas, números y guiones.",
     defaultsSummary: "Ya lo dejamos listo: hora de {{timeZone}}, {{language}} y {{currency}}.",
     timeZoneLabel: "Zona horaria del evento", timeZoneHelp: "Tus invitados verán las horas en esta zona, estén donde estén.", languageLabel: "Idioma principal", currencyLabel: "Moneda",
-    titleRequired: "Escribe el nombre de tu celebración.", dateInvalid: "Revisa la fecha: usa AAAA-MM-DD, por ejemplo 2027-08-14.", timeInvalid: "Revisa la hora: usa HH:MM, por ejemplo 17:30.",
+    titleRequired: "Escribe el nombre de tu celebración.", dateInvalid: "Elige también la fecha.", timeInvalid: "Elige también la hora.",
     previewTitle: "Así va quedando", previewHint: "Cambia mientras escribes.", previewShow: "Ver cómo queda", previewHide: "Ocultar", previewFallbackTitle: "Tu celebración",
     create: "Crear mi invitación", readyTitle: "Tu invitación está lista", readyBody: "Por ahora es un borrador: solo tú la ves. Completa lo que falta y publícala cuando quieras.",
     finish: "Completar mi invitación", chooseStyle: "Elegir otro estilo"
@@ -102,7 +102,7 @@ export const hostEsBO = {
   },
   settings: {
     title: "Configuración", intro: "Idiomas y fecha límite de tu celebración.", general: "Idiomas", saved: "Configuración guardada.", languages: "Idiomas del sitio", defaultLanguage: "Idioma principal", timeZone: "Zona horaria", currency: "Moneda", more: "Más opciones", format: "Hora y moneda", formatHelp: "Ya vienen con lo habitual de tu zona. Cámbialas solo si tu celebración es en otro lugar.",
-    deadline: { label: "Fecha límite para confirmar", date: "Fecha (AAAA-MM-DD)", time: "Hora (HH:MM)", help: "Hora local del evento ({{timeZone}}).", none: "Sin fecha límite: tus invitados responden cuando quieran.", clear: "Quitar fecha límite",
+    deadline: { label: "Fecha límite para confirmar", date: "Fecha", time: "Hora", help: "Hora local del evento ({{timeZone}}).", none: "Sin fecha límite: tus invitados responden cuando quieran.", clear: "Quitar fecha límite",
       past: "Esa fecha ya pasó: tus invitados ya no podrán responder ni cambiar su respuesta.", effect: "Tus invitados podrán responder hasta el {{date}} ({{zone}})." }
   },
   settingsExtra: {
