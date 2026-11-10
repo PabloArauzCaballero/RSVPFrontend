@@ -39,7 +39,7 @@ export function LocationField({ name, onName, link, onLink, nameError, placehold
           {marked ? <Text role="status" style={styles.muted}>{t("host.location.marked")}</Text> : null}
         </View>
       ) : null}
-      <Field label={t("host.location.link")} help={t(MAP_PICKER_AVAILABLE ? "host.location.linkHelp" : "host.location.linkHelpNative")} placeholder="https://maps.app.goo.gl/…" value={link} onChange={onLink} keyboardType="url" testID={`${testID}-link`} {...(mapLinkProblem(link) ? { error: t("host.location.linkInvalid") } : {})} />
+      <Field label={t("host.location.link")} help={t(MAP_PICKER_AVAILABLE ? "host.location.linkHelp" : "host.location.linkHelpNative")} placeholder={t("host.location.linkPlaceholder")} value={link} onChange={onLink} keyboardType="url" testID={`${testID}-link`} {...(mapLinkProblem(link) ? { error: t("host.location.linkInvalid") } : {})} />
       {picking ? <MapPicker initial={pointOf(link)} query={name.trim()} onClose={() => setPicking(false)} onPick={(point) => { onLink(pointUrl(point)); setPicking(false); }} /> : null}
     </View>
   );

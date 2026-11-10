@@ -72,8 +72,7 @@ export function MapPicker({ initial, query, onPick, onClose }: MapPickerProps): 
       requestAnimationFrame(() => created.invalidateSize());
     });
     return () => { disposed = true; map.current?.remove(); map.current = null; };
-    // The map is created once per opening; `initial` only says where it starts.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Created once per opening on purpose: `initial` only says where the map starts, it never moves it afterwards.
   }, []);
 
   const show = (point: MapPoint): void => { map.current?.setView([point.lat, point.lng], ZOOM_PLACE); };
