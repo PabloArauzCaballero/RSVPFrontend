@@ -95,6 +95,17 @@ describe("C2–C5 · picker and onboarding", () => {
     expect(body.content).toEqual({ title: "Lucía", venueName: "Iglesia San Roque", childName: "Mateo", hosts: { PARENT: "Lucía" } });
   });
 
+  it("the way back sits beside the progress bar, never inside it (a control inside a progressbar is unreachable for assistive technology)", async () => {
+    const { client } = fakeClient({ "GET /celebrations/event-types": () => ({ items: [WEDDING] }) });
+    renderApp(<OnboardingScreen step={1} onNavigate={navigate} />, client);
+    fireEvent.click(await screen.findByRole("radio", { name: "Boda" }));
+    fireEvent.click(screen.getByTestId("onboarding-next"));
+    const bar = screen.getByRole("progressbar", { name: "Tus pasos" });
+    expect(bar.getAttribute("aria-valuenow")).toBe("2");
+    expect(bar.querySelector("[role='button'], button")).toBeNull();
+    expect(screen.getByTestId("onboarding-back")).toBeTruthy();
+  });
+
   it("a venue longer than the limit stops the step with the reason next to the field", async () => {
     const { client } = fakeClient({ "GET /celebrations/event-types": () => ({ items: [WEDDING] }) });
     renderApp(<OnboardingScreen step={1} onNavigate={navigate} />, client);

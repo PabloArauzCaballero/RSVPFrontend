@@ -76,8 +76,9 @@ function StepProgress({ step, onBack }: { readonly step: number; readonly onBack
   const styles = useStyles();
   const name = t(`host.onboarding.stepLabels.${STEPS[step - 1] ?? "type"}`);
   return (
-    <View role="progressbar" aria-label={t("host.onboarding.progress")} aria-valuemin={1} aria-valuemax={LAST} aria-valuenow={step} aria-valuetext={`${t("host.onboarding.step", { step })}: ${name}`} style={{ gap: spacing[2] }}>
-      <View style={{ flexDirection: "row", gap: spacing[1] }}>
+    <View style={{ gap: spacing[2] }}>
+      {/* Only the bar is the progressbar: a control inside one (the way back) is not reachable by assistive technology. */}
+      <View role="progressbar" aria-label={t("host.onboarding.progress")} aria-valuemin={1} aria-valuemax={LAST} aria-valuenow={step} aria-valuetext={`${t("host.onboarding.step", { step })}: ${name}`} style={{ flexDirection: "row", gap: spacing[1] }}>
         {STEPS.map((key, index) => <View key={key} style={{ flex: 1, height: 4, borderRadius: radius.full, backgroundColor: index < step ? palette.primary : palette.border }} />)}
       </View>
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 44 }}>
