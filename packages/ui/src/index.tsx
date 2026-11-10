@@ -11,6 +11,7 @@ import { useReducedMotion, MOTION } from './motion';
 
 export { UiProvider, useTheme, useColors, useTones, useThemedStyles, tracking, depth, type ColorScheme, type Palette, type Tones } from './theme';
 import { DateField } from './date-field';
+import { TimeField } from './time-field';
 export { Logo, type LogoProps, type LogoTone } from './logo';
 export { CheckMark, type CheckMarkProps } from './scheme-check';
 export { NoticeMark, type NoticeMarkProps, type NoticeMarkTone } from './notice-mark';
@@ -246,9 +247,14 @@ export function Table({ columns, rows, state = 'default', emptyMessage }: { colu
   );
 }
 
-/** ISO `YYYY-MM-DD` value. iOS/Android open the system picker (`date-field.native.tsx`); web and tests type the date. */
-export function DatePicker({ label, value, onChange, state = 'default', error }: { label: string; value?: string; onChange?: (value: string) => void; state?: State; error?: string }) {
-  return <DateField label={label} value={value} onChange={onChange} state={state} error={error} />;
+/** ISO `YYYY-MM-DD` value behind the device's calendar: the system picker on iOS/Android (`date-field.native.tsx`), the browser's on web. */
+export function DatePicker({ label, value, onChange, state = 'default', error, testID }: { label: string; value?: string; onChange?: (value: string) => void; state?: State; error?: string; testID?: string }) {
+  return <DateField label={label} value={value} onChange={onChange} state={state} error={error} testID={testID} />;
+}
+
+/** 24-hour `HH:MM` value behind the device's clock: the system picker on iOS/Android (`time-field.native.tsx`), the browser's on web. */
+export function TimePicker({ label, value, onChange, state = 'default', error, testID }: { label: string; value?: string; onChange?: (value: string) => void; state?: State; error?: string; testID?: string }) {
+  return <TimeField label={label} value={value} onChange={onChange} state={state} error={error} testID={testID} />;
 }
 
 export function FileUpload({ label, fileName, onSelect, state = 'default', error }: { label: string; fileName?: string; onSelect?: () => void; state?: State; error?: string }) {

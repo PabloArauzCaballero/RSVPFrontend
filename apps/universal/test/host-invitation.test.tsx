@@ -53,12 +53,13 @@ describe("parts of the invitation and their progress", () => {
     await waitFor(() => expect(calls.some((call) => call.method === "PATCH")).toBe(true));
   });
 
-  it("a bad date is explained in plain words and nothing is sent", async () => {
+  it("a day without its time is explained in plain words and nothing is sent", async () => {
     const { client, calls } = fakeClient(baseHandlers());
     renderApp(<ContentEditorScreen section="general" celebrationId="c-1" onNavigate={navigate} />, client);
-    fireEvent.change(await screen.findByLabelText("Fecha (AAAA-MM-DD)"), { target: { value: "2026-13-45" } });
+    expect((await screen.findByLabelText("Fecha")).getAttribute("type")).toBe("date");
+    fireEvent.change(screen.getByLabelText("Hora"), { target: { value: "" } });
     fireEvent.click(screen.getByTestId("save-content"));
-    expect(await screen.findByText(/Revisa la fecha: usa AAAA-MM-DD/)).toBeTruthy();
+    expect(await screen.findByText("Elige también la hora.")).toBeTruthy();
     expect(calls.some((call) => call.method === "PATCH")).toBe(false);
   });
 });

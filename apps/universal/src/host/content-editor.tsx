@@ -16,7 +16,7 @@ import { asTemplateDocument } from "./template-gallery";
 import { useSingleFlight } from "../platform/single-flight";
 import { contentOverLimit, LIMITS, overLimit, slugProblem } from "./limits";
 import { Enter } from "@rsvp/ui";
-import { ActionButton, ChoiceGroup, Field, OverflowMenu, useStyles } from "./ui";
+import { ActionButton, ChoiceGroup, DateInput, Field, OverflowMenu, TimeInput, useStyles } from "./ui";
 
 /** C7–C11 · Hosts, venues, story, schedule and other sections. Saving never loses what was typed. */
 
@@ -51,7 +51,7 @@ function limitError(t: Translate, value: string, max: number | undefined): { rea
   return excess === null || max === undefined ? {} : { error: t("host.limits.tooLong", { count: excess, max }) };
 }
 
-function ListEditor({ items, onChange, fields, itemLabel, addLabel, t }: { readonly items: readonly Row[]; readonly onChange: (items: Row[]) => void; readonly fields: readonly { readonly key: string; readonly label: string; readonly multiline?: boolean; readonly max?: number; readonly choices?: readonly { readonly value: string; readonly label: string }[] }[]; readonly itemLabel: (n: number) => string; readonly addLabel: string; readonly t: Translate }): ReactNode {
+function ListEditor({ items, onChange, fields, itemLabel, addLabel, t }: { readonly items: readonly Row[]; readonly onChange: (items: Row[]) => void; readonly fields: readonly { readonly key: string; readonly label: string; readonly multiline?: boolean; readonly max?: number; /** A calendar day or a time of day, picked instead of typed. */ readonly picker?: "date" | "time"; readonly choices?: readonly { readonly value: string; readonly label: string }[] }[]; readonly itemLabel: (n: number) => string; readonly addLabel: string; readonly t: Translate }): ReactNode {
   const styles = useStyles();
   const update = (index: number, key: string, value: string): void => onChange(items.map((item, position) => (position === index ? { ...item, [key]: value } : item)));
   const move = (index: number, delta: number): void => {
@@ -76,6 +76,8 @@ function ListEditor({ items, onChange, fields, itemLabel, addLabel, t }: { reado
           </View>
           {fields.map((field) => field.choices
             ? <ChoiceGroup key={field.key} label={field.label} choices={field.choices} value={item[field.key] ?? null} onChange={(value) => update(index, field.key, value)} />
+            : field.picker === "date" ? <DateInput key={field.key} label={field.label} value={item[field.key] ?? ""} onChange={(value) => update(index, field.key, value)} />
+            : field.picker === "time" ? <TimeInput key={field.key} label={field.label} value={item[field.key] ?? ""} onChange={(value) => update(index, field.key, value)} />
             : <Field key={field.key} label={field.label} value={item[field.key] ?? ""} multiline={field.multiline} {...limitError(t, item[field.key] ?? "", field.max)} onChange={(value) => update(index, field.key, value)} />)}
         </View>
       ))}
@@ -200,8 +202,8 @@ function Editor({ loaded, section, saved, onSaved, onNavigate }: { readonly load
         <Field label={t("host.editor.general.title")} value={text("title")} {...limitError(t, text("title"), LIMITS.title)} onChange={(value) => set("title", value)} testID="field-title" />
         <Field label={t("host.editor.general.subtitle")} value={text("subtitle")} {...limitError(t, text("subtitle"), LIMITS.subtitle)} onChange={(value) => set("subtitle", value)} />
         <View style={styles.row}>
-          <View style={{ flexGrow: 1, flexBasis: FIELD_BASIS }}><Field label={t("host.onboarding.dateLabel")} value={eventDate.date} onChange={(value) => setEventDate((existing) => ({ ...existing, date: value }))} keyboardType="numbers-and-punctuation" /></View>
-          <View style={{ flexGrow: 1, flexBasis: TIME_BASIS }}><Field label={t("host.onboarding.timeLabel")} value={eventDate.time} onChange={(value) => setEventDate((existing) => ({ ...existing, time: value }))} keyboardType="numbers-and-punctuation" /></View>
+          <View style={{ flexGrow: 1, flexBasis: FIELD_BASIS }}><DateInput label={t("host.onboarding.dateLabel")} value={eventDate.date} onChange={(value) => setEventDate((existing) => ({ ...existing, date: value }))} testID="field-event-date" /></View>
+          <View style={{ flexGrow: 1, flexBasis: TIME_BASIS }}><TimeInput label={t("host.onboarding.timeLabel")} value={eventDate.time} onChange={(value) => setEventDate((existing) => ({ ...existing, time: value }))} testID="field-event-time" /></View>
         </View>
         <Text style={styles.muted}>{t("host.editor.schedule.zoneHelp", { timeZone: celebration.timeZone })}</Text>
         <Field label={t("host.editor.general.venueName")} value={text("venueName")} {...limitError(t, text("venueName"), LIMITS.venueName)} onChange={(value) => set("venueName", value)} />
@@ -233,7 +235,7 @@ function Editor({ loaded, section, saved, onSaved, onNavigate }: { readonly load
         <Text style={styles.muted}>{t("host.editor.schedule.zoneHelp", { timeZone: celebration.timeZone })}</Text>
         <ListEditor t={t} items={schedule.map(({ id: _id, ...item }) => item)} onChange={(items) => setSchedule(items.map((item, index) => ({ id: schedule[index]?.id ?? newItemId("s"), title: item["title"] ?? "", description: item["description"] ?? "", date: item["date"] ?? "", time: item["time"] ?? "" })))}
           itemLabel={(n) => t("host.editor.schedule.item", { n })} addLabel={t("host.editor.schedule.add")}
-          fields={[{ key: "title", label: t("host.editor.schedule.title"), max: LIMITS.scheduleTitle }, { key: "date", label: t("host.onboarding.dateLabel") }, { key: "time", label: t("host.onboarding.timeLabel") }, { key: "description", label: t("host.editor.schedule.description"), multiline: true, max: LIMITS.scheduleDescription }]} />
+          fields={[{ key: "title", label: t("host.editor.schedule.title"), max: LIMITS.scheduleTitle }, { key: "date", label: t("host.onboarding.dateLabel"), picker: "date" }, { key: "time", label: t("host.onboarding.timeLabel"), picker: "time" }, { key: "description", label: t("host.editor.schedule.description"), multiline: true, max: LIMITS.scheduleDescription }]} />
       </Part>
     ),
     secciones: () => (
