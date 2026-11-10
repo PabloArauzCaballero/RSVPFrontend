@@ -9,6 +9,7 @@ import type { State } from './index';
 export interface PickerFieldProps { label: string; value?: string; onChange?: (value: string) => void; state: State; error?: string; testID?: string }
 
 const FIELD_HEIGHT = 48;
+// Tighter than a text input: the browser draws its own calendar or clock button inside, and a 12-hour time must fit in half a phone row.
 const unavailable = (state: State): boolean => state === 'disabled' || state === 'loading';
 
 /**
@@ -31,7 +32,7 @@ export function WebPickerField({ kind, label, value, onChange, state, error, tes
         value: value ?? '',
         onChange: (event: { target: { value: string } }) => onChange?.(event.target.value),
         style: {
-          boxSizing: 'border-box', display: 'block', width: '100%', minWidth: 0, minHeight: FIELD_HEIGHT, margin: 0, padding: `0 ${spacing[4]}px`, borderRadius: radius.button,
+          boxSizing: 'border-box', display: 'block', width: '100%', minWidth: 0, minHeight: FIELD_HEIGHT, margin: 0, padding: `0 ${spacing[3]}px`, borderRadius: radius.button,
           border: `1px solid ${invalid ? palette.danger : palette.fieldBorder}`, backgroundColor: palette.surface, color: palette.text, fontFamily: fonts.sans,
           fontSize: typography.fontSize.base, lineHeight: `${FIELD_HEIGHT - 2}px`, colorScheme: scheme, opacity: unavailable(state) ? 0.6 : 1
         }

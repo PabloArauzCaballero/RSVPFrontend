@@ -211,7 +211,7 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
         {ownFields.map((field) => <Field key={field} label={fieldLabel(t, field)} value={detail(field)} {...tooLong(detail(field), LIMITS.extraField)} onChange={(value) => setDetail(field, value)} testID={`onboarding-${field}`} />)}
         <View style={styles.row}>
           <View style={{ flexGrow: 1, flexBasis: 160 }}><DateInput label={t("host.onboarding.dateLabel")} value={when.date} onChange={(date) => setWhen((current) => ({ ...current, date }))} testID="onboarding-date" {...(tried && dateProblem === "dateInvalid" ? { error: t("host.onboarding.dateInvalid") } : {})} /></View>
-          <View style={{ flexGrow: 1, flexBasis: 120 }}><TimeInput label={t("host.onboarding.timeLabel")} value={when.time} onChange={(time) => setWhen((current) => ({ ...current, time }))} testID="onboarding-time" {...(tried && dateProblem === "timeInvalid" ? { error: t("host.onboarding.timeInvalid") } : {})} /></View>
+          <View style={{ flexGrow: 1, flexBasis: 150 }}><TimeInput label={t("host.onboarding.timeLabel")} value={when.time} onChange={(time) => setWhen((current) => ({ ...current, time }))} testID="onboarding-time" {...(tried && dateProblem === "timeInvalid" ? { error: t("host.onboarding.timeInvalid") } : {})} /></View>
         </View>
         <Field label={t("host.editor.general.venueName")} placeholder={t("host.onboarding.venuePlaceholder")} value={detail("venueName")} {...tooLong(detail("venueName"), LIMITS.venueName)} onChange={(value) => setDetail("venueName", value)} testID="onboarding-venue" />
         <Text style={styles.muted}>{t("host.onboarding.dateHelp")}</Text>

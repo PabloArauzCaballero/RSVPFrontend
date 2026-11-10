@@ -94,7 +94,7 @@ const PART_MAX_WIDTH = 720;
 const SUBHEADING_SIZE = 16;
 const PREVIEW_DIALOG_WIDTH = 640;
 const FIELD_BASIS = 160;
-const TIME_BASIS = 120;
+const TIME_BASIS = 150;
 
 /** A part of the invitation: its name, one line about it and its fields, laid on the page rather than in a card of its own. */
 function Part({ section, children }: { readonly section: EditorSection; readonly children: ReactNode }): ReactNode {
