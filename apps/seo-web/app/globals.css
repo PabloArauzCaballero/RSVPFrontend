@@ -412,15 +412,7 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 .celebration-missing { width: min(100% - 2.5rem, 40rem); margin: 0 auto; padding: clamp(3rem, 12vw, 7rem) 0; display: grid; gap: 1rem; }
 
 /* ===== Public celebration (theme comes from @rsvp/celebration-theme) ===== */
-.celebration-shell { min-height: 100vh; background: var(--celebration-canvas, var(--canvas)); color: var(--celebration-text, var(--text)); }
-.celebration-hero { width: min(100% - 2.5rem, 62rem); margin: 0 auto; padding: clamp(3rem, 12vw, 8rem) 0 3rem; text-align: center; }
-.celebration-hero p:first-child { margin: 0 0 .5rem; color: var(--celebration-accent, var(--text)); font-size: .8rem; font-family: var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
-.celebration-hero h1 { margin: 0; font-size: clamp(2.2rem, 8vw, 5rem); line-height: 1.05; }
-.celebration-hero p:last-child { max-width: 38rem; margin: 1.25rem auto 0; color: var(--celebration-muted, var(--text-muted)); font-family: var(--font-body); }
-.celebration-shell article { display: grid; gap: 1px; background: color-mix(in srgb, var(--celebration-accent, var(--border)) 22%, transparent); }
-.celebration-shell article section { width: min(100% - 2.5rem, 62rem); margin: 0 auto; padding: clamp(2rem, 7vw, 4rem); background: var(--celebration-surface, var(--surface)); }
-.celebration-shell article section h2 { margin-top: 0; color: var(--celebration-accent, var(--text)); }
-.celebration-shell details { font-family: var(--font-body); }
+/* The invitation itself is styled by @rsvp/celebration-theme/styles.css (one stylesheet for every template); nothing here may restyle `.celebration-*`. */
 .celebration-languages { display: flex; justify-content: flex-end; gap: 1rem; padding: .5rem 1.25rem; background: var(--surface); border-bottom: 1px solid var(--border); font-size: .9rem; }
 .celebration-languages a { min-height: 44px; display: inline-flex; align-items: center; color: var(--text); }
 .celebration-languages a[aria-current="true"] { font-weight: 600; text-decoration-thickness: 2px; }

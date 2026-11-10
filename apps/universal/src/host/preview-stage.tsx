@@ -35,7 +35,8 @@ export function PreviewFrame({ device, theme, view, gallery = [], label, height 
     <View onLayout={onLayout} style={{ width: "100%", alignItems: "center" }}>
       <View testID={`preview-${device}`} role="region" aria-label={label} style={{ width: width * scale, height: frameHeight * scale, overflow: "hidden", borderRadius: radius.lg, borderWidth: 1, borderColor: palette.border, backgroundColor: theme.palette.canvas }}>
         <View style={{ width, height: frameHeight, transform: [{ scale }], transformOrigin: "top left" }}>
-          <ScrollView style={{ flex: 1 }} nestedScrollEnabled>
+          {/* Focusable: a taller invitation scrolls inside the frame, and a scroll area must be reachable with the keyboard. */}
+          <ScrollView style={{ flex: 1 }} nestedScrollEnabled tabIndex={0}>
             <CelebrationNativeRenderer theme={theme} view={view} gallery={gallery} t={t} />
           </ScrollView>
         </View>
