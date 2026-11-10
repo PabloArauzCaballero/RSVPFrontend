@@ -26,6 +26,7 @@ export const hostEsBO = {
     serverLoad: "El servidor no respondió como esperábamos. Inténtalo de nuevo en unos minutos.",
     networkLoad: "No hay conexión con el servidor. Revisa tu internet e inténtalo de nuevo."
   },
+  location: { mark: "Marcar en el mapa", change: "Cambiar el punto", marked: "Punto marcado. Tus invitados lo abrirán con «Cómo llegar».", link: "Enlace del mapa", linkHelp: "Opcional. Se completa al marcar el punto; también puedes pegar el enlace que te da Google Maps al compartir el lugar.", linkHelpNative: "Opcional. Pega el enlace que te da Google Maps al compartir el lugar; tus invitados lo abrirán con «Cómo llegar».", linkInvalid: "Pega un enlace de Google Maps, Apple Maps, Waze u OpenStreetMap que empiece con https://.", pickerTitle: "Marca el lugar en el mapa", search: "Buscar un lugar o dirección", searchPlaceholder: "Salón Las Palmas, Santa Cruz", searchButton: "Buscar", results: "Resultados de la búsqueda", noResults: "No encontramos ese lugar. Prueba con la calle o la zona y termina de ubicarlo moviendo el mapa.", searchError: "No pudimos buscar ahora. Mueve el mapa hasta el lugar o inténtalo de nuevo.", locationError: "No pudimos obtener tu ubicación. Revisa el permiso del navegador o busca el lugar por su nombre.", mapLabel: "Mapa: muévelo hasta que el pin quede sobre el lugar", hint: "Mueve el mapa hasta que el pin quede justo sobre el lugar.", myLocation: "Usar mi ubicación", use: "Listo" },
   limits: {
     requiredMissing: "Para guardar falta: {{fields}}.", fieldsTooLong: "Hay textos demasiado largos. Acórtalos para poder guardar.",
     tooLong_one: "Quita {{count}} carácter: el máximo es {{max}}.",
@@ -65,7 +66,7 @@ export const hostEsBO = {
     hosts: { help: "Los roles salen del tipo de evento: {{eventType}}." },
     venues: { name: "Nombre del lugar", address: "Dirección", kind: "Tipo", kinds: { ceremony: "Ceremonia", reception: "Recepción", other: "Otro" }, add: "Agregar lugar", item: "Lugar {{n}}" },
     story: { label: "Su historia", help: "Separa los párrafos con una línea en blanco." },
-    schedule: { title: "Actividad", date: "Fecha", time: "Hora", description: "Detalle", add: "Agregar actividad", item: "Actividad {{n}}", zoneHelp: "Escribe la hora local del evento ({{timeZone}})." },
+    schedule: { title: "Actividad", date: "Fecha", time: "Hora", description: "Detalle", add: "Agregar actividad", item: "Actividad {{n}}", zoneHelp: "Es la hora local del evento ({{timeZone}})." },
     extra: { dressCode: "Código de vestimenta", faq: "Preguntas frecuentes", question: "Pregunta", answer: "Respuesta", addFaq: "Agregar pregunta", recommendations: "Recomendaciones", recommendationName: "Nombre", recommendationDescription: "Descripción", recommendationKind: "Tipo", kinds: { lodging: "Hospedaje", transport: "Transporte", other: "Otra" }, listingId: "Código de partner (opcional)", listingHelp: "Si es un partner, su enlace pasa por nuestro redirector.", addRecommendation: "Agregar recomendación", item: "Elemento {{n}}" }
   },
   gallery: {

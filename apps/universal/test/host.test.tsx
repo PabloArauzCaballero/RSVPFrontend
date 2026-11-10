@@ -160,6 +160,25 @@ describe("C2–C5 · picker and onboarding", () => {
     expect(calls.some((call) => call.method === "POST")).toBe(false);
   });
 
+  it("the venue is a real place: a pasted maps link travels with the creation, anything that is not a maps link stops the step", async () => {
+    const { client, calls } = fakeClient({ "GET /celebrations/event-types": () => ({ items: [WEDDING] }), "POST /celebrations": () => ({ ...CELEBRATION, id: "c-new" }) });
+    renderApp(<OnboardingScreen step={1} onNavigate={navigate} />, client);
+    fireEvent.click(await screen.findByRole("radio", { name: "Boda" }));
+    fireEvent.click(screen.getByTestId("onboarding-next"));
+    type("Novia", "Ana"); type("Novio", "Luis"); fillWhenWhere();
+    expect(screen.getByTestId("onboarding-venue-map")).toBeTruthy();
+    type("Enlace del mapa", "javascript:alert(1)");
+    expect(screen.getByText(/Pega un enlace de Google Maps/)).toBeTruthy();
+    fireEvent.click(screen.getByTestId("onboarding-next"));
+    expect(screen.queryByLabelText("Nombre de la celebración")).toBeNull();
+    type("Enlace del mapa", "https://maps.app.goo.gl/AbC123");
+    expect(screen.getByText(/Punto marcado/)).toBeTruthy();
+    fireEvent.click(screen.getByTestId("onboarding-next"));
+    fireEvent.click(screen.getByTestId("onboarding-create"));
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith("/onboarding/listo?c=c-new"));
+    expect((calls.find((call) => call.method === "POST")?.body as { content: Record<string, unknown> }).content).toMatchObject({ venueName: "Salón Las Palmas", venueMapUrl: "https://maps.app.goo.gl/AbC123" });
+  });
+
   it("half a date (a time without its day, or a day without its time) stops the step with a clear message and keeps what was typed", async () => {
     const { client, calls } = fakeClient({ "GET /celebrations/event-types": () => ({ items: [WEDDING] }) });
     renderApp(<OnboardingScreen step={1} onNavigate={navigate} />, client);

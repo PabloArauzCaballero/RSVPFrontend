@@ -15,6 +15,7 @@ import { extraFields, fieldLabel } from "./content-editor";
 import { CenteredActions, LoadFailed } from "./load-failed";
 import { previewView, type PreviewSource } from "./preview-model";
 import { PreviewFrame } from "./preview-stage";
+import { LocationField, mapLinkProblem } from "./location-field";
 import { MoreOptions } from "./more-options";
 import { ActionButton, Celebrate, ChoiceGroup, DateInput, Field, FilterSelect, Illustration, Notice, Screen, TimeInput, useStyles } from "./ui";
 
@@ -37,6 +38,7 @@ const STEPS = ["type", "who", "name"] as const;
 type StepName = (typeof STEPS)[number];
 const LAST = STEPS.length;
 const HOST_PREFIX = "hosts.";
+const MAP_LINK = "venueMapUrl";
 const WIDE = 960;
 const PREVIEW_WIDTH = 360;
 const MAX_PREVIEW_NAMES = 2;
@@ -134,12 +136,12 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
     const count = overLimit(value, max);
     return count === null ? {} : { error: t("host.limits.tooLong", { count, max }) };
   };
-  const filledDetails = Object.fromEntries(["venueName", ...ownFields].map((key) => [key, detail(key).trim()] as const).filter(([, value]) => value));
+  const filledDetails = Object.fromEntries(["venueName", MAP_LINK, ...ownFields].map((key) => [key, detail(key).trim()] as const).filter(([, value]) => value));
   // Everything the event type needs to publish is asked for here and is mandatory: the step does not let an empty field through.
   const requiredRoles = (type?.requiredFieldsForPublish ?? []).filter((field) => field.startsWith(HOST_PREFIX)).map((field) => field.slice(HOST_PREFIX.length));
   const missing = (value: string): { error: string } | Record<string, never> => (tried && !value.trim() ? { error: t("host.onboarding.required") } : {});
   const whoIncomplete = dateMissing || timeMissing || !wall.ok || !detail("venueName").trim() || ownFields.some((key) => !detail(key).trim()) || requiredRoles.some((role) => !(hosts[role] ?? "").trim());
-  const whoOverLimit = overLimit(detail("venueName"), LIMITS.venueName) !== null || ownFields.some((key) => overLimit(detail(key), LIMITS.extraField) !== null) || Object.values(hosts).some((name) => overLimit(name, LIMITS.hostName) !== null);
+  const whoOverLimit = mapLinkProblem(detail(MAP_LINK)) || overLimit(detail("venueName"), LIMITS.venueName) !== null || ownFields.some((key) => overLimit(detail(key), LIMITS.extraField) !== null) || Object.values(hosts).some((name) => overLimit(name, LIMITS.hostName) !== null);
   const titleProblem = !effectiveTitle.trim() ? t("host.onboarding.titleRequired") : overLimit(effectiveTitle, LIMITS.title) !== null ? t("host.limits.tooLong", { count: overLimit(effectiveTitle, LIMITS.title) ?? 0, max: LIMITS.title }) : null;
   const slugIssue = slugProblem(effectiveSlug);
 
@@ -206,7 +208,7 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
         </View>
         {types.isPending ? <SkeletonList label={t("host.common.loading")}><View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing[2] }}>{[120, 96, 140, 110, 128].map((width, index) => <Skeleton key={index} width={width} height={44} radius={radius.md} />)}</View></SkeletonList> : null}
         {types.isError ? <LoadFailed title={t("host.onboarding.typeTitle")} error={types.error} onRetry={() => { void types.refetch(); }} /> : null}
-        <ChoiceGroup label={t("host.onboarding.typeLabel")} value={typeCode} onChange={(code) => { if (code !== typeCode) { setHosts({}); setDetails((current): Record<string, string> => (current["venueName"] ? { venueName: current["venueName"] } : {})); } setTypeCode(code); }} choices={(types.data?.items ?? []).map((item) => ({ value: item.code, label: item.name }))} />
+        <ChoiceGroup label={t("host.onboarding.typeLabel")} value={typeCode} onChange={(code) => { if (code !== typeCode) { setHosts({}); setDetails((current): Record<string, string> => (current["venueName"] ? { venueName: current["venueName"], ...(current[MAP_LINK] ? { [MAP_LINK]: current[MAP_LINK] } : {}) } : {})); } setTypeCode(code); }} choices={(types.data?.items ?? []).map((item) => ({ value: item.code, label: item.name }))} />
         {type?.description ? <Text style={styles.muted}>{type.description}</Text> : null}
       </View>
     ),
@@ -221,7 +223,8 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
           <View style={{ flexGrow: 1, flexBasis: 160 }}><DateInput label={t("host.onboarding.dateLabel")} value={when.date} onChange={(date) => setWhen((current) => ({ ...current, date }))} testID="onboarding-date" {...(tried && dateMissing ? { error: t("host.onboarding.dateInvalid") } : {})} /></View>
           <View style={{ flexGrow: 1, flexBasis: 150 }}><TimeInput label={t("host.onboarding.timeLabel")} value={when.time} onChange={(time) => setWhen((current) => ({ ...current, time }))} testID="onboarding-time" {...(tried && timeMissing ? { error: t("host.onboarding.timeInvalid") } : {})} /></View>
         </View>
-        <Field label={t("host.editor.general.venueName")} placeholder={t("host.onboarding.venuePlaceholder")} value={detail("venueName")} {...missing(detail("venueName"))} {...tooLong(detail("venueName"), LIMITS.venueName)} onChange={(value) => setDetail("venueName", value)} testID="onboarding-venue" />
+        <LocationField name={detail("venueName")} onName={(value) => setDetail("venueName", value)} link={detail(MAP_LINK)} onLink={(value) => setDetail(MAP_LINK, value)} placeholder={t("host.onboarding.venuePlaceholder")} testID="onboarding-venue"
+          {...(missing(detail("venueName")).error ?? tooLong(detail("venueName"), LIMITS.venueName).error ? { nameError: missing(detail("venueName")).error ?? tooLong(detail("venueName"), LIMITS.venueName).error } : {})} />
         <Text style={styles.muted}>{t("host.onboarding.dateHelp")}</Text>
       </View>
     ),
