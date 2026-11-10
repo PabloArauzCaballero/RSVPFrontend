@@ -36,6 +36,7 @@ const ZONE_CURRENCY: Readonly<Record<string, (typeof CURRENCIES)[number]>> = {
 const STEPS = ["type", "who", "name"] as const;
 type StepName = (typeof STEPS)[number];
 const LAST = STEPS.length;
+const HOST_PREFIX = "hosts.";
 const WIDE = 960;
 const PREVIEW_WIDTH = 360;
 const MAX_PREVIEW_NAMES = 2;
@@ -124,7 +125,8 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
   const effectiveTitle = titleEdited ? title : suggestedTitle(type, hosts, join);
   const effectiveSlug = slugEdited ? slug : slugify(effectiveTitle);
   const wall = toWallClock(when);
-  const dateProblem = !wall.ok ? (isCalendarDate(when.date.trim()) ? "timeInvalid" : "dateInvalid") : null;
+  const dateMissing = !isCalendarDate(when.date.trim());
+  const timeMissing = !when.time.trim();
   const ownFields = extraFields(type);
   const detail = (key: string): string => details[key] ?? "";
   const setDetail = (key: string, value: string): void => setDetails((current) => ({ ...current, [key]: value }));
@@ -133,6 +135,10 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
     return count === null ? {} : { error: t("host.limits.tooLong", { count, max }) };
   };
   const filledDetails = Object.fromEntries(["venueName", ...ownFields].map((key) => [key, detail(key).trim()] as const).filter(([, value]) => value));
+  // Everything the event type needs to publish is asked for here and is mandatory: the step does not let an empty field through.
+  const requiredRoles = (type?.requiredFieldsForPublish ?? []).filter((field) => field.startsWith(HOST_PREFIX)).map((field) => field.slice(HOST_PREFIX.length));
+  const missing = (value: string): { error: string } | Record<string, never> => (tried && !value.trim() ? { error: t("host.onboarding.required") } : {});
+  const whoIncomplete = dateMissing || timeMissing || !wall.ok || !detail("venueName").trim() || ownFields.some((key) => !detail(key).trim()) || requiredRoles.some((role) => !(hosts[role] ?? "").trim());
   const whoOverLimit = overLimit(detail("venueName"), LIMITS.venueName) !== null || ownFields.some((key) => overLimit(detail(key), LIMITS.extraField) !== null) || Object.values(hosts).some((name) => overLimit(name, LIMITS.hostName) !== null);
   const titleProblem = !effectiveTitle.trim() ? t("host.onboarding.titleRequired") : overLimit(effectiveTitle, LIMITS.title) !== null ? t("host.limits.tooLong", { count: overLimit(effectiveTitle, LIMITS.title) ?? 0, max: LIMITS.title }) : null;
   const slugIssue = slugProblem(effectiveSlug);
@@ -151,7 +157,7 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
 
   const submit = (): void => {
     setTried(true);
-    if (!typeCode || titleProblem || slugIssue || !wall.ok || whoOverLimit) return;
+    if (!typeCode || titleProblem || slugIssue || whoIncomplete || whoOverLimit) return;
     const namedHosts = Object.fromEntries(Object.entries(hosts).filter(([, name]) => name.trim()));
     once((release) => create.mutate({
       slug: effectiveSlug, eventTypeCode: typeCode, defaultLocale: language, supportedLocales: [language], timeZone, currency,
@@ -159,7 +165,7 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
     }, { onSuccess: (created) => onNavigate(withCelebration(`${HOST_ROUTES.onboarding}/listo`, created.id)), onSettled: release }));
   };
   const goWho = (): void => setStep(2);
-  const goName = (): void => { setTried(true); if (wall.ok && !whoOverLimit) { setTried(false); setStep(3); } };
+  const goName = (): void => { setTried(true); if (!whoIncomplete && !whoOverLimit) { setTried(false); setStep(3); } };
 
   if (celebrationId) {
     return (
@@ -208,13 +214,14 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
       <View style={{ gap: spacing[4] }}>
         <Text accessibilityRole="header" style={styles.subtitle}>{t("host.onboarding.whoTitle")}</Text>
         <Text style={styles.muted}>{t("host.onboarding.hostsHelp")}</Text>
-        {(type?.hostRoles ?? []).map((role) => <Field key={role.role} label={role.label} value={hosts[role.role] ?? ""} {...tooLong(hosts[role.role] ?? "", LIMITS.hostName)} onChange={(name) => setHosts((current) => ({ ...current, [role.role]: name }))} />)}
-        {ownFields.map((field) => <Field key={field} label={fieldLabel(t, field)} value={detail(field)} {...tooLong(detail(field), LIMITS.extraField)} onChange={(value) => setDetail(field, value)} testID={`onboarding-${field}`} />)}
-        <View style={styles.row}>
-          <View style={{ flexGrow: 1, flexBasis: 160 }}><DateInput label={t("host.onboarding.dateLabel")} value={when.date} onChange={(date) => setWhen((current) => ({ ...current, date }))} testID="onboarding-date" {...(tried && dateProblem === "dateInvalid" ? { error: t("host.onboarding.dateInvalid") } : {})} /></View>
-          <View style={{ flexGrow: 1, flexBasis: 150 }}><TimeInput label={t("host.onboarding.timeLabel")} value={when.time} onChange={(time) => setWhen((current) => ({ ...current, time }))} testID="onboarding-time" {...(tried && dateProblem === "timeInvalid" ? { error: t("host.onboarding.timeInvalid") } : {})} /></View>
+        {tried && whoIncomplete ? <Notice kind="error">{t("host.onboarding.requiredNotice")}</Notice> : null}
+        {(type?.hostRoles ?? []).map((role) => <Field key={role.role} label={role.label} value={hosts[role.role] ?? ""} {...(requiredRoles.includes(role.role) ? missing(hosts[role.role] ?? "") : {})} {...tooLong(hosts[role.role] ?? "", LIMITS.hostName)} onChange={(name) => setHosts((current) => ({ ...current, [role.role]: name }))} />)}
+        {ownFields.map((field) => <Field key={field} label={fieldLabel(t, field)} value={detail(field)} {...missing(detail(field))} {...tooLong(detail(field), LIMITS.extraField)} onChange={(value) => setDetail(field, value)} testID={`onboarding-${field}`} />)}
+        <View style={[styles.row, { alignItems: "flex-start" }]}>
+          <View style={{ flexGrow: 1, flexBasis: 160 }}><DateInput label={t("host.onboarding.dateLabel")} value={when.date} onChange={(date) => setWhen((current) => ({ ...current, date }))} testID="onboarding-date" {...(tried && dateMissing ? { error: t("host.onboarding.dateInvalid") } : {})} /></View>
+          <View style={{ flexGrow: 1, flexBasis: 150 }}><TimeInput label={t("host.onboarding.timeLabel")} value={when.time} onChange={(time) => setWhen((current) => ({ ...current, time }))} testID="onboarding-time" {...(tried && timeMissing ? { error: t("host.onboarding.timeInvalid") } : {})} /></View>
         </View>
-        <Field label={t("host.editor.general.venueName")} placeholder={t("host.onboarding.venuePlaceholder")} value={detail("venueName")} {...tooLong(detail("venueName"), LIMITS.venueName)} onChange={(value) => setDetail("venueName", value)} testID="onboarding-venue" />
+        <Field label={t("host.editor.general.venueName")} placeholder={t("host.onboarding.venuePlaceholder")} value={detail("venueName")} {...missing(detail("venueName"))} {...tooLong(detail("venueName"), LIMITS.venueName)} onChange={(value) => setDetail("venueName", value)} testID="onboarding-venue" />
         <Text style={styles.muted}>{t("host.onboarding.dateHelp")}</Text>
       </View>
     ),
@@ -223,7 +230,7 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
         <Text accessibilityRole="header" style={styles.subtitle}>{t("host.onboarding.nameTitle")}</Text>
         <Field label={t("host.onboarding.titleLabel")} placeholder={t("host.onboarding.titlePlaceholder")} help={t("host.onboarding.titleHelp")} value={effectiveTitle} testID="onboarding-title" {...(titleProblem && (tried || effectiveTitle) ? { error: titleProblem } : {})}
           onChange={(value) => { setTitleEdited(true); setTitle(value); }} />
-        <Field label={t("host.onboarding.slugLabel")} help={t("host.onboarding.slugHelp", { url: `/c/${effectiveSlug}` })} value={effectiveSlug} testID="onboarding-slug" {...(effectiveSlug && slugIssue ? { error: t(`host.limits.slug${slugIssue === "length" ? "Length" : "Pattern"}`) } : {})}
+        <Field label={t("host.onboarding.slugLabel")} help={t("host.onboarding.slugHelp", { url: `/c/${effectiveSlug}` })} value={effectiveSlug} testID="onboarding-slug" {...(slugIssue && !effectiveSlug ? (tried ? { error: t("host.onboarding.slugRequired") } : {}) : slugIssue ? { error: t(`host.limits.slug${slugIssue === "length" ? "Length" : "Pattern"}`) } : {})}
           onChange={(value) => { setSlugEdited(true); setSlug(value.toLowerCase()); }} />
         {/* Zone, language and currency come from the device and the zone: nobody has to decide them to get an invitation. */}
         <View style={{ gap: spacing[2] }}>

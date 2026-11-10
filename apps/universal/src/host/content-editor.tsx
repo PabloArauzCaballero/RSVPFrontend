@@ -24,6 +24,7 @@ const BUILT_IN_FIELDS = ["title", "subtitle", "eventDate", "venueName"];
 const VENUE_KINDS = ["ceremony", "reception", "other"] as const;
 const RECOMMENDATION_KINDS = ["lodging", "transport", "other"] as const;
 const PATH_SEPARATOR = ".";
+const HOST_PREFIX = "hosts.";
 /** Rows are kept as typed while editing (a freshly added row is empty); blank ones are dropped when saving. */
 const REQUIRED_ROW_FIELD: Readonly<Record<string, string>> = { venues: "name", faq: "question", recommendations: "name" };
 
@@ -160,6 +161,7 @@ function Editor({ loaded, section, saved, onSaved, onNavigate }: { readonly load
   const [invalid, setInvalid] = useState<string | null>(null);
   const [slug, setSlug] = useState(celebration.slug);
   const [previewing, setPreviewing] = useState(false);
+  const [attempted, setAttempted] = useState(false);
   const slugEditable = celebration.status === "DRAFT";
   const slugIssue = slugEditable && slug !== celebration.slug ? slugProblem(slug) : null;
   const text = (key: string): string => asText(draft[key]);
@@ -183,6 +185,21 @@ function Editor({ loaded, section, saved, onSaved, onNavigate }: { readonly load
     const next: Draft = { ...draft, ...compacted, ...(unchangedDate ? {} : { eventDate: date.value }), ...(unchangedSchedule ? {} : { schedule: items.value }) };
     return { ok: true, patch: contentPatch(celebration.content, next), slugChanged: slugEditable && slug !== celebration.slug, content: next };
   };
+  /**
+   * What the event type needs to publish and is still empty, by field (`hosts.ROLE` for a host). Saving is refused while
+   * any is missing: an invitation is never stored half filled "just because".
+   */
+  const requiredMissing = (): string[] => {
+    const required = eventType?.requiredFieldsForPublish ?? ["title"];
+    return [...new Set(["title", ...required])].filter((field) => {
+      if (field === "eventDate") return !eventDate.date.trim() || !eventDate.time.trim();
+      if (field.startsWith(HOST_PREFIX)) return !asText(hosts[field.slice(HOST_PREFIX.length)]).trim();
+      return !text(field).trim();
+    });
+  };
+  const requiredLabel = (field: string): string => (field.startsWith(HOST_PREFIX) ? eventType?.hostRoles.find((role) => role.role === field.slice(HOST_PREFIX.length))?.label ?? field : field === "eventDate" ? `${t("host.onboarding.dateLabel")} / ${t("host.onboarding.timeLabel")}` : field === "title" ? t("host.editor.general.title") : field === "venueName" ? t("host.editor.general.venueName") : fieldLabel(t, field));
+  const lacking = attempted ? requiredMissing() : [];
+  const need = (field: string): { readonly error?: string } => (lacking.includes(field) ? { error: t("host.onboarding.required") } : {});
   const current = plan();
   const dirty = !current.ok || Object.keys(current.patch).length > 0 || current.slugChanged;
 
@@ -190,6 +207,9 @@ function Editor({ loaded, section, saved, onSaved, onNavigate }: { readonly load
     setInvalid(null);
     const result = plan();
     if (!result.ok) { setInvalid(result.message); return; }
+    const absent = requiredMissing();
+    setAttempted(absent.length > 0);
+    if (absent.length) { setInvalid(t("host.limits.requiredMissing", { fields: absent.map(requiredLabel).join(", ") })); return; }
     if (!Object.keys(result.patch).length && !result.slugChanged) { onSaved(true); return; }
     onSaved(false);
     once((release) => { mutation.mutateAsync({ target: celebration, patch: { ...(result.slugChanged ? { slug } : {}), ...(Object.keys(result.patch).length ? { content: result.patch } : {}) } }).then(() => onSaved(true), () => undefined).finally(release); });
@@ -199,15 +219,15 @@ function Editor({ loaded, section, saved, onSaved, onNavigate }: { readonly load
   const bodies: Readonly<Record<EditorSection, () => ReactNode>> = {
     general: () => (
       <Part section="general">
-        <Field label={t("host.editor.general.title")} value={text("title")} {...limitError(t, text("title"), LIMITS.title)} onChange={(value) => set("title", value)} testID="field-title" />
+        <Field label={t("host.editor.general.title")} value={text("title")} {...need("title")} {...limitError(t, text("title"), LIMITS.title)} onChange={(value) => set("title", value)} testID="field-title" />
         <Field label={t("host.editor.general.subtitle")} value={text("subtitle")} {...limitError(t, text("subtitle"), LIMITS.subtitle)} onChange={(value) => set("subtitle", value)} />
-        <View style={styles.row}>
-          <View style={{ flexGrow: 1, flexBasis: FIELD_BASIS }}><DateInput label={t("host.onboarding.dateLabel")} value={eventDate.date} onChange={(value) => setEventDate((existing) => ({ ...existing, date: value }))} testID="field-event-date" /></View>
-          <View style={{ flexGrow: 1, flexBasis: TIME_BASIS }}><TimeInput label={t("host.onboarding.timeLabel")} value={eventDate.time} onChange={(value) => setEventDate((existing) => ({ ...existing, time: value }))} testID="field-event-time" /></View>
+        <View style={[styles.row, { alignItems: "flex-start" }]}>
+          <View style={{ flexGrow: 1, flexBasis: FIELD_BASIS }}><DateInput label={t("host.onboarding.dateLabel")} value={eventDate.date} onChange={(value) => setEventDate((existing) => ({ ...existing, date: value }))} testID="field-event-date" {...(lacking.includes("eventDate") && !eventDate.date.trim() ? { error: t("host.onboarding.dateInvalid") } : {})} /></View>
+          <View style={{ flexGrow: 1, flexBasis: TIME_BASIS }}><TimeInput label={t("host.onboarding.timeLabel")} value={eventDate.time} onChange={(value) => setEventDate((existing) => ({ ...existing, time: value }))} testID="field-event-time" {...(lacking.includes("eventDate") && !eventDate.time.trim() ? { error: t("host.onboarding.timeInvalid") } : {})} /></View>
         </View>
         <Text style={styles.muted}>{t("host.editor.schedule.zoneHelp", { timeZone: celebration.timeZone })}</Text>
-        <Field label={t("host.editor.general.venueName")} value={text("venueName")} {...limitError(t, text("venueName"), LIMITS.venueName)} onChange={(value) => set("venueName", value)} />
-        {extraFields(eventType).map((field) => <Field key={field} label={fieldLabel(t, field)} value={text(field)} {...limitError(t, text(field), LIMITS.extraField)} onChange={(value) => set(field, value)} />)}
+        <Field label={t("host.editor.general.venueName")} value={text("venueName")} {...need("venueName")} {...limitError(t, text("venueName"), LIMITS.venueName)} onChange={(value) => set("venueName", value)} />
+        {extraFields(eventType).map((field) => <Field key={field} label={fieldLabel(t, field)} value={text(field)} {...need(field)} {...limitError(t, text(field), LIMITS.extraField)} onChange={(value) => set(field, value)} />)}
         <Field label={t("host.editor.general.slug")} value={slug} onChange={(value) => setSlug(value.toLowerCase())} testID="slug"
           help={slugEditable ? t("host.onboarding.slugHelp", { url: `/c/${slug}` }) : t("host.editor.general.slugLocked")} {...(slugIssue ? { error: t(`host.limits.slug${slugIssue === "length" ? "Length" : "Pattern"}`) } : {})} />
       </Part>
@@ -215,7 +235,7 @@ function Editor({ loaded, section, saved, onSaved, onNavigate }: { readonly load
     anfitriones: () => (
       <Part section="anfitriones">
         <Text style={styles.muted}>{t("host.editor.hosts.help", { eventType: eventType?.name ?? celebration.eventTypeCode })}</Text>
-        {(eventType?.hostRoles ?? []).map((role) => <Field key={role.role} label={role.label} value={asText(hosts[role.role])} {...limitError(t, asText(hosts[role.role]), LIMITS.hostName)} onChange={(value) => set("hosts", { ...hosts, [role.role]: value })} />)}
+        {(eventType?.hostRoles ?? []).map((role) => <Field key={role.role} label={role.label} value={asText(hosts[role.role])} {...need(`${HOST_PREFIX}${role.role}`)} {...limitError(t, asText(hosts[role.role]), LIMITS.hostName)} onChange={(value) => set("hosts", { ...hosts, [role.role]: value })} />)}
       </Part>
     ),
     lugares: () => (
