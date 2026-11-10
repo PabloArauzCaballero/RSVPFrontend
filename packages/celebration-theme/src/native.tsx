@@ -134,7 +134,7 @@ function Page(props: NativeRendererProps): ReactNode {
           {content.hosts.length && !hostsInTitle ? <Text style={s.hosts}>{content.hosts.map((host) => host.name).join(" & ")}</Text> : null}
           <View style={s.rule} />
           {content.eventDate ? <Text style={s.date}>{formatDate(content.eventDate, props.view.timeZone, props.view.locale)}</Text> : null}
-          {content.venueName ? <Text style={[s.muted, { opacity: 0.85 }]}>{content.venueName}</Text> : null}
+          {content.venueName ? <Text style={s.muted}>{content.venueName}</Text> : null}
           {days !== null ? <View style={s.pill}><Text style={s.pillText}>{props.t(days ? "celebration.hero.countdown" : "celebration.hero.today", { count: days })}</Text></View> : null}
         </View>
       </View>
