@@ -33,7 +33,7 @@ describe("REQ-F14-03 · verification queue", () => {
     renderApp(<VerificationScreen onNavigate={navigate} />, client, ADMIN);
     expect(await screen.findByText("Foto Altiplano")).toBeTruthy();
     expect(screen.getByText("Catering Sol")).toBeTruthy();
-    expect(screen.getAllByText(/Enviado el .*2026.* UTC/)).toHaveLength(2);
+    expect(screen.getAllByText(/Enviado el .*2026/)).toHaveLength(2);
     fireEvent.click(screen.getByRole("button", { name: "Verificar a Foto Altiplano" }));
     expect(await screen.findByText("Proveedor actualizado.")).toBeTruthy();
     await waitFor(() => expect(screen.queryByText("Foto Altiplano")).toBeNull());
@@ -43,7 +43,8 @@ describe("REQ-F14-03 · verification queue", () => {
   it("rejecting needs a reason: empty is refused in place, then the reason is sent", async () => {
     const { client, calls } = fakeClient({ ...queue(PROVIDERS), "POST /providers/p-2/reject": () => ({}) });
     renderApp(<VerificationScreen onNavigate={navigate} />, client, ADMIN);
-    fireEvent.click(await screen.findByRole("button", { name: "Rechazar a Catering Sol" }));
+    fireEvent.click((await screen.findAllByRole("button", { name: "Otras acciones" }))[1]!);
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Rechazar a Catering Sol" }));
     fireEvent.click(screen.getByRole("button", { name: "Rechazar" }));
     expect(await screen.findByText(/Escribe el motivo: queda/)).toBeTruthy();
     expect(calls.some((call) => call.method === "POST")).toBe(false);
@@ -80,14 +81,17 @@ describe("REQ-F14-03 · verification queue", () => {
     second.unmount();
     const down = fakeClient({ "GET /providers/admin/verification-queue": () => new HttpFailure(503) });
     renderApp(<VerificationScreen onNavigate={navigate} />, down.client, ADMIN);
-    expect(await screen.findByText(/No se pudo completar la acción/)).toBeTruthy();
+    expect(await screen.findByText(/El servicio no está disponible por ahora/)).toBeTruthy();
     expect(screen.getByTestId("admin-retry")).toBeTruthy();
   });
 
   it("shows a loading indicator while the queue is pending", () => {
     const { client } = fakeClient({ "GET /providers/admin/verification-queue": () => new Promise(() => undefined) });
     renderApp(<VerificationScreen onNavigate={navigate} />, client, ADMIN);
-    expect(screen.getByLabelText("Cargando…")).toBeTruthy();
+    // The skeleton has the shape of the rows and announces the loading as a busy status region.
+    const status = screen.getByRole("status");
+    expect(status.getAttribute("aria-busy")).toBe("true");
+    expect(within(status).getByText("Cargando…")).toBeTruthy();
   });
 });
 
@@ -104,7 +108,8 @@ describe("REQ-F14-04 · moderation of microsites and external gifts", () => {
     expect(screen.getByText(/Regalo externo/)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Aprobar Sitio de Foto Altiplano" }));
     expect(await screen.findByText("Decisión registrada.")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Rechazar Licuadora en tienda externa" }));
+    fireEvent.click(screen.getAllByRole("button", { name: "Otras acciones" }).at(-1)!);
+    fireEvent.click(screen.getByRole("menuitem", { name: "Rechazar Licuadora en tienda externa" }));
     fireEvent.click(screen.getByRole("button", { name: "Rechazar" }));
     expect(await screen.findByText(/Escribe el motivo: queda/)).toBeTruthy();
     type("Motivo", "El enlace no es una tienda");
@@ -174,17 +179,30 @@ describe("REQ-F14-01 · categories, geography, users, organizations", () => {
     expect(await screen.findByText(/Todavía no hay categorías/)).toBeTruthy();
   });
 
-  it("geography: a city needs its parent; country does not", async () => {
-    const { client, calls } = fakeClient({ "GET /providers/admin/geography": () => ({ items: [{ code: "BO", kind: "COUNTRY", parentCode: null, names: { "es-BO": "Bolivia" }, active: true }] }), "PUT /providers/admin/geography/LAPAZ": (call) => call.body });
+  it("geography: a city is a lowercase slug with a parent and coordinates; the country is read-only", async () => {
+    const { client, calls } = fakeClient({ "GET /providers/admin/geography": () => ({ items: [{ code: "BO", kind: "COUNTRY", parentCode: null, names: { "es-BO": "Bolivia" }, active: true }] }), "PUT /providers/admin/geography/santa-cruz": (call) => call.body });
     renderApp(<GeographyScreen onNavigate={navigate} />, client, ADMIN);
     expect(await screen.findByText(/Bolivia · País · Activo/)).toBeTruthy();
-    type("Código", "lapaz"); type("Nombre (es-BO)", "La Paz");
+    type("Código", "Santa-Cruz"); type("Nombre (es-BO)", "Santa Cruz");
     fireEvent.click(screen.getByTestId("save-geo"));
     expect(await screen.findByText("Indica a qué ubicación pertenece.")).toBeTruthy();
-    type("Código de la ubicación superior", "bo");
+    type("Código de la ubicación superior", "sc");
+    fireEvent.click(screen.getByTestId("save-geo"));
+    expect(await screen.findByText("Una ciudad nueva necesita latitud y longitud válidas.")).toBeTruthy();
+    expect(calls.some((call) => call.method === "PUT")).toBe(false);
+    type("Latitud (-90 a 90)", "-17.78"); type("Longitud (-180 a 180)", "-63.18");
     fireEvent.click(screen.getByTestId("save-geo"));
     expect(await screen.findByText("Guardado.")).toBeTruthy();
-    expect(calls.find((call) => call.method === "PUT")?.body).toMatchObject({ kind: "CITY", parentCode: "BO", names: { "es-BO": "La Paz" } });
+    expect(calls.find((call) => call.method === "PUT")?.body).toMatchObject({ kind: "CITY", parentCode: "SC", names: { "es-BO": "Santa Cruz" }, latitude: -17.78, longitude: -63.18 });
+  });
+
+  it("geography: editing the country shows it read-only and sends nothing", async () => {
+    const { client, calls } = fakeClient({ "GET /providers/admin/geography": () => ({ items: [{ code: "BO", kind: "COUNTRY", parentCode: null, names: { "es-BO": "Bolivia" }, active: true }] }) });
+    renderApp(<GeographyScreen onNavigate={navigate} />, client, ADMIN);
+    fireEvent.click(await screen.findByRole("button", { name: "Editar Bolivia" }));
+    expect(await screen.findByText("El país no se puede modificar.")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("save-geo"));
+    expect(calls.some((call) => call.method === "PUT")).toBe(false);
   });
 
   it("geography: 403 for a non-authorised API answer", async () => {
@@ -240,14 +258,14 @@ describe("E1 · platform summary on the dashboard", () => {
       "GET /celebrations/admin/event-types": () => ({ items: [] }), "GET /media/admin/templates": () => ({ items: [] })
     });
     renderApp(<DashboardScreen onNavigate={navigate} />, client, ADMIN);
-    expect(await screen.findByText("Verificado: 4")).toBeTruthy();
-    expect(screen.getByText("En verificación: 1")).toBeTruthy();
-    expect(screen.getByText("Ofertas publicadas: 9")).toBeTruthy();
-    expect(screen.getByText("Leads válidos (30 días): 12")).toBeTruthy();
-    expect(screen.getByText("Reservas confirmadas: 5")).toBeTruthy();
-    expect(await screen.findByText("Cuentas: 25")).toBeTruthy();
-    expect(screen.getByText("Cuentas con rol HOST: 20")).toBeTruthy();
-    expect(screen.getByText("Organizaciones: 3")).toBeTruthy();
+    expect(await screen.findByLabelText("Verificado: 4")).toBeTruthy();
+    expect(screen.getByLabelText("En verificación: 1")).toBeTruthy();
+    expect(screen.getByLabelText("Ofertas publicadas: 9")).toBeTruthy();
+    expect(screen.getByLabelText("Leads válidos (30 días): 12")).toBeTruthy();
+    expect(screen.getByLabelText("Reservas confirmadas: 5")).toBeTruthy();
+    expect(await screen.findByLabelText("Cuentas: 25")).toBeTruthy();
+    expect(screen.getByLabelText("Cuentas con rol HOST: 20")).toBeTruthy();
+    expect(screen.getByLabelText("Organizaciones: 3")).toBeTruthy();
     expect(calls.filter((call) => call.path.endsWith("/summary")).map((call) => call.path).sort()).toEqual(["/identity/admin/summary", "/providers/admin/summary"]);
   });
 
@@ -257,9 +275,9 @@ describe("E1 · platform summary on the dashboard", () => {
       "GET /celebrations/admin/event-types": () => ({ items: [] }), "GET /media/admin/templates": () => ({ items: [] })
     });
     renderApp(<DashboardScreen onNavigate={navigate} />, client, ADMIN);
-    expect(await screen.findByText("Verificado: 4")).toBeTruthy();
+    expect(await screen.findByLabelText("Verificado: 4")).toBeTruthy();
     expect((await screen.findAllByText(/no tienes permiso|Acceso denegado|permiso/i)).length).toBeGreaterThan(0);
-    expect(screen.queryByText("Cuentas: 25")).toBeNull();
+    expect(screen.queryByLabelText("Cuentas: 25")).toBeNull();
   });
 
   it("HOST never triggers the summary requests", () => {

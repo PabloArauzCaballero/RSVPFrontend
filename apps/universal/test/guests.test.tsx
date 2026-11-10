@@ -11,7 +11,7 @@ import { notificationTarget } from "../src/host/guests/notification-target";
 import { PreferencesScreen } from "../src/host/guests/preferences-screen";
 import { ReportScreen } from "../src/host/guests/report-screen";
 import { RequestsScreen } from "../src/host/guests/requests-screen";
-import { SummaryScreen } from "../src/host/guests/summary-screen";
+import { nextStep, SummaryScreen } from "../src/host/guests/summary-screen";
 import { PushPermissionsScreen } from "../src/push/permissions-screen";
 import { enablePush } from "../src/push/register";
 import { clipboard } from "./stubs/expo-clipboard";
@@ -44,10 +44,10 @@ describe("REQ-F16-01 · C19 guest list (read model, search, filter, paging, stat
     renderApp(<GuestListScreen celebrationId={id} onNavigate={navigate} />, client);
     expect(await screen.findByLabelText("Abrir a Ana Pérez")).toBeTruthy();
     expect(screen.getByLabelText("Abrir a Beto Ramos")).toBeTruthy();
-    fireEvent.click(screen.getByRole("radio", { name: "Confirmó" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Filtrar por respuesta" }), { target: { value: "CONFIRMED" } });
     await waitFor(() => expect(screen.queryByLabelText("Abrir a Beto Ramos")).toBeNull());
     expect(mock.state.log.some((call) => call.path.includes("status=CONFIRMED"))).toBe(true);
-    fireEvent.click(screen.getByRole("radio", { name: "Todos" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Filtrar por respuesta" }), { target: { value: "ALL" } });
     fireEvent.change(screen.getByTestId("guest-search"), { target: { value: "carla" } });
     expect(await screen.findByLabelText("Abrir a Carla Vega")).toBeTruthy();
     await waitFor(() => expect(screen.queryByLabelText("Abrir a Ana Pérez")).toBeNull());
@@ -69,17 +69,22 @@ describe("REQ-F16-01 · C19 guest list (read model, search, filter, paging, stat
   it("empty, filtered-empty, error with retry, and 403", async () => {
     const empty = world();
     const view = renderApp(<GuestListScreen celebrationId={empty.id} onNavigate={navigate} />, empty.client);
-    expect(await screen.findByText(/Todavía no hay invitados/)).toBeTruthy();
+    expect(await screen.findByText("Aquí verás quién viene")).toBeTruthy();
+    expect(screen.queryByTestId("guest-search")).toBeNull();
     fireEvent.click(screen.getByTestId("add-guest"));
     expect(navigate).toHaveBeenCalledWith(`/invitados/nuevo?c=${empty.id}`);
-    fireEvent.change(screen.getByTestId("guest-search"), { target: { value: "zzz" } });
-    expect(await screen.findByText("Ningún invitado coincide con esta búsqueda.")).toBeTruthy();
     view.unmount();
+
+    const some = world((m) => { m.addGuest({ name: "Ana Pérez" }); });
+    const filtered = renderApp(<GuestListScreen celebrationId={some.id} onNavigate={navigate} />, some.client);
+    fireEvent.change(await screen.findByTestId("guest-search"), { target: { value: "zzz" } });
+    expect(await screen.findByText(/No encontramos a nadie con esa búsqueda/)).toBeTruthy();
+    filtered.unmount();
 
     const broken = world((m) => { m.state.failNext.push({ status: 503, body: { type: "x", title: "down", status: 503 }, headers: { "content-type": "application/problem+json" } }); });
     renderApp(<GuestListScreen celebrationId={broken.id} onNavigate={navigate} />, broken.client);
     fireEvent.click(await screen.findByRole("button", { name: "Reintentar" }));
-    expect(await screen.findByText(/Todavía no hay invitados/)).toBeTruthy();
+    expect(await screen.findByText("Aquí verás quién viene")).toBeTruthy();
   });
 
   it("403: a reader of the celebration (not a manager) sees the system's no-permission notice and no list calls", async () => {
@@ -117,7 +122,8 @@ describe("REQ-F16-02 · C20 add one guest", () => {
     type("Correo electrónico", "luz@example.com");
     type("Acompañantes permitidos", "2");
     fireEvent.click(screen.getByTestId("save-guest"));
-    expect(await screen.findByText("Invitado agregado.")).toBeTruthy();
+    expect(await screen.findByText(/ya está en tu lista/)).toBeTruthy();
+    expect(screen.getByText("Ya tienes a tu primer invitado")).toBeTruthy();
     expect(mock.state.log.find((call) => call.method === "POST")).toMatchObject({ path: `/guests/celebrations/${id}/guests`, body: { name: "Luz Mamani", email: "luz@example.com", allowedCompanions: 2 } });
     expect(mock.listGuests()[0]?.name).toBe("Luz Mamani");
   });
@@ -134,7 +140,7 @@ describe("REQ-F16-02 · C20 add one guest", () => {
     expect(await screen.findByText(/Escribe el teléfono con código de país/)).toBeTruthy();
     type("Teléfono (WhatsApp)", "+591 7123-4567");
     fireEvent.click(screen.getByTestId("save-guest"));
-    expect(await screen.findByText("Invitado agregado.")).toBeTruthy();
+    expect(await screen.findByText(/ya está en tu lista/)).toBeTruthy();
     expect(mock.state.log.find((call) => call.method === "POST")?.body).toMatchObject({ name: "Sin contacto", phone: "+59171234567" });
     expect(mock.state.log.find((call) => call.method === "POST")?.body).not.toHaveProperty("email");
   });
@@ -151,9 +157,9 @@ describe("REQ-F16-03 · C21 CSV import with per-line report", () => {
     fireEvent.change(screen.getByTestId("csv-input"), { target: { value: csv } });
     fireEvent.click(screen.getByTestId("run-import"));
     expect((await screen.findByTestId("import-summary")).textContent).toBe("1 importados, 3 con error, de 4 filas.");
-    expect(within(screen.getByTestId("import-error-3")).getByText("Línea 3 · Campo: name")).toBeTruthy();
-    expect(within(screen.getByTestId("import-error-4")).getByText("Email is invalid")).toBeTruthy();
-    expect(within(screen.getByTestId("import-error-5")).getByText("Must be a non-negative integer")).toBeTruthy();
+    expect(within(screen.getByTestId("import-error-3")).getByText("Línea 3 · Campo: nombre")).toBeTruthy();
+    expect(within(screen.getByTestId("import-error-4")).getByText("El correo no es válido.")).toBeTruthy();
+    expect(within(screen.getByTestId("import-error-5")).getByText("Los acompañantes son un número entero, de 0 en adelante.")).toBeTruthy();
     expect(mock.listGuests().map((guest) => guest.name)).toEqual(["Ana"]);
   });
 
@@ -185,15 +191,15 @@ describe("REQ-F16-04 · C22 groups (contract v1.9.0)", () => {
     await screen.findByTestId("guest-name");
     type("Nombre", "Nuevo");
     type("Correo electrónico", "nuevo@example.com");
-    fireEvent.click(await screen.findByRole("radio", { name: "Familia Quispe" }));
+    fireEvent.change(await screen.findByRole("combobox", { name: "Grupo familiar" }), { target: { value: groupId } });
     fireEvent.click(screen.getByTestId("save-guest"));
-    await screen.findByText("Invitado agregado.");
+    await screen.findByText(/ya está en tu lista/);
     expect(mock.state.log.filter((call) => call.method === "POST").at(-1)?.body).toMatchObject({ groupId });
     expect(mock.state.groups.get(groupId)?.memberIds).toHaveLength(1);
     cleanup();
 
     renderApp(<GuestDetailScreen celebrationId={id} guestId="00000000-0000-4000-8000-0000000000aa" onNavigate={navigate} />, client);
-    fireEvent.click(await screen.findByRole("radio", { name: "Familia Quispe (1)" }));
+    fireEvent.change(await screen.findByRole("combobox", { name: "Grupo familiar" }), { target: { value: groupId } });
     expect(await screen.findByText("Grupo actualizado.")).toBeTruthy();
     expect(mock.state.log.find((call) => call.method === "PATCH")).toMatchObject({ path: `/guests/celebrations/${id}/guests/00000000-0000-4000-8000-0000000000aa`, body: { groupId } });
     expect(mock.state.groups.get(groupId)?.memberIds).toHaveLength(2);
@@ -233,6 +239,7 @@ describe("REQ-F16-05/06 · C23 detail and personal link", () => {
     await detail(mock, client, "00000000-0000-4000-8000-0000000000aa");
     fireEvent.click(screen.getByTestId("issue-link"));
     await screen.findByTestId("masked-link");
+    fireEvent.click(screen.getByTestId("guest-more"));
     fireEvent.click(screen.getByTestId("revoke-link"));
     expect(await screen.findByText("¿Revocar este enlace?")).toBeTruthy();
     expect(mock.state.log.some((call) => call.method === "DELETE")).toBe(false);
@@ -248,7 +255,8 @@ describe("REQ-F16-05/06 · C23 detail and personal link", () => {
     fireEvent.click(screen.getByTestId("issue-link"));
     await screen.findByTestId("masked-link");
     const first = mock.listGuests()[0]!.token;
-    fireEvent.click(screen.getByRole("button", { name: "Reemitir enlace" }));
+    fireEvent.click(screen.getByTestId("guest-more"));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Reemitir enlace" }));
     expect(await screen.findByText("¿Reemitir el enlace?")).toBeTruthy();
     fireEvent.click(within(screen.getByRole("alert")).getByRole("button", { name: "Reemitir enlace" }));
     await waitFor(() => expect(mock.listGuests()[0]!.token).not.toBe(first));
@@ -257,7 +265,7 @@ describe("REQ-F16-05/06 · C23 detail and personal link", () => {
   it("unknown guest: 404 reads as not found", async () => {
     const { mock, client } = world();
     renderApp(<GuestDetailScreen celebrationId={mock.celebrationId} guestId="00000000-0000-4000-8000-00000000ffff" onNavigate={navigate} />, client);
-    expect(await screen.findByText(/No encontramos esta celebración o no tienes acceso/)).toBeTruthy();
+    expect(await screen.findByText(/No encontramos a este invitado/)).toBeTruthy();
   });
 });
 
@@ -273,18 +281,22 @@ describe("REQ-F17-01/04/06 · C6 summary shows the backend numbers and how fresh
     expect(screen.getByTestId("count-declined").getAttribute("aria-label")).toBe("No asisten: 1");
     expect(screen.getByTestId("count-companions").getAttribute("aria-label")).toBe("Acompañantes: 2");
     expect(screen.getByTestId("count-total").getAttribute("aria-label")).toBe("Invitados: 4");
-    expect(screen.getByText("5 días para cerrar las respuestas")).toBeTruthy();
-    expect(await screen.findByText("1 solicitudes de acompañantes por revisar")).toBeTruthy();
+    expect(screen.getByText("Quedan 5 días para cerrar las respuestas")).toBeTruthy();
+    // The celebration is still a draft: publishing comes first, and the open request stays visible as a line.
+    expect(await screen.findByText("1 solicitud de acompañantes por revisar")).toBeTruthy();
     expect(screen.getByText(/Actualizado/)).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Revisar solicitudes" }));
-    expect(navigate).toHaveBeenCalledWith(`/bandeja/acompanantes?c=${id}`);
+    // Inicio is headed by the celebration's own name, not a generic "Tu celebración" (the name is not repeated on other screens).
+    expect(screen.queryByRole("heading", { name: "Tu celebración" })).toBeNull();
+    expect(within(screen.getByTestId("next-step")).getByText("Publica tu invitación")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("next-step-action"));
+    expect(navigate).toHaveBeenCalledWith(`/publicar?c=${id}`);
     expect(mock.state.log.every((call) => call.method === "GET")).toBe(true);
   });
 
   it("says out loud when the projection lags or is stale (eventual consistency)", async () => {
     const lag = world((m) => { m.addGuest({ name: "A" }); m.state.pendingEvents = 3; });
     const view = renderApp(<SummaryScreen celebrationId={lag.id} onNavigate={navigate} />, lag.client);
-    expect(await screen.findByText("Los datos pueden tardar unos segundos en reflejar los últimos cambios (3 pendientes de procesar).")).toBeTruthy();
+    expect(await screen.findByText("Los últimos cambios pueden tardar unos segundos en verse (3 por procesar).")).toBeTruthy();
     view.unmount();
     const stale = world((m) => { m.addGuest({ name: "A" }); m.state.pendingEvents = 3; m.state.stale = true; });
     renderApp(<SummaryScreen celebrationId={stale.id} onNavigate={navigate} />, stale.client);
@@ -294,12 +306,12 @@ describe("REQ-F17-01/04/06 · C6 summary shows the backend numbers and how fresh
   it("empty celebration explains itself; error offers retry", async () => {
     const empty = world();
     const view = renderApp(<SummaryScreen celebrationId={empty.id} onNavigate={navigate} />, empty.client);
-    expect(await screen.findByText("Cuando agregues invitados verás aquí cuántos confirmaron.")).toBeTruthy();
+    expect(await screen.findByText("Cuando agregues invitados verás aquí quién responde")).toBeTruthy();
     view.unmount();
     const broken = world((m) => { m.state.failNext.push({ status: 500, body: { type: "x", title: "boom", status: 500 }, headers: { "content-type": "application/problem+json" } }); });
     renderApp(<SummaryScreen celebrationId={broken.id} onNavigate={navigate} />, broken.client);
     fireEvent.click(await screen.findByRole("button", { name: "Reintentar" }));
-    expect(await screen.findByText("Cuando agregues invitados verás aquí cuántos confirmaron.")).toBeTruthy();
+    expect(await screen.findByText("Cuando agregues invitados verás aquí quién responde")).toBeTruthy();
   });
 
   it("the guest who confirms through the public link shows up in the host's count after a refresh (slice: confirm → count, no duplicates)", async () => {
@@ -313,6 +325,40 @@ describe("REQ-F17-01/04/06 · C6 summary shows the backend numbers and how fresh
     fireEvent.click(screen.getByRole("button", { name: "Actualizar" }));
     await waitFor(() => expect(screen.getByTestId("count-confirmed").getAttribute("aria-label")).toBe("Confirmados: 1"));
     expect(screen.getByTestId("count-total").getAttribute("aria-label")).toBe("Invitados: 1");
+  });
+});
+
+describe("Inicio · the next best step", () => {
+  const base = { published: true, ready: null, missing: 0, total: 5, pending: 0, openRequests: 0, pendingGifts: 0 } as const;
+  it("picks exactly one step, in the order of the brief", () => {
+    expect(nextStep({ ...base, published: false })).toEqual({ kind: "publish" });
+    expect(nextStep({ ...base, published: false, ready: true })).toEqual({ kind: "publish" });
+    expect(nextStep({ ...base, published: false, ready: false, missing: 2 })).toEqual({ kind: "finish", missing: 2 });
+    expect(nextStep({ ...base, total: 0 })).toEqual({ kind: "addGuests" });
+    expect(nextStep({ ...base, openRequests: 3, pendingGifts: 1, pending: 2 })).toEqual({ kind: "requests", count: 3 });
+    expect(nextStep({ ...base, pendingGifts: 1, pending: 2 })).toEqual({ kind: "gifts", count: 1 });
+    expect(nextStep({ ...base, pending: 2 })).toEqual({ kind: "pending", count: 2 });
+    expect(nextStep(base)).toEqual({ kind: "done" });
+  });
+
+  it("a published celebration with nobody on the list asks for the first guests; one with open requests asks to review them", async () => {
+    const empty = world();
+    const published = { ...empty.celebration, status: "PUBLISHED" as const };
+    const emptyClient = contractClient(empty.mock, published).client;
+    const view = renderApp(<SummaryScreen celebrationId={empty.id} onNavigate={navigate} />, emptyClient);
+    expect(await screen.findByText("Aquí verás quién viene")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("next-step-action"));
+    expect(navigate).toHaveBeenCalledWith(`/invitados/nuevo?c=${empty.id}`);
+    view.unmount();
+
+    const busy = world((m) => {
+      m.addGuest({ name: "A", status: "CONFIRMED" }); m.addGuest({ name: "B" });
+      m.state.requests.set("r1", { id: "r1", guestId: "x", requestedCompanions: 4, allowedCompanions: 1, status: "PENDING_REVIEW", createdAt: NOW.toISOString(), resolvedAt: null });
+    });
+    renderApp(<SummaryScreen celebrationId={busy.id} onNavigate={navigate} />, contractClient(busy.mock, { ...busy.celebration, status: "PUBLISHED" }).client);
+    expect(await screen.findByText("Revisa 1 solicitud")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("next-step-action"));
+    expect(navigate).toHaveBeenLastCalledWith(`/bandeja/acompanantes?c=${busy.id}`);
   });
 });
 
@@ -331,7 +377,7 @@ describe("REQ-F17-03 · C26 companion requests", () => {
     fireEvent.click(screen.getByTestId("approve-req-1"));
     expect(await screen.findByText("Solicitud aprobada.")).toBeTruthy();
     expect(mock.state.log.find((call) => call.method === "POST")).toMatchObject({ path: `/guests/celebrations/${id}/companion-requests/req-1/decision`, body: { decision: "APPROVED" } });
-    await waitFor(() => expect(screen.getByText("No hay solicitudes pendientes.")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("Todo al día")).toBeTruthy());
     expect(mock.listGuests()[0]?.approvedCompanions).toBe(4);
   });
 
@@ -350,13 +396,13 @@ describe("REQ-F17-03 · C26 companion requests", () => {
     mock.state.requests.get("req-1")!.status = "REJECTED";
     fireEvent.click(screen.getByTestId("approve-req-1"));
     expect(await screen.findByText("Esta solicitud ya estaba resuelta o cambió. Actualizamos la lista.")).toBeTruthy();
-    await waitFor(() => expect(screen.getByText("No hay solicitudes pendientes.")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("Todo al día")).toBeTruthy());
   });
 
   it("empty inbox", async () => {
     const { client, id } = world();
     renderApp(<RequestsScreen celebrationId={id} onNavigate={navigate} />, client);
-    expect(await screen.findByText("No hay solicitudes pendientes.")).toBeTruthy();
+    expect(await screen.findByText("Todo al día")).toBeTruthy();
   });
 });
 
@@ -369,9 +415,9 @@ describe("REQ-F17-02/05 · C24 report and safe CSV export", () => {
     });
     renderApp(<ReportScreen celebrationId={id} onNavigate={navigate} />, client);
     expect(await screen.findByText("Dieta: +cmd|' /C calc'!A0")).toBeTruthy();
-    fireEvent.click(screen.getByRole("radio", { name: "Confirmó" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Filtrar por respuesta" }), { target: { value: "CONFIRMED" } });
     await waitFor(() => expect(screen.queryByText("-Sin responder")).toBeNull());
-    fireEvent.click(screen.getByRole("radio", { name: "Todos" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Filtrar por respuesta" }), { target: { value: "ALL" } });
     await screen.findByText("-Sin responder");
     fireEvent.click(screen.getByTestId("export-csv"));
     await waitFor(() => expect(saved.files).toHaveLength(1));
@@ -395,6 +441,7 @@ describe("REQ-F17-02/05 · C24 report and safe CSV export", () => {
       m.addGuest({ name: "Otro", status: "CONFIRMED", dietaryNotes: "Vegetariano", version: 1 });
     });
     renderApp(<ReportScreen celebrationId={id} onNavigate={navigate} />, client);
+    fireEvent.click(await screen.findByTestId("report-more"));
     fireEvent.click(await screen.findByTestId("export-catering"));
     await waitFor(() => expect(saved.files).toHaveLength(1));
     const csv = saved.files[0]!.text;
@@ -408,11 +455,11 @@ describe("REQ-F17-02/05 · C24 report and safe CSV export", () => {
   it("empty report and a failing export say so", async () => {
     const empty = world();
     const view = renderApp(<ReportScreen celebrationId={empty.id} onNavigate={navigate} />, empty.client);
-    expect(await screen.findByText("Todavía no hay respuestas para mostrar.")).toBeTruthy();
+    expect(await screen.findByText("Aquí aparecerán las respuestas")).toBeTruthy();
     view.unmount();
     const { mock, client, id } = world((m) => { m.addGuest({ name: "A" }); });
     renderApp(<ReportScreen celebrationId={id} onNavigate={navigate} />, client);
-    await screen.findByText("A");
+    await screen.findByLabelText("Abrir a A");
     mock.state.failNext.push({ status: 500, body: { type: "x", title: "boom", status: 500 }, headers: { "content-type": "application/problem+json" } });
     fireEvent.click(screen.getByTestId("export-csv"));
     expect(await screen.findByText("No pudimos preparar el archivo. Inténtalo de nuevo.")).toBeTruthy();
@@ -444,6 +491,24 @@ describe("REQ-F18 · notifications center and preferences", () => {
     expect((mock.state.notifications as { readAt: string | null }[]).every((item) => item.readAt !== null)).toBe(true);
   });
 
+  it("mark-all: two taps in the same frame send each read once", async () => {
+    const { mock, client, id } = world((m) => { m.state.notifications.push(notice(1, "rsvp.companion.requested", "2026-12-04T10:00:00Z"), notice(2, "rsvp.confirmed", "2026-12-04T11:00:00Z")); });
+    renderApp(<NotificationsScreen celebrationId={id} onNavigate={navigate} />, client);
+    expect((await screen.findByTestId("unread-count")).textContent).toBe("2 sin leer");
+    fireEvent.click(screen.getByTestId("mark-all")); fireEvent.click(screen.getByTestId("mark-all"));
+    await waitFor(() => expect(screen.getByTestId("unread-count").textContent).toBe("0 sin leer"));
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(mock.state.log.filter((call) => call.method === "POST")).toHaveLength(2);
+  });
+
+  it("known host templates render the app's own copy (the person's language), unknown ones keep the server's text", async () => {
+    const { client, id } = world((m) => { m.state.notifications.push(notice(1, "hostRsvpConfirmed", "2026-12-04T10:00:00Z"), notice(2, "someFutureTemplate", "2026-12-04T09:00:00Z")); });
+    renderApp(<NotificationsScreen celebrationId={id} onNavigate={navigate} />, client);
+    expect((await screen.findAllByText(/Un invitado confirmó|Alguien confirmó que viene/)).length).toBe(2); // subject and body, both from the app
+    expect(screen.queryByText(/Aviso 1/)).toBeNull();
+    expect(screen.getAllByText(/Aviso 2/).length).toBeGreaterThan(0);
+  });
+
   it("helpers: targets never guess", () => {
     expect(notificationTarget("rsvp.companion.requested")).toBe("requests");
     expect(notificationTarget("guest.rsvp.confirmed")).toBe("report");
@@ -453,39 +518,45 @@ describe("REQ-F18 · notifications center and preferences", () => {
   it("empty and error states", async () => {
     const empty = world();
     const view = renderApp(<NotificationsScreen celebrationId={empty.id} onNavigate={navigate} />, empty.client);
-    expect(await screen.findByText("Todavía no tienes avisos.")).toBeTruthy();
+    expect(await screen.findByText("Tu bandeja está tranquila")).toBeTruthy();
+    // A failed inbox read says so and offers the retry; it is reached from the menu's "Actualizar" once the list was loaded.
     view.unmount();
-    const broken = world((m) => { m.state.failNext.push({ status: 503, body: { type: "x", title: "down", status: 503 }, headers: { "content-type": "application/problem+json" } }); });
-    renderApp(<NotificationsScreen celebrationId={broken.id} onNavigate={navigate} />, broken.client);
+    const flaky = world();
+    renderApp(<NotificationsScreen celebrationId={flaky.id} onNavigate={navigate} />, flaky.client);
+    await screen.findByText("Tu bandeja está tranquila");
+    flaky.mock.state.failNext.push({ status: 503, body: { type: "x", title: "down", status: 503 }, headers: { "content-type": "application/problem+json" } });
+    fireEvent.click(screen.getByRole("button", { name: "Más opciones" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Actualizar" }));
     expect(await screen.findByRole("button", { name: "Reintentar" })).toBeTruthy();
   });
 
   it("REQ-F18-03/04 · switching a channel off is written to the backend and read back", async () => {
     const { mock, client, id } = world();
     renderApp(<PreferencesScreen celebrationId={id} onNavigate={navigate} />, client);
-    const pushSwitch = await screen.findByRole("switch", { name: "Notificaciones push" }) as HTMLInputElement;
-    expect(pushSwitch.checked).toBe(true);
+    const pushSwitch = await screen.findByRole("switch", { name: "Notificaciones push" });
+    expect(pushSwitch.getAttribute("aria-checked")).toBe("true");
     fireEvent.click(pushSwitch);
     expect(await screen.findByText("Preferencia guardada.")).toBeTruthy();
     expect(mock.state.preferences["PUSH"]).toBe(false);
     expect(mock.state.log.find((call) => call.method === "PATCH")?.body).toEqual({ channels: { PUSH: false } });
-    await waitFor(() => expect((screen.getByRole("switch", { name: "Notificaciones push" }) as HTMLInputElement).checked).toBe(false));
+    await waitFor(() => expect((screen.getByRole("switch", { name: "Notificaciones push" })).getAttribute("aria-checked")).toBe("false"));
   });
 
   it("REQ-F18-05 · a failed save reverts the switch and says so", async () => {
     const { mock, client, id } = world();
     renderApp(<PreferencesScreen celebrationId={id} onNavigate={navigate} />, client);
-    const email = await screen.findByRole("switch", { name: "Correo electrónico" }) as HTMLInputElement;
+    const email = await screen.findByRole("switch", { name: "Correo electrónico" });
     mock.state.failNext.push({ status: 503, body: { type: "x", title: "down", status: 503 }, headers: { "content-type": "application/problem+json" } });
     fireEvent.click(email);
     expect(await screen.findByText("No se pudo guardar; volvimos al valor anterior.")).toBeTruthy();
-    await waitFor(() => expect((screen.getByRole("switch", { name: "Correo electrónico" }) as HTMLInputElement).checked).toBe(true));
+    await waitFor(() => expect((screen.getByRole("switch", { name: "Correo electrónico" })).getAttribute("aria-checked")).toBe("true"));
     expect(mock.state.preferences["EMAIL"]).toBe(true);
   });
 
   it("REQ-F18-06 · quiet hours are read, validated, saved and restored to the service default", async () => {
     const { mock, client, id } = world();
     renderApp(<PreferencesScreen celebrationId={id} onNavigate={navigate} />, client);
+    fireEvent.click(await screen.findByTestId("prefs-more"));
     expect((await screen.findByTestId("quiet-current")).textContent).toContain("Silencio de 22:00 a 8:00 · Horario del servicio");
     fireEvent.change(screen.getByLabelText("Desde (hora, 0–23)"), { target: { value: "23" } });
     fireEvent.change(screen.getByLabelText("Hasta (hora, 0–23)"), { target: { value: "25" } });
@@ -504,12 +575,12 @@ describe("REQ-F18 · notifications center and preferences", () => {
   it("REQ-F18-03 · event types are switched per type (unlisted means on) and written as eventTypes", async () => {
     const { mock, client, id } = world();
     renderApp(<PreferencesScreen celebrationId={id} onNavigate={navigate} />, client);
-    const toggle = await screen.findByRole("switch", { name: "Un invitado pide más acompañantes" }) as HTMLInputElement;
-    expect(toggle.checked).toBe(true);
+    const toggle = await screen.findByRole("switch", { name: "Un invitado pide más acompañantes" });
+    expect(toggle.getAttribute("aria-checked")).toBe("true");
     fireEvent.click(toggle);
     await waitFor(() => expect(mock.state.eventTypes["companionRequested"]).toBe(false));
     expect(mock.state.log.find((call) => call.method === "PATCH")?.body).toEqual({ eventTypes: { companionRequested: false } });
-    await waitFor(() => expect((screen.getByRole("switch", { name: "Un invitado pide más acompañantes" }) as HTMLInputElement).checked).toBe(false));
+    await waitFor(() => expect((screen.getByRole("switch", { name: "Un invitado pide más acompañantes" })).getAttribute("aria-checked")).toBe("false"));
   });
 });
 
@@ -526,5 +597,99 @@ describe("REQ-F19-01 (code path only) · push permission and device registration
     expect(await screen.findByText(/necesitan un teléfono real/)).toBeTruthy();
     expect(screen.queryByTestId("enable-push")).toBeNull();
     expect(registered).toHaveLength(0);
+  });
+});
+
+describe("Reorganización · una acción primaria arriba a la derecha, secundarias en «⋯», filtros en selector", () => {
+  const ids = (list: readonly HTMLElement[]): string[] => list.map((node) => node.getAttribute("aria-label") ?? node.textContent ?? "");
+
+  it("lista: «Agregar invitado» es la única acción visible y lo demás vive en el menú «Más opciones»", async () => {
+    const { client, id } = world((m) => { m.addGuest({ name: "Ana Pérez" }); });
+    renderApp(<GuestListScreen celebrationId={id} onNavigate={navigate} />, client);
+    await screen.findByLabelText("Abrir a Ana Pérez");
+    expect(screen.getAllByRole("button", { name: "Agregar invitado" })).toHaveLength(1);
+    expect(screen.queryByRole("menuitem")).toBeNull(); // closed: nothing to tab through
+    expect(screen.queryByRole("button", { name: "Importar CSV" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Más opciones" }));
+    expect(ids(screen.getAllByRole("menuitem"))).toEqual(["Importar CSV", "Grupos", "Ajustes de invitados"]);
+    fireEvent.click(screen.getByRole("menuitem", { name: "Grupos" }));
+    expect(navigate).toHaveBeenCalledWith(`/invitados/grupos?c=${id}`);
+    fireEvent.click(screen.getByTestId("add-guest"));
+    expect(navigate).toHaveBeenLastCalledWith(`/invitados/nuevo?c=${id}`);
+  });
+
+  it("lista: la respuesta se filtra con un selector de cuatro opciones, no con fichas", async () => {
+    const { client, id } = world((m) => { m.addGuest({ name: "Ana Pérez" }); });
+    renderApp(<GuestListScreen celebrationId={id} onNavigate={navigate} />, client);
+    const select = await screen.findByRole("combobox", { name: "Filtrar por respuesta" });
+    expect(Array.from((select as HTMLSelectElement).options).map((option) => option.textContent)).toEqual(["Todos", "Sin responder", "Confirmó", "No asistirá"]);
+    expect(screen.queryByRole("radio")).toBeNull();
+  });
+
+  it("respuestas: «Exportar CSV» arriba a la derecha y «Exportar para el catering» en el menú", async () => {
+    const { client, id } = world((m) => { m.addGuest({ name: "Ana Pérez", status: "CONFIRMED", version: 1 }); });
+    renderApp(<ReportScreen celebrationId={id} onNavigate={navigate} />, client);
+    await screen.findByTestId("export-csv");
+    expect(screen.queryByTestId("export-catering")).toBeNull();
+    fireEvent.click(screen.getByTestId("report-more"));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Exportar para el catering" }));
+    await waitFor(() => expect(saved.files.at(-1)?.name).toMatch(/^catering-/));
+    expect(await screen.findByText(/no lleva nombres ni contactos/)).toBeTruthy(); // the note that sat under the old button now rides on the confirmation
+  });
+
+  it("bandeja: «Marcar todos como leídos» es la acción de la cabecera y la fila abre su destino sin botón «Abrir»", async () => {
+    const { client, id } = world((m) => { m.state.notifications.push({ id: "00000000-0000-4000-8000-000000000101", eventId: "00000000-0000-4000-8000-000000000201", channel: "INBOX", template: "hostRsvpConfirmed", locale: "es-BO", status: "SENT", attempts: 1, availableAt: NOW.toISOString(), createdAt: NOW.toISOString(), subject: "x", text: "y", readAt: null } as never); });
+    renderApp(<NotificationsScreen celebrationId={id} onNavigate={navigate} />, client);
+    await screen.findByTestId("unread-count");
+    expect(screen.queryByRole("button", { name: "Abrir" })).toBeNull();
+    expect(screen.getByRole("button", { name: /^Abrir: Un invitado confirmó/ })).toBeTruthy();
+    expect(screen.getAllByTestId("mark-all")).toHaveLength(1);
+  });
+
+  it("acompañantes: el nombre abre la ficha y las dos decisiones son los únicos botones de la tarjeta", async () => {
+    const { client, id } = world((m) => {
+      const guest = m.addGuest({ name: "Marta Quispe", status: "CONFIRMED", requestedCompanions: 4, approvedCompanions: 1, allowedCompanions: 1 });
+      m.state.requests.set("req-1", { id: "req-1", guestId: guest.id, requestedCompanions: 4, allowedCompanions: 1, status: "PENDING_REVIEW", createdAt: NOW.toISOString(), resolvedAt: null });
+    });
+    renderApp(<RequestsScreen celebrationId={id} onNavigate={navigate} />, client);
+    const card = await screen.findByTestId("request-req-1");
+    expect(ids(within(card).getAllByRole("button"))).toEqual(["Abrir invitado", "Aprobar", "Rechazar"]);
+    fireEvent.click(within(card).getByRole("button", { name: "Abrir invitado" }));
+    expect(navigate).toHaveBeenCalledWith(expect.stringMatching(/^\/invitados\/[^?]+\?c=/));
+  });
+
+  it("preferencias: los interruptores no repiten su estado en texto y «Configurar avisos» está en el menú", async () => {
+    const { client, id } = world();
+    renderApp(<PreferencesScreen celebrationId={id} onNavigate={navigate} />, client);
+    await screen.findByRole("switch", { name: "Correo electrónico" });
+    expect(screen.queryByText("Activado")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Más opciones" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Configurar avisos en este dispositivo" }));
+    expect(navigate).toHaveBeenCalledWith(`/permisos-push?c=${id}`);
+  });
+
+  it("ficha: la cabecera pasa de «Generar y copiar enlace» a «Copiar enlace»; reemitir sólo aparece con enlace y revocar/eliminar están en el menú", async () => {
+    const { mock, client } = world((m) => { m.addGuest({ name: "Marta Quispe", id: "00000000-0000-4000-8000-0000000000aa" }); });
+    renderApp(<GuestDetailScreen celebrationId={mock.celebrationId} guestId="00000000-0000-4000-8000-0000000000aa" onNavigate={navigate} />, client);
+    await screen.findByTestId("issue-link");
+    expect(screen.queryByTestId("copy-link")).toBeNull();
+    fireEvent.click(screen.getByTestId("guest-more"));
+    expect(ids(screen.getAllByRole("menuitem"))).toEqual(["Revocar enlace", "Eliminar invitado"]);
+    fireEvent.click(screen.getByTestId("guest-more"));
+    fireEvent.click(screen.getByTestId("issue-link"));
+    await screen.findByTestId("masked-link");
+    expect(screen.queryByTestId("issue-link")).toBeNull();
+    expect(screen.getAllByTestId("copy-link")).toHaveLength(1);
+    fireEvent.click(screen.getByTestId("guest-more"));
+    expect(ids(screen.getAllByRole("menuitem"))).toEqual(["Reemitir enlace", "Revocar enlace", "Eliminar invitado"]);
+  });
+
+  it("inicio: el botón del siguiente paso está en la cabecera y la banda sólo lo explica", async () => {
+    const { client, id } = world((m) => { m.addGuest({ name: "A" }); });
+    renderApp(<SummaryScreen celebrationId={id} onNavigate={navigate} />, client);
+    const band = await screen.findByTestId("next-step");
+    expect(within(band).queryByRole("button")).toBeNull();
+    expect(screen.getAllByTestId("next-step-action")).toHaveLength(1);
+    expect(screen.queryByTestId("step-published")).toBeNull();
   });
 });

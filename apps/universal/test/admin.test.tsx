@@ -6,6 +6,7 @@ import type { EventTypeDefinition, Template, TranslatedEventType } from "@rsvp/q
 import { definitionOf, EventTypesScreen, formOf } from "../src/admin/event-types";
 import { DashboardScreen, OperationsScreen } from "../src/admin/other-screens";
 import { TemplatesAdminScreen } from "../src/admin/templates";
+import { VerificationScreen } from "../src/admin/queues";
 import { OnboardingScreen } from "../src/host/onboarding";
 import { ADMIN, fakeClient, GUEST, HOST, renderApp, TEMPLATES, WEDDING, type Handler } from "./support";
 
@@ -58,6 +59,7 @@ describe("REQ-F14-02 · event type editor", () => {
     fireEvent.click(await screen.findByRole("radio", { name: "Graduación" }));
     fireEvent.click(screen.getByTestId("onboarding-next"));
     type("Graduada o graduado", "Sofía");
+    fireEvent.click(screen.getByTestId("onboarding-next")); // the name and link are the third short step
     type("Nombre de la celebración", "Grado de Sofía");
     fireEvent.click(screen.getByTestId("onboarding-create"));
     await waitFor(() => expect(calls.find((call) => call.method === "POST")?.body).toMatchObject({ eventTypeCode: "GRADUACION", content: { hosts: { GRADUATE: "Sofía" } } }));
@@ -68,9 +70,9 @@ describe("E2, E3, E7, E12", () => {
   it("dashboard counts come from the live lists", async () => {
     const { client } = fakeClient({ "GET /celebrations/admin/event-types": () => ({ items: [{ status: "ACTIVE" }, { status: "RETIRED" }] }), "GET /media/admin/templates": () => ({ items: [...TEMPLATES, { ...TEMPLATES[0], id: "d", status: "DRAFT" }] }) });
     renderApp(<DashboardScreen onNavigate={navigate} />, client, ADMIN);
-    expect(await screen.findByText("Tipos de evento activos: 1")).toBeTruthy();
-    expect(screen.getByText("Templates publicados: 2")).toBeTruthy();
-    expect(screen.getByText("Templates en borrador: 1")).toBeTruthy();
+    expect(await screen.findByLabelText("Tipos de evento activos: 1")).toBeTruthy();
+    expect(screen.getByLabelText("Templates publicados: 2")).toBeTruthy();
+    expect(screen.getByLabelText("Templates en borrador: 1")).toBeTruthy();
   });
 
   it("templates: create, then publish and archive (with confirmation) with If-Match", async () => {
@@ -81,10 +83,12 @@ describe("E2, E3, E7, E12", () => {
     type("Etiquetas de tipo de evento", "graduation, birthday");
     fireEvent.click(screen.getByTestId("save-template"));
     await waitFor(() => expect(calls.find((call) => call.path === "/media/templates" && call.method === "POST")?.body).toMatchObject({ name: "Nuevo", eventTypeTags: ["graduation", "birthday"], layout: "classic" }));
-    fireEvent.click(screen.getByRole("radio", { name: "Nuevo · Borrador" }));
-    fireEvent.click(await screen.findByText("Publicar"));
+    fireEvent.change(screen.getByRole("combobox", { name: "Plantillas de invitación" }), { target: { value: "t-new" } });
+    fireEvent.click(await screen.findByRole("button", { name: "Otras acciones" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Publicar" }));
     await waitFor(() => expect(calls.find((call) => call.path.endsWith("/publish"))?.headers.get("if-match")).toBe('"1"'));
-    fireEvent.click(screen.getByText("Archivar"));
+    fireEvent.click(screen.getByRole("button", { name: "Otras acciones" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Archivar" }));
     expect(screen.getByText("Archivar es definitivo: el template deja de ofrecerse.")).toBeTruthy();
     fireEvent.click(screen.getAllByText("Archivar").at(-1) as HTMLElement);
     await waitFor(() => expect(calls.some((call) => call.path.endsWith("/archive"))).toBe(true));
@@ -100,18 +104,50 @@ describe("E2, E3, E7, E12", () => {
     expect(await screen.findByText("Proyección reconstruida: 42 eventos aplicados.")).toBeTruthy();
     expect(calls.some((call) => call.method === "POST")).toBe(true);
   });
+
+  it("operations: one primary action in the header; the observability links sit behind the Otras acciones menu", async () => {
+    const { client } = fakeClient({ "GET /celebrations/health": () => ({ status: "ok" }) });
+    renderApp(<OperationsScreen onNavigate={navigate} />, client, ADMIN);
+    expect(await screen.findByText("celebration-site-service: Disponible")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Abrir Grafana" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Otras acciones" }));
+    expect(await screen.findByRole("menuitem", { name: "Abrir Grafana" })).toBeTruthy();
+    expect(screen.getByRole("menuitem", { name: "Abrir RabbitMQ" })).toBeTruthy();
+    expect(screen.getAllByTestId("replay")).toHaveLength(1);
+  });
+
+  it("verification: four statuses are a select, not chips; the negative action is behind the row menu", async () => {
+    const { client } = fakeClient({ "GET /providers/admin/verification-queue": () => ({ items: [{ providerId: "p-1", name: "Foto", category: "X", city: "La Paz", submittedAt: "2026-11-01T15:00:00Z", status: "PENDING" }] }) });
+    renderApp(<VerificationScreen onNavigate={navigate} />, client, ADMIN);
+    expect(await screen.findByRole("combobox", { name: "Mostrar" })).toBeTruthy();
+    expect(screen.queryByRole("radio", { name: "Pendientes" })).toBeNull();
+    expect(screen.queryByTestId("reject-p-1")).toBeNull();
+    fireEvent.click(await screen.findByRole("button", { name: "Otras acciones" }));
+    expect(await screen.findByTestId("reject-p-1")).toBeTruthy();
+  });
 });
 
 describe("no hand-written copy in lane B screens", () => {
   const files = (path: string): string[] => (statSync(path).isDirectory() ? readdirSync(path).flatMap((entry) => files(join(path, entry))) : [path]);
   // Letters between ">" (not "=>") and "<" or "{": a JSX text node. Matches ">Guardar<"; rejects ">{t("x")}<" and "=> a < b".
-  const JSX_TEXT = /(?<![=])>\s*([^<>{}\s·&|/,;:()[\]-][^<>{}]*?)\s*</g;
+  // Also rejects what is code, not text: a comparison (">= WIDE ?", "> 0;") starts with "=" or a digit and runs into a statement (";") or a
+  // ternary ("shown ?"). A JSX text node never contains ";" and never ends with a space before "?".
+  const JSX_TEXT = /(?<![=])>\s*([^<>{}\s·&|/,;:()[\]=-][^<>{};]*?)\s*</g;
+  const isCode = (text: string): boolean => /\s\?$/.test(text) || /^\d+\s*$/.test(text);
+  const handWritten = (source: string): string[] => [...source.matchAll(JSX_TEXT)].map((match) => match[1] ?? "").filter((text) => /\p{L}/u.test(text) && !isCode(text));
   it("every JSX text node in src/host, src/admin, src/guest and src/push is a translation", () => {
     const root = process.cwd();
     const offenders = ["src/host", "src/admin", "src/guest", "src/push"].flatMap((dir) => files(join(root, dir))).filter((file) => file.endsWith(".tsx")).flatMap((file) => {
       const source = readFileSync(file, "utf8").replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, "");
-      return [...source.matchAll(JSX_TEXT)].map((match) => match[1] ?? "").filter((text) => /\p{L}/u.test(text)).map((text) => `${relative(root, file)}: "${text}"`);
+      return handWritten(source).map((text) => `${relative(root, file)}: "${text}"`);
     });
     expect(offenders).toEqual([]);
+  });
+  it("the detector still catches real hand-written text and ignores comparisons", () => {
+    expect(handWritten("<Text>Guardar</Text>")).toEqual(["Guardar"]);
+    expect(handWritten('<Text accessibilityRole="header">Hola mundo</Text>')).toEqual(["Hola mundo"]);
+    expect(handWritten("if (width >= WIDE ? 1 : 2) { return <View/>; }")).toEqual([]);
+    expect(handWritten("const n = items.length > 0;\n return (<View/>)")).toEqual([]);
+    expect(handWritten("{shown > shown ? <A/> : null}")).toEqual([]);
   });
 });

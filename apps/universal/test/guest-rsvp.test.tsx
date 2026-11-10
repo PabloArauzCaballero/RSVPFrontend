@@ -45,14 +45,21 @@ describe("REQ-F21-04 · the five RSVP states, in native components, against the 
   it("A9 guest: confirms with the real POST and shows the confirmed state", async () => {
     const mock = seeded();
     show(mock, { token: MOCK_VALID_TOKEN });
-    expect(await screen.findByText("¿Podrás acompañarnos?")).toBeTruthy();
-    expect(screen.getByText("Invitación a Ana y Luis")).toBeTruthy();
-    fireEvent.click(screen.getByRole("radio", { name: "Sí, asistiré" }));
-    fireEvent.change(screen.getByLabelText("Restricciones alimentarias"), { target: { value: "Vegano" } });
+    expect(await screen.findByText("¿Nos acompañas?")).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Ana y Luis");
+    expect(screen.getByText("Te invitan Ana y Luis")).toBeTruthy();
+    fireEvent.click(screen.getByRole("radio", { name: "Voy" }));
+    expect(screen.getByRole("button", { name: "Confirmar que voy" })).toBeTruthy();
+    fireEvent.click(screen.getByTestId("companions-plus"));
+    fireEvent.click(screen.getByTestId("rsvp-extras"));
+    fireEvent.change(screen.getByLabelText("Restricción alimentaria (opcional)"), { target: { value: "Vegano" } });
     fireEvent.click(screen.getByTestId("rsvp-submit"));
-    expect(await screen.findByText("Tu asistencia está confirmada")).toBeTruthy();
+    expect(await screen.findByText("Listo, estás dentro.")).toBeTruthy();
+    // The journey ends in place: the check is drawn and the next step (the gift list) is one tap away.
+    expect(screen.getByRole("status")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Ver la lista de regalos" })).toBeTruthy();
     const post = mock.state.log.find((call) => call.method === "POST");
-    expect(post).toMatchObject({ path: `/rsvp/celebrations/${mock.celebrationId}/rsvp`, body: { status: "CONFIRMED", dietaryNotes: "Vegano" } });
+    expect(post).toMatchObject({ path: `/rsvp/celebrations/${mock.celebrationId}/rsvp`, body: { status: "CONFIRMED", requestedCompanions: 1, dietaryNotes: "Vegano" } });
     expect(post?.headers["authorization"]).toBe(`Bearer ${MOCK_VALID_TOKEN}`);
     expect(post?.headers["idempotency-key"]).toBeTruthy();
   });
@@ -60,9 +67,9 @@ describe("REQ-F21-04 · the five RSVP states, in native components, against the 
   it("A9 negative: no choice → field error, nothing sent", async () => {
     const mock = seeded();
     show(mock, { token: MOCK_VALID_TOKEN });
-    await screen.findByText("¿Podrás acompañarnos?");
+    await screen.findByText("¿Nos acompañas?");
     fireEvent.click(screen.getByTestId("rsvp-submit"));
-    expect(await screen.findByText("Revisa los campos marcados.")).toBeTruthy();
+    expect(await screen.findByText("Elige una opción para continuar.")).toBeTruthy();
     expect(mock.state.log.some((call) => call.method === "POST")).toBe(false);
   });
 
@@ -72,11 +79,12 @@ describe("REQ-F21-04 · the five RSVP states, in native components, against the 
     show(mock, { token: MOCK_VALID_TOKEN });
     expect(await screen.findByText("Tu asistencia está confirmada")).toBeTruthy();
     expect(screen.getByText(/Quedan 5 d/)).toBeTruthy();
+    expect(screen.queryByText("Listo, estás dentro.")).toBeNull();
     vi.useRealTimers();
     fireEvent.click(screen.getByRole("button", { name: "Cambiar mi respuesta" }));
-    fireEvent.click(screen.getByRole("radio", { name: "No podré asistir" }));
+    fireEvent.click(screen.getByRole("radio", { name: "No puedo" }));
     fireEvent.click(screen.getByTestId("rsvp-submit"));
-    expect(await screen.findByText("Registramos que no podrás asistir")).toBeTruthy();
+    expect(await screen.findByText("Quedó registrado que no podrás venir")).toBeTruthy();
     expect(mock.state.log.filter((call) => call.method === "PATCH")).toHaveLength(1);
   });
 
@@ -84,33 +92,35 @@ describe("REQ-F21-04 · the five RSVP states, in native components, against the 
     const mock = seeded({ status: "CONFIRMED", version: 1 }, { deadline: "2026-12-01T03:59:00.000Z" });
     show(mock, { token: MOCK_VALID_TOKEN });
     expect(await screen.findByText("El plazo para responder terminó")).toBeTruthy();
-    expect(screen.getByText("Si necesitas cambiar tu respuesta, escribe a Ana y Luis.")).toBeTruthy();
+    expect(screen.getByText("¿Necesitas cambiar algo? Escríbele a Ana y Luis.")).toBeTruthy();
+    expect(screen.getByText(/Ya no se puede cambiar desde aquí, pero quien te invitó puede ayudarte/)).toBeTruthy();
     expect(screen.queryByTestId("rsvp-submit")).toBeNull();
   });
 
   it("A12 invalid: no celebration data at all", async () => {
     const mock = seeded();
     const { container } = show(mock, { token: "x".repeat(43) });
-    expect(await screen.findByText("Este enlace no está disponible")).toBeTruthy();
+    expect(await screen.findByText("Este enlace ya no funciona")).toBeTruthy();
+    expect(screen.getByText("Pídele un nuevo enlace a quien te invitó.")).toBeTruthy();
     expect(container.textContent).not.toMatch(/Ana y Luis|Hacienda|Marta/);
   });
 
   it("A13 unregistered: AUTO_ACCEPT registers and offers the canonical personal link; RESTRICTED shows the 403 explanation", async () => {
     const open = createContractMock({ now: () => NOW, unregisteredMode: "AUTO_ACCEPT" });
     const first = show(open, {});
-    await screen.findByText("Confirma tu asistencia");
+    await screen.findByText("Confirma que vienes");
     fireEvent.change(screen.getByLabelText("Tu nombre"), { target: { value: "Pedro" } });
-    fireEvent.change(screen.getByLabelText("Tu correo electrónico"), { target: { value: "pedro@example.com" } });
+    fireEvent.change(screen.getByLabelText("Tu correo"), { target: { value: "pedro@example.com" } });
     fireEvent.click(screen.getByRole("checkbox"));
     fireEvent.click(screen.getByTestId("rsvp-register"));
-    expect(await screen.findByText("Listo: confirmamos tu asistencia")).toBeTruthy();
-    expect(screen.getByTestId("rsvp-email-notice").textContent).toContain("No te prometemos un correo");
+    expect(await screen.findByText("Listo, estás dentro.")).toBeTruthy();
+    expect(screen.getByTestId("rsvp-email-notice").textContent).toContain("Quizá no llegue un correo de confirmación");
     expect((screen.getByLabelText("Tu enlace personal") as HTMLInputElement).value).toMatch(new RegExp(`/c/${open.slug}/rsvp/[A-Za-z0-9_-]{43}$`));
     first.unmount();
     const restricted = createContractMock({ now: () => NOW, unregisteredMode: "RESTRICTED" });
     show(restricted, {});
     // public-settings (1.10.0) is asked first: the form never appears and hostContact says who to write to.
-    expect(await screen.findByText("Esta celebración solo admite invitados con enlace personal")).toBeTruthy();
+    expect(await screen.findByText("Esta celebración solo recibe respuestas con enlace personal")).toBeTruthy();
     expect(screen.queryByTestId("rsvp-register")).toBeNull();
     expect(screen.getByTestId("host-contact-email").textContent).toContain("anayluis@example.com");
     expect(restricted.state.log.some((call) => call.path.endsWith("/public-settings"))).toBe(true);
@@ -121,15 +131,17 @@ describe("REQ-F21-04 · the five RSVP states, in native components, against the 
     const mock = seeded();
     let offline = false;
     show(mock, { token: MOCK_VALID_TOKEN }, mock.slowFetch(() => offline));
-    fireEvent.click(await screen.findByRole("radio", { name: "Sí, asistiré" }));
-    fireEvent.change(screen.getByLabelText("Mensaje para los anfitriones (opcional)"), { target: { value: "Hasta pronto" } });
+    fireEvent.click(await screen.findByRole("radio", { name: "Voy" }));
+    fireEvent.click(screen.getByTestId("rsvp-extras"));
+    fireEvent.change(screen.getByLabelText("Mensaje para quien te invita (opcional)"), { target: { value: "Hasta pronto" } });
     offline = true;
     fireEvent.click(screen.getByTestId("rsvp-submit"));
-    expect(await screen.findByText(/No hay conexión\. Tu respuesta sigue aquí/)).toBeTruthy();
-    expect((screen.getByLabelText("Mensaje para los anfitriones (opcional)") as HTMLTextAreaElement).value).toBe("Hasta pronto");
+    expect(await screen.findByText(/Sin conexión por ahora\. Cuando vuelva internet, reintenta/)).toBeTruthy();
+    expect(screen.getByText("Tu respuesta sigue aquí.")).toBeTruthy();
+    expect((screen.getByLabelText("Mensaje para quien te invita (opcional)") as HTMLTextAreaElement).value).toBe("Hasta pronto");
     offline = false;
     fireEvent.click(screen.getByRole("button", { name: "Reintentar" }));
-    await waitFor(() => expect(screen.getByText("Tu asistencia está confirmada")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("Listo, estás dentro.")).toBeTruthy());
     expect(mock.listGuests()[0]?.version).toBe(1);
   });
 
@@ -137,14 +149,15 @@ describe("REQ-F21-04 · the five RSVP states, in native components, against the 
     const mock = createContractMock({ now: () => NOW, rateLimitAfter: 2 });
     mock.addGuest({ name: "Marta", token: MOCK_VALID_TOKEN });
     show(mock, { token: MOCK_VALID_TOKEN });
-    fireEvent.click(await screen.findByRole("radio", { name: "Sí, asistiré" }));
+    fireEvent.click(await screen.findByRole("radio", { name: "Voy" }));
     fireEvent.click(screen.getByTestId("rsvp-submit"));
-    expect(await screen.findByText(/Espera 17 segundos/)).toBeTruthy();
+    expect(await screen.findByText(/Espera 17 s y reintenta/)).toBeTruthy();
+    expect(screen.getByText("Tu respuesta sigue aquí.")).toBeTruthy();
   });
 
   it("en-US copy", async () => {
     const mock = seeded();
     renderApp(<GuestRsvpScreen slug={mock.slug} token={MOCK_VALID_TOKEN} />, clientFor(mock), GUEST, "en-US");
-    expect(await screen.findByText("Can you join us?")).toBeTruthy();
+    expect(await screen.findByText("Are you coming?")).toBeTruthy();
   });
 });

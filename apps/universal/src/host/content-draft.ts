@@ -21,19 +21,32 @@ export function wallClockAt(celebration: Pick<Celebration, "localTimes">, path: 
   return local ? { date: local.date, time: local.time } : EMPTY;
 }
 
+/** YYYY-MM-DD that exists in the calendar (rejects 2027-13-45 and 2027-02-30). */
+export function isCalendarDate(value: string): boolean {
+  if (!DATE.test(value)) return false;
+  const [year, month, day] = value.split("-").map(Number) as [number, number, number];
+  const parsed = new Date(Date.UTC(year, month - 1, day));
+  return parsed.getUTCFullYear() === year && parsed.getUTCMonth() === month - 1 && parsed.getUTCDate() === day;
+}
+
 export type WallClockResult = { readonly ok: true; readonly value: string | null } | { readonly ok: false };
 
 /** Both empty → no value; both valid → YYYY-MM-DDTHH:mm; anything else is invalid. */
 export function toWallClock({ date, time }: WallClock): WallClockResult {
   if (!date.trim() && !time.trim()) return { ok: true, value: null };
-  return DATE.test(date.trim()) && TIME.test(time.trim()) ? { ok: true, value: `${date.trim()}T${time.trim()}` } : { ok: false };
+  return isCalendarDate(date.trim()) && TIME.test(time.trim()) ? { ok: true, value: `${date.trim()}T${time.trim()}` } : { ok: false };
+}
+
+/** JSON with object keys in alphabetical order: the API stores content with sorted keys, so key order is never a change. */
+function canonicalJson(value: unknown): string {
+  return JSON.stringify(value ?? null, (_key, item: unknown) => (typeof item === "object" && item !== null && !Array.isArray(item) ? Object.fromEntries(Object.entries(item).sort(([first], [second]) => first.localeCompare(second))) : item));
 }
 
 /** Top-level keys whose value changed; removed keys map to null (the API deletes them). */
 export function contentPatch(original: Readonly<Record<string, unknown>>, draft: Readonly<Record<string, unknown>>): Record<string, unknown> {
   const keys = new Set([...Object.keys(original), ...Object.keys(draft)]);
   return Object.fromEntries([...keys]
-    .filter((key) => JSON.stringify(original[key] ?? null) !== JSON.stringify(draft[key] ?? null))
+    .filter((key) => canonicalJson(original[key]) !== canonicalJson(draft[key]))
     .map((key) => [key, draft[key] === undefined || draft[key] === "" ? null : draft[key]]));
 }
 

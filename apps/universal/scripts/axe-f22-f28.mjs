@@ -31,9 +31,9 @@ async function scan(page, path, label, base, width, scheme) {
 }
 async function login(page, email) {
   await page.goto(`${APP}/login`);
-  await page.getByLabel("Correo electrónico", { exact: true }).filter({ visible: true }).fill(email);
+  await page.getByLabel(/^(Correo electrónico|Correo)$/).filter({ visible: true }).fill(email);
   await page.getByLabel("Contraseña", { exact: true }).filter({ visible: true }).fill(world.password);
-  await page.getByRole("button", { name: "Iniciar sesión" }).filter({ visible: true }).click();
+  await page.getByRole("button", { name: /^(Iniciar sesión|Entrar)$/ }).filter({ visible: true }).click();
   await page.waitForURL((url) => !url.pathname.startsWith("/login"), { timeout: 20000 });
 }
 for (const scheme of SCHEMES) for (const width of WIDTHS) {

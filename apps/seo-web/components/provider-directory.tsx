@@ -1,7 +1,10 @@
 import type { Translate } from "@rsvp/i18n/server";
+import { CheckMark } from "./brand/check-mark";
+import { EmptyArt, OfflineArt } from "./brand/illustrations";
+import { Monogram } from "./brand/monogram";
 import { ImpressionTracker } from "./impression-tracker";
 import { NearMeButton } from "./near-me";
-import { itemListJsonLd, jsonLdScript } from "../lib/json-ld";
+import { breadcrumbJsonLd, itemListJsonLd, jsonLdScript } from "../lib/json-ld";
 import { siteUrl } from "../lib/metadata";
 import { pageCount, PROVIDER_CATEGORIES, PROVIDER_CITIES, RADIUS_OPTIONS_KM, type ProviderCard, type ProviderPage } from "../lib/providers";
 
@@ -21,20 +24,58 @@ function price(card: ProviderCard, locale: string): string | null {
 }
 
 export function Breadcrumbs({ t, items }: { readonly t: Translate; readonly items: readonly { readonly label: string; readonly href?: string }[] }) {
+  const crumbs = [
+    { name: t("directory.breadcrumb.home"), url: `${siteUrl()}/` },
+    { name: t("directory.breadcrumb.directory"), url: `${siteUrl()}${DIRECTORY}` },
+    ...items.map((item) => ({ name: item.label, url: item.href ? `${siteUrl()}${item.href}` : undefined }))
+  ];
   return (
-    <nav aria-label={t("directory.breadcrumb.label")} className="directory-breadcrumbs">
-      <ol>
-        <li><a href="/">{t("directory.breadcrumb.home")}</a></li>
-        <li><a href={DIRECTORY}>{t("directory.breadcrumb.directory")}</a></li>
-        {items.map((item) => <li key={item.label}>{item.href ? <a href={item.href}>{item.label}</a> : <span aria-current="page">{item.label}</span>}</li>)}
-      </ol>
-    </nav>
+    <>
+      <script type="application/ld+json" data-breadcrumbs dangerouslySetInnerHTML={{ __html: jsonLdScript(breadcrumbJsonLd(crumbs)) }} />
+      <nav aria-label={t("directory.breadcrumb.label")} className="directory-breadcrumbs">
+        <ol>
+          <li><a href="/">{t("directory.breadcrumb.home")}</a></li>
+          <li><a href={DIRECTORY}>{t("directory.breadcrumb.directory")}</a></li>
+          {items.map((item) => <li key={item.label}>{item.href ? <a href={item.href}>{item.label}</a> : <span aria-current="page">{item.label}</span>}</li>)}
+        </ol>
+      </nav>
+    </>
   );
 }
 
-export function ProviderResults({ page, t, locale, path, query = "" }: { readonly page: ProviderPage; readonly t: Translate; readonly locale: string; readonly path: string; readonly query?: string }) {
-  if (!page.available) return <p role="status" className="directory-status">{t("directory.unavailable")}</p>;
-  if (!page.items.length) return <p role="status" className="directory-status">{t("directory.empty")}</p>;
+/** Plain heading block that opens every directory page: where you are, the one thing this page is about, and what to do. */
+export function PageTop({ t, items, title, lead }: { readonly t: Translate; readonly items: readonly { readonly label: string; readonly href?: string }[]; readonly title: string; readonly lead?: string }) {
+  return (
+    <header className="top">
+      <div className="top__inner">
+        <Breadcrumbs t={t} items={items} />
+        <h1>{title}</h1>
+        {lead ? <p className="top__lead">{lead}</p> : null}
+      </div>
+    </header>
+  );
+}
+
+export function ProviderResults({ page, t, locale, path, query = "", summary }: { readonly page: ProviderPage; readonly t: Translate; readonly locale: string; readonly path: string; readonly query?: string; readonly summary?: string }) {
+  if (!page.available) {
+    return (
+      <div role="status" className="directory-status state">
+        <OfflineArt className="state__art" />
+        <p>{t("directory.unavailable")}</p>
+        <a className="rsvp-button" href={query ? `${path}?${query}` : path}>{t("directory.retry")}</a>
+      </div>
+    );
+  }
+  if (!page.items.length) {
+    return (
+      <div role="status" className="directory-status state">
+        <EmptyArt className="state__art" />
+        <p>{t("directory.empty")}</p>
+        <p className="state__hint">{t("directory.emptyHint")}</p>
+        <a className="rsvp-button rsvp-button--secondary" href={DIRECTORY}>{t("directory.emptyAction")}</a>
+      </div>
+    );
+  }
   const pages = pageCount(page);
   const href = (number: number): string => {
     const params = new URLSearchParams([...new URLSearchParams(query)].filter(([key]) => key !== "page"));
@@ -46,17 +87,21 @@ export function ProviderResults({ page, t, locale, path, query = "" }: { readonl
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
-      <p className="directory-count">{t("directory.results", { count: page.total })}</p>
+      <p className="directory-count">{summary ?? t("directory.results", { count: page.total })}</p>
       <ImpressionTracker surface="SEARCH">
       <ul className="directory-results">
         {page.items.map((card) => (
           <li key={card.listingId} data-listing-id={card.listingId}>
-            {card.imageUrl ? <img src={card.imageUrl} alt="" width={320} height={240} loading="lazy" decoding="async" /> : null}
-            <h2><a href={providerHref(card)}>{card.name}</a></h2>
-            <p>{t(`directory.category.${card.category}`)} · {card.city}</p>
-            {card.verified ? <p className="directory-verified">{t("directory.verified")}</p> : null}
-            {price(card, locale) ? <p>{t("directory.priceFrom", { price: price(card, locale) ?? "" })}</p> : null}
-            {card.summary ? <p>{card.summary}</p> : null}
+            <div className="result__thumb">{card.imageUrl ? <img src={card.imageUrl} alt="" width={320} height={240} loading="lazy" decoding="async" /> : <Monogram name={card.name} />}</div>
+            <div className="result__body">
+              <h2><a href={providerHref(card)}>{card.name}</a></h2>
+              <p className="result__meta">{t(`directory.category.${card.category}`)} · {card.city}</p>
+              {card.summary ? <p className="result__summary">{card.summary}</p> : null}
+            </div>
+            <div className="result__side">
+              {card.verified ? <p className="directory-verified"><CheckMark size={14} draw={false} />{t("directory.verified")}</p> : null}
+              {price(card, locale) ? <p className="result__price">{t("directory.priceFrom", { price: price(card, locale) ?? "" })}</p> : null}
+            </div>
           </li>
         ))}
       </ul>
@@ -72,18 +117,33 @@ export function ProviderResults({ page, t, locale, path, query = "" }: { readonl
   );
 }
 
-export function CategoryLinks({ t }: { readonly t: Translate }) {
+/** Three plain steps for asking a quote, shown on the directory home so the path from browsing to a request is visible. */
+export function QuoteSteps({ t }: { readonly t: Translate }) {
   return (
-    <ul className="directory-links">
-      {PROVIDER_CATEGORIES.map((category) => <li key={category.slug}><a href={`${DIRECTORY}/${category.slug}`}>{t(`directory.category.${category.code}`)}</a></li>)}
+    <section className="quote-steps" aria-labelledby="quote-steps-title">
+      <h2 id="quote-steps-title">{t("directory.steps.title")}</h2>
+      <ol>
+        <li><h3>{t("directory.steps.chooseTitle")}</h3><p>{t("directory.steps.chooseBody")}</p></li>
+        <li><h3>{t("directory.steps.tellTitle")}</h3><p>{t("directory.steps.tellBody")}</p></li>
+        <li><h3>{t("directory.steps.replyTitle")}</h3><p>{t("directory.steps.replyBody")}</p></li>
+      </ol>
+      <p className="quote-steps__trust">{t("directory.trust")}</p>
+    </section>
+  );
+}
+
+export function CategoryLinks({ t, citySlug, exclude }: { readonly t: Translate; readonly citySlug?: string; readonly exclude?: string }) {
+  return (
+    <ul className="directory-links directory-links--categories">
+      {PROVIDER_CATEGORIES.filter((category) => category.slug !== exclude).map((category) => <li key={category.slug}><a href={citySlug ? `${DIRECTORY}/${category.slug}/${citySlug}` : `${DIRECTORY}/${category.slug}`}>{t(`directory.category.${category.code}`)}</a></li>)}
     </ul>
   );
 }
 
-export function CityLinks({ t, categorySlug, categoryCode, onlyFeatured = false }: { readonly t: Translate; readonly categorySlug: string; readonly categoryCode: string; readonly onlyFeatured?: boolean }) {
+export function CityLinks({ t, categorySlug, categoryCode, onlyFeatured = false, exclude }: { readonly t: Translate; readonly categorySlug: string; readonly categoryCode: string; readonly onlyFeatured?: boolean; readonly exclude?: string }) {
   return (
     <ul className="directory-links">
-      {PROVIDER_CITIES.filter((city) => !onlyFeatured || city.featured).map((city) => (
+      {PROVIDER_CITIES.filter((city) => (!onlyFeatured || city.featured) && city.slug !== exclude).map((city) => (
         <li key={city.slug}><a href={`${DIRECTORY}/${categorySlug}/${city.slug}`}>{t("directory.cityTitle", { category: t(`directory.category.${categoryCode}`), city: city.name })}</a></li>
       ))}
     </ul>

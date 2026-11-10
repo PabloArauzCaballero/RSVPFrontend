@@ -1,175 +1,193 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from "react-native";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Linking, Text, View } from "react-native";
 import { router } from "expo-router";
 import { ApiError } from "@rsvp/api-client";
 import { nativeMagicLink, personalLinkOrigin, personalLinkUrl } from "@rsvp/auth";
 import { readContent, type HostContact, type PublicCelebrationView } from "@rsvp/celebration-theme";
-import { colors, spacing } from "@rsvp/design-tokens";
+import { spacing } from "@rsvp/design-tokens";
+import { Celebrate, Checkbox, CheckMark, Chip, Enter, Skeleton, StickyActions, useColors } from "@rsvp/ui";
 import { rsvpSchema, unregisteredRsvpSchema } from "@rsvp/forms";
-import { formatCelebrationDate, type Translate } from "@rsvp/i18n";
+import { formatCelebrationDate, type AppLocale, type Translate } from "@rsvp/i18n";
 import {
-  classifyRsvpError, countdownTo, newIdempotencyKey, rsvpScreenFor, useCelebrationBySlug, useGuestResource, useGuestRsvp, usePublicRegistrationSettings, useRegisterUnregistered, useSaveGuestRsvp,
+  classifyRsvpError, countdownTo, guestVisible, newIdempotencyKey, rsvpScreenFor, useCelebrationBySlug, useGiftList, useGuestResource, useGuestRsvp, usePublicRegistrationSettings, useRegisterUnregistered, useSaveGuestRsvp,
   type Countdown as CountdownValue, type RsvpFailure, type RsvpState
 } from "@rsvp/query-hooks";
-import { LanguageSwitch } from "../auth/auth-ui";
-import { ActionButton, ChoiceGroup, Field, Notice, styles } from "../host/ui";
+import { AttendanceChoice, CompanionsStepper, ExtrasFields, type Attendance } from "./answer-fields";
+import { GuestFrame, type GuestFrameProps } from "./frame";
+import { InvalidLink, LinkState, OfflineState } from "./link-states";
+import { ActionButton, Field, Notice, useStyles } from "../host/ui";
 import { useApiClient, useLocale, useT } from "../platform/providers";
+import { useSingleFlightGate } from "../platform/single-flight";
 import { copyText } from "../platform/clipboard";
 
 /**
- * F21-04 · The five states of F15, native. Same contract calls and same copy (`rsvp.*`) as the web page;
- * the personal token lives only in component memory and the Authorization header.
+ * The guest's whole journey in one place (F21-04, mode Persuade): the invitation on the cover, the answer under it
+ * (two taps for "I am coming"), a drawn check when it is saved and, only if there is a gift list, one tap to it.
+ * Same contract calls as the web page; the personal token lives only in component memory and the Authorization header.
  */
 
-const palette = colors.light;
-type Status = "" | "CONFIRMED" | "DECLINED";
-interface Draft { status: Status; requestedCompanions: string; dietaryNotes: string; message: string }
+/** From here a wait is told in minutes. */
+const LONG_WAIT_SECONDS = 90;
+interface Draft { status: Attendance; requestedCompanions: string; dietaryNotes: string; message: string }
 interface ClosedInfo { deadline?: string; deadlineLocal?: string; timeZone?: string }
 type Errors = Partial<Record<"status" | "requestedCompanions" | "dietaryNotes" | "message" | "name" | "email" | "consent", string>>;
+type Saved = "first" | "edit" | null;
 
 const KNOWN_ISSUES = ["companions", "tooLong", "required", "email", "consent"];
 function issueMessages(issues: readonly { path: (string | number)[]; message: string }[], t: Translate): Errors {
   const errors: Errors = {};
   for (const issue of issues) {
     const field = String(issue.path[0]) as keyof Errors;
-    if (!(field in errors)) errors[field] = t(`rsvp.errors.${KNOWN_ISSUES.includes(issue.message) ? issue.message : "required"}`);
+    if (!(field in errors)) errors[field] = field === "status" ? t("rsvp.invite.chooseOne") : t(`rsvp.invite.errors.${KNOWN_ISSUES.includes(issue.message) ? issue.message : "required"}`);
   }
   return errors;
 }
 const initialDraft = (state: RsvpState): Draft => ({ status: state.status === "PENDING" ? "" : state.status, requestedCompanions: String(state.requestedCompanions), dietaryNotes: state.dietaryNotes ?? "", message: state.message ?? "" });
 
-function Frame({ children }: { readonly children: ReactNode }): ReactNode {
-  return (
-    <ScrollView role="main" style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-      {children}
-      <LanguageSwitch />
-    </ScrollView>
-  );
+function hostList(hosts: readonly string[], locale: string): string { return new Intl.ListFormat(locale, { style: "long", type: "conjunction" }).format(hosts); }
+
+/** The invitation as it sits on the cover: its title, who invites, and when and where when the hosts published them. */
+function coverFor(view: PublicCelebrationView, locale: AppLocale, t: Translate): GuestFrameProps {
+  const content = readContent(view);
+  const hosts = content.hosts.map((host) => host.name);
+  let when = "";
+  if (content.eventDate) {
+    try { when = formatCelebrationDate(content.eventDate, { locale, timeZone: view.timeZone }, { dateStyle: "full" }); } catch { when = ""; }
+  }
+  const meta = [when, content.venueName].filter(Boolean).join(" · ");
+  return { heading: content.title || t("rsvp.page.title"), ...(hosts.length ? { lead: t("rsvp.invite.hostedBy", { hosts: hostList(hosts, locale) }) } : {}), ...(meta ? { meta } : {}) };
 }
 
-function Heading({ children }: { readonly children: string }): ReactNode {
-  return <Text accessibilityRole="header" aria-level={1} style={styles.title}>{children}</Text>;
+function Question({ children }: { readonly children: string }): ReactNode {
+  const styles = useStyles();
+  return <Text accessibilityRole="header" aria-level={2} style={[styles.title, { fontSize: 30, lineHeight: 33, letterSpacing: -0.9 }]}>{children}</Text>;
 }
 
 function Loading(): ReactNode {
+  const styles = useStyles();
   const t = useT();
-  return <Frame><View accessibilityLiveRegion="polite" style={styles.row}><ActivityIndicator color={palette.primary} /><Text style={styles.muted}>{t("rsvp.loading")}</Text></View></Frame>;
-}
-
-/** Invalid, expired, revoked or unknown: one screen, no celebration data (REQ-F15-04 / F21-06). */
-function Invalid(): ReactNode {
-  const t = useT();
-  return <Frame><View style={styles.card}><Heading>{t("rsvp.invalid.title")}</Heading><Text style={styles.body}>{t("rsvp.invalid.body")}</Text><Text style={styles.muted}>{t("rsvp.invalid.hint")}</Text></View></Frame>;
-}
-
-function LoadFailure({ message, onRetry }: { readonly message: string; readonly onRetry: () => void }): ReactNode {
-  const t = useT();
-  return <Frame><Notice kind="error"><Text style={styles.body}>{message}</Text><ActionButton label={t("rsvp.actions.retry")} onPress={onRetry} /></Notice></Frame>;
+  return (
+    <GuestFrame>
+      <View accessibilityLiveRegion="polite" style={{ gap: spacing[3] }}>
+        <Skeleton width="70%" height={28} /><Skeleton width="100%" height={16} /><Skeleton width="85%" height={16} />
+        <View style={{ flexDirection: "row", gap: spacing[3], marginTop: spacing[3] }}><View style={{ flex: 1 }}><Skeleton height={72} radius={8} /></View><View style={{ flex: 1 }}><Skeleton height={72} radius={8} /></View></View>
+        <Text style={styles.muted}>{t("rsvp.invite.loading")}</Text>
+      </View>
+    </GuestFrame>
+  );
 }
 
 function CountdownLine({ deadline }: { readonly deadline: string | null }): ReactNode {
+  const styles = useStyles();
   const t = useT();
+  const palette = useColors();
   const [left, setLeft] = useState<CountdownValue | null>(() => countdownTo(deadline, Date.now()));
   useEffect(() => {
     setLeft(countdownTo(deadline, Date.now()));
     const timer = setInterval(() => setLeft(countdownTo(deadline, Date.now())), 30_000);
     return () => clearInterval(timer);
   }, [deadline]);
-  if (!left) return null;
-  return <Text accessibilityRole="timer" accessibilityLabel={t("rsvp.countdown.label")} style={[styles.label, { color: palette.text }]}>{t("rsvp.countdown.value", { days: left.days, hours: left.hours, minutes: left.minutes })}</Text>;
+  // Only worth saying when it is close: a countdown of weeks is noise, the deadline line already says the date.
+  if (!left || left.days >= 7) return null;
+  return <Text accessibilityRole="timer" accessibilityLabel={t("rsvp.invite.countdownLabel")} style={[styles.label, { color: palette.text }]}>{t("rsvp.invite.countdown", { days: left.days, hours: left.hours, minutes: left.minutes })}</Text>;
 }
 
 function DeadlineLine({ state }: { readonly state: RsvpState }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const locale = useLocale();
-  if (!state.deadline) return <Text style={styles.body}>{t("rsvp.deadline.none")}</Text>;
-  return <Text style={styles.body}>{t("rsvp.deadline.open", { date: formatCelebrationDate(state.deadline, { locale, timeZone: state.timeZone }), timeZone: state.timeZone })}</Text>;
+  if (!state.deadline) return <Text style={styles.muted}>{t("rsvp.invite.deadlineNone")}</Text>;
+  return <Text style={styles.muted}>{t("rsvp.invite.deadlineOpen", { date: formatCelebrationDate(state.deadline, { locale, timeZone: state.timeZone }), timeZone: state.timeZone })}</Text>;
 }
 
 function AnswerSummary({ state }: { readonly state: RsvpState }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const locale = useLocale();
   const waiting = state.status === "CONFIRMED" ? Math.max(0, state.requestedCompanions - state.approvedCompanions) : 0;
   return (
-    <View accessibilityLabel={t("rsvp.summary.label")} style={{ gap: spacing[1] }}>
-      <Text style={[styles.label, { color: palette.primary }]}>{t(`rsvp.status.${state.status}`)}</Text>
-      {state.status === "CONFIRMED" ? <Text style={styles.body}>{t("rsvp.summary.companions", { count: state.approvedCompanions })}</Text> : null}
-      {waiting ? <Text style={styles.body}>{t("rsvp.summary.pendingCompanions", { count: waiting })}</Text> : null}
-      {state.dietaryNotes ? <Text style={styles.body}>{t("rsvp.summary.dietary", { value: state.dietaryNotes })}</Text> : null}
-      {state.message ? <Text style={styles.body}>{t("rsvp.summary.message", { value: state.message })}</Text> : null}
-      {state.updatedAt ? <Text style={styles.muted}>{t("rsvp.summary.updated", { date: formatCelebrationDate(state.updatedAt, { locale, timeZone: state.timeZone }) })}</Text> : null}
+    <View accessibilityLabel={t("rsvp.invite.summaryLabel")} style={{ gap: spacing[1] }}>
+      <Chip tone={state.status === "CONFIRMED" ? "yes" : state.status === "DECLINED" ? "no" : "wait"}>{t(`rsvp.status.${state.status}`)}</Chip>
+      {state.status === "CONFIRMED" && state.approvedCompanions > 0 ? <Text style={styles.body}>{t("rsvp.invite.summaryCompanions", { count: state.approvedCompanions })}</Text> : null}
+      {waiting ? <Text style={styles.body}>{t("rsvp.invite.summaryPending", { count: waiting })}</Text> : null}
+      {state.dietaryNotes ? <Text style={styles.body}>{t("rsvp.invite.summaryDietary", { value: state.dietaryNotes })}</Text> : null}
+      {state.message ? <Text style={styles.body}>{t("rsvp.invite.summaryMessage", { value: state.message })}</Text> : null}
+      {state.updatedAt ? <Text style={styles.muted}>{t("rsvp.invite.summaryUpdated", { date: formatCelebrationDate(state.updatedAt, { locale, timeZone: state.timeZone }) })}</Text> : null}
     </View>
   );
 }
 
-function hostList(hosts: readonly string[], locale: string): string { return new Intl.ListFormat(locale, { style: "long", type: "conjunction" }).format(hosts); }
-
 /** "Who to write to": the published `hostContact` (only with the hosts' consent) plus the host names. */
 function HostContactLines({ hosts, contact }: { readonly hosts: readonly string[]; readonly contact?: HostContact | undefined }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const locale = useLocale();
   return (
-    <>
-      <Text style={styles.body}>{hosts.length ? t("rsvp.closed.contact", { hosts: hostList(hosts, locale) }) : t("rsvp.closed.contactGeneric")}</Text>
-      {contact?.email ? <Text testID="host-contact-email" accessibilityRole="link" style={styles.body} onPress={() => { void Linking.openURL(`mailto:${contact.email}`); }}>{t("rsvp.closed.contactEmail")} {contact.email}</Text> : null}
-      {contact?.phone ? <Text testID="host-contact-phone" accessibilityRole="link" style={styles.body} onPress={() => { void Linking.openURL(`tel:${contact.phone}`); }}>{t("rsvp.closed.contactPhone")} {contact.phone}</Text> : null}
-    </>
+    <View style={{ gap: spacing[1], alignItems: "center" }}>
+      <Text style={[styles.body, { textAlign: "center" }]}>{hosts.length ? t("rsvp.invite.contact", { hosts: hostList(hosts, locale) }) : t("rsvp.invite.contactGeneric")}</Text>
+      {contact?.email ? <Text testID="host-contact-email" accessibilityRole="link" style={[styles.body, { fontWeight: "600", textDecorationLine: "underline" }]} onPress={() => { void Linking.openURL(`mailto:${contact.email}`); }}>{t("rsvp.invite.contactEmail")} {contact.email}</Text> : null}
+      {contact?.phone ? <Text testID="host-contact-phone" accessibilityRole="link" style={[styles.body, { fontWeight: "600", textDecorationLine: "underline" }]} onPress={() => { void Linking.openURL(`tel:${contact.phone}`); }}>{t("rsvp.invite.contactPhone")} {contact.phone}</Text> : null}
+    </View>
   );
 }
 
-function Closed({ info, state, hosts, contact }: { readonly info: ClosedInfo; readonly state: RsvpState | null; readonly hosts: readonly string[]; readonly contact?: HostContact | undefined }): ReactNode {
+/** The deadline passed: said warmly, with who can still help and the last answer on record. */
+function Closed({ info, state, cover, hosts, contact }: { readonly info: ClosedInfo; readonly state: RsvpState | null; readonly cover: GuestFrameProps; readonly hosts: readonly string[]; readonly contact?: HostContact | undefined }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const locale = useLocale();
   const deadline = info.deadline ?? state?.deadline ?? undefined;
   const timeZone = info.timeZone ?? state?.timeZone;
   const when = info.deadlineLocal ?? (deadline && timeZone ? formatCelebrationDate(deadline, { locale, timeZone }) : undefined);
+  const lead = when && timeZone ? t("rsvp.invite.closedOn", { date: when, timeZone }) : t("rsvp.invite.closedGeneric");
   return (
-    <View style={styles.card}>
-      <Heading>{t("rsvp.closed.title")}</Heading>
-      <Text style={styles.body}>{when && timeZone ? t("rsvp.closed.closedOn", { date: when, timeZone }) : t("rsvp.closed.closedGeneric")}</Text>
+    <LinkState illustration="deadlineClosed" frame={cover} title={t("rsvp.invite.closedTitle")} body={`${lead} ${t("rsvp.invite.closedHelp")}`}>
       <HostContactLines hosts={hosts} contact={contact} />
-      {state && state.status !== "PENDING" ? <><Text style={styles.muted}>{t("rsvp.closed.yourAnswer", { status: t(`rsvp.status.${state.status}`) })}</Text><AnswerSummary state={state} /></> : null}
-    </View>
+      {state && state.status !== "PENDING" ? <View style={{ alignSelf: "stretch", gap: spacing[2], marginTop: spacing[3] }}><Text style={styles.muted}>{t("rsvp.invite.yourAnswer")}</Text><AnswerSummary state={state} /></View> : null}
+    </LinkState>
   );
 }
 
 function FailureNotice({ failure, onRetry, busy }: { readonly failure: RsvpFailure; readonly onRetry: () => void; readonly busy: boolean }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const messages: Record<string, string> = {
-    offline: t("rsvp.errors.offline"), unavailable: t("rsvp.errors.unavailable"), validation: t("rsvp.errors.validation"), conflict: t("rsvp.errors.conflict"), exists: t("rsvp.errors.conflict"), unknown: t("rsvp.errors.unknown"),
-    "rate-limited": failure.kind === "rate-limited" && failure.retryAfterSeconds ? t("rsvp.errors.rateLimited", { seconds: failure.retryAfterSeconds }) : t("rsvp.errors.rateLimitedNoWait")
+    offline: t("rsvp.invite.errors.offline"), unavailable: t("rsvp.invite.errors.unavailable"), validation: t("rsvp.invite.errors.validation"), conflict: t("rsvp.invite.errors.conflict"), exists: t("rsvp.invite.errors.conflict"), unknown: t("rsvp.invite.errors.unknown"),
+    restricted: t("rsvp.invite.errors.restricted"),
+    "rate-limited": failure.kind === "rate-limited" && failure.retryAfterSeconds
+      // A long wait (anonymous requests can be held for ~50 minutes) is said in minutes, never as a count of seconds.
+      ? failure.retryAfterSeconds >= LONG_WAIT_SECONDS ? t("rsvp.invite.errors.rateLimitedMinutes", { minutes: Math.ceil(failure.retryAfterSeconds / 60) }) : t("rsvp.invite.errors.rateLimited", { seconds: Math.ceil(failure.retryAfterSeconds) })
+      : t("rsvp.invite.errors.rateLimitedNoWait")
   };
   const retryable = ["offline", "unavailable", "rate-limited", "unknown"].includes(failure.kind);
   return (
     <Notice kind="error">
-      <Text style={styles.body}>{messages[failure.kind] ?? t("rsvp.errors.unknown")}</Text>
-      {retryable ? <ActionButton variant="secondary" label={t("rsvp.actions.retry")} disabled={busy} onPress={onRetry} /> : null}
-      <Text style={styles.muted}>{t("rsvp.draft.kept")}</Text>
+      <Text style={styles.body}>{messages[failure.kind] ?? t("rsvp.invite.errors.unknown")}</Text>
+      {retryable ? <ActionButton icon="refresh" variant="secondary" label={t("rsvp.invite.retry")} disabled={busy} onPress={onRetry} testID="rsvp-retry" /> : null}
+      <Text style={styles.muted}>{t("rsvp.invite.kept")}</Text>
     </Notice>
   );
 }
 
-function AnswerFields({ draft, onChange, errors, allowed, askAttendance = true }: { readonly draft: Draft; readonly onChange: (patch: Partial<Draft>) => void; readonly errors: Errors; readonly allowed?: number; readonly askAttendance?: boolean }): ReactNode {
+/** One tap to the gift list, shown only when the list has something to give (or could not be checked). */
+function GiftsLink({ client, celebrationId, slug, token }: { readonly client: ReturnType<typeof useApiClient>; readonly celebrationId: string; readonly slug: string; readonly token: string }): ReactNode {
+  const styles = useStyles();
   const t = useT();
+  const list = useGiftList(client, celebrationId, token);
+  const empty = list.isSuccess && guestVisible(list.data.items).length === 0;
+  if (empty) return null;
   return (
-    <View style={{ gap: spacing[4] }}>
-      {askAttendance ? (
-        <View style={{ gap: spacing[1] }}>
-          <ChoiceGroup<"CONFIRMED" | "DECLINED"> label={t("rsvp.form.statusLegend")} value={draft.status || null} onChange={(status) => onChange({ status })}
-            choices={[{ value: "CONFIRMED", label: t("rsvp.form.confirm") }, { value: "DECLINED", label: t("rsvp.form.decline") }]} />
-          {errors.status ? <Text accessibilityRole="alert" style={[styles.muted, { color: palette.danger }]}>{errors.status}</Text> : null}
-        </View>
-      ) : null}
-      {draft.status !== "DECLINED" ? <Field label={t("rsvp.form.companions")} keyboardType="number-pad" value={draft.requestedCompanions} onChange={(requestedCompanions) => onChange({ requestedCompanions })} error={errors.requestedCompanions} help={allowed === undefined ? undefined : t("rsvp.form.companionsHelp", { count: allowed })} /> : null}
-      <Field label={t("rsvp.form.dietary")} help={t("rsvp.form.dietaryHelp")} multiline value={draft.dietaryNotes} onChange={(dietaryNotes) => onChange({ dietaryNotes })} error={errors.dietaryNotes} />
-      <Field label={t("rsvp.form.message")} multiline value={draft.message} onChange={(message) => onChange({ message })} error={errors.message} />
-    </View>
+    <Enter from="down"><View style={{ alignSelf: "stretch", gap: spacing[2] }}>
+      <ActionButton icon="arrow" label={t("rsvp.invite.giftsCta")} onPress={() => { router.push(`/c/${encodeURIComponent(slug)}/regalos/${encodeURIComponent(token)}` as never); }} testID="open-gifts" />
+      <Text style={[styles.muted, { textAlign: "center" }]}>{t("rsvp.invite.giftsHint")}</Text>
+    </View></Enter>
   );
 }
 
 export interface GuestRsvpScreenProps { readonly slug: string; readonly token?: string }
 
 export function GuestRsvpScreen({ slug, token }: GuestRsvpScreenProps): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const client = useApiClient();
   const celebration = useCelebrationBySlug<PublicCelebrationView>(client, slug);
@@ -179,59 +197,88 @@ export function GuestRsvpScreen({ slug, token }: GuestRsvpScreenProps): ReactNod
   const [closed, setClosed] = useState<ClosedInfo | null>(null);
   const [revoked, setRevoked] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [notice, setNotice] = useState("");
+  const [saved, setSaved] = useState<Saved>(null);
+  const locale = useLocale();
 
-  if (!slug || revoked || (celebration.error instanceof ApiError && celebration.error.status === 404)) return <Invalid />;
-  if (celebration.isError) return <LoadFailure message={t("rsvp.errors.offline")} onRetry={() => { void celebration.refetch(); }} />;
+  if (!slug || revoked || (celebration.error instanceof ApiError && celebration.error.status === 404)) return <InvalidLink />;
+  if (celebration.isError) return <OfflineState onRetry={() => { void celebration.refetch(); }} />;
   if (celebration.isPending) return <Loading />;
   const view = celebration.data;
   const content = readContent(view);
   const hosts = content.hosts.map((host) => host.name);
-  if (!token) return <PublicRegistration view={view} slug={slug} hosts={hosts} contact={content.hostContact} />;
+  const cover = coverFor(view, locale, t);
+  if (!token) return <PublicRegistration view={view} slug={slug} cover={cover} hosts={hosts} contact={content.hostContact} />;
   if (rsvp.isError) {
     const failure = classifyRsvpError(rsvp.error);
-    if (failure.kind === "invalid") return <Invalid />;
-    return <LoadFailure message={failure.kind === "offline" ? t("rsvp.errors.offline") : t("rsvp.errors.unavailable")} onRetry={() => { void rsvp.refetch(); }} />;
+    if (failure.kind === "invalid") return <InvalidLink />;
+    return <OfflineState unavailable={failure.kind !== "offline"} onRetry={() => { void rsvp.refetch(); }} />;
   }
   if (rsvp.isPending) return <Loading />;
   const state = rsvp.data;
   const screen = closed ? "closed" : rsvpScreenFor(state);
-  const header = <Text style={styles.muted}>{t("rsvp.page.invitationTo", { title: content.title })}</Text>;
-  if (screen === "closed") return <Frame>{header}<Closed info={closed ?? {}} state={state} hosts={hosts} contact={content.hostContact} /></Frame>;
+  if (screen === "closed") return <Closed info={closed ?? {}} state={state} cover={cover} hosts={hosts} contact={content.hostContact} />;
 
   const form = (
     <AnswerForm key={editing ? "edit" : "first"} celebrationId={view.celebrationId} token={token} state={state} allowed={resource.data?.allowedCompanions} mode={screen === "guest" ? "first" : "edit"}
       onCancel={screen === "confirmed" ? () => setEditing(false) : undefined} onClosed={setClosed} onInvalid={() => setRevoked(true)}
-      onSaved={(next) => { setEditing(false); setNotice(next.status === "DECLINED" ? t("rsvp.success.declined") : screen === "guest" ? t("rsvp.success.confirmed") : t("rsvp.success.saved")); }} />
+      onSaved={() => { setEditing(false); setSaved(screen === "guest" ? "first" : "edit"); }} />
   );
   if (screen === "guest") {
-    return <Frame>{header}<View style={styles.card}><Heading>{t("rsvp.guest.title")}</Heading><Text style={styles.body}>{t("rsvp.guest.intro")}</Text><DeadlineLine state={state} /><CountdownLine deadline={state.deadline} />{form}</View></Frame>;
+    return (
+      <GuestFrame {...cover}>
+        <View style={{ gap: spacing[2] }}>
+          <Question>{t("rsvp.invite.question")}</Question>
+          <Text style={styles.body}>{t("rsvp.invite.lead")}</Text>
+          <DeadlineLine state={state} />
+          <CountdownLine deadline={state.deadline} />
+        </View>
+        {form}
+      </GuestFrame>
+    );
   }
+  const declined = state.status === "DECLINED";
   return (
-    <Frame>
-      {header}
-      <View style={styles.card}>
-        <Heading>{state.status === "DECLINED" ? t("rsvp.confirmed.titleDeclined") : t("rsvp.confirmed.title")}</Heading>
-        {notice ? <Notice kind="success">{notice}</Notice> : null}
+    <GuestFrame {...cover}>
+      {saved === "first" ? (
+        <View style={{ gap: spacing[4] }}>
+          {declined ? (
+            <LinkState illustration="welcomeGuest" title={t("rsvp.invite.declinedTitle")} body={t("rsvp.invite.declinedBody")} frame={cover} />
+          ) : (
+            <View style={{ paddingVertical: spacing[2] }}>
+              <Celebrate title={t("rsvp.invite.doneTitle")} body={state.deadline ? t("rsvp.invite.doneBodyUntil", { date: formatCelebrationDate(state.deadline, { locale, timeZone: state.timeZone }) }) : t("rsvp.invite.doneBodyAnytime")} />
+            </View>
+          )}
+        </View>
+      ) : (
+        <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[3] }}>
+          <CheckMark size={32} tone={declined ? "ink" : "success"} />
+          <View style={{ flex: 1 }}><Question>{declined ? t("rsvp.invite.againTitleNo") : t("rsvp.invite.againTitleYes")}</Question></View>
+        </View>
+      )}
+      {saved === "edit" ? <Notice kind="success">{t("rsvp.invite.savedNote")}</Notice> : null}
+      {!editing ? <GiftsLink client={client} celebrationId={view.celebrationId} slug={slug} token={token} /> : null}
+      <View style={{ gap: spacing[3] }}>
         <AnswerSummary state={state} />
-        <DeadlineLine state={state} />
+        {saved === "first" ? null : <DeadlineLine state={state} />}
         <CountdownLine deadline={state.deadline} />
-        <ActionButton variant="secondary" label={t("gifts.title")} onPress={() => { router.push(`/c/${encodeURIComponent(slug)}/regalos/${encodeURIComponent(token)}` as never); }} testID="open-gifts" />
-        {editing ? form : <><ActionButton label={t("rsvp.confirmed.edit")} onPress={() => { setNotice(""); setEditing(true); }} /><Text style={styles.muted}>{t("rsvp.confirmed.editHint")}</Text></>}
       </View>
-    </Frame>
+      {editing ? form : <ActionButton variant="secondary" label={t("rsvp.invite.edit")} onPress={() => { setSaved(null); setEditing(true); }} testID="rsvp-edit" />}
+    </GuestFrame>
   );
 }
 
-function AnswerForm({ celebrationId, token, state, allowed, mode, onSaved, onClosed, onInvalid, onCancel }: { readonly celebrationId: string; readonly token: string; readonly state: RsvpState; readonly allowed: number | undefined; readonly mode: "first" | "edit"; readonly onSaved: (state: RsvpState) => void; readonly onClosed: (info: ClosedInfo) => void; readonly onInvalid: () => void; readonly onCancel?: () => void }): ReactNode {
+function AnswerForm({ celebrationId, token, state, allowed, mode, onSaved, onClosed, onInvalid, onCancel }: { readonly celebrationId: string; readonly token: string; readonly state: RsvpState; readonly allowed: number | undefined; readonly mode: "first" | "edit"; readonly onSaved: (state: RsvpState) => void; readonly onClosed: (info: ClosedInfo) => void; readonly onInvalid: () => void; readonly onCancel?: (() => void) | undefined }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const client = useApiClient();
+  const palette = useColors();
   const save = useSaveGuestRsvp(client, celebrationId, token);
   // The draft lives in component state: a failed send never clears it. Nothing is written to device storage.
   const [draft, setDraft] = useState<Draft>(() => initialDraft(state));
   const [errors, setErrors] = useState<Errors>({});
   const [failure, setFailure] = useState<RsvpFailure | null>(null);
   const attempt = useRef<{ payload: string; key: string } | null>(null);
+  const flight = useSingleFlightGate();
 
   async function submit(): Promise<void> {
     const parsed = rsvpSchema.safeParse(draft);
@@ -241,6 +288,7 @@ function AnswerForm({ celebrationId, token, state, allowed, mode, onSaved, onClo
     const input = { status: parsed.data.status, requestedCompanions: declined ? 0 : parsed.data.requestedCompanions, dietaryNotes: parsed.data.dietaryNotes || null, message: parsed.data.message || null };
     const payload = JSON.stringify(input);
     if (attempt.current?.payload !== payload) attempt.current = { payload, key: newIdempotencyKey() };
+    if (!flight.begin()) return;
     try {
       const next = await save.mutateAsync({ current: state, input, idempotencyKey: attempt.current.key });
       setFailure(null);
@@ -250,48 +298,59 @@ function AnswerForm({ celebrationId, token, state, allowed, mode, onSaved, onClo
       if (failed.kind === "closed") onClosed(failed);
       else if (failed.kind === "invalid") onInvalid();
       else setFailure(failed);
-    }
+    } finally { flight.end(); }
   }
   const busy = save.isPending;
+  const change = (patch: Partial<Draft>): void => { setDraft((current) => ({ ...current, ...patch })); setErrors({}); };
+  const label = busy ? t("rsvp.invite.submitting") : mode === "edit" ? t("rsvp.invite.save") : draft.status === "CONFIRMED" ? t("rsvp.invite.submitYes") : draft.status === "DECLINED" ? t("rsvp.invite.submitNo") : t("rsvp.invite.submitNone");
   return (
-    <View style={{ gap: spacing[4] }}>
-      <AnswerFields draft={draft} errors={errors} allowed={allowed} onChange={(patch) => { setDraft((current) => ({ ...current, ...patch })); setErrors({}); }} />
-      {Object.keys(errors).length ? <Text accessibilityRole="alert" style={[styles.muted, { color: palette.danger }]}>{t("rsvp.errors.summary")}</Text> : null}
+    <View style={{ gap: spacing[5] }}>
+      <AttendanceChoice value={draft.status} onChange={(status) => change({ status })} error={errors.status} />
+      {draft.status === "CONFIRMED" ? <CompanionsStepper value={draft.requestedCompanions} onChange={(requestedCompanions) => change({ requestedCompanions })} allowed={allowed} error={errors.requestedCompanions} /> : null}
+      {draft.status ? <ExtrasFields dietaryNotes={draft.dietaryNotes} message={draft.message} onChange={change} errors={errors} /> : null}
+      {Object.keys(errors).length ? <Text accessibilityRole="alert" style={[styles.muted, { color: palette.danger }]}>{t("rsvp.invite.errors.summary")}</Text> : null}
       {failure ? <FailureNotice failure={failure} busy={busy} onRetry={() => { void submit(); }} /> : null}
-      <ActionButton testID="rsvp-submit" label={busy ? t("rsvp.form.submitting") : mode === "first" ? t("rsvp.form.submit") : t("rsvp.form.save")} busy={busy} onPress={() => { void submit(); }} />
-      {onCancel ? <ActionButton variant="secondary" label={t("rsvp.form.cancelEdit")} disabled={busy} onPress={onCancel} /> : null}
+      <StickyActions>
+        <ActionButton testID="rsvp-submit" label={label} busy={busy} onPress={() => { void submit(); }} />
+        {onCancel ? <ActionButton icon="close" variant="secondary" label={t("rsvp.invite.cancelEdit")} disabled={busy} onPress={onCancel} testID="rsvp-cancel-edit" /> : null}
+      </StickyActions>
     </View>
   );
 }
 
 /** GET .../public-settings first: the form only appears when public registration can succeed. */
-function PublicRegistration(props: { readonly view: PublicCelebrationView; readonly slug: string; readonly hosts: readonly string[]; readonly contact: HostContact | undefined }): ReactNode {
-  const t = useT();
+function PublicRegistration(props: { readonly view: PublicCelebrationView; readonly slug: string; readonly cover: GuestFrameProps; readonly hosts: readonly string[]; readonly contact: HostContact | undefined }): ReactNode {
   const client = useApiClient();
   const settings = usePublicRegistrationSettings(client, props.view.celebrationId);
   if (settings.isPending) return <Loading />;
-  if (settings.isError) return <LoadFailure message={t("rsvp.unregistered.unavailable")} onRetry={() => { void settings.refetch(); }} />;
-  if (!settings.data.publicRegistrationEnabled) return <RestrictedNotice hosts={props.hosts} contact={props.contact} />;
+  if (settings.isError) return <OfflineState onRetry={() => { void settings.refetch(); }} unavailable />;
+  if (!settings.data.publicRegistrationEnabled) return <RestrictedNotice cover={props.cover} hosts={props.hosts} contact={props.contact} />;
   return <PublicRegistrationForm {...props} />;
 }
 
-function RestrictedNotice({ hosts, contact }: { readonly hosts: readonly string[]; readonly contact: HostContact | undefined }): ReactNode {
+function RestrictedNotice({ cover, hosts, contact }: { readonly cover: GuestFrameProps; readonly hosts: readonly string[]; readonly contact: HostContact | undefined }): ReactNode {
   const t = useT();
-  return <Frame><View style={styles.card}><Heading>{t("rsvp.unregistered.restrictedTitle")}</Heading><Text style={styles.body}>{t("rsvp.unregistered.restrictedBody")}</Text><HostContactLines hosts={hosts} contact={contact} /></View></Frame>;
+  return (
+    <LinkState illustration="noAccess" frame={cover} title={t("rsvp.invite.open.restrictedTitle")} body={t("rsvp.invite.open.restrictedBody")}>
+      <HostContactLines hosts={hosts} contact={contact} />
+    </LinkState>
+  );
 }
 
-function PublicRegistrationForm({ view, slug, hosts, contact }: { readonly view: PublicCelebrationView; readonly slug: string; readonly hosts: readonly string[]; readonly contact: HostContact | undefined }): ReactNode {
+function PublicRegistrationForm({ view, slug, cover, hosts, contact }: { readonly view: PublicCelebrationView; readonly slug: string; readonly cover: GuestFrameProps; readonly hosts: readonly string[]; readonly contact: HostContact | undefined }): ReactNode {
+  const styles = useStyles();
   const t = useT();
   const locale = useLocale();
   const client = useApiClient();
+  const palette = useColors();
   const register = useRegisterUnregistered(client, view.celebrationId);
-  const [draft, setDraft] = useState<Draft & { name: string; email: string; consent: boolean }>({ status: "CONFIRMED", requestedCompanions: "0", dietaryNotes: "", message: "", name: "", email: "", consent: false });
+  const [draft, setDraft] = useState<{ status: Attendance; requestedCompanions: string; dietaryNotes: string; message: string; name: string; email: string; consent: boolean }>({ status: "CONFIRMED", requestedCompanions: "0", dietaryNotes: "", message: "", name: "", email: "", consent: false });
   const [errors, setErrors] = useState<Errors>({});
   const [failure, setFailure] = useState<RsvpFailure | null>(null);
   const [receipt, setReceipt] = useState<{ link: string | null } | null>(null);
   const [copied, setCopied] = useState(false);
   const attempt = useRef<{ payload: string; key: string } | null>(null);
-  const title = useMemo(() => readContent(view).title, [view]);
+  const flight = useSingleFlightGate();
 
   async function submit(): Promise<void> {
     const parsed = unregisteredRsvpSchema.safeParse(draft);
@@ -300,50 +359,53 @@ function PublicRegistrationForm({ view, slug, hosts, contact }: { readonly view:
     const input = { name: parsed.data.name, email: parsed.data.email, locale, consent: true as const, requestedCompanions: parsed.data.requestedCompanions, dietaryNotes: parsed.data.dietaryNotes || null, message: parsed.data.message || null };
     const payload = JSON.stringify(input);
     if (attempt.current?.payload !== payload) attempt.current = { payload, key: newIdempotencyKey() };
+    if (!flight.begin()) return;
     try {
       const response = await register.mutateAsync({ input, idempotencyKey: attempt.current.key });
       setFailure(null);
       setReceipt({ link: response.accessToken ? personalLinkUrl(personalLinkOrigin({ EXPO_PUBLIC_SITE_URL: process.env.EXPO_PUBLIC_SITE_URL, RSVP_PUBLIC_ORIGIN: process.env.EXPO_PUBLIC_RSVP_ORIGIN }), slug, response.accessToken.token).url : null });
-    } catch (error) { setFailure(classifyRsvpError(error)); }
+    } catch (error) { setFailure(classifyRsvpError(error)); } finally { flight.end(); }
   }
 
-  if (failure?.kind === "restricted") return <RestrictedNotice hosts={hosts} contact={contact} />;
+  if (failure?.kind === "restricted") return <RestrictedNotice cover={cover} hosts={hosts} contact={contact} />;
   if (receipt) {
     return (
-      <Frame>
-        <View style={styles.card}>
-          <Heading>{t("rsvp.unregistered.doneTitle")}</Heading>
-          {receipt.link ? (
-            <>
-              <Text style={styles.body}>{t("rsvp.unregistered.doneBody")}</Text>
-              <Field label={t("rsvp.unregistered.linkLabel")} value={receipt.link} onChange={() => undefined} />
-              <ActionButton label={t("rsvp.actions.copyLink")} onPress={() => { void copyText(receipt.link ?? "").then(setCopied); }} />
-              {copied ? <Notice kind="success">{t("rsvp.actions.copied")}</Notice> : null}
-            </>
-          ) : <Text style={styles.body}>{t("rsvp.unregistered.replayBody")}</Text>}
-          <Text style={styles.muted} testID="rsvp-email-notice">{t("rsvp.unregistered.emailNotice")}</Text>
+      <GuestFrame {...cover}>
+        <View style={{ paddingVertical: spacing[2] }}>
+          <Celebrate title={t("rsvp.invite.open.doneTitle")} body={receipt.link ? t("rsvp.invite.open.doneBody") : t("rsvp.invite.open.replayBody")} />
         </View>
-      </Frame>
+        {receipt.link ? (
+          <View style={{ gap: spacing[3] }}>
+            <Field label={t("rsvp.invite.open.linkLabel")} value={receipt.link} onChange={() => undefined} />
+            <ActionButton icon="copy" label={t("rsvp.invite.open.copyLink")} onPress={() => { void copyText(receipt.link ?? "").then(setCopied); }} testID="rsvp-copy-link" />
+            {copied ? <Notice kind="success">{t("rsvp.invite.open.copied")}</Notice> : null}
+          </View>
+        ) : null}
+        <Text style={styles.muted} testID="rsvp-email-notice">{t("rsvp.invite.open.emailNotice")}</Text>
+      </GuestFrame>
     );
   }
   const busy = register.isPending;
+  const change = (patch: Partial<typeof draft>): void => { setDraft((current) => ({ ...current, ...patch })); setErrors({}); };
   return (
-    <Frame>
-      <Text style={styles.muted}>{t("rsvp.page.invitationTo", { title })}</Text>
-      <View style={styles.card}>
-        <Heading>{t("rsvp.unregistered.title")}</Heading>
-        <Text style={styles.body}>{t("rsvp.unregistered.intro")}</Text>
-        <Field label={t("rsvp.form.name")} value={draft.name} onChange={(name) => setDraft({ ...draft, name })} error={errors.name} />
-        <Field label={t("rsvp.form.email")} keyboardType="email-address" help={t("rsvp.form.emailHelp")} value={draft.email} onChange={(email) => setDraft({ ...draft, email })} error={errors.email} />
-        <AnswerFields draft={draft} askAttendance={false} errors={errors} onChange={(patch) => setDraft({ ...draft, ...patch })} />
-        <Pressable accessibilityRole="checkbox" aria-checked={draft.consent} accessibilityLabel={t("rsvp.form.consent")} onPress={() => setDraft({ ...draft, consent: !draft.consent })} style={[styles.option, draft.consent && styles.optionSelected]}>
-          <Text style={styles.body}>{draft.consent ? "☑ " : "☐ "}{t("rsvp.form.consent")}</Text>
-        </Pressable>
-        {errors.consent ? <Text accessibilityRole="alert" style={[styles.muted, { color: palette.danger }]}>{errors.consent}</Text> : null}
-        {failure ? <FailureNotice failure={failure} busy={busy} onRetry={() => { void submit(); }} /> : null}
-        <ActionButton testID="rsvp-register" label={busy ? t("rsvp.form.submitting") : t("rsvp.form.register")} busy={busy} onPress={() => { void submit(); }} />
+    <GuestFrame {...cover}>
+      <View style={{ gap: spacing[2] }}>
+        <Question>{t("rsvp.invite.open.title")}</Question>
+        <Text style={styles.body}>{t("rsvp.invite.open.lead")}</Text>
       </View>
-    </Frame>
+      <View style={{ gap: spacing[5] }}>
+        <Field label={t("rsvp.invite.open.name")} value={draft.name} onChange={(name) => change({ name })} error={errors.name} testID="rsvp-name" />
+        <Field label={t("rsvp.invite.open.email")} keyboardType="email-address" help={t("rsvp.invite.open.emailHelp")} value={draft.email} onChange={(email) => change({ email })} error={errors.email} testID="rsvp-email" />
+        <CompanionsStepper value={draft.requestedCompanions} onChange={(requestedCompanions) => change({ requestedCompanions })} allowed={undefined} error={errors.requestedCompanions} />
+        <ExtrasFields dietaryNotes={draft.dietaryNotes} message={draft.message} onChange={change} errors={errors} />
+        <Checkbox label={t("rsvp.invite.open.consent")} value={draft.consent} onChange={(consent) => change({ consent })} />
+        {errors.consent ? <Text accessibilityRole="alert" style={[styles.muted, { color: palette.danger }]}>{errors.consent}</Text> : null}
+        {Object.keys(errors).length ? <Text accessibilityRole="alert" style={[styles.muted, { color: palette.danger }]}>{t("rsvp.invite.errors.summary")}</Text> : null}
+        <StickyActions summary={failure ? <FailureNotice failure={failure} busy={busy} onRetry={() => { void submit(); }} /> : undefined}>
+          <ActionButton testID="rsvp-register" label={busy ? t("rsvp.invite.submitting") : t("rsvp.invite.open.submit")} busy={busy} onPress={() => { void submit(); }} />
+        </StickyActions>
+      </View>
+    </GuestFrame>
   );
 }
 
