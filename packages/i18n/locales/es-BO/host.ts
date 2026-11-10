@@ -27,7 +27,7 @@ export const hostEsBO = {
     networkLoad: "No hay conexión con el servidor. Revisa tu internet e inténtalo de nuevo."
   },
   limits: {
-    fieldsTooLong: "Hay textos demasiado largos. Acórtalos para poder guardar.",
+    requiredMissing: "Para guardar falta: {{fields}}.", fieldsTooLong: "Hay textos demasiado largos. Acórtalos para poder guardar.",
     tooLong_one: "Quita {{count}} carácter: el máximo es {{max}}.",
     tooLong_other: "Quita {{count}} caracteres: el máximo es {{max}}.",
     slugLength: "El enlace debe tener entre 3 y 80 caracteres.",
@@ -45,12 +45,12 @@ export const hostEsBO = {
     typeLabel: "Elige una opción",
     typeTitle: "¿Qué vas a celebrar?", typeHelp: "Con esto preparamos los textos y las secciones que mejor le quedan.",
     whoTitle: "¿Quiénes son, cuándo y dónde es?", hostsHelp: "Escribe los nombres como quieres que se lean en la invitación.",
-    dateLabel: "Fecha", timeLabel: "Hora", venuePlaceholder: "Salón Las Palmas", dateHelp: "Con estos datos tu invitación queda lista para publicar. ¿Aún no tienes la fecha o el lugar? Déjalos vacíos y agrégalos después.",
+    dateLabel: "Fecha", timeLabel: "Hora", venuePlaceholder: "Salón Las Palmas", dateHelp: "Con estos datos tu invitación queda lista para publicar. Podrás cambiarlos cuando quieras.",
     nameTitle: "Ponle nombre y enlace", titleLabel: "Nombre de la celebración", titlePlaceholder: "Ana y Luis", titleHelp: "Es lo primero que verán tus invitados.",
     slugLabel: "Enlace de tu invitación", slugHelp: "Así lo recibirán tus invitados: {{url}}. Solo minúsculas, números y guiones.",
     defaultsSummary: "Ya lo dejamos listo: hora de {{timeZone}}, {{language}} y {{currency}}.",
     timeZoneLabel: "Zona horaria del evento", timeZoneHelp: "Tus invitados verán las horas en esta zona, estén donde estén.", languageLabel: "Idioma principal", currencyLabel: "Moneda",
-    titleRequired: "Escribe el nombre de tu celebración.", dateInvalid: "Elige también la fecha.", timeInvalid: "Elige también la hora.",
+    titleRequired: "Escribe el nombre de tu celebración.", dateInvalid: "Elige la fecha.", timeInvalid: "Elige la hora.", required: "Completa este campo.", requiredNotice: "Completa los datos marcados para continuar.", slugRequired: "Escribe el enlace de tu invitación.",
     previewTitle: "Así va quedando", previewHint: "Cambia mientras escribes.", previewShow: "Ver cómo queda", previewHide: "Ocultar", previewFallbackTitle: "Tu celebración",
     create: "Crear mi invitación", readyTitle: "Tu invitación está lista", readyBody: "Por ahora es un borrador: solo tú la ves. Completa lo que falta y publícala cuando quieras.",
     finish: "Completar mi invitación", chooseStyle: "Elegir otro estilo"
@@ -61,7 +61,7 @@ export const hostEsBO = {
     save: "Guardar cambios", dirty: "Tienes cambios sin guardar.", viewPreview: "Ver cómo queda", previewTitle: "Así la ven tus invitados", closePreview: "Cerrar vista previa", previewDraftNote: "Incluye lo que escribiste, aunque aún no lo hayas guardado.",
     sections: { general: "Lo básico", hosts: "Quiénes", venues: "Dónde", story: "Historia", schedule: "Programa", sections: "Más detalles" },
     about: { general: "Lo primero que ven tus invitados.", anfitriones: "Los nombres que aparecen en la invitación.", lugares: "Dónde será: ceremonia, recepción u otro lugar.", historia: "Cuenta cómo empezó todo.", itinerario: "Qué pasa y a qué hora.", secciones: "Vestimenta, preguntas frecuentes y recomendaciones." },
-    general: { slug: "Enlace de tu invitación", slugLocked: "El enlace ya no se puede cambiar porque la invitación se publicó o se archivó.", title: "Nombre de la celebración", subtitle: "Frase de bienvenida", eventDate: "Fecha", eventTime: "Hora", venueName: "Lugar principal", extraField: "Dato adicional: {{field}}" },
+    general: { slug: "Enlace de tu invitación", slugLocked: "El enlace ya no se puede cambiar porque la invitación se publicó o se archivó.", title: "Nombre de la celebración", subtitle: "Frase de bienvenida", eventDate: "Fecha", eventTime: "Hora", venueName: "Ubicación", extraField: "Dato adicional: {{field}}" },
     hosts: { help: "Los roles salen del tipo de evento: {{eventType}}." },
     venues: { name: "Nombre del lugar", address: "Dirección", kind: "Tipo", kinds: { ceremony: "Ceremonia", reception: "Recepción", other: "Otro" }, add: "Agregar lugar", item: "Lugar {{n}}" },
     story: { label: "Su historia", help: "Separa los párrafos con una línea en blanco." },
@@ -92,7 +92,7 @@ export const hostEsBO = {
   },
   publish: {
     title: "Publicar", intro: "Completa lo que falta, publica y comparte el enlace.", ready: "Tu celebración está lista para publicar.", readyBody: "Todo lo necesario está completo. Publícala cuando quieras.", missing: "Antes de publicar, completa:", pending: "Datos pendientes: {{count}}",
-    fields: { title: "El nombre de la celebración", subtitle: "La frase de bienvenida", eventDate: "La fecha del evento", venueName: "El lugar principal", childName: "El nombre de quien se bautiza", companyName: "El nombre de la empresa", celebrantName: "El nombre de la celebrante", host: "El nombre de: {{role}}", other: "El dato «{{field}}»" },
+    fields: { title: "El nombre de la celebración", subtitle: "La frase de bienvenida", eventDate: "La fecha del evento", venueName: "La ubicación", childName: "El nombre de quien se bautiza", companyName: "El nombre de la empresa", celebrantName: "El nombre de la celebrante", host: "El nombre de: {{role}}", other: "El dato «{{field}}»" },
     goTo: "Completar", publish: "Publicar celebración", publishConfirm: "Tu invitación será visible para cualquiera que tenga el enlace. ¿Publicar ahora?",
     done: { title: "Tu invitación ya está publicada", body: "Comparte el enlace y mañana sabrás quién viene." },
     unpublish: "Despublicar", unpublishConfirm: "El sitio dejará de verse hasta que lo publiques otra vez. El enlace no cambia.", reasonLabel: "Motivo (opcional)",

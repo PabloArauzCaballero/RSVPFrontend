@@ -6,7 +6,7 @@ import { GalleryEditorScreen } from "../src/host/gallery-editor";
 import { fitScale } from "../src/host/preview-stage";
 import { TemplatesScreen } from "../src/host/templates-screen";
 import { TranslationEditorScreen, translationProgress } from "../src/host/translation-editor";
-import { baseHandlers, CELEBRATION, fakeClient, HttpFailure, renderApp, TEMPLATES, WEDDING } from "./support";
+import { baseHandlers, CELEBRATION, fakeClient, HttpFailure, renderApp, TEMPLATES, WEDDING, pickTime } from "./support";
 
 const navigate = vi.fn();
 const draft = { title: "Ana y Luis", subtitle: "Los esperamos", venueName: "Iglesia", hosts: { BRIDE: "Ana", GROOM: "Luis" } };
@@ -53,13 +53,26 @@ describe("parts of the invitation and their progress", () => {
     await waitFor(() => expect(calls.some((call) => call.method === "PATCH")).toBe(true));
   });
 
+  it("what the event type needs to publish is mandatory when saving: an emptied field is named, marked and nothing is sent", async () => {
+    const { client, calls } = fakeClient(baseHandlers());
+    renderApp(<ContentEditorScreen section="general" celebrationId="c-1" onNavigate={navigate} />, client);
+    fireEvent.change(await screen.findByLabelText("Ubicación"), { target: { value: " " } });
+    fireEvent.click(screen.getByTestId("save-content"));
+    expect(await screen.findByText("Para guardar falta: Ubicación.")).toBeTruthy();
+    expect(screen.getByText("Completa este campo.")).toBeTruthy();
+    expect(calls.some((call) => call.method === "PATCH")).toBe(false);
+    fireEvent.change(screen.getByLabelText("Ubicación"), { target: { value: "Hacienda El Carmen" } });
+    fireEvent.click(screen.getByTestId("save-content"));
+    await waitFor(() => expect(calls.some((call) => call.method === "PATCH")).toBe(true));
+  });
+
   it("a day without its time is explained in plain words and nothing is sent", async () => {
     const { client, calls } = fakeClient(baseHandlers());
     renderApp(<ContentEditorScreen section="general" celebrationId="c-1" onNavigate={navigate} />, client);
     expect((await screen.findByLabelText("Fecha")).getAttribute("type")).toBe("date");
-    fireEvent.change(screen.getByLabelText("Hora"), { target: { value: "" } });
+    pickTime("Hora", "");
     fireEvent.click(screen.getByTestId("save-content"));
-    expect(await screen.findByText("Elige también la hora.")).toBeTruthy();
+    expect(await screen.findByText("Elige la hora.")).toBeTruthy();
     expect(calls.some((call) => call.method === "PATCH")).toBe(false);
   });
 });

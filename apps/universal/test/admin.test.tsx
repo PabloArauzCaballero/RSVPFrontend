@@ -8,7 +8,7 @@ import { DashboardScreen, OperationsScreen } from "../src/admin/other-screens";
 import { TemplatesAdminScreen } from "../src/admin/templates";
 import { VerificationScreen } from "../src/admin/queues";
 import { OnboardingScreen } from "../src/host/onboarding";
-import { ADMIN, fakeClient, GUEST, HOST, renderApp, TEMPLATES, WEDDING, type Handler } from "./support";
+import { ADMIN, fakeClient, GUEST, HOST, renderApp, TEMPLATES, WEDDING, type Handler, pickTime } from "./support";
 
 const navigate = vi.fn();
 const type = (label: string, value: string): void => { fireEvent.change(screen.getByLabelText(label), { target: { value } }); };
@@ -59,6 +59,7 @@ describe("REQ-F14-02 · event type editor", () => {
     fireEvent.click(await screen.findByRole("radio", { name: "Graduación" }));
     fireEvent.click(screen.getByTestId("onboarding-next"));
     type("Graduada o graduado", "Sofía");
+    type("Fecha", "2027-11-20"); pickTime("Hora", "19:00"); type("Ubicación", "Aula Magna");
     fireEvent.click(screen.getByTestId("onboarding-next")); // the name and link are the third short step
     type("Nombre de la celebración", "Grado de Sofía");
     fireEvent.click(screen.getByTestId("onboarding-create"));

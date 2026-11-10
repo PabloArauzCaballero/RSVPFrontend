@@ -7,7 +7,7 @@ import { PublishScreen } from "../src/host/publish-checklist";
 import { SettingsScreen } from "../src/host/settings-screen";
 import { TemplatesScreen } from "../src/host/templates-screen";
 import { ANONYMOUS } from "../src/platform/session";
-import { ADMIN, baseHandlers, CELEBRATION, fakeClient, GUEST, HOST, renderApp, TEMPLATES } from "./support";
+import { ADMIN, baseHandlers, CELEBRATION, fakeClient, GUEST, HOST, renderApp, TEMPLATES, pickTime, timeField } from "./support";
 
 /** Tests for requirements that had no proof: F13-01 save, F11-02 screens, F12-02/05/06, F13-05. */
 const navigate = vi.fn();
@@ -82,11 +82,11 @@ describe("REQ-F11-02 · C8/C10/C11 screens: venues, schedule, extra sections", (
     fireEvent.change(titles[1] as HTMLElement, { target: { value: "Fiesta" } });
     fireEvent.change(screen.getAllByLabelText("Fecha")[1] as HTMLElement, { target: { value: "2026-12-19" } });
     // the clock control cannot hold "7pm": an activity with a day and no time is what is left to refuse
-    expect((screen.getAllByLabelText("Hora")[1] as HTMLElement).getAttribute("type")).toBe("time");
+    expect(timeField("Hora", 1).getAttribute("aria-haspopup")).toBe("dialog");
     fireEvent.click(screen.getByTestId("save-content"));
     expect(screen.getByRole("alert").textContent).toContain("Actividad 2");
     expect(calls.some((call) => call.method === "PATCH")).toBe(false);
-    fireEvent.change(screen.getAllByLabelText("Hora")[1] as HTMLElement, { target: { value: "23:30" } });
+    pickTime("Hora", "23:30", 1);
     fireEvent.click(screen.getAllByRole("button", { name: /^Más opciones: Actividad/ })[1] as HTMLElement);
     fireEvent.click(await screen.findByRole("menuitem", { name: "Subir" }));
     fireEvent.click(screen.getByTestId("save-content"));
