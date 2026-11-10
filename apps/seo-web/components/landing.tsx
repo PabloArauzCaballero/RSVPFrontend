@@ -215,7 +215,8 @@ export function Landing({ t, locale }: Readonly<{ t: Translate; locale: string }
           <h2 id="styles-title">{t("landing.styles.title")}</h2>
           <p>{t("landing.styles.body")}</p>
         </div>
-        <ul className="styles__rail">
+        {/* The rail scrolls sideways on a phone: it must be reachable and scrollable with the keyboard. */}
+        <ul className="styles__rail" tabIndex={0} aria-labelledby="styles-title">
           {STYLES.map((style) => <StyleCard key={style.key} t={t} style={style.key} sample={style.sample} />)}
         </ul>
         <p className="wrap styles__more"><a className="textlink" href={create}>{t("landing.styles.link")}</a></p>

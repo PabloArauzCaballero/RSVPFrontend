@@ -167,10 +167,11 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 .styles { padding: var(--section) 0 0; }
 .styles__rail { list-style: none; margin: clamp(2rem, 5vw, 3.5rem) auto 0; padding: 0 max(1.25rem, (100% - 72rem) / 2) 1rem; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(11.5rem, 1fr); gap: 1rem; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
 .styles__rail::-webkit-scrollbar { display: none; }
+.styles__rail:focus-visible { outline-offset: -2px; }
 .style { scroll-snap-align: center; display: grid; gap: .75rem; }
 .style__name { margin: 0; font-size: .9rem; font-weight: 500; }
 .styles__more { margin-top: .5rem; }
-.sheet { --sheet-paper: #FBF7EE; --sheet-ink: #3A3226; --sheet-gold: #8C6B3F; aspect-ratio: 3 / 4.3; display: grid; grid-template-rows: auto 1fr auto auto auto; justify-items: center; align-items: center; gap: .5rem; padding: 1.5rem 1rem 1.1rem; border-radius: var(--radius-cell); background: var(--sheet-paper); color: var(--sheet-ink); text-align: center; box-shadow: inset 0 0 0 1px rgb(0 0 0 / .06), 0 20px 40px -24px rgb(0 0 0 / .3); transition: transform .35s var(--ease-out); }
+.sheet { --sheet-paper: #FBF7EE; --sheet-ink: #3A3226; --sheet-gold: #7A5A2E; aspect-ratio: 3 / 4.3; display: grid; grid-template-rows: auto 1fr auto auto auto; justify-items: center; align-items: center; gap: .5rem; padding: 1.5rem 1rem 1.1rem; border-radius: var(--radius-cell); background: var(--sheet-paper); color: var(--sheet-ink); text-align: center; box-shadow: inset 0 0 0 1px rgb(0 0 0 / .06), 0 20px 40px -24px rgb(0 0 0 / .3); transition: transform .35s var(--ease-out); }
 .style:hover .sheet { transform: translateY(-6px); }
 .sheet__kicker { margin: 0; font-family: var(--font-mono); font-size: .58rem; letter-spacing: .2em; text-transform: uppercase; color: var(--sheet-gold); }
 .sheet__names { margin: 0; display: grid; font-family: var(--serif); font-size: 1.65rem; line-height: 1.02; letter-spacing: -.02em; }
@@ -184,14 +185,14 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 .sheet--editorial .sheet__amp { font-style: normal; font-size: 1em; line-height: .92; }
 .sheet--editorial .sheet__sprig { display: none; }
 .sheet--editorial .sheet__date { padding-top: .5rem; border-top: 2px solid var(--sheet-ink); width: 100%; }
-.sheet--garden { --sheet-paper: #EDF2E8; --sheet-ink: #2C4733; --sheet-gold: #4F7A57; }
+.sheet--garden { --sheet-paper: #EDF2E8; --sheet-ink: #2C4733; --sheet-gold: #3F6A47; }
 .sheet--garden .sheet__names { font-style: italic; font-weight: 400; }
-.sheet--rose { --sheet-paper: #F9ECEA; --sheet-ink: #74404B; --sheet-gold: #B5727D; }
+.sheet--rose { --sheet-paper: #F9ECEA; --sheet-ink: #74404B; --sheet-gold: #9A4F5C; }
 .sheet--rose .sheet__names { font-style: italic; font-size: 2.1rem; }
 .sheet--minimal { --sheet-paper: var(--bone); --sheet-ink: var(--ink); --sheet-gold: #70707A; }
 .sheet--minimal .sheet__names { font-family: var(--font-head); font-weight: 300; font-size: 1.9rem; letter-spacing: -.04em; }
 .sheet--minimal .sheet__sprig { width: 1.5rem; height: 1px; background: var(--sheet-ink); } .sheet--minimal .sheet__sprig * { display: none; }
-.sheet--terracotta { --sheet-paper: #F4E8DB; --sheet-ink: #3B2A20; --sheet-gold: #B4532A; }
+.sheet--terracotta { --sheet-paper: #F4E8DB; --sheet-ink: #3B2A20; --sheet-gold: #9C4521; }
 .sheet--terracotta .sheet__cta { background: var(--sheet-gold); }
 
 /* Three taps: each cell opens with the piece of interface it describes. */
