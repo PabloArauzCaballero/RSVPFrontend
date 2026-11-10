@@ -55,3 +55,15 @@ Verificación:
 - Líneas base visuales regeneradas para `host-editor-general`, `host-configuracion` y `host-onboarding` (13/13).
 
 No verificado: los scripts `scripts/live/*.mjs` se actualizaron al nuevo campo de hora pero no se volvieron a ejecutar completos contra TEST; el selector nativo de iOS/Android no cambió y sigue sin probarse en dispositivo.
+
+## La ubicación es un lugar real (2026-11-10, noche)
+
+«Ubicación» ya no es solo un texto: junto al nombre del lugar el anfitrión **marca el punto en un mapa** o **pega el enlace que le da su app de mapas**. Se guarda un único dato nuevo en el contenido, `venueMapUrl`, y el «Cómo llegar» de la invitación abre ese punto exacto en vez de buscar el nombre.
+
+- `apps/universal/src/host/map-picker.tsx` (web): mapa de OpenStreetMap con Leaflet 1.9.4; el pin queda fijo en el centro y se mueve el mapa (arrastre, pellizco, botones +/−, flechas del teclado). Búsqueda por nombre o dirección (Nominatim, solo al pulsar «Buscar») y «Usar mi ubicación». En iOS/Android nativo no hay mapa todavía: queda el campo del enlace (`map-picker.native.tsx`).
+- `apps/universal/src/host/location-field.tsx`: nombre + «Marcar en el mapa» + «Enlace del mapa», en el asistente y en el editor.
+- `packages/celebration-theme/src/content.ts`: `mapUrl` solo acepta enlaces `https` de Google Maps, Apple Maps, Waze u OpenStreetMap, al escribir **y** al pintar la invitación: lo que teclea un anfitrión nunca llega a un `href` arbitrario ni a un `javascript:`. Un enlace inválido detiene el paso y el guardado.
+
+Verificación: `turbo run lint typecheck test` 66/66 (nuevas: `map-link.test.tsx`, y el asistente con enlace válido e inválido). Build web contra el API de TEST con sesión real, 360 px oscuro y 1280 px claro: el mapa carga, la búsqueda centra la Plaza 24 de Septiembre, «Listo» deja el enlace con las coordenadas en el campo; axe WCAG 2.2 AA sin critical/serious y sin scroll horizontal (4/4).
+
+No verificado / límites: «Usar mi ubicación» no se probó (requiere permiso del navegador en un dispositivo real). Las teselas y la búsqueda son los servidores públicos de OpenStreetMap, aptos para pruebas y uso moderado; con tráfico real hay que contratar un proveedor de mapas. El texto que se busca se envía a Nominatim.

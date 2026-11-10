@@ -8,6 +8,7 @@ import { useApiClient, useLocale, useT } from "../platform/providers";
 import { CelebrationScreen, type Loaded, type ScreenProps } from "./gate";
 import { asRecord, asRecords, asText, contentPatch, isCalendarDate, newItemId, scheduleContent, scheduleDraft, toWallClock, wallClockAt, type ScheduleDraft } from "./content-draft";
 import { EDITOR_SECTIONS, editorPath, editorSectionLabel, withCelebration, type EditorSection } from "./routes";
+import { LocationField, mapLinkProblem } from "./location-field";
 import { useSaveHeader } from "./save-bar";
 import { EditorProgress, readyCount, SectionRow, sectionStates } from "./editor-sections";
 import { previewView } from "./preview-model";
@@ -175,6 +176,7 @@ function Editor({ loaded, section, saved, onSaved, onNavigate }: { readonly load
     const date = toWallClock(eventDate);
     const items = scheduleContent(schedule);
     if (slugIssue) return { ok: false, message: t(`host.limits.slug${slugIssue === "length" ? "Length" : "Pattern"}`) };
+    if (mapLinkProblem(text("venueMapUrl"))) return { ok: false, message: t("host.location.linkInvalid") };
     if (contentOverLimit(draft, schedule, extraFields(eventType)) > 0) return { ok: false, message: t("host.limits.fieldsTooLong") };
     if (!date.ok) return { ok: false, message: t(isCalendarDate(eventDate.date.trim()) ? "host.onboarding.timeInvalid" : "host.onboarding.dateInvalid") };
     if (!items.ok) return { ok: false, message: t("host.common.invalid", { detail: t("host.editor.schedule.item", { n: items.index + 1 }) }) };
@@ -226,7 +228,8 @@ function Editor({ loaded, section, saved, onSaved, onNavigate }: { readonly load
           <View style={{ flexGrow: 1, flexBasis: TIME_BASIS }}><TimeInput label={t("host.onboarding.timeLabel")} value={eventDate.time} onChange={(value) => setEventDate((existing) => ({ ...existing, time: value }))} testID="field-event-time" {...(lacking.includes("eventDate") && !eventDate.time.trim() ? { error: t("host.onboarding.timeInvalid") } : {})} /></View>
         </View>
         <Text style={styles.muted}>{t("host.editor.schedule.zoneHelp", { timeZone: celebration.timeZone })}</Text>
-        <Field label={t("host.editor.general.venueName")} value={text("venueName")} {...need("venueName")} {...limitError(t, text("venueName"), LIMITS.venueName)} onChange={(value) => set("venueName", value)} />
+        <LocationField name={text("venueName")} onName={(value) => set("venueName", value)} link={text("venueMapUrl")} onLink={(value) => set("venueMapUrl", value)} testID="field-venue"
+          {...(need("venueName").error ?? limitError(t, text("venueName"), LIMITS.venueName).error ? { nameError: need("venueName").error ?? limitError(t, text("venueName"), LIMITS.venueName).error } : {})} />
         {extraFields(eventType).map((field) => <Field key={field} label={fieldLabel(t, field)} value={text(field)} {...need(field)} {...limitError(t, text(field), LIMITS.extraField)} onChange={(value) => set(field, value)} />)}
         <Field label={t("host.editor.general.slug")} value={slug} onChange={(value) => setSlug(value.toLowerCase())} testID="slug"
           help={slugEditable ? t("host.onboarding.slugHelp", { url: `/c/${slug}` }) : t("host.editor.general.slugLocked")} {...(slugIssue ? { error: t(`host.limits.slug${slugIssue === "length" ? "Length" : "Pattern"}`) } : {})} />
