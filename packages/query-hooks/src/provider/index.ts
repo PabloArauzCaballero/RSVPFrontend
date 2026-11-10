@@ -1,7 +1,7 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ApiClient } from "@rsvp/api-client";
 import { providerService } from "./api.js";
-import type { UpdateProviderInput, ProviderDiscoveryQuery, DocumentInput, MicrositeInput, Availability, BookingRequestInput, BookingStatus, CreateListingInput, LeadConfig, QuoteInput, RegisterProviderInput } from "./types.js";
+import type { Fulfillment, ProviderDiscoveryQuery, DocumentInput, MicrositeInput, Availability, BookingRequestInput, BookingStatus, CreateListingInput, LeadConfig, QuoteInput, RegisterProviderInput } from "./types.js";
 export * from "./types.js";
 export { providerService } from "./api.js";
 import { cachePolicy } from "../policy.js";
@@ -76,22 +76,13 @@ export function usePublishListing(client: ApiClient, providerId: string, locale:
   const queryClient = useQueryClient();
   return useMutation({ mutationFn: (listingId: string) => providerService(client).publishListing(providerId, listingId, locale), onSuccess: () => queryClient.invalidateQueries({ queryKey: P(providerId, "listings") }) });
 }
-/** PATCH /providers/{id}: the owner renames the business; the cached profile is replaced by the answer. */
-export function useUpdateProvider(client: ApiClient, providerId: string) {
+/** EXPECTED contract (not in provider-catalog 2.1.0): edit the delivery conditions of an existing offer. */
+export function useUpdateFulfillment(client: ApiClient, providerId: string, locale: string) {
   const queryClient = useQueryClient();
-  return useMutation({ mutationFn: (input: UpdateProviderInput) => providerService(client).update(providerId, input), onSuccess: (saved) => { queryClient.setQueryData(P(providerId, "profile"), saved); void queryClient.invalidateQueries({ queryKey: ["providers", "mine"] }); } });
+  return useMutation({ mutationFn: ({ listingId, fulfillment }: { listingId: string; fulfillment: Fulfillment }) => providerService(client).updateFulfillment(providerId, listingId, fulfillment, locale), onSuccess: () => queryClient.invalidateQueries({ queryKey: P(providerId, "listings") }) });
 }
 export function useLeads(client: ApiClient, providerId: string | undefined) {
   return useQuery({ queryKey: P(providerId ?? "", "leads"), queryFn: () => providerService(client).leads(providerId ?? ""), ...live, enabled: Boolean(providerId) });
-}
-export const LEADS_PAGE_SIZE = 50;
-/** Leads in pages of 50 (`limit`/`offset`, the server allows up to 200); `total` tells whether there is another page. */
-export function useInfiniteLeads(client: ApiClient, providerId: string | undefined) {
-  return useInfiniteQuery({
-    queryKey: P(providerId ?? "", "leads", "pages"), initialPageParam: 0, ...live, enabled: Boolean(providerId),
-    queryFn: ({ pageParam }) => providerService(client).leads(providerId ?? "", LEADS_PAGE_SIZE, pageParam),
-    getNextPageParam: (last, pages) => { const loaded = pages.reduce((sum, page) => sum + page.items.length, 0); return last.items.length === LEADS_PAGE_SIZE && (last.total === undefined || loaded < last.total) ? loaded : undefined; }
-  });
 }
 export function useMetrics(client: ApiClient, providerId: string | undefined, from: string, to: string, groupBy?: string) {
   return useQuery({ queryKey: P(providerId ?? "", "metrics", from, to, groupBy ?? ""), queryFn: () => providerService(client).metrics(providerId ?? "", from, to, groupBy), ...live, enabled: Boolean(providerId) });
@@ -125,14 +116,6 @@ export function useMicrosite(client: ApiClient, providerId: string | undefined) 
 export function useSaveMicrosite(client: ApiClient, providerId: string) {
   const queryClient = useQueryClient();
   return useMutation({ mutationFn: ({ input, version }: { input: MicrositeInput; version: number }) => providerService(client).saveMicrosite(providerId, input, version), onSuccess: (saved) => { queryClient.setQueryData(P(providerId, "microsite"), saved); } });
-}
-export function useDeleteDocument(client: ApiClient, providerId: string) {
-  const queryClient = useQueryClient();
-  return useMutation({ mutationFn: (documentId: string) => providerService(client).deleteDocument(providerId, documentId), onSettled: () => queryClient.invalidateQueries({ queryKey: P(providerId, "documents") }) });
-}
-/** GET .../documents/{id}/download: a short-lived presigned URL, requested only when the owner asks to open the file. */
-export function useDocumentDownload(client: ApiClient, providerId: string) {
-  return useMutation({ mutationFn: (documentId: string) => providerService(client).downloadDocument(providerId, documentId) });
 }
 export function useProviderDocuments(client: ApiClient, providerId: string | undefined) {
   return useQuery({ queryKey: P(providerId ?? "", "documents"), queryFn: () => providerService(client).documents(providerId ?? ""), ...live, enabled: Boolean(providerId) });

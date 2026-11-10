@@ -1,0 +1,16 @@
+
+ RUN  v3.1.2 C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/packages/forms
+
+ ✓ src/schemas/host-gift.test.ts (14 tests) 8ms
+ ✓ src/schemas/rsvp.test.ts (5 tests) 11ms
+ ✓ src/schemas/quote.test.ts (3 tests) 11ms
+ ✓ src/schemas/auth-celebration.test.ts (3 tests) 12ms
+ ✓ src/schemas/guest-gift-reservation.test.ts (2 tests) 6ms
+ ✓ src/schemas/notification.test.ts (8 tests) 6ms
+
+ Test Files  6 passed (6)
+      Tests  35 passed (35)
+   Start at  18:58:22
+   Duration  2.07s (transform 236ms, setup 0ms, collect 588ms, tests 55ms, environment 2ms, prepare 1.35s)
+
+JSON report written to C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/docs/progress/evidence/fix-F15-F16-2026-11-08/forms-full.json

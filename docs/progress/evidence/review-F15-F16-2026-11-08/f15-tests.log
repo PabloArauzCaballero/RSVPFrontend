@@ -1,0 +1,29 @@
+Loaded  vitest@3.1.2  and  @vitest/coverage-v8@3.2.7 .
+Running mixed versions is not supported and may lead into bugs
+Update your dependencies and make sure the versions match.
+
+ RUN  v3.1.2 C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/apps/seo-web
+      Coverage enabled with v8
+
+ ✓ tests/rsvp-page.test.tsx (24 tests) 3048ms
+   ✓ REQ-F15-06 · conexión lenta o caída: el formulario no se pierde > a lost first read offers a retry instead of a blank page  766ms
+   ✓ REQ-F15 · privacidad del enlace personal > the token never appears in the URL of any request, in storage or in the DOM  555ms
+
+ Test Files  1 passed (1)
+      Tests  24 passed (24)
+   Start at  18:27:14
+   Duration  8.86s (transform 879ms, setup 0ms, collect 2.28s, tests 3.05s, environment 1.31s, prepare 209ms)
+
+JSON report written to C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/docs/progress/evidence/review-F15-F16-2026-11-08/f15-tests.json
+ % Coverage report from v8
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------|---------|----------|---------|---------|-------------------
+All files          |   90.22 |     87.7 |   86.44 |   90.22 |                   
+ ...invitation.tsx |       0 |      100 |     100 |       0 | 3-56              
+ rsvp-draft.ts     |     100 |    44.44 |     100 |     100 | 11,19-21,25,29    
+ ...experience.tsx |   99.11 |    91.11 |   72.41 |   99.11 | 32,246            
+ rsvp-form.tsx     |     100 |      100 |     100 |     100 |                   
+ ...-providers.tsx |     100 |      100 |     100 |     100 |                   
+ rsvp-status.tsx   |     100 |    79.48 |     100 |     100 | 56,82-87,93,95-99 
+-------------------|---------|----------|---------|---------|-------------------

@@ -1,0 +1,13 @@
+
+ RUN  v3.1.2 C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/apps/seo-web
+
+ ✓ tests/rsvp-submission.test.tsx (4 tests) 520ms
+ ✓ tests/rsvp-page.test.tsx (24 tests) 2331ms
+   ✓ REQ-F15-06 · conexión lenta o caída: el formulario no se pierde > a lost first read offers a retry instead of a blank page  665ms
+
+ Test Files  2 passed (2)
+      Tests  28 passed (28)
+   Start at  18:54:43
+   Duration  5.85s (transform 1.04s, setup 0ms, collect 3.47s, tests 2.85s, environment 2.15s, prepare 342ms)
+
+JSON report written to C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/docs/progress/evidence/fix-F15-F16-2026-11-08/f15-tests.json

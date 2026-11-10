@@ -1,0 +1,26 @@
+{
+  "environment": {
+    "EXPO_PUBLIC_LINK_DOMAIN": false,
+    "EXPO_PUBLIC_EAS_PROJECT_ID": false,
+    "EXPO_IOS_BUNDLE_IDENTIFIER": false,
+    "EXPO_ANDROID_PACKAGE": false,
+    "RSVP_APPLE_APP_ID": false,
+    "RSVP_ANDROID_SHA256_FINGERPRINTS": false
+  },
+  "commandsAvailable": {
+    "adb": false,
+    "maestro": false,
+    "eas": false
+  },
+  "gatewayPorts": [
+    {
+      "port": 8000,
+      "state": "ECONNREFUSED"
+    },
+    {
+      "port": 28000,
+      "state": "ECONNREFUSED"
+    }
+  ],
+  "nativeExecution": "No physical devices or signed builds provided in this session. Native export is compilation only."
+}

@@ -1,33 +1,27 @@
-.fulfillment { display: grid; gap: .75rem; border: 1px solid var(--border); border-radius: var(--radius-cell, 12px); padding: 1.5rem; background: var(--surface); }
-.fulfillment h2 { margin: 0; font-size: 1.35rem; }
+.fulfillment { display: grid; gap: .75rem; padding: 1rem 1.25rem; border: 1px solid var(--border); border-left: 4px solid var(--primary); border-radius: .75rem; background: var(--surface); }
+.fulfillment h2 { margin: 0; font-size: 1.15rem; }
 .fulfillment dl { display: grid; gap: .6rem; margin: 0; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
-.fulfillment dt { color: var(--text-muted); font-family: var(--font-mono); font-size: .75rem; letter-spacing: .05em; text-transform: uppercase; }
-.fulfillment dd { margin: 0; font-weight: 500; }
+.fulfillment dt { color: var(--text-muted); font-size: .85rem; font-weight: 650; }
+.fulfillment dd { margin: 0; font-weight: 600; }
 .provider-form { display: grid; gap: 1.1rem; max-width: 40rem; }
 .provider-form fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: .6rem; min-width: 0; }
-.provider-form legend { font-weight: 500; padding: 0; margin-bottom: .3rem; }
-.provider-form input[type="text"], .provider-form input[type="email"], .provider-form input[type="tel"], .provider-form input[type="number"], .provider-form input[type="date"], .provider-form textarea { width: 100%; min-height: 2.75rem; padding: .6rem .8rem; border: 1px solid var(--field-border); border-radius: var(--radius-button, 6px); background: var(--surface); color: var(--text); font-size: 1rem; }
+.provider-form legend { font-weight: 650; padding: 0; margin-bottom: .3rem; }
+.provider-form input[type="text"], .provider-form input[type="email"], .provider-form input[type="tel"], .provider-form input[type="number"], .provider-form input[type="date"], .provider-form textarea { width: 100%; min-height: 2.75rem; padding: .6rem .8rem; border: 1px solid var(--border); border-radius: .5rem; background: var(--canvas); color: var(--text); font-size: 1rem; }
 .provider-form [aria-invalid="true"] { border-color: var(--danger); }
-.quote-item { display: grid; grid-template-columns: auto 1fr; gap: .25rem .75rem; align-items: start; padding: .85rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-inner, 8px); background: var(--surface); }
-.quote-item:has(input:checked) { border-color: var(--text); background: var(--surface-muted); }
+.quote-item { display: grid; grid-template-columns: auto 1fr; gap: .25rem .75rem; align-items: start; padding: .75rem 1rem; border: 1px solid var(--border); border-radius: .75rem; background: var(--surface); }
+.quote-item:has(input:checked) { border-color: var(--primary); background: var(--primary-muted); }
 .quote-item input { width: 1.25rem; height: 1.25rem; margin-top: .2rem; accent-color: var(--primary); }
 .quote-item small { grid-column: 2; color: var(--text-muted); }
 .agenda-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .25rem; margin: 0; padding: 0; list-style: none; }
-/* 7 cells x 44 px + gaps must fit a 328 px column (360 px screen): tighter gap below 26rem. */
-@media (max-width: 26rem) { .agenda-grid { gap: 1px; } }
-.agenda-head { text-align: center; font-family: var(--font-mono); font-size: .75rem; letter-spacing: .05em; text-transform: uppercase; color: var(--text-muted); }
-.agenda-day { min-height: 2.75rem; width: 100%; border: 1px solid var(--border); border-radius: var(--radius-button, 6px); background: var(--surface); color: var(--text); font-weight: 500; font-variant-numeric: tabular-nums; cursor: pointer; }
-.agenda-day[data-state="free"] { background: var(--tone-green-bg, var(--success-bg)); border-color: var(--success); }
+.agenda-head { text-align: center; font-size: .8rem; font-weight: 700; color: var(--text-muted); }
+.agenda-day { min-height: 2.75rem; width: 100%; border: 1px solid var(--border); border-radius: .5rem; background: var(--surface); color: var(--text); font-weight: 650; font-variant-numeric: tabular-nums; cursor: pointer; }
+.agenda-day[data-state="free"] { background: var(--primary-muted); border-color: var(--primary); }
 .agenda-day[data-state="blocked"], .agenda-day[data-state="full"] { background: var(--surface-muted); color: var(--text-muted); text-decoration: line-through; cursor: not-allowed; }
 .agenda-day[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); }
-.agenda-day:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.agenda-day:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
 .agenda-bar { display: flex; align-items: center; justify-content: space-between; gap: .5rem; flex-wrap: wrap; }
 .agenda-bar h2 { margin: 0; text-transform: capitalize; }
 .agenda-legend { display: flex; flex-wrap: wrap; gap: .75rem 1.25rem; margin: 0; padding: 0; list-style: none; color: var(--text-muted); font-size: .9rem; }
 
 /* Honeypot of the anonymous quote: out of sight and out of the tab order, but present for bots. */
 .hp-field { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
-.agenda-legend li { display: inline-flex; align-items: center; gap: .5rem; }
-.agenda-legend li::before { content: ""; width: .8rem; height: .8rem; border-radius: 3px; border: 1px solid var(--border); background: var(--surface-muted); }
-.agenda-legend li:first-child::before { background: var(--tone-green-bg, var(--success-bg)); border-color: var(--success); }
-@media (max-width: 40rem) { .agenda-bar h2 { order: -1; flex: 1 0 100%; } }

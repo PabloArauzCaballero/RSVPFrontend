@@ -13,8 +13,6 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     setupFiles: ["./test/setup.ts"],
-    // Playwright specs (visual gate) run with `yarn test:visual`, not here.
-    exclude: ["e2e/**", "node_modules/**"],
     testTimeout: TEST_TIMEOUT_MS,
     coverage: {
       provider: "v8",
@@ -40,9 +38,7 @@ export default defineConfig({
       { find: /^expo-clipboard$/, replacement: stub("expo-clipboard") },
       { find: /^expo-notifications$/, replacement: stub("expo-notifications") },
       { find: /^expo-device$/, replacement: stub("expo-device") },
-      { find: /^expo-constants$/, replacement: stub("expo-constants") },
-      // Exact module id only: the real package ships Flow syntax that jsdom cannot parse.
-      { find: /^react-native-safe-area-context$/, replacement: stub("react-native-safe-area-context") }
+      { find: /^expo-constants$/, replacement: stub("expo-constants") }
     ]
   }
 });

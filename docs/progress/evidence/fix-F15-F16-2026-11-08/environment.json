@@ -1,0 +1,71 @@
+{
+  "date": "2026-11-08T23:03:17.354Z",
+  "node": "v25.9.0",
+  "gitMetadata": false,
+  "ports": [
+    {
+      "port": 8000,
+      "status": "ECONNREFUSED"
+    },
+    {
+      "port": 28000,
+      "status": "ECONNREFUSED"
+    }
+  ],
+  "changedReviewedSources": [
+    "apps/seo-web/components/rsvp/rsvp-experience.tsx",
+    "apps/seo-web/components/rsvp/rsvp-form.tsx",
+    "apps/universal/src/host/guests/guest-detail-screen.tsx",
+    "apps/universal/src/host/guests/guest-form-screen.tsx"
+  ],
+  "specs": [
+    {
+      "file": "celebration.openapi.json",
+      "frontend": "1.2.0",
+      "backend": "1.0.0",
+      "identicalJson": false
+    },
+    {
+      "file": "gateway.openapi.json",
+      "frontend": "1.0.0",
+      "backend": "1.0.0",
+      "identicalJson": true
+    },
+    {
+      "file": "gift-list.openapi.json",
+      "frontend": "1.3.0",
+      "backend": "1.0.0",
+      "identicalJson": false
+    },
+    {
+      "file": "guest-rsvp.openapi.json",
+      "frontend": "1.10.0",
+      "backend": "1.8.0",
+      "identicalJson": false
+    },
+    {
+      "file": "identity.openapi.json",
+      "frontend": "1.1.0",
+      "backend": "1.0.0",
+      "identicalJson": false
+    },
+    {
+      "file": "notification.openapi.json",
+      "frontend": "1.5.0",
+      "backend": "1.2.0",
+      "identicalJson": false
+    },
+    {
+      "file": "provider-catalog.openapi.json",
+      "frontend": "2.2.0",
+      "backend": "1.0.0",
+      "identicalJson": false
+    },
+    {
+      "file": "template-media.openapi.json",
+      "frontend": "1.0.0",
+      "backend": "1.0.0",
+      "identicalJson": false
+    }
+  ]
+}

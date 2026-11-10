@@ -3,12 +3,13 @@ import type { ApiClient } from "@rsvp/api-client";
 import { cachePolicy } from "../policy.js";
 import { queryKeys } from "../keys.js";
 import { hostNotificationsApi } from "../guest/api.js";
-import { newIdempotencyKey } from "../guest/rsvp-flow.js";
 import type { DeviceRegistration, HostNotification, NotificationPreferences, NotificationPreferencesPatch } from "../guest/types.js";
 
-/** GET /notifications/celebrations/{id}/notifications: delivery records addressed to the host; `readAt` is the server's read state (contract 1.4.0). */
+/** GET /notifications/celebrations/{id}/notifications: the host's in-app notices and delivery records. */
+export const HOST_INBOX_LIMIT = 50;
+
 export function useHostNotifications(client: ApiClient, celebrationId: string) {
-  return useQuery({ queryKey: queryKeys.notification.inbox(celebrationId), queryFn: () => hostNotificationsApi(client).inbox(celebrationId), enabled: Boolean(celebrationId), refetchInterval: 30_000, ...cachePolicy.notification });
+  return useQuery({ queryKey: queryKeys.notification.inbox(celebrationId), queryFn: () => hostNotificationsApi(client).inbox(celebrationId, HOST_INBOX_LIMIT), enabled: Boolean(celebrationId), refetchInterval: 30_000, ...cachePolicy.notification });
 }
 
 export function useHostNotificationPreferences(client: ApiClient, celebrationId: string) {
@@ -16,49 +17,80 @@ export function useHostNotificationPreferences(client: ApiClient, celebrationId:
 }
 
 /**
- * Optimistic channel toggle: the cache flips immediately; a failure restores the previous value and
+ * Optimistic channel toggle: roll back its snapshot only if no newer server data replaced it, and
  * the error is thrown to the caller so the screen can say it was not saved (REQ-F18-04/05).
  */
 export function useUpdateHostNotificationPreferences(client: ApiClient, celebrationId: string) {
   const queryClient = useQueryClient();
   const key = queryKeys.notification.preferences(celebrationId);
   return useMutation({
-    mutationFn: (body: NotificationPreferencesPatch) => hostNotificationsApi(client).updatePreferences(celebrationId, body),
-    onMutate: async (body) => {
+    scope: { id: `host-notification-preferences:${celebrationId}` },
+    networkMode: "always",
+    mutationFn: async (body: NotificationPreferencesPatch) => {
       await queryClient.cancelQueries({ queryKey: key });
       const previous = queryClient.getQueryData<NotificationPreferences>(key);
-      if (previous) {
+      if (previous && (body.channels || body.eventTypes)) {
         queryClient.setQueryData<NotificationPreferences>(key, {
+          ...previous,
           channels: { ...previous.channels, ...body.channels },
-          eventTypes: { ...previous.eventTypes, ...body.eventTypes },
-          // null restores the service-wide schedule; the server answer replaces this guess on success.
-          quietHours: body.quietHours === undefined ? previous.quietHours : body.quietHours === null ? { ...previous.quietHours, source: "DEFAULT" } : { ...body.quietHours, source: "RECIPIENT" }
+          eventTypes: { ...previous.eventTypes, ...body.eventTypes }
         });
       }
-      return { previous };
-    },
-    onError: (_error, _body, context) => { if (context?.previous) queryClient.setQueryData(key, context.previous); },
-    onSuccess: (saved) => { queryClient.setQueryData(key, saved); }
+      const optimisticRevision = queryClient.getQueryState(key)?.dataUpdateCount;
+      try {
+        const saved = await hostNotificationsApi(client).updatePreferences(celebrationId, body);
+        await queryClient.cancelQueries({ queryKey: key });
+        queryClient.setQueryData(key, saved);
+        return saved;
+      } catch (error) {
+        await queryClient.cancelQueries({ queryKey: key });
+        // A completed refetch is newer server evidence, even if its values match the optimistic patch.
+        if (previous && (body.channels || body.eventTypes) && queryClient.getQueryState(key)?.dataUpdateCount === optimisticRevision) {
+          queryClient.setQueryData(key, previous);
+        }
+        throw error;
+      }
+    }
   });
 }
 
 /**
- * POST .../notifications/{id}/read (idempotent; the server keeps the first read time). The inbox flips to read at once
- * and is restored if the call fails, so the unread count is the server's, shared by every device.
+ * POST .../notifications/{id}/read keeps the first read time. Preserve server-confirmed reads if a batch stops partway.
  */
 export function useMarkHostNotificationsRead(client: ApiClient, celebrationId: string) {
   const queryClient = useQueryClient();
   const key = queryKeys.notification.inbox(celebrationId);
   return useMutation({
-    mutationFn: async (ids: readonly string[]) => { for (const id of ids) await hostNotificationsApi(client).markRead(celebrationId, id); },
-    onMutate: async (ids) => {
+    scope: { id: `host-inbox:${celebrationId}` },
+    networkMode: "always",
+    mutationFn: async (ids: readonly string[]) => {
       await queryClient.cancelQueries({ queryKey: key });
-      const previous = queryClient.getQueryData<{ items: HostNotification[] }>(key);
+      const selected = new Set(ids);
+      const confirmed = new Map<string, string>();
       const at = new Date().toISOString();
-      if (previous) queryClient.setQueryData(key, { ...previous, items: previous.items.map((item) => (ids.includes(item.id) && !item.readAt ? { ...item, readAt: at } : item)) });
-      return { previous };
+      const setReadState = (update: (item: HostNotification) => HostNotification) =>
+        queryClient.setQueryData<{ items: HostNotification[] }>(key, (current) =>
+          current && { ...current, items: current.items.map(update) });
+      const optimistic = new Set<string>();
+      setReadState((item) => {
+        if (!selected.has(item.id) || item.readAt !== null) return item;
+        optimistic.add(item.id);
+        return { ...item, readAt: at };
+      });
+      const api = hostNotificationsApi(client);
+      try {
+        for (const id of selected) {
+          const saved = await api.markRead(celebrationId, id);
+          confirmed.set(id, saved.readAt);
+        }
+      } finally {
+        setReadState((item) => {
+          const readAt = confirmed.get(item.id);
+          if (readAt !== undefined) return { ...item, readAt };
+          return optimistic.has(item.id) && item.readAt === at ? { ...item, readAt: null } : item;
+        });
+      }
     },
-    onError: (_error, _ids, context) => { if (context?.previous) queryClient.setQueryData(key, context.previous); },
     onSettled: () => { void queryClient.invalidateQueries({ queryKey: key }); }
   });
 }
@@ -82,16 +114,4 @@ export function useUnregisterHostDevice(client: ApiClient, celebrationId: string
   const queryClient = useQueryClient();
   return useMutation({ mutationFn: (deviceId: string) => hostNotificationsApi(client).unregisterDevice(celebrationId, deviceId), onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.notification.devices(celebrationId) }) });
 }
-
-/** GET .../push-deliveries: what happened to each push sent to the host's devices (status, attempts, last error). */
-export function usePushDeliveries(client: ApiClient, celebrationId: string) {
-  return useQuery({ queryKey: [...queryKeys.notification.devices(celebrationId), "deliveries"] as const, queryFn: () => hostNotificationsApi(client).pushDeliveries(celebrationId), enabled: Boolean(celebrationId), retry: false, ...cachePolicy.notification });
-}
-/** POST .../devices/{id}/test: one key per press, so a double click queues a single test push. */
-export function useTestHostDevice(client: ApiClient, celebrationId: string) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (deviceId: string) => hostNotificationsApi(client).testDevice(celebrationId, deviceId, newIdempotencyKey()),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: [...queryKeys.notification.devices(celebrationId), "deliveries"] })
-  });
-}
+export { usePushGiftReservation } from "./gift-reservation.js";

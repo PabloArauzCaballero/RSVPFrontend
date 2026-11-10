@@ -47,11 +47,11 @@ export function FailureNotice({ failure, t, onRetry, busy }: { failure: RsvpFail
   );
 }
 
-interface TextFieldProps { label: string; value: string; onChange: (value: string) => void; error?: string; help?: string; type?: string; autoComplete?: string; multiline?: boolean; maxLength?: number; inputMode?: 'numeric' | 'email' | 'text'; min?: number }
-export function TextField({ label, value, onChange, error, help, type = 'text', autoComplete, multiline, maxLength, inputMode, min }: TextFieldProps): ReactNode {
+interface TextFieldProps { label: string; value: string; onChange: (value: string) => void; error?: string; help?: string; type?: string; autoComplete?: string; multiline?: boolean; maxLength?: number; inputMode?: 'numeric' | 'email' | 'text'; min?: number; disabled?: boolean }
+export function TextField({ label, value, onChange, error, help, type = 'text', autoComplete, multiline, maxLength, inputMode, min, disabled = false }: TextFieldProps): ReactNode {
   const id = useId();
   const describedBy = [help ? `${id}-help` : '', error ? `${id}-error` : ''].filter(Boolean).join(' ') || undefined;
-  const shared = { id, value, 'aria-invalid': error ? true : undefined, 'aria-describedby': describedBy, maxLength, autoComplete } as const;
+  const shared = { id, value, disabled, 'aria-invalid': error ? true : undefined, 'aria-describedby': describedBy, maxLength, autoComplete } as const;
   return (
     <div className="rsvp-field">
       <label htmlFor={id}>{label}</label>
@@ -65,23 +65,23 @@ export function TextField({ label, value, onChange, error, help, type = 'text', 
 }
 
 /** Attendance choice, companions, diet and message: the answer part shared by first answer, edit and public registration. */
-export function AnswerFields({ draft, onChange, errors, t, allowedCompanions, askAttendance = true }: { draft: RsvpDraft; onChange: (patch: Partial<RsvpDraft>) => void; errors: FieldErrors; t: Translate; allowedCompanions?: number; askAttendance?: boolean }): ReactNode {
+export function AnswerFields({ draft, onChange, errors, t, allowedCompanions, askAttendance = true, disabled = false }: { draft: RsvpDraft; onChange: (patch: Partial<RsvpDraft>) => void; errors: FieldErrors; t: Translate; allowedCompanions?: number; askAttendance?: boolean; disabled?: boolean }): ReactNode {
   return (
     <>
       {askAttendance ? (
         <fieldset className="rsvp-choice" aria-describedby={errors.status ? 'rsvp-status-error' : undefined}>
           <legend>{t('rsvp.form.statusLegend')}</legend>
-          <label className="rsvp-radio"><input type="radio" name="status" value="CONFIRMED" checked={draft.status === 'CONFIRMED'} onChange={() => onChange({ status: 'CONFIRMED' })} /><span>{t('rsvp.form.confirm')}</span></label>
-          <label className="rsvp-radio"><input type="radio" name="status" value="DECLINED" checked={draft.status === 'DECLINED'} onChange={() => onChange({ status: 'DECLINED' })} /><span>{t('rsvp.form.decline')}</span></label>
+          <label className="rsvp-radio"><input disabled={disabled} type="radio" name="status" value="CONFIRMED" checked={draft.status === 'CONFIRMED'} onChange={() => onChange({ status: 'CONFIRMED' })} /><span>{t('rsvp.form.confirm')}</span></label>
+          <label className="rsvp-radio"><input disabled={disabled} type="radio" name="status" value="DECLINED" checked={draft.status === 'DECLINED'} onChange={() => onChange({ status: 'DECLINED' })} /><span>{t('rsvp.form.decline')}</span></label>
           {errors.status ? <p id="rsvp-status-error" className="rsvp-error">{errors.status}</p> : null}
         </fieldset>
       ) : null}
       {draft.status !== 'DECLINED' ? (
-        <TextField label={t('rsvp.form.companions')} type="number" inputMode="numeric" min={0} value={draft.requestedCompanions} onChange={(value) => onChange({ requestedCompanions: value })} error={errors.requestedCompanions}
+        <TextField disabled={disabled} label={t('rsvp.form.companions')} type="number" inputMode="numeric" min={0} value={draft.requestedCompanions} onChange={(value) => onChange({ requestedCompanions: value })} error={errors.requestedCompanions}
           help={allowedCompanions === undefined ? undefined : t('rsvp.form.companionsHelp', { count: allowedCompanions })} />
       ) : null}
-      <TextField label={t('rsvp.form.dietary')} help={t('rsvp.form.dietaryHelp')} multiline maxLength={1000} value={draft.dietaryNotes} onChange={(value) => onChange({ dietaryNotes: value })} error={errors.dietaryNotes} />
-      <TextField label={t('rsvp.form.message')} multiline maxLength={2000} value={draft.message} onChange={(value) => onChange({ message: value })} error={errors.message} />
+      <TextField disabled={disabled} label={t('rsvp.form.dietary')} help={t('rsvp.form.dietaryHelp')} multiline maxLength={1000} value={draft.dietaryNotes} onChange={(value) => onChange({ dietaryNotes: value })} error={errors.dietaryNotes} />
+      <TextField disabled={disabled} label={t('rsvp.form.message')} multiline maxLength={2000} value={draft.message} onChange={(value) => onChange({ message: value })} error={errors.message} />
     </>
   );
 }

@@ -1,0 +1,24 @@
+Loaded  vitest@3.1.2  and  @vitest/coverage-v8@3.2.7 .
+Running mixed versions is not supported and may lead into bugs
+Update your dependencies and make sure the versions match.
+
+ RUN  v3.1.2 C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/packages/i18n
+      Coverage enabled with v8
+
+ ✓ test/format.test.ts (6 tests) 33ms
+ ✓ test/translator.test.ts (4 tests) 34ms
+ ✓ test/resources.test.ts (2 tests) 25ms
+
+ Test Files  3 passed (3)
+      Tests  12 passed (12)
+   Start at  23:32:35
+   Duration  1.71s (transform 288ms, setup 0ms, collect 1.15s, tests 92ms, environment 1ms, prepare 529ms)
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 100% ( 89/89 )
+Branches     : 95.23% ( 20/21 )
+Functions    : 100% ( 10/10 )
+Lines        : 100% ( 89/89 )
+================================================================================

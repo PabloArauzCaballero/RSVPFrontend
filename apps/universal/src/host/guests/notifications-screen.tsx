@@ -1,96 +1,73 @@
-import { PressFeedback, Stagger, useColors } from "@rsvp/ui";
 import type { ReactNode } from "react";
 import { Text, View } from "react-native";
-import { radius, spacing } from "@rsvp/design-tokens";
+import { spacing } from "@rsvp/design-tokens";
 import { formatCelebrationDate } from "@rsvp/i18n";
-import { useHostNotifications, useMarkHostNotificationsRead, type HostNotification } from "@rsvp/query-hooks";
+import { HOST_INBOX_LIMIT, useHostNotifications, useMarkHostNotificationsRead, type HostNotification } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../../platform/providers";
 import { CelebrationScreen, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
-import { ActionButton, EmptyState, Notice, OverflowMenu, useStyles } from "../ui";
-import { FailureNotice, RetryNotice, TextAction, BlockSkeleton } from "./parts";
-
-import { useSingleFlightGate } from "../../platform/single-flight";
-import { classifyFailure } from "./failure";
-import { knownNoticeTemplate, notificationTarget } from "./notification-target";
+import { ActionButton, Loading, Notice, styles } from "../ui";
+import { RetryNotice } from "./parts";
+import { notificationTarget } from "./notification-target";
 
 /** C31 / F6 · In-app notification center: unread first, direct action, mark one or all as read. The read state is the server's (`readAt`), shared by every device (REQ-F18-01/02/05). */
 
-/** The inbox read and its "mark as read" write, lifted to the screen so the header action ("Marcar todos como leídos") and the list share one request gate. */
-function useInbox(celebrationId: string | undefined) {
-  const client = useApiClient();
-  const id = celebrationId ?? "";
-  const inbox = useHostNotifications(client, id);
-  const markRead = useMarkHostNotificationsRead(client, id);
-  const flight = useSingleFlightGate();
-  /** One batch at a time: a second tap before the first answer would repeat every call. */
-  const mark = (ids: readonly string[]): void => { if (ids.length === 0 || !flight.begin()) return; markRead.mutate(ids, { onSettled: flight.end }); };
-  const unread = (inbox.data?.items ?? []).filter((item) => item.readAt === null);
-  return { inbox, markRead, mark, unread };
-}
-type Inbox = ReturnType<typeof useInbox>;
-
-function NotificationsBody({ timeZone, celebrationId, inbox: { inbox, markRead, mark, unread }, onNavigate }: { readonly celebrationId: string; readonly timeZone: string; readonly inbox: Inbox; readonly onNavigate: (href: string) => void }): ReactNode {
-  const styles = useStyles();
-  const palette = useColors();
+function NotificationsBody({ celebrationId, timeZone, onNavigate }: { readonly celebrationId: string; readonly timeZone: string; readonly onNavigate: (href: string) => void }): ReactNode {
   const t = useT();
   const locale = useLocale();
-  if (inbox.isPending) return <BlockSkeleton />;
+  const client = useApiClient();
+  const inbox = useHostNotifications(client, celebrationId);
+  const markRead = useMarkHostNotificationsRead(client, celebrationId);
+  if (inbox.isPending) return <Loading />;
   if (inbox.isError) return <RetryNotice error={inbox.error} onRetry={() => { void inbox.refetch(); }} />;
   const isRead = (item: HostNotification): boolean => item.readAt !== null;
   const items = [...inbox.data.items].sort((a, b) => Number(isRead(a)) - Number(isRead(b)) || Date.parse(b.createdAt) - Date.parse(a.createdAt));
+  const unread = items.filter((item) => !isRead(item));
+  const limited = items.length === HOST_INBOX_LIMIT;
   const open = (item: HostNotification): void => {
-    mark([item.id]);
     const target = notificationTarget(item.template);
-    if (target) onNavigate(withCelebration(target === "requests" ? HOST_ROUTES.requests : HOST_ROUTES.report, celebrationId));
+    if (!target || markRead.isPending) return;
+    const navigate = () => onNavigate(withCelebration(HOST_ROUTES[target], celebrationId));
+    if (isRead(item)) navigate();
+    else markRead.mutate([item.id], { onSuccess: navigate });
   };
   return (
     <View style={{ gap: spacing[4] }}>
-      <Text testID="unread-count" accessibilityLiveRegion="polite" style={[styles.label, { fontSize: 16 }]}>{t("guests.notifications.unreadCount", { count: unread.length })}</Text>
-      {items.length === 0 ? <EmptyState illustration="calendar" title={t("guests.notifications.emptyTitle")} body={t("guests.notifications.empty")} /> : (
-        <View role="list" style={{ borderRadius: radius.lg, borderWidth: 1, borderColor: palette.border, backgroundColor: palette.surface, overflow: "hidden" }}>
-          <Stagger>
-          {items.map((item, index) => {
+      <Text style={styles.body}>{t("guests.notifications.intro")}</Text>
+      <View style={styles.row}>
+        <Text testID="unread-count" accessibilityLiveRegion="polite" style={styles.label}>{t("guests.notifications.unreadCount", { count: unread.length })}</Text>
+        <ActionButton variant="secondary" label={t(limited ? "guests.notifications.markVisible" : "guests.notifications.markAll")} disabled={markRead.isPending || unread.length === 0} onPress={() => markRead.mutate(unread.map((item) => item.id))} testID="mark-all" />
+        <ActionButton variant="secondary" label={t("guests.notifications.refresh")} disabled={markRead.isPending || inbox.isFetching} onPress={() => { void inbox.refetch(); }} />
+      </View>
+      {limited ? <Text style={styles.muted}>{t("guests.notifications.listLimit", { count: HOST_INBOX_LIMIT })}</Text> : null}
+      {markRead.isPending ? <Notice>{t("guests.notifications.marking")}</Notice> : null}
+      {markRead.isError ? <Notice kind="error">{t("guests.notifications.markFailed")}</Notice> : null}
+      {items.length === 0 ? <Notice>{t("guests.notifications.empty")}</Notice> : (
+        <View role="list" style={{ gap: spacing[2] }}>
+          {items.map((item) => {
             const seen = isRead(item);
             const target = notificationTarget(item.template);
-            const own = knownNoticeTemplate(item.template);
-            const subject = own ? t(`guests.notifications.templates.${own}.subject`) : item.subject;
-            const body = own ? t(`guests.notifications.templates.${own}.text`) : item.text;
-            const when = formatCelebrationDate(item.createdAt, { locale, timeZone });
-            const meta = item.channel === "INBOX" ? when : t("guests.notifications.via", { channel: t(`guests.notifications.channel.${item.channel}`), status: t(`guests.notifications.delivery.${item.status}`), date: when });
-            const text = (
-              <View style={{ flexDirection: "row", alignItems: "flex-start", gap: spacing[3], flex: 1, minWidth: 0 }}>
-                <View aria-hidden style={{ width: 10, height: 10, marginTop: 7, borderRadius: 5, backgroundColor: seen ? "transparent" : palette.primary }} />
-                <View style={{ flex: 1, minWidth: 0, gap: spacing[1] }}>
-                  <Text style={[styles.itemTitle, { fontSize: 17, fontWeight: seen ? "400" : "600" }]}>{subject}</Text>
-                  <Text style={styles.body}>{body}</Text>
-                  <Text style={styles.muted}>{seen ? meta : `${t("guests.notifications.unread")} · ${meta}`}</Text>
+            return (
+              <View key={item.id} role="listitem" testID={`notice-${item.id}`} style={[styles.card, { gap: spacing[1] }, seen && { opacity: 0.8 }]}>
+                <Text style={styles.subtitle}>{seen ? t("guests.notifications.read") : t("guests.notifications.unread")} · {item.subject}</Text>
+                <Text style={styles.body}>{item.text}</Text>
+                <Text style={styles.muted}>{item.channel === "INBOX"
+                  ? t("guests.notifications.inApp", { date: formatCelebrationDate(item.createdAt, { locale, timeZone }) })
+                  : t("guests.notifications.via", { channel: t(`guests.notifications.channel.${item.channel}`), status: t(`guests.notifications.delivery.${item.status}`), date: formatCelebrationDate(item.createdAt, { locale, timeZone }) })}</Text>
+                <View style={styles.row}>
+                  {target ? <ActionButton label={t("guests.notifications.open")} disabled={markRead.isPending} onPress={() => open(item)} testID={`open-${item.id}`} /> : null}
+                  {!seen ? <ActionButton variant="secondary" label={t("guests.notifications.markRead")} disabled={markRead.isPending} onPress={() => markRead.mutate([item.id])} testID={`read-${item.id}`} /> : null}
                 </View>
               </View>
             );
-            return (
-              <View key={item.id} role="listitem" testID={`notice-${item.id}`} style={[{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: spacing[3], paddingVertical: spacing[5], paddingHorizontal: spacing[6] }, index > 0 ? { borderTopWidth: 1, borderTopColor: palette.border } : null, seen ? { backgroundColor: palette.surfaceMuted } : null]}>
-                {target ? <PressFeedback accessibilityLabel={`${t("guests.notifications.open")}: ${subject}`} onPress={() => open(item)} testID={`open-${item.id}`} style={{ flexGrow: 1, flexShrink: 1, flexBasis: 260, minWidth: 0 }}>{text}</PressFeedback> : <View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 260, minWidth: 0 }}>{text}</View>}
-                {seen ? null : <TextAction label={t("guests.notifications.markRead")} onPress={() => mark([item.id])} testID={`read-${item.id}`} />}
-              </View>
-            );
           })}
-          </Stagger>
         </View>
       )}
-      {markRead.isError ? (classifyFailure(markRead.error).kind === "api" ? <Notice kind="error">{t("guests.notifications.markFailed")}</Notice> : <FailureNotice error={markRead.error} />) : null}
     </View>
   );
 }
 
 export function NotificationsScreen(props: ScreenProps): ReactNode {
   const t = useT();
-  const state = useInbox(props.celebrationId);
-  return (
-    <CelebrationScreen {...props} current="notifications" title={t("guests.notifications.title")} intro={t("guests.notifications.intro")}
-      actions={<ActionButton icon="check" label={t("guests.notifications.markAll")} busy={state.markRead.isPending} disabled={state.unread.length === 0} onPress={() => state.mark(state.unread.map((item) => item.id))} testID="mark-all" />}
-      menu={<OverflowMenu label={t("guests.more")} testID="notifications-more" items={[{ key: "refresh", label: t("guests.notifications.refresh"), onPress: () => { void state.inbox.refetch(); } }]} />}>
-      {({ celebration }) => <NotificationsBody celebrationId={celebration.id} timeZone={celebration.timeZone} inbox={state} onNavigate={props.onNavigate} />}
-    </CelebrationScreen>
-  );
+  return <CelebrationScreen {...props} current="notifications" title={t("guests.notifications.title")}>{({ celebration }) => <NotificationsBody key={celebration.id} celebrationId={celebration.id} timeZone={celebration.timeZone} onNavigate={props.onNavigate} />}</CelebrationScreen>;
 }

@@ -1,3 +1,11 @@
+# F21 · Continuación local 2026-11-07
+
+Estado actual: `TESTED` en frontend; bundles iOS/Android compilados; **no DONE**. [Resultados, requisitos, límites y responsables de esta continuación](local-2026-11-07.md). 80 pruebas F21 pasaron tres veces; regresiones universal 354/354 y Next 107/107. Chrome en 360/768/1280 con axe sin hallazgos graves. La apertura en teléfonos, el gateway real del head actual, CI/revisión y la sincronización de contratos siguen pendientes.
+
+Lo que sigue es evidencia histórica de otras corridas; no acredita automáticamente los cambios locales de esta continuación.
+
+---
+
 # Evidencia · F21 App del invitado · 2026-11-04
 Comandos (2026-11-04): `corepack yarn turbo run typecheck test lint` → 66/66 tareas OK; `corepack yarn eslint . --max-warnings 0` → exit 0. Navegador: `CHROMIUM_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" ...` (ver cada guion).
 

@@ -1,0 +1,13 @@
+
+ RUN  v3.1.2 C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/packages/query-hooks
+
+ ✓ test/report-completeness.test.ts (5 tests) 6ms
+ ✓ test/guest-contract.test.tsx (29 tests) 1064ms
+ ✓ test/notification-concurrency.test.tsx (2 tests) 325ms
+
+ Test Files  3 passed (3)
+      Tests  36 passed (36)
+   Start at  13:45:13
+   Duration  6.22s (transform 307ms, setup 0ms, collect 1.61s, tests 1.39s, environment 4.08s, prepare 533ms)
+
+JSON report written to C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/docs/progress/evidence/review-fix-F17-F18-2026-11-09/hooks-after.json

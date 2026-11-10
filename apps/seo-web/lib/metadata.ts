@@ -34,8 +34,6 @@ export function celebrationMetadata(view: PublicCelebrationView, gallery: readon
   const content = readContent(view);
   const path = celebrationPath(view.slug, section?.path);
   const url = `${siteUrl()}${path}`;
-  // Every language has its own explicit address and the page is canonical to the one it renders, so the canonical is always in the hreflang set.
-  const own = `${url}?lang=${view.locale}`;
   const title = section ? t("celebration.meta.sectionTitle", { section: t(`celebration.sections.${section.id}`), title: content.title }) : content.title;
   const description = celebrationDescription(view, t);
   const cover = gallery.find((image) => image.isCover) ?? gallery[0];
@@ -44,12 +42,12 @@ export function celebrationMetadata(view: PublicCelebrationView, gallery: readon
     title,
     description,
     alternates: {
-      canonical: own,
+      canonical: url,
       languages: Object.fromEntries(view.availableLocales.map((locale) => [locale, `${url}?lang=${locale}`]))
     },
     openGraph: {
       type: "website",
-      url: own,
+      url,
       title,
       description,
       siteName: "RSVP",

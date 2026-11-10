@@ -1,0 +1,44 @@
+
+▶ next build (NEXT_PUBLIC_API_URL → contract mock)
+   ▲ Next.js 15.3.1
+
+   Creating an optimized production build ...
+unable to verify the first certificate; if the root CA is installed locally, try running Node.js with --use-system-ca
+
+Retrying 1/3...
+unable to verify the first certificate; if the root CA is installed locally, try running Node.js with --use-system-ca
+
+Retrying 2/3...
+unable to verify the first certificate; if the root CA is installed locally, try running Node.js with --use-system-ca
+
+Retrying 3/3...
+[Error: unable to verify the first certificate; if the root CA is installed locally, try running Node.js with --use-system-ca] {
+  code: 'UNABLE_TO_VERIFY_LEAF_SIGNATURE'
+}
+Failed to compile.
+
+app\layout.tsx
+`next/font` error:
+Failed to fetch `Plus Jakarta Sans` from Google Fonts.
+
+
+> Build failed because of webpack errors
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: next build failed
+
+1 !== 0
+
+    at file:///C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/apps/seo-web/scripts/e2e-rsvp.mjs:39:8
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 1,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v25.9.0

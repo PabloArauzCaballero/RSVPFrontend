@@ -1,0 +1,22 @@
+Loaded  vitest@3.1.2  and  @vitest/coverage-v8@3.2.7 .
+Running mixed versions is not supported and may lead into bugs
+Update your dependencies and make sure the versions match.
+
+ RUN  v3.1.2 C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/packages/query-hooks
+      Coverage enabled with v8
+
+ ✓ test/host-gifts.test.tsx (9 tests) 485ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  11:27:43
+   Duration  3.74s (transform 199ms, setup 0ms, collect 999ms, tests 485ms, environment 1.71s, prepare 178ms)
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 100% ( 29/29 )
+Branches     : 100% ( 11/11 )
+Functions    : 100% ( 5/5 )
+Lines        : 100% ( 29/29 )
+================================================================================

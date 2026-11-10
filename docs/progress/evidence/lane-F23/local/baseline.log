@@ -1,0 +1,11 @@
+
+ RUN  v3.1.2 C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/apps/universal
+
+ ✓ test/gifts-portal.test.tsx (28 tests) 2284ms
+
+ Test Files  1 passed (1)
+      Tests  28 passed (28)
+   Start at  10:59:35
+   Duration  8.74s (transform 1.30s, setup 475ms, collect 4.68s, tests 2.28s, environment 964ms, prepare 128ms)
+
+JSON report written to C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/docs/progress/evidence/lane-F23/local/baseline.json

@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-08T22:37:55.452Z",
+  "gateway": [
+    {
+      "port": 8000,
+      "result": "ECONNREFUSED"
+    },
+    {
+      "port": 28000,
+      "result": "ECONNREFUSED"
+    }
+  ],
+  "gitMetadata": false,
+  "node": "v25.9.0",
+  "surface": "component review; no current real-backend or native-runtime claim"
+}

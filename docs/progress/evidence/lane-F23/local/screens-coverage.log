@@ -1,0 +1,39 @@
+Loaded  vitest@3.1.2  and  @vitest/coverage-v8@3.2.7 .
+Running mixed versions is not supported and may lead into bugs
+Update your dependencies and make sure the versions match.
+
+ RUN  v3.1.2 C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/apps/universal
+      Coverage enabled with v8
+
+ ✓ test/gifts-portal.test.tsx (28 tests) 3433ms
+   ✓ REQ-F28 · availability and date requests > validates the schedule, saves it and confirms or rejects requests (409 refreshes)  410ms
+ ✓ test/host-gifts.test.tsx (37 tests) 5985ms
+   ✓ F23 slice 1 · create a catalog gift and see its public state > creates once, shows backend publication in the host list, and the guest sees the same item without an account  436ms
+   ✓ F23 slice 3 · decisions, preferences and discovery > list HTTP 503 never reveals stale gift rows  1117ms
+   ✓ F23 slice 2 · deliberate external flow and publication > requires review, handles the partner-first challenge once and keeps PROPOSED out of the public list until approved  316ms
+ ✓ test/host-gifts-controls.test.tsx (3 tests) 150ms
+ ✓ test/host-gifts-routing.test.ts (15 tests) 11ms
+
+ Test Files  4 passed (4)
+      Tests  83 passed (83)
+   Start at  11:56:51
+   Duration  18.72s (transform 1.63s, setup 1.63s, collect 14.17s, tests 9.58s, environment 5.27s, prepare 645ms)
+
+JSON report written to C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/docs/progress/evidence/lane-F23/local/screens-final.json
+ % Coverage report from v8
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------|---------|----------|---------|---------|-------------------
+All files          |     100 |    87.14 |      80 |     100 |                   
+ ...log-screen.tsx |     100 |     93.9 |   83.33 |     100 | 22,35,48,62,80    
+ controls.tsx      |     100 |      100 |     100 |     100 |                   
+ controls.web.tsx  |     100 |    76.92 |     100 |     100 | 14-16             
+ ...nal-screen.tsx |     100 |    89.06 |   71.42 |     100 | ...54,63,71,95,99 
+ gifts-screen.tsx  |     100 |    85.71 |   76.47 |     100 | 21,33-34,58,74,93 
+ inbox-screen.tsx  |     100 |    85.71 |   69.23 |     100 | 26,41,44,46-49    
+ partner-link.tsx  |     100 |    83.33 |     100 |     100 | 12                
+ ...r-link.web.tsx |     100 |      100 |     100 |     100 |                   
+ parts.tsx         |     100 |     90.9 |     100 |     100 | 22,32,34          
+ ...ers-screen.tsx |     100 |    75.94 |      80 |     100 | ...71-74,83,89,96 
+ routing.ts        |     100 |       95 |     100 |     100 | 15                
+-------------------|---------|----------|---------|---------|-------------------

@@ -1,0 +1,57 @@
+
+ RUN  v3.1.2 C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/apps/universal
+
+ ❯ test/host-review-state.test.tsx (2 tests | 2 failed) 293ms
+   × REQ-F17-02: changing celebration never exposes the old report during the next read 212ms
+     → expected <div dir="auto" …(1)></div> to be null
+   × REQ-F18-06: a refreshed saved schedule cannot erase a dirty quiet-hours draft 80ms
+     → expected 'Silencio de 22:00 a 8:00 · Horario de…' to contain '21:00 a 6:00'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/host-review-state.test.tsx > REQ-F17-02: changing celebration never exposes the old report during the next read
+AssertionError: expected <div dir="auto" …(1)></div> to be null
+
+- Expected: 
+null
+
++ Received: 
+<div
+  class="css-text-146c3p1 r-color-rw1157 r-fontFamily-1g7mlie r-fontSize-1i10wst r-fontWeight-b88u0q"
+  dir="auto"
+>
+  Privada de A
+</div>
+
+ ❯ test/host-review-state.test.tsx:34:50
+     32|  view.rerender(<ReportScreen celebrationId={b.celebrationId} onNavigat…
+     33|  await waitFor(() => expect(pending).toBe(true));
+     34|  try {expect(screen.queryByText('Privada de A')).toBeNull();} finally …
+       |                                                  ^
+     35|  await screen.findByText('Todavía no hay respuestas para mostrar.');
+     36| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  test/host-review-state.test.tsx > REQ-F18-06: a refreshed saved schedule cannot erase a dirty quiet-hours draft
+AssertionError: expected 'Silencio de 22:00 a 8:00 · Horario de…' to contain '21:00 a 6:00'
+
+Expected: "21:00 a 6:00"
+Received: "Silencio de 22:00 a 8:00 · Horario del servicio"
+
+ ❯ test/host-review-state.test.tsx:45:58
+     43|  mock.state.quietHours = {start:21,end:6};
+     44|  await act(async () => {await view.queries.invalidateQueries({queryKey…
+     45|  expect(screen.getByTestId('quiet-current').textContent).toContain('21…
+       |                                                          ^
+     46|  expect((screen.getByTestId('quiet-start') as HTMLInputElement).value)…
+     47|  expect((screen.getByTestId('quiet-end') as HTMLInputElement).value).t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  13:39:40
+   Duration  7.55s (transform 983ms, setup 587ms, collect 4.19s, tests 293ms, environment 1.91s, prepare 216ms)
+

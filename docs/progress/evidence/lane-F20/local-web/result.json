@@ -1,0 +1,56 @@
+{
+  "date": "2026-11-07T17:12:27.179Z",
+  "surface": "Expo web + Chrome + contract mock; not a push device test",
+  "checks": [
+    "360/768/1280: pending -> approved by keyboard, celebration timezone despite Tokyo device, reduced motion",
+    "empty, service error, 409 race, English rejection and expired-session return destination"
+  ],
+  "axe": [
+    {
+      "name": "pending-360",
+      "violations": []
+    },
+    {
+      "name": "approved-360",
+      "violations": []
+    },
+    {
+      "name": "pending-768",
+      "violations": []
+    },
+    {
+      "name": "approved-768",
+      "violations": []
+    },
+    {
+      "name": "pending-1280",
+      "violations": []
+    },
+    {
+      "name": "approved-1280",
+      "violations": []
+    },
+    {
+      "name": "empty-360",
+      "violations": []
+    },
+    {
+      "name": "error-360",
+      "violations": []
+    },
+    {
+      "name": "conflict-360",
+      "violations": []
+    },
+    {
+      "name": "pending-en-US-768",
+      "violations": []
+    },
+    {
+      "name": "expired-session-768",
+      "violations": []
+    }
+  ],
+  "posts": 5,
+  "status": "PASS"
+}

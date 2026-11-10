@@ -64,10 +64,6 @@ const latest = await call("GET", `/celebrations/${celebration.id}`, { token: hos
 await call("PUT", `/celebrations/${celebration.id}/collaborators/${viewerClaims.sub}`, { token: host.accessToken, headers: { "if-match": String(latest.version) }, body: { role: "VIEWER" } });
 const guest = await call("POST", `/guests/celebrations/${celebration.id}/guests`, { token: host.accessToken, body: { name: "Marta Invitada", email: `marta.${stamp}@example.com` } });
 const issued = await call("POST", `/guests/celebrations/${celebration.id}/guests/${guest.id}/access-token`, { token: host.accessToken, body: {} });
-// A signed-in visitor asks the provider for a quote, so the provider portal has a real FORM lead to show (anonymous quotes are off unless
-// the local Provider Catalog runs with PROVIDER_ANON_QUOTES=open).
-const visitor = await register("HOST", "f26visitor");
-await call("POST", `/providers/${providerRow.id}/quotes`, { token: visitor.accessToken, body: { listingIds: [listings[0].id], eventDate: new Date(Date.now() + 40 * 86_400_000).toISOString().slice(0, 10), guestCount: 50, contact: { name: "Visitante", email: visitor.email } } });
 
 console.log(JSON.stringify({ stamp, password: PASSWORD, host: { email: host.email, token: host.accessToken }, provider: { email: provider.email, token: provider.accessToken, id: providerRow.id, slug: providerRow.slug }, listings: listings.map((l) => ({ id: l.id, title: l.title })), celebration: { id: celebration.id, slug, published, missing: check.missingFields }, guest: { id: guest.id, issued }, viewer: { email: viewer.email }, giftItems: giftItems.map((g) => g.id) }, null, 2));
 

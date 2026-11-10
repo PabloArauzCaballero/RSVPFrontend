@@ -1,0 +1,12 @@
+
+ RUN  v3.1.2 C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/apps/universal
+
+ ✓ test/host-gifts.test.tsx (5 tests) 808ms
+   ✓ F23 slice 1 · create a catalog gift and see its public state > creates once, shows backend publication in the host list, and the guest sees the same item without an account  306ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  11:08:04
+   Duration  6.93s (transform 981ms, setup 329ms, collect 4.28s, tests 808ms, environment 1.13s, prepare 168ms)
+
+JSON report written to C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/docs/progress/evidence/lane-F23/local/slice-1.json

@@ -1,0 +1,31 @@
+Loaded  vitest@3.1.2  and  @vitest/coverage-v8@3.2.7 .
+Running mixed versions is not supported and may lead into bugs
+Update your dependencies and make sure the versions match.
+
+ RUN  v3.1.2 C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/apps/universal
+      Coverage enabled with v8
+
+ ✓ test/guest-state.test.tsx (4 tests) 857ms
+ ✓ test/guests.test.tsx (60 tests) 8755ms
+   ✓ REQ-F16-01 · C19 guest list (read model, search, filter, paging, states) > lists guests with status, filters by response and searches on the server  646ms
+   ✓ REQ-F16-01 · C19 guest list (read model, search, filter, paging, states) > 500 guests stay usable: 50 per page, server paging, never 500 rows in the DOM  656ms
+   ✓ REQ-F16-01 · C19 guest list (read model, search, filter, paging, states) > empty, filtered-empty, error with retry, and 403  496ms
+   ✓ REQ-F18 · notifications center and preferences > recovers from every documented GET error on notifications  406ms
+   ✓ REQ-F18 · notifications center and preferences > recovers from every documented GET error on preferences  418ms
+
+ Test Files  2 passed (2)
+      Tests  64 passed (64)
+   Start at  19:02:42
+   Duration  13.92s (transform 1.10s, setup 674ms, collect 5.60s, tests 9.61s, environment 2.27s, prepare 364ms)
+
+ % Coverage report from v8
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------|---------|----------|---------|---------|-------------------
+All files          |   97.58 |     91.7 |   79.36 |   97.58 |                   
+ groups-screen.tsx |     100 |       95 |      75 |     100 | 40                
+ ...ail-screen.tsx |     100 |    83.87 |      85 |     100 | ...90,112-113,129 
+ ...orm-screen.tsx |     100 |     97.5 |    92.3 |     100 | 31                
+ ...ist-screen.tsx |     100 |    95.74 |      75 |     100 | 67                
+ import-screen.tsx |   87.67 |    91.66 |      60 |   87.67 | 45-53             
+-------------------|---------|----------|---------|---------|-------------------

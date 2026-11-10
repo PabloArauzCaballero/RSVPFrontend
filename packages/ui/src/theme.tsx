@@ -1,66 +1,54 @@
 import { createContext, useContext, useMemo, type PropsWithChildren } from 'react';
 import { StyleSheet, useColorScheme } from 'react-native';
-import { colors, radius, shadow, spacing, tones, typography, type ColorTheme } from '@rsvp/design-tokens';
-import { fonts } from './fonts';
+import { colors, radius, spacing, typography, type ColorTheme } from '@rsvp/design-tokens';
 import { defaultStrings, type UiStrings } from './strings';
 
 export type Palette = (typeof colors)[ColorTheme];
-export type ColorScheme = 'light' | 'dark';
-export type Tones = (typeof tones)[ColorTheme];
 
-/** Letter-spacing in px from an `em` value, because native needs numbers. */
-/** Resting depth of a surface (card, tile, list): light mode lifts it with a hairline and a long soft shadow; dark mode adds a faint top highlight, the way an edge catches light. */
-export const depth = (scheme: ColorScheme): { boxShadow: string } => ({ boxShadow: scheme === 'dark' ? 'inset 0 1px 0 rgb(255 255 255 / 0.05)' : shadow.md });
-
-export const tracking = (size: number, em: number): number => Math.round(size * em * 100) / 100;
-
-export function createStyles(palette: Palette, scheme: ColorScheme = palette === colors.dark ? 'dark' : 'light') {
-  const tone = tones[scheme];
+export function createStyles(palette: Palette) {
   return StyleSheet.create({
     page: { flex: 1, backgroundColor: palette.canvas, padding: spacing[4], gap: spacing[4] },
-    title: { color: palette.text, fontFamily: fonts.display, fontSize: typography.fontSize.xl, lineHeight: 26, fontWeight: '500', letterSpacing: tracking(typography.fontSize.xl, -0.02) },
-    body: { color: palette.textMuted, fontFamily: fonts.sans, fontSize: typography.fontSize.base, lineHeight: typography.lineHeight.base },
-    /** Small uppercase label: field labels, table heads. */
-    label: { color: palette.text, fontFamily: fonts.sans, fontSize: typography.fontSize.xs, lineHeight: typography.lineHeight.xs, fontWeight: '600', letterSpacing: tracking(typography.fontSize.xs, 0.05), textTransform: 'uppercase', marginBottom: spacing[2] },
-    help: { color: palette.danger, fontFamily: fonts.sans, fontSize: typography.fontSize.sm, lineHeight: typography.lineHeight.sm, marginTop: spacing[1] },
-    button: { flexDirection: 'row', gap: spacing[2], minHeight: 44, minWidth: 44, alignItems: 'center', justifyContent: 'center', borderRadius: radius.control, borderWidth: 1, borderColor: palette.primary, paddingHorizontal: spacing[5], backgroundColor: palette.primary },
-    buttonSecondary: { backgroundColor: 'transparent', borderColor: palette.fieldBorder },
-    buttonGhost: { backgroundColor: 'transparent', borderColor: 'transparent', paddingHorizontal: spacing[2] },
-    buttonDanger: { backgroundColor: tone.red.bg, borderColor: palette.danger },
-    buttonDisabled: { opacity: 0.5 },
-    buttonText: { color: palette.onPrimary, fontFamily: fonts.sans, fontSize: 15, lineHeight: 20, fontWeight: '600', letterSpacing: tracking(15, -0.01) },
-    buttonTextSecondary: { color: palette.text },
-    buttonTextGhost: { color: palette.text, textDecorationLine: 'underline' },
-    buttonTextDanger: { color: palette.danger },
-    input: { minHeight: 48, borderWidth: 1, borderColor: palette.fieldBorder, borderRadius: radius.button, paddingHorizontal: spacing[4], color: palette.text, backgroundColor: palette.surface, fontFamily: fonts.sans, fontSize: typography.fontSize.base },
+    title: { color: palette.text, fontSize: typography.fontSize.xl, lineHeight: typography.lineHeight.xl, fontWeight: '800', letterSpacing: -0.5 },
+    body: { color: palette.textMuted, fontSize: typography.fontSize.base, lineHeight: typography.lineHeight.base },
+    label: { color: palette.text, fontSize: typography.fontSize.sm, fontWeight: '600', marginBottom: spacing[1] },
+    help: { color: palette.danger, fontSize: typography.fontSize.sm, marginTop: spacing[1] },
+    button: { minHeight: 48, minWidth: 44, alignItems: 'center', justifyContent: 'center', borderRadius: radius.md, paddingHorizontal: spacing[4], backgroundColor: palette.primary },
+    buttonSecondary: { backgroundColor: palette.primaryMuted },
+    buttonGhost: { backgroundColor: 'transparent' },
+    buttonDanger: { backgroundColor: palette.danger },
+    buttonDisabled: { opacity: 0.55 },
+    buttonText: { color: palette.onPrimary, fontSize: typography.fontSize.base, fontWeight: '700' },
+    buttonTextSecondary: { color: palette.primary },
+    buttonTextDanger: { color: palette.onDanger },
+    input: { minHeight: 44, borderWidth: 1, borderColor: palette.border, borderRadius: radius.md, paddingHorizontal: spacing[3], color: palette.text, backgroundColor: palette.surface, fontSize: typography.fontSize.base },
     inputError: { borderColor: palette.danger },
-    card: { backgroundColor: palette.surface, borderColor: palette.border, borderWidth: 1, borderRadius: radius.lg, padding: spacing[6], gap: spacing[2], ...depth(scheme) },
-    overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: palette.scrim },
-    sheet: { backgroundColor: palette.surface, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg, borderWidth: 1, borderColor: palette.border, padding: spacing[6], gap: spacing[3], width: '100%', maxWidth: 640, alignSelf: 'center' },
-    modal: { margin: spacing[4], marginTop: 'auto', marginBottom: 'auto', backgroundColor: palette.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: palette.border, boxShadow: shadow.lg, padding: spacing[6], gap: spacing[3], maxWidth: 520, alignSelf: 'center', width: '90%' },
-    toast: { backgroundColor: palette.text, borderRadius: radius.md, paddingHorizontal: spacing[4], paddingVertical: spacing[3], minHeight: 44, justifyContent: 'center', borderWidth: 1, borderColor: palette.text },
-    toastSuccess: { backgroundColor: tone.green.bg, borderColor: palette.success },
-    toastError: { backgroundColor: tone.red.bg, borderColor: palette.danger },
-    toastText: { color: palette.canvas, fontFamily: fonts.sans, fontSize: typography.fontSize.sm, lineHeight: typography.lineHeight.sm, fontWeight: '500' },
-    toastTextSuccess: { color: tone.green.fg, fontFamily: fonts.sans, fontSize: typography.fontSize.sm, lineHeight: typography.lineHeight.sm, fontWeight: '500' },
-    toastTextError: { color: tone.red.fg, fontFamily: fonts.sans, fontSize: typography.fontSize.sm, lineHeight: typography.lineHeight.sm, fontWeight: '500' },
-    tableHead: { flexDirection: 'row', backgroundColor: palette.surfaceMuted, borderRadius: radius.md },
+    card: { backgroundColor: palette.surface, borderColor: palette.border, borderWidth: 1, borderRadius: radius.lg, padding: spacing[4], gap: spacing[2] },
+    overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(10,16,51,0.6)' },
+    sheet: { backgroundColor: palette.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: spacing[5], gap: spacing[3], width: '100%', maxWidth: 640, alignSelf: 'center' },
+    modal: { margin: spacing[4], marginTop: 'auto', marginBottom: 'auto', backgroundColor: palette.surface, borderRadius: radius.lg, padding: spacing[5], gap: spacing[3], maxWidth: 520, alignSelf: 'center', width: '90%' },
+    toast: { backgroundColor: palette.text, borderRadius: radius.md, padding: spacing[3], minHeight: 44, justifyContent: 'center' },
+    toastSuccess: { backgroundColor: palette.success },
+    toastError: { backgroundColor: palette.danger },
+    toastText: { color: palette.surface },
+    toastTextOnTone: { color: palette.onPrimary },
+    tableHead: { flexDirection: 'row', backgroundColor: palette.surfaceMuted },
     tableRow: { flexDirection: 'row', borderTopWidth: 1, borderColor: palette.border },
-    cell: { flex: 1, padding: spacing[3], color: palette.text, fontFamily: fonts.sans, fontSize: typography.fontSize.sm },
-    checkboxRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[3], minHeight: 44 },
-    checkbox: { width: 22, height: 22, borderRadius: 4, borderWidth: 1, borderColor: palette.fieldBorder, backgroundColor: palette.surface, alignItems: 'center', justifyContent: 'center' },
-    selected: { backgroundColor: palette.primary, borderColor: palette.primary },
-    picker: { borderWidth: 1, borderColor: palette.fieldBorder, borderRadius: radius.button, overflow: 'hidden' },
+    cell: { flex: 1, padding: spacing[3], color: palette.text },
+    checkboxRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[2], minHeight: 44 },
+    checkbox: { width: 24, height: 24, borderRadius: radius.sm, borderWidth: 2, borderColor: palette.primary, alignItems: 'center', justifyContent: 'center' },
+    selected: { backgroundColor: palette.primary },
+    picker: { borderWidth: 1, borderColor: palette.border, borderRadius: radius.md, overflow: 'hidden' },
     option: { padding: spacing[3], minHeight: 44, justifyContent: 'center' },
-    optionSelected: { backgroundColor: palette.surfaceMuted }
+    optionSelected: { backgroundColor: palette.primaryMuted }
   });
 }
 
 export type Styles = ReturnType<typeof createStyles>;
+export type ColorScheme = 'light' | 'dark';
 
 interface ThemeValue { scheme: ColorScheme; palette: Palette; styles: Styles; strings: UiStrings }
 const cache: Record<ColorScheme, Styles | undefined> = { light: undefined, dark: undefined };
-const stylesFor = (scheme: ColorScheme): Styles => (cache[scheme] ??= createStyles(colors[scheme], scheme));
+const stylesFor = (scheme: ColorScheme): Styles => (cache[scheme] ??= createStyles(colors[scheme]));
 const build = (scheme: ColorScheme, strings: UiStrings): ThemeValue => ({ scheme, palette: colors[scheme], styles: stylesFor(scheme), strings });
 
 const ThemeContext = createContext<{ scheme?: ColorScheme; strings: UiStrings }>({ strings: defaultStrings });
@@ -77,27 +65,4 @@ export function useTheme(): ThemeValue {
   const { scheme, strings } = useContext(ThemeContext);
   const resolved: ColorScheme = scheme ?? (system === 'dark' ? 'dark' : 'light');
   return useMemo(() => build(resolved, strings), [resolved, strings]);
-}
-
-/** The active palette: the shortest way for a component to read a colour token. */
-export function useColors(): Palette {
-  return useTheme().palette;
-}
-
-/** The pastel pairs (`bg` + readable `fg`) of the active scheme: tags, status, icon grounds, illustration shapes. The only place hue appears. */
-export function useTones(): Tones {
-  return tones[useTheme().scheme];
-}
-
-const sheets = new WeakMap<object, Partial<Record<ColorScheme, unknown>>>();
-
-/**
- * Style sheet derived from the active palette, built once per scheme and shared by every component that uses the same
- * `factory` (declare it at module level). Never create a `StyleSheet` at module level from a palette: it would freeze one scheme.
- */
-export function useThemedStyles<TStyles>(factory: (palette: Palette, scheme: ColorScheme) => TStyles): TStyles {
-  const { scheme, palette } = useTheme();
-  const perScheme = sheets.get(factory) ?? {};
-  sheets.set(factory, perScheme);
-  return (perScheme[scheme] ??= factory(palette, scheme)) as TStyles;
 }

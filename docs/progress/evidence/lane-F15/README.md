@@ -1,4 +1,29 @@
+> Actualización 2026-11-08: fallos frontend del review corregidos; merge aún pendiente de integración y gates. Ver [corrección actual](fix-2026-11-08.md).
+
+> **Revisión vigente 2026-11-08:** no listo para merge; pruebas existentes verdes y nuevos bordes fallando. Ver [hallazgos y gates pendientes](review-2026-11-08.md). Las corridas siguientes se conservan como evidencia histórica.
+
 # Evidencia · F15 RSVP público por magic link · 2026-11-04
+
+## Continuación local de F15 · 2026-11-05
+
+| Requisitos | Comportamiento a verificar | Caso negativo o límite |
+|---|---|---|
+| REQ-F15-01, 02 y 04 | Abrir el enlace en Next.js, enviar la respuesta y mover el foco al estado confirmado | Un token inválido o revocado muestra la recuperación genérica y oculta los datos de la celebración |
+| REQ-F15-03 | Mostrar el instante de cierre en el idioma del invitado y la zona de la celebración | El plazo vence durante el envío y el 409 trae una fecha preformateada en otro idioma |
+| REQ-F15-05 | Consultar el modo antes de mostrar el formulario público | La API devuelve 403 si el modo cambia entre la lectura y el envío |
+| REQ-F15-06 | Mostrar el estado de envío o un error recuperable y conservar lo escrito | El navegador ya se encuentra sin conexión al enviar |
+
+Este corte cubre el RSVP público de Next.js. CodeGraph 1.6.2 trazó `RsvpTokenPage → RsvpExperience → Flow → AnswerForm` y los consumidores de `ClosedView`. El contrato local es Guest/RSVP 1.10.0. Se mantiene el indicador de carga existente con su alternativa de movimiento reducido.
+
+### Verificación local
+
+- `vitest run tests/rsvp-page.test.tsx --coverage --coverage.include=components/rsvp/** --coverage.thresholds.lines=75 --coverage.thresholds.statements=75` → exit 0, 24/24, 90,13 % de líneas y sentencias en los componentes RSVP. Los cinco estados pasan por MSW. Para la pérdida de conexión se inyecta un fallo de transporte. Node 25 requiere `NODE_OPTIONS=--no-experimental-webstorage` para usar el almacenamiento de jsdom. El runner avisa que Vitest y su proveedor de cobertura tienen versiones distintas.
+- `vitest run tests/rsvp-page.test.tsx` tres veces y `vitest run` en `apps/seo-web` → exit 0 en cada corrida, 24/24 en cada repetición y 106/106 en la regresión web. `vitest run --coverage` en `packages/forms` → exit 0, 11/11 y 100 % de líneas y sentencias.
+- `tsc --noEmit` en `apps/seo-web`, ESLint dirigido a las rutas, componentes y pruebas de RSVP, y `node --check apps/seo-web/scripts/e2e-rsvp.mjs` → exit 0.
+- `node apps/seo-web/scripts/e2e-rsvp.mjs` con `CHROMIUM_PATH` apuntando a Chrome y `RSVP_EVIDENCE_DIR` a `local-web` → exit 0. El [reporte](local-web/e2e-result.json) registra el envío con teclado, la privacidad del enlace, la conservación del borrador tras recargar y 16 comprobaciones de axe sin violaciones críticas ni serias. Las [capturas](local-web/) incluyen A9–A13 a 360, 768 y 1280 px. El flujo usa `next build` y `next start` con el doble del contrato. La conexión simulada usa 400 ms de latencia, 100 kB/s de bajada y 50 kB/s de subida.
+
+El estado de este corte es `TESTED` local. La nueva integración con Guest/RSVP real queda pendiente. No había respuesta de Kong en los puertos locales 8000 y 28000. También quedan pendientes la aprobación de las capturas como referencia, tres ejecuciones en CI y la revisión por otro eje.
+
 Comandos (2026-11-04): `corepack yarn turbo run typecheck test lint` → 66/66 tareas OK; `corepack yarn eslint . --max-warnings 0` → exit 0. Navegador: `CHROMIUM_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" ...` (ver cada guion).
 
 ## Contra el BACKEND REAL (2026-11-05)

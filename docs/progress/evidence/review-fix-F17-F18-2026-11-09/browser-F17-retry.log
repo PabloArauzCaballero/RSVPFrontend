@@ -1,0 +1,56 @@
+
+▶ expo export (web, dev build) with the contract mock as API
+Starting Metro Bundler
+warning: Bundler cache is empty, rebuilding (this may take a minute)
+Web node_modules\expo-router\entry.js ▓▓▓▓░░░░░░░░░░░░ 25.0% (16/46)
+Web node_modules\expo-router\entry.js ▓▓▓▓░░░░░░░░░░░░ 26.1% (224/460)
+Web node_modules\expo-router\entry.js ▓▓▓▓▓▓░░░░░░░░░░ 39.0% (383/613)
+Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓░░░░░░░░ 51.2% (501/700)
+Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 60.4% (732/942)
+Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 81.6% ( 991/1097)
+Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 91.0% (1168/1229)
+Web Bundled 25672ms node_modules\expo-router\entry.js (1347 modules)
+
+› Assets (24):
+..\..\node_modules\@expo\metro-runtime\assets\alert-triangle.4f355ba1efca4b9c0e7a6271af047f61.png (609 B)
+..\..\node_modules\@expo\metro-runtime\assets\chevron-left.5b50965d3dfbc518fe50ce36c314a6ec.png (126 B)
+..\..\node_modules\@expo\metro-runtime\assets\chevron-right.e62addcde857ebdb7342e6b9f1095e97.png (123 B)
+..\..\node_modules\@expo\metro-runtime\assets\close.369745d4a4a6fa62fa0ed495f89aa964.png (187 B)
+..\..\node_modules\@expo\metro-runtime\assets\loader.817aca47ff3cea63020753d336e628a4.png (282 B)
+..\..\node_modules\@react-navigation\elements\lib\module\assets\back-icon-mask.0a328cd9c1afd0afe8e3b1ec5165b1b4.png (653 B)
+..\..\node_modules\@react-navigation\elements\lib\module\assets\back-icon.35ba0eaec5a4f5ed12ca16fabeae451d.png (207 B)
+..\..\node_modules\@react-navigation\elements\lib\module\assets\clear-icon.c94f6478e7ae0cdd9f15de1fcb9e5e55.png (4 variations | 425 B)
+..\..\node_modules\@react-navigation\elements\lib\module\assets\close-icon.808e1b1b9b53114ec2838071a7e6daa7.png (4 variations | 235 B)
+..\..\node_modules\@react-navigation\elements\lib\module\assets\search-icon.286d67d3f74808a60a78d3ebf1a5fb57.png (928 B)
+..\..\node_modules\expo-router\assets\arrow_down.017bc6ba3fc25503e5eb5e53826d48a8.png (9.46 kB)
+..\..\node_modules\expo-router\assets\error.d1ea1496f9057eb392d5bbf3732a61b7.png (469 B)
+..\..\node_modules\expo-router\assets\file.19eeb73b9593a38f8e9f418337fc7d10.png (138 B)
+..\..\node_modules\expo-router\assets\forward.d8b800c443b8972542883e0b9de2bdc6.png (188 B)
+..\..\node_modules\expo-router\assets\logotype.0fb94560a2bb19eb54892e497fb29c67.png (1.74 kB)
+..\..\node_modules\expo-router\assets\pkg.ab19f4cbc543357183a20571f68380a3.png (364 B)
+..\..\node_modules\expo-router\assets\sitemap.412dd9275b6b48ad28f5e3d81bb1f626.png (465 B)
+..\..\node_modules\expo-router\assets\unmatched.20e71bdf79e3a97bf55fd9e164041578.png (4.75 kB)
+
+› web bundles (3):
+_expo/static/css/modal.module-d6974dc704dba6fe76e33fac1006ba13.css (2.28 kB)
+_expo/static/css/web-ed7b25516f9abb98518e181201b21770.css (9.38 kB)
+_expo/static/js/web/entry-d41d8cd98f00b204e9800998ecf8427e.js (2.91 MB)
+
+› Files (3):
+favicon.ico (14.5 kB)
+index.html (1.6 kB)
+metadata.json (49 B)
+
+Exported: web-build-e2e
+Detected 1 process preventing Expo from exiting, forcefully exiting now.
+  - C:\Program Files\nodejs\node.exe C:\Users\maria\OneDrive\Documentos\Github\RSVP\RSVPFrontend\node_modules\nativewind\dist\metro\tailwind\v3/child.js
+
+▶ F17 · C6 resumen
+  ✔ REQ-F17-01/04/06 · summary numbers equal the read model's, freshness lag is shown, open requests come from openCompanionRequests
+  ✔ REQ-F17-01/04/06 replay · guest app confirms; POST replay keeps version 1 and the open host summary updates automatically by one
+
+▶ F17 · C26 bandeja y C24 reporte
+  ✔ REQ-F17-03 · approve with one click: POST decision, request leaves the inbox, success notice
+  ✔ REQ-F17-02/05 · report lists answers; CSV and caterer CSV download from the browser; caterer file has no names/contacts
+
+ALL PASS

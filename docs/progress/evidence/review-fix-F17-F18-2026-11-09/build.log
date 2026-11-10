@@ -1,0 +1,32 @@
+turbo 2.5.2
+
+• Packages in scope: @rsvp/api-client, @rsvp/auth, @rsvp/celebration-theme, @rsvp/config-eslint, @rsvp/config-jest, @rsvp/config-tailwind, @rsvp/config-ts, @rsvp/contracts, @rsvp/design-tokens, @rsvp/forms, @rsvp/i18n, @rsvp/query-hooks, @rsvp/seo-web, @rsvp/telemetry, @rsvp/testing, @rsvp/ui, @rsvp/ui-web, @rsvp/universal
+• Running build in 18 packages
+• Remote caching disabled
+@rsvp/config-tailwind:build: cache hit, replaying logs d0aab0f1aacd71c5
+@rsvp/config-ts:build: cache hit, replaying logs 88829248e1381e62
+@rsvp/config-jest:build: cache hit, replaying logs 5a0242aa94df67cc
+@rsvp/config-eslint:build: cache hit, replaying logs 0c676cc421df4c7b
+@rsvp/i18n:build: cache miss, executing fa458b913d25f317
+@rsvp/design-tokens:build: cache hit, replaying logs 0ef5c060f9748fe0
+@rsvp/design-tokens:build: [design-tokens] verified tokens.json, tokens.css
+@rsvp/celebration-theme:build: cache hit, replaying logs 5c107202ff6cd56b
+@rsvp/contracts:build: cache hit, replaying logs e68bf867a6cdabe1
+@rsvp/telemetry:build: cache hit, replaying logs 1805f28eca2e21e8
+@rsvp/forms:build: cache hit, replaying logs a958272346b66e6c
+@rsvp/testing:build: cache hit, replaying logs d96c63c8a7cba0d7
+@rsvp/api-client:build: cache hit, replaying logs d6a1368292820f19
+@rsvp/query-hooks:build: cache miss, executing be3ab6ab4c40c909
+@rsvp/auth:build: cache hit, replaying logs 19ab1ab5e648a1e3
+@rsvp/ui:build: cache miss, executing cef00b6b06a6b5a8
+@rsvp/ui-web:build: cache miss, executing 335b2c842c900e41
+@rsvp/seo-web:build: cache miss, executing 6a221588f0e96c60
+@rsvp/universal:build: cache miss, executing 415fef1e2cf684ba
+@rsvp/seo-web:build:    ▲ Next.js 15.3.1
+@rsvp/seo-web:build: 
+@rsvp/seo-web:build:    Creating an optimized production build ...
+@rsvp/universal:build: Starting Metro Bundler
+@rsvp/seo-web:build:  ✓ Compiled successfully in 8.0s
+@rsvp/seo-web:build:    Linting and checking validity of types ...
+@rsvp/seo-web:build: 
+@rsvp/seo-web:build:  ⚠ The Next.js plugin was not detected in your ESLint configuration. See https://nextjs.org/docs/app/api-reference/config/eslint#migrating-existing-config

@@ -1,5 +1,4 @@
 import { readContent, type GalleryImage, type LocalDateTime, type PublicCelebrationView } from "@rsvp/celebration-theme";
-import { siteUrl } from "./metadata";
 
 /** schema.org structured data. Validated against the schema by tests/seo.test.ts. */
 
@@ -60,71 +59,9 @@ export function itemListJsonLd(items: readonly ListItem[], url: string): Readonl
   };
 }
 
-const MINOR_UNIT_DIGITS = 2;
-
-/** 125000 BOB cents → "1250.00": a decimal string, never a float, as schema.org prices expect. */
-export function minorToDecimal(amountMinor: number): string {
-  const digits = Math.abs(amountMinor).toString().padStart(MINOR_UNIT_DIGITS + 1, "0");
-  return `${amountMinor < 0 ? "-" : ""}${digits.slice(0, -MINOR_UNIT_DIGITS)}.${digits.slice(-MINOR_UNIT_DIGITS)}`;
-}
-
-export interface OfferInput { readonly name: string; readonly description?: string | null | undefined; readonly priceFrom?: { readonly amountMinor: number; readonly currency: string } | null | undefined }
-
-/**
- * `LocalBusiness` for a partner microsite (lane F25). Its offers are `Service`s inside an `OfferCatalog`; the price is a minimum
- * (`PriceSpecification.minPrice`) because the site only knows the "from" price. No rating is ever emitted: there are no reviews.
- */
-export function localBusinessJsonLd(input: { readonly name: string; readonly url: string; readonly category: string; readonly offers?: readonly OfferInput[] }): Readonly<Record<string, unknown>> {
-  const offers = input.offers ?? [];
-  return {
-    "@context": CONTEXT,
-    "@type": "LocalBusiness",
-    name: input.name,
-    url: input.url,
-    ...(offers.length ? {
-      hasOfferCatalog: {
-        "@type": "OfferCatalog",
-        name: input.category,
-        itemListElement: offers.map((offer) => ({
-          "@type": "Offer",
-          itemOffered: { "@type": "Service", name: offer.name, serviceType: input.category, ...(offer.description ? { description: offer.description } : {}) },
-          ...(offer.priceFrom ? { priceSpecification: { "@type": "PriceSpecification", minPrice: minorToDecimal(offer.priceFrom.amountMinor), priceCurrency: offer.priceFrom.currency } } : {})
-        }))
-      }
-    } : {})
-  };
-}
-
-/** Organization and WebSite of the whole site, linked by `@id`, for the home page. No search box markup: Google retired it. */
-export function siteGraphJsonLd(input: { readonly description: string; readonly locale: string }): Readonly<Record<string, unknown>> {
-  const base = siteUrl();
-  return {
-    "@context": CONTEXT,
-    "@graph": [
-      { "@type": "Organization", "@id": `${base}/#organization`, name: "DOne", url: `${base}/`, logo: `${base}/apple-icon.png`, description: input.description },
-      { "@type": "WebSite", "@id": `${base}/#website`, name: "DOne", url: `${base}/`, inLanguage: input.locale, publisher: { "@id": `${base}/#organization` } }
-    ]
-  };
-}
-
-/** Marks up the visible questions and answers of the home page (semantic only: Google no longer shows FAQ rich results). */
-export function faqJsonLd(items: readonly { readonly question: string; readonly answer: string }[]): Readonly<Record<string, unknown>> {
-  return {
-    "@context": CONTEXT,
-    "@type": "FAQPage",
-    mainEntity: items.map((item) => ({ "@type": "Question", name: item.question, acceptedAnswer: { "@type": "Answer", text: item.answer } }))
-  };
-}
-
-export interface Crumb { readonly name: string; readonly url?: string | undefined }
-
-/** `BreadcrumbList` mirroring the visible breadcrumbs; the current page (last) carries no `item`, as Google allows. */
-export function breadcrumbJsonLd(crumbs: readonly Crumb[]): Readonly<Record<string, unknown>> {
-  return {
-    "@context": CONTEXT,
-    "@type": "BreadcrumbList",
-    itemListElement: crumbs.map((crumb, index) => ({ "@type": "ListItem", position: index + 1, name: crumb.name, ...(crumb.url ? { item: crumb.url } : {}) }))
-  };
+/** `LocalBusiness` for a partner microsite (lane F25). */
+export function localBusinessJsonLd(input: { readonly name: string; readonly url: string; readonly category: string }): Readonly<Record<string, unknown>> {
+  return { "@context": CONTEXT, "@type": "LocalBusiness", name: input.name, url: input.url, additionalType: input.category };
 }
 
 /** Serialises JSON-LD for a <script> tag, escaping `<` so content can never close the tag. */

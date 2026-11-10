@@ -1,40 +1,32 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "@rsvp/design-tokens/tokens.css";
+import { Plus_Jakarta_Sans } from "next/font/google";
+import { createTranslator, defaultLocale } from "@rsvp/i18n/server";
 import "@rsvp/celebration-theme/styles.css";
 import "./globals.css";
 import { siteUrl } from "../lib/metadata";
-import { siteI18n, siteRequestPath } from "../lib/site-locale";
 import { SiteFooter, SiteHeader } from "../components/site-chrome";
 
-/** Invitation paper: one sans (Geist) for names, headlines and the interface, and a mono for metadata. */
-const text = Geist({ subsets: ["latin"], variable: "--font-text", display: "swap", fallback: ["system-ui", "Helvetica Neue", "sans-serif"] });
-const mono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono-face", display: "swap", fallback: ["ui-monospace", "SF Mono", "monospace"] });
+const text = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"], variable: "--font-text", display: "swap" });
 
-export async function generateMetadata(): Promise<Metadata> {
-  const { t } = await siteI18n();
-  return {
-    metadataBase: new URL(siteUrl()),
-    title: { default: t("celebration.site.title"), template: "%s · DOne" },
-    description: t("celebration.site.description"),
-    applicationName: "DOne",
-    // Declared explicitly so the 404 page (which gets no file-based icon links) does not make browsers ask for /favicon.ico.
-    icons: { icon: [{ url: "/icon.svg", type: "image/svg+xml" }], apple: [{ url: "/apple-icon.png", sizes: "180x180" }] },
-    formatDetection: { telephone: false }
-  };
-}
+const t = createTranslator(defaultLocale);
 
-export const viewport: Viewport = { width: "device-width", initialScale: 1, colorScheme: "light dark" };
+export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl()),
+  title: { default: t("celebration.site.title"), template: "%s · DOne" },
+  description: t("celebration.site.description"),
+  applicationName: "DOne",
+  formatDetection: { telephone: false }
+};
 
-export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const { t, locale } = await siteI18n();
-  const path = await siteRequestPath();
+export const viewport: Viewport = { width: "device-width", initialScale: 1 };
+
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang={locale} className={`${text.variable} ${mono.variable}`}>
+    <html lang={defaultLocale} className={text.variable}>
       <body>
         <SiteHeader t={t} />
         <div id="contenido">{children}</div>
-        <SiteFooter t={t} locale={locale} path={path} />
+        <SiteFooter t={t} />
       </body>
     </html>
   );

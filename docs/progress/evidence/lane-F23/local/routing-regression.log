@@ -1,0 +1,15 @@
+
+ RUN  v3.1.2 C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/apps/universal
+
+ ✓ test/guest-rsvp.test.tsx (13 tests) 1165ms
+   ✓ REQ-F21-04 · the five RSVP states, in native components, against the contract > A9 guest: confirms with the real POST and shows the confirmed state  337ms
+ ✓ test/guest-app.test.tsx (34 tests) 1433ms
+   ✓ F21 · RSVP through the real API client and MSW > confirms once without borrowing the signed-in host's credentials  399ms
+ ✓ test/host-gifts-routing.test.ts (15 tests) 10ms
+
+ Test Files  3 passed (3)
+      Tests  62 passed (62)
+   Start at  11:38:40
+   Duration  9.98s (transform 1.16s, setup 1.07s, collect 9.37s, tests 2.61s, environment 3.68s, prepare 418ms)
+
+JSON report written to C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/docs/progress/evidence/lane-F23/local/routing-regression.json

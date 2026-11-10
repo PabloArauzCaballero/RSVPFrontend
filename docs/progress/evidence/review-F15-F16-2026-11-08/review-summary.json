@@ -1,0 +1,48 @@
+{
+  "date": "2026-11-08",
+  "timezone": "America/La_Paz",
+  "recommendation": "NOT_READY_FOR_INTEGRATION",
+  "implementationChanged": false,
+  "published": false,
+  "existing": {
+    "F15": {
+      "passed": 24,
+      "total": 24
+    },
+    "F16": {
+      "passed": 18,
+      "total": 18
+    },
+    "guestsFile": {
+      "passed": 60,
+      "total": 60
+    }
+  },
+  "diagnosticProbes": {
+    "F15": {
+      "failed": 1,
+      "total": 1
+    },
+    "F16": {
+      "failed": 2,
+      "total": 2
+    },
+    "scope": "component state only; identity-switch router behavior not verified"
+  },
+  "static": {
+    "typecheck": "18/18 cache hits, exit 0",
+    "eslint": "exit 0",
+    "harness": "exit 0",
+    "contracts": "exit 1: eight specs differ"
+  },
+  "sourceHashes": "source-hashes.json",
+  "evidenceOnlyFiles": [
+    "docs/progress/evidence/review-F15-F16-2026-11-08/README.md",
+    "docs/progress/evidence/lane-F15/review-2026-11-08.md",
+    "docs/progress/evidence/lane-F16/review-2026-11-08.md",
+    "docs/progress/evidence/lane-F15/README.md",
+    "docs/progress/evidence/lane-F16/README.md",
+    "docs/progress/STATUS_LOG.md",
+    "docs/progress/BLOCKERS.md"
+  ]
+}

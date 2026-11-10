@@ -461,9 +461,8 @@ describe("platform admin hooks (expected contract, ADMIN only)", () => {
     await check((h) => admin.useVerificationQueue(h.client, "SUSPENDED"), "/providers/admin/verification-queue?status=SUSPENDED");
     await check((h) => admin.useModerationQueue(h.client, "REJECTED"), "/providers/admin/moderation?status=REJECTED");
     await check((h) => admin.useLeadMetrics(h.client, { groupBy: "category", from: "2026-10-01", to: "2026-10-31" }), "/providers/admin/metrics/leads?groupBy=category&from=2026-10-01&to=2026-10-31");
-    await check((h) => admin.useAdminUsers(h.client, "  ana "), "/identity/admin/users?page=0&size=25&query=ana");
-    await check((h) => admin.useAdminUsers(h.client, "ana", 2), "/identity/admin/users?page=2&size=25&query=ana");
-    await check((h) => admin.useAdminUsers(h.client, ""), "/identity/admin/users?page=0&size=25");
+    await check((h) => admin.useAdminUsers(h.client, "  ana "), "/identity/admin/users?query=ana");
+    await check((h) => admin.useAdminUsers(h.client, ""), "/identity/admin/users");
     await check((h) => admin.useAdminOrganizations(h.client), "/identity/admin/organizations");
     await check((h) => admin.useOrganization(h.client, "o 1"), "/identity/organizations/o%201");
     await check((h) => admin.useProviderSummary(h.client), "/providers/admin/summary");

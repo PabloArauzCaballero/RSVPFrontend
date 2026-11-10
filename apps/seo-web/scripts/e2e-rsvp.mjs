@@ -6,7 +6,7 @@
 // Writes screenshots (360/768/1280) and e2e-result.json into docs/progress/evidence/lane-F15/.
 import { spawn } from "node:child_process";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
@@ -15,7 +15,8 @@ import { createContractMock, MOCK_CONFIRMED_TOKEN, MOCK_VALID_TOKEN, seedDemo } 
 import { serveContractMock } from "../../../packages/testing/src/contract-server.ts";
 
 const app = fileURLToPath(new URL("..", import.meta.url));
-const evidence = fileURLToPath(new URL("../../../docs/progress/evidence/lane-F15/", import.meta.url));
+const evidence = process.env.RSVP_EVIDENCE_DIR ? resolve(process.env.RSVP_EVIDENCE_DIR) : fileURLToPath(new URL("../../../docs/progress/evidence/lane-F15/", import.meta.url));
+const next = fileURLToPath(import.meta.resolve("next/dist/bin/next"));
 const API_PORT = Number(process.env.API_PORT ?? 8431);
 const WEB_PORT = Number(process.env.WEB_PORT ?? 3431);
 const WIDTHS = [360, 768, 1280];
@@ -34,18 +35,22 @@ const { server, setOffline } = await serveContractMock(mock, API_PORT);
 step("next build (NEXT_PUBLIC_API_URL → contract mock)");
 const env = { ...process.env, NEXT_PUBLIC_API_URL: API, NEXT_PUBLIC_SITE_URL: SITE, NEXT_DIST_DIR: ".next-e2e", NEXT_TELEMETRY_DISABLED: "1" };
 // Async on purpose: the mock API lives in this process and `next build` calls it while prerendering.
-const buildStatus = await new Promise((resolve) => spawn("npx", ["next", "build"], { cwd: app, env, stdio: "inherit" }).on("exit", resolve));
+const buildStatus = await new Promise((done, reject) => spawn(process.execPath, [next, "build"], { cwd: app, env, stdio: "inherit" }).once("exit", done).once("error", reject));
 assert.equal(buildStatus, 0, "next build failed");
-const web = spawn("npx", ["next", "start", "-p", String(WEB_PORT)], { cwd: app, env, stdio: "inherit" });
+const web = spawn(process.execPath, [next, "start", "-p", String(WEB_PORT)], { cwd: app, env, stdio: "inherit" });
 for (let attempt = 0; attempt < 60; attempt += 1) { if ((await fetch(SITE).catch(() => null))?.ok) break; await new Promise((resolve) => setTimeout(resolve, 1000)); }
 ok("next start is serving");
 
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH, args: ["--no-sandbox"] });
 const consoleErrors = [];
 const requestUrls = [];
-async function open(width, path, { lang } = {}) {
+async function open(width, path, { lang, slow } = {}) {
   const context = await browser.newContext({ viewport: { width, height: width < 500 ? 780 : 900 }, locale: lang ?? "es-BO", reducedMotion: "no-preference" });
   const page = await context.newPage();
+  if (slow) {
+    const network = await context.newCDPSession(page);
+    await network.send("Network.emulateNetworkConditions", { offline: false, latency: 400, downloadThroughput: 100_000, uploadThroughput: 50_000 });
+  }
   page.on("console", (message) => { if (message.type() === "error" && !/Failed to load resource|net::ERR/.test(message.text())) consoleErrors.push(message.text()); });
   page.on("request", (request) => requestUrls.push(request.url()));
   await page.goto(`${SITE}${path}`, { waitUntil: "domcontentloaded" });
@@ -68,10 +73,10 @@ try {
     await page.getByRole("heading", { name: "¿Podrás acompañarnos?" }).waitFor();
     await noOverflow(page, `A9-${width}`);
     await snap(page, "A9-formulario", width);
-    if (width === 360) await axe(page, "A9");
+    await axe(page, `A9-${width}`);
     await context.close();
   }
-  record("REQ-F15-01", "form rendered with the real celebration at 360/768/1280, no horizontal scroll, axe clean");
+  record("REQ-F15-01", "form rendered at 360/768/1280 with no horizontal scroll or critical/serious axe violations");
 
   step("A9 → A10: confirm for real, keyboard only, then the confirmed state");
   {
@@ -83,7 +88,21 @@ try {
     await page.getByLabel("Acompañantes").fill("1");
     await page.getByLabel("Restricciones alimentarias").fill("Vegetariana");
     await page.getByLabel("Mensaje para los anfitriones (opcional)").fill("¡Felicidades!");
+    let release;
+    let started;
+    const gate = new Promise((resolve) => { release = resolve; });
+    const pending = new Promise((resolve) => { started = resolve; });
+    await page.route("**/rsvp/celebrations/*/rsvp", async (route) => {
+      if (route.request().method() === "POST") { started(); await gate; }
+      await route.continue();
+    });
     await page.getByRole("button", { name: "Enviar respuesta" }).click();
+    await pending;
+    try {
+      assert.equal(await page.locator("form input:enabled, form textarea:enabled").count(), 0);
+      await snap(page, "A9-enviando", 360);
+      await axe(page, "A9-enviando");
+    } finally { release(); }
     await page.getByRole("heading", { name: "Tu asistencia está confirmada" }).waitFor();
     const focused = await page.evaluate(() => document.activeElement?.textContent ?? "");
     assert.match(focused, /Tu asistencia está confirmada/, "focus moves to the new state's heading");
@@ -100,6 +119,7 @@ try {
     assert.match(await page.getByRole("timer").textContent(), /Quedan \d+ d \d+ h \d+ min/);
     await noOverflow(page, `A10-${width}`);
     await snap(page, "A10-confirmado", width);
+    await axe(page, `A10-${width}`);
     if (width === 1280) {
       await page.getByRole("button", { name: "Cambiar mi respuesta" }).click();
       await page.getByLabel("No podré asistir").check();
@@ -107,7 +127,7 @@ try {
       await page.getByRole("button", { name: "Guardar cambios" }).click();
       await page.getByRole("heading", { name: "Registramos que no podrás asistir" }).waitFor();
       assert.equal([...mock.state.guests.values()].find((guest) => guest.token === MOCK_CONFIRMED_TOKEN).status, "DECLINED");
-      await axe(page, "A10");
+      await axe(page, `A10-edicion-${width}`);
     }
     await context.close();
   }
@@ -123,7 +143,7 @@ try {
     assert.equal(await page.getByRole("button", { name: /Enviar|Guardar|Cambiar/ }).count(), 0);
     await noOverflow(page, `A11-${width}`);
     await snap(page, "A11-fuera-de-plazo", width);
-    if (width === 360) await axe(page, "A11");
+    await axe(page, `A11-${width}`);
     await context.close();
   }
   mock.state.deadline = savedDeadline;
@@ -137,18 +157,18 @@ try {
     for (const secret of ["Ana y Luis", "Hacienda", "Marta", "Invitación a"]) assert.ok(!text.includes(secret), `leaked "${secret}"`);
     await noOverflow(page, `A12-${width}`);
     await snap(page, "A12-token-invalido", width);
-    if (width === 360) await axe(page, "A12");
+    await axe(page, `A12-${width}`);
     await context.close();
   }
   record("REQ-F15-04", "invalid token shows no celebration data at 360/768/1280");
 
-  step("A13 no registrado: AUTO_ACCEPT, RESTRICTED (403) y alta con enlace");
+  step("A13 no registrado: AUTO_ACCEPT, RESTRICTED y alta con enlace");
   for (const width of WIDTHS) {
     const { page, context } = await open(width, celebrationPath);
     await page.getByRole("heading", { name: "Confirma tu asistencia" }).waitFor();
     await noOverflow(page, `A13-${width}`);
     await snap(page, "A13-no-registrado", width);
-    if (width === 360) await axe(page, "A13");
+    await axe(page, `A13-${width}`);
     await context.close();
   }
   {
@@ -171,26 +191,24 @@ try {
   mock.state.unregisteredMode = "RESTRICTED";
   for (const width of [360, 1280]) {
     const { page, context } = await open(width, celebrationPath);
-    await page.getByLabel("Tu nombre").fill("Pedro Mamani");
-    await page.getByLabel("Tu correo electrónico").fill("pedro2@example.com");
-    await page.getByLabel(/Doy mi consentimiento/).check();
-    await page.getByRole("button", { name: "Confirmar mi asistencia" }).click();
     await page.getByRole("heading", { name: "Esta celebración solo admite invitados con enlace personal" }).waitFor();
-    await snap(page, "A13-restringido-403", width);
+    assert.equal(await page.getByLabel("Tu nombre").count(), 0);
+    await snap(page, "A13-restringido", width);
     await context.close();
   }
   mock.state.unregisteredMode = "AUTO_ACCEPT";
-  record("REQ-F15-05", "AUTO_ACCEPT registers (one-time link shown, not stored); RESTRICTED answers 403 with the explanation");
+  record("REQ-F15-05", "AUTO_ACCEPT registers and shows the one-time link; RESTRICTED hides the form and explains how to proceed");
 
   step("REQ-F15-06 · pérdida de conexión: borrador conservado y reintento");
   {
     const fresh = mock.addGuest({ name: "Invitada sin responder", token: "Fr3sh9Qw1Lm7Xv2Rt5Yb8Nc4Hd6Jf0Gs-_AaBbCcDdE", allowedCompanions: 2 });
-    const { page, context } = await open(360, `${celebrationPath}/${fresh.token}`);
+    const { page, context } = await open(360, `${celebrationPath}/${fresh.token}`, { slow: true });
     await page.getByRole("heading", { name: "¿Podrás acompañarnos?" }).waitFor();
     await page.getByLabel("Sí, asistiré").check();
     await page.getByLabel("Restricciones alimentarias").fill("Sin lactosa");
     setOffline(true);
     await page.getByRole("button", { name: "Enviar respuesta" }).click();
+    await page.getByRole("button", { name: "Enviando…" }).waitFor();
     await page.getByText(/No hay conexión\. Tu respuesta sigue aquí/).waitFor();
     assert.equal(await page.getByLabel("Restricciones alimentarias").inputValue(), "Sin lactosa");
     await snap(page, "REQ-F15-06-sin-conexion", 360);
@@ -204,7 +222,7 @@ try {
     assert.equal(await page.evaluate(() => sessionStorage.length), 0, "draft cleared after success");
     await context.close();
   }
-  record("REQ-F15-06", "offline send kept the fields, the draft survived a reload, the retry created exactly one RSVP");
+  record("REQ-F15-06", "the form works on a throttled connection; offline kept the fields, the draft survived a reload and retry created one RSVP");
 
   step("privacidad: noindex, no-referrer, no-store; el token no aparece en HTML ni en peticiones");
   {
@@ -226,6 +244,7 @@ try {
   {
     const { page, context } = await open(360, `${celebrationPath}/${MOCK_CONFIRMED_TOKEN}?lang=en-US`, { lang: "en-US" });
     await page.getByRole("heading", { name: /Your attendance is confirmed|We noted that you cannot attend|The reply deadline/ }).waitFor();
+    assert.equal(await page.locator("main.rsvp-shell").getAttribute("lang"), "en-US");
     await snap(page, "A10-en-US", 360);
     await context.close();
   }

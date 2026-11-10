@@ -1,5 +1,35 @@
 # Bloqueos (frontend)
 
+## F17/F18 · corrección local 2026-11-09
+
+- RESUELTOS: CSV parcial, filas de otra celebración, plazo congelado, pérdida del borrador de silencio y rollback que descartaba preferencias recientes. 644 pruebas completas, build/tipos/lint y Chrome con mock pasan.
+- INTEGRACIÓN BLOQUEADA: frontend Guest/RSVP 1.10.0 y Notification 1.5.0 frente a backend local 1.8.0/1.2.0. Ocho specs difieren; gateway 8000/28000 devuelve ECONNREFUSED. Coordinar servicios compatibles de backend 21/23; Miguel debe repetir su recorrido frontend contra ellos.
+- PENDIENTES: verificar supresión real de canales, iOS/Android y compartir CSV nativo, matriz visual/accesibilidad completa, CI tres corridas, revisión de otro eje y checkout Git. No REGRESSION_VERIFIED ni DONE. [Evidencia actual](evidence/review-fix-F17-F18-2026-11-09/README.md).
+
+## F15/F16 · corrección local 2026-11-08
+
+- RESUELTOS: pérdidas de borrador de F15/F16 e identidad de la ficha F16. Ocho regresiones nuevas, 657 pruebas de suites completas, build/tipos/lint y recorridos Chrome con mock pasan.
+- PENDIENTES: Guest/RSVP frontend 1.10.0 frente a backend local 1.8.0, ocho specs difieren; gateway 8000/28000 no disponible. Mesas sin contrato y motivos CSV arbitrarios sin garantía de localización.
+- Antes de integrar: entorno backend compatible y regresión real (200 CSV/500 invitados), runtime nativo, matriz visual/accesibilidad manual, CI, revisión de otro eje y checkout Git. No REGRESSION_VERIFIED ni DONE. [Corrección y evidencia](evidence/fix-F15-F16-2026-11-08/README.md).
+
+## F23 · continuación local 2026-11-08
+
+- Backend 25: localhost:8000 y :28000 devuelven ECONNREFUSED fuera del sandbox. Fabio aporta Gift List/Provider Catalog y contrato coordinado; Miguel debe repetir creación/publicación, reserva/decisión, fricción y privacidad contra servicios reales. La lista pública existente ya pasa la prueba frontend; no se modifica F22.
+- `verify` pasa build/lint y falla al comparar ocho specs vendorizados con el checkout backend. No se regeneran contratos de otros carriles. Hace falta coordinar sus versiones y repetir F23.
+- Hermes iOS/Android compila, pero falta runtime en dispositivos, accesibilidad nativa, CI tres corridas, revisión de código por otro eje y aprobación humana de capturas. Miguel conserva esas verificaciones F23; Pablo/F07 aporta infraestructura/build firmado cuando corresponda. Las 55 pruebas × 3 locales y 28 capturas Chrome no sustituyen esos gates. Estado `TESTED`, no `REGRESSION_VERIFIED` ni `DONE`. [Evidencia y responsables](evidence/lane-F23/local-2026-11-08.md).
+
+## F21 · continuación local 2026-11-07
+
+- Frontend probado y bundles iOS/Android compilados; no hay prueba física ni cierre DONE. Pablo/F05 debe aportar dominio asociado, AASA/assetlinks y firmas/configuración; F07 aporta builds firmados. Miguel/F21 conserva la responsabilidad de ejecutar y grabar el recorrido de invitado en iPhone y Android.
+- Guest/RSVP backend 19 y regalos: el gateway local 8000/28000 no responde; falta repetir la integración real del head actual. verify pasa build/lint y falla al comparar ocho specs vendorizados con el checkout backend; no se regeneran contratos de otros carriles como parte de F21.
+- CI tres corridas, revisión de otro eje y aprobación humana de capturas pendientes; las 80 pruebas × 3 locales, 29 capturas Chrome y export Hermes no sustituyen esos gates. [Evidencia, comandos y responsables](evidence/lane-F21/local-2026-11-07.md).
+
+## F20 · verificación local 2026-11-07
+
+- El detalle y el ejecutor de decisiones están probados localmente; las acciones nativas siguen pendientes. Notification 1.5.0 no publica la correlación del aviso con `reservationId`. Backend 24 debe versionar esa referencia antes de activar categorías y conectar el resolver. No se debe inferir desde texto o `eventId`.
+- Falta conectar/validar el driver nativo: la API de tareas de `expo-notifications` 0.32.17 solo documenta acciones en segundo plano/cierre para Android. Sin credenciales/builds/dispositivos y con Kong local 8000/28000 inaccesible, no hay prueba de aprobación desde el sistema con la app cerrada. No se declara F20 DONE. [Evidencia y pasos pendientes](evidence/lane-F20/README.md).
+- Gate general observado: build/lint pasan; `verify` se detiene en el test de sincronización de los ocho contratos vendorizados con la copia local de backend. No regenerar contratos como arreglo de F20 sin coordinación de versiones. Suite propia y regresiones dirigidas en verde; CI/dispositivos/revisión por otro eje pendientes.
+
 - **Identity no emite cookies de sesión** ni un login funcional (F05). La app web de producción no puede autenticarse todavía; en local se usa `EXPO_PUBLIC_DEV_ACCESS_TOKEN`. Además, el JWT solo trae `sub`: sin `roles` ni `organizationIds`, las pantallas de planner y admin no se activan con tokens reales.
 - **Provider Catalog (Fabio) no expone HTTP.** F24 renderiza las rutas, metadatos y JSON-LD, pero sin datos; el admin no puede listar categorías, geografía, moderación ni métricas (E5, E6, E8, E11). El contrato de búsqueda que espera el directorio está en `apps/seo-web/lib/providers.ts` (`GET /providers?category=&city=&verified=&maxPriceMinor=&availableOn=&page=&pageSize=`).
 - **Identity sin API de usuarios ni organizaciones** (E9, E10).

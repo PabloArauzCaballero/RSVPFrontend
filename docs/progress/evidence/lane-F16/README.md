@@ -1,4 +1,35 @@
+> Actualización 2026-11-08: fallos frontend del review corregidos; merge aún pendiente de integración y gates. Ver [corrección actual](fix-2026-11-08.md).
+
+> **Revisión vigente 2026-11-08:** no listo para merge; pruebas existentes verdes y nuevos bordes fallando. Ver [hallazgos y gates pendientes](review-2026-11-08.md). Las corridas siguientes se conservan como evidencia histórica.
+
 # Evidencia · F16 Gestión de invitados · 2026-11-04
+
+## Continuación local de F16
+
+| Corte | Requisitos | Resultado que se comprobará |
+|---|---|---|
+| Alta y lista | REQ-F16-01, 02 | Crear un invitado y encontrarlo por nombre. Comprobar búsqueda sin coincidencias, reintento y paginación con 500 invitados. |
+| Importación | REQ-F16-03 | Elegir un CSV de 200 filas en Chrome. Distinguir las filas importadas de las rechazadas y evitar reenviar el mismo contenido después de un éxito parcial. |
+| Grupos y enlaces | REQ-F16-04, 05, 06 | Verificar la asignación a grupos y el enlace enmascarado. El contrato local de Guest/RSVP 1.10.0 expone grupos familiares. La parte de mesas requiere un contrato del backend. |
+
+CodeGraph 1.6.2 trazó las rutas de invitados hasta sus pantallas en Expo. Este corte conserva el diseño y las transiciones actuales. La prueba de 200 filas en el navegador usa un archivo sintético y el doble del contrato mientras Kong local no responde.
+
+### Resultados locales · 2026-11-05
+
+| Requisito | Resultado | Evidencia |
+|---|---|---|
+| REQ-F16-01 | PASS en Expo web contra el doble del contrato | Chrome paginó 500 invitados con 50 elementos en la segunda página. La suite de componentes comprobó filtro, búsqueda, vacío y reintento. |
+| REQ-F16-02 | PASS en Expo web contra el doble del contrato | Chrome validó un formulario incompleto, guardó un invitado con teléfono E.164 y lo encontró desde el listado. |
+| REQ-F16-03 | PASS en Expo web contra el doble del contrato | El selector cargó 200 filas, 198 quedaron registradas y las líneas 41 y 151 mostraron el campo y el motivo. El botón bloqueó el reenvío del mismo contenido. La suite comprobó la corrección de filas y la conservación del CSV ante 401, 403, 409 y 422 con MSW. |
+| REQ-F16-04 | PASS local para grupos familiares. BLOCKED-EXTERNAL para mesas | La suite de componentes comprobó crear un grupo, asignar al dar de alta y mover un invitado. Chrome mostró el grupo. El OpenAPI local incluye `/groups` y falta el contrato de mesas. |
+| REQ-F16-05, 06 | PASS en Expo web contra el doble del contrato | Chrome mostró el enlace enmascarado, verificó que el secreto completo no aparecía en el DOM y abrió la confirmación de revocación. La suite ejercitó copiar, compartir y revocar. |
+
+- `node apps/universal/scripts/e2e-guests.mjs --f16` → exit 0. Exportación de Expo web y Chrome a 360, 768 y 1280 px. El [reporte](local-web/e2e-result.json) registra seis comprobaciones y diez mediciones de axe con cero violaciones críticas o serias. Las [capturas](local-web/) corresponden a esta corrida local.
+- `vitest run test/guests.test.tsx --coverage` en `apps/universal` con cobertura acotada a las cinco pantallas de F16 → exit 0, 37/37 y 97,56 % de líneas y sentencias. `vitest run` en el mismo workspace → exit 0, 194/194. Node 25 usó `NODE_OPTIONS=--no-experimental-webstorage` para jsdom. Vitest emitió su aviso de versiones distintas entre el runner y el proveedor de cobertura.
+- `tsc --noEmit` en `apps/universal`, ESLint dirigido a los archivos TypeScript modificados y `node --check apps/universal/scripts/e2e-guests.mjs` → exit 0.
+
+Estado `TESTED` local. Para el cierre faltan repetir el archivo de 200 filas y la lista de 500 contra el servicio real, probar las acciones nativas, verificar navegación por teclado y accesibilidad en las superficies pendientes, aprobar las capturas como referencia, pasar tres corridas en CI y recibir revisión de otro eje. No se observó un gateway local en los puertos 8000 y 28000.
+
 Comandos (2026-11-04): `corepack yarn turbo run typecheck test lint` → 66/66 tareas OK; `corepack yarn eslint . --max-warnings 0` → exit 0. Navegador: `CHROMIUM_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" ...` (ver cada guion).
 
 ## Contra el BACKEND REAL (2026-11-05)

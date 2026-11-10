@@ -1,0 +1,86 @@
+{
+  "createdAt": "2026-11-10T00:40:13.666Z",
+  "scope": "F17/F18 only; not a Git status",
+  "files": [
+    {
+      "file": "apps/universal/src/host/guests/report-screen.tsx",
+      "sha256": "8478d0a36fc9aa5fa7ebc2c13a57d8b5d952d6506b35a05cc57b7b65c78db1f7",
+      "beforeSha256": "a624b94db570f2e619a2a564fc6b97867249c73cd21ee7a5ccbe9a9c55b784d2"
+    },
+    {
+      "file": "apps/universal/src/host/guests/summary-screen.tsx",
+      "sha256": "f8b62da4e84c29674a711c3ae316cb0b06410f0d21983b62403cf6b7cca3a2c0",
+      "beforeSha256": "a67c92b9493cd9f13ed0257102e7a3d602607979739ede1af36ad4648d50a70f"
+    },
+    {
+      "file": "apps/universal/src/host/guests/preferences-screen.tsx",
+      "sha256": "ec7aee3d1e7c76453ea48ac2f98c499a03cf1e1d10d39137f7f10f663c92da01",
+      "beforeSha256": "4126a102b0d103eee0c36980ca05102415da7ccd315b6b4be69b0d5735758004"
+    },
+    {
+      "file": "packages/query-hooks/src/guest/csv.ts",
+      "sha256": "1398d8c7ebdb6f687b01813e3994489cf8324e86f08560be3fc02fff93dc576c",
+      "beforeSha256": "c03442c24aa8206d13160e81060f2828718a5be3cb1e9d43a354f4159d199cf2"
+    },
+    {
+      "file": "packages/query-hooks/src/notification/index.ts",
+      "sha256": "7f1a0ee24a91e36d4394809518f1b3dd87945b4d2b5d7fa2729c19b7f7a211c3",
+      "beforeSha256": "86b3ca66bbfb64a93ab22ebdea153bfc82dfebcd6d6d19886f00817e48b86b39"
+    },
+    {
+      "file": "packages/i18n/locales/es-BO/guests.ts",
+      "sha256": "b257b9d3a2c228ebba476261e7696e75ebe5d62ddbb4d737a76ca00e999ff611",
+      "beforeSha256": "ebb768d5bab51d55cf924248740bb2e17d166cdac0a4b97e32a6c8eb4ace71cc"
+    },
+    {
+      "file": "packages/i18n/locales/en-US/guests.ts",
+      "sha256": "d63650e896e556f18be603e4377acb03373accb8bfac7a57374e62a9c92992b5",
+      "beforeSha256": "c5605da0fcc8cdc8088eccb525a2c7af5bcd61703b026b561003f6bb93a14dd6"
+    },
+    {
+      "file": "apps/universal/test/host-review-state.test.tsx",
+      "sha256": "c345943c28cfdef468055253c14891b6dc03be7124a51f4e5656cae218ee9825",
+      "beforeSha256": null
+    },
+    {
+      "file": "packages/query-hooks/test/report-completeness.test.ts",
+      "sha256": "c9bc3538509afcb39786122520389ebda2e5bf6aa8d1e9b2962aee852d9250d3",
+      "beforeSha256": null
+    },
+    {
+      "file": "packages/query-hooks/test/notification-concurrency.test.tsx",
+      "sha256": "5bd78fd5d09070c41241c594fb73cc72131598af30b7108efd9eec21670cc706",
+      "beforeSha256": null
+    },
+    {
+      "file": "apps/universal/scripts/e2e-guests.mjs",
+      "sha256": "7177681148369467e14348dda2d516f85bece283a0a72438b500b8841af00206",
+      "beforeSha256": "6468182d1833dbba6e6e686a83611c9af9e9f8af8d94b406fbc72646fe443e6c"
+    },
+    {
+      "file": "docs/progress/evidence/lane-F17/README.md",
+      "sha256": "40a3d4b00b8d026b00e8c5f00eb1078174b5822312eccb51f333792097c4348c",
+      "beforeSha256": null
+    },
+    {
+      "file": "docs/progress/evidence/lane-F18/README.md",
+      "sha256": "e7bcd5226c408f87592b26a3f721617a046d753293da99d7d2302252b949cbdc",
+      "beforeSha256": null
+    },
+    {
+      "file": "docs/progress/STATUS_LOG.md",
+      "sha256": "4d05a9fd3cd0604326fbceacff02a6eeb1b776f22d9baa1011011dea2995b2dd",
+      "beforeSha256": null
+    },
+    {
+      "file": "docs/progress/BLOCKERS.md",
+      "sha256": "c3e7878f92e316fb56f7690c8b619b86bab28c16b4ac39faa259c6c21b8660cd",
+      "beforeSha256": null
+    },
+    {
+      "file": "docs/progress/evidence/review-fix-F17-F18-2026-11-09/README.md",
+      "sha256": "90b81ee3720b70bb340aa68c4da283f6975ece77bc2c9fbabe6fd4a23d0f1396",
+      "beforeSha256": null
+    }
+  ]
+}

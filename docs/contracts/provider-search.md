@@ -4,7 +4,7 @@ Estado: **contrato propuesto por el frontend, no publicado por backend.** `packa
 
 ## GET /providers (público, sin auth)
 
-Query: `category` (código: VENUE, CATERING, …), `city` (slug de la ciudad, p. ej. la-paz; el nombre devuelve 422), `verified=true`, `maxPriceMinor`, `availableOn` (AAAA-MM-DD), `slug` (microsite, F25), `lat`, `lng`, `radiusKm` (cercanía, F24 REQ-04; si llegan, `city` se ignora y se ordena por distancia), `page`, `pageSize`.
+Query: `category` (código: VENUE, CATERING, …), `city` (nombre), `verified=true`, `maxPriceMinor`, `availableOn` (AAAA-MM-DD), `slug` (microsite, F25), `lat`, `lng`, `radiusKm` (cercanía, F24 REQ-04; si llegan, `city` se ignora y se ordena por distancia), `page`, `pageSize`.
 
 Respuesta 200: `{ items: ProviderCard[], total, page, pageSize }`, solo proveedores `VERIFIED` con ficha publicada. Un proveedor sin verificar o suspendido no aparece (el microsite lo trata como 404 sin filtrar datos).
 

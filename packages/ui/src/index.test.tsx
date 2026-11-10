@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { colors } from '@rsvp/design-tokens';
 import * as native from './index';
 import * as web from '../../ui-web/src/index';
-import { Button, Card, Checkbox, ComponentCatalog, SwitchRow, DatePicker, FileUpload, Input, Modal, Select, Sheet, Table, Toast, UiProvider, componentStates } from './index';
+import { Button, Card, Checkbox, ComponentCatalog, DatePicker, FileUpload, Input, Modal, Select, Sheet, Table, Toast, UiProvider, componentStates } from './index';
 
 afterEach(cleanup);
 
@@ -62,28 +62,6 @@ describe('behaviour and accessibility roles (REQ-F03-03)', () => {
     expect(screen.getAllByRole('alert').map((n) => n.textContent)).toEqual(['Guardado', 'Falló']);
   });
 
-  it('every radio states whether it is checked (aria-required-attr: axe rates a radio without it critical)', () => {
-    render(<Select label="Tipo" value="a" options={[{ label: 'A', value: 'a' }, { label: 'B', value: 'b' }]} />);
-    expect(screen.getByRole('radio', { name: 'A' }).getAttribute('aria-checked')).toBe('true');
-    expect(screen.getByRole('radio', { name: 'B' }).getAttribute('aria-checked')).toBe('false');
-  });
-
-  it('SwitchRow is a WAI-ARIA switch: role, aria-checked, tap, Space and Enter-capable, 56 px row, disabled ignores input', () => {
-    const change = vi.fn();
-    const { rerender } = render(<SwitchRow label="Email" hint="Avisos" value={false} onChange={change} testID="sw" />);
-    const row = screen.getByRole('switch', { name: 'Email' });
-    expect(row.getAttribute('aria-checked')).toBe('false');
-    expect(row.getAttribute('tabindex')).toBe('0');
-    fireEvent.click(row);
-    fireEvent.keyDown(row, { key: ' ' });
-    expect(change.mock.calls.map((c) => c[0])).toEqual([true, true]);
-    rerender(<SwitchRow label="Email" value onChange={change} disabled />);
-    const off = screen.getByRole('switch', { name: 'Email' });
-    expect(off.getAttribute('aria-checked')).toBe('true');
-    fireEvent.click(off); fireEvent.keyDown(off, { key: ' ' });
-    expect(change).toHaveBeenCalledTimes(2);
-  });
-
   it('Sheet and Modal render titled content, an empty state hides children, and Cerrar closes', () => {
     const close = vi.fn();
     render(<><Sheet visible onClose={close} title="Panel"><span>Cuerpo panel</span></Sheet><Modal visible onClose={close} title="Confirmar" state="empty"><span>Cuerpo modal</span></Modal></>);
@@ -101,8 +79,7 @@ describe('behaviour and accessibility roles (REQ-F03-03)', () => {
 });
 
 describe('REQ-F02-03: dark mode reuses the same components with redefined tokens', () => {
-  // The button's visual is the inner view (it scales on press); the pressable keeps only the hit area.
-  const background = (el: HTMLElement) => getComputedStyle((el.firstElementChild as HTMLElement | null) ?? el).backgroundColor;
+  const background = (el: HTMLElement) => getComputedStyle(el).backgroundColor;
   const rgb = (hex: string) => { const n = parseInt(hex.slice(1), 16); return `rgb(${n >> 16}, ${(n >> 8) & 255}, ${n & 255})`; };
 
   it('the identical tree gets the dark palette from <UiProvider scheme="dark"> and the light palette otherwise', () => {
@@ -151,43 +128,5 @@ describe('REQ-F06-02 · primitive copy comes from the i18n catalog', () => {
     render(<web.UiProvider strings={web.stringsFor('en-US')}><web.ComponentCatalog /></web.UiProvider>);
     expect(screen.getAllByText('Component catalog')[0]).toBeTruthy();
     expect(web.defaultStrings.close).toBe('Cerrar');
-  });
-});
-
-describe('shared primitives of the frame (A6)', () => {
-  it('EmptyState and Celebrate tell their Button to centre; elsewhere it stays at the start', async () => {
-    const { ButtonAlignContext, EmptyState, Celebrate } = await import('./index');
-    const { useContext } = await import('react');
-    const Probe = () => <span data-testid="align">{useContext(ButtonAlignContext)}</span>;
-    const outside = render(<UiProvider scheme="light"><Probe /></UiProvider>);
-    expect(screen.getByTestId('align').textContent).toBe('start');
-    outside.unmount();
-    const empty = render(<UiProvider scheme="light"><EmptyState illustration="table" title="t" body="b" action={<Probe />} /></UiProvider>);
-    expect(screen.getByTestId('align').textContent).toBe('center');
-    empty.unmount();
-    render(<UiProvider scheme="light"><Celebrate title="t"><Probe /></Celebrate></UiProvider>);
-    expect(screen.getByTestId('align').textContent).toBe('center');
-  });
-
-  it('pressVisual scales on press and only dims under Reduce Motion', async () => {
-    const { pressVisual } = await import('./index');
-    expect(pressVisual(true, false)).toMatchObject({ transform: 'scale(0.98)' });
-    expect(pressVisual(false, false)).toMatchObject({ transform: 'none' });
-    expect(pressVisual(true, true)).toEqual({ opacity: 0.72 });
-  });
-
-  it('StickyActions sticks to the bottom on web and groups its actions', async () => {
-    const { StickyActions } = await import('./index');
-    render(<UiProvider scheme="light"><StickyActions testID="bar"><Button>Guardar</Button></StickyActions></UiProvider>);
-    const bar = screen.getByTestId('bar');
-    expect(bar.getAttribute('role')).toBe('group');
-    expect(getComputedStyle(bar).position).toBe('sticky');
-    expect(screen.getByRole('button', { name: 'Guardar' })).toBeTruthy();
-  });
-
-  it('a Sheet opens with Enter on web (platform animation off)', async () => {
-    const { Sheet } = await import('./index');
-    render(<UiProvider scheme="light"><Sheet visible onClose={() => undefined} title="Hoja"><Button>Dentro</Button></Sheet></UiProvider>);
-    expect(document.querySelector('[data-enter]')).not.toBeNull();
   });
 });

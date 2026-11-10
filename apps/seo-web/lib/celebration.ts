@@ -20,18 +20,10 @@ export async function loadPublicPage(slug: string, language: string, client: Api
   const view = await orNull(client.request<PublicCelebrationView>(`/celebrations/public/${encodeURIComponent(slug)}`, { auth: false, headers: language ? { "accept-language": language } : {} }));
   if (!view) return null;
   const [template, gallery] = await Promise.all([
-    view.templateId ? optional(client.request<TemplateDocument>(`/media/templates/${view.templateId}`, { auth: false })) : Promise.resolve(null),
-    optional(client.request<{ readonly items: readonly GalleryImage[] }>(`/media/public/celebrations/${view.celebrationId}/assets`, { auth: false }))
+    view.templateId ? orNull(client.request<TemplateDocument>(`/media/templates/${view.templateId}`, { auth: false })) : Promise.resolve(null),
+    orNull(client.request<{ readonly items: readonly GalleryImage[] }>(`/media/public/celebrations/${view.celebrationId}/assets`, { auth: false }))
   ]);
   return { view, template, gallery: gallery?.items ?? [] };
-}
-
-/**
- * The template and the gallery only dress the page: if the media service is down (502/503, timeout) the celebration still
- * renders with the default look and no photos, instead of a 500 for the whole invitation. The celebration itself is never optional.
- */
-async function optional<TValue>(request: Promise<TValue>): Promise<TValue | null> {
-  try { return await request; } catch { return null; }
 }
 
 const SITEMAP_PAGE = 100;

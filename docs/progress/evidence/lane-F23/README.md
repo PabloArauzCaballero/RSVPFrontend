@@ -1,3 +1,11 @@
+# F23 · continuación local de Miguel · 2026-11-08
+
+Estado actual de esta copia: `TESTED` frontend, **no DONE**. Se adaptaron catálogo, externo con alternativas, estados/publicación, bandeja y privacidad, y descubrimiento de proveedores. Suite propia 55/55 × 3, regresión universal 409/409, Next 107/107, hooks 98/98; 28 capturas Chrome a 360/768/1280 con axe sin critical/serious; Hermes iOS/Android compila. El gateway actual no responde y `verify` sigue fallando en sincronización de ocho specs con backend; faltan integración real actual, runtime nativo, CI y revisión humana. Sin commits, PR ni push.
+
+Ver [evidencia actual, REQs, comandos, alcance y responsables](local-2026-11-08.md). Las secciones siguientes se conservan como evidencia histórica; sus pruebas contra backend real no cubren los cambios de esta continuación.
+
+---
+
 # F23 · Gestión de regalos del anfitrión · 2026-11-05
 
 Nivel: `TESTED` + Chrome real (app Expo web :8081, login por la pantalla real) contra backend real. **No DONE.**

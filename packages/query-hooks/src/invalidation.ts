@@ -11,8 +11,6 @@ export const invalidation = {
   /** Host-side read models derived from the guest list and RSVPs (list, summary, requests, exports). */
   guestsChanged: (celebrationId: string) => [queryKeys.guest.lists(celebrationId), queryKeys.guest.summary(celebrationId), queryKeys.guest.companionRequests(celebrationId), queryKeys.guest.rsvps(celebrationId)] as const,
   giftReservationChanged: (celebrationId: string) => [queryKeys.gift.list(celebrationId)] as const,
-  organizationsChanged: () => [queryKeys.identity.organizations] as const,
-  organizationChanged: (id: string) => [queryKeys.identity.organization(id), queryKeys.identity.organizations] as const,
   providerChanged: () => [queryKeys.provider.all] as const,
   notificationPreferencesChanged: (celebrationId: string) => [queryKeys.notification.preferences(celebrationId)] as const
 };

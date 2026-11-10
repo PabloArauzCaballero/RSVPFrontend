@@ -1,0 +1,8 @@
+specs/celebration.openapi.json differs from the backend: run "yarn workspace @rsvp/contracts generate"
+specs/gateway.openapi.json differs from the backend: run "yarn workspace @rsvp/contracts generate"
+specs/gift-list.openapi.json differs from the backend: run "yarn workspace @rsvp/contracts generate"
+specs/guest-rsvp.openapi.json differs from the backend: run "yarn workspace @rsvp/contracts generate"
+specs/identity.openapi.json differs from the backend: run "yarn workspace @rsvp/contracts generate"
+specs/notification.openapi.json differs from the backend: run "yarn workspace @rsvp/contracts generate"
+specs/provider-catalog.openapi.json differs from the backend: run "yarn workspace @rsvp/contracts generate"
+specs/template-media.openapi.json differs from the backend: run "yarn workspace @rsvp/contracts generate"

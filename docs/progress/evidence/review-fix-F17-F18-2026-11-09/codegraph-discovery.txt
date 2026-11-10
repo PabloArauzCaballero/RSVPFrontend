@@ -1,0 +1,405 @@
+**Flow (call path among the symbols you queried)**
+
+1. ReportBody (apps/universal/src/host/guests/report-screen.tsx:23)
+   ↓ calls
+2. exportCsv (apps/universal/src/host/guests/report-screen.tsx:35)
+   ↓ calls (when kind !== "catering")
+3. buildRsvpReportCsv (packages/query-hooks/src/guest/csv.ts:49)
+
+**Dynamic-dispatch links among your symbols**
+(synthesized — the indirect hops grep/Read would reconstruct; the `@file:line` is the wiring site)
+
+- ReportScreen → ReportBody   [dynamic: renders <ReportBody>]
+- ReportBody → StatusBadge   [dynamic: renders <StatusBadge>]
+- ReportBody → Notice   [dynamic: renders <Notice>]
+- ReportBody → FreshnessLine   [dynamic: renders <FreshnessLine>]
+- ReportBody → RetryNotice   [dynamic: renders <RetryNotice>]
+- ReportBody → ActionButton   [dynamic: renders <ActionButton>]
+
+> Full source for these symbols is below — the call flow among them, followed by their bodies.
+**Exploration: ReportBody buildRsvpReportCsv buildCateringCsv useHostNotifications useUpdateHostNotificationPreferences useMarkHostNotificationsRead QuietHours refetch concurrent edits impact callers**
+
+Found 50 symbols across 6 files.
+
+**Blast radius — what depends on these (update/verify before editing)**
+
+- `ReportBody` (apps/universal/src/host/guests/report-screen.tsx:23) — 1 caller in `apps/universal/src/host/guests/report-screen.tsx`; tested via callers: `apps/universal/test/guests.test.tsx`
+- `useHostNotifications` (packages/query-hooks/src/notification/index.ts:11) — 5 callers in `apps/universal/src/push/push-bridge.tsx`, `apps/universal/src/host/guests/notifications-screen.tsx`; tests: `packages/query-hooks/test/hook-routes.test.tsx`
+- `buildCateringCsv` (packages/query-hooks/src/guest/csv.ts:67) — 4 callers in `apps/universal/src/host/guests/report-screen.tsx`; tests: `packages/query-hooks/test/guest-contract.test.tsx`, `packages/query-hooks/test/hook-routes.test.tsx`
+- `useMarkHostNotificationsRead` (packages/query-hooks/src/notification/index.ts:54) — 4 callers in `apps/universal/src/host/guests/notifications-screen.tsx`; tests: `packages/query-hooks/test/guest-contract.test.tsx`, `packages/query-hooks/test/hook-routes.test.tsx`
+- `QuietHours` (apps/universal/src/host/guests/preferences-screen.tsx:23) — 1 caller in `apps/universal/src/host/guests/preferences-screen.tsx`; tested via callers: `apps/universal/test/guests.test.tsx`
+
+**Relationships**
+
+**calls:**
+- ReportBody → useT
+- ReportBody → useApiClient
+- ReportBody → StatusBadge
+- ReportBody → exportCsv
+- ReportBody → Notice
+- ReportBody → FreshnessLine
+- ReportBody → RetryNotice
+- ReportBody → withCelebration
+- ReportBody → useGuestList
+- ReportBody → ActionButton
+- ... and 170 more
+
+**references:**
+- ReportBody → FILTERS
+- ReportBody → PAGE
+- useHostNotifications → HOST_INBOX_LIMIT
+- useHostNotifications → ApiClient
+- hostNotificationsApi → ApiClient
+- buildCateringCsv → MAX_PAGES
+- buildCateringCsv → CateringReport
+- toCsv → csvCell
+- readHostRsvpAnswers → MAX_PAGES
+- buildRsvpReportCsv → MAX_PAGES
+- ... and 40 more
+
+**Source Code**
+
+> The code below is the **verbatim, current on-disk source** of these files — re-read from disk on this call and line-numbered, byte-for-byte identical to what the Read tool returns. It is NOT a summary, outline, or stale cache. Treat each block as a Read you have already performed: do not Read a file shown here.
+
+**`packages/query-hooks/src/guest/csv.ts`** — buildCateringCsv(function), readHostRsvpAnswers(function), buildRsvpReportCsv(function), toCsv(function), MAX_PAGES(constant), csvCell(function), rsvpReportRows(function), GUEST_PAGE(constant), RsvpPageReader(type_alias), FORMULA_START(constant), +2 more
+
+```typescript
+1	import type { CateringReport, CompanionRequest, GuestListItem, HostRsvpSummary } from "./types.js";
+2	
+3	/**
+4	 * CSV export hardening (CWE-1236, "CSV injection"): a cell that starts with = + - @ (or a tab/CR that
+5	 * spreadsheets also treat as formula starters) is prefixed with a single quote so Excel/Sheets read it as text.
+6	 * Then RFC 4180 quoting for commas, quotes and line breaks.
+7	 */
+8	const FORMULA_START = /^[=+\-@\t\r]/;
+9	export function csvCell(value: unknown): string {
+10	  const text = value === null || value === undefined ? "" : String(value);
+11	  const safe = FORMULA_START.test(text) ? `'${text}` : text;
+12	  return /[",\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
+13	}
+14	
+15	export function toCsv(header: readonly string[], rows: readonly (readonly unknown[])[]): string {
+16	  return [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n") + "\r\n";
+17	}
+18	
+19	/** Rows of the RSVP report: the read-model list joined with each guest's dietary notes and message (host RSVP list). */
+20	export function rsvpReportRows(guests: readonly GuestListItem[], rsvps: readonly HostRsvpSummary[]): (string | number)[][] {
+21	  const byGuest = new Map(rsvps.map((rsvp) => [rsvp.guestId, rsvp]));
+22	  return guests.map((guest) => {
+23	    const rsvp = byGuest.get(guest.guestId);
+24	    return [guest.name, guest.email ?? "", guest.phone ?? "", guest.status, guest.allowedCompanions, guest.requestedCompanions, guest.approvedCompanions, rsvp?.dietaryNotes ?? "", rsvp?.message ?? ""];
+25	  });
+26	}
+27	export const RSVP_REPORT_COLUMNS = ["name", "email", "phone", "status", "allowedCompanions", "requestedCompanions", "approvedCompanions", "dietaryNotes", "message"] as const;
+28	
+29	export const pendingRequests = (requests: readonly CompanionRequest[]): CompanionRequest[] => requests.filter((request) => request.status === "PENDING_REVIEW");
+30	
+31	const GUEST_PAGE = 100;
+32	const RSVP_PAGE = 1000;
+33	const MAX_PAGES = 200;
+34	
+35	type RsvpPageReader = { readonly rsvps: (celebrationId: string, query: { readonly limit: number; readonly offset: number }) => Promise<{ readonly items: readonly HostRsvpSummary[] }> };
+36	
+37	/** Walk all response pages so the screen and export can include notes for every guest. */
+38	export async function readHostRsvpAnswers(api: RsvpPageReader, celebrationId: string): Promise<HostRsvpSummary[]> {
+39	  const answers: HostRsvpSummary[] = [];
+40	  for (let page = 0; page < MAX_PAGES; page += 1) {
+41	    const result = await api.rsvps(celebrationId, { limit: RSVP_PAGE, offset: answers.length });
+42	    answers.push(...result.items);
+43	    if (result.items.length < RSVP_PAGE) return answers;
+44	  }
+45	  throw new Error("RSVP report exceeded the pagination limit");
+46	}
+47	
+48	/** Walks every page of the read models (guest list + RSVPs) and returns the report CSV. Numbers are the backend's, not recounted. */
+49	export async function buildRsvpReportCsv(
+50	  api: RsvpPageReader & { readonly list: (celebrationId: string, query: { readonly limit: number; readonly offset: number; readonly status?: "PENDING" | "CONFIRMED" | "DECLINED" }) => Promise<{ readonly items: readonly GuestListItem[]; readonly total: number }> },
+51	  celebrationId: string, header: readonly string[], status?: "PENDING" | "CONFIRMED" | "DECLINED"
+52	): Promise<string> {
+53	  const guests: GuestListItem[] = [];
+54	  for (let page = 0, total = Infinity; guests.length < total && page < MAX_PAGES; page += 1) {
+55	    const result = await api.list(celebrationId, { limit: GUEST_PAGE, offset: guests.length, ...(status ? { status } : {}) });
+56	    total = result.total;
+57	    if (result.items.length === 0) break;
+58	    guests.push(...result.items);
+59	  }
+60	  const rsvps = await readHostRsvpAnswers(api, celebrationId);
+61	  return toCsv(header, rsvpReportRows(guests, rsvps));
+62	}
+63	
+64	export const CATERING_COLUMNS = ["guestKey", "group", "status", "partySize", "dietaryNotes", "message"] as const;
+65	
+66	/** Caterer's sheet from GET /catering-report: keyset pages, no names, e-mails or phones (the backend never sends them). */
+67	export async function buildCateringCsv(
+68	  api: { readonly catering: (celebrationId: string, query: { readonly status?: "PENDING" | "CONFIRMED" | "DECLINED"; readonly withNotesOnly?: boolean; readonly includeMessage?: boolean; readonly limit?: number; readonly cursor?: string }) => Promise<CateringReport> },
+69	  celebrationId: string, header: readonly string[], options: { readonly withNotesOnly: boolean; readonly includeMessage: boolean }
+70	): Promise<string> {
+71	  const rows: (string | number)[][] = [];
+72	  let cursor: string | undefined;
+73	  for (let page = 0; page < MAX_PAGES; page += 1) {
+74	    const result = await api.catering(celebrationId, { status: "CONFIRMED", limit: 500, ...options, ...(cursor ? { cursor } : {}) });
+75	    for (const item of result.items) rows.push([item.guestId, item.groupId ?? "", item.status, item.partySize, item.dietaryNotes ?? "", item.message ?? ""]);
+76	    if (!result.nextCursor) break;
+77	    cursor = result.nextCursor;
+78	  }
+79	  return toCsv(options.includeMessage ? header : header.slice(0, -1), options.includeMessage ? rows : rows.map((row) => row.slice(0, -1)));
+80	}
+```
+
+**`packages/query-hooks/src/notification/index.ts`** — ApiClient(references), hostNotificationsApi(calls), setReadState(calls), HOST_INBOX_LIMIT(constant), HostNotification(references), setReadState(function), useHostDevices(function), useHostNotificationPreferences(function), useHostNotifications(function), useMarkHostNotificationsRead(function), +4 more
+
+```typescript
+6	import type { DeviceRegistration, HostNotification, NotificationPreferences, NotificationPreferencesPatch } from "../guest/types.js";
+7	
+8	/** GET /notifications/celebrations/{id}/notifications: the host's in-app notices and delivery records. */
+9	export const HOST_INBOX_LIMIT = 50;
+10	
+11	export function useHostNotifications(client: ApiClient, celebrationId: string) {
+12	  return useQuery({ queryKey: queryKeys.notification.inbox(celebrationId), queryFn: () => hostNotificationsApi(client).inbox(celebrationId, HOST_INBOX_LIMIT), enabled: Boolean(celebrationId), refetchInterval: 30_000, ...cachePolicy.notification });
+13	}
+14	
+15	export function useHostNotificationPreferences(client: ApiClient, celebrationId: string) {
+16	  return useQuery({ queryKey: queryKeys.notification.preferences(celebrationId), queryFn: () => hostNotificationsApi(client).preferences(celebrationId), enabled: Boolean(celebrationId), ...cachePolicy.notification });
+17	}
+18	
+19	/**
+20	 * Optimistic channel toggle: the cache flips immediately; a failure restores the previous value and
+21	 * the error is thrown to the caller so the screen can say it was not saved (REQ-F18-04/05).
+22	 */
+23	export function useUpdateHostNotificationPreferences(client: ApiClient, celebrationId: string) {
+24	  const queryClient = useQueryClient();
+25	  const key = queryKeys.notification.preferences(celebrationId);
+26	  return useMutation({
+27	    scope: { id: `host-notification-preferences:${celebrationId}` },
+28	    networkMode: "always",
+29	    mutationFn: async (body: NotificationPreferencesPatch) => {
+30	      await queryClient.cancelQueries({ queryKey: key });
+31	      const previous = queryClient.getQueryData<NotificationPreferences>(key);
+32	      if (previous && (body.channels || body.eventTypes)) {
+33	        queryClient.setQueryData<NotificationPreferences>(key, {
+34	          ...previous,
+35	          channels: { ...previous.channels, ...body.channels },
+36	          eventTypes: { ...previous.eventTypes, ...body.eventTypes }
+37	        });
+38	      }
+39	      try {
+40	        const saved = await hostNotificationsApi(client).updatePreferences(celebrationId, body);
+41	        queryClient.setQueryData(key, saved);
+42	        return saved;
+43	      } catch (error) {
+44	        if (previous && (body.channels || body.eventTypes)) queryClient.setQueryData(key, previous);
+45	        throw error;
+46	      }
+47	    }
+48	  });
+49	}
+50	
+51	/**
+52	 * POST .../notifications/{id}/read keeps the first read time. Preserve server-confirmed reads if a batch stops partway.
+53	 */
+54	export function useMarkHostNotificationsRead(client: ApiClient, celebrationId: string) {
+55	  const queryClient = useQueryClient();
+56	  const key = queryKeys.notification.inbox(celebrationId);
+57	  return useMutation({
+58	    scope: { id: `host-inbox:${celebrationId}` },
+59	    networkMode: "always",
+60	    mutationFn: async (ids: readonly string[]) => {
+61	      await queryClient.cancelQueries({ queryKey: key });
+62	      const selected = new Set(ids);
+63	      const confirmed = new Map<string, string>();
+64	      const at = new Date().toISOString();
+65	      const setReadState = (update: (item: HostNotification) => HostNotification) =>
+66	        queryClient.setQueryData<{ items: HostNotification[] }>(key, (current) =>
+67	          current && { ...current, items: current.items.map(update) });
+68	      const optimistic = new Set<string>();
+69	      setReadState((item) => {
+70	        if (!selected.has(item.id) || item.readAt !== null) return item;
+71	        optimistic.add(item.id);
+72	        return { ...item, readAt: at };
+73	      });
+74	      const api = hostNotificationsApi(client);
+75	      try {
+76	        for (const id of selected) {
+77	          const saved = await api.markRead(celebrationId, id);
+78	          confirmed.set(id, saved.readAt);
+79	        }
+80	      } finally {
+81	        setReadState((item) => {
+82	          const readAt = confirmed.get(item.id);
+83	          if (readAt !== undefined) return { ...item, readAt };
+84	          return optimistic.has(item.id) && item.readAt === at ? { ...item, readAt: null } : item;
+85	        });
+86	      }
+87	    },
+88	    onSettled: () => { void queryClient.invalidateQueries({ queryKey: key }); }
+89	  });
+90	}
+91	
+92	/**
+93	 * PUT /notifications/celebrations/{id}/recipients: ONE call after guests are registered or imported (or after a public sign-up),
+94	 * so Notification knows every recipient and releases events held waiting for context. Idempotent.
+95	 */
+96	export function useSyncHostRecipients(client: ApiClient, celebrationId: string) {
+97	  return useMutation({ mutationFn: () => hostNotificationsApi(client).syncRecipients(celebrationId) });
+98	}
+99	
+100	export function useHostDevices(client: ApiClient, celebrationId: string) {
+101	  return useQuery({ queryKey: queryKeys.notification.devices(celebrationId), queryFn: () => hostNotificationsApi(client).devices(celebrationId), enabled: Boolean(celebrationId), ...cachePolicy.notification });
+102	}
+103	export function useRegisterHostDevice(client: ApiClient, celebrationId: string) {
+104	  const queryClient = useQueryClient();
+105	  return useMutation({ mutationFn: (body: DeviceRegistration) => hostNotificationsApi(client).registerDevice(celebrationId, body), onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.notification.devices(celebrationId) }) });
+106	}
+107	export function useUnregisterHostDevice(client: ApiClient, celebrationId: string) {
+108	  const queryClient = useQueryClient();
+109	  return useMutation({ mutationFn: (deviceId: string) => hostNotificationsApi(client).unregisterDevice(celebrationId, deviceId), onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.notification.devices(celebrationId) }) });
+110	}
+111	export { usePushGiftReservation } from "./gift-reservation.js";
+112	
+```
+
+**`apps/universal/src/host/guests/preferences-screen.tsx`** — imports(imports), references(references), feedback(calls), useT(calls), Notice(calls), Section(calls), ActionButton(calls), calls(calls), Input(calls), Input(imports), +29 more
+
+```tsx
+20	export const HOST_EVENT_TYPES = ["celebrationPublished", "companionRequested", "giftRequested", "leadCapReached"] as const;
+21	const palette = colors.light;
+22	
+23	function QuietHours({ quiet, timeZone, busy, onSave, feedback }: {
+24	  readonly quiet: NotificationPreferences["quietHours"];
+25	  readonly timeZone: string;
+26	  readonly busy: boolean;
+27	  readonly onSave: (value: { start: number; end: number } | null) => void;
+28	  readonly feedback: ReactNode;
+29	}): ReactNode {
+30	  const t = useT();
+31	  const [start, setStart] = useState(String(quiet.start));
+32	  const [end, setEnd] = useState(String(quiet.end));
+33	  const [submitted, setSubmitted] = useState(false);
+34	  const startHour = quietHourSchema.safeParse(start);
+35	  const endHour = quietHourSchema.safeParse(end);
+36	  const save = (): void => {
+37	    setSubmitted(true);
+38	    if (!startHour.success || !endHour.success) return;
+39	    setSubmitted(false);
+40	    onSave({ start: startHour.data, end: endHour.data });
+41	  };
+42	  return (
+43	    <Section title={t("guests.preferences.quietTitle")}>
+44	      <Text style={styles.body}>{t("guests.preferences.quietIntro")}</Text>
+45	      <Text style={styles.muted}>{t("guests.preferences.quietZone", { timeZone })}</Text>
+46	      <Text testID="quiet-current" style={styles.label}>
+47	        {quiet.start === quiet.end ? t("guests.preferences.quietOff") : t("guests.preferences.quietCurrent", { start: quiet.start, end: quiet.end })} · {quiet.source === "DEFAULT" ? t("guests.preferences.quietSourceDefault") : t("guests.preferences.quietSourceMine")}
+48	      </Text>
+49	      <Input label={t("guests.preferences.quietStart")} value={start} onChangeText={setStart} keyboardType="number-pad" testID="quiet-start"
+50	        state={busy ? "disabled" : "default"} error={submitted && !startHour.success ? t("guests.preferences.quietInvalid") : undefined} />
+51	      <Input label={t("guests.preferences.quietEnd")} value={end} onChangeText={setEnd} keyboardType="number-pad" testID="quiet-end"
+52	        state={busy ? "disabled" : "default"} error={submitted && !endHour.success ? t("guests.preferences.quietInvalid") : undefined} />
+53	      <View style={styles.row}>
+54	        <ActionButton label={t("guests.preferences.quietSave")} onPress={save} busy={busy} testID="quiet-save" />
+```
+
+**`apps/universal/src/host/guests/report-screen.tsx`** — imports(imports), hostGuestsApi(calls), saveTextFile(calls), useT(calls), references(references), exportDate(calls), hostGuestsApi(imports), buildRsvpReportCsv(calls), buildRsvpReportCsv(imports), useGuestList(calls), +34 more
+
+```tsx
+20	  return `${part("year")}-${part("month")}-${part("day")}`;
+21	}
+22	
+23	function ReportBody({ celebrationId, timeZone, slug, onNavigate }: { readonly celebrationId: string; readonly timeZone: string; readonly slug: string; readonly onNavigate: (href: string) => void }): ReactNode {
+24	  const t = useT();
+25	  const client = useApiClient();
+26	  const [status, setStatus] = useState<RsvpStatus | "ALL">("ALL");
+27	  const [offset, setOffset] = useState(0);
+28	  const list = useGuestList(client, celebrationId, { limit: PAGE, offset, ...(status === "ALL" ? {} : { status }) });
+29	  const rsvps = useHostRsvps(client, celebrationId);
+30	  const [exporting, setExporting] = useState(false);
+31	  const [exportMessage, setExportMessage] = useState<{ kind: "success" | "error"; text: string } | null>(null);
+32	  const answers = rsvps.isError ? undefined : rsvps.data;
+33	  const byGuest = useMemo(() => new Map(answers?.map((item) => [item.guestId, item])), [answers]);
+34	
+35	  const exportCsv = async (kind: "full" | "catering" = "full"): Promise<void> => {
+36	    setExporting(true); setExportMessage(null);
+37	    try {
+38	      if (kind === "catering") {
+39	        const header = CATERING_COLUMNS.map((column) => t(`guests.report.columns.${{ guestKey: "guestKey", group: "group", status: "status", partySize: "partySize", dietaryNotes: "dietary", message: "message" }[column]}`));
+40	        const csv = await buildCateringCsv(hostGuestsApi(client), celebrationId, header, { withNotesOnly: false, includeMessage: false });
+41	        const name = `catering-${slug}-${exportDate(timeZone)}.csv`;
+42	        const outcome = await saveTextFile(name, csv);
+43	        setExportMessage(outcome === "failed" ? { kind: "error", text: t("guests.report.exportFailed") } : { kind: "success", text: t("guests.report.exported", { name }) });
+44	        return;
+45	      }
+46	      const header = RSVP_REPORT_COLUMNS.map((column) => t(`guests.report.columns.${{ name: "name", email: "email", phone: "phone", status: "status", allowedCompanions: "allowed", requestedCompanions: "requested", approvedCompanions: "approved", dietaryNotes: "dietary", message: "message" }[column]}`));
+47	      const csv = await buildRsvpReportCsv(hostGuestsApi(client), celebrationId, header, status === "ALL" ? undefined : status);
+48	      const name = `rsvp-${slug}-${exportDate(timeZone)}.csv`;
+49	      const outcome = await saveTextFile(name, csv);
+50	      setExportMessage(outcome === "failed" ? { kind: "error", text: t("guests.report.exportFailed") } : { kind: "success", text: t("guests.report.exported", { name }) });
+51	    } catch { setExportMessage({ kind: "error", text: t("guests.report.exportFailed") }); } finally { setExporting(false); }
+52	  };
+53	
+54	  const data = list.data;
+55	  const loadingAnswers = Boolean(data?.items.length) && rsvps.isPending;
+56	  const to = data ? data.offset + data.items.length : 0;
+57	  const paged = Math.max(0, (data?.total ?? 0) - PAGE) !== 0;
+58	  return (
+59	    <View style={{ gap: spacing[4] }}>
+60	      <Text style={styles.body}>{t("guests.report.intro")}</Text>
+61	      <View accessibilityRole="radiogroup" accessibilityLabel={t("guests.report.filterLabel")} style={styles.row}>
+62	        {FILTERS.map((value) => (
+63	          <Pressable key={value} accessibilityRole="radio" aria-checked={status === value} accessibilityLabel={value === "ALL" ? t("guests.list.all") : t(`guests.status.${value}`)} onPress={() => { setStatus(value); setOffset(0); }} style={[styles.navItem, status === value && styles.navItemCurrent]}>
+64	            <Text style={styles.label}>{value === "ALL" ? t("guests.list.all") : t(`guests.status.${value}`)}</Text>
+65	          </Pressable>
+66	        ))}
+67	      </View>
+68	      <View style={styles.row}>
+69	        <ActionButton label={exporting ? t("guests.report.exporting") : t("guests.report.export")} busy={exporting} onPress={() => { void exportCsv(); }} testID="export-csv" />
+```
+
+**`apps/universal/src/host/gifts/external-screen.tsx`** — problemCode(calls), changeSettings(calls), references(references), useAddGift(calls), parseHostGiftPrice(calls), suggestionsOf(calls), changeSettings(function), ExternalScreen(function), calls(calls), edit(calls), +23 more
+
+```tsx
+14	type Errors = Partial<Record<"title" | "url" | "price", string>>;
+15	
+16	/** C28: explicit review precedes external creation; only the server grants publication. */
+17	function ExternalBody({ celebration, refetch, onNavigate }: { readonly celebration: Celebration; readonly refetch: () => void; readonly onNavigate: (path: string) => void }): ReactNode {
+18	  const t = useT();
+19	  const client = useApiClient();
+20	  const settings = useUpdateSettings(client, celebration.id);
+
+... (gap) ...
+
+36	  const busy = add.isPending || settings.isPending;
+37	  useEffect(() => { if (partnerFirst && Platform.OS === "web") suggestionBlock.current?.focus(); }, [partnerFirst]);
+38	
+39	  const edit = (setter: (value: string) => void) => (value: string): void => {
+40	    setter(value); setErrors({}); setReviewError(false); setReviewed(false); setDone(null); setChallenge(null); setSuggestions([]); add.reset();
+41	  };
+42	  const browse = (query = title): void => onNavigate(`${withCelebration(HOST_ROUTES.giftCatalog, celebration.id)}${query.trim() ? `&q=${encodeURIComponent(query.trim())}` : ""}`);
+43	  const send = (): void => {
+44	    if (inFlight.current || changingSettings.current) return;
+```
+
+**`packages/query-hooks/src/guest/types.ts`** — HostRsvpSummary(type_alias), NotificationPreferences(type_alias), HostNotification(type_alias), Guest(references), CateringReport(type_alias), Guest(type_alias), GuestListItem(type_alias)
+
+```typescript
+1	import type { GuestRsvpComponents, NotificationComponents } from "@rsvp/contracts";
+2	
+3	/** Contract types (guest-rsvp v1.8.0, notification v1.2.0): never hand-written copies of the backend shapes. */
+4	type Guest = GuestRsvpComponents["schemas"];
+5	export type RsvpState = Guest["RsvpState"];
+6	export type RsvpResponse = Guest["RsvpResponse"];
+7	export type GuestTokenResource = Guest["GuestTokenResource"];
+8	export type UnregisteredConfirmation = Guest["UnregisteredConfirmation"];
+9	export type RegistrationReceipt = Guest["RegistrationReceipt"];
+10	export type HostGuest = Guest["Guest"];
+11	export type RegisterGuestInput = Guest["RegisterGuest"];
+12	export type GuestGroup = Guest["GuestGroup"];
+13	export type GuestGroupSummary = Guest["GuestGroupSummary"];
+14	export type CateringReport = Guest["CateringReport"];
+15	export type CateringItem = Guest["CateringItem"];
+16	export type GuestListItem = Guest["GuestListItem"];
+17	export type GuestReadList = Guest["GuestReadList"];
+```
+
+**Not shown above — explore these names for their source**
+
+- apps/universal/src/host/ui.tsx: Notice:130, ActionButton:126, Loading:171, Section:83, ConfirmDialog:176
+- ... and 34 more files

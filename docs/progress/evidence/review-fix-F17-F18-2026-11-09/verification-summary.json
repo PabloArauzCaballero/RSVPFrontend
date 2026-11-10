@@ -1,0 +1,35 @@
+{
+  "scope": "Local frontend; mocks do not prove backend delivery or native runtime",
+  "tests": {
+    "universal": 416,
+    "hooks": 105,
+    "seoWeb": 111,
+    "i18n": 12,
+    "total": 644
+  },
+  "build": "PASS 18/18",
+  "typecheck": "PASS 18/18",
+  "lint": "PASS",
+  "coverage": {
+    "screens": 98.78,
+    "hooks": 99.42
+  },
+  "browser": {
+    "F17": {
+      "status": "PASS",
+      "checks": 4,
+      "axeChecks": 9,
+      "seriousOrCritical": 0,
+      "screenshots": 11
+    },
+    "F18": {
+      "status": "PASS",
+      "checks": 4,
+      "axeChecks": 7,
+      "seriousOrCritical": 0,
+      "screenshots": 10
+    }
+  },
+  "contracts": "BLOCKED-EXTERNAL: version mismatch",
+  "gateway": "ECONNREFUSED 8000/28000"
+}

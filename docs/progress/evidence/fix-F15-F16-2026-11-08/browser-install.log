@@ -1,0 +1,47 @@
+Removing unused browser at C:\Users\maria\AppData\Local\ms-playwright\chromium-1248
+Downloading Chrome for Testing 151.0.7922.34 (playwright chromium v1234)[2m from https://cdn.playwright.dev/builds/cft/151.0.7922.34/win64/chrome-win64.zip[22m
+Error: unable to verify the first certificate; if the root CA is installed locally, try running Node.js with --use-system-ca
+    at TLSSocket.onConnectSecure (node:internal/tls/wrap:1655:34)
+    at TLSSocket.emit (node:events:509:20)
+    at TLSSocket._finishInit (node:internal/tls/wrap:1101:8)
+    at ssl.onhandshakedone (node:internal/tls/wrap:887:12) {
+  code: 'UNABLE_TO_VERIFY_LEAF_SIGNATURE'
+}
+Downloading Chrome for Testing 151.0.7922.34 (playwright chromium v1234)[2m from https://cdn.playwright.dev/builds/cft/151.0.7922.34/win64/chrome-win64.zip[22m
+Error: unable to verify the first certificate; if the root CA is installed locally, try running Node.js with --use-system-ca
+    at TLSSocket.onConnectSecure (node:internal/tls/wrap:1655:34)
+    at TLSSocket.emit (node:events:509:20)
+    at TLSSocket._finishInit (node:internal/tls/wrap:1101:8)
+    at ssl.onhandshakedone (node:internal/tls/wrap:887:12) {
+  code: 'UNABLE_TO_VERIFY_LEAF_SIGNATURE'
+}
+Downloading Chrome for Testing 151.0.7922.34 (playwright chromium v1234)[2m from https://cdn.playwright.dev/builds/cft/151.0.7922.34/win64/chrome-win64.zip[22m
+Error: unable to verify the first certificate; if the root CA is installed locally, try running Node.js with --use-system-ca
+    at TLSSocket.onConnectSecure (node:internal/tls/wrap:1655:34)
+    at TLSSocket.emit (node:events:509:20)
+    at TLSSocket._finishInit (node:internal/tls/wrap:1101:8)
+    at ssl.onhandshakedone (node:internal/tls/wrap:887:12) {
+  code: 'UNABLE_TO_VERIFY_LEAF_SIGNATURE'
+}
+Downloading Chrome for Testing 151.0.7922.34 (playwright chromium v1234)[2m from https://cdn.playwright.dev/builds/cft/151.0.7922.34/win64/chrome-win64.zip[22m
+Error: unable to verify the first certificate; if the root CA is installed locally, try running Node.js with --use-system-ca
+    at TLSSocket.onConnectSecure (node:internal/tls/wrap:1655:34)
+    at TLSSocket.emit (node:events:509:20)
+    at TLSSocket._finishInit (node:internal/tls/wrap:1101:8)
+    at ssl.onhandshakedone (node:internal/tls/wrap:887:12) {
+  code: 'UNABLE_TO_VERIFY_LEAF_SIGNATURE'
+}
+Downloading Chrome for Testing 151.0.7922.34 (playwright chromium v1234)[2m from https://cdn.playwright.dev/builds/cft/151.0.7922.34/win64/chrome-win64.zip[22m
+Error: unable to verify the first certificate; if the root CA is installed locally, try running Node.js with --use-system-ca
+    at TLSSocket.onConnectSecure (node:internal/tls/wrap:1655:34)
+    at TLSSocket.emit (node:events:509:20)
+    at TLSSocket._finishInit (node:internal/tls/wrap:1101:8)
+    at ssl.onhandshakedone (node:internal/tls/wrap:887:12) {
+  code: 'UNABLE_TO_VERIFY_LEAF_SIGNATURE'
+}
+Failed to install browsers
+Error: Failed to download Chrome for Testing 151.0.7922.34 (playwright chromium v1234), caused by
+Error: Download failure, code=1
+    at ChildProcess.<anonymous> (C:\Users\maria\OneDrive\Documentos\Github\RSVP\RSVPFrontend\node_modules\playwright-core\lib\coreBundle.js:32015:32)
+    at ChildProcess.emit (node:events:509:20)
+    at ChildProcess._handle.onexit (node:internal/child_process:294:12)

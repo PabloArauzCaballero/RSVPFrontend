@@ -1,0 +1,25 @@
+
+ RUN  v3.1.2 C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/apps/seo-web
+
+ ✓ tests/seo.test.tsx (17 tests) 228ms
+ ✓ tests/rsvp-page.test.tsx (24 tests) 2871ms
+   ✓ REQ-F15-01 · A9 formulario de RSVP por token > shows the real celebration, confirms with companions and diet, and sends POST status/requestedCompanions with an Idempotency-Key  342ms
+   ✓ REQ-F15-06 · conexión lenta o caída: el formulario no se pierde > a lost first read offers a retry instead of a blank page  665ms
+ ✓ tests/quote-agenda.test.tsx (11 tests) 826ms
+ ✓ tests/partner.test.tsx (9 tests) 120ms
+ ✓ tests/gifts.test.tsx (15 tests) 1370ms
+   ✓ states · 401, 403 and failure > list answering 500 shows a clear message  649ms
+ ✓ tests/invitation-link.test.tsx (9 tests) 300ms
+ ✓ tests/search-page.test.tsx (6 tests) 180ms
+ ✓ tests/redirect.test.ts (9 tests) 21ms
+ ✓ tests/guest-navigation.test.tsx (1 test) 86ms
+ ✓ tests/no-native-ui-boundary.test.ts (3 tests) 53ms
+ ✓ tests/impressions.test.ts (2 tests) 6ms
+ ✓ tests/i18n-boundary.test.ts (1 test) 11ms
+
+ Test Files  12 passed (12)
+      Tests  107 passed (107)
+   Start at  23:34:47
+   Duration  16.01s (transform 4.13s, setup 0ms, collect 9.22s, tests 6.07s, environment 9.23s, prepare 1.90s)
+
+JSON report written to C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/docs/progress/evidence/lane-F21/local/web-regression.json

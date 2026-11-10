@@ -1,0 +1,150 @@
+{
+  "scope": "F21 only, plus additive forms/i18n registration, minimal Next invitation-to-gifts navigation, and F21 progress records",
+  "modified": [
+    {
+      "file": "apps/universal/src/deep-links/router.ts",
+      "sha256": "86626c47babdd9a37b671168ac85f69257136bc603b07863d98a037d1cb2f7e4"
+    },
+    {
+      "file": "apps/universal/app/+native-intent.ts",
+      "sha256": "f5c70987607fb2d861b98c0f802914e02902130751f5897994c0462e992b601b"
+    },
+    {
+      "file": "apps/universal/app/(guest)/_layout.tsx",
+      "sha256": "7518a25c1341fff94cb5283ef93944a5cb0677972c45590c2988dfd55918112e"
+    },
+    {
+      "file": "apps/universal/app/(guest)/rsvp/[token].tsx",
+      "sha256": "1fdc371f7734a403893a14366b1be7ddbaeb4afe5ae7203897b408e244c7c97e"
+    },
+    {
+      "file": "apps/universal/app/(guest)/invitacion.tsx",
+      "sha256": "25402fcfee90692c10084ec2694e289f35d6883cfc678bdd89a2cd39f286283b"
+    },
+    {
+      "file": "apps/universal/src/guest/rsvp-screen.tsx",
+      "sha256": "b643bb2315d13413b5e028a5d6d346f0fd03e2058fb7ee1e8d3104a161421bc9"
+    },
+    {
+      "file": "apps/universal/src/guest/gifts-screen.tsx",
+      "sha256": "d15821a5615391f590aec6eb254f7cdba16a8991eccb6e3562a045870a545181"
+    },
+    {
+      "file": "apps/universal/test/guest-rsvp.test.tsx",
+      "sha256": "f4d8c112f73ccba8f2de2951511929b2e541b181db51d664081847810cbe510b"
+    },
+    {
+      "file": "packages/forms/src/index.ts",
+      "sha256": "09c252467f8ab1162c55194b4cebebeb2cb3a27ae444895b07f65e48d92c2d22"
+    },
+    {
+      "file": "packages/i18n/src/server.ts",
+      "sha256": "1c6470a7b141e64eaf2549b86d58ee8ea9ffc7723ff0b33664ea488db094cedb"
+    },
+    {
+      "file": "apps/seo-web/components/rsvp/rsvp-experience.tsx",
+      "sha256": "d0b3478e8660df1a7aa6a09a051462cfa3363226075ab78ccad7a275f0ae322d"
+    },
+    {
+      "file": "docs/progress/evidence/lane-F21/README.md",
+      "sha256": "14d2b06e120fb9ff68cc05dac0fd2097634e74d290707d9c2cb7b771c89a58aa"
+    },
+    {
+      "file": "docs/progress/BLOCKERS.md",
+      "sha256": "7558cc6f891cc343e982de67c66dca67256b4b9d57a7fec4093b634d8fd0ef07"
+    },
+    {
+      "file": "docs/progress/STATUS_LOG.md",
+      "sha256": "bb9b43fb2461dfe0e489739a84850897e0dbed66c1949fb219ffd6f1fcf82940"
+    }
+  ],
+  "created": [
+    {
+      "file": "apps/universal/src/guest/data-boundary.tsx",
+      "sha256": "0ef2c0329960264380291d3128a4980b2c3334df64ec1589e99c8b4c78f0538e"
+    },
+    {
+      "file": "apps/universal/src/guest/invalid-link.tsx",
+      "sha256": "38b386ef8e1a29d825acde1291c7ec2b8588e7dc558ff5e478a7be6ee0d65b3a"
+    },
+    {
+      "file": "apps/universal/src/guest/link-landing.tsx",
+      "sha256": "dc37bf679623a8540c5f61f99316e894b427221e412dae8d1f693793bc7c9688"
+    },
+    {
+      "file": "apps/universal/src/guest/response-controls.tsx",
+      "sha256": "2212499b458ef9fd9cc9606fcbeb4ad9541252100575196a946e250003779b78"
+    },
+    {
+      "file": "apps/universal/src/guest/response-controls.web.tsx",
+      "sha256": "4add9b5926fc8fd1372e6a94c877e192a312bee74de5c4cc526a19b1c61b1ec9"
+    },
+    {
+      "file": "apps/universal/src/guest/field.tsx",
+      "sha256": "4dacd3b32e8761b9fd26d6d44bf3b43eea32191cbcbd47778e2efd439d546d63"
+    },
+    {
+      "file": "apps/universal/app/(guest)/regalos/[token].tsx",
+      "sha256": "a0e01e35c0a2f6a2469cdc83201df89a21d3ca170fd3e9c821b2c40d2c4da0d9"
+    },
+    {
+      "file": "packages/forms/src/schemas/guest-gift-reservation.ts",
+      "sha256": "164bdafdfd626972dd149151af2b87ccc185c7e61de73779408a69a3237d0a23"
+    },
+    {
+      "file": "packages/forms/src/schemas/guest-gift-reservation.test.ts",
+      "sha256": "7b98cfcf7c7857ace1bcfa111fb106fc046e3ff1067c23cc16db780b47919064"
+    },
+    {
+      "file": "packages/i18n/locales/es-BO/guest-app.ts",
+      "sha256": "961186e1f550e91f853317e22e8080de7b036a425ef651259c0235db47e32524"
+    },
+    {
+      "file": "packages/i18n/locales/en-US/guest-app.ts",
+      "sha256": "1b20bc55cd8854389b8aad8e13d79fbc341f551033ee77635287ae9e28a8464e"
+    },
+    {
+      "file": "apps/seo-web/components/guest-app/gift-navigation.tsx",
+      "sha256": "d365b62aa4ecae5dbc19101033a0a31fd07776dc0c3606487ff0bd0d668f4abe"
+    },
+    {
+      "file": "apps/seo-web/tests/guest-navigation.test.tsx",
+      "sha256": "475fd3241ebdbf424035ea370cd15a8ee24296ec19741f4cac36f9b392420338"
+    },
+    {
+      "file": "apps/universal/test/guest-app.test.tsx",
+      "sha256": "f6cf1cfa6e797da71a34b3fd4fac1d206aacc26300bd8515ca1eb160108d8db1"
+    },
+    {
+      "file": "apps/universal/test/guest-gifts.test.tsx",
+      "sha256": "34152c8afaed084ee375e7028ed40898fbc3600c1b67050f6a667be96c8455e4"
+    },
+    {
+      "file": "apps/universal/test/guest-link-landing.test.tsx",
+      "sha256": "a97d9ae84af6030ff791f86ed95f937806b2982ceac2a93ea428f2dd256a1488"
+    },
+    {
+      "file": "apps/universal/test/guest-controls.test.tsx",
+      "sha256": "82d42db71c88090c39e96068b8ff86ae94f824d2b5e3ee68e2799fa8348052ea"
+    },
+    {
+      "file": "apps/universal/scripts/e2e-guest-app.mjs",
+      "sha256": "f32ad2850791bd2821123abd1357115e4edfad3587acee30603facfc4353e25d"
+    },
+    {
+      "file": "apps/universal/.maestro/f21-invitation.yaml",
+      "sha256": "4bfa5a34776be3adf6d7f35a0cf2fdbd35013d04e114feca7548602e345518d3"
+    },
+    {
+      "file": "docs/progress/evidence/lane-F21/local-2026-11-07.md",
+      "sha256": "88a893f7944f25dc42728f180309e590993e2a237a59c22b4fca11d77deed3de"
+    }
+  ],
+  "evidenceDirectories": [
+    "docs/progress/evidence/lane-F21/local",
+    "docs/progress/evidence/lane-F21/local-web"
+  ],
+  "noPublication": true,
+  "noBackendEdits": true,
+  "gitMetadataPresent": false
+}

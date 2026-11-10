@@ -1,0 +1,28 @@
+appId: ${APP_ID}
+---
+- openLink: ${MAGIC_LINK}
+- extendedWaitUntil:
+    visible: "¿Podrás acompañarnos?|Can you join us?"
+    timeout: 30000
+- assertNotVisible:
+    id: login-email
+- tapOn: "Sí, asistiré|Yes, I will attend"
+- tapOn:
+    id: rsvp-submit
+- extendedWaitUntil:
+    visible: "Tu asistencia está confirmada|Your attendance is confirmed"
+    timeout: 30000
+- takeScreenshot: f21-rsvp-confirmed
+- tapOn:
+    id: open-gifts
+- extendedWaitUntil:
+    visible: "Lista de regalos|Gift list"
+    timeout: 30000
+- assertNotVisible:
+    id: login-password
+- tapOn:
+    id: back-to-rsvp
+- extendedWaitUntil:
+    visible: "Tu asistencia está confirmada|Your attendance is confirmed"
+    timeout: 30000
+- takeScreenshot: f21-back-to-rsvp

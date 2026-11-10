@@ -1,0 +1,31 @@
+appId: ${APP_ID}
+---
+- launchApp
+- openLink: "rsvp://bandeja/${RESERVATION_ID}?c=${CELEBRATION_ID}"
+- runFlow:
+    when:
+      visible:
+        id: login-email
+    commands:
+      - tapOn:
+          id: login-email
+      - inputText: ${QA_EMAIL}
+      - tapOn:
+          id: login-password
+      - inputText: ${QA_PASSWORD}
+      - hideKeyboard
+      - tapOn:
+          id: login-submit
+- extendedWaitUntil:
+    visible:
+      id: push-approve
+    timeout: 30000
+- assertVisible: "Pendiente de tu decisión|Awaiting your decision"
+- tapOn:
+    id: push-approve
+- extendedWaitUntil:
+    visible: "Reserva aprobada|Reservation approved"
+    timeout: 30000
+- assertNotVisible:
+    id: push-reject
+- takeScreenshot: f20-request-approved

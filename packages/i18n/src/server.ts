@@ -23,6 +23,12 @@ import { quoteEnUS } from "../locales/en-US/quote.js";
 import { quoteEsBO } from "../locales/es-BO/quote.js";
 import { portalEnUS } from "../locales/en-US/portal.js";
 import { portalEsBO } from "../locales/es-BO/portal.js";
+import { pushActionsEsBO } from "../locales/es-BO/push-actions.js";
+import { pushActionsEnUS } from "../locales/en-US/push-actions.js";
+import { guestAppEsBO } from "../locales/es-BO/guest-app.js";
+import { guestAppEnUS } from "../locales/en-US/guest-app.js";
+import { hostGiftsEsBO } from "../locales/es-BO/host-gifts.js";
+import { hostGiftsEnUS } from "../locales/en-US/host-gifts.js";
 import { adminEnUS } from "../locales/en-US/admin.js";
 import { adminEsBO } from "../locales/es-BO/admin.js";
 
@@ -31,8 +37,8 @@ import { adminEsBO } from "../locales/es-BO/admin.js";
  * translator. Safe in Next.js server components, where react-i18next cannot load.
  */
 
-const esBO = { ...esBOCommon, celebration: celebrationEsBO, directory: directoryEsBO, host: hostEsBO, admin: adminEsBO, landing: landingEsBO, partner: partnerEsBO, search: searchEsBO, rsvp: rsvpEsBO, guests: guestsEsBO, gifts: giftsEsBO, ...quoteEsBO, portal: portalEsBO };
-const enUS = { ...enUSCommon, celebration: celebrationEnUS, directory: directoryEnUS, host: hostEnUS, admin: adminEnUS, landing: landingEnUS, partner: partnerEnUS, search: searchEnUS, rsvp: rsvpEnUS, guests: guestsEnUS, gifts: giftsEnUS, ...quoteEnUS, portal: portalEnUS };
+const esBO = { ...esBOCommon, celebration: celebrationEsBO, directory: directoryEsBO, host: hostEsBO, admin: adminEsBO, landing: landingEsBO, partner: partnerEsBO, search: searchEsBO, rsvp: rsvpEsBO, guests: guestsEsBO, gifts: giftsEsBO, ...quoteEsBO, portal: portalEsBO, pushActions: pushActionsEsBO, guestApp: guestAppEsBO, hostGifts: hostGiftsEsBO };
+const enUS = { ...enUSCommon, celebration: celebrationEnUS, directory: directoryEnUS, host: hostEnUS, admin: adminEnUS, landing: landingEnUS, partner: partnerEnUS, search: searchEnUS, rsvp: rsvpEnUS, guests: guestsEnUS, gifts: giftsEnUS, ...quoteEnUS, portal: portalEnUS, pushActions: pushActionsEnUS, guestApp: guestAppEnUS, hostGifts: hostGiftsEnUS };
 
 /** Every resource, by locale; tests compare their key sets. */
 export const resources = { "es-BO": esBO, "en-US": enUS } as const;

@@ -6,7 +6,7 @@ import { createApiClient } from "@rsvp/api-client";
 import {
   buildCateringCsv, classifyRsvpError, countdownTo, csvCell, maskSecret, newIdempotencyKey, queryKeys, rsvpReportRows, rsvpScreenFor, toCsv, tokenFingerprint,
   useChangeGuestGroup, useCompanionRequests, useGuestGroups, useGuestList, useGuestRsvp, useGuestSummary, useHostNotificationPreferences, useImportGuests, useIssueGuestToken, useRegisterGuest, useRegisterUnregistered,
-  useMarkHostNotificationsRead, usePublicRegistrationSettings, useResolveCompanionRequest, useResolveGuestCredential, useRevokeGuestToken, useSaveGuestRsvp, useUpdateHostNotificationPreferences, type RsvpState
+  useHostRsvps, useMarkHostNotificationsRead, usePublicRegistrationSettings, useResolveCompanionRequest, useResolveGuestCredential, useRevokeGuestToken, useSaveGuestRsvp, useUpdateHostNotificationPreferences, type RsvpState
 } from "../src/index.js";
 
 const TOKEN = "T".repeat(43);
@@ -177,6 +177,23 @@ describe("REQ-F16 · host guest surface on /guests/celebrations/{id}/…", () =>
 });
 
 describe("REQ-F17 · summary, companion requests, CSV", () => {
+  it("REQ-F17-02 · reads notes from the second RSVP page", async () => {
+    const answers = Array.from({ length: 1001 }, (_, index) => ({
+      guestId: `guest-${index}`, celebrationId: CELEBRATION, status: "CONFIRMED",
+      version: 1, dietaryNotes: index === 1000 ? "Sin maní" : null, message: null,
+      requestedCompanions: 0, approvedCompanions: 0, updatedAt: null, respondedAt: null
+    }));
+    const { client, calls, wrapper } = setup((call) => {
+      const offset = Number(new URL(call.path, "http://gw.test").searchParams.get("offset"));
+      return { body: { items: answers.slice(offset, offset + 1000), limit: 1000, offset } };
+    });
+    const view = renderHook(() => useHostRsvps(client, CELEBRATION), { wrapper });
+    await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
+    expect(view.result.current.data).toHaveLength(1001);
+    expect(view.result.current.data?.at(-1)?.dietaryNotes).toBe("Sin maní");
+    expect(calls.map((call) => new URL(call.path, "http://gw.test").searchParams.get("offset"))).toEqual(["0", "1000"]);
+  });
+
   it("REQ-F17-06 · the summary is the backend read model, passed through untouched", async () => {
     const summary = { celebrationId: CELEBRATION, total: 10, confirmed: 4, declined: 1, pending: 5, companions: 3, openCompanionRequests: 7, freshness: { updatedAt: "2026-11-04T10:00:00Z", lastEventAt: null, pendingEvents: 2, oldestPendingAt: null, stale: false, consistencyWindowSeconds: 5 } };
     const { client, calls, wrapper } = setup(() => ({ body: summary }));
@@ -288,6 +305,17 @@ describe("contract 1.10.0 · POST /rsvp/resolve and GET public-settings", () => 
 
 describe("contract 1.4.0 · read state lives on the server", () => {
   const inbox = { items: [{ id: "n-1", readAt: null }, { id: "n-2", readAt: null }] };
+  it("keeps server-confirmed reads when marking the next notice fails", async () => {
+    const readAt = "2026-11-04T10:00:00Z";
+    const { client, wrapper, queryClient } = setup((call) => call.path.endsWith("/n-1/read")
+      ? { body: { id: "n-1", readAt } }
+      : { status: 422, body: { status: 422 } });
+    const key = queryKeys.notification.inbox(CELEBRATION);
+    queryClient.setQueryData(key, inbox);
+    const mark = renderHook(() => useMarkHostNotificationsRead(client, CELEBRATION), { wrapper });
+    await act(async () => { await expect(mark.result.current.mutateAsync(["n-1", "n-2"])).rejects.toMatchObject({ status: 422 }); });
+    expect(queryClient.getQueryData(key)).toEqual({ items: [{ id: "n-1", readAt }, { id: "n-2", readAt: null }] });
+  });
   it("marks each notice read with POST .../read; the inbox flips at once and is restored if it fails", async () => {
     let fail = false;
     const { client, calls, wrapper, queryClient } = setup((call) => (call.method === "POST" ? (fail ? { status: 500, body: {} } : { body: { id: "n", readAt: "2026-11-04T10:00:00Z" } }) : { body: inbox }));

@@ -1,0 +1,6 @@
+import { guestSystemPath } from "../src/deep-links/router";
+
+/** Expo invokes this for cold starts and links received while the app is running. */
+export function redirectSystemPath({ path }: { path: string; initial: boolean }): string {
+  return guestSystemPath(path);
+}

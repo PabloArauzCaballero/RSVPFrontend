@@ -1,0 +1,18 @@
+{
+  "result": "PASS",
+  "scope": "Hermes compilation only; not signed, installed or executed on physical devices",
+  "platforms": [
+    {
+      "platform": "ios",
+      "bundle": "_expo/static/js/ios/entry-93888601dd9163b4b58f6429e3045ff1.hbc",
+      "bytes": 5275236,
+      "sha256": "07c17b792ea10792831ec7034e0bf030a7076a5bf67b7f79d06167b7b7612997"
+    },
+    {
+      "platform": "android",
+      "bundle": "_expo/static/js/android/entry-52af680c8adbb168d19ee696dfc4fef7.hbc",
+      "bytes": 5284195,
+      "sha256": "7ccc466276957078c873f49a898ec5f11f515c5c05652bf72cfa66aba22f25f3"
+    }
+  ]
+}

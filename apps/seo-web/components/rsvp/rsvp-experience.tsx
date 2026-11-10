@@ -1,6 +1,5 @@
 'use client';
 
-import { CheckMark } from '../brand/check-mark';
 import { personalLinkUrl } from '@rsvp/auth';
 import { ApiError, type ApiClient } from '@rsvp/api-client';
 import { readContent, type HostContact, type PublicCelebrationView } from '@rsvp/celebration-theme';
@@ -16,6 +15,7 @@ import { clearDraft, emptyDraft, loadDraft, saveDraft, type RsvpDraft } from './
 import { AnswerFields, FailureNotice, TextField, validateAnswer, validateRegistration, type FieldErrors, type RegistrationDraft } from './rsvp-form';
 import { RsvpProviders } from './rsvp-providers';
 import { AnswerSummary, ClosedView, HostContactLines, Countdown, DeadlineLine, InvalidView, LoadFailureView, LoadingView, StateHeading, type ClosedInfo } from './rsvp-status';
+import { GuestGiftNavigation } from '../guest-app/gift-navigation';
 
 interface Props { readonly slug: string; readonly token?: string; readonly locale: AppLocale; readonly siteOrigin: string; readonly client?: ApiClient }
 
@@ -70,7 +70,8 @@ function Flow({ slug, token, locale, siteOrigin, client: injected }: Props): Rea
   const screen = closed ? 'closed' : rsvpScreenFor(state);
 
   const header = <p className="rsvp-for">{t('rsvp.page.invitationTo', { title })}</p>;
-  if (screen === 'closed') return <>{header}<ClosedView info={closed ?? {}} state={state} hosts={hosts} contact={contact} locale={locale} t={t} /></>;
+  const gifts = <GuestGiftNavigation slug={slug} token={token} label={t('gifts.title')} />;
+  if (screen === 'closed') return <>{header}<ClosedView info={closed ?? {}} state={state} hosts={hosts} contact={contact} locale={locale} t={t} />{gifts}</>;
 
   const form = (
     <AnswerForm
@@ -92,6 +93,7 @@ function Flow({ slug, token, locale, siteOrigin, client: injected }: Props): Rea
           <Countdown deadline={state.deadline} t={t} />
           {form}
         </section>
+        {gifts}
       </>
     );
   }
@@ -99,8 +101,7 @@ function Flow({ slug, token, locale, siteOrigin, client: injected }: Props): Rea
     <>
       {header}
       <section className="rsvp-card" aria-labelledby="rsvp-title">
-        {state.status === 'CONFIRMED' ? <CheckMark size={56} className="rsvp-check" /> : null}
-        <StateHeading id="rsvp-title">{state.status === 'DECLINED' ? t('rsvp.confirmed.titleDeclined') : t('rsvp.confirmed.title')}</StateHeading>
+        <StateHeading key={state.status} id="rsvp-title">{state.status === 'DECLINED' ? t('rsvp.confirmed.titleDeclined') : t('rsvp.confirmed.title')}</StateHeading>
         {notice ? <p className="rsvp-notice rsvp-notice--success" role="status">{notice}</p> : null}
         <AnswerSummary state={state} locale={locale} t={t} />
         <DeadlineLine state={state} locale={locale} t={t} />
@@ -112,6 +113,7 @@ function Flow({ slug, token, locale, siteOrigin, client: injected }: Props): Rea
           </div>
         )}
       </section>
+      {gifts}
     </>
   );
 }
@@ -129,11 +131,13 @@ function AnswerForm({ client, celebrationId, token, state, t, allowedCompanions,
   const [errors, setErrors] = useState<FieldErrors>({});
   const [failure, setFailure] = useState<RsvpFailure | null>(null);
   const attempt = useRef<{ payload: string; key: string } | null>(null);
+  const submitting = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => { saveDraft(scope, draft); }, [scope, draft]);
 
   async function submit(): Promise<void> {
+    if (submitting.current) return;
     const result = validateAnswer(draft, t);
     if (!result.ok) {
       setErrors(result.errors);
@@ -145,6 +149,7 @@ function AnswerForm({ client, celebrationId, token, state, t, allowedCompanions,
     const input = { status: result.value.status, requestedCompanions: declined ? 0 : result.value.requestedCompanions, dietaryNotes: result.value.dietaryNotes || null, message: result.value.message || null };
     const payload = JSON.stringify(input);
     if (attempt.current?.payload !== payload) attempt.current = { payload, key: newIdempotencyKey() };
+    submitting.current = true;
     try {
       const next = await save.mutateAsync({ current: state, input, idempotencyKey: attempt.current.key });
       clearDraft(scope);
@@ -155,7 +160,7 @@ function AnswerForm({ client, celebrationId, token, state, t, allowedCompanions,
       if (failed.kind === 'closed') onClosed(failed);
       else if (failed.kind === 'invalid') onInvalid();
       else setFailure(failed);
-    }
+    } finally { submitting.current = false; }
   }
 
   // Coming back online re-sends the very same draft once, without the person having to find the button.
@@ -168,7 +173,7 @@ function AnswerForm({ client, celebrationId, token, state, t, allowedCompanions,
   const busy = save.isPending;
   return (
     <form ref={formRef} className="rsvp-form" noValidate onSubmit={(event: FormEvent) => { event.preventDefault(); void submit(); }}>
-      <AnswerFields draft={draft} onChange={(patch) => { setDraft((current) => ({ ...current, ...patch })); setErrors({}); }} errors={errors} t={t} allowedCompanions={allowedCompanions} />
+      <AnswerFields disabled={busy} draft={draft} onChange={(patch) => { setDraft((current) => ({ ...current, ...patch })); setErrors({}); }} errors={errors} t={t} allowedCompanions={allowedCompanions} />
       {Object.keys(errors).length ? <p className="rsvp-error" role="alert">{t('rsvp.errors.summary')}</p> : null}
       {failure ? <FailureNotice failure={failure} t={t} busy={busy} onRetry={() => { void submit(); }} /> : null}
       <div className="rsvp-actions">
@@ -209,21 +214,25 @@ function UnregisteredForm({ client, view, slug, t, locale, siteOrigin, hosts, co
   const [receipt, setReceipt] = useState<{ link: string | null } | null>(null);
   const [copied, setCopied] = useState(false);
   const attempt = useRef<{ payload: string; key: string } | null>(null);
+  const submitting = useRef(false);
   const title = readContent(view).title;
 
   async function submit(): Promise<void> {
+    if (submitting.current) return;
     const result = validateRegistration(draft, t);
     if (!result.ok) { setErrors(result.errors); return; }
     setErrors({});
     const input = { name: result.value.name, email: result.value.email, locale, consent: true as const, requestedCompanions: result.value.requestedCompanions, dietaryNotes: result.value.dietaryNotes || null, message: result.value.message || null };
     const payload = JSON.stringify(input);
     if (attempt.current?.payload !== payload) attempt.current = { payload, key: newIdempotencyKey() };
+    submitting.current = true;
     try {
       const response = await register.mutateAsync({ input, idempotencyKey: attempt.current.key });
       setFailure(null);
       // The raw token exists only in this component's memory so the person can copy it; it is never stored.
       setReceipt({ link: response.accessToken ? personalLinkUrl(siteOrigin, slug, response.accessToken.token).url : null });
     } catch (error) { setFailure(classifyRsvpError(error)); }
+    finally { submitting.current = false; }
   }
 
   // The settings said yes, but the server can still say no (the mode changed meanwhile): same explanation, same contact.
@@ -231,7 +240,6 @@ function UnregisteredForm({ client, view, slug, t, locale, siteOrigin, hosts, co
   if (receipt) {
     return (
       <section className="rsvp-card" aria-labelledby="rsvp-done-title">
-        <CheckMark size={56} className="rsvp-check" />
         <StateHeading id="rsvp-done-title">{t('rsvp.unregistered.doneTitle')}</StateHeading>
         {receipt.link ? (
           <>
@@ -255,11 +263,11 @@ function UnregisteredForm({ client, view, slug, t, locale, siteOrigin, hosts, co
         <StateHeading id="rsvp-title">{t('rsvp.unregistered.title')}</StateHeading>
         <p>{t('rsvp.unregistered.intro')}</p>
         <form className="rsvp-form" noValidate onSubmit={(event: FormEvent) => { event.preventDefault(); void submit(); }}>
-          <TextField label={t('rsvp.form.name')} autoComplete="name" value={draft.name} onChange={(name) => setDraft({ ...draft, name })} error={errors.name} />
-          <TextField label={t('rsvp.form.email')} type="email" autoComplete="email" inputMode="email" help={t('rsvp.form.emailHelp')} value={draft.email} onChange={(email) => setDraft({ ...draft, email })} error={errors.email} />
-          <AnswerFields draft={draft} askAttendance={false} errors={errors} t={t} onChange={(patch) => setDraft({ ...draft, ...patch })} />
+          <TextField disabled={busy} label={t('rsvp.form.name')} autoComplete="name" value={draft.name} onChange={(name) => setDraft({ ...draft, name })} error={errors.name} />
+          <TextField disabled={busy} label={t('rsvp.form.email')} type="email" autoComplete="email" inputMode="email" help={t('rsvp.form.emailHelp')} value={draft.email} onChange={(email) => setDraft({ ...draft, email })} error={errors.email} />
+          <AnswerFields disabled={busy} draft={draft} askAttendance={false} errors={errors} t={t} onChange={(patch) => setDraft({ ...draft, ...patch })} />
           <label className="rsvp-radio rsvp-consent">
-            <input type="checkbox" checked={draft.consent} aria-invalid={errors.consent ? true : undefined} aria-describedby={errors.consent ? 'rsvp-consent-error' : undefined} onChange={(event) => setDraft({ ...draft, consent: event.target.checked })} />
+            <input disabled={busy} type="checkbox" checked={draft.consent} aria-invalid={errors.consent ? true : undefined} aria-describedby={errors.consent ? 'rsvp-consent-error' : undefined} onChange={(event) => setDraft({ ...draft, consent: event.target.checked })} />
             <span>{t('rsvp.form.consent')}</span>
           </label>
           {errors.consent ? <p id="rsvp-consent-error" className="rsvp-error">{errors.consent}</p> : null}

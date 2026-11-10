@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-08T16:00:49.552Z",
+  "gateway": [
+    {
+      "port": 8000,
+      "result": "ECONNREFUSED"
+    },
+    {
+      "port": 28000,
+      "result": "ECONNREFUSED"
+    }
+  ],
+  "gitMetadata": false,
+  "node": "v25.9.0",
+  "platform": "win32"
+}

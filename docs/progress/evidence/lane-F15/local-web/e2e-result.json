@@ -1,0 +1,118 @@
+{
+  "date": "2026-11-06T01:16:40.065Z",
+  "surface": "Next.js (next build + next start) in Chrome, contract mock",
+  "checks": [
+    {
+      "id": "REQ-F15-01",
+      "text": "form rendered at 360/768/1280 with no horizontal scroll or critical/serious axe violations",
+      "status": "PASS"
+    },
+    {
+      "id": "REQ-F15-01",
+      "text": "a keyboard-only confirmation reached the (mock) API once and focus moved to the new heading",
+      "status": "PASS"
+    },
+    {
+      "id": "REQ-F15-02",
+      "text": "confirmed state with deadline countdown; edit goes through PATCH and shows the new answer",
+      "status": "PASS"
+    },
+    {
+      "id": "REQ-F15-03",
+      "text": "closed screen says when it closed (celebration zone) and whom to write to; no controls to edit",
+      "status": "PASS"
+    },
+    {
+      "id": "REQ-F15-04",
+      "text": "invalid token shows no celebration data at 360/768/1280",
+      "status": "PASS"
+    },
+    {
+      "id": "REQ-F15-05",
+      "text": "AUTO_ACCEPT registers and shows the one-time link; RESTRICTED hides the form and explains how to proceed",
+      "status": "PASS"
+    },
+    {
+      "id": "REQ-F15-06",
+      "text": "the form works on a throttled connection; offline kept the fields, the draft survived a reload and retry created one RSVP",
+      "status": "PASS"
+    },
+    {
+      "id": "REQ-F15 (privacy)",
+      "text": "noindex + no-referrer + no-store; server HTML has no celebration data; no API URL carries a token",
+      "status": "PASS"
+    },
+    {
+      "id": "i18n/console",
+      "text": "en-US renders; no console errors across the run",
+      "status": "PASS"
+    }
+  ],
+  "axe": [
+    {
+      "screen": "A9-360",
+      "violations": []
+    },
+    {
+      "screen": "A9-768",
+      "violations": []
+    },
+    {
+      "screen": "A9-1280",
+      "violations": []
+    },
+    {
+      "screen": "A10-360",
+      "violations": []
+    },
+    {
+      "screen": "A10-768",
+      "violations": []
+    },
+    {
+      "screen": "A10-1280",
+      "violations": []
+    },
+    {
+      "screen": "A10-edicion-1280",
+      "violations": []
+    },
+    {
+      "screen": "A11-360",
+      "violations": []
+    },
+    {
+      "screen": "A11-768",
+      "violations": []
+    },
+    {
+      "screen": "A11-1280",
+      "violations": []
+    },
+    {
+      "screen": "A12-360",
+      "violations": []
+    },
+    {
+      "screen": "A12-768",
+      "violations": []
+    },
+    {
+      "screen": "A12-1280",
+      "violations": []
+    },
+    {
+      "screen": "A13-360",
+      "violations": []
+    },
+    {
+      "screen": "A13-768",
+      "violations": []
+    },
+    {
+      "screen": "A13-1280",
+      "violations": []
+    }
+  ],
+  "status": "PASS"
+}

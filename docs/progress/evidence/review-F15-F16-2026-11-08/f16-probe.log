@@ -1,0 +1,52 @@
+
+ RUN  v3.1.2 C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/apps/universal
+
+stdout | test/__review_f16_20261108.test.tsx > review F16: changing to another cached guest clears the previous personal link
+F16 identity-switch observation {"displayedGuest":"B","oldLinkStillShown":true,"copiedPreviousGuestsCredential":true}
+
+stdout | test/__review_f16_20261108.test.tsx > review F16: preserve next guest draft written during delayed save
+F16 delayed-submit observation {"editableWhilePending":true,"savedNames":["Primera invitada"],"draftAfterSuccess":""}
+
+ ❯ test/__review_f16_20261108.test.tsx (2 tests | 2 failed) 342ms
+   × review F16: changing to another cached guest clears the previous personal link 184ms
+     → expected true to be false // Object.is equality
+   × review F16: preserve next guest draft written during delayed save 157ms
+     → expected false to be true // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/__review_f16_20261108.test.tsx > review F16: changing to another cached guest clears the previous personal link
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ test/__review_f16_20261108.test.tsx:27:44
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  test/__review_f16_20261108.test.tsx > review F16: preserve next guest draft written during delayed save
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ test/__review_f16_20261108.test.tsx:36:225
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  18:36:04
+   Duration  11.06s (transform 2.93s, setup 310ms, collect 9.24s, tests 342ms, environment 658ms, prepare 162ms)
+
+JSON report written to C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/docs/progress/evidence/review-F15-F16-2026-11-08/f16-probe.json

@@ -1,0 +1,38 @@
+
+ RUN  v3.1.2 C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/apps/seo-web
+
+stdout | tests/__review_f15_20261108.test.tsx > review F15: preserve editable draft changes during delayed successful submit
+F15 delayed-submit observation {"editableWhilePending":true,"posted":{"status":"CONFIRMED","requestedCompanions":0,"dietaryNotes":null,"message":"Mensaje original"},"latestDraftPreserved":false}
+
+ ❯ tests/__review_f15_20261108.test.tsx (1 test | 1 failed) 317ms
+   × review F15: preserve editable draft changes during delayed successful submit 317ms
+     → expected false to be true // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/__review_f15_20261108.test.tsx > review F15: preserve editable draft changes during delayed successful submit
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/__review_f15_20261108.test.tsx:21:31
+     19|  const preserved=(document.body.textContent+JSON.stringify({...session…
+     20|  console.log('F15 delayed-submit observation',JSON.stringify({editable…
+     21|  expect(!editable||preserved).toBe(true);
+       |                               ^
+     22| });
+     23| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  18:33:24
+   Duration  3.22s (transform 761ms, setup 0ms, collect 1.49s, tests 317ms, environment 1.05s, prepare 134ms)
+
+JSON report written to C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/docs/progress/evidence/review-F15-F16-2026-11-08/f15-probe.json

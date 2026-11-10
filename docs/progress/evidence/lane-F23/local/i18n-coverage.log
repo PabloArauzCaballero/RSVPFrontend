@@ -1,0 +1,25 @@
+Loaded  vitest@3.1.2  and  @vitest/coverage-v8@3.2.7 .
+Running mixed versions is not supported and may lead into bugs
+Update your dependencies and make sure the versions match.
+
+ RUN  v3.1.2 C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/packages/i18n
+      Coverage enabled with v8
+
+ ✓ test/translator.test.ts (4 tests) 49ms
+ ✓ test/format.test.ts (6 tests) 60ms
+ ✓ test/resources.test.ts (2 tests) 21ms
+
+ Test Files  3 passed (3)
+      Tests  12 passed (12)
+   Start at  11:43:16
+   Duration  1.54s (transform 230ms, setup 0ms, collect 1.00s, tests 131ms, environment 0ms, prepare 541ms)
+
+JSON report written to C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/docs/progress/evidence/lane-F23/local/i18n-regression.json
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 100% ( 91/91 )
+Branches     : 95.23% ( 20/21 )
+Functions    : 100% ( 10/10 )
+Lines        : 100% ( 91/91 )
+================================================================================

@@ -1,0 +1,31 @@
+export const hostGiftsEsBO = {
+  category: "Categoría", allCategories: "Todas las categorías", otherCategory: "Otra categoría",
+  maxPrice: "Precio máximo", apply: "Aplicar filtros", reset: "Quitar filtros", priceCurrency: "Importes en {{currency}}.",
+  resultWindow: "Se muestran hasta 50 productos de la búsqueda. Los filtros se aplican a estos resultados.",
+  count: "{{count}} productos encontrados", invalidQuery: "Busca con al menos 2 caracteres y hasta 100, o deja la búsqueda vacía.",
+  invalidMoney: "Escribe un importe válido, con hasta dos decimales.", titleLong: "El nombre admite hasta 200 caracteres.",
+  required: "Completa los campos obligatorios.", invalidUrl: "Usa un enlace http o https válido, sin usuario ni contraseña.",
+  priceNeeded: "Confirma el precio acordado antes de añadir este producto.", agreedPrice: "Precio acordado ({{currency}})",
+  published: "Publicado: los invitados ya pueden verlo.", unpublished: "Sin publicar: los invitados aún no lo ven.",
+  publicStatus: "Visibilidad en la lista pública", savedReview: "El servidor confirmó el alta. Puedes revisar el estado en tus regalos.",
+  reviewList: "Ver mis regalos", publicationUnknown: "Consulta la lista para comprobar su publicación.",
+  beforeExternal: "Primero, revisa el catálogo de aliados", preferExternal: "Revisé las alternativas y prefiero un regalo externo",
+  priorityOff: "No priorizar los aliados", destination: { PRODUCT_PAGE: "Ver producto", LANDING: "Conocer al proveedor" },
+  browsePartners: "Buscar alternativas en el catálogo", reviewSuggestion: "Ver esta alternativa", emptySuggestions: "No llegaron alternativas para este nombre. Puedes buscar otras en el catálogo.",
+  externalReviewRequired: "Revisa las alternativas y confirma que prefieres un regalo externo.",
+  itemUnavailable: "No se pudo identificar el regalo. Actualiza la lista antes de decidir.",
+  privacyUnavailable: "No pudimos consultar tu preferencia. Ocultamos nombres y mensajes hasta recuperarla.",
+  requesterUnavailable: "Nombre pendiente de comprobar",
+  settingsSaving: "Guardando preferencia…", settingsChanged: "La preferencia se guardó. Actualizamos las reservas y los regalos.",
+  refresh: "Actualizar", partnerOpenFailed: "No pudimos abrir el enlace del aliado. Inténtalo otra vez.",
+  refreshing: "Actualizando los resultados…",
+  nothingToApprove: "La propuesta ya cambió. Actualiza la lista para ver su estado.",
+  failure: {
+    forbidden: "No tienes permiso para gestionar los regalos de esta celebración.",
+    missing: "No encontramos este regalo o celebración. Actualiza la lista.",
+    conflict: "Los datos cambiaron. Actualiza la lista antes de volver a decidir.",
+    validation: "Revisa los datos del regalo. Conservamos lo que escribiste.",
+    limited: "Hay demasiadas solicitudes. Espera un momento antes de reintentar.",
+    unavailable: "El servicio no responde. Conservamos lo escrito; consulta la lista antes de repetir un alta."
+  }
+} as const;

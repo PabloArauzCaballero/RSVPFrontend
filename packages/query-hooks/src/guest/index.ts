@@ -5,6 +5,7 @@ import { queryKeys } from "../keys.js";
 import { invalidation } from "../invalidation.js";
 import { usePublicCelebration } from "../celebration/index.js";
 import { guestAccessApi, hostGuestsApi, hostNotificationsApi } from "./api.js";
+import { readHostRsvpAnswers } from "./csv.js";
 import { classifyRsvpError, tokenFingerprint } from "./rsvp-flow.js";
 import type { CompanionDecision, PublicCelebrationRef, RegisterGuestInput, RsvpResponse, RsvpState, UnregisteredConfirmation } from "./types.js";
 
@@ -89,10 +90,19 @@ export function useGuestList(client: ApiClient, celebrationId: string, filters: 
   return useQuery({ queryKey: queryKeys.guest.list(celebrationId, filters), queryFn: ({ signal }) => hostGuestsApi(client).list(celebrationId, filters, signal), enabled: Boolean(celebrationId), placeholderData: keepPreviousData, ...cachePolicy.guest });
 }
 export function useGuestSummary(client: ApiClient, celebrationId: string) {
-  return useQuery({ queryKey: queryKeys.guest.summary(celebrationId), queryFn: () => hostGuestsApi(client).summary(celebrationId), enabled: Boolean(celebrationId), refetchInterval: 30_000, refetchIntervalInBackground: false, ...cachePolicy.guest });
+  return useQuery({
+    queryKey: queryKeys.guest.summary(celebrationId),
+    queryFn: () => hostGuestsApi(client).summary(celebrationId),
+    enabled: Boolean(celebrationId),
+    ...cachePolicy.guest,
+    refetchInterval: ({ state }) => {
+      if (state.error instanceof ApiError && state.error.status < 500) return false;
+      return state.data?.freshness?.pendingEvents ? 5_000 : cachePolicy.guest.staleTime;
+    }
+  });
 }
 export function useHostRsvps(client: ApiClient, celebrationId: string) {
-  return useQuery({ queryKey: queryKeys.guest.rsvps(celebrationId), queryFn: () => hostGuestsApi(client).rsvps(celebrationId, { limit: 1000, offset: 0 }), enabled: Boolean(celebrationId), ...cachePolicy.guest });
+  return useQuery({ queryKey: queryKeys.guest.rsvps(celebrationId), queryFn: () => readHostRsvpAnswers(hostGuestsApi(client), celebrationId), enabled: Boolean(celebrationId), ...cachePolicy.guest });
 }
 export function useGuestDetail(client: ApiClient, celebrationId: string, guestId: string) {
   return useQuery({ queryKey: queryKeys.guest.detail(celebrationId, guestId), queryFn: () => hostGuestsApi(client).detail(celebrationId, guestId), enabled: Boolean(celebrationId && guestId), ...cachePolicy.guest });
@@ -149,29 +159,5 @@ export function useResolveCompanionRequest(client: ApiClient, celebrationId: str
     mutationFn: ({ requestId, decision }: { readonly requestId: string; readonly decision: CompanionDecision }) => hostGuestsApi(client).decide(celebrationId, requestId, decision),
     // A 409 means someone else decided first: the list must be refreshed either way.
     onSettled: () => refetchAll(queryClient, invalidation.guestsChanged(celebrationId))
-  });
-}
-
-export function useGuestDefaults(client: ApiClient, celebrationId: string) {
-  return useQuery({ queryKey: [...queryKeys.guest.all, celebrationId, "defaults"] as const, queryFn: () => hostGuestsApi(client).defaults(celebrationId), enabled: Boolean(celebrationId), ...cachePolicy.guest });
-}
-export function useSetGuestDefaults(client: ApiClient, celebrationId: string) {
-  const queryClient = useQueryClient();
-  return useMutation({ mutationFn: (defaultAllowedCompanions: number) => hostGuestsApi(client).setDefaults(celebrationId, defaultAllowedCompanions), onSuccess: (saved) => { queryClient.setQueryData([...queryKeys.guest.all, celebrationId, "defaults"], saved); } });
-}
-export function useGuestRetention(client: ApiClient, celebrationId: string) {
-  return useQuery({ queryKey: [...queryKeys.guest.all, celebrationId, "retention"] as const, queryFn: () => hostGuestsApi(client).retention(celebrationId), enabled: Boolean(celebrationId), ...cachePolicy.guest });
-}
-export function useConfigureGuestRetention(client: ApiClient, celebrationId: string) {
-  const queryClient = useQueryClient();
-  return useMutation({ mutationFn: (retentionDays: number | null) => hostGuestsApi(client).setRetention(celebrationId, retentionDays), onSuccess: (saved) => { queryClient.setQueryData([...queryKeys.guest.all, celebrationId, "retention"], saved); } });
-}
-/** Irreversible: the guest, their link and their answers leave this celebration. Lists, summary and requests are refetched. */
-export function useEraseGuest(client: ApiClient, celebrationId: string) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (guestId: string) => hostGuestsApi(client).erase(celebrationId, guestId),
-    // The detail query is left alone on purpose: refetching it would 404 and unmount the screen that is about to navigate away.
-    onSuccess: () => Promise.all([refetchAll(queryClient, invalidation.guestsChanged(celebrationId)), queryClient.invalidateQueries({ queryKey: queryKeys.guest.groups(celebrationId) })])
   });
 }

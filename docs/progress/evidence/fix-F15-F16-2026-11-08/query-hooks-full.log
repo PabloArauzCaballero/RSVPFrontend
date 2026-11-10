@@ -1,0 +1,24 @@
+
+ RUN  v3.1.2 C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/packages/query-hooks
+
+ ✓ test/guest-contract.test.tsx (29 tests) 1125ms
+ ✓ test/celebration-api.test.ts (7 tests) 34ms
+ ✓ test/hook-routes.test.tsx (34 tests) 5815ms
+   ✓ provider hooks (portal, quotes, schedule, documents) > portal reads: profile, listings with locale, leads paging, metrics grouping, availability, bookings, mine  1061ms
+   ✓ celebration, template, media and event-type hooks > reads: detail, public (no session), check, audit, event types, templates, media  833ms
+   ✓ guest and notification hooks > guest credential is a Bearer on rsvp reads and never part of the cache key  458ms
+   ✓ guest and notification hooks > host guest reads and writes use the /guests routes; registering and importing sync recipients once  565ms
+   ✓ guest and notification hooks > notifications: inbox, preferences (optimistic, rolled back on failure), mark read, devices  499ms
+   ✓ platform admin hooks (expected contract, ADMIN only) > reads: categories, geography, queues by status, metrics range, users search, organizations, summaries  1075ms
+ ✓ test/host-gifts.test.tsx (9 tests) 526ms
+ ✓ test/domain-hooks.test.tsx (6 tests) 77ms
+ ✓ test/msw-hooks.test.tsx (7 tests) 532ms
+ ✓ test/push-gift-reservation.test.tsx (4 tests) 245ms
+ ✓ test/invalidation.test.ts (2 tests) 5ms
+
+ Test Files  8 passed (8)
+      Tests  98 passed (98)
+   Start at  18:58:24
+   Duration  15.83s (transform 586ms, setup 0ms, collect 5.05s, tests 8.36s, environment 11.13s, prepare 1.57s)
+
+JSON report written to C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/docs/progress/evidence/fix-F15-F16-2026-11-08/query-hooks-full.json

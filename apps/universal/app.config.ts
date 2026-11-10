@@ -11,7 +11,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   icon: "./assets/icon.png",
   splash: { image: "./assets/splash-icon.png", resizeMode: "contain", backgroundColor: "#F6F7FB" },
   web: { bundler: "metro", output: "single", favicon: "./assets/favicon.png" },
-  plugins: ["expo-router", ["expo-notifications", { icon: "./assets/notification-icon.png", color: "#1F3BFF" }]],
+  plugins: ["expo-router", ["expo-notifications", { icon: "./assets/notification-icon.png", color: "#1F3BFF", defaultChannel: "default" }]],
   runtimeVersion: { policy: "appVersion" },
   updates: projectId ? { url: `https://u.expo.dev/${projectId}` } : undefined,
   extra: { eas: projectId ? { projectId } : undefined },

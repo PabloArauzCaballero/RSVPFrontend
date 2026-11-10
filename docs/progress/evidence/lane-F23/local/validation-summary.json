@@ -1,0 +1,268 @@
+{
+  "date": "2026-11-08T16:07:42.878Z",
+  "unitRuns": [
+    {
+      "file": "unit-run-1.json",
+      "tests": 55,
+      "passed": 55
+    },
+    {
+      "file": "unit-run-2.json",
+      "tests": 55,
+      "passed": 55
+    },
+    {
+      "file": "unit-run-3.json",
+      "tests": 55,
+      "passed": 55
+    }
+  ],
+  "regressions": {
+    "screens-final.json": {
+      "file": "screens-final.json",
+      "tests": 83,
+      "passed": 83
+    },
+    "universal-regression.json": {
+      "file": "universal-regression.json",
+      "tests": 409,
+      "passed": 409
+    },
+    "web-regression.json": {
+      "file": "web-regression.json",
+      "tests": 107,
+      "passed": 107
+    },
+    "forms-regression.json": {
+      "file": "forms-regression.json",
+      "tests": 35,
+      "passed": 35
+    },
+    "hooks-regression.json": {
+      "file": "hooks-regression.json",
+      "tests": 98,
+      "passed": 98
+    },
+    "i18n-regression.json": {
+      "file": "i18n-regression.json",
+      "tests": 12,
+      "passed": 12
+    }
+  },
+  "browser": {
+    "status": "PASS",
+    "screens": 28,
+    "criticalOrSerious": 0,
+    "runtimeErrors": 0,
+    "steps": [
+      {
+        "width": 360,
+        "partnerRequiredActions": 2,
+        "externalRequiredActions": 4,
+        "partnerRequiredFields": 0,
+        "externalRequiredFields": 3
+      },
+      {
+        "width": 768,
+        "partnerRequiredActions": 2,
+        "externalRequiredActions": 4,
+        "partnerRequiredFields": 0,
+        "externalRequiredFields": 3
+      },
+      {
+        "width": 1280,
+        "partnerRequiredActions": 2,
+        "externalRequiredActions": 4,
+        "partnerRequiredFields": 0,
+        "externalRequiredFields": 3
+      }
+    ]
+  },
+  "coverage": {
+    "screens": {
+      "lines": {
+        "total": 577,
+        "covered": 577,
+        "skipped": 0,
+        "pct": 100
+      },
+      "statements": {
+        "total": 577,
+        "covered": 577,
+        "skipped": 0,
+        "pct": 100
+      },
+      "functions": {
+        "total": 95,
+        "covered": 76,
+        "skipped": 0,
+        "pct": 80
+      },
+      "branches": {
+        "total": 420,
+        "covered": 366,
+        "skipped": 0,
+        "pct": 87.14
+      },
+      "branchesTrue": {
+        "total": 0,
+        "covered": 0,
+        "skipped": 0,
+        "pct": "Unknown"
+      }
+    },
+    "forms": {
+      "lines": {
+        "total": 86,
+        "covered": 86,
+        "skipped": 0,
+        "pct": 100
+      },
+      "statements": {
+        "total": 86,
+        "covered": 86,
+        "skipped": 0,
+        "pct": 100
+      },
+      "functions": {
+        "total": 6,
+        "covered": 6,
+        "skipped": 0,
+        "pct": 100
+      },
+      "branches": {
+        "total": 36,
+        "covered": 34,
+        "skipped": 0,
+        "pct": 94.44
+      },
+      "branchesTrue": {
+        "total": 0,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 100
+      }
+    },
+    "hooks": {
+      "lines": {
+        "total": 29,
+        "covered": 29,
+        "skipped": 0,
+        "pct": 100
+      },
+      "statements": {
+        "total": 29,
+        "covered": 29,
+        "skipped": 0,
+        "pct": 100
+      },
+      "functions": {
+        "total": 5,
+        "covered": 5,
+        "skipped": 0,
+        "pct": 100
+      },
+      "branches": {
+        "total": 11,
+        "covered": 11,
+        "skipped": 0,
+        "pct": 100
+      },
+      "branchesTrue": {
+        "total": 0,
+        "covered": 0,
+        "skipped": 0,
+        "pct": "Unknown"
+      }
+    },
+    "hooks-full": {
+      "lines": {
+        "total": 1036,
+        "covered": 1030,
+        "skipped": 0,
+        "pct": 99.42
+      },
+      "statements": {
+        "total": 1036,
+        "covered": 1030,
+        "skipped": 0,
+        "pct": 99.42
+      },
+      "functions": {
+        "total": 461,
+        "covered": 454,
+        "skipped": 0,
+        "pct": 98.48
+      },
+      "branches": {
+        "total": 693,
+        "covered": 645,
+        "skipped": 0,
+        "pct": 93.07
+      },
+      "branchesTrue": {
+        "total": 0,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 100
+      }
+    },
+    "i18n": {
+      "lines": {
+        "total": 91,
+        "covered": 91,
+        "skipped": 0,
+        "pct": 100
+      },
+      "statements": {
+        "total": 91,
+        "covered": 91,
+        "skipped": 0,
+        "pct": 100
+      },
+      "functions": {
+        "total": 10,
+        "covered": 10,
+        "skipped": 0,
+        "pct": 100
+      },
+      "branches": {
+        "total": 21,
+        "covered": 20,
+        "skipped": 0,
+        "pct": 95.23
+      },
+      "branchesTrue": {
+        "total": 0,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 100
+      }
+    }
+  },
+  "overall": "TESTED; not REGRESSION_VERIFIED or DONE",
+  "native": {
+    "result": "PASS",
+    "scope": "Hermes compilation only; not signed, installed or executed on physical devices",
+    "platforms": [
+      {
+        "platform": "ios",
+        "bundle": "_expo/static/js/ios/entry-93888601dd9163b4b58f6429e3045ff1.hbc",
+        "bytes": 5275236,
+        "sha256": "07c17b792ea10792831ec7034e0bf030a7076a5bf67b7f79d06167b7b7612997"
+      },
+      {
+        "platform": "android",
+        "bundle": "_expo/static/js/android/entry-52af680c8adbb168d19ee696dfc4fef7.hbc",
+        "bytes": 5284195,
+        "sha256": "7ccc466276957078c873f49a898ec5f11f515c5c05652bf72cfa66aba22f25f3"
+      }
+    ]
+  },
+  "general": {
+    "build": "18/18 PASS",
+    "lint": "18/18 PASS; final root ESLint exit 0",
+    "typecheck": "18/18 PASS after final source edits",
+    "verify": "FAIL: eight vendored contracts differ from sibling backend; no contracts regenerated"
+  }
+}

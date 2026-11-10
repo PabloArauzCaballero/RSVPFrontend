@@ -5,12 +5,9 @@ import { CelebrationNativeRenderer } from "@rsvp/celebration-theme/native";
 import { useAdminTemplates, useSaveTemplate, useTemplateTransition, type LayoutId, type SectionId, type Template, type TemplateInput, type TemplateTheme } from "@rsvp/query-hooks";
 import type { Translate } from "@rsvp/i18n";
 import { useApiClient, useLocale, useT } from "../platform/providers";
-import { ChoiceGroup, ConfirmDialog, Field, FilterSelect, Notice, PageIntro, Section, useStyles } from "../host/ui";
-import { RowsSkeleton } from "../provider/parts";
-import { AdminErrorNotice, AdminListError, Stack } from "./shared";
-import { AdminScreen, splitList, useHeaderSlot } from "./admin-screen";
+import { ActionButton, ChoiceGroup, ConfirmDialog, ErrorNotice, Field, Loading, Notice, Section, styles } from "../host/ui";
+import { AdminScreen, splitList } from "./admin-screen";
 import { SECTION_IDS } from "./event-types";
-import { useSingleMutation } from "../platform/single-flight";
 
 /** E3 · Templates as rows: create, edit, publish and archive, with a live preview of the theme. */
 
@@ -43,14 +40,11 @@ export function sampleView(t: Translate, locale: string): PublicCelebrationView 
 const inputOf = (template: Template): TemplateInput => ({ name: template.name, description: template.description, eventTypeTags: template.eventTypeTags, layout: template.layout, theme: template.theme, sectionOrder: template.sectionOrder });
 
 function Editor({ template, onSaved }: { readonly template: Template | undefined; readonly onSaved: () => void }): ReactNode {
-  const styles = useStyles();
   const t = useT();
   const client = useApiClient();
   const locale = useLocale();
   const save = useSaveTemplate(client);
-  const saveOnce = useSingleMutation(save);
   const transition = useTemplateTransition(client);
-  const transitionOnce = useSingleMutation(transition);
   const [form, setForm] = useState<TemplateInput>(template ? inputOf(template) : BLANK);
   const [tags, setTags] = useState(form.eventTypeTags.join(", "));
   const [confirmArchive, setConfirmArchive] = useState(false);
@@ -59,21 +53,13 @@ function Editor({ template, onSaved }: { readonly template: Template | undefined
   const input = { ...form, eventTypeTags: splitList(tags) };
   // The form holds exactly the TemplateDocument fields the theme engine reads.
   const preview = themeFromTemplate({ id: template?.id ?? "draft", ...input } as unknown as TemplateDocument, SECTION_IDS);
-  const doSave = (): void => saveOnce({ target: template, input }, { onSuccess: onSaved });
-  useHeaderSlot({
-    primary: { label: t("host.common.save"), onPress: doSave, testID: "save-template", busy: save.isPending },
-    items: [
-      ...(template?.status === "DRAFT" ? [{ key: "publish", label: t("admin.templates.publish"), onPress: () => transitionOnce({ target: template, action: "publish" }, { onSuccess: onSaved }) }] : []),
-      ...(template && template.status !== "ARCHIVED" ? [{ key: "archive", label: t("admin.templates.archive"), onPress: () => setConfirmArchive(true), destructive: true }] : [])
-    ]
-  });
   return (
     <Section title={template ? t("admin.templates.edit", { name: template.name }) : t("admin.templates.new")}>
       {template ? <Text style={styles.muted}>{`${t(`admin.templates.status.${template.status}`)} · ${t("admin.templates.version", { version: template.version })}`}</Text> : null}
       <Field label={t("admin.templates.name")} value={form.name} onChange={(name) => setForm((current) => ({ ...current, name }))} testID="template-name" />
       <Field label={t("admin.templates.description")} value={form.description ?? ""} onChange={(description) => setForm((current) => ({ ...current, description }))} />
       <Field label={t("admin.templates.tags")} help={t("admin.templates.tagsHelp")} value={tags} onChange={setTags} testID="template-tags" />
-      <FilterSelect label={t("admin.templates.layout")} value={form.layout} onChange={(layout) => setForm((current) => ({ ...current, layout }))} options={LAYOUTS.map((value) => ({ value, label: t(`admin.templates.layouts.${value}`) }))} />
+      <ChoiceGroup label={t("admin.templates.layout")} value={form.layout} onChange={(layout) => setForm((current) => ({ ...current, layout }))} choices={LAYOUTS.map((value) => ({ value, label: t(`admin.templates.layouts.${value}`) }))} />
       <Text style={styles.label}>{t("admin.templates.palette")}</Text>
       {PALETTE_KEYS.map((key) => (
         <Field key={key} label={t(`admin.templates.colors.${key}`)} help={t("admin.templates.colorHelp")} value={form.theme.palette[key]} onChange={(value) => setTheme({ palette: { ...form.theme.palette, [key]: value } })} />
@@ -91,10 +77,15 @@ function Editor({ template, onSaved }: { readonly template: Template | undefined
       </View>
       <Text style={styles.label}>{t("admin.templates.preview")}</Text>
       <View style={[styles.card, { maxHeight: PREVIEW_HEIGHT, overflow: "hidden", padding: 0 }]}><CelebrationNativeRenderer theme={preview} view={sampleView(t, locale)} t={t} /></View>
-      <AdminErrorNotice error={save.error ?? transition.error} onRetry={() => saveOnce({ target: template, input }, { onSuccess: onSaved })} />
+      <ErrorNotice error={save.error ?? transition.error} />
       {save.isSuccess || transition.isSuccess ? <Notice kind="success">{t("admin.saved")}</Notice> : null}
+      <View style={styles.row}>
+        <ActionButton label={t("host.common.save")} busy={save.isPending} onPress={() => save.mutate({ target: template, input }, { onSuccess: onSaved })} testID="save-template" />
+        {template?.status === "DRAFT" ? <ActionButton variant="secondary" label={t("admin.templates.publish")} busy={transition.isPending} onPress={() => transition.mutate({ target: template, action: "publish" }, { onSuccess: onSaved })} /> : null}
+        {template && template.status !== "ARCHIVED" ? <ActionButton variant="danger" label={t("admin.templates.archive")} onPress={() => setConfirmArchive(true)} /> : null}
+      </View>
       <ConfirmDialog visible={confirmArchive} danger title={t("admin.templates.archive")} body={t("admin.templates.archiveConfirm")} confirmLabel={t("admin.templates.archive")}
-        onCancel={() => setConfirmArchive(false)} onConfirm={() => { setConfirmArchive(false); if (template) transitionOnce({ target: template, action: "archive" }, { onSuccess: onSaved }); }} />
+        onCancel={() => setConfirmArchive(false)} onConfirm={() => { setConfirmArchive(false); if (template) transition.mutate({ target: template, action: "archive" }, { onSuccess: onSaved }); }} />
     </Section>
   );
 }
@@ -107,14 +98,11 @@ export function TemplatesAdminScreen({ onNavigate }: { readonly onNavigate: (hre
   const current = list.data?.items.find((item) => item.id === editing);
   return (
     <AdminScreen title={t("admin.templates.title")} current="templates" onNavigate={onNavigate}>
-      <Stack>
-      <PageIntro>{t("admin.templates.intro")}</PageIntro>
-      {list.isPending ? <RowsSkeleton count={3} minHeight={72} trailing={false} /> : null}
-      <AdminListError error={list.error} retryTestID="error-retry" onRetry={() => { void list.refetch(); }} />
-      <FilterSelect label={t("admin.templates.title")} value={editing} onChange={setEditing}
-        options={[{ value: "", label: t("admin.templates.new") }, ...(list.data?.items ?? []).map((item) => ({ value: item.id, label: `${item.name} · ${t(`admin.templates.status.${item.status}`)}` }))]} />
+      {list.isPending ? <Loading /> : null}
+      <ErrorNotice error={list.error} />
+      <ChoiceGroup label={t("admin.templates.title")} value={editing} onChange={setEditing}
+        choices={[{ value: "", label: t("admin.templates.new") }, ...(list.data?.items ?? []).map((item) => ({ value: item.id, label: `${item.name} · ${t(`admin.templates.status.${item.status}`)}` }))]} />
       <Editor key={`${editing}-${current?.version ?? 0}`} template={current} onSaved={() => { void list.refetch(); }} />
-      </Stack>
     </AdminScreen>
   );
 }

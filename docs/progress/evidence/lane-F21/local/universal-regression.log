@@ -1,0 +1,66 @@
+
+ RUN  v3.1.2 C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/apps/universal
+
+ ✓ test/gifts-portal.test.tsx (28 tests) 3462ms
+   ✓ REQ-F23-04 · status of each gift > lists cataloged gifts first with their status and offers the proposal approval  368ms
+ ✓ test/auth.test.tsx (34 tests) 2103ms
+ ✓ test/guests.test.tsx (60 tests) 10693ms
+   ✓ REQ-F16-01 · C19 guest list (read model, search, filter, paging, states) > lists guests with status, filters by response and searches on the server  1139ms
+   ✓ REQ-F16-01 · C19 guest list (read model, search, filter, paging, states) > 500 guests stay usable: 50 per page, server paging, never 500 rows in the DOM  545ms
+   ✓ REQ-F16-01 · C19 guest list (read model, search, filter, paging, states) > empty, filtered-empty, error with retry, and 403  499ms
+   ✓ REQ-F16-04 · C22 groups (contract v1.9.0) > creates a group, lists the backend's groups with member counts, assigns at creation and moves a guest from their page  343ms
+   ✓ REQ-F18 · notifications center and preferences > recovers from every documented GET error on notifications  371ms
+   ✓ REQ-F18 · notifications center and preferences > recovers from every documented GET error on preferences  431ms
+   ✓ REQ-F18 · notifications center and preferences > handles HTTP 413 on preference writes and rolls back the switch  325ms
+ ✓ test/admin-modules.test.tsx (24 tests) 8274ms
+   ✓ REQ-F14-03 · verification queue > lists the real queue, verifies one provider and the list refreshes  509ms
+   ✓ REQ-F14-03 · verification queue > rejecting needs a reason: empty is refused in place, then the reason is sent  513ms
+   ✓ REQ-F14-03 · verification queue > suspends a verified provider with a reason  336ms
+   ✓ REQ-F14-03 · verification queue > empty, 403 and server error states  365ms
+   ✓ REQ-F14-04 · moderation of microsites and external gifts > approves one item and rejects another with a reason  565ms
+   ✓ REQ-F14-01 · categories, geography, users, organizations > categories: lists, validates the code, then saves with PUT  1331ms
+   ✓ REQ-F14-01 · categories, geography, users, organizations > categories: empty state invites the first one  627ms
+   ✓ REQ-F14-01 · categories, geography, users, organizations > geography: a city needs its parent; country does not  922ms
+   ✓ E1 · platform summary on the dashboard > shows the provider and account counters from the two services  530ms
+   ✓ E1 · platform summary on the dashboard > one service failing does not blank the other card; a 403 says so  360ms
+ ✓ test/host.test.tsx (17 tests) 8108ms
+   ✓ C2–C5 · picker and onboarding > lists celebrations and opens the editor  812ms
+   ✓ C2–C5 · picker and onboarding > REQ-F11-04 · host fields come from the event type: a wedding asks for the couple, a quinceañera for the celebrant  2964ms
+   ✓ C2–C5 · picker and onboarding > an invalid date stops creation with a clear message and keeps the form  673ms
+   ✓ C7–C11 · content editor > saves only what changed, with the edited version as If-Match, the time as the event's wall clock  316ms
+   ✓ C12 · gallery > reorders and chooses the cover through the API  317ms
+   ✓ C13–C16 · translations, templates, preview, publishing > REQ-F12-01/02 · only compatible templates are requested; applying sends just the template id  302ms
+   ✓ C17–C18 · settings and switches > REQ-F13-06 · a past deadline warns that RSVPs freeze; computed in the celebration zone  574ms
+   ✓ C17–C18 · settings and switches > REQ-F13-02/03/04 · each switch explains the consequence, needs confirmation and says it is not retroactive  468ms
+ ✓ test/push-actions.test.ts (26 tests) 177ms
+ ✓ test/host-requirements.test.tsx (14 tests) 2077ms
+   ✓ REQ-F13-01 · C17 saves languages, time zone and currency > sends only one PATCH with languages, default language, zone and currency, with the loaded version as If-Match  517ms
+ ✓ test/guest-rsvp.test.tsx (13 tests) 1184ms
+   ✓ REQ-F21-04 · the five RSVP states, in native components, against the contract > A9 guest: confirms with the real POST and shows the confirmed state  342ms
+ ✓ test/guest-gifts.test.tsx (22 tests) 3289ms
+   ✓ F21 · guest gifts > reserves once with the guest credential: PENDING_REVIEW  419ms
+   ✓ F21 · guest gifts > GET 503 has recovery and never displays a blank screen  1086ms
+ ✓ test/admin.test.tsx (8 tests) 1040ms
+   ✓ REQ-F14-02 · event type editor > E2E (component level): an admin creates GRADUACION; a host can choose it right away and create a celebration with it  470ms
+   ✓ E2, E3, E7, E12 > templates: create, then publish and archive (with confirmation) with If-Match  353ms
+ ✓ test/guest-app.test.tsx (34 tests) 1201ms
+   ✓ F21 · RSVP through the real API client and MSW > confirms once without borrowing the signed-in host's credentials  332ms
+ ✓ test/push.test.ts (24 tests) 1275ms
+ ✓ test/push-request.test.tsx (17 tests) 2217ms
+   ✓ F20 · authorized request detail > GET 503 is an explained state, not a blank detail  1088ms
+ ✓ test/push-handlers.test.ts (3 tests) 7ms
+ ✓ test/push-permissions.test.tsx (3 tests) 400ms
+ ✓ test/session-refresh.test.ts (3 tests) 70ms
+ ✓ test/route-groups.test.ts (2 tests) 29ms
+ ✓ test/error-states.test.tsx (5 tests) 162ms
+ ✓ test/portal-profile.test.ts (4 tests) 5ms
+ ✓ test/guest-link-landing.test.tsx (10 tests) 567ms
+ ✓ test/safe-frame.test.tsx (2 tests) 33ms
+ ✓ test/guest-controls.test.tsx (1 test) 251ms
+
+ Test Files  22 passed (22)
+      Tests  354 passed (354)
+   Start at  23:32:37
+   Duration  88.64s (transform 7.33s, setup 9.15s, collect 62.20s, tests 46.63s, environment 35.48s, prepare 5.21s)
+
+JSON report written to C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/docs/progress/evidence/lane-F21/local/universal-regression.json

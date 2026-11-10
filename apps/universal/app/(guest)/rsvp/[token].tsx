@@ -1,10 +1,10 @@
-import { router, useLocalSearchParams } from 'expo-router';
-import { InvitationLinkScreen } from '../../../src/auth/invitation-link';
-
-/** F05-04: opened by the universal link https://<domain>/rsvp/<token> or by rsvp://rsvp/<token>; resolved with POST /rsvp/resolve. */
-const goTo = (path: string): void => { router.replace(path as never); };
+import { useCallback } from "react";
+import { useLocalSearchParams, useRouter, type Href } from "expo-router";
+import { GuestLinkLanding } from "../../../src/guest/link-landing";
 
 export default function InvitationLinkRoute() {
   const { token } = useLocalSearchParams<{ token?: string }>();
-  return <InvitationLinkScreen token={typeof token === 'string' ? token : undefined} onResolved={goTo} />;
+  const router = useRouter();
+  const onResolved = useCallback((path: string) => router.replace(path as Href), [router]);
+  return <GuestLinkLanding token={typeof token === "string" ? token : ""} onResolved={onResolved} />;
 }

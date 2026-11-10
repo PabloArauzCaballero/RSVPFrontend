@@ -1,0 +1,128 @@
+{
+  "date": "2026-11-08T03:28:51.321Z",
+  "surface": "Expo web + Next.js + Chrome with contract fixtures; no OS association/device claim",
+  "checks": [
+    "App: RSVP -> gifts -> reserve -> back, keyboard and redirector, 360/768/1280, no account or stored credential",
+    "Legacy links, five RSVP states, gift error/empty/conflict, English and slow failed submission with preserved draft",
+    "Web without an installed app: same canonical invitation path, confirm and reserve without account, 360/768/1280"
+  ],
+  "axe": [
+    {
+      "screen": "app:rsvp-360",
+      "violations": []
+    },
+    {
+      "screen": "app:confirmed-360",
+      "violations": []
+    },
+    {
+      "screen": "app:gifts-360",
+      "violations": []
+    },
+    {
+      "screen": "app:reservation-360",
+      "violations": []
+    },
+    {
+      "screen": "app:reserved-360",
+      "violations": []
+    },
+    {
+      "screen": "app:rsvp-768",
+      "violations": []
+    },
+    {
+      "screen": "app:confirmed-768",
+      "violations": []
+    },
+    {
+      "screen": "app:gifts-768",
+      "violations": []
+    },
+    {
+      "screen": "app:reservation-768",
+      "violations": []
+    },
+    {
+      "screen": "app:reserved-768",
+      "violations": []
+    },
+    {
+      "screen": "app:rsvp-1280",
+      "violations": []
+    },
+    {
+      "screen": "app:confirmed-1280",
+      "violations": []
+    },
+    {
+      "screen": "app:gifts-1280",
+      "violations": []
+    },
+    {
+      "screen": "app:reservation-1280",
+      "violations": []
+    },
+    {
+      "screen": "app:reserved-1280",
+      "violations": []
+    },
+    {
+      "screen": "app:invalid-360",
+      "violations": []
+    },
+    {
+      "screen": "app:closed-360",
+      "violations": []
+    },
+    {
+      "screen": "app:unregistered-360",
+      "violations": []
+    },
+    {
+      "screen": "app:empty-360",
+      "violations": []
+    },
+    {
+      "screen": "app:forbidden-360",
+      "violations": []
+    },
+    {
+      "screen": "app:conflict-360",
+      "violations": []
+    },
+    {
+      "screen": "app:rsvp-en-US-768",
+      "violations": []
+    },
+    {
+      "screen": "app:slow-send-error-360",
+      "violations": []
+    },
+    {
+      "screen": "web:rsvp-360",
+      "violations": []
+    },
+    {
+      "screen": "web:reserved-360",
+      "violations": []
+    },
+    {
+      "screen": "web:rsvp-768",
+      "violations": []
+    },
+    {
+      "screen": "web:reserved-768",
+      "violations": []
+    },
+    {
+      "screen": "web:rsvp-1280",
+      "violations": []
+    },
+    {
+      "screen": "web:reserved-1280",
+      "violations": []
+    }
+  ],
+  "status": "PASS"
+}

@@ -1,0 +1,148 @@
+{
+  "surface": "Expo web in Chrome, HTTP fixtures; not a live backend or native device",
+  "date": "2026-11-08T15:55:29.522Z",
+  "checks": [
+    "Five host screens at 360/768/1280; create -> public guest list -> reserve -> host approval; unpublished external hidden; partner 2 required actions vs external 4 + 3 fields",
+    "Read-back preference confirmation, guest default hidden, real outbound DOM anchors through the redirector, keyboard Space and reduced motion",
+    "Empty inbox/list, forbidden list, discovery outage, failed external submission with preserved draft, concurrent 409 and en-US with system dark preference (app uses its existing light theme)"
+  ],
+  "axe": [
+    {
+      "screen": "catalog-360",
+      "violations": []
+    },
+    {
+      "screen": "gifts-360",
+      "violations": []
+    },
+    {
+      "screen": "inbox-360",
+      "violations": []
+    },
+    {
+      "screen": "external-360",
+      "violations": []
+    },
+    {
+      "screen": "external-partner-first-360",
+      "violations": []
+    },
+    {
+      "screen": "providers-360",
+      "violations": []
+    },
+    {
+      "screen": "visibility-hidden-360",
+      "violations": []
+    },
+    {
+      "screen": "catalog-768",
+      "violations": []
+    },
+    {
+      "screen": "gifts-768",
+      "violations": []
+    },
+    {
+      "screen": "inbox-768",
+      "violations": []
+    },
+    {
+      "screen": "external-768",
+      "violations": []
+    },
+    {
+      "screen": "external-partner-first-768",
+      "violations": []
+    },
+    {
+      "screen": "providers-768",
+      "violations": []
+    },
+    {
+      "screen": "visibility-hidden-768",
+      "violations": []
+    },
+    {
+      "screen": "catalog-1280",
+      "violations": []
+    },
+    {
+      "screen": "gifts-1280",
+      "violations": []
+    },
+    {
+      "screen": "inbox-1280",
+      "violations": []
+    },
+    {
+      "screen": "external-1280",
+      "violations": []
+    },
+    {
+      "screen": "external-partner-first-1280",
+      "violations": []
+    },
+    {
+      "screen": "providers-1280",
+      "violations": []
+    },
+    {
+      "screen": "visibility-hidden-1280",
+      "violations": []
+    },
+    {
+      "screen": "gifts-empty-360",
+      "violations": []
+    },
+    {
+      "screen": "inbox-empty-360",
+      "violations": []
+    },
+    {
+      "screen": "gifts-forbidden-360",
+      "violations": []
+    },
+    {
+      "screen": "providers-error-360",
+      "violations": []
+    },
+    {
+      "screen": "external-send-error-360",
+      "violations": []
+    },
+    {
+      "screen": "inbox-race-360",
+      "violations": []
+    },
+    {
+      "screen": "catalog-en-US-system-dark-768",
+      "violations": []
+    }
+  ],
+  "runtimeErrors": [],
+  "steps": [
+    {
+      "width": 360,
+      "partnerRequiredActions": 2,
+      "externalRequiredActions": 4,
+      "partnerRequiredFields": 0,
+      "externalRequiredFields": 3
+    },
+    {
+      "width": 768,
+      "partnerRequiredActions": 2,
+      "externalRequiredActions": 4,
+      "partnerRequiredFields": 0,
+      "externalRequiredFields": 3
+    },
+    {
+      "width": 1280,
+      "partnerRequiredActions": 2,
+      "externalRequiredActions": 4,
+      "partnerRequiredFields": 0,
+      "externalRequiredFields": 3
+    }
+  ],
+  "status": "PASS"
+}

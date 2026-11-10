@@ -1,5 +1,5 @@
 import { ApiError, type ApiClient } from "@rsvp/api-client";
-import type { ProviderDiscoveryQuery, ProviderPage, Availability, Booking, BookingRequestInput, BookingStatus, Calendar, CreateListingInput, Lead, ListingHit, ListingSummary, LeadConfig, Metrics, OwnListing, Provider, QuoteInput, QuoteReceipt, RegisterProviderInput, UpdateProviderInput, Microsite, MicrositeInput, ProviderDocument, DocumentInput, DocumentRegistration, DocumentDownload } from "./types.js";
+import type { Fulfillment, ProviderDiscoveryQuery, ProviderPage, Availability, Booking, BookingRequestInput, BookingStatus, Calendar, CreateListingInput, Lead, ListingHit, ListingSummary, LeadConfig, Metrics, OwnListing, Provider, QuoteInput, QuoteReceipt, RegisterProviderInput, Microsite, MicrositeInput, ProviderDocument, DocumentInput, DocumentRegistration, DocumentDownload } from "./types.js";
 
 const qs = (params: Record<string, string | number | undefined>): string => {
   const entries = Object.entries(params).filter((entry): entry is [string, string | number] => entry[1] !== undefined && entry[1] !== "");
@@ -26,10 +26,12 @@ export function providerService(client: ApiClient) {
     registerDocument: (providerId: string, body: DocumentInput) => client.request<DocumentRegistration, DocumentInput>(`${base(providerId)}/documents`, { method: "POST", body }),
     completeDocument: (providerId: string, documentId: string) => client.request<ProviderDocument>(`${base(providerId)}/documents/${documentId}/complete`, { method: "POST" }),
     downloadDocument: (providerId: string, documentId: string) => client.request<DocumentDownload>(`${base(providerId)}/documents/${documentId}/download`),
-    /** PATCH /providers/{id} (owner or admin): rename. A listing cannot be edited after creation: the contract has no such route. */
-    update: (providerId: string, body: UpdateProviderInput) => client.request<Provider, UpdateProviderInput>(base(providerId), { method: "PATCH", body }),
-    /** DELETE /providers/{id}/documents/{documentId} answers 204 (also when the document did not exist). */
-    deleteDocument: (providerId: string, documentId: string) => client.request<undefined>(`${base(providerId)}/documents/${documentId}`, { method: "DELETE" }),
+    /**
+     * EXPECTED, NOT PUBLISHED: provider-catalog 2.1.0 has no way to edit a listing after POST /providers/{id}/listings. Agreed shape:
+     * PUT /providers/{id}/listings/{listingId}/fulfillment with a Fulfillment body, answering the updated listing. Until the backend
+     * ships it the gateway answers 404/405 and the screen says nothing was saved (see docs/progress/BLOCKERS.md).
+     */
+    updateFulfillment: (providerId: string, listingId: string, body: Fulfillment, locale: string) => client.request<OwnListing, Fulfillment>(`${base(providerId)}/listings/${listingId}/fulfillment${qs({ locale })}`, { method: "PUT", body }),
     submit: (providerId: string) => client.request<Provider>(`${base(providerId)}/submit`, { method: "POST" }),
     configureLeads: (providerId: string, body: LeadConfig) => client.request<Provider, LeadConfig>(`${base(providerId)}/lead-config`, { method: "PUT", body }),
     ownListings: (providerId: string, locale: string) => client.request<{ items: readonly OwnListing[] }>(`${base(providerId)}/listings${qs({ locale })}`),

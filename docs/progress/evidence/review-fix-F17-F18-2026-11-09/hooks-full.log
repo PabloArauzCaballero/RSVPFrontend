@@ -1,0 +1,12 @@
+Loaded  vitest@3.1.2  and  @vitest/coverage-v8@3.2.7 .
+Running mixed versions is not supported and may lead into bugs
+Update your dependencies and make sure the versions match.
+JSON report written to C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/docs/progress/evidence/review-fix-F17-F18-2026-11-09/hooks-full.json
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 99.42% ( 1040/1046 )
+Branches     : 93.48% ( 660/706 )
+Functions    : 98.48% ( 454/461 )
+Lines        : 99.42% ( 1040/1046 )
+================================================================================

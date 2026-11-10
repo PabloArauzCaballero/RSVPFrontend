@@ -2,13 +2,14 @@ export const canPickTextFile = true;
 
 /** Web: a hidden file input. Resolves null when the dialog closes without a file. */
 export function pickTextFile(): Promise<{ readonly name: string; readonly text: string; readonly size: number } | null> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = ".csv,text/csv";
-    input.onchange = async () => {
+    input.onchange = () => {
       const file = input.files?.[0];
-      resolve(file ? { name: file.name, size: file.size, text: await file.text() } : null);
+      if (!file) { resolve(null); return; }
+      file.text().then((text) => resolve({ name: file.name, size: file.size, text }), reject);
     };
     input.oncancel = () => resolve(null);
     input.click();

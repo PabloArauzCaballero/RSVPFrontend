@@ -1,0 +1,240 @@
+diff --git "a/docs\\progress\\evidence\\review-fix-F17-F18-2026-11-09\\before\\apps\\universal\\src\\host\\guests\\report-screen.tsx" b/apps/universal/src/host/guests/report-screen.tsx
+index 8b35eff..9247c12 100644
+--- "a/docs\\progress\\evidence\\review-fix-F17-F18-2026-11-09\\before\\apps\\universal\\src\\host\\guests\\report-screen.tsx"
++++ b/apps/universal/src/host/guests/report-screen.tsx
+@@ -110,5 +110,5 @@ function ReportBody({ celebrationId, timeZone, slug, onNavigate }: { readonly ce
+ 
+ export function ReportScreen(props: ScreenProps): ReactNode {
+   const t = useT();
+-  return <CelebrationScreen {...props} current="report" title={t("guests.report.title")}>{({ celebration }) => <ReportBody celebrationId={celebration.id} timeZone={celebration.timeZone} slug={celebration.slug} onNavigate={props.onNavigate} />}</CelebrationScreen>;
++  return <CelebrationScreen {...props} current="report" title={t("guests.report.title")}>{({ celebration }) => <ReportBody key={celebration.id} celebrationId={celebration.id} timeZone={celebration.timeZone} slug={celebration.slug} onNavigate={props.onNavigate} />}</CelebrationScreen>;
+ }
+diff --git "a/docs\\progress\\evidence\\review-fix-F17-F18-2026-11-09\\before\\apps\\universal\\src\\host\\guests\\summary-screen.tsx" b/apps/universal/src/host/guests/summary-screen.tsx
+index 79163fc..46dcaf8 100644
+--- "a/docs\\progress\\evidence\\review-fix-F17-F18-2026-11-09\\before\\apps\\universal\\src\\host\\guests\\summary-screen.tsx"
++++ b/apps/universal/src/host/guests/summary-screen.tsx
+@@ -1,4 +1,4 @@
+-import type { ReactNode } from "react";
++import { useEffect, useState, type ReactNode } from "react";
+ import { Text, View } from "react-native";
+ import { spacing } from "@rsvp/design-tokens";
+ import { ApiError } from "@rsvp/api-client";
+@@ -24,6 +24,11 @@ function SummaryBody({ celebration, onNavigate }: { readonly celebration: Celebr
+   const t = useT();
+   const client = useApiClient();
+   const summary = useGuestSummary(client, celebration.id);
++  const [now, setNow] = useState(Date.now);
++  useEffect(() => {
++    const timer = setInterval(() => setNow(Date.now()), 30_000);
++    return () => clearInterval(timer);
++  }, []);
+   const go = (path: string) => () => onNavigate(withCelebration(path, celebration.id));
+   if (summary.isPending) return <Loading />;
+   const data = summary.data;
+@@ -44,7 +49,7 @@ function SummaryBody({ celebration, onNavigate }: { readonly celebration: Celebr
+         <CountTile testID="count-total" label={t("guests.summary.total")} value={data.total} />
+       </View>
+       <Section title={t("guests.summary.title")}>
+-        <Text style={styles.body}>{deadlineLine(celebration, t, Date.now())}</Text>
++        <Text style={styles.body}>{deadlineLine(celebration, t, now)}</Text>
+         <Text testID="open-requests" style={styles.body}>{open ? t("guests.summary.openRequests", { count: open }) : t("guests.summary.noRequests")}</Text>
+         <View style={styles.row}>
+           {open ? <ActionButton label={t("guests.summary.reviewRequests")} onPress={go(HOST_ROUTES.requests)} /> : null}
+diff --git "a/docs\\progress\\evidence\\review-fix-F17-F18-2026-11-09\\before\\apps\\universal\\src\\host\\guests\\preferences-screen.tsx" b/apps/universal/src/host/guests/preferences-screen.tsx
+index 86e0b44..f342351 100644
+--- "a/docs\\progress\\evidence\\review-fix-F17-F18-2026-11-09\\before\\apps\\universal\\src\\host\\guests\\preferences-screen.tsx"
++++ b/apps/universal/src/host/guests/preferences-screen.tsx
+@@ -24,12 +24,13 @@ function QuietHours({ quiet, timeZone, busy, onSave, feedback }: {
+   readonly quiet: NotificationPreferences["quietHours"];
+   readonly timeZone: string;
+   readonly busy: boolean;
+-  readonly onSave: (value: { start: number; end: number } | null) => void;
++  readonly onSave: (value: { start: number; end: number } | null, onSaved: () => void) => void;
+   readonly feedback: ReactNode;
+ }): ReactNode {
+   const t = useT();
+-  const [start, setStart] = useState(String(quiet.start));
+-  const [end, setEnd] = useState(String(quiet.end));
++  const [draft, setDraft] = useState<{ start: string; end: string } | null>(null);
++  const start = draft?.start ?? String(quiet.start);
++  const end = draft?.end ?? String(quiet.end);
+   const [submitted, setSubmitted] = useState(false);
+   const startHour = quietHourSchema.safeParse(start);
+   const endHour = quietHourSchema.safeParse(end);
+@@ -37,7 +38,7 @@ function QuietHours({ quiet, timeZone, busy, onSave, feedback }: {
+     setSubmitted(true);
+     if (!startHour.success || !endHour.success) return;
+     setSubmitted(false);
+-    onSave({ start: startHour.data, end: endHour.data });
++    onSave({ start: startHour.data, end: endHour.data }, () => setDraft(null));
+   };
+   return (
+     <Section title={t("guests.preferences.quietTitle")}>
+@@ -46,13 +47,13 @@ function QuietHours({ quiet, timeZone, busy, onSave, feedback }: {
+       <Text testID="quiet-current" style={styles.label}>
+         {quiet.start === quiet.end ? t("guests.preferences.quietOff") : t("guests.preferences.quietCurrent", { start: quiet.start, end: quiet.end })} · {quiet.source === "DEFAULT" ? t("guests.preferences.quietSourceDefault") : t("guests.preferences.quietSourceMine")}
+       </Text>
+-      <Input label={t("guests.preferences.quietStart")} value={start} onChangeText={setStart} keyboardType="number-pad" testID="quiet-start"
++      <Input label={t("guests.preferences.quietStart")} value={start} onChangeText={(value) => setDraft({ start: value, end })} keyboardType="number-pad" testID="quiet-start"
+         state={busy ? "disabled" : "default"} error={submitted && !startHour.success ? t("guests.preferences.quietInvalid") : undefined} />
+-      <Input label={t("guests.preferences.quietEnd")} value={end} onChangeText={setEnd} keyboardType="number-pad" testID="quiet-end"
++      <Input label={t("guests.preferences.quietEnd")} value={end} onChangeText={(value) => setDraft({ start, end: value })} keyboardType="number-pad" testID="quiet-end"
+         state={busy ? "disabled" : "default"} error={submitted && !endHour.success ? t("guests.preferences.quietInvalid") : undefined} />
+       <View style={styles.row}>
+         <ActionButton label={t("guests.preferences.quietSave")} onPress={save} busy={busy} testID="quiet-save" />
+-        <ActionButton variant="secondary" label={t("guests.preferences.quietDefault")} onPress={() => onSave(null)} disabled={busy || quiet.source === "DEFAULT"} testID="quiet-default" />
++        <ActionButton variant="secondary" label={t("guests.preferences.quietDefault")} onPress={() => onSave(null, () => { setDraft(null); setSubmitted(false); })} disabled={busy || quiet.source === "DEFAULT"} testID="quiet-default" />
+       </View>
+       {feedback}
+     </Section>
+@@ -68,11 +69,11 @@ function PreferencesBody({ celebrationId, timeZone, onNavigate }: { readonly cel
+   const update = useUpdateHostNotificationPreferences(client, celebrationId);
+   const saving = useRef(false);
+   const [area, setArea] = useState<PreferenceArea | null>(null);
+-  const save = (body: Parameters<typeof update.mutate>[0], section: PreferenceArea): void => {
++  const save = (body: Parameters<typeof update.mutate>[0], section: PreferenceArea, onSaved?: () => void): void => {
+     if (saving.current) return;
+     saving.current = true;
+     setArea(section);
+-    update.mutate(body, { onSettled: () => { saving.current = false; } });
++    update.mutate(body, { onSuccess: onSaved, onSettled: () => { saving.current = false; } });
+   };
+   const feedback = (section: PreferenceArea): ReactNode => {
+     if (area !== section) return null;
+@@ -125,8 +126,8 @@ function PreferencesBody({ celebrationId, timeZone, onNavigate }: { readonly cel
+         })}
+         {feedback("events")}
+       </Section>
+-      <QuietHours key={`${prefs.data.quietHours.start}-${prefs.data.quietHours.end}-${prefs.data.quietHours.source}`} quiet={prefs.data.quietHours}
+-        timeZone={timeZone} busy={update.isPending} feedback={feedback("quiet")} onSave={(value) => save({ quietHours: value }, "quiet")} />
++      <QuietHours quiet={prefs.data.quietHours}
++        timeZone={timeZone} busy={update.isPending} feedback={feedback("quiet")} onSave={(value, onSaved) => save({ quietHours: value }, "quiet", onSaved)} />
+       <ActionButton variant="secondary" label={t("guests.preferences.pushSetup")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.push, celebrationId))} />
+     </View>
+   );
+diff --git "a/docs\\progress\\evidence\\review-fix-F17-F18-2026-11-09\\before\\packages\\query-hooks\\src\\guest\\csv.ts" b/packages/query-hooks/src/guest/csv.ts
+index 8862391..75da8e5 100644
+--- "a/docs\\progress\\evidence\\review-fix-F17-F18-2026-11-09\\before\\packages\\query-hooks\\src\\guest\\csv.ts"
++++ b/packages/query-hooks/src/guest/csv.ts
+@@ -51,12 +51,14 @@ export async function buildRsvpReportCsv(
+   celebrationId: string, header: readonly string[], status?: "PENDING" | "CONFIRMED" | "DECLINED"
+ ): Promise<string> {
+   const guests: GuestListItem[] = [];
+-  for (let page = 0, total = Infinity; guests.length < total && page < MAX_PAGES; page += 1) {
++  let total = Infinity;
++  for (let page = 0; guests.length < total && page < MAX_PAGES; page += 1) {
+     const result = await api.list(celebrationId, { limit: GUEST_PAGE, offset: guests.length, ...(status ? { status } : {}) });
+     total = result.total;
+-    if (result.items.length === 0) break;
++    if (result.items.length === 0 && guests.length < total) throw new Error("RSVP report ended before the advertised total");
+     guests.push(...result.items);
+   }
++  if (guests.length < total) throw new Error("RSVP report exceeded the pagination limit");
+   const rsvps = await readHostRsvpAnswers(api, celebrationId);
+   return toCsv(header, rsvpReportRows(guests, rsvps));
+ }
+@@ -70,11 +72,14 @@ export async function buildCateringCsv(
+ ): Promise<string> {
+   const rows: (string | number)[][] = [];
+   let cursor: string | undefined;
++  const visited = new Set<string>();
+   for (let page = 0; page < MAX_PAGES; page += 1) {
+     const result = await api.catering(celebrationId, { status: "CONFIRMED", limit: 500, ...options, ...(cursor ? { cursor } : {}) });
+     for (const item of result.items) rows.push([item.guestId, item.groupId ?? "", item.status, item.partySize, item.dietaryNotes ?? "", item.message ?? ""]);
+-    if (!result.nextCursor) break;
++    if (!result.nextCursor) return toCsv(options.includeMessage ? header : header.slice(0, -1), options.includeMessage ? rows : rows.map((row) => row.slice(0, -1)));
++    if (visited.has(result.nextCursor)) throw new Error("Catering report repeated a pagination cursor");
++    visited.add(result.nextCursor);
+     cursor = result.nextCursor;
+   }
+-  return toCsv(options.includeMessage ? header : header.slice(0, -1), options.includeMessage ? rows : rows.map((row) => row.slice(0, -1)));
++  throw new Error("Catering report exceeded the pagination limit");
+ }
+diff --git "a/docs\\progress\\evidence\\review-fix-F17-F18-2026-11-09\\before\\packages\\query-hooks\\src\\notification\\index.ts" b/packages/query-hooks/src/notification/index.ts
+index 140af40..1ae75c9 100644
+--- "a/docs\\progress\\evidence\\review-fix-F17-F18-2026-11-09\\before\\packages\\query-hooks\\src\\notification\\index.ts"
++++ b/packages/query-hooks/src/notification/index.ts
+@@ -17,7 +17,7 @@ export function useHostNotificationPreferences(client: ApiClient, celebrationId:
+ }
+ 
+ /**
+- * Optimistic channel toggle: the cache flips immediately; a failure restores the previous value and
++ * Optimistic channel toggle: roll back its snapshot only if no newer server data replaced it, and
+  * the error is thrown to the caller so the screen can say it was not saved (REQ-F18-04/05).
+  */
+ export function useUpdateHostNotificationPreferences(client: ApiClient, celebrationId: string) {
+@@ -36,12 +36,18 @@ export function useUpdateHostNotificationPreferences(client: ApiClient, celebrat
+           eventTypes: { ...previous.eventTypes, ...body.eventTypes }
+         });
+       }
++      const optimisticRevision = queryClient.getQueryState(key)?.dataUpdateCount;
+       try {
+         const saved = await hostNotificationsApi(client).updatePreferences(celebrationId, body);
++        await queryClient.cancelQueries({ queryKey: key });
+         queryClient.setQueryData(key, saved);
+         return saved;
+       } catch (error) {
+-        if (previous && (body.channels || body.eventTypes)) queryClient.setQueryData(key, previous);
++        await queryClient.cancelQueries({ queryKey: key });
++        // A completed refetch is newer server evidence, even if its values match the optimistic patch.
++        if (previous && (body.channels || body.eventTypes) && queryClient.getQueryState(key)?.dataUpdateCount === optimisticRevision) {
++          queryClient.setQueryData(key, previous);
++        }
+         throw error;
+       }
+     }
+diff --git "a/docs\\progress\\evidence\\review-fix-F17-F18-2026-11-09\\before\\packages\\i18n\\locales\\es-BO\\guests.ts" b/packages/i18n/locales/es-BO/guests.ts
+index daabfd8..c7cb818 100644
+--- "a/docs\\progress\\evidence\\review-fix-F17-F18-2026-11-09\\before\\packages\\i18n\\locales\\es-BO\\guests.ts"
++++ b/packages/i18n/locales/es-BO/guests.ts
+@@ -44,7 +44,7 @@ export const guestsEsBO = {
+   summary: {
+     refreshFailed: "No pudimos actualizar el resumen. Ves los últimos datos recibidos. Puedes volver a actualizar.",
+     title: "Resumen de invitados", confirmed: "Confirmados", pending: "Sin responder", declined: "No asisten", companions: "Acompañantes", total: "Invitados",
+-    daysToDeadline: "{{count}} días para cerrar las respuestas", deadlineToday: "Las respuestas cierran hoy", deadlinePassed: "Las respuestas ya cerraron", noDeadline: "Sin fecha límite de respuesta",
++    daysToDeadline: "{{count}} días para cerrar las respuestas", deadlineToday: "Menos de un día para cerrar las respuestas", deadlinePassed: "Las respuestas ya cerraron", noDeadline: "Sin fecha límite de respuesta",
+     openRequests: "{{count}} solicitudes de acompañantes por revisar", noRequests: "Sin solicitudes de acompañantes pendientes", reviewRequests: "Revisar solicitudes", viewReport: "Ver reporte", viewGuests: "Ver invitados", empty: "Cuando agregues invitados verás aquí cuántos confirmaron."
+   },
+   report: {
+diff --git "a/docs\\progress\\evidence\\review-fix-F17-F18-2026-11-09\\before\\packages\\i18n\\locales\\en-US\\guests.ts" b/packages/i18n/locales/en-US/guests.ts
+index a557eab..b4a74fe 100644
+--- "a/docs\\progress\\evidence\\review-fix-F17-F18-2026-11-09\\before\\packages\\i18n\\locales\\en-US\\guests.ts"
++++ b/packages/i18n/locales/en-US/guests.ts
+@@ -47,7 +47,7 @@ export const guestsEnUS: DeepStrings<typeof guestsEsBO> = {
+   summary: {
+     refreshFailed: "We could not refresh the summary. You are seeing the last data received. You can refresh again.",
+     title: "Guest summary", confirmed: "Confirmed", pending: "Not answered", declined: "Not attending", companions: "Companions", total: "Guests",
+-    daysToDeadline: "{{count}} days until replies close", deadlineToday: "Replies close today", deadlinePassed: "Replies are closed", noDeadline: "No reply deadline",
++    daysToDeadline: "{{count}} days until replies close", deadlineToday: "Less than one day until replies close", deadlinePassed: "Replies are closed", noDeadline: "No reply deadline",
+     openRequests: "{{count}} companion requests to review", noRequests: "No companion requests pending", reviewRequests: "Review requests", viewReport: "View report", viewGuests: "View guests", empty: "Once you add guests you will see here how many confirmed."
+   },
+   report: {
+diff --git "a/docs\\progress\\evidence\\review-fix-F17-F18-2026-11-09\\before\\apps\\universal\\scripts\\e2e-guests.mjs" b/apps/universal/scripts/e2e-guests.mjs
+index f177b98..cc4a956 100644
+--- "a/docs\\progress\\evidence\\review-fix-F17-F18-2026-11-09\\before\\apps\\universal\\scripts\\e2e-guests.mjs"
++++ b/apps/universal/scripts/e2e-guests.mjs
+@@ -331,8 +331,12 @@ try {
+       assert.ok(first.readAt, "Opening saved the read state on the mock server");
+       record("F18", "REQ-F18-01/05 open", "INBOX notice opened by keyboard after POST /read and remained read on reload");
+     }
++    const savedReads = Promise.all(mock.state.notifications.filter((item) => item.readAt === null).map((item) =>
++      page.waitForResponse((response) => response.url().endsWith(`/notifications/${item.id}/read`) && response.request().method() === "POST" && response.status() === 200)));
+     await page.getByTestId("mark-all").click();
+     await page.getByText("0 sin leer").waitFor();
++    await savedReads;
++    assert.ok(mock.state.notifications.every((item) => item.readAt !== null), "All optimistic reads must be persisted before reloading");
+     await shot("F18", "C31-todo-leido", 360, page);
+     await page.reload(); await page.getByText("0 sin leer").waitFor();
+     await context.close(); }
+@@ -351,6 +355,11 @@ try {
+       assert.equal(await persisted.isChecked(), false);
+       await page.getByTestId("quiet-start").fill("23");
+       await page.getByTestId("quiet-end").fill("07");
++      mock.state.quietHours = { start: 21, end: 6 };
++      await persisted.click();
++      await page.getByText(/Silencio de 21:00 a 6:00/).waitFor();
++      assert.equal(await page.getByTestId("quiet-start").inputValue(), "23", "remote quiet-hours refresh preserves the draft");
++      assert.equal(await page.getByTestId("quiet-end").inputValue(), "07");
+       await page.getByTestId("quiet-save").press("Enter");
+       await page.getByText(/Silencio de 23:00 a 7:00/).waitFor();
+       assert.deepEqual(mock.state.quietHours, { start: 23, end: 7 });

@@ -48,7 +48,7 @@ describe("REQ-F26-04/05 · date request: 422 blocked and 409 no capacity read di
 
 describe("REQ-F26-01/02 · quote cart and sent confirmation", () => {
   const offers = [{ listingId: LISTING, title: "Torta", priceFrom: { amountMinor: 45000, currency: "BOB" }, fulfillment: { responsible: "PROVIDER", coverageZones: ["la-paz"], leadTimeDays: 3 } }];
-  const cart = () => render(<QuoteCart slug="dulce-sol" providerId={PID} providerName="Dulce Sol" timeZone="America/La_Paz" offers={offers} preselected={LISTING} locale="es-BO" today="2026-11-05" cities={[{ slug: "la-paz", name: "La Paz" }, { slug: "sucre", name: "Sucre" }]} />);
+  const cart = () => render(<QuoteCart slug="dulce-sol" providerId={PID} providerName="Dulce Sol" timeZone="America/La_Paz" offers={offers} preselected={LISTING} locale="es-BO" today="2026-11-05" />);
   const fill = () => {
     fireEvent.change(screen.getByLabelText("Fecha del evento"), { target: { value: "2027-03-10" } });
     fireEvent.change(screen.getByLabelText("Cantidad de invitados"), { target: { value: "80" } });
@@ -65,22 +65,20 @@ describe("REQ-F26-01/02 · quote cart and sent confirmation", () => {
     let body: Record<string, unknown> = {};
     vi.stubGlobal("fetch", vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => { body = JSON.parse(String(init?.body)); return window.sessionStorage.getItem("rsvp.visitor.token") ? json(201, { id: "3ac2bdf8-db0f-4350-805c-0c70214ba5e8", status: "REQUESTED", leadId: "l", disclaimer: "Deslinde", listings: [] }) : json(401, { type: "x", title: "t", status: 401 }); }));
     cart(); fill();
-    fireEvent.change(screen.getByLabelText(/Presupuesto aproximado \(Bs\.\)/), { target: { value: "5000" } });
-    // Provider Catalog only accepts a city SLUG as eventCity (422 "eventCity must be a city slug"): the field is a list of slugs, not free text.
-    fireEvent.change(screen.getByLabelText(/Ciudad del evento/), { target: { value: "la-paz" } });
+    fireEvent.change(screen.getByLabelText("Presupuesto aproximado (Bs.)"), { target: { value: "5000" } });
     fireEvent.click(screen.getByRole("button", { name: "Enviar solicitud" }));
     expect(await screen.findByText("Inicia sesión para enviar tu solicitud")).toBeTruthy();
     expect((screen.getByLabelText("Tu nombre") as HTMLInputElement).value).toBe("Ana");
     window.sessionStorage.setItem("rsvp.visitor.token", "tok");
     fireEvent.click(screen.getByRole("button", { name: "Enviar solicitud" }));
     expect(await screen.findByRole("heading", { name: "Solicitud enviada" })).toBeTruthy();
-    expect(body).toMatchObject({ budgetMinor: 500000, guestCount: 80, listingIds: [LISTING], contact: { email: "ana@example.com" }, eventCity: "la-paz" });
+    expect(body).toMatchObject({ budgetMinor: 500000, guestCount: 80, listingIds: [LISTING], contact: { email: "ana@example.com" } });
   });
 });
 
 describe("Anonymous quote · honeypot, no account needed, 429/403/422 messages", () => {
   const offers = [{ listingId: LISTING, title: "Torta" }];
-  const cart = () => render(<QuoteCart slug="dulce-sol" providerId={PID} providerName="Dulce Sol" timeZone="America/La_Paz" offers={offers} preselected={LISTING} locale="es-BO" today="2026-11-05" cities={[{ slug: "la-paz", name: "La Paz" }, { slug: "sucre", name: "Sucre" }]} />);
+  const cart = () => render(<QuoteCart slug="dulce-sol" providerId={PID} providerName="Dulce Sol" timeZone="America/La_Paz" offers={offers} preselected={LISTING} locale="es-BO" today="2026-11-05" />);
   const fill = () => {
     fireEvent.change(screen.getByLabelText("Fecha del evento"), { target: { value: "2027-03-10" } });
     fireEvent.change(screen.getByLabelText("Cantidad de invitados"), { target: { value: "80" } });

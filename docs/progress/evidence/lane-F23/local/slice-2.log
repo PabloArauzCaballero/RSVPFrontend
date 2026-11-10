@@ -1,0 +1,14 @@
+
+ RUN  v3.1.2 C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/apps/universal
+
+ ✓ test/host-gifts.test.tsx (12 tests) 1979ms
+   ✓ F23 slice 1 · create a catalog gift and see its public state > creates once, shows backend publication in the host list, and the guest sees the same item without an account  418ms
+   ✓ F23 slice 2 · deliberate external flow and publication > requires review, handles the partner-first challenge once and keeps PROPOSED out of the public list until approved  417ms
+ ✓ test/gifts-portal.test.tsx (28 tests) 2748ms
+
+ Test Files  2 passed (2)
+      Tests  40 passed (40)
+   Start at  11:12:48
+   Duration  10.70s (transform 1.68s, setup 794ms, collect 11.77s, tests 4.73s, environment 2.50s, prepare 291ms)
+
+JSON report written to C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/docs/progress/evidence/lane-F23/local/slice-2.json

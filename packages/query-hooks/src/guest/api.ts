@@ -50,14 +50,6 @@ export function hostGuestsApi(client: ApiClient) {
     revokeToken: (celebrationId: string, guestId: string) => api.delete("/celebrations/{celebrationId}/guests/{guestId}/access-token", { path: { celebrationId, guestId } }),
     rsvps: (celebrationId: string, query: { readonly limit?: number; readonly offset?: number }) => api.get("/celebrations/{celebrationId}/rsvps", { path: { celebrationId }, query }),
     companionRequests: (celebrationId: string) => api.get("/celebrations/{celebrationId}/companion-requests", { path: { celebrationId }, query: { limit: 100 } }),
-    /** GET/PUT .../guest-settings: the companions a new guest gets by default (MANAGE writes). */
-    defaults: (celebrationId: string) => api.get("/celebrations/{celebrationId}/guest-settings", { path: { celebrationId } }),
-    setDefaults: (celebrationId: string, defaultAllowedCompanions: number) => api.put("/celebrations/{celebrationId}/guest-settings", { path: { celebrationId }, body: { defaultAllowedCompanions } }),
-    /** GET/PUT .../retention-settings: days after registration the personal data is kept; null means no schedule approved. */
-    retention: (celebrationId: string) => api.get("/celebrations/{celebrationId}/retention-settings", { path: { celebrationId } }),
-    setRetention: (celebrationId: string, retentionDays: number | null) => api.put("/celebrations/{celebrationId}/retention-settings", { path: { celebrationId }, body: { retentionDays } }),
-    /** DELETE .../guests/{id}/erasure: irreversible local erasure; downstream erasure is queued (202). */
-    erase: (celebrationId: string, guestId: string) => api.delete("/celebrations/{celebrationId}/guests/{guestId}/erasure", { path: { celebrationId, guestId } }),
     decide: (celebrationId: string, requestId: string, decision: CompanionDecision) => api.post("/celebrations/{celebrationId}/companion-requests/{requestId}/decision", { path: { celebrationId, requestId }, body: { decision } })
   } as const;
 }
@@ -74,9 +66,6 @@ export function hostNotificationsApi(client: ApiClient) {
     syncRecipients: (celebrationId: string, guestIds?: readonly string[]) => api.put("/celebrations/{celebrationId}/recipients", { path: { celebrationId }, body: guestIds ? { guestIds: [...guestIds] } : {} }),
     devices: (celebrationId: string) => api.get("/celebrations/{celebrationId}/devices", { path: { celebrationId } }),
     registerDevice: (celebrationId: string, body: DeviceRegistration) => api.post("/celebrations/{celebrationId}/devices", { path: { celebrationId }, body }),
-    unregisterDevice: (celebrationId: string, deviceId: string) => api.delete("/celebrations/{celebrationId}/devices/{deviceId}", { path: { celebrationId, deviceId } }),
-    /** POST .../devices/{id}/test: queues one test push to that device; the Idempotency-Key makes a retry harmless. */
-    testDevice: (celebrationId: string, deviceId: string, key: string) => api.post("/celebrations/{celebrationId}/devices/{deviceId}/test", { path: { celebrationId, deviceId }, body: {}, headers: { "idempotency-key": key } }),
-    pushDeliveries: (celebrationId: string, notificationId?: string) => api.get("/celebrations/{celebrationId}/push-deliveries", { path: { celebrationId }, query: notificationId ? { notificationId } : {} })
+    unregisterDevice: (celebrationId: string, deviceId: string, signal?: AbortSignal) => api.delete("/celebrations/{celebrationId}/devices/{deviceId}", { path: { celebrationId, deviceId }, signal })
   } as const;
 }

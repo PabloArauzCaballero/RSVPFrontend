@@ -1,0 +1,65 @@
+{
+  "date": "2026-11-06T23:29:02.355Z",
+  "surface": "Expo web export in Chrome, contract mock",
+  "status": "PASS",
+  "checks": [
+    {
+      "id": "REQ-F17-01/04/06",
+      "text": "summary numbers equal the read model's, freshness lag is shown, open requests come from openCompanionRequests",
+      "status": "PASS"
+    },
+    {
+      "id": "REQ-F17-01/04/06 replay",
+      "text": "guest app confirms; POST replay keeps version 1 and the open host summary updates automatically by one",
+      "status": "PASS"
+    },
+    {
+      "id": "REQ-F17-03",
+      "text": "approve with one click: POST decision, request leaves the inbox, success notice",
+      "status": "PASS"
+    },
+    {
+      "id": "REQ-F17-02/05",
+      "text": "report lists answers; CSV and caterer CSV download from the browser; caterer file has no names/contacts",
+      "status": "PASS"
+    }
+  ],
+  "axe": [
+    {
+      "screen": "C6-resumen-360",
+      "violations": []
+    },
+    {
+      "screen": "C6-resumen-768",
+      "violations": []
+    },
+    {
+      "screen": "C6-resumen-1280",
+      "violations": []
+    },
+    {
+      "screen": "C26-bandeja-360",
+      "violations": []
+    },
+    {
+      "screen": "C26-bandeja-768",
+      "violations": []
+    },
+    {
+      "screen": "C26-bandeja-1280",
+      "violations": []
+    },
+    {
+      "screen": "C24-reporte-360",
+      "violations": []
+    },
+    {
+      "screen": "C24-reporte-768",
+      "violations": []
+    },
+    {
+      "screen": "C24-reporte-1280",
+      "violations": []
+    }
+  ]
+}

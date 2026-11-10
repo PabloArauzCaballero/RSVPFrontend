@@ -1,0 +1,22 @@
+// @vitest-environment jsdom
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { createApiClient } from '@rsvp/api-client';
+import { createContractMock, MOCK_VALID_TOKEN } from '@rsvp/testing/contract-mock';
+vi.mock('next/navigation', () => ({ useParams: () => ({}) }));
+import { RsvpExperience } from '../components/rsvp/rsvp-experience';
+beforeEach(() => { vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date('2026-12-04T12:00:00Z')); sessionStorage.clear(); });
+afterEach(() => { cleanup(); vi.useRealTimers(); });
+it('review F15: preserve editable draft changes during delayed successful submit', async () => {
+ const mock=createContractMock({now:()=>new Date('2026-12-04T12:00:00Z')});mock.addGuest({name:'Marta Quispe',token:MOCK_VALID_TOKEN});
+ let release!:()=>void,waiting=false;const gate=new Promise<void>(done=>{release=done;});
+ const client=createApiClient({baseUrl:'http://gw.test',tokenStore:{getAccessToken:async()=>null,getRefreshToken:async()=>null,setTokens:async()=>undefined,clear:async()=>undefined},refreshSession:{refresh:async()=>{throw new Error('No test session');}},fetchFn:async(input,options)=>{if(options?.method==='POST'&&String(input).endsWith('/rsvp')){waiting=true;await gate;}return mock.fetch(input,options);}});
+ render(<RsvpExperience slug={mock.slug} token={MOCK_VALID_TOKEN} locale="es-BO" siteOrigin="https://fixture.example" client={client}/>);
+ fireEvent.click(await screen.findByLabelText('Sí, asistiré'));const label='Mensaje para los anfitriones (opcional)';
+ fireEvent.change(screen.getByLabelText(label),{target:{value:'Mensaje original'}});fireEvent.click(screen.getByRole('button',{name:'Enviar respuesta'}));await waitFor(()=>expect(waiting).toBe(true));
+ const field=screen.getByLabelText(label) as HTMLTextAreaElement,editable=!field.disabled&&!field.readOnly,latest='Cambio pendiente escrito durante el envío';
+ if(editable)fireEvent.change(field,{target:{value:latest}});release();await screen.findByRole('heading',{name:'Tu asistencia está confirmada'});
+ const preserved=(document.body.textContent+JSON.stringify({...sessionStorage})).includes(latest);
+ console.log('F15 delayed-submit observation',JSON.stringify({editableWhilePending:editable,posted:mock.state.log.find(call=>call.method==='POST')?.body,latestDraftPreserved:preserved}));
+ expect(!editable||preserved).toBe(true);
+});

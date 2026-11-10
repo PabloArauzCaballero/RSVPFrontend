@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApiClient } from "@rsvp/api-client";
+import { onlineManager } from "@tanstack/react-query";
+import { http, setupServer } from "@rsvp/testing";
 import { createContractMock, MOCK_VALID_TOKEN, type ContractMock, type MockResponse } from "@rsvp/testing/contract-mock";
 
 const route = vi.hoisted(() => ({ params: {} as Record<string, string> }));
@@ -10,11 +12,19 @@ vi.mock("next/navigation", () => ({ useParams: () => route.params }));
 import { RsvpExperience } from "../components/rsvp/rsvp-experience";
 
 const NOW = new Date("2026-12-04T12:00:00Z");
+const BASE_URL = "http://gw.test";
+const server = setupServer();
 const anonymous = { getAccessToken: async () => null, getRefreshToken: async () => null, setTokens: async () => undefined, clear: async () => undefined };
 
-function setup(mock: ContractMock, fetchFn: typeof fetch = mock.fetch) {
-  const client = createApiClient({ baseUrl: "http://gw.test", fetchFn, tokenStore: anonymous, refreshSession: { refresh: async () => { throw new Error("none"); } } });
-  return client;
+function setup(mock: ContractMock, fetchFn?: typeof fetch) {
+  server.use(http.all(`${BASE_URL}/*`, async ({ request }) => mock.fetch(request.url, {
+    method: request.method,
+    headers: request.headers,
+    body: request.body ? await request.text() : undefined
+  })));
+  // Node's Request rejects jsdom's AbortSignal.
+  const transport: typeof fetch = fetchFn ?? ((input, init) => fetch(input, { ...init, signal: undefined }));
+  return createApiClient({ baseUrl: BASE_URL, fetchFn: transport, tokenStore: anonymous, refreshSession: { refresh: async () => { throw new Error("none"); } } });
 }
 const open = (mock: ContractMock, token: string | undefined, fetchFn?: typeof fetch, locale: "es-BO" | "en-US" = "es-BO") => {
   route.params = token ? { token } : {};
@@ -27,10 +37,12 @@ const seeded = (overrides: Partial<ReturnType<ContractMock["addGuest"]>> = {}, m
 };
 const storageDump = () => JSON.stringify({ ...window.sessionStorage, ...window.localStorage });
 
+beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 beforeEach(() => { vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(NOW); window.sessionStorage.clear(); window.localStorage.clear(); });
-afterEach(() => { cleanup(); vi.useRealTimers(); });
+afterEach(() => { cleanup(); onlineManager.setOnline(true); server.resetHandlers(); vi.useRealTimers(); });
+afterAll(() => server.close());
 
-describe("REQ-F15-01 · A9 formulario de RSVP por token (contrato real)", () => {
+describe("REQ-F15-01 · A9 formulario de RSVP por token", () => {
   it("shows the real celebration, confirms with companions and diet, and sends POST status/requestedCompanions with an Idempotency-Key", async () => {
     const mock = seeded();
     open(mock, MOCK_VALID_TOKEN);
@@ -108,14 +120,14 @@ describe("REQ-F15-03 · A11 fuera de plazo", () => {
     expect(screen.queryByRole("button", { name: /Enviar|Guardar|Cambiar/ })).toBeNull();
   });
 
-  it("a 409 RsvpWindowClosed at send time (the deadline passed while the form was open) moves to the closed screen and keeps nothing sent", async () => {
+  it("shows the guest's language and the celebration time zone when the deadline expires before submission", async () => {
     const mock = seeded();
-    open(mock, MOCK_VALID_TOKEN);
-    fireEvent.click(await screen.findByLabelText("Sí, asistiré"));
-    mock.state.deadline = "2026-12-04T11:00:00.000Z";
-    fireEvent.click(screen.getByRole("button", { name: "Enviar respuesta" }));
-    expect(await screen.findByRole("heading", { name: "El plazo para responder terminó" })).toBeTruthy();
-    expect(screen.getByText(/4 de diciembre/)).toBeTruthy();
+    open(mock, MOCK_VALID_TOKEN, undefined, "en-US");
+    fireEvent.click(await screen.findByLabelText(/Yes, I/));
+    mock.state.deadline = "2026-12-04T03:59:00.000Z";
+    fireEvent.click(screen.getByRole("button", { name: "Send reply" }));
+    expect(await screen.findByRole("heading", { name: "The reply deadline has passed" })).toBeTruthy();
+    expect(screen.getByText(/Dec 3, 2026.*11:59 PM.*America\/La_Paz/s)).toBeTruthy();
     expect(mock.listGuests()[0]?.status).toBe("PENDING");
   });
 });
@@ -228,6 +240,7 @@ describe("REQ-F15-06 · conexión lenta o caída: el formulario no se pierde", (
     fireEvent.click(await screen.findByLabelText("Sí, asistiré"));
     fireEvent.change(screen.getByLabelText("Restricciones alimentarias"), { target: { value: "Sin lactosa" } });
     offline = true;
+    onlineManager.setOnline(false);
     fireEvent.click(screen.getByRole("button", { name: "Enviar respuesta" }));
     const alert = await screen.findByText(/No hay conexión\. Tu respuesta sigue aquí/);
     expect(alert).toBeTruthy();
@@ -237,6 +250,7 @@ describe("REQ-F15-06 · conexión lenta o caída: el formulario no se pierde", (
     expect(storageDump()).toContain("Sin lactosa");
     expect(storageDump()).not.toContain(MOCK_VALID_TOKEN);
     offline = false;
+    onlineManager.setOnline(true);
     fireEvent.click(screen.getByRole("button", { name: "Reintentar" }));
     expect(await screen.findByRole("heading", { name: "Tu asistencia está confirmada" })).toBeTruthy();
     const posts = mock.state.log.filter((call) => call.method === "POST");

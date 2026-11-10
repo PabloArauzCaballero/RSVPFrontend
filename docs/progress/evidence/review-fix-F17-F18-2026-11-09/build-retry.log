@@ -1,0 +1,165 @@
+turbo 2.5.2
+
+• Packages in scope: @rsvp/api-client, @rsvp/auth, @rsvp/celebration-theme, @rsvp/config-eslint, @rsvp/config-jest, @rsvp/config-tailwind, @rsvp/config-ts, @rsvp/contracts, @rsvp/design-tokens, @rsvp/forms, @rsvp/i18n, @rsvp/query-hooks, @rsvp/seo-web, @rsvp/telemetry, @rsvp/testing, @rsvp/ui, @rsvp/ui-web, @rsvp/universal
+• Running build in 18 packages
+• Remote caching disabled
+@rsvp/config-eslint:build: cache hit, replaying logs 0c676cc421df4c7b
+@rsvp/config-jest:build: cache hit, replaying logs 5a0242aa94df67cc
+@rsvp/config-ts:build: cache hit, replaying logs 88829248e1381e62
+@rsvp/config-tailwind:build: cache hit, replaying logs d0aab0f1aacd71c5
+@rsvp/contracts:build: cache hit, replaying logs e68bf867a6cdabe1
+@rsvp/testing:build: cache hit, replaying logs d96c63c8a7cba0d7
+@rsvp/telemetry:build: cache hit, replaying logs 1805f28eca2e21e8
+@rsvp/forms:build: cache hit, replaying logs a958272346b66e6c
+@rsvp/design-tokens:build: cache hit, replaying logs 0ef5c060f9748fe0
+@rsvp/design-tokens:build: [design-tokens] verified tokens.json, tokens.css
+@rsvp/i18n:build: cache hit, replaying logs fa458b913d25f317
+@rsvp/celebration-theme:build: cache hit, replaying logs 5c107202ff6cd56b
+@rsvp/api-client:build: cache hit, replaying logs d6a1368292820f19
+@rsvp/ui:build: cache hit, replaying logs cef00b6b06a6b5a8
+@rsvp/auth:build: cache hit, replaying logs 19ab1ab5e648a1e3
+@rsvp/query-hooks:build: cache miss, executing 177b21146c5979b3
+@rsvp/ui-web:build: cache hit, replaying logs 335b2c842c900e41
+@rsvp/universal:build: cache miss, executing db35b1eb6e8146b9
+@rsvp/seo-web:build: cache miss, executing 2b30ec5b790bbf62
+@rsvp/seo-web:build:    ▲ Next.js 15.3.1
+@rsvp/seo-web:build: 
+@rsvp/seo-web:build:    Creating an optimized production build ...
+@rsvp/universal:build: Starting Metro Bundler
+@rsvp/seo-web:build:  ✓ Compiled successfully in 22.0s
+@rsvp/seo-web:build:    Linting and checking validity of types ...
+@rsvp/seo-web:build: 
+@rsvp/seo-web:build:  ⚠ The Next.js plugin was not detected in your ESLint configuration. See https://nextjs.org/docs/app/api-reference/config/eslint#migrating-existing-config
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+@rsvp/seo-web:build:    Collecting page data ...
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  1.0% (1/1)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% (15/44)
+@rsvp/seo-web:build:    Generating static pages (0/123) ...
+@rsvp/seo-web:build:    Generating static pages (30/123) 
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% ( 25/201)
+@rsvp/seo-web:build:    Generating static pages (61/123) 
+@rsvp/seo-web:build:    Generating static pages (92/123) 
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% ( 42/241)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% ( 73/288)
+@rsvp/seo-web:build:  ✓ Generating static pages (123/123)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% ( 94/315)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% (139/338)
+@rsvp/seo-web:build:    Finalizing page optimization ...
+@rsvp/seo-web:build:    Collecting build traces ...
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% (179/381)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% (207/436)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% (228/459)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% (273/491)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓░░░░░░░░░░░ 34.7% (298/506)
+@rsvp/seo-web:build: 
+@rsvp/seo-web:build: Route (app)                                     Size  First Load JS  Revalidate  Expire
+@rsvp/seo-web:build: ┌ ○ /                                          161 B         102 kB          1h      1y
+@rsvp/seo-web:build: ├ ○ /_not-found                                978 B         102 kB
+@rsvp/seo-web:build: ├ ƒ /.well-known/apple-app-site-association    161 B         102 kB
+@rsvp/seo-web:build: ├ ƒ /.well-known/assetlinks.json               161 B         102 kB
+@rsvp/seo-web:build: ├ ○ /apple-icon.png                              0 B            0 B
+@rsvp/seo-web:build: ├ ƒ /c/[slug]                                1.08 kB         103 kB
+@rsvp/seo-web:build: ├ ƒ /c/[slug]/[section]                      1.08 kB         103 kB
+@rsvp/seo-web:build: ├ ƒ /c/[slug]/regalos                          158 B         202 kB
+@rsvp/seo-web:build: ├ ƒ /c/[slug]/regalos/[id]                     158 B         202 kB
+@rsvp/seo-web:build: ├ ƒ /c/[slug]/rsvp                             157 B         197 kB
+@rsvp/seo-web:build: ├ ƒ /c/[slug]/rsvp/[token]                     157 B         197 kB
+@rsvp/seo-web:build: ├ ○ /catalogo                                  183 B         183 kB
+@rsvp/seo-web:build: ├ ○ /icon.svg                                    0 B            0 B
+@rsvp/seo-web:build: ├ ○ /opengraph-image.png                         0 B            0 B
+@rsvp/seo-web:build: ├ ƒ /p/[slug]                                  208 B         186 kB
+@rsvp/seo-web:build: ├ ƒ /p/[slug]/agenda                         2.29 kB         177 kB
+@rsvp/seo-web:build: ├ ƒ /p/[slug]/catalogo                         213 B         105 kB
+@rsvp/seo-web:build: ├ ƒ /p/[slug]/catalogo/[sku]                   213 B         105 kB
+@rsvp/seo-web:build: ├ ƒ /p/[slug]/cotizar                        4.79 kB         192 kB
+@rsvp/seo-web:build: ├ ○ /proveedores                               197 B         105 kB          1h      1y
+@rsvp/seo-web:build: ├ ● /proveedores/[categoria]                   197 B         105 kB
+@rsvp/seo-web:build: ├   ├ /proveedores/salones
+@rsvp/seo-web:build: ├   ├ /proveedores/catering
+@rsvp/seo-web:build: ├   ├ /proveedores/fotografia
+@rsvp/seo-web:build: ├   └ [+8 more paths]
+@rsvp/seo-web:build: ├ ● /proveedores/[categoria]/[ciudad]          197 B         105 kB
+@rsvp/seo-web:build: ├   ├ /proveedores/salones/la-paz
+@rsvp/seo-web:build: ├   ├ /proveedores/salones/santa-cruz
+@rsvp/seo-web:build: ├   ├ /proveedores/salones/cochabamba
+@rsvp/seo-web:build: ├   └ [+96 more paths]
+@rsvp/seo-web:build: ├ ƒ /proveedores/buscar                        197 B         105 kB
+@rsvp/seo-web:build: ├ ƒ /r/[listingId]                             161 B         102 kB
+@rsvp/seo-web:build: ├ ○ /robots.txt                                161 B         102 kB
+@rsvp/seo-web:build: ├ ƒ /rsvp/[token]                              919 B         191 kB
+@rsvp/seo-web:build: ├ ○ /sitemap.xml                               161 B         102 kB          1m      1y
+@rsvp/seo-web:build: └ ○ /twitter-image.png                           0 B            0 B
+@rsvp/seo-web:build: + First Load JS shared by all                 101 kB
+@rsvp/seo-web:build:   ├ chunks/8315-1c9f09ac7be29523.js          46.3 kB
+@rsvp/seo-web:build:   ├ chunks/87c73c54-aba717b704177890.js      53.2 kB
+@rsvp/seo-web:build:   └ other shared chunks (total)              2.01 kB
+@rsvp/seo-web:build: 
+@rsvp/seo-web:build: 
+@rsvp/seo-web:build: ○  (Static)   prerendered as static content
+@rsvp/seo-web:build: ●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+@rsvp/seo-web:build: ƒ  (Dynamic)  server-rendered on demand
+@rsvp/seo-web:build: 
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓░░░░░░░░░░░ 37.0% (316/532)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓░░░░░░░░░░░ 37.0% (327/550)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓░░░░░░░░░░░ 37.0% (339/563)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓▓░░░░░░░░░░ 38.0% (350/568)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓▓░░░░░░░░░░ 40.2% (365/576)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓▓░░░░░░░░░░ 43.6% (394/606)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓░░░░░░░░░ 45.7% (428/633)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓░░░░░░░░ 50.4% (467/658)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓░░░░░░░░ 51.5% (472/658)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓░░░░░░░░ 54.8% (513/693)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 57.3% (546/759)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 57.3% (585/818)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 58.0% (632/831)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 58.9% (652/851)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 61.7% (684/871)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 65.2% (725/909)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 65.8% (746/957)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 66.3% (790/970)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 70.8% (827/983)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 70.8% ( 856/1020)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 75.7% ( 891/1024)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 77.1% ( 906/1032)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 85.0% ( 957/1038)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 90.0% ( 995/1049)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 92.5% (1036/1077)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 92.5% (1066/1116)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 94.4% (1099/1151)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 94.4% (1114/1167)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 94.4% (1152/1206)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 94.4% (1210/1254)
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (1267/1267)
+@rsvp/universal:build: Web Bundled 175453ms node_modules\expo-router\entry.js (1267 modules)
+@rsvp/universal:build: 
+@rsvp/universal:build: › Assets (18):
+@rsvp/universal:build: ..\..\node_modules\@react-navigation\elements\lib\module\assets\back-icon-mask.0a328cd9c1afd0afe8e3b1ec5165b1b4.png (653 B)
+@rsvp/universal:build: ..\..\node_modules\@react-navigation\elements\lib\module\assets\back-icon.35ba0eaec5a4f5ed12ca16fabeae451d.png (207 B)
+@rsvp/universal:build: ..\..\node_modules\@react-navigation\elements\lib\module\assets\clear-icon.c94f6478e7ae0cdd9f15de1fcb9e5e55.png (4 variations | 425 B)
+@rsvp/universal:build: ..\..\node_modules\@react-navigation\elements\lib\module\assets\close-icon.808e1b1b9b53114ec2838071a7e6daa7.png (4 variations | 235 B)
+@rsvp/universal:build: ..\..\node_modules\@react-navigation\elements\lib\module\assets\search-icon.286d67d3f74808a60a78d3ebf1a5fb57.png (928 B)
+@rsvp/universal:build: ..\..\node_modules\expo-router\assets\arrow_down.017bc6ba3fc25503e5eb5e53826d48a8.png (9.46 kB)
+@rsvp/universal:build: ..\..\node_modules\expo-router\assets\error.d1ea1496f9057eb392d5bbf3732a61b7.png (469 B)
+@rsvp/universal:build: ..\..\node_modules\expo-router\assets\file.19eeb73b9593a38f8e9f418337fc7d10.png (138 B)
+@rsvp/universal:build: ..\..\node_modules\expo-router\assets\forward.d8b800c443b8972542883e0b9de2bdc6.png (188 B)
+@rsvp/universal:build: ..\..\node_modules\expo-router\assets\pkg.ab19f4cbc543357183a20571f68380a3.png (364 B)
+@rsvp/universal:build: ..\..\node_modules\expo-router\assets\sitemap.412dd9275b6b48ad28f5e3d81bb1f626.png (465 B)
+@rsvp/universal:build: ..\..\node_modules\expo-router\assets\unmatched.20e71bdf79e3a97bf55fd9e164041578.png (4.75 kB)
+@rsvp/universal:build: 
+@rsvp/universal:build: › web bundles (3):
+@rsvp/universal:build: _expo/static/css/modal.module-d6974dc704dba6fe76e33fac1006ba13.css (2.28 kB)
+@rsvp/universal:build: _expo/static/css/web-ed7b25516f9abb98518e181201b21770.css (9.38 kB)
+@rsvp/universal:build: _expo/static/js/web/entry-10219e884ae8dde9d8ce1cbd6a94aa0a.js (2.14 MB)
+@rsvp/universal:build: 
+@rsvp/universal:build: › Files (3):
+@rsvp/universal:build: favicon.ico (14.5 kB)
+@rsvp/universal:build: index.html (1.6 kB)
+@rsvp/universal:build: metadata.json (49 B)
+@rsvp/universal:build: 
+@rsvp/universal:build: Exported: web-build
+
+ Tasks:    18 successful, 18 total
+Cached:    15 cached, 18 total
+  Time:    3m56.783s 
+
+ WARNING  no output files found for task @rsvp/query-hooks#build. Please check your `outputs` key in `turbo.json`

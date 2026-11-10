@@ -1,4 +1,4 @@
-import { createContext, Fragment, useCallback, useContext, useEffect, useMemo, useState, type PropsWithChildren, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type PropsWithChildren, type ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { I18nextProvider, useTranslation } from "react-i18next";
 import { createApiClient, type ApiClient } from "@rsvp/api-client";
@@ -9,7 +9,7 @@ import { AuthProvider, StaticAuthProvider, useAuth } from "../auth/auth-context"
 import { readLocalePreference, writeLocalePreference } from "./preferences";
 import { createAppSessionStore, type SessionClaims } from "./session";
 import { secureStorage } from "./secure-storage";
-import { useScheme, useThemeHydration } from "./theme";
+import { createPushSession, type PushSession } from "../push/session";
 
 /**
  * Everything a screen needs from the platform, through context: the API client, the session
@@ -22,6 +22,7 @@ interface Platform {
   readonly client: ApiClient;
   readonly locale: AppLocale;
   readonly setLocale: (locale: AppLocale) => void;
+  readonly pushSession: PushSession;
 }
 
 const PlatformContext = createContext<Platform | null>(null);
@@ -71,15 +72,15 @@ export function AppProviders({ children, client, claims, runtime, locale, queryC
   const resolvedLocale = chosen ?? (stored ? resolveLocale(stored, []) : locale ?? deviceLocale());
   const setLocale = useCallback((next: AppLocale) => { setChosen(next); void writeLocalePreference(next); }, []);
   const i18n = useMemo(() => createI18n(resolvedLocale), [resolvedLocale]);
-  const platform = useMemo<Platform>(() => ({ client: client ?? app?.client ?? createAppClient(), locale: resolvedLocale, setLocale }), [client, app, resolvedLocale, setLocale]);
-  // The scheme is the person's choice or the system's. Style sheets are chosen per scheme at render time, so a change remounts the tree once (rare, and the stored choice makes it a start-up event on native).
-  const scheme = useScheme();
-  useThemeHydration();
-  const body = <PlatformContext.Provider value={platform}><UiProvider scheme={scheme} strings={stringsFor(resolvedLocale)}><Fragment key={scheme}>{children}</Fragment></UiProvider></PlatformContext.Provider>;
+  const api = useMemo(() => client ?? app?.client ?? createAppClient(), [client, app]);
+  const pushSession = useMemo(() => createPushSession(api, () => app ? app.manager.getState().session?.userId : claims?.userId ?? undefined), [api, app, claims?.userId]);
+  const platform = useMemo<Platform>(() => ({ client: api, locale: resolvedLocale, setLocale, pushSession }), [api, resolvedLocale, setLocale, pushSession]);
+  // The host, guest and portal screens are built on the light palette only; until they have a dark theme the primitives must not follow the system scheme (white labels on a light page failed contrast at 1.07:1).
+  const body = <PlatformContext.Provider value={platform}><UiProvider scheme="light" strings={stringsFor(resolvedLocale)}>{children}</UiProvider></PlatformContext.Provider>;
   return (
     <QueryClientProvider client={queries}>
       <I18nextProvider i18n={i18n}>
-        {app ? <AuthProvider manager={app.manager} identityClient={app.identityClient}>{body}</AuthProvider> : <StaticAuthProvider claims={claims ?? ANONYMOUS_CLAIMS}>{body}</StaticAuthProvider>}
+        {app ? <AuthProvider manager={app.manager} identityClient={app.identityClient} pushSession={pushSession}>{body}</AuthProvider> : <StaticAuthProvider claims={claims ?? ANONYMOUS_CLAIMS}>{body}</StaticAuthProvider>}
       </I18nextProvider>
     </QueryClientProvider>
   );
@@ -92,6 +93,7 @@ function usePlatform(): Platform {
 }
 
 export const useApiClient = (): ApiClient => usePlatform().client;
+export const usePushSession = (): PushSession => usePlatform().pushSession;
 export const useClaims = (): SessionClaims => useAuth().claims;
 export const useLocale = (): AppLocale => usePlatform().locale;
 /** The active language and the way to change it; the choice is remembered across launches. */

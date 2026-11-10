@@ -16,5 +16,5 @@ interface Props { readonly params: Promise<{ slug: string }>; readonly searchPar
 export default async function RsvpTokenPage({ params, searchParams }: Props) {
   const [{ slug }, { lang }, requestHeaders] = await Promise.all([params, searchParams, headers()]);
   const locale = uiLocale(requestedLanguage(lang, requestHeaders.get('accept-language')));
-  return <main className="rsvp-shell"><RsvpExperience slug={slug} locale={locale} siteOrigin={siteUrl()} /></main>;
+  return <main className="rsvp-shell" lang={locale}><RsvpExperience slug={slug} locale={locale} siteOrigin={siteUrl()} /></main>;
 }

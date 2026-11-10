@@ -1,0 +1,254 @@
+{
+  "date": "2026-11-08T16:07:42.875Z",
+  "lane": "F23",
+  "owner": "Miguel",
+  "status": "TESTED",
+  "published": false,
+  "gitMetadata": false,
+  "scope": "Only F23 source, additive package exports, its tests and progress notes; global entry composition reserves the five F23 static routes before the existing guest resolver.",
+  "files": [
+    {
+      "path": "apps/universal/src/host/gifts/catalog-screen.tsx",
+      "change": "modified",
+      "beforeSha256": "739e8b35d4217b17d2596d78e4308537a5d298f07171f6acb10c261032125941",
+      "sha256": "3812175037a66e425178ba959ed3af77ce5ee6e9e2d8612f58d72fa777e71dab",
+      "bytes": 7468
+    },
+    {
+      "path": "apps/universal/src/host/gifts/gifts-screen.tsx",
+      "change": "modified",
+      "beforeSha256": "1bdc16422c6257837e5fa0ef97987e530ffd0d40ad00a779d25c070e98b01ee7",
+      "sha256": "672462d46ab97a9727848a621ee27844ff1d03790200bfc783bc9eab1d7c7972",
+      "bytes": 7483
+    },
+    {
+      "path": "apps/universal/src/host/gifts/external-screen.tsx",
+      "change": "modified",
+      "beforeSha256": "04b8c2cfc1ed13559503ede2edd2fab7fa50ebf6b34de722f70bf56d0194cc43",
+      "sha256": "6b9e205f46eedf8c8e886ec74794dcd73c5f93e3d42251f5a9ed94b9d151704a",
+      "bytes": 9586
+    },
+    {
+      "path": "apps/universal/src/host/gifts/inbox-screen.tsx",
+      "change": "modified",
+      "beforeSha256": "19df0df2847a7853e1e1eb354228532e62fdcc2d21431703358c22fd46610ab8",
+      "sha256": "38af9832f44b790e8670e965105e54526b935f94ee5c8865b15da3614535661e",
+      "bytes": 5209
+    },
+    {
+      "path": "apps/universal/src/host/gifts/providers-screen.tsx",
+      "change": "modified",
+      "beforeSha256": "bdea88b83a913b9bbb9120fa50ce600b12f342e23edcfaf6df1d549cadbaaaf0",
+      "sha256": "147035348ff325aed3ab492efadf6e0f04424d3cf645a62014dce1b08b97c416",
+      "bytes": 10189
+    },
+    {
+      "path": "apps/universal/app/(host)/regalos/catalogo.tsx",
+      "change": "modified",
+      "beforeSha256": "d3a797d846824e0fa08566b2eafa0fa3671ae67e211fc33935da70ef2fdc3d8c",
+      "sha256": "8f87c43ad1ccc32b238a74d1d507d053d30f04a4f2fdefb397fffbee437346b1",
+      "bytes": 469
+    },
+    {
+      "path": "apps/universal/test/gifts-portal.test.tsx",
+      "change": "modified",
+      "beforeSha256": "583de54521c8a3cc9eea04553f57de53ad861fb4000691ad283d36eff3dc26bf",
+      "sha256": "0054d9298efdf1566f99bcc0e922e5cf7756351bdf8871f0b1f6aaaace34a904",
+      "bytes": 29175
+    },
+    {
+      "path": "packages/forms/src/index.ts",
+      "change": "modified",
+      "beforeSha256": "09c252467f8ab1162c55194b4cebebeb2cb3a27ae444895b07f65e48d92c2d22",
+      "sha256": "ede9cb1c62f2c5c6fd635b34b55d9ea3ced0108fbd34f371eded56a9b43255dc",
+      "bytes": 284
+    },
+    {
+      "path": "packages/query-hooks/src/index.ts",
+      "change": "modified",
+      "beforeSha256": "50a9041b1e56570935edf82664887c6865aa8bdeb0886c37e88db993b8b4ad90",
+      "sha256": "7b930d73a63e51f2fd601c5690b627bf8b1b7004f18f94ab5d4b8be7e8210a97",
+      "bytes": 350
+    },
+    {
+      "path": "packages/i18n/src/server.ts",
+      "change": "modified",
+      "beforeSha256": "1c6470a7b141e64eaf2549b86d58ee8ea9ffc7723ff0b33664ea488db094cedb",
+      "sha256": "c5cd9dda2bff2cfc00332a5d705efc44a38248c5b60a3c0de0352ea70c3dd29b",
+      "bytes": 4565
+    },
+    {
+      "path": "docs/progress/evidence/lane-F23/README.md",
+      "change": "modified",
+      "beforeSha256": "b626ad3ba01cdbeec898d688668ecef01b51d717b2affd34f1991188cd95c258",
+      "sha256": "69ab0bcd85d2e8a61bd6de6941cc0be8e14e6e73de59456b48c9f8057cbb7e0a",
+      "bytes": 4566
+    },
+    {
+      "path": "apps/universal/app/+native-intent.ts",
+      "change": "modified",
+      "beforeSha256": "f5c70987607fb2d861b98c0f802914e02902130751f5897994c0462e992b601b",
+      "sha256": "c7899872a4d07c006549cac9c2792030f66a269f048d9266a1dcbe63e515f371",
+      "bytes": 364
+    },
+    {
+      "path": "docs/progress/STATUS_LOG.md",
+      "change": "modified",
+      "beforeSha256": "bb9b43fb2461dfe0e489739a84850897e0dbed66c1949fb219ffd6f1fcf82940",
+      "sha256": "059b3148a416e359201a6537294a9a965115b59496dcd080a7314ccf5129adba",
+      "bytes": 11875
+    },
+    {
+      "path": "docs/progress/BLOCKERS.md",
+      "change": "modified",
+      "beforeSha256": "7558cc6f891cc343e982de67c66dca67256b4b9d57a7fec4093b634d8fd0ef07",
+      "sha256": "e8901d45627bab7852d236ec79f38401e4f8ec75efa930cafb8fea20f2f17803",
+      "bytes": 8495
+    },
+    {
+      "path": "docs/progress/DECISIONS.md",
+      "change": "modified",
+      "beforeSha256": "85f632e1fd7b4054150cc915aebb20fa4c8e9bf93b7243b9f1047b0d26ad6956",
+      "sha256": "031fd5dfa231c70fbf232b7e4fdd8c6e00c84e983fdd92fee53bb4aa705b9e79",
+      "bytes": 5109
+    },
+    {
+      "path": "apps/universal/src/host/gifts/controls.types.ts",
+      "change": "added",
+      "sha256": "1bd77567b4c8da29d86b669510cc300bd6b6c0c53507b89ab04373817f5898f6",
+      "bytes": 508
+    },
+    {
+      "path": "apps/universal/src/host/gifts/controls.tsx",
+      "change": "added",
+      "sha256": "007d3d0995a60912f108e8ccbce5aa0a73fe965c42512be0caa10e9ea81d55b4",
+      "bytes": 1499
+    },
+    {
+      "path": "apps/universal/src/host/gifts/controls.web.tsx",
+      "change": "added",
+      "sha256": "6375bb007bf2ea004a4ca53dd6c58ac08fb1bca6a2b2494be81327c17c99a49c",
+      "bytes": 2794
+    },
+    {
+      "path": "apps/universal/src/host/gifts/parts.tsx",
+      "change": "added",
+      "sha256": "6520ac278e07805ff164a951d64bd43474f9f37ccf0565745050805c4744f556",
+      "bytes": 3642
+    },
+    {
+      "path": "apps/universal/src/host/gifts/partner-link.types.ts",
+      "change": "added",
+      "sha256": "356ffb02cea25aae1b235b4b23070ec3ce3ccbda3bb46552feb48572cd588d0c",
+      "bytes": 224
+    },
+    {
+      "path": "apps/universal/src/host/gifts/partner-link.tsx",
+      "change": "added",
+      "sha256": "0bc616dc3a3aec8e9a7fa7aa194c32799d7e71e34a0dbf392d888e527363d545",
+      "bytes": 992
+    },
+    {
+      "path": "apps/universal/src/host/gifts/partner-link.web.tsx",
+      "change": "added",
+      "sha256": "3ea40e356531532c194e3ff3f5e9c72ee3df56ef728b24767123ed61aedcc688",
+      "bytes": 1206
+    },
+    {
+      "path": "apps/universal/src/host/gifts/routing.ts",
+      "change": "added",
+      "sha256": "65585db6bff674a003dd1d4e83e4dd0aca196c78c63aab2c954bc2dac7301962",
+      "bytes": 1038
+    },
+    {
+      "path": "apps/universal/test/host-gifts.test.tsx",
+      "change": "added",
+      "sha256": "ec4d22ba8cd83ed22ade1a45d988e94d008e902dd8a0347d6c7b45835e4f29e4",
+      "bytes": 24596
+    },
+    {
+      "path": "apps/universal/test/host-gifts-controls.test.tsx",
+      "change": "added",
+      "sha256": "f9ba4ad07b18fa68fd40ad4d5f6d4b876f101d4cf1d070981cb2542a4c503c69",
+      "bytes": 2789
+    },
+    {
+      "path": "apps/universal/test/host-gifts-routing.test.ts",
+      "change": "added",
+      "sha256": "711b702e52fdc216e3c1c06732b6b83b3fa2085e413c9eaae9d8d07f4a15a032",
+      "bytes": 1501
+    },
+    {
+      "path": "apps/universal/test/fixtures/host-gifts.ts",
+      "change": "added",
+      "sha256": "4fcab1f0a14abcc5e281f2a7c4d8601803cb670999264e5a1778cb8193534526",
+      "bytes": 10729
+    },
+    {
+      "path": "apps/universal/scripts/e2e-host-gifts.mjs",
+      "change": "added",
+      "sha256": "6f2340eeac5eb3cc12a2725f91cec7d9fb30dbf6eaebacf7eef75bda891bd10a",
+      "bytes": 18564
+    },
+    {
+      "path": "packages/forms/src/schemas/host-gift.ts",
+      "change": "added",
+      "sha256": "e94cc1780b120311e56af45bb90760ab836dc8b99d81658aa43a9bef2926c72f",
+      "bytes": 1444
+    },
+    {
+      "path": "packages/forms/src/schemas/host-gift.test.ts",
+      "change": "added",
+      "sha256": "e5a08edbc004eec56b725241dbabeef3b6bfa2383ef273617e8521e6574c34c1",
+      "bytes": 1547
+    },
+    {
+      "path": "packages/query-hooks/src/host-gifts/index.ts",
+      "change": "added",
+      "sha256": "66022837191e2e425f4d72c15dafd0f692cbbdd03d98eb0ee0781a5045af6865",
+      "bytes": 1743
+    },
+    {
+      "path": "packages/query-hooks/test/host-gifts.test.tsx",
+      "change": "added",
+      "sha256": "122402721513ca6a8b0a79bb467a4fa25a5525a651a001751caaa7554671adba",
+      "bytes": 5073
+    },
+    {
+      "path": "packages/i18n/locales/es-BO/host-gifts.ts",
+      "change": "added",
+      "sha256": "6fe20bed92ef1e6f22e6222bb1513b474a53c2f78225e0c88c15e24e79733850",
+      "bytes": 2983
+    },
+    {
+      "path": "packages/i18n/locales/en-US/host-gifts.ts",
+      "change": "added",
+      "sha256": "d2c4fa6826e1165b8c3d56933c28e1d7fe820f12a4ecc49c7d2458712d4e31f9",
+      "bytes": 2817
+    },
+    {
+      "path": "docs/progress/evidence/lane-F23/local-2026-11-08.md",
+      "change": "added",
+      "sha256": "d1b30886d745fbf698dcddc8d0d4b9ee23de3f1ab59c60bfb4ccfdc86f4f916e",
+      "bytes": 19325
+    }
+  ],
+  "artifacts": [
+    "docs/progress/evidence/lane-F23/local/",
+    "docs/progress/evidence/lane-F23/local-web/"
+  ],
+  "unchangedBoundaries": [
+    "backend and vendored contracts",
+    "F21 guest parser and screens",
+    "F22 public gift list",
+    "F28 provider portal",
+    "shared authentication and API clients",
+    "package manifests and lockfile"
+  ],
+  "pending": [
+    "Live backend 25 integration and version coordination",
+    "Native device/runtime and native accessibility verification",
+    "Three CI runs",
+    "Cross-axis code review and human snapshot approval"
+  ]
+}

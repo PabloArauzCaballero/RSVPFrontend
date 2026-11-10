@@ -32,24 +32,34 @@ const GUEST_PAGE = 100;
 const RSVP_PAGE = 1000;
 const MAX_PAGES = 200;
 
+type RsvpPageReader = { readonly rsvps: (celebrationId: string, query: { readonly limit: number; readonly offset: number }) => Promise<{ readonly items: readonly HostRsvpSummary[] }> };
+
+/** Walk all response pages so the screen and export can include notes for every guest. */
+export async function readHostRsvpAnswers(api: RsvpPageReader, celebrationId: string): Promise<HostRsvpSummary[]> {
+  const answers: HostRsvpSummary[] = [];
+  for (let page = 0; page < MAX_PAGES; page += 1) {
+    const result = await api.rsvps(celebrationId, { limit: RSVP_PAGE, offset: answers.length });
+    answers.push(...result.items);
+    if (result.items.length < RSVP_PAGE) return answers;
+  }
+  throw new Error("RSVP report exceeded the pagination limit");
+}
+
 /** Walks every page of the read models (guest list + RSVPs) and returns the report CSV. Numbers are the backend's, not recounted. */
 export async function buildRsvpReportCsv(
-  api: { readonly list: (celebrationId: string, query: { readonly limit: number; readonly offset: number; readonly status?: "PENDING" | "CONFIRMED" | "DECLINED" }) => Promise<{ readonly items: readonly GuestListItem[]; readonly total: number }>; readonly rsvps: (celebrationId: string, query: { readonly limit: number; readonly offset: number }) => Promise<{ readonly items: readonly HostRsvpSummary[] }> },
+  api: RsvpPageReader & { readonly list: (celebrationId: string, query: { readonly limit: number; readonly offset: number; readonly status?: "PENDING" | "CONFIRMED" | "DECLINED" }) => Promise<{ readonly items: readonly GuestListItem[]; readonly total: number }> },
   celebrationId: string, header: readonly string[], status?: "PENDING" | "CONFIRMED" | "DECLINED"
 ): Promise<string> {
   const guests: GuestListItem[] = [];
-  for (let page = 0, total = Infinity; guests.length < total && page < MAX_PAGES; page += 1) {
+  let total = Infinity;
+  for (let page = 0; guests.length < total && page < MAX_PAGES; page += 1) {
     const result = await api.list(celebrationId, { limit: GUEST_PAGE, offset: guests.length, ...(status ? { status } : {}) });
     total = result.total;
-    if (result.items.length === 0) break;
+    if (result.items.length === 0 && guests.length < total) throw new Error("RSVP report ended before the advertised total");
     guests.push(...result.items);
   }
-  const rsvps: HostRsvpSummary[] = [];
-  for (let page = 0; page < MAX_PAGES; page += 1) {
-    const result = await api.rsvps(celebrationId, { limit: RSVP_PAGE, offset: rsvps.length });
-    rsvps.push(...result.items);
-    if (result.items.length < RSVP_PAGE) break;
-  }
+  if (guests.length < total) throw new Error("RSVP report exceeded the pagination limit");
+  const rsvps = await readHostRsvpAnswers(api, celebrationId);
   return toCsv(header, rsvpReportRows(guests, rsvps));
 }
 
@@ -62,11 +72,14 @@ export async function buildCateringCsv(
 ): Promise<string> {
   const rows: (string | number)[][] = [];
   let cursor: string | undefined;
+  const visited = new Set<string>();
   for (let page = 0; page < MAX_PAGES; page += 1) {
     const result = await api.catering(celebrationId, { status: "CONFIRMED", limit: 500, ...options, ...(cursor ? { cursor } : {}) });
     for (const item of result.items) rows.push([item.guestId, item.groupId ?? "", item.status, item.partySize, item.dietaryNotes ?? "", item.message ?? ""]);
-    if (!result.nextCursor) break;
+    if (!result.nextCursor) return toCsv(options.includeMessage ? header : header.slice(0, -1), options.includeMessage ? rows : rows.map((row) => row.slice(0, -1)));
+    if (visited.has(result.nextCursor)) throw new Error("Catering report repeated a pagination cursor");
+    visited.add(result.nextCursor);
     cursor = result.nextCursor;
   }
-  return toCsv(options.includeMessage ? header : header.slice(0, -1), options.includeMessage ? rows : rows.map((row) => row.slice(0, -1)));
+  throw new Error("Catering report exceeded the pagination limit");
 }

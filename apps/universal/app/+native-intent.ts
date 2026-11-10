@@ -1,6 +1,7 @@
-import { resolveDeepLink } from "../src/deep-links/router";
+import { guestSystemPath } from "../src/deep-links/router";
+import { hostGiftSystemPath } from "../src/host/gifts/routing";
 
-/** Expo Router hook: normalises incoming system URLs (universal link or rsvp:// scheme) to the guest route (REQ-F21-01). */
+/** Expo invokes this for cold starts and links received while the app is running. */
 export function redirectSystemPath({ path }: { path: string; initial: boolean }): string {
-  return resolveDeepLink(path.includes("://") ? path : `https://link.invalid${path.startsWith("/") ? "" : "/"}${path}`) ?? path;
+  return hostGiftSystemPath(path) ?? guestSystemPath(path);
 }

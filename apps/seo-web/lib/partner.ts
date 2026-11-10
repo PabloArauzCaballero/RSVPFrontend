@@ -35,20 +35,6 @@ export type PartnerLookup =
   | { readonly state: "not-found" }
   | { readonly state: "unavailable" };
 
-/**
- * The catalogue sends the address either as a line of text or as an object `{ line, city, reference, latitude, longitude }`;
- * the page only ever prints text, so an object is reduced to its street line (never rendered as a React child).
- */
-export function addressText(value: unknown): string | undefined {
-  if (typeof value === "string") return value.trim() || undefined;
-  if (value && typeof value === "object") {
-    const { line, reference } = value as { line?: unknown; reference?: unknown };
-    const parts = [line, reference].filter((part): part is string => typeof part === "string" && part.trim().length > 0);
-    return parts.length ? parts.join(", ") : undefined;
-  }
-  return undefined;
-}
-
 export function partnerFromListings(slug: string, cards: readonly ProviderCard[]): Partner | null {
   const own = cards.filter((card) => card.providerSlug === slug && card.verified);
   const head = own[0];
@@ -65,7 +51,7 @@ export function partnerFromListings(slug: string, cards: readonly ProviderCard[]
     department: head.department,
     ...(head.summary ? { summary: head.summary } : {}),
     ...(head.imageUrl ? { imageUrl: head.imageUrl } : {}),
-    ...(addressText(head.address) ? { address: addressText(head.address) } : {}),
+    ...(head.address ? { address: head.address } : {}),
     hours: head.hours ?? [],
     coverage: [...new Set(own.flatMap((card) => [...(card.coverage ?? []), ...(card.fulfillment?.coverageZones ?? [])]))],
     ...(own.find((card) => card.providerId)?.providerId ? { providerId: own.find((card) => card.providerId)?.providerId as string } : {}),

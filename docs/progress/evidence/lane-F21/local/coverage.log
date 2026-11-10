@@ -1,0 +1,41 @@
+Loaded  vitest@3.1.2  and  @vitest/coverage-v8@3.2.7 .
+Running mixed versions is not supported and may lead into bugs
+Update your dependencies and make sure the versions match.
+
+ RUN  v3.1.2 C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/apps/universal
+      Coverage enabled with v8
+
+ ✓ test/guest-rsvp.test.tsx (13 tests) 1709ms
+   ✓ REQ-F21-04 · the five RSVP states, in native components, against the contract > A9 guest: confirms with the real POST and shows the confirmed state  522ms
+ ✓ test/guest-gifts.test.tsx (22 tests) 4091ms
+   ✓ F21 · guest gifts > reserves once with the guest credential: PENDING_REVIEW  450ms
+   ✓ F21 · guest gifts > GET 503 has recovery and never displays a blank screen  1090ms
+ ✓ test/guest-app.test.tsx (34 tests) 2119ms
+   ✓ F21 · RSVP through the real API client and MSW > confirms once without borrowing the signed-in host's credentials  503ms
+   ✓ F21 · RSVP through the real API client and MSW > switching invitations clears the previous form and its revoked state  301ms
+ ✓ test/guest-link-landing.test.tsx (10 tests) 666ms
+ ✓ test/guest-controls.test.tsx (1 test) 338ms
+   ✓ F21 web · exposes real radio/checkbox controls and preserves exclusive attendance selection  335ms
+
+ Test Files  5 passed (5)
+      Tests  80 passed (80)
+   Start at  23:31:24
+   Duration  22.89s (transform 1.40s, setup 1.96s, collect 14.55s, tests 8.92s, environment 7.97s, prepare 958ms)
+
+ % Coverage report from v8
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------|---------|----------|---------|---------|-------------------
+All files          |   98.58 |    86.81 |   79.77 |   98.58 |                   
+ deep-links        |     100 |    89.33 |     100 |     100 |                   
+  router.ts        |     100 |    89.33 |     100 |     100 | ...43,46,54,63-64 
+ guest             |   98.44 |    86.25 |   78.04 |   98.44 |                   
+  ...-boundary.tsx |     100 |      100 |     100 |     100 |                   
+  field.tsx        |     100 |      100 |     100 |     100 |                   
+  gifts-screen.tsx |   98.05 |    86.44 |   84.21 |   98.05 | 108-110           
+  invalid-link.tsx |     100 |      100 |     100 |     100 |                   
+  link-landing.tsx |     100 |      100 |   66.66 |     100 |                   
+  ...-controls.tsx |     100 |      100 |     100 |     100 |                   
+  ...trols.web.tsx |     100 |      100 |     100 |     100 |                   
+  rsvp-screen.tsx  |   98.06 |    82.68 |      72 |   98.06 | 69-72,202,341     
+-------------------|---------|----------|---------|---------|-------------------

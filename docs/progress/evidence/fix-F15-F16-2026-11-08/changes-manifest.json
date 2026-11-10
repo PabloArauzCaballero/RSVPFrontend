@@ -1,0 +1,42 @@
+[
+  {
+    "file": "apps/seo-web/components/rsvp/rsvp-form.tsx",
+    "sha256": "b6660010d61cb28ee15814b8ea37834006e587e1d65c4e533a98a63eeb574f7f",
+    "kind": "product"
+  },
+  {
+    "file": "apps/seo-web/components/rsvp/rsvp-experience.tsx",
+    "sha256": "c2a061e20b6d5e8396e429e8a406348859cae7dcf77f5c6baf7de4af29634c3d",
+    "kind": "product"
+  },
+  {
+    "file": "apps/universal/src/host/guests/guest-form-screen.tsx",
+    "sha256": "57b73ade892383aa196a1dc2fbebeb1044effa0ace5da2b11d5f5adf2a894307",
+    "kind": "product"
+  },
+  {
+    "file": "apps/universal/src/host/guests/guest-detail-screen.tsx",
+    "sha256": "14e4864650df57446fa5e5d997fb9690471e1504293323e4a5494754356adb20",
+    "kind": "product"
+  },
+  {
+    "file": "apps/seo-web/scripts/e2e-rsvp.mjs",
+    "sha256": "6a4c5ff1b2d78c3313b4d74d51aa6da81d7dcdc550f085bbcec7271507086261",
+    "kind": "browser test"
+  },
+  {
+    "file": "apps/universal/scripts/e2e-guests.mjs",
+    "sha256": "6468182d1833dbba6e6e686a83611c9af9e9f8af8d94b406fbc72646fe443e6c",
+    "kind": "browser test"
+  },
+  {
+    "file": "apps/seo-web/tests/rsvp-submission.test.tsx",
+    "sha256": "39bb02c7264cc093b3f8098b3f8f3436f20c64f688c10b6a060e8a03f6a16e87",
+    "kind": "regression"
+  },
+  {
+    "file": "apps/universal/test/guest-state.test.tsx",
+    "sha256": "cd8a3ce1bf3a1028897c2c7184b30c4d9d03909ffd778ab5a88a1519143684e2",
+    "kind": "regression"
+  }
+]

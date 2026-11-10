@@ -1,0 +1,19 @@
+
+ RUN  v3.1.2 C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/apps/universal
+
+ ✓ test/guest-rsvp.test.tsx (13 tests) 1196ms
+   ✓ REQ-F21-04 · the five RSVP states, in native components, against the contract > A9 guest: confirms with the real POST and shows the confirmed state  362ms
+ ✓ test/guest-gifts.test.tsx (22 tests) 3284ms
+   ✓ F21 · guest gifts > reserves once with the guest credential: PENDING_REVIEW  327ms
+   ✓ F21 · guest gifts > GET 503 has recovery and never displays a blank screen  1071ms
+ ✓ test/guest-app.test.tsx (34 tests) 2535ms
+   ✓ F21 · RSVP through the real API client and MSW > confirms once without borrowing the signed-in host's credentials  1083ms
+ ✓ test/guest-link-landing.test.tsx (10 tests) 669ms
+ ✓ test/guest-controls.test.tsx (1 test) 207ms
+
+ Test Files  5 passed (5)
+      Tests  80 passed (80)
+   Start at  23:29:26
+   Duration  19.92s (transform 1.39s, setup 1.63s, collect 16.29s, tests 7.89s, environment 5.28s, prepare 863ms)
+
+JSON report written to C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/docs/progress/evidence/lane-F21/local/unit-run-1.json

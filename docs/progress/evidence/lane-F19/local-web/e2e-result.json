@@ -1,0 +1,35 @@
+{
+  "date": "2026-11-07T00:10:24.825Z",
+  "surface": "Expo web export in Chrome, contract mock",
+  "status": "PASS",
+  "checks": [
+    {
+      "id": "REQ-F19-01 (code path)",
+      "text": "permission screen renders and explains that web cannot receive push; physical-device registration NOT exercised",
+      "status": "PASS"
+    },
+    {
+      "id": "REQ-F19-01 keyboard",
+      "text": "unsupported state leaves notice preferences reachable by keyboard",
+      "status": "PASS"
+    }
+  ],
+  "axe": [
+    {
+      "screen": "permisos-push-web-no-soportado-360",
+      "violations": []
+    },
+    {
+      "screen": "permisos-push-web-no-soportado-768",
+      "violations": []
+    },
+    {
+      "screen": "permisos-push-web-no-soportado-1280",
+      "violations": []
+    },
+    {
+      "screen": "permisos-push-en-US-768",
+      "violations": []
+    }
+  ]
+}

@@ -119,7 +119,7 @@ describe("metadata and crawling", () => {
     const metadata = celebrationMetadata(VIEW, GALLERY, t);
     expect(metadata.title).toBe("Ana y Luis");
     expect(metadata.description).toBe("Boda · sábado, 19 de diciembre de 2026 · Hacienda El Prado");
-    expect(metadata.alternates?.canonical).toMatch(/\/c\/ana-y-luis\?lang=es-BO$/);
+    expect(metadata.alternates?.canonical).toMatch(/\/c\/ana-y-luis$/);
     expect(Object.keys(metadata.alternates?.languages ?? {})).toEqual(["es-BO", "en-US"]);
     expect(metadata.openGraph).toMatchObject({ type: "website", locale: "es_BO", images: [{ url: GALLERY[0]?.variants.full, width: 1920, height: 1280 }] });
     expect(celebrationMetadata(VIEW, GALLERY, t, { id: "faq", path: "faq" }).title).toBe("Preguntas frecuentes · Ana y Luis");
@@ -162,7 +162,7 @@ describe("provider directory (F24)", () => {
     const { client } = clientFor({ "/providers": json(503, { title: "Down", status: 503 }) });
     const result = await searchProviders({ category: "VENUE" }, client);
     expect(result).toMatchObject({ available: false, items: [] });
-    expect(renderToStaticMarkup(<ProviderResults page={result} t={t} locale="es-BO" path="/proveedores/salones" />)).toContain("No pudimos cargar los proveedores");
+    expect(renderToStaticMarkup(<ProviderResults page={result} t={t} locale="es-BO" path="/proveedores/salones" />)).toContain("no está disponible");
   });
 
   it("REQ-F24-05 · listings carry ItemList JSON-LD, prices without floats, and crawlable pagination", async () => {

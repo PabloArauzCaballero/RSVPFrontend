@@ -1,0 +1,409 @@
+turbo 2.5.2
+
+• Packages in scope: @rsvp/api-client, @rsvp/auth, @rsvp/celebration-theme, @rsvp/config-eslint, @rsvp/config-jest, @rsvp/config-tailwind, @rsvp/config-ts, @rsvp/contracts, @rsvp/design-tokens, @rsvp/forms, @rsvp/i18n, @rsvp/query-hooks, @rsvp/seo-web, @rsvp/telemetry, @rsvp/testing, @rsvp/ui, @rsvp/ui-web, @rsvp/universal
+• Running build in 18 packages
+• Remote caching disabled
+@rsvp/config-jest:build: cache hit, replaying logs 5a0242aa94df67cc
+@rsvp/config-ts:build: cache hit, replaying logs 88829248e1381e62
+@rsvp/config-eslint:build: cache hit, replaying logs 0c676cc421df4c7b
+@rsvp/config-tailwind:build: cache hit, replaying logs d0aab0f1aacd71c5
+@rsvp/i18n:build: cache miss, executing d20c0cbe0b5a2b0f
+@rsvp/forms:build: cache hit, replaying logs a958272346b66e6c
+@rsvp/telemetry:build: cache hit, replaying logs 1805f28eca2e21e8
+@rsvp/testing:build: cache hit, replaying logs d96c63c8a7cba0d7
+@rsvp/contracts:build: cache hit, replaying logs e68bf867a6cdabe1
+@rsvp/design-tokens:build: cache hit, replaying logs 0ef5c060f9748fe0
+@rsvp/design-tokens:build: [design-tokens] verified tokens.json, tokens.css
+@rsvp/celebration-theme:build: cache hit, replaying logs 5c107202ff6cd56b
+@rsvp/api-client:build: cache hit, replaying logs d6a1368292820f19
+@rsvp/query-hooks:build: cache hit, replaying logs 104acf7110758bcd
+@rsvp/auth:build: cache hit, replaying logs 19ab1ab5e648a1e3
+@rsvp/ui-web:build: cache miss, executing 208c2d465f6775e9
+@rsvp/ui:build: cache miss, executing 5c974b84dc325fbb
+@rsvp/seo-web:build: cache miss, executing a9d8275675b017d3
+@rsvp/universal:build: cache miss, executing f8e34471c395ad39
+@rsvp/seo-web:build:    ▲ Next.js 15.3.1
+@rsvp/seo-web:build: 
+@rsvp/seo-web:build:    Creating an optimized production build ...
+@rsvp/universal:build: Starting Metro Bundler
+@rsvp/seo-web:build:  ✓ Compiled successfully in 2000ms
+@rsvp/seo-web:build:    Linting and checking validity of types ...
+@rsvp/universal:build: Web node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+@rsvp/seo-web:build: 
+@rsvp/seo-web:build:  ⚠ The Next.js plugin was not detected in your ESLint configuration. See https://nextjs.org/docs/app/api-reference/config/eslint#migrating-existing-config
+@rsvp/universal:build: Web Bundled 3241ms node_modules\expo-router\entry.js (1243 modules)
+@rsvp/universal:build: 
+@rsvp/universal:build: › Assets (18):
+@rsvp/universal:build: ..\..\node_modules\@react-navigation\elements\lib\module\assets\back-icon-mask.0a328cd9c1afd0afe8e3b1ec5165b1b4.png (653 B)
+@rsvp/universal:build: ..\..\node_modules\@react-navigation\elements\lib\module\assets\back-icon.35ba0eaec5a4f5ed12ca16fabeae451d.png (207 B)
+@rsvp/universal:build: ..\..\node_modules\@react-navigation\elements\lib\module\assets\clear-icon.c94f6478e7ae0cdd9f15de1fcb9e5e55.png (4 variations | 425 B)
+@rsvp/universal:build: ..\..\node_modules\@react-navigation\elements\lib\module\assets\close-icon.808e1b1b9b53114ec2838071a7e6daa7.png (4 variations | 235 B)
+@rsvp/universal:build: ..\..\node_modules\@react-navigation\elements\lib\module\assets\search-icon.286d67d3f74808a60a78d3ebf1a5fb57.png (928 B)
+@rsvp/universal:build: ..\..\node_modules\expo-router\assets\arrow_down.017bc6ba3fc25503e5eb5e53826d48a8.png (9.46 kB)
+@rsvp/universal:build: ..\..\node_modules\expo-router\assets\error.d1ea1496f9057eb392d5bbf3732a61b7.png (469 B)
+@rsvp/universal:build: ..\..\node_modules\expo-router\assets\file.19eeb73b9593a38f8e9f418337fc7d10.png (138 B)
+@rsvp/universal:build: ..\..\node_modules\expo-router\assets\forward.d8b800c443b8972542883e0b9de2bdc6.png (188 B)
+@rsvp/universal:build: ..\..\node_modules\expo-router\assets\pkg.ab19f4cbc543357183a20571f68380a3.png (364 B)
+@rsvp/universal:build: ..\..\node_modules\expo-router\assets\sitemap.412dd9275b6b48ad28f5e3d81bb1f626.png (465 B)
+@rsvp/universal:build: ..\..\node_modules\expo-router\assets\unmatched.20e71bdf79e3a97bf55fd9e164041578.png (4.75 kB)
+@rsvp/universal:build: 
+@rsvp/universal:build: › web bundles (3):
+@rsvp/universal:build: _expo/static/css/modal.module-d6974dc704dba6fe76e33fac1006ba13.css (2.28 kB)
+@rsvp/universal:build: _expo/static/css/web-ed7b25516f9abb98518e181201b21770.css (9.38 kB)
+@rsvp/universal:build: _expo/static/js/web/entry-e6d8d6bc19996471801679d8593f286a.js (2.14 MB)
+@rsvp/universal:build: 
+@rsvp/universal:build: › Files (3):
+@rsvp/universal:build: favicon.ico (14.5 kB)
+@rsvp/universal:build: index.html (1.6 kB)
+@rsvp/universal:build: metadata.json (49 B)
+@rsvp/universal:build: 
+@rsvp/universal:build: Exported: web-build
+@rsvp/seo-web:build:    Collecting page data ...
+@rsvp/seo-web:build:    Generating static pages (0/123) ...
+@rsvp/seo-web:build:    Generating static pages (30/123) 
+@rsvp/seo-web:build:    Generating static pages (61/123) 
+@rsvp/seo-web:build:    Generating static pages (92/123) 
+@rsvp/seo-web:build:  ✓ Generating static pages (123/123)
+@rsvp/seo-web:build:    Finalizing page optimization ...
+@rsvp/seo-web:build:    Collecting build traces ...
+@rsvp/seo-web:build: 
+@rsvp/seo-web:build: Route (app)                                     Size  First Load JS  Revalidate  Expire
+@rsvp/seo-web:build: ┌ ○ /                                          161 B         102 kB          1h      1y
+@rsvp/seo-web:build: ├ ○ /_not-found                                978 B         102 kB
+@rsvp/seo-web:build: ├ ƒ /.well-known/apple-app-site-association    161 B         102 kB
+@rsvp/seo-web:build: ├ ƒ /.well-known/assetlinks.json               161 B         102 kB
+@rsvp/seo-web:build: ├ ○ /apple-icon.png                              0 B            0 B
+@rsvp/seo-web:build: ├ ƒ /c/[slug]                                1.08 kB         103 kB
+@rsvp/seo-web:build: ├ ƒ /c/[slug]/[section]                      1.08 kB         103 kB
+@rsvp/seo-web:build: ├ ƒ /c/[slug]/regalos                          158 B         202 kB
+@rsvp/seo-web:build: ├ ƒ /c/[slug]/regalos/[id]                     158 B         202 kB
+@rsvp/seo-web:build: ├ ƒ /c/[slug]/rsvp                             157 B         197 kB
+@rsvp/seo-web:build: ├ ƒ /c/[slug]/rsvp/[token]                     157 B         197 kB
+@rsvp/seo-web:build: ├ ○ /catalogo                                  183 B         183 kB
+@rsvp/seo-web:build: ├ ○ /icon.svg                                    0 B            0 B
+@rsvp/seo-web:build: ├ ○ /opengraph-image.png                         0 B            0 B
+@rsvp/seo-web:build: ├ ƒ /p/[slug]                                  208 B         186 kB
+@rsvp/seo-web:build: ├ ƒ /p/[slug]/agenda                         2.29 kB         177 kB
+@rsvp/seo-web:build: ├ ƒ /p/[slug]/catalogo                         213 B         105 kB
+@rsvp/seo-web:build: ├ ƒ /p/[slug]/catalogo/[sku]                   213 B         105 kB
+@rsvp/seo-web:build: ├ ƒ /p/[slug]/cotizar                        4.79 kB         192 kB
+@rsvp/seo-web:build: ├ ○ /proveedores                               197 B         105 kB          1h      1y
+@rsvp/seo-web:build: ├ ● /proveedores/[categoria]                   197 B         105 kB
+@rsvp/seo-web:build: ├   ├ /proveedores/salones
+@rsvp/seo-web:build: ├   ├ /proveedores/catering
+@rsvp/seo-web:build: ├   ├ /proveedores/fotografia
+@rsvp/seo-web:build: ├   └ [+8 more paths]
+@rsvp/seo-web:build: ├ ● /proveedores/[categoria]/[ciudad]          197 B         105 kB
+@rsvp/seo-web:build: ├   ├ /proveedores/salones/la-paz
+@rsvp/seo-web:build: ├   ├ /proveedores/salones/santa-cruz
+@rsvp/seo-web:build: ├   ├ /proveedores/salones/cochabamba
+@rsvp/seo-web:build: ├   └ [+96 more paths]
+@rsvp/seo-web:build: ├ ƒ /proveedores/buscar                        197 B         105 kB
+@rsvp/seo-web:build: ├ ƒ /r/[listingId]                             161 B         102 kB
+@rsvp/seo-web:build: ├ ○ /robots.txt                                161 B         102 kB
+@rsvp/seo-web:build: ├ ƒ /rsvp/[token]                              919 B         191 kB
+@rsvp/seo-web:build: ├ ○ /sitemap.xml                               161 B         102 kB          1m      1y
+@rsvp/seo-web:build: └ ○ /twitter-image.png                           0 B            0 B
+@rsvp/seo-web:build: + First Load JS shared by all                 101 kB
+@rsvp/seo-web:build:   ├ chunks/8315-1c9f09ac7be29523.js          46.3 kB
+@rsvp/seo-web:build:   ├ chunks/87c73c54-aba717b704177890.js      53.2 kB
+@rsvp/seo-web:build:   └ other shared chunks (total)              2.01 kB
+@rsvp/seo-web:build: 
+@rsvp/seo-web:build: 
+@rsvp/seo-web:build: ○  (Static)   prerendered as static content
+@rsvp/seo-web:build: ●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+@rsvp/seo-web:build: ƒ  (Dynamic)  server-rendered on demand
+@rsvp/seo-web:build: 
+
+ Tasks:    18 successful, 18 total
+Cached:    13 cached, 18 total
+  Time:    23.332s 
+
+ WARNING  no output files found for task @rsvp/i18n#build. Please check your `outputs` key in `turbo.json`
+ WARNING  no output files found for task @rsvp/ui#build. Please check your `outputs` key in `turbo.json`
+ WARNING  no output files found for task @rsvp/ui-web#build. Please check your `outputs` key in `turbo.json`
+turbo 2.5.2
+
+• Packages in scope: @rsvp/api-client, @rsvp/auth, @rsvp/celebration-theme, @rsvp/config-eslint, @rsvp/config-jest, @rsvp/config-tailwind, @rsvp/config-ts, @rsvp/contracts, @rsvp/design-tokens, @rsvp/forms, @rsvp/i18n, @rsvp/query-hooks, @rsvp/seo-web, @rsvp/telemetry, @rsvp/testing, @rsvp/ui, @rsvp/ui-web, @rsvp/universal
+• Running lint in 18 packages
+• Remote caching disabled
+@rsvp/config-eslint:lint: cache hit, replaying logs df11baaee0e0e995
+@rsvp/config-tailwind:lint: cache hit, replaying logs 7f9373809bde783f
+@rsvp/config-ts:lint: cache hit, replaying logs 8dc5cb62faaba457
+@rsvp/config-jest:lint: cache hit, replaying logs e5ebf825f974c66e
+@rsvp/telemetry:lint: cache hit, replaying logs 13d6340c32f20aa4
+@rsvp/forms:lint: cache hit, replaying logs 3666f8ba025f0be3
+@rsvp/i18n:lint: cache miss, executing 525fdddab058aac3
+@rsvp/design-tokens:lint: cache hit, replaying logs d800a007496c593a
+@rsvp/testing:lint: cache hit, replaying logs 15011566de047ae4
+@rsvp/contracts:lint: cache hit, replaying logs dc996f53fd5cb9b4
+@rsvp/celebration-theme:lint: cache hit, replaying logs cab46cd3de5e03c0
+@rsvp/api-client:lint: cache hit, replaying logs a7138312bd32ab3c
+@rsvp/query-hooks:lint: cache hit, replaying logs a6fe103d065d35c5
+@rsvp/auth:lint: cache hit, replaying logs 9a08f9ed32802007
+@rsvp/ui-web:lint: cache miss, executing bdabc645a46c52c1
+@rsvp/ui:lint: cache miss, executing 93c3527b723cce69
+@rsvp/seo-web:lint: cache miss, executing 626623f2310fcaad
+@rsvp/universal:lint: cache miss, executing bd10cb747e2bc284
+
+ Tasks:    18 successful, 18 total
+Cached:    13 cached, 18 total
+  Time:    8.972s 
+
+turbo 2.5.2
+
+• Packages in scope: @rsvp/api-client, @rsvp/auth, @rsvp/celebration-theme, @rsvp/config-eslint, @rsvp/config-jest, @rsvp/config-tailwind, @rsvp/config-ts, @rsvp/contracts, @rsvp/design-tokens, @rsvp/forms, @rsvp/i18n, @rsvp/query-hooks, @rsvp/seo-web, @rsvp/telemetry, @rsvp/testing, @rsvp/ui, @rsvp/ui-web, @rsvp/universal
+• Running test in 18 packages
+• Remote caching disabled
+@rsvp/config-ts:test: cache hit, replaying logs c02dbc171926ec30
+@rsvp/config-ts:test: 
+@rsvp/config-ts:test: [1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mC:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/packages/config-ts[39m
+@rsvp/config-ts:test: 
+@rsvp/config-ts:test: No test files found, exiting with code 0
+@rsvp/config-ts:test: 
+@rsvp/config-ts:test: [2minclude: [22m[33m**/*.{test,spec}.?(c|m)[jt]s?(x)[39m
+@rsvp/config-ts:test: [2mexclude:  [22m[33m**/node_modules/**[2m, [22m**/dist/**[2m, [22m**/cypress/**[2m, [22m**/.{idea,git,cache,output,temp}/**[2m, [22m**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build,eslint,prettier}.config.*[39m
+@rsvp/config-ts:test: 
+@rsvp/config-ts:build: cache hit, replaying logs 88829248e1381e62
+@rsvp/config-eslint:test: cache hit, replaying logs 37edcab5b7ba7fb3
+@rsvp/config-eslint:test: ✔ REQ-F06-06: a hand-written JSX text fails (214.4496ms)
+@rsvp/config-eslint:test: ✔ a hand-written literal child, label, placeholder and accessibility label fail (11.7484ms)
+@rsvp/config-eslint:test: ✔ translated text, dynamic values, punctuation, symbols and brand names pass (15.9266ms)
+@rsvp/config-eslint:test: ✔ catalogs and the declared legacy debt list are exempt, tests are not scanned (16.6895ms)
+@rsvp/config-eslint:test: ✔ the repository's own screens are clean (the gate is green on main code) (4479.9161ms)
+@rsvp/config-eslint:test: ✔ the CLI exits non-zero when a screen contains a literal (what blocks the merge) (1821.7964ms)
+@rsvp/config-eslint:test: ℹ tests 6
+@rsvp/config-eslint:test: ℹ suites 0
+@rsvp/config-eslint:test: ℹ pass 6
+@rsvp/config-eslint:test: ℹ fail 0
+@rsvp/config-eslint:test: ℹ cancelled 0
+@rsvp/config-eslint:test: ℹ skipped 0
+@rsvp/config-eslint:test: ℹ todo 0
+@rsvp/config-eslint:test: ℹ duration_ms 9016.5999
+@rsvp/config-jest:test: cache hit, replaying logs 21e279f62dc391fe
+@rsvp/config-tailwind:test: cache hit, replaying logs af978acfe15f681e
+@rsvp/i18n:test: cache miss, executing 54705c99523e32ab
+@rsvp/testing:build: cache hit, replaying logs d96c63c8a7cba0d7
+@rsvp/forms:build: cache hit, replaying logs a958272346b66e6c
+@rsvp/celebration-theme:build: cache hit, replaying logs 5c107202ff6cd56b
+@rsvp/design-tokens:test: cache hit, replaying logs f794e2c73121e311
+@rsvp/design-tokens:test: 
+@rsvp/design-tokens:test: [1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mC:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/packages/design-tokens[39m
+@rsvp/design-tokens:test: 
+@rsvp/design-tokens:test:  [32m✓[39m src/tokens.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+@rsvp/design-tokens:test:  [32m✓[39m src/tokens-pipeline.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 2374[2mms[22m[39m
+@rsvp/design-tokens:test:    [33m[2m✓[22m[39m REQ-F02-01/05: one source for every consumer[2m > [22mgenerated files are in sync with src/*.ts [33m 586[2mms[22m[39m
+@rsvp/design-tokens:test:    [33m[2m✓[22m[39m REQ-F02-01/05: one source for every consumer[2m > [22mREQ-F02-02 (pipeline): changing one token in the source reaches the preset, the CSS and the JSON [33m 1775[2mms[22m[39m
+@rsvp/design-tokens:test: 
+@rsvp/design-tokens:test: [2m Test Files [22m [1m[32m2 passed[39m[22m[90m (2)[39m
+@rsvp/design-tokens:test: [2m      Tests [22m [1m[32m6 passed[39m[22m[90m (6)[39m
+@rsvp/design-tokens:test: [2m   Start at [22m 13:43:02
+@rsvp/design-tokens:test: [2m   Duration [22m 3.33s[2m (transform 161ms, setup 0ms, collect 210ms, tests 2.38s, environment 0ms, prepare 536ms)[22m
+@rsvp/design-tokens:test: 
+@rsvp/telemetry:test: cache hit, replaying logs db997ee0f4855fcd
+@rsvp/telemetry:test: 
+@rsvp/telemetry:test: [1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mC:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/packages/telemetry[39m
+@rsvp/telemetry:test: 
+@rsvp/telemetry:test: No test files found, exiting with code 0
+@rsvp/telemetry:test: 
+@rsvp/telemetry:test: [2minclude: [22m[33m**/*.{test,spec}.?(c|m)[jt]s?(x)[39m
+@rsvp/telemetry:test: [2mexclude:  [22m[33m**/node_modules/**[2m, [22m**/dist/**[2m, [22m**/cypress/**[2m, [22m**/.{idea,git,cache,output,temp}/**[2m, [22m**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build,eslint,prettier}.config.*[39m
+@rsvp/telemetry:test: 
+@rsvp/contracts:test: cache miss, executing 530a6535b15bea54
+@rsvp/forms:test: cache hit, replaying logs dec45bd3a2f7aac6
+@rsvp/forms:test: 
+@rsvp/forms:test: [1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mC:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/packages/forms[39m
+@rsvp/forms:test: 
+@rsvp/forms:test:  [32m✓[39m src/schemas/guest-gift-reservation.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+@rsvp/forms:test:  [32m✓[39m src/schemas/host-gift.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+@rsvp/forms:test:  [32m✓[39m src/schemas/quote.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+@rsvp/forms:test:  [32m✓[39m src/schemas/rsvp.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+@rsvp/forms:test:  [32m✓[39m src/schemas/notification.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+@rsvp/forms:test:  [32m✓[39m src/schemas/auth-celebration.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+@rsvp/forms:test: 
+@rsvp/forms:test: [2m Test Files [22m [1m[32m6 passed[39m[22m[90m (6)[39m
+@rsvp/forms:test: [2m      Tests [22m [1m[32m35 passed[39m[22m[90m (35)[39m
+@rsvp/forms:test: [2m   Start at [22m 11:44:50
+@rsvp/forms:test: [2m   Duration [22m 3.32s[2m (transform 4.91s, setup 0ms, collect 6.18s, tests 63ms, environment 1ms, prepare 5.47s)[22m
+@rsvp/forms:test: 
+@rsvp/celebration-theme:test: cache hit, replaying logs 53ec8c30cd1a293e
+@rsvp/celebration-theme:test: 
+@rsvp/celebration-theme:test: [1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mC:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/packages/celebration-theme[39m
+@rsvp/celebration-theme:test: 
+@rsvp/celebration-theme:test:  [32m✓[39m src/index.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+@rsvp/celebration-theme:test:  [32m✓[39m src/renderer.test.tsx [2m([22m[2m15 tests[22m[2m)[22m[32m 293[2mms[22m[39m
+@rsvp/celebration-theme:test:  [32m✓[39m src/native.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[33m 529[2mms[22m[39m
+@rsvp/celebration-theme:test: 
+@rsvp/celebration-theme:test: [2m Test Files [22m [1m[32m3 passed[39m[22m[90m (3)[39m
+@rsvp/celebration-theme:test: [2m      Tests [22m [1m[32m28 passed[39m[22m[90m (28)[39m
+@rsvp/celebration-theme:test: [2m   Start at [22m 13:43:01
+@rsvp/celebration-theme:test: [2m   Duration [22m 10.76s[2m (transform 777ms, setup 0ms, collect 7.70s, tests 832ms, environment 8.88s, prepare 857ms)[22m
+@rsvp/celebration-theme:test: 
+@rsvp/testing:test: cache hit, replaying logs eb9f2552016800db
+@rsvp/testing:test: 
+@rsvp/testing:test: [1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mC:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/packages/testing[39m
+@rsvp/testing:test: 
+@rsvp/testing:test: No test files found, exiting with code 0
+@rsvp/testing:test: 
+@rsvp/testing:test: [2minclude: [22m[33m**/*.{test,spec}.?(c|m)[jt]s?(x)[39m
+@rsvp/testing:test: [2mexclude:  [22m[33m**/node_modules/**[2m, [22m**/dist/**[2m, [22m**/cypress/**[2m, [22m**/.{idea,git,cache,output,temp}/**[2m, [22m**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build,eslint,prettier}.config.*[39m
+@rsvp/testing:test: 
+@rsvp/i18n:build: cache hit, replaying logs d20c0cbe0b5a2b0f
+@rsvp/design-tokens:build: cache hit, replaying logs 0ef5c060f9748fe0
+@rsvp/design-tokens:build: [design-tokens] verified tokens.json, tokens.css
+@rsvp/contracts:build: cache hit, replaying logs e68bf867a6cdabe1
+@rsvp/ui:build: cache hit, replaying logs 5c974b84dc325fbb
+@rsvp/ui:test: cache miss, executing b28bc4bdd334f6b1
+@rsvp/ui-web:build: cache hit, replaying logs 208c2d465f6775e9
+@rsvp/ui-web:test: cache miss, executing bc8202d4a59217cb
+@rsvp/api-client:build: cache hit, replaying logs d6a1368292820f19
+@rsvp/api-client:test: cache hit, replaying logs 211091a0b08eed04
+@rsvp/api-client:test: 
+@rsvp/api-client:test: [1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mC:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/packages/api-client[39m
+@rsvp/api-client:test: 
+@rsvp/api-client:test:  [32m✓[39m test/errors.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+@rsvp/api-client:test:  [32m✓[39m test/client.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+@rsvp/api-client:test:  [32m✓[39m test/contract.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+@rsvp/api-client:test: 
+@rsvp/api-client:test: [2m Test Files [22m [1m[32m3 passed[39m[22m[90m (3)[39m
+@rsvp/api-client:test: [2m      Tests [22m [1m[32m11 passed[39m[22m[90m (11)[39m
+@rsvp/api-client:test: [2m   Start at [22m 13:43:07
+@rsvp/api-client:test: [2m   Duration [22m 2.92s[2m (transform 1.94s, setup 0ms, collect 1.94s, tests 37ms, environment 1ms, prepare 2.93s)[22m
+@rsvp/api-client:test: 
+@rsvp/query-hooks:build: cache hit, replaying logs 104acf7110758bcd
+@rsvp/auth:build: cache hit, replaying logs 19ab1ab5e648a1e3
+@rsvp/query-hooks:test: cache miss, executing b47e2cc7bd201e72
+@rsvp/auth:test: cache hit, replaying logs 5de862ae375f7ab6
+@rsvp/auth:test: 
+@rsvp/auth:test: [1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mC:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/packages/auth[39m
+@rsvp/auth:test: 
+@rsvp/auth:test:  [2m[90m↓[39m[22m test/identity-live.test.ts [2m([22m[2m1 test[22m[2m | [22m[33m1 skipped[39m[2m)[22m
+@rsvp/auth:test:  [32m✓[39m test/deep-links.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+@rsvp/auth:test:  [32m✓[39m test/guards.test.ts [2m([22m[2m31 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+@rsvp/auth:test:  [32m✓[39m test/identity-client.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 32[2mms[22m[39m
+@rsvp/auth:test:  [32m✓[39m test/session.test.ts [2m([22m[2m23 tests[22m[2m)[22m[32m 41[2mms[22m[39m
+@rsvp/auth:test: 
+@rsvp/auth:test: [2m Test Files [22m [1m[32m4 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (5)[39m
+@rsvp/auth:test: [2m      Tests [22m [1m[32m71 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (72)[39m
+@rsvp/auth:test: [2m   Start at [22m 13:43:08
+@rsvp/auth:test: [2m   Duration [22m 3.81s[2m (transform 4.47s, setup 0ms, collect 7.44s, tests 92ms, environment 1ms, prepare 3.62s)[22m
+@rsvp/auth:test: 
+@rsvp/universal:test: cache miss, executing 55d258cd06f5c534
+@rsvp/seo-web:test: cache miss, executing 6c9baebd1846ae63
+@rsvp/i18n:test: 
+@rsvp/i18n:test: [1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mC:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/packages/i18n[39m
+@rsvp/i18n:test: 
+@rsvp/ui-web:test: 
+@rsvp/ui-web:test: [1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mC:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/packages/ui-web[39m
+@rsvp/ui-web:test: 
+@rsvp/contracts:test: 
+@rsvp/contracts:test: [1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mC:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/packages/contracts[39m
+@rsvp/contracts:test: 
+@rsvp/query-hooks:test: 
+@rsvp/query-hooks:test: [1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mC:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/packages/query-hooks[39m
+@rsvp/query-hooks:test: 
+@rsvp/universal:test: 
+@rsvp/universal:test: [1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mC:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/apps/universal[39m
+@rsvp/universal:test: 
+@rsvp/seo-web:test: 
+@rsvp/seo-web:test: [1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mC:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/apps/seo-web[39m
+@rsvp/seo-web:test: 
+@rsvp/ui:test: 
+@rsvp/ui:test: [1m[46m RUN [49m[22m [36mv3.2.7 [39m[90mC:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/packages/ui[39m
+@rsvp/ui:test: 
+@rsvp/i18n:test:  [32m✓[39m test/resources.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 40[2mms[22m[39m
+@rsvp/i18n:test:  [32m✓[39m test/translator.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 184[2mms[22m[39m
+@rsvp/i18n:test:  [32m✓[39m test/format.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 216[2mms[22m[39m
+@rsvp/i18n:test: 
+@rsvp/i18n:test: [2m Test Files [22m [1m[32m3 passed[39m[22m[90m (3)[39m
+@rsvp/i18n:test: [2m      Tests [22m [1m[32m12 passed[39m[22m[90m (12)[39m
+@rsvp/i18n:test: [2m   Start at [22m 11:53:33
+@rsvp/i18n:test: [2m   Duration [22m 4.47s[2m (transform 2.98s, setup 0ms, collect 10.67s, tests 439ms, environment 1ms, prepare 791ms)[22m
+@rsvp/i18n:test: 
+@rsvp/seo-web:test:  [32m✓[39m tests/i18n-boundary.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 24[2mms[22m[39m
+@rsvp/seo-web:test:  [32m✓[39m tests/impressions.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+@rsvp/seo-web:test:  [32m✓[39m tests/no-native-ui-boundary.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 282[2mms[22m[39m
+@rsvp/seo-web:test:  [32m✓[39m tests/redirect.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 34[2mms[22m[39m
+@rsvp/query-hooks:test:  [32m✓[39m test/invalidation.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+@rsvp/query-hooks:test:  [32m✓[39m test/celebration-api.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 47[2mms[22m[39m
+@rsvp/query-hooks:test:  [32m✓[39m test/push-gift-reservation.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 385[2mms[22m[39m
+@rsvp/query-hooks:test:  [32m✓[39m test/domain-hooks.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[32m 181[2mms[22m[39m
+@rsvp/universal:test:  [32m✓[39m test/route-groups.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 52[2mms[22m[39m
+@rsvp/query-hooks:test:  [32m✓[39m test/msw-hooks.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[33m 517[2mms[22m[39m
+@rsvp/seo-web:test:  [32m✓[39m tests/guest-navigation.test.tsx [2m([22m[2m1 test[22m[2m)[22m[32m 156[2mms[22m[39m
+@rsvp/query-hooks:test:  [32m✓[39m test/host-gifts.test.tsx [2m([22m[2m9 tests[22m[2m)[22m[33m 512[2mms[22m[39m
+@rsvp/query-hooks:test:  [32m✓[39m test/guest-contract.test.tsx [2m([22m[2m29 tests[22m[2m)[22m[33m 1349[2mms[22m[39m
+@rsvp/contracts:test:  [31m❯[39m test/contracts.test.ts [2m([22m[2m4 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 8489[2mms[22m[39m
+@rsvp/contracts:test:    [32m✓[39m @rsvp/contracts (REQ-F01-05 local substitute, REQ-F04-01)[2m > [22mvendors the 8 backend OpenAPI 3.1 specs (semver versions follow the backend; the sync test below pins them to its checkout) and each one has an RFC 9457 Problem[32m 27[2mms[22m[39m
+@rsvp/contracts:test: [31m   [31m×[31m @rsvp/contracts (REQ-F01-05 local substitute, REQ-F04-01)[2m > [22mgenerated types are in sync with the vendored specs and with the backend checkout (when present)[39m[33m 4876[2mms[22m[39m
+@rsvp/contracts:test: [31m     → expected [Function] to not throw an error but 'Error: Command failed: node scripts/g…' was thrown[39m
+@rsvp/contracts:test:    [33m[2m✓[22m[39m @rsvp/contracts (REQ-F01-05 local substitute, REQ-F04-01)[2m > [22mnegative: a drifted spec makes generated files stale and the check fails with that reason [33m 3583[2mms[22m[39m
+@rsvp/contracts:test:    [32m✓[39m @rsvp/contracts (REQ-F01-05 local substitute, REQ-F04-01)[2m > [22mexposes the typed paths and schemas[32m 0[2mms[22m[39m
+@rsvp/contracts:test: 
+@rsvp/contracts:test: [31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+@rsvp/contracts:test: 
+@rsvp/contracts:test: [41m[1m FAIL [22m[49m test/contracts.test.ts[2m > [22m@rsvp/contracts (REQ-F01-05 local substitute, REQ-F04-01)[2m > [22mgenerated types are in sync with the vendored specs and with the backend checkout (when present)
+@rsvp/contracts:test: [31m[1mAssertionError[22m: expected [Function] to not throw an error but 'Error: Command failed: node scripts/g…' was thrown[39m
+@rsvp/contracts:test: 
+@rsvp/contracts:test: [32m- Expected:[39m 
+@rsvp/contracts:test: undefined
+@rsvp/contracts:test: 
+@rsvp/contracts:test: [31m+ Received:[39m 
+@rsvp/contracts:test: "Error: Command failed: node scripts/generate.mjs --check
+@rsvp/contracts:test: specs/celebration.openapi.json differs from the backend: run \"yarn workspace @rsvp/contracts generate\"
+@rsvp/contracts:test: specs/gateway.openapi.json differs from the backend: run \"yarn workspace @rsvp/contracts generate\"
+@rsvp/contracts:test: specs/gift-list.openapi.json differs from the backend: run \"yarn workspace @rsvp/contracts generate\"
+@rsvp/contracts:test: specs/guest-rsvp.openapi.json differs from the backend: run \"yarn workspace @rsvp/contracts generate\"
+@rsvp/contracts:test: specs/identity.openapi.json differs from the backend: run \"yarn workspace @rsvp/contracts generate\"
+@rsvp/contracts:test: specs/notification.openapi.json differs from the backend: run \"yarn workspace @rsvp/contracts generate\"
+@rsvp/contracts:test: specs/provider-catalog.openapi.json differs from the backend: run \"yarn workspace @rsvp/contracts generate\"
+@rsvp/contracts:test: specs/template-media.openapi.json differs from the backend: run \"yarn workspace @rsvp/contracts generate\"
+@rsvp/contracts:test: "
+@rsvp/contracts:test: 
+@rsvp/contracts:test: [36m [2m❯[22m test/contracts.test.ts:[2m22:111[22m[39m
+@rsvp/contracts:test:     [90m 20| [39m
+@rsvp/contracts:test:     [90m 21| [39m  it("generated types are in sync with the vendored specs and with the…
+@rsvp/contracts:test:     [90m 22| [39m    expect(() => execFileSync("node", ["scripts/generate.mjs", "--chec…
+@rsvp/contracts:test:     [90m   | [39m                                                                                                              [31m^[39m
+@rsvp/contracts:test:     [90m 23| [39m  }[33m,[39m [34m60_000[39m)[33m;[39m
+@rsvp/contracts:test:     [90m 24| [39m
+@rsvp/contracts:test: 
+@rsvp/contracts:test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+@rsvp/contracts:test: 
+@rsvp/contracts:test: 
+@rsvp/contracts:test: [2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+@rsvp/contracts:test: [2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m3 passed[39m[22m[90m (4)[39m
+@rsvp/contracts:test: [2m   Start at [22m 11:53:34
+@rsvp/contracts:test: [2m   Duration [22m 11.84s[2m (transform 755ms, setup 0ms, collect 359ms, tests 8.49s, environment 0ms, prepare 841ms)[22m
+@rsvp/contracts:test: 
+@rsvp/ui-web:test: [90mstderr[2m | src/index.test.tsx[2m > [22m[2mPartnerLink: always through /r/{listingId}[2m > [22m[2mhas no axe violations
+@rsvp/ui-web:test: [22m[39mError: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+@rsvp/ui-web:test:     at module.exports (C:\Users\maria\OneDrive\Documentos\Github\RSVP\RSVPFrontend\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+@rsvp/ui-web:test:     at HTMLCanvasElementImpl.getContext (C:\Users\maria\OneDrive\Documentos\Github\RSVP\RSVPFrontend\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
+@rsvp/ui-web:test:     at HTMLCanvasElement.getContext (C:\Users\maria\OneDrive\Documentos\Github\RSVP\RSVPFrontend\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+@rsvp/ui-web:test:     at C:\Users\maria\OneDrive\Documentos\Github\RSVP\RSVPFrontend\node_modules\axe-core\axe.js:21249:49
+@rsvp/ui-web:test:     at Object.get (C:\Users\maria\OneDrive\Documentos\Github\RSVP\RSVPFrontend\node_modules\axe-core\axe.js:15329:23)
+@rsvp/ui-web:test:     at _isIconLigature (C:\Users\maria\OneDrive\Documentos\Github\RSVP\RSVPFrontend\node_modules\axe-core\axe.js:21248:41)
+@rsvp/ui-web:test:     at C:\Users\maria\OneDrive\Documentos\Github\RSVP\RSVPFrontend\node_modules\axe-core\axe.js:33168:54
+@rsvp/ui-web:test:     at Array.some (<anonymous>)
+@rsvp/ui-web:test:     at hasRealTextChildren (C:\Users\maria\OneDrive\Documentos\Github\RSVP\RSVPFrontend\node_modules\axe-core\axe.js:33167:35)
+@rsvp/ui-web:test:     at Rule.colorContrastMatches [as matches] (C:\Users\maria\OneDrive\Documentos\Github\RSVP\RSVPFrontend\node_modules\axe-core\axe.js:33129:12) [90mundefined[39m
+@rsvp/ui-web:test: 
+@rsvp/ui-web:test:  [32m✓[39m src/index.test.tsx [2m([22m[2m15 tests[22m[2m)[22m[33m 978[2mms[22m[39m
+@rsvp/ui-web:test:    [33m[2m✓[22m[39m REQ-F03-05/03: catalog renders every primitive and passes axe (structure rules)[2m > [22mshows all five states and has no critical/serious axe violations [33m 449[2mms[22m[39m
+@rsvp/ui-web:test: 
+@rsvp/ui-web:test: [2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+@rsvp/ui-web:test: [2m      Tests [22m [1m[32m15 passed[39m[22m[90m (15)[39m
+@rsvp/ui-web:test: [2m   Start at [22m 11:53:34
+@rsvp/ui-web:test: [2m   Duration [22m 12.19s[2m (transform 1.18s, setup 0ms, collect 3.68s, tests 978ms, environment 5.39s, prepare 849ms)[22m
+@rsvp/ui-web:test: 
+@rsvp/contracts:test: ERROR: command finished with error: command (C:\Users\maria\OneDrive\Documentos\Github\RSVP\RSVPFrontend\packages\contracts) C:\Users\maria\AppData\Local\Temp\xfs-6d1ff81e\yarn.cmd run test exited (1)
+@rsvp/contracts#test: command (C:\Users\maria\OneDrive\Documentos\Github\RSVP\RSVPFrontend\packages\contracts) C:\Users\maria\AppData\Local\Temp\xfs-6d1ff81e\yarn.cmd run test exited (1)
+
+ Tasks:    24 successful, 30 total
+Cached:    23 cached, 30 total
+  Time:    15.546s 
+Failed:    @rsvp/contracts#test
+
+ WARNING  no output files found for task @rsvp/i18n#test. Please check your `outputs` key in `turbo.json`
+ ERROR  run failed: command  exited (1)

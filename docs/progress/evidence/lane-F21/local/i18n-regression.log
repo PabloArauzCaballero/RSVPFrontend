@@ -1,0 +1,13 @@
+
+ RUN  v3.1.2 C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/packages/i18n
+
+ ✓ test/translator.test.ts (4 tests) 35ms
+ ✓ test/format.test.ts (6 tests) 38ms
+ ✓ test/resources.test.ts (2 tests) 23ms
+
+ Test Files  3 passed (3)
+      Tests  12 passed (12)
+   Start at  23:29:25
+   Duration  1.75s (transform 350ms, setup 0ms, collect 1.35s, tests 96ms, environment 1ms, prepare 495ms)
+
+JSON report written to C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/docs/progress/evidence/lane-F21/local/i18n-regression.json

@@ -1,0 +1,986 @@
+diff --git a/apps/universal/src/host/gifts/catalog-screen.tsx b/apps/universal/src/host/gifts/catalog-screen.tsx
+index 88152bd..d95292c 100644
+--- a/apps/universal/src/host/gifts/catalog-screen.tsx
++++ b/apps/universal/src/host/gifts/catalog-screen.tsx
+@@ -1,53 +1,91 @@
+-import { useState, type ReactNode } from "react";
++import { useRef, useState, type ReactNode } from "react";
+ import { Text, View } from "react-native";
+ import { spacing } from "@rsvp/design-tokens";
+ import { ApiError } from "@rsvp/api-client";
++import { hostGiftSearchSchema, parseHostGiftPrice } from "@rsvp/forms";
+ import { formatMinor } from "@rsvp/i18n";
+-import { problemCode, useAddGift, useListingSearch, type ListingHit } from "@rsvp/query-hooks";
++import { problemCode, useAddGift, useHostGiftCatalog, type GiftItemStatus, type ListingHit } from "@rsvp/query-hooks";
+ import { useApiClient, useLocale, useT } from "../../platform/providers";
+ import { CelebrationScreen, type ScreenProps } from "../gate";
+-import { ActionButton, ErrorNotice, Field, Loading, Notice, styles } from "../ui";
+-import { RetryNotice } from "../guests/parts";
++import { HOST_ROUTES, withCelebration } from "../routes";
++import { ActionButton, Loading, Notice, styles } from "../ui";
++import { GiftCategory } from "./controls";
++import { GiftFailure, GiftField, PublicationLine } from "./parts";
+ 
+-/** C27 · Build the list from the partner catalog: search listings (GET /listings?q=), then add the chosen product as a CATALOGED gift. */
+-function CatalogBody({ celebrationId, currency }: { readonly celebrationId: string; readonly currency: string }): ReactNode {
++interface Props extends ScreenProps { readonly initialQuery?: string }
++
++function CatalogBody({ celebrationId, currency, initialQuery = "", onNavigate }: Props & { readonly celebrationId: string; readonly currency: string }): ReactNode {
+   const t = useT();
+   const locale = useLocale();
+   const client = useApiClient();
+-  const [query, setQuery] = useState("");
+-  const [committed, setCommitted] = useState("");
+-  const search = useListingSearch(client, committed);
++  const initial = hostGiftSearchSchema.safeParse(initialQuery);
++  const [query, setQuery] = useState(initial.success ? initial.data : "");
++  const [committed, setCommitted] = useState(query);
++  const [category, setCategory] = useState("all");
++  const [maxPrice, setMaxPrice] = useState("");
++  const [ceiling, setCeiling] = useState<number | null>(null);
++  const [errors, setErrors] = useState<{ query?: string; price?: string; agreed?: string }>({});
++  const [agreed, setAgreed] = useState<Record<string, string>>({});
++  const [added, setAdded] = useState<{ title: string; status: GiftItemStatus } | null>(null);
++  const inFlight = useRef(false);
++  const search = useHostGiftCatalog(client, committed, locale);
+   const add = useAddGift(client, celebrationId);
+-  const [added, setAdded] = useState<string | null>(null);
+   const unavailable = add.error instanceof ApiError && problemCode(add.error) === "CATALOG_PRODUCT_UNAVAILABLE";
++  const categories = [...new Set(search.data?.items.flatMap((hit) => hit.category ? [hit.category] : []) ?? [])];
++  const items = search.data?.items.filter((hit) => (category === "all" || hit.category === category) && (ceiling === null || (hit.currency ?? currency) === currency && hit.priceFromMinor !== undefined && hit.priceFromMinor <= ceiling)) ?? [];
++
++  const apply = (): void => {
++    const parsed = hostGiftSearchSchema.safeParse(query);
++    const minor = maxPrice.trim() ? parseHostGiftPrice(maxPrice) : null;
++    if (!parsed.success || maxPrice.trim() && minor === null) {
++      setErrors({ ...(!parsed.success ? { query: t("hostGifts.invalidQuery") } : {}), ...(maxPrice.trim() && minor === null ? { price: t("hostGifts.invalidMoney") } : {}) }); return;
++    }
++    setErrors({}); setCeiling(minor); setAdded(null);
++    if (committed === parsed.data) { void search.refetch(); } else { setCommitted(parsed.data); setCategory("all"); }
++  };
+ 
+   const choose = (hit: ListingHit): void => {
+-    setAdded(null);
+-    add.mutate({ source: "CATALOGED", title: hit.title, price: { amountMinor: hit.priceFromMinor ?? 0, currency: hit.currency ?? currency }, productListingId: hit.id }, { onSuccess: () => setAdded(hit.title) });
++    if (inFlight.current) return;
++    const amountMinor = hit.priceFromMinor ?? parseHostGiftPrice(agreed[hit.id] ?? "");
++    if (amountMinor === null || !Number.isSafeInteger(amountMinor) || amountMinor < 0) { setErrors({ agreed: hit.id }); return; }
++    inFlight.current = true; setAdded(null); setErrors({});
++    add.mutate({ source: "CATALOGED", title: hit.title, price: { amountMinor, currency: hit.currency ?? currency }, productListingId: hit.id }, {
++      onSuccess: (item) => setAdded({ title: hit.title, status: item.status }),
++      onSettled: () => { inFlight.current = false; }
++    });
+   };
+-  return (
+-    <View style={{ gap: spacing[4] }}>
+-      <Text style={styles.body}>{t("gifts.host.catalog.intro")}</Text>
+-      <Field label={t("gifts.host.catalog.search")} value={query} onChange={setQuery} placeholder={t("gifts.host.catalog.searchPlaceholder")} testID="catalog-query" />
+-      <ActionButton label={t("gifts.host.catalog.search")} onPress={() => setCommitted(query.trim())} testID="catalog-search" />
+-      {added ? <Notice kind="success">{t("gifts.host.catalog.added", { title: added })}</Notice> : null}
+-      {unavailable ? <Notice kind="error">{t("gifts.host.catalog.unavailableBody")}</Notice> : <ErrorNotice error={add.error} />}
+-      {search.isFetching && !search.data ? <Loading /> : null}
+-      {search.isError ? <RetryNotice error={search.error} onRetry={() => { void search.refetch(); }} /> : null}
+-      {search.data?.viaFallback ? <Notice>{t("gifts.host.catalog.fallbackNote")}</Notice> : null}
+-      {search.data && search.data.items.length === 0 ? <Notice>{t("gifts.host.catalog.none")}</Notice> : null}
+-      {search.data?.items.map((hit) => (
+-        <View key={hit.id} testID={`hit-${hit.id}`} style={[styles.card, { gap: spacing[1] }]}>
+-          <Text style={styles.subtitle}>{hit.title}</Text>
+-          {hit.priceFromMinor !== undefined ? <Text style={styles.body}>{t("gifts.host.catalog.priceFrom", { price: formatMinor(hit.priceFromMinor, hit.currency ?? currency, locale) })}</Text> : null}
+-          <ActionButton label={add.isPending && add.variables?.source === "CATALOGED" && add.variables.productListingId === hit.id ? t("gifts.host.catalog.adding") : t("gifts.host.catalog.add")} busy={add.isPending && add.variables?.source === "CATALOGED" && add.variables.productListingId === hit.id} disabled={add.isPending} onPress={() => choose(hit)} testID={`add-${hit.id}`} />
+-        </View>
+-      ))}
++
++  return <View style={{ gap: spacing[4] }}>
++    <Text style={styles.body}>{t("gifts.host.catalog.intro")}</Text>
++    <GiftField label={t("gifts.host.catalog.search")} value={query} onChange={setQuery} error={errors.query} placeholder={t("gifts.host.catalog.searchPlaceholder")} testID="catalog-query" />
++    <GiftCategory label={t("hostGifts.category")} value={category} onChange={setCategory} prefix="catalog-category" choices={[
++      { value: "all", label: t("hostGifts.allCategories") }, ...categories.map((code) => ({ value: code, label: t(`directory.category.${code}`) === `directory.category.${code}` ? t("hostGifts.otherCategory") : t(`directory.category.${code}`) }))
++    ]} />
++    <GiftField label={t("hostGifts.maxPrice")} value={maxPrice} onChange={setMaxPrice} error={errors.price} keyboardType="decimal-pad" help={t("hostGifts.priceCurrency", { currency })} testID="catalog-max-price" />
++    <View style={styles.row}>
++      <ActionButton label={t("gifts.host.catalog.search")} onPress={apply} busy={search.isFetching} testID="catalog-search" />
++      <ActionButton variant="secondary" label={t("hostGifts.reset")} onPress={() => { setCategory("all"); setMaxPrice(""); setCeiling(null); setErrors({}); }} />
+     </View>
+-  );
++    <Text style={styles.muted}>{t("hostGifts.resultWindow")}</Text>
++    {added ? <Notice kind="success"><Text style={styles.body}>{t("gifts.host.catalog.added", { title: added.title })}</Text><PublicationLine status={added.status} /></Notice> : null}
++    {unavailable ? <Notice kind="error">{t("gifts.host.catalog.unavailableBody")}</Notice> : <GiftFailure error={add.error} />}
++    <ActionButton variant="secondary" label={t("hostGifts.reviewList")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.gifts, celebrationId))} />
++    {search.isPending ? <Loading /> : null}
++    {search.isError ? <GiftFailure error={search.error} onRetry={() => { void search.refetch(); }} /> : null}
++    {search.data?.viaFallback ? <Notice>{t("gifts.host.catalog.fallbackNote")}</Notice> : null}
++    {search.data ? <Text accessibilityLiveRegion="polite" style={styles.muted}>{t("hostGifts.count", { count: items.length })}</Text> : null}
++    {search.data && !items.length ? <Notice>{t("gifts.host.catalog.none")}</Notice> : null}
++    {items.map((hit) => <View key={hit.id} testID={`hit-${hit.id}`} style={[styles.card, { gap: spacing[2] }]}>
++      <Text accessibilityRole="header" style={styles.subtitle}>{hit.title}</Text>
++      {hit.priceFromMinor !== undefined ? <Text style={styles.body}>{t("gifts.host.catalog.priceFrom", { price: formatMinor(hit.priceFromMinor, hit.currency ?? currency, locale) })}</Text> : <GiftField label={t("hostGifts.agreedPrice", { currency: hit.currency ?? currency })} help={t("hostGifts.priceNeeded")} value={agreed[hit.id] ?? ""} onChange={(value) => setAgreed((current) => ({ ...current, [hit.id]: value }))} keyboardType="decimal-pad" error={errors.agreed === hit.id ? t("hostGifts.invalidMoney") : undefined} testID={`catalog-price-${hit.id}`} />}
++      <ActionButton label={add.isPending && add.variables?.source === "CATALOGED" && add.variables.productListingId === hit.id ? t("gifts.host.catalog.adding") : t("gifts.host.catalog.add")}
++        busy={add.isPending && add.variables?.source === "CATALOGED" && add.variables.productListingId === hit.id} disabled={add.isPending || hit.type === "SERVICE" || hit.published === false || hit.providerStatus !== undefined && hit.providerStatus !== "VERIFIED"}
++        onPress={() => choose(hit)} testID={`add-${hit.id}`} />
++    </View>)}
++  </View>;
+ }
+ 
+-export function CatalogScreen(props: ScreenProps): ReactNode {
++export function CatalogScreen(props: Props): ReactNode {
+   const t = useT();
+-  return <CelebrationScreen {...props} current="gifts" title={t("gifts.host.catalog.title")}>{({ celebration }) => <CatalogBody celebrationId={celebration.id} currency={celebration.currency} />}</CelebrationScreen>;
+-}
++  return <CelebrationScreen {...props} current="gifts" title={t("gifts.host.catalog.title")}>{({ celebration }) => <CatalogBody key={celebration.id} {...props} celebrationId={celebration.id} currency={celebration.currency} />}</CelebrationScreen>;
++}
+\ No newline at end of file
+
+diff --git a/apps/universal/src/host/gifts/gifts-screen.tsx b/apps/universal/src/host/gifts/gifts-screen.tsx
+index 699d637..f6d5640 100644
+--- a/apps/universal/src/host/gifts/gifts-screen.tsx
++++ b/apps/universal/src/host/gifts/gifts-screen.tsx
+@@ -1,59 +1,63 @@
+-import type { ReactNode } from "react";
++import { useRef, useState, type ReactNode } from "react";
+ import { Switch, Text, View } from "react-native";
++import { ApiError } from "@rsvp/api-client";
+ import { colors, spacing } from "@rsvp/design-tokens";
+ import { formatMinor } from "@rsvp/i18n";
+-import { catalogedFirst, useApproveExternalGift, useGiftList, useGiftSettings, useUpdateGiftSettings, type GiftItem } from "@rsvp/query-hooks";
++import { catalogedFirst, useApproveExternalGift, useGiftList, useGiftSettings, useHostGiftVisibility, type GiftItem } from "@rsvp/query-hooks";
+ import { useApiClient, useLocale, useT } from "../../platform/providers";
+ import { CelebrationScreen, type ScreenProps } from "../gate";
+ import { HOST_ROUTES, withCelebration } from "../routes";
+-import { ActionButton, ErrorNotice, Loading, Notice, Section, styles } from "../ui";
+-import { RetryNotice } from "../guests/parts";
++import { ActionButton, Loading, Notice, Section, styles } from "../ui";
++import { GiftFailure, PublicationLine } from "./parts";
+ 
+-/** C29 · Status of each gift (available, pending, committed, proposed) with the doors to the catalog, the external gift and the inbox. */
+-function GiftRow({ item, currencyLocale, onApprove, approving }: { readonly item: GiftItem; readonly currencyLocale: ReturnType<typeof useLocale>; readonly onApprove: (id: string) => void; readonly approving: boolean }): ReactNode {
++function GiftRow({ item, locale, showRequester, onApprove, approving, disabled }: { readonly item: GiftItem; readonly locale: ReturnType<typeof useLocale>; readonly showRequester: boolean; readonly onApprove: (id: string) => void; readonly approving: boolean; readonly disabled: boolean }): ReactNode {
+   const t = useT();
+-  return (
+-    <View testID={`gift-${item.id}`} style={[styles.card, { gap: spacing[1] }]}>
+-      <Text style={styles.subtitle}>{item.title}</Text>
+-      <Text style={styles.body}>{formatMinor(item.price.amountMinor, item.price.currency, currencyLocale)} · {item.source === "CATALOGED" ? t("gifts.host.list.fromPartner") : t("gifts.host.list.external")}</Text>
+-      <Text style={styles.label} testID={`gift-status-${item.id}`}>{t(`gifts.host.status.${item.status}`)}</Text>
+-      {item.reservedByName ? <Text style={styles.muted} testID={`gift-by-${item.id}`}>{t("gifts.host.list.reservedBy", { name: item.reservedByName })}</Text> : null}
+-      {item.status === "PROPOSED" ? <ActionButton label={approving ? t("gifts.host.approvingProposal") : t("gifts.host.approveProposal")} busy={approving} onPress={() => onApprove(item.id)} testID={`approve-proposal-${item.id}`} /> : null}
+-    </View>
+-  );
++  return <View testID={`gift-${item.id}`} style={[styles.card, { gap: spacing[2] }]}>
++    <Text accessibilityRole="header" style={styles.subtitle}>{item.title}</Text>
++    <Text style={styles.body}>{formatMinor(item.price.amountMinor, item.price.currency, locale)} · {t(item.source === "CATALOGED" ? "gifts.host.list.fromPartner" : "gifts.host.list.external")}</Text>
++    <Text style={styles.label} testID={`gift-status-${item.id}`}>{t(`gifts.host.status.${item.status}`)}</Text>
++    <PublicationLine status={item.status} />
++    {showRequester && item.reservedByName ? <Text style={styles.muted} testID={`gift-by-${item.id}`}>{t("gifts.host.list.reservedBy", { name: item.reservedByName })}</Text> : null}
++    {item.status === "PROPOSED" ? <ActionButton label={approving ? t("gifts.host.approvingProposal") : t("gifts.host.approveProposal")} busy={approving} disabled={disabled} onPress={() => onApprove(item.id)} testID={`approve-proposal-${item.id}`} /> : null}
++  </View>;
+ }
+ 
+-/** REQ-F23-06 · who may see who reserved. Guests default to not seeing the name; the host sees it unless they turn it off. */
+-function RequesterVisibility({ celebrationId }: { readonly celebrationId: string }): ReactNode {
++/** Preferences remain authoritative; names are masked while a write and its refetch are pending. */
++function RequesterVisibility({ celebrationId, onMask }: { readonly celebrationId: string; readonly onMask: (value: boolean) => void }): ReactNode {
+   const t = useT();
+   const client = useApiClient();
+   const settings = useGiftSettings(client, celebrationId);
+-  const update = useUpdateGiftSettings(client, celebrationId);
++  const update = useHostGiftVisibility(client, celebrationId);
++  const inFlight = useRef(false);
++  const [mismatch, setMismatch] = useState(false);
+   if (settings.isPending) return <Loading />;
+-  if (settings.isError) return <RetryNotice error={settings.error} onRetry={() => { void settings.refetch(); }} />;
++  if (settings.isError) return <><Notice>{t("hostGifts.privacyUnavailable")}</Notice><GiftFailure error={settings.error} onRetry={() => { void settings.refetch(); }} /></>;
+   const current = settings.data;
++  const save = (key: "showRequesterToHost" | "showRequesterToGuests", value: boolean): void => {
++    if (inFlight.current) return;
++    inFlight.current = true; onMask(true); setMismatch(false);
++    const input = { showRequesterToHost: current.showRequesterToHost, showRequesterToGuests: current.showRequesterToGuests, [key]: value };
++    update.mutate(input, {
++      onSuccess: (saved) => setMismatch(saved.showRequesterToHost !== input.showRequesterToHost || saved.showRequesterToGuests !== input.showRequesterToGuests),
++      onSettled: () => { inFlight.current = false; onMask(false); }
++    });
++  };
+   const rows = [
+     { key: "showRequesterToHost" as const, label: t("gifts.host.visibility.host"), help: t("gifts.host.visibility.hostHelp") },
+     { key: "showRequesterToGuests" as const, label: t("gifts.host.visibility.guests"), help: t("gifts.host.visibility.guestsHelp") }
+   ];
+-  return (
+-    <Section title={t("gifts.host.visibility.title")}>
+-      <Text style={styles.body}>{t("gifts.host.visibility.intro")}</Text>
+-      {rows.map((row) => (
+-        <View key={row.key} style={[styles.row, { justifyContent: "space-between", minHeight: 48 }]}>
+-          <View style={{ flexShrink: 1 }}>
+-            <Text style={styles.label}>{row.label}</Text>
+-            <Text style={styles.muted}>{row.help}</Text>
+-          </View>
+-          <Switch accessibilityLabel={row.label} testID={`visibility-${row.key}`} value={current[row.key]} disabled={update.isPending}
+-            onValueChange={(value) => update.mutate({ showRequesterToHost: current.showRequesterToHost, showRequesterToGuests: current.showRequesterToGuests, [row.key]: value }, { onSuccess: () => { void settings.refetch(); } })}
+-            trackColor={{ true: colors.light.primary, false: colors.light.border }} thumbColor="#FFFFFF" />
+-        </View>
+-      ))}
+-      {update.isSuccess ? <Notice kind="success">{t("gifts.host.visibility.saved")}</Notice> : null}
+-      {update.isError ? <ErrorNotice error={update.error} /> : null}
+-    </Section>
+-  );
++  return <Section title={t("gifts.host.visibility.title")}>
++    <Text style={styles.body}>{t("gifts.host.visibility.intro")}</Text>
++    {rows.map((row) => <View key={row.key} style={[styles.row, { justifyContent: "space-between", minHeight: 48 }]}>
++      <View style={{ flexShrink: 1 }}><Text style={styles.label}>{row.label}</Text><Text style={styles.muted}>{row.help}</Text></View>
++      <Switch accessibilityLabel={row.label} testID={`visibility-${row.key}`} value={current[row.key]} disabled={update.isPending} onValueChange={(value) => save(row.key, value)}
++        trackColor={{ true: colors.light.primary, false: colors.light.border }} thumbColor={colors.light.surface} />
++    </View>)}
++    {update.isPending ? <Text accessibilityLiveRegion="polite" style={styles.muted}>{t("hostGifts.settingsSaving")}</Text> : null}
++    {update.isSuccess && !mismatch ? <Notice kind="success">{t("hostGifts.settingsChanged")}</Notice> : null}
++    {mismatch ? <Notice kind="error">{t("hostGifts.privacyUnavailable")}</Notice> : null}
++    <GiftFailure error={update.error} />
++  </Section>;
+ }
+ 
+ function GiftsBody({ celebrationId, onNavigate }: { readonly celebrationId: string; readonly onNavigate: (href: string) => void }): ReactNode {
+@@ -61,29 +65,36 @@ function GiftsBody({ celebrationId, onNavigate }: { readonly celebrationId: stri
+   const locale = useLocale();
+   const client = useApiClient();
+   const list = useGiftList(client, celebrationId);
++  const settings = useGiftSettings(client, celebrationId);
+   const approve = useApproveExternalGift(client, celebrationId);
++  const lock = useRef(false);
++  const [privacyPending, setPrivacyPending] = useState(false);
+   const go = (path: string) => () => onNavigate(withCelebration(path, celebrationId));
++  const approveProposal = (id: string): void => {
++    if (lock.current) return;
++    lock.current = true;
++    approve.mutate(id, { onError: (error) => { if (error instanceof ApiError && error.status === 409) void list.refetch(); }, onSettled: () => { lock.current = false; } });
++  };
+   if (list.isPending) return <Loading />;
+-  if (list.isError) return <RetryNotice error={list.error} onRetry={() => { void list.refetch(); }} />;
++  if (list.isError) return <GiftFailure error={list.error} onRetry={() => { void list.refetch(); }} />;
+   const items = catalogedFirst(list.data.items);
+-  return (
+-    <View style={{ gap: spacing[4] }}>
+-      <Text style={styles.body}>{t("gifts.host.intro")}</Text>
+-      <View style={styles.row}>
+-        <ActionButton label={t("gifts.host.catalog.title")} onPress={go(HOST_ROUTES.giftCatalog)} testID="go-catalog" />
+-        <ActionButton variant="secondary" label={t("gifts.host.providers.title")} onPress={go(HOST_ROUTES.giftProviders)} testID="go-providers" />
+-        <ActionButton variant="secondary" label={t("gifts.host.external.title")} onPress={go(HOST_ROUTES.giftExternal)} testID="go-external" />
+-        <ActionButton variant="secondary" label={t("gifts.host.inbox.title")} onPress={go(HOST_ROUTES.giftInbox)} testID="go-inbox" />
+-      </View>
+-      <RequesterVisibility celebrationId={celebrationId} />
+-      <ErrorNotice error={approve.error} onReload={() => { void list.refetch(); }} />
+-      <Text accessibilityRole="header" style={styles.subtitle}>{t("gifts.host.list.title")}</Text>
+-      {items.length === 0 ? <Notice>{t("gifts.host.list.empty")}</Notice> : items.map((item) => <GiftRow key={item.id} item={item} currencyLocale={locale} onApprove={(id) => approve.mutate(id)} approving={approve.isPending && approve.variables === item.id} />)}
++  const showRequester = settings.isSuccess && settings.data.showRequesterToHost && !privacyPending;
++  return <View style={{ gap: spacing[4] }}>
++    <Text style={styles.body}>{t("gifts.host.intro")}</Text>
++    <View style={styles.row}>
++      <ActionButton label={t("gifts.host.catalog.title")} onPress={go(HOST_ROUTES.giftCatalog)} testID="go-catalog" />
++      <ActionButton variant="secondary" label={t("gifts.host.providers.title")} onPress={go(HOST_ROUTES.giftProviders)} testID="go-providers" />
++      <ActionButton variant="secondary" label={t("gifts.host.external.title")} onPress={go(HOST_ROUTES.giftExternal)} testID="go-external" />
++      <ActionButton variant="secondary" label={t("gifts.host.inbox.title")} onPress={go(HOST_ROUTES.giftInbox)} testID="go-inbox" />
+     </View>
+-  );
++    <RequesterVisibility celebrationId={celebrationId} onMask={setPrivacyPending} />
++    <GiftFailure error={approve.error} onRetry={() => { void list.refetch(); }} />
++    <Text accessibilityRole="header" style={styles.subtitle}>{t("gifts.host.list.title")}</Text>
++    {items.length === 0 ? <Notice>{t("gifts.host.list.empty")}</Notice> : items.map((item) => <GiftRow key={item.id} item={item} locale={locale} showRequester={showRequester} onApprove={approveProposal} disabled={approve.isPending} approving={approve.isPending && approve.variables === item.id} />)}
++  </View>;
+ }
+ 
+ export function GiftsScreen(props: ScreenProps): ReactNode {
+   const t = useT();
+-  return <CelebrationScreen {...props} current="gifts" title={t("gifts.host.title")}>{({ celebration }) => <GiftsBody celebrationId={celebration.id} onNavigate={props.onNavigate} />}</CelebrationScreen>;
++  return <CelebrationScreen {...props} current="gifts" title={t("gifts.host.title")}>{({ celebration }) => <GiftsBody key={celebration.id} celebrationId={celebration.id} onNavigate={props.onNavigate} />}</CelebrationScreen>;
+ }
+
+diff --git a/apps/universal/src/host/gifts/external-screen.tsx b/apps/universal/src/host/gifts/external-screen.tsx
+index e3bf258..d8c3125 100644
+--- a/apps/universal/src/host/gifts/external-screen.tsx
++++ b/apps/universal/src/host/gifts/external-screen.tsx
+@@ -1,19 +1,20 @@
+-import { useState, type ReactNode } from "react";
+-import { Text, View } from "react-native";
++import { useEffect, useRef, useState, type ReactNode } from "react";
++import { Platform, Text, View, type TextInput } from "react-native";
+ import { spacing } from "@rsvp/design-tokens";
+ import { ApiError } from "@rsvp/api-client";
+-import { partnerSuggestionsOf, problemCode, useAddGift, useUpdateSettings, type ApprovalMode, type Celebration, type PartnerSuggestion } from "@rsvp/query-hooks";
++import { hostExternalGiftSchema, parseHostGiftPrice } from "@rsvp/forms";
++import { partnerSuggestionsOf, problemCode, useAddGift, useUpdateSettings, type ApprovalMode, type Celebration, type GiftItemStatus, type PartnerSuggestion } from "@rsvp/query-hooks";
+ import { useApiClient, useT } from "../../platform/providers";
+ import { CelebrationScreen, type ScreenProps } from "../gate";
+-import { ActionButton, ChoiceGroup, ErrorNotice, Field, Notice, Section, styles } from "../ui";
+-import { isHttpUrl, parseMinor } from "./money";
++import { HOST_ROUTES, withCelebration } from "../routes";
++import { ActionButton, Notice, Section, styles } from "../ui";
++import { GiftChoices, GiftConsent } from "./controls";
++import { GiftFailure, GiftField, GiftFormSummary, PublicationLine } from "./parts";
+ 
+-/**
+- * C28 · External gift with deliberate friction. With partner priority on, the first attempt answers 409 PARTNER_CATALOG_FIRST with
+- * suggestions: the host sees them and must choose a partner product or confirm "add anyway" (resent with partnerSuggestionsAcknowledged).
+- * Also the switch of the external mode and of partnerPriority (written to the celebration settings, If-Match through useUpdateSettings).
+- */
+-function ExternalBody({ celebration, refetch }: { readonly celebration: Celebration; readonly refetch: () => void }): ReactNode {
++type Errors = Partial<Record<"title" | "url" | "price", string>>;
++
++/** C28: explicit review precedes external creation; only the server grants publication. */
++function ExternalBody({ celebration, refetch, onNavigate }: { readonly celebration: Celebration; readonly refetch: () => void; readonly onNavigate: (path: string) => void }): ReactNode {
+   const t = useT();
+   const client = useApiClient();
+   const settings = useUpdateSettings(client, celebration.id);
+@@ -21,61 +22,92 @@ function ExternalBody({ celebration, refetch }: { readonly celebration: Celebrat
+   const [title, setTitle] = useState("");
+   const [url, setUrl] = useState("");
+   const [price, setPrice] = useState("");
+-  const [error, setError] = useState<string | null>(null);
++  const [reviewed, setReviewed] = useState(false);
++  const [reviewError, setReviewError] = useState(false);
++  const [errors, setErrors] = useState<Errors>({});
+   const [suggestions, setSuggestions] = useState<readonly PartnerSuggestion[]>([]);
+-  const [done, setDone] = useState<string | null>(null);
++  const [challenge, setChallenge] = useState<string | null>(null);
++  const [done, setDone] = useState<GiftItemStatus | null>(null);
++  const inFlight = useRef(false), changingSettings = useRef(false);
++  const titleInput = useRef<TextInput>(null), urlInput = useRef<TextInput>(null), priceInput = useRef<TextInput>(null);
++  const suggestionBlock = useRef<View>(null);
++  const fingerprint = JSON.stringify({ title: title.trim(), url: url.trim(), price: price.trim() });
++  const partnerFirst = challenge === fingerprint && add.error instanceof ApiError && add.error.status === 409 && problemCode(add.error) === "PARTNER_CATALOG_FIRST";
++  const busy = add.isPending || settings.isPending;
++  useEffect(() => { if (partnerFirst && Platform.OS === "web") suggestionBlock.current?.focus(); }, [partnerFirst]);
+ 
+-  const send = (acknowledged: boolean): void => {
+-    setDone(null);
+-    const minor = parseMinor(price);
+-    if (!title.trim() || !url.trim() || !price.trim()) return setError(t("gifts.host.external.required"));
+-    if (!isHttpUrl(url)) return setError(t("gifts.host.external.invalidUrl"));
+-    if (minor === null) return setError(t("gifts.host.external.invalidMoney"));
+-    setError(null);
+-    add.mutate({ source: "EXTERNAL", title: title.trim(), price: { amountMinor: minor, currency: celebration.currency }, url: url.trim(), ...(acknowledged ? { partnerSuggestionsAcknowledged: true } : {}) }, {
+-      onSuccess: (item) => { setSuggestions([]); setTitle(""); setUrl(""); setPrice(""); setDone(item.status === "PROPOSED" ? t("gifts.host.external.proposed") : t("gifts.host.external.added")); },
+-      onError: (failure) => { if (failure instanceof ApiError && failure.status === 409 && problemCode(failure) === "PARTNER_CATALOG_FIRST") setSuggestions(partnerSuggestionsOf(failure)); }
++  const edit = (setter: (value: string) => void) => (value: string): void => {
++    setter(value); setErrors({}); setReviewError(false); setReviewed(false); setDone(null); setChallenge(null); setSuggestions([]); add.reset();
++  };
++  const browse = (query = title): void => onNavigate(`${withCelebration(HOST_ROUTES.giftCatalog, celebration.id)}${query.trim() ? `&q=${encodeURIComponent(query.trim())}` : ""}`);
++  const send = (): void => {
++    if (inFlight.current || changingSettings.current) return;
++    setDone(null); setReviewError(!reviewed);
++    const parsed = hostExternalGiftSchema.safeParse({ title, url, price });
++    if (!parsed.success) {
++      const next: Errors = {};
++      for (const issue of parsed.error.issues) { const key = issue.path[0]; if (key === "title" || key === "url" || key === "price") next[key] = t(`hostGifts.${issue.message}`); }
++      setErrors(next); return;
++    }
++    if (!reviewed) return;
++    const minor = parseHostGiftPrice(parsed.data.price);
++    if (minor === null) return;
++    inFlight.current = true; setErrors({});
++    add.mutate({ source: "EXTERNAL", title: parsed.data.title, price: { amountMinor: minor, currency: celebration.currency }, url: parsed.data.url, ...(partnerFirst ? { partnerSuggestionsAcknowledged: true } : {}) }, {
++      onSuccess: (item) => { setSuggestions([]); setChallenge(null); setTitle(""); setUrl(""); setPrice(""); setReviewed(false); setDone(item.status); },
++      onError: (failure) => { if (failure instanceof ApiError && failure.status === 409 && problemCode(failure) === "PARTNER_CATALOG_FIRST") { setChallenge(fingerprint); setSuggestions(partnerSuggestionsOf(failure)); } },
++      onSettled: () => { inFlight.current = false; }
+     });
+   };
+-  const partnerFirst = add.error instanceof ApiError && add.error.status === 409 && problemCode(add.error) === "PARTNER_CATALOG_FIRST";
+-  const mode = celebration.settings.externalGiftMode;
+-  const changeMode = (value: ApprovalMode): void => { if (value !== mode) settings.mutate({ target: celebration, patch: { externalGiftMode: value } }, { onSuccess: refetch }); };
++  const changeSettings = (patch: { externalGiftMode?: ApprovalMode; partnerPriorityEnabled?: boolean }): void => {
++    if (changingSettings.current || inFlight.current) return;
++    changingSettings.current = true;
++    settings.mutate({ target: celebration, patch }, { onSuccess: () => { setChallenge(null); setSuggestions([]); add.reset(); refetch(); }, onSettled: () => { changingSettings.current = false; } });
++  };
+ 
+-  return (
+-    <View style={{ gap: spacing[4] }}>
+-      <Section title={t("gifts.host.external.modeLabel")}>
+-        <ChoiceGroup<ApprovalMode> label={t("gifts.host.external.modeLabel")} value={mode} onChange={changeMode} choices={[{ value: "AUTO_ACCEPT", label: t("gifts.host.external.modeAuto") }, { value: "RESTRICTED", label: t("gifts.host.external.modeRestricted") }]} />
+-        <ChoiceGroup<"on" | "off"> label={t("gifts.host.external.priorityLabel")} value={celebration.settings.partnerPriorityEnabled ? "on" : "off"} onChange={(value) => settings.mutate({ target: celebration, patch: { partnerPriorityEnabled: value === "on" } }, { onSuccess: refetch })}
+-          choices={[{ value: "on", label: t("gifts.host.external.priorityLabel"), description: t("gifts.host.external.priorityHelp") }, { value: "off", label: t("host.common.remove") }]} />
+-        <ErrorNotice error={settings.error} onReload={refetch} />
+-        {settings.isSuccess ? <Notice kind="success">{t("gifts.host.external.modeSaved")}</Notice> : null}
+-      </Section>
+-      <Section title={t("gifts.host.external.title")}>
+-        <Text style={styles.body}>{t("gifts.host.external.intro")}</Text>
+-        <Field label={t("gifts.host.external.name")} value={title} onChange={setTitle} testID="external-title" />
+-        <Field label={t("gifts.host.external.url")} value={url} onChange={setUrl} keyboardType="url" testID="external-url" />
+-        <Field label={t("gifts.host.external.price")} value={price} onChange={setPrice} help={t("gifts.host.external.priceHelp")} keyboardType="decimal-pad" testID="external-price" />
+-        {error ? <Notice kind="error">{error}</Notice> : null}
+-        {done ? <Notice kind="success">{done}</Notice> : null}
+-        {partnerFirst ? (
+-          <Notice kind="info">
+-            <Text style={styles.subtitle}>{t("gifts.host.external.suggestionsTitle")}</Text>
+-            <Text style={styles.body}>{t("gifts.host.external.suggestionsBody")}</Text>
+-            {suggestions.map((suggestion) => (
+-              <View key={suggestion.productListingId} style={styles.row} testID={`suggestion-${suggestion.productListingId}`}>
+-                <Text style={styles.body}>{suggestion.title}</Text>
+-                <ActionButton variant="secondary" label={t("gifts.host.external.useSuggestion")} onPress={() => add.mutate({ source: "CATALOGED", title: suggestion.title, price: { amountMinor: parseMinor(price) ?? 0, currency: celebration.currency }, productListingId: suggestion.productListingId }, { onSuccess: () => { setSuggestions([]); setDone(t("gifts.host.catalog.added", { title: suggestion.title })); } })} />
+-              </View>
+-            ))}
+-          </Notice>
+-        ) : <ErrorNotice error={add.error} onReload={refetch} />}
+-        <ActionButton label={partnerFirst ? t("gifts.host.external.submitAnyway") : t("gifts.host.external.submit")} variant={partnerFirst ? "secondary" : "primary"} busy={add.isPending} disabled={add.isPending} onPress={() => send(partnerFirst)} testID="external-submit" />
+-      </Section>
++  return <View style={{ gap: spacing[4] }}>
++    <Section title={t("gifts.host.external.modeLabel")}>
++      <GiftChoices label={t("gifts.host.external.modeLabel")} value={celebration.settings.externalGiftMode} disabled={busy}
++        onChange={(value) => { if (value === "AUTO_ACCEPT" || value === "RESTRICTED") changeSettings({ externalGiftMode: value }); }}
++        choices={[{ value: "AUTO_ACCEPT", label: t("gifts.host.external.modeAuto") }, { value: "RESTRICTED", label: t("gifts.host.external.modeRestricted") }]} />
++      <GiftChoices label={t("gifts.host.external.priorityLabel")} value={celebration.settings.partnerPriorityEnabled ? "on" : "off"} disabled={busy}
++        onChange={(value) => changeSettings({ partnerPriorityEnabled: value === "on" })}
++        choices={[{ value: "on", label: t("gifts.host.external.priorityLabel"), description: t("gifts.host.external.priorityHelp") }, { value: "off", label: t("hostGifts.priorityOff") }]} />
++      <GiftFailure error={settings.error} onRetry={refetch} />
++      {settings.isSuccess ? <Notice kind="success">{t("gifts.host.external.modeSaved")}</Notice> : null}
++    </Section>
++    <View style={styles.card}>
++      <Text accessibilityRole="header" style={styles.subtitle}>{t("hostGifts.beforeExternal")}</Text>
++      <Text style={styles.body}>{t("gifts.host.external.intro")}</Text>
++      <ActionButton variant="secondary" label={t("hostGifts.browsePartners")} disabled={busy} onPress={() => browse()} testID="external-browse-partners" />
++      <GiftConsent label={t("hostGifts.preferExternal")} value={reviewed} onChange={(value) => { setReviewed(value); setReviewError(false); }} disabled={busy} />
++      {reviewError ? <Notice kind="error">{t("hostGifts.externalReviewRequired")}</Notice> : null}
+     </View>
+-  );
++    <Section title={t("gifts.host.external.title")}>
++      <GiftFormSummary fields={[
++        { label: t("gifts.host.external.name"), error: errors.title, onFocus: () => titleInput.current?.focus() },
++        { label: t("gifts.host.external.url"), error: errors.url, onFocus: () => urlInput.current?.focus() },
++        { label: t("gifts.host.external.price"), error: errors.price, onFocus: () => priceInput.current?.focus() }
++      ]} />
++      <GiftField inputRef={titleInput} label={t("gifts.host.external.name")} value={title} onChange={edit(setTitle)} error={errors.title} state={busy ? "disabled" : "default"} testID="external-title" />
++      <GiftField inputRef={urlInput} label={t("gifts.host.external.url")} value={url} onChange={edit(setUrl)} error={errors.url} state={busy ? "disabled" : "default"} keyboardType="url" autoCapitalize="none" testID="external-url" />
++      <GiftField inputRef={priceInput} label={t("gifts.host.external.price")} value={price} onChange={edit(setPrice)} error={errors.price} state={busy ? "disabled" : "default"} help={t("hostGifts.priceCurrency", { currency: celebration.currency })} keyboardType="decimal-pad" testID="external-price" />
++      {done ? <Notice kind="success"><Text style={styles.body}>{t(done === "PROPOSED" ? "gifts.host.external.proposed" : "gifts.host.external.added")}</Text><PublicationLine status={done} /></Notice> : null}
++      {partnerFirst ? <View ref={suggestionBlock} tabIndex={-1} accessibilityLiveRegion="polite" testID="external-suggestions"><Notice>
++        <Text accessibilityRole="header" style={styles.subtitle}>{t("gifts.host.external.suggestionsTitle")}</Text>
++        <Text style={styles.body}>{t("gifts.host.external.suggestionsBody")}</Text>
++        {!suggestions.length ? <Text style={styles.body}>{t("hostGifts.emptySuggestions")}</Text> : null}
++        {suggestions.map((suggestion) => <View key={suggestion.productListingId} style={{ gap: spacing[2] }} testID={`suggestion-${suggestion.productListingId}`}>
++          <Text style={styles.body}>{suggestion.title}</Text><ActionButton variant="secondary" label={t("hostGifts.reviewSuggestion")} onPress={() => browse(suggestion.title)} disabled={busy} testID={`review-suggestion-${suggestion.productListingId}`} />
++        </View>)}
++      </Notice></View> : <GiftFailure error={add.error} />}
++      <ActionButton label={partnerFirst ? t("gifts.host.external.submitAnyway") : t("gifts.host.external.submit")} variant={partnerFirst ? "secondary" : "primary"} busy={add.isPending} disabled={busy} onPress={send} testID="external-submit" />
++      <ActionButton variant="secondary" label={t("hostGifts.reviewList")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.gifts, celebration.id))} testID="external-review-list" />
++    </Section>
++  </View>;
+ }
+ 
+ export function ExternalScreen(props: ScreenProps): ReactNode {
+   const t = useT();
+-  return <CelebrationScreen {...props} current="gifts" title={t("gifts.host.external.title")}>{({ celebration, refetch }) => <ExternalBody celebration={celebration} refetch={refetch} />}</CelebrationScreen>;
++  return <CelebrationScreen {...props} current="gifts" title={t("gifts.host.external.title")}>{({ celebration, refetch }) => <ExternalBody key={celebration.id} celebration={celebration} refetch={refetch} onNavigate={props.onNavigate} />}</CelebrationScreen>;
+ }
+
+diff --git a/apps/universal/src/host/gifts/inbox-screen.tsx b/apps/universal/src/host/gifts/inbox-screen.tsx
+index 206c5bb..52e4e13 100644
+--- a/apps/universal/src/host/gifts/inbox-screen.tsx
++++ b/apps/universal/src/host/gifts/inbox-screen.tsx
+@@ -1,61 +1,66 @@
+-import { useState, type ReactNode } from "react";
++import { useRef, useState, type ReactNode } from "react";
+ import { Text, View } from "react-native";
+ import { spacing } from "@rsvp/design-tokens";
+ import { ApiError } from "@rsvp/api-client";
+ import { formatCelebrationDate } from "@rsvp/i18n";
+-import { useDecideReservation, useGiftList, useHostReservations, type GiftReservation } from "@rsvp/query-hooks";
++import { useDecideReservation, useGiftList, useGiftSettings, useHostReservations, type GiftReservation } from "@rsvp/query-hooks";
+ import { useApiClient, useLocale, useT } from "../../platform/providers";
+ import { CelebrationScreen, type ScreenProps } from "../gate";
+-import { ActionButton, ErrorNotice, Loading, Notice, styles } from "../ui";
+-import { RetryNotice } from "../guests/parts";
++import { ActionButton, Loading, Notice, styles } from "../ui";
++import { GiftFailure } from "./parts";
+ 
+-/** C25 · Pending reservations: who asked, which gift, approve or reject; a reservation somebody already decided (409) refreshes the list. */
+ function InboxBody({ celebrationId, timeZone }: { readonly celebrationId: string; readonly timeZone: string }): ReactNode {
+   const t = useT();
+   const locale = useLocale();
+   const client = useApiClient();
+   const reservations = useHostReservations(client, celebrationId, "PENDING_REVIEW");
+   const gifts = useGiftList(client, celebrationId);
++  const settings = useGiftSettings(client, celebrationId);
+   const decide = useDecideReservation(client, celebrationId);
+-  const [notice, setNotice] = useState<{ kind: "success" | "info"; text: string } | null>(null);
++  const inFlight = useRef(false);
++  const [notice, setNotice] = useState<"approved" | "rejected" | "stale" | null>(null);
+   const resolve = (reservation: GiftReservation, decision: "approve" | "reject"): void => {
+-    setNotice(null);
++    if (inFlight.current) return;
++    inFlight.current = true; setNotice(null);
+     decide.mutate({ reservationId: reservation.id, decision }, {
+-      onSuccess: () => setNotice({ kind: "success", text: decision === "approve" ? t("gifts.host.inbox.approved") : t("gifts.host.inbox.rejected") }),
+-      onError: (error) => { if (error instanceof ApiError && error.status === 409) setNotice({ kind: "info", text: t("gifts.host.inbox.stale") }); }
++      onSuccess: (resolved) => setNotice(resolved.status === "COMMITTED" ? "approved" : resolved.status === "REJECTED" ? "rejected" : "stale"),
++      onError: (error) => { if (error instanceof ApiError && error.status === 409) setNotice("stale"); },
++      onSettled: () => { inFlight.current = false; }
+     });
+   };
+   if (reservations.isPending) return <Loading />;
+-  if (reservations.isError) return <RetryNotice error={reservations.error} onRetry={() => { void reservations.refetch(); }} />;
++  if (reservations.isError) return <GiftFailure error={reservations.error} onRetry={() => { void reservations.refetch(); }} />;
+   const open = reservations.data.items.filter((entry) => entry.status === "PENDING_REVIEW");
+   const conflict = decide.error instanceof ApiError && decide.error.status === 409;
+-  return (
+-    <View style={{ gap: spacing[4] }}>
+-      <Text style={styles.body}>{t("gifts.host.inbox.intro")}</Text>
+-      {notice ? <Notice kind={notice.kind}>{notice.text}</Notice> : null}
+-      {decide.isError && !conflict ? <ErrorNotice error={decide.error} /> : null}
+-      {open.length === 0 ? <Notice>{t("gifts.host.inbox.empty")}</Notice> : open.map((reservation) => {
+-        const gift = gifts.data?.items.find((item) => item.id === reservation.itemId);
+-        const busy = decide.isPending && decide.variables?.reservationId === reservation.id ? decide.variables.decision : null;
+-        return (
+-          <View key={reservation.id} testID={`reservation-${reservation.id}`} style={[styles.card, { gap: spacing[2] }]}>
+-            <Text style={styles.subtitle}>{t("gifts.host.inbox.gift", { title: gift?.title ?? reservation.itemId.slice(0, 8) })}</Text>
+-            <Text style={styles.body}>{t("gifts.host.inbox.requester", { name: reservation.requesterHidden ? t("gifts.host.inbox.hidden") : reservation.guestDisplayName || t("gifts.host.inbox.anonymous") })}</Text>
+-            {reservation.requesterHidden ? <Text style={styles.muted} testID={`hidden-${reservation.id}`}>{t("gifts.host.inbox.hiddenHelp")}</Text> : null}
+-            {reservation.message ? <Text style={styles.muted}>“{reservation.message}”</Text> : null}
+-            <Text style={styles.muted}>{t("gifts.host.inbox.requestedAt", { date: formatCelebrationDate(reservation.requestedAt, { locale, timeZone }) })}</Text>
+-            <View style={styles.row}>
+-              <ActionButton label={t("gifts.host.inbox.approve")} busy={busy === "approve"} disabled={busy !== null} onPress={() => resolve(reservation, "approve")} testID={`approve-${reservation.id}`} />
+-              <ActionButton variant="danger" label={t("gifts.host.inbox.reject")} busy={busy === "reject"} disabled={busy !== null} onPress={() => resolve(reservation, "reject")} testID={`reject-${reservation.id}`} />
+-            </View>
+-          </View>
+-        );
+-      })}
+-    </View>
+-  );
++  const allowNames = settings.isSuccess && settings.data.showRequesterToHost;
++  return <View style={{ gap: spacing[4] }}>
++    <Text style={styles.body}>{t("gifts.host.inbox.intro")}</Text>
++    {notice ? <Notice kind={notice === "stale" ? "info" : "success"}>{t(`gifts.host.inbox.${notice}`)}</Notice> : null}
++    {decide.isError && !conflict ? <GiftFailure error={decide.error} /> : null}
++    {settings.isError ? <><Notice>{t("hostGifts.privacyUnavailable")}</Notice><GiftFailure error={settings.error} onRetry={() => { void settings.refetch(); }} /></> : null}
++    {gifts.isError ? <GiftFailure error={gifts.error} onRetry={() => { void gifts.refetch(); }} /> : null}
++    {open.length === 0 ? <Notice>{t("gifts.host.inbox.empty")}</Notice> : open.map((reservation) => {
++      const gift = gifts.data?.items.find((item) => item.id === reservation.itemId);
++      const busy = decide.isPending && decide.variables?.reservationId === reservation.id ? decide.variables.decision : null;
++      const hidden = reservation.requesterHidden || settings.data?.showRequesterToHost === false;
++      const name = !allowNames || reservation.requesterHidden ? t(hidden ? "gifts.host.inbox.hidden" : "hostGifts.requesterUnavailable") : reservation.guestDisplayName || t("gifts.host.inbox.anonymous");
++      return <View key={reservation.id} testID={`reservation-${reservation.id}`} style={[styles.card, { gap: spacing[2] }]}>
++        <Text accessibilityRole="header" style={styles.subtitle}>{gift ? t("gifts.host.inbox.gift", { title: gift.title }) : t("hostGifts.itemUnavailable")}</Text>
++        {!gift && !gifts.isPending ? <ActionButton variant="secondary" label={t("hostGifts.refresh")} onPress={() => { void gifts.refetch(); }} /> : null}
++        <Text style={styles.body}>{t("gifts.host.inbox.requester", { name })}</Text>
++        {hidden ? <Text style={styles.muted} testID={`hidden-${reservation.id}`}>{t("gifts.host.inbox.hiddenHelp")}</Text> : null}
++        {allowNames && !reservation.requesterHidden && reservation.message ? <Text style={styles.muted}>“{reservation.message}”</Text> : null}
++        <Text style={styles.muted}>{t("gifts.host.inbox.requestedAt", { date: formatCelebrationDate(reservation.requestedAt, { locale, timeZone }) })}</Text>
++        <View style={styles.row}>
++          <ActionButton label={t("gifts.host.inbox.approve")} busy={busy === "approve"} disabled={decide.isPending || !gift} onPress={() => resolve(reservation, "approve")} testID={`approve-${reservation.id}`} />
++          <ActionButton variant="danger" label={t("gifts.host.inbox.reject")} busy={busy === "reject"} disabled={decide.isPending || !gift} onPress={() => resolve(reservation, "reject")} testID={`reject-${reservation.id}`} />
++        </View>
++      </View>;
++    })}
++  </View>;
+ }
+ 
+ export function GiftInboxScreen(props: ScreenProps): ReactNode {
+   const t = useT();
+-  return <CelebrationScreen {...props} current="giftInbox" title={t("gifts.host.inbox.title")}>{({ celebration }) => <InboxBody celebrationId={celebration.id} timeZone={celebration.timeZone} />}</CelebrationScreen>;
+-}
++  return <CelebrationScreen {...props} current="giftInbox" title={t("gifts.host.inbox.title")}>{({ celebration }) => <InboxBody key={celebration.id} celebrationId={celebration.id} timeZone={celebration.timeZone} />}</CelebrationScreen>;
++}
+\ No newline at end of file
+
+diff --git a/apps/universal/src/host/gifts/providers-screen.tsx b/apps/universal/src/host/gifts/providers-screen.tsx
+index d674d23..4b4ac8e 100644
+--- a/apps/universal/src/host/gifts/providers-screen.tsx
++++ b/apps/universal/src/host/gifts/providers-screen.tsx
+@@ -1,107 +1,109 @@
+-import { useState, type ReactNode } from "react";
+-import { Linking, Pressable, Text, View } from "react-native";
++import { useRef, useState, type ReactNode } from "react";
++import { Text, View } from "react-native";
+ import { spacing } from "@rsvp/design-tokens";
+ import { ApiError } from "@rsvp/api-client";
++import { parseHostGiftPrice } from "@rsvp/forms";
+ import { formatMinor } from "@rsvp/i18n";
+-import { problemCode, useAddGift, useProviderDiscovery, type ProviderCard } from "@rsvp/query-hooks";
++import { problemCode, useAddGift, useProviderDiscovery, type GiftItemStatus, type ProviderCard } from "@rsvp/query-hooks";
+ import { useApiClient, useLocale, useT } from "../../platform/providers";
+-import { partnerRedirectUrl } from "../../platform/partner-link";
+ import { CelebrationScreen, type ScreenProps } from "../gate";
+-import { ActionButton, ErrorNotice, Field, Loading, Notice, styles } from "../ui";
+-import { RetryNotice } from "../guests/parts";
++import { HOST_ROUTES, withCelebration } from "../routes";
++import { ActionButton, Loading, Notice, styles } from "../ui";
++import { GiftCategory } from "./controls";
++import { GiftFailure, GiftField, PublicationLine } from "./parts";
++import { GiftPartnerLink } from "./partner-link";
+ 
+ const CATEGORIES = ["VENUE", "CATERING", "PHOTOGRAPHY", "MUSIC", "DECORATION", "MAKEUP", "TRANSPORT", "INVITATIONS", "WEDDING_PLANNER", "ACCOMMODATION", "HONEYMOON"] as const;
+ const PAGE_SIZE = 6;
+-const CENTS = 100;
+ 
+-/** REQ-F23-05 · Extended card: the offer, the business behind it, how it is delivered, where it is and when it opens. */
+-function ProviderOffer({ card, celebrationId, adding, onAdd }: { readonly card: ProviderCard; readonly celebrationId: string; readonly adding: boolean; readonly onAdd: (card: ProviderCard) => void }): ReactNode {
++function ProviderOffer({ card, celebrationId, currency, adding, disabled, onAdd, agreed, onPrice, invalidPrice }: {
++  readonly card: ProviderCard; readonly celebrationId: string; readonly currency: string; readonly adding: boolean; readonly disabled: boolean;
++  readonly onAdd: (card: ProviderCard) => void; readonly agreed: string; readonly onPrice: (value: string) => void; readonly invalidPrice: boolean;
++}): ReactNode {
+   const t = useT();
+   const locale = useLocale();
+   const fulfillment = card.fulfillment;
+-  const open = (destination: string): void => { void Linking.openURL(partnerRedirectUrl(card.listingId, { destination, surface: "APP", celebrationId })); };
+-  return (
+-    <View testID={`provider-${card.listingId}`} style={[styles.card, { gap: spacing[1] }]}>
+-      <Text accessibilityRole="header" style={styles.subtitle}>{card.name}</Text>
+-      <Text style={styles.label}>{t("gifts.host.providers.by", { name: card.providerName })}</Text>
+-      <Text style={styles.body}>{t(`directory.category.${card.category}`)} · {card.city}{card.department && card.department !== card.city ? `, ${card.department}` : ""}</Text>
+-      {card.priceFrom ? <Text style={styles.body}>{t("gifts.host.catalog.priceFrom", { price: formatMinor(card.priceFrom.amountMinor, card.priceFrom.currency, locale) })}</Text> : null}
+-      {card.summary ? <Text style={styles.muted}>{card.summary}</Text> : null}
+-      {fulfillment ? (
+-        <View testID={`fulfillment-${card.listingId}`}>
+-          <Text style={styles.muted}>{t("gifts.host.providers.leadTime", { days: fulfillment.leadTimeDays })}{fulfillment.coverageZones.length ? ` · ${t("gifts.host.providers.coverage", { zones: fulfillment.coverageZones.join(", ") })}` : ""}</Text>
+-          {fulfillment.transportCostMinor !== undefined && card.priceFrom ? <Text style={styles.muted}>{t("gifts.host.providers.transport", { price: formatMinor(fulfillment.transportCostMinor, card.priceFrom.currency, locale) })}</Text> : null}
+-        </View>
+-      ) : null}
+-      {card.address ? <Text style={styles.muted}>{t("gifts.host.providers.address", { address: [card.address.line, card.address.reference].filter(Boolean).join(" · ") })}</Text> : null}
+-      {card.hours?.weekly.length ? <Text style={styles.muted}>{t("gifts.host.providers.hours", { hours: card.hours.weekly.map((slot) => `${slot.opens}-${slot.closes}`).join(", ") })}{card.hours.note ? ` · ${card.hours.note}` : ""}</Text> : null}
+-      <Text style={styles.muted}>{t("gifts.host.providers.disclaimer")}</Text>
+-      <View style={styles.row}>
+-        <ActionButton label={adding ? t("gifts.host.catalog.adding") : t("gifts.host.catalog.add")} busy={adding} disabled={adding} onPress={() => onAdd(card)} testID={`add-provider-${card.listingId}`} />
+-        {card.destinations.slice(0, 3).map((destination) => (
+-          <ActionButton key={destination} variant="secondary" label={t(`partner.destination.${destination}`, { name: card.providerName })} onPress={() => open(destination)} testID={`dest-${card.listingId}-${destination}`} />
+-        ))}
+-      </View>
++  return <View testID={`provider-${card.listingId}`} style={[styles.card, { gap: spacing[2] }]}>
++    <Text accessibilityRole="header" style={styles.subtitle}>{card.name}</Text>
++    <Text style={styles.label}>{t("gifts.host.providers.by", { name: card.providerName })}</Text>
++    <Text style={styles.body}>{t(`directory.category.${card.category}`)} · {card.city}{card.department && card.department !== card.city ? `, ${card.department}` : ""}</Text>
++    {card.priceFrom ? <Text style={styles.body}>{t("gifts.host.catalog.priceFrom", { price: formatMinor(card.priceFrom.amountMinor, card.priceFrom.currency, locale) })}</Text> : <GiftField label={t("hostGifts.agreedPrice", { currency })} value={agreed} onChange={onPrice} help={t("hostGifts.priceNeeded")} error={invalidPrice ? t("hostGifts.invalidMoney") : undefined} keyboardType="decimal-pad" testID={`provider-price-${card.listingId}`} />}
++    {card.summary ? <Text style={styles.muted}>{card.summary}</Text> : null}
++    {fulfillment ? <View testID={`fulfillment-${card.listingId}`}>
++      <Text style={styles.muted}>{t("gifts.host.providers.leadTime", { days: fulfillment.leadTimeDays })}{fulfillment.coverageZones.length ? ` · ${t("gifts.host.providers.coverage", { zones: fulfillment.coverageZones.join(", ") })}` : ""}</Text>
++      {fulfillment.transportCostMinor !== undefined && card.priceFrom ? <Text style={styles.muted}>{t("gifts.host.providers.transport", { price: formatMinor(fulfillment.transportCostMinor, card.priceFrom.currency, locale) })}</Text> : null}
++    </View> : null}
++    {card.address ? <Text style={styles.muted}>{t("gifts.host.providers.address", { address: [card.address.line, card.address.reference].filter(Boolean).join(" · ") })}</Text> : null}
++    {card.hours?.weekly.length ? <Text style={styles.muted}>{t("gifts.host.providers.hours", { hours: card.hours.weekly.map((slot) => `${slot.opens}-${slot.closes}`).join(", ") })}{card.hours.note ? ` · ${card.hours.note}` : ""}</Text> : null}
++    <Text style={styles.muted}>{t("gifts.host.providers.disclaimer")}</Text>
++    <View style={styles.row}>
++      <ActionButton label={adding ? t("gifts.host.catalog.adding") : t("gifts.host.catalog.add")} busy={adding} disabled={disabled || !card.verified} onPress={() => onAdd(card)} testID={`add-provider-${card.listingId}`} />
++      {card.destinations.slice(0, 3).map((destination) => <GiftPartnerLink key={destination} listingId={card.listingId} destination={destination} celebrationId={celebrationId} label={destination === "PRODUCT_PAGE" || destination === "LANDING" ? t(`hostGifts.destination.${destination}`) : t(`partner.destination.${destination}`, { name: card.providerName })} />)}
+     </View>
+-  );
++  </View>;
+ }
+ 
+-function ProvidersBody({ celebrationId, currency }: { readonly celebrationId: string; readonly currency: string }): ReactNode {
++function ProvidersBody({ celebrationId, currency, onNavigate }: { readonly celebrationId: string; readonly currency: string; readonly onNavigate: (path: string) => void }): ReactNode {
+   const t = useT();
++  const locale = useLocale();
+   const client = useApiClient();
+   const [category, setCategory] = useState<string | undefined>(undefined);
+   const [city, setCity] = useState("");
+   const [maxPrice, setMaxPrice] = useState("");
+   const [committed, setCommitted] = useState<{ city?: string; maxPriceMinor?: number }>({});
+   const [page, setPage] = useState(1);
+-  const [added, setAdded] = useState<string | null>(null);
+-  const discovery = useProviderDiscovery(client, { ...(category ? { category } : {}), ...(committed.city ? { city: committed.city } : {}), ...(committed.maxPriceMinor !== undefined ? { maxPriceMinor: committed.maxPriceMinor } : {}), page, pageSize: PAGE_SIZE });
++  const [added, setAdded] = useState<{ title: string; status: GiftItemStatus } | null>(null);
++  const [filterError, setFilterError] = useState<string | null>(null);
++  const [agreed, setAgreed] = useState<Record<string, string>>({});
++  const [invalidPrice, setInvalidPrice] = useState<string | null>(null);
++  const inFlight = useRef(false);
++  const discovery = useProviderDiscovery(client, { ...(category ? { category } : {}), ...committed, page, pageSize: PAGE_SIZE }, locale);
+   const add = useAddGift(client, celebrationId);
+   const unavailable = add.error instanceof ApiError && problemCode(add.error) === "CATALOG_PRODUCT_UNAVAILABLE";
+   const apply = (): void => {
+-    const price = Number(maxPrice.replace(",", "."));
+-    setPage(1);
+-    setCommitted({ ...(city.trim() ? { city: city.trim().toLowerCase().replace(/\s+/g, "-") } : {}), ...(maxPrice.trim() && Number.isFinite(price) ? { maxPriceMinor: Math.round(price * CENTS) } : {}) });
++    const minor = maxPrice.trim() ? parseHostGiftPrice(maxPrice) : null;
++    if (maxPrice.trim() && minor === null) { setFilterError(t("hostGifts.invalidMoney")); return; }
++    setFilterError(null); setPage(1);
++    setCommitted({ ...(city.trim() ? { city: city.trim().normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().replace(/\s+/g, "-") } : {}), ...(minor !== null ? { maxPriceMinor: minor } : {}) });
+   };
+   const choose = (card: ProviderCard): void => {
+-    setAdded(null);
+-    add.mutate({ source: "CATALOGED", title: card.name, price: { amountMinor: card.priceFrom?.amountMinor ?? 0, currency: card.priceFrom?.currency ?? currency }, productListingId: card.listingId }, { onSuccess: () => setAdded(card.name) });
++    if (inFlight.current) return;
++    const minor = card.priceFrom?.amountMinor ?? parseHostGiftPrice(agreed[card.listingId] ?? "");
++    if (minor === null || !Number.isSafeInteger(minor) || minor < 0) { setInvalidPrice(card.listingId); return; }
++    inFlight.current = true; setAdded(null); setInvalidPrice(null);
++    add.mutate({ source: "CATALOGED", title: card.name, price: { amountMinor: minor, currency: card.priceFrom?.currency ?? currency }, productListingId: card.listingId }, {
++      onSuccess: (item) => setAdded({ title: card.name, status: item.status }), onSettled: () => { inFlight.current = false; }
++    });
+   };
+   const total = discovery.data?.total ?? 0;
+   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+-  return (
+-    <View style={{ gap: spacing[4] }}>
+-      <Text style={styles.body}>{t("gifts.host.providers.intro")}</Text>
+-      <View accessibilityRole="radiogroup" accessibilityLabel={t("gifts.host.providers.category")} style={[styles.row, { flexWrap: "wrap" }]}>
+-        {[undefined, ...CATEGORIES].map((code) => (
+-          <Pressable key={code ?? "all"} accessibilityRole="radio" aria-checked={category === code} accessibilityLabel={code ? t(`directory.category.${code}`) : t("gifts.host.providers.allCategories")} testID={`category-${code ?? "all"}`}
+-            onPress={() => { setCategory(code); setPage(1); }} style={[styles.option, category === code ? styles.optionSelected : null, { minHeight: 44, justifyContent: "center" }]}>
+-            <Text style={styles.body}>{code ? t(`directory.category.${code}`) : t("gifts.host.providers.allCategories")}</Text>
+-          </Pressable>
+-        ))}
+-      </View>
+-      <Field label={t("gifts.host.providers.city")} value={city} onChange={setCity} help={t("gifts.host.providers.cityHelp")} testID="providers-city" />
+-      <Field label={t("gifts.host.providers.maxPrice")} value={maxPrice} onChange={setMaxPrice} keyboardType="decimal-pad" testID="providers-max-price" />
+-      <ActionButton label={t("gifts.host.providers.search")} onPress={apply} testID="providers-search" />
+-      {added ? <Notice kind="success">{t("gifts.host.catalog.added", { title: added })}</Notice> : null}
+-      {unavailable ? <Notice kind="error">{t("gifts.host.catalog.unavailableBody")}</Notice> : <ErrorNotice error={add.error} />}
+-      {discovery.isPending ? <Loading /> : null}
+-      {discovery.isError ? <RetryNotice error={discovery.error} onRetry={() => { void discovery.refetch(); }} /> : null}
+-      {discovery.data && discovery.data.items.length === 0 ? <Notice>{t("gifts.host.providers.none")}</Notice> : null}
+-      {discovery.data ? <Text style={styles.muted} accessibilityLiveRegion="polite">{t("gifts.host.providers.count", { count: total })}</Text> : null}
+-      {discovery.data?.items.map((card) => <ProviderOffer key={card.listingId} card={card} celebrationId={celebrationId} adding={add.isPending && add.variables?.source === "CATALOGED" && add.variables.productListingId === card.listingId} onAdd={choose} />)}
+-      {pages > 1 ? (
+-        <View style={styles.row}>
+-          <ActionButton variant="secondary" label={t("directory.pagination.previous")} disabled={page <= 1} onPress={() => setPage(page - 1)} testID="providers-prev" />
+-          <Text style={styles.muted}>{t("gifts.host.providers.page", { page, pages })}</Text>
+-          <ActionButton variant="secondary" label={t("directory.pagination.next")} disabled={page >= pages} onPress={() => setPage(page + 1)} testID="providers-next" />
+-        </View>
+-      ) : null}
+-    </View>
+-  );
++  const shownPage = discovery.data?.page ?? page;
++  return <View style={{ gap: spacing[4] }}>
++    <Text style={styles.body}>{t("gifts.host.providers.intro")}</Text>
++    <GiftCategory label={t("gifts.host.providers.category")} value={category ?? "all"} onChange={(value) => { setCategory(value === "all" ? undefined : value); setPage(1); }} prefix="category"
++      choices={[{ value: "all", label: t("gifts.host.providers.allCategories") }, ...CATEGORIES.map((value) => ({ value, label: t(`directory.category.${value}`) }))]} />
++    <GiftField label={t("gifts.host.providers.city")} value={city} onChange={setCity} help={t("gifts.host.providers.cityHelp")} testID="providers-city" />
++    <GiftField label={t("gifts.host.providers.maxPrice")} value={maxPrice} onChange={setMaxPrice} keyboardType="decimal-pad" error={filterError ?? undefined} testID="providers-max-price" />
++    <ActionButton label={t("gifts.host.providers.search")} onPress={apply} testID="providers-search" busy={discovery.isFetching} />
++    {added ? <Notice kind="success"><Text style={styles.body}>{t("gifts.host.catalog.added", { title: added.title })}</Text><PublicationLine status={added.status} /></Notice> : null}
++    {unavailable ? <Notice kind="error">{t("gifts.host.catalog.unavailableBody")}</Notice> : <GiftFailure error={add.error} />}
++    <ActionButton variant="secondary" label={t("hostGifts.reviewList")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.gifts, celebrationId))} />
++    {discovery.isPending ? <Loading /> : null}
++    {discovery.isFetching && discovery.data ? <Text accessibilityLiveRegion="polite" style={styles.muted}>{t("hostGifts.refreshing")}</Text> : null}
++    {discovery.isError ? <GiftFailure error={discovery.error} onRetry={() => { void discovery.refetch(); }} /> : null}
++    {discovery.data && discovery.data.items.length === 0 ? <Notice>{t("gifts.host.providers.none")}</Notice> : null}
++    {discovery.data ? <Text style={styles.muted} accessibilityLiveRegion="polite">{t("gifts.host.providers.count", { count: total })}</Text> : null}
++    {discovery.data?.items.map((card) => <ProviderOffer key={card.listingId} card={card} celebrationId={celebrationId} currency={currency} adding={add.isPending && add.variables?.source === "CATALOGED" && add.variables.productListingId === card.listingId}
++      disabled={add.isPending || discovery.isError || discovery.isFetching} onAdd={choose} agreed={agreed[card.listingId] ?? ""} onPrice={(value) => setAgreed((current) => ({ ...current, [card.listingId]: value }))} invalidPrice={invalidPrice === card.listingId} />)}
++    {pages > 1 ? <View style={styles.row}>
++      <ActionButton variant="secondary" label={t("directory.pagination.previous")} disabled={page <= 1 || discovery.isFetching} onPress={() => setPage((current) => current - 1)} testID="providers-prev" />
++      <Text style={styles.muted}>{t("gifts.host.providers.page", { page: shownPage, pages })}</Text>
++      <ActionButton variant="secondary" label={t("directory.pagination.next")} disabled={page >= pages || discovery.isFetching} onPress={() => setPage((current) => current + 1)} testID="providers-next" />
++    </View> : null}
++  </View>;
+ }
+ 
+ export function ProvidersScreen(props: ScreenProps): ReactNode {
+   const t = useT();
+-  return <CelebrationScreen {...props} current="gifts" title={t("gifts.host.providers.title")}>{({ celebration }) => <ProvidersBody celebrationId={celebration.id} currency={celebration.currency} />}</CelebrationScreen>;
++  return <CelebrationScreen {...props} current="gifts" title={t("gifts.host.providers.title")}>{({ celebration }) => <ProvidersBody key={celebration.id} celebrationId={celebration.id} currency={celebration.currency} onNavigate={props.onNavigate} />}</CelebrationScreen>;
+ }
+
+diff --git a/apps/universal/app/(host)/regalos/catalogo.tsx b/apps/universal/app/(host)/regalos/catalogo.tsx
+index ad55120..02a70bb 100644
+--- a/apps/universal/app/(host)/regalos/catalogo.tsx
++++ b/apps/universal/app/(host)/regalos/catalogo.tsx
+@@ -1,4 +1,9 @@
+ import { CatalogScreen } from '../../../src/host/gifts/catalog-screen';
+ import { useHostRoute } from '../../../src/platform/route';
++import { useLocalSearchParams } from 'expo-router';
+ 
+-export default function Route() { const { celebrationId, onNavigate } = useHostRoute(); return <CatalogScreen celebrationId={celebrationId} onNavigate={onNavigate} />; }
++export default function Route() {
++  const { celebrationId, onNavigate } = useHostRoute();
++  const { q } = useLocalSearchParams<{ q?: string | string[] }>();
++  return <CatalogScreen celebrationId={celebrationId} onNavigate={onNavigate} initialQuery={Array.isArray(q) ? q[0] : q} />;
++}
+
+diff --git a/apps/universal/test/gifts-portal.test.tsx b/apps/universal/test/gifts-portal.test.tsx
+index 1c0477c..0c5a78f 100644
+--- a/apps/universal/test/gifts-portal.test.tsx
++++ b/apps/universal/test/gifts-portal.test.tsx
+@@ -23,7 +23,7 @@ const navigate = vi.fn();
+ const gift = (id: string, over: Record<string, unknown> = {}) => ({ id, listId: "l", celebrationId: "c-1", title: id, price: { amountMinor: 10000, currency: "BOB" }, source: "CATALOGED", status: "AVAILABLE", version: 0, createdAt: "2026-11-01T00:00:00Z", productListingId: LISTING, ...over });
+ const GIFTS = { items: [gift("Torta"), gift("Licuadora", { source: "EXTERNAL", status: "PROPOSED", productListingId: null }), gift("Mesa", { status: "COMMITTED" })], partnerPriorityEnabled: true };
+ const type = (label: string, value: string): void => { fireEvent.change(screen.getByLabelText(label), { target: { value } }); };
+-const handlers = (extra: Record<string, Handler>) => baseHandlers(CELEBRATION) && { ...baseHandlers(CELEBRATION), ...extra };
++const handlers = (extra: Record<string, Handler>) => ({ ...baseHandlers(CELEBRATION), "GET /gifts/celebrations/c-1/gift-settings": () => ({ showRequesterToHost: true, showRequesterToGuests: false, version: 0 }), ...extra });
+ 
+ beforeEach(() => { navigate.mockClear(); resetSecureStore(); });
+ afterEach(() => { cleanup(); });
+@@ -44,7 +44,7 @@ describe("REQ-F23-04 · status of each gift", () => {
+   it("403 on the list shows the forbidden notice with a retry", async () => {
+     const { client } = fakeClient(handlers({ "GET /gifts/celebrations/c-1/items": () => new HttpFailure(403) }));
+     renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
+-    expect(await screen.findByText(/Puedes ver esta celebración|No tienes permisos/i)).toBeTruthy();
++    expect(await screen.findByText(/Puedes ver esta celebración|No tienes permiso/i)).toBeTruthy();
+   });
+ });
+ 
+@@ -72,7 +72,7 @@ describe("REQ-F23-01 · pending reservations inbox", () => {
+     cleanup();
+     const denied = fakeClient(handlers({ "GET /gifts/celebrations/c-1/reservations": () => new HttpFailure(403), "GET /gifts/celebrations/c-1/items": () => GIFTS }));
+     renderApp(<GiftInboxScreen celebrationId="c-1" onNavigate={navigate} />, denied.client);
+-    expect(await screen.findByText(/Puedes ver esta celebración|No tienes permisos/i)).toBeTruthy();
++    expect(await screen.findByText(/Puedes ver esta celebración|No tienes permiso/i)).toBeTruthy();
+   });
+ });
+ 
+@@ -97,7 +97,7 @@ describe("REQ-F23-02 · build the list from the partner catalog", () => {
+     expect(await screen.findByTestId(`hit-${LISTING}`)).toBeTruthy();
+   });
+   it("422 CATALOG_PRODUCT_UNAVAILABLE explains and keeps the search", async () => {
+-    const { client } = fakeClient(handlers({ "GET /listings": () => ({ items: [{ id: LISTING, providerId: PID, title: "Torta" }] }), "POST /gifts/celebrations/c-1/items": () => new HttpFailure(422, { code: "CATALOG_PRODUCT_UNAVAILABLE" }) }));
++    const { client } = fakeClient(handlers({ "GET /listings": () => ({ items: [{ id: LISTING, providerId: PID, title: "Torta", priceFromMinor: 45000 }] }), "POST /gifts/celebrations/c-1/items": () => new HttpFailure(422, { code: "CATALOG_PRODUCT_UNAVAILABLE" }) }));
+     renderApp(<CatalogScreen celebrationId="c-1" onNavigate={navigate} />, client);
+     await screen.findByTestId("catalog-query");
+     fireEvent.click(screen.getByTestId("catalog-search"));
+@@ -113,6 +113,7 @@ describe("REQ-F23-03 · external gift with explicit friction (PARTNER_CATALOG_FI
+     renderApp(<ExternalScreen celebrationId="c-1" onNavigate={navigate} />, client);
+     await screen.findByTestId("external-title");
+     type("Nombre del regalo", "Licuadora"); type("Enlace de la tienda", "https://tienda.example/l"); type("Precio (Bs.)", "150.50");
++    fireEvent.click(screen.getByRole("checkbox", { name: "Revisé las alternativas y prefiero un regalo externo" }));
+     fireEvent.click(screen.getByTestId("external-submit"));
+     expect(await screen.findByText("Batidora")).toBeTruthy();
+     expect(screen.getByText(/Antes de continuar/)).toBeTruthy();
+@@ -128,10 +129,10 @@ describe("REQ-F23-03 · external gift with explicit friction (PARTNER_CATALOG_FI
+     await screen.findByTestId("external-title");
+     type("Nombre del regalo", "X"); type("Enlace de la tienda", "ftp://x"); type("Precio (Bs.)", "10");
+     fireEvent.click(screen.getByTestId("external-submit"));
+-    expect(await screen.findByText(/enlace válido/)).toBeTruthy();
++    expect(await screen.findByText("Usa un enlace http o https válido, sin usuario ni contraseña.")).toBeTruthy();
+     type("Enlace de la tienda", "https://x.example"); type("Precio (Bs.)", "diez");
+     fireEvent.click(screen.getByTestId("external-submit"));
+-    expect(await screen.findByText(/precio válido/)).toBeTruthy();
++    expect(await screen.findByText("Escribe un importe válido, con hasta dos decimales.")).toBeTruthy();
+     expect(calls.filter((call) => call.method === "POST")).toHaveLength(0);
+   });
+   it("money and url parsing", () => {
+@@ -309,16 +310,17 @@ describe("REQ-F28 · availability and date requests", () => {
+ describe("REQ-F23-06 · who sees the requester", () => {
+   it("the switches read and write /gift-settings and the inbox says when the name is hidden", async () => {
+     const put: unknown[] = [];
++    let visibility = { showRequesterToHost: true, showRequesterToGuests: false, version: 0 };
+     const { client } = fakeClient(handlers({
+       "GET /gifts/celebrations/c-1/items": () => GIFTS,
+-      "GET /gifts/celebrations/c-1/gift-settings": () => ({ showRequesterToHost: true, showRequesterToGuests: false, version: 0 }),
+-      "PUT /gifts/celebrations/c-1/gift-settings": ({ body }) => { put.push(body); return { ...(body as object), version: 1 }; }
++      "GET /gifts/celebrations/c-1/gift-settings": () => visibility,
++      "PUT /gifts/celebrations/c-1/gift-settings": ({ body }) => { put.push(body); visibility = { ...visibility, ...(body as object), version: 1 }; return visibility; }
+     }));
+     renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
+     const guests = await screen.findByRole("switch", { name: "Mostrar el nombre a otros invitados" });
+     fireEvent.click(guests);
+     await waitFor(() => expect(put).toEqual([{ showRequesterToHost: true, showRequesterToGuests: true }]));
+-    expect(await screen.findByText("Preferencia guardada. Aplica desde ahora.")).toBeTruthy();
++    expect(await screen.findByText("La preferencia se guardó. Actualizamos las reservas y los regalos.")).toBeTruthy();
+   });
+   it("requesterHidden shows 'Nombre oculto' instead of an anonymous guest", async () => {
+     const { client } = fakeClient(handlers({ "GET /gifts/celebrations/c-1/reservations": () => ({ items: [{ id: "r9", itemId: "Torta", celebrationId: "c-1", guestDisplayName: null, requesterHidden: true, status: "PENDING_REVIEW", requestedAt: "2026-11-02T15:00:00Z" }] }), "GET /gifts/celebrations/c-1/items": () => GIFTS }));
+
+diff --git a/packages/forms/src/index.ts b/packages/forms/src/index.ts
+index 58911b0..36b4402 100644
+--- a/packages/forms/src/index.ts
++++ b/packages/forms/src/index.ts
+@@ -4,3 +4,4 @@ export * from "./schemas/rsvp.js";
+ export * from "./schemas/quote.js";
+ export * from "./schemas/notification.js";
+ export * from "./schemas/guest-gift-reservation.js";
++export * from "./schemas/host-gift.js";
+
+diff --git a/packages/query-hooks/src/index.ts b/packages/query-hooks/src/index.ts
+index 4330625..0af7006 100644
+--- a/packages/query-hooks/src/index.ts
++++ b/packages/query-hooks/src/index.ts
+@@ -7,3 +7,4 @@ export * from "./keys.js";
+ export * from "./policy.js";
+ export * from "./invalidation.js";
+ export * from "./media/upload.js";
++export * from "./host-gifts/index.js";
+
+diff --git a/packages/i18n/src/server.ts b/packages/i18n/src/server.ts
+index 6584327..4a17d09 100644
+--- a/packages/i18n/src/server.ts
++++ b/packages/i18n/src/server.ts
+@@ -27,6 +27,8 @@ import { pushActionsEsBO } from "../locales/es-BO/push-actions.js";
+ import { pushActionsEnUS } from "../locales/en-US/push-actions.js";
+ import { guestAppEsBO } from "../locales/es-BO/guest-app.js";
+ import { guestAppEnUS } from "../locales/en-US/guest-app.js";
++import { hostGiftsEsBO } from "../locales/es-BO/host-gifts.js";
++import { hostGiftsEnUS } from "../locales/en-US/host-gifts.js";
+ import { adminEnUS } from "../locales/en-US/admin.js";
+ import { adminEsBO } from "../locales/es-BO/admin.js";
+ 
+@@ -35,8 +37,8 @@ import { adminEsBO } from "../locales/es-BO/admin.js";
+  * translator. Safe in Next.js server components, where react-i18next cannot load.
+  */
+ 
+-const esBO = { ...esBOCommon, celebration: celebrationEsBO, directory: directoryEsBO, host: hostEsBO, admin: adminEsBO, landing: landingEsBO, partner: partnerEsBO, search: searchEsBO, rsvp: rsvpEsBO, guests: guestsEsBO, gifts: giftsEsBO, ...quoteEsBO, portal: portalEsBO, pushActions: pushActionsEsBO, guestApp: guestAppEsBO };
+-const enUS = { ...enUSCommon, celebration: celebrationEnUS, directory: directoryEnUS, host: hostEnUS, admin: adminEnUS, landing: landingEnUS, partner: partnerEnUS, search: searchEnUS, rsvp: rsvpEnUS, guests: guestsEnUS, gifts: giftsEnUS, ...quoteEnUS, portal: portalEnUS, pushActions: pushActionsEnUS, guestApp: guestAppEnUS };
++const esBO = { ...esBOCommon, celebration: celebrationEsBO, directory: directoryEsBO, host: hostEsBO, admin: adminEsBO, landing: landingEsBO, partner: partnerEsBO, search: searchEsBO, rsvp: rsvpEsBO, guests: guestsEsBO, gifts: giftsEsBO, ...quoteEsBO, portal: portalEsBO, pushActions: pushActionsEsBO, guestApp: guestAppEsBO, hostGifts: hostGiftsEsBO };
++const enUS = { ...enUSCommon, celebration: celebrationEnUS, directory: directoryEnUS, host: hostEnUS, admin: adminEnUS, landing: landingEnUS, partner: partnerEnUS, search: searchEnUS, rsvp: rsvpEnUS, guests: guestsEnUS, gifts: giftsEnUS, ...quoteEnUS, portal: portalEnUS, pushActions: pushActionsEnUS, guestApp: guestAppEnUS, hostGifts: hostGiftsEnUS };
+ 
+ /** Every resource, by locale; tests compare their key sets. */
+ export const resources = { "es-BO": esBO, "en-US": enUS } as const;
+
+diff --git a/docs/progress/evidence/lane-F23/README.md b/docs/progress/evidence/lane-F23/README.md
+index 0ad06c3..e937c11 100644
+--- a/docs/progress/evidence/lane-F23/README.md
++++ b/docs/progress/evidence/lane-F23/README.md
+@@ -1,3 +1,11 @@
++# F23 · continuación local de Miguel · 2026-11-08
++
++Estado actual de esta copia: `TESTED` frontend, **no DONE**. Se adaptaron catálogo, externo con alternativas, estados/publicación, bandeja y privacidad, y descubrimiento de proveedores. Suite propia 55/55 × 3, regresión universal 409/409, Next 107/107, hooks 98/98; 28 capturas Chrome a 360/768/1280 con axe sin critical/serious; Hermes iOS/Android compila. El gateway actual no responde y `verify` sigue fallando en sincronización de ocho specs con backend; faltan integración real actual, runtime nativo, CI y revisión humana. Sin commits, PR ni push.
++
++Ver [evidencia actual, REQs, comandos, alcance y responsables](local-2026-11-08.md). Las secciones siguientes se conservan como evidencia histórica; sus pruebas contra backend real no cubren los cambios de esta continuación.
++
++---
++
+ # F23 · Gestión de regalos del anfitrión · 2026-11-05
+ 
+ Nivel: `TESTED` + Chrome real (app Expo web :8081, login por la pantalla real) contra backend real. **No DONE.**
+
+diff --git a/apps/universal/app/+native-intent.ts b/apps/universal/app/+native-intent.ts
+index 661408a..5fd42ab 100644
+--- a/apps/universal/app/+native-intent.ts
++++ b/apps/universal/app/+native-intent.ts
+@@ -1,6 +1,7 @@
+ import { guestSystemPath } from "../src/deep-links/router";
++import { hostGiftSystemPath } from "../src/host/gifts/routing";
+ 
+ /** Expo invokes this for cold starts and links received while the app is running. */
+ export function redirectSystemPath({ path }: { path: string; initial: boolean }): string {
+-  return guestSystemPath(path);
++  return hostGiftSystemPath(path) ?? guestSystemPath(path);
+ }
+
+diff --git a/docs/progress/STATUS_LOG.md b/docs/progress/STATUS_LOG.md
+index 6083858..a69568c 100644
+--- a/docs/progress/STATUS_LOG.md
++++ b/docs/progress/STATUS_LOG.md
+@@ -2,6 +2,7 @@
+ 
+ | Fecha | Carril / fase | Estado | Evidencia |
+ |---|---|---|---|
++| 2026-11-08 | **F23 · Miguel · continuación local** | `TESTED` frontend, no DONE: catálogo y publicación, externo con alternativas, bandeja/estados, privacidad confirmada por lectura y proveedores por redirector. F23 55/55 × 3; universal 409/409, Next 107/107, hooks 98/98; 28 capturas Chrome 360/768/1280, axe sin critical/serious; Hermes iOS/Android compila. Build/lint/tipos pasan; verify falla en sincronización de ocho contratos con backend. Gateway actual inaccesible; faltan integración real actual, runtime nativo, CI, revisión de otro eje y aprobación visual. Sin publicación. | [F23 actual](evidence/lane-F23/local-2026-11-08.md) |
+ | 2026-11-07 | **F21 · Miguel · continuación local** | `TESTED` frontend, no DONE: enlaces estrictos, caché privada por invitación, RSVP y regalos/reservas sin cuenta; navegación mínima a regalos desde la web. F21 80/80 × 3; universal 354/354, Next 107/107; cobertura F21 98.58 % líneas; Chrome 29 pantallas 360/768/1280, axe sin critical/serious; Hermes iOS/Android compilan. Build/lint/tipos generales pasan; verify falla en sincronización de ocho contratos con backend. Sin gateway real actual, dominio/builds firmados/teléfonos, CI ni revisión de otro eje; sin publicación. | [F21 actual](evidence/lane-F21/local-2026-11-07.md) |
+ | 2026-11-05 | **Cierre de pendientes transversales: axe F22-F28, cobertura, snapshots, F28 entrega, F14 real + E1, aviso público** | `TESTED` (web, Chrome; **no DONE**). `yarn turbo run typecheck test lint` 66/66 y `eslint . --max-warnings 0` limpio. **axe:** 126 hallazgos moderate/minor triados (102 `region`, 18 `aria-allowed-role`, 6 `heading-order`; ninguno falso positivo) y corregidos; barrido de 132 combinaciones: 0 critical, 0 serious, 0 moderate/minor ([triaje](evidence/axe-triage-f22-f28.md)). **Cobertura** (`yarn test:coverage`, umbral en CI: líneas/sentencias >= 85 %): query-hooks 99.9 %, forms 100 %, i18n 100 %, auth 99 %, api-client 87 %, ui 100 %, ui-web 100 %, apps/universal 92 %, apps/seo-web 92 % (líneas; funciones 76-78 % en las apps, sin umbral). **Snapshots:** 14 nuevos (7 pantallas x 360/1280, contra el fixture) + catálogo/landing; salida de máquina macOS, **sin revisión humana y sin línea base Linux** (workflow `visual-baselines` + [runbook](../runbooks/visual-baselines.md)); el catálogo fluctúa ~1 % en 2 de 4 corridas. **F28 entrega:** el contrato 2.2.0 sigue sin edición de oferta; pantalla lista contra `PUT .../listings/{id}/fulfillment` (esperado) y honesta cuando el servidor no la tiene, probada solo con cliente simulado; dependencia anotada en BLOCKERS. **F14 contra el backend real** (provider-catalog 2.2.0 / identity 1.1.0 publicados, ADMIN de bootstrap): 8 pantallas sin errores a 360/768/1280, E1 (resumen de plataforma) añadido, verificación de un proveedor desde la UI confirmada en la API, axe 0; escrituras de categorías/geografía/moderación y rechazo NO probadas en vivo; moderación y organizaciones vacías en este stack. **Alta pública de no registrados:** mensaje honesto de que el aviso por correo depende del anfitrión. Evidencia obsoleta («contra mock», «NO HECHO») corregida en F15-F18, F21-F23, F28. No probado: iOS/Android, lector de pantalla/teclado, Linux. | [axe](evidence/axe-triage-f22-f28.md) · [F14](evidence/lane-F14/README.md) · [F28](evidence/lane-F28/README.md) · [runbook visual](../runbooks/visual-baselines.md) |
+ | 2026-11-04 | **F21-F28 · cierre de pendientes contra el backend real** | `TESTED` en Chrome (24 comprobaciones PASS en `live-run-closeout-all.json`, 0 errores de consola), **no DONE**. Hecho: F22-04 reserva sin cuenta con el token opaco del enlace (201, 409 con alternativas, token de otra celebracion 404 sin datos, desconocido 401, anfitrion aprueba en la UI; `reservedByName` solo si el ajuste lo permite; sin SSR anonimo); REQ-F23-05 descubrir proveedores con `GET /providers`; REQ-F23-06 `gift-settings` + `requesterHidden`; `PartnerLink` (ui-web) y `partnerRedirectUrl` (app) siempre por `/r/{listingId}`; REQ-F21-05 regalos en la app (Expo web); F28 productos, servicios y entrega propios, documentos registrar->PUT MinIO :29000->completar->'Recibido' (PDF y PNG) y CTR coherente (impresiones antes de clics: 0->12 / 1->4 clics, CTR 0.3333); cotizacion sin cuenta con honeypot, captcha opcional, 429/403/422; axe en 132 combinaciones (360/768/1280, claro/oscuro): 0 critical/serious tras corregir; selector nativo con `expo-document-picker`; `e2e-guests.mjs` actualizado. **No probado / limites:** iOS/Android (picker nativo y app), captcha contra un verificador real (el stack local esta en `open`), 403 CAPTCHA_FAILED y 401 ANONYMOUS_QUOTES_DISABLED solo en test, clics de la corrida cuentan como `invalidLeads` (sin agente de navegador), condiciones de entrega sin edicion (el contrato no tiene PUT de oferta), la app ignora el esquema oscuro del sistema (fuerza claro hasta tener tema oscuro), 126 hallazgos axe moderate/minor: ya triados y corregidos el 2026-11-05 (fila superior). Hallazgo: el enlace de partner de regalos ya no fuerza `PRODUCT_PAGE` (404 sin ese destino). | [F21](evidence/lane-F21/README.md) · [F22](evidence/lane-F22/README.md) · [F23](evidence/lane-F23/README.md) · [F26](evidence/lane-F26/README.md) · [F27](evidence/lane-F27/README.md) · [F28](evidence/lane-F28/README.md) · [axe](evidence/axe-f22-f28.json) |
+
+diff --git a/docs/progress/BLOCKERS.md b/docs/progress/BLOCKERS.md
+index 67e24d6..212716b 100644
+--- a/docs/progress/BLOCKERS.md
++++ b/docs/progress/BLOCKERS.md
+@@ -1,5 +1,11 @@
+ # Bloqueos (frontend)
+ 
++## F23 · continuación local 2026-11-08
++
++- Backend 25: localhost:8000 y :28000 devuelven ECONNREFUSED fuera del sandbox. Fabio aporta Gift List/Provider Catalog y contrato coordinado; Miguel debe repetir creación/publicación, reserva/decisión, fricción y privacidad contra servicios reales. La lista pública existente ya pasa la prueba frontend; no se modifica F22.
++- `verify` pasa build/lint y falla al comparar ocho specs vendorizados con el checkout backend. No se regeneran contratos de otros carriles. Hace falta coordinar sus versiones y repetir F23.
++- Hermes iOS/Android compila, pero falta runtime en dispositivos, accesibilidad nativa, CI tres corridas, revisión de código por otro eje y aprobación humana de capturas. Miguel conserva esas verificaciones F23; Pablo/F07 aporta infraestructura/build firmado cuando corresponda. Las 55 pruebas × 3 locales y 28 capturas Chrome no sustituyen esos gates. Estado `TESTED`, no `REGRESSION_VERIFIED` ni `DONE`. [Evidencia y responsables](evidence/lane-F23/local-2026-11-08.md).
++
+ ## F21 · continuación local 2026-11-07
+ 
+ - Frontend probado y bundles iOS/Android compilados; no hay prueba física ni cierre DONE. Pablo/F05 debe aportar dominio asociado, AASA/assetlinks y firmas/configuración; F07 aporta builds firmados. Miguel/F21 conserva la responsabilidad de ejecutar y grabar el recorrido de invitado en iPhone y Android.
+
+diff --git a/docs/progress/DECISIONS.md b/docs/progress/DECISIONS.md
+index 6cc9b18..d0c14fd 100644
+--- a/docs/progress/DECISIONS.md
++++ b/docs/progress/DECISIONS.md
+@@ -1,5 +1,11 @@
+ # Decisiones (frontend)
+ 
++## F23 · Miguel · 2026-11-08
++
++- **Estado y privacidad confirmados por servidor.** La publicación usa el estado recibido; la visibilidad solo se anuncia guardada después de PUT y GET independiente concordantes. Un payload oculto incoherente no muestra nombre ni mensaje. Se conservan los predeterminados del contrato (anfitrión true, invitados false).
++- **Precio de catálogo independiente del externo.** Una sugerencia solo aporta id/título: abre el catálogo para consultar su precio; si falta, requiere importe acordado. Alternativas antes de externo y desafío 409 explícito; modificar el borrador invalida la revisión anterior. Pulsaciones concurrentes se bloquean sincrónicamente, sin prometer idempotencia de servidor ausente del contrato.
++- **Fronteras F23.** Hooks/schemas/textos propios con exportaciones aditivas y enlaces web reales por /r/{listingId}. El resolver estático de las cinco rutas F23 se compone antes del resolver de invitado en +native-intent.ts; no se cambia su parser F21. Una regresión comprueba ambas entradas. Sin cambios en F22/F28, backend ni contratos. [Evidencia y alcance](evidence/lane-F23/local-2026-11-08.md).
++
+ ## Eje B (Leo) · 2026-10-17
+ 
+ - **Un renderer, cinco layouts como datos.** `@rsvp/celebration-theme` traduce la fila del template (paleta, tipografías, estilo, orden de secciones) a variables CSS en web y a contexto en React Native. Los layouts son especificaciones (`src/layouts`), no componentes. Modo oscuro derivado: superficies oscuras neutras con el acento del template.
+

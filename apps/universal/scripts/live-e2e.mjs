@@ -163,7 +163,7 @@ step("C17 · RSVP deadline in the event's local time");
 await page.goto(app$(`/configuracion?c=${celebrationId}`));
 await page.getByLabel("Fecha (AAAA-MM-DD)").fill("2026-12-10");
 await page.getByLabel("Hora (HH:MM)").fill("23:59");
-await page.getByTestId("save-settings").click();
+await page.getByTestId("save-deadline").click();
 await page.waitForTimeout(1500);
 axeProblems += await capture("lane-F13", "C17-configuracion");
 const stored = await (await fetch(`${GATEWAY}/celebrations/${celebrationId}`, { headers: { authorization: `Bearer ${token}` } })).json();

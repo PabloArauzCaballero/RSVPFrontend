@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useSyncExternalStore, type PropsWithChildren, type ReactNode } from "react";
 import { IdentityClient, type SessionManager, type AuthState, type LoginInput, type PasswordRecoveryInput, type RegisterInput, type Session } from "@rsvp/auth";
 import type { ApiClient } from "@rsvp/api-client";
+import type { PushSession } from "../push/session";
 import { claimsOf, type SessionClaims } from "../platform/session";
 
 /** What a screen can do with the session. `state.status` is "loading" until the stored session is read. */
@@ -22,7 +23,7 @@ export function useAuth(): AuthApi {
 }
 
 /** Bridges the framework-free SessionManager to React and restores the stored session once on mount. */
-export function AuthProvider({ manager, identityClient, children }: PropsWithChildren<{ readonly manager: SessionManager; readonly identityClient: ApiClient }>): ReactNode {
+export function AuthProvider({ manager, identityClient, pushSession, children }: PropsWithChildren<{ readonly manager: SessionManager; readonly identityClient: ApiClient; readonly pushSession?: PushSession }>): ReactNode {
   const state = useSyncExternalStore((listener) => manager.subscribe(listener), () => manager.getState(), () => manager.getState());
   useEffect(() => { void manager.restore(); }, [manager]);
   const value = useMemo<AuthApi>(() => {
@@ -32,9 +33,9 @@ export function AuthProvider({ manager, identityClient, children }: PropsWithChi
       signIn: (input) => manager.signIn(input),
       register: (input) => manager.register(input),
       requestRecovery: (input) => identity.requestPasswordRecovery(input),
-      signOut: () => manager.logout().catch(() => undefined)
+      signOut: () => (pushSession ? pushSession.end(state.session?.userId, () => manager.logout()) : manager.logout()).catch(() => undefined)
     };
-  }, [manager, identityClient, state]);
+  }, [manager, identityClient, pushSession, state]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

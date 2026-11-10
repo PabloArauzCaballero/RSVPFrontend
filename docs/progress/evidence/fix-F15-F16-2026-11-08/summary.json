@@ -1,0 +1,225 @@
+{
+  "date": "2026-11-08T23:08:14.005Z",
+  "status": "TESTED",
+  "mergeReady": false,
+  "fixedReviewFindings": 3,
+  "newRegressionTests": 8,
+  "suites": [
+    {
+      "name": "seo-web",
+      "passed": 111,
+      "failed": 0
+    },
+    {
+      "name": "universal",
+      "passed": 413,
+      "failed": 0
+    },
+    {
+      "name": "query-hooks",
+      "passed": 98,
+      "failed": 0
+    },
+    {
+      "name": "forms",
+      "passed": 35,
+      "failed": 0
+    }
+  ],
+  "total": 657,
+  "coverage": {
+    "F15": {
+      "lines": {
+        "total": 447,
+        "covered": 404,
+        "skipped": 0,
+        "pct": 90.38
+      },
+      "statements": {
+        "total": 447,
+        "covered": 404,
+        "skipped": 0,
+        "pct": 90.38
+      },
+      "functions": {
+        "total": 59,
+        "covered": 53,
+        "skipped": 0,
+        "pct": 89.83
+      },
+      "branches": {
+        "total": 254,
+        "covered": 226,
+        "skipped": 0,
+        "pct": 88.97
+      },
+      "branchesTrue": {
+        "total": 0,
+        "covered": 0,
+        "skipped": 0,
+        "pct": "Unknown"
+      }
+    },
+    "F16": {
+      "lines": {
+        "total": 373,
+        "covered": 364,
+        "skipped": 0,
+        "pct": 97.58
+      },
+      "statements": {
+        "total": 373,
+        "covered": 364,
+        "skipped": 0,
+        "pct": 97.58
+      },
+      "functions": {
+        "total": 63,
+        "covered": 50,
+        "skipped": 0,
+        "pct": 79.36
+      },
+      "branches": {
+        "total": 193,
+        "covered": 177,
+        "skipped": 0,
+        "pct": 91.7
+      },
+      "branchesTrue": {
+        "total": 0,
+        "covered": 0,
+        "skipped": 0,
+        "pct": "Unknown"
+      }
+    }
+  },
+  "browser": {
+    "F15": {
+      "status": "PASS",
+      "checks": 9,
+      "axe": [
+        {
+          "screen": "A9-360",
+          "violations": []
+        },
+        {
+          "screen": "A9-768",
+          "violations": []
+        },
+        {
+          "screen": "A9-1280",
+          "violations": []
+        },
+        {
+          "screen": "A9-enviando",
+          "violations": []
+        },
+        {
+          "screen": "A10-360",
+          "violations": []
+        },
+        {
+          "screen": "A10-768",
+          "violations": []
+        },
+        {
+          "screen": "A10-1280",
+          "violations": []
+        },
+        {
+          "screen": "A10-edicion-1280",
+          "violations": []
+        },
+        {
+          "screen": "A11-360",
+          "violations": []
+        },
+        {
+          "screen": "A11-768",
+          "violations": []
+        },
+        {
+          "screen": "A11-1280",
+          "violations": []
+        },
+        {
+          "screen": "A12-360",
+          "violations": []
+        },
+        {
+          "screen": "A12-768",
+          "violations": []
+        },
+        {
+          "screen": "A12-1280",
+          "violations": []
+        },
+        {
+          "screen": "A13-360",
+          "violations": []
+        },
+        {
+          "screen": "A13-768",
+          "violations": []
+        },
+        {
+          "screen": "A13-1280",
+          "violations": []
+        }
+      ]
+    },
+    "F16": {
+      "status": "PASS",
+      "checks": 8,
+      "axe": [
+        {
+          "screen": "C19-lista-360",
+          "violations": []
+        },
+        {
+          "screen": "C19-lista-768",
+          "violations": []
+        },
+        {
+          "screen": "C19-lista-1280",
+          "violations": []
+        },
+        {
+          "screen": "C20-alta-360",
+          "violations": []
+        },
+        {
+          "screen": "C20-alta-768",
+          "violations": []
+        },
+        {
+          "screen": "C20-alta-1280",
+          "violations": []
+        },
+        {
+          "screen": "C21-archivo-200-768",
+          "violations": []
+        },
+        {
+          "screen": "C22-grupos-360",
+          "violations": []
+        },
+        {
+          "screen": "C22-grupos-768",
+          "violations": []
+        },
+        {
+          "screen": "C22-grupos-1280",
+          "violations": []
+        }
+      ]
+    }
+  },
+  "limits": [
+    "Current backend unavailable at gateway",
+    "Guest/RSVP frontend 1.10.0 versus backend checkout 1.8.0",
+    "Tables contract absent",
+    "No native device, CI, peer review or Git target diff",
+    "Node 25 outside declared range; no gitleaks executable"
+  ]
+}

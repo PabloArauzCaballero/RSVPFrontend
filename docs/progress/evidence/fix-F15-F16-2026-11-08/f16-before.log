@@ -1,0 +1,54 @@
+
+ RUN  v3.1.2 C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/apps/universal
+
+ ❯ test/guest-state.test.tsx (2 tests | 2 failed) 473ms
+   × REQ-F16: changing to another cached guest clears the previous personal link 290ms
+     → expected true to be false // Object.is equality
+   × REQ-F16: preserve next guest draft written during delayed save 181ms
+     → expected '' to be 'Borrador del siguiente invitado' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/guest-state.test.tsx > REQ-F16: changing to another cached guest clears the previous personal link
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ test/guest-state.test.tsx:26:44
+     24|  view.rerender(<GuestDetailScreen celebrationId={mock.celebrationId} g…
+     25|  if(screen.queryByTestId('copy-link')){fireEvent.click(screen.getByTes…
+     26|  expect(clipboard.value.includes(secretA)).toBe(false);expect(screen.q…
+       |                                            ^
+     27| });
+     28| it('REQ-F16: preserve next guest draft written during delayed save',as…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  test/guest-state.test.tsx > REQ-F16: preserve next guest draft written during delayed save
+AssertionError: expected '' to be 'Borrador del siguiente invitado' // Object.is equality
+
+- Expected
++ Received
+
+- Borrador del siguiente invitado
+
+ ❯ test/guest-state.test.tsx:36:16
+     34|  release();
+     35|  await screen.findByText('Invitado agregado.');const value=(screen.get…
+     36|  expect(value).toBe('Borrador del siguiente invitado');
+       |                ^
+     37|  expect(mock.listGuests().map(guest => guest.name)).toEqual(['Primera …
+     38| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  18:50:41
+   Duration  5.79s (transform 1.10s, setup 313ms, collect 3.48s, tests 473ms, environment 984ms, prepare 159ms)
+

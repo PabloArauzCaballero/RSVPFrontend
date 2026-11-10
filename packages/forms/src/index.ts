@@ -2,3 +2,6 @@ export * from "./schemas/auth.js";
 export * from "./schemas/celebration.js";
 export * from "./schemas/rsvp.js";
 export * from "./schemas/quote.js";
+export * from "./schemas/notification.js";
+export * from "./schemas/guest-gift-reservation.js";
+export * from "./schemas/host-gift.js";

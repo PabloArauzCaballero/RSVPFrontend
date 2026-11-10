@@ -1,0 +1,14 @@
+
+ RUN  v3.1.2 C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/apps/universal
+
+ ✓ test/host-gifts-controls.test.tsx (3 tests) 123ms
+ ✓ test/host-gifts.test.tsx (37 tests) 4186ms
+   ✓ F23 slice 3 · decisions, preferences and discovery > list HTTP 503 never reveals stale gift rows  1063ms
+ ✓ test/host-gifts-routing.test.ts (15 tests) 9ms
+
+ Test Files  3 passed (3)
+      Tests  55 passed (55)
+   Start at  11:55:05
+   Duration  12.08s (transform 1.13s, setup 1.09s, collect 7.80s, tests 4.32s, environment 3.69s, prepare 426ms)
+
+JSON report written to C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/docs/progress/evidence/lane-F23/local/unit-run-1.json

@@ -32,69 +32,32 @@ export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
     forbiddenTitle: "You cannot reserve gifts here", forbiddenBody: "Your invitation has no permission for this list. Ask the hosts for a new link.",
     expiredTitle: "Your link expired", expiredBody: "The personal link is no longer valid. Ask the hosts to send you a new one.",
     unavailableTitle: "We could not load the gifts", unavailableBody: "The gift service is not responding right now. Nothing was lost: try again.",
-    offline: "No connection. Check your internet and try again; your message is still here.", nameTooLong: "The name can be up to {{max}} characters.", messageTooLong: "The message can be up to {{max}} characters.", busyWait: "We received too many requests in a row. Wait {{seconds}} seconds and try again.", retryHint: "You can press Reserve again: it will not reserve twice.",
     retry: "Try again", validation: "Check the data: the name or the message is too long.", generic: "We could not reserve the gift. Try again."
   },
   empty: { title: "No gifts yet", body: "The hosts have not added gifts yet. Come back soon.", filtered: "No gift matches these filters." },
   notFound: { title: "We could not find this celebration", body: "The page does not exist or the hosts have not published it yet." },
-  /** Guest gift list in the app (Persuade). seo-web keeps using the keys above. */
-  guest: {
-    title: "Gifts", intro: "Reserve a gift in one tap and nobody else will give the same one.", rule: "Each person can hold a limited number of reserved gifts at a time.", backToRsvp: "Back to my answer", loading: "Opening the list…",
-    groupPartner: "From our partners", groupOther: "Ideas from your hosts",
-    status: { AVAILABLE: "Available", PENDING_REVIEW: "Waiting for approval", COMMITTED: "Reserved" },
-    reserve: "Reserve", reserveFor: "Reserve {{title}}", viaPartner: "See it at the partner shop", partnerNote: "A DOne partner offers it. Opening the link takes you out of DOne.", reservedBy: "Reserved by {{name}}",
-    form: { title: "Reserve “{{title}}”", lead: "If you like, leave your name and a message for your hosts. Both are optional.", name: "Your name (optional)", nameHelp: "Your hosts see it next to your reservation.", message: "Message (optional)", messageHelp: "Up to 500 characters.", submit: "Confirm reservation", submitting: "Reserving…", cancel: "Not now" },
-    done: { confirmedTitle: "Gift reserved", confirmedBody: "“{{title}}” is yours. Your hosts will see it on their list in a moment.", pendingTitle: "Reservation sent", pendingBody: "Your hosts approve each reservation. Meanwhile, nobody else can reserve “{{title}}”." },
-    taken: { title: "Someone got there first", body: "Someone else already reserved “{{title}}”. It happens. Here are other options.", alternatives: "Other available gifts", none: "There are no available gifts left. Thank you for wanting to join them." },
-    empty: { title: "No gifts yet", body: "Your hosts have not added any yet. Come back in a few days." },
-    error: {
-      expiredTitle: "Your link no longer works", expiredBody: "Ask whoever invited you for a new one.",
-      otherTitle: "This link is for another celebration", otherBody: "Open the link you were sent for this celebration. If you cannot find it, ask whoever invited you for a new one.",
-      forbiddenTitle: "This link cannot reserve gifts", forbiddenBody: "Ask whoever invited you for a new link.",
-      busyTitle: "It is busy right now", busyBody: "Wait a few seconds and try again.", busyMinutes: "You can open the list again in about {{minutes}} min. If it is urgent, write to whoever invited you.",
-      unavailableTitle: "We could not load the gifts", unavailableBody: "Nothing was lost. Try again.",
-      offlineTitle: "No connection right now", offlineBody: "Check your internet and try again.", retry: "Try again",
-      notFoundTitle: "We could not find this celebration", notFoundBody: "The link may be incomplete, or it may not be published yet."
-    },
-    reserveError: {
-      limit: "You reached the most gifts one person can reserve. If your hosts reject one of your reservations, you can pick another.",
-      expired: "Your link no longer works. Ask whoever invited you for a new one.", forbidden: "This link cannot reserve gifts. Ask whoever invited you for a new one.", notFound: "This link is for another celebration. Open the one you were sent for this one.",
-      busy: "There were a lot of requests in a row. Wait a moment and try again.", busyWait: "There were a lot of requests in a row. Wait {{seconds}} s and try again.", busyMinutes: "There were a lot of requests. You can try again in about {{minutes}} min. Your message is still here.",
-      validation: "The name or the message is too long. Shorten it and try again.", offline: "No connection right now. Your message is still here; try again when your internet is back.", generic: "We could not reserve the gift. Try again.",
-      retryHint: "You can tap “Confirm reservation” again: it will not be reserved twice.", nameTooLong: "The name accepts up to {{max}} characters.", messageTooLong: "The message accepts up to {{max}} characters."
-    }
-  },
   host: {
-    title: "Gifts", intro: "What you add here your guests see and reserve with one tap.", nav: "Gifts",
-    figures: { gifts: "Gifts", available: "Available", reserved: "Reserved", review: "To review" }, list: {
-      emptyTitle: "Your list starts with one gift", emptyBody: "Pick products from our partners or link one from your favorite store. Guests reserve it, so nobody gives the same thing twice.",
-      add: "Add a gift", fromPartner: "From a partner", external: "From a store", reservedBy: "Reserved by {{name}}",
-      more: "More options", pending: "Reservations to review: {{count}}", pendingBody: "Your guests are waiting for your answer.", pendingAction: "Review reservations"
-    },
-    status: { AVAILABLE: "Available", PROPOSED: "To review", PENDING_REVIEW: "Reservation to review", COMMITTED: "Reserved", REJECTED: "Rejected" },
-    visibility: { title: "Who sees who reserved", intro: "You decide whether names show in your dashboard and in your guests' list.", host: "Show the name in my dashboard", hostHelp: "If you turn it off, you see reservations without a name.", guests: "Show the name to other guests", guestsHelp: "Off: guests only see that the gift is already reserved.", saved: "Preference saved. It applies from now on." },
+    title: "Gifts", intro: "Build the list your guests will see. Partner products come first.", nav: "Gifts",
+    list: { title: "Status of each gift", empty: "You have not added gifts yet.", emptyAction: "Add from the catalog", fromPartner: "From a partner", external: "External", reservedBy: "Reserved by {{name}}" },
+    status: { AVAILABLE: "Available", PROPOSED: "Proposed, to review", PENDING_REVIEW: "Reservation pending", COMMITTED: "Committed", REJECTED: "Rejected" },
+    visibility: { title: "Who sees who reserved", intro: "Choose whether the names of people who reserve show in your dashboard and in your guests' list.", host: "Show the name in my dashboard", hostHelp: "If you turn it off, you will see reservations without the name.", guests: "Show the name to other guests", guestsHelp: "Off by default: guests only see that the gift is reserved.", saved: "Preference saved. It applies from now on." },
     approveProposal: "Approve proposal", approvingProposal: "Approving…",
-    rejectProposal: "Reject proposal", rejectingProposal: "Rejecting…", proposalRejected: "Proposal rejected: {{title}}.", rejectConfirm: { title: "Reject this proposal?", body: "“{{title}}” will not show to your guests. You cannot undo this from here." },
-    inbox: { title: "Reservations to review", intro: "Your guests want these gifts. You decide.", emptyTitle: "There are no pending reservations", emptyBody: "When a guest reserves a gift that needs your approval, you will see it here.", emptyAction: "Back to my list", signedAs: "Signed as: {{name}}", group: "Group: {{group}}", requester: "Requested by: {{name}}", hidden: "Name hidden by your setting", hiddenHelp: "You can show names again in My list, \"More options\".", anonymous: "A guest", approve: "Approve", reject: "Reject", approved: "Reservation approved.", rejected: "Reservation rejected.", stale: "This reservation was no longer pending. We refreshed the list.", gift: "Gift: {{title}}", requestedAt: "Requested on {{date}}" },
-    add: {
-      title: "Add a gift", intro: "Choose where the gift comes from. Partners come first.", originLabel: "Where does the gift come from?",
-      origin: { catalog: "From the catalog", provider: "From a provider", store: "From a store" },
-      hint: { catalog: "Products from verified providers, ready to add.", provider: "Browse providers by category and city, and add what they offer.", store: "A link from any store. First we show you partner options." },
-      seeList: "See my list"
-    },
+    inbox: { title: "Pending reservations", intro: "Approve or reject your guests' reservations.", empty: "There are no pending reservations.", requester: "Requested by: {{name}}", hidden: "Name hidden by your setting", hiddenHelp: "You can show names again under Gifts, \"Who sees who reserved\".", anonymous: "A guest", approve: "Approve", reject: "Reject", approved: "Reservation approved.", rejected: "Reservation rejected.", stale: "This reservation was no longer pending; we refreshed the list.", gift: "Gift: {{title}}", requestedAt: "Requested on {{date}}" },
     providers: {
-      category: "Category", allCategories: "All", city: "City", cityHelp: "Optional. For example: la-paz or santa-cruz.", maxPrice: "Maximum price (Bs.)", search: "Search providers", moreFilters: "More filters",
-      by: "By {{name}}", leadTime: "Lead time: {{days}} days", coverage: "Coverage: {{zones}}", transport: "Delivery from {{price}}", address: "Address: {{address}}", hours: "Hours: {{hours}}", details: "See details",
-      disclaimer: "DOne connects you with the provider; it does not provide or guarantee the service. Agree price, delivery and timing with them.", none: "No provider matches these filters. Try another category.", count: "{{count}} results", page: "Page {{page}} of {{pages}}"
+      title: "Discover providers", intro: "Browse verified providers with their offer, coverage and opening hours. Add the product you like to your list.",
+      category: "Category", allCategories: "All", city: "City", cityHelp: "Optional. For example: la-paz or santa-cruz.", maxPrice: "Maximum price (Bs.)", search: "Search providers",
+      by: "By {{name}}", leadTime: "Lead time: {{days}} days", coverage: "Coverage: {{zones}}", transport: "Delivery from {{price}}", address: "Address: {{address}}", hours: "Hours: {{hours}}",
+      disclaimer: "DOne connects you with the provider; it does not provide or guarantee the service. Agree price, delivery and timing with them.", none: "No provider matches these filters.", count: "{{count}} results", page: "Page {{page}} of {{pages}}"
     },
-    catalog: { alreadyListed: "Already on your list.", prompt: "Type what you are looking for, like a cake or a dinner set.", search: "Search", searchLabel: "Search the catalog", searchPlaceholder: "Cake, tableware, flowers…", add: "Add to my list", adding: "Adding…", added: "Added: {{title}}", none: "We found no products for that search. Try another word.", fallbackNote: "Product search is not available yet; we show the public provider catalog.", unavailable: "Product unavailable", unavailableBody: "That product is no longer in the catalog. Pick another.", priceFrom: "From {{price}}" },
-    store: {
-      ruleTitle: "Partners first", ruleOn: "Before you add a store gift we show you similar partner products. If none fits, you add it anyway.", ruleOff: "You can add gifts from any store with no steps before.", ruleChange: "Change in Control modes",
-      modeAUTO_ACCEPT: "Your store gifts show on the list right away.", modeRESTRICTED: "Your store gifts wait for review: you approve them from My list.",
-      name: "Gift name", url: "Store link", price: "Price ({{currency}})", priceHelp: "Numbers only, for example 150.50", submit: "Add gift", submitAnyway: "Add anyway",
-      suggestionsTitle: "Before you go on, look at these partner options", suggestionsBody: "Your list puts partners first. Pick one of these or add your gift anyway.", useSuggestion: "Add this one",
-      added: "Store gift added.", proposed: "Gift proposed: it waits for review in My list.", invalidUrl: "Enter a valid link starting with http:// or https://.", titleTooLong: "The name can be up to {{max}} characters.", invalidMoney: "Enter a valid price, for example 150.50.", required: "Fill in the name, the link and the price."
+    catalog: { title: "Add from the catalog", intro: "Search products from verified providers and add them to your list.", search: "Search products", searchPlaceholder: "Cake, tableware, flowers…", add: "Add to the list", adding: "Adding…", added: "Added: {{title}}", none: "We found no products for that search.", fallbackNote: "Product search is not available yet; showing the public provider catalog.", unavailable: "Product unavailable", unavailableBody: "That product is no longer available in the catalog. Choose another.", priceFrom: "From {{price}}" },
+    external: {
+      title: "Add an external gift", intro: "A gift from another store has no DOne partner behind it. Before adding it, check whether a partner offers something similar.",
+      modeLabel: "Who can add external gifts", modeAuto: "They are published right away", modeRestricted: "I review them before publishing", modeSaved: "Mode saved.",
+      priorityLabel: "Show partners first", priorityHelp: "When on, we suggest partner products before allowing an external gift.",
+      name: "Gift name", url: "Store link", price: "Price (Bs.)", priceHelp: "Numbers only, for example 150.50", submit: "Add external gift", submitAnyway: "Add anyway",
+      suggestionsTitle: "Before you continue, look at these partner products", suggestionsBody: "Your list puts partner products first. You can add one of these or continue with your external gift.", useSuggestion: "Add this one",
+      added: "External gift added.", proposed: "Gift proposed: it waits for your approval.", invalidUrl: "Enter a valid link starting with http:// or https://.", invalidMoney: "Enter a valid price, for example 150.50.", required: "Fill in the name, the link and the price."
     },
-    errors: { codes: { notAvailable: "Someone got there first: that gift is no longer available. We refreshed the list.", alreadyAnswered: "That gift already has another answer and the list changed. We refreshed it.", reservationAnswered: "That reservation already has an answer. We refreshed the list.", requestReused: "That request was already sent with other details. Start again from the list.", validation: "Check the gift details and try again.", invalidUrl: "That link is not valid. It must start with http:// or https://.", invalidMoney: "That price is not valid. Use numbers only, for example 150.50.", invalidTitle: "Check the gift name: it cannot be empty or too long.", invalidCurrency: "The gift currency is not valid for this celebration.", giftGone: "That gift is no longer on the list. We refreshed it.", reservationGone: "We could not find that reservation. We refreshed the list.", forbidden: "Only the hosts of this celebration can manage gifts." }, forbidden: "Only the hosts of this celebration can manage gifts.", conflict: "This list changed while you were editing. We refreshed it.", validation: "Check the gift data.", retry: "Try again" }
+    errors: { forbidden: "Only the hosts of this celebration can manage gifts.", conflict: "This list changed while you were editing. We refreshed it.", validation: "Check the gift data.", retry: "Try again" }
   }
 };

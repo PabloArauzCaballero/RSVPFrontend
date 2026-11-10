@@ -1,0 +1,15 @@
+
+ RUN  v3.1.2 C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/apps/universal
+
+ ✓ test/host-gifts-controls.test.tsx (3 tests) 197ms
+ ✓ test/host-gifts.test.tsx (37 tests) 4360ms
+   ✓ F23 slice 1 · create a catalog gift and see its public state > creates once, shows backend publication in the host list, and the guest sees the same item without an account  332ms
+   ✓ F23 slice 3 · decisions, preferences and discovery > list HTTP 503 never reveals stale gift rows  1065ms
+ ✓ test/host-gifts-routing.test.ts (15 tests) 10ms
+
+ Test Files  3 passed (3)
+      Tests  55 passed (55)
+   Start at  11:55:29
+   Duration  13.34s (transform 1.32s, setup 1.10s, collect 9.81s, tests 4.57s, environment 3.44s, prepare 505ms)
+
+JSON report written to C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/docs/progress/evidence/lane-F23/local/unit-run-3.json

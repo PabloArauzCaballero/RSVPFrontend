@@ -1,0 +1,40 @@
+Starting Metro Bundler
+iOS node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Android node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+iOS node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Android node_modules\expo-router\entry.js ▓▓▓░░░░░░░░░░░░░ 23.3% (269/557)
+iOS node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 67.1% (1025/1251)
+Android node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 93.6% (1584/1637)
+iOS node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (1821/1821)
+Android node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (1827/1827)
+Android Bundled 13965ms node_modules\expo-router\entry.js (1827 modules)
+iOS node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (1821/1821)
+Android node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (1827/1827)
+iOS node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (1821/1821)
+iOS Bundled 19269ms node_modules\expo-router\entry.js (1821 modules)
+iOS node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (1821/1821)
+
+› Assets (31):
+..\..\node_modules\@react-navigation\elements\lib\module\assets\back-icon-mask.png (653 B)
+..\..\node_modules\@react-navigation\elements\lib\module\assets\back-icon.png (8 variations | 359 B)
+..\..\node_modules\@react-navigation\elements\lib\module\assets\clear-icon.png (4 variations | 425 B)
+..\..\node_modules\@react-navigation\elements\lib\module\assets\close-icon.png (4 variations | 235 B)
+..\..\node_modules\@react-navigation\elements\lib\module\assets\search-icon.png (7 variations | 592 B)
+..\..\node_modules\expo-router\assets\arrow_down.png (9.46 kB)
+..\..\node_modules\expo-router\assets\error.png (469 B)
+..\..\node_modules\expo-router\assets\file.png (138 B)
+..\..\node_modules\expo-router\assets\forward.png (188 B)
+..\..\node_modules\expo-router\assets\pkg.png (364 B)
+..\..\node_modules\expo-router\assets\sitemap.png (465 B)
+..\..\node_modules\expo-router\assets\unmatched.png (4.75 kB)
+
+› android bundles (1):
+_expo/static/js/android/entry-6e6efec210c53e5b350c321bd50c28a9.hbc (5.25 MB)
+
+› ios bundles (1):
+_expo/static/js/ios/entry-af38792868d0ea27cae951e8a06ac9f5.hbc (5.24 MB)
+
+› Files (1):
+metadata.json (3.57 kB)
+
+Exported: native-build-f21

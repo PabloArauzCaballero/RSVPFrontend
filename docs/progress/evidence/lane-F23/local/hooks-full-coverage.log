@@ -1,0 +1,37 @@
+Loaded  vitest@3.1.2  and  @vitest/coverage-v8@3.2.7 .
+Running mixed versions is not supported and may lead into bugs
+Update your dependencies and make sure the versions match.
+
+ RUN  v3.1.2 C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/packages/query-hooks
+      Coverage enabled with v8
+
+ ✓ test/guest-contract.test.tsx (29 tests) 1136ms
+ ✓ test/celebration-api.test.ts (7 tests) 25ms
+ ✓ test/hook-routes.test.tsx (34 tests) 5955ms
+   ✓ gift hooks > guest list sends exactly the guest credential and no session; the host list uses the session  300ms
+   ✓ gift hooks > host reservations, decisions, add, approve external and settings use the documented routes  310ms
+   ✓ provider hooks (portal, quotes, schedule, documents) > portal reads: profile, listings with locale, leads paging, metrics grouping, availability, bookings, mine  1110ms
+   ✓ celebration, template, media and event-type hooks > reads: detail, public (no session), check, audit, event types, templates, media  825ms
+   ✓ guest and notification hooks > guest credential is a Bearer on rsvp reads and never part of the cache key  444ms
+   ✓ guest and notification hooks > host guest reads and writes use the /guests routes; registering and importing sync recipients once  579ms
+   ✓ guest and notification hooks > notifications: inbox, preferences (optimistic, rolled back on failure), mark read, devices  490ms
+   ✓ platform admin hooks (expected contract, ADMIN only) > reads: categories, geography, queues by status, metrics range, users search, organizations, summaries  1102ms
+ ✓ test/host-gifts.test.tsx (9 tests) 540ms
+ ✓ test/domain-hooks.test.tsx (6 tests) 76ms
+ ✓ test/msw-hooks.test.tsx (7 tests) 500ms
+ ✓ test/push-gift-reservation.test.tsx (4 tests) 246ms
+ ✓ test/invalidation.test.ts (2 tests) 3ms
+
+ Test Files  8 passed (8)
+      Tests  98 passed (98)
+   Start at  11:47:18
+   Duration  17.61s (transform 686ms, setup 0ms, collect 6.60s, tests 8.48s, environment 13.25s, prepare 1.45s)
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 99.42% ( 1030/1036 )
+Branches     : 93.07% ( 645/693 )
+Functions    : 98.48% ( 454/461 )
+Lines        : 99.42% ( 1030/1036 )
+================================================================================

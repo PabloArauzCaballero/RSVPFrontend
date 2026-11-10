@@ -16,9 +16,7 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   reporter: "list",
-  // The site negotiates its language from Accept-Language, so the browser language must be pinned: Spanish (es-BO) is the product language
-  // and the baselines; Playwright's default (en-US) would silently turn every reference image English.
-  use: { baseURL: `http://localhost:${PORT}`, locale: "es-BO", launchOptions: { ...(executablePath ? { executablePath } : {}) } },
+  use: { baseURL: `http://localhost:${PORT}`, launchOptions: { ...(executablePath ? { executablePath } : {}) } },
   // The screens read the local contract fixture (never the real backend) so the pixels are deterministic.
   webServer: [
     { command: "node scripts/fixture-api.mjs", url: `http://localhost:${FIXTURE_PORT}/providers`, reuseExistingServer: true, timeout: 30_000, env: { PORT: String(FIXTURE_PORT) } },

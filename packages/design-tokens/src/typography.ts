@@ -1,12 +1,10 @@
 /**
- * Minimalist system: a sans with character for the interface (Geist) and the same sans for titles (Geist),
- * tight tracking and line-height on titles. Web loads both from Google Fonts. Native keeps the platform fonts until
- * the faces are bundled with expo-font (see docs/progress/DECISIONS.md). Mono is for codes and metadata.
+ * One family: Plus Jakarta Sans (Brand Kit v3). Web loads it from Google Fonts. Native keeps the
+ * platform font until the face is bundled with expo-font (see docs/progress/DECISIONS.md).
  */
 export const typography = {
-  fontFamily: { sans: 'Geist', display: 'Geist', mono: 'Geist Mono' },
-  fontSize: { xs: 12, sm: 14, base: 16, lg: 18, xl: 22, '2xl': 34, '3xl': 56 },
-  lineHeight: { xs: 16, sm: 20, base: 26, lg: 28, xl: 28, '2xl': 38, '3xl': 60 },
-  letterSpacing: { display: '-0.02em', displayLarge: '-0.03em', body: '0em', label: '0.05em' },
-  fontWeight: { regular: '400', medium: '500', semibold: '600', bold: '700' }
+  fontFamily: { sans: 'Plus Jakarta Sans', display: 'Plus Jakarta Sans' },
+  fontSize: { xs: 12, sm: 14, base: 16, lg: 18, xl: 20, '2xl': 32, '3xl': 56 },
+  lineHeight: { xs: 16, sm: 20, base: 25, lg: 28, xl: 28, '2xl': 38, '3xl': 58 },
+  fontWeight: { regular: '400', medium: '500', semibold: '600', bold: '700', extrabold: '800' }
 } as const;

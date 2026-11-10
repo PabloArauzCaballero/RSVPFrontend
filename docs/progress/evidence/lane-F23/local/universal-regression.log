@@ -1,0 +1,58 @@
+
+ RUN  v3.1.2 C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/apps/universal
+
+ ✓ test/gifts-portal.test.tsx (28 tests) 4094ms
+   ✓ REQ-F23-03 · external gift with explicit friction (PARTNER_CATALOG_FIRST) > shows partner suggestions on the 409 and only adds anyway after acknowledging them  349ms
+   ✓ REQ-F28-03/05 · services with delivery conditions > creates a listing with fulfillment in minor units  313ms
+   ✓ REQ-F28 · availability and date requests > validates the schedule, saves it and confirms or rejects requests (409 refreshes)  335ms
+ ✓ test/guests.test.tsx (60 tests) 10412ms
+   ✓ REQ-F16-01 · C19 guest list (read model, search, filter, paging, states) > lists guests with status, filters by response and searches on the server  809ms
+   ✓ REQ-F16-01 · C19 guest list (read model, search, filter, paging, states) > 500 guests stay usable: 50 per page, server paging, never 500 rows in the DOM  877ms
+   ✓ REQ-F16-01 · C19 guest list (read model, search, filter, paging, states) > empty, filtered-empty, error with retry, and 403  557ms
+   ✓ REQ-F16-04 · C22 groups (contract v1.9.0) > creates a group, lists the backend's groups with member counts, assigns at creation and moves a guest from their page  395ms
+   ✓ REQ-F18 · notifications center and preferences > recovers from every documented GET error on notifications  388ms
+   ✓ REQ-F18 · notifications center and preferences > recovers from every documented GET error on preferences  468ms
+ ✓ test/host-gifts.test.tsx (37 tests) 6884ms
+   ✓ F23 slice 1 · create a catalog gift and see its public state > creates once, shows backend publication in the host list, and the guest sees the same item without an account  503ms
+   ✓ F23 slice 3 · decisions, preferences and discovery > list HTTP 503 never reveals stale gift rows  1075ms
+   ✓ F23 slice 3 · decisions, preferences and discovery > discovers in the current language, validates price and applies category/city/price filters  310ms
+   ✓ F23 slice 2 · deliberate external flow and publication > requires review, handles the partner-first challenge once and keeps PROPOSED out of the public list until approved  377ms
+ ✓ test/auth.test.tsx (34 tests) 2065ms
+ ✓ test/admin-modules.test.tsx (24 tests) 2257ms
+ ✓ test/host.test.tsx (17 tests) 2031ms
+   ✓ C2–C5 · picker and onboarding > REQ-F11-04 · host fields come from the event type: a wedding asks for the couple, a quinceañera for the celebrant  434ms
+ ✓ test/push-actions.test.ts (26 tests) 148ms
+ ✓ test/host-requirements.test.tsx (14 tests) 1972ms
+   ✓ REQ-F13-01 · C17 saves languages, time zone and currency > sends only one PATCH with languages, default language, zone and currency, with the loaded version as If-Match  451ms
+ ✓ test/guest-rsvp.test.tsx (13 tests) 1163ms
+   ✓ REQ-F21-04 · the five RSVP states, in native components, against the contract > A9 guest: confirms with the real POST and shows the confirmed state  378ms
+ ✓ test/guest-gifts.test.tsx (22 tests) 3300ms
+   ✓ F21 · guest gifts > reserves once with the guest credential: PENDING_REVIEW  304ms
+   ✓ F21 · guest gifts > GET 503 has recovery and never displays a blank screen  1071ms
+ ✓ test/guest-app.test.tsx (34 tests) 1526ms
+   ✓ F21 · RSVP through the real API client and MSW > confirms once without borrowing the signed-in host's credentials  474ms
+ ✓ test/admin.test.tsx (8 tests) 1370ms
+   ✓ REQ-F14-02 · event type editor > E2E (component level): an admin creates GRADUACION; a host can choose it right away and create a celebration with it  533ms
+   ✓ E2, E3, E7, E12 > templates: create, then publish and archive (with confirmation) with If-Match  500ms
+ ✓ test/push.test.ts (24 tests) 2804ms
+   ✓ REQ-F19-02 · device registration follows the session > revokes before logout and restores only the opted-in account without prompting  494ms
+ ✓ test/push-handlers.test.ts (3 tests) 6ms
+ ✓ test/push-request.test.tsx (17 tests) 2201ms
+   ✓ F20 · authorized request detail > GET 503 is an explained state, not a blank detail  1074ms
+ ✓ test/session-refresh.test.ts (3 tests) 48ms
+ ✓ test/push-permissions.test.tsx (3 tests) 460ms
+ ✓ test/route-groups.test.ts (2 tests) 36ms
+ ✓ test/host-gifts-controls.test.tsx (3 tests) 182ms
+ ✓ test/error-states.test.tsx (5 tests) 168ms
+ ✓ test/portal-profile.test.ts (4 tests) 3ms
+ ✓ test/guest-link-landing.test.tsx (10 tests) 514ms
+ ✓ test/host-gifts-routing.test.ts (15 tests) 10ms
+ ✓ test/safe-frame.test.tsx (2 tests) 22ms
+ ✓ test/guest-controls.test.tsx (1 test) 127ms
+
+ Test Files  25 passed (25)
+      Tests  409 passed (409)
+   Start at  11:43:52
+   Duration  104.35s (transform 3.93s, setup 9.58s, collect 107.90s, tests 43.80s, environment 32.09s, prepare 4.01s)
+
+JSON report written to C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/docs/progress/evidence/lane-F23/local/universal-regression.json

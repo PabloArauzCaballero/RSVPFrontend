@@ -1,0 +1,99 @@
+
+▶ next build (NEXT_PUBLIC_API_URL → contract mock)
+   ▲ Next.js 15.3.1
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 15.0s
+   Linting and checking validity of types ...
+
+ ⚠ The Next.js plugin was not detected in your ESLint configuration. See https://nextjs.org/docs/app/api-reference/config/eslint#migrating-existing-config
+   Collecting page data ...
+   Generating static pages (0/123) ...
+   Generating static pages (30/123) 
+   Generating static pages (61/123) 
+   Generating static pages (92/123) 
+ ✓ Generating static pages (123/123)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                     Size  First Load JS  Revalidate  Expire
+┌ ○ /                                          161 B         102 kB          1h      1y
+├ ○ /_not-found                                978 B         102 kB
+├ ƒ /.well-known/apple-app-site-association    161 B         102 kB
+├ ƒ /.well-known/assetlinks.json               161 B         102 kB
+├ ○ /apple-icon.png                              0 B            0 B
+├ ƒ /c/[slug]                                1.08 kB         103 kB
+├ ƒ /c/[slug]/[section]                      1.08 kB         103 kB
+├ ƒ /c/[slug]/regalos                          158 B         202 kB
+├ ƒ /c/[slug]/regalos/[id]                     158 B         202 kB
+├ ƒ /c/[slug]/rsvp                             157 B         197 kB
+├ ƒ /c/[slug]/rsvp/[token]                     157 B         197 kB
+├ ○ /catalogo                                  183 B         183 kB
+├ ○ /icon.svg                                    0 B            0 B
+├ ○ /opengraph-image.png                         0 B            0 B
+├ ƒ /p/[slug]                                  208 B         186 kB
+├ ƒ /p/[slug]/agenda                         2.27 kB         177 kB
+├ ƒ /p/[slug]/catalogo                         213 B         105 kB
+├ ƒ /p/[slug]/catalogo/[sku]                   213 B         105 kB
+├ ƒ /p/[slug]/cotizar                        4.77 kB         192 kB
+├ ○ /proveedores                               197 B         105 kB          1h      1y
+├ ● /proveedores/[categoria]                   197 B         105 kB
+├   ├ /proveedores/salones
+├   ├ /proveedores/catering
+├   ├ /proveedores/fotografia
+├   └ [+8 more paths]
+├ ● /proveedores/[categoria]/[ciudad]          197 B         105 kB
+├   ├ /proveedores/salones/la-paz
+├   ├ /proveedores/salones/santa-cruz
+├   ├ /proveedores/salones/cochabamba
+├   └ [+96 more paths]
+├ ƒ /proveedores/buscar                        197 B         105 kB
+├ ƒ /r/[listingId]                             161 B         102 kB
+├ ○ /robots.txt                                161 B         102 kB
+├ ƒ /rsvp/[token]                              919 B         191 kB
+├ ○ /sitemap.xml                               161 B         102 kB          1m      1y
+└ ○ /twitter-image.png                           0 B            0 B
++ First Load JS shared by all                 101 kB
+  ├ chunks/8315-1c9f09ac7be29523.js          46.3 kB
+  ├ chunks/87c73c54-aba717b704177890.js      53.2 kB
+  └ other shared chunks (total)              2.01 kB
+
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+ƒ  (Dynamic)  server-rendered on demand
+
+   ▲ Next.js 15.3.1
+   - Local:        http://localhost:3431
+   - Network:      http://172.30.240.1:3431
+
+ ✓ Starting...
+ ✓ Ready in 836ms
+  ✔ next start is serving
+
+▶ A9 formulario (invitado sin responder) · 360/768/1280 + axe + overflow
+  ✔ REQ-F15-01 · form rendered at 360/768/1280 with no horizontal scroll or critical/serious axe violations
+
+▶ A9 → A10: confirm for real, keyboard only, then the confirmed state
+  ✔ REQ-F15-01 · a keyboard-only confirmation reached the (mock) API once and focus moved to the new heading
+
+▶ A10 confirmado con cuenta atrás y edición · 360/768/1280
+  ✔ REQ-F15-02 · confirmed state with deadline countdown; edit goes through PATCH and shows the new answer
+
+▶ A11 fuera de plazo
+  ✔ REQ-F15-03 · closed screen says when it closed (celebration zone) and whom to write to; no controls to edit
+
+▶ A12 token inválido · sin datos de la celebración
+  ✔ REQ-F15-04 · invalid token shows no celebration data at 360/768/1280
+
+▶ A13 no registrado: AUTO_ACCEPT, RESTRICTED y alta con enlace
+  ✔ REQ-F15-05 · AUTO_ACCEPT registers and shows the one-time link; RESTRICTED hides the form and explains how to proceed
+
+▶ REQ-F15-06 · pérdida de conexión: borrador conservado y reintento
+  ✔ REQ-F15-06 · the form works on a throttled connection; offline kept the fields, the draft survived a reload and retry created one RSVP
+
+▶ privacidad: noindex, no-referrer, no-store; el token no aparece en HTML ni en peticiones
+  ✔ REQ-F15 (privacy) · noindex + no-referrer + no-store; server HTML has no celebration data; no API URL carries a token
+
+▶ en-US
+  ✔ i18n/console · en-US renders; no console errors across the run

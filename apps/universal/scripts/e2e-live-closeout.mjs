@@ -265,7 +265,7 @@ async function f23() {
     const card = page.locator('[data-testid^="provider-"]').first();
     const text = await card.innerText();
     assert.match(text, /Plazo: \d+ días/); assert.match(text, /Cobertura:/); assert.match(text, /no presta ni garantiza/);
-    await page.getByTestId("provider-category").selectOption("CATERING");
+    await page.getByTestId("category-CATERING").click();
     await page.waitForResponse((response) => response.url().includes("category=CATERING"));
     await page.locator('[data-testid^="provider-"]').first().waitFor();
     await snap("F23", page, "F7-filtrado-catering", 1280);

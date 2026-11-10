@@ -1,0 +1,391 @@
+**Flow (call path among the symbols you queried)**
+
+1. AnswerForm (apps/seo-web/components/rsvp/rsvp-experience.tsx:127)
+   ↓ dynamic: renders <AnswerFields>
+2. AnswerFields (apps/seo-web/components/rsvp/rsvp-form.tsx:68)
+   ↓ dynamic: renders <TextField>
+3. TextField (apps/seo-web/components/rsvp/rsvp-form.tsx:51)
+
+**Dynamic-dispatch links among your symbols**
+(synthesized — the indirect hops grep/Read would reconstruct; the `@file:line` is the wiring site)
+
+- Flow → AnswerForm   [dynamic: renders <AnswerForm>]
+- AnswerForm → FailureNotice   [dynamic: renders <FailureNotice>]
+- GuestRsvpBody → AnswerForm   [dynamic: renders <AnswerForm>]
+- AnswerForm → AnswerFields   [dynamic: renders <AnswerFields>]
+- AnswerForm → ActionButton   [dynamic: renders <ActionButton>]
+- UnregisteredForm → TextField   [dynamic: renders <TextField>]
+
+> Full source for these symbols is below — the call flow among them, followed by their bodies.
+**Exploration: AnswerForm TextField AnswerFields GuestFormScreen LinkSection DetailBody pending input state and identity reset callers**
+
+Found 35 symbols across 8 files.
+
+**Blast radius — what depends on these (update/verify before editing)**
+
+- `AnswerForm` (apps/seo-web/components/rsvp/rsvp-experience.tsx:127) — 1 caller in `apps/seo-web/components/rsvp/rsvp-experience.tsx`; tested via callers: `apps/seo-web/tests/rsvp-page.test.tsx`
+- `AnswerForm` (apps/universal/src/guest/rsvp-screen.tsx:236) — 1 caller in `apps/universal/src/guest/rsvp-screen.tsx`; tested via callers: `apps/universal/test/guest-rsvp.test.tsx`, `apps/universal/test/guest-app.test.tsx`
+- `AnswerFields` (apps/universal/src/guest/rsvp-screen.tsx:156) — 2 callers in `apps/universal/src/guest/rsvp-screen.tsx`; no tests found within 3 caller hops
+- `TextField` (apps/seo-web/components/rsvp/rsvp-form.tsx:51) — 3 callers in `apps/seo-web/components/rsvp/rsvp-form.tsx`, `apps/seo-web/components/rsvp/rsvp-experience.tsx`; tested via callers: `apps/seo-web/tests/rsvp-page.test.tsx`
+
+**Relationships**
+
+**calls:**
+- AnswerForm → tokenFingerprint
+- AnswerForm → initialFrom
+- AnswerForm → FailureNotice
+- AnswerForm → AnswerFields
+- AnswerForm → loadDraft
+- AnswerForm → saveDraft
+- AnswerForm → submit
+- AnswerForm → useSaveGuestRsvp
+- Flow → AnswerForm
+- retry → submit
+- ... and 96 more
+
+**references:**
+- AnswerForm → retry
+- AnswerForm → AnswerFormProps
+- initialFrom → RsvpDraft
+- initialFrom → RsvpState
+- FailureNotice → RsvpFailure
+- AnswerFields → RsvpDraft
+- AnswerFields → FieldErrors
+- AnswerForm → ClosedInfo
+- AnswerForm → RsvpState
+- AnswerFields → Draft
+- ... and 29 more
+
+**Source Code**
+
+> The code below is the **verbatim, current on-disk source** of these files — re-read from disk on this call and line-numbered, byte-for-byte identical to what the Read tool returns. It is NOT a summary, outline, or stale cache. Treat each block as a Read you have already performed: do not Read a file shown here.
+
+**`apps/universal/src/host/guests/guest-detail-screen.tsx`** — references(references), calls(calls), ActionButton(calls), Celebration(references), useApiClient(calls), useT(calls), ConfirmDialog(calls), DetailBody(function), LinkSection(calls), LinkSection(function)
+
+```tsx
+20	
+21	interface Issued { readonly url: string; readonly masked: string; readonly expiresAt: string }
+22	
+23	function LinkSection({ celebration, guestId }: { readonly celebration: Celebration; readonly guestId: string }): ReactNode {
+24	  const t = useT();
+25	  const locale = useLocale();
+26	  const client = useApiClient();
+27	  const issue = useIssueGuestToken(client, celebration.id);
+28	  const revoke = useRevokeGuestToken(client, celebration.id);
+29	  const [issued, setIssued] = useState<Issued | null>(null);
+30	  const [confirm, setConfirm] = useState<"revoke" | "reissue" | null>(null);
+31	  const [message, setMessage] = useState("");
+32	
+33	  const origin = siteOrigin();
+34	  const generate = (): void => {
+35	    setMessage("");
+
+... (gap) ...
+
+95	  );
+96	}
+97	
+98	function DetailBody({ celebration, guestId, onNavigate }: { readonly celebration: Celebration; readonly guestId: string; readonly onNavigate: (href: string) => void }): ReactNode {
+99	  const t = useT();
+100	  const locale = useLocale();
+101	  const client = useApiClient();
+102	  const guest = useGuestDetail(client, celebration.id, guestId);
+103	  const status = useGuestList(client, celebration.id, { search: guest.data?.name ?? "", limit: 100 });
+104	  if (guest.isPending) return <Loading />;
+105	  if (guest.isError) return <RetryNotice error={guest.error} onRetry={() => { void guest.refetch(); }} />;
+106	  const data = guest.data;
+107	  const row = status.data?.items.find((item) => item.guestId === guestId);
+108	  return (
+109	    <View style={{ gap: spacing[4] }}>
+110	      <Section title={data.name}>
+111	        {row ? <StatusBadge status={row.status} /> : null}
+112	        {data.email ? <Text style={styles.body}>{t("guests.detail.email")}: {data.email}</Text> : null}
+113	        {data.phone ? <Text style={styles.body}>{t("guests.detail.phone")}: {data.phone}</Text> : null}
+114	        <Text style={styles.body}>{t("guests.detail.companions")}: {data.allowedCompanions}</Text>
+115	        <Text style={styles.body}>{t("guests.detail.locale")}: {data.locale}</Text>
+116	        <Text style={styles.muted}>{t("guests.detail.consent", { date: formatCelebrationDate(data.consentGivenAt, { locale, timeZone: celebration.timeZone }) })}</Text>
+117	      </Section>
+118	      <GroupSection celebrationId={celebration.id} guestId={guestId} groupId={data.groupId} />
+119	      <LinkSection celebration={celebration} guestId={guestId} />
+120	      <ActionButton variant="secondary" label={t("guests.form.back")} onPress={() => onNavigate(withCelebration(HOST_ROUTES.guests, celebration.id))} />
+121	    </View>
+122	  );
+123	}
+124	
+125	export function GuestDetailScreen(props: ScreenProps & { readonly guestId?: string }): ReactNode {
+126	  const t = useT();
+```
+
+**`apps/universal/scripts/e2e-host-gifts.mjs`** — pending(constant), reset(function)
+
+```javascript
+41	const sleep = (milliseconds) => new Promise((done) => setTimeout(done, milliseconds));
+42	const id = (page, name) => page.getByTestId(name).filter({ visible: true });
+43	const heading = (page, name) => page.getByRole("heading", { name, exact: true });
+44	function reset() {
+45	  fixture.state.items = []; fixture.state.reservations = []; fixture.state.calls = []; fixture.state.failures.clear();
+46	  fixture.state.settings = { showRequesterToHost: true, showRequesterToGuests: false, version: 0 };
+47	  fixture.state.celebration = { ...fixture.state.celebration, settings: { ...fixture.state.celebration.settings, externalGiftMode: "RESTRICTED", partnerPriorityEnabled: true } };
+48	}
+49	const route = (path) => `${APP}${path}${query}`;
+50	async function session(width, { locale = "es-BO", dark = false } = {}) {
+51	  const context = await browser.newContext({ viewport: { width, height: 900 }, locale, timezoneId: "Asia/Tokyo", reducedMotion: "reduce", colorScheme: dark ? "dark" : "light" });
+
+... (gap) ...
+
+176	  await page.goto(route("/regalos/catalogo")); await id(page, "add-" + LISTING_A).waitFor(); await id(page, "add-" + LISTING_A).click(); await page.getByText("Agregado: Vajilla de cerámica", { exact: true }).waitFor();
+177	  const item = fixture.state.items[0];
+178	  fixture.state.items[0] = { ...item, status: "PENDING_REVIEW" };
+179	  const pending = { id: "88888888-8888-4888-8888-888888888888", itemId: item.id, celebrationId: c, guestDisplayName: "Invitada de la carrera", message: "Mensaje privado", status: "PENDING_REVIEW", requestedAt: "2026-11-08T02:00:00Z" };
+180	  fixture.state.reservations = [pending];
+181	  await page.goto(route("/bandeja/regalos")); await id(page, "approve-" + pending.id).waitFor();
+182	  fixture.state.reservations = [{ ...pending, status: "COMMITTED" }];
+```
+
+**`apps/seo-web/components/rsvp/rsvp-form.tsx`** — RsvpDraft(references), validateAnswer(function), calls(calls), AnswerFields(function), FailureNotice(function), FieldErrors(references), FieldErrors(type_alias), RsvpFailure(references), TextField(calls), TextField(function), +2 more
+
+```tsx
+6	import { useId, type ReactNode } from 'react';
+7	import type { RsvpDraft } from './rsvp-draft';
+8	
+9	export type FieldErrors = Partial<Record<'status' | 'requestedCompanions' | 'dietaryNotes' | 'message' | 'name' | 'email' | 'consent', string>>;
+10	
+11	/** Turns a zod issue code from @rsvp/forms into the translated message; unknown codes read as "required". */
+12	export function translateIssues(issues: readonly { path: (string | number)[]; message: string }[], t: Translate): FieldErrors {
+
+... (gap) ...
+
+31	}
+32	
+33	/** What the person is told and can do after a failed send. The draft is never cleared by a failure. */
+34	export function FailureNotice({ failure, t, onRetry, busy }: { failure: RsvpFailure; t: Translate; onRetry: () => void; busy: boolean }): ReactNode {
+35	  const message = {
+36	    offline: t('rsvp.errors.offline'), unavailable: t('rsvp.errors.unavailable'), validation: t('rsvp.errors.validation'), conflict: t('rsvp.errors.conflict'), exists: t('rsvp.errors.conflict'),
+37	    'rate-limited': failure.kind === 'rate-limited' && failure.retryAfterSeconds ? t('rsvp.errors.rateLimited', { seconds: failure.retryAfterSeconds }) : t('rsvp.errors.rateLimitedNoWait'),
+38	    unknown: t('rsvp.errors.unknown'), invalid: t('rsvp.invalid.body'), closed: t('rsvp.closed.title'), restricted: t('rsvp.unregistered.restrictedTitle')
+39	  }[failure.kind];
+40	  const retryable = ['offline', 'unavailable', 'rate-limited', 'unknown'].includes(failure.kind);
+41	  return (
+42	    <div className="rsvp-notice rsvp-notice--error" role="alert">
+43	      <p>{message}</p>
+44	      {retryable ? <button type="button" className="rsvp-button rsvp-button--secondary" onClick={onRetry} disabled={busy}>{t('rsvp.actions.retry')}</button> : null}
+45	      <p className="rsvp-hint">{t('rsvp.draft.kept')}</p>
+46	    </div>
+47	  );
+48	}
+49	
+50	interface TextFieldProps { label: string; value: string; onChange: (value: string) => void; error?: string; help?: string; type?: string; autoComplete?: string; multiline?: boolean; maxLength?: number; inputMode?: 'numeric' | 'email' | 'text'; min?: number }
+51	export function TextField({ label, value, onChange, error, help, type = 'text', autoComplete, multiline, maxLength, inputMode, min }: TextFieldProps): ReactNode {
+52	  const id = useId();
+53	  const describedBy = [help ? `${id}-help` : '', error ? `${id}-error` : ''].filter(Boolean).join(' ') || undefined;
+54	  const shared = { id, value, 'aria-invalid': error ? true : undefined, 'aria-describedby': describedBy, maxLength, autoComplete } as const;
+55	  return (
+56	    <div className="rsvp-field">
+57	      <label htmlFor={id}>{label}</label>
+58	      {multiline
+59	        ? <textarea {...shared} rows={3} onChange={(event) => onChange(event.target.value)} />
+60	        : <input {...shared} type={type} inputMode={inputMode} min={min} onChange={(event) => onChange(event.target.value)} />}
+61	      {help ? <p id={`${id}-help`} className="rsvp-hint">{help}</p> : null}
+62	      {error ? <p id={`${id}-error`} className="rsvp-error">{error}</p> : null}
+63	    </div>
+64	  );
+65	}
+66	
+67	/** Attendance choice, companions, diet and message: the answer part shared by first answer, edit and public registration. */
+68	export function AnswerFields({ draft, onChange, errors, t, allowedCompanions, askAttendance = true }: { draft: RsvpDraft; onChange: (patch: Partial<RsvpDraft>) => void; errors: FieldErrors; t: Translate; allowedCompanions?: number; askAttendance?: boolean }): ReactNode {
+69	  return (
+70	    <>
+71	      {askAttendance ? (
+72	        <fieldset className="rsvp-choice" aria-describedby={errors.status ? 'rsvp-status-error' : undefined}>
+73	          <legend>{t('rsvp.form.statusLegend')}</legend>
+74	          <label className="rsvp-radio"><input type="radio" name="status" value="CONFIRMED" checked={draft.status === 'CONFIRMED'} onChange={() => onChange({ status: 'CONFIRMED' })} /><span>{t('rsvp.form.confirm')}</span></label>
+75	          <label className="rsvp-radio"><input type="radio" name="status" value="DECLINED" checked={draft.status === 'DECLINED'} onChange={() => onChange({ status: 'DECLINED' })} /><span>{t('rsvp.form.decline')}</span></label>
+76	          {errors.status ? <p id="rsvp-status-error" className="rsvp-error">{errors.status}</p> : null}
+77	        </fieldset>
+78	      ) : null}
+79	      {draft.status !== 'DECLINED' ? (
+80	        <TextField label={t('rsvp.form.companions')} type="number" inputMode="numeric" min={0} value={draft.requestedCompanions} onChange={(value) => onChange({ requestedCompanions: value })} error={errors.requestedCompanions}
+81	          help={allowedCompanions === undefined ? undefined : t('rsvp.form.companionsHelp', { count: allowedCompanions })} />
+82	      ) : null}
+83	      <TextField label={t('rsvp.form.dietary')} help={t('rsvp.form.dietaryHelp')} multiline maxLength={1000} value={draft.dietaryNotes} onChange={(value) => onChange({ dietaryNotes: value })} error={errors.dietaryNotes} />
+84	      <TextField label={t('rsvp.form.message')} multiline maxLength={2000} value={draft.message} onChange={(value) => onChange({ message: value })} error={errors.message} />
+85	    </>
+86	  );
+87	}
+88	
+```
+
+**`apps/universal/src/guest/rsvp-screen.tsx`** — useApiClient(calls), classifyRsvpError(calls), submit(calls), Draft(interface), Draft(references), ClosedInfo(interface), ClosedInfo(references), Errors(references), Errors(type_alias), issueMessages(calls), +28 more
+
+```tsx
+137	  );
+138	}
+139	
+140	function FailureNotice({ failure, onRetry, busy }: { readonly failure: RsvpFailure; readonly onRetry: () => void; readonly busy: boolean }): ReactNode {
+141	  const t = useT();
+142	  const messages: Record<string, string> = {
+143	    restricted: t("guestApp.permission"), offline: t("rsvp.errors.offline"), unavailable: t("rsvp.errors.unavailable"), validation: t("rsvp.errors.validation"), conflict: t("rsvp.errors.conflict"), exists: t("rsvp.errors.conflict"), unknown: t("rsvp.errors.unknown"),
+144	    "rate-limited": failure.kind === "rate-limited" && failure.retryAfterSeconds ? t("rsvp.errors.rateLimited", { seconds: failure.retryAfterSeconds }) : t("rsvp.errors.rateLimitedNoWait")
+145	  };
+146	  const retryable = ["offline", "unavailable", "rate-limited", "unknown"].includes(failure.kind);
+147	  return (
+148	    <Notice kind="error">
+149	      <Text style={styles.body}>{messages[failure.kind] ?? t("rsvp.errors.unknown")}</Text>
+150	      {retryable ? <ActionButton variant="secondary" label={t("rsvp.actions.retry")} disabled={busy} onPress={onRetry} /> : null}
+151	      <Text style={styles.muted}>{t("guestApp.draftKept")}</Text>
+152	    </Notice>
+153	  );
+154	}
+155	
+156	function AnswerFields({ draft, onChange, errors, allowed, askAttendance = true }: { readonly draft: Draft; readonly onChange: (patch: Partial<Draft>) => void; readonly errors: Errors; readonly allowed?: number; readonly askAttendance?: boolean }): ReactNode {
+157	  const t = useT();
+158	  return (
+159	    <View style={{ gap: spacing[4] }}>
+160	      {askAttendance ? (
+161	        <View style={{ gap: spacing[1] }}>
+162	          <AttendanceChoice value={draft.status || null} onChange={(status) => onChange({ status })} />
+163	          {errors.status ? <Text accessibilityRole="alert" style={[styles.muted, { color: palette.danger }]}>{errors.status}</Text> : null}
+164	        </View>
+165	      ) : null}
+166	      {draft.status !== "DECLINED" ? <Field label={t("rsvp.form.companions")} keyboardType="number-pad" value={draft.requestedCompanions} onChange={(requestedCompanions) => onChange({ requestedCompanions })} error={errors.requestedCompanions} help={allowed === undefined ? undefined : t("rsvp.form.companionsHelp", { count: allowed })} /> : null}
+167	      <Field label={t("rsvp.form.dietary")} help={t("rsvp.form.dietaryHelp")} multiline value={draft.dietaryNotes} onChange={(dietaryNotes) => onChange({ dietaryNotes })} error={errors.dietaryNotes} />
+168	      <Field label={t("rsvp.form.message")} multiline value={draft.message} onChange={(message) => onChange({ message })} error={errors.message} />
+169	    </View>
+170	  );
+171	}
+172	
+173	export interface GuestRsvpScreenProps { readonly slug: string; readonly token?: string }
+174	
+```
+
+**`apps/seo-web/components/rsvp/rsvp-experience.tsx`** — calls(calls), HostContact(references), AppLocale(references), classifyRsvpError(calls), StateHeading(calls), ApiClient(references), readContent(calls), PublicCelebrationView(references), newIdempotencyKey(calls), FailureNotice(calls), +56 more
+
+```tsx
+118	  );
+119	}
+120	
+121	interface AnswerFormProps {
+122	  client: ApiClient; celebrationId: string; token: string; state: RsvpState; t: Translate; allowedCompanions: number | undefined; mode: 'first' | 'edit';
+123	  onSaved: (state: RsvpState) => void; onClosed: (info: ClosedInfo) => void; onInvalid: () => void; onCancel?: () => void;
+124	}
+125	
+126	/** First answer (POST) and edit (PATCH). A failed send keeps every field and offers a retry with the same Idempotency-Key. */
+127	function AnswerForm({ client, celebrationId, token, state, t, allowedCompanions, mode, onSaved, onClosed, onInvalid, onCancel }: AnswerFormProps): ReactNode {
+128	  const scope = `${celebrationId}:${tokenFingerprint(token)}`;
+129	  const save = useSaveGuestRsvp(client, celebrationId, token);
+130	  const [draft, setDraft] = useState<RsvpDraft>(() => loadDraft(scope) ?? initialFrom(state));
+131	  const [errors, setErrors] = useState<FieldErrors>({});
+132	  const [failure, setFailure] = useState<RsvpFailure | null>(null);
+133	  const attempt = useRef<{ payload: string; key: string } | null>(null);
+134	  const formRef = useRef<HTMLFormElement>(null);
+135	
+136	  useEffect(() => { saveDraft(scope, draft); }, [scope, draft]);
+137	
+138	  async function submit(): Promise<void> {
+139	    const result = validateAnswer(draft, t);
+140	    if (!result.ok) {
+141	      setErrors(result.errors);
+142	      window.requestAnimationFrame(() => formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"], fieldset[aria-describedby] input')?.focus());
+143	      return;
+144	    }
+145	    setErrors({});
+146	    const declined = result.value.status === 'DECLINED';
+147	    const input = { status: result.value.status, requestedCompanions: declined ? 0 : result.value.requestedCompanions, dietaryNotes: result.value.dietaryNotes || null, message: result.value.message || null };
+148	    const payload = JSON.stringify(input);
+149	    if (attempt.current?.payload !== payload) attempt.current = { payload, key: newIdempotencyKey() };
+150	    try {
+151	      const next = await save.mutateAsync({ current: state, input, idempotencyKey: attempt.current.key });
+152	      clearDraft(scope);
+153	      setFailure(null);
+154	      onSaved(next);
+155	    } catch (error) {
+156	      const failed = classifyRsvpError(error);
+157	      if (failed.kind === 'closed') onClosed(failed);
+158	      else if (failed.kind === 'invalid') onInvalid();
+159	      else setFailure(failed);
+160	    }
+161	  }
+162	
+163	  // Coming back online re-sends the very same draft once, without the person having to find the button.
+164	  useEffect(() => {
+165	    const retry = () => { if (failure?.kind === 'offline') void submit(); };
+166	    window.addEventListener('online', retry);
+167	    return () => window.removeEventListener('online', retry);
+168	  });
+169	
+170	  const busy = save.isPending;
+171	  return (
+172	    <form ref={formRef} className="rsvp-form" noValidate onSubmit={(event: FormEvent) => { event.preventDefault(); void submit(); }}>
+173	      <AnswerFields draft={draft} onChange={(patch) => { setDraft((current) => ({ ...current, ...patch })); setErrors({}); }} errors={errors} t={t} allowedCompanions={allowedCompanions} />
+174	      {Object.keys(errors).length ? <p className="rsvp-error" role="alert">{t('rsvp.errors.summary')}</p> : null}
+175	      {failure ? <FailureNotice failure={failure} t={t} busy={busy} onRetry={() => { void submit(); }} /> : null}
+176	      <div className="rsvp-actions">
+177	        <button type="submit" className="rsvp-button" disabled={busy} aria-busy={busy}>{busy ? t('rsvp.form.submitting') : mode === 'first' ? t('rsvp.form.submit') : t('rsvp.form.save')}</button>
+178	        {onCancel ? <button type="button" className="rsvp-button rsvp-button--secondary" onClick={onCancel} disabled={busy}>{t('rsvp.form.cancelEdit')}</button> : null}
+179	      </div>
+180	    </form>
+181	  );
+182	}
+183	
+184	/* ---------------------------- A13 · not registered ---------------------------- */
+185	
+```
+
+**`apps/universal/src/host/guests/guest-form-screen.tsx`** — calls(calls), GuestFormScreen(function), ScreenProps(references), useT(calls)
+
+```tsx
+50	  );
+51	}
+52	
+53	export function GuestFormScreen(props: ScreenProps & { readonly groupId?: string }): ReactNode {
+54	  const t = useT();
+55	  return <CelebrationScreen {...props} current="guests" title={t("guests.form.title")}>{({ celebration }) => <Form celebrationId={celebration.id} onNavigate={props.onNavigate} groupId={props.groupId} />}</CelebrationScreen>;
+56	}
+57	
+```
+
+**`packages/query-hooks/src/guest/types.ts`** — references(references), RsvpState(type_alias)
+
+```typescript
+2	
+3	/** Contract types (guest-rsvp v1.8.0, notification v1.2.0): never hand-written copies of the backend shapes. */
+4	type Guest = GuestRsvpComponents["schemas"];
+5	export type RsvpState = Guest["RsvpState"];
+6	export type RsvpResponse = Guest["RsvpResponse"];
+7	export type GuestTokenResource = Guest["GuestTokenResource"];
+8	export type UnregisteredConfirmation = Guest["UnregisteredConfirmation"];
+```
+
+**`apps/universal/src/host/gate.tsx`** — ScreenProps(interface)
+
+```tsx
+19	  return !claims.roles.length || claims.roles.some((role) => HOST_ROLES.includes(role));
+20	}
+21	
+22	export interface ScreenProps {
+23	  readonly celebrationId?: string;
+24	  readonly onNavigate: (href: string) => void;
+25	}
+26	
+27	export interface Loaded {
+28	  readonly celebration: Celebration;
+```
+
+**Not shown above — explore these names for their source**
+
+- packages/query-hooks/src/celebration/types.ts: Celebration:29
+- apps/universal/src/guest/gifts-screen.tsx: Fields:21
+- apps/seo-web/components/rsvp/rsvp-draft.ts: loadDraft:14, saveDraft:24, clearDraft:28, RsvpDraft:5
+- packages/query-hooks/src/guest/index.ts: useSaveGuestRsvp:57, useResolveGuestCredential:124, useGuestRsvp:40, useGuestResource:31, useRegisterUnregistered:78
+- packages/query-hooks/src/guest/rsvp-flow.ts: tokenFingerprint:68, classifyRsvpError:19, newIdempotencyKey:59, RsvpFailure:5
+- apps/universal/src/platform/providers.tsx: useT:106, useApiClient:95
+- apps/universal/src/host/ui.tsx: ActionButton:126, ConfirmDialog:176
+- apps/universal/src/guest/response-controls.tsx: AttendanceChoice:8
+- apps/seo-web/components/provider/quote-cart.tsx: Field:109
+- packages/celebration-theme/src/content.ts: readContent:78, HostContact:63, PublicCelebrationView:22
+- ... and 17 more files
+
+---
+> **Verbatim source for 8 files is included above — treat it as already Read.** Trimmed for size: `guest-detail-screen.tsx`, `rsvp-form.tsx`, `rsvp-screen.tsx` +1 more; gap markers and file headers name what was elided (e.g. `LinkSection`, `AnswerForm`). For those, or anything under "Not shown above", make ANOTHER codegraph_explore with those exact names instead of reading the files — it returns their source with line numbers.
+
+> **Exploration guidance — advisory only, NOT a quota: this project (~525 files indexed) is usually covered in ≈2 focused explore calls, and extra calls are never rejected or rate-limited.** If the response above does not fully cover your question, run another codegraph_explore on the uncovered symbols — it is cheaper and more complete than Read. Only stop exploring when the response actually covers the flow you asked about.

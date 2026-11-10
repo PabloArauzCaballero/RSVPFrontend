@@ -1,0 +1,31 @@
+export const hostGiftsEnUS = {
+  category: "Category", allCategories: "All categories", otherCategory: "Other category",
+  maxPrice: "Maximum price", apply: "Apply filters", reset: "Clear filters", priceCurrency: "Amounts in {{currency}}.",
+  resultWindow: "Up to 50 search products are shown. Filters apply to these results.",
+  count: "{{count}} products found", invalidQuery: "Use 2 to 100 characters, or leave the search empty.",
+  invalidMoney: "Enter a valid amount with up to two decimal places.", titleLong: "The name can contain up to 200 characters.",
+  required: "Complete the required fields.", invalidUrl: "Use a valid http or https link without a username or password.",
+  priceNeeded: "Confirm the agreed price before adding this product.", agreedPrice: "Agreed price ({{currency}})",
+  published: "Published: guests can see it now.", unpublished: "Unpublished: guests cannot see it yet.",
+  publicStatus: "Visibility in the public list", savedReview: "The server confirmed the gift. You can review its status in your gifts.",
+  reviewList: "View my gifts", publicationUnknown: "Check the list to confirm publication.",
+  beforeExternal: "First, check the partner catalog", preferExternal: "I checked the alternatives and prefer an external gift",
+  priorityOff: "Do not prioritize partners", destination: { PRODUCT_PAGE: "View product", LANDING: "Meet the provider" },
+  browsePartners: "Find alternatives in the catalog", reviewSuggestion: "View this alternative", emptySuggestions: "No alternatives were returned for this name. You can search for others in the catalog.",
+  externalReviewRequired: "Review the alternatives and confirm that you prefer an external gift.",
+  itemUnavailable: "We could not identify the gift. Refresh the list before deciding.",
+  privacyUnavailable: "We could not load your preference. Names and messages stay hidden until it is available.",
+  requesterUnavailable: "Name not yet verified",
+  settingsSaving: "Saving preference…", settingsChanged: "Preference saved. Reservations and gifts are up to date.",
+  refresh: "Refresh", partnerOpenFailed: "We could not open the partner link. Please try again.",
+  refreshing: "Refreshing the results…",
+  nothingToApprove: "The proposal has changed. Refresh the list to see its status.",
+  failure: {
+    forbidden: "You do not have permission to manage this celebration's gifts.",
+    missing: "We could not find this gift or celebration. Refresh the list.",
+    conflict: "The data changed. Refresh the list before deciding again.",
+    validation: "Check the gift data. What you wrote is still here.",
+    limited: "There are too many requests. Wait a moment before trying again.",
+    unavailable: "The service is not responding. Your draft is here; check the list before repeating a gift creation."
+  }
+} as const;

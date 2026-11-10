@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-10T00:25:40.634Z",
+  "status": "FAIL",
+  "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByText('0 sin leer') to be visible\u001b[22m\n\n    at C:\\Users\\maria\\OneDrive\\Documentos\\Github\\RSVP\\RSVPFrontend\\apps\\universal\\scripts\\e2e-guests.mjs:337:61",
+  "checks": [
+    {
+      "id": "REQ-F18-01/05 open",
+      "text": "INBOX notice opened by keyboard after POST /read and remained read on reload",
+      "status": "PASS"
+    }
+  ]
+}

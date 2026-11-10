@@ -1,0 +1,333 @@
+
+ RUN  v3.1.2 C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/packages/query-hooks
+
+ ❯ test/report-completeness.test.ts (5 tests | 4 failed) 14ms
+   × REQ-F17-05: refuses a report that stops before the advertised total 9ms
+     → promise resolved "'Nombre\r\nAna Pérez,,,CONFIRMED,1,1,1…'" instead of rejecting
+   × REQ-F17-05: refuses a report still incomplete at the page limit 1ms
+     → promise resolved "'Nombre\r\nAna Pérez,,,CONFIRMED,1,1,1…'" instead of rejecting
+   × REQ-F17-05: refuses a catering cursor cycle instead of exporting duplicates 1ms
+     → promise resolved "'k,g,s,p,d\r\n'" instead of rejecting
+   × REQ-F17-05: refuses a catering export unfinished at the page limit 1ms
+     → promise resolved "'k,g,s,p,d\r\n'" instead of rejecting
+   ✓ REQ-F17-05: accepts a complete short-page report and preserves accents 1ms
+ ❯ test/notification-concurrency.test.tsx (1 test | 1 failed) 164ms
+   × REQ-F18-03/04: rollback must preserve unrelated values refreshed during a failed toggle 164ms
+     → expected true to be false // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/notification-concurrency.test.tsx > REQ-F18-03/04: rollback must preserve unrelated values refreshed during a failed toggle
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ test/notification-concurrency.test.tsx:26:31
+     24|  const current=queries.getQueryData<NotificationPreferences>(key)!;
+     25|  expect(current.channels.EMAIL).toBe(true);
+     26|  expect(current.channels.SMS).toBe(false);
+       |                               ^
+     27|  expect(current.quietHours).toEqual({start:21,end:6,source:'USER'});
+     28| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  test/report-completeness.test.ts > REQ-F17-05: refuses a report that stops before the advertised total
+AssertionError: promise resolved "'Nombre\r\nAna Pérez,,,CONFIRMED,1,1,1…'" instead of rejecting
+
+- Expected: 
+Error {
+  "message": "rejected promise",
+}
+
++ Received: 
+"Nombre
+Ana Pérez,,,CONFIRMED,1,1,1,,
+"
+
+ ❯ test/report-completeness.test.ts:7:55
+      5| it('REQ-F17-05: refuses a report that stops before the advertised tota…
+      6|  const api = { list: vi.fn(async (_id: string, query: {offset: number}…
+      7|  await expect(buildRsvpReportCsv(api, 'c', ['Nombre'])).rejects.toThro…
+       |                                                       ^
+      8|  expect(api.rsvps).not.toHaveBeenCalled();
+      9| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  test/report-completeness.test.ts > REQ-F17-05: refuses a report still incomplete at the page limit
+AssertionError: promise resolved "'Nombre\r\nAna Pérez,,,CONFIRMED,1,1,1…'" instead of rejecting
+
+- Expected: 
+Error {
+  "message": "rejected promise",
+}
+
++ Received: 
+"Nombre
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+Ana Pérez,,,CONFIRMED,1,1,1,,
+"
+
+ ❯ test/report-completeness.test.ts:12:55
+     10| it('REQ-F17-05: refuses a report still incomplete at the page limit', …
+     11|  const api = { list: vi.fn(async (_id: string, query: {offset: number}…
+     12|  await expect(buildRsvpReportCsv(api, 'c', ['Nombre'])).rejects.toThro…
+       |                                                       ^
+     13|  expect(api.list).toHaveBeenCalledTimes(200);
+     14| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  test/report-completeness.test.ts > REQ-F17-05: refuses a catering cursor cycle instead of exporting duplicates
+AssertionError: promise resolved "'k,g,s,p,d\r\n'" instead of rejecting
+
+- Expected: 
+Error {
+  "message": "rejected promise",
+}
+
++ Received: 
+"k,g,s,p,d
+"
+
+ ❯ test/report-completeness.test.ts:17:122
+     15| it('REQ-F17-05: refuses a catering cursor cycle instead of exporting d…
+     16|  const catering = vi.fn(async () => ({items: [], limit: 500, nextCurso…
+     17|  await expect(buildCateringCsv({catering}, 'c', ['k','g','s','p','d','…
+       |                                                                                                                          ^
+     18|  expect(catering).toHaveBeenCalledTimes(2);
+     19| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  test/report-completeness.test.ts > REQ-F17-05: refuses a catering export unfinished at the page limit
+AssertionError: promise resolved "'k,g,s,p,d\r\n'" instead of rejecting
+
+- Expected: 
+Error {
+  "message": "rejected promise",
+}
+
++ Received: 
+"k,g,s,p,d
+"
+
+ ❯ test/report-completeness.test.ts:23:122
+     21|  let calls = 0;
+     22|  const catering = vi.fn(async () => ({items: [], limit: 500, nextCurso…
+     23|  await expect(buildCateringCsv({catering}, 'c', ['k','g','s','p','d','…
+       |                                                                                                                          ^
+     24|  expect(catering).toHaveBeenCalledTimes(200);
+     25| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  5 failed | 1 passed (6)
+   Start at  13:39:40
+   Duration  5.13s (transform 258ms, setup 0ms, collect 966ms, tests 178ms, environment 2.99s, prepare 352ms)
+

@@ -1,0 +1,29 @@
+Loaded  vitest@3.1.2  and  @vitest/coverage-v8@3.2.7 .
+Running mixed versions is not supported and may lead into bugs
+Update your dependencies and make sure the versions match.
+
+ RUN  v3.1.2 C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/apps/universal
+      Coverage enabled with v8
+
+ ✓ test/host-review-state.test.tsx (3 tests) 442ms
+ ✓ test/guests.test.tsx (60 tests) 9025ms
+   ✓ REQ-F16-01 · C19 guest list (read model, search, filter, paging, states) > lists guests with status, filters by response and searches on the server  637ms
+   ✓ REQ-F16-01 · C19 guest list (read model, search, filter, paging, states) > 500 guests stay usable: 50 per page, server paging, never 500 rows in the DOM  467ms
+   ✓ REQ-F16-01 · C19 guest list (read model, search, filter, paging, states) > empty, filtered-empty, error with retry, and 403  473ms
+   ✓ REQ-F16-04 · C22 groups (contract v1.9.0) > creates a group, lists the backend's groups with member counts, assigns at creation and moves a guest from their page  391ms
+   ✓ REQ-F18 · notifications center and preferences > recovers from every documented GET error on notifications  495ms
+   ✓ REQ-F18 · notifications center and preferences > recovers from every documented GET error on preferences  471ms
+
+ Test Files  2 passed (2)
+      Tests  63 passed (63)
+   Start at  13:59:41
+   Duration  15.25s (transform 1.30s, setup 782ms, collect 7.58s, tests 9.47s, environment 2.62s, prepare 327ms)
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 98.78% ( 406/411 )
+Branches     : 90.55% ( 211/233 )
+Functions    : 81.96% ( 50/61 )
+Lines        : 98.78% ( 406/411 )
+================================================================================

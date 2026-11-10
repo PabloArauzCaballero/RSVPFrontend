@@ -1,0 +1,57 @@
+{
+  "date": "2026-11-06T23:41:47.735Z",
+  "surface": "Expo web export in Chrome, contract mock",
+  "status": "PASS",
+  "checks": [
+    {
+      "id": "REQ-F18-01/05 open",
+      "text": "INBOX notice opened by keyboard after POST /read and remained read on reload",
+      "status": "PASS"
+    },
+    {
+      "id": "REQ-F18-01/05",
+      "text": "3 unread → mark all → 0 unread, persisted across reload (readAt is server-side, notification 1.4.0: POST ./read; not per-device)",
+      "status": "PASS"
+    },
+    {
+      "id": "REQ-F18-06",
+      "text": "quiet hours written in the celebration time zone; leading zero accepted",
+      "status": "PASS"
+    },
+    {
+      "id": "REQ-F18-03/04",
+      "text": "switching PUSH off is PATCHed to the notification contract and read back",
+      "status": "PASS"
+    }
+  ],
+  "axe": [
+    {
+      "screen": "C31-notificaciones-360",
+      "violations": []
+    },
+    {
+      "screen": "C31-notificaciones-768",
+      "violations": []
+    },
+    {
+      "screen": "C31-notificaciones-1280",
+      "violations": []
+    },
+    {
+      "screen": "preferencias-360",
+      "violations": []
+    },
+    {
+      "screen": "preferencias-768",
+      "violations": []
+    },
+    {
+      "screen": "preferencias-1280",
+      "violations": []
+    },
+    {
+      "screen": "preferencias-en-US-768",
+      "violations": []
+    }
+  ]
+}

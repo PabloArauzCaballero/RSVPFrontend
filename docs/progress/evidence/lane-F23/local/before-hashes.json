@@ -1,0 +1,17 @@
+{
+  "apps/universal/src/host/gifts/catalog-screen.tsx": "739e8b35d4217b17d2596d78e4308537a5d298f07171f6acb10c261032125941",
+  "apps/universal/src/host/gifts/gifts-screen.tsx": "1bdc16422c6257837e5fa0ef97987e530ffd0d40ad00a779d25c070e98b01ee7",
+  "apps/universal/src/host/gifts/external-screen.tsx": "04b8c2cfc1ed13559503ede2edd2fab7fa50ebf6b34de722f70bf56d0194cc43",
+  "apps/universal/src/host/gifts/inbox-screen.tsx": "19df0df2847a7853e1e1eb354228532e62fdcc2d21431703358c22fd46610ab8",
+  "apps/universal/src/host/gifts/providers-screen.tsx": "bdea88b83a913b9bbb9120fa50ce600b12f342e23edcfaf6df1d549cadbaaaf0",
+  "apps/universal/app/(host)/regalos/catalogo.tsx": "d3a797d846824e0fa08566b2eafa0fa3671ae67e211fc33935da70ef2fdc3d8c",
+  "apps/universal/test/gifts-portal.test.tsx": "583de54521c8a3cc9eea04553f57de53ad861fb4000691ad283d36eff3dc26bf",
+  "packages/forms/src/index.ts": "09c252467f8ab1162c55194b4cebebeb2cb3a27ae444895b07f65e48d92c2d22",
+  "packages/query-hooks/src/index.ts": "50a9041b1e56570935edf82664887c6865aa8bdeb0886c37e88db993b8b4ad90",
+  "packages/i18n/src/server.ts": "1c6470a7b141e64eaf2549b86d58ee8ea9ffc7723ff0b33664ea488db094cedb",
+  "docs/progress/evidence/lane-F23/README.md": "b626ad3ba01cdbeec898d688668ecef01b51d717b2affd34f1991188cd95c258",
+  "apps/universal/app/+native-intent.ts": "f5c70987607fb2d861b98c0f802914e02902130751f5897994c0462e992b601b",
+  "docs/progress/STATUS_LOG.md": "bb9b43fb2461dfe0e489739a84850897e0dbed66c1949fb219ffd6f1fcf82940",
+  "docs/progress/BLOCKERS.md": "7558cc6f891cc343e982de67c66dca67256b4b9d57a7fec4093b634d8fd0ef07",
+  "docs/progress/DECISIONS.md": "85f632e1fd7b4054150cc915aebb20fa4c8e9bf93b7243b9f1047b0d26ad6956"
+}

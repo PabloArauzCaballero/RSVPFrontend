@@ -1,6 +1,5 @@
 'use client';
 
-import { CheckMark } from '../brand/check-mark';
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { ApiError } from '@rsvp/api-client';
 import { createTranslator, formatMinor, type AppLocale } from '@rsvp/i18n/server';
@@ -13,7 +12,7 @@ import { CAPTCHA_SITE_KEY, QuoteCaptcha } from './quote-captcha';
 import './provider.css';
 
 export interface QuoteOffer { readonly listingId: string; readonly title: string; readonly priceFrom?: { readonly amountMinor: number; readonly currency: string }; readonly fulfillment?: { readonly responsible: string; readonly coverageZones: readonly string[]; readonly leadTimeDays: number; readonly transportCostMinor?: number } }
-export interface QuoteCartProps { readonly slug: string; readonly providerId: string; readonly providerName: string; readonly timeZone: string; readonly offers: readonly QuoteOffer[]; readonly preselected?: string; readonly locale: AppLocale; readonly today: string; /** Identity of each city is its slug: Provider Catalog rejects any other `eventCity` (422 "eventCity must be a city slug"). */ readonly cities: readonly { readonly slug: string; readonly name: string }[] }
+export interface QuoteCartProps { readonly slug: string; readonly providerId: string; readonly providerName: string; readonly timeZone: string; readonly offers: readonly QuoteOffer[]; readonly preselected?: string; readonly locale: AppLocale; readonly today: string }
 
 export function QuoteCart(props: QuoteCartProps) {
   const [client] = useState(() => new QueryClient({ defaultOptions: { mutations: { retry: false } } }));
@@ -21,7 +20,7 @@ export function QuoteCart(props: QuoteCartProps) {
 }
 
 /** B8 · intent cart (items, date, guests, budget) and B9 · sent confirmation. */
-function QuoteBody({ slug, providerId, providerName, offers, preselected, locale, today, cities }: QuoteCartProps) {
+function QuoteBody({ slug, providerId, providerName, offers, preselected, locale, today }: QuoteCartProps) {
   const t = useMemo(() => createTranslator(locale), [locale]);
   const api = useMemo(() => createVisitorClient(), []);
   const quote = useQuote(api, providerId, locale);
@@ -59,7 +58,6 @@ function QuoteBody({ slug, providerId, providerName, offers, preselected, locale
   if (receipt) {
     return (
       <main className="directory partner" data-testid="quote-sent">
-        <CheckMark size={64} className="sent__check" />
         <h1 tabIndex={-1} ref={(node) => node?.focus()}>{t('quote.sent.title')}</h1>
         <p role="status">{t('quote.sent.body', { name: providerName, id: receipt.id.slice(0, 8) })}</p>
         <p>{t('quote.sent.copy')}</p>
@@ -89,18 +87,12 @@ function QuoteBody({ slug, providerId, providerName, offers, preselected, locale
         <div aria-live="polite" data-testid="quote-summary"><strong>{t('quote.summary')}</strong>: {chosen.length ? chosen.map((offer) => offer.title).join(', ') : t('quote.noneSelected')}</div>
         <Field id="eventDate" label={t('quote.eventDate')} type="date" min={today} error={err('eventDate')} />
         <Field id="guestCount" label={t('quote.guests')} type="number" min={1} inputMode="numeric" error={err('guestCount')} />
-        <Field id="budget" label={`${t('quote.budget')} ${t('quote.optional')}`} type="number" min={0} inputMode="decimal" help={t('quote.budgetHelp')} error={err('budget')} />
-        <div className="rsvp-field">
-          <label htmlFor="eventCity">{t('quote.city')} {t('quote.optional')}</label>
-          <select id="eventCity" name="eventCity" defaultValue="">
-            <option value="">{t('directory.filters.any')}</option>
-            {cities.map((city) => <option key={city.slug} value={city.slug}>{city.name}</option>)}
-          </select>
-        </div>
+        <Field id="budget" label={t('quote.budget')} type="number" min={0} inputMode="decimal" help={t('quote.budgetHelp')} error={err('budget')} />
+        <Field id="eventCity" label={t('quote.city')} type="text" />
         <Field id="name" label={t('quote.name')} type="text" autoComplete="name" error={err('name')} />
         <Field id="email" label={t('quote.email')} type="email" autoComplete="email" error={err('email')} />
-        <Field id="phone" label={`${t('quote.phone')} ${t('quote.optional')}`} type="tel" inputMode="tel" autoComplete="tel" />
-        <div className="rsvp-field"><label htmlFor="message">{t('quote.message')} {t('quote.optional')}</label><textarea id="message" name="message" rows={4} maxLength={2000} /></div>
+        <Field id="phone" label={t('quote.phone')} type="tel" autoComplete="tel" />
+        <div className="rsvp-field"><label htmlFor="message">{t('quote.message')}</label><textarea id="message" name="message" rows={4} maxLength={2000} /></div>
         <div className="hp-field" aria-hidden="true"><label htmlFor="website">{t('quote.honeypot')}</label><input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" /></div>
         {signedIn ? null : <p className="rsvp-hint" data-testid="quote-anon-note">{t('quote.anonymousNote')}</p>}
         {CAPTCHA_SITE_KEY && !signedIn ? <QuoteCaptcha onToken={onCaptcha} resetKey={captchaReset} label={t('quote.captcha.label')} /> : null}

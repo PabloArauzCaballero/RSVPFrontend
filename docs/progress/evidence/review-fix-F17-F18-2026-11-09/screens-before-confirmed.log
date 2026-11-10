@@ -1,0 +1,57 @@
+
+ RUN  v3.1.2 C:/Users/maria/OneDrive/Documentos/Github/RSVP/RSVPFrontend/apps/universal
+
+ ❯ test/host-review-state.test.tsx (2 tests | 2 failed) 242ms
+   × REQ-F17-02: changing celebration never exposes the old report during the next read 154ms
+     → expected <div dir="auto" …(1)></div> to be null
+   × REQ-F18-06: a refreshed saved schedule cannot erase a dirty quiet-hours draft 87ms
+     → expected '21' to be '23' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/host-review-state.test.tsx > REQ-F17-02: changing celebration never exposes the old report during the next read
+AssertionError: expected <div dir="auto" …(1)></div> to be null
+
+- Expected: 
+null
+
++ Received: 
+<div
+  class="css-text-146c3p1 r-color-rw1157 r-fontFamily-1g7mlie r-fontSize-1i10wst r-fontWeight-b88u0q"
+  dir="auto"
+>
+  Privada de A
+</div>
+
+ ❯ test/host-review-state.test.tsx:34:50
+     32|  view.rerender(<ReportScreen celebrationId={b.celebrationId} onNavigat…
+     33|  await waitFor(() => expect(pending).toBe(true));
+     34|  try {expect(screen.queryByText('Privada de A')).toBeNull();} finally …
+       |                                                  ^
+     35|  await screen.findByText('Todavía no hay respuestas para mostrar.');
+     36| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  test/host-review-state.test.tsx > REQ-F18-06: a refreshed saved schedule cannot erase a dirty quiet-hours draft
+AssertionError: expected '21' to be '23' // Object.is equality
+
+Expected: "23"
+Received: "21"
+
+ ❯ test/host-review-state.test.tsx:46:72
+     44|  await act(async () => {await view.queries.invalidateQueries({queryKey…
+     45|  await waitFor(() => expect(screen.getByTestId('quiet-current').textCo…
+     46|  expect((screen.getByTestId('quiet-start') as HTMLInputElement).value)…
+       |                                                                        ^
+     47|  expect((screen.getByTestId('quiet-end') as HTMLInputElement).value).t…
+     48|  fireEvent.click(screen.getByTestId('quiet-save'));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  13:41:36
+   Duration  5.50s (transform 812ms, setup 341ms, collect 3.55s, tests 242ms, environment 1.02s, prepare 124ms)
+

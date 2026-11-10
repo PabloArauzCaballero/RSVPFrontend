@@ -1,0 +1,89 @@
+{
+  "date": "2026-11-08T23:03:04.425Z",
+  "surface": "Expo web export in Chrome, contract mock",
+  "status": "PASS",
+  "checks": [
+    {
+      "id": "REQ-F16-01",
+      "text": "500 guests: 50 per page with server paging, search, empty-filtered state; no horizontal scroll at 360/768/1280",
+      "status": "PASS"
+    },
+    {
+      "id": "REQ-F16-02 concurrencia",
+      "text": "Late success preserves edits made after the submitted draft; only the original guest was created.",
+      "status": "PASS"
+    },
+    {
+      "id": "REQ-F16-02",
+      "text": "validation on save, phone-only guest accepted (E.164), saved and visible to the mock",
+      "status": "PASS"
+    },
+    {
+      "id": "REQ-F16-03",
+      "text": "CSV with 3 bad rows: 1 imported; each error shown with line number, field and reason",
+      "status": "PASS"
+    },
+    {
+      "id": "REQ-F16-03 archivo",
+      "text": "A selected CSV file with 200 data rows imported 198 and explained errors on lines 41 and 151. Submitting the same content again was disabled.",
+      "status": "PASS"
+    },
+    {
+      "id": "REQ-F16-04",
+      "text": "the groups screen lists the seeded family group",
+      "status": "PASS"
+    },
+    {
+      "id": "REQ-F16-05/06 identidad",
+      "text": "Expo Router A -> list -> B retains no previous personal link; reused-prop and late-response cases are covered separately by component tests.",
+      "status": "PASS"
+    },
+    {
+      "id": "REQ-F16-05/06",
+      "text": "link issued, shown masked (abcd…wxyz), full secret absent from the DOM, revoke asks for confirmation",
+      "status": "PASS"
+    }
+  ],
+  "axe": [
+    {
+      "screen": "C19-lista-360",
+      "violations": []
+    },
+    {
+      "screen": "C19-lista-768",
+      "violations": []
+    },
+    {
+      "screen": "C19-lista-1280",
+      "violations": []
+    },
+    {
+      "screen": "C20-alta-360",
+      "violations": []
+    },
+    {
+      "screen": "C20-alta-768",
+      "violations": []
+    },
+    {
+      "screen": "C20-alta-1280",
+      "violations": []
+    },
+    {
+      "screen": "C21-archivo-200-768",
+      "violations": []
+    },
+    {
+      "screen": "C22-grupos-360",
+      "violations": []
+    },
+    {
+      "screen": "C22-grupos-768",
+      "violations": []
+    },
+    {
+      "screen": "C22-grupos-1280",
+      "violations": []
+    }
+  ]
+}

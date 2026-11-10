@@ -1,0 +1,59 @@
+Starting Metro Bundler
+iOS node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Android node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+iOS node_modules\expo-router\entry.js ▓▓▓░░░░░░░░░░░░░ 19.4% ( 56/223)
+Android node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+iOS node_modules\expo-router\entry.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% (418/731)
+Android node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+iOS node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓░░░░░░░░ 52.6% (630/877)
+Android node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+iOS node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 63.4% ( 890/1127)
+Android node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+iOS node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 74.2% (1200/1396)
+Android node_modules\expo-router\entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+iOS node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 87.4% (1459/1587)
+Android node_modules\expo-router\entry.js ▓▓░░░░░░░░░░░░░░ 16.0% (4/7)
+iOS node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 92.8% (1612/1674)
+Android node_modules\expo-router\entry.js ▓▓▓░░░░░░░░░░░░░ 21.0% ( 34/191)
+iOS node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 94.0% (1667/1747)
+Android node_modules\expo-router\entry.js ▓▓▓▓░░░░░░░░░░░░ 30.3% (361/656)
+iOS node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 94.0% (1719/1784)
+Android node_modules\expo-router\entry.js ▓▓▓▓▓▓░░░░░░░░░░ 41.0% (574/896)
+iOS node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 96.2% (1782/1818)
+Android node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 63.2% ( 885/1163)
+iOS node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 98.8% (1811/1822)
+Android node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 72.3% (1154/1357)
+iOS node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.5% (1819/1829)
+Android node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 87.2% (1416/1521)
+iOS node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.5% (1819/1829)
+Android node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 91.8% (1565/1633)
+iOS node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.5% (1819/1829)
+Android node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (1835/1835)
+iOS Bundled 52013ms node_modules\expo-router\entry.js (1829 modules)
+Android node_modules\expo-router\entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (1835/1835)
+Android Bundled 55206ms node_modules\expo-router\entry.js (1835 modules)
+
+› Assets (31):
+..\..\node_modules\@react-navigation\elements\lib\module\assets\back-icon-mask.png (653 B)
+..\..\node_modules\@react-navigation\elements\lib\module\assets\back-icon.png (8 variations | 359 B)
+..\..\node_modules\@react-navigation\elements\lib\module\assets\clear-icon.png (4 variations | 425 B)
+..\..\node_modules\@react-navigation\elements\lib\module\assets\close-icon.png (4 variations | 235 B)
+..\..\node_modules\@react-navigation\elements\lib\module\assets\search-icon.png (7 variations | 592 B)
+..\..\node_modules\expo-router\assets\arrow_down.png (9.46 kB)
+..\..\node_modules\expo-router\assets\error.png (469 B)
+..\..\node_modules\expo-router\assets\file.png (138 B)
+..\..\node_modules\expo-router\assets\forward.png (188 B)
+..\..\node_modules\expo-router\assets\pkg.png (364 B)
+..\..\node_modules\expo-router\assets\sitemap.png (465 B)
+..\..\node_modules\expo-router\assets\unmatched.png (4.75 kB)
+
+› ios bundles (1):
+_expo/static/js/ios/entry-93888601dd9163b4b58f6429e3045ff1.hbc (5.28 MB)
+
+› android bundles (1):
+_expo/static/js/android/entry-52af680c8adbb168d19ee696dfc4fef7.hbc (5.28 MB)
+
+› Files (1):
+metadata.json (3.57 kB)
+
+Exported: native-build-f23

@@ -17,8 +17,6 @@ export function PublicCelebration({ page, only }: { readonly page: PublicPage; r
   const languages = view.availableLocales.filter((candidate) => (supportedLocales as readonly string[]).includes(candidate));
   return (
     <>
-      {/* The invitation is the guest's page: the site's sales navigation and pitch step back (see `body:has([data-quiet-chrome])` in globals.css). */}
-      <span hidden data-quiet-chrome="" />
       {fonts ? <link rel="stylesheet" href={fonts} precedence="default" /> : null}
       {jsonLd ? <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} /> : null}
       {languages.length > 1 ? (
