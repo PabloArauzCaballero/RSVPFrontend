@@ -46,7 +46,7 @@ export const landingEsBO = {
     seeTitle: "Mira quién viene",
     seeBody: "Ves quién confirmó, con cuántos acompañantes y qué restricciones de comida tiene.",
     artWedding: "Boda", artQuince: "Quinceaños", artBaptism: "Bautizo", artDate: "12 de diciembre", artPlace: "Hacienda Los Lirios",
-    artMessage: "¡Nos casamos! Aquí está tu invitación:", artLink: "done/c/valentina-y-mateo", artFor: "Enlace personal de Carla"
+    artMessage: "¡Nos casamos! Aquí está tu invitación:", artLink: "DOne/c/valentina-y-mateo", artFor: "Enlace personal de Carla"
   },
   guests: {
     title: "Sabes quién viene, sin perseguir a nadie",

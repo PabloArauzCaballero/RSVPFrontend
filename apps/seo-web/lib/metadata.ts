@@ -52,7 +52,7 @@ export function celebrationMetadata(view: PublicCelebrationView, gallery: readon
       url: own,
       title,
       description,
-      siteName: "RSVP",
+      siteName: "DOne",
       locale: view.locale.replace("-", OG_LOCALE_SEPARATOR),
       ...(image ? { images: [{ url: image, width: cover?.width ?? undefined, height: cover?.height ?? undefined, alt: content.title }] } : {})
     },
