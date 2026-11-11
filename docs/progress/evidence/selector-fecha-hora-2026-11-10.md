@@ -67,3 +67,10 @@ No verificado: los scripts `scripts/live/*.mjs` se actualizaron al nuevo campo d
 Verificación: `turbo run lint typecheck test` 66/66 (nuevas: `map-link.test.tsx`, y el asistente con enlace válido e inválido). Build web contra el API de TEST con sesión real, 360 px oscuro y 1280 px claro: el mapa carga, la búsqueda centra la Plaza 24 de Septiembre, «Listo» deja el enlace con las coordenadas en el campo; axe WCAG 2.2 AA sin critical/serious y sin scroll horizontal (4/4).
 
 No verificado / límites: «Usar mi ubicación» no se probó (requiere permiso del navegador en un dispositivo real). Las teselas y la búsqueda son los servidores públicos de OpenStreetMap, aptos para pruebas y uso moderado; con tráfico real hay que contratar un proveedor de mapas. El texto que se busca se envía a Nominatim.
+
+## Pendientes cerrados (2026-11-11)
+
+- **«Cómo llegar» en una invitación publicada**: se publicó la invitación de prueba de TEST (`/c/valeria-y-tomas-5834k`) con un punto marcado; la página pública pinta `<a href="https://www.google.com/maps/search/?api=1&query=-17.783278%2C-63.182117" … data-link-kind="navigation">Cómo llegar</a>`.
+- **Ya no queda ninguna fecha ni hora que se escriba a mano**: agenda del proveedor (apertura, cierre, días bloqueados), resultados del proveedor (desde/hasta), horario del perfil del proveedor y el rango de métricas del admin usan los mismos selectores. Las etiquetas pierden el «(AAAA-MM-DD)» / «(HH:MM)».
+- Verificación: `yarn lint:code` y `turbo run lint typecheck test` 66/66 (365 pruebas en `apps/universal`). Las tres pantallas del portal cargan en el build contra TEST sin scroll horizontal ni hallazgos axe critical/serious (6/6), pero el proveedor de prueba no tiene negocio registrado, así que ahí solo se ve el aviso «Primero registra tu negocio»; los formularios se comprobaron con las pruebas de componente y el mock visual.
+- No verificado: los formularios del proveedor con datos reales en TEST; `scripts/live/provider-admin-buttons.mjs` se adaptó pero no se ejecutó.

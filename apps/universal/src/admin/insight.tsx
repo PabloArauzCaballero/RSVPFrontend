@@ -4,7 +4,7 @@ import { PLATFORM_ROLES, USERS_PAGE_SIZE, useAdminOrganizations, useAdminUsers, 
 import { spacing } from "@rsvp/design-tokens";
 import { AvatarMark, Stagger, useColors } from "@rsvp/ui";
 import { useApiClient, useT } from "../platform/providers";
-import { ActionButton, ChoiceGroup, ConfirmDialog, Field, Loading, Notice, OverflowMenu, PageIntro, Section, useStyles } from "../host/ui";
+import { ActionButton, ChoiceGroup, ConfirmDialog, DateInput, Field, Loading, Notice, OverflowMenu, PageIntro, Section, useStyles } from "../host/ui";
 import { AdminScreen, adminOnly } from "./admin-screen";
 import { AdminErrorNotice, QueryBoundary, useStamp, Stack } from "./shared";
 import { useSingleMutation } from "../platform/single-flight";
@@ -35,8 +35,8 @@ function MetricsScreenContent({ onNavigate }: Nav): ReactNode {
       <PageIntro>{t("admin.metrics.intro")}</PageIntro>
       <ChoiceGroup label={t("admin.metrics.groupBy")} value={groupBy} onChange={setGroupBy} choices={(["partner", "category"] as const).map((value) => ({ value, label: t(`admin.metrics.groups.${value}`) }))} />
       <View style={styles.row}>
-        <View style={{ flexGrow: 1, minWidth: 180 }}><Field label={t("admin.metrics.from")} help={t("admin.metrics.dateHelp")} value={from} onChange={setFrom} testID="metrics-from" /></View>
-        <View style={{ flexGrow: 1, minWidth: 180 }}><Field label={t("admin.metrics.to")} value={to} onChange={setTo} testID="metrics-to" /></View>
+        <View style={{ flexGrow: 1, minWidth: 180 }}><DateInput label={t("admin.metrics.from")} help={t("admin.metrics.dateHelp")} value={from} onChange={setFrom} testID="metrics-from" /></View>
+        <View style={{ flexGrow: 1, minWidth: 180 }}><DateInput label={t("admin.metrics.to")} value={to} onChange={setTo} testID="metrics-to" /></View>
       </View>
       {valid ? (
         <QueryBoundary query={metrics} empty={t("admin.metrics.empty")}>

@@ -15,7 +15,7 @@ import { ProvidersScreen } from "../src/host/gifts/providers-screen";
 import { DeliveryScreen } from "../src/provider/delivery-screen";
 import { writeLocal } from "../src/platform/local-store";
 import { resetSecureStore } from "./stubs/expo-secure-store";
-import { baseHandlers, CELEBRATION, fakeClient, HOST, HttpFailure, renderApp, type Handler } from "./support";
+import { baseHandlers, CELEBRATION, fakeClient, HOST, HttpFailure, renderApp, type Handler, pickTime } from "./support";
 
 const PID = "4f0f2d3d-0000-4000-8000-0000000000aa";
 const LISTING = "7d1c1a34-5d4c-4a39-9a2e-0f4f2d3d7b11";
@@ -314,9 +314,10 @@ describe("REQ-F28-06 · lead metrics", () => {
     expect(within(totals).getByLabelText(/Toques por cada vista: 5/)).toBeTruthy();
     expect(within(totals).getByLabelText(/Solicitudes válidas: 25/)).toBeTruthy();
     fireEvent.change(screen.getByTestId("metrics-period"), { target: { value: "custom" } });
-    type("Desde (AAAA-MM-DD)", "2026-13-40");
+    // a date picker cannot hold a day that does not exist: it stays empty, and an empty period is refused
+    type("Desde", "2026-13-40");
     fireEvent.click(screen.getByTestId("metrics-apply"));
-    expect(await screen.findByText(/formato AAAA-MM-DD/)).toBeTruthy();
+    expect(await screen.findByText(/Elige las dos fechas/)).toBeTruthy();
     expect(validRange("2026-01-01", "2026-01-31")).toBe(true);
     expect(validRange("2026-02-01", "2026-01-31")).toBe(false);
     expect(calls.every((call) => !call.path.includes("2026-13"))).toBe(true);
@@ -331,10 +332,10 @@ describe("REQ-F28 · availability and date requests", () => {
     renderApp(<AgendaScreen />, client, HOST);
     await screen.findByTestId("booking-b1");
     await waitFor(() => expect((screen.getByLabelText("Cupos por día") as HTMLInputElement).value).toBe("1"));
-    type("Hasta", "07:00");
+    pickTime("Hasta", "07:00");
     fireEvent.click(screen.getByTestId("agenda-save"));
     expect(await screen.findByText(/posterior a la de apertura/)).toBeTruthy();
-    type("Hasta", "19:00"); type("Fecha (AAAA-MM-DD)", "2027-03-15");
+    pickTime("Hasta", "19:00"); type("Fecha", "2027-03-15");
     fireEvent.click(screen.getByTestId("blackout-add"));
     expect(await screen.findByTestId("blackout-2027-03-15")).toBeTruthy();
     fireEvent.click(screen.getByTestId("agenda-save"));
