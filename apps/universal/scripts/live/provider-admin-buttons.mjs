@@ -7,6 +7,7 @@ import { execFileSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
+import { pickTime } from "./time-field.mjs";
 
 const APP = process.env.APP ?? "http://localhost:3100";
 const API = process.env.API ?? "http://localhost:28000";
@@ -68,6 +69,7 @@ const go = async (page, path) => { await page.goto(`${APP}${path}`); await page.
 const id = (page, testId) => page.getByTestId(testId).filter({ visible: true }).first();
 const text = (page, pattern) => page.getByText(pattern).filter({ visible: true }).first();
 // Campaign tracking lives behind "More options" in Contacto; open it the first time a field of it is needed.
+const tid = (page, testId) => page.getByTestId(testId).filter({ visible: true }).first();
 const fill = async (page, testId, value) => {
   if (/^utm-/.test(testId) && !(await id(page, testId).isVisible().catch(() => false))) await id(page, "destinations-more").click();
   await id(page, testId).fill(String(value));
@@ -425,15 +427,14 @@ async function portal() {
     await step("Agenda", "agenda-save", "LIMITE cupos 0 / 1001 / 1.5 / vacio y horas invertidas: errores locales", async () => {
       const puts = counter(page, "PUT", /availability/);
       for (const cap of ["0", "1001", "1.5", "", "-3"]) { await fill(page, "agenda-capacity", cap); await click(page, "agenda-save"); await text(page, /entre 1 y 1000/).waitFor(); }
-      await fill(page, "agenda-capacity", "2"); await fill(page, "agenda-start", "20:00"); await fill(page, "agenda-end", "08:00"); await click(page, "agenda-save"); await text(page, /posterior a la de apertura/).waitFor();
-      await fill(page, "agenda-start", "25:00"); await click(page, "agenda-save"); await text(page, /formato HH:MM/).waitFor();
-      await fill(page, "agenda-start", "08:00"); await fill(page, "agenda-end", "20:00");
+      await fill(page, "agenda-capacity", "2"); await pickTime(page, tid(page, "agenda-start"), "20:00"); await pickTime(page, tid(page, "agenda-end"), "08:00"); await click(page, "agenda-save"); await text(page, /posterior a la de apertura/).waitFor();
+      await pickTime(page, tid(page, "agenda-start"), "08:00"); await pickTime(page, tid(page, "agenda-end"), "20:00");
       assert.equal(puts.length, 0);
       return "0 PUT; el backend tambien responde 422 INVALID_AVAILABILITY a cupos 0/1.5/100000 y start>=end";
     });
     await step("Agenda", "blackout-add", "LIMITE fecha 2027-02-30, rango invertido, duplicado", async () => {
       await fill(page, "blackout-date", "2027-02-30"); await click(page, "blackout-add"); await text(page, "Esa fecha no existe en el calendario.").waitFor();
-      await fill(page, "blackout-date", "manana"); await click(page, "blackout-add"); await text(page, "Usa el formato AAAA-MM-DD.").waitFor();
+      await fill(page, "blackout-date", ""); await click(page, "blackout-add"); await text(page, "Elige la fecha.").waitFor();
       await fill(page, "blackout-date", day(60)); await fill(page, "blackout-end", day(50)); await click(page, "blackout-add"); await text(page, "La fecha final no puede ser anterior a la inicial.").waitFor();
       await fill(page, "blackout-end", ""); await click(page, "blackout-add"); await id(page, `blackout-${day(60)}`).waitFor();
       await fill(page, "blackout-date", day(60)); await click(page, "blackout-add"); await text(page, "Ese día ya está bloqueado.").waitFor();
@@ -580,7 +581,7 @@ async function portal() {
     await step("Metricas", "metrics-apply", "LIMITE fechas invalidas / desde>hasta: error local, sin peticion", async () => {
       const gets = counter(page, "GET", /\/metrics/);
       const before = gets.length;
-      for (const [from, to] of [["2026-13-01", "2026-12-01"], ["2026-12-31", "2026-12-01"], ["", ""], ["ayer", "hoy"]]) { await fill(page, "metrics-from", from); await fill(page, "metrics-to", to); await click(page, "metrics-apply"); await text(page, "Usa el formato AAAA-MM-DD y un período válido.").waitFor(); }
+      for (const [from, to] of [["2026-12-31", "2026-12-01"], ["", ""]]) { await fill(page, "metrics-from", from); await fill(page, "metrics-to", to); await click(page, "metrics-apply"); await text(page, "Elige las dos fechas y un período válido.").waitFor(); }
       assert.equal(gets.length, before);
       const direct = await http("GET", `/providers/${A.providerId}/metrics?from=2026-12-31&to=2026-12-01`, { token: A.owner.token });
       assert.equal(direct.status, 422);

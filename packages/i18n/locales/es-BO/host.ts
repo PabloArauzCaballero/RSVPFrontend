@@ -26,8 +26,9 @@ export const hostEsBO = {
     serverLoad: "El servidor no respondió como esperábamos. Inténtalo de nuevo en unos minutos.",
     networkLoad: "No hay conexión con el servidor. Revisa tu internet e inténtalo de nuevo."
   },
+  location: { linkPlaceholder: "https://maps.app.goo.gl/…", mark: "Marcar en el mapa", change: "Cambiar el punto", marked: "Punto marcado. Tus invitados lo abrirán con «Cómo llegar».", link: "Enlace del mapa", linkHelp: "Opcional. Se completa al marcar el punto; también puedes pegar el enlace que te da Google Maps al compartir el lugar.", linkHelpNative: "Opcional. Pega el enlace que te da Google Maps al compartir el lugar; tus invitados lo abrirán con «Cómo llegar».", linkInvalid: "Pega un enlace de Google Maps, Apple Maps, Waze u OpenStreetMap que empiece con https://.", pickerTitle: "Marca el lugar en el mapa", search: "Buscar un lugar o dirección", searchPlaceholder: "Salón Las Palmas, Santa Cruz", searchButton: "Buscar", results: "Resultados de la búsqueda", noResults: "No encontramos ese lugar. Prueba con la calle o la zona y termina de ubicarlo moviendo el mapa.", searchError: "No pudimos buscar ahora. Mueve el mapa hasta el lugar o inténtalo de nuevo.", locationError: "No pudimos obtener tu ubicación. Revisa el permiso del navegador o busca el lugar por su nombre.", mapLabel: "Mapa: muévelo hasta que el pin quede sobre el lugar", hint: "Mueve el mapa hasta que el pin quede justo sobre el lugar.", myLocation: "Usar mi ubicación", use: "Listo" },
   limits: {
-    fieldsTooLong: "Hay textos demasiado largos. Acórtalos para poder guardar.",
+    requiredMissing: "Para guardar falta: {{fields}}.", fieldsTooLong: "Hay textos demasiado largos. Acórtalos para poder guardar.",
     tooLong_one: "Quita {{count}} carácter: el máximo es {{max}}.",
     tooLong_other: "Quita {{count}} caracteres: el máximo es {{max}}.",
     slugLength: "El enlace debe tener entre 3 y 80 caracteres.",
@@ -41,16 +42,16 @@ export const hostEsBO = {
   onboarding: {
     joinNames: "{{first}} y {{second}}",
     title: "Crea tu invitación", intro: "Tres pasos cortos y tu invitación ya tiene su enlace.",
-    step: "Paso {{step}} de 3", stepLabels: { type: "Qué celebras", who: "Quién y cuándo", name: "Nombre y enlace" }, progress: "Tus pasos",
+    step: "Paso {{step}} de 3", stepLabels: { type: "Qué celebras", who: "Quién, cuándo y dónde", name: "Nombre y enlace" }, progress: "Tus pasos",
     typeLabel: "Elige una opción",
     typeTitle: "¿Qué vas a celebrar?", typeHelp: "Con esto preparamos los textos y las secciones que mejor le quedan.",
-    whoTitle: "¿Quiénes son y cuándo es?", hostsHelp: "Escribe los nombres como quieres que se lean en la invitación.",
-    dateLabel: "Fecha (AAAA-MM-DD)", timeLabel: "Hora (HH:MM)", dateHelp: "Ejemplo: 2027-08-14. ¿Aún no la tienes? Déjala vacía y agrégala después.",
+    whoTitle: "¿Quiénes son, cuándo y dónde es?", hostsHelp: "Escribe los nombres como quieres que se lean en la invitación.",
+    dateLabel: "Fecha", timeLabel: "Hora", venuePlaceholder: "Salón Las Palmas", dateHelp: "Con estos datos tu invitación queda lista para publicar. Podrás cambiarlos cuando quieras.",
     nameTitle: "Ponle nombre y enlace", titleLabel: "Nombre de la celebración", titlePlaceholder: "Ana y Luis", titleHelp: "Es lo primero que verán tus invitados.",
     slugLabel: "Enlace de tu invitación", slugHelp: "Así lo recibirán tus invitados: {{url}}. Solo minúsculas, números y guiones.",
     defaultsSummary: "Ya lo dejamos listo: hora de {{timeZone}}, {{language}} y {{currency}}.",
     timeZoneLabel: "Zona horaria del evento", timeZoneHelp: "Tus invitados verán las horas en esta zona, estén donde estén.", languageLabel: "Idioma principal", currencyLabel: "Moneda",
-    titleRequired: "Escribe el nombre de tu celebración.", dateInvalid: "Revisa la fecha: usa AAAA-MM-DD, por ejemplo 2027-08-14.", timeInvalid: "Revisa la hora: usa HH:MM, por ejemplo 17:30.",
+    titleRequired: "Escribe el nombre de tu celebración.", dateInvalid: "Elige la fecha.", timeInvalid: "Elige la hora.", required: "Completa este campo.", requiredNotice: "Completa los datos marcados para continuar.", slugRequired: "Escribe el enlace de tu invitación.",
     previewTitle: "Así va quedando", previewHint: "Cambia mientras escribes.", previewShow: "Ver cómo queda", previewHide: "Ocultar", previewFallbackTitle: "Tu celebración",
     create: "Crear mi invitación", readyTitle: "Tu invitación está lista", readyBody: "Por ahora es un borrador: solo tú la ves. Completa lo que falta y publícala cuando quieras.",
     finish: "Completar mi invitación", chooseStyle: "Elegir otro estilo"
@@ -61,11 +62,11 @@ export const hostEsBO = {
     save: "Guardar cambios", dirty: "Tienes cambios sin guardar.", viewPreview: "Ver cómo queda", previewTitle: "Así la ven tus invitados", closePreview: "Cerrar vista previa", previewDraftNote: "Incluye lo que escribiste, aunque aún no lo hayas guardado.",
     sections: { general: "Lo básico", hosts: "Quiénes", venues: "Dónde", story: "Historia", schedule: "Programa", sections: "Más detalles" },
     about: { general: "Lo primero que ven tus invitados.", anfitriones: "Los nombres que aparecen en la invitación.", lugares: "Dónde será: ceremonia, recepción u otro lugar.", historia: "Cuenta cómo empezó todo.", itinerario: "Qué pasa y a qué hora.", secciones: "Vestimenta, preguntas frecuentes y recomendaciones." },
-    general: { slug: "Enlace de tu invitación", slugLocked: "El enlace ya no se puede cambiar porque la invitación se publicó o se archivó.", title: "Nombre de la celebración", subtitle: "Frase de bienvenida", eventDate: "Fecha", eventTime: "Hora", venueName: "Lugar principal", extraField: "Dato adicional: {{field}}" },
+    general: { slug: "Enlace de tu invitación", slugLocked: "El enlace ya no se puede cambiar porque la invitación se publicó o se archivó.", title: "Nombre de la celebración", subtitle: "Frase de bienvenida", eventDate: "Fecha", eventTime: "Hora", venueName: "Ubicación", extraField: "Dato adicional: {{field}}" },
     hosts: { help: "Los roles salen del tipo de evento: {{eventType}}." },
     venues: { name: "Nombre del lugar", address: "Dirección", kind: "Tipo", kinds: { ceremony: "Ceremonia", reception: "Recepción", other: "Otro" }, add: "Agregar lugar", item: "Lugar {{n}}" },
     story: { label: "Su historia", help: "Separa los párrafos con una línea en blanco." },
-    schedule: { title: "Actividad", date: "Fecha", time: "Hora", description: "Detalle", add: "Agregar actividad", item: "Actividad {{n}}", zoneHelp: "Escribe la hora local del evento ({{timeZone}})." },
+    schedule: { title: "Actividad", date: "Fecha", time: "Hora", description: "Detalle", add: "Agregar actividad", item: "Actividad {{n}}", zoneHelp: "Es la hora local del evento ({{timeZone}})." },
     extra: { dressCode: "Código de vestimenta", faq: "Preguntas frecuentes", question: "Pregunta", answer: "Respuesta", addFaq: "Agregar pregunta", recommendations: "Recomendaciones", recommendationName: "Nombre", recommendationDescription: "Descripción", recommendationKind: "Tipo", kinds: { lodging: "Hospedaje", transport: "Transporte", other: "Otra" }, listingId: "Código de partner (opcional)", listingHelp: "Si es un partner, su enlace pasa por nuestro redirector.", addRecommendation: "Agregar recomendación", item: "Elemento {{n}}" }
   },
   gallery: {
@@ -92,7 +93,7 @@ export const hostEsBO = {
   },
   publish: {
     title: "Publicar", intro: "Completa lo que falta, publica y comparte el enlace.", ready: "Tu celebración está lista para publicar.", readyBody: "Todo lo necesario está completo. Publícala cuando quieras.", missing: "Antes de publicar, completa:", pending: "Datos pendientes: {{count}}",
-    fields: { title: "El nombre de la celebración", subtitle: "La frase de bienvenida", eventDate: "La fecha del evento", venueName: "El lugar principal", childName: "El nombre de quien se bautiza", companyName: "El nombre de la empresa", celebrantName: "El nombre de la celebrante", host: "El nombre de: {{role}}", other: "El dato «{{field}}»" },
+    fields: { title: "El nombre de la celebración", subtitle: "La frase de bienvenida", eventDate: "La fecha del evento", venueName: "La ubicación", childName: "El nombre de quien se bautiza", companyName: "El nombre de la empresa", celebrantName: "El nombre de la celebrante", host: "El nombre de: {{role}}", other: "El dato «{{field}}»" },
     goTo: "Completar", publish: "Publicar celebración", publishConfirm: "Tu invitación será visible para cualquiera que tenga el enlace. ¿Publicar ahora?",
     done: { title: "Tu invitación ya está publicada", body: "Comparte el enlace y mañana sabrás quién viene." },
     unpublish: "Despublicar", unpublishConfirm: "El sitio dejará de verse hasta que lo publiques otra vez. El enlace no cambia.", reasonLabel: "Motivo (opcional)",
@@ -102,7 +103,7 @@ export const hostEsBO = {
   },
   settings: {
     title: "Configuración", intro: "Idiomas y fecha límite de tu celebración.", general: "Idiomas", saved: "Configuración guardada.", languages: "Idiomas del sitio", defaultLanguage: "Idioma principal", timeZone: "Zona horaria", currency: "Moneda", more: "Más opciones", format: "Hora y moneda", formatHelp: "Ya vienen con lo habitual de tu zona. Cámbialas solo si tu celebración es en otro lugar.",
-    deadline: { label: "Fecha límite para confirmar", date: "Fecha (AAAA-MM-DD)", time: "Hora (HH:MM)", help: "Hora local del evento ({{timeZone}}).", none: "Sin fecha límite: tus invitados responden cuando quieran.", clear: "Quitar fecha límite",
+    deadline: { label: "Fecha límite para confirmar", date: "Fecha", time: "Hora", help: "Hora local del evento ({{timeZone}}).", none: "Sin fecha límite: tus invitados responden cuando quieran.", clear: "Quitar fecha límite",
       past: "Esa fecha ya pasó: tus invitados ya no podrán responder ni cambiar su respuesta.", effect: "Tus invitados podrán responder hasta el {{date}} ({{zone}})." }
   },
   settingsExtra: {

@@ -50,6 +50,8 @@ export interface CelebrationContent {
   readonly subtitle: string;
   readonly eventDate: string | null;
   readonly venueName: string;
+  /** The exact place of the main venue: a link to a maps service the host marked or pasted; absent when there is none or it is not a maps link. */
+  readonly venueMapUrl?: string;
   readonly hosts: readonly HostName[];
   readonly story: string;
   readonly dressCode: string;
@@ -84,6 +86,7 @@ export function readContent(view: Pick<PublicCelebrationView, "content" | "event
     subtitle: text(content["subtitle"]),
     eventDate: text(content["eventDate"]) || null,
     venueName: text(content["venueName"]),
+    ...(mapUrl(content["venueMapUrl"]) ? { venueMapUrl: mapUrl(content["venueMapUrl"]) as string } : {}),
     hosts: view.eventType.hostRoles.map((role) => ({ ...role, name: text(hosts[role.role]) })).filter((host) => host.name),
     story: text(content["story"]),
     dressCode: text(content["dressCode"]),
@@ -136,8 +139,65 @@ export function partnerHref(listingId: string): string {
   return `${REDIRECTOR}${encodeURIComponent(listingId)}`;
 }
 
-/** Navigation to a venue (not a partner): a maps search for its name and address. */
-export function navigationHref(venue: Pick<Venue, "name" | "address">): string {
+/**
+ * Hosts whose links a guest may be sent to as "how to get there". The link is typed or pasted by the host and ends up in an
+ * `href` of the public page, so only `https` links of maps services are accepted: never a script URL or an arbitrary site.
+ */
+const MAP_HOSTS: readonly { readonly host: RegExp; readonly path?: RegExp }[] = [
+  { host: /^(www\.|maps\.)?google\.[a-z.]{2,6}$/, path: /^\/maps(\/|$)/ },
+  { host: /^maps\.google\.[a-z.]{2,6}$/ },
+  { host: /^maps\.app\.goo\.gl$/ },
+  { host: /^goo\.gl$/, path: /^\/maps\// },
+  { host: /^g\.co$/, path: /^\/kgs\// },
+  { host: /^maps\.apple\.com$/ },
+  { host: /^(www\.|ul\.)?waze\.com$/ },
+  { host: /^(www\.)?openstreetmap\.org$/ },
+  { host: /^osm\.org$/ }
+];
+const MAP_URL_MAX = 500;
+
+/** The link when it is an `https` link of a maps service, trimmed; undefined for anything else. */
+export function mapUrl(value: unknown): string | undefined {
+  const raw = typeof value === "string" ? value.trim() : "";
+  if (!raw || raw.length > MAP_URL_MAX) return undefined;
+  let url: URL;
+  try { url = new URL(raw); } catch { return undefined; }
+  if (url.protocol !== "https:" || url.username || url.password) return undefined;
+  const host = url.hostname.toLowerCase();
+  return MAP_HOSTS.some((rule) => rule.host.test(host) && (!rule.path || rule.path.test(url.pathname))) ? url.toString() : undefined;
+}
+
+export interface MapPoint { readonly lat: number; readonly lng: number }
+const COORDINATE_DIGITS = 6;
+const MAX_LAT = 90;
+const MAX_LNG = 180;
+const POINT = /(-?\d{1,2}(?:\.\d+)?),\s*(-?\d{1,3}(?:\.\d+)?)/;
+
+/** A maps link that opens exactly on a point marked on the map. */
+export function pointUrl({ lat, lng }: MapPoint): string {
+  return `${MAPS_SEARCH}${lat.toFixed(COORDINATE_DIGITS)}%2C${lng.toFixed(COORDINATE_DIGITS)}`;
+}
+
+/** The point a maps link carries in sight (`query=lat,lng`, `q=lat,lng`, `@lat,lng`, `ll=lat,lng`); null when it has none, as short links do. */
+export function pointOf(link: string): MapPoint | null {
+  const safe = mapUrl(link);
+  if (!safe) return null;
+  const url = new URL(safe);
+  const candidates = [url.searchParams.get("query"), url.searchParams.get("q"), url.searchParams.get("ll"), url.searchParams.get("mlat") && `${url.searchParams.get("mlat")},${url.searchParams.get("mlon")}`, /@(-?\d[^/?]*)/.exec(url.pathname)?.[1]];
+  for (const candidate of candidates) {
+    const match = candidate ? POINT.exec(candidate) : null;
+    if (!match || match.index !== 0) continue;
+    const lat = Number(match[1]);
+    const lng = Number(match[2]);
+    if (Math.abs(lat) <= MAX_LAT && Math.abs(lng) <= MAX_LNG) return { lat, lng };
+  }
+  return null;
+}
+
+/** Navigation to a venue (not a partner): the place the host marked when there is one, otherwise a maps search for its name and address. */
+export function navigationHref(venue: Pick<Venue, "name" | "address"> & { readonly mapUrl?: string }): string {
+  const marked = mapUrl(venue.mapUrl);
+  if (marked) return marked;
   return `${MAPS_SEARCH}${encodeURIComponent([venue.name, venue.address].filter(Boolean).join(", "))}`;
 }
 
