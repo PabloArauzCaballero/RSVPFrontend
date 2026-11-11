@@ -5,7 +5,7 @@ export const enUS = {
     signInTitle: "Sign in to DOne", signInIntro: "Pick up your invitation or your services where you left them.",
     registerTitle: "Create your account", registerIntro: "Tell us what you will do and you are in within a minute.",
     recoverTitle: "Reset your password", recoverIntro: "Type your email and we will send you the instructions.",
-    recoverSend: "Send instructions", recoverSent: "Done. If there is an account with that email, the instructions are on their way.",
+    recoverSend: "Send instructions", recoverSent: "All set. If there is an account with that email, the instructions are on their way.",
     signingIn: "Signing in…", creating: "Creating your account…",
     backToSignIn: "Back to sign in", noAccount: "No account yet?", haveAccount: "Already have an account?",
     role: "What will you do on DOne?", roleHost: "I am organizing a celebration", roleHostHint: "I create my invitation and see who is coming.", roleProvider: "I offer services", roleProviderHint: "I get requests from people who organize.", rolePlanner: "I help organize", rolePlannerHint: "I run celebrations for other people.",

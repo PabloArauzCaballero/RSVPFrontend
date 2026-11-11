@@ -4,7 +4,7 @@ import { LegacyInvitation } from "../../../components/rsvp/legacy-invitation";
 import { requestedLanguage, uiLocale } from "../../../lib/locale";
 
 /** A personal link is private: never indexed, never cached, never shown in a sitemap. */
-export const metadata: Metadata = { robots: { index: false, follow: false, nocache: true }, referrer: "no-referrer", title: "RSVP" };
+export const metadata: Metadata = { robots: { index: false, follow: false, nocache: true }, referrer: "no-referrer", title: "DOne" };
 export const dynamic = "force-dynamic";
 
 /**

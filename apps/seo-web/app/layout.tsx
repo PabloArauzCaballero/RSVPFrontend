@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Fraunces, Geist, Geist_Mono } from "next/font/google";
 import "@rsvp/design-tokens/tokens.css";
 import "@rsvp/celebration-theme/styles.css";
 import "./globals.css";
@@ -7,9 +7,11 @@ import { siteUrl } from "../lib/metadata";
 import { siteI18n, siteRequestPath } from "../lib/site-locale";
 import { SiteFooter, SiteHeader } from "../components/site-chrome";
 
-/** Invitation paper: one sans (Geist) for names, headlines and the interface, and a mono for metadata. */
+/** Invitation paper: one sans (Geist) for headlines and the interface, a mono for metadata. */
 const text = Geist({ subsets: ["latin"], variable: "--font-text", display: "swap", fallback: ["system-ui", "Helvetica Neue", "sans-serif"] });
 const mono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono-face", display: "swap", fallback: ["ui-monospace", "SF Mono", "monospace"] });
+/** The serif of the sample invitations on the home page (names and dates), roman and italic. */
+const serif = Fraunces({ subsets: ["latin"], style: ["normal", "italic"], variable: "--font-serif-face", display: "swap", fallback: ["Iowan Old Style", "Georgia", "serif"] });
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await siteI18n();
@@ -30,7 +32,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const { t, locale } = await siteI18n();
   const path = await siteRequestPath();
   return (
-    <html lang={locale} className={`${text.variable} ${mono.variable}`}>
+    <html lang={locale} className={`${text.variable} ${mono.variable} ${serif.variable}`}>
       <body>
         <SiteHeader t={t} />
         <div id="contenido">{children}</div>
