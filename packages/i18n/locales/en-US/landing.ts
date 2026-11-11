@@ -46,7 +46,7 @@ export const landingEnUS = {
     seeTitle: "See who is coming",
     seeBody: "See who confirmed, with how many companions, and any dietary needs.",
     artWedding: "Wedding", artQuince: "Quinceañera", artBaptism: "Baptism", artDate: "December 12", artPlace: "Hacienda Los Lirios",
-    artMessage: "We're getting married! Here is your invitation:", artLink: "done/c/valentina-y-mateo", artFor: "Carla's personal link"
+    artMessage: "We're getting married! Here is your invitation:", artLink: "DOne/c/valentina-y-mateo", artFor: "Carla's personal link"
   },
   guests: {
     title: "You know who is coming, without chasing anyone",
