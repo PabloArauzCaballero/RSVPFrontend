@@ -38,7 +38,7 @@ export function adminNav(t: Translate): NavItem[] {
 }
 
 /** The one primary action of a screen and its secondary actions, as plain data so a form deep in the screen can hand them to the header. */
-export interface HeaderPrimary { readonly label: string; readonly onPress: () => void; readonly testID?: string; readonly busy?: boolean; readonly disabled?: boolean }
+export interface HeaderPrimary { readonly label: string; /** Icon name of the button; the check of a saving action when absent. */ readonly icon?: string; readonly onPress: () => void; readonly testID?: string; readonly busy?: boolean; readonly disabled?: boolean }
 export interface HeaderItem { readonly key: string; readonly label: string; readonly onPress: () => void; readonly testID?: string; readonly destructive?: boolean; readonly disabled?: boolean }
 export interface HeaderSlot { readonly primary?: HeaderPrimary | undefined; readonly items?: readonly HeaderItem[] | undefined }
 const SlotContext = createContext<(slot: HeaderSlot | null) => void>(() => undefined);
@@ -51,7 +51,7 @@ export function useHeaderSlot(slot: HeaderSlot): void {
   const set = useContext(SlotContext);
   const latest = useRef(slot);
   latest.current = slot;
-  const signature = JSON.stringify([slot.primary ? [slot.primary.label, slot.primary.testID, slot.primary.busy, slot.primary.disabled] : null, (slot.items ?? []).map((item) => [item.key, item.label, item.testID, item.destructive, item.disabled])]);
+  const signature = JSON.stringify([slot.primary ? [slot.primary.label, slot.primary.icon, slot.primary.testID, slot.primary.busy, slot.primary.disabled] : null, (slot.items ?? []).map((item) => [item.key, item.label, item.testID, item.destructive, item.disabled])]);
   useEffect(() => {
     const call = (key: "primary" | "item", itemKey?: string) => () => {
       if (key === "primary") latest.current.primary?.onPress();
@@ -70,7 +70,7 @@ export function AdminScreen({ title, current, onNavigate, actions, menu, childre
   const t = useT();
   const claims = useClaims();
   const [slot, setSlot] = useState<HeaderSlot | null>(null);
-  const slotActions = useMemo(() => (slot?.primary ? <ActionButton label={slot.primary.label} onPress={slot.primary.onPress} busy={slot.primary.busy ?? false} disabled={slot.primary.disabled ?? false} {...(slot.primary.testID ? { testID: slot.primary.testID } : {})} /> : undefined), [slot]);
+  const slotActions = useMemo(() => (slot?.primary ? <ActionButton label={slot.primary.label} {...(slot.primary.icon ? { icon: slot.primary.icon } : {})} onPress={slot.primary.onPress} busy={slot.primary.busy ?? false} disabled={slot.primary.disabled ?? false} {...(slot.primary.testID ? { testID: slot.primary.testID } : {})} /> : undefined), [slot]);
   const slotMenu = useMemo(() => (slot?.items?.length ? <OverflowMenu label={t("admin.dashboard.more")} items={slot.items} /> : undefined), [slot, t]);
   if (!isPlatformAdmin(claims.roles)) return <Screen title={t("admin.title")}><Notice kind="error">{t("admin.denied")}</Notice></Screen>;
   const shownActions = actions ?? slotActions;
