@@ -9,3 +9,8 @@ Solución: `Screen` reaplica la columna dentro de la transición (`screen-stack`
 Evidencia (2026-11-13, Chrome real contra dev): separación aviso→tarjeta 72–80 px en 360/768/1280 × claro/oscuro (antes 0); axe sin críticos/serios. Unitaria nueva en `navigation.test.tsx`; falla si se quita la columna (comprobado revirtiendo el arreglo).
 
 Límites: no se hizo una comparación visual completa contra la línea base del resto de pantallas; las que ya tenían su propia columna no cambian (un solo hijo).
+
+## Ampliación (2026-11-13, tarde)
+
+- en-US en Chrome real contra dev (360 oscuro y 1280 claro, axe sin críticos/serios), con las 4 ramas combinadas: los cuatro arreglos se comportan igual ("This is missing." ×2, Settings → /configuracion, separación 70–78 px, 17 ciudades por nombre).
+- Puerta visual del repo (`playwright test`, 189 capturas, mock determinista, en-US): `origin/dev` limpio ya falla 38 capturas contra la línea base guardada en el repo (auth, guest y portal; anterior a este PR). Comparando contra una línea base regenerada localmente desde `origin/dev`: 189/189.
