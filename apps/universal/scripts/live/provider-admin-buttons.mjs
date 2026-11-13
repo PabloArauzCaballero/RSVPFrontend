@@ -266,11 +266,11 @@ async function portal() {
     await go(page, "/portal/servicios");
     await click(page, "offer-new");
     await id(page, "listing-submit").waitFor();
-    const fillValid = async (name) => { if (!(await id(page, "listing-name").isVisible().catch(() => false))) await click(page, "offer-new"); await fill(page, "listing-name", name); await fill(page, "listing-whatsapp", "https://wa.me/59171111111"); await fill(page, "listing-coverage", "la-paz, el-alto"); await fill(page, "listing-lead", "0"); await fill(page, "listing-conditions", "Entrega incluida"); };
+    const fillValid = async (name) => { if (!(await id(page, "listing-name").isVisible().catch(() => false))) await click(page, "offer-new"); await fill(page, "listing-name", name); await fill(page, "listing-whatsapp", "https://wa.me/59171111111"); for (const slug of ["la-paz", "el-alto"]) { const chip = id(page, `coverage-${slug}`); if ((await chip.getAttribute("aria-checked")) !== "true") await chip.click(); } await fill(page, "listing-lead", "0"); await fill(page, "listing-conditions", "Entrega incluida"); };
     await step("Servicios", "listing-submit", "LIMITE formulario vacio: errores locales, ningun POST", async () => {
       const posts = counter(page, "POST", /\/listings/);
       await click(page, "listing-submit");
-      for (const message of [/nombre de la oferta/, /al menos un destino/, /zona de cobertura/, /condiciones de entrega/, /plazo en días/]) await text(page, message).waitFor();
+      for (const message of [/nombre de la oferta/, /al menos un destino/, /ciudad de cobertura/, /condiciones de entrega/, /plazo en días/]) await text(page, message).waitFor();
       assert.equal(posts.length, 0);
       return "5 errores locales, 0 POST";
     });
@@ -283,21 +283,22 @@ async function portal() {
       assert.equal(posts.length, 0);
       return "0 POST con valores fuera de rango";
     });
-    await step("Servicios", "listing-submit", "ERROR 422 del servidor (ciudad inexistente): detalle visible, datos conservados", async () => {
-      await fillValid("Ciudad mala"); await fill(page, "listing-price", ""); await fill(page, "listing-lead", "1");
+    await step("Servicios", "listing-city", "VALIDO ciudad por nombre: el selector muestra nombres y envia el codigo", async () => {
+      await fillValid("Ciudad por nombre"); await fill(page, "listing-price", ""); await fill(page, "listing-lead", "1");
       if (!(await id(page, "listing-city").isVisible().catch(() => false))) await click(page, "offer-more");
-      await page.getByLabel("Ciudad", { exact: true }).filter({ visible: true }).fill("atlantis");
+      assert.ok((await id(page, "listing-city").locator("option").allTextContents()).includes("Santa Cruz de la Sierra (Santa Cruz)"));
+      await id(page, "listing-city").selectOption("santa-cruz");
+      const body = page.waitForRequest((request) => request.method() === "POST" && /\/listings$/.test(request.url()));
       await click(page, "listing-submit");
-      await text(page, /Unknown city/).waitFor();
-      assert.equal(await id(page, "listing-name").inputValue(), "Ciudad mala");
-      assert.ok(!(await ownListings(A)).some((l) => l.title === "Ciudad mala"));
-      return "POST 422 'Unknown city.' mostrado; GET: la oferta no existe; formulario intacto";
+      assert.equal((await body).postDataJSON().city, "santa-cruz");
+      await text(page, "Oferta creada como borrador.").waitFor();
+      assert.ok((await ownListings(A)).some((l) => l.title === "Ciudad por nombre" && l.city === "santa-cruz"));
+      return "opcion 'Santa Cruz de la Sierra (Santa Cruz)'; POST city=santa-cruz; GET persistido";
     });
     await step("Servicios", "listing-submit", "ERROR red caida", async () => {
-      if (!(await id(page, "listing-city").isVisible().catch(() => false))) await click(page, "offer-more");
-      await page.getByLabel("Ciudad", { exact: true }).filter({ visible: true }).fill("la-paz");
+      await fillValid("Sin red");
       await offline(page, /\/listings/, async () => { await click(page, "listing-submit"); await text(page, /No hay conexión con el servidor/).waitFor(); });
-      assert.ok(!(await ownListings(A)).some((l) => l.title === "Ciudad mala"));
+      assert.ok(!(await ownListings(A)).some((l) => l.title === "Sin red"));
       return "red caida -> aviso con 'Reintentar'; nada creado";
     });
     await step("Servicios", "listing-submit", "VALIDO precio 0, plazo 0, doble clic = un POST; GET persistido", async () => {

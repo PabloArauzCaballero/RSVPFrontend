@@ -15,7 +15,7 @@ import { ProvidersScreen } from "../src/host/gifts/providers-screen";
 import { DeliveryScreen } from "../src/provider/delivery-screen";
 import { writeLocal } from "../src/platform/local-store";
 import { resetSecureStore } from "./stubs/expo-secure-store";
-import { baseHandlers, CELEBRATION, fakeClient, HOST, HttpFailure, renderApp, type Handler } from "./support";
+import { baseHandlers, CELEBRATION, fakeClient, GEO, HOST, HttpFailure, renderApp, type Handler } from "./support";
 
 const PID = "4f0f2d3d-0000-4000-8000-0000000000aa";
 const LISTING = "7d1c1a34-5d4c-4a39-9a2e-0f4f2d3d7b11";
@@ -188,7 +188,7 @@ describe("REQ-F23-03 · external gift with explicit friction (PARTNER_CATALOG_FI
 });
 
 const profile = { id: PID, slug: "dulce-sol-4f0f2d", name: "Dulce Sol", status: "DRAFT", plan: "FREE", currency: "BOB", timeZone: "America/La_Paz", version: 1, ownerId: "u-host" };
-const providerHandlers = (extra: Record<string, Handler> = {}): Record<string, Handler> => ({ [`GET /providers/${PID}`]: () => profile, ...extra });
+const providerHandlers = (extra: Record<string, Handler> = {}): Record<string, Handler> => ({ [`GET /providers/${PID}`]: () => profile, "GET /providers/geo": () => GEO, ...extra });
 const withProvider = async (): Promise<void> => { await writeLocal("rsvp.provider.u-host", PID); };
 
 describe("REQ-F28-01 · onboarding, verification and status", () => {
@@ -234,7 +234,7 @@ describe("REQ-F28-03/05 · services with delivery conditions", () => {
     fireEvent.click(await screen.findByTestId("listing-submit"));
     expect(await screen.findByText(/nombre de la oferta/)).toBeTruthy();
     expect(screen.getByText(/al menos un destino/)).toBeTruthy();
-    expect(screen.getByText(/zona de cobertura/)).toBeTruthy();
+    expect(screen.getByText(/ciudad de cobertura/)).toBeTruthy();
     expect(calls.filter((call) => call.method === "POST" && call.path.endsWith("/listings"))).toHaveLength(0);
   });
   it("creates a listing with fulfillment in minor units", async () => {
@@ -244,9 +244,14 @@ describe("REQ-F28-03/05 · services with delivery conditions", () => {
     fireEvent.click(await screen.findByTestId("offer-new"));
     fireEvent.click(await screen.findByText("Producto"));
     fireEvent.click(screen.getByTestId("offer-more"));
-    type("Nombre", "Torta"); type("WhatsApp (enlace https://wa.me/…)", "https://wa.me/59170000000"); type("Zonas de cobertura", "la-paz, el-alto"); type("Costo de traslado (Bs.)", "50"); type("Plazo (días de anticipación)", "3"); type("Condiciones", "Montaje incluido"); type("Precio desde (Bs.)", "450");
+    type("Nombre", "Torta"); type("WhatsApp (enlace https://wa.me/…)", "https://wa.me/59170000000"); type("Costo de traslado (Bs.)", "50");
+    // Coverage and city are picked by name (QA 2026-11-13: typing "la-paz" was the only way and "Santa Cruz De la Sierra" came back 422).
+    fireEvent.click(await screen.findByRole("checkbox", { name: "La Paz" })); fireEvent.click(screen.getByRole("checkbox", { name: "El Alto" }));
+    expect(screen.queryByText(/la-paz/)).toBeNull();
+    fireEvent.change(screen.getByTestId("listing-city"), { target: { value: "santa-cruz" } });
+    expect(within(screen.getByTestId("listing-city")).getByRole("option", { name: "Santa Cruz de la Sierra (Santa Cruz)" })).toBeTruthy(); type("Plazo (días de anticipación)", "3"); type("Condiciones", "Montaje incluido"); type("Precio desde (Bs.)", "450");
     fireEvent.click(screen.getByTestId("listing-submit"));
-    await waitFor(() => expect(calls.find((call) => call.method === "POST")?.body).toMatchObject({ type: "PRODUCT", priceFromMinor: 45000, destinations: { WHATSAPP: "https://wa.me/59170000000" }, fulfillment: { responsible: "PROVIDER", coverageZones: ["la-paz", "el-alto"], transportCostMinor: 5000, leadTimeDays: 3 } }));
+    await waitFor(() => expect(calls.find((call) => call.method === "POST")?.body).toMatchObject({ type: "PRODUCT", priceFromMinor: 45000, destinations: { WHATSAPP: "https://wa.me/59170000000" }, city: "santa-cruz", fulfillment: { responsible: "PROVIDER", coverageZones: ["la-paz", "el-alto"], transportCostMinor: 5000, leadTimeDays: 3 } }));
   });
 });
 
@@ -268,7 +273,7 @@ describe("REQ-F28-03 · services, products and delivery terms are ONE list of of
     renderApp(<DeliveryScreen />, client, HOST);
     const row = await screen.findByTestId("delivery-p1");
     expect(row.textContent).toMatch(/Entrega a cargo de: Yo \(el proveedor\)/);
-    expect(row.textContent).toMatch(/Cobertura: la-paz/);
+    await waitFor(() => expect(row.textContent).toMatch(/Cobertura: La Paz/));
     expect(row.textContent).toMatch(/Plazo: 3 días/);
     // an offer without terms is flagged once (the reason it cannot be published), not twice
     expect(screen.getByTestId("publish-blocked-s1").textContent).toMatch(/declara sus condiciones de entrega/);
