@@ -73,6 +73,14 @@ describe("Screen shows the section tabs of the active destination", () => {
     expect(document.activeElement).toBe(tabs[0]);
   });
 
+  it("keeps the column gap between a screen's blocks: the transition box does not swallow it (QA 2026-11-13, Equipo)", () => {
+    const { client } = fakeClient({ ...baseHandlers() });
+    renderApp(<Screen title="Equipo" nav={hostNav(t, undefined)} current="organizations" onNavigate={vi.fn()}><span>aviso</span><span>tarjeta</span></Screen>, client);
+    const stack = screen.getByTestId("screen-stack");
+    expect([...stack.children].map((child) => child.textContent)).toEqual(["aviso", "tarjeta"]);
+    expect(getComputedStyle(stack).rowGap || getComputedStyle(stack).gap).not.toBe("");
+  });
+
   it("shows no tab bar for a one-screen destination", () => {
     const { client } = fakeClient({ ...baseHandlers() });
     renderApp(<Screen title="Inicio" nav={hostNav(t, "c-1")} current="summary" onNavigate={() => undefined}><span>cuerpo</span></Screen>, client);

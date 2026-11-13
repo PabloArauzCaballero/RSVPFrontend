@@ -69,6 +69,8 @@ const createShellStyles = (palette: Palette) => StyleSheet.create({
   headActions: { flexDirection: "row", alignItems: "center", gap: spacing[2], flexShrink: 0, minHeight: 52, marginTop: -4 },
   mTabs: { marginHorizontal: -spacing[5], marginTop: spacing[2] },
   mTitle: { color: palette.text, fontSize: 32, lineHeight: 36, fontWeight: "500", letterSpacing: -0.9, fontFamily: fontDisplay },
+  stack: { flexGrow: 1, gap: spacing[8] },
+  stackWide: { gap: spacing[10] },
   mSheet: { flexGrow: 1, paddingHorizontal: spacing[5], paddingTop: spacing[6], paddingBottom: spacing[12], gap: spacing[8] },
   title: { color: palette.text, fontSize: 40, lineHeight: 44, fontWeight: "600", letterSpacing: -1.4, fontFamily: fontDisplay },
   tabBar: { flexDirection: "row", backgroundColor: Platform.OS === "web" ? `${palette.surface}E6` : palette.surface, borderTopWidth: 1, borderTopColor: palette.border, ...(Platform.OS === "web" ? ({ paddingBottom: "env(safe-area-inset-bottom)", backdropFilter: "saturate(180%) blur(20px)", WebkitBackdropFilter: "saturate(180%) blur(20px)" } as object) : null) },
@@ -329,7 +331,8 @@ export function Screen({ title, intro, nav, current, onNavigate, actions, menu, 
   const sectionTabs = destination?.tabs;
   // A change of destination fades in with a short rise, sibling tabs only fade; scroll returns to the top and focus goes to the h1 (docs/design/motion.md).
   const actionsInHeader = width >= ACTIONS_IN_HEADER;
-  const content = <ScreenTransition routeKey={current ?? title} groupKey={destination?.key}>{status && actionsInHeader ? status : null}{children}</ScreenTransition>;
+  // The transition wraps the children in its own box, so the column's gap would stop at it: the stack re-applies it, and a screen's blocks (a notice, then a card) never touch.
+  const content = <ScreenTransition routeKey={current ?? title} groupKey={destination?.key}><View testID="screen-stack" style={[s.stack, wide && s.stackWide]}>{status && actionsInHeader ? status : null}{children}</View></ScreenTransition>;
   const headerActions = menu || (actions && actionsInHeader) ? <View style={s.headActions}>{menu}{actionsInHeader ? actions : null}</View> : null;
   const stickyActions = actions && !actionsInHeader ? <StickyActions testID="screen-sticky-actions" {...(status ? { summary: status } : {})}>{actions}</StickyActions> : null;
   const tabs = sectionTabs && sectionTabs.length > 1 ? sectionTabs : undefined;
