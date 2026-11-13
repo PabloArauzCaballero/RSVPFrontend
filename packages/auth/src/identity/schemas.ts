@@ -13,7 +13,7 @@ export const loginSchema = z.object({ email, password: z.string().min(1, "requir
 export const recoverySchema = z.object({ email });
 export const registerSchema = z.object({
   email,
-  password: z.string().min(MIN_REGISTER_PASSWORD, "passwordShort").max(MAX_PASSWORD, "tooLong").refine((value) => new TextEncoder().encode(value).length <= MAX_PASSWORD_BYTES, "passwordBytes"),
+  password: z.string().min(1, "required").min(MIN_REGISTER_PASSWORD, "passwordShort").max(MAX_PASSWORD, "tooLong").refine((value) => new TextEncoder().encode(value).length <= MAX_PASSWORD_BYTES, "passwordBytes"),
   role: z.enum(["HOST", "PLANNER", "PROVIDER"])
 });
 
