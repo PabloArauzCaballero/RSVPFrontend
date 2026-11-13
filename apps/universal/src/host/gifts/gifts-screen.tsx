@@ -2,9 +2,8 @@ import { Chip, SkeletonList, Stagger, SwitchRow, fonts, useColors } from "@rsvp/
 import { useState, type ReactNode } from "react";
 import { Text, View, useWindowDimensions } from "react-native";
 import { radius, spacing } from "@rsvp/design-tokens";
-import { ApiError } from "@rsvp/api-client";
 import { formatMinor } from "@rsvp/i18n";
-import { catalogedFirst, useApproveExternalGift, useGiftList, useHostReservations, useRejectExternalGift, useGiftSettings, useUpdateGiftSettings, type GiftItem } from "@rsvp/query-hooks";
+import { catalogedFirst, isGiftListMissing, useApproveExternalGift, useGiftList, useHostReservations, useRejectExternalGift, useGiftSettings, useUpdateGiftSettings, type GiftItem } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../../platform/providers";
 import { CelebrationScreen, useScreenHeader, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
@@ -17,8 +16,6 @@ import { useSingleFlightGate } from "../../platform/single-flight";
 
 type ChipTone = "yes" | "maybe" | "wait" | "no";
 const STATUS_TONE: Readonly<Record<GiftItem["status"], ChipTone>> = { AVAILABLE: "wait", PROPOSED: "maybe", PENDING_REVIEW: "maybe", COMMITTED: "yes", REJECTED: "no" };
-
-const NOT_FOUND = 404;
 
 /** A square monogram: the first letter of the gift on a quiet ground, so every row has a face before it has a photo. */
 function Monogram({ title }: { readonly title: string }): ReactNode {
@@ -129,7 +126,7 @@ function GiftsBody({ celebrationId, onNavigate }: { readonly celebrationId: stri
   useScreenHeader({ actions: <ActionButton icon="plus" label={t("gifts.host.list.add")} onPress={go(HOST_ROUTES.giftCatalog)} testID="go-add" /> });
   if (list.isPending) return <SkeletonList count={4} row={{ minHeight: 76, avatar: false, trailing: true }} label={t("host.common.loading")} />;
   // A celebration that never had a gift gets 404 GIFT_LIST_NOT_FOUND: that is the empty list, not a failure.
-  const noListYet = list.isError && list.error instanceof ApiError && list.error.status === NOT_FOUND;
+  const noListYet = isGiftListMissing(list.error);
   if (list.isError && !noListYet) return <RetryNotice error={list.error} onRetry={() => { void list.refetch(); }} />;
   const items = list.data ? catalogedFirst(list.data.items) : [];
   const waiting = reservations.data?.items.filter((entry) => entry.status === "PENDING_REVIEW").length ?? 0;

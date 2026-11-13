@@ -33,10 +33,10 @@ export function useApproveReservation<TResponse>(client: ApiClient, celebrationI
 }
 
 // ---- Typed gift flows (F22 guest list, F23 host management). Contract: gift-list.openapi.json 1.1.0. ----
-import { giftApi as giftService } from "./api.js";
+import { addExternalGift, giftApi as giftService } from "./api.js";
 import type { AddGiftInput, UpdateGiftSettingsInput, GiftItemList, GiftReservation, ReservationStatus, ReserveGiftInput } from "./types.js";
 export * from "./types.js";
-export { giftApi as giftService, suggestionsOf, problemCode } from "./api.js";
+export { giftApi as giftService, isGiftListMissing, suggestionsOf, problemCode } from "./api.js";
 import { suggestionsOf, problemCode } from "./api.js";
 
 /** Cataloged gifts first (the order the backend returns); this only repeats the guarantee for older payloads. */
@@ -80,7 +80,12 @@ export function useDecideReservation(client: ApiClient, celebrationId: string) {
 }
 export function useAddGift(client: ApiClient, celebrationId: string) {
   const queryClient = useQueryClient();
-  return useMutation({ mutationFn: (input: AddGiftInput) => giftService(client).add(celebrationId, input), onSuccess: () => refetchAll(queryClient, invalidation.giftReservationChanged(celebrationId)) });
+  return useMutation({
+    mutationFn: (input: AddGiftInput) => input.source === "EXTERNAL"
+      ? addExternalGift(client, celebrationId, input)
+      : giftService(client).add(celebrationId, input),
+    onSuccess: () => refetchAll(queryClient, invalidation.giftReservationChanged(celebrationId))
+  });
 }
 export function useApproveExternalGift(client: ApiClient, celebrationId: string) {
   const queryClient = useQueryClient();
