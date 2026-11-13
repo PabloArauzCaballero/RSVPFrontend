@@ -185,7 +185,8 @@ async function f28() {
     if (!(await page.getByTestId("listing-name").isVisible().catch(() => false))) await page.getByTestId("offer-new").click();
     await page.getByTestId("listing-name").fill("Torta de chocolate");
     await page.getByTestId("listing-whatsapp").fill("https://wa.me/59171111111");
-    await page.getByTestId("listing-coverage").fill("la-paz, el-alto");
+    await page.getByTestId("coverage-la-paz").click();
+    await page.getByTestId("coverage-el-alto").click();
     await page.getByTestId("listing-lead").fill("2");
     await page.getByTestId("listing-conditions").fill("Entrega en tu domicilio.");
     await page.getByTestId("listing-price").fill("200");

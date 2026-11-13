@@ -62,6 +62,13 @@ export const TEMPLATES: readonly Template[] = [
 ];
 
 /** Handlers every host screen needs: the celebration and the event types. */
+/** GET /providers/geo as provider-catalog serves it (a subset): slugs are stored, names are shown. */
+export const GEO = { country: "BO", source: "test", items: [
+  { slug: "la-paz", name: "La Paz", department: "La Paz", departmentCode: "LP", capital: true },
+  { slug: "el-alto", name: "El Alto", department: "La Paz", departmentCode: "LP", capital: false },
+  { slug: "santa-cruz", name: "Santa Cruz de la Sierra", department: "Santa Cruz", departmentCode: "SC", capital: true }
+] };
+
 export function baseHandlers(celebration: Celebration = CELEBRATION): Record<string, Handler> {
   return {
     [`GET /celebrations/${celebration.id}`]: () => celebration,
