@@ -13,3 +13,8 @@ Evidencia (2026-11-13, Chrome real contra el backend de dev por un proxy del mis
 - Unitarias: `gifts-portal.test.tsx` elige "La Paz", "El Alto" y "Santa Cruz de la Sierra (Santa Cruz)" y verifica el cuerpo del POST.
 
 Límites: en-US no se recorrió en Chrome (las cadenas se actualizaron en ambos idiomas); nativo iOS/Android no probado (el selector usa `FilterSelect`, que ya tiene variante nativa). El filtro "Ciudad" de proveedores en Regalos sigue siendo texto libre (fuera de este PR).
+
+## Ampliación (2026-11-13, tarde)
+
+- en-US en Chrome real contra dev (360 oscuro y 1280 claro, axe sin críticos/serios), con las 4 ramas combinadas: los cuatro arreglos se comportan igual ("This is missing." ×2, Settings → /configuracion, separación 70–78 px, 17 ciudades por nombre).
+- Puerta visual del repo (`playwright test`, 189 capturas, mock determinista, en-US): `origin/dev` limpio ya falla 38 capturas contra la línea base guardada en el repo (auth, guest y portal; anterior a este PR). Comparando contra una línea base regenerada localmente desde `origin/dev`: 189/189.
