@@ -60,6 +60,12 @@ describe("REQ-F23-04 · status of each gift", () => {
     renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
     expect(await screen.findByText(/Puedes ver esta celebración|No tienes permisos/i)).toBeTruthy();
   });
+  it("an inaccessible celebration keeps its error on the list", async () => {
+    const { client } = fakeClient(handlers({ "GET /gifts/celebrations/c-1/items": () => new HttpFailure(404, { code: "NOT_FOUND" }) }));
+    renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    expect(await screen.findByText("No encontramos esta celebración o no tienes acceso a ella.")).toBeTruthy();
+    expect(screen.queryByText("Tu lista empieza con un regalo")).toBeNull();
+  });
 });
 
 describe("REQ-F23-01 · pending reservations inbox", () => {
@@ -129,6 +135,65 @@ describe("REQ-F23-02 · build the list from the partner catalog", () => {
 });
 
 describe("REQ-F23-03 · external gift with explicit friction (PARTNER_CATALOG_FIRST)", () => {
+  const listPath = "/gifts/celebrations/c-1/gift-list";
+  const itemsPath = "/gifts/celebrations/c-1/items";
+  const fillStore = async (): Promise<void> => {
+    await screen.findByTestId("external-title");
+    type("Nombre del regalo", "Licuadora");
+    type("Enlace de la tienda", "https://tienda.example/l");
+    type("Precio (BOB)", "150.50");
+  };
+
+  it.each(["created", "created concurrently"])("adds the first external gift when the list is %s", async (outcome) => {
+    let hasList = false;
+    const { client, calls } = fakeClient(handlers({
+      [`POST ${listPath}`]: () => {
+        hasList = true;
+        return outcome === "created" ? { id: "l", celebrationId: "c-1" } : new HttpFailure(409, { code: "GIFT_LIST_EXISTS" });
+      },
+      [`POST ${itemsPath}`]: () => hasList
+        ? gift("ext", { source: "EXTERNAL", status: "PROPOSED" })
+        : new HttpFailure(404, { code: "GIFT_LIST_NOT_FOUND" })
+    }));
+    renderApp(<ExternalScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    await fillStore();
+    fireEvent.click(screen.getByTestId("external-submit"));
+    expect(await screen.findByText(/queda por revisar/)).toBeTruthy();
+
+    const posts = calls.filter((call) => call.method === "POST");
+    expect(posts.map((call) => call.path)).toEqual([itemsPath, listPath, itemsPath]);
+    expect(posts[0]?.body).toEqual({
+      source: "EXTERNAL", title: "Licuadora", price: { amountMinor: 15050, currency: "BOB" }, url: "https://tienda.example/l"
+    });
+    expect(posts[1]?.body).toBeUndefined();
+    expect(posts[2]?.body).toEqual(posts[0]?.body);
+  });
+
+  it("keeps the access error and the entered details for a different 404", async () => {
+    const { client, calls } = fakeClient(handlers({
+      [`POST ${itemsPath}`]: () => new HttpFailure(404, { code: "NOT_FOUND" })
+    }));
+    renderApp(<ExternalScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    await fillStore();
+    fireEvent.click(screen.getByTestId("external-submit"));
+    expect(await screen.findByText("No encontramos esta celebración o no tienes acceso a ella.")).toBeTruthy();
+    expect(screen.getByDisplayValue("Licuadora")).toBeTruthy();
+    expect(calls.filter((call) => call.method === "POST").map((call) => call.path)).toEqual([itemsPath]);
+  });
+
+  it("shows a list error and retains the form if the list is still missing after recovery", async () => {
+    const { client, calls } = fakeClient(handlers({
+      [`POST ${listPath}`]: () => ({ id: "l", celebrationId: "c-1" }),
+      [`POST ${itemsPath}`]: () => new HttpFailure(404, { code: "GIFT_LIST_NOT_FOUND" })
+    }));
+    renderApp(<ExternalScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    await fillStore();
+    fireEvent.click(screen.getByTestId("external-submit"));
+    expect(await screen.findByText("La lista de regalos no está disponible. Vuelve a intentarlo.")).toBeTruthy();
+    expect(screen.getByDisplayValue("Licuadora")).toBeTruthy();
+    expect(calls.filter((call) => call.method === "POST").map((call) => call.path)).toEqual([itemsPath, listPath, itemsPath]);
+  });
+
   it("shows partner suggestions on the 409 and only adds anyway after acknowledging them", async () => {
     let attempts = 0;
     const { client, calls } = fakeClient(handlers({ "POST /gifts/celebrations/c-1/items": (call) => { attempts += 1; return (call.body as { partnerSuggestionsAcknowledged?: boolean }).partnerSuggestionsAcknowledged ? gift("ext", { source: "EXTERNAL", status: "PROPOSED" }) : new HttpFailure(409, { code: "PARTNER_CATALOG_FIRST", suggestions: [{ productListingId: LISTING, title: "Batidora" }] }); } }));
