@@ -2,7 +2,7 @@
 
 ## Requisitos
 
-Los secretos `EXPO_TOKEN`, credenciales de Apple/Google y `EXPO_ASC_APP_ID` se configuran en GitHub/EAS, nunca en el repositorio. El proyecto de Expo debe estar enlazado desde `apps/universal/app.config.ts`.
+Los secretos `EXPO_TOKEN` y las credenciales de Apple/Google se configuran en GitHub/EAS, nunca en el repositorio. `eas.json` no fija `ascAppId`: EAS no sustituye variables en ese campo (exige solo dígitos), y sin él `eas submit` localiza la app de App Store Connect por el bundle id con la sesión de Apple. El Apple ID de la app no es secreto; si se quiere un envío sin sesión (CI), se escribe el número en `submit.production.ios.ascAppId`. El proyecto de Expo debe estar enlazado desde `apps/universal/app.config.ts`.
 
 Configurar estas variables de despliegue en EAS/GitHub, nunca en el repositorio: `EXPO_PUBLIC_EAS_PROJECT_ID`, `EXPO_PUBLIC_LINK_DOMAIN`, `EXPO_IOS_BUNDLE_IDENTIFIER`, `EXPO_ANDROID_PACKAGE`, `RSVP_APPLE_APP_ID`, `RSVP_ANDROID_PACKAGE` y `RSVP_ANDROID_SHA256_FINGERPRINTS`.
 
