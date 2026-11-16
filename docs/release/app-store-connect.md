@@ -91,6 +91,6 @@ Cinco, en este orden, con datos de ejemplo («Ana y Luis»): Inicio, Quién vien
 ## 8. Qué corre después
 
 1. El dueño crea la app y registra el Bundle ID.
-2. Claude: `eas init`, `EXPO_IOS_BUNDLE_IDENTIFIER` y `EXPO_ASC_APP_ID` en EAS, build `production` (los builds apuntan al gateway https de TEST).
+2. Claude: `eas init`, `EXPO_IOS_BUNDLE_IDENTIFIER` en EAS, build `production` (los builds apuntan al gateway https de TEST).
 3. El dueño sube el `.ipa` con `altool` (la llave de App Store Connect no se la damos a Claude).
 4. Apple procesa el build (minutos a ~1 h) y aparece en TestFlight.
