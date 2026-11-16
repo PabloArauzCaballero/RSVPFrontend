@@ -26,13 +26,19 @@ describe("provider reorganisation · one primary action in the header", () => {
     expect(screen.getAllByTestId("offer-new")).toHaveLength(1);
     expect(screen.queryByRole("button", { name: "Publicar" })).toBeNull();
   });
-  it("Ofertas: the category is a selector with all 11 options, not a row of radios", async () => {
-    const { client } = fakeClient(portal());
+  it("Ofertas: the categories returned by the service are displayed in a selector", async () => {
+    const items = [
+      { code: "DECORATION", name: "Decoración" },
+      { code: "VENUE", name: "Salones de eventos" },
+      { code: "CATERING", name: "Catering" },
+      { code: "MUSIC", name: "Música" }
+    ];
+    const { client } = fakeClient(portal({ "GET /providers/categories": () => ({ items }) }));
     renderApp(<ServicesScreen />, client, HOST);
     fireEvent.click(await screen.findByTestId("offer-new"));
     const select = (await screen.findByTestId("listing-category")) as HTMLSelectElement;
     expect(select.tagName).toBe("SELECT");
-    expect(select.options).toHaveLength(11);
+    expect(Array.from(select.options, (option) => option.value)).toEqual(items.map((item) => item.code));
     expect(screen.queryByTestId("offer-new")).toBeNull(); // the form has its own bar: no second primary
     expect(screen.getByTestId("listing-submit")).toBeTruthy();
   });

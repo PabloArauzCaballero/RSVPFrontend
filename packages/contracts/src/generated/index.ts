@@ -15,6 +15,6 @@ export const contractVersions = {
   "guest-rsvp": "710b597811d7b858",
   "identity": "32a28c1ce1dce3b1",
   "notification": "670dd80c6c1e7fd0",
-  "provider-catalog": "5a9638172de8a7c4",
+  "provider-catalog": "d5205c42bbddc4dd",
   "template-media": "84f42a8849c3b34e"
 } as const;

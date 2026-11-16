@@ -23,7 +23,8 @@ export interface QuoteInput { readonly listingIds: readonly string[]; readonly e
   /** Anonymous requests only: the captcha token (when the deployment runs PROVIDER_ANON_QUOTES=captcha) and the honeypot, which must stay empty. */
   readonly captchaToken?: string; readonly website?: string }
 export interface QuoteReceipt { readonly id: string; readonly providerId?: string; readonly status: "REQUESTED"; readonly leadId: string; readonly disclaimer: string; readonly listings: readonly { readonly listingId: string; readonly fulfillment?: FulfillmentView }[] }
-export interface ListingHit { readonly id: string; readonly providerId: string; readonly title: string; readonly type?: string; readonly category?: string; readonly published?: boolean; readonly providerStatus?: ProviderStatus; readonly priceFromMinor?: number; readonly currency?: string }
+export interface ListingHit { readonly id: string; readonly providerId: string; readonly title: string; readonly type?: string; readonly category?: string; readonly published?: boolean; readonly providerStatus?: ProviderStatus; readonly priceFromMinor?: number; readonly currency?: string; readonly imageUrl?: string }
+export interface OfferCategory { readonly code: string; readonly name: string; readonly listingType?: CreateListingInput["type"] | null }
 /** PATCH /providers/{id}: the owner renames; the plan is admin-only and not offered here. */
 export interface UpdateProviderInput { readonly name: string }
 export const MAX_PROVIDER_NAME = 120;

@@ -45,6 +45,10 @@ const live = { staleTime: 15_000, gcTime: 5 * 60_000 } as const;
 export function useListingSearch(client: ApiClient, q: string) {
   return useQuery({ queryKey: ["providers", "listing-search", q] as const, queryFn: () => providerService(client).searchListings(q), staleTime: 30_000, enabled: q.trim().length >= 2 || q === "" });
 }
+
+export function useOfferCategories(client: ApiClient, locale: string) {
+  return useQuery({ queryKey: ["providers", "offer-categories", locale] as const, queryFn: () => providerService(client).categories(locale), ...cachePolicy.provider });
+}
 export function useMonthCalendar(client: ApiClient, providerId: string | undefined, month: string) {
   return useQuery({ queryKey: P(providerId ?? "", "calendar", month), queryFn: () => providerService(client).calendar(providerId ?? "", month), ...live, enabled: Boolean(providerId) });
 }
