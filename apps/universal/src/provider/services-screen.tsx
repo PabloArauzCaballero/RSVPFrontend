@@ -3,7 +3,7 @@ import { Text, View } from "react-native";
 import { radius, spacing } from "@rsvp/design-tokens";
 import { formatMinor } from "@rsvp/i18n";
 import { Chip, Enter, Stagger, fonts, useColors } from "@rsvp/ui";
-import { useCreateOwnListing, useOwnListings, usePublishListing, type CreateListingInput, type OwnListing, type Provider } from "@rsvp/query-hooks";
+import { useCreateOwnListing, useOfferCategories, useOwnListings, usePublishListing, type CreateListingInput, type OwnListing, type Provider } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../platform/providers";
 import { ActionButton, ChoiceGroup, EmptyState, Field, FilterSelect, Illustration, Notice, OverflowMenu, PageIntro, Section, SuccessNote, useStyles } from "../host/ui";
 import { PortalErrorNotice as ErrorNotice, PortalErrorState } from "./errors";
@@ -12,10 +12,20 @@ import { PortalScreen, usePortalHeader, type PortalRoute } from "./frame";
 import { useSingleMutation } from "../platform/single-flight";
 import { MoreToggle, RowsSkeleton, StickyActions } from "./parts";
 
-const CATEGORIES = ["VENUE", "CATERING", "PHOTOGRAPHY", "MUSIC", "DECORATION", "MAKEUP", "TRANSPORT", "INVITATIONS", "WEDDING_PLANNER", "ACCOMMODATION", "HONEYMOON"] as const;
 const MAX_TITLE = 120;
+const MAX_IMAGE_URL = 500;
 const HTTPS = /^https:\/\/[^\s]+$/i;
-type Kind = "SERVICE" | "PRODUCT";
+type Kind = CreateListingInput["type"];
+
+function isPhotoUrl(value: string): boolean {
+  if (!HTTPS.test(value) || value.length > MAX_IMAGE_URL) return false;
+  try {
+    const url = new URL(value);
+    return Boolean(url.hostname) && !url.username && !url.password;
+  } catch {
+    return false;
+  }
+}
 
 /** One offer as a row: the name, its state and ONE line of delivery terms. "Publicar" lives in the row's "⋯" menu (a draft without terms shows it off, with the reason under the terms). */
 function OfferRow({ provider, listing, publishing, onPublish }: { readonly provider: Provider; readonly listing: OwnListing; readonly publishing: boolean; readonly onPublish: () => void }): ReactNode {
@@ -56,11 +66,14 @@ function NewOffer({ providerId, onClose, onCreated }: { readonly providerId: str
   const locale = useLocale();
   const client = useApiClient();
   const create = useCreateOwnListing(client, providerId, locale);
+  const categories = useOfferCategories(client, locale);
   const createOnce = useSingleMutation(create);
   const [kind, setKind] = useState<Kind>("SERVICE");
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
-  const [category, setCategory] = useState<string>("DECORATION");
+  const [categoryByKind, setCategoryByKind] = useState<Partial<Record<Kind, string>>>({ SERVICE: "DECORATION" });
+  const [imageUrl, setImageUrl] = useState("");
+  const [imageError, setImageError] = useState(false);
   const [city, setCity] = useState("la-paz");
   const [whatsapp, setWhatsapp] = useState("");
   const [site, setSite] = useState("");
@@ -71,7 +84,17 @@ function NewOffer({ providerId, onClose, onCreated }: { readonly providerId: str
   const [conditions, setConditions] = useState("");
   const [more, setMore] = useState(false);
   const [errors, setErrors] = useState<readonly string[]>([]);
+  const isProduct = kind === "PRODUCT";
+  const categoryLabel = t(isProduct ? "portal.services.new.productCategory" : "portal.services.new.category");
+  const categoryOptions = (categories.data?.items ?? [])
+    .filter((item) => item.listingType === kind || item.listingType === null || (item.listingType === undefined && !isProduct))
+    .map((item) => ({ value: item.code, label: item.name, listingType: item.listingType }));
+  const category = categoryOptions.find((option) => option.value === categoryByKind[kind])?.value
+    ?? categoryOptions.find((option) => option.listingType === kind)?.value
+    ?? categoryOptions[0]?.value;
+
   const submit = (): void => {
+    if (!category) return;
     const found: string[] = [];
     const destinations: Record<string, string> = {};
     if (whatsapp.trim()) destinations["WHATSAPP"] = whatsapp.trim();
@@ -80,6 +103,9 @@ function NewOffer({ providerId, onClose, onCreated }: { readonly providerId: str
     const priceMinor = price.trim() ? parseMinor(price) : undefined;
     const transportMinor = transport.trim() ? parseMinor(transport) : undefined;
     const leadDays = Number(lead);
+    const photo = isProduct ? imageUrl.trim().replace(/^https:/i, "https:") : "";
+    const invalidPhoto = Boolean(photo) && !isPhotoUrl(photo);
+    setImageError(invalidPhoto);
     if (!name.trim()) found.push(t("portal.services.errors.name"));
     else if (name.trim().length > MAX_TITLE) found.push(t("portal.services.errors.nameLong"));
     if (Object.keys(destinations).length === 0) found.push(t("portal.services.errors.destination"));
@@ -89,20 +115,33 @@ function NewOffer({ providerId, onClose, onCreated }: { readonly providerId: str
     if (!conditions.trim()) found.push(t("portal.services.errors.conditions"));
     if (lead.trim() === "" || !Number.isInteger(leadDays) || leadDays < 0) found.push(t("portal.services.errors.lead"));
     setErrors(found);
-    if (found.length) return;
+    if (found.length || invalidPhoto) return;
     const body: CreateListingInput = {
       type: kind, category, city: city.trim() || "la-paz", titles: { [locale]: name.trim() }, destinations,
       fulfillment: { responsible, coverageZones: zones, ...(typeof transportMinor === "number" ? { transportCostMinor: transportMinor } : {}), leadTimeDays: leadDays, conditions: { [locale]: conditions.trim() } },
-      ...(typeof priceMinor === "number" ? { priceFromMinor: priceMinor } : {})
+      ...(typeof priceMinor === "number" ? { priceFromMinor: priceMinor } : {}),
+      ...(photo ? { imageUrl: photo } : {})
     };
     createOnce(body, { onSuccess: () => { setName(""); setPrice(""); onCreated(); } });
   };
   return (
     <Section title={t("portal.services.new.title")}>
-      <ChoiceGroup<Kind> label={t("portal.services.new.kind")} value={kind} onChange={setKind} choices={[{ value: "SERVICE", label: t("portal.services.type.SERVICE") }, { value: "PRODUCT", label: t("portal.services.type.PRODUCT") }]} />
-      <Field label={t("portal.services.new.name")} value={name} onChange={setName} testID="listing-name" />
-      <View style={{ gap: spacing[1] }}><Text style={styles.label}>{t("portal.services.new.category")}</Text><FilterSelect label={t("portal.services.new.category")} value={category} onChange={setCategory} options={CATEGORIES.map((value) => ({ value, label: t(`directory.category.${value}`) }))} testID="listing-category" /></View>
-      <Field label={t("portal.services.new.price")} value={price} onChange={setPrice} help={t("portal.services.new.priceHelp")} keyboardType="decimal-pad" testID="listing-price" />
+      <ChoiceGroup<Kind> label={t("portal.services.new.kind")} value={kind} onChange={setKind} disabled={create.isPending} choices={[{ value: "SERVICE", label: t("portal.services.type.SERVICE") }, { value: "PRODUCT", label: t("portal.services.type.PRODUCT") }]} />
+      <Field label={t(isProduct ? "portal.services.new.productName" : "portal.services.new.name")} value={name} onChange={setName} testID="listing-name" />
+      <View style={{ gap: spacing[1] }}>
+        <Text style={styles.label}>{categoryLabel}</Text>
+        {category ? (
+          <FilterSelect label={categoryLabel} value={category} onChange={(value) => setCategoryByKind((current) => ({ ...current, [kind]: value }))} options={categoryOptions} testID="listing-category" />
+        ) : categories.isPending ? (
+          <Text style={styles.muted} accessibilityLiveRegion="polite">{t("portal.services.new.loadingCategories")}</Text>
+        ) : categories.isError ? (
+          <ErrorNotice error={categories.error} onRetry={() => { void categories.refetch(); }} />
+        ) : (
+          <Text style={styles.muted} accessibilityLiveRegion="polite">{t("portal.services.new.emptyCategories")}</Text>
+        )}
+      </View>
+      <Field label={t(isProduct ? "portal.services.new.productPrice" : "portal.services.new.price")} value={price} onChange={setPrice} help={t("portal.services.new.priceHelp")} keyboardType="decimal-pad" testID="listing-price" />
+      {isProduct ? <Field label={t("portal.services.new.imageUrl")} value={imageUrl} onChange={(value) => { setImageUrl(value); setImageError(false); }} help={t("portal.services.new.imageHelp")} error={imageError ? t("portal.services.errors.imageUrl") : undefined} keyboardType="url" testID="listing-image-url" /> : null}
       <Field label={t("portal.services.new.whatsapp")} value={whatsapp} onChange={setWhatsapp} help={t("portal.services.new.destinationsHelp")} keyboardType="url" testID="listing-whatsapp" />
       <Text accessibilityRole="header" style={styles.subtitle}>{t("portal.services.new.fulfillmentTitle")}</Text>
       <Field label={t("portal.services.new.coverage")} value={coverage} onChange={setCoverage} help={t("portal.services.new.coverageHelp")} testID="listing-coverage" />
@@ -120,7 +159,7 @@ function NewOffer({ providerId, onClose, onCreated }: { readonly providerId: str
       {errors.length ? <Notice kind="error">{errors.map((message) => <Text key={message} style={styles.body}>{message}</Text>)}</Notice> : null}
       <ErrorNotice error={create.error} onRetry={submit} />
       <StickyActions ground="surface">
-        <ActionButton icon="plus" label={create.isPending ? t("portal.services.new.creating") : t("portal.services.new.submit")} busy={create.isPending} disabled={create.isPending} onPress={submit} testID="listing-submit" />
+        <ActionButton icon="plus" label={create.isPending ? t("portal.services.new.creating") : t("portal.services.new.submit")} busy={create.isPending} disabled={create.isPending || !category} onPress={submit} testID="listing-submit" />
         <ActionButton icon="close" variant="secondary" label={t("portal.services.new.cancel")} disabled={create.isPending} onPress={onClose} testID="offer-new-close" />
       </StickyActions>
     </Section>

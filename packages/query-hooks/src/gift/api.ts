@@ -1,5 +1,5 @@
 import { ApiError, type ApiClient } from "@rsvp/api-client";
-import type { AddGiftInput, AddExternalGiftInput, GiftItem, GiftItemList, GiftReservation, ReservationList, ReservationStatus, ReserveGiftInput, PartnerSuggestion, GiftSettings, UpdateGiftSettingsInput } from "./types.js";
+import type { AddGiftInput, GiftItem, GiftItemList, GiftReservation, ReservationList, ReservationStatus, ReserveGiftInput, PartnerSuggestion, GiftSettings, UpdateGiftSettingsInput } from "./types.js";
 
 /** Gateway: Gift List is served under `/gifts` (Kong strips the prefix). */
 const BASE = "/gifts/celebrations";
@@ -39,7 +39,7 @@ export function giftApi(client: ApiClient) {
 }
 
 /** Retry only after Gift confirmed that the first POST wrote no item because the list was missing. */
-export async function addExternalGift(client: ApiClient, celebrationId: string, body: AddExternalGiftInput): Promise<GiftItem> {
+export async function addGiftWithList(client: ApiClient, celebrationId: string, body: AddGiftInput): Promise<GiftItem> {
   const api = giftApi(client);
   try {
     return await api.add(celebrationId, body);

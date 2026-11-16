@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "RSVP Provider Catalog API",
-    "version": "2.2.0",
+    "version": "2.4.0",
     "description": "2.0.0: real service (port 3005). Paths now include the gateway prefixes (/providers, /r) and /listings; bodies and responses are defined. GET /providers keeps the query contract of RSVPFrontend seo-web (category, city, verified, maxPriceMinor, availableOn, page, pageSize) and adds coverage, near and locale. Errors are RFC 9457 problems. Disclaimer: RSVP brokers contact, it does not deliver the service. 2.1.0 (additive): ProviderCard adds providerId, providerName, destinations, address and hours and GET /providers accepts ?slug=; GET /providers/mine; microsite profile (GET/PUT /providers/{id}/microsite, REQ-F28-02); verification documents with presigned upload to object storage (/providers/{id}/documents...); POST /providers/impressions returns {recorded, ignored}; POST /providers/{id}/quotes accepts anonymous requests only when the deployment enables them (captcha or open mode, with per-address and per-contact caps); GET /listings text search matches any word, accent-insensitively, by title, category or description. 2.2.0 (additive, back office, ADMIN only: 401 without token, 403 to any other role): GET/PUT /providers/admin/categories[/{code}], GET/PUT /providers/admin/geography[/{code}], GET /providers/admin/verification-queue, POST /providers/{providerId}/reject (reason required), POST /providers/{providerId}/suspend now takes {reason} (required when an administrator suspends; the owner may still pause its own provider), GET /providers/admin/moderation and POST /providers/admin/moderation/{id}/approve|reject, GET /providers/admin/metrics/leads, GET /providers/admin/summary. ProviderStatus gains REJECTED (a rejected provider may resubmit). Every decision is audited (actor, time, reason) and emits an outbox event. Inactive categories and cities disappear from the public lists. City coordinates were verified against GeoNames."
   },
   "servers": [
@@ -3377,6 +3377,12 @@
           },
           "priceFrom": {
             "$ref": "#/components/schemas/Money"
+          },
+          "imageUrl": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https://",
+            "maxLength": 500
           }
         }
       },
@@ -3507,6 +3513,18 @@
                   "additionalProperties": {
                     "type": "string"
                   }
+                },
+                "listingType": {
+                  "description": "Offer type for this category. Null means that services and products can use it.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "SERVICE",
+                    "PRODUCT",
+                    null
+                  ]
                 }
               }
             }
