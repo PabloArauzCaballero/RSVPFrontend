@@ -3,6 +3,7 @@
 
 .celebration {
   --celebration-space: clamp(1rem, 4vw, 2rem);
+  --celebration-flourish: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 24' fill='none' stroke='%23000' stroke-width='1.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 12h44M72 12h44'/%3E%3Cpath d='M60 5c-4 3-4 11 0 14c4-3 4-11 0-14Z'/%3E%3Cpath d='M52 12c-3-4-8-4-10-1c3 3 7 3 10 1ZM68 12c3-4 8-4 10-1c-3 3-7 3-10 1Z'/%3E%3C/svg%3E");
   min-height: 100vh;
   background: var(--celebration-canvas);
   color: var(--celebration-text);
@@ -20,26 +21,55 @@
 .celebration-note { color: var(--celebration-muted); font-size: .9rem; }
 .celebration-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-/* Hero variants */
-.celebration-hero { position: relative; display: grid; gap: 1rem; padding: clamp(3rem, 12vw, 7rem) var(--celebration-space) clamp(2rem, 6vw, 4rem); }
-.celebration-hero-copy { position: relative; display: grid; gap: .5rem; width: min(100%, var(--celebration-max-width)); margin: 0 auto; }
+/* Cover. Each layout composes it its own way; without a photo the cover is still designed (frame, band or bar), never bare text. */
+.celebration-hero { position: relative; display: grid; gap: 1rem; padding: clamp(3rem, 11vw, 7rem) var(--celebration-space) clamp(2.5rem, 7vw, 4.5rem); background: radial-gradient(60rem 26rem at 50% 0%, color-mix(in srgb, var(--celebration-accent) 13%, transparent), transparent 70%); overflow: hidden; }
+.celebration-hero-copy { position: relative; display: grid; gap: .6rem; width: min(100%, var(--celebration-max-width)); margin: 0 auto; }
 .celebration[data-align="center"] .celebration-hero-copy { text-align: center; justify-items: center; }
 .celebration-hero p { margin: 0; }
-.celebration-hosts { font-family: var(--celebration-heading-font); font-size: 1.35rem; }
-.celebration-date { font-size: 1.1rem; }
-.celebration-venue, .celebration-countdown { color: var(--celebration-muted); }
+.celebration-hero h1 { font-size: calc(clamp(2.5rem, 8.5vw, 5rem) * var(--celebration-heading-scale)); line-height: 1.02; letter-spacing: -.015em; overflow-wrap: anywhere; text-wrap: balance; }
+.celebration-hero .celebration-eyebrow { margin-bottom: .75rem; font-size: .78rem; letter-spacing: .26em; }
+.celebration-hosts { font-family: var(--celebration-heading-font); font-size: clamp(1.2rem, 3.2vw, 1.6rem); }
+.celebration-amp { font-style: italic; color: var(--celebration-accent); }
+.celebration-ornament { display: block; width: clamp(6rem, 22vw, 9rem); height: auto; margin: .75rem 0; color: var(--celebration-accent); }
+.celebration-rule { display: block; width: 3.5rem; height: 2px; margin: 1rem 0; background: var(--celebration-accent); }
+.celebration-date { font-family: var(--celebration-heading-font); font-size: clamp(1.15rem, 3.2vw, 1.6rem); letter-spacing: .03em; }
+.celebration-date time::first-letter { text-transform: uppercase; }
+.celebration-venue { color: var(--celebration-muted); font-size: 1.05rem; }
+.celebration-countdown { margin-top: .75rem !important; width: fit-content; padding: .3rem 1rem; border: 1px solid color-mix(in srgb, currentColor 35%, transparent); border-radius: 9999px; font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: var(--celebration-muted); }
 .celebration-hero-image { width: 100%; height: 100%; object-fit: cover; }
-.celebration-hero[data-hero="overlay"] { min-height: 70vh; align-content: end; color: #fff; }
-.celebration-hero[data-hero="overlay"] .celebration-hero-image { position: absolute; inset: 0; filter: brightness(.55); }
-.celebration-hero[data-hero="overlay"] .celebration-venue, .celebration-hero[data-hero="overlay"] .celebration-countdown, .celebration-hero[data-hero="overlay"] .celebration-eyebrow { color: #fff; }
-.celebration-hero[data-hero="banner"] { background: var(--celebration-accent); color: var(--celebration-surface); border-radius: 0 0 var(--celebration-radius) var(--celebration-radius); }
+
+/* centered (classic): a card with a double hairline, like a printed invitation. */
+.celebration-hero[data-hero="centered"] .celebration-hero-copy { padding: clamp(2.25rem, 7vw, 4.5rem) clamp(1.25rem, 5vw, 3.5rem); background: color-mix(in srgb, var(--celebration-surface) 82%, transparent); border: 1px solid color-mix(in srgb, var(--celebration-accent) 55%, transparent); outline: 1px solid color-mix(in srgb, var(--celebration-accent) 28%, transparent); outline-offset: 7px; }
+.celebration-hero[data-hero="centered"] .celebration-hero-image { max-height: 26rem; width: min(100%, var(--celebration-max-width)); margin: 0 auto 1.5rem; }
+
+/* overlay (editorial): the title over the photo; without one, over a band of the accent colour. */
+.celebration-hero[data-hero="overlay"] { min-height: min(78vh, 46rem); align-content: end; color: #fff; background: linear-gradient(160deg, var(--celebration-accent), color-mix(in srgb, var(--celebration-accent) 72%, #000)); }
+.celebration-hero[data-hero="overlay"] .celebration-hero-image { position: absolute; inset: 0; filter: brightness(.5); }
+.celebration-hero[data-hero="overlay"] :is(.celebration-venue, .celebration-countdown, .celebration-eyebrow, .celebration-amp) { color: #fff; }
+.celebration-hero[data-hero="overlay"] .celebration-rule { width: 100%; height: 1px; background: rgb(255 255 255 / .55); }
+.celebration-hero[data-hero="overlay"] h1 { line-height: .95; letter-spacing: -.02em; }
+
+/* banner (festive): a rounded block of the accent colour with confetti. */
+.celebration-hero[data-hero="banner"] { color: var(--celebration-surface); border-radius: 0 0 calc(var(--celebration-radius) * 1.6) calc(var(--celebration-radius) * 1.6); background:
+  radial-gradient(circle at 12% 22%, color-mix(in srgb, var(--celebration-surface) 55%, transparent) 0 .3rem, transparent .32rem),
+  radial-gradient(circle at 86% 18%, color-mix(in srgb, var(--celebration-surface) 40%, transparent) 0 .45rem, transparent .47rem),
+  radial-gradient(circle at 72% 78%, color-mix(in srgb, var(--celebration-surface) 30%, transparent) 0 .25rem, transparent .27rem),
+  radial-gradient(circle at 22% 84%, color-mix(in srgb, var(--celebration-surface) 38%, transparent) 0 .5rem, transparent .52rem),
+  radial-gradient(circle at 48% 8%, color-mix(in srgb, var(--celebration-surface) 30%, transparent) 0 .2rem, transparent .22rem),
+  var(--celebration-accent); }
 .celebration-hero[data-hero="banner"] .celebration-hero-image { max-height: 22rem; border-radius: var(--celebration-radius); order: 2; width: min(100%, var(--celebration-max-width)); margin: 0 auto; }
-.celebration-hero[data-hero="banner"] .celebration-eyebrow, .celebration-hero[data-hero="banner"] .celebration-venue, .celebration-hero[data-hero="banner"] .celebration-countdown { color: var(--celebration-surface); }
+.celebration-hero[data-hero="banner"] :is(.celebration-eyebrow, .celebration-venue, .celebration-countdown, .celebration-amp) { color: var(--celebration-surface); }
+.celebration-hero[data-hero="banner"] .celebration-rule { background: var(--celebration-surface); }
+
+/* split (corporate): the copy behind a bar of the accent colour, the photo beside it. */
+.celebration-hero[data-hero="split"] .celebration-hero-copy { padding-left: clamp(1rem, 4vw, 2rem); border-left: 6px solid var(--celebration-accent); }
 .celebration-hero[data-hero="split"] .celebration-hero-image { max-height: 18rem; border-radius: var(--celebration-radius); }
-.celebration-hero[data-hero="centered"] .celebration-hero-image { max-height: 26rem; width: min(100%, var(--celebration-max-width)); margin: 0 auto; }
-.celebration-hero[data-hero="compact"] { padding-block: clamp(2rem, 6vw, 3.5rem) 1rem; }
+
+/* compact (minimal): quiet, left-aligned, all air. */
+.celebration-hero[data-hero="compact"] { padding-block: clamp(3rem, 9vw, 5.5rem) clamp(1.5rem, 4vw, 2.5rem); background: none; }
+.celebration-hero[data-hero="compact"] h1 { font-weight: 400; }
 @media (min-width: 48rem) {
-  .celebration-hero[data-hero="split"] { grid-template-columns: 1fr 1fr; align-items: center; }
+  .celebration-hero[data-hero="split"][data-has-image="true"] { grid-template-columns: 1fr 1fr; align-items: center; }
   .celebration-hero[data-hero="split"] .celebration-hero-copy { order: -1; }
 }
 
@@ -51,26 +81,34 @@
 
 /* Sections */
 .celebration-sections { display: grid; gap: var(--celebration-gap); padding: var(--celebration-gap) var(--celebration-space); }
-.celebration-sections > section { width: min(100%, var(--celebration-max-width)); margin: 0 auto; }
+.celebration-sections > section { width: min(100%, var(--celebration-max-width)); min-width: 0; margin: 0 auto; }
+.celebration h2 { overflow-wrap: anywhere; text-wrap: balance; }
 .celebration[data-align="center"] .celebration-sections > section { text-align: center; }
 .celebration[data-section-style="cards"] .celebration-sections > section { background: var(--celebration-surface); border-radius: var(--celebration-radius); padding: clamp(1.25rem, 4vw, 2.5rem); box-shadow: 0 1px 3px rgb(0 0 0 / .08); }
 .celebration[data-section-style="bands"] .celebration-sections { gap: 0; padding-inline: 0; }
 .celebration[data-section-style="bands"] .celebration-sections > section { width: 100%; padding: var(--celebration-gap) max(var(--celebration-space), calc((100% - var(--celebration-max-width)) / 2)); }
 .celebration[data-section-style="bands"] .celebration-sections > section:nth-child(even) { background: var(--celebration-surface); }
 .celebration[data-divider="line"] .celebration-sections > section + section { border-top: 1px solid color-mix(in srgb, var(--celebration-muted) 30%, transparent); padding-top: var(--celebration-gap); }
-.celebration[data-divider="ornament"] .celebration-sections > section h2::after { content: ""; display: block; width: 3rem; height: 2px; margin: .75rem auto 0; background: var(--celebration-accent); }
+.celebration[data-divider="ornament"] .celebration-sections > section h2::after { content: ""; display: block; width: 6.5rem; height: 1.3rem; margin: .75rem auto 0; background: var(--celebration-accent); -webkit-mask: var(--celebration-flourish) center / contain no-repeat; mask: var(--celebration-flourish) center / contain no-repeat; }
 .celebration[data-align="start"][data-divider="ornament"] .celebration-sections > section h2::after { margin-inline: 0; }
 
-.celebration-schedule { list-style: none; padding: 0; margin: 0; display: grid; gap: 1rem; text-align: start; }
-.celebration-schedule li { display: grid; grid-template-columns: 5.5rem 1fr; gap: 1rem; }
-.celebration-schedule time { font-weight: 700; color: var(--celebration-accent); }
+/* Schedule: a timeline, the hour on the left, a dot on the thread, the activity on the right. */
+.celebration-schedule { list-style: none; padding: 0; margin: 0; display: grid; text-align: start; width: min(100%, 34rem); }
+.celebration[data-align="center"] .celebration-schedule { margin-inline: auto; }
+.celebration-schedule li { position: relative; display: grid; grid-template-columns: 6.75rem 1fr; gap: 2.5rem; padding-block: .9rem; }
+.celebration-schedule li::before { content: ""; position: absolute; left: 7.7rem; top: 1.45rem; width: .6rem; height: .6rem; border-radius: 50%; background: var(--celebration-accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--celebration-accent) 18%, transparent); }
+.celebration-schedule li::after { content: ""; position: absolute; left: calc(7.7rem + .3rem - .5px); top: 0; bottom: 0; width: 1px; background: color-mix(in srgb, var(--celebration-muted) 40%, transparent); }
+.celebration-schedule li:first-child::after { top: 1.45rem; } .celebration-schedule li:last-child::after { bottom: calc(100% - 1.45rem); } .celebration-schedule li:only-child::after { display: none; }
+.celebration-schedule time { font-family: var(--celebration-heading-font); font-weight: 700; font-size: 1.1rem; color: var(--celebration-accent); text-align: end; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.celebration-schedule strong { font-size: 1.05rem; }
 .celebration-schedule p { margin: .25rem 0 0; color: var(--celebration-muted); }
 .celebration-venues, .celebration-recommendations { list-style: none; padding: 0; margin: 0; display: grid; gap: 1.25rem; }
 @media (min-width: 48rem) { .celebration-venues, .celebration-recommendations { grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); } }
-.celebration-venues li, .celebration-recommendations li { display: grid; gap: .25rem; }
+.celebration-venues li, .celebration-recommendations li { display: grid; gap: .25rem; align-content: start; padding: clamp(1.1rem, 3vw, 1.6rem); border: 1px solid color-mix(in srgb, var(--celebration-muted) 30%, transparent); border-radius: max(var(--celebration-radius), 2px); background: color-mix(in srgb, var(--celebration-surface) 70%, transparent); }
+.celebration-venues strong, .celebration-recommendations strong { font-family: var(--celebration-heading-font); font-size: 1.3rem; font-weight: 600; line-height: 1.2; }
 .celebration-venues p, .celebration-recommendations p { margin: 0; }
 .celebration-venues a, .celebration-recommendations a, .celebration-cta { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; }
-.celebration-cta { padding: .6rem 1.4rem; border-radius: var(--celebration-radius); background: var(--celebration-accent); color: var(--celebration-surface) !important; text-decoration: none; }
+.celebration-cta { padding: .8rem 2rem; font-size: 1.05rem; border-radius: var(--celebration-radius); background: var(--celebration-accent); color: var(--celebration-surface) !important; text-decoration: none; }
 .celebration-gallery { list-style: none; padding: 0; margin: 0; display: grid; gap: .75rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr)); }
 .celebration-gallery img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; }
 .celebration[data-images="rounded"] .celebration-gallery img { border-radius: var(--celebration-radius); }
@@ -81,3 +119,11 @@
 @media (prefers-reduced-motion: reduce) { .celebration * { scroll-behavior: auto !important; transition: none !important; } }
 .celebration-venues a, .celebration-recommendations a { justify-self: center; }
 .celebration[data-align="start"] .celebration-venues a, .celebration[data-align="start"] .celebration-recommendations a { justify-self: start; }
+
+/* Story and dress code read as a letter: a narrow measure and a larger opening paragraph. */
+.celebration-sections > section[data-section="story"] p, .celebration-sections > section[data-section="dressCode"] p { max-width: 40rem; }
+.celebration[data-align="center"] .celebration-sections > section :is(p, details) { margin-inline: auto; }
+.celebration-sections > section[data-section="story"] p:first-of-type { font-size: 1.15em; }
+/* The reply is what the page is for: it gets its own tinted block. */
+.celebration-sections > section[data-section="rsvp"] { padding: clamp(1.75rem, 6vw, 3.5rem) clamp(1.25rem, 5vw, 3rem); border-radius: max(var(--celebration-radius), 2px); background: color-mix(in srgb, var(--celebration-accent) 9%, var(--celebration-surface)); border: 1px solid color-mix(in srgb, var(--celebration-accent) 30%, transparent); }
+.celebration[data-section-style="bands"] .celebration-sections > section[data-section="rsvp"] { border-radius: 0; border-inline: 0; }

@@ -75,6 +75,14 @@ describe("content helpers", () => {
   it("reads hosts in the event type's role order with their labels", () => {
     expect(readContent(VIEW).hosts).toEqual([{ role: "BRIDE", label: "Novia", name: "Ana" }, { role: "GROOM", label: "Novio", name: "Luis" }]);
   });
+  it("the cover names the hosts only when the title does not; a layout without a photo still marks its cover", () => {
+    const named = renderToStaticMarkup(<CelebrationRenderer theme={themeFromTemplate(TEMPLATES[0], VIEW.enabledSections)} view={VIEW} t={t} now={NOW} />);
+    expect(named).not.toContain("celebration-hosts");
+    expect(named).toContain('data-has-image="false"');
+    const other = renderToStaticMarkup(<CelebrationRenderer theme={themeFromTemplate(TEMPLATES[0], VIEW.enabledSections)} view={{ ...VIEW, content: { ...VIEW.content, title: "Nuestra boda" } }} gallery={GALLERY} t={t} now={NOW} />);
+    expect(new DOMParser().parseFromString(other, "text/html").querySelector(".celebration-hosts")?.textContent).toBe("Ana & Luis");
+  });
+
   it("ignores malformed content instead of failing", () => {
     const content = readContent({ ...VIEW, content: { schedule: [{ title: "x" }, "bad", { title: "ok", startsAt: "2026-01-01T00:00:00Z" }], faq: [{ question: "q" }], venues: [{ kind: "spaceship", name: "Somewhere" }], recommendations: [{ kind: "weird", name: "r" }] } });
     expect(content.schedule).toHaveLength(1);
