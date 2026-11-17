@@ -31,6 +31,9 @@ describe("two-level navigation", () => {
     const settings = nav.find((item) => item.key === "settings")?.tabs ?? [];
     expect(settings.find((tab) => tab.key === "celebrations")?.href).toBe("/celebraciones");
     expect(settings.find((tab) => tab.key === "organizations")?.href).toBe("/organizaciones");
+    // "Ajustes" lands on Configuración, not on Publicar (QA 2026-11-13).
+    expect(nav.find((item) => item.key === "settings")?.href).toBe("/configuracion?c=c%201");
+    expect(settings[0]?.key).toBe("settings");
   });
 
   it("provider: five destinations covering all ten portal routes; admin: four groups covering all modules", () => {
