@@ -3,7 +3,7 @@ import type { rsvpEsBO } from "../es-BO/rsvp.js";
 
 /** Guest RSVP through the personal link (F15 web, F21 app). */
 export const rsvpEnUS: DeepStrings<typeof rsvpEsBO> = {
-  page: { title: "Your response", invitationTo: "Invitation to {{title}}" },
+  page: { title: "Your response", invitationTo: "Invitation to {{title}}", invitationFor: "Invitation for {{name}}" },
   loading: "Opening your invitation…",
   invalid: {
     title: "This link is not available",
@@ -38,7 +38,7 @@ export const rsvpEnUS: DeepStrings<typeof rsvpEsBO> = {
   draft: { kept: "Your draft is kept on this device only until the submission is confirmed." },
   success: { confirmed: "Done: your attendance is confirmed.", declined: "Thanks for letting us know. We noted that you cannot attend.", saved: "Changes saved." },
   status: { PENDING: "Not answered", CONFIRMED: "You will attend", DECLINED: "You will not attend" },
-  confirmed: { title: "Your attendance is confirmed", titleDeclined: "We noted that you cannot attend", edit: "Change my reply", editHint: "You can change it until the deadline." },
+  confirmed: { gifts: "View gifts", giftsHint: "Choose a gift from the list your hosts prepared.", title: "Your attendance is confirmed", titleDeclined: "We noted that you cannot attend", edit: "Change my reply", editHint: "You can change it until the deadline." },
   summary: {
     label: "Your reply", companions: "Approved guests with you: {{count}}", pendingCompanions: "{{count}} waiting for the host's approval", dietary: "Restrictions: {{value}}", message: "Your message: {{value}}", updated: "Last updated: {{date}}", none: "No additional details."
   },

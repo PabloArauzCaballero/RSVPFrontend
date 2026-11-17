@@ -643,6 +643,8 @@ export interface components {
             celebrationId: string;
             /** Format: uuid */
             guestId: string;
+            /** @description Guest name recorded by the host. Exposed only to this guest after validating the personal invitation credential. */
+            name?: string;
             /** @description Explicit guest language, or null for current celebration default; exposed only to the valid guest credential. */
             preferredLocale?: string | null;
         };

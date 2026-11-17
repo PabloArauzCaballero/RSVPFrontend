@@ -12,6 +12,7 @@
 .gifts__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); gap: 1rem; list-style: none; padding: 0; margin: 0; }
 .gift-card { display: grid; gap: .5rem; align-content: start; padding: 1.5rem; border: 1px solid var(--border); border-radius: var(--radius-cell, 12px); background: var(--surface); }
 .gift-card--partner { border-color: var(--field-border); }
+.gift-card__photo { display: block; width: 100%; height: auto; aspect-ratio: 3 / 2; object-fit: contain; border-radius: var(--radius-button, 6px); background: var(--surface-muted); }
 .gift-card h3 { margin: 0; font-size: 1.35rem; }
 .gift-card h3 a { color: var(--text); text-decoration: none; }
 .gift-card h3 a:hover { text-decoration: underline; }

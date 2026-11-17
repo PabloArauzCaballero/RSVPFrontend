@@ -204,7 +204,7 @@ export function createContractMock(options: MockOptions = {}) {
       if (!guest) return problem(401, "Unauthorized");
       if (id !== celebrationId) return problem(404, "Not found");
       const noStore = { "cache-control": "no-store", "referrer-policy": "no-referrer" };
-      if (kind === "guest") return method === "GET" ? json(200, { guestId: guest.id, celebrationId, allowedCompanions: guest.allowedCompanions, preferredLocale: null }, noStore) : problem(404, "Not found");
+      if (kind === "guest") return method === "GET" ? json(200, { guestId: guest.id, celebrationId, name: guest.name, allowedCompanions: guest.allowedCompanions, preferredLocale: null }, noStore) : problem(404, "Not found");
       if (method === "GET") return json(200, rsvpState(guest), noStore);
       if (method !== "POST" && method !== "PATCH") return problem(404, "Not found");
       const parsed = parseRsvpBody(request.body);

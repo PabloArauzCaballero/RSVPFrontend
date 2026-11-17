@@ -46,6 +46,11 @@ export function useListingSearch(client: ApiClient, q: string) {
   return useQuery({ queryKey: ["providers", "listing-search", q] as const, queryFn: () => providerService(client).searchListings(q), staleTime: 30_000, enabled: q.trim().length >= 2 || q === "" });
 }
 
+/** Public catalog metadata, shared by gift cards and cached across the list and detail page. Never sends the guest credential. */
+export function usePublicListing(client: ApiClient, listingId: string | undefined) {
+  return useQuery({ queryKey: ["providers", "public-listing", listingId] as const, queryFn: () => providerService(client).publicListing(listingId ?? ""), enabled: Boolean(listingId), staleTime: 5 * 60_000, retry: false });
+}
+
 export function useOfferCategories(client: ApiClient, locale: string) {
   return useQuery({ queryKey: ["providers", "offer-categories", locale] as const, queryFn: () => providerService(client).categories(locale), ...cachePolicy.provider });
 }

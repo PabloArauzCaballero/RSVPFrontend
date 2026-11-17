@@ -12,6 +12,7 @@ type ListingSearchItem = ListingHit & Pick<ProviderCard, "priceFrom">;
 export function providerService(client: ApiClient) {
   const base = (providerId: string) => `/providers/${providerId}`;
   return {
+    publicListing: (listingId: string) => client.request<ListingSummary>(`/listings/${encodeURIComponent(listingId)}`, { auth: false }),
     register: (body: RegisterProviderInput) => client.request<Provider, RegisterProviderInput>("/providers", { method: "POST", body }),
     /** With the owner's session a DRAFT/PENDING provider is readable; anonymous callers only see VERIFIED ones (404 otherwise). */
     get: (providerId: string) => client.request<Provider>(base(providerId)),

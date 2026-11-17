@@ -5,10 +5,12 @@ import { ApiError } from '@rsvp/api-client';
 import { createTranslator, formatMinor, type AppLocale } from '@rsvp/i18n/server';
 import { catalogedFirst, guestVisible, isGiftTaken, useGiftList, useReserveGiftItem, type GiftItem, type GiftItemList, type GiftReservation } from '@rsvp/query-hooks';
 import { PartnerLink } from '@rsvp/ui-web';
+import { personalLinkPath } from '@rsvp/auth';
 import { createGuestClient } from '../../lib/guest-client';
 import { clearGuestCredential, readGuestCredential } from '../../lib/guest-credential';
 import { GiftProviders } from './gift-providers';
 import { ReserveDialog } from './reserve-dialog';
+import { GiftPhoto } from './gift-photo';
 import './gift.css';
 
 export interface GiftExperienceProps {
@@ -96,8 +98,9 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
     const taken = item.status === 'COMMITTED';
     return (
       <li key={item.id} className={`gift-card${item.source === 'CATALOGED' ? ' gift-card--partner' : ''}`} data-gift-id={item.id} data-source={item.source}>
+        <GiftPhoto client={client} item={item} t={t} />
         <span className={`gift-badge${item.status === 'PENDING_REVIEW' ? ' gift-badge--pending' : taken ? ' gift-badge--taken' : ''}`}>{t(`gifts.status.${item.status}`)}</span>
-        <h3>{onlyItemId ? item.title : <a href={`/c/${encodeURIComponent(slug)}/regalos/${item.id}`} aria-label={t('gifts.card.open', { title: item.title })}>{item.title}</a>}</h3>
+        <h3>{onlyItemId ? item.title : <a href={`/c/${encodeURIComponent(slug)}/regalos/${item.id}?lang=${locale}`} aria-label={t('gifts.card.open', { title: item.title })}>{item.title}</a>}</h3>
         <p className="gift-card__price">{formatMinor(item.price.amountMinor, item.price.currency, locale)}</p>
         {item.reservedByName ? <p className="gift-card__by" data-testid="reserved-by">{t('gifts.card.reservedBy', { name: item.reservedByName })}</p> : null}
         {item.description ? <p className="gift-card__desc">{item.description}</p> : null}
@@ -113,6 +116,7 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
 
   return (
     <main className="gifts" aria-busy={!ready || list.isPending}>
+      {credential ? <button type="button" className="rsvp-button rsvp-button--secondary" onClick={() => window.location.assign(`${personalLinkPath(slug, credential)}?lang=${locale}`)}>{t('gifts.backToRsvp')}</button> : null}
       <a href={`/c/${encodeURIComponent(slug)}`}>{t('gifts.back')}</a>
       <h1>{onlyItemId && scoped[0] ? scoped[0].title : t('gifts.title')}</h1>
       <p className="gifts__intro">{celebrationTitle} · {t('gifts.intro')}</p>
@@ -122,7 +126,7 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
           <section className="gifts__notice gifts__notice--ok" data-outcome={outcome.status}>
             <h2>{outcome.status === 'COMMITTED' ? t('gifts.outcome.confirmedTitle') : t('gifts.outcome.pendingTitle')}</h2>
             <p>{t(outcome.status === 'COMMITTED' ? 'gifts.outcome.confirmedBody' : 'gifts.outcome.pendingBody', { title: outcome.item.title })}</p>
-            <a className="rsvp-button rsvp-button--secondary" href={`/c/${encodeURIComponent(slug)}/regalos`}>{t('gifts.outcome.seeList')}</a>
+            <a className="rsvp-button rsvp-button--secondary" href={`/c/${encodeURIComponent(slug)}/regalos?lang=${locale}`}>{t('gifts.outcome.seeList')}</a>
           </section>
         ) : null}
         {outcome?.kind === 'taken' ? (
