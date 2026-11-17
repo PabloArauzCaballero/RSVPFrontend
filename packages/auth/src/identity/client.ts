@@ -4,7 +4,15 @@ import type { Role, Session } from "../session/types.js";
 
 
 export interface LoginInput { email: string; password: string; }
-export interface RegisterInput extends LoginInput { role: Extract<Role, "HOST" | "PLANNER" | "PROVIDER">; }
+/**
+ * Identity 1.x sign-up. The profile fields are optional on the wire (older clients send only email, password and role);
+ * the app always sends them. `acceptedTerms` is stored as the moment of acceptance.
+ */
+export interface RegisterInput extends LoginInput {
+  role: Extract<Role, "HOST" | "PLANNER" | "PROVIDER">;
+  givenName?: string; familyName?: string; phone?: string; city?: string; country?: string;
+  locale?: string; timeZone?: string; acceptedTerms?: boolean; marketingOptIn?: boolean;
+}
 export interface PasswordRecoveryInput { email: string; }
 
 /**
