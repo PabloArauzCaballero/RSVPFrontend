@@ -5,7 +5,7 @@ const projectId = process.env.EXPO_PUBLIC_EAS_PROJECT_ID;
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: "RSVP",
+  name: "DOne",
   slug: "rsvp",
   scheme: "rsvp",
   icon: "./assets/icon.png",
