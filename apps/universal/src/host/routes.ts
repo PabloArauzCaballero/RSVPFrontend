@@ -66,7 +66,8 @@ const DESTINATIONS: readonly { readonly key: HostDestination; readonly tabs: rea
   { key: "gifts", tabs: ["gifts", "giftInbox"] },
   { key: "invitation", tabs: ["editor", "gallery", "translations", "templates", "preview"] },
   { key: "alerts", tabs: ["notifications", "preferences"] },
-  { key: "settings", tabs: ["publish", "settings", "modes", "celebrations", "organizations"] }
+  // "Ajustes" opens on Configuración (the first tab is the destination's landing); publishing keeps its own tab and header action.
+  { key: "settings", tabs: ["settings", "publish", "modes", "celebrations", "organizations"] }
 ];
 
 /** Routes that are not scoped to one celebration (`?c=` would be noise). */
