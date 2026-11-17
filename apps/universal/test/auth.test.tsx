@@ -30,6 +30,13 @@ function setup(ui: React.ReactNode, handlers: Record<string, Handler> = {}, stor
 }
 const type = (label: string, value: string): void => { fireEvent.change(screen.getByLabelText(label), { target: { value } }); };
 const press = (label: string): void => { fireEvent.click(screen.getByRole("button", { name: label })); };
+/** Fills every required sign-up field (the role stays as chosen by the test). */
+const fillSignUp = (email = "ana@example.com", password = "correct-horse-battery"): void => {
+  type("Nombre", "Ana"); type("Apellido", "Rojas"); type("Celular", "+591 7123 4567");
+  type("Correo", email); type("Contraseña", password); type("Repite la contraseña", password);
+  fireEvent.click(screen.getByRole("checkbox", { name: /Acepto los términos/ }));
+};
+const PROFILE = { givenName: "Ana", familyName: "Rojas", phone: "+59171234567", city: "La Paz", country: "BO", locale: "es-BO", acceptedTerms: true, marketingOptIn: false };
 
 beforeEach(() => { resetSecureStore(); localStorage.clear(); });
 
@@ -98,16 +105,78 @@ describe("REQ-F05-01 · sign in", () => {
 describe("REQ-F05-01 · sign up and recovery", () => {
   it("blocks a short password locally and never calls Identity", async () => {
     const { calls } = setup(<RegisterScreen onNavigate={vi.fn()} />);
-    type("Correo", "ana@example.com"); type("Contraseña", "corta"); press("Crear mi cuenta");
+    fillSignUp("ana@example.com", "corta"); press("Crear mi cuenta");
     expect(await screen.findByText("Usa al menos 12 caracteres. Una frase corta funciona bien.")).toBeTruthy();
     expect(calls).toHaveLength(0);
   });
-  it("registers with the chosen role and starts the session", async () => {
-    const { manager, calls } = setup(<RegisterScreen onNavigate={vi.fn()} />, { "POST /identity/auth/register": () => ({ id: "u", email: "p@x.co", roles: ["PROVIDER"], ...tokenResponse(["PROVIDER"]) }) });
-    type("Correo", "p@x.co"); type("Contraseña", "correct-horse-battery");
-    fireEvent.click(screen.getByRole("radio", { name: /Ofrezco servicios/ })); press("Crear mi cuenta");
+  it("an empty form marks every required field, and the reveal button carries the error border (QA 2026-11-13)", async () => {
+    const { calls } = setup(<RegisterScreen onNavigate={vi.fn()} />);
+    type("Celular", "+591 ");
+    press("Crear mi cuenta");
+    // Nombre, Apellido, Celular (a bare country code is empty), Correo, Contraseña, Repite la contraseña.
+    expect(await screen.findAllByText("Falta este dato.")).toHaveLength(6);
+    expect(screen.getByText("Para crear la cuenta tienes que aceptar los términos.")).toBeTruthy();
+    expect(screen.queryByText("Usa al menos 12 caracteres. Una frase corta funciona bien.")).toBeNull();
+    const input = screen.getByLabelText("Contraseña");
+    const toggle = screen.getAllByRole("button", { name: "Mostrar" })[0]!;
+    expect(getComputedStyle(toggle).borderTopColor).toBe(getComputedStyle(input).borderTopColor);
+    expect(calls).toHaveLength(0);
+  });
+  it("cross-field rules: different passwords, a malformed phone and a missing business name are reported together", async () => {
+    const { calls } = setup(<RegisterScreen onNavigate={vi.fn()} />);
+    fireEvent.click(screen.getByRole("radio", { name: /Ofrezco servicios/ }));
+    fillSignUp(); type("Repite la contraseña", "otra-contrasena-larga"); type("Celular", "71234567");
+    press("Crear mi cuenta");
+    expect(await screen.findByText("Las contraseñas no coinciden.")).toBeTruthy();
+    expect(screen.getByText("Revisa el celular: escribe el código de país, por ejemplo +591 71234567.")).toBeTruthy();
+    expect(screen.getAllByText("Falta este dato.")).toHaveLength(1);
+    expect(calls).toHaveLength(0);
+  });
+  it("a host sends the whole profile to Identity and nothing else is created", async () => {
+    const { manager, calls } = setup(<RegisterScreen onNavigate={vi.fn()} />, { "POST /identity/auth/register": () => ({ id: "u", email: "ana@example.com", roles: ["HOST"], ...tokenResponse(["HOST"]) }) });
+    fillSignUp(); fireEvent.change(screen.getByLabelText("Ciudad"), { target: { value: "Cochabamba" } }); press("Crear mi cuenta");
+    await waitFor(() => expect(manager.getState().session?.roles).toEqual(["HOST"]));
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.body).toEqual({ email: "ana@example.com", password: "correct-horse-battery", role: "HOST", ...PROFILE, city: "Cochabamba", timeZone: expect.any(String) });
+  });
+  it("another city can be typed when it is not in the list", async () => {
+    const { calls } = setup(<RegisterScreen onNavigate={vi.fn()} />, { "POST /identity/auth/register": () => ({ id: "u", email: "ana@example.com", roles: ["HOST"], ...tokenResponse(["HOST"]) }) });
+    fillSignUp(); fireEvent.change(screen.getByLabelText("Ciudad"), { target: { value: "OTHER" } });
+    press("Crear mi cuenta");
+    expect(await screen.findByText("Falta este dato.")).toBeTruthy();
+    type("¿En qué ciudad estás?", "Montero"); press("Crear mi cuenta");
+    await waitFor(() => expect(calls[0]?.body).toMatchObject({ city: "Montero" }));
+  });
+  it("registers a provider and creates its business with the new session before the portal opens", async () => {
+    const { manager, calls } = setup(<RegisterScreen onNavigate={vi.fn()} />, {
+      "POST /identity/auth/register": () => ({ id: "u", email: "p@x.co", roles: ["PROVIDER"], ...tokenResponse(["PROVIDER"]) }),
+      "POST /providers": (call) => { expect(manager.getState().session).toBeNull(); return { id: "prov-1", name: (call.body as { name: string }).name }; }
+    });
+    fireEvent.click(screen.getByRole("radio", { name: /Ofrezco servicios/ }));
+    fillSignUp("p@x.co"); type("Nombre de tu negocio", "Flores del Valle"); press("Crear mi cuenta");
     await waitFor(() => expect(manager.getState().session?.roles).toEqual(["PROVIDER"]));
-    expect(calls[0]?.body).toEqual({ email: "p@x.co", password: "correct-horse-battery", role: "PROVIDER" });
+    expect(calls[0]?.body).toEqual({ email: "p@x.co", password: "correct-horse-battery", role: "PROVIDER", ...PROFILE, timeZone: expect.any(String) });
+    expect(calls[1]).toMatchObject({ method: "POST", path: "/providers", body: { name: "Flores del Valle", timeZone: expect.any(String) } });
+    expect(calls[1]?.headers.get("Authorization")).toMatch(/^Bearer /);
+  });
+  it("registers a planner and creates the company with the account", async () => {
+    const { manager, calls } = setup(<RegisterScreen onNavigate={vi.fn()} />, {
+      "POST /identity/auth/register": () => ({ id: "u", email: "pl@x.co", roles: ["PLANNER"], ...tokenResponse(["PLANNER"]) }),
+      "POST /identity/organizations": () => ({ id: "org-9", name: "Eventos Illimani", ownerUserId: "u", members: [] })
+    });
+    fireEvent.click(screen.getByRole("radio", { name: /Ayudo a organizar/ }));
+    fillSignUp("pl@x.co"); type("Nombre de tu empresa o equipo", "Eventos Illimani"); press("Crear mi cuenta");
+    await waitFor(() => expect(manager.getState().session?.roles).toEqual(["PLANNER"]));
+    expect(calls[1]).toMatchObject({ method: "POST", path: "/identity/organizations", body: { name: "Eventos Illimani" } });
+  });
+  it("if the business cannot be created the account still signs in (the portal offers to create it)", async () => {
+    const { manager } = setup(<RegisterScreen onNavigate={vi.fn()} />, {
+      "POST /identity/auth/register": () => ({ id: "u", email: "p@x.co", roles: ["PROVIDER"], ...tokenResponse(["PROVIDER"]) }),
+      "POST /providers": () => new HttpFailure(503, { title: "Unavailable" })
+    });
+    fireEvent.click(screen.getByRole("radio", { name: /Ofrezco servicios/ }));
+    fillSignUp("p@x.co"); type("Nombre de tu negocio", "Flores del Valle"); press("Crear mi cuenta");
+    await waitFor(() => expect(manager.getState().session?.roles).toEqual(["PROVIDER"]));
   });
   it("offers only the self-service roles (ADMIN never appears)", () => {
     setup(<RegisterScreen onNavigate={vi.fn()} />);
@@ -132,12 +201,12 @@ describe("REQ-F05-01 · sign up and recovery", () => {
   });
   it("409: the e-mail already exists, with a way out", async () => {
     setup(<RegisterScreen onNavigate={vi.fn()} />, { "POST /identity/auth/register": () => new HttpFailure(409, { title: "Conflict" }) });
-    type("Correo", "ana@example.com"); type("Contraseña", "correct-horse-battery"); press("Crear mi cuenta");
+    fillSignUp(); press("Crear mi cuenta");
     expect(await screen.findByText("No pudimos crear la cuenta con esos datos. Prueba con otro correo, o entra si ya tienes cuenta.")).toBeTruthy();
   });
   it("422 from the server is reported without leaking its technical text", async () => {
     setup(<RegisterScreen onNavigate={vi.fn()} />, { "POST /identity/auth/register": () => new HttpFailure(422, { errors: [{ field: "password", message: "bean validation: size must be between 12 and 128" }] }) });
-    type("Correo", "ana@example.com"); type("Contraseña", "correct-horse-battery"); press("Crear mi cuenta");
+    fillSignUp(); press("Crear mi cuenta");
     expect(await screen.findByText("Algunos datos no son válidos. Revisa los campos marcados.")).toBeTruthy();
     expect(screen.queryByText(/bean validation/)).toBeNull();
   });
