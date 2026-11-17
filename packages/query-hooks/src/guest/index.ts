@@ -85,11 +85,15 @@ export function useRegisterUnregistered(client: ApiClient, celebrationId: string
 
 export interface GuestListFilters { readonly status?: "PENDING" | "CONFIRMED" | "DECLINED"; readonly groupId?: string; readonly search?: string; readonly limit?: number; readonly offset?: number }
 
+const PROJECTION_REFRESH_MS = 2_000;
+
 export function useGuestList(client: ApiClient, celebrationId: string, filters: GuestListFilters = {}) {
-  return useQuery({ queryKey: queryKeys.guest.list(celebrationId, filters), queryFn: ({ signal }) => hostGuestsApi(client).list(celebrationId, filters, signal), enabled: Boolean(celebrationId), placeholderData: keepPreviousData, ...cachePolicy.guest });
+  return useQuery({ queryKey: queryKeys.guest.list(celebrationId, filters), queryFn: ({ signal }) => hostGuestsApi(client).list(celebrationId, filters, signal), enabled: Boolean(celebrationId), placeholderData: keepPreviousData, ...cachePolicy.guest,
+    refetchInterval: (query) => !query.state.error && (query.state.data?.freshness?.pendingEvents ?? 0) > 0 ? PROJECTION_REFRESH_MS : false,
+    refetchIntervalInBackground: false });
 }
 export function useGuestSummary(client: ApiClient, celebrationId: string) {
-  return useQuery({ queryKey: queryKeys.guest.summary(celebrationId), queryFn: () => hostGuestsApi(client).summary(celebrationId), enabled: Boolean(celebrationId), refetchInterval: 30_000, refetchIntervalInBackground: false, ...cachePolicy.guest });
+  return useQuery({ queryKey: queryKeys.guest.summary(celebrationId), queryFn: () => hostGuestsApi(client).summary(celebrationId), enabled: Boolean(celebrationId), refetchInterval: (query) => (query.state.data?.freshness?.pendingEvents ?? 0) > 0 ? PROJECTION_REFRESH_MS : 30_000, refetchIntervalInBackground: false, ...cachePolicy.guest });
 }
 export function useHostRsvps(client: ApiClient, celebrationId: string) {
   return useQuery({ queryKey: queryKeys.guest.rsvps(celebrationId), queryFn: () => hostGuestsApi(client).rsvps(celebrationId, { limit: 1000, offset: 0 }), enabled: Boolean(celebrationId), ...cachePolicy.guest });
@@ -126,12 +130,12 @@ export function useChangeGuestGroup(client: ApiClient, celebrationId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ guestId, groupId }: { readonly guestId: string; readonly groupId: string | null }) => hostGuestsApi(client).changeGroup(celebrationId, guestId, groupId),
-    onSuccess: () => Promise.all([refetchAll(queryClient, invalidation.guestsChanged(celebrationId)), queryClient.invalidateQueries({ queryKey: queryKeys.guest.groups(celebrationId) })])
+    onSuccess: (_saved, { guestId }) => refetchAll(queryClient, [...invalidation.guestsChanged(celebrationId), queryKeys.guest.detail(celebrationId, guestId)])
   });
 }
 export function useCreateGuestGroup(client: ApiClient, celebrationId: string) {
   const queryClient = useQueryClient();
-  return useMutation({ mutationFn: (name: string) => hostGuestsApi(client).createGroup(celebrationId, name), onSuccess: () => Promise.all([refetchAll(queryClient, invalidation.guestsChanged(celebrationId)), queryClient.invalidateQueries({ queryKey: queryKeys.guest.groups(celebrationId) })]) });
+  return useMutation({ mutationFn: (name: string) => hostGuestsApi(client).createGroup(celebrationId, name), onSuccess: () => refetchAll(queryClient, invalidation.guestsChanged(celebrationId)) });
 }
 /** Issue or replace the guest's link; the response carries the raw token once. Do not put it in a cache: callers keep it in component state. */
 export function useIssueGuestToken(client: ApiClient, celebrationId: string) {
@@ -172,6 +176,6 @@ export function useEraseGuest(client: ApiClient, celebrationId: string) {
   return useMutation({
     mutationFn: (guestId: string) => hostGuestsApi(client).erase(celebrationId, guestId),
     // The detail query is left alone on purpose: refetching it would 404 and unmount the screen that is about to navigate away.
-    onSuccess: () => Promise.all([refetchAll(queryClient, invalidation.guestsChanged(celebrationId)), queryClient.invalidateQueries({ queryKey: queryKeys.guest.groups(celebrationId) })])
+    onSuccess: () => refetchAll(queryClient, invalidation.guestsChanged(celebrationId))
   });
 }

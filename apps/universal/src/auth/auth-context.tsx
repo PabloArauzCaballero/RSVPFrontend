@@ -11,6 +11,7 @@ export interface AuthApi {
   register(input: RegisterInput): Promise<Session>;
   requestRecovery(input: PasswordRecoveryInput): Promise<void>;
   signOut(): Promise<void>;
+  retrySession(): Promise<void>;
 }
 
 const AuthContext = createContext<AuthApi | null>(null);
@@ -32,7 +33,8 @@ export function AuthProvider({ manager, identityClient, children }: PropsWithChi
       signIn: (input) => manager.signIn(input),
       register: (input) => manager.register(input),
       requestRecovery: (input) => identity.requestPasswordRecovery(input),
-      signOut: () => manager.logout().catch(() => undefined)
+      signOut: () => manager.logout().catch(() => undefined),
+      retrySession: async () => { await manager.restore(); }
     };
   }, [manager, identityClient, state]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -46,7 +48,8 @@ export function StaticAuthProvider({ claims, children }: PropsWithChildren<{ rea
     signIn: async () => { throw new Error("Static session"); },
     register: async () => { throw new Error("Static session"); },
     requestRecovery: async () => undefined,
-    signOut: async () => undefined
+    signOut: async () => undefined,
+    retrySession: async () => undefined
   }), [claims]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

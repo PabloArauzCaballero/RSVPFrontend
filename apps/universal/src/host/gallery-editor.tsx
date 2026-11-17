@@ -49,6 +49,8 @@ function Gallery({ celebrationId, pick }: { readonly celebrationId: string; read
   const [toDelete, setToDelete] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
   const items: readonly MediaAsset[] = (assets.data?.items ?? []).filter((asset) => asset.status === "PROCESSED");
+  const processing = (assets.data?.items ?? []).filter((asset) => asset.status === "PROCESSING");
+  const rejected = (assets.data?.items ?? []).filter((asset) => asset.status === "REJECTED");
   const ids = items.map((asset) => asset.id);
   const cover = items.find((asset) => asset.isCover)?.id ?? null;
 
@@ -72,7 +74,7 @@ function Gallery({ celebrationId, pick }: { readonly celebrationId: string; read
   useScreenHeader(failedLoad
     ? { menu: <OverflowMenu items={[{ key: "add", label: t("host.gallery.add"), onPress: addPhoto, disabled: upload.isPending, testID: "add-photo" }]} /> }
     : { actions: <ActionButton icon="plus" label={t("host.gallery.add")} onPress={addPhoto} busy={upload.isPending} testID="add-photo" /> });
-  const empty = assets.isSuccess && !items.length;
+  const empty = assets.isSuccess && !items.length && !processing.length && !rejected.length;
   const saved = (): { readonly onSuccess: () => void } => ({ onSuccess: () => setDone(t("host.gallery.orderSaved")) });
 
   return (
@@ -94,6 +96,12 @@ function Gallery({ celebrationId, pick }: { readonly celebrationId: string; read
         </View>
       ) : null}
       {problem ? <Notice kind="error">{problem}</Notice> : null}
+      {processing.map((asset) => <Notice key={asset.id}>{t("host.gallery.processing", { name: asset.filename })}</Notice>)}
+      {rejected.map((asset) => <View key={asset.id} style={{ gap: spacing[2] }}>
+        <Notice kind="error">{t("host.gallery.rejected", { name: asset.filename })}</Notice>
+        <ActionButton variant="secondary" label={t("host.gallery.delete")} onPress={() => { remove.reset(); setToDelete(asset.id); }} />
+      </View>)}
+      {assets.isError && assets.data ? <LoadFailed title={t("host.gallery.refreshFailedTitle")} error={assets.error} onRetry={() => { void assets.refetch(); }} testID="retry-gallery-refresh" /> : null}
       <CelebrationErrorNotice error={upload.error ?? reorder.error ?? remove.error} onReload={() => { void assets.refetch(); }} />
       {done ? <Notice kind="success">{done}</Notice> : null}
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing[4] }}>

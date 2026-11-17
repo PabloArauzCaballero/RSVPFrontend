@@ -1,6 +1,8 @@
 export const esBO = {
   common: { loading: "Cargando…", retry: "Reintentar", cancel: "Cancelar", save: "Guardar", signOut: "Cerrar sesión", more: "Más", close: "Cerrar", empty: "No hay resultados." },
   auth: {
+    signOut: { title: "¿Estás seguro de cerrar sesión?", body: "Puedes cancelar para seguir en tu cuenta." },
+    restoreUnavailable: { title: "No pudimos recuperar tu sesión", body: "Revisa tu conexión e inténtalo de nuevo. No hace falta cerrar sesión.", retry: "Reintentar" },
     email: "Correo", password: "Contraseña", signIn: "Entrar", register: "Crear mi cuenta", forgotPassword: "Olvidé mi contraseña",
     signInTitle: "Entra a DOne", signInIntro: "Retoma tu invitación o tus servicios donde los dejaste.",
     registerTitle: "Crea tu cuenta", registerIntro: "Dinos qué vas a hacer y entras en un minuto.",

@@ -97,8 +97,18 @@ export function useTemplateTransition(client: ApiClient) {
 }
 
 export function useMediaAssets(client: ApiClient, celebrationId: string) {
-  return useQuery({ queryKey: queryKeys.media.list(celebrationId), queryFn: () => mediaApi(client).list(celebrationId), ...cachePolicy.celebration, enabled: Boolean(celebrationId) });
+  return useQuery({
+    queryKey: queryKeys.media.list(celebrationId),
+    queryFn: ({ signal }) => mediaApi(client).list(celebrationId, signal),
+    ...cachePolicy.celebration, enabled: Boolean(celebrationId),
+    // /complete returns 202 PROCESSING. Refetch only this resource until the worker finishes.
+    // Requests share the query cache, pause in hidden tabs and stop on terminal states or errors.
+    refetchInterval: (query) => !query.state.error && query.state.data?.items.some((asset) => asset.status === "PROCESSING") ? MEDIA_PROCESSING_INTERVAL_MS : false,
+    refetchIntervalInBackground: false
+  });
 }
+
+const MEDIA_PROCESSING_INTERVAL_MS = 2_000;
 
 export interface UploadInput { readonly file: Blob; readonly filename: string; readonly onProgress: (fraction: number) => void }
 

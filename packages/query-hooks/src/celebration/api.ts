@@ -62,7 +62,7 @@ export function mediaApi(client: ApiClient) {
     presign: (input: { readonly celebrationId: string; readonly filename: string; readonly contentType: string; readonly sizeBytes: number }) =>
       client.request<UploadIntent, typeof input>(`${MEDIA}/uploads/presign`, { method: "POST", body: input }),
     complete: (assetId: string) => client.request<MediaAsset>(`${MEDIA}/uploads/${assetId}/complete`, { method: "POST" }),
-    list: (celebrationId: string) => client.request<Items<MediaAsset>>(`${MEDIA}/celebrations/${celebrationId}/assets`),
+    list: (celebrationId: string, signal?: AbortSignal) => client.request<Items<MediaAsset>>(`${MEDIA}/celebrations/${celebrationId}/assets`, { signal }),
     reorder: (celebrationId: string, assetIds: readonly string[], coverAssetId: string | null) =>
       client.request<Items<MediaAsset>, { readonly assetIds: readonly string[]; readonly coverAssetId: string | null }>(`${MEDIA}/celebrations/${celebrationId}/assets/order`, { method: "PUT", body: { assetIds, coverAssetId } }),
     remove: (assetId: string) => client.request<void>(`${MEDIA}/assets/${assetId}`, { method: "DELETE" })

@@ -1,6 +1,8 @@
 export const enUS = {
   common: { loading: "Loading…", retry: "Try again", cancel: "Cancel", save: "Save", signOut: "Sign out", more: "More", close: "Close", empty: "There are no results." },
   auth: {
+    signOut: { title: "Are you sure you want to sign out?", body: "You can cancel to stay signed in." },
+    restoreUnavailable: { title: "We couldn't restore your session", body: "Check your connection and try again. You don't need to sign out.", retry: "Try again" },
     email: "Email", password: "Password", signIn: "Sign in", register: "Create my account", forgotPassword: "I forgot my password",
     signInTitle: "Sign in to DOne", signInIntro: "Pick up your invitation or your services where you left them.",
     registerTitle: "Create your account", registerIntro: "Tell us what you will do and you are in within a minute.",

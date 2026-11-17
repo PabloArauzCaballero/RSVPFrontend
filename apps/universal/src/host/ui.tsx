@@ -240,11 +240,11 @@ export function Loading(): ReactNode {
 }
 
 /** `busy` shows the confirm button as loading and refuses a second confirm, Cancel and Escape until the request ends. */
-export function ConfirmDialog({ visible, title, body, confirmLabel, danger, busy = false, confirmTestID, cancelTestID, onConfirm, onCancel, children }: PropsWithChildren<{ readonly visible: boolean; readonly title: string; readonly body: string; readonly confirmLabel: string; readonly danger?: boolean; readonly busy?: boolean; readonly confirmTestID?: string; readonly cancelTestID?: string; readonly onConfirm: () => void; readonly onCancel: () => void }>): ReactNode {
+export function ConfirmDialog({ visible, title, body, confirmLabel, danger, busy = false, confirmTestID, cancelTestID, onConfirm, onCancel, onDismiss, children }: PropsWithChildren<{ readonly visible: boolean; readonly title: string; readonly body: string; readonly confirmLabel: string; readonly danger?: boolean; readonly busy?: boolean; readonly confirmTestID?: string; readonly cancelTestID?: string; readonly onConfirm: () => void; readonly onCancel: () => void; readonly onDismiss?: () => void }>): ReactNode {
   const styles = useStyles();
   const t = useT();
   return (
-    <Modal visible={visible} transparent animationType={overlayAnimation("fade")} onRequestClose={busy ? () => undefined : onCancel}>
+    <Modal visible={visible} accessibilityLabel={title} transparent animationType={overlayAnimation("fade")} onDismiss={onDismiss} onRequestClose={busy ? () => undefined : onCancel}>
       <View style={styles.overlay}>
         <OverlayEnter from="none"><View accessibilityViewIsModal accessibilityRole="alert" style={styles.dialog}>
           <Text accessibilityRole="header" style={styles.subtitle}>{title}</Text>

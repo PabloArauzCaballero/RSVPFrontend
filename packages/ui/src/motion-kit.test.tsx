@@ -1,4 +1,6 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { createRef } from 'react';
+import { Text, type View } from 'react-native';
 import axe from 'axe-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EASE, Enter, MOTION, MIN_TARGET, PressFeedback, ScreenTransition, SkeletonList, Stagger, StepTransition, UiProvider, cssEase, offsetFor, resetScreenHistory, staggerDelay } from './index';
@@ -10,6 +12,13 @@ const el = (container: HTMLElement, selector: string): HTMLElement => container.
 
 beforeEach(() => { vi.useFakeTimers(); resetScreenHistory(); });
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.unstubAllGlobals(); });
+
+it('forwards focus to the actual press target so a dismissed dialog can restore keyboard focus', () => {
+  const trigger = createRef<View>();
+  render(<UiProvider><PressFeedback ref={trigger} accessibilityLabel="Open menu"><Text>Menu</Text></PressFeedback></UiProvider>);
+  trigger.current?.focus();
+  expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Open menu' }));
+});
 
 describe('tokens', () => {
   it('keep every duration inside the brief: entrances 400-600 ms, overlays and screens quicker, press under 200, exits faster than entrances', () => {

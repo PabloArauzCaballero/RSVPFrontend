@@ -1,7 +1,29 @@
 import { describe, expect, it, vi } from "vitest";
 import { createApiClient } from "../src/client.js";
+import { ApiError } from "../src/errors.js";
 
 describe("createApiClient", () => {
+  it.each([new TypeError("offline"), new ApiError(503, "c", { title: "Unavailable", status: 503 }), new ApiError(429, "c", { title: "Slow down", status: 429 })])("keeps the session on a recoverable refresh failure and retries on the next request: %s", async (error) => {
+    const fetchFn = vi.fn().mockResolvedValueOnce(new Response("{}", { status: 401 })).mockResolvedValueOnce(new Response("{}", { status: 401 })).mockResolvedValueOnce(new Response('{"ok":true}'));
+    const store = { getAccessToken: async () => "old", getRefreshToken: async () => "refresh", setTokens: vi.fn(), clear: vi.fn() };
+    const refresh = vi.fn().mockRejectedValueOnce(error).mockResolvedValueOnce({ accessToken: "new", expiresIn: 900 });
+    const onUnauthorized = vi.fn();
+    const client = createApiClient({ baseUrl: "https://api.test", tokenStore: store, refreshSession: { refresh }, fetchFn, onUnauthorized });
+    await expect(client.request("/celebrations")).rejects.toBe(error);
+    expect(store.clear).not.toHaveBeenCalled();
+    expect(onUnauthorized).not.toHaveBeenCalled();
+    await expect(client.request("/celebrations")).resolves.toEqual({ ok: true });
+    expect(refresh).toHaveBeenCalledTimes(2);
+  });
+
+  it("clears a session only when Identity rejects its refresh credential", async () => {
+    const clear = vi.fn();
+    const onUnauthorized = vi.fn();
+    const client = createApiClient({ baseUrl: "https://api.test", tokenStore: { getAccessToken: async () => "old", getRefreshToken: async () => "dead", setTokens: vi.fn(), clear }, refreshSession: { refresh: async () => { throw new ApiError(401, "c"); } }, fetchFn: vi.fn().mockResolvedValue(new Response("{}", { status: 401 })), onUnauthorized });
+    await expect(client.request("/celebrations")).rejects.toMatchObject({ status: 401 });
+    expect(clear).toHaveBeenCalledOnce();
+    expect(onUnauthorized).toHaveBeenCalledOnce();
+  });
   it("refreshes once after a 401 and retries with the new access token", async () => {
     const fetchFn = vi.fn()
       .mockResolvedValueOnce(new Response(JSON.stringify({ title: "Expired", status: 401 }), { status: 401, headers: { "content-type": "application/problem+json" } }))

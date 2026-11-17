@@ -32,5 +32,6 @@ export type ContractChecks = [
   Expect<FieldsExist<Template, T["Template"]>>,
   Expect<FieldsExist<TemplateInput, T["TemplateInput"]>>,
   Expect<FieldsExist<UploadIntent, T["UploadIntent"]>>,
+  Expect<Equal<MediaAsset["status"], NonNullable<T["MediaAsset"]["status"]>>>,
   Expect<FieldsExist<MediaAsset, T["MediaAsset"]>>
 ];

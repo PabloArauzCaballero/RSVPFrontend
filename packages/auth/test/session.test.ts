@@ -76,6 +76,14 @@ describe("SessionManager", () => {
     await expect(new SessionManager(createMemorySessionStore(), api as never).refresh()).rejects.toMatchObject({ status: 401 });
   });
   describe("cookie transport (web, REQ-F05-02)", () => {
+    it.each([new TypeError("offline"), new ApiError(503, "c", { title: "Unavailable", status: 503 })])("a failed reload can recover without losing the cookie or opening private routes: %s", async (failure) => {
+      const refresh = vi.fn().mockRejectedValueOnce(failure).mockResolvedValueOnce(tokens());
+      const manager = new SessionManager(createMemorySessionStore(), identity({ transport: "cookie", refresh }));
+      expect((await manager.restore()).status).toBe("unavailable");
+      expect(manager.getState().session).toBeNull();
+      expect((await manager.restore()).status).toBe("authenticated");
+      expect(refresh).toHaveBeenCalledTimes(2);
+    });
     it("restore with an empty memory store renews the session from the httpOnly cookie", async () => {
       const api = identity({ transport: "cookie", refresh: vi.fn(async () => ({ accessToken: tokens({ roles: ["PLANNER"] }).accessToken, expiresIn: 900 })) });
       const manager = new SessionManager(createMemorySessionStore(), api);

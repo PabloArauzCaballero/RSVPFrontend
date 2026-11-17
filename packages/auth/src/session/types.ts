@@ -8,5 +8,5 @@ export const ROLES: readonly Role[] = ["HOST", "PLANNER", "PROVIDER", "ADMIN", "
 export interface Session extends Omit<TokenPair, "refreshToken"> { refreshToken: string; userId: string; roles: Role[]; organizationIds: string[]; }
 export interface SessionStore extends TokenStore { getSession(): Promise<Session | null>; setSession(session: Session): Promise<void>; }
 
-export type AuthStatus = "loading" | "anonymous" | "authenticated";
+export type AuthStatus = "loading" | "unavailable" | "anonymous" | "authenticated";
 export interface AuthState { readonly status: AuthStatus; readonly session: Session | null; }

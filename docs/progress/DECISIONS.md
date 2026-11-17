@@ -66,3 +66,8 @@
 - **Los esqueletos son `role=status` + `aria-busy`:** toda prueba que espere carga debe esperar también `[aria-busy=true]`.
 - **Sin hápticos hasta tener dispositivo para verificarlos.**
 - **Las referencias visuales oscuras se añaden como suites separadas** (`*.dark.visual.spec.ts`, 15 rutas) en vez de duplicar las 159 claras.
+
+## Recursos y sesión de la imagen web · 2026-11-17
+
+- **API del mismo origen en la imagen universal:** el JavaScript usa `/api` y nginx reenvía al gateway configurado en el build, con TLS verificado. Identity ya emite una cookie HttpOnly/Secure/SameSite=Strict; una API en otro sitio impedía restaurarla al recargar. Se descartan persistir tokens en localStorage o relajar SameSite. Se ajusta solo el Path de la cookie para el prefijo del proxy. Expo de desarrollo y apps nativas conservan su URL configurada. Hace falta un ingreso inicial después del despliegue; reversión mediante la imagen anterior.
+- **La caché sigue el trabajo pendiente:** Media consulta cada 2 s mientras haya `PROCESSING`; invitados hace lo mismo cuando el contrato informa eventos pendientes. Las mutaciones invalidan las consultas relacionadas; no hay recarga de documento. Fallar una restauración de sesión por red/5xx muestra reintento; solo un rechazo 401 implica sesión anónima. Evidencia, alcance y controles pendientes: [session-refresh](evidence/session-refresh/README.md).
