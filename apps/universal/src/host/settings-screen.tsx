@@ -11,7 +11,7 @@ import { CelebrationErrorNotice } from "./celebration-errors";
 import { AuditSection, EventTypeSection, TeamSection } from "./settings-extras";
 import { spacing } from "@rsvp/design-tokens";
 import { MoreOptions } from "./more-options";
-import { ActionButton, ChoiceGroup, Field, FilterSelect, Notice, Section, ToggleChip, useStyles } from "./ui";
+import { ActionButton, ChoiceGroup, DateInput, FilterSelect, Notice, Section, TimeInput, ToggleChip, useStyles } from "./ui";
 import { ThemeChoice } from "./theme-choice";
 
 /** C17 · Languages, time zone, currency and RSVP deadline, with a preview of the effect (REQ-F13-01/06). */
@@ -107,8 +107,8 @@ function SettingsForm({ celebration, refetch, onSaved, moreOpen, onMoreOpen }: {
       </Section>
       <Section title={t("host.settings.deadline.label")}>
         <View style={styles.row}>
-          <View style={{ flexGrow: 1 }}><Field label={t("host.settings.deadline.date")} value={deadline.date} onChange={(date) => setDeadline((current) => ({ ...current, date }))} /></View>
-          <View style={{ flexGrow: 1 }}><Field label={t("host.settings.deadline.time")} value={deadline.time} onChange={(time) => setDeadline((current) => ({ ...current, time }))} /></View>
+          <View style={{ flexGrow: 1 }}><DateInput label={t("host.settings.deadline.date")} value={deadline.date} onChange={(date) => setDeadline((current) => ({ ...current, date }))} testID="deadline-date" /></View>
+          <View style={{ flexGrow: 1 }}><TimeInput label={t("host.settings.deadline.time")} value={deadline.time} onChange={(time) => setDeadline((current) => ({ ...current, time }))} testID="deadline-time" /></View>
         </View>
         <Text style={styles.muted}>{t("host.settings.deadline.help", { timeZone })}</Text>
         {entered ? <Notice>{t("host.settings.deadline.effect", { date: entered.replace("T", " "), zone: zoneName(timeZone, celebration.defaultLocale) })}</Notice> : null}

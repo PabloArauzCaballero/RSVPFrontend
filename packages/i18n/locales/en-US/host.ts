@@ -29,8 +29,9 @@ export const hostEnUS: DeepStrings<typeof hostEsBO> = {
     serverLoad: "The server did not respond as expected. Try again in a few minutes.",
     networkLoad: "Cannot reach the server. Check your internet and try again."
   },
+  location: { linkPlaceholder: "https://maps.app.goo.gl/…", mark: "Mark on the map", change: "Change the point", marked: "Point marked. Your guests will open it with “How to get there”.", link: "Map link", linkHelp: "Optional. It is filled in when you mark the point; you can also paste the link Google Maps gives you when you share the place.", linkHelpNative: "Optional. Paste the link Google Maps gives you when you share the place; your guests will open it with “How to get there”.", linkInvalid: "Paste a Google Maps, Apple Maps, Waze or OpenStreetMap link that starts with https://.", pickerTitle: "Mark the place on the map", search: "Search for a place or address", searchPlaceholder: "Las Palmas Hall, Santa Cruz", searchButton: "Search", results: "Search results", noResults: "We could not find that place. Try the street or the area and finish by moving the map.", searchError: "We could not search right now. Move the map to the place or try again.", locationError: "We could not get your location. Check the browser permission or search for the place by name.", mapLabel: "Map: move it until the pin sits on the place", hint: "Move the map until the pin sits right on the place.", myLocation: "Use my location", use: "Done" },
   limits: {
-    fieldsTooLong: "Some texts are too long. Shorten them to save.",
+    requiredMissing: "To save, fill in: {{fields}}.", fieldsTooLong: "Some texts are too long. Shorten them to save.",
     tooLong_one: "Remove {{count}} character: the maximum is {{max}}.",
     tooLong_other: "Remove {{count}} characters: the maximum is {{max}}.",
     slugLength: "The link must be between 3 and 80 characters.",
@@ -44,16 +45,16 @@ export const hostEnUS: DeepStrings<typeof hostEsBO> = {
   onboarding: {
     joinNames: "{{first}} and {{second}}",
     title: "Create your invitation", intro: "Three short steps and your invitation has its own link.",
-    step: "Step {{step}} of 3", stepLabels: { type: "What you're celebrating", who: "Who and when", name: "Name and link" }, progress: "Your steps",
+    step: "Step {{step}} of 3", stepLabels: { type: "What you're celebrating", who: "Who, when and where", name: "Name and link" }, progress: "Your steps",
     typeLabel: "Pick one",
     typeTitle: "What are you celebrating?", typeHelp: "This sets up the wording and the sections that suit it best.",
-    whoTitle: "Who is it, and when?", hostsHelp: "Write the names the way you want them to read on the invitation.",
-    dateLabel: "Date (YYYY-MM-DD)", timeLabel: "Time (HH:MM)", dateHelp: "Example: 2027-08-14. No date yet? Leave it empty and add it later.",
+    whoTitle: "Who is it, when and where?", hostsHelp: "Write the names the way you want them to read on the invitation.",
+    dateLabel: "Date", timeLabel: "Time", venuePlaceholder: "Las Palmas Hall", dateHelp: "With these details your invitation is ready to publish. You can change them whenever you like.",
     nameTitle: "Give it a name and a link", titleLabel: "Celebration name", titlePlaceholder: "Ana and Luis", titleHelp: "It's the first thing your guests see.",
     slugLabel: "Your invitation's link", slugHelp: "This is how your guests will get it: {{url}}. Lowercase letters, numbers and hyphens only.",
     defaultsSummary: "Already set for you: {{timeZone}} time, {{language}} and {{currency}}.",
     timeZoneLabel: "Event time zone", timeZoneHelp: "Your guests see times in this zone, wherever they are.", languageLabel: "Main language", currencyLabel: "Currency",
-    titleRequired: "Write your celebration's name.", dateInvalid: "Check the date: use YYYY-MM-DD, for example 2027-08-14.", timeInvalid: "Check the time: use HH:MM, for example 17:30.",
+    titleRequired: "Write your celebration's name.", dateInvalid: "Choose the date.", timeInvalid: "Choose the time.", required: "Fill in this field.", requiredNotice: "Fill in the marked fields to continue.", slugRequired: "Write your invitation's link.",
     previewTitle: "How it's shaping up", previewHint: "It changes as you type.", previewShow: "See how it looks", previewHide: "Hide", previewFallbackTitle: "Your celebration",
     create: "Create my invitation", readyTitle: "Your invitation is ready", readyBody: "For now it's a draft: only you can see it. Fill in what's missing and publish it whenever you like.",
     finish: "Finish my invitation", chooseStyle: "Pick another style"
@@ -64,7 +65,7 @@ export const hostEnUS: DeepStrings<typeof hostEsBO> = {
     save: "Save changes", dirty: "You have unsaved changes.", viewPreview: "See how it looks", previewTitle: "How your guests see it", closePreview: "Close preview", previewDraftNote: "It includes what you typed, even if you haven't saved it yet.",
     sections: { general: "The basics", hosts: "Who", venues: "Where", story: "Story", schedule: "Schedule", sections: "More details" },
     about: { general: "The first thing your guests see.", anfitriones: "The names shown on the invitation.", lugares: "Where it happens: ceremony, reception or another place.", historia: "Tell how it all began.", itinerario: "What happens, and when.", secciones: "Dress code, FAQ and recommendations." },
-    general: { slug: "Your invitation's link", slugLocked: "The link can no longer be changed because the invitation was published or archived.", title: "Celebration name", subtitle: "Welcome line", eventDate: "Date", eventTime: "Time", venueName: "Main venue", extraField: "Extra detail: {{field}}" },
+    general: { slug: "Your invitation's link", slugLocked: "The link can no longer be changed because the invitation was published or archived.", title: "Celebration name", subtitle: "Welcome line", eventDate: "Date", eventTime: "Time", venueName: "Location", extraField: "Extra detail: {{field}}" },
     hosts: { help: "The roles come from the event type: {{eventType}}." },
     venues: { name: "Venue name", address: "Address", kind: "Type", kinds: { ceremony: "Ceremony", reception: "Reception", other: "Other" }, add: "Add venue", item: "Venue {{n}}" },
     story: { label: "Your story", help: "Separate paragraphs with a blank line." },
@@ -95,7 +96,7 @@ export const hostEnUS: DeepStrings<typeof hostEsBO> = {
   },
   publish: {
     title: "Publish", intro: "Complete what is missing, publish and share the link.", ready: "Your celebration is ready to publish.", readyBody: "Everything needed is complete. Publish whenever you like.", missing: "Before publishing, complete:", pending: "Items left: {{count}}",
-    fields: { title: "The celebration name", subtitle: "The welcome line", eventDate: "The event date", venueName: "The main venue", childName: "The name of the child being baptised", companyName: "The company name", celebrantName: "The name of the celebrant", host: "The name of: {{role}}", other: "The field “{{field}}”" },
+    fields: { title: "The celebration name", subtitle: "The welcome line", eventDate: "The event date", venueName: "The location", childName: "The name of the child being baptised", companyName: "The company name", celebrantName: "The name of the celebrant", host: "The name of: {{role}}", other: "The field “{{field}}”" },
     goTo: "Complete", publish: "Publish celebration", publishConfirm: "Your invitation will be visible to anyone with the link. Publish now?",
     done: { title: "Your invitation is published", body: "Share the link and tomorrow you will know who is coming." },
     unpublish: "Unpublish", unpublishConfirm: "The site stops showing until you publish it again. The link stays the same.", reasonLabel: "Reason (optional)",
@@ -105,7 +106,7 @@ export const hostEnUS: DeepStrings<typeof hostEsBO> = {
   },
   settings: {
     title: "Settings", intro: "Languages and RSVP deadline for your celebration.", general: "Languages", saved: "Settings saved.", languages: "Site languages", defaultLanguage: "Main language", timeZone: "Time zone", currency: "Currency", more: "More options", format: "Time and currency", formatHelp: "They already match your area. Change them only if your celebration is somewhere else.",
-    deadline: { label: "RSVP deadline", date: "Date (YYYY-MM-DD)", time: "Time (HH:MM)", help: "Event local time ({{timeZone}}).", none: "No deadline: your guests reply whenever they like.", clear: "Remove deadline",
+    deadline: { label: "RSVP deadline", date: "Date", time: "Time", help: "Event local time ({{timeZone}}).", none: "No deadline: your guests reply whenever they like.", clear: "Remove deadline",
       past: "That date has passed: your guests can no longer reply or change their answer.", effect: "Your guests can reply until {{date}} ({{zone}})." }
   },
   settingsExtra: {
