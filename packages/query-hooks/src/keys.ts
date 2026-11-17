@@ -23,6 +23,6 @@ export const queryKeys = {
   },
   identity: { organizations: ["identity", "organizations"] as const, organization: (id: string) => ["identity", "organizations", id] as const },
   gift: { all: ["gifts"] as const, list: (celebrationId: string) => ["gifts", celebrationId] as const },
-  provider: { all: ["providers"] as const, calendar: (providerId: string) => ["providers", providerId, "calendar"] as const, search: (params: string) => ["providers", "search", params] as const },
+  provider: { all: ["providers"] as const, calendar: (providerId: string) => ["providers", providerId, "calendar"] as const, search: (params: string) => ["providers", "search", params] as const, geo: ["providers", "geo"] as const },
   notification: { all: ["notifications"] as const, preferences: (celebrationId: string) => ["notifications", celebrationId, "preferences"] as const, inbox: (celebrationId: string) => ["notifications", celebrationId, "inbox"] as const, devices: (celebrationId: string) => ["notifications", celebrationId, "devices"] as const }
 } as const;

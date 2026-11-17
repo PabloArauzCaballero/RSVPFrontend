@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ApiClient } from "@rsvp/api-client";
 import { providerService } from "./api.js";
-import type { UpdateProviderInput, ProviderDiscoveryQuery, DocumentInput, MicrositeInput, Availability, BookingRequestInput, BookingStatus, CreateListingInput, LeadConfig, QuoteInput, RegisterProviderInput } from "./types.js";
+import type { GeoCity, UpdateProviderInput, ProviderDiscoveryQuery, DocumentInput, MicrositeInput, Availability, BookingRequestInput, BookingStatus, CreateListingInput, LeadConfig, QuoteInput, RegisterProviderInput } from "./types.js";
 export * from "./types.js";
 export { providerService } from "./api.js";
 import { cachePolicy } from "../policy.js";
@@ -14,6 +14,17 @@ const refetchAll = (queryClient: ReturnType<typeof useQueryClient>, keys: readon
 export function useProviders<T>(client: ApiClient, query: Record<string, string | undefined> = {}) {
   const search = new URLSearchParams(Object.entries(query).filter((entry): entry is [string, string] => entry[1] !== undefined)).toString();
   return useQuery({ queryKey: queryKeys.provider.search(search), queryFn: () => providerApi(client).get("/providers", { query: query as never, auth: false }) as Promise<T>, ...cachePolicy.provider });
+}
+/** Cities of the catalogue, sorted by name for pickers. Public and rarely changing: the provider cache policy applies. */
+export function useGeoCities(client: ApiClient) {
+  return useQuery({
+    queryKey: queryKeys.provider.geo,
+    queryFn: async (): Promise<readonly GeoCity[]> => {
+      const body = await client.request<{ readonly items?: readonly GeoCity[] }>("/providers/geo", { auth: false });
+      return [...(body.items ?? [])].sort((a, b) => a.name.localeCompare(b.name, "es"));
+    },
+    ...cachePolicy.provider
+  });
 }
 export function useProviderCalendar<T>(client: ApiClient, providerId: string) {
   return useQuery({ queryKey: queryKeys.provider.calendar(providerId), queryFn: () => providerApi(client).get("/providers/{providerId}/calendar", { path: { providerId }, auth: false }) as Promise<T>, ...cachePolicy.provider, enabled: Boolean(providerId) });
