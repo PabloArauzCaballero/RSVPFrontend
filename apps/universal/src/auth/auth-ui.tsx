@@ -67,6 +67,15 @@ function createAuthStyles(palette: (typeof colors)[ColorTheme]) {
   languageActive: { backgroundColor: palette.surfaceMuted, borderColor: palette.text },
   roleOption: { minHeight: MIN_TOUCH + 12, justifyContent: "center", paddingHorizontal: spacing[4], paddingVertical: spacing[3], borderWidth: 1, borderColor: palette.fieldBorder, borderRadius: radius.md, backgroundColor: palette.surface },
   roleOptionActive: { borderColor: palette.text, backgroundColor: palette.surfaceMuted },
+  section: { gap: spacing[4], paddingTop: spacing[2] },
+  sectionTitle: { color: palette.textMuted, fontSize: typography.fontSize.xs, fontWeight: "600", letterSpacing: 0.6, textTransform: "uppercase", fontFamily: textFamily },
+  pair: { flexDirection: "row", flexWrap: "wrap", gap: spacing[4] },
+  pairItem: { flexGrow: 1, flexShrink: 1, flexBasis: 160, minWidth: 0 },
+  check: { flexDirection: "row", alignItems: "flex-start", gap: spacing[3], minHeight: MIN_TOUCH, paddingVertical: spacing[1] },
+  checkBox: { width: 22, height: 22, marginTop: 1, borderRadius: radius.sm, borderWidth: 1.5, borderColor: palette.fieldBorder, backgroundColor: palette.surface, alignItems: "center", justifyContent: "center" },
+  checkBoxOn: { borderColor: palette.primary, backgroundColor: palette.primary },
+  checkTick: { width: 6, height: 11, marginTop: -2, borderRightWidth: 2, borderBottomWidth: 2, borderColor: palette.onPrimary, transform: [{ rotate: "45deg" }] },
+  checkText: { flex: 1, color: palette.text, fontSize: typography.fontSize.sm, lineHeight: typography.lineHeight.sm, fontFamily: textFamily },
   roleTitle: { color: palette.text, fontSize: typography.fontSize.base, fontWeight: "600", fontFamily: textFamily },
   centered: { flex: 1, alignItems: "center", justifyContent: "center", padding: spacing[6], backgroundColor: palette.canvas, gap: spacing[4] }
   });
@@ -131,7 +140,7 @@ export function AuthLayout({ title, intro, illustration = "invitation", children
   );
 }
 
-export interface AuthFieldProps extends Pick<TextInputProps, "autoComplete" | "keyboardType" | "returnKeyType" | "onSubmitEditing" | "textContentType"> {
+export interface AuthFieldProps extends Pick<TextInputProps, "autoComplete" | "keyboardType" | "returnKeyType" | "onSubmitEditing" | "textContentType" | "autoCapitalize" | "inputMode"> {
   readonly label: string;
   readonly value: string;
   readonly onChange: (value: string) => void;
@@ -155,7 +164,7 @@ export function AuthField({ label, value, onChange, error, hint, secret = false,
       <View style={authStyles.inputRow}>
         <TextInput
           accessibilityLabel={label} aria-invalid={error ? true : undefined} aria-describedby={error ? errorId : undefined} aria-required
-          value={value} onChangeText={onChange} editable={editable} testID={testID} secureTextEntry={secret && !revealed} autoCapitalize="none" autoCorrect={false}
+          value={value} onChangeText={onChange} editable={editable} testID={testID} secureTextEntry={secret && !revealed} autoCapitalize="none" autoCorrect={false} aria-errormessage={error ? errorId : undefined}
           style={[authStyles.input, secret && authStyles.inputWithToggle, error ? authStyles.inputError : null, focusRing]} {...input}
         />
         {secret ? (
@@ -201,3 +210,37 @@ export function Banner({ kind, children }: PropsWithChildren<{ readonly kind: "e
   );
 }
 
+
+/** A group of fields under a quiet heading, so a long form reads as three short steps. */
+export function AuthSection({ title, children }: PropsWithChildren<{ readonly title: string }>): ReactNode {
+  const authStyles = useAuthStyles();
+  return (
+    <View role="group" aria-label={title} style={authStyles.section}>
+      <Text accessibilityRole="header" aria-level={2} style={authStyles.sectionTitle}>{title}</Text>
+      {children}
+    </View>
+  );
+}
+
+/** Two short fields side by side when there is room (first and last name), stacked on a phone. */
+export function AuthPair({ children }: PropsWithChildren): ReactNode {
+  const authStyles = useAuthStyles();
+  const items = Array.isArray(children) ? children : [children];
+  return <View style={authStyles.pair}>{items.map((child, index) => <View key={index} style={authStyles.pairItem}>{child}</View>)}</View>;
+}
+
+/** A consent checkbox: the whole row is the 44 px target, the error sits under it and is announced. */
+export function AuthCheck({ label, value, onChange, error, disabled = false, testID }: { readonly label: string; readonly value: boolean; readonly onChange: (value: boolean) => void; readonly error?: string; readonly disabled?: boolean; readonly testID?: string }): ReactNode {
+  const authStyles = useAuthStyles();
+  const focusRing = useAuthFocusRing();
+  const errorId = `${testID ?? label}-error`;
+  return (
+    <View style={{ gap: spacing[1] }}>
+      <Pressable role="checkbox" aria-checked={value} aria-disabled={disabled} aria-invalid={error ? true : undefined} aria-describedby={error ? errorId : undefined} accessibilityLabel={label} disabled={disabled} onPress={() => onChange(!value)} testID={testID} style={[authStyles.check, focusRing]}>
+        <View style={[authStyles.checkBox, value && authStyles.checkBoxOn, error && !value ? authStyles.inputError : null]}>{value ? <View style={[authStyles.checkTick]} /> : null}</View>
+        <Text style={authStyles.checkText}>{label}</Text>
+      </Pressable>
+      {error ? <Text nativeID={errorId} accessibilityRole="alert" style={authStyles.fieldError}>{error}</Text> : null}
+    </View>
+  );
+}
