@@ -102,6 +102,16 @@ describe("REQ-F05-01 · sign up and recovery", () => {
     expect(await screen.findByText("Usa al menos 12 caracteres. Una frase corta funciona bien.")).toBeTruthy();
     expect(calls).toHaveLength(0);
   });
+  it("an empty password says the same thing as an empty e-mail, and the reveal button carries the error border (QA 2026-11-13)", async () => {
+    const { calls } = setup(<RegisterScreen onNavigate={vi.fn()} />);
+    press("Crear mi cuenta");
+    expect(await screen.findAllByText("Falta este dato.")).toHaveLength(2);
+    expect(screen.queryByText("Usa al menos 12 caracteres. Una frase corta funciona bien.")).toBeNull();
+    const input = screen.getByLabelText("Contraseña");
+    const toggle = screen.getByRole("button", { name: "Mostrar" });
+    expect(getComputedStyle(toggle).borderTopColor).toBe(getComputedStyle(input).borderTopColor);
+    expect(calls).toHaveLength(0);
+  });
   it("registers with the chosen role and starts the session", async () => {
     const { manager, calls } = setup(<RegisterScreen onNavigate={vi.fn()} />, { "POST /identity/auth/register": () => ({ id: "u", email: "p@x.co", roles: ["PROVIDER"], ...tokenResponse(["PROVIDER"]) }) });
     type("Correo", "p@x.co"); type("Contraseña", "correct-horse-battery");

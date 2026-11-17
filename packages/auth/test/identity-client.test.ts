@@ -50,6 +50,7 @@ describe("schemas", () => {
     expect(validate(loginSchema, { email: " a@b.co ", password: "x" })).toMatchObject({ ok: true, value: { email: "a@b.co" } });
   });
   it("register enforces the 12-character and 72-byte password policy and excludes ADMIN", () => {
+    expect(validate(registerSchema, { email: "", password: "", role: "HOST" })).toEqual({ ok: false, errors: { email: "required", password: "required" } });
     expect(validate(registerSchema, { email: "a@b.co", password: "short", role: "HOST" })).toEqual({ ok: false, errors: { password: "passwordShort" } });
     expect(validate(registerSchema, { email: "a@b.co", password: "ñ".repeat(40), role: "HOST" })).toEqual({ ok: false, errors: { password: "passwordBytes" } });
     expect(validate(registerSchema, { email: "a@b.co", password: "correct-horse-battery", role: "ADMIN" }).ok).toBe(false);
