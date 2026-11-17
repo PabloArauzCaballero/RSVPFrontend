@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { render, type RenderResult } from "@testing-library/react";
+import { fireEvent, render, screen, type RenderResult } from "@testing-library/react";
 import { QueryClient } from "@tanstack/react-query";
 import { createApiClient, toApiError, type ApiClient, type RequestOptions } from "@rsvp/api-client";
 import { MOCK_HOST_JWT, type ContractMock } from "@rsvp/testing/contract-mock";
@@ -50,7 +50,7 @@ export const BAUTIZO: TranslatedEventType = { ...WEDDING, code: "BAUTIZO", name:
 
 export const CELEBRATION: Celebration = {
   id: "c-1", slug: "ana-y-luis", ownerId: "u-host", organizationId: null, eventTypeCode: "WEDDING", status: "DRAFT", version: 3, defaultLocale: "es-BO", supportedLocales: ["es-BO", "en-US"],
-  timeZone: "America/La_Paz", currency: "BOB", content: { title: "Ana y Luis", eventDate: "2026-12-19T23:00:00.000Z", hosts: { BRIDE: "Ana" }, schedule: [{ id: "s1", title: "Ceremonia", startsAt: "2026-12-19T23:00:00.000Z" }] },
+  timeZone: "America/La_Paz", currency: "BOB", content: { title: "Ana y Luis", eventDate: "2026-12-19T23:00:00.000Z", venueName: "Salón Las Palmas", hosts: { BRIDE: "Ana", GROOM: "Luis" }, schedule: [{ id: "s1", title: "Ceremonia", startsAt: "2026-12-19T23:00:00.000Z" }] },
   translations: {}, settings: { giftReservationMode: "RESTRICTED", unregisteredRsvpMode: "RESTRICTED", extraCompanionMode: "RESTRICTED", externalGiftMode: "RESTRICTED", rsvpDeadline: null, partnerPriorityEnabled: false, settingsVersion: 1, effectiveFrom: "2026-10-17T00:00:00Z" },
   templateId: "t-classic", collaborators: [], publishedAt: null, createdAt: "2026-10-17T00:00:00Z", updatedAt: "2026-10-17T00:00:00Z", access: "MANAGE",
   localTimes: { eventDate: { date: "2026-12-19", time: "19:00", timeZone: "America/La_Paz", utcOffset: "-04:00" }, "schedule.0.startsAt": { date: "2026-12-19", time: "19:00", timeZone: "America/La_Paz", utcOffset: "-04:00" } }
@@ -88,4 +88,22 @@ export function contractClient(mock: ContractMock, celebration: Celebration = { 
     }
   };
   return { client, celebration };
+}
+
+const two = (n: number): string => String(n).padStart(2, "0");
+/** The product's own time field: a button named "<label>: <shown time>" that opens the clock panel. */
+export const timeField = (label: string, index = 0): HTMLElement => screen.getAllByRole("button", { name: new RegExp(`^${label}: `) })[index] as HTMLElement;
+/** Chooses a 24-hour `HH:MM` in the clock panel as a person would (hour, minutes, morning or afternoon); an empty value clears it. */
+export function pickTime(label: string, value: string, index = 0): void {
+  fireEvent.click(timeField(label, index));
+  if (!value) {
+    const clear = screen.getByTestId("time-clear");
+    fireEvent.click(clear.getAttribute("aria-disabled") === "true" ? screen.getByTestId("time-done") : clear);
+    return;
+  }
+  const [hours = 0, minutes = 0] = value.split(":").map(Number);
+  fireEvent.click(screen.getByTestId(`time-hour-${hours % 12 || 12}`));
+  fireEvent.click(screen.getByTestId(`time-minute-${two(minutes)}`));
+  fireEvent.click(screen.getByTestId(hours >= 12 ? "time-pm" : "time-am"));
+  fireEvent.click(screen.getByTestId("time-done"));
 }

@@ -15,7 +15,7 @@ const fromIso = (iso?: string): Date => {
 const unavailable = (state: State): boolean => state === 'disabled' || state === 'loading';
 
 /** iOS and Android: the system date picker behind the same value contract (ISO `YYYY-MM-DD`). */
-export function DateField({ label, value, onChange, state, error }: DateFieldProps) {
+export function DateField({ label, value, onChange, state, error, testID }: DateFieldProps) {
   const { styles, strings } = useTheme();
   const [open, setOpen] = useState(false);
   const pick = (event: DateTimePickerEvent, date?: Date) => {
@@ -26,7 +26,7 @@ export function DateField({ label, value, onChange, state, error }: DateFieldPro
   return (
     <View>
       <Text style={styles.label}>{label}</Text>
-      <Pressable accessibilityRole="button" accessibilityLabel={`${label}: ${value || strings.datePlaceholder}`} accessibilityState={{ disabled: unavailable(state) }} disabled={unavailable(state)} onPress={() => setOpen(true)} style={styles.input}>
+      <Pressable testID={testID} accessibilityRole="button" accessibilityLabel={`${label}: ${value || strings.datePlaceholder}`} accessibilityState={{ disabled: unavailable(state) }} disabled={unavailable(state)} onPress={() => setOpen(true)} style={styles.input}>
         <Text style={styles.body}>{value || strings.datePlaceholder}</Text>
       </Pressable>
       {open ? <DateTimePicker value={fromIso(value)} mode="date" display={Platform.OS === 'ios' ? 'inline' : 'default'} onChange={pick} /> : null}

@@ -172,13 +172,14 @@ describe("provider · agenda", () => {
     expect(await screen.findByText(/entre 1 y 1000/)).toBeTruthy();
     type("Cupos por día", "1001"); fireEvent.click(screen.getByTestId("agenda-save"));
     expect(await screen.findByText(/entre 1 y 1000/)).toBeTruthy();
-    type("Fecha (AAAA-MM-DD)", "2027-02-30"); fireEvent.click(screen.getByTestId("blackout-add"));
-    expect(await screen.findByText("Esa fecha no existe en el calendario.")).toBeTruthy();
-    type("Fecha (AAAA-MM-DD)", "2027-03-05"); type("Hasta (opcional, AAAA-MM-DD)", "2027-03-01"); fireEvent.click(screen.getByTestId("blackout-add"));
+    // the date picker cannot hold a day that does not exist (30 February): the field stays empty and adding is refused
+    type("Fecha", "2027-02-30"); fireEvent.click(screen.getByTestId("blackout-add"));
+    expect(await screen.findByText("Elige la fecha.")).toBeTruthy();
+    type("Fecha", "2027-03-05"); type("Hasta (opcional)", "2027-03-01"); fireEvent.click(screen.getByTestId("blackout-add"));
     expect(await screen.findByText("La fecha final no puede ser anterior a la inicial.")).toBeTruthy();
-    type("Hasta (opcional, AAAA-MM-DD)", "2027-03-07"); fireEvent.click(screen.getByTestId("blackout-add"));
+    type("Hasta (opcional)", "2027-03-07"); fireEvent.click(screen.getByTestId("blackout-add"));
     await screen.findByTestId("blackout-2027-03-05");
-    type("Fecha (AAAA-MM-DD)", "2027-03-05"); fireEvent.click(screen.getByTestId("blackout-add"));
+    type("Fecha", "2027-03-05"); fireEvent.click(screen.getByTestId("blackout-add"));
     expect(await screen.findByText("Ese día ya está bloqueado.")).toBeTruthy();
     expect(calls.some((call) => call.method === "PUT")).toBe(false);
     type("Cupos por día", "1000"); fireEvent.click(screen.getByTestId("agenda-save"));

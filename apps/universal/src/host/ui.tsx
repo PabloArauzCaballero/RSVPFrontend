@@ -2,7 +2,7 @@ import { useState, type PropsWithChildren, type ReactNode } from "react";
 import { Modal, Pressable, StyleSheet, Text, View, type KeyboardTypeOptions } from "react-native";
 import { usePathname, useRouter, type Href } from "expo-router";
 import { ApiError } from "@rsvp/api-client";
-import { Button, CheckMark, Enter, fonts, Input, NoticeMark, OverlayEnter, overlayAnimation, pressVisual, SkeletonList, useColors, useReducedMotion, useTheme } from "@rsvp/ui";
+import { Button, CheckMark, DatePicker, Enter, fonts, Input, NoticeMark, OverlayEnter, overlayAnimation, pressVisual, SkeletonList, TimePicker, useColors, useReducedMotion, useTheme } from "@rsvp/ui";
 import { colors, radius, spacing, typography, type ColorTheme } from "@rsvp/design-tokens";
 import { loginHref } from "../auth/routes";
 import { useT } from "../platform/providers";
@@ -102,6 +102,30 @@ export function Field({ label, value, onChange, help, error, multiline, placehol
     <View style={{ gap: spacing[1] }}>
       <Input label={label} accessibilityHint={help} value={value} onChangeText={onChange} placeholder={placeholder} keyboardType={keyboardType} testID={testID} error={error} state={editable ? "default" : "disabled"}
         multiline={multiline} maxLength={maxLength} autoCapitalize={keyboardType === "email-address" ? "none" : undefined} autoCorrect={keyboardType === "email-address" ? false : undefined} onSubmitEditing={multiline ? undefined : onSubmit} returnKeyType={onSubmit && !multiline ? "go" : undefined} style={[multiline ? { minHeight: MULTILINE_HEIGHT, paddingVertical: spacing[2], textAlignVertical: "top" as const } : null, mono ? { fontFamily: fonts.mono } : null]} />
+      {help ? <Text style={styles.muted}>{help}</Text> : null}
+    </View>
+  );
+}
+
+export interface PickerInputProps { readonly label: string; readonly value: string; readonly onChange: (value: string) => void; readonly help?: string; readonly error?: string; readonly testID?: string }
+
+/** A calendar day chosen with the device's date picker; the value stays `YYYY-MM-DD`. */
+export function DateInput({ label, value, onChange, help, error, testID }: PickerInputProps): ReactNode {
+  const styles = useStyles();
+  return (
+    <View style={{ gap: spacing[1] }}>
+      <DatePicker label={label} value={value} onChange={onChange} {...(error ? { error } : {})} {...(testID ? { testID } : {})} />
+      {help ? <Text style={styles.muted}>{help}</Text> : null}
+    </View>
+  );
+}
+
+/** A time of day chosen with the device's clock; the value stays 24-hour `HH:MM`. */
+export function TimeInput({ label, value, onChange, help, error, testID }: PickerInputProps): ReactNode {
+  const styles = useStyles();
+  return (
+    <View style={{ gap: spacing[1] }}>
+      <TimePicker label={label} value={value} onChange={onChange} {...(error ? { error } : {})} {...(testID ? { testID } : {})} />
       {help ? <Text style={styles.muted}>{help}</Text> : null}
     </View>
   );

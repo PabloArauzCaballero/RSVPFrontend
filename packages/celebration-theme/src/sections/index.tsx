@@ -38,7 +38,11 @@ function Schedule({ content, timeZone, locale, t }: SectionProps): ReactNode {
 }
 
 function Venues({ content, t }: SectionProps): ReactNode {
-  const venues = content.venues.length ? content.venues : [{ key: "main", kind: "other" as const, name: content.venueName }];
+  // The main venue leads when it is the only one, and also when the host marked its exact place and did not repeat it in the list.
+  const main = { key: "main", kind: "other" as const, name: content.venueName, mapUrl: content.venueMapUrl };
+  const listed = content.venues.map((venue) => (venue.name === content.venueName ? { ...venue, mapUrl: content.venueMapUrl } : venue));
+  const repeated = content.venues.some((venue) => venue.name === content.venueName);
+  const venues = !content.venues.length ? [main] : content.venueMapUrl && content.venueName && !repeated ? [main, ...listed] : listed;
   return (
     <ul className="celebration-venues">
       {venues.map((venue) => (

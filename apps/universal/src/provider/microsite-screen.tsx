@@ -4,7 +4,7 @@ import { ApiError } from "@rsvp/api-client";
 import { spacing } from "@rsvp/design-tokens";
 import { useMicrosite, useSaveMicrosite, type Microsite, type MicrositeInput, type Provider } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../platform/providers";
-import { Field, Notice, PageIntro } from "../host/ui";
+import { Field, Notice, PageIntro, TimeInput } from "../host/ui";
 import { PortalErrorNotice as ErrorNotice } from "./errors";
 import { PortalScreen, usePortalHeader } from "./frame";
 import { useSingleMutation } from "../platform/single-flight";
@@ -108,8 +108,8 @@ function Editor({ microsite, providerId, onReload }: { readonly microsite: Micro
             <Field label={t("portal.microsite.facebook")} value={form.facebook} onChange={(facebook) => set({ facebook })} error={text("facebook")} />
             <Field label={t("portal.microsite.reference")} value={form.reference} onChange={(reference) => set({ reference })} />
             <Field label={t("portal.microsite.hoursDays")} value={form.days} onChange={(days) => set({ days })} error={text("days")} testID="microsite-days" />
-            <Field label={t("portal.microsite.hoursOpens")} value={form.opens} onChange={(opens) => set({ opens })} error={text("opens")} testID="microsite-opens" />
-            <Field label={t("portal.microsite.hoursCloses")} value={form.closes} onChange={(closes) => set({ closes })} testID="microsite-closes" />
+            <TimeInput label={t("portal.microsite.hoursOpens")} value={form.opens} onChange={(opens) => set({ opens })} {...(text("opens") ? { error: text("opens") as string } : {})} testID="microsite-opens" />
+            <TimeInput label={t("portal.microsite.hoursCloses")} value={form.closes} onChange={(closes) => set({ closes })} testID="microsite-closes" />
             <Field label={t("portal.microsite.hoursNote")} value={form.note} onChange={(note) => set({ note })} />
           </View>
         ) : null}
