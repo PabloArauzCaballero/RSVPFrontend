@@ -67,6 +67,8 @@ export function useReserveGiftItem(client: ApiClient, celebrationId: string, cre
   });
 }
 export const isGiftTaken = (error: unknown): boolean => error instanceof ApiError && error.status === 409 && problemCode(error) === "GIFT_NOT_AVAILABLE";
+export const isGiftRsvpRequired = (error: unknown): boolean => error instanceof ApiError && error.status === 403
+  && ["GUEST_RSVP_DECLINED", "GUEST_RSVP_REQUIRED"].includes(problemCode(error) ?? "");
 
 export function useHostReservations(client: ApiClient, celebrationId: string | undefined, status?: ReservationStatus) {
   return useQuery({ queryKey: [...queryKeys.gift.list(celebrationId ?? ""), "reservations", status ?? "all"] as const, queryFn: () => giftService(client).reservations(celebrationId ?? "", status), ...cachePolicy.gift, enabled: Boolean(celebrationId) });

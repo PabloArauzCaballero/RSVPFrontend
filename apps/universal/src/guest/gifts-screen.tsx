@@ -25,6 +25,7 @@ type Outcome = { readonly kind: "reserved"; readonly item: GiftItem; readonly st
 const LONG_WAIT_SECONDS = 90;
 
 const RESERVE_ERROR_KEY = {
+  attendance: "gifts.error.attendanceBody",
   limit: "gifts.guest.reserveError.limit", expired: "gifts.guest.reserveError.expired", forbidden: "gifts.guest.reserveError.forbidden", notFound: "gifts.guest.reserveError.notFound", busy: "gifts.guest.reserveError.busy",
   validation: "gifts.guest.reserveError.validation", offline: "gifts.guest.reserveError.offline", generic: "gifts.guest.reserveError.generic"
 } as const;
@@ -110,7 +111,13 @@ export function GuestGiftsScreen({ slug, token }: { readonly slug: string; reado
   const retryAfter = reserve.error instanceof ApiError ? reserve.error.retryAfterSeconds : undefined;
   const reservedInList = outcome?.kind === "reserved" && items.some((item) => item.id === outcome.item.id);
 
-  const reservedNote = (reserved: Extract<Outcome, { kind: "reserved" }>): ReactNode => (
+  const reservedNote = (reserved: Extract<Outcome, { kind: "reserved" }>): ReactNode => reserved.status === "CANCELLED" ? (
+    <Notice kind="error">
+      <Text accessibilityRole="header" style={styles.subtitle}>{t("gifts.outcome.cancelledTitle")}</Text>
+      <Text style={styles.body}>{t("gifts.outcome.cancelledBody")}</Text>
+      <ActionButton icon="back" variant="secondary" label={t("gifts.guest.backToRsvp")} onPress={() => { router.push(`/c/${encodeURIComponent(slug)}/rsvp/${encodeURIComponent(token)}` as never); }} />
+    </Notice>
+  ) : (
     <View testID="gift-reserved" style={{ gap: spacing[2], alignItems: "center" }}>
       <Illustration name="giftReserved" tone="auto" size="md" />
       <SuccessNote
@@ -130,6 +137,7 @@ export function GuestGiftsScreen({ slug, token }: { readonly slug: string; reado
         <Notice kind="error">
           <Text testID="reserve-error" style={styles.body}>{failedKind === "busy" && retryAfter ? (retryAfter >= LONG_WAIT_SECONDS ? t("gifts.guest.reserveError.busyMinutes", { minutes: Math.ceil(retryAfter / 60) }) : t("gifts.guest.reserveError.busyWait", { seconds: Math.ceil(retryAfter) })) : t(RESERVE_ERROR_KEY[failedKind])}</Text>
           {isRetryable(failedKind) ? <Text style={styles.muted}>{t("gifts.guest.reserveError.retryHint")}</Text> : null}
+          {failedKind === "attendance" ? <ActionButton icon="back" variant="secondary" label={t("gifts.guest.backToRsvp")} onPress={() => { router.push(`/c/${encodeURIComponent(slug)}/rsvp/${encodeURIComponent(token)}` as never); }} /> : null}
         </Notice>
       ) : null}
       <View style={{ gap: spacing[2] }}>

@@ -36,12 +36,15 @@ describe("REQ-F15-01 · A9 formulario de RSVP por token (contrato real)", () => 
     open(mock, MOCK_VALID_TOKEN);
     expect(await screen.findByRole("heading", { name: "¿Podrás acompañarnos?" })).toBeTruthy();
     expect(screen.getByText("Invitación a Ana y Luis")).toBeTruthy();
+    expect(screen.getByTestId("guest-name").textContent).toBe("Invitación para Marta Quispe");
+    expect(screen.queryByRole("button", { name: "Ver regalos" })).toBeNull();
     fireEvent.click(screen.getByLabelText("Sí, asistiré"));
     fireEvent.change(screen.getByLabelText("Acompañantes"), { target: { value: "1" } });
     fireEvent.change(screen.getByLabelText("Restricciones alimentarias"), { target: { value: "Vegetariana" } });
     fireEvent.change(screen.getByLabelText("Mensaje para los anfitriones (opcional)"), { target: { value: "¡Felicidades!" } });
     fireEvent.click(screen.getByRole("button", { name: "Enviar respuesta" }));
     expect(await screen.findByRole("heading", { name: "Tu asistencia está confirmada" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Ver regalos" })).toBeTruthy();
     const post = mock.state.log.find((call) => call.method === "POST");
     expect(post).toMatchObject({ path: `/rsvp/celebrations/${mock.celebrationId}/rsvp`, body: { status: "CONFIRMED", requestedCompanions: 1, dietaryNotes: "Vegetariana", message: "¡Felicidades!" } });
     expect(post?.headers["idempotency-key"]).toBeTruthy();
@@ -55,6 +58,7 @@ describe("REQ-F15-01 · A9 formulario de RSVP por token (contrato real)", () => 
     fireEvent.click(await screen.findByLabelText("No podré asistir"));
     fireEvent.click(screen.getByRole("button", { name: "Enviar respuesta" }));
     expect(await screen.findByRole("heading", { name: "Registramos que no podrás asistir" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Ver regalos" })).toBeNull();
     expect(mock.state.log.find((call) => call.method === "POST")?.body).toMatchObject({ status: "DECLINED", requestedCompanions: 0 });
   });
 
@@ -81,6 +85,7 @@ describe("REQ-F15-02 · A10 confirmado y editable con cuenta atrás", () => {
     const mock = seeded({ status: "CONFIRMED", version: 1, requestedCompanions: 1, approvedCompanions: 1, dietaryNotes: "Sin gluten" });
     open(mock, MOCK_VALID_TOKEN);
     expect(await screen.findByRole("heading", { name: "Tu asistencia está confirmada" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Ver regalos" })).toBeTruthy();
     expect(screen.getByText("Restricciones: Sin gluten")).toBeTruthy();
     expect(screen.getByRole("timer").textContent).toMatch(/Quedan 5 d \d+ h \d+ min/);
     fireEvent.click(screen.getByRole("button", { name: "Cambiar mi respuesta" }));
@@ -106,6 +111,7 @@ describe("REQ-F15-03 · A11 fuera de plazo", () => {
     expect(screen.getByText(/Cerró el .*30 nov.*America\/La_Paz/s)).toBeTruthy();
     expect(screen.getByText("Si necesitas cambiar tu respuesta, escribe a Ana y Luis.")).toBeTruthy();
     expect(screen.queryByRole("button", { name: /Enviar|Guardar|Cambiar/ })).toBeNull();
+    expect(screen.getByRole("button", { name: "Ver regalos" })).toBeTruthy();
   });
 
   it("a 409 RsvpWindowClosed at send time (the deadline passed while the form was open) moves to the closed screen and keeps nothing sent", async () => {

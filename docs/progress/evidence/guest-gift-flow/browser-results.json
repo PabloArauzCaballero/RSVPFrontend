@@ -1,0 +1,131 @@
+{
+  "scope": "Real PostgreSQL, Guest HTTP and Gift Nest HTTP. Celebration/catalog and image bytes are fixtures; no Kong or RabbitMQ.",
+  "browser": [
+    {
+      "width": 360,
+      "colorScheme": "light",
+      "locale": "es-BO",
+      "name": "PASS",
+      "navigation": "PASS",
+      "photo": "PASS",
+      "overflow": "PASS",
+      "axeCriticalSerious": 0
+    },
+    {
+      "width": 360,
+      "colorScheme": "light",
+      "locale": "en-US",
+      "name": "PASS",
+      "navigation": "PASS",
+      "photo": "PASS",
+      "overflow": "PASS",
+      "axeCriticalSerious": 0
+    },
+    {
+      "width": 360,
+      "colorScheme": "dark",
+      "locale": "es-BO",
+      "name": "PASS",
+      "navigation": "PASS",
+      "photo": "PASS",
+      "overflow": "PASS",
+      "axeCriticalSerious": 0
+    },
+    {
+      "width": 360,
+      "colorScheme": "dark",
+      "locale": "en-US",
+      "name": "PASS",
+      "navigation": "PASS",
+      "photo": "PASS",
+      "overflow": "PASS",
+      "axeCriticalSerious": 0
+    },
+    {
+      "width": 768,
+      "colorScheme": "light",
+      "locale": "es-BO",
+      "name": "PASS",
+      "navigation": "PASS",
+      "photo": "PASS",
+      "overflow": "PASS",
+      "axeCriticalSerious": 0
+    },
+    {
+      "width": 768,
+      "colorScheme": "light",
+      "locale": "en-US",
+      "name": "PASS",
+      "navigation": "PASS",
+      "photo": "PASS",
+      "overflow": "PASS",
+      "axeCriticalSerious": 0
+    },
+    {
+      "width": 768,
+      "colorScheme": "dark",
+      "locale": "es-BO",
+      "name": "PASS",
+      "navigation": "PASS",
+      "photo": "PASS",
+      "overflow": "PASS",
+      "axeCriticalSerious": 0
+    },
+    {
+      "width": 768,
+      "colorScheme": "dark",
+      "locale": "en-US",
+      "name": "PASS",
+      "navigation": "PASS",
+      "photo": "PASS",
+      "overflow": "PASS",
+      "axeCriticalSerious": 0
+    },
+    {
+      "width": 1280,
+      "colorScheme": "light",
+      "locale": "es-BO",
+      "name": "PASS",
+      "navigation": "PASS",
+      "photo": "PASS",
+      "overflow": "PASS",
+      "axeCriticalSerious": 0
+    },
+    {
+      "width": 1280,
+      "colorScheme": "light",
+      "locale": "en-US",
+      "name": "PASS",
+      "navigation": "PASS",
+      "photo": "PASS",
+      "overflow": "PASS",
+      "axeCriticalSerious": 0
+    },
+    {
+      "width": 1280,
+      "colorScheme": "dark",
+      "locale": "es-BO",
+      "name": "PASS",
+      "navigation": "PASS",
+      "photo": "PASS",
+      "overflow": "PASS",
+      "axeCriticalSerious": 0
+    },
+    {
+      "width": 1280,
+      "colorScheme": "dark",
+      "locale": "en-US",
+      "name": "PASS",
+      "navigation": "PASS",
+      "photo": "PASS",
+      "overflow": "PASS",
+      "axeCriticalSerious": 0
+    }
+  ],
+  "api": {
+    "name": "Own name only, no contact; unknown credential 401; other celebration 404",
+    "privacyLimit": "Existing Next router bootstrap and site-wide language links contain the personal path token. The changed RSVP panel does not put it in DOM attributes or storage. Existing no-store/no-referrer headers are retained; this is not a claim of token-free page HTML.",
+    "reservation": "Browser confirmed RSVP, opened gifts and reserved PENDING_REVIEW. Second valid guest got 409 GIFT_NOT_AVAILABLE.",
+    "concurrent": "Two real Guest-validated opaque credentials, both SQL updates simultaneously blocked on one row, yielded one 201, one 409 and exactly one persisted reservation."
+  }
+}

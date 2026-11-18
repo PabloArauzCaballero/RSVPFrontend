@@ -1,5 +1,5 @@
 import { ApiError } from "@rsvp/api-client";
-import { isGiftTaken } from "@rsvp/query-hooks";
+import { isGiftTaken, isGiftRsvpRequired } from "@rsvp/query-hooks";
 
 /** Gift List contract 1.2.0 · ReserveGiftRequest: guestDisplayName <= 120, message <= 500 characters. */
 export const NAME_MAX = 120;
@@ -12,12 +12,13 @@ export function reserveFieldErrors(input: { readonly name: string; readonly mess
   return { ...(input.name.trim().length > NAME_MAX ? { name: "tooLong" as const } : {}), ...(input.message.trim().length > MESSAGE_MAX ? { message: "tooLong" as const } : {}) };
 }
 
-export type ReserveFailure = "taken" | "limit" | "expired" | "forbidden" | "notFound" | "busy" | "validation" | "offline" | "generic";
+export type ReserveFailure = "taken" | "limit" | "expired" | "forbidden" | "attendance" | "notFound" | "busy" | "validation" | "offline" | "generic";
 
 /** One reading of a failed reservation, so the dialog always says what to do next. */
 export function reserveFailureKind(error: unknown): ReserveFailure {
   if (!(error instanceof ApiError)) return "offline";
   if (isGiftTaken(error)) return "taken";
+  if (isGiftRsvpRequired(error)) return "attendance";
   if (error.problem?.code === "RESERVATION_LIMIT_REACHED") return "limit";
   if (error.status === 401) return "expired";
   if (error.status === 403) return "forbidden";

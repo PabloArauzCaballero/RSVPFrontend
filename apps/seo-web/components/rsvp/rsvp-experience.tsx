@@ -12,6 +12,7 @@ import {
 import { useParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { createGuestClient } from '../../lib/guest-client';
+import { clearGuestCredential, guestGiftPath } from '../../lib/guest-credential';
 import { clearDraft, emptyDraft, loadDraft, saveDraft, type RsvpDraft } from './rsvp-draft';
 import { AnswerFields, FailureNotice, TextField, validateAnswer, validateRegistration, type FieldErrors, type RegistrationDraft } from './rsvp-form';
 import { RsvpProviders } from './rsvp-providers';
@@ -48,6 +49,11 @@ function Flow({ slug, token, locale, siteOrigin, client: injected }: Props): Rea
   const [editing, setEditing] = useState(false);
   const [notice, setNotice] = useState('');
 
+  useEffect(() => {
+    if (!token) return;
+    if (revoked || classifyRsvpError(rsvp.error).kind === 'invalid') clearGuestCredential(slug);
+  }, [token, slug, revoked, rsvp.error]);
+
   const missing = celebration.error instanceof ApiError && celebration.error.status === 404;
   if (missing || revoked) return <InvalidView t={t} />;
   if (celebration.isError) return <LoadFailureView t={t} message={t('rsvp.errors.offline')} onRetry={() => { void celebration.refetch(); }} />;
@@ -69,8 +75,9 @@ function Flow({ slug, token, locale, siteOrigin, client: injected }: Props): Rea
   const state = rsvp.data;
   const screen = closed ? 'closed' : rsvpScreenFor(state);
 
-  const header = <p className="rsvp-for">{t('rsvp.page.invitationTo', { title })}</p>;
-  if (screen === 'closed') return <>{header}<ClosedView info={closed ?? {}} state={state} hosts={hosts} contact={contact} locale={locale} t={t} /></>;
+  const header = <><p className="rsvp-for">{t('rsvp.page.invitationTo', { title })}</p>{resource.isSuccess && resource.data.name ? <p className="rsvp-for" data-testid="guest-name">{t('rsvp.page.invitationFor', { name: resource.data.name })}</p> : null}</>;
+  const giftsLink = state.status === 'CONFIRMED' ? <div className="rsvp-actions"><button type="button" className="rsvp-button" onClick={() => window.location.assign(guestGiftPath(slug, token, locale))}>{t('rsvp.confirmed.gifts')}</button><p className="rsvp-hint">{t('rsvp.confirmed.giftsHint')}</p></div> : null;
+  if (screen === 'closed') return <>{header}<ClosedView info={closed ?? {}} state={state} hosts={hosts} contact={contact} locale={locale} t={t} />{giftsLink}</>;
 
   const form = (
     <AnswerForm
@@ -103,6 +110,7 @@ function Flow({ slug, token, locale, siteOrigin, client: injected }: Props): Rea
         <StateHeading id="rsvp-title">{state.status === 'DECLINED' ? t('rsvp.confirmed.titleDeclined') : t('rsvp.confirmed.title')}</StateHeading>
         {notice ? <p className="rsvp-notice rsvp-notice--success" role="status">{notice}</p> : null}
         <AnswerSummary state={state} locale={locale} t={t} />
+        {!editing ? giftsLink : null}
         <DeadlineLine state={state} locale={locale} t={t} />
         <Countdown deadline={state.deadline} t={t} />
         {editing ? form : (
