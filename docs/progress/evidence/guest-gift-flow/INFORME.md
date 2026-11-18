@@ -1,5 +1,7 @@
 # Enlace personal → asistencia → regalos
 
+> Registro histórico del 17 de noviembre. El cierre posterior implementa CANCELLED y la recuperación de asistencia, y comprueba el recorrido con Chrome, Kong, RabbitMQ y PostgreSQL reales. Consultar [INFORME_CIERRE_INVITADOS_REGALOS.md](./INFORME_CIERRE_INVITADOS_REGALOS.md) y [la matriz](./MATRIZ_VALIDACION_INVITADOS_REGALOS.json). Se preservan abajo los resultados y límites de la ejecución anterior; no se convierten retrospectivamente en PASS. No hubo merge ni despliegue en Coolify.
+
 Fecha: 2026-11-17. Base: `chore/deploy-contabo-coolify`, commit `669547884aabaf6cf625ce91a0fccb44676312e9`. Rama candidata: `fix/guest-rsvp-gifts-coolify` en ambos repositorios. No se modificó el despliegue.
 
 ## Resultado implementado
