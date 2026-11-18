@@ -68,10 +68,10 @@ Las verificaciones de código y los recorridos web de esta entrega están comple
 
 El nuevo diálogo y las capturas se ofrecen para revisión; no se inventa una aprobación humana de diseño. No se ejecutó un binario móvil ni un lector de pantalla. Tras un eventual despliegue corresponde comprobar el login y la recarga en el dominio HTTPS final. El cambio de origen de la cookie requiere iniciar sesión una vez; las siguientes recargas la conservan. El plan de reversión sigue siendo desplegar la imagen anterior, sin migraciones.
 
-## Reanudaci?n y compatibilidad de ramas ? 2026-11-17
+## Branch integration check - 2026-11-17
 
-Tras `git fetch origin`, `origin/chore/deploy-contabo-coolify` sigue en `669547884aabaf6cf625ce91a0fccb44676312e9` y la rama de correcciones en `52af3eb9e918766b0c77ddcfceee59dd264ca694`. `git merge-base --is-ancestor origin/chore/deploy-contabo-coolify HEAD` termina en 0 y `git merge-tree --write-tree HEAD origin/chore/deploy-contabo-coolify` termina en 0: integraci?n limpia, sin resoluci?n de conflictos necesaria. La base del PR debe ser `chore/deploy-contabo-coolify`; la rama compare debe ser `fix/invitation-refresh-and-session`.
+After `git fetch origin`, the deployment base `origin/chore/deploy-contabo-coolify` is `669547884aabaf6cf625ce91a0fccb44676312e9`. Both `git merge-base --is-ancestor origin/chore/deploy-contabo-coolify HEAD` and `git merge-tree --write-tree HEAD origin/chore/deploy-contabo-coolify` exit 0: no merge conflicts. The intended PR base is `chore/deploy-contabo-coolify`, with head `fix/invitation-refresh-and-session`.
 
-La comparaci?n exploratoria contra `origin/dev` (`a392529`) termina en 1, con conflictos en la evidencia de F23 y `packages/query-hooks/src/gift/{api,index}.ts`. Esa integraci?n es otro alcance y no se mezcla aqu? con el destino de despliegue solicitado.
+An exploratory merge-tree against `origin/dev` (`a392529`) exits 1, with conflicts in the F23 evidence and `packages/query-hooks/src/gift/{api,index}.ts`. Integration into dev is outside this deployment change.
 
-Se restaur? ?nicamente LF en la copia local de `minimalist-ui/SKILL.md`, sin cambiar su contenido versionado: `node scripts/reload-skills.mjs cli` termina en 0. Se retiran espacios finales de dos salidas de Turbo para que `git diff --cached --check` pase; los resultados hist?ricos no se alteran. No hay cambios adicionales de producci?n en esta reanudaci?n. Las pruebas completas anteriores corresponden al commit identificado arriba; no se presentan como nuevas ejecuciones.
+Restoring LF only in the local minimalist-ui skill allows `node scripts/reload-skills.mjs cli` to exit 0 without changing its versioned content. Trailing spaces were removed from two Turbo logs; recorded results are unchanged. Complete test results above refer to production commit `52af3eb`; they are not presented as new executions. No additional production changes were made.
