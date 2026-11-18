@@ -1,0 +1,32 @@
+• Packages in scope: @rsvp/api-client, @rsvp/auth, @rsvp/celebration-theme, @rsvp/config-eslint, @rsvp/config-jest, @rsvp/config-tailwind, @rsvp/config-ts, @rsvp/contracts, @rsvp/design-tokens, @rsvp/forms, @rsvp/i18n, @rsvp/query-hooks, @rsvp/seo-web, @rsvp/telemetry, @rsvp/testing, @rsvp/ui, @rsvp/ui-web, @rsvp/universal
+• Running build, lint, typecheck in 18 packages
+• Remote caching disabled
+
+ Tasks:    54 successful, 54 total
+Cached:    0 cached, 54 total
+  Time:    2m5.927s
+
+
+
+Attention:
+Turborepo now collects completely anonymous telemetry regarding usage.
+This information is used to shape the Turborepo roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://turborepo.com/docs/telemetry
+
+ WARNING  no output files found for task @rsvp/api-client#build. Please check your `outputs` key in `turbo.json`
+ WARNING  no output files found for task @rsvp/auth#build. Please check your `outputs` key in `turbo.json`
+ WARNING  no output files found for task @rsvp/celebration-theme#build. Please check your `outputs` key in `turbo.json`
+ WARNING  no output files found for task @rsvp/config-eslint#build. Please check your `outputs` key in `turbo.json`
+ WARNING  no output files found for task @rsvp/config-jest#build. Please check your `outputs` key in `turbo.json`
+ WARNING  no output files found for task @rsvp/config-tailwind#build. Please check your `outputs` key in `turbo.json`
+ WARNING  no output files found for task @rsvp/config-ts#build. Please check your `outputs` key in `turbo.json`
+ WARNING  no output files found for task @rsvp/contracts#build. Please check your `outputs` key in `turbo.json`
+ WARNING  no output files found for task @rsvp/design-tokens#build. Please check your `outputs` key in `turbo.json`
+ WARNING  no output files found for task @rsvp/forms#build. Please check your `outputs` key in `turbo.json`
+ WARNING  no output files found for task @rsvp/i18n#build. Please check your `outputs` key in `turbo.json`
+ WARNING  no output files found for task @rsvp/query-hooks#build. Please check your `outputs` key in `turbo.json`
+ WARNING  no output files found for task @rsvp/telemetry#build. Please check your `outputs` key in `turbo.json`
+ WARNING  no output files found for task @rsvp/testing#build. Please check your `outputs` key in `turbo.json`
+ WARNING  no output files found for task @rsvp/ui#build. Please check your `outputs` key in `turbo.json`
+ WARNING  no output files found for task @rsvp/ui-web#build. Please check your `outputs` key in `turbo.json`

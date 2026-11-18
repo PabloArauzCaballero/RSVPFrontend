@@ -1,0 +1,6 @@
+FROM node:24.18.1-bookworm-slim
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0 NODE_OPTIONS=--max-old-space-size=3072 CI=1
+WORKDIR /workspace
+RUN corepack enable && corepack prepare yarn@4.10.3 --activate
+COPY . .
+RUN --mount=type=cache,target=/root/.yarn/berry/cache yarn install --immutable

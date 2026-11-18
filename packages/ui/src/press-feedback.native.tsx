@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { forwardRef, useRef } from 'react';
 import { Animated, Easing, Pressable, View } from 'react-native';
 import { EASE, MIN_TARGET, MOTION, useReducedMotion } from './motion';
 import type { PressFeedbackProps } from './press-feedback';
@@ -9,7 +9,7 @@ const OUT = Easing.bezier(EASE.out[0], EASE.out[1], EASE.out[2], EASE.out[3]);
  * Native: scale 0.98 with `Animated` on the native driver; the scale sits on an inner view so the 44 pt hit area is intact.
  * Press-in animates from the current value, so a quick second tap never jumps. Reduce Motion dims instead of scaling.
  */
-export function PressFeedback({ children, style, minTarget = true, hoverTint: _hover, accessibilityRole = 'button', onPressIn, onPressOut, disabled, ...rest }: PressFeedbackProps) {
+export const PressFeedback = forwardRef<View, PressFeedbackProps>(function PressFeedback({ children, style, minTarget = true, hoverTint: _hover, accessibilityRole = 'button', onPressIn, onPressOut, disabled, ...rest }, ref) {
   const reduced = useReducedMotion();
   const level = useRef(new Animated.Value(0)).current;
   const to = (value: number, duration: number): void => { Animated.timing(level, { toValue: value, duration, easing: OUT, useNativeDriver: true }).start(); };
@@ -17,6 +17,7 @@ export function PressFeedback({ children, style, minTarget = true, hoverTint: _h
   const opacity = level.interpolate({ inputRange: [0, 1], outputRange: [1, MOTION.pressReducedOpacity] });
   return (
     <Pressable
+      ref={ref}
       {...rest}
       accessibilityRole={accessibilityRole}
       disabled={disabled}
@@ -29,4 +30,4 @@ export function PressFeedback({ children, style, minTarget = true, hoverTint: _h
       </Animated.View>
     </Pressable>
   );
-}
+});

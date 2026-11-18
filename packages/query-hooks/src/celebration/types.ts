@@ -116,7 +116,7 @@ export interface MediaAsset {
   readonly filename: string;
   readonly contentType: string;
   readonly sizeBytes: number;
-  readonly status: "PENDING_UPLOAD" | "PROCESSED" | "REJECTED" | "DELETED";
+  readonly status: "PENDING_UPLOAD" | "PROCESSING" | "PROCESSED" | "REJECTED" | "DELETED";
   readonly width: number | null;
   readonly height: number | null;
   readonly sortOrder: number;

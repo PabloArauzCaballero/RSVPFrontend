@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { forwardRef, useState, type ReactNode } from 'react';
 import { Pressable, View, type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
 import { MIN_TARGET, MOTION, cssEase, useReducedMotion } from './motion';
 import { useColors } from './theme';
@@ -18,7 +18,7 @@ export interface PressFeedbackProps extends Omit<PressableProps, 'children' | 's
  * The scale lives on an inner view, so the pressable area (44 px minimum) never shrinks. With Reduce Motion there is no
  * scale: the content dims to 0.72 instead, so the press is still seen. No hover motion (touch fires false hovers).
  */
-export function PressFeedback({ children, style, minTarget = true, hoverTint = false, accessibilityRole = 'button', onPressIn, onPressOut, disabled, ...rest }: PressFeedbackProps) {
+export const PressFeedback = forwardRef<View, PressFeedbackProps>(function PressFeedback({ children, style, minTarget = true, hoverTint = false, accessibilityRole = 'button', onPressIn, onPressOut, disabled, ...rest }, ref) {
   const reduced = useReducedMotion();
   const palette = useColors();
   const [pressed, setPressed] = useState(false);
@@ -31,6 +31,7 @@ export function PressFeedback({ children, style, minTarget = true, hoverTint = f
     : { transform: active ? `scale(${MOTION.pressScale})` : 'none', transitionProperty: 'transform', transitionDuration: `${ms}ms`, transitionTimingFunction: ease };
   return (
     <Pressable
+      ref={ref}
       {...rest}
       accessibilityRole={accessibilityRole}
       disabled={disabled}
@@ -42,4 +43,4 @@ export function PressFeedback({ children, style, minTarget = true, hoverTint = f
       <View style={[{ flexGrow: 1, justifyContent: 'center' }, inner as ViewStyle]}>{children}</View>
     </Pressable>
   );
-}
+});

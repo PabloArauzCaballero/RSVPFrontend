@@ -3,6 +3,7 @@ import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWind
 import { radius, spacing } from "@rsvp/design-tokens";
 import { Logo, NavIcon, OverlayEnter, PageIntro, PressFeedback, ScreenTransition, SwitchRow, StickyActions, fonts, overlayAnimation, useColors, useThemedStyles, type Palette } from "@rsvp/ui";
 import { useAuth } from "../auth/auth-context";
+import { useConfirmSignOut } from "../auth/sign-out";
 import { useT } from "../platform/providers";
 import { useThemePreference } from "../platform/theme";
 
@@ -189,6 +190,7 @@ function ThemeSwitch(): ReactNode {
 }
 
 function Sidebar({ nav, current, onNavigate }: { readonly nav: readonly NavItem[]; readonly current?: string; readonly onNavigate?: (href: string) => void }): ReactNode {
+  const confirmSignOut = useConfirmSignOut();
   const s = useThemedStyles(createShellStyles);
   const t = useT();
   const auth = useAuth();
@@ -210,7 +212,7 @@ function Sidebar({ nav, current, onNavigate }: { readonly nav: readonly NavItem[
       </ScrollView>
       <View style={{ marginTop: spacing[2] }}><ThemeSwitch /></View>
       {auth.state.status === "authenticated" ? (
-        <Pressable role="button" accessibilityLabel={t("common.signOut")} onPress={() => { void auth.signOut(); }} style={[s.signOut, ringColor]}>
+        <Pressable role="button" accessibilityLabel={t("common.signOut")} onPress={() => confirmSignOut()} style={[s.signOut, ringColor]}>
           <NavIcon name="logout" size={20} color={palette.textMuted} />
           <Text style={s.sidebarText}>{t("common.signOut")}</Text>
         </Pressable>
@@ -220,6 +222,8 @@ function Sidebar({ nav, current, onNavigate }: { readonly nav: readonly NavItem[
 }
 
 function MobileFrame({ nav, current, onNavigate, children }: PropsWithChildren<{ readonly nav: readonly NavItem[]; readonly current?: string; readonly onNavigate?: (href: string) => void }>): ReactNode {
+  const confirmSignOut = useConfirmSignOut();
+  const moreButton = useRef<View>(null);
   const s = useThemedStyles(createShellStyles);
   const palette = useColors();
   const tabRing = ring(palette.primary);
@@ -254,7 +258,7 @@ function MobileFrame({ nav, current, onNavigate, children }: PropsWithChildren<{
             );
           })}
           {overflow || signedIn ? (
-            <PressFeedback accessibilityRole="button" aria-expanded={open} accessibilityLabel={t("common.more")} onPress={() => setOpen(true)} style={[s.tab, tabRing]}>
+            <PressFeedback ref={moreButton} accessibilityRole="button" aria-expanded={open} accessibilityLabel={t("common.more")} onPress={() => setOpen(true)} style={[s.tab, tabRing]}>
               <View style={s.tabInner}>
                 <View style={[s.tabDot, hiddenActive && s.tabDotActive]} />
                 <NavIcon name="more" size={22} color={hiddenActive ? palette.text : palette.textMuted} />
@@ -264,7 +268,7 @@ function MobileFrame({ nav, current, onNavigate, children }: PropsWithChildren<{
           ) : null}
         </View>
       ) : null}
-      <Modal visible={open} transparent animationType={overlayAnimation("slide")} onRequestClose={() => setOpen(false)}>
+      <Modal visible={open} accessibilityLabel={t("common.more")} transparent animationType={overlayAnimation("slide")} onRequestClose={() => setOpen(false)}>
         <Pressable accessibilityLabel={t("common.close")} style={s.overlay} onPress={() => setOpen(false)}>
           <OverlayEnter from="down"><Pressable accessibilityViewIsModal style={s.sheet} onPress={(event) => event.stopPropagation()}>
             <View style={s.grabber} />
@@ -279,7 +283,7 @@ function MobileFrame({ nav, current, onNavigate, children }: PropsWithChildren<{
               })}
               <View style={{ paddingHorizontal: spacing[3], paddingVertical: spacing[2] }}><ThemeSwitch /></View>
               {signedIn ? (
-                <Pressable role="button" accessibilityLabel={t("common.signOut")} onPress={() => { setOpen(false); void auth.signOut(); }} style={s.sheetItem}>
+                <Pressable role="button" accessibilityLabel={t("common.signOut")} onPress={() => { setOpen(false); confirmSignOut(() => moreButton.current?.focus()); }} style={s.sheetItem}>
                   <Text style={s.sheetText}>{t("common.signOut")}</Text>
                 </Pressable>
               ) : null}
@@ -293,6 +297,7 @@ function MobileFrame({ nav, current, onNavigate, children }: PropsWithChildren<{
 
 /** Focused flows without sections (onboarding, access denied): the logo and sign-out, nothing else. */
 function BareFrame({ children }: PropsWithChildren): ReactNode {
+  const confirmSignOut = useConfirmSignOut();
   const s = useThemedStyles(createShellStyles);
   const palette = useColors();
   const t = useT();
@@ -302,7 +307,7 @@ function BareFrame({ children }: PropsWithChildren): ReactNode {
       <View style={s.topBar}>
         <Logo tone="auto" height={24} />
         {auth.state.status === "authenticated" ? (
-          <Pressable role="button" accessibilityLabel={t("common.signOut")} onPress={() => { void auth.signOut(); }} style={[{ minHeight: MIN_TOUCH, justifyContent: "center" }, ring(palette.primary)]}>
+          <Pressable role="button" accessibilityLabel={t("common.signOut")} onPress={() => confirmSignOut()} style={[{ minHeight: MIN_TOUCH, justifyContent: "center" }, ring(palette.primary)]}>
             <Text style={s.sidebarText}>{t("common.signOut")}</Text>
           </Pressable>
         ) : null}

@@ -1,0 +1,171 @@
+{
+  "date": "2026-11-17T20:22:34.588Z",
+  "node": "v24.18.1",
+  "platform": "linux",
+  "sourceCommit": "52af3eb9e918766b0c77ddcfceee59dd264ca694",
+  "complete": true,
+  "status": "PASS",
+  "results": [
+    {
+      "name": "harness",
+      "command": "yarn harness:validate",
+      "exitCode": 0,
+      "signal": null,
+      "seconds": 1
+    },
+    {
+      "name": "lint-code",
+      "command": "yarn lint:code",
+      "exitCode": 0,
+      "signal": null,
+      "seconds": 5
+    },
+    {
+      "name": "contracts",
+      "command": "yarn workspace @rsvp/contracts check:generated",
+      "exitCode": 0,
+      "signal": null,
+      "seconds": 1
+    },
+    {
+      "name": "build-lint-typecheck",
+      "command": "yarn turbo run build lint typecheck --concurrency=1 --output-logs=errors-only",
+      "exitCode": 0,
+      "signal": null,
+      "seconds": 126
+    },
+    {
+      "name": "test-api-client",
+      "command": "yarn workspace @rsvp/api-client test --maxWorkers=1 --no-file-parallelism",
+      "exitCode": 0,
+      "signal": null,
+      "seconds": 1
+    },
+    {
+      "name": "test-auth",
+      "command": "yarn workspace @rsvp/auth test --maxWorkers=1 --no-file-parallelism",
+      "exitCode": 0,
+      "signal": null,
+      "seconds": 2
+    },
+    {
+      "name": "test-celebration-theme",
+      "command": "yarn workspace @rsvp/celebration-theme test --maxWorkers=1 --no-file-parallelism",
+      "exitCode": 0,
+      "signal": null,
+      "seconds": 3
+    },
+    {
+      "name": "test-config-eslint",
+      "command": "yarn workspace @rsvp/config-eslint test",
+      "exitCode": 0,
+      "signal": null,
+      "seconds": 5
+    },
+    {
+      "name": "test-config-jest",
+      "command": "yarn workspace @rsvp/config-jest test",
+      "exitCode": 0,
+      "signal": null,
+      "seconds": 0
+    },
+    {
+      "name": "test-config-tailwind",
+      "command": "yarn workspace @rsvp/config-tailwind test",
+      "exitCode": 0,
+      "signal": null,
+      "seconds": 0
+    },
+    {
+      "name": "test-config-ts",
+      "command": "yarn workspace @rsvp/config-ts test --maxWorkers=1 --no-file-parallelism",
+      "exitCode": 0,
+      "signal": null,
+      "seconds": 1
+    },
+    {
+      "name": "test-contracts",
+      "command": "yarn workspace @rsvp/contracts test --maxWorkers=1 --no-file-parallelism",
+      "exitCode": 0,
+      "signal": null,
+      "seconds": 2
+    },
+    {
+      "name": "test-design-tokens",
+      "command": "yarn workspace @rsvp/design-tokens test --maxWorkers=1 --no-file-parallelism",
+      "exitCode": 0,
+      "signal": null,
+      "seconds": 2
+    },
+    {
+      "name": "test-forms",
+      "command": "yarn workspace @rsvp/forms test --maxWorkers=1 --no-file-parallelism",
+      "exitCode": 0,
+      "signal": null,
+      "seconds": 1
+    },
+    {
+      "name": "test-i18n",
+      "command": "yarn workspace @rsvp/i18n test --maxWorkers=1 --no-file-parallelism",
+      "exitCode": 0,
+      "signal": null,
+      "seconds": 2
+    },
+    {
+      "name": "test-query-hooks",
+      "command": "yarn workspace @rsvp/query-hooks test --maxWorkers=1 --no-file-parallelism",
+      "exitCode": 0,
+      "signal": null,
+      "seconds": 10
+    },
+    {
+      "name": "test-telemetry",
+      "command": "yarn workspace @rsvp/telemetry test --maxWorkers=1 --no-file-parallelism",
+      "exitCode": 0,
+      "signal": null,
+      "seconds": 1
+    },
+    {
+      "name": "test-testing",
+      "command": "yarn workspace @rsvp/testing test --maxWorkers=1 --no-file-parallelism",
+      "exitCode": 0,
+      "signal": null,
+      "seconds": 1
+    },
+    {
+      "name": "test-ui",
+      "command": "yarn workspace @rsvp/ui test --maxWorkers=1 --no-file-parallelism",
+      "exitCode": 0,
+      "signal": null,
+      "seconds": 18
+    },
+    {
+      "name": "test-ui-web",
+      "command": "yarn workspace @rsvp/ui-web test --maxWorkers=1 --no-file-parallelism",
+      "exitCode": 0,
+      "signal": null,
+      "seconds": 2
+    },
+    {
+      "name": "test-seo-web",
+      "command": "yarn workspace @rsvp/seo-web test --maxWorkers=1 --no-file-parallelism",
+      "exitCode": 0,
+      "signal": null,
+      "seconds": 11
+    },
+    {
+      "name": "test-universal",
+      "command": "yarn workspace @rsvp/universal test --maxWorkers=1 --no-file-parallelism",
+      "exitCode": 0,
+      "signal": null,
+      "seconds": 50
+    },
+    {
+      "name": "coverage",
+      "command": "yarn turbo run test:coverage --concurrency=1 --output-logs=errors-only -- --maxWorkers=1 --no-file-parallelism",
+      "exitCode": 0,
+      "signal": null,
+      "seconds": 168
+    }
+  ]
+}

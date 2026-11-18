@@ -156,6 +156,20 @@ describe("REQ-F05-01 · sign up and recovery", () => {
 });
 
 describe("REQ-F05-03 · route guards", () => {
+  it("an offline reload keeps private content guarded and recovers the same route on retry", async () => {
+    let offline = true;
+    const { client } = fakeClient({ "POST /identity/auth/refresh": () => offline ? new HttpFailure(503, { title: "Unavailable" }) : tokenResponse(["HOST"]) });
+    const manager = new SessionManager(createMemorySessionStore(), new IdentityClient(client, "cookie"));
+    render(<AppProviders runtime={{ manager, client, identityClient: client }} locale="es-BO"><RouteGuard group="host"><p>Mi invitación privada</p></RouteGuard></AppProviders>);
+    expect(await screen.findByText("No pudimos recuperar tu sesión")).toBeTruthy();
+    expect(manager.getState().status).toBe("unavailable");
+    expect(screen.queryByText("Mi invitación privada")).toBeNull();
+    expect(screen.queryByText(/^redirect:/)).toBeNull();
+    offline = false;
+    fireEvent.click(screen.getByTestId("retry-session"));
+    expect(await screen.findByText("Mi invitación privada")).toBeTruthy();
+    expect(manager.getState().status).toBe("authenticated");
+  });
   const guarded = (group: "host" | "admin" | "provider"): React.ReactNode => <RouteGuard group={group}><p>contenido privado</p></RouteGuard>;
   const withRoles = async (roles: Role[], node: React.ReactNode): Promise<void> => {
     const store = createMemorySessionStore(sessionFromTokens(tokenResponse(roles)));
@@ -190,6 +204,13 @@ describe("REQ-F05-03 · route guards", () => {
     const { manager, calls } = setup(guarded("admin"), { "POST /identity/auth/logout": () => undefined }, store);
     await waitFor(() => screen.getByText("Esta sección es de otra cuenta"));
     press("Cerrar sesión");
+    expect(await screen.findByText("¿Estás seguro de cerrar sesión?")).toBeTruthy();
+    expect(await screen.findByRole("dialog", { name: "¿Estás seguro de cerrar sesión?" })).toBeTruthy();
+    expect(calls.some((call) => call.path === "/identity/auth/logout")).toBe(false);
+    fireEvent.click(screen.getByTestId("cancel-sign-out"));
+    expect(manager.getState().status).toBe("authenticated");
+    press("Cerrar sesión");
+    fireEvent.click(await screen.findByTestId("confirm-sign-out"));
     await waitFor(() => expect(manager.getState().status).toBe("anonymous"));
     expect(calls.find((call) => call.path === "/identity/auth/logout")?.body).toEqual({ refreshToken: "r".repeat(40) });
     expect(await store.getSession()).toBeNull();
