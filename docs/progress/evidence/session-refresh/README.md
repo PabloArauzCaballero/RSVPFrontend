@@ -2,6 +2,8 @@
 
 Base: `origin/chore/deploy-contabo-coolify`, `669547884aabaf6cf625ce91a0fccb44676312e9`. Rama: `fix/invitation-refresh-and-session`.
 
+**Corrección del diagnóstico inicial:** la [auditoría de publicación](publication-audit/README.md) comprueba el commit exportado con LF, sin el backend hermano de otra rama. Contratos, tokens y harness pasan sin modificar esos archivos. Los fallos de Windows registrados abajo no demuestran archivos desactualizados en GitHub. También se completaron Chrome real y la comparación visual con la web desplegada.
+
 ## Entregas observables
 
 | Requisito | Causa y cambio | Prueba positiva y límite |
@@ -22,12 +24,12 @@ Base: `origin/chore/deploy-contabo-coolify`, `669547884aabaf6cf625ce91a0fccb4467
 - El ejecutable usado, resultados y matriz se registran en `live-results.json`: PASS, 19 comprobaciones, finalizado el 2026-11-17 a las 19:37 UTC. `direct-session-results.json` registra además dos recargas por tamaño (360/1280), teclado y refresh 200 en una ejecución directa sin interceptar solicitudes. Chromium no acredita Chrome, iOS ni Android. Se inspeccionaron las capturas finales del diálogo móvil claro en español y escritorio oscuro en inglés: texto completo, botones visibles y sin desbordamiento. No son una comparación aprobada contra baseline.
 - Movimiento: se reutiliza el diálogo y su transición existente, con `overlayAnimation` y movimiento reducido; no se incorpora una animación nueva. Los estados de procesamiento son texto anunciado mediante `Notice`, sin un bucle decorativo nuevo.
 
-## Controles generales que ya fallaban en la base
+## Fallos locales del diagnóstico inicial y causa comprobada
 
-- `contracts check:generated`: el clon hermano local está en otra rama y sus ocho contratos difieren. Además, `provider-catalog.ts` e índice generados ya están desactualizados respecto del snapshot vendorizado.
-- `design-tokens generate --check`: `generated/tokens.json` y `generated/tokens.css` ya están desactualizados.
-- `harness:validate`: frontmatter/entrada de descubrimiento de `minimalist-ui` inválidos.
-- Se reprodujeron fallos de sincronización en una extracción aislada del commit base. `git diff --exit-code 6695478 -- packages/contracts packages/design-tokens .agents/skills/minimalist-ui .claude/skills/minimalist-ui` devuelve 0: esos archivos no se tocaron. La extracción no tiene el backend hermano y el formato de los generados difiere del checkout; no se presenta como una comparación exacta de sus diagnósticos.
+- `contracts check:generated`: el clon hermano local está en otra rama y sus ocho contratos difieren; además, Windows convirtió `provider-catalog` y el índice a CRLF. El mismo commit exportado con `git -c core.autocrlf=false archive` verifica los ocho contratos del snapshot vendorizado, exit 0. No hace falta regenerarlos ni importar contratos de otra rama.
+- `design-tokens generate --check`: la comparación byte a byte rechazaba CRLF en los dos generados. El contenido versionado con LF verifica correctamente, exit 0.
+- `harness:validate`: el lector exige delimitadores y metadatos con LF; la copia local de `minimalist-ui` tenía CRLF. Su descripción YAML multilínea no era la causa. Con LF verifica 28 carriles y 61 skills, exit 0.
+- La extracción anterior con `git archive` heredaba `core.autocrlf=true` y también producía CRLF. Por eso no acreditaba que el fallo estuviese en el contenido versionado. La nueva auditoría corrige el método. No se cambiaron generados, contratos, skills, hooks ni sus controles.
 
 ## Resultados observados
 
@@ -48,13 +50,13 @@ Base: `origin/chore/deploy-contabo-coolify`, `669547884aabaf6cf625ce91a0fccb4467
 
 El test existente de config-eslint intenta borrar su fixture con `rm`, que no está disponible en PowerShell. Después de la suite dejó `apps/universal/src/__lint_fixture__/bad.tsx`, causando un fallo intermedio de tsc. Se comprobó su origen en el test, se retiró únicamente ese archivo generado y su carpeta vacía, y se repitieron los controles estáticos en verde. No se cambió ni excluyó el test.
 
-Las ejecuciones usan cuentas sintéticas con sufijos `@example.invalid`, celebraciones con prefijos `refresh-`/`keys-` y datos ficticios; permanecen sin publicar. No se envía correo a destinatarios reales ni se alteran objetos de la celebración del usuario. El navegador instalado de prueba es Chromium 151.0.7922.34 de Playwright. No se pudo completar la variante Chrome for Testing: su ejecutable dejó de estar disponible tras el primer intento. No se cambió la configuración de seguridad del equipo.
+Las ejecuciones usan cuentas sintéticas con sufijos `@example.invalid`, celebraciones con prefijos `refresh-`/`keys-`/`compare-` y datos ficticios; permanecen sin publicar. No se envía correo a destinatarios reales ni se alteran objetos de la celebración del usuario. La primera ejecución usó Chromium 151.0.7922.34; el ejecutable descargado de Chrome for Testing no estuvo disponible. La auditoría posterior usa Chrome instalado 157.0.8103.79 y completa las 19 comprobaciones. No se cambió la configuración de seguridad del equipo.
 
 La semántica de SameSite usada en el diagnóstico está documentada por [MDN, Set-Cookie](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie#samesitesamesite-value). No se cambió a SameSite=None ni se guardaron credenciales en localStorage.
 
 ## Despliegue y reversión
 
-El destino previsto es `chore/deploy-contabo-coolify`, mediante revisión humana. No se hace merge ni se cambia el servidor desde este trabajo. La regla de `.agents/skills/rsvp-pr-gate/SKILL.md` dice: «Si algo no se puede probar en un entorno real, no se abre PR»; los controles generales rojos tampoco satisfacen la puerta de PR.
+El destino previsto es `chore/deploy-contabo-coolify`, mediante revisión humana. No se hace merge ni se cambia el servidor desde este trabajo. La auditoría de publicación enlazada arriba actualiza el estado de los controles, incluida la corrección del diagnóstico local inicial. Las filas FAIL de esta primera ejecución conservan su resultado histórico; no representan el resultado del commit en un entorno limpio.
 
 Coolify conserva el valor actual de `EXPO_PUBLIC_API_URL` como argumento de build: ahora configura el upstream fijo de nginx, mientras el JS de esa imagen usa `/api`. No se pone ningún dominio concreto en el código. Las apps nativas y Expo de desarrollo conservan su transporte configurado. Se preservan Secure, HttpOnly, SameSite y la verificación de certificados. Después del cambio de dominio de la cookie hace falta iniciar sesión una vez; las siguientes recargas usan la cookie del dominio de la app.
 

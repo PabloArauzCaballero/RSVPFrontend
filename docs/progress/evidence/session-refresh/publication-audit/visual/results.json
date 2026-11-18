@@ -1,0 +1,337 @@
+{
+  "status": "PASS",
+  "date": "2026-11-17T20:11:36.973Z",
+  "baseline": "https://dev.done.arauzsoftware.com",
+  "candidate": "http://localhost:8340",
+  "browser": "157.0.8103.79",
+  "noInterception": true,
+  "sameSyntheticData": true,
+  "threshold": 0.002,
+  "comparison": "exact RGB pixel difference, same Windows Chrome; no masks",
+  "results": [
+    {
+      "surface": "gallery",
+      "width": 360,
+      "scheme": "light",
+      "locale": "es-BO",
+      "differentPixels": 0,
+      "ratio": 0,
+      "unchanged": true
+    },
+    {
+      "surface": "guests",
+      "width": 360,
+      "scheme": "light",
+      "locale": "es-BO",
+      "differentPixels": 0,
+      "ratio": 0,
+      "unchanged": true
+    },
+    {
+      "surface": "gifts",
+      "width": 360,
+      "scheme": "light",
+      "locale": "es-BO",
+      "differentPixels": 0,
+      "ratio": 0,
+      "unchanged": true
+    },
+    {
+      "surface": "gallery",
+      "width": 360,
+      "scheme": "light",
+      "locale": "en-US",
+      "differentPixels": 0,
+      "ratio": 0,
+      "unchanged": true
+    },
+    {
+      "surface": "guests",
+      "width": 360,
+      "scheme": "light",
+      "locale": "en-US",
+      "differentPixels": 0,
+      "ratio": 0,
+      "unchanged": true
+    },
+    {
+      "surface": "gifts",
+      "width": 360,
+      "scheme": "light",
+      "locale": "en-US",
+      "differentPixels": 0,
+      "ratio": 0,
+      "unchanged": true
+    },
+    {
+      "surface": "gallery",
+      "width": 360,
+      "scheme": "dark",
+      "locale": "es-BO",
+      "differentPixels": 0,
+      "ratio": 0,
+      "unchanged": true
+    },
+    {
+      "surface": "guests",
+      "width": 360,
+      "scheme": "dark",
+      "locale": "es-BO",
+      "differentPixels": 0,
+      "ratio": 0,
+      "unchanged": true
+    },
+    {
+      "surface": "gifts",
+      "width": 360,
+      "scheme": "dark",
+      "locale": "es-BO",
+      "differentPixels": 0,
+      "ratio": 0,
+      "unchanged": true
+    },
+    {
+      "surface": "gallery",
+      "width": 360,
+      "scheme": "dark",
+      "locale": "en-US",
+      "differentPixels": 0,
+      "ratio": 0,
+      "unchanged": true
+    },
+    {
+      "surface": "guests",
+      "width": 360,
+      "scheme": "dark",
+      "locale": "en-US",
+      "differentPixels": 0,
+      "ratio": 0,
+      "unchanged": true
+    },
+    {
+      "surface": "gifts",
+      "width": 360,
+      "scheme": "dark",
+      "locale": "en-US",
+      "differentPixels": 0,
+      "ratio": 0,
+      "unchanged": true
+    },
+    {
+      "surface": "gallery",
+      "width": 768,
+      "scheme": "light",
+      "locale": "es-BO",
+      "differentPixels": 0,
+      "ratio": 0,
+      "unchanged": true
+    },
+    {
+      "surface": "guests",
+      "width": 768,
+      "scheme": "light",
+      "locale": "es-BO",
+      "differentPixels": 0,
+      "ratio": 0,
+      "unchanged": true
+    },
+    {
+      "surface": "gifts",
+      "width": 768,
+      "scheme": "light",
+      "locale": "es-BO",
+      "differentPixels": 0,
+      "ratio": 0,
+      "unchanged": true
+    },
+    {
+      "surface": "gallery",
+      "width": 768,
+      "scheme": "light",
+      "locale": "en-US",
+      "differentPixels": 1185,
+      "ratio": 0.0017144097222222222,
+      "unchanged": true
+    },
+    {
+      "surface": "guests",
+      "width": 768,
+      "scheme": "light",
+      "locale": "en-US",
+      "differentPixels": 1118,
+      "ratio": 0.001617476851851852,
+      "unchanged": true
+    },
+    {
+      "surface": "gifts",
+      "width": 768,
+      "scheme": "light",
+      "locale": "en-US",
+      "differentPixels": 911,
+      "ratio": 0.0013179976851851853,
+      "unchanged": true
+    },
+    {
+      "surface": "gallery",
+      "width": 768,
+      "scheme": "dark",
+      "locale": "es-BO",
+      "differentPixels": 0,
+      "ratio": 0,
+      "unchanged": true
+    },
+    {
+      "surface": "guests",
+      "width": 768,
+      "scheme": "dark",
+      "locale": "es-BO",
+      "differentPixels": 0,
+      "ratio": 0,
+      "unchanged": true
+    },
+    {
+      "surface": "gifts",
+      "width": 768,
+      "scheme": "dark",
+      "locale": "es-BO",
+      "differentPixels": 0,
+      "ratio": 0,
+      "unchanged": true
+    },
+    {
+      "surface": "gallery",
+      "width": 768,
+      "scheme": "dark",
+      "locale": "en-US",
+      "differentPixels": 0,
+      "ratio": 0,
+      "unchanged": true
+    },
+    {
+      "surface": "guests",
+      "width": 768,
+      "scheme": "dark",
+      "locale": "en-US",
+      "differentPixels": 0,
+      "ratio": 0,
+      "unchanged": true
+    },
+    {
+      "surface": "gifts",
+      "width": 768,
+      "scheme": "dark",
+      "locale": "en-US",
+      "differentPixels": 0,
+      "ratio": 0,
+      "unchanged": true
+    },
+    {
+      "surface": "gallery",
+      "width": 1280,
+      "scheme": "light",
+      "locale": "es-BO",
+      "differentPixels": 0,
+      "ratio": 0,
+      "unchanged": true
+    },
+    {
+      "surface": "guests",
+      "width": 1280,
+      "scheme": "light",
+      "locale": "es-BO",
+      "differentPixels": 0,
+      "ratio": 0,
+      "unchanged": true
+    },
+    {
+      "surface": "gifts",
+      "width": 1280,
+      "scheme": "light",
+      "locale": "es-BO",
+      "differentPixels": 0,
+      "ratio": 0,
+      "unchanged": true
+    },
+    {
+      "surface": "gallery",
+      "width": 1280,
+      "scheme": "light",
+      "locale": "en-US",
+      "differentPixels": 0,
+      "ratio": 0,
+      "unchanged": true
+    },
+    {
+      "surface": "guests",
+      "width": 1280,
+      "scheme": "light",
+      "locale": "en-US",
+      "differentPixels": 0,
+      "ratio": 0,
+      "unchanged": true
+    },
+    {
+      "surface": "gifts",
+      "width": 1280,
+      "scheme": "light",
+      "locale": "en-US",
+      "differentPixels": 0,
+      "ratio": 0,
+      "unchanged": true
+    },
+    {
+      "surface": "gallery",
+      "width": 1280,
+      "scheme": "dark",
+      "locale": "es-BO",
+      "differentPixels": 0,
+      "ratio": 0,
+      "unchanged": true
+    },
+    {
+      "surface": "guests",
+      "width": 1280,
+      "scheme": "dark",
+      "locale": "es-BO",
+      "differentPixels": 0,
+      "ratio": 0,
+      "unchanged": true
+    },
+    {
+      "surface": "gifts",
+      "width": 1280,
+      "scheme": "dark",
+      "locale": "es-BO",
+      "differentPixels": 0,
+      "ratio": 0,
+      "unchanged": true
+    },
+    {
+      "surface": "gallery",
+      "width": 1280,
+      "scheme": "dark",
+      "locale": "en-US",
+      "differentPixels": 0,
+      "ratio": 0,
+      "unchanged": true
+    },
+    {
+      "surface": "guests",
+      "width": 1280,
+      "scheme": "dark",
+      "locale": "en-US",
+      "differentPixels": 0,
+      "ratio": 0,
+      "unchanged": true
+    },
+    {
+      "surface": "gifts",
+      "width": 1280,
+      "scheme": "dark",
+      "locale": "en-US",
+      "differentPixels": 0,
+      "ratio": 0,
+      "unchanged": true
+    }
+  ]
+}
