@@ -14,6 +14,7 @@ export const giftsEsBO = {
   detail: { title: "{{title}} · Regalos", back: "Volver a la lista", notFound: "Este regalo ya no está en la lista.", partnerNote: "Este producto lo ofrece un aliado de DOne. Al abrir el enlace saldrás de DOne." },
   reserve: { title: "Reservar este regalo", intro: "Te pedimos tu nombre para que los anfitriones sepan quién regala.", name: "Tu nombre", nameHelp: "Opcional. Los anfitriones verán este nombre junto a tu reserva.", message: "Mensaje para los anfitriones", messageHelp: "Opcional, hasta 500 caracteres.", submit: "Reservar regalo", submitting: "Reservando…", cancel: "Cancelar", close: "Cerrar" },
   outcome: {
+    cancelledTitle: "Reserva cancelada", cancelledBody: "Esta reserva se canceló al cambiar tu asistencia. Si volvés a asistir, confirmá tu respuesta y elegí un regalo disponible.",
     confirmedTitle: "¡Regalo reservado!", confirmedBody: "Reservaste «{{title}}». Los anfitriones ya saben que lo regalas tú.",
     pendingTitle: "Solicitud enviada", pendingBody: "Los anfitriones aprueban cada reserva. Te avisaremos cuando confirmen «{{title}}»; mientras tanto nadie más puede reservarlo.",
     takenTitle: "Alguien se adelantó", takenBody: "«{{title}}» ya fue tomado por otra persona. No pasa nada: la lista se actualizó y te mostramos otras opciones.",
@@ -22,6 +23,7 @@ export const giftsEsBO = {
     seeList: "Ver la lista de regalos", reserveAnother: "Elegir otro regalo"
   },
   error: {
+    attendanceBody: "Para reservar un regalo, volvé a tu respuesta y confirmá que asistirás.",
     otherTitle: "Este enlace es de otra celebración", otherBody: "El enlace que abriste no corresponde a esta lista de regalos. Abre el enlace que te enviaron los anfitriones de esta celebración.",
     busyTitle: "Hay mucha gente ahora mismo", busyBody: "Recibimos demasiadas solicitudes seguidas. Espera unos segundos e inténtalo otra vez.",
     limit: "Ya tienes el máximo de regalos reservados. Espera a que los anfitriones confirmen alguno antes de reservar otro.",

@@ -17,6 +17,7 @@ export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
   detail: { title: "{{title}} · Gifts", back: "Back to the list", notFound: "This gift is no longer on the list.", partnerNote: "A DOne partner offers this product. Opening the link takes you out of DOne." },
   reserve: { title: "Reserve this gift", intro: "We ask for your name so the hosts know who is giving it.", name: "Your name", nameHelp: "Optional. The hosts will see this name next to your reservation.", message: "Message for the hosts", messageHelp: "Optional, up to 500 characters.", submit: "Reserve gift", submitting: "Reserving…", cancel: "Cancel", close: "Close" },
   outcome: {
+    cancelledTitle: "Reservation cancelled", cancelledBody: "This reservation was cancelled when your attendance changed. If you are attending again, confirm your response and choose an available gift.",
     confirmedTitle: "Gift reserved!", confirmedBody: "You reserved “{{title}}”. The hosts know you are giving it.",
     pendingTitle: "Request sent", pendingBody: "The hosts approve each reservation. We will let you know when “{{title}}” is confirmed; meanwhile nobody else can reserve it.",
     takenTitle: "Someone got there first", takenBody: "“{{title}}” was just taken by someone else. No worries: the list is up to date and here are other options.",
@@ -25,6 +26,7 @@ export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
     seeList: "See the gift list", reserveAnother: "Choose another gift"
   },
   error: {
+    attendanceBody: "To reserve a gift, return to your response and confirm that you are attending.",
     otherTitle: "This link belongs to another celebration", otherBody: "The link you opened does not match this gift list. Open the link the hosts of this celebration sent you.",
     busyTitle: "It is busy right now", busyBody: "We received too many requests in a row. Wait a few seconds and try again.",
     limit: "You already hold the maximum number of reserved gifts. Wait for the hosts to confirm one before reserving another.",

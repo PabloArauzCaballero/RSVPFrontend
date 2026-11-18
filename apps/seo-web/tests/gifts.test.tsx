@@ -107,6 +107,23 @@ describe("REQ-F22-04 · reserving needs no account: the guest credential is the 
 });
 
 describe("REQ-F22-05 · the two successful outcomes follow the celebration mode", () => {
+  it("a replay of a cancelled reservation never says request sent or gift reserved", async () => {
+    stubFetch(() => json(201, { id: "r-cancelled", itemId: "cat-1", celebrationId: CELEBRATION, status: "CANCELLED", requestedAt: "2026-11-01T00:00:00Z" }));
+    renderList();fireEvent.click(await screen.findByRole("button", { name: /Reservar Torta/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Reservar regalo" }));
+    expect(await screen.findByRole("heading", { name: "Reserva cancelada" })).toBeTruthy();
+    expect(screen.queryByText("Solicitud enviada")).toBeNull();
+    expect(document.querySelector('[data-outcome="CANCELLED"] a[href*="guest-credential"]')).toBeNull();
+  });
+  it.each(["GUEST_RSVP_DECLINED", "GUEST_RSVP_REQUIRED"])("%s explains how to confirm RSVP without losing entered data", async (code) => {
+    stubFetch(() => json(403, { type: "x", title: "Confirm attendance", status: 403, code }));
+    renderList();fireEvent.click(await screen.findByRole("button", { name: /Reservar Torta/ }));
+    fireEvent.change(screen.getByLabelText("Tu nombre"), { target: { value: "Nombre QA" } });
+    fireEvent.click(screen.getByRole("button", { name: "Reservar regalo" }));
+    expect((await screen.findByRole("alert")).textContent).toContain("confirmá que asistirás");
+    expect((screen.getByLabelText("Tu nombre") as HTMLInputElement).value).toBe("Nombre QA");
+    expect(within(screen.getByRole("dialog")).getByRole("button", { name: "Volver a mi respuesta" })).toBeTruthy();
+  });
   it("COMMITTED says reserved; PENDING_REVIEW says request sent", async () => {
     stubFetch(() => json(201, { id: "r1", itemId: "cat-1", celebrationId: CELEBRATION, status: "PENDING_REVIEW", requestedAt: "2026-11-01T00:00:00Z" }));
     renderList();

@@ -122,11 +122,17 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
       <p className="gifts__intro">{celebrationTitle} · {t('gifts.intro')}</p>
 
       <div ref={outcomeRef} tabIndex={-1} role="status" aria-live="polite">
-        {outcome?.kind === 'reserved' ? (
+        {outcome?.kind === 'reserved' && outcome.status !== 'CANCELLED' ? (
           <section className="gifts__notice gifts__notice--ok" data-outcome={outcome.status}>
             <h2>{outcome.status === 'COMMITTED' ? t('gifts.outcome.confirmedTitle') : t('gifts.outcome.pendingTitle')}</h2>
             <p>{t(outcome.status === 'COMMITTED' ? 'gifts.outcome.confirmedBody' : 'gifts.outcome.pendingBody', { title: outcome.item.title })}</p>
             <a className="rsvp-button rsvp-button--secondary" href={`/c/${encodeURIComponent(slug)}/regalos?lang=${locale}`}>{t('gifts.outcome.seeList')}</a>
+          </section>
+        ) : null}
+        {outcome?.kind === 'reserved' && outcome.status === 'CANCELLED' ? (
+          <section className="gifts__notice gifts__notice--warn" data-outcome="CANCELLED">
+            <h2>{t('gifts.outcome.cancelledTitle')}</h2><p>{t('gifts.outcome.cancelledBody')}</p>
+            {credential ? <button type="button" className="rsvp-button" onClick={() => window.location.assign(`${personalLinkPath(slug, credential)}?lang=${locale}`)}>{t('gifts.backToRsvp')}</button> : null}
           </section>
         ) : null}
         {outcome?.kind === 'taken' ? (
@@ -179,7 +185,7 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
         </>
       ) : null}
 
-      <ReserveDialog item={target} t={t} pending={reserve.isPending} error={reserve.error && !isGiftTaken(reserve.error) ? reserve.error : null} onCancel={() => { setTarget(null); reserve.reset(); }} onSubmit={submit} />
+      <ReserveDialog item={target} t={t} pending={reserve.isPending} error={reserve.error && !isGiftTaken(reserve.error) ? reserve.error : null} onCancel={() => { setTarget(null); reserve.reset(); }} onSubmit={submit} onReviewRsvp={credential ? () => window.location.assign(`${personalLinkPath(slug, credential)}?lang=${locale}`) : undefined} />
     </main>
   );
 }
