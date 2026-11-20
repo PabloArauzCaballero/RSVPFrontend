@@ -9,12 +9,12 @@ export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
   backToRsvp: "Back to my response",
   back: "Back to the celebration",
   loading: "Loading gifts…",
-  filters: { label: "Filter gifts", maxPrice: "Maximum price", source: "Source", sourceAll: "All", sourcePartner: "From our partners", sourceOther: "Other stores", onlyAvailable: "Available only", clear: "Clear filters", count: "{{count}} gifts" },
+  filters: { label: "Filter gifts", maxPrice: "Maximum price", source: "Source", sourceAll: "All", sourcePartner: "From our partners", sourceOther: "Other stores", onlyAvailable: "Available only", clear: "Clear filters", count_one: "{{count}} gift", count_other: "{{count}} gifts" },
   group: { partner: "Products from our partners", other: "More ideas from the hosts" },
   status: { AVAILABLE: "Available", PENDING_REVIEW: "Awaiting approval", COMMITTED: "Already reserved" },
   price: "Price",
   card: { photo: "Photo of {{title}}", reservedBy: "Reserved by {{name}}", open: "See details of {{title}}", reserve: "Reserve", reserveFor: "Reserve {{title}}", viaPartner: "See at the partner's store", viaOther: "See at the store" },
-  detail: { title: "{{title}} · Gifts", back: "Back to the list", notFound: "This gift is no longer on the list.", partnerNote: "A DOne partner offers this product. Opening the link takes you out of DOne." },
+  detail: { title: "{{title}} · Gifts", back: "Back to the list", notFound: "This gift is no longer on the list.", notFoundBody: "The hosts may have removed it. The full list is still open to you.", partnerNote: "A DOne partner offers this product. Opening the link takes you out of DOne." },
   reserve: { title: "Reserve this gift", intro: "We ask for your name so the hosts know who is giving it.", name: "Your name", nameHelp: "Optional. The hosts will see this name next to your reservation.", message: "Message for the hosts", messageHelp: "Optional, up to 500 characters.", submit: "Reserve gift", submitting: "Reserving…", cancel: "Cancel", close: "Close" },
   outcome: {
     cancelledTitle: "Reservation cancelled", cancelledBody: "This reservation was cancelled when your attendance changed. If you are attending again, confirm your response and choose an available gift.",
@@ -38,7 +38,7 @@ export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
     offline: "No connection. Check your internet and try again; your message is still here.", nameTooLong: "The name can be up to {{max}} characters.", messageTooLong: "The message can be up to {{max}} characters.", busyWait: "We received too many requests in a row. Wait {{seconds}} seconds and try again.", retryHint: "You can press Reserve again: it will not reserve twice.",
     retry: "Try again", validation: "Check the data: the name or the message is too long.", generic: "We could not reserve the gift. Try again."
   },
-  empty: { title: "No gifts yet", body: "The hosts have not added gifts yet. Come back soon.", filtered: "No gift matches these filters." },
+  empty: { title: "No gifts yet", body: "The hosts have not added gifts yet. Come back soon.", filtered: "No gift matches these filters.", filteredBody: "Try another price or source, or clear the filters." },
   notFound: { title: "We could not find this celebration", body: "The page does not exist or the hosts have not published it yet." },
   /** Guest gift list in the app (Persuade). seo-web keeps using the keys above. */
   guest: {

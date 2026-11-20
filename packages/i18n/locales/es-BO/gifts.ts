@@ -6,12 +6,12 @@ export const giftsEsBO = {
   backToRsvp: "Volver a mi respuesta",
   back: "Volver a la celebración",
   loading: "Cargando los regalos…",
-  filters: { label: "Filtrar regalos", maxPrice: "Precio máximo", source: "Origen", sourceAll: "Todos", sourcePartner: "De nuestros aliados", sourceOther: "Otras tiendas", onlyAvailable: "Solo disponibles", clear: "Quitar filtros", count: "{{count}} regalos" },
+  filters: { label: "Filtrar regalos", maxPrice: "Precio máximo", source: "Origen", sourceAll: "Todos", sourcePartner: "De nuestros aliados", sourceOther: "Otras tiendas", onlyAvailable: "Solo disponibles", clear: "Quitar filtros", count_one: "{{count}} regalo", count_other: "{{count}} regalos" },
   group: { partner: "Productos de nuestros aliados", other: "Otras ideas de los anfitriones" },
   status: { AVAILABLE: "Disponible", PENDING_REVIEW: "Pendiente de aprobación", COMMITTED: "Ya reservado" },
   price: "Precio",
   card: { photo: "Foto de {{title}}", reservedBy: "Reservado por {{name}}", open: "Ver detalle de {{title}}", reserve: "Reservar", reserveFor: "Reservar {{title}}", viaPartner: "Ver en la tienda del aliado", viaOther: "Ver en la tienda" },
-  detail: { title: "{{title}} · Regalos", back: "Volver a la lista", notFound: "Este regalo ya no está en la lista.", partnerNote: "Este producto lo ofrece un aliado de DOne. Al abrir el enlace saldrás de DOne." },
+  detail: { title: "{{title}} · Regalos", back: "Volver a la lista", notFound: "Este regalo ya no está en la lista.", notFoundBody: "Puede que los anfitriones lo hayan quitado. La lista completa sigue abierta para ti.", partnerNote: "Este producto lo ofrece un aliado de DOne. Al abrir el enlace saldrás de DOne." },
   reserve: { title: "Reservar este regalo", intro: "Te pedimos tu nombre para que los anfitriones sepan quién regala.", name: "Tu nombre", nameHelp: "Opcional. Los anfitriones verán este nombre junto a tu reserva.", message: "Mensaje para los anfitriones", messageHelp: "Opcional, hasta 500 caracteres.", submit: "Reservar regalo", submitting: "Reservando…", cancel: "Cancelar", close: "Cerrar" },
   outcome: {
     cancelledTitle: "Reserva cancelada", cancelledBody: "Esta reserva se canceló al cambiar tu asistencia. Si volvés a asistir, confirmá tu respuesta y elegí un regalo disponible.",
@@ -35,7 +35,7 @@ export const giftsEsBO = {
     offline: "Sin conexión. Revisa tu internet e inténtalo de nuevo; tu mensaje sigue aquí.", nameTooLong: "El nombre admite hasta {{max}} caracteres.", messageTooLong: "El mensaje admite hasta {{max}} caracteres.", busyWait: "Recibimos demasiadas solicitudes seguidas. Espera {{seconds}} segundos e inténtalo otra vez.", retryHint: "Puedes volver a pulsar Reservar: no se reservará dos veces.",
     retry: "Reintentar", validation: "Revisa los datos: el nombre o el mensaje son demasiado largos.", generic: "No pudimos reservar el regalo. Inténtalo de nuevo."
   },
-  empty: { title: "Aún no hay regalos", body: "Los anfitriones todavía no agregaron regalos. Vuelve pronto.", filtered: "Ningún regalo coincide con estos filtros." },
+  empty: { title: "Aún no hay regalos", body: "Los anfitriones todavía no agregaron regalos. Vuelve pronto.", filtered: "Ningún regalo coincide con estos filtros.", filteredBody: "Prueba con otro precio u origen, o quita los filtros." },
   notFound: { title: "No encontramos esta celebración", body: "La página no existe o los anfitriones aún no la han publicado." },
   /** Lista de regalos del invitado en la app (Persuade). La web de seo-web sigue con las claves de arriba. */
   guest: {
