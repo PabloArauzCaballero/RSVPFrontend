@@ -14,6 +14,7 @@ import assert from "node:assert/strict";
 import { chromium } from "playwright";
 import AxeBuilder from "@axe-core/playwright";
 import { pickTime, timeButton } from "./live/time-field.mjs";
+import { pickDate } from "./live/date-field.mjs";
 
 const app = fileURLToPath(new URL("..", import.meta.url));
 const backend = process.env.BACKEND ?? fileURLToPath(new URL("../../../../RSVPBackend", import.meta.url));
@@ -91,7 +92,7 @@ await page.getByTestId("onboarding-next").click();
 const slug = `boda-ui-${randomUUID().slice(0, 6)}`;
 await page.getByLabel("Nombre de la celebración").fill("Camila y Diego");
 await page.getByLabel("Dirección del sitio").fill(slug);
-await page.getByLabel("Fecha", { exact: true }).fill("2026-12-19");
+await pickDate(page, page.getByTestId("onboarding-date"), "2026-12-19");
 await pickTime(page, timeButton(page, "Hora").first(), "19:30");
 await page.getByRole("radio", { name: "America/La_Paz" }).click();
 await page.getByLabel("Novia").fill("Camila");

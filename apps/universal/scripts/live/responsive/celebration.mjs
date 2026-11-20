@@ -10,6 +10,7 @@ import assert from "node:assert/strict";
 import { chromium } from "playwright";
 import AxeBuilder from "@axe-core/playwright";
 import { pickTime } from "../time-field.mjs";
+import { pickDate } from "../date-field.mjs";
 
 const APP = process.env.APP ?? "http://localhost:8200";
 const API = process.env.API ?? "http://localhost:28000";
@@ -143,7 +144,7 @@ if (process.env.FLOWS !== "0") for (const width of WIDTHS) {
     await tid("onboarding-next").click();
     // who, when and where are mandatory: the step does not let an empty field through
     for (const input of await page.locator("input[type=text], input:not([type])").filter({ visible: true }).all()) await input.fill("Ana");
-    await tid("onboarding-date").fill("2027-08-14");
+    await pickDate(page, tid("onboarding-date"), "2027-08-14");
     await pickTime(page, tid("onboarding-time"), "17:30");
     await tid("onboarding-next").click();
     await tid("onboarding-title").fill(title);
@@ -158,15 +159,27 @@ if (process.env.FLOWS !== "0") for (const width of WIDTHS) {
     return `GET ${id} title=${created.content.title}`;
   });
   await flow("valid-general-content", async () => {
-    const c = await draft();
+    const c = await draft(completeContent);
     const title = `Edited ${stamp}-${width}`;
     await page.goto(`${APP}/editor/general?c=${c.id}`); await settle(page);
     await tid("field-title").fill(title);
+    const search = tid("field-venue-search");
+    const bounds = await search.boundingBox();
+    assert(bounds && bounds.x >= 0 && bounds.x + bounds.width <= width + 1, "The venue search button fits in the viewport");
+    await page.route("https://nominatim.openstreetmap.org/**", (route) => route.fulfill({
+      headers: { "access-control-allow-origin": "*" },
+      json: [{ place_id: 1, name: "Floresta", display_name: "Floresta, Santa Cruz", lat: "-17.8", lon: "-63.2" }]
+    }), { times: 1 });
+    await tid("field-venue-name").fill("Floresta");
+    await search.click();
+    await tid("field-venue-name-result-0").click();
     await tid("save-content").click();
     await page.waitForFunction(() => true);
     for (let i = 0; i < 30 && (await get(c.id)).content.title !== title; i++) await page.waitForTimeout(300);
     const saved = await get(c.id);
     assert.equal(saved.content.title, title);
+    assert.equal(saved.content.venueName, "Floresta");
+    assert.equal(new URL(saved.content.venueMapUrl).searchParams.get("query"), "-17.8,-63.2");
     return `GET content.title=${saved.content.title} v${saved.version}`;
   });
   await flow("valid-publish-unpublish", async () => {

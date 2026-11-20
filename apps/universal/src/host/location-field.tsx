@@ -3,7 +3,9 @@ import { Text, View } from "react-native";
 import { mapUrl, pointOf, pointUrl } from "@rsvp/celebration-theme";
 import { spacing } from "@rsvp/design-tokens";
 import { useT } from "../platform/providers";
+import { LIMITS, overLimit } from "./limits";
 import { MAP_PICKER_AVAILABLE, MapPicker } from "./map-picker";
+import { PlaceSearch } from "./place-search";
 import { ActionButton, Field, useStyles } from "./ui";
 
 /**
@@ -32,7 +34,14 @@ export function LocationField({ name, onName, link, onLink, nameError, placehold
   const marked = Boolean(mapUrl(link));
   return (
     <View style={{ gap: spacing[3] }}>
-      <Field label={t("host.editor.general.venueName")} value={name} onChange={onName} testID={`${testID}-name`} {...(placeholder ? { placeholder } : {})} {...(nameError ? { error: nameError } : {})} />
+      {MAP_PICKER_AVAILABLE ? (
+        <PlaceSearch label={t("host.editor.general.venueName")} value={name} onChange={onName} error={nameError}
+          placeholder={placeholder ?? t("host.location.searchPlaceholder")} testID={`${testID}-name`} buttonTestID={`${testID}-search`}
+          onPick={(place) => {
+            if (overLimit(place.name, LIMITS.venueName) === null) onName(place.name);
+            onLink(pointUrl(place.point));
+          }} />
+      ) : <Field label={t("host.editor.general.venueName")} value={name} onChange={onName} testID={`${testID}-name`} {...(placeholder ? { placeholder } : {})} {...(nameError ? { error: nameError } : {})} />}
       {MAP_PICKER_AVAILABLE ? (
         <View style={[styles.row, { alignItems: "center" }]}>
           <ActionButton variant="secondary" icon="pin" label={t(marked ? "host.location.change" : "host.location.mark")} onPress={() => setPicking(true)} testID={`${testID}-map`} />

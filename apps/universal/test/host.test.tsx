@@ -12,13 +12,13 @@ import { TemplatesScreen } from "../src/host/templates-screen";
 import { TranslationEditorScreen } from "../src/host/translation-editor";
 import { DevicePreviewScreen } from "../src/host/device-preview";
 import { createTranslator } from "@rsvp/i18n";
-import { baseHandlers, BAUTIZO, CELEBRATION, fakeClient, GUEST, HttpFailure, QUINCE, renderApp, TEMPLATES, WEDDING, pickTime, timeField } from "./support";
+import { baseHandlers, BAUTIZO, CELEBRATION, fakeClient, GUEST, HttpFailure, QUINCE, renderApp, TEMPLATES, WEDDING, pickOnboardingDate, pickTime, timeField } from "./support";
 
 const navigate = vi.fn();
 const field = (label: string): HTMLInputElement => screen.getByLabelText(label) as HTMLInputElement;
 const type = (label: string, value: string): void => { fireEvent.change(field(label), { target: { value } }); };
 /** When and where of the second step: mandatory, so every test that moves on fills them. */
-const fillWhenWhere = (): void => { type("Fecha", "2027-01-10"); pickTime("Hora", "20:00"); type("Ubicación", "Salón Las Palmas"); };
+const fillWhenWhere = (): void => { pickOnboardingDate("2027-01-10"); pickTime("Hora", "20:00"); type("Ubicación", "Salón Las Palmas"); };
 
 describe("editing helpers", () => {
   it("wall clocks, patches, schedule and slugs", () => {
@@ -55,10 +55,9 @@ describe("C2–C5 · picker and onboarding", () => {
     fireEvent.click(screen.getByTestId("onboarding-next"));
     expect(screen.queryByLabelText("Novia")).toBeNull();
     type("Quinceañera", "María");
-    // the date and the time are the device's pickers, never a format to type
-    expect(field("Fecha").getAttribute("type")).toBe("date");
+    expect(screen.getByTestId("onboarding-date").getAttribute("aria-haspopup")).toBe("dialog");
     expect(timeField("Hora").getAttribute("aria-haspopup")).toBe("dialog");
-    type("Fecha", "2027-01-10");
+    pickOnboardingDate("2027-01-10");
     pickTime("Hora", "20:00");
     type("Ubicación", "Salón Las Palmas");
     fireEvent.click(screen.getByTestId("onboarding-next"));
@@ -90,7 +89,7 @@ describe("C2–C5 · picker and onboarding", () => {
     expect(field("Ubicación").value).toBe("Iglesia San Roque");
     type("Madre o padre", "Lucía");
     type("El nombre de quien se bautiza", "Mateo");
-    type("Fecha", "2027-01-10");
+    pickOnboardingDate("2027-01-10");
     pickTime("Hora", "09:30");
     fireEvent.click(screen.getByTestId("onboarding-next"));
     fireEvent.click(screen.getByTestId("onboarding-create"));
@@ -190,7 +189,7 @@ describe("C2–C5 · picker and onboarding", () => {
     expect(screen.getByText("Elige la fecha.")).toBeTruthy();
     expect(field("Novia").value).toBe("Ana");
     expect(screen.queryByLabelText("Nombre de la celebración")).toBeNull();
-    type("Fecha", "2026-12-19");
+    pickOnboardingDate("2026-12-19");
     pickTime("Hora", "");
     fireEvent.click(screen.getByTestId("onboarding-next"));
     expect(screen.getByText("Elige la hora.")).toBeTruthy();

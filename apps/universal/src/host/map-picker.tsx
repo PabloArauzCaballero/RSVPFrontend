@@ -1,12 +1,14 @@
-import { createElement, useEffect, useRef, useState, type ReactNode } from "react";
+import { createElement, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Modal, ScrollView, Text, View, useWindowDimensions } from "react-native";
 import "leaflet/dist/leaflet.css";
 import type { Map as LeafletMap } from "leaflet";
+import type { MapPlace } from "@rsvp/api-client";
 import type { MapPoint } from "@rsvp/celebration-theme";
-import { Button, PressFeedback, useColors } from "@rsvp/ui";
+import { Button, overlayAnimation, useColors } from "@rsvp/ui";
 import { colors, radius, spacing } from "@rsvp/design-tokens";
-import { useLocale, useT } from "../platform/providers";
-import { ActionButton, Field, Notice, useStyles } from "./ui";
+import { useT } from "../platform/providers";
+import { PlaceSearch } from "./place-search";
+import { ActionButton, Notice, useStyles } from "./ui";
 
 /**
  * Marks the exact place of the celebration on a map. The pin stays in the middle and the host moves the map under it
@@ -25,17 +27,13 @@ export interface MapPickerProps {
   readonly onClose: () => void;
 }
 
-interface Place { readonly id: string; readonly label: string; readonly point: MapPoint }
-
 const TILES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
-const SEARCH = "https://nominatim.openstreetmap.org/search";
 const ATTRIBUTION = "&copy; <a href=\"https://www.openstreetmap.org/copyright\" target=\"_blank\" rel=\"noopener noreferrer\">OpenStreetMap</a>";
 /** Nothing marked yet: Bolivia whole, so the first move is a search or "my location". */
 const COUNTRY: MapPoint = { lat: -16.7, lng: -64.9 };
 const ZOOM_COUNTRY = 5;
 const ZOOM_PLACE = 17;
 const ZOOM_MAX = 19;
-const RESULTS = 5;
 const DIALOG_WIDTH = 720;
 const MAP_MAX = 440;
 const MAP_MIN = 220;
@@ -49,22 +47,21 @@ export function MapPicker({ initial, query, onPick, onClose }: MapPickerProps): 
   const t = useT();
   const styles = useStyles();
   const palette = useColors();
-  const locale = useLocale();
   const { height } = useWindowDimensions();
   const holder = useRef<HTMLDivElement | null>(null);
   const map = useRef<LeafletMap | null>(null);
+  const startPoint = useRef(initial);
   const [text, setText] = useState(query);
-  const [places, setPlaces] = useState<readonly Place[] | null>(null);
-  const [busy, setBusy] = useState(false);
   const [locating, setLocating] = useState(false);
-  const [problem, setProblem] = useState<"search" | "location" | null>(null);
+  const [locateFailed, setLocateFailed] = useState(false);
 
   useEffect(() => {
     let disposed = false;
     void import("leaflet").then((leaflet) => {
       const element = holder.current;
       if (disposed || !element) return;
-      const created = leaflet.map(element, { center: [(initial ?? COUNTRY).lat, (initial ?? COUNTRY).lng], zoom: initial ? ZOOM_PLACE : ZOOM_COUNTRY, maxZoom: ZOOM_MAX });
+      const point = startPoint.current ?? COUNTRY;
+      const created = leaflet.map(element, { center: [point.lat, point.lng], zoom: startPoint.current ? ZOOM_PLACE : ZOOM_COUNTRY, maxZoom: ZOOM_MAX });
       leaflet.tileLayer(TILES, { maxZoom: ZOOM_MAX, attribution: ATTRIBUTION }).addTo(created);
       created.attributionControl.setPrefix(false);
       map.current = created;
@@ -75,34 +72,17 @@ export function MapPicker({ initial, query, onPick, onClose }: MapPickerProps): 
     // Created once per opening on purpose: `initial` only says where the map starts, it never moves it afterwards.
   }, []);
 
-  const show = (point: MapPoint): void => { map.current?.setView([point.lat, point.lng], ZOOM_PLACE); };
-  const search = (): void => {
-    const wanted = text.trim();
-    if (!wanted || busy) return;
-    setBusy(true); setProblem(null);
-    const url = `${SEARCH}?format=jsonv2&limit=${RESULTS}&accept-language=${encodeURIComponent(locale)}&q=${encodeURIComponent(wanted)}`;
-    fetch(url, { headers: { Accept: "application/json" } })
-      .then((answer) => (answer.ok ? answer.json() : Promise.reject(new Error(String(answer.status)))))
-      .then((found: unknown) => {
-        const list = (Array.isArray(found) ? found : []).flatMap((item: unknown): Place[] => {
-          const row = item as { place_id?: unknown; display_name?: unknown; lat?: unknown; lon?: unknown };
-          const lat = Number(row.lat);
-          const lng = Number(row.lon);
-          return typeof row.display_name === "string" && Number.isFinite(lat) && Number.isFinite(lng) ? [{ id: String(row.place_id), label: row.display_name, point: { lat, lng } }] : [];
-        });
-        setPlaces(list);
-        const [first] = list;
-        if (first) show(first.point);
-      })
-      .catch(() => setProblem("search"))
-      .finally(() => setBusy(false));
-  };
+  const show = useCallback((point: MapPoint): void => {
+    startPoint.current = point;
+    map.current?.setView([point.lat, point.lng], ZOOM_PLACE);
+  }, []);
+  const showPlace = useCallback((place: MapPlace): void => { setLocateFailed(false); show(place.point); }, [show]);
   const locate = (): void => {
-    if (!("geolocation" in navigator)) { setProblem("location"); return; }
-    setLocating(true); setProblem(null);
+    if (!("geolocation" in navigator)) { setLocateFailed(true); return; }
+    setLocating(true); setLocateFailed(false);
     navigator.geolocation.getCurrentPosition(
       (position) => { setLocating(false); show({ lat: position.coords.latitude, lng: position.coords.longitude }); },
-      () => { setLocating(false); setProblem("location"); },
+      () => { setLocating(false); setLocateFailed(true); },
       { enableHighAccuracy: true, timeout: LOCATE_TIMEOUT }
     );
   };
@@ -114,29 +94,15 @@ export function MapPicker({ initial, query, onPick, onClose }: MapPickerProps): 
   const mapHeight = Math.max(MAP_MIN, Math.min(MAP_MAX, height - CHROME));
 
   return (
-    <Modal visible transparent animationType="fade" onRequestClose={onClose}>
+    <Modal visible transparent animationType={overlayAnimation("fade")} onRequestClose={onClose}>
       <View style={styles.overlay}>
-        <View accessibilityViewIsModal role="dialog" aria-label={t("host.location.pickerTitle")} testID="map-picker" style={[styles.dialog, { maxWidth: DIALOG_WIDTH, maxHeight: "96%", padding: spacing[4], gap: spacing[3] }]}>
+        <View accessibilityViewIsModal role="dialog" aria-modal aria-label={t("host.location.pickerTitle")} testID="map-picker" style={[styles.dialog, { maxWidth: DIALOG_WIDTH, maxHeight: "96%", padding: spacing[4], gap: spacing[3] }]}>
           <Text accessibilityRole="header" style={styles.subtitle}>{t("host.location.pickerTitle")}</Text>
           {/* Search, results and map scroll together on a short screen; the two closing actions stay in sight below. */}
           <ScrollView tabIndex={0} aria-label={t("host.location.pickerTitle")} style={{ flexShrink: 1 }} contentContainerStyle={{ gap: spacing[3] }} keyboardShouldPersistTaps="handled">
-          <View style={{ flexDirection: "row", gap: spacing[2], alignItems: "flex-end" }}>
-            <View style={{ flex: 1, minWidth: 0 }}><Field label={t("host.location.search")} placeholder={t("host.location.searchPlaceholder")} value={text} onChange={setText} onSubmit={search} testID="map-search" /></View>
-            <ActionButton variant="secondary" icon="search" label={t("host.location.searchButton")} busy={busy} onPress={search} testID="map-search-go" />
-          </View>
-          {places && !places.length ? <Text role="status" style={styles.muted}>{t("host.location.noResults")}</Text> : null}
-          {places && places.length > 1 ? (
-            <View role="list" aria-label={t("host.location.results")} style={{ gap: spacing[1] }}>
-              {places.slice(0, 3).map((place) => (
-                <View role="listitem" key={place.id}>
-                  <PressFeedback accessibilityRole="button" accessibilityLabel={place.label} hoverTint onPress={() => show(place.point)} style={{ borderRadius: radius.md, paddingHorizontal: spacing[2], paddingVertical: spacing[1] }}>
-                    <Text numberOfLines={1} style={styles.muted}>{place.label}</Text>
-                  </PressFeedback>
-                </View>
-              ))}
-            </View>
-          ) : null}
-          {problem ? <Notice kind="error">{t(problem === "search" ? "host.location.searchError" : "host.location.locationError")}</Notice> : null}
+          <PlaceSearch label={t("host.location.search")} placeholder={t("host.location.searchPlaceholder")} value={text} onChange={setText}
+            onPick={showPlace} onFirstResult={showPlace} testID="map-search" buttonTestID="map-search-go" />
+          {locateFailed ? <Notice kind="error">{t("host.location.locationError")}</Notice> : null}
           <View style={{ height: mapHeight, borderRadius: radius.md, overflow: "hidden", borderWidth: 1, borderColor: palette.border, isolation: "isolate" } as object}>
             {createElement("div", { ref: holder, role: "application", "aria-label": t("host.location.mapLabel"), "data-testid": "map-canvas", style: { width: "100%", height: "100%", zIndex: 0 } })}
             {/* The pin never moves: its tip marks the middle of the map, which is the point that will be saved. */}

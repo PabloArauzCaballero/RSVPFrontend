@@ -2,3 +2,4 @@ export * from "./client.js";
 export * from "./contract.js";
 export * from "./errors.js";
 export * from "./types.js";
+export * from "./celebration/place-search.js";
