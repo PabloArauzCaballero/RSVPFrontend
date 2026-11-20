@@ -3,12 +3,14 @@ export const queryKeys = {
     all: ["celebrations"] as const,
     detail: (id: string) => ["celebrations", id] as const,
     public: (slug: string) => ["celebrations", "public", slug] as const,
+    /** The same public read in one language: a child of `public(slug)`, so invalidating the slug refreshes every language. */
+    publicIn: (slug: string, language: string) => ["celebrations", "public", slug, language] as const,
     publishCheck: (id: string) => ["celebrations", id, "publish-check"] as const,
     audit: (id: string) => ["celebrations", id, "audit"] as const
   },
   eventType: { all: ["event-types"] as const, list: (locale: string) => ["event-types", locale] as const, admin: ["event-types", "admin"] as const },
   template: { all: ["templates"] as const, compatible: (tags: string) => ["templates", "compatible", tags] as const, detail: (id: string) => ["templates", id] as const, admin: ["templates", "admin"] as const },
-  media: { list: (celebrationId: string) => ["media", celebrationId] as const },
+  media: { list: (celebrationId: string) => ["media", celebrationId] as const, publicGallery: (celebrationId: string) => ["media", "public", celebrationId] as const },
   // The guest token never appears in a key: `rsvp` is keyed by celebration + a non-reversible fingerprint.
   guest: {
     all: ["guests"] as const,

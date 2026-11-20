@@ -1,7 +1,7 @@
 import type { ApiClient } from "@rsvp/api-client";
 import type {
   AuditEntry, Celebration, CelebrationPatch, CreateCelebrationInput, EventTypeDefinition, Items, MediaAsset, PublishCheck,
-  SettingsPatch, Template, TemplateInput, TranslatedEventType, UploadIntent
+  PublicGalleryImage, SettingsPatch, Template, TemplateInput, TranslatedEventType, UploadIntent
 } from "./types.js";
 
 /**
@@ -65,6 +65,9 @@ export function mediaApi(client: ApiClient) {
     list: (celebrationId: string, signal?: AbortSignal) => client.request<Items<MediaAsset>>(`${MEDIA}/celebrations/${celebrationId}/assets`, { signal }),
     reorder: (celebrationId: string, assetIds: readonly string[], coverAssetId: string | null) =>
       client.request<Items<MediaAsset>, { readonly assetIds: readonly string[]; readonly coverAssetId: string | null }>(`${MEDIA}/celebrations/${celebrationId}/assets/order`, { method: "PUT", body: { assetIds, coverAssetId } }),
-    remove: (assetId: string) => client.request<void>(`${MEDIA}/assets/${assetId}`, { method: "DELETE" })
+    remove: (assetId: string) => client.request<void>(`${MEDIA}/assets/${assetId}`, { method: "DELETE" }),
+    /** GET /media/public/celebrations/{id}/assets: the processed photos of a published celebration, read without a session. */
+    publicGallery: (celebrationId: string, signal?: AbortSignal) =>
+      client.request<Items<PublicGalleryImage>>(`${MEDIA}/public/celebrations/${encodeURIComponent(celebrationId)}/assets`, { auth: false, signal })
   } as const;
 }

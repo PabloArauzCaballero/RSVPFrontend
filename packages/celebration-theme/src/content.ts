@@ -201,6 +201,21 @@ export function navigationHref(venue: Pick<Venue, "name" | "address"> & { readon
   return `${MAPS_SEARCH}${encodeURIComponent([venue.name, venue.address].filter(Boolean).join(", "))}`;
 }
 
+/** A venue as a guest sees it in the venues section: listed or main, with the exact place when the host marked one. */
+export interface ShownVenue { readonly key: string; readonly kind: VenueKind; readonly name: string; readonly address?: string; readonly mapUrl?: string }
+
+/**
+ * The venues section in order. The main venue leads when it is the only one, and also when the host marked its exact place
+ * and did not repeat it in the list; a listed venue with the main venue's name takes its marked place. Shared by both renderers.
+ */
+export function shownVenues(content: Pick<CelebrationContent, "venueName" | "venueMapUrl" | "venues">): readonly ShownVenue[] {
+  const main: ShownVenue = { key: "main", kind: VenueKind.Other, name: content.venueName, ...(content.venueMapUrl ? { mapUrl: content.venueMapUrl } : {}) };
+  const listed = content.venues.map((venue): ShownVenue => (venue.name === content.venueName && content.venueMapUrl ? { ...venue, mapUrl: content.venueMapUrl } : venue));
+  const repeated = content.venues.some((venue) => venue.name === content.venueName);
+  if (!content.venues.length) return [main];
+  return content.venueMapUrl && content.venueName && !repeated ? [main, ...listed] : listed;
+}
+
 /** Path of each public section, in Spanish as the product's URLs are (REQ-F10-01). */
 export const SECTION_PATHS: Readonly<Partial<Record<SectionId, string>>> = {
   story: "historia",

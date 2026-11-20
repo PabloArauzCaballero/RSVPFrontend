@@ -246,6 +246,13 @@ describe("celebration, template, media and event-type hooks", () => {
     await check((h) => hooks.useTemplate(h.client, "t-1"), "/media/templates/t-1", false);
     await check((h) => hooks.useAdminTemplates(h.client), "/media/admin/templates");
     await check((h) => hooks.useMediaAssets(h.client, "c-1"), "/media/celebrations/c-1/assets");
+    await check((h) => hooks.usePublicGallery(h.client, "c-1"), "/media/public/celebrations/c-1/assets", false);
+    // The invitation in the app: read without a session, in the guest's language (Accept-Language), slug encoded once.
+    const invitation = harness(() => ({ body: { slug: "ana y luis" } }));
+    const seen = await runQuery(invitation, () => hooks.usePublicInvitation(invitation.client, "ana y luis", "en-US"));
+    expect(seen.path).toBe("/celebrations/public/ana%20y%20luis");
+    expect(seen.headers.get("authorization")).toBeNull();
+    expect(seen.headers.get("accept-language")).toBe("en-US");
     const none = harness();
     renderHook(() => hooks.useCompatibleTemplates(none.client, []), { wrapper: none.wrapper });
     renderHook(() => hooks.useTemplate(none.client, null), { wrapper: none.wrapper });
