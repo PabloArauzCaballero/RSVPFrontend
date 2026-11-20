@@ -1,8 +1,11 @@
+import type { AppLocale } from '@rsvp/i18n/server';
+import { CalendarDateField } from './calendar-date-field';
 import { WebPickerField, type PickerFieldProps } from './picker-field';
 
-export type DateFieldProps = PickerFieldProps;
+export interface DateFieldProps extends PickerFieldProps {
+  calendar?: { locale: AppLocale; timeZone: string };
+}
 
-/** Web and tests: the browser's calendar behind an ISO date (`YYYY-MM-DD`). The native build replaces this file with the system picker (`date-field.native.tsx`). */
-export function DateField(props: DateFieldProps) {
-  return <WebPickerField kind="date" {...props} />;
+export function DateField({ calendar, ...props }: DateFieldProps) {
+  return calendar ? <CalendarDateField {...props} {...calendar} /> : <WebPickerField kind="date" {...props} />;
 }

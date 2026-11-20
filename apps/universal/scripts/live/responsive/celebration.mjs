@@ -10,6 +10,7 @@ import assert from "node:assert/strict";
 import { chromium } from "playwright";
 import AxeBuilder from "@axe-core/playwright";
 import { pickTime } from "../time-field.mjs";
+import { pickDate } from "../date-field.mjs";
 
 const APP = process.env.APP ?? "http://localhost:8200";
 const API = process.env.API ?? "http://localhost:28000";
@@ -143,7 +144,7 @@ if (process.env.FLOWS !== "0") for (const width of WIDTHS) {
     await tid("onboarding-next").click();
     // who, when and where are mandatory: the step does not let an empty field through
     for (const input of await page.locator("input[type=text], input:not([type])").filter({ visible: true }).all()) await input.fill("Ana");
-    await tid("onboarding-date").fill("2027-08-14");
+    await pickDate(page, tid("onboarding-date"), "2027-08-14");
     await pickTime(page, tid("onboarding-time"), "17:30");
     await tid("onboarding-next").click();
     await tid("onboarding-title").fill(title);

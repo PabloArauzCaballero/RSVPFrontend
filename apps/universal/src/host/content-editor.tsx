@@ -150,6 +150,7 @@ function DraftPreview({ celebration, eventType, content, slug, onClose }: { read
 
 function Editor({ loaded, section, saved, onSaved, onNavigate }: { readonly loaded: Loaded; readonly section: EditorSection; readonly saved: boolean; readonly onSaved: (saved: boolean) => void; readonly onNavigate: (href: string) => void }): ReactNode {
   const t = useT();
+  const locale = useLocale();
   const styles = useStyles();
   const once = useSingleFlight();
   const client = useApiClient();
@@ -224,7 +225,7 @@ function Editor({ loaded, section, saved, onSaved, onNavigate }: { readonly load
         <Field label={t("host.editor.general.title")} value={text("title")} {...need("title")} {...limitError(t, text("title"), LIMITS.title)} onChange={(value) => set("title", value)} testID="field-title" />
         <Field label={t("host.editor.general.subtitle")} value={text("subtitle")} {...limitError(t, text("subtitle"), LIMITS.subtitle)} onChange={(value) => set("subtitle", value)} />
         <View style={[styles.row, { alignItems: "flex-start" }]}>
-          <View style={{ flexGrow: 1, flexBasis: FIELD_BASIS }}><DateInput label={t("host.onboarding.dateLabel")} value={eventDate.date} onChange={(value) => setEventDate((existing) => ({ ...existing, date: value }))} testID="field-event-date" {...(lacking.includes("eventDate") && !eventDate.date.trim() ? { error: t("host.onboarding.dateInvalid") } : {})} /></View>
+          <View style={{ flexGrow: 1, flexBasis: FIELD_BASIS }}><DateInput label={t("host.onboarding.dateLabel")} value={eventDate.date} onChange={(value) => setEventDate((existing) => ({ ...existing, date: value }))} calendar={{ locale, timeZone: celebration.timeZone }} testID="field-event-date" {...(lacking.includes("eventDate") && !eventDate.date.trim() ? { error: t("host.onboarding.dateInvalid") } : {})} /></View>
           <View style={{ flexGrow: 1, flexBasis: TIME_BASIS }}><TimeInput label={t("host.onboarding.timeLabel")} value={eventDate.time} onChange={(value) => setEventDate((existing) => ({ ...existing, time: value }))} testID="field-event-time" {...(lacking.includes("eventDate") && !eventDate.time.trim() ? { error: t("host.onboarding.timeInvalid") } : {})} /></View>
         </View>
         <Text style={styles.muted}>{t("host.editor.schedule.zoneHelp", { timeZone: celebration.timeZone })}</Text>

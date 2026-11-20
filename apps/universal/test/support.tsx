@@ -91,6 +91,18 @@ export function contractClient(mock: ContractMock, celebration: Celebration = { 
 }
 
 const two = (n: number): string => String(n).padStart(2, "0");
+export function pickOnboardingDate(value: string): void {
+  fireEvent.click(screen.getByTestId("onboarding-date"));
+  const shown = screen.getByRole("grid").querySelector("button[tabindex='0']")?.getAttribute("data-testid");
+  if (!shown) throw new Error("No active day in the invitation calendar");
+  const [year, month] = value.split("-").map(Number) as [number, number, number];
+  const [currentYear, currentMonth] = shown.slice(-10).split("-").map(Number) as [number, number, number];
+  const distance = (year - currentYear) * 12 + month - currentMonth;
+  const step = distance > 0 ? "calendar-next-month" : "calendar-previous-month";
+  for (let index = 0; index < Math.abs(distance); index++) fireEvent.click(screen.getByTestId(step));
+  fireEvent.click(screen.getByTestId(`calendar-day-${value}`));
+}
+
 /** The product's own time field: a button named "<label>: <shown time>" that opens the clock panel. */
 export const timeField = (label: string, index = 0): HTMLElement => screen.getAllByRole("button", { name: new RegExp(`^${label}: `) })[index] as HTMLElement;
 /** Chooses a 24-hour `HH:MM` in the clock panel as a person would (hour, minutes, morning or afternoon); an empty value clears it. */

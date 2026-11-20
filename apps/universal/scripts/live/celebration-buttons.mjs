@@ -6,6 +6,7 @@ import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
 import { pickTime, timeButton } from "./time-field.mjs";
+import { pickDate } from "./date-field.mjs";
 
 const APP = process.env.APP ?? "http://localhost:8100";
 const API = process.env.API ?? "http://localhost:28000";
@@ -143,7 +144,7 @@ await check("P2-valid", "onboarding: 3 pasos (tipo, quien y cuando, nombre y enl
   await page.getByTestId("onboarding-next").click();
   await field("Novia").fill("Ana");
   await field("Novio").fill("Luis");
-  await field("Fecha").fill("2027-08-14");
+  await pickDate(page, page.getByTestId("onboarding-date"), "2027-08-14");
   await pickTime(page, timeButton(page, "Hora").first(), "17:30");
   await field("Ubicación").fill("Hacienda Sol");
   await page.getByRole("region", { name: "Así va quedando" }).filter({ visible: true }).first().getByText("Ana").first().waitFor();
@@ -168,7 +169,7 @@ async function onboardingDetails() {
   await page.getByRole("radio", { name: /Boda/ }).first().click();
   await page.getByTestId("onboarding-next").click();
   await field("Novia").fill("Ana"); await field("Novio").fill("Luis");
-  await field("Fecha").fill("2027-08-14"); await pickTime(page, timeButton(page, "Hora").first(), "17:30");
+  await pickDate(page, page.getByTestId("onboarding-date"), "2027-08-14"); await pickTime(page, timeButton(page, "Hora").first(), "17:30");
   await field("Ubicación").fill("Hacienda Sol");
   await page.getByTestId("onboarding-next").click();
 }
@@ -188,12 +189,12 @@ await check("P2-limit-date", "onboarding: una fecha invalida o sin hora detiene 
   await page.getByRole("radio", { name: /Boda/ }).first().click();
   await page.getByTestId("onboarding-next").click();
   const before = count("POST", "/celebrations");
-  // the date is the browser's picker and the time the product's own clock: both are mandatory
-  assert.equal(await field("Fecha").getAttribute("type"), "date"); assert.equal(await timeButton(page, "Hora").first().getAttribute("aria-haspopup"), "dialog");
+  // Both pickers are mandatory.
+  assert.equal(await page.getByTestId("onboarding-date").getAttribute("aria-haspopup"), "dialog"); assert.equal(await timeButton(page, "Hora").first().getAttribute("aria-haspopup"), "dialog");
   await pickTime(page, timeButton(page, "Hora").first(), "17:30");
   await page.getByTestId("onboarding-next").click();
   await text("Elige la fecha.").waitFor();
-  await field("Fecha").fill("2027-08-14"); await pickTime(page, timeButton(page, "Hora").first(), "");
+  await pickDate(page, page.getByTestId("onboarding-date"), "2027-08-14"); await pickTime(page, timeButton(page, "Hora").first(), "");
   await page.getByTestId("onboarding-next").click();
   await text("Elige la hora.").waitFor();
   assert.equal(count("POST", "/celebrations"), before);
@@ -250,7 +251,7 @@ await check("P3-general-valid", "editor general: guardar titulo, subtitulo, luga
   await field("Nombre de la celebración").fill("Boda editada");
   await field("Frase de bienvenida").fill("Los esperamos");
   await field("Ubicación").fill("Hacienda Sol");
-  await field("Fecha").fill("2027-09-01");
+  await pickDate(page, page.getByTestId("field-event-date"), "2027-09-01");
   await page.getByTestId("save-content").click();
   await text(/Cambios guardados/).waitFor();
   const stored = await get(ed.id);

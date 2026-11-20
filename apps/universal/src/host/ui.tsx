@@ -1,9 +1,10 @@
-import { useState, type PropsWithChildren, type ReactNode } from "react";
-import { Modal, Pressable, StyleSheet, Text, View, type KeyboardTypeOptions } from "react-native";
+import { useState, type PropsWithChildren, type ReactNode, type Ref } from "react";
+import { Modal, Pressable, StyleSheet, Text, View, type KeyboardTypeOptions, type TextInput } from "react-native";
 import { usePathname, useRouter, type Href } from "expo-router";
 import { ApiError } from "@rsvp/api-client";
 import { Button, CheckMark, DatePicker, Enter, fonts, Input, NoticeMark, OverlayEnter, overlayAnimation, pressVisual, SkeletonList, TimePicker, useColors, useReducedMotion, useTheme } from "@rsvp/ui";
 import { colors, radius, spacing, typography, type ColorTheme } from "@rsvp/design-tokens";
+import type { AppLocale } from "@rsvp/i18n/server";
 import { loginHref } from "../auth/routes";
 import { useT } from "../platform/providers";
 
@@ -90,17 +91,19 @@ export interface FieldProps {
   readonly testID?: string;
   /** Enter in a single-line field. */
   readonly onSubmit?: () => void;
+  readonly trailing?: ReactNode;
+  readonly inputRef?: Ref<TextInput>;
   readonly maxLength?: number;
   readonly editable?: boolean;
   /** Data, not prose (a CSV, a code): the mono face. It also keeps a very long unbroken paste fast: kerning a 200 000-character run in Geist took seconds. */
   readonly mono?: boolean;
 }
 
-export function Field({ label, value, onChange, help, error, multiline, placeholder, keyboardType, testID, onSubmit, maxLength, editable = true, mono = false }: FieldProps): ReactNode {
+export function Field({ label, value, onChange, help, error, multiline, placeholder, keyboardType, testID, onSubmit, trailing, inputRef, maxLength, editable = true, mono = false }: FieldProps): ReactNode {
   const styles = useStyles();
   return (
     <View style={{ gap: spacing[1] }}>
-      <Input label={label} accessibilityHint={help} value={value} onChangeText={onChange} placeholder={placeholder} keyboardType={keyboardType} testID={testID} error={error} state={editable ? "default" : "disabled"}
+      <Input inputRef={inputRef} label={label} accessibilityHint={help} value={value} onChangeText={onChange} placeholder={placeholder} keyboardType={keyboardType} testID={testID} error={error} state={editable ? "default" : "disabled"} trailing={trailing}
         multiline={multiline} maxLength={maxLength} autoCapitalize={keyboardType === "email-address" ? "none" : undefined} autoCorrect={keyboardType === "email-address" ? false : undefined} onSubmitEditing={multiline ? undefined : onSubmit} returnKeyType={onSubmit && !multiline ? "go" : undefined} style={[multiline ? { minHeight: MULTILINE_HEIGHT, paddingVertical: spacing[2], textAlignVertical: "top" as const } : null, mono ? { fontFamily: fonts.mono } : null]} />
       {help ? <Text style={styles.muted}>{help}</Text> : null}
     </View>
@@ -109,12 +112,12 @@ export function Field({ label, value, onChange, help, error, multiline, placehol
 
 export interface PickerInputProps { readonly label: string; readonly value: string; readonly onChange: (value: string) => void; readonly help?: string; readonly error?: string; readonly testID?: string }
 
-/** A calendar day chosen with the device's date picker; the value stays `YYYY-MM-DD`. */
-export function DateInput({ label, value, onChange, help, error, testID }: PickerInputProps): ReactNode {
+/** The invitation calendar uses the celebration's zone for its Today shortcut. */
+export function DateInput({ label, value, onChange, help, error, testID, calendar }: PickerInputProps & { readonly calendar?: { readonly locale: AppLocale; readonly timeZone: string } }): ReactNode {
   const styles = useStyles();
   return (
     <View style={{ gap: spacing[1] }}>
-      <DatePicker label={label} value={value} onChange={onChange} {...(error ? { error } : {})} {...(testID ? { testID } : {})} />
+      <DatePicker label={label} value={value} onChange={onChange} {...(calendar ? { calendar } : {})} {...(error ? { error } : {})} {...(testID ? { testID } : {})} />
       {help ? <Text style={styles.muted}>{help}</Text> : null}
     </View>
   );
