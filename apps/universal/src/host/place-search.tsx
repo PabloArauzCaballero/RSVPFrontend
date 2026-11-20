@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "expo-router";
-import { Text, View, type TextInput } from "react-native";
+import { Text, View, useWindowDimensions, type TextInput } from "react-native";
 import type { MapPlace } from "@rsvp/api-client";
 import { usePlaceSearch } from "@rsvp/query-hooks";
 import { radius, spacing } from "@rsvp/design-tokens";
@@ -20,13 +20,17 @@ interface PlaceSearchProps {
   readonly buttonTestID: string;
 }
 
+const STICKY_SAVE_BELOW = 768;
+
 /** Shared by the inline venue field and the map. Typing only edits the query. */
 export function PlaceSearch({ label, value, onChange, onPick, onFirstResult, error, placeholder, testID, buttonTestID }: PlaceSearchProps) {
   const t = useT();
   const locale = useLocale();
   const styles = useStyles();
   const palette = useColors();
+  const { width } = useWindowDimensions();
   const input = useRef<TextInput>(null);
+  const firstResult = useRef<View>(null);
   const [submitted, setSubmitted] = useState("");
   const wanted = value.trim();
   const query = submitted === wanted ? submitted : "";
@@ -34,8 +38,17 @@ export function PlaceSearch({ label, value, onChange, onPick, onFirstResult, err
 
   useEffect(() => {
     const first = places?.[0];
-    if (query && first) onFirstResult?.(first);
-  }, [query, places, onFirstResult]);
+    if (!query || !first) return;
+    if (onFirstResult) {
+      onFirstResult(first);
+      return;
+    }
+    // Reveal the first result above the editor's sticky Save bar without moving keyboard focus.
+    const row = firstResult.current;
+    if (width < STICKY_SAVE_BELOW && row && "scrollIntoView" in row && typeof row.scrollIntoView === "function") {
+      row.scrollIntoView({ block: "center", inline: "nearest" });
+    }
+  }, [query, places, onFirstResult, width]);
 
   const search = (): void => {
     if (!wanted || isFetching) return;
@@ -64,7 +77,7 @@ export function PlaceSearch({ label, value, onChange, onPick, onFirstResult, err
           <View role="list" aria-label={t("host.location.results")} style={{ borderWidth: 1, borderColor: palette.border, borderRadius: radius.md, backgroundColor: palette.surface }}>
             {places.map((place, index) => {
               const address = place.label.startsWith(`${place.name}, `) ? place.label.slice(place.name.length + 2) : place.label;
-              return <View role="listitem" key={place.id} style={index > 0 ? { borderTopWidth: 1, borderColor: palette.border } : undefined}>
+              return <View role="listitem" key={place.id} ref={index === 0 ? firstResult : undefined} style={index > 0 ? { borderTopWidth: 1, borderColor: palette.border } : undefined}>
                 <PressFeedback accessibilityLabel={place.label} hoverTint onPress={() => choose(place)} testID={`${testID}-result-${index}`}
                   style={{ borderRadius: radius.md, paddingVertical: spacing[2], paddingHorizontal: spacing[3] }}>
                   <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[2] }}>

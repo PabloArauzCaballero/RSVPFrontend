@@ -159,15 +159,27 @@ if (process.env.FLOWS !== "0") for (const width of WIDTHS) {
     return `GET ${id} title=${created.content.title}`;
   });
   await flow("valid-general-content", async () => {
-    const c = await draft();
+    const c = await draft(completeContent);
     const title = `Edited ${stamp}-${width}`;
     await page.goto(`${APP}/editor/general?c=${c.id}`); await settle(page);
     await tid("field-title").fill(title);
+    const search = tid("field-venue-search");
+    const bounds = await search.boundingBox();
+    assert(bounds && bounds.x >= 0 && bounds.x + bounds.width <= width + 1, "The venue search button fits in the viewport");
+    await page.route("https://nominatim.openstreetmap.org/**", (route) => route.fulfill({
+      headers: { "access-control-allow-origin": "*" },
+      json: [{ place_id: 1, name: "Floresta", display_name: "Floresta, Santa Cruz", lat: "-17.8", lon: "-63.2" }]
+    }), { times: 1 });
+    await tid("field-venue-name").fill("Floresta");
+    await search.click();
+    await tid("field-venue-name-result-0").click();
     await tid("save-content").click();
     await page.waitForFunction(() => true);
     for (let i = 0; i < 30 && (await get(c.id)).content.title !== title; i++) await page.waitForTimeout(300);
     const saved = await get(c.id);
     assert.equal(saved.content.title, title);
+    assert.equal(saved.content.venueName, "Floresta");
+    assert.equal(new URL(saved.content.venueMapUrl).searchParams.get("query"), "-17.8,-63.2");
     return `GET content.title=${saved.content.title} v${saved.version}`;
   });
   await flow("valid-publish-unpublish", async () => {

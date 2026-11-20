@@ -295,7 +295,9 @@ function Editor({ loaded, section, saved, onSaved, onNavigate }: { readonly load
       {wide ? (
         <View style={{ flexDirection: "row", gap: spacing[8], alignItems: "flex-start" }}>
           <View style={{ width: LIST_WIDTH }}>{list}</View>
-          <Enter from="down" key={section} grow><View style={{ flex: 1, minWidth: 0, gap: spacing[4] }}>{bodies[section]()}</View></Enter>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Enter from="down" key={section}>{bodies[section]()}</Enter>
+          </View>
         </View>
       ) : list}
       {previewing ? <DraftPreview celebration={celebration} eventType={eventType} content={current.ok ? current.content : draft} slug={slug} onClose={() => setPreviewing(false)} /> : null}
