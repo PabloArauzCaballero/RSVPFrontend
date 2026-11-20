@@ -33,7 +33,7 @@ Nivel alcanzado: **VERIFIED en Expo web (Chrome real) contra el backend real de 
 ## Comandos (2026-11-20, macOS, Node 22)
 
 ```
-yarn turbo run test typecheck lint      → 44/45 tareas OK; falla solo @rsvp/contracts#test (preexistente, ver abajo)
+yarn turbo run test typecheck lint      → se detuvo en @rsvp/contracts#test (preexistente, ver abajo) tras 24/45 tareas; corregido: con --continue (rama del slice 2, que incluye este) 65/66, única falla esa
   apps/universal vitest                  → 29 archivos, 386+ pruebas OK (13 nuevas de la invitación)
   packages/celebration-theme vitest      → 44 OK (11 nuevas del renderer con acciones)
   packages/query-hooks vitest            → 89 OK
