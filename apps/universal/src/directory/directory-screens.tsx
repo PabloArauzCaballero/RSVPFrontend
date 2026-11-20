@@ -49,7 +49,7 @@ export function searchQuery(values: SearchValues): DirectoryQuery {
   };
 }
 
-function useSearchStyles() {
+export function useSearchStyles() {
   const palette = useColors();
   return {
     palette,
@@ -63,14 +63,14 @@ function useSearchStyles() {
   };
 }
 
-function TextLink({ label, path, onNavigate, current = false }: { readonly label: string; readonly path?: string; readonly onNavigate: (path: string) => void; readonly current?: boolean }): ReactNode {
+export function TextLink({ label, path, onNavigate, current = false }: { readonly label: string; readonly path?: string; readonly onNavigate: (path: string) => void; readonly current?: boolean }): ReactNode {
   const s = useSearchStyles();
   if (!path || current) return <Text aria-current={current ? "page" : undefined} style={{ color: s.palette.textMuted, fontFamily: fonts.sans }}>{label}</Text>;
   return <Pressable accessibilityRole="link" onPress={() => onNavigate(path)} style={{ minHeight: 44, justifyContent: "center" }}><Text style={s.link}>{label}</Text></Pressable>;
 }
 
 /** Where you are, the one thing this page is about, and what to do: the web's PageTop with its breadcrumbs. */
-function PageTop({ items, title, lead, onNavigate }: { readonly items: readonly { readonly label: string; readonly href?: string }[]; readonly title: string; readonly lead?: string } & DirectoryProps): ReactNode {
+export function PageTop({ items, title, lead, onNavigate }: { readonly items: readonly { readonly label: string; readonly href?: string }[]; readonly title: string; readonly lead?: string } & DirectoryProps): ReactNode {
   const t = useT();
   const s = useSearchStyles();
   const crumbs = [{ label: t("directory.breadcrumb.directory"), href: items.length ? DIRECTORY : undefined }, ...items];

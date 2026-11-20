@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { ApiError } from '@rsvp/api-client';
 import { createTranslator, type AppLocale } from '@rsvp/i18n/server';
-import { useBookDate, useMonthCalendar, type CalendarDay } from '@rsvp/query-hooks';
+import { dayState, shiftMonth, useBookDate, useMonthCalendar } from '@rsvp/query-hooks';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { appUrl } from '../../lib/app-url';
 import { createVisitorClient } from '../../lib/visitor-client';
@@ -16,12 +16,7 @@ export function Agenda(props: AgendaProps) {
   return <QueryClientProvider client={client}><AgendaBody {...props} /></QueryClientProvider>;
 }
 
-export function shiftMonth(month: string, delta: number): string {
-  const [year = 0, mon = 1] = month.split('-').map(Number);
-  const date = new Date(Date.UTC(year, mon - 1 + delta, 1));
-  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
-}
-export const dayState = (day: CalendarDay): 'free' | 'blocked' | 'full' => (day.available ? 'free' : day.reason === 'FULL' ? 'full' : 'blocked');
+export { dayState, shiftMonth } from '@rsvp/query-hooks';
 
 /** B10 calendar of free days in the PROVIDER's time zone and B11 date request: 422 (blocked day) and 409 (last slot gone) read differently (REQ-F26-05). */
 function AgendaBody({ slug, providerId, providerName, timeZone, locale, initialMonth }: AgendaProps) {

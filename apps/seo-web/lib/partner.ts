@@ -1,6 +1,7 @@
 import type { ApiClient } from "@rsvp/api-client";
 import { publicClient } from "./api";
 import { resolveProviderId } from "./catalog";
+import { partnerFromListings, type Partner, type PartnerLookup } from "@rsvp/query-hooks";
 import { searchProviders, type ProviderCard } from "./providers";
 
 /**
@@ -10,70 +11,9 @@ import { searchProviders, type ProviderCard } from "./providers";
  */
 
 const MAX_SLUG_PAGES = 20;
-export const PARTNER_CONTACT_ORDER = ["WHATSAPP", "PHONE", "EMAIL", "INSTAGRAM", "OFFICIAL_SITE"] as const;
 
-export interface Partner {
-  readonly slug: string;
-  readonly name: string;
-  readonly category: string;
-  readonly city: string;
-  readonly department: string;
-  readonly summary?: string;
-  readonly imageUrl?: string;
-  readonly address?: string;
-  readonly hours: readonly string[];
-  readonly coverage: readonly string[];
-  /** Listing that carries the contact buttons; every destination is reached via /r/{listingId}. */
-  readonly primaryListingId: string;
-  readonly providerId?: string;
-  readonly destinations: readonly string[];
-  readonly listings: readonly ProviderCard[];
-}
-
-export type PartnerLookup =
-  | { readonly state: "ok"; readonly partner: Partner }
-  | { readonly state: "not-found" }
-  | { readonly state: "unavailable" };
-
-/**
- * The catalogue sends the address either as a line of text or as an object `{ line, city, reference, latitude, longitude }`;
- * the page only ever prints text, so an object is reduced to its street line (never rendered as a React child).
- */
-export function addressText(value: unknown): string | undefined {
-  if (typeof value === "string") return value.trim() || undefined;
-  if (value && typeof value === "object") {
-    const { line, reference } = value as { line?: unknown; reference?: unknown };
-    const parts = [line, reference].filter((part): part is string => typeof part === "string" && part.trim().length > 0);
-    return parts.length ? parts.join(", ") : undefined;
-  }
-  return undefined;
-}
-
-export function partnerFromListings(slug: string, cards: readonly ProviderCard[]): Partner | null {
-  const own = cards.filter((card) => card.providerSlug === slug && card.verified);
-  const head = own[0];
-  if (!head) return null;
-  const known = PARTNER_CONTACT_ORDER.filter((destination) => own.some((card) => card.destinations?.includes(destination)));
-  // The public card does not list its destinations: offer the default one and let the redirector answer if it is not enabled.
-  const destinations = known.length ? known : (PARTNER_CONTACT_ORDER.slice(-1) as readonly string[]);
-  const withContact = own.find((card) => card.destinations?.length) ?? head;
-  return {
-    slug,
-    name: head.name,
-    category: head.category,
-    city: head.city,
-    department: head.department,
-    ...(head.summary ? { summary: head.summary } : {}),
-    ...(head.imageUrl ? { imageUrl: head.imageUrl } : {}),
-    ...(addressText(head.address) ? { address: addressText(head.address) } : {}),
-    hours: head.hours ?? [],
-    coverage: [...new Set(own.flatMap((card) => [...(card.coverage ?? []), ...(card.fulfillment?.coverageZones ?? [])]))],
-    ...(own.find((card) => card.providerId)?.providerId ? { providerId: own.find((card) => card.providerId)?.providerId as string } : {}),
-    primaryListingId: withContact.listingId,
-    destinations,
-    listings: own
-  };
-}
+// The partner model (built from the directory cards) is shared with the app's microsite.
+export { PARTNER_CONTACT_ORDER, addressText, partnerFromListings, type Partner, type PartnerLookup } from "@rsvp/query-hooks";
 
 export async function loadPartner(slug: string, client: ApiClient = publicClient()): Promise<PartnerLookup> {
   // Provider Catalog 2.0.0 ignores `?slug=` (it returns the whole directory), so the partner's cards are collected

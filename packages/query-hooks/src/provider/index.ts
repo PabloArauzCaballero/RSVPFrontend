@@ -169,6 +169,7 @@ export function useProviderDiscovery(client: ApiClient, query: ProviderDiscovery
 }
 
 export * from "./directory.js";
+export * from "./partner.js";
 
 /** GET /providers for the directory (search, category and city pages), public; keyed by the exact query path. */
 export function useDirectorySearch<TPage>(client: ApiClient, query: DirectoryQuery, enabled = true) {
