@@ -4,7 +4,7 @@ import { siteI18n } from "../../../../lib/site-locale";
 import { CategoryLinks, CityLinks, PageTop, ProviderResults } from "../../../../components/provider-directory";
 import { routeMetadata } from "../../../../lib/seo";
 import { isSupported } from "../../../../lib/locale-negotiation";
-import { categoryBySlug, cityBySlug, pageParam, PROVIDER_CATEGORIES, PROVIDER_CITIES, searchProviders } from "../../../../lib/providers";
+import { categoryBySlug, cityBySlug, loadCategoryNames, pageParam, PROVIDER_CATEGORIES, PROVIDER_CITIES, searchProviders } from "../../../../lib/providers";
 
 /** B3 · Long-tail landing: "salones de eventos en Santa Cruz de la Sierra", with its own metadata. */
 export const revalidate = 300;
@@ -42,14 +42,14 @@ export default async function CategoryCityPage({ params, searchParams }: Props) 
   const found = await resolve(params);
   if (!found) notFound();
   const page = pageParam((await searchParams).page);
-  const results = await searchProviders({ category: found.category.code, city: found.city.slug, verifiedOnly: true, page });
+  const [results, categoryNames] = await Promise.all([searchProviders({ category: found.category.code, city: found.city.slug, verifiedOnly: true, page }), loadCategoryNames(locale)]);
   const name = t(`directory.category.${found.category.code}`);
   const values = { category: name, city: found.city.name };
   return (
     <main className="dir-page">
       <PageTop t={t} items={[{ label: name, href: `/proveedores/${found.category.slug}` }, { label: found.city.name }]} title={t("directory.cityTitle", values)} lead={t("directory.cityDescription", values)} />
       <div className="dir-body">
-        <ProviderResults page={results} t={t} locale={locale} path={`/proveedores/${found.category.slug}/${found.city.slug}`} query={page > 1 ? `page=${page}` : ""} summary={results.available && results.total > 0 ? t("directory.intro", { count: results.total, category: name.toLocaleLowerCase(locale), place: found.city.name }) : undefined} />
+        <ProviderResults page={results} t={t} locale={locale} path={`/proveedores/${found.category.slug}/${found.city.slug}`} query={page > 1 ? `page=${page}` : ""} categoryNames={categoryNames} summary={results.available && results.total > 0 ? t("directory.intro", { count: results.total, category: name.toLocaleLowerCase(locale), place: found.city.name }) : undefined} />
         <section aria-labelledby="dir-other-cities"><h2 id="dir-other-cities">{t("directory.otherCities")}</h2><CityLinks t={t} categorySlug={found.category.slug} categoryCode={found.category.code} exclude={found.city.slug} /></section>
         <section aria-labelledby="dir-other-categories"><h2 id="dir-other-categories">{t("directory.otherCategories", { city: found.city.name })}</h2><CategoryLinks t={t} citySlug={found.city.slug} exclude={found.category.slug} /></section>
       </div>

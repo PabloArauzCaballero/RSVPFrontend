@@ -89,3 +89,38 @@ node scripts/live/gifts-mirror.mjs          → 21/21 PASS, exit 0
 ```
 
 Límites: iOS/Android no probados; en nativo la credencial vive en memoria del proceso (se pierde al cerrar la app); reservar en vivo no se repitió en este slice porque el flujo de reserva no cambió (cubierto por `gifts-portal.test.tsx`).
+
+---
+
+# Slice 3: el directorio de proveedores (`/proveedores`, `/buscar`, `/{categoria}`, `/{categoria}/{ciudad}`)
+
+Fecha: 2026-11-20 · Rama `feat/espejo-movil-directorio` (sobre el slice 2).
+
+**Resultado observable:** en la app, el directorio funciona en las mismas direcciones y con los mismos parámetros que la web (B1–B4): portada con búsqueda, categorías, ciudades destacadas y pasos para cotizar; resultados filtrados por categoría, ciudad, precio máximo, fecha, solo verificados y «cerca de mí» (donde la plataforma ofrece geolocalización); páginas por categoría y por categoría + ciudad con migas, contador, paginación y enlaces cruzados. Cada resultado abre `/p/{slug}` (el micrositio es el slice siguiente). Las impresiones se cuentan con la misma regla que la web.
+
+Categorías, ciudades, la construcción de la consulta, la paginación y el agrupador de impresiones pasan a `@rsvp/query-hooks`; la web los reexporta y no cambia de comportamiento.
+
+**Hallazgo corregido en ambas superficies:** las categorías que el admin agrega (en dev: `PASTRY`, `KITCHENWARE`) se mostraban como clave cruda (`directory.category.PASTRY`), tanto en la web como en la app. Ahora se usa la traducción propia, luego el nombre que publica `GET /providers/categories` y, al final, el código (`categoryLabel`).
+
+| ID | Requisito | Estado | Comando / artefacto | Resultado |
+|---|---|---|---|---|
+| ESP-30 | `/proveedores/buscar` muestra lo mismo que `GET /providers` | PASS | `scripts/live/directory-mirror.mjs` · [directory-results.json](directory-results.json) | 6/6 en el mismo orden |
+| ESP-31 | Formulario → dirección de la web → mismos resultados | PASS | live | `?categoria=catering` = `category=CATERING` (1) |
+| ESP-32 | `/proveedores/{categoria}` | PASS | live | contador «Hay 1 proveedor verificado de catering en Bolivia.» |
+| ESP-33 | `/proveedores/{categoria}/{ciudad}` sin resultados | PASS | live | `salones/santa-cruz` → estado vacío con salida al directorio |
+| ESP-34 | Negativo: ciudad inexistente | PASS | live + test | no es página y no consulta nada |
+| ESP-35 | Resultado → `/p/{slug}` | PASS | live | `/p/multicenter-59388c` |
+| ESP-36 | Impresiones como en la web | PASS | live + `directory.test.tsx` | 1 POST, solo `listingIds` + `surface=SEARCH`, sin repetidos; a 360 px cuentan los 4 visibles de 6 |
+| ESP-37 | Nombres de categoría publicados, nunca la clave | PASS | live + tests (app, web, query-hooks) | 0 claves crudas |
+| ESP-38 | 503 ≠ vacío, con reintento | TESTED | `directory-mirror.test.tsx` | |
+| ESP-39 | Portada y búsqueda en 360/768/1280 × claro/oscuro × es-BO/en-US, axe | PASS | live | 24/24 sin desborde, 0 critical/serious, 0 errores |
+| ESP-40 | Rutas públicas sin inicio de sesión | TESTED | `directory-mirror.test.tsx` | `/proveedores*` y `/p/*` en el grupo público; `/regalos/proveedores` sigue siendo del anfitrión |
+
+```
+yarn turbo run test typecheck lint --continue → 65/66 (única falla @rsvp/contracts#test, preexistente)
+  universal 408 · seo-web 141 · query-hooks 93
+yarn lint:code → 0 · yarn harness:validate → 0
+node scripts/live/directory-mirror.mjs → 33/33 PASS, exit 0
+```
+
+Límites: iOS/Android no probados; «cerca de mí» solo aparece donde existe `navigator.geolocation` (la app web), porque la app nativa no incluye un módulo de ubicación; la paginación no se observó en vivo (dev tiene 6 resultados, menos que una página) y queda probada en tests; el JSON-LD y los metadatos SEO son exclusivos de la web indexable y no aplican a la app.

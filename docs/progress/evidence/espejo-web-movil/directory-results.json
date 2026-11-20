@@ -1,0 +1,201 @@
+{
+  "app": "http://localhost:8300",
+  "results": [
+    {
+      "case": "Category labels: published names, never a raw key",
+      "ok": true,
+      "detail": "raw keys=0",
+      "at": "2026-11-20T21:13:41.769Z"
+    },
+    {
+      "case": "B4 /proveedores/buscar = GET /providers",
+      "ok": true,
+      "detail": "shown=6 api=6 total=6",
+      "at": "2026-11-20T21:13:41.770Z"
+    },
+    {
+      "case": "Impressions (SEARCH, ids only, once each)",
+      "ok": true,
+      "detail": "posts=1 ids=4 clean=true",
+      "at": "2026-11-20T21:13:44.282Z"
+    },
+    {
+      "case": "Result → /p/{slug}",
+      "ok": true,
+      "detail": "/p/multicenter-59388c",
+      "at": "2026-11-20T21:13:44.354Z"
+    },
+    {
+      "case": "Runtime (search)",
+      "ok": true,
+      "detail": "no console errors",
+      "at": "2026-11-20T21:13:44.354Z"
+    },
+    {
+      "case": "Form → ?categoria=catering = GET /providers?category=CATERING",
+      "ok": true,
+      "detail": "shown=1 api=1",
+      "at": "2026-11-20T21:13:48.350Z"
+    },
+    {
+      "case": "B2 /proveedores/catering",
+      "ok": true,
+      "detail": "count=\"Hay 1 proveedor verificado de catering en Bolivia.\"",
+      "at": "2026-11-20T21:13:52.172Z"
+    },
+    {
+      "case": "B3 empty (salones/santa-cruz) → empty state",
+      "ok": true,
+      "at": "2026-11-20T21:13:53.339Z"
+    },
+    {
+      "case": "Negative: unknown city → not a page",
+      "ok": true,
+      "at": "2026-11-20T21:13:53.420Z"
+    },
+    {
+      "case": "/proveedores 360px light es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:13:55.926Z"
+    },
+    {
+      "case": "/proveedores 360px light en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:13:58.324Z"
+    },
+    {
+      "case": "/proveedores 360px dark es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:14:00.729Z"
+    },
+    {
+      "case": "/proveedores 360px dark en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:14:03.253Z"
+    },
+    {
+      "case": "/proveedores 768px light es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:14:05.754Z"
+    },
+    {
+      "case": "/proveedores 768px light en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:14:08.354Z"
+    },
+    {
+      "case": "/proveedores 768px dark es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:14:11.062Z"
+    },
+    {
+      "case": "/proveedores 768px dark en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:14:13.618Z"
+    },
+    {
+      "case": "/proveedores 1280px light es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:14:16.102Z"
+    },
+    {
+      "case": "/proveedores 1280px light en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:14:18.546Z"
+    },
+    {
+      "case": "/proveedores 1280px dark es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:14:21.201Z"
+    },
+    {
+      "case": "/proveedores 1280px dark en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:14:23.770Z"
+    },
+    {
+      "case": "/proveedores/buscar 360px light es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:14:26.613Z"
+    },
+    {
+      "case": "/proveedores/buscar 360px light en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:14:29.120Z"
+    },
+    {
+      "case": "/proveedores/buscar 360px dark es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:14:31.675Z"
+    },
+    {
+      "case": "/proveedores/buscar 360px dark en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:14:34.329Z"
+    },
+    {
+      "case": "/proveedores/buscar 768px light es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:14:37.047Z"
+    },
+    {
+      "case": "/proveedores/buscar 768px light en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:14:39.561Z"
+    },
+    {
+      "case": "/proveedores/buscar 768px dark es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:14:42.238Z"
+    },
+    {
+      "case": "/proveedores/buscar 768px dark en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:14:44.774Z"
+    },
+    {
+      "case": "/proveedores/buscar 1280px light es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:14:47.388Z"
+    },
+    {
+      "case": "/proveedores/buscar 1280px light en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:14:49.932Z"
+    },
+    {
+      "case": "/proveedores/buscar 1280px dark es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:14:52.420Z"
+    },
+    {
+      "case": "/proveedores/buscar 1280px dark en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:14:54.935Z"
+    }
+  ]
+}

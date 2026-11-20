@@ -6,8 +6,11 @@ export const HOME_BY_GROUP: Readonly<Record<RouteGroup, string>> = { auth: AUTH_
 
 const ADMIN_PREFIX = "/admin";
 const PROVIDER_PREFIX = "/portal";
-/** `/c/{slug}/rsvp/{token}` is the canonical personal link; `/rsvp/{token}` the legacy one. */
-const GUEST_PREFIXES = ["/invitacion", "/rsvp", "/c"] as const;
+/**
+ * The public group: no sign-in. `/c/{slug}/rsvp/{token}` is the canonical personal link and `/rsvp/{token}` the legacy one;
+ * `/proveedores` and `/p/{slug}` mirror the public site's directory and partner microsites.
+ */
+const GUEST_PREFIXES = ["/invitacion", "/rsvp", "/c", "/proveedores", "/p"] as const;
 const AUTH_PATHS: readonly string[] = Object.values(AUTH_ROUTES);
 
 function startsWithSegment(path: string, prefix: string): boolean { return path === prefix || path.startsWith(`${prefix}/`) || path.startsWith(`${prefix}?`); }

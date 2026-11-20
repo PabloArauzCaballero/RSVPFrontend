@@ -41,5 +41,6 @@ export const directoryEsBO = {
   otherCities: "Esta categoría en otras ciudades",
   otherCategories: "Otras categorías en {{city}}",
   trust: "«Verificado» quiere decir que el proveedor pasó la verificación de DOne. DOne no presta ni garantiza el servicio: precio, cobertura y plazos los acuerdas con el proveedor.",
+  notFound: { title: "Esta página del directorio no existe", body: "Puede que la categoría o la ciudad del enlace esté mal escrita. Desde el directorio puedes buscar por las dos." },
   breadcrumb: { label: "Ruta de navegación", home: "Inicio", directory: "Proveedores" }
 } as const;
