@@ -1,6 +1,6 @@
 import Svg, { Path } from 'react-native-svg';
 import { logo } from '@rsvp/design-tokens';
-import { LOGO_VIEWBOX, useLogoColors, type LogoProps } from './logo';
+import { LOGO_VIEWBOX, useLogoColors, type LogoProps } from './logo-shared';
 
 /** Native: the same artwork as the web logo, drawn with react-native-svg. */
 export function Logo({ variant = 'wordmark', tone = 'auto', height = 28, label = 'DOne', decorative = false }: LogoProps) {

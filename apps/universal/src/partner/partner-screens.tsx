@@ -5,7 +5,7 @@ import { spacing, radius } from "@rsvp/design-tokens";
 import { isFutureDate, quoteSchema, toMinor } from "@rsvp/forms";
 import { formatMinor } from "@rsvp/i18n";
 import {
-  categoryLabel, dayState, PROVIDER_CATEGORIES, PROVIDER_CITIES, quoteFailureMessage, shiftMonth, todayIn, useBookDate, useMonthCalendar, useOfferCategories, usePartnerContext, useQuote, zoneName,
+  agendaEmptiness, categoryLabel, dayState, PROVIDER_CATEGORIES, PROVIDER_CITIES, quoteFailureMessage, shiftMonth, todayIn, useBookDate, useMonthCalendar, useOfferCategories, usePartnerContext, useQuote, zoneName,
   type DirectoryCard, type Partner, type PartnerContext, type QuoteReceipt
 } from "@rsvp/query-hooks";
 import { Checkbox, CheckMark, DatePicker, EmptyState, Select, Skeleton, fonts } from "@rsvp/ui";
@@ -256,6 +256,8 @@ function AgendaBody({ slug, partner, providerId, timeZone, onNavigate }: { reado
   const dateLabel = (iso: string): string => new Intl.DateTimeFormat(locale, { dateStyle: "full", timeZone: "UTC" }).format(new Date(`${iso}T00:00:00Z`));
   const weekdays = Array.from({ length: 7 }, (_, index) => new Intl.DateTimeFormat(locale, { weekday: "short", timeZone: "UTC" }).format(new Date(Date.UTC(2023, 0, 1 + index))));
   const days = calendar.data?.days ?? [];
+  // A month with nothing to pick says why and what to do instead of leaving an empty grid (same rule as the web).
+  const empty = calendar.data ? agendaEmptiness(days) : null;
   const lead = days[0] ? days[0].weekday : 0;
   const move = (delta: number): void => { setMonth(shiftMonth(month, delta)); setPicked(null); };
   const request = (): void => {
@@ -276,14 +278,23 @@ function AgendaBody({ slug, partner, providerId, timeZone, onNavigate }: { reado
   return (
     <Page testID="agenda-screen">
       <PageTop items={[{ label: partner.name, href: base(slug) }, { label: t("detail.agenda") }]} title={t("agenda.title", { name: partner.name })} lead={t("agenda.intro", { zone: calendar.data?.timeZone ?? timeZone })} onNavigate={onNavigate} />
-      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing[2] }}>
+      {/* The month on its own line and the two buttons in a row that may wrap: at 360 px the three never fit side by side. */}
+      <Text accessibilityLiveRegion="polite" accessibilityRole="header" aria-level={2} style={[s.h2, { textTransform: "capitalize" }]} testID="agenda-month">{monthLabel}</Text>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", gap: spacing[2] }}>
         <ActionButton icon="back" variant="secondary" label={t("agenda.prev")} onPress={() => move(-1)} testID="agenda-prev" />
-        <Text accessibilityLiveRegion="polite" accessibilityRole="header" aria-level={2} style={[s.h2, { textTransform: "capitalize" }]} testID="agenda-month">{monthLabel}</Text>
         <ActionButton icon="arrow" variant="secondary" label={t("agenda.next")} onPress={() => move(1)} testID="agenda-next" />
       </View>
       {calendar.isPending ? <Text role="status" style={s.lead}>{t("agenda.loading")}</Text> : null}
       {calendar.isError ? <View role="alert" style={{ gap: spacing[2] }}><Text style={s.lead}>{t("agenda.error")}</Text><ActionButton icon="refresh" label={t("agenda.retry")} onPress={() => { void calendar.refetch(); }} /></View> : null}
-      {calendar.data ? (
+      {empty ? (
+        <View role="status" style={[s.card, { flexDirection: "column", gap: spacing[3] }]} testID="agenda-empty">
+          <Text accessibilityRole="header" aria-level={2} style={[s.h2, { fontSize: 20 }]}>{t(`agenda.empty.${empty}Title`, { name: partner.name, month: monthLabel })}</Text>
+          <Text style={s.lead}>{t(`agenda.empty.${empty}Body`)}</Text>
+          <ActionButton icon="arrow" label={t("agenda.empty.quote")} onPress={() => onNavigate(`${base(slug)}/cotizar`)} testID="agenda-empty-quote" />
+          <ActionButton icon="calendar" variant="secondary" label={t("agenda.empty.nextMonth")} onPress={() => move(1)} testID="agenda-empty-next" />
+        </View>
+      ) : null}
+      {calendar.data && empty !== "unpublished" ? (
         <View role="group" aria-label={t("agenda.month", { month: monthLabel })} testID="agenda-grid">
           <View aria-hidden style={{ flexDirection: "row" }}>{weekdays.map((name, index) => <Text key={index} style={[s.lead, { width: cell, textAlign: "center", fontSize: 12 }]}>{name}</Text>)}</View>
           <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
@@ -314,8 +325,12 @@ function AgendaBody({ slug, partner, providerId, timeZone, onNavigate }: { reado
           </Notice>
         ) : null}
       </View>
-      <Text style={s.lead}>{picked ? t("agenda.selected", { date: dateLabel(picked) }) : t("agenda.select")}</Text>
-      <ActionButton icon="calendar" label={book.isPending ? t("agenda.requesting") : t("agenda.request")} busy={book.isPending} disabled={!picked} onPress={request} testID="agenda-request" />
+      {empty ? null : (
+        <>
+          <Text style={s.lead}>{picked ? t("agenda.selected", { date: dateLabel(picked) }) : t("agenda.select")}</Text>
+          <ActionButton icon="calendar" label={book.isPending ? t("agenda.requesting") : t("agenda.request")} busy={book.isPending} disabled={!picked} onPress={request} testID="agenda-request" />
+        </>
+      )}
     </Page>
   );
 }

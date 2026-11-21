@@ -1,0 +1,43 @@
+# Espejo web · the public invitation on iOS/Android (A1, A2–A8), against the real dev gateway.
+#   maestro test -e APP_ID=host.exp.Exponent -e BASE=exp://127.0.0.1:8081/-- e2e/maestro/espejo-invitacion.yaml   (iOS, Expo Go)
+#   maestro test -e APP_ID=host.exp.exponent -e BASE=exp://10.0.2.2:8081/-- e2e/maestro/espejo-invitacion.yaml    (Android, Expo Go)
+# With a dev or store build use APP_ID=<bundle id> and BASE=rsvp:/ (the app's scheme).
+appId: ${APP_ID}
+---
+- runFlow: cold-start.yaml
+- runFlow:
+    file: open.yaml
+    env: { ROUTE: /c/sofia-y-victor-boda }
+- extendedWaitUntil:
+    visible: "sofia y victor boda"
+    timeout: 240000
+# Expo Go opens its developer menu once the bundle has loaded (first run only): close it before looking at the screen.
+- runFlow: dismiss-dev-menu.yaml
+- takeScreenshot: espejo-invitacion
+- assertVisible: "Inicio"
+- assertVisible: "Lugares"
+# The section navigation goes to the section's own page. One scroll first: on Android, Expo Go pins a development notice
+# (push notifications are not available in Expo Go since SDK 53) over the bottom of the screen, where the navigation starts.
+- scroll
+- tapOn:
+    text: "Lugares"
+    index: 0
+- extendedWaitUntil:
+    visible: "Cómo llegar"
+    timeout: 30000
+- takeScreenshot: espejo-invitacion-lugares
+# "Cómo llegar" leaves the app for maps (Safari / Maps on iOS, browser / Maps on Android).
+- tapOn: "Cómo llegar"
+- extendedWaitUntil:
+    notVisible: "Cómo llegar"
+    timeout: 15000
+- takeScreenshot: espejo-invitacion-como-llegar
+# Second invitation, straight to a section page, two languages.
+- runFlow:
+    file: open.yaml
+    env: { ROUTE: /c/roxana-y-pedro/lugares }
+- extendedWaitUntil:
+    visible: "Salón Las Palmas"
+    timeout: 60000
+- assertVisible: "English"
+- takeScreenshot: espejo-invitacion-roxana-lugares

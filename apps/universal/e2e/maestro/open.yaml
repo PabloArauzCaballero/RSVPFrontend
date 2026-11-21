@@ -1,0 +1,27 @@
+# Opens ${BASE}${ROUTE} and clears what the system or Expo Go may put in front of the app: the iOS "Open in …?" confirmation
+# (it animates in, so it is tapped again while it is still on screen) and the Expo Go developer-menu onboarding (first run only).
+# Used by every espejo-*.yaml flow.
+appId: ${APP_ID}
+---
+- openLink: ${BASE}${ROUTE}
+- extendedWaitUntil:
+    visible: "Abrir|Open"
+    timeout: 8000
+    optional: true
+- repeat:
+    while:
+      visible: "Abrir|Open"
+    times: 4
+    commands:
+      - waitForAnimationToEnd:
+          timeout: 2000
+      - tapOn:
+          text: "Abrir|Open"
+          optional: true
+- extendedWaitUntil:
+    visible: "Continue"
+    timeout: 6000
+    optional: true
+- tapOn:
+    text: "Continue"
+    optional: true
