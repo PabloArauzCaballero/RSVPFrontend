@@ -1,13 +1,14 @@
 import { useState, type ReactNode } from "react";
-import { Modal, ScrollView, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import { supportedLocales } from "@rsvp/i18n";
 import { radius, spacing } from "@rsvp/design-tokens";
-import { Button, Chip, OverlayEnter, PressFeedback, overlayAnimation, useColors } from "@rsvp/ui";
+import { Chip, PressFeedback, useColors } from "@rsvp/ui";
 import { useAdminCategories, useAdminGeography, useUpsertCategory, useUpsertGeoEntry, type GeoEntry, type GeoKind, type ProviderCategory } from "@rsvp/query-hooks/admin";
 import { useApiClient, useLocale, useT } from "../platform/providers";
 import { ChoiceGroup, Field, FilterSelect, Notice, PageIntro, useStyles } from "../host/ui";
 import { AdminScreen, adminOnly, useHeaderSlot } from "./admin-screen";
 import { AdminErrorNotice, QueryBoundary, Stack } from "./shared";
+import { EditorDialog } from "./editor-dialog";
 import { useSingleMutation } from "../platform/single-flight";
 
 /**
@@ -23,7 +24,6 @@ type Nav = { readonly onNavigate: (href: string) => void };
 type Names = Readonly<Record<string, string>>;
 /** A list longer than this gets a search box. */
 const SEARCH_FROM = 7;
-const DIALOG_WIDTH = 560;
 const ROW_MIN = 64;
 const CHEVRON = 8;
 const MAX_LAT = 90;
@@ -91,28 +91,6 @@ function CatalogList({ rows, countLabel, onOpen }: { readonly rows: readonly Row
         </View>
       ) : <Text style={styles.body}>{t("admin.common.noMatches")}</Text>}
     </View>
-  );
-}
-
-/** The form of one entry, over the list: title, fields that scroll, and the two closing actions always in sight. */
-function EditorDialog({ title, saveLabel, saveTestID, busy, canSave = true, onSave, onClose, children }: { readonly title: string; readonly saveLabel: string; readonly saveTestID: string; readonly busy: boolean; readonly canSave?: boolean; readonly onSave: () => void; readonly onClose: () => void; readonly children: ReactNode }): ReactNode {
-  const t = useT();
-  const styles = useStyles();
-  return (
-    <Modal visible transparent animationType={overlayAnimation("fade")} onRequestClose={busy ? () => undefined : onClose}>
-      <View style={styles.overlay}>
-        <OverlayEnter from="none">
-          <View accessibilityViewIsModal role="dialog" aria-label={title} style={[styles.dialog, { maxWidth: DIALOG_WIDTH, maxHeight: "94%" }]}>
-            <Text accessibilityRole="header" style={styles.subtitle}>{title}</Text>
-            <ScrollView tabIndex={0} aria-label={title} style={{ flexShrink: 1 }} contentContainerStyle={{ gap: spacing[4], paddingBottom: spacing[1] }} keyboardShouldPersistTaps="handled">{children}</ScrollView>
-            <View style={{ flexDirection: "row", gap: spacing[2] }}>
-              <View style={{ flex: 1 }}><Button variant="secondary" icon="close" block state={busy ? "disabled" : "default"} onPress={onClose} testID="catalog-cancel">{t("host.common.cancel")}</Button></View>
-              <View style={{ flex: 1 }}><Button icon="check" block state={busy ? "loading" : canSave ? "default" : "disabled"} onPress={onSave} testID={saveTestID}>{saveLabel}</Button></View>
-            </View>
-          </View>
-        </OverlayEnter>
-      </View>
-    </Modal>
   );
 }
 
