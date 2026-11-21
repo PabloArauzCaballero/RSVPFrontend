@@ -8,7 +8,7 @@ import { AppProviders } from "../src/platform/providers";
 import type { SessionClaims } from "../src/platform/session";
 
 /** A fake gateway: handlers by "METHOD path" (path without query), every call recorded. */
-export interface Call { readonly method: string; readonly path: string; readonly body: unknown; readonly headers: Headers }
+export interface Call { readonly method: string; readonly path: string; /** The path with its query string. */ readonly url: string; readonly body: unknown; readonly headers: Headers }
 export type Handler = (call: Call) => unknown;
 
 export class HttpFailure {
@@ -19,7 +19,7 @@ export function fakeClient(handlers: Readonly<Record<string, Handler>>): { reado
   const calls: Call[] = [];
   const client: ApiClient = {
     request: async <TResponse,>(path: string, options: RequestOptions<unknown> = {}): Promise<TResponse> => {
-      const call = { method: options.method ?? "GET", path: path.split("?")[0] ?? path, body: options.body, headers: new Headers(options.headers) };
+      const call = { method: options.method ?? "GET", path: path.split("?")[0] ?? path, url: path, body: options.body, headers: new Headers(options.headers) };
       calls.push(call);
       const handler = handlers[`${call.method} ${call.path}`];
       if (!handler) throw toApiError(404, "test", { title: "Not found", status: 404 });
