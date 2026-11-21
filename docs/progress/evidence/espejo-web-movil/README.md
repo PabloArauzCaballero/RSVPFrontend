@@ -160,3 +160,38 @@ node scripts/live/partner-mirror.mjs SLUG=multicenter-59388c → 48/48, exit 0 (
 ```
 
 Límites: iOS/Android no probados. Agenda y envío de cotización solo con pruebas (sin disponibilidad en dev y sin crear leads reales). Captcha de cotizaciones anónimas: la app no muestra Turnstile; si el despliegue lo exige, el servidor responde 403 y la app lo dice («quote.errors.captcha»), y con sesión no aplica. Un calendario sin días muestra la rejilla vacía, igual que la web (falta un estado vacío propio en ambas: seguimiento aparte). El JSON-LD del negocio es exclusivo de la web.
+
+---
+
+# Agenda sin disponibilidad: estado vacío en la web y la app
+
+Fecha: 2026-11-20 · Rama `fix/agenda-sin-disponibilidad` (sobre el slice 4).
+
+**Problema:** cuando `GET /providers/{id}/calendar` devuelve 0 días (proveedor sin disponibilidad configurada), la web y la app mostraban una rejilla vacía, «Elige un día libre» y un botón «Solicitar esta fecha» siempre deshabilitado: un callejón sin salida que no explicaba nada. En dev, `multicenter-59388c` está así.
+
+**Ahora, en las dos superficies con la misma regla (`agendaEmptiness` en query-hooks):**
+- 0 días → `unpublished`: «{proveedor} todavía no publicó sus días para {mes}», con el porqué y dos salidas: **Pedir cotización** (a `/p/{slug}/cotizar`) y **Ver el mes siguiente**. No se muestra la rejilla vacía ni el botón de solicitar.
+- Días publicados pero ninguno libre → `noneFree`: «No quedan días libres en {mes}». La rejilla queda (cada día dice por qué), con las mismas salidas.
+- Con al menos un día libre, nada cambia.
+- El aviso es `role="status"` con su encabezado; textos nuevos `agenda.empty.*` en es-BO y en-US.
+
+**Hallazgo corregido de paso (app):** a 360 px, la fila «Mes anterior · mes · Mes siguiente» no cabía y «Mes siguiente» quedaba cortado (el `ScrollView` recortaba, así que la medida de desborde del documento no lo veía). Ahora el mes va en su propia línea y los botones pueden pasar a dos líneas. El script vivo mide además que el botón quede entero dentro de la pantalla.
+
+| ID | Requisito | Estado | Comando / artefacto | Resultado |
+|---|---|---|---|---|
+| AGV-01 | Mes sin días: explica, sin rejilla ni botón muerto, `role=status` | PASS (web y app) | `scripts/live/agenda-empty.mjs` · [agenda-empty-results.json](agenda-empty-results.json) | precondición de la API: 0 días en 2026-11 |
+| AGV-02 | «Pedir cotización» lleva a `/p/{slug}/cotizar` | PASS (web y app) | live | |
+| AGV-03 | «Ver el mes siguiente» pide el mes siguiente y muestra la rejilla si hay días | TESTED | `quote-agenda.test.tsx`, `partner-mirror.test.tsx` | dev no tiene días en ningún mes: no observado en vivo |
+| AGV-04 | Ningún día libre → aviso con la rejilla visible | TESTED | ídem | |
+| AGV-05 | Con días libres, sin aviso y con el botón de solicitar | TESTED | ídem | |
+| AGV-06 | 360/1280 × claro/oscuro, axe | PASS | live | 8/8 sin desborde (incluido el botón «Mes siguiente» entero), 0 critical/serious, 0 errores |
+
+Web en vivo: `next dev` de seo-web en :3320 con `RSVP_API_URL` = gateway de dev (lectura del servidor) y `NEXT_PUBLIC_API_URL` = proxy local :8320 (el navegador lee el calendario; el CORS de dev no admite localhost, el proxy sí para orígenes localhost). App: export web servido por el mismo proxy.
+
+```
+yarn turbo run test typecheck lint --continue → ver PR
+  apps/seo-web quote-agenda 14 (3 nuevas) · apps/universal partner-mirror 15 (3 nuevas) · query-hooks directory 6 (1 nueva)
+node scripts/live/agenda-empty.mjs SLUG=multicenter-59388c WEB=http://localhost:3320 → 10/10 PASS, exit 0
+```
+
+Límites: iOS/Android no probados; «mes siguiente con días» solo en pruebas (dev no tiene ningún proveedor con disponibilidad).
