@@ -18,6 +18,7 @@ import { previewView, type PreviewSource } from "./preview-model";
 import { PreviewFrame } from "./preview-stage";
 import { LocationField, mapLinkProblem } from "./location-field";
 import { MoreOptions } from "./more-options";
+import { StepProgress } from "./step-progress";
 import { ActionButton, Celebrate, ChoiceGroup, DateInput, Field, FilterSelect, Illustration, Notice, Screen, TimeInput, useStyles } from "./ui";
 
 /**
@@ -73,24 +74,10 @@ export function suggestedTitle(type: TranslatedEventType | undefined, hosts: Rea
   return first && second ? join(first, second) : first ?? "";
 }
 
-/** Three segments that fill as the host moves on; the words say where they are, the bar shows how far is left. */
-function StepProgress({ step, onBack }: { readonly step: number; readonly onBack?: () => void }): ReactNode {
+/** Three segments that fill as the host moves on (the shared `StepProgress`). */
+function OnboardingProgress({ step, onBack }: { readonly step: number; readonly onBack?: () => void }): ReactNode {
   const t = useT();
-  const palette = useColors();
-  const styles = useStyles();
-  const name = t(`host.onboarding.stepLabels.${STEPS[step - 1] ?? "type"}`);
-  return (
-    <View style={{ gap: spacing[2] }}>
-      {/* Only the bar is the progressbar: a control inside one (the way back) is not reachable by assistive technology. */}
-      <View role="progressbar" aria-label={t("host.onboarding.progress")} aria-valuemin={1} aria-valuemax={LAST} aria-valuenow={step} aria-valuetext={`${t("host.onboarding.step", { step })}: ${name}`} style={{ flexDirection: "row", gap: spacing[1] }}>
-        {STEPS.map((key, index) => <View key={key} style={{ flex: 1, height: 4, borderRadius: radius.full, backgroundColor: index < step ? palette.primary : palette.border }} />)}
-      </View>
-      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 44 }}>
-        <Text style={styles.label}>{`${t("host.onboarding.step", { step })} · ${name}`}</Text>
-        {onBack ? <PressFeedback accessibilityRole="button" accessibilityLabel={t("host.common.back")} onPress={onBack} testID="onboarding-back" style={{ minHeight: 44, minWidth: 44, justifyContent: "center", alignItems: "flex-end", paddingHorizontal: spacing[2] }}><Text style={[styles.label, { color: palette.primary }]}>{t("host.common.back")}</Text></PressFeedback> : null}
-      </View>
-    </View>
-  );
+  return <StepProgress step={step} total={LAST} name={t(`host.onboarding.stepLabels.${STEPS[step - 1] ?? "type"}`)} progressLabel={t("host.onboarding.progress")} stepText={t("host.onboarding.step", { step })} {...(onBack ? { back: { label: t("host.common.back"), onPress: onBack, testID: "onboarding-back" } } : {})} />;
 }
 
 export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate }: { readonly step: number; readonly celebrationId?: string; readonly onNavigate: (href: string) => void }): ReactNode {
@@ -286,7 +273,7 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
       : <ActionButton icon="plus" label={t("host.onboarding.create")} busy={create.isPending} onPress={submit} testID="onboarding-create" />;
   const form = (
     <View style={{ gap: spacing[5], flex: wide ? 1 : undefined, width: "100%" }}>
-      <StepProgress step={step} {...(step > 1 && !create.isPending ? { onBack: () => setStep(step - 1) } : {})} />
+      <OnboardingProgress step={step} {...(step > 1 && !create.isPending ? { onBack: () => setStep(step - 1) } : {})} />
       {!wide && step > 1 ? (
         <Enter from="down" key="preview">
           <View style={{ gap: spacing[2] }}>

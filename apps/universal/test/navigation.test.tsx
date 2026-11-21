@@ -41,6 +41,10 @@ describe("two-level navigation", () => {
     const admin = adminNav(t);
     expect(admin.map((item) => item.key)).toEqual(["review", "catalog", "people", "operation"]);
     expect(tabKeys(admin).sort()).toEqual(Object.keys(ADMIN_ROUTES).sort());
+    // A24: Partners is a tab of "people", after users and organizations, so the destination still opens on users.
+    const people = admin.find((item) => item.key === "people");
+    expect(people?.tabs?.map((tab) => [tab.key, tab.href])).toEqual([["users", "/admin/usuarios"], ["organizations", "/admin/organizaciones"], ["partners", "/admin/partners"]]);
+    expect(people?.href).toBe("/admin/usuarios");
   });
 
   it("a destination is current for any of its tabs; the bottom bar keeps five slots", () => {
