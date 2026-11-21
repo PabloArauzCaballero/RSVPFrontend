@@ -513,7 +513,7 @@ describe("REQ-F21-05 · gifts inside the guest app with the link credential", ()
       "GET /gifts/celebrations/c-1/items": ({ headers }) => { seen.push(headers.get("authorization") ?? undefined); return { items: [gift("Torta"), gift("Mesa")], partnerPriorityEnabled: true }; },
       "POST /gifts/celebrations/c-1/items/Torta/reservations": () => new HttpFailure(409, { code: "GIFT_NOT_AVAILABLE", title: "taken", status: 409 })
     }));
-    renderApp(<GuestGiftsScreen slug="ana-luis" token={TOKEN} />, client);
+    renderApp(<GuestGiftsScreen slug="ana-luis" token={TOKEN} onNavigate={navigate} />, client);
     fireEvent.click(await screen.findByTestId("reserve-Torta"));
     fireEvent.click(await screen.findByRole("button", { name: "Confirmar reserva" }));
     expect(await screen.findByTestId("gift-taken")).toBeTruthy();
@@ -529,7 +529,7 @@ describe("REQ-F21-05 · gifts inside the guest app with the link credential", ()
       "POST /gifts/celebrations/c-1/items/Torta/reservations": () => ({ id: "r1", itemId: "Torta", celebrationId: "c-1", status: "COMMITTED", requestedAt: "2026-11-02T15:00:00Z" }),
       "POST /gifts/celebrations/c-1/items/Mesa/reservations": () => new HttpFailure(422, { code: "RESERVATION_LIMIT_REACHED", title: "limit", status: 422 })
     }));
-    renderApp(<GuestGiftsScreen slug="ana-luis" token={TOKEN} />, client);
+    renderApp(<GuestGiftsScreen slug="ana-luis" token={TOKEN} onNavigate={navigate} />, client);
     expect(await screen.findByText("Cada persona puede tener un máximo de regalos reservados a la vez.")).toBeTruthy();
     fireEvent.click(await screen.findByTestId("reserve-Torta"));
     expect(screen.queryByRole("alert", { name: /Reservar/ })).toBeNull();
@@ -545,7 +545,7 @@ describe("REQ-F21-05 · gifts inside the guest app with the link credential", ()
       "GET /celebrations/public/ana-luis": () => ({ celebrationId: "c-1", slug: "ana-luis", content: { title: "Ana y Luis" } }),
       "GET /gifts/celebrations/c-1/items": () => new HttpFailure(401)
     }));
-    renderApp(<GuestGiftsScreen slug="ana-luis" token={"T".repeat(43)} />, client);
+    renderApp(<GuestGiftsScreen slug="ana-luis" token={"T".repeat(43)} onNavigate={navigate} />, client);
     expect(await screen.findByText("Tu enlace ya no funciona")).toBeTruthy();
     expect(screen.getByText("Pídele uno nuevo a quien te invitó.")).toBeTruthy();
     expect(screen.queryByTestId("gifts-retry")).toBeNull();

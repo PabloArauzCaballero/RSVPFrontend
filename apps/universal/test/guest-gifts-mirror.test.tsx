@@ -1,0 +1,123 @@
+import { fireEvent, screen, within } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { MOCK_VALID_TOKEN } from "@rsvp/testing/contract-mock";
+import { GuestGiftsScreen } from "../src/guest/gifts-screen";
+import { giftRoute } from "../src/guest/gift-route";
+import { clearGiftCredential, readGiftCredential, saveGiftCredential } from "../src/guest/gift-credential";
+import { GUEST, HttpFailure, fakeClient, renderApp, type Handler } from "./support";
+
+/** The shared fake credential of the contract mock (a 43-character base64url string, as the backend issues). */
+const TOKEN = MOCK_VALID_TOKEN;
+const LISTING = "6f1c2a3b-4d5e-4f60-8a7b-9c0d1e2f3a4b";
+const TORTA = "11111111-2222-4333-8444-555555555555";
+const MESA = "22222222-3333-4444-8555-666666666666";
+const VELAS = "33333333-4444-4555-8666-777777777777";
+const gift = (id: string, title: string, over: Record<string, unknown> = {}) => ({ id, listId: "l", celebrationId: "c-1", title, price: { amountMinor: 10000, currency: "BOB" }, source: "CATALOGED", status: "AVAILABLE", version: 0, createdAt: "2026-11-01T00:00:00Z", productListingId: LISTING, ...over });
+const ITEMS = [
+  gift(MESA, "Mesa", { source: "EXTERNAL", productListingId: null, externalUrl: "https://tienda.example/mesa", price: { amountMinor: 50000, currency: "BOB" } }),
+  gift(TORTA, "Torta"),
+  gift(VELAS, "Velas", { source: "EXTERNAL", productListingId: null, status: "COMMITTED", price: { amountMinor: 3000, currency: "BOB" } }),
+  gift("44444444-5555-4666-8777-888888888888", "Propuesta", { source: "EXTERNAL", productListingId: null, status: "PROPOSED" })
+];
+
+function show(props: { readonly token?: string; readonly onlyItemId?: string } = {}, extra: Readonly<Record<string, Handler>> = {}) {
+  const { client, calls } = fakeClient({
+    "GET /celebrations/public/ana-luis": () => ({ celebrationId: "c-1", slug: "ana-luis", content: { title: "Ana y Luis" } }),
+    "GET /gifts/celebrations/c-1/items": ({ headers }) => (headers.get("authorization") === `Bearer ${TOKEN}` ? { items: ITEMS, partnerPriorityEnabled: true } : new HttpFailure(401)),
+    [`GET /listings/${LISTING}`]: () => ({ id: LISTING, imageUrl: "https://media.example/torta.webp" }),
+    ...extra
+  });
+  const onNavigate = vi.fn();
+  renderApp(<GuestGiftsScreen slug="ana-luis" {...props} onNavigate={onNavigate} />, client, GUEST);
+  return { calls, onNavigate };
+}
+
+beforeEach(() => { clearGiftCredential("ana-luis"); });
+
+describe("Espejo web · A14 the gift list at /c/{slug}/regalos in the app", () => {
+  it("one segment tells a gift id (detail) from a personal-link credential", () => {
+    expect(giftRoute(TORTA)).toEqual({ onlyItemId: TORTA });
+    expect(giftRoute(TOKEN)).toEqual({ token: TOKEN });
+    expect(giftRoute("")).toEqual({});
+  });
+
+  it("a link credential is kept for the session, so /c/{slug}/regalos opens again without it in the address", async () => {
+    show({ token: TOKEN });
+    await screen.findByTestId(`gift-${TORTA}`);
+    expect(readGiftCredential("ana-luis")).toBe(TOKEN);
+  });
+
+  it("partner gifts first, then the hosts' ideas; what a guest must not see stays hidden; photo, partner and store links", async () => {
+    saveGiftCredential("ana-luis", TOKEN);
+    show();
+    await screen.findByTestId(`gift-${TORTA}`);
+    const order = [...document.querySelectorAll("[data-testid^='gift-']")].map((node) => node.getAttribute("data-testid")).filter((id) => /^gift-[0-9a-f]{8}-/.test(id ?? ""));
+    expect(order).toEqual([`gift-${TORTA}`, `gift-${MESA}`, `gift-${VELAS}`]);
+    expect(screen.queryByText("Propuesta")).toBeNull();
+    expect(await screen.findByTestId(`gift-photo-${TORTA}`)).toBeTruthy();
+    expect(screen.getByTestId(`partner-${TORTA}`)).toBeTruthy();
+    expect(screen.getByTestId(`store-${MESA}`)).toBeTruthy();
+    expect(screen.getByTestId("gift-count").textContent).toBe("3 regalos");
+  });
+
+  it("filters as on the web: max price, source and only available, with a count and a way to clear them", async () => {
+    saveGiftCredential("ana-luis", TOKEN);
+    show();
+    await screen.findByTestId("gift-filters");
+    fireEvent.change(screen.getByLabelText("Precio máximo"), { target: { value: "120" } });
+    expect(screen.getByTestId("gift-count").textContent).toBe("2 regalos");
+    expect(screen.queryByTestId(`gift-${MESA}`)).toBeNull();
+    fireEvent.click(screen.getByRole("checkbox", { name: "Solo disponibles" }));
+    expect(screen.getByTestId("gift-count").textContent).toBe("1 regalo");
+    fireEvent.click(within(screen.getByTestId("gift-filters")).getByRole("radio", { name: "Otras tiendas" }));
+    expect(screen.getByText("Ningún regalo coincide con estos filtros.")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("filter-clear"));
+    expect(screen.getByTestId("gift-count").textContent).toBe("3 regalos");
+  });
+
+  it("a gift's title opens its own page at the web's address; the invitation is one tap back", async () => {
+    saveGiftCredential("ana-luis", TOKEN);
+    const { onNavigate } = show();
+    fireEvent.click(await screen.findByTestId(`open-${TORTA}`));
+    expect(onNavigate).toHaveBeenCalledWith(`/c/ana-luis/regalos/${TORTA}`);
+    fireEvent.click(screen.getByTestId("gifts-invitation"));
+    expect(onNavigate).toHaveBeenLastCalledWith("/c/ana-luis");
+    fireEvent.click(screen.getByTestId("gifts-back"));
+    expect(onNavigate).toHaveBeenLastCalledWith(`/c/ana-luis/rsvp/${TOKEN}`);
+  });
+
+  it("negative: without the personal link there is no anonymous list — it asks for the link (401) and offers the invitation", async () => {
+    const { onNavigate } = show();
+    expect(await screen.findByText("Abre tu enlace de invitación")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("gifts-need-link"));
+    expect(onNavigate).toHaveBeenCalledWith("/c/ana-luis/rsvp");
+    expect(screen.queryByTestId("gift-filters")).toBeNull();
+  });
+
+  it("negative: an expired kept credential is forgotten, so the next visit asks for the link instead of failing again", async () => {
+    saveGiftCredential("ana-luis", "X".repeat(43));
+    show();
+    expect(await screen.findByText("Tu enlace ya no funciona")).toBeTruthy();
+    expect(readGiftCredential("ana-luis")).toBeNull();
+  });
+});
+
+describe("Espejo web · A15 a gift's own page at /c/{slug}/regalos/{id}", () => {
+  it("shows only that gift under its own title, with the partner note and the way back to the list", async () => {
+    saveGiftCredential("ana-luis", TOKEN);
+    const { onNavigate } = show({ onlyItemId: TORTA });
+    await screen.findByTestId(`gift-${TORTA}`);
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Torta");
+    expect(screen.queryByTestId(`gift-${MESA}`)).toBeNull();
+    expect(screen.queryByTestId("gift-filters")).toBeNull();
+    expect(screen.getByText("Este producto lo ofrece un aliado de DOne. Al abrir el enlace saldrás de DOne.")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("gifts-list"));
+    expect(onNavigate).toHaveBeenCalledWith("/c/ana-luis/regalos");
+  });
+
+  it("negative: a gift that is no longer on the list says so", async () => {
+    saveGiftCredential("ana-luis", TOKEN);
+    show({ onlyItemId: "99999999-9999-4999-8999-999999999999" });
+    expect(await screen.findByText("Este regalo ya no está en la lista.")).toBeTruthy();
+  });
+});

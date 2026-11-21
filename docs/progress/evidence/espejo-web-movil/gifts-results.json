@@ -1,0 +1,130 @@
+{
+  "app": "http://localhost:8300",
+  "slug": "qa-espejo-movil",
+  "results": [
+    {
+      "case": "A14 personal link → list",
+      "ok": true,
+      "detail": "rows=3/3 bearer=true kept=true errors=0",
+      "at": "2026-11-20T20:56:58.221Z"
+    },
+    {
+      "case": "A14 /c/{slug}/regalos with the kept credential",
+      "ok": true,
+      "detail": "/c/qa-espejo-movil/regalos",
+      "at": "2026-11-20T20:56:59.612Z"
+    },
+    {
+      "case": "Filters · max price",
+      "ok": true,
+      "detail": "max=450 rows=2 expected=2 count=\"2 regalos\"",
+      "at": "2026-11-20T20:56:59.940Z"
+    },
+    {
+      "case": "Filters · source partner (none in this list) → filtered empty state",
+      "ok": true,
+      "detail": "empty=1",
+      "at": "2026-11-20T20:57:00.275Z"
+    },
+    {
+      "case": "Filters · clear",
+      "ok": true,
+      "at": "2026-11-20T20:57:00.600Z"
+    },
+    {
+      "case": "A15 detail /c/{slug}/regalos/{id}",
+      "ok": true,
+      "detail": "h1=\"Cafetera italiana de 6 tazas\"",
+      "at": "2026-11-20T20:57:01.376Z"
+    },
+    {
+      "case": "Store link opens outside",
+      "ok": true,
+      "detail": "https://tienda.example/cafetera",
+      "at": "2026-11-20T20:57:01.463Z"
+    },
+    {
+      "case": "Negative · no credential → asks for the link (401)",
+      "ok": true,
+      "at": "2026-11-20T20:57:02.440Z"
+    },
+    {
+      "case": "Negative · forged token → expired, credential forgotten",
+      "ok": true,
+      "detail": "kept=null",
+      "at": "2026-11-20T20:57:03.719Z"
+    },
+    {
+      "case": "A14 360px light es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T20:57:06.145Z"
+    },
+    {
+      "case": "A14 360px light en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T20:57:08.424Z"
+    },
+    {
+      "case": "A14 360px dark es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T20:57:10.744Z"
+    },
+    {
+      "case": "A14 360px dark en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T20:57:13.133Z"
+    },
+    {
+      "case": "A14 768px light es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T20:57:16.100Z"
+    },
+    {
+      "case": "A14 768px light en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T20:57:18.834Z"
+    },
+    {
+      "case": "A14 768px dark es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T20:57:21.488Z"
+    },
+    {
+      "case": "A14 768px dark en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T20:57:24.505Z"
+    },
+    {
+      "case": "A14 1280px light es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T20:57:27.211Z"
+    },
+    {
+      "case": "A14 1280px light en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T20:57:29.705Z"
+    },
+    {
+      "case": "A14 1280px dark es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T20:57:32.108Z"
+    },
+    {
+      "case": "A14 1280px dark en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T20:57:34.710Z"
+    }
+  ]
+}

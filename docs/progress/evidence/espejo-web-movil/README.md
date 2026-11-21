@@ -54,4 +54,38 @@ Cómo reproducir: `EXPO_PUBLIC_API_URL=http://localhost:8300/api expo export --p
 - Las capturas `fullPage` muestran el primer viewport: la invitación se desplaza dentro de su `ScrollView`.
 - Movimiento: no se añadió animación (motion design: la navegación entre secciones es un cambio de página, sin transición propia).
 
-Siguientes slices del espejo: regalos públicos (`/c/{slug}/regalos`, `/regalos/{id}`), directorio de proveedores (`/proveedores/...`), microsite del partner (`/p/{slug}`, catálogo, agenda, cotizar) y catálogo (`/catalogo`).
+Siguientes slices del espejo: directorio de proveedores (`/proveedores/...`), microsite del partner (`/p/{slug}`, catálogo, agenda, cotizar) y catálogo (`/catalogo`).
+
+---
+
+# Slice 2: la lista de regalos (`/c/{slug}/regalos`, `/regalos/{id}`)
+
+Fecha: 2026-11-20 · Rama `feat/espejo-movil-regalos` (sobre el slice 1).
+
+**Resultado observable:** en la app, la lista de regalos funciona en las mismas direcciones y con lo mismo que la web (A14/A15): filtros por precio máximo, origen y «solo disponibles» con contador; aliados primero; foto del producto del aliado; «Ver en la tienda» para regalos externos; página propia de cada regalo; vuelta a la invitación. `/c/{slug}/regalos` sin token abre con la credencial guardada en la sesión (o pide el enlace), y `/regalos/{token}` sigue funcionando: un segmento UUID es un regalo y cualquier otro es la credencial.
+
+Mundo de prueba en TEST (dev): celebración `qa-espejo-movil` del anfitrión de prueba, publicada, con 3 regalos externos aprobados y una invitada QA con asistencia confirmada (script fuera del repo; el token no se versiona).
+
+| ID | Requisito | Estado | Comando / artefacto | Resultado |
+|---|---|---|---|---|
+| ESP-20 | El enlace personal abre la lista con la credencial como Bearer y la guarda en la sesión | PASS | `scripts/live/gifts-mirror.mjs` · [gifts-results.json](gifts-results.json) | 3/3 regalos, todas las lecturas con `Bearer`, `sessionStorage` con la misma clave que la web |
+| ESP-21 | `/c/{slug}/regalos` sin token en la dirección | PASS | live | abre con la credencial guardada |
+| ESP-22 | Filtros: precio máximo, origen, solo disponibles, quitar | PASS | live + `guest-gifts-mirror.test.tsx` | 450 Bs → 2 regalos; «De nuestros aliados» → estado vacío filtrado; quitar → 3 |
+| ESP-23 | Detalle `/c/{slug}/regalos/{id}` | PASS | live | h1 = título del regalo, una sola fila, nota de aliado y vuelta a la lista |
+| ESP-24 | «Ver en la tienda» sale de la app | PASS | live | nueva pestaña pide `https://tienda.example/cafetera` (dominio reservado: no carga, se verifica la petición) |
+| ESP-25 | Negativo: sin enlace no hay lista anónima | PASS | live | 401 → «Abre tu enlace de invitación» + ir a mi invitación |
+| ESP-26 | Negativo: token falsificado | PASS | live | «Tu enlace ya no funciona» y la credencial se olvida |
+| ESP-27 | Foto del producto del aliado y enlace por `/r/{listingId}` | TESTED | `guest-gifts-mirror.test.tsx` | la lista QA no tiene regalos de aliado: no observado en vivo |
+| ESP-28 | 360/768/1280 × claro/oscuro × es-BO/en-US, axe | PASS | live | 12/12 sin desborde, 0 critical/serious, 0 errores de consola |
+
+Además: el contador decía «1 regalos» (también en la web). La clave pasa a plural i18next (`count_one`/`count_other`) en ambos idiomas.
+
+```
+yarn turbo run test typecheck lint --continue → 65/66 tareas OK; única falla @rsvp/contracts#test (preexistente)
+  apps/universal                            → 30 archivos, 396 pruebas (guest-gifts-mirror 9 nuevas; gifts-portal 39 sin cambios de aserción)
+  apps/seo-web                              → 140 (arrange delega en arrangeGifts compartido)
+yarn lint:code                              → exit 0
+node scripts/live/gifts-mirror.mjs          → 21/21 PASS, exit 0
+```
+
+Límites: iOS/Android no probados; en nativo la credencial vive en memoria del proceso (se pierde al cerrar la app); reservar en vivo no se repitió en este slice porque el flujo de reserva no cambió (cubierto por `gifts-portal.test.tsx`).

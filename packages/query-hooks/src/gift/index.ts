@@ -48,6 +48,26 @@ export function catalogedFirst<T extends { readonly source: string }>(items: rea
 export const guestVisible = <T extends { readonly status: string }>(items: readonly T[]): T[] => items.filter((item) => item.status === "AVAILABLE" || item.status === "PENDING_REVIEW" || item.status === "COMMITTED");
 
 /** `credential` = the guest's bearer; omit it for the host session. The credential is never part of the query key. */
+/** Where a gift comes from, as a guest filters it: a DOne partner (CATALOGED) or any other store. */
+export type GiftSourceFilter = "all" | "partner" | "other";
+export interface GiftFilters { readonly maxMinor?: number; readonly source: GiftSourceFilter; readonly onlyAvailable: boolean }
+
+/**
+ * The guest's list as the web page and the app show it: only what a guest may see, the guest's filters applied, and partner
+ * gifts before the others whatever the order they arrived in. One function so both surfaces filter identically.
+ */
+export function arrangeGifts<T extends { readonly source: string; readonly status: string; readonly price: { readonly amountMinor: number } }>(items: readonly T[], filters: GiftFilters): { readonly partner: T[]; readonly other: T[] } {
+  const kept = guestVisible(items).filter((item) => (filters.maxMinor === undefined || item.price.amountMinor <= filters.maxMinor) && (!filters.onlyAvailable || item.status === "AVAILABLE") && (filters.source === "all" || (filters.source === "partner") === (item.source === "CATALOGED")));
+  const ordered = catalogedFirst(kept);
+  return { partner: ordered.filter((item) => item.source === "CATALOGED"), other: ordered.filter((item) => item.source !== "CATALOGED") };
+}
+
+/** A typed price ("150", "150.5") as minor units, or undefined when empty or not a number: an empty filter filters nothing. */
+export function maxPriceMinor(text: string): number | undefined {
+  const value = text.trim().replace(",", ".");
+  return value !== "" && Number.isFinite(Number(value)) ? Math.round(Number(value) * 100) : undefined;
+}
+
 export function useGiftList(client: ApiClient, celebrationId: string | undefined, credential?: string | null, initialData?: GiftItemList) {
   return useQuery({
     queryKey: [...queryKeys.gift.list(celebrationId ?? ""), credential === undefined ? "host" : "guest"] as const,
