@@ -1,15 +1,18 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { createTranslator, resolveLocale } from '@rsvp/i18n/server';
 import { OfflineArt } from '../components/brand/illustrations';
+import { reportBoundaryError } from '../lib/telemetry';
 
 /**
  * Last-resort boundary for a server render that failed (the backend did not answer). The visitor gets a plain
  * explanation, a retry that re-renders the route, and a way home: never the framework's blank "Application error".
+ * The failure is reported once to telemetry (M11).
  */
-export default function RouteError({ reset }: { readonly error: Error & { digest?: string }; readonly reset: () => void }) {
+export default function RouteError({ error, reset }: { readonly error: Error & { digest?: string }; readonly reset: () => void }) {
   const t = useMemo(() => createTranslator(resolveLocale(null, typeof navigator === 'undefined' ? [] : [...navigator.languages])), []);
+  useEffect(() => { reportBoundaryError(error, 'route'); }, [error]);
   return (
     <main className="state-page" role="alert">
       <OfflineArt className="state__art" />
