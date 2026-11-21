@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ContentEditorScreen } from "../src/host/content-editor";
 import { contentPatch, scheduleContent, slugify, toWallClock } from "../src/host/content-draft";
 import { CelebrationsScreen, forgetAutoOpen } from "../src/host/celebrations";
@@ -35,6 +35,12 @@ describe("editing helpers", () => {
 });
 
 describe("C2–C5 · picker and onboarding", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-20T12:00:00Z"));
+  });
+  afterEach(() => vi.useRealTimers());
+
   it("lists celebrations and opens the editor", async () => {
     const { client } = fakeClient({ "GET /celebrations": () => ({ items: [CELEBRATION] }) });
     renderApp(<CelebrationsScreen onNavigate={navigate} />, client);

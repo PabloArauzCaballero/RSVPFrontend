@@ -26,6 +26,11 @@ export const quoteEnUS: DeepStrings<typeof quoteEsBO> = {
     title: "{{name}}'s availability", meta: "Free days of {{name}}, in {{zone}} time.", intro: "Free days are in {{zone}} time, the vendor's zone.", legend: "Free, blocked or full days",
     prev: "Previous month", next: "Next month", month: "Calendar for {{month}}", free: "Free", blocked: "Unavailable", full: "Full", remaining: "{{count}} slot",
     dayLabel: "{{date}}: {{state}}", select: "Choose a free day to request the date.", selected: "Chosen date: {{date}}", request: "Request this date", requesting: "Requesting…", loading: "Loading the calendar…", error: "We could not load the calendar.", retry: "Try again",
+    empty: {
+      unpublishedTitle: "{{name}} has not published their days for {{month}} yet", unpublishedBody: "We cannot show free days for this month yet. Ask for a quote with your event date and the provider will reply to you directly.",
+      noneFreeTitle: "No free days left in {{month}}", noneFreeBody: "Every day this month is blocked or fully booked. Try the next month or ask for a quote with your date.",
+      nextMonth: "See next month", quote: "Ask for a quote"
+    },
     reason: { BLACKOUT: "The vendor blocked this day", NO_RULE: "The vendor does not work this day", OUTSIDE_HOURS: "Outside business hours", FULL: "No slots left" },
     outcome: { requestedTitle: "Date requested", requestedBody: "We asked {{name}} for {{date}}. They will confirm soon; the request expires {{expires}}.", blocked: "This date is unavailable: the vendor blocked it. Choose another free day.", noCapacity: "Someone took the last slot for this date. Choose another free day; the calendar was refreshed.", signIn: "Sign in to request a date.", generic: "We could not request the date. Try again." }
   }

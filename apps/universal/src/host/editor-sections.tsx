@@ -23,13 +23,19 @@ const focusRing = (color: string): object => Platform.select({ web: { outlineCol
 const filled = (value: unknown): boolean => asText(value).trim().length > 0;
 const hasRows = (value: unknown, key: string): boolean => asRecords(value).some((row) => filled(row[key]));
 
-export interface StateInput { readonly draft: Readonly<Record<string, unknown>>; readonly eventDate: WallClock; readonly schedule: readonly ScheduleDraft[]; readonly eventType: TranslatedEventType | undefined }
+export interface StateInput {
+  readonly draft: Readonly<Record<string, unknown>>;
+  readonly eventDate: WallClock;
+  readonly schedule: readonly ScheduleDraft[];
+  readonly eventType: TranslatedEventType | undefined;
+  readonly invalidEventDate?: boolean;
+}
 
 /**
  * A part is "ready" when it has what it needs; "missing" only for the parts the event type requires to publish (the
  * basics and the hosts); optional parts that are empty say so instead of nagging.
  */
-export function sectionStates({ draft, eventDate, schedule, eventType }: StateInput): Record<EditorSection, SectionState> {
+export function sectionStates({ draft, eventDate, schedule, eventType, invalidEventDate = false }: StateInput): Record<EditorSection, SectionState> {
   const required = eventType?.requiredFieldsForPublish ?? [];
   const basics = required.filter((field) => !field.startsWith(HOST_PREFIX));
   const basicsFilled = (basics.length ? basics : ["title"]).every((field) => (field === "eventDate" ? Boolean(eventDate.date.trim() && eventDate.time.trim()) : filled(draft[field])));
@@ -39,7 +45,7 @@ export function sectionStates({ draft, eventDate, schedule, eventType }: StateIn
   const extras = filled(draft["dressCode"]) || hasRows(draft["faq"], "question") || hasRows(draft["recommendations"], "name");
   const optional = (has: boolean): SectionState => (has ? "ready" : "optional");
   return {
-    general: basicsFilled ? "ready" : "missing",
+    general: basicsFilled && !invalidEventDate ? "ready" : "missing",
     anfitriones: hostsFilled ? "ready" : hostRoles.length ? "missing" : "optional",
     lugares: optional(hasRows(draft["venues"], "name")),
     historia: optional(filled(draft["story"])),

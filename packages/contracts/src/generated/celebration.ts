@@ -9,6 +9,7 @@ export interface paths {
         };
         get: operations["listCelebrations"];
         put?: never;
+        /** @description The date is optional in a draft. When provided, content.eventDate must be a date-time after the server's current instant. A date that has already started returns 422 EVENT_DATE_NOT_IN_FUTURE; a non-string date returns 422 INVALID_EVENT_DATE. Null represents an unset date. */
         post: operations["createCelebration"];
         delete?: never;
         options?: never;
@@ -29,6 +30,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
+        /** @description When content.eventDate is added or changed, it must be a date-time after the server's current instant (422 EVENT_DATE_NOT_IN_FUTURE, or INVALID_EVENT_DATE for a non-string date). Existing dates may be kept. Null removes the date from content. */
         patch: operations["editCelebration"];
         trace?: never;
     };

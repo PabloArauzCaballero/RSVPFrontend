@@ -91,8 +91,8 @@ export function contractClient(mock: ContractMock, celebration: Celebration = { 
 }
 
 const two = (n: number): string => String(n).padStart(2, "0");
-export function pickOnboardingDate(value: string): void {
-  fireEvent.click(screen.getByTestId("onboarding-date"));
+export function pickOnboardingDate(value: string, testId = "onboarding-date"): void {
+  fireEvent.click(screen.getByTestId(testId));
   const shown = screen.getByRole("grid").querySelector("button[tabindex='0']")?.getAttribute("data-testid");
   if (!shown) throw new Error("No active day in the invitation calendar");
   const [year, month] = value.split("-").map(Number) as [number, number, number];

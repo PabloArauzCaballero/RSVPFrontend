@@ -108,7 +108,7 @@ function useStyles(scheme: ColorScheme): Styles {
       navCurrent: { color: palette.accent, fontWeight: "700", textDecorationLine: "underline" },
       note: { color: palette.muted, fontFamily: theme.typography.body, fontSize: 13, textAlign: align, marginTop: SPACE / 2 },
       faqRow: { minHeight: TOUCH, justifyContent: "center", paddingVertical: SPACE / 2, borderBottomWidth: HAIRLINE, borderColor: palette.muted },
-      coverPhoto: { width: "100%", maxHeight: COVER_MAX_HEIGHT, borderRadius: layout.hero === "overlay" ? 0 : layout.radius }
+      coverPhoto: { borderRadius: layout.hero === "overlay" ? 0 : layout.radius }
     })
   };
 }
@@ -222,7 +222,26 @@ function CoverPhoto({ image, scheme }: { readonly image: GalleryImage; readonly 
       </View>
     );
   }
-  return <Image testID="celebration-cover-photo" source={{ uri }} style={[s.coverPhoto, { aspectRatio: Math.max(ratio, 3 / 4) }]} resizeMode="cover" accessibilityIgnoresInvertColors />;
+  return <FramedCoverPhoto uri={uri} ratio={ratio} style={s.coverPhoto} />;
+}
+
+/**
+ * Height of a cover photo shown `width` wide: its own proportion (never taller than 3:4) capped at the cover's maximum, as the
+ * web's `width: 100%; max-height` does. Computed rather than left to `aspectRatio` + `maxHeight`: on iOS/Android Yoga
+ * honours the cap by shrinking the WIDTH to keep the ratio, so the photo came out narrow and left-aligned.
+ */
+export function coverPhotoHeight(width: number, ratio: number): number {
+  return Math.round(Math.min(width / Math.max(ratio, 3 / 4), COVER_MAX_HEIGHT));
+}
+
+function FramedCoverPhoto({ uri, ratio, style }: { readonly uri: string; readonly ratio: number; readonly style: ImageStyle }): ReactNode {
+  const [width, setWidth] = useState(0);
+  return (
+    <View testID="celebration-cover-photo" onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
+      style={{ width: "100%", height: width ? coverPhotoHeight(width, ratio) : COVER_MAX_HEIGHT, overflow: "hidden", borderRadius: style.borderRadius }}>
+      <Image source={{ uri }} style={StyleSheet.absoluteFill} resizeMode="cover" accessibilityIgnoresInvertColors />
+    </View>
+  );
 }
 
 function SectionNav({ sections, only, t, scheme, actions }: { readonly sections: readonly SectionId[]; readonly only?: SectionId; readonly t: Translate; readonly scheme: ColorScheme; readonly actions?: NativeRendererActions }): ReactNode {

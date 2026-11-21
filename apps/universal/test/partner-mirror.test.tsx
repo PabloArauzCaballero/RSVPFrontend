@@ -121,6 +121,40 @@ describe("Espejo web · B10/B11 agenda", () => {
   });
 });
 
+describe("Agenda empty states (same rule as the web)", () => {
+  it("no days published: a status naming the provider and month, quote and next month; no grid and no request button", async () => {
+    const months: string[] = [];
+    const { onNavigate } = show((go) => <AgendaScreen slug="dulce-sol" onNavigate={go} />, {
+      [`GET /providers/${PROVIDER}/calendar`]: () => { months.push("asked"); return months.length === 1 ? { providerId: PROVIDER, timeZone: "America/La_Paz", month: "x", days: [] } : { providerId: PROVIDER, timeZone: "America/La_Paz", month: "y", days: DAYS }; }
+    });
+    const empty = await screen.findByTestId("agenda-empty");
+    expect(empty.getAttribute("role")).toBe("status");
+    expect(empty.textContent).toContain("Dulce Sol Pastelería todavía no publicó sus días para");
+    expect(screen.queryByTestId("agenda-grid")).toBeNull();
+    expect(screen.queryByTestId("agenda-request")).toBeNull();
+    fireEvent.click(screen.getByTestId("agenda-empty-quote"));
+    expect(onNavigate).toHaveBeenCalledWith("/p/dulce-sol/cotizar");
+    fireEvent.click(screen.getByTestId("agenda-empty-next"));
+    expect(await screen.findByTestId("agenda-grid")).toBeTruthy();
+    expect(screen.queryByTestId("agenda-empty")).toBeNull();
+    expect(months).toHaveLength(2);
+  });
+
+  it("days published but none free: the grid stays with the notice", async () => {
+    show((go) => <AgendaScreen slug="dulce-sol" onNavigate={go} />, { [`GET /providers/${PROVIDER}/calendar`]: () => ({ providerId: PROVIDER, timeZone: "America/La_Paz", month: "x", days: DAYS.map((day) => ({ ...day, available: false, reason: "FULL" })) }) });
+    expect((await screen.findByTestId("agenda-empty")).textContent).toContain("No quedan días libres en");
+    expect(screen.getByTestId("agenda-grid")).toBeTruthy();
+    expect(screen.queryByTestId("agenda-request")).toBeNull();
+  });
+
+  it("with a free day there is no empty notice and the request button is there", async () => {
+    show((go) => <AgendaScreen slug="dulce-sol" onNavigate={go} />);
+    await screen.findByTestId("agenda-grid");
+    expect(screen.queryByTestId("agenda-empty")).toBeNull();
+    expect(screen.getByTestId("agenda-request")).toBeTruthy();
+  });
+});
+
 describe("Espejo web · B8/B9 quote", () => {
   const fill = (): void => {
     fireEvent.change(screen.getByLabelText("Fecha del evento"), { target: { value: "2099-05-10" } });

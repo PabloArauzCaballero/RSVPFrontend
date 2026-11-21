@@ -1,0 +1,18 @@
+# Cold start of Expo Go before a flow: it keeps a running (or crashed) session alive and a deep link only navigates inside it.
+# iOS: stop the client; a link opened while Expo Go's home is in front is not loaded. Android: launch the client and let it
+# settle; a link that arrives while the stopped task is still closing is dropped together with it.
+appId: ${APP_ID}
+---
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - stopApp
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - launchApp:
+          stopApp: true
+      - waitForAnimationToEnd:
+          timeout: 5000

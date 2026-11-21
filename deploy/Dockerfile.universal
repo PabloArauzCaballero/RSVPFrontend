@@ -7,7 +7,9 @@ RUN corepack enable && corepack prepare yarn@4.10.3 --activate
 COPY . .
 RUN yarn install --immutable
 ARG EXPO_PUBLIC_API_URL
+# Public site (seo-web): partner redirector /r and indexable pages. Required when it is not the app's own domain.
 ARG EXPO_PUBLIC_SITE_URL
+# Origin of the guests' personal RSVP links.
 ARG EXPO_PUBLIC_RSVP_ORIGIN
 # The public gateway URL configures nginx below. The browser always calls this app's own /api.
 ENV EXPO_PUBLIC_API_URL=/api EXPO_PUBLIC_SITE_URL=$EXPO_PUBLIC_SITE_URL EXPO_PUBLIC_RSVP_ORIGIN=$EXPO_PUBLIC_RSVP_ORIGIN
