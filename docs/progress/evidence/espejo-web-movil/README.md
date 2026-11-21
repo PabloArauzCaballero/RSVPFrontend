@@ -145,10 +145,10 @@ El modelo del socio (`partnerFromListings`, `addressText`, orden de contactos), 
 | ESP-53 | Cobertura sin duplicados | PASS | live + `directory.test.tsx` | 2 zonas (antes 5) |
 | ESP-54 | Catálogo | PASS | live | 6 ofertas |
 | ESP-55 | Ficha: entrega antes de cotizar y contactar (REQ-F25-04) | PASS | live + test | |
-| ESP-56 | Agenda = `GET /calendar` en la zona del proveedor | NO OBSERVADO en vivo · TESTED | `partner-mirror.test.tsx` | el proveedor de dev no tiene disponibilidad configurada (0 días en nov–ene) |
-| ESP-57 | Pedir fecha sin sesión → 401 → login de la app | TESTED · vivo N/A | test | sin día libre en dev; el test cubre 401, 409 y éxito |
+| ESP-56 | Agenda = `GET /calendar` en la zona del proveedor | BLOCKED-EXTERNAL en vivo · TESTED | `partner-mirror.test.tsx` | `multicenter-59388c` no tiene disponibilidad. El proveedor QA propio (`proveedor-de-prueba-qa-ccc9c0`) quedó con disponibilidad diaria de 08 a 22 h, una oferta publicada con entrega y enviado a verificación (2026-11-20), pero sigue en `PENDING_VERIFICATION`: su calendario público responde 404 hasta que un ADMIN lo verifique |
+| ESP-57 | Pedir fecha sin sesión → 401 → login de la app | BLOCKED-EXTERNAL en vivo · TESTED | test | mismo bloqueo que ESP-56 (falta la verificación de un ADMIN); el test cubre 401, 409 y éxito |
 | ESP-58 | Cotizar: oferta preseleccionada, formulario incompleto rechazado sin enviar | PASS | live | 4 alertas, ningún POST a `/quotes` |
-| ESP-59 | Cotizar: envío con unidades menores enteras, confirmación, 429, 401 | TESTED | test | no se envía en vivo: crearía un lead real |
+| ESP-59 | Cotizar: envío con unidades menores enteras, confirmación, 429, 401 | BLOCKED-EXTERNAL en vivo · TESTED | test | el envío real irá al proveedor QA propio (no crea leads ajenos) cuando un ADMIN lo verifique; hoy su micrositio no existe para el público |
 | ESP-60 | Socio inexistente / no verificado / catálogo caído | PASS (vivo: inexistente) · TESTED | live + test | |
 | ESP-61 | Micrositio, agenda y cotizar en 360/768/1280 × claro/oscuro × es-BO/en-US, axe | PASS | live | 36/36 sin desborde, 0 critical/serious |
 
