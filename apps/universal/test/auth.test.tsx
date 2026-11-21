@@ -30,6 +30,7 @@ function setup(ui: React.ReactNode, handlers: Record<string, Handler> = {}, stor
 }
 const type = (label: string, value: string): void => { fireEvent.change(screen.getByLabelText(label), { target: { value } }); };
 const press = (label: string): void => { fireEvent.click(screen.getByRole("button", { name: label })); };
+const acceptTerms = (): void => { fireEvent.click(screen.getByRole("checkbox", { name: "Acepto los Términos de uso y la Política de privacidad." })); };
 
 beforeEach(() => { resetSecureStore(); localStorage.clear(); });
 
@@ -105,9 +106,18 @@ describe("REQ-F05-01 · sign up and recovery", () => {
   it("registers with the chosen role and starts the session", async () => {
     const { manager, calls } = setup(<RegisterScreen onNavigate={vi.fn()} />, { "POST /identity/auth/register": () => ({ id: "u", email: "p@x.co", roles: ["PROVIDER"], ...tokenResponse(["PROVIDER"]) }) });
     type("Correo", "p@x.co"); type("Contraseña", "correct-horse-battery");
-    fireEvent.click(screen.getByRole("radio", { name: /Ofrezco servicios/ })); press("Crear mi cuenta");
+    fireEvent.click(screen.getByRole("radio", { name: /Ofrezco servicios/ })); acceptTerms(); press("Crear mi cuenta");
     await waitFor(() => expect(manager.getState().session?.roles).toEqual(["PROVIDER"]));
-    expect(calls[0]?.body).toEqual({ email: "p@x.co", password: "correct-horse-battery", role: "PROVIDER" });
+    expect(calls[0]?.body).toEqual({ email: "p@x.co", password: "correct-horse-battery", role: "PROVIDER", termsVersion: "2026-11-21-borrador" });
+  });
+  it("B6: without an explicit acceptance of the terms and the privacy policy no account is created; both texts are one tap away", async () => {
+    const navigate = vi.fn();
+    const { calls } = setup(<RegisterScreen onNavigate={navigate} />);
+    type("Correo", "p@x.co"); type("Contraseña", "correct-horse-battery"); press("Crear mi cuenta");
+    expect(await screen.findByText("Para crear tu cuenta necesitas aceptar los términos y la política de privacidad.")).toBeTruthy();
+    expect(calls).toHaveLength(0);
+    fireEvent.click(screen.getByRole("link", { name: "Términos de uso" })); fireEvent.click(screen.getByRole("link", { name: "Política de privacidad" }));
+    expect(navigate.mock.calls.map(([href]) => href)).toEqual(["/terminos", "/privacidad"]);
   });
   it("offers only the self-service roles (ADMIN never appears)", () => {
     setup(<RegisterScreen onNavigate={vi.fn()} />);
@@ -132,12 +142,12 @@ describe("REQ-F05-01 · sign up and recovery", () => {
   });
   it("409: the e-mail already exists, with a way out", async () => {
     setup(<RegisterScreen onNavigate={vi.fn()} />, { "POST /identity/auth/register": () => new HttpFailure(409, { title: "Conflict" }) });
-    type("Correo", "ana@example.com"); type("Contraseña", "correct-horse-battery"); press("Crear mi cuenta");
+    type("Correo", "ana@example.com"); type("Contraseña", "correct-horse-battery"); acceptTerms(); press("Crear mi cuenta");
     expect(await screen.findByText("No pudimos crear la cuenta con esos datos. Prueba con otro correo, o entra si ya tienes cuenta.")).toBeTruthy();
   });
   it("422 from the server is reported without leaking its technical text", async () => {
     setup(<RegisterScreen onNavigate={vi.fn()} />, { "POST /identity/auth/register": () => new HttpFailure(422, { errors: [{ field: "password", message: "bean validation: size must be between 12 and 128" }] }) });
-    type("Correo", "ana@example.com"); type("Contraseña", "correct-horse-battery"); press("Crear mi cuenta");
+    type("Correo", "ana@example.com"); type("Contraseña", "correct-horse-battery"); acceptTerms(); press("Crear mi cuenta");
     expect(await screen.findByText("Algunos datos no son válidos. Revisa los campos marcados.")).toBeTruthy();
     expect(screen.queryByText(/bean validation/)).toBeNull();
   });

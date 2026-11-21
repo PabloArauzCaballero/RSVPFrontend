@@ -19,7 +19,7 @@ export const rsvpEnUS: DeepStrings<typeof rsvpEsBO> = {
     dietary: "Dietary restrictions", dietaryHelp: "Allergies, vegetarian, gluten free…",
     message: "Message for the hosts (optional)",
     name: "Your name", email: "Your email", emailHelp: "Only the hosts will see it.",
-    consent: "I consent to the hosts storing my name and email and contacting me about this event.",
+    consent: "I consent to the hosts storing my name and email and contacting me about this event, as the privacy policy describes.",
     submit: "Send reply", submitting: "Sending…", save: "Save changes", cancelEdit: "Cancel", register: "Confirm my attendance"
   },
   errors: {
@@ -94,7 +94,7 @@ export const rsvpEnUS: DeepStrings<typeof rsvpEsBO> = {
     },
     open: {
       title: "Confirm you are coming", lead: "This invitation is open. Leave your name and email and you are on the list.",
-      name: "Your name", email: "Your email", emailHelp: "Only your hosts see it.", consent: "I agree that my hosts keep my name and email and contact me about this event.", submit: "Confirm I am coming",
+      name: "Your name", email: "Your email", emailHelp: "Only your hosts see it.", consent: "I agree that my hosts keep my name and email and contact me about this event, as the privacy policy describes.", submit: "Confirm I am coming",
       checkFailed: "We could not check whether you can sign up. Try again.",
       restrictedTitle: "This celebration only takes answers with a personal link", restrictedBody: "Ask whoever invited you for yours. If you already have it, open it from the original message.",
       doneTitle: "Done, you are in.", doneBody: "Keep your personal link: it is the only way to change your answer later. We do not store it in your browser.",
