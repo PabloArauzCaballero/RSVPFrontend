@@ -237,3 +237,22 @@ En Expo Go, el enlace es `exp://<host>:8081/--/<ruta>` y no `rsvp://<ruta>`: el 
 yarn turbo run test typecheck lint --continue → 66/66 · ui 262 (con platform-files) · celebration-theme 45 · universal 420 · seo-web 141
 yarn lint:code → 0 · yarn harness:validate → 0
 ```
+# Enlaces a proveedores: origen del redirector
+
+Fecha: 2026-11-20 · Rama `fix/app-partner-redirector-origin`.
+
+**Causa raíz:** `partnerRedirectUrl` armaba `/r/{listingId}` con `siteOrigin()`, el origen de los enlaces personales, que prioriza `EXPO_PUBLIC_RSVP_ORIGIN`. En TEST ese es `dev.done.arauzsoftware.com`, el dominio de la app Expo, que no tiene `/r` («Esta página no existe»). El redirector vive en el sitio público (`EXPO_PUBLIC_SITE_URL`).
+
+**Solución:** `publicSiteOrigin()` en `src/platform/site-origin.ts` (lectura literal de `EXPO_PUBLIC_SITE_URL`, sin barra final; sin ella, el origen de RSVP). La usan `partnerRedirectUrl` (micrositio, invitación, regalos, panel de proveedores del anfitrión) y `publicUrl` de la vista previa. Documentado en `docker-compose.coolify.yml`, `deploy/Dockerfile.universal` y `docs/runbooks/releases.md`.
+
+| Comprobación | Estado | Resultado |
+|---|---|---|
+| `test/site-origins.test.ts` con el código anterior | FAIL (esperado) | 2/3 fallan: el enlace iba a `dev.done…` |
+| `test/site-origins.test.ts` con el código nuevo | PASS | 3/3 (dos dominios, un dominio, URL de partner rechazada) |
+| Chrome real, `/p/multicenter-59388c`, export con `RSVP_ORIGIN`=dev.done y `SITE_URL`=rsvp-web | PASS | WhatsApp y sitio web piden `https://rsvp-web.161.97.85.216.sslip.io/r/5b383c88…?destination=…&surface=APP` → 302 ([redirector-origin-results.json](redirector-origin-results.json)) |
+| Regalo de aliado en vivo | NO OBSERVADO | ninguna lista pública de dev tiene regalos de aliado; usa el mismo `partnerRedirectUrl` (cubierto por la prueba) |
+| Panel de proveedores del anfitrión en vivo | NO OBSERVADO | requiere sesión de anfitrión; mismo `partnerRedirectUrl` |
+
+Nota fuera de alcance: en dev, el destino `OFFICIAL_SITE` del listing `5b383c88…` redirige a la misma búsqueda de WhatsApp que `WHATSAPP`; es dato del proveedor en el backend, no del enlace.
+
+**Para que dev quede bien:** la imagen `universal` de Coolify debe compilarse con `EXPO_PUBLIC_SITE_URL=https://rsvp-web.161.97.85.216.sslip.io` (variable buildtime) y redeplegarse.
