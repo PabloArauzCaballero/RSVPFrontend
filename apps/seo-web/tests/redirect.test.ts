@@ -102,3 +102,45 @@ describe("REQ-F27-02/03 · /r/{listingId} redirector", () => {
     expect(rule?.disallow).toContain("/r/");
   });
 });
+
+describe("B1 · /r forwards the visitor address so Kong rate-limits each visitor, not seo-web", () => {
+  const sentHeaders = (fetchFn: ReturnType<typeof gateway>) => new Headers((fetchFn.mock.calls[0] as unknown as [URL, RequestInit])[1].headers as Record<string, string>);
+
+  it("sends the right-most X-Forwarded-For entry (the one the proxy appended) as X-Forwarded-For and X-Real-IP", async () => {
+    const fetchFn = gateway(upstream302());
+    await GET(new Request(`http://site.test/r/${LISTING}`, { headers: { "x-forwarded-for": "198.51.100.9, 203.0.113.7" } }), ctx);
+    const headers = sentHeaders(fetchFn);
+    expect(headers.get("x-forwarded-for")).toBe("203.0.113.7");
+    expect(headers.get("x-real-ip")).toBe("203.0.113.7");
+  });
+
+  it("a forged left-most entry or a non-address is never forwarded", async () => {
+    const fetchFn = gateway(upstream302());
+    await GET(new Request(`http://site.test/r/${LISTING}`, { headers: { "x-forwarded-for": "203.0.113.7, not-an-ip" } }), ctx);
+    expect(sentHeaders(fetchFn).get("x-forwarded-for")).toBeNull();
+    expect(sentHeaders(fetchFn).get("x-real-ip")).toBeNull();
+  });
+
+  it("without a proxy header nothing is invented", async () => {
+    const fetchFn = gateway(upstream302());
+    await GET(new Request(`http://site.test/r/${LISTING}`), ctx);
+    expect(sentHeaders(fetchFn).get("x-forwarded-for")).toBeNull();
+  });
+});
+
+describe("B1 · clientAddressOf / trustedProxyHops", async () => {
+  const { clientAddressOf, trustedProxyHops } = await import("../lib/client-address");
+  it("reads the entry written by the N-th trusted proxy from the right, IPv4 or IPv6", () => {
+    const headers = new Headers({ "x-forwarded-for": "198.51.100.9, 2001:db8::1, 10.0.0.5" });
+    expect(clientAddressOf(headers, 1)).toBe("10.0.0.5");
+    expect(clientAddressOf(headers, 2)).toBe("2001:db8::1");
+    expect(clientAddressOf(headers, 4)).toBeNull();
+    expect(clientAddressOf(headers, 0)).toBeNull();
+  });
+  it("hops come from SEO_WEB_TRUSTED_PROXY_HOPS; invalid values fall back to 1", () => {
+    expect(trustedProxyHops(undefined)).toBe(1);
+    expect(trustedProxyHops("2")).toBe(2);
+    expect(trustedProxyHops("0")).toBe(0);
+    for (const bad of ["-1", "abc", "9", "1.5"]) expect(trustedProxyHops(bad)).toBe(1);
+  });
+});

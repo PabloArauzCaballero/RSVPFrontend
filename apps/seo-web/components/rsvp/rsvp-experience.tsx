@@ -75,7 +75,10 @@ function Flow({ slug, token, locale, siteOrigin, client: injected }: Props): Rea
   const state = rsvp.data;
   const screen = closed ? 'closed' : rsvpScreenFor(state);
 
-  const header = <><p className="rsvp-for">{t('rsvp.page.invitationTo', { title })}</p>{resource.isSuccess && resource.data.name ? <p className="rsvp-for" data-testid="guest-name">{t('rsvp.page.invitationFor', { name: resource.data.name })}</p> : null}</>;
+  // GuestTokenResource.name only exists from Guest/RSVP 1.11.0 (backend PR #27). The pinned contract (1.10.0, the deployed one)
+  // does not declare it, so it is read only when the service actually sends it.
+  const guestName = resource.isSuccess && 'name' in resource.data && typeof resource.data.name === 'string' && resource.data.name ? resource.data.name : undefined;
+  const header = <><p className="rsvp-for">{t('rsvp.page.invitationTo', { title })}</p>{guestName ? <p className="rsvp-for" data-testid="guest-name">{t('rsvp.page.invitationFor', { name: guestName })}</p> : null}</>;
   const giftsLink = state.status === 'CONFIRMED' ? <div className="rsvp-actions"><button type="button" className="rsvp-button" onClick={() => window.location.assign(guestGiftPath(slug, token, locale))}>{t('rsvp.confirmed.gifts')}</button><p className="rsvp-hint">{t('rsvp.confirmed.giftsHint')}</p></div> : null;
   if (screen === 'closed') return <>{header}<ClosedView info={closed ?? {}} state={state} hosts={hosts} contact={contact} locale={locale} t={t} />{giftsLink}</>;
 
