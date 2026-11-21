@@ -249,6 +249,46 @@ describe("provider · leads pagination", () => {
   });
 });
 
+describe("provider · agenda bookings follow the cursor (L4)", () => {
+  beforeEach(() => { resetSecureStore(); });
+  const booking = (n: number, status = "CONFIRMED") => ({ id: `bk-${n}`, providerId: PID, requesterId: "u", date: `2027-02-${String(1 + (n % 28)).padStart(2, "0")}`, status, expiresAt: "2027-03-01T00:00:00Z" });
+  it("loads the next page only on request, with the server's cursor, and stops when nextCursor is null", async () => {
+    await withProvider();
+    const { client, paths } = rawClient({ [`GET /providers/${PID}`]: () => profile, [`GET /providers/${PID}/availability`]: () => ({ providerId: PID, capacityPerDay: 1, rules: [], blackouts: [] }),
+      [`GET /providers/${PID}/bookings`]: (path) => new URL(path, "http://x").searchParams.get("cursor") === "c2"
+        ? { items: Array.from({ length: 3 }, (_, i) => booking(50 + i, i === 0 ? "REQUESTED" : "CONFIRMED")), nextCursor: null }
+        : { items: Array.from({ length: 50 }, (_, i) => booking(i, i === 0 ? "REQUESTED" : "CONFIRMED")), nextCursor: "c2" } });
+    renderApp(<AgendaScreen />, client, HOST);
+    expect(await screen.findByText("Al menos 1 fecha por confirmar")).toBeTruthy();
+    expect(screen.getAllByTestId(/^booking-bk-/)).toHaveLength(50);
+    fireEvent.click(screen.getByTestId("bookings-more"));
+    await waitFor(() => expect(screen.getAllByTestId(/^booking-bk-/)).toHaveLength(53));
+    expect(screen.getByText("2 fechas por confirmar")).toBeTruthy();
+    expect(screen.queryByTestId("bookings-more")).toBeNull();
+    expect(paths.filter((path) => path.includes("/bookings"))).toEqual([`GET /providers/${PID}/bookings?limit=50`, `GET /providers/${PID}/bookings?limit=50&cursor=c2`]);
+  });
+  it("a failed next page keeps the bookings already shown and offers a retry", async () => {
+    await withProvider();
+    let calls = 0;
+    const { client } = rawClient({ [`GET /providers/${PID}`]: () => profile, [`GET /providers/${PID}/availability`]: () => ({ providerId: PID, capacityPerDay: 1, rules: [], blackouts: [] }),
+      [`GET /providers/${PID}/bookings`]: (path) => { if (new URL(path, "http://x").searchParams.get("cursor")) { calls += 1; if (calls === 1) return problem(503, "UNAVAILABLE"); return { items: [booking(99)], nextCursor: null }; } return { items: [booking(1)], nextCursor: "c2" }; } });
+    renderApp(<AgendaScreen />, client, HOST);
+    fireEvent.click(await screen.findByTestId("bookings-more"));
+    await waitFor(() => expect(screen.getByTestId("booking-bk-1")).toBeTruthy());
+    const retry = await screen.findByTestId("error-retry");
+    expect(screen.getByTestId("booking-bk-1")).toBeTruthy();
+    fireEvent.click(retry);
+    await waitFor(() => expect(screen.getByTestId("booking-bk-99")).toBeTruthy());
+  });
+  it("an older catalog without nextCursor shows its single page and no 'show more'", async () => {
+    await withProvider();
+    const { client } = fakeClient(portal({ [`GET /providers/${PID}/availability`]: () => ({ providerId: PID, capacityPerDay: 1, rules: [], blackouts: [] }), [`GET /providers/${PID}/bookings`]: () => ({ items: [booking(1, "REQUESTED")] }) }));
+    renderApp(<AgendaScreen />, client, HOST);
+    expect(await screen.findByText("1 fecha por confirmar")).toBeTruthy();
+    expect(screen.queryByTestId("bookings-more")).toBeNull();
+  });
+});
+
 describe("admin · users grant role", () => {
   const user = { id: "u-1", email: "ana@example.com", roles: ["HOST"], status: "ACTIVE", createdAt: "2026-10-01T12:00:00Z" };
   it("confirms before PUT /identity/users/{id}/roles/{role}, hides roles already held and pages with page/size", async () => {

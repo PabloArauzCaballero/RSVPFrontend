@@ -81,13 +81,17 @@ function Agenda({ provider }: { readonly provider: Provider }): ReactNode {
   const weekdayLabels = t("portal.agenda.weekday", { returnObjects: true } as never) as unknown as readonly string[];
   const labelOf = (day: number): string => (Array.isArray(weekdayLabels) ? weekdayLabels[day] : undefined) ?? String(day);
 
-  const pending = (bookings.data?.items ?? []).filter((booking) => booking.status === "REQUESTED").length;
+  const shownBookings = bookings.data?.pages.flatMap((page) => page.items) ?? [];
+  const pending = shownBookings.filter((booking) => booking.status === "REQUESTED").length;
+  // With more pages still on the server the count is a lower bound, and the heading says so (PF-2).
+  const pendingTitle = bookings.hasNextPage ? t("portal.agenda.bookingsPendingAtLeast", { count: pending }) : t("portal.agenda.bookingsPending", { count: pending });
+  const listFailed = bookings.isError && !bookings.isFetchNextPageError;
   return (
     <View style={{ gap: spacing[8] }}>
       <PageIntro>{t("portal.agenda.intro", { zone: provider.timeZone })}</PageIntro>
       {notice ? <Notice kind={notice.kind}>{notice.text}</Notice> : null}
-      <View style={{ gap: spacing[1] }}><Text accessibilityRole="header" style={styles.subtitle}>{pending > 0 ? t("portal.agenda.bookingsPending", { count: pending }) : t("portal.agenda.bookings")}</Text>
-        {bookings.isPending ? <RowsSkeleton count={2} minHeight={120} trailing /> : bookings.isError ? <ErrorNotice error={bookings.error} onReload={() => { void bookings.refetch(); }} /> : bookings.data.items.length === 0 ? <EmptyState illustration="freeAgenda" title={t("portal.agenda.bookingsEmptyTitle")} body={t("portal.agenda.bookingsEmpty")} /> : <Stagger>{[...bookings.data.items].sort((a, b) => Number(b.status === "REQUESTED") - Number(a.status === "REQUESTED")).map((booking) => {
+      <View style={{ gap: spacing[1] }}><Text accessibilityRole="header" style={styles.subtitle}>{pending > 0 ? pendingTitle : t("portal.agenda.bookings")}</Text>
+        {bookings.isPending ? <RowsSkeleton count={2} minHeight={120} trailing /> : listFailed ? <ErrorNotice error={bookings.error} onReload={() => { void bookings.refetch(); }} /> : shownBookings.length === 0 ? <EmptyState illustration="freeAgenda" title={t("portal.agenda.bookingsEmptyTitle")} body={t("portal.agenda.bookingsEmpty")} /> : <Stagger>{[...shownBookings].sort((a, b) => Number(b.status === "REQUESTED") - Number(a.status === "REQUESTED")).map((booking) => {
           const busy = decide.isPending && decide.variables?.bookingId === booking.id ? decide.variables.action : null;
           return (
             <View key={booking.id} style={{ gap: spacing[2], paddingVertical: spacing[5], borderTopWidth: 1, borderTopColor: palette.border }} testID={`booking-${booking.id}`}>
@@ -105,6 +109,8 @@ function Agenda({ provider }: { readonly provider: Provider }): ReactNode {
             </View>
           );
         })}</Stagger>}
+        {bookings.isFetchNextPageError ? <ErrorNotice error={bookings.error} onRetry={() => { void bookings.fetchNextPage(); }} /> : null}
+        {bookings.hasNextPage ? <ActionButton icon="arrow" variant="secondary" label={t("portal.agenda.bookingsMore")} busy={bookings.isFetchingNextPage} disabled={bookings.isFetchingNextPage} onPress={() => { void bookings.fetchNextPage(); }} testID="bookings-more" /> : null}
         {decide.isError && !conflict ? <ErrorNotice error={decide.error} onRetry={() => { if (decide.variables) decideOnce(decide.variables); }} /> : null}
       </View>
       {availability.isError && !(availability.error instanceof ApiError && availability.error.status === 404) ? <ErrorNotice error={availability.error} onReload={() => { void availability.refetch(); }} /> : null}
