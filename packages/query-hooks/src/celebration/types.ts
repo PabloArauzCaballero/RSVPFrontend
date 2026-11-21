@@ -74,6 +74,19 @@ export interface CelebrationPatch {
 
 export interface PublishCheck { readonly ready: boolean; readonly missingFields: readonly string[]; readonly status: CelebrationStatus; readonly version: number }
 
+/**
+ * GET /celebrations/{id}/public-page (A18): whether the public page agrees with the publication
+ * decision. Only LIVE means a guest opening the link sees the invitation.
+ */
+export type PublicPageState = "LIVE" | "PUBLISHING" | "UNPUBLISHING" | "OFFLINE";
+export interface PublicPageStatus {
+  readonly celebrationId: string;
+  readonly status: CelebrationStatus;
+  readonly state: PublicPageState;
+  readonly version: number;
+  readonly publicVersion: number | null;
+}
+
 export interface AuditEntry { readonly id: string; readonly action: string; readonly actorId: string | null; readonly at: string; readonly details: Readonly<Record<string, unknown>> }
 
 export interface TranslatedEventType {

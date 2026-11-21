@@ -1,6 +1,6 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Image, Platform, Share, Text, View } from "react-native";
-import { missingFieldsOf, useMediaAssets, usePublicationAction, usePublishCheck, type Celebration, type TranslatedEventType } from "@rsvp/query-hooks";
+import { isPublicPageInTransition, missingFieldsOf, useMediaAssets, usePublicationAction, usePublicPageStatus, usePublishCheck, type Celebration, type TranslatedEventType } from "@rsvp/query-hooks";
 import type { Translate } from "@rsvp/i18n";
 import { formatDate } from "@rsvp/celebration-theme";
 import { useApiClient, useT } from "../platform/providers";
@@ -23,6 +23,8 @@ const HOSTS_PREFIX = "hosts.";
 const SECTION_OF_FIELD: Readonly<Record<string, EditorSection>> = { story: "historia", dressCode: "secciones", faq: "secciones", schedule: "itinerario", venues: "lugares" };
 const OG_WIDTH = 320;
 const OG_HEIGHT = 168;
+/** After this long without the page agreeing with the decision, the screen says it is slower than usual. */
+const SLOW_PUBLIC_PAGE_MS = 30_000;
 
 export interface Task { readonly field: string; readonly label: string; readonly section: EditorSection }
 
@@ -46,6 +48,17 @@ function Checklist({ celebration, eventType, onNavigate, refetch }: { readonly c
   const check = usePublishCheck(client, celebration.id);
   const action = usePublicationAction(client, celebration.id);
   const media = useMediaAssets(client, celebration.id);
+  // A18: «publicada» only when the public page exists (LIVE), never just because the command answered 200.
+  const page = usePublicPageStatus(client, celebration.id);
+  const pageState = page.data?.state;
+  const inTransition = isPublicPageInTransition(pageState);
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    setSlow(false);
+    if (!inTransition) return undefined;
+    const timer = setTimeout(() => setSlow(true), SLOW_PUBLIC_PAGE_MS);
+    return () => clearTimeout(timer);
+  }, [inTransition]);
   const once = useSingleFlight();
   const [dialog, setDialog] = useState<Dialog>(null);
   const [reason, setReason] = useState("");
@@ -73,7 +86,9 @@ function Checklist({ celebration, eventType, onNavigate, refetch }: { readonly c
 
   const draft = celebration.status === "DRAFT";
   const ready = draft && check.isSuccess && !missing.length;
-  const justPublished = action.isSuccess && action.variables?.action.kind === "publish";
+  const live = celebration.status === "PUBLISHED" && pageState === "LIVE";
+  const publishing = celebration.status === "PUBLISHED" && !live;
+  const justPublished = live && action.isSuccess && action.variables?.action.kind === "publish";
   // One action per state, top right (a fixed bar on a phone): publish a draft, copy the link of a published page. The rest is in «⋯».
   const menuItems = [
     ...(celebration.status === "PUBLISHED" ? [{ key: "unpublish", label: t("host.publish.unpublish"), onPress: () => setDialog("unpublish"), disabled: action.isPending, testID: "unpublish" }] : []),
@@ -82,7 +97,8 @@ function Checklist({ celebration, eventType, onNavigate, refetch }: { readonly c
   useScreenHeader({
     actions: draft
       ? <ActionButton icon="check" label={t("host.publish.publish")} disabled={Boolean(missing.length) || !check.isSuccess} busy={action.isPending} onPress={() => setDialog("publish")} testID="publish" />
-      : celebration.status === "PUBLISHED" ? <ActionButton icon="copy" label={t("host.publish.copy")} onPress={() => { void share(); }} testID="copy-link" /> : null,
+      : live ? <ActionButton icon="copy" label={t("host.publish.copy")} onPress={() => { void share(); }} testID="copy-link" />
+        : publishing ? <ActionButton icon="copy" label={t("host.publish.copy")} disabled busy={!page.isError} onPress={() => undefined} testID="copy-link" /> : null,
     menu: celebration.status !== "ARCHIVED" ? <OverflowMenu testID="more-publish" items={menuItems} /> : null
   });
   return (
@@ -96,6 +112,18 @@ function Checklist({ celebration, eventType, onNavigate, refetch }: { readonly c
         </Enter>
       ) : celebration.status !== "PUBLISHED" ? (
         <Notice kind="info">{t(`host.publish.status.${celebration.status}`)}</Notice>
+      ) : null}
+      {(publishing && !page.isError) || pageState === "UNPUBLISHING" ? (
+        <View testID="public-page-pending" accessibilityLiveRegion="polite" style={{ gap: spacing[2] }}>
+          <Notice kind="info">{t(`host.publish.live.${pageState === "UNPUBLISHING" ? "UNPUBLISHING" : "PUBLISHING"}`)}</Notice>
+          {slow ? <Text style={styles.muted}>{t("host.publish.live.slow")}</Text> : null}
+        </View>
+      ) : null}
+      {page.isError && celebration.status === "PUBLISHED" ? (
+        <View style={{ gap: spacing[2], maxWidth: 720 }}>
+          <Notice kind="error">{t("host.publish.live.unknown")}</Notice>
+          <ActionButton icon="refresh" variant="secondary" label={t("host.common.retry")} onPress={() => { void page.refetch(); }} testID="retry-public-page" />
+        </View>
       ) : null}
       {draft ? (
         <View style={{ gap: spacing[3], maxWidth: 720 }}>
@@ -132,7 +160,7 @@ function Checklist({ celebration, eventType, onNavigate, refetch }: { readonly c
       <CelebrationErrorNotice error={fromError.length ? null : action.error} onReload={() => { void check.refetch(); refetch(); }} />
       {celebration.status !== "ARCHIVED" ? (
         <View style={{ gap: spacing[3], maxWidth: 720 }}>
-          {celebration.status === "PUBLISHED" ? (
+          {live ? (
             <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: spacing[4] }}>
               <View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 260, gap: spacing[2] }}>
                 <Text accessibilityRole="header" aria-level={2} style={styles.subtitle}>{t("host.publish.share")}</Text>

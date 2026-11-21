@@ -6,6 +6,7 @@ export const queryKeys = {
     /** The same public read in one language: a child of `public(slug)`, so invalidating the slug refreshes every language. */
     publicIn: (slug: string, language: string) => ["celebrations", "public", slug, language] as const,
     publishCheck: (id: string) => ["celebrations", id, "publish-check"] as const,
+    publicPage: (id: string) => ["celebrations", id, "public-page"] as const,
     audit: (id: string) => ["celebrations", id, "audit"] as const
   },
   eventType: { all: ["event-types"] as const, list: (locale: string) => ["event-types", locale] as const, admin: ["event-types", "admin"] as const },

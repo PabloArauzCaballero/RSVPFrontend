@@ -161,12 +161,59 @@ describe("REQ-F12-06 · copy the public link", () => {
   it("writes the public URL to the clipboard and confirms it", async () => {
     const writeText = vi.fn(async () => undefined);
     vi.stubGlobal("navigator", { ...globalThis.navigator, clipboard: { writeText } });
-    const { client } = fakeClient({ ...baseHandlers({ ...CELEBRATION, status: "PUBLISHED" }), "GET /celebrations/c-1/publish-check": () => ({ ready: true, missingFields: [], status: "PUBLISHED", version: 3 }), "GET /media/celebrations/c-1/assets": () => ({ items: [] }) });
+    const { client } = fakeClient({ ...baseHandlers({ ...CELEBRATION, status: "PUBLISHED" }), "GET /celebrations/c-1/publish-check": () => ({ ready: true, missingFields: [], status: "PUBLISHED", version: 3 }), "GET /media/celebrations/c-1/assets": () => ({ items: [] }), "GET /celebrations/c-1/public-page": () => ({ celebrationId: "c-1", status: "PUBLISHED", state: "LIVE", version: 3, publicVersion: 3 }) });
     renderApp(<PublishScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    await waitFor(() => expect((screen.getByTestId("copy-link") as HTMLElement).getAttribute("aria-disabled")).not.toBe("true"));
     fireEvent.click(await screen.findByText("Copiar enlace"));
     await waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
     expect(String((writeText.mock.calls[0] as unknown[])[0])).toMatch(/\/c\/ana-y-luis$/);
     expect(await screen.findByText("Enlace copiado.")).toBeTruthy();
+  });
+});
+
+describe("A18 · «publicada» only when the public page exists", () => {
+  const page = (state: string) => ({ celebrationId: "c-1", status: state === "OFFLINE" || state === "UNPUBLISHING" ? "DRAFT" : "PUBLISHED", state, version: 4, publicVersion: state === "LIVE" || state === "UNPUBLISHING" ? 4 : null });
+
+  it("after publishing, it says «Publicando…» and offers no link until the page is LIVE; then it celebrates", async () => {
+    let current = { ...CELEBRATION };
+    let pageState = "OFFLINE";
+    const { client, calls } = fakeClient({
+      ...baseHandlers(),
+      "GET /celebrations/c-1": () => current,
+      "GET /celebrations/c-1/publish-check": () => ({ ready: true, missingFields: [], status: current.status, version: current.version }),
+      "GET /media/celebrations/c-1/assets": () => ({ items: [] }),
+      "GET /celebrations/c-1/public-page": () => page(pageState),
+      "POST /celebrations/c-1/publish": () => { current = { ...CELEBRATION, status: "PUBLISHED", version: 4 }; pageState = "PUBLISHING"; return current; }
+    });
+    renderApp(<PublishScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    await screen.findByText("Tu celebración está lista para publicar.");
+    fireEvent.click(screen.getByTestId("publish"));
+    fireEvent.click(screen.getAllByText("Publicar celebración").at(-1) as HTMLElement);
+    expect(await screen.findByText(/^Publicando…/)).toBeTruthy();
+    expect(screen.queryByText("Tu invitación ya está publicada")).toBeNull();
+    expect(screen.queryByText("Publicada: cualquiera con el enlace la ve.")).toBeNull();
+    expect(screen.queryByText("Comparte el enlace")).toBeNull();
+    expect((screen.getByTestId("copy-link") as HTMLElement).getAttribute("aria-disabled")).toBe("true");
+    pageState = "LIVE";
+    expect(await screen.findByText("Tu invitación ya está publicada", undefined, { timeout: 5000 })).toBeTruthy();
+    expect(screen.queryByTestId("public-page-pending")).toBeNull();
+    expect((screen.getByTestId("copy-link") as HTMLElement).getAttribute("aria-disabled")).not.toBe("true");
+    expect(calls.filter((call) => call.path === "/celebrations/c-1/public-page").length).toBeGreaterThan(1);
+  });
+
+  it("a published celebration whose page is still served after unpublishing says it is being taken down", async () => {
+    const { client } = fakeClient({ ...baseHandlers(), "GET /celebrations/c-1/publish-check": () => ({ ready: true, missingFields: [], status: "DRAFT", version: 4 }), "GET /media/celebrations/c-1/assets": () => ({ items: [] }), "GET /celebrations/c-1/public-page": () => page("UNPUBLISHING") });
+    renderApp(<PublishScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    expect(await screen.findByText(/^Retirando tu invitación…/)).toBeTruthy();
+  });
+
+  it("if the state cannot be read, it never claims the page is visible and offers to retry", async () => {
+    const { client } = fakeClient({ ...baseHandlers({ ...CELEBRATION, status: "PUBLISHED" }), "GET /celebrations/c-1/publish-check": () => ({ ready: true, missingFields: [], status: "PUBLISHED", version: 3 }), "GET /media/celebrations/c-1/assets": () => ({ items: [] }) });
+    renderApp(<PublishScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    expect(await screen.findByText(/No pudimos comprobar si tu invitación ya está visible/)).toBeTruthy();
+    expect(screen.getByTestId("retry-public-page")).toBeTruthy();
+    expect(screen.queryByText("Comparte el enlace")).toBeNull();
+    expect((screen.getByTestId("copy-link") as HTMLElement).getAttribute("aria-disabled")).toBe("true");
   });
 });
 

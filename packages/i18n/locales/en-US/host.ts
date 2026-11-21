@@ -104,6 +104,7 @@ export const hostEnUS: DeepStrings<typeof hostEsBO> = {
     unpublish: "Unpublish", unpublishConfirm: "The site stops showing until you publish it again. The link stays the same.", reasonLabel: "Reason (optional)",
     archive: "Archive", archiveConfirm: "Archiving is final: the celebration can no longer be published or edited.", more: "More options",
     status: { DRAFT: "Draft: only you can see it.", PUBLISHED: "Published: anyone with the link can see it.", ARCHIVED: "Archived." },
+    live: { PUBLISHING: "Publishing… Your invitation will be visible in a few seconds. We will tell you here when it is ready to share.", UNPUBLISHING: "Taking your invitation down… It may stay visible for a few seconds.", slow: "This is taking longer than usual. You can leave this screen; if nothing changes in a few minutes, contact us.", unknown: "We could not check whether your invitation is visible yet. Try again before sharing the link." },
     share: "Share the link", link: "Public link", copy: "Copy link", copied: "Link copied.", whatsappPreview: "How it looks on WhatsApp"
   },
   settings: {
