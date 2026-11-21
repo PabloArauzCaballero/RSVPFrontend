@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { androidAssetLinks, appleAssociation, magicLinkUrl, nativeMagicLink, parseMagicLink, parsePersonalLink, personalLinkOrigin, personalLinkUrl, verificationConfigFromEnvironment } from "../src/index.js";
+import { androidAssetLinks, appleAssociation, MissingPublicOriginError, magicLinkUrl, nativeMagicLink, parseMagicLink, parsePersonalLink, personalLinkOrigin, personalLinkUrl, verificationConfigFromEnvironment } from "../src/index.js";
 
 describe("deep links", () => {
   it("REQ-F15-01 · the canonical personal link is ${origin}/c/{slug}/rsvp/{token} and round trips slug and token", () => {
@@ -13,6 +13,15 @@ describe("deep links", () => {
     expect(personalLinkOrigin({ NEXT_PUBLIC_SITE_URL: "https://site.test" })).toBe("https://site.test");
     expect(personalLinkOrigin({ EXPO_PUBLIC_SITE_URL: "https://expo.test" })).toBe("https://expo.test");
     expect(personalLinkOrigin({})).toBe("http://localhost:3000");
+  });
+  it("L11 · only development and test builds fall back to localhost; any other build fails closed without an origin", () => {
+    expect(personalLinkOrigin({}, "development")).toBe("http://localhost:3000");
+    expect(personalLinkOrigin({}, "test")).toBe("http://localhost:3000");
+    expect(() => personalLinkOrigin({}, "production")).toThrow(MissingPublicOriginError);
+    expect(() => personalLinkOrigin({}, "staging")).toThrow(MissingPublicOriginError);
+    expect(() => personalLinkOrigin({ RSVP_PUBLIC_ORIGIN: "  ", EXPO_PUBLIC_SITE_URL: "" }, "production")).toThrow(/EXPO_PUBLIC_RSVP_ORIGIN/);
+    expect(personalLinkOrigin({ RSVP_PUBLIC_ORIGIN: "https://done.bo/" }, "production")).toBe("https://done.bo");
+    expect(personalLinkOrigin({ RSVP_PUBLIC_ORIGIN: "", EXPO_PUBLIC_SITE_URL: "https://expo.test" }, "production")).toBe("https://expo.test");
   });
   it("keeps parsing the legacy token-only links already sent", () => {
     const legacy = magicLinkUrl("https://rsvp.example", "abc/123");

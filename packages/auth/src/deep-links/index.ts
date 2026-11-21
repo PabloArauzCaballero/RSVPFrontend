@@ -10,12 +10,29 @@ export const PERSONAL_LINK_PATHS: readonly string[] = ["/c/*/rsvp/*", "/rsvp/*"]
 /** @deprecated Legacy token-only prefix. Kept so links already sent keep opening the app/web fallback. */
 export const MAGIC_LINK_PATH = "/rsvp";
 
-const DEFAULT_ORIGIN = "http://localhost:3000";
+/** Only a development or test build may fall back to the local site (PF-7: no localhost fallback in production). */
+const LOCAL_ORIGIN = "http://localhost:3000";
+const LOCAL_BUILDS: readonly string[] = ["development", "test"];
 const trimSlash = (value: string): string => value.replace(/\/$/, "");
 
-/** The public origin of personal links; configurable per environment (never hardcoded in screens). */
-export function personalLinkOrigin(environment: Record<string, string | undefined>): string {
-  return trimSlash(environment["RSVP_PUBLIC_ORIGIN"] || environment["NEXT_PUBLIC_SITE_URL"] || environment["EXPO_PUBLIC_SITE_URL"] || DEFAULT_ORIGIN);
+/** A production bundle was built without the public origin of personal links: no guest link can be issued. */
+export class MissingPublicOriginError extends Error {
+  constructor() {
+    super("Missing public origin for personal links: set EXPO_PUBLIC_RSVP_ORIGIN or EXPO_PUBLIC_SITE_URL (app) / NEXT_PUBLIC_SITE_URL (web) at build time.");
+    this.name = "MissingPublicOriginError";
+  }
+}
+
+/**
+ * The public origin of personal links; configurable per environment (never hardcoded in screens). Without one, a
+ * development or test build uses the local site and any other build fails closed instead of sending guests to
+ * localhost. `nodeEnv` defaults to the bundler-inlined `process.env.NODE_ENV` (Metro and Next both replace it).
+ */
+export function personalLinkOrigin(environment: Record<string, string | undefined>, nodeEnv: string | undefined = process.env.NODE_ENV): string {
+  const configured = [environment["RSVP_PUBLIC_ORIGIN"], environment["NEXT_PUBLIC_SITE_URL"], environment["EXPO_PUBLIC_SITE_URL"]].map((value) => value?.trim()).find(Boolean);
+  if (configured) return trimSlash(configured);
+  if (nodeEnv && LOCAL_BUILDS.includes(nodeEnv)) return LOCAL_ORIGIN;
+  throw new MissingPublicOriginError();
 }
 
 export function personalLinkPath(slug: string, token: string): string {
