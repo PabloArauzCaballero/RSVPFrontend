@@ -4,6 +4,7 @@ import { themeFromTemplate } from "@rsvp/celebration-theme";
 import { spacing } from "@rsvp/design-tokens";
 import { useMediaAssets, useTemplate, type Celebration, type MediaAsset, type TranslatedEventType } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../platform/providers";
+import { publicSiteOrigin } from "../platform/site-origin";
 import { CelebrationScreen, useScreenHeader, type ScreenProps } from "./gate";
 import { previewView } from "./preview-model";
 import { PreviewStage, DEVICE_WIDTHS, type Device } from "./preview-stage";
@@ -15,10 +16,9 @@ import { ActionButton, Notice, OverflowMenu, useStyles } from "./ui";
 /** C15 · The real invitation at phone, tablet and desktop width, without leaving the dashboard. */
 
 export { DEVICE_WIDTHS };
-const DEFAULT_SITE_URL = "http://localhost:3000";
-
+/** The published invitation on the public site (the same origin as the partner redirector). */
 export function publicUrl(slug: string): string {
-  return `${process.env.EXPO_PUBLIC_SITE_URL ?? DEFAULT_SITE_URL}/c/${slug}`;
+  return `${publicSiteOrigin()}/c/${slug}`;
 }
 
 export function DevicePreviewScreen({ celebrationId, onNavigate }: ScreenProps): ReactNode {

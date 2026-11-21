@@ -1,9 +1,10 @@
-import { siteOrigin } from "./site-origin";
+import { publicSiteOrigin } from "./site-origin";
 
 const LISTING_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * The only way the app points at a partner: the redirector of the public site, `/r/{listingId}`, which records the lead and answers 302.
+ * It lives on the public site (`publicSiteOrigin`), never on the app's own domain, which has no `/r` route.
  * Same rule as `PartnerLink` in ui-web; it takes a listing id, so a direct partner URL cannot be built here.
  */
 export function partnerRedirectUrl(listingId: string, options: { readonly destination?: string; readonly surface: string; readonly celebrationId?: string }): string {
@@ -12,5 +13,5 @@ export function partnerRedirectUrl(listingId: string, options: { readonly destin
   if (options.destination) query.set("destination", options.destination);
   query.set("surface", options.surface);
   if (options.celebrationId) query.set("celebrationId", options.celebrationId);
-  return `${siteOrigin()}/r/${encodeURIComponent(listingId)}?${query.toString()}`;
+  return `${publicSiteOrigin()}/r/${encodeURIComponent(listingId)}?${query.toString()}`;
 }

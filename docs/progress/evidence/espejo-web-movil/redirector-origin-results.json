@@ -1,0 +1,19 @@
+{
+  "app": "http://localhost:8330",
+  "site": "https://rsvp-web.161.97.85.216.sslip.io",
+  "slug": "multicenter-59388c",
+  "results": [
+    {
+      "case": "contact-WHATSAPP → public site redirector",
+      "ok": true,
+      "detail": "https://rsvp-web.161.97.85.216.sslip.io/r/5b383c88-f312-40e2-8b7b-f6d18defef1a?destination=WHATSAPP&surface=APP → 302 https://www.google.com/search?q=https%3A%2F%2Fwa.me%2F591781",
+      "at": "2026-11-21T03:47:18.490Z"
+    },
+    {
+      "case": "contact-OFFICIAL_SITE → public site redirector",
+      "ok": true,
+      "detail": "https://rsvp-web.161.97.85.216.sslip.io/r/5b383c88-f312-40e2-8b7b-f6d18defef1a?destination=OFFICIAL_SITE&surface=APP → 302 https://www.google.com/search?q=https%3A%2F%2Fwa.me%2F591781",
+      "at": "2026-11-21T03:47:18.897Z"
+    }
+  ]
+}

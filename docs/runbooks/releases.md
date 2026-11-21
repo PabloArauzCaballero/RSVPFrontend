@@ -6,6 +6,11 @@ Los secretos `EXPO_TOKEN`, credenciales de Apple/Google y `EXPO_ASC_APP_ID` se c
 
 Configurar estas variables de despliegue en EAS/GitHub, nunca en el repositorio: `EXPO_PUBLIC_EAS_PROJECT_ID`, `EXPO_PUBLIC_LINK_DOMAIN`, `EXPO_IOS_BUNDLE_IDENTIFIER`, `EXPO_ANDROID_PACKAGE`, `RSVP_APPLE_APP_ID`, `RSVP_ANDROID_PACKAGE` y `RSVP_ANDROID_SHA256_FINGERPRINTS`.
 
+La app (nativa, EAS y la imagen web de Coolify) necesita dos orígenes distintos, ambos incrustados al compilar:
+
+- `EXPO_PUBLIC_SITE_URL`: el sitio público (seo-web). Ahí viven el redirector de proveedores `/r/{listingId}` y las páginas indexables. Es **obligatoria** cuando el sitio no está en el mismo dominio que la app; sin ella, los enlaces a proveedores usan `EXPO_PUBLIC_RSVP_ORIGIN`, lo que solo es correcto si un único dominio sirve las dos cosas. En TEST: `https://rsvp-web.161.97.85.216.sslip.io`.
+- `EXPO_PUBLIC_RSVP_ORIGIN`: el dominio de los enlaces personales de RSVP. En TEST: `https://dev.done.arauzsoftware.com`.
+
 El sitio SEO sirve `/.well-known/apple-app-site-association` y `/.well-known/assetlinks.json` de forma dinámica. Ambos responden 404 hasta contar con los identificadores verificados: publicar valores de ejemplo puede dejar los enlaces universales invalidados por caché.
 
 ## Preview para QA

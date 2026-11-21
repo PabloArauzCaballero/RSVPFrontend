@@ -1,6 +1,9 @@
 # Despliegue web de RSVP en Coolify (Contabo TEST). Build context = raiz del repo; sin bind mounts (Coolify no los materializa).
 # Dos servicios publicos, cada uno con su dominio en Coolify: universal (app Expo web) y seo-web (sitio publico y enlaces de RSVP).
 # Las URLs son argumentos de build porque se incrustan en el JS: deben ser variables buildtime en Coolify.
+# universal: EXPO_PUBLIC_SITE_URL = dominio de seo-web (sirve /r/{listingId} y las paginas indexables; TEST: https://rsvp-web.161.97.85.216.sslip.io);
+#            EXPO_PUBLIC_RSVP_ORIGIN = dominio de los enlaces personales de RSVP (TEST: https://dev.done.arauzsoftware.com).
+#            Si la app y el sitio viven en dominios distintos, SITE_URL es obligatoria: sin ella los enlaces a proveedores irian al dominio de la app, que no tiene /r.
 name: rsvp-web
 services:
   universal:
