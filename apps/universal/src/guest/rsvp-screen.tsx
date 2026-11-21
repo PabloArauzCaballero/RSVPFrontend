@@ -400,6 +400,7 @@ function PublicRegistrationForm({ view, slug, cover, hosts, contact }: { readonl
         <CompanionsStepper value={draft.requestedCompanions} onChange={(requestedCompanions) => change({ requestedCompanions })} allowed={undefined} error={errors.requestedCompanions} />
         <ExtrasFields dietaryNotes={draft.dietaryNotes} message={draft.message} onChange={change} errors={errors} />
         <Checkbox label={t("rsvp.invite.open.consent")} value={draft.consent} onChange={(consent) => change({ consent })} />
+        <Text testID="rsvp-privacy-link" accessibilityRole="link" style={[styles.body, { fontWeight: "600", textDecorationLine: "underline" }]} onPress={() => router.push("/privacidad")}>{t("legal.links.privacy")}</Text>
         {errors.consent ? <Text accessibilityRole="alert" style={[styles.muted, { color: palette.danger }]}>{errors.consent}</Text> : null}
         {Object.keys(errors).length ? <Text accessibilityRole="alert" style={[styles.muted, { color: palette.danger }]}>{t("rsvp.invite.errors.summary")}</Text> : null}
         <StickyActions summary={failure ? <FailureNotice failure={failure} busy={busy} onRetry={() => { void submit(); }} /> : undefined}>
