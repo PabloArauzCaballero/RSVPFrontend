@@ -281,3 +281,30 @@ expo config --type introspect                      → ios.infoPlist.CFBundleLoc
 **Qué cubre Expo Go y qué solo un build propio:** con Expo Go se verificó que `getLocales()` devuelve el idioma del usuario y que la app lo usa, en iOS y Android. Que el sistema muestre la app en Ajustes → Idioma por app, y que el bundle propio declare `es`/`en`, solo se puede observar en un build propio (EAS). Está configurado (introspección), pero no se observó en un dispositivo.
 
 Para arrancar en nativo hizo falta aplicar localmente la corrección de #37 (`motion.native` se importaba a sí mismo). Esa corrección no forma parte de este PR.
+# Portada: `/` sin sesión (web) — «Portada en la web, login en el celular»
+
+Fecha: 2026-11-21 · Rama `feat/app-portada-web` (base `chore/deploy-contabo-coolify` @ `09d399c`). Decisión del dueño del 2026-11-21.
+
+**Resultado observable:** en la app servida en el navegador, quien abre `/` sin sesión ve la misma portada que el sitio público: encabezado con Proveedores, Ingresar y Crear; la promesa con la invitación en el teléfono; los estilos; los tres pasos; invitados, regalos y proveedores; para quién es; tipos de celebración; preguntas; cierre. En iOS y Android, `/` sin sesión sigue abriendo el login. Con sesión, en cualquier plataforma, va al inicio de su rol.
+
+El contenido de muestra y el orden (estilos, invitados y cifras, regalos, tipos, preguntas, pruebas, pasos, proveedores) viven en `@rsvp/i18n` (`landing-content.ts`) y los consumen la web (`apps/seo-web/components/landing.tsx`) y la app (`apps/universal/src/landing/landing-screen.tsx`).
+
+| ID | Requisito | Estado | Comando / artefacto | Resultado |
+|---|---|---|---|---|
+| ESP-70 | Web sin sesión: `/` muestra la portada y no redirige | PASS | `scripts/live/landing-mirror.mjs` · [landing-results.json](landing-results.json) | 12/12 combinaciones se quedan en `/` |
+| ESP-71 | Mismas secciones que el sitio | PASS | live | cada encabezado visible del sitio está en la app (0 faltantes), en es-BO y en-US |
+| ESP-72 | Crear → `/registro`, Ingresar → `/login`, Proveedores → `/proveedores` | PASS | live + `test/landing.test.tsx` | |
+| ESP-73 | iOS/Android sin sesión → login | TESTED | `test/landing.test.tsx` (`anonymous-home.tsx`) | no se corrió en simulador en este frente |
+| ESP-74 | Con sesión → inicio del rol | TESTED | `test/landing.test.tsx` | HOST → `/celebraciones`, ADMIN → `/admin` |
+| ESP-75 | Preguntas que se abren y anuncian su estado | TESTED | `test/landing.test.tsx` | `aria-expanded` |
+| ESP-76 | 360/768/1280 × claro/oscuro × es-BO/en-US, axe | PASS | live | sin desborde, 0 critical/serious, 0 errores de consola |
+
+Capturas lado a lado (app / sitio): `portada-app-{360,1280}-{light,dark}.png` y `portada-sitio-{360,1280}-{light,dark}.png`.
+
+```
+yarn turbo run test typecheck lint --continue → 66/66 (universal 440, seo-web 141, i18n 12)
+yarn lint:code → 0 · yarn harness:validate → 0
+node scripts/live/landing-mirror.mjs (Chrome real; app exportada contra dev en :8340; sitio https://rsvp-web.161.97.85.216.sslip.io) → 15/15, exit 0
+```
+
+Diferencias aceptadas con el sitio: el degradado del hero y las sombras del teléfono y las tarjetas no se replican; el JSON-LD (sitio y FAQ) es de la web indexable y no aplica a la app; el primer CTA lleva a `/registro` de la app (en el sitio lleva al login de la app). Movimiento: una sola entrada de la escena del hero con `Enter`, que respeta movimiento reducido. Ninguna línea base visual cubre `/` (`e2e/screens.ts`), así que no cambió ninguna.

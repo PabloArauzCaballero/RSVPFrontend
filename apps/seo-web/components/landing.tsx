@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { Translate } from "@rsvp/i18n/server";
+import { LANDING_COUNTS, LANDING_FAQ, LANDING_GIFTS, LANDING_GUEST_POINTS, LANDING_GUESTS, LANDING_PROOF, LANDING_PROVIDER_CHIPS, LANDING_PROVIDERS, LANDING_STATUS, LANDING_STYLES, LANDING_TYPES, type LandingSample, type LandingStyle, type LandingTone, type Translate } from "@rsvp/i18n/server";
 import { appUrl } from "../lib/app-url";
 import { faqJsonLd, jsonLdScript, siteGraphJsonLd } from "../lib/json-ld";
 import { CheckMark } from "./brand/check-mark";
@@ -58,13 +58,9 @@ function HeroScene({ t }: Props) {
   );
 }
 
-const STYLES = [
-  { key: "classic", sample: "wedding" }, { key: "editorial", sample: "wedding" }, { key: "garden", sample: "wedding" },
-  { key: "rose", sample: "quince" }, { key: "minimal", sample: "baptism" }, { key: "terracotta", sample: "wedding" }
-] as const;
 
 /** The same invitation in six of the styles of the catalogue: paper, ink and type change, the content does not. */
-function StyleCard({ t, style, sample }: Props & { readonly style: (typeof STYLES)[number]["key"]; readonly sample: (typeof STYLES)[number]["sample"] }) {
+function StyleCard({ t, style, sample }: Props & { readonly style: LandingStyle; readonly sample: LandingSample }) {
   const kicker = sample === "wedding" ? t("landing.styles.sampleWedding") : sample === "quince" ? t("landing.styles.sampleQuince") : t("landing.styles.sampleBaptism");
   const names: ReactNode = sample === "wedding" ? <><span>{t("landing.invitation.first")}</span><span className="sheet__amp">&amp;</span><span>{t("landing.invitation.second")}</span></> : <span>{sample === "quince" ? t("landing.styles.sampleQuinceName") : t("landing.styles.sampleBaptismName")}</span>;
   return (
@@ -81,15 +77,12 @@ function StyleCard({ t, style, sample }: Props & { readonly style: (typeof STYLE
   );
 }
 
-function Tag({ tone, children }: Readonly<{ tone: "green" | "yellow" | "gray" | "red"; children: ReactNode }>) {
+function Tag({ tone, children }: Readonly<{ tone: LandingTone; children: ReactNode }>) {
   return <span className="tag" data-tone={tone}>{children}</span>;
 }
 
-const GUESTS = [
-  { key: "g1", status: "yes", plus: 2, note: "vegetarian" }, { key: "g2", status: "yes", plus: 1, note: null }, { key: "g3", status: "pending", plus: 0, note: null },
-  { key: "g4", status: "yes", plus: 0, note: "glutenFree" }, { key: "g5", status: "no", plus: 0, note: null }
-] as const;
-const STATUS = { yes: { tone: "green", label: "statusYes" }, pending: { tone: "yellow", label: "statusPending" }, no: { tone: "gray", label: "statusNo" } } as const;
+const GUESTS = LANDING_GUESTS;
+const STATUS = LANDING_STATUS;
 
 /** The host's list as the app shows it: three counts, the bar and who answered what. */
 function GuestPanel({ t }: Props) {
@@ -97,11 +90,11 @@ function GuestPanel({ t }: Props) {
     <div className="panel" role="img" aria-label={t("landing.guests.panel")}>
       <div aria-hidden="true">
         <div className="panel__stats">
-          <p><strong>86</strong><span>{t("landing.guests.confirmed")}</span></p>
-          <p><strong>31</strong><span>{t("landing.guests.pending")}</span></p>
-          <p><strong>11</strong><span>{t("landing.guests.declined")}</span></p>
+          <p><strong>{LANDING_COUNTS.confirmed}</strong><span>{t("landing.guests.confirmed")}</span></p>
+          <p><strong>{LANDING_COUNTS.pending}</strong><span>{t("landing.guests.pending")}</span></p>
+          <p><strong>{LANDING_COUNTS.declined}</strong><span>{t("landing.guests.declined")}</span></p>
         </div>
-        <div className="panel__bar"><span style={{ flexGrow: 86 }} data-part="yes" /><span style={{ flexGrow: 31 }} data-part="pending" /><span style={{ flexGrow: 11 }} data-part="no" /></div>
+        <div className="panel__bar"><span style={{ flexGrow: LANDING_COUNTS.confirmed }} data-part="yes" /><span style={{ flexGrow: LANDING_COUNTS.pending }} data-part="pending" /><span style={{ flexGrow: LANDING_COUNTS.declined }} data-part="no" /></div>
         <ul className="panel__rows">
           {GUESTS.map((guest) => (
             <li key={guest.key}>
@@ -125,7 +118,7 @@ function GiftGlyph({ kind }: Readonly<{ kind: "glass" | "coffee" | "plane" }>) {
   return <svg viewBox="0 0 28 28" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">{paths[kind]}</svg>;
 }
 
-const GIFTS = [{ n: 1, kind: "glass", state: "reserved", tone: "gray" }, { n: 2, kind: "coffee", state: "available", tone: "green" }, { n: 3, kind: "plane", state: "review", tone: "yellow" }] as const;
+const GIFTS = LANDING_GIFTS;
 
 function GiftPanel({ t }: Props) {
   return (
@@ -146,10 +139,10 @@ function ProviderPanel({ t }: Props) {
   return (
     <div className="providers__panel" role="img" aria-label={t("landing.providers.panel")}>
       <div aria-hidden="true">
-        <div className="providers__chips">{[1, 2, 3, 4, 5, 6].map((n) => <span key={n} data-on={n === 1 || undefined}>{t(`landing.providers.c${n}`)}</span>)}</div>
-        {[1, 2].map((n) => (
+        <div className="providers__chips">{LANDING_PROVIDER_CHIPS.map((n) => <span key={n} data-on={n === 1 || undefined}>{t(`landing.providers.c${n}`)}</span>)}</div>
+        {LANDING_PROVIDERS.map(({ n, tone }) => (
           <div className="provider" key={n}>
-            <span className="provider__mark" data-tone={n === 1 ? "yellow" : "green"}>{t(`landing.providers.n${n}`).charAt(0)}</span>
+            <span className="provider__mark" data-tone={tone}>{t(`landing.providers.n${n}`).charAt(0)}</span>
             <span className="provider__who"><strong>{t(`landing.providers.n${n}`)}</strong><span>{t(`landing.providers.m${n}`)}</span></span>
             <Tag tone="green">{t("landing.providers.verified")}</Tag>
             <span className="provider__cta">{t("landing.providers.quote")}</span>
@@ -182,11 +175,10 @@ function StepArt({ t, step }: Props & { readonly step: 1 | 2 | 3 }) {
   );
 }
 
-const TYPES = ["wedding", "quince", "baptism", "birthday", "anniversary", "corporate"] as const;
 
 export function Landing({ t, locale }: Readonly<{ t: Translate; locale: string }>) {
   const create = appUrl("/login");
-  const faq = (["account", "change", "gift", "guarantee", "language"] as const).map((key) => ({ question: t(`landing.faq.${key}Q`), answer: t(`landing.faq.${key}A`) }));
+  const faq = LANDING_FAQ.map((key) => ({ question: t(`landing.faq.${key}Q`), answer: t(`landing.faq.${key}A`) }));
   return (
     <main className="landing">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(siteGraphJsonLd({ description: t("landing.meta.description"), locale })) }} />
@@ -203,7 +195,7 @@ export function Landing({ t, locale }: Readonly<{ t: Translate; locale: string }
               <a className="textlink" href="/proveedores">{t("landing.hero.secondary")}</a>
             </div>
             <ul className="hero__proof">
-              {(["proofAccount", "proofLink", "proofLanguage"] as const).map((key) => <li key={key}><CheckMark size={16} draw={false} />{t(`landing.hero.${key}`)}</li>)}
+              {LANDING_PROOF.map((key) => <li key={key}><CheckMark size={16} draw={false} />{t(`landing.hero.${key}`)}</li>)}
             </ul>
           </div>
           <HeroScene t={t} />
@@ -217,7 +209,7 @@ export function Landing({ t, locale }: Readonly<{ t: Translate; locale: string }
         </div>
         {/* The rail scrolls sideways on a phone: it must be reachable and scrollable with the keyboard. */}
         <ul className="styles__rail" tabIndex={0} aria-labelledby="styles-title">
-          {STYLES.map((style) => <StyleCard key={style.key} t={t} style={style.key} sample={style.sample} />)}
+          {LANDING_STYLES.map((style) => <StyleCard key={style.key} t={t} style={style.key} sample={style.sample} />)}
         </ul>
         <p className="wrap styles__more"><a className="textlink" href={create}>{t("landing.styles.link")}</a></p>
       </section>
@@ -238,7 +230,7 @@ export function Landing({ t, locale }: Readonly<{ t: Translate; locale: string }
           <h2 id="guests-title">{t("landing.guests.title")}</h2>
           <p>{t("landing.guests.body")}</p>
           <ul className="ticks">
-            {(["pointReplies", "pointCompanions", "pointFood", "pointDeadline"] as const).map((key) => <li key={key}><span className="ticks__mark"><CheckMark size={14} draw={false} /></span>{t(`landing.guests.${key}`)}</li>)}
+            {LANDING_GUEST_POINTS.map((key) => <li key={key}><span className="ticks__mark"><CheckMark size={14} draw={false} /></span>{t(`landing.guests.${key}`)}</li>)}
           </ul>
         </div>
         <GuestPanel t={t} />
@@ -286,7 +278,7 @@ export function Landing({ t, locale }: Readonly<{ t: Translate; locale: string }
         <div className="wrap">
           <h2 id="types-title">{t("landing.types.title")}</h2>
           <ul className="types__list">
-            {TYPES.map((type) => <li key={type}>{t(`landing.types.${type}`)}</li>)}
+            {LANDING_TYPES.map((type) => <li key={type}>{t(`landing.types.${type}`)}</li>)}
           </ul>
           <p className="types__other">{t("landing.types.other")}</p>
         </div>
