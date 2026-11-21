@@ -3,13 +3,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ApiError } from '@rsvp/api-client';
 import { createTranslator, formatMinor, type AppLocale } from '@rsvp/i18n/server';
-import { arrangeGifts, isGiftTaken, maxPriceMinor, useGiftList, useReserveGiftItem, type GiftFilters, type GiftItem, type GiftItemList, type GiftReservation, type GiftSourceFilter } from '@rsvp/query-hooks';
+import { activeReservationsByItem, arrangeGifts, isGiftTaken, isReservationNotActive, maxPriceMinor, useCancelGiftReservation, useGiftList, useMyGiftReservations, useReserveGiftItem, type GiftFilters, type GiftItem, type GiftItemList, type GiftReservation, type GiftSourceFilter } from '@rsvp/query-hooks';
 import { PartnerLink } from '@rsvp/ui-web';
 import { personalLinkPath } from '@rsvp/auth';
 import { createGuestClient } from '../../lib/guest-client';
 import { clearGuestCredential, readGuestCredential } from '../../lib/guest-credential';
 import { GiftProviders } from './gift-providers';
 import { ReserveDialog } from './reserve-dialog';
+import { CancelReservationDialog } from './cancel-dialog';
 import { GiftPhoto } from './gift-photo';
 import './gift.css';
 
@@ -45,6 +46,13 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
   const ready = credential !== undefined;
   const list = useGiftList(client, ready ? celebrationId : undefined, credential ?? null, credential ? undefined : initial);
   const reserve = useReserveGiftItem(client, celebrationId, credential ?? null);
+  // D-3 · the guest's own reservations (needs the link credential): after a reload the card still offers to cancel.
+  const mineQuery = useMyGiftReservations(client, ready ? celebrationId : undefined, credential ?? null);
+  const mine = activeReservationsByItem(mineQuery.data?.items);
+  const cancel = useCancelGiftReservation(client, celebrationId, credential ?? null);
+  const [cancelTarget, setCancelTarget] = useState<{ readonly item: GiftItem; readonly reservation: GiftReservation } | null>(null);
+  const [cancelled, setCancelled] = useState<string | null>(null);
+  const cancelKeys = useRef(new Map<string, string>());
 
   const [maxPrice, setMaxPrice] = useState('');
   const [source, setSource] = useState<Source>('all');
@@ -76,6 +84,18 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
     });
   };
 
+  const confirmCancel = () => {
+    if (!cancelTarget || cancel.isPending) return;
+    const { item, reservation } = cancelTarget;
+    let key = cancelKeys.current.get(reservation.id);
+    if (!key) { key = crypto.randomUUID(); cancelKeys.current.set(reservation.id, key); }
+    cancel.mutate({ reservationId: reservation.id, idempotencyKey: key }, {
+      onSuccess: () => { setCancelTarget(null); setOutcome(null); setCancelled(item.title); },
+      onError: (failure) => { if (isReservationNotActive(failure)) setCancelTarget(null); }
+    });
+  };
+  useEffect(() => { if (cancelled) outcomeRef.current?.focus(); }, [cancelled]);
+
   const error = list.error;
   const status = error instanceof ApiError ? error.status : undefined;
   let blocker: { title: string; body: string; action?: { label: string; href: string }; retry?: boolean } | null = null;
@@ -99,10 +119,12 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
         <h3>{onlyItemId ? item.title : <a href={`/c/${encodeURIComponent(slug)}/regalos/${item.id}?lang=${locale}`} aria-label={t('gifts.card.open', { title: item.title })}>{item.title}</a>}</h3>
         <p className="gift-card__price">{formatMinor(item.price.amountMinor, item.price.currency, locale)}</p>
         {item.reservedByName ? <p className="gift-card__by" data-testid="reserved-by">{t('gifts.card.reservedBy', { name: item.reservedByName })}</p> : null}
+        {mine.get(item.id) ? <p className="gift-card__mine" data-testid="my-reservation">{mine.get(item.id)?.status === 'PENDING_REVIEW' ? t('gifts.mine.pendingLabel') : t('gifts.mine.label')}</p> : null}
         {item.description ? <p className="gift-card__desc">{item.description}</p> : null}
         {onlyItemId && href ? <p className="gift-card__desc">{t('gifts.detail.partnerNote')}</p> : null}
         <div className="gift-card__actions">
           {item.status === 'AVAILABLE' ? <button type="button" className="rsvp-button" onClick={() => { setOutcome(null); setTarget(item); }} aria-label={t('gifts.card.reserveFor', { title: item.title })}>{t('gifts.card.reserve')}</button> : null}
+          {mine.get(item.id) ? <button type="button" className="rsvp-button rsvp-button--secondary" disabled={cancel.isPending} onClick={() => { const held = mine.get(item.id); if (held) { setCancelled(null); cancel.reset(); setCancelTarget({ item, reservation: held }); } }} aria-label={t('gifts.mine.cancelFor', { title: item.title })}>{t('gifts.mine.cancel')}</button> : null}
           {href && item.productListingId ? <PartnerLink listingId={item.productListingId} surface="GIFT_LIST" celebrationId={celebrationId}>{t('gifts.card.viaPartner')}</PartnerLink>
             : item.externalUrl ? <a className="rsvp-button rsvp-button--secondary" href={item.externalUrl} rel="nofollow noopener noreferrer ugc" target="_blank">{t('gifts.card.viaOther')}</a> : null}
         </div>
@@ -130,6 +152,12 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
             <h2>{t('gifts.outcome.cancelledTitle')}</h2><p>{t('gifts.outcome.cancelledBody')}</p>
             {credential ? <button type="button" className="rsvp-button" onClick={() => window.location.assign(`${personalLinkPath(slug, credential)}?lang=${locale}`)}>{t('gifts.backToRsvp')}</button> : null}
           </section>
+        ) : null}
+        {cancelled ? (
+          <section className="gifts__notice gifts__notice--ok" data-outcome="guest-cancelled"><p>{t('gifts.mine.done', { title: cancelled })}</p></section>
+        ) : null}
+        {cancel.isError && isReservationNotActive(cancel.error) ? (
+          <section className="gifts__notice" data-outcome="not-active"><p>{t('gifts.mine.notActive')}</p></section>
         ) : null}
         {outcome?.kind === 'taken' ? (
           <section className="gifts__notice gifts__notice--warn" data-outcome="taken">
@@ -182,6 +210,7 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
       ) : null}
 
       <ReserveDialog item={target} t={t} pending={reserve.isPending} error={reserve.error && !isGiftTaken(reserve.error) ? reserve.error : null} onCancel={() => { setTarget(null); reserve.reset(); }} onSubmit={submit} onReviewRsvp={credential ? () => window.location.assign(`${personalLinkPath(slug, credential)}?lang=${locale}`) : undefined} />
+      <CancelReservationDialog item={cancelTarget?.item ?? null} t={t} pending={cancel.isPending} error={cancel.error && !isReservationNotActive(cancel.error) ? cancel.error : null} onKeep={() => { setCancelTarget(null); cancel.reset(); }} onConfirm={confirmCancel} />
     </main>
   );
 }
