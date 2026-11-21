@@ -3,7 +3,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { createApiClient } from "@rsvp/api-client";
-import { categoryLabel, createImpressionBatcher, pageCount, pageParam, providerSearchPath, useDirectorySearch } from "../src/index.js";
+import { categoryLabel, createImpressionBatcher, uniqueZones, pageCount, pageParam, providerSearchPath, useDirectorySearch } from "../src/index.js";
 
 describe("directory (shared by the public site and the app)", () => {
   it("categoryLabel: own translation, then the published name, then the code; never the raw key", () => {
@@ -11,6 +11,10 @@ describe("directory (shared by the public site and the app)", () => {
     expect(categoryLabel("VENUE", t, { VENUE: "Venues" })).toBe("Salones de eventos");
     expect(categoryLabel("PASTRY", t, { PASTRY: "Pastelería" })).toBe("Pastelería");
     expect(categoryLabel("NEW_CODE", t)).toBe("NEW_CODE");
+  });
+
+  it("coverage zones typed differently by the provider are one zone (first spelling kept)", () => {
+    expect(uniqueZones(["Santa cruz de la sierra", "Santa Cruz de la Sierra", " santa  cruz de la sierra ", "la-paz", "La Paz", ""])).toEqual(["Santa cruz de la sierra", "la-paz"]);
   });
 
   it("the query path: proximity wins over the city; empty filters are not sent; page and size always are", () => {

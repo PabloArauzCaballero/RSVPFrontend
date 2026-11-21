@@ -124,3 +124,39 @@ node scripts/live/directory-mirror.mjs → 33/33 PASS, exit 0
 ```
 
 Límites: iOS/Android no probados; «cerca de mí» solo aparece donde existe `navigator.geolocation` (la app web), porque la app nativa no incluye un módulo de ubicación; la paginación no se observó en vivo (dev tiene 6 resultados, menos que una página) y queda probada en tests; el JSON-LD y los metadatos SEO son exclusivos de la web indexable y no aplican a la app.
+
+---
+
+# Slice 4: el micrositio del proveedor (`/p/{slug}`, `/catalogo`, `/catalogo/{sku}`, `/agenda`, `/cotizar`)
+
+Fecha: 2026-11-20 · Rama `feat/espejo-movil-micrositio` (sobre el slice 3).
+
+**Resultado observable:** desde el directorio, la app abre el micrositio del proveedor como la web (B5–B11): nombre del negocio, ofertas verificadas, sobre el proveedor, cobertura, contacto después del aviso de la plataforma y siempre por `/r/{listingId}` (`surface=APP`); catálogo; ficha con la entrega antes de cualquier botón; agenda con días libres en la zona del proveedor y pedido de fecha; carrito de cotización con confirmación. Cotizar y pedir fecha usan la sesión de la app; un 401 lleva al login de la app con vuelta a la página.
+
+El modelo del socio (`partnerFromListings`, `addressText`, orden de contactos), `todayIn`, `shiftMonth`, `dayState` y los mensajes de error de cotización pasan a `@rsvp/query-hooks/provider/partner`; la web los reexporta.
+
+**Hallazgo corregido en ambas superficies:** la cobertura repetía la misma zona escrita distinto («Santa cruz de la sierra», «Santa Cruz de la Sierra», «la-paz»/«La Paz»). `uniqueZones` la muestra una vez.
+
+| ID | Requisito | Estado | Comando / artefacto | Resultado |
+|---|---|---|---|---|
+| ESP-50 | h1 = nombre del negocio (`GET /providers/{id}`) | PASS | `scripts/live/partner-mirror.mjs` · [partner-results.json](partner-results.json) | «Katering Grecia» |
+| ESP-51 | Ofertas = tarjetas verificadas del socio | PASS | live | 6/6 |
+| ESP-52 | Aviso antes del contacto; contacto por `/r/` | PASS | live | `/r/{listingId}?destination=WHATSAPP&surface=APP` |
+| ESP-53 | Cobertura sin duplicados | PASS | live + `directory.test.tsx` | 2 zonas (antes 5) |
+| ESP-54 | Catálogo | PASS | live | 6 ofertas |
+| ESP-55 | Ficha: entrega antes de cotizar y contactar (REQ-F25-04) | PASS | live + test | |
+| ESP-56 | Agenda = `GET /calendar` en la zona del proveedor | BLOCKED-EXTERNAL en vivo · TESTED | `partner-mirror.test.tsx` | `multicenter-59388c` no tiene disponibilidad. El proveedor QA propio (`proveedor-de-prueba-qa-ccc9c0`) quedó con disponibilidad diaria de 08 a 22 h, una oferta publicada con entrega y enviado a verificación (2026-11-20), pero sigue en `PENDING_VERIFICATION`: su calendario público responde 404 hasta que un ADMIN lo verifique |
+| ESP-57 | Pedir fecha sin sesión → 401 → login de la app | BLOCKED-EXTERNAL en vivo · TESTED | test | mismo bloqueo que ESP-56 (falta la verificación de un ADMIN); el test cubre 401, 409 y éxito |
+| ESP-58 | Cotizar: oferta preseleccionada, formulario incompleto rechazado sin enviar | PASS | live | 4 alertas, ningún POST a `/quotes` |
+| ESP-59 | Cotizar: envío con unidades menores enteras, confirmación, 429, 401 | BLOCKED-EXTERNAL en vivo · TESTED | test | el envío real irá al proveedor QA propio (no crea leads ajenos) cuando un ADMIN lo verifique; hoy su micrositio no existe para el público |
+| ESP-60 | Socio inexistente / no verificado / catálogo caído | PASS (vivo: inexistente) · TESTED | live + test | |
+| ESP-61 | Micrositio, agenda y cotizar en 360/768/1280 × claro/oscuro × es-BO/en-US, axe | PASS | live | 36/36 sin desborde, 0 critical/serious |
+
+```
+yarn turbo run test typecheck lint --continue → 65/66 (única falla @rsvp/contracts#test, preexistente)
+  universal 420 · seo-web 141 · query-hooks 94
+yarn lint:code → 0
+node scripts/live/partner-mirror.mjs SLUG=multicenter-59388c → 48/48, exit 0 (una comprobación marcada NOT OBSERVED)
+```
+
+Límites: iOS/Android no probados. Agenda y envío de cotización solo con pruebas (sin disponibilidad en dev y sin crear leads reales). Captcha de cotizaciones anónimas: la app no muestra Turnstile; si el despliegue lo exige, el servidor responde 403 y la app lo dice («quote.errors.captcha»), y con sesión no aplica. Un calendario sin días muestra la rejilla vacía, igual que la web (falta un estado vacío propio en ambas: seguimiento aparte). El JSON-LD del negocio es exclusivo de la web.
