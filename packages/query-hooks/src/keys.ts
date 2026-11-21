@@ -17,6 +17,7 @@ export const queryKeys = {
     list: (celebrationId: string, filters?: unknown) => ["guests", celebrationId, "list", filters ?? null] as const,
     lists: (celebrationId: string) => ["guests", celebrationId, "list"] as const,
     detail: (celebrationId: string, guestId: string) => ["guests", celebrationId, "detail", guestId] as const,
+    linkStatus: (celebrationId: string, guestId: string) => ["guests", celebrationId, "detail", guestId, "link"] as const,
     summary: (celebrationId: string) => ["guests", celebrationId, "summary"] as const,
     groups: (celebrationId: string) => ["guests", celebrationId, "groups"] as const,
     companionRequests: (celebrationId: string) => ["guests", celebrationId, "companion-requests"] as const,
