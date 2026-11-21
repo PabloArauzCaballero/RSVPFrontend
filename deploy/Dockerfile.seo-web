@@ -1,7 +1,8 @@
 # Sitio publico (Next.js): paginas de celebracion, enlaces personales de RSVP y catalogo de proveedores.
 # Build desde la raiz del repo: docker build -f deploy/Dockerfile.seo-web .
 # NEXT_PUBLIC_* se incrustan al compilar: cambiarlas exige reconstruir la imagen.
-FROM node:24.18.1-bookworm-slim
+# M14 · Dos etapas: el runtime lleva solo el servidor standalone de Next (sin el monorepo ni sus dependencias de build).
+FROM node:24.18.1-bookworm-slim AS build
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0 NEXT_TELEMETRY_DISABLED=1 NODE_OPTIONS=--max-old-space-size=3072
 WORKDIR /workspace
 RUN corepack enable && corepack prepare yarn@4.10.3 --activate
@@ -10,10 +11,19 @@ RUN yarn install --immutable
 ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_SITE_URL
 ARG NEXT_PUBLIC_APP_URL
+# M9 · Empty or relative values would bake relative canonical/OG/sitemap URLs: stop the build instead.
+RUN sh deploy/check-build-args.sh NEXT_PUBLIC_API_URL NEXT_PUBLIC_SITE_URL NEXT_PUBLIC_APP_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 RUN yarn workspace @rsvp/seo-web build
-ENV NODE_ENV=production
-WORKDIR /workspace/apps/seo-web
+
+FROM node:24.18.1-bookworm-slim
+# A2 · Runtime heap below the 768m container limit (the 3 GB of the build stage no longer leaks into the server).
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 NODE_OPTIONS=--max-old-space-size=512 PORT=3000 HOSTNAME=0.0.0.0
+WORKDIR /app
+COPY --from=build --chown=node:node /workspace/apps/seo-web/.next/standalone ./
+COPY --from=build --chown=node:node /workspace/apps/seo-web/.next/static ./apps/seo-web/.next/static
+# M14 · The ISR/data cache writes under .next/cache: it must belong to the runtime user.
+RUN mkdir -p /app/apps/seo-web/.next/cache && chown -R node:node /app/apps/seo-web/.next
 EXPOSE 3000
 USER node
-CMD ["yarn", "next", "start", "-p", "3000", "-H", "0.0.0.0"]
+CMD ["node", "apps/seo-web/server.js"]

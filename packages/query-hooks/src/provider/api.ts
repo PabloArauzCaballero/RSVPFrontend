@@ -1,11 +1,13 @@
 import { ApiError, type ApiClient } from "@rsvp/api-client";
-import type { ProviderCard, ProviderDiscoveryQuery, ProviderPage, Availability, Booking, BookingRequestInput, BookingStatus, Calendar, CreateListingInput, Lead, ListingHit, ListingSummary, LeadConfig, Metrics, OfferCategory, OwnListing, Provider, QuoteInput, QuoteReceipt, RegisterProviderInput, UpdateProviderInput, Microsite, MicrositeInput, ProviderDocument, DocumentInput, DocumentRegistration, DocumentDownload } from "./types.js";
+import type { ProviderCard, ProviderDiscoveryQuery, ProviderPage, Availability, Booking, BookingPage, BookingRequestInput, BookingStatus, Calendar, CreateListingInput, Lead, ListingHit, ListingSummary, LeadConfig, Metrics, OfferCategory, OwnListing, Provider, QuoteInput, QuoteReceipt, ProviderQuote, ProviderQuotePage, RegisterProviderInput, UpdateProviderInput, Microsite, MicrositeInput, ProviderDocument, DocumentInput, DocumentRegistration, DocumentDownload } from "./types.js";
 
 const qs = (params: Record<string, string | number | undefined>): string => {
   const entries = Object.entries(params).filter((entry): entry is [string, string | number] => entry[1] !== undefined && entry[1] !== "");
   return entries.length ? `?${new URLSearchParams(entries.map(([key, value]) => [key, String(value)]))}` : "";
 };
 const NOT_ROUTED = 404;
+/** Bookings per page (the catalog accepts 1 to 100). */
+export const BOOKINGS_PAGE_SIZE = 50;
 type ListingSearchItem = ListingHit & Pick<ProviderCard, "priceFrom">;
 
 /** Provider Catalog through Kong (`/providers`, `/r`). Public reads use auth:false; the portal uses the PROVIDER session. */
@@ -43,10 +45,15 @@ export function providerService(client: ApiClient) {
     availability: (providerId: string) => client.request<Availability>(`${base(providerId)}/availability`),
     setAvailability: (providerId: string, body: Omit<Availability, "timeZone" | "providerId" | "version">) => client.request<Availability, typeof body>(`${base(providerId)}/availability`, { method: "PUT", body }),
     calendar: (providerId: string, month: string) => client.request<Calendar>(`${base(providerId)}/calendar${qs({ month })}`, { auth: false }),
-    bookings: (providerId: string, status?: BookingStatus) => client.request<{ items: readonly Booking[] }>(`${base(providerId)}/bookings${qs({ status })}`),
-    myBookings: () => client.request<{ items: readonly Booking[] }>("/providers/me/bookings"),
+    /** One page of the owner's bookings; pass the previous page's `nextCursor` to read the next one (L4). */
+    bookings: (providerId: string, status?: BookingStatus, cursor?: string, limit = BOOKINGS_PAGE_SIZE) => client.request<BookingPage>(`${base(providerId)}/bookings${qs({ status, limit, cursor })}`),
+    myBookings: (cursor?: string, limit = BOOKINGS_PAGE_SIZE) => client.request<BookingPage>(`/providers/me/bookings${qs({ limit, cursor })}`),
     requestBooking: (providerId: string, body: BookingRequestInput) => client.request<Booking, BookingRequestInput>(`${base(providerId)}/bookings`, { method: "POST", body }),
     decideBooking: (providerId: string, bookingId: string, action: "confirm" | "reject" | "cancel") => client.request<Booking>(`${base(providerId)}/bookings/${bookingId}/${action}`, { method: "POST" }),
+    /** GET /providers/{id}/quotes (provider-catalog 2.5.0, owner only): newest first; `cursor` is the previous page's nextCursor. */
+    quotes: (providerId: string, limit = 20, cursor?: string) => client.request<ProviderQuotePage>(`${base(providerId)}/quotes${qs({ limit, cursor })}`),
+    /** GET /providers/{id}/quotes/{quoteId}: the contact the requester gave, to answer them. */
+    quote: (providerId: string, quoteId: string) => client.request<ProviderQuote>(`${base(providerId)}/quotes/${encodeURIComponent(quoteId)}`),
     requestQuote: (providerId: string, body: QuoteInput, locale: string) => client.request<QuoteReceipt, QuoteInput>(`${base(providerId)}/quotes${qs({ locale })}`, { method: "POST", body }),
     /**
      * GET /listings?q= (host picker for cataloged gifts). Older gateways without this route fall back to public provider cards.

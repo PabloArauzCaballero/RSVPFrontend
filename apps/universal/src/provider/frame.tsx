@@ -9,14 +9,14 @@ import type { Translate } from "@rsvp/i18n";
 import { ActionButton, ErrorNotice, Loading, Notice, OverflowMenu, Screen, type NavItem } from "../host/ui";
 
 /** Provider portal URLs. They live under /portal so the (provider) route guard covers them all. */
-export const PORTAL_ROUTES = { home: "/portal", onboarding: "/portal/alta", services: "/portal/servicios", products: "/portal/productos", delivery: "/portal/entrega", destinations: "/portal/destinos", agenda: "/portal/agenda", leads: "/portal/leads", metrics: "/portal/metricas", microsite: "/portal/perfil", documents: "/portal/documentos" } as const;
+export const PORTAL_ROUTES = { home: "/portal", onboarding: "/portal/alta", services: "/portal/servicios", products: "/portal/productos", delivery: "/portal/entrega", destinations: "/portal/destinos", agenda: "/portal/agenda", quotes: "/portal/cotizaciones", leads: "/portal/leads", metrics: "/portal/metricas", microsite: "/portal/perfil", documents: "/portal/documentos" } as const;
 export type PortalRoute = keyof typeof PORTAL_ROUTES;
 /** Provider navigation (brief §2): five destinations; the screens that were separate entries are their tabs. Routes do not move. */
 const NAV: readonly { readonly key: string; readonly tabs: readonly PortalRoute[] }[] = [
   { key: "overview", tabs: ["home"] },
   { key: "offers", tabs: ["services"] },
   { key: "agenda", tabs: ["agenda"] },
-  { key: "clients", tabs: ["leads", "metrics"] },
+  { key: "clients", tabs: ["quotes", "leads", "metrics"] },
   { key: "profile", tabs: ["microsite", "documents", "destinations"] }
 ];
 export const portalNav = (t: Translate): NavItem[] => NAV.map((destination) => {

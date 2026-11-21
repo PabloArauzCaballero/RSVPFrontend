@@ -291,6 +291,10 @@ export function createContractMock(options: MockOptions = {}) {
         const guest = state.guests.get(guestRouteMatch[1]!);
         if (!guest) return problem(404, "Not found");
         if (guestRouteMatch[2]) {
+          // Guest/RSVP 1.12.0 (A11): a working link is replaced only with rotate: true; GET tells whether one works.
+          const working = guest.token !== null && (!guest.tokenExpiresAt || new Date(guest.tokenExpiresAt) > now());
+          if (method === "GET") return json(200, working ? { active: true, issuedAt: null, expiresAt: guest.tokenExpiresAt ?? new Date(now().getTime() + 7 * 86_400_000).toISOString() } : { active: false, issuedAt: null, expiresAt: null }, { "cache-control": "no-store" });
+          if (method === "POST" && working && bodyOf()["rotate"] !== true) return problem(409, "This guest already has a working personal link", { code: "ACCESS_LINK_ACTIVE", expiresAt: guest.tokenExpiresAt });
           if (method === "POST") { guest.token = base64Url(); guest.tokenExpiresAt = new Date(now().getTime() + 7 * 86_400_000).toISOString(); return json(201, { token: guest.token, expiresAt: guest.tokenExpiresAt, url: `${options.webOrigin ?? "http://localhost:3000"}/c/${slug}/rsvp/${guest.token}` }, { "cache-control": "no-store" }); }
           if (method === "DELETE") { guest.token = null; guest.tokenExpiresAt = null; return { status: 204 }; }
         }

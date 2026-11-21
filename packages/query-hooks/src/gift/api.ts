@@ -15,6 +15,26 @@ export const problemCode = (error: unknown): string | undefined => (error instan
 export const isGiftListMissing = (error: unknown): boolean =>
   error instanceof ApiError && error.status === 404 && problemCode(error) === "GIFT_LIST_NOT_FOUND";
 
+/** L4 · Gift answers bounded pages (Gift List 1.12.0). The lists read here are whole, so they follow nextCursor up to this many pages. */
+const PAGE_SIZE = 200;
+const MAX_PAGES = 50;
+const pageQuery = (cursor: string | undefined, extra: Readonly<Record<string, string>> = {}): string =>
+  `?${new URLSearchParams({ ...extra, limit: String(PAGE_SIZE), ...(cursor ? { cursor } : {}) }).toString()}`;
+/**
+ * Reads every page into one list. A server before 1.12.0 ignores limit/cursor and sends no nextCursor, so one call is enough;
+ * more than MAX_PAGES pages is a broken cursor, and failing loudly beats showing a list silently cut short.
+ */
+async function allPages<TPage extends { readonly items: readonly unknown[]; readonly nextCursor?: string | null }>(read: (cursor?: string) => Promise<TPage>): Promise<TPage> {
+  let page = await read();
+  const items = [...page.items];
+  for (let pages = 1; page.nextCursor; pages++) {
+    if (pages >= MAX_PAGES) throw new Error("Gift list pagination did not end.");
+    page = await read(page.nextCursor);
+    items.push(...page.items);
+  }
+  return { ...page, items, nextCursor: null };
+}
+
 /**
  * Guest calls carry the guest's credential as Bearer; the host's calls use the session. `credential` set means "send exactly this
  * token and never the stored session" (auth:false), so a guest page never leaks or needs a host session.
@@ -23,14 +43,21 @@ export function giftApi(client: ApiClient) {
   // undefined = the host session; null = anonymous (no refresh attempt); string = exactly that guest bearer.
   const withCredential = (credential?: string | null) => (credential === undefined ? {} : { auth: false as const, headers: bearer(credential ?? undefined) });
   return {
-    list: (celebrationId: string, credential?: string | null, signal?: AbortSignal) => client.request<GiftItemList>(`${BASE}/${celebrationId}/items`, { signal, ...withCredential(credential) }),
+    list: (celebrationId: string, credential?: string | null, signal?: AbortSignal) =>
+      allPages((cursor) => client.request<GiftItemList>(`${BASE}/${celebrationId}/items${pageQuery(cursor)}`, { signal, ...withCredential(credential) })),
     createList: (celebrationId: string) => client.request<unknown>(`${BASE}/${celebrationId}/gift-list`, { method: "POST" }),
     add: (celebrationId: string, body: AddGiftInput) => client.request<GiftItem, AddGiftInput>(`${BASE}/${celebrationId}/items`, { method: "POST", body }),
     reserve: (celebrationId: string, giftItemId: string, body: ReserveGiftInput, credential: string | null | undefined, idempotencyKey: string) =>
       client.request<GiftReservation, ReserveGiftInput>(`${BASE}/${celebrationId}/items/${giftItemId}/reservations`, { method: "POST", body, ...withCredential(credential), headers: { ...bearer(credential ?? undefined), "idempotency-key": idempotencyKey } }),
-    reservations: (celebrationId: string, status?: ReservationStatus) => client.request<ReservationList>(`${BASE}/${celebrationId}/reservations${status ? `?status=${status}` : ""}`),
+    reservations: (celebrationId: string, status?: ReservationStatus) =>
+      allPages((cursor) => client.request<ReservationList>(`${BASE}/${celebrationId}/reservations${pageQuery(cursor, status ? { status } : {})}`)),
     approve: (celebrationId: string, reservationId: string) => client.request<GiftReservation>(`${BASE}/${celebrationId}/reservations/${reservationId}/approve`, { method: "POST" }),
     reject: (celebrationId: string, reservationId: string) => client.request<GiftReservation>(`${BASE}/${celebrationId}/reservations/${reservationId}/reject`, { method: "POST" }),
+    /** D-3 · the guest (their own, with `credential`) or the host (session, `credential` undefined) cancels an active reservation. */
+    cancel: (celebrationId: string, reservationId: string, credential: string | null | undefined, idempotencyKey: string) =>
+      client.request<GiftReservation>(`${BASE}/${celebrationId}/reservations/${reservationId}/cancel`, { method: "POST", ...withCredential(credential), headers: { ...bearer(credential ?? undefined), "idempotency-key": idempotencyKey } }),
+    /** The guest's own reservations (any status); only with the guest's link credential. */
+    myReservations: (celebrationId: string, credential: string, signal?: AbortSignal) => client.request<ReservationList>(`${BASE}/${celebrationId}/my-reservations`, { signal, ...withCredential(credential) }),
     settings: (celebrationId: string) => client.request<GiftSettings>(`${BASE}/${celebrationId}/gift-settings`),
     updateSettings: (celebrationId: string, body: UpdateGiftSettingsInput) => client.request<GiftSettings, UpdateGiftSettingsInput>(`${BASE}/${celebrationId}/gift-settings`, { method: "PUT", body }),
     approveExternal: (celebrationId: string, giftItemId: string) => client.request<GiftItem>(`${BASE}/${celebrationId}/items/${giftItemId}/approve`, { method: "POST" }),

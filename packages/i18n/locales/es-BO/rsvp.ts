@@ -16,7 +16,7 @@ export const rsvpEsBO = {
     dietary: "Restricciones alimentarias", dietaryHelp: "Alergias, vegetariano, sin gluten…",
     message: "Mensaje para los anfitriones (opcional)",
     name: "Tu nombre", email: "Tu correo electrónico", emailHelp: "Solo lo verán los anfitriones.",
-    consent: "Doy mi consentimiento para que los anfitriones guarden mi nombre y correo y me contacten sobre este evento.",
+    consent: "Doy mi consentimiento para que los anfitriones guarden mi nombre y correo y me contacten sobre este evento, según la política de privacidad.",
     submit: "Enviar respuesta", submitting: "Enviando…", save: "Guardar cambios", cancelEdit: "Cancelar", register: "Confirmar mi asistencia"
   },
   errors: {
@@ -91,7 +91,7 @@ export const rsvpEsBO = {
     },
     open: {
       title: "Confirma que vienes", lead: "Esta invitación está abierta. Deja tu nombre y tu correo y quedas en la lista.",
-      name: "Tu nombre", email: "Tu correo", emailHelp: "Solo lo ven quienes te invitan.", consent: "Acepto que quienes me invitan guarden mi nombre y mi correo y me contacten sobre este evento.", submit: "Confirmar que voy",
+      name: "Tu nombre", email: "Tu correo", emailHelp: "Solo lo ven quienes te invitan.", consent: "Acepto que quienes me invitan guarden mi nombre y mi correo y me contacten sobre este evento, según la política de privacidad.", submit: "Confirmar que voy",
       checkFailed: "No pudimos comprobar si puedes registrarte. Inténtalo de nuevo.",
       restrictedTitle: "Esta celebración solo recibe respuestas con enlace personal", restrictedBody: "Pídele el tuyo a quien te invitó. Si ya lo tienes, ábrelo desde el mensaje original.",
       doneTitle: "Listo, estás dentro.", doneBody: "Guarda tu enlace personal: es la única forma de cambiar tu respuesta después. No lo guardamos en tu navegador.",

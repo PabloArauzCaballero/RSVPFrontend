@@ -6,6 +6,7 @@ export const queryKeys = {
     /** The same public read in one language: a child of `public(slug)`, so invalidating the slug refreshes every language. */
     publicIn: (slug: string, language: string) => ["celebrations", "public", slug, language] as const,
     publishCheck: (id: string) => ["celebrations", id, "publish-check"] as const,
+    publicPage: (id: string) => ["celebrations", id, "public-page"] as const,
     audit: (id: string) => ["celebrations", id, "audit"] as const
   },
   eventType: { all: ["event-types"] as const, list: (locale: string) => ["event-types", locale] as const, admin: ["event-types", "admin"] as const },
@@ -17,13 +18,14 @@ export const queryKeys = {
     list: (celebrationId: string, filters?: unknown) => ["guests", celebrationId, "list", filters ?? null] as const,
     lists: (celebrationId: string) => ["guests", celebrationId, "list"] as const,
     detail: (celebrationId: string, guestId: string) => ["guests", celebrationId, "detail", guestId] as const,
+    linkStatus: (celebrationId: string, guestId: string) => ["guests", celebrationId, "detail", guestId, "link"] as const,
     summary: (celebrationId: string) => ["guests", celebrationId, "summary"] as const,
     groups: (celebrationId: string) => ["guests", celebrationId, "groups"] as const,
     companionRequests: (celebrationId: string) => ["guests", celebrationId, "companion-requests"] as const,
     rsvps: (celebrationId: string) => ["guests", celebrationId, "rsvps"] as const,
     rsvp: (celebrationId: string, fingerprint: string) => ["guests", "rsvp", celebrationId, fingerprint] as const
   },
-  identity: { organizations: ["identity", "organizations"] as const, organization: (id: string) => ["identity", "organizations", id] as const },
+  identity: { organizations: ["identity", "organizations"] as const, organization: (id: string) => ["identity", "organizations", id] as const, invitations: (id: string) => ["identity", "organizations", id, "invitations"] as const, myInvitations: ["identity", "invitations"] as const },
   gift: { all: ["gifts"] as const, list: (celebrationId: string) => ["gifts", celebrationId] as const },
   provider: { all: ["providers"] as const, calendar: (providerId: string) => ["providers", providerId, "calendar"] as const, search: (params: string) => ["providers", "search", params] as const },
   notification: { all: ["notifications"] as const, preferences: (celebrationId: string) => ["notifications", celebrationId, "preferences"] as const, inbox: (celebrationId: string) => ["notifications", celebrationId, "inbox"] as const, devices: (celebrationId: string) => ["notifications", celebrationId, "devices"] as const }
