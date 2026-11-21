@@ -18,6 +18,8 @@ export interface Availability { readonly providerId?: string; readonly timeZone:
 export interface CalendarDay { readonly date: string; readonly weekday: number; readonly available: boolean; readonly remaining?: number; readonly reason?: "BLACKOUT" | "NO_RULE" | "OUTSIDE_HOURS" | "FULL" }
 export interface Calendar { readonly providerId: string; readonly timeZone: string; readonly month: string; readonly days: readonly CalendarDay[] }
 export interface Booking { readonly id: string; readonly providerId: string; readonly requesterId: string; readonly date: string; readonly status: BookingStatus; readonly expiresAt: string; readonly startsAt?: string; readonly listingId?: string; readonly version?: number }
+/** One keyset page of bookings (Provider Catalog 2.8.0, L4). `nextCursor` is null on the last page; an older catalog omits it and returns everything it has in one page. */
+export interface BookingPage { readonly items: readonly Booking[]; readonly nextCursor?: string | null }
 export interface BookingRequestInput { readonly date?: string; readonly startsAt?: string; readonly time?: string; readonly listingId?: string }
 export interface QuoteInput { readonly listingIds: readonly string[]; readonly eventDate: string; readonly guestCount: number; readonly budgetMinor?: number; readonly eventCity?: string; readonly contact: { readonly name: string; readonly email: string; readonly phone?: string }; readonly message?: string; readonly locale?: string;
   /** Anonymous requests only: the captcha token (when the deployment runs PROVIDER_ANON_QUOTES=captcha) and the honeypot, which must stay empty. */
