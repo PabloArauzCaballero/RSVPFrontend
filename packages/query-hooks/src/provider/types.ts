@@ -35,7 +35,9 @@ export interface BusinessHours { readonly weekly: readonly { readonly weekdays: 
 export interface BusinessAddress { readonly line: string; readonly city?: string; readonly reference?: string; readonly latitude?: number; readonly longitude?: number }
 export interface MicrositeInput { readonly descriptions?: Readonly<Record<string, string>>; readonly gallery?: readonly { readonly mediaId: string; readonly url: string; readonly alt?: Readonly<Record<string, string>> }[]; readonly hours?: BusinessHours; readonly social?: Readonly<Record<string, string>>; readonly address?: BusinessAddress }
 export interface Microsite { readonly providerId: string; readonly version: number; readonly descriptions: Readonly<Record<string, string>>; readonly gallery: MicrositeInput["gallery"] & readonly unknown[]; readonly hours: BusinessHours; readonly social: Readonly<Record<string, string>>; readonly address: BusinessAddress | null }
-export type DocumentKind = "IDENTITY" | "BUSINESS_REGISTRATION" | "TAX_ID" | "ADDRESS_PROOF" | "OTHER";
+/** provider-catalog 2.5.0 adds POWER_OF_ATTORNEY and BANK_CERTIFICATE (KYP). */
+export type DocumentKind = "IDENTITY" | "BUSINESS_REGISTRATION" | "TAX_ID" | "ADDRESS_PROOF" | "POWER_OF_ATTORNEY" | "BANK_CERTIFICATE" | "OTHER";
+export const DOCUMENT_KINDS: readonly DocumentKind[] = ["IDENTITY", "BUSINESS_REGISTRATION", "TAX_ID", "ADDRESS_PROOF", "POWER_OF_ATTORNEY", "BANK_CERTIFICATE", "OTHER"];
 export type DocumentContentType = "application/pdf" | "image/jpeg" | "image/png" | "image/webp";
 export interface DocumentInput { readonly kind: DocumentKind; readonly fileName: string; readonly contentType: DocumentContentType; readonly sizeBytes: number }
 export interface ProviderDocument { readonly id: string; readonly providerId: string; readonly kind: string; readonly fileName: string; readonly contentType: string; readonly sizeBytes: number; readonly status: "PENDING_UPLOAD" | "UPLOADED"; readonly createdAt: string; readonly uploadedAt?: string }
