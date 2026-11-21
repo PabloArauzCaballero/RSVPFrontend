@@ -16,6 +16,18 @@ function gateway(response: () => Response) {
 const upstream302 = (location = "https://hotel.example/reservas?utm_source=rsvp&utm_medium=referral") => () => new Response(null, { status: 302, headers: { location } });
 
 describe("REQ-F27-02/03 · /r/{listingId} redirector", () => {
+  it("preserves the WhatsApp message from the catalog after redirecting a guest", async () => {
+    const message = "Hola, ¿está disponible el regalo? 🎁";
+    const backend = gateway(upstream302(`https://wa.me/12025550123?text=${encodeURIComponent(message)}`));
+    const response = await GET(new Request(`http://site.test/r/${LISTING}?destination=WHATSAPP&surface=GIFT_LIST`), ctx);
+    expect(response.status).toBe(302);
+    const [request] = backend.mock.calls[0] as unknown as [URL];
+    expect(request.searchParams.get("destination")).toBe("WHATSAPP");
+    const target = new URL(response.headers.get("location") ?? "");
+    expect(target.origin + target.pathname).toBe("https://wa.me/12025550123");
+    expect(target.searchParams.get("text")).toBe(message);
+  });
+
   it("answers exactly 302, never 301, and sends the visitor to the partner", async () => {
     gateway(upstream302());
     const response = await GET(new Request(`http://site.test/r/${LISTING}?destination=WHATSAPP`), ctx);

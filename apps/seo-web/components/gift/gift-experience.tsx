@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { ApiError } from '@rsvp/api-client';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { ApiError, type ApiClient } from '@rsvp/api-client';
 import { createTranslator, formatMinor, type AppLocale } from '@rsvp/i18n/server';
-import { activeReservationsByItem, arrangeGifts, isGiftTaken, isReservationNotActive, maxPriceMinor, useCancelGiftReservation, useGiftList, useMyGiftReservations, useReserveGiftItem, type GiftFilters, type GiftItem, type GiftItemList, type GiftReservation, type GiftSourceFilter } from '@rsvp/query-hooks';
+import { activeReservationsByItem, arrangeGifts, giftContactDestinations, isGiftTaken, isReservationNotActive, maxPriceMinor, useCancelGiftReservation, useGiftList, useMyGiftReservations, usePublicListing, useReserveGiftItem, type GiftFilters, type GiftItem, type GiftItemList, type GiftReservation, type GiftSourceFilter, type ListingSummary } from '@rsvp/query-hooks';
 import { PartnerLink } from '@rsvp/ui-web';
 import { personalLinkPath } from '@rsvp/auth';
 import { createGuestClient } from '../../lib/guest-client';
@@ -28,8 +28,10 @@ export interface GiftExperienceProps {
 type Source = GiftSourceFilter;
 type Outcome = { readonly kind: 'reserved'; readonly item: GiftItem; readonly status: GiftReservation['status'] } | { readonly kind: 'taken'; readonly item: GiftItem };
 
-export const partnerHref = (item: GiftItem, celebrationId: string): string | null =>
-  item.productListingId ? `/r/${encodeURIComponent(item.productListingId)}?surface=GIFT_LIST&celebrationId=${encodeURIComponent(celebrationId)}` : null;
+function GiftWithListing({ client, item, render }: { readonly client: ApiClient; readonly item: GiftItem; readonly render: (item: GiftItem, listing: ListingSummary | undefined) => ReactNode }) {
+  const listing = usePublicListing(client, item.productListingId ?? undefined);
+  return render(item, listing.isError ? undefined : listing.data);
+}
 
 /** Applies the guest's filters and keeps partner gifts before the others (shared with the app: `arrangeGifts`). */
 export const arrange = (items: readonly GiftItem[], filters: GiftFilters): { readonly partner: GiftItem[]; readonly other: GiftItem[] } => arrangeGifts(items, filters);
@@ -109,28 +111,34 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
   }
   useEffect(() => { if (status === 401 && credential) clearGuestCredential(slug); }, [status, credential, slug]);
 
-  const renderCard = (item: GiftItem) => {
-    const href = partnerHref(item, celebrationId);
+  const card = (item: GiftItem, listing: ListingSummary | undefined) => {
+    const listingId = item.productListingId;
+    const contact = giftContactDestinations(listing?.destinationTypes);
     const taken = item.status === 'COMMITTED';
     return (
       <li key={item.id} className={`gift-card${item.source === 'CATALOGED' ? ' gift-card--partner' : ''}`} data-gift-id={item.id} data-source={item.source}>
-        <GiftPhoto client={client} item={item} t={t} />
+        <GiftPhoto item={item} url={listing?.imageUrl} t={t} />
         <span className={`gift-badge${item.status === 'PENDING_REVIEW' ? ' gift-badge--pending' : taken ? ' gift-badge--taken' : ''}`}>{t(`gifts.status.${item.status}`)}</span>
         <h3>{onlyItemId ? item.title : <a href={`/c/${encodeURIComponent(slug)}/regalos/${item.id}?lang=${locale}`} aria-label={t('gifts.card.open', { title: item.title })}>{item.title}</a>}</h3>
         <p className="gift-card__price">{formatMinor(item.price.amountMinor, item.price.currency, locale)}</p>
         {item.reservedByName ? <p className="gift-card__by" data-testid="reserved-by">{t('gifts.card.reservedBy', { name: item.reservedByName })}</p> : null}
         {mine.get(item.id) ? <p className="gift-card__mine" data-testid="my-reservation">{mine.get(item.id)?.status === 'PENDING_REVIEW' ? t('gifts.mine.pendingLabel') : t('gifts.mine.label')}</p> : null}
         {item.description ? <p className="gift-card__desc">{item.description}</p> : null}
-        {onlyItemId && href ? <p className="gift-card__desc">{t('gifts.detail.partnerNote')}</p> : null}
+        {onlyItemId && contact.length > 0 ? <p className="gift-card__desc">{t('gifts.detail.partnerNote')}</p> : null}
         <div className="gift-card__actions">
           {item.status === 'AVAILABLE' ? <button type="button" className="rsvp-button" onClick={() => { setOutcome(null); setTarget(item); }} aria-label={t('gifts.card.reserveFor', { title: item.title })}>{t('gifts.card.reserve')}</button> : null}
           {mine.get(item.id) ? <button type="button" className="rsvp-button rsvp-button--secondary" disabled={cancel.isPending} onClick={() => { const held = mine.get(item.id); if (held) { setCancelled(null); cancel.reset(); setCancelTarget({ item, reservation: held }); } }} aria-label={t('gifts.mine.cancelFor', { title: item.title })}>{t('gifts.mine.cancel')}</button> : null}
-          {href && item.productListingId ? <PartnerLink listingId={item.productListingId} surface="GIFT_LIST" celebrationId={celebrationId}>{t('gifts.card.viaPartner')}</PartnerLink>
+          {listingId ? contact.map((destination) => (
+            <PartnerLink key={destination} listingId={listingId} destination={destination} surface="GIFT_LIST" celebrationId={celebrationId}>
+              {t(destination === 'WHATSAPP' ? 'gifts.card.viaWhatsApp' : 'gifts.card.viaPartner')}
+            </PartnerLink>
+          ))
             : item.externalUrl ? <a className="rsvp-button rsvp-button--secondary" href={item.externalUrl} rel="nofollow noopener noreferrer ugc" target="_blank">{t('gifts.card.viaOther')}</a> : null}
         </div>
       </li>
     );
   };
+  const renderCard = (item: GiftItem) => <GiftWithListing key={item.id} client={client} item={item} render={card} />;
 
   return (
     <main className="gifts" aria-busy={!ready || list.isPending}>

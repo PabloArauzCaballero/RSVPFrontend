@@ -13,7 +13,7 @@ export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
   group: { partner: "Products from our partners", other: "More ideas from the hosts" },
   status: { AVAILABLE: "Available", PENDING_REVIEW: "Awaiting approval", COMMITTED: "Already reserved" },
   price: "Price",
-  card: { photo: "Photo of {{title}}", reservedBy: "Reserved by {{name}}", open: "See details of {{title}}", reserve: "Reserve", reserveFor: "Reserve {{title}}", viaPartner: "See at the partner's store", viaOther: "See at the store" },
+  card: { photo: "Photo of {{title}}", reservedBy: "Reserved by {{name}}", open: "See details of {{title}}", reserve: "Reserve", reserveFor: "Reserve {{title}}", viaPartner: "See at the partner's store", viaWhatsApp: "Ask on WhatsApp", viaOther: "See at the store" },
   detail: { title: "{{title}} · Gifts", back: "Back to the list", notFound: "This gift is no longer on the list.", notFoundBody: "The hosts may have removed it. The full list is still open to you.", partnerNote: "A DOne partner offers this product. Opening the link takes you out of DOne." },
   reserve: { title: "Reserve this gift", intro: "We ask for your name so the hosts know who is giving it.", name: "Your name", nameHelp: "Optional. The hosts will see this name next to your reservation.", message: "Message for the hosts", messageHelp: "Optional, up to 500 characters.", submit: "Reserve gift", submitting: "Reserving…", cancel: "Cancel", close: "Close" },
   /** D-3 · the guest cancels their own reservation (public web). */

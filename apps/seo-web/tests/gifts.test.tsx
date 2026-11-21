@@ -169,12 +169,26 @@ describe("states · 401, 403 and failure", () => {
 
 describe("REQ-F22-03 · partner links go through the redirector (DOM scan)", () => {
   it("no anchor leaves for a partner outside /r/", async () => {
-    stubFetch(() => json(201, {}));
+    stubFetch(() => json(201, {}), undefined, () => json(200, { destinationTypes: ["OFFICIAL_SITE"] }));
     renderList();
-    await screen.findByText("Torta");
+    await screen.findAllByRole("link", { name: "Ver en la tienda del aliado" });
     const partnerAnchors = [...document.querySelectorAll("[data-source=CATALOGED] a")].map((anchor) => anchor.getAttribute("href") ?? "");
     expect(partnerAnchors.some((href) => href.startsWith("/r/") && href.includes("surface=GIFT_LIST"))).toBe(true);
     expect(partnerAnchors.filter((href) => /^https?:/.test(href))).toEqual([]);
+  });
+
+  it("links a store and WhatsApp independently when both are available", async () => {
+    stubFetch(() => json(201, {}), undefined, () => json(200, { destinationTypes: ["OFFICIAL_SITE", "WHATSAPP", "PRODUCT_PAGE"] }));
+    renderList();
+    await screen.findAllByRole("link", { name: "Consultar por WhatsApp" });
+    const gift = within(document.querySelector<HTMLElement>('[data-gift-id="cat-1"]')!);
+    const store = gift.getByRole("link", { name: "Ver en la tienda del aliado" });
+    const whatsapp = gift.getByRole("link", { name: "Consultar por WhatsApp" });
+    for (const [anchor, destination] of [[store, "PRODUCT_PAGE"], [whatsapp, "WHATSAPP"]] as const) {
+      const target = new URL(anchor.getAttribute("href")!, "https://done.example");
+      expect(target.pathname).toBe(`/r/${ITEMS.find((entry) => entry.id === "cat-1")!.productListingId}`);
+      expect(Object.fromEntries(target.searchParams)).toEqual({ destination, surface: "GIFT_LIST", celebrationId: CELEBRATION });
+    }
   });
 });
 
