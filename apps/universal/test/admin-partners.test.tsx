@@ -3,7 +3,7 @@ import { act, fireEvent, screen, waitFor, within } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Intake, PartnerDetail, PartnerRow } from "@rsvp/query-hooks/admin";
 import { PartnersScreen } from "../src/admin/partners/partners-screen";
-import { filtersFromParams, paramsFromFilters, problemFieldErrors, type FilterParam, type UrlParams } from "../src/admin/partners/model";
+import { filtersFromParams, nitInUseOf, paramsFromFilters, problemFieldErrors, type FilterParam, type UrlParams } from "../src/admin/partners/model";
 import { DataTable } from "../src/admin/data-table";
 import { Paginator } from "../src/admin/paginator";
 import { StepperDialog } from "../src/admin/stepper-dialog";
@@ -14,6 +14,7 @@ import { ADMIN, fakeClient, HOST, HttpFailure, renderApp, type Call, type Handle
 const GEO = { items: [{ slug: "la-paz", name: "La Paz", department: "La Paz", departmentCode: "LP" }, { slug: "el-alto", name: "El Alto", department: "La Paz", departmentCode: "LP" }, { slug: "santa-cruz", name: "Santa Cruz de la Sierra", department: "Santa Cruz", departmentCode: "SC" }] };
 const CATEGORIES = { items: [{ code: "FLORES", name: "Flores" }, { code: "FOTO", name: "Fotografía" }] };
 const OWNER = { id: "11111111-1111-1111-1111-111111111111", email: "ana@sol.bo", roles: ["HOST"], status: "ACTIVE", createdAt: "2026-10-01T12:00:00Z" };
+const NEW_OWNER = { id: "33333333-3333-3333-3333-333333333333", email: "beto@luna.bo", roles: ["HOST"], status: "ACTIVE", createdAt: "2026-10-05T12:00:00Z" };
 const ADMIN_USER = { id: "22222222-2222-2222-2222-222222222222", email: "admin@done.bo", roles: ["ADMIN"], status: "ACTIVE", createdAt: "2026-01-01T12:00:00Z" };
 
 const ROW: PartnerRow = {
@@ -47,7 +48,7 @@ function base(extra: Record<string, Handler> = {}, intakes: readonly Intake[] = 
     "GET /providers/admin/intakes": () => ({ items: intakes.map((intake) => ({ id: intake.id, status: intake.status, ownerUserId: intake.ownerUserId, name: intake.identity?.name ?? null, slug: intake.identity?.slug ?? null, createdBy: intake.createdBy, createdAt: intake.createdAt, updatedAt: intake.updatedAt })) }),
     "GET /identity/admin/users": (call) => {
       const query = new URLSearchParams(call.url.split("?")[1]);
-      if (query.get("email")) return { items: query.get("email") === OWNER.email ? [OWNER] : [] };
+      if (query.get("email")) return { items: [OWNER, NEW_OWNER].filter((user) => user.email === query.get("email")) };
       const ids = (query.get("ids") ?? "").split(",");
       return { items: [OWNER, ADMIN_USER].filter((user) => ids.includes(user.id)) };
     },
@@ -65,7 +66,7 @@ const sent = (calls: readonly Call[], method: string, path: string): Call[] => c
 
 /** react-native-web reads `documentElement.clientWidth` (0 in jsdom: the narrow layout unless a test widens it). */
 const setWidth = (width: number): void => { Object.defineProperty(document.documentElement, "clientWidth", { configurable: true, value: width }); act(() => { window.dispatchEvent(new Event("resize")); }); };
-afterEach(() => { vi.restoreAllMocks(); setWidth(0); });
+afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs(); setWidth(0); });
 
 describe("A24 · Partners tab", () => {
   it("only ADMIN gets the screen (and no partner request leaves for anyone else)", () => {
@@ -111,13 +112,16 @@ describe("A24 · Partners tab", () => {
     expect(filtersFromParams({ status: "HACKED", sort: "drop table", page: "-1" })).toEqual({});
   });
 
-  it("the row menu offers every action; changing the owner is visible but disabled until F4; suspending asks for a reason", async () => {
+  it("the row menu offers every action; with EXPO_PUBLIC_PARTNER_OWNER_CHANGE off, changing the owner is visible but disabled; suspending asks for a reason", async () => {
+    vi.stubEnv("EXPO_PUBLIC_PARTNER_OWNER_CHANGE", "false");
     const { client, calls } = fakeClient(base({ "POST /providers/admin/partners/p-1/suspend": () => ({ ...DETAIL, status: "SUSPENDED" }) }));
     renderApp(<Harness />, client, ADMIN);
     fireEvent.click(await screen.findByTestId("partner-menu-p-1"));
     const menu = await screen.findByRole("menu");
     expect(within(menu).getAllByRole("menuitem").map((item) => item.textContent)).toEqual(["Ver detalle", "Editar", "Suspender", "Completar KYP", "Revisar documentos", "Ver micrositio", "Copiar ID", "Cambiar dueño · Disponible cuando exista la revocación de roles (F4)"]);
     expect(screen.getByTestId("partner-owner-p-1").getAttribute("aria-disabled")).toBe("true");
+    fireEvent.click(screen.getByTestId("partner-owner-p-1"));
+    expect(screen.queryByText("Cambiar el dueño de Flores Sol")).toBeNull();
     fireEvent.click(screen.getByTestId("partner-suspend-p-1"));
     expect(await screen.findByText("Suspender a Flores Sol")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Suspender" }));
@@ -253,6 +257,243 @@ describe("A24 · «Crear partner» dialog", () => {
     expect((screen.getByLabelText("NIT") as HTMLInputElement).value).toBe("1234567");
     expect(within(screen.getByTestId("kyp-doc-POWER_OF_ATTORNEY")).getByText("Falta subir este documento.")).toBeTruthy();
     expect(screen.queryByTestId("partner-created")).toBeNull();
+  });
+});
+
+describe("A24 · «Cambiar dueño» (DPA-3, behind EXPO_PUBLIC_PARTNER_OWNER_CHANGE)", () => {
+  const GRANT = `PUT /identity/users/${NEW_OWNER.id}/roles/PROVIDER`;
+  const REVOKE = `DELETE /identity/users/${OWNER.id}/roles/PROVIDER`;
+  const CHANGE = "POST /providers/admin/partners/p-1/change-owner";
+
+  /** Flag on, the dialog open on Flores Sol (version 3, owned by ana@sol.bo), the new owner found and a reason written. */
+  async function openAndFill(handlers: Record<string, Handler>, order: string[]) {
+    vi.stubEnv("EXPO_PUBLIC_PARTNER_OWNER_CHANGE", "true");
+    const traced = Object.fromEntries(Object.entries(handlers).map(([route, handler]) => [route, (call: Call) => { order.push(route.split(" ")[0] ?? route); return handler(call); }]));
+    const { client, calls } = fakeClient(base(traced));
+    renderApp(<Harness />, client, ADMIN);
+    fireEvent.click(await screen.findByTestId("partner-menu-p-1"));
+    const item = await screen.findByTestId("partner-owner-p-1");
+    expect(item.textContent).toBe("Cambiar dueño");
+    expect(item.getAttribute("aria-disabled")).not.toBe("true");
+    fireEvent.click(item);
+    expect(await screen.findByText("Cambiar el dueño de Flores Sol")).toBeTruthy();
+    expect(await within(screen.getByTestId("owner-current")).findByText("ana@sol.bo")).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Correo de la cuenta del nuevo dueño"), { target: { value: "nadie@luna.bo" } });
+    fireEvent.click(screen.getByTestId("owner-change-search"));
+    expect(await screen.findByText("No existe una cuenta con ese correo: pide al proveedor que se registre.")).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Correo de la cuenta del nuevo dueño"), { target: { value: NEW_OWNER.email } });
+    fireEvent.click(screen.getByTestId("owner-change-search"));
+    expect(await screen.findByText(`Cuenta encontrada: ${NEW_OWNER.email}`)).toBeTruthy();
+    // The reason is required: nothing leaves without it.
+    fireEvent.click(screen.getByTestId("owner-change-save"));
+    expect(await screen.findByText("Escribe el motivo: queda registrado en la auditoría.")).toBeTruthy();
+    expect(order).toEqual([]);
+    fireEvent.change(screen.getByTestId("owner-change-reason"), { target: { value: "Venta del negocio" } });
+    return calls;
+  }
+
+  it("grant → change (If-Match, newOwnerUserId, reason) → revoke, in that order, when the previous owner keeps no partner", async () => {
+    const order: string[] = [];
+    const calls = await openAndFill({
+      [GRANT]: () => ({ ...NEW_OWNER, roles: ["HOST", "PROVIDER"] }),
+      [CHANGE]: () => ({ ...DETAIL, ownerUserId: NEW_OWNER.id, version: 4, previousOwnerStillOwns: 0 }),
+      [REVOKE]: () => ({ ...OWNER, roles: ["HOST"] })
+    }, order);
+    act(() => { fireEvent.click(screen.getByTestId("owner-change-save")); fireEvent.click(screen.getByTestId("owner-change-save")); });
+    expect(await screen.findByTestId("owner-changed")).toBeTruthy();
+    expect(order).toEqual(["PUT", "POST", "DELETE"]);
+    const change = sent(calls, "POST", "/providers/admin/partners/p-1/change-owner");
+    expect(change).toHaveLength(1);
+    expect(change[0]?.body).toEqual({ newOwnerUserId: NEW_OWNER.id, reason: "Venta del negocio" });
+    expect(change[0]?.headers.get("if-match")).toBe("3");
+    expect(screen.getByText(`El partner ahora es de ${NEW_OWNER.email}.`)).toBeTruthy();
+    expect(screen.getByText("El dueño anterior ya no tiene el rol PROVIDER.")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("owner-change-close"));
+    expect(await screen.findByText("Dueño cambiado.")).toBeTruthy();
+  });
+
+  it("the revoke is skipped when the previous owner still owns other partners", async () => {
+    const order: string[] = [];
+    const calls = await openAndFill({
+      [GRANT]: () => NEW_OWNER,
+      [CHANGE]: () => ({ ...DETAIL, ownerUserId: NEW_OWNER.id, previousOwnerStillOwns: 2 }),
+      [REVOKE]: () => OWNER
+    }, order);
+    fireEvent.click(screen.getByTestId("owner-change-save"));
+    expect(await screen.findByText("El dueño anterior conserva el rol PROVIDER porque tiene 2 partners más.")).toBeTruthy();
+    expect(order).toEqual(["PUT", "POST"]);
+    expect(calls.some((call) => call.method === "DELETE")).toBe(false);
+  });
+
+  it("a failed revoke leaves the change done and warns to revoke it from Usuarios", async () => {
+    const order: string[] = [];
+    await openAndFill({
+      [GRANT]: () => NEW_OWNER,
+      [CHANGE]: () => ({ ...DETAIL, ownerUserId: NEW_OWNER.id, previousOwnerStillOwns: 0 }),
+      [REVOKE]: () => new HttpFailure(404, { code: "NOT_FOUND" })
+    }, order);
+    fireEvent.click(screen.getByTestId("owner-change-save"));
+    expect(await screen.findByText("El dueño anterior conserva el rol PROVIDER; revócalo desde Usuarios.")).toBeTruthy();
+    expect(screen.getByText(`El partner ahora es de ${NEW_OWNER.email}.`)).toBeTruthy();
+    expect(order).toEqual(["PUT", "POST", "DELETE"]);
+  });
+
+  it("a failed grant stops before the change", async () => {
+    const order: string[] = [];
+    const calls = await openAndFill({ [GRANT]: () => new HttpFailure(503, { code: "UNAVAILABLE" }), [CHANGE]: () => DETAIL }, order);
+    fireEvent.click(screen.getByTestId("owner-change-save"));
+    expect(await screen.findByText("No se pudo dar el rol PROVIDER al nuevo dueño, así que el dueño no cambió. Vuelve a intentarlo.")).toBeTruthy();
+    expect(sent(calls, "POST", "/providers/admin/partners/p-1/change-owner")).toHaveLength(0);
+  });
+
+  it("409 OWNER_CHANGE_UNAVAILABLE (backend switch off) says so, and nothing is revoked", async () => {
+    const order: string[] = [];
+    await openAndFill({ [GRANT]: () => NEW_OWNER, [CHANGE]: () => new HttpFailure(409, { code: "OWNER_CHANGE_UNAVAILABLE" }), [REVOKE]: () => OWNER }, order);
+    fireEvent.click(screen.getByTestId("owner-change-save"));
+    expect(await screen.findByText("El cambio de dueño aún no está habilitado en el servidor.")).toBeTruthy();
+    expect(order).toEqual(["PUT", "POST"]);
+    expect(screen.queryByTestId("owner-changed")).toBeNull();
+  });
+
+  it("PARTNER_VERSION_CONFLICT, SAME_OWNER and REASON_REQUIRED have their own copy and a reload that re-reads the partner", async () => {
+    const order: string[] = [];
+    const answers = [
+      new HttpFailure(409, { code: "PARTNER_VERSION_CONFLICT" }),
+      new HttpFailure(422, { code: "SAME_OWNER" }),
+      new HttpFailure(422, { code: "REASON_REQUIRED" })
+    ];
+    const calls = await openAndFill({ [GRANT]: () => NEW_OWNER, [CHANGE]: () => answers.shift() ?? DETAIL }, order);
+    for (const text of ["Alguien cambió este partner mientras lo editabas. Recárgalo y vuelve a intentarlo.", "Esa cuenta ya es la dueña de este partner. Elige otra.", "El servidor no recibió el motivo. Recarga el partner y escríbelo de nuevo."]) {
+      fireEvent.click(screen.getByTestId("owner-change-save"));
+      expect(await screen.findByText(text)).toBeTruthy();
+      const reads = calls.filter((call) => call.url === "/providers/admin/partners/p-1").length;
+      fireEvent.click(screen.getByTestId("owner-change-reload"));
+      await waitFor(() => expect(calls.filter((call) => call.url === "/providers/admin/partners/p-1").length).toBe(reads + 1));
+      expect(screen.queryByText(text)).toBeNull();
+    }
+  });
+});
+
+describe("A24 · duplicate NIT (warnings.nitInUse, 409 NIT_IN_USE)", () => {
+  const OTHER = { providerId: "p-9", name: "Flores del Valle", slug: "flores-valle" };
+  const WARNED: Intake = { ...COMPLETE_INTAKE, warnings: { nitInUse: [OTHER] } };
+  const ACK = "Confirmo que este NIT ya lo usa otro partner y quiero continuar";
+
+  async function walkToKyp(handlers: Record<string, Handler>, patched: (body: object) => Intake) {
+    const { client, calls } = fakeClient(base({
+      "GET /providers/admin/intakes/i-1": () => COMPLETE_INTAKE,
+      "PATCH /providers/admin/intakes/i-1": (call) => patched(call.body as object),
+      "GET /providers/admin/partners/p-9": () => ({ ...DETAIL, id: "p-9", name: "Flores del Valle", slug: "flores-valle" }),
+      ...handlers
+    }, [COMPLETE_INTAKE]));
+    renderApp(<Harness />, client, ADMIN);
+    fireEvent.click(await screen.findByTestId("draft-continue-i-1"));
+    await screen.findByDisplayValue("Flores Sol");
+    for (const label of ["Paso 3 de 6: Contacto", "Paso 4 de 6: Cobertura", "Paso 5 de 6: KYP"]) {
+      next();
+      await waitFor(() => expect(screen.getByRole("progressbar").getAttribute("aria-valuetext")).toBe(label));
+    }
+    return calls;
+  }
+
+  it("the KYP step lists the partners with the same NIT, each linked to its detail; the summary then requires the acknowledgement, sent on commit", async () => {
+    const calls = await walkToKyp({
+      "PUT /identity/users/11111111-1111-1111-1111-111111111111/roles/PROVIDER": () => OWNER,
+      "POST /providers/admin/intakes/i-1/commit": () => ({ ...DETAIL, kypStatus: "COMPLETE" })
+    }, (body) => ({ ...("kyp" in body ? WARNED : COMPLETE_INTAKE), ...body, fieldErrors: EMPTY_ERRORS }));
+    next();
+    // Held once on step 5 to read the warning.
+    const notice = await screen.findByTestId("nit-in-use");
+    expect(screen.getByRole("progressbar").getAttribute("aria-valuetext")).toBe("Paso 5 de 6: KYP");
+    expect(within(notice).getByText("Este NIT ya lo usa otro partner:")).toBeTruthy();
+    fireEvent.click(within(notice).getByTestId("nit-in-use-p-9"));
+    expect(await screen.findByText("Flores del Valle (/p/flores-valle)")).toBeTruthy();
+    await waitFor(() => expect(calls.some((call) => call.url === "/providers/admin/partners/p-9")).toBe(true));
+    fireEvent.click(screen.getByTestId("partner-detail-close"));
+    next();
+    await waitFor(() => expect(screen.getByRole("progressbar").getAttribute("aria-valuetext")).toBe("Paso 6 de 6: Resumen"));
+    expect(within(screen.getByTestId("partner-summary")).getByTestId("nit-in-use")).toBeTruthy();
+    fireEvent.click(screen.getByRole("checkbox", { name: "Confirmo que revisé los documentos KYP" }));
+    next();
+    expect(await screen.findByText("Marca la casilla para continuar con un NIT que ya está en uso.")).toBeTruthy();
+    expect(sent(calls, "POST", "/providers/admin/intakes/i-1/commit")).toHaveLength(0);
+    fireEvent.click(screen.getByRole("checkbox", { name: ACK }));
+    next();
+    await screen.findByTestId("partner-created");
+    expect(sent(calls, "POST", "/providers/admin/intakes/i-1/commit")[0]?.body).toEqual({ confirmReviewed: true, acknowledgeDuplicateNit: true });
+  });
+
+  it("without the warning the acknowledgement is not asked for and not sent", async () => {
+    const calls = await walkToKyp({
+      "PUT /identity/users/11111111-1111-1111-1111-111111111111/roles/PROVIDER": () => OWNER,
+      "POST /providers/admin/intakes/i-1/commit": () => DETAIL
+    }, (body) => ({ ...COMPLETE_INTAKE, warnings: {}, ...body, fieldErrors: EMPTY_ERRORS }));
+    next();
+    await waitFor(() => expect(screen.getByRole("progressbar").getAttribute("aria-valuetext")).toBe("Paso 6 de 6: Resumen"));
+    expect(screen.queryByTestId("nit-in-use")).toBeNull();
+    expect(screen.queryByRole("checkbox", { name: ACK })).toBeNull();
+    fireEvent.click(screen.getByRole("checkbox", { name: "Confirmo que revisé los documentos KYP" }));
+    next();
+    await screen.findByTestId("partner-created");
+    expect(sent(calls, "POST", "/providers/admin/intakes/i-1/commit")[0]?.body).toEqual({ confirmReviewed: true });
+  });
+
+  it("409 NIT_IN_USE on commit goes back to the KYP step with details.providers in the notice", async () => {
+    let commits = 0;
+    const calls = await walkToKyp({
+      "PUT /identity/users/11111111-1111-1111-1111-111111111111/roles/PROVIDER": () => OWNER,
+      "POST /providers/admin/intakes/i-1/commit": () => (commits++ === 0 ? new HttpFailure(409, { code: "NIT_IN_USE", details: { providers: [OTHER] } }) : DETAIL)
+    }, (body) => ({ ...COMPLETE_INTAKE, ...body, fieldErrors: EMPTY_ERRORS }));
+    next();
+    await waitFor(() => expect(screen.getByRole("progressbar").getAttribute("aria-valuetext")).toBe("Paso 6 de 6: Resumen"));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Confirmo que revisé los documentos KYP" }));
+    next();
+    await waitFor(() => expect(screen.getByRole("progressbar").getAttribute("aria-valuetext")).toBe("Paso 5 de 6: KYP"));
+    expect(within(screen.getByTestId("nit-in-use")).getByText("Flores del Valle (/p/flores-valle)")).toBeTruthy();
+    expect(screen.queryByText("Otra persona ya resolvió este elemento. Recarga la lista para ver el estado actual.")).toBeNull();
+    next();
+    await waitFor(() => expect(screen.getByRole("progressbar").getAttribute("aria-valuetext")).toBe("Paso 6 de 6: Resumen"));
+    fireEvent.click(screen.getByRole("checkbox", { name: ACK }));
+    next();
+    await screen.findByTestId("partner-created");
+    expect(sent(calls, "POST", "/providers/admin/intakes/i-1/commit").map((call) => call.body)).toEqual([{ confirmReviewed: true }, { confirmReviewed: true, acknowledgeDuplicateNit: true }]);
+  });
+
+  it("edit: a new NIT that answers 409 NIT_IN_USE shows the notice and the acknowledgement on the KYP step, then PATCHes with it", async () => {
+    let patches = 0;
+    const { client, calls } = fakeClient(base({
+      "PATCH /providers/admin/partners/p-1": () => (patches++ === 0 ? new HttpFailure(409, { code: "NIT_IN_USE", details: { providers: [OTHER] } }) : DETAIL)
+    }));
+    renderApp(<Harness />, client, ADMIN);
+    fireEvent.click(await screen.findByTestId("partner-menu-p-1"));
+    fireEvent.click(await screen.findByTestId("partner-edit-p-1"));
+    await screen.findByTestId("partner-wizard");
+    for (const label of ["Paso 2 de 4: Contacto", "Paso 3 de 4: Cobertura", "Paso 4 de 4: KYP"]) {
+      next();
+      await waitFor(() => expect(screen.getByRole("progressbar").getAttribute("aria-valuetext")).toBe(label));
+    }
+    fireEvent.change(screen.getByLabelText("NIT"), { target: { value: "7654321" } });
+    next();
+    expect(await screen.findByTestId("nit-in-use")).toBeTruthy();
+    expect(screen.queryByText("Otra persona ya resolvió este elemento. Recarga la lista para ver el estado actual.")).toBeNull();
+    next();
+    expect(await screen.findByText("Marca la casilla para continuar con un NIT que ya está en uso.")).toBeTruthy();
+    expect(sent(calls, "PATCH", "/providers/admin/partners/p-1")).toHaveLength(1);
+    fireEvent.click(screen.getByRole("checkbox", { name: ACK }));
+    next();
+    await waitFor(() => expect(sent(calls, "PATCH", "/providers/admin/partners/p-1")).toHaveLength(2));
+    const [first, second] = sent(calls, "PATCH", "/providers/admin/partners/p-1");
+    expect(first?.body).not.toHaveProperty("acknowledgeDuplicateNit");
+    expect(second?.body).toMatchObject({ acknowledgeDuplicateNit: true, kyp: { nit: "7654321" } });
+    expect(await screen.findByText("Cambios guardados.")).toBeTruthy();
+  });
+
+  it("nitInUseOf reads details.providers of NIT_IN_USE only", () => {
+    const problem = (status: number, body: Record<string, unknown>): ApiError => toApiError(status, "c", { title: "x", status, ...body });
+    expect(nitInUseOf(problem(409, { code: "NIT_IN_USE", details: { providers: [OTHER, { bogus: true }] } }))).toEqual([OTHER]);
+    expect(nitInUseOf(problem(409, { code: "NIT_IN_USE", details: {} }))).toEqual([]);
+    expect(nitInUseOf(problem(409, { code: "PARTNER_VERSION_CONFLICT" }))).toBeNull();
+    expect(nitInUseOf(new TypeError("offline"))).toBeNull();
   });
 });
 

@@ -1,6 +1,6 @@
 import { ApiError } from "@rsvp/api-client";
 import { partnerContactSchema, partnerCoverageSchema, partnerFieldErrors, partnerIdentitySchema, partnerKypSchema, partnerSlug, requiredKypDocuments, missingKypDocuments } from "@rsvp/forms";
-import { KYP_STATUSES, PARTNER_ORIGINS, PARTNER_SORTS, PARTNER_STATUSES, type CiExtension, type KypStatus, type PartnerDetail, type PartnerFilters, type PartnerOrigin, type PartnerSections, type PartnerSort, type PartnerStatus, type PersonType, type SectionName } from "@rsvp/query-hooks/admin";
+import { KYP_STATUSES, PARTNER_ORIGINS, PARTNER_SORTS, PARTNER_STATUSES, type CiExtension, type KypStatus, type NitMatch, type PartnerDetail, type PartnerFilters, type PartnerOrigin, type PartnerSections, type PartnerSort, type PartnerStatus, type PersonType, type SectionName } from "@rsvp/query-hooks/admin";
 
 /** Pure model of the Partners tab: URL ⇄ filters, form ⇄ API sections, and server problems → field errors and steps. */
 
@@ -186,6 +186,16 @@ export function problemFieldErrors(error: unknown): Record<string, string> {
   if (code === "KYP_INCOMPLETE") return Object.fromEntries(missing.map((path) => [path, path.startsWith("documents.") ? "MISSING_DOCUMENT" : "MISSING"]));
   if (code === "VALIDATION_FAILED" && details && typeof details === "object") { const out: Record<string, string> = {}; flatten(details, "", out); return out; }
   return {};
+}
+
+/** 409 NIT_IN_USE (commit, or a partner PATCH that changes kyp.nit): the other partners in `details.providers`; `null` for any other failure. */
+export function nitInUseOf(error: unknown): NitMatch[] | null {
+  if (!(error instanceof ApiError) || error.problem?.code !== "NIT_IN_USE") return null;
+  const details = error.problem["details"];
+  const providers = details && typeof details === "object" ? (details as { providers?: unknown }).providers : undefined;
+  if (!Array.isArray(providers)) return [];
+  return providers.filter((item): item is NitMatch => Boolean(item) && typeof item === "object" && typeof (item as NitMatch).providerId === "string" && typeof (item as NitMatch).name === "string")
+    .map((item) => ({ providerId: item.providerId, name: item.name, slug: typeof item.slug === "string" ? item.slug : null }));
 }
 
 export type StepKey = "owner" | "identity" | "contact" | "coverage" | "kyp" | "summary";

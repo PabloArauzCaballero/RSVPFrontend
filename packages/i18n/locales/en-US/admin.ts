@@ -86,16 +86,27 @@ export const adminEnUS: DeepStrings<typeof adminEsBO> = {
     drafts: { title_one: "You have {{count}} unfinished partner", title_other: "You have {{count}} unfinished partners", item: "{{name}} · saved {{when}}", unnamed: "No name yet", continue: "Continue draft" },
     actions: {
       menu: "Actions for {{name}}", view: "View details", viewNamed: "View details of {{name}}", edit: "Edit", suspend: "Suspend", reactivate: "Reactivate", completeKyp: "Complete KYP", reviewDocuments: "Review documents",
-      microsite: "View microsite", micrositeNamed: "View the microsite of {{name}}", copyId: "Copy ID", changeOwnerBlocked: "Change owner · Available once role revocation exists (F4)"
+      microsite: "View microsite", micrositeNamed: "View the microsite of {{name}}", copyId: "Copy ID", changeOwnerBlocked: "Change owner · Available once role revocation exists (F4)", changeOwner: "Change owner"
     },
     suspend: { title: "Suspend {{name}}", body: "Their offers are unpublished and they get no new requests. The reason is recorded and sent to the provider." },
     reactivate: { title: "Reactivate {{name}}", body: "They become verified again if their KYP is complete or expiring. The reason is recorded." },
-    done: { created: "Partner created and verified.", saved: "Changes saved.", kyp: "KYP complete: the partner is up to date.", suspended: "Partner suspended.", reactivated: "Partner reactivated.", copied: "ID copied: {{id}}", copyFailed: "Could not copy. The ID is {{id}}" },
+    done: { created: "Partner created and verified.", saved: "Changes saved.", kyp: "KYP complete: the partner is up to date.", suspended: "Partner suspended.", reactivated: "Partner reactivated.", copied: "ID copied: {{id}}", copyFailed: "Could not copy. The ID is {{id}}", ownerChanged: "Owner changed." },
     steps: { owner: "Owner", identity: "Identity", contact: "Contact", coverage: "Coverage", kyp: "KYP", summary: "Summary" },
     owner: {
       intro: "The partner is linked to an account that already exists. Search its exact e-mail.", email: "Owner account e-mail", search: "Find account",
       notFound: "There is no account with that e-mail: ask the provider to sign up.", found: "Account found: {{email}}", since: "Account created", roles: "Current roles",
-      roleNote: "When the partner is created this account gets the PROVIDER role.", required: "Find and confirm the owner's account to continue."
+      roleNote: "When the partner is created this account gets the PROVIDER role.", required: "Find and confirm the owner's account to continue.",
+      changeTitle: "Change the owner of {{name}}", changeIntro: "The partner moves to another existing account. Look up its exact e-mail and write the reason.", current: "Current owner", newEmail: "E-mail of the new owner's account",
+      confirm: "Change owner", reload: "Reload the partner", reasonRequired: "Write the reason: it is recorded in the audit log.",
+      roleSteps: "The new owner gets the PROVIDER role. The previous one loses it if they have no other partners.",
+      grantFailed: "The PROVIDER role could not be given to the new owner, so the owner did not change. Try again.",
+      changed: "The partner now belongs to {{email}}.", revoked: "The previous owner no longer has the PROVIDER role.",
+      keepsRole_one: "The previous owner keeps the PROVIDER role because they have {{count}} more partner.", keepsRole_other: "The previous owner keeps the PROVIDER role because they have {{count}} more partners.",
+      revokeFailed: "The previous owner keeps the PROVIDER role; revoke it from Users.", reloginBoth: "Both must sign in again to see the change in their portal.",
+      codes: {
+        OWNER_CHANGE_UNAVAILABLE: "Changing the owner is not enabled on the server yet.", SAME_OWNER: "That account already owns this partner. Choose another one.",
+        REASON_REQUIRED: "The server did not get the reason. Reload the partner and write it again.", PARTNER_VERSION_CONFLICT: "Someone changed this partner while you were editing it. Reload it and try again."
+      }
     },
     fields: {
       name: "Business name", slug: "Microsite address", slugHelp: "It will be /p/{{slug}}. Lowercase letters, numbers and hyphens.", categories: "Categories", categoriesHelp: "Choose one to ten.", description: "Description", plan: "Plan",
@@ -125,6 +136,10 @@ export const adminEnUS: DeepStrings<typeof adminEsBO> = {
       INVALID_DATE: "Choose a valid date.", DATE_IN_FUTURE: "The date cannot be in the future.", INVALID_CI: "The ID card number has digits only, 4 to 10.", INVALID_CI_EXTENSION: "Choose the extension from the list.", INVALID_CI_COMPLEMENT: "The complement has 1 or 2 letters or digits.",
       CI_EXPIRED: "The ID card has expired: ask for a valid one to create the partner.", INVALID_ACCOUNT: "The account number has digits only, 6 to 20.", INVALID_CURRENCY: "Choose BOB or USD.",
       MISSING: "Missing or not valid: check it.", MISSING_DOCUMENT: "This document still has to be uploaded.", INVALID: "Check this value."
+    },
+    nit: {
+      inUse_one: "Another partner already uses this NIT:", inUse_other: "{{count}} other partners already use this NIT:", inUseHelp: "It may be the same company under another brand. Check the NIT is typed correctly before you continue.",
+      acknowledge: "I confirm another partner already uses this NIT and I want to continue", acknowledgeRequired: "Tick the box to continue with a NIT that is already in use."
     },
     detail: {
       title: "Partner", audit: "Audit history", noAudit: "No recorded changes yet.", auditLine: "{{action}} · {{who}} · {{when}}", noKyp: "This partner has no KYP yet. Use “Complete KYP”.", noDocuments: "No documents.",

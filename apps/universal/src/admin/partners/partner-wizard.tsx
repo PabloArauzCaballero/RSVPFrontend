@@ -1,19 +1,19 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
-import { Checkbox, Chip } from "@rsvp/ui";
+import { Checkbox, Chip, PressFeedback, useColors } from "@rsvp/ui";
 import { ApiError } from "@rsvp/api-client";
 import { useOfferCategories } from "@rsvp/query-hooks";
 import {
   useAdminPartner, useAdminUserByEmail, useAdminUsersByIds, useCommitIntake, useCreateIntake, useGrantRole, useIntake, usePartnerAction, usePartnerGeo, usePatchIntake, usePatchPartner,
-  type IdentityUser, type PartnerDetail, type SectionName
+  type IdentityUser, type NitMatch, type PartnerDetail, type SectionName
 } from "@rsvp/query-hooks/admin";
 import { useApiClient, useLocale, useT } from "../../platform/providers";
 import { useSingleFlightGate } from "../../platform/single-flight";
 import { ActionButton, CheckMark, Field, Notice, useStyles } from "../../host/ui";
 import { StepperDialog } from "../stepper-dialog";
 import { AdminErrorNotice, useStamp } from "../shared";
-import { boliviaToday, documentErrors, EMPTY_FORM, firstStepWithError, formFromSections, problemFieldErrors, requiredDocumentsOf, sectionFieldErrors, sectionsOf, validateSection, contactOf, coverageOf, identityOf, kypOf, type PartnerForm, type StepKey } from "./model";
+import { boliviaToday, documentErrors, EMPTY_FORM, firstStepWithError, formFromSections, nitInUseOf, problemFieldErrors, requiredDocumentsOf, sectionFieldErrors, sectionsOf, validateSection, contactOf, coverageOf, identityOf, kypOf, type PartnerForm, type StepKey } from "./model";
 import { ContactStep, CoverageStep, IdentityStep, KypStep, Line, type Geography } from "./partner-steps";
 import { IntakeDocuments, PartnerDocuments, useDocumentKindLabel } from "./kyp-documents";
 
@@ -72,9 +72,40 @@ function OwnerStep({ email, onEmail, onSearch, searched, lookup, owner }: {
   );
 }
 
-function SummaryStep({ form, owner, geo, documents, confirmed, onConfirm, confirmError }: {
+/** Other partners that already use this NIT (intake `warnings.nitInUse` or 409 NIT_IN_USE). A warning, not a block: each one opens its detail. */
+function NitInUseNotice({ partners, onOpen }: { readonly partners: readonly NitMatch[]; readonly onOpen: (id: string) => void }): ReactNode {
+  const t = useT();
+  const styles = useStyles();
+  const palette = useColors();
+  if (partners.length === 0) return null;
+  return (
+    <View testID="nit-in-use">
+      <Notice>
+        <Text style={styles.label}>{t("admin.partners.nit.inUse", { count: partners.length })}</Text>
+        <View role="list" style={{ gap: spacing[1] }}>
+          {partners.map((match) => (
+            <View key={match.providerId} role="listitem">
+              <PressFeedback accessibilityRole="link" accessibilityLabel={t("admin.partners.actions.viewNamed", { name: match.name })} onPress={() => onOpen(match.providerId)} testID={`nit-in-use-${match.providerId}`}>
+                <Text style={[styles.body, { color: palette.primary, textDecorationLine: "underline" }]}>{match.slug ? `${match.name} (/p/${match.slug})` : match.name}</Text>
+              </PressFeedback>
+            </View>
+          ))}
+        </View>
+        <Text style={styles.muted}>{t("admin.partners.nit.inUseHelp")}</Text>
+      </Notice>
+    </View>
+  );
+}
+
+/** Required only when the NIT is already in use: the commit (or the PATCH) then carries `acknowledgeDuplicateNit: true`. */
+function NitAcknowledgement({ value, onChange, error }: { readonly value: boolean; readonly onChange: (value: boolean) => void; readonly error: boolean }): ReactNode {
+  const t = useT();
+  return <Checkbox label={t("admin.partners.nit.acknowledge")} value={value} onChange={onChange} {...(error && !value ? { error: t("admin.partners.nit.acknowledgeRequired") } : {})} />;
+}
+
+function SummaryStep({ form, owner, geo, documents, confirmed, onConfirm, confirmError, duplicates }: {
   readonly form: PartnerForm; readonly owner: string; readonly geo: ReturnType<typeof useGeography>; readonly documents: readonly { readonly kind: string; readonly fileName: string; readonly status: string }[];
-  readonly confirmed: boolean; readonly onConfirm: (value: boolean) => void; readonly confirmError: boolean;
+  readonly confirmed: boolean; readonly onConfirm: (value: boolean) => void; readonly confirmError: boolean; readonly duplicates?: ReactNode;
 }): ReactNode {
   const t = useT();
   const styles = useStyles();
@@ -113,6 +144,7 @@ function SummaryStep({ form, owner, geo, documents, confirmed, onConfirm, confir
       <Line label={t("admin.partners.fields.ciExpiresOn")} value={kyp.representative?.ciExpiresOn} />
       <Line label={t("admin.partners.fields.bank")} value={kyp.bankAccount ? `${kyp.bankAccount.bank ?? ""} · ${kyp.bankAccount.currency ?? ""}` : t("admin.partners.fields.noBank")} />
       <Line label={t("admin.partners.documents.title")} value={documents.filter((doc) => doc.status === "UPLOADED").map((doc) => `${label(doc.kind)} (${doc.fileName})`).join(", ")} />
+      {duplicates}
       <View style={{ paddingTop: spacing[3] }}>
         <Checkbox label={t("admin.partners.wizard.confirmReviewed")} value={confirmed} onChange={onConfirm} {...(confirmError && !confirmed ? { error: t("admin.partners.wizard.confirmRequired") } : {})} />
       </View>
@@ -141,7 +173,11 @@ function CreatedView({ partner, onOpen, onClose }: { readonly partner: PartnerDe
   );
 }
 
-export function PartnerWizard({ mode, onClose, onDone }: { readonly mode: WizardMode; readonly onClose: () => void; readonly onDone: (partnerId: string, change: "created" | "saved" | "kyp") => void }): ReactNode {
+export function PartnerWizard({ mode, onClose, onDone, onOpenPartner }: {
+  readonly mode: WizardMode; readonly onClose: () => void; readonly onDone: (partnerId: string, change: "created" | "saved" | "kyp") => void;
+  /** Opens another partner's detail (over the wizard, which keeps its state): the links of the duplicate-NIT notice. */
+  readonly onOpenPartner?: (partnerId: string) => void;
+}): ReactNode {
   const t = useT();
   const locale = useLocale();
   const client = useApiClient();
@@ -160,6 +196,12 @@ export function PartnerWizard({ mode, onClose, onDone }: { readonly mode: Wizard
   const [confirmed, setConfirmed] = useState(false);
   const [confirmError, setConfirmError] = useState(false);
   const [created, setCreated] = useState<PartnerDetail | null>(null);
+  /** 409 NIT_IN_USE, tied to the NIT it was about (a new NIT makes it stale). */
+  const [nitConflict, setNitConflict] = useState<{ readonly nit: string; readonly partners: readonly NitMatch[] } | null>(null);
+  /** The NIT whose warning already held the admin on the KYP step once (the next press moves on). */
+  const [nitShown, setNitShown] = useState<string | null>(null);
+  const [ackNit, setAckNit] = useState(false);
+  const [ackNitError, setAckNitError] = useState(false);
   const gate = useSingleFlightGate();
   const loaded = useRef(false);
 
@@ -187,6 +229,24 @@ export function PartnerWizard({ mode, onClose, onDone }: { readonly mode: Wizard
   const version = partner.data?.version ?? existing?.version ?? 1;
   const busy = createIntake.isPending || patchIntake.isPending || commit.isPending || grant.isPending || patchPartner.isPending || action.isPending;
   const setForm = (update: (current: PartnerForm) => PartnerForm): void => setFormState(update);
+  const currentNit = (kypOf(form).nit ?? "").trim();
+  /** The other partners with this NIT: the intake's warning (if it is about the NIT on screen) plus a 409 NIT_IN_USE. */
+  const nitInUse = useMemo(() => {
+    const warned = mode.kind === "create" && (intake.data?.kyp?.nit ?? "").trim() === currentNit ? intake.data?.warnings?.nitInUse ?? [] : [];
+    const conflicted = nitConflict && nitConflict.nit === currentNit ? nitConflict.partners : [];
+    return [...new Map([...warned, ...conflicted].map((match) => [match.providerId, match] as const)).values()];
+  }, [mode.kind, intake.data, nitConflict, currentNit]);
+  const acknowledgeDuplicateNit = nitInUse.length > 0 && ackNit;
+  /** A 409 NIT_IN_USE goes back to the KYP step with the notice; the acknowledgement has to be given (again). */
+  const showNitConflict = (error: unknown): boolean => {
+    const partners = nitInUseOf(error);
+    if (!partners) return false;
+    setNitConflict({ nit: currentNit, partners });
+    setAckNit(false);
+    setAckNitError(false);
+    setIndex(steps.indexOf("kyp"));
+    return true;
+  };
 
   /** Shows a server answer on its fields and takes the admin to the first step that has one. */
   const showErrors = (next: Record<string, string>): void => {
@@ -218,7 +278,14 @@ export function PartnerWizard({ mode, onClose, onDone }: { readonly mode: Wizard
       if (Object.keys(found).length) { setErrors(found); return; }
       if (mode.kind === "create") {
         run((release) => patchIntake.mutate(sectionsOf(form, step), {
-          onSuccess: (saved) => { const server = sectionFieldErrors(saved.fieldErrors, step); if (Object.keys(server).length) setErrors(server); else advance(); },
+          onSuccess: (saved) => {
+            const server = sectionFieldErrors(saved.fieldErrors, step);
+            if (Object.keys(server).length) { setErrors(server); return; }
+            // A NIT already in use holds the admin here once, to read the warning (or fix a typo) before the summary.
+            const savedNit = (saved.kyp?.nit ?? "").trim();
+            if (step === "kyp" && (saved.warnings?.nitInUse?.length ?? 0) > 0 && nitShown !== savedNit) { setNitShown(savedNit); setAckNit(false); return; }
+            advance();
+          },
           onError: (error) => { const mapped = problemFieldErrors(error); if (Object.keys(mapped).length) showErrors(mapped); else setFailure({ stage: "save", error }); },
           onSettled: release
         }));
@@ -229,14 +296,17 @@ export function PartnerWizard({ mode, onClose, onDone }: { readonly mode: Wizard
       return;
     }
     // summary: grant the PROVIDER role (idempotent, harmless if the commit then fails), then commit (DPA-9, interim option B).
-    if (!confirmed) { setConfirmError(true); return; }
+    const missingAck = nitInUse.length > 0 && !ackNit;
+    if (!confirmed) setConfirmError(true);
+    if (missingAck) setAckNitError(true);
+    if (!confirmed || missingAck) return;
     const ownerId = intake.data?.ownerUserId ?? owner?.id;
     if (!intakeId || !ownerId) return;
     run((release) => grant.mutate({ userId: ownerId, role: "PROVIDER" }, {
       onError: (error) => { setFailure({ stage: "grant", error }); release(); },
-      onSuccess: () => commit.mutate(undefined, {
+      onSuccess: () => commit.mutate({ acknowledgeDuplicateNit }, {
         onSuccess: (partnerDetail) => setCreated(partnerDetail),
-        onError: (error) => { const mapped = problemFieldErrors(error); if (Object.keys(mapped).length) showErrors(mapped); setFailure({ stage: "commit", error }); },
+        onError: (error) => { if (showNitConflict(error)) return; const mapped = problemFieldErrors(error); if (Object.keys(mapped).length) showErrors(mapped); setFailure({ stage: "commit", error }); },
         onSettled: release
       })
     }));
@@ -247,8 +317,9 @@ export function PartnerWizard({ mode, onClose, onDone }: { readonly mode: Wizard
     const sections = mode.kind === "kyp"
       ? { ...sectionsOf(form, "coverage"), ...sectionsOf(form, "kyp") }
       : { ...sectionsOf(form, "identity"), ...sectionsOf(form, "contact"), ...sectionsOf(form, "coverage"), ...(hasKyp(form) ? sectionsOf(form, "kyp") : {}) };
-    const fail = (error: unknown): void => { const mapped = problemFieldErrors(error); if (Object.keys(mapped).length) showErrors(mapped); setFailure({ stage: "save", error }); };
-    run((release) => patchPartner.mutate({ sections, version }, {
+    if (nitInUse.length > 0 && !ackNit) { setAckNitError(true); return; }
+    const fail = (error: unknown): void => { if (showNitConflict(error)) return; const mapped = problemFieldErrors(error); if (Object.keys(mapped).length) showErrors(mapped); setFailure({ stage: "save", error }); };
+    run((release) => patchPartner.mutate({ sections, version, acknowledgeDuplicateNit }, {
       onError: (error) => { fail(error); release(); },
       onSuccess: () => {
         if (mode.kind !== "kyp") { release(); onDone(existing.id, "saved"); return; }
@@ -273,6 +344,8 @@ export function PartnerWizard({ mode, onClose, onDone }: { readonly mode: Wizard
   const mappedCount = Object.keys(errors).length;
   const ownerEmail = owner?.email ?? intake.data?.ownerUserId ?? "";
 
+  const duplicates = <NitInUseNotice partners={nitInUse} onOpen={(id) => onOpenPartner?.(id)} />;
+  const acknowledgement = <NitAcknowledgement value={ackNit} onChange={(value) => { setAckNit(value); setAckNitError(false); }} error={ackNitError} />;
   const body = (): ReactNode => {
     if (created) return <CreatedView partner={created} onOpen={() => onDone(created.id, "created")} onClose={() => { onDone(created.id, "created"); }} />;
     if (resumeLoading) return <Text>{t("host.common.loading")}</Text>;
@@ -288,9 +361,17 @@ export function PartnerWizard({ mode, onClose, onDone }: { readonly mode: Wizard
         const docs = mode.kind === "create"
           ? (intakeId ? <IntakeDocuments intakeId={intakeId} required={required} documents={documents} errors={errors} /> : null)
           : <PartnerDocuments providerId={existing?.id ?? ""} required={required} documents={documents} errors={errors} />;
-        return <KypStep form={form} setForm={setForm} errors={errors} geo={geo} documents={docs} />;
+        return (
+          <>
+            <KypStep form={form} setForm={setForm} errors={errors} geo={geo} documents={docs} />
+            {duplicates}
+            {/* edit and kyp end on this step: the acknowledgement goes here instead of a summary. */}
+            {mode.kind !== "create" && nitInUse.length > 0 ? acknowledgement : null}
+          </>
+        );
       }
-      case "summary": return <SummaryStep form={form} owner={ownerEmail} geo={geo} documents={documents} confirmed={confirmed} onConfirm={(value) => { setConfirmed(value); setConfirmError(false); }} confirmError={confirmError} />;
+      case "summary": return <SummaryStep form={form} owner={ownerEmail} geo={geo} documents={documents} confirmed={confirmed} onConfirm={(value) => { setConfirmed(value); setConfirmError(false); }} confirmError={confirmError}
+        duplicates={nitInUse.length > 0 ? <>{duplicates}{acknowledgement}</> : null} />;
     }
   };
 

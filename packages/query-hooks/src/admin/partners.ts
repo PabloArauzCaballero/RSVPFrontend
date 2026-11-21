@@ -5,7 +5,8 @@ import type { ApiClient } from "@rsvp/api-client";
  * Partner administration (A24): the admin creates partners through a server-side intake and manages them from a table.
  * Hand-written copies of provider-catalog 2.5.0 (`/providers/admin/intakes*`, `/providers/admin/partners*`,
  * `/providers/admin/documents/{id}/download`) and identity 1.2.0 (`GET /identity/admin/users?email=|ids=`), as published
- * in RSVPBackend PR #42. Every route is ADMIN-only on the server (requireAdmin per endpoint).
+ * in RSVPBackend PR #42 (@ 030e8eb for the duplicate-NIT warning and the change-owner body). Every route is ADMIN-only on the
+ * server (requireAdmin per endpoint).
  */
 
 export type PersonType = "NATURAL" | "UNIPERSONAL" | "JURIDICA";
@@ -47,9 +48,15 @@ export type SectionName = "identity" | "contact" | "coverage" | "kyp";
 export type SectionErrors = Readonly<Record<SectionName, Readonly<Record<string, string>>>>;
 
 export interface IntakeDocument { readonly id: string; readonly intakeId: string; readonly kind: KypDocumentKind; readonly fileName: string; readonly contentType: string; readonly sizeBytes: number; readonly status: "PENDING_UPLOAD" | "UPLOADED"; readonly createdAt: string; readonly uploadedAt?: string }
+/** Another partner whose KYP already uses the same NIT. Allowed after an explicit confirmation: two partners may belong to one company. */
+export interface NitMatch { readonly providerId: string; readonly name: string; readonly slug: string | null }
+/** Non-blocking warnings of an OPEN intake: `{}` or `{ nitInUse: [...] }`. With `nitInUse` the commit needs `acknowledgeDuplicateNit: true` (else 409 NIT_IN_USE). */
+export interface IntakeWarnings { readonly nitInUse?: readonly NitMatch[] }
 export interface Intake extends PartnerSections {
   readonly id: string; readonly status: IntakeStatus; readonly ownerUserId: string; readonly documents: readonly IntakeDocument[];
   readonly fieldErrors: SectionErrors; readonly providerId?: string; readonly createdBy: string; readonly createdAt: string; readonly updatedAt: string;
+  /** Required since 030e8eb; optional here so an older server (or a test fixture) without it reads as "no warnings". */
+  readonly warnings?: IntakeWarnings;
 }
 export interface IntakeSummary { readonly id: string; readonly status: IntakeStatus; readonly ownerUserId: string; readonly name: string | null; readonly slug: string | null; readonly createdBy: string; readonly createdAt: string; readonly updatedAt: string }
 
@@ -73,6 +80,9 @@ export interface PartnerDetail {
   readonly contact: PartnerContact; readonly coverage: PartnerCoverage; readonly kyp: PartnerKyp | null; readonly representativeInRegistration: boolean;
   readonly documents: readonly PartnerDocument[]; readonly publishedListings: number; readonly audit: readonly AuditEntry[];
 }
+/** 200 of change-owner: the partner after the change plus how many other partners the previous owner still owns (0 = revoke PROVIDER). */
+export interface PartnerOwnerChange extends PartnerDetail { readonly previousOwnerStillOwns: number }
+export interface ChangeOwnerInput { readonly providerId: string; readonly newOwnerUserId: string; readonly reason: string; readonly version: number }
 /** `POST .../documents`: PUT the bytes to `uploadUrl` with exactly this `method` and these `headers`, then complete. */
 export interface KypDocumentUpload { readonly documentId: string; readonly uploadUrl: string; readonly method: "PUT"; readonly headers: Readonly<Record<string, string>>; readonly expiresAt: string }
 export interface KypDocumentInput { readonly kind: KypDocumentKind; readonly fileName: string; readonly contentType: "application/pdf" | "image/jpeg" | "image/png" | "image/webp"; readonly sizeBytes: number }
@@ -224,11 +234,16 @@ export function useDeleteIntakeDocument(client: ApiClient, intakeId: string) {
   const queryClient = useQueryClient();
   return useMutation({ mutationFn: (documentId: string) => client.request<undefined>(`${INTAKES}/${enc(intakeId)}/documents/${enc(documentId)}`, { method: "DELETE" }), onSettled: () => refreshIntake(queryClient, intakeId) });
 }
-/** POST .../commit with `{ confirmReviewed: true }` and the intake's one Idempotency-Key. 201 = the partner exists, VERIFIED. */
+/**
+ * POST .../commit with `{ confirmReviewed: true }` and the intake's one Idempotency-Key. 201 = the partner exists, VERIFIED.
+ * `acknowledgeDuplicateNit` is sent only when true: the admin confirmed a NIT that another partner uses (else 409 NIT_IN_USE).
+ */
 export function useCommitIntake(client: ApiClient, intakeId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => client.request<PartnerDetail, { readonly confirmReviewed: true }>(`${INTAKES}/${enc(intakeId)}/commit`, { method: "POST", body: { confirmReviewed: true }, headers: { "Idempotency-Key": commitIdempotencyKey(intakeId) } }),
+    mutationFn: (options?: { readonly acknowledgeDuplicateNit?: boolean }) => client.request<PartnerDetail, { readonly confirmReviewed: true; readonly acknowledgeDuplicateNit?: true }>(`${INTAKES}/${enc(intakeId)}/commit`, {
+      method: "POST", body: { confirmReviewed: true, ...(options?.acknowledgeDuplicateNit ? { acknowledgeDuplicateNit: true as const } : {}) }, headers: { "Idempotency-Key": commitIdempotencyKey(intakeId) }
+    }),
     onSuccess: (partner) => { queryClient.setQueryData(partnerKeys.detail(partner.id), partner); return Promise.all([queryClient.invalidateQueries({ queryKey: partnerKeys.lists }), refreshIntake(queryClient, intakeId)]); }
   });
 }
@@ -245,11 +260,15 @@ export function useAdminPartner(client: ApiClient, providerId: string | undefine
 export function useRevealPartnerCi(client: ApiClient, providerId: string, enabled: boolean) {
   return useQuery({ queryKey: partnerKeys.revealed(providerId), queryFn: () => client.request<PartnerDetail>(`${PARTNERS}/${enc(providerId)}?reveal=ci`), enabled: enabled && Boolean(providerId), staleTime: 0, gcTime: 0, retry: false });
 }
-/** Optimistic concurrency: `If-Match: <version>`; a stale version answers 409 PARTNER_VERSION_CONFLICT. */
+/**
+ * Optimistic concurrency: `If-Match: <version>`; a stale version answers 409 PARTNER_VERSION_CONFLICT. A new `kyp.nit` that another
+ * partner uses answers 409 NIT_IN_USE unless `acknowledgeDuplicateNit` is true (sent only then).
+ */
 export function usePatchPartner(client: ApiClient, providerId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ sections, version }: { readonly sections: PartnerSections; readonly version: number }) => client.request<PartnerDetail, PartnerSections>(`${PARTNERS}/${enc(providerId)}`, { method: "PATCH", body: sections, headers: { "If-Match": String(version) } }),
+    mutationFn: ({ sections, version, acknowledgeDuplicateNit }: { readonly sections: PartnerSections; readonly version: number; readonly acknowledgeDuplicateNit?: boolean }) =>
+      client.request<PartnerDetail, PartnerSections & { readonly acknowledgeDuplicateNit?: true }>(`${PARTNERS}/${enc(providerId)}`, { method: "PATCH", body: { ...sections, ...(acknowledgeDuplicateNit ? { acknowledgeDuplicateNit: true as const } : {}) }, headers: { "If-Match": String(version) } }),
     onSuccess: (partner) => { queryClient.setQueryData(partnerKeys.detail(providerId), partner); return queryClient.invalidateQueries({ queryKey: partnerKeys.lists }); }
   });
 }
@@ -279,16 +298,29 @@ export function useReviewPartnerDocument(client: ApiClient, providerId: string) 
 export function useAdminDocumentDownload(client: ApiClient) {
   return useMutation({ mutationFn: (documentId: string) => client.request<AdminDocumentDownload>(`/providers/admin/documents/${enc(documentId)}/download`) });
 }
-export type PartnerAction = "suspend" | "reactivate" | "kyp-complete" | "change-owner";
-/** suspend / reactivate (`{ reason }`, required), kyp/complete (revalidates; KYP_INCOMPLETE otherwise) and change-owner (409 OWNER_CHANGE_UNAVAILABLE until F4). */
+export type PartnerAction = "suspend" | "reactivate" | "kyp-complete";
+/** suspend / reactivate (`{ reason }`, required) and kyp/complete (revalidates; KYP_INCOMPLETE otherwise). Change-owner has its own hook. */
 export function usePartnerAction(client: ApiClient) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ providerId, action, reason, ownerUserId }: { readonly providerId: string; readonly action: PartnerAction; readonly reason?: string; readonly ownerUserId?: string }) => {
+    mutationFn: ({ providerId, action, reason }: { readonly providerId: string; readonly action: PartnerAction; readonly reason?: string }) => {
       const path = `${PARTNERS}/${enc(providerId)}/${action === "kyp-complete" ? "kyp/complete" : action}`;
-      const body = action === "kyp-complete" ? undefined : action === "change-owner" ? { ownerUserId: ownerUserId ?? "" } : { reason: reason ?? "" };
+      const body = action === "kyp-complete" ? undefined : { reason: reason ?? "" };
       return client.request<PartnerDetail, object | undefined>(path, { method: "POST", ...(body ? { body } : {}) });
     },
     onSuccess: (_partner, { providerId }) => refreshPartner(queryClient, providerId)
+  });
+}
+/**
+ * POST .../change-owner `{ newOwnerUserId, reason }` with `If-Match: <version>` (DPA-3). Behind the backend flag
+ * PROVIDER_OWNER_CHANGE_ENABLED: while it is off every call answers 409 OWNER_CHANGE_UNAVAILABLE. Other answers: 422 SAME_OWNER,
+ * REASON_REQUIRED, and 409 PARTNER_VERSION_CONFLICT. The server never calls Identity (B10): granting and revoking PROVIDER is the UI's job.
+ */
+export function useChangePartnerOwner(client: ApiClient) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ providerId, newOwnerUserId, reason, version }: ChangeOwnerInput) =>
+      client.request<PartnerOwnerChange, { readonly newOwnerUserId: string; readonly reason: string }>(`${PARTNERS}/${enc(providerId)}/change-owner`, { method: "POST", body: { newOwnerUserId, reason }, headers: { "If-Match": String(version) } }),
+    onSuccess: (partner, { providerId }) => { queryClient.setQueryData(partnerKeys.detail(providerId), partner); return queryClient.invalidateQueries({ queryKey: partnerKeys.lists }); }
   });
 }

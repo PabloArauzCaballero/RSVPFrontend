@@ -121,6 +121,36 @@ describe("partner mutations", () => {
     expect(invalidate).toHaveBeenCalledWith({ queryKey: admin.partnerKeys.detail("p-1") });
   });
 
+  it("duplicate NIT: acknowledgeDuplicateNit goes on the commit and the PATCH only when true", async () => {
+    const h = harness(() => ({ status: 200, body: { id: "p-1" } }));
+    const commit = renderHook(() => admin.useCommitIntake(h.client, "i-nit"), { wrapper: h.wrapper });
+    await act(async () => { await commit.result.current.mutateAsync({ acknowledgeDuplicateNit: true }); });
+    await act(async () => { await commit.result.current.mutateAsync({ acknowledgeDuplicateNit: false }); });
+    const patch = renderHook(() => admin.usePatchPartner(h.client, "p-1"), { wrapper: h.wrapper });
+    await act(async () => { await patch.result.current.mutateAsync({ sections: { kyp: { nit: "1234567" } }, version: 2, acknowledgeDuplicateNit: true }); });
+    await act(async () => { await patch.result.current.mutateAsync({ sections: { kyp: { nit: "1234567" } }, version: 2 }); });
+    expect(h.calls.map((call) => call.body)).toEqual([
+      { confirmReviewed: true, acknowledgeDuplicateNit: true }, { confirmReviewed: true },
+      { kyp: { nit: "1234567" }, acknowledgeDuplicateNit: true }, { kyp: { nit: "1234567" } }
+    ]);
+  });
+
+  it("change-owner posts newOwnerUserId and reason with If-Match; revoke is DELETE /identity/users/{id}/roles/{role}", async () => {
+    const h = harness((seen) => (seen.method === "DELETE" ? { status: 204 } : { body: { id: "p-1", previousOwnerStillOwns: 0 } }));
+    const invalidate = vi.spyOn(h.queryClient, "invalidateQueries");
+    const change = renderHook(() => admin.useChangePartnerOwner(h.client), { wrapper: h.wrapper });
+    let answer: admin.PartnerOwnerChange | undefined;
+    await act(async () => { answer = await change.result.current.mutateAsync({ providerId: "p-1", newOwnerUserId: "u-2", reason: "Venta", version: 7 }); });
+    expect(answer?.previousOwnerStillOwns).toBe(0);
+    const revoke = renderHook(() => admin.useRevokeRole(h.client), { wrapper: h.wrapper });
+    await act(async () => { await revoke.result.current.mutateAsync({ userId: "u-1", role: "PROVIDER" }); });
+    expect(h.calls.map((call) => `${call.method} ${call.path}`)).toEqual(["POST /providers/admin/partners/p-1/change-owner", "DELETE /identity/users/u-1/roles/PROVIDER"]);
+    expect(h.calls[0]?.body).toEqual({ newOwnerUserId: "u-2", reason: "Venta" });
+    expect(h.calls[0]?.headers.get("if-match")).toBe("7");
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: admin.partnerKeys.lists });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: admin.adminKeys.usersAll });
+  });
+
   it("review, download and the audited CI reveal", async () => {
     const h = harness(() => ({ body: { id: "p-1", url: "https://s3.test/x" } }));
     const review = renderHook(() => admin.useReviewPartnerDocument(h.client, "p-1"), { wrapper: h.wrapper });

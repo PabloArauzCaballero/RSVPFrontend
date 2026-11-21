@@ -83,16 +83,27 @@ export const adminEsBO = {
     drafts: { title_one: "Tienes {{count}} alta sin terminar", title_other: "Tienes {{count}} altas sin terminar", item: "{{name}} · guardado {{when}}", unnamed: "Sin nombre todavía", continue: "Continuar borrador" },
     actions: {
       menu: "Acciones de {{name}}", view: "Ver detalle", viewNamed: "Ver detalle de {{name}}", edit: "Editar", suspend: "Suspender", reactivate: "Reactivar", completeKyp: "Completar KYP", reviewDocuments: "Revisar documentos",
-      microsite: "Ver micrositio", micrositeNamed: "Ver el micrositio de {{name}}", copyId: "Copiar ID", changeOwnerBlocked: "Cambiar dueño · Disponible cuando exista la revocación de roles (F4)"
+      microsite: "Ver micrositio", micrositeNamed: "Ver el micrositio de {{name}}", copyId: "Copiar ID", changeOwnerBlocked: "Cambiar dueño · Disponible cuando exista la revocación de roles (F4)", changeOwner: "Cambiar dueño"
     },
     suspend: { title: "Suspender a {{name}}", body: "Sus ofertas dejan de publicarse y no recibe solicitudes nuevas. El motivo queda registrado y se lo comunicamos al proveedor." },
     reactivate: { title: "Reactivar a {{name}}", body: "Vuelve a estar verificado si su KYP está completo o por vencer. El motivo queda registrado." },
-    done: { created: "Partner creado y verificado.", saved: "Cambios guardados.", kyp: "KYP completo: el partner queda al día.", suspended: "Partner suspendido.", reactivated: "Partner reactivado.", copied: "ID copiado: {{id}}", copyFailed: "No se pudo copiar. El ID es {{id}}" },
+    done: { created: "Partner creado y verificado.", saved: "Cambios guardados.", kyp: "KYP completo: el partner queda al día.", suspended: "Partner suspendido.", reactivated: "Partner reactivado.", copied: "ID copiado: {{id}}", copyFailed: "No se pudo copiar. El ID es {{id}}", ownerChanged: "Dueño cambiado." },
     steps: { owner: "Dueño", identity: "Identidad", contact: "Contacto", coverage: "Cobertura", kyp: "KYP", summary: "Resumen" },
     owner: {
       intro: "El partner se vincula a una cuenta que ya existe. Busca su correo exacto.", email: "Correo de la cuenta del dueño", search: "Buscar cuenta",
       notFound: "No existe una cuenta con ese correo: pide al proveedor que se registre.", found: "Cuenta encontrada: {{email}}", since: "Cuenta creada", roles: "Roles actuales",
-      roleNote: "Al crear el partner esta cuenta recibe el rol PROVIDER.", required: "Busca y confirma la cuenta del dueño para seguir."
+      roleNote: "Al crear el partner esta cuenta recibe el rol PROVIDER.", required: "Busca y confirma la cuenta del dueño para seguir.",
+      changeTitle: "Cambiar el dueño de {{name}}", changeIntro: "El partner pasa a otra cuenta que ya existe. Busca su correo exacto y escribe el motivo.", current: "Dueño actual", newEmail: "Correo de la cuenta del nuevo dueño",
+      confirm: "Cambiar dueño", reload: "Recargar el partner", reasonRequired: "Escribe el motivo: queda registrado en la auditoría.",
+      roleSteps: "El nuevo dueño recibe el rol PROVIDER. El anterior lo pierde si no tiene otros partners.",
+      grantFailed: "No se pudo dar el rol PROVIDER al nuevo dueño, así que el dueño no cambió. Vuelve a intentarlo.",
+      changed: "El partner ahora es de {{email}}.", revoked: "El dueño anterior ya no tiene el rol PROVIDER.",
+      keepsRole_one: "El dueño anterior conserva el rol PROVIDER porque tiene {{count}} partner más.", keepsRole_other: "El dueño anterior conserva el rol PROVIDER porque tiene {{count}} partners más.",
+      revokeFailed: "El dueño anterior conserva el rol PROVIDER; revócalo desde Usuarios.", reloginBoth: "Los dos deben volver a iniciar sesión para ver el cambio en su portal.",
+      codes: {
+        OWNER_CHANGE_UNAVAILABLE: "El cambio de dueño aún no está habilitado en el servidor.", SAME_OWNER: "Esa cuenta ya es la dueña de este partner. Elige otra.",
+        REASON_REQUIRED: "El servidor no recibió el motivo. Recarga el partner y escríbelo de nuevo.", PARTNER_VERSION_CONFLICT: "Alguien cambió este partner mientras lo editabas. Recárgalo y vuelve a intentarlo."
+      }
     },
     fields: {
       name: "Nombre comercial", slug: "Dirección del micrositio", slugHelp: "Se verá en /p/{{slug}}. Minúsculas, números y guiones.", categories: "Categorías", categoriesHelp: "Elige de una a diez.", description: "Descripción", plan: "Plan",
@@ -122,6 +133,10 @@ export const adminEsBO = {
       INVALID_DATE: "Elige una fecha válida.", DATE_IN_FUTURE: "La fecha no puede ser futura.", INVALID_CI: "El CI lleva solo números, de 4 a 10 dígitos.", INVALID_CI_EXTENSION: "Elige la extensión de la lista.", INVALID_CI_COMPLEMENT: "El complemento tiene 1 o 2 letras o números.",
       CI_EXPIRED: "El CI está vencido: pide el carnet vigente para poder crear el partner.", INVALID_ACCOUNT: "El número de cuenta lleva solo números, de 6 a 20 dígitos.", INVALID_CURRENCY: "Elige BOB o USD.",
       MISSING: "Falta o no es válido: revísalo.", MISSING_DOCUMENT: "Falta subir este documento.", INVALID: "Revisa este dato."
+    },
+    nit: {
+      inUse_one: "Este NIT ya lo usa otro partner:", inUse_other: "Este NIT ya lo usan otros {{count}} partners:", inUseHelp: "Puede ser la misma empresa con otra marca. Revisa que el NIT esté bien escrito antes de seguir.",
+      acknowledge: "Confirmo que este NIT ya lo usa otro partner y quiero continuar", acknowledgeRequired: "Marca la casilla para continuar con un NIT que ya está en uso."
     },
     detail: {
       title: "Partner", audit: "Historial de auditoría", noAudit: "Sin cambios registrados todavía.", auditLine: "{{action}} · {{who}} · {{when}}", noKyp: "Este partner todavía no tiene KYP. Usa «Completar KYP».", noDocuments: "Sin documentos.",

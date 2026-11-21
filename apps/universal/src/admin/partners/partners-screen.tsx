@@ -20,6 +20,8 @@ import { activeFilterCount, filtersFromParams, KYP_EXPIRING_DAYS, paramsFromFilt
 import { Picker } from "./partner-steps";
 import { KYP_TONE, PartnerDetailDialog, STATUS_TONE } from "./partner-detail";
 import { PartnerWizard } from "./partner-wizard";
+import { ChangeOwnerDialog } from "./change-owner";
+import { partnerOwnerChangeEnabled } from "../../platform/partner-flags";
 
 /**
  * Partners tab (A24, DP-9..DP-13): the only place where partners are created (by an ADMIN, VERIFIED, with a complete KYP),
@@ -45,10 +47,12 @@ function PartnersHeader({ onCreate }: { readonly onCreate: () => void }): null {
 }
 
 /** Edit and «Completar KYP» need the partner's full record first; the dialog waits for it. */
-function ExistingWizard({ kind, partnerId, onClose, onDone }: { readonly kind: "edit" | "kyp"; readonly partnerId: string; readonly onClose: () => void; readonly onDone: (id: string, change: "created" | "saved" | "kyp") => void }): ReactNode {
+function ExistingWizard({ kind, partnerId, onClose, onDone, onOpenPartner }: {
+  readonly kind: "edit" | "kyp"; readonly partnerId: string; readonly onClose: () => void; readonly onDone: (id: string, change: "created" | "saved" | "kyp") => void; readonly onOpenPartner: (id: string) => void;
+}): ReactNode {
   const t = useT();
   const query = useAdminPartner(useApiClient(), partnerId);
-  if (query.data) return <PartnerWizard mode={{ kind, partner: query.data }} onClose={onClose} onDone={onDone} />;
+  if (query.data) return <PartnerWizard mode={{ kind, partner: query.data }} onClose={onClose} onDone={onDone} onOpenPartner={onOpenPartner} />;
   return (
     <EditorDialog title={t("admin.partners.detail.title")} onClose={onClose}>
       {query.error ? <AdminErrorNotice error={query.error} onRetry={() => { void query.refetch(); }} /> : <Text>{t("host.common.loading")}</Text>}
@@ -139,6 +143,8 @@ function PartnersScreenContent({ onNavigate, params, onParams }: PartnersScreenP
   const [wizard, setWizard] = useState<Wizard | null>(null);
   const [asking, setAsking] = useState<Asking | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [changingOwner, setChangingOwner] = useState<string | null>(null);
+  const ownerChange = partnerOwnerChangeEnabled();
 
   const categoryName = (code: string): string => categoriesQuery.data?.items.find((item) => item.code === code)?.name ?? code;
   const cityName = (code: string): string => geo.data?.items.find((city) => city.slug === code)?.name ?? code;
@@ -183,7 +189,9 @@ function PartnersScreenContent({ onNavigate, params, onParams }: PartnersScreenP
       { key: "documents", label: t("admin.partners.actions.reviewDocuments"), onPress: () => open(row.id), testID: `partner-docs-${row.id}` },
       ...(row.slug ? [{ key: "microsite", label: t("admin.partners.actions.microsite"), onPress: () => onNavigate(`/p/${row.slug}`), testID: `partner-microsite-${row.id}` }] : []),
       { key: "copy", label: t("admin.partners.actions.copyId"), onPress: () => { void copyText(row.id).then((ok) => setNotice(t(ok ? "admin.partners.done.copied" : "admin.partners.done.copyFailed", { id: row.id }))); }, testID: `partner-copy-${row.id}` },
-      { key: "owner", label: t("admin.partners.actions.changeOwnerBlocked"), disabled: true, onPress: () => undefined, testID: `partner-owner-${row.id}` }
+      ownerChange
+        ? { key: "owner", label: t("admin.partners.actions.changeOwner"), onPress: () => { setNotice(null); setChangingOwner(row.id); }, testID: `partner-owner-${row.id}` }
+        : { key: "owner", label: t("admin.partners.actions.changeOwnerBlocked"), disabled: true, onPress: () => undefined, testID: `partner-owner-${row.id}` }
     ]} />
   );
 
@@ -208,10 +216,12 @@ function PartnersScreenContent({ onNavigate, params, onParams }: PartnersScreenP
           illustration="provider" testID="partners-table" />
         {list.data ? <Paginator page={list.data.page} pageSize={PARTNERS_PAGE_SIZE} total={list.data.total} disabled={list.isFetching} onChange={(page) => write({ ...filters, page: page || undefined })} testID="partners-pages" /> : null}
       </Stack>
+      {changingOwner ? <ChangeOwnerDialog partnerId={changingOwner} onClose={() => setChangingOwner(null)} onDone={() => { setChangingOwner(null); setNotice(t("admin.partners.done.ownerChanged")); }} /> : null}
+      {wizard?.kind === "create" ? <PartnerWizard mode={wizard.intakeId ? { kind: "create", intakeId: wizard.intakeId } : { kind: "create" }} onClose={() => setWizard(null)} onDone={done} onOpenPartner={open} /> : null}
+      {wizard && wizard.kind !== "create" ? <ExistingWizard kind={wizard.kind} partnerId={wizard.partnerId} onClose={() => setWizard(null)} onDone={done} onOpenPartner={open} /> : null}
+      {/* After the wizards: a partner linked from the duplicate-NIT notice opens over the wizard, which keeps its state. */}
       {openPartner ? <PartnerDetailDialog partnerId={openPartner} onClose={() => open(undefined)} cityName={cityName} categoryName={categoryName}
         onEdit={(partner: PartnerDetail) => { open(undefined); setWizard({ kind: "edit", partnerId: partner.id }); }} onCompleteKyp={(partner: PartnerDetail) => { open(undefined); setWizard({ kind: "kyp", partnerId: partner.id }); }} /> : null}
-      {wizard?.kind === "create" ? <PartnerWizard mode={wizard.intakeId ? { kind: "create", intakeId: wizard.intakeId } : { kind: "create" }} onClose={() => setWizard(null)} onDone={done} /> : null}
-      {wizard && wizard.kind !== "create" ? <ExistingWizard kind={wizard.kind} partnerId={wizard.partnerId} onClose={() => setWizard(null)} onDone={done} /> : null}
       <ReasonDialog visible={asking !== null} title={asking ? t(`admin.partners.${asking.action}.title`, { name: asking.row.name }) : ""} body={asking ? t(`admin.partners.${asking.action}.body`) : ""} confirmLabel={asking ? t(`admin.partners.actions.${asking.action}`) : ""}
         onCancel={() => setAsking(null)} onConfirm={(reason) => { const current = asking; setAsking(null); if (current) actOnce({ providerId: current.row.id, action: current.action, reason }); }} />
     </AdminScreen>
