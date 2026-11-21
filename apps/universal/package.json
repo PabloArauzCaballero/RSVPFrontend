@@ -24,6 +24,7 @@
     "@rsvp/design-tokens": "workspace:*",
     "@rsvp/i18n": "workspace:*",
     "@rsvp/query-hooks": "workspace:*",
+    "@rsvp/telemetry": "workspace:*",
     "@rsvp/ui": "workspace:*",
     "@tanstack/react-query": "^5.66.0",
     "expo": "54.0.0",
