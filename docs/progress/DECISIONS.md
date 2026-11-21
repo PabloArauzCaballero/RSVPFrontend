@@ -85,3 +85,8 @@
 - **Etiqueta de categoría:** traducción propia, luego el nombre de `GET /providers/categories` en el idioma de la página, luego el código. Las categorías son datos que el admin extiende; una lista fija en i18n siempre irá por detrás.
 - **Micrositio en la app con el modelo de la web:** `loadPartnerContext` (query-hooks) recorre las páginas del directorio para el slug, resuelve el proveedor (tarjeta o `GET /listings/{id}`) y su perfil público; no verificado o 404 es «no encontrado», un catálogo caído es «no disponible». Contactos con `surface=APP`. Cotizar y pedir fecha usan la sesión de la app (no la del visitante de la web) y un 401 lleva a `/login?returnTo=`. Sin captcha en la app: el servidor sigue decidiendo (403) y con sesión no aplica.
 - **Zonas de cobertura:** una vez por lugar como se ve (slug de ciudad = su nombre), sin distinguir mayúsculas ni espacios, en ambas superficies (`uniqueZones`).
+
+## Idioma del dispositivo en la app nativa · 2026-11-21
+
+- **El idioma de la persona se lee del sistema con `expo-localization` (`getLocales()`), no de `Intl`.** En iOS, `Intl…resolvedOptions().locale` refleja el idioma del bundle, limitado a las localizaciones que declara la app, y no la preferencia de la persona. `Intl` queda solo como último recurso si el módulo no responde. El orden de REQ-F06-05 se mantiene: elección explícita > preferencia guardada > dispositivo.
+- **La app declara sus idiomas al sistema** (`expo-localization` con `supportedLocales: ["es", "en"]` en `app.config.ts`) para los builds propios: `CFBundleLocalizations` en iOS y `locales_config` en Android. Esta lista tiene que ir a la par de `supportedLocales` de `@rsvp/i18n`.

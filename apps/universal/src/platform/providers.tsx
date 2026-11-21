@@ -7,6 +7,7 @@ import { createI18n, resolveLocale, supportedLocales, type AppLocale, type Trans
 import { UiProvider, stringsFor } from "@rsvp/ui";
 import { AuthProvider, StaticAuthProvider, useAuth } from "../auth/auth-context";
 import { SignOutProvider } from "../auth/sign-out";
+import { deviceLanguages } from "./device-languages";
 import { readLocalePreference, writeLocalePreference } from "./preferences";
 import { createAppSessionStore, type SessionClaims } from "./session";
 import { secureStorage } from "./secure-storage";
@@ -27,8 +28,9 @@ interface Platform {
 
 const PlatformContext = createContext<Platform | null>(null);
 
+/** The first supported language in the person's own order (es-* → es-BO, en-* → en-US); es-BO when none is supported. */
 export function deviceLocale(): AppLocale {
-  return resolveLocale(null, [Intl.DateTimeFormat().resolvedOptions().locale]);
+  return resolveLocale(null, deviceLanguages());
 }
 
 export interface AppRuntime {

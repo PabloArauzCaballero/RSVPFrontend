@@ -11,7 +11,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   icon: "./assets/icon.png",
   splash: { image: "./assets/splash-icon.png", resizeMode: "contain", backgroundColor: "#F6F7FB" },
   web: { bundler: "metro", output: "single", favicon: "./assets/favicon.png" },
-  plugins: ["expo-router", ["expo-notifications", { icon: "./assets/notification-icon.png", color: "#1F3BFF" }]],
+  // The app's languages, declared to the OS: iOS writes CFBundleLocalizations (without it the bundle runs in English and
+  // Settings offers no per-app language) and Android its locales_config. Keep in step with `supportedLocales` of @rsvp/i18n.
+  plugins: ["expo-router", ["expo-notifications", { icon: "./assets/notification-icon.png", color: "#1F3BFF" }], ["expo-localization", { supportedLocales: ["es", "en"] }]],
   runtimeVersion: { policy: "appVersion" },
   updates: projectId ? { url: `https://u.expo.dev/${projectId}` } : undefined,
   extra: { eas: projectId ? { projectId } : undefined },
