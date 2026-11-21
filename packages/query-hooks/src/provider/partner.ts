@@ -106,6 +106,15 @@ export function shiftMonth(month: string, delta: number): string {
 }
 export const dayState = <TDay extends { readonly available: boolean; readonly reason?: string | null }>(day: TDay): "free" | "blocked" | "full" => (day.available ? "free" : day.reason === "FULL" ? "full" : "blocked");
 
+/**
+ * Why a loaded month has nothing to pick, or null when it has a free day: the provider published no days for it
+ * (an empty calendar: no availability configured) or every published day is blocked or full. Both surfaces say it the same way.
+ */
+export function agendaEmptiness<TDay extends { readonly available: boolean }>(days: readonly TDay[]): "unpublished" | "noneFree" | null {
+  if (days.length === 0) return "unpublished";
+  return days.some((day) => day.available) ? null : "noneFree";
+}
+
 /** One message per failure the quote path can answer: rate limits (with the wait), a failed captcha, a rejected (bot-like) request. */
 export function quoteFailureMessage(status: number | undefined, code: string | undefined, retryAfter: number | undefined): { readonly key: string; readonly values?: Readonly<Record<string, number>> } {
   if (status === 429) {

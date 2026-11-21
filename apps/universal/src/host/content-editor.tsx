@@ -7,6 +7,8 @@ import type { Translate } from "@rsvp/i18n";
 import { useApiClient, useLocale, useT } from "../platform/providers";
 import { CelebrationScreen, type Loaded, type ScreenProps } from "./gate";
 import { asRecord, asRecords, asText, contentPatch, isCalendarDate, newItemId, scheduleContent, scheduleDraft, toWallClock, wallClockAt, type ScheduleDraft } from "./content-draft";
+import { eventCalendarDay, eventDateInstant } from "./event-date";
+import { eventDateErrorKey } from "./celebration-errors";
 import { EDITOR_SECTIONS, editorPath, editorSectionLabel, withCelebration, type EditorSection } from "./routes";
 import { LocationField, mapLinkProblem } from "./location-field";
 import { useSaveHeader } from "./save-bar";
@@ -170,19 +172,35 @@ function Editor({ loaded, section, saved, onSaved, onNavigate }: { readonly load
   const set = (key: string, value: unknown): void => setDraft((current) => ({ ...current, [key]: value }));
   const hosts = asRecord(draft["hosts"]);
   const wide = width >= WIDE;
-  const states = sectionStates({ draft, eventDate, schedule, eventType });
+  const date = toWallClock(eventDate);
+  const originalDate = wallClockAt(celebration, "eventDate");
+  const unchangedDate = originalDate.date === eventDate.date && originalDate.time === eventDate.time;
+  const instant = !unchangedDate && date.ok && date.value ? eventDateInstant(date.value, celebration.timeZone) : null;
+  const storedInstant = Date.parse(asText(celebration.content["eventDate"]));
+  const datePassed = (): boolean => instant !== null && instant !== storedInstant && instant <= Date.now();
+  const pastDate = datePassed();
+  const serverDateError = eventDateErrorKey(mutation.error);
+  const submittedDate = mutation.variables?.patch.content?.["eventDate"];
+  const dateMatchesSubmission = submittedDate === undefined ? unchangedDate : date.ok && submittedDate === date.value;
+  const currentDateError = dateMatchesSubmission ? serverDateError : null;
+  const dateErrorKey = currentDateError ?? (pastDate ? "host.onboarding.dateRejected" : null);
+  const states = sectionStates({ draft, eventDate, schedule, eventType, invalidEventDate: !date.ok || Boolean(dateErrorKey) });
+  const today = eventCalendarDay(celebration.timeZone);
+  const setDatePart = (part: "date" | "time", value: string): void => {
+    if (serverDateError) mutation.reset();
+    if (invalid === t("host.onboarding.dateRejected")) setInvalid(null);
+    setEventDate((current) => ({ ...current, [part]: value }));
+  };
 
   /** What saving would send, or why it cannot be sent. Also tells whether there is anything unsaved. */
-  const plan = (): Plan => {
-    const date = toWallClock(eventDate);
+  const plan = (hasPassed: boolean): Plan => {
     const items = scheduleContent(schedule);
     if (slugIssue) return { ok: false, message: t(`host.limits.slug${slugIssue === "length" ? "Length" : "Pattern"}`) };
     if (mapLinkProblem(text("venueMapUrl"))) return { ok: false, message: t("host.location.linkInvalid") };
     if (contentOverLimit(draft, schedule, extraFields(eventType)) > 0) return { ok: false, message: t("host.limits.fieldsTooLong") };
     if (!date.ok) return { ok: false, message: t(isCalendarDate(eventDate.date.trim()) ? "host.onboarding.timeInvalid" : "host.onboarding.dateInvalid") };
+    if (hasPassed) return { ok: false, message: t("host.onboarding.dateRejected") };
     if (!items.ok) return { ok: false, message: t("host.common.invalid", { detail: t("host.editor.schedule.item", { n: items.index + 1 }) }) };
-    const originalDate = wallClockAt(celebration, "eventDate");
-    const unchangedDate = originalDate.date === eventDate.date && originalDate.time === eventDate.time;
     const unchangedSchedule = JSON.stringify(scheduleDraft(celebration)) === JSON.stringify(schedule);
     const compacted = Object.fromEntries(Object.entries(REQUIRED_ROW_FIELD).filter(([key]) => Array.isArray(draft[key])).map(([key, required]) => [key, compact(rows(draft[key], ROW_KEYS[key] ?? []), required)]));
     const next: Draft = { ...draft, ...compacted, ...(unchangedDate ? {} : { eventDate: date.value }), ...(unchangedSchedule ? {} : { schedule: items.value }) };
@@ -202,13 +220,17 @@ function Editor({ loaded, section, saved, onSaved, onNavigate }: { readonly load
   };
   const requiredLabel = (field: string): string => (field.startsWith(HOST_PREFIX) ? eventType?.hostRoles.find((role) => role.role === field.slice(HOST_PREFIX.length))?.label ?? field : field === "eventDate" ? `${t("host.onboarding.dateLabel")} / ${t("host.onboarding.timeLabel")}` : field === "title" ? t("host.editor.general.title") : field === "venueName" ? t("host.editor.general.venueName") : fieldLabel(t, field));
   const lacking = attempted ? requiredMissing() : [];
+  const dateFieldError = dateErrorKey ? t(dateErrorKey) : lacking.includes("eventDate") && !eventDate.date.trim() ? t("host.onboarding.dateInvalid") : undefined;
   const need = (field: string): { readonly error?: string } => (lacking.includes(field) ? { error: t("host.onboarding.required") } : {});
-  const current = plan();
+  const current = plan(pastDate);
   const dirty = !current.ok || Object.keys(current.patch).length > 0 || current.slugChanged;
+  const previewContent = current.ok && !currentDateError
+    ? { ...current.content, ...(instant !== null ? { eventDate: new Date(instant).toISOString() } : {}) }
+    : draft;
 
   const save = (): void => {
     setInvalid(null);
-    const result = plan();
+    const result = plan(datePassed());
     if (!result.ok) { setInvalid(result.message); return; }
     const absent = requiredMissing();
     setAttempted(absent.length > 0);
@@ -225,8 +247,9 @@ function Editor({ loaded, section, saved, onSaved, onNavigate }: { readonly load
         <Field label={t("host.editor.general.title")} value={text("title")} {...need("title")} {...limitError(t, text("title"), LIMITS.title)} onChange={(value) => set("title", value)} testID="field-title" />
         <Field label={t("host.editor.general.subtitle")} value={text("subtitle")} {...limitError(t, text("subtitle"), LIMITS.subtitle)} onChange={(value) => set("subtitle", value)} />
         <View style={[styles.row, { alignItems: "flex-start" }]}>
-          <View style={{ flexGrow: 1, flexBasis: FIELD_BASIS }}><DateInput label={t("host.onboarding.dateLabel")} value={eventDate.date} onChange={(value) => setEventDate((existing) => ({ ...existing, date: value }))} calendar={{ locale, timeZone: celebration.timeZone }} testID="field-event-date" {...(lacking.includes("eventDate") && !eventDate.date.trim() ? { error: t("host.onboarding.dateInvalid") } : {})} /></View>
-          <View style={{ flexGrow: 1, flexBasis: TIME_BASIS }}><TimeInput label={t("host.onboarding.timeLabel")} value={eventDate.time} onChange={(value) => setEventDate((existing) => ({ ...existing, time: value }))} testID="field-event-time" {...(lacking.includes("eventDate") && !eventDate.time.trim() ? { error: t("host.onboarding.timeInvalid") } : {})} /></View>
+          <View style={{ flexGrow: 1, flexBasis: FIELD_BASIS }}><DateInput label={t("host.onboarding.dateLabel")} value={eventDate.date} onChange={(value) => setDatePart("date", value)} calendar={{ locale, timeZone: celebration.timeZone }} minimumDate={today} testID="field-event-date"
+            {...(dateFieldError ? { error: dateFieldError } : {})} /></View>
+          <View style={{ flexGrow: 1, flexBasis: TIME_BASIS }}><TimeInput label={t("host.onboarding.timeLabel")} value={eventDate.time} onChange={(value) => setDatePart("time", value)} testID="field-event-time" {...(lacking.includes("eventDate") && !eventDate.time.trim() ? { error: t("host.onboarding.timeInvalid") } : {})} /></View>
         </View>
         <Text style={styles.muted}>{t("host.editor.schedule.zoneHelp", { timeZone: celebration.timeZone })}</Text>
         <LocationField name={text("venueName")} onName={(value) => set("venueName", value)} link={text("venueMapUrl")} onLink={(value) => set("venueMapUrl", value)} testID="field-venue"
@@ -277,7 +300,10 @@ function Editor({ loaded, section, saved, onSaved, onNavigate }: { readonly load
     )
   };
 
-  useSaveHeader({ dirty, saved, busy: mutation.isPending, invalid, error: mutation.error, onReload: loaded.refetch, onSave: save, saveTestID: "save-content",
+  useSaveHeader({ dirty, saved, busy: mutation.isPending,
+    invalid: section === "general" && invalid === dateFieldError ? null : invalid,
+    error: serverDateError && (section === "general" || !currentDateError) ? null : mutation.error,
+    onReload: loaded.refetch, onSave: save, saveTestID: "save-content",
     menu: <OverflowMenu items={[{ key: "preview", label: t("host.editor.viewPreview"), onPress: () => setPreviewing(true), testID: "view-preview" }]} /> });
   const list = (
     <View role="navigation" aria-label={t("host.editor.list")} style={{ gap: spacing[1] }}>
@@ -300,7 +326,7 @@ function Editor({ loaded, section, saved, onSaved, onNavigate }: { readonly load
           </View>
         </View>
       ) : list}
-      {previewing ? <DraftPreview celebration={celebration} eventType={eventType} content={current.ok ? current.content : draft} slug={slug} onClose={() => setPreviewing(false)} /> : null}
+      {previewing ? <DraftPreview celebration={celebration} eventType={eventType} content={previewContent} slug={slug} onClose={() => setPreviewing(false)} /> : null}
     </View>
   );
 }

@@ -4,6 +4,7 @@ import { WebPickerField, type PickerFieldProps } from './picker-field';
 
 export interface DateFieldProps extends PickerFieldProps {
   calendar?: { locale: AppLocale; timeZone: string };
+  minimumDate?: string;
 }
 
 export function DateField({ calendar, ...props }: DateFieldProps) {
