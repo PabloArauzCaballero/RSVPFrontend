@@ -31,6 +31,11 @@ export function giftApi(client: ApiClient) {
     reservations: (celebrationId: string, status?: ReservationStatus) => client.request<ReservationList>(`${BASE}/${celebrationId}/reservations${status ? `?status=${status}` : ""}`),
     approve: (celebrationId: string, reservationId: string) => client.request<GiftReservation>(`${BASE}/${celebrationId}/reservations/${reservationId}/approve`, { method: "POST" }),
     reject: (celebrationId: string, reservationId: string) => client.request<GiftReservation>(`${BASE}/${celebrationId}/reservations/${reservationId}/reject`, { method: "POST" }),
+    /** D-3 · the guest (their own, with `credential`) or the host (session, `credential` undefined) cancels an active reservation. */
+    cancel: (celebrationId: string, reservationId: string, credential: string | null | undefined, idempotencyKey: string) =>
+      client.request<GiftReservation>(`${BASE}/${celebrationId}/reservations/${reservationId}/cancel`, { method: "POST", ...withCredential(credential), headers: { ...bearer(credential ?? undefined), "idempotency-key": idempotencyKey } }),
+    /** The guest's own reservations (any status); only with the guest's link credential. */
+    myReservations: (celebrationId: string, credential: string, signal?: AbortSignal) => client.request<ReservationList>(`${BASE}/${celebrationId}/my-reservations`, { signal, ...withCredential(credential) }),
     settings: (celebrationId: string) => client.request<GiftSettings>(`${BASE}/${celebrationId}/gift-settings`),
     updateSettings: (celebrationId: string, body: UpdateGiftSettingsInput) => client.request<GiftSettings, UpdateGiftSettingsInput>(`${BASE}/${celebrationId}/gift-settings`, { method: "PUT", body }),
     approveExternal: (celebrationId: string, giftItemId: string) => client.request<GiftItem>(`${BASE}/${celebrationId}/items/${giftItemId}/approve`, { method: "POST" }),

@@ -36,3 +36,5 @@
 .gift-skeleton { height: 9rem; border-radius: var(--radius-cell, 12px); border: 1px solid var(--border); background: var(--surface-muted); animation: gift-pulse 1.6s ease-in-out infinite; }
 @keyframes gift-pulse { 50% { opacity: .55; } }
 @media (prefers-reduced-motion: reduce) { .gift-skeleton { animation: none; } }
+/* D-3 · the guest's own reservation, with the way to cancel it. */
+.gift-card__mine { margin: 0; font-weight: 600; }
