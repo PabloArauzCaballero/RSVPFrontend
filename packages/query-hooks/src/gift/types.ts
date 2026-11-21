@@ -11,7 +11,7 @@ export interface GiftItem {
   /** Present only when the host lets this viewer see who reserved (gift-settings). */
   readonly reservedByName?: string;
 }
-export interface GiftItemList { readonly items: readonly GiftItem[]; readonly partnerPriorityEnabled: boolean }
+export interface GiftItemList { readonly items: readonly GiftItem[]; readonly partnerPriorityEnabled: boolean; /** L4 (1.12.0): next page, null on the last one. */ readonly nextCursor?: string | null }
 export interface GiftReservation {
   readonly id: string; readonly itemId: string; readonly celebrationId: string; readonly guestId?: string | null; readonly guestDisplayName?: string | null;
   readonly message?: string | null; readonly status: ReservationStatus; readonly requestedAt: string; readonly resolvedAt?: string | null; readonly resolvedBy?: string | null;
@@ -22,7 +22,7 @@ export interface GiftReservation {
   /** RSVP_DECLINED: the guest said they will not attend. GUEST_CANCELLED: the guest withdrew it. HOST_CANCELLED: the host released the gift. */
   readonly cancellationReason?: CancellationReason;
 }
-export interface ReservationList { readonly items: readonly GiftReservation[] }
+export interface ReservationList { readonly items: readonly GiftReservation[]; /** L4 (1.12.0): next page, null on the last one. */ readonly nextCursor?: string | null }
 export interface ReserveGiftInput { readonly guestDisplayName?: string | null; readonly message?: string | null }
 export interface AddCatalogedGiftInput { readonly source: "CATALOGED"; readonly title: string; readonly description?: string | null; readonly price: Money; readonly productListingId: string }
 export interface AddExternalGiftInput { readonly source: "EXTERNAL"; readonly title: string; readonly description?: string | null; readonly price: Money; readonly url: string; readonly partnerSuggestionsAcknowledged?: boolean }
