@@ -581,22 +581,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/items/{giftItemId}/reservations": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["reserveLegacyGift"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/public/celebrations/{slug}/gift-items": {
         parameters: {
             query?: never;
@@ -636,22 +620,6 @@ export interface paths {
          * @description Public without JWT or JWKS even when Authorization is invalid. Existing process business configuration remains required. Every request resolves the authoritative published Celebration through GET /celebrations/public/{slug}; no positive publication cache. Missing/unpublished/gifts-disabled is404, inconsistent dependency/timeout or DB unavailability is503. Includes only EXTERNAL/AVAILABLE with non-null publication and valid complete content, scoped in SQL before LIMIT+1. Legacy incomplete/unpublished rows are excluded without backfill. Price and external URL are intentionally public; no commercial /r links. Query parameters are closed and singular. Current-state pagination is not a distributed snapshot. H05B compatibility: external-only surface excludes new CATALOGED rows; use /public/celebrations/{slug}/gift-items for the complete mixed page. Previous external behavior/schema/order preserved.
          */
         head: operations["headPublicExternalGiftPublications"];
-        patch?: never;
-        trace?: never;
-    };
-    "/reservations/{reservationId}/approve": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["approveLegacyReservation"];
-        delete?: never;
-        options?: never;
-        head?: never;
         patch?: never;
         trace?: never;
     };
@@ -1117,13 +1085,7 @@ export interface components {
             reservation: components["schemas"]["ModeAwareReservationView"];
         };
         /** @description Independent complete manual/automatic view. AUTOMATIC has resolvedAt exactly equal to requestedAt and a null owner resolver; PENDING has null resolution; MANUAL has an owner UUID. Only these ten public fields are exposed. Settings provenance remains server-side. UNKNOWN preserves recognized legacy decisions without attributing a mode or resolution that was never recorded. */
-        ModeAwareReservationView: ({
-            /** @constant */
-            cancellationReason?: "RSVP_DECLINED";
-            /** Format: date-time */
-            cancelledAt?: string;
-            /** @enum {string} */
-            cancelledFromStatus?: "PENDING_REVIEW" | "COMMITTED";
+        ModeAwareReservationView: {
             /** Format: uuid */
             celebrationId: string;
             /** Format: uuid */
@@ -1141,8 +1103,8 @@ export interface components {
             resolvedAt: string | null;
             resolvedByUserId: string | null;
             /** @enum {unknown} */
-            status: "PENDING_REVIEW" | "COMMITTED" | "REJECTED" | "CANCELLED";
-        } & unknown) & ({
+            status: "PENDING_REVIEW" | "COMMITTED" | "REJECTED";
+        } & ({
             /** @constant */
             reservationMode?: "RESTRICTED";
             /** @constant */
@@ -1319,12 +1281,6 @@ export interface components {
         };
         /** @description Owner-only record including identified and erased guests. ERASED is displayed as invitado eliminado, with guestId null; identity state does not change reservation status, quantity or resolution. Exactly eleven fields; no erasure IDs, tombstones, hashes or former identity. Automatic resolution retains a null owner resolver and resolvedAt equal to requestedAt. Manual pending records remain pending when settings change. UNKNOWN preserves recognized legacy decisions without attributing a mode or resolution that was never recorded. */
         ReservationRecordView: ({
-            /** @constant */
-            cancellationReason?: "RSVP_DECLINED";
-            /** Format: date-time */
-            cancelledAt?: string;
-            /** @enum {string} */
-            cancelledFromStatus?: "PENDING_REVIEW" | "COMMITTED";
             /** Format: uuid */
             celebrationId: string;
             /** Format: uuid */
@@ -1343,8 +1299,8 @@ export interface components {
             resolvedAt: string | null;
             resolvedByUserId: string | null;
             /** @enum {unknown} */
-            status: "PENDING_REVIEW" | "COMMITTED" | "REJECTED" | "CANCELLED";
-        } & (({
+            status: "PENDING_REVIEW" | "COMMITTED" | "REJECTED";
+        } & ({
             /** Format: uuid */
             guestId?: string;
             /** @constant */
@@ -1353,7 +1309,7 @@ export interface components {
             guestId?: null;
             /** @constant */
             guestIdentityState?: "ERASED";
-        }) & unknown)) & ({
+        })) & ({
             /** @constant */
             reservationMode?: "RESTRICTED";
             /** @constant */
@@ -1390,13 +1346,7 @@ export interface components {
             reservation: components["schemas"]["ReservationView"];
         };
         /** @description Only complete reservationSchemaVersion1 rows. requestedAt maps to created_at written by the server. Status/time/resolver are reservation history; no names/messages/credentials. */
-        ReservationView: ({
-            /** @constant */
-            cancellationReason?: "RSVP_DECLINED";
-            /** Format: date-time */
-            cancelledAt?: string;
-            /** @enum {string} */
-            cancelledFromStatus?: "PENDING_REVIEW" | "COMMITTED";
+        ReservationView: {
             /** Format: uuid */
             celebrationId: string;
             /** Format: uuid */
@@ -1410,8 +1360,8 @@ export interface components {
             resolvedAt: string | null;
             resolvedByUserId: string | null;
             /** @enum {unknown} */
-            status: "PENDING_REVIEW" | "COMMITTED" | "REJECTED" | "CANCELLED";
-        } & unknown) & ({
+            status: "PENDING_REVIEW" | "COMMITTED" | "REJECTED";
+        } & ({
             resolvedAt?: null;
             resolvedByUserId?: null;
             /** @constant */
@@ -1424,40 +1374,6 @@ export interface components {
             /** @enum {unknown} */
             status?: "COMMITTED" | "REJECTED";
         });
-        RsvpAwareGiftReservation: components["schemas"]["DevCompatGiftReservation"] | components["schemas"]["RsvpCancelledGiftReservation"];
-        RsvpAwareReservationList: {
-            items: components["schemas"]["RsvpAwareGiftReservation"][];
-        };
-        RsvpCancelledGiftReservation: {
-            /** @constant */
-            cancellationReason: "RSVP_DECLINED";
-            /** Format: date-time */
-            cancelledAt: string;
-            /** @enum {string} */
-            cancelledFromStatus: "PENDING_REVIEW" | "COMMITTED";
-            /** Format: uuid */
-            celebrationId: string;
-            guestDisplayName?: string | null;
-            /**
-             * Format: uuid
-             * @description Null after guest erasure
-             */
-            guestId?: string | null;
-            /** Format: uuid */
-            id: string;
-            /** Format: uuid */
-            itemId: string;
-            message?: string | null;
-            /** Format: date-time */
-            requestedAt: string;
-            /** @description true when the host chose not to see who asked: guestId, guestDisplayName and message are null */
-            requesterHidden?: boolean;
-            /** Format: date-time */
-            resolvedAt?: string | null;
-            resolvedBy?: string | null;
-            /** @constant */
-            status: "CANCELLED";
-        };
     };
     responses: {
         /** @description Celebration or Provider Catalog is unavailable (fail closed) */
@@ -1587,7 +1503,7 @@ export interface components {
         /** @description Echoed in the response header and in problem.correlationId; generated when absent. */
         DevCompatCorrelationId: string;
         /** @description Single optional status filter; unknown, duplicate, empty or invalid parameters return422. */
-        OwnerReservationStatus: "PENDING_REVIEW" | "COMMITTED" | "REJECTED" | "CANCELLED";
+        OwnerReservationStatus: "PENDING_REVIEW" | "COMMITTED" | "REJECTED";
         /** @description Optional single UUID. Echoed unchanged when valid. Missing value generates a UUID. Invalid or duplicate values return 422 with a fresh UUID and never echo arbitrary text. */
         PrivateCorrelationId: string;
         PublicationGiftItemId: string;
@@ -1887,7 +1803,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RsvpAwareGiftReservation"];
+                    "application/json": components["schemas"]["DevCompatGiftReservation"];
                 };
             };
             401: components["responses"]["DevCompatUnauthorized"];
@@ -6243,7 +6159,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RsvpAwareReservationList"];
+                    "application/json": components["schemas"]["DevCompatReservationList"];
                 };
             };
             401: components["responses"]["DevCompatUnauthorized"];
@@ -6274,7 +6190,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RsvpAwareGiftReservation"];
+                    "application/json": components["schemas"]["DevCompatGiftReservation"];
                 };
             };
             401: components["responses"]["DevCompatUnauthorized"];
@@ -6319,7 +6235,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RsvpAwareGiftReservation"];
+                    "application/json": components["schemas"]["DevCompatGiftReservation"];
                 };
             };
             401: components["responses"]["DevCompatUnauthorized"];
@@ -7275,26 +7191,6 @@ export interface operations {
             503: components["responses"]["DevCompatDependencyUnavailable"];
         };
     };
-    reserveLegacyGift: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Reserved or pending review */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            409: components["responses"]["GiftNotAvailable"];
-            422: components["responses"]["Validation"];
-        };
-    };
     readPublicMixedGiftItems: {
         parameters: {
             query?: {
@@ -7667,26 +7563,6 @@ export interface operations {
                 };
                 content?: never;
             };
-        };
-    };
-    approveLegacyReservation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Committed */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            403: components["responses"]["Forbidden"];
-            409: components["responses"]["GiftNotAvailable"];
         };
     };
 }
