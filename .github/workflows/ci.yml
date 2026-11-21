@@ -20,3 +20,15 @@ jobs:
       - run: yarn turbo run build lint typecheck test --affected
       # Coverage gate: lines/statements >= 85 % in the packages with logic and both apps (vitest thresholds fail the job below it).
       - run: yarn test:coverage
+
+  deploy-config:
+    # A6/B1/M9 · nginx of the web app with its real image, rendered config and expected headers; build-arg validation.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sh deploy/nginx-check.sh
+      - name: Empty or relative build args stop the image build (M9)
+        run: |
+          if EXPO_PUBLIC_API_URL='' sh deploy/check-build-args.sh EXPO_PUBLIC_API_URL; then exit 1; fi
+          if EXPO_PUBLIC_API_URL=/api sh deploy/check-build-args.sh EXPO_PUBLIC_API_URL; then exit 1; fi
+          EXPO_PUBLIC_API_URL=https://api.example.com sh deploy/check-build-args.sh EXPO_PUBLIC_API_URL
