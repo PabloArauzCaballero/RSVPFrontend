@@ -10,6 +10,7 @@ import { ErrorNotice, Notice } from "./ui";
  */
 export type ErrorKind = "versionConflict" | "slugTaken" | "slugImmutable" | "archived" | "invalidTransition" | "rateLimited" | "server" | "network" | "other";
 
+const STATUS_BAD_REQUEST = 400;
 const STATUS_CONFLICT = 409;
 const STATUS_VALIDATION = 422;
 const STATUS_RATE_LIMITED = 429;
@@ -27,10 +28,14 @@ export function errorKind(error: unknown): ErrorKind {
   return "other";
 }
 
-export function eventDateErrorKey(error: unknown): "host.onboarding.dateInFuture" | "host.onboarding.dateInvalid" | null {
-  if (!(error instanceof ApiError) || error.status !== STATUS_VALIDATION) return null;
-  if (error.problem?.code === "EVENT_DATE_NOT_IN_FUTURE") return "host.onboarding.dateInFuture";
-  if (error.problem?.code === "INVALID_EVENT_DATE") return "host.onboarding.dateInvalid";
+export function eventDateErrorKey(error: unknown): "host.onboarding.dateRejected" | null {
+  if (!(error instanceof ApiError) || (error.status !== STATUS_VALIDATION && error.status !== STATUS_BAD_REQUEST)) return null;
+  const problem = error.problem;
+  if (problem?.code === "EVENT_DATE_NOT_IN_FUTURE" || problem?.code === "INVALID_EVENT_DATE" || problem?.field === "content.eventDate") {
+    return "host.onboarding.dateRejected";
+  }
+  // Older validation responses identify this rejection through the problem title.
+  if (problem?.title === "The event date and time must be in the future") return "host.onboarding.dateRejected";
   return null;
 }
 

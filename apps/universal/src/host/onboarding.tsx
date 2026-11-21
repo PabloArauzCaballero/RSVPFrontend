@@ -215,7 +215,7 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
     );
   }
 
-  const dateErrorKey = serverDateError ?? (pastDate ? "host.onboarding.dateInFuture" : tried && dateMissing ? "host.onboarding.dateInvalid" : null);
+  const dateErrorKey = serverDateError ?? (pastDate ? "host.onboarding.dateRejected" : tried && dateMissing ? "host.onboarding.dateInvalid" : null);
   const stepName = STEPS[step - 1] as StepName;
   const bodies: Readonly<Record<StepName, () => ReactNode>> = {
     type: () => (
