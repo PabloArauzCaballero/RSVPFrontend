@@ -1,6 +1,6 @@
 import type { ApiClient } from "@rsvp/api-client";
 import type {
-  AuditEntry, Celebration, CelebrationPatch, CreateCelebrationInput, EventTypeDefinition, Items, MediaAsset, PublishCheck,
+  AuditEntry, Celebration, CelebrationPatch, CreateCelebrationInput, EventTypeDefinition, Items, MediaAsset, PublicPageStatus, PublishCheck,
   PublicGalleryImage, SettingsPatch, Template, TemplateInput, TranslatedEventType, UploadIntent
 } from "./types.js";
 
@@ -31,6 +31,8 @@ export function celebrationApi(client: ApiClient) {
     setCollaborator: (target: Versioned, userId: string, role: "CO_HOST" | "VIEWER") => mutate(`${BASE}/${target.id}/collaborators/${userId}`, "PUT", target, { role }),
     removeCollaborator: (target: Versioned, userId: string) => mutate(`${BASE}/${target.id}/collaborators/${userId}`, "DELETE", target),
     publishCheck: (id: string) => client.request<PublishCheck>(`${BASE}/${id}/publish-check`),
+    /** Never cached by the server (no-store): the publish screen polls it while the page is being built or withdrawn. */
+    publicPage: (id: string, signal?: AbortSignal) => client.request<PublicPageStatus>(`${BASE}/${id}/public-page`, { signal }),
     publish: (target: Versioned) => mutate(`${BASE}/${target.id}/publish`, "POST", target),
     unpublish: (target: Versioned, reason: string | null) => mutate(`${BASE}/${target.id}/unpublish`, "POST", target, { reason }),
     archive: (target: Versioned) => mutate(`${BASE}/${target.id}/archive`, "POST", target),
