@@ -39,6 +39,7 @@ export const resources = { "es-BO": esBO, "en-US": enUS } as const;
 export const i18nextResources = { "es-BO": { translation: esBO }, "en-US": { translation: enUS } } as const;
 
 export { formatMinor } from "./format/money.js";
+export * from "./landing-content.js";
 export type AppLocale = "es-BO" | "en-US";
 export const supportedLocales: readonly AppLocale[] = ["es-BO", "en-US"];
 export const defaultLocale: AppLocale = "es-BO";
