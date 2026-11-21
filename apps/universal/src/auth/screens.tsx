@@ -2,7 +2,7 @@ import { useState, type ReactNode } from "react";
 import { Pressable, Text, View, useWindowDimensions } from "react-native";
 import { loginSchema, recoverySchema, registerSchema, validate, type Role } from "@rsvp/auth";
 import { spacing } from "@rsvp/design-tokens";
-import { CheckMark, StickyActions, useColors } from "@rsvp/ui";
+import { CheckMark, Checkbox, StickyActions, useColors } from "@rsvp/ui";
 import { useT } from "../platform/providers";
 import { useAuth } from "./auth-context";
 import { AuthField, AuthLayout, Banner, SubmitButton, TextLink, useAuthFocusRing, useAuthStyles } from "./auth-ui";
@@ -81,13 +81,16 @@ export function RegisterScreen({ onNavigate, returnTo = null }: AuthScreenProps)
   const compact = useWindowDimensions().width < 900;
   const auth = useAuth();
   const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [role, setRole] = useState<Extract<Role, "HOST" | "PLANNER" | "PROVIDER">>("HOST");
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({}); const submitState = useAuthSubmit(); const { busy, setStatus } = submitState;
   const submit = async (): Promise<void> => {
     if (busy || submitState.waitSeconds > 0) return;
     const checked = validate(registerSchema, { email, password, role });
-    if (!checked.ok) { setErrors(fieldMessages(t, checked.errors)); setStatus(IDLE); return; }
+    // B6: the account is created only with an explicit acceptance of the terms and the privacy policy, and Identity records which version.
+    const termsError: FieldErrors = termsAccepted ? {} : { terms: t("legal.consent.required") };
+    if (!checked.ok || !termsAccepted) { setErrors({ ...(checked.ok ? {} : fieldMessages(t, checked.errors)), ...termsError }); setStatus(IDLE); return; }
     setErrors({});
-    await submitState.run(async () => { await auth.register(checked.value); return { kind: "busy" }; });
+    await submitState.run(async () => { await auth.register({ ...checked.value, termsVersion: t("legal.version") }); return { kind: "busy" }; });
   };
   return (
     <AuthLayout title={t("auth.registerTitle")} intro={t("auth.registerIntro")} illustration="table">
@@ -100,6 +103,13 @@ export function RegisterScreen({ onNavigate, returnTo = null }: AuthScreenProps)
         </View>
         <AuthField label={t("auth.email")} value={email} onChange={setEmail} error={errors["email"]} autoComplete="email" keyboardType="email-address" textContentType="emailAddress" returnKeyType="go" onSubmitEditing={() => { void submit(); }} editable={!busy} testID="register-email" />
         <AuthField label={t("auth.password")} value={password} onChange={setPassword} error={errors["password"]} hint={t("auth.passwordHint")} secret autoComplete="new-password" textContentType="newPassword" returnKeyType="go" onSubmitEditing={() => { void submit(); }} editable={!busy} testID="register-password" />
+        <View style={{ gap: spacing[1] }}>
+          <Checkbox label={t("legal.consent.accept")} value={termsAccepted} onChange={setTermsAccepted} state={busy ? "disabled" : "default"} error={errors["terms"]} />
+          <View style={authStyles.switchRow}>
+            <TextLink label={t("legal.links.terms")} onPress={() => onNavigate("/terminos")} />
+            <TextLink label={t("legal.links.privacy")} onPress={() => onNavigate("/privacidad")} />
+          </View>
+        </View>
         {compact ? (
           <StickyActions summary={<FailureBanner submit={submitState} />}>
             <SubmitButton label={t("auth.register")} busyLabel={t("auth.creating")} busy={busy} blocked={submitState.waitSeconds > 0} onPress={() => { void submit(); }} testID="register-submit" />
