@@ -31,7 +31,11 @@ services:
         NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
         NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
     environment:
-      RSVP_API_URL: ${NEXT_PUBLIC_API_URL}
+      # Server-side calls (/r) go to the gateway. RSVP_API_INTERNAL_URL (optional) points them at Kong over a shared Docker
+      # network instead of the public domain, so no second Traefik hop can drop the visitor address (B1).
+      RSVP_API_URL: ${RSVP_API_INTERNAL_URL:-${NEXT_PUBLIC_API_URL}}
+      # Proxies in front of seo-web whose X-Forwarded-For entry is trusted (Traefik = 1). The visitor address is forwarded to Kong.
+      SEO_WEB_TRUSTED_PROXY_HOPS: ${SEO_WEB_TRUSTED_PROXY_HOPS:-1}
     mem_limit: 768m
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))"]

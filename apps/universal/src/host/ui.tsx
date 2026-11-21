@@ -246,7 +246,7 @@ export function Loading(): ReactNode {
 }
 
 /** `busy` shows the confirm button as loading and refuses a second confirm, Cancel and Escape until the request ends. */
-export function ConfirmDialog({ visible, title, body, confirmLabel, danger, busy = false, confirmTestID, cancelTestID, onConfirm, onCancel, onDismiss, children }: PropsWithChildren<{ readonly visible: boolean; readonly title: string; readonly body: string; readonly confirmLabel: string; readonly danger?: boolean; readonly busy?: boolean; readonly confirmTestID?: string; readonly cancelTestID?: string; readonly onConfirm: () => void; readonly onCancel: () => void; readonly onDismiss?: () => void }>): ReactNode {
+export function ConfirmDialog({ visible, title, body, confirmLabel, cancelLabel, danger, busy = false, confirmTestID, cancelTestID, onConfirm, onCancel, onDismiss, children }: PropsWithChildren<{ readonly visible: boolean; readonly title: string; readonly body: string; readonly confirmLabel: string; /** When «Cancelar» would be ambiguous (the action itself cancels something), name the way back. */ readonly cancelLabel?: string; readonly danger?: boolean; readonly busy?: boolean; readonly confirmTestID?: string; readonly cancelTestID?: string; readonly onConfirm: () => void; readonly onCancel: () => void; readonly onDismiss?: () => void }>): ReactNode {
   const styles = useStyles();
   const t = useT();
   return (
@@ -258,7 +258,7 @@ export function ConfirmDialog({ visible, title, body, confirmLabel, danger, busy
           {children}
           <View style={styles.row}>
             <ActionButton label={confirmLabel} variant={danger ? "danger" : "primary"} busy={busy} onPress={onConfirm} {...(confirmTestID ? { testID: confirmTestID } : {})} />
-            <ActionButton icon="close" label={t("host.common.cancel")} variant="secondary" disabled={busy} onPress={onCancel} {...(cancelTestID ? { testID: cancelTestID } : {})} />
+            <ActionButton icon="close" label={cancelLabel ?? t("host.common.cancel")} variant="secondary" disabled={busy} onPress={onCancel} {...(cancelTestID ? { testID: cancelTestID } : {})} />
           </View>
         </View></OverlayEnter>
       </View>

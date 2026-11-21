@@ -478,7 +478,7 @@ const signOutButton = async (page) => {
 }
 
 
-// ---------------------------------------------------------------- ORGANIZATIONS (POST /organizations, /organizations/{id}/members)
+// ---------------------------------------------------------------- ORGANIZATIONS (POST /organizations, /organizations/{id}/invitations)
 console.log("\n== Organizations ==");
 {
   const member = uniq("member"); const memberReg = await registerApi(member, "HOST"); assert.equal(memberReg.status, 201);
@@ -521,29 +521,33 @@ console.log("\n== Organizations ==");
   await check("org-member-add · LIMIT empty / malformed email rejected, no request", async () => {
     await byId(page, "org-member-add").waitFor();
     const before = h.count("POST /identity/organizations/");
-    await byId(page, "org-member-add").click(); await text(page, "Escribe el correo de la cuenta.").waitFor();
+    await byId(page, "org-member-add").click(); await text(page, "Escribe el correo de la persona.").waitFor();
     await fillId(page, "org-member-email", "no-arroba"); await byId(page, "org-member-add").click(); await text(page, /Escribe un correo válido/).waitFor();
     assert.equal(h.count("POST /identity/organizations/"), before);
   });
-  await check("org-member-add · ERROR unknown account: Identity answers 422 and the UI does not confirm whether the account exists", async () => {
-    await fillId(page, "org-member-email", uniq("ghost")); await byId(page, "org-member-add").click();
-    await text(page, /No pudimos agregar ese correo/).waitFor();
+  await check("org-member-add · SEG-003 an address without an account gets the same 202 and the same message: no account oracle", async () => {
+    const ghost = uniq("ghost");
+    await fillId(page, "org-member-email", ghost); await byId(page, "org-member-add").click();
+    await text(page, `Invitación enviada a ${ghost.toLowerCase()}. Entra al equipo cuando la acepte.`).waitFor({ timeout: 8000 });
   });
-  await check("org-member-add · VALID existing account as PLANNER (Enter submits), API shows the member; role radios lock while in flight", async () => {
+  await check("org-member-add · VALID existing account invited as PLANNER (Enter submits): pending, NOT a member until they accept; role radios lock while in flight", async () => {
     await fillId(page, "org-member-email", ` ${member.toUpperCase()} `);
     await page.getByRole("radio", { name: "Organizador de eventos" }).filter({ visible: true }).click();
     h.state.delayMs = 800;
     await byId(page, "org-member-email").press("Enter");
     await page.waitForFunction(() => [...document.querySelectorAll('[role="radio"]')].some((e) => e.offsetParent && /Organizador de eventos/.test(e.textContent ?? "") && e.getAttribute("aria-disabled") === "true"), null, { timeout: 3000 });
-    await text(page, "Miembro agregado.").waitFor({ timeout: 8000 }); h.state.delayMs = 0;
+    await text(page, `Invitación enviada a ${member.toLowerCase()}. Entra al equipo cuando la acepte.`).waitFor({ timeout: 8000 }); h.state.delayMs = 0;
     const listed = (await apiJson("GET", "/identity/organizations", null, await token())).body.items.find((o) => o.name === orgName);
     const detail = await apiJson("GET", `/identity/organizations/${listed.id}`, null, await token());
-    assert.ok(detail.body.members.some((m) => m.email === member.toLowerCase() && m.role === "PLANNER"), JSON.stringify(detail.body.members));
+    assert.ok(!detail.body.members.some((m) => m.email === member.toLowerCase()), "no membership without consent: " + JSON.stringify(detail.body.members));
+    const pending = await apiJson("GET", `/identity/organizations/${listed.id}/invitations`, null, await token());
+    assert.ok(pending.body.items.some((i) => i.email === member.toLowerCase() && i.role === "PLANNER"), JSON.stringify(pending.body.items));
     await text(page, member.toLowerCase()).waitFor();
+    assert.equal((await apiJson("POST", `/identity/organizations/${listed.id}/members`, { email: member, role: "PLANNER" }, await token())).status, 404, "the retired add-member route is gone");
   });
-  await check("org-member-add · ERROR 409 adding the same account again says they are already a member", async () => {
-    await fillId(page, "org-member-email", member); await byId(page, "org-member-add").click();
-    await text(page, "Esa persona ya es miembro de esta organización.").waitFor();
+  await check("org-member-add · ERROR 409 inviting someone who already belongs (the owner) is explained", async () => {
+    await fillId(page, "org-member-email", h.email); await byId(page, "org-member-add").click();
+    await text(page, /esa persona ya es miembro, o la organización tiene demasiadas invitaciones pendientes/).waitFor();
   });
   await h.context.close();
   const hostOnly = await signedIn(ANCHO, "HOST");

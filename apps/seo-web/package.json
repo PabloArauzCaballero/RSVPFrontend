@@ -21,6 +21,7 @@
     "@rsvp/forms": "workspace:*",
     "@rsvp/i18n": "workspace:*",
     "@rsvp/query-hooks": "workspace:*",
+    "@rsvp/telemetry": "workspace:*",
     "@rsvp/ui-web": "workspace:*",
     "@tanstack/react-query": "^5.66.0",
     "next": "15.3.1",

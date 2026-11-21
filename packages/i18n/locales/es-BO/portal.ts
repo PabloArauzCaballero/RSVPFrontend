@@ -1,9 +1,10 @@
 /** Portal del proveedor (F28): alta, verificación, ofertas, destinos, agenda, leads y métricas. */
 export const portalEsBO = {
   label: "Portal del proveedor",
-  nav: { label: "Secciones del portal", home: "Resumen", services: "Ofertas", products: "Productos", delivery: "Entrega", microsite: "Perfil público", documents: "Documentos", destinations: "Contacto", agenda: "Agenda", leads: "Solicitudes", metrics: "Resultados" },
+  nav: { label: "Secciones del portal", home: "Resumen", services: "Ofertas", products: "Productos", delivery: "Entrega", microsite: "Perfil público", documents: "Documentos", destinations: "Contacto", agenda: "Agenda", quotes: "Cotizaciones", leads: "Solicitudes", metrics: "Resultados" },
   dest: { overview: "Resumen", offers: "Ofertas", agenda: "Agenda", clients: "Clientes", profile: "Perfil" },
   microsite: {
+    moderationRejected: "El equipo rechazó tu perfil público y dejó de mostrarse. Motivo: {{reason}}. Corrígelo y guárdalo: volverá a publicarse cuando lo aprobemos.", moderationHeld: "Tus cambios esperan la revisión del equipo. Hasta que los aprobemos, tu perfil público no se muestra.",
     title: "Perfil público", intro: "Así te ven las parejas en tu página. Se guarda completo; si alguien más lo cambió, te avisamos antes de pisarlo.",
     descEs: "Descripción (español)", descEn: "Descripción (inglés)", descHelp: "Hasta 2000 caracteres.", website: "Sitio web", instagram: "Instagram", facebook: "Facebook", whatsapp: "WhatsApp (con código de país)",
     address: "Dirección", addressHelp: "Calle y número.", reference: "Referencia", hours: "Horario de atención", hoursOpens: "Abre", hoursCloses: "Cierra", hoursDays: "Días (0 = domingo, ej. 1,2,3,4,5)", hoursNote: "Nota del horario",
@@ -30,6 +31,7 @@ export const portalEsBO = {
     SUSPENDED: { label: "Suspendido", body: "Tu ficha está suspendida y no aparece en el directorio. Escribe al equipo para resolverlo." },
     submit: "Enviar a verificación", submitting: "Enviando…", submitted: "Enviaste tu ficha a verificación.", needsListing: "Crea una oferta para poder enviarla.",
     documentsNote: "Puedes subir tus documentos en Perfil. El equipo los revisa junto con tu ficha.",
+    reason: "Motivo del equipo: {{reason}}",
     publicPage: "Ver mi microsite"
   },
   home: {
@@ -63,9 +65,15 @@ export const portalEsBO = {
     utmTitle: "Seguimiento de campañas", utmSource: "Origen de la campaña", utmMedium: "Medio", utmCampaign: "Nombre de la campaña (opcional)", utmHelp: "Solo letras, números, punto, guion y guion bajo.", utmInvalid: "Usa solo letras, números, punto, guion o guion bajo (máx. 64).", dedupe: "Minutos para no contar dos clics del mismo visitante", cap: "Tope mensual de leads (0 = sin tope)", billing: "Modelo de cobro", save: "Guardar destinos", saving: "Guardando…", saved: "Destinos guardados.", numberInvalid: "Escribe enteros válidos: minutos entre 1 y 1440 y tope entre 0 y 1000000."
   },
   agenda: {
-    title: "Agenda", scheduleTitle: "Tu horario", intro: "Responde las fechas que te piden y define cuándo atiendes ({{zone}}).", bookingsPending_one: "{{count}} fecha por confirmar", bookingsPending_other: "{{count}} fechas por confirmar", bookingsEmptyTitle: "Sin fechas por responder", capacity: "Cupos por día", weekdays: "Días de atención", weekday: ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"], start: "Desde", end: "Hasta", timeInvalid: "Elige la hora de apertura y la de cierre.", rangeInvalid: "La hora de cierre debe ser posterior a la de apertura.",
+    title: "Agenda", scheduleTitle: "Tu horario", intro: "Responde las fechas que te piden y define cuándo atiendes ({{zone}}).", bookingsPending_one: "{{count}} fecha por confirmar", bookingsPending_other: "{{count}} fechas por confirmar", bookingsPendingAtLeast_one: "Al menos {{count}} fecha por confirmar", bookingsPendingAtLeast_other: "Al menos {{count}} fechas por confirmar", bookingsMore: "Ver más fechas", bookingsEmptyTitle: "Sin fechas por responder", capacity: "Cupos por día", weekdays: "Días de atención", weekday: ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"], start: "Desde", end: "Hasta", timeInvalid: "Elige la hora de apertura y la de cierre.", rangeInvalid: "La hora de cierre debe ser posterior a la de apertura.",
     blackouts: "Días bloqueados", blackoutDate: "Fecha", blackoutReason: "Motivo (opcional)", addBlackout: "Bloquear día", removeBlackout: "Quitar", dateInvalid: "Elige la fecha.", save: "Guardar agenda", saving: "Guardando…", saved: "Agenda guardada.", capacityInvalid: "Escribe un número entero de cupos entre 1 y 1000.", blackoutEnd: "Hasta (opcional)", dateReal: "Esa fecha no existe en el calendario.", blackoutDuplicate: "Ese día ya está bloqueado.", endBefore: "La fecha final no puede ser anterior a la inicial.", rejectTitle: "¿Rechazar esta solicitud?", rejectBody: "La pareja verá que no puedes atender esa fecha. No se puede deshacer.", cancelTitle: "¿Cancelar esta reserva?", cancelBody: "La pareja será avisada de que la fecha queda libre. No se puede deshacer.", keep: "Volver", rowMenu: "Más opciones de la solicitud del {{date}}",
     bookings: "Fechas pedidas", bookingsEmpty: "Cuando una pareja pida una fecha, la verás aquí para confirmarla con un toque.", status: { REQUESTED: "Pendiente", CONFIRMED: "Confirmada", REJECTED: "Rechazada", CANCELLED: "Cancelada", EXPIRED: "Vencida" }, confirm: "Confirmar", reject: "Rechazar", cancel: "Cancelar reserva", decided: "Solicitud actualizada.", stale: "Esa solicitud ya cambió de estado; actualizamos la lista.", date: "{{date}}", expires: "Vence {{when}}"
+  },
+  quotes: {
+    title: "Cotizaciones", intro: "Pedidos de cotización que recibiste. Abre uno para ver cómo contactar a quien lo envió y respóndele directamente.", emptyTitle: "Aún no tienes cotizaciones", empty: "Cuando alguien te pida una cotización desde tu ficha, aparecerá aquí con sus datos de contacto.",
+    received: "Recibida el {{date}}", event: "Evento: {{date}}", guests: "{{count}} invitados", budget: "Presupuesto: {{amount}}", noBudget: "Sin presupuesto indicado", city: "Zona: {{city}}", withMessage: "Incluye un mensaje",
+    open: "Ver contacto", close: "Ocultar contacto", contactTitle: "Contacto de {{name}}", email: "Correo", phone: "Teléfono", noPhone: "No dejó teléfono", message: "Mensaje", writeEmail: "Escribir a {{email}}", call: "Llamar al {{phone}}",
+    loadingContact: "Cargando el contacto…", contactError: "No pudimos cargar el contacto de esta cotización.", more: "Cargar más", shown: "{{shown}} cotizaciones", status: { REQUESTED: "Nueva" }
   },
   leads: {
     title: "Solicitudes", intro: "Parejas que te escribieron o pidieron una cotización.", emptyTitle: "Aún no te han escrito", empty: "Cuando una pareja toque tu contacto o pida una cotización, aparecerá aquí.", clicksEmpty: "Nadie ha tocado tus contactos todavía.", more: "Cargar más", shown: "Mostrando {{shown}} de {{total}}", filter: "Mostrar", filters: { all: "Todas", quote: "Cotizaciones", click: "Toques" }, quotesEmpty: "Aún no recibes cotizaciones.",
