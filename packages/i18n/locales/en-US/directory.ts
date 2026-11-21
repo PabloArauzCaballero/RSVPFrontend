@@ -44,5 +44,6 @@ export const directoryEnUS: DeepStrings<typeof directoryEsBO> = {
   otherCities: "This category in other cities",
   otherCategories: "Other categories in {{city}}",
   trust: "“Verified” means the vendor has passed DOne’s verification. DOne does not provide or guarantee the service: you agree price, coverage and timing with the vendor.",
+  notFound: { title: "This directory page does not exist", body: "The category or the city in the link may be misspelled. From the directory you can search by both." },
   breadcrumb: { label: "Breadcrumb", home: "Home", directory: "Vendors" }
 };

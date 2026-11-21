@@ -6,6 +6,7 @@ import { ImpressionTracker } from "./impression-tracker";
 import { NearMeButton } from "./near-me";
 import { breadcrumbJsonLd, itemListJsonLd, jsonLdScript } from "../lib/json-ld";
 import { siteUrl } from "../lib/metadata";
+import { categoryLabel } from "@rsvp/query-hooks";
 import { pageCount, PROVIDER_CATEGORIES, PROVIDER_CITIES, RADIUS_OPTIONS_KM, type ProviderCard, type ProviderPage } from "../lib/providers";
 
 const DIRECTORY = "/proveedores";
@@ -56,7 +57,7 @@ export function PageTop({ t, items, title, lead }: { readonly t: Translate; read
   );
 }
 
-export function ProviderResults({ page, t, locale, path, query = "", summary }: { readonly page: ProviderPage; readonly t: Translate; readonly locale: string; readonly path: string; readonly query?: string; readonly summary?: string }) {
+export function ProviderResults({ page, t, locale, path, query = "", summary, categoryNames = {} }: { readonly page: ProviderPage; readonly t: Translate; readonly locale: string; readonly path: string; readonly query?: string; readonly summary?: string; /** Published names for codes the translation does not know yet (`loadCategoryNames`). */ readonly categoryNames?: Readonly<Record<string, string>> }) {
   if (!page.available) {
     return (
       <div role="status" className="directory-status state">
@@ -95,7 +96,7 @@ export function ProviderResults({ page, t, locale, path, query = "", summary }: 
             <div className="result__thumb">{card.imageUrl ? <img src={card.imageUrl} alt="" width={320} height={240} loading="lazy" decoding="async" /> : <Monogram name={card.name} />}</div>
             <div className="result__body">
               <h2><a href={providerHref(card)}>{card.name}</a></h2>
-              <p className="result__meta">{t(`directory.category.${card.category}`)} · {card.city}</p>
+              <p className="result__meta">{categoryLabel(card.category, t, categoryNames)} · {card.city}</p>
               {card.summary ? <p className="result__summary">{card.summary}</p> : null}
             </div>
             <div className="result__side">

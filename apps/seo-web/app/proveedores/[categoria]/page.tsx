@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { siteI18n } from "../../../lib/site-locale";
 import { CityLinks, PageTop, ProviderResults } from "../../../components/provider-directory";
-import { categoryBySlug, pageParam, PROVIDER_CATEGORIES, searchProviders } from "../../../lib/providers";
+import { categoryBySlug, loadCategoryNames, pageParam, PROVIDER_CATEGORIES, searchProviders } from "../../../lib/providers";
 import { routeMetadata } from "../../../lib/seo";
 import { isSupported } from "../../../lib/locale-negotiation";
 
@@ -35,13 +35,13 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   const category = categoryBySlug((await params).categoria);
   if (!category) notFound();
   const page = pageParam((await searchParams).page);
-  const results = await searchProviders({ category: category.code, verifiedOnly: true, page });
+  const [results, categoryNames] = await Promise.all([searchProviders({ category: category.code, verifiedOnly: true, page }), loadCategoryNames(locale)]);
   const name = t(`directory.category.${category.code}`);
   return (
     <main className="dir-page">
       <PageTop t={t} items={[{ label: name }]} title={t("directory.categoryTitle", { category: name })} lead={t("directory.categoryDescription", { category: name })} />
       <div className="dir-body">
-        <ProviderResults page={results} t={t} locale={locale} path={`/proveedores/${category.slug}`} query={page > 1 ? `page=${page}` : ""} summary={results.available && results.total > 0 ? t("directory.intro", { count: results.total, category: name.toLocaleLowerCase(locale), place: "Bolivia" }) : undefined} />
+        <ProviderResults page={results} t={t} locale={locale} path={`/proveedores/${category.slug}`} query={page > 1 ? `page=${page}` : ""} categoryNames={categoryNames} summary={results.available && results.total > 0 ? t("directory.intro", { count: results.total, category: name.toLocaleLowerCase(locale), place: "Bolivia" }) : undefined} />
         <section aria-labelledby="dir-cities"><h2 id="dir-cities">{t("directory.citiesHeading")}</h2><CityLinks t={t} categorySlug={category.slug} categoryCode={category.code} /></section>
       </div>
     </main>
