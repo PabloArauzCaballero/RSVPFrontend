@@ -97,6 +97,30 @@ describe("REQ-F27-02/03 · /r/{listingId} redirector", () => {
     expect(await response.text()).toContain('href="/proveedores"');
   });
 
+  it("A23 · a link without destination (gift items) asks Provider Catalog for the listing's primary destination, never a fixed OFFICIAL_SITE", async () => {
+    const fetchFn = gateway(upstream302("https://shop.example/torta?utm_source=rsvp"));
+    const celebrationId = "22222222-3333-4444-8555-666666666666";
+    const response = await GET(new Request(`http://site.test/r/${LISTING}?surface=GIFT_LIST&celebrationId=${celebrationId}`), ctx);
+    expect(response.status).toBe(302);
+    const [url] = fetchFn.mock.calls[0] as unknown as [URL];
+    expect(url.searchParams.has("destination")).toBe(false);
+    expect(url.searchParams.get("surface")).toBe("GIFT_LIST");
+    expect(url.searchParams.get("celebrationId")).toBe(celebrationId);
+  });
+
+  it("A23 · every service destination of a microsite button is forwarded as is; an unknown one is dropped, not replaced", async () => {
+    for (const destination of ["OFFICIAL_SITE", "LANDING", "WHATSAPP", "PHONE", "EMAIL", "INSTAGRAM", "PRODUCT_PAGE"]) {
+      const fetchFn = gateway(upstream302());
+      await GET(new Request(`http://site.test/r/${LISTING}?destination=${destination}&surface=PUBLIC_SITE`), ctx);
+      const [url] = fetchFn.mock.calls[0] as unknown as [URL];
+      expect(url.searchParams.get("destination")).toBe(destination);
+    }
+    const fetchFn = gateway(upstream302());
+    await GET(new Request(`http://site.test/r/${LISTING}?destination=javascript:alert(1)`), ctx);
+    const [url] = fetchFn.mock.calls[0] as unknown as [URL];
+    expect(url.searchParams.has("destination")).toBe(false);
+  });
+
   it("/r/ is not indexable", () => {
     const rule = (robots().rules as { disallow: string[] }[])[0];
     expect(rule?.disallow).toContain("/r/");
