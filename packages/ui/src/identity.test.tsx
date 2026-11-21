@@ -34,6 +34,24 @@ describe('illustration set', () => {
     for (const [x, y] of absolute) { expect(x).toBeGreaterThanOrEqual(-4); expect(x).toBeLessThanOrEqual(ILLUSTRATION_VIEWBOX + 4); expect(y).toBeGreaterThanOrEqual(-4); expect(y).toBeLessThanOrEqual(ILLUSTRATION_VIEWBOX + 4); }
   });
 
+  it.each(ILLUSTRATION_NAMES)('%s is staged as a scene: stone disc and contact shadow first, an ink figure, one pastel piece', (name) => {
+    const layers = ILLUSTRATIONS[name].map((shape) => shape.layer);
+    expect(layers.slice(0, 2)).toEqual(['ground', 'shadow']);
+    expect(layers.filter((layer) => layer === 'ground' || layer === 'shadow')).toHaveLength(2);
+    expect(layers.some((layer) => layer === 'solid' || layer === 'line')).toBe(true);
+    expect(layers.filter((layer) => layer === 'soft')).toHaveLength(1);
+  });
+
+  it('draws the scene only with DOne tokens: no new colour enters the palette', () => {
+    for (const tone of TONES) {
+      const scheme = tone === 'ink' ? colors.light : colors.dark;
+      const palette = illustrationColors(tone, 'yellow');
+      expect(palette.ground).toBe(scheme.primaryMuted);
+      expect(palette.stone).toBe(scheme.fieldBorder);
+      expect(palette.shadow).toBe(tone === 'ink' ? colors.light.border : colors.dark.canvas);
+    }
+  });
+
   it.each(ILLUSTRATION_NAMES)('%s is decorative by default in every tone and uses only ink plus its group pastel', (name) => {
     for (const tone of TONES) {
       const { container, unmount } = render(<Illustration name={name} tone={tone} size="sm" />);
