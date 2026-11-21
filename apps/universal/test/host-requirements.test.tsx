@@ -7,7 +7,7 @@ import { PublishScreen } from "../src/host/publish-checklist";
 import { SettingsScreen } from "../src/host/settings-screen";
 import { TemplatesScreen } from "../src/host/templates-screen";
 import { ANONYMOUS } from "../src/platform/session";
-import { ADMIN, baseHandlers, CELEBRATION, fakeClient, GUEST, HOST, renderApp, TEMPLATES, pickTime, timeField } from "./support";
+import { ADMIN, baseHandlers, CELEBRATION, fakeClient, GUEST, HOST, HttpFailure, renderApp, TEMPLATES, pickTime, timeField } from "./support";
 
 /** Tests for requirements that had no proof: F13-01 save, F11-02 screens, F12-02/05/06, F13-05. */
 const navigate = vi.fn();
@@ -214,6 +214,37 @@ describe("A18 · «publicada» only when the public page exists", () => {
     expect(screen.getByTestId("retry-public-page")).toBeTruthy();
     expect(screen.queryByText("Comparte el enlace")).toBeNull();
     expect((screen.getByTestId("copy-link") as HTMLElement).getAttribute("aria-disabled")).toBe("true");
+  });
+});
+
+describe("M10 · D-1 · search engines only when the host turns them on", () => {
+  const published = { ...CELEBRATION, status: "PUBLISHED" as const, version: 3, searchIndexing: false };
+  const live = () => ({ celebrationId: "c-1", status: "PUBLISHED", state: "LIVE", version: 3, publicVersion: 3 });
+  const handlers = (celebration: typeof published, extra: Record<string, (call: { readonly body: unknown }) => unknown> = {}) => ({
+    ...baseHandlers(celebration), "GET /celebrations/c-1/publish-check": () => ({ ready: true, missingFields: [], status: "PUBLISHED", version: 3 }),
+    "GET /media/celebrations/c-1/assets": () => ({ items: [] }), "GET /celebrations/c-1/public-page": live, ...extra
+  });
+
+  it("starts off and says only people with the link see it; turning it on sends PATCH {searchIndexing: true} with the version", async () => {
+    const { client, calls } = fakeClient(handlers(published, { "PATCH /celebrations/c-1": () => ({ ...published, version: 4, searchIndexing: true }) }));
+    renderApp(<PublishScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    const toggle = await screen.findByTestId("search-indexing-switch");
+    expect(toggle.getAttribute("aria-checked")).toBe("false");
+    expect(screen.getByText(/Solo la ve quien tiene el enlace/)).toBeTruthy();
+    fireEvent.click(toggle);
+    await waitFor(() => expect(calls.some((call) => call.method === "PATCH")).toBe(true));
+    const patch = calls.find((call) => call.method === "PATCH");
+    expect(patch?.body).toEqual({ searchIndexing: true });
+    expect(patch?.headers.get("if-match")).toBe('"3"');
+  });
+
+  it("if the change is refused (someone else edited first) it says so and the switch keeps the stored value", async () => {
+    const { client, calls } = fakeClient(handlers(published, { "PATCH /celebrations/c-1": () => new HttpFailure(409, { code: "VERSION_CONFLICT" }) }));
+    renderApp(<PublishScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    fireEvent.click(await screen.findByTestId("search-indexing-switch"));
+    await waitFor(() => expect(calls.some((call) => call.method === "PATCH")).toBe(true));
+    await waitFor(() => expect(screen.getByTestId("search-indexing").textContent).toContain("Alguien guardó cambios mientras editabas"));
+    expect(screen.getByTestId("search-indexing-switch").getAttribute("aria-checked")).toBe("false");
   });
 });
 

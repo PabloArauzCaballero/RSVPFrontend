@@ -33,6 +33,8 @@ export interface PublicCelebrationView {
   readonly localTimes: Readonly<Record<string, LocalDateTime>>;
   readonly rsvpDeadline: string | null;
   readonly publishedAt: string | null;
+  /** D-1 (celebration 1.4.0): true only when the host allowed search engines; absent or false means `noindex`. */
+  readonly indexable?: boolean;
   readonly version: number;
 }
 

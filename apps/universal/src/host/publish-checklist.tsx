@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Image, Platform, Share, Text, View } from "react-native";
-import { isPublicPageInTransition, missingFieldsOf, useMediaAssets, usePublicationAction, usePublicPageStatus, usePublishCheck, type Celebration, type TranslatedEventType } from "@rsvp/query-hooks";
+import { isPublicPageInTransition, missingFieldsOf, useEditCelebration, useMediaAssets, usePublicationAction, usePublicPageStatus, usePublishCheck, type Celebration, type TranslatedEventType } from "@rsvp/query-hooks";
 import type { Translate } from "@rsvp/i18n";
 import { formatDate } from "@rsvp/celebration-theme";
 import { useApiClient, useT } from "../platform/providers";
@@ -13,7 +13,7 @@ import { useSingleFlight } from "../platform/single-flight";
 import { CelebrationErrorNotice } from "./celebration-errors";
 import { LIMITS, overLimit } from "./limits";
 import { radius, spacing } from "@rsvp/design-tokens";
-import { Enter, SkeletonList, Stagger, useColors } from "@rsvp/ui";
+import { Enter, SkeletonList, Stagger, SwitchRow, useColors } from "@rsvp/ui";
 import { Row, RowList } from "./gifts/offer-row";
 import { ActionButton, Celebrate, CheckMark, ConfirmDialog, Field, Notice, OverflowMenu, useStyles } from "./ui";
 
@@ -48,6 +48,8 @@ function Checklist({ celebration, eventType, onNavigate, refetch }: { readonly c
   const check = usePublishCheck(client, celebration.id);
   const action = usePublicationAction(client, celebration.id);
   const media = useMediaAssets(client, celebration.id);
+  // D-1: search engines only when the host says so; the switch sends the version the host is looking at.
+  const indexing = useEditCelebration(client, celebration.id);
   // A18: «publicada» only when the public page exists (LIVE), never just because the command answered 200.
   const page = usePublicPageStatus(client, celebration.id);
   const pageState = page.data?.state;
@@ -170,6 +172,17 @@ function Checklist({ celebration, eventType, onNavigate, refetch }: { readonly c
               </View>
             </View>
           ) : null}
+          <View testID="search-indexing" style={{ gap: spacing[2] }}>
+            <SwitchRow
+              label={t("host.publish.searchIndexing.label")}
+              hint={t(celebration.searchIndexing === true ? "host.publish.searchIndexing.on" : "host.publish.searchIndexing.off")}
+              value={celebration.searchIndexing === true}
+              disabled={indexing.isPending || celebration.access === "READ"}
+              testID="search-indexing-switch"
+              onChange={(value) => once((release) => indexing.mutate({ target: celebration, patch: { searchIndexing: value } }, { onSettled: () => { release(); refetch(); } }))}
+            />
+            <CelebrationErrorNotice error={indexing.error} onReload={refetch} />
+          </View>
           <Text style={styles.label}>{t("host.publish.whatsappPreview")}</Text>
           <View style={[styles.card, { maxWidth: OG_WIDTH, padding: 0, overflow: "hidden" }]} testID="whatsapp-card">
             {cover ? <Image source={{ uri: cover }} style={{ width: OG_WIDTH, height: OG_HEIGHT }} accessibilityIgnoresInvertColors /> : null}

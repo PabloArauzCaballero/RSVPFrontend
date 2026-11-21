@@ -8,7 +8,7 @@ import { SITE_LOCALES } from "../lib/locale-negotiation";
 
 /**
  * Only public, indexable routes (REQ-F08-05): the home, the provider directory, every verified
- * partner microsite and every published celebration. Regenerated at most every 5 minutes, so a newly published
+ * partner microsite and every published celebration whose host enabled indexing (D-1). Regenerated at most every 5 minutes, so a newly published
  * celebration appears without a deploy.
  */
 export const revalidate = 300;
