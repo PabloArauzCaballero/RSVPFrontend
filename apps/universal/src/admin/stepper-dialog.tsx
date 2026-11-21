@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
-import { Modal, ScrollView, Text, View } from "react-native";
+import { Modal, ScrollView, Text, View, useWindowDimensions } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
 import { Button, OverlayEnter, StepTransition, overlayAnimation } from "@rsvp/ui";
 import { useT } from "../platform/providers";
 import { useStyles } from "../host/ui";
 import { StepProgress } from "../host/step-progress";
+import { dialogMaxHeight } from "./editor-dialog";
 
 const DIALOG_WIDTH = 720;
 
@@ -40,13 +41,14 @@ export interface StepperDialogProps {
 export function StepperDialog({ title, steps, step, onNext, onBack, onClose, nextLabel, nextIcon = "arrow", nextTestID = "stepper-next", busy = false, closeLabel, footer = true, testID = "stepper", children }: StepperDialogProps): ReactNode {
   const t = useT();
   const styles = useStyles();
+  const { height } = useWindowDimensions();
   const name = steps[step - 1] ?? "";
   const stepText = t("admin.stepper.step", { step, total: steps.length });
   return (
     <Modal visible transparent animationType={overlayAnimation("fade")} onRequestClose={busy ? () => undefined : onClose}>
       <View style={styles.overlay}>
         <OverlayEnter from="none">
-          <View accessibilityViewIsModal role="dialog" aria-label={title} testID={testID} style={[styles.dialog, { maxWidth: DIALOG_WIDTH, maxHeight: "94%" }]}>
+          <View accessibilityViewIsModal role="dialog" aria-label={title} testID={testID} style={[styles.dialog, { maxWidth: DIALOG_WIDTH, maxHeight: dialogMaxHeight(height) }]}>
             <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: spacing[3] }}>
               <Text accessibilityRole="header" style={[styles.subtitle, { flex: 1 }]}>{title}</Text>
               <Button variant="ghost" icon="close" state={busy ? "disabled" : "default"} onPress={onClose} testID={`${testID}-close`}>{closeLabel ?? t("host.common.cancel")}</Button>

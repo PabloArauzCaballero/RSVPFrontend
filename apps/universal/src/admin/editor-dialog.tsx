@@ -1,11 +1,18 @@
 import type { ReactNode } from "react";
-import { Modal, ScrollView, Text, View } from "react-native";
+import { Modal, ScrollView, Text, View, useWindowDimensions } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
 import { Button, OverlayEnter, overlayAnimation } from "@rsvp/ui";
 import { useT } from "../platform/providers";
 import { useStyles } from "../host/ui";
 
 const DIALOG_WIDTH = 560;
+const OVERLAY_GAP = 48;
+const MIN_DIALOG_HEIGHT = 320;
+/**
+ * The dialog's height cap in pixels. A percentage does not work here: the opening animation wraps the dialog in a box of
+ * automatic height, so "94%" resolves to nothing and a long form pushes its own buttons below the screen.
+ */
+export const dialogMaxHeight = (windowHeight: number): number => Math.max(MIN_DIALOG_HEIGHT, windowHeight - OVERLAY_GAP);
 
 /**
  * A form (or a read-only sheet) over an admin list: title, content that scrolls, and the closing actions always in sight.
@@ -28,12 +35,13 @@ export function EditorDialog({ title, saveLabel, saveTestID, busy = false, canSa
 }): ReactNode {
   const t = useT();
   const styles = useStyles();
+  const { height } = useWindowDimensions();
   const editing = onSave !== undefined;
   return (
     <Modal visible transparent animationType={overlayAnimation("fade")} onRequestClose={busy ? () => undefined : onClose}>
       <View style={styles.overlay}>
         <OverlayEnter from="none">
-          <View accessibilityViewIsModal role="dialog" aria-label={title} style={[styles.dialog, { maxWidth: width, maxHeight: "94%" }]}>
+          <View accessibilityViewIsModal role="dialog" aria-label={title} style={[styles.dialog, { maxWidth: width, maxHeight: dialogMaxHeight(height) }]}>
             <Text accessibilityRole="header" style={styles.subtitle}>{title}</Text>
             <ScrollView tabIndex={0} aria-label={title} style={{ flexShrink: 1 }} contentContainerStyle={{ gap: spacing[4], paddingBottom: spacing[1] }} keyboardShouldPersistTaps="handled">{children}</ScrollView>
             <View style={{ flexDirection: "row", gap: spacing[2] }}>

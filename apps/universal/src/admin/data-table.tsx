@@ -101,9 +101,11 @@ function Table<TRow>({ label, columns, rows, rowKey, actions, sort, onSort, test
             return (
               <View key={column.key} role="columnheader" {...(ariaSort ? { "aria-sort": ariaSort } : {})} style={cell(column.flex)}>
                 {column.sort && onSort ? (
-                  <PressFeedback accessibilityRole="button" accessibilityLabel={t("admin.table.sortAction", { column: column.header })} onPress={() => onSort(column.sort?.value ?? "")} testID={`${testID}-sort-${column.key}`} style={{ minHeight: 44, flexDirection: "row", alignItems: "center", gap: spacing[2] }}>
-                    <Text style={[styles.label, active ? null : { color: palette.textMuted }]}>{column.header}</Text>
-                    <SortArrow direction={column.sort.direction} active={active} />
+                  <PressFeedback accessibilityRole="button" accessibilityLabel={t("admin.table.sortAction", { column: column.header })} onPress={() => onSort(column.sort?.value ?? "")} testID={`${testID}-sort-${column.key}`} style={{ minHeight: 44, justifyContent: "center" }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[2] }}>
+                      <Text style={[styles.label, active ? null : { color: palette.textMuted }]}>{column.header}</Text>
+                      <SortArrow direction={column.sort.direction} active={active} />
+                    </View>
                   </PressFeedback>
                 ) : <Text style={[styles.label, { color: palette.textMuted, minHeight: 44, textAlignVertical: "center", paddingTop: spacing[3] } as object]}>{column.header}</Text>}
               </View>
