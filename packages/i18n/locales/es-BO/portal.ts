@@ -4,6 +4,7 @@ export const portalEsBO = {
   nav: { label: "Secciones del portal", home: "Resumen", services: "Ofertas", products: "Productos", delivery: "Entrega", microsite: "Perfil público", documents: "Documentos", destinations: "Contacto", agenda: "Agenda", quotes: "Cotizaciones", leads: "Solicitudes", metrics: "Resultados" },
   dest: { overview: "Resumen", offers: "Ofertas", agenda: "Agenda", clients: "Clientes", profile: "Perfil" },
   microsite: {
+    moderationRejected: "El equipo rechazó tu perfil público y dejó de mostrarse. Motivo: {{reason}}. Corrígelo y guárdalo: volverá a publicarse cuando lo aprobemos.", moderationHeld: "Tus cambios esperan la revisión del equipo. Hasta que los aprobemos, tu perfil público no se muestra.",
     title: "Perfil público", intro: "Así te ven las parejas en tu página. Se guarda completo; si alguien más lo cambió, te avisamos antes de pisarlo.",
     descEs: "Descripción (español)", descEn: "Descripción (inglés)", descHelp: "Hasta 2000 caracteres.", website: "Sitio web", instagram: "Instagram", facebook: "Facebook", whatsapp: "WhatsApp (con código de país)",
     address: "Dirección", addressHelp: "Calle y número.", reference: "Referencia", hours: "Horario de atención", hoursOpens: "Abre", hoursCloses: "Cierra", hoursDays: "Días (0 = domingo, ej. 1,2,3,4,5)", hoursNote: "Nota del horario",
@@ -30,6 +31,7 @@ export const portalEsBO = {
     SUSPENDED: { label: "Suspendido", body: "Tu ficha está suspendida y no aparece en el directorio. Escribe al equipo para resolverlo." },
     submit: "Enviar a verificación", submitting: "Enviando…", submitted: "Enviaste tu ficha a verificación.", needsListing: "Crea una oferta para poder enviarla.",
     documentsNote: "Puedes subir tus documentos en Perfil. El equipo los revisa junto con tu ficha.",
+    reason: "Motivo del equipo: {{reason}}",
     publicPage: "Ver mi microsite"
   },
   home: {
