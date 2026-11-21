@@ -58,3 +58,6 @@ Por decisión de Pablo («uno por rol»): cada bloque de «Para cada lado de la 
 | seo-web `playwright test` | 33 passed, 1 failed (`landing 360/1280`, por el dibujo) → `--update-snapshots`: 1 passed |
 
 Capturas: `portada-roles-{sitio,app}-{light,dark}.png`. El espejo se corrió contra el sitio construido en local, no contra el desplegado: el desplegado todavía no tiene este cambio.
+## iOS nativo (2026-11-21)
+
+Expo Go 54.0.7 en un simulador propio («DOne iPhone 17», iOS 26.5), con el bundle de la rama abierto en la ruta de desarrollo `/identidad`. Las láminas se dibujan con `react-native-svg` y muestran disco, sombra, figura de tinta y pieza pastel, iguales a la web (`ios-nativo-identidad-claro.png`). Nivel: **VERIFIED en iOS (claro)**. El modo oscuro nativo no se capturó: la página de identidad es fija en claro y el simulador no admitía desplazamiento sin permiso de accesibilidad. Lo cubre `identity.native.test.tsx` (mismos `d`, colores de `illustrationColors('onDark')`). Android no se ejecutó.
