@@ -40,3 +40,7 @@ Revertir el commit del PR: el modelo de datos (`Shape`, `Layer`) solo suma capas
 ## Fuera de este PR
 
 Portada (seo-web `landing.tsx` + app `landing-screen.tsx`, espejo `landing-mirror.mjs`) y pasos del onboarding: van en un PR aparte cuando se resuelvan los PR #13/#14.
+
+## iOS nativo (2026-11-21)
+
+Expo Go 54.0.7 en un simulador propio («DOne iPhone 17», iOS 26.5), con el bundle de la rama abierto en la ruta de desarrollo `/identidad`. Las láminas se dibujan con `react-native-svg` y muestran disco, sombra, figura de tinta y pieza pastel, iguales a la web (`ios-nativo-identidad-claro.png`). Nivel: **VERIFIED en iOS (claro)**. El modo oscuro nativo no se capturó: la página de identidad es fija en claro y el simulador no admitía desplazamiento sin permiso de accesibilidad. Lo cubre `identity.native.test.tsx` (mismos `d`, colores de `illustrationColors('onDark')`). Android no se ejecutó.
