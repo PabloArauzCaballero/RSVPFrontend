@@ -80,11 +80,12 @@ export const guestsEnUS: DeepStrings<typeof guestsEsBO> = {
     },
     link: {
       title: "Their personal link", intro: "Each guest replies with a unique link. We never show it in full, so nobody can read it over your shoulder.",
+      active: "They already have a link that works until {{date}}. For safety we cannot show it again: if it was lost, generate a new one (the previous one will stop working).", unknown: "We could not check whether they already have a link. Try again before generating one.", issueNew: "Generate a new link",
       none: "They do not have a link yet. Generate one and send it.", issue: "Generate and copy link", reissue: "Reissue link", revoke: "Revoke link", manage: "Reissue or revoke the link", copy: "Copy link", copied: "Link copied.", copyFailed: "We could not copy. Use Share.",
       readyTitle: "Link ready for {{name}}", readyBody: "Copy it or share it: one tap and they can reply.",
       share: "Share", shareTitle: "Your invitation", shareText: "You are invited to {{title}}. Confirm your attendance here:", masked: "Link: {{value}}", expires: "Expires on {{date}}",
       once: "For safety, the full link only exists on this screen while you keep it open. If you lose it, reissue it.",
-      revokeTitle: "Revoke this link?", revokeBody: "The guest will no longer be able to open it right away. You can generate a new one whenever you want.", reissueTitle: "Reissue the link?", reissueBody: "The previous link stops working and a new one is generated.", revoked: "Link revoked."
+      revokeTitle: "Revoke this link?", revokeBody: "The guest will no longer be able to open it right away. You can generate a new one whenever you want.", reissueTitle: "Reissue the link?", reissueBody: "The link you already sent will stop working and a new one is generated, which you will have to send again.", revoked: "Link revoked."
     }
   },
   settings: {

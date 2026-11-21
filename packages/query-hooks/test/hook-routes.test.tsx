@@ -375,7 +375,8 @@ describe("guest and notification hooks", () => {
   it("group, token and companion decisions", async () => {
     const group = harness(); expect(await runMutation(group, () => hooks.useChangeGuestGroup(group.client, "c-1"), { guestId: "g-1", groupId: null })).toMatchObject({ method: "PATCH", body: { groupId: null } });
     const created = harness(); expect(await runMutation(created, () => hooks.useCreateGuestGroup(created.client, "c-1"), "Familia")).toMatchObject({ path: "/guests/celebrations/c-1/groups", body: { name: "Familia" } });
-    const issue = harness(); expect((await runMutation(issue, () => hooks.useIssueGuestToken(issue.client, "c-1"), "g-1")).path).toBe("/guests/celebrations/c-1/guests/g-1/access-token");
+    const issue = harness(); expect(await runMutation(issue, () => hooks.useIssueGuestToken(issue.client, "c-1"), { guestId: "g-1" })).toMatchObject({ path: "/guests/celebrations/c-1/guests/g-1/access-token", body: {} });
+    const rotate = harness(); expect(await runMutation(rotate, () => hooks.useIssueGuestToken(rotate.client, "c-1"), { guestId: "g-1", rotate: true })).toMatchObject({ method: "POST", body: { rotate: true } });
     const revoke = harness(() => ({ status: 204 })); expect((await runMutation(revoke, () => hooks.useRevokeGuestToken(revoke.client, "c-1"), "g-1")).method).toBe("DELETE");
     const decide = harness(); expect(await runMutation(decide, () => hooks.useResolveCompanionRequest(decide.client, "c-1"), { requestId: "r-1", decision: "APPROVED" as const })).toMatchObject({ path: "/guests/celebrations/c-1/companion-requests/r-1/decision", body: { decision: "APPROVED" } });
   });

@@ -19,6 +19,7 @@ import { ActionButton, Field, Notice, useStyles } from "../host/ui";
 import { useApiClient, useLocale, useT } from "../platform/providers";
 import { useSingleFlightGate } from "../platform/single-flight";
 import { copyText } from "../platform/clipboard";
+import { saveGiftCredential } from "./gift-credential";
 
 /**
  * The guest's whole journey in one place (F21-04, mode Persuade): the invitation on the cover, the answer under it
@@ -178,7 +179,7 @@ function GiftsLink({ client, celebrationId, slug, token }: { readonly client: Re
   if (empty) return null;
   return (
     <Enter from="down"><View style={{ alignSelf: "stretch", gap: spacing[2] }}>
-      <ActionButton icon="arrow" label={t("rsvp.invite.giftsCta")} onPress={() => { router.push(`/c/${encodeURIComponent(slug)}/regalos/${encodeURIComponent(token)}` as never); }} testID="open-gifts" />
+      <ActionButton icon="arrow" label={t("rsvp.invite.giftsCta")} onPress={() => { saveGiftCredential(slug, token); router.push(`/c/${encodeURIComponent(slug)}/regalos` as never); }} testID="open-gifts" />
       <Text style={[styles.muted, { textAlign: "center" }]}>{t("rsvp.invite.giftsHint")}</Text>
     </View></Enter>
   );
