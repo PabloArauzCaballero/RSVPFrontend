@@ -29,7 +29,7 @@ expect() { # path header-regex
 absent() {
   if curl -s -D - -o /dev/null "http://127.0.0.1:$PORT$1" | tr -d '\r' | grep -Eiq "$2"; then echo "FAIL $1: unexpected /$2/" >&2; fail=1; fi
 }
-for p in / /index.html /rsvp/token-123 /c/boda/rsvp/token-123; do
+for p in / /index.html /rsvp/token-123 /c/boda/rsvp/token-123 /c/boda/regalos/ref-123; do
   expect "$p" '^x-content-type-options: nosniff$'
   expect "$p" '^x-frame-options: DENY$'
   expect "$p" '^strict-transport-security: max-age='
@@ -43,5 +43,16 @@ expect /rsvp/token-123 '^cache-control: no-store$'
 expect / '^content-encoding: gzip$'
 absent / '^server: nginx/'
 absent /rsvp/token-123 '^referrer-policy: strict-origin'
-[ "$fail" -eq 0 ] && echo "nginx-check: config valid, headers and gzip as expected"
+expect /c/boda/regalos/ref-123 '^referrer-policy: no-referrer$'
+expect /c/boda/regalos/ref-123 '^cache-control: no-store$'
+# A13 · The access log never carries a guest credential, a query string or the client address.
+curl -s -o /dev/null "http://127.0.0.1:$PORT/restablecer?token=query-secret-123"
+curl -s -o /dev/null "http://127.0.0.1:$PORT/proveedores"
+LOG=$(docker logs "$NAME" 2>/dev/null)
+for secret in token-123 ref-123 query-secret-123 172.17.; do
+  if printf %s "$LOG" | grep -Fq "$secret"; then echo "FAIL access log contains $secret" >&2; fail=1; fi
+done
+printf %s "$LOG" | grep -Fq ' GET /[guest-credential-path]' || { echo "FAIL access log: guest paths not redacted" >&2; fail=1; }
+printf %s "$LOG" | grep -Fq ' GET /proveedores' || { echo "FAIL access log: ordinary paths must stay visible" >&2; fail=1; }
+[ "$fail" -eq 0 ] && echo "nginx-check: config valid, headers, gzip and redacted access log as expected"
 exit "$fail"
