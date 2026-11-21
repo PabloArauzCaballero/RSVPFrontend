@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "RSVP Identity API",
-    "version": "1.1.0",
-    "description": "1.1.0 (additive, ADMIN only): GET /admin/users?query=&page=&size=, GET /admin/organizations and GET /admin/summary (served by Kong at /identity/admin/*). Reads of the user list and role grants are audited (actor, action, time; never the search text). Account status is always ACTIVE: suspension of accounts does not exist yet."
+    "version": "1.3.0",
+    "description": "1.3.0 (additive, B4): real password recovery and e-mail verification. POST /auth/password-recovery now stores a single-use token (30 minutes, hash only) and asks Notification to send the link (event identity.user.password-reset-requested.v1); POST /auth/password-reset consumes it, sets the new password and ends every session; sign-up sends a 24-hour verification link (identity.user.email-verification-requested.v1), confirmed with POST /auth/email-verification/confirm and re-sent with POST /auth/email-verification. Registration and the access token expose whether the e-mail is verified (`emailVerified`, claim `email_verified`). 1.2.0 (additive, B9): the access token carries `memberships` [{organizationId, role}], the role of the subject IN each organization. `roles` now lists only the platform roles of the account (membership roles are no longer merged into it); `organizationIds` stays, derived from `memberships`, for visibility only. Consumers decide organization-scoped authority from `memberships` and must treat a token without it (minted by Identity < 1.2.0) as granting no organization management. 1.1.0 (additive, ADMIN only): GET /admin/users?query=&page=&size=, GET /admin/organizations and GET /admin/summary (served by Kong at /identity/admin/*). Reads of the user list and role grants are audited (actor, action, time; never the search text). Account status is always ACTIVE: suspension of accounts does not exist yet."
   },
   "servers": [
     {
@@ -63,6 +63,9 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/SessionTransport"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
           }
         ]
       }
@@ -181,7 +184,13 @@
           "422": {
             "$ref": "#/components/responses/Validation"
           }
-        }
+        },
+        "description": "Always 202 for a well-formed address. For an existing account, stores the SHA-256 of a single-use token valid 30 minutes (any earlier unused link stops working) and records the e-mail request for Notification. A second request within 60 seconds sends nothing new. `Accept-Language` picks the e-mail language (en-US or es-BO).",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ]
       }
     },
     "/auth/logout": {
@@ -710,6 +719,91 @@
           }
         }
       }
+    },
+    "/auth/password-reset": {
+      "post": {
+        "operationId": "resetPassword",
+        "description": "Consumes the single-use link of a password-recovery e-mail, sets the new password, marks the e-mail verified and revokes every refresh-token chain of the account (signs it out everywhere). Unknown, used or expired links answer 422 on `token`; a weak password answers 422 on `newPassword` without consuming the link.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SessionTransport"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Password changed; every session ended.",
+            "headers": {
+              "Set-Cookie": {
+                "description": "Cleared `rsvp_refresh` cookie (Max-Age=0) when `X-Session-Transport: cookie` is sent.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          }
+        }
+      }
+    },
+    "/auth/email-verification/confirm": {
+      "post": {
+        "operationId": "confirmEmailVerification",
+        "description": "Consumes the single-use link of the verification e-mail (24 hours) and marks the account's e-mail verified. Unknown, used or expired links answer 422 on `token`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailVerificationConfirmRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "E-mail verified."
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          }
+        }
+      }
+    },
+    "/auth/email-verification": {
+      "post": {
+        "operationId": "resendEmailVerification",
+        "description": "Sends a new verification link to the signed-in account. No-op (still 202) when the e-mail is already verified or a link was sent less than 60 seconds ago.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted."
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -854,7 +948,7 @@
         "properties": {
           "accessToken": {
             "type": "string",
-            "description": "RS256 JWT. Claims: iss, sub, roles[], organizationIds[], iat, exp, jti."
+            "description": "RS256 JWT. Claims: iss, sub, roles[] (platform roles), organizationIds[], memberships[] ({organizationId, role}), iat, exp, jti."
           },
           "refreshToken": {
             "type": "string",
@@ -900,6 +994,10 @@
                     "PROVIDER"
                   ]
                 }
+              },
+              "emailVerified": {
+                "type": "boolean",
+                "description": "Since 1.3.0. Always false right after sign-up: a verification e-mail is on its way."
               }
             }
           }
@@ -949,7 +1047,7 @@
       },
       "AccessTokenClaims": {
         "type": "object",
-        "description": "Payload of accessToken, consumed by every service.",
+        "description": "Payload of accessToken, consumed by every service. Organization-scoped authority comes only from `memberships`.",
         "required": [
           "iss",
           "sub",
@@ -976,13 +1074,22 @@
                 "PLANNER",
                 "PROVIDER"
               ]
-            }
+            },
+            "description": "Platform roles of the account. Never contains roles held in an organization (see `memberships`)."
           },
           "organizationIds": {
             "type": "array",
             "items": {
               "type": "string",
               "format": "uuid"
+            },
+            "description": "Organizations the subject belongs to in any role (derived from `memberships`). Visibility only: never a source of authority."
+          },
+          "memberships": {
+            "type": "array",
+            "description": "Since 1.2.0. The role of the subject in each organization it belongs to. A role here applies only to its organization.",
+            "items": {
+              "$ref": "#/components/schemas/OrganizationMembershipClaim"
             }
           },
           "iat": {
@@ -994,6 +1101,10 @@
           "jti": {
             "type": "string",
             "format": "uuid"
+          },
+          "email_verified": {
+            "type": "boolean",
+            "description": "Since 1.3.0. Whether the account proved it owns its e-mail."
           }
         }
       },
@@ -1303,6 +1414,62 @@
             }
           }
         }
+      },
+      "OrganizationMembershipClaim": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "organizationId",
+          "role"
+        ],
+        "properties": {
+          "organizationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "HOST",
+              "PLANNER"
+            ]
+          }
+        }
+      },
+      "PasswordResetRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "token",
+          "newPassword"
+        ],
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "description": "The `token` query parameter of the e-mail link."
+          },
+          "newPassword": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 128
+          }
+        }
+      },
+      "EmailVerificationConfirmRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "token"
+        ],
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        }
       }
     },
     "responses": {
@@ -1375,6 +1542,15 @@
           "enum": [
             "cookie"
           ]
+        }
+      },
+      "AcceptLanguage": {
+        "name": "Accept-Language",
+        "in": "header",
+        "required": false,
+        "description": "Language of the account e-mail: en-US when it starts with `en`, es-BO otherwise.",
+        "schema": {
+          "type": "string"
         }
       }
     }
