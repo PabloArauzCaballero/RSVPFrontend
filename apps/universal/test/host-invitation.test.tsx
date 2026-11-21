@@ -12,7 +12,10 @@ import { baseHandlers, CELEBRATION, fakeClient, HttpFailure, renderApp, TEMPLATE
 const navigate = vi.fn();
 const draft = { title: "Ana y Luis", subtitle: "Los esperamos", venueName: "Iglesia", hosts: { BRIDE: "Ana", GROOM: "Luis" } };
 const date = { date: "2026-12-19", time: "19:00" };
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.useRealTimers();
+});
 
 describe("parts of the invitation and their progress", () => {
   it("required parts are ready or missing; optional parts are ready only when they have something", () => {
@@ -79,6 +82,8 @@ describe("parts of the invitation and their progress", () => {
   });
 
   it("can pick a place directly, keeping the pasted map link until a result is chosen", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-20T12:00:00Z"));
     const point = { lat: -17.8, lng: -63.2 };
     const mapUrl = "https://maps.app.goo.gl/ABCD";
     const fetch = vi.fn().mockResolvedValue(Response.json([{ place_id: 1, name: "Floresta", display_name: "Floresta, Santa Cruz", lat: "-17.8", lon: "-63.2" }]));

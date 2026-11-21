@@ -55,6 +55,7 @@ export const hostEnUS: DeepStrings<typeof hostEsBO> = {
     defaultsSummary: "Already set for you: {{timeZone}} time, {{language}} and {{currency}}.",
     timeZoneLabel: "Event time zone", timeZoneHelp: "Your guests see times in this zone, wherever they are.", languageLabel: "Main language", currencyLabel: "Currency",
     titleRequired: "Write your celebration's name.", dateInvalid: "Choose the date.", timeInvalid: "Choose the time.", required: "Fill in this field.", requiredNotice: "Fill in the marked fields to continue.", slugRequired: "Write your invitation's link.",
+    dateInFuture: "Choose a date and time in the future.",
     previewTitle: "How it's shaping up", previewHint: "It changes as you type.", previewShow: "See how it looks", previewHide: "Hide", previewFallbackTitle: "Your celebration",
     create: "Create my invitation", readyTitle: "Your invitation is ready", readyBody: "For now it's a draft: only you can see it. Fill in what's missing and publish it whenever you like.",
     finish: "Finish my invitation", chooseStyle: "Pick another style"

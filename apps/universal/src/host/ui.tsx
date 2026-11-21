@@ -113,11 +113,14 @@ export function Field({ label, value, onChange, help, error, multiline, placehol
 export interface PickerInputProps { readonly label: string; readonly value: string; readonly onChange: (value: string) => void; readonly help?: string; readonly error?: string; readonly testID?: string }
 
 /** The invitation calendar uses the celebration's zone for its Today shortcut. */
-export function DateInput({ label, value, onChange, help, error, testID, calendar }: PickerInputProps & { readonly calendar?: { readonly locale: AppLocale; readonly timeZone: string } }): ReactNode {
+export function DateInput({ label, value, onChange, help, error, testID, calendar, minimumDate }: PickerInputProps & {
+  readonly calendar?: { readonly locale: AppLocale; readonly timeZone: string };
+  readonly minimumDate?: string;
+}): ReactNode {
   const styles = useStyles();
   return (
     <View style={{ gap: spacing[1] }}>
-      <DatePicker label={label} value={value} onChange={onChange} {...(calendar ? { calendar } : {})} {...(error ? { error } : {})} {...(testID ? { testID } : {})} />
+      <DatePicker label={label} value={value} onChange={onChange} {...(calendar ? { calendar } : {})} {...(minimumDate ? { minimumDate } : {})} {...(error ? { error } : {})} {...(testID ? { testID } : {})} />
       {help ? <Text style={styles.muted}>{help}</Text> : null}
     </View>
   );
