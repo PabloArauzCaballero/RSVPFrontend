@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ApiError } from '@rsvp/api-client';
 import { createTranslator, formatMinor, type AppLocale } from '@rsvp/i18n/server';
-import { catalogedFirst, guestVisible, isGiftTaken, useGiftList, useReserveGiftItem, type GiftItem, type GiftItemList, type GiftReservation } from '@rsvp/query-hooks';
+import { arrangeGifts, isGiftTaken, maxPriceMinor, useGiftList, useReserveGiftItem, type GiftFilters, type GiftItem, type GiftItemList, type GiftReservation, type GiftSourceFilter } from '@rsvp/query-hooks';
 import { PartnerLink } from '@rsvp/ui-web';
 import { personalLinkPath } from '@rsvp/auth';
 import { createGuestClient } from '../../lib/guest-client';
@@ -24,18 +24,14 @@ export interface GiftExperienceProps {
   readonly onlyItemId?: string;
 }
 
-type Source = 'all' | 'partner' | 'other';
+type Source = GiftSourceFilter;
 type Outcome = { readonly kind: 'reserved'; readonly item: GiftItem; readonly status: GiftReservation['status'] } | { readonly kind: 'taken'; readonly item: GiftItem };
 
 export const partnerHref = (item: GiftItem, celebrationId: string): string | null =>
   item.productListingId ? `/r/${encodeURIComponent(item.productListingId)}?surface=GIFT_LIST&celebrationId=${encodeURIComponent(celebrationId)}` : null;
 
-/** Applies the guest's filters and keeps partner gifts before the others, whatever the order they arrived in. */
-export function arrange(items: readonly GiftItem[], filters: { readonly maxMinor?: number; readonly source: Source; readonly onlyAvailable: boolean }): { readonly partner: GiftItem[]; readonly other: GiftItem[] } {
-  const kept = guestVisible(items).filter((item) => (filters.maxMinor === undefined || item.price.amountMinor <= filters.maxMinor) && (!filters.onlyAvailable || item.status === 'AVAILABLE') && (filters.source === 'all' || (filters.source === 'partner') === (item.source === 'CATALOGED')));
-  const ordered = catalogedFirst(kept);
-  return { partner: ordered.filter((item) => item.source === 'CATALOGED'), other: ordered.filter((item) => item.source !== 'CATALOGED') };
-}
+/** Applies the guest's filters and keeps partner gifts before the others (shared with the app: `arrangeGifts`). */
+export const arrange = (items: readonly GiftItem[], filters: GiftFilters): { readonly partner: GiftItem[]; readonly other: GiftItem[] } => arrangeGifts(items, filters);
 
 export function GiftExperience(props: GiftExperienceProps) {
   return <GiftProviders><GiftBody {...props} /></GiftProviders>;
@@ -59,7 +55,7 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
   const inFlight = useRef(false);
   const outcomeRef = useRef<HTMLDivElement>(null);
 
-  const maxMinor = maxPrice.trim() !== '' && Number.isFinite(Number(maxPrice)) ? Math.round(Number(maxPrice) * 100) : undefined;
+  const maxMinor = maxPriceMinor(maxPrice);
   const all = list.data?.items ?? [];
   const scoped = onlyItemId ? all.filter((item) => item.id === onlyItemId) : all;
   const { partner, other } = arrange(scoped, { ...(maxMinor !== undefined ? { maxMinor } : {}), source, onlyAvailable });

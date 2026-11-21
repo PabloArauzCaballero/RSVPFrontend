@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
-import { ApiError, type ApiClient } from "@rsvp/api-client";
-import { cachePolicy } from "../policy.js";
+import type { ApiClient } from "@rsvp/api-client";
+import { cachePolicy, retryTransient } from "../policy.js";
 import { queryKeys } from "../keys.js";
 import { invalidation } from "../invalidation.js";
 import { usePublicCelebration } from "../celebration/index.js";
@@ -15,11 +15,6 @@ export * from "./csv.js";
 
 const refetchAll = (queryClient: ReturnType<typeof useQueryClient>, keys: readonly (readonly unknown[])[]) => Promise.all(keys.map((queryKey) => queryClient.invalidateQueries({ queryKey })));
 
-/** 4xx answers are final (bad token, closed window…); only network and 5xx failures are worth another try. */
-export const retryTransient = (count: number, error: unknown): boolean => {
-  if (error instanceof ApiError && error.status < 500 && error.status !== 429) return false;
-  return count < 1;
-};
 
 /** GET /celebrations/public/{slug}: the real public read that turns a slug into a celebrationId (never the deprecated slug helper). */
 export function useCelebrationBySlug<TView extends PublicCelebrationRef = PublicCelebrationRef>(client: ApiClient, slug: string) {

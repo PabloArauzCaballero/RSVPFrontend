@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { navigationHref, partnerHref, type CelebrationContent, type GalleryImage } from "../content.js";
+import { navigationHref, partnerHref, shownVenues, type CelebrationContent, type GalleryImage } from "../content.js";
 import { formatTime, zoneLabel } from "../format.js";
 import type { SectionId, Translate } from "../types.js";
 
@@ -38,18 +38,14 @@ function Schedule({ content, timeZone, locale, t }: SectionProps): ReactNode {
 }
 
 function Venues({ content, t }: SectionProps): ReactNode {
-  // The main venue leads when it is the only one, and also when the host marked its exact place and did not repeat it in the list.
-  const main = { key: "main", kind: "other" as const, name: content.venueName, mapUrl: content.venueMapUrl };
-  const listed = content.venues.map((venue) => (venue.name === content.venueName ? { ...venue, mapUrl: content.venueMapUrl } : venue));
-  const repeated = content.venues.some((venue) => venue.name === content.venueName);
-  const venues = !content.venues.length ? [main] : content.venueMapUrl && content.venueName && !repeated ? [main, ...listed] : listed;
+  const venues = shownVenues(content);
   return (
     <ul className="celebration-venues">
       {venues.map((venue) => (
         <li key={venue.key}>
           <p className="celebration-eyebrow">{t(`celebration.venues.kind.${venue.kind}`)}</p>
           <strong>{venue.name}</strong>
-          {"address" in venue && venue.address ? <p>{venue.address}</p> : null}
+          {venue.address ? <p>{venue.address}</p> : null}
           <a href={navigationHref(venue)} target="_blank" rel="noopener noreferrer" data-link-kind="navigation">{t("celebration.venues.howToGetThere")}</a>
         </li>
       ))}
