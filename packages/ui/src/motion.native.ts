@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AccessibilityInfo } from 'react-native';
 
-export { MOTION, EASE, MIN_TARGET, cssEase, offsetFor, staggerDelay, type EaseName, type MotionDirection } from './motion';
+export { MOTION, EASE, MIN_TARGET, cssEase, offsetFor, staggerDelay, type EaseName, type MotionDirection } from './motion-tokens';
 
 let known: boolean | undefined;
 let started = false;

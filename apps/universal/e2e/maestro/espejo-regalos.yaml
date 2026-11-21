@@ -1,0 +1,48 @@
+# Espejo web · the guest gift list on iOS/Android (A14/A15) with the personal-link credential, against the real dev gateway.
+# Extra variables: SLUG (a published celebration with an approved gift list) and TOKEN (a guest's link credential — pass it at
+# run time, never commit it). Read-only: it opens the list, the same list without the token, and one gift's own page.
+appId: ${APP_ID}
+---
+- runFlow: cold-start.yaml
+- runFlow:
+    file: open.yaml
+    env: { ROUTE: "/c/${SLUG}/regalos/${TOKEN}" }
+# The filters only appear once the list has loaded with the credential; the gifts come after them.
+- extendedWaitUntil:
+    visible: "(Precio máximo|Maximum price)"
+    timeout: 240000
+# Expo Go opens its developer menu once the bundle has loaded (first run only): close it before looking at the screen.
+- runFlow: dismiss-dev-menu.yaml
+- takeScreenshot: espejo-regalos-lista
+- scrollUntilVisible:
+    element: "(3 regalos|3 gifts)"
+    direction: DOWN
+    timeout: 30000
+    centerElement: true
+# The gifts come after the count and their group heading. On iOS the title is a link whose accessible name is
+# "Ver detalle de … / See details of …", so it is matched inside that name.
+- scrollUntilVisible:
+    element: ".*Cafetera italiana de 6 tazas.*"
+    direction: DOWN
+    timeout: 30000
+    centerElement: true
+- takeScreenshot: espejo-regalos-lista-items
+# The same list without the token in the address: the credential kept for the session opens it.
+- runFlow:
+    file: open.yaml
+    env: { ROUTE: "/c/${SLUG}/regalos" }
+- extendedWaitUntil:
+    visible: "(Precio máximo|Maximum price)"
+    timeout: 60000
+- takeScreenshot: espejo-regalos-sin-token
+# A gift's own page at the web's address.
+- scrollUntilVisible:
+    element: ".*Cafetera italiana de 6 tazas.*"
+    direction: DOWN
+    timeout: 30000
+    centerElement: true
+- tapOn: ".*Cafetera italiana de 6 tazas.*"
+- extendedWaitUntil:
+    visible: "(Volver a la lista|Back to the list)"
+    timeout: 30000
+- takeScreenshot: espejo-regalos-detalle
