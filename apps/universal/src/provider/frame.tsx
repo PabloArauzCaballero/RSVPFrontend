@@ -5,6 +5,7 @@ import { spacing } from "@rsvp/design-tokens";
 import { useMyProviders, useProviderProfile, type Provider } from "@rsvp/query-hooks";
 import { useApiClient, useClaims, useT } from "../platform/providers";
 import { readLocal, writeLocal } from "../platform/local-store";
+import { providerSelfServiceEnabled } from "../platform/provider-self-service";
 import type { Translate } from "@rsvp/i18n";
 import { ActionButton, ErrorNotice, Loading, Notice, OverflowMenu, Screen, type NavItem } from "../host/ui";
 
@@ -85,7 +86,9 @@ export function PortalScreen({ title, current, requireProvider = true, children 
   const menu = header?.menu?.length ? <OverflowMenu testID="more-options" items={header.menu} /> : undefined;
   const frame = (body: ReactNode): ReactNode => <HeaderSlot.Provider value={setHeader}><Screen title={title} nav={nav} current={active} onNavigate={(href) => router.push(href as Href)} {...(actions ? { actions } : {})} {...(menu ? { menu } : {})}>{body}</Screen></HeaderSlot.Provider>;
   if (providerId === undefined) return frame(<Loading />);
-  if (!providerId) return frame(requireProvider ? <View style={{ gap: spacing[3] }}><Notice>{t("portal.errors.noProvider")}</Notice><ActionButton icon="arrow" label={t("portal.errors.goOnboarding")} onPress={() => router.push(PORTAL_ROUTES.onboarding as Href)} testID="go-onboarding" /></View> : children({} as Provider, () => undefined));
+  // Without a partner: the sign-up while self-service is open; with it closed (phase 4) the same explanation as /portal/alta, whose button now leads there.
+  const open = providerSelfServiceEnabled();
+  if (!providerId) return frame(requireProvider ? <View style={{ gap: spacing[3] }}><Notice>{t(open ? "portal.errors.noProvider" : "portal.selfServiceClosed.body")}</Notice><ActionButton icon="arrow" label={t(open ? "portal.errors.goOnboarding" : "portal.selfServiceClosed.goExplanation")} onPress={() => router.push(PORTAL_ROUTES.onboarding as Href)} testID="go-onboarding" /></View> : children({} as Provider, () => undefined));
   if (profile.isPending) return frame(<Loading />);
   if (profile.isError || !profile.data) return frame(<ErrorNotice error={profile.error} onReload={() => { void profile.refetch(); }} />);
   return frame(children(profile.data, () => { void profile.refetch(); }));

@@ -24,6 +24,8 @@ export const portalEnUS: DeepStrings<typeof portalEsBO> = {
     name: "Business name", nameHelp: "This is the name couples will see.", submit: "Create my profile", creating: "Creating…", required: "Enter your business name.", tooLong: "The name allows up to 120 characters.",
     existingTitle: "Already have a profile?", existingBody: "Connect it with its provider code.", existingId: "Provider code", connect: "Connect profile", invalidId: "The code must be a valid identifier.", notFound: "We found no provider with that code.", notOwner: "That profile belongs to another account."
   },
+  /** Phase 4 (EXPO_PUBLIC_PROVIDER_SELF_SERVICE off): partners are created by the DOne team. The onboarding keys stay until phase 5. */
+  selfServiceClosed: { title: "You don't have a partner yet", body: "Your account doesn't have a partner yet. The DOne team creates partners after verifying your documents (KYP). Write to us to get started.", goExplanation: "See how to get started" },
   status: {
     title: "Your profile status",
     DRAFT: { label: "Draft", body: "It is not public yet. Finish the steps and send it for verification." },

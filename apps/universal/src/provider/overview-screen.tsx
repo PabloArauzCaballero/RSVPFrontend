@@ -15,6 +15,7 @@ import { lastDays } from "./metrics-screen";
 import { useSingleMutation } from "../platform/single-flight";
 import { Moment, useFirstTime } from "./parts";
 import { Figure, FigureGroup } from "../host/figures";
+import { isSelfServiceDisabled, providerSelfServiceEnabled } from "../platform/provider-self-service";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -173,7 +174,24 @@ export function OverviewScreen(): ReactNode {
 /** D1 · Sign-up of the business and connecting an existing profile. The primary action («Crear mi ficha») sits in the header. */
 export function OnboardingScreen({ onDone }: { readonly onDone: () => void }): ReactNode {
   const t = useT();
-  return <PortalScreen title={t("portal.onboarding.title")} current="home" requireProvider={false}>{() => <OnboardingBody onDone={onDone} />}</PortalScreen>;
+  const open = providerSelfServiceEnabled();
+  return <PortalScreen title={t(open ? "portal.onboarding.title" : "portal.selfServiceClosed.title")} current="home" requireProvider={false}>{() => (open ? <OnboardingBody onDone={onDone} /> : <SelfServiceClosed />)}</PortalScreen>;
+}
+
+/**
+ * With EXPO_PUBLIC_PROVIDER_SELF_SERVICE off (phase 4, DP-2): no create or connect form. The DOne team creates the partner after
+ * checking the KYP; once it exists, GET /providers/mine finds it and the portal opens by itself. There is no support link in the
+ * app yet, so this screen has no contact action.
+ */
+export function SelfServiceClosed(): ReactNode {
+  const t = useT();
+  const styles = useStyles();
+  return (
+    <View testID="self-service-closed" style={[styles.row, { gap: spacing[4], flexWrap: "nowrap" }]}>
+      <Illustration name="welcomeProvider" tone="auto" size="md" />
+      <View style={{ flex: 1 }}><PageIntro>{t("portal.selfServiceClosed.body")}</PageIntro></View>
+    </View>
+  );
 }
 
 function OnboardingBody({ onDone }: { readonly onDone: () => void }): ReactNode {
@@ -207,7 +225,10 @@ function OnboardingBody({ onDone }: { readonly onDone: () => void }): ReactNode 
       await remember(provider.id); onDone();
     } catch (failure) { setError(failure instanceof ApiError && failure.status === 404 ? t("portal.onboarding.notFound") : t("portal.errors.generic")); } finally { setConnecting(false); }
   };
-  usePortalHeader({ icon: "plus", label: register.isPending ? t("portal.onboarding.creating") : t("portal.onboarding.submit"), busy: register.isPending, disabled: register.isPending, onPress: create, testID: "provider-create" });
+  // An older build with the sign-up still open, against a backend whose switch is closed: 403 SELF_SERVICE_DISABLED gets the same explanation.
+  const closed = isSelfServiceDisabled(register.error);
+  usePortalHeader(closed ? undefined : { icon: "plus", label: register.isPending ? t("portal.onboarding.creating") : t("portal.onboarding.submit"), busy: register.isPending, disabled: register.isPending, onPress: create, testID: "provider-create" });
+  if (closed) return <SelfServiceClosed />;
   return (
     <View style={{ gap: spacing[4] }}>
       <View style={[styles.row, { gap: spacing[4], flexWrap: "nowrap" }]}><Illustration name="welcomeProvider" tone="auto" size="md" /><View style={{ flex: 1 }}><PageIntro>{t("portal.onboarding.intro")}</PageIntro></View></View>
