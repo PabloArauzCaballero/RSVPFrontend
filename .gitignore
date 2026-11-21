@@ -17,5 +17,14 @@ coverage
 web-build-e2e
 web-build-live
 
+# Artefactos de Playwright (L12): resultados, trazas, capturas de fallos e informes de cada app
+**/test-results/
+**/playwright-report/
+**/blob-report/
+**/playwright/.cache/
+
+# Expo CLI ejecutado en la raíz del monorepo crea un app.json vacío (L9); la configuración real es apps/universal/app.config.ts
+/app.json
+
 # Poblador de datos de demostración: ids de la última corrida (sin tokens)
 apps/universal/scripts/seed/.last-run.json

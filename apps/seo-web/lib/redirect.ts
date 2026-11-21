@@ -1,4 +1,5 @@
 import { apiBaseUrl } from "./api";
+import { forwardedFor } from "./client-address";
 
 /**
  * Partner redirector (F27). Every outbound partner link is /r/{listingId}; this module asks Provider Catalog
@@ -35,6 +36,8 @@ export interface RedirectRequest {
   readonly referrer?: string | null;
   readonly correlationId?: string | null;
   readonly sessionId?: string | null;
+  /** Visitor address resolved from the trusted proxy (B1); forwarded so Kong rate-limits each visitor separately. */
+  readonly clientAddress?: string | null;
   readonly fetchFn?: typeof fetch;
 }
 
@@ -74,7 +77,7 @@ export async function resolveRedirect(request: RedirectRequest): Promise<Redirec
   }
   if (!upstream.searchParams.has("surface")) upstream.searchParams.set("surface", "PUBLIC_SITE");
 
-  const headers: Record<string, string> = { [CORRELATION_HEADER]: correlationId };
+  const headers: Record<string, string> = { [CORRELATION_HEADER]: correlationId, ...forwardedFor(request.clientAddress) };
   if (request.userAgent) headers["user-agent"] = request.userAgent;
   if (request.referrer) headers["referer"] = request.referrer;
   if (request.sessionId) headers["x-session-id"] = request.sessionId;

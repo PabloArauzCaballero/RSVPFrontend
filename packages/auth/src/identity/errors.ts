@@ -21,6 +21,11 @@ export function classifyAuthError(error: unknown): AuthFailure {
   return error instanceof TypeError ? "offline" : "unknown";
 }
 
+/** Identity answered 422 on `token`: the e-mail link is unknown, already used or expired. */
+export function isInvalidLink(error: unknown): boolean {
+  return error instanceof ApiError && error.status === STATUS_INVALID && "token" in fieldErrorsOf(error);
+}
+
 /** Field-level messages from an Identity 422 problem (`errors[]`), keyed by field. */
 export function fieldErrorsOf(error: unknown): Readonly<Record<string, string>> {
   if (!(error instanceof ApiError)) return {};

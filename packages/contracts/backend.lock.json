@@ -1,0 +1,41 @@
+{
+  "$comment": "Backend commit whose OpenAPI specs are vendored in specs/. It must be the backend deployed with this frontend. Change it only with: yarn workspace @rsvp/contracts generate --ref <sha|branch|tag> (see README.md).",
+  "repository": "PabloArauzCaballero/RSVPBackend",
+  "path": "packages/contracts-openapi/specs",
+  "ref": "efa44382bfe85580256189d2392d9dfa1f375e72",
+  "refName": "fix/f2-contratos-backend (RSVPBackend PR #41): the API deployed in TEST (chore/deploy-contabo-coolify 4dc9d46) with the F2 contract corrections; repin to the merge commit once #41 is merged",
+  "specs": {
+    "celebration": {
+      "version": "1.2.1",
+      "sha256": "8d5c53f71a9e0659e385e26a7895c096fe67860a33c9a4099bec6947074bb702"
+    },
+    "gateway": {
+      "version": "1.0.0",
+      "sha256": "1307c08dc3ff407e77cb4a56b7f60a699ea42fcd898232825f213a40205486a5"
+    },
+    "gift-list": {
+      "version": "1.8.1",
+      "sha256": "f0164b4e4fd671f76e686745655f3af3251c0cba51269d4eec48eb022486f4db"
+    },
+    "guest-rsvp": {
+      "version": "1.10.0",
+      "sha256": "710b597811d7b858d37e551a0dbb4a86644b43d2679fef66cc59177a26a133ef"
+    },
+    "identity": {
+      "version": "1.1.0",
+      "sha256": "32a28c1ce1dce3b1717d36b61e28d1cc700f4d03dbf86503db90adecaa16835d"
+    },
+    "notification": {
+      "version": "1.5.0",
+      "sha256": "670dd80c6c1e7fd0492ee69122e6ed7868da17328e7857fe5931428405670a39"
+    },
+    "provider-catalog": {
+      "version": "2.4.1",
+      "sha256": "10e600661fea3616a6a25e1f69aa6fba3c7f75fa9d36fc6d49f6e59566b53ebd"
+    },
+    "template-media": {
+      "version": "1.0.0",
+      "sha256": "84f42a8849c3b34ee225ce52e2b42ce2ea04e310befc3be22dab64de479d8360"
+    }
+  }
+}
