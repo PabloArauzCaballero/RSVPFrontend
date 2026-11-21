@@ -9,3 +9,4 @@ export * from "./policy.js";
 export * from "./invalidation.js";
 export * from "./media/upload.js";
 export * from "./place-search.js";
+export * from "./session-scope.js";
