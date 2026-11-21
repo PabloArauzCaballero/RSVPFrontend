@@ -165,7 +165,7 @@ describe("REQ-F16 · host guest surface on /guests/celebrations/{id}/…", () =>
     const { client, calls, wrapper, queryClient } = setup((call) => (call.method === "DELETE" ? { status: 204 } : { status: 201, body: { token: TOKEN, expiresAt: "2026-12-30T00:00:00Z" } }));
     const issue = renderHook(() => useIssueGuestToken(client, CELEBRATION), { wrapper });
     const revoke = renderHook(() => useRevokeGuestToken(client, CELEBRATION), { wrapper });
-    await act(async () => { await issue.result.current.mutateAsync("g-1"); await revoke.result.current.mutateAsync("g-1"); });
+    await act(async () => { await issue.result.current.mutateAsync({ guestId: "g-1" }); await revoke.result.current.mutateAsync("g-1"); });
     expect(calls.map((call) => `${call.method} ${call.path}`)).toEqual([`POST /guests/celebrations/${CELEBRATION}/guests/g-1/access-token`, `DELETE /guests/celebrations/${CELEBRATION}/guests/g-1/access-token`]);
     expect(JSON.stringify(queryClient.getQueryCache().getAll().map((query) => query.state.data))).not.toContain(TOKEN);
   });
