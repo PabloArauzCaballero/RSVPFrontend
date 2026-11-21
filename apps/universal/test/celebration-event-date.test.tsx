@@ -8,7 +8,8 @@ import { baseHandlers, CELEBRATION, fakeClient, HOST, HttpFailure, pickOnboardin
 const NOW = "2026-11-20T03:00:00Z";
 const PAST_DATE = "2026-11-18";
 const TODAY = "2026-11-19";
-const FUTURE_ERROR = "Elige una fecha y hora futuras.";
+const FUTURE_ERROR = "Elige una fecha válida.";
+const LEGACY_DATE_ERROR = "The event date and time must be in the future";
 const DATE_PROBLEM = { code: "EVENT_DATE_NOT_IN_FUTURE", field: "content.eventDate" };
 
 beforeEach(() => {
@@ -30,6 +31,18 @@ function field(testId: string): HTMLInputElement {
 
 function change(testId: string, value: string): void {
   fireEvent.change(field(testId), { target: { value } });
+}
+
+async function expectDateFieldError(message: string): Promise<void> {
+  const date = screen.getByTestId("field-event-date");
+  const hint = await screen.findByText(message);
+  const descriptionId = date.getAttribute("aria-describedby");
+  expect(descriptionId && document.getElementById(descriptionId)?.contains(hint)).toBe(true);
+  expect(date.parentElement?.contains(hint)).toBe(true);
+  expect(date.compareDocumentPosition(hint) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(date.getAttribute("aria-invalid")).toBe("true");
+  expect(screen.getAllByText(message)).toHaveLength(1);
+  expect(screen.queryByText(new RegExp(LEGACY_DATE_ERROR))).toBeNull();
 }
 
 async function openDateStep(): Promise<void> {
@@ -133,7 +146,7 @@ it("REQ-F11-02 · blocks a reschedule that expires before saving, then saves a f
   pickOnboardingDate("2026-11-20", "field-event-date");
   vi.setSystemTime(new Date("2026-11-20T23:00:01Z"));
   fireEvent.click(screen.getByTestId("save-content"));
-  expect(await screen.findByText(FUTURE_ERROR)).toBeTruthy();
+  await expectDateFieldError(FUTURE_ERROR);
   expect(calls.some(({ method }) => method === "PATCH")).toBe(false);
 
   pickOnboardingDate("2026-11-21", "field-event-date");
@@ -162,20 +175,21 @@ it("REQ-F11-02 · can update other fields without resending a stored historical 
 });
 
 it.each([
-  ["EVENT_DATE_NOT_IN_FUTURE", "Choose a date and time in the future."],
-  ["INVALID_EVENT_DATE", "Choose the date."]
-])("REQ-F11-02 · links a translated %s from the backend to the date field", async (code, message) => {
+  { status: 422, problem: DATE_PROBLEM, locale: "en-US", message: "Choose a valid date.", reschedule: true },
+  { status: 422, problem: { ...DATE_PROBLEM, code: "INVALID_EVENT_DATE" }, locale: "en-US", message: "Choose a valid date.", reschedule: true },
+  { status: 422, problem: { title: LEGACY_DATE_ERROR }, locale: "es-BO", message: FUTURE_ERROR, reschedule: true },
+  { status: 400, problem: { title: LEGACY_DATE_ERROR }, locale: "es-BO", message: FUTURE_ERROR, reschedule: false }
+] as const)("REQ-F11-02 · shows a $status date rejection below the date field in $locale", async ({ status, problem, locale, message, reschedule }) => {
   const { client } = fakeClient({
-    ...baseHandlers(), "PATCH /celebrations/c-1": () => new HttpFailure(422, { ...DATE_PROBLEM, code })
+    ...baseHandlers(), "PATCH /celebrations/c-1": () => new HttpFailure(status, problem)
   });
-  renderApp(<ContentEditorScreen section="general" celebrationId="c-1" onNavigate={vi.fn()} />, client, HOST, "en-US");
+  renderApp(<ContentEditorScreen section="general" celebrationId="c-1" onNavigate={vi.fn()} />, client, HOST, locale);
   await screen.findByTestId("field-event-date");
-  change("field-title", "Updated wedding");
-  pickOnboardingDate("2026-11-21", "field-event-date");
+  change("field-title", "Boda de Ana y Luis");
+  if (reschedule) pickOnboardingDate("2026-11-21", "field-event-date");
   fireEvent.click(screen.getByTestId("save-content"));
-  expect(await screen.findByText(message)).toBeTruthy();
-  expect(field("field-event-date").getAttribute("aria-invalid")).toBe("true");
-  expect(field("field-title").value).toBe("Updated wedding");
-  pickOnboardingDate("2026-11-22", "field-event-date");
+  await expectDateFieldError(message);
+  expect(field("field-title").value).toBe("Boda de Ana y Luis");
+  pickOnboardingDate(reschedule ? "2026-11-22" : "2026-12-20", "field-event-date");
   expect(screen.queryByText(message)).toBeNull();
 });

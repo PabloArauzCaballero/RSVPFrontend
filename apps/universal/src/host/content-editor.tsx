@@ -181,13 +181,14 @@ function Editor({ loaded, section, saved, onSaved, onNavigate }: { readonly load
   const pastDate = datePassed();
   const serverDateError = eventDateErrorKey(mutation.error);
   const submittedDate = mutation.variables?.patch.content?.["eventDate"];
-  const currentDateError = date.ok && submittedDate === date.value ? serverDateError : null;
-  const dateErrorKey = currentDateError ?? (pastDate ? "host.onboarding.dateInFuture" : null);
+  const dateMatchesSubmission = submittedDate === undefined ? unchangedDate : date.ok && submittedDate === date.value;
+  const currentDateError = dateMatchesSubmission ? serverDateError : null;
+  const dateErrorKey = currentDateError ?? (pastDate ? "host.onboarding.dateRejected" : null);
   const states = sectionStates({ draft, eventDate, schedule, eventType, invalidEventDate: !date.ok || Boolean(dateErrorKey) });
   const today = eventCalendarDay(celebration.timeZone);
   const setDatePart = (part: "date" | "time", value: string): void => {
     if (serverDateError) mutation.reset();
-    if (invalid === t("host.onboarding.dateInFuture")) setInvalid(null);
+    if (invalid === t("host.onboarding.dateRejected")) setInvalid(null);
     setEventDate((current) => ({ ...current, [part]: value }));
   };
 
@@ -198,7 +199,7 @@ function Editor({ loaded, section, saved, onSaved, onNavigate }: { readonly load
     if (mapLinkProblem(text("venueMapUrl"))) return { ok: false, message: t("host.location.linkInvalid") };
     if (contentOverLimit(draft, schedule, extraFields(eventType)) > 0) return { ok: false, message: t("host.limits.fieldsTooLong") };
     if (!date.ok) return { ok: false, message: t(isCalendarDate(eventDate.date.trim()) ? "host.onboarding.timeInvalid" : "host.onboarding.dateInvalid") };
-    if (hasPassed) return { ok: false, message: t("host.onboarding.dateInFuture") };
+    if (hasPassed) return { ok: false, message: t("host.onboarding.dateRejected") };
     if (!items.ok) return { ok: false, message: t("host.common.invalid", { detail: t("host.editor.schedule.item", { n: items.index + 1 }) }) };
     const unchangedSchedule = JSON.stringify(scheduleDraft(celebration)) === JSON.stringify(schedule);
     const compacted = Object.fromEntries(Object.entries(REQUIRED_ROW_FIELD).filter(([key]) => Array.isArray(draft[key])).map(([key, required]) => [key, compact(rows(draft[key], ROW_KEYS[key] ?? []), required)]));
