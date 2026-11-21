@@ -39,10 +39,23 @@ export const esBO = {
     plannerOnly: "Solo las cuentas de organizador de eventos pueden crear organizaciones.",
     listTitle: "Tus organizaciones", empty: "Todavía no perteneces a ninguna organización.", open: "Ver {{name}}", owner: "Propietario", retry: "Reintentar",
     membersTitle: "Miembros de {{name}}", noMembers: "Aún no hay miembros.", memberHost: "Anfitrión", memberPlanner: "Organizador de eventos",
-    addTitle: "Agregar un miembro", emailLabel: "Correo de la cuenta", emailHelp: "La persona ya debe tener una cuenta en DOne.", roleLabel: "Rol en la organización", add: "Agregar miembro", adding: "Agregando…", added: "Miembro agregado.",
-    ownerOnly: "Solo el propietario puede agregar miembros.",
-    validation: { nameRequired: "Escribe un nombre para la organización.", nameTooLong: "El nombre admite hasta 120 caracteres.", emailRequired: "Escribe el correo de la cuenta.", emailInvalid: "Escribe un correo válido, por ejemplo nombre@correo.com." },
-    errors: { cannotAdd: "No pudimos agregar ese correo. Revisa que esté bien escrito y que la persona ya tenga una cuenta en DOne.", notFound: "No encontramos esta organización. Actualiza la lista e inténtalo de nuevo.", conflict: "Esa persona ya es miembro de esta organización.", forbidden: "No tienes permiso para esta acción en esta organización." }
+    addTitle: "Invitar a una persona", emailLabel: "Correo de la persona", emailHelp: "Le llega una invitación por correo. Entra al equipo solo si la acepta; si aún no tiene cuenta, puede crearla desde el correo.", roleLabel: "Rol en la organización", add: "Enviar invitación", adding: "Enviando…", added: "Invitación enviada a {{email}}. Entra al equipo cuando la acepte.",
+    ownerOnly: "Solo el propietario puede invitar a otras personas.",
+    pendingTitle: "Invitaciones pendientes", pendingEmpty: "No hay invitaciones pendientes.", pendingRole: "{{role}} · vence el {{date}}", revoke: "Retirar", revoking: "Retirando…", revokeLabel: "Retirar la invitación de {{email}}", revoked: "Invitación retirada. El enlace ya no funciona.",
+    myInvitations: "Ver las invitaciones que recibí",
+    validation: { nameRequired: "Escribe un nombre para la organización.", nameTooLong: "El nombre admite hasta 120 caracteres.", emailRequired: "Escribe el correo de la persona.", emailInvalid: "Escribe un correo válido, por ejemplo nombre@correo.com." },
+    errors: { notFound: "No encontramos esta organización. Actualiza la lista e inténtalo de nuevo.", conflict: "No se pudo invitar: esa persona ya es miembro, o la organización tiene demasiadas invitaciones pendientes. Retira alguna y vuelve a intentarlo.", forbidden: "No tienes permiso para esta acción en esta organización.", revokeGone: "Esa invitación ya no estaba pendiente. Actualizamos la lista." },
+    inbox: {
+      title: "Invitaciones", intro: "Aquí ves las organizaciones que te invitaron. Solo entras si aceptas.", empty: "No tienes invitaciones pendientes.",
+      unverified: "Verifica tu correo para ver aquí tus invitaciones. Mientras tanto, puedes responder desde el enlace que te llegó por correo.",
+      card: "{{organization}} te invita como {{role}}.", expires: "Vence el {{date}}.",
+      fromLinkTitle: "Te invitaron a una organización", fromLinkBody: "Acepta para unirte al equipo, o rechaza la invitación.",
+      accept: "Aceptar", accepting: "Aceptando…", decline: "Rechazar", declining: "Rechazando…",
+      acceptLabel: "Aceptar la invitación de {{organization}}", declineLabel: "Rechazar la invitación de {{organization}}", thisOrganization: "esta organización",
+      confirmDeclineTitle: "¿Rechazar la invitación?", confirmDeclineBody: "No podrás aceptarla después. Si cambias de idea, pide una invitación nueva.",
+      accepted: "Listo, ya eres parte del equipo.", declined: "Rechazaste la invitación.", goToTeams: "Ver mis organizaciones",
+      errors: { notFound: "Esta invitación ya no está disponible: venció, ya fue respondida o es para otra cuenta. Entra con la cuenta del correo invitado.", forbidden: "Para responder, abre el enlace del correo de la invitación o verifica tu correo.", conflict: "Ya perteneces a esta organización." }
+    }
   },
   theme: {
     title: "Apariencia", label: "Tema de la app", darkMode: "Modo oscuro", system: "Sistema", light: "Claro", dark: "Oscuro",

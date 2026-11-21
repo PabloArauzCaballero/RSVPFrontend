@@ -39,10 +39,23 @@ export const enUS = {
     plannerOnly: "Only event planner accounts can create organizations.",
     listTitle: "Your organizations", empty: "You do not belong to any organization yet.", open: "View {{name}}", owner: "Owner", retry: "Retry",
     membersTitle: "Members of {{name}}", noMembers: "No members yet.", memberHost: "Host", memberPlanner: "Event planner",
-    addTitle: "Add a member", emailLabel: "Account email", emailHelp: "The person must already have a DOne account.", roleLabel: "Role in the organization", add: "Add member", adding: "Adding…", added: "Member added.",
-    ownerOnly: "Only the owner can add members.",
-    validation: { nameRequired: "Enter a name for the organization.", nameTooLong: "The name can have up to 120 characters.", emailRequired: "Enter the account email.", emailInvalid: "Enter a valid email, for example name@mail.com." },
-    errors: { cannotAdd: "We could not add that email. Check it is spelled correctly and that the person already has a DOne account.", notFound: "We could not find this organization. Refresh the list and try again.", conflict: "That person is already a member of this organization.", forbidden: "You do not have permission for this action in this organization." }
+    addTitle: "Invite someone", emailLabel: "Their email", emailHelp: "They get an invitation by email and join only if they accept. If they have no account yet, they can create one from the email.", roleLabel: "Role in the organization", add: "Send invitation", adding: "Sending…", added: "Invitation sent to {{email}}. They join once they accept.",
+    ownerOnly: "Only the owner can invite people.",
+    pendingTitle: "Pending invitations", pendingEmpty: "No pending invitations.", pendingRole: "{{role}} · expires {{date}}", revoke: "Withdraw", revoking: "Withdrawing…", revokeLabel: "Withdraw the invitation to {{email}}", revoked: "Invitation withdrawn. The link no longer works.",
+    myInvitations: "See the invitations I received",
+    validation: { nameRequired: "Enter a name for the organization.", nameTooLong: "The name can have up to 120 characters.", emailRequired: "Enter their email.", emailInvalid: "Enter a valid email, for example name@mail.com." },
+    errors: { notFound: "We could not find this organization. Refresh the list and try again.", conflict: "We could not invite them: that person is already a member, or the organization has too many pending invitations. Withdraw some and try again.", forbidden: "You do not have permission for this action in this organization.", revokeGone: "That invitation was no longer pending. We refreshed the list." },
+    inbox: {
+      title: "Invitations", intro: "Organizations that invited you appear here. You only join if you accept.", empty: "You have no pending invitations.",
+      unverified: "Verify your email to see your invitations here. Meanwhile, you can answer from the link we emailed you.",
+      card: "{{organization}} invites you as {{role}}.", expires: "Expires {{date}}.",
+      fromLinkTitle: "You were invited to an organization", fromLinkBody: "Accept to join the team, or decline the invitation.",
+      accept: "Accept", accepting: "Accepting…", decline: "Decline", declining: "Declining…",
+      acceptLabel: "Accept the invitation from {{organization}}", declineLabel: "Decline the invitation from {{organization}}", thisOrganization: "this organization",
+      confirmDeclineTitle: "Decline the invitation?", confirmDeclineBody: "You will not be able to accept it later. If you change your mind, ask for a new invitation.",
+      accepted: "Done, you are part of the team.", declined: "You declined the invitation.", goToTeams: "See my organizations",
+      errors: { notFound: "This invitation is no longer available: it expired, was already answered or is for another account. Sign in with the invited email's account.", forbidden: "To answer, open the link in the invitation email or verify your email.", conflict: "You already belong to this organization." }
+    }
   },
   theme: {
     title: "Appearance", label: "App theme", darkMode: "Dark mode", system: "System", light: "Light", dark: "Dark",
