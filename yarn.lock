@@ -4565,6 +4565,7 @@ __metadata:
     "@rsvp/forms": "workspace:*"
     "@rsvp/i18n": "workspace:*"
     "@rsvp/query-hooks": "workspace:*"
+    "@rsvp/telemetry": "workspace:*"
     "@rsvp/testing": "workspace:*"
     "@rsvp/ui-web": "workspace:*"
     "@tanstack/react-query": "npm:^5.66.0"
@@ -4587,7 +4588,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rsvp/telemetry@workspace:packages/telemetry":
+"@rsvp/telemetry@workspace:*, @rsvp/telemetry@workspace:packages/telemetry":
   version: 0.0.0-use.local
   resolution: "@rsvp/telemetry@workspace:packages/telemetry"
   dependencies:
@@ -4674,6 +4675,7 @@ __metadata:
     "@rsvp/design-tokens": "workspace:*"
     "@rsvp/i18n": "workspace:*"
     "@rsvp/query-hooks": "workspace:*"
+    "@rsvp/telemetry": "workspace:*"
     "@rsvp/testing": "workspace:*"
     "@rsvp/ui": "workspace:*"
     "@tanstack/react-query": "npm:^5.66.0"
