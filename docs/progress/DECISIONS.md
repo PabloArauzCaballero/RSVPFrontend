@@ -95,3 +95,9 @@
 
 - **El idioma de la persona se lee del sistema con `expo-localization` (`getLocales()`), no de `Intl`.** En iOS, `Intl…resolvedOptions().locale` refleja el idioma del bundle, limitado a las localizaciones que declara la app, y no la preferencia de la persona. `Intl` queda solo como último recurso si el módulo no responde. El orden de REQ-F06-05 se mantiene: elección explícita > preferencia guardada > dispositivo.
 - **La app declara sus idiomas al sistema** (`expo-localization` con `supportedLocales: ["es", "en"]` en `app.config.ts`) para los builds propios: `CFBundleLocalizations` en iOS y `locales_config` en Android. Esta lista tiene que ir a la par de `supportedLocales` de `@rsvp/i18n`.
+
+## División del bundle web por zonas (M13) · 2026-11-21
+
+- **Las zonas `(host)`, `(admin)` y `(provider)` cargan sus pantallas con `lazyScreen(load…Screens, (zone) => zone.X)`** (`src/platform/lazy-screen.tsx`). Cada zona tiene un barril `src/<zona>/screens.ts` que solo se alcanza con `import()` desde `src/<zona>/load.ts`, así Metro emite un chunk por zona que se descarga al abrir su primera ruta. `test/lazy-zones.test.tsx` falla si una ruta de esas zonas importa su pantalla de forma estática o si alguien importa el barril.
+- **Descartado `asyncRoutes` de Expo Router:** parte cada ruta, pero junta todo lo compartido en un `__common` que se carga al inicio (entry 1,13 MB + common 1,06 MB, casi igual que antes) y obliga a tocar `app.config.ts`.
+- Un fallo de descarga del chunk llega al `ErrorBoundary` de la ruta y el reintento vuelve a pedirlo (no se reusa la promesa rechazada de `React.lazy`).
