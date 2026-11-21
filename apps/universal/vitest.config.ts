@@ -41,6 +41,8 @@ export default defineConfig({
       { find: /^expo-notifications$/, replacement: stub("expo-notifications") },
       { find: /^expo-device$/, replacement: stub("expo-device") },
       { find: /^expo-constants$/, replacement: stub("expo-constants") },
+      // Exact module id only: the device's preferred languages, set per test with `setDeviceLocales`.
+      { find: /^expo-localization$/, replacement: stub("expo-localization") },
       // Exact module id only: the real package ships Flow syntax that jsdom cannot parse.
       { find: /^react-native-safe-area-context$/, replacement: stub("react-native-safe-area-context") }
     ]

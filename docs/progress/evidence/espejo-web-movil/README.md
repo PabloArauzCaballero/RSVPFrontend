@@ -256,3 +256,28 @@ Fecha: 2026-11-20 · Rama `fix/app-partner-redirector-origin`.
 Nota fuera de alcance: en dev, el destino `OFFICIAL_SITE` del listing `5b383c88…` redirige a la misma búsqueda de WhatsApp que `WHATSAPP`; es dato del proveedor en el backend, no del enlace.
 
 **Para que dev quede bien:** la imagen `universal` de Coolify debe compilarse con `EXPO_PUBLIC_SITE_URL=https://rsvp-web.161.97.85.216.sslip.io` (variable buildtime) y redeplegarse.
+# Nativo · el idioma del dispositivo (iOS y Android)
+
+Fecha: 2026-11-21 · Rama `fix/app-idioma-dispositivo` (base `chore/deploy-contabo-coolify`).
+
+**Causa raíz (confirmada en simulador):** `deviceLocale()` leía `Intl.DateTimeFormat().resolvedOptions().locale`. En iOS, Hermes devuelve el idioma en que arrancó el *bundle*, elegido entre las localizaciones que la app declara. Expo Go 54.0.7 no declara `CFBundleLocalizations` (solo trae `Base.lproj`, es decir inglés), y un build propio sin esa clave tampoco declararía español. Por eso un iPhone completamente en español abría la app en inglés. En Android, `Intl` sigue el idioma del sistema y no estaba afectado.
+
+**Corrección:** los idiomas preferidos se leen del sistema con `getLocales()` de `expo-localization` (`src/platform/device-languages.ts`), en el orden que la persona eligió; `Intl` queda solo como último recurso. El orden de REQ-F06-05 no cambia: elección explícita > preferencia guardada > dispositivo. Además, `app.config.ts` declara los idiomas de la app (`expo-localization` con `supportedLocales: ["es", "en"]`), así que los builds propios llevan `CFBundleLocalizations` (iOS) y `locales_config` (Android), y Ajustes ofrece el idioma por app.
+
+| Plataforma | Dispositivo | Código anterior | Con la corrección |
+|---|---|---|---|
+| iOS 26.5 · iPhone 17 (Expo Go 54.0.7, simulador borrado antes de cada corrida) | idioma `es-BO`, región `es_BO` | **inglés** ([captura](nativo/idioma-ios-antes-es-bo.png)) | **español** ([directorio](nativo/idioma-ios-despues-es-bo.png), [invitación bilingüe con «Español» marcado](nativo/idioma-ios-despues-invitacion.png)) |
+| iOS 26.5 · iPhone 17 | idioma `es-BO`, región `es_US` | **inglés** ([captura](nativo/idioma-ios-antes-es-us.png)) | — |
+| Android · Pixel 4 (Expo Go SDK 54) | sistema `es-US` | español ([captura](nativo/idioma-android-antes-es-us.png)): no afectado | **español** ([directorio](nativo/idioma-android-despues-es-us.png), [invitación](nativo/idioma-android-despues-invitacion.png)) |
+
+En cada corrida se comprobó, descargando el bundle exacto que pide Expo Go (URL del manifiesto), que la función servida era la esperada (`Intl…` antes, `deviceLanguages()` después). Metro no detectaba ediciones en este worktree y servía bundles en caché, así que cada variante se midió reiniciando Metro con `--clear`.
+
+```
+apps/universal vitest test/device-locale.test.tsx → 8/8 (con el código anterior: 5 fallan, que es lo esperado)
+apps/universal vitest (suite completa)             → 33 archivos, 428 pruebas
+expo config --type introspect                      → ios.infoPlist.CFBundleLocalizations = [es, en]
+```
+
+**Qué cubre Expo Go y qué solo un build propio:** con Expo Go se verificó que `getLocales()` devuelve el idioma del usuario y que la app lo usa, en iOS y Android. Que el sistema muestre la app en Ajustes → Idioma por app, y que el bundle propio declare `es`/`en`, solo se puede observar en un build propio (EAS). Está configurado (introspección), pero no se observó en un dispositivo.
+
+Para arrancar en nativo hizo falta aplicar localmente la corrección de #37 (`motion.native` se importaba a sí mismo). Esa corrección no forma parte de este PR.
