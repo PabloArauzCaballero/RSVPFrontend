@@ -13,7 +13,8 @@
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit",
     "test:coverage": "vitest run --coverage",
-    "test:visual": "playwright test"
+    "test:visual": "playwright test",
+    "web-shell": "WRITE_WEB_SHELL=1 vitest run test/web-shell.test.ts"
   },
   "dependencies": {
     "@expo-google-fonts/geist": "0.4.2",
