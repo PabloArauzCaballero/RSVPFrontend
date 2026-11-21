@@ -2,36 +2,36 @@
   "$comment": "Backend commit whose OpenAPI specs are vendored in specs/. It must be the backend deployed with this frontend. Change it only with: yarn workspace @rsvp/contracts generate --ref <sha|branch|tag> (see README.md).",
   "repository": "PabloArauzCaballero/RSVPBackend",
   "path": "packages/contracts-openapi/specs",
-  "ref": "efa44382bfe85580256189d2392d9dfa1f375e72",
-  "refName": "fix/f2-contratos-backend (RSVPBackend PR #41): the API deployed in TEST (chore/deploy-contabo-coolify 4dc9d46) with the F2 contract corrections; repin to the merge commit once #41 is merged",
+  "ref": "5c779500621cb862f13abd5ed73824ec8d2a6903",
+  "refName": "5c779500621cb862f13abd5ed73824ec8d2a6903",
   "specs": {
     "celebration": {
-      "version": "1.2.1",
-      "sha256": "8d5c53f71a9e0659e385e26a7895c096fe67860a33c9a4099bec6947074bb702"
+      "version": "1.4.0",
+      "sha256": "24224f080788265a788042fa410889bbab6bb42eada65a35bfda8fc1d262c1fa"
     },
     "gateway": {
       "version": "1.0.0",
       "sha256": "1307c08dc3ff407e77cb4a56b7f60a699ea42fcd898232825f213a40205486a5"
     },
     "gift-list": {
-      "version": "1.8.1",
-      "sha256": "f0164b4e4fd671f76e686745655f3af3251c0cba51269d4eec48eb022486f4db"
+      "version": "1.9.0",
+      "sha256": "70351a03b1cd28475b37484a232dcfc251c0748bdb0ad0420a1fe26cf6b3d9d7"
     },
     "guest-rsvp": {
-      "version": "1.10.0",
-      "sha256": "710b597811d7b858d37e551a0dbb4a86644b43d2679fef66cc59177a26a133ef"
+      "version": "1.13.0",
+      "sha256": "532ec48dcd10e0c589c5daa1f2319330d9eef7e918406f35474942fe232ea004"
     },
     "identity": {
-      "version": "1.1.0",
-      "sha256": "32a28c1ce1dce3b1717d36b61e28d1cc700f4d03dbf86503db90adecaa16835d"
+      "version": "1.6.0",
+      "sha256": "2a3f24eec4a867ee3769fe73b0e9e5a51ebf8d8c96fbfcb5be82dbc5b7b4ba26"
     },
     "notification": {
       "version": "1.5.0",
       "sha256": "670dd80c6c1e7fd0492ee69122e6ed7868da17328e7857fe5931428405670a39"
     },
     "provider-catalog": {
-      "version": "2.4.1",
-      "sha256": "10e600661fea3616a6a25e1f69aa6fba3c7f75fa9d36fc6d49f6e59566b53ebd"
+      "version": "2.5.1",
+      "sha256": "c5e8102b0a087cae97d2e25237caa7c1fc85229df75a730de60006e25b14bbf9"
     },
     "template-media": {
       "version": "1.0.0",

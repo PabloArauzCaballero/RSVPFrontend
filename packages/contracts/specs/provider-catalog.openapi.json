@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "RSVP Provider Catalog API",
-    "version": "2.4.1",
-    "description": "2.0.0: real service (port 3005). Paths now include the gateway prefixes (/providers, /r) and /listings; bodies and responses are defined. GET /providers keeps the query contract of RSVPFrontend seo-web (category, city, verified, maxPriceMinor, availableOn, page, pageSize) and adds coverage, near and locale. Errors are RFC 9457 problems. Disclaimer: RSVP brokers contact, it does not deliver the service. 2.1.0 (additive): ProviderCard adds providerId, providerName, destinations, address and hours and GET /providers accepts ?slug=; GET /providers/mine; microsite profile (GET/PUT /providers/{id}/microsite, REQ-F28-02); verification documents with presigned upload to object storage (/providers/{id}/documents...); POST /providers/impressions returns {recorded, ignored}; POST /providers/{id}/quotes accepts anonymous requests only when the deployment enables them (captcha or open mode, with per-address and per-contact caps); GET /listings text search matches any word, accent-insensitively, by title, category or description. 2.2.0 (additive, back office, ADMIN only: 401 without token, 403 to any other role): GET/PUT /providers/admin/categories[/{code}], GET/PUT /providers/admin/geography[/{code}], GET /providers/admin/verification-queue, POST /providers/{providerId}/reject (reason required), POST /providers/{providerId}/suspend now takes {reason} (required when an administrator suspends; the owner may still pause its own provider), GET /providers/admin/moderation and POST /providers/admin/moderation/{id}/approve|reject, GET /providers/admin/metrics/leads, GET /providers/admin/summary. ProviderStatus gains REJECTED (a rejected provider may resubmit). Every decision is audited (actor, time, reason) and emits an outbox event. Inactive categories and cities disappear from the public lists. City coordinates were verified against GeoNames. 2.3.0 (additive): the provider-owned routes of the Nest runtime (/private/*, /catalog/*, /public/products*) and, later in the same version, GET/PUT /providers/{providerId}/notification-settings and the internal GET /internal/v1/providers/{providerId}/notification-profile (that addition did not bump the version; from 2.4.1 the contract version lock in packages/contracts-openapi/versions.lock.json refuses a content change without a version change). 2.4.0 (additive): listing categories and catalog photos. 2.4.1 (correction, no runtime change): removes GET/POST /, POST /{providerId}/verify, POST /{providerId}/listings, GET /{providerId}/calendar, POST /{providerId}/bookings and POST /{providerId}/quotes. The service never served those unprefixed paths (it serves the same operations under /providers/...), and they duplicated seven operationIds (searchProviders, registerProvider, verifyProvider, createListing, getProviderCalendar, requestBooking, requestQuote), which OpenAPI requires to be unique."
+    "version": "2.5.1",
+    "description": "2.0.0: real service (port 3005). Paths now include the gateway prefixes (/providers, /r) and /listings; bodies and responses are defined. GET /providers keeps the query contract of RSVPFrontend seo-web (category, city, verified, maxPriceMinor, availableOn, page, pageSize) and adds coverage, near and locale. Errors are RFC 9457 problems. Disclaimer: RSVP brokers contact, it does not deliver the service. 2.1.0 (additive): ProviderCard adds providerId, providerName, destinations, address and hours and GET /providers accepts ?slug=; GET /providers/mine; microsite profile (GET/PUT /providers/{id}/microsite, REQ-F28-02); verification documents with presigned upload to object storage (/providers/{id}/documents...); POST /providers/impressions returns {recorded, ignored}; POST /providers/{id}/quotes accepts anonymous requests only when the deployment enables them (captcha or open mode, with per-address and per-contact caps); GET /listings text search matches any word, accent-insensitively, by title, category or description. 2.2.0 (additive, back office, ADMIN only: 401 without token, 403 to any other role): GET/PUT /providers/admin/categories[/{code}], GET/PUT /providers/admin/geography[/{code}], GET /providers/admin/verification-queue, POST /providers/{providerId}/reject (reason required), POST /providers/{providerId}/suspend now takes {reason} (required when an administrator suspends; the owner may still pause its own provider), GET /providers/admin/moderation and POST /providers/admin/moderation/{id}/approve|reject, GET /providers/admin/metrics/leads, GET /providers/admin/summary. ProviderStatus gains REJECTED (a rejected provider may resubmit). Every decision is audited (actor, time, reason) and emits an outbox event. Inactive categories and cities disappear from the public lists. City coordinates were verified against GeoNames. 2.3.0 (additive): the provider-owned routes of the Nest runtime (/private/*, /catalog/*, /public/products*) and, later in the same version, GET/PUT /providers/{providerId}/notification-settings and the internal GET /internal/v1/providers/{providerId}/notification-profile (that addition did not bump the version; from 2.4.1 the contract version lock in packages/contracts-openapi/versions.lock.json refuses a content change without a version change). 2.4.0 (additive): listing categories and catalog photos. 2.4.1 (correction, no runtime change): removes GET/POST /, POST /{providerId}/verify, POST /{providerId}/listings, GET /{providerId}/calendar, POST /{providerId}/bookings and POST /{providerId}/quotes. The service never served those unprefixed paths (it serves the same operations under /providers/...), and they duplicated seven operationIds (searchProviders, registerProvider, verifyProvider, createListing, getProviderCalendar, requestBooking, requestQuote), which OpenAPI requires to be unique. 2.5.0 (B11, additive): the provider's quote inbox. GET /providers/{providerId}/quotes (newest first, keyset cursor) and GET /providers/{providerId}/quotes/{quoteId} with the contact the requester gave. Owner with the PROVIDER role only (administrators and other providers get 403), under the provider's row-level scope. 2.5.1 (correction, no runtime change): the /private/*, /catalog/* and /public/products* operations declare their own server http://localhost:8000/providers. The service has always served them under /providers (Nest controllers providers/private, providers/catalog and providers/public/products), and the gateway reaches them there; resolved against the global server they pointed to paths that answer 404. Path keys and operationIds are unchanged, so generated clients keep their types and only the base URL of these 18 operations moves."
   },
   "servers": [
     {
@@ -1568,6 +1568,74 @@
           {}
         ],
         "description": "Decision (DECISIONS.md 2026-11-05): quotes may be anonymous only when PROVIDER_ANON_QUOTES is `captcha` (default when a captcha verifier is configured) or `open` (local development). Anonymous requests need contact.email, are limited to 5 per hour per client address (429 + Retry-After) and 3 per day per contact e-mail and provider (429 QUOTE_LIMIT_REACHED), reject a filled honeypot `website` (422 QUOTE_REJECTED) and, in captcha mode, a valid captchaToken (403 CAPTCHA_FAILED). With mode `off` (default without a verifier) anonymous requests answer 401 ANONYMOUS_QUOTES_DISABLED. Date requests (bookings) always require an account."
+      },
+      "get": {
+        "operationId": "listProviderQuotes",
+        "summary": "Quote requests received by the provider (owner only), newest first",
+        "tags": [
+          "provider-catalog"
+        ],
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            },
+            "description": "nextCursor of the previous page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of the quote inbox",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderQuotePage"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/listings": {
@@ -3503,7 +3571,13 @@
             "description": "One optional UUID, echoed unchanged if valid or generated if absent. Invalid or duplicate header values return 422 after access control with a fresh UUID; correlation conveys no authority."
           }
         ]
-      }
+      },
+      "servers": [
+        {
+          "url": "http://localhost:8000/providers",
+          "description": "Gateway: the service serves these operations under /providers"
+        }
+      ]
     },
     "/private/providers/{providerId}": {
       "get": {
@@ -4002,7 +4076,13 @@
             }
           }
         }
-      }
+      },
+      "servers": [
+        {
+          "url": "http://localhost:8000/providers",
+          "description": "Gateway: the service serves these operations under /providers"
+        }
+      ]
     },
     "/private/providers/{providerId}/verification": {
       "get": {
@@ -4501,7 +4581,13 @@
             }
           }
         }
-      }
+      },
+      "servers": [
+        {
+          "url": "http://localhost:8000/providers",
+          "description": "Gateway: the service serves these operations under /providers"
+        }
+      ]
     },
     "/private/providers/{providerId}/verification-requests": {
       "post": {
@@ -4986,7 +5072,13 @@
             }
           }
         }
-      }
+      },
+      "servers": [
+        {
+          "url": "http://localhost:8000/providers",
+          "description": "Gateway: the service serves these operations under /providers"
+        }
+      ]
     },
     "/private/admin/providers/{providerId}": {
       "get": {
@@ -5485,7 +5577,13 @@
             }
           }
         }
-      }
+      },
+      "servers": [
+        {
+          "url": "http://localhost:8000/providers",
+          "description": "Gateway: the service serves these operations under /providers"
+        }
+      ]
     },
     "/private/admin/providers/{providerId}/verify": {
       "post": {
@@ -5970,7 +6068,13 @@
             }
           }
         }
-      }
+      },
+      "servers": [
+        {
+          "url": "http://localhost:8000/providers",
+          "description": "Gateway: the service serves these operations under /providers"
+        }
+      ]
     },
     "/private/admin/providers/{providerId}/suspend": {
       "post": {
@@ -6455,7 +6559,13 @@
             }
           }
         }
-      }
+      },
+      "servers": [
+        {
+          "url": "http://localhost:8000/providers",
+          "description": "Gateway: the service serves these operations under /providers"
+        }
+      ]
     },
     "/catalog/reference": {
       "get": {
@@ -6694,7 +6804,13 @@
             }
           }
         }
-      }
+      },
+      "servers": [
+        {
+          "url": "http://localhost:8000/providers",
+          "description": "Gateway: the service serves these operations under /providers"
+        }
+      ]
     },
     "/private/providers/{providerId}/listings": {
       "post": {
@@ -7142,7 +7258,13 @@
             }
           }
         }
-      }
+      },
+      "servers": [
+        {
+          "url": "http://localhost:8000/providers",
+          "description": "Gateway: the service serves these operations under /providers"
+        }
+      ]
     },
     "/private/providers/{providerId}/listings/{listingId}": {
       "get": {
@@ -7615,7 +7737,13 @@
             }
           }
         }
-      }
+      },
+      "servers": [
+        {
+          "url": "http://localhost:8000/providers",
+          "description": "Gateway: the service serves these operations under /providers"
+        }
+      ]
     },
     "/catalog/listings": {
       "get": {
@@ -7926,7 +8054,13 @@
             }
           }
         }
-      }
+      },
+      "servers": [
+        {
+          "url": "http://localhost:8000/providers",
+          "description": "Gateway: the service serves these operations under /providers"
+        }
+      ]
     },
     "/catalog/listings/{listingId}": {
       "get": {
@@ -8243,7 +8377,13 @@
             }
           }
         }
-      }
+      },
+      "servers": [
+        {
+          "url": "http://localhost:8000/providers",
+          "description": "Gateway: the service serves these operations under /providers"
+        }
+      ]
     },
     "/catalog/nearby-listings": {
       "get": {
@@ -8580,7 +8720,13 @@
             }
           }
         }
-      }
+      },
+      "servers": [
+        {
+          "url": "http://localhost:8000/providers",
+          "description": "Gateway: the service serves these operations under /providers"
+        }
+      ]
     },
     "/private/providers/{providerId}/products": {
       "post": {
@@ -8917,7 +9063,13 @@
             }
           }
         }
-      }
+      },
+      "servers": [
+        {
+          "url": "http://localhost:8000/providers",
+          "description": "Gateway: the service serves these operations under /providers"
+        }
+      ]
     },
     "/private/providers/{providerId}/products/{productListingId}": {
       "get": {
@@ -9322,7 +9474,13 @@
             }
           }
         }
-      }
+      },
+      "servers": [
+        {
+          "url": "http://localhost:8000/providers",
+          "description": "Gateway: the service serves these operations under /providers"
+        }
+      ]
     },
     "/public/products": {
       "get": {
@@ -9606,7 +9764,13 @@
             }
           }
         }
-      }
+      },
+      "servers": [
+        {
+          "url": "http://localhost:8000/providers",
+          "description": "Gateway: the service serves these operations under /providers"
+        }
+      ]
     },
     "/public/products/{productListingId}": {
       "get": {
@@ -9879,7 +10043,13 @@
             }
           }
         }
-      }
+      },
+      "servers": [
+        {
+          "url": "http://localhost:8000/providers",
+          "description": "Gateway: the service serves these operations under /providers"
+        }
+      ]
     },
     "/public/products/availability": {
       "post": {
@@ -10088,7 +10258,13 @@
             }
           }
         }
-      }
+      },
+      "servers": [
+        {
+          "url": "http://localhost:8000/providers",
+          "description": "Gateway: the service serves these operations under /providers"
+        }
+      ]
     },
     "/providers/{providerId}/notification-settings": {
       "get": {
@@ -10232,6 +10408,61 @@
             }
           }
         ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/providers/{providerId}/quotes/{quoteId}": {
+      "get": {
+        "operationId": "getProviderQuote",
+        "summary": "One quote request with the requester's contact (owner only)",
+        "tags": [
+          "provider-catalog"
+        ],
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "quoteId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Quote request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderQuote"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        },
         "security": [
           {
             "bearerAuth": []
@@ -16945,6 +17176,264 @@
           },
           "timeZone": {
             "type": "string"
+          }
+        }
+      },
+      "ProviderQuoteSummary": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "providerId",
+          "status",
+          "eventDate",
+          "guestCount",
+          "budget",
+          "eventCity",
+          "listingIds",
+          "locale",
+          "contactName",
+          "hasMessage",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "providerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "REQUESTED"
+            ]
+          },
+          "eventDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "guestCount": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "budget": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "amountMinor",
+                  "currency"
+                ],
+                "properties": {
+                  "amountMinor": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "currency": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{3}$"
+                  }
+                }
+              }
+            ]
+          },
+          "eventCity": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "listingIds": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "locale": {
+            "type": "string"
+          },
+          "contactName": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "hasMessage": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ProviderQuote": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "providerId",
+          "status",
+          "eventDate",
+          "guestCount",
+          "budget",
+          "eventCity",
+          "listingIds",
+          "locale",
+          "contactName",
+          "hasMessage",
+          "createdAt",
+          "contact",
+          "message",
+          "leadId"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "providerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "REQUESTED"
+            ]
+          },
+          "eventDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "guestCount": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "budget": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "amountMinor",
+                  "currency"
+                ],
+                "properties": {
+                  "amountMinor": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "currency": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{3}$"
+                  }
+                }
+              }
+            ]
+          },
+          "eventCity": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "listingIds": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "locale": {
+            "type": "string"
+          },
+          "contactName": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "hasMessage": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "contact": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "email",
+              "phone"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 120
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "phone": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000
+          },
+          "leadId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "format": "uuid"
+              }
+            ]
+          }
+        }
+      },
+      "ProviderQuotePage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProviderQuoteSummary"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       }
