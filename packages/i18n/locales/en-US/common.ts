@@ -1,11 +1,13 @@
 export const enUS = {
   common: { loading: "Loading…", retry: "Try again", cancel: "Cancel", save: "Save", signOut: "Sign out", more: "More", close: "Close", empty: "There are no results." },
   auth: {
+    signOut: { title: "Are you sure you want to sign out?", body: "You can cancel to stay signed in." },
+    restoreUnavailable: { title: "We couldn't restore your session", body: "Check your connection and try again. You don't need to sign out.", retry: "Try again" },
     email: "Email", password: "Password", signIn: "Sign in", register: "Create my account", forgotPassword: "I forgot my password",
     signInTitle: "Sign in to DOne", signInIntro: "Pick up your invitation or your services where you left them.",
     registerTitle: "Create your account", registerIntro: "Tell us what you will do and you are in within a minute.",
     recoverTitle: "Reset your password", recoverIntro: "Type your email and we will send you the instructions.",
-    recoverSend: "Send instructions", recoverSent: "Done. If there is an account with that email, the instructions are on their way.",
+    recoverSend: "Send instructions", recoverSent: "All set. If there is an account with that email, the instructions are on their way.",
     signingIn: "Signing in…", creating: "Creating your account…",
     backToSignIn: "Back to sign in", noAccount: "No account yet?", haveAccount: "Already have an account?",
     role: "What will you do on DOne?", roleHost: "I am organizing a celebration", roleHostHint: "I create my invitation and see who is coming.", roleProvider: "I offer services", roleProviderHint: "I get requests from people who organize.", rolePlanner: "I help organize", rolePlannerHint: "I run celebrations for other people.",
@@ -24,7 +26,7 @@ export const enUS = {
   stubs: { host: { title: "Host dashboard", description: "Manage your celebration from one place." }, provider: { title: "Provider portal", description: "Review and answer your requests." }, guest: { title: "Your invitation", description: "Confirm your attendance and see the details." } },
   ui: {
     partnerDisclaimer: "Sponsored link: opening it takes you out of DOne. DOne connects you, but does not provide or guarantee the provider's service.", action: "Action", loading: "Loading…", empty: "No information available.", genericError: "The action could not be completed.", close: "Close", emptyTable: "No records.", chooseFile: "Choose file", dismiss: "Dismiss notice", moreOptions: "More options",
-    datePlaceholder: "YYYY-MM-DD", confirmChange: "Confirm change", cancel: "Cancel",
+    datePlaceholder: "Choose a date", datePreviousMonth: "Previous month", dateNextMonth: "Next month", dateToday: "Today", dateClear: "Clear date", timePlaceholder: "Choose a time", timeAm: "AM", timePm: "PM", timeHour: "Hour", timeMinute: "Minutes", timePeriod: "AM or PM", timeDone: "Done", timeClear: "Clear", confirmChange: "Confirm change", cancel: "Cancel",
     catalogTitle: "Component catalog", catalogIntro: "Each block is a state. Same tokens in light and dark.", catalogActions: "Actions", catalogState: "State:", catalogSave: "Save", catalogBlocked: "Blocked",
     catalogOpenDialog: "Open dialog", catalogOpenPanel: "Open panel", catalogName: "Name", catalogNamePlaceholder: "Type your name", catalogNameError: "Type your full name.", catalogOption: "Option", catalogOptionOne: "Option one", catalogOptionTwo: "Option two", catalogOptionError: "Choose an option.",
     catalogTerms: "I accept the terms", catalogTermsError: "You must accept.", catalogDate: "Date", catalogAttachment: "Attachment", catalogCard: "Card content", catalogRowName: "Invitation", catalogRowStatus: "Active", catalogColName: "Name", catalogColStatus: "Status",

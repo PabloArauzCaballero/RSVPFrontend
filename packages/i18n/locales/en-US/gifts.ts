@@ -6,16 +6,18 @@ export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
   meta: { title: "Gifts · {{name}}", description: "Choose a gift for {{name}}. Products from our partners come first." },
   title: "Gift list",
   intro: "Pick what to give. Reserving a gift keeps someone else from giving the same one.",
+  backToRsvp: "Back to my response",
   back: "Back to the celebration",
   loading: "Loading gifts…",
-  filters: { label: "Filter gifts", maxPrice: "Maximum price", source: "Source", sourceAll: "All", sourcePartner: "From our partners", sourceOther: "Other stores", onlyAvailable: "Available only", clear: "Clear filters", count: "{{count}} gifts" },
+  filters: { label: "Filter gifts", maxPrice: "Maximum price", source: "Source", sourceAll: "All", sourcePartner: "From our partners", sourceOther: "Other stores", onlyAvailable: "Available only", clear: "Clear filters", count_one: "{{count}} gift", count_other: "{{count}} gifts" },
   group: { partner: "Products from our partners", other: "More ideas from the hosts" },
   status: { AVAILABLE: "Available", PENDING_REVIEW: "Awaiting approval", COMMITTED: "Already reserved" },
   price: "Price",
-  card: { reservedBy: "Reserved by {{name}}", open: "See details of {{title}}", reserve: "Reserve", reserveFor: "Reserve {{title}}", viaPartner: "See at the partner's store", viaOther: "See at the store" },
-  detail: { title: "{{title}} · Gifts", back: "Back to the list", notFound: "This gift is no longer on the list.", partnerNote: "A DOne partner offers this product. Opening the link takes you out of DOne." },
+  card: { photo: "Photo of {{title}}", reservedBy: "Reserved by {{name}}", open: "See details of {{title}}", reserve: "Reserve", reserveFor: "Reserve {{title}}", viaPartner: "See at the partner's store", viaOther: "See at the store" },
+  detail: { title: "{{title}} · Gifts", back: "Back to the list", notFound: "This gift is no longer on the list.", notFoundBody: "The hosts may have removed it. The full list is still open to you.", partnerNote: "A DOne partner offers this product. Opening the link takes you out of DOne." },
   reserve: { title: "Reserve this gift", intro: "We ask for your name so the hosts know who is giving it.", name: "Your name", nameHelp: "Optional. The hosts will see this name next to your reservation.", message: "Message for the hosts", messageHelp: "Optional, up to 500 characters.", submit: "Reserve gift", submitting: "Reserving…", cancel: "Cancel", close: "Close" },
   outcome: {
+    cancelledTitle: "Reservation cancelled", cancelledBody: "This reservation was cancelled when your attendance changed. If you are attending again, confirm your response and choose an available gift.",
     confirmedTitle: "Gift reserved!", confirmedBody: "You reserved “{{title}}”. The hosts know you are giving it.",
     pendingTitle: "Request sent", pendingBody: "The hosts approve each reservation. We will let you know when “{{title}}” is confirmed; meanwhile nobody else can reserve it.",
     takenTitle: "Someone got there first", takenBody: "“{{title}}” was just taken by someone else. No worries: the list is up to date and here are other options.",
@@ -24,6 +26,7 @@ export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
     seeList: "See the gift list", reserveAnother: "Choose another gift"
   },
   error: {
+    attendanceBody: "To reserve a gift, return to your response and confirm that you are attending.",
     otherTitle: "This link belongs to another celebration", otherBody: "The link you opened does not match this gift list. Open the link the hosts of this celebration sent you.",
     busyTitle: "It is busy right now", busyBody: "We received too many requests in a row. Wait a few seconds and try again.",
     limit: "You already hold the maximum number of reserved gifts. Wait for the hosts to confirm one before reserving another.",
@@ -35,7 +38,7 @@ export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
     offline: "No connection. Check your internet and try again; your message is still here.", nameTooLong: "The name can be up to {{max}} characters.", messageTooLong: "The message can be up to {{max}} characters.", busyWait: "We received too many requests in a row. Wait {{seconds}} seconds and try again.", retryHint: "You can press Reserve again: it will not reserve twice.",
     retry: "Try again", validation: "Check the data: the name or the message is too long.", generic: "We could not reserve the gift. Try again."
   },
-  empty: { title: "No gifts yet", body: "The hosts have not added gifts yet. Come back soon.", filtered: "No gift matches these filters." },
+  empty: { title: "No gifts yet", body: "The hosts have not added gifts yet. Come back soon.", filtered: "No gift matches these filters.", filteredBody: "Try another price or source, or clear the filters." },
   notFound: { title: "We could not find this celebration", body: "The page does not exist or the hosts have not published it yet." },
   /** Guest gift list in the app (Persuade). seo-web keeps using the keys above. */
   guest: {
@@ -87,7 +90,7 @@ export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
       by: "By {{name}}", leadTime: "Lead time: {{days}} days", coverage: "Coverage: {{zones}}", transport: "Delivery from {{price}}", address: "Address: {{address}}", hours: "Hours: {{hours}}", details: "See details",
       disclaimer: "DOne connects you with the provider; it does not provide or guarantee the service. Agree price, delivery and timing with them.", none: "No provider matches these filters. Try another category.", count: "{{count}} results", page: "Page {{page}} of {{pages}}"
     },
-    catalog: { alreadyListed: "Already on your list.", prompt: "Type what you are looking for, like a cake or a dinner set.", search: "Search", searchLabel: "Search the catalog", searchPlaceholder: "Cake, tableware, flowers…", add: "Add to my list", adding: "Adding…", added: "Added: {{title}}", none: "We found no products for that search. Try another word.", fallbackNote: "Product search is not available yet; we show the public provider catalog.", unavailable: "Product unavailable", unavailableBody: "That product is no longer in the catalog. Pick another.", priceFrom: "From {{price}}" },
+    catalog: { photo: "Photo of {{title}}", alreadyListed: "Already on your list.", prompt: "Type what you are looking for, like a cake or a dinner set.", search: "Search", searchLabel: "Search the catalog", searchPlaceholder: "Cake, tableware, flowers…", add: "Add to my list", adding: "Adding…", added: "Added: {{title}}", none: "We found no products for that search. Try another word.", fallbackNote: "Product search is not available yet; we show the public provider catalog.", unavailable: "Product unavailable", unavailableBody: "That product is no longer in the catalog. Pick another.", priceFrom: "From {{price}}" },
     store: {
       ruleTitle: "Partners first", ruleOn: "Before you add a store gift we show you similar partner products. If none fits, you add it anyway.", ruleOff: "You can add gifts from any store with no steps before.", ruleChange: "Change in Control modes",
       modeAUTO_ACCEPT: "Your store gifts show on the list right away.", modeRESTRICTED: "Your store gifts wait for review: you approve them from My list.",

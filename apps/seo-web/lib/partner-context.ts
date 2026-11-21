@@ -25,8 +25,4 @@ export async function loadPartnerContext(slug: string): Promise<PartnerContext> 
   }
 }
 
-/** Today's calendar date (YYYY-MM-DD) and month (YYYY-MM) in an IANA zone. */
-export function todayIn(timeZone: string, now: Date = new Date()): { readonly date: string; readonly month: string } {
-  const parts = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
-  return { date: parts, month: parts.slice(0, 7) };
-}
+export { todayIn } from "@rsvp/query-hooks";

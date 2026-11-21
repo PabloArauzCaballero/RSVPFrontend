@@ -1,0 +1,21 @@
+• Packages in scope: @rsvp/api-client, @rsvp/auth, @rsvp/celebration-theme, @rsvp/config-eslint, @rsvp/config-jest, @rsvp/config-tailwind, @rsvp/config-ts, @rsvp/contracts, @rsvp/design-tokens, @rsvp/forms, @rsvp/i18n, @rsvp/query-hooks, @rsvp/seo-web, @rsvp/telemetry, @rsvp/testing, @rsvp/ui, @rsvp/ui-web, @rsvp/universal
+• Running test:coverage in 18 packages
+• Remote caching disabled
+
+ Tasks:    21 successful, 21 total
+Cached:    0 cached, 21 total
+  Time:    2m47.564s
+
+
+ WARNING  no output files found for task @rsvp/api-client#build. Please check your `outputs` key in `turbo.json`
+ WARNING  no output files found for task @rsvp/auth#build. Please check your `outputs` key in `turbo.json`
+ WARNING  no output files found for task @rsvp/celebration-theme#build. Please check your `outputs` key in `turbo.json`
+ WARNING  no output files found for task @rsvp/config-ts#build. Please check your `outputs` key in `turbo.json`
+ WARNING  no output files found for task @rsvp/contracts#build. Please check your `outputs` key in `turbo.json`
+ WARNING  no output files found for task @rsvp/design-tokens#build. Please check your `outputs` key in `turbo.json`
+ WARNING  no output files found for task @rsvp/forms#build. Please check your `outputs` key in `turbo.json`
+ WARNING  no output files found for task @rsvp/i18n#build. Please check your `outputs` key in `turbo.json`
+ WARNING  no output files found for task @rsvp/query-hooks#build. Please check your `outputs` key in `turbo.json`
+ WARNING  no output files found for task @rsvp/testing#build. Please check your `outputs` key in `turbo.json`
+ WARNING  no output files found for task @rsvp/ui#build. Please check your `outputs` key in `turbo.json`
+ WARNING  no output files found for task @rsvp/ui-web#build. Please check your `outputs` key in `turbo.json`

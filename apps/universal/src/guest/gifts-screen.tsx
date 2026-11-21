@@ -1,23 +1,25 @@
-import { useMemo, useRef, useState, type ReactNode } from "react";
-import { Linking, Pressable, Text, View } from "react-native";
-import { router } from "expo-router";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Image, Linking, Pressable, Text, View } from "react-native";
 import { ApiError } from "@rsvp/api-client";
 import type { PublicCelebrationView } from "@rsvp/celebration-theme";
 import { spacing } from "@rsvp/design-tokens";
 import { formatMinor } from "@rsvp/i18n";
-import { Chip, EmptyState, Illustration, Skeleton, Stagger, SuccessNote, useColors } from "@rsvp/ui";
-import { catalogedFirst, guestVisible, isGiftTaken, newIdempotencyKey, useCelebrationBySlug, useGiftList, useReserveGiftItem, type GiftItem, type GiftReservation } from "@rsvp/query-hooks";
+import { Checkbox, Chip, EmptyState, Illustration, Skeleton, Stagger, SuccessNote, useColors } from "@rsvp/ui";
+import { arrangeGifts, isGiftTaken, maxPriceMinor, newIdempotencyKey, useCelebrationBySlug, useGiftList, usePublicListing, useReserveGiftItem, type GiftItem, type GiftReservation, type GiftSourceFilter } from "@rsvp/query-hooks";
 import { GuestFrame, type GuestFrameProps } from "./frame";
 import { LinkState, OfflineState } from "./link-states";
-import { ActionButton, Field, Notice, useStyles } from "../host/ui";
+import { ActionButton, ChoiceGroup, Field, Notice, useStyles } from "../host/ui";
+import { clearGiftCredential, readGiftCredential, saveGiftCredential } from "./gift-credential";
 import { MESSAGE_MAX, NAME_MAX, reserveFailureKind, reserveFieldErrors, isRetryable } from "./reserve-rules";
 import { partnerRedirectUrl } from "../platform/partner-link";
 import { useApiClient, useLocale, useT } from "../platform/providers";
 
 /**
- * F21-05 · The guest's gift list inside the app (mode Persuade, the optional last step of the journey). No account: the
- * opaque credential of the invitation link is the Bearer (Gift List 1.2.0 validates it against Guest). It lives in
- * component memory only. Reserving is one form in the row itself, not a dialog. Partner links always go through `/r/{listingId}`.
+ * F21-05 · The guest's gift list inside the app (mode Persuade, the optional last step of the journey), and the mirror of the
+ * public site's A14/A15: `/c/{slug}/regalos` and the detail `/c/{slug}/regalos/{id}`, with the same filters, order and states.
+ * No account: the opaque credential of the invitation link is the Bearer (Gift List 1.2.0 validates it against Guest). It is
+ * kept per celebration for this session only (`gift-credential`), so the list opens again without the token in the address.
+ * Reserving is one form in the row itself, not a dialog. Partner links always go through `/r/{listingId}`.
  */
 type Outcome = { readonly kind: "reserved"; readonly item: GiftItem; readonly status: GiftReservation["status"] } | { readonly kind: "taken"; readonly item: GiftItem };
 
@@ -25,6 +27,7 @@ type Outcome = { readonly kind: "reserved"; readonly item: GiftItem; readonly st
 const LONG_WAIT_SECONDS = 90;
 
 const RESERVE_ERROR_KEY = {
+  attendance: "gifts.error.attendanceBody",
   limit: "gifts.guest.reserveError.limit", expired: "gifts.guest.reserveError.expired", forbidden: "gifts.guest.reserveError.forbidden", notFound: "gifts.guest.reserveError.notFound", busy: "gifts.guest.reserveError.busy",
   validation: "gifts.guest.reserveError.validation", offline: "gifts.guest.reserveError.offline", generic: "gifts.guest.reserveError.generic"
 } as const;
@@ -38,16 +41,53 @@ function blockerFor(status: number, retryAfter: number | undefined, t: ReturnTyp
   return { illustration: "offline", title: t("gifts.guest.error.unavailableTitle"), body: t("gifts.guest.error.unavailableBody") };
 }
 
-export function GuestGiftsScreen({ slug, token }: { readonly slug: string; readonly token: string }): ReactNode {
+/** Photos are optional public catalog data (a partner product's picture): their failure never prevents viewing or reserving. */
+function GiftPhoto({ item }: { readonly item: GiftItem }): ReactNode {
+  const client = useApiClient();
+  const t = useT();
+  const listing = usePublicListing(client, item.source === "CATALOGED" ? item.productListingId ?? undefined : undefined);
+  const [failed, setFailed] = useState<string | null>(null);
+  const url = listing.data?.imageUrl;
+  if (!url || url === failed || !isSafeHttps(url)) return null;
+  return <Image testID={`gift-photo-${item.id}`} source={{ uri: url }} accessibilityLabel={t("gifts.card.photo", { title: item.title })} onError={() => setFailed(url)} style={{ width: "100%", aspectRatio: 3 / 2, borderRadius: 12 }} resizeMode="cover" accessibilityIgnoresInvertColors />;
+}
+/** An `https` URL without credentials: the only kind of host-typed link (photo or store) the app opens or loads. */
+function isSafeHttps(value: string): boolean {
+  try { const url = new URL(value); return url.protocol === "https:" && !url.username && !url.password; } catch { return false; }
+}
+
+export interface GuestGiftsScreenProps {
+  readonly slug: string;
+  /** The credential from the personal link, when the address carried it; otherwise the one kept for this celebration. */
+  readonly token?: string;
+  /** A15 · show only this gift (`/c/{slug}/regalos/{id}`). */
+  readonly onlyItemId?: string;
+  readonly onNavigate: (path: string) => void;
+}
+
+const SOURCES: readonly GiftSourceFilter[] = ["all", "partner", "other"];
+const SOURCE_LABEL: Readonly<Record<GiftSourceFilter, string>> = { all: "gifts.filters.sourceAll", partner: "gifts.filters.sourcePartner", other: "gifts.filters.sourceOther" };
+
+export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: GuestGiftsScreenProps): ReactNode {
   const styles = useStyles();
   const t = useT();
   const palette = useColors();
   const locale = useLocale();
   const client = useApiClient();
+  const [credential, setCredential] = useState<string | null>(() => token || readGiftCredential(slug));
+  useEffect(() => { if (token) { saveGiftCredential(slug, token); setCredential(token); } }, [slug, token]);
   const celebration = useCelebrationBySlug<PublicCelebrationView>(client, slug);
   const celebrationId = celebration.data?.celebrationId;
-  const list = useGiftList(client, celebrationId, token);
-  const reserve = useReserveGiftItem(client, celebrationId ?? "", token);
+  const list = useGiftList(client, celebrationId, credential);
+  const reserve = useReserveGiftItem(client, celebrationId ?? "", credential);
+  const [maxPrice, setMaxPrice] = useState("");
+  const [source, setSource] = useState<GiftSourceFilter>("all");
+  const [onlyAvailable, setOnlyAvailable] = useState(false);
+  const listStatusCode = list.error instanceof ApiError ? list.error.status : 0;
+  // An expired or revoked credential is forgotten, so the next visit asks for the link instead of failing again.
+  useEffect(() => { if (listStatusCode === 401 && credential) clearGiftCredential(slug); }, [listStatusCode, credential, slug]);
+  const rsvpPath = credential ? `/c/${encodeURIComponent(slug)}/rsvp/${encodeURIComponent(credential)}` : `/c/${encodeURIComponent(slug)}/rsvp`;
+  const listPath = `/c/${encodeURIComponent(slug)}/regalos`;
   const [target, setTarget] = useState<GiftItem | null>(null);
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
@@ -56,10 +96,16 @@ export function GuestGiftsScreen({ slug, token }: { readonly slug: string; reado
   const keys = useRef(new Map<string, string>());
   const inFlight = useRef(false);
 
-  const items = useMemo(() => catalogedFirst(guestVisible(list.data?.items ?? [])), [list.data]);
-  const partner = items.filter((item) => item.source === "CATALOGED");
-  const other = items.filter((item) => item.source !== "CATALOGED");
-  const alternatives = items.filter((item) => item.status === "AVAILABLE" && item.id !== outcome?.item.id).slice(0, 3);
+  const all = useMemo(() => list.data?.items ?? [], [list.data]);
+  const scoped = onlyItemId ? all.filter((item) => item.id === onlyItemId) : all;
+  const maxMinor = maxPriceMinor(maxPrice);
+  const { partner, other } = arrangeGifts(scoped, { ...(maxMinor !== undefined ? { maxMinor } : {}), source, onlyAvailable });
+  const items = [...partner, ...other];
+  const unfiltered = arrangeGifts(scoped, { source: "all", onlyAvailable: false });
+  const visibleCount = unfiltered.partner.length + unfiltered.other.length;
+  const { partner: altPartner, other: altOther } = arrangeGifts(all.filter((item) => item.id !== outcome?.item.id), { source: "all", onlyAvailable: true });
+  const alternatives = [...altPartner, ...altOther].slice(0, 3);
+  const filtered = maxMinor !== undefined || source !== "all" || onlyAvailable;
 
   const keyFor = (itemId: string): string => { let key = keys.current.get(itemId); if (!key) { key = newIdempotencyKey(); keys.current.set(itemId, key); } return key; };
   const open = (item: GiftItem): void => { setOutcome(null); reserve.reset(); setFieldErrors({}); setTarget(item); };
@@ -94,15 +140,25 @@ export function GuestGiftsScreen({ slug, token }: { readonly slug: string; reado
   }
   const rawTitle = celebration.data.content?.["title"];
   const title = typeof rawTitle === "string" && rawTitle ? rawTitle : slug;
-  const cover: GuestFrameProps = { heading: t("gifts.guest.title"), lead: title };
-  const listStatus = list.error instanceof ApiError ? list.error.status : 0;
+  const detailTitle = onlyItemId ? all.find((item) => item.id === onlyItemId)?.title : undefined;
+  const cover: GuestFrameProps = { heading: detailTitle ?? t("gifts.guest.title"), lead: title };
+  const listStatus = listStatusCode;
+  if (list.isError && listStatus === 401 && !credential) {
+    // Opened without the personal link (and none kept for this celebration): there is no anonymous read, so ask for the link.
+    return (
+      <LinkState illustration="linkExpired" title={t("gifts.error.needLinkTitle")} body={t("gifts.error.needLinkBody")} frame={cover}>
+        <ActionButton icon="arrow" label={t("gifts.error.needLinkAction")} onPress={() => go(rsvpPath)} testID="gifts-need-link" />
+        <ActionButton icon="back" variant="secondary" label={t("gifts.back")} onPress={() => go(`/c/${encodeURIComponent(slug)}`)} testID="gifts-invitation" />
+      </LinkState>
+    );
+  }
   if (list.isError) {
     const blocker = blockerFor(listStatus, list.error instanceof ApiError ? list.error.retryAfterSeconds : undefined, t);
     const retryable = listStatus !== 401 && listStatus !== 403 && listStatus !== 404;
     return (
       <LinkState illustration={blocker.illustration} title={blocker.title} body={blocker.body} frame={cover}>
         {retryable ? <ActionButton icon="refresh" variant="secondary" label={t("gifts.guest.error.retry")} onPress={() => { void list.refetch(); }} testID="gifts-retry" /> : null}
-        <ActionButton icon="back" variant="secondary" label={t("gifts.guest.backToRsvp")} onPress={() => { router.push(`/c/${encodeURIComponent(slug)}/rsvp/${encodeURIComponent(token)}` as never); }} testID="gifts-back" />
+        <ActionButton icon="back" variant="secondary" label={t("gifts.guest.backToRsvp")} onPress={() => { go(rsvpPath); }} testID="gifts-back" />
       </LinkState>
     );
   }
@@ -110,7 +166,13 @@ export function GuestGiftsScreen({ slug, token }: { readonly slug: string; reado
   const retryAfter = reserve.error instanceof ApiError ? reserve.error.retryAfterSeconds : undefined;
   const reservedInList = outcome?.kind === "reserved" && items.some((item) => item.id === outcome.item.id);
 
-  const reservedNote = (reserved: Extract<Outcome, { kind: "reserved" }>): ReactNode => (
+  const reservedNote = (reserved: Extract<Outcome, { kind: "reserved" }>): ReactNode => reserved.status === "CANCELLED" ? (
+    <Notice kind="error">
+      <Text accessibilityRole="header" style={styles.subtitle}>{t("gifts.outcome.cancelledTitle")}</Text>
+      <Text style={styles.body}>{t("gifts.outcome.cancelledBody")}</Text>
+      <ActionButton icon="back" variant="secondary" label={t("gifts.guest.backToRsvp")} onPress={() => { go(rsvpPath); }} />
+    </Notice>
+  ) : (
     <View testID="gift-reserved" style={{ gap: spacing[2], alignItems: "center" }}>
       <Illustration name="giftReserved" tone="auto" size="md" />
       <SuccessNote
@@ -130,6 +192,7 @@ export function GuestGiftsScreen({ slug, token }: { readonly slug: string; reado
         <Notice kind="error">
           <Text testID="reserve-error" style={styles.body}>{failedKind === "busy" && retryAfter ? (retryAfter >= LONG_WAIT_SECONDS ? t("gifts.guest.reserveError.busyMinutes", { minutes: Math.ceil(retryAfter / 60) }) : t("gifts.guest.reserveError.busyWait", { seconds: Math.ceil(retryAfter) })) : t(RESERVE_ERROR_KEY[failedKind])}</Text>
           {isRetryable(failedKind) ? <Text style={styles.muted}>{t("gifts.guest.reserveError.retryHint")}</Text> : null}
+          {failedKind === "attendance" ? <ActionButton icon="back" variant="secondary" label={t("gifts.guest.backToRsvp")} onPress={() => { go(rsvpPath); }} /> : null}
         </Notice>
       ) : null}
       <View style={{ gap: spacing[2] }}>
@@ -141,11 +204,17 @@ export function GuestGiftsScreen({ slug, token }: { readonly slug: string; reado
 
   const row = (item: GiftItem): ReactNode => {
     const viaPartner = item.productListingId ? partnerRedirectUrl(item.productListingId, { surface: "GIFT_LIST", ...(celebrationId ? { celebrationId } : {}) }) : null;
+    const viaOther = !viaPartner && item.externalUrl && isSafeHttps(item.externalUrl) ? item.externalUrl : null;
     const opened = target?.id === item.id;
     return (
       <View key={item.id} testID={`gift-${item.id}`} style={{ gap: spacing[2], paddingVertical: spacing[4], borderBottomWidth: 1, borderBottomColor: palette.border }}>
+        <GiftPhoto item={item} />
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", gap: spacing[3] }}>
-          <Text accessibilityRole="header" aria-level={3} style={[styles.subtitle, { flex: 1 }]}>{item.title}</Text>
+          {onlyItemId ? <Text accessibilityRole="header" aria-level={3} style={[styles.subtitle, { flex: 1 }]}>{item.title}</Text> : (
+            <Pressable accessibilityRole="link" accessibilityLabel={t("gifts.card.open", { title: item.title })} onPress={() => go(`${listPath}/${encodeURIComponent(item.id)}`)} testID={`open-${item.id}`} style={{ flex: 1, minHeight: 44, justifyContent: "center" }}>
+              <Text accessibilityRole="header" aria-level={3} style={[styles.subtitle, { textDecorationLine: "underline" }]}>{item.title}</Text>
+            </Pressable>
+          )}
           <Text style={[styles.body, { fontWeight: "600", fontVariant: ["tabular-nums"] }]}>{formatMinor(item.price.amountMinor, item.price.currency, locale)}</Text>
         </View>
         {item.description ? <Text style={styles.muted}>{item.description}</Text> : null}
@@ -167,6 +236,7 @@ export function GuestGiftsScreen({ slug, token }: { readonly slug: string; reado
           <View style={styles.row}>
             {item.status === "AVAILABLE" ? <ActionButton icon="check" label={t("gifts.guest.reserve")} onPress={() => open(item)} testID={`reserve-${item.id}`} /> : null}
             {viaPartner ? <ActionButton icon="arrow" variant="secondary" label={t("gifts.guest.viaPartner")} onPress={() => { void Linking.openURL(viaPartner); }} testID={`partner-${item.id}`} /> : null}
+            {viaOther ? <ActionButton icon="arrow" variant="secondary" label={t("gifts.card.viaOther")} onPress={() => { void Linking.openURL(viaOther); }} testID={`store-${item.id}`} /> : null}
           </View>
         )}
         {viaPartner && !opened ? <Text style={styles.muted}>{t("gifts.guest.partnerNote")}</Text> : null}
@@ -174,17 +244,35 @@ export function GuestGiftsScreen({ slug, token }: { readonly slug: string; reado
     );
   };
 
+  const link = (label: string, path: string, testID: string): ReactNode => (
+    <Pressable accessibilityRole="link" accessibilityLabel={label} onPress={() => go(path)} testID={testID} style={{ minHeight: 44, justifyContent: "center", alignSelf: "flex-start" }}>
+      <Text style={[styles.body, { color: palette.primary, fontWeight: "600", textDecorationLine: "underline" }]}>{label}</Text>
+    </Pressable>
+  );
+
   return (
     <GuestFrame {...cover}>
       <View style={{ gap: spacing[2] }}>
-        <Text style={styles.body}>{t("gifts.guest.intro")}</Text>
-        <Text style={styles.muted}>{t("gifts.guest.rule")}</Text>
-        <Pressable accessibilityRole="link" accessibilityLabel={t("gifts.guest.backToRsvp")} onPress={() => { router.push(`/c/${encodeURIComponent(slug)}/rsvp/${encodeURIComponent(token)}` as never); }} testID="gifts-back" style={{ minHeight: 44, justifyContent: "center", alignSelf: "flex-start" }}>
-          <Text style={[styles.body, { color: palette.primary, fontWeight: "600", textDecorationLine: "underline" }]}>{t("gifts.guest.backToRsvp")}</Text>
-        </Pressable>
+        {onlyItemId ? null : <Text style={styles.body}>{t("gifts.guest.intro")}</Text>}
+        {onlyItemId ? null : <Text style={styles.muted}>{t("gifts.guest.rule")}</Text>}
+        {onlyItemId ? link(t("gifts.detail.back"), listPath, "gifts-list") : null}
+        {credential ? link(t("gifts.guest.backToRsvp"), rsvpPath, "gifts-back") : null}
+        {link(t("gifts.back"), `/c/${encodeURIComponent(slug)}`, "gifts-invitation")}
       </View>
       {outcome?.kind === "reserved" && !reservedInList ? reservedNote(outcome) : null}
-      {list.data && items.length === 0 ? <EmptyState illustration="noGifts" title={t("gifts.guest.empty.title")} body={t("gifts.guest.empty.body")} /> : null}
+      {list.data && !onlyItemId && visibleCount > 0 ? (
+        <View accessibilityRole="search" aria-label={t("gifts.filters.label")} style={{ gap: spacing[3] }} testID="gift-filters">
+          <Field label={t("gifts.filters.maxPrice")} value={maxPrice} onChange={setMaxPrice} keyboardType="decimal-pad" testID="filter-max-price" />
+          <ChoiceGroup label={t("gifts.filters.source")} value={source} onChange={setSource} choices={SOURCES.map((value) => ({ value, label: t(SOURCE_LABEL[value]) }))} />
+          <Checkbox label={t("gifts.filters.onlyAvailable")} value={onlyAvailable} onChange={setOnlyAvailable} />
+          {filtered ? <ActionButton icon="close" variant="secondary" label={t("gifts.filters.clear")} onPress={() => { setMaxPrice(""); setSource("all"); setOnlyAvailable(false); }} testID="filter-clear" /> : null}
+          <Text accessibilityLiveRegion="polite" role="status" style={styles.muted} testID="gift-count">{t("gifts.filters.count", { count: items.length })}</Text>
+        </View>
+      ) : null}
+      {list.data && onlyItemId && scoped.length === 0 ? <EmptyState illustration="noGifts" title={t("gifts.detail.notFound")} body={t("gifts.detail.notFoundBody")} /> : null}
+      {list.data && !onlyItemId && visibleCount === 0 ? <EmptyState illustration="noGifts" title={t("gifts.guest.empty.title")} body={t("gifts.guest.empty.body")} /> : null}
+      {list.data && visibleCount > 0 && items.length === 0 ? <EmptyState illustration="emptySearch" title={t("gifts.empty.filtered")} body={t("gifts.empty.filteredBody")} /> : null}
+      {onlyItemId && items[0]?.productListingId ? <Text style={styles.muted}>{t("gifts.detail.partnerNote")}</Text> : null}
       {partner.length ? <View><Text accessibilityRole="header" aria-level={2} style={styles.subtitle}>{t("gifts.guest.groupPartner")}</Text><Stagger>{partner.map(row)}</Stagger></View> : null}
       {other.length ? <View><Text accessibilityRole="header" aria-level={2} style={styles.subtitle}>{t("gifts.guest.groupOther")}</Text><Stagger>{other.map(row)}</Stagger></View> : null}
     </GuestFrame>

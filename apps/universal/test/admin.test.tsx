@@ -1,14 +1,14 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { fireEvent, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { EventTypeDefinition, Template, TranslatedEventType } from "@rsvp/query-hooks";
 import { definitionOf, EventTypesScreen, formOf } from "../src/admin/event-types";
 import { DashboardScreen, OperationsScreen } from "../src/admin/other-screens";
 import { TemplatesAdminScreen } from "../src/admin/templates";
 import { VerificationScreen } from "../src/admin/queues";
 import { OnboardingScreen } from "../src/host/onboarding";
-import { ADMIN, fakeClient, GUEST, HOST, renderApp, TEMPLATES, WEDDING, type Handler } from "./support";
+import { ADMIN, fakeClient, GUEST, HOST, renderApp, TEMPLATES, WEDDING, type Handler, pickOnboardingDate, pickTime } from "./support";
 
 const navigate = vi.fn();
 const type = (label: string, value: string): void => { fireEvent.change(screen.getByLabelText(label), { target: { value } }); };
@@ -22,12 +22,16 @@ describe("REQ-F14-06 · only ADMIN reaches administration", () => {
 });
 
 describe("REQ-F14-02 · event type editor", () => {
+  afterEach(() => vi.useRealTimers());
+
   it("form and definition round-trip, with roles uppercased and empty translations dropped", () => {
     const definition: EventTypeDefinition = { code: "GRADUATION", status: "ACTIVE", defaultLocale: "es-BO", hostRoles: ["GRADUATE"], enabledSections: ["story"], requiredFieldsForPublish: ["title"], compatibleTemplateTags: ["graduation"], translations: [{ locale: "es-BO", name: "Graduación", hostRoleLabels: { GRADUATE: "Graduado" } }] };
     expect(definitionOf(formOf(definition))).toEqual(definition);
   });
 
   it("E2E (component level): an admin creates GRADUACION; a host can choose it right away and create a celebration with it", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2027-10-20T12:00:00Z"));
     const types: TranslatedEventType[] = [WEDDING];
     const definitions: EventTypeDefinition[] = [];
     const handlers: Record<string, Handler> = {
@@ -59,6 +63,7 @@ describe("REQ-F14-02 · event type editor", () => {
     fireEvent.click(await screen.findByRole("radio", { name: "Graduación" }));
     fireEvent.click(screen.getByTestId("onboarding-next"));
     type("Graduada o graduado", "Sofía");
+    pickOnboardingDate("2027-11-20"); pickTime("Hora", "19:00"); type("Ubicación", "Aula Magna");
     fireEvent.click(screen.getByTestId("onboarding-next")); // the name and link are the third short step
     type("Nombre de la celebración", "Grado de Sofía");
     fireEvent.click(screen.getByTestId("onboarding-create"));

@@ -6,6 +6,8 @@ import { IdentityClient, SessionManager } from "@rsvp/auth";
 import { createI18n, resolveLocale, supportedLocales, type AppLocale, type Translate } from "@rsvp/i18n";
 import { UiProvider, stringsFor } from "@rsvp/ui";
 import { AuthProvider, StaticAuthProvider, useAuth } from "../auth/auth-context";
+import { SignOutProvider } from "../auth/sign-out";
+import { deviceLanguages } from "./device-languages";
 import { readLocalePreference, writeLocalePreference } from "./preferences";
 import { createAppSessionStore, type SessionClaims } from "./session";
 import { secureStorage } from "./secure-storage";
@@ -26,8 +28,9 @@ interface Platform {
 
 const PlatformContext = createContext<Platform | null>(null);
 
+/** The first supported language in the person's own order (es-* → es-BO, en-* → en-US); es-BO when none is supported. */
 export function deviceLocale(): AppLocale {
-  return resolveLocale(null, [Intl.DateTimeFormat().resolvedOptions().locale]);
+  return resolveLocale(null, deviceLanguages());
 }
 
 export interface AppRuntime {
@@ -75,7 +78,7 @@ export function AppProviders({ children, client, claims, runtime, locale, queryC
   // The scheme is the person's choice or the system's. Style sheets are chosen per scheme at render time, so a change remounts the tree once (rare, and the stored choice makes it a start-up event on native).
   const scheme = useScheme();
   useThemeHydration();
-  const body = <PlatformContext.Provider value={platform}><UiProvider scheme={scheme} strings={stringsFor(resolvedLocale)}><Fragment key={scheme}>{children}</Fragment></UiProvider></PlatformContext.Provider>;
+  const body = <PlatformContext.Provider value={platform}><UiProvider scheme={scheme} strings={stringsFor(resolvedLocale)}><SignOutProvider><Fragment key={scheme}>{children}</Fragment></SignOutProvider></UiProvider></PlatformContext.Provider>;
   return (
     <QueryClientProvider client={queries}>
       <I18nextProvider i18n={i18n}>

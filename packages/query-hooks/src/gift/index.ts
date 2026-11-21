@@ -33,7 +33,7 @@ export function useApproveReservation<TResponse>(client: ApiClient, celebrationI
 }
 
 // ---- Typed gift flows (F22 guest list, F23 host management). Contract: gift-list.openapi.json 1.1.0. ----
-import { addExternalGift, giftApi as giftService } from "./api.js";
+import { addGiftWithList, giftApi as giftService } from "./api.js";
 import type { AddGiftInput, UpdateGiftSettingsInput, GiftItemList, GiftReservation, ReservationStatus, ReserveGiftInput } from "./types.js";
 export * from "./types.js";
 export { giftApi as giftService, isGiftListMissing, suggestionsOf, problemCode } from "./api.js";
@@ -48,6 +48,26 @@ export function catalogedFirst<T extends { readonly source: string }>(items: rea
 export const guestVisible = <T extends { readonly status: string }>(items: readonly T[]): T[] => items.filter((item) => item.status === "AVAILABLE" || item.status === "PENDING_REVIEW" || item.status === "COMMITTED");
 
 /** `credential` = the guest's bearer; omit it for the host session. The credential is never part of the query key. */
+/** Where a gift comes from, as a guest filters it: a DOne partner (CATALOGED) or any other store. */
+export type GiftSourceFilter = "all" | "partner" | "other";
+export interface GiftFilters { readonly maxMinor?: number; readonly source: GiftSourceFilter; readonly onlyAvailable: boolean }
+
+/**
+ * The guest's list as the web page and the app show it: only what a guest may see, the guest's filters applied, and partner
+ * gifts before the others whatever the order they arrived in. One function so both surfaces filter identically.
+ */
+export function arrangeGifts<T extends { readonly source: string; readonly status: string; readonly price: { readonly amountMinor: number } }>(items: readonly T[], filters: GiftFilters): { readonly partner: T[]; readonly other: T[] } {
+  const kept = guestVisible(items).filter((item) => (filters.maxMinor === undefined || item.price.amountMinor <= filters.maxMinor) && (!filters.onlyAvailable || item.status === "AVAILABLE") && (filters.source === "all" || (filters.source === "partner") === (item.source === "CATALOGED")));
+  const ordered = catalogedFirst(kept);
+  return { partner: ordered.filter((item) => item.source === "CATALOGED"), other: ordered.filter((item) => item.source !== "CATALOGED") };
+}
+
+/** A typed price ("150", "150.5") as minor units, or undefined when empty or not a number: an empty filter filters nothing. */
+export function maxPriceMinor(text: string): number | undefined {
+  const value = text.trim().replace(",", ".");
+  return value !== "" && Number.isFinite(Number(value)) ? Math.round(Number(value) * 100) : undefined;
+}
+
 export function useGiftList(client: ApiClient, celebrationId: string | undefined, credential?: string | null, initialData?: GiftItemList) {
   return useQuery({
     queryKey: [...queryKeys.gift.list(celebrationId ?? ""), credential === undefined ? "host" : "guest"] as const,
@@ -67,6 +87,8 @@ export function useReserveGiftItem(client: ApiClient, celebrationId: string, cre
   });
 }
 export const isGiftTaken = (error: unknown): boolean => error instanceof ApiError && error.status === 409 && problemCode(error) === "GIFT_NOT_AVAILABLE";
+export const isGiftRsvpRequired = (error: unknown): boolean => error instanceof ApiError && error.status === 403
+  && ["GUEST_RSVP_DECLINED", "GUEST_RSVP_REQUIRED"].includes(problemCode(error) ?? "");
 
 export function useHostReservations(client: ApiClient, celebrationId: string | undefined, status?: ReservationStatus) {
   return useQuery({ queryKey: [...queryKeys.gift.list(celebrationId ?? ""), "reservations", status ?? "all"] as const, queryFn: () => giftService(client).reservations(celebrationId ?? "", status), ...cachePolicy.gift, enabled: Boolean(celebrationId) });
@@ -81,9 +103,7 @@ export function useDecideReservation(client: ApiClient, celebrationId: string) {
 export function useAddGift(client: ApiClient, celebrationId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: AddGiftInput) => input.source === "EXTERNAL"
-      ? addExternalGift(client, celebrationId, input)
-      : giftService(client).add(celebrationId, input),
+    mutationFn: (input: AddGiftInput) => addGiftWithList(client, celebrationId, input),
     onSuccess: () => refetchAll(queryClient, invalidation.giftReservationChanged(celebrationId))
   });
 }

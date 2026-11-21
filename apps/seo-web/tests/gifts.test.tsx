@@ -12,9 +12,11 @@ const ITEMS = [item({ id: "ext-1", source: "EXTERNAL", productListingId: null, e
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { "content-type": status >= 400 ? "application/problem+json" : "application/json" } });
 
 let posts: { url: string; key: string | null }[] = [];
-function stubFetch(reserve: () => Response, list: () => Response = () => json(200, { items: ITEMS, partnerPriorityEnabled: true })) {
+let photoHeaders: Headers[] = [];
+function stubFetch(reserve: () => Response, list: () => Response = () => json(200, { items: ITEMS, partnerPriorityEnabled: true }), photo: () => Response = () => json(404, {})) {
   vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
+    if (url.includes('/listings/')) { photoHeaders.push(new Headers(init?.headers)); return photo(); }
     if (init?.method === "POST") { posts.push({ url, key: new Headers(init.headers).get("idempotency-key") }); return reserve(); }
     return list();
   }));
@@ -23,12 +25,45 @@ const renderList = (initial?: boolean) => render(<GiftExperience slug="ana-luis"
 
 beforeEach(() => {
   posts = [];
+  photoHeaders = [];
   window.sessionStorage.clear();
   window.sessionStorage.setItem("rsvp.guest.credential.ana-luis", "guest-credential-0123456789");
   HTMLDialogElement.prototype.showModal = function showModal(this: HTMLDialogElement) { this.setAttribute("open", ""); };
   HTMLDialogElement.prototype.close = function close(this: HTMLDialogElement) { this.removeAttribute("open"); };
 });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+
+describe('Guest gift photos', () => {
+  it('shows the catalog photo using an anonymous public request and keeps the token out of the image referrer', async () => {
+    stubFetch(() => json(201, {}), undefined, () => json(200, { imageUrl: 'https://images.example/torta.jpg' }));
+    renderList();
+    const photo = await screen.findByRole('img', { name: 'Foto de Torta' });
+    expect(photo.getAttribute('src')).toBe('https://images.example/torta.jpg');
+    expect(photo.getAttribute('referrerpolicy')).toBe('no-referrer');
+    expect(photoHeaders.length).toBeGreaterThan(0);
+    expect(photoHeaders.every((headers) => !headers.has('authorization'))).toBe(true);
+    expect(screen.queryByRole('img', { name: 'Foto de Cafetera' })).toBeNull();
+  });
+
+  it('a broken image disappears and the gift can still be reserved', async () => {
+    stubFetch(() => json(201, {}), undefined, () => json(200, { imageUrl: 'https://images.example/missing.jpg' }));
+    renderList();
+    fireEvent.error(await screen.findByRole('img', { name: 'Foto de Torta' }));
+    expect(screen.queryByRole('img', { name: 'Foto de Torta' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Reservar Torta' })).toBeTruthy();
+  });
+
+  it('catalog failure and unsafe photo URLs do not break the gift list', async () => {
+    stubFetch(() => json(201, {}), undefined, () => json(503, {}));
+    const first = renderList();
+    expect(await screen.findByRole('button', { name: 'Reservar Torta' })).toBeTruthy();
+    first.unmount();
+    stubFetch(() => json(201, {}), undefined, () => json(200, { imageUrl: 'javascript:alert(1)' }));
+    renderList();
+    expect(await screen.findByRole('button', { name: 'Reservar Torta' })).toBeTruthy();
+    expect(screen.queryAllByRole('img')).toHaveLength(0);
+  });
+});
 
 describe("REQ-F22-02 · partner gifts come before external ones, in the rendered order", () => {
   it("arrange() puts CATALOGED first whatever the arrival order and hides what a guest must not see", () => {
@@ -72,6 +107,23 @@ describe("REQ-F22-04 · reserving needs no account: the guest credential is the 
 });
 
 describe("REQ-F22-05 · the two successful outcomes follow the celebration mode", () => {
+  it("a replay of a cancelled reservation never says request sent or gift reserved", async () => {
+    stubFetch(() => json(201, { id: "r-cancelled", itemId: "cat-1", celebrationId: CELEBRATION, status: "CANCELLED", requestedAt: "2026-11-01T00:00:00Z" }));
+    renderList();fireEvent.click(await screen.findByRole("button", { name: /Reservar Torta/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Reservar regalo" }));
+    expect(await screen.findByRole("heading", { name: "Reserva cancelada" })).toBeTruthy();
+    expect(screen.queryByText("Solicitud enviada")).toBeNull();
+    expect(document.querySelector('[data-outcome="CANCELLED"] a[href*="guest-credential"]')).toBeNull();
+  });
+  it.each(["GUEST_RSVP_DECLINED", "GUEST_RSVP_REQUIRED"])("%s explains how to confirm RSVP without losing entered data", async (code) => {
+    stubFetch(() => json(403, { type: "x", title: "Confirm attendance", status: 403, code }));
+    renderList();fireEvent.click(await screen.findByRole("button", { name: /Reservar Torta/ }));
+    fireEvent.change(screen.getByLabelText("Tu nombre"), { target: { value: "Nombre QA" } });
+    fireEvent.click(screen.getByRole("button", { name: "Reservar regalo" }));
+    expect((await screen.findByRole("alert")).textContent).toContain("confirmá que asistirás");
+    expect((screen.getByLabelText("Tu nombre") as HTMLInputElement).value).toBe("Nombre QA");
+    expect(within(screen.getByRole("dialog")).getByRole("button", { name: "Volver a mi respuesta" })).toBeTruthy();
+  });
   it("COMMITTED says reserved; PENDING_REVIEW says request sent", async () => {
     stubFetch(() => json(201, { id: "r1", itemId: "cat-1", celebrationId: CELEBRATION, status: "PENDING_REVIEW", requestedAt: "2026-11-01T00:00:00Z" }));
     renderList();

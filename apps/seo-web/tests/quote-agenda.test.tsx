@@ -46,6 +46,49 @@ describe("REQ-F26-04/05 · date request: 422 blocked and 409 no capacity read di
   });
 });
 
+describe("Agenda empty states: a month with nothing to pick says why and what to do", () => {
+  const agenda = () => render(<Agenda slug="dulce-sol" providerId={PID} providerName="Dulce Sol" timeZone="America/La_Paz" locale="es-BO" initialMonth="2027-02" />);
+  const months: string[] = [];
+  const serve = (byMonth: Readonly<Record<string, unknown[]>>) => vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
+    const month = new URL(String(input)).searchParams.get("month") ?? "";
+    months.push(month);
+    return json(200, { providerId: PID, timeZone: "America/La_Paz", month, days: byMonth[month] ?? [] });
+  }));
+
+  it("no days published: no empty grid, a status naming the provider and month, quote link and next month; no request button", async () => {
+    months.length = 0;
+    serve({ "2027-03": days.map((day) => ({ ...day, date: day.date.replace("2027-02", "2027-03") })) });
+    agenda();
+    const empty = await screen.findByTestId("agenda-empty");
+    expect(empty.getAttribute("role")).toBe("status");
+    expect(empty.getAttribute("data-empty")).toBe("unpublished");
+    expect(empty.textContent).toContain("Dulce Sol todavía no publicó sus días para febrero de 2027");
+    expect(screen.queryByTestId("agenda-grid")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Solicitar esta fecha" })).toBeNull();
+    expect(screen.getByRole("link", { name: "Pedir cotización" }).getAttribute("href")).toBe("/p/dulce-sol/cotizar");
+    fireEvent.click(screen.getByRole("button", { name: "Ver el mes siguiente" }));
+    expect(await screen.findByTestId("agenda-grid")).toBeTruthy();
+    expect(screen.queryByTestId("agenda-empty")).toBeNull();
+    expect(months).toContain("2027-03");
+  });
+
+  it("days published but none free: the grid stays (each day says why) with the notice", async () => {
+    serve({ "2027-02": days.map((day) => ({ ...day, available: false, reason: "FULL" })) });
+    agenda();
+    expect((await screen.findByTestId("agenda-empty")).getAttribute("data-empty")).toBe("noneFree");
+    expect(screen.getByTestId("agenda-grid")).toBeTruthy();
+    expect(screen.getByText("No quedan días libres en febrero de 2027")).toBeTruthy();
+  });
+
+  it("with free days there is no empty notice and the request flow is there", async () => {
+    serve({ "2027-02": days });
+    agenda();
+    await screen.findByTestId("agenda-grid");
+    expect(screen.queryByTestId("agenda-empty")).toBeNull();
+    expect(screen.getByRole("button", { name: "Solicitar esta fecha" })).toBeTruthy();
+  });
+});
+
 describe("REQ-F26-01/02 · quote cart and sent confirmation", () => {
   const offers = [{ listingId: LISTING, title: "Torta", priceFrom: { amountMinor: 45000, currency: "BOB" }, fulfillment: { responsible: "PROVIDER", coverageZones: ["la-paz"], leadTimeDays: 3 } }];
   const cart = () => render(<QuoteCart slug="dulce-sol" providerId={PID} providerName="Dulce Sol" timeZone="America/La_Paz" offers={offers} preselected={LISTING} locale="es-BO" today="2026-11-05" cities={[{ slug: "la-paz", name: "La Paz" }, { slug: "sucre", name: "Sucre" }]} />);

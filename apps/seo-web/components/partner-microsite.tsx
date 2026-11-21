@@ -6,12 +6,11 @@ import type { Partner } from "../lib/partner";
 import { CheckMark } from "./brand/check-mark";
 import { OfflineArt } from "./brand/illustrations";
 import { Monogram } from "./brand/monogram";
-import { cityBySlug, PROVIDER_CATEGORIES } from "../lib/providers";
+import { zoneName } from "@rsvp/query-hooks";
+import { PROVIDER_CATEGORIES } from "../lib/providers";
 import { Breadcrumbs } from "./provider-directory";
 
 const MINOR_UNIT_DIGITS = 2;
-/** Coverage zones arrive as city slugs ("la-paz"); known cities are shown by name. */
-const zoneName = (zone: string): string => cityBySlug(zone)?.name ?? zone;
 
 function money(amountMinor: number, currency: string, locale: string): string {
   const digits = Math.abs(amountMinor).toString().padStart(MINOR_UNIT_DIGITS + 1, "0");

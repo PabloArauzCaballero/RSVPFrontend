@@ -1,0 +1,75 @@
+{
+  "app": "http://localhost:8320",
+  "web": "http://localhost:3320",
+  "slug": "multicenter-59388c",
+  "month": "2026-11",
+  "apiDays": 0,
+  "results": [
+    {
+      "case": "app 360px light: empty month explained, no empty grid, no dead request button",
+      "ok": true,
+      "detail": "role=status grid=0 requestButton=0 overflow=0 axe(critical+serious)=0 errors=0",
+      "screenshot": "agenda-vacia-app-360-light.png",
+      "at": "2026-11-21T00:59:03.035Z"
+    },
+    {
+      "case": "app: \"Pedir cotización\" opens the quote",
+      "ok": true,
+      "at": "2026-11-21T00:59:03.204Z"
+    },
+    {
+      "case": "app 360px dark: empty month explained, no empty grid, no dead request button",
+      "ok": true,
+      "detail": "role=status grid=0 requestButton=0 overflow=0 axe(critical+serious)=0 errors=0",
+      "screenshot": "agenda-vacia-app-360-dark.png",
+      "at": "2026-11-21T00:59:07.240Z"
+    },
+    {
+      "case": "app 1280px light: empty month explained, no empty grid, no dead request button",
+      "ok": true,
+      "detail": "role=status grid=0 requestButton=0 overflow=0 axe(critical+serious)=0 errors=0",
+      "screenshot": "agenda-vacia-app-1280-light.png",
+      "at": "2026-11-21T00:59:11.271Z"
+    },
+    {
+      "case": "app 1280px dark: empty month explained, no empty grid, no dead request button",
+      "ok": true,
+      "detail": "role=status grid=0 requestButton=0 overflow=0 axe(critical+serious)=0 errors=0",
+      "screenshot": "agenda-vacia-app-1280-dark.png",
+      "at": "2026-11-21T00:59:16.587Z"
+    },
+    {
+      "case": "web 360px light: empty month explained, no empty grid, no dead request button",
+      "ok": true,
+      "detail": "role=status grid=0 requestButton=0 overflow=0 axe(critical+serious)=0 errors=0",
+      "screenshot": "agenda-vacia-web-360-light.png",
+      "at": "2026-11-21T00:59:22.897Z"
+    },
+    {
+      "case": "web: \"Pedir cotización\" opens the quote",
+      "ok": true,
+      "at": "2026-11-21T00:59:25.646Z"
+    },
+    {
+      "case": "web 360px dark: empty month explained, no empty grid, no dead request button",
+      "ok": true,
+      "detail": "role=status grid=0 requestButton=0 overflow=0 axe(critical+serious)=0 errors=0",
+      "screenshot": "agenda-vacia-web-360-dark.png",
+      "at": "2026-11-21T00:59:30.723Z"
+    },
+    {
+      "case": "web 1280px light: empty month explained, no empty grid, no dead request button",
+      "ok": true,
+      "detail": "role=status grid=0 requestButton=0 overflow=0 axe(critical+serious)=0 errors=0",
+      "screenshot": "agenda-vacia-web-1280-light.png",
+      "at": "2026-11-21T00:59:36.701Z"
+    },
+    {
+      "case": "web 1280px dark: empty month explained, no empty grid, no dead request button",
+      "ok": true,
+      "detail": "role=status grid=0 requestButton=0 overflow=0 axe(critical+serious)=0 errors=0",
+      "screenshot": "agenda-vacia-web-1280-dark.png",
+      "at": "2026-11-21T00:59:42.352Z"
+    }
+  ]
+}

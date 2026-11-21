@@ -1,0 +1,22 @@
+{
+  "status": "PASS",
+  "browser": "151.0.7922.34",
+  "app": "http://localhost:8340",
+  "noInterception": true,
+  "results": [
+    {
+      "width": 360,
+      "reloads": 2,
+      "browserSentCookie": true,
+      "refreshStatus": 200,
+      "keyboard": true
+    },
+    {
+      "width": 1280,
+      "reloads": 2,
+      "browserSentCookie": true,
+      "refreshStatus": 200,
+      "keyboard": true
+    }
+  ]
+}

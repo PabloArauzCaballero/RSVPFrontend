@@ -23,6 +23,11 @@ export const quoteEsBO = {
     title: "Disponibilidad de {{name}}", meta: "Días libres de {{name}}, en la hora de {{zone}}.", intro: "Los días libres están en hora de {{zone}}, la zona del proveedor.", legend: "Días libres, bloqueados o sin cupo",
     prev: "Mes anterior", next: "Mes siguiente", month: "Calendario de {{month}}", free: "Libre", blocked: "No disponible", full: "Sin cupo", remaining: "{{count}} cupo",
     dayLabel: "{{date}}: {{state}}", select: "Elige un día libre para solicitar la fecha.", selected: "Fecha elegida: {{date}}", request: "Solicitar esta fecha", requesting: "Solicitando…", loading: "Cargando el calendario…", error: "No pudimos cargar el calendario.", retry: "Reintentar",
+    empty: {
+      unpublishedTitle: "{{name}} todavía no publicó sus días para {{month}}", unpublishedBody: "Por ahora no podemos mostrarte días libres en este mes. Pide una cotización con la fecha de tu evento y el proveedor te responderá directamente.",
+      noneFreeTitle: "No quedan días libres en {{month}}", noneFreeBody: "Todos los días de este mes están bloqueados o sin cupo. Prueba con el mes siguiente o pide una cotización con tu fecha.",
+      nextMonth: "Ver el mes siguiente", quote: "Pedir cotización"
+    },
     reason: { BLACKOUT: "El proveedor bloqueó este día", NO_RULE: "El proveedor no atiende este día", OUTSIDE_HOURS: "Fuera del horario de atención", FULL: "Ya no quedan cupos" },
     outcome: { requestedTitle: "Fecha solicitada", requestedBody: "Pedimos {{date}} a {{name}}. Te confirmará pronto; la solicitud vence {{expires}}.", blocked: "Esta fecha no está disponible: el proveedor la bloqueó. Elige otro día libre.", noCapacity: "Alguien tomó el último cupo de esta fecha. Elige otro día libre; el calendario se actualizó.", signIn: "Inicia sesión para solicitar una fecha.", generic: "No pudimos solicitar la fecha. Inténtalo de nuevo." }
   }

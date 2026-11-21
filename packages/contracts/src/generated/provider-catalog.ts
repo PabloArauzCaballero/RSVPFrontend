@@ -934,6 +934,11 @@ export interface components {
         CategoryList: {
             items?: {
                 code?: string;
+                /**
+                 * @description Offer type for this category. Null means that services and products can use it.
+                 * @enum {string|null}
+                 */
+                listingType?: "SERVICE" | "PRODUCT" | null;
                 name?: string;
                 names?: {
                     [key: string]: string;
@@ -1096,6 +1101,8 @@ export interface components {
             category?: string;
             /** Format: uuid */
             id: string;
+            /** Format: uri */
+            imageUrl?: string;
             priceFrom?: components["schemas"]["Money"];
             /** Format: uuid */
             providerId: string;

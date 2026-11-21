@@ -1,6 +1,6 @@
 /** RSVP del invitado por enlace personal (F15 web, F21 app). Mismo texto en Next.js y en Expo. */
 export const rsvpEsBO = {
-  page: { title: "Tu respuesta", invitationTo: "Invitación a {{title}}" },
+  page: { title: "Tu respuesta", invitationTo: "Invitación a {{title}}", invitationFor: "Invitación para {{name}}" },
   loading: "Abriendo tu invitación…",
   invalid: {
     title: "Este enlace no está disponible",
@@ -35,7 +35,7 @@ export const rsvpEsBO = {
   draft: { kept: "Tu borrador se guarda solo en este dispositivo hasta que el envío se confirme." },
   success: { confirmed: "Listo: confirmamos tu asistencia.", declined: "Gracias por avisarnos. Registramos que no podrás asistir.", saved: "Cambios guardados." },
   status: { PENDING: "Sin responder", CONFIRMED: "Asistirás", DECLINED: "No asistirás" },
-  confirmed: { title: "Tu asistencia está confirmada", titleDeclined: "Registramos que no podrás asistir", edit: "Cambiar mi respuesta", editHint: "Puedes cambiarla hasta que cierre el plazo." },
+  confirmed: { gifts: "Ver regalos", giftsHint: "Elige un regalo de la lista que prepararon los anfitriones.", title: "Tu asistencia está confirmada", titleDeclined: "Registramos que no podrás asistir", edit: "Cambiar mi respuesta", editHint: "Puedes cambiarla hasta que cierre el plazo." },
   summary: {
     label: "Tu respuesta", companions: "Acompañantes aprobados: {{count}}", pendingCompanions: "{{count}} esperando aprobación del anfitrión", dietary: "Restricciones: {{value}}", message: "Tu mensaje: {{value}}", updated: "Última actualización: {{date}}", none: "Sin detalles adicionales."
   },

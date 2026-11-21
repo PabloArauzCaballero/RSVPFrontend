@@ -110,13 +110,22 @@ export interface TemplateInput { readonly name: string; readonly description?: s
 export interface Template extends TemplateInput { readonly id: string; readonly status: "DRAFT" | "PUBLISHED" | "ARCHIVED"; readonly version: number; readonly publishedAt: string | null }
 
 export interface UploadIntent { readonly assetId: string; readonly objectKey: string; readonly uploadUrl: string; readonly method: "PUT"; readonly requiredHeaders: Readonly<Record<string, string>>; readonly maxBytes: number }
+/** One photo of GET /media/public/celebrations/{id}/assets: only what a guest may see (no filename or upload state). */
+export interface PublicGalleryImage {
+  readonly id: string;
+  readonly width: number | null;
+  readonly height: number | null;
+  readonly isCover: boolean;
+  readonly variants: Readonly<Partial<Record<"thumb" | "medium" | "full" | "webp", string>>>;
+}
+
 export interface MediaAsset {
   readonly id: string;
   readonly celebrationId: string;
   readonly filename: string;
   readonly contentType: string;
   readonly sizeBytes: number;
-  readonly status: "PENDING_UPLOAD" | "PROCESSED" | "REJECTED" | "DELETED";
+  readonly status: "PENDING_UPLOAD" | "PROCESSING" | "PROCESSED" | "REJECTED" | "DELETED";
   readonly width: number | null;
   readonly height: number | null;
   readonly sortOrder: number;

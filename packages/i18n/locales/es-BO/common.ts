@@ -1,6 +1,8 @@
 export const esBO = {
   common: { loading: "Cargando…", retry: "Reintentar", cancel: "Cancelar", save: "Guardar", signOut: "Cerrar sesión", more: "Más", close: "Cerrar", empty: "No hay resultados." },
   auth: {
+    signOut: { title: "¿Estás seguro de cerrar sesión?", body: "Puedes cancelar para seguir en tu cuenta." },
+    restoreUnavailable: { title: "No pudimos recuperar tu sesión", body: "Revisa tu conexión e inténtalo de nuevo. No hace falta cerrar sesión.", retry: "Reintentar" },
     email: "Correo", password: "Contraseña", signIn: "Entrar", register: "Crear mi cuenta", forgotPassword: "Olvidé mi contraseña",
     signInTitle: "Entra a DOne", signInIntro: "Retoma tu invitación o tus servicios donde los dejaste.",
     registerTitle: "Crea tu cuenta", registerIntro: "Dinos qué vas a hacer y entras en un minuto.",
@@ -24,7 +26,7 @@ export const esBO = {
   stubs: { host: { title: "Panel del anfitrión", description: "Gestiona tu celebración desde un solo lugar." }, provider: { title: "Portal del proveedor", description: "Revisa y responde tus solicitudes." }, guest: { title: "Tu invitación", description: "Confirma tu asistencia y descubre los detalles." } },
   ui: {
     partnerDisclaimer: "Enlace patrocinado: al abrirlo sales de DOne. DOne conecta, pero no presta ni garantiza el servicio del proveedor.", action: "Acción", loading: "Cargando…", empty: "No hay información disponible.", genericError: "No se pudo completar la acción.", close: "Cerrar", emptyTable: "No hay registros.", chooseFile: "Seleccionar archivo", dismiss: "Descartar aviso", moreOptions: "Más opciones",
-    datePlaceholder: "AAAA-MM-DD", confirmChange: "Confirmar cambio", cancel: "Cancelar",
+    datePlaceholder: "Elegir fecha", datePreviousMonth: "Mes anterior", dateNextMonth: "Mes siguiente", dateToday: "Hoy", dateClear: "Borrar fecha", timePlaceholder: "Elegir hora", timeAm: "a. m.", timePm: "p. m.", timeHour: "Hora", timeMinute: "Minutos", timePeriod: "Mañana o tarde", timeDone: "Listo", timeClear: "Borrar", confirmChange: "Confirmar cambio", cancel: "Cancelar",
     catalogTitle: "Catálogo de componentes", catalogIntro: "Cada bloque es un estado. Mismos tokens en claro y oscuro.", catalogActions: "Acciones", catalogState: "Estado:", catalogSave: "Guardar", catalogBlocked: "Bloqueado",
     catalogOpenDialog: "Abrir diálogo", catalogOpenPanel: "Abrir panel", catalogName: "Nombre", catalogNamePlaceholder: "Escribe tu nombre", catalogNameError: "Escribe tu nombre completo.", catalogOption: "Opción", catalogOptionOne: "Opción uno", catalogOptionTwo: "Opción dos", catalogOptionError: "Elige una opción.",
     catalogTerms: "Acepto los términos", catalogTermsError: "Debes aceptar.", catalogDate: "Fecha", catalogAttachment: "Adjunto", catalogCard: "Contenido de la tarjeta", catalogRowName: "Invitación", catalogRowStatus: "Activa", catalogColName: "Nombre", catalogColStatus: "Estado",

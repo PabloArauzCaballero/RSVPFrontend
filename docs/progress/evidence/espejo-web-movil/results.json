@@ -1,0 +1,354 @@
+{
+  "app": "http://localhost:8300",
+  "api": "http://localhost:8300/api",
+  "slugs": [
+    "sofia-y-victor-boda",
+    "roxana-y-pedro",
+    "fabio"
+  ],
+  "results": [
+    {
+      "case": "A1 sofia-y-victor-boda 360px light es-BO",
+      "ok": true,
+      "detail": "h1=\"sofia y victor boda\" server=\"sofia y victor boda\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-sofia-y-victor-boda-360-light-es-BO.png",
+      "at": "2026-11-20T20:42:54.265Z"
+    },
+    {
+      "case": "A1 sofia-y-victor-boda 360px light en-US",
+      "ok": true,
+      "detail": "h1=\"sofia y victor boda\" server=\"sofia y victor boda\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-sofia-y-victor-boda-360-light-en-US.png",
+      "at": "2026-11-20T20:42:59.831Z"
+    },
+    {
+      "case": "A1 sofia-y-victor-boda 360px dark es-BO",
+      "ok": true,
+      "detail": "h1=\"sofia y victor boda\" server=\"sofia y victor boda\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-sofia-y-victor-boda-360-dark-es-BO.png",
+      "at": "2026-11-20T20:43:05.596Z"
+    },
+    {
+      "case": "A1 sofia-y-victor-boda 360px dark en-US",
+      "ok": true,
+      "detail": "h1=\"sofia y victor boda\" server=\"sofia y victor boda\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-sofia-y-victor-boda-360-dark-en-US.png",
+      "at": "2026-11-20T20:43:11.488Z"
+    },
+    {
+      "case": "A1 sofia-y-victor-boda 768px light es-BO",
+      "ok": true,
+      "detail": "h1=\"sofia y victor boda\" server=\"sofia y victor boda\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-sofia-y-victor-boda-768-light-es-BO.png",
+      "at": "2026-11-20T20:43:16.923Z"
+    },
+    {
+      "case": "A1 sofia-y-victor-boda 768px light en-US",
+      "ok": true,
+      "detail": "h1=\"sofia y victor boda\" server=\"sofia y victor boda\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-sofia-y-victor-boda-768-light-en-US.png",
+      "at": "2026-11-20T20:43:22.137Z"
+    },
+    {
+      "case": "A1 sofia-y-victor-boda 768px dark es-BO",
+      "ok": true,
+      "detail": "h1=\"sofia y victor boda\" server=\"sofia y victor boda\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-sofia-y-victor-boda-768-dark-es-BO.png",
+      "at": "2026-11-20T20:43:27.578Z"
+    },
+    {
+      "case": "A1 sofia-y-victor-boda 768px dark en-US",
+      "ok": true,
+      "detail": "h1=\"sofia y victor boda\" server=\"sofia y victor boda\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-sofia-y-victor-boda-768-dark-en-US.png",
+      "at": "2026-11-20T20:43:32.684Z"
+    },
+    {
+      "case": "A1 sofia-y-victor-boda 1280px light es-BO",
+      "ok": true,
+      "detail": "h1=\"sofia y victor boda\" server=\"sofia y victor boda\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-sofia-y-victor-boda-1280-light-es-BO.png",
+      "at": "2026-11-20T20:43:38.404Z"
+    },
+    {
+      "case": "A1 sofia-y-victor-boda 1280px light en-US",
+      "ok": true,
+      "detail": "h1=\"sofia y victor boda\" server=\"sofia y victor boda\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-sofia-y-victor-boda-1280-light-en-US.png",
+      "at": "2026-11-20T20:43:44.129Z"
+    },
+    {
+      "case": "A1 sofia-y-victor-boda 1280px dark es-BO",
+      "ok": true,
+      "detail": "h1=\"sofia y victor boda\" server=\"sofia y victor boda\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-sofia-y-victor-boda-1280-dark-es-BO.png",
+      "at": "2026-11-20T20:43:50.082Z"
+    },
+    {
+      "case": "A1 sofia-y-victor-boda 1280px dark en-US",
+      "ok": true,
+      "detail": "h1=\"sofia y victor boda\" server=\"sofia y victor boda\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-sofia-y-victor-boda-1280-dark-en-US.png",
+      "at": "2026-11-20T20:43:56.774Z"
+    },
+    {
+      "case": "A2–A8 sofia-y-victor-boda nav → Nuestra historia",
+      "ok": true,
+      "detail": "url=/c/sofia-y-victor-boda/historia sections=section-story h1=\"Nuestra historia\"",
+      "screenshot": "seccion-sofia-y-victor-boda-historia-360.png",
+      "at": "2026-11-20T20:44:03.202Z"
+    },
+    {
+      "case": "A2–A8 sofia-y-victor-boda nav → Lugares",
+      "ok": true,
+      "detail": "url=/c/sofia-y-victor-boda/lugares sections=section-venues h1=\"Lugares\"",
+      "screenshot": "seccion-sofia-y-victor-boda-lugares-360.png",
+      "at": "2026-11-20T20:44:05.291Z"
+    },
+    {
+      "case": "A2–A8 sofia-y-victor-boda nav → Galería",
+      "ok": true,
+      "detail": "url=/c/sofia-y-victor-boda/galeria sections=section-gallery h1=\"Galería\"",
+      "screenshot": "seccion-sofia-y-victor-boda-galeria-360.png",
+      "at": "2026-11-20T20:44:07.371Z"
+    },
+    {
+      "case": "Venues sofia-y-victor-boda cómo llegar",
+      "ok": true,
+      "detail": "https://www.google.com/maps/search/?api=1&query=-17.768699%2C-63.182967",
+      "at": "2026-11-20T20:44:09.011Z"
+    },
+    {
+      "case": "Runtime sofia-y-victor-boda",
+      "ok": true,
+      "detail": "no console errors",
+      "at": "2026-11-20T20:44:09.020Z"
+    },
+    {
+      "case": "A1 roxana-y-pedro 360px light es-BO",
+      "ok": true,
+      "detail": "h1=\"Roxana y Pedro\" server=\"Roxana y Pedro\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-roxana-y-pedro-360-light-es-BO.png",
+      "at": "2026-11-20T20:44:12.396Z"
+    },
+    {
+      "case": "A1 roxana-y-pedro 360px light en-US",
+      "ok": true,
+      "detail": "h1=\"Roxanne\" server=\"Roxanne\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-roxana-y-pedro-360-light-en-US.png",
+      "at": "2026-11-20T20:44:15.362Z"
+    },
+    {
+      "case": "A1 roxana-y-pedro 360px dark es-BO",
+      "ok": true,
+      "detail": "h1=\"Roxana y Pedro\" server=\"Roxana y Pedro\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-roxana-y-pedro-360-dark-es-BO.png",
+      "at": "2026-11-20T20:44:18.365Z"
+    },
+    {
+      "case": "A1 roxana-y-pedro 360px dark en-US",
+      "ok": true,
+      "detail": "h1=\"Roxanne\" server=\"Roxanne\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-roxana-y-pedro-360-dark-en-US.png",
+      "at": "2026-11-20T20:44:21.426Z"
+    },
+    {
+      "case": "A1 roxana-y-pedro 768px light es-BO",
+      "ok": true,
+      "detail": "h1=\"Roxana y Pedro\" server=\"Roxana y Pedro\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-roxana-y-pedro-768-light-es-BO.png",
+      "at": "2026-11-20T20:44:24.377Z"
+    },
+    {
+      "case": "A1 roxana-y-pedro 768px light en-US",
+      "ok": true,
+      "detail": "h1=\"Roxanne\" server=\"Roxanne\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-roxana-y-pedro-768-light-en-US.png",
+      "at": "2026-11-20T20:44:27.574Z"
+    },
+    {
+      "case": "A1 roxana-y-pedro 768px dark es-BO",
+      "ok": true,
+      "detail": "h1=\"Roxana y Pedro\" server=\"Roxana y Pedro\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-roxana-y-pedro-768-dark-es-BO.png",
+      "at": "2026-11-20T20:44:30.607Z"
+    },
+    {
+      "case": "A1 roxana-y-pedro 768px dark en-US",
+      "ok": true,
+      "detail": "h1=\"Roxanne\" server=\"Roxanne\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-roxana-y-pedro-768-dark-en-US.png",
+      "at": "2026-11-20T20:44:33.564Z"
+    },
+    {
+      "case": "A1 roxana-y-pedro 1280px light es-BO",
+      "ok": true,
+      "detail": "h1=\"Roxana y Pedro\" server=\"Roxana y Pedro\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-roxana-y-pedro-1280-light-es-BO.png",
+      "at": "2026-11-20T20:44:36.507Z"
+    },
+    {
+      "case": "A1 roxana-y-pedro 1280px light en-US",
+      "ok": true,
+      "detail": "h1=\"Roxanne\" server=\"Roxanne\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-roxana-y-pedro-1280-light-en-US.png",
+      "at": "2026-11-20T20:44:39.439Z"
+    },
+    {
+      "case": "A1 roxana-y-pedro 1280px dark es-BO",
+      "ok": true,
+      "detail": "h1=\"Roxana y Pedro\" server=\"Roxana y Pedro\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-roxana-y-pedro-1280-dark-es-BO.png",
+      "at": "2026-11-20T20:44:42.413Z"
+    },
+    {
+      "case": "A1 roxana-y-pedro 1280px dark en-US",
+      "ok": true,
+      "detail": "h1=\"Roxanne\" server=\"Roxanne\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-roxana-y-pedro-1280-dark-en-US.png",
+      "at": "2026-11-20T20:44:45.394Z"
+    },
+    {
+      "case": "A2–A8 roxana-y-pedro nav → Lugares",
+      "ok": true,
+      "detail": "url=/c/roxana-y-pedro/lugares sections=section-venues h1=\"Lugares\"",
+      "screenshot": "seccion-roxana-y-pedro-lugares-360.png",
+      "at": "2026-11-20T20:44:49.627Z"
+    },
+    {
+      "case": "Venues roxana-y-pedro cómo llegar",
+      "ok": true,
+      "detail": "https://www.google.com/maps/search/?api=1&query=Sal%C3%B3n%20Las%20Palmas",
+      "at": "2026-11-20T20:44:51.318Z"
+    },
+    {
+      "case": "Runtime roxana-y-pedro",
+      "ok": true,
+      "detail": "no console errors",
+      "at": "2026-11-20T20:44:51.334Z"
+    },
+    {
+      "case": "A1 fabio 360px light es-BO",
+      "ok": true,
+      "detail": "h1=\"Fabio\" server=\"Fabio\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-fabio-360-light-es-BO.png",
+      "at": "2026-11-20T20:44:57.114Z"
+    },
+    {
+      "case": "A1 fabio 360px light en-US",
+      "ok": true,
+      "detail": "h1=\"Fabio\" server=\"Fabio\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-fabio-360-light-en-US.png",
+      "at": "2026-11-20T20:45:04.177Z"
+    },
+    {
+      "case": "A1 fabio 360px dark es-BO",
+      "ok": true,
+      "detail": "h1=\"Fabio\" server=\"Fabio\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-fabio-360-dark-es-BO.png",
+      "at": "2026-11-20T20:45:11.692Z"
+    },
+    {
+      "case": "A1 fabio 360px dark en-US",
+      "ok": true,
+      "detail": "h1=\"Fabio\" server=\"Fabio\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-fabio-360-dark-en-US.png",
+      "at": "2026-11-20T20:45:17.601Z"
+    },
+    {
+      "case": "A1 fabio 768px light es-BO",
+      "ok": true,
+      "detail": "h1=\"Fabio\" server=\"Fabio\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-fabio-768-light-es-BO.png",
+      "at": "2026-11-20T20:45:23.758Z"
+    },
+    {
+      "case": "A1 fabio 768px light en-US",
+      "ok": true,
+      "detail": "h1=\"Fabio\" server=\"Fabio\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-fabio-768-light-en-US.png",
+      "at": "2026-11-20T20:45:29.470Z"
+    },
+    {
+      "case": "A1 fabio 768px dark es-BO",
+      "ok": true,
+      "detail": "h1=\"Fabio\" server=\"Fabio\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-fabio-768-dark-es-BO.png",
+      "at": "2026-11-20T20:45:35.995Z"
+    },
+    {
+      "case": "A1 fabio 768px dark en-US",
+      "ok": true,
+      "detail": "h1=\"Fabio\" server=\"Fabio\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-fabio-768-dark-en-US.png",
+      "at": "2026-11-20T20:45:41.956Z"
+    },
+    {
+      "case": "A1 fabio 1280px light es-BO",
+      "ok": true,
+      "detail": "h1=\"Fabio\" server=\"Fabio\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-fabio-1280-light-es-BO.png",
+      "at": "2026-11-20T20:45:47.681Z"
+    },
+    {
+      "case": "A1 fabio 1280px light en-US",
+      "ok": true,
+      "detail": "h1=\"Fabio\" server=\"Fabio\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-fabio-1280-light-en-US.png",
+      "at": "2026-11-20T20:45:54.128Z"
+    },
+    {
+      "case": "A1 fabio 1280px dark es-BO",
+      "ok": true,
+      "detail": "h1=\"Fabio\" server=\"Fabio\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-fabio-1280-dark-es-BO.png",
+      "at": "2026-11-20T20:45:59.856Z"
+    },
+    {
+      "case": "A1 fabio 1280px dark en-US",
+      "ok": true,
+      "detail": "h1=\"Fabio\" server=\"Fabio\" overflow=0 errors=0 axe(critical+serious)=0 other=0",
+      "screenshot": "invitacion-fabio-1280-dark-en-US.png",
+      "at": "2026-11-20T20:46:05.883Z"
+    },
+    {
+      "case": "A2–A8 fabio nav → Lugares",
+      "ok": true,
+      "detail": "url=/c/fabio/lugares sections=section-venues h1=\"Lugares\"",
+      "screenshot": "seccion-fabio-lugares-360.png",
+      "at": "2026-11-20T20:46:13.286Z"
+    },
+    {
+      "case": "A2–A8 fabio nav → Galería",
+      "ok": true,
+      "detail": "url=/c/fabio/galeria sections=section-gallery h1=\"Galería\"",
+      "screenshot": "seccion-fabio-galeria-360.png",
+      "at": "2026-11-20T20:46:15.411Z"
+    },
+    {
+      "case": "Venues fabio cómo llegar",
+      "ok": true,
+      "detail": "https://www.google.com/maps/search/?api=1&query=-17.856552%2C-63.259229",
+      "at": "2026-11-20T20:46:17.185Z"
+    },
+    {
+      "case": "Runtime fabio",
+      "ok": true,
+      "detail": "no console errors",
+      "at": "2026-11-20T20:46:17.204Z"
+    },
+    {
+      "case": "Negative 404 unknown slug",
+      "ok": true,
+      "detail": "gateway=404, screen shows not-available",
+      "screenshot": "negativo-404-360.png",
+      "at": "2026-11-20T20:46:18.533Z"
+    },
+    {
+      "case": "Negative path that is not a section",
+      "ok": true,
+      "detail": "celebration requests=0",
+      "at": "2026-11-20T20:46:18.596Z"
+    }
+  ]
+}

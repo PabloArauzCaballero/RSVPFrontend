@@ -2,7 +2,7 @@
 export interface Money { readonly amountMinor: number; readonly currency: string }
 export type GiftSource = "CATALOGED" | "EXTERNAL";
 export type GiftItemStatus = "AVAILABLE" | "PROPOSED" | "PENDING_REVIEW" | "COMMITTED" | "REJECTED";
-export type ReservationStatus = "PENDING_REVIEW" | "COMMITTED" | "REJECTED";
+export type ReservationStatus = "PENDING_REVIEW" | "COMMITTED" | "REJECTED" | "CANCELLED";
 export interface GiftItem {
   readonly id: string; readonly listId: string; readonly celebrationId: string; readonly title: string; readonly description?: string | null;
   readonly price: Money; readonly source: GiftSource; readonly status: GiftItemStatus; readonly version: number;
@@ -16,6 +16,9 @@ export interface GiftReservation {
   readonly message?: string | null; readonly status: ReservationStatus; readonly requestedAt: string; readonly resolvedAt?: string | null; readonly resolvedBy?: string | null;
   /** True when the host chose not to see the requester: the name is null and the UI says so. */
   readonly requesterHidden?: boolean;
+  readonly cancelledAt?: string;
+  readonly cancelledFromStatus?: "PENDING_REVIEW" | "COMMITTED";
+  readonly cancellationReason?: "RSVP_DECLINED";
 }
 export interface ReservationList { readonly items: readonly GiftReservation[] }
 export interface ReserveGiftInput { readonly guestDisplayName?: string | null; readonly message?: string | null }

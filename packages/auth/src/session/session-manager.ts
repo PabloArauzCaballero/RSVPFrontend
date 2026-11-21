@@ -37,10 +37,21 @@ export class SessionManager {
 
   /** Reads the persisted session at start-up and renews it when its access token is stale. */
   async restore(): Promise<AuthState> {
+    if (this.state.status === "unavailable") {
+      this.state = { status: "loading", session: null };
+      for (const listener of this.listeners) listener(this.state);
+    }
     const session = await this.store.getSession();
     if (!session && this.identity.transport === "cookie") {
       // Web reload: memory is empty but the httpOnly cookie may still hold a live refresh token.
-      try { await this.refresh(); } catch { this.publish(null); }
+      try { await this.refresh(); } catch (error) {
+        if (error instanceof ApiError && error.status === STATUS_UNAUTHORIZED) this.publish(null);
+        else {
+          // No proof the cookie expired: keep the route guarded and offer recovery instead of signing out.
+          this.state = { status: "unavailable", session: null };
+          for (const listener of this.listeners) listener(this.state);
+        }
+      }
       return this.state;
     }
     if (!session) { this.publish(null); return this.state; }

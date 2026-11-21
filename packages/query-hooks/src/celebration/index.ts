@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient, type QueryKey } from "@tanstack/react-query";
 import type { ApiClient } from "@rsvp/api-client";
-import { cachePolicy } from "../policy.js";
+import { cachePolicy, retryTransient } from "../policy.js";
 import { queryKeys } from "../keys.js";
 import { invalidation } from "../invalidation.js";
 import { celebrationApi, mediaApi, templateApi, type Versioned } from "./api.js";
@@ -22,6 +22,22 @@ export function useCelebration<T = Celebration>(client: ApiClient, id: string) {
 export function usePublicCelebration<T>(client: ApiClient, slug: string) {
   return useQuery({ queryKey: queryKeys.celebration.public(slug), queryFn: () => client.request<T>(`/celebrations/public/${slug}`, { auth: false }), ...cachePolicy.celebration, enabled: Boolean(slug) });
 }
+/**
+ * GET /celebrations/public/{slug} in the language the guest reads (Accept-Language), as the public site loads it.
+ * A 404 is the answer for an unpublished or unknown slug, so it is not retried.
+ */
+export function usePublicInvitation<T>(client: ApiClient, slug: string, language: string) {
+  return useQuery({
+    queryKey: queryKeys.celebration.publicIn(slug, language),
+    queryFn: ({ signal }) => client.request<T>(`/celebrations/public/${encodeURIComponent(slug)}`, { auth: false, signal, headers: language ? { "accept-language": language } : {} }),
+    ...cachePolicy.celebration, enabled: Boolean(slug), retry: retryTransient
+  });
+}
+/** Photos of a published celebration. Only dresses the page: callers render without it when it fails. */
+export function usePublicGallery(client: ApiClient, celebrationId: string | undefined) {
+  return useQuery({ queryKey: queryKeys.media.publicGallery(celebrationId ?? ""), queryFn: ({ signal }) => mediaApi(client).publicGallery(celebrationId ?? "", signal), ...cachePolicy.celebration, enabled: Boolean(celebrationId), retry: false });
+}
+
 export function useMyCelebrations(client: ApiClient, options: { readonly enabled?: boolean } = {}) {
   return useQuery({ queryKey: queryKeys.celebration.all, queryFn: () => celebrationApi(client).list(), ...cachePolicy.celebration, enabled: options.enabled ?? true });
 }
@@ -97,8 +113,18 @@ export function useTemplateTransition(client: ApiClient) {
 }
 
 export function useMediaAssets(client: ApiClient, celebrationId: string) {
-  return useQuery({ queryKey: queryKeys.media.list(celebrationId), queryFn: () => mediaApi(client).list(celebrationId), ...cachePolicy.celebration, enabled: Boolean(celebrationId) });
+  return useQuery({
+    queryKey: queryKeys.media.list(celebrationId),
+    queryFn: ({ signal }) => mediaApi(client).list(celebrationId, signal),
+    ...cachePolicy.celebration, enabled: Boolean(celebrationId),
+    // /complete returns 202 PROCESSING. Refetch only this resource until the worker finishes.
+    // Requests share the query cache, pause in hidden tabs and stop on terminal states or errors.
+    refetchInterval: (query) => !query.state.error && query.state.data?.items.some((asset) => asset.status === "PROCESSING") ? MEDIA_PROCESSING_INTERVAL_MS : false,
+    refetchIntervalInBackground: false
+  });
 }
+
+const MEDIA_PROCESSING_INTERVAL_MS = 2_000;
 
 export interface UploadInput { readonly file: Blob; readonly filename: string; readonly onProgress: (fraction: number) => void }
 

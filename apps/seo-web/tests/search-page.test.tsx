@@ -13,8 +13,10 @@ async function render(search: Record<string, string>, respond: () => Response = 
   const fetchFn = vi.fn(async () => respond());
   vi.stubGlobal("fetch", fetchFn);
   const html = renderToStaticMarkup(await SearchPage({ searchParams: Promise.resolve(search) }));
-  const asked = fetchFn.mock.calls.map((call) => new URL(String((call as unknown[])[0])));
-  return { document: dom(html), asked, html };
+  const all = fetchFn.mock.calls.map((call) => new URL(String((call as unknown[])[0])));
+  // The page also reads the published category names (GET /providers/categories); `asked` is the search itself.
+  const asked = all.filter((url) => url.pathname === "/providers");
+  return { document: dom(html), asked, all, html };
 }
 afterEach(() => vi.unstubAllGlobals());
 
@@ -28,6 +30,19 @@ describe("REQ-F24-04 · search page, proximity filter", () => {
     expect(asked[0]?.searchParams.has("city")).toBe(false);
     expect(document.querySelectorAll(".directory-results li")).toHaveLength(2);
     expect(document.querySelector('script[type="application/ld+json"]')).not.toBeNull();
+  });
+
+  it("reads the published category names in the page language, and a code the translation lacks shows that name, never the key", async () => {
+    const respond = (): Response => page([{ ...card(1), category: "PASTRY" }]);
+    const fetchFn = vi.fn(async (input: unknown) => (String(input).includes("/providers/categories")
+      ? new Response(JSON.stringify({ items: [{ code: "PASTRY", name: "Pastelería" }] }), { status: 200, headers: { "content-type": "application/json" } })
+      : respond()));
+    vi.stubGlobal("fetch", fetchFn);
+    const html = renderToStaticMarkup(await SearchPage({ searchParams: Promise.resolve({}) }));
+    const categories = fetchFn.mock.calls.map((call) => new URL(String((call as unknown[])[0]))).find((url) => url.pathname === "/providers/categories");
+    expect(categories?.searchParams.get("locale")).toBe("es-BO");
+    expect(html).toContain("Pastelería · La Paz");
+    expect(html).not.toContain("directory.category.PASTRY");
   });
 
   it("the form keeps the position in hidden fields, shows the active-location notice and can clear it", async () => {

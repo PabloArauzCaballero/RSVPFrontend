@@ -1,11 +1,12 @@
-import { Input } from './index';
-import { useTheme } from './theme';
-import type { State } from './index';
+import type { AppLocale } from '@rsvp/i18n/server';
+import { CalendarDateField } from './calendar-date-field';
+import { WebPickerField, type PickerFieldProps } from './picker-field';
 
-export interface DateFieldProps { label: string; value?: string; onChange?: (value: string) => void; state: State; error?: string }
+export interface DateFieldProps extends PickerFieldProps {
+  calendar?: { locale: AppLocale; timeZone: string };
+  minimumDate?: string;
+}
 
-/** Web and tests: a typed ISO date (YYYY-MM-DD). The native build replaces this file with a platform picker (`date-field.native.tsx`). */
-export function DateField({ label, value, onChange, state, error }: DateFieldProps) {
-  const { strings } = useTheme();
-  return <Input label={label} value={value} onChangeText={onChange} placeholder={strings.datePlaceholder} keyboardType="numbers-and-punctuation" state={state} error={error} />;
+export function DateField({ calendar, ...props }: DateFieldProps) {
+  return calendar ? <CalendarDateField {...props} {...calendar} /> : <WebPickerField kind="date" {...props} />;
 }

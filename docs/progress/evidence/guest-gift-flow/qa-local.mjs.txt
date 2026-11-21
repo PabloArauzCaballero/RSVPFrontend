@@ -1,0 +1,164 @@
+import assert from 'node:assert/strict';
+import { spawn, spawnSync } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
+import { once } from 'node:events';
+import { mkdir, writeFile, open, mkdtemp, rm } from 'node:fs/promises';
+import { createServer, request as proxyRequest } from 'node:http';
+import { resolve } from 'node:path';
+import { setTimeout as delay } from 'node:timers/promises';
+import pg from './rsvp-review-tools/node_modules/pg/esm/index.mjs';
+import { chromium } from './rsvp-guest-frontend/node_modules/playwright/index.mjs';
+import { AxeBuilder } from './rsvp-guest-frontend/node_modules/@axe-core/playwright/dist/index.mjs';
+import headless from './rsvp-f23-browser-tools/node_modules/@sparticuz/chromium/build/index.js';
+import { createDatabase, startService, seedCelebration, assertStatus } from './rsvp-guest-backend/apps/gift-list-service/test/integration/support.mjs';
+import { createGuestPool, PostgresGuestStore } from './rsvp-guest-backend/apps/guest-rsvp-service/dist/infrastructure/persistence/postgres-store.js';
+import { migrate as migrateGuest } from './rsvp-guest-backend/apps/guest-rsvp-service/dist/infrastructure/persistence/migrations.js';
+import { createGuestHttpServer } from './rsvp-guest-backend/apps/guest-rsvp-service/dist/interface/http-server.js';
+import { PostgresTokenRateLimiter } from './rsvp-guest-backend/apps/guest-rsvp-service/dist/infrastructure/persistence/token-rate-limiter.js';
+import { registerGuest } from './rsvp-guest-backend/apps/guest-rsvp-service/dist/application/command/register-guest.js';
+import { issueToken } from './rsvp-guest-backend/apps/guest-rsvp-service/dist/application/command/issue-token.js';
+import { HttpGuestCredentials } from './rsvp-guest-backend/apps/gift-list-service/dist/v2/infrastructure/http/guest-credentials.client.js';
+import { guard } from './rsvp-guest-backend/apps/guest-rsvp-service/test/support.mjs';
+
+process.env.LOCAL_POSTGRES_PORT = '38844';
+const output = resolve('rsvp-guest-frontend/docs/progress/evidence/guest-gift-flow');
+await mkdir(output, { recursive: true });
+const admin = new pg.Pool({ host: '127.0.0.1', port: 38844, user: 'postgres', database: 'postgres' });
+const dbName = `guest_qa_${randomUUID().replaceAll('-', '')}`;
+let guestPool, guestServer, giftDb, gift, gateway, browser, next, postgres, pgDirectory;
+const closeServer = async server => { if (server) { const done = once(server, 'close'); server.close(); server.closeAllConnections(); await done; } };
+const json = (res, status, body) => { res.writeHead(status, { 'content-type': 'application/json', 'cache-control': 'no-store' }); res.end(JSON.stringify(body)); };
+const publicView = {};
+const summary = { scope: 'Real PostgreSQL, Guest HTTP and Gift Nest HTTP. Celebration/catalog and image bytes are fixtures; no Kong or RabbitMQ.', browser: [], api: {} };
+try {
+  const native = resolve('rsvp-postgres-tools/node_modules/@embedded-postgres/linux-x64/native');
+  const pgEnv = { ...process.env, LD_LIBRARY_PATH: `${native}/lib` };
+  pgDirectory = await mkdtemp('/tmp/rsvp-guest-browser-pg-');
+  const init = spawnSync(`${native}/bin/initdb`, ['-D', pgDirectory, '-U', 'postgres', '-A', 'trust', '--no-locale', '--encoding=UTF8', '--no-instructions'], { env: pgEnv, encoding: 'utf8' });
+  assert.equal(init.status, 0, init.stderr);
+  postgres = spawn(`${native}/bin/postgres`, ['-D', pgDirectory, '-h', '127.0.0.1', '-p', '38844', '-c', 'unix_socket_directories=', '-c', 'TimeZone=UTC'], { env: pgEnv, stdio: 'ignore' });
+  for (let i = 0; ; i++) { try { await admin.query('SELECT 1'); break; } catch {} if (i > 50 || postgres.exitCode !== null) throw new Error('PostgreSQL did not start'); await delay(100); }
+  await admin.query(`CREATE ROLE ${dbName} LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE`);
+  await admin.query(`CREATE DATABASE ${dbName} OWNER ${dbName}`);
+  guestPool = createGuestPool(`postgresql://${dbName}@127.0.0.1:38844/${dbName}`);
+  await migrateGuest(guestPool);
+  const store = new PostgresGuestStore(guestPool);
+  guestServer = createGuestHttpServer({ store, guard, tokenRateLimiter: new PostgresTokenRateLimiter(guestPool, 30), celebrations: { get: async () => ({ access: 'MANAGE', defaultLocale: 'es-BO' }) } });
+  guestServer.listen(0, '127.0.0.1'); await once(guestServer, 'listening');
+  const guestOrigin = `http://127.0.0.1:${guestServer.address().port}`;
+  giftDb = await createDatabase('gift_ui');
+  gift = await startService(giftDb, { deps: { guests: new HttpGuestCredentials(guestOrigin) } });
+  const c = await seedCelebration(gift);
+  const context = { celebrationId: c.celebrationId, actorId: c.hostSub, access: 'MANAGE', correlationId: randomUUID() };
+  const slug = 'guest-gift-qa';
+  await store.run(c.celebrationId, tx => tx.mergeWindow({ timeZone: 'America/La_Paz', defaultLocale: 'es-BO', metadataVersion: 1, slug, publicState: 'PUBLISHED', settings: { deadline: null, version: 1, extraCompanionMode: 'AUTO_ACCEPT', unregisteredRsvpMode: 'RESTRICTED', effectiveFrom: new Date().toISOString() } }));
+  const guest = await registerGuest(store, context, { name: 'Invitada QA', email: 'guest.qa@example.invalid', allowedCompanions: 0 });
+  const second = await registerGuest(store, context, { name: 'Segundo QA', email: 'second.qa@example.invalid', allowedCompanions: 0 });
+  let issued = await issueToken(store, context, guest.id);
+  const other = await issueToken(store, context, second.id);
+  const productId = randomUUID();
+  gift.listings.set(productId, { providerId: randomUUID(), providerStatus: 'VERIFIED', published: true });
+  const item = assertStatus(await gift.call('POST', `/celebrations/${c.celebrationId}/items`, { as: c.host, body: { source: 'CATALOGED', title: 'Regalo QA', price: { amountMinor: 25000, currency: 'BOB' }, productListingId: productId } }), 201).body;
+  Object.assign(publicView, { celebrationId: c.celebrationId, slug, locale: 'es-BO', availableLocales: ['es-BO', 'en-US'], timeZone: 'America/La_Paz', rsvpDeadline: null, enabledSections: ['rsvp', 'gifts'], eventType: { code: 'WEDDING', name: 'Boda', hostRoles: [] }, content: { title: 'Fiesta QA', hosts: [{ role: 'HOST', name: 'Anfitrión QA' }] } });
+  const apiCall = async (path, credential, method = 'GET', body) => {
+    const response = await fetch(guestOrigin + path, { method, headers: { authorization: `Bearer ${credential}`, ...(body ? { 'content-type': 'application/json', 'idempotency-key': randomUUID() } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) });
+    return { status: response.status, body: await response.json() };
+  };
+  const resourcePath = `/rsvp/celebrations/${c.celebrationId}/guest`;
+  const resource = await apiCall(resourcePath, issued.token);
+  assert.equal(resource.status, 200); assert.equal(resource.body.name, 'Invitada QA');
+  assert.equal('email' in resource.body, false); assert.equal('phone' in resource.body, false);
+  assert.equal((await apiCall(resourcePath, 'x'.repeat(43))).status, 401);
+  assert.equal((await apiCall(`/rsvp/celebrations/${randomUUID()}/guest`, issued.token)).status, 404);
+  summary.api.name = 'Own name only, no contact; unknown credential 401; other celebration 404';
+  gateway = createServer((req, res) => {
+    res.setHeader('access-control-allow-origin', 'http://127.0.0.1:38841');
+    res.setHeader('access-control-allow-headers', 'authorization,content-type,idempotency-key,x-correlation-id');
+    res.setHeader('access-control-allow-methods', 'GET,POST,PATCH,OPTIONS');
+    if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
+    const path = new URL(req.url, 'http://localhost').pathname;
+    if (path === `/celebrations/public/${slug}`) { json(res, 200, publicView); return; }
+    if (path === `/listings/${productId}`) { json(res, 200, { id: productId, providerId: gift.listings.get(productId).providerId, providerStatus: 'VERIFIED', published: true, type: 'PRODUCT', title: 'Regalo QA', imageUrl: 'https://qa.example/gift.png' }); return; }
+    const target = path.startsWith('/rsvp/') ? guestOrigin + req.url : path.startsWith('/gifts/') ? gift.base + req.url.slice('/gifts'.length) : null;
+    if (!target) { json(res, 404, {}); return; }
+    const upstream = proxyRequest(target, { method: req.method, headers: { ...req.headers, host: new URL(target).host } }, reply => { res.writeHead(reply.statusCode, reply.headers); reply.pipe(res); });
+    upstream.on('error', () => { res.writeHead(502); res.end(); }); req.pipe(upstream);
+  });
+  gateway.listen(8000, '127.0.0.1'); await once(gateway, 'listening');
+  const log = await open('/tmp/rsvp-guest-next-live.txt', 'w');
+  next = spawn(process.execPath, [resolve('rsvp-guest-frontend/node_modules/next/dist/bin/next'), 'start', '--hostname', '127.0.0.1', '--port', '38841'], { cwd: resolve('rsvp-guest-frontend/apps/seo-web'), env: { ...process.env, NEXT_TELEMETRY_DISABLED: '1', RSVP_API_URL: 'http://127.0.0.1:8000', NEXT_PUBLIC_API_URL: 'http://localhost:8000' }, stdio: ['ignore', log.fd, log.fd] });
+  for (let i = 0; ; i++) { try { if ((await fetch('http://127.0.0.1:38841/')).ok) break; } catch {} if (i > 100 || next.exitCode !== null) throw new Error('Next runtime did not become ready'); await delay(200); }
+  const chromeArgs = headless.args.filter(arg => !['--single-process', '--disable-web-security', '--allow-running-insecure-content', '--disable-site-isolation-trials', '--disable-features=AudioServiceOutOfProcess,IsolateOrigins,site-per-process'].includes(arg));
+  browser = await chromium.launch({ executablePath: await headless.executablePath(), args: chromeArgs, headless: true });
+  const image = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aRZkAAAAASUVORK5CYII=', 'base64');
+  for (const width of [360, 768, 1280]) for (const colorScheme of ['light', 'dark']) for (const locale of ['es-BO', 'en-US']) {
+    if (summary.browser.length > 0) {
+      const another = await registerGuest(store, context, { name: 'Invitada QA', email: `guest.${summary.browser.length}@example.invalid`, allowedCompanions: 0 });
+      issued = await issueToken(store, context, another.id);
+      assert.equal((await apiCall(`/rsvp/celebrations/${c.celebrationId}/rsvp`, issued.token, 'POST', { status: 'CONFIRMED', requestedCompanions: 0 })).status, 201);
+    }
+    const bc = await browser.newContext({ viewport: { width, height: 900 }, colorScheme, locale, reducedMotion: 'reduce' });
+    const page = await bc.newPage();
+    await page.route('https://qa.example/gift.png', route => route.fulfill({ status: 200, contentType: 'image/png', body: image }));
+    await page.goto(`http://127.0.0.1:38841/c/${slug}/rsvp/${issued.token}?lang=${locale}`);
+    await page.getByTestId('guest-name').waitFor();
+    assert.equal(await page.getByTestId('guest-name').textContent(), locale === 'es-BO' ? 'Invitación para Invitada QA' : 'Invitation for Invitada QA');
+    if (summary.browser.length === 0) { await page.getByLabel('Sí, asistiré', { exact: true }).check(); await page.getByRole('button', { name: 'Enviar respuesta', exact: true }).click(); }
+    const giftsButton = page.getByRole('button', { name: locale === 'es-BO' ? 'Ver regalos' : 'View gifts', exact: true });
+    await giftsButton.waitFor();
+    const bootstrapHasToken = (await page.content()).includes(issued.token);
+    assert.equal(await page.locator('.rsvp-shell').evaluate((el, token) => el.innerHTML.includes(token), issued.token), false);
+    summary.api.privacyLimit = bootstrapHasToken ? 'Existing Next router bootstrap and site-wide language links contain the personal path token. The changed RSVP panel does not put it in DOM attributes or storage. Existing no-store/no-referrer headers are retained; this is not a claim of token-free page HTML.' : 'No token found in rendered HTML.';
+    await page.screenshot({ path: `${output}/rsvp-${width}-${colorScheme}-${locale}.png`, fullPage: true });
+    await giftsButton.click();
+    await page.waitForURL(`**/c/${slug}/regalos*`);
+    const photo = page.getByRole('img', { name: locale === 'es-BO' ? 'Foto de Regalo QA' : 'Photo of Regalo QA' });
+    await photo.waitFor();
+    assert.equal(await photo.evaluate(el => el.naturalWidth > 0), true);
+    assert.equal(await page.evaluate(() => location.hash), '');
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
+    const axe = await new AxeBuilder({ page }).analyze();
+    const serious = axe.violations.filter(v => ['critical', 'serious'].includes(v.impact));
+    assert.deepEqual(serious.map(v => v.id), []);
+    await page.screenshot({ path: `${output}/gifts-${width}-${colorScheme}-${locale}.png`, fullPage: true });
+    if (summary.browser.length === 0) {
+      await page.getByRole('button', { name: 'Reservar Regalo QA', exact: true }).click();
+      await page.getByRole('button', { name: 'Reservar regalo', exact: true }).click();
+      await page.getByRole('heading', { name: 'Solicitud enviada', exact: true }).waitFor();
+      const lost = await gift.call('POST', `/celebrations/${c.celebrationId}/items/${item.id}/reservations`, { as: other.token, body: {} });
+      assert.equal(lost.status, 409); assert.equal(lost.body.code, 'GIFT_NOT_AVAILABLE');
+      summary.api.reservation = 'Browser confirmed RSVP, opened gifts and reserved PENDING_REVIEW. Second valid guest got 409 GIFT_NOT_AVAILABLE.';
+    }
+    summary.browser.push({ width, colorScheme, locale, name: 'PASS', navigation: 'PASS', photo: 'PASS', overflow: 'PASS', axeCriticalSerious: serious.length });
+    await bc.close();
+  }
+  const raceListing = randomUUID();
+  gift.listings.set(raceListing, { providerId: randomUUID(), providerStatus: 'VERIFIED', published: true });
+  const raceGift = assertStatus(await gift.call('POST', `/celebrations/${c.celebrationId}/items`, { as: c.host, body: { source: 'CATALOGED', title: 'Concurrent gift QA', price: { amountMinor: 10000, currency: 'BOB' }, productListingId: raceListing } }), 201).body;
+  const locker = await giftDb.pool.connect();
+  try {
+    await locker.query('BEGIN');
+    await locker.query("SELECT set_config('app.celebration_id',$1,true)", [c.celebrationId]);
+    await locker.query('SELECT id FROM gift_item WHERE id=$1 FOR UPDATE', [raceGift.id]);
+    const attempts = [issued.token, other.token].map(as => gift.call('POST', `/celebrations/${c.celebrationId}/items/${raceGift.id}/reservations`, { as, body: {}, headers: { 'idempotency-key': randomUUID() } }));
+    let waiting = 0;
+    for (let i = 0; i < 100; i++) { waiting = Number((await giftDb.admin.query("SELECT count(*) n FROM pg_stat_activity WHERE datname='gift_db' AND wait_event_type='Lock' AND query ILIKE 'UPDATE gift_item%'")).rows[0].n); if (waiting === 2) break; await delay(20); }
+    await locker.query('COMMIT');
+    const results = await Promise.all(attempts);
+    assert.equal(waiting, 2, 'both transactions must really overlap on the same gift row');
+    assert.deepEqual(results.map(r => r.status).sort(), [201, 409]);
+    const count = await gift.store.scoped(c.celebrationId, q => q.query('SELECT count(*) n FROM gift_reservation WHERE item_id=$1', [raceGift.id]));
+    assert.equal(Number(count.rows[0].n), 1);
+    summary.api.concurrent = 'Two real Guest-validated opaque credentials, both SQL updates simultaneously blocked on one row, yielded one 201, one 409 and exactly one persisted reservation.';
+  } finally { await locker.query('ROLLBACK').catch(() => undefined); locker.release(); }
+  await writeFile(`${output}/browser-results.json`, JSON.stringify(summary, null, 2) + '\n');
+  console.log(JSON.stringify({ result: 'PASS', cases: summary.browser.length, api: summary.api, scope: summary.scope }));
+} finally {
+  await browser?.close();
+  if (next && next.exitCode === null) { const done = once(next, 'exit'); next.kill('SIGTERM'); await done; }
+  await closeServer(gateway); await closeServer(guestServer);
+  await gift?.close(); await giftDb?.drop(); await guestPool?.end();
+  await admin.query(`DROP DATABASE IF EXISTS ${dbName} WITH (FORCE)`).catch(() => undefined); await admin.query(`DROP ROLE IF EXISTS ${dbName}`).catch(() => undefined); await admin.end();
+  if (postgres && postgres.exitCode === null) { const done = once(postgres, 'exit'); postgres.kill('SIGTERM'); await done; }
+  if (pgDirectory) await rm(pgDirectory, { recursive: true, force: true });
+}

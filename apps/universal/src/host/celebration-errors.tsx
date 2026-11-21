@@ -10,7 +10,9 @@ import { ErrorNotice, Notice } from "./ui";
  */
 export type ErrorKind = "versionConflict" | "slugTaken" | "slugImmutable" | "archived" | "invalidTransition" | "rateLimited" | "server" | "network" | "other";
 
+const STATUS_BAD_REQUEST = 400;
 const STATUS_CONFLICT = 409;
+const STATUS_VALIDATION = 422;
 const STATUS_RATE_LIMITED = 429;
 const STATUS_SERVER = 500;
 const CODE_KIND: Readonly<Record<string, ErrorKind>> = {
@@ -26,10 +28,23 @@ export function errorKind(error: unknown): ErrorKind {
   return "other";
 }
 
+export function eventDateErrorKey(error: unknown): "host.onboarding.dateRejected" | null {
+  if (!(error instanceof ApiError) || (error.status !== STATUS_VALIDATION && error.status !== STATUS_BAD_REQUEST)) return null;
+  const problem = error.problem;
+  if (problem?.code === "EVENT_DATE_NOT_IN_FUTURE" || problem?.code === "INVALID_EVENT_DATE" || problem?.field === "content.eventDate") {
+    return "host.onboarding.dateRejected";
+  }
+  // Older validation responses identify this rejection through the problem title.
+  if (problem?.title === "The event date and time must be in the future") return "host.onboarding.dateRejected";
+  return null;
+}
+
 export function CelebrationErrorNotice({ error, onReload }: { readonly error: unknown; readonly onReload?: () => void }): ReactNode {
   const t = useT();
   const kind = errorKind(error);
   if (!error) return null;
+  const dateError = eventDateErrorKey(error);
+  if (dateError) return <Notice kind="error">{t(dateError)}</Notice>;
   if (kind === "other" || kind === "versionConflict") return <ErrorNotice error={error} {...(onReload ? { onReload } : {})} />;
   const seconds = error instanceof ApiError ? error.retryAfterSeconds : undefined;
   const message = kind === "rateLimited" ? (seconds ? t("host.errors.rateLimited", { seconds }) : t("host.errors.rateLimitedNoWait")) : t(`host.errors.${kind}`);
