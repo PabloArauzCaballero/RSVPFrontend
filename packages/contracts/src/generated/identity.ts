@@ -67,6 +67,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/email-verification": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Sends a new verification link to the signed-in account. No-op (still 202) when the e-mail is already verified or a link was sent less than 60 seconds ago. */
+        post: operations["resendEmailVerification"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/email-verification/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Consumes the single-use link of the verification e-mail (24 hours) and marks the account's e-mail verified. Unknown, used or expired links answer 422 on `token`. */
+        post: operations["confirmEmailVerification"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/login": {
         parameters: {
             query?: never;
@@ -108,7 +142,25 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** @description Always 202 for a well-formed address. For an existing account, stores the SHA-256 of a single-use token valid 30 minutes (any earlier unused link stops working) and records the e-mail request for Notification. A second request within 60 seconds sends nothing new. `Accept-Language` picks the e-mail language (en-US or es-BO). */
         post: operations["requestPasswordRecovery"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/password-reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Consumes the single-use link of a password-recovery e-mail, sets the new password, marks the e-mail verified and revokes every refresh-token chain of the account (signs it out everywhere). Unknown, used or expired links answer 422 on `token`; a weak password answers 422 on `newPassword` without consuming the link. */
+        post: operations["resetPassword"];
         delete?: never;
         options?: never;
         head?: never;
@@ -270,14 +322,20 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        /** @description Payload of accessToken, consumed by every service. */
+        /** @description Payload of accessToken, consumed by every service. Organization-scoped authority comes only from `memberships`. */
         AccessTokenClaims: {
+            /** @description Since 1.3.0. Whether the account proved it owns its e-mail. */
+            email_verified?: boolean;
             exp: number;
             iat: number;
             iss: string;
             /** Format: uuid */
             jti?: string;
+            /** @description Since 1.2.0. The role of the subject in each organization it belongs to. A role here applies only to its organization. */
+            memberships?: components["schemas"]["OrganizationMembershipClaim"][];
+            /** @description Organizations the subject belongs to in any role (derived from `memberships`). Visibility only: never a source of authority. */
             organizationIds: string[];
+            /** @description Platform roles of the account. Never contains roles held in an organization (see `memberships`). */
             roles: ("ADMIN" | "HOST" | "PLANNER" | "PROVIDER")[];
             /** Format: uuid */
             sub: string;
@@ -331,6 +389,9 @@ export interface components {
         CreateOrganizationRequest: {
             name: string;
         };
+        EmailVerificationConfirmRequest: {
+            token: string;
+        };
         Jwks: {
             keys: {
                 /** @constant */
@@ -371,6 +432,12 @@ export interface components {
             /** Format: uuid */
             userId: string;
         };
+        OrganizationMembershipClaim: {
+            /** Format: uuid */
+            organizationId: string;
+            /** @enum {string} */
+            role: "HOST" | "PLANNER";
+        };
         OrganizationSummary: {
             /** Format: uuid */
             id: string;
@@ -381,6 +448,11 @@ export interface components {
         PasswordRecoveryRequest: {
             /** Format: email */
             email: string;
+        };
+        PasswordResetRequest: {
+            newPassword: string;
+            /** @description The `token` query parameter of the e-mail link. */
+            token: string;
         };
         Problem: {
             /** Format: uuid */
@@ -411,12 +483,14 @@ export interface components {
         Registration: components["schemas"]["Session"] & {
             /** Format: email */
             email: string;
+            /** @description Since 1.3.0. Always false right after sign-up: a verification e-mail is on its way. */
+            emailVerified?: boolean;
             /** Format: uuid */
             id: string;
             roles: ("HOST" | "PLANNER" | "PROVIDER")[];
         };
         Session: {
-            /** @description RS256 JWT. Claims: iss, sub, roles[], organizationIds[], iat, exp, jti. */
+            /** @description RS256 JWT. Claims: iss, sub, roles[] (platform roles), organizationIds[], memberships[] ({organizationId, role}), iat, exp, jti. */
             accessToken: string;
             /** @constant */
             expiresIn: 900;
@@ -488,6 +562,8 @@ export interface components {
         };
     };
     parameters: {
+        /** @description Language of the account e-mail: en-US when it starts with `en`, es-BO otherwise. */
+        AcceptLanguage: string;
         /** @description `cookie` (web): the refresh token travels only in the `rsvp_refresh` cookie (HttpOnly, Secure, SameSite=Strict, Path=/identity/auth, 30 days) and is omitted from bodies. Absent (mobile): the refresh token is in the body. The custom header forces a CORS preflight, which with SameSite=Strict is the CSRF defence. */
         SessionTransport: "cookie";
     };
@@ -593,6 +669,51 @@ export interface operations {
             422: components["responses"]["Validation"];
         };
     };
+    resendEmailVerification: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Language of the account e-mail: en-US when it starts with `en`, es-BO otherwise. */
+                "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Accepted. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    confirmEmailVerification: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmailVerificationConfirmRequest"];
+            };
+        };
+        responses: {
+            /** @description E-mail verified. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            422: components["responses"]["Validation"];
+        };
+    };
     login: {
         parameters: {
             query?: never;
@@ -656,7 +777,10 @@ export interface operations {
     requestPasswordRecovery: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Language of the account e-mail: en-US when it starts with `en`, es-BO otherwise. */
+                "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -669,6 +793,34 @@ export interface operations {
             /** @description Accepted. This response is identical whether or not the account exists. */
             202: {
                 headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            422: components["responses"]["Validation"];
+        };
+    };
+    resetPassword: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `cookie` (web): the refresh token travels only in the `rsvp_refresh` cookie (HttpOnly, Secure, SameSite=Strict, Path=/identity/auth, 30 days) and is omitted from bodies. Absent (mobile): the refresh token is in the body. The custom header forces a CORS preflight, which with SameSite=Strict is the CSRF defence. */
+                "X-Session-Transport"?: components["parameters"]["SessionTransport"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordResetRequest"];
+            };
+        };
+        responses: {
+            /** @description Password changed; every session ended. */
+            204: {
+                headers: {
+                    /** @description Cleared `rsvp_refresh` cookie (Max-Age=0) when `X-Session-Transport: cookie` is sent. */
+                    "Set-Cookie"?: string;
                     [name: string]: unknown;
                 };
                 content?: never;
@@ -713,6 +865,8 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description Language of the account e-mail: en-US when it starts with `en`, es-BO otherwise. */
+                "Accept-Language"?: components["parameters"]["AcceptLanguage"];
                 /** @description `cookie` (web): the refresh token travels only in the `rsvp_refresh` cookie (HttpOnly, Secure, SameSite=Strict, Path=/identity/auth, 30 days) and is omitted from bodies. Absent (mobile): the refresh token is in the body. The custom header forces a CORS preflight, which with SameSite=Strict is the CSRF defence. */
                 "X-Session-Transport"?: components["parameters"]["SessionTransport"];
             };
