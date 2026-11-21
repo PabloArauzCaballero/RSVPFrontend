@@ -7,6 +7,7 @@ export const portalEnUS: DeepStrings<typeof portalEsBO> = {
   nav: { label: "Portal sections", home: "Overview", services: "Offers", products: "Products", delivery: "Delivery", microsite: "Public profile", documents: "Documents", destinations: "Contact", agenda: "Schedule", leads: "Requests", metrics: "Results" },
   dest: { overview: "Overview", offers: "Offers", agenda: "Schedule", clients: "Clients", profile: "Profile" },
   microsite: {
+    moderationRejected: "The team rejected your public profile and it is no longer shown. Reason: {{reason}}. Fix it and save it: it will be published again once we approve it.", moderationHeld: "Your changes are waiting for the team's review. Until we approve them, your public profile is not shown.",
     title: "Public profile", intro: "This is how couples see you on your page. It saves as a whole; if someone else changed it, we warn you before overwriting.",
     descEs: "Description (Spanish)", descEn: "Description (English)", descHelp: "Up to 2000 characters.", website: "Website", instagram: "Instagram", facebook: "Facebook", whatsapp: "WhatsApp (with country code)",
     address: "Address", addressHelp: "Street and number.", reference: "Landmark", hours: "Opening hours", hoursOpens: "Opens", hoursCloses: "Closes", hoursDays: "Days (0 = Sunday, e.g. 1,2,3,4,5)", hoursNote: "Hours note",
@@ -33,6 +34,7 @@ export const portalEnUS: DeepStrings<typeof portalEsBO> = {
     SUSPENDED: { label: "Suspended", body: "Your profile is suspended and does not appear in the directory. Write to the team to resolve it." },
     submit: "Submit for verification", submitting: "Submitting…", submitted: "You sent your profile for verification.", needsListing: "Create an offer to be able to send it.",
     documentsNote: "You can upload your documents in Profile. The team reviews them with your profile.",
+    reason: "Reason from the team: {{reason}}",
     publicPage: "See my microsite"
   },
   home: {

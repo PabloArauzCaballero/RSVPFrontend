@@ -6,7 +6,7 @@ import { VerificationScreen } from "../src/admin/queues";
 import { TemplatesAdminScreen } from "../src/admin/templates";
 import { blackoutProblem, isRealDate, validCapacity } from "../src/provider/agenda-rules";
 import { failureKind, isRetryable } from "../src/provider/errors";
-import { mergeMicrosite } from "../src/provider/microsite-screen";
+import { mergeMicrosite, MicrositeScreen } from "../src/provider/microsite-screen";
 import { AgendaScreen } from "../src/provider/agenda-screen";
 import { DocumentsScreen } from "../src/provider/documents-screen";
 import { LeadsScreen } from "../src/provider/leads-screen";
@@ -125,6 +125,19 @@ describe("provider · rename (PATCH /providers/{id})", () => {
     await waitFor(() => expect(screen.getByTestId("submit-verification").getAttribute("aria-disabled")).not.toBe("true"));
     fireEvent.click(screen.getByTestId("submit-verification"));
     await waitFor(() => expect(calls.some((call) => call.path === `/providers/${PID}/submit`)).toBe(true));
+  });
+  it("A20: the administrator's reason of a rejection and of a suspension reaches the provider", async () => {
+    await withProvider();
+    for (const status of ["REJECTED", "SUSPENDED"]) {
+      const { client } = fakeClient(portal({ [`GET /providers/${PID}`]: () => ({ ...profile, status, statusReason: "Falta el NIT vigente.", statusChangedAt: "2026-11-21T15:00:00Z" }) }));
+      renderApp(<OverviewScreen />, client, HOST);
+      expect((await screen.findByTestId("provider-status-reason")).textContent).toBe("Motivo del equipo: Falta el NIT vigente.");
+      cleanup();
+    }
+    const { client } = fakeClient(portal({ [`GET /providers/${PID}`]: () => ({ ...profile, status: "PENDING_VERIFICATION", statusReason: null }) }));
+    renderApp(<OverviewScreen />, client, HOST);
+    await screen.findByTestId("provider-status");
+    expect(screen.queryByTestId("provider-status-reason")).toBeNull();
   });
 });
 
@@ -351,5 +364,25 @@ describe("provider · ready-to-sell journey and agenda priorities", () => {
     expect(await screen.findByText("1 fecha por confirmar")).toBeTruthy();
     const order = screen.getAllByTestId(/^booking-b[12]$/).map((node) => node.getAttribute("data-testid"));
     expect(order).toEqual(["booking-b2", "booking-b1"]);
+  });
+});
+
+describe("provider · microsite moderation (A20)", () => {
+  const microsite = { providerId: PID, version: 3, descriptions: { "es-BO": "Hola" }, gallery: [], hours: { weekly: [] }, social: {}, address: null };
+  it("a rejected microsite tells the owner it is unpublished and why; a held one says it waits for review", async () => {
+    await withProvider();
+    const { client } = fakeClient(portal({ [`GET /providers/${PID}/microsite`]: () => ({ ...microsite, moderation: { status: "REJECTED", reason: "La galería muestra un documento.", submittedAt: "2026-11-21T15:00:00Z", published: false } }) }));
+    renderApp(<MicrositeScreen />, client, HOST);
+    expect((await screen.findByTestId("microsite-moderation-rejected")).textContent).toContain("Motivo: La galería muestra un documento.");
+    cleanup();
+    const held = fakeClient(portal({ [`GET /providers/${PID}/microsite`]: () => ({ ...microsite, moderation: { status: "PENDING", reason: null, submittedAt: "2026-11-21T15:00:00Z", published: false } }) }));
+    renderApp(<MicrositeScreen />, held.client, HOST);
+    await screen.findByTestId("microsite-moderation-held");
+    cleanup();
+    const approved = fakeClient(portal({ [`GET /providers/${PID}/microsite`]: () => ({ ...microsite, moderation: { status: "APPROVED", reason: null, submittedAt: "2026-11-21T15:00:00Z", published: true } }) }));
+    renderApp(<MicrositeScreen />, approved.client, HOST);
+    await screen.findByTestId("microsite-desc-es");
+    expect(screen.queryByTestId("microsite-moderation-rejected")).toBeNull();
+    expect(screen.queryByTestId("microsite-moderation-held")).toBeNull();
   });
 });
