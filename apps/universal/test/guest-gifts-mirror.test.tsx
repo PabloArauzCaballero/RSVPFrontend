@@ -121,3 +121,43 @@ describe("Espejo web · A15 a gift's own page at /c/{slug}/regalos/{id}", () => 
     expect(await screen.findByText("Este regalo ya no está en la lista.")).toBeTruthy();
   });
 });
+
+describe("D-3 · the guest cancels their own reservation in the app", () => {
+  const RESERVATION = "55555555-6666-4777-8888-999999999999";
+  const HELD = ITEMS.map((entry) => (entry.id === TORTA ? { ...entry, status: "COMMITTED" } : entry));
+  const mine = (headers: Headers) => (headers.get("authorization") === `Bearer ${TOKEN}` ? { items: [{ id: RESERVATION, itemId: TORTA, celebrationId: "c-1", status: "COMMITTED", requestedAt: "2026-11-01T00:00:00Z" }] } : new HttpFailure(401));
+  const withHeld = (cancel: Handler) => ({
+    "GET /gifts/celebrations/c-1/items": () => ({ items: HELD, partnerPriorityEnabled: true }),
+    "GET /gifts/celebrations/c-1/my-reservations": ({ headers }: { headers: Headers }) => mine(headers),
+    [`POST /gifts/celebrations/c-1/reservations/${RESERVATION}/cancel`]: cancel
+  });
+  it("says «Tu reserva», asks before cancelling and cancels with the link credential and one Idempotency-Key", async () => {
+    saveGiftCredential("ana-luis", TOKEN);
+    const { calls } = show({}, withHeld(() => ({ id: RESERVATION, itemId: TORTA, celebrationId: "c-1", status: "CANCELLED", requestedAt: "2026-11-01T00:00:00Z", cancellationReason: "GUEST_CANCELLED" })));
+    expect(within(await screen.findByTestId(`gift-mine-${TORTA}`)).getByText("Tu reserva")).toBeTruthy();
+    fireEvent.click(screen.getByTestId(`cancel-reservation-${TORTA}`));
+    expect(screen.getByText("¿Cancelar tu reserva?")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("cancel-reservation-confirm"));
+    expect(await screen.findByText("Cancelaste tu reserva de «Torta». El regalo volvió a la lista.")).toBeTruthy();
+    const post = calls.filter((call) => call.method === "POST");
+    expect(post).toHaveLength(1);
+    expect(post[0]?.headers.get("authorization")).toBe(`Bearer ${TOKEN}`);
+    expect(post[0]?.headers.get("idempotency-key")).toBeTruthy();
+  });
+  it("«No, mantenerla» sends nothing; an expired link says so inside the dialog; 409 closes and explains", async () => {
+    saveGiftCredential("ana-luis", TOKEN);
+    let answer: () => unknown = () => new HttpFailure(401);
+    const { calls } = show({}, withHeld(() => answer()));
+    fireEvent.click(await screen.findByTestId(`cancel-reservation-${TORTA}`));
+    fireEvent.click(screen.getByTestId("cancel-reservation-keep"));
+    expect(calls.filter((call) => call.method === "POST")).toHaveLength(0);
+    fireEvent.click(screen.getByTestId(`cancel-reservation-${TORTA}`));
+    fireEvent.click(screen.getByTestId("cancel-reservation-confirm"));
+    expect((await screen.findByTestId("cancel-reservation-error")).textContent).toBe("Tu enlace ya no funciona. Pídele uno nuevo a quien te invitó.");
+    answer = () => new HttpFailure(409, { code: "RESERVATION_NOT_ACTIVE" });
+    fireEvent.click(screen.getByTestId("cancel-reservation-confirm"));
+    expect(await screen.findByText("Esta reserva ya no estaba activa. Actualizamos la lista.")).toBeTruthy();
+    const keys = calls.filter((call) => call.method === "POST").map((call) => call.headers.get("idempotency-key"));
+    expect(new Set(keys).size).toBe(1);
+  });
+});
