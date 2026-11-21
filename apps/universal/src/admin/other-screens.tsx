@@ -9,6 +9,7 @@ import { useApiClient, useT } from "../platform/providers";
 import { ActionButton, ConfirmDialog, Notice, OverflowMenu, PageIntro, Section, useStyles } from "../host/ui";
 import { Figure, FigureGroup } from "../host/figures";
 import { AdminScreen } from "./admin-screen";
+import { observabilityLinks } from "./observability-links";
 import { AdminErrorNotice, Stack } from "./shared";
 import { useSingleMutation } from "../platform/single-flight";
 import { RowsSkeleton } from "../provider/parts";
@@ -97,8 +98,6 @@ function PlatformSummary(): ReactNode {
   );
 }
 
-const GRAFANA_URL = process.env.EXPO_PUBLIC_GRAFANA_URL ?? "http://localhost:3000";
-const RABBIT_URL = process.env.EXPO_PUBLIC_RABBITMQ_URL ?? "http://localhost:15672";
 const SERVICES = [{ name: "celebration-site-service", path: "/celebrations/health" }, { name: "template-media-service", path: "/media/health" }] as const;
 
 /** E12 · Live health of lane B's services, the public-projection replay, and links to the observability stack. */
@@ -122,13 +121,11 @@ export function OperationsScreen({ onNavigate }: Nav): ReactNode {
   const replay = useMutation({ mutationFn: () => celebrationApi(client).replayPublicProjection() });
   const replayOnce = useSingleMutation(replay);
   const [confirm, setConfirm] = useState(false);
+  const links = observabilityLinks();
   return (
     <AdminScreen title={t("admin.operations.title")} current="operations" onNavigate={onNavigate}
       actions={<ActionButton label={t("admin.operations.replay")} busy={replay.isPending} onPress={() => setConfirm(true)} testID="replay" />}
-      menu={<OverflowMenu label={t("admin.dashboard.more")} items={[
-        { key: "grafana", label: t("admin.operations.grafana"), onPress: () => { void Linking.openURL(GRAFANA_URL); } },
-        { key: "rabbit", label: t("admin.operations.rabbit"), onPress: () => { void Linking.openURL(RABBIT_URL); } }
-      ]} />}>
+      menu={links.length ? <OverflowMenu label={t("admin.dashboard.more")} items={links.map((link) => ({ key: link.key, label: t(`admin.operations.${link.key}`), onPress: () => { void Linking.openURL(link.url); } }))} /> : undefined}>
       <Stack>
       <PageIntro>{t("admin.operations.intro")}</PageIntro>
       <Section title={t("admin.operations.services")}>
