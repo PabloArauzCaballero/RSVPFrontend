@@ -1,5 +1,5 @@
-import { cleanup, render } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { CelebrationNativeRenderer } from "./native.js";
 import { themeFromTemplate } from "./theme.js";
 import { GALLERY, NOW, t, TEMPLATES, VIEW } from "../test/fixtures.js";
@@ -41,3 +41,82 @@ describe("CelebrationNativeRenderer (react-native-web)", () => {
     dark.unmount();
   });
 });
+
+describe("CelebrationNativeRenderer · the guest's invitation in the app (mirror of the public page)", () => {
+  const actionsFor = () => ({ openUrl: vi.fn(), partnerUrl: vi.fn((id: string) => `https://done.test/r/${id}?surface=app`), openSection: vi.fn() });
+  const show = (extra: Partial<Parameters<typeof CelebrationNativeRenderer>[0]> = {}) =>
+    render(<CelebrationNativeRenderer theme={themeFromTemplate(TEMPLATES[0], VIEW.enabledSections)} view={VIEW} gallery={GALLERY} t={t} now={NOW} {...extra} />);
+
+  it("section navigation: home is current on the cover and every section with content is one tap away", () => {
+    const actions = actionsFor();
+    show({ actions });
+    const nav = screen.getByTestId("celebration-nav");
+    // A landmark of links, like the web's <nav>: role "menu" would demand menuitem children (axe aria-required-children).
+    expect(nav.getAttribute("role")).toBe("navigation");
+    const links = [...nav.querySelectorAll("[role='link']")].map((node) => node.textContent);
+    expect(links).toEqual(["celebration.nav.home", "celebration.sections.story", "celebration.sections.schedule", "celebration.sections.venues", "celebration.sections.gallery", "celebration.sections.dressCode", "celebration.sections.faq", "celebration.sections.recommendations"]);
+    expect(nav.querySelector("[aria-current='page']")?.textContent).toBe("celebration.nav.home");
+    fireEvent.click(within(nav).getByText("celebration.sections.venues"));
+    expect(actions.openSection).toHaveBeenCalledWith("venues");
+  });
+
+  it("a section's own page: compact header named after the section, only that section, current in the navigation", () => {
+    const actions = actionsFor();
+    show({ actions, only: "faq" });
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("celebration.sections.faq");
+    expect(screen.getByTestId("celebration-cover").textContent).toContain("Ana y Luis");
+    expect([...document.querySelectorAll("[data-testid^='section-']")].map((node) => node.getAttribute("data-testid"))).toEqual(["section-faq"]);
+    expect(screen.getByTestId("celebration-nav").querySelector("[aria-current='page']")?.textContent).toBe("celebration.sections.faq");
+    fireEvent.click(screen.getByText("celebration.nav.home"));
+    expect(actions.openSection).toHaveBeenCalledWith(null);
+  });
+
+  it("how to get there opens maps for the venue; the partner recommendation goes through the redirector, never to the partner", () => {
+    const actions = actionsFor();
+    show({ actions });
+    fireEvent.click(screen.getAllByText("celebration.venues.howToGetThere")[0] as HTMLElement);
+    expect(actions.openUrl).toHaveBeenCalledWith("https://www.google.com/maps/search/?api=1&query=Iglesia%20San%20Francisco%2C%20Plaza%20San%20Francisco%2C%20La%20Paz");
+    fireEvent.click(screen.getByText("celebration.recommendations.view"));
+    expect(actions.partnerUrl).toHaveBeenCalledWith("listing-42");
+    expect(actions.partnerUrl).toHaveBeenCalledTimes(1);
+    expect(actions.openUrl).toHaveBeenLastCalledWith("https://done.test/r/listing-42?surface=app");
+    // A recommendation without a listing has no link at all.
+    expect(screen.getAllByText("celebration.recommendations.view")).toHaveLength(1);
+  });
+
+  it("the schedule says its times are the event's local time; a photo opens full size; a question opens to its answer", () => {
+    const actions = actionsFor();
+    show({ actions });
+    expect(screen.getByTestId("section-schedule").textContent).toContain("celebration.schedule.zoneNote");
+    expect(screen.getByTestId("section-schedule").textContent).toContain("America/La_Paz");
+    fireEvent.click(screen.getByLabelText(/celebration.gallery.open/));
+    expect(actions.openUrl).toHaveBeenCalledWith("https://media.test/g1-full.webp");
+    const question = screen.getByRole("button", { name: "¿Pueden ir niños?" });
+    expect(question.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByText("Sí.")).toBeNull();
+    fireEvent.click(question);
+    expect(question.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByText("Sí.")).toBeTruthy();
+  });
+
+  it.each([["classic", true], ["editorial", true], ["festive", true], ["corporate", true], ["minimal", false]] as const)("cover photo on the %s layout: %s", (layout, expected) => {
+    const template = TEMPLATES.find((candidate) => candidate.layout === layout) ?? TEMPLATES[0];
+    render(<CelebrationNativeRenderer theme={themeFromTemplate(template, VIEW.enabledSections)} view={VIEW} gallery={GALLERY} t={t} now={NOW} />);
+    expect(Boolean(document.querySelector("[data-testid='celebration-cover-photo']"))).toBe(expected);
+  });
+
+  it("negative: a listing the app cannot link (partnerUrl null) shows the recommendation without a link", () => {
+    show({ actions: { ...actionsFor(), partnerUrl: () => null } });
+    expect(screen.getByText("Hotel Partner")).toBeTruthy();
+    expect(screen.queryByText("celebration.recommendations.view")).toBeNull();
+  });
+
+  it("negative: without actions (host preview, admin) nothing navigates — no section menu, no links", () => {
+    show();
+    expect(screen.queryByTestId("celebration-nav")).toBeNull();
+    expect(screen.queryByText("celebration.venues.howToGetThere")).toBeNull();
+    expect(screen.queryByText("celebration.recommendations.view")).toBeNull();
+    expect(document.querySelectorAll("[role='link']")).toHaveLength(0);
+  });
+});
+
