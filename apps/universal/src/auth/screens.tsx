@@ -4,6 +4,7 @@ import { loginSchema, recoverySchema, registerSchema, validate, type Role } from
 import { spacing } from "@rsvp/design-tokens";
 import { CheckMark, StickyActions, useColors } from "@rsvp/ui";
 import { useT } from "../platform/providers";
+import { providerSelfServiceEnabled } from "../platform/provider-self-service";
 import { useAuth } from "./auth-context";
 import { AuthField, AuthLayout, Banner, SubmitButton, TextLink, useAuthFocusRing, useAuthStyles } from "./auth-ui";
 import { AUTH_ROUTES, loginHref } from "./routes";
@@ -74,6 +75,8 @@ const SELF_SERVICE_ROLES: readonly { readonly role: Extract<Role, "HOST" | "PLAN
   { role: "PROVIDER", title: "auth.roleProvider", hint: "auth.roleProviderHint" },
   { role: "PLANNER", title: "auth.rolePlanner", hint: "auth.rolePlannerHint" }
 ];
+/** DPA-1: with the partner self-service closed, PROVIDER is granted only by an ADMIN when the partner is created, so sign-up no longer offers it. */
+const signUpRoles = (): typeof SELF_SERVICE_ROLES => (providerSelfServiceEnabled() ? SELF_SERVICE_ROLES : SELF_SERVICE_ROLES.filter((option) => option.role !== "PROVIDER"));
 
 export function RegisterScreen({ onNavigate, returnTo = null }: AuthScreenProps): ReactNode {
   const authStyles = useAuthStyles();
@@ -94,7 +97,7 @@ export function RegisterScreen({ onNavigate, returnTo = null }: AuthScreenProps)
       <View style={authStyles.form}>
         <View accessibilityRole="radiogroup" accessibilityLabel={t("auth.role")} style={{ gap: spacing[2] }}>
           <Text style={authStyles.label}>{t("auth.role")}</Text>
-          {SELF_SERVICE_ROLES.map((option) => (
+          {signUpRoles().map((option) => (
             <ChoiceRow key={option.role} testID={`register-role-${option.role}`} title={t(option.title)} hint={t(option.hint)} selected={role === option.role} disabled={busy} onSelect={() => setRole(option.role)} />
           ))}
         </View>

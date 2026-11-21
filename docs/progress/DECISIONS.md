@@ -95,3 +95,10 @@
 
 - **El idioma de la persona se lee del sistema con `expo-localization` (`getLocales()`), no de `Intl`.** En iOS, `Intl…resolvedOptions().locale` refleja el idioma del bundle, limitado a las localizaciones que declara la app, y no la preferencia de la persona. `Intl` queda solo como último recurso si el módulo no responde. El orden de REQ-F06-05 se mantiene: elección explícita > preferencia guardada > dispositivo.
 - **La app declara sus idiomas al sistema** (`expo-localization` con `supportedLocales: ["es", "en"]` en `app.config.ts`) para los builds propios: `CFBundleLocalizations` en iOS y `locales_config` en Android. Esta lista tiene que ir a la par de `supportedLocales` de `@rsvp/i18n`.
+
+## Interruptor del alta de partners por autoservicio (A24, fase 4) · 2026-11-21
+
+- **`EXPO_PUBLIC_PROVIDER_SELF_SERVICE` cierra el alta por autoservicio en el FE**, a la par de `PROVIDER_SELF_SERVICE_SIGNUP` del BE (RSVPBackend #90). Con el valor apagado, `/portal/alta` y el aviso `noProvider` explican que el equipo de DOne crea los partners tras el KYP, y el registro deja de ofrecer PROVIDER (DPA-1). Un 403 `SELF_SERVICE_DISABLED` muestra la misma explicación.
+- **Valor por defecto:** sin variable, sigue a `__DEV__`, igual que el resto de la app (`session.ts`). Queda abierto en desarrollo y **cerrado** en los builds de producción, que incluyen TEST. Si la variable trae un valor que no es `true`, `1`, `false` ni `0`, queda cerrado.
+- **Alternativa descartada:** leer el estado del BE en tiempo de ejecución. No hay un endpoint público para eso, y el 403 ya cubre las versiones antiguas de la app.
+- **Retiro:** la fase 5 borra el flag, `OnboardingScreen` y las claves `portal.onboarding.*` después de 7 días estable en TEST (PLAN del traspaso, `docs/bugs/traspaso-partner-admin` en `bugs/catalogo` del backend).
