@@ -1,0 +1,17 @@
+# Closes the Expo Go developer menu that opens by itself once the bundle has loaded on a first run (its onboarding on iOS,
+# the menu itself on Android). It covers the app, so it is closed before any tap. Only Expo Go shows it; store builds never do.
+appId: ${APP_ID}
+---
+- extendedWaitUntil:
+    visible: "Connected to expo-cli|This is the developer menu.*|Continue"
+    timeout: 5000
+    optional: true
+- runFlow:
+    when:
+      platform: Android
+      visible: "Connected to expo-cli|Go Home"
+    commands:
+      - back
+- tapOn:
+    text: "Continue"
+    optional: true

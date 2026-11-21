@@ -15,9 +15,12 @@ const fromIso = (iso?: string): Date => {
 const unavailable = (state: State): boolean => state === 'disabled' || state === 'loading';
 
 /** iOS and Android: the system date picker behind the same value contract (ISO `YYYY-MM-DD`). */
-export function DateField({ label, value, onChange, state, error, testID }: DateFieldProps) {
+export function DateField({ label, value, onChange, state, error, testID, minimumDate }: DateFieldProps) {
   const { styles, strings } = useTheme();
   const [open, setOpen] = useState(false);
+  const minDate = minimumDate ? fromIso(minimumDate) : undefined;
+  const selected = value ? fromIso(value) : minDate ?? fromIso();
+  const pickerValue = minDate && selected < minDate ? minDate : selected;
   const pick = (event: DateTimePickerEvent, date?: Date) => {
     // Android closes its dialog itself; iOS stays open until "done".
     if (Platform.OS === 'android') setOpen(false);
@@ -26,10 +29,10 @@ export function DateField({ label, value, onChange, state, error, testID }: Date
   return (
     <View>
       <Text style={styles.label}>{label}</Text>
-      <Pressable testID={testID} accessibilityRole="button" accessibilityLabel={`${label}: ${value || strings.datePlaceholder}`} accessibilityState={{ disabled: unavailable(state) }} disabled={unavailable(state)} onPress={() => setOpen(true)} style={styles.input}>
+      <Pressable testID={testID} accessibilityRole="button" accessibilityLabel={`${label}: ${value || strings.datePlaceholder}`} accessibilityHint={error} accessibilityState={{ disabled: unavailable(state) }} disabled={unavailable(state)} onPress={() => setOpen(true)} style={styles.input}>
         <Text style={styles.body}>{value || strings.datePlaceholder}</Text>
       </Pressable>
-      {open ? <DateTimePicker value={fromIso(value)} mode="date" display={Platform.OS === 'ios' ? 'inline' : 'default'} onChange={pick} /> : null}
+      {open ? <DateTimePicker value={pickerValue} minimumDate={minDate} mode="date" display={Platform.OS === 'ios' ? 'inline' : 'default'} onChange={pick} /> : null}
       {open && Platform.OS === 'ios' ? <Button variant="secondary" onPress={() => setOpen(false)}>{strings.close}</Button> : null}
       <StateHint state={state === 'empty' || state === 'disabled' ? undefined : state} error={error} />
     </View>

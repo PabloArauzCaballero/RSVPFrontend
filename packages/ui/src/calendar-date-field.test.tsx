@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DateField } from './date-field';
 import { stringsFor } from './strings';
@@ -6,7 +6,10 @@ import { UiProvider } from './theme';
 
 const calendar = { locale: 'es-BO', timeZone: 'America/La_Paz' } as const;
 
-afterEach(() => vi.useRealTimers());
+afterEach(() => {
+  cleanup();
+  vi.useRealTimers();
+});
 
 describe('invitation calendar', () => {
   it('opens at the saved day, moves across leap February and sends an ISO date', async () => {
@@ -40,5 +43,27 @@ describe('invitation calendar', () => {
     fireEvent.click(trigger);
     fireEvent.click(screen.getByRole('button', { name: 'Today' }));
     expect(onChange).toHaveBeenCalledWith('2026-11-19');
+  });
+
+  it('opens a saved historical date at the first allowed day and keeps keyboard navigation in range', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-20T02:00:00Z'));
+    const onChange = vi.fn();
+    render(<DateField label="Fecha" value="2026-10-12" minimumDate="2026-11-19" onChange={onChange} state="default" calendar={calendar} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Fecha:/ }));
+    const minimum = screen.getByTestId('calendar-day-2026-11-19');
+    const pastDay = screen.getByTestId<HTMLButtonElement>('calendar-day-2026-11-18');
+    expect(pastDay.disabled).toBe(true);
+    expect(screen.getByTestId('calendar-previous-month').getAttribute('aria-disabled')).toBe('true');
+    fireEvent.click(pastDay);
+    expect(onChange).not.toHaveBeenCalled();
+    await waitFor(() => expect(document.activeElement).toBe(minimum));
+    fireEvent.keyDown(minimum, { key: 'ArrowLeft' });
+    expect(document.activeElement).toBe(minimum);
+    fireEvent.keyDown(minimum, { key: 'ArrowRight' });
+    const next = screen.getByTestId('calendar-day-2026-11-20');
+    await waitFor(() => expect(document.activeElement).toBe(next));
+    fireEvent.click(next);
+    expect(onChange).toHaveBeenCalledWith('2026-11-20');
   });
 });

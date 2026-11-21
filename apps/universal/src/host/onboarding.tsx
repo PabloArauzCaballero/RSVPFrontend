@@ -7,9 +7,10 @@ import { useCelebration, useCreateCelebration, useEventTypes, type Celebration, 
 import { useApiClient, useClaims, useLocale, useT } from "../platform/providers";
 import { canUseHostWorkspace } from "./gate";
 import { isCalendarDate, slugify, toWallClock } from "./content-draft";
+import { eventCalendarDay, eventDateInstant } from "./event-date";
 import { editorPath, HOST_ROUTES, withCelebration } from "./routes";
 import { useSingleFlight } from "../platform/single-flight";
-import { CelebrationErrorNotice } from "./celebration-errors";
+import { CelebrationErrorNotice, eventDateErrorKey } from "./celebration-errors";
 import { LIMITS, overLimit, slugProblem } from "./limits";
 import { extraFields, fieldLabel } from "./content-editor";
 import { CenteredActions, LoadFailed } from "./load-failed";
@@ -127,8 +128,16 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
   const effectiveTitle = titleEdited ? title : suggestedTitle(type, hosts, join);
   const effectiveSlug = slugEdited ? slug : slugify(effectiveTitle);
   const wall = toWallClock(when);
+  const localDateTime = wall.ok ? wall.value : null;
+  const instant = localDateTime ? eventDateInstant(localDateTime, timeZone) : null;
   const dateMissing = !isCalendarDate(when.date.trim());
-  const timeMissing = !when.time.trim();
+  const datePassed = (): boolean => instant !== null && instant <= Date.now();
+  const pastDate = datePassed();
+  const serverDateError = eventDateErrorKey(create.error);
+  const setDatePart = (part: "date" | "time", value: string): void => {
+    if (serverDateError) create.reset();
+    setWhen((current) => ({ ...current, [part]: value }));
+  };
   const ownFields = extraFields(type);
   const detail = (key: string): string => details[key] ?? "";
   const setDetail = (key: string, value: string): void => setDetails((current) => ({ ...current, [key]: value }));
@@ -140,7 +149,7 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
   // Everything the event type needs to publish is asked for here and is mandatory: the step does not let an empty field through.
   const requiredRoles = (type?.requiredFieldsForPublish ?? []).filter((field) => field.startsWith(HOST_PREFIX)).map((field) => field.slice(HOST_PREFIX.length));
   const missing = (value: string): { error: string } | Record<string, never> => (tried && !value.trim() ? { error: t("host.onboarding.required") } : {});
-  const whoIncomplete = dateMissing || timeMissing || !wall.ok || !detail("venueName").trim() || ownFields.some((key) => !detail(key).trim()) || requiredRoles.some((role) => !(hosts[role] ?? "").trim());
+  const whoIncomplete = !localDateTime || !detail("venueName").trim() || ownFields.some((key) => !detail(key).trim()) || requiredRoles.some((role) => !(hosts[role] ?? "").trim());
   const whoOverLimit = mapLinkProblem(detail(MAP_LINK)) || overLimit(detail("venueName"), LIMITS.venueName) !== null || ownFields.some((key) => overLimit(detail(key), LIMITS.extraField) !== null) || Object.values(hosts).some((name) => overLimit(name, LIMITS.hostName) !== null);
   const titleProblem = !effectiveTitle.trim() ? t("host.onboarding.titleRequired") : overLimit(effectiveTitle, LIMITS.title) !== null ? t("host.limits.tooLong", { count: overLimit(effectiveTitle, LIMITS.title) ?? 0, max: LIMITS.title }) : null;
   const slugIssue = slugProblem(effectiveSlug);
@@ -149,7 +158,7 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
     id: "draft", slug: effectiveSlug, eventTypeCode: typeCode ?? "", defaultLocale: language, supportedLocales: [language], timeZone, currency, templateId: null, publishedAt: null, version: 0, translations: {},
     content: {
       title: effectiveTitle.trim() || t("host.onboarding.previewFallbackTitle"),
-      ...(wall.ok && wall.value ? { eventDate: wall.value } : {}),
+      ...(instant !== null && !pastDate && !serverDateError ? { eventDate: new Date(instant).toISOString() } : {}),
       ...filledDetails,
       ...(Object.values(hosts).some((name) => name.trim()) ? { hosts: Object.fromEntries(Object.entries(hosts).filter(([, name]) => name.trim())) } : {})
     }
@@ -159,15 +168,26 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
 
   const submit = (): void => {
     setTried(true);
-    if (!typeCode || titleProblem || slugIssue || whoIncomplete || whoOverLimit) return;
+    if (!localDateTime || whoIncomplete || whoOverLimit || datePassed()) { setStep(2); return; }
+    if (!typeCode || titleProblem || slugIssue) return;
     const namedHosts = Object.fromEntries(Object.entries(hosts).filter(([, name]) => name.trim()));
     once((release) => create.mutate({
       slug: effectiveSlug, eventTypeCode: typeCode, defaultLocale: language, supportedLocales: [language], timeZone, currency,
-      content: { title: effectiveTitle.trim(), ...(wall.value ? { eventDate: wall.value } : {}), ...filledDetails, ...(Object.keys(namedHosts).length ? { hosts: namedHosts } : {}) }
-    }, { onSuccess: (created) => onNavigate(withCelebration(`${HOST_ROUTES.onboarding}/listo`, created.id)), onSettled: release }));
+      content: { title: effectiveTitle.trim(), eventDate: localDateTime, ...filledDetails, ...(Object.keys(namedHosts).length ? { hosts: namedHosts } : {}) }
+    }, {
+      onSuccess: (created) => onNavigate(withCelebration(`${HOST_ROUTES.onboarding}/listo`, created.id)),
+      onError: (error) => { if (eventDateErrorKey(error)) setStep(2); },
+      onSettled: release
+    }));
   };
   const goWho = (): void => setStep(2);
-  const goName = (): void => { setTried(true); if (!whoIncomplete && !whoOverLimit) { setTried(false); setStep(3); } };
+  const goName = (): void => {
+    setTried(true);
+    if (!whoIncomplete && !whoOverLimit && !datePassed() && !serverDateError) {
+      setTried(false);
+      setStep(3);
+    }
+  };
 
   if (celebrationId) {
     return (
@@ -195,6 +215,7 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
     );
   }
 
+  const dateErrorKey = serverDateError ?? (pastDate ? "host.onboarding.dateRejected" : tried && dateMissing ? "host.onboarding.dateInvalid" : null);
   const stepName = STEPS[step - 1] as StepName;
   const bodies: Readonly<Record<StepName, () => ReactNode>> = {
     type: () => (
@@ -220,9 +241,10 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
         {(type?.hostRoles ?? []).map((role) => <Field key={role.role} label={role.label} value={hosts[role.role] ?? ""} {...(requiredRoles.includes(role.role) ? missing(hosts[role.role] ?? "") : {})} {...tooLong(hosts[role.role] ?? "", LIMITS.hostName)} onChange={(name) => setHosts((current) => ({ ...current, [role.role]: name }))} />)}
         {ownFields.map((field) => <Field key={field} label={fieldLabel(t, field)} value={detail(field)} {...missing(detail(field))} {...tooLong(detail(field), LIMITS.extraField)} onChange={(value) => setDetail(field, value)} testID={`onboarding-${field}`} />)}
         <View style={[styles.row, { alignItems: "flex-start" }]}>
-          <View style={{ flexGrow: 1, flexBasis: 160 }}><DateInput label={t("host.onboarding.dateLabel")} value={when.date} onChange={(date) => setWhen((current) => ({ ...current, date }))} calendar={{ locale, timeZone }} testID="onboarding-date" {...(tried && dateMissing ? { error: t("host.onboarding.dateInvalid") } : {})} /></View>
-          <View style={{ flexGrow: 1, flexBasis: 150 }}><TimeInput label={t("host.onboarding.timeLabel")} value={when.time} onChange={(time) => setWhen((current) => ({ ...current, time }))} testID="onboarding-time" {...(tried && timeMissing ? { error: t("host.onboarding.timeInvalid") } : {})} /></View>
+          <View style={{ flexGrow: 1, flexBasis: 160 }}><DateInput label={t("host.onboarding.dateLabel")} value={when.date} onChange={(date) => setDatePart("date", date)} minimumDate={eventCalendarDay(timeZone)} calendar={{ locale, timeZone }} testID="onboarding-date" {...(dateErrorKey ? { error: t(dateErrorKey) } : {})} /></View>
+          <View style={{ flexGrow: 1, flexBasis: 150 }}><TimeInput label={t("host.onboarding.timeLabel")} value={when.time} onChange={(time) => setDatePart("time", time)} testID="onboarding-time" {...(tried && (!when.time.trim() || (!dateMissing && !wall.ok)) ? { error: t("host.onboarding.timeInvalid") } : {})} /></View>
         </View>
+        <Text style={styles.muted}>{t("host.editor.schedule.zoneHelp", { timeZone: zoneLabel(timeZone) })}</Text>
         <LocationField name={detail("venueName")} onName={(value) => setDetail("venueName", value)} link={detail(MAP_LINK)} onLink={(value) => setDetail(MAP_LINK, value)} placeholder={t("host.onboarding.venuePlaceholder")} testID="onboarding-venue"
           {...(missing(detail("venueName")).error ?? tooLong(detail("venueName"), LIMITS.venueName).error ? { nameError: missing(detail("venueName")).error ?? tooLong(detail("venueName"), LIMITS.venueName).error } : {})} />
         <Text style={styles.muted}>{t("host.onboarding.dateHelp")}</Text>
@@ -241,7 +263,7 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
           <MoreOptions label={t("ui.moreOptions")} testID="onboarding-more">
             <View style={{ gap: spacing[1], alignItems: "flex-start" }}>
               <Text style={styles.label}>{t("host.onboarding.timeZoneLabel")}</Text>
-              <FilterSelect label={t("host.onboarding.timeZoneLabel")} value={timeZone} onChange={(zone) => { setTimeZone(zone); setCurrency(defaultCurrency(zone)); }} options={zoneChoices().map((zone) => ({ value: zone, label: zoneLabel(zone) }))} testID="onboarding-time-zone" />
+              <FilterSelect label={t("host.onboarding.timeZoneLabel")} value={timeZone} onChange={(zone) => { if (serverDateError) create.reset(); setTimeZone(zone); setCurrency(defaultCurrency(zone)); }} options={zoneChoices().map((zone) => ({ value: zone, label: zoneLabel(zone) }))} testID="onboarding-time-zone" />
               <Text style={styles.muted}>{t("host.onboarding.timeZoneHelp")}</Text>
             </View>
             <ChoiceGroup label={t("host.onboarding.languageLabel")} value={language} onChange={setLanguage} choices={LANGUAGES.map((value) => ({ value, label: t(`celebration.language.${value}`) }))} />
@@ -264,7 +286,7 @@ export function OnboardingScreen({ step: initialStep, celebrationId, onNavigate 
       : <ActionButton icon="plus" label={t("host.onboarding.create")} busy={create.isPending} onPress={submit} testID="onboarding-create" />;
   const form = (
     <View style={{ gap: spacing[5], flex: wide ? 1 : undefined, width: "100%" }}>
-      <StepProgress step={step} {...(step > 1 ? { onBack: () => setStep(step - 1) } : {})} />
+      <StepProgress step={step} {...(step > 1 && !create.isPending ? { onBack: () => setStep(step - 1) } : {})} />
       {!wide && step > 1 ? (
         <Enter from="down" key="preview">
           <View style={{ gap: spacing[2] }}>

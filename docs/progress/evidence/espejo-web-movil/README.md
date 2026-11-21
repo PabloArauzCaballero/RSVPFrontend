@@ -163,6 +163,80 @@ Límites: iOS/Android no probados. Agenda y envío de cotización solo con prueb
 
 ---
 
+# Agenda sin disponibilidad: estado vacío en la web y la app
+
+Fecha: 2026-11-20 · Rama `fix/agenda-sin-disponibilidad` (sobre el slice 4).
+
+**Problema:** cuando `GET /providers/{id}/calendar` devuelve 0 días (proveedor sin disponibilidad configurada), la web y la app mostraban una rejilla vacía, «Elige un día libre» y un botón «Solicitar esta fecha» siempre deshabilitado: un callejón sin salida que no explicaba nada. En dev, `multicenter-59388c` está así.
+
+**Ahora, en las dos superficies con la misma regla (`agendaEmptiness` en query-hooks):**
+- 0 días → `unpublished`: «{proveedor} todavía no publicó sus días para {mes}», con el porqué y dos salidas: **Pedir cotización** (a `/p/{slug}/cotizar`) y **Ver el mes siguiente**. No se muestra la rejilla vacía ni el botón de solicitar.
+- Días publicados pero ninguno libre → `noneFree`: «No quedan días libres en {mes}». La rejilla queda (cada día dice por qué), con las mismas salidas.
+- Con al menos un día libre, nada cambia.
+- El aviso es `role="status"` con su encabezado; textos nuevos `agenda.empty.*` en es-BO y en-US.
+
+**Hallazgo corregido de paso (app):** a 360 px, la fila «Mes anterior · mes · Mes siguiente» no cabía y «Mes siguiente» quedaba cortado (el `ScrollView` recortaba, así que la medida de desborde del documento no lo veía). Ahora el mes va en su propia línea y los botones pueden pasar a dos líneas. El script vivo mide además que el botón quede entero dentro de la pantalla.
+
+| ID | Requisito | Estado | Comando / artefacto | Resultado |
+|---|---|---|---|---|
+| AGV-01 | Mes sin días: explica, sin rejilla ni botón muerto, `role=status` | PASS (web y app) | `scripts/live/agenda-empty.mjs` · [agenda-empty-results.json](agenda-empty-results.json) | precondición de la API: 0 días en 2026-11 |
+| AGV-02 | «Pedir cotización» lleva a `/p/{slug}/cotizar` | PASS (web y app) | live | |
+| AGV-03 | «Ver el mes siguiente» pide el mes siguiente y muestra la rejilla si hay días | TESTED | `quote-agenda.test.tsx`, `partner-mirror.test.tsx` | dev no tiene días en ningún mes: no observado en vivo |
+| AGV-04 | Ningún día libre → aviso con la rejilla visible | TESTED | ídem | |
+| AGV-05 | Con días libres, sin aviso y con el botón de solicitar | TESTED | ídem | |
+| AGV-06 | 360/1280 × claro/oscuro, axe | PASS | live | 8/8 sin desborde (incluido el botón «Mes siguiente» entero), 0 critical/serious, 0 errores |
+
+Web en vivo: `next dev` de seo-web en :3320 con `RSVP_API_URL` = gateway de dev (lectura del servidor) y `NEXT_PUBLIC_API_URL` = proxy local :8320 (el navegador lee el calendario; el CORS de dev no admite localhost, el proxy sí para orígenes localhost). App: export web servido por el mismo proxy.
+
+```
+yarn turbo run test typecheck lint --continue → ver PR
+  apps/seo-web quote-agenda 14 (3 nuevas) · apps/universal partner-mirror 15 (3 nuevas) · query-hooks directory 6 (1 nueva)
+node scripts/live/agenda-empty.mjs SLUG=multicenter-59388c WEB=http://localhost:3320 → 10/10 PASS, exit 0
+```
+
+Límites: iOS/Android no probados; «mes siguiente con días» solo en pruebas (dev no tiene ningún proveedor con disponibilidad).
+# Nativo: iOS y Android (invitación, regalos, directorio y micrositio)
+
+Fecha: 2026-11-20 · Rama `fix/espejo-nativo` (base `chore/deploy-contabo-coolify` @ `b2c2a95`).
+
+**Cómo se probó:** Expo Go **SDK 54**, el del proyecto: iOS 54.0.7 en un simulador dedicado («Espejo QA SDK54», iPhone 17 · iOS 26.5) y Android 54.0.8 en el emulador `Pixel_4`. Metro apuntaba al backend real de dev (`EXPO_PUBLIC_API_URL=https://rsvp-api.161.97.85.216.sslip.io`; en nativo no aplica CORS). Los recorridos son flujos de **Maestro 2.8** versionados en `apps/universal/e2e/maestro/`: `espejo-invitacion.yaml`, `espejo-regalos.yaml` y `espejo-directorio-micrositio.yaml`, con los sub-flujos `cold-start.yaml`, `open.yaml` y `dismiss-dev-menu.yaml`.
+
+```
+maestro test -e APP_ID=host.exp.Exponent -e BASE=exp://127.0.0.1:8081/-- [-e SLUG=… -e TOKEN=…] e2e/maestro/<flujo>.yaml   # iOS
+maestro test -e APP_ID=host.exp.exponent -e BASE=exp://10.0.2.2:8081/--  [-e SLUG=… -e TOKEN=…] e2e/maestro/<flujo>.yaml   # Android
+```
+
+En Expo Go, el enlace es `exp://<host>:8081/--/<ruta>` y no `rsvp://<ruta>`: el esquema `rsvp` solo existe en un build propio (dev o tienda), que no se generó. Las rutas, la pantalla y el código que abren son los mismos.
+
+## Bugs nativos encontrados y corregidos
+
+1. **La app no arrancaba en iOS ni en Android** («Uncaught Error: Maximum call stack size exceeded» en `packages/ui/src/motion.native.ts`; [captura](nativo/antes-ios-crash-motion.png)). Causa raíz: `motion.native.ts` reexportaba desde `'./motion'`, y en nativo Metro resuelve `'./motion'` a `motion.native.ts` mismo, porque la extensión de plataforma gana. El módulo se importaba a sí mismo. Venía del rediseño (#12) y está en `dev`. La misma forma de error dejaba `undefined` los valores que `logo.native.tsx` (`LOGO_VIEWBOX`, `useLogoColors`) y `notice-mark.native.tsx` (`NOTICE_GLYPHS`) leían de su propio nombre base. **Corrección:** lo que comparten web y nativo pasa a archivos sin variante de plataforma (`motion-tokens.ts`, `logo-shared.ts`, `notice-glyphs.ts`), y los `.ts`/`.native.ts` lo reexportan desde ahí. **Guarda:** `packages/ui/src/platform-files.test.ts` recorre `packages/*` y `apps/universal/{src,app}` y falla si un archivo `.native`/`.ios`/`.android`/`.web` importa en tiempo de ejecución su propio nombre base (`import type` se permite, porque se borra al compilar). Se verificó en rojo con el código anterior y en verde con la corrección.
+2. **La foto de portada salía angosta y alineada a la izquierda** (264 × 352 pt en un iPhone de 402 pt; [captura](nativo/antes-ios-portada-angosta.png)). Causa raíz: `width: 100%` + `aspectRatio` + `maxHeight`. En nativo, Yoga respeta el tope **reduciendo el ancho** para conservar la proporción; en la web, CSS conserva el ancho. **Corrección:** el contenedor mide su ancho y la altura se calcula (`coverPhotoHeight`: proporción propia, nunca más alta que 3:4, tope 352). La imagen cubre el contenedor. Después: 370 × 352 pt, a todo el ancho ([captura](nativo/ios-espejo-invitacion.png)). Prueba en `native.test.tsx`.
+
+## Resultados por plataforma
+
+| Recorrido | iOS (simulador, Expo Go 54) | Android (emulador, Expo Go 54) |
+|---|---|---|
+| Invitación `/c/sofia-y-victor-boda`: portada a todo el ancho, navegación de secciones → `/lugares`, «Cómo llegar» sale a mapas | **VERIFIED** · Safari en google.com/maps ([1](nativo/ios-espejo-invitacion.png), [2](nativo/ios-espejo-invitacion-lugares.png), [3](nativo/ios-espejo-invitacion-como-llegar.png)) | **VERIFIED** · abre la app Google Maps ([1](nativo/android-espejo-invitacion.png), [2](nativo/android-espejo-invitacion-lugares.png), [3](nativo/android-espejo-invitacion-como-llegar.png)) |
+| Sección directa `/c/roxana-y-pedro/lugares`, con dos idiomas | **VERIFIED** | **VERIFIED** |
+| Directorio `/proveedores/buscar`: resultados reales de dev, resultado → `/p/{slug}` | **VERIFIED** ([1](nativo/ios-espejo-directorio-resultados.png), [2](nativo/ios-espejo-micrositio.png)) | **VERIFIED** ([1](nativo/android-espejo-directorio-resultados.png)) |
+| Micrositio: aviso antes del contacto, contacto sale por `/r/{listingId}`, catálogo, ficha con la entrega antes de cotizar | **VERIFIED** (la salida por `/r/` se observa; para el destino, ver bloqueo abajo) | **VERIFIED** ([ficha](nativo/android-espejo-micrositio-oferta.png)) |
+| Regalos `/c/qa-espejo-movil/regalos/{token}`, la misma lista sin token y la ficha `/regalos/{id}` | **VERIFIED** · la lista carga con la credencial, abre igual sin el token en la dirección, ficha `/regalos/{id}` ([lista](nativo/ios-espejo-regalos-lista-items.png), [ficha](nativo/ios-espejo-regalos-detalle.png)) | **VERIFIED** · igual ([lista](nativo/android-espejo-regalos-lista-items.png), [ficha](nativo/android-espejo-regalos-detalle.png)) |
+
+## Bloqueos externos y límites (no son PASS)
+
+- **`/r/{listingId}` en `dev.done.arauzsoftware.com` responde «Esta página no existe»** ([captura](nativo/ios-espejo-micrositio-redirector.png)). La app arma el enlace al redirector con `EXPO_PUBLIC_SITE_URL`, pero ese dominio sirve la app Expo, y el redirector vive en seo-web. **BLOCKED-EXTERNAL (despliegue/configuración):** hay que servir `/r` en ese origen o apuntar `EXPO_PUBLIC_SITE_URL` al dominio de seo-web. Afecta a todos los enlaces de socio de la app (micrositio, regalos de aliado, proveedores del anfitrión), no solo al nativo.
+- **Idioma de la interfaz en iOS (por confirmar):** con el sistema en español, la interfaz de la app salió en inglés. La app toma el idioma de `Intl` y Expo Go solo declara localización en inglés. Hay que confirmarlo en un build propio antes de tratarlo como bug de producción. La invitación no se ve afectada, porque sigue el idioma de la celebración.
+- **Solo Expo Go (sin impacto en producción):** en Android, LogBox avisa «expo-notifications: Android Push notifications… removed from Expo Go in SDK 53» y tapa el borde inferior; los flujos centran los elementos antes de tocarlos. Expo Go también abre su menú de desarrollo en el primer arranque, y `dismiss-dev-menu.yaml` lo cierra.
+- **Metro en este worktree** (dentro de `.claude/worktrees`) no detectó los cambios de archivos: hubo que reiniciarlo con `--clear` después de cada cambio. Las capturas válidas son posteriores a ese reinicio; la de la portada angosta se tomó a propósito con el código anterior.
+- **Mundo de regalos:** la celebración QA `qa-espejo-movil` del entorno TEST, con su invitada QA (token pasado como `TOKEN` en la ejecución, fuera del repo). En iOS el título del regalo es un enlace cuyo nombre accesible es «Ver detalle de … / See details of …», así que el flujo lo busca dentro de ese nombre. Una corrida de Android falló porque el emulador no alcanzó Metro («Packager is not running at 10.0.2.2:8081», por la carga de la máquina); al repetirla pasó.
+- **Android, ejecución final de invitación y directorio:** pasaron con el arranque en frío escrito dentro de cada flujo (`launchApp` con `stopApp`, más espera), que es exactamente la rama Android de `cold-start.yaml`. Después de mover esos pasos al sub-flujo no se repitieron en Android, para no cargar más la máquina; en iOS sí se repitieron con los archivos finales.
+- **No probado en nativo:** universal links (`apple-app-site-association`/`assetlinks.json` no se sirven), build propio con esquema `rsvp://`, dispositivos físicos, lector de pantalla (VoiceOver/TalkBack), agenda y envío de cotización (escriben datos).
+
+```
+yarn turbo run test typecheck lint --continue → 66/66 · ui 262 (con platform-files) · celebration-theme 45 · universal 420 · seo-web 141
+yarn lint:code → 0 · yarn harness:validate → 0
+```
 # Enlaces a proveedores: origen del redirector
 
 Fecha: 2026-11-20 · Rama `fix/app-partner-redirector-origin`.

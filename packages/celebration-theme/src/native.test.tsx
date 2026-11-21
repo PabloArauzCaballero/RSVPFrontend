@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { CelebrationNativeRenderer } from "./native.js";
+import { CelebrationNativeRenderer, coverPhotoHeight } from "./native.js";
 import { themeFromTemplate } from "./theme.js";
 import { GALLERY, NOW, t, TEMPLATES, VIEW } from "../test/fixtures.js";
 
@@ -117,6 +117,15 @@ describe("CelebrationNativeRenderer · the guest's invitation in the app (mirror
     expect(screen.queryByText("celebration.venues.howToGetThere")).toBeNull();
     expect(screen.queryByText("celebration.recommendations.view")).toBeNull();
     expect(document.querySelectorAll("[role='link']")).toHaveLength(0);
+  });
+});
+
+describe("cover photo size (native regression: Yoga shrank the width to honour maxHeight)", () => {
+  it("is always the full width; the height follows the photo, never taller than 3:4, capped at 352", () => {
+    expect(coverPhotoHeight(360, 16 / 9)).toBe(203);
+    expect(coverPhotoHeight(370, 442 / 694)).toBe(352);
+    expect(coverPhotoHeight(200, 442 / 694)).toBe(267);
+    expect(coverPhotoHeight(720, 4 / 3)).toBe(352);
   });
 });
 
