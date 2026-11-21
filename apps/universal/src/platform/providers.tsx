@@ -19,7 +19,26 @@ import { useScheme, useThemeHydration } from "./theme";
  * claims (for what to show; the API enforces access) and the translator.
  */
 
-const DEFAULT_API_URL = "http://localhost:8000";
+/** The local gateway: only a development run may fall back to it. */
+const DEVELOPMENT_API_URL = "http://localhost:8000";
+
+/**
+ * The gateway the app talks to (A8). A release build must carry `EXPO_PUBLIC_API_URL` (eas.json `env`, the Docker build
+ * arg on web), and it must be https or same-origin (`/api` behind the web image's nginx): a store build that silently
+ * pointed at localhost, or sent tokens over plain http, would look installed and fail on every screen. So it fails at boot.
+ */
+export function resolveApiUrl(value: string | undefined, development: boolean): string {
+  const url = value?.trim();
+  if (!url) {
+    if (development) return DEVELOPMENT_API_URL;
+    throw new Error("EXPO_PUBLIC_API_URL is not set: a release build needs the gateway URL (eas.json env or the Docker build arg).");
+  }
+  if (!development && !url.startsWith("/") && !url.startsWith("https://")) throw new Error(`EXPO_PUBLIC_API_URL must be https or same-origin in a release build, got ${url}.`);
+  return url.replace(/\/$/, "");
+}
+
+/** Metro sets __DEV__; outside it (tests, tooling) NODE_ENV decides. */
+const isDevelopmentRun = (): boolean => (typeof __DEV__ === "boolean" ? __DEV__ : process.env.NODE_ENV !== "production");
 
 interface Platform {
   readonly client: ApiClient;
@@ -45,7 +64,7 @@ export interface AppRuntime {
 const NO_TOKENS = { getAccessToken: async () => null, getRefreshToken: async () => null, setTokens: async () => undefined, clear: async () => undefined };
 
 /** The real session wiring: stored tokens → SessionManager → api-client with refresh and logout (REQ-F05-01/02/06). */
-export function createAppRuntime(baseUrl = process.env.EXPO_PUBLIC_API_URL ?? DEFAULT_API_URL): AppRuntime {
+export function createAppRuntime(baseUrl = resolveApiUrl(process.env.EXPO_PUBLIC_API_URL, isDevelopmentRun())): AppRuntime {
   const identityClient = createApiClient({ baseUrl, tokenStore: NO_TOKENS, refreshSession: { refresh: async () => { throw new Error("Identity calls are anonymous"); } } });
   // Web: every tab shares the refresh cookie, so rotations are serialised across tabs (A21). Native: one context.
   const manager = new SessionManager(createAppSessionStore(), new IdentityClient(identityClient, secureStorage ? "body" : "cookie"),
