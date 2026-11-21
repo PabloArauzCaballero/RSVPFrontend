@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "RSVP Celebration API",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "description": "Celebration Site Service (lanes 10-15). Behind Kong at /celebrations. Errors are RFC 9457 problems. 1.1.0: optional public host contact in content.hostContact ({email?, phone? E.164, consentPublic: true}); refused without consent (422 HOST_CONTACT_CONSENT_REQUIRED) or channel (INVALID_HOST_CONTACT), null removes it, never translatable. It is public once published (GET /public/{slug}) so guests past the RSVP deadline know whom to write to. 1.2.0 (additive): GET /celebrations/admin/summary, ADMIN only, celebrations per status for the platform dashboard."
   },
   "servers": [
@@ -427,6 +427,7 @@
     "/celebrations": {
       "post": {
         "operationId": "createCelebration",
+        "description": "The date is optional in a draft. When provided, content.eventDate must be a date-time after the server's current instant. A date that has already started returns 422 EVENT_DATE_NOT_IN_FUTURE; a non-string date returns 422 INVALID_EVENT_DATE. Null represents an unset date.",
         "requestBody": {
           "required": true,
           "content": {
@@ -626,6 +627,7 @@
       },
       "patch": {
         "operationId": "editCelebration",
+        "description": "When content.eventDate is added or changed, it must be a date-time after the server's current instant (422 EVENT_DATE_NOT_IN_FUTURE, or INVALID_EVENT_DATE for a non-string date). Existing dates may be kept. Null removes the date from content.",
         "parameters": [
           {
             "$ref": "#/components/parameters/CelebrationId"
