@@ -19,6 +19,7 @@ import { ActionButton, Field, Notice, useStyles } from "../host/ui";
 import { useApiClient, useLocale, useT } from "../platform/providers";
 import { useSingleFlightGate } from "../platform/single-flight";
 import { copyText } from "../platform/clipboard";
+import { saveGiftCredential } from "./gift-credential";
 
 /**
  * The guest's whole journey in one place (F21-04, mode Persuade): the invitation on the cover, the answer under it
@@ -178,7 +179,7 @@ function GiftsLink({ client, celebrationId, slug, token }: { readonly client: Re
   if (empty) return null;
   return (
     <Enter from="down"><View style={{ alignSelf: "stretch", gap: spacing[2] }}>
-      <ActionButton icon="arrow" label={t("rsvp.invite.giftsCta")} onPress={() => { router.push(`/c/${encodeURIComponent(slug)}/regalos/${encodeURIComponent(token)}` as never); }} testID="open-gifts" />
+      <ActionButton icon="arrow" label={t("rsvp.invite.giftsCta")} onPress={() => { saveGiftCredential(slug, token); router.push(`/c/${encodeURIComponent(slug)}/regalos` as never); }} testID="open-gifts" />
       <Text style={[styles.muted, { textAlign: "center" }]}>{t("rsvp.invite.giftsHint")}</Text>
     </View></Enter>
   );
@@ -399,6 +400,7 @@ function PublicRegistrationForm({ view, slug, cover, hosts, contact }: { readonl
         <CompanionsStepper value={draft.requestedCompanions} onChange={(requestedCompanions) => change({ requestedCompanions })} allowed={undefined} error={errors.requestedCompanions} />
         <ExtrasFields dietaryNotes={draft.dietaryNotes} message={draft.message} onChange={change} errors={errors} />
         <Checkbox label={t("rsvp.invite.open.consent")} value={draft.consent} onChange={(consent) => change({ consent })} />
+        <Text testID="rsvp-privacy-link" accessibilityRole="link" style={[styles.body, { fontWeight: "600", textDecorationLine: "underline" }]} onPress={() => router.push("/privacidad")}>{t("legal.links.privacy")}</Text>
         {errors.consent ? <Text accessibilityRole="alert" style={[styles.muted, { color: palette.danger }]}>{errors.consent}</Text> : null}
         {Object.keys(errors).length ? <Text accessibilityRole="alert" style={[styles.muted, { color: palette.danger }]}>{t("rsvp.invite.errors.summary")}</Text> : null}
         <StickyActions summary={failure ? <FailureNotice failure={failure} busy={busy} onRetry={() => { void submit(); }} /> : undefined}>

@@ -75,7 +75,10 @@ function Flow({ slug, token, locale, siteOrigin, client: injected }: Props): Rea
   const state = rsvp.data;
   const screen = closed ? 'closed' : rsvpScreenFor(state);
 
-  const header = <><p className="rsvp-for">{t('rsvp.page.invitationTo', { title })}</p>{resource.isSuccess && resource.data.name ? <p className="rsvp-for" data-testid="guest-name">{t('rsvp.page.invitationFor', { name: resource.data.name })}</p> : null}</>;
+  // GuestTokenResource.name only exists from Guest/RSVP 1.11.0 (backend PR #27). The pinned contract (1.10.0, the deployed one)
+  // does not declare it, so it is read only when the service actually sends it.
+  const guestName = resource.isSuccess && 'name' in resource.data && typeof resource.data.name === 'string' && resource.data.name ? resource.data.name : undefined;
+  const header = <><p className="rsvp-for">{t('rsvp.page.invitationTo', { title })}</p>{guestName ? <p className="rsvp-for" data-testid="guest-name">{t('rsvp.page.invitationFor', { name: guestName })}</p> : null}</>;
   const giftsLink = state.status === 'CONFIRMED' ? <div className="rsvp-actions"><button type="button" className="rsvp-button" onClick={() => window.location.assign(guestGiftPath(slug, token, locale))}>{t('rsvp.confirmed.gifts')}</button><p className="rsvp-hint">{t('rsvp.confirmed.giftsHint')}</p></div> : null;
   if (screen === 'closed') return <>{header}<ClosedView info={closed ?? {}} state={state} hosts={hosts} contact={contact} locale={locale} t={t} />{giftsLink}</>;
 
@@ -270,6 +273,7 @@ function UnregisteredForm({ client, view, slug, t, locale, siteOrigin, hosts, co
             <input type="checkbox" checked={draft.consent} aria-invalid={errors.consent ? true : undefined} aria-describedby={errors.consent ? 'rsvp-consent-error' : undefined} onChange={(event) => setDraft({ ...draft, consent: event.target.checked })} />
             <span>{t('rsvp.form.consent')}</span>
           </label>
+          <p className="rsvp-legal"><a href="/privacidad" target="_blank" rel="noopener">{t('legal.links.privacy')}</a></p>
           {errors.consent ? <p id="rsvp-consent-error" className="rsvp-error">{errors.consent}</p> : null}
           {failure ? <FailureNotice failure={failure} t={t} busy={busy} onRetry={() => { void submit(); }} /> : null}
           <div className="rsvp-actions"><button type="submit" className="rsvp-button" disabled={busy} aria-busy={busy}>{busy ? t('rsvp.form.submitting') : t('rsvp.form.register')}</button></div>

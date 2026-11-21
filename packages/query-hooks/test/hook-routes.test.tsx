@@ -48,7 +48,7 @@ describe("gift hooks", () => {
   it("guest list sends exactly the guest credential and no session; the host list uses the session", async () => {
     const guest = harness(() => ({ body: { items: [] } }));
     const seen = await runQuery(guest, () => hooks.useGiftList(guest.client, "c-1", "guest-token"));
-    expect(seen.path).toBe("/gifts/celebrations/c-1/items");
+    expect(seen.path).toBe("/gifts/celebrations/c-1/items?limit=200"); // L4: whole list read in bounded pages
     expect(seen.headers.get("authorization")).toBe("Bearer guest-token");
     const anonymous = harness(() => ({ body: { items: [] } }));
     expect((await runQuery(anonymous, () => hooks.useGiftList(anonymous.client, "c-1", null))).headers.get("authorization")).toBeNull();
@@ -71,8 +71,8 @@ describe("gift hooks", () => {
   });
 
   it("host reservations, decisions, add, approve external and settings use the documented routes", async () => {
-    const reservations = harness(); expect((await runQuery(reservations, () => hooks.useHostReservations(reservations.client, "c-1", "PENDING_REVIEW"))).path).toBe("/gifts/celebrations/c-1/reservations?status=PENDING_REVIEW");
-    const all = harness(); expect((await runQuery(all, () => hooks.useHostReservations(all.client, "c-1"))).path).toBe("/gifts/celebrations/c-1/reservations");
+    const reservations = harness(); expect((await runQuery(reservations, () => hooks.useHostReservations(reservations.client, "c-1", "PENDING_REVIEW"))).path).toBe("/gifts/celebrations/c-1/reservations?status=PENDING_REVIEW&limit=200");
+    const all = harness(); expect((await runQuery(all, () => hooks.useHostReservations(all.client, "c-1"))).path).toBe("/gifts/celebrations/c-1/reservations?limit=200");
     const approve = harness(); expect(await runMutation(approve, () => hooks.useDecideReservation(approve.client, "c-1"), { reservationId: "r-1", decision: "approve" as const })).toMatchObject({ method: "POST", path: "/gifts/celebrations/c-1/reservations/r-1/approve" });
     const reject = harness(); expect((await runMutation(reject, () => hooks.useDecideReservation(reject.client, "c-1"), { reservationId: "r-1", decision: "reject" as const })).path).toBe("/gifts/celebrations/c-1/reservations/r-1/reject");
     const add = harness(); expect(await runMutation(add, () => hooks.useAddGift(add.client, "c-1"), { title: "Licuadora" } as never)).toMatchObject({ method: "POST", path: "/gifts/celebrations/c-1/items", body: { title: "Licuadora" } });
@@ -375,7 +375,8 @@ describe("guest and notification hooks", () => {
   it("group, token and companion decisions", async () => {
     const group = harness(); expect(await runMutation(group, () => hooks.useChangeGuestGroup(group.client, "c-1"), { guestId: "g-1", groupId: null })).toMatchObject({ method: "PATCH", body: { groupId: null } });
     const created = harness(); expect(await runMutation(created, () => hooks.useCreateGuestGroup(created.client, "c-1"), "Familia")).toMatchObject({ path: "/guests/celebrations/c-1/groups", body: { name: "Familia" } });
-    const issue = harness(); expect((await runMutation(issue, () => hooks.useIssueGuestToken(issue.client, "c-1"), "g-1")).path).toBe("/guests/celebrations/c-1/guests/g-1/access-token");
+    const issue = harness(); expect(await runMutation(issue, () => hooks.useIssueGuestToken(issue.client, "c-1"), { guestId: "g-1" })).toMatchObject({ path: "/guests/celebrations/c-1/guests/g-1/access-token", body: {} });
+    const rotate = harness(); expect(await runMutation(rotate, () => hooks.useIssueGuestToken(rotate.client, "c-1"), { guestId: "g-1", rotate: true })).toMatchObject({ method: "POST", body: { rotate: true } });
     const revoke = harness(() => ({ status: 204 })); expect((await runMutation(revoke, () => hooks.useRevokeGuestToken(revoke.client, "c-1"), "g-1")).method).toBe("DELETE");
     const decide = harness(); expect(await runMutation(decide, () => hooks.useResolveCompanionRequest(decide.client, "c-1"), { requestId: "r-1", decision: "APPROVED" as const })).toMatchObject({ path: "/guests/celebrations/c-1/companion-requests/r-1/decision", body: { decision: "APPROVED" } });
   });
@@ -497,5 +498,36 @@ describe("platform admin hooks (expected contract, ADMIN only)", () => {
     await waitFor(() => expect(view.result.current.isError).toBe(true));
     expect((view.result.current.error as ApiError).status).toBe(403);
     expect(h.calls).toHaveLength(1);
+  });
+});
+
+describe("organization invitation hooks (identity 2.0.0, SEG-003)", () => {
+  it("the owner invites, lists and revokes; nothing calls the retired POST /members", async () => {
+    const invite = harness(() => ({ status: 202, body: { id: "i-1", organizationId: "o 1", email: "a@b.co", role: "HOST", status: "PENDING", expiresAt: "2026-11-28T00:00:00Z", createdAt: "2026-11-21T00:00:00Z" } }));
+    const sent = await runMutation(invite, () => hooks.useInviteToOrganization(invite.client, "o 1"), { email: "a@b.co", role: "HOST" as const });
+    expect(sent.method).toBe("POST");
+    expect(sent.path).toBe("/identity/organizations/o%201/invitations");
+    expect(sent.body).toEqual({ email: "a@b.co", role: "HOST" });
+    const list = harness(() => ({ body: { items: [] } }));
+    expect((await runQuery(list, () => hooks.useOrganizationInvitations(list.client, "o 1"))).path).toBe("/identity/organizations/o%201/invitations");
+    const revoke = harness(() => ({ status: 204 }));
+    const revoked = await runMutation(revoke, () => hooks.useRevokeOrganizationInvitation(revoke.client, "o 1"), "i/1");
+    expect(revoked.method).toBe("DELETE");
+    expect(revoked.path).toBe("/identity/organizations/o%201/invitations/i%2F1");
+    expect("useAddOrganizationMember" in hooks).toBe(false);
+  });
+
+  it("the invitee lists, accepts with the link token and declines without it", async () => {
+    const mine = harness(() => ({ body: { emailVerified: true, items: [] } }));
+    expect((await runQuery(mine, () => hooks.useMyInvitations(mine.client))).path).toBe("/identity/invitations");
+    const accept = harness(() => ({ body: { organizationId: "o-1", role: "PLANNER" } }));
+    const accepted = await runMutation(accept, () => hooks.useAnswerInvitation(accept.client), { invitationId: "i-1", decision: "accept" as const, token: "t-1" });
+    expect(accepted.method).toBe("POST");
+    expect(accepted.path).toBe("/identity/invitations/i-1/accept");
+    expect(accepted.body).toEqual({ token: "t-1" });
+    const decline = harness(() => ({ status: 204 }));
+    const declined = await runMutation(decline, () => hooks.useAnswerInvitation(decline.client), { invitationId: "i-1", decision: "decline" as const });
+    expect(declined.path).toBe("/identity/invitations/i-1/decline");
+    expect(declined.body).toEqual({});
   });
 });

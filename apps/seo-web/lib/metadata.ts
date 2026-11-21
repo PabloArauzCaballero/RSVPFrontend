@@ -57,6 +57,15 @@ export function celebrationMetadata(view: PublicCelebrationView, gallery: readon
       ...(image ? { images: [{ url: image, width: cover?.width ?? undefined, height: cover?.height ?? undefined, alt: content.title }] } : {})
     },
     twitter: { card: image ? "summary_large_image" : "summary", title, description, ...(image ? { images: [image] } : {}) },
-    robots: { index: true, follow: true }
+    robots: celebrationRobots(view)
   };
+}
+
+/**
+ * D-1: a published celebration is reachable by its link but kept out of search engines unless the
+ * host turned indexing on. Anything but an explicit `indexable: true` (an older API, a missing field)
+ * is `noindex`, so a failure never exposes an invitation.
+ */
+export function celebrationRobots(view: Pick<PublicCelebrationView, "indexable">): { readonly index: boolean; readonly follow: boolean } {
+  return view.indexable === true ? { index: true, follow: true } : { index: false, follow: false };
 }

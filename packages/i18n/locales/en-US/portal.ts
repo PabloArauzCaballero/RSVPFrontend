@@ -4,7 +4,7 @@ import type { portalEsBO } from "../es-BO/portal.js";
 /** Provider portal (F28). */
 export const portalEnUS: DeepStrings<typeof portalEsBO> = {
   label: "Provider portal",
-  nav: { label: "Portal sections", home: "Overview", services: "Offers", products: "Products", delivery: "Delivery", microsite: "Public profile", documents: "Documents", destinations: "Contact", agenda: "Schedule", leads: "Requests", metrics: "Results" },
+  nav: { label: "Portal sections", home: "Overview", services: "Offers", products: "Products", delivery: "Delivery", microsite: "Public profile", documents: "Documents", destinations: "Contact", agenda: "Schedule", quotes: "Quotes", leads: "Requests", metrics: "Results" },
   dest: { overview: "Overview", offers: "Offers", agenda: "Schedule", clients: "Clients", profile: "Profile" },
   microsite: {
     title: "Public profile", intro: "This is how couples see you on your page. It saves as a whole; if someone else changed it, we warn you before overwriting.",
@@ -69,6 +69,12 @@ export const portalEnUS: DeepStrings<typeof portalEsBO> = {
     title: "Schedule", scheduleTitle: "Your hours", intro: "Answer the dates couples ask for and set when you work ({{zone}}).", bookingsPending_one: "{{count}} date to confirm", bookingsPending_other: "{{count}} dates to confirm", bookingsEmptyTitle: "No dates to answer", capacity: "Slots per day", weekdays: "Working days", weekday: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], start: "From", end: "To", timeInvalid: "Choose the opening and the closing time.", rangeInvalid: "The closing time must be after the opening time.",
     blackouts: "Blocked days", blackoutDate: "Date", blackoutReason: "Reason (optional)", addBlackout: "Block day", removeBlackout: "Remove", dateInvalid: "Choose the date.", save: "Save schedule", saving: "Saving…", saved: "Schedule saved.", capacityInvalid: "Enter a whole number of slots between 1 and 1000.", blackoutEnd: "Until (optional)", dateReal: "That date does not exist on the calendar.", blackoutDuplicate: "That day is already blocked.", endBefore: "The end date cannot be before the start date.", rejectTitle: "Reject this request?", rejectBody: "The couple will see that you cannot take that date. This cannot be undone.", cancelTitle: "Cancel this booking?", cancelBody: "The couple will be told the date is free again. This cannot be undone.", keep: "Go back", rowMenu: "More options for the request of {{date}}",
     bookings: "Requested dates", bookingsEmpty: "When a couple asks for a date, you will see it here to confirm with a tap.", status: { REQUESTED: "Pending", CONFIRMED: "Confirmed", REJECTED: "Rejected", CANCELLED: "Canceled", EXPIRED: "Expired" }, confirm: "Confirm", reject: "Reject", cancel: "Cancel booking", decided: "Request updated.", stale: "That request already changed state; we refreshed the list.", date: "{{date}}", expires: "Expires {{when}}"
+  },
+  quotes: {
+    title: "Quotes", intro: "Quote requests you received. Open one to see how to reach the person who sent it and answer them directly.", emptyTitle: "No quotes yet", empty: "When someone asks you for a quote from your listing, it will show up here with their contact details.",
+    received: "Received on {{date}}", event: "Event: {{date}}", guests: "{{count}} guests", budget: "Budget: {{amount}}", noBudget: "No budget given", city: "Area: {{city}}", withMessage: "Includes a message",
+    open: "Show contact", close: "Hide contact", contactTitle: "How to reach {{name}}", email: "Email", phone: "Phone", noPhone: "No phone given", message: "Message", writeEmail: "Write to {{email}}", call: "Call {{phone}}",
+    loadingContact: "Loading the contact…", contactError: "We could not load the contact for this quote.", more: "Load more", shown: "{{shown}} quotes", status: { REQUESTED: "New" }
   },
   leads: {
     title: "Requests", intro: "Couples who wrote to you or asked for a quote.", emptyTitle: "Nobody has written yet", empty: "When a couple taps your contact or asks for a quote, it shows up here.", clicksEmpty: "Nobody has tapped your contacts yet.", more: "Load more", shown: "Showing {{shown}} of {{total}}", filter: "Show", filters: { all: "All", quote: "Quotes", click: "Taps" }, quotesEmpty: "You have not received quotes yet.",

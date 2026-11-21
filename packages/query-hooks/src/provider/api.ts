@@ -1,5 +1,5 @@
 import { ApiError, type ApiClient } from "@rsvp/api-client";
-import type { ProviderCard, ProviderDiscoveryQuery, ProviderPage, Availability, Booking, BookingRequestInput, BookingStatus, Calendar, CreateListingInput, Lead, ListingHit, ListingSummary, LeadConfig, Metrics, OfferCategory, OwnListing, Provider, QuoteInput, QuoteReceipt, RegisterProviderInput, UpdateProviderInput, Microsite, MicrositeInput, ProviderDocument, DocumentInput, DocumentRegistration, DocumentDownload } from "./types.js";
+import type { ProviderCard, ProviderDiscoveryQuery, ProviderPage, Availability, Booking, BookingRequestInput, BookingStatus, Calendar, CreateListingInput, Lead, ListingHit, ListingSummary, LeadConfig, Metrics, OfferCategory, OwnListing, Provider, QuoteInput, QuoteReceipt, ProviderQuote, ProviderQuotePage, RegisterProviderInput, UpdateProviderInput, Microsite, MicrositeInput, ProviderDocument, DocumentInput, DocumentRegistration, DocumentDownload } from "./types.js";
 
 const qs = (params: Record<string, string | number | undefined>): string => {
   const entries = Object.entries(params).filter((entry): entry is [string, string | number] => entry[1] !== undefined && entry[1] !== "");
@@ -47,6 +47,10 @@ export function providerService(client: ApiClient) {
     myBookings: () => client.request<{ items: readonly Booking[] }>("/providers/me/bookings"),
     requestBooking: (providerId: string, body: BookingRequestInput) => client.request<Booking, BookingRequestInput>(`${base(providerId)}/bookings`, { method: "POST", body }),
     decideBooking: (providerId: string, bookingId: string, action: "confirm" | "reject" | "cancel") => client.request<Booking>(`${base(providerId)}/bookings/${bookingId}/${action}`, { method: "POST" }),
+    /** GET /providers/{id}/quotes (provider-catalog 2.5.0, owner only): newest first; `cursor` is the previous page's nextCursor. */
+    quotes: (providerId: string, limit = 20, cursor?: string) => client.request<ProviderQuotePage>(`${base(providerId)}/quotes${qs({ limit, cursor })}`),
+    /** GET /providers/{id}/quotes/{quoteId}: the contact the requester gave, to answer them. */
+    quote: (providerId: string, quoteId: string) => client.request<ProviderQuote>(`${base(providerId)}/quotes/${encodeURIComponent(quoteId)}`),
     requestQuote: (providerId: string, body: QuoteInput, locale: string) => client.request<QuoteReceipt, QuoteInput>(`${base(providerId)}/quotes${qs({ locale })}`, { method: "POST", body }),
     /**
      * GET /listings?q= (host picker for cataloged gifts). Older gateways without this route fall back to public provider cards.
