@@ -1,0 +1,58 @@
+# Espejo web · directory (B1–B4) and partner microsite (B5–B7) on iOS/Android, against the real dev gateway.
+# Same variables as espejo-invitacion.yaml. Read-only: it never sends a quote or a date request.
+# The interface follows the app's language (es-BO or en-US), so every label is matched in both; the data comes from dev.
+appId: ${APP_ID}
+---
+- runFlow: cold-start.yaml
+- runFlow:
+    file: open.yaml
+    env: { ROUTE: /proveedores/buscar }
+- extendedWaitUntil:
+    visible: "Buscar proveedores|Search vendors"
+    timeout: 240000
+# Expo Go opens its developer menu once the bundle has loaded (first run only): close it before looking at the screen.
+- runFlow: dismiss-dev-menu.yaml
+- takeScreenshot: espejo-directorio-buscar
+# The results come after the search form.
+# Centered: on Android, Expo Go pins a development notice (no push notifications in Expo Go since SDK 53) over the bottom edge.
+- scrollUntilVisible:
+    element: "Servicios de comida"
+    direction: DOWN
+    timeout: 60000
+    centerElement: true
+- takeScreenshot: espejo-directorio-resultados
+# A result opens the partner microsite at the web's address.
+- tapOn: "Servicios de comida"
+- extendedWaitUntil:
+    visible: "Katering Grecia"
+    timeout: 60000
+- takeScreenshot: espejo-micrositio
+- scrollUntilVisible:
+    element: "Escribir por WhatsApp|Message on WhatsApp"
+    direction: DOWN
+    timeout: 30000
+    centerElement: true
+# The disclaimer precedes the contact buttons (REQ-F25-05).
+- assertVisible: "(Antes de contratar|Before you hire).*"
+- takeScreenshot: espejo-micrositio-contacto
+# The contact leaves the app through the redirector /r/{listingId}.
+- tapOn: "Escribir por WhatsApp|Message on WhatsApp"
+- extendedWaitUntil:
+    notVisible: "Escribir por WhatsApp|Message on WhatsApp"
+    timeout: 15000
+- takeScreenshot: espejo-micrositio-redirector
+# The catalogue and one offer, with its fulfillment before any button (REQ-F25-04).
+- runFlow:
+    file: open.yaml
+    env: { ROUTE: /p/multicenter-59388c/catalogo }
+- extendedWaitUntil:
+    visible: "Catálogo de Katering Grecia|Katering Grecia's catalog"
+    timeout: 60000
+- takeScreenshot: espejo-micrositio-catalogo
+- tapOn:
+    text: "Ver condiciones y precio|See terms and price"
+    index: 0
+- extendedWaitUntil:
+    visible: "Entrega y condiciones|Delivery and terms"
+    timeout: 30000
+- takeScreenshot: espejo-micrositio-oferta
