@@ -144,7 +144,7 @@ describe("REQ-F05-01 · sign up and recovery", () => {
   it("recovery: confirms without revealing whether the account exists", async () => {
     const { calls } = setup(<RecoveryScreen onNavigate={vi.fn()} />, { "POST /identity/auth/password-recovery": () => undefined });
     type("Correo", "nadie@example.com"); press("Enviar instrucciones");
-    expect(await screen.findByText("Listo. Si hay una cuenta con ese correo, te llegarán las instrucciones.")).toBeTruthy();
+    expect(await screen.findByText("Listo. Si hay una cuenta con ese correo, te enviamos un enlace que vence en 30 minutos. Revisa también la carpeta de spam.")).toBeTruthy();
     expect(calls[0]).toMatchObject({ path: "/identity/auth/password-recovery", body: { email: "nadie@example.com" } });
   });
   it("recovery offline shows the connection message and keeps the e-mail", async () => {

@@ -2,7 +2,7 @@ import { createContext, Fragment, useCallback, useContext, useEffect, useMemo, u
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { I18nextProvider, useTranslation } from "react-i18next";
 import { createApiClient, type ApiClient } from "@rsvp/api-client";
-import { IdentityClient, SessionManager } from "@rsvp/auth";
+import { IdentityClient, SessionManager, browserCoordinator, inProcessCoordinator } from "@rsvp/auth";
 import { createI18n, resolveLocale, supportedLocales, type AppLocale, type Translate } from "@rsvp/i18n";
 import { UiProvider, stringsFor } from "@rsvp/ui";
 import { AuthProvider, StaticAuthProvider, useAuth } from "../auth/auth-context";
@@ -46,7 +46,9 @@ const NO_TOKENS = { getAccessToken: async () => null, getRefreshToken: async () 
 /** The real session wiring: stored tokens → SessionManager → api-client with refresh and logout (REQ-F05-01/02/06). */
 export function createAppRuntime(baseUrl = process.env.EXPO_PUBLIC_API_URL ?? DEFAULT_API_URL): AppRuntime {
   const identityClient = createApiClient({ baseUrl, tokenStore: NO_TOKENS, refreshSession: { refresh: async () => { throw new Error("Identity calls are anonymous"); } } });
-  const manager = new SessionManager(createAppSessionStore(), new IdentityClient(identityClient, secureStorage ? "body" : "cookie"));
+  // Web: every tab shares the refresh cookie, so rotations are serialised across tabs (A21). Native: one context.
+  const manager = new SessionManager(createAppSessionStore(), new IdentityClient(identityClient, secureStorage ? "body" : "cookie"),
+    secureStorage ? inProcessCoordinator() : browserCoordinator());
   const client = createApiClient({ baseUrl, tokenStore: manager.tokenStore, refreshSession: manager.refreshSession });
   return { manager, client, identityClient };
 }

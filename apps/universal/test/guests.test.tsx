@@ -237,8 +237,7 @@ describe("REQ-F16-05/06 · C23 detail and personal link", () => {
   it("revoke asks first, then DELETEs: the old link stops working (401 for the guest)", async () => {
     const { mock, client } = world((m) => { m.addGuest({ name: "Marta Quispe", id: "00000000-0000-4000-8000-0000000000aa", token: MOCK_VALID_TOKEN }); });
     await detail(mock, client, "00000000-0000-4000-8000-0000000000aa");
-    fireEvent.click(screen.getByTestId("issue-link"));
-    await screen.findByTestId("masked-link");
+    expect(await screen.findByTestId("link-active")).toBeTruthy();
     fireEvent.click(screen.getByTestId("guest-more"));
     fireEvent.click(screen.getByTestId("revoke-link"));
     expect(await screen.findByText("¿Revocar este enlace?")).toBeTruthy();
@@ -247,6 +246,31 @@ describe("REQ-F16-05/06 · C23 detail and personal link", () => {
     expect(await screen.findByText("Enlace revocado.")).toBeTruthy();
     expect(mock.listGuests()[0]?.token).toBeNull();
     expect(screen.queryByTestId("masked-link")).toBeNull();
+  });
+
+  it("A11 · a guest who already has a working link: the screen says so, and a new link is only generated after confirming", async () => {
+    const { mock, client } = world((m) => { m.addGuest({ name: "Marta Quispe", id: "00000000-0000-4000-8000-0000000000aa", token: MOCK_VALID_TOKEN }); });
+    await detail(mock, client, "00000000-0000-4000-8000-0000000000aa");
+    expect((await screen.findByTestId("link-active")).textContent).toMatch(/Ya tiene un enlace que funciona hasta el/);
+    expect(screen.queryByText("Todavía no tiene enlace. Genera uno y envíaselo.")).toBeNull();
+    await waitFor(() => expect(screen.getByTestId("issue-link").textContent).toContain("Generar enlace nuevo"));
+    fireEvent.click(screen.getByTestId("issue-link"));
+    expect(await screen.findByText("¿Reemitir el enlace?")).toBeTruthy();
+    expect(mock.state.log.some((call) => call.method === "POST")).toBe(false);
+    expect(mock.listGuests()[0]!.token).toBe(MOCK_VALID_TOKEN);
+    fireEvent.click(within(screen.getByRole("alert")).getByRole("button", { name: "Reemitir enlace" }));
+    await screen.findByTestId("masked-link");
+    expect(mock.state.log.find((call) => call.method === "POST")?.body).toEqual({ rotate: true });
+    expect(mock.listGuests()[0]!.token).not.toBe(MOCK_VALID_TOKEN);
+  });
+
+  it("A11 · without a working link the first one is generated at once, without rotate", async () => {
+    const { mock, client } = world((m) => { m.addGuest({ name: "Marta Quispe", id: "00000000-0000-4000-8000-0000000000aa" }); });
+    await detail(mock, client, "00000000-0000-4000-8000-0000000000aa");
+    expect(await screen.findByText("Todavía no tiene enlace. Genera uno y envíaselo.")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("issue-link"));
+    await screen.findByTestId("masked-link");
+    expect(mock.state.log.find((call) => call.method === "POST")?.body).toEqual({});
   });
 
   it("reissue replaces the previous link after confirmation", async () => {
