@@ -18,6 +18,15 @@ El catálogo de [Marketing Skills](docs/engineering/marketing-skills-source.json
 - Antes de abrir un PR aplica [`rsvp-pr-gate`](.agents/skills/rsvp-pr-gate/SKILL.md): revisión del diff, lint/typecheck/build/contratos/gitleaks en verde, pruebas de integración contra servicios reales, recorrido en entorno real (gateway Docker en backend; Playwright con Chrome real contra el backend real en frontend), casos negativos, reversión y evidencia pegada en el PR. Sin esa evidencia no hay PR.
 - **Solo soluciones de largo plazo:** causa raíz, sin parches, sin debilitar pruebas, sin `skip`/`only`, sin ignores sin motivo ni `TODO` sin issue. Activa los hooks locales con `yarn hooks:install`.
 
+## Regla obligatoria: catálogo de bugs compartido (`bugs/catalogo`)
+
+El inventario único de bugs, los puntos fundamentales (PF-1 a PF-10), las decisiones abiertas (D-1 a D-5) y el índice de contratos de **toda la plataforma, backend y frontend,** viven en la rama `bugs/catalogo` de **RSVPBackend**, en `docs/bugs/`.
+
+- **Antes de planificar, escribir código, revisar o mergear**, consulta siempre `CATALOGO.md`, `PUNTOS-FUNDAMENTALES.md` y `CONTRATOS.md` de esa rama: `git -C ../RSVPBackend fetch origin bugs/catalogo` y luego `git -C ../RSVPBackend show origin/bugs/catalogo:docs/bugs/CATALOGO.md` (o `gh api repos/PabloArauzCaballero/RSVPBackend/contents/docs/bugs/CATALOGO.md?ref=bugs/catalogo -H "Accept: application/vnd.github.raw"`), y lo mismo con `PUNTOS-FUNDAMENTALES.md` y `CONTRATOS.md`. No te apoyes en una lectura anterior: la rama cambia.
+- Un cambio no puede romper ningún punto fundamental. Las decisiones `D-n` las toma el dueño del producto, no un agente.
+- Todo PR que corrige un bug cita su ID en el cuerpo (por ejemplo `Corrige: B2`) y actualiza su estado en `bugs/catalogo` mediante un worktree aparte. Los hallazgos nuevos se registran ahí con ubicación, punto fundamental y evidencia.
+- `bugs/catalogo` nunca se mergea en `dev`: solo cuenta su carpeta `docs/bugs/`.
+
 ## Obligatorio
 
 - **Vertical slice obligatorio:** usa [`rsvp-vertical-slice`](.agents/skills/rsvp-vertical-slice/SKILL.md) en toda planificación, ejecución o revisión de carril; la [revisión del plan](docs/plan/revision-vertical-slice-2026-10-16.md) prevalece sobre listas históricas por capas. Cada entrega debe tener resultado observable, prueba y evidencia.
