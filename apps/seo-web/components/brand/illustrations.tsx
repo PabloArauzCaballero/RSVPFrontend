@@ -3,7 +3,7 @@
  * a stone disc, a flat contact shadow, the object as a filled ink figure and ONE piece in a muted pastel. Colours come from
  * CSS (`.art` in globals.css) so they follow the light and dark schemes; every drawing is decorative because the text next to
  * it says the same thing. The tone class (`art--yellow`, `art--green`, `art--red`, `art--gray`) picks the pastel.
- * `apps/seo-web` cannot import `packages/ui`, so the three paths are copied here; keep them in sync with the app.
+ * `apps/seo-web` cannot import `packages/ui`, so the paths are copied here; keep them in sync with the app.
  */
 const base = { strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true, focusable: "false", viewBox: "0 0 120 120" } as const;
 const GROUND = "M14 56a46 46 0 1 0 92 0a46 46 0 1 0 -92 0Z";
@@ -48,6 +48,50 @@ export function EmptyArt({ className = "" }: Readonly<{ className?: string }>) {
       <path className="art__pastel" d="M34 52a18 18 0 1 0 36 0a18 18 0 1 0 -36 0Z" />
       <path className="art__ink" strokeWidth={3} d="M44 58C48 54 56 54 60 58" />
       <path className="art__solid" d="M42.4 48a2.6 2.6 0 1 0 5.2 0a2.6 2.6 0 1 0 -5.2 0ZM56.4 48a2.6 2.6 0 1 0 5.2 0a2.6 2.6 0 1 0 -5.2 0Z" />
+    </svg>
+  );
+}
+
+/** Landing, the host: a garland over the D with the tick (the app's `welcomeHost`). */
+export function HostArt({ className = "" }: Readonly<{ className?: string }>) {
+  return (
+    <svg {...base} className={`art art--yellow ${className}`.trim()}>
+      <path className="art__ground" d="M14 56a46 46 0 1 0 92 0a46 46 0 1 0 -92 0Z" />
+      <path className="art__shadow" d="M32 99a28 5 0 1 0 56 0a28 5 0 1 0 -56 0Z" />
+      <path className="art__ink" strokeWidth={3} d="M10 14Q60 36 110 14" />
+      <path className="art__solid" d="M16 20.3L32 20.3L24 36.3ZM52 26L68 26L60 42ZM88 20.3L104 20.3L96 36.3Z" />
+      <path className="art__pastel" d="M34 24.57L50 24.57L42 40.57ZM70 24.57L86 24.57L78 40.57Z" />
+      <path className="art__solid" d="M41.2 46H54.72a26 26 0 0 1 0 52H41.2a5.2 5.2 0 0 1 -5.2 -5.2V51.2a5.2 5.2 0 0 1 5.2 -5.2Z" />
+      <path className="art__knock" strokeWidth={5} d="M45.36 72L54.65 81.29L71.36 60.86" />
+    </svg>
+  );
+}
+
+/** Landing, the guest: the pastel invitation rising out of its envelope (the app's `welcomeGuest`). */
+export function GuestArt({ className = "" }: Readonly<{ className?: string }>) {
+  return (
+    <svg {...base} className={`art art--blue ${className}`.trim()}>
+      <path className="art__ground" d="M14 56a46 46 0 1 0 92 0a46 46 0 1 0 -92 0Z" />
+      <path className="art__shadow" d="M28 99a32 5 0 1 0 64 0a32 5 0 1 0 -64 0Z" />
+      <path className="art__stone" d="M30 52H90a6 6 0 0 1 6 6V92a6 6 0 0 1 -6 6H30a6 6 0 0 1 -6 -6V58a6 6 0 0 1 6 -6Z" />
+      <path className="art__pastel" d="M42 22H78a6 6 0 0 1 6 6V70a6 6 0 0 1 -6 6H42a6 6 0 0 1 -6 -6V28a6 6 0 0 1 6 -6Z" />
+      <path className="art__ink" strokeWidth={3} d="M49.5 40L57 47.5L70.5 31" />
+      <path className="art__solid" d="M24 56L60 78L96 56V92a6 6 0 0 1-6 6H30a6 6 0 0 1-6-6Z" />
+    </svg>
+  );
+}
+
+/** Landing, the provider: the stall with its pastel awning (the app's `welcomeProvider`). */
+export function ProviderArt({ className = "" }: Readonly<{ className?: string }>) {
+  return (
+    <svg {...base} className={`art art--green ${className}`.trim()}>
+      <path className="art__ground" d="M14 56a46 46 0 1 0 92 0a46 46 0 1 0 -92 0Z" />
+      <path className="art__shadow" d="M24 99a36 5 0 1 0 72 0a36 5 0 1 0 -72 0Z" />
+      <path className="art__ink" strokeWidth={4} d="M28 42V60M92 42V60" />
+      <path className="art__solid" d="M30 58H90a6 6 0 0 1 6 6V92a6 6 0 0 1 -6 6H30a6 6 0 0 1 -6 -6V64a6 6 0 0 1 6 -6Z" />
+      <path className="art__knock" strokeWidth={4} d="M49.5 78L57 85.5L70.5 69" />
+      <path className="art__pastel" d="M28 22H92L102 42a7 7 0 0 1-14 0a7 7 0 0 1-14 0a7 7 0 0 1-14 0a7 7 0 0 1-14 0a7 7 0 0 1-14 0a7 7 0 0 1-14 0Z" />
+      <path className="art__ink" strokeWidth={2.5} d="M48 22L45 42M60 22V42M72 22L75 42" />
     </svg>
   );
 }

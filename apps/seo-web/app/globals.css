@@ -43,11 +43,16 @@ button, input, select, textarea { font: inherit; }
 .tag, .directory-verified, .gift-badge, .rsvp-status-badge, .rsvp-countdown { display: inline-flex; align-items: center; gap: .4rem; width: fit-content; max-width: 100%; padding: .2rem .65rem; border-radius: 9999px; background: var(--tone-gray-bg); color: var(--tone-gray-fg); font-family: var(--font-mono); font-size: .72rem; font-weight: 500; letter-spacing: .05em; text-transform: uppercase; line-height: 1.5; }
 
 /* ===== Drawings (empty states only) and the check ===== */
-.art { display: block; width: 100%; height: auto; overflow: visible; --art-pastel: var(--tone-yellow-bg); }
-.art--yellow { --art-pastel: var(--tone-yellow-bg); } .art--green { --art-pastel: var(--tone-green-bg); } .art--red { --art-pastel: var(--tone-red-bg); } .art--gray { --art-pastel: var(--tone-gray-bg); }
-.art__ground { fill: var(--primary-muted); } .art__shadow { fill: var(--border); } .art__solid { fill: var(--text); }
+.art { display: block; width: 100%; height: auto; overflow: visible; --art-pastel: var(--pastel-yellow-bg); --art-edge: var(--pastel-yellow-fg); }
+/* The same pastel pair as the app's illustrations (`tones`), with the same faint edge so a pale piece keeps its outline. */
+.art--yellow { --art-pastel: var(--pastel-yellow-bg); --art-edge: var(--pastel-yellow-fg); } .art--green { --art-pastel: var(--pastel-green-bg); --art-edge: var(--pastel-green-fg); }
+.art--red { --art-pastel: var(--pastel-red-bg); --art-edge: var(--pastel-red-fg); } .art--gray { --art-pastel: var(--pastel-gray-bg); --art-edge: var(--pastel-gray-fg); } .art--blue { --art-pastel: var(--pastel-blue-bg); --art-edge: var(--pastel-blue-fg); }
+.art__ground { fill: var(--primary-muted); } .art__shadow { fill: var(--border); } .art__solid { fill: var(--text); } .art__stone { fill: var(--field-border); }
 .art__ink { fill: none; stroke: var(--text); } .art__knock { fill: none; stroke: var(--canvas); } .art__knock-fill { fill: var(--canvas); }
-.art__pastel { fill: var(--art-pastel); stroke: none; }
+.art__pastel { fill: var(--art-pastel); stroke: var(--art-edge); stroke-width: 1.25; stroke-opacity: .55; }
+/* On dark the contact shadow is the canvas, like the app's `illustrationColors('onDark')`. */
+[data-theme='dark'] .art__shadow { fill: var(--canvas); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme='light']) .art__shadow { fill: var(--canvas); } }
 .check { display: inline-block; flex: none; vertical-align: middle; }
 @media (prefers-reduced-motion: no-preference) {
   .check--draw .check__stroke { stroke-dasharray: 1; stroke-dashoffset: 1; animation: check-draw .6s var(--ease-out) .3s forwards; }
@@ -257,6 +262,7 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 @media (min-width: 52rem) { .roles__grid { grid-template-columns: 1.2fr 1fr 1fr; } }
 .roles__grid > div { display: grid; gap: .75rem; align-content: start; padding: clamp(1.5rem, 3vw, 2rem); border: 1px solid var(--border); border-radius: var(--radius-cell); background: var(--surface); }
 .roles__grid > .roles__host { background: var(--accent); border-color: transparent; color: var(--on-accent); } .roles__grid > .roles__host p { color: inherit; } .roles__grid > .roles__host .textlink { color: inherit; }
+.roles__art { width: 6rem; }
 .roles__grid h3 { margin: 0; font-size: clamp(1.5rem, 2.6vw, 1.9rem); }
 .roles__grid p { margin: 0; color: var(--text-muted); }
 .roles__links { display: flex; flex-wrap: wrap; gap: 0 1.5rem; }

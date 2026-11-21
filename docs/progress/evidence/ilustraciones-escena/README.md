@@ -40,3 +40,21 @@ Revertir el commit del PR: el modelo de datos (`Shape`, `Layer`) solo suma capas
 ## Fuera de este PR
 
 Portada (seo-web `landing.tsx` + app `landing-screen.tsx`, espejo `landing-mirror.mjs`) y pasos del onboarding: van en un PR aparte cuando se resuelvan los PR #13/#14.
+
+## Segundo PR: portada (2026-11-21)
+
+Por decisión de Pablo («uno por rol»): cada bloque de «Para cada lado de la fiesta» lleva su escena (`welcomeHost`, `welcomeGuest`, `welcomeProvider`) en el sitio (`landing.tsx`, `HostArt`/`GuestArt`/`ProviderArt`) y en la app web (`landing-screen.tsx`, `Illustration` de 96 px, igual que `.roles__art` de 6rem).
+
+- `design-tokens` emite los pastel de `tones` como `--pastel-{tono}-bg/fg` (son los mismos valores que ya usa la app; ningún color nuevo). Así el sitio pinta las escenas con los mismos pastel y el mismo filete que la app; antes `.art` tomaba `--accent-muted`/`--success-bg`, que no coincidían.
+- En oscuro, la sombra de contacto del sitio es `canvas`, como en la app.
+
+| Comando | Resultado |
+|---|---|
+| `yarn typecheck` / `yarn lint:code` | exit 0 / exit 0 |
+| `@rsvp/seo-web test` | 145 passed (nueva `landing-art.test.tsx`) |
+| `@rsvp/universal test` | 457 passed (nuevo caso en `landing.test.tsx`) |
+| `@rsvp/design-tokens test` | 80 passed (el pipeline comprueba que `generated/` está al día) |
+| `landing-mirror.mjs` (app exportada en :8340 contra el sitio construido de la rama en :3100) | **15/15 PASS**, 12 combinaciones 360/768/1280 × claro/oscuro × es/en con `roleArt app=3 site=3`, axe 0 críticos/serios |
+| seo-web `playwright test` | 33 passed, 1 failed (`landing 360/1280`, por el dibujo) → `--update-snapshots`: 1 passed |
+
+Capturas: `portada-roles-{sitio,app}-{light,dark}.png`. El espejo se corrió contra el sitio construido en local, no contra el desplegado: el desplegado todavía no tiene este cambio.

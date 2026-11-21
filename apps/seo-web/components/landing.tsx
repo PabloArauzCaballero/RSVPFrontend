@@ -3,6 +3,7 @@ import { LANDING_COUNTS, LANDING_FAQ, LANDING_GIFTS, LANDING_GUEST_POINTS, LANDI
 import { appUrl } from "../lib/app-url";
 import { faqJsonLd, jsonLdScript, siteGraphJsonLd } from "../lib/json-ld";
 import { CheckMark } from "./brand/check-mark";
+import { GuestArt, HostArt, ProviderArt } from "./brand/illustrations";
 
 type Props = Readonly<{ t: Translate }>;
 
@@ -258,15 +259,18 @@ export function Landing({ t, locale }: Readonly<{ t: Translate; locale: string }
         <h2 id="roles-title">{t("landing.roles.title")}</h2>
         <div className="roles__grid">
           <div className="roles__host">
+            <HostArt className="roles__art" />
             <h3>{t("landing.roles.hostTitle")}</h3>
             <p>{t("landing.roles.hostBody")}</p>
             <a className="textlink" href={create}>{t("landing.roles.hostLink")}</a>
           </div>
           <div className="roles__guest">
+            <GuestArt className="roles__art" />
             <h3>{t("landing.roles.guestTitle")}</h3>
             <p>{t("landing.roles.guestBody")}</p>
           </div>
           <div className="roles__provider">
+            <ProviderArt className="roles__art" />
             <h3>{t("landing.roles.providerTitle")}</h3>
             <p>{t("landing.roles.providerBody")}</p>
             <p className="roles__links"><a className="textlink" href={create}>{t("landing.roles.providerLink")}</a><a className="textlink" href="/proveedores">{t("landing.roles.directoryLink")}</a></p>
