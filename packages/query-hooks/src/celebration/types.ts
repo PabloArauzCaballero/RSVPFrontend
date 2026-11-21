@@ -44,6 +44,8 @@ export interface Celebration {
   readonly templateId: string | null;
   readonly collaborators: readonly Collaborator[];
   readonly publishedAt: string | null;
+  /** D-1 (celebration 1.4.0): search engines may index the public page and the sitemap lists it. Off by default. */
+  readonly searchIndexing?: boolean;
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly access?: AccessLevel;
@@ -70,6 +72,7 @@ export interface CelebrationPatch {
   readonly currency?: string;
   readonly content?: Readonly<Record<string, unknown>>;
   readonly translations?: Readonly<Record<string, Readonly<Record<string, unknown>> | null>>;
+  readonly searchIndexing?: boolean;
 }
 
 export interface PublishCheck { readonly ready: boolean; readonly missingFields: readonly string[]; readonly status: CelebrationStatus; readonly version: number }

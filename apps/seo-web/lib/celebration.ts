@@ -13,6 +13,8 @@ export interface PublicSlug {
   readonly slug: string;
   readonly updatedAt: string;
   readonly supportedLocales: readonly string[];
+  /** D-1: the API lists only indexable celebrations; an item that says otherwise is dropped here too. */
+  readonly indexable?: boolean;
 }
 
 /** GET /celebrations/public/{slug} (read model), then its template and gallery. Unpublished → null (A21). */
@@ -36,8 +38,8 @@ async function optional<TValue>(request: Promise<TValue>): Promise<TValue | null
 
 const SITEMAP_PAGE = 100;
 
-/** Published slugs for the sitemap (GET /celebrations/public). */
+/** Published slugs the hosts made indexable, for the sitemap (GET /celebrations/public, D-1). */
 export async function loadPublicSlugs(client: ApiClient = publicClient()): Promise<readonly PublicSlug[]> {
   const page = await client.request<{ readonly items: readonly PublicSlug[] }>(`/celebrations/public?limit=${SITEMAP_PAGE}`, { auth: false });
-  return page.items;
+  return page.items.filter((item) => item.indexable !== false);
 }
