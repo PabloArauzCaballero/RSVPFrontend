@@ -99,6 +99,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/celebrations/{celebrationId}/public-page": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Whether the public page exists for the current publication decision
+         * @description Publishing commits the decision and the public page is then built from the event, so for a moment (or longer, if the event is stuck) they can disagree. Any collaborator who may read the celebration may ask. Never cached (Cache-Control: no-store).
+         */
+        get: operations["getPublicPageStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/celebrations/{celebrationId}/publish": {
         parameters: {
             query?: never;
@@ -573,6 +593,24 @@ export interface components {
             templateId?: string | null;
             timeZone?: string;
             version?: number;
+        };
+        PublicPageStatus: {
+            /** Format: uuid */
+            celebrationId: string;
+            /** @description Celebration version the public page was built from; null without page */
+            publicVersion: number | null;
+            /**
+             * @description LIVE: published and the page exists. PUBLISHING: published, page not built yet. UNPUBLISHING: withdrawn, page still served. OFFLINE: not published and no page.
+             * @enum {string}
+             */
+            state: "LIVE" | "PUBLISHING" | "UNPUBLISHING" | "OFFLINE";
+            /**
+             * @description Publication decision (write model)
+             * @enum {string}
+             */
+            status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
+            /** @description Celebration version */
+            version: number;
         };
         PublicSlug: {
             slug: string;
@@ -1307,6 +1345,47 @@ export interface operations {
             };
             /** @description If-Match required */
             428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    getPublicPageStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                celebrationId: components["parameters"]["CelebrationId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Publication decision and public page state */
+            200: {
+                headers: {
+                    "Cache-Control"?: "no-store";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicPageStatus"];
+                };
+            };
+            /** @description Missing or invalid RS256 bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found or not yours (cross-tenant access is always 404, never 403) */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
