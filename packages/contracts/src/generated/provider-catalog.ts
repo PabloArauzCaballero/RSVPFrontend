@@ -1099,6 +1099,8 @@ export interface components {
         };
         ListingSummary: {
             category?: string;
+            /** @description Destination types available through the public redirector. Returned by GET /listings/{listingId} without target URLs. */
+            destinationTypes?: components["schemas"]["Destination"][];
             /** Format: uuid */
             id: string;
             /** Format: uri */
