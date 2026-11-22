@@ -22,6 +22,7 @@ import { KYP_TONE, PartnerDetailDialog, STATUS_TONE } from "./partner-detail";
 import { PartnerWizard } from "./partner-wizard";
 import { ChangeOwnerDialog } from "./change-owner";
 import { partnerOwnerChangeEnabled } from "../../platform/partner-flags";
+import { PartnerRequestsView, usePendingRequestCount } from "./requests-view";
 
 /**
  * Partners tab (A24, DP-9..DP-13): the only place where partners are created (by an ADMIN, VERIFIED, with a complete KYP),
@@ -58,6 +59,23 @@ function ExistingWizard({ kind, partnerId, onClose, onDone, onOpenPartner }: {
       {query.error ? <AdminErrorNotice error={query.error} onRetry={() => { void query.refetch(); }} /> : <Text>{t("host.common.loading")}</Text>}
     </EditorDialog>
   );
+}
+
+/** «Partners | Solicitudes»: two tabs over the same screen, the second with the OPEN + IN_REVIEW count of the whole queue. */
+function ViewSwitch({ view, pending, onChange }: { readonly view: "partners" | "requests"; readonly pending: number | undefined; readonly onChange: (view: "partners" | "requests") => void }): ReactNode {
+  const t = useT();
+  const styles = useStyles();
+  const palette = useColors();
+  const tab = (key: "partners" | "requests", label: string, badge?: number): ReactNode => {
+    const selected = view === key;
+    return (
+      <PressFeedback key={key} accessibilityRole="tab" aria-selected={selected} accessibilityLabel={badge ? t("admin.partners.views.requestsBadge", { count: badge }) : label} onPress={() => onChange(key)} style={[styles.choice, selected && styles.choiceSelected, { flexDirection: "row", alignItems: "center", gap: spacing[2] }]} testID={`partners-view-${key}`}>
+        <Text style={[styles.body, selected && { fontWeight: "600" }]}>{label}</Text>
+        {badge ? <View aria-hidden style={{ minWidth: 22, paddingHorizontal: 6, borderRadius: 11, backgroundColor: palette.primary, alignItems: "center" }}><Text style={{ color: palette.onPrimary, fontWeight: "600", fontVariant: ["tabular-nums"] }} testID="requests-badge">{String(badge)}</Text></View> : null}
+      </PressFeedback>
+    );
+  };
+  return <View role="tablist" aria-label={t("admin.partners.views.label")} style={styles.row}>{tab("partners", t("admin.partners.views.partners"))}{tab("requests", t("admin.partners.views.requests"), pending)}</View>;
 }
 
 function Drafts({ onContinue }: { readonly onContinue: (intakeId: string) => void }): ReactNode {
@@ -149,7 +167,9 @@ function PartnersScreenContent({ onNavigate, params, onParams }: PartnersScreenP
   const categoryName = (code: string): string => categoriesQuery.data?.items.find((item) => item.code === code)?.name ?? code;
   const cityName = (code: string): string => geo.data?.items.find((city) => city.slug === code)?.name ?? code;
   const email = (id: string | null): string => (id ? people.data?.get(id)?.email ?? t("admin.partners.unknownUser") : "—");
-  const write = (next: PartnerFilters, partner = openPartner): void => onParams(paramsFromFilters(next, partner));
+  const view = params.view === "requests" ? "requests" : "partners";
+  const pending = usePendingRequestCount();
+  const write = (next: PartnerFilters, partner = openPartner): void => onParams(paramsFromFilters(next, partner, params.view));
   /** A new filter starts again on the first page; the open partner stays open. */
   const change = (patch: Partial<PartnerFilters>): void => { setNotice(null); write(Object.fromEntries(Object.entries({ ...filters, ...patch, page: undefined }).filter(([, item]) => item !== undefined)) as PartnerFilters); };
   const open = (id: string | undefined): void => write(filters, id);
@@ -201,8 +221,10 @@ function PartnersScreenContent({ onNavigate, params, onParams }: PartnersScreenP
       <PartnersHeader onCreate={() => { setNotice(null); setWizard({ kind: "create" }); }} />
       <Stack>
         <PageIntro>{t("admin.partners.intro")}</PageIntro>
-        <Drafts onContinue={(intakeId) => setWizard({ kind: "create", intakeId })} />
+        <ViewSwitch view={view} pending={pending} onChange={(next) => { setNotice(null); onParams(paramsFromFilters(next === "requests" ? {} : filters, undefined, next)); }} />
         {notice ? <Notice kind="success">{notice}</Notice> : null}
+        {view === "requests" ? <PartnerRequestsView categoryName={categoryName} cityName={cityName} onOpenIntake={(intakeId) => { setNotice(null); setWizard({ kind: "create", intakeId }); }} /> : <>
+        <Drafts onContinue={(intakeId) => setWizard({ kind: "create", intakeId })} />
         {action.isSuccess ? <Notice kind="success">{t(`admin.partners.done.${action.variables?.action === "reactivate" ? "reactivated" : "suspended"}`)}</Notice> : null}
         <AdminErrorNotice error={action.error} />
         <Filters key={filters.q ?? ""} filters={filters} onChange={change} onClear={() => write({})}
@@ -215,6 +237,7 @@ function PartnersScreenContent({ onNavigate, params, onParams }: PartnersScreenP
           {...(count ? { emptyAction: <ActionButton icon="close" variant="secondary" label={t("admin.partners.filters.clear", { count })} onPress={() => write({})} testID="empty-clear" /> } : {})}
           illustration="provider" testID="partners-table" />
         {list.data ? <Paginator page={list.data.page} pageSize={PARTNERS_PAGE_SIZE} total={list.data.total} disabled={list.isFetching} onChange={(page) => write({ ...filters, page: page || undefined })} testID="partners-pages" /> : null}
+        </>}
       </Stack>
       {changingOwner ? <ChangeOwnerDialog partnerId={changingOwner} onClose={() => setChangingOwner(null)} onDone={() => { setChangingOwner(null); setNotice(t("admin.partners.done.ownerChanged")); }} /> : null}
       {wizard?.kind === "create" ? <PartnerWizard mode={wizard.intakeId ? { kind: "create", intakeId: wizard.intakeId } : { kind: "create" }} onClose={() => setWizard(null)} onDone={done} onOpenPartner={open} /> : null}

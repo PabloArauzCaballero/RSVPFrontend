@@ -5,7 +5,7 @@ import { KYP_STATUSES, PARTNER_ORIGINS, PARTNER_SORTS, PARTNER_STATUSES, type Ci
 /** Pure model of the Partners tab: URL ⇄ filters, form ⇄ API sections, and server problems → field errors and steps. */
 
 // ---- Filters in the URL query (shareable, survive a reload).
-export const FILTER_PARAMS = ["q", "status", "kyp", "category", "city", "person", "origin", "plan", "expiring", "from", "to", "listings", "sort", "page", "partner"] as const;
+export const FILTER_PARAMS = ["q", "status", "kyp", "category", "city", "person", "origin", "plan", "expiring", "from", "to", "listings", "sort", "page", "partner", "view"] as const;
 export type FilterParam = (typeof FILTER_PARAMS)[number];
 export type UrlParams = Readonly<Partial<Record<FilterParam, string | undefined>>>;
 export const KYP_EXPIRING_DAYS = 30;
@@ -37,12 +37,13 @@ export function filtersFromParams(params: UrlParams): PartnerFilters {
 }
 
 /** Every known param, `undefined` when unset, so a router that merges params also clears the ones that were removed. */
-export function paramsFromFilters(filters: PartnerFilters, partner?: string): Record<FilterParam, string | undefined> {
+/** `view` keeps the sub-tab («Solicitudes» is `requests`; Partners, the default, is no param). */
+export function paramsFromFilters(filters: PartnerFilters, partner?: string, view?: string): Record<FilterParam, string | undefined> {
   return {
     q: filters.q || undefined, status: filters.status, kyp: filters.kypStatus, category: filters.categoryCode, city: filters.cityCode, person: filters.personType, origin: filters.origin, plan: filters.plan,
     expiring: filters.kypExpiringWithinDays ? "1" : undefined, from: filters.createdFrom, to: filters.createdTo,
     listings: filters.hasPublishedListings === undefined ? undefined : filters.hasPublishedListings ? "yes" : "no",
-    sort: filters.sort && filters.sort !== "-createdAt" ? filters.sort : undefined, page: filters.page ? String(filters.page) : undefined, partner
+    sort: filters.sort && filters.sort !== "-createdAt" ? filters.sort : undefined, page: filters.page ? String(filters.page) : undefined, partner, view: view === "requests" ? view : undefined
   };
 }
 
