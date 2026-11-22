@@ -1409,7 +1409,7 @@ export interface components {
              */
             "es-BO": string;
         };
-        /** @description Web: strict absolute HTTPS, valid unambiguous host, no credentials; PHONE exact tel:E.164; EMAIL simple mailto without query/headers; WHATSAPP exact https://wa.me/E164-digits. Unsafe escapes/controls/backslashes/executable schemes rejected. URLs are never fetched for validation. Destinations stay private until a future verified redirect capability. */
+        /** @description Web: strict absolute HTTPS, valid unambiguous host, no credentials; PHONE exact tel:E.164; EMAIL simple mailto without query/headers; WHATSAPP uses https://wa.me/E164-digits with optional trailing slash and UTF-8 encoded text query. Unsafe escapes/controls/backslashes/executable schemes rejected. URLs are never fetched for validation. Target URLs stay private and are resolved by the redirector. */
         CatalogDestinations: {
             EMAIL?: string;
             INSTAGRAM?: string;
@@ -2600,6 +2600,8 @@ export interface components {
         };
         ListingSummary: {
             category?: string;
+            /** @description Destination types available through the public redirector. Returned by GET /listings/{listingId} without target URLs. */
+            destinationTypes?: components["schemas"]["Destination"][];
             /** Format: uuid */
             id: string;
             /** Format: uri */
