@@ -1,8 +1,7 @@
-import { useEffect } from "react";
 import { router, useLocalSearchParams, type Href } from "expo-router";
 import { GuestGiftsScreen } from "../../../../../src/guest/gifts-screen";
 import { giftRoute } from "../../../../../src/guest/gift-route";
-import { saveGiftCredential } from "../../../../../src/guest/gift-credential";
+import { useGuestLinkRedirect } from "../../../../../src/guest/use-guest-link-redirect";
 
 const goTo = (path: string): void => { router.push(path as Href); };
 
@@ -16,11 +15,7 @@ export default function GuestGiftsRefRoute() {
   const safeSlug = typeof slug === "string" ? slug : "";
   const route = giftRoute(typeof ref === "string" ? ref : "");
   const credential = "token" in route ? route.token : null;
-  useEffect(() => {
-    if (!credential || !safeSlug) return;
-    saveGiftCredential(safeSlug, credential);
-    router.replace(`/c/${encodeURIComponent(safeSlug)}/regalos` as Href);
-  }, [credential, safeSlug]);
+  useGuestLinkRedirect(safeSlug, credential, credential ? "regalos" : null);
   if (credential) return null;
   return <GuestGiftsScreen slug={safeSlug} {...route} onNavigate={goTo} />;
 }
