@@ -8,6 +8,7 @@ import {
 } from "@rsvp/query-hooks";
 import { Checkbox, DatePicker, EmptyState, Logo, Select, Skeleton, fonts, useColors } from "@rsvp/ui";
 import { LanguageSwitch } from "../auth/auth-ui";
+import { PARTNER_REQUEST_ROUTE } from "../auth/routes";
 import { ActionButton, Field, useStyles } from "../host/ui";
 import { useApiClient, useLocale, useT } from "../platform/providers";
 
@@ -293,6 +294,11 @@ export function DirectoryHomeScreen({ onNavigate }: DirectoryProps): ReactNode {
               </View>
             ))}
             <Text style={s.lead}>{t("directory.trust")}</Text>
+          </View>
+          <View style={{ gap: spacing[1] }} testID="partner-cta">
+            <Text accessibilityRole="header" aria-level={2} style={s.h2}>{t("directory.partnerCta.title")}</Text>
+            <Text style={s.lead}>{t("directory.partnerCta.body")}</Text>
+            <TextLink label={t("directory.partnerCta.link")} path={PARTNER_REQUEST_ROUTE} onNavigate={onNavigate} />
           </View>
           <LanguageSwitch />
         </View>
