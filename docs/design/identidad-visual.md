@@ -41,6 +41,16 @@ Todo vive en una rejilla de **120 unidades**, con margen de 8 y trazo de **6** (
 
 **Capas** (`Layer`): `soft` bloque desplazado (+6,+6) detrás, `line` trazo, `solid` relleno, `knock`/`knockFill` el glifo dentro de un sello (color opuesto, no depende del fondo), `accent`/`accentFill` ámbar. Una pieza tiene **una idea**: una escena y, cuando cuadra, la D o el cheque. Si necesitas explicarla con texto para que se entienda, simplifícala.
 
+## 2b. Construcción en escena (vigente desde 2026-11-21; reemplaza la construcción de línea de §2 y §3)
+
+Las 32 láminas de `packages/ui/src/illustrations.ts` y las tres de `apps/seo-web/components/brand/illustrations.tsx` se dibujan como escenas pequeñas, con la misma gramática:
+
+1. **Plano:** un disco de piedra (`ground` = `primaryMuted`) y una sombra de contacto plana (`shadow` = `border` en claro, `canvas` en oscuro). Es una elipse sólida, no una sombra con desenfoque.
+2. **Figura:** el objeto relleno de tinta (`solid`), con los detalles calados en el color del fondo (`knock`, `knockFill`) y las piezas secundarias en piedra (`stone` = `fieldBorder`). La figura no lleva contorno.
+3. **Acento:** una sola pieza en el pastel del grupo (`soft`, de `ILLUSTRATION_PASTEL`), con un cheque o un signo de tinta encima cuando hace falta. Es la única luz de la lámina.
+
+Una idea por lámina. No se agrega ningún color: todo sale de los tokens de DOne. Siguen prohibidos los degradados, el desenfoque, las chispas, las personas con rostro y las ilustraciones en cada tarjeta. Las pruebas `identity.test.tsx` comprueban el orden de las capas y que la paleta sea la de los tokens.
+
 ## 3. Trazo, relleno y acento
 
 - **Trazo** 6 en ilustraciones (3 en composiciones grandes, 1.25 en el patrón). Nunca mezclar grosores dentro de una pieza salvo glifos pequeños dentro de sellos (`w` 3 a 4).

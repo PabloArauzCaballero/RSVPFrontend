@@ -45,8 +45,9 @@ button, input, select, textarea { font: inherit; }
 /* ===== Drawings (empty states only) and the check ===== */
 .art { display: block; width: 100%; height: auto; overflow: visible; --art-pastel: var(--tone-yellow-bg); }
 .art--yellow { --art-pastel: var(--tone-yellow-bg); } .art--green { --art-pastel: var(--tone-green-bg); } .art--red { --art-pastel: var(--tone-red-bg); } .art--gray { --art-pastel: var(--tone-gray-bg); }
-.art__ink { stroke: var(--text); } .art__pastel { fill: var(--art-pastel); stroke: none; } .art__bg { fill: var(--canvas); }
-.art__faint { opacity: .45; } .art__dash { stroke-dasharray: 1 8; }
+.art__ground { fill: var(--primary-muted); } .art__shadow { fill: var(--border); } .art__solid { fill: var(--text); }
+.art__ink { fill: none; stroke: var(--text); } .art__knock { fill: none; stroke: var(--canvas); } .art__knock-fill { fill: var(--canvas); }
+.art__pastel { fill: var(--art-pastel); stroke: none; }
 .check { display: inline-block; flex: none; vertical-align: middle; }
 @media (prefers-reduced-motion: no-preference) {
   .check--draw .check__stroke { stroke-dasharray: 1; stroke-dashoffset: 1; animation: check-draw .6s var(--ease-out) .3s forwards; }
