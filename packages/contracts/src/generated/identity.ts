@@ -57,10 +57,44 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Accounts, optionally filtered by an e-mail fragment */
+        /** Accounts, optionally filtered by an e-mail fragment, an exact e-mail or a list of ids */
         get: operations["adminListUsers"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/email-verification": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Sends a new verification link to the signed-in account. No-op (still 202) when the e-mail is already verified or a link was sent less than 60 seconds ago. */
+        post: operations["resendEmailVerification"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/email-verification/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Consumes the single-use link of the verification e-mail (24 hours) and marks the account's e-mail verified. Unknown, used or expired links answer 422 on `token`. */
+        post: operations["confirmEmailVerification"];
         delete?: never;
         options?: never;
         head?: never;
@@ -99,6 +133,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/logout-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Ends every refresh-token chain of the caller (all devices). Access tokens already issued expire on their own (15 minutes). */
+        post: operations["logoutEverywhere"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Signed-in password change. A wrong current password answers 422 on currentPassword. Every other session of the account ends; the response is a new session for this device (same transport rules as login). */
+        post: operations["changePassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/password-recovery": {
         parameters: {
             query?: never;
@@ -108,7 +176,25 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** @description Always 202 for a well-formed address. For an existing account, stores the SHA-256 of a single-use token valid 30 minutes (any earlier unused link stops working) and records the e-mail request for Notification. A second request within 60 seconds sends nothing new. `Accept-Language` picks the e-mail language (en-US or es-BO). */
         post: operations["requestPasswordRecovery"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/password-reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Consumes the single-use link of a password-recovery e-mail, sets the new password, marks the e-mail verified and revokes every refresh-token chain of the account (signs it out everywhere). Unknown, used or expired links answer 422 on `token`; a weak password answers 422 on `newPassword` without consuming the link. */
+        post: operations["resetPassword"];
         delete?: never;
         options?: never;
         head?: never;
@@ -157,6 +243,23 @@ export interface paths {
         get: operations["identityHealth"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/oauth/token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description client_credentials only. Internal callers use http://identity-service:8080/oauth/token. */
+        post: operations["issueServiceToken"];
         delete?: never;
         options?: never;
         head?: never;
@@ -215,6 +318,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/organizations/{id}/members/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** @description The owner or an ADMIN removes a member; a member removes themselves (leaves). The owner cannot be removed (409). Not visible or not a member: 404. */
+        delete: operations["removeOrganizationMember"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/users": {
         parameters: {
             query?: never;
@@ -243,7 +363,11 @@ export interface paths {
         get: operations["getUser"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Delete an account (ADMIN only; A22, D-5)
+         * @description Same effect as DELETE /users/me for another account. 409 for one's own account (use DELETE /users/me) or the last ADMIN.
+         */
+        delete: operations["deleteUser"];
         options?: never;
         head?: never;
         patch?: never;
@@ -260,7 +384,46 @@ export interface paths {
         /** Grant a platform role, idempotent (ADMIN only). The first ADMIN comes from the operator command IDENTITY_BOOTSTRAP_ADMIN_EMAIL */
         put: operations["grantUserRole"];
         post?: never;
-        delete?: never;
+        /** Revoke a platform role (ADMIN only). Idempotent; 409 for the account's last role or the platform's last ADMIN. Ends the account's sessions. */
+        delete: operations["revokeUserRole"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/{id}/suspension": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** @description ADMIN only. Sign-in answers 403 account-suspended and refresh 401; every session ends at once. 409 on one's own account. */
+        put: operations["suspendUser"];
+        post?: never;
+        /** @description ADMIN only. Lifts the suspension. */
+        delete: operations["reactivateUser"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete my account (A22, D-5)
+         * @description Deletes the signed-in account for real, confirming with the password: roles, single-use tokens, memberships and the organizations it owns are removed, every session ends and identity.user.deleted.v1 is published through the outbox so every service purges its copies. 409 for the last ADMIN.
+         */
+        delete: operations["deleteOwnAccount"];
         options?: never;
         head?: never;
         patch?: never;
@@ -270,17 +433,27 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        /** @description Payload of accessToken, consumed by every service. */
+        /** @description Payload of accessToken, consumed by every service. Organization-scoped authority comes only from `memberships`. */
         AccessTokenClaims: {
+            /** @description Since 1.3.0. Whether the account proved it owns its e-mail. */
+            email_verified?: boolean;
             exp: number;
             iat: number;
             iss: string;
             /** Format: uuid */
             jti?: string;
+            /** @description Since 1.2.0. The role of the subject in each organization it belongs to. A role here applies only to its organization. */
+            memberships?: components["schemas"]["OrganizationMembershipClaim"][];
+            /** @description Organizations the subject belongs to in any role (derived from `memberships`). Visibility only: never a source of authority. */
             organizationIds: string[];
+            /** @description Platform roles of the account. Never contains roles held in an organization (see `memberships`). */
             roles: ("ADMIN" | "HOST" | "PLANNER" | "PROVIDER")[];
             /** Format: uuid */
             sub: string;
+        };
+        AccountDeletionRequest: {
+            /** @description The current password, to confirm the deletion. */
+            password: string;
         };
         AddMemberRequest: {
             /** Format: email */
@@ -328,8 +501,20 @@ export interface components {
             size: number;
             total: number;
         };
+        /** @description Form (application/x-www-form-urlencoded) per RFC 6749; JSON is also accepted, with snake_case or camelCase names (grantType, clientId, clientSecret). Client credentials go preferably in HTTP Basic. */
+        ClientCredentialsRequest: {
+            client_id?: string;
+            client_secret?: string;
+            /** @constant */
+            grant_type: "client_credentials";
+            /** @description Space separated. A token is for one audience, selected by its scopes: scopes of two audiences in one request give invalid_scope. Without scope, a client with a single audience gets all its scopes and a client with several (notification-service: provider-catalog-service and guest-rsvp-service) gets invalid_scope. */
+            scope?: string;
+        };
         CreateOrganizationRequest: {
             name: string;
+        };
+        EmailVerificationConfirmRequest: {
+            token: string;
         };
         Jwks: {
             keys: {
@@ -352,6 +537,10 @@ export interface components {
         LogoutRequest: {
             refreshToken: string;
         };
+        OAuthError: {
+            /** @enum {string} */
+            error: "invalid_request" | "invalid_client" | "unsupported_grant_type" | "invalid_scope";
+        };
         Organization: {
             /** Format: uuid */
             id: string;
@@ -371,6 +560,12 @@ export interface components {
             /** Format: uuid */
             userId: string;
         };
+        OrganizationMembershipClaim: {
+            /** Format: uuid */
+            organizationId: string;
+            /** @enum {string} */
+            role: "HOST" | "PLANNER";
+        };
         OrganizationSummary: {
             /** Format: uuid */
             id: string;
@@ -378,9 +573,18 @@ export interface components {
             /** Format: uuid */
             ownerUserId: string;
         };
+        PasswordChangeRequest: {
+            currentPassword: string;
+            newPassword: string;
+        };
         PasswordRecoveryRequest: {
             /** Format: email */
             email: string;
+        };
+        PasswordResetRequest: {
+            newPassword: string;
+            /** @description The `token` query parameter of the e-mail link. */
+            token: string;
         };
         Problem: {
             /** Format: uuid */
@@ -407,16 +611,29 @@ export interface components {
              * @enum {string}
              */
             role: "HOST" | "PLANNER" | "PROVIDER";
+            /** @description B6: version of the terms and privacy policy the person accepted (for example 2026-11-21-borrador). Optional for clients released before 1.6.0. */
+            termsVersion?: string;
         };
         Registration: components["schemas"]["Session"] & {
             /** Format: email */
             email: string;
+            /** @description Since 1.3.0. Always false right after sign-up: a verification e-mail is on its way. */
+            emailVerified?: boolean;
             /** Format: uuid */
             id: string;
             roles: ("HOST" | "PLANNER" | "PROVIDER")[];
         };
+        ServiceTokenResponse: {
+            /** @description RS256 JWT. Claims: iss, sub (client id), client_id, aud, scope, roles [SERVICE], iat, exp, jti. */
+            access_token: string;
+            /** @constant */
+            expires_in: 300;
+            scope: string;
+            /** @constant */
+            token_type: "Bearer";
+        };
         Session: {
-            /** @description RS256 JWT. Claims: iss, sub, roles[], organizationIds[], iat, exp, jti. */
+            /** @description RS256 JWT. Claims: iss, sub, roles[] (platform roles), organizationIds[], memberships[] ({organizationId, role}), iat, exp, jti. */
             accessToken: string;
             /** @constant */
             expiresIn: 900;
@@ -432,6 +649,11 @@ export interface components {
             /** Format: uuid */
             id: string;
             roles: ("ADMIN" | "HOST" | "PLANNER" | "PROVIDER")[];
+            /**
+             * @description Since 1.5.0.
+             * @enum {string}
+             */
+            status?: "ACTIVE" | "SUSPENDED";
         };
         UserPage: {
             items: components["schemas"]["User"][];
@@ -488,6 +710,8 @@ export interface components {
         };
     };
     parameters: {
+        /** @description Language of the account e-mail: en-US when it starts with `en`, es-BO otherwise. */
+        AcceptLanguage: string;
         /** @description `cookie` (web): the refresh token travels only in the `rsvp_refresh` cookie (HttpOnly, Secure, SameSite=Strict, Path=/identity/auth, 30 days) and is omitted from bodies. Absent (mobile): the refresh token is in the body. The custom header forces a CORS preflight, which with SameSite=Strict is the CSRF defence. */
         SessionTransport: "cookie";
     };
@@ -566,6 +790,10 @@ export interface operations {
     adminListUsers: {
         parameters: {
             query?: {
+                /** @description Exact e-mail, case-insensitive (1.2.0). Not combinable with query or ids. */
+                email?: string;
+                /** @description Comma-separated user ids, at most 100 (1.2.0). Unknown ids are skipped; items keep creation order. Not combinable with query or email. */
+                ids?: string;
                 /** @description Zero-based page */
                 page?: number;
                 /** @description Case-insensitive e-mail fragment, up to 120 characters */
@@ -590,6 +818,51 @@ export interface operations {
             };
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
+            422: components["responses"]["Validation"];
+        };
+    };
+    resendEmailVerification: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Language of the account e-mail: en-US when it starts with `en`, es-BO otherwise. */
+                "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Accepted. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    confirmEmailVerification: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmailVerificationConfirmRequest"];
+            };
+        };
+        responses: {
+            /** @description E-mail verified. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             422: components["responses"]["Validation"];
         };
     };
@@ -621,6 +894,15 @@ export interface operations {
                 };
             };
             401: components["responses"]["Unauthorized"];
+            /** @description The credentials are right but the account is suspended (problem type account-suspended). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
             422: components["responses"]["Validation"];
         };
     };
@@ -653,10 +935,66 @@ export interface operations {
             422: components["responses"]["Validation"];
         };
     };
+    logoutEverywhere: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `cookie` (web): the refresh token travels only in the `rsvp_refresh` cookie (HttpOnly, Secure, SameSite=Strict, Path=/identity/auth, 30 days) and is omitted from bodies. Absent (mobile): the refresh token is in the body. The custom header forces a CORS preflight, which with SameSite=Strict is the CSRF defence. */
+                "X-Session-Transport"?: components["parameters"]["SessionTransport"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Signed out everywhere; the cookie is cleared with cookie transport. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    changePassword: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `cookie` (web): the refresh token travels only in the `rsvp_refresh` cookie (HttpOnly, Secure, SameSite=Strict, Path=/identity/auth, 30 days) and is omitted from bodies. Absent (mobile): the refresh token is in the body. The custom header forces a CORS preflight, which with SameSite=Strict is the CSRF defence. */
+                "X-Session-Transport"?: components["parameters"]["SessionTransport"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordChangeRequest"];
+            };
+        };
+        responses: {
+            /** @description Session */
+            200: {
+                headers: {
+                    /** @description `rsvp_refresh` cookie when `X-Session-Transport: cookie` is sent; cleared (Max-Age=0) on logout. */
+                    "Set-Cookie"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Session"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            422: components["responses"]["Validation"];
+        };
+    };
     requestPasswordRecovery: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Language of the account e-mail: en-US when it starts with `en`, es-BO otherwise. */
+                "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -669,6 +1007,34 @@ export interface operations {
             /** @description Accepted. This response is identical whether or not the account exists. */
             202: {
                 headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            422: components["responses"]["Validation"];
+        };
+    };
+    resetPassword: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `cookie` (web): the refresh token travels only in the `rsvp_refresh` cookie (HttpOnly, Secure, SameSite=Strict, Path=/identity/auth, 30 days) and is omitted from bodies. Absent (mobile): the refresh token is in the body. The custom header forces a CORS preflight, which with SameSite=Strict is the CSRF defence. */
+                "X-Session-Transport"?: components["parameters"]["SessionTransport"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordResetRequest"];
+            };
+        };
+        responses: {
+            /** @description Password changed; every session ended. */
+            204: {
+                headers: {
+                    /** @description Cleared `rsvp_refresh` cookie (Max-Age=0) when `X-Session-Transport: cookie` is sent. */
+                    "Set-Cookie"?: string;
                     [name: string]: unknown;
                 };
                 content?: never;
@@ -713,6 +1079,8 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
+                /** @description Language of the account e-mail: en-US when it starts with `en`, es-BO otherwise. */
+                "Accept-Language"?: components["parameters"]["AcceptLanguage"];
                 /** @description `cookie` (web): the refresh token travels only in the `rsvp_refresh` cookie (HttpOnly, Secure, SameSite=Strict, Path=/identity/auth, 30 days) and is omitted from bodies. Absent (mobile): the refresh token is in the body. The custom header forces a CORS preflight, which with SameSite=Strict is the CSRF defence. */
                 "X-Session-Transport"?: components["parameters"]["SessionTransport"];
             };
@@ -755,6 +1123,51 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    issueServiceToken: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClientCredentialsRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ClientCredentialsRequest"];
+            };
+        };
+        responses: {
+            /** @description Service token. */
+            200: {
+                headers: {
+                    "Cache-Control"?: "no-store";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceTokenResponse"];
+                };
+            };
+            /** @description unsupported_grant_type, invalid_scope or invalid_request. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OAuthError"];
+                };
+            };
+            /** @description invalid_client (unknown client or wrong secret; indistinguishable). */
+            401: {
+                headers: {
+                    "WWW-Authenticate"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OAuthError"];
+                };
             };
         };
     };
@@ -864,6 +1277,31 @@ export interface operations {
             422: components["responses"]["Validation"];
         };
     };
+    removeOrganizationMember: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Removed. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
     listUsers: {
         parameters: {
             query?: {
@@ -915,6 +1353,30 @@ export interface operations {
             404: components["responses"]["NotFound"];
         };
     };
+    deleteUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
     grantUserRole: {
         parameters: {
             query?: never;
@@ -939,6 +1401,110 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
+            422: components["responses"]["Validation"];
+        };
+    };
+    revokeUserRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                role: "ADMIN" | "HOST" | "PLANNER" | "PROVIDER";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The user */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["Validation"];
+        };
+    };
+    suspendUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The user */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    reactivateUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The user */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    deleteOwnAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccountDeletionRequest"];
+            };
+        };
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            409: components["responses"]["Conflict"];
             422: components["responses"]["Validation"];
         };
     };
