@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "RSVP Identity API",
-    "version": "1.7.0",
-    "description": "1.7.0 (additive, A24; PR #42): GET /admin/users also accepts email (exact, case-insensitive match, to link the owner of a partner) and ids (comma-separated user ids, at most 100, to show the owners of a page of partners). Only one of query, email or ids per call (422 otherwise). Still ADMIN only (MANAGE_PLATFORM) and audited as users.list with the kind of filter, never its value. 1.6.0 (additive, B6/A22): POST /auth/register accepts an optional termsVersion (the version of the terms and privacy policy the person accepted; stored with the server time). DELETE /users/me (the account owner, confirming with the password) and DELETE /users/{id} (ADMIN) delete the account for real: roles, tokens, memberships and the organizations it owns go with it, every session ends and identity.user.deleted.v1 (AsyncAPI 1.13.0) tells the other services to purge their copies. The last ADMIN cannot be deleted. 1.5.0 (additive, A21): POST /auth/password (signed-in change; ends other sessions, returns a new one), POST /auth/logout-all, PUT/DELETE /users/{id}/suspension (ADMIN; a suspended account gets 403 account-suspended on sign-in and 401 on refresh), DELETE /users/{id}/roles/{role} (ADMIN; never the last role or the last ADMIN; ends the account's sessions) and DELETE /organizations/{id}/members/{userId} (owner or ADMIN removes, a member leaves). User and AdminUser carry status ACTIVE|SUSPENDED. 1.4.0 (additive, B10): POST /oauth/token (OAuth 2.0 client_credentials, RFC 6749 §4.4) for internal services. Each client holds (audience, scope) pairs; notification-service may obtain provider:notification-profile:read (aud provider-catalog-service) and guest:notification-profile:read (aud guest-rsvp-service), one audience per token. Clients and the audience/scopes each may obtain are declared in Identity; secrets are configured as SHA-256 in IDENTITY_SERVICE_CLIENTS. The token carries roles [SERVICE], aud, scope and client_id and lives 5 minutes; it is never issued to a person. 1.3.0 (additive, B4): real password recovery and e-mail verification. POST /auth/password-recovery now stores a single-use token (30 minutes, hash only) and asks Notification to send the link (event identity.user.password-reset-requested.v1); POST /auth/password-reset consumes it, sets the new password and ends every session; sign-up sends a 24-hour verification link (identity.user.email-verification-requested.v1), confirmed with POST /auth/email-verification/confirm and re-sent with POST /auth/email-verification. Registration and the access token expose whether the e-mail is verified (`emailVerified`, claim `email_verified`). 1.2.0 (additive, B9): the access token carries `memberships` [{organizationId, role}], the role of the subject IN each organization. `roles` now lists only the platform roles of the account (membership roles are no longer merged into it); `organizationIds` stays, derived from `memberships`, for visibility only. Consumers decide organization-scoped authority from `memberships` and must treat a token without it (minted by Identity < 1.2.0) as granting no organization management. 1.1.0 (additive, ADMIN only): GET /admin/users?query=&page=&size=, GET /admin/organizations and GET /admin/summary (served by Kong at /identity/admin/*). Reads of the user list and role grants are audited (actor, action, time; never the search text). Account status is always ACTIVE: suspension of accounts does not exist yet."
+    "version": "2.0.0",
+    "description": "2.0.0 (BREAKING, IDENTIDAD-SEG-003): joining an organization takes the invitee's consent. POST /organizations/{id}/members (addOrganizationMember) is retired: it revealed which e-mails have an account (422 vs 201 with the userId) and created the membership without the person's consent. Instead the owner or an ADMIN invites an e-mail with POST /organizations/{id}/invitations, which answers 202 with the same body whether or not the address has an account; Identity e-mails a 7-day single-use link (identity.organization.invitation-requested.v1, IDENTITY_PUBLIC_APP_URL + /invitaciones?invitacion={id}&token=...). Only the invitee creates the membership, with POST /invitations/{id}/accept, or refuses it with POST /invitations/{id}/decline; GET /invitations lists the open invitations of the signed-in account (only when its e-mail is verified; otherwise the link token is the proof). The owner lists open invitations (GET /organizations/{id}/invitations) and revokes them (DELETE /organizations/{id}/invitations/{invitationId}). Every step is audited. Consumers of addOrganizationMember (the frontend organizations screen) must switch to invitations. 1.7.0 (additive, A24; PR #42): GET /admin/users also accepts email (exact, case-insensitive match, to link the owner of a partner) and ids (comma-separated user ids, at most 100, to show the owners of a page of partners). Only one of query, email or ids per call (422 otherwise). Still ADMIN only (MANAGE_PLATFORM) and audited as users.list with the kind of filter, never its value. 1.6.0 (additive, B6/A22): POST /auth/register accepts an optional termsVersion (the version of the terms and privacy policy the person accepted; stored with the server time). DELETE /users/me (the account owner, confirming with the password) and DELETE /users/{id} (ADMIN) delete the account for real: roles, tokens, memberships and the organizations it owns go with it, every session ends and identity.user.deleted.v1 (AsyncAPI 1.13.0) tells the other services to purge their copies. The last ADMIN cannot be deleted. 1.5.0 (additive, A21): POST /auth/password (signed-in change; ends other sessions, returns a new one), POST /auth/logout-all, PUT/DELETE /users/{id}/suspension (ADMIN; a suspended account gets 403 account-suspended on sign-in and 401 on refresh), DELETE /users/{id}/roles/{role} (ADMIN; never the last role or the last ADMIN; ends the account's sessions) and DELETE /organizations/{id}/members/{userId} (owner or ADMIN removes, a member leaves). User and AdminUser carry status ACTIVE|SUSPENDED. 1.4.0 (additive, B10): POST /oauth/token (OAuth 2.0 client_credentials, RFC 6749 §4.4) for internal services. Each client holds (audience, scope) pairs; notification-service may obtain provider:notification-profile:read (aud provider-catalog-service) and guest:notification-profile:read (aud guest-rsvp-service), one audience per token. Clients and the audience/scopes each may obtain are declared in Identity; secrets are configured as SHA-256 in IDENTITY_SERVICE_CLIENTS. The token carries roles [SERVICE], aud, scope and client_id and lives 5 minutes; it is never issued to a person. 1.3.0 (additive, B4): real password recovery and e-mail verification. POST /auth/password-recovery now stores a single-use token (30 minutes, hash only) and asks Notification to send the link (event identity.user.password-reset-requested.v1); POST /auth/password-reset consumes it, sets the new password and ends every session; sign-up sends a 24-hour verification link (identity.user.email-verification-requested.v1), confirmed with POST /auth/email-verification/confirm and re-sent with POST /auth/email-verification. Registration and the access token expose whether the e-mail is verified (`emailVerified`, claim `email_verified`). 1.2.0 (additive, B9): the access token carries `memberships` [{organizationId, role}], the role of the subject IN each organization. `roles` now lists only the platform roles of the account (membership roles are no longer merged into it); `organizationIds` stays, derived from `memberships`, for visibility only. Consumers decide organization-scoped authority from `memberships` and must treat a token without it (minted by Identity < 1.2.0) as granting no organization management. 1.1.0 (additive, ADMIN only): GET /admin/users?query=&page=&size=, GET /admin/organizations and GET /admin/summary (served by Kong at /identity/admin/*). Reads of the user list and role grants are audited (actor, action, time; never the search text). Account status is always ACTIVE: suspension of accounts does not exist yet."
   },
   "servers": [
     {
@@ -377,65 +377,6 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
-          }
-        }
-      }
-    },
-    "/organizations/{id}/members": {
-      "post": {
-        "operationId": "addOrganizationMember",
-        "summary": "Add an existing account as HOST or PLANNER member (owner or ADMIN). The member's next access token lists the organization.",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AddMemberRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Member added",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OrganizationMember"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          },
-          "409": {
-            "$ref": "#/components/responses/Conflict"
-          },
-          "422": {
-            "$ref": "#/components/responses/Validation"
           }
         }
       }
@@ -1255,6 +1196,286 @@
           }
         }
       }
+    },
+    "/organizations/{id}/invitations": {
+      "post": {
+        "operationId": "createOrganizationInvitation",
+        "summary": "Invite an e-mail as HOST or PLANNER member (owner or ADMIN).",
+        "description": "202 with the same body whether or not the address has an account. Nothing is created in the organization until the invitee accepts. Inviting the same address again within 60 seconds with the same role returns the open invitation and sends nothing new; otherwise a new invitation replaces the open one (only the latest link works). 409: the address already belongs to a member, or the organization has 50 open invitations. Not a member: 404; a member who is not the owner: 403.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvitationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Invitation recorded; the e-mail is on its way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationInvitation"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          }
+        }
+      },
+      "get": {
+        "operationId": "listOrganizationInvitations",
+        "summary": "Open invitations of the organization (owner or ADMIN).",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Open invitations, newest first.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationInvitationList"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/organizations/{id}/invitations/{invitationId}": {
+      "delete": {
+        "operationId": "revokeOrganizationInvitation",
+        "summary": "Revoke an open invitation (owner or ADMIN). Its link stops working.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "invitationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Revoked."
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/invitations": {
+      "get": {
+        "operationId": "listMyInvitations",
+        "summary": "Open invitations addressed to the signed-in account's e-mail.",
+        "description": "Listed only when the account's e-mail is verified (emailVerified true); an unverified account answers from the e-mail link.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Open invitations, newest first.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceivedInvitationList"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/invitations/{id}/accept": {
+      "post": {
+        "operationId": "acceptInvitation",
+        "summary": "Accept an invitation: creates the membership (its next access token lists the organization).",
+        "description": "404 when the invitation does not exist, is not addressed to the caller's e-mail, or is no longer open (answered, revoked, expired). 403 when the account's e-mail is not verified and token is missing or wrong. 409 when the caller already belongs to the organization. Of two simultaneous answers only one succeeds.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvitationAnswer"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Joined.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationMembership"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/invitations/{id}/decline": {
+      "post": {
+        "operationId": "declineInvitation",
+        "summary": "Decline an invitation. Final: the link stops working.",
+        "description": "Same 403/404 rules as acceptInvitation.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvitationAnswer"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Declined."
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1574,26 +1795,6 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 120
-          }
-        }
-      },
-      "AddMemberRequest": {
-        "type": "object",
-        "required": [
-          "email",
-          "role"
-        ],
-        "properties": {
-          "email": {
-            "type": "string",
-            "format": "email"
-          },
-          "role": {
-            "type": "string",
-            "enum": [
-              "HOST",
-              "PLANNER"
-            ]
           }
         }
       },
@@ -2030,6 +2231,185 @@
             "type": "string",
             "maxLength": 128,
             "description": "The current password, to confirm the deletion."
+          }
+        }
+      },
+      "InvitationRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "email",
+          "role"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 320
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "HOST",
+              "PLANNER"
+            ],
+            "description": "Role IN this organization (memberships claim). Never a platform role."
+          }
+        }
+      },
+      "OrganizationInvitation": {
+        "type": "object",
+        "required": [
+          "id",
+          "organizationId",
+          "email",
+          "role",
+          "status",
+          "expiresAt",
+          "createdAt"
+        ],
+        "description": "An open invitation as its organization's owner sees it. Identical in shape whether or not the address has an account; never carries a user id.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "organizationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Normalized (trimmed, lower-case). Kept only while the invitation is open."
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "HOST",
+              "PLANNER"
+            ],
+            "description": "Role IN this organization (memberships claim). Never a platform role."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING"
+            ]
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "7 days after createdAt."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "OrganizationInvitationList": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrganizationInvitation"
+            }
+          }
+        }
+      },
+      "ReceivedInvitation": {
+        "type": "object",
+        "required": [
+          "id",
+          "organizationId",
+          "organizationName",
+          "role",
+          "expiresAt",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "organizationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "organizationName": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "HOST",
+              "PLANNER"
+            ],
+            "description": "Role IN this organization (memberships claim). Never a platform role."
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ReceivedInvitationList": {
+        "type": "object",
+        "required": [
+          "emailVerified",
+          "items"
+        ],
+        "properties": {
+          "emailVerified": {
+            "type": "boolean",
+            "description": "false: the account has not proven its e-mail, so items is empty; the invitee answers from the e-mail link (token)."
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReceivedInvitation"
+            }
+          }
+        }
+      },
+      "InvitationAnswer": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "token": {
+            "type": "string",
+            "maxLength": 128,
+            "description": "The token of the e-mail link. Required while the account's e-mail is not verified; ignored otherwise."
+          }
+        }
+      },
+      "InvitationMembership": {
+        "type": "object",
+        "required": [
+          "organizationId",
+          "role"
+        ],
+        "properties": {
+          "organizationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "HOST",
+              "PLANNER"
+            ],
+            "description": "Role IN this organization (memberships claim). Never a platform role."
           }
         }
       }

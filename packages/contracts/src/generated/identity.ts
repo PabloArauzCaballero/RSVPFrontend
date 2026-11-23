@@ -249,6 +249,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/invitations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Open invitations addressed to the signed-in account's e-mail.
+         * @description Listed only when the account's e-mail is verified (emailVerified true); an unverified account answers from the e-mail link.
+         */
+        get: operations["listMyInvitations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/invitations/{id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accept an invitation: creates the membership (its next access token lists the organization).
+         * @description 404 when the invitation does not exist, is not addressed to the caller's e-mail, or is no longer open (answered, revoked, expired). 403 when the account's e-mail is not verified and token is missing or wrong. 409 when the caller already belongs to the organization. Of two simultaneous answers only one succeeds.
+         */
+        post: operations["acceptInvitation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/invitations/{id}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Decline an invitation. Final: the link stops working.
+         * @description Same 403/404 rules as acceptInvitation.
+         */
+        post: operations["declineInvitation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/oauth/token": {
         parameters: {
             query?: never;
@@ -301,7 +361,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/organizations/{id}/members": {
+    "/organizations/{id}/invitations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Open invitations of the organization (owner or ADMIN). */
+        get: operations["listOrganizationInvitations"];
+        put?: never;
+        /**
+         * Invite an e-mail as HOST or PLANNER member (owner or ADMIN).
+         * @description 202 with the same body whether or not the address has an account. Nothing is created in the organization until the invitee accepts. Inviting the same address again within 60 seconds with the same role returns the open invitation and sends nothing new; otherwise a new invitation replaces the open one (only the latest link works). 409: the address already belongs to a member, or the organization has 50 open invitations. Not a member: 404; a member who is not the owner: 403.
+         */
+        post: operations["createOrganizationInvitation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/organizations/{id}/invitations/{invitationId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -310,9 +391,9 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Add an existing account as HOST or PLANNER member (owner or ADMIN). The member's next access token lists the organization. */
-        post: operations["addOrganizationMember"];
-        delete?: never;
+        post?: never;
+        /** Revoke an open invitation (owner or ADMIN). Its link stops working. */
+        delete: operations["revokeOrganizationInvitation"];
         options?: never;
         head?: never;
         patch?: never;
@@ -455,12 +536,6 @@ export interface components {
             /** @description The current password, to confirm the deletion. */
             password: string;
         };
-        AddMemberRequest: {
-            /** Format: email */
-            email: string;
-            /** @enum {string} */
-            role: "HOST" | "PLANNER";
-        };
         AdminOrganization: {
             /** Format: uuid */
             id: string;
@@ -516,6 +591,28 @@ export interface components {
         EmailVerificationConfirmRequest: {
             token: string;
         };
+        InvitationAnswer: {
+            /** @description The token of the e-mail link. Required while the account's e-mail is not verified; ignored otherwise. */
+            token?: string;
+        };
+        InvitationMembership: {
+            /** Format: uuid */
+            organizationId: string;
+            /**
+             * @description Role IN this organization (memberships claim). Never a platform role.
+             * @enum {string}
+             */
+            role: "HOST" | "PLANNER";
+        };
+        InvitationRequest: {
+            /** Format: email */
+            email: string;
+            /**
+             * @description Role IN this organization (memberships claim). Never a platform role.
+             * @enum {string}
+             */
+            role: "HOST" | "PLANNER";
+        };
         Jwks: {
             keys: {
                 /** @constant */
@@ -548,6 +645,35 @@ export interface components {
             name: string;
             /** Format: uuid */
             ownerUserId: string;
+        };
+        /** @description An open invitation as its organization's owner sees it. Identical in shape whether or not the address has an account; never carries a user id. */
+        OrganizationInvitation: {
+            /** Format: date-time */
+            createdAt: string;
+            /**
+             * Format: email
+             * @description Normalized (trimmed, lower-case). Kept only while the invitation is open.
+             */
+            email: string;
+            /**
+             * Format: date-time
+             * @description 7 days after createdAt.
+             */
+            expiresAt: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            organizationId: string;
+            /**
+             * @description Role IN this organization (memberships claim). Never a platform role.
+             * @enum {string}
+             */
+            role: "HOST" | "PLANNER";
+            /** @enum {string} */
+            status: "PENDING";
+        };
+        OrganizationInvitationList: {
+            items: components["schemas"]["OrganizationInvitation"][];
         };
         OrganizationMember: {
             /**
@@ -596,6 +722,27 @@ export interface components {
             status: number;
             title: string;
             type: string;
+        };
+        ReceivedInvitation: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            expiresAt: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            organizationId: string;
+            organizationName: string;
+            /**
+             * @description Role IN this organization (memberships claim). Never a platform role.
+             * @enum {string}
+             */
+            role: "HOST" | "PLANNER";
+        };
+        ReceivedInvitationList: {
+            /** @description false: the account has not proven its e-mail, so items is empty; the invitee answers from the e-mail link (token). */
+            emailVerified: boolean;
+            items: components["schemas"]["ReceivedInvitation"][];
         };
         RefreshRequest: {
             refreshToken: string;
@@ -1126,6 +1273,84 @@ export interface operations {
             };
         };
     };
+    listMyInvitations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Open invitations, newest first. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceivedInvitationList"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    acceptInvitation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["InvitationAnswer"];
+            };
+        };
+        responses: {
+            /** @description Joined. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvitationMembership"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    declineInvitation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["InvitationAnswer"];
+            };
+        };
+        responses: {
+            /** @description Declined. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
     issueServiceToken: {
         parameters: {
             query?: never;
@@ -1246,7 +1471,7 @@ export interface operations {
             404: components["responses"]["NotFound"];
         };
     };
-    addOrganizationMember: {
+    listOrganizationInvitations: {
         parameters: {
             query?: never;
             header?: never;
@@ -1255,19 +1480,47 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AddMemberRequest"];
-            };
-        };
+        requestBody?: never;
         responses: {
-            /** @description Member added */
-            201: {
+            /** @description Open invitations, newest first. */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["OrganizationMember"];
+                    "application/json": components["schemas"]["OrganizationInvitationList"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    createOrganizationInvitation: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Language of the account e-mail: en-US when it starts with `en`, es-BO otherwise. */
+                "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InvitationRequest"];
+            };
+        };
+        responses: {
+            /** @description Invitation recorded; the e-mail is on its way. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrganizationInvitation"];
                 };
             };
             401: components["responses"]["Unauthorized"];
@@ -1275,6 +1528,30 @@ export interface operations {
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
             422: components["responses"]["Validation"];
+        };
+    };
+    revokeOrganizationInvitation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                invitationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Revoked. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
         };
     };
     removeOrganizationMember: {
