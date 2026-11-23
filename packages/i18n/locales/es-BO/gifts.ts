@@ -1,45 +1,18 @@
 /** Lista de regalos pública (F22) y gestión del anfitrión (F23). */
 export const giftsEsBO = {
   meta: { title: "Regalos · {{name}}", description: "Elige un regalo para {{name}}. Los productos de nuestros aliados aparecen primero." },
-  title: "Lista de regalos",
-  intro: "Elige qué regalar. Reservar un regalo evita que otra persona regale lo mismo.",
-  backToRsvp: "Volver a mi respuesta",
   back: "Volver a la celebración",
-  loading: "Cargando los regalos…",
   filters: { label: "Filtrar regalos", maxPrice: "Precio máximo", source: "Origen", sourceAll: "Todos", sourcePartner: "De nuestros aliados", sourceOther: "Otras tiendas", onlyAvailable: "Solo disponibles", clear: "Quitar filtros", count_one: "{{count}} regalo", count_other: "{{count}} regalos" },
-  group: { partner: "Productos de nuestros aliados", other: "Otras ideas de los anfitriones" },
-  status: { AVAILABLE: "Disponible", PENDING_REVIEW: "Pendiente de aprobación", COMMITTED: "Ya reservado" },
-  price: "Precio",
-  card: { photo: "Foto de {{title}}", reservedBy: "Reservado por {{name}}", open: "Ver detalle de {{title}}", reserve: "Reservar", reserveFor: "Reservar {{title}}", viaPartner: "Ver en la tienda del aliado", viaWhatsApp: "Consultar por WhatsApp", viaOther: "Ver en la tienda" },
+  card: { photo: "Foto de {{title}}", open: "Ver detalle de {{title}}", viaWhatsApp: "Consultar por WhatsApp", viaOther: "Ver en la tienda" },
   detail: { title: "{{title}} · Regalos", back: "Volver a la lista", notFound: "Este regalo ya no está en la lista.", notFoundBody: "Puede que los anfitriones lo hayan quitado. La lista completa sigue abierta para ti.", partnerNote: "Este producto lo ofrece un aliado de DOne. Al abrir el enlace saldrás de DOne." },
-  reserve: { title: "Reservar este regalo", intro: "Te pedimos tu nombre para que los anfitriones sepan quién regala.", name: "Tu nombre", nameHelp: "Opcional. Los anfitriones verán este nombre junto a tu reserva.", message: "Mensaje para los anfitriones", messageHelp: "Opcional, hasta 500 caracteres.", submit: "Reservar regalo", submitting: "Reservando…", cancel: "Cancelar", close: "Cerrar" },
-  /** D-3 · el invitado cancela su propia reserva (web pública). */
-  mine: { label: "Tu reserva", pendingLabel: "Tu reserva, esperando aprobación", cancel: "Cancelar mi reserva", cancelFor: "Cancelar mi reserva de {{title}}", confirmTitle: "¿Cancelar tu reserva?", confirmBody: "«{{title}}» vuelve a estar disponible para los demás invitados. Si cambias de idea, podrás reservarlo otra vez mientras siga libre.", confirm: "Sí, cancelar la reserva", keep: "No, mantenerla", cancelling: "Cancelando…", done: "Cancelaste tu reserva de «{{title}}». El regalo volvió a la lista.", notActive: "Esta reserva ya no estaba activa. Actualizamos la lista.", error: "No pudimos cancelar la reserva. Inténtalo de nuevo: no se cancelará dos veces.", expired: "Tu enlace ya no es válido. Pide a los anfitriones uno nuevo para gestionar tu reserva.", released: "Los anfitriones liberaron «{{title}}». Puedes elegir otro regalo." },
-  outcome: {
-    cancelledTitle: "Reserva cancelada", cancelledBody: "Esta reserva se canceló al cambiar tu asistencia. Si volvés a asistir, confirmá tu respuesta y elegí un regalo disponible.",
-    confirmedTitle: "¡Regalo reservado!", confirmedBody: "Reservaste «{{title}}». Los anfitriones ya saben que lo regalas tú.",
-    pendingTitle: "Solicitud enviada", pendingBody: "Los anfitriones aprueban cada reserva. Te avisaremos cuando confirmen «{{title}}»; mientras tanto nadie más puede reservarlo.",
-    takenTitle: "Alguien se adelantó", takenBody: "«{{title}}» ya fue tomado por otra persona. No pasa nada: la lista se actualizó y te mostramos otras opciones.",
-    takenAlternatives: "Otros regalos disponibles",
-    takenNone: "Ya no quedan regalos disponibles en esta lista. Gracias por querer acompañarlos.",
-    seeList: "Ver la lista de regalos", reserveAnother: "Elegir otro regalo"
-  },
+  outcome: { cancelledTitle: "Reserva cancelada", cancelledBody: "Esta reserva se canceló al cambiar tu asistencia. Si volvés a asistir, confirmá tu respuesta y elegí un regalo disponible." },
   error: {
     attendanceBody: "Para reservar un regalo, volvé a tu respuesta y confirmá que asistirás.",
-    otherTitle: "Este enlace es de otra celebración", otherBody: "El enlace que abriste no corresponde a esta lista de regalos. Abre el enlace que te enviaron los anfitriones de esta celebración.",
-    busyTitle: "Hay mucha gente ahora mismo", busyBody: "Recibimos demasiadas solicitudes seguidas. Espera unos segundos e inténtalo otra vez.",
-    limit: "Ya tienes el máximo de regalos reservados. Espera a que los anfitriones confirmen alguno antes de reservar otro.",
     needLinkTitle: "Abre tu enlace de invitación", needLinkBody: "Para ver y reservar regalos usamos el enlace personal de tu invitación; no necesitas crear una cuenta. Ábrelo desde el mensaje que te enviaron los anfitriones.",
-    needLinkAction: "Ir a mi invitación",
-    forbiddenTitle: "No puedes reservar regalos aquí", forbiddenBody: "Tu invitación no tiene permiso para esta lista. Pide a los anfitriones un enlace nuevo.",
-    expiredTitle: "Tu enlace venció", expiredBody: "El enlace personal ya no es válido. Pide a los anfitriones que te envíen uno nuevo.",
-    unavailableTitle: "No pudimos cargar los regalos", unavailableBody: "El servicio de regalos no responde ahora mismo. No se perdió nada: inténtalo otra vez.",
-    offline: "Sin conexión. Revisa tu internet e inténtalo de nuevo; tu mensaje sigue aquí.", nameTooLong: "El nombre admite hasta {{max}} caracteres.", messageTooLong: "El mensaje admite hasta {{max}} caracteres.", busyWait: "Recibimos demasiadas solicitudes seguidas. Espera {{seconds}} segundos e inténtalo otra vez.", retryHint: "Puedes volver a pulsar Reservar: no se reservará dos veces.",
-    retry: "Reintentar", validation: "Revisa los datos: el nombre o el mensaje son demasiado largos.", generic: "No pudimos reservar el regalo. Inténtalo de nuevo."
-  },
-  empty: { title: "Aún no hay regalos", body: "Los anfitriones todavía no agregaron regalos. Vuelve pronto.", filtered: "Ningún regalo coincide con estos filtros.", filteredBody: "Prueba con otro precio u origen, o quita los filtros." },
+    needLinkAction: "Ir a mi invitación" },
+  empty: { filtered: "Ningún regalo coincide con estos filtros.", filteredBody: "Prueba con otro precio u origen, o quita los filtros." },
   notFound: { title: "No encontramos esta celebración", body: "La página no existe o los anfitriones aún no la han publicado." },
-  /** Lista de regalos del invitado en la app (Persuade). La web de seo-web sigue con las claves de arriba. */
+  /** Lista de regalos del invitado en la app (Persuade). La web pública (seo-web) usa las mismas claves desde M21. */
   guest: {
     title: "Regalos", intro: "Reserva un regalo en un toque y nadie más regalará lo mismo.", rule: "Cada persona puede tener un máximo de regalos reservados a la vez.", backToRsvp: "Volver a mi respuesta", loading: "Abriendo la lista…",
     groupPartner: "De nuestros aliados", groupOther: "Ideas de quienes te invitan",
@@ -59,7 +32,7 @@ export const giftsEsBO = {
       notFoundTitle: "No encontramos esta celebración", notFoundBody: "Puede que el enlace esté incompleto o que aún no se haya publicado."
     },
     /** D-3 · el invitado cancela su propia reserva (app). */
-    mine: { label: "Tu reserva", pendingLabel: "Tu reserva, esperando aprobación", cancel: "Cancelar mi reserva", confirmTitle: "¿Cancelar tu reserva?", confirmBody: "«{{title}}» vuelve a estar disponible para los demás invitados. Si cambias de idea, podrás reservarlo otra vez mientras siga libre.", confirm: "Sí, cancelar la reserva", keep: "No, mantenerla", cancelling: "Cancelando…", done: "Cancelaste tu reserva de «{{title}}». El regalo volvió a la lista.", notActive: "Esta reserva ya no estaba activa. Actualizamos la lista.", error: "No pudimos cancelar la reserva. Inténtalo de nuevo: no se cancelará dos veces.", expired: "Tu enlace ya no funciona. Pídele uno nuevo a quien te invitó.", offline: "Sin conexión por ahora. Tu reserva sigue igual; reintenta cuando vuelva internet.", released: "Quienes te invitan liberaron «{{title}}». Puedes elegir otro regalo." },
+    mine: { label: "Tu reserva", pendingLabel: "Tu reserva, esperando aprobación", cancel: "Cancelar mi reserva", cancelFor: "Cancelar mi reserva de {{title}}", confirmTitle: "¿Cancelar tu reserva?", confirmBody: "«{{title}}» vuelve a estar disponible para los demás invitados. Si cambias de idea, podrás reservarlo otra vez mientras siga libre.", confirm: "Sí, cancelar la reserva", keep: "No, mantenerla", cancelling: "Cancelando…", done: "Cancelaste tu reserva de «{{title}}». El regalo volvió a la lista.", notActive: "Esta reserva ya no estaba activa. Actualizamos la lista.", error: "No pudimos cancelar la reserva. Inténtalo de nuevo: no se cancelará dos veces.", expired: "Tu enlace ya no funciona. Pídele uno nuevo a quien te invitó.", offline: "Sin conexión por ahora. Tu reserva sigue igual; reintenta cuando vuelva internet.", released: "Quienes te invitan liberaron «{{title}}». Puedes elegir otro regalo." },
     reserveError: {
       limit: "Llegaste al máximo de regalos que una persona puede reservar. Si quienes te invitan rechazan alguna reserva, podrás elegir otro.",
       expired: "Tu enlace ya no funciona. Pídele uno nuevo a quien te invitó.", forbidden: "Con este enlace no se pueden reservar regalos. Pídele uno nuevo a quien te invitó.", notFound: "Este enlace es de otra celebración. Abre el que te enviaron para esta.",

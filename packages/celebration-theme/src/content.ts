@@ -244,3 +244,23 @@ export function daysUntil(eventDate: string | null, now: Date): number | null {
   if (!Number.isFinite(target)) return null;
   return Math.max(0, Math.ceil((target - now.getTime()) / MS_PER_DAY));
 }
+
+/** The invitation on top of every guest screen (the app's `GuestFrame` and the site's guest sheet): title, who invites, when and where. */
+export interface GuestCover { readonly heading: string; readonly lead?: string; /** Date and place, one line. */ readonly meta?: string }
+
+/**
+ * One reading of the cover for the app and the public site. Words come from the caller's translator (`rsvp.page.title` when the
+ * hosts left the title empty, `rsvp.invite.hostedBy`), and the date from `formatDate` in the celebration's time zone, so the
+ * same celebration shows the same cover on both surfaces. A date that cannot be formatted is simply left out.
+ */
+export function guestCover(view: Pick<PublicCelebrationView, "content" | "eventType">, options: { readonly locale: string; readonly t: (key: string, values?: Readonly<Record<string, string>>) => string; readonly formatDate: (iso: string) => string }): GuestCover {
+  const content = readContent(view);
+  const hosts = content.hosts.map((host) => host.name);
+  let when = "";
+  if (content.eventDate) {
+    try { when = options.formatDate(content.eventDate); } catch { when = ""; }
+  }
+  const meta = [when, content.venueName].filter(Boolean).join(" · ");
+  const lead = hosts.length ? options.t("rsvp.invite.hostedBy", { hosts: new Intl.ListFormat(options.locale, { style: "long", type: "conjunction" }).format(hosts) }) : "";
+  return { heading: content.title || options.t("rsvp.page.title"), ...(lead ? { lead } : {}), ...(meta ? { meta } : {}) };
+}

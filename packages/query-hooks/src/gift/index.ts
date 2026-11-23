@@ -37,6 +37,7 @@ export function useApproveReservation<TResponse>(client: ApiClient, celebrationI
 import { addGiftWithList, giftApi as giftService } from "./api.js";
 import type { AddGiftInput, UpdateGiftSettingsInput, GiftItemList, GiftReservation, ReservationStatus, ReserveGiftInput } from "./types.js";
 export * from "./types.js";
+export * from "./reserve-rules.js";
 export { giftApi as giftService, isGiftListMissing, suggestionsOf, problemCode } from "./api.js";
 import { suggestionsOf, problemCode } from "./api.js";
 
