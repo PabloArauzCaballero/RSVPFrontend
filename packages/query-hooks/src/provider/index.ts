@@ -49,7 +49,30 @@ export function useListingSearch(client: ApiClient, q: string) {
 
 /** Public catalog metadata, shared by gift cards and cached across the list and detail page. Never sends the guest credential. */
 export function usePublicListing(client: ApiClient, listingId: string | undefined) {
-  return useQuery({ queryKey: ["providers", "public-listing", listingId] as const, queryFn: () => providerService(client).publicListing(listingId ?? ""), enabled: Boolean(listingId), staleTime: 5 * 60_000, retry: false });
+  const service = providerService(client);
+  const cache = { staleTime: 5 * 60_000, retry: false } as const;
+  const listing = useQuery({
+    queryKey: ["providers", "public-listing", listingId],
+    queryFn: () => service.publicListing(listingId ?? ""),
+    enabled: Boolean(listingId),
+    ...cache
+  });
+  const summary = listing.data;
+  // An explicit empty array means the listing has no usable destination.
+  const lookupDirectory = !listing.isError && summary?.id === listingId && summary?.published &&
+    summary.providerStatus === "VERIFIED" && summary.destinationTypes === undefined;
+  const providerId = lookupDirectory ? summary.providerId : undefined;
+  const directory = useQuery({
+    queryKey: ["providers", "public-directory-offers", providerId],
+    queryFn: () => service.publicDirectoryOffers(providerId ?? ""),
+    enabled: Boolean(providerId),
+    ...cache
+  });
+  const offer = directory.isError ? undefined : directory.data?.find((card) => card.listingId === listingId);
+  if (!summary || !lookupDirectory || !Array.isArray(offer?.destinations)) return listing;
+  // The older PRODUCT_PAGE redirect can reject the gift surface context. The detail endpoint confirms that capability.
+  const destinationTypes = offer.destinations.filter((destination) => destination !== "PRODUCT_PAGE");
+  return { ...listing, data: { ...summary, destinationTypes } };
 }
 
 export function useOfferCategories(client: ApiClient, locale: string) {

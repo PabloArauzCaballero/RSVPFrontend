@@ -1,4 +1,5 @@
 import { fireEvent, screen, within } from "@testing-library/react";
+import { Linking } from "react-native";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MOCK_VALID_TOKEN } from "@rsvp/testing/contract-mock";
 import { GuestGiftsScreen } from "../src/guest/gifts-screen";
@@ -24,7 +25,7 @@ function show(props: { readonly token?: string; readonly onlyItemId?: string } =
   const { client, calls } = fakeClient({
     "GET /celebrations/public/ana-luis": () => ({ celebrationId: "c-1", slug: "ana-luis", content: { title: "Ana y Luis" } }),
     "GET /gifts/celebrations/c-1/items": ({ headers }) => (headers.get("authorization") === `Bearer ${TOKEN}` ? { items: ITEMS, partnerPriorityEnabled: true } : new HttpFailure(401)),
-    [`GET /listings/${LISTING}`]: () => ({ id: LISTING, imageUrl: "https://media.example/torta.webp" }),
+    [`GET /listings/${LISTING}`]: () => ({ id: LISTING, imageUrl: "https://media.example/torta.webp", destinationTypes: ["OFFICIAL_SITE"] }),
     ...extra
   });
   const onNavigate = vi.fn();
@@ -75,6 +76,30 @@ describe("Espejo web · A14 the gift list at /c/{slug}/regalos in the app", () =
     expect(screen.getByTestId("gift-count").textContent).toBe("3 regalos");
   });
 
+  it("offers WhatsApp on a gift without a website, through the redirector and without the guest credential", async () => {
+    const launch = vi.spyOn(Linking, "openURL").mockResolvedValue(undefined);
+    try {
+      show({ token: TOKEN }, { [`GET /listings/${LISTING}`]: () => ({ id: LISTING, destinationTypes: ["WHATSAPP"] }) });
+      fireEvent.click(await screen.findByRole("button", { name: "Consultar por WhatsApp" }));
+      expect(screen.queryByTestId(`partner-${TORTA}`)).toBeNull();
+      expect(screen.getByTestId(`reserve-${TORTA}`)).toBeTruthy();
+      expect(launch.mock.calls).toHaveLength(1);
+      const target = new URL(launch.mock.calls[0]![0]);
+      expect(target.pathname).toBe(`/r/${LISTING}`);
+      expect(Object.fromEntries(target.searchParams)).toEqual({ destination: "WHATSAPP", surface: "GIFT_LIST", celebrationId: "c-1" });
+    } finally {
+      launch.mockRestore();
+    }
+  });
+
+  it("keeps the reservation available if the catalog offer is no longer public", async () => {
+    const { calls } = show({ token: TOKEN }, { [`GET /listings/${LISTING}`]: () => new HttpFailure(404) });
+    await screen.findByTestId(`reserve-${TORTA}`);
+    expect(calls.some((call) => call.path === `/listings/${LISTING}`)).toBe(true);
+    expect(screen.queryByTestId(`partner-${TORTA}`)).toBeNull();
+    expect(screen.queryByTestId(`whatsapp-${TORTA}`)).toBeNull();
+  });
+
   it("a gift's title opens its own page at the web's address; the invitation is one tap back", async () => {
     saveGiftCredential("ana-luis", TOKEN);
     const { onNavigate } = show();
@@ -111,7 +136,7 @@ describe("Espejo web · A15 a gift's own page at /c/{slug}/regalos/{id}", () => 
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Torta");
     expect(screen.queryByTestId(`gift-${MESA}`)).toBeNull();
     expect(screen.queryByTestId("gift-filters")).toBeNull();
-    expect(screen.getByText("Este producto lo ofrece un aliado de DOne. Al abrir el enlace saldrás de DOne.")).toBeTruthy();
+    expect(await screen.findByText("Este producto lo ofrece un aliado de DOne. Al abrir el enlace saldrás de DOne.")).toBeTruthy();
     fireEvent.click(screen.getByTestId("gifts-list"));
     expect(onNavigate).toHaveBeenCalledWith("/c/ana-luis/regalos");
   });
