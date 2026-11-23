@@ -146,7 +146,7 @@ await check("F15", "REQ-F15-02 editar", "reload keeps the answer; editing sends 
 
 await check("F15", "REQ-F15-04 token inválido", "an unknown token shows the same screen with no celebration data at 360/768/1280 (axe clean)", () =>
   capture("F15", "A12-token-invalido", `/c/${slug}/rsvp/${"x".repeat(43)}`, async (p) => {
-    await p.getByRole("heading", { name: "Este enlace no está disponible" }).waitFor({ timeout: 15000 });
+    await p.getByRole("heading", { name: "Este enlace ya no funciona" }).waitFor({ timeout: 15000 });
     if ((await p.content()).includes("Ana y Luis")) throw new Error("celebration title leaked on the invalid screen");
   }));
 
@@ -165,7 +165,7 @@ await check("F15", "REQ-F15-01 enlace legado", "/rsvp/{token} (sin ?c=) llama PO
 await check("F15", "REQ-F15-04 legado inválido", "/rsvp/{token desconocido} muestra el enlace no disponible (401 de resolve)", async () => {
   const { page, ctx } = await newPage(360);
   await page.goto(`${SITE}/rsvp/${"z".repeat(43)}`, { waitUntil: "domcontentloaded" });
-  await page.getByRole("heading", { name: "Este enlace no está disponible" }).waitFor({ timeout: 15000 });
+  await page.getByRole("heading", { name: "Este enlace ya no funciona" }).waitFor({ timeout: 15000 });
   await ctx.close();
 });
 
@@ -209,7 +209,7 @@ await check("F15", "REQ-F15-05 restringido", "RESTRICTED: public-settings says s
   const { page, ctx } = await newPage(360);
   await until("restricted settings visible to Guest", async () => {
     await page.goto(`${SITE}/c/${slug}/rsvp`, { waitUntil: "domcontentloaded" });
-    return page.getByRole("heading", { name: "Esta celebración solo admite invitados con enlace personal" }).waitFor({ timeout: 4000 }).then(() => true, () => false);
+    return page.getByRole("heading", { name: "Esta celebración solo recibe respuestas con enlace personal" }).waitFor({ timeout: 4000 }).then(() => true, () => false);
   }, { timeout: 40000, every: 500 });
   if (await page.getByRole("button", { name: "Confirmar mi asistencia" }).count()) throw new Error("form is visible in RESTRICTED mode");
   const email = await page.getByTestId("host-contact-email").textContent();
@@ -455,7 +455,7 @@ await check("F21", "REQ-F21-03 enlace legado", "/rsvp/{token} in the app resolve
 await check("F21", "REQ-F21-04 token inválido", "an unknown credential is the generic screen in the app", async () => {
   const { page, ctx } = await newPage(360);
   await page.goto(`${APP}/c/${slug}/rsvp/${"y".repeat(43)}`, { waitUntil: "domcontentloaded" });
-  await page.getByText("Este enlace no está disponible").waitFor({ timeout: 20000 });
+  await page.getByText("Este enlace ya no funciona").waitFor({ timeout: 20000 });
   await page.screenshot({ path: shotPath("F21", "F1-token-invalido", 360), fullPage: true });
   await ctx.close();
 });

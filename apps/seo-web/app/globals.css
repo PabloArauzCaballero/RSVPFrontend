@@ -355,7 +355,7 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 .directory-verified .check { color: var(--tone-green-fg); }
 .directory-status { padding: 1rem; border-radius: var(--radius-inner); background: var(--surface-muted); }
 .state { display: grid; justify-items: start; gap: .75rem; padding: clamp(1.5rem, 4vw, 2.5rem); border: 1px solid var(--border); border-radius: var(--radius-cell); background: var(--surface); }
-.state p { margin: 0; font-family: var(--font-head); font-size: 1.5rem; letter-spacing: -.02em; line-height: 1.2; max-width: 34rem; }
+.state p, .state .state__title { margin: 0; font-weight: inherit; font-family: var(--font-head); font-size: 1.5rem; letter-spacing: -.02em; line-height: 1.2; max-width: 34rem; }
 .state .state__hint { font-family: var(--font-body); font-weight: 400; letter-spacing: 0; color: var(--text-muted); font-size: 1rem; }
 .state__art { width: min(11rem, 60%); margin-bottom: .5rem; }
 .directory-pagination { display: flex; align-items: center; gap: 1rem; font-family: var(--font-mono); font-size: .85rem; }
@@ -466,6 +466,11 @@ html:has(.rsvp-shell, .rsvp-status) body { overflow-x: clip; }
 .rsvp-spinner { width: 1.25rem; height: 1.25rem; border-radius: 50%; border: 2px solid var(--border); border-top-color: var(--text); animation: rsvp-spin .9s linear infinite; }
 @keyframes rsvp-spin { to { transform: rotate(360deg); } }
 .rsvp-card .state__art { width: 8rem; }
+/* The guest's dead ends (link expired, offline, closed, invite only): the app's `LinkState`, drawing on top and centred. */
+.rsvp-card.rsvp-state { justify-items: center; text-align: center; background: var(--surface); }
+.rsvp-state .rsvp-summary { justify-self: stretch; text-align: start; }
+.rsvp-card.rsvp-state > p { color: var(--text-muted); }
+.rsvp-card.rsvp-state > p.rsvp-state__action { color: var(--text); font-weight: 600; }
 @media (prefers-reduced-motion: reduce) { .rsvp-spinner { animation: none; border-top-color: var(--border); border-right-color: var(--text); } .rsvp-radio { transition: none; } }
 
 /* ===== Touch targets: every standalone control is at least 44 px; links inside running text keep their line box. ===== */

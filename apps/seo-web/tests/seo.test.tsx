@@ -181,5 +181,9 @@ describe("provider directory (F24)", () => {
   it("an empty category says so", async () => {
     const { client } = clientFor({ "/providers": json(200, { items: [], total: 0, page: 1, pageSize: 12 }) });
     expect(renderToStaticMarkup(<ProviderResults page={await searchProviders({}, client)} t={t} locale="es-BO" path="/proveedores" />)).toContain("Todavía no hay proveedores");
+    // Espejo web/móvil: the empty result is a heading with the app's drawing, as the app's `EmptyState`.
+    const empty = renderToStaticMarkup(<ProviderResults page={await searchProviders({}, client)} t={t} locale="es-BO" path="/proveedores" />);
+    expect(empty).toMatch(/<h2 class="state__title">Todavía no hay proveedores[^<]*<\/h2>/);
+    expect(empty).toContain('data-art="emptySearch"');
   });
 });

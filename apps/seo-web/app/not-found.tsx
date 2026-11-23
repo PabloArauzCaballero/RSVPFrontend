@@ -4,18 +4,18 @@ import { LostArt } from "../components/brand/illustrations";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await siteI18n();
-  return { title: t("landing.notFound.title"), robots: { index: false, follow: false } };
+  return { title: t("notFound.title"), robots: { index: false, follow: false } };
 }
 
-/** Any unknown address: the same words in the visitor's language, a drawing of the unfinished check, and the way back. */
+/** Any unknown address: the app's own 404 words (`notFound.*`, the app's `NotFoundScreen`), its drawing and the way back. */
 export default async function NotFound() {
   const { t } = await siteI18n();
   return (
     <main className="state-page">
       <LostArt className="state__art" />
-      <h1>{t("landing.notFound.title")}</h1>
-      <p>{t("landing.notFound.body")}</p>
-      <a className="btn btn--solid" href="/">{t("landing.notFound.home")}</a>
+      <h1>{t("notFound.title")}</h1>
+      <p>{t("notFound.intro")}</p>
+      <a className="btn btn--solid" href="/">{t("notFound.home")}</a>
     </main>
   );
 }

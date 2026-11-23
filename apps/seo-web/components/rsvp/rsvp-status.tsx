@@ -5,7 +5,7 @@ import type { AppLocale, Translate } from '@rsvp/i18n/server';
 import type { HostContact } from '@rsvp/celebration-theme';
 import { countdownTo, type Countdown as CountdownValue, type RsvpState } from '@rsvp/query-hooks';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { LostArt } from '../brand/illustrations';
+import { DeadlineClosedArt, LinkExpiredArt, NoAccessArt, OfflineArt } from '../brand/illustrations';
 
 /** Moves keyboard and screen-reader focus to the heading of the state that just appeared. */
 export function StateHeading({ children, id }: { children: ReactNode; id?: string }): ReactNode {
@@ -20,24 +20,39 @@ export function LoadingView({ t }: { t: Translate }): ReactNode {
 
 /**
  * Token invalid, expired, revoked or unknown celebration: the same screen for every cause, with no
- * title, host, date or any other data of the celebration (REQ-F15-04).
+ * title, host, date or any other data of the celebration (REQ-F15-04). Same words and drawing as the app (`InvalidLink`).
  */
 export function InvalidView({ t }: { t: Translate }): ReactNode {
   return (
-    <section className="rsvp-card rsvp-card--quiet" aria-labelledby="rsvp-invalid-title">
-      <LostArt className="state__art" />
-      <StateHeading id="rsvp-invalid-title">{t('rsvp.invalid.title')}</StateHeading>
-      <p>{t('rsvp.invalid.body')}</p>
-      <p className="rsvp-hint">{t('rsvp.invalid.hint')}</p>
+    <section className="rsvp-card rsvp-card--quiet rsvp-state" aria-labelledby="rsvp-invalid-title">
+      <LinkExpiredArt className="state__art" />
+      <StateHeading id="rsvp-invalid-title">{t('rsvp.invite.invalidTitle')}</StateHeading>
+      <p>{t('rsvp.invite.invalidBody')}</p>
+      <p className="rsvp-state__action">{t('rsvp.invite.invalidAction')}</p>
     </section>
   );
 }
 
-export function LoadFailureView({ message, t, onRetry }: { message: string; t: Translate; onRetry: () => void }): ReactNode {
+/** Offline, or the service did not answer: what happened and one way out, as the app's `OfflineState`. */
+export function LoadFailureView({ kind, t, onRetry }: { kind: 'offline' | 'unavailable'; t: Translate; onRetry: () => void }): ReactNode {
   return (
-    <section className="rsvp-card rsvp-card--quiet" role="alert">
-      <p>{message}</p>
-      <button type="button" className="rsvp-button" onClick={onRetry}>{t('rsvp.actions.retry')}</button>
+    <section className="rsvp-card rsvp-card--quiet rsvp-state" role="alert" aria-labelledby="rsvp-failure-title">
+      <OfflineArt className="state__art" />
+      <StateHeading id="rsvp-failure-title">{kind === 'offline' ? t('rsvp.invite.offlineTitle') : t('rsvp.invite.unavailableTitle')}</StateHeading>
+      <p>{kind === 'offline' ? t('rsvp.invite.offlineBody') : t('rsvp.invite.unavailableBody')}</p>
+      <button type="button" className="rsvp-button" onClick={onRetry}>{t('rsvp.invite.retry')}</button>
+    </section>
+  );
+}
+
+/** Public registration is closed for this celebration: the app's `RestrictedNotice`. */
+export function RestrictedView({ t, hosts, contact, locale }: { t: Translate; hosts: readonly string[]; contact: HostContact | undefined; locale: AppLocale }): ReactNode {
+  return (
+    <section className="rsvp-card rsvp-card--quiet rsvp-state" aria-labelledby="rsvp-restricted-title">
+      <NoAccessArt className="state__art" />
+      <StateHeading id="rsvp-restricted-title">{t('rsvp.invite.open.restrictedTitle')}</StateHeading>
+      <p>{t('rsvp.invite.open.restrictedBody')}</p>
+      <HostContactLines contact={contact} hosts={hosts} locale={locale} t={t} />
     </section>
   );
 }
@@ -78,29 +93,30 @@ export function AnswerSummary({ state, locale, t }: { state: RsvpState; locale: 
 
 export interface ClosedInfo { deadline?: string; deadlineLocal?: string; timeZone?: string }
 
-/** Deadline passed: when it closed, who to write to and the last answer on record (REQ-F15-03). */
 /** "Who to write to": the published `hostContact` of the celebration (only when the hosts consented), else the host names. */
 export function HostContactLines({ contact, hosts, locale, t }: { contact?: HostContact | undefined; hosts: readonly string[]; locale: AppLocale; t: Translate }): ReactNode {
   const names = hosts.length ? new Intl.ListFormat(locale, { style: 'long', type: 'conjunction' }).format(hosts) : '';
   return (
     <>
-      <p>{names ? t('rsvp.closed.contact', { hosts: names }) : t('rsvp.closed.contactGeneric')}</p>
-      {contact?.email ? <p data-testid="host-contact-email">{t('rsvp.closed.contactEmail')} <a href={`mailto:${contact.email}`}>{contact.email}</a></p> : null}
-      {contact?.phone ? <p data-testid="host-contact-phone">{t('rsvp.closed.contactPhone')} <a href={`tel:${contact.phone}`}>{contact.phone}</a></p> : null}
+      <p>{names ? t('rsvp.invite.contact', { hosts: names }) : t('rsvp.invite.contactGeneric')}</p>
+      {contact?.email ? <p data-testid="host-contact-email">{t('rsvp.invite.contactEmail')} <a href={`mailto:${contact.email}`}>{contact.email}</a></p> : null}
+      {contact?.phone ? <p data-testid="host-contact-phone">{t('rsvp.invite.contactPhone')} <a href={`tel:${contact.phone}`}>{contact.phone}</a></p> : null}
     </>
   );
 }
 
+/** Deadline passed: when it closed, who to write to and the last answer on record (REQ-F15-03), as the app's `Closed`. */
 export function ClosedView({ info, state, hosts, contact, locale, t }: { info: ClosedInfo; state: RsvpState | null; hosts: readonly string[]; contact?: HostContact | undefined; locale: AppLocale; t: Translate }): ReactNode {
   const deadline = info.deadline ?? state?.deadline ?? undefined;
   const timeZone = info.timeZone ?? state?.timeZone;
   const when = info.deadlineLocal ?? (deadline && timeZone ? formatCelebrationDate(deadline, { locale, timeZone }) : undefined);
   return (
-    <section className="rsvp-card" aria-labelledby="rsvp-closed-title">
-      <StateHeading id="rsvp-closed-title">{t('rsvp.closed.title')}</StateHeading>
-      <p>{when && timeZone ? t('rsvp.closed.closedOn', { date: when, timeZone }) : t('rsvp.closed.closedGeneric')}</p>
+    <section className="rsvp-card rsvp-state" aria-labelledby="rsvp-closed-title">
+      <DeadlineClosedArt className="state__art" />
+      <StateHeading id="rsvp-closed-title">{t('rsvp.invite.closedTitle')}</StateHeading>
+      <p>{when && timeZone ? t('rsvp.invite.closedOn', { date: when, timeZone }) : t('rsvp.invite.closedGeneric')} {t('rsvp.invite.closedHelp')}</p>
       <HostContactLines contact={contact} hosts={hosts} locale={locale} t={t} />
-      {state && state.status !== 'PENDING' ? <><p className="rsvp-hint">{t('rsvp.closed.yourAnswer', { status: t(`rsvp.status.${state.status}`) })}</p><AnswerSummary state={state} locale={locale} t={t} /></> : null}
+      {state && state.status !== 'PENDING' ? <><p className="rsvp-hint">{t('rsvp.invite.yourAnswer')}</p><AnswerSummary state={state} locale={locale} t={t} /></> : null}
     </section>
   );
 }

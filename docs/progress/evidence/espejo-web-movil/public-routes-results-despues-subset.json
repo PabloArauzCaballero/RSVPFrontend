@@ -1,0 +1,500 @@
+{
+  "app": "https://dev.done.arauzsoftware.com",
+  "site": "http://localhost:3199",
+  "results": [
+    {
+      "route": "celebracion-404",
+      "path": "/c/no-existe-espejo-paridad",
+      "locale": "es-BO",
+      "same": true,
+      "webStatus": 404,
+      "appUrl": "https://dev.done.arauzsoftware.com/c/no-existe-espejo-paridad",
+      "web": [
+        "Esta celebración no está disponible"
+      ],
+      "app": [
+        "Esta celebración no está disponible"
+      ],
+      "webArt": [
+        "notFound"
+      ],
+      "appArt": [
+        "notFound"
+      ],
+      "webActions": [
+        "Ir al inicio"
+      ],
+      "appActions": [
+        "Ir al inicio"
+      ],
+      "detail": "",
+      "at": "2026-11-23T11:47:40.359Z"
+    },
+    {
+      "route": "celebracion-404",
+      "path": "/c/no-existe-espejo-paridad",
+      "locale": "en-US",
+      "same": true,
+      "webStatus": 404,
+      "appUrl": "https://dev.done.arauzsoftware.com/c/no-existe-espejo-paridad",
+      "web": [
+        "This celebration is not available"
+      ],
+      "app": [
+        "This celebration is not available"
+      ],
+      "webArt": [
+        "notFound"
+      ],
+      "appArt": [
+        "notFound"
+      ],
+      "webActions": [
+        "Go to the home page"
+      ],
+      "appActions": [
+        "Go to the home page"
+      ],
+      "detail": "",
+      "at": "2026-11-23T11:47:49.737Z"
+    },
+    {
+      "route": "rsvp-abierto",
+      "path": "/c/qa-espejo-movil/rsvp",
+      "locale": "es-BO",
+      "same": false,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/c/qa-espejo-movil/rsvp",
+      "web": [
+        "Esta celebración solo recibe respuestas con enlace personal"
+      ],
+      "app": [
+        "QA Espejo · Ana y Luis",
+        "Esta celebración solo recibe respuestas con enlace personal"
+      ],
+      "webArt": [
+        "noAccess"
+      ],
+      "appArt": [
+        "noAccess"
+      ],
+      "webActions": [],
+      "appActions": [],
+      "detail": "headings web=[\"Esta celebración solo recibe respuestas con enlace personal\"] app=[\"QA Espejo · Ana y Luis\",\"Esta celebración solo recibe respuestas con enlace personal\"]",
+      "at": "2026-11-23T11:47:58.451Z"
+    },
+    {
+      "route": "rsvp-abierto",
+      "path": "/c/qa-espejo-movil/rsvp",
+      "locale": "en-US",
+      "same": false,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/c/qa-espejo-movil/rsvp",
+      "web": [
+        "This celebration only takes answers with a personal link"
+      ],
+      "app": [
+        "QA Espejo · Ana y Luis",
+        "This celebration only takes answers with a personal link"
+      ],
+      "webArt": [
+        "noAccess"
+      ],
+      "appArt": [
+        "noAccess"
+      ],
+      "webActions": [],
+      "appActions": [],
+      "detail": "headings web=[\"This celebration only takes answers with a personal link\"] app=[\"QA Espejo · Ana y Luis\",\"This celebration only takes answers with a personal link\"]",
+      "at": "2026-11-23T11:48:07.209Z"
+    },
+    {
+      "route": "rsvp-enlace-invalido",
+      "path": "/c/qa-espejo-movil/rsvp/{token-falso}",
+      "locale": "es-BO",
+      "same": true,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/c/qa-espejo-movil/rsvp/{token-falso}",
+      "web": [
+        "Este enlace ya no funciona"
+      ],
+      "app": [
+        "Este enlace ya no funciona"
+      ],
+      "webArt": [
+        "linkExpired"
+      ],
+      "appArt": [
+        "linkExpired"
+      ],
+      "webActions": [],
+      "appActions": [],
+      "detail": "",
+      "at": "2026-11-23T11:48:16.524Z"
+    },
+    {
+      "route": "rsvp-enlace-invalido",
+      "path": "/c/qa-espejo-movil/rsvp/{token-falso}",
+      "locale": "en-US",
+      "same": true,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/c/qa-espejo-movil/rsvp/{token-falso}",
+      "web": [
+        "This link no longer works"
+      ],
+      "app": [
+        "This link no longer works"
+      ],
+      "webArt": [
+        "linkExpired"
+      ],
+      "appArt": [
+        "linkExpired"
+      ],
+      "webActions": [],
+      "appActions": [],
+      "detail": "",
+      "at": "2026-11-23T11:48:25.785Z"
+    },
+    {
+      "route": "rsvp-legado-invalido",
+      "path": "/rsvp/{token-falso}",
+      "locale": "es-BO",
+      "same": true,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/rsvp/{token-falso}",
+      "web": [
+        "Este enlace ya no funciona"
+      ],
+      "app": [
+        "Este enlace ya no funciona"
+      ],
+      "webArt": [
+        "linkExpired"
+      ],
+      "appArt": [
+        "linkExpired"
+      ],
+      "webActions": [],
+      "appActions": [],
+      "detail": "",
+      "at": "2026-11-23T11:48:33.665Z"
+    },
+    {
+      "route": "rsvp-legado-invalido",
+      "path": "/rsvp/{token-falso}",
+      "locale": "en-US",
+      "same": true,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/rsvp/{token-falso}",
+      "web": [
+        "This link no longer works"
+      ],
+      "app": [
+        "This link no longer works"
+      ],
+      "webArt": [
+        "linkExpired"
+      ],
+      "appArt": [
+        "linkExpired"
+      ],
+      "webActions": [],
+      "appActions": [],
+      "detail": "",
+      "at": "2026-11-23T11:48:42.137Z"
+    },
+    {
+      "route": "regalos-sin-enlace",
+      "path": "/c/qa-espejo-movil/regalos",
+      "locale": "es-BO",
+      "same": false,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/c/qa-espejo-movil/regalos",
+      "web": [
+        "Lista de regalos",
+        "Abre tu enlace de invitación"
+      ],
+      "app": [
+        "Regalos",
+        "Abre tu enlace de invitación"
+      ],
+      "webArt": [
+        "linkExpired"
+      ],
+      "appArt": [
+        "linkExpired"
+      ],
+      "webActions": [
+        "Volver a la celebración",
+        "Ir a mi invitación"
+      ],
+      "appActions": [
+        "Ir a mi invitación",
+        "Volver a la celebración"
+      ],
+      "detail": "headings web=[\"Lista de regalos\",\"Abre tu enlace de invitación\"] app=[\"Regalos\",\"Abre tu enlace de invitación\"]",
+      "at": "2026-11-23T11:48:55.005Z"
+    },
+    {
+      "route": "regalos-sin-enlace",
+      "path": "/c/qa-espejo-movil/regalos",
+      "locale": "en-US",
+      "same": false,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/c/qa-espejo-movil/regalos",
+      "web": [
+        "Gift list",
+        "Open your invitation link"
+      ],
+      "app": [
+        "Gifts",
+        "Open your invitation link"
+      ],
+      "webArt": [
+        "linkExpired"
+      ],
+      "appArt": [
+        "linkExpired"
+      ],
+      "webActions": [
+        "Back to the celebration",
+        "Go to my invitation"
+      ],
+      "appActions": [
+        "Go to my invitation",
+        "Back to the celebration"
+      ],
+      "detail": "headings web=[\"Gift list\",\"Open your invitation link\"] app=[\"Gifts\",\"Open your invitation link\"]",
+      "at": "2026-11-23T11:49:05.200Z"
+    },
+    {
+      "route": "regalos-enlace-invalido",
+      "path": "/c/qa-espejo-movil/regalos/{token-falso}",
+      "locale": "es-BO",
+      "same": false,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/c/qa-espejo-movil/regalos/{token-falso}",
+      "web": [
+        "Lista de regalos",
+        "Abre tu enlace de invitación"
+      ],
+      "app": [
+        "Regalos",
+        "Tu enlace ya no funciona"
+      ],
+      "webArt": [
+        "linkExpired"
+      ],
+      "appArt": [
+        "linkExpired"
+      ],
+      "webActions": [
+        "Volver a la celebración",
+        "Ir a mi invitación"
+      ],
+      "appActions": [
+        "Volver a mi respuesta"
+      ],
+      "detail": "headings web=[\"Lista de regalos\",\"Abre tu enlace de invitación\"] app=[\"Regalos\",\"Tu enlace ya no funciona\"]",
+      "at": "2026-11-23T11:49:15.343Z"
+    },
+    {
+      "route": "regalos-enlace-invalido",
+      "path": "/c/qa-espejo-movil/regalos/{token-falso}",
+      "locale": "en-US",
+      "same": false,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/c/qa-espejo-movil/regalos/{token-falso}",
+      "web": [
+        "Gift list",
+        "Open your invitation link"
+      ],
+      "app": [
+        "Gifts",
+        "Your link no longer works"
+      ],
+      "webArt": [
+        "linkExpired"
+      ],
+      "appArt": [
+        "linkExpired"
+      ],
+      "webActions": [
+        "Back to the celebration",
+        "Go to my invitation"
+      ],
+      "appActions": [
+        "Back to my answer"
+      ],
+      "detail": "headings web=[\"Gift list\",\"Open your invitation link\"] app=[\"Gifts\",\"Your link no longer works\"]",
+      "at": "2026-11-23T11:49:26.757Z"
+    },
+    {
+      "route": "directorio-vacio",
+      "path": "/proveedores/salones/santa-cruz",
+      "locale": "es-BO",
+      "same": false,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/proveedores/salones/santa-cruz",
+      "web": [
+        "Salones de eventos en Santa Cruz de la Sierra",
+        "Esta categoría en otras ciudades",
+        "Otras categorías en Santa Cruz de la Sierra"
+      ],
+      "app": [
+        "Salones de eventos en Santa Cruz de la Sierra",
+        "Todavía no hay proveedores publicados aquí.",
+        "Esta categoría en otras ciudades",
+        "Otras categorías en Santa Cruz de la Sierra"
+      ],
+      "webArt": [
+        "emptySearch"
+      ],
+      "appArt": [
+        "emptySearch"
+      ],
+      "webActions": [
+        "Inicio",
+        "Proveedores",
+        "Salones de eventos",
+        "Ver todas las categorías",
+        "Salones de eventos en La Paz",
+        "Salones de eventos en Cochabamba",
+        "Salones de eventos en Sucre",
+        "Salones de eventos en Tarija",
+        "Salones de eventos en Oruro",
+        "Salones de eventos en Potosí",
+        "Salones de eventos en Trinidad",
+        "Salones de eventos en Cobija"
+      ],
+      "appActions": [
+        "Proveedores",
+        "Salones de eventos",
+        "Ver todas las categorías",
+        "Salones de eventos en La Paz",
+        "Salones de eventos en Cochabamba",
+        "Salones de eventos en Sucre",
+        "Salones de eventos en Tarija",
+        "Salones de eventos en Oruro",
+        "Salones de eventos en Potosí",
+        "Salones de eventos en Trinidad",
+        "Salones de eventos en Cobija",
+        "Catering"
+      ],
+      "detail": "headings web=[\"Salones de eventos en Santa Cruz de la Sierra\",\"Esta categoría en otras ciudades\",\"Otras categorías en Santa Cruz de la Sierra\"] app=[\"Salones de eventos en Santa Cruz de la Sierra\",\"Todavía no hay proveedores publicados aquí.\",\"Esta categoría en otras ciudades\",\"Otras categorías en Santa Cruz de la Sierra\"]",
+      "at": "2026-11-23T11:49:37.843Z"
+    },
+    {
+      "route": "directorio-vacio",
+      "path": "/proveedores/salones/santa-cruz",
+      "locale": "en-US",
+      "same": false,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/proveedores/salones/santa-cruz",
+      "web": [
+        "Event venues in Santa Cruz de la Sierra",
+        "This category in other cities",
+        "Other categories in Santa Cruz de la Sierra"
+      ],
+      "app": [
+        "Event venues in Santa Cruz de la Sierra",
+        "No vendors are published here yet.",
+        "This category in other cities",
+        "Other categories in Santa Cruz de la Sierra"
+      ],
+      "webArt": [
+        "emptySearch"
+      ],
+      "appArt": [
+        "emptySearch"
+      ],
+      "webActions": [
+        "Home",
+        "Vendors",
+        "Event venues",
+        "See all categories",
+        "Event venues in La Paz",
+        "Event venues in Cochabamba",
+        "Event venues in Sucre",
+        "Event venues in Tarija",
+        "Event venues in Oruro",
+        "Event venues in Potosí",
+        "Event venues in Trinidad",
+        "Event venues in Cobija"
+      ],
+      "appActions": [
+        "Vendors",
+        "Event venues",
+        "See all categories",
+        "Event venues in La Paz",
+        "Event venues in Cochabamba",
+        "Event venues in Sucre",
+        "Event venues in Tarija",
+        "Event venues in Oruro",
+        "Event venues in Potosí",
+        "Event venues in Trinidad",
+        "Event venues in Cobija",
+        "Catering"
+      ],
+      "detail": "headings web=[\"Event venues in Santa Cruz de la Sierra\",\"This category in other cities\",\"Other categories in Santa Cruz de la Sierra\"] app=[\"Event venues in Santa Cruz de la Sierra\",\"No vendors are published here yet.\",\"This category in other cities\",\"Other categories in Santa Cruz de la Sierra\"]",
+      "at": "2026-11-23T11:49:44.990Z"
+    },
+    {
+      "route": "partner-404",
+      "path": "/p/no-existe-espejo-paridad",
+      "locale": "es-BO",
+      "same": true,
+      "webStatus": 404,
+      "appUrl": "https://dev.done.arauzsoftware.com/p/no-existe-espejo-paridad",
+      "web": [
+        "No encontramos a este proveedor"
+      ],
+      "app": [
+        "No encontramos a este proveedor"
+      ],
+      "webArt": [
+        "notFound"
+      ],
+      "appArt": [
+        "notFound"
+      ],
+      "webActions": [
+        "Volver a proveedores"
+      ],
+      "appActions": [
+        "Volver a proveedores"
+      ],
+      "detail": "",
+      "at": "2026-11-23T11:49:53.892Z"
+    },
+    {
+      "route": "partner-404",
+      "path": "/p/no-existe-espejo-paridad",
+      "locale": "en-US",
+      "same": true,
+      "webStatus": 404,
+      "appUrl": "https://dev.done.arauzsoftware.com/p/no-existe-espejo-paridad",
+      "web": [
+        "We could not find this vendor"
+      ],
+      "app": [
+        "We could not find this vendor"
+      ],
+      "webArt": [
+        "notFound"
+      ],
+      "appArt": [
+        "notFound"
+      ],
+      "webActions": [
+        "Back to vendors"
+      ],
+      "appActions": [
+        "Back to vendors"
+      ],
+      "detail": "",
+      "at": "2026-11-23T11:50:02.057Z"
+    }
+  ]
+}

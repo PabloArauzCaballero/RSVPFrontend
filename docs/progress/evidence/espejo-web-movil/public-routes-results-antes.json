@@ -1,0 +1,798 @@
+{
+  "app": "https://dev.done.arauzsoftware.com",
+  "site": "https://rsvp-web.161.97.85.216.sslip.io",
+  "results": [
+    {
+      "route": "celebracion",
+      "path": "/c/qa-espejo-movil",
+      "locale": "es-BO",
+      "same": false,
+      "webStatus": 200,
+      "web": [
+        "Nuestra historia",
+        "Itinerario",
+        "Lugares",
+        "Preguntas frecuentes",
+        "Confirma tu asistencia"
+      ],
+      "app": [
+        "QA Espejo · Ana y Luis",
+        "Nuestra historia",
+        "Itinerario",
+        "Lugares",
+        "Preguntas frecuentes",
+        "Confirma tu asistencia"
+      ],
+      "webArt": [],
+      "appArt": [],
+      "webActions": [
+        "Cómo llegar"
+      ],
+      "appActions": [
+        "Cómo llegar",
+        "¿Es real?"
+      ],
+      "detail": "headings web=[\"Nuestra historia\",\"Itinerario\",\"Lugares\",\"Preguntas frecuentes\",\"Confirma tu asistencia\"] app=[\"QA Espejo · Ana y Luis\",\"Nuestra historia\",\"Itinerario\",\"Lugares\",\"Preguntas frecuentes\",\"Confirma tu asistencia\"]",
+      "at": "2026-11-23T11:34:15.531Z"
+    },
+    {
+      "route": "celebracion",
+      "path": "/c/qa-espejo-movil",
+      "locale": "en-US",
+      "same": false,
+      "webStatus": 200,
+      "web": [
+        "Nuestra historia",
+        "Itinerario",
+        "Lugares",
+        "Preguntas frecuentes",
+        "Confirma tu asistencia"
+      ],
+      "app": [
+        "QA Espejo · Ana y Luis",
+        "Nuestra historia",
+        "Itinerario",
+        "Lugares",
+        "Preguntas frecuentes",
+        "Confirma tu asistencia"
+      ],
+      "webArt": [],
+      "appArt": [],
+      "webActions": [
+        "Cómo llegar"
+      ],
+      "appActions": [
+        "Cómo llegar",
+        "¿Es real?"
+      ],
+      "detail": "headings web=[\"Nuestra historia\",\"Itinerario\",\"Lugares\",\"Preguntas frecuentes\",\"Confirma tu asistencia\"] app=[\"QA Espejo · Ana y Luis\",\"Nuestra historia\",\"Itinerario\",\"Lugares\",\"Preguntas frecuentes\",\"Confirma tu asistencia\"]",
+      "at": "2026-11-23T11:34:35.718Z"
+    },
+    {
+      "route": "celebracion-404",
+      "path": "/c/no-existe-espejo-paridad",
+      "locale": "es-BO",
+      "same": false,
+      "webStatus": 404,
+      "web": [
+        "Esta celebración no está disponible"
+      ],
+      "app": [
+        "Esta celebración no está disponible"
+      ],
+      "webArt": [],
+      "appArt": [
+        "notFound"
+      ],
+      "webActions": [
+        "Ir al inicio"
+      ],
+      "appActions": [
+        "Ir al inicio"
+      ],
+      "detail": "art web=[] app=[\"notFound\"]",
+      "at": "2026-11-23T11:34:47.254Z"
+    },
+    {
+      "route": "celebracion-404",
+      "path": "/c/no-existe-espejo-paridad",
+      "locale": "en-US",
+      "same": false,
+      "webStatus": 404,
+      "web": [
+        "This celebration is not available"
+      ],
+      "app": [
+        "This celebration is not available"
+      ],
+      "webArt": [],
+      "appArt": [
+        "notFound"
+      ],
+      "webActions": [
+        "Go to the home page"
+      ],
+      "appActions": [
+        "Go to the home page"
+      ],
+      "detail": "art web=[] app=[\"notFound\"]",
+      "at": "2026-11-23T11:34:58.004Z"
+    },
+    {
+      "route": "rsvp-abierto",
+      "path": "/c/qa-espejo-movil/rsvp",
+      "locale": "es-BO",
+      "same": false,
+      "webStatus": 200,
+      "web": [
+        "Esta celebración solo admite invitados con enlace personal"
+      ],
+      "app": [
+        "QA Espejo · Ana y Luis",
+        "Esta celebración solo recibe respuestas con enlace personal"
+      ],
+      "webArt": [],
+      "appArt": [
+        "noAccess"
+      ],
+      "webActions": [],
+      "appActions": [],
+      "detail": "headings web=[\"Esta celebración solo admite invitados con enlace personal\"] app=[\"QA Espejo · Ana y Luis\",\"Esta celebración solo recibe respuestas con enlace personal\"] · art web=[] app=[\"noAccess\"]",
+      "at": "2026-11-23T11:35:11.900Z"
+    },
+    {
+      "route": "rsvp-abierto",
+      "path": "/c/qa-espejo-movil/rsvp",
+      "locale": "en-US",
+      "same": false,
+      "webStatus": 200,
+      "web": [
+        "This celebration only accepts guests with a personal link"
+      ],
+      "app": [
+        "QA Espejo · Ana y Luis",
+        "This celebration only takes answers with a personal link"
+      ],
+      "webArt": [],
+      "appArt": [
+        "noAccess"
+      ],
+      "webActions": [],
+      "appActions": [],
+      "detail": "headings web=[\"This celebration only accepts guests with a personal link\"] app=[\"QA Espejo · Ana y Luis\",\"This celebration only takes answers with a personal link\"] · art web=[] app=[\"noAccess\"]",
+      "at": "2026-11-23T11:35:23.195Z"
+    },
+    {
+      "route": "rsvp-enlace-invalido",
+      "path": "/c/qa-espejo-movil/rsvp/{token-falso}",
+      "locale": "es-BO",
+      "same": false,
+      "webStatus": 200,
+      "web": [
+        "Este enlace no está disponible"
+      ],
+      "app": [
+        "Este enlace ya no funciona"
+      ],
+      "webArt": [],
+      "appArt": [
+        "linkExpired"
+      ],
+      "webActions": [],
+      "appActions": [],
+      "detail": "headings web=[\"Este enlace no está disponible\"] app=[\"Este enlace ya no funciona\"] · art web=[] app=[\"linkExpired\"]",
+      "at": "2026-11-23T11:35:35.051Z"
+    },
+    {
+      "route": "rsvp-enlace-invalido",
+      "path": "/c/qa-espejo-movil/rsvp/{token-falso}",
+      "locale": "en-US",
+      "same": false,
+      "webStatus": 200,
+      "web": [
+        "This link is not available"
+      ],
+      "app": [
+        "This link no longer works"
+      ],
+      "webArt": [],
+      "appArt": [
+        "linkExpired"
+      ],
+      "webActions": [],
+      "appActions": [],
+      "detail": "headings web=[\"This link is not available\"] app=[\"This link no longer works\"] · art web=[] app=[\"linkExpired\"]",
+      "at": "2026-11-23T11:35:48.431Z"
+    },
+    {
+      "route": "rsvp-legado-invalido",
+      "path": "/rsvp/{token-falso}",
+      "locale": "es-BO",
+      "same": false,
+      "webStatus": 200,
+      "web": [
+        "Este enlace no está disponible"
+      ],
+      "app": [
+        "Este enlace ya no funciona"
+      ],
+      "webArt": [],
+      "appArt": [
+        "linkExpired"
+      ],
+      "webActions": [],
+      "appActions": [],
+      "detail": "headings web=[\"Este enlace no está disponible\"] app=[\"Este enlace ya no funciona\"] · art web=[] app=[\"linkExpired\"]",
+      "at": "2026-11-23T11:36:00.019Z"
+    },
+    {
+      "route": "rsvp-legado-invalido",
+      "path": "/rsvp/{token-falso}",
+      "locale": "en-US",
+      "same": false,
+      "webStatus": 200,
+      "web": [
+        "This link is not available"
+      ],
+      "app": [
+        "This link no longer works"
+      ],
+      "webArt": [],
+      "appArt": [
+        "linkExpired"
+      ],
+      "webActions": [],
+      "appActions": [],
+      "detail": "headings web=[\"This link is not available\"] app=[\"This link no longer works\"] · art web=[] app=[\"linkExpired\"]",
+      "at": "2026-11-23T11:36:11.127Z"
+    },
+    {
+      "route": "regalos-sin-enlace",
+      "path": "/c/qa-espejo-movil/regalos",
+      "locale": "es-BO",
+      "same": false,
+      "webStatus": 200,
+      "web": [
+        "Lista de regalos",
+        "Abre tu enlace de invitación"
+      ],
+      "app": [
+        "Regalos",
+        "Abre tu enlace de invitación"
+      ],
+      "webArt": [],
+      "appArt": [
+        "linkExpired"
+      ],
+      "webActions": [
+        "Volver a la celebración",
+        "Ir a mi invitación"
+      ],
+      "appActions": [
+        "Ir a mi invitación",
+        "Volver a la celebración"
+      ],
+      "detail": "headings web=[\"Lista de regalos\",\"Abre tu enlace de invitación\"] app=[\"Regalos\",\"Abre tu enlace de invitación\"] · art web=[] app=[\"linkExpired\"]",
+      "at": "2026-11-23T11:36:22.934Z"
+    },
+    {
+      "route": "regalos-sin-enlace",
+      "path": "/c/qa-espejo-movil/regalos",
+      "locale": "en-US",
+      "same": false,
+      "webStatus": 200,
+      "web": [
+        "Gift list",
+        "Open your invitation link"
+      ],
+      "app": [
+        "Gifts",
+        "Open your invitation link"
+      ],
+      "webArt": [],
+      "appArt": [
+        "linkExpired"
+      ],
+      "webActions": [
+        "Back to the celebration",
+        "Go to my invitation"
+      ],
+      "appActions": [
+        "Go to my invitation",
+        "Back to the celebration"
+      ],
+      "detail": "headings web=[\"Gift list\",\"Open your invitation link\"] app=[\"Gifts\",\"Open your invitation link\"] · art web=[] app=[\"linkExpired\"]",
+      "at": "2026-11-23T11:36:35.597Z"
+    },
+    {
+      "route": "regalos-enlace-invalido",
+      "path": "/c/qa-espejo-movil/regalos/{token-falso}",
+      "locale": "es-BO",
+      "same": false,
+      "webStatus": 200,
+      "web": [
+        "Lista de regalos",
+        "Abre tu enlace de invitación"
+      ],
+      "app": [
+        "Regalos",
+        "Tu enlace ya no funciona"
+      ],
+      "webArt": [],
+      "appArt": [
+        "linkExpired"
+      ],
+      "webActions": [
+        "Volver a la celebración",
+        "Ir a mi invitación"
+      ],
+      "appActions": [
+        "Volver a mi respuesta"
+      ],
+      "detail": "headings web=[\"Lista de regalos\",\"Abre tu enlace de invitación\"] app=[\"Regalos\",\"Tu enlace ya no funciona\"] · art web=[] app=[\"linkExpired\"]",
+      "at": "2026-11-23T11:36:47.013Z"
+    },
+    {
+      "route": "regalos-enlace-invalido",
+      "path": "/c/qa-espejo-movil/regalos/{token-falso}",
+      "locale": "en-US",
+      "same": false,
+      "webStatus": 200,
+      "web": [
+        "Gift list",
+        "Open your invitation link"
+      ],
+      "app": [
+        "Gifts",
+        "Your link no longer works"
+      ],
+      "webArt": [],
+      "appArt": [
+        "linkExpired"
+      ],
+      "webActions": [
+        "Back to the celebration",
+        "Go to my invitation"
+      ],
+      "appActions": [
+        "Back to my answer"
+      ],
+      "detail": "headings web=[\"Gift list\",\"Open your invitation link\"] app=[\"Gifts\",\"Your link no longer works\"] · art web=[] app=[\"linkExpired\"]",
+      "at": "2026-11-23T11:36:58.532Z"
+    },
+    {
+      "route": "directorio",
+      "path": "/proveedores",
+      "locale": "es-BO",
+      "same": false,
+      "webStatus": 200,
+      "web": [
+        "¿Qué necesitas?",
+        "O busca por ciudad",
+        "Así se pide una cotización"
+      ],
+      "app": [
+        "Proveedores para tu celebración en Bolivia",
+        "Afina tu búsqueda",
+        "¿Qué necesitas?",
+        "O busca por ciudad",
+        "Así se pide una cotización",
+        "1. Elige un proveedor",
+        "2. Cuéntale tu evento",
+        "3. Recibe su respuesta"
+      ],
+      "webArt": [],
+      "appArt": [],
+      "webActions": [
+        "Usar mi ubicación",
+        "Buscar",
+        "Salones de eventos",
+        "Catering",
+        "Fotografía",
+        "Música",
+        "Decoración",
+        "Maquillaje",
+        "Transporte",
+        "Invitaciones",
+        "Wedding planners",
+        "Hospedaje"
+      ],
+      "appActions": [
+        "Usar mi ubicación",
+        "Buscar",
+        "Salones de eventos",
+        "Catering",
+        "Fotografía",
+        "Música",
+        "Decoración",
+        "Maquillaje",
+        "Transporte",
+        "Invitaciones",
+        "Wedding planners",
+        "Hospedaje"
+      ],
+      "detail": "headings web=[\"¿Qué necesitas?\",\"O busca por ciudad\",\"Así se pide una cotización\"] app=[\"Proveedores para tu celebración en Bolivia\",\"Afina tu búsqueda\",\"¿Qué necesitas?\",\"O busca por ciudad\",\"Así se pide una cotización\",\"1. Elige un proveedor\",\"2. Cuéntale tu evento\",\"3. Recibe su respuesta\"]",
+      "at": "2026-11-23T11:37:09.182Z"
+    },
+    {
+      "route": "directorio",
+      "path": "/proveedores",
+      "locale": "en-US",
+      "same": false,
+      "webStatus": 200,
+      "web": [
+        "What do you need?",
+        "Or search by city",
+        "How to ask for a quote"
+      ],
+      "app": [
+        "Vendors for your celebration in Bolivia",
+        "Narrow your search",
+        "What do you need?",
+        "Or search by city",
+        "How to ask for a quote",
+        "1. Pick a vendor",
+        "2. Tell them about your event",
+        "3. Get their reply"
+      ],
+      "webArt": [],
+      "appArt": [],
+      "webActions": [
+        "Use my location",
+        "Search",
+        "Event venues",
+        "Catering",
+        "Photography",
+        "Music",
+        "Decoration",
+        "Makeup",
+        "Transport",
+        "Invitations",
+        "Wedding planners",
+        "Accommodation"
+      ],
+      "appActions": [
+        "Use my location",
+        "Search",
+        "Event venues",
+        "Catering",
+        "Photography",
+        "Music",
+        "Decoration",
+        "Makeup",
+        "Transport",
+        "Invitations",
+        "Wedding planners",
+        "Accommodation"
+      ],
+      "detail": "headings web=[\"What do you need?\",\"Or search by city\",\"How to ask for a quote\"] app=[\"Vendors for your celebration in Bolivia\",\"Narrow your search\",\"What do you need?\",\"Or search by city\",\"How to ask for a quote\",\"1. Pick a vendor\",\"2. Tell them about your event\",\"3. Get their reply\"]",
+      "at": "2026-11-23T11:37:19.009Z"
+    },
+    {
+      "route": "directorio-buscar",
+      "path": "/proveedores/buscar",
+      "locale": "es-BO",
+      "same": false,
+      "webStatus": 200,
+      "web": [
+        "Servicios de comida",
+        "Juego de platos dorados",
+        "Aguanile",
+        "Tortas para cumpleañeros",
+        "Equipos de cocina",
+        "Hotel Los Tajibos"
+      ],
+      "app": [
+        "Buscar proveedores",
+        "Afina tu búsqueda",
+        "Servicios de comida",
+        "Juego de platos dorados",
+        "Aguanile",
+        "Tortas para cumpleañeros",
+        "Equipos de cocina",
+        "Hotel Los Tajibos"
+      ],
+      "webArt": [],
+      "appArt": [],
+      "webActions": [
+        "Usar mi ubicación",
+        "Buscar",
+        "Servicios de comida",
+        "Juego de platos dorados",
+        "Aguanile",
+        "Tortas para cumpleañeros",
+        "Equipos de cocina",
+        "Hotel Los Tajibos"
+      ],
+      "appActions": [
+        "Usar mi ubicación",
+        "Buscar",
+        "Servicios de comida",
+        "Juego de platos dorados",
+        "Aguanile",
+        "Tortas para cumpleañeros",
+        "Equipos de cocina",
+        "Hotel Los Tajibos"
+      ],
+      "detail": "headings web=[\"Servicios de comida\",\"Juego de platos dorados\",\"Aguanile\",\"Tortas para cumpleañeros\",\"Equipos de cocina\",\"Hotel Los Tajibos\"] app=[\"Buscar proveedores\",\"Afina tu búsqueda\",\"Servicios de comida\",\"Juego de platos dorados\",\"Aguanile\",\"Tortas para cumpleañeros\",\"Equipos de cocina\",\"Hotel Los Tajibos\"]",
+      "at": "2026-11-23T11:37:30.602Z"
+    },
+    {
+      "route": "directorio-buscar",
+      "path": "/proveedores/buscar",
+      "locale": "en-US",
+      "same": false,
+      "webStatus": 200,
+      "web": [
+        "Servicios de comida",
+        "Juego de platos dorados",
+        "Aguanile",
+        "Tortas para cumpleañeros",
+        "Equipos de cocina",
+        "Hotel Los Tajibos"
+      ],
+      "app": [
+        "Search vendors",
+        "Narrow your search",
+        "Servicios de comida",
+        "Juego de platos dorados",
+        "Aguanile",
+        "Tortas para cumpleañeros",
+        "Equipos de cocina",
+        "Hotel Los Tajibos"
+      ],
+      "webArt": [],
+      "appArt": [],
+      "webActions": [
+        "Use my location",
+        "Search",
+        "Servicios de comida",
+        "Juego de platos dorados",
+        "Aguanile",
+        "Tortas para cumpleañeros",
+        "Equipos de cocina",
+        "Hotel Los Tajibos"
+      ],
+      "appActions": [
+        "Use my location",
+        "Search",
+        "Servicios de comida",
+        "Juego de platos dorados",
+        "Aguanile",
+        "Tortas para cumpleañeros",
+        "Equipos de cocina",
+        "Hotel Los Tajibos"
+      ],
+      "detail": "headings web=[\"Servicios de comida\",\"Juego de platos dorados\",\"Aguanile\",\"Tortas para cumpleañeros\",\"Equipos de cocina\",\"Hotel Los Tajibos\"] app=[\"Search vendors\",\"Narrow your search\",\"Servicios de comida\",\"Juego de platos dorados\",\"Aguanile\",\"Tortas para cumpleañeros\",\"Equipos de cocina\",\"Hotel Los Tajibos\"]",
+      "at": "2026-11-23T11:37:42.156Z"
+    },
+    {
+      "route": "directorio-vacio",
+      "path": "/proveedores/salones/santa-cruz",
+      "locale": "es-BO",
+      "same": false,
+      "webStatus": 200,
+      "web": [
+        "Esta categoría en otras ciudades",
+        "Otras categorías en Santa Cruz de la Sierra"
+      ],
+      "app": [
+        "Salones de eventos en Santa Cruz de la Sierra",
+        "Todavía no hay proveedores publicados aquí.",
+        "Esta categoría en otras ciudades",
+        "Otras categorías en Santa Cruz de la Sierra"
+      ],
+      "webArt": [],
+      "appArt": [
+        "emptySearch"
+      ],
+      "webActions": [
+        "Ver todas las categorías",
+        "Salones de eventos en La Paz",
+        "Salones de eventos en Cochabamba",
+        "Salones de eventos en Sucre",
+        "Salones de eventos en Tarija",
+        "Salones de eventos en Oruro",
+        "Salones de eventos en Potosí",
+        "Salones de eventos en Trinidad",
+        "Salones de eventos en Cobija",
+        "Catering",
+        "Fotografía",
+        "Música"
+      ],
+      "appActions": [
+        "Ver todas las categorías",
+        "Salones de eventos en La Paz",
+        "Salones de eventos en Cochabamba",
+        "Salones de eventos en Sucre",
+        "Salones de eventos en Tarija",
+        "Salones de eventos en Oruro",
+        "Salones de eventos en Potosí",
+        "Salones de eventos en Trinidad",
+        "Salones de eventos en Cobija",
+        "Catering",
+        "Fotografía",
+        "Música"
+      ],
+      "detail": "headings web=[\"Esta categoría en otras ciudades\",\"Otras categorías en Santa Cruz de la Sierra\"] app=[\"Salones de eventos en Santa Cruz de la Sierra\",\"Todavía no hay proveedores publicados aquí.\",\"Esta categoría en otras ciudades\",\"Otras categorías en Santa Cruz de la Sierra\"] · art web=[] app=[\"emptySearch\"]",
+      "at": "2026-11-23T11:37:51.776Z"
+    },
+    {
+      "route": "directorio-vacio",
+      "path": "/proveedores/salones/santa-cruz",
+      "locale": "en-US",
+      "same": false,
+      "webStatus": 200,
+      "web": [
+        "This category in other cities",
+        "Other categories in Santa Cruz de la Sierra"
+      ],
+      "app": [
+        "Event venues in Santa Cruz de la Sierra",
+        "No vendors are published here yet.",
+        "This category in other cities",
+        "Other categories in Santa Cruz de la Sierra"
+      ],
+      "webArt": [],
+      "appArt": [
+        "emptySearch"
+      ],
+      "webActions": [
+        "See all categories",
+        "Event venues in La Paz",
+        "Event venues in Cochabamba",
+        "Event venues in Sucre",
+        "Event venues in Tarija",
+        "Event venues in Oruro",
+        "Event venues in Potosí",
+        "Event venues in Trinidad",
+        "Event venues in Cobija",
+        "Catering",
+        "Photography",
+        "Music"
+      ],
+      "appActions": [
+        "See all categories",
+        "Event venues in La Paz",
+        "Event venues in Cochabamba",
+        "Event venues in Sucre",
+        "Event venues in Tarija",
+        "Event venues in Oruro",
+        "Event venues in Potosí",
+        "Event venues in Trinidad",
+        "Event venues in Cobija",
+        "Catering",
+        "Photography",
+        "Music"
+      ],
+      "detail": "headings web=[\"This category in other cities\",\"Other categories in Santa Cruz de la Sierra\"] app=[\"Event venues in Santa Cruz de la Sierra\",\"No vendors are published here yet.\",\"This category in other cities\",\"Other categories in Santa Cruz de la Sierra\"] · art web=[] app=[\"emptySearch\"]",
+      "at": "2026-11-23T11:38:02.766Z"
+    },
+    {
+      "route": "partner",
+      "path": "/p/multicenter-59388c",
+      "locale": "es-BO",
+      "same": false,
+      "webStatus": 200,
+      "web": [
+        "Lo que ofrece",
+        "Sobre el proveedor",
+        "Zona de cobertura",
+        "Hablar directo con el proveedor"
+      ],
+      "app": [
+        "Katering Grecia",
+        "Lo que ofrece",
+        "Sobre el proveedor",
+        "Zona de cobertura",
+        "Hablar directo con el proveedor"
+      ],
+      "webArt": [],
+      "appArt": [],
+      "webActions": [
+        "Servicios de comida",
+        "Juego de platos dorados",
+        "Aguanile",
+        "Tortas para cumpleañeros",
+        "Equipos de cocina",
+        "Hotel Los Tajibos",
+        "Ver el catálogo completo",
+        "Escribir por WhatsApp"
+      ],
+      "appActions": [
+        "Pedir cotización",
+        "Ver disponibilidad",
+        "Servicios de comida",
+        "Juego de platos dorados",
+        "Aguanile",
+        "Tortas para cumpleañeros",
+        "Equipos de cocina",
+        "Hotel Los Tajibos",
+        "Ver el catálogo completo",
+        "Escribir por WhatsApp"
+      ],
+      "detail": "headings web=[\"Lo que ofrece\",\"Sobre el proveedor\",\"Zona de cobertura\",\"Hablar directo con el proveedor\"] app=[\"Katering Grecia\",\"Lo que ofrece\",\"Sobre el proveedor\",\"Zona de cobertura\",\"Hablar directo con el proveedor\"]",
+      "at": "2026-11-23T11:38:15.127Z"
+    },
+    {
+      "route": "partner",
+      "path": "/p/multicenter-59388c",
+      "locale": "en-US",
+      "same": false,
+      "webStatus": 200,
+      "web": [
+        "What they offer",
+        "About the vendor",
+        "Coverage area",
+        "Talk to the vendor directly"
+      ],
+      "app": [
+        "Katering Grecia",
+        "What they offer",
+        "About the vendor",
+        "Coverage area",
+        "Talk to the vendor directly"
+      ],
+      "webArt": [],
+      "appArt": [],
+      "webActions": [
+        "Servicios de comida",
+        "Juego de platos dorados",
+        "Aguanile",
+        "Tortas para cumpleañeros",
+        "Equipos de cocina",
+        "Hotel Los Tajibos",
+        "See the full catalog",
+        "Message on WhatsApp"
+      ],
+      "appActions": [
+        "Request a quote",
+        "See availability",
+        "Servicios de comida",
+        "Juego de platos dorados",
+        "Aguanile",
+        "Tortas para cumpleañeros",
+        "Equipos de cocina",
+        "Hotel Los Tajibos",
+        "See the full catalog",
+        "Message on WhatsApp"
+      ],
+      "detail": "headings web=[\"What they offer\",\"About the vendor\",\"Coverage area\",\"Talk to the vendor directly\"] app=[\"Katering Grecia\",\"What they offer\",\"About the vendor\",\"Coverage area\",\"Talk to the vendor directly\"]",
+      "at": "2026-11-23T11:38:29.711Z"
+    },
+    {
+      "route": "partner-agenda",
+      "path": "/p/multicenter-59388c/agenda",
+      "locale": "es-BO",
+      "same": true,
+      "webStatus": 200,
+      "web": [
+        "Disponibilidad de Katering Grecia",
+        "noviembre de 2026",
+        "Katering Grecia todavía no publicó sus días para noviembre de 2026"
+      ],
+      "app": [
+        "Disponibilidad de Katering Grecia",
+        "noviembre de 2026",
+        "Katering Grecia todavía no publicó sus días para noviembre de 2026"
+      ],
+      "webArt": [],
+      "appArt": [],
+      "webActions": [
+        "Katering Grecia",
+        "Mes anterior",
+        "Mes siguiente",
+        "Pedir cotización",
+        "Ver el mes siguiente"
+      ],
+      "appActions": [
+        "Mes anterior",
+        "Mes siguiente",
+        "Pedir cotización",
+        "Ver el mes siguiente"
+      ],
+      "detail": "",
+      "at": "2026-11-23T11:38:42.470Z"
+    }
+  ]
+}

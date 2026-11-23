@@ -16,7 +16,7 @@ import { clearGuestCredential, guestGiftPath } from '../../lib/guest-credential'
 import { clearDraft, emptyDraft, loadDraft, saveDraft, type RsvpDraft } from './rsvp-draft';
 import { AnswerFields, FailureNotice, TextField, validateAnswer, validateRegistration, type FieldErrors, type RegistrationDraft } from './rsvp-form';
 import { RsvpProviders } from './rsvp-providers';
-import { AnswerSummary, ClosedView, HostContactLines, Countdown, DeadlineLine, InvalidView, LoadFailureView, LoadingView, StateHeading, type ClosedInfo } from './rsvp-status';
+import { AnswerSummary, ClosedView, Countdown, DeadlineLine, InvalidView, LoadFailureView, LoadingView, RestrictedView, StateHeading, type ClosedInfo } from './rsvp-status';
 
 interface Props { readonly slug: string; readonly token?: string; readonly locale: AppLocale; readonly siteOrigin: string; readonly client?: ApiClient }
 
@@ -56,7 +56,7 @@ function Flow({ slug, token, locale, siteOrigin, client: injected }: Props): Rea
 
   const missing = celebration.error instanceof ApiError && celebration.error.status === 404;
   if (missing || revoked) return <InvalidView t={t} />;
-  if (celebration.isError) return <LoadFailureView t={t} message={t('rsvp.errors.offline')} onRetry={() => { void celebration.refetch(); }} />;
+  if (celebration.isError) return <LoadFailureView t={t} kind="offline" onRetry={() => { void celebration.refetch(); }} />;
   if (celebration.isPending) return <LoadingView t={t} />;
   const view = celebration.data;
   const content = readContent(view);
@@ -69,7 +69,7 @@ function Flow({ slug, token, locale, siteOrigin, client: injected }: Props): Rea
   if (rsvp.isError) {
     const failure = classifyRsvpError(rsvp.error);
     if (failure.kind === 'invalid') return <InvalidView t={t} />;
-    return <LoadFailureView t={t} message={failure.kind === 'offline' ? t('rsvp.errors.offline') : t('rsvp.errors.unavailable')} onRetry={() => { void rsvp.refetch(); }} />;
+    return <LoadFailureView t={t} kind={failure.kind === 'offline' ? 'offline' : 'unavailable'} onRetry={() => { void rsvp.refetch(); }} />;
   }
   if (rsvp.isPending) return <LoadingView t={t} />;
   const state = rsvp.data;
@@ -194,19 +194,9 @@ function UnregisteredFlow(props: { client: ApiClient; view: PublicCelebrationVie
   const { client, view, t, locale, hosts, contact } = props;
   const settings = usePublicRegistrationSettings(client, view.celebrationId);
   if (settings.isPending) return <LoadingView t={t} />;
-  if (settings.isError) return <LoadFailureView t={t} message={t('rsvp.unregistered.unavailable')} onRetry={() => { void settings.refetch(); }} />;
+  if (settings.isError) return <LoadFailureView t={t} kind="unavailable" onRetry={() => { void settings.refetch(); }} />;
   if (!settings.data.publicRegistrationEnabled) return <RestrictedView t={t} hosts={hosts} contact={contact} locale={locale} />;
   return <UnregisteredForm {...props} />;
-}
-
-function RestrictedView({ t, hosts, contact, locale }: { t: Translate; hosts: readonly string[]; contact: HostContact | undefined; locale: AppLocale }): ReactNode {
-  return (
-    <section className="rsvp-card rsvp-card--quiet" aria-labelledby="rsvp-restricted-title">
-      <StateHeading id="rsvp-restricted-title">{t('rsvp.unregistered.restrictedTitle')}</StateHeading>
-      <p>{t('rsvp.unregistered.restrictedBody')}</p>
-      <HostContactLines contact={contact} hosts={hosts} locale={locale} t={t} />
-    </section>
-  );
 }
 
 function UnregisteredForm({ client, view, slug, t, locale, siteOrigin, hosts, contact }: { client: ApiClient; view: PublicCelebrationView; slug: string; t: Translate; locale: AppLocale; siteOrigin: string; hosts: readonly string[]; contact: HostContact | undefined }): ReactNode {

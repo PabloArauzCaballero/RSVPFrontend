@@ -26,6 +26,10 @@
 .gifts__notice h2 { margin: 0; }
 .gifts__notice p { margin: 0; }
 .gifts__notice--warn { border-color: var(--warning, var(--accent)); background: var(--tone-yellow-bg, var(--accent-muted)); }
+/* A dead end of the list (link expired, other celebration, busy): the app's `LinkState`, drawing on top and centred. */
+.gifts__blocker { justify-items: center; text-align: center; background: var(--surface); }
+.gifts__blocker .state__art { width: 8rem; margin-bottom: 0; }
+.gifts__blocker p { color: var(--text-muted); }
 .gifts__notice--ok { border-color: var(--success); background: var(--success-bg); }
 .gift-dialog { width: min(100% - 2rem, 30rem); border: 1px solid var(--border); border-radius: var(--radius-cell, 12px); padding: 0; background: var(--surface); color: var(--text); box-shadow: var(--shadow-float); }
 .gift-dialog::backdrop { background: var(--scrim); }
