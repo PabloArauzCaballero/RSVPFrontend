@@ -2,36 +2,36 @@
   "$comment": "Backend commit whose OpenAPI specs are vendored in specs/. It must be the backend deployed with this frontend. Change it only with: yarn workspace @rsvp/contracts generate --ref <sha|branch|tag> (see README.md).",
   "repository": "PabloArauzCaballero/RSVPBackend",
   "path": "packages/contracts-openapi/specs",
-  "ref": "71993997bfe18301be3dad014c2c6f86dab3aa27",
-  "refName": "7199399",
+  "ref": "271b69efb491e5fcbf928ef63f83126709ef295d",
+  "refName": "271b69e",
   "specs": {
     "celebration": {
-      "version": "1.2.1",
-      "sha256": "8d5c53f71a9e0659e385e26a7895c096fe67860a33c9a4099bec6947074bb702"
+      "version": "1.4.0",
+      "sha256": "24224f080788265a788042fa410889bbab6bb42eada65a35bfda8fc1d262c1fa"
     },
     "gateway": {
       "version": "1.0.0",
       "sha256": "1307c08dc3ff407e77cb4a56b7f60a699ea42fcd898232825f213a40205486a5"
     },
     "gift-list": {
-      "version": "1.8.1",
-      "sha256": "f0164b4e4fd671f76e686745655f3af3251c0cba51269d4eec48eb022486f4db"
+      "version": "1.12.0",
+      "sha256": "d946e69dacc89ad65091f15aa3134c10fcd181348d02d5109712d8631bef9590"
     },
     "guest-rsvp": {
-      "version": "1.10.0",
-      "sha256": "710b597811d7b858d37e551a0dbb4a86644b43d2679fef66cc59177a26a133ef"
+      "version": "1.13.0",
+      "sha256": "532ec48dcd10e0c589c5daa1f2319330d9eef7e918406f35474942fe232ea004"
     },
     "identity": {
-      "version": "1.1.0",
-      "sha256": "32a28c1ce1dce3b1717d36b61e28d1cc700f4d03dbf86503db90adecaa16835d"
+      "version": "1.7.0",
+      "sha256": "680ff2cb3997f030cc5153c3a020dd64d3d04fe4ef152bb957e4f862109a5c29"
     },
     "notification": {
       "version": "1.5.0",
       "sha256": "670dd80c6c1e7fd0492ee69122e6ed7868da17328e7857fe5931428405670a39"
     },
     "provider-catalog": {
-      "version": "2.9.1",
-      "sha256": "e0f8dee15e7093db9daf234146ade70e4460c9d8b3e3086ec4ac2ab842480ace"
+      "version": "3.2.0",
+      "sha256": "023f8d29a5c54d2c24bd830af5a2d49220fb8512d91a1a6cf936df9df926da03"
     },
     "template-media": {
       "version": "1.0.0",

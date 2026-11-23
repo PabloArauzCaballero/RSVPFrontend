@@ -140,70 +140,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/private/admin/providers/{providerId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Admin provider verification lifecycle
-         * @description Direct service URL: /providers/private/admin/providers/{providerId}. ADMIN only on this explicit administrative route; administrative actor can differ from owner. HEAD shares access/lookup/status/headers without body. expectedVersion is a concurrency precondition, never authority.
-         */
-        get: operations["getAdministrativeProvider"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        /**
-         * Admin provider verification lifecycle
-         * @description Direct service URL: /providers/private/admin/providers/{providerId}. ADMIN only on this explicit administrative route; administrative actor can differ from owner. HEAD shares access/lookup/status/headers without body. expectedVersion is a concurrency precondition, never authority.
-         */
-        head: operations["headAdministrativeProvider"];
-        patch?: never;
-        trace?: never;
-    };
-    "/private/admin/providers/{providerId}/suspend": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Admin provider verification lifecycle
-         * @description Direct service URL: /providers/private/admin/providers/{providerId}/suspend. ADMIN only on this explicit administrative route; administrative actor can differ from owner. HEAD shares access/lookup/status/headers without body. expectedVersion is a concurrency precondition, never authority.
-         */
-        post: operations["suspendPrivateProvider"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/private/admin/providers/{providerId}/verify": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Admin provider verification lifecycle
-         * @description Direct service URL: /providers/private/admin/providers/{providerId}/verify. ADMIN only on this explicit administrative route; administrative actor can differ from owner. HEAD shares access/lookup/status/headers without body. expectedVersion is a concurrency precondition, never authority.
-         */
-        post: operations["verifyPrivateProvider"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/private/providers": {
         parameters: {
             query?: never;
@@ -316,50 +252,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/private/providers/{providerId}/verification": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Owner provider verification lifecycle
-         * @description Direct service URL: /providers/private/providers/{providerId}/verification. PROVIDER plus persisted ownership; foreign/absent IDs share 404. HEAD shares access/lookup/status/headers without body. expectedVersion is a concurrency precondition, never authority.
-         */
-        get: operations["getProviderVerification"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        /**
-         * Owner provider verification lifecycle
-         * @description Direct service URL: /providers/private/providers/{providerId}/verification. PROVIDER plus persisted ownership; foreign/absent IDs share 404. HEAD shares access/lookup/status/headers without body. expectedVersion is a concurrency precondition, never authority.
-         */
-        head: operations["headProviderVerification"];
-        patch?: never;
-        trace?: never;
-    };
-    "/private/providers/{providerId}/verification-requests": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Owner provider verification lifecycle
-         * @description Direct service URL: /providers/private/providers/{providerId}/verification-requests. PROVIDER plus persisted ownership; foreign/absent IDs share 404. HEAD shares access/lookup/status/headers without body. expectedVersion is a concurrency precondition, never authority.
-         */
-        post: operations["requestProviderVerification"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/providers": {
         parameters: {
             query?: never;
@@ -421,7 +313,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Booking requests of the provider (owner only) */
+        /**
+         * Booking requests of the provider (owner only)
+         * @description Keyset page ordered by (date, id). Follow nextCursor until it is null to read every booking.
+         */
         get: operations["listProviderBookings"];
         put?: never;
         /** Request a date; capacity is enforced atomically */
@@ -701,13 +596,31 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** Quote requests received by the provider (owner only), newest first */
+        get: operations["listProviderQuotes"];
         put?: never;
         /**
          * Persist a quote request, create a form lead and emit QuoteRequested (signed in, or anonymous where enabled)
          * @description Decision (DECISIONS.md 2026-11-05): quotes may be anonymous only when PROVIDER_ANON_QUOTES is `captcha` (default when a captcha verifier is configured) or `open` (local development). Anonymous requests need contact.email, are limited to 5 per hour per client address (429 + Retry-After) and 3 per day per contact e-mail and provider (429 QUOTE_LIMIT_REACHED), reject a filled honeypot `website` (422 QUOTE_REJECTED) and, in captcha mode, a valid captchaToken (403 CAPTCHA_FAILED). With mode `off` (default without a verifier) anonymous requests answer 401 ANONYMOUS_QUOTES_DISABLED. Date requests (bookings) always require an account.
          */
         post: operations["requestQuote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/{providerId}/quotes/{quoteId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One quote request with the requester's contact (owner only) */
+        get: operations["getProviderQuote"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -816,6 +729,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/providers/admin/documents/{documentId}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Presigned GET (5 minutes) of a partner or intake document; audited as document.downloaded */
+        get: operations["downloadAdminDocument"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/providers/admin/geography": {
         parameters: {
             query?: never;
@@ -844,6 +774,123 @@ export interface paths {
         /** Create or update a region or city (a new city needs coordinates) */
         put: operations["adminUpsertGeography"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/admin/intakes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Intakes by status (default OPEN, latest 100) */
+        get: operations["listPartnerIntakes"];
+        put?: never;
+        /**
+         * Step 1 of the create-partner wizard: open an intake (draft) for an existing Identity user
+         * @description Audited as partner-intake.created. The owner is not re-validated against Identity (no service token, B10).
+         */
+        post: operations["createPartnerIntake"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/admin/intakes/{intakeId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Resume an intake */
+        get: operations["getPartnerIntake"];
+        put?: never;
+        post?: never;
+        /** Discard the draft (and its uploaded files) */
+        delete: operations["discardPartnerIntake"];
+        options?: never;
+        head?: never;
+        /**
+         * Save wizard steps; returns per-step fieldErrors without rejecting the draft
+         * @description The Intake carries warnings.nitInUse when kyp.nit is already used by other partners (a warning, not an error).
+         */
+        patch: operations["updatePartnerIntake"];
+        trace?: never;
+    };
+    "/providers/admin/intakes/{intakeId}/commit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create the partner (VERIFIED, origin ADMIN, KYP COMPLETE) in one transaction
+         * @description Validates identity, contact, coverage and the mandatory KYP by person type, then in ONE transaction: inserts the provider, KYP (encrypted) and profile, moves the documents (review ACCEPTED), writes admin_audit provider.created-by-admin and enqueues provider.provider.registered.v2 (no KYP data). The owner's PROVIDER role is granted by the admin UI beforehand (DPA-9, option B).
+         */
+        post: operations["commitPartnerIntake"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/admin/intakes/{intakeId}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Register a KYP document of the intake and get a presigned PUT
+         * @description PDF, JPEG, PNG or WebP; up to 10 MB; up to 20 per intake. Audited as document.uploaded.
+         */
+        post: operations["registerPartnerIntakeDocument"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/admin/intakes/{intakeId}/documents/{documentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove an intake document (audited) */
+        delete: operations["deletePartnerIntakeDocument"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/admin/intakes/{intakeId}/documents/{documentId}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Verify the uploaded object (HEAD) */
+        post: operations["completePartnerIntakeDocument"];
         delete?: never;
         options?: never;
         head?: never;
@@ -912,6 +959,186 @@ export interface paths {
         put?: never;
         /** Reject a moderation item (reason required) */
         post: operations["adminRejectModeration"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/admin/partners": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Every partner with server-side filters, sort and pagination
+         * @description Owner e-mails are resolved by the admin UI with GET /identity/admin/users?ids=.
+         */
+        get: operations["listAdminPartners"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/admin/partners/{providerId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Partner detail: data, contact, coverage, masked KYP, documents and the latest 50 audit entries */
+        get: operations["getAdminPartner"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Partial edit of identity, contact, coverage and KYP (audited diff without sensitive values)
+         * @description Invalid values -> 422 VALIDATION_FAILED or CI_EXPIRED. Missing KYP data is accepted while the KYP is not COMPLETE; a COMPLETE KYP that would become incomplete -> 422 KYP_INCOMPLETE.
+         */
+        patch: operations["updateAdminPartner"];
+        trace?: never;
+    };
+    "/providers/admin/partners/{providerId}/change-owner": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change the partner owner (behind PROVIDER_OWNER_CHANGE_ENABLED, default false: 409 OWNER_CHANGE_UNAVAILABLE until F4 role revocation ships, DPA-3)
+         * @description With PROVIDER_OWNER_CHANGE_ENABLED=true, ONE transaction updates the owner under If-Match, writes admin_audit provider.owner-changed (detail: previousOwnerUserId, newOwnerUserId; reason) and enqueues provider.provider.owner-changed.v1. The admin UI grants PROVIDER to the new owner and revokes it from the previous one only when previousOwnerStillOwns is 0.
+         */
+        post: operations["changeAdminPartnerOwner"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/admin/partners/{providerId}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Register a KYP document of an existing partner (presigned PUT) */
+        post: operations["registerAdminPartnerDocument"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/admin/partners/{providerId}/documents/{documentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove a partner document (administrator only for ACCEPTED KYP evidence; audited) */
+        delete: operations["deleteAdminPartnerDocument"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/admin/partners/{providerId}/documents/{documentId}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Verify the uploaded object (HEAD) */
+        post: operations["completeAdminPartnerDocument"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/admin/partners/{providerId}/documents/{documentId}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accept or reject a document; rejecting a required one reopens a COMPLETE KYP (PENDING) */
+        post: operations["reviewAdminPartnerDocument"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/admin/partners/{providerId}/kyp/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revalidate the KYP; complete -> kypStatus COMPLETE, else 422 KYP_INCOMPLETE / CI_EXPIRED */
+        post: operations["completeAdminPartnerKyp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/admin/partners/{providerId}/reactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** SUSPENDED -> VERIFIED, only with kypStatus COMPLETE or EXPIRING (else 422 KYP_INCOMPLETE) */
+        post: operations["reactivateAdminPartner"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/admin/partners/{providerId}/suspend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Suspend with a mandatory reason; the partner leaves the public directory at once */
+        post: operations["suspendAdminPartner"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1030,7 +1257,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Booking requests made by the caller */
+        /**
+         * Booking requests made by the caller
+         * @description Keyset page ordered by (date, id). Follow nextCursor until it is null to read every booking.
+         */
         get: operations["listMyBookings"];
         put?: never;
         post?: never;
@@ -1131,7 +1361,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description H05B minimal PRODUCT_PAGE redirect only. Resolve exclusively the stored validated officialProductUrl; inject controlled UTM and correlationId without fetching or navigating to destination. Persist anonymous unqualified nonbillable click(valid:false/UNASSESSED), then LeadMarkedInvalid outbox atomically before302. Known suspended product records invalid/SUSPENDED then404 without Location. Service/nonpublic/missing product or disabled destination404. Unknown/duplicate query or arbitrary url/next/redirect422. No celebration/guest authority inferred from query. Failure to persist/outbox503 and no302. This is not the complete qualified lead, billing, bot, dedupe or ranking engine. Compatibility destinations and lead semantics from dev are retained; final runtime interoperability remains a release gate. */
+        /** @description One partner redirector (A23). The own gift-catalog products (H05B) resolve their PRODUCT_PAGE through the H05B boundary: the stored validated officialProductUrl with controlled UTM and correlationId, an anonymous nonbillable click (valid:false, reason unassessed) and its provider.lead.marked-invalid.v1 outbox committed atomically before the 302; a suspended provider records the click (reason suspended) and answers 404 without Location; unknown or duplicate query keys (url, next, redirect...) answer 422. Every other listing and destination (OFFICIAL_SITE, LANDING, WHATSAPP, PHONE, EMAIL, INSTAGRAM, PRODUCT_PAGE) is resolved by the marketplace redirector: the lead (valid, or invalid dup/bot) and its event are stored in one transaction before the 302 (never 301). Only a destination stored on the listing, enabled in its lead configuration and still passing its whitelist can become the Location; anything else is 404. tel: and mailto: targets are returned intact; https targets get utm_source, utm_medium, utm_campaign and correlationId. Failure to persist the click or its outbox answers 503 and never 302. */
         get: operations["resolveListingRedirect"];
         put?: never;
         post?: never;
@@ -1160,6 +1390,15 @@ export interface components {
             names: {
                 [key: string]: string;
             };
+        };
+        AdminDocumentDownload: {
+            /** Format: uuid */
+            documentId: string;
+            /** Format: date-time */
+            expiresAt: string;
+            kind: components["schemas"]["DocumentKind"];
+            /** Format: uri */
+            url: string;
         };
         AdminGeoEntry: {
             active: boolean;
@@ -1206,23 +1445,17 @@ export interface components {
             /** @description Valid leads in the range. */
             total: number;
         };
-        AdminProviderView: {
-            /** @description Three uppercase ASCII letters; this does not validate the complete ISO currency catalogue. */
-            currency: string;
+        AuditEntry: {
+            action: string;
             /** Format: uuid */
-            id: string;
-            /** Format: uuid */
-            ownerId: string;
-            /** @enum {string} */
-            plan: "FREE" | "FEATURED" | "PREMIUM";
-            /** @enum {string} */
-            status: "DRAFT" | "PENDING_VERIFICATION" | "VERIFIED" | "SUSPENDED" | "REJECTED";
-            /**
-             * Format: provider-iana-time-zone
-             * @description IANA zone supported by this runtime, including UTC; arbitrary numeric offsets are rejected.
-             */
-            timeZone: string;
-            version: number;
+            actorId: string;
+            /** @description Ids, codes and diffs; sensitive values are REDACTED. */
+            detail: {
+                [key: string]: unknown;
+            };
+            /** Format: date-time */
+            occurredAt: string;
+            reason: string | null;
         };
         Availability: {
             blackouts?: {
@@ -1279,7 +1512,9 @@ export interface components {
             version?: number;
         };
         BookingList: {
-            items?: components["schemas"]["Booking"][];
+            items: components["schemas"]["Booking"][];
+            /** @description Opaque cursor of the next page, to pass back as ?cursor; null when this is the last page. */
+            nextCursor: string | null;
         };
         /** @description Provide startsAt (UTC instant) or date (+ optional time in the provider time zone). */
         BookingRequest: {
@@ -1823,6 +2058,30 @@ export interface components {
                 };
                 slug?: string;
             }[];
+        };
+        /** @description Required while PROVIDER_OWNER_CHANGE_ENABLED is true; with the flag off every call answers 409 OWNER_CHANGE_UNAVAILABLE. */
+        ChangePartnerOwnerInput: {
+            /**
+             * Format: uuid
+             * @description Identity user that becomes the owner; must differ from the current owner (else 422 SAME_OWNER).
+             */
+            newOwnerUserId?: string;
+            /**
+             * Format: uuid
+             * @deprecated
+             * @description Never honored (2.5.0 stub); use newOwnerUserId.
+             */
+            ownerUserId?: string;
+            /** @description Mandatory (else 422 REASON_REQUIRED); stored in admin_audit. */
+            reason?: string;
+        };
+        /** @enum {string} */
+        CiExtension: "LP" | "CB" | "SC" | "OR" | "PT" | "CH" | "TJ" | "BE" | "PD";
+        CommitIntakeInput: {
+            /** @description Confirms creating the partner although another partner already uses its NIT (see Intake.warnings.nitInUse). Absent means false. */
+            acknowledgeDuplicateNit?: boolean;
+            /** @constant */
+            confirmReviewed: true;
         };
         CreateListing: {
             category: string;
@@ -2458,9 +2717,11 @@ export interface components {
             /** @description Display name only; no path separators */
             fileName: string;
             /** @enum {string} */
-            kind: "IDENTITY" | "BUSINESS_REGISTRATION" | "TAX_ID" | "ADDRESS_PROOF" | "OTHER";
+            kind: "IDENTITY" | "BUSINESS_REGISTRATION" | "TAX_ID" | "ADDRESS_PROOF" | "POWER_OF_ATTORNEY" | "BANK_CERTIFICATE" | "OTHER";
             sizeBytes: number;
         };
+        /** @enum {string} */
+        DocumentKind: "IDENTITY" | "BUSINESS_REGISTRATION" | "TAX_ID" | "ADDRESS_PROOF" | "POWER_OF_ATTORNEY" | "BANK_CERTIFICATE" | "OTHER";
         DocumentRegistration: components["schemas"]["ProviderDocument"] & {
             upload: {
                 /** Format: date-time */
@@ -2476,6 +2737,17 @@ export interface components {
                  */
                 url: string;
             };
+        };
+        /** @enum {string} */
+        DocumentReview: "PENDING" | "ACCEPTED" | "REJECTED";
+        DocumentReviewInput: {
+            /** @enum {string} */
+            decision: "ACCEPTED" | "REJECTED";
+            reason?: string;
+        };
+        /** @description Field path -> code (REQUIRED, INVALID_NIT, CI_EXPIRED, UNKNOWN_CITY, SLUG_TAKEN, ...). */
+        FieldErrors: {
+            [key: string]: string;
         };
         Fulfillment: {
             /** @description Locale -> text (es-BO, en-US...). */
@@ -2516,6 +2788,90 @@ export interface components {
             listingIds: string[];
             surface?: string;
         };
+        Intake: {
+            contact?: components["schemas"]["PartnerContact"];
+            coverage?: components["schemas"]["PartnerCoverage"];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            createdBy: string;
+            documents: components["schemas"]["IntakeDocument"][];
+            fieldErrors: {
+                contact: components["schemas"]["FieldErrors"];
+                coverage: components["schemas"]["FieldErrors"];
+                identity: components["schemas"]["FieldErrors"];
+                kyp: components["schemas"]["FieldErrors"];
+            };
+            /** Format: uuid */
+            id: string;
+            identity?: components["schemas"]["PartnerIdentity"];
+            kyp?: components["schemas"]["PartnerKyp"];
+            /** Format: uuid */
+            ownerUserId: string;
+            /**
+             * Format: uuid
+             * @description Present once COMMITTED.
+             */
+            providerId?: string;
+            representativeInRegistration?: boolean;
+            /** @enum {string} */
+            status: "OPEN" | "COMMITTED" | "DISCARDED";
+            /** Format: date-time */
+            updatedAt: string;
+            warnings: components["schemas"]["IntakeWarnings"];
+        };
+        IntakeCreateInput: {
+            /**
+             * Format: uuid
+             * @description Identity user resolved by the admin UI with GET /identity/admin/users?email= (not re-checked here, B10).
+             */
+            ownerUserId: string;
+        };
+        IntakeDocument: {
+            contentType: string;
+            /** Format: date-time */
+            createdAt: string;
+            fileName: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            intakeId: string;
+            kind: components["schemas"]["DocumentKind"];
+            sizeBytes: number;
+            /** @enum {string} */
+            status: "PENDING_UPLOAD" | "UPLOADED";
+            /** Format: date-time */
+            uploadedAt?: string;
+        };
+        /** @description Each section given replaces the stored one. Wrong types or unknown fields -> 422 VALIDATION_FAILED; business rules come back as fieldErrors without rejecting the save. */
+        IntakeSectionsInput: {
+            contact?: components["schemas"]["PartnerContact"];
+            coverage?: components["schemas"]["PartnerCoverage"];
+            identity?: components["schemas"]["PartnerIdentity"];
+            kyp?: components["schemas"]["PartnerKyp"];
+            representativeInRegistration?: boolean;
+        };
+        IntakeSummary: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            createdBy: string;
+            /** Format: uuid */
+            id: string;
+            name: string | null;
+            /** Format: uuid */
+            ownerUserId: string;
+            slug: string | null;
+            /** @enum {string} */
+            status: "OPEN" | "COMMITTED" | "DISCARDED";
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        /** @description Non-blocking warnings of an OPEN intake; an empty object when there are none. */
+        IntakeWarnings: {
+            /** @description Partners that already use kyp.nit. The commit then needs acknowledgeDuplicateNit: true (else 409 NIT_IN_USE). */
+            nitInUse?: components["schemas"]["NitMatch"][];
+        };
         InternalProviderNotificationProfile: {
             /** @enum {string|null} */
             channel: "EMAIL" | "SMS" | "WHATSAPP" | "PUSH" | null;
@@ -2527,6 +2883,25 @@ export interface components {
             providerId: string;
             timeZone: string;
         };
+        /** @description PUT the raw bytes to uploadUrl sending exactly `headers` (presigned, 10 minutes), then POST .../complete. */
+        KypDocumentUpload: {
+            /** Format: uuid */
+            documentId: string;
+            /** Format: date-time */
+            expiresAt: string;
+            headers: {
+                [key: string]: string;
+            };
+            /** @constant */
+            method: "PUT";
+            /** Format: uri */
+            uploadUrl: string;
+        };
+        /**
+         * @description EXPIRING: COMPLETE and the representative CI expires within 30 days; EXPIRED: COMPLETE and the CI already expired.
+         * @enum {string}
+         */
+        KypStatus: "COMPLETE" | "PENDING" | "EXPIRING" | "EXPIRED";
         Lead: {
             billable?: boolean;
             category?: string;
@@ -2629,6 +3004,15 @@ export interface components {
                 url: string;
             }[];
             hours: components["schemas"]["BusinessHours"];
+            /** @description Owner and administrators only (A20): last moderation of the microsite. A REJECTED microsite is not public (published false) until an administrator approves a newer version; the public read then answers version 0 with empty fields. */
+            moderation?: {
+                published: boolean;
+                reason: string | null;
+                /** @enum {string} */
+                status: "PENDING" | "APPROVED" | "REJECTED";
+                /** Format: date-time */
+                submittedAt: string;
+            };
             /** Format: uuid */
             providerId: string;
             social: {
@@ -2713,9 +3097,170 @@ export interface components {
             nextCursor: string | null;
             originCityId: string;
         };
+        /** @description Another partner whose KYP already uses the NIT (duplicate-NIT warning). Duplicates are allowed after confirmation: two partners may belong to the same company. */
+        NitMatch: {
+            name: string;
+            /** Format: uuid */
+            providerId: string;
+            slug: string | null;
+        };
         OptionalReasonRequest: {
             reason?: string;
         };
+        PartnerContact: {
+            phone?: string;
+            publicEmail?: string;
+            social?: {
+                facebook?: string;
+                instagram?: string;
+                tiktok?: string;
+            };
+            website?: string;
+            whatsapp?: string;
+        };
+        /** @description Codes of the normalized geography only (GET /providers/geo): departmentCode, a cityCode of that department and zoneCodes that are known city codes. No free text (PA-10). */
+        PartnerCoverage: {
+            cityCode?: string;
+            departmentCode?: string;
+            zoneCodes?: string[];
+        };
+        /** @description ETag carries `version` for If-Match. `audit` holds the latest 50 admin_audit entries of the partner. */
+        PartnerDetail: {
+            audit: components["schemas"]["AuditEntry"][];
+            contact: components["schemas"]["PartnerContact"];
+            coverage: components["schemas"]["PartnerCoverage"];
+            /** Format: date-time */
+            createdAt: string;
+            createdBy: string | null;
+            documents: components["schemas"]["PartnerDocument"][];
+            /** Format: uuid */
+            id: string;
+            identity: components["schemas"]["PartnerIdentityView"];
+            kyp: components["schemas"]["PartnerKyp"] | null;
+            kypCompletedAt: string | null;
+            kypReviewDueAt: string | null;
+            kypStatus: components["schemas"]["KypStatus"];
+            name: string;
+            origin: components["schemas"]["ProviderOrigin"];
+            /** Format: uuid */
+            ownerUserId: string;
+            personType: components["schemas"]["PersonType"] | null;
+            plan: string;
+            publishedListings: number;
+            representativeInRegistration: boolean;
+            slug: string | null;
+            status: components["schemas"]["ProviderStatus"];
+            statusReason: string | null;
+            /** Format: date-time */
+            updatedAt: string;
+            version: number;
+        };
+        PartnerDocument: components["schemas"]["ProviderDocument"] & {
+            reviewedAt: string | null;
+            reviewedBy: string | null;
+            reviewReason: string | null;
+            reviewStatus: components["schemas"]["DocumentReview"];
+        };
+        /** @description Commit rules: name 1..120; slug ^[a-z0-9-]{3,60}$ without leading, trailing or double hyphens, unique; categoryCodes 1..10 codes of /providers/categories; description up to 2000; plan FREE, FEATURED or PREMIUM. */
+        PartnerIdentity: {
+            categoryCodes?: string[];
+            description?: string;
+            name?: string;
+            plan?: string;
+            slug?: string;
+        };
+        PartnerIdentityView: {
+            categoryCodes: string[];
+            description: string | null;
+            name: string;
+            plan: string;
+            slug: string | null;
+        };
+        /** @description Bolivian KYP. Drafts accept any subset; the commit requires personType, legalName, nit (7-12 digits), legalAddress, representative (ciNumber digits, ciExtension of the closed list, ciExpiresOn not in the past -> CI_EXPIRED), seprecRegistration for UNIPERSONAL and JURIDICA, companyType for JURIDICA. Required documents: NATURAL TAX_ID, IDENTITY, ADDRESS_PROOF; UNIPERSONAL adds BUSINESS_REGISTRATION; JURIDICA adds BUSINESS_REGISTRATION and POWER_OF_ATTORNEY unless representativeInRegistration=true; BANK_CERTIFICATE when bankAccount is given. In responses ciNumber and accountNumber are masked (****1234); sending a masked value back keeps the stored number. */
+        PartnerKyp: {
+            bankAccount?: {
+                /** @description Encrypted at rest; always masked in responses. */
+                accountNumber?: string;
+                bank?: string;
+                /** @enum {string} */
+                currency?: "BOB" | "USD";
+                holder?: string;
+            };
+            companyType?: string;
+            legalAddress?: {
+                cityCode?: string;
+                departmentCode?: string;
+                line?: string;
+            };
+            legalName?: string;
+            nit?: string;
+            personType?: components["schemas"]["PersonType"];
+            powerOfAttorney?: {
+                /** Format: date */
+                date?: string;
+                notary?: string;
+                number?: string;
+            };
+            representative?: {
+                ciComplement?: string;
+                /** Format: date */
+                ciExpiresOn?: string;
+                ciExtension?: components["schemas"]["CiExtension"];
+                /** @description Encrypted at rest; masked in responses unless GET ?reveal=ci (audited). */
+                ciNumber?: string;
+                fullName?: string;
+            };
+            /** Format: date */
+            seprecDate?: string;
+            seprecRegistration?: string;
+        };
+        /** @description PartnerDetail after the owner change plus previousOwnerStillOwns. The admin UI revokes PROVIDER from the previous owner (Identity, F4) only when previousOwnerStillOwns is 0; the backend never calls Identity (B10). */
+        PartnerOwnerChange: components["schemas"]["PartnerDetail"] & {
+            /** @description Other providers the previous owner still owns. */
+            previousOwnerStillOwns: number;
+        };
+        PartnerPage: {
+            items: components["schemas"]["PartnerRow"][];
+            page: number;
+            pageSize: number;
+            total: number;
+        };
+        PartnerRow: {
+            /** @description First partner category, else the category of its oldest listing. */
+            categoryCode: string | null;
+            /** @description Partner coverage city, else the city of its oldest listing. */
+            cityCode: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            createdBy: string | null;
+            /** Format: uuid */
+            id: string;
+            kypReviewDueAt: string | null;
+            kypStatus: components["schemas"]["KypStatus"];
+            name: string;
+            origin: components["schemas"]["ProviderOrigin"];
+            /** Format: uuid */
+            ownerUserId: string;
+            personType: components["schemas"]["PersonType"] | null;
+            plan: string;
+            publishedListings: number;
+            slug: string | null;
+            status: components["schemas"]["ProviderStatus"];
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        /** @description IntakeSectionsInput plus acknowledgeDuplicateNit. A kyp.nit change that another partner already uses needs acknowledgeDuplicateNit: true (else 409 NIT_IN_USE). */
+        PartnerUpdateInput: {
+            /** @description Confirms a kyp.nit already used by another partner. Absent means false. */
+            acknowledgeDuplicateNit?: boolean;
+            contact?: components["schemas"]["PartnerContact"];
+            coverage?: components["schemas"]["PartnerCoverage"];
+            identity?: components["schemas"]["PartnerIdentity"];
+            kyp?: components["schemas"]["PartnerKyp"];
+            representativeInRegistration?: boolean;
+        };
+        /** @enum {string} */
+        PersonType: "NATURAL" | "UNIPERSONAL" | "JURIDICA";
         /** @enum {string} */
         Plan: "FREE" | "FEATURED" | "PREMIUM";
         PrivateProvider: {
@@ -2865,6 +3410,7 @@ export interface components {
             code?: string;
             /** Format: uuid */
             correlationId?: string;
+            /** @description Machine-readable context (always an object). KYP_INCOMPLETE (since 2.5.0): {missing: string[]} with kyp.<path> and documents.<KIND> entries. NIT_IN_USE: {providers: NitMatch[]}. */
             details?: {
                 [key: string]: unknown;
             };
@@ -2886,6 +3432,13 @@ export interface components {
             /** @description Null for a minimal private registration until that public business field is supplied. */
             slug: string | null;
             status: components["schemas"]["ProviderStatus"];
+            /**
+             * Format: date-time
+             * @description Owner and administrators only: instant of the last status decision (verify, suspend, reject).
+             */
+            statusChangedAt?: string | null;
+            /** @description Owner and administrators only (A20): the administrator reason of the last reject or suspend, shown to the provider in its portal; null after a verification or when there was no reason. */
+            statusReason?: string | null;
             timeZone: string;
             version: number;
         };
@@ -2926,144 +3479,13 @@ export interface components {
             kind: string;
             /** Format: uuid */
             providerId: string;
+            /** @description 2.5.0: administrator review (PENDING until reviewed). An owner cannot delete an ACCEPTED document (403 DOCUMENT_REVIEWED_ADMIN_ONLY). */
+            reviewStatus?: components["schemas"]["DocumentReview"];
             sizeBytes: number;
             /** @enum {string} */
             status: "PENDING_UPLOAD" | "UPLOADED";
             /** Format: date-time */
             uploadedAt?: string;
-        };
-        ProviderLifecycleProblem: {
-            /** @constant */
-            code: "PROVIDER_UNAUTHORIZED";
-            /** Format: uuid */
-            correlationId: string;
-            /** @constant */
-            status: 401;
-            /** @constant */
-            title: "Unauthorized";
-            /** @constant */
-            type: "about:blank";
-        } | {
-            /** @constant */
-            code: "PROVIDER_FORBIDDEN";
-            /** Format: uuid */
-            correlationId: string;
-            /** @constant */
-            status: 403;
-            /** @constant */
-            title: "Forbidden";
-            /** @constant */
-            type: "about:blank";
-        } | {
-            /** @constant */
-            code: "PROVIDER_NOT_FOUND";
-            /** Format: uuid */
-            correlationId: string;
-            /** @constant */
-            status: 404;
-            /** @constant */
-            title: "Not Found";
-            /** @constant */
-            type: "about:blank";
-        } | {
-            /** @constant */
-            code: "PROVIDER_REQUEST_TIMEOUT";
-            /** Format: uuid */
-            correlationId: string;
-            /** @constant */
-            status: 408;
-            /** @constant */
-            title: "Request Timeout";
-            /** @constant */
-            type: "about:blank";
-        } | {
-            /** @constant */
-            code: "PROVIDER_PAYLOAD_TOO_LARGE";
-            /** Format: uuid */
-            correlationId: string;
-            /** @constant */
-            status: 413;
-            /** @constant */
-            title: "Payload Too Large";
-            /** @constant */
-            type: "about:blank";
-        } | {
-            /** @constant */
-            code: "PROVIDER_UNSUPPORTED_MEDIA_TYPE";
-            /** Format: uuid */
-            correlationId: string;
-            /** @constant */
-            status: 415;
-            /** @constant */
-            title: "Unsupported Media Type";
-            /** @constant */
-            type: "about:blank";
-        } | {
-            /** @constant */
-            code: "PROVIDER_VALIDATION";
-            /** Format: uuid */
-            correlationId: string;
-            /** @constant */
-            status: 422;
-            /** @constant */
-            title: "Unprocessable Entity";
-            /** @constant */
-            type: "about:blank";
-        } | {
-            /** @constant */
-            code: "PROVIDER_INTERNAL_ERROR";
-            /** Format: uuid */
-            correlationId: string;
-            /** @constant */
-            status: 500;
-            /** @constant */
-            title: "Internal Server Error";
-            /** @constant */
-            type: "about:blank";
-        } | {
-            /** @constant */
-            code: "PROVIDER_DEPENDENCY_UNAVAILABLE";
-            /** Format: uuid */
-            correlationId: string;
-            /** @constant */
-            status: 503;
-            /** @constant */
-            title: "Service Unavailable";
-            /** @constant */
-            type: "about:blank";
-        } | {
-            /** @constant */
-            code: "PROVIDER_STALE_VERSION";
-            /** Format: uuid */
-            correlationId: string;
-            /** @constant */
-            status: 409;
-            /** @constant */
-            title: "Conflict";
-            /** @constant */
-            type: "about:blank";
-        } | {
-            /** @constant */
-            code: "PROVIDER_INVALID_TRANSITION";
-            /** Format: uuid */
-            correlationId: string;
-            /** @constant */
-            status: 409;
-            /** @constant */
-            title: "Conflict";
-            /** @constant */
-            type: "about:blank";
-        } | {
-            /** @constant */
-            code: "PROVIDER_VERSION_EXHAUSTED";
-            /** Format: uuid */
-            correlationId: string;
-            /** @constant */
-            status: 409;
-            /** @constant */
-            title: "Conflict";
-            /** @constant */
-            type: "about:blank";
         };
         ProviderNotificationSettings: {
             /** @enum {string|null} */
@@ -3075,11 +3497,69 @@ export interface components {
             /** Format: uuid */
             providerId: string;
         };
+        /** @enum {string} */
+        ProviderOrigin: "ADMIN" | "SELF_SERVICE";
         ProviderPage: {
             items: components["schemas"]["ProviderCard"][];
             page: number;
             pageSize: number;
             total: number;
+        };
+        ProviderQuote: {
+            budget: null | {
+                amountMinor: number;
+                currency: string;
+            };
+            contact: {
+                /** Format: email */
+                email: string;
+                name: string;
+                phone: string | null;
+            };
+            contactName: string;
+            /** Format: date-time */
+            createdAt: string;
+            eventCity: string | null;
+            /** Format: date */
+            eventDate: string;
+            guestCount: number;
+            hasMessage: boolean;
+            /** Format: uuid */
+            id: string;
+            leadId: null | string;
+            listingIds: string[];
+            locale: string;
+            message: string | null;
+            /** Format: uuid */
+            providerId: string;
+            /** @enum {string} */
+            status: "REQUESTED";
+        };
+        ProviderQuotePage: {
+            items: components["schemas"]["ProviderQuoteSummary"][];
+            nextCursor: string | null;
+        };
+        ProviderQuoteSummary: {
+            budget: null | {
+                amountMinor: number;
+                currency: string;
+            };
+            contactName: string;
+            /** Format: date-time */
+            createdAt: string;
+            eventCity: string | null;
+            /** Format: date */
+            eventDate: string;
+            guestCount: number;
+            hasMessage: boolean;
+            /** Format: uuid */
+            id: string;
+            listingIds: string[];
+            locale: string;
+            /** Format: uuid */
+            providerId: string;
+            /** @enum {string} */
+            status: "REQUESTED";
         };
         /** @enum {string} */
         ProviderStatus: "DRAFT" | "PENDING_VERIFICATION" | "VERIFIED" | "SUSPENDED" | "REJECTED";
@@ -3095,10 +3575,6 @@ export interface components {
                 [key: string]: number;
             };
             quotes: number;
-        };
-        ProviderTransitionInput: {
-            /** @description The original JSON number must represent an exact integer in 1..2147483647. Exact decimal/exponent forms such as 1.0 or 1e0 are accepted; fractions that round to an integer during parsing are rejected. Schema validation of a parsed number alone cannot observe the original numeric lexeme. */
-            expectedVersion: number;
         };
         QuoteInput: {
             budgetMinor?: number;
@@ -3181,13 +3657,6 @@ export interface components {
             status: "PENDING" | "VERIFIED" | "REJECTED" | "SUSPENDED";
             /** Format: date-time */
             submittedAt: string;
-        };
-        VerificationView: {
-            /** Format: uuid */
-            providerId: string;
-            /** @enum {string} */
-            status: "DRAFT" | "PENDING_VERIFICATION" | "VERIFIED" | "SUSPENDED" | "REJECTED";
-            version: number;
         };
     };
     responses: {
@@ -3962,626 +4431,6 @@ export interface operations {
                 };
             };
             404: components["responses"]["NotFound"];
-        };
-    };
-    getAdministrativeProvider: {
-        parameters: {
-            query?: never;
-            header?: {
-                /** @description One optional UUID, echoed unchanged if valid or generated if absent. Invalid or duplicate header values return 422 after access control with a fresh UUID; correlation conveys no authority. */
-                "X-Correlation-ID"?: string;
-            };
-            path: {
-                /** @description Validated after authentication and ADMIN role on this explicit administrative route. An absent provider returns a safe 404; no owner role or owner claim is required. */
-                providerId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Current persisted verification state/version. */
-            200: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AdminProviderView"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    "WWW-Authenticate": "Bearer";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 401;
-                    };
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 403;
-                    };
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 404;
-                    };
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 422;
-                    };
-                };
-            };
-            /** @description Internal Server Error */
-            500: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 500;
-                    };
-                };
-            };
-            /** @description Service Unavailable */
-            503: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 503;
-                    };
-                };
-            };
-        };
-    };
-    headAdministrativeProvider: {
-        parameters: {
-            query?: never;
-            header?: {
-                /** @description One optional UUID, echoed unchanged if valid or generated if absent. Invalid or duplicate header values return 422 after access control with a fresh UUID; correlation conveys no authority. */
-                "X-Correlation-ID"?: string;
-            };
-            path: {
-                /** @description Validated after authentication and ADMIN role on this explicit administrative route. An absent provider returns a safe 404; no owner role or owner claim is required. */
-                providerId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Current persisted verification state/version. */
-            200: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    "WWW-Authenticate": "Bearer";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Internal Server Error */
-            500: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Service Unavailable */
-            503: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    suspendPrivateProvider: {
-        parameters: {
-            query?: never;
-            header?: {
-                /** @description One optional UUID, echoed unchanged if valid or generated if absent. Invalid or duplicate header values return 422 after access control with a fresh UUID; correlation conveys no authority. */
-                "X-Correlation-ID"?: string;
-            };
-            path: {
-                /** @description Validated after authentication and ADMIN role on this explicit administrative route. An absent provider returns a safe 404; no owner role or owner claim is required. */
-                providerId: string;
-            };
-            cookie?: never;
-        };
-        /** @description Closed UTF-8 JSON object,16384 real bytes maximum,finite total read deadline. Current version is obtained from lifecycle reads. Stale,invalid transition or exhausted version returns409 without mutation/event. No targetStatus or client authority accepted. */
-        requestBody: {
-            content: {
-                /** @example {
-                 *       "expectedVersion": 1
-                 *     } */
-                "application/json": components["schemas"]["ProviderTransitionInput"];
-            };
-        };
-        responses: {
-            /** @description Current persisted verification state/version. */
-            200: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AdminProviderView"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    "WWW-Authenticate": "Bearer";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 401;
-                    };
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 403;
-                    };
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 404;
-                    };
-                };
-            };
-            /** @description Request Timeout */
-            408: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 408;
-                    };
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 409;
-                    };
-                };
-            };
-            /** @description Payload Too Large */
-            413: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 413;
-                    };
-                };
-            };
-            /** @description Unsupported Media Type */
-            415: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 415;
-                    };
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 422;
-                    };
-                };
-            };
-            /** @description Internal Server Error */
-            500: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 500;
-                    };
-                };
-            };
-            /** @description Service Unavailable */
-            503: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 503;
-                    };
-                };
-            };
-        };
-    };
-    verifyPrivateProvider: {
-        parameters: {
-            query?: never;
-            header?: {
-                /** @description One optional UUID, echoed unchanged if valid or generated if absent. Invalid or duplicate header values return 422 after access control with a fresh UUID; correlation conveys no authority. */
-                "X-Correlation-ID"?: string;
-            };
-            path: {
-                /** @description Validated after authentication and ADMIN role on this explicit administrative route. An absent provider returns a safe 404; no owner role or owner claim is required. */
-                providerId: string;
-            };
-            cookie?: never;
-        };
-        /** @description Closed UTF-8 JSON object,16384 real bytes maximum,finite total read deadline. Current version is obtained from lifecycle reads. Stale,invalid transition or exhausted version returns409 without mutation/event. No targetStatus or client authority accepted. */
-        requestBody: {
-            content: {
-                /** @example {
-                 *       "expectedVersion": 1
-                 *     } */
-                "application/json": components["schemas"]["ProviderTransitionInput"];
-            };
-        };
-        responses: {
-            /** @description Current persisted verification state/version. */
-            200: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AdminProviderView"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    "WWW-Authenticate": "Bearer";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 401;
-                    };
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 403;
-                    };
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 404;
-                    };
-                };
-            };
-            /** @description Request Timeout */
-            408: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 408;
-                    };
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 409;
-                    };
-                };
-            };
-            /** @description Payload Too Large */
-            413: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 413;
-                    };
-                };
-            };
-            /** @description Unsupported Media Type */
-            415: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 415;
-                    };
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 422;
-                    };
-                };
-            };
-            /** @description Internal Server Error */
-            500: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 500;
-                    };
-                };
-            };
-            /** @description Service Unavailable */
-            503: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 503;
-                    };
-                };
-            };
         };
     };
     registerPrivateProvider: {
@@ -5686,427 +5535,6 @@ export interface operations {
             };
         };
     };
-    getProviderVerification: {
-        parameters: {
-            query?: never;
-            header?: {
-                /** @description One optional UUID, echoed unchanged if valid or generated if absent. Invalid or duplicate header values return 422 after access control with a fresh UUID; correlation conveys no authority. */
-                "X-Correlation-ID"?: string;
-            };
-            path: {
-                /** @description Validated after authentication and PROVIDER role. Foreign and absent IDs return the same safe 404. */
-                providerId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Current persisted verification state/version. */
-            200: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["VerificationView"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    "WWW-Authenticate": "Bearer";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 401;
-                    };
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 403;
-                    };
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 404;
-                    };
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 422;
-                    };
-                };
-            };
-            /** @description Internal Server Error */
-            500: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 500;
-                    };
-                };
-            };
-            /** @description Service Unavailable */
-            503: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 503;
-                    };
-                };
-            };
-        };
-    };
-    headProviderVerification: {
-        parameters: {
-            query?: never;
-            header?: {
-                /** @description One optional UUID, echoed unchanged if valid or generated if absent. Invalid or duplicate header values return 422 after access control with a fresh UUID; correlation conveys no authority. */
-                "X-Correlation-ID"?: string;
-            };
-            path: {
-                /** @description Validated after authentication and PROVIDER role. Foreign and absent IDs return the same safe 404. */
-                providerId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Current persisted verification state/version. */
-            200: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    "WWW-Authenticate": "Bearer";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Internal Server Error */
-            500: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Service Unavailable */
-            503: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    requestProviderVerification: {
-        parameters: {
-            query?: never;
-            header?: {
-                /** @description One optional UUID, echoed unchanged if valid or generated if absent. Invalid or duplicate header values return 422 after access control with a fresh UUID; correlation conveys no authority. */
-                "X-Correlation-ID"?: string;
-            };
-            path: {
-                /** @description Validated after authentication and PROVIDER role. Foreign and absent IDs return the same safe 404. */
-                providerId: string;
-            };
-            cookie?: never;
-        };
-        /** @description Closed UTF-8 JSON object,16384 real bytes maximum,finite total read deadline. Current version is obtained from lifecycle reads. Stale,invalid transition or exhausted version returns409 without mutation/event. No targetStatus or client authority accepted. */
-        requestBody: {
-            content: {
-                /** @example {
-                 *       "expectedVersion": 1
-                 *     } */
-                "application/json": components["schemas"]["ProviderTransitionInput"];
-            };
-        };
-        responses: {
-            /** @description Current persisted verification state/version. */
-            200: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["VerificationView"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    "WWW-Authenticate": "Bearer";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 401;
-                    };
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 403;
-                    };
-                };
-            };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 404;
-                    };
-                };
-            };
-            /** @description Request Timeout */
-            408: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 408;
-                    };
-                };
-            };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 409;
-                    };
-                };
-            };
-            /** @description Payload Too Large */
-            413: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 413;
-                    };
-                };
-            };
-            /** @description Unsupported Media Type */
-            415: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 415;
-                    };
-                };
-            };
-            /** @description Unprocessable Entity */
-            422: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 422;
-                    };
-                };
-            };
-            /** @description Internal Server Error */
-            500: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 500;
-                    };
-                };
-            };
-            /** @description Service Unavailable */
-            503: {
-                headers: {
-                    /** @description Private representations and errors must not be stored. */
-                    "Cache-Control": "no-store";
-                    /** @description Valid UUID propagated or generated; conveys no authority. */
-                    "X-Correlation-ID": string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ProviderLifecycleProblem"] & {
-                        /** @constant */
-                        status?: 503;
-                    };
-                };
-            };
-        };
-    };
     searchProviders: {
         parameters: {
             query?: {
@@ -6284,6 +5712,10 @@ export interface operations {
     listProviderBookings: {
         parameters: {
             query?: {
+                /** @description nextCursor of the previous page. Opaque: build it only from a response. */
+                cursor?: string;
+                /** @description Bookings per page. */
+                limit?: number;
                 status?: components["schemas"]["BookingStatus"];
             };
             header?: never;
@@ -6305,6 +5737,7 @@ export interface operations {
             };
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
+            422: components["responses"]["Validation"];
         };
     };
     requestBooking: {
@@ -6904,6 +6337,36 @@ export interface operations {
             422: components["responses"]["Validation"];
         };
     };
+    listProviderQuotes: {
+        parameters: {
+            query?: {
+                /** @description nextCursor of the previous page */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                providerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of the quote inbox */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderQuotePage"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["Validation"];
+        };
+    };
     requestQuote: {
         parameters: {
             query?: {
@@ -6936,6 +6399,32 @@ export interface operations {
             404: components["responses"]["NotFound"];
             422: components["responses"]["Validation"];
             429: components["responses"]["RateLimited"];
+        };
+    };
+    getProviderQuote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                providerId: string;
+                quoteId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Quote request */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderQuote"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
         };
     };
     rejectProvider: {
@@ -7105,6 +6594,40 @@ export interface operations {
             422: components["responses"]["Validation"];
         };
     };
+    downloadAdminDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                documentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Link */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminDocumentDownload"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            /** @description STORAGE_NOT_CONFIGURED or KYP_ENCRYPTION_NOT_CONFIGURED: the deployment lacks object storage or the KYP key (fails closed). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
     adminListGeography: {
         parameters: {
             query?: never;
@@ -7157,6 +6680,323 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             409: components["responses"]["Conflict"];
             422: components["responses"]["Validation"];
+        };
+    };
+    listPartnerIntakes: {
+        parameters: {
+            query?: {
+                /** @description Intake status. */
+                status?: "OPEN" | "COMMITTED" | "DISCARDED";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Intakes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["IntakeSummary"][];
+                    };
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            422: components["responses"]["Validation"];
+        };
+    };
+    createPartnerIntake: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IntakeCreateInput"];
+            };
+        };
+        responses: {
+            /** @description Intake */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Intake"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            422: components["responses"]["Validation"];
+        };
+    };
+    getPartnerIntake: {
+        parameters: {
+            query?: {
+                /** @description ci returns the representative CI unmasked; the read is audited (kyp.ci-revealed). The bank account is never revealed. */
+                reveal?: "ci";
+            };
+            header?: never;
+            path: {
+                intakeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Intake */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Intake"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            /** @description STORAGE_NOT_CONFIGURED or KYP_ENCRYPTION_NOT_CONFIGURED: the deployment lacks object storage or the KYP key (fails closed). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    discardPartnerIntake: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                intakeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Discarded */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    updatePartnerIntake: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                intakeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IntakeSectionsInput"];
+            };
+        };
+        responses: {
+            /** @description Intake */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Intake"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["Validation"];
+            /** @description STORAGE_NOT_CONFIGURED or KYP_ENCRYPTION_NOT_CONFIGURED: the deployment lacks object storage or the KYP key (fails closed). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    commitPartnerIntake: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Repeating the commit with the same key answers the same 201 (header Idempotent-Replayed: true) without creating anything; another key or none gets 409 INTAKE_ALREADY_COMMITTED. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                intakeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommitIntakeInput"];
+            };
+        };
+        responses: {
+            /** @description Partner created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerDetail"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            /** @description INTAKE_ALREADY_COMMITTED (another or no Idempotency-Key), or NIT_IN_USE: another partner already uses the NIT and acknowledgeDuplicateNit is not true (details.providers: NitMatch[]). With acknowledgeDuplicateNit the commit proceeds and admin_audit records duplicateNitAcknowledged and duplicateNitProviderIds. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description KYP_INCOMPLETE (details: list of kyp.<path> and documents.<KIND>), CI_EXPIRED, SLUG_TAKEN or VALIDATION_FAILED (details: per-section field errors). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description STORAGE_NOT_CONFIGURED or KYP_ENCRYPTION_NOT_CONFIGURED: the deployment lacks object storage or the KYP key (fails closed). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    registerPartnerIntakeDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                intakeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DocumentInput"];
+            };
+        };
+        responses: {
+            /** @description Upload */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KypDocumentUpload"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["Validation"];
+            /** @description STORAGE_NOT_CONFIGURED or KYP_ENCRYPTION_NOT_CONFIGURED: the deployment lacks object storage or the KYP key (fails closed). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    deletePartnerIntakeDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                documentId: string;
+                intakeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Removed */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    completePartnerIntakeDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                documentId: string;
+                intakeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Uploaded */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntakeDocument"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["Validation"];
+            /** @description STORAGE_NOT_CONFIGURED or KYP_ENCRYPTION_NOT_CONFIGURED: the deployment lacks object storage or the KYP key (fails closed). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     adminLeadMetrics: {
@@ -7269,6 +7109,430 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ModerationItem"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["Validation"];
+        };
+    };
+    listAdminPartners: {
+        parameters: {
+            query?: {
+                /** @description Partner category or category of any of its listings. */
+                categoryCode?: string;
+                /** @description Partner coverage city or city of any of its listings. */
+                cityCode?: string;
+                /** @description Created on or after this day (America/La_Paz). */
+                createdFrom?: string;
+                /** @description Created on or before this day (America/La_Paz). */
+                createdTo?: string;
+                /** @description With (true) or without (false) published listings. */
+                hasPublishedListings?: boolean;
+                /** @description CI expires between today and today + N days (Bolivia business day). */
+                kypExpiringWithinDays?: number;
+                /** @description Effective KYP status (EXPIRING/EXPIRED derived from the CI expiry). */
+                kypStatus?: components["schemas"]["KypStatus"][];
+                /** @description ADMIN or SELF_SERVICE. */
+                origin?: components["schemas"]["ProviderOrigin"];
+                /** @description Zero-based page. */
+                page?: number;
+                /** @description Rows per page. */
+                pageSize?: number;
+                /** @description KYP person type. */
+                personType?: components["schemas"]["PersonType"];
+                /** @description FREE, FEATURED or PREMIUM. */
+                plan?: string;
+                /** @description Name, slug, legal name (contains, case-insensitive), exact NIT or exact owner id. */
+                q?: string;
+                /** @description kypStatus orders EXPIRED, EXPIRING, PENDING, COMPLETE. */
+                sort?: "name" | "-createdAt" | "-updatedAt" | "kypStatus";
+                /** @description Repeatable (status=A&status=B), status[] or comma list. */
+                status?: components["schemas"]["ProviderStatus"][];
+                /** @description Partner coverage zone. */
+                zoneCode?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Page */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerPage"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            422: components["responses"]["Validation"];
+        };
+    };
+    getAdminPartner: {
+        parameters: {
+            query?: {
+                /** @description ci returns the representative CI unmasked; the read is audited (kyp.ci-revealed). The bank account is never revealed. */
+                reveal?: "ci";
+            };
+            header?: never;
+            path: {
+                providerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Partner */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerDetail"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            /** @description STORAGE_NOT_CONFIGURED or KYP_ENCRYPTION_NOT_CONFIGURED: the deployment lacks object storage or the KYP key (fails closed). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    updateAdminPartner: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Partner version ("3") from the ETag; a stale version gets 409 PARTNER_VERSION_CONFLICT. */
+                "If-Match"?: string;
+            };
+            path: {
+                providerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PartnerUpdateInput"];
+            };
+        };
+        responses: {
+            /** @description Partner */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerDetail"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            /** @description PARTNER_VERSION_CONFLICT (stale If-Match), or NIT_IN_USE: the new kyp.nit is used by another partner and acknowledgeDuplicateNit is not true (details.providers: NitMatch[]). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            422: components["responses"]["Validation"];
+            /** @description STORAGE_NOT_CONFIGURED or KYP_ENCRYPTION_NOT_CONFIGURED: the deployment lacks object storage or the KYP key (fails closed). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    changeAdminPartnerOwner: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Partner version ("3") from the ETag; a stale version gets 409 PARTNER_VERSION_CONFLICT. */
+                "If-Match"?: string;
+            };
+            path: {
+                providerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ChangePartnerOwnerInput"];
+            };
+        };
+        responses: {
+            /** @description Owner changed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerOwnerChange"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            /** @description OWNER_CHANGE_UNAVAILABLE (PROVIDER_OWNER_CHANGE_ENABLED is false) or PARTNER_VERSION_CONFLICT (stale If-Match). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description SAME_OWNER, REASON_REQUIRED, REASON_TOO_LONG or VALIDATION_FAILED (newOwnerUserId missing or not a UUID, unknown field). */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    registerAdminPartnerDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                providerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DocumentInput"];
+            };
+        };
+        responses: {
+            /** @description Upload */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KypDocumentUpload"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["Validation"];
+            /** @description STORAGE_NOT_CONFIGURED or KYP_ENCRYPTION_NOT_CONFIGURED: the deployment lacks object storage or the KYP key (fails closed). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    deleteAdminPartnerDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                documentId: string;
+                providerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Removed */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    completeAdminPartnerDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                documentId: string;
+                providerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Uploaded */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerDocument"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["Validation"];
+            /** @description STORAGE_NOT_CONFIGURED or KYP_ENCRYPTION_NOT_CONFIGURED: the deployment lacks object storage or the KYP key (fails closed). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    reviewAdminPartnerDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                documentId: string;
+                providerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DocumentReviewInput"];
+            };
+        };
+        responses: {
+            /** @description Reviewed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerDocument"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["Validation"];
+        };
+    };
+    completeAdminPartnerKyp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                providerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Partner */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerDetail"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["Validation"];
+            /** @description STORAGE_NOT_CONFIGURED or KYP_ENCRYPTION_NOT_CONFIGURED: the deployment lacks object storage or the KYP key (fails closed). */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    reactivateAdminPartner: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                providerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonRequest"];
+            };
+        };
+        responses: {
+            /** @description Partner */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerDetail"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["Validation"];
+        };
+    };
+    suspendAdminPartner: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                providerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonRequest"];
+            };
+        };
+        responses: {
+            /** @description Partner */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerDetail"];
                 };
             };
             401: components["responses"]["Unauthorized"];
@@ -7420,7 +7684,12 @@ export interface operations {
     };
     listMyBookings: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description nextCursor of the previous page. Opaque: build it only from a response. */
+                cursor?: string;
+                /** @description Bookings per page. */
+                limit?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -7437,6 +7706,7 @@ export interface operations {
                 };
             };
             401: components["responses"]["Unauthorized"];
+            422: components["responses"]["Validation"];
         };
     };
     listMyProviders: {
@@ -7839,12 +8109,13 @@ export interface operations {
     };
     resolveListingRedirect: {
         parameters: {
-            query: {
+            query?: {
                 celebrationId?: string;
                 city?: string;
                 correlationId?: string;
                 country?: string;
-                destination: "OFFICIAL_SITE" | "LANDING" | "WHATSAPP" | "PHONE" | "EMAIL" | "INSTAGRAM" | "PRODUCT_PAGE";
+                /** @description Absent means the primary destination of the listing: PRODUCT_PAGE of a product, otherwise the first stored and enabled destination in this enum order. */
+                destination?: "OFFICIAL_SITE" | "LANDING" | "WHATSAPP" | "PHONE" | "EMAIL" | "INSTAGRAM" | "PRODUCT_PAGE";
                 /** @description Requires celebrationId. */
                 guestId?: string;
                 locale?: string;
