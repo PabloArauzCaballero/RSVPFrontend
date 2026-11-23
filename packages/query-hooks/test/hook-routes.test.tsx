@@ -560,3 +560,34 @@ describe("platform admin hooks (expected contract, ADMIN only)", () => {
     expect(h.calls).toHaveLength(1);
   });
 });
+
+describe("organization invitation hooks (identity 2.0.0, SEG-003)", () => {
+  it("the owner invites, lists and revokes; nothing calls the retired POST /members", async () => {
+    const invite = harness(() => ({ status: 202, body: { id: "i-1", organizationId: "o 1", email: "a@b.co", role: "HOST", status: "PENDING", expiresAt: "2026-11-28T00:00:00Z", createdAt: "2026-11-21T00:00:00Z" } }));
+    const sent = await runMutation(invite, () => hooks.useInviteToOrganization(invite.client, "o 1"), { email: "a@b.co", role: "HOST" as const });
+    expect(sent.method).toBe("POST");
+    expect(sent.path).toBe("/identity/organizations/o%201/invitations");
+    expect(sent.body).toEqual({ email: "a@b.co", role: "HOST" });
+    const list = harness(() => ({ body: { items: [] } }));
+    expect((await runQuery(list, () => hooks.useOrganizationInvitations(list.client, "o 1"))).path).toBe("/identity/organizations/o%201/invitations");
+    const revoke = harness(() => ({ status: 204 }));
+    const revoked = await runMutation(revoke, () => hooks.useRevokeOrganizationInvitation(revoke.client, "o 1"), "i/1");
+    expect(revoked.method).toBe("DELETE");
+    expect(revoked.path).toBe("/identity/organizations/o%201/invitations/i%2F1");
+    expect("useAddOrganizationMember" in hooks).toBe(false);
+  });
+
+  it("the invitee lists, accepts with the link token and declines without it", async () => {
+    const mine = harness(() => ({ body: { emailVerified: true, items: [] } }));
+    expect((await runQuery(mine, () => hooks.useMyInvitations(mine.client))).path).toBe("/identity/invitations");
+    const accept = harness(() => ({ body: { organizationId: "o-1", role: "PLANNER" } }));
+    const accepted = await runMutation(accept, () => hooks.useAnswerInvitation(accept.client), { invitationId: "i-1", decision: "accept" as const, token: "t-1" });
+    expect(accepted.method).toBe("POST");
+    expect(accepted.path).toBe("/identity/invitations/i-1/accept");
+    expect(accepted.body).toEqual({ token: "t-1" });
+    const decline = harness(() => ({ status: 204 }));
+    const declined = await runMutation(decline, () => hooks.useAnswerInvitation(decline.client), { invitationId: "i-1", decision: "decline" as const });
+    expect(declined.path).toBe("/identity/invitations/i-1/decline");
+    expect(declined.body).toEqual({});
+  });
+});

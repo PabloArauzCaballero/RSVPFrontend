@@ -29,6 +29,7 @@ export const HOST_ROUTES = {
   giftExternal: "/regalos/externo",
   giftInbox: "/bandeja/regalos",
   organizations: "/organizaciones",
+  invitations: "/invitaciones",
   guestSettings: "/invitados/ajustes"
 } as const;
 export type HostRoute = keyof typeof HOST_ROUTES;
@@ -70,7 +71,7 @@ const DESTINATIONS: readonly { readonly key: HostDestination; readonly tabs: rea
 ];
 
 /** Routes that are not scoped to one celebration (`?c=` would be noise). */
-const ACCOUNT_ROUTES: readonly HostRoute[] = ["celebrations", "organizations"];
+const ACCOUNT_ROUTES: readonly HostRoute[] = ["celebrations", "organizations", "invitations"];
 
 /** The address a screen key opens: the editor has no page of its own, it opens on its first section. */
 export const routePath = (key: HostRoute): string => (key === "editor" ? editorPath("general") : HOST_ROUTES[key]);

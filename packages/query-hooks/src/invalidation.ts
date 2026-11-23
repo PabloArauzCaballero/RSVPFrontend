@@ -13,6 +13,8 @@ export const invalidation = {
   giftReservationChanged: (celebrationId: string) => [queryKeys.gift.list(celebrationId)] as const,
   organizationsChanged: () => [queryKeys.identity.organizations] as const,
   organizationChanged: (id: string) => [queryKeys.identity.organization(id), queryKeys.identity.organizations] as const,
+  invitationsChanged: (id: string) => [queryKeys.identity.invitations(id)] as const,
+  invitationAnswered: () => [queryKeys.identity.myInvitations, queryKeys.identity.organizations] as const,
   providerChanged: () => [queryKeys.provider.all] as const,
   notificationPreferencesChanged: (celebrationId: string) => [queryKeys.notification.preferences(celebrationId)] as const
 };

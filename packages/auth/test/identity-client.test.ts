@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { createApiClient } from "@rsvp/api-client";
-import { IdentityClient, classifyAuthError, fieldErrorsOf, loginSchema, recoverySchema, registerSchema, validate } from "../src/index.js";
+import { IdentityClient, classifyAuthError, fieldErrorsOf, isInvalidLink, loginSchema, passwordResetSchema, recoverySchema, registerSchema, validate } from "../src/index.js";
 import { tokens } from "./helpers.js";
 
 const json = (status: number, body: unknown, type = "application/json"): Response => new Response(status === 204 ? null : JSON.stringify(body), { status, headers: { "content-type": type } });
@@ -86,5 +86,27 @@ describe("schemas", () => {
       expect(JSON.parse(String(init.body))).toEqual({ refreshToken: "r".repeat(40) });
       expect(new Headers(init.headers).get("x-session-transport")).toBeNull();
     });
+  });
+  it("B4: password reset, e-mail confirmation and resend hit the 1.3.0 contract; a 422 on token is an invalid link", async () => {
+    const fetchFn = vi.fn(async () => json(204, null)) as unknown as typeof fetch;
+    const client = clientWith(fetchFn);
+    await client.resetPassword({ token: "t".repeat(43), newPassword: "a brand new passphrase" });
+    await client.confirmEmail("v".repeat(43));
+    await client.resendEmailVerification("access-token");
+    const calls = (fetchFn as unknown as ReturnType<typeof vi.fn>).mock.calls as [string, RequestInit][];
+    expect(calls.map(([url, init]) => [url, init.method])).toEqual([
+      ["http://gw/identity/auth/password-reset", "POST"], ["http://gw/identity/auth/email-verification/confirm", "POST"], ["http://gw/identity/auth/email-verification", "POST"]
+    ]);
+    expect(JSON.parse(String(calls[0]?.[1].body))).toEqual({ token: "t".repeat(43), newPassword: "a brand new passphrase" });
+    expect(JSON.parse(String(calls[1]?.[1].body))).toEqual({ token: "v".repeat(43) });
+    expect(new Headers(calls[2]?.[1].headers).get("authorization")).toBe("Bearer access-token");
+    const used = await clientWith((async () => json(422, { title: "Invalid", status: 422, errors: [{ field: "token", message: "expired" }] }, "application/problem+json")) as unknown as typeof fetch)
+      .resetPassword({ token: "x", newPassword: "a brand new passphrase" }).catch((e: unknown) => e);
+    expect(isInvalidLink(used)).toBe(true);
+    const weak = await clientWith((async () => json(422, { title: "Invalid", status: 422, errors: [{ field: "newPassword", message: "short" }] }, "application/problem+json")) as unknown as typeof fetch)
+      .resetPassword({ token: "x", newPassword: "a brand new passphrase" }).catch((e: unknown) => e);
+    expect(isInvalidLink(weak)).toBe(false);
+    expect(validate(passwordResetSchema, { token: "", newPassword: "a brand new passphrase" })).toEqual({ ok: false, errors: { token: "linkInvalid" } });
+    expect(validate(passwordResetSchema, { token: "t", newPassword: "short" })).toEqual({ ok: false, errors: { newPassword: "passwordShort" } });
   });
 });

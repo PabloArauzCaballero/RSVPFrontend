@@ -13,7 +13,7 @@ export const contractVersions = {
   "gateway": "1307c08dc3ff407e",
   "gift-list": "70351a03b1cd2847",
   "guest-rsvp": "9a3583ec3663193f",
-  "identity": "32a28c1ce1dce3b1",
+  "identity": "2a3f24eec4a867ee",
   "notification": "670dd80c6c1e7fd0",
   "provider-catalog": "e0f8dee15e7093db",
   "template-media": "84f42a8849c3b34e"

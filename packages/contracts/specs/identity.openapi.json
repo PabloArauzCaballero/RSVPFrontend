@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "RSVP Identity API",
-    "version": "1.1.0",
-    "description": "1.1.0 (additive, ADMIN only): GET /admin/users?query=&page=&size=, GET /admin/organizations and GET /admin/summary (served by Kong at /identity/admin/*). Reads of the user list and role grants are audited (actor, action, time; never the search text). Account status is always ACTIVE: suspension of accounts does not exist yet."
+    "version": "1.6.0",
+    "description": "1.6.0 (additive, B6/A22): POST /auth/register accepts an optional termsVersion (the version of the terms and privacy policy the person accepted; stored with the server time). DELETE /users/me (the account owner, confirming with the password) and DELETE /users/{id} (ADMIN) delete the account for real: roles, tokens, memberships and the organizations it owns go with it, every session ends and identity.user.deleted.v1 (AsyncAPI 1.13.0) tells the other services to purge their copies. The last ADMIN cannot be deleted. 1.5.0 (additive, A21): POST /auth/password (signed-in change; ends other sessions, returns a new one), POST /auth/logout-all, PUT/DELETE /users/{id}/suspension (ADMIN; a suspended account gets 403 account-suspended on sign-in and 401 on refresh), DELETE /users/{id}/roles/{role} (ADMIN; never the last role or the last ADMIN; ends the account's sessions) and DELETE /organizations/{id}/members/{userId} (owner or ADMIN removes, a member leaves). User and AdminUser carry status ACTIVE|SUSPENDED. 1.4.0 (additive, B10): POST /oauth/token (OAuth 2.0 client_credentials, RFC 6749 §4.4) for internal services. Each client holds (audience, scope) pairs; notification-service may obtain provider:notification-profile:read (aud provider-catalog-service) and guest:notification-profile:read (aud guest-rsvp-service), one audience per token. Clients and the audience/scopes each may obtain are declared in Identity; secrets are configured as SHA-256 in IDENTITY_SERVICE_CLIENTS. The token carries roles [SERVICE], aud, scope and client_id and lives 5 minutes; it is never issued to a person. 1.3.0 (additive, B4): real password recovery and e-mail verification. POST /auth/password-recovery now stores a single-use token (30 minutes, hash only) and asks Notification to send the link (event identity.user.password-reset-requested.v1); POST /auth/password-reset consumes it, sets the new password and ends every session; sign-up sends a 24-hour verification link (identity.user.email-verification-requested.v1), confirmed with POST /auth/email-verification/confirm and re-sent with POST /auth/email-verification. Registration and the access token expose whether the e-mail is verified (`emailVerified`, claim `email_verified`). 1.2.0 (additive, B9): the access token carries `memberships` [{organizationId, role}], the role of the subject IN each organization. `roles` now lists only the platform roles of the account (membership roles are no longer merged into it); `organizationIds` stays, derived from `memberships`, for visibility only. Consumers decide organization-scoped authority from `memberships` and must treat a token without it (minted by Identity < 1.2.0) as granting no organization management. 1.1.0 (additive, ADMIN only): GET /admin/users?query=&page=&size=, GET /admin/organizations and GET /admin/summary (served by Kong at /identity/admin/*). Reads of the user list and role grants are audited (actor, action, time; never the search text). Account status is always ACTIVE: suspension of accounts does not exist yet."
   },
   "servers": [
     {
@@ -63,6 +63,9 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/SessionTransport"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
           }
         ]
       }
@@ -94,6 +97,16 @@
           },
           "422": {
             "$ref": "#/components/responses/Validation"
+          },
+          "403": {
+            "description": "The credentials are right but the account is suspended (problem type account-suspended).",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
           }
         },
         "requestBody": {
@@ -181,7 +194,13 @@
           "422": {
             "$ref": "#/components/responses/Validation"
           }
-        }
+        },
+        "description": "Always 202 for a well-formed address. For an existing account, stores the SHA-256 of a single-use token valid 30 minutes (any earlier unused link stops working) and records the e-mail request for Notification. A second request within 60 seconds sends nothing new. `Accept-Language` picks the e-mail language (en-US or es-BO).",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ]
       }
     },
     "/auth/logout": {
@@ -515,6 +534,44 @@
             "$ref": "#/components/responses/NotFound"
           }
         }
+      },
+      "delete": {
+        "operationId": "deleteUser",
+        "summary": "Delete an account (ADMIN only; A22, D-5)",
+        "description": "Same effect as DELETE /users/me for another account. 409 for one's own account (use DELETE /users/me) or the last ADMIN.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
       }
     },
     "/users/{id}/roles/{role}": {
@@ -570,6 +627,67 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "revokeUserRole",
+        "summary": "Revoke a platform role (ADMIN only). Idempotent; 409 for the account's last role or the platform's last ADMIN. Ends the account's sessions.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "role",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ADMIN",
+                "HOST",
+                "PLANNER",
+                "PROVIDER"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           },
           "422": {
             "$ref": "#/components/responses/Validation"
@@ -710,6 +828,412 @@
           }
         }
       }
+    },
+    "/auth/password-reset": {
+      "post": {
+        "operationId": "resetPassword",
+        "description": "Consumes the single-use link of a password-recovery e-mail, sets the new password, marks the e-mail verified and revokes every refresh-token chain of the account (signs it out everywhere). Unknown, used or expired links answer 422 on `token`; a weak password answers 422 on `newPassword` without consuming the link.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SessionTransport"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Password changed; every session ended.",
+            "headers": {
+              "Set-Cookie": {
+                "description": "Cleared `rsvp_refresh` cookie (Max-Age=0) when `X-Session-Transport: cookie` is sent.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          }
+        }
+      }
+    },
+    "/auth/email-verification/confirm": {
+      "post": {
+        "operationId": "confirmEmailVerification",
+        "description": "Consumes the single-use link of the verification e-mail (24 hours) and marks the account's e-mail verified. Unknown, used or expired links answer 422 on `token`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailVerificationConfirmRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "E-mail verified."
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          }
+        }
+      }
+    },
+    "/auth/email-verification": {
+      "post": {
+        "operationId": "resendEmailVerification",
+        "description": "Sends a new verification link to the signed-in account. No-op (still 202) when the e-mail is already verified or a link was sent less than 60 seconds ago.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted."
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/oauth/token": {
+      "post": {
+        "operationId": "issueServiceToken",
+        "description": "client_credentials only. Internal callers use http://identity-service:8080/oauth/token.",
+        "security": [
+          {
+            "clientBasic": []
+          },
+          {}
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientCredentialsRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientCredentialsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Service token.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceTokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "unsupported_grant_type, invalid_scope or invalid_request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "invalid_client (unknown client or wrong secret; indistinguishable).",
+            "headers": {
+              "WWW-Authenticate": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/password": {
+      "post": {
+        "operationId": "changePassword",
+        "description": "Signed-in password change. A wrong current password answers 422 on currentPassword. Every other session of the account ends; the response is a new session for this device (same transport rules as login).",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SessionTransport"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordChangeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Session"
+                }
+              }
+            },
+            "headers": {
+              "Set-Cookie": {
+                "description": "`rsvp_refresh` cookie when `X-Session-Transport: cookie` is sent; cleared (Max-Age=0) on logout.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          }
+        }
+      }
+    },
+    "/auth/logout-all": {
+      "post": {
+        "operationId": "logoutEverywhere",
+        "description": "Ends every refresh-token chain of the caller (all devices). Access tokens already issued expire on their own (15 minutes).",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/SessionTransport"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Signed out everywhere; the cookie is cleared with cookie transport."
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/users/{id}/suspension": {
+      "put": {
+        "operationId": "suspendUser",
+        "description": "ADMIN only. Sign-in answers 403 account-suspended and refresh 401; every session ends at once. 409 on one's own account.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "reactivateUser",
+        "description": "ADMIN only. Lifts the suspension.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/organizations/{id}/members/{userId}": {
+      "delete": {
+        "operationId": "removeOrganizationMember",
+        "description": "The owner or an ADMIN removes a member; a member removes themselves (leaves). The owner cannot be removed (409). Not visible or not a member: 404.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed."
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          }
+        }
+      }
+    },
+    "/users/me": {
+      "delete": {
+        "operationId": "deleteOwnAccount",
+        "summary": "Delete my account (A22, D-5)",
+        "description": "Deletes the signed-in account for real, confirming with the password: roles, single-use tokens, memberships and the organizations it owns are removed, every session ends and identity.user.deleted.v1 is published through the outbox so every service purges its copies. 409 for the last ADMIN.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountDeletionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -828,6 +1352,11 @@
             ],
             "default": "HOST",
             "description": "ADMIN is never self-service."
+          },
+          "termsVersion": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9._-]{1,64}$",
+            "description": "B6: version of the terms and privacy policy the person accepted (for example 2026-11-21-borrador). Optional for clients released before 1.6.0."
           }
         }
       },
@@ -854,7 +1383,7 @@
         "properties": {
           "accessToken": {
             "type": "string",
-            "description": "RS256 JWT. Claims: iss, sub, roles[], organizationIds[], iat, exp, jti."
+            "description": "RS256 JWT. Claims: iss, sub, roles[] (platform roles), organizationIds[], memberships[] ({organizationId, role}), iat, exp, jti."
           },
           "refreshToken": {
             "type": "string",
@@ -900,6 +1429,10 @@
                     "PROVIDER"
                   ]
                 }
+              },
+              "emailVerified": {
+                "type": "boolean",
+                "description": "Since 1.3.0. Always false right after sign-up: a verification e-mail is on its way."
               }
             }
           }
@@ -949,7 +1482,7 @@
       },
       "AccessTokenClaims": {
         "type": "object",
-        "description": "Payload of accessToken, consumed by every service.",
+        "description": "Payload of accessToken, consumed by every service. Organization-scoped authority comes only from `memberships`.",
         "required": [
           "iss",
           "sub",
@@ -976,13 +1509,22 @@
                 "PLANNER",
                 "PROVIDER"
               ]
-            }
+            },
+            "description": "Platform roles of the account. Never contains roles held in an organization (see `memberships`)."
           },
           "organizationIds": {
             "type": "array",
             "items": {
               "type": "string",
               "format": "uuid"
+            },
+            "description": "Organizations the subject belongs to in any role (derived from `memberships`). Visibility only: never a source of authority."
+          },
+          "memberships": {
+            "type": "array",
+            "description": "Since 1.2.0. The role of the subject in each organization it belongs to. A role here applies only to its organization.",
+            "items": {
+              "$ref": "#/components/schemas/OrganizationMembershipClaim"
             }
           },
           "iat": {
@@ -994,6 +1536,10 @@
           "jti": {
             "type": "string",
             "format": "uuid"
+          },
+          "email_verified": {
+            "type": "boolean",
+            "description": "Since 1.3.0. Whether the account proved it owns its e-mail."
           }
         }
       },
@@ -1137,6 +1683,14 @@
               "null"
             ],
             "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "SUSPENDED"
+            ],
+            "description": "Since 1.5.0."
           }
         }
       },
@@ -1303,6 +1857,160 @@
             }
           }
         }
+      },
+      "OrganizationMembershipClaim": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "organizationId",
+          "role"
+        ],
+        "properties": {
+          "organizationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "HOST",
+              "PLANNER"
+            ]
+          }
+        }
+      },
+      "PasswordResetRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "token",
+          "newPassword"
+        ],
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "description": "The `token` query parameter of the e-mail link."
+          },
+          "newPassword": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 128
+          }
+        }
+      },
+      "EmailVerificationConfirmRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "token"
+        ],
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        }
+      },
+      "OAuthError": {
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "string",
+            "enum": [
+              "invalid_request",
+              "invalid_client",
+              "unsupported_grant_type",
+              "invalid_scope"
+            ]
+          }
+        }
+      },
+      "ClientCredentialsRequest": {
+        "type": "object",
+        "required": [
+          "grant_type"
+        ],
+        "description": "Form (application/x-www-form-urlencoded) per RFC 6749; JSON is also accepted, with snake_case or camelCase names (grantType, clientId, clientSecret). Client credentials go preferably in HTTP Basic.",
+        "properties": {
+          "grant_type": {
+            "type": "string",
+            "const": "client_credentials"
+          },
+          "client_id": {
+            "type": "string"
+          },
+          "client_secret": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string",
+            "description": "Space separated. A token is for one audience, selected by its scopes: scopes of two audiences in one request give invalid_scope. Without scope, a client with a single audience gets all its scopes and a client with several (notification-service: provider-catalog-service and guest-rsvp-service) gets invalid_scope."
+          }
+        }
+      },
+      "ServiceTokenResponse": {
+        "type": "object",
+        "required": [
+          "access_token",
+          "token_type",
+          "expires_in",
+          "scope"
+        ],
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "RS256 JWT. Claims: iss, sub (client id), client_id, aud, scope, roles [SERVICE], iat, exp, jti."
+          },
+          "token_type": {
+            "type": "string",
+            "const": "Bearer"
+          },
+          "expires_in": {
+            "type": "integer",
+            "const": 300
+          },
+          "scope": {
+            "type": "string"
+          }
+        }
+      },
+      "PasswordChangeRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "currentPassword",
+          "newPassword"
+        ],
+        "properties": {
+          "currentPassword": {
+            "type": "string"
+          },
+          "newPassword": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 128
+          }
+        }
+      },
+      "AccountDeletionRequest": {
+        "type": "object",
+        "required": [
+          "password"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "description": "The current password, to confirm the deletion."
+          }
+        }
       }
     },
     "responses": {
@@ -1362,6 +2070,11 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "JWT"
+      },
+      "clientBasic": {
+        "type": "http",
+        "scheme": "basic",
+        "description": "Service client id and secret (client_credentials)."
       }
     },
     "parameters": {
@@ -1375,6 +2088,15 @@
           "enum": [
             "cookie"
           ]
+        }
+      },
+      "AcceptLanguage": {
+        "name": "Accept-Language",
+        "in": "header",
+        "required": false,
+        "description": "Language of the account e-mail: en-US when it starts with `en`, es-BO otherwise.",
+        "schema": {
+          "type": "string"
         }
       }
     }
