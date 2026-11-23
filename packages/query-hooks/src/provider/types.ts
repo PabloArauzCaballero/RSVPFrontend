@@ -52,4 +52,4 @@ export interface ProviderCard {
   readonly fulfillment?: FulfillmentView; readonly address?: BusinessAddress; readonly hours?: BusinessHours;
 }
 export interface ProviderPage { readonly items: readonly ProviderCard[]; readonly total: number; readonly page: number; readonly pageSize: number }
-export interface ProviderDiscoveryQuery { readonly category?: string; readonly city?: string; readonly maxPriceMinor?: number; readonly page?: number; readonly pageSize?: number }
+export interface ProviderDiscoveryQuery { readonly category?: string; readonly city?: string; readonly maxPriceMinor?: number; readonly page?: number; readonly pageSize?: number; readonly slug?: string }
