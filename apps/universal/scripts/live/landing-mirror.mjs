@@ -39,6 +39,9 @@ try {
     if (!siteHeadings.length) { await site.reload(); await site.waitForLoadState("networkidle").catch(() => undefined); siteHeadings = await headings(site); }
     const missing = siteHeadings.filter((text) => !appHeadings.includes(text));
     const url = new URL(app.url()).pathname;
+    // One drawing per side of the party on both sides of the mirror, all three decorative.
+    const appArt = await app.locator("[data-testid='landing-roles'] svg[data-illustration][aria-hidden='true']").count();
+    const siteArt = await site.locator(".roles__art[aria-hidden='true']").count();
     const overflow = await app.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     const axe = await new AxeBuilder({ page: app }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
     const serious = axe.violations.filter((violation) => violation.impact === "critical" || violation.impact === "serious");
@@ -46,8 +49,8 @@ try {
       await app.screenshot({ path: `${OUT}portada-app-${width}-${scheme}.png`, fullPage: false });
       await site.screenshot({ path: `${OUT}portada-sitio-${width}-${scheme}.png`, fullPage: false });
     }
-    record({ case: `/ ${width}px ${scheme} ${locale}`, ok: url === "/" && siteHeadings.length > 0 && missing.length === 0 && overflow <= 0 && !serious.length && !errors.length,
-      detail: `stays at "${url}", headings app=${appHeadings.length} site=${siteHeadings.length} missing=${JSON.stringify(missing)} overflow=${overflow} axe(critical+serious)=${serious.map((v) => `${v.id}:${v.nodes.length}`).join(",") || 0} errors=${errors.length}` });
+    record({ case: `/ ${width}px ${scheme} ${locale}`, ok: url === "/" && siteHeadings.length > 0 && missing.length === 0 && appArt === 3 && siteArt === 3 && overflow <= 0 && !serious.length && !errors.length,
+      detail: `stays at "${url}", headings app=${appHeadings.length} site=${siteHeadings.length} missing=${JSON.stringify(missing)} roleArt app=${appArt} site=${siteArt} overflow=${overflow} axe(critical+serious)=${serious.map((v) => `${v.id}:${v.nodes.length}`).join(",") || 0} errors=${errors.length}` });
     await context.close();
   }
 

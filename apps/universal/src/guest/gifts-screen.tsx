@@ -5,7 +5,7 @@ import type { PublicCelebrationView } from "@rsvp/celebration-theme";
 import { spacing } from "@rsvp/design-tokens";
 import { formatMinor } from "@rsvp/i18n";
 import { Checkbox, Chip, EmptyState, Illustration, Skeleton, Stagger, SuccessNote, useColors } from "@rsvp/ui";
-import { activeReservationsByItem, arrangeGifts, isGiftTaken, isReservationNotActive, maxPriceMinor, newIdempotencyKey, useCancelGiftReservation, useCelebrationBySlug, useGiftList, useMyGiftReservations, usePublicListing, useReserveGiftItem, type GiftItem, type GiftReservation, type GiftSourceFilter } from "@rsvp/query-hooks";
+import { activeReservationsByItem, arrangeGifts, giftContactDestinations, isGiftTaken, isReservationNotActive, maxPriceMinor, newIdempotencyKey, useCancelGiftReservation, useCelebrationBySlug, useGiftList, useMyGiftReservations, usePublicListing, useReserveGiftItem, type GiftItem, type GiftReservation, type GiftSourceFilter, type ListingSummary } from "@rsvp/query-hooks";
 import { GuestFrame, type GuestFrameProps } from "./frame";
 import { LinkState, OfflineState } from "./link-states";
 import { ActionButton, ChoiceGroup, ConfirmDialog, Field, Notice, useStyles } from "../host/ui";
@@ -41,13 +41,19 @@ function blockerFor(status: number, retryAfter: number | undefined, t: ReturnTyp
   return { illustration: "offline", title: t("gifts.guest.error.unavailableTitle"), body: t("gifts.guest.error.unavailableBody") };
 }
 
-/** Photos are optional public catalog data (a partner product's picture): their failure never prevents viewing or reserving. */
-function GiftPhoto({ item }: { readonly item: GiftItem }): ReactNode {
+function GiftWithListing({ item, render }: {
+  readonly item: GiftItem;
+  readonly render: (item: GiftItem, listing: ListingSummary | undefined) => ReactNode;
+}): ReactNode {
   const client = useApiClient();
-  const t = useT();
   const listing = usePublicListing(client, item.source === "CATALOGED" ? item.productListingId ?? undefined : undefined);
+  return render(item, listing.isError ? undefined : listing.data);
+}
+
+/** Photos are optional public catalog data (a partner product's picture): their failure never prevents viewing or reserving. */
+function GiftPhoto({ item, url }: { readonly item: GiftItem; readonly url: string | undefined }): ReactNode {
+  const t = useT();
   const [failed, setFailed] = useState<string | null>(null);
-  const url = listing.data?.imageUrl;
   if (!url || url === failed || !isSafeHttps(url)) return null;
   return <Image testID={`gift-photo-${item.id}`} source={{ uri: url }} accessibilityLabel={t("gifts.card.photo", { title: item.title })} onError={() => setFailed(url)} style={{ width: "100%", aspectRatio: 3 / 2, borderRadius: 12 }} resizeMode="cover" accessibilityIgnoresInvertColors />;
 }
@@ -224,13 +230,14 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
     </View>
   );
 
-  const row = (item: GiftItem): ReactNode => {
-    const viaPartner = item.productListingId ? partnerRedirectUrl(item.productListingId, { surface: "GIFT_LIST", ...(celebrationId ? { celebrationId } : {}) }) : null;
-    const viaOther = !viaPartner && item.externalUrl && isSafeHttps(item.externalUrl) ? item.externalUrl : null;
+  const row = (item: GiftItem, listing: ListingSummary | undefined): ReactNode => {
+    const listingId = item.productListingId;
+    const contact = giftContactDestinations(listing?.destinationTypes);
+    const viaOther = !listingId && item.externalUrl && isSafeHttps(item.externalUrl) ? item.externalUrl : null;
     const opened = target?.id === item.id;
     return (
       <View key={item.id} testID={`gift-${item.id}`} style={{ gap: spacing[2], paddingVertical: spacing[4], borderBottomWidth: 1, borderBottomColor: palette.border }}>
-        <GiftPhoto item={item} />
+        <GiftPhoto item={item} url={listing?.imageUrl} />
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", gap: spacing[3] }}>
           {onlyItemId ? <Text accessibilityRole="header" aria-level={3} style={[styles.subtitle, { flex: 1 }]}>{item.title}</Text> : (
             <Pressable accessibilityRole="link" accessibilityLabel={t("gifts.card.open", { title: item.title })} onPress={() => go(`${listPath}/${encodeURIComponent(item.id)}`)} testID={`open-${item.id}`} style={{ flex: 1, minHeight: 44, justifyContent: "center" }}>
@@ -263,14 +270,20 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
         {opened ? form(item) : (
           <View style={styles.row}>
             {item.status === "AVAILABLE" ? <ActionButton icon="check" label={t("gifts.guest.reserve")} onPress={() => open(item)} testID={`reserve-${item.id}`} /> : null}
-            {viaPartner ? <ActionButton icon="arrow" variant="secondary" label={t("gifts.guest.viaPartner")} onPress={() => { void Linking.openURL(viaPartner); }} testID={`partner-${item.id}`} /> : null}
+            {listingId ? contact.map((destination) => (
+              <ActionButton key={destination} icon="arrow" variant="secondary"
+                label={t(destination === "WHATSAPP" ? "gifts.card.viaWhatsApp" : "gifts.guest.viaPartner")}
+                onPress={() => { void Linking.openURL(partnerRedirectUrl(listingId, { destination, surface: "GIFT_LIST", ...(celebrationId ? { celebrationId } : {}) })); }}
+                testID={`${destination === "WHATSAPP" ? "whatsapp" : "partner"}-${item.id}`} />
+            )) : null}
             {viaOther ? <ActionButton icon="arrow" variant="secondary" label={t("gifts.card.viaOther")} onPress={() => { void Linking.openURL(viaOther); }} testID={`store-${item.id}`} /> : null}
           </View>
         )}
-        {viaPartner && !opened ? <Text style={styles.muted}>{t("gifts.guest.partnerNote")}</Text> : null}
+        {contact.length > 0 && !opened ? <Text style={styles.muted}>{t(onlyItemId ? "gifts.detail.partnerNote" : "gifts.guest.partnerNote")}</Text> : null}
       </View>
     );
   };
+  const renderGift = (item: GiftItem) => <GiftWithListing key={item.id} item={item} render={row} />;
 
   const link = (label: string, path: string, testID: string): ReactNode => (
     <Pressable accessibilityRole="link" accessibilityLabel={label} onPress={() => go(path)} testID={testID} style={{ minHeight: 44, justifyContent: "center", alignSelf: "flex-start" }}>
@@ -302,9 +315,8 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
       {list.data && onlyItemId && scoped.length === 0 ? <EmptyState illustration="noGifts" title={t("gifts.detail.notFound")} body={t("gifts.detail.notFoundBody")} /> : null}
       {list.data && !onlyItemId && visibleCount === 0 ? <EmptyState illustration="noGifts" title={t("gifts.guest.empty.title")} body={t("gifts.guest.empty.body")} /> : null}
       {list.data && visibleCount > 0 && items.length === 0 ? <EmptyState illustration="emptySearch" title={t("gifts.empty.filtered")} body={t("gifts.empty.filteredBody")} /> : null}
-      {onlyItemId && items[0]?.productListingId ? <Text style={styles.muted}>{t("gifts.detail.partnerNote")}</Text> : null}
-      {partner.length ? <View><Text accessibilityRole="header" aria-level={2} style={styles.subtitle}>{t("gifts.guest.groupPartner")}</Text><Stagger>{partner.map(row)}</Stagger></View> : null}
-      {other.length ? <View><Text accessibilityRole="header" aria-level={2} style={styles.subtitle}>{t("gifts.guest.groupOther")}</Text><Stagger>{other.map(row)}</Stagger></View> : null}
+      {partner.length ? <View><Text accessibilityRole="header" aria-level={2} style={styles.subtitle}>{t("gifts.guest.groupPartner")}</Text><Stagger>{partner.map(renderGift)}</Stagger></View> : null}
+      {other.length ? <View><Text accessibilityRole="header" aria-level={2} style={styles.subtitle}>{t("gifts.guest.groupOther")}</Text><Stagger>{other.map(renderGift)}</Stagger></View> : null}
       <ConfirmDialog visible={cancelTarget !== null} danger busy={cancel.isPending} title={t("gifts.guest.mine.confirmTitle")} body={cancelTarget ? t("gifts.guest.mine.confirmBody", { title: cancelTarget.item.title }) : ""}
         confirmLabel={cancel.isPending ? t("gifts.guest.mine.cancelling") : t("gifts.guest.mine.confirm")} cancelLabel={t("gifts.guest.mine.keep")} confirmTestID="cancel-reservation-confirm" cancelTestID="cancel-reservation-keep"
         onCancel={() => { setCancelTarget(null); cancel.reset(); }} onConfirm={confirmCancel}>
