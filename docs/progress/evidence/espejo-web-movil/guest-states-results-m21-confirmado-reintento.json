@@ -1,0 +1,150 @@
+{
+  "app": "https://dev.done.arauzsoftware.com",
+  "site": "http://localhost:3199",
+  "results": [
+    {
+      "case": "invitado-confirmado web 360px light es-BO",
+      "ok": true,
+      "detail": "art=- cover=1 missing=0 overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-23T15:29:54.056Z"
+    },
+    {
+      "case": "invitado-confirmado app 360px light es-BO",
+      "ok": true,
+      "detail": "art=- cover=1 missing=0 overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-23T15:29:59.954Z"
+    },
+    {
+      "case": "invitado-confirmado web 360px light en-US",
+      "ok": true,
+      "detail": "art=- cover=1 missing=0 overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-23T15:30:04.436Z"
+    },
+    {
+      "case": "invitado-confirmado app 360px light en-US",
+      "ok": true,
+      "detail": "art=- cover=1 missing=0 overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-23T15:30:09.503Z"
+    },
+    {
+      "case": "invitado-confirmado web 360px dark es-BO",
+      "ok": true,
+      "detail": "art=- cover=1 missing=0 overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-23T15:30:12.544Z"
+    },
+    {
+      "case": "invitado-confirmado app 360px dark es-BO",
+      "ok": true,
+      "detail": "art=- cover=1 missing=0 overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-23T15:30:18.007Z"
+    },
+    {
+      "case": "invitado-confirmado web 360px dark en-US",
+      "ok": true,
+      "detail": "art=- cover=1 missing=0 overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-23T15:30:22.562Z"
+    },
+    {
+      "case": "invitado-confirmado app 360px dark en-US",
+      "ok": true,
+      "detail": "art=- cover=1 missing=0 overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-23T15:30:27.459Z"
+    },
+    {
+      "case": "invitado-confirmado web 768px light es-BO",
+      "ok": true,
+      "detail": "art=- cover=1 missing=0 overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-23T15:30:30.473Z"
+    },
+    {
+      "case": "invitado-confirmado app 768px light es-BO",
+      "ok": true,
+      "detail": "art=- cover=1 missing=0 overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-23T15:30:35.231Z"
+    },
+    {
+      "case": "invitado-confirmado web 768px light en-US",
+      "ok": false,
+      "detail": "locator.waitFor: Timeout 20000ms exceeded.",
+      "at": "2026-11-23T15:30:55.446Z"
+    },
+    {
+      "case": "invitado-confirmado app 768px light en-US",
+      "ok": true,
+      "detail": "art=- cover=1 missing=0 overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-23T15:31:01.684Z"
+    },
+    {
+      "case": "invitado-confirmado web 768px dark es-BO",
+      "ok": true,
+      "detail": "art=- cover=1 missing=0 overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-23T15:31:05.191Z"
+    },
+    {
+      "case": "invitado-confirmado app 768px dark es-BO",
+      "ok": true,
+      "detail": "art=- cover=1 missing=0 overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-23T15:31:09.976Z"
+    },
+    {
+      "case": "invitado-confirmado web 768px dark en-US",
+      "ok": true,
+      "detail": "art=- cover=1 missing=0 overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-23T15:31:13.996Z"
+    },
+    {
+      "case": "invitado-confirmado app 768px dark en-US",
+      "ok": true,
+      "detail": "art=- cover=1 missing=0 overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-23T15:31:18.734Z"
+    },
+    {
+      "case": "invitado-confirmado web 1280px light es-BO",
+      "ok": true,
+      "detail": "art=- cover=1 missing=0 overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-23T15:31:21.693Z"
+    },
+    {
+      "case": "invitado-confirmado app 1280px light es-BO",
+      "ok": true,
+      "detail": "art=- cover=1 missing=0 overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-23T15:31:28.103Z"
+    },
+    {
+      "case": "invitado-confirmado web 1280px light en-US",
+      "ok": true,
+      "detail": "art=- cover=1 missing=0 overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-23T15:31:31.103Z"
+    },
+    {
+      "case": "invitado-confirmado app 1280px light en-US",
+      "ok": false,
+      "detail": "locator.waitFor: Timeout 20000ms exceeded.",
+      "at": "2026-11-23T15:31:53.865Z"
+    },
+    {
+      "case": "invitado-confirmado web 1280px dark es-BO",
+      "ok": false,
+      "detail": "locator.waitFor: Timeout 20000ms exceeded.",
+      "at": "2026-11-23T15:32:14.030Z"
+    },
+    {
+      "case": "invitado-confirmado app 1280px dark es-BO",
+      "ok": true,
+      "detail": "art=- cover=1 missing=0 overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-23T15:32:18.897Z"
+    },
+    {
+      "case": "invitado-confirmado web 1280px dark en-US",
+      "ok": true,
+      "detail": "art=- cover=1 missing=0 overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-23T15:32:21.891Z"
+    },
+    {
+      "case": "invitado-confirmado app 1280px dark en-US",
+      "ok": true,
+      "detail": "art=- cover=1 missing=0 overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-23T15:32:26.817Z"
+    }
+  ]
+}

@@ -2,6 +2,7 @@ import { useState, type ReactNode } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { radius, spacing, typography } from "@rsvp/design-tokens";
 import { CheckMark, PressFeedback, fonts, useColors, useThemedStyles, type Palette } from "@rsvp/ui";
+import { COMPANIONS_STEPPER_MAX as STEPPER_MAX, companionCount, stepCompanions } from "@rsvp/query-hooks";
 import { Field, useStyles } from "../host/ui";
 import { useT } from "../platform/providers";
 
@@ -12,8 +13,6 @@ import { useT } from "../platform/providers";
 
 const fontFamily = fonts.sans;
 const MIN_TOUCH = 44;
-/** The contract sets no maximum; this only keeps the stepper from running away. */
-const STEPPER_MAX = 20;
 const ringFor = (color: string): object => Platform.select({ web: { outlineColor: color, outlineWidth: 2, outlineOffset: 2 }, default: {} }) as object;
 
 const createStyles = (palette: Palette) => StyleSheet.create({
@@ -74,16 +73,14 @@ export function CompanionsStepper({ value, onChange, allowed, error }: { readonl
   const palette = useColors();
   const focusRing = ringFor(palette.primary);
   const t = useT();
-  const parsed = Number(value);
-  const count = Number.isInteger(parsed) && parsed >= 0 ? parsed : 0;
-  const set = (next: number): void => onChange(String(Math.min(STEPPER_MAX, Math.max(0, next))));
+  const count = companionCount(value);
   return (
     <View style={{ gap: spacing[2] }}>
       <Text style={styles.label}>{t("rsvp.invite.companions")}</Text>
       <View style={s.stepper}>
-        <Pressable accessibilityRole="button" accessibilityLabel={t("rsvp.invite.companionsRemove")} aria-disabled={count === 0} disabled={count === 0} onPress={() => set(count - 1)} testID="companions-minus" style={[s.step, count === 0 && s.stepOff, focusRing]}><Text accessibilityElementsHidden aria-hidden style={s.stepGlyph}>−</Text></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel={t("rsvp.invite.companionsRemove")} aria-disabled={count === 0} disabled={count === 0} onPress={() => onChange(stepCompanions(value, -1))} testID="companions-minus" style={[s.step, count === 0 && s.stepOff, focusRing]}><Text accessibilityElementsHidden aria-hidden style={s.stepGlyph}>−</Text></Pressable>
         <Text accessibilityLiveRegion="polite" accessibilityLabel={t("rsvp.invite.companionsCount", { count })} testID="companions-count" style={s.count}>{count}</Text>
-        <Pressable accessibilityRole="button" accessibilityLabel={t("rsvp.invite.companionsAdd")} aria-disabled={count >= STEPPER_MAX} disabled={count >= STEPPER_MAX} onPress={() => set(count + 1)} testID="companions-plus" style={[s.step, count >= STEPPER_MAX && s.stepOff, focusRing]}><Text accessibilityElementsHidden aria-hidden style={s.stepGlyph}>+</Text></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel={t("rsvp.invite.companionsAdd")} aria-disabled={count >= STEPPER_MAX} disabled={count >= STEPPER_MAX} onPress={() => onChange(stepCompanions(value, 1))} testID="companions-plus" style={[s.step, count >= STEPPER_MAX && s.stepOff, focusRing]}><Text accessibilityElementsHidden aria-hidden style={s.stepGlyph}>+</Text></Pressable>
       </View>
       {allowed !== undefined ? <Text style={styles.muted}>{t("rsvp.invite.companionsIncluded", { count: allowed })}</Text> : null}
       {error ? <Text accessibilityRole="alert" style={[styles.muted, { color: palette.danger }]}>{error}</Text> : null}

@@ -5,12 +5,11 @@ import type { PublicCelebrationView } from "@rsvp/celebration-theme";
 import { spacing } from "@rsvp/design-tokens";
 import { formatMinor } from "@rsvp/i18n";
 import { Checkbox, Chip, EmptyState, Illustration, Skeleton, Stagger, SuccessNote, useColors } from "@rsvp/ui";
-import { activeReservationsByItem, arrangeGifts, giftContactDestinations, isGiftTaken, isReservationNotActive, maxPriceMinor, newIdempotencyKey, useCancelGiftReservation, useCelebrationBySlug, useGiftList, useMyGiftReservations, usePublicListing, useReserveGiftItem, type GiftItem, type GiftReservation, type GiftSourceFilter, type ListingSummary } from "@rsvp/query-hooks";
+import { activeReservationsByItem, arrangeGifts, giftContactDestinations, giftListBlocker, isGiftTaken, isReservationNotActive, isReserveRetryable, maxPriceMinor, MESSAGE_MAX, NAME_MAX, newIdempotencyKey, reserveFailureKind, reserveFailureMessage, reserveFieldErrors, useCancelGiftReservation, useCelebrationBySlug, useGiftList, useMyGiftReservations, usePublicListing, useReserveGiftItem, type GiftItem, type GiftReservation, type GiftSourceFilter, type ListingSummary } from "@rsvp/query-hooks";
 import { GuestFrame, type GuestFrameProps } from "./frame";
 import { LinkState, OfflineState } from "./link-states";
 import { ActionButton, ChoiceGroup, ConfirmDialog, Field, Notice, useStyles } from "../host/ui";
 import { clearGiftCredential, readGiftCredential, saveGiftCredential } from "./gift-credential";
-import { MESSAGE_MAX, NAME_MAX, reserveFailureKind, reserveFieldErrors, isRetryable } from "./reserve-rules";
 import { partnerRedirectUrl } from "../platform/partner-link";
 import { useApiClient, useLocale, useT } from "../platform/providers";
 
@@ -22,24 +21,6 @@ import { useApiClient, useLocale, useT } from "../platform/providers";
  * Reserving is one form in the row itself, not a dialog. Partner links always go through `/r/{listingId}`.
  */
 type Outcome = { readonly kind: "reserved"; readonly item: GiftItem; readonly status: GiftReservation["status"] } | { readonly kind: "taken"; readonly item: GiftItem };
-
-/** From here a wait is told in minutes (anonymous requests can be held for ~50 minutes). */
-const LONG_WAIT_SECONDS = 90;
-
-const RESERVE_ERROR_KEY = {
-  attendance: "gifts.error.attendanceBody",
-  limit: "gifts.guest.reserveError.limit", expired: "gifts.guest.reserveError.expired", forbidden: "gifts.guest.reserveError.forbidden", notFound: "gifts.guest.reserveError.notFound", busy: "gifts.guest.reserveError.busy",
-  validation: "gifts.guest.reserveError.validation", offline: "gifts.guest.reserveError.offline", generic: "gifts.guest.reserveError.generic"
-} as const;
-
-/** Why the list could not open, with the one thing to do about it. */
-function blockerFor(status: number, retryAfter: number | undefined, t: ReturnType<typeof useT>): { illustration: "linkExpired" | "noAccess" | "offline" | "notFound"; title: string; body: string } {
-  if (status === 401) return { illustration: "linkExpired", title: t("gifts.guest.error.expiredTitle"), body: t("gifts.guest.error.expiredBody") };
-  if (status === 404) return { illustration: "linkExpired", title: t("gifts.guest.error.otherTitle"), body: t("gifts.guest.error.otherBody") };
-  if (status === 403) return { illustration: "noAccess", title: t("gifts.guest.error.forbiddenTitle"), body: t("gifts.guest.error.forbiddenBody") };
-  if (status === 429) return { illustration: "offline", title: t("gifts.guest.error.busyTitle"), body: retryAfter && retryAfter >= LONG_WAIT_SECONDS ? t("gifts.guest.error.busyMinutes", { minutes: Math.ceil(retryAfter / 60) }) : t("gifts.guest.error.busyBody") };
-  return { illustration: "offline", title: t("gifts.guest.error.unavailableTitle"), body: t("gifts.guest.error.unavailableBody") };
-}
 
 function GiftWithListing({ item, render }: {
   readonly item: GiftItem;
@@ -178,11 +159,10 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
     );
   }
   if (list.isError) {
-    const blocker = blockerFor(listStatus, list.error instanceof ApiError ? list.error.retryAfterSeconds : undefined, t);
-    const retryable = listStatus !== 401 && listStatus !== 403 && listStatus !== 404;
+    const blocker = giftListBlocker(listStatus, list.error instanceof ApiError ? list.error.retryAfterSeconds : undefined, Boolean(credential));
     return (
-      <LinkState illustration={blocker.illustration} title={blocker.title} body={blocker.body} frame={cover}>
-        {retryable ? <ActionButton icon="refresh" variant="secondary" label={t("gifts.guest.error.retry")} onPress={() => { void list.refetch(); }} testID="gifts-retry" /> : null}
+      <LinkState illustration={blocker.illustration} title={t(blocker.title.key)} body={t(blocker.body.key, blocker.body.params)} frame={cover}>
+        {blocker.retryable ? <ActionButton icon="refresh" variant="secondary" label={t("gifts.guest.error.retry")} onPress={() => { void list.refetch(); }} testID="gifts-retry" /> : null}
         <ActionButton icon="back" variant="secondary" label={t("gifts.guest.backToRsvp")} onPress={() => { go(rsvpPath); }} testID="gifts-back" />
       </LinkState>
     );
@@ -192,6 +172,7 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
     : cancelStatus === 401 ? t("gifts.guest.mine.expired") : cancel.error instanceof ApiError ? t("gifts.guest.mine.error") : t("gifts.guest.mine.offline");
   const failedKind = reserve.isError ? reserveFailureKind(reserve.error) : null;
   const retryAfter = reserve.error instanceof ApiError ? reserve.error.retryAfterSeconds : undefined;
+  const reserveMessage = failedKind && failedKind !== "taken" ? reserveFailureMessage(failedKind, retryAfter) : null;
   const reservedInList = outcome?.kind === "reserved" && items.some((item) => item.id === outcome.item.id);
 
   const reservedNote = (reserved: Extract<Outcome, { kind: "reserved" }>): ReactNode => reserved.status === "CANCELLED" ? (
@@ -218,8 +199,8 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
       <Field label={t("gifts.guest.form.message")} value={message} onChange={(next) => { setMessage(next); setFieldErrors({}); }} help={t("gifts.guest.form.messageHelp")} error={fieldErrors.message ? t("gifts.guest.reserveError.messageTooLong", { max: MESSAGE_MAX }) : undefined} multiline testID="reserve-message" />
       {failedKind && failedKind !== "taken" ? (
         <Notice kind="error">
-          <Text testID="reserve-error" style={styles.body}>{failedKind === "busy" && retryAfter ? (retryAfter >= LONG_WAIT_SECONDS ? t("gifts.guest.reserveError.busyMinutes", { minutes: Math.ceil(retryAfter / 60) }) : t("gifts.guest.reserveError.busyWait", { seconds: Math.ceil(retryAfter) })) : t(RESERVE_ERROR_KEY[failedKind])}</Text>
-          {isRetryable(failedKind) ? <Text style={styles.muted}>{t("gifts.guest.reserveError.retryHint")}</Text> : null}
+          <Text testID="reserve-error" style={styles.body}>{reserveMessage ? t(reserveMessage.key, reserveMessage.params) : null}</Text>
+          {isReserveRetryable(failedKind) ? <Text style={styles.muted}>{t("gifts.guest.reserveError.retryHint")}</Text> : null}
           {failedKind === "attendance" ? <ActionButton icon="back" variant="secondary" label={t("gifts.guest.backToRsvp")} onPress={() => { go(rsvpPath); }} /> : null}
         </Notice>
       ) : null}

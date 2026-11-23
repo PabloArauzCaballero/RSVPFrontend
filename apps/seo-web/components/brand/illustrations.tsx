@@ -105,6 +105,52 @@ export function DeadlineClosedArt({ className = "" }: Readonly<{ className?: str
   );
 }
 
+/** The guest said they cannot come: the envelope with a pastel card and its tick, a thank-you (the app's `welcomeGuest`). */
+export function WelcomeGuestArt({ className = "" }: Readonly<{ className?: string }>) {
+  return (
+    <svg {...base} data-art="welcomeGuest" className={`art art--blue ${className}`.trim()}>
+      <path className="art__ground" d={GROUND} />
+      <path className="art__shadow" d="M28 99a32 5 0 1 0 64 0a32 5 0 1 0 -64 0Z" />
+      <path className="art__stone" d="M30 52H90a6 6 0 0 1 6 6V92a6 6 0 0 1 -6 6H30a6 6 0 0 1 -6 -6V58a6 6 0 0 1 6 -6Z" />
+      <path className="art__pastel" d="M42 22H78a6 6 0 0 1 6 6V70a6 6 0 0 1 -6 6H42a6 6 0 0 1 -6 -6V28a6 6 0 0 1 6 -6Z" />
+      <path className="art__ink" strokeWidth={3} d="M49.5 40L57 47.5L70.5 31" />
+      <path className="art__solid" d="M24 56L60 78L96 56V92a6 6 0 0 1-6 6H30a6 6 0 0 1-6-6Z" />
+    </svg>
+  );
+}
+
+/** A gift was reserved: the box with its pastel ribbon and the seal with the tick (the app's `giftReserved`). */
+export function GiftReservedArt({ className = "" }: Readonly<{ className?: string }>) {
+  return (
+    <svg {...base} data-art="giftReserved" className={`art art--yellow ${className}`.trim()}>
+      <path className="art__ground" d={GROUND} />
+      <path className="art__shadow" d="M28 99a32 5 0 1 0 64 0a32 5 0 1 0 -64 0Z" />
+      <path className="art__solid" d="M32 56H76a8 8 0 0 1 8 8V90a8 8 0 0 1 -8 8H32a8 8 0 0 1 -8 -8V64a8 8 0 0 1 8 -8Z" />
+      <path className="art__solid" d="M26 44H82a6 6 0 0 1 6 6V52a6 6 0 0 1 -6 6H26a6 6 0 0 1 -6 -6V50a6 6 0 0 1 6 -6Z" />
+      <path className="art__knock" strokeWidth={2.5} d="M24 58H84" />
+      <path className="art__pastel" d="M51 44H57a2 2 0 0 1 2 2V96a2 2 0 0 1 -2 2H51a2 2 0 0 1 -2 -2V46a2 2 0 0 1 2 -2ZM54 44C46 26 30 30 36 40C39 44 46 44 54 44ZM54 44C62 26 78 30 72 40C69 44 62 44 54 44Z" />
+      <path className="art__ink" strokeWidth={2.5} d="M54 44C46 26 30 30 36 40C39 44 46 44 54 44ZM54 44C62 26 78 30 72 40C69 44 62 44 54 44Z" />
+      <path className="art__knock-fill" d="M73 86a15 15 0 1 0 30 0a15 15 0 1 0 -30 0Z" />
+      <path className="art__solid" d="M76 86a12 12 0 1 0 24 0a12 12 0 1 0 -24 0Z" />
+      <path className="art__knock" strokeWidth={3.5} d="M82.4 86L86.4 90L93.6 81.2" />
+    </svg>
+  );
+}
+
+/** No gifts yet: the open box with its lid aside and a pastel tag (the app's `noGifts`). */
+export function NoGiftsArt({ className = "" }: Readonly<{ className?: string }>) {
+  return (
+    <svg {...base} data-art="noGifts" className={`art art--yellow ${className}`.trim()}>
+      <path className="art__ground" d={GROUND} />
+      <path className="art__shadow" d="M28 99a32 5 0 1 0 64 0a32 5 0 1 0 -64 0Z" />
+      <path className="art__solid" d="M36 60H84a8 8 0 0 1 8 8V90a8 8 0 0 1 -8 8H36a8 8 0 0 1 -8 -8V68a8 8 0 0 1 8 -8Z" />
+      <path className="art__stone" d="M35 60H85a3 3 0 0 1 3 3V65a3 3 0 0 1 -3 3H35a3 3 0 0 1 -3 -3V63a3 3 0 0 1 3 -3Z" />
+      <path className="art__solid" d="M30 46L86 30L90 42L34 58Z" />
+      <path className="art__pastel" d="M55 38.8L61 37.1L65 49.1L59 50.8Z" />
+    </svg>
+  );
+}
+
 /** Landing, the host: a garland over the D with the tick (the app's `welcomeHost`). */
 export function HostArt({ className = "" }: Readonly<{ className?: string }>) {
   return (

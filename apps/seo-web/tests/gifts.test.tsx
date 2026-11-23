@@ -33,6 +33,55 @@ beforeEach(() => {
 });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
+describe("M21 · la lista de regalos de la web es la de la app", () => {
+  it("«Regalos» is the cover with the celebration under it, then the rule; the old «Lista de regalos» is gone", async () => {
+    stubFetch(() => json(201, {}));
+    renderList();
+    expect(await screen.findByRole("heading", { level: 1, name: "Regalos" })).toBeTruthy();
+    expect(screen.getByText("Ana y Luis")).toBeTruthy();
+    expect(screen.getByText("Reserva un regalo en un toque y nadie más regalará lo mismo.")).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 2, name: "De nuestros aliados" })).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 2, name: "Ideas de quienes te invitan" })).toBeTruthy();
+    expect(screen.queryByText("Lista de regalos")).toBeNull();
+    expect(screen.getByRole("link", { name: "Volver a mi respuesta" }).getAttribute("href")).toBe("/c/ana-luis/rsvp/guest-credential-0123456789?lang=es-BO");
+  });
+
+  it("reserving opens a form inside the gift's own row, not a dialog, and «Ahora no» closes it without sending", async () => {
+    stubFetch(() => json(201, {}));
+    renderList();
+    fireEvent.click(await screen.findByRole("button", { name: "Reservar Torta" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    const row = within(document.querySelector<HTMLElement>('[data-gift-id="cat-1"]')!);
+    expect(row.getByRole("heading", { name: "Reservar «Torta»" })).toBeTruthy();
+    expect(row.getByLabelText("Mensaje (opcional)")).toBeTruthy();
+    fireEvent.click(row.getByRole("button", { name: "Ahora no" }));
+    expect(row.getByRole("button", { name: "Reservar Torta" })).toBeTruthy();
+    expect(posts).toHaveLength(0);
+  });
+
+  it("negative: a name over 120 characters is stopped before sending, with the app's words", async () => {
+    stubFetch(() => json(201, {}));
+    renderList();
+    fireEvent.click(await screen.findByRole("button", { name: "Reservar Torta" }));
+    fireEvent.change(screen.getByLabelText("Tu nombre (opcional)"), { target: { value: "n".repeat(121) } });
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar reserva" }));
+    expect(screen.getByText("El nombre admite hasta 120 caracteres.")).toBeTruthy();
+    expect(posts).toHaveLength(0);
+  });
+
+  it.each([
+    [429, { "retry-after": "17", "access-control-expose-headers": "retry-after" }, "Hubo muchas solicitudes seguidas. Espera 17 s y vuelve a intentarlo."],
+    [422, {}, "El nombre o el mensaje son demasiado largos. Acórtalos y vuelve a intentarlo."]
+  ] as const)("a %i on reserve keeps the form and says what to do", async (status, headers, text) => {
+    stubFetch(() => new Response(JSON.stringify({ type: "x", title: "t", status }), { status, headers: { "content-type": "application/problem+json", ...headers } }));
+    renderList();
+    fireEvent.click(await screen.findByRole("button", { name: "Reservar Torta" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar reserva" }));
+    expect((await screen.findByTestId("reserve-error")).textContent).toBe(text);
+    expect(screen.getByRole("button", { name: "Confirmar reserva" })).toBeTruthy();
+  });
+});
+
 describe('Guest gift photos', () => {
   it('shows the catalog photo using an anonymous public request and keeps the token out of the image referrer', async () => {
     stubFetch(() => json(201, {}), undefined, () => json(200, { imageUrl: 'https://images.example/torta.jpg' }));
@@ -81,15 +130,27 @@ describe("REQ-F22-02 · partner gifts come before external ones, in the rendered
 });
 
 describe("REQ-F22-01 · filters by price, source and availability", () => {
-  it("filters on the maximum price and on the source", async () => {
+  it("filters on the maximum price and on the source (a radio group, as the app's choice)", async () => {
     stubFetch(() => json(201, {}));
     renderList();
     await screen.findByText("Torta");
     fireEvent.change(screen.getByLabelText("Precio máximo"), { target: { value: "500" } });
     expect(screen.queryByText("Mesa")).toBeNull();
-    fireEvent.change(screen.getByLabelText("Origen"), { target: { value: "other" } });
+    const source = screen.getByRole("group", { name: "Origen" });
+    fireEvent.click(within(source).getByLabelText("Otras tiendas"));
     expect(screen.queryByText("Torta")).toBeNull();
     expect(screen.getByText("Cafetera")).toBeTruthy();
+    expect(screen.getByTestId("gift-count").textContent).toBe("1 regalo");
+    fireEvent.click(screen.getByRole("button", { name: "Quitar filtros" }));
+    expect(screen.getByText("Torta")).toBeTruthy();
+  });
+  it("a filter that leaves nothing says so with the app's drawing", async () => {
+    stubFetch(() => json(201, {}));
+    renderList();
+    await screen.findByText("Torta");
+    fireEvent.change(screen.getByLabelText("Precio máximo"), { target: { value: "1" } });
+    expect(screen.getByRole("heading", { name: "Ningún regalo coincide con estos filtros." })).toBeTruthy();
+    expect(document.querySelector('[data-art="emptySearch"]')).toBeTruthy();
   });
 });
 
@@ -98,9 +159,10 @@ describe("REQ-F22-04 · reserving needs no account: the guest credential is the 
     stubFetch(() => json(201, { id: "r1", itemId: "cat-1", celebrationId: CELEBRATION, status: "COMMITTED", requestedAt: "2026-11-01T00:00:00Z" }));
     renderList();
     fireEvent.click(await screen.findByRole("button", { name: /Reservar Torta/ }));
-    const submit = screen.getByRole("button", { name: "Reservar regalo" });
+    const submit = screen.getByRole("button", { name: "Confirmar reserva" });
     fireEvent.click(submit); fireEvent.click(submit);
-    await screen.findByText("¡Regalo reservado!");
+    await screen.findByText("Regalo reservado");
+    expect(document.querySelector('[data-art="giftReserved"]')).toBeTruthy();
     expect(posts).toHaveLength(1);
     expect(posts[0]?.key).toMatch(/^[0-9a-f-]{36}$/);
   });
@@ -110,26 +172,27 @@ describe("REQ-F22-05 · the two successful outcomes follow the celebration mode"
   it("a replay of a cancelled reservation never says request sent or gift reserved", async () => {
     stubFetch(() => json(201, { id: "r-cancelled", itemId: "cat-1", celebrationId: CELEBRATION, status: "CANCELLED", requestedAt: "2026-11-01T00:00:00Z" }));
     renderList();fireEvent.click(await screen.findByRole("button", { name: /Reservar Torta/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Reservar regalo" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar reserva" }));
     expect(await screen.findByRole("heading", { name: "Reserva cancelada" })).toBeTruthy();
-    expect(screen.queryByText("Solicitud enviada")).toBeNull();
-    expect(document.querySelector('[data-outcome="CANCELLED"] a[href*="guest-credential"]')).toBeNull();
+    expect(screen.queryByText("Reserva enviada")).toBeNull();
+    expect(screen.queryByText("Regalo reservado")).toBeNull();
   });
   it.each(["GUEST_RSVP_DECLINED", "GUEST_RSVP_REQUIRED"])("%s explains how to confirm RSVP without losing entered data", async (code) => {
     stubFetch(() => json(403, { type: "x", title: "Confirm attendance", status: 403, code }));
     renderList();fireEvent.click(await screen.findByRole("button", { name: /Reservar Torta/ }));
-    fireEvent.change(screen.getByLabelText("Tu nombre"), { target: { value: "Nombre QA" } });
-    fireEvent.click(screen.getByRole("button", { name: "Reservar regalo" }));
+    fireEvent.change(screen.getByLabelText("Tu nombre (opcional)"), { target: { value: "Nombre QA" } });
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar reserva" }));
     expect((await screen.findByRole("alert")).textContent).toContain("confirmá que asistirás");
-    expect((screen.getByLabelText("Tu nombre") as HTMLInputElement).value).toBe("Nombre QA");
-    expect(within(screen.getByRole("dialog")).getByRole("button", { name: "Volver a mi respuesta" })).toBeTruthy();
+    expect((screen.getByLabelText("Tu nombre (opcional)") as HTMLInputElement).value).toBe("Nombre QA");
+    const form = screen.getByRole("form", { name: "Reservar «Torta»" });
+    expect(within(form).getByRole("link", { name: "Volver a mi respuesta" }).getAttribute("href")).toContain("/c/ana-luis/rsvp/");
   });
   it("COMMITTED says reserved; PENDING_REVIEW says request sent", async () => {
     stubFetch(() => json(201, { id: "r1", itemId: "cat-1", celebrationId: CELEBRATION, status: "PENDING_REVIEW", requestedAt: "2026-11-01T00:00:00Z" }));
     renderList();
     fireEvent.click(await screen.findByRole("button", { name: /Reservar Torta/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Reservar regalo" }));
-    expect(await screen.findByText("Solicitud enviada")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar reserva" }));
+    expect(await screen.findByText("Reserva enviada")).toBeTruthy();
   });
 });
 
@@ -140,11 +203,14 @@ describe("REQ-F22-06 · 409 GIFT_NOT_AVAILABLE leaves the guest with something t
       () => json(200, { items: ITEMS.map((entry) => (taken && entry.id === "cat-1" ? { ...entry, status: "COMMITTED" } : entry)), partnerPriorityEnabled: true }));
     renderList();
     fireEvent.click(await screen.findByRole("button", { name: /Reservar Torta/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Reservar regalo" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar reserva" }));
     expect(await screen.findByRole("heading", { name: "Alguien se adelantó" })).toBeTruthy();
     const alternatives = await screen.findByTestId("alternatives");
-    await waitFor(() => expect(within(alternatives).getAllByRole("heading", { level: 3 }).length).toBeGreaterThanOrEqual(1));
+    await waitFor(() => expect(within(alternatives).getAllByRole("button").length).toBeGreaterThanOrEqual(1));
     expect(within(alternatives).queryByText("Torta")).toBeNull();
+    // One tap on an alternative opens its reservation form in its own row.
+    fireEvent.click(within(alternatives).getAllByRole("button")[0]!);
+    expect(screen.getByRole("button", { name: "Confirmar reserva" })).toBeTruthy();
   });
 });
 
@@ -162,10 +228,14 @@ describe("states · 401, 403 and failure", () => {
     expect(await screen.findByRole("heading", { name: "Abre tu enlace de invitación" })).toBeTruthy();
     expect(document.querySelector('[data-art="linkExpired"]')).toBeTruthy();
   });
-  it("loading shows a status and an empty list says so", async () => {
+  it("loading shows a status and an empty list says so, with the app's drawing", async () => {
     stubFetch(() => json(201, {}), () => json(200, { items: [], partnerPriorityEnabled: false }));
     renderList();
+    expect(screen.getByRole("status").textContent).toContain("Abriendo la lista…");
     expect(await screen.findByText("Aún no hay regalos")).toBeTruthy();
+    expect(screen.getByText("Quienes te invitan todavía no agregaron ninguno. Vuelve en unos días.")).toBeTruthy();
+    expect(document.querySelector('[data-art="noGifts"]')).toBeTruthy();
+    expect(screen.queryByRole("search")).toBeNull();
   });
 });
 
@@ -212,6 +282,7 @@ describe("REQ-F23-06 · reservedByName only when the backend sends it", () => {
     renderList();
     await screen.findByText("Torta");
     expect(screen.getAllByTestId("reserved-by").map((node) => node.textContent)).toEqual(["Reservado por Marta"]);
+    expect(screen.getAllByText("Reservado").length).toBe(2);
   });
 });
 

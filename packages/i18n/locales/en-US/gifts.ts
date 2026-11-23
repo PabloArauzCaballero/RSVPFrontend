@@ -1,48 +1,20 @@
 import type { DeepStrings } from "../types.js";
 import type { giftsEsBO } from "../es-BO/gifts.js";
-
 /** Public gift list (F22) and host gift management (F23). */
 export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
   meta: { title: "Gifts · {{name}}", description: "Choose a gift for {{name}}. Products from our partners come first." },
-  title: "Gift list",
-  intro: "Pick what to give. Reserving a gift keeps someone else from giving the same one.",
-  backToRsvp: "Back to my response",
   back: "Back to the celebration",
-  loading: "Loading gifts…",
   filters: { label: "Filter gifts", maxPrice: "Maximum price", source: "Source", sourceAll: "All", sourcePartner: "From our partners", sourceOther: "Other stores", onlyAvailable: "Available only", clear: "Clear filters", count_one: "{{count}} gift", count_other: "{{count}} gifts" },
-  group: { partner: "Products from our partners", other: "More ideas from the hosts" },
-  status: { AVAILABLE: "Available", PENDING_REVIEW: "Awaiting approval", COMMITTED: "Already reserved" },
-  price: "Price",
-  card: { photo: "Photo of {{title}}", reservedBy: "Reserved by {{name}}", open: "See details of {{title}}", reserve: "Reserve", reserveFor: "Reserve {{title}}", viaPartner: "See at the partner's store", viaWhatsApp: "Ask on WhatsApp", viaOther: "See at the store" },
+  card: { photo: "Photo of {{title}}", open: "See details of {{title}}", viaWhatsApp: "Ask on WhatsApp", viaOther: "See at the store" },
   detail: { title: "{{title}} · Gifts", back: "Back to the list", notFound: "This gift is no longer on the list.", notFoundBody: "The hosts may have removed it. The full list is still open to you.", partnerNote: "A DOne partner offers this product. Opening the link takes you out of DOne." },
-  reserve: { title: "Reserve this gift", intro: "We ask for your name so the hosts know who is giving it.", name: "Your name", nameHelp: "Optional. The hosts will see this name next to your reservation.", message: "Message for the hosts", messageHelp: "Optional, up to 500 characters.", submit: "Reserve gift", submitting: "Reserving…", cancel: "Cancel", close: "Close" },
-  /** D-3 · the guest cancels their own reservation (public web). */
-  mine: { label: "Your reservation", pendingLabel: "Your reservation, waiting for approval", cancel: "Cancel my reservation", cancelFor: "Cancel my reservation of {{title}}", confirmTitle: "Cancel your reservation?", confirmBody: "\"{{title}}\" becomes available to the other guests again. If you change your mind, you can reserve it again while it is still free.", confirm: "Yes, cancel the reservation", keep: "No, keep it", cancelling: "Cancelling…", done: "You cancelled your reservation of \"{{title}}\". The gift is back on the list.", notActive: "This reservation was no longer active. We refreshed the list.", error: "We could not cancel the reservation. Try again: it will not be cancelled twice.", expired: "Your link is no longer valid. Ask the hosts for a new one to manage your reservation.", released: "The hosts released \"{{title}}\". You can choose another gift." },
-  outcome: {
-    cancelledTitle: "Reservation cancelled", cancelledBody: "This reservation was cancelled when your attendance changed. If you are attending again, confirm your response and choose an available gift.",
-    confirmedTitle: "Gift reserved!", confirmedBody: "You reserved “{{title}}”. The hosts know you are giving it.",
-    pendingTitle: "Request sent", pendingBody: "The hosts approve each reservation. We will let you know when “{{title}}” is confirmed; meanwhile nobody else can reserve it.",
-    takenTitle: "Someone got there first", takenBody: "“{{title}}” was just taken by someone else. No worries: the list is up to date and here are other options.",
-    takenAlternatives: "Other available gifts",
-    takenNone: "No gifts are left on this list. Thank you for wanting to celebrate with them.",
-    seeList: "See the gift list", reserveAnother: "Choose another gift"
-  },
+  outcome: { cancelledTitle: "Reservation cancelled", cancelledBody: "This reservation was cancelled when your attendance changed. If you are attending again, confirm your response and choose an available gift." },
   error: {
     attendanceBody: "To reserve a gift, return to your response and confirm that you are attending.",
-    otherTitle: "This link belongs to another celebration", otherBody: "The link you opened does not match this gift list. Open the link the hosts of this celebration sent you.",
-    busyTitle: "It is busy right now", busyBody: "We received too many requests in a row. Wait a few seconds and try again.",
-    limit: "You already hold the maximum number of reserved gifts. Wait for the hosts to confirm one before reserving another.",
     needLinkTitle: "Open your invitation link", needLinkBody: "To see and reserve gifts we use the personal link of your invitation; you do not need an account. Open it from the message the hosts sent you.",
-    needLinkAction: "Go to my invitation",
-    forbiddenTitle: "You cannot reserve gifts here", forbiddenBody: "Your invitation has no permission for this list. Ask the hosts for a new link.",
-    expiredTitle: "Your link expired", expiredBody: "The personal link is no longer valid. Ask the hosts to send you a new one.",
-    unavailableTitle: "We could not load the gifts", unavailableBody: "The gift service is not responding right now. Nothing was lost: try again.",
-    offline: "No connection. Check your internet and try again; your message is still here.", nameTooLong: "The name can be up to {{max}} characters.", messageTooLong: "The message can be up to {{max}} characters.", busyWait: "We received too many requests in a row. Wait {{seconds}} seconds and try again.", retryHint: "You can press Reserve again: it will not reserve twice.",
-    retry: "Try again", validation: "Check the data: the name or the message is too long.", generic: "We could not reserve the gift. Try again."
-  },
-  empty: { title: "No gifts yet", body: "The hosts have not added gifts yet. Come back soon.", filtered: "No gift matches these filters.", filteredBody: "Try another price or source, or clear the filters." },
+    needLinkAction: "Go to my invitation" },
+  empty: { filtered: "No gift matches these filters.", filteredBody: "Try another price or source, or clear the filters." },
   notFound: { title: "We could not find this celebration", body: "The page does not exist or the hosts have not published it yet." },
-  /** Guest gift list in the app (Persuade). seo-web keeps using the keys above. */
+  /** Guest gift list in the app (Persuade). The public site (seo-web) uses the same keys since M21. */
   guest: {
     title: "Gifts", intro: "Reserve a gift in one tap and nobody else will give the same one.", rule: "Each person can hold a limited number of reserved gifts at a time.", backToRsvp: "Back to my answer", loading: "Opening the list…",
     groupPartner: "From our partners", groupOther: "Ideas from your hosts",
@@ -62,7 +34,7 @@ export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
       notFoundTitle: "We could not find this celebration", notFoundBody: "The link may be incomplete, or it may not be published yet."
     },
     /** D-3 · the guest cancels their own reservation (app). */
-    mine: { label: "Your reservation", pendingLabel: "Your reservation, waiting for approval", cancel: "Cancel my reservation", confirmTitle: "Cancel your reservation?", confirmBody: "\"{{title}}\" becomes available to the other guests again. If you change your mind, you can reserve it again while it is still free.", confirm: "Yes, cancel the reservation", keep: "No, keep it", cancelling: "Cancelling…", done: "You cancelled your reservation of \"{{title}}\". The gift is back on the list.", notActive: "This reservation was no longer active. We refreshed the list.", error: "We could not cancel the reservation. Try again: it will not be cancelled twice.", expired: "Your link no longer works. Ask whoever invited you for a new one.", offline: "No connection right now. Your reservation is unchanged; try again when you are back online.", released: "Your hosts released \"{{title}}\". You can choose another gift." },
+    mine: { label: "Your reservation", pendingLabel: "Your reservation, waiting for approval", cancel: "Cancel my reservation", cancelFor: "Cancel my reservation of {{title}}", confirmTitle: "Cancel your reservation?", confirmBody: "\"{{title}}\" becomes available to the other guests again. If you change your mind, you can reserve it again while it is still free.", confirm: "Yes, cancel the reservation", keep: "No, keep it", cancelling: "Cancelling…", done: "You cancelled your reservation of \"{{title}}\". The gift is back on the list.", notActive: "This reservation was no longer active. We refreshed the list.", error: "We could not cancel the reservation. Try again: it will not be cancelled twice.", expired: "Your link no longer works. Ask whoever invited you for a new one.", offline: "No connection right now. Your reservation is unchanged; try again when you are back online.", released: "Your hosts released \"{{title}}\". You can choose another gift." },
     reserveError: {
       limit: "You reached the most gifts one person can reserve. If your hosts reject one of your reservations, you can pick another.",
       expired: "Your link no longer works. Ask whoever invited you for a new one.", forbidden: "This link cannot reserve gifts. Ask whoever invited you for a new one.", notFound: "This link is for another celebration. Open the one you were sent for this one.",

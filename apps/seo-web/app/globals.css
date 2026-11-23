@@ -40,7 +40,7 @@ button, input, select, textarea { font: inherit; }
 @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
 
 /* ===== Tags. Rule: small pill, uppercase, tracked, pastel ground; the only pill shape on the site. ===== */
-.tag, .directory-verified, .gift-badge, .rsvp-status-badge, .rsvp-countdown { display: inline-flex; align-items: center; gap: .4rem; width: fit-content; max-width: 100%; padding: .2rem .65rem; border-radius: 9999px; background: var(--tone-gray-bg); color: var(--tone-gray-fg); font-family: var(--font-mono); font-size: .72rem; font-weight: 500; letter-spacing: .05em; text-transform: uppercase; line-height: 1.5; }
+.tag, .directory-verified, .gift-badge, .guest-chip, .guest-countdown { display: inline-flex; align-items: center; gap: .4rem; width: fit-content; max-width: 100%; padding: .2rem .65rem; border-radius: 9999px; background: var(--tone-gray-bg); color: var(--tone-gray-fg); font-family: var(--font-mono); font-size: .72rem; font-weight: 500; letter-spacing: .05em; text-transform: uppercase; line-height: 1.5; }
 
 /* ===== Drawings (empty states only) and the check ===== */
 .art { display: block; width: 100%; height: auto; overflow: visible; --art-pastel: var(--pastel-yellow-bg); --art-edge: var(--pastel-yellow-fg); }
@@ -429,51 +429,102 @@ table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nu
 /* ===== RSVP by personal link: a calm task surface for a phone in one hand ===== */
 .rsvp-shell, .rsvp-status { width: min(100% - 2.5rem, 38rem); margin: 0 auto; padding: clamp(2rem, 7vw, 4.5rem) 0 clamp(3rem, 8vw, 5rem); display: grid; gap: 1rem; align-content: start; position: relative; }
 html:has(.rsvp-shell, .rsvp-status) body { overflow-x: clip; }
-.rsvp-for { margin: 0; color: var(--text-muted); font-family: var(--font-mono); font-size: .8rem; letter-spacing: .05em; text-transform: uppercase; overflow-wrap: anywhere; }
 .rsvp-card { display: grid; gap: 1rem; padding: clamp(1.5rem, 5vw, 2.5rem); border: 1px solid var(--border); border-radius: var(--radius-cell); background: var(--surface); }
 .rsvp-card--quiet { background: var(--surface-muted); }
 .rsvp-card p, .rsvp-card ul { margin: 0; }
 .rsvp-check, .sent__check { color: var(--text); width: 3.5rem; height: 3.5rem; padding: .85rem; border-radius: 50%; background: var(--tone-green-bg); }
 .rsvp-heading { margin: 0; font-size: clamp(1.9rem, 6vw, 2.75rem); line-height: 1.05; letter-spacing: -.03em; }
 /* Programmatic focus target (moves the reader to the new state); it is not in the tab order, so no ring. */
-.rsvp-heading:focus, .rsvp-heading:focus-visible { outline: none; }
+.rsvp-heading:focus, .rsvp-heading:focus-visible, .guest-question:focus, .guest-question:focus-visible { outline: none; }
 .rsvp-hint { color: var(--text-muted); font-size: .9rem; }
 .rsvp-error { color: var(--danger); font-size: .9rem; font-weight: 500; margin: 0; }
-.rsvp-countdown { font-variant-numeric: tabular-nums; background: var(--tone-yellow-bg); color: var(--tone-yellow-fg); }
-.rsvp-form { display: grid; gap: 1.25rem; margin-top: .5rem; }
+.rsvp-form { display: grid; gap: 1.75rem; }
 .rsvp-field { display: grid; gap: .4rem; }
-.rsvp-field label, .rsvp-field > span, .rsvp-choice legend { font-weight: 500; font-size: .95rem; }
+.rsvp-field label, .rsvp-field > span { font-weight: 500; font-size: .95rem; }
 .rsvp-form input[type="text"], .rsvp-form input[type="email"], .rsvp-form input[type="number"], .rsvp-form textarea, .rsvp-field input[readonly], .rsvp-field select { width: 100%; min-height: 3rem; padding: .65rem .9rem; border: 1px solid var(--field-border); border-radius: var(--radius-button); background: var(--surface); color: var(--text); font-size: 1rem; }
 .rsvp-form textarea { min-height: 6rem; resize: vertical; }
 .rsvp-form [aria-invalid="true"] { border-color: var(--danger); }
 .rsvp-form input:focus-visible, .rsvp-form textarea:focus-visible, .rsvp-field input[readonly]:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-.rsvp-choice { display: grid; gap: .6rem; margin: 0; padding: 0; border: 0; min-width: 0; }
-.rsvp-choice legend { padding: 0; margin-bottom: .4rem; }
-.rsvp-radio { display: flex; align-items: center; gap: .75rem; min-height: 3.25rem; padding: .6rem 1rem; border: 1px solid var(--field-border); border-radius: var(--radius-inner); background: var(--surface); font-weight: 500; cursor: pointer; transition: border-color .15s var(--ease-out), background-color .15s var(--ease-out); }
-.rsvp-radio:has(input:checked) { border-color: var(--text); background: var(--surface-muted); }
-.rsvp-radio input { width: 1.25rem; height: 1.25rem; accent-color: var(--primary); flex: none; margin: 0; }
-.rsvp-radio:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
 .rsvp-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
 .rsvp-actions .rsvp-hint { flex-basis: 100%; }
 .rsvp-notice { display: grid; gap: .6rem; padding: .85rem 1rem; border-radius: var(--radius-inner); background: var(--surface-muted); }
 .rsvp-notice p { margin: 0; }
 .rsvp-notice--error { border: 1px solid var(--danger); background: var(--danger-bg); }
 .rsvp-notice--success { background: var(--success-bg); }
-.rsvp-summary { display: grid; gap: .6rem; }
-.rsvp-summary ul { padding-left: 1.1rem; display: grid; gap: .25rem; overflow-wrap: anywhere; }
-.rsvp-status-badge[data-status="CONFIRMED"] { background: var(--tone-green-bg); color: var(--tone-green-fg); }
-.rsvp-status-badge[data-status="DECLINED"] { background: var(--tone-red-bg); color: var(--tone-red-fg); }
-.rsvp-status-badge[data-status="MAYBE"], .rsvp-status-badge[data-status="TENTATIVE"] { background: var(--tone-yellow-bg); color: var(--tone-yellow-fg); }
-.rsvp-loading { display: flex; align-items: center; gap: .75rem; padding: 2rem 0; color: var(--text-muted); }
-.rsvp-spinner { width: 1.25rem; height: 1.25rem; border-radius: 50%; border: 2px solid var(--border); border-top-color: var(--text); animation: rsvp-spin .9s linear infinite; }
-@keyframes rsvp-spin { to { transform: rotate(360deg); } }
 .rsvp-card .state__art { width: 8rem; }
+
+/*
+ * M21 · The guest's sheet, as the app draws it (apps/universal/src/guest/frame.tsx, mode Persuade): the invitation on top
+ * (title, who invites, when and where), a 1 px rule, then the state or the answer. Nothing competes with the event's name.
+ */
+.guest-sheet { gap: 2rem; padding: clamp(1.5rem, 6vw, 3rem); }
+.guest-sheet__body { display: grid; gap: 1.5rem; min-width: 0; }
+/* The app wraps text naturally (React Native has no balance/pretty): the sheet does the same, so both break lines alike. */
+.guest-sheet h1, .guest-sheet h2, .guest-sheet p { text-wrap: wrap; }
+/* A state heading takes focus when it appears; it must not land under the sticky site header. */
+.guest-sheet h1, .guest-sheet h2 { scroll-margin-top: 6rem; }
+.guest-cover { display: grid; gap: 1rem; animation: guest-enter .32s var(--ease-out) both; }
+.guest-cover__title { margin: 0; font-size: clamp(2.5rem, 10vw, 3.5rem); line-height: 1.08; font-weight: 500; letter-spacing: -.03em; overflow-wrap: anywhere; }
+.guest-cover__lead { font-size: 1.125rem; line-height: 1.55; }
+.guest-cover__meta { color: var(--text-muted); font-family: var(--font-mono); font-size: .8125rem; line-height: 1.6; }
+.guest-rule { margin: 0; border: 0; border-top: 1px solid var(--border); }
+.guest-question { margin: 0; font-size: 1.875rem; line-height: 1.1; font-weight: 500; letter-spacing: -.03em; }
+.guest-intro { display: grid; gap: .5rem; }
+.guest-intro > p { margin: 0; }
+.guest-actions { justify-content: center; }
+.guest-actions .rsvp-button { flex: 1 1 14rem; max-width: 22rem; }
+/* "Voy" / "No puedo": two large choices. Both fill with ink when chosen; the mark (a drawn tick or a ring) tells them apart, never the colour. */
+.answer-choice { margin: 0; padding: 0; border: 0; min-width: 0; display: grid; gap: .5rem; }
+.answer-choice__options { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+.answer-choice__option { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .25rem; min-height: 72px; padding: 0 .75rem; border: 1px solid var(--field-border); border-radius: var(--radius-inner); background: var(--surface); color: var(--text); font-family: var(--font-head); font-size: 1.375rem; line-height: 1.2; font-weight: 500; letter-spacing: -.02em; text-align: center; cursor: pointer; transition: background-color .15s var(--ease-out), border-color .15s var(--ease-out), transform .15s var(--ease-out); }
+.answer-choice__option:active { transform: scale(.98); }
+.answer-choice__option input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.answer-choice__option:has(input:checked) { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+.answer-choice__option:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+.answer-choice__mark { color: var(--on-primary); }
+.answer-choice__ring { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--on-primary); display: grid; place-items: center; }
+.answer-choice__ring > span { width: 8px; height: 8px; border-radius: 50%; background: var(--on-primary); }
+.stepper { display: grid; gap: .5rem; }
+.stepper__label { font-weight: 500; font-size: .95rem; }
+.stepper__row { display: flex; align-items: center; gap: 1rem; }
+.stepper__step { width: 48px; height: 48px; border: 1px solid var(--field-border); border-radius: var(--radius-inner); background: var(--surface); color: var(--text); font-size: 1.5rem; line-height: 1; cursor: pointer; display: grid; place-items: center; }
+.stepper__step:disabled { opacity: .4; cursor: not-allowed; }
+.stepper__count { min-width: 2.5rem; text-align: center; font-family: var(--font-head); font-size: 2rem; line-height: 1.1; font-weight: 500; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.extras { display: grid; gap: .75rem; }
+.extras__toggle { justify-self: start; min-height: 44px; padding: 0; border: 0; background: none; color: var(--text); font-weight: 500; text-decoration: underline; text-underline-offset: .2em; cursor: pointer; text-align: start; }
+.extras__fields { display: grid; gap: 1rem; }
+.guest-consent { display: flex; align-items: flex-start; gap: .75rem; min-height: 44px; font-size: .95rem; cursor: pointer; }
+.guest-consent input { width: 1.25rem; height: 1.25rem; margin: .2rem 0 0; flex: none; accent-color: var(--primary); }
+.guest-countdown { font-variant-numeric: tabular-nums; background: var(--tone-yellow-bg); color: var(--tone-yellow-fg); }
+.guest-summary { display: grid; gap: .25rem; overflow-wrap: anywhere; }
+.guest-summary .guest-chip { margin-bottom: .25rem; }
+.guest-chip[data-tone="yes"] { background: var(--tone-green-bg); color: var(--tone-green-fg); }
+.guest-chip[data-tone="no"] { background: var(--tone-red-bg); color: var(--tone-red-fg); }
+.guest-chip[data-tone="wait"] { background: var(--tone-yellow-bg); color: var(--tone-yellow-fg); }
+.guest-again { display: flex; align-items: center; gap: .75rem; }
+.guest-again__mark { flex: none; color: var(--success); }
+.guest-again__mark--ink { color: var(--text); }
+.guest-gifts { display: grid; gap: .5rem; justify-items: center; text-align: center; animation: guest-enter .32s var(--ease-out) both; }
+.guest-gifts .rsvp-button { width: 100%; max-width: 22rem; }
+.guest-celebrate { display: grid; justify-items: center; gap: 1rem; padding: 1rem 0; text-align: center; }
+.rsvp-check--lg { width: 4.5rem; height: 4.5rem; padding: 1rem; }
+.guest-contact { display: grid; gap: .25rem; justify-items: center; }
+.guest-contact a { color: var(--text); font-weight: 600; }
+.guest-closed-answer { justify-self: stretch; display: grid; gap: .5rem; margin-top: .75rem; text-align: start; }
+.guest-loading { display: grid; gap: .75rem; }
+.guest-skeleton { display: block; height: 1rem; border-radius: var(--radius-inner); background: var(--surface-muted); animation: guest-pulse 1.6s ease-in-out infinite; }
+.guest-skeleton-row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin-top: .75rem; }
+.guest-skeleton--tile { height: 72px; }
+@keyframes guest-pulse { 50% { opacity: .55; } }
+@keyframes guest-enter { from { opacity: 0; transform: translateY(8px); } }
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 /* The guest's dead ends (link expired, offline, closed, invite only): the app's `LinkState`, drawing on top and centred. */
-.rsvp-card.rsvp-state { justify-items: center; text-align: center; background: var(--surface); }
-.rsvp-state .rsvp-summary { justify-self: stretch; text-align: start; }
-.rsvp-card.rsvp-state > p { color: var(--text-muted); }
-.rsvp-card.rsvp-state > p.rsvp-state__action { color: var(--text); font-weight: 600; }
-@media (prefers-reduced-motion: reduce) { .rsvp-spinner { animation: none; border-top-color: var(--border); border-right-color: var(--text); } .rsvp-radio { transition: none; } }
+.rsvp-state { display: grid; justify-items: center; gap: 1rem; text-align: center; animation: guest-enter .32s var(--ease-out) both; }
+.rsvp-state .state__art { width: 8rem; margin: 0; }
+.rsvp-state__title { font-size: 2rem; line-height: 1.1; font-weight: 500; }
+.rsvp-state__body { color: var(--text-muted); }
+.rsvp-state__action { color: var(--text); font-weight: 600; }
+@media (prefers-reduced-motion: reduce) { .answer-choice__option, .guest-cover, .guest-gifts, .rsvp-state { transition: none; animation: none; } .guest-skeleton { animation: none; } }
 
 /* ===== Touch targets: every standalone control is at least 44 px; links inside running text keep their line box. ===== */
 .directory-pagination a, main > a:not([class]), .gifts h3 a { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; }

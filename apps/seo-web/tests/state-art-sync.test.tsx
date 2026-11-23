@@ -4,14 +4,16 @@ import { describe, expect, it } from "vitest";
 // Test-only reach into the app's drawing data (the boundary test scans app/, components/ and lib/, never tests/): seo-web
 // copies the paths because it cannot import `@rsvp/ui`, and this is what keeps the copy honest.
 import { ILLUSTRATION_GROUPS, ILLUSTRATION_PASTEL, ILLUSTRATIONS, type IllustrationName, type Layer } from "../../../packages/ui/src/illustrations";
-import { DeadlineClosedArt, EmptyArt, LinkExpiredArt, LostArt, NoAccessArt, OfflineArt } from "../components/brand/illustrations";
+import { DeadlineClosedArt, EmptyArt, GiftReservedArt, LinkExpiredArt, LostArt, NoAccessArt, NoGiftsArt, OfflineArt, WelcomeGuestArt } from "../components/brand/illustrations";
 
 /** The CSS class of each layer of the app's scene grammar (globals.css `.art__*`). */
 const LAYER_CLASS: Partial<Record<Layer, string>> = { ground: "art__ground", shadow: "art__shadow", solid: "art__solid", stone: "art__stone", line: "art__ink", knock: "art__knock", knockFill: "art__knock-fill", soft: "art__pastel" };
 
 const STATE_ART: Record<string, ReactElement> = {
   notFound: <LostArt />, offline: <OfflineArt />, emptySearch: <EmptyArt />,
-  linkExpired: <LinkExpiredArt />, noAccess: <NoAccessArt />, deadlineClosed: <DeadlineClosedArt />
+  linkExpired: <LinkExpiredArt />, noAccess: <NoAccessArt />, deadlineClosed: <DeadlineClosedArt />,
+  // M21 · the guest journey (declined, reserved, empty list) draws the same scenes as the app.
+  welcomeGuest: <WelcomeGuestArt />, giftReserved: <GiftReservedArt />, noGifts: <NoGiftsArt />
 };
 
 const paths = (html: string) => [...html.matchAll(/<path class="([^"]+)"(?: stroke-width="([^"]+)")? d="([^"]+)"/g)].map(([, cls, width, d]) => ({ cls, width: width ? Number(width) : undefined, d }));
