@@ -4676,6 +4676,7 @@ __metadata:
   dependencies:
     "@babel/core": "npm:^7.27.1"
     "@expo-google-fonts/geist": "npm:0.4.2"
+    "@playwright/test": "npm:1.62.1"
     "@react-native-community/datetimepicker": "npm:8.4.4"
     "@rsvp/api-client": "workspace:*"
     "@rsvp/auth": "workspace:*"
