@@ -1,0 +1,118 @@
+{
+  "app": "https://dev.done.arauzsoftware.com",
+  "site": "http://localhost:3199",
+  "results": [
+    {
+      "route": "directorio-vacio",
+      "path": "/proveedores/salones/santa-cruz",
+      "locale": "es-BO",
+      "same": true,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/proveedores/salones/santa-cruz",
+      "web": [
+        "Salones de eventos en Santa Cruz de la Sierra",
+        "Todavía no hay proveedores publicados aquí.",
+        "Esta categoría en otras ciudades",
+        "Otras categorías en Santa Cruz de la Sierra"
+      ],
+      "app": [
+        "Salones de eventos en Santa Cruz de la Sierra",
+        "Todavía no hay proveedores publicados aquí.",
+        "Esta categoría en otras ciudades",
+        "Otras categorías en Santa Cruz de la Sierra"
+      ],
+      "webArt": [
+        "emptySearch"
+      ],
+      "appArt": [
+        "emptySearch"
+      ],
+      "webActions": [
+        "Inicio",
+        "Proveedores",
+        "Salones de eventos",
+        "Ver todas las categorías",
+        "Salones de eventos en La Paz",
+        "Salones de eventos en Cochabamba",
+        "Salones de eventos en Sucre",
+        "Salones de eventos en Tarija",
+        "Salones de eventos en Oruro",
+        "Salones de eventos en Potosí",
+        "Salones de eventos en Trinidad",
+        "Salones de eventos en Cobija"
+      ],
+      "appActions": [
+        "Proveedores",
+        "Salones de eventos",
+        "Ver todas las categorías",
+        "Salones de eventos en La Paz",
+        "Salones de eventos en Cochabamba",
+        "Salones de eventos en Sucre",
+        "Salones de eventos en Tarija",
+        "Salones de eventos en Oruro",
+        "Salones de eventos en Potosí",
+        "Salones de eventos en Trinidad",
+        "Salones de eventos en Cobija",
+        "Catering"
+      ],
+      "detail": "",
+      "at": "2026-11-23T11:50:50.512Z"
+    },
+    {
+      "route": "directorio-vacio",
+      "path": "/proveedores/salones/santa-cruz",
+      "locale": "en-US",
+      "same": true,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/proveedores/salones/santa-cruz",
+      "web": [
+        "Event venues in Santa Cruz de la Sierra",
+        "No vendors are published here yet.",
+        "This category in other cities",
+        "Other categories in Santa Cruz de la Sierra"
+      ],
+      "app": [
+        "Event venues in Santa Cruz de la Sierra",
+        "No vendors are published here yet.",
+        "This category in other cities",
+        "Other categories in Santa Cruz de la Sierra"
+      ],
+      "webArt": [
+        "emptySearch"
+      ],
+      "appArt": [
+        "emptySearch"
+      ],
+      "webActions": [
+        "Home",
+        "Vendors",
+        "Event venues",
+        "See all categories",
+        "Event venues in La Paz",
+        "Event venues in Cochabamba",
+        "Event venues in Sucre",
+        "Event venues in Tarija",
+        "Event venues in Oruro",
+        "Event venues in Potosí",
+        "Event venues in Trinidad",
+        "Event venues in Cobija"
+      ],
+      "appActions": [
+        "Vendors",
+        "Event venues",
+        "See all categories",
+        "Event venues in La Paz",
+        "Event venues in Cochabamba",
+        "Event venues in Sucre",
+        "Event venues in Tarija",
+        "Event venues in Oruro",
+        "Event venues in Potosí",
+        "Event venues in Trinidad",
+        "Event venues in Cobija",
+        "Catering"
+      ],
+      "detail": "",
+      "at": "2026-11-23T11:50:57.841Z"
+    }
+  ]
+}

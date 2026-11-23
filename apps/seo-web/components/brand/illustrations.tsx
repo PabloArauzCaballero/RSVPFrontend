@@ -11,10 +11,15 @@ import type { ReactNode } from "react";
 const base = { strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true, focusable: "false", viewBox: "0 0 120 120" } as const;
 const GROUND = "M14 56a46 46 0 1 0 92 0a46 46 0 1 0 -92 0Z";
 
+/**
+ * State drawings carry `data-art` with the app's name (the hook the app exposes as `data-illustration`) and its group pastel;
+ * `tests/state-art-sync.test.tsx` fails when a path or a pastel stops matching `ILLUSTRATIONS` and `ILLUSTRATION_PASTEL`.
+ */
+
 /** 404: a compass whose needle lost the north (the app's `notFound`). */
 export function LostArt({ className = "" }: Readonly<{ className?: string }>) {
   return (
-    <svg {...base} className={`art art--yellow ${className}`.trim()}>
+    <svg {...base} data-art="notFound" className={`art art--gray ${className}`.trim()}>
       <path className="art__ground" d={GROUND} />
       <path className="art__shadow" d="M34 99a26 5 0 1 0 52 0a26 5 0 1 0 -52 0Z" />
       <path className="art__solid" d="M28 58a32 32 0 1 0 64 0a32 32 0 1 0 -64 0Z" />
@@ -29,7 +34,7 @@ export function LostArt({ className = "" }: Readonly<{ className?: string }>) {
 /** Service did not answer: the signal arcs with a pastel bar across them (the app's `offline`). */
 export function OfflineArt({ className = "" }: Readonly<{ className?: string }>) {
   return (
-    <svg {...base} className={`art art--red ${className}`.trim()}>
+    <svg {...base} data-art="offline" className={`art art--gray ${className}`.trim()}>
       <path className="art__ground" d={GROUND} />
       <path className="art__shadow" d="M36 99a24 5 0 1 0 48 0a24 5 0 1 0 -48 0Z" />
       <path className="art__ink" strokeWidth={7} d="M28 54C46 36 74 36 92 54M40 68C52 57 68 57 80 68" />
@@ -43,7 +48,7 @@ export function OfflineArt({ className = "" }: Readonly<{ className?: string }>)
 /** No results: a magnifier with a pastel glass that found nothing (the app's `emptySearch`). */
 export function EmptyArt({ className = "" }: Readonly<{ className?: string }>) {
   return (
-    <svg {...base} className={`art art--gray ${className}`.trim()}>
+    <svg {...base} data-art="emptySearch" className={`art art--gray ${className}`.trim()}>
       <path className="art__ground" d={GROUND} />
       <path className="art__shadow" d="M34 99a26 5 0 1 0 52 0a26 5 0 1 0 -52 0Z" />
       <path className="art__solid" d="M72.6 63.4L92.6 83.4A6.5 6.5 0 0 1 83.4 92.6L63.4 72.6A6.5 6.5 0 0 1 72.6 63.4Z" />
@@ -51,6 +56,51 @@ export function EmptyArt({ className = "" }: Readonly<{ className?: string }>) {
       <path className="art__pastel" d="M34 52a18 18 0 1 0 36 0a18 18 0 1 0 -36 0Z" />
       <path className="art__ink" strokeWidth={3} d="M44 58C48 54 56 54 60 58" />
       <path className="art__solid" d="M42.4 48a2.6 2.6 0 1 0 5.2 0a2.6 2.6 0 1 0 -5.2 0ZM56.4 48a2.6 2.6 0 1 0 5.2 0a2.6 2.6 0 1 0 -5.2 0Z" />
+    </svg>
+  );
+}
+
+/** Guest link expired, revoked or incomplete: a broken chain with the pastel gap between its links (the app's `linkExpired`). */
+export function LinkExpiredArt({ className = "" }: Readonly<{ className?: string }>) {
+  return (
+    <svg {...base} data-art="linkExpired" className={`art art--blue ${className}`.trim()}>
+      <path className="art__ground" d={GROUND} />
+      <path className="art__shadow" d="M28 99a32 5 0 1 0 64 0a32 5 0 1 0 -64 0Z" />
+      <path className="art__solid" d="M18.81 80.81L38.81 60.81A13 13 0 0 1 57.19 79.19L37.19 99.19A13 13 0 0 1 18.81 80.81Z" />
+      <path className="art__knock-fill" d="M24.11 86.11L44.11 66.11A5.5 5.5 0 0 1 51.89 73.89L31.89 93.89A5.5 5.5 0 0 1 24.11 86.11Z" />
+      <path className="art__solid" d="M62.81 36.81L82.81 16.81A13 13 0 0 1 101.19 35.19L81.19 55.19A13 13 0 0 1 62.81 36.81Z" />
+      <path className="art__knock-fill" d="M68.11 42.11L88.11 22.11A5.5 5.5 0 0 1 95.89 29.89L75.89 49.89A5.5 5.5 0 0 1 68.11 42.11Z" />
+      <path className="art__pastel" d="M53 58a7 7 0 1 0 14 0a7 7 0 1 0 -14 0Z" />
+    </svg>
+  );
+}
+
+/** Answers only with a personal link, or a link that cannot do this: the padlock with a pastel keyhole (the app's `noAccess`). */
+export function NoAccessArt({ className = "" }: Readonly<{ className?: string }>) {
+  return (
+    <svg {...base} data-art="noAccess" className={`art art--red ${className}`.trim()}>
+      <path className="art__ground" d={GROUND} />
+      <path className="art__shadow" d="M30 99a30 5 0 1 0 60 0a30 5 0 1 0 -60 0Z" />
+      <path className="art__ink" strokeWidth={8} d="M44 54V42a16 16 0 0 1 32 0V54" />
+      <path className="art__solid" d="M40 52H80a10 10 0 0 1 10 10V88a10 10 0 0 1 -10 10H40a10 10 0 0 1 -10 -10V62a10 10 0 0 1 10 -10Z" />
+      <path className="art__pastel" d="M54 70a6 6 0 1 0 12 0a6 6 0 1 0 -12 0ZM60 72H60a3 3 0 0 1 3 3V83a3 3 0 0 1 -3 3H60a3 3 0 0 1 -3 -3V75a3 3 0 0 1 3 -3Z" />
+    </svg>
+  );
+}
+
+/** The deadline to answer passed: the clock with a small pastel padlock (the app's `deadlineClosed`). */
+export function DeadlineClosedArt({ className = "" }: Readonly<{ className?: string }>) {
+  return (
+    <svg {...base} data-art="deadlineClosed" className={`art art--blue ${className}`.trim()}>
+      <path className="art__ground" d={GROUND} />
+      <path className="art__shadow" d="M28 99a32 5 0 1 0 64 0a32 5 0 1 0 -64 0Z" />
+      <path className="art__solid" d="M22 56a32 32 0 1 0 64 0a32 32 0 1 0 -64 0Z" />
+      <path className="art__knock" strokeWidth={4} d="M54 56V38M54 56L68 64" />
+      <path className="art__knock" strokeWidth={3} d="M54 30V33M54 79V82M28 56H31M77 56H80" />
+      <path className="art__ink" strokeWidth={4} d="M82 76V70a7 7 0 0 1 14 0V76" />
+      <path className="art__knock-fill" d="M80 73H98a7 7 0 0 1 7 7V93a7 7 0 0 1 -7 7H80a7 7 0 0 1 -7 -7V80a7 7 0 0 1 7 -7Z" />
+      <path className="art__pastel" d="M81 76H97a5 5 0 0 1 5 5V92a5 5 0 0 1 -5 5H81a5 5 0 0 1 -5 -5V81a5 5 0 0 1 5 -5Z" />
+      <path className="art__solid" d="M86.4 85a2.6 2.6 0 1 0 5.2 0a2.6 2.6 0 1 0 -5.2 0Z" />
     </svg>
   );
 }

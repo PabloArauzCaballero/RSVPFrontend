@@ -149,16 +149,18 @@ describe("REQ-F22-06 · 409 GIFT_NOT_AVAILABLE leaves the guest with something t
 });
 
 describe("states · 401, 403 and failure", () => {
-  it.each([[401, "Tu enlace venció"], [403, "No puedes reservar regalos aquí"], [500, "No pudimos cargar los regalos"]] as const)("list answering %i shows a clear message", async (status, heading) => {
+  it.each([[401, "Tu enlace ya no funciona"], [403, "Con este enlace no se pueden reservar regalos"], [500, "No pudimos cargar los regalos"]] as const)("list answering %i shows a clear message", async (status, heading) => {
     stubFetch(() => json(201, {}), () => json(status, { type: "x", title: "t", status }));
     renderList();
     expect(await screen.findByRole("heading", { name: heading })).toBeTruthy();
+    expect(document.querySelector(`[data-art="${status === 403 ? "noAccess" : status === 401 ? "linkExpired" : "offline"}"]`)).toBeTruthy();
   });
   it("without a credential a 401 asks the guest to open the invitation link", async () => {
     window.sessionStorage.clear();
     stubFetch(() => json(201, {}), () => json(401, { type: "x", title: "t", status: 401 }));
     renderList();
     expect(await screen.findByRole("heading", { name: "Abre tu enlace de invitación" })).toBeTruthy();
+    expect(document.querySelector('[data-art="linkExpired"]')).toBeTruthy();
   });
   it("loading shows a status and an empty list says so", async () => {
     stubFetch(() => json(201, {}), () => json(200, { items: [], partnerPriorityEnabled: false }));

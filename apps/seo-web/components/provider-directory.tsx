@@ -62,7 +62,7 @@ export function ProviderResults({ page, t, locale, path, query = "", summary, ca
     return (
       <div role="status" className="directory-status state">
         <OfflineArt className="state__art" />
-        <p>{t("directory.unavailable")}</p>
+        <h2 className="state__title">{t("directory.unavailable")}</h2>
         <a className="rsvp-button" href={query ? `${path}?${query}` : path}>{t("directory.retry")}</a>
       </div>
     );
@@ -71,7 +71,7 @@ export function ProviderResults({ page, t, locale, path, query = "", summary, ca
     return (
       <div role="status" className="directory-status state">
         <EmptyArt className="state__art" />
-        <p>{t("directory.empty")}</p>
+        <h2 className="state__title">{t("directory.empty")}</h2>
         <p className="state__hint">{t("directory.emptyHint")}</p>
         <a className="rsvp-button rsvp-button--secondary" href={DIRECTORY}>{t("directory.emptyAction")}</a>
       </div>

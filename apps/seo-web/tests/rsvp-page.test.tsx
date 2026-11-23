@@ -108,8 +108,9 @@ describe("REQ-F15-03 · A11 fuera de plazo", () => {
     const mock = seeded({ status: "CONFIRMED", version: 1 }, { deadline: "2026-12-01T03:59:00.000Z" });
     open(mock, MOCK_VALID_TOKEN);
     expect(await screen.findByRole("heading", { name: "El plazo para responder terminó" })).toBeTruthy();
-    expect(screen.getByText(/Cerró el .*30 nov.*America\/La_Paz/s)).toBeTruthy();
-    expect(screen.getByText("Si necesitas cambiar tu respuesta, escribe a Ana y Luis.")).toBeTruthy();
+    expect(document.querySelector('[data-art="deadlineClosed"]')).toBeTruthy(); // the app's drawing for this state
+    expect(screen.getByText(/Las respuestas cerraron el .*30 nov.*America\/La_Paz/s)).toBeTruthy();
+    expect(screen.getByText("¿Necesitas cambiar algo? Escríbele a Ana y Luis.")).toBeTruthy();
     expect(screen.queryByRole("button", { name: /Enviar|Guardar|Cambiar/ })).toBeNull();
     expect(screen.getByRole("button", { name: "Ver regalos" })).toBeTruthy();
   });
@@ -130,7 +131,9 @@ describe("REQ-F15-04 · A12 token inválido o revocado, sin filtrar datos", () =
   it.each([["unknown token", "x".repeat(43)], ["revoked token", MOCK_VALID_TOKEN]])("%s: same screen, no celebration title, no hosts, no token on the page", async (name, token) => {
     const mock = seeded({ token: name === "revoked token" ? null : MOCK_VALID_TOKEN });
     const view = open(mock, token);
-    expect(await screen.findByRole("heading", { name: "Este enlace no está disponible" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Este enlace ya no funciona" })).toBeTruthy();
+    expect(document.querySelector('[data-art="linkExpired"]')).toBeTruthy(); // the app's drawing for this state
+    expect(screen.getByText("Pídele un nuevo enlace a quien te invitó.")).toBeTruthy();
     const text = view.container.textContent ?? "";
     for (const secret of ["Ana y Luis", "Hacienda", "Marta", token, "Invitación a"]) expect(text).not.toContain(secret);
     expect(storageDump()).not.toContain(token);
@@ -140,7 +143,7 @@ describe("REQ-F15-04 · A12 token inválido o revocado, sin filtrar datos", () =
     const mock = seeded();
     route.params = { token: MOCK_VALID_TOKEN };
     render(<RsvpExperience slug="no-existe" token={MOCK_VALID_TOKEN} locale="es-BO" siteOrigin="https://done.example" client={setup(mock)} />);
-    expect(await screen.findByRole("heading", { name: "Este enlace no está disponible" }, { timeout: 3000 })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Este enlace ya no funciona" }, { timeout: 3000 })).toBeTruthy();
   });
 
   it("a token revoked while the form is open is detected on send (401) and the draft is not leaked", async () => {
@@ -149,7 +152,7 @@ describe("REQ-F15-04 · A12 token inválido o revocado, sin filtrar datos", () =
     fireEvent.click(await screen.findByLabelText("Sí, asistiré"));
     mock.listGuests()[0]!.token = null;
     fireEvent.click(screen.getByRole("button", { name: "Enviar respuesta" }));
-    expect(await screen.findByRole("heading", { name: "Este enlace no está disponible" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Este enlace ya no funciona" })).toBeTruthy();
   });
 });
 
@@ -183,9 +186,10 @@ describe("REQ-F15-05 · A13 RSVP de no registrado", () => {
   it("REQ-F15-05 (1.10.0) · RESTRICTED: public-settings is asked first, the form never appears, and the page names the published hostContact", async () => {
     const mock = createContractMock({ now: () => NOW, unregisteredMode: "RESTRICTED" });
     open(mock, undefined);
-    expect(await screen.findByRole("heading", { name: "Esta celebración solo admite invitados con enlace personal" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Esta celebración solo recibe respuestas con enlace personal" })).toBeTruthy();
+    expect(document.querySelector('[data-art="noAccess"]')).toBeTruthy(); // the app's drawing for this state
     expect(screen.queryByRole("button", { name: "Confirmar mi asistencia" })).toBeNull();
-    expect(screen.getByText("Si necesitas cambiar tu respuesta, escribe a Ana y Luis.")).toBeTruthy();
+    expect(screen.getByText("¿Necesitas cambiar algo? Escríbele a Ana y Luis.")).toBeTruthy();
     expect(screen.getByTestId("host-contact-email").textContent).toContain("anayluis@example.com");
     expect(screen.getByRole("link", { name: "anayluis@example.com" }).getAttribute("href")).toBe("mailto:anayluis@example.com");
     expect(screen.getByRole("link", { name: "+59171234567" }).getAttribute("href")).toBe("tel:+59171234567");
@@ -202,7 +206,7 @@ describe("REQ-F15-05 · A13 RSVP de no registrado", () => {
     fill();
     fireEvent.click(screen.getByLabelText(/Doy mi consentimiento/));
     fireEvent.click(screen.getByRole("button", { name: "Confirmar mi asistencia" }));
-    expect(await screen.findByRole("heading", { name: "Esta celebración solo admite invitados con enlace personal" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Esta celebración solo recibe respuestas con enlace personal" })).toBeTruthy();
     expect(mock.listGuests()).toHaveLength(0);
   });
 
@@ -214,7 +218,7 @@ describe("REQ-F15-05 · A13 RSVP de no registrado", () => {
     const failing = createContractMock({ now: () => NOW });
     const base = failing.fetch;
     open(failing, undefined, (async (input: RequestInfo | URL, init?: RequestInit) => (String(input).endsWith("/public-settings") ? new Response("{}", { status: 503, headers: { "content-type": "application/problem+json" } }) : base(input, init))) as typeof fetch);
-    expect(await screen.findByText("No pudimos comprobar si puedes registrarte. Inténtalo de nuevo.", {}, { timeout: 4000 })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "No pudimos abrir tu invitación" }, { timeout: 4000 })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Reintentar" })).toBeTruthy();
   });
 
@@ -222,7 +226,7 @@ describe("REQ-F15-05 · A13 RSVP de no registrado", () => {
     const mock = createContractMock({ now: () => NOW });
     route.params = {};
     render(<RsvpExperience slug="otro" locale="es-BO" siteOrigin="https://done.example" client={setup(mock)} />);
-    expect(await screen.findByRole("heading", { name: "Este enlace no está disponible" }, { timeout: 3000 })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Este enlace ya no funciona" }, { timeout: 3000 })).toBeTruthy();
   });
 });
 
@@ -283,7 +287,8 @@ describe("REQ-F15-06 · conexión lenta o caída: el formulario no se pierde", (
     const mock = seeded();
     let offline = true;
     open(mock, MOCK_VALID_TOKEN, mock.slowFetch(() => offline));
-    expect(await screen.findByText(/No hay conexión/, undefined, { timeout: 3000 })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Sin conexión por ahora" }, { timeout: 3000 })).toBeTruthy();
+    expect(document.querySelector('[data-art="offline"]')).toBeTruthy(); // the app's drawing for this state
     offline = false;
     fireEvent.click(screen.getByRole("button", { name: "Reintentar" }));
     await waitFor(() => expect(screen.getByRole("heading", { name: "¿Podrás acompañarnos?" })).toBeTruthy());

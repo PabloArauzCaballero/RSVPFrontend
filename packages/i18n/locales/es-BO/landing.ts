@@ -118,6 +118,5 @@ export const landingEsBO = {
   },
   closing: { title: "Tu primera invitación empieza con un toque", body: "Elige el tipo de celebración, agrega a tus invitados y comparte el enlace.", cta: "Crear mi celebración" },
   error: { title: "No pudimos cargar esta página", body: "El servicio no respondió ahora mismo. Prueba otra vez en unos segundos.", retry: "Reintentar", home: "Ir al inicio" },
-  notFound: { title: "Esta página no existe", body: "Puede que el enlace tenga un error o que la página ya no esté. Desde el inicio puedes llegar a todo lo demás.", home: "Ir al inicio" },
   footer: { tagline: "Que te respondan en un toque.", providers: "Proveedores", skip: "Saltar al contenido", explore: "Explorar", create: "Crear mi celebración" }
 };

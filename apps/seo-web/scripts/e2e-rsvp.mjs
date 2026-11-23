@@ -132,7 +132,7 @@ try {
   step("A12 token inválido · sin datos de la celebración");
   for (const width of WIDTHS) {
     const { page, context } = await open(width, `${celebrationPath}/${"x".repeat(43)}`);
-    await page.getByRole("heading", { name: "Este enlace no está disponible" }).waitFor();
+    await page.getByRole("heading", { name: "Este enlace ya no funciona" }).waitFor();
     const text = await page.locator("main").textContent();
     for (const secret of ["Ana y Luis", "Hacienda", "Marta", "Invitación a"]) assert.ok(!text.includes(secret), `leaked "${secret}"`);
     await noOverflow(page, `A12-${width}`);
@@ -175,7 +175,7 @@ try {
     await page.getByLabel("Tu correo electrónico").fill("pedro2@example.com");
     await page.getByLabel(/Doy mi consentimiento/).check();
     await page.getByRole("button", { name: "Confirmar mi asistencia" }).click();
-    await page.getByRole("heading", { name: "Esta celebración solo admite invitados con enlace personal" }).waitFor();
+    await page.getByRole("heading", { name: "Esta celebración solo recibe respuestas con enlace personal" }).waitFor();
     await snap(page, "A13-restringido-403", width);
     await context.close();
   }

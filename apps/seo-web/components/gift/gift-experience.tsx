@@ -12,6 +12,7 @@ import { GiftProviders } from './gift-providers';
 import { ReserveDialog } from './reserve-dialog';
 import { CancelReservationDialog } from './cancel-dialog';
 import { GiftPhoto } from './gift-photo';
+import { LinkExpiredArt, NoAccessArt, OfflineArt } from '../brand/illustrations';
 import './gift.css';
 
 export interface GiftExperienceProps {
@@ -26,6 +27,15 @@ export interface GiftExperienceProps {
 }
 
 type Source = GiftSourceFilter;
+type GiftBlockerArt = 'linkExpired' | 'noAccess' | 'offline';
+/** From this wait on, the guest is told the minutes instead of "a few seconds" (the app's threshold). */
+const LONG_WAIT_SECONDS = 90;
+
+function BlockerArt({ art }: { readonly art: GiftBlockerArt }) {
+  if (art === 'noAccess') return <NoAccessArt className="state__art" />;
+  if (art === 'offline') return <OfflineArt className="state__art" />;
+  return <LinkExpiredArt className="state__art" />;
+}
 type Outcome = { readonly kind: 'reserved'; readonly item: GiftItem; readonly status: GiftReservation['status'] } | { readonly kind: 'taken'; readonly item: GiftItem };
 
 function GiftWithListing({ client, item, render }: {
@@ -104,14 +114,17 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
 
   const error = list.error;
   const status = error instanceof ApiError ? error.status : undefined;
-  let blocker: { title: string; body: string; action?: { label: string; href: string }; retry?: boolean } | null = null;
+  // Same dead ends, words and drawings as the app's guest gift list (`blockerFor` in apps/universal/src/guest/gifts-screen.tsx).
+  let blocker: { art: GiftBlockerArt; title: string; body: string; action?: { label: string; href: string }; retry?: boolean } | null = null;
   if (ready && list.isError) {
-    if (status === 401 && credential) blocker = { title: t('gifts.error.expiredTitle'), body: t('gifts.error.expiredBody') };
-    else if (status === 401) blocker = { title: t('gifts.error.needLinkTitle'), body: t('gifts.error.needLinkBody'), action: { label: t('gifts.error.needLinkAction'), href: `/c/${encodeURIComponent(slug)}/rsvp` } };
-    else if (status === 404 && credential) blocker = { title: t('gifts.error.otherTitle'), body: t('gifts.error.otherBody'), action: { label: t('gifts.error.needLinkAction'), href: `/c/${encodeURIComponent(slug)}/rsvp` } };
-    else if (status === 429) blocker = { title: t('gifts.error.busyTitle'), body: t('gifts.error.busyBody'), retry: true };
-    else if (status === 403) blocker = { title: t('gifts.error.forbiddenTitle'), body: t('gifts.error.forbiddenBody') };
-    else blocker = { title: t('gifts.error.unavailableTitle'), body: t('gifts.error.unavailableBody'), retry: true };
+    const rsvpHref = `/c/${encodeURIComponent(slug)}/rsvp`;
+    const retryAfter = error instanceof ApiError ? error.retryAfterSeconds : undefined;
+    if (status === 401 && credential) blocker = { art: 'linkExpired', title: t('gifts.guest.error.expiredTitle'), body: t('gifts.guest.error.expiredBody') };
+    else if (status === 401) blocker = { art: 'linkExpired', title: t('gifts.error.needLinkTitle'), body: t('gifts.error.needLinkBody'), action: { label: t('gifts.error.needLinkAction'), href: rsvpHref } };
+    else if (status === 404 && credential) blocker = { art: 'linkExpired', title: t('gifts.guest.error.otherTitle'), body: t('gifts.guest.error.otherBody'), action: { label: t('gifts.error.needLinkAction'), href: rsvpHref } };
+    else if (status === 429) blocker = { art: 'offline', title: t('gifts.guest.error.busyTitle'), body: retryAfter && retryAfter >= LONG_WAIT_SECONDS ? t('gifts.guest.error.busyMinutes', { minutes: Math.ceil(retryAfter / 60) }) : t('gifts.guest.error.busyBody'), retry: true };
+    else if (status === 403) blocker = { art: 'noAccess', title: t('gifts.guest.error.forbiddenTitle'), body: t('gifts.guest.error.forbiddenBody') };
+    else blocker = { art: 'offline', title: t('gifts.guest.error.unavailableTitle'), body: t('gifts.guest.error.unavailableBody'), retry: true };
   }
   useEffect(() => { if (status === 401 && credential) clearGuestCredential(slug); }, [status, credential, slug]);
 
@@ -186,10 +199,11 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
       </div>
 
       {blocker ? (
-        <section className="gifts__notice gifts__notice--warn" role="alert">
+        <section className="gifts__notice gifts__blocker" role="alert">
+          <BlockerArt art={blocker.art} />
           <h2>{blocker.title}</h2><p>{blocker.body}</p>
           {blocker.action ? <a className="rsvp-button" href={blocker.action.href}>{blocker.action.label}</a> : null}
-          {blocker.retry ? <button type="button" className="rsvp-button" onClick={() => { void list.refetch(); }}>{t('gifts.error.retry')}</button> : null}
+          {blocker.retry ? <button type="button" className="rsvp-button" onClick={() => { void list.refetch(); }}>{t('gifts.guest.error.retry')}</button> : null}
         </section>
       ) : null}
 
