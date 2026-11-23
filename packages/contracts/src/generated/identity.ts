@@ -57,7 +57,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Accounts, optionally filtered by an e-mail fragment */
+        /** Accounts, optionally filtered by an e-mail fragment, an exact e-mail or a list of ids */
         get: operations["adminListUsers"];
         put?: never;
         post?: never;
@@ -790,6 +790,10 @@ export interface operations {
     adminListUsers: {
         parameters: {
             query?: {
+                /** @description Exact e-mail, case-insensitive (1.2.0). Not combinable with query or ids. */
+                email?: string;
+                /** @description Comma-separated user ids, at most 100 (1.2.0). Unknown ids are skipped; items keep creation order. Not combinable with query or email. */
+                ids?: string;
                 /** @description Zero-based page */
                 page?: number;
                 /** @description Case-insensitive e-mail fragment, up to 120 characters */
