@@ -1,24 +1,40 @@
 #!/bin/sh
 # A6/B1 · Real nginx (the pinned image of Dockerfile.universal) with the rendered nginx-spa.conf: config test plus the headers
-# each kind of path must carry. Own container name, loopback port; removes the container. Used by CI (job deploy-config).
+# each kind of path must carry. L19 · Also the /api/ proxy through Docker's DNS (prefix, query, Host, visitor address,
+# cookie path) and an upstream that does not resolve: nginx must start, serve the SPA and answer 502 on /api/.
+# Own container and network names, loopback ports; removes everything. Used by CI (job deploy-config).
 #   sh deploy/nginx-check.sh
 set -eu
 IMAGE=$(sed -n 's/^FROM \(nginx:[^ ]*\).*/\1/p' deploy/Dockerfile.universal)
 NAME="rsvp-nginx-check-$$"
+NET="$NAME-net"
 WORK=$(mktemp -d)
 PORT=${NGINX_CHECK_PORT:-18089}
-trap 'docker rm -f "$NAME" >/dev/null 2>&1 || true; rm -rf "$WORK"' EXIT
-# An IP upstream: nginx resolves proxy_pass hosts at load time and the check must not depend on DNS.
-# shellcheck disable=SC2016 # the literal ${RSVP_API_UPSTREAM} is envsubst's variable list, same as Dockerfile.universal
-RSVP_API_UPSTREAM=https://127.0.0.1:9 envsubst '${RSVP_API_UPSTREAM}' < deploy/nginx-spa.conf > "$WORK/default.conf"
+DNS_PORT=$((PORT + 1))
+NODNS_PORT=$((PORT + 2))
+# shellcheck disable=SC2329 # invoked by the EXIT trap
+cleanup() {
+  docker rm -f "$NAME" "$NAME-api" "$NAME-dns" "$NAME-nodns" >/dev/null 2>&1 || true
+  docker network rm "$NET" >/dev/null 2>&1 || true
+  rm -rf "$WORK"
+}
+trap cleanup EXIT
 mkdir -p "$WORK/html/_expo"
 printf '<!doctype html><title>app</title>%02000d' 0 > "$WORK/html/index.html"
-docker run -d --name "$NAME" -p "127.0.0.1:$PORT:80" \
-  -v "$WORK/default.conf:/etc/nginx/conf.d/default.conf:ro" \
-  -v "$PWD/deploy/nginx-security-headers.conf:/etc/nginx/snippets/security-headers.conf:ro" \
-  -v "$WORK/html:/usr/share/nginx/html:ro" "$IMAGE" >/dev/null
+start() { # container port upstream-url [docker run options]
+  name=$1; port=$2; upstream=$3; shift 3
+  sh deploy/render-nginx-spa.sh "$upstream" deploy/nginx-spa.conf > "$WORK/$name.conf"
+  docker run -d --name "$name" "$@" -p "127.0.0.1:$port:80" \
+    -v "$WORK/$name.conf:/etc/nginx/conf.d/default.conf:ro" \
+    -v "$PWD/deploy/nginx-security-headers.conf:/etc/nginx/snippets/security-headers.conf:ro" \
+    -v "$WORK/html:/usr/share/nginx/html:ro" "$IMAGE" >/dev/null
+  i=0; until curl -fs "http://127.0.0.1:$port/health" >/dev/null; do
+    i=$((i+1)); [ "$i" -lt 30 ] || { echo "FAIL $name did not start" >&2; docker logs "$name" >&2; exit 1; }; sleep 1
+  done
+}
+# The header and log checks use an IP upstream on the default bridge (no DNS needed).
+start "$NAME" "$PORT" https://127.0.0.1:9
 docker exec "$NAME" nginx -t
-i=0; until curl -fs "http://127.0.0.1:$PORT/health" >/dev/null; do i=$((i+1)); [ "$i" -lt 30 ] || exit 1; sleep 1; done
 
 fail=0
 expect() { # path header-regex
@@ -59,5 +75,35 @@ printf %s "$LOG" | grep -Fq ' GET /proveedores' || { echo "FAIL access log: ordi
 # The log shows the path the client asked for, not the SPA fallback every page ends in.
 printf %s "$LOG" | grep -Fq ' GET /restablecer' || { echo "FAIL access log: ordinary paths must be logged without their query" >&2; fail=1; }
 printf %s "$LOG" | grep -Fq ' GET /[unlogged-path]' || { echo "FAIL access log: encoded paths must become a marker" >&2; fail=1; }
-[ "$fail" -eq 0 ] && echo "nginx-check: config valid, headers, gzip and redacted access log as expected"
+
+# L19 · The proxy through Docker's embedded DNS (user network, as in Coolify), against a stub gateway that echoes what it got.
+docker network create "$NET" >/dev/null
+cat > "$WORK/api.conf" <<'STUB'
+server {
+  listen 8080;
+  location / {
+    add_header Set-Cookie "rsvp_refresh=x; Path=/identity/auth; HttpOnly" always;
+    return 200 "uri=$request_uri host=$http_host xff=$http_x_forwarded_for\n";
+  }
+}
+STUB
+docker run -d --name "$NAME-api" --network "$NET" -v "$WORK/api.conf:/etc/nginx/conf.d/default.conf:ro" "$IMAGE" >/dev/null
+start "$NAME-dns" "$DNS_PORT" "http://$NAME-api:8080/base" --network "$NET"
+# curl reaches nginx from a private Docker address, trusted like Traefik (B1): the right-most entry is the visitor and the
+# gateway gets that single value, never the client's own list.
+RESP=$(curl -s -D - -H 'X-Forwarded-For: 198.51.100.7, 203.0.113.9' "http://127.0.0.1:$DNS_PORT/api/identity/auth/login?next=%2Fx&a=1" | tr -d '\r')
+printf %s "$RESP" | grep -Fxq "uri=/base/identity/auth/login?next=%2Fx&a=1 host=$NAME-api:8080 xff=203.0.113.9" \
+  || { echo "FAIL /api/ proxy: prefix, base path, query, Host or visitor address changed: $RESP" >&2; fail=1; }
+printf %s "$RESP" | grep -Eiq '^set-cookie: rsvp_refresh=x; Path=/api/identity/auth;' \
+  || { echo "FAIL /api/ proxy: auth cookie not first-party" >&2; fail=1; }
+# L19 · An upstream that does not resolve (the incident in TEST: one DNS failure at boot killed the container).
+start "$NAME-nodns" "$NODNS_PORT" https://rsvp-api.l19-check.invalid --network "$NET"
+[ "$(docker inspect -f '{{.State.Running}}' "$NAME-nodns")" = true ] || { echo "FAIL nginx died on an unresolvable upstream" >&2; fail=1; }
+[ "$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$NODNS_PORT/")" = 200 ] || { echo "FAIL SPA not served without DNS" >&2; fail=1; }
+[ "$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$NODNS_PORT/api/x")" = 502 ] || { echo "FAIL /api/ must answer 502 without DNS" >&2; fail=1; }
+# The upstream URL is written into nginx directives: anything beyond host[:port] and plain path segments is refused.
+for bad in /api 'https://api.example.com/a?b=1' 'https://api.example.com/a b' 'https://api.example.com/a;b' 'https://api.exa{mple}.com'; do
+  if sh deploy/render-nginx-spa.sh "$bad" deploy/nginx-spa.conf >/dev/null 2>&1; then echo "FAIL render accepted $bad" >&2; fail=1; fi
+done
+[ "$fail" -eq 0 ] && echo "nginx-check: config valid, headers, gzip, redacted access log, /api/ proxy and DNS failure as expected"
 exit "$fail"
