@@ -701,13 +701,31 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** Quote requests received by the provider (owner only), newest first */
+        get: operations["listProviderQuotes"];
         put?: never;
         /**
          * Persist a quote request, create a form lead and emit QuoteRequested (signed in, or anonymous where enabled)
          * @description Decision (DECISIONS.md 2026-11-05): quotes may be anonymous only when PROVIDER_ANON_QUOTES is `captcha` (default when a captcha verifier is configured) or `open` (local development). Anonymous requests need contact.email, are limited to 5 per hour per client address (429 + Retry-After) and 3 per day per contact e-mail and provider (429 QUOTE_LIMIT_REACHED), reject a filled honeypot `website` (422 QUOTE_REJECTED) and, in captcha mode, a valid captchaToken (403 CAPTCHA_FAILED). With mode `off` (default without a verifier) anonymous requests answer 401 ANONYMOUS_QUOTES_DISABLED. Date requests (bookings) always require an account.
          */
         post: operations["requestQuote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/{providerId}/quotes/{quoteId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One quote request with the requester's contact (owner only) */
+        get: operations["getProviderQuote"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -3080,6 +3098,62 @@ export interface components {
             page: number;
             pageSize: number;
             total: number;
+        };
+        ProviderQuote: {
+            budget: null | {
+                amountMinor: number;
+                currency: string;
+            };
+            contact: {
+                /** Format: email */
+                email: string;
+                name: string;
+                phone: string | null;
+            };
+            contactName: string;
+            /** Format: date-time */
+            createdAt: string;
+            eventCity: string | null;
+            /** Format: date */
+            eventDate: string;
+            guestCount: number;
+            hasMessage: boolean;
+            /** Format: uuid */
+            id: string;
+            leadId: null | string;
+            listingIds: string[];
+            locale: string;
+            message: string | null;
+            /** Format: uuid */
+            providerId: string;
+            /** @enum {string} */
+            status: "REQUESTED";
+        };
+        ProviderQuotePage: {
+            items: components["schemas"]["ProviderQuoteSummary"][];
+            nextCursor: string | null;
+        };
+        ProviderQuoteSummary: {
+            budget: null | {
+                amountMinor: number;
+                currency: string;
+            };
+            contactName: string;
+            /** Format: date-time */
+            createdAt: string;
+            eventCity: string | null;
+            /** Format: date */
+            eventDate: string;
+            guestCount: number;
+            hasMessage: boolean;
+            /** Format: uuid */
+            id: string;
+            listingIds: string[];
+            locale: string;
+            /** Format: uuid */
+            providerId: string;
+            /** @enum {string} */
+            status: "REQUESTED";
         };
         /** @enum {string} */
         ProviderStatus: "DRAFT" | "PENDING_VERIFICATION" | "VERIFIED" | "SUSPENDED" | "REJECTED";
@@ -6904,6 +6978,36 @@ export interface operations {
             422: components["responses"]["Validation"];
         };
     };
+    listProviderQuotes: {
+        parameters: {
+            query?: {
+                /** @description nextCursor of the previous page */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                providerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of the quote inbox */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderQuotePage"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["Validation"];
+        };
+    };
     requestQuote: {
         parameters: {
             query?: {
@@ -6936,6 +7040,32 @@ export interface operations {
             404: components["responses"]["NotFound"];
             422: components["responses"]["Validation"];
             429: components["responses"]["RateLimited"];
+        };
+    };
+    getProviderQuote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                providerId: string;
+                quoteId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Quote request */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderQuote"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
         };
     };
     rejectProvider: {

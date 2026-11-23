@@ -48,11 +48,16 @@ expect /c/boda/regalos/ref-123 '^cache-control: no-store$'
 # A13 · The access log never carries a guest credential, a query string or the client address.
 curl -s -o /dev/null "http://127.0.0.1:$PORT/restablecer?token=query-secret-123"
 curl -s -o /dev/null "http://127.0.0.1:$PORT/proveedores"
+curl -s -o /dev/null "http://127.0.0.1:$PORT/api/rsvp/token-api-123"
+curl -s -o /dev/null "http://127.0.0.1:$PORT/%72svp/token-encoded-123"
 LOG=$(docker logs "$NAME" 2>/dev/null)
-for secret in token-123 ref-123 query-secret-123 172.17.; do
+for secret in token-123 ref-123 query-secret-123 token-api-123 token-encoded-123 172.17.; do
   if printf %s "$LOG" | grep -Fq "$secret"; then echo "FAIL access log contains $secret" >&2; fail=1; fi
 done
 printf %s "$LOG" | grep -Fq ' GET /[guest-credential-path]' || { echo "FAIL access log: guest paths not redacted" >&2; fail=1; }
 printf %s "$LOG" | grep -Fq ' GET /proveedores' || { echo "FAIL access log: ordinary paths must stay visible" >&2; fail=1; }
+# The log shows the path the client asked for, not the SPA fallback every page ends in.
+printf %s "$LOG" | grep -Fq ' GET /restablecer' || { echo "FAIL access log: ordinary paths must be logged without their query" >&2; fail=1; }
+printf %s "$LOG" | grep -Fq ' GET /[unlogged-path]' || { echo "FAIL access log: encoded paths must become a marker" >&2; fail=1; }
 [ "$fail" -eq 0 ] && echo "nginx-check: config valid, headers, gzip and redacted access log as expected"
 exit "$fail"

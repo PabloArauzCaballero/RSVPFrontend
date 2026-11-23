@@ -196,7 +196,8 @@ export interface paths {
             };
             cookie?: never;
         };
-        get?: never;
+        /** Whether the guest has a working personal link (never the link itself) */
+        get: operations["getGuestAccessLinkStatus"];
         put?: never;
         /** @description Owner/co-host only. Issue or replace the only active token; a replacement atomically revokes its predecessor (reissue policy: every issuance invalidates the previous link at once, so a host resends by issuing again). Default TTL 7 days (604800 s), configurable from 60 s to 30 days. The raw token and the canonical url are returned once with no-store and are never persisted. resend=true requires the canonical url (503 if the web origin or slug is unknown). */
         post: operations["issueGuestAccessToken"];
@@ -319,6 +320,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/internal/v1/celebrations/{celebrationId}/guests/{guestId}/notification-profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Internal service query: contact and celebration context of one guest for Notification */
+        get: operations["getInternalGuestNotificationProfile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/rsvp/{token}": {
         parameters: {
             query?: never;
@@ -328,12 +346,14 @@ export interface paths {
             };
             cookie?: never;
         };
+        /** @deprecated */
         get: operations["getRsvpByToken"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
+        /** @deprecated */
         patch: operations["respondToRsvp"];
         trace?: never;
     };
@@ -455,6 +475,13 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AccessLinkStatus: {
+            active: boolean;
+            /** Format: date-time */
+            expiresAt: string | null;
+            /** Format: date-time */
+            issuedAt: string | null;
+        };
         CateringItem: {
             dietaryNotes: string | null;
             /** Format: uuid */
@@ -563,6 +590,11 @@ export interface components {
             };
             /** Format: date-time */
             consentGivenAt: string;
+            /**
+             * @description Present when email and phone are withheld from this actor (READ access, or platform ADMIN without X-Access-Reason).
+             * @constant
+             */
+            contactsHidden?: true;
             email: string | null;
             groupId: string | null;
             /** Format: uuid */
@@ -604,6 +636,11 @@ export interface components {
             approvedCompanions: number;
             /** Format: uuid */
             celebrationId: string;
+            /**
+             * @description Present when email and phone are withheld from this actor (READ access, or platform ADMIN without X-Access-Reason).
+             * @constant
+             */
+            contactsHidden?: true;
             /** Format: email */
             email: string | null;
             /** Format: uuid */
@@ -643,6 +680,8 @@ export interface components {
             celebrationId: string;
             /** Format: uuid */
             guestId: string;
+            /** @description Guest name recorded by the host. Exposed only to this guest after validating the personal invitation credential. */
+            name?: string;
             /** @description Explicit guest language, or null for current celebration default; exposed only to the valid guest credential. */
             preferredLocale?: string | null;
         };
@@ -670,6 +709,23 @@ export interface components {
             /** Format: date-time */
             updatedAt: string | null;
             version: number;
+        };
+        InternalGuestNotificationProfile: {
+            /** @description Celebration context projected by Guest; null until the first projection arrives */
+            celebration: null | {
+                defaultLocale: string;
+                /** @description IANA time zone */
+                timeZone: string;
+                version: number;
+            };
+            /** Format: uuid */
+            celebrationId: string;
+            /** Format: email */
+            email: string | null;
+            /** Format: uuid */
+            guestId: string;
+            phone: string | null;
+            preferredLocale: string | null;
         };
         /** @description The URL carries the secret in the path of a front-end route only; it must not be logged, indexed or sent to analytics. */
         IssuedGuestToken: {
@@ -1113,7 +1169,10 @@ export interface operations {
                 search?: string;
                 status?: "PENDING" | "CONFIRMED" | "DECLINED";
             };
-            header?: never;
+            header?: {
+                /** @description Platform ADMIN only: why the contacts are read. Without it the contacts are hidden; with it the read is recorded (who, celebration, reason). */
+                "X-Access-Reason"?: string;
+            };
             path: {
                 celebrationId: components["parameters"]["CelebrationId"];
             };
@@ -1236,7 +1295,10 @@ export interface operations {
                 limit?: number;
                 offset?: number;
             };
-            header?: never;
+            header?: {
+                /** @description Platform ADMIN only: why the contacts are read. Without it the contacts are hidden; with it the read is recorded (who, celebration, reason). */
+                "X-Access-Reason"?: string;
+            };
             path: {
                 celebrationId: components["parameters"]["CelebrationId"];
             };
@@ -1303,7 +1365,10 @@ export interface operations {
     getGuest: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Platform ADMIN only: why the contacts are read. Without it the contacts are hidden; with it the read is recorded (who, celebration, reason). */
+                "X-Access-Reason"?: string;
+            };
             path: {
                 celebrationId: components["parameters"]["CelebrationId"];
                 guestId: string;
@@ -1365,6 +1430,33 @@ export interface operations {
             503: components["responses"]["Dependency"];
         };
     };
+    getGuestAccessLinkStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                celebrationId: components["parameters"]["CelebrationId"];
+                guestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Link status */
+            200: {
+                headers: {
+                    "Cache-Control"?: "no-store";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessLinkStatus"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
     issueGuestAccessToken: {
         parameters: {
             query?: never;
@@ -1383,7 +1475,12 @@ export interface operations {
                      * @default false
                      */
                     resend?: boolean;
-                    /** @default 604800 */
+                    /**
+                     * @description Required to replace a working link: the current link stops working. Without it, a working link answers 409 ACCESS_LINK_ACTIVE.
+                     * @default false
+                     */
+                    rotate?: boolean;
+                    /** @description Explicit lifetime. Default: until a week after the event date (at least 7 days, at most 365); 30 days when the celebration has no event date. */
                     ttlSeconds?: number;
                 };
             };
@@ -1403,6 +1500,18 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
+            /** @description The guest already has a working link (code ACCESS_LINK_ACTIVE, expiresAt); send rotate: true to replace it */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"] & {
+                        /** Format: date-time */
+                        expiresAt?: string;
+                    };
+                };
+            };
             413: components["responses"]["TooLarge"];
             415: components["responses"]["UnsupportedType"];
             422: components["responses"]["Validation"];
@@ -1588,6 +1697,33 @@ export interface operations {
             404: components["responses"]["NotFound"];
             422: components["responses"]["Validation"];
             500: components["responses"]["Internal"];
+            503: components["responses"]["Dependency"];
+        };
+    };
+    getInternalGuestNotificationProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                celebrationId: string;
+                guestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Guest notification profile */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InternalGuestNotificationProfile"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
             503: components["responses"]["Dependency"];
         };
     };
