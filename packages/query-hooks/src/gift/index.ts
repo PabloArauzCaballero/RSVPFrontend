@@ -101,6 +101,36 @@ export const isGiftTaken = (error: unknown): boolean => error instanceof ApiErro
 export const isGiftRsvpRequired = (error: unknown): boolean => error instanceof ApiError && error.status === 403
   && ["GUEST_RSVP_DECLINED", "GUEST_RSVP_REQUIRED"].includes(problemCode(error) ?? "");
 
+/** Reservations that still hold a gift, by gift: what the guest can cancel, or what the host can release. */
+export function activeReservationsByItem(reservations: readonly GiftReservation[] | undefined): ReadonlyMap<string, GiftReservation> {
+  const active = new Map<string, GiftReservation>();
+  for (const reservation of reservations ?? []) if (reservation.status === "PENDING_REVIEW" || reservation.status === "COMMITTED") active.set(reservation.itemId, reservation);
+  return active;
+}
+
+/** The guest's own reservations, so a reload still shows "your reservation" and lets them cancel it. Needs the link credential. */
+export function useMyGiftReservations(client: ApiClient, celebrationId: string | undefined, credential: string | null | undefined) {
+  return useQuery({
+    queryKey: [...queryKeys.gift.list(celebrationId ?? ""), "mine"] as const,
+    queryFn: ({ signal }) => giftService(client).myReservations(celebrationId ?? "", credential ?? "", signal),
+    ...cachePolicy.gift, enabled: Boolean(celebrationId && credential), retry: (count, error) => !(error instanceof ApiError && error.status < 500) && count < 1
+  });
+}
+
+/**
+ * D-3 · cancel an active reservation: the guest with their credential, or the host with the session (`credential` undefined).
+ * The caller keeps one Idempotency-Key per reservation, so a double tap or a retry after a lost answer cancels once.
+ */
+export function useCancelGiftReservation(client: ApiClient, celebrationId: string, credential?: string | null) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ reservationId, idempotencyKey }: { reservationId: string; idempotencyKey: string }) => giftService(client).cancel(celebrationId, reservationId, credential, idempotencyKey),
+    onSettled: () => refetchAll(queryClient, invalidation.giftReservationChanged(celebrationId))
+  });
+}
+/** 409 RESERVATION_NOT_ACTIVE: somebody (the host, the guest or an attendance change) already ended it; the list is refreshed. */
+export const isReservationNotActive = (error: unknown): boolean => error instanceof ApiError && error.status === 409 && problemCode(error) === "RESERVATION_NOT_ACTIVE";
+
 export function useHostReservations(client: ApiClient, celebrationId: string | undefined, status?: ReservationStatus) {
   return useQuery({ queryKey: [...queryKeys.gift.list(celebrationId ?? ""), "reservations", status ?? "all"] as const, queryFn: () => giftService(client).reservations(celebrationId ?? "", status), ...cachePolicy.gift, enabled: Boolean(celebrationId) });
 }

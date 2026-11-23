@@ -482,3 +482,19 @@ html:has(.rsvp-shell, .rsvp-status) body { overflow-x: clip; }
 
 /* Invitation pages: no sales navigation or pitch around a guest's invitation; the logo and the footer link stay. */
 body:has([data-quiet-chrome]) .site-nav, body:has([data-quiet-chrome]) .site-footer__line { display: none; }
+
+/* B6 · Legal pages: one readable column, the draft notice first. */
+.legal-page { width: var(--wrap); margin: 0 auto; padding: clamp(2.5rem, 6vw, 4rem) 0 0; }
+.legal-doc { max-width: 68ch; display: grid; gap: 1rem; }
+.legal-doc h1 { margin: 0; font-size: clamp(2rem, 5vw, 3rem); line-height: 1.1; }
+.legal-doc h2 { margin: 1.5rem 0 0; font-size: clamp(1.25rem, 2.6vw, 1.5rem); }
+.legal-doc p, .legal-doc li { margin: 0; line-height: 1.6; }
+.legal-doc ul, .legal-doc ol { margin: 0; padding-left: 1.25rem; display: grid; gap: .4rem; }
+.legal-doc section { display: grid; gap: .75rem; scroll-margin-top: 5rem; }
+.legal-draft { padding: .85rem 1rem; border: 1px solid var(--border); border-left: 4px solid var(--warning); border-radius: .5rem; background: var(--canvas); font-weight: 600; }
+.legal-version { color: var(--text-muted); font-size: .9rem; }
+.legal-lead { font-size: 1.1rem; }
+.legal-toc { padding: 1rem 1.25rem; border: 1px solid var(--border); border-radius: .5rem; }
+.legal-toc a, .legal-other a { color: var(--text); text-decoration: underline; text-underline-offset: .2em; }
+.rsvp-legal { margin: -.25rem 0 0; font-size: .95rem; }
+.rsvp-legal a { color: var(--text); text-decoration: underline; text-underline-offset: .2em; min-height: 44px; display: inline-flex; align-items: center; }

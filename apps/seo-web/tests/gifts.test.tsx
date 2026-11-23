@@ -212,3 +212,70 @@ describe("REQ-F23-06 · reservedByName only when the backend sends it", () => {
     expect(screen.getAllByTestId("reserved-by").map((node) => node.textContent)).toEqual(["Reservado por Marta"]);
   });
 });
+
+describe("D-3 · the guest cancels their own reservation from the gift page", () => {
+  const RESERVATION = "9b1c1a34-5d4c-4a39-9a2e-0f4f2d3d7b01";
+  const held = [item({ id: "ext-1", source: "EXTERNAL", productListingId: null, externalUrl: "https://tienda.example/x", title: "Cafetera" }), item({ id: "cat-1", title: "Torta", status: "COMMITTED" })];
+  const mine = { items: [{ id: RESERVATION, itemId: "cat-1", celebrationId: CELEBRATION, status: "COMMITTED", requestedAt: "2026-11-01T00:00:00Z" }] };
+  let calls: { url: string; method: string; key: string | null; auth: string | null }[] = [];
+  function stubCancel(cancel: () => Response) {
+    calls = [];
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input), headers = new Headers(init?.headers);
+      calls.push({ url, method: init?.method ?? "GET", key: headers.get("idempotency-key"), auth: headers.get("authorization") });
+      if (url.includes("/listings/")) return json(404, {});
+      if (url.endsWith("/my-reservations")) return json(200, mine);
+      if (init?.method === "POST") return cancel();
+      return json(200, { items: held, partnerPriorityEnabled: false });
+    }));
+  }
+
+  it("shows «Tu reserva», asks before cancelling, sends the link credential with one Idempotency-Key and confirms", async () => {
+    stubCancel(() => json(200, { ...mine.items[0], status: "CANCELLED", cancelledAt: "2026-11-02T00:00:00Z", cancelledFromStatus: "COMMITTED", cancellationReason: "GUEST_CANCELLED" }));
+    renderList();
+    expect(await screen.findByText("Tu reserva")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar mi reserva de Torta" }));
+    const dialog = screen.getByRole("dialog", { name: "¿Cancelar tu reserva?" });
+    expect(within(dialog).getByText(/«Torta» vuelve a estar disponible/)).toBeTruthy();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Sí, cancelar la reserva" }));
+    expect(await screen.findByText("Cancelaste tu reserva de «Torta». El regalo volvió a la lista.")).toBeTruthy();
+    const posts = calls.filter((call) => call.method === "POST");
+    expect(posts).toHaveLength(1);
+    expect(posts[0]?.url).toMatch(new RegExp(`/gifts/celebrations/${CELEBRATION}/reservations/${RESERVATION}/cancel$`));
+    expect(posts[0]?.auth).toBe("Bearer guest-credential-0123456789");
+    expect(posts[0]?.key).toBeTruthy();
+    expect(calls.some((call) => call.url.endsWith("/my-reservations") && call.auth === "Bearer guest-credential-0123456789")).toBe(true);
+  });
+
+  it("«No, mantenerla» keeps the reservation and sends nothing", async () => {
+    stubCancel(() => json(200, {}));
+    renderList();
+    fireEvent.click(await screen.findByRole("button", { name: "Cancelar mi reserva de Torta" }));
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "No, mantenerla" }));
+    expect(calls.filter((call) => call.method === "POST")).toHaveLength(0);
+    expect(screen.getByText("Tu reserva")).toBeTruthy();
+  });
+
+  it("a reservation somebody already ended (409 RESERVATION_NOT_ACTIVE) closes the dialog and says the list was refreshed", async () => {
+    stubCancel(() => json(409, { type: "https://rsvp.example/problems/reservation-not-active", title: "x", status: 409, code: "RESERVATION_NOT_ACTIVE" }));
+    renderList();
+    fireEvent.click(await screen.findByRole("button", { name: "Cancelar mi reserva de Torta" }));
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Sí, cancelar la reserva" }));
+    expect(await screen.findByText("Esta reserva ya no estaba activa. Actualizamos la lista.")).toBeTruthy();
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
+  it("a server failure stays in the dialog with a retry that reuses the same Idempotency-Key", async () => {
+    let attempt = 0;
+    stubCancel(() => (++attempt === 1 ? json(503, { title: "x", status: 503, code: "NOT_READY" }) : json(200, { ...mine.items[0], status: "CANCELLED" })));
+    renderList();
+    fireEvent.click(await screen.findByRole("button", { name: "Cancelar mi reserva de Torta" }));
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Sí, cancelar la reserva" }));
+    expect(await within(screen.getByRole("dialog")).findByRole("alert")).toBeTruthy();
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Sí, cancelar la reserva" }));
+    expect(await screen.findByText(/Cancelaste tu reserva/)).toBeTruthy();
+    const keys = calls.filter((call) => call.method === "POST").map((call) => call.key);
+    expect(keys.length).toBeGreaterThanOrEqual(2);
+    expect(new Set(keys).size).toBe(1);
+  });
+});

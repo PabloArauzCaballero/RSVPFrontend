@@ -273,6 +273,7 @@ function UnregisteredForm({ client, view, slug, t, locale, siteOrigin, hosts, co
             <input type="checkbox" checked={draft.consent} aria-invalid={errors.consent ? true : undefined} aria-describedby={errors.consent ? 'rsvp-consent-error' : undefined} onChange={(event) => setDraft({ ...draft, consent: event.target.checked })} />
             <span>{t('rsvp.form.consent')}</span>
           </label>
+          <p className="rsvp-legal"><a href="/privacidad" target="_blank" rel="noopener">{t('legal.links.privacy')}</a></p>
           {errors.consent ? <p id="rsvp-consent-error" className="rsvp-error">{errors.consent}</p> : null}
           {failure ? <FailureNotice failure={failure} t={t} busy={busy} onRetry={() => { void submit(); }} /> : null}
           <div className="rsvp-actions"><button type="submit" className="rsvp-button" disabled={busy} aria-busy={busy}>{busy ? t('rsvp.form.submitting') : t('rsvp.form.register')}</button></div>

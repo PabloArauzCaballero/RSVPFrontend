@@ -48,7 +48,7 @@ describe("gift hooks", () => {
   it("guest list sends exactly the guest credential and no session; the host list uses the session", async () => {
     const guest = harness(() => ({ body: { items: [] } }));
     const seen = await runQuery(guest, () => hooks.useGiftList(guest.client, "c-1", "guest-token"));
-    expect(seen.path).toBe("/gifts/celebrations/c-1/items");
+    expect(seen.path).toBe("/gifts/celebrations/c-1/items?limit=200"); // L4: whole list read in bounded pages
     expect(seen.headers.get("authorization")).toBe("Bearer guest-token");
     const anonymous = harness(() => ({ body: { items: [] } }));
     expect((await runQuery(anonymous, () => hooks.useGiftList(anonymous.client, "c-1", null))).headers.get("authorization")).toBeNull();
@@ -71,8 +71,8 @@ describe("gift hooks", () => {
   });
 
   it("host reservations, decisions, add, approve external and settings use the documented routes", async () => {
-    const reservations = harness(); expect((await runQuery(reservations, () => hooks.useHostReservations(reservations.client, "c-1", "PENDING_REVIEW"))).path).toBe("/gifts/celebrations/c-1/reservations?status=PENDING_REVIEW");
-    const all = harness(); expect((await runQuery(all, () => hooks.useHostReservations(all.client, "c-1"))).path).toBe("/gifts/celebrations/c-1/reservations");
+    const reservations = harness(); expect((await runQuery(reservations, () => hooks.useHostReservations(reservations.client, "c-1", "PENDING_REVIEW"))).path).toBe("/gifts/celebrations/c-1/reservations?status=PENDING_REVIEW&limit=200");
+    const all = harness(); expect((await runQuery(all, () => hooks.useHostReservations(all.client, "c-1"))).path).toBe("/gifts/celebrations/c-1/reservations?limit=200");
     const approve = harness(); expect(await runMutation(approve, () => hooks.useDecideReservation(approve.client, "c-1"), { reservationId: "r-1", decision: "approve" as const })).toMatchObject({ method: "POST", path: "/gifts/celebrations/c-1/reservations/r-1/approve" });
     const reject = harness(); expect((await runMutation(reject, () => hooks.useDecideReservation(reject.client, "c-1"), { reservationId: "r-1", decision: "reject" as const })).path).toBe("/gifts/celebrations/c-1/reservations/r-1/reject");
     const add = harness(); expect(await runMutation(add, () => hooks.useAddGift(add.client, "c-1"), { title: "Licuadora" } as never)).toMatchObject({ method: "POST", path: "/gifts/celebrations/c-1/items", body: { title: "Licuadora" } });

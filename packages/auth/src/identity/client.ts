@@ -4,7 +4,11 @@ import type { Role, Session } from "../session/types.js";
 
 
 export interface LoginInput { email: string; password: string; }
-export interface RegisterInput extends LoginInput { role: Extract<Role, "HOST" | "PLANNER" | "PROVIDER">; }
+export interface RegisterInput extends LoginInput {
+  role: Extract<Role, "HOST" | "PLANNER" | "PROVIDER">;
+  /** B6: version of the terms and privacy policy the person accepted (`legal.version`); Identity records it with the time. */
+  termsVersion?: string;
+}
 export interface PasswordRecoveryInput { email: string; }
 /** `token` is the `token` query parameter of the e-mail link. */
 export interface PasswordResetInput { token: string; newPassword: string; }

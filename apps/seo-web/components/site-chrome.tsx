@@ -52,6 +52,8 @@ export function SiteFooter({ t, locale, path = "/" }: Readonly<{ t: Translate; l
           <nav aria-label={t("landing.footer.explore")} className="site-footer__links">
             <a href="/proveedores">{t("landing.footer.providers")}</a>
             <a href={appUrl("/login")}>{t("landing.footer.create")}</a>
+            <a href="/privacidad">{t("legal.links.privacy")}</a>
+            <a href="/terminos">{t("legal.links.terms")}</a>
           </nav>
           <LanguageSwitch t={t} locale={locale} path={path} />
         </div>

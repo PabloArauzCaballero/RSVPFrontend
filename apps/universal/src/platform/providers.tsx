@@ -1,5 +1,6 @@
 import { createContext, Fragment, useCallback, useContext, useEffect, useMemo, useState, type PropsWithChildren, type ReactNode } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
+import { createSessionQueryCache } from "@rsvp/query-hooks";
 import { I18nextProvider, useTranslation } from "react-i18next";
 import { createApiClient, type ApiClient } from "@rsvp/api-client";
 import { IdentityClient, SessionManager, browserCoordinator, inProcessCoordinator } from "@rsvp/auth";
@@ -61,13 +62,28 @@ export interface AppProvidersProps {
   readonly claims?: SessionClaims;
   readonly runtime?: AppRuntime;
   readonly locale?: AppLocale;
+  /** Tests: a fixed cache. It is still emptied when the signed-in user changes. */
   readonly queryClient?: QueryClient;
+}
+
+const QUERY_DEFAULTS = { queries: { retry: 1 } } as const;
+
+/**
+ * B12: the query cache follows the signed-in person. Entries are hashed under `claims.userId`, and when it changes (sign-out, another
+ * account, session lost) everything cached for the previous person is cancelled and dropped. The switch runs during render, before any
+ * child of the new session can read or fetch; it is idempotent (a repeated render with the same user is a no-op) and React Query
+ * notifies its listeners asynchronously, so no other component is updated while this one renders.
+ */
+function SessionQueryProvider({ queryClient, children }: PropsWithChildren<{ readonly queryClient?: QueryClient }>): ReactNode {
+  const userId = useAuth().claims.userId;
+  const [cache] = useState(() => createSessionQueryCache({ client: queryClient, defaults: QUERY_DEFAULTS, userId }));
+  cache.switchUser(userId);
+  return <QueryClientProvider client={cache.client}>{children}</QueryClientProvider>;
 }
 
 const ANONYMOUS_CLAIMS: SessionClaims = { userId: null, roles: [], organizationIds: [] };
 
 export function AppProviders({ children, client, claims, runtime, locale, queryClient }: PropsWithChildren<AppProvidersProps>): ReactNode {
-  const [queries] = useState(() => queryClient ?? new QueryClient({ defaultOptions: { queries: { retry: 1 } } }));
   const [app] = useState<AppRuntime | null>(() => (runtime ?? (client || claims ? null : createAppRuntime())));
   const [stored, setStored] = useState<string | null>(null);
   const [chosen, setChosen] = useState<AppLocale | null>(null);
@@ -80,13 +96,11 @@ export function AppProviders({ children, client, claims, runtime, locale, queryC
   // The scheme is the person's choice or the system's. Style sheets are chosen per scheme at render time, so a change remounts the tree once (rare, and the stored choice makes it a start-up event on native).
   const scheme = useScheme();
   useThemeHydration();
-  const body = <PlatformContext.Provider value={platform}><UiProvider scheme={scheme} strings={stringsFor(resolvedLocale)}><SignOutProvider><Fragment key={scheme}>{children}</Fragment></SignOutProvider></UiProvider></PlatformContext.Provider>;
+  const body = <SessionQueryProvider queryClient={queryClient}><PlatformContext.Provider value={platform}><UiProvider scheme={scheme} strings={stringsFor(resolvedLocale)}><SignOutProvider><Fragment key={scheme}>{children}</Fragment></SignOutProvider></UiProvider></PlatformContext.Provider></SessionQueryProvider>;
   return (
-    <QueryClientProvider client={queries}>
-      <I18nextProvider i18n={i18n}>
-        {app ? <AuthProvider manager={app.manager} identityClient={app.identityClient}>{body}</AuthProvider> : <StaticAuthProvider claims={claims ?? ANONYMOUS_CLAIMS}>{body}</StaticAuthProvider>}
-      </I18nextProvider>
-    </QueryClientProvider>
+    <I18nextProvider i18n={i18n}>
+      {app ? <AuthProvider manager={app.manager} identityClient={app.identityClient}>{body}</AuthProvider> : <StaticAuthProvider claims={claims ?? ANONYMOUS_CLAIMS}>{body}</StaticAuthProvider>}
+    </I18nextProvider>
   );
 }
 
