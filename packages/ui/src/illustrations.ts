@@ -1,4 +1,4 @@
-import { colors, ink, tones, type ToneName } from '@rsvp/design-tokens';
+import { colors, illustrationTokens, ink, tones, type ToneName } from '@rsvp/design-tokens';
 
 /**
  * Illustrations of DOne, drawn as small scenes: a stone disc, a flat contact shadow, the object as a filled ink figure and
@@ -55,9 +55,9 @@ export const ILLUSTRATION_SIZES = { sm: 64, md: 104, lg: 148 } as const;
 export const ILLUSTRATION_PASTEL: Record<IllustrationGroup, ToneName> = { host: 'yellow', guest: 'blue', provider: 'green', admin: 'gray', access: 'red', system: 'gray' };
 
 /**
- * Colour per layer, all from DOne's tokens. `ground` is the stone disc behind the scene (`primaryMuted`), `shadow` the flat
- * contact shadow under the object (`border` on light, the canvas on dark) and `stone` the secondary pieces of the figure
- * (`fieldBorder`). `soft` is the single pastel piece; every line, solid and accent is ink. `knock` is the glyph inside a
+ * Colour per layer, all from DOne's tokens. `ground` is the stone disc behind the scene, `shadow` the flat contact shadow
+ * under the object and `stone` the secondary pieces of the figure: the roles of `illustrationTokens` (@rsvp/design-tokens),
+ * resolved in the active scheme and shared with the public site's `.art__*` classes. `soft` is the single pastel piece; every line, solid and accent is ink. `knock` is the glyph inside a
  * solid ink shape (the ground colour), so it contrasts with the ink whatever sits behind the illustration. `softEdge` is the
  * readable text colour of the pastel pair, drawn as a faint hairline so the flat pastel keeps an edge on a bone ground.
  */
@@ -69,7 +69,7 @@ export function illustrationColors(tone: ResolvedTone, pastel: ToneName): Illust
   const pair = (dark ? tones.dark : tones.light)[pastel];
   const scheme = dark ? colors.dark : colors.light;
   return {
-    ground: scheme.primaryMuted, shadow: dark ? colors.dark.canvas : colors.light.border, stone: scheme.fieldBorder,
+    ground: scheme[illustrationTokens.ground], shadow: scheme[illustrationTokens.shadow], stone: scheme[illustrationTokens.stone],
     soft: pair.bg, softEdge: pair.fg, line, solid: line, knock, knockFill: knock, accent: line, accentFill: line, spark: 'none'
   };
 }

@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { colors } from './colors';
+import { colors, illustrationTokens } from './colors';
 
 const root = join(__dirname, '..');
 const require = createRequire(import.meta.url);
@@ -35,6 +35,15 @@ describe('REQ-F02-01/05: one source for every consumer', () => {
     const palette = new Set(Object.values({ ...colors.light, ...colors.dark }).map((v) => v.toLowerCase()));
     const copies = [...css.matchAll(/#[0-9a-fA-F]{6}\b/g)].map((m) => m[0]).filter((hex) => palette.has(hex.toLowerCase()));
     expect(copies).toEqual([]);
+  });
+
+  it('L16: seo-web paints the illustration scene with the same roles as the app, with no dark override of any of them', () => {
+    const css = readFileSync(join(root, '../../apps/seo-web/app/globals.css'), 'utf8');
+    for (const [layer, token] of Object.entries(illustrationTokens)) {
+      const rules = [...css.matchAll(new RegExp(`([^{}]*)\\.art__${layer}\\s*\\{([^}]*)\\}`, 'g'))];
+      expect(rules.map(([, , body]) => body!.trim()), `.art__${layer}`).toEqual([`fill: var(--${kebab(token)});`]);
+      expect(rules[0]![1], `.art__${layer} is scoped to a scheme`).not.toMatch(/data-theme|prefers-color-scheme/);
+    }
   });
 
   it('REQ-F02-02 (pipeline): changing one token in the source reaches the preset, the CSS and the JSON', () => {
