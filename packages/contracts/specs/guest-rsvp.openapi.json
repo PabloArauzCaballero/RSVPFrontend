@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "RSVP Guest and RSVP API",
-    "version": "1.10.0",
+    "version": "1.11.0",
     "description": "Additive lanes 17/18/19: guest management, opaque credentials and token-authenticated RSVP. Public APIs use Authorization Bearer, never a token in the URL. Lane 20 adds companion counts, scoped host decisions and public registration with safe approval defaults. Lane 21 adds host-only event-driven read models with freshness metadata and tenant-scoped replay operations documented in the service runbook. 1.9.0: optional email plus E.164 phone (at least one contact), explicit consent origin, respondedAt, group listing and reassignment, authoritative open companion-request total, paginated catering report, canonical invitation URL on token issue (see docs/ACCESS_TOKENS.md). Compatibility: Guest.email and GuestListItem.email may now be null (clients must tolerate null); every previously valid request remains valid. 1.10.0: POST /rsvp/resolve (credential -> celebrationId and slug, for legacy /rsvp/{token} links) and GET /rsvp/celebrations/{id}/public-settings (whether public registration of unregistered guests is enabled). Both public, additive, no-store."
   },
   "servers": [
@@ -2088,6 +2088,12 @@
               "null"
             ],
             "description": "Explicit guest language, or null for current celebration default; exposed only to the valid guest credential."
+          },
+          "name": {
+            "type": "string",
+            "description": "Guest name recorded by the host. Exposed only to this guest after validating the personal invitation credential.",
+            "minLength": 1,
+            "maxLength": 200
           }
         }
       },

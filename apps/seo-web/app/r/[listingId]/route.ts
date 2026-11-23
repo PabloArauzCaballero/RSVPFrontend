@@ -1,5 +1,6 @@
 import { CORRELATION_HEADER, REDIRECT_STATUS, resolveRedirect } from "../../../lib/redirect";
 import { redirectErrorPage } from "../../../lib/redirect-page";
+import { clientAddressOf, trustedProxyHops } from "../../../lib/client-address";
 
 /**
  * B13 · Partner redirector. 302 (never 301) to the partner destination after Provider Catalog records the lead;
@@ -25,7 +26,8 @@ export async function GET(request: Request, { params }: { readonly params: Promi
     searchParams: url.searchParams,
     userAgent: request.headers.get("user-agent"),
     referrer: request.headers.get("referer"),
-    correlationId: request.headers.get(CORRELATION_HEADER)
+    correlationId: request.headers.get(CORRELATION_HEADER),
+    clientAddress: clientAddressOf(request.headers, trustedProxyHops())
   });
   const noStore = { "cache-control": "no-store", "x-robots-tag": "noindex, nofollow", [CORRELATION_HEADER]: outcome.correlationId };
   if (outcome.kind === "redirect") {
