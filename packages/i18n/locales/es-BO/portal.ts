@@ -21,6 +21,8 @@ export const portalEsBO = {
     name: "Nombre del negocio", nameHelp: "Es el nombre que verán las parejas.", submit: "Crear mi ficha", creating: "Creando…", required: "Escribe el nombre de tu negocio.", tooLong: "El nombre admite hasta 120 caracteres.",
     existingTitle: "¿Ya tienes una ficha?", existingBody: "Conéctala con su código de proveedor.", existingId: "Código de proveedor", connect: "Conectar ficha", invalidId: "El código debe ser un identificador válido.", notFound: "No encontramos un proveedor con ese código.", notOwner: "Esa ficha pertenece a otra cuenta."
   },
+  /** Phase 4 (EXPO_PUBLIC_PROVIDER_SELF_SERVICE off): partners are created by the DOne team. The onboarding keys stay until phase 5. */
+  selfServiceClosed: { title: "Aún no tienes un partner", body: "Tu cuenta aún no tiene un partner. El equipo de DOne crea los partners después de verificar tu documentación (KYP). Escríbenos para empezar.", goExplanation: "Ver cómo empezar" },
   status: {
     title: "Estado de tu ficha",
     DRAFT: { label: "Borrador", body: "Aún no es pública. Completa los pasos y envíala a verificación." },
