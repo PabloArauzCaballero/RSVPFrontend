@@ -1,5 +1,5 @@
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { IdentityClient, SessionManager, createMemorySessionStore } from "@rsvp/auth";
 import { queryKeys } from "@rsvp/query-hooks";
@@ -141,5 +141,24 @@ describe("A26 · a public page open while the session arrives is asked again for
     await waitFor(() => expect(runs.some((run) => run.rendered === "user-beto")).toBe(true));
     expect(screen.queryByText(/Boda de Ana/)).toBeNull();
     for (const run of runs) expect(run.rendered).toBe(run.signedIn);
+  });
+
+  it("a screen that keeps the previous data while loading (keepPreviousData) never shows the previous account's data", async () => {
+    function GuestList(): React.ReactNode {
+      const userId = useAuth().claims.userId;
+      const query = useQuery({
+        queryKey: ["guests", "list"],
+        placeholderData: keepPreviousData,
+        queryFn: () => (userId && PRIVATE[userId] ? Promise.resolve(PRIVATE[userId]) : new Promise<string>(() => undefined))
+      });
+      return <p>{`${userId ?? "anónimo"}: ${query.data ?? "cargando"}`}</p>;
+    }
+    const manager = setupWithoutSession(<GuestList />);
+    await signIn(manager, "user-ana");
+    expect(await screen.findByText(`user-ana: ${PRIVATE["user-ana"]}`)).toBeTruthy();
+    await signIn(manager, "user-beto");
+    expect(await screen.findByText("user-beto: cargando")).toBeTruthy();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(screen.queryByText(/Boda de Ana/)).toBeNull();
   });
 });

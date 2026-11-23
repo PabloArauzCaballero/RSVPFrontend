@@ -33,8 +33,12 @@ export function createSessionQueryCache(options: { readonly defaults?: DefaultOp
     switchUser(next) {
       if (next === current) return;
       current = next;
-      const mounted = client.getQueryCache().getAll().flatMap((query) => query.observers);
+      const queries = client.getQueryCache().getAll();
+      const mounted = queries.flatMap((query) => query.observers);
       void client.cancelQueries();
+      // The dropped entries lose their data too: an observer remembers the last entry that had data and offers it as placeholder
+      // (`keepPreviousData`), so it must not be able to hand the previous person's data to the next one.
+      for (const query of queries) query.reset();
       client.clear();
       for (const observer of mounted) detach(observer);
     }
@@ -49,9 +53,9 @@ export function createSessionQueryCache(options: { readonly defaults?: DefaultOp
  * So the observer is moved to an inert entry of the next person (`skipToken`: the old closure is dropped and nothing can run it) and
  * every listener is notified. Its component renders again and passes its own current options, with the `queryFn` built for the
  * new person; React Query then fetches them because the entry has no data. `queryHash`/`_defaulted` are dropped so the hash is
- * computed again under the new user.
+ * computed again under the new user; `placeholderData`/`initialData` are dropped so the inert entry starts with nothing.
  */
 function detach(observer: QueryObserver<unknown, unknown, unknown, unknown, QueryKey>): void {
-  const { queryHash: _previousHash, _defaulted: _previousDefaults, ...options } = observer.options;
+  const { queryHash: _hash, _defaulted: _defaults, placeholderData: _placeholder, initialData: _initial, ...options } = observer.options;
   observer.setOptions({ ...options, queryFn: skipToken, enabled: false, notifyOnChangeProps: "all" });
 }
