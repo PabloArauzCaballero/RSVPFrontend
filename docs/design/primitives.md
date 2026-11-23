@@ -55,7 +55,7 @@ Una frase corta en pasado, sin signos de exclamación.
 
 ## Illustration
 
-Ilustración de línea de tinta, trazo de 3,5 sobre una rejilla de 120, con UNA forma pastel desplazada detrás (el único color) y, donde encaja, el sello con el cheque. Sin chispas ni acento de segundo color. Decorativa por defecto (`aria-hidden`).
+Escena de un objeto sobre una rejilla de 120: disco de piedra, sombra de contacto plana, la figura rellena de tinta y UNA pieza en el pastel del grupo (el único color). Capas `ground`, `shadow`, `stone`, `solid`, `knock`/`knockFill`, `line` y `soft`; todas salen de tokens de DOne (`illustrationColors`). Sin chispas, contornos ni acento de segundo color. Decorativa por defecto (`aria-hidden`). Tamaños: `md` en estados vacíos, `lg` en la columna del ingreso y en los estados del enlace del invitado.
 
 ```tsx
 <Illustration name="invitation" />                       // auto: tinta en claro, tinta clara en oscuro; 104 px

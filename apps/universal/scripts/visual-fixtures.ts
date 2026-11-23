@@ -43,7 +43,7 @@ const routes: readonly (readonly [RegExp, (request: Request) => Reply])[] = [
   [new RegExp(`^/providers/${P}/metrics`), () => ok({ providerId: P, from: "2026-10-07", to: "2026-11-06", totals: { impressions: 1240, clicks: 96, validLeads: 14, invalidLeads: 2, ctr: 0.077 }, rows: [] })],
   [new RegExp(`^/providers/${P}/availability`), () => ok({ providerId: P, timeZone: "America/La_Paz", capacityPerDay: 2, rules: [{ weekdays: [1, 2, 3, 4, 5], start: "09:00", end: "18:00" }], blackouts: [], version: 1 })],
   [new RegExp(`^/providers/${P}/calendar`), () => ok({ providerId: P, timeZone: "America/La_Paz", month: "2026-11", days })],
-  [new RegExp(`^/providers/${P}/bookings`), () => ok({ items: [{ id: "b-1", providerId: P, requesterId: "u-9", date: "2026-11-21", status: "PENDING", expiresAt: "2026-11-10T00:00:00Z", listingId: L1 }] })],
+  [new RegExp(`^/providers/${P}/bookings`), () => ok({ items: [{ id: "b-1", providerId: P, requesterId: "u-9", date: "2026-11-21", status: "REQUESTED", expiresAt: "2026-11-10T00:00:00Z", listingId: L1 }] })],
   [new RegExp(`^/providers/${P}/microsite`), () => ok({ providerId: P, version: 1, descriptions: { "es-BO": "Fotografía de bodas en La Paz." }, gallery: [], hours: { weekly: [{ weekdays: [1, 2, 3, 4, 5], opens: "09:00", closes: "18:00" }] }, social: {}, address: { line: "Av. Arce 2000", city: "La Paz" } })],
   [new RegExp(`^/providers/${P}/documents`), () => ok({ items: [{ id: "d-1", providerId: P, kind: "IDENTITY", fileName: "ci.pdf", contentType: "application/pdf", sizeBytes: 204800, status: "UPLOADED", createdAt: NOW, uploadedAt: NOW }] })],
   [/^\/providers(\?.*)?$/, () => ok({ items: [card], total: 1, page: 1, pageSize: 6 })],
@@ -69,10 +69,17 @@ const routes: readonly (readonly [RegExp, (request: Request) => Reply])[] = [
 ];
 
 /** Wraps `mock.handle`: what the mock already serves stays untouched; only its 404s fall through to these samples. */
+/** Identity's answer to a refresh with no cookie (Problem Details, 401). */
+const SESSION_MISSING: Reply = { status: 401, headers: { "content-type": "application/problem+json" }, body: { title: "Missing refresh token", status: 401 } };
+
 export function withVisualFixtures<TMock extends { handle: (request: never) => Reply }>(mock: TMock): TMock {
   const original = mock.handle.bind(mock) as (request: Request) => Reply;
   (mock as { handle: (request: Request) => Reply }).handle = (request) => {
     const reply = original(request);
+    // Web reload without a session: the app asks Identity to refresh from the httpOnly cookie. With no cookie the real
+    // Identity answers 401 (seen on TEST, 2026-11-21), which means "anonymous". Without this the gate showed
+    // "We couldn't restore your session" on the login and sign-up screens instead of the forms (catalog L13).
+    if (reply.status === 404 && request.method === "POST" && request.path.split("?")[0] === "/identity/auth/refresh") return SESSION_MISSING;
     if (reply.status !== 404 || request.method !== "GET") return reply;
     const found = routes.find(([pattern]) => pattern.test(request.path));
     return found ? found[1](request) : reply;

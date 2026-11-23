@@ -1,5 +1,6 @@
 import { ApiError, type ApiClient } from "@rsvp/api-client";
 import type { ProviderCard, ProviderDiscoveryQuery, ProviderPage, Availability, Booking, BookingPage, BookingRequestInput, BookingStatus, Calendar, CreateListingInput, Lead, ListingHit, ListingSummary, LeadConfig, Metrics, OfferCategory, OwnListing, Provider, QuoteInput, QuoteReceipt, ProviderQuote, ProviderQuotePage, RegisterProviderInput, UpdateProviderInput, Microsite, MicrositeInput, ProviderDocument, DocumentInput, DocumentRegistration, DocumentDownload } from "./types.js";
+import { pageCount } from "./directory.js";
 
 const qs = (params: Record<string, string | number | undefined>): string => {
   const entries = Object.entries(params).filter((entry): entry is [string, string | number] => entry[1] !== undefined && entry[1] !== "");
@@ -8,18 +9,37 @@ const qs = (params: Record<string, string | number | undefined>): string => {
 const NOT_ROUTED = 404;
 /** Bookings per page (the catalog accepts 1 to 100). */
 export const BOOKINGS_PAGE_SIZE = 50;
+const MAX_DIRECTORY_PAGE_SIZE = 50;
 type ListingSearchItem = ListingHit & Pick<ProviderCard, "priceFrom">;
 
 /** Provider Catalog through Kong (`/providers`, `/r`). Public reads use auth:false; the portal uses the PROVIDER session. */
 export function providerService(client: ApiClient) {
   const base = (providerId: string) => `/providers/${providerId}`;
+  const discover = (query: ProviderDiscoveryQuery, locale = "es-BO") =>
+    client.request<ProviderPage>(`/providers${qs({ ...query, locale })}`, { auth: false });
   return {
     publicListing: (listingId: string) => client.request<ListingSummary>(`/listings/${encodeURIComponent(listingId)}`, { auth: false }),
+    /** Public offer cards for older catalogs that omit contact channels from the listing detail. */
+    publicDirectoryOffers: async (providerId: string): Promise<readonly ProviderCard[]> => {
+      const provider = await client.request<Pick<Provider, "id" | "slug" | "status">>(base(encodeURIComponent(providerId)), { auth: false });
+      if (provider.id !== providerId || provider.status !== "VERIFIED" || !provider.slug) return [];
+
+      const query = { slug: provider.slug, pageSize: MAX_DIRECTORY_PAGE_SIZE };
+      const first = await discover({ ...query, page: 1 });
+      const offers = [...first.items];
+      const pages = pageCount(first);
+      for (let page = 2; page <= pages; page += 1) {
+        const result = await discover({ ...query, page });
+        if (result.items.length === 0) break;
+        offers.push(...result.items);
+      }
+      return offers.filter((offer) => offer.verified && offer.providerId === providerId);
+    },
     register: (body: RegisterProviderInput) => client.request<Provider, RegisterProviderInput>("/providers", { method: "POST", body }),
     /** With the owner's session a DRAFT/PENDING provider is readable; anonymous callers only see VERIFIED ones (404 otherwise). */
     get: (providerId: string) => client.request<Provider>(base(providerId)),
     /** GET /providers (public, VERIFIED only): the discovery the host panel uses to pick partners (REQ-F23-05). */
-    discover: (query: ProviderDiscoveryQuery, locale = "es-BO") => client.request<ProviderPage>(`/providers${qs({ ...query, locale })}`, { auth: false }),
+    discover,
     /** GET /providers/mine (provider-catalog 2.1.0): every provider the caller owns, in any status, oldest first. */
     mine: () => client.request<{ items: readonly Provider[] }>("/providers/mine"),
     /** GET/PUT /providers/{id}/microsite: version 0 until first saved; `If-Match` carries the version loaded (409 MICROSITE_VERSION_CONFLICT otherwise). */

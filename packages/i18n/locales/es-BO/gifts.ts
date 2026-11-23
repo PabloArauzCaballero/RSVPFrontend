@@ -10,7 +10,7 @@ export const giftsEsBO = {
   group: { partner: "Productos de nuestros aliados", other: "Otras ideas de los anfitriones" },
   status: { AVAILABLE: "Disponible", PENDING_REVIEW: "Pendiente de aprobación", COMMITTED: "Ya reservado" },
   price: "Precio",
-  card: { photo: "Foto de {{title}}", reservedBy: "Reservado por {{name}}", open: "Ver detalle de {{title}}", reserve: "Reservar", reserveFor: "Reservar {{title}}", viaPartner: "Ver en la tienda del aliado", viaOther: "Ver en la tienda" },
+  card: { photo: "Foto de {{title}}", reservedBy: "Reservado por {{name}}", open: "Ver detalle de {{title}}", reserve: "Reservar", reserveFor: "Reservar {{title}}", viaPartner: "Ver en la tienda del aliado", viaWhatsApp: "Consultar por WhatsApp", viaOther: "Ver en la tienda" },
   detail: { title: "{{title}} · Regalos", back: "Volver a la lista", notFound: "Este regalo ya no está en la lista.", notFoundBody: "Puede que los anfitriones lo hayan quitado. La lista completa sigue abierta para ti.", partnerNote: "Este producto lo ofrece un aliado de DOne. Al abrir el enlace saldrás de DOne." },
   reserve: { title: "Reservar este regalo", intro: "Te pedimos tu nombre para que los anfitriones sepan quién regala.", name: "Tu nombre", nameHelp: "Opcional. Los anfitriones verán este nombre junto a tu reserva.", message: "Mensaje para los anfitriones", messageHelp: "Opcional, hasta 500 caracteres.", submit: "Reservar regalo", submitting: "Reservando…", cancel: "Cancelar", close: "Cerrar" },
   /** D-3 · el invitado cancela su propia reserva (web pública). */

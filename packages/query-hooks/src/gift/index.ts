@@ -4,6 +4,7 @@ import { cachePolicy } from "../policy.js";
 import { queryKeys } from "../keys.js";
 import { invalidation } from "../invalidation.js";
 import { giftApi } from "../domains.js";
+import type { Destination } from "../provider/types.js";
 
 const refetchAll = (queryClient: ReturnType<typeof useQueryClient>, keys: readonly (readonly unknown[])[]) => Promise.all(keys.map((queryKey) => queryClient.invalidateQueries({ queryKey })));
 
@@ -60,6 +61,16 @@ export function arrangeGifts<T extends { readonly source: string; readonly statu
   const kept = guestVisible(items).filter((item) => (filters.maxMinor === undefined || item.price.amountMinor <= filters.maxMinor) && (!filters.onlyAvailable || item.status === "AVAILABLE") && (filters.source === "all" || (filters.source === "partner") === (item.source === "CATALOGED")));
   const ordered = catalogedFirst(kept);
   return { partner: ordered.filter((item) => item.source === "CATALOGED"), other: ordered.filter((item) => item.source !== "CATALOGED") };
+}
+
+const GIFT_STORE_DESTINATIONS = ["PRODUCT_PAGE", "OFFICIAL_SITE", "LANDING"] as const;
+
+/** Use the most specific store link and offer WhatsApp independently. */
+export function giftContactDestinations(available: readonly Destination[] = []): Destination[] {
+  const store = GIFT_STORE_DESTINATIONS.find((destination) => available.includes(destination));
+  const choices: Destination[] = store ? [store] : [];
+  if (available.includes("WHATSAPP")) choices.push("WHATSAPP");
+  return choices;
 }
 
 /** A typed price ("150", "150.5") as minor units, or undefined when empty or not a number: an empty filter filters nothing. */
