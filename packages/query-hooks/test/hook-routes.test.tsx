@@ -121,8 +121,8 @@ describe("provider hooks (portal, quotes, schedule, documents)", () => {
     await check((h) => hooks.useMetrics(h.client, "p-1", "2026-10-01", "2026-10-31", "category"), "/providers/p-1/metrics?from=2026-10-01&to=2026-10-31&groupBy=category");
     await check((h) => hooks.useMetrics(h.client, "p-1", "2026-10-01", "2026-10-31"), "/providers/p-1/metrics?from=2026-10-01&to=2026-10-31");
     await check((h) => hooks.useAvailability(h.client, "p-1"), "/providers/p-1/availability");
-    await check((h) => hooks.useProviderBookings(h.client, "p-1", "REQUESTED" as never), "/providers/p-1/bookings?status=REQUESTED");
-    await check((h) => hooks.useProviderBookings(h.client, "p-1"), "/providers/p-1/bookings");
+    await check((h) => hooks.useProviderBookings(h.client, "p-1", "REQUESTED" as never), "/providers/p-1/bookings?status=REQUESTED&limit=50");
+    await check((h) => hooks.useProviderBookings(h.client, "p-1"), "/providers/p-1/bookings?limit=50");
     await check((h) => hooks.useMyProviders(h.client), "/providers/mine");
     await check((h) => hooks.useMicrosite(h.client, "p-1"), "/providers/p-1/microsite");
     await check((h) => hooks.useProviderDocuments(h.client, "p-1"), "/providers/p-1/documents");
@@ -178,7 +178,8 @@ describe("provider hooks (portal, quotes, schedule, documents)", () => {
     const h = harness();
     await hooks.providerService(h.client).downloadDocument("p-1", "d-1");
     await hooks.providerService(h.client).myBookings();
-    expect(h.calls.map((call) => call.path)).toEqual(["/providers/p-1/documents/d-1/download", "/providers/me/bookings"]);
+    await hooks.providerService(h.client).myBookings("Y3Vyc29y", 20);
+    expect(h.calls.map((call) => call.path)).toEqual(["/providers/p-1/documents/d-1/download", "/providers/me/bookings?limit=50", "/providers/me/bookings?limit=20&cursor=Y3Vyc29y"]);
   });
 
   it("listing search uses /listings and falls back to the public cards only when the gateway has no such route", async () => {

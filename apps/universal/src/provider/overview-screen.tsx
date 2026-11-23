@@ -110,6 +110,8 @@ function Overview({ provider, refetch }: { readonly provider: Provider; readonly
     <View style={{ gap: spacing[8] }}>
       <ReadyHeader provider={provider} tone={tone} doneCount={doneCount} celebrating={Boolean(milestone)} />
       <RenameProvider provider={provider} open={renaming} onClose={() => setRenaming(false)} />
+      {/* A20: the administrator's reason of a rejection or suspension reaches the provider. */}
+      {(provider.status === "REJECTED" || suspended) && provider.statusReason ? <View testID="provider-status-reason"><Notice kind="error">{t("portal.status.reason", { reason: provider.statusReason })}</Notice></View> : null}
       {milestone ? <Enter key={milestone} from="down"><Moment><Celebrate title={t(`portal.home.milestone.${milestone}.title`)} body={t(`portal.home.milestone.${milestone}.body`)} /></Moment></Enter> : null}
       {suspended ? <EmptyState illustration="suspended" title={t("portal.status.SUSPENDED.label")} body={t("portal.status.SUSPENDED.body")} /> : provider.status === "VERIFIED" ? null : (
         // Once verified the path is finished: the header already says "3 of 3" and "Verified", so the three done steps are not listed again.

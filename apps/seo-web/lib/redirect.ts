@@ -8,7 +8,6 @@ import { forwardedFor } from "./client-address";
  */
 
 export const REDIRECT_STATUS = 302;
-export const DEFAULT_DESTINATION = "OFFICIAL_SITE";
 export const DESTINATIONS = ["OFFICIAL_SITE", "LANDING", "WHATSAPP", "PHONE", "EMAIL", "INSTAGRAM", "PRODUCT_PAGE"] as const;
 export const SURFACES = ["PUBLIC_SITE", "SEARCH", "CELEBRATION_SITE", "GIFT_LIST", "EMAIL", "APP", "QUOTE_FORM"] as const;
 export const CORRELATION_HEADER = "x-correlation-id";
@@ -66,11 +65,14 @@ function failureOf(status: number): { readonly reason: RedirectFailure; readonly
 export async function resolveRedirect(request: RedirectRequest): Promise<RedirectOutcome> {
   const correlationId = correlationIdOf(request.correlationId, request.searchParams.get("correlationId"));
   if (!UUID.test(request.listingId)) return { kind: "failure", reason: "not-found", status: NOT_FOUND, correlationId };
-  const requested = request.searchParams.get("destination") ?? DEFAULT_DESTINATION;
-  const destination = (DESTINATIONS as readonly string[]).includes(requested) ? requested : DEFAULT_DESTINATION;
+  // A23: a link without a (known) destination asks for the listing's primary one, which only Provider Catalog knows
+  // (PRODUCT_PAGE of a product, otherwise its first stored destination). Defaulting to OFFICIAL_SITE broke gift links,
+  // whose products usually have only a product page.
+  const requested = request.searchParams.get("destination");
+  const destination = requested !== null && (DESTINATIONS as readonly string[]).includes(requested) ? requested : null;
 
   const upstream = new URL(`${apiBaseUrl()}/r/${request.listingId}`);
-  upstream.searchParams.set("destination", destination);
+  if (destination) upstream.searchParams.set("destination", destination);
   for (const key of CONTEXT_KEYS) {
     const value = request.searchParams.get(key);
     if (value) upstream.searchParams.set(key, value);
