@@ -82,3 +82,64 @@ describe("B12 · the query cache belongs to one person", () => {
     for (const hash of hashes) expect(hash).toContain('"user":"user-ana"');
   });
 });
+
+/**
+ * A26: on the web the session is restored asynchronously, so the visitor turns from anonymous into a person while a public page
+ * (guest RSVP, guest gifts) already asked for its data. The screen reads neither the session nor `fetchStatus`, only `isPending`/`data`.
+ */
+function setupWithoutSession(screenUnderTest: React.ReactNode): SessionManager {
+  let next = "user-ana";
+  const { client } = fakeClient({ "POST /identity/auth/login": () => tokens(next), "POST /identity/auth/logout": () => undefined });
+  const manager = new SessionManager(createMemorySessionStore(), new IdentityClient(client));
+  render(<AppProviders runtime={{ manager, client, identityClient: client }} locale="es-BO">{screenUnderTest}</AppProviders>);
+  (manager as SessionManager & { nextUser: (id: string) => void }).nextUser = (id: string) => { next = id; };
+  return manager;
+}
+
+describe("A26 · a public page open while the session arrives is asked again for the new person", () => {
+  it("a pending public query that only reads isPending/data is fetched again after the anonymous → person switch", async () => {
+    let calls = 0;
+    function PublicInvitation(): React.ReactNode {
+      cacheProbe = useQueryClient();
+      // The first request is still in flight when the session arrives (it never answers on its own); the next one answers.
+      const query = useQuery({ queryKey: ["public-invitation", "boda-publica"], queryFn: () => (++calls === 1 ? new Promise<string>(() => undefined) : Promise.resolve("Invitación de la boda")) });
+      return <p>{query.isPending ? "Abriendo tu invitación…" : query.data}</p>;
+    }
+    const manager = setupWithoutSession(<PublicInvitation />);
+    expect(await screen.findByText("Abriendo tu invitación…")).toBeTruthy();
+    await waitFor(() => expect(calls).toBe(1));
+    await signIn(manager, "user-ana");
+    expect(await screen.findByText("Invitación de la boda")).toBeTruthy();
+    expect(calls).toBe(2);
+    const hashes = cacheProbe?.getQueryCache().getAll().map((query) => query.queryHash) ?? [];
+    expect(hashes.length).toBeGreaterThan(0);
+    for (const hash of hashes) expect(hash).toContain('"user":"user-ana"');
+  });
+
+  it("the query asked again after a switch only ever runs with the identity of the person who rendered it", async () => {
+    const runs: { readonly rendered: string | null; readonly signedIn: string | null }[] = [];
+    let managerRef: SessionManager | null = null;
+    function PrivateWithPendingFetch(): React.ReactNode {
+      cacheProbe = useQueryClient();
+      const rendered = useAuth().claims.userId;
+      const query = useQuery({
+        queryKey: ["mine"],
+        queryFn: () => {
+          // Who the closure was rendered for, and who is signed in when it actually runs.
+          runs.push({ rendered, signedIn: managerRef?.getState().session?.userId ?? null });
+          return rendered && PRIVATE[rendered] ? PRIVATE[rendered] : new Promise<string>(() => undefined);
+        }
+      });
+      return <p>{query.isPending ? "cargando" : query.data}</p>;
+    }
+    const manager = setupWithoutSession(<PrivateWithPendingFetch />);
+    managerRef = manager;
+    expect(await screen.findByText("cargando")).toBeTruthy();
+    await signIn(manager, "user-ana");
+    expect(await screen.findByText(PRIVATE["user-ana"] ?? "")).toBeTruthy();
+    await signIn(manager, "user-beto");
+    await waitFor(() => expect(runs.some((run) => run.rendered === "user-beto")).toBe(true));
+    expect(screen.queryByText(/Boda de Ana/)).toBeNull();
+    for (const run of runs) expect(run.rendered).toBe(run.signedIn);
+  });
+});
