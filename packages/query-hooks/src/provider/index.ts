@@ -126,6 +126,19 @@ export function useInfiniteLeads(client: ApiClient, providerId: string | undefin
     getNextPageParam: (last, pages) => { const loaded = pages.reduce((sum, page) => sum + page.items.length, 0); return last.items.length === LEADS_PAGE_SIZE && (last.total === undefined || loaded < last.total) ? loaded : undefined; }
   });
 }
+export const QUOTES_PAGE_SIZE = 20;
+/** B11 · The provider's quote inbox, newest first, page by page (keyset cursor). */
+export function useInfiniteProviderQuotes(client: ApiClient, providerId: string | undefined) {
+  return useInfiniteQuery({
+    queryKey: P(providerId ?? "", "quotes", "pages"), initialPageParam: undefined as string | undefined, ...live, enabled: Boolean(providerId),
+    queryFn: ({ pageParam }) => providerService(client).quotes(providerId ?? "", QUOTES_PAGE_SIZE, pageParam),
+    getNextPageParam: (last) => last.nextCursor ?? undefined
+  });
+}
+/** One quote request with the requester's contact; loaded only when the provider opens it. */
+export function useProviderQuote(client: ApiClient, providerId: string | undefined, quoteId: string | undefined) {
+  return useQuery({ queryKey: P(providerId ?? "", "quotes", quoteId ?? ""), queryFn: () => providerService(client).quote(providerId ?? "", quoteId ?? ""), ...live, enabled: Boolean(providerId && quoteId) });
+}
 export function useMetrics(client: ApiClient, providerId: string | undefined, from: string, to: string, groupBy?: string) {
   return useQuery({ queryKey: P(providerId ?? "", "metrics", from, to, groupBy ?? ""), queryFn: () => providerService(client).metrics(providerId ?? "", from, to, groupBy), ...live, enabled: Boolean(providerId) });
 }

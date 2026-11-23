@@ -92,7 +92,8 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
   const listStatusCode = list.error instanceof ApiError ? list.error.status : 0;
   // An expired or revoked credential is forgotten, so the next visit asks for the link instead of failing again.
   useEffect(() => { if (listStatusCode === 401 && credential) clearGiftCredential(slug); }, [listStatusCode, credential, slug]);
-  const rsvpPath = credential ? `/c/${encodeURIComponent(slug)}/rsvp/${encodeURIComponent(credential)}` : `/c/${encodeURIComponent(slug)}/rsvp`;
+  // A13: the credential is kept for the session, never put back into an address.
+  const rsvpPath = `/c/${encodeURIComponent(slug)}/rsvp`;
   const listPath = `/c/${encodeURIComponent(slug)}/regalos`;
   const [target, setTarget] = useState<GiftItem | null>(null);
   const [name, setName] = useState("");

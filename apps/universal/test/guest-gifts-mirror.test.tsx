@@ -108,7 +108,8 @@ describe("Espejo web · A14 the gift list at /c/{slug}/regalos in the app", () =
     fireEvent.click(screen.getByTestId("gifts-invitation"));
     expect(onNavigate).toHaveBeenLastCalledWith("/c/ana-luis");
     fireEvent.click(screen.getByTestId("gifts-back"));
-    expect(onNavigate).toHaveBeenLastCalledWith(`/c/ana-luis/rsvp/${TOKEN}`);
+    // A13: back to the invitation without the credential in the address (it is kept for the session).
+    expect(onNavigate).toHaveBeenLastCalledWith("/c/ana-luis/rsvp");
   });
 
   it("negative: without the personal link there is no anonymous list — it asks for the link (401) and offers the invitation", async () => {
