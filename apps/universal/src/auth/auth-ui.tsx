@@ -109,7 +109,7 @@ export function AuthLayout({ title, intro, illustration = "invitation", children
         <View style={authStyles.brand}>
           <Logo tone="auto" height={32} />
           <View style={{ gap: spacing[6] }}>
-            <Illustration name={illustration} tone="auto" size={104} />
+            <Illustration name={illustration} tone="auto" size="lg" />
             <Text accessibilityElementsHidden aria-hidden style={authStyles.pitch}>{t("auth.brandPitch")}</Text>
             <Text accessibilityElementsHidden aria-hidden style={authStyles.pitchBody}>{t("auth.brandBody")}</Text>
           </View>

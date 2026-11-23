@@ -18,7 +18,7 @@ export function LinkState({ illustration, title, body, action, frame, children }
   return (
     <GuestFrame {...(frame ?? {})}>
       <Enter from="down"><View style={{ alignItems: "center", gap: spacing[4] }}>
-        <Illustration name={illustration} tone="auto" size="md" />
+        <Illustration name={illustration} tone="auto" size="lg" />
         <Text accessibilityRole="header" aria-level={frame?.heading ? 2 : 1} style={{ color: palette.text, fontSize: 32, lineHeight: 35, fontWeight: "500", letterSpacing: -0.9, textAlign: "center", fontFamily: fonts.display }}>{title}</Text>
         {body ? <Text style={{ color: palette.textMuted, fontSize: typography.fontSize.base, lineHeight: typography.lineHeight.base, textAlign: "center", fontFamily }}>{body}</Text> : null}
         {action ? <Text style={{ color: palette.text, fontSize: typography.fontSize.base, lineHeight: typography.lineHeight.base, fontWeight: "600", textAlign: "center", fontFamily }}>{action}</Text> : null}

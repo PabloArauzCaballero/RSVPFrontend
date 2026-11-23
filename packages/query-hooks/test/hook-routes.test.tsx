@@ -208,6 +208,67 @@ describe("provider hooks (portal, quotes, schedule, documents)", () => {
     expect(h.calls).toHaveLength(0);
     expect((await runQuery(h, () => hooks.useListingSearch(h.client, "to"))).path).toContain("/listings?q=to");
   });
+
+  it("looks up missing gift channels in the provider's public directory and shares the lookup", async () => {
+    const h = harness(({ path }) => {
+      if (path.startsWith("/listings/")) {
+        return { body: { id: path.split("/").at(-1), providerId: "p-1", providerStatus: "VERIFIED", published: true } };
+      }
+      if (path === "/providers/p-1") return { body: { id: "p-1", slug: "dulce-sol", status: "VERIFIED" } };
+      if (path === "/providers?slug=dulce-sol&pageSize=50&page=1&locale=es-BO") {
+        return { body: { total: 51, pageSize: 50, items: [
+          { listingId: "l-1", providerId: "p-other", verified: true, destinations: ["OFFICIAL_SITE"] }
+        ] } };
+      }
+      if (path === "/providers?slug=dulce-sol&pageSize=50&page=2&locale=es-BO") {
+        return { body: { total: 51, pageSize: 50, items: [
+          { listingId: "l-1", providerId: "p-1", verified: true, destinations: ["WHATSAPP", "PRODUCT_PAGE"] },
+          { listingId: "l-2", providerId: "p-1", verified: true, destinations: ["LANDING", "WHATSAPP"] }
+        ] } };
+      }
+      return { status: 404 };
+    });
+    const { result } = renderHook(() => ({
+      first: hooks.usePublicListing(h.client, "l-1"),
+      second: hooks.usePublicListing(h.client, "l-2")
+    }), { wrapper: h.wrapper });
+
+    await waitFor(() => {
+      expect(result.current.first.data?.destinationTypes).toEqual(["WHATSAPP"]);
+      expect(result.current.second.data?.destinationTypes).toEqual(["LANDING", "WHATSAPP"]);
+    });
+    expect(h.calls.filter(({ path }) => path.startsWith("/providers"))).toHaveLength(3);
+    expect(h.calls.every(({ headers }) => headers.get("authorization") === null)).toBe(true);
+  });
+
+  it("uses any explicit channel list from the detail, including an empty one", async () => {
+    const h = harness(({ path }) => ({ body: {
+      id: path.split("/").at(-1), providerId: "p-1", providerStatus: "VERIFIED", published: true,
+      destinationTypes: path === "/listings/l-1" ? [] : ["PRODUCT_PAGE"]
+    } }));
+    const { result } = renderHook(() => ({
+      first: hooks.usePublicListing(h.client, "l-1"),
+      second: hooks.usePublicListing(h.client, "l-2")
+    }), { wrapper: h.wrapper });
+
+    await waitFor(() => {
+      expect(result.current.first.data?.destinationTypes).toEqual([]);
+      expect(result.current.second.data?.destinationTypes).toEqual(["PRODUCT_PAGE"]);
+    });
+    expect(h.calls.map(({ path }) => path)).toEqual(["/listings/l-1", "/listings/l-2"]);
+  });
+
+  it("keeps public metadata when an old catalog directory is unavailable", async () => {
+    const photo = "https://media.example/offer.webp";
+    const h = harness(({ path }) => path === "/listings/l-1"
+      ? { body: { id: "l-1", providerId: "p-1", providerStatus: "VERIFIED", published: true, imageUrl: photo } }
+      : { status: 503 });
+    const { result } = renderHook(() => hooks.usePublicListing(h.client, "l-1"), { wrapper: h.wrapper });
+    await waitFor(() => expect(h.queryClient.getQueryState(["providers", "public-directory-offers", "p-1"])?.status).toBe("error"));
+    expect(result.current.isError).toBe(false);
+    expect(result.current.data?.imageUrl).toBe(photo);
+    expect(result.current.data?.destinationTypes).toBeUndefined();
+  });
 });
 
 describe("celebration, template, media and event-type hooks", () => {
