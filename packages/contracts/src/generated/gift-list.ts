@@ -1085,7 +1085,13 @@ export interface components {
             reservation: components["schemas"]["ModeAwareReservationView"];
         };
         /** @description Independent complete manual/automatic view. AUTOMATIC has resolvedAt exactly equal to requestedAt and a null owner resolver; PENDING has null resolution; MANUAL has an owner UUID. Only these ten public fields are exposed. Settings provenance remains server-side. UNKNOWN preserves recognized legacy decisions without attributing a mode or resolution that was never recorded. */
-        ModeAwareReservationView: {
+        ModeAwareReservationView: ({
+            /** @constant */
+            cancellationReason?: "RSVP_DECLINED";
+            /** Format: date-time */
+            cancelledAt?: string;
+            /** @enum {string} */
+            cancelledFromStatus?: "PENDING_REVIEW" | "COMMITTED";
             /** Format: uuid */
             celebrationId: string;
             /** Format: uuid */
@@ -1103,8 +1109,8 @@ export interface components {
             resolvedAt: string | null;
             resolvedByUserId: string | null;
             /** @enum {unknown} */
-            status: "PENDING_REVIEW" | "COMMITTED" | "REJECTED";
-        } & ({
+            status: "PENDING_REVIEW" | "COMMITTED" | "REJECTED" | "CANCELLED";
+        } & unknown) & ({
             /** @constant */
             reservationMode?: "RESTRICTED";
             /** @constant */
@@ -1281,6 +1287,12 @@ export interface components {
         };
         /** @description Owner-only record including identified and erased guests. ERASED is displayed as invitado eliminado, with guestId null; identity state does not change reservation status, quantity or resolution. Exactly eleven fields; no erasure IDs, tombstones, hashes or former identity. Automatic resolution retains a null owner resolver and resolvedAt equal to requestedAt. Manual pending records remain pending when settings change. UNKNOWN preserves recognized legacy decisions without attributing a mode or resolution that was never recorded. */
         ReservationRecordView: ({
+            /** @constant */
+            cancellationReason?: "RSVP_DECLINED";
+            /** Format: date-time */
+            cancelledAt?: string;
+            /** @enum {string} */
+            cancelledFromStatus?: "PENDING_REVIEW" | "COMMITTED";
             /** Format: uuid */
             celebrationId: string;
             /** Format: uuid */
@@ -1299,8 +1311,8 @@ export interface components {
             resolvedAt: string | null;
             resolvedByUserId: string | null;
             /** @enum {unknown} */
-            status: "PENDING_REVIEW" | "COMMITTED" | "REJECTED";
-        } & ({
+            status: "PENDING_REVIEW" | "COMMITTED" | "REJECTED" | "CANCELLED";
+        } & (({
             /** Format: uuid */
             guestId?: string;
             /** @constant */
@@ -1309,7 +1321,7 @@ export interface components {
             guestId?: null;
             /** @constant */
             guestIdentityState?: "ERASED";
-        })) & ({
+        }) & unknown)) & ({
             /** @constant */
             reservationMode?: "RESTRICTED";
             /** @constant */
@@ -1346,7 +1358,13 @@ export interface components {
             reservation: components["schemas"]["ReservationView"];
         };
         /** @description Only complete reservationSchemaVersion1 rows. requestedAt maps to created_at written by the server. Status/time/resolver are reservation history; no names/messages/credentials. */
-        ReservationView: {
+        ReservationView: ({
+            /** @constant */
+            cancellationReason?: "RSVP_DECLINED";
+            /** Format: date-time */
+            cancelledAt?: string;
+            /** @enum {string} */
+            cancelledFromStatus?: "PENDING_REVIEW" | "COMMITTED";
             /** Format: uuid */
             celebrationId: string;
             /** Format: uuid */
@@ -1360,8 +1378,8 @@ export interface components {
             resolvedAt: string | null;
             resolvedByUserId: string | null;
             /** @enum {unknown} */
-            status: "PENDING_REVIEW" | "COMMITTED" | "REJECTED";
-        } & ({
+            status: "PENDING_REVIEW" | "COMMITTED" | "REJECTED" | "CANCELLED";
+        } & unknown) & ({
             resolvedAt?: null;
             resolvedByUserId?: null;
             /** @constant */
@@ -1374,6 +1392,40 @@ export interface components {
             /** @enum {unknown} */
             status?: "COMMITTED" | "REJECTED";
         });
+        RsvpAwareGiftReservation: components["schemas"]["DevCompatGiftReservation"] | components["schemas"]["RsvpCancelledGiftReservation"];
+        RsvpAwareReservationList: {
+            items: components["schemas"]["RsvpAwareGiftReservation"][];
+        };
+        RsvpCancelledGiftReservation: {
+            /** @constant */
+            cancellationReason: "RSVP_DECLINED";
+            /** Format: date-time */
+            cancelledAt: string;
+            /** @enum {string} */
+            cancelledFromStatus: "PENDING_REVIEW" | "COMMITTED";
+            /** Format: uuid */
+            celebrationId: string;
+            guestDisplayName?: string | null;
+            /**
+             * Format: uuid
+             * @description Null after guest erasure
+             */
+            guestId?: string | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            itemId: string;
+            message?: string | null;
+            /** Format: date-time */
+            requestedAt: string;
+            /** @description true when the host chose not to see who asked: guestId, guestDisplayName and message are null */
+            requesterHidden?: boolean;
+            /** Format: date-time */
+            resolvedAt?: string | null;
+            resolvedBy?: string | null;
+            /** @constant */
+            status: "CANCELLED";
+        };
     };
     responses: {
         /** @description Celebration or Provider Catalog is unavailable (fail closed) */
@@ -1503,7 +1555,7 @@ export interface components {
         /** @description Echoed in the response header and in problem.correlationId; generated when absent. */
         DevCompatCorrelationId: string;
         /** @description Single optional status filter; unknown, duplicate, empty or invalid parameters return422. */
-        OwnerReservationStatus: "PENDING_REVIEW" | "COMMITTED" | "REJECTED";
+        OwnerReservationStatus: "PENDING_REVIEW" | "COMMITTED" | "REJECTED" | "CANCELLED";
         /** @description Optional single UUID. Echoed unchanged when valid. Missing value generates a UUID. Invalid or duplicate values return 422 with a fresh UUID and never echo arbitrary text. */
         PrivateCorrelationId: string;
         PublicationGiftItemId: string;
@@ -1803,7 +1855,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DevCompatGiftReservation"];
+                    "application/json": components["schemas"]["RsvpAwareGiftReservation"];
                 };
             };
             401: components["responses"]["DevCompatUnauthorized"];
@@ -6159,7 +6211,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DevCompatReservationList"];
+                    "application/json": components["schemas"]["RsvpAwareReservationList"];
                 };
             };
             401: components["responses"]["DevCompatUnauthorized"];
@@ -6190,7 +6242,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DevCompatGiftReservation"];
+                    "application/json": components["schemas"]["RsvpAwareGiftReservation"];
                 };
             };
             401: components["responses"]["DevCompatUnauthorized"];
@@ -6235,7 +6287,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DevCompatGiftReservation"];
+                    "application/json": components["schemas"]["RsvpAwareGiftReservation"];
                 };
             };
             401: components["responses"]["DevCompatUnauthorized"];
