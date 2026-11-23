@@ -1,96 +1,96 @@
 {
   "app": "http://localhost:8340",
-  "site": "https://rsvp-web.161.97.85.216.sslip.io",
+  "site": "http://localhost:3100",
   "results": [
     {
       "case": "/ 360px light es-BO",
       "ok": true,
-      "detail": "stays at \"/\", headings app=16 site=10 missing=[] overflow=0 axe(critical+serious)=0 errors=0",
-      "at": "2026-11-21T05:07:29.910Z"
+      "detail": "stays at \"/\", headings app=16 site=10 missing=[] roleArt app=3 site=3 overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-21T14:28:02.182Z"
     },
     {
       "case": "/ 360px light en-US",
       "ok": true,
-      "detail": "stays at \"/\", headings app=16 site=10 missing=[] overflow=0 axe(critical+serious)=0 errors=0",
-      "at": "2026-11-21T05:07:36.100Z"
+      "detail": "stays at \"/\", headings app=16 site=10 missing=[] roleArt app=3 site=3 overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-21T14:28:05.204Z"
     },
     {
       "case": "/ 360px dark es-BO",
       "ok": true,
-      "detail": "stays at \"/\", headings app=16 site=10 missing=[] overflow=0 axe(critical+serious)=0 errors=0",
-      "at": "2026-11-21T05:07:42.951Z"
+      "detail": "stays at \"/\", headings app=16 site=10 missing=[] roleArt app=3 site=3 overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-21T14:28:08.238Z"
     },
     {
       "case": "/ 360px dark en-US",
       "ok": true,
-      "detail": "stays at \"/\", headings app=16 site=10 missing=[] overflow=0 axe(critical+serious)=0 errors=0",
-      "at": "2026-11-21T05:07:49.679Z"
+      "detail": "stays at \"/\", headings app=16 site=10 missing=[] roleArt app=3 site=3 overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-21T14:28:11.284Z"
     },
     {
       "case": "/ 768px light es-BO",
       "ok": true,
-      "detail": "stays at \"/\", headings app=16 site=10 missing=[] overflow=0 axe(critical+serious)=0 errors=0",
-      "at": "2026-11-21T05:07:55.734Z"
+      "detail": "stays at \"/\", headings app=16 site=10 missing=[] roleArt app=3 site=3 overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-21T14:28:14.390Z"
     },
     {
       "case": "/ 768px light en-US",
       "ok": true,
-      "detail": "stays at \"/\", headings app=16 site=10 missing=[] overflow=0 axe(critical+serious)=0 errors=0",
-      "at": "2026-11-21T05:08:01.887Z"
+      "detail": "stays at \"/\", headings app=16 site=10 missing=[] roleArt app=3 site=3 overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-21T14:28:17.387Z"
     },
     {
       "case": "/ 768px dark es-BO",
       "ok": true,
-      "detail": "stays at \"/\", headings app=16 site=10 missing=[] overflow=0 axe(critical+serious)=0 errors=0",
-      "at": "2026-11-21T05:08:08.131Z"
+      "detail": "stays at \"/\", headings app=16 site=10 missing=[] roleArt app=3 site=3 overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-21T14:28:20.477Z"
     },
     {
       "case": "/ 768px dark en-US",
       "ok": true,
-      "detail": "stays at \"/\", headings app=16 site=10 missing=[] overflow=0 axe(critical+serious)=0 errors=0",
-      "at": "2026-11-21T05:08:14.494Z"
+      "detail": "stays at \"/\", headings app=16 site=10 missing=[] roleArt app=3 site=3 overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-21T14:28:23.652Z"
     },
     {
       "case": "/ 1280px light es-BO",
       "ok": true,
-      "detail": "stays at \"/\", headings app=16 site=10 missing=[] overflow=0 axe(critical+serious)=0 errors=0",
-      "at": "2026-11-21T05:08:21.198Z"
+      "detail": "stays at \"/\", headings app=16 site=10 missing=[] roleArt app=3 site=3 overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-21T14:28:26.911Z"
     },
     {
       "case": "/ 1280px light en-US",
       "ok": true,
-      "detail": "stays at \"/\", headings app=16 site=10 missing=[] overflow=0 axe(critical+serious)=0 errors=0",
-      "at": "2026-11-21T05:08:27.964Z"
+      "detail": "stays at \"/\", headings app=16 site=10 missing=[] roleArt app=3 site=3 overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-21T14:28:30.163Z"
     },
     {
       "case": "/ 1280px dark es-BO",
       "ok": true,
-      "detail": "stays at \"/\", headings app=16 site=10 missing=[] overflow=0 axe(critical+serious)=0 errors=0",
-      "at": "2026-11-21T05:08:34.490Z"
+      "detail": "stays at \"/\", headings app=16 site=10 missing=[] roleArt app=3 site=3 overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-21T14:28:33.484Z"
     },
     {
       "case": "/ 1280px dark en-US",
       "ok": true,
-      "detail": "stays at \"/\", headings app=16 site=10 missing=[] overflow=0 axe(critical+serious)=0 errors=0",
-      "at": "2026-11-21T05:08:41.159Z"
+      "detail": "stays at \"/\", headings app=16 site=10 missing=[] roleArt app=3 site=3 overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-21T14:28:36.616Z"
     },
     {
       "case": "landing-create → /registro",
       "ok": true,
       "detail": "/registro",
-      "at": "2026-11-21T05:08:42.893Z"
+      "at": "2026-11-21T14:28:36.902Z"
     },
     {
       "case": "landing-sign-in → /login",
       "ok": true,
       "detail": "/login",
-      "at": "2026-11-21T05:08:43.293Z"
+      "at": "2026-11-21T14:28:37.030Z"
     },
     {
       "case": "landing-directory → /proveedores",
       "ok": true,
       "detail": "/proveedores",
-      "at": "2026-11-21T05:08:44.221Z"
+      "at": "2026-11-21T14:28:37.175Z"
     }
   ]
 }
