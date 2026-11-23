@@ -50,9 +50,8 @@ button, input, select, textarea { font: inherit; }
 .art__ground { fill: var(--primary-muted); } .art__shadow { fill: var(--border); } .art__solid { fill: var(--text); } .art__stone { fill: var(--field-border); }
 .art__ink { fill: none; stroke: var(--text); } .art__knock { fill: none; stroke: var(--canvas); } .art__knock-fill { fill: var(--canvas); }
 .art__pastel { fill: var(--art-pastel); stroke: var(--art-edge); stroke-width: 1.25; stroke-opacity: .55; }
-/* On dark the contact shadow is the canvas, like the app's `illustrationColors('onDark')`. */
-[data-theme='dark'] .art__shadow { fill: var(--canvas); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme='light']) .art__shadow { fill: var(--canvas); } }
+/* Rule: ground, shadow and stone are the roles of `illustrationTokens` (@rsvp/design-tokens), the same in both schemes as in the
+   app's `illustrationColors`. No dark override: painting the shadow with the canvas made it bite the disc on the page (L16). */
 .check { display: inline-block; flex: none; vertical-align: middle; }
 @media (prefers-reduced-motion: no-preference) {
   .check--draw .check__stroke { stroke-dasharray: 1; stroke-dashoffset: 1; animation: check-draw .6s var(--ease-out) .3s forwards; }

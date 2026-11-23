@@ -48,7 +48,9 @@ describe('illustration set', () => {
       const palette = illustrationColors(tone, 'yellow');
       expect(palette.ground).toBe(scheme.primaryMuted);
       expect(palette.stone).toBe(scheme.fieldBorder);
-      expect(palette.shadow).toBe(tone === 'ink' ? colors.light.border : colors.dark.canvas);
+      // L16: the shadow is the same role in both schemes and never the page colour, or on dark it bites the disc.
+      expect(palette.shadow).toBe(scheme.border);
+      expect(palette.shadow).not.toBe(scheme.canvas);
     }
   });
 
