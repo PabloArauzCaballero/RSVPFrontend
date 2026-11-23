@@ -21,7 +21,9 @@ export type IllustrationName =
   // Admin
   | 'nothingPending' | 'importDone'
   // Access and system
-  | 'noAccess' | 'searching' | 'serverError' | 'maintenance' | 'notFound';
+  | 'noAccess' | 'searching' | 'serverError' | 'maintenance' | 'notFound'
+  // Public home (site and web app): the promise and the three taps
+  | 'landingSend' | 'landingCreate' | 'landingShare' | 'landingReplies';
 
 /**
  * Semantic tone, never a hex. `ink` draws dark ink on a light ground, `onDark` draws light ink on a dark ground and `auto`
@@ -41,7 +43,8 @@ export const ILLUSTRATION_GROUPS: Record<IllustrationName, IllustrationGroup> = 
   linkExpired: 'guest', welcomeGuest: 'guest',
   noOffers: 'provider', offerPublished: 'provider', freeAgenda: 'provider', newClient: 'provider', verifying: 'provider', verified: 'provider', suspended: 'provider', welcomeProvider: 'provider',
   nothingPending: 'admin', importDone: 'admin',
-  noAccess: 'access', searching: 'system', serverError: 'system', maintenance: 'system', notFound: 'system'
+  noAccess: 'access', searching: 'system', serverError: 'system', maintenance: 'system', notFound: 'system',
+  landingSend: 'guest', landingCreate: 'host', landingShare: 'guest', landingReplies: 'host'
 };
 export const ILLUSTRATION_NAMES = Object.keys(ILLUSTRATION_GROUPS) as IllustrationName[];
 export const ILLUSTRATION_VIEWBOX = 120;
@@ -417,6 +420,45 @@ const RAW: Record<IllustrationName, readonly Shape[]> = {
     { layer: 'soft', d: poly([[72, 40], [64, 61], [56, 55]], true) },
     { layer: 'knockFill', d: poly([[56, 55], [48, 76], [64, 61]], true) },
     { layer: 'solid', d: circle(60, 58, 3) }
+  ],
+
+  // ---- Public home (site `landing.tsx` and web app `landing-screen.tsx`, the same drawings) -------------------------
+  /** The promise: a paper plane on its way, its pastel trail behind it. */
+  landingSend: [
+    ...stage(24),
+    { layer: 'stone', d: poly([[100, 24], [52, 64], [62, 90]], true) },
+    { layer: 'solid', d: poly([[100, 24], [16, 52], [52, 64]], true) },
+    { layer: 'solid', d: poly([[52, 64], [48, 80], [60, 72]], true) },
+    { layer: 'knock', w: 2.5, d: 'M100 24L52 64' },
+    { layer: 'soft', d: circle(36, 80, 5.5) + circle(25, 88, 4.5) + circle(16, 95, 3.5) }
+  ],
+  /** Step one, create: the arched invitation with its lines and the pastel pencil that writes it. */
+  landingCreate: [
+    ...stage(30),
+    { layer: 'solid', d: archCard(26, 22, 50, 76, 10) },
+    { layer: 'knock', w: 3, d: circle(51, 48, 6) },
+    { layer: 'knock', w: 3, d: 'M38 66H64M42 76H60' },
+    { layer: 'knockFill', d: capsule(98, 30, 72, 76, 9) },
+    { layer: 'soft', d: capsule(98, 30, 72, 76, 6) },
+    { layer: 'solid', d: poly([[77.22, 78.95], [66.78, 73.05], [66.1, 86.45]], true) }
+  ],
+  /** Step two, share: the phone with a pastel bubble that carries the link. */
+  landingShare: [
+    ...stage(26),
+    { layer: 'solid', d: rect(28, 18, 44, 80, 10) },
+    { layer: 'knock', w: 3, d: 'M44 27H56' },
+    { layer: 'knockFill', d: circle(50, 89, 3) },
+    { layer: 'knockFill', d: rect(47, 33, 58, 32, 13) },
+    { layer: 'soft', d: rect(50, 36, 52, 26, 10) },
+    { layer: 'line', w: 2.5, d: `${capsule(62, 49, 70, 49, 5)}${capsule(82, 49, 90, 49, 5)}M70 49H82` }
+  ],
+  /** Step three, see who comes: the list on its clipboard, two answers ticked and the pastel one still to come. */
+  landingReplies: [
+    ...stage(30),
+    { layer: 'solid', d: rect(28, 22, 64, 76, 9) },
+    { layer: 'stone', d: rect(46, 15, 28, 13, 5) },
+    { layer: 'knock', w: 3, d: `${check(41, 46, 0.7)}${check(41, 64, 0.7)}M54 46H80M54 64H76M54 82H70` },
+    { layer: 'soft', d: circle(41, 82, 5.5) }
   ]
 };
 
