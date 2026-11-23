@@ -6,11 +6,14 @@ import type { ContractMock } from "./contract-mock.js";
  * page against contract-shaped answers. `POST /__mock/offline?on=1` cuts the network (answers 503 with no CORS
  * headers like a dead gateway) and `/__mock/reset-offline` restores it.
  */
+/** The request headers Kong's cors plugin allows (RSVPBackend `infra/kong/kong.yml`); a header missing here fails the preflight like it would in TEST. */
+export const ALLOWED_HEADERS = "authorization,content-type,x-correlation-id,idempotency-key,accept-language,if-match,x-session-transport";
+
 export function serveContractMock(mock: ContractMock, port: number): Promise<{ server: Server; url: string; setOffline: (value: boolean) => void }> {
   let offline = false;
   const server = createServer((request, response) => {
     const origin = request.headers.origin ?? "*";
-    const cors = { "access-control-allow-origin": origin, "access-control-allow-credentials": "true", "access-control-allow-headers": "authorization,content-type,x-correlation-id,idempotency-key,accept-language,if-match", "access-control-allow-methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS", "access-control-expose-headers": "x-correlation-id,retry-after" };
+    const cors = { "access-control-allow-origin": origin, "access-control-allow-credentials": "true", "access-control-allow-headers": ALLOWED_HEADERS, "access-control-allow-methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS", "access-control-expose-headers": "x-correlation-id,retry-after" };
     if (request.method === "OPTIONS") { response.writeHead(204, cors).end(); return; }
     if (request.url?.startsWith("/__mock/offline")) { offline = new URL(request.url, "http://x").searchParams.get("on") === "1"; response.writeHead(204, cors).end(); return; }
     if (offline) { request.destroy(); return; }
