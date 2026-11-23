@@ -61,7 +61,8 @@ describe("@rsvp/contracts (REQ-F01-05 local substitute, REQ-F04-01, M8)", () => 
       writeFileSync(file, readFileSync(file, "utf8").replace("publish-check", "publish-verify"));
       const result = run(dir, ["--check"]);
       expect(result.status).not.toBe(0);
-      expect(result.out).toContain("specs/celebration.openapi.json (1.2.1) differs from");
+      // The version comes from the lock: a literal here goes stale every time the copy is pinned to a newer backend.
+      expect(result.out).toContain(`specs/celebration.openapi.json (${lock.specs.celebration.version}) differs from`);
       expect(result.out).toContain("src/generated/celebration.ts is stale");
     } finally { rmSync(dir, { recursive: true, force: true }); }
   }, 60_000);
