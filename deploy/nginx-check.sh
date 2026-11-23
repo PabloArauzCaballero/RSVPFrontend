@@ -1,7 +1,8 @@
 #!/bin/sh
 # A6/B1 · Real nginx (the pinned image of Dockerfile.universal) with the rendered nginx-spa.conf: config test plus the headers
 # each kind of path must carry. L19 · Also the /api/ proxy through Docker's DNS (prefix, query, Host, visitor address,
-# cookie path) and an upstream that does not resolve: nginx must start, serve the SPA and answer 502 on /api/.
+# cookie path) and an upstream that does not resolve: nginx must start, serve the SPA and answer 502 on /api/. L20 · With
+# the upstream down, guest credential paths under /api/ leave nothing in the container output; other /api/ paths do.
 # Own container and network names, loopback ports; removes everything. Used by CI (job deploy-config).
 #   sh deploy/nginx-check.sh
 set -eu
@@ -24,9 +25,11 @@ printf '<!doctype html><title>app</title>%02000d' 0 > "$WORK/html/index.html"
 start() { # container port upstream-url [docker run options]
   name=$1; port=$2; upstream=$3; shift 3
   sh deploy/render-nginx-spa.sh "$upstream" deploy/nginx-spa.conf > "$WORK/$name.conf"
+  sh deploy/render-nginx-spa.sh "$upstream" deploy/nginx-api-proxy.conf > "$WORK/$name-api-proxy.conf"
   docker run -d --name "$name" "$@" -p "127.0.0.1:$port:80" \
     -v "$WORK/$name.conf:/etc/nginx/conf.d/default.conf:ro" \
     -v "$PWD/deploy/nginx-security-headers.conf:/etc/nginx/snippets/security-headers.conf:ro" \
+    -v "$WORK/$name-api-proxy.conf:/etc/nginx/snippets/api-proxy.conf:ro" \
     -v "$WORK/html:/usr/share/nginx/html:ro" "$IMAGE" >/dev/null
   i=0; until curl -fs "http://127.0.0.1:$port/health" >/dev/null; do
     i=$((i+1)); [ "$i" -lt 30 ] || { echo "FAIL $name did not start" >&2; docker logs "$name" >&2; exit 1; }; sleep 1
@@ -101,9 +104,26 @@ start "$NAME-nodns" "$NODNS_PORT" https://rsvp-api.l19-check.invalid --network "
 [ "$(docker inspect -f '{{.State.Running}}' "$NAME-nodns")" = true ] || { echo "FAIL nginx died on an unresolvable upstream" >&2; fail=1; }
 [ "$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$NODNS_PORT/")" = 200 ] || { echo "FAIL SPA not served without DNS" >&2; fail=1; }
 [ "$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$NODNS_PORT/api/x")" = 502 ] || { echo "FAIL /api/ must answer 502 without DNS" >&2; fail=1; }
+# L20 · With the upstream down (connection refused on $NAME, DNS failure on $NAME-nodns) nginx writes an error log line
+# with the request line. Guest credential paths under /api/ must not reach the container output (stdout or stderr);
+# any other /api/ path keeps its error line (observability).
+for c in "$NAME:$PORT" "$NAME-nodns:$NODNS_PORT"; do
+  cname=${c%:*}; cport=${c##*:}
+  for p in /api/rsvp/TOKENSECRETO123 /api/%72svp/TOKENCODIFICADO123 /api/RSVP/TOKENMAYUS123 \
+    /api/c/boda/rsvp/TOKENCELEBRACION123 /api/c/boda/regalos/REFSECRETO123 /api/l20-visible; do
+    curl -s -o /dev/null "http://127.0.0.1:$cport$p"
+  done
+  OUT=$(docker logs "$cname" 2>&1)
+  for secret in TOKENSECRETO123 TOKENCODIFICADO123 TOKENMAYUS123 TOKENCELEBRACION123 REFSECRETO123; do
+    if printf %s "$OUT" | grep -Fq "$secret"; then echo "FAIL $cname: container output contains $secret" >&2; fail=1; fi
+  done
+  ERR=$(docker logs "$cname" 2>&1 >/dev/null)
+  printf %s "$ERR" | grep -F 'request: "GET /api/l20-visible HTTP/1.1"' | grep -Eq 'connect\(\) failed|could not be resolved' \
+    || { echo "FAIL $cname: error log lost the upstream failure of an ordinary /api/ path" >&2; fail=1; }
+done
 # The upstream URL is written into nginx directives: anything beyond host[:port] and plain path segments is refused.
 for bad in /api 'https://api.example.com/a?b=1' 'https://api.example.com/a b' 'https://api.example.com/a;b' 'https://api.exa{mple}.com'; do
   if sh deploy/render-nginx-spa.sh "$bad" deploy/nginx-spa.conf >/dev/null 2>&1; then echo "FAIL render accepted $bad" >&2; fail=1; fi
 done
-[ "$fail" -eq 0 ] && echo "nginx-check: config valid, headers, gzip, redacted access log, /api/ proxy and DNS failure as expected"
+[ "$fail" -eq 0 ] && echo "nginx-check: config valid, headers, gzip, redacted access log, /api/ proxy, DNS failure and guest-free error log as expected"
 exit "$fail"
