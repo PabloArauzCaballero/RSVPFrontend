@@ -110,3 +110,32 @@ Comandos (exit code y resultado, 2026-11-23, `CHROMIUM_PATH="/Applications/Googl
 | `gitleaks detect --no-git --source docs/progress/evidence/l13-lineas-base` | sin hallazgos |
 
 **No verificado:** las líneas base de Linux (`-linux.png`, workflow `visual-baselines`), iOS y Android. Tampoco verifiqué A26 en TEST con una sesión real; lo reproduje con el mock local y el token de desarrollo.
+
+---
+
+# A26 corregida: las 10 capturas con sesión (2026-11-23)
+
+FE #96 (`fix/a26-cambio-de-usuario-refetch`) corrige A26 en `switchUser`. Tras un cambio de usuario, cada observador montado pasa a una entrada inerte de la persona nueva (`skipToken`) y se le notifica. Su pantalla se vuelve a pintar y pide con la `queryFn` actual. La `queryFn` de la identidad anterior nunca se ejecuta y la prueba de B12 sigue intacta. Ese arreglo entró por cascada en fe-05 → fe-06 → fe-07, y esta rama mergea el fe-07 nuevo.
+
+Reproducción en Chrome real contra el mock (proyecto `authed`, token de desarrollo, 4 aperturas por pantalla del enlace personal a 390 px):
+
+| | `guest-rsvp` | `guest-regalos` |
+|---|---|---|
+| Antes (esta rama @ 6d6f4bd) | 0/4 cargan («Abriendo tu invitación…», [captura](regresion-guest-rsvp-cargando-390.png)) | 0/4 cargan («Abriendo la lista…») |
+| Después (con FE #96) | 4/4 cargan ([captura](a26-corregida-guest-rsvp-390.png)) | 4/4 cargan ([captura](a26-corregida-guest-regalos-390.png)) |
+
+De las 10 capturas que estaban pendientes, `guest-rsvp dark` 390 y 1440 ya coinciden con su línea base: la carga muestra lo que se había congelado. Revisé a ojo las otras 8 (esperada, actual y diferencia) y las regeneré. Todas son intencionales:
+
+| Captura | Motivo | PR/ID |
+|---|---|---|
+| `guest-rsvp` 390, 768, 1440 | Tipografía M12. A 768 y 1440, «(America/La_Paz time).» pasa a una segunda línea y todo baja unos 20 px. Mismo texto y mismos colores | M12 (FE #60) |
+| `guest-regalos` 390, 768, 1440 y `dark` 390, 1440 | Ya figuraba en la tabla de arriba: filtros (precio máximo, origen, «solo disponibles»), «Volver a la celebración» y el título del regalo de un aliado como enlace a su ficha. Además, tipografía M12 | regalos fe-05, A15, M12 |
+
+| Comando | Resultado |
+|---|---|
+| `... @rsvp/universal test:visual` (antes de regenerar, con A26 corregida) | exit 1 · 181 passed / 8 failed (las 8 de arriba, diferencias de píxeles, ninguna se queda cargando) |
+| `... test:visual --project authed --project authed-dark -g "guest-(rsvp\|regalos)( dark)? [0-9]+px" --update-snapshots` | exit 0 · 10 passed · 8 PNG cambiadas, las 8 revisadas |
+| `yarn workspace @rsvp/universal test:visual` (después) | exit 0 · **189 passed** |
+| `@rsvp/query-hooks test` · `@rsvp/universal test` (esta rama con el fe-07 nuevo) | exit 0 · 114 passed · 573 passed |
+
+**No verificado:** A26 en TEST con una sesión real, iOS y Android, y las líneas base de Linux.
