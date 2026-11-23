@@ -33,4 +33,22 @@ describe("visual mock behaves like the gateway the app talks to", () => {
     expect(statuses.length).toBeGreaterThan(0);
     for (const item of reply.body.items) expect(statuses).toContain(item.status);
   });
+
+  // The publish screen showed «We could not check whether your invitation is visible yet» because the mock had no
+  // GET /celebrations/{id}/public-page (contract 1.3.0, A18): a baseline regenerated then would freeze an error state.
+  it("answers the public page status of the published demo celebration as LIVE, with the contract's fields", () => {
+    const celebration = mock.handle({ method: "GET", path: "/celebrations", headers: {}, body: undefined }) as { body: { items: { id: string; status: string; version: number; searchIndexing: unknown }[] } };
+    const demo = celebration.body.items[0]!;
+    expect(demo.searchIndexing).toBe(false);
+    const reply = mock.handle({ method: "GET", path: `/celebrations/${demo.id}/public-page`, headers: {}, body: undefined }) as { status: number; headers: Record<string, string>; body: Record<string, unknown> };
+    expect(reply.status).toBe(200);
+    expect(reply.headers["cache-control"]).toBe("no-store");
+    const spec = JSON.parse(readFileSync(resolve(REPO, "packages/contracts/specs/celebration.openapi.json"), "utf8")) as { components: { schemas: Record<string, { required: string[]; properties: Record<string, unknown> }> } };
+    const schema = spec.components.schemas["PublicPageStatus"]!;
+    expect(Object.keys(reply.body).sort()).toEqual(Object.keys(schema.properties).sort());
+    for (const field of schema.required) expect(reply.body).toHaveProperty(field);
+    expect(reply.body).toEqual({ celebrationId: demo.id, status: demo.status, state: "LIVE", version: demo.version, publicVersion: demo.version });
+    // Every field the contract requires on a Celebration is present (searchIndexing is required since 1.4.0).
+    for (const field of spec.components.schemas["Celebration"]!.required) expect(demo).toHaveProperty(field);
+  });
 });
