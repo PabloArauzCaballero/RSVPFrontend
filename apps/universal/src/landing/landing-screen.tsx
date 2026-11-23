@@ -5,7 +5,7 @@ import {
   LANDING_COUNTS, LANDING_FAQ, LANDING_GIFTS, LANDING_GUEST_POINTS, LANDING_GUESTS, LANDING_PROOF, LANDING_PROVIDER_CHIPS, LANDING_PROVIDERS, LANDING_STATUS,
   LANDING_STEPS, LANDING_STYLES, LANDING_TYPES, type LandingSample, type LandingStyle, type LandingTone, type Translate
 } from "@rsvp/i18n";
-import { CheckMark, Enter, Logo, fonts, useColors, useTones } from "@rsvp/ui";
+import { CheckMark, Enter, Illustration, Logo, fonts, useColors, useTones } from "@rsvp/ui";
 import { LanguageSwitch } from "../auth/auth-ui";
 import { useT } from "../platform/providers";
 
@@ -305,6 +305,9 @@ function Feature({ twoUp, flip = false, copy, art, testID }: { readonly twoUp: b
   );
 }
 
+/** One drawing per side of the party, the same as the public site (`roles__art`). */
+const ROLE_ART = { host: "welcomeHost", guest: "welcomeGuest", provider: "welcomeProvider" } as const;
+
 export function LandingScreen({ onNavigate }: LandingProps): ReactNode {
   const t = useT();
   const palette = useColors();
@@ -389,6 +392,7 @@ export function LandingScreen({ onNavigate }: LandingProps): ReactNode {
           <View style={{ flexDirection: twoUp ? "row" : "column", gap: 16 }} testID="landing-roles">
             {(["host", "guest", "provider"] as const).map((role) => (
               <View key={role} style={{ flex: twoUp ? 1 : undefined, gap: 10, padding: 24, borderRadius: radius.lg, borderWidth: 1, borderColor: palette.border, backgroundColor: role === "host" ? palette.surfaceMuted : palette.surface }}>
+                <Illustration name={ROLE_ART[role]} tone="auto" size={96} />
                 <Heading level={3}>{t(`landing.roles.${role}Title`)}</Heading>
                 <Text style={{ color: palette.textMuted, fontFamily: fonts.sans, fontSize: 16, lineHeight: 24 }}>{t(`landing.roles.${role}Body`)}</Text>
                 {role === "host" ? <Link label={t("landing.roles.hostLink")} path={create} onNavigate={onNavigate} /> : null}
