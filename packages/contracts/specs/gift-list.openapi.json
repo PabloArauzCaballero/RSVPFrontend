@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "RSVP Gift List API",
-    "version": "1.8.1",
+    "version": "1.9.0",
     "description": "1.8.1 (correction, no runtime change): removes POST /items/{giftItemId}/reservations and POST /reservations/{reservationId}/approve. The service never served those paths (reservations go through /guest/celebrations/{celebrationId}/items/{giftItemId}/reservations and /celebrations/{celebrationId}/reservations/{reservationId}/approve), and they duplicated the operationIds reserveGift and approveReservation, which OpenAPI requires to be unique."
   },
   "servers": [
@@ -11811,7 +11811,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DevCompatGiftReservation"
+                  "$ref": "#/components/schemas/RsvpAwareGiftReservation"
                 }
               }
             },
@@ -11898,7 +11898,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DevCompatReservationList"
+                  "$ref": "#/components/schemas/RsvpAwareReservationList"
                 }
               }
             }
@@ -11953,7 +11953,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DevCompatGiftReservation"
+                  "$ref": "#/components/schemas/RsvpAwareGiftReservation"
                 }
               }
             }
@@ -12021,7 +12021,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DevCompatGiftReservation"
+                  "$ref": "#/components/schemas/RsvpAwareGiftReservation"
                 }
               }
             }
@@ -12249,7 +12249,12 @@
         "required": false,
         "schema": {
           "type": "string",
-          "enum": ["PENDING_REVIEW", "COMMITTED", "REJECTED"]
+          "enum": [
+            "PENDING_REVIEW",
+            "COMMITTED",
+            "REJECTED",
+            "CANCELLED"
+          ]
         },
         "description": "Single optional status filter; unknown, duplicate, empty or invalid parameters return422."
       },
@@ -12717,7 +12722,12 @@
             "format": "uuid"
           },
           "status": {
-            "enum": ["PENDING_REVIEW", "COMMITTED", "REJECTED"]
+            "enum": [
+              "PENDING_REVIEW",
+              "COMMITTED",
+              "REJECTED",
+              "CANCELLED"
+            ]
           },
           "requestedAt": {
             "type": "string",
@@ -12746,6 +12756,21 @@
                 "type": "null"
               }
             ]
+          },
+          "cancelledAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "cancelledFromStatus": {
+            "type": "string",
+            "enum": [
+              "PENDING_REVIEW",
+              "COMMITTED"
+            ]
+          },
+          "cancellationReason": {
+            "type": "string",
+            "const": "RSVP_DECLINED"
           }
         },
         "oneOf": [
@@ -12779,7 +12804,28 @@
             }
           }
         ],
-        "description": "Only complete reservationSchemaVersion1 rows. requestedAt maps to created_at written by the server. Status/time/resolver are reservation history; no names/messages/credentials."
+        "description": "Only complete reservationSchemaVersion1 rows. requestedAt maps to created_at written by the server. Status/time/resolver are reservation history; no names/messages/credentials.",
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "CANCELLED"
+                }
+              },
+              "required": [
+                "status"
+              ]
+            },
+            "then": {
+              "required": [
+                "cancelledAt",
+                "cancelledFromStatus",
+                "cancellationReason"
+              ]
+            }
+          }
+        ]
       },
       "ReservationResult": {
         "type": "object",
@@ -12886,7 +12932,12 @@
             "format": "uuid"
           },
           "status": {
-            "enum": ["PENDING_REVIEW", "COMMITTED", "REJECTED"]
+            "enum": [
+              "PENDING_REVIEW",
+              "COMMITTED",
+              "REJECTED",
+              "CANCELLED"
+            ]
           },
           "requestedAt": {
             "type": "string",
@@ -12921,6 +12972,21 @@
           },
           "resolutionType": {
             "enum": ["PENDING", "MANUAL", "AUTOMATIC", "UNKNOWN"]
+          },
+          "cancelledAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "cancelledFromStatus": {
+            "type": "string",
+            "enum": [
+              "PENDING_REVIEW",
+              "COMMITTED"
+            ]
+          },
+          "cancellationReason": {
+            "type": "string",
+            "const": "RSVP_DECLINED"
           }
         },
         "oneOf": [
@@ -12987,7 +13053,28 @@
             }
           }
         ],
-        "description": "Independent complete manual/automatic view. AUTOMATIC has resolvedAt exactly equal to requestedAt and a null owner resolver; PENDING has null resolution; MANUAL has an owner UUID. Only these ten public fields are exposed. Settings provenance remains server-side. UNKNOWN preserves recognized legacy decisions without attributing a mode or resolution that was never recorded."
+        "description": "Independent complete manual/automatic view. AUTOMATIC has resolvedAt exactly equal to requestedAt and a null owner resolver; PENDING has null resolution; MANUAL has an owner UUID. Only these ten public fields are exposed. Settings provenance remains server-side. UNKNOWN preserves recognized legacy decisions without attributing a mode or resolution that was never recorded.",
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "CANCELLED"
+                }
+              },
+              "required": [
+                "status"
+              ]
+            },
+            "then": {
+              "required": [
+                "cancelledAt",
+                "cancelledFromStatus",
+                "cancellationReason"
+              ]
+            }
+          }
+        ]
       },
       "ModeAwareReservationResult": {
         "type": "object",
@@ -13763,7 +13850,12 @@
             ]
           },
           "status": {
-            "enum": ["PENDING_REVIEW", "COMMITTED", "REJECTED"]
+            "enum": [
+              "PENDING_REVIEW",
+              "COMMITTED",
+              "REJECTED",
+              "CANCELLED"
+            ]
           },
           "requestedAt": {
             "type": "string",
@@ -13801,6 +13893,21 @@
           },
           "guestIdentityState": {
             "enum": ["IDENTIFIED", "ERASED"]
+          },
+          "cancelledAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "cancelledFromStatus": {
+            "type": "string",
+            "enum": [
+              "PENDING_REVIEW",
+              "COMMITTED"
+            ]
+          },
+          "cancellationReason": {
+            "type": "string",
+            "const": "RSVP_DECLINED"
           }
         },
         "oneOf": [
@@ -13893,6 +14000,25 @@
                 }
               }
             ]
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "CANCELLED"
+                }
+              },
+              "required": [
+                "status"
+              ]
+            },
+            "then": {
+              "required": [
+                "cancelledAt",
+                "cancelledFromStatus",
+                "cancellationReason"
+              ]
+            }
           }
         ]
       },
@@ -14481,6 +14607,117 @@
           "partnerPriorityEnabled": {
             "type": "boolean",
             "description": "From celebration.settings.updated.v1; when true, external gifts require acknowledging partner suggestions first"
+          }
+        }
+      },
+      "RsvpCancelledGiftReservation": {
+        "type": "object",
+        "required": [
+          "id",
+          "itemId",
+          "celebrationId",
+          "status",
+          "requestedAt",
+          "cancelledAt",
+          "cancelledFromStatus",
+          "cancellationReason"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "celebrationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "guestId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Null after guest erasure"
+          },
+          "guestDisplayName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "const": "CANCELLED"
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "resolvedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "resolvedBy": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "requesterHidden": {
+            "type": "boolean",
+            "description": "true when the host chose not to see who asked: guestId, guestDisplayName and message are null"
+          },
+          "cancelledAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "cancelledFromStatus": {
+            "type": "string",
+            "enum": [
+              "PENDING_REVIEW",
+              "COMMITTED"
+            ]
+          },
+          "cancellationReason": {
+            "type": "string",
+            "const": "RSVP_DECLINED"
+          }
+        }
+      },
+      "RsvpAwareGiftReservation": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/DevCompatGiftReservation"
+          },
+          {
+            "$ref": "#/components/schemas/RsvpCancelledGiftReservation"
+          }
+        ]
+      },
+      "RsvpAwareReservationList": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RsvpAwareGiftReservation"
+            }
           }
         }
       }
