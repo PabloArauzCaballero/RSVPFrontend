@@ -13,7 +13,8 @@
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit",
     "test:coverage": "vitest run --coverage",
-    "test:visual": "playwright test"
+    "test:visual": "playwright test",
+    "web-shell": "WRITE_WEB_SHELL=1 vitest run test/web-shell.test.ts"
   },
   "dependencies": {
     "@expo-google-fonts/geist": "0.4.2",
@@ -24,6 +25,7 @@
     "@rsvp/design-tokens": "workspace:*",
     "@rsvp/i18n": "workspace:*",
     "@rsvp/query-hooks": "workspace:*",
+    "@rsvp/telemetry": "workspace:*",
     "@rsvp/ui": "workspace:*",
     "@tanstack/react-query": "^5.66.0",
     "expo": "54.0.0",
@@ -39,6 +41,7 @@
     "expo-router": "6.0.0",
     "expo-secure-store": "~15.0.7",
     "expo-status-bar": "~3.0.8",
+    "expo-updates": "~29.0.20",
     "i18next": "^24.2.3",
     "leaflet": "1.9.4",
     "nativewind": "^4.1.23",
@@ -55,6 +58,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.27.1",
+    "@playwright/test": "1.62.1",
     "@rsvp/config-ts": "workspace:*",
     "@rsvp/testing": "workspace:*",
     "@testing-library/dom": "^10.4.1",

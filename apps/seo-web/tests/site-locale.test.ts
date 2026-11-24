@@ -48,7 +48,7 @@ describe("site language (middleware + siteI18n)", () => {
     requestHeaders.set("x-site-locale", "en-US");
     const { locale, t } = await siteI18n();
     expect(locale).toBe("en-US");
-    expect(t("landing.notFound.home")).toBe("Go to the home page");
+    expect(t("notFound.home")).toBe("Go to the start");
     requestHeaders.set("x-site-locale", "xx");
     expect((await siteI18n()).locale).toBe("es-BO");
   });

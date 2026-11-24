@@ -38,7 +38,7 @@ const SERIF = "Georgia, 'Iowan Old Style', 'Times New Roman', serif";
 
 function useLayout() {
   const { width } = useWindowDimensions();
-  return { wide: width >= 992, twoUp: width >= 960, three: width >= 832, narrow: width < 420 };
+  return { width, wide: width >= 992, twoUp: width >= 960, three: width >= 832, narrow: width < 420 };
 }
 
 function Column({ children, style }: PropsWithChildren<{ readonly style?: ViewStyle }>): ReactNode {
@@ -307,11 +307,13 @@ function Feature({ twoUp, flip = false, copy, art, testID }: { readonly twoUp: b
 
 /** One drawing per side of the party, the same as the public site (`roles__art`). */
 const ROLE_ART = { host: "welcomeHost", guest: "welcomeGuest", provider: "welcomeProvider" } as const;
+/** One drawing per tap, the same as the public site (`steps__art`): create, share, see who comes. */
+const STEP_ART = { 1: "landingCreate", 2: "landingShare", 3: "landingReplies" } as const;
 
 export function LandingScreen({ onNavigate }: LandingProps): ReactNode {
   const t = useT();
   const palette = useColors();
-  const { wide, twoUp, three, narrow } = useLayout();
+  const { wide, twoUp, three, narrow, width } = useLayout();
   const section: ViewStyle = { paddingTop: narrow ? 72 : 112 };
   const create = "/registro";
   return (
@@ -330,6 +332,8 @@ export function LandingScreen({ onNavigate }: LandingProps): ReactNode {
       <View style={{ borderBottomWidth: 1, borderBottomColor: palette.border, backgroundColor: palette.canvas }}>
         <Column style={{ flexDirection: wide ? "row" : "column", alignItems: wide ? "center" : "stretch", gap: wide ? 64 : 40, paddingVertical: narrow ? 48 : 88 }}>
           <View style={{ flex: wide ? 1.1 : undefined, gap: 22, minWidth: 0 }}>
+            {/* The promise, drawn small beside the product picture (the site's `hero__art`: 4.5rem, 5.5rem from 52rem). */}
+            <View testID="landing-hero-art"><Illustration name="landingSend" tone="auto" size={width >= 832 ? 88 : 72} /></View>
             <Enter from="down"><Text style={{ color: palette.textMuted, fontFamily: fonts.mono, fontSize: 12, letterSpacing: 1, textTransform: "uppercase" }}>{t("landing.hero.eyebrow")}</Text></Enter>
             <Heading level={1} size={narrow ? 44 : wide ? 76 : 60}>{t("landing.hero.title")}</Heading>
             <Lead>{t("landing.hero.body")}</Lead>
@@ -362,7 +366,8 @@ export function LandingScreen({ onNavigate }: LandingProps): ReactNode {
             {LANDING_STEPS.map(({ step, key }) => (
               <View key={key} style={{ flex: three ? 1 : undefined, gap: 10, padding: 16, paddingBottom: 26, borderRadius: radius.lg, borderWidth: 1, borderColor: palette.border, backgroundColor: palette.surface }}>
                 <StepArt t={t} step={step} />
-                <View style={{ flexDirection: "row", alignItems: "baseline", gap: 10, marginTop: 8, paddingHorizontal: 6 }}>
+                <View style={{ marginTop: 8, paddingHorizontal: 6 }}><Illustration name={STEP_ART[step]} tone="auto" size={64} /></View>
+                <View style={{ flexDirection: "row", alignItems: "baseline", gap: 10, paddingHorizontal: 6 }}>
                   <Text aria-hidden style={{ color: palette.textMuted, fontFamily: fonts.mono, fontSize: 13 }}>{step}</Text>
                   <Heading level={3}>{t(`landing.how.${key}Title`)}</Heading>
                 </View>
@@ -421,7 +426,8 @@ export function LandingScreen({ onNavigate }: LandingProps): ReactNode {
       <View style={[section, { paddingBottom: narrow ? 72 : 112 }]}>
         <Column>
           <View style={{ alignItems: "center", gap: 18, paddingVertical: narrow ? 48 : 72, paddingHorizontal: 24, borderRadius: 28, backgroundColor: palette.primary }} testID="landing-closing">
-            <CheckMark size={44} />
+            {/* The envelope with its sealed tick, on a tile of the page's surface (the site's `closing__art`). */}
+            <View testID="landing-closing-art" style={{ padding: 10, borderRadius: 20, backgroundColor: palette.surface }}><Illustration name="invitation" tone="auto" size={96} /></View>
             <Text accessibilityRole="header" aria-level={2} style={{ color: palette.onPrimary, fontFamily: fonts.display, fontSize: narrow ? 30 : 40, lineHeight: narrow ? 33 : 43, fontWeight: "600", textAlign: "center", letterSpacing: -1 }}>{t("landing.closing.title")}</Text>
             <Text style={{ color: palette.onPrimary, opacity: 0.8, fontFamily: fonts.sans, fontSize: 17, lineHeight: 25, textAlign: "center", maxWidth: 520 }}>{t("landing.closing.body")}</Text>
             <View style={{ alignSelf: "center" }}><Solid label={t("landing.closing.cta")} path={create} invert onNavigate={onNavigate} testID="landing-closing-cta" /></View>

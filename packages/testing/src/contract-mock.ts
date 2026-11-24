@@ -161,9 +161,16 @@ export function createContractMock(options: MockOptions = {}) {
         id: celebrationId, slug, ownerId: "u-host", organizationId: null, eventTypeCode: "WEDDING", status: "PUBLISHED", version: 3, defaultLocale: "es-BO", supportedLocales: ["es-BO", "en-US"], timeZone, currency: "BOB",
         content: { title: "Ana y Luis", eventDate: "2026-12-19T23:00:00.000Z", venueName: "Hacienda El Prado", hosts: { BRIDE: "Ana", GROOM: "Luis" } }, translations: {},
         settings: { giftReservationMode: "RESTRICTED", unregisteredRsvpMode: state.unregisteredMode, extraCompanionMode: "RESTRICTED", externalGiftMode: "RESTRICTED", rsvpDeadline: state.deadline, partnerPriorityEnabled: false, settingsVersion: 1, effectiveFrom: "2026-10-17T00:00:00Z" },
-        templateId: null, collaborators: [], publishedAt: "2026-10-17T12:00:00.000Z", createdAt: "2026-10-17T00:00:00Z", updatedAt: "2026-10-17T00:00:00Z", access: "MANAGE", localTimes: {}
+        templateId: null, collaborators: [], publishedAt: "2026-10-17T12:00:00.000Z", createdAt: "2026-10-17T00:00:00Z", updatedAt: "2026-10-17T00:00:00Z", access: "MANAGE", localTimes: {},
+        // Contract 1.4.0 (M10 / D-1): required; the demo celebration keeps the default (not offered to search engines).
+        searchIndexing: false
       };
       return json(200, path === "/celebrations" ? { items: [celebration] } : celebration);
+    }
+
+    // Contract 1.3.0 (A18): the demo celebration is PUBLISHED and its public page (/celebrations/public/{slug}, above) exists, so it is LIVE.
+    if (method === "GET" && path === `/celebrations/${celebrationId}/public-page`) {
+      return json(200, { celebrationId, status: "PUBLISHED", state: "LIVE", version: 3, publicVersion: 3 }, { "cache-control": "no-store" });
     }
 
     // ---- guest surface: opaque token as Bearer ----

@@ -61,3 +61,41 @@ Capturas: `portada-roles-{sitio,app}-{light,dark}.png`. El espejo se corrió con
 ## iOS nativo (2026-11-21)
 
 Expo Go 54.0.7 en un simulador propio («DOne iPhone 17», iOS 26.5), con el bundle de la rama abierto en la ruta de desarrollo `/identidad`. Las láminas se dibujan con `react-native-svg` y muestran disco, sombra, figura de tinta y pieza pastel, iguales a la web (`ios-nativo-identidad-claro.png`). Nivel: **VERIFIED en iOS (claro)**. El modo oscuro nativo no se capturó: la página de identidad es fija en claro y el simulador no admitía desplazamiento sin permiso de accesibilidad. Lo cubre `identity.native.test.tsx` (mismos `d`, colores de `illustrationColors('onDark')`). Android no se ejecutó.
+
+## Tercer PR: portada completa (2026-11-23)
+
+Rama `feat/portada-dibujos-completa` → `chore/deploy-contabo-coolify` (se integra en fe-07, #80). Pedido de Pablo: «dibujitos minimalistas al estilo de Cuotea» en la portada (hero), los tres toques y la llamada final, **solo objetos**, sin cambiar a amarillo ni la paleta de DOne.
+
+**Dibujos nuevos en `@rsvp/ui`** (misma gramática: disco de piedra, sombra plana, figura de tinta, una sola pieza en el pastel del grupo; ningún color nuevo):
+
+| Lámina | Dónde | Objeto | Pastel (grupo) |
+|---|---|---|---|
+| `landingSend` | Portada, sobre la marca de la sección (4.5rem; 5.5rem desde 52rem) | Avión de papel con estela de tres puntos | azul (`guest`) |
+| `landingCreate` | Paso 1, debajo de la imagen del producto (4rem) | Invitación de arco con su lápiz | `tones.yellow` de DOne (`host`) |
+| `landingShare` | Paso 2 | Teléfono con la burbuja del enlace | azul (`guest`) |
+| `landingReplies` | Paso 3 | Portapapeles: dos respuestas con tic y una pendiente | `tones.yellow` de DOne (`host`) |
+| `invitation` (ya existía) | Llamada final, en lugar del tic suelto, sobre una baldosa `surface` (el panel es `primary`, invertido) | Sobre con la tarjeta y el sello | `tones.yellow` de DOne (`host`) |
+
+El «amarillo» de la tabla es el pastel `tones.yellow` (#FBF3DB / #3A3012) que DOne ya usaba en las láminas del anfitrión y en el degradado de la portada; no es el amarillo de Cuotea.
+
+**Espejo sitio/app.** El sitio no puede importar `packages/ui`, así que copia los trazados en `apps/seo-web/components/brand/illustrations.tsx`. La prueba nueva `apps/universal/test/site-art-sync.test.ts` lee esa copia y falla si capas, trazados, grosores o (en la portada) el pastel se separan de `@rsvp/ui`: cubre las 11 copias del sitio. `landing-mirror.mjs` exige además los mismos 5 dibujos en el mismo orden en ambos lados.
+
+| Comando | Resultado |
+|---|---|
+| `yarn typecheck` / `yarn lint:code` | exit 0 (18 tareas) / exit 0 |
+| `@rsvp/ui test` | 317 passed |
+| `@rsvp/seo-web test` | 147 passed (caso nuevo en `landing-art.test.tsx`) |
+| `@rsvp/universal test` | 475 passed (caso nuevo en `landing.test.tsx` y `site-art-sync.test.ts`, 12 casos) |
+| `landing-mirror.mjs` (app exportada en :8340 contra el sitio construido de la rama en :3100) | **15/15 PASS**, 12 combinaciones 360/768/1280 × claro/oscuro × es/en con `scenes app=5 site=5`, `roleArt 3/3`, overflow 0, axe 0 críticos/serios |
+| seo-web `playwright test` | 33 passed, 1 failed (`landing 360/1280`, por los dibujos) → `--update-snapshots -g "landing 360/1280"`: 1 passed; línea base revisada a ojo |
+| `landing-art-capture.mjs` (Chrome real) | 24 capturas, overflow 0 en 390 y 1280, claro y oscuro |
+
+La app no tiene línea base visual de la portada (`apps/universal/e2e` no la captura), así que no se regeneró ninguna de la app.
+
+Capturas: `portada-dibujos-{sitio,app}-{hero,pasos,cierre}-{390,1280}-{light,dark}.png`.
+
+**Límite conocido (L16, no se toca aquí):** en oscuro la sombra de contacto es `canvas` y, sobre el fondo de la portada (avión del hero), muerde el borde inferior del disco. Lo corrige la rama `fix/l16-sombra-ilustracion-oscuro`; dentro de las tarjetas de los pasos y de la baldosa del cierre (`surface`) se ve bien.
+
+**No verificado:** iOS/Android nativo (la portada solo existe en la app web; en nativo `/` abre el ingreso) y el entorno TEST desplegado.
+
+**Reversión:** revertir el commit. Solo suma láminas y nodos decorativos; ningún dato ni contrato cambia.

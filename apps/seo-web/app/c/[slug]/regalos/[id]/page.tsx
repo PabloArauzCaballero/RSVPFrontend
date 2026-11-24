@@ -14,7 +14,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   const { slug } = await params;
   const data = await loadGiftPage(slug);
   if (data.state === "not-found") return { title: t("gifts.notFound.title"), robots: { index: false, follow: false } };
-  return { title: t("gifts.title"), robots: { index: false, follow: false } };
+  return { title: t("gifts.guest.title"), robots: { index: false, follow: false } };
 }
 
 export default async function GiftDetailPage({ params, searchParams }: Props) {

@@ -1,6 +1,5 @@
-import { useEffect } from "react";
-import { router, useLocalSearchParams, type Href } from "expo-router";
-import { saveGiftCredential } from "../../../../../src/guest/gift-credential";
+import { useLocalSearchParams } from "expo-router";
+import { useGuestLinkRedirect } from "../../../../../src/guest/use-guest-link-redirect";
 
 /**
  * F21-04 · personal link https://<domain>/c/{slug}/rsvp/{token} (or rsvp://c/{slug}/rsvp/{token}) inside the app.
@@ -11,10 +10,6 @@ export default function GuestRsvpRoute() {
   const { slug, token } = useLocalSearchParams<{ slug?: string; token?: string }>();
   const safeSlug = typeof slug === "string" ? slug : "";
   const credential = typeof token === "string" ? token : "";
-  useEffect(() => {
-    if (!safeSlug) return;
-    if (credential) saveGiftCredential(safeSlug, credential);
-    router.replace(`/c/${encodeURIComponent(safeSlug)}/rsvp` as Href);
-  }, [credential, safeSlug]);
+  useGuestLinkRedirect(safeSlug, credential, "rsvp");
   return null;
 }

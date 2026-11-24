@@ -1,0 +1,1256 @@
+{
+  "app": "https://dev.done.arauzsoftware.com",
+  "site": "http://localhost:3199",
+  "results": [
+    {
+      "route": "celebracion",
+      "path": "/c/qa-espejo-movil",
+      "locale": "es-BO",
+      "same": true,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/c/qa-espejo-movil",
+      "web": [
+        "QA Espejo · Ana y Luis",
+        "Nuestra historia",
+        "Itinerario",
+        "Lugares",
+        "Preguntas frecuentes",
+        "Confirma tu asistencia"
+      ],
+      "app": [
+        "QA Espejo · Ana y Luis",
+        "Nuestra historia",
+        "Itinerario",
+        "Lugares",
+        "Preguntas frecuentes",
+        "Confirma tu asistencia"
+      ],
+      "webArt": [],
+      "appArt": [],
+      "webActions": [
+        "Inicio",
+        "Nuestra historia",
+        "Itinerario",
+        "Lugares",
+        "Preguntas frecuentes",
+        "Cómo llegar"
+      ],
+      "appActions": [
+        "Inicio",
+        "Nuestra historia",
+        "Itinerario",
+        "Lugares",
+        "Preguntas frecuentes",
+        "Cómo llegar",
+        "¿Es real?"
+      ],
+      "detail": "",
+      "at": "2026-11-23T12:10:45.706Z"
+    },
+    {
+      "route": "celebracion",
+      "path": "/c/qa-espejo-movil",
+      "locale": "en-US",
+      "same": true,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/c/qa-espejo-movil",
+      "web": [
+        "QA Espejo · Ana y Luis",
+        "Nuestra historia",
+        "Itinerario",
+        "Lugares",
+        "Preguntas frecuentes",
+        "Confirma tu asistencia"
+      ],
+      "app": [
+        "QA Espejo · Ana y Luis",
+        "Nuestra historia",
+        "Itinerario",
+        "Lugares",
+        "Preguntas frecuentes",
+        "Confirma tu asistencia"
+      ],
+      "webArt": [],
+      "appArt": [],
+      "webActions": [
+        "Inicio",
+        "Nuestra historia",
+        "Itinerario",
+        "Lugares",
+        "Preguntas frecuentes",
+        "Cómo llegar"
+      ],
+      "appActions": [
+        "Inicio",
+        "Nuestra historia",
+        "Itinerario",
+        "Lugares",
+        "Preguntas frecuentes",
+        "Cómo llegar",
+        "¿Es real?"
+      ],
+      "detail": "",
+      "at": "2026-11-23T12:10:53.378Z"
+    },
+    {
+      "route": "celebracion-404",
+      "path": "/c/no-existe-espejo-paridad",
+      "locale": "es-BO",
+      "same": true,
+      "webStatus": 404,
+      "appUrl": "https://dev.done.arauzsoftware.com/c/no-existe-espejo-paridad",
+      "web": [
+        "Esta celebración no está disponible"
+      ],
+      "app": [
+        "Esta celebración no está disponible"
+      ],
+      "webArt": [
+        "notFound"
+      ],
+      "appArt": [
+        "notFound"
+      ],
+      "webActions": [
+        "Ir al inicio"
+      ],
+      "appActions": [
+        "Ir al inicio"
+      ],
+      "detail": "",
+      "at": "2026-11-23T12:11:00.834Z"
+    },
+    {
+      "route": "celebracion-404",
+      "path": "/c/no-existe-espejo-paridad",
+      "locale": "en-US",
+      "same": true,
+      "webStatus": 404,
+      "appUrl": "https://dev.done.arauzsoftware.com/c/no-existe-espejo-paridad",
+      "web": [
+        "This celebration is not available"
+      ],
+      "app": [
+        "This celebration is not available"
+      ],
+      "webArt": [
+        "notFound"
+      ],
+      "appArt": [
+        "notFound"
+      ],
+      "webActions": [
+        "Go to the home page"
+      ],
+      "appActions": [
+        "Go to the home page"
+      ],
+      "detail": "",
+      "at": "2026-11-23T12:11:10.505Z"
+    },
+    {
+      "route": "rsvp-abierto",
+      "path": "/c/qa-espejo-movil/rsvp",
+      "locale": "es-BO",
+      "same": false,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/c/qa-espejo-movil/rsvp",
+      "web": [
+        "Esta celebración solo recibe respuestas con enlace personal"
+      ],
+      "app": [
+        "QA Espejo · Ana y Luis",
+        "Esta celebración solo recibe respuestas con enlace personal"
+      ],
+      "webArt": [
+        "noAccess"
+      ],
+      "appArt": [
+        "noAccess"
+      ],
+      "webActions": [],
+      "appActions": [],
+      "detail": "headings web=[\"Esta celebración solo recibe respuestas con enlace personal\"] app=[\"QA Espejo · Ana y Luis\",\"Esta celebración solo recibe respuestas con enlace personal\"]",
+      "at": "2026-11-23T12:11:18.963Z"
+    },
+    {
+      "route": "rsvp-abierto",
+      "path": "/c/qa-espejo-movil/rsvp",
+      "locale": "en-US",
+      "same": false,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/c/qa-espejo-movil/rsvp",
+      "web": [
+        "This celebration only takes answers with a personal link"
+      ],
+      "app": [
+        "QA Espejo · Ana y Luis",
+        "This celebration only takes answers with a personal link"
+      ],
+      "webArt": [
+        "noAccess"
+      ],
+      "appArt": [
+        "noAccess"
+      ],
+      "webActions": [],
+      "appActions": [],
+      "detail": "headings web=[\"This celebration only takes answers with a personal link\"] app=[\"QA Espejo · Ana y Luis\",\"This celebration only takes answers with a personal link\"]",
+      "at": "2026-11-23T12:11:28.995Z"
+    },
+    {
+      "route": "rsvp-enlace-invalido",
+      "path": "/c/qa-espejo-movil/rsvp/{token-falso}",
+      "locale": "es-BO",
+      "same": true,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/c/qa-espejo-movil/rsvp/{token-falso}",
+      "web": [
+        "Este enlace ya no funciona"
+      ],
+      "app": [
+        "Este enlace ya no funciona"
+      ],
+      "webArt": [
+        "linkExpired"
+      ],
+      "appArt": [
+        "linkExpired"
+      ],
+      "webActions": [],
+      "appActions": [],
+      "detail": "",
+      "at": "2026-11-23T12:11:38.612Z"
+    },
+    {
+      "route": "rsvp-enlace-invalido",
+      "path": "/c/qa-espejo-movil/rsvp/{token-falso}",
+      "locale": "en-US",
+      "same": true,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/c/qa-espejo-movil/rsvp/{token-falso}",
+      "web": [
+        "This link no longer works"
+      ],
+      "app": [
+        "This link no longer works"
+      ],
+      "webArt": [
+        "linkExpired"
+      ],
+      "appArt": [
+        "linkExpired"
+      ],
+      "webActions": [],
+      "appActions": [],
+      "detail": "",
+      "at": "2026-11-23T12:11:49.642Z"
+    },
+    {
+      "route": "rsvp-legado-invalido",
+      "path": "/rsvp/{token-falso}",
+      "locale": "es-BO",
+      "same": true,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/rsvp/{token-falso}",
+      "web": [
+        "Este enlace ya no funciona"
+      ],
+      "app": [
+        "Este enlace ya no funciona"
+      ],
+      "webArt": [
+        "linkExpired"
+      ],
+      "appArt": [
+        "linkExpired"
+      ],
+      "webActions": [],
+      "appActions": [],
+      "detail": "",
+      "at": "2026-11-23T12:11:57.164Z"
+    },
+    {
+      "route": "rsvp-legado-invalido",
+      "path": "/rsvp/{token-falso}",
+      "locale": "en-US",
+      "same": true,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/rsvp/{token-falso}",
+      "web": [
+        "This link no longer works"
+      ],
+      "app": [
+        "This link no longer works"
+      ],
+      "webArt": [
+        "linkExpired"
+      ],
+      "appArt": [
+        "linkExpired"
+      ],
+      "webActions": [],
+      "appActions": [],
+      "detail": "",
+      "at": "2026-11-23T12:12:04.678Z"
+    },
+    {
+      "route": "regalos-sin-enlace",
+      "path": "/c/qa-espejo-movil/regalos",
+      "locale": "es-BO",
+      "same": false,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/c/qa-espejo-movil/regalos",
+      "web": [
+        "Lista de regalos",
+        "Abre tu enlace de invitación"
+      ],
+      "app": [
+        "Regalos",
+        "Abre tu enlace de invitación"
+      ],
+      "webArt": [
+        "linkExpired"
+      ],
+      "appArt": [
+        "linkExpired"
+      ],
+      "webActions": [
+        "Volver a la celebración",
+        "Ir a mi invitación"
+      ],
+      "appActions": [
+        "Ir a mi invitación",
+        "Volver a la celebración"
+      ],
+      "detail": "headings web=[\"Lista de regalos\",\"Abre tu enlace de invitación\"] app=[\"Regalos\",\"Abre tu enlace de invitación\"]",
+      "at": "2026-11-23T12:12:14.557Z"
+    },
+    {
+      "route": "regalos-sin-enlace",
+      "path": "/c/qa-espejo-movil/regalos",
+      "locale": "en-US",
+      "same": false,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/c/qa-espejo-movil/regalos",
+      "web": [
+        "Gift list",
+        "Open your invitation link"
+      ],
+      "app": [
+        "Gifts",
+        "Open your invitation link"
+      ],
+      "webArt": [
+        "linkExpired"
+      ],
+      "appArt": [
+        "linkExpired"
+      ],
+      "webActions": [
+        "Back to the celebration",
+        "Go to my invitation"
+      ],
+      "appActions": [
+        "Go to my invitation",
+        "Back to the celebration"
+      ],
+      "detail": "headings web=[\"Gift list\",\"Open your invitation link\"] app=[\"Gifts\",\"Open your invitation link\"]",
+      "at": "2026-11-23T12:12:28.708Z"
+    },
+    {
+      "route": "regalos-enlace-invalido",
+      "path": "/c/qa-espejo-movil/regalos/{token-falso}",
+      "locale": "es-BO",
+      "same": false,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/c/qa-espejo-movil/regalos/{token-falso}",
+      "web": [
+        "Lista de regalos",
+        "Abre tu enlace de invitación"
+      ],
+      "app": [
+        "Regalos",
+        "Tu enlace ya no funciona"
+      ],
+      "webArt": [
+        "linkExpired"
+      ],
+      "appArt": [
+        "linkExpired"
+      ],
+      "webActions": [
+        "Volver a la celebración",
+        "Ir a mi invitación"
+      ],
+      "appActions": [
+        "Volver a mi respuesta"
+      ],
+      "detail": "headings web=[\"Lista de regalos\",\"Abre tu enlace de invitación\"] app=[\"Regalos\",\"Tu enlace ya no funciona\"]",
+      "at": "2026-11-23T12:12:40.900Z"
+    },
+    {
+      "route": "regalos-enlace-invalido",
+      "path": "/c/qa-espejo-movil/regalos/{token-falso}",
+      "locale": "en-US",
+      "same": false,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/c/qa-espejo-movil/regalos/{token-falso}",
+      "web": [
+        "Gift list",
+        "Open your invitation link"
+      ],
+      "app": [
+        "Gifts",
+        "Your link no longer works"
+      ],
+      "webArt": [
+        "linkExpired"
+      ],
+      "appArt": [
+        "linkExpired"
+      ],
+      "webActions": [
+        "Back to the celebration",
+        "Go to my invitation"
+      ],
+      "appActions": [
+        "Back to my answer"
+      ],
+      "detail": "headings web=[\"Gift list\",\"Open your invitation link\"] app=[\"Gifts\",\"Your link no longer works\"]",
+      "at": "2026-11-23T12:12:52.242Z"
+    },
+    {
+      "route": "directorio",
+      "path": "/proveedores",
+      "locale": "es-BO",
+      "same": false,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/proveedores",
+      "web": [
+        "Proveedores para tu celebración en Bolivia",
+        "¿Qué necesitas?",
+        "O busca por ciudad",
+        "Así se pide una cotización"
+      ],
+      "app": [
+        "Proveedores para tu celebración en Bolivia",
+        "Afina tu búsqueda",
+        "¿Qué necesitas?",
+        "O busca por ciudad",
+        "Así se pide una cotización",
+        "1. Elige un proveedor",
+        "2. Cuéntale tu evento",
+        "3. Recibe su respuesta"
+      ],
+      "webArt": [],
+      "appArt": [],
+      "webActions": [
+        "Inicio",
+        "Proveedores",
+        "Usar mi ubicación",
+        "Buscar",
+        "Salones de eventos",
+        "Catering",
+        "Fotografía",
+        "Música",
+        "Decoración",
+        "Maquillaje",
+        "Transporte",
+        "Invitaciones"
+      ],
+      "appActions": [
+        "Usar mi ubicación",
+        "Buscar",
+        "Salones de eventos",
+        "Catering",
+        "Fotografía",
+        "Música",
+        "Decoración",
+        "Maquillaje",
+        "Transporte",
+        "Invitaciones",
+        "Wedding planners",
+        "Hospedaje"
+      ],
+      "detail": "headings web=[\"Proveedores para tu celebración en Bolivia\",\"¿Qué necesitas?\",\"O busca por ciudad\",\"Así se pide una cotización\"] app=[\"Proveedores para tu celebración en Bolivia\",\"Afina tu búsqueda\",\"¿Qué necesitas?\",\"O busca por ciudad\",\"Así se pide una cotización\",\"1. Elige un proveedor\",\"2. Cuéntale tu evento\",\"3. Recibe su respuesta\"]",
+      "at": "2026-11-23T12:13:02.795Z"
+    },
+    {
+      "route": "directorio",
+      "path": "/proveedores",
+      "locale": "en-US",
+      "same": false,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/proveedores",
+      "web": [
+        "Vendors for your celebration in Bolivia",
+        "What do you need?",
+        "Or search by city",
+        "How to ask for a quote"
+      ],
+      "app": [
+        "Vendors for your celebration in Bolivia",
+        "Narrow your search",
+        "What do you need?",
+        "Or search by city",
+        "How to ask for a quote",
+        "1. Pick a vendor",
+        "2. Tell them about your event",
+        "3. Get their reply"
+      ],
+      "webArt": [],
+      "appArt": [],
+      "webActions": [
+        "Home",
+        "Vendors",
+        "Use my location",
+        "Search",
+        "Event venues",
+        "Catering",
+        "Photography",
+        "Music",
+        "Decoration",
+        "Makeup",
+        "Transport",
+        "Invitations"
+      ],
+      "appActions": [
+        "Use my location",
+        "Search",
+        "Event venues",
+        "Catering",
+        "Photography",
+        "Music",
+        "Decoration",
+        "Makeup",
+        "Transport",
+        "Invitations",
+        "Wedding planners",
+        "Accommodation"
+      ],
+      "detail": "headings web=[\"Vendors for your celebration in Bolivia\",\"What do you need?\",\"Or search by city\",\"How to ask for a quote\"] app=[\"Vendors for your celebration in Bolivia\",\"Narrow your search\",\"What do you need?\",\"Or search by city\",\"How to ask for a quote\",\"1. Pick a vendor\",\"2. Tell them about your event\",\"3. Get their reply\"]",
+      "at": "2026-11-23T12:13:18.441Z"
+    },
+    {
+      "route": "directorio-buscar",
+      "path": "/proveedores/buscar",
+      "locale": "es-BO",
+      "same": false,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/proveedores/buscar",
+      "web": [
+        "Buscar proveedores",
+        "Servicios de comida",
+        "Juego de platos dorados",
+        "Aguanile",
+        "Tortas para cumpleañeros",
+        "Equipos de cocina",
+        "Hotel Los Tajibos"
+      ],
+      "app": [
+        "Buscar proveedores",
+        "Afina tu búsqueda",
+        "Servicios de comida",
+        "Juego de platos dorados",
+        "Aguanile",
+        "Tortas para cumpleañeros",
+        "Equipos de cocina",
+        "Hotel Los Tajibos"
+      ],
+      "webArt": [],
+      "appArt": [],
+      "webActions": [
+        "Inicio",
+        "Proveedores",
+        "Usar mi ubicación",
+        "Buscar",
+        "Servicios de comida",
+        "Juego de platos dorados",
+        "Aguanile",
+        "Tortas para cumpleañeros",
+        "Equipos de cocina",
+        "Hotel Los Tajibos"
+      ],
+      "appActions": [
+        "Proveedores",
+        "Usar mi ubicación",
+        "Buscar",
+        "Servicios de comida",
+        "Juego de platos dorados",
+        "Aguanile",
+        "Tortas para cumpleañeros",
+        "Equipos de cocina",
+        "Hotel Los Tajibos"
+      ],
+      "detail": "headings web=[\"Buscar proveedores\",\"Servicios de comida\",\"Juego de platos dorados\",\"Aguanile\",\"Tortas para cumpleañeros\",\"Equipos de cocina\",\"Hotel Los Tajibos\"] app=[\"Buscar proveedores\",\"Afina tu búsqueda\",\"Servicios de comida\",\"Juego de platos dorados\",\"Aguanile\",\"Tortas para cumpleañeros\",\"Equipos de cocina\",\"Hotel Los Tajibos\"]",
+      "at": "2026-11-23T12:13:37.991Z"
+    },
+    {
+      "route": "directorio-buscar",
+      "path": "/proveedores/buscar",
+      "locale": "en-US",
+      "same": false,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/proveedores/buscar",
+      "web": [
+        "Search vendors",
+        "Servicios de comida",
+        "Juego de platos dorados",
+        "Aguanile",
+        "Tortas para cumpleañeros",
+        "Equipos de cocina",
+        "Hotel Los Tajibos"
+      ],
+      "app": [
+        "Search vendors",
+        "Narrow your search",
+        "Servicios de comida",
+        "Juego de platos dorados",
+        "Aguanile",
+        "Tortas para cumpleañeros",
+        "Equipos de cocina",
+        "Hotel Los Tajibos"
+      ],
+      "webArt": [],
+      "appArt": [],
+      "webActions": [
+        "Home",
+        "Vendors",
+        "Use my location",
+        "Search",
+        "Servicios de comida",
+        "Juego de platos dorados",
+        "Aguanile",
+        "Tortas para cumpleañeros",
+        "Equipos de cocina",
+        "Hotel Los Tajibos"
+      ],
+      "appActions": [
+        "Vendors",
+        "Use my location",
+        "Search",
+        "Servicios de comida",
+        "Juego de platos dorados",
+        "Aguanile",
+        "Tortas para cumpleañeros",
+        "Equipos de cocina",
+        "Hotel Los Tajibos"
+      ],
+      "detail": "headings web=[\"Search vendors\",\"Servicios de comida\",\"Juego de platos dorados\",\"Aguanile\",\"Tortas para cumpleañeros\",\"Equipos de cocina\",\"Hotel Los Tajibos\"] app=[\"Search vendors\",\"Narrow your search\",\"Servicios de comida\",\"Juego de platos dorados\",\"Aguanile\",\"Tortas para cumpleañeros\",\"Equipos de cocina\",\"Hotel Los Tajibos\"]",
+      "at": "2026-11-23T12:13:49.023Z"
+    },
+    {
+      "route": "directorio-vacio",
+      "path": "/proveedores/salones/santa-cruz",
+      "locale": "es-BO",
+      "same": true,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/proveedores/salones/santa-cruz",
+      "web": [
+        "Salones de eventos en Santa Cruz de la Sierra",
+        "Todavía no hay proveedores publicados aquí.",
+        "Esta categoría en otras ciudades",
+        "Otras categorías en Santa Cruz de la Sierra"
+      ],
+      "app": [
+        "Salones de eventos en Santa Cruz de la Sierra",
+        "Todavía no hay proveedores publicados aquí.",
+        "Esta categoría en otras ciudades",
+        "Otras categorías en Santa Cruz de la Sierra"
+      ],
+      "webArt": [
+        "emptySearch"
+      ],
+      "appArt": [
+        "emptySearch"
+      ],
+      "webActions": [
+        "Inicio",
+        "Proveedores",
+        "Salones de eventos",
+        "Ver todas las categorías",
+        "Salones de eventos en La Paz",
+        "Salones de eventos en Cochabamba",
+        "Salones de eventos en Sucre",
+        "Salones de eventos en Tarija",
+        "Salones de eventos en Oruro",
+        "Salones de eventos en Potosí",
+        "Salones de eventos en Trinidad",
+        "Salones de eventos en Cobija"
+      ],
+      "appActions": [
+        "Proveedores",
+        "Salones de eventos",
+        "Ver todas las categorías",
+        "Salones de eventos en La Paz",
+        "Salones de eventos en Cochabamba",
+        "Salones de eventos en Sucre",
+        "Salones de eventos en Tarija",
+        "Salones de eventos en Oruro",
+        "Salones de eventos en Potosí",
+        "Salones de eventos en Trinidad",
+        "Salones de eventos en Cobija",
+        "Catering"
+      ],
+      "detail": "",
+      "at": "2026-11-23T12:13:56.959Z"
+    },
+    {
+      "route": "directorio-vacio",
+      "path": "/proveedores/salones/santa-cruz",
+      "locale": "en-US",
+      "same": true,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/proveedores/salones/santa-cruz",
+      "web": [
+        "Event venues in Santa Cruz de la Sierra",
+        "No vendors are published here yet.",
+        "This category in other cities",
+        "Other categories in Santa Cruz de la Sierra"
+      ],
+      "app": [
+        "Event venues in Santa Cruz de la Sierra",
+        "No vendors are published here yet.",
+        "This category in other cities",
+        "Other categories in Santa Cruz de la Sierra"
+      ],
+      "webArt": [
+        "emptySearch"
+      ],
+      "appArt": [
+        "emptySearch"
+      ],
+      "webActions": [
+        "Home",
+        "Vendors",
+        "Event venues",
+        "See all categories",
+        "Event venues in La Paz",
+        "Event venues in Cochabamba",
+        "Event venues in Sucre",
+        "Event venues in Tarija",
+        "Event venues in Oruro",
+        "Event venues in Potosí",
+        "Event venues in Trinidad",
+        "Event venues in Cobija"
+      ],
+      "appActions": [
+        "Vendors",
+        "Event venues",
+        "See all categories",
+        "Event venues in La Paz",
+        "Event venues in Cochabamba",
+        "Event venues in Sucre",
+        "Event venues in Tarija",
+        "Event venues in Oruro",
+        "Event venues in Potosí",
+        "Event venues in Trinidad",
+        "Event venues in Cobija",
+        "Catering"
+      ],
+      "detail": "",
+      "at": "2026-11-23T12:14:06.123Z"
+    },
+    {
+      "route": "partner",
+      "path": "/p/multicenter-59388c",
+      "locale": "es-BO",
+      "same": true,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/p/multicenter-59388c",
+      "web": [
+        "Katering Grecia",
+        "Lo que ofrece",
+        "Sobre el proveedor",
+        "Zona de cobertura",
+        "Hablar directo con el proveedor"
+      ],
+      "app": [
+        "Katering Grecia",
+        "Lo que ofrece",
+        "Sobre el proveedor",
+        "Zona de cobertura",
+        "Hablar directo con el proveedor"
+      ],
+      "webArt": [],
+      "appArt": [],
+      "webActions": [
+        "Inicio",
+        "Proveedores",
+        "Catering",
+        "Pedir cotización",
+        "Ver disponibilidad",
+        "Servicios de comida",
+        "Juego de platos dorados",
+        "Aguanile",
+        "Tortas para cumpleañeros",
+        "Equipos de cocina",
+        "Hotel Los Tajibos",
+        "Ver el catálogo completo"
+      ],
+      "appActions": [
+        "Proveedores",
+        "Catering",
+        "Pedir cotización",
+        "Ver disponibilidad",
+        "Servicios de comida",
+        "Juego de platos dorados",
+        "Aguanile",
+        "Tortas para cumpleañeros",
+        "Equipos de cocina",
+        "Hotel Los Tajibos",
+        "Ver el catálogo completo",
+        "Escribir por WhatsApp"
+      ],
+      "detail": "",
+      "at": "2026-11-23T12:14:16.628Z"
+    },
+    {
+      "route": "partner",
+      "path": "/p/multicenter-59388c",
+      "locale": "en-US",
+      "same": true,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/p/multicenter-59388c",
+      "web": [
+        "Katering Grecia",
+        "What they offer",
+        "About the vendor",
+        "Coverage area",
+        "Talk to the vendor directly"
+      ],
+      "app": [
+        "Katering Grecia",
+        "What they offer",
+        "About the vendor",
+        "Coverage area",
+        "Talk to the vendor directly"
+      ],
+      "webArt": [],
+      "appArt": [],
+      "webActions": [
+        "Home",
+        "Vendors",
+        "Catering",
+        "Request a quote",
+        "See availability",
+        "Servicios de comida",
+        "Juego de platos dorados",
+        "Aguanile",
+        "Tortas para cumpleañeros",
+        "Equipos de cocina",
+        "Hotel Los Tajibos",
+        "See the full catalog"
+      ],
+      "appActions": [
+        "Vendors",
+        "Catering",
+        "Request a quote",
+        "See availability",
+        "Servicios de comida",
+        "Juego de platos dorados",
+        "Aguanile",
+        "Tortas para cumpleañeros",
+        "Equipos de cocina",
+        "Hotel Los Tajibos",
+        "See the full catalog",
+        "Message on WhatsApp"
+      ],
+      "detail": "",
+      "at": "2026-11-23T12:14:24.675Z"
+    },
+    {
+      "route": "partner-agenda",
+      "path": "/p/multicenter-59388c/agenda",
+      "locale": "es-BO",
+      "same": true,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/p/multicenter-59388c/agenda",
+      "web": [
+        "Disponibilidad de Katering Grecia",
+        "noviembre de 2026",
+        "Katering Grecia todavía no publicó sus días para noviembre de 2026"
+      ],
+      "app": [
+        "Disponibilidad de Katering Grecia",
+        "noviembre de 2026",
+        "Katering Grecia todavía no publicó sus días para noviembre de 2026"
+      ],
+      "webArt": [],
+      "appArt": [],
+      "webActions": [
+        "Katering Grecia",
+        "Mes anterior",
+        "Mes siguiente",
+        "Pedir cotización",
+        "Ver el mes siguiente"
+      ],
+      "appActions": [
+        "Proveedores",
+        "Katering Grecia",
+        "Mes anterior",
+        "Mes siguiente",
+        "Pedir cotización",
+        "Ver el mes siguiente"
+      ],
+      "detail": "",
+      "at": "2026-11-23T12:14:35.361Z"
+    },
+    {
+      "route": "partner-agenda",
+      "path": "/p/multicenter-59388c/agenda",
+      "locale": "en-US",
+      "same": true,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/p/multicenter-59388c/agenda",
+      "web": [
+        "Katering Grecia's availability",
+        "November 2026",
+        "Katering Grecia has not published their days for November 2026 yet"
+      ],
+      "app": [
+        "Katering Grecia's availability",
+        "November 2026",
+        "Katering Grecia has not published their days for November 2026 yet"
+      ],
+      "webArt": [],
+      "appArt": [],
+      "webActions": [
+        "Katering Grecia",
+        "Previous month",
+        "Next month",
+        "Ask for a quote",
+        "See next month"
+      ],
+      "appActions": [
+        "Vendors",
+        "Katering Grecia",
+        "Previous month",
+        "Next month",
+        "Ask for a quote",
+        "See next month"
+      ],
+      "detail": "",
+      "at": "2026-11-23T12:14:44.527Z"
+    },
+    {
+      "route": "partner-404",
+      "path": "/p/no-existe-espejo-paridad",
+      "locale": "es-BO",
+      "same": true,
+      "webStatus": 404,
+      "appUrl": "https://dev.done.arauzsoftware.com/p/no-existe-espejo-paridad",
+      "web": [
+        "No encontramos a este proveedor"
+      ],
+      "app": [
+        "No encontramos a este proveedor"
+      ],
+      "webArt": [
+        "notFound"
+      ],
+      "appArt": [
+        "notFound"
+      ],
+      "webActions": [
+        "Volver a proveedores"
+      ],
+      "appActions": [
+        "Volver a proveedores"
+      ],
+      "detail": "",
+      "at": "2026-11-23T12:14:51.694Z"
+    },
+    {
+      "route": "partner-404",
+      "path": "/p/no-existe-espejo-paridad",
+      "locale": "en-US",
+      "same": true,
+      "webStatus": 404,
+      "appUrl": "https://dev.done.arauzsoftware.com/p/no-existe-espejo-paridad",
+      "web": [
+        "We could not find this vendor"
+      ],
+      "app": [
+        "We could not find this vendor"
+      ],
+      "webArt": [
+        "notFound"
+      ],
+      "appArt": [
+        "notFound"
+      ],
+      "webActions": [
+        "Back to vendors"
+      ],
+      "appActions": [
+        "Back to vendors"
+      ],
+      "detail": "",
+      "at": "2026-11-23T12:14:58.737Z"
+    },
+    {
+      "route": "privacidad",
+      "path": "/privacidad",
+      "locale": "es-BO",
+      "same": false,
+      "webStatus": 404,
+      "appUrl": "https://dev.done.arauzsoftware.com/privacidad",
+      "web": [
+        "Esta página no existe"
+      ],
+      "app": [
+        "Esta página no existe"
+      ],
+      "webArt": [
+        "notFound"
+      ],
+      "appArt": [],
+      "webActions": [
+        "Ir al inicio"
+      ],
+      "appActions": [
+        "Ir al inicio"
+      ],
+      "detail": "art web=[\"notFound\"] app=[]",
+      "at": "2026-11-23T12:15:05.603Z"
+    },
+    {
+      "route": "privacidad",
+      "path": "/privacidad",
+      "locale": "en-US",
+      "same": false,
+      "webStatus": 404,
+      "appUrl": "https://dev.done.arauzsoftware.com/privacidad",
+      "web": [
+        "This page does not exist"
+      ],
+      "app": [
+        "This page does not exist"
+      ],
+      "webArt": [
+        "notFound"
+      ],
+      "appArt": [],
+      "webActions": [
+        "Go to the home page"
+      ],
+      "appActions": [
+        "Go to the start"
+      ],
+      "detail": "art web=[\"notFound\"] app=[]",
+      "at": "2026-11-23T12:15:13.164Z"
+    },
+    {
+      "route": "terminos",
+      "path": "/terminos",
+      "locale": "es-BO",
+      "same": false,
+      "webStatus": 404,
+      "appUrl": "https://dev.done.arauzsoftware.com/terminos",
+      "web": [
+        "Esta página no existe"
+      ],
+      "app": [
+        "Esta página no existe"
+      ],
+      "webArt": [
+        "notFound"
+      ],
+      "appArt": [],
+      "webActions": [
+        "Ir al inicio"
+      ],
+      "appActions": [
+        "Ir al inicio"
+      ],
+      "detail": "art web=[\"notFound\"] app=[]",
+      "at": "2026-11-23T12:15:20.370Z"
+    },
+    {
+      "route": "terminos",
+      "path": "/terminos",
+      "locale": "en-US",
+      "same": false,
+      "webStatus": 404,
+      "appUrl": "https://dev.done.arauzsoftware.com/terminos",
+      "web": [
+        "This page does not exist"
+      ],
+      "app": [
+        "This page does not exist"
+      ],
+      "webArt": [
+        "notFound"
+      ],
+      "appArt": [],
+      "webActions": [
+        "Go to the home page"
+      ],
+      "appActions": [
+        "Go to the start"
+      ],
+      "detail": "art web=[\"notFound\"] app=[]",
+      "at": "2026-11-23T12:15:27.403Z"
+    },
+    {
+      "route": "404",
+      "path": "/ruta-que-no-existe-espejo",
+      "locale": "es-BO",
+      "same": false,
+      "webStatus": 404,
+      "appUrl": "https://dev.done.arauzsoftware.com/ruta-que-no-existe-espejo",
+      "web": [
+        "Esta página no existe"
+      ],
+      "app": [
+        "Esta página no existe"
+      ],
+      "webArt": [
+        "notFound"
+      ],
+      "appArt": [],
+      "webActions": [
+        "Ir al inicio"
+      ],
+      "appActions": [
+        "Ir al inicio"
+      ],
+      "detail": "art web=[\"notFound\"] app=[]",
+      "at": "2026-11-23T12:15:34.549Z"
+    },
+    {
+      "route": "404",
+      "path": "/ruta-que-no-existe-espejo",
+      "locale": "en-US",
+      "same": false,
+      "webStatus": 404,
+      "appUrl": "https://dev.done.arauzsoftware.com/ruta-que-no-existe-espejo",
+      "web": [
+        "This page does not exist"
+      ],
+      "app": [
+        "This page does not exist"
+      ],
+      "webArt": [
+        "notFound"
+      ],
+      "appArt": [],
+      "webActions": [
+        "Go to the home page"
+      ],
+      "appActions": [
+        "Go to the start"
+      ],
+      "detail": "art web=[\"notFound\"] app=[]",
+      "at": "2026-11-23T12:15:40.811Z"
+    },
+    {
+      "route": "catalogo-componentes",
+      "path": "/catalogo",
+      "locale": "es-BO",
+      "same": false,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/catalogo",
+      "web": [
+        "Catálogo de componentes",
+        "Acciones",
+        "Estado: default",
+        "Estado: loading",
+        "Estado: error",
+        "Estado: empty",
+        "Estado: disabled"
+      ],
+      "app": [
+        "Catálogo de componentes",
+        "Estado: default",
+        "Estado: loading",
+        "Estado: error",
+        "Estado: empty",
+        "Estado: disabled"
+      ],
+      "webArt": [],
+      "appArt": [],
+      "webActions": [
+        "primary",
+        "secondary",
+        "ghost",
+        "danger",
+        "Cargando…",
+        "Bloqueado",
+        "Abrir diálogo",
+        "Abrir panel"
+      ],
+      "appActions": [
+        "primary",
+        "secondary",
+        "ghost",
+        "danger",
+        "Abrir diálogo",
+        "Abrir panel",
+        "Acción",
+        "Adjunto",
+        "Acción",
+        "Adjunto",
+        "Acción",
+        "Adjunto"
+      ],
+      "detail": "headings web=[\"Catálogo de componentes\",\"Acciones\",\"Estado: default\",\"Estado: loading\",\"Estado: error\",\"Estado: empty\",\"Estado: disabled\"] app=[\"Catálogo de componentes\",\"Estado: default\",\"Estado: loading\",\"Estado: error\",\"Estado: empty\",\"Estado: disabled\"]",
+      "at": "2026-11-23T12:15:47.319Z"
+    },
+    {
+      "route": "catalogo-componentes",
+      "path": "/catalogo",
+      "locale": "en-US",
+      "same": false,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/catalogo",
+      "web": [
+        "Catálogo de componentes",
+        "Acciones",
+        "Estado: default",
+        "Estado: loading",
+        "Estado: error",
+        "Estado: empty",
+        "Estado: disabled"
+      ],
+      "app": [
+        "Component catalog",
+        "State: default",
+        "State: loading",
+        "State: error",
+        "State: empty",
+        "State: disabled"
+      ],
+      "webArt": [],
+      "appArt": [],
+      "webActions": [
+        "primary",
+        "secondary",
+        "ghost",
+        "danger",
+        "Cargando…",
+        "Bloqueado",
+        "Abrir diálogo",
+        "Abrir panel"
+      ],
+      "appActions": [
+        "primary",
+        "secondary",
+        "ghost",
+        "danger",
+        "Open dialog",
+        "Open panel",
+        "Action",
+        "Attachment",
+        "Action",
+        "Attachment",
+        "Action",
+        "Attachment"
+      ],
+      "detail": "headings web=[\"Catálogo de componentes\",\"Acciones\",\"Estado: default\",\"Estado: loading\",\"Estado: error\",\"Estado: empty\",\"Estado: disabled\"] app=[\"Component catalog\",\"State: default\",\"State: loading\",\"State: error\",\"State: empty\",\"State: disabled\"]",
+      "at": "2026-11-23T12:15:54.653Z"
+    }
+  ]
+}

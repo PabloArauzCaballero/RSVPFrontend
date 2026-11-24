@@ -38,7 +38,7 @@ function Resolver({ locale, token: given, client: injected, navigate }: Props): 
   if (resolved.isError) {
     const status = resolved.error instanceof ApiError ? resolved.error.status : 0;
     if (status === 401 || status === 404) return <InvalidView t={t} />;
-    return <LoadFailureView t={t} message={t(status === 0 ? 'rsvp.errors.offline' : 'rsvp.errors.unavailable')} onRetry={() => { void resolved.refetch(); }} />;
+    return <LoadFailureView t={t} kind={status === 0 ? 'offline' : 'unavailable'} onRetry={() => { void resolved.refetch(); }} />;
   }
   if (resolved.isPending || (slug && SLUG.test(slug))) return <LoadingView t={t} />;
   // Valid credential but the celebration's slug is not known yet: the installed app can still open it by id.

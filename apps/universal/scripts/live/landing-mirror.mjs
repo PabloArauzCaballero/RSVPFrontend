@@ -42,6 +42,10 @@ try {
     // One drawing per side of the party on both sides of the mirror, all three decorative.
     const appArt = await app.locator("[data-testid='landing-roles'] svg[data-illustration][aria-hidden='true']").count();
     const siteArt = await site.locator(".roles__art[aria-hidden='true']").count();
+    // The promise, one drawing per tap and the closing envelope: the same names, in the same order, on both sides.
+    const appScenes = await app.evaluate(() => ["landing-hero-art", "landing-steps", "landing-closing-art"].flatMap((id) => [...document.querySelectorAll(`[data-testid='${id}'] svg[data-illustration][aria-hidden='true']`)].map((svg) => svg.getAttribute("data-illustration"))));
+    const siteScenes = await site.locator(".hero__art[aria-hidden='true'], .steps__art[aria-hidden='true'], .closing__art svg[aria-hidden='true']").count();
+    const scenesOk = appScenes.join(",") === "landingSend,landingCreate,landingShare,landingReplies,invitation" && siteScenes === 5;
     const overflow = await app.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     const axe = await new AxeBuilder({ page: app }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
     const serious = axe.violations.filter((violation) => violation.impact === "critical" || violation.impact === "serious");
@@ -49,8 +53,8 @@ try {
       await app.screenshot({ path: `${OUT}portada-app-${width}-${scheme}.png`, fullPage: false });
       await site.screenshot({ path: `${OUT}portada-sitio-${width}-${scheme}.png`, fullPage: false });
     }
-    record({ case: `/ ${width}px ${scheme} ${locale}`, ok: url === "/" && siteHeadings.length > 0 && missing.length === 0 && appArt === 3 && siteArt === 3 && overflow <= 0 && !serious.length && !errors.length,
-      detail: `stays at "${url}", headings app=${appHeadings.length} site=${siteHeadings.length} missing=${JSON.stringify(missing)} roleArt app=${appArt} site=${siteArt} overflow=${overflow} axe(critical+serious)=${serious.map((v) => `${v.id}:${v.nodes.length}`).join(",") || 0} errors=${errors.length}` });
+    record({ case: `/ ${width}px ${scheme} ${locale}`, ok: url === "/" && siteHeadings.length > 0 && missing.length === 0 && appArt === 3 && siteArt === 3 && scenesOk && overflow <= 0 && !serious.length && !errors.length,
+      detail: `stays at "${url}", headings app=${appHeadings.length} site=${siteHeadings.length} missing=${JSON.stringify(missing)} roleArt app=${appArt} site=${siteArt} scenes app=${appScenes.length} site=${siteScenes} overflow=${overflow} axe(critical+serious)=${serious.map((v) => `${v.id}:${v.nodes.length}`).join(",") || 0} errors=${errors.length}` });
     await context.close();
   }
 

@@ -1,5 +1,7 @@
+import { LOCALE_STORAGE_KEY } from "./locale-key";
+
 /** Language is not sensitive: localStorage is the right home on web. Storage can throw (private mode, blocked site data). */
-const LOCALE_KEY = "rsvp.locale";
+const LOCALE_KEY = LOCALE_STORAGE_KEY;
 
 export async function readLocalePreference(): Promise<string | null> {
   try { return globalThis.localStorage?.getItem(LOCALE_KEY) ?? null; } catch { return null; }
