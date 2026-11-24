@@ -28,7 +28,7 @@
 .celebration[data-align="center"] .celebration-hero-copy { text-align: center; justify-items: center; }
 .celebration-hero p { margin: 0; }
 .celebration-hero h1 { font-size: calc(clamp(2.5rem, 8.5vw, 5rem) * var(--celebration-heading-scale)); line-height: 1.02; letter-spacing: -.015em; overflow-wrap: anywhere; text-wrap: balance; }
-.celebration-hero .celebration-eyebrow { margin-bottom: .75rem; font-size: .78rem; letter-spacing: .26em; }
+.celebration-hero .celebration-eyebrow { margin-bottom: .75rem; font-size: .8125rem; letter-spacing: .26em; }
 .celebration-hosts { font-family: var(--celebration-heading-font); font-size: clamp(1.2rem, 3.2vw, 1.6rem); }
 .celebration-amp { font-style: italic; color: var(--celebration-accent); }
 .celebration-ornament { display: block; width: clamp(6rem, 22vw, 9rem); height: auto; margin: .75rem 0; color: var(--celebration-accent); }
@@ -36,7 +36,7 @@
 .celebration-date { font-family: var(--celebration-heading-font); font-size: clamp(1.15rem, 3.2vw, 1.6rem); letter-spacing: .03em; }
 .celebration-date time::first-letter { text-transform: uppercase; }
 .celebration-venue { color: var(--celebration-muted); font-size: 1.05rem; }
-.celebration-countdown { margin-top: .75rem !important; width: fit-content; padding: .3rem 1rem; border: 1px solid color-mix(in srgb, currentColor 35%, transparent); border-radius: 9999px; font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: var(--celebration-muted); }
+.celebration-countdown { margin-top: .75rem !important; width: fit-content; padding: .3rem 1rem; border: 1px solid color-mix(in srgb, currentColor 35%, transparent); border-radius: 9999px; font-size: .8125rem; letter-spacing: .12em; text-transform: uppercase; color: var(--celebration-muted); }
 .celebration-hero-image { width: 100%; height: 100%; object-fit: cover; }
 
 /* centered (classic): a card with a double hairline, like a printed invitation. */
@@ -44,23 +44,23 @@
 .celebration-hero[data-hero="centered"] .celebration-hero-image { max-height: 26rem; width: min(100%, var(--celebration-max-width)); margin: 0 auto 1.5rem; }
 
 /* overlay (editorial): the title over the photo; without one, over a band of the accent colour. */
-.celebration-hero[data-hero="overlay"] { min-height: min(78vh, 46rem); align-content: end; color: #fff; background: linear-gradient(160deg, var(--celebration-accent), color-mix(in srgb, var(--celebration-accent) 72%, #000)); }
+.celebration-hero[data-hero="overlay"] { min-height: min(78vh, 46rem); align-content: end; color: #fff; background: linear-gradient(160deg, var(--celebration-accent-fill), color-mix(in srgb, var(--celebration-accent-fill) 72%, #000)); }
 .celebration-hero[data-hero="overlay"] .celebration-hero-image { position: absolute; inset: 0; filter: brightness(.5); }
 .celebration-hero[data-hero="overlay"] :is(.celebration-venue, .celebration-countdown, .celebration-eyebrow, .celebration-amp) { color: #fff; }
 .celebration-hero[data-hero="overlay"] .celebration-rule { width: 100%; height: 1px; background: rgb(255 255 255 / .55); }
 .celebration-hero[data-hero="overlay"] h1 { line-height: .95; letter-spacing: -.02em; }
 
 /* banner (festive): a rounded block of the accent colour with confetti. */
-.celebration-hero[data-hero="banner"] { color: var(--celebration-surface); border-radius: 0 0 calc(var(--celebration-radius) * 1.6) calc(var(--celebration-radius) * 1.6); background:
+.celebration-hero[data-hero="banner"] { color: var(--celebration-on-accent); border-radius: 0 0 calc(var(--celebration-radius) * 1.6) calc(var(--celebration-radius) * 1.6); background:
   radial-gradient(circle at 12% 22%, color-mix(in srgb, var(--celebration-surface) 55%, transparent) 0 .3rem, transparent .32rem),
   radial-gradient(circle at 86% 18%, color-mix(in srgb, var(--celebration-surface) 40%, transparent) 0 .45rem, transparent .47rem),
   radial-gradient(circle at 72% 78%, color-mix(in srgb, var(--celebration-surface) 30%, transparent) 0 .25rem, transparent .27rem),
   radial-gradient(circle at 22% 84%, color-mix(in srgb, var(--celebration-surface) 38%, transparent) 0 .5rem, transparent .52rem),
   radial-gradient(circle at 48% 8%, color-mix(in srgb, var(--celebration-surface) 30%, transparent) 0 .2rem, transparent .22rem),
-  var(--celebration-accent); }
+  var(--celebration-accent-fill); }
 .celebration-hero[data-hero="banner"] .celebration-hero-image { max-height: 22rem; border-radius: var(--celebration-radius); order: 2; width: min(100%, var(--celebration-max-width)); margin: 0 auto; }
-.celebration-hero[data-hero="banner"] :is(.celebration-eyebrow, .celebration-venue, .celebration-countdown, .celebration-amp) { color: var(--celebration-surface); }
-.celebration-hero[data-hero="banner"] .celebration-rule { background: var(--celebration-surface); }
+.celebration-hero[data-hero="banner"] :is(.celebration-eyebrow, .celebration-venue, .celebration-countdown, .celebration-amp) { color: var(--celebration-on-accent); }
+.celebration-hero[data-hero="banner"] .celebration-rule { background: var(--celebration-on-accent); }
 
 /* split (corporate): the copy behind a bar of the accent colour, the photo beside it. */
 .celebration-hero[data-hero="split"] .celebration-hero-copy { padding-left: clamp(1rem, 4vw, 2rem); border-left: 6px solid var(--celebration-accent); }
@@ -109,7 +109,15 @@
 .celebration-venues strong, .celebration-recommendations strong { font-family: var(--celebration-heading-font); font-size: 1.3rem; font-weight: 600; line-height: 1.2; }
 .celebration-venues p, .celebration-recommendations p { margin: 0; }
 .celebration-venues a, .celebration-recommendations a, .celebration-cta { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; }
-.celebration-cta { padding: .8rem 2rem; font-size: 1.05rem; border-radius: var(--celebration-radius); background: var(--celebration-accent); color: var(--celebration-surface) !important; text-decoration: none; }
+/* DESIGN.md · Movimiento: solo transform y opacidad; scale(.98) al pulsar. Sin movimiento si el sistema lo reduce. */
+@media (prefers-reduced-motion: no-preference) {
+  .celebration-cta { transition: transform 120ms cubic-bezier(0.16, 1, 0.3, 1); }
+  .celebration-cta:active { transform: scale(.98); }
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .celebration-cta:hover { transform: scale(1.02); }
+}
+.celebration-cta { padding: .8rem 2rem; font-size: 1.05rem; border-radius: var(--celebration-radius); background: var(--celebration-accent-fill); color: var(--celebration-on-accent) !important; text-decoration: none; }
 .celebration-gallery { list-style: none; padding: 0; margin: 0; display: grid; gap: .75rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr)); }
 .celebration-gallery img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; }
 .celebration[data-images="rounded"] .celebration-gallery img { border-radius: var(--celebration-radius); }
