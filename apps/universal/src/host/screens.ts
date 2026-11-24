@@ -32,3 +32,4 @@ export { GiftsScreen } from "./gifts/gifts-screen";
 export { ProvidersScreen } from "./gifts/providers-screen";
 export { ReportScreen } from "./guests/report-screen";
 export { TemplatesScreen } from "./templates-screen";
+export { DesignEditorScreen } from "./design-editor-screen";

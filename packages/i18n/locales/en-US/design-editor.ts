@@ -4,6 +4,8 @@ import type { designEditorEsBO } from "../es-BO/design-editor.js";
 /** Invitation editor (templates F5): canvas, levels, history, saving and publishing. */
 export const designEditorEnUS: DeepStrings<typeof designEditorEsBO> = {
   title: "Invitation design",
+  create: { title: "Create the design", body: "You don't have your own design yet. We create it from your celebration's template and you customize it from there.", action: "Create the design from my template", failed: "We couldn't create the design. Try again; nothing was lost." },
+  noCelebration: "Choose a celebration to design its invitation.",
   loading: "Opening your design…",
   loadFailed: "We couldn't open the design. Check your connection and try again.",
   forbidden: "You can see this design, but only hosts or the planner can change it.",

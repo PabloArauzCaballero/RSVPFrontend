@@ -4424,7 +4424,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@rsvp/design-editor@workspace:packages/design-editor":
+"@rsvp/design-editor@workspace:*, @rsvp/design-editor@workspace:packages/design-editor":
   version: 0.0.0-use.local
   resolution: "@rsvp/design-editor@workspace:packages/design-editor"
   dependencies:
@@ -4631,6 +4631,7 @@ __metadata:
     "@rsvp/auth": "workspace:*"
     "@rsvp/celebration-theme": "workspace:*"
     "@rsvp/config-ts": "workspace:*"
+    "@rsvp/design-editor": "workspace:*"
     "@rsvp/design-tokens": "workspace:*"
     "@rsvp/i18n": "workspace:*"
     "@rsvp/query-hooks": "workspace:*"

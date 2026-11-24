@@ -1,6 +1,8 @@
 /** Editor de invitaciones (plantillas F5): lienzo, modos, historial, guardado y publicación. */
 export const designEditorEsBO = {
   title: "Diseño de la invitación",
+  create: { title: "Crear el diseño", body: "Todavía no tienes un diseño propio. Lo creamos a partir de la plantilla de tu celebración y desde ahí lo personalizas.", action: "Crear el diseño desde mi plantilla", failed: "No pudimos crear el diseño. Inténtalo de nuevo; no se perdió nada." },
+  noCelebration: "Elige una celebración para diseñar su invitación.",
   loading: "Abriendo tu diseño…",
   loadFailed: "No pudimos abrir el diseño. Revisa tu conexión y vuelve a intentarlo.",
   forbidden: "Puedes ver este diseño, pero solo los anfitriones o el planner pueden cambiarlo.",

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import { design } from "@rsvp/celebration-theme";
+import type { design } from "@rsvp/celebration-theme";
 import { createAutosaver, type Autosaver, type DraftGateway, type SaveStatus } from "../save/autosave.js";
 import { setPaletteColour } from "../model/ops.js";
 import { canRedo, canUndo, documentOf, editorReducer, initialEditorState, type CanvasName, type EditorMode } from "../model/state.js";
