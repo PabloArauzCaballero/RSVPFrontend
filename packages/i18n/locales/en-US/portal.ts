@@ -15,7 +15,7 @@ export const portalEnUS: DeepStrings<typeof portalEsBO> = {
   },
   documents: {
     title: "Documents", intro: "Upload what backs your business. They are private: only you and the verification team see them. PDF, JPG, PNG or WebP up to 10 MB.", emptyTitle: "Your documents go here",
-    kind: "Document type", kinds: { IDENTITY: "ID document", BUSINESS_REGISTRATION: "Business registration", TAX_ID: "Tax ID", ADDRESS_PROOF: "Proof of address", OTHER: "Other" },
+    kind: "Document type", kinds: { IDENTITY: "ID document", BUSINESS_REGISTRATION: "Business registration", TAX_ID: "Tax ID", ADDRESS_PROOF: "Proof of address", POWER_OF_ATTORNEY: "Representative's power of attorney", BANK_CERTIFICATE: "Bank certificate", OTHER: "Other" }, kindUnknown: "Document ({{kind}})",
     choose: "Choose file", upload: "Upload document", uploading: "Uploading…", uploaded: "Document uploaded.", delete: "Delete", deleteTitle: "Delete this document?", deleteBody: "The file and its record are removed. To get verified you will have to upload it again.", deleted: "Document deleted.", opening: "Opening…", empty: "Upload the first one so the team can review it with your profile.", status: { PENDING_UPLOAD: "Upload pending", UPLOADED: "Received" },
     tooBig: "The file is larger than 10 MB.", badType: "Only PDF, JPG, PNG or WebP.", none: "Choose a file first.", putFailed: "The file could not be sent. Try again.", download: "View", rowMenu: "More options for {{name}}", size: "{{kb}} KB", webOnly: "In this version file upload works in the browser."
   },

@@ -112,11 +112,23 @@ export function useAdminUsers(client: ApiClient, search: string, page = 0) {
   const params = new URLSearchParams({ page: String(page), size: String(USERS_PAGE_SIZE), ...(query ? { query } : {}) }).toString();
   return useQuery({ queryKey: adminKeys.users(query, page), queryFn: () => client.request<UsersPage>(`/identity/admin/users?${params}`), ...FRESH, placeholderData: (previous) => previous });
 }
-/** PUT /identity/users/{id}/roles/{role} (ADMIN only, idempotent). Identity has no revoke route, so there is no hook for it. */
+/** PUT /identity/users/{id}/roles/{role} (ADMIN only, idempotent). */
 export function useGrantRole(client: ApiClient) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ userId, role }: { readonly userId: string; readonly role: PlatformRole }) => client.request<{ readonly id: string; readonly email: string; readonly roles: readonly string[] }>(`/identity/users/${encodeURIComponent(userId)}/roles/${role}`, { method: "PUT" }),
+    onSuccess: () => Promise.all([queryClient.invalidateQueries({ queryKey: adminKeys.usersAll }), queryClient.invalidateQueries({ queryKey: adminKeys.identitySummary })])
+  });
+}
+
+/**
+ * DELETE /identity/users/{id}/roles/{role} (operationId revokeUserRole, ADMIN only). Delivered by F4 in RSVPBackend #46; until it is
+ * deployed the route answers 404, which the caller shows as a failure.
+ */
+export function useRevokeRole(client: ApiClient) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId, role }: { readonly userId: string; readonly role: PlatformRole }) => client.request<unknown>(`/identity/users/${encodeURIComponent(userId)}/roles/${role}`, { method: "DELETE" }),
     onSuccess: () => Promise.all([queryClient.invalidateQueries({ queryKey: adminKeys.usersAll }), queryClient.invalidateQueries({ queryKey: adminKeys.identitySummary })])
   });
 }
@@ -140,3 +152,4 @@ export function useProviderSummary(client: ApiClient) {
 export function useIdentitySummary(client: ApiClient) {
   return useQuery({ queryKey: adminKeys.identitySummary, queryFn: () => client.request<IdentitySummary>("/identity/admin/summary"), ...FRESH, retry: false });
 }
+export * from "./partners.js";

@@ -2,7 +2,7 @@ import { useState, type ReactNode } from "react";
 import { Linking, Text, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
 import { Stagger, useColors } from "@rsvp/ui";
-import { DOCUMENT_TYPES, MAX_DOCUMENT_BYTES, useDeleteDocument, useDocumentDownload, useProviderDocuments, useUploadDocument, type DocumentContentType, type DocumentKind, type Provider } from "@rsvp/query-hooks";
+import { DOCUMENT_KINDS, DOCUMENT_TYPES, MAX_DOCUMENT_BYTES, useDeleteDocument, useDocumentDownload, useProviderDocuments, useUploadDocument, type DocumentContentType, type DocumentKind, type Provider } from "@rsvp/query-hooks";
 import { useApiClient, useT } from "../platform/providers";
 import { pickDocument, type PickedImage } from "../platform/pick-document";
 import { ActionButton, ConfirmDialog, EmptyState, FilterSelect, Notice, OverflowMenu, PageIntro, useStyles } from "../host/ui";
@@ -13,6 +13,11 @@ import { useSingleMutation } from "../platform/single-flight";
 
 const KINDS: readonly DocumentKind[] = ["IDENTITY", "BUSINESS_REGISTRATION", "TAX_ID", "ADDRESS_PROOF", "OTHER"];
 const BYTES_PER_KB = 1024;
+
+/** A kind added by a newer service (or one this build does not know) still shows, with its code, instead of a raw i18n key. */
+export function documentKindLabel(t: (key: string, values?: Readonly<Record<string, string | number>>) => string, kind: string): string {
+  return (DOCUMENT_KINDS as readonly string[]).includes(kind) ? t(`portal.documents.kinds.${kind}`) : t("portal.documents.kindUnknown", { kind });
+}
 
 /** Validates the chosen file before any request: type and size follow the contract (`DocumentInput`). Returns an i18n key or null. */
 export function documentProblem(file: Pick<PickedImage, "type" | "size"> | null): "portal.documents.none" | "portal.documents.badType" | "portal.documents.tooBig" | null {
@@ -81,7 +86,7 @@ function Documents({ provider }: { readonly provider: Provider }): ReactNode {
         <View role="list">
           <Stagger>{list.data.items.map((item) => (
             <View key={item.id} role="listitem" testID={`document-${item.id}`} style={{ gap: spacing[1], paddingVertical: spacing[3], borderTopWidth: 1, borderTopColor: palette.border }}>
-              <Text style={styles.subtitle}>{t(`portal.documents.kinds.${item.kind}`)} · {item.fileName}</Text>
+              <Text style={styles.subtitle}>{documentKindLabel(t, item.kind)} · {item.fileName}</Text>
               <Text style={styles.muted}>{t(`portal.documents.status.${item.status}`)} · {t("portal.documents.size", { kb: Math.max(1, Math.round(item.sizeBytes / BYTES_PER_KB)) })}</Text>
               <View style={[styles.row, { alignItems: "center" }]}>
                 {item.status === "UPLOADED" ? <ActionButton variant="secondary" label={open.isPending && open.variables === item.id ? t("portal.documents.opening") : t("portal.documents.download")} busy={open.isPending && open.variables === item.id} disabled={open.isPending} onPress={() => openOnce(item.id, { onSuccess: (file) => { void Linking.openURL(file.download.url); } })} testID={`document-view-${item.id}`} /> : null}

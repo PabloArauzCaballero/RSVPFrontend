@@ -46,7 +46,9 @@ export interface Microsite { readonly providerId: string; readonly version: numb
   /** Provider Catalog 3.0.0 (A20), owner and admin only: the last moderation of the microsite; a REJECTED microsite is not public until a newer version is approved. */
   readonly moderation?: MicrositeModeration }
 export interface MicrositeModeration { readonly status: "PENDING" | "APPROVED" | "REJECTED"; readonly reason: string | null; readonly submittedAt: string; readonly published: boolean }
-export type DocumentKind = "IDENTITY" | "BUSINESS_REGISTRATION" | "TAX_ID" | "ADDRESS_PROOF" | "OTHER";
+/** provider-catalog 2.5.0 adds POWER_OF_ATTORNEY and BANK_CERTIFICATE (KYP). */
+export type DocumentKind = "IDENTITY" | "BUSINESS_REGISTRATION" | "TAX_ID" | "ADDRESS_PROOF" | "POWER_OF_ATTORNEY" | "BANK_CERTIFICATE" | "OTHER";
+export const DOCUMENT_KINDS: readonly DocumentKind[] = ["IDENTITY", "BUSINESS_REGISTRATION", "TAX_ID", "ADDRESS_PROOF", "POWER_OF_ATTORNEY", "BANK_CERTIFICATE", "OTHER"];
 export type DocumentContentType = "application/pdf" | "image/jpeg" | "image/png" | "image/webp";
 export interface DocumentInput { readonly kind: DocumentKind; readonly fileName: string; readonly contentType: DocumentContentType; readonly sizeBytes: number }
 export interface ProviderDocument { readonly id: string; readonly providerId: string; readonly kind: string; readonly fileName: string; readonly contentType: string; readonly sizeBytes: number; readonly status: "PENDING_UPLOAD" | "UPLOADED"; readonly createdAt: string; readonly uploadedAt?: string }

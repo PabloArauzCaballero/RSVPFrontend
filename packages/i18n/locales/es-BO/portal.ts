@@ -12,7 +12,7 @@ export const portalEsBO = {
   },
   documents: {
     title: "Documentos", intro: "Sube lo que respalda tu negocio. Son privados: solo tú y el equipo de verificación los ven. PDF, JPG, PNG o WebP de hasta 10 MB.", emptyTitle: "Aquí van tus documentos",
-    kind: "Tipo de documento", kinds: { IDENTITY: "Documento de identidad", BUSINESS_REGISTRATION: "Registro del negocio", TAX_ID: "Identificación tributaria", ADDRESS_PROOF: "Comprobante de domicilio", OTHER: "Otro" },
+    kind: "Tipo de documento", kinds: { IDENTITY: "Documento de identidad", BUSINESS_REGISTRATION: "Registro del negocio", TAX_ID: "Identificación tributaria", ADDRESS_PROOF: "Comprobante de domicilio", POWER_OF_ATTORNEY: "Poder del representante", BANK_CERTIFICATE: "Certificado bancario", OTHER: "Otro" }, kindUnknown: "Documento ({{kind}})",
     choose: "Elegir archivo", upload: "Subir documento", uploading: "Subiendo…", uploaded: "Documento subido.", delete: "Eliminar", deleteTitle: "¿Eliminar este documento?", deleteBody: "Se borra el archivo y su registro. Para verificarte tendrás que subirlo de nuevo.", deleted: "Documento eliminado.", opening: "Abriendo…", empty: "Sube el primero para que el equipo lo revise junto con tu ficha.", status: { PENDING_UPLOAD: "Subida pendiente", UPLOADED: "Recibido" },
     tooBig: "El archivo supera los 10 MB.", badType: "Solo PDF, JPG, PNG o WebP.", none: "Elige un archivo primero.", putFailed: "No se pudo enviar el archivo. Inténtalo de nuevo.", download: "Ver", rowMenu: "Más opciones de {{name}}", size: "{{kb}} KB", webOnly: "En esta versión la carga de archivos funciona en el navegador."
   },

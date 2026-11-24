@@ -15,6 +15,7 @@ export const ADMIN_ROUTES = {
   moderation: "/admin/moderacion",
   users: "/admin/usuarios",
   organizations: "/admin/organizaciones",
+  partners: "/admin/partners",
   metrics: "/admin/metricas",
   operations: "/admin/operacion"
 } as const;
@@ -26,7 +27,7 @@ export const isPlatformAdmin = (roles: readonly string[]): boolean => roles.incl
 const ADMIN_GROUPS: readonly { readonly key: string; readonly tabs: readonly AdminRoute[] }[] = [
   { key: "review", tabs: ["verification", "moderation"] },
   { key: "catalog", tabs: ["categories", "geography", "eventTypes", "templates"] },
-  { key: "people", tabs: ["users", "organizations"] },
+  { key: "people", tabs: ["users", "organizations", "partners"] },
   { key: "operation", tabs: ["dashboard", "metrics", "operations"] }
 ];
 
