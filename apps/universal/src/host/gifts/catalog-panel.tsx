@@ -3,13 +3,13 @@ import { Image, Text, View } from "react-native";
 import { radius, spacing } from "@rsvp/design-tokens";
 import { ApiError } from "@rsvp/api-client";
 import { formatMinor } from "@rsvp/i18n";
-import { problemCode, useAddGift, useGiftList, useListingSearch, type ListingHit } from "@rsvp/query-hooks";
+import { problemCode, useAddGift, useGiftList, useListingSearch, useProductCategories, type ListingHit } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../../platform/providers";
 import { alreadyListed } from "./money";
 import { Hint, Row, RowList } from "./offer-row";
 import { GiftErrorNotice } from "./gift-errors";
 import { SkeletonList, Stagger } from "@rsvp/ui";
-import { ActionButton, Field, Notice, useStyles } from "../ui";
+import { ActionButton, Field, FilterSelect, Notice, useStyles } from "../ui";
 import { RetryNotice } from "../guests/parts";
 import { useSingleFlightGate } from "../../platform/single-flight";
 
@@ -22,7 +22,13 @@ function ProductPhoto({ url, label }: { readonly url: string; readonly label: st
   );
 }
 
-/** C27 · «Del catálogo»: search listings (GET /listings?q=), then add the chosen product as a CATALOGED gift. */
+const ALL = "ALL";
+
+/**
+ * C27 · «Del catálogo»: search the products of verified providers (GET /listings?q=&type=PRODUCT), narrow them by a
+ * product category read from the catalog (M23), then add the chosen product as a CATALOGED gift. `GET /listings` is the
+ * only source (A27): a failure shows the error with «Reintentar», and no result shows an honest empty state.
+ */
 export function CatalogPanel({ celebrationId, currency, onSeeList }: { readonly celebrationId: string; readonly currency: string; readonly onSeeList: () => void }): ReactNode {
   const styles = useStyles();
   const t = useT();
@@ -30,7 +36,9 @@ export function CatalogPanel({ celebrationId, currency, onSeeList }: { readonly 
   const client = useApiClient();
   const [query, setQuery] = useState("");
   const [committed, setCommitted] = useState("");
-  const search = useListingSearch(client, committed);
+  const [category, setCategory] = useState(ALL);
+  const search = useListingSearch(client, committed, locale);
+  const categories = useProductCategories(client, locale);
   const add = useAddGift(client, celebrationId);
   const list = useGiftList(client, celebrationId);
   const flight = useSingleFlightGate();
@@ -43,19 +51,36 @@ export function CatalogPanel({ celebrationId, currency, onSeeList }: { readonly 
     if (!flight.begin()) return;
     add.mutate({ source: "CATALOGED", title: hit.title, price: { amountMinor: hit.priceFromMinor ?? 0, currency: hit.currency ?? currency }, productListingId: hit.id }, { onSuccess: () => setAdded(hit.title), onSettled: flight.end });
   };
-  const items = search.data?.items ?? [];
+  const items = (search.data?.items ?? []).filter((hit) => category === ALL || hit.category === category);
+  const narrowed = committed !== "" || category !== ALL;
   return (
     <View style={{ gap: spacing[4] }}>
       <Field label={t("gifts.host.catalog.searchLabel")} value={query} onChange={setQuery} onSubmit={run} placeholder={t("gifts.host.catalog.searchPlaceholder")} testID="catalog-query" />
       <ActionButton icon="search" label={t("gifts.host.catalog.search")} onPress={run} testID="catalog-search" />
+      {categories.data?.items.length ? (
+        <FilterSelect label={t("gifts.host.catalog.category")} value={category} testID="catalog-category"
+          options={[{ value: ALL, label: t("gifts.host.catalog.allCategories") }, ...categories.data.items.map((item) => ({ value: item.code, label: item.name }))]}
+          onChange={setCategory} />
+      ) : null}
+      {categories.isError ? (
+        <View style={{ gap: spacing[2] }} testID="catalog-categories-error">
+          <Text style={styles.muted}>{t("gifts.host.catalog.categoriesError")}</Text>
+          <RetryNotice error={categories.error} onRetry={() => { void categories.refetch(); }} />
+        </View>
+      ) : null}
+      <Text style={styles.muted}>{t("gifts.host.catalog.disclaimer")}</Text>
       {added ? <Notice kind="success"><Text style={styles.body}>{t("gifts.host.catalog.added", { title: added })}</Text><ActionButton icon="plus" variant="secondary" label={t("gifts.host.add.seeList")} onPress={onSeeList} testID="see-list" /></Notice> : null}
       {unavailable ? <Notice kind="error">{t("gifts.host.catalog.unavailableBody")}</Notice> : <GiftErrorNotice error={add.error} />}
       {!search.data && !search.isFetching && !search.isError ? <Hint>{t("gifts.host.catalog.prompt")}</Hint> : null}
       {search.isFetching && !search.data ? <SkeletonList count={3} row={{ minHeight: 120, avatar: false, trailing: false }} label={t("host.common.loading")} /> : null}
-      {search.isError ? <RetryNotice error={search.error} onRetry={() => { void search.refetch(); }} /> : null}
-      {search.data?.viaFallback ? <Notice>{t("gifts.host.catalog.fallbackNote")}</Notice> : null}
-      {search.data && items.length === 0 ? <Hint>{t("gifts.host.catalog.none")}</Hint> : null}
-      {items.length ? (
+      {search.isError ? (
+        <View style={{ gap: spacing[2] }} testID="catalog-error">
+          <Text style={styles.body}>{t("gifts.host.catalog.error")}</Text>
+          <RetryNotice error={search.error} onRetry={() => { void search.refetch(); }} />
+        </View>
+      ) : null}
+      {search.data && !search.isError && items.length === 0 ? <View testID="catalog-empty"><Hint>{t(narrowed ? "gifts.host.catalog.none" : "gifts.host.catalog.empty")}</Hint></View> : null}
+      {items.length && !search.isError ? (
         <RowList>
           <Stagger>{items.map((hit, index) => {
             const listed = alreadyListed(list.data?.items ?? [], hit.id);

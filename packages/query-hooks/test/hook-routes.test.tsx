@@ -182,24 +182,44 @@ describe("provider hooks (portal, quotes, schedule, documents)", () => {
     expect(h.calls.map((call) => call.path)).toEqual(["/providers/p-1/documents/d-1/download", "/providers/me/bookings?limit=50", "/providers/me/bookings?limit=20&cursor=Y3Vyc29y"]);
   });
 
-  it("listing search uses /listings and falls back to the public cards only when the gateway has no such route", async () => {
-    const routed = harness(() => ({ body: { items: [{ id: "l-1", providerId: "p-1", title: "Torta" }] } }));
-    expect(await hooks.providerService(routed.client).searchListings("torta")).toEqual({ items: [{ id: "l-1", providerId: "p-1", title: "Torta" }], viaFallback: false });
-    expect(routed.last().path).toBe("/listings?q=torta&type=PRODUCT&limit=20&locale=es-BO");
+  it("listing search asks /listings for products only, in the given language", async () => {
+    const routed = harness(() => ({ body: { items: [{ id: "l-1", providerId: "p-1", title: "Torta", priceFrom: { amountMinor: 45000, currency: "BOB" } }] } }));
+    expect(await hooks.providerService(routed.client).searchListings("torta")).toEqual({ items: [{ id: "l-1", providerId: "p-1", title: "Torta", priceFromMinor: 45000, currency: "BOB" }] });
+    expect(routed.last().path).toBe("/listings?q=torta&type=PRODUCT&limit=50&locale=es-BO");
+    await hooks.providerService(routed.client).searchListings("cake", "en-US");
+    expect(routed.last().path).toBe("/listings?q=cake&type=PRODUCT&limit=50&locale=en-US");
+  });
 
-    const cards = { items: [
-      { listingId: "l-1", providerSlug: "dulce-sol", name: "Torta de bodas", summary: "Hecha a mano", category: "CATERING", priceFrom: { amountMinor: 45000, currency: "BOB" } },
-      { listingId: "l-2", providerSlug: "foto", name: "Fotografía" }
-    ] };
-    const fallback = harness((seen) => (seen.path.startsWith("/listings") ? { status: 404, body: { title: "no route", status: 404 } } : { body: cards }));
-    const result = await hooks.providerService(fallback.client).searchListings("torta");
-    expect(result.viaFallback).toBe(true);
-    expect(result.items).toEqual([{ id: "l-1", providerId: "dulce-sol", title: "Hecha a mano", category: "CATERING", priceFromMinor: 45000, currency: "BOB" }]);
-    const everything = await hooks.providerService(fallback.client).searchListings("");
-    expect(everything.items.map((item) => item.id)).toEqual(["l-1", "l-2"]);
+  it("A27 · listing search has no alternative source: an unrouted 404 or a 500 reaches the caller and /providers is never read", async () => {
+    for (const status of [404, 500]) {
+      const failing = harness((seen) => (seen.path.startsWith("/listings") ? { status, body: { title: "no route", status } } : { body: { items: [{ listingId: "l-1", providerSlug: "s", name: "Catering" }] } }));
+      await expect(hooks.providerService(failing.client).searchListings("torta")).rejects.toBeInstanceOf(ApiError);
+      await expect(hooks.providerService(failing.client).searchListings("")).rejects.toBeInstanceOf(ApiError);
+      expect(failing.calls.every((call) => call.path.startsWith("/listings"))).toBe(true);
+    }
+  });
 
-    const broken = harness(() => ({ status: 500, body: { title: "boom", status: 500 } }));
-    await expect(hooks.providerService(broken.client).searchListings("torta")).rejects.toBeInstanceOf(ApiError);
+  it("A28 · a hit the catalog marks as SERVICE never comes out of listing search", async () => {
+    const mixed = harness(() => ({ body: { items: [
+      { id: "l-1", providerId: "p-1", title: "Torta", type: "PRODUCT" },
+      { id: "l-2", providerId: "p-1", title: "Catering", type: "SERVICE" },
+      { id: "l-3", providerId: "p-1", title: "Platos" }
+    ] } }));
+    const result = await hooks.providerService(mixed.client).searchListings("");
+    expect(result.items.map((item) => item.id)).toEqual(["l-1", "l-3"]);
+  });
+
+  it("M23 · product categories come from /providers/categories?type=PRODUCT and keep only product and shared ones", async () => {
+    const h = harness(() => ({ body: { items: [
+      { code: "MUSIC", name: "Música", listingType: "SERVICE" },
+      { code: "DECORATION", name: "Decoración", listingType: null },
+      { code: "PASTRY", name: "Pastelería", listingType: "PRODUCT" }
+    ] } }));
+    const result = await hooks.providerService(h.client).productCategories("en-US");
+    expect(h.last().path).toBe("/providers/categories?type=PRODUCT&locale=en-US");
+    expect(result.items.map((item) => item.code)).toEqual(["DECORATION", "PASTRY"]);
+    const fresh = harness(() => ({ body: { items: [] } }));
+    expect((await runQuery(fresh, () => hooks.useProductCategories(fresh.client, "es-BO"))).path).toBe("/providers/categories?type=PRODUCT&locale=es-BO");
   });
 
   it("useListingSearch waits for two characters and useMyProviders can be disabled", async () => {
