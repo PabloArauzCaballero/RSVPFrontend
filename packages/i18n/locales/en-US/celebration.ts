@@ -10,6 +10,7 @@ export const celebrationEnUS: DeepStrings<typeof celebrationEsBO> = {
   venues: { howToGetThere: "Get directions", kind: { ceremony: "Ceremony", reception: "Reception", other: "Venue" } },
   recommendations: { view: "See option", kind: { lodging: "Lodging", transport: "Transport", other: "Recommendation" } },
   gallery: { photo: "Photo {{n}} of {{total}}", open: "Open {{label}} full size" },
+  media: { playVideo: "Watch the video: {{title}}", playMusic: "Listen: {{title}}", showMap: "Show the map: {{title}}", privacy: "Tapping loads content from {{provider}}, and that site may receive data about your visit.", play: "Play {{title}}", pause: "Pause {{title}}", progress: "Progress of {{title}}", audioError: "We could not play the music. Try again." },
   rsvp: { body: "Reply from the personal link you received with your invitation.", cta: "Reply now" },
   notFound: { title: "This celebration is not available", body: "The link may be mistyped, or the hosts have not published it yet.", home: "Go to the home page" },
   meta: { description: "{{eventType}} · {{date}} · {{venue}}", fallbackDescription: "Everything about the celebration in one place.", sectionTitle: "{{section}} · {{title}}" },

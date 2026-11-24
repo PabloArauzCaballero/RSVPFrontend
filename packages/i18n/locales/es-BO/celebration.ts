@@ -7,6 +7,7 @@ export const celebrationEsBO = {
   venues: { howToGetThere: "Cómo llegar", kind: { ceremony: "Ceremonia", reception: "Recepción", other: "Lugar" } },
   recommendations: { view: "Ver opción", kind: { lodging: "Hospedaje", transport: "Transporte", other: "Recomendación" } },
   gallery: { photo: "Foto {{n}} de {{total}}", open: "Abrir {{label}} en tamaño completo" },
+  media: { playVideo: "Ver el video: {{title}}", playMusic: "Escuchar: {{title}}", showMap: "Ver el mapa: {{title}}", privacy: "Al tocar, se carga contenido de {{provider}} y ese sitio puede recibir datos de tu visita.", play: "Reproducir {{title}}", pause: "Pausar {{title}}", progress: "Avance de {{title}}", audioError: "No pudimos reproducir la música. Inténtalo de nuevo." },
   rsvp: { body: "Confirma tu asistencia desde el enlace personal que recibiste en tu invitación.", cta: "Confirmar asistencia" },
   notFound: { title: "Esta celebración no está disponible", body: "Puede que el enlace esté mal escrito o que los anfitriones todavía no la hayan publicado.", home: "Ir al inicio" },
   meta: { description: "{{eventType}} · {{date}} · {{venue}}", fallbackDescription: "Toda la información de la celebración en un solo lugar.", sectionTitle: "{{section}} · {{title}}" },
