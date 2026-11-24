@@ -12,7 +12,7 @@
 
 | Id | Resolución |
 |---|---|
-| R1 · Gala usaba amarillo | El acento de Gala pasa a **vino** (`#7B2A3C` claro, matiz 347°; rosa palo `#E6A3B1` oscuro, 347°). Fuera de la franja 40–70° del amarillo del sistema. Se conserva el concepto «gala» con el marco art déco. Fotos de ejemplo planas y sin `#E8C987`. El dorado anterior queda como **alternativa pendiente de decisión de Pablo** (§6.4). La plantilla se titula «Gala art déco» en el prototipo mientras no se decida (la semilla se llama «Gala dorada»). |
+| R1 · Gala usaba amarillo | El acento de Gala pasa a **vino** (`#7B2A3C` claro, matiz 347°; rosa palo `#E6A3B1` oscuro, 347°). Fuera de la franja 40–70° del amarillo del sistema. Se conserva el concepto «gala» con el marco art déco. Fotos de ejemplo planas y sin `#E8C987`. **Decisión de Pablo (2026-11-24, comentario en el PR): cerrada.** La plantilla lleva acento vino y se llama «Gala art déco»; el dorado queda descartado (la semilla `016-gala-dorada` conserva su clave y se renombra en la migración). |
 | R2 · Familias fuera del catálogo | Las seis familias salen ahora del **catálogo curado de F1** (`packages/celebration-theme/src/design/catalog.ts`, rama `feat/f1-diseno-v2-esquema`, PR #115, 41 familias). Se reemplazan Hanken Grotesk y Bricolage Grotesque. |
 | R3 · Banderines con contorno | Banderines como **figuras rellenas de tinta** sobre un cordel (algunos en el acento); el festón es una franja rellena de semicírculos. |
 | R4 · Estados | Prototipados y capturados: sin enlace personal, regalos OPEN/EMPTY/CLOSED, plazo vencido, galería y error de carga de la foto (§5). |
@@ -329,7 +329,7 @@ Motivos de lo que no es 2:
 1. **Dirección por plantilla:** ¿Marfil (arco y anillos), Piñata (piñata que se mece, disco de foto, banderines de tinta) y Gala (simetría y puertas deco) son la personalidad correcta?
 2. **Familia de trazo por plantilla** (1,25 redondo / 2,25 punteado / 1 en ángulo) y la **foto como parte del dibujo** (arco, disco, chaflán).
 3. **Barra fija inferior en móvil y cabecera fija en escritorio** para «Ver regalos» y «Confirmar asistencia».
-4. **Acento de Gala (decisión de Pablo).** El prototipo usa **vino** (`#7B2A3C` claro, `#E6A3B1` oscuro). La alternativa pendiente es el **dorado** anterior: `#6E5200` claro (matiz 45°) y `#CDAE6C` oscuro (matiz 41°), contrastes 6,60:1 y 10,03:1 sobre su canvas; es el tono del amarillo del sistema (`packages/design-tokens/src/colors.ts`), por eso no se usa sin tu visto bueno. Cambiarlo son dos tokens en `_build/tokens.mjs`.
+4. **Acento de Gala: decidido por Pablo (2026-11-24).** Acento **vino** (`#7B2A3C` claro, `#E6A3B1` oscuro) y nombre **«Gala art déco»**. Ya no hay nada que aprobar aquí; el dorado anterior (`#6E5200` / `#CDAE6C`) queda descartado.
 5. **Tipografías.** Las tres parejas salen del catálogo de F1, así que no se amplía el catálogo; `DESIGN.md` (Newsreader + Geist) sigue siendo la tipografía de la app, no de las plantillas.
 6. Si se aprueba, se rehacen las 16 con la misma ficha y las capturas pasan a ser las líneas base de F8.
 
