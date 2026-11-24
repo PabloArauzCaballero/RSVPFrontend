@@ -1,12 +1,13 @@
-import { colors, ink, tones, type ToneName } from '@rsvp/design-tokens';
+import { colors, illustrationTokens, ink, tones, type ToneName } from '@rsvp/design-tokens';
 
 /**
- * Line illustrations of DOne (minimalist system): a continuous ink line on a flat ground with ONE offset geometric shape in a
- * muted pastel from `tones`. Used only in empty states and welcomes. Thin rounded strokes on a 120-unit grid; the seal keeps the
- * check of the symbol. One data source for web and native.
+ * Illustrations of DOne, drawn as small scenes: a stone disc, a flat contact shadow, the object as a filled ink figure and
+ * ONE accent piece in a muted pastel from `tones` (the group's). The construction follows the "paper, ink and a single
+ * light" drawing style; the colours are DOne's own tokens and nothing else. Used in empty states, welcomes, friendly errors
+ * and milestones. One data source for web and native, on a 120-unit grid.
  *
  * Shape vocabulary: the D (a rounded rectangle closed by a half circle), the check, the envelope, the arch (door, window,
- * invitation card). No second accent colour and no sparkles: the pastel shape is the only colour.
+ * invitation card). No outlines around the figure, no gradients, no blur, no sparkles: the pastel piece is the only colour.
  */
 export type IllustrationName =
   // Original set
@@ -20,7 +21,9 @@ export type IllustrationName =
   // Admin
   | 'nothingPending' | 'importDone'
   // Access and system
-  | 'noAccess' | 'searching' | 'serverError' | 'maintenance' | 'notFound';
+  | 'noAccess' | 'searching' | 'serverError' | 'maintenance' | 'notFound'
+  // Public home (site and web app): the promise and the three taps
+  | 'landingSend' | 'landingCreate' | 'landingShare' | 'landingReplies';
 
 /**
  * Semantic tone, never a hex. `ink` draws dark ink on a light ground, `onDark` draws light ink on a dark ground and `auto`
@@ -29,7 +32,7 @@ export type IllustrationName =
 export type IllustrationTone = 'auto' | 'ink' | 'onDark';
 export type ResolvedTone = Exclude<IllustrationTone, 'auto'>;
 /** `knockFill` is a small filled detail in the ground colour of its seal (the glyph inside a solid disc). */
-export type Layer = 'soft' | 'line' | 'solid' | 'knock' | 'knockFill' | 'accent' | 'accentFill' | 'spark';
+export type Layer = 'ground' | 'shadow' | 'stone' | 'soft' | 'line' | 'solid' | 'knock' | 'knockFill' | 'accent' | 'accentFill' | 'spark';
 /** `w` overrides the stroke width (small glyphs inside seals); `o` is the opacity (patterns). */
 export interface Shape { readonly d: string; readonly layer: Layer; readonly w?: number; readonly o?: number }
 
@@ -40,7 +43,8 @@ export const ILLUSTRATION_GROUPS: Record<IllustrationName, IllustrationGroup> = 
   linkExpired: 'guest', welcomeGuest: 'guest',
   noOffers: 'provider', offerPublished: 'provider', freeAgenda: 'provider', newClient: 'provider', verifying: 'provider', verified: 'provider', suspended: 'provider', welcomeProvider: 'provider',
   nothingPending: 'admin', importDone: 'admin',
-  noAccess: 'access', searching: 'system', serverError: 'system', maintenance: 'system', notFound: 'system'
+  noAccess: 'access', searching: 'system', serverError: 'system', maintenance: 'system', notFound: 'system',
+  landingSend: 'guest', landingCreate: 'host', landingShare: 'guest', landingReplies: 'host'
 };
 export const ILLUSTRATION_NAMES = Object.keys(ILLUSTRATION_GROUPS) as IllustrationName[];
 export const ILLUSTRATION_VIEWBOX = 120;
@@ -51,7 +55,9 @@ export const ILLUSTRATION_SIZES = { sm: 64, md: 104, lg: 148 } as const;
 export const ILLUSTRATION_PASTEL: Record<IllustrationGroup, ToneName> = { host: 'yellow', guest: 'blue', provider: 'green', admin: 'gray', access: 'red', system: 'gray' };
 
 /**
- * Colour per layer. `soft` is the single pastel shape; every line, solid and accent is ink. `knock` is the glyph inside a
+ * Colour per layer, all from DOne's tokens. `ground` is the stone disc behind the scene, `shadow` the flat contact shadow
+ * under the object and `stone` the secondary pieces of the figure: the roles of `illustrationTokens` (@rsvp/design-tokens),
+ * resolved in the active scheme and shared with the public site's `.art__*` classes. `soft` is the single pastel piece; every line, solid and accent is ink. `knock` is the glyph inside a
  * solid ink shape (the ground colour), so it contrasts with the ink whatever sits behind the illustration. `softEdge` is the
  * readable text colour of the pastel pair, drawn as a faint hairline so the flat pastel keeps an edge on a bone ground.
  */
@@ -61,9 +67,13 @@ export function illustrationColors(tone: ResolvedTone, pastel: ToneName): Illust
   const line = dark ? colors.dark.text : ink;
   const knock = dark ? colors.dark.canvas : colors.light.canvas;
   const pair = (dark ? tones.dark : tones.light)[pastel];
-  return { soft: pair.bg, softEdge: pair.fg, line, solid: line, knock, knockFill: knock, accent: line, accentFill: line, spark: 'none' };
+  const scheme = dark ? colors.dark : colors.light;
+  return {
+    ground: scheme[illustrationTokens.ground], shadow: scheme[illustrationTokens.shadow], stone: scheme[illustrationTokens.stone],
+    soft: pair.bg, softEdge: pair.fg, line, solid: line, knock, knockFill: knock, accent: line, accentFill: line, spark: 'none'
+  };
 }
-export const isFillLayer = (layer: Layer): boolean => layer === 'soft' || layer === 'solid' || layer === 'accentFill' || layer === 'knockFill';
+export const isFillLayer = (layer: Layer): boolean => layer === 'ground' || layer === 'shadow' || layer === 'stone' || layer === 'soft' || layer === 'solid' || layer === 'accentFill' || layer === 'knockFill';
 export const resolveTone = (tone: IllustrationTone, scheme: 'light' | 'dark'): ResolvedTone => (tone === 'auto' ? (scheme === 'dark' ? 'onDark' : 'ink') : tone);
 
 const n = (value: number): string => String(Math.round(value * 100) / 100);
@@ -83,318 +93,374 @@ export const archCard = (x: number, y: number, w: number, h: number, r = 12): st
   `M${n(x)} ${n(y + h - r)}V${n(y + w / 2)}a${n(w / 2)} ${n(w / 2)} 0 0 1 ${n(w)} 0V${n(y + h - r)}a${n(r)} ${n(r)} 0 0 1 ${n(-r)} ${n(r)}H${n(x + r)}a${n(r)} ${n(r)} 0 0 1 ${n(-r)} ${n(-r)}Z`;
 /** The tick of the symbol, centred on (cx, cy); `k` scales it (the seal uses 15/15 = 1). */
 export const check = (cx: number, cy: number, k: number): string => poly([[cx - 7 * k, cy], [cx - 2 * k, cy + 5 * k], [cx + 7 * k, cy - 6 * k]]);
-/** Sparkles of the previous identity: kept in the data so the shapes stay put, never drawn (see `ILLUSTRATIONS`). */
-const spark = (cx: number, cy: number, s = 6): Shape => ({ layer: 'spark', d: `M${n(cx)} ${n(cy - s)}V${n(cy + s)}M${n(cx - s)} ${n(cy)}H${n(cx + s)}` });
-/** The seal: a solid disc with the knocked-out check of the symbol. */
-const seal = (cx: number, cy: number, r: number): Shape[] => {
-  const k = r / 15;
-  return [{ layer: 'solid', d: circle(cx, cy, r) }, { layer: 'knock', d: check(cx, cy, k) }];
-};
-/** The D as a mark: the outline of the D with the tick of the logo inside, all in ink line. */
-const dMark = (x: number, y: number, h: number): Shape[] => [
-  { layer: 'line', d: dShape(x, y, h) },
-  { layer: 'line', d: check(x + 0.43 * h, y + 0.5 * h, h / 28), w: Math.max(3, h * 0.07) }
-];
 /** A pill whose axis runs from (x1, y1) to (x2, y2): the rounded link of a chain. */
 const capsule = (x1: number, y1: number, x2: number, y2: number, r: number): string => {
   const len = Math.hypot(x2 - x1, y2 - y1); const nx = ((y2 - y1) / len) * r; const ny = (-(x2 - x1) / len) * r;
   return `M${n(x1 + nx)} ${n(y1 + ny)}L${n(x2 + nx)} ${n(y2 + ny)}A${n(r)} ${n(r)} 0 0 1 ${n(x2 - nx)} ${n(y2 - ny)}L${n(x1 - nx)} ${n(y1 - ny)}A${n(r)} ${n(r)} 0 0 1 ${n(x1 + nx)} ${n(y1 + ny)}Z`;
 };
-/** An arc of the circle (cx, cy, r) between two angles in degrees, clockwise on screen: a seat around a table. */
-const arcAt = (cx: number, cy: number, r: number, from: number, to: number): string => {
-  const at = (deg: number): string => `${n(cx + r * Math.cos((deg * Math.PI) / 180))} ${n(cy + r * Math.sin((deg * Math.PI) / 180))}`;
-  return `M${at(from)}A${n(r)} ${n(r)} 0 0 1 ${at(to)}`;
-};
 const lerp = (a: Pt, b: Pt, t: number): Pt => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
 const quad = (a: Pt, b: Pt, c: Pt, t: number): Pt => lerp(lerp(a, b, t), lerp(b, c, t), t);
-/** A pennant hanging from point `p`. */
-const flag = (p: Pt, layer: 'line'): Shape => ({ layer, d: poly([[p[0] - 9, p[1] + 2], [p[0] + 9, p[1] + 2], [p[0], p[1] + 20]], true) });
-const offset = (d: string, dx: number, dy: number): string => d.replace(/^M([\d.-]+) ([\d.-]+)/, (_m, x: string, y: string) => `M${n(Number(x) + dx)} ${n(Number(y) + dy)}`);
 
-const GIFT: readonly Shape[] = [
-  { layer: 'soft', d: rect(28, 60, 76, 50, 12) },
-  { layer: 'line', d: rect(22, 54, 76, 50, 12) },
-  { layer: 'line', d: rect(16, 40, 88, 18, 9) },
-  { layer: 'line', d: 'M60 40V104' },
-  { layer: 'line', d: 'M60 40C50 14 26 22 36 34C40 38 50 40 60 40ZM60 40C70 14 94 22 84 34C80 38 70 40 60 40Z' }
+/**
+ * Every drawing is staged the same way (the grammar of the scene): a stone disc behind (`ground`), a flat contact shadow
+ * under the object (`shadow`), the object as a filled ink figure (`solid`, details knocked out in the ground colour,
+ * secondary pieces in `stone`) and ONE accent piece in the group pastel (`soft`). One idea per drawing; no outlines around
+ * the figure, no gradients, no blur.
+ */
+const stage = (shadowRx = 32, shadowY = 99): Shape[] => [
+  { layer: 'ground', d: circle(60, 56, 46) },
+  { layer: 'shadow', d: ellipse(60, shadowY, shadowRx, 5) }
 ];
-const TAG = poly([[24, 22], [58, 22], [98, 62], [62, 98], [24, 60]], true);
-const VERIFY_D = { x: 24, y: 18, h: 84 };
+/** A solid disc with the tick knocked out (the seal of the symbol), with a ground-coloured halo so it reads over the figure. */
+const seal = (cx: number, cy: number, r: number): Shape[] => [
+  { layer: 'knockFill', d: circle(cx, cy, r + 3) },
+  { layer: 'solid', d: circle(cx, cy, r) },
+  { layer: 'knock', w: 3.5, d: check(cx, cy, r / 15) }
+];
+/** The pastel badge with an ink tick: the accent of the "done" drawings. */
+const badge = (cx: number, cy: number, r: number): Shape[] => [
+  { layer: 'knockFill', d: circle(cx, cy, r + 3) },
+  { layer: 'soft', d: circle(cx, cy, r) },
+  { layer: 'line', w: 3, d: check(cx, cy, r / 14) }
+];
+/** The bow of the gift, moved `dx` to the side. */
+const bow = (dx: number): string => {
+  const x = (value: number): string => n(value + dx);
+  return `M${x(60)} 44C${x(52)} 26 ${x(36)} 30 ${x(42)} 40C${x(45)} 44 ${x(52)} 44 ${x(60)} 44ZM${x(60)} 44C${x(68)} 26 ${x(84)} 30 ${x(78)} 40C${x(75)} 44 ${x(68)} 44 ${x(60)} 44Z`;
+};
+/** The gift: an ink box and lid, the ribbon and bow are the pastel light. */
+const gift = (dx: number): Shape[] => [
+  { layer: 'solid', d: rect(30 + dx, 56, 60, 42, 8) },
+  { layer: 'solid', d: rect(26 + dx, 44, 68, 14, 6) },
+  { layer: 'knock', w: 2.5, d: `M${30 + dx} 58H${90 + dx}` },
+  { layer: 'soft', d: rect(55 + dx, 44, 10, 54, 2) + bow(dx) },
+  { layer: 'line', w: 2.5, d: bow(dx) }
+];
+const TAG = poly([[30, 30], [62, 30], [96, 64], [64, 96], [30, 62]], true);
+/** The calendar body shared by `calendar` and `freeAgenda`. */
+const calendarBody: Shape[] = [
+  { layer: 'solid', d: rect(28, 34, 64, 62, 10) },
+  { layer: 'line', w: 5, d: 'M44 26V40M76 26V40' },
+  { layer: 'knock', w: 3, d: 'M28 50H92' },
+  { layer: 'knockFill', d: [[40, 62], [52, 62], [64, 62], [76, 62], [40, 78], [52, 78]].map(([x, y]) => circle(x!, y!, 3.2)).join('') }
+];
+const D = { x: 32, y: 26, h: 68 };
+const dTick = (x: number, y: number, h: number, w = 6): Shape => ({ layer: 'knock', w, d: check(x + 0.43 * h, y + 0.5 * h, h / 28) });
+/** Magnifier: an ink ring with a pastel glass and a handle. */
+const lens: Shape[] = [
+  { layer: 'solid', d: capsule(68, 68, 88, 88, 6.5) },
+  { layer: 'solid', d: circle(52, 52, 26) },
+  { layer: 'soft', d: circle(52, 52, 18) }
+];
 
 const RAW: Record<IllustrationName, readonly Shape[]> = {
+  /** An envelope with the card peeking out and a pastel wax seal. */
   invitation: [
-    { layer: 'soft', d: rect(18, 38, 96, 68, 16) },
-    { layer: 'line', d: 'M32 32V26a8 8 0 0 1 8-8H76a8 8 0 0 1 8 8V32' },
-    { layer: 'line', d: rect(10, 30, 96, 68, 16) },
-    { layer: 'line', d: 'M16 44L58 74L100 44' },
-    ...seal(94, 90, 15),
-    spark(104, 16)
+    ...stage(),
+    { layer: 'stone', d: rect(34, 24, 52, 40, 6) },
+    { layer: 'line', w: 3, d: 'M44 36H76M44 46H66' },
+    { layer: 'solid', d: rect(24, 50, 72, 48, 8) },
+    { layer: 'knock', w: 3, d: 'M28 56L60 78L92 56' },
+    { layer: 'knockFill', d: circle(60, 78, 12) },
+    { layer: 'soft', d: circle(60, 78, 9) },
+    { layer: 'line', w: 2.5, d: check(60, 78, 0.65) }
   ],
-  gift: [...GIFT, spark(104, 20), spark(14, 22, 4)],
+  gift: [...stage(), ...gift(0)],
   calendar: [
-    { layer: 'soft', d: rect(22, 32, 88, 78, 16) },
-    { layer: 'line', d: rect(16, 26, 88, 78, 16) },
-    { layer: 'line', d: 'M16 50H104M40 16V34M80 16V34' },
-    { layer: 'line', d: 'M42 78L54 90L80 62' },
-    spark(108, 14)
+    ...stage(),
+    ...calendarBody,
+    { layer: 'soft', d: rect(66, 70, 18, 16, 4) },
+    { layer: 'line', w: 2.5, d: check(75, 78, 0.7) }
   ],
+  /** A round table seen from the side, two chairs and the centrepiece. */
   table: [
-    { layer: 'soft', d: ellipse(66, 90, 44, 14) },
-    { layer: 'line', d: ellipse(60, 86, 44, 14) },
-    { layer: 'line', d: circle(28, 42, 10) },
-    { layer: 'line', d: circle(60, 30, 11) },
-    { layer: 'line', d: circle(92, 42, 10) },
-    { layer: 'line', d: 'M12 70C12 56 44 56 44 70M44 60C44 48 76 48 76 60M76 70C76 56 108 56 108 70' },
-    spark(104, 14, 5)
+    ...stage(38),
+    { layer: 'stone', d: rect(16, 52, 14, 46, 4) + rect(90, 52, 14, 46, 4) },
+    { layer: 'solid', d: rect(56, 64, 8, 34, 3) },
+    { layer: 'solid', d: rect(38, 94, 44, 6, 3) },
+    { layer: 'solid', d: ellipse(60, 64, 36, 9) },
+    { layer: 'line', w: 3, d: 'M60 53V44' },
+    { layer: 'soft', d: circle(60, 40, 7) }
   ],
+  /** The provider's card: avatar, two lines and the verified seal. */
   provider: [
-    { layer: 'soft', d: rect(24, 22, 84, 88, 16) },
-    { layer: 'line', d: rect(16, 14, 84, 88, 16) },
-    { layer: 'line', d: circle(58, 44, 13) },
-    { layer: 'line', d: 'M36 78H80M44 90H72' },
-    ...seal(96, 96, 15),
-    spark(108, 14)
+    ...stage(),
+    { layer: 'solid', d: rect(32, 24, 56, 74, 10) },
+    { layer: 'knock', w: 3, d: circle(60, 46, 9) },
+    { layer: 'knock', w: 3, d: 'M46 70H74M50 80H70' },
+    ...badge(86, 88, 12)
   ],
+  /** The signal arcs and a pastel bar across them. */
   offline: [
-    { layer: 'soft', d: circle(66, 70, 44) },
-    { layer: 'line', d: 'M18 52C42 30 78 30 102 52M36 70C50 57 70 57 84 70' },
-    { layer: 'solid', d: circle(60, 88, 6) },
-    { layer: 'accent', d: 'M26 102L94 26' }
+    ...stage(24),
+    { layer: 'line', w: 7, d: 'M28 54C46 36 74 36 92 54M40 68C52 57 68 57 80 68' },
+    { layer: 'solid', d: circle(60, 84, 7) },
+    { layer: 'knockFill', d: capsule(32, 94, 90, 30, 7) },
+    { layer: 'soft', d: capsule(32, 94, 90, 30, 4.5) }
   ],
+  /** A magnifier with a pastel glass that found nothing. */
   emptySearch: [
-    { layer: 'soft', d: circle(60, 60, 34) },
-    { layer: 'line', d: circle(52, 52, 32) },
-    { layer: 'line', d: 'M76 76L102 102' },
-    { layer: 'solid', d: `${circle(42, 46, 3.5)}${circle(62, 46, 3.5)}` },
-    { layer: 'line', d: 'M42 62C48 67 56 67 62 62' },
-    spark(100, 28, 5)
+    ...stage(26),
+    ...lens,
+    { layer: 'line', w: 3, d: 'M44 58C48 54 56 54 60 58' },
+    { layer: 'solid', d: circle(45, 48, 2.6) + circle(59, 48, 2.6) }
   ],
+  /** The ink disc with the tick and pastel confetti. */
   success: [
-    { layer: 'soft', d: circle(66, 66, 42) },
-    { layer: 'line', d: circle(60, 60, 42) },
-    { layer: 'line', d: 'M40 62L54 76L82 44' },
-    spark(100, 16), spark(18, 26, 4), spark(106, 98, 4)
+    ...stage(26),
+    { layer: 'solid', d: circle(60, 56, 30) },
+    { layer: 'knock', w: 6, d: check(60, 56, 2) },
+    { layer: 'soft', d: rect(18, 28, 9, 9, 2) + rect(94, 34, 9, 9, 2) + circle(98, 80, 4.5) + circle(22, 76, 4.5) + rect(76, 14, 7, 7, 2) }
   ],
 
   // ---- Host ------------------------------------------------------------------------------------------------------
-  /** A round table seen from above with an empty chair: the first guest goes here. */
+  /** A table from above, chairs taken in stone and the empty one in pastel: the first guest goes here. */
   guestsEmpty: [
-    { layer: 'soft', d: circle(66, 66, 24) },
-    { layer: 'line', d: circle(60, 60, 24) },
-    { layer: 'line', d: 'M60 51V69M51 60H69' },
-    { layer: 'line', d: arcAt(60, 60, 42, -124, -56) },
-    { layer: 'line', d: arcAt(60, 60, 42, -34, 34) },
-    { layer: 'line', d: arcAt(60, 60, 42, 146, 214) },
-    { layer: 'accent', d: arcAt(60, 60, 42, 56, 124) },
-    spark(106, 18, 5)
+    ...stage(20, 100),
+    { layer: 'stone', d: circle(60, 24, 8) + circle(92, 56, 8) + circle(28, 56, 8) },
+    { layer: 'solid', d: circle(60, 56, 22) },
+    { layer: 'knock', w: 3.5, d: 'M60 48V64M52 56H68' },
+    { layer: 'soft', d: circle(60, 88, 8) }
   ],
-  /** A speech bubble with the check: someone answered. */
+  /** A speech bubble with the tick and a pastel dot: someone answered. */
   firstReply: [
-    { layer: 'soft', d: rect(20, 28, 92, 58, 18) },
-    { layer: 'line', d: rect(14, 22, 92, 58, 18) },
-    { layer: 'line', d: 'M34 80L30 102L54 80' },
-    { layer: 'line', d: check(60, 51, 2.3) },
-    spark(106, 12, 6), spark(14, 12, 4)
+    ...stage(),
+    { layer: 'solid', d: rect(22, 30, 72, 50, 16) },
+    { layer: 'solid', d: poly([[36, 76], [32, 96], [56, 78]], true) },
+    { layer: 'knock', w: 5, d: check(58, 55, 1.9) },
+    { layer: 'knockFill', d: circle(92, 32, 13) },
+    { layer: 'soft', d: circle(92, 32, 10) }
   ],
   /** The gift box with the lid lifted and nothing inside yet. */
   noGifts: [
-    { layer: 'soft', d: rect(18, 60, 76, 50, 12) },
-    { layer: 'line', d: rect(12, 54, 76, 50, 12) },
-    { layer: 'line', d: 'M50 54V104' },
-    { layer: 'line', d: rect(28, 18, 84, 18, 9) },
-    { layer: 'line', d: 'M70 18V36' },
-    spark(18, 30, 6)
+    ...stage(),
+    { layer: 'solid', d: rect(28, 60, 64, 38, 8) },
+    { layer: 'stone', d: rect(32, 60, 56, 8, 3) },
+    { layer: 'solid', d: 'M30 46L86 30L90 42L34 58Z' },
+    { layer: 'soft', d: poly([[55, 38.8], [61, 37.1], [65, 49.1], [59, 50.8]], true) }
   ],
   /** The gift with the seal: someone reserved it. */
-  giftReserved: [...GIFT, ...seal(96, 92, 16), spark(104, 14), spark(14, 22, 4)],
-  /** An arched invitation card with the D on it, and the light of "it is out". */
+  giftReserved: [...stage(), ...gift(-6), ...seal(88, 86, 12)],
+  /** An arched invitation with the D, and the pastel light of "it is out". */
   published: [
-    { layer: 'soft', d: archCard(34, 18, 64, 92) },
-    { layer: 'line', d: archCard(28, 12, 64, 92) },
-    ...dMark(46, 38, 34),
-    { layer: 'line', d: 'M44 88H76M52 97H68' },
-    spark(106, 16, 6), spark(12, 40, 4)
+    ...stage(),
+    { layer: 'soft', d: circle(86, 28, 11) },
+    { layer: 'line', w: 3, d: 'M100 18L105 13M102 32H109' },
+    { layer: 'solid', d: archCard(34, 22, 52, 76) },
+    { layer: 'knock', w: 3.5, d: dShape(47, 50, 28) },
+    dTick(47, 50, 28, 3.5)
   ],
-  /** A clock with the lock: the deadline passed. */
+  /** A clock with the pastel padlock: the deadline passed. */
   deadlineClosed: [
-    { layer: 'soft', d: circle(58, 62, 38) },
-    { layer: 'line', d: circle(52, 56, 38) },
-    { layer: 'line', d: 'M52 56V34M52 56L68 66' },
-    { layer: 'line', d: 'M52 22V26M52 86V90M18 56H22M82 56H86' },
-    { layer: 'solid', d: circle(92, 92, 17) },
-    { layer: 'knockFill', d: rect(85.5, 91, 13, 10, 2.5) },
-    { layer: 'knock', w: 3, d: 'M88.5 91V88a3.5 3.5 0 0 1 7 0V91' },
-    spark(100, 18, 6)
+    ...stage(),
+    { layer: 'solid', d: circle(54, 56, 32) },
+    { layer: 'knock', w: 4, d: 'M54 56V38M54 56L68 64' },
+    { layer: 'knock', w: 3, d: 'M54 30V33M54 79V82M28 56H31M77 56H80' },
+    { layer: 'line', w: 4, d: 'M82 76V70a7 7 0 0 1 14 0V76' },
+    { layer: 'knockFill', d: rect(73, 73, 32, 27, 7) },
+    { layer: 'soft', d: rect(76, 76, 26, 21, 5) },
+    { layer: 'solid', d: circle(89, 85, 2.6) }
   ],
   /** Garland, then the D: the host's welcome. */
   welcomeHost: ((): readonly Shape[] => {
-    const a: Pt = [6, 10]; const b: Pt = [60, 34]; const c: Pt = [114, 10];
+    const a: Pt = [10, 14]; const b: Pt = [60, 36]; const c: Pt = [110, 14];
     const at = (t: number): Pt => quad(a, b, c, t);
+    const flagAt = (t: number): string => { const p = at(t); return poly([[p[0] - 8, p[1] + 1], [p[0] + 8, p[1] + 1], [p[0], p[1] + 17]], true); };
     return [
-      { layer: 'line', d: `M${a[0]} ${a[1]}Q${b[0]} ${b[1]} ${c[0]} ${c[1]}` },
-      flag(at(0.16), 'line'), flag(at(0.38), 'line'), flag(at(0.62), 'line'), flag(at(0.84), 'line'),
-      { layer: 'soft', d: dShape(44, 54, 56) },
-      ...dMark(35.9, 48, 56)
+      ...stage(28),
+      { layer: 'line', w: 3, d: `M${a[0]} ${a[1]}Q${b[0]} ${b[1]} ${c[0]} ${c[1]}` },
+      { layer: 'solid', d: flagAt(0.14) + flagAt(0.5) + flagAt(0.86) },
+      { layer: 'soft', d: flagAt(0.32) + flagAt(0.68) },
+      { layer: 'solid', d: dShape(36, 46, 52) },
+      dTick(36, 46, 52, 5)
     ];
   })(),
 
   // ---- Guest -----------------------------------------------------------------------------------------------------
-  /** A chain whose links came apart: the link no longer works. */
+  /** A chain whose links came apart, with a pastel light in the gap. */
   linkExpired: [
-    { layer: 'soft', d: capsule(24, 106, 50, 80, 14) + capsule(82, 52, 108, 26, 14) },
-    { layer: 'line', d: capsule(18, 100, 44, 74, 14) },
-    { layer: 'line', d: capsule(76, 46, 102, 20, 14) },
-    { layer: 'accent', d: 'M52 52L68 68' },
-    spark(100, 82, 5), spark(18, 30, 4)
+    ...stage(),
+    { layer: 'solid', d: capsule(28, 90, 48, 70, 13) },
+    { layer: 'knockFill', d: capsule(28, 90, 48, 70, 5.5) },
+    { layer: 'solid', d: capsule(72, 46, 92, 26, 13) },
+    { layer: 'knockFill', d: capsule(72, 46, 92, 26, 5.5) },
+    { layer: 'soft', d: circle(60, 58, 7) }
   ],
-  /** The invitation rising out of its envelope for a guest who just arrived. */
+  /** The pastel invitation rising out of its ink envelope for a guest who just arrived. */
   welcomeGuest: [
-    { layer: 'soft', d: 'M16 62V100a8 8 0 0 0 8 8H104a8 8 0 0 0 8-8V62Z' },
-    { layer: 'line', d: 'M32 67V26a10 10 0 0 1 10-10H78a10 10 0 0 1 10 10V67' },
-    { layer: 'line', d: check(60, 38, 2) },
-    { layer: 'line', d: 'M10 54L60 84L110 54V96a10 10 0 0 1-10 10H20a10 10 0 0 1-10-10Z' },
-    spark(104, 14, 6), spark(16, 24, 4)
+    ...stage(),
+    { layer: 'stone', d: rect(24, 52, 72, 46, 6) },
+    { layer: 'soft', d: rect(36, 22, 48, 54, 6) },
+    { layer: 'line', w: 3, d: check(60, 40, 1.5) },
+    { layer: 'solid', d: 'M24 56L60 78L96 56V92a6 6 0 0 1-6 6H30a6 6 0 0 1-6-6Z' }
   ],
 
   // ---- Provider --------------------------------------------------------------------------------------------------
-  /** A price tag with nothing on it yet. */
+  /** A price tag on its string, the price still blank in pastel. */
   noOffers: [
-    { layer: 'soft', d: offset(TAG, 6, 6) },
-    { layer: 'line', d: TAG },
-    { layer: 'line', d: circle(41, 39, 5) },
-    spark(62, 58, 8)
+    ...stage(),
+    { layer: 'line', w: 3, d: 'M42 40C34 24 48 12 58 20' },
+    { layer: 'solid', d: TAG },
+    { layer: 'knockFill', d: circle(42, 42, 5) },
+    { layer: 'soft', d: poly([[56, 62], [70, 48], [80, 58], [66, 72]], true) }
   ],
-  /** The tag with the seal: the offer is live. */
+  /** The tag with the pastel badge: the offer is live. */
   offerPublished: [
-    { layer: 'soft', d: offset(TAG, 6, 6) },
-    { layer: 'line', d: TAG },
-    { layer: 'line', d: circle(41, 39, 5) },
-    ...seal(92, 90, 16),
-    spark(104, 24, 5)
+    ...stage(),
+    { layer: 'line', w: 3, d: 'M42 40C34 24 48 12 58 20' },
+    { layer: 'solid', d: TAG },
+    { layer: 'knockFill', d: circle(42, 42, 5) },
+    ...badge(86, 86, 12)
   ],
-  /** An open calendar: free days, and the spot for the first booking. */
+  /** An open calendar: free days, and the pastel spot for the first booking. */
   freeAgenda: [
-    { layer: 'soft', d: rect(22, 32, 88, 78, 16) },
-    { layer: 'line', d: rect(16, 26, 88, 78, 16) },
-    { layer: 'line', d: 'M16 50H104M40 16V34M80 16V34' },
-    { layer: 'solid', d: [[36, 68], [60, 68], [84, 68], [36, 86], [60, 86]].map(([x, y]) => circle(x!, y!, 3.5)).join('') },
-    { layer: 'line', d: circle(84, 86, 6) }
+    ...stage(),
+    ...calendarBody,
+    { layer: 'soft', d: rect(66, 70, 18, 16, 4) },
+    { layer: 'line', w: 2.5, d: 'M75 73V83M70 78H80' }
   ],
-  /** A person with the plus: a new client. */
+  /** A person and the pastel plus: a new client (no face, only the shape). */
   newClient: [
-    { layer: 'soft', d: circle(62, 40, 17) },
-    { layer: 'line', d: circle(56, 34, 17) },
-    { layer: 'line', d: 'M20 104C20 78 38 66 56 66C74 66 92 78 92 104' },
-    { layer: 'solid', d: circle(94, 40, 16) },
-    { layer: 'knock', w: 4, d: 'M94 32V48M86 40H102' },
-    spark(104, 82, 5)
+    ...stage(28),
+    { layer: 'solid', d: circle(50, 40, 14) },
+    { layer: 'solid', d: 'M22 98C22 74 36 62 50 62C64 62 78 74 78 98Z' },
+    { layer: 'knockFill', d: circle(88, 46, 15) },
+    { layer: 'soft', d: circle(88, 46, 12) },
+    { layer: 'line', w: 3, d: 'M88 40V52M82 46H94' }
   ],
-  /** The D drawn halfway: the check is on its way. */
+  /** The D with the first leg of the tick, the rest in pastel dots on its way. */
   verifying: ((): readonly Shape[] => {
-    const { x, y, h } = VERIFY_D; const k = h / 28;
+    const { x, y, h } = D; const k = h / 28;
     const cx = x + 0.43 * h; const cy = y + 0.5 * h;
-    // The three points of the check (see `check`), so the dots follow the second leg that is still to be drawn.
     const p0: Pt = [cx - 7 * k, cy]; const p1: Pt = [cx - 2 * k, cy + 5 * k]; const p2: Pt = [cx + 7 * k, cy - 6 * k];
-    const dots = [0.3, 0.58, 0.86].map((t) => lerp(p1, p2, t));
+    const dots = [0.3, 0.6, 0.9].map((t) => lerp(p1, p2, t));
     return [
-      { layer: 'soft', d: dShape(x + 6, y + 6, h) },
-      { layer: 'line', d: dShape(x, y, h) },
-      { layer: 'line', w: 7, d: poly([p0, p1]) },
-      { layer: 'line', d: dots.map(([dx, dy]) => circle(dx, dy, 3.6)).join('') }
+      ...stage(28),
+      { layer: 'solid', d: dShape(x, y, h) },
+      { layer: 'knock', w: 7, d: poly([p0, p1]) },
+      { layer: 'soft', d: dots.map(([dx, dy]) => circle(dx, dy, 4.8)).join('') }
     ];
   })(),
-  /** The D, solid, with the check knocked out: verified. */
+  /** The solid D with the tick knocked out, and its pastel light: verified. */
   verified: [
-    { layer: 'soft', d: dShape(VERIFY_D.x + 8, VERIFY_D.y + 8, VERIFY_D.h) },
-    ...dMark(VERIFY_D.x, VERIFY_D.y, VERIFY_D.h),
-    spark(106, 14, 6), spark(12, 100, 4)
+    ...stage(28),
+    { layer: 'soft', d: circle(90, 28, 10) },
+    { layer: 'line', w: 3, d: 'M104 18L108 14M106 30H112' },
+    { layer: 'solid', d: dShape(D.x, D.y, D.h) },
+    dTick(D.x, D.y, D.h, 7)
   ],
-  /** Paused: a quiet circle with two bars. Sober, nothing alarming. */
+  /** Paused: an ink disc with two bars and a quiet pastel moon. */
   suspended: [
-    { layer: 'soft', d: circle(60, 60, 38) },
-    { layer: 'line', d: circle(54, 54, 38) },
-    { layer: 'line', d: 'M44 40V68M64 40V68' },
-    { layer: 'line', d: circle(100, 20, 4.5) }
+    ...stage(26),
+    { layer: 'soft', d: circle(90, 26, 9) },
+    { layer: 'solid', d: circle(58, 58, 30) },
+    { layer: 'knock', w: 7, d: 'M49 46V70M67 46V70' }
   ],
-  /** The stall: awning and counter. */
+  /** The stall: pastel awning, ink counter with the tick. */
   welcomeProvider: [
-    { layer: 'line', d: 'M40 14H60V38a12 12 0 0 1-24 0Z' },
-    { layer: 'soft', d: rect(24, 64, 84, 44, 10) },
-    { layer: 'line', d: 'M20 14H100L108 38H12Z' },
-    { layer: 'line', d: 'M12 38a12 12 0 0 0 24 0a12 12 0 0 0 24 0a12 12 0 0 0 24 0a12 12 0 0 0 24 0' },
-    { layer: 'line', d: 'M40 14L36 38M60 14V38M80 14L84 38' },
-    { layer: 'line', d: 'M18 64V96a8 8 0 0 0 8 8H94a8 8 0 0 0 8-8V64' },
-    ...seal(60, 84, 14),
-    spark(110, 12, 5)
+    ...stage(36),
+    { layer: 'line', w: 4, d: 'M28 42V60M92 42V60' },
+    { layer: 'solid', d: rect(24, 58, 72, 40, 6) },
+    { layer: 'knock', w: 4, d: check(60, 78, 1.5) },
+    { layer: 'soft', d: 'M28 22H92L102 42a7 7 0 0 1-14 0a7 7 0 0 1-14 0a7 7 0 0 1-14 0a7 7 0 0 1-14 0a7 7 0 0 1-14 0a7 7 0 0 1-14 0Z' },
+    { layer: 'line', w: 2.5, d: 'M48 22L45 42M60 22V42M72 22L75 42' }
   ],
 
   // ---- Admin -----------------------------------------------------------------------------------------------------
-  /** An inbox with the check above it: all caught up. */
+  /** An inbox tray with the pastel tick above it: all caught up. */
   nothingPending: [
-    { layer: 'soft', d: 'M18 80L32 52H100L114 80V102a8 8 0 0 1-8 8H26a8 8 0 0 1-8-8Z' },
-    { layer: 'line', d: 'M12 74L26 46H94L108 74V96a8 8 0 0 1-8 8H20a8 8 0 0 1-8-8Z' },
-    { layer: 'line', d: 'M12 74H42a18 18 0 0 0 36 0H108' },
-    { layer: 'line', d: check(60, 24, 2.2) },
-    spark(104, 18, 6)
+    ...stage(36),
+    { layer: 'solid', d: 'M24 72L34 52H86L96 72V92a6 6 0 0 1-6 6H30a6 6 0 0 1-6-6Z' },
+    { layer: 'knock', w: 3.5, d: 'M24 72H44a16 16 0 0 0 32 0H96' },
+    ...badge(60, 30, 12)
   ],
   /** A sheet of people with the seal: the import finished. */
   importDone: [
-    { layer: 'soft', d: rect(24, 18, 66, 88, 12) },
-    { layer: 'line', d: rect(18, 12, 66, 88, 12) },
-    { layer: 'line', d: circle(36, 36, 6.5) }, { layer: 'line', d: 'M50 36H70' },
-    { layer: 'line', d: circle(36, 58, 6.5) }, { layer: 'line', d: 'M50 58H70' },
-    { layer: 'line', d: circle(36, 80, 6.5) }, { layer: 'line', d: 'M50 80H62' },
-    ...seal(88, 92, 17)
+    ...stage(),
+    { layer: 'solid', d: rect(28, 20, 56, 78, 8) },
+    { layer: 'knock', w: 3, d: `${circle(42, 38, 5)}M54 38H72${circle(42, 58, 5)}M54 58H72${circle(42, 78, 5)}M54 78H64` },
+    ...badge(86, 86, 12)
   ],
 
   // ---- Access and system -----------------------------------------------------------------------------------------
-  /** A closed padlock with a keyhole: you do not have access here. */
+  /** A closed padlock with a pastel keyhole: you do not have access here. */
   noAccess: [
-    { layer: 'soft', d: rect(32, 56, 68, 54, 14) },
-    { layer: 'line', d: rect(26, 50, 68, 54, 14) },
-    { layer: 'line', d: 'M40 50V38a20 20 0 0 1 40 0V50' },
-    { layer: 'line', d: circle(60, 74, 7) },
-    { layer: 'line', d: 'M60 78V90' },
-    spark(104, 20, 6)
+    ...stage(30),
+    { layer: 'line', w: 8, d: 'M44 54V42a16 16 0 0 1 32 0V54' },
+    { layer: 'solid', d: rect(30, 52, 60, 46, 10) },
+    { layer: 'soft', d: circle(60, 70, 6) + rect(57, 72, 6, 14, 3) }
   ],
-  /** A lens over a person: looking for someone. */
+  /** A magnifier over a person: looking for someone. */
   searching: [
-    { layer: 'soft', d: circle(56, 56, 32) },
-    { layer: 'line', d: circle(50, 50, 32) },
-    { layer: 'line', d: circle(50, 42, 8) },
-    { layer: 'line', d: 'M34 68C36 57 64 57 66 68' },
-    { layer: 'line', d: 'M74 74L102 102' },
-    { layer: 'accent', d: 'M30 36A22 22 0 0 1 38 28' },
-    spark(100, 24, 5)
+    ...stage(26),
+    ...lens,
+    { layer: 'line', w: 2.5, d: `${circle(52, 46, 5)}M42 64C44 55 60 55 62 64` }
   ],
-  /** Two server units and a crack between them. */
+  /** Two server units and a pastel crack between them. */
   serverError: [
-    { layer: 'soft', d: rect(24, 20, 84, 30, 10) + rect(24, 76, 84, 30, 10) },
-    { layer: 'line', d: rect(18, 14, 84, 30, 10) },
-    { layer: 'line', d: rect(18, 70, 84, 30, 10) },
-    { layer: 'solid', d: circle(34, 29, 3.5) }, { layer: 'line', d: 'M50 29H84' },
-    { layer: 'solid', d: circle(34, 85, 3.5) }, { layer: 'line', d: 'M50 85H72' },
-    { layer: 'accent', d: 'M62 44L54 53L66 60L58 70' }
+    ...stage(),
+    { layer: 'solid', d: rect(28, 24, 64, 28, 8) },
+    { layer: 'solid', d: rect(28, 70, 64, 28, 8) },
+    { layer: 'knockFill', d: circle(40, 38, 3.5) + circle(40, 84, 3.5) },
+    { layer: 'knock', w: 3, d: 'M52 38H80M52 84H72' },
+    { layer: 'soft', d: poly([[64, 50], [54, 62], [63, 63], [56, 74], [70, 59], [61, 58], [68, 50]], true) }
   ],
-  /** A traffic cone with two stripes: back soon. */
+  /** A traffic cone with pastel stripes: back soon. */
   maintenance: [
-    { layer: 'soft', d: poly([[58, 20], [74, 20], [96, 104], [36, 104]], true) },
-    { layer: 'line', d: poly([[52, 14], [68, 14], [90, 98], [30, 98]], true) },
-    { layer: 'line', d: rect(20, 98, 80, 12, 6) },
-    { layer: 'accent', d: 'M47 48H73M40 74H80' }
+    ...stage(),
+    { layer: 'solid', d: poly([[54, 24], [66, 24], [84, 90], [36, 90]], true) },
+    { layer: 'solid', d: rect(26, 88, 68, 10, 4) },
+    { layer: 'soft', d: poly([[48.5, 44], [71.5, 44], [73.6, 52], [46.4, 52]], true) + poly([[43.1, 64], [76.9, 64], [79.1, 72], [40.9, 72]], true) }
   ],
-  /** A compass that lost the north: the page is not here. */
+  /** A compass whose pastel needle lost the north: the page is not here. */
   notFound: [
-    { layer: 'soft', d: circle(64, 64, 40) },
-    { layer: 'line', d: circle(58, 58, 40) },
-    { layer: 'line', d: 'M58 22V27M58 89V94M22 58H27M89 58H94' },
-    { layer: 'line', d: poly([[58, 30], [70, 58], [46, 58]], true) },
-    { layer: 'line', d: poly([[46, 58], [58, 86], [70, 58]]) },
-    { layer: 'solid', d: circle(58, 58, 3) }
+    ...stage(26),
+    { layer: 'solid', d: circle(60, 58, 32) },
+    { layer: 'knock', w: 2, d: circle(60, 58, 25) },
+    { layer: 'soft', d: poly([[72, 40], [64, 61], [56, 55]], true) },
+    { layer: 'knockFill', d: poly([[56, 55], [48, 76], [64, 61]], true) },
+    { layer: 'solid', d: circle(60, 58, 3) }
+  ],
+
+  // ---- Public home (site `landing.tsx` and web app `landing-screen.tsx`, the same drawings) -------------------------
+  /** The promise: a paper plane on its way, its pastel trail behind it. */
+  landingSend: [
+    ...stage(24),
+    { layer: 'stone', d: poly([[100, 24], [52, 64], [62, 90]], true) },
+    { layer: 'solid', d: poly([[100, 24], [16, 52], [52, 64]], true) },
+    { layer: 'solid', d: poly([[52, 64], [48, 80], [60, 72]], true) },
+    { layer: 'knock', w: 2.5, d: 'M100 24L52 64' },
+    { layer: 'soft', d: circle(36, 80, 5.5) + circle(25, 88, 4.5) + circle(16, 95, 3.5) }
+  ],
+  /** Step one, create: the arched invitation with its lines and the pastel pencil that writes it. */
+  landingCreate: [
+    ...stage(30),
+    { layer: 'solid', d: archCard(26, 22, 50, 76, 10) },
+    { layer: 'knock', w: 3, d: circle(51, 48, 6) },
+    { layer: 'knock', w: 3, d: 'M38 66H64M42 76H60' },
+    { layer: 'knockFill', d: capsule(98, 30, 72, 76, 9) },
+    { layer: 'soft', d: capsule(98, 30, 72, 76, 6) },
+    { layer: 'solid', d: poly([[77.22, 78.95], [66.78, 73.05], [66.1, 86.45]], true) }
+  ],
+  /** Step two, share: the phone with a pastel bubble that carries the link. */
+  landingShare: [
+    ...stage(26),
+    { layer: 'solid', d: rect(28, 18, 44, 80, 10) },
+    { layer: 'knock', w: 3, d: 'M44 27H56' },
+    { layer: 'knockFill', d: circle(50, 89, 3) },
+    { layer: 'knockFill', d: rect(47, 33, 58, 32, 13) },
+    { layer: 'soft', d: rect(50, 36, 52, 26, 10) },
+    { layer: 'line', w: 2.5, d: `${capsule(62, 49, 70, 49, 5)}${capsule(82, 49, 90, 49, 5)}M70 49H82` }
+  ],
+  /** Step three, see who comes: the list on its clipboard, two answers ticked and the pastel one still to come. */
+  landingReplies: [
+    ...stage(30),
+    { layer: 'solid', d: rect(28, 22, 64, 76, 9) },
+    { layer: 'stone', d: rect(46, 15, 28, 13, 5) },
+    { layer: 'knock', w: 3, d: `${check(41, 46, 0.7)}${check(41, 64, 0.7)}M54 46H80M54 64H76M54 82H70` },
+    { layer: 'soft', d: circle(41, 82, 5.5) }
   ]
 };
 
-/** The shapes of each illustration, without the sparkles. */
-export const ILLUSTRATIONS = Object.fromEntries(
-  (Object.entries(RAW) as [IllustrationName, readonly Shape[]][]).map(([name, shapes]) => [name, shapes.filter((shape) => shape.layer !== 'spark')])
-) as unknown as Record<IllustrationName, readonly Shape[]>;
+/** The shapes of each illustration. */
+export const ILLUSTRATIONS = RAW;

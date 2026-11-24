@@ -1,0 +1,540 @@
+{
+  "app": "https://dev.done.arauzsoftware.com",
+  "site": "https://rsvp-web.161.97.85.216.sslip.io",
+  "results": [
+    {
+      "route": "celebracion-404",
+      "path": "/c/no-existe-espejo-paridad",
+      "locale": "es-BO",
+      "same": false,
+      "webStatus": 404,
+      "appUrl": "https://dev.done.arauzsoftware.com/c/no-existe-espejo-paridad",
+      "web": [
+        "Esta celebración no está disponible"
+      ],
+      "app": [
+        "Esta celebración no está disponible"
+      ],
+      "webArt": [],
+      "appArt": [
+        "notFound"
+      ],
+      "webActions": [
+        "Ir al inicio"
+      ],
+      "appActions": [
+        "Ir al inicio"
+      ],
+      "detail": "art web=[] app=[\"notFound\"]",
+      "at": "2026-11-23T11:41:33.440Z"
+    },
+    {
+      "route": "celebracion-404",
+      "path": "/c/no-existe-espejo-paridad",
+      "locale": "en-US",
+      "same": false,
+      "webStatus": 404,
+      "appUrl": "https://dev.done.arauzsoftware.com/c/no-existe-espejo-paridad",
+      "web": [
+        "This celebration is not available"
+      ],
+      "app": [
+        "This celebration is not available"
+      ],
+      "webArt": [],
+      "appArt": [
+        "notFound"
+      ],
+      "webActions": [
+        "Go to the home page"
+      ],
+      "appActions": [
+        "Go to the home page"
+      ],
+      "detail": "art web=[] app=[\"notFound\"]",
+      "at": "2026-11-23T11:41:42.840Z"
+    },
+    {
+      "route": "directorio-vacio",
+      "path": "/proveedores/salones/santa-cruz",
+      "locale": "es-BO",
+      "same": false,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/proveedores/salones/santa-cruz",
+      "web": [
+        "Salones de eventos en Santa Cruz de la Sierra",
+        "Esta categoría en otras ciudades",
+        "Otras categorías en Santa Cruz de la Sierra"
+      ],
+      "app": [
+        "Salones de eventos en Santa Cruz de la Sierra",
+        "Todavía no hay proveedores publicados aquí.",
+        "Esta categoría en otras ciudades",
+        "Otras categorías en Santa Cruz de la Sierra"
+      ],
+      "webArt": [],
+      "appArt": [
+        "emptySearch"
+      ],
+      "webActions": [
+        "Inicio",
+        "Proveedores",
+        "Salones de eventos",
+        "Ver todas las categorías",
+        "Salones de eventos en La Paz",
+        "Salones de eventos en Cochabamba",
+        "Salones de eventos en Sucre",
+        "Salones de eventos en Tarija",
+        "Salones de eventos en Oruro",
+        "Salones de eventos en Potosí",
+        "Salones de eventos en Trinidad",
+        "Salones de eventos en Cobija"
+      ],
+      "appActions": [
+        "Proveedores",
+        "Salones de eventos",
+        "Ver todas las categorías",
+        "Salones de eventos en La Paz",
+        "Salones de eventos en Cochabamba",
+        "Salones de eventos en Sucre",
+        "Salones de eventos en Tarija",
+        "Salones de eventos en Oruro",
+        "Salones de eventos en Potosí",
+        "Salones de eventos en Trinidad",
+        "Salones de eventos en Cobija",
+        "Catering"
+      ],
+      "detail": "headings web=[\"Salones de eventos en Santa Cruz de la Sierra\",\"Esta categoría en otras ciudades\",\"Otras categorías en Santa Cruz de la Sierra\"] app=[\"Salones de eventos en Santa Cruz de la Sierra\",\"Todavía no hay proveedores publicados aquí.\",\"Esta categoría en otras ciudades\",\"Otras categorías en Santa Cruz de la Sierra\"] · art web=[] app=[\"emptySearch\"]",
+      "at": "2026-11-23T11:41:51.440Z"
+    },
+    {
+      "route": "directorio-vacio",
+      "path": "/proveedores/salones/santa-cruz",
+      "locale": "en-US",
+      "same": false,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/proveedores/salones/santa-cruz",
+      "web": [
+        "Event venues in Santa Cruz de la Sierra",
+        "This category in other cities",
+        "Other categories in Santa Cruz de la Sierra"
+      ],
+      "app": [
+        "Event venues in Santa Cruz de la Sierra",
+        "No vendors are published here yet.",
+        "This category in other cities",
+        "Other categories in Santa Cruz de la Sierra"
+      ],
+      "webArt": [],
+      "appArt": [
+        "emptySearch"
+      ],
+      "webActions": [
+        "Home",
+        "Vendors",
+        "Event venues",
+        "See all categories",
+        "Event venues in La Paz",
+        "Event venues in Cochabamba",
+        "Event venues in Sucre",
+        "Event venues in Tarija",
+        "Event venues in Oruro",
+        "Event venues in Potosí",
+        "Event venues in Trinidad",
+        "Event venues in Cobija"
+      ],
+      "appActions": [
+        "Vendors",
+        "Event venues",
+        "See all categories",
+        "Event venues in La Paz",
+        "Event venues in Cochabamba",
+        "Event venues in Sucre",
+        "Event venues in Tarija",
+        "Event venues in Oruro",
+        "Event venues in Potosí",
+        "Event venues in Trinidad",
+        "Event venues in Cobija",
+        "Catering"
+      ],
+      "detail": "headings web=[\"Event venues in Santa Cruz de la Sierra\",\"This category in other cities\",\"Other categories in Santa Cruz de la Sierra\"] app=[\"Event venues in Santa Cruz de la Sierra\",\"No vendors are published here yet.\",\"This category in other cities\",\"Other categories in Santa Cruz de la Sierra\"] · art web=[] app=[\"emptySearch\"]",
+      "at": "2026-11-23T11:42:02.866Z"
+    },
+    {
+      "route": "partner-agenda",
+      "path": "/p/multicenter-59388c/agenda",
+      "locale": "es-BO",
+      "same": true,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/p/multicenter-59388c/agenda",
+      "web": [
+        "Disponibilidad de Katering Grecia",
+        "noviembre de 2026",
+        "Katering Grecia todavía no publicó sus días para noviembre de 2026"
+      ],
+      "app": [
+        "Disponibilidad de Katering Grecia",
+        "noviembre de 2026",
+        "Katering Grecia todavía no publicó sus días para noviembre de 2026"
+      ],
+      "webArt": [],
+      "appArt": [],
+      "webActions": [
+        "Katering Grecia",
+        "Mes anterior",
+        "Mes siguiente",
+        "Pedir cotización",
+        "Ver el mes siguiente"
+      ],
+      "appActions": [
+        "Proveedores",
+        "Katering Grecia",
+        "Mes anterior",
+        "Mes siguiente",
+        "Pedir cotización",
+        "Ver el mes siguiente"
+      ],
+      "detail": "",
+      "at": "2026-11-23T11:42:15.869Z"
+    },
+    {
+      "route": "partner-agenda",
+      "path": "/p/multicenter-59388c/agenda",
+      "locale": "en-US",
+      "same": true,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/p/multicenter-59388c/agenda",
+      "web": [
+        "Katering Grecia's availability",
+        "November 2026",
+        "Katering Grecia has not published their days for November 2026 yet"
+      ],
+      "app": [
+        "Katering Grecia's availability",
+        "November 2026",
+        "Katering Grecia has not published their days for November 2026 yet"
+      ],
+      "webArt": [],
+      "appArt": [],
+      "webActions": [
+        "Katering Grecia",
+        "Previous month",
+        "Next month",
+        "Ask for a quote",
+        "See next month"
+      ],
+      "appActions": [
+        "Vendors",
+        "Katering Grecia",
+        "Previous month",
+        "Next month",
+        "Ask for a quote",
+        "See next month"
+      ],
+      "detail": "",
+      "at": "2026-11-23T11:42:27.595Z"
+    },
+    {
+      "route": "partner-404",
+      "path": "/p/no-existe-espejo-paridad",
+      "locale": "es-BO",
+      "same": false,
+      "webStatus": 404,
+      "appUrl": "https://dev.done.arauzsoftware.com/p/no-existe-espejo-paridad",
+      "web": [
+        "No encontramos a este proveedor"
+      ],
+      "app": [
+        "No encontramos a este proveedor"
+      ],
+      "webArt": [],
+      "appArt": [
+        "notFound"
+      ],
+      "webActions": [
+        "Volver a proveedores"
+      ],
+      "appActions": [
+        "Volver a proveedores"
+      ],
+      "detail": "art web=[] app=[\"notFound\"]",
+      "at": "2026-11-23T11:42:38.955Z"
+    },
+    {
+      "route": "partner-404",
+      "path": "/p/no-existe-espejo-paridad",
+      "locale": "en-US",
+      "same": false,
+      "webStatus": 404,
+      "appUrl": "https://dev.done.arauzsoftware.com/p/no-existe-espejo-paridad",
+      "web": [
+        "We could not find this vendor"
+      ],
+      "app": [
+        "We could not find this vendor"
+      ],
+      "webArt": [],
+      "appArt": [
+        "notFound"
+      ],
+      "webActions": [
+        "Back to vendors"
+      ],
+      "appActions": [
+        "Back to vendors"
+      ],
+      "detail": "art web=[] app=[\"notFound\"]",
+      "at": "2026-11-23T11:42:52.932Z"
+    },
+    {
+      "route": "privacidad",
+      "path": "/privacidad",
+      "locale": "es-BO",
+      "same": true,
+      "webStatus": 404,
+      "appUrl": "https://dev.done.arauzsoftware.com/privacidad",
+      "web": [
+        "Esta página no existe"
+      ],
+      "app": [
+        "Esta página no existe"
+      ],
+      "webArt": [],
+      "appArt": [],
+      "webActions": [
+        "Ir al inicio"
+      ],
+      "appActions": [
+        "Ir al inicio"
+      ],
+      "detail": "",
+      "at": "2026-11-23T11:43:01.505Z"
+    },
+    {
+      "route": "privacidad",
+      "path": "/privacidad",
+      "locale": "en-US",
+      "same": true,
+      "webStatus": 404,
+      "appUrl": "https://dev.done.arauzsoftware.com/privacidad",
+      "web": [
+        "This page does not exist"
+      ],
+      "app": [
+        "This page does not exist"
+      ],
+      "webArt": [],
+      "appArt": [],
+      "webActions": [
+        "Go to the home page"
+      ],
+      "appActions": [
+        "Go to the start"
+      ],
+      "detail": "",
+      "at": "2026-11-23T11:43:12.065Z"
+    },
+    {
+      "route": "terminos",
+      "path": "/terminos",
+      "locale": "es-BO",
+      "same": true,
+      "webStatus": 404,
+      "appUrl": "https://dev.done.arauzsoftware.com/terminos",
+      "web": [
+        "Esta página no existe"
+      ],
+      "app": [
+        "Esta página no existe"
+      ],
+      "webArt": [],
+      "appArt": [],
+      "webActions": [
+        "Ir al inicio"
+      ],
+      "appActions": [
+        "Ir al inicio"
+      ],
+      "detail": "",
+      "at": "2026-11-23T11:43:21.749Z"
+    },
+    {
+      "route": "terminos",
+      "path": "/terminos",
+      "locale": "en-US",
+      "same": true,
+      "webStatus": 404,
+      "appUrl": "https://dev.done.arauzsoftware.com/terminos",
+      "web": [
+        "This page does not exist"
+      ],
+      "app": [
+        "This page does not exist"
+      ],
+      "webArt": [],
+      "appArt": [],
+      "webActions": [
+        "Go to the home page"
+      ],
+      "appActions": [
+        "Go to the start"
+      ],
+      "detail": "",
+      "at": "2026-11-23T11:43:31.397Z"
+    },
+    {
+      "route": "404",
+      "path": "/ruta-que-no-existe-espejo",
+      "locale": "es-BO",
+      "same": true,
+      "webStatus": 404,
+      "appUrl": "https://dev.done.arauzsoftware.com/ruta-que-no-existe-espejo",
+      "web": [
+        "Esta página no existe"
+      ],
+      "app": [
+        "Esta página no existe"
+      ],
+      "webArt": [],
+      "appArt": [],
+      "webActions": [
+        "Ir al inicio"
+      ],
+      "appActions": [
+        "Ir al inicio"
+      ],
+      "detail": "",
+      "at": "2026-11-23T11:43:39.910Z"
+    },
+    {
+      "route": "404",
+      "path": "/ruta-que-no-existe-espejo",
+      "locale": "en-US",
+      "same": true,
+      "webStatus": 404,
+      "appUrl": "https://dev.done.arauzsoftware.com/ruta-que-no-existe-espejo",
+      "web": [
+        "This page does not exist"
+      ],
+      "app": [
+        "This page does not exist"
+      ],
+      "webArt": [],
+      "appArt": [],
+      "webActions": [
+        "Go to the home page"
+      ],
+      "appActions": [
+        "Go to the start"
+      ],
+      "detail": "",
+      "at": "2026-11-23T11:43:49.516Z"
+    },
+    {
+      "route": "catalogo-componentes",
+      "path": "/catalogo",
+      "locale": "es-BO",
+      "same": false,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/catalogo",
+      "web": [
+        "Catálogo de componentes",
+        "Acciones",
+        "Estado: default",
+        "Estado: loading",
+        "Estado: error",
+        "Estado: empty",
+        "Estado: disabled"
+      ],
+      "app": [
+        "Catálogo de componentes",
+        "Estado: default",
+        "Estado: loading",
+        "Estado: error",
+        "Estado: empty",
+        "Estado: disabled"
+      ],
+      "webArt": [],
+      "appArt": [],
+      "webActions": [
+        "primary",
+        "secondary",
+        "ghost",
+        "danger",
+        "Cargando…",
+        "Bloqueado",
+        "Abrir diálogo",
+        "Abrir panel"
+      ],
+      "appActions": [
+        "primary",
+        "secondary",
+        "ghost",
+        "danger",
+        "Abrir diálogo",
+        "Abrir panel",
+        "Acción",
+        "Adjunto",
+        "Acción",
+        "Adjunto",
+        "Acción",
+        "Adjunto"
+      ],
+      "detail": "headings web=[\"Catálogo de componentes\",\"Acciones\",\"Estado: default\",\"Estado: loading\",\"Estado: error\",\"Estado: empty\",\"Estado: disabled\"] app=[\"Catálogo de componentes\",\"Estado: default\",\"Estado: loading\",\"Estado: error\",\"Estado: empty\",\"Estado: disabled\"]",
+      "at": "2026-11-23T11:43:58.363Z"
+    },
+    {
+      "route": "catalogo-componentes",
+      "path": "/catalogo",
+      "locale": "en-US",
+      "same": false,
+      "webStatus": 200,
+      "appUrl": "https://dev.done.arauzsoftware.com/catalogo",
+      "web": [
+        "Catálogo de componentes",
+        "Acciones",
+        "Estado: default",
+        "Estado: loading",
+        "Estado: error",
+        "Estado: empty",
+        "Estado: disabled"
+      ],
+      "app": [
+        "Component catalog",
+        "State: default",
+        "State: loading",
+        "State: error",
+        "State: empty",
+        "State: disabled"
+      ],
+      "webArt": [],
+      "appArt": [],
+      "webActions": [
+        "primary",
+        "secondary",
+        "ghost",
+        "danger",
+        "Cargando…",
+        "Bloqueado",
+        "Abrir diálogo",
+        "Abrir panel"
+      ],
+      "appActions": [
+        "primary",
+        "secondary",
+        "ghost",
+        "danger",
+        "Open dialog",
+        "Open panel",
+        "Action",
+        "Attachment",
+        "Action",
+        "Attachment",
+        "Action",
+        "Attachment"
+      ],
+      "detail": "headings web=[\"Catálogo de componentes\",\"Acciones\",\"Estado: default\",\"Estado: loading\",\"Estado: error\",\"Estado: empty\",\"Estado: disabled\"] app=[\"Component catalog\",\"State: default\",\"State: loading\",\"State: error\",\"State: empty\",\"State: disabled\"]",
+      "at": "2026-11-23T11:44:09.579Z"
+    }
+  ]
+}

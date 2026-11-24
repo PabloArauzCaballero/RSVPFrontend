@@ -32,3 +32,11 @@ yarn eas update --channel production --message "Descripción del parche"
 O desde Actions: workflow **EAS update** (`.github/workflows/eas-update.yml`), con canal y mensaje. Requiere `EXPO_TOKEN` y `EXPO_PUBLIC_EAS_PROJECT_ID`; hasta tenerlos, no se ha ejecutado.
 
 Si cambia código nativo, se requiere una nueva build de producción, no una actualización OTA.
+
+## iOS · TestFlight (F12 / A8)
+
+- Proyecto EAS: `@pablo28809s-team/rsvp` (`a7c4435b-6494-458c-b142-83b2b0705ef1`). Bundle iOS y paquete Android: `com.arauzsoftware.done` (no se cambia después del primer build subido).
+- Perfiles en `apps/universal/eas.json`; todos heredan `base`, que fija `EXPO_PUBLIC_API_URL`, `EXPO_PUBLIC_SITE_URL` y `EXPO_PUBLIC_RSVP_ORIGIN`. Hoy apuntan a TEST; cuando exista producción se cambian ahí y se compila un build nuevo.
+- Un build de release sin `EXPO_PUBLIC_API_URL`, o con una URL `http://`, falla al arrancar (`resolveApiUrl`, A8).
+- Primer build y envío (interactivo, requiere la cuenta de Apple Developer y su 2FA): `cd apps/universal && eas build -p ios --profile production --auto-submit`. EAS registra el bundle id, crea certificado y perfil, y `--auto-submit` crea la app en App Store Connect si no existe y sube el build a TestFlight.
+- Ficha de la tienda: `docs/release/app-store-connect.md`.

@@ -161,9 +161,16 @@ export function createContractMock(options: MockOptions = {}) {
         id: celebrationId, slug, ownerId: "u-host", organizationId: null, eventTypeCode: "WEDDING", status: "PUBLISHED", version: 3, defaultLocale: "es-BO", supportedLocales: ["es-BO", "en-US"], timeZone, currency: "BOB",
         content: { title: "Ana y Luis", eventDate: "2026-12-19T23:00:00.000Z", venueName: "Hacienda El Prado", hosts: { BRIDE: "Ana", GROOM: "Luis" } }, translations: {},
         settings: { giftReservationMode: "RESTRICTED", unregisteredRsvpMode: state.unregisteredMode, extraCompanionMode: "RESTRICTED", externalGiftMode: "RESTRICTED", rsvpDeadline: state.deadline, partnerPriorityEnabled: false, settingsVersion: 1, effectiveFrom: "2026-10-17T00:00:00Z" },
-        templateId: null, collaborators: [], publishedAt: "2026-10-17T12:00:00.000Z", createdAt: "2026-10-17T00:00:00Z", updatedAt: "2026-10-17T00:00:00Z", access: "MANAGE", localTimes: {}
+        templateId: null, collaborators: [], publishedAt: "2026-10-17T12:00:00.000Z", createdAt: "2026-10-17T00:00:00Z", updatedAt: "2026-10-17T00:00:00Z", access: "MANAGE", localTimes: {},
+        // Contract 1.4.0 (M10 / D-1): required; the demo celebration keeps the default (not offered to search engines).
+        searchIndexing: false
       };
       return json(200, path === "/celebrations" ? { items: [celebration] } : celebration);
+    }
+
+    // Contract 1.3.0 (A18): the demo celebration is PUBLISHED and its public page (/celebrations/public/{slug}, above) exists, so it is LIVE.
+    if (method === "GET" && path === `/celebrations/${celebrationId}/public-page`) {
+      return json(200, { celebrationId, status: "PUBLISHED", state: "LIVE", version: 3, publicVersion: 3 }, { "cache-control": "no-store" });
     }
 
     // ---- guest surface: opaque token as Bearer ----
@@ -291,6 +298,10 @@ export function createContractMock(options: MockOptions = {}) {
         const guest = state.guests.get(guestRouteMatch[1]!);
         if (!guest) return problem(404, "Not found");
         if (guestRouteMatch[2]) {
+          // Guest/RSVP 1.12.0 (A11): a working link is replaced only with rotate: true; GET tells whether one works.
+          const working = guest.token !== null && (!guest.tokenExpiresAt || new Date(guest.tokenExpiresAt) > now());
+          if (method === "GET") return json(200, working ? { active: true, issuedAt: null, expiresAt: guest.tokenExpiresAt ?? new Date(now().getTime() + 7 * 86_400_000).toISOString() } : { active: false, issuedAt: null, expiresAt: null }, { "cache-control": "no-store" });
+          if (method === "POST" && working && bodyOf()["rotate"] !== true) return problem(409, "This guest already has a working personal link", { code: "ACCESS_LINK_ACTIVE", expiresAt: guest.tokenExpiresAt });
           if (method === "POST") { guest.token = base64Url(); guest.tokenExpiresAt = new Date(now().getTime() + 7 * 86_400_000).toISOString(); return json(201, { token: guest.token, expiresAt: guest.tokenExpiresAt, url: `${options.webOrigin ?? "http://localhost:3000"}/c/${slug}/rsvp/${guest.token}` }, { "cache-control": "no-store" }); }
           if (method === "DELETE") { guest.token = null; guest.tokenExpiresAt = null; return { status: 204 }; }
         }

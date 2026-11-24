@@ -379,7 +379,7 @@ const celebrationSlug = world.celebration.slug;
     assert.equal((await http(`${SITE}/c/${celebrationSlug}/rsvp/%E0%A4%A`)).status, 400);
     for (const bad of [`${token.slice(0, -2)}xx`, "x", "a".repeat(400)]) {
       await b.page.goto(`${SITE}/c/${celebrationSlug}/rsvp/${bad}`);
-      await text(b.page, /Este enlace no está disponible/).waitFor({ timeout: 6000 }).catch(async () => { throw new Error(`token ${bad.slice(0, 20)}: ${(await b.page.locator("body").innerText()).slice(0, 160).replace(/\n+/g, " | ")}`); });
+      await text(b.page, /Este enlace ya no funciona/).waitFor({ timeout: 6000 }).catch(async () => { throw new Error(`token ${bad.slice(0, 20)}: ${(await b.page.locator("body").innerText()).slice(0, 160).replace(/\n+/g, " | ")}`); });
       assert.equal(await b.page.getByRole("button", { name: /Enviar respuesta/ }).count(), 0, bad);
     }
     await b.context.close();

@@ -1,8 +1,9 @@
 import { createContext, Fragment, useCallback, useContext, useEffect, useMemo, useState, type PropsWithChildren, type ReactNode } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
+import { createSessionQueryCache } from "@rsvp/query-hooks";
 import { I18nextProvider, useTranslation } from "react-i18next";
 import { createApiClient, type ApiClient } from "@rsvp/api-client";
-import { IdentityClient, SessionManager } from "@rsvp/auth";
+import { IdentityClient, SessionManager, browserCoordinator, inProcessCoordinator } from "@rsvp/auth";
 import { createI18n, resolveLocale, supportedLocales, type AppLocale, type Translate } from "@rsvp/i18n";
 import { UiProvider, stringsFor } from "@rsvp/ui";
 import { AuthProvider, StaticAuthProvider, useAuth } from "../auth/auth-context";
@@ -18,7 +19,26 @@ import { useScheme, useThemeHydration } from "./theme";
  * claims (for what to show; the API enforces access) and the translator.
  */
 
-const DEFAULT_API_URL = "http://localhost:8000";
+/** The local gateway: only a development run may fall back to it. */
+const DEVELOPMENT_API_URL = "http://localhost:8000";
+
+/**
+ * The gateway the app talks to (A8). A release build must carry `EXPO_PUBLIC_API_URL` (eas.json `env`, the Docker build
+ * arg on web), and it must be https or same-origin (`/api` behind the web image's nginx): a store build that silently
+ * pointed at localhost, or sent tokens over plain http, would look installed and fail on every screen. So it fails at boot.
+ */
+export function resolveApiUrl(value: string | undefined, development: boolean): string {
+  const url = value?.trim();
+  if (!url) {
+    if (development) return DEVELOPMENT_API_URL;
+    throw new Error("EXPO_PUBLIC_API_URL is not set: a release build needs the gateway URL (eas.json env or the Docker build arg).");
+  }
+  if (!development && !url.startsWith("/") && !url.startsWith("https://")) throw new Error(`EXPO_PUBLIC_API_URL must be https or same-origin in a release build, got ${url}.`);
+  return url.replace(/\/$/, "");
+}
+
+/** Metro sets __DEV__; outside it (tests, tooling) NODE_ENV decides. */
+const isDevelopmentRun = (): boolean => (typeof __DEV__ === "boolean" ? __DEV__ : process.env.NODE_ENV !== "production");
 
 interface Platform {
   readonly client: ApiClient;
@@ -44,9 +64,11 @@ export interface AppRuntime {
 const NO_TOKENS = { getAccessToken: async () => null, getRefreshToken: async () => null, setTokens: async () => undefined, clear: async () => undefined };
 
 /** The real session wiring: stored tokens → SessionManager → api-client with refresh and logout (REQ-F05-01/02/06). */
-export function createAppRuntime(baseUrl = process.env.EXPO_PUBLIC_API_URL ?? DEFAULT_API_URL): AppRuntime {
+export function createAppRuntime(baseUrl = resolveApiUrl(process.env.EXPO_PUBLIC_API_URL, isDevelopmentRun())): AppRuntime {
   const identityClient = createApiClient({ baseUrl, tokenStore: NO_TOKENS, refreshSession: { refresh: async () => { throw new Error("Identity calls are anonymous"); } } });
-  const manager = new SessionManager(createAppSessionStore(), new IdentityClient(identityClient, secureStorage ? "body" : "cookie"));
+  // Web: every tab shares the refresh cookie, so rotations are serialised across tabs (A21). Native: one context.
+  const manager = new SessionManager(createAppSessionStore(), new IdentityClient(identityClient, secureStorage ? "body" : "cookie"),
+    secureStorage ? inProcessCoordinator() : browserCoordinator());
   const client = createApiClient({ baseUrl, tokenStore: manager.tokenStore, refreshSession: manager.refreshSession });
   return { manager, client, identityClient };
 }
@@ -59,13 +81,28 @@ export interface AppProvidersProps {
   readonly claims?: SessionClaims;
   readonly runtime?: AppRuntime;
   readonly locale?: AppLocale;
+  /** Tests: a fixed cache. It is still emptied when the signed-in user changes. */
   readonly queryClient?: QueryClient;
+}
+
+const QUERY_DEFAULTS = { queries: { retry: 1 } } as const;
+
+/**
+ * B12: the query cache follows the signed-in person. Entries are hashed under `claims.userId`, and when it changes (sign-out, another
+ * account, session lost) everything cached for the previous person is cancelled and dropped. The switch runs during render, before any
+ * child of the new session can read or fetch; it is idempotent (a repeated render with the same user is a no-op) and React Query
+ * notifies its listeners asynchronously, so no other component is updated while this one renders.
+ */
+function SessionQueryProvider({ queryClient, children }: PropsWithChildren<{ readonly queryClient?: QueryClient }>): ReactNode {
+  const userId = useAuth().claims.userId;
+  const [cache] = useState(() => createSessionQueryCache({ client: queryClient, defaults: QUERY_DEFAULTS, userId }));
+  cache.switchUser(userId);
+  return <QueryClientProvider client={cache.client}>{children}</QueryClientProvider>;
 }
 
 const ANONYMOUS_CLAIMS: SessionClaims = { userId: null, roles: [], organizationIds: [] };
 
 export function AppProviders({ children, client, claims, runtime, locale, queryClient }: PropsWithChildren<AppProvidersProps>): ReactNode {
-  const [queries] = useState(() => queryClient ?? new QueryClient({ defaultOptions: { queries: { retry: 1 } } }));
   const [app] = useState<AppRuntime | null>(() => (runtime ?? (client || claims ? null : createAppRuntime())));
   const [stored, setStored] = useState<string | null>(null);
   const [chosen, setChosen] = useState<AppLocale | null>(null);
@@ -78,13 +115,11 @@ export function AppProviders({ children, client, claims, runtime, locale, queryC
   // The scheme is the person's choice or the system's. Style sheets are chosen per scheme at render time, so a change remounts the tree once (rare, and the stored choice makes it a start-up event on native).
   const scheme = useScheme();
   useThemeHydration();
-  const body = <PlatformContext.Provider value={platform}><UiProvider scheme={scheme} strings={stringsFor(resolvedLocale)}><SignOutProvider><Fragment key={scheme}>{children}</Fragment></SignOutProvider></UiProvider></PlatformContext.Provider>;
+  const body = <SessionQueryProvider queryClient={queryClient}><PlatformContext.Provider value={platform}><UiProvider scheme={scheme} strings={stringsFor(resolvedLocale)}><SignOutProvider><Fragment key={scheme}>{children}</Fragment></SignOutProvider></UiProvider></PlatformContext.Provider></SessionQueryProvider>;
   return (
-    <QueryClientProvider client={queries}>
-      <I18nextProvider i18n={i18n}>
-        {app ? <AuthProvider manager={app.manager} identityClient={app.identityClient}>{body}</AuthProvider> : <StaticAuthProvider claims={claims ?? ANONYMOUS_CLAIMS}>{body}</StaticAuthProvider>}
-      </I18nextProvider>
-    </QueryClientProvider>
+    <I18nextProvider i18n={i18n}>
+      {app ? <AuthProvider manager={app.manager} identityClient={app.identityClient}>{body}</AuthProvider> : <StaticAuthProvider claims={claims ?? ANONYMOUS_CLAIMS}>{body}</StaticAuthProvider>}
+    </I18nextProvider>
   );
 }
 

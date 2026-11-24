@@ -551,3 +551,31 @@ describe("REQ-F21-05 · gifts inside the guest app with the link credential", ()
     expect(screen.queryByTestId("gifts-retry")).toBeNull();
   });
 });
+
+describe("D-3 · the host releases a reserved gift", () => {
+  const COMMITTED = { items: [{ id: "r9", itemId: "Mesa", celebrationId: "c-1", guestDisplayName: "Marta", status: "COMMITTED", requestedAt: "2026-11-02T15:00:00Z" }] };
+  const base = (extra: Record<string, Handler> = {}) => handlers({ "GET /gifts/celebrations/c-1/items": () => GIFTS, "GET /gifts/celebrations/c-1/reservations": () => COMMITTED, "GET /gifts/celebrations/c-1/gift-settings": () => ({ showRequesterToHost: true, showRequesterToGuests: false, version: 1 }), ...extra });
+  it("only a committed gift offers «Liberar regalo»; it asks first and sends one cancel with an Idempotency-Key", async () => {
+    const { client, calls } = fakeClient(base({ "POST /gifts/celebrations/c-1/reservations/r9/cancel": () => ({ ...COMMITTED.items[0], status: "CANCELLED", cancellationReason: "HOST_CANCELLED" }) }));
+    renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    fireEvent.click(await screen.findByTestId("release-Mesa"));
+    expect(screen.queryByTestId("release-Torta")).toBeNull();
+    expect(screen.getByText("¿Liberar este regalo?")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("release-confirm"));
+    expect(await screen.findByText("Liberaste «Mesa». Ya está disponible otra vez.")).toBeTruthy();
+    const posts = calls.filter((call) => call.method === "POST");
+    expect(posts.map((call) => call.path)).toEqual(["/gifts/celebrations/c-1/reservations/r9/cancel"]);
+    expect(posts[0]?.headers.get("idempotency-key")).toBeTruthy();
+  });
+  it("«No, mantener la reserva» sends nothing; a reservation already ended (409) closes and explains", async () => {
+    const { client, calls } = fakeClient(base({ "POST /gifts/celebrations/c-1/reservations/r9/cancel": () => new HttpFailure(409, { code: "RESERVATION_NOT_ACTIVE" }) }));
+    renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    fireEvent.click(await screen.findByTestId("release-Mesa"));
+    fireEvent.click(screen.getByTestId("release-keep"));
+    expect(calls.filter((call) => call.method === "POST")).toHaveLength(0);
+    fireEvent.click(screen.getByTestId("release-Mesa"));
+    fireEvent.click(screen.getByTestId("release-confirm"));
+    expect(await screen.findByText("Esa reserva ya no estaba activa. Actualizamos la lista.")).toBeTruthy();
+    await waitFor(() => expect(screen.queryByText("¿Liberar este regalo?")).toBeNull());
+  });
+});

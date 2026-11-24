@@ -1,4 +1,5 @@
-// Measures the motion kit in a REAL Chrome against the exported web app (route /movimiento, dev-only demo).
+// Measures the motion kit in a REAL Chrome against the web app (route /movimiento, dev-only demo: since L7 it exists only in a
+// development build, so serve `expo start --web` or an `expo export --platform web --dev` output, not the production export).
 //   APP=http://localhost:8400 CHROMIUM_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" node scripts/live/motion.mjs
 // Per run (fresh browser context each): real transition durations from transitionstart/transitionend timestamps, layout shift
 // (CLS) from PerformanceObserver, frame pacing from a requestAnimationFrame sampler, long tasks (>50 ms) from both a

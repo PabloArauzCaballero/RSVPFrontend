@@ -46,7 +46,10 @@ export function hostGuestsApi(client: ApiClient) {
       api.get("/celebrations/{celebrationId}/catering-report", { path: { celebrationId }, query }),
     createGroup: (celebrationId: string, name: string) => api.post("/celebrations/{celebrationId}/groups", { path: { celebrationId }, body: { name } }),
     group: (celebrationId: string, groupId: string) => api.get("/celebrations/{celebrationId}/groups/{groupId}", { path: { celebrationId, groupId } }),
-    issueToken: (celebrationId: string, guestId: string) => api.post("/celebrations/{celebrationId}/guests/{guestId}/access-token", { path: { celebrationId, guestId }, body: {} }),
+    /** A11: without `rotate`, a guest with a working link answers 409 ACCESS_LINK_ACTIVE instead of losing it. */
+    issueToken: (celebrationId: string, guestId: string, rotate = false) => api.post("/celebrations/{celebrationId}/guests/{guestId}/access-token", { path: { celebrationId, guestId }, body: rotate ? { rotate: true } : {} }),
+    /** Whether the guest has a working link and until when; the link itself is never returned again. */
+    linkStatus: (celebrationId: string, guestId: string) => api.get("/celebrations/{celebrationId}/guests/{guestId}/access-token", { path: { celebrationId, guestId } }),
     revokeToken: (celebrationId: string, guestId: string) => api.delete("/celebrations/{celebrationId}/guests/{guestId}/access-token", { path: { celebrationId, guestId } }),
     rsvps: (celebrationId: string, query: { readonly limit?: number; readonly offset?: number }) => api.get("/celebrations/{celebrationId}/rsvps", { path: { celebrationId }, query }),
     companionRequests: (celebrationId: string) => api.get("/celebrations/{celebrationId}/companion-requests", { path: { celebrationId }, query: { limit: 100 } }),

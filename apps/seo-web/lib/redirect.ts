@@ -1,4 +1,5 @@
 import { apiBaseUrl } from "./api";
+import { forwardedFor } from "./client-address";
 
 /**
  * Partner redirector (F27). Every outbound partner link is /r/{listingId}; this module asks Provider Catalog
@@ -7,7 +8,6 @@ import { apiBaseUrl } from "./api";
  */
 
 export const REDIRECT_STATUS = 302;
-export const DEFAULT_DESTINATION = "OFFICIAL_SITE";
 export const DESTINATIONS = ["OFFICIAL_SITE", "LANDING", "WHATSAPP", "PHONE", "EMAIL", "INSTAGRAM", "PRODUCT_PAGE"] as const;
 export const SURFACES = ["PUBLIC_SITE", "SEARCH", "CELEBRATION_SITE", "GIFT_LIST", "EMAIL", "APP", "QUOTE_FORM"] as const;
 export const CORRELATION_HEADER = "x-correlation-id";
@@ -35,6 +35,8 @@ export interface RedirectRequest {
   readonly referrer?: string | null;
   readonly correlationId?: string | null;
   readonly sessionId?: string | null;
+  /** Visitor address resolved from the trusted proxy (B1); forwarded so Kong rate-limits each visitor separately. */
+  readonly clientAddress?: string | null;
   readonly fetchFn?: typeof fetch;
 }
 
@@ -63,18 +65,21 @@ function failureOf(status: number): { readonly reason: RedirectFailure; readonly
 export async function resolveRedirect(request: RedirectRequest): Promise<RedirectOutcome> {
   const correlationId = correlationIdOf(request.correlationId, request.searchParams.get("correlationId"));
   if (!UUID.test(request.listingId)) return { kind: "failure", reason: "not-found", status: NOT_FOUND, correlationId };
-  const requested = request.searchParams.get("destination") ?? DEFAULT_DESTINATION;
-  const destination = (DESTINATIONS as readonly string[]).includes(requested) ? requested : DEFAULT_DESTINATION;
+  // A23: a link without a (known) destination asks for the listing's primary one, which only Provider Catalog knows
+  // (PRODUCT_PAGE of a product, otherwise its first stored destination). Defaulting to OFFICIAL_SITE broke gift links,
+  // whose products usually have only a product page.
+  const requested = request.searchParams.get("destination");
+  const destination = requested !== null && (DESTINATIONS as readonly string[]).includes(requested) ? requested : null;
 
   const upstream = new URL(`${apiBaseUrl()}/r/${request.listingId}`);
-  upstream.searchParams.set("destination", destination);
+  if (destination) upstream.searchParams.set("destination", destination);
   for (const key of CONTEXT_KEYS) {
     const value = request.searchParams.get(key);
     if (value) upstream.searchParams.set(key, value);
   }
   if (!upstream.searchParams.has("surface")) upstream.searchParams.set("surface", "PUBLIC_SITE");
 
-  const headers: Record<string, string> = { [CORRELATION_HEADER]: correlationId };
+  const headers: Record<string, string> = { [CORRELATION_HEADER]: correlationId, ...forwardedFor(request.clientAddress) };
   if (request.userAgent) headers["user-agent"] = request.userAgent;
   if (request.referrer) headers["referer"] = request.referrer;
   if (request.sessionId) headers["x-session-id"] = request.sessionId;

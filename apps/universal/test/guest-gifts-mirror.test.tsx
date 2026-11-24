@@ -1,4 +1,5 @@
 import { fireEvent, screen, within } from "@testing-library/react";
+import { Linking } from "react-native";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MOCK_VALID_TOKEN } from "@rsvp/testing/contract-mock";
 import { GuestGiftsScreen } from "../src/guest/gifts-screen";
@@ -24,7 +25,7 @@ function show(props: { readonly token?: string; readonly onlyItemId?: string } =
   const { client, calls } = fakeClient({
     "GET /celebrations/public/ana-luis": () => ({ celebrationId: "c-1", slug: "ana-luis", content: { title: "Ana y Luis" } }),
     "GET /gifts/celebrations/c-1/items": ({ headers }) => (headers.get("authorization") === `Bearer ${TOKEN}` ? { items: ITEMS, partnerPriorityEnabled: true } : new HttpFailure(401)),
-    [`GET /listings/${LISTING}`]: () => ({ id: LISTING, imageUrl: "https://media.example/torta.webp" }),
+    [`GET /listings/${LISTING}`]: () => ({ id: LISTING, imageUrl: "https://media.example/torta.webp", destinationTypes: ["OFFICIAL_SITE"] }),
     ...extra
   });
   const onNavigate = vi.fn();
@@ -75,6 +76,30 @@ describe("Espejo web · A14 the gift list at /c/{slug}/regalos in the app", () =
     expect(screen.getByTestId("gift-count").textContent).toBe("3 regalos");
   });
 
+  it("offers WhatsApp on a gift without a website, through the redirector and without the guest credential", async () => {
+    const launch = vi.spyOn(Linking, "openURL").mockResolvedValue(undefined);
+    try {
+      show({ token: TOKEN }, { [`GET /listings/${LISTING}`]: () => ({ id: LISTING, destinationTypes: ["WHATSAPP"] }) });
+      fireEvent.click(await screen.findByRole("button", { name: "Consultar por WhatsApp" }));
+      expect(screen.queryByTestId(`partner-${TORTA}`)).toBeNull();
+      expect(screen.getByTestId(`reserve-${TORTA}`)).toBeTruthy();
+      expect(launch.mock.calls).toHaveLength(1);
+      const target = new URL(launch.mock.calls[0]![0]);
+      expect(target.pathname).toBe(`/r/${LISTING}`);
+      expect(Object.fromEntries(target.searchParams)).toEqual({ destination: "WHATSAPP", surface: "GIFT_LIST", celebrationId: "c-1" });
+    } finally {
+      launch.mockRestore();
+    }
+  });
+
+  it("keeps the reservation available if the catalog offer is no longer public", async () => {
+    const { calls } = show({ token: TOKEN }, { [`GET /listings/${LISTING}`]: () => new HttpFailure(404) });
+    await screen.findByTestId(`reserve-${TORTA}`);
+    expect(calls.some((call) => call.path === `/listings/${LISTING}`)).toBe(true);
+    expect(screen.queryByTestId(`partner-${TORTA}`)).toBeNull();
+    expect(screen.queryByTestId(`whatsapp-${TORTA}`)).toBeNull();
+  });
+
   it("a gift's title opens its own page at the web's address; the invitation is one tap back", async () => {
     saveGiftCredential("ana-luis", TOKEN);
     const { onNavigate } = show();
@@ -83,7 +108,8 @@ describe("Espejo web · A14 the gift list at /c/{slug}/regalos in the app", () =
     fireEvent.click(screen.getByTestId("gifts-invitation"));
     expect(onNavigate).toHaveBeenLastCalledWith("/c/ana-luis");
     fireEvent.click(screen.getByTestId("gifts-back"));
-    expect(onNavigate).toHaveBeenLastCalledWith(`/c/ana-luis/rsvp/${TOKEN}`);
+    // A13: back to the invitation without the credential in the address (it is kept for the session).
+    expect(onNavigate).toHaveBeenLastCalledWith("/c/ana-luis/rsvp");
   });
 
   it("negative: without the personal link there is no anonymous list — it asks for the link (401) and offers the invitation", async () => {
@@ -110,7 +136,7 @@ describe("Espejo web · A15 a gift's own page at /c/{slug}/regalos/{id}", () => 
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Torta");
     expect(screen.queryByTestId(`gift-${MESA}`)).toBeNull();
     expect(screen.queryByTestId("gift-filters")).toBeNull();
-    expect(screen.getByText("Este producto lo ofrece un aliado de DOne. Al abrir el enlace saldrás de DOne.")).toBeTruthy();
+    expect(await screen.findByText("Este producto lo ofrece un aliado de DOne. Al abrir el enlace saldrás de DOne.")).toBeTruthy();
     fireEvent.click(screen.getByTestId("gifts-list"));
     expect(onNavigate).toHaveBeenCalledWith("/c/ana-luis/regalos");
   });
@@ -119,5 +145,45 @@ describe("Espejo web · A15 a gift's own page at /c/{slug}/regalos/{id}", () => 
     saveGiftCredential("ana-luis", TOKEN);
     show({ onlyItemId: "99999999-9999-4999-8999-999999999999" });
     expect(await screen.findByText("Este regalo ya no está en la lista.")).toBeTruthy();
+  });
+});
+
+describe("D-3 · the guest cancels their own reservation in the app", () => {
+  const RESERVATION = "55555555-6666-4777-8888-999999999999";
+  const HELD = ITEMS.map((entry) => (entry.id === TORTA ? { ...entry, status: "COMMITTED" } : entry));
+  const mine = (headers: Headers) => (headers.get("authorization") === `Bearer ${TOKEN}` ? { items: [{ id: RESERVATION, itemId: TORTA, celebrationId: "c-1", status: "COMMITTED", requestedAt: "2026-11-01T00:00:00Z" }] } : new HttpFailure(401));
+  const withHeld = (cancel: Handler) => ({
+    "GET /gifts/celebrations/c-1/items": () => ({ items: HELD, partnerPriorityEnabled: true }),
+    "GET /gifts/celebrations/c-1/my-reservations": ({ headers }: { headers: Headers }) => mine(headers),
+    [`POST /gifts/celebrations/c-1/reservations/${RESERVATION}/cancel`]: cancel
+  });
+  it("says «Tu reserva», asks before cancelling and cancels with the link credential and one Idempotency-Key", async () => {
+    saveGiftCredential("ana-luis", TOKEN);
+    const { calls } = show({}, withHeld(() => ({ id: RESERVATION, itemId: TORTA, celebrationId: "c-1", status: "CANCELLED", requestedAt: "2026-11-01T00:00:00Z", cancellationReason: "GUEST_CANCELLED" })));
+    expect(within(await screen.findByTestId(`gift-mine-${TORTA}`)).getByText("Tu reserva")).toBeTruthy();
+    fireEvent.click(screen.getByTestId(`cancel-reservation-${TORTA}`));
+    expect(screen.getByText("¿Cancelar tu reserva?")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("cancel-reservation-confirm"));
+    expect(await screen.findByText("Cancelaste tu reserva de «Torta». El regalo volvió a la lista.")).toBeTruthy();
+    const post = calls.filter((call) => call.method === "POST");
+    expect(post).toHaveLength(1);
+    expect(post[0]?.headers.get("authorization")).toBe(`Bearer ${TOKEN}`);
+    expect(post[0]?.headers.get("idempotency-key")).toBeTruthy();
+  });
+  it("«No, mantenerla» sends nothing; an expired link says so inside the dialog; 409 closes and explains", async () => {
+    saveGiftCredential("ana-luis", TOKEN);
+    let answer: () => unknown = () => new HttpFailure(401);
+    const { calls } = show({}, withHeld(() => answer()));
+    fireEvent.click(await screen.findByTestId(`cancel-reservation-${TORTA}`));
+    fireEvent.click(screen.getByTestId("cancel-reservation-keep"));
+    expect(calls.filter((call) => call.method === "POST")).toHaveLength(0);
+    fireEvent.click(screen.getByTestId(`cancel-reservation-${TORTA}`));
+    fireEvent.click(screen.getByTestId("cancel-reservation-confirm"));
+    expect((await screen.findByTestId("cancel-reservation-error")).textContent).toBe("Tu enlace ya no funciona. Pídele uno nuevo a quien te invitó.");
+    answer = () => new HttpFailure(409, { code: "RESERVATION_NOT_ACTIVE" });
+    fireEvent.click(screen.getByTestId("cancel-reservation-confirm"));
+    expect(await screen.findByText("Esta reserva ya no estaba activa. Actualizamos la lista.")).toBeTruthy();
+    const keys = calls.filter((call) => call.method === "POST").map((call) => call.headers.get("idempotency-key"));
+    expect(new Set(keys).size).toBe(1);
   });
 });

@@ -77,11 +77,12 @@ export const guestsEsBO = {
     },
     link: {
       title: "Su enlace personal", intro: "Cada invitado responde con un enlace único. No lo mostramos completo para que nadie lo vea de reojo.",
+      active: "Ya tiene un enlace que funciona hasta el {{date}}. Por seguridad no podemos mostrarlo otra vez: si lo perdiste, genera uno nuevo (el anterior dejará de funcionar).", unknown: "No pudimos comprobar si ya tiene un enlace. Vuelve a intentarlo antes de generar uno.", issueNew: "Generar enlace nuevo",
       none: "Todavía no tiene enlace. Genera uno y envíaselo.", issue: "Generar y copiar enlace", reissue: "Reemitir enlace", revoke: "Revocar enlace", manage: "Reemitir o revocar el enlace", copy: "Copiar enlace", copied: "Enlace copiado.", copyFailed: "No pudimos copiar. Usa Compartir.",
       readyTitle: "Enlace listo para {{name}}", readyBody: "Cópialo o compártelo: con un toque, responde.",
       share: "Compartir", shareTitle: "Tu invitación", shareText: "Te invitamos a {{title}}. Confirma tu asistencia aquí:", masked: "Enlace: {{value}}", expires: "Vence el {{date}}",
       once: "Por seguridad, el enlace completo solo existe en esta pantalla mientras no la cierres. Si lo pierdes, reemítelo.",
-      revokeTitle: "¿Revocar este enlace?", revokeBody: "El invitado dejará de poder abrirlo de inmediato. Puedes generar uno nuevo cuando quieras.", reissueTitle: "¿Reemitir el enlace?", reissueBody: "El enlace anterior dejará de funcionar y se generará uno nuevo.", revoked: "Enlace revocado."
+      revokeTitle: "¿Revocar este enlace?", revokeBody: "El invitado dejará de poder abrirlo de inmediato. Puedes generar uno nuevo cuando quieras.", reissueTitle: "¿Reemitir el enlace?", reissueBody: "El enlace que ya le enviaste dejará de funcionar y se generará uno nuevo que tendrás que enviarle otra vez.", revoked: "Enlace revocado."
     }
   },
   settings: {

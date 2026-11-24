@@ -3,6 +3,7 @@ import { LANDING_COUNTS, LANDING_FAQ, LANDING_GIFTS, LANDING_GUEST_POINTS, LANDI
 import { appUrl } from "../lib/app-url";
 import { faqJsonLd, jsonLdScript, siteGraphJsonLd } from "../lib/json-ld";
 import { CheckMark } from "./brand/check-mark";
+import { CreateArt, GuestArt, HostArt, InvitationArt, ProviderArt, RepliesArt, SendArt, ShareArt } from "./brand/illustrations";
 
 type Props = Readonly<{ t: Translate }>;
 
@@ -187,6 +188,7 @@ export function Landing({ t, locale }: Readonly<{ t: Translate; locale: string }
       <section className="hero" aria-labelledby="hero-title">
         <div className="hero__inner">
           <div className="hero__copy">
+            <SendArt className="hero__art" />
             <p className="eyebrow">{t("landing.hero.eyebrow")}</p>
             <h1 id="hero-title">{t("landing.hero.title")}</h1>
             <p className="hero__lead">{t("landing.hero.body")}</p>
@@ -218,9 +220,9 @@ export function Landing({ t, locale }: Readonly<{ t: Translate; locale: string }
         <div className="wrap">
           <h2 id="how-title">{t("landing.how.title")}</h2>
           <ol className="steps__list">
-            <li><StepArt t={t} step={1} /><h3>{t("landing.how.createTitle")}</h3><p>{t("landing.how.createBody")}</p></li>
-            <li><StepArt t={t} step={2} /><h3>{t("landing.how.shareTitle")}</h3><p>{t("landing.how.shareBody")}</p></li>
-            <li><StepArt t={t} step={3} /><h3>{t("landing.how.seeTitle")}</h3><p>{t("landing.how.seeBody")}</p></li>
+            <li><StepArt t={t} step={1} /><CreateArt className="steps__art" /><h3>{t("landing.how.createTitle")}</h3><p>{t("landing.how.createBody")}</p></li>
+            <li><StepArt t={t} step={2} /><ShareArt className="steps__art" /><h3>{t("landing.how.shareTitle")}</h3><p>{t("landing.how.shareBody")}</p></li>
+            <li><StepArt t={t} step={3} /><RepliesArt className="steps__art" /><h3>{t("landing.how.seeTitle")}</h3><p>{t("landing.how.seeBody")}</p></li>
           </ol>
         </div>
       </section>
@@ -258,15 +260,18 @@ export function Landing({ t, locale }: Readonly<{ t: Translate; locale: string }
         <h2 id="roles-title">{t("landing.roles.title")}</h2>
         <div className="roles__grid">
           <div className="roles__host">
+            <HostArt className="roles__art" />
             <h3>{t("landing.roles.hostTitle")}</h3>
             <p>{t("landing.roles.hostBody")}</p>
             <a className="textlink" href={create}>{t("landing.roles.hostLink")}</a>
           </div>
           <div className="roles__guest">
+            <GuestArt className="roles__art" />
             <h3>{t("landing.roles.guestTitle")}</h3>
             <p>{t("landing.roles.guestBody")}</p>
           </div>
           <div className="roles__provider">
+            <ProviderArt className="roles__art" />
             <h3>{t("landing.roles.providerTitle")}</h3>
             <p>{t("landing.roles.providerBody")}</p>
             <p className="roles__links"><a className="textlink" href={create}>{t("landing.roles.providerLink")}</a><a className="textlink" href="/proveedores">{t("landing.roles.directoryLink")}</a></p>
@@ -295,7 +300,9 @@ export function Landing({ t, locale }: Readonly<{ t: Translate; locale: string }
 
       <section className="closing" aria-labelledby="closing-title">
         <div className="closing__inner">
-          <span className="closing__mark"><CheckMark size={40} className="closing__check" /></span>
+          {/* The envelope with its sealed tick takes the place of the bare check: one mark per panel, on its own tile so the
+              drawing keeps the page's colours on the inverted panel. */}
+          <span className="closing__art"><InvitationArt /></span>
           <h2 id="closing-title">{t("landing.closing.title")}</h2>
           <p>{t("landing.closing.body")}</p>
           <a className="btn btn--invert btn--lg" href={create}>{t("landing.closing.cta")}</a>

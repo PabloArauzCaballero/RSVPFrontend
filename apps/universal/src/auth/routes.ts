@@ -9,6 +9,11 @@ export const AUTH_ROUTES = { login: "/login", register: "/registro", recover: "/
 export const ACCOUNT_ROUTES = { partnerRequest: "/cuenta/solicitud-partner" } as const;
 /** Where «Solicita ser partner» points (the directory CTA, the provider access notice and, later, FE #81's «Ver cómo empezar»). */
 export const PARTNER_REQUEST_ROUTE = ACCOUNT_ROUTES.partnerRequest;
+/**
+ * Pages opened from account e-mails (B4). Public for everyone, signed in or not, so they belong to
+ * the public group: a signed-out person can sign in and come back to them (`returnTo`).
+ */
+export const ACCOUNT_LINK_ROUTES = { reset: "/restablecer", verifyEmail: "/verificar-correo" } as const;
 export const HOME_BY_GROUP: Readonly<Record<RouteGroup, string>> = { auth: AUTH_ROUTES.login, host: "/celebraciones", provider: "/portal", admin: "/admin", guest: "/invitacion", account: ACCOUNT_ROUTES.partnerRequest };
 
 const ADMIN_PREFIX = "/admin";
@@ -18,7 +23,7 @@ const ACCOUNT_PREFIX = "/cuenta";
  * The public group: no sign-in. `/c/{slug}/rsvp/{token}` is the canonical personal link and `/rsvp/{token}` the legacy one;
  * `/proveedores` and `/p/{slug}` mirror the public site's directory and partner microsites.
  */
-const GUEST_PREFIXES = ["/invitacion", "/rsvp", "/c", "/proveedores", "/p"] as const;
+const GUEST_PREFIXES = ["/invitacion", "/rsvp", "/c", "/proveedores", "/p", ACCOUNT_LINK_ROUTES.reset, ACCOUNT_LINK_ROUTES.verifyEmail] as const;
 const AUTH_PATHS: readonly string[] = Object.values(AUTH_ROUTES);
 
 function startsWithSegment(path: string, prefix: string): boolean { return path === prefix || path.startsWith(`${prefix}/`) || path.startsWith(`${prefix}?`); }

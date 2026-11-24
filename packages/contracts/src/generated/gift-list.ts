@@ -426,6 +426,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/celebrations/{celebrationId}/my-reservations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The calling guest's own reservations in this celebration (any status), oldest first
+         * @description Guest link credential only: guestId comes from Guest's validation of the credential, never from the request. Lets the guest page show a reservation and offer to cancel it after a reload. Hosts and member JWTs answer 403 GUEST_IDENTITY_REQUIRED.
+         */
+        get: operations["listMyReservations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/celebrations/{celebrationId}/reservations": {
         parameters: {
             query?: never;
@@ -454,6 +474,26 @@ export interface paths {
         put?: never;
         /** Confirm a pending reservation (host) */
         post: operations["approveReservation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/celebrations/{celebrationId}/reservations/{reservationId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel a pending or committed reservation (the guest who made it, or the host); the gift returns to AVAILABLE
+         * @description D-3. With a guest link credential only that guest's own reservation can be cancelled (another guest's answers 404, never revealing it exists); the host can cancel any reservation of the celebration. A member JWT without host access answers 403 GUEST_IDENTITY_REQUIRED. Reservation and item move together with UPDATE ... WHERE version = ?, so a concurrent approve, reject or cancellation loses with 409 RESERVATION_NOT_ACTIVE. Emits gift.reservation.cancelled.v1 with reason GUEST_CANCELLED or HOST_CANCELLED.
+         */
+        post: operations["cancelReservation"];
         delete?: never;
         options?: never;
         head?: never;
@@ -581,22 +621,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/items/{giftItemId}/reservations": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["reserveLegacyGift"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/public/celebrations/{slug}/gift-items": {
         parameters: {
             query?: never;
@@ -636,22 +660,6 @@ export interface paths {
          * @description Public without JWT or JWKS even when Authorization is invalid. Existing process business configuration remains required. Every request resolves the authoritative published Celebration through GET /celebrations/public/{slug}; no positive publication cache. Missing/unpublished/gifts-disabled is404, inconsistent dependency/timeout or DB unavailability is503. Includes only EXTERNAL/AVAILABLE with non-null publication and valid complete content, scoped in SQL before LIMIT+1. Legacy incomplete/unpublished rows are excluded without backfill. Price and external URL are intentionally public; no commercial /r links. Query parameters are closed and singular. Current-state pagination is not a distributed snapshot. H05B compatibility: external-only surface excludes new CATALOGED rows; use /public/celebrations/{slug}/gift-items for the complete mixed page. Previous external behavior/schema/order preserved.
          */
         head: operations["headPublicExternalGiftPublications"];
-        patch?: never;
-        trace?: never;
-    };
-    "/reservations/{reservationId}/approve": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["approveLegacyReservation"];
-        delete?: never;
-        options?: never;
-        head?: never;
         patch?: never;
         trace?: never;
     };
@@ -1100,6 +1108,40 @@ export interface components {
             /** Format: uuid */
             providerId: string;
         };
+        /** @description A reservation cancelled by hand (since 1.10.0): the gift went back to AVAILABLE in the same transaction. */
+        ManuallyCancelledGiftReservation: {
+            /**
+             * @description GUEST_CANCELLED: the guest withdrew it with their invitation link. HOST_CANCELLED: the host released it (D-3).
+             * @enum {string}
+             */
+            cancellationReason: "GUEST_CANCELLED" | "HOST_CANCELLED";
+            /** Format: date-time */
+            cancelledAt: string;
+            /** @enum {string} */
+            cancelledFromStatus: "PENDING_REVIEW" | "COMMITTED";
+            /** Format: uuid */
+            celebrationId: string;
+            guestDisplayName?: string | null;
+            /**
+             * Format: uuid
+             * @description Null after guest erasure
+             */
+            guestId?: string | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            itemId: string;
+            message?: string | null;
+            /** Format: date-time */
+            requestedAt: string;
+            /** @description true when the host chose not to see who asked: guestId, guestDisplayName and message are null */
+            requesterHidden?: boolean;
+            /** Format: date-time */
+            resolvedAt?: string | null;
+            resolvedBy?: string | null;
+            /** @constant */
+            status: "CANCELLED";
+        };
         ManualReservationInput: {
             /** @description Exact nonnegative signed32 original JSON number lexeme; rounded fractions, duplicate/extra fields and overflow are rejected. Integer-equivalent decimal/exponent notation remains accepted. */
             expectedItemVersion: number;
@@ -1176,6 +1218,16 @@ export interface components {
         /** @description Tenant/status/afterId filters before LIMIT+1; ascending reservation UUID, current item version per wrapper. Resolved rows remain historical and do not reactivate. */
         OwnerReservationPage: {
             items: components["schemas"]["ReservationResult"][];
+            nextCursor: string | null;
+        };
+        /** @description One page of CanonicalCompatGiftItemPage (since 1.12.0). */
+        PagedGiftItemPage: components["schemas"]["CanonicalCompatGiftItemPage"] & {
+            /** @description Pass it as cursor to get the next page; null on the last page. */
+            nextCursor: string | null;
+        };
+        /** @description One page of RsvpAwareReservationList (since 1.12.0). */
+        PagedReservationList: components["schemas"]["RsvpAwareReservationList"] & {
+            /** @description Pass it as cursor to get the next page; null on the last page. */
             nextCursor: string | null;
         };
         PrivateCreateGiftListInput: Record<string, never>;
@@ -1424,7 +1476,7 @@ export interface components {
             /** @enum {unknown} */
             status?: "COMMITTED" | "REJECTED";
         });
-        RsvpAwareGiftReservation: components["schemas"]["DevCompatGiftReservation"] | components["schemas"]["RsvpCancelledGiftReservation"];
+        RsvpAwareGiftReservation: components["schemas"]["DevCompatGiftReservation"] | components["schemas"]["RsvpCancelledGiftReservation"] | components["schemas"]["ManuallyCancelledGiftReservation"];
         RsvpAwareReservationList: {
             items: components["schemas"]["RsvpAwareGiftReservation"][];
         };
@@ -1588,6 +1640,10 @@ export interface components {
         DevCompatCorrelationId: string;
         /** @description Single optional status filter; unknown, duplicate, empty or invalid parameters return422. */
         OwnerReservationStatus: "PENDING_REVIEW" | "COMMITTED" | "REJECTED" | "CANCELLED";
+        /** @description The nextCursor of the previous page, unchanged. Keyset based: rows added meanwhile never shift a page. An invalid cursor answers 422 VALIDATION_FAILED. */
+        PageCursor: string;
+        /** @description Page size (L4). Never more than 200. */
+        PageLimit: number;
         /** @description Optional single UUID. Echoed unchanged when valid. Missing value generates a UUID. Invalid or duplicate values return 422 with a fresh UUID and never echo arbitrary text. */
         PrivateCorrelationId: string;
         PublicationGiftItemId: string;
@@ -1714,7 +1770,12 @@ export interface operations {
     };
     listGiftItems: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description The nextCursor of the previous page, unchanged. Keyset based: rows added meanwhile never shift a page. An invalid cursor answers 422 VALIDATION_FAILED. */
+                cursor?: components["parameters"]["PageCursor"];
+                /** @description Page size (L4). Never more than 200. */
+                limit?: components["parameters"]["PageLimit"];
+            };
             header?: {
                 /** @description Echoed in the response header and in problem.correlationId; generated when absent. */
                 "X-Correlation-Id"?: components["parameters"]["DevCompatCorrelationId"];
@@ -1732,7 +1793,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CanonicalCompatGiftItemPage"];
+                    "application/json": components["schemas"]["PagedGiftItemPage"];
                 };
             };
             401: components["responses"]["DevCompatUnauthorized"];
@@ -6221,9 +6282,51 @@ export interface operations {
             };
         };
     };
+    listMyReservations: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Echoed in the response header and in problem.correlationId; generated when absent. */
+                "X-Correlation-Id"?: components["parameters"]["DevCompatCorrelationId"];
+            };
+            path: {
+                celebrationId: components["parameters"]["DevCompatCelebrationId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Own reservations */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RsvpAwareReservationList"];
+                };
+            };
+            401: components["responses"]["DevCompatUnauthorized"];
+            /** @description GUEST_IDENTITY_REQUIRED */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["DevCompatProblem"];
+                };
+            };
+            404: components["responses"]["DevCompatNotFound"];
+            429: components["responses"]["DevCompatRateLimited"];
+            503: components["responses"]["DevCompatDependencyUnavailable"];
+        };
+    };
     listReservations: {
         parameters: {
             query?: {
+                /** @description The nextCursor of the previous page, unchanged. Keyset based: rows added meanwhile never shift a page. An invalid cursor answers 422 VALIDATION_FAILED. */
+                cursor?: components["parameters"]["PageCursor"];
+                /** @description Page size (L4). Never more than 200. */
+                limit?: components["parameters"]["PageLimit"];
                 status?: components["schemas"]["DevCompatReservationStatus"];
             };
             header?: {
@@ -6243,7 +6346,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RsvpAwareReservationList"];
+                    "application/json": components["schemas"]["PagedReservationList"];
                 };
             };
             401: components["responses"]["DevCompatUnauthorized"];
@@ -6295,6 +6398,73 @@ export interface operations {
                     "application/problem+json": components["schemas"]["DevCompatProblem"];
                 };
             };
+            503: components["responses"]["DevCompatDependencyUnavailable"];
+        };
+    };
+    cancelReservation: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Repeating the cancellation with the same key returns the stored result (200 with Idempotency-Replayed: true) instead of 409 RESERVATION_NOT_ACTIVE; the same key for another reservation is 422 IDEMPOTENCY_KEY_REUSED. Keys are scoped to (celebration, caller). */
+                "Idempotency-Key"?: string;
+                /** @description Echoed in the response header and in problem.correlationId; generated when absent. */
+                "X-Correlation-Id"?: components["parameters"]["DevCompatCorrelationId"];
+            };
+            path: {
+                celebrationId: components["parameters"]["DevCompatCelebrationId"];
+                reservationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Cancelled (status CANCELLED, cancellationReason GUEST_CANCELLED or HOST_CANCELLED) */
+            200: {
+                headers: {
+                    /** @description true when the response replays a previous request with the same Idempotency-Key */
+                    "Idempotency-Replayed"?: "true";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RsvpAwareGiftReservation"];
+                };
+            };
+            401: components["responses"]["DevCompatUnauthorized"];
+            /** @description GUEST_IDENTITY_REQUIRED: neither the host nor a guest with their link credential */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["DevCompatProblem"];
+                };
+            };
+            404: components["responses"]["DevCompatNotFound"];
+            /** @description RESERVATION_NOT_ACTIVE: already cancelled, rejected, or changed concurrently */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "https://rsvp.example/problems/reservation-not-active",
+                     *       "title": "Only a pending or committed reservation can be cancelled.",
+                     *       "status": 409,
+                     *       "code": "RESERVATION_NOT_ACTIVE"
+                     *     } */
+                    "application/problem+json": components["schemas"]["DevCompatProblem"];
+                };
+            };
+            /** @description VALIDATION_FAILED (malformed Idempotency-Key) or IDEMPOTENCY_KEY_REUSED */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["DevCompatProblem"];
+                };
+            };
+            429: components["responses"]["DevCompatRateLimited"];
             503: components["responses"]["DevCompatDependencyUnavailable"];
         };
     };
@@ -7275,26 +7445,6 @@ export interface operations {
             503: components["responses"]["DevCompatDependencyUnavailable"];
         };
     };
-    reserveLegacyGift: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Reserved or pending review */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            409: components["responses"]["GiftNotAvailable"];
-            422: components["responses"]["Validation"];
-        };
-    };
     readPublicMixedGiftItems: {
         parameters: {
             query?: {
@@ -7667,26 +7817,6 @@ export interface operations {
                 };
                 content?: never;
             };
-        };
-    };
-    approveLegacyReservation: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Committed */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            403: components["responses"]["Forbidden"];
-            409: components["responses"]["GiftNotAvailable"];
         };
     };
 }

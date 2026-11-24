@@ -64,10 +64,10 @@ async function f22() {
   {
     const linkToken = world.guest.issued.token;
     const { page, context } = await open(360, path, { credential: linkToken });
-    await page.getByRole("heading", { name: "Tu enlace venció" }).waitFor();
+    await page.getByRole("heading", { name: "Tu enlace ya no funciona" }).waitFor();
     await snap("F22", page, "A14-token-de-enlace-rechazado", 360);
     await context.close();
-    record("F22", "401-link", "el token opaco del enlace de invitado es rechazado por Gift List en vivo (401) -> mensaje 'Tu enlace venció'");
+    record("F22", "401-link", "el token opaco del enlace de invitado es rechazado por Gift List en vivo (401) -> mensaje 'Tu enlace ya no funciona'");
   }
 
   // With a real Identity JWT as the guest credential the whole flow runs against the live service.

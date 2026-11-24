@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { createApiClient, ValidationError } from "@rsvp/api-client";
-import { celebrationApi, mediaApi, missingFieldsOf, templateApi, uploadToPresignedUrl, UploadError, invalidation } from "../src/index.js";
+import { celebrationApi, isPublicPageInTransition, mediaApi, missingFieldsOf, templateApi, uploadToPresignedUrl, UploadError, invalidation } from "../src/index.js";
 
 interface Call { readonly method: string; readonly path: string; readonly headers: Headers; readonly body: unknown }
 
@@ -80,6 +80,18 @@ describe("celebration API", () => {
     expect(calls[9]?.body).toEqual({ assetIds: ["a-2", "a-1"], coverAssetId: "a-2" });
   });
 
+  it("A18 · the public page state is read with the host session and polled only while it is in transition", async () => {
+    const { client, calls } = harness(200, { celebrationId: "c-1", status: "PUBLISHED", state: "PUBLISHING", version: 4, publicVersion: null });
+    expect((await celebrationApi(client).publicPage("c-1")).state).toBe("PUBLISHING");
+    expect(calls.at(-1)?.path).toBe("/celebrations/c-1/public-page");
+    expect(calls.at(-1)?.headers.get("authorization")).toMatch(/^Bearer /);
+    expect(isPublicPageInTransition("PUBLISHING")).toBe(true);
+    expect(isPublicPageInTransition("UNPUBLISHING")).toBe(true);
+    expect(isPublicPageInTransition("LIVE")).toBe(false);
+    expect(isPublicPageInTransition("OFFLINE")).toBe(false);
+    expect(isPublicPageInTransition(undefined)).toBe(false);
+  });
+
   it("a publish 422 exposes exactly the missing fields; other errors expose none", async () => {
     const { client } = harness(422, { title: "Missing", status: 422, code: "PUBLISH_REQUIREMENTS_MISSING", missingFields: ["eventDate", "hosts.GROOM"] });
     const error = await celebrationApi(client).publish(target).catch((caught: unknown) => caught);
@@ -88,8 +100,8 @@ describe("celebration API", () => {
     expect(missingFieldsOf(new Error("x"))).toEqual([]);
   });
 
-  it("mutations invalidate the celebration, its checklist and its audit", () => {
-    expect(invalidation.celebrationChanged("c-1")).toEqual([["celebrations", "c-1"], ["celebrations"], ["celebrations", "c-1", "publish-check"], ["celebrations", "c-1", "audit"]]);
+  it("mutations invalidate the celebration, its checklist, its public page state and its audit", () => {
+    expect(invalidation.celebrationChanged("c-1")).toEqual([["celebrations", "c-1"], ["celebrations"], ["celebrations", "c-1", "publish-check"], ["celebrations", "c-1", "public-page"], ["celebrations", "c-1", "audit"]]);
     expect(invalidation.mediaChanged("c-1")).toEqual([["media", "c-1"]]);
   });
 });

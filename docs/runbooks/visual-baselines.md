@@ -25,4 +25,6 @@ El job no hace commit ni aprueba nada por sí mismo.
 
 ## Servidor de las pruebas visuales
 
+El catálogo de componentes (`/catalogo`) solo existe en desarrollo (L18): cualquier build de producción, incluida la imagen de TEST y producción, lo responde con 404, queda fuera del sitemap y lleva `noindex`. La suite visual lo compila con la variable explícita `RSVP_VISUAL_TEST_CATALOG=1`, que solo pone `apps/seo-web/playwright.config.ts` (`lib/dev-surfaces.ts`; una prueba unitaria comprueba que ni el Dockerfile ni el compose de Coolify la usan).
+
 Las pruebas visuales corren contra el build de producción (`next build` + `next start`), no contra `next dev`: el modo desarrollo inyecta un indicador flotante y compila bajo demanda, lo que producía diferencias de píxeles intermitentes y llegó a quedar incrustado en las líneas base. El fixture (`apps/seo-web/scripts/fixture-api.mjs`) envía CORS y responde 401 a la lista de regalos sin credencial para que las pantallas muestren su estado real y no un error de red.

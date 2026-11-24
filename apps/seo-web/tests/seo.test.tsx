@@ -68,6 +68,16 @@ describe("data loading (contract responses)", () => {
     const { client } = clientFor({ "/celebrations/public": json(200, { items: [{ slug: "a", updatedAt: "2026-10-17T00:00:00Z", supportedLocales: ["es-BO"] }] }) });
     expect((await loadPublicSlugs(client)).map((item) => item.slug)).toEqual(["a"]);
   });
+
+  it("M10 · D-1 · the sitemap drops any item the API marks as not indexable", async () => {
+    const items = [
+      { slug: "listed", updatedAt: "2026-10-17T00:00:00Z", supportedLocales: ["es-BO"] },
+      { slug: "opted-in", updatedAt: "2026-10-17T00:00:00Z", supportedLocales: ["es-BO"], indexable: true },
+      { slug: "hidden", updatedAt: "2026-10-17T00:00:00Z", supportedLocales: ["es-BO"], indexable: false }
+    ];
+    const { client } = clientFor({ "/celebrations/public": json(200, { items }) });
+    expect((await loadPublicSlugs(client)).map((item) => item.slug)).toEqual(["listed", "opted-in"]);
+  });
 });
 
 describe("rendered public page", () => {
@@ -126,6 +136,13 @@ describe("metadata and crawling", () => {
     expect(celebrationMetadata({ ...VIEW, content: { title: "X" } }, [], t).description).toBe("Toda la información de la celebración en un solo lugar.");
   });
 
+  it("M10 · D-1 · a celebration is noindex unless its host enabled indexing", () => {
+    expect(celebrationMetadata(VIEW, GALLERY, t).robots).toEqual({ index: false, follow: false });
+    expect(celebrationMetadata({ ...VIEW, indexable: false }, GALLERY, t).robots).toEqual({ index: false, follow: false });
+    expect(celebrationMetadata({ ...VIEW, indexable: true }, GALLERY, t).robots).toEqual({ index: true, follow: true });
+    expect(celebrationMetadata({ ...VIEW, indexable: true }, GALLERY, t, { id: "faq", path: "faq" }).robots).toEqual({ index: true, follow: true });
+  });
+
   it("REQ-F08-05 · robots keeps private surfaces and magic links out", () => {
     const rules = robots().rules;
     const disallow = (Array.isArray(rules) ? rules[0] : rules)?.disallow;
@@ -181,5 +198,9 @@ describe("provider directory (F24)", () => {
   it("an empty category says so", async () => {
     const { client } = clientFor({ "/providers": json(200, { items: [], total: 0, page: 1, pageSize: 12 }) });
     expect(renderToStaticMarkup(<ProviderResults page={await searchProviders({}, client)} t={t} locale="es-BO" path="/proveedores" />)).toContain("Todavía no hay proveedores");
+    // Espejo web/móvil: the empty result is a heading with the app's drawing, as the app's `EmptyState`.
+    const empty = renderToStaticMarkup(<ProviderResults page={await searchProviders({}, client)} t={t} locale="es-BO" path="/proveedores" />);
+    expect(empty).toMatch(/<h2 class="state__title">Todavía no hay proveedores[^<]*<\/h2>/);
+    expect(empty).toContain('data-art="emptySearch"');
   });
 });

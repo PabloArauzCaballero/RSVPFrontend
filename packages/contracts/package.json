@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Tipos generados desde los OpenAPI congelados del backend (v1.0.0). Sustituto local hasta que el paquete de GitHub Packages se publique con contenido.",
+  "description": "Tipos generados desde los OpenAPI del backend, vendorizados desde el commit del backend fijado en backend.lock.json (ver README.md).",
   "exports": {
     ".": "./src/index.ts",
     "./specs/*": "./specs/*"
@@ -11,6 +11,7 @@
   "scripts": {
     "generate": "node scripts/generate.mjs",
     "check:generated": "node scripts/generate.mjs --check",
+    "check:source": "node scripts/generate.mjs --verify-source",
     "build": "tsc --noEmit",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",

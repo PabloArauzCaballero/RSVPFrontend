@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "RSVP Guest and RSVP API",
-    "version": "1.11.0",
-    "description": "Additive lanes 17/18/19: guest management, opaque credentials and token-authenticated RSVP. Public APIs use Authorization Bearer, never a token in the URL. Lane 20 adds companion counts, scoped host decisions and public registration with safe approval defaults. Lane 21 adds host-only event-driven read models with freshness metadata and tenant-scoped replay operations documented in the service runbook. 1.9.0: optional email plus E.164 phone (at least one contact), explicit consent origin, respondedAt, group listing and reassignment, authoritative open companion-request total, paginated catering report, canonical invitation URL on token issue (see docs/ACCESS_TOKENS.md). Compatibility: Guest.email and GuestListItem.email may now be null (clients must tolerate null); every previously valid request remains valid. 1.10.0: POST /rsvp/resolve (credential -> celebrationId and slug, for legacy /rsvp/{token} links) and GET /rsvp/celebrations/{id}/public-settings (whether public registration of unregistered guests is enabled). Both public, additive, no-store."
+    "version": "1.13.0",
+    "description": "Additive lanes 17/18/19: guest management, opaque credentials and token-authenticated RSVP. Public APIs use Authorization Bearer, never a token in the URL. Lane 20 adds companion counts, scoped host decisions and public registration with safe approval defaults. Lane 21 adds host-only event-driven read models with freshness metadata and tenant-scoped replay operations documented in the service runbook. 1.9.0: optional email plus E.164 phone (at least one contact), explicit consent origin, respondedAt, group listing and reassignment, authoritative open companion-request total, paginated catering report, canonical invitation URL on token issue (see docs/ACCESS_TOKENS.md). Compatibility: Guest.email and GuestListItem.email may now be null (clients must tolerate null); every previously valid request remains valid. 1.10.0: POST /rsvp/resolve (credential -> celebrationId and slug, for legacy /rsvp/{token} links) and GET /rsvp/celebrations/{id}/public-settings (whether public registration of unregistered guests is enabled). Both public, additive, no-store. 1.12.0 (A12, additive; after 1.11.0 of PR #27): internal service-only GET /internal/v1/celebrations/{celebrationId}/guests/{guestId}/notification-profile, so Notification can reach a guest it does not know yet (for instance one who registered on their own). Requires a bearer JWT with role SERVICE (Identity client_credentials); not exposed as a public route. 1.12.1 (correction, no runtime change): GET/PATCH /rsvp/{token}, POST /rsvp/resolve and GET /rsvp/celebrations/{celebrationId}/public-settings declare the gateway root server, like the other /rsvp/* operations: the gateway serves them at /rsvp (public, rate-limited), never under /guests (JWT). GET/PATCH /rsvp/{token} are marked deprecated: the service never implemented them (404) and the guest credential travels only in the Authorization header (docs/ACCESS_TOKENS.md). 1.13.0 (F7: A11, A13): POST .../access-token answers 409 ACCESS_LINK_ACTIVE (with expiresAt) when the guest has a working link and the body does not say rotate: true, so no client replaces a link silently; the default lifetime follows the event (a week after it, at least 7 days, at most 365 days, 30 days without event date) and ttlSeconds accepts up to 31536000; GET .../access-token tells whether a working link exists and until when, without revealing it. Guest and GuestListItem carry contactsHidden: true (email and phone null) for READ collaborators and for a platform ADMIN that does not send X-Access-Reason (10-200 characters, recorded)."
   },
   "servers": [
     {
@@ -49,13 +49,18 @@
                   "ttlSeconds": {
                     "type": "integer",
                     "minimum": 60,
-                    "maximum": 2592000,
-                    "default": 604800
+                    "maximum": 31536000,
+                    "description": "Explicit lifetime. Default: until a week after the event date (at least 7 days, at most 365); 30 days when the celebration has no event date."
                   },
                   "resend": {
                     "type": "boolean",
                     "default": false,
                     "description": "Re-issue to resend the invitation and require the canonical url in the response."
+                  },
+                  "rotate": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Required to replace a working link: the current link stops working. Without it, a working link answers 409 ACCESS_LINK_ACTIVE."
                   }
                 }
               }
@@ -106,6 +111,29 @@
           },
           "503": {
             "$ref": "#/components/responses/Dependency"
+          },
+          "409": {
+            "description": "The guest already has a working link (code ACCESS_LINK_ACTIVE, expiresAt); send rotate: true to replace it",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Problem"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "expiresAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
           }
         }
       },
@@ -130,6 +158,38 @@
           },
           "503": {
             "$ref": "#/components/responses/Dependency"
+          }
+        }
+      },
+      "get": {
+        "operationId": "getGuestAccessLinkStatus",
+        "summary": "Whether the guest has a working personal link (never the link itself)",
+        "responses": {
+          "200": {
+            "description": "Link status",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessLinkStatus"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
           }
         }
       }
@@ -628,6 +688,17 @@
               "maximum": 1000000,
               "default": 0
             }
+          },
+          {
+            "name": "X-Access-Reason",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 10,
+              "maxLength": 200
+            },
+            "description": "Platform ADMIN only: why the contacts are read. Without it the contacts are hidden; with it the read is recorded (who, celebration, reason)."
           }
         ],
         "responses": {
@@ -727,7 +798,20 @@
           "503": {
             "$ref": "#/components/responses/Dependency"
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "X-Access-Reason",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 10,
+              "maxLength": 200
+            },
+            "description": "Platform ADMIN only: why the contacts are read. Without it the contacts are hidden; with it the read is recorded (who, celebration, reason)."
+          }
+        ]
       },
       "patch": {
         "operationId": "changeGuestGroup",
@@ -1148,7 +1232,8 @@
           "404": {
             "$ref": "#/components/responses/NotFound"
           }
-        }
+        },
+        "deprecated": true
       },
       "patch": {
         "security": [],
@@ -1166,8 +1251,17 @@
           "422": {
             "$ref": "#/components/responses/Validation"
           }
+        },
+        "deprecated": true
+      },
+      "servers": [
+        {
+          "url": "http://localhost:8000"
+        },
+        {
+          "url": "http://localhost:3002"
         }
-      }
+      ]
     },
     "/celebrations/{celebrationId}/companion-requests": {
       "parameters": [
@@ -1508,6 +1602,17 @@
               "maximum": 1000000,
               "default": 0
             }
+          },
+          {
+            "name": "X-Access-Reason",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 10,
+              "maxLength": 200
+            },
+            "description": "Platform ADMIN only: why the contacts are read. Without it the contacts are hidden; with it the read is recorded (who, celebration, reason)."
           }
         ],
         "responses": {
@@ -1929,7 +2034,15 @@
             "$ref": "#/components/responses/Dependency"
           }
         }
-      }
+      },
+      "servers": [
+        {
+          "url": "http://localhost:8000"
+        },
+        {
+          "url": "http://localhost:3002"
+        }
+      ]
     },
     "/rsvp/celebrations/{celebrationId}/public-settings": {
       "parameters": [
@@ -1993,6 +2106,72 @@
           },
           "500": {
             "$ref": "#/components/responses/Internal"
+          },
+          "503": {
+            "$ref": "#/components/responses/Dependency"
+          }
+        }
+      },
+      "servers": [
+        {
+          "url": "http://localhost:8000"
+        },
+        {
+          "url": "http://localhost:3002"
+        }
+      ]
+    },
+    "/internal/v1/celebrations/{celebrationId}/guests/{guestId}/notification-profile": {
+      "get": {
+        "operationId": "getInternalGuestNotificationProfile",
+        "summary": "Internal service query: contact and celebration context of one guest for Notification",
+        "tags": [
+          "guest-internal"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "celebrationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "guestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Guest notification profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalGuestNotificationProfile"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
           },
           "503": {
             "$ref": "#/components/responses/Dependency"
@@ -2531,6 +2710,11 @@
                 "format": "date-time"
               }
             }
+          },
+          "contactsHidden": {
+            "type": "boolean",
+            "const": true,
+            "description": "Present when email and phone are withheld from this actor (READ access, or platform ADMIN without X-Access-Reason)."
           }
         }
       },
@@ -3027,6 +3211,11 @@
             ],
             "pattern": "^\\+[1-9][0-9]{7,14}$",
             "description": "E.164 (+ country code and number, 8 to 15 digits). Spaces, dots, dashes and parentheses are stripped on input."
+          },
+          "contactsHidden": {
+            "type": "boolean",
+            "const": true,
+            "description": "Present when email and phone are withheld from this actor (READ access, or platform ADMIN without X-Access-Reason)."
           }
         }
       },
@@ -3292,6 +3481,108 @@
           "publicRegistrationEnabled": {
             "type": "boolean",
             "description": "True only for a published celebration whose effective unregisteredRsvpMode is AUTO_ACCEPT. Unknown, draft, archived and RESTRICTED celebrations answer identically (RESTRICTED/false)."
+          }
+        }
+      },
+      "InternalGuestNotificationProfile": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "celebrationId",
+          "guestId",
+          "email",
+          "phone",
+          "preferredLocale",
+          "celebration"
+        ],
+        "properties": {
+          "celebrationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "guestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "email",
+            "maxLength": 254
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^\\+[1-9][0-9]{7,14}$"
+          },
+          "preferredLocale": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 35
+          },
+          "celebration": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "timeZone",
+                  "defaultLocale",
+                  "version"
+                ],
+                "properties": {
+                  "timeZone": {
+                    "type": "string",
+                    "description": "IANA time zone"
+                  },
+                  "defaultLocale": {
+                    "type": "string"
+                  },
+                  "version": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                }
+              }
+            ],
+            "description": "Celebration context projected by Guest; null until the first projection arrives"
+          }
+        }
+      },
+      "AccessLinkStatus": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "active",
+          "issuedAt",
+          "expiresAt"
+        ],
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "issuedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
           }
         }
       }
