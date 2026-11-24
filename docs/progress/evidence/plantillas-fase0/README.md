@@ -28,6 +28,11 @@ El cambio visible hoy es el piso de 13 px del antetítulo y de la cuenta atrás 
 ## Ronda 2 (correcciones de la revisión del PR #118)
 
 - `paletas/oscuro-{movil,escritorio}-{antes,despues}.png` se regeneraron con el mismo guion para ambos lados (antes = base `chore/deploy-contabo-coolify`, despues = esta rama), a escala reducida (`movil` 390 px a 50 %, `escritorio` 1280 px a 30 %). Los de claro no cambian en esta ronda y conservan la escala anterior.
-- Cambio visible nuevo en oscuro: el relleno de la franja y del botón se aclara hasta 3:1 contra el canvas y el surface (mismo matiz, Δ <= 2°), y el acento de texto ya se valida contra el lavado de la portada (13 %) y el bloque de confirmar (9 %).
+- Cambio visible nuevo en oscuro: el relleno de la franja y del botón se aclara hasta 3:1 contra el canvas, el surface y los cuatro fondos con lavado del acento (13 % y 9 %, incluido el bloque de confirmar donde vive el botón), con el mismo matiz (Δ <= 2°); mínimo medido 3,01 y blanco/relleno >= 4,52, y el acento de texto ya se valida contra el lavado de la portada (13 %) y el bloque de confirmar (9 %).
 - axe-core 4.10.3 sobre las 16 plantillas (es-BO y en-US, claro y oscuro, 360 y 1280 px): 0 critical y 0 serious. Quedan `region` (moderate: el HTML de prueba no trae los puntos de referencia de la página real) y `color-contrast` como «incompleto» (axe no puede calcular fondos con degradado); por eso el contraste contra el lavado se calcula en `darkBackdrops` y se prueba.
 - Desbordamiento horizontal a 360 px en el HTML de prueba (`SECTION` de 384 px): idéntico con el CSS de la base (386 px de ancho de documento antes y después), no es de F0; se deja anotado para F4.
+
+## Ronda 3
+
+- PL-118-M1b: el relleno del botón se valida contra `darkBackdrops` (canvas, surface y sus mezclas con el acento al 13 % y 9 %). Cupieron a la vez 3:1 y blanco >= 4,5 en las 16 plantillas, por lo que no hizo falta borde.
+- Hover del botón: `scale(1.02)` solo con `@media (hover: hover)` y movimiento permitido; `:active` `scale(.98)` (DESIGN.md). Sin `translateY`, sin salto al pasar de hover a pulsar. `paletas/oscuro-*-despues.png` regeneradas.

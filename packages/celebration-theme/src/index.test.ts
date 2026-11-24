@@ -174,11 +174,12 @@ describe("template colours read in both schemes (WCAG AA)", () => {
     expect(hueDistance(dark.accent, palette.accent)).toBeLessThanOrEqual(2);
   });
 
-  it.each(SEEDED_PALETTES)("%s · dark fill reads as a shape (3:1) on canvas and surface, keeps the hue, and its ink and the white cover text read", (_key, palette) => {
+  it.each(SEEDED_PALETTES)("%s · dark fill reads as a shape (3:1) on canvas, surface and the accent washes (RSVP block, cover), keeps the hue, and its ink and the white cover text read", (_key, palette) => {
     const dark = paletteFor(themeOf(palette), "dark");
     const { fill, ink } = accentFill(themeOf(palette), "dark");
     expect(contrastRatio(fill, dark.canvas)).toBeGreaterThanOrEqual(COMPONENT_CONTRAST);
     expect(contrastRatio(fill, dark.surface)).toBeGreaterThanOrEqual(COMPONENT_CONTRAST);
+    for (const background of darkBackdrops(dark.accent)) expect(contrastRatio(fill, background)).toBeGreaterThanOrEqual(COMPONENT_CONTRAST);
     expect(contrastRatio(ink, fill)).toBeGreaterThanOrEqual(TEXT_CONTRAST);
     expect(contrastRatio("#FFFFFF", fill)).toBeGreaterThanOrEqual(TEXT_CONTRAST);
     expect(hueDistance(fill, palette.accent)).toBeLessThanOrEqual(2);
@@ -247,7 +248,9 @@ describe("styles.css and native styles keep the contract the theme assumes", () 
     expect(css).toMatch(new RegExp(String.raw`data-section="rsvp"\][^}]*color-mix\(in srgb, var\(--celebration-accent\) ${RSVP_WASH * 100}%, var\(--celebration-surface\)\)`));
   });
 
-  it("the reply button has hover and press states that move only transform, and only when motion is allowed", () => {
-    expect(css).toMatch(/prefers-reduced-motion: no-preference\) \{[^@]*\.celebration-cta:hover \{ transform:[^}]+\}[^@]*\.celebration-cta:active \{ transform: scale\(\.98\); \}/);
+  it("the reply button presses with scale(.98) (DESIGN.md) and hovers only where hover exists, both only when motion is allowed", () => {
+    expect(css).toMatch(/prefers-reduced-motion: no-preference\) \{[^@]*\.celebration-cta:active \{ transform: scale\(\.98\); \}/);
+    expect(css).toMatch(/@media \(hover: hover\) and \(prefers-reduced-motion: no-preference\) \{\s*\.celebration-cta:hover \{ transform: scale\(1\.02\); \}/);
+    expect(css).not.toContain("translateY(-1px)");
   });
 });

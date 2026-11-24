@@ -111,8 +111,10 @@
 /* DESIGN.md · Movimiento: solo transform y opacidad; scale(.98) al pulsar. Sin movimiento si el sistema lo reduce. */
 @media (prefers-reduced-motion: no-preference) {
   .celebration-cta { transition: transform 120ms cubic-bezier(0.16, 1, 0.3, 1); }
-  .celebration-cta:hover { transform: translateY(-1px); }
   .celebration-cta:active { transform: scale(.98); }
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .celebration-cta:hover { transform: scale(1.02); }
 }
 .celebration-cta { padding: .8rem 2rem; font-size: 1.05rem; border-radius: var(--celebration-radius); background: var(--celebration-accent-fill); color: var(--celebration-on-accent) !important; text-decoration: none; }
 .celebration-gallery { list-style: none; padding: 0; margin: 0; display: grid; gap: .75rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr)); }
