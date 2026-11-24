@@ -1,6 +1,9 @@
 import { useRouter } from 'expo-router';
-import { PartnersScreen } from '../../../src/admin/partners/partners-screen';
+import { loadAdminScreens } from '../../../src/admin/load';
+import { lazyScreen } from '../../../src/platform/lazy-screen';
 import { useHostRoute } from '../../../src/platform/route';
+
+const PartnersScreen = lazyScreen(loadAdminScreens, (zone) => zone.PartnersScreen);
 
 /** A24 · Partners: table, filters in the URL query and the «Crear partner» dialog. */
 export default function Route() {
