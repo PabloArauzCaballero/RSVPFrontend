@@ -183,7 +183,7 @@ const reveal = async (page, testId) => {
     const { page, context } = await open(flags, P.owner.email); current = page;
     await step("portal: create offer", async () => {
       await go(page, "/portal/servicios"); await tid(page, "offer-new").click(); await tid(page, "listing-name").waitFor();
-      await tid(page, "listing-name").fill("Flow cake"); await tid(page, "listing-whatsapp").fill("https://wa.me/59171111111"); await tid(page, "listing-coverage").fill("la-paz, el-alto"); await tid(page, "listing-lead").fill("2"); await tid(page, "listing-conditions").fill("Delivery included"); await tid(page, "listing-price").fill("150,50");
+      await tid(page, "listing-name").fill("Flow cake"); await tid(page, "listing-whatsapp").fill("https://wa.me/59171111111"); await tid(page, "coverage-la-paz").click(); await tid(page, "coverage-el-alto").click(); await tid(page, "listing-lead").fill("2"); await tid(page, "listing-conditions").fill("Delivery included"); await tid(page, "listing-price").fill("150,50");
       await tid(page, "listing-submit").click();
       const created = await poll(async () => (await listings()).find((l) => l.title === "Flow cake"), "listing in GET");
       assert.equal(created.priceFromMinor, 15050); assert.equal(created.published, false);
