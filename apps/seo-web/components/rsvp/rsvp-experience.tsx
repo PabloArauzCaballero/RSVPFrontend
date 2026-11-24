@@ -12,7 +12,7 @@ import {
 import { useParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { createGuestClient } from '../../lib/guest-client';
-import { clearGuestCredential, guestGiftPath } from '../../lib/guest-credential';
+import { clearGuestCredential, guestGiftPath, readGuestCredential, saveGuestCredential } from '../../lib/guest-credential';
 import { CheckMark } from '../brand/check-mark';
 import { clearDraft, emptyDraft, loadDraft, saveDraft, type RsvpDraft } from './rsvp-draft';
 import { AttendanceChoice, CompanionsStepper, ExtrasFields, FailureNotice, TextField, validateAnswer, validateRegistration, type FieldErrors, type RegistrationDraft } from './rsvp-form';
@@ -31,12 +31,23 @@ import { AnswerSummary, Celebrate, ClosedView, Countdown, DeadlineLine, Declined
 interface Props { readonly slug: string; readonly token?: string; readonly locale: AppLocale; readonly siteOrigin: string; readonly client?: ApiClient }
 type Saved = 'first' | 'edit' | null;
 
-/** Entry of /c/{slug}/rsvp[/{token}]: everything that needs the personal token runs in the browser, after a no-store request. */
+/**
+ * Entry of /c/{slug}/rsvp[/{token}]: everything that needs the personal token runs in the browser, after a no-store request.
+ * The token comes from the personal link (and is stored in this tab, never kept in the address); without it in the route,
+ * the credential this tab already holds opens the guest's own answer, as in the app (`apps/universal/app/(guest)/c/[slug]/rsvp`).
+ */
 export function RsvpExperience(props: Props): ReactNode {
   // The token is read from the browser route instead of being passed down as a prop, so it is not repeated in server-rendered props.
   const params = useParams<{ token?: string }>();
-  const token = props.token ?? safeDecode(params?.token);
-  return <RsvpProviders><Flow {...props} token={token} /></RsvpProviders>;
+  const routeToken = props.token ?? safeDecode(params?.token);
+  // `undefined` until the browser has been asked: sessionStorage does not exist while rendering on the server.
+  const [stored, setStored] = useState<string | null | undefined>(routeToken ? null : undefined);
+  useEffect(() => {
+    if (routeToken) saveGuestCredential(props.slug, routeToken);
+    else setStored(readGuestCredential(props.slug));
+  }, [routeToken, props.slug]);
+  if (!routeToken && stored === undefined) return <RsvpProviders><LoadingView t={createTranslator(props.locale)} /></RsvpProviders>;
+  return <RsvpProviders><Flow {...props} token={routeToken ?? stored ?? undefined} /></RsvpProviders>;
 }
 
 function safeDecode(value: string | undefined): string | undefined {
