@@ -127,7 +127,8 @@ export function hasSectionContent(section: SectionId, content: CelebrationConten
     dressCode: Boolean(content.dressCode),
     faq: Boolean(content.faq.length),
     recommendations: Boolean(content.recommendations.length),
-    gifts: false,
+    // P22: the gifts button is always there, with or without gifts loaded yet; the gift page says what the list holds.
+    gifts: true,
     rsvp: true
   };
   return checks[section];
@@ -226,8 +227,39 @@ export const SECTION_PATHS: Readonly<Partial<Record<SectionId, string>>> = {
   gallery: "galeria",
   dressCode: "dress-code",
   faq: "faq",
-  recommendations: "recomendaciones"
+  recommendations: "recomendaciones",
+  /** Not a section page: the guest's gift list (`/c/{slug}/regalos` on the site, `(guest)/c/[slug]/regalos` in the app). */
+  gifts: "regalos"
 };
+
+/**
+ * The guest's gift list, the same address on the public site and in the app. It never carries the guest's personal link:
+ * the gift page resolves the credential itself (from the session, or by asking for the link).
+ */
+export function giftsPath(slug: string): string {
+  return `/c/${encodeURIComponent(slug)}/regalos`;
+}
+
+/**
+ * What the public view will say about the gift list. Session rsvp-f1 adds `gifts.status` to GET /celebrations/public/{slug}
+ * (final name in CONTRATOS.md); until it exists every invitation is treated as OPEN.
+ */
+export type GiftsStatus = "OPEN" | "EMPTY" | "CLOSED";
+
+/**
+ * The label of the gifts button for each status. One label for now («Ver regalos»): when rsvp-f1 publishes
+ * `gifts.guest.cta.open|empty|closed`, this map points at them and the callers pass `giftsStatus`.
+ */
+export const GIFTS_CTA_KEYS: Readonly<Record<GiftsStatus, string>> = {
+  OPEN: "celebration.gifts.cta",
+  EMPTY: "celebration.gifts.cta",
+  CLOSED: "celebration.gifts.cta"
+};
+
+/** The gifts block is titled like the gift page (`gifts.guest.title`); every other section by its name in the menu. */
+export function sectionTitleKey(section: SectionId): string {
+  return section === "gifts" ? "gifts.guest.title" : `celebration.sections.${section}`;
+}
 
 export function sectionForPath(path: string): SectionId | undefined {
   const entry = Object.entries(SECTION_PATHS).find(([, value]) => value === path);

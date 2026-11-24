@@ -15,6 +15,9 @@
     "test": "vitest run",
     "coverage": "vitest run --coverage"
   },
+  "dependencies": {
+    "@rsvp/design-tokens": "workspace:*"
+  },
   "peerDependencies": {
     "react": ">=18",
     "react-native": ">=0.79"

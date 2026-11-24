@@ -1,7 +1,7 @@
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { NavIcon } from './index';
-import { NAV_ICONS } from './nav-icon-shapes';
+import { NAV_ICONS } from '@rsvp/design-tokens';
 
 afterEach(cleanup);
 

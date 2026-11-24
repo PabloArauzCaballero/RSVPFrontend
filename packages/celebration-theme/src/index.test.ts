@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { accentFill, compatibleTemplates, contrastRatio, fontStylesheet, inkOnAccent, LAYOUT_IDS, LAYOUTS, paletteFor, TEXT_CONTRAST, themeFromTemplate, themeVariables, FALLBACK_TEMPLATE, type Palette } from "./index.js";
+import { accentFill, compatibleTemplates, contrastRatio, fontStylesheet, inkOnAccent, LAYOUT_IDS, LAYOUTS, paletteFor, TEXT_CONTRAST, themeFromTemplate, themeVariables, withGifts, FALLBACK_TEMPLATE, type Palette } from "./index.js";
 import { TEMPLATES, WEDDING_SECTIONS } from "../test/fixtures.js";
 
 describe("theme as data", () => {
@@ -17,9 +17,9 @@ describe("theme as data", () => {
     expect(theme.sections[0]).toBe("gallery");
   });
 
-  it("sections the event type does not enable are dropped; enabled ones the template omits are hidden, not lost", () => {
+  it("sections the event type does not enable are dropped; enabled ones the template omits are hidden, not lost (gifts aside, P22)", () => {
     const corporate = themeFromTemplate(TEMPLATES[4], ["story", "schedule", "venues", "faq"]);
-    expect(corporate.sections).toEqual(["schedule", "venues", "faq"]);
+    expect(corporate.sections).toEqual(["schedule", "venues", "faq", "gifts"]);
     expect(corporate.hiddenSections).toEqual(["story"]);
   });
 
@@ -34,8 +34,8 @@ describe("theme as data", () => {
     const theme = themeFromTemplate(broken, ["story"]);
     expect(theme.layout).toBe(FALLBACK_TEMPLATE.layout);
     expect(theme.sectionStyle).toBe(FALLBACK_TEMPLATE.theme.sectionStyle);
-    expect(theme.sections).toEqual(["story"]);
-    expect(themeFromTemplate(null, ["faq"]).sections).toEqual(["faq"]);
+    expect(theme.sections).toEqual(["story", "gifts"]);
+    expect(themeFromTemplate(null, ["faq"]).sections).toEqual(["faq", "gifts"]);
   });
 
   it("REQ-F09-04 · the palette becomes CSS variables; light keeps the template's accent exactly", () => {
@@ -51,6 +51,28 @@ describe("theme as data", () => {
   it("loads only the web fonts the theme names", () => {
     expect(fontStylesheet(themeFromTemplate(TEMPLATES[0], []))).toBe("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Source+Sans+3:wght@400;600;700&display=swap");
     expect(fontStylesheet(themeFromTemplate(FALLBACK_TEMPLATE, []))).toBeUndefined();
+  });
+});
+
+describe("P22 · PL-A10 · the gifts section is on every invitation", () => {
+  const withoutGifts = <TSection extends string>(order: readonly TSection[]): TSection[] => order.filter((section) => section !== "gifts");
+
+  it.each(TEMPLATES.map((template) => [template.layout, template] as const))("%s · present when the template omits it and the event type does not enable it", (_layout, template) => {
+    const omitted = { ...template, sectionOrder: withoutGifts(template.sectionOrder) };
+    const theme = themeFromTemplate(omitted, withoutGifts(WEDDING_SECTIONS));
+    expect(theme.sections).toContain("gifts");
+    expect(theme.hiddenSections).not.toContain("gifts");
+    // Right before the reply when the template does not place it.
+    expect(theme.sections.indexOf("gifts")).toBe(theme.sections.indexOf("rsvp") - 1);
+  });
+
+  it("a template that places gifts keeps its position; without a reply section it goes last; it is never repeated", () => {
+    expect(themeFromTemplate(TEMPLATES[0], WEDDING_SECTIONS).sections).toEqual(["story", "schedule", "venues", "gallery", "dressCode", "gifts", "faq", "recommendations", "rsvp"]);
+    expect(withGifts(["story", "faq"])).toEqual(["story", "faq", "gifts"]);
+    expect(withGifts(["rsvp"])).toEqual(["gifts", "rsvp"]);
+    expect(withGifts([])).toEqual(["gifts"]);
+    expect(withGifts(["gifts", "story", "rsvp"])).toEqual(["gifts", "story", "rsvp"]);
+    expect(themeFromTemplate(null, []).sections).toEqual(["gifts"]);
   });
 });
 
