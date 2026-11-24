@@ -13,7 +13,7 @@ describe("CelebrationNativeRenderer (react-native-web)", () => {
   it("REQ-F09-04 · same theme data and section order as the web renderer, palette from context", () => {
     const { container } = render(<CelebrationNativeRenderer theme={themeFromTemplate(TEMPLATES[3], VIEW.enabledSections)} view={VIEW} gallery={GALLERY} t={t} now={NOW} />);
     const order = [...container.querySelectorAll("[data-testid^='section-']")].map((node) => node.getAttribute("data-testid"));
-    expect(order).toEqual(["section-story", "section-schedule", "section-venues", "section-dressCode", "section-gallery", "section-faq", "section-rsvp"]);
+    expect(order).toEqual(["section-story", "section-schedule", "section-venues", "section-dressCode", "section-gallery", "section-gifts", "section-faq", "section-rsvp"]);
     expect(injectedCss()).toContain("rgba(255,245,250,1.00)");
     // the title is made of the hosts' names, so the cover does not repeat them underneath
     expect(container.textContent).toContain("Ana y Luis");
@@ -43,7 +43,7 @@ describe("CelebrationNativeRenderer (react-native-web)", () => {
 });
 
 describe("CelebrationNativeRenderer · the guest's invitation in the app (mirror of the public page)", () => {
-  const actionsFor = () => ({ openUrl: vi.fn(), partnerUrl: vi.fn((id: string) => `https://done.test/r/${id}?surface=app`), openSection: vi.fn() });
+  const actionsFor = () => ({ openUrl: vi.fn(), partnerUrl: vi.fn((id: string) => `https://done.test/r/${id}?surface=app`), openSection: vi.fn(), openRsvp: vi.fn() });
   const show = (extra: Partial<Parameters<typeof CelebrationNativeRenderer>[0]> = {}) =>
     render(<CelebrationNativeRenderer theme={themeFromTemplate(TEMPLATES[0], VIEW.enabledSections)} view={VIEW} gallery={GALLERY} t={t} now={NOW} {...extra} />);
 
@@ -54,7 +54,7 @@ describe("CelebrationNativeRenderer · the guest's invitation in the app (mirror
     // A landmark of links, like the web's <nav>: role "menu" would demand menuitem children (axe aria-required-children).
     expect(nav.getAttribute("role")).toBe("navigation");
     const links = [...nav.querySelectorAll("[role='link']")].map((node) => node.textContent);
-    expect(links).toEqual(["celebration.nav.home", "celebration.sections.story", "celebration.sections.schedule", "celebration.sections.venues", "celebration.sections.gallery", "celebration.sections.dressCode", "celebration.sections.faq", "celebration.sections.recommendations"]);
+    expect(links).toEqual(["celebration.nav.home", "celebration.sections.story", "celebration.sections.schedule", "celebration.sections.venues", "celebration.sections.gallery", "celebration.sections.dressCode", "celebration.sections.gifts", "celebration.sections.faq", "celebration.sections.recommendations"]);
     expect(nav.querySelector("[aria-current='page']")?.textContent).toBe("celebration.nav.home");
     fireEvent.click(within(nav).getByText("celebration.sections.venues"));
     expect(actions.openSection).toHaveBeenCalledWith("venues");
@@ -116,6 +116,45 @@ describe("CelebrationNativeRenderer · the guest's invitation in the app (mirror
     expect(screen.queryByTestId("celebration-nav")).toBeNull();
     expect(screen.queryByText("celebration.venues.howToGetThere")).toBeNull();
     expect(screen.queryByText("celebration.recommendations.view")).toBeNull();
+    expect(document.querySelectorAll("[role='link']")).toHaveLength(0);
+  });
+});
+
+describe("P22 · PL-A10 / PL-A11 · gifts and reply buttons in the app", () => {
+  const actions = () => ({ openUrl: vi.fn(), partnerUrl: vi.fn((id: string) => `https://done.test/r/${id}`), openSection: vi.fn(), openRsvp: vi.fn() });
+  const withoutGifts = <TSection extends string>(order: readonly TSection[]): TSection[] => order.filter((section) => section !== "gifts");
+
+  it.each(TEMPLATES.map((template) => [template.layout, template] as const))("%s · gifts button shown although sectionOrder and the event type omit it; opens the gift list without any token", (_layout, template) => {
+    const a = actions();
+    const omitted = { ...template, sectionOrder: withoutGifts(template.sectionOrder) };
+    render(<CelebrationNativeRenderer theme={themeFromTemplate(omitted, withoutGifts(VIEW.enabledSections))} view={{ ...VIEW, enabledSections: withoutGifts(VIEW.enabledSections) }} gallery={GALLERY} t={t} now={NOW} actions={a} />);
+    const section = screen.getByTestId("section-gifts");
+    expect(within(section).getByText("celebration.sections.gifts")).toBeTruthy();
+    const button = screen.getByTestId("celebration-gifts-cta");
+    expect(button.textContent).toBe("celebration.gifts.cta");
+    expect(button.getAttribute("role")).toBe("link");
+    fireEvent.click(button);
+    expect(a.openSection).toHaveBeenCalledWith("gifts");
+    expect(a.openRsvp).not.toHaveBeenCalled();
+    fireEvent.click(within(screen.getByTestId("celebration-nav")).getByText("celebration.sections.gifts"));
+    expect(a.openSection).toHaveBeenCalledTimes(2);
+    cleanup();
+  });
+
+  it("the reply leads somewhere: the help to find the link without it, «Confirmar asistencia» with it", () => {
+    const a = actions();
+    const view = render(<CelebrationNativeRenderer theme={themeFromTemplate(TEMPLATES[0], VIEW.enabledSections)} view={VIEW} gallery={GALLERY} t={t} now={NOW} actions={a} />);
+    expect(screen.getByTestId("celebration-rsvp-cta").textContent).toBe("celebration.rsvp.findLink");
+    fireEvent.click(screen.getByTestId("celebration-rsvp-cta"));
+    expect(a.openRsvp).toHaveBeenCalledTimes(1);
+    view.unmount();
+    render(<CelebrationNativeRenderer theme={themeFromTemplate(TEMPLATES[0], VIEW.enabledSections)} view={VIEW} gallery={GALLERY} t={t} now={NOW} actions={a} hasPersonalLink />);
+    expect(screen.getByTestId("celebration-rsvp-cta").textContent).toBe("celebration.rsvp.cta");
+  });
+
+  it("negative: in a still preview (no actions) the buttons are drawn but are not controls", () => {
+    render(<CelebrationNativeRenderer theme={themeFromTemplate(TEMPLATES[0], VIEW.enabledSections)} view={VIEW} gallery={GALLERY} t={t} now={NOW} />);
+    expect(screen.getByTestId("celebration-gifts-cta")).toBeTruthy();
     expect(document.querySelectorAll("[role='link']")).toHaveLength(0);
   });
 });
