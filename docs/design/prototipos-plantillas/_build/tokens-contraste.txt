@@ -1,0 +1,84 @@
+
+marfil light
+OK  14.02 (>=4.5) Texto sobre canvas
+OK  14.83 (>=4.5) Texto sobre surface
+OK   6.11 (>=4.5) Muted sobre canvas
+OK   6.47 (>=4.5) Muted sobre surface
+OK   6.39 (>=4.5) Acento (texto, enlaces) sobre canvas
+OK   6.76 (>=4.5) Acento sobre surface
+OK   6.71 (>=4.5) onAccent sobre accentFill (botón)
+OK   6.39 (>=3) accentFill sobre canvas (UI, foco)
+OK   5.66 (>=3) accentFill sobre disco (pieza de color del dibujo)
+OK   3.66 (>=3) line sobre canvas (UI)
+OK   3.87 (>=3) line sobre surface (UI)
+OK  12.41 (>=4.5) Tinta del dibujo (text) sobre disco
+
+marfil dark
+OK  15.04 (>=4.5) Texto sobre canvas
+OK  13.93 (>=4.5) Texto sobre surface
+OK   7.78 (>=4.5) Muted sobre canvas
+OK   7.21 (>=4.5) Muted sobre surface
+OK   9.31 (>=4.5) Acento (texto, enlaces) sobre canvas
+OK   8.63 (>=4.5) Acento sobre surface
+OK   7.09 (>=4.5) onAccent sobre accentFill (botón)
+OK   7.19 (>=3) accentFill sobre canvas (UI, foco)
+OK   6.43 (>=3) accentFill sobre disco (pieza de color del dibujo)
+OK   4.20 (>=3) line sobre canvas (UI)
+OK   3.89 (>=3) line sobre surface (UI)
+OK  13.46 (>=4.5) Tinta del dibujo (text) sobre disco
+
+pinata light
+OK  15.06 (>=4.5) Texto sobre canvas
+OK  15.77 (>=4.5) Texto sobre surface
+OK   6.62 (>=4.5) Muted sobre canvas
+OK   6.93 (>=4.5) Muted sobre surface
+OK   5.31 (>=4.5) Acento (texto, enlaces) sobre canvas
+OK   5.56 (>=4.5) Acento sobre surface
+OK   5.56 (>=4.5) onAccent sobre accentFill (botón)
+OK   5.31 (>=3) accentFill sobre canvas (UI, foco)
+OK   4.72 (>=3) accentFill sobre disco (pieza de color del dibujo)
+OK   4.14 (>=3) line sobre canvas (UI)
+OK   4.34 (>=3) line sobre surface (UI)
+OK  13.38 (>=4.5) Tinta del dibujo (text) sobre disco
+
+pinata dark
+OK  15.45 (>=4.5) Texto sobre canvas
+OK  14.02 (>=4.5) Texto sobre surface
+OK   8.55 (>=4.5) Muted sobre canvas
+OK   7.76 (>=4.5) Muted sobre surface
+OK   8.44 (>=4.5) Acento (texto, enlaces) sobre canvas
+OK   7.66 (>=4.5) Acento sobre surface
+OK   6.96 (>=4.5) onAccent sobre accentFill (botón)
+OK   7.17 (>=3) accentFill sobre canvas (UI, foco)
+OK   6.35 (>=3) accentFill sobre disco (pieza de color del dibujo)
+OK   4.00 (>=3) line sobre canvas (UI)
+OK   3.63 (>=3) line sobre surface (UI)
+OK  13.68 (>=4.5) Tinta del dibujo (text) sobre disco
+
+gala light
+OK  16.76 (>=4.5) Texto sobre canvas
+OK  18.59 (>=4.5) Texto sobre surface
+OK   7.27 (>=4.5) Muted sobre canvas
+OK   8.06 (>=4.5) Muted sobre surface
+OK   6.60 (>=4.5) Acento (texto, enlaces) sobre canvas
+OK   7.32 (>=4.5) Acento sobre surface
+OK   7.32 (>=4.5) onAccent sobre accentFill (botón)
+OK   6.60 (>=3) accentFill sobre canvas (UI, foco)
+OK   5.86 (>=3) accentFill sobre disco (pieza de color del dibujo)
+OK   3.37 (>=3) line sobre canvas (UI)
+OK   3.74 (>=3) line sobre surface (UI)
+OK  14.89 (>=4.5) Tinta del dibujo (text) sobre disco
+
+gala dark
+OK  15.33 (>=4.5) Texto sobre canvas
+OK  14.02 (>=4.5) Texto sobre surface
+OK   8.74 (>=4.5) Muted sobre canvas
+OK   7.99 (>=4.5) Muted sobre surface
+OK  10.03 (>=4.5) Acento (texto, enlaces) sobre canvas
+OK   9.17 (>=4.5) Acento sobre surface
+OK   8.85 (>=4.5) onAccent sobre accentFill (botón)
+OK   8.81 (>=3) accentFill sobre canvas (UI, foco)
+OK   7.83 (>=3) accentFill sobre disco (pieza de color del dibujo)
+OK   4.03 (>=3) line sobre canvas (UI)
+OK   3.69 (>=3) line sobre surface (UI)
+OK  13.63 (>=4.5) Tinta del dibujo (text) sobre disco

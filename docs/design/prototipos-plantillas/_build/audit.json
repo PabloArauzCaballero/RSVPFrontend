@@ -1,0 +1,608 @@
+{
+ "marfil|390|light|sin": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 6.111407490696729,
+   "worst": "20 · 03 · 2027"
+  },
+  "lines": {
+   "min": 36,
+   "max": 51,
+   "minEl": "Nos conocimos en 2016, en un m",
+   "maxEl": "Los buses salen de la parroqui"
+  }
+ },
+ "marfil|390|light|foto": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 6.111407490696729,
+   "worst": "20 · 03 · 2027"
+  },
+  "lines": {
+   "min": 36,
+   "max": 51,
+   "minEl": "Nos conocimos en 2016, en un m",
+   "maxEl": "Los buses salen de la parroqui"
+  }
+ },
+ "marfil|390|dark|sin": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 7.094444145917715,
+   "worst": "Saltar al contenido"
+  },
+  "lines": {
+   "min": 36,
+   "max": 51,
+   "minEl": "Nos conocimos en 2016, en un m",
+   "maxEl": "Los buses salen de la parroqui"
+  }
+ },
+ "marfil|390|dark|foto": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 7.094444145917715,
+   "worst": "Saltar al contenido"
+  },
+  "lines": {
+   "min": 36,
+   "max": 51,
+   "minEl": "Nos conocimos en 2016, en un m",
+   "maxEl": "Los buses salen de la parroqui"
+  }
+ },
+ "marfil|768|light|sin": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 6.111407490696729,
+   "worst": "20 · 03 · 2027"
+  },
+  "lines": {
+   "min": 57,
+   "max": 68,
+   "minEl": "que el Illimani saliera entre ",
+   "maxEl": "Tu invitación indica cuántos l"
+  }
+ },
+ "marfil|768|light|foto": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 6.111407490696729,
+   "worst": "20 · 03 · 2027"
+  },
+  "lines": {
+   "min": 57,
+   "max": 68,
+   "minEl": "que el Illimani saliera entre ",
+   "maxEl": "Tu invitación indica cuántos l"
+  }
+ },
+ "marfil|768|dark|sin": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 7.094444145917715,
+   "worst": "Saltar al contenido"
+  },
+  "lines": {
+   "min": 57,
+   "max": 68,
+   "minEl": "que el Illimani saliera entre ",
+   "maxEl": "Tu invitación indica cuántos l"
+  }
+ },
+ "marfil|768|dark|foto": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 7.094444145917715,
+   "worst": "Saltar al contenido"
+  },
+  "lines": {
+   "min": 57,
+   "max": 68,
+   "minEl": "que el Illimani saliera entre ",
+   "maxEl": "Tu invitación indica cuántos l"
+  }
+ },
+ "marfil|1280|light|sin": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 6.111411257510701,
+   "worst": "Parroquia San Miguel, Calacoto · La Paz"
+  },
+  "lines": {
+   "min": 38,
+   "max": 68,
+   "minEl": "Responde antes del 20 de febre",
+   "maxEl": "Tu invitación indica cuántos l"
+  }
+ },
+ "marfil|1280|light|foto": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 6.111411257510701,
+   "worst": "Parroquia San Miguel, Calacoto · La Paz"
+  },
+  "lines": {
+   "min": 38,
+   "max": 68,
+   "minEl": "Responde antes del 20 de febre",
+   "maxEl": "Tu invitación indica cuántos l"
+  }
+ },
+ "marfil|1280|dark|sin": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 7.094444145917715,
+   "worst": "Saltar al contenido"
+  },
+  "lines": {
+   "min": 38,
+   "max": 68,
+   "minEl": "Responde antes del 20 de febre",
+   "maxEl": "Tu invitación indica cuántos l"
+  }
+ },
+ "marfil|1280|dark|foto": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 7.094444145917715,
+   "worst": "Saltar al contenido"
+  },
+  "lines": {
+   "min": 38,
+   "max": 68,
+   "minEl": "Responde antes del 20 de febre",
+   "maxEl": "Tu invitación indica cuántos l"
+  }
+ },
+ "pinata|390|light|sin": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 5.311898031765111,
+   "worst": "·6"
+  },
+  "lines": {
+   "min": 22,
+   "max": 49,
+   "minEl": "Cada quien se lleva su",
+   "maxEl": "Los colores de la fiesta son e"
+  }
+ },
+ "pinata|390|light|foto": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 5.311898031765111,
+   "worst": "·6"
+  },
+  "lines": {
+   "min": 22,
+   "max": 49,
+   "minEl": "Cada quien se lleva su",
+   "maxEl": "Los colores de la fiesta son e"
+  }
+ },
+ "pinata|390|dark|sin": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 6.96440201036325,
+   "worst": "Saltar al contenido"
+  },
+  "lines": {
+   "min": 22,
+   "max": 49,
+   "minEl": "Cada quien se lleva su",
+   "maxEl": "Los colores de la fiesta son e"
+  }
+ },
+ "pinata|390|dark|foto": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 6.96440201036325,
+   "worst": "Saltar al contenido"
+  },
+  "lines": {
+   "min": 22,
+   "max": 49,
+   "minEl": "Cada quien se lleva su",
+   "maxEl": "Los colores de la fiesta son e"
+  }
+ },
+ "pinata|768|light|sin": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 5.311898031765111,
+   "worst": "·6"
+  },
+  "lines": {
+   "min": 66,
+   "max": 73,
+   "minEl": "Sofi cumple seis y quiere comp",
+   "maxEl": "Desde los 4 años puede quedars"
+  }
+ },
+ "pinata|768|light|foto": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 5.311898031765111,
+   "worst": "·6"
+  },
+  "lines": {
+   "min": 66,
+   "max": 73,
+   "minEl": "Sofi cumple seis y quiere comp",
+   "maxEl": "Desde los 4 años puede quedars"
+  }
+ },
+ "pinata|768|dark|sin": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 6.96440201036325,
+   "worst": "Saltar al contenido"
+  },
+  "lines": {
+   "min": 66,
+   "max": 73,
+   "minEl": "Sofi cumple seis y quiere comp",
+   "maxEl": "Desde los 4 años puede quedars"
+  }
+ },
+ "pinata|768|dark|foto": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 6.96440201036325,
+   "worst": "Saltar al contenido"
+  },
+  "lines": {
+   "min": 66,
+   "max": 73,
+   "minEl": "Sofi cumple seis y quiere comp",
+   "maxEl": "Desde los 4 años puede quedars"
+  }
+ },
+ "pinata|1280|light|sin": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 5.311898031765111,
+   "worst": "·6"
+  },
+  "lines": {
+   "min": 37,
+   "max": 73,
+   "minEl": "de mesa y los rompecabezas. El",
+   "maxEl": "Desde los 4 años puede quedars"
+  }
+ },
+ "pinata|1280|light|foto": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 5.311898031765111,
+   "worst": "·6"
+  },
+  "lines": {
+   "min": 37,
+   "max": 73,
+   "minEl": "de mesa y los rompecabezas. El",
+   "maxEl": "Desde los 4 años puede quedars"
+  }
+ },
+ "pinata|1280|dark|sin": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 6.96440201036325,
+   "worst": "Saltar al contenido"
+  },
+  "lines": {
+   "min": 37,
+   "max": 73,
+   "minEl": "de mesa y los rompecabezas. El",
+   "maxEl": "Desde los 4 años puede quedars"
+  }
+ },
+ "pinata|1280|dark|foto": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 6.96440201036325,
+   "worst": "Saltar al contenido"
+  },
+  "lines": {
+   "min": 37,
+   "max": 73,
+   "minEl": "de mesa y los rompecabezas. El",
+   "maxEl": "Desde los 4 años puede quedars"
+  }
+ },
+ "gala|390|light|sin": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 6.598568498628926,
+   "worst": "25"
+  },
+  "lines": {
+   "min": 25,
+   "max": 54,
+   "minEl": "Equipo fundador y aliados",
+   "maxEl": "Valet sin costo, con ingreso p"
+  }
+ },
+ "gala|390|light|foto": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 6.598568498628926,
+   "worst": "25"
+  },
+  "lines": {
+   "min": 25,
+   "max": 54,
+   "minEl": "Equipo fundador y aliados",
+   "maxEl": "Valet sin costo, con ingreso p"
+  }
+ },
+ "gala|390|dark|sin": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 8.742709689830829,
+   "worst": "Grupo Altiplano"
+  },
+  "lines": {
+   "min": 25,
+   "max": 54,
+   "minEl": "Equipo fundador y aliados",
+   "maxEl": "Valet sin costo, con ingreso p"
+  }
+ },
+ "gala|390|dark|foto": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 8.742709689830829,
+   "worst": "Grupo Altiplano"
+  },
+  "lines": {
+   "min": 25,
+   "max": 54,
+   "minEl": "Equipo fundador y aliados",
+   "maxEl": "Valet sin costo, con ingreso p"
+  }
+ },
+ "gala|768|light|sin": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 6.598568498628926,
+   "worst": "25"
+  },
+  "lines": {
+   "min": 64,
+   "max": 72,
+   "minEl": "Si quieres obsequiar algo por ",
+   "maxEl": "Valet sin costo, con ingreso p"
+  }
+ },
+ "gala|768|light|foto": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 6.598568498628926,
+   "worst": "25"
+  },
+  "lines": {
+   "min": 64,
+   "max": 72,
+   "minEl": "Si quieres obsequiar algo por ",
+   "maxEl": "Valet sin costo, con ingreso p"
+  }
+ },
+ "gala|768|dark|sin": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 8.742709689830829,
+   "worst": "Grupo Altiplano"
+  },
+  "lines": {
+   "min": 64,
+   "max": 72,
+   "minEl": "Si quieres obsequiar algo por ",
+   "maxEl": "Valet sin costo, con ingreso p"
+  }
+ },
+ "gala|768|dark|foto": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 8.742709689830829,
+   "worst": "Grupo Altiplano"
+  },
+  "lines": {
+   "min": 64,
+   "max": 72,
+   "minEl": "Si quieres obsequiar algo por ",
+   "maxEl": "Valet sin costo, con ingreso p"
+  }
+ },
+ "gala|1280|light|sin": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 6.598568498628926,
+   "worst": "25"
+  },
+  "lines": {
+   "min": 59,
+   "max": 72,
+   "minEl": "Los cupos son limitados. Respo",
+   "maxEl": "Valet sin costo, con ingreso p"
+  }
+ },
+ "gala|1280|light|foto": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 6.598568498628926,
+   "worst": "25"
+  },
+  "lines": {
+   "min": 59,
+   "max": 72,
+   "minEl": "Los cupos son limitados. Respo",
+   "maxEl": "Valet sin costo, con ingreso p"
+  }
+ },
+ "gala|1280|dark|sin": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 8.742709689830829,
+   "worst": "Grupo Altiplano"
+  },
+  "lines": {
+   "min": 59,
+   "max": 72,
+   "minEl": "Los cupos son limitados. Respo",
+   "maxEl": "Valet sin costo, con ingreso p"
+  }
+ },
+ "gala|1280|dark|foto": {
+  "overflow": 0,
+  "small": [],
+  "tap": [],
+  "contrast": {
+   "min": 8.742709689830829,
+   "worst": "Grupo Altiplano"
+  },
+  "lines": {
+   "min": 59,
+   "max": 72,
+   "minEl": "Los cupos son limitados. Respo",
+   "maxEl": "Valet sin costo, con ingreso p"
+  }
+ },
+ "anim|marfil|390": {
+  "gifts": [
+   true,
+   true,
+   true,
+   true,
+   true
+  ],
+  "hidden": 0,
+  "focus": "A outline=solid 3px"
+ },
+ "anim|marfil|1280": {
+  "gifts": [
+   true,
+   true,
+   true,
+   true,
+   true
+  ],
+  "hidden": 0,
+  "focus": "A outline=solid 3px"
+ },
+ "anim|pinata|390": {
+  "gifts": [
+   true,
+   true,
+   true,
+   true,
+   true
+  ],
+  "hidden": 0,
+  "focus": "A outline=solid 3px"
+ },
+ "anim|pinata|1280": {
+  "gifts": [
+   true,
+   true,
+   true,
+   true,
+   true
+  ],
+  "hidden": 0,
+  "focus": "A outline=solid 3px"
+ },
+ "anim|gala|390": {
+  "gifts": [
+   true,
+   true,
+   true,
+   true,
+   true
+  ],
+  "hidden": 0,
+  "focus": "A outline=solid 3px"
+ },
+ "anim|gala|1280": {
+  "gifts": [
+   true,
+   true,
+   true,
+   true,
+   true
+  ],
+  "hidden": 0,
+  "focus": "A outline=solid 3px"
+ }
+}
