@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useRef, useState, type PropsWithChildren, type ReactNode } from "react";
 import { ConfirmDialog } from "../host/ui";
-import { useT } from "../platform/providers";
+import { useApiClient, useT } from "../platform/providers";
+import { unregisterPushDevices } from "../push/lifecycle";
 import { useAuth } from "./auth-context";
 
 type RequestSignOut = (restoreFocus?: () => void) => void;
@@ -15,6 +16,7 @@ export function useConfirmSignOut(): RequestSignOut {
 
 export function SignOutProvider({ children }: PropsWithChildren): ReactNode {
   const auth = useAuth();
+  const client = useApiClient();
   const t = useT();
   const [visible, setVisible] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -32,7 +34,8 @@ export function SignOutProvider({ children }: PropsWithChildren): ReactNode {
     pending.current = true;
     returnFocus.current = null;
     setBusy(true);
-    try { await auth.signOut(); }
+    // F12: while the session still exists, so this phone stops receiving this account's notices (never blocks: it has a short budget).
+    try { await unregisterPushDevices(client).catch(() => undefined); await auth.signOut(); }
     finally { pending.current = false; setBusy(false); setVisible(false); }
   };
   return (

@@ -129,6 +129,7 @@ export const guestsEsBO = {
     title: "Avisos en este dispositivo", intro: "Te avisamos cuando alguien confirme o pida acompañantes. Puedes apagarlos cuando quieras en Preferencias.",
     enable: "Activar avisos push", registering: "Activando…", enabled: "Este dispositivo recibirá avisos push.", denied: "Los avisos están bloqueados. Actívalos en los ajustes del sistema para esta app.", openSettings: "Abrir ajustes",
     unsupported: "Los avisos push necesitan un teléfono real con la app instalada. Este entorno no los admite.", failed: "No pudimos activar los avisos. Inténtalo de nuevo.", noProject: "Falta configurar el proyecto de notificaciones de la app.", disable: "Quitar este dispositivo", preferences: "Preferencias de avisos",
+    invite: { title: "Recibe estos avisos en tu teléfono", body: "Te avisamos al momento cuando alguien confirme, cambie su respuesta o pida acompañantes, aunque la app esté cerrada.", action: "Activar avisos push" },
     readyBody: "Actívalos y este teléfono recibe cada aviso al momento.", 
     advanced: "Dispositivos y envíos",
     state: { ready: "Avisos al instante", enabled: "Este teléfono ya recibe avisos", denied: "Los avisos están apagados", unsupported: "Aquí no hay avisos push" },

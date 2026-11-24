@@ -13,6 +13,7 @@ import { FailureNotice, RetryNotice, TextAction, BlockSkeleton } from "./parts";
 import { useSingleFlightGate } from "../../platform/single-flight";
 import { classifyFailure } from "./failure";
 import { knownNoticeTemplate, notificationTarget } from "./notification-target";
+import { PushInvite } from "../../push/push-invite";
 
 /** C31 / F6 · In-app notification center: unread first, direct action, mark one or all as read. The read state is the server's (`readAt`), shared by every device (REQ-F18-01/02/05). */
 
@@ -46,6 +47,7 @@ function NotificationsBody({ timeZone, celebrationId, inbox: { inbox, markRead, 
   };
   return (
     <View style={{ gap: spacing[4] }}>
+      <PushInvite celebrationId={celebrationId} onNavigate={onNavigate} />
       <Text testID="unread-count" accessibilityLiveRegion="polite" style={[styles.label, { fontSize: 16 }]}>{t("guests.notifications.unreadCount", { count: unread.length })}</Text>
       {items.length === 0 ? <EmptyState illustration="calendar" title={t("guests.notifications.emptyTitle")} body={t("guests.notifications.empty")} /> : (
         <View role="list" style={{ borderRadius: radius.lg, borderWidth: 1, borderColor: palette.border, backgroundColor: palette.surface, overflow: "hidden" }}>
