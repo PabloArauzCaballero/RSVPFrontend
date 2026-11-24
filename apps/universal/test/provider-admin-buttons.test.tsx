@@ -14,13 +14,13 @@ import { ProductsScreen } from "../src/provider/services-screen";
 import { OverviewScreen } from "../src/provider/overview-screen";
 import { writeLocal } from "../src/platform/local-store";
 import { resetSecureStore } from "./stubs/expo-secure-store";
-import { ADMIN, fakeClient, HOST, HttpFailure, renderApp, type Handler } from "./support";
+import { ADMIN, fakeClient, GEO, HOST, HttpFailure, renderApp, type Handler } from "./support";
 
 const PID = "4f0f2d3d-0000-4000-8000-0000000000aa";
 const navigate = vi.fn();
 const type = (label: string, value: string): void => { fireEvent.change(screen.getByLabelText(label), { target: { value } }); };
 const profile = { id: PID, slug: "dulce-sol", name: "Dulce Sol", status: "VERIFIED", plan: "FREE", currency: "BOB", timeZone: "America/La_Paz", version: 1, ownerId: "u-host" };
-const portal = (extra: Record<string, Handler> = {}): Record<string, Handler> => ({ [`GET /providers/${PID}`]: () => profile, [`GET /providers/${PID}/listings`]: () => ({ items: [] }), [`GET /providers/${PID}/metrics`]: () => ({ providerId: PID, from: "", to: "", totals: { impressions: 0, clicks: 0, validLeads: 0, invalidLeads: 0, ctr: 0 } }), ...extra });
+const portal = (extra: Record<string, Handler> = {}): Record<string, Handler> => ({ [`GET /providers/${PID}`]: () => profile, "GET /providers/geo": () => GEO, [`GET /providers/${PID}/listings`]: () => ({ items: [] }), [`GET /providers/${PID}/metrics`]: () => ({ providerId: PID, from: "", to: "", totals: { impressions: 0, clicks: 0, validLeads: 0, invalidLeads: 0, ctr: 0 } }), ...extra });
 /** Secondary actions live behind a "⋯" menu: open the trigger named `trigger` (inside `scope`) and return the menu item named `item`. */
 const menuItem = async (trigger: string | RegExp, item: string, scope: { readonly findByRole: typeof screen.findByRole } = screen): Promise<HTMLElement> => {
   fireEvent.click(await scope.findByRole("button", { name: trigger }));

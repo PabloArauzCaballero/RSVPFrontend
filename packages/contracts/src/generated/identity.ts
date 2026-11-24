@@ -497,7 +497,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * My account and profile (since 2.1.0)
+         * @description Any role with a person's Bearer token. The account is the token subject (no id in the path). Cache-Control: no-store. 401 if the account no longer exists.
+         */
+        get: operations["getOwnProfile"];
         put?: never;
         post?: never;
         /**
@@ -507,7 +511,11 @@ export interface paths {
         delete: operations["deleteOwnAccount"];
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Edit my profile (since 2.1.0)
+         * @description Partial update of the token subject's profile under a row lock. 422 names the invalid or read-only field and never echoes its value.
+         */
+        patch: operations["updateOwnProfile"];
         trace?: never;
     };
 }
@@ -634,6 +642,32 @@ export interface components {
         LogoutRequest: {
             refreshToken: string;
         };
+        /** @description The signed-in account (since 2.1.0). */
+        Me: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: email */
+            email: string;
+            emailVerified: boolean;
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: date-time
+             * @description When the current marketing consent was given; null without consent.
+             */
+            marketingOptInAt: string | null;
+            profile: components["schemas"]["UserProfile"];
+            roles: ("HOST" | "PLANNER" | "PROVIDER" | "ADMIN")[];
+            /** Format: date-time */
+            termsAcceptedAt: string | null;
+            /** @description B6: accepted version of the terms and privacy policy; null if none was recorded. */
+            termsVersion: string | null;
+            /**
+             * Format: date-time
+             * @description Last profile change (the creation time if it never changed).
+             */
+            updatedAt: string;
+        };
         OAuthError: {
             /** @enum {string} */
             error: "invalid_request" | "invalid_client" | "unsupported_grant_type" | "invalid_scope";
@@ -748,10 +782,33 @@ export interface components {
             refreshToken: string;
         };
         RegisterRequest: {
+            /** @description Optional (since 2.1.0). Free text, trimmed; 1 to 80 characters. */
+            city?: string;
+            /**
+             * @description Optional (since 2.1.0). ISO 3166-1 alpha-2; stored upper-case.
+             * @default BO
+             */
+            country: string;
             /** Format: email */
             email: string;
+            /** @description Optional (since 2.1.0). Trimmed; 1 to 80 characters, no control characters. Personal data (encrypted at rest). */
+            familyName?: string;
+            /** @description Optional (since 2.1.0). Trimmed; 1 to 80 characters, no control characters. Personal data (encrypted at rest). */
+            givenName?: string;
+            /**
+             * @description Optional (since 2.1.0). Preferred language. Default: en-US when Accept-Language prefers English, es-BO otherwise. It also picks the language of the verification e-mail.
+             * @enum {string}
+             */
+            locale?: "es-BO" | "en-US";
+            /**
+             * @description Optional (since 2.1.0). Consent to product news. The time it was given is recorded (marketingOptInAt).
+             * @default false
+             */
+            marketingOptIn: boolean;
             /** @description Length-based policy; at most 72 UTF-8 bytes. */
             password: string;
+            /** @description Optional (since 2.1.0). E.164 (for example +59170000000). Spaces, dots, dashes and parentheses are removed before the check. Personal data (encrypted at rest). */
+            phone?: string;
             /**
              * @description ADMIN is never self-service.
              * @default HOST
@@ -760,6 +817,11 @@ export interface components {
             role: "HOST" | "PLANNER" | "PROVIDER";
             /** @description B6: version of the terms and privacy policy the person accepted (for example 2026-11-21-borrador). Optional for clients released before 1.6.0. */
             termsVersion?: string;
+            /**
+             * @description Optional (since 2.1.0). IANA time zone.
+             * @default America/La_Paz
+             */
+            timeZone: string;
         };
         Registration: components["schemas"]["Session"] & {
             /** Format: email */
@@ -768,6 +830,8 @@ export interface components {
             emailVerified?: boolean;
             /** Format: uuid */
             id: string;
+            /** @description Since 2.1.0: the profile as stored (defaults filled in). */
+            profile?: components["schemas"]["UserProfile"];
             roles: ("HOST" | "PLANNER" | "PROVIDER")[];
         };
         ServiceTokenResponse: {
@@ -789,6 +853,20 @@ export interface components {
             /** @constant */
             tokenType: "Bearer";
         };
+        /** @description Partial update (since 2.1.0): only the keys sent change. null clears givenName, familyName, phone or city; country, locale, timeZone and marketingOptIn cannot be null. Any other key (email, roles, termsVersion...) answers 422 naming it. */
+        UpdateProfileRequest: {
+            city?: string | null;
+            country?: string;
+            familyName?: string | null;
+            givenName?: string | null;
+            /** @enum {string} */
+            locale?: "es-BO" | "en-US";
+            /** @description true records the time of the consent (kept if it was already given); false clears it. */
+            marketingOptIn?: boolean;
+            /** @description E.164; separators are removed. */
+            phone?: string | null;
+            timeZone?: string;
+        };
         User: {
             /** Format: date-time */
             createdAt?: string | null;
@@ -807,6 +885,19 @@ export interface components {
             page: number;
             size: number;
             total: number;
+        };
+        /** @description Since 2.1.0. Unset optional values are null, so the shape is stable. */
+        UserProfile: {
+            city: string | null;
+            country: string;
+            familyName: string | null;
+            givenName: string | null;
+            /** @enum {string} */
+            locale: "es-BO" | "en-US";
+            marketingOptIn: boolean;
+            /** @description E.164. */
+            phone: string | null;
+            timeZone: string;
         };
     };
     responses: {
@@ -1760,6 +1851,27 @@ export interface operations {
             404: components["responses"]["NotFound"];
         };
     };
+    getOwnProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The signed-in account */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Me"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
     deleteOwnAccount: {
         parameters: {
             query?: never;
@@ -1782,6 +1894,32 @@ export interface operations {
             };
             401: components["responses"]["Unauthorized"];
             409: components["responses"]["Conflict"];
+            422: components["responses"]["Validation"];
+        };
+    };
+    updateOwnProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateProfileRequest"];
+            };
+        };
+        responses: {
+            /** @description The signed-in account */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Me"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
             422: components["responses"]["Validation"];
         };
     };

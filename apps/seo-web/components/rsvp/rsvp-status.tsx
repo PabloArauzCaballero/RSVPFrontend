@@ -167,7 +167,7 @@ export function HostContactLines({ contact, hosts, locale, t }: { contact?: Host
   return (
     <div className="guest-contact">
       <p>{names ? t('rsvp.invite.contact', { hosts: names }) : t('rsvp.invite.contactGeneric')}</p>
-      {contact?.email ? <p data-testid="host-contact-email">{t('rsvp.invite.contactEmail')} <a href={`mailto:${contact.email}`}>{contact.email}</a></p> : null}
+      {contact?.email ? <p className="rsvp-contact-email" data-testid="host-contact-email">{t('rsvp.invite.contactEmail')} <a href={`mailto:${contact.email}`}>{contact.email}</a></p> : null}
       {contact?.phone ? <p data-testid="host-contact-phone">{t('rsvp.invite.contactPhone')} <a href={`tel:${contact.phone}`}>{contact.phone}</a></p> : null}
     </div>
   );

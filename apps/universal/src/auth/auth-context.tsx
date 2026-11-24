@@ -8,7 +8,7 @@ export interface AuthApi {
   readonly state: AuthState;
   readonly claims: SessionClaims;
   signIn(input: LoginInput): Promise<Session>;
-  register(input: RegisterInput): Promise<Session>;
+  register(input: RegisterInput, prepare?: (session: Session) => Promise<void>): Promise<Session>;
   requestRecovery(input: PasswordRecoveryInput): Promise<void>;
   /** Sets the new password from a recovery link. Identity ends every session, so this one is closed too. */
   resetPassword(input: PasswordResetInput): Promise<void>;
@@ -37,7 +37,7 @@ export function AuthProvider({ manager, identityClient, children }: PropsWithChi
     return {
       state, claims: claimsOf(state.session),
       signIn: (input) => manager.signIn(input),
-      register: (input) => manager.register(input),
+      register: (input, prepare) => manager.register(input, prepare),
       requestRecovery: (input) => identity.requestPasswordRecovery(input),
       resetPassword: async (input) => { await identity.resetPassword(input); await manager.logout().catch(() => undefined); },
       confirmEmail: async (token) => { await identity.confirmEmail(token); if (manager.getState().session) await manager.refresh().catch(() => undefined); },

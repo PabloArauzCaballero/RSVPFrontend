@@ -109,7 +109,7 @@ describe("A24 · Partners tab", () => {
     const filters = filtersFromParams({ q: " sol ", status: "VERIFIED", kyp: "EXPIRED", person: "JURIDICA", origin: "ADMIN", plan: "FREE", expiring: "1", from: "2026-01-01", to: "nope", listings: "no", sort: "name", page: "2" });
     expect(filters).toEqual({ q: "sol", status: "VERIFIED", kypStatus: "EXPIRED", personType: "JURIDICA", origin: "ADMIN", plan: "FREE", kypExpiringWithinDays: 30, createdFrom: "2026-01-01", hasPublishedListings: false, sort: "name", page: 2 });
     expect(filtersFromParams(paramsFromFilters(filters))).toEqual(filters);
-    expect(filtersFromParams({ status: "HACKED", sort: "drop table", page: "-1" })).toEqual({});
+    expect(filtersFromParams({ status: "INVENTADO", sort: "drop table", page: "-1" })).toEqual({});
   });
 
   it("the row menu offers every action; with EXPO_PUBLIC_PARTNER_OWNER_CHANGE off, changing the owner is visible but disabled; suspending asks for a reason", async () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { createApiClient } from "@rsvp/api-client";
-import { IdentityClient, classifyAuthError, fieldErrorsOf, isInvalidLink, loginSchema, passwordResetSchema, recoverySchema, registerSchema, validate } from "../src/index.js";
+import { IdentityClient, classifyAuthError, fieldErrorsOf, isInvalidLink, loginSchema, passwordResetSchema, recoverySchema, registerSchema, validate, validateRegistration } from "../src/index.js";
 import { tokens } from "./helpers.js";
 
 const json = (status: number, body: unknown, type = "application/json"): Response => new Response(status === 204 ? null : JSON.stringify(body), { status, headers: { "content-type": type } });
@@ -50,10 +50,28 @@ describe("schemas", () => {
     expect(validate(loginSchema, { email: " a@b.co ", password: "x" })).toMatchObject({ ok: true, value: { email: "a@b.co" } });
   });
   it("register enforces the 12-character and 72-byte password policy and excludes ADMIN", () => {
-    expect(validate(registerSchema, { email: "a@b.co", password: "short", role: "HOST" })).toEqual({ ok: false, errors: { password: "passwordShort" } });
-    expect(validate(registerSchema, { email: "a@b.co", password: "ñ".repeat(40), role: "HOST" })).toEqual({ ok: false, errors: { password: "passwordBytes" } });
-    expect(validate(registerSchema, { email: "a@b.co", password: "correct-horse-battery", role: "ADMIN" }).ok).toBe(false);
-    expect(validate(registerSchema, { email: "a@b.co", password: "correct-horse-battery", role: "PROVIDER" }).ok).toBe(true);
+    const base = { role: "HOST", givenName: "Ana", familyName: "Rojas", phone: "+591 7123 4567", city: "La Paz", passwordConfirmation: "x" };
+    expect(validate(registerSchema, { ...base, email: "", password: "" })).toEqual({ ok: false, errors: { email: "required", password: "required" } });
+    expect(validate(registerSchema, { ...base, email: "a@b.co", password: "short" })).toEqual({ ok: false, errors: { password: "passwordShort" } });
+    expect(validate(registerSchema, { ...base, email: "a@b.co", password: "ñ".repeat(40) })).toEqual({ ok: false, errors: { password: "passwordBytes" } });
+    expect(validate(registerSchema, { ...base, email: "a@b.co", password: "correct-horse-battery", role: "ADMIN" }).ok).toBe(false);
+    expect(validate(registerSchema, { ...base, email: "a@b.co", password: "correct-horse-battery", role: "PROVIDER" }).ok).toBe(true);
+  });
+  it("register requires the profile and normalises the phone to E.164", () => {
+    const access = { email: "a@b.co", password: "correct-horse-battery", passwordConfirmation: "correct-horse-battery" };
+    const empty = validateRegistration({ role: "HOST", givenName: " ", familyName: "", phone: "+591 ", city: "", ...access });
+    expect(empty).toEqual({ ok: false, errors: { givenName: "required", familyName: "required", phone: "required", city: "required" } });
+    const ok = validateRegistration({ role: "HOST", givenName: " Ana ", familyName: "Rojas", phone: "+591 (7) 123-4567", city: "Sucre", ...access });
+    expect(ok).toMatchObject({ ok: true, value: { givenName: "Ana", phone: "+59171234567", country: "BO", marketingOptIn: false, organizationName: "" } });
+    expect(validateRegistration({ role: "HOST", givenName: "A", familyName: "R", phone: "71234567", city: "Sucre", ...access })).toEqual({ ok: false, errors: { phone: "invalidPhone" } });
+    expect(validateRegistration({ role: "HOST", givenName: "x".repeat(81), familyName: "R", phone: "+59171234567", city: "Sucre", ...access })).toEqual({ ok: false, errors: { givenName: "tooLong" } });
+  });
+  it("register reports cross-field rules together with field errors (a planner needs the company; passwords must match)", () => {
+    const result = validateRegistration({ role: "PLANNER", organizationName: " ", givenName: "", familyName: "R", phone: "+59171234567", city: "Sucre", email: "a@b.co", password: "correct-horse-battery", passwordConfirmation: "other-horse-battery" });
+    expect(result).toEqual({ ok: false, errors: { organizationName: "required", passwordConfirmation: "passwordMismatch", givenName: "required" } });
+    const filled = { givenName: "A", familyName: "R", phone: "+59171234567", city: "Sucre", email: "a@b.co", password: "correct-horse-battery", passwordConfirmation: "correct-horse-battery" };
+    expect(validateRegistration({ role: "HOST", organizationName: "", ...filled }).ok).toBe(true);
+    expect(validateRegistration({ role: "PROVIDER", organizationName: "", ...filled }).ok).toBe(true);
   });
   it("recovery only needs an e-mail", () => { expect(validate(recoverySchema, { email: "a@b.co" }).ok).toBe(true); });
 
