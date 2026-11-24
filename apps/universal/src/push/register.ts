@@ -53,9 +53,28 @@ export async function enablePush(register: (body: DeviceRegistration) => Promise
     let { status } = await Notifications.getPermissionsAsync();
     if (status !== "granted") status = (await Notifications.requestPermissionsAsync()).status;
     if (status !== "granted") return { kind: "denied" };
-    if (Platform.OS === "android") await Notifications.setNotificationChannelAsync("default", { name: "default", importance: Notifications.AndroidImportance.DEFAULT });
-    const token = await Notifications.getExpoPushTokenAsync({ projectId });
-    await register({ installationId: await installationId(), projectId, platform: Platform.OS === "ios" ? "ios" : "android", token: token.data });
+    await register(await registrationBody(projectId));
     return { kind: "registered" };
   } catch { return { kind: "failed" }; }
+}
+
+/** The registration of this installation: its Expo token for the EAS project the backend expects (EXPO_PROJECT_ID). */
+async function registrationBody(projectId: string): Promise<DeviceRegistration> {
+  if (Platform.OS === "android") await Notifications.setNotificationChannelAsync("default", { name: "default", importance: Notifications.AndroidImportance.DEFAULT });
+  const token = await Notifications.getExpoPushTokenAsync({ projectId });
+  return { installationId: await installationId(), projectId, platform: Platform.OS === "ios" ? "ios" : "android", token: token.data };
+}
+
+/**
+ * F12 · The registration when permission was ALREADY granted, for refreshing a token or adding another celebration without
+ * asking anything. Never shows the system prompt; null when there is nothing to register (web, simulator, no permission, no token).
+ */
+export async function silentRegistration(): Promise<DeviceRegistration | null> {
+  if (!supportsPush()) return null;
+  const projectId = easProjectId();
+  if (!projectId) return null;
+  try {
+    const { status } = await Notifications.getPermissionsAsync();
+    return status === "granted" ? await registrationBody(projectId) : null;
+  } catch { return null; }
 }
