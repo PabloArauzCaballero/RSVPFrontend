@@ -5,6 +5,7 @@ import { useApiClient, useClaims, useLocale, useT } from "../platform/providers"
 import type { SessionClaims } from "../platform/session";
 import { ActionButton, EmptyState, ErrorNotice, Notice, Screen } from "./ui";
 import { HOST_ROUTES, hostNav, routePath, withCelebration, type HostRoute } from "./routes";
+import { useSilentPushRegistration } from "../push/lifecycle";
 
 /** Who may open the host workspace: hosts and planners only (REQ-F13-05). The API re-checks everything. */
 const HOST_ROLES: readonly string[] = ["HOST", "PLANNER"];
@@ -73,6 +74,8 @@ export function CelebrationScreen({ celebrationId, onNavigate, current, title, h
   const claims = useClaims();
   const query = useCelebration(client, celebrationId ?? "");
   const types = useEventTypes(client, locale);
+  // F12: with push already allowed on this phone, each celebration the host opens gets its notices too (no prompt).
+  useSilentPushRegistration(client, query.data?.access === "READ" ? undefined : query.data?.id);
   // With no celebration chosen, a person who has exactly one open celebration goes straight to it instead of a dead-end "choose one".
   const mine = useMyCelebrations(client, { enabled: !celebrationId });
   const onlyOne = !celebrationId && mine.isSuccess && mine.data.items.length === 1 ? mine.data.items[0]?.id : undefined;

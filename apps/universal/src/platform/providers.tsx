@@ -8,6 +8,7 @@ import { createI18n, resolveLocale, supportedLocales, type AppLocale, type Trans
 import { UiProvider, stringsFor } from "@rsvp/ui";
 import { AuthProvider, StaticAuthProvider, useAuth } from "../auth/auth-context";
 import { SignOutProvider } from "../auth/sign-out";
+import { PushLifecycle } from "../push/lifecycle";
 import { deviceLanguages } from "./device-languages";
 import { readLocalePreference, writeLocalePreference } from "./preferences";
 import { createAppSessionStore, type SessionClaims } from "./session";
@@ -115,7 +116,7 @@ export function AppProviders({ children, client, claims, runtime, locale, queryC
   // The scheme is the person's choice or the system's. Style sheets are chosen per scheme at render time, so a change remounts the tree once (rare, and the stored choice makes it a start-up event on native).
   const scheme = useScheme();
   useThemeHydration();
-  const body = <SessionQueryProvider queryClient={queryClient}><PlatformContext.Provider value={platform}><UiProvider scheme={scheme} strings={stringsFor(resolvedLocale)}><SignOutProvider><Fragment key={scheme}>{children}</Fragment></SignOutProvider></UiProvider></PlatformContext.Provider></SessionQueryProvider>;
+  const body = <SessionQueryProvider queryClient={queryClient}><PlatformContext.Provider value={platform}><UiProvider scheme={scheme} strings={stringsFor(resolvedLocale)}><SignOutProvider><PushLifecycle client={platform.client} /><Fragment key={scheme}>{children}</Fragment></SignOutProvider></UiProvider></PlatformContext.Provider></SessionQueryProvider>;
   return (
     <I18nextProvider i18n={i18n}>
       {app ? <AuthProvider manager={app.manager} identityClient={app.identityClient}>{body}</AuthProvider> : <StaticAuthProvider claims={claims ?? ANONYMOUS_CLAIMS}>{body}</StaticAuthProvider>}

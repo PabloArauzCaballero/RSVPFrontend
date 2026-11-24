@@ -133,6 +133,7 @@ export const guestsEnUS: DeepStrings<typeof guestsEsBO> = {
     enable: "Turn on push notices", registering: "Turning on…", enabled: "This device will receive push notices.", denied: "Notices are blocked. Turn them on in the system settings for this app.", openSettings: "Open settings",
     unsupported: "Push notices need a real phone with the app installed. This environment does not support them.", failed: "We could not turn notices on. Try again.", noProject: "The app's notification project is not configured.", disable: "Remove this device", preferences: "Notice preferences",
     state: { ready: "Instant alerts", enabled: "This phone already gets alerts", denied: "Alerts are turned off", unsupported: "No push alerts here" },
+    invite: { title: "Get these notices on your phone", body: "We tell you right away when someone confirms, changes their reply or asks for companions, even with the app closed.", action: "Turn on push notices" },
     readyBody: "Turn them on and this phone gets every alert right away.", 
     advanced: "Devices and deliveries",
     devicesTitle: "Registered devices", devicesEmpty: "No devices are registered for push notices yet.", platform: { ios: "iPhone", android: "Android" },
