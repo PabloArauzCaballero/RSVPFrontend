@@ -12,7 +12,7 @@ const email = z.string().trim().min(1, "required").max(MAX_EMAIL, "tooLong").reg
 export const loginSchema = z.object({ email, password: z.string().min(1, "required").max(MAX_PASSWORD, "tooLong") });
 export const recoverySchema = z.object({ email });
 /** Identity's PasswordPolicy: 12+ characters, at most 72 UTF-8 bytes (bcrypt). */
-const newPassword = z.string().min(MIN_REGISTER_PASSWORD, "passwordShort").max(MAX_PASSWORD, "tooLong").refine((value) => new TextEncoder().encode(value).length <= MAX_PASSWORD_BYTES, "passwordBytes");
+const newPassword = z.string().min(1, "required").min(MIN_REGISTER_PASSWORD, "passwordShort").max(MAX_PASSWORD, "tooLong").refine((value) => new TextEncoder().encode(value).length <= MAX_PASSWORD_BYTES, "passwordBytes");
 const MAX_LINK_TOKEN = 128;
 
 export const registerSchema = z.object({
