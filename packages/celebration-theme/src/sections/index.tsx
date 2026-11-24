@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
-import { navigationHref, partnerHref, shownVenues, type CelebrationContent, type GalleryImage } from "../content.js";
+import { GIFTS_CTA_KEYS, navigationHref, partnerHref, shownVenues, type CelebrationContent, type GalleryImage, type GiftsStatus } from "../content.js";
 import { formatTime, zoneLabel } from "../format.js";
+import { ActionIcon } from "../icon.js";
 import type { SectionId, Translate } from "../types.js";
 
 /** What every section receives. Sections never fetch and never hold copy of their own. */
@@ -10,8 +11,14 @@ export interface SectionProps {
   readonly timeZone: string;
   readonly locale: string;
   readonly t: Translate;
-  /** Where the RSVP call to action points (the guest's magic link lives in their invitation). */
+  /** Where the RSVP call to action points when the visitor has their personal link: «Confirmar asistencia». */
   readonly rsvpHref?: string;
+  /** Where a visitor without their personal link is helped (`/c/{slug}/rsvp`): «Busca tu enlace personal». */
+  readonly rsvpHelpHref?: string;
+  /** The guest's gift list (`giftsPath`); never carries the guest's link. */
+  readonly giftsHref: string;
+  /** What the gift list holds; until the public view says it, OPEN. Only the button's label depends on it. */
+  readonly giftsStatus?: GiftsStatus;
 }
 
 type Section = (props: SectionProps) => ReactNode;
@@ -104,17 +111,38 @@ function Recommendations({ content, t }: SectionProps): ReactNode {
   );
 }
 
-function Rsvp({ t, rsvpHref }: SectionProps): ReactNode {
+/**
+ * PL-A11: the reply always leads somewhere. With the personal link, «Confirmar asistencia»; without it, the help that
+ * explains the personal link and lets an open celebration register the visitor (`/c/{slug}/rsvp`).
+ */
+function Rsvp({ t, rsvpHref, rsvpHelpHref }: SectionProps): ReactNode {
+  const action = rsvpHref
+    ? <a className="celebration-cta" href={rsvpHref} data-link-kind="internal" data-action="rsvp"><ActionIcon name="check" /><span>{t("celebration.rsvp.cta")}</span></a>
+    : null;
+  const help = !rsvpHref && rsvpHelpHref
+    ? <a className="celebration-cta" href={rsvpHelpHref} data-link-kind="internal" data-action="rsvp-help"><ActionIcon name="invitation" /><span>{t("celebration.rsvp.findLink")}</span></a>
+    : null;
   return (
     <>
       <p>{t("celebration.rsvp.body")}</p>
-      {rsvpHref ? <a className="celebration-cta" href={rsvpHref} data-link-kind="internal">{t("celebration.rsvp.cta")}</a> : null}
+      {action}
+      {help}
     </>
   );
 }
 
-/** Gift lists are owned by lane F22 and render on their own page. */
-const Gifts: Section = () => null;
+/**
+ * P22 / PL-A10: the gifts button, present on every invitation. The list itself lives on its own page, which resolves the
+ * guest's credential; this link never carries it.
+ */
+function Gifts({ t, giftsHref, giftsStatus }: SectionProps): ReactNode {
+  return (
+    <>
+      <p>{t("gifts.guest.intro")}</p>
+      <a className="celebration-cta" href={giftsHref} data-link-kind="internal" data-action="gifts"><ActionIcon name="gifts" /><span>{t(GIFTS_CTA_KEYS[giftsStatus ?? "OPEN"])}</span></a>
+    </>
+  );
+}
 
 export const SECTIONS: Readonly<Record<SectionId, Section>> = {
   story: Story,

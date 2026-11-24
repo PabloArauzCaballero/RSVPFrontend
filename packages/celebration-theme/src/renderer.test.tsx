@@ -1,8 +1,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it } from "vitest";
-import { CelebrationRenderer, readContent, themeFromTemplate, daysUntil, sectionForPath, partnerHref, navigationHref, type TemplateDocument } from "./index.js";
-import { GALLERY, NOW, t, TEMPLATES, VIEW } from "../test/fixtures.js";
+import { CelebrationRenderer, readContent, themeFromTemplate, daysUntil, sectionForPath, partnerHref, navigationHref, mapUrl, giftsPath, type GiftsStatus, type TemplateDocument } from "./index.js";
+import { GALLERY, NOW, t, TEMPLATES, VIEW, WEDDING_SECTIONS } from "../test/fixtures.js";
 
 const renderWith = (template: TemplateDocument | null, extra: Partial<Parameters<typeof CelebrationRenderer>[0]> = {}): string =>
   renderToStaticMarkup(<CelebrationRenderer theme={themeFromTemplate(template, VIEW.enabledSections)} view={VIEW} gallery={GALLERY} t={t} now={NOW} basePath="/c/ana-y-luis" {...extra} />);
@@ -29,7 +29,7 @@ describe("CelebrationRenderer", () => {
   it("sections in the template's order, and empty ones leave no hole", () => {
     const html = renderWith(TEMPLATES[1]);
     const order = [...html.matchAll(/data-section="(\w+)"/g)].map((match) => match[1]);
-    expect(order).toEqual(["schedule", "venues", "story", "gallery", "faq", "rsvp"]);
+    expect(order).toEqual(["schedule", "venues", "story", "gallery", "faq", "gifts", "rsvp"]);
     const noDressCode = renderToStaticMarkup(<CelebrationRenderer theme={themeFromTemplate(TEMPLATES[0], VIEW.enabledSections)} view={{ ...VIEW, content: { ...VIEW.content, dressCode: "", faq: [] } }} t={t} now={NOW} />);
     expect(noDressCode).not.toContain('data-section="dressCode"');
     expect(noDressCode).not.toContain('data-section="faq"');
@@ -68,6 +68,112 @@ describe("CelebrationRenderer", () => {
   it("countdown says today on the day, and days before", () => {
     expect(renderWith(TEMPLATES[0])).toContain("celebration.hero.countdown {&quot;count&quot;:64}");
     expect(renderWith(TEMPLATES[0], { now: new Date("2026-12-20T00:00:00.000Z") })).toContain("celebration.hero.today");
+  });
+});
+
+const BASE = "/c/ana-y-luis";
+const withoutGifts = <TSection extends string>(order: readonly TSection[]): TSection[] => order.filter((section) => section !== "gifts");
+const parse = (html: string): Document => new DOMParser().parseFromString(html, "text/html");
+
+describe("P22 · PL-A10 · the gifts button on every invitation", () => {
+  it.each(TEMPLATES.map((template) => [template.layout, template] as const))("%s · shown even when the template's sectionOrder omits gifts and the event type does not enable it", (_layout, template) => {
+    const omitted: TemplateDocument = { ...template, sectionOrder: withoutGifts(template.sectionOrder) };
+    const view = { ...VIEW, enabledSections: withoutGifts(WEDDING_SECTIONS) };
+    for (const colorScheme of ["light", "dark"] as const) {
+      const document = parse(renderToStaticMarkup(<CelebrationRenderer theme={themeFromTemplate(omitted, view.enabledSections)} view={view} gallery={GALLERY} t={t} now={NOW} basePath={BASE} colorScheme={colorScheme} />));
+      const section = document.querySelector('section[data-section="gifts"]');
+      expect(section?.querySelector("h2")?.textContent).toBe("gifts.guest.title");
+      const button = section?.querySelector<HTMLAnchorElement>('a[data-action="gifts"]');
+      expect(button?.getAttribute("href")).toBe(`${BASE}/regalos`);
+      expect(button?.className).toBe("celebration-cta");
+      expect(button?.textContent).toBe("celebration.gifts.cta");
+      // DESIGN.md: icon + text; the icon is decorative, the label names the action.
+      expect(button?.querySelector('svg[data-icon="gifts"]')?.getAttribute("aria-hidden")).toBe("true");
+      const nav = [...document.querySelectorAll(".celebration-nav a")];
+      expect(nav.find((link) => link.getAttribute("href") === `${BASE}/regalos`)?.textContent).toBe("celebration.sections.gifts");
+    }
+  });
+
+  it("goes where the template places it, otherwise right before the reply", () => {
+    const placed = parse(renderWith(TEMPLATES[0]));
+    expect([...placed.querySelectorAll("[data-section]")].map((node) => node.getAttribute("data-section"))).toEqual(["story", "schedule", "venues", "gallery", "dressCode", "gifts", "faq", "recommendations", "rsvp"]);
+    const corporate = parse(renderWith(TEMPLATES[4]));
+    expect([...corporate.querySelectorAll("[data-section]")].map((node) => node.getAttribute("data-section"))).toEqual(["schedule", "venues", "faq", "recommendations", "gifts", "rsvp"]);
+  });
+
+  it("never carries the guest's personal link, even when the page knows it", () => {
+    const html = renderWith(TEMPLATES[1], { rsvpHref: `${BASE}/rsvp/secret-token-123456` });
+    const gifts = parse(html).querySelector('a[data-action="gifts"]');
+    expect(gifts?.getAttribute("href")).toBe(giftsPath(VIEW.slug));
+    expect(gifts?.getAttribute("href")).not.toContain("secret-token");
+    expect(giftsPath("ana y luis")).toBe("/c/ana%20y%20luis/regalos");
+  });
+
+  it.each(["OPEN", "EMPTY", "CLOSED"] as const)("giftsStatus %s keeps the button and, until rsvp-f1 adds its labels, says «Ver regalos»", (status: GiftsStatus) => {
+    const gifts = parse(renderWith(TEMPLATES[2], { giftsStatus: status })).querySelector('a[data-action="gifts"]');
+    expect(gifts?.textContent).toBe("celebration.gifts.cta");
+  });
+
+  it("is on the cover page; a section's own page keeps it in the navigation", () => {
+    const faqPage = parse(renderWith(TEMPLATES[0], { only: "faq" }));
+    expect(faqPage.querySelector('a[data-action="gifts"]')).toBeNull();
+    expect(faqPage.querySelector(`.celebration-nav a[href="${BASE}/regalos"]`)).toBeTruthy();
+  });
+});
+
+describe("PL-A11 · the reply always leads somewhere", () => {
+  it.each(TEMPLATES.map((template) => [template.layout, template] as const))("%s · without a personal link: the help to find it; with it: «Confirmar asistencia»", (_layout, template) => {
+    const help = parse(renderWith(template, { rsvpHelpHref: `${BASE}/rsvp` })).querySelector('section[data-section="rsvp"]');
+    const helpLink = help?.querySelector('a[data-action="rsvp-help"]');
+    expect(help?.textContent).toContain("celebration.rsvp.body");
+    expect(helpLink?.getAttribute("href")).toBe(`${BASE}/rsvp`);
+    expect(helpLink?.textContent).toBe("celebration.rsvp.findLink");
+    expect(helpLink?.querySelector('svg[data-icon="invitation"]')).toBeTruthy();
+    expect(help?.querySelector('a[data-action="rsvp"]')).toBeNull();
+
+    const own = parse(renderWith(template, { rsvpHref: `${BASE}/rsvp/token-abcdefghijklmnop`, rsvpHelpHref: `${BASE}/rsvp` })).querySelector('section[data-section="rsvp"]');
+    expect(own?.querySelector('a[data-action="rsvp"]')?.textContent).toBe("celebration.rsvp.cta");
+    expect(own?.querySelector('a[data-action="rsvp"] svg[data-icon="check"]')).toBeTruthy();
+    expect(own?.querySelector('a[data-action="rsvp-help"]')).toBeNull();
+  });
+
+  it("negative: with no destination at all (a still preview) the section stays text, no dead link", () => {
+    const section = parse(renderWith(TEMPLATES[0])).querySelector('section[data-section="rsvp"]');
+    expect(section?.querySelector("a")).toBeNull();
+  });
+});
+
+describe("business model · every provider link goes through the redirector (/r/{listingId})", () => {
+  // A hostile content row: the host (or a buggy editor) put the provider's own address in the recommendation.
+  const direct = "https://hotel-directo.example/reservar";
+  const view = {
+    ...VIEW,
+    content: {
+      ...VIEW.content,
+      recommendations: [
+        { kind: "lodging", name: "Hotel Partner", listingId: "listing-42", url: direct, href: direct, website: direct },
+        { kind: "transport", name: "Traslados", listingId: "listing 7/x", url: direct },
+        { kind: "other", name: "Sin ficha", url: direct }
+      ]
+    }
+  };
+  const galleryUrls = new Set(GALLERY.flatMap((image) => Object.values(image.variants)));
+
+  it.each(TEMPLATES.map((template) => [template.layout, template] as const))("%s · no rendered link reaches a provider directly", (_layout, template) => {
+    for (const colorScheme of ["light", "dark"] as const) {
+      const html = renderToStaticMarkup(<CelebrationRenderer theme={themeFromTemplate(template, view.enabledSections)} view={view} gallery={GALLERY} t={t} now={NOW} basePath={BASE} rsvpHelpHref={`${BASE}/rsvp`} colorScheme={colorScheme} />);
+      expect(html).not.toContain("hotel-directo.example");
+      const anchors = [...parse(html).querySelectorAll("a")];
+      const partners = anchors.filter((anchor) => anchor.dataset["linkKind"] === "partner");
+      if (template.sectionOrder.includes("recommendations")) expect(partners.map((anchor) => anchor.getAttribute("href"))).toEqual(["/r/listing-42", "/r/listing%207%2Fx"]);
+      for (const anchor of anchors) {
+        const href = anchor.getAttribute("href") ?? "";
+        // Allowed: the redirector, the invitation's own pages, maps for "how to get there" and the full-size photos.
+        const allowed = /^\/r\/[^/?#]+$/.test(href) || href === BASE || href.startsWith(`${BASE}/`) || Boolean(mapUrl(href)) || galleryUrls.has(href);
+        expect(allowed, `${anchor.dataset["linkKind"] ?? "?"} → ${href}`).toBe(true);
+        if (anchor.dataset["linkKind"] === "partner") expect(anchor.getAttribute("rel")).toContain("sponsored");
+      }
+    }
   });
 });
 

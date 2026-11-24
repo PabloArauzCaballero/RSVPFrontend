@@ -30,7 +30,10 @@ export function PublicCelebration({ page, only }: { readonly page: PublicPage; r
           ))}
         </nav>
       ) : null}
-      <CelebrationRenderer theme={theme} view={view} gallery={gallery} t={t} only={only} basePath={basePath} />
+      {/* The page is shared and server-rendered, so it never knows the visitor's personal link: the reply sends them to the
+          help to find it (`/c/{slug}/rsvp`, which also registers them when the celebration is open). The guest with the link
+          arrives at `/c/{slug}/rsvp/{token}` directly. The gifts button needs nothing: it is always `/c/{slug}/regalos`. */}
+      <CelebrationRenderer theme={theme} view={view} gallery={gallery} t={t} only={only} basePath={basePath} rsvpHelpHref={celebrationPath(view.slug, "rsvp")} />
     </>
   );
 }

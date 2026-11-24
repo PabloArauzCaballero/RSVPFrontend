@@ -35,9 +35,23 @@ export function themeFromTemplate(template: TemplateDocument | null | undefined,
     palette: { ...FALLBACK_TEMPLATE.theme.palette, ...source.theme.palette },
     typography: { ...FALLBACK_TEMPLATE.theme.typography, ...source.theme.typography },
     sectionStyle: isStyle(source.theme.sectionStyle) ? source.theme.sectionStyle : FALLBACK_TEMPLATE.theme.sectionStyle,
-    sections: order.filter((section) => enabled.includes(section)),
-    hiddenSections: enabled.filter((section) => !order.includes(section))
+    sections: withGifts(order.filter((section) => enabled.includes(section))),
+    hiddenSections: enabled.filter((section) => !order.includes(section) && section !== GIFTS)
   };
+}
+
+const GIFTS: SectionId = "gifts";
+const REPLY: SectionId = "rsvp";
+
+/**
+ * P22 (PL-A10): the gifts button is the business model, so every invitation carries it, whatever the template's
+ * `sectionOrder` places and whatever the event type enables. A template that places it keeps its position; otherwise it
+ * goes right before the reply, or last when there is no reply section.
+ */
+export function withGifts(sections: readonly SectionId[]): readonly SectionId[] {
+  if (sections.includes(GIFTS)) return sections;
+  const reply = sections.indexOf(REPLY);
+  return reply === -1 ? [...sections, GIFTS] : [...sections.slice(0, reply), GIFTS, ...sections.slice(reply)];
 }
 
 export function layoutOf(theme: CelebrationTheme): LayoutSpec {
