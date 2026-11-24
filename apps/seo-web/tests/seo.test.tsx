@@ -91,6 +91,26 @@ describe("rendered public page", () => {
     expect(anchors.every((anchor) => anchor.dataset["linkKind"])).toBe(true);
   });
 
+  it("P22 / PL-A10 · the gifts button is on the public page whatever the template and the event type say, and goes to /c/{slug}/regalos with no token", () => {
+    const view = { ...VIEW, enabledSections: VIEW.enabledSections.filter((section) => section !== "gifts") };
+    const template = { ...(TEMPLATES[4] as NonNullable<typeof page.template>) };
+    const document = dom(renderToStaticMarkup(<PublicCelebration page={{ ...page, view, template }} />));
+    const button = document.querySelector('section[data-section="gifts"] a[data-action="gifts"]');
+    expect(button?.getAttribute("href")).toBe("/c/ana-y-luis/regalos");
+    expect(button?.textContent).toBe("Ver regalos");
+    expect(document.querySelector('section[data-section="gifts"] h2')?.textContent).toBe("Regalos");
+    expect(document.querySelector('.celebration-nav a[href="/c/ana-y-luis/regalos"]')?.textContent).toBe("Regalos");
+    expect(document.documentElement.innerHTML).not.toMatch(/token|rsvp\/[A-Za-z0-9_-]{16,}/);
+  });
+
+  it("PL-A11 · the public reply is not a dead end: it leads to the help to find the personal link", () => {
+    const document = dom(renderToStaticMarkup(<PublicCelebration page={page} />));
+    const help = document.querySelector('section[data-section="rsvp"] a[data-action="rsvp-help"]');
+    expect(help?.getAttribute("href")).toBe("/c/ana-y-luis/rsvp");
+    expect(help?.textContent).toBe("Busca tu enlace personal");
+    expect(help?.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
+  });
+
   it("REQ-F08-04 · JSON-LD Event in the page, with the celebration's own UTC offset", () => {
     const document = dom(renderToStaticMarkup(<PublicCelebration page={page} />));
     const data = JSON.parse(document.querySelector('script[type="application/ld+json"]')?.textContent ?? "{}");
