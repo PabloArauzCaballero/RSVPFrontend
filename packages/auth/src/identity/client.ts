@@ -8,6 +8,12 @@ export interface RegisterInput extends LoginInput {
   role: Extract<Role, "HOST" | "PLANNER" | "PROVIDER">;
   /** B6: version of the terms and privacy policy the person accepted (`legal.version`); Identity records it with the time. */
   termsVersion?: string;
+  /**
+   * Identity 2.1.0 profile. Optional on the wire (older clients send only email, password and role); the app sends it.
+   * Names and phone are personal data: Identity stores them encrypted and deletes them with the account.
+   */
+  givenName?: string; familyName?: string; phone?: string; country?: string; city?: string;
+  locale?: "es-BO" | "en-US"; timeZone?: string; marketingOptIn?: boolean;
 }
 export interface PasswordRecoveryInput { email: string; }
 /** `token` is the `token` query parameter of the e-mail link. */

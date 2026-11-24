@@ -3,10 +3,11 @@ import { ApiError } from "@rsvp/api-client";
 import { isExpired, sessionFromTokens } from "./claims.js";
 import type { AuthState, Session, SessionStore } from "./types.js";
 import { inProcessCoordinator, type SessionCoordinator } from "./coordination.js";
+import type { RegisterInput } from "../identity/client.js";
 
 export interface IdentityApi {
   login(input: { email: string; password: string }): Promise<Session>;
-  register(input: { email: string; password: string; role: "HOST" | "PLANNER" | "PROVIDER" }): Promise<Session>;
+  register(input: RegisterInput): Promise<Session>;
   refresh(refreshToken: string, correlationId: string): Promise<TokenPair>;
   logout(refreshToken: string): Promise<void>;
   /** "cookie": the refresh token is an httpOnly cookie, so a session can be restored with no stored state. */
@@ -84,7 +85,16 @@ export class SessionManager {
 
   async establish(session: Session): Promise<void> { await this.store.setSession(session); this.publish(session); }
   async signIn(input: { email: string; password: string }): Promise<Session> { const session = await this.identity.login(input); await this.establish(session); return session; }
-  async register(input: { email: string; password: string; role: "HOST" | "PLANNER" | "PROVIDER" }): Promise<Session> { const session = await this.identity.register(input); await this.establish(session); return session; }
+  /**
+   * Creates the account and signs in. `prepare` runs with the new session before anyone sees it (so a screen that opens on
+   * sign-in already finds what it set up). It is best effort: the account exists, so its failure never blocks entry.
+   */
+  async register(input: RegisterInput, prepare?: (session: Session) => Promise<void>): Promise<Session> {
+    const session = await this.identity.register(input);
+    if (prepare) await prepare(session).catch(() => undefined);
+    await this.establish(session);
+    return session;
+  }
 
   /**
    * The ONLY place a refresh token is rotated (the api-client goes through `refreshSession`, which
