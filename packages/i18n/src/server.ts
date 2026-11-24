@@ -25,14 +25,16 @@ import { portalEnUS } from "../locales/en-US/portal.js";
 import { portalEsBO } from "../locales/es-BO/portal.js";
 import { adminEnUS } from "../locales/en-US/admin.js";
 import { adminEsBO } from "../locales/es-BO/admin.js";
+import { legalEnUS } from "../locales/en-US/legal.js";
+import { legalEsBO } from "../locales/es-BO/legal.js";
 
 /**
  * React-free entry (`@rsvp/i18n/server`): resources, locale resolution and a synchronous
  * translator. Safe in Next.js server components, where react-i18next cannot load.
  */
 
-const esBO = { ...esBOCommon, celebration: celebrationEsBO, directory: directoryEsBO, host: hostEsBO, admin: adminEsBO, landing: landingEsBO, partner: partnerEsBO, search: searchEsBO, rsvp: rsvpEsBO, guests: guestsEsBO, gifts: giftsEsBO, ...quoteEsBO, portal: portalEsBO };
-const enUS = { ...enUSCommon, celebration: celebrationEnUS, directory: directoryEnUS, host: hostEnUS, admin: adminEnUS, landing: landingEnUS, partner: partnerEnUS, search: searchEnUS, rsvp: rsvpEnUS, guests: guestsEnUS, gifts: giftsEnUS, ...quoteEnUS, portal: portalEnUS };
+const esBO = { ...esBOCommon, celebration: celebrationEsBO, directory: directoryEsBO, host: hostEsBO, admin: adminEsBO, landing: landingEsBO, partner: partnerEsBO, search: searchEsBO, rsvp: rsvpEsBO, guests: guestsEsBO, gifts: giftsEsBO, ...quoteEsBO, portal: portalEsBO, legal: legalEsBO };
+const enUS = { ...enUSCommon, celebration: celebrationEnUS, directory: directoryEnUS, host: hostEnUS, admin: adminEnUS, landing: landingEnUS, partner: partnerEnUS, search: searchEnUS, rsvp: rsvpEnUS, guests: guestsEnUS, gifts: giftsEnUS, ...quoteEnUS, portal: portalEnUS, legal: legalEnUS };
 
 /** Every resource, by locale; tests compare their key sets. */
 export const resources = { "es-BO": esBO, "en-US": enUS } as const;
@@ -40,6 +42,7 @@ export const i18nextResources = { "es-BO": { translation: esBO }, "en-US": { tra
 
 export { formatMinor } from "./format/money.js";
 export * from "./landing-content.js";
+export * from "./legal-content.js";
 export type AppLocale = "es-BO" | "en-US";
 export const supportedLocales: readonly AppLocale[] = ["es-BO", "en-US"];
 export const defaultLocale: AppLocale = "es-BO";

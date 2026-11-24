@@ -97,8 +97,74 @@ describe("REQ-F27-02/03 · /r/{listingId} redirector", () => {
     expect(await response.text()).toContain('href="/proveedores"');
   });
 
+  it("A23 · a link without destination (gift items) asks Provider Catalog for the listing's primary destination, never a fixed OFFICIAL_SITE", async () => {
+    const fetchFn = gateway(upstream302("https://shop.example/torta?utm_source=rsvp"));
+    const celebrationId = "22222222-3333-4444-8555-666666666666";
+    const response = await GET(new Request(`http://site.test/r/${LISTING}?surface=GIFT_LIST&celebrationId=${celebrationId}`), ctx);
+    expect(response.status).toBe(302);
+    const [url] = fetchFn.mock.calls[0] as unknown as [URL];
+    expect(url.searchParams.has("destination")).toBe(false);
+    expect(url.searchParams.get("surface")).toBe("GIFT_LIST");
+    expect(url.searchParams.get("celebrationId")).toBe(celebrationId);
+  });
+
+  it("A23 · every service destination of a microsite button is forwarded as is; an unknown one is dropped, not replaced", async () => {
+    for (const destination of ["OFFICIAL_SITE", "LANDING", "WHATSAPP", "PHONE", "EMAIL", "INSTAGRAM", "PRODUCT_PAGE"]) {
+      const fetchFn = gateway(upstream302());
+      await GET(new Request(`http://site.test/r/${LISTING}?destination=${destination}&surface=PUBLIC_SITE`), ctx);
+      const [url] = fetchFn.mock.calls[0] as unknown as [URL];
+      expect(url.searchParams.get("destination")).toBe(destination);
+    }
+    const fetchFn = gateway(upstream302());
+    await GET(new Request(`http://site.test/r/${LISTING}?destination=javascript:alert(1)`), ctx);
+    const [url] = fetchFn.mock.calls[0] as unknown as [URL];
+    expect(url.searchParams.has("destination")).toBe(false);
+  });
+
   it("/r/ is not indexable", () => {
     const rule = (robots().rules as { disallow: string[] }[])[0];
     expect(rule?.disallow).toContain("/r/");
+  });
+});
+
+describe("B1 · /r forwards the visitor address so Kong rate-limits each visitor, not seo-web", () => {
+  const sentHeaders = (fetchFn: ReturnType<typeof gateway>) => new Headers((fetchFn.mock.calls[0] as unknown as [URL, RequestInit])[1].headers as Record<string, string>);
+
+  it("sends the right-most X-Forwarded-For entry (the one the proxy appended) as X-Forwarded-For and X-Real-IP", async () => {
+    const fetchFn = gateway(upstream302());
+    await GET(new Request(`http://site.test/r/${LISTING}`, { headers: { "x-forwarded-for": "198.51.100.9, 203.0.113.7" } }), ctx);
+    const headers = sentHeaders(fetchFn);
+    expect(headers.get("x-forwarded-for")).toBe("203.0.113.7");
+    expect(headers.get("x-real-ip")).toBe("203.0.113.7");
+  });
+
+  it("a forged left-most entry or a non-address is never forwarded", async () => {
+    const fetchFn = gateway(upstream302());
+    await GET(new Request(`http://site.test/r/${LISTING}`, { headers: { "x-forwarded-for": "203.0.113.7, not-an-ip" } }), ctx);
+    expect(sentHeaders(fetchFn).get("x-forwarded-for")).toBeNull();
+    expect(sentHeaders(fetchFn).get("x-real-ip")).toBeNull();
+  });
+
+  it("without a proxy header nothing is invented", async () => {
+    const fetchFn = gateway(upstream302());
+    await GET(new Request(`http://site.test/r/${LISTING}`), ctx);
+    expect(sentHeaders(fetchFn).get("x-forwarded-for")).toBeNull();
+  });
+});
+
+describe("B1 · clientAddressOf / trustedProxyHops", async () => {
+  const { clientAddressOf, trustedProxyHops } = await import("../lib/client-address");
+  it("reads the entry written by the N-th trusted proxy from the right, IPv4 or IPv6", () => {
+    const headers = new Headers({ "x-forwarded-for": "198.51.100.9, 2001:db8::1, 10.0.0.5" });
+    expect(clientAddressOf(headers, 1)).toBe("10.0.0.5");
+    expect(clientAddressOf(headers, 2)).toBe("2001:db8::1");
+    expect(clientAddressOf(headers, 4)).toBeNull();
+    expect(clientAddressOf(headers, 0)).toBeNull();
+  });
+  it("hops come from SEO_WEB_TRUSTED_PROXY_HOPS; invalid values fall back to 1", () => {
+    expect(trustedProxyHops(undefined)).toBe(1);
+    expect(trustedProxyHops("2")).toBe(2);
+    expect(trustedProxyHops("0")).toBe(0);
+    for (const bad of ["-1", "abc", "9", "1.5"]) expect(trustedProxyHops(bad)).toBe(1);
   });
 });

@@ -78,3 +78,16 @@ export const avatars = {
 export type ColorTheme = keyof typeof colors;
 export type ColorToken = keyof typeof colors.light;
 export type ToneName = keyof typeof tones.light;
+
+/**
+ * The neutral pieces of an illustration scene, as palette roles: the stone disc (`ground`), the flat contact shadow under the
+ * object (`shadow`) and the secondary pieces of the figure (`stone`). The SAME role in both schemes, so the app
+ * (`illustrationColors` in @rsvp/ui) and the public site (`.art__*` in seo-web) resolve it from the active palette and never
+ * special-case dark. The shadow is `border`: on light it is a step darker than the bone grounds, on dark a step lighter than
+ * the near-black ones (dark separates depth with a lighter tone, see `shadow` in spacing.ts). It must never equal a ground the
+ * drawing sits on: on dark the canvas made the shadow vanish on the page and bite the bottom of the disc (catalogue L16).
+ * `contrast.test.ts` pins the shadow apart from every ground and from the disc, in both schemes.
+ */
+export const illustrationTokens = { ground: 'primaryMuted', shadow: 'border', stone: 'fieldBorder' } as const satisfies Record<'ground' | 'shadow' | 'stone', ColorToken>;
+/** Grounds an illustration can sit on: the page, a card and a muted card (the host role card of the landing). */
+export const illustrationGrounds = ['canvas', 'surface', 'surfaceMuted'] as const satisfies readonly ColorToken[];

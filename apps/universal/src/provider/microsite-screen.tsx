@@ -95,6 +95,9 @@ function Editor({ microsite, providerId, onReload }: { readonly microsite: Micro
   return (
     <View style={{ gap: spacing[4] }}>
       <PageIntro>{t("portal.microsite.intro")}</PageIntro>
+      {/* A20: a rejected microsite is unpublished; the owner sees why and that it stays hidden until a newer version is approved. */}
+      {microsite.moderation?.status === "REJECTED" && microsite.moderation.reason ? <View testID="microsite-moderation-rejected"><Notice kind="error">{t("portal.microsite.moderationRejected", { reason: microsite.moderation.reason })}</Notice></View>
+        : microsite.moderation && !microsite.moderation.published ? <View testID="microsite-moderation-held"><Notice>{t("portal.microsite.moderationHeld")}</Notice></View> : null}
       <View style={{ gap: spacing[3] }}>
         <Field label={t("portal.microsite.descEs")} help={t("portal.microsite.descHelp")} multiline value={form.es} onChange={(es) => set({ es })} error={text("es")} testID="microsite-desc-es" />
         <Field label={t("portal.microsite.website")} value={form.website} onChange={(website) => set({ website })} error={text("website")} testID="microsite-website" />

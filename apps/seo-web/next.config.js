@@ -1,15 +1,42 @@
+const path = require('node:path');
+
+/**
+ * A6 · Security headers for every page. CSP starts report-only: violations appear in the browser console without
+ * breaking the site; enforce it once the console is clean in TEST. Next needs inline scripts for hydration.
+ */
+const securityHeaders = [
+  { key: 'X-Content-Type-Options', value: 'nosniff' },
+  { key: 'X-Frame-Options', value: 'DENY' },
+  { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
+  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+  { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=()' },
+  {
+    key: 'Content-Security-Policy-Report-Only',
+    value: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+  }
+];
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   distDir: process.env.NEXT_DIST_DIR ?? '.next',
+  // M14 · Self-contained server for the multi-stage image (deploy/Dockerfile.seo-web): only the traced files ship.
+  output: 'standalone',
+  outputFileTracingRoot: path.join(__dirname, '../..'),
+  // A6 · Do not advertise the framework.
+  poweredByHeader: false,
   transpilePackages: ['@rsvp/api-client', '@rsvp/auth', '@rsvp/celebration-theme', '@rsvp/design-tokens', '@rsvp/forms', '@rsvp/i18n', '@rsvp/query-hooks', '@rsvp/ui-web'],
   reactStrictMode: true,
+  // L18 · Baked at build time (not read from the running server's environment): only the visual test build opens the dev-only
+  // /catalogo (lib/dev-surfaces.ts). The deployed image is built without it, and setting it on a running container changes nothing.
+  env: { RSVP_VISUAL_TEST_CATALOG: process.env.RSVP_VISUAL_TEST_CATALOG === '1' ? '1' : '' },
   // Metadata in <head> for every user agent: WhatsApp, Lighthouse and many crawlers are not in Next's bot list,
   // and streamed metadata (in <body>) would leave them without title, description or Open Graph card.
   htmlLimitedBots: /.*/,
   // Personal RSVP links carry a credential in the path: never cached, never leaked through the Referer header.
   async headers() {
     const privateHeaders = [{ key: 'Cache-Control', value: 'no-store' }, { key: 'Referrer-Policy', value: 'no-referrer' }, { key: 'X-Robots-Tag', value: 'noindex, nofollow' }];
-    return [{ source: '/c/:slug/rsvp/:path*', headers: privateHeaders }, { source: '/c/:slug/rsvp', headers: privateHeaders }, { source: '/rsvp/:path*', headers: privateHeaders }];
+    // Order matters: for the same key the later rule wins, so credential paths keep `no-referrer`.
+    return [{ source: '/:path*', headers: securityHeaders }, { source: '/c/:slug/rsvp/:path*', headers: privateHeaders }, { source: '/c/:slug/rsvp', headers: privateHeaders }, { source: '/rsvp/:path*', headers: privateHeaders }];
   },
   webpack: (config) => {
     // Workspace packages use NodeNext-style "./x.js" imports that point to .ts sources.

@@ -55,6 +55,70 @@ export function countdownTo(deadline: string | null, now: number): Countdown | n
   return { days: Math.floor(left / DAY), hours: Math.floor((left % DAY) / HOUR), minutes: Math.floor((left % HOUR) / MINUTE) };
 }
 
+/*
+ * The guest's answer, worded once for the app (`apps/universal/src/guest`) and the public site (`apps/seo-web/components/rsvp`).
+ * Only i18n keys (`rsvp.invite.*`) and numbers live here; each surface translates and draws them, so the same answer of
+ * Guest/RSVP reads the same on both.
+ */
+
+/** From this wait on (anonymous requests can be held for ~50 minutes) the guest is told minutes, never a count of seconds. */
+export const GUEST_LONG_WAIT_SECONDS = 90;
+
+/** A countdown of weeks is noise (the deadline line already says the date): it shows only in the last days. */
+export const COUNTDOWN_VISIBLE_DAYS = 7;
+export function nearCountdown(deadline: string | null, now: number): Countdown | null {
+  const left = countdownTo(deadline, now);
+  return left && left.days < COUNTDOWN_VISIBLE_DAYS ? left : null;
+}
+
+/** The contract sets no maximum of companions; this only keeps the stepper from running away. */
+export const COMPANIONS_STEPPER_MAX = 20;
+/** The draft keeps companions as text (what a field holds); anything that is not a whole number reads as 0. */
+export function companionCount(value: string): number {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed >= 0 ? parsed : 0;
+}
+export function stepCompanions(value: string, delta: number): string {
+  return String(Math.min(COMPANIONS_STEPPER_MAX, Math.max(0, companionCount(value) + delta)));
+}
+
+export type RsvpField = "status" | "requestedCompanions" | "dietaryNotes" | "message" | "name" | "email" | "consent";
+const KNOWN_ISSUES = ["companions", "tooLong", "required", "email", "consent"];
+
+/** The zod issues of `@rsvp/forms` as one i18n key per field (the first issue wins); unknown codes read as "required". */
+export function rsvpIssueKeys(issues: readonly { readonly path: readonly (string | number)[]; readonly message: string }[]): Partial<Record<RsvpField, string>> {
+  const keys: Partial<Record<RsvpField, string>> = {};
+  for (const issue of issues) {
+    const field = String(issue.path[0]) as RsvpField;
+    if (!(field in keys)) keys[field] = field === "status" ? "rsvp.invite.chooseOne" : `rsvp.invite.errors.${KNOWN_ISSUES.includes(issue.message) ? issue.message : "required"}`;
+  }
+  return keys;
+}
+
+/** What the guest reads after a failed send, and whether the same tap can succeed. The draft is never cleared by a failure. */
+export function rsvpFailureNotice(failure: RsvpFailure): { readonly key: string; readonly params?: Readonly<Record<string, number>>; readonly retryable: boolean } {
+  const retryable = failure.kind === "offline" || failure.kind === "unavailable" || failure.kind === "rate-limited" || failure.kind === "unknown";
+  if (failure.kind === "rate-limited") {
+    const wait = failure.retryAfterSeconds;
+    if (!wait) return { key: "rsvp.invite.errors.rateLimitedNoWait", retryable };
+    return wait >= GUEST_LONG_WAIT_SECONDS
+      ? { key: "rsvp.invite.errors.rateLimitedMinutes", params: { minutes: Math.ceil(wait / 60) }, retryable }
+      : { key: "rsvp.invite.errors.rateLimited", params: { seconds: Math.ceil(wait) }, retryable };
+  }
+  const keys: Partial<Record<RsvpFailure["kind"], string>> = {
+    offline: "rsvp.invite.errors.offline", unavailable: "rsvp.invite.errors.unavailable", validation: "rsvp.invite.errors.validation",
+    conflict: "rsvp.invite.errors.conflict", exists: "rsvp.invite.errors.conflict", restricted: "rsvp.invite.errors.restricted"
+  };
+  return { key: keys[failure.kind] ?? "rsvp.invite.errors.unknown", retryable };
+}
+
+/** The send button names what it will do: "I am coming", "I can't", or save an edit. */
+export function rsvpSubmitKey({ busy, mode, status }: { readonly busy: boolean; readonly mode: "first" | "edit"; readonly status: "" | "CONFIRMED" | "DECLINED" }): string {
+  if (busy) return "rsvp.invite.submitting";
+  if (mode === "edit") return "rsvp.invite.save";
+  return status === "CONFIRMED" ? "rsvp.invite.submitYes" : status === "DECLINED" ? "rsvp.invite.submitNo" : "rsvp.invite.submitNone";
+}
+
 /** Fresh random key for one submit intent; reuse it for every retry of that same intent. */
 export function newIdempotencyKey(): string {
   const random = globalThis.crypto?.randomUUID?.();

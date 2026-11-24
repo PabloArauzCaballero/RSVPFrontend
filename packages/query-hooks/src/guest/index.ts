@@ -133,11 +133,25 @@ export function useCreateGuestGroup(client: ApiClient, celebrationId: string) {
   return useMutation({ mutationFn: (name: string) => hostGuestsApi(client).createGroup(celebrationId, name), onSuccess: () => refetchAll(queryClient, invalidation.guestsChanged(celebrationId)) });
 }
 /** Issue or replace the guest's link; the response carries the raw token once. Do not put it in a cache: callers keep it in component state. */
+export interface IssueGuestTokenInput { readonly guestId: string; /** Replace a working link (the current one stops working). */ readonly rotate?: boolean }
 export function useIssueGuestToken(client: ApiClient, celebrationId: string) {
-  return useMutation({ mutationFn: (guestId: string) => hostGuestsApi(client).issueToken(celebrationId, guestId), gcTime: 0 });
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ guestId, rotate = false }: IssueGuestTokenInput) => hostGuestsApi(client).issueToken(celebrationId, guestId, rotate),
+    onSettled: (_data, _error, { guestId }) => queryClient.invalidateQueries({ queryKey: queryKeys.guest.linkStatus(celebrationId, guestId) }),
+    gcTime: 0
+  });
 }
 export function useRevokeGuestToken(client: ApiClient, celebrationId: string) {
-  return useMutation({ mutationFn: (guestId: string) => hostGuestsApi(client).revokeToken(celebrationId, guestId) });
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (guestId: string) => hostGuestsApi(client).revokeToken(celebrationId, guestId),
+    onSettled: (_data, _error, guestId) => queryClient.invalidateQueries({ queryKey: queryKeys.guest.linkStatus(celebrationId, guestId) })
+  });
+}
+/** A11 · whether the guest already has a working personal link (and until when), so the screen never claims there is none. */
+export function useGuestLinkStatus(client: ApiClient, celebrationId: string, guestId: string) {
+  return useQuery({ queryKey: queryKeys.guest.linkStatus(celebrationId, guestId), queryFn: () => hostGuestsApi(client).linkStatus(celebrationId, guestId), enabled: Boolean(celebrationId && guestId), staleTime: 0, gcTime: cachePolicy.guest.gcTime });
 }
 export function useCompanionRequests(client: ApiClient, celebrationId: string) {
   return useQuery({ queryKey: queryKeys.guest.companionRequests(celebrationId), queryFn: () => hostGuestsApi(client).companionRequests(celebrationId), enabled: Boolean(celebrationId), ...cachePolicy.guest });

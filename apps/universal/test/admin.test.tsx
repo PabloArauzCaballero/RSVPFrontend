@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { Linking } from "react-native";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { EventTypeDefinition, Template, TranslatedEventType } from "@rsvp/query-hooks";
 import { definitionOf, EventTypesScreen, formOf } from "../src/admin/event-types";
@@ -9,6 +10,9 @@ import { TemplatesAdminScreen } from "../src/admin/templates";
 import { VerificationScreen } from "../src/admin/queues";
 import { OnboardingScreen } from "../src/host/onboarding";
 import { ADMIN, fakeClient, GUEST, HOST, renderApp, TEMPLATES, WEDDING, type Handler, pickOnboardingDate, pickTime } from "./support";
+
+// L8: the observability links depend on build variables; each test sets its own.
+afterEach(() => { vi.unstubAllEnvs(); });
 
 const navigate = vi.fn();
 const type = (label: string, value: string): void => { fireEvent.change(screen.getByLabelText(label), { target: { value } }); };
@@ -110,7 +114,10 @@ describe("E2, E3, E7, E12", () => {
     expect(calls.some((call) => call.method === "POST")).toBe(true);
   });
 
-  it("operations: one primary action in the header; the observability links sit behind the Otras acciones menu", async () => {
+  it("operations: one primary action in the header; the configured observability links sit behind the Otras acciones menu", async () => {
+    vi.stubEnv("EXPO_PUBLIC_GRAFANA_URL", "https://grafana.example.test");
+    vi.stubEnv("EXPO_PUBLIC_RABBITMQ_URL", "https://rabbit.example.test");
+    const open = vi.spyOn(Linking, "openURL").mockResolvedValue(true);
     const { client } = fakeClient({ "GET /celebrations/health": () => ({ status: "ok" }) });
     renderApp(<OperationsScreen onNavigate={navigate} />, client, ADMIN);
     expect(await screen.findByText("celebration-site-service: Disponible")).toBeTruthy();
@@ -119,6 +126,29 @@ describe("E2, E3, E7, E12", () => {
     expect(await screen.findByRole("menuitem", { name: "Abrir Grafana" })).toBeTruthy();
     expect(screen.getByRole("menuitem", { name: "Abrir RabbitMQ" })).toBeTruthy();
     expect(screen.getAllByTestId("replay")).toHaveLength(1);
+    fireEvent.click(screen.getByRole("menuitem", { name: "Abrir Grafana" }));
+    await waitFor(() => expect(open).toHaveBeenCalledWith("https://grafana.example.test"));
+    open.mockRestore();
+  });
+
+  it("L8 · operations: without the variables there is no Grafana or RabbitMQ link and no menu, never a localhost fallback", async () => {
+    vi.stubEnv("EXPO_PUBLIC_GRAFANA_URL", "");
+    vi.stubEnv("EXPO_PUBLIC_RABBITMQ_URL", "not a url");
+    const { client } = fakeClient({ "GET /celebrations/health": () => ({ status: "ok" }) });
+    const { container } = renderApp(<OperationsScreen onNavigate={navigate} />, client, ADMIN);
+    expect(await screen.findByText("celebration-site-service: Disponible")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Otras acciones" })).toBeNull();
+    expect(container.innerHTML).not.toContain("localhost");
+  });
+
+  it("L8 · only one of the two configured: only that link", async () => {
+    vi.stubEnv("EXPO_PUBLIC_GRAFANA_URL", "");
+    vi.stubEnv("EXPO_PUBLIC_RABBITMQ_URL", "https://rabbit.example.test");
+    const { client } = fakeClient({ "GET /celebrations/health": () => ({ status: "ok" }) });
+    renderApp(<OperationsScreen onNavigate={navigate} />, client, ADMIN);
+    fireEvent.click(await screen.findByRole("button", { name: "Otras acciones" }));
+    expect(await screen.findByRole("menuitem", { name: "Abrir RabbitMQ" })).toBeTruthy();
+    expect(screen.queryByRole("menuitem", { name: "Abrir Grafana" })).toBeNull();
   });
 
   it("verification: four statuses are a select, not chips; the negative action is behind the row menu", async () => {

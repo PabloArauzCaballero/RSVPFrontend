@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const out = join(root, 'generated');
-const { colors, ink, bone } = await import('../src/colors.ts');
+const { colors, ink, bone, tones } = await import('../src/colors.ts');
 const { spacing, radius, shadow } = await import('../src/spacing.ts');
 const { typography } = await import('../src/typography.ts');
 
@@ -17,8 +17,10 @@ const rem = (px) => (px === 0 ? '0px' : `${px / 16}rem`);
 const toVars = (palette) => Object.fromEntries(Object.entries(palette).map(([k, v]) => [`--${kebab(k)}`, v]));
 const brand = { ink, bone };
 
-const light = { ...toVars(colors.light), ...Object.fromEntries(Object.entries(brand).map(([k, v]) => [`--${k}`, v])) };
-const dark = toVars(colors.dark);
+// The muted pastels of `tones` (the one hue of an illustration), so the public site draws with the same values as the app.
+const pastels = (set) => Object.fromEntries(Object.entries(set).flatMap(([name, pair]) => [[`--pastel-${name}-bg`, pair.bg], [`--pastel-${name}-fg`, pair.fg]]));
+const light = { ...toVars(colors.light), ...Object.fromEntries(Object.entries(brand).map(([k, v]) => [`--${k}`, v])), ...pastels(tones.light) };
+const dark = { ...toVars(colors.dark), ...pastels(tones.dark) };
 const tokens = {
   colors: Object.fromEntries(Object.keys(light).map((v) => [v.slice(2), `var(${v})`])),
   light, dark,

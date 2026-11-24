@@ -44,6 +44,8 @@ export interface Celebration {
   readonly templateId: string | null;
   readonly collaborators: readonly Collaborator[];
   readonly publishedAt: string | null;
+  /** D-1 (celebration 1.4.0): search engines may index the public page and the sitemap lists it. Off by default. */
+  readonly searchIndexing?: boolean;
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly access?: AccessLevel;
@@ -70,9 +72,23 @@ export interface CelebrationPatch {
   readonly currency?: string;
   readonly content?: Readonly<Record<string, unknown>>;
   readonly translations?: Readonly<Record<string, Readonly<Record<string, unknown>> | null>>;
+  readonly searchIndexing?: boolean;
 }
 
 export interface PublishCheck { readonly ready: boolean; readonly missingFields: readonly string[]; readonly status: CelebrationStatus; readonly version: number }
+
+/**
+ * GET /celebrations/{id}/public-page (A18): whether the public page agrees with the publication
+ * decision. Only LIVE means a guest opening the link sees the invitation.
+ */
+export type PublicPageState = "LIVE" | "PUBLISHING" | "UNPUBLISHING" | "OFFLINE";
+export interface PublicPageStatus {
+  readonly celebrationId: string;
+  readonly status: CelebrationStatus;
+  readonly state: PublicPageState;
+  readonly version: number;
+  readonly publicVersion: number | null;
+}
 
 export interface AuditEntry { readonly id: string; readonly action: string; readonly actorId: string | null; readonly at: string; readonly details: Readonly<Record<string, unknown>> }
 

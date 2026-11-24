@@ -2,7 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "RSVP Gift List API",
-    "version": "1.9.0"
+    "version": "1.12.0",
+    "description": "Gift List v2 is the canonical surface (D-4). Authorization since 1.11.0 (A9): acting as a guest (reserveGift, listMyReservations, cancelReservation of one's own reservation) requires the guest's own link credential (guestCredential), validated by Guest; any account JWT, including the host and read-only collaborators or organization members (Celebration access READ), answers 403 GUEST_IDENTITY_REQUIRED there. Adding, approving or rejecting gifts, deciding or listing reservations and the gift settings require Celebration access MANAGE (403 HOST_REQUIRED otherwise). READ accounts may only list the items. Reservation events (gift.reservation.requested/auto-committed/confirmed/rejected.v1 and gift.item.released.v1 on rejection) carry payload.guestId while the guest is identified. 1.8.1 (correction, no runtime change): removes POST /items/{giftItemId}/reservations and POST /reservations/{reservationId}/approve. The service never served those paths (reservations go through /guest/celebrations/{celebrationId}/items/{giftItemId}/reservations and /celebrations/{celebrationId}/reservations/{reservationId}/approve), and they duplicated the operationIds reserveGift and approveReservation, which OpenAPI requires to be unique. Since 1.12.0 (L4) listGiftItems and listReservations return bounded pages: limit 1..200 (default 100) and an opaque cursor; nextCursor is null on the last page. Unknown or repeated query parameters answer 422. 1.10.0 (additive, A5/D-3; PR #60): the guest (link credential) and the host (JWT) cancel an active reservation with POST /celebrations/{celebrationId}/reservations/{reservationId}/cancel, and the guest reads their own reservations back with GET /celebrations/{celebrationId}/my-reservations."
   },
   "servers": [
     {
@@ -21,7 +22,9 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["status"],
+                  "required": [
+                    "status"
+                  ],
                   "properties": {
                     "status": {
                       "const": "ok"
@@ -55,6 +58,12 @@
           },
           {
             "$ref": "#/components/parameters/DevCompatCorrelationId"
+          },
+          {
+            "$ref": "#/components/parameters/PageLimit"
+          },
+          {
+            "$ref": "#/components/parameters/PageCursor"
           }
         ],
         "responses": {
@@ -63,7 +72,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CanonicalCompatGiftItemPage"
+                  "$ref": "#/components/schemas/PagedGiftItemPage"
                 }
               }
             }
@@ -171,38 +180,6 @@
         }
       }
     },
-    "/items/{giftItemId}/reservations": {
-      "post": {
-        "operationId": "reserveLegacyGift",
-        "responses": {
-          "201": {
-            "description": "Reserved or pending review"
-          },
-          "409": {
-            "$ref": "#/components/responses/GiftNotAvailable"
-          },
-          "422": {
-            "$ref": "#/components/responses/Validation"
-          }
-        }
-      }
-    },
-    "/reservations/{reservationId}/approve": {
-      "post": {
-        "operationId": "approveLegacyReservation",
-        "responses": {
-          "200": {
-            "description": "Committed"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
-          "409": {
-            "$ref": "#/components/responses/GiftNotAvailable"
-          }
-        }
-      }
-    },
     "/celebrations/{celebrationId}/list": {
       "post": {
         "operationId": "createPrivateGiftList",
@@ -297,7 +274,9 @@
                           "const": "Bad Request"
                         },
                         "code": {
-                          "enum": ["INVALID_JSON"]
+                          "enum": [
+                            "INVALID_JSON"
+                          ]
                         }
                       }
                     }
@@ -356,7 +335,9 @@
                           "const": "Unauthorized"
                         },
                         "code": {
-                          "enum": ["UNAUTHORIZED"]
+                          "enum": [
+                            "UNAUTHORIZED"
+                          ]
                         }
                       }
                     }
@@ -408,7 +389,9 @@
                           "const": "Forbidden"
                         },
                         "code": {
-                          "enum": ["GIFT_OWNER_REQUIRED"]
+                          "enum": [
+                            "GIFT_OWNER_REQUIRED"
+                          ]
                         }
                       }
                     }
@@ -460,7 +443,9 @@
                           "const": "Not Found"
                         },
                         "code": {
-                          "enum": ["CELEBRATION_NOT_FOUND"]
+                          "enum": [
+                            "CELEBRATION_NOT_FOUND"
+                          ]
                         }
                       }
                     }
@@ -512,7 +497,9 @@
                           "const": "Conflict"
                         },
                         "code": {
-                          "enum": ["GIFT_LIST_EXISTS"]
+                          "enum": [
+                            "GIFT_LIST_EXISTS"
+                          ]
                         }
                       }
                     }
@@ -564,7 +551,9 @@
                           "const": "Payload Too Large"
                         },
                         "code": {
-                          "enum": ["PAYLOAD_TOO_LARGE"]
+                          "enum": [
+                            "PAYLOAD_TOO_LARGE"
+                          ]
                         }
                       }
                     }
@@ -616,7 +605,9 @@
                           "const": "Unsupported Media Type"
                         },
                         "code": {
-                          "enum": ["UNSUPPORTED_MEDIA_TYPE"]
+                          "enum": [
+                            "UNSUPPORTED_MEDIA_TYPE"
+                          ]
                         }
                       }
                     }
@@ -668,7 +659,9 @@
                           "const": "Unprocessable Entity"
                         },
                         "code": {
-                          "enum": ["VALIDATION_FAILED"]
+                          "enum": [
+                            "VALIDATION_FAILED"
+                          ]
                         }
                       }
                     }
@@ -720,7 +713,9 @@
                           "const": "Internal Server Error"
                         },
                         "code": {
-                          "enum": ["INTERNAL_ERROR"]
+                          "enum": [
+                            "INTERNAL_ERROR"
+                          ]
                         }
                       }
                     }
@@ -772,7 +767,10 @@
                           "const": "Service Unavailable"
                         },
                         "code": {
-                          "enum": ["AUTHORITY_UNAVAILABLE", "PERSISTENCE_UNAVAILABLE"]
+                          "enum": [
+                            "AUTHORITY_UNAVAILABLE",
+                            "PERSISTENCE_UNAVAILABLE"
+                          ]
                         }
                       }
                     }
@@ -824,7 +822,9 @@
                           "const": "Request Timeout"
                         },
                         "code": {
-                          "enum": ["REQUEST_TIMEOUT"]
+                          "enum": [
+                            "REQUEST_TIMEOUT"
+                          ]
                         }
                       }
                     }
@@ -930,7 +930,9 @@
                           "const": "Unauthorized"
                         },
                         "code": {
-                          "enum": ["UNAUTHORIZED"]
+                          "enum": [
+                            "UNAUTHORIZED"
+                          ]
                         }
                       }
                     }
@@ -982,7 +984,9 @@
                           "const": "Forbidden"
                         },
                         "code": {
-                          "enum": ["GIFT_OWNER_REQUIRED"]
+                          "enum": [
+                            "GIFT_OWNER_REQUIRED"
+                          ]
                         }
                       }
                     }
@@ -1034,7 +1038,10 @@
                           "const": "Not Found"
                         },
                         "code": {
-                          "enum": ["CELEBRATION_NOT_FOUND", "GIFT_LIST_NOT_FOUND"]
+                          "enum": [
+                            "CELEBRATION_NOT_FOUND",
+                            "GIFT_LIST_NOT_FOUND"
+                          ]
                         }
                       }
                     }
@@ -1086,7 +1093,9 @@
                           "const": "Unprocessable Entity"
                         },
                         "code": {
-                          "enum": ["VALIDATION_FAILED"]
+                          "enum": [
+                            "VALIDATION_FAILED"
+                          ]
                         }
                       }
                     }
@@ -1138,7 +1147,11 @@
                           "const": "Internal Server Error"
                         },
                         "code": {
-                          "enum": ["GIFT_LEGACY_DATA_INCOMPLETE", "GIFT_MONEY_OUT_OF_RANGE", "INTERNAL_ERROR"]
+                          "enum": [
+                            "GIFT_LEGACY_DATA_INCOMPLETE",
+                            "GIFT_MONEY_OUT_OF_RANGE",
+                            "INTERNAL_ERROR"
+                          ]
                         }
                       }
                     }
@@ -1190,7 +1203,10 @@
                           "const": "Service Unavailable"
                         },
                         "code": {
-                          "enum": ["AUTHORITY_UNAVAILABLE", "PERSISTENCE_UNAVAILABLE"]
+                          "enum": [
+                            "AUTHORITY_UNAVAILABLE",
+                            "PERSISTENCE_UNAVAILABLE"
+                          ]
                         }
                       }
                     }
@@ -1480,7 +1496,9 @@
                           "const": "Bad Request"
                         },
                         "code": {
-                          "enum": ["INVALID_JSON"]
+                          "enum": [
+                            "INVALID_JSON"
+                          ]
                         }
                       }
                     }
@@ -1539,7 +1557,9 @@
                           "const": "Unauthorized"
                         },
                         "code": {
-                          "enum": ["UNAUTHORIZED"]
+                          "enum": [
+                            "UNAUTHORIZED"
+                          ]
                         }
                       }
                     }
@@ -1591,7 +1611,9 @@
                           "const": "Forbidden"
                         },
                         "code": {
-                          "enum": ["GIFT_OWNER_REQUIRED"]
+                          "enum": [
+                            "GIFT_OWNER_REQUIRED"
+                          ]
                         }
                       }
                     }
@@ -1643,7 +1665,10 @@
                           "const": "Not Found"
                         },
                         "code": {
-                          "enum": ["CELEBRATION_NOT_FOUND", "GIFT_LIST_NOT_FOUND"]
+                          "enum": [
+                            "CELEBRATION_NOT_FOUND",
+                            "GIFT_LIST_NOT_FOUND"
+                          ]
                         }
                       }
                     }
@@ -1695,7 +1720,9 @@
                           "const": "Payload Too Large"
                         },
                         "code": {
-                          "enum": ["PAYLOAD_TOO_LARGE"]
+                          "enum": [
+                            "PAYLOAD_TOO_LARGE"
+                          ]
                         }
                       }
                     }
@@ -1747,7 +1774,9 @@
                           "const": "Unsupported Media Type"
                         },
                         "code": {
-                          "enum": ["UNSUPPORTED_MEDIA_TYPE"]
+                          "enum": [
+                            "UNSUPPORTED_MEDIA_TYPE"
+                          ]
                         }
                       }
                     }
@@ -1799,7 +1828,11 @@
                           "const": "Unprocessable Entity"
                         },
                         "code": {
-                          "enum": ["VALIDATION_FAILED", "EXTERNAL_MODE_NOT_IN_SLICE", "CATALOG_FLOW_REQUIRED"]
+                          "enum": [
+                            "VALIDATION_FAILED",
+                            "EXTERNAL_MODE_NOT_IN_SLICE",
+                            "CATALOG_FLOW_REQUIRED"
+                          ]
                         }
                       }
                     }
@@ -1851,7 +1884,9 @@
                           "const": "Internal Server Error"
                         },
                         "code": {
-                          "enum": ["INTERNAL_ERROR"]
+                          "enum": [
+                            "INTERNAL_ERROR"
+                          ]
                         }
                       }
                     }
@@ -1903,7 +1938,10 @@
                           "const": "Service Unavailable"
                         },
                         "code": {
-                          "enum": ["AUTHORITY_UNAVAILABLE", "PERSISTENCE_UNAVAILABLE"]
+                          "enum": [
+                            "AUTHORITY_UNAVAILABLE",
+                            "PERSISTENCE_UNAVAILABLE"
+                          ]
                         }
                       }
                     }
@@ -1955,7 +1993,9 @@
                           "const": "Request Timeout"
                         },
                         "code": {
-                          "enum": ["REQUEST_TIMEOUT"]
+                          "enum": [
+                            "REQUEST_TIMEOUT"
+                          ]
                         }
                       }
                     }
@@ -2078,7 +2118,9 @@
                           "const": "Bad Request"
                         },
                         "code": {
-                          "enum": ["INVALID_JSON"]
+                          "enum": [
+                            "INVALID_JSON"
+                          ]
                         }
                       }
                     }
@@ -2137,7 +2179,9 @@
                           "const": "Unauthorized"
                         },
                         "code": {
-                          "enum": ["UNAUTHORIZED"]
+                          "enum": [
+                            "UNAUTHORIZED"
+                          ]
                         }
                       }
                     }
@@ -2189,7 +2233,9 @@
                           "const": "Forbidden"
                         },
                         "code": {
-                          "enum": ["GIFT_OWNER_REQUIRED"]
+                          "enum": [
+                            "GIFT_OWNER_REQUIRED"
+                          ]
                         }
                       }
                     }
@@ -2241,7 +2287,10 @@
                           "const": "Not Found"
                         },
                         "code": {
-                          "enum": ["CELEBRATION_NOT_FOUND", "GIFT_LIST_NOT_FOUND"]
+                          "enum": [
+                            "CELEBRATION_NOT_FOUND",
+                            "GIFT_LIST_NOT_FOUND"
+                          ]
                         }
                       }
                     }
@@ -2286,7 +2335,9 @@
                           "const": "Payload Too Large"
                         },
                         "code": {
-                          "enum": ["PAYLOAD_TOO_LARGE"]
+                          "enum": [
+                            "PAYLOAD_TOO_LARGE"
+                          ]
                         }
                       }
                     }
@@ -2338,7 +2389,9 @@
                           "const": "Unsupported Media Type"
                         },
                         "code": {
-                          "enum": ["UNSUPPORTED_MEDIA_TYPE"]
+                          "enum": [
+                            "UNSUPPORTED_MEDIA_TYPE"
+                          ]
                         }
                       }
                     }
@@ -2390,7 +2443,10 @@
                           "const": "Unprocessable Entity"
                         },
                         "code": {
-                          "enum": ["VALIDATION_FAILED", "CATALOG_FLOW_REQUIRED"]
+                          "enum": [
+                            "VALIDATION_FAILED",
+                            "CATALOG_FLOW_REQUIRED"
+                          ]
                         }
                       }
                     }
@@ -2435,7 +2491,9 @@
                           "const": "Internal Server Error"
                         },
                         "code": {
-                          "enum": ["INTERNAL_ERROR"]
+                          "enum": [
+                            "INTERNAL_ERROR"
+                          ]
                         }
                       }
                     }
@@ -2487,7 +2545,10 @@
                           "const": "Service Unavailable"
                         },
                         "code": {
-                          "enum": ["AUTHORITY_UNAVAILABLE", "PERSISTENCE_UNAVAILABLE"]
+                          "enum": [
+                            "AUTHORITY_UNAVAILABLE",
+                            "PERSISTENCE_UNAVAILABLE"
+                          ]
                         }
                       }
                     }
@@ -2539,7 +2600,9 @@
                           "const": "Request Timeout"
                         },
                         "code": {
-                          "enum": ["REQUEST_TIMEOUT"]
+                          "enum": [
+                            "REQUEST_TIMEOUT"
+                          ]
                         }
                       }
                     }
@@ -2630,7 +2693,9 @@
                           "const": "Bad Request"
                         },
                         "code": {
-                          "enum": ["INVALID_JSON"]
+                          "enum": [
+                            "INVALID_JSON"
+                          ]
                         }
                       }
                     }
@@ -2689,7 +2754,9 @@
                           "const": "Unauthorized"
                         },
                         "code": {
-                          "enum": ["UNAUTHORIZED"]
+                          "enum": [
+                            "UNAUTHORIZED"
+                          ]
                         }
                       }
                     }
@@ -2741,7 +2808,9 @@
                           "const": "Forbidden"
                         },
                         "code": {
-                          "enum": ["GIFT_OWNER_REQUIRED"]
+                          "enum": [
+                            "GIFT_OWNER_REQUIRED"
+                          ]
                         }
                       }
                     }
@@ -2793,7 +2862,11 @@
                           "const": "Not Found"
                         },
                         "code": {
-                          "enum": ["CELEBRATION_NOT_FOUND", "GIFT_LIST_NOT_FOUND", "GIFT_ITEM_NOT_FOUND"]
+                          "enum": [
+                            "CELEBRATION_NOT_FOUND",
+                            "GIFT_LIST_NOT_FOUND",
+                            "GIFT_ITEM_NOT_FOUND"
+                          ]
                         }
                       }
                     }
@@ -2838,7 +2911,9 @@
                           "const": "Payload Too Large"
                         },
                         "code": {
-                          "enum": ["PAYLOAD_TOO_LARGE"]
+                          "enum": [
+                            "PAYLOAD_TOO_LARGE"
+                          ]
                         }
                       }
                     }
@@ -2890,7 +2965,9 @@
                           "const": "Unsupported Media Type"
                         },
                         "code": {
-                          "enum": ["UNSUPPORTED_MEDIA_TYPE"]
+                          "enum": [
+                            "UNSUPPORTED_MEDIA_TYPE"
+                          ]
                         }
                       }
                     }
@@ -2942,7 +3019,9 @@
                           "const": "Unprocessable Entity"
                         },
                         "code": {
-                          "enum": ["VALIDATION_FAILED"]
+                          "enum": [
+                            "VALIDATION_FAILED"
+                          ]
                         }
                       }
                     }
@@ -2987,7 +3066,9 @@
                           "const": "Internal Server Error"
                         },
                         "code": {
-                          "enum": ["INTERNAL_ERROR"]
+                          "enum": [
+                            "INTERNAL_ERROR"
+                          ]
                         }
                       }
                     }
@@ -3039,7 +3120,10 @@
                           "const": "Service Unavailable"
                         },
                         "code": {
-                          "enum": ["AUTHORITY_UNAVAILABLE", "PERSISTENCE_UNAVAILABLE"]
+                          "enum": [
+                            "AUTHORITY_UNAVAILABLE",
+                            "PERSISTENCE_UNAVAILABLE"
+                          ]
                         }
                       }
                     }
@@ -3091,7 +3175,9 @@
                           "const": "Request Timeout"
                         },
                         "code": {
-                          "enum": ["REQUEST_TIMEOUT"]
+                          "enum": [
+                            "REQUEST_TIMEOUT"
+                          ]
                         }
                       }
                     }
@@ -3170,7 +3256,9 @@
                           "const": "Conflict"
                         },
                         "code": {
-                          "enum": ["GIFT_ITEM_CONFLICT"]
+                          "enum": [
+                            "GIFT_ITEM_CONFLICT"
+                          ]
                         }
                       }
                     }
@@ -3266,7 +3354,9 @@
                           "const": "Not Found"
                         },
                         "code": {
-                          "enum": ["CELEBRATION_NOT_FOUND"]
+                          "enum": [
+                            "CELEBRATION_NOT_FOUND"
+                          ]
                         }
                       }
                     }
@@ -3311,7 +3401,9 @@
                           "const": "Unprocessable Entity"
                         },
                         "code": {
-                          "enum": ["VALIDATION_FAILED"]
+                          "enum": [
+                            "VALIDATION_FAILED"
+                          ]
                         }
                       }
                     }
@@ -3356,7 +3448,9 @@
                           "const": "Internal Server Error"
                         },
                         "code": {
-                          "enum": ["INTERNAL_ERROR"]
+                          "enum": [
+                            "INTERNAL_ERROR"
+                          ]
                         }
                       }
                     }
@@ -3401,7 +3495,10 @@
                           "const": "Service Unavailable"
                         },
                         "code": {
-                          "enum": ["AUTHORITY_UNAVAILABLE", "PERSISTENCE_UNAVAILABLE"]
+                          "enum": [
+                            "AUTHORITY_UNAVAILABLE",
+                            "PERSISTENCE_UNAVAILABLE"
+                          ]
                         }
                       }
                     }
@@ -3618,7 +3715,9 @@
                           "const": "Bad Request"
                         },
                         "code": {
-                          "enum": ["INVALID_JSON"]
+                          "enum": [
+                            "INVALID_JSON"
+                          ]
                         }
                       }
                     }
@@ -3668,7 +3767,9 @@
                           "const": "Unauthorized"
                         },
                         "code": {
-                          "enum": ["UNAUTHORIZED"]
+                          "enum": [
+                            "UNAUTHORIZED"
+                          ]
                         }
                       }
                     }
@@ -3761,7 +3862,9 @@
                           "const": "Request Timeout"
                         },
                         "code": {
-                          "enum": ["REQUEST_TIMEOUT"]
+                          "enum": [
+                            "REQUEST_TIMEOUT"
+                          ]
                         }
                       }
                     }
@@ -3805,7 +3908,9 @@
                           "const": "Conflict"
                         },
                         "code": {
-                          "enum": ["GiftNotAvailable"]
+                          "enum": [
+                            "GiftNotAvailable"
+                          ]
                         }
                       }
                     }
@@ -3849,7 +3954,9 @@
                           "const": "Payload Too Large"
                         },
                         "code": {
-                          "enum": ["PAYLOAD_TOO_LARGE"]
+                          "enum": [
+                            "PAYLOAD_TOO_LARGE"
+                          ]
                         }
                       }
                     }
@@ -3893,7 +4000,9 @@
                           "const": "Unsupported Media Type"
                         },
                         "code": {
-                          "enum": ["UNSUPPORTED_MEDIA_TYPE"]
+                          "enum": [
+                            "UNSUPPORTED_MEDIA_TYPE"
+                          ]
                         }
                       }
                     }
@@ -3937,7 +4046,9 @@
                           "const": "Unprocessable Entity"
                         },
                         "code": {
-                          "enum": ["VALIDATION_FAILED"]
+                          "enum": [
+                            "VALIDATION_FAILED"
+                          ]
                         }
                       }
                     }
@@ -3981,7 +4092,9 @@
                           "const": "Internal Server Error"
                         },
                         "code": {
-                          "enum": ["INTERNAL_ERROR"]
+                          "enum": [
+                            "INTERNAL_ERROR"
+                          ]
                         }
                       }
                     }
@@ -4025,7 +4138,10 @@
                           "const": "Service Unavailable"
                         },
                         "code": {
-                          "enum": ["AUTHORITY_UNAVAILABLE", "PERSISTENCE_UNAVAILABLE"]
+                          "enum": [
+                            "AUTHORITY_UNAVAILABLE",
+                            "PERSISTENCE_UNAVAILABLE"
+                          ]
                         }
                       }
                     }
@@ -4141,7 +4257,9 @@
                           "const": "Unauthorized"
                         },
                         "code": {
-                          "enum": ["UNAUTHORIZED"]
+                          "enum": [
+                            "UNAUTHORIZED"
+                          ]
                         }
                       }
                     }
@@ -4234,7 +4352,9 @@
                           "const": "Unprocessable Entity"
                         },
                         "code": {
-                          "enum": ["VALIDATION_FAILED"]
+                          "enum": [
+                            "VALIDATION_FAILED"
+                          ]
                         }
                       }
                     }
@@ -4278,7 +4398,9 @@
                           "const": "Internal Server Error"
                         },
                         "code": {
-                          "enum": ["INTERNAL_ERROR"]
+                          "enum": [
+                            "INTERNAL_ERROR"
+                          ]
                         }
                       }
                     }
@@ -4322,7 +4444,10 @@
                           "const": "Service Unavailable"
                         },
                         "code": {
-                          "enum": ["AUTHORITY_UNAVAILABLE", "PERSISTENCE_UNAVAILABLE"]
+                          "enum": [
+                            "AUTHORITY_UNAVAILABLE",
+                            "PERSISTENCE_UNAVAILABLE"
+                          ]
                         }
                       }
                     }
@@ -4579,7 +4704,9 @@
                           "const": "Unauthorized"
                         },
                         "code": {
-                          "enum": ["UNAUTHORIZED"]
+                          "enum": [
+                            "UNAUTHORIZED"
+                          ]
                         }
                       }
                     }
@@ -4623,7 +4750,9 @@
                           "const": "Forbidden"
                         },
                         "code": {
-                          "enum": ["GIFT_OWNER_REQUIRED"]
+                          "enum": [
+                            "GIFT_OWNER_REQUIRED"
+                          ]
                         }
                       }
                     }
@@ -4716,7 +4845,9 @@
                           "const": "Unprocessable Entity"
                         },
                         "code": {
-                          "enum": ["VALIDATION_FAILED"]
+                          "enum": [
+                            "VALIDATION_FAILED"
+                          ]
                         }
                       }
                     }
@@ -4760,7 +4891,9 @@
                           "const": "Internal Server Error"
                         },
                         "code": {
-                          "enum": ["INTERNAL_ERROR"]
+                          "enum": [
+                            "INTERNAL_ERROR"
+                          ]
                         }
                       }
                     }
@@ -4804,7 +4937,10 @@
                           "const": "Service Unavailable"
                         },
                         "code": {
-                          "enum": ["AUTHORITY_UNAVAILABLE", "PERSISTENCE_UNAVAILABLE"]
+                          "enum": [
+                            "AUTHORITY_UNAVAILABLE",
+                            "PERSISTENCE_UNAVAILABLE"
+                          ]
                         }
                       }
                     }
@@ -5075,7 +5211,9 @@
                           "const": "Bad Request"
                         },
                         "code": {
-                          "enum": ["INVALID_JSON"]
+                          "enum": [
+                            "INVALID_JSON"
+                          ]
                         }
                       }
                     }
@@ -5125,7 +5263,9 @@
                           "const": "Unauthorized"
                         },
                         "code": {
-                          "enum": ["UNAUTHORIZED"]
+                          "enum": [
+                            "UNAUTHORIZED"
+                          ]
                         }
                       }
                     }
@@ -5169,7 +5309,9 @@
                           "const": "Forbidden"
                         },
                         "code": {
-                          "enum": ["GIFT_OWNER_REQUIRED"]
+                          "enum": [
+                            "GIFT_OWNER_REQUIRED"
+                          ]
                         }
                       }
                     }
@@ -5262,7 +5404,9 @@
                           "const": "Request Timeout"
                         },
                         "code": {
-                          "enum": ["REQUEST_TIMEOUT"]
+                          "enum": [
+                            "REQUEST_TIMEOUT"
+                          ]
                         }
                       }
                     }
@@ -5306,7 +5450,9 @@
                           "const": "Conflict"
                         },
                         "code": {
-                          "enum": ["GIFT_RESERVATION_CONFLICT"]
+                          "enum": [
+                            "GIFT_RESERVATION_CONFLICT"
+                          ]
                         }
                       }
                     }
@@ -5350,7 +5496,9 @@
                           "const": "Payload Too Large"
                         },
                         "code": {
-                          "enum": ["PAYLOAD_TOO_LARGE"]
+                          "enum": [
+                            "PAYLOAD_TOO_LARGE"
+                          ]
                         }
                       }
                     }
@@ -5394,7 +5542,9 @@
                           "const": "Unsupported Media Type"
                         },
                         "code": {
-                          "enum": ["UNSUPPORTED_MEDIA_TYPE"]
+                          "enum": [
+                            "UNSUPPORTED_MEDIA_TYPE"
+                          ]
                         }
                       }
                     }
@@ -5438,7 +5588,9 @@
                           "const": "Unprocessable Entity"
                         },
                         "code": {
-                          "enum": ["VALIDATION_FAILED"]
+                          "enum": [
+                            "VALIDATION_FAILED"
+                          ]
                         }
                       }
                     }
@@ -5482,7 +5634,9 @@
                           "const": "Internal Server Error"
                         },
                         "code": {
-                          "enum": ["INTERNAL_ERROR"]
+                          "enum": [
+                            "INTERNAL_ERROR"
+                          ]
                         }
                       }
                     }
@@ -5526,7 +5680,10 @@
                           "const": "Service Unavailable"
                         },
                         "code": {
-                          "enum": ["AUTHORITY_UNAVAILABLE", "PERSISTENCE_UNAVAILABLE"]
+                          "enum": [
+                            "AUTHORITY_UNAVAILABLE",
+                            "PERSISTENCE_UNAVAILABLE"
+                          ]
                         }
                       }
                     }
@@ -5636,7 +5793,9 @@
                           "const": "Bad Request"
                         },
                         "code": {
-                          "enum": ["INVALID_JSON"]
+                          "enum": [
+                            "INVALID_JSON"
+                          ]
                         }
                       }
                     }
@@ -5686,7 +5845,9 @@
                           "const": "Unauthorized"
                         },
                         "code": {
-                          "enum": ["UNAUTHORIZED"]
+                          "enum": [
+                            "UNAUTHORIZED"
+                          ]
                         }
                       }
                     }
@@ -5730,7 +5891,9 @@
                           "const": "Forbidden"
                         },
                         "code": {
-                          "enum": ["GIFT_OWNER_REQUIRED"]
+                          "enum": [
+                            "GIFT_OWNER_REQUIRED"
+                          ]
                         }
                       }
                     }
@@ -5823,7 +5986,9 @@
                           "const": "Request Timeout"
                         },
                         "code": {
-                          "enum": ["REQUEST_TIMEOUT"]
+                          "enum": [
+                            "REQUEST_TIMEOUT"
+                          ]
                         }
                       }
                     }
@@ -5867,7 +6032,9 @@
                           "const": "Conflict"
                         },
                         "code": {
-                          "enum": ["GIFT_RESERVATION_CONFLICT"]
+                          "enum": [
+                            "GIFT_RESERVATION_CONFLICT"
+                          ]
                         }
                       }
                     }
@@ -5911,7 +6078,9 @@
                           "const": "Payload Too Large"
                         },
                         "code": {
-                          "enum": ["PAYLOAD_TOO_LARGE"]
+                          "enum": [
+                            "PAYLOAD_TOO_LARGE"
+                          ]
                         }
                       }
                     }
@@ -5955,7 +6124,9 @@
                           "const": "Unsupported Media Type"
                         },
                         "code": {
-                          "enum": ["UNSUPPORTED_MEDIA_TYPE"]
+                          "enum": [
+                            "UNSUPPORTED_MEDIA_TYPE"
+                          ]
                         }
                       }
                     }
@@ -5999,7 +6170,9 @@
                           "const": "Unprocessable Entity"
                         },
                         "code": {
-                          "enum": ["VALIDATION_FAILED"]
+                          "enum": [
+                            "VALIDATION_FAILED"
+                          ]
                         }
                       }
                     }
@@ -6043,7 +6216,9 @@
                           "const": "Internal Server Error"
                         },
                         "code": {
-                          "enum": ["INTERNAL_ERROR"]
+                          "enum": [
+                            "INTERNAL_ERROR"
+                          ]
                         }
                       }
                     }
@@ -6087,7 +6262,10 @@
                           "const": "Service Unavailable"
                         },
                         "code": {
-                          "enum": ["AUTHORITY_UNAVAILABLE", "PERSISTENCE_UNAVAILABLE"]
+                          "enum": [
+                            "AUTHORITY_UNAVAILABLE",
+                            "PERSISTENCE_UNAVAILABLE"
+                          ]
                         }
                       }
                     }
@@ -6197,7 +6375,9 @@
                           "const": "Bad Request"
                         },
                         "code": {
-                          "enum": ["INVALID_JSON"]
+                          "enum": [
+                            "INVALID_JSON"
+                          ]
                         }
                       }
                     }
@@ -6247,7 +6427,9 @@
                           "const": "Unauthorized"
                         },
                         "code": {
-                          "enum": ["UNAUTHORIZED"]
+                          "enum": [
+                            "UNAUTHORIZED"
+                          ]
                         }
                       }
                     }
@@ -6340,7 +6522,9 @@
                           "const": "Request Timeout"
                         },
                         "code": {
-                          "enum": ["REQUEST_TIMEOUT"]
+                          "enum": [
+                            "REQUEST_TIMEOUT"
+                          ]
                         }
                       }
                     }
@@ -6384,7 +6568,9 @@
                           "const": "Conflict"
                         },
                         "code": {
-                          "enum": ["GiftNotAvailable"]
+                          "enum": [
+                            "GiftNotAvailable"
+                          ]
                         }
                       }
                     }
@@ -6428,7 +6614,9 @@
                           "const": "Payload Too Large"
                         },
                         "code": {
-                          "enum": ["PAYLOAD_TOO_LARGE"]
+                          "enum": [
+                            "PAYLOAD_TOO_LARGE"
+                          ]
                         }
                       }
                     }
@@ -6472,7 +6660,9 @@
                           "const": "Unsupported Media Type"
                         },
                         "code": {
-                          "enum": ["UNSUPPORTED_MEDIA_TYPE"]
+                          "enum": [
+                            "UNSUPPORTED_MEDIA_TYPE"
+                          ]
                         }
                       }
                     }
@@ -6516,7 +6706,9 @@
                           "const": "Unprocessable Entity"
                         },
                         "code": {
-                          "enum": ["VALIDATION_FAILED"]
+                          "enum": [
+                            "VALIDATION_FAILED"
+                          ]
                         }
                       }
                     }
@@ -6560,7 +6752,9 @@
                           "const": "Internal Server Error"
                         },
                         "code": {
-                          "enum": ["INTERNAL_ERROR"]
+                          "enum": [
+                            "INTERNAL_ERROR"
+                          ]
                         }
                       }
                     }
@@ -6604,7 +6798,10 @@
                           "const": "Service Unavailable"
                         },
                         "code": {
-                          "enum": ["AUTHORITY_UNAVAILABLE", "PERSISTENCE_UNAVAILABLE"]
+                          "enum": [
+                            "AUTHORITY_UNAVAILABLE",
+                            "PERSISTENCE_UNAVAILABLE"
+                          ]
                         }
                       }
                     }
@@ -6720,7 +6917,9 @@
                           "const": "Unauthorized"
                         },
                         "code": {
-                          "enum": ["UNAUTHORIZED"]
+                          "enum": [
+                            "UNAUTHORIZED"
+                          ]
                         }
                       }
                     }
@@ -6813,7 +7012,9 @@
                           "const": "Unprocessable Entity"
                         },
                         "code": {
-                          "enum": ["VALIDATION_FAILED"]
+                          "enum": [
+                            "VALIDATION_FAILED"
+                          ]
                         }
                       }
                     }
@@ -6857,7 +7058,9 @@
                           "const": "Internal Server Error"
                         },
                         "code": {
-                          "enum": ["INTERNAL_ERROR"]
+                          "enum": [
+                            "INTERNAL_ERROR"
+                          ]
                         }
                       }
                     }
@@ -6901,7 +7104,10 @@
                           "const": "Service Unavailable"
                         },
                         "code": {
-                          "enum": ["AUTHORITY_UNAVAILABLE", "PERSISTENCE_UNAVAILABLE"]
+                          "enum": [
+                            "AUTHORITY_UNAVAILABLE",
+                            "PERSISTENCE_UNAVAILABLE"
+                          ]
                         }
                       }
                     }
@@ -7158,7 +7364,9 @@
                           "const": "Unauthorized"
                         },
                         "code": {
-                          "enum": ["UNAUTHORIZED"]
+                          "enum": [
+                            "UNAUTHORIZED"
+                          ]
                         }
                       }
                     }
@@ -7202,7 +7410,9 @@
                           "const": "Forbidden"
                         },
                         "code": {
-                          "enum": ["GIFT_OWNER_REQUIRED"]
+                          "enum": [
+                            "GIFT_OWNER_REQUIRED"
+                          ]
                         }
                       }
                     }
@@ -7295,7 +7505,9 @@
                           "const": "Unprocessable Entity"
                         },
                         "code": {
-                          "enum": ["VALIDATION_FAILED"]
+                          "enum": [
+                            "VALIDATION_FAILED"
+                          ]
                         }
                       }
                     }
@@ -7339,7 +7551,9 @@
                           "const": "Internal Server Error"
                         },
                         "code": {
-                          "enum": ["INTERNAL_ERROR"]
+                          "enum": [
+                            "INTERNAL_ERROR"
+                          ]
                         }
                       }
                     }
@@ -7383,7 +7597,10 @@
                           "const": "Service Unavailable"
                         },
                         "code": {
-                          "enum": ["AUTHORITY_UNAVAILABLE", "PERSISTENCE_UNAVAILABLE"]
+                          "enum": [
+                            "AUTHORITY_UNAVAILABLE",
+                            "PERSISTENCE_UNAVAILABLE"
+                          ]
                         }
                       }
                     }
@@ -7654,7 +7871,9 @@
                           "const": "Bad Request"
                         },
                         "code": {
-                          "enum": ["INVALID_JSON"]
+                          "enum": [
+                            "INVALID_JSON"
+                          ]
                         }
                       }
                     }
@@ -7704,7 +7923,9 @@
                           "const": "Unauthorized"
                         },
                         "code": {
-                          "enum": ["UNAUTHORIZED"]
+                          "enum": [
+                            "UNAUTHORIZED"
+                          ]
                         }
                       }
                     }
@@ -7748,7 +7969,9 @@
                           "const": "Forbidden"
                         },
                         "code": {
-                          "enum": ["GIFT_OWNER_REQUIRED"]
+                          "enum": [
+                            "GIFT_OWNER_REQUIRED"
+                          ]
                         }
                       }
                     }
@@ -7792,7 +8015,10 @@
                           "const": "Not Found"
                         },
                         "code": {
-                          "enum": ["CELEBRATION_NOT_FOUND", "GIFT_LIST_NOT_FOUND"]
+                          "enum": [
+                            "CELEBRATION_NOT_FOUND",
+                            "GIFT_LIST_NOT_FOUND"
+                          ]
                         }
                       }
                     }
@@ -7836,7 +8062,9 @@
                           "const": "Request Timeout"
                         },
                         "code": {
-                          "enum": ["REQUEST_TIMEOUT"]
+                          "enum": [
+                            "REQUEST_TIMEOUT"
+                          ]
                         }
                       }
                     }
@@ -7880,7 +8108,9 @@
                           "const": "Payload Too Large"
                         },
                         "code": {
-                          "enum": ["PAYLOAD_TOO_LARGE"]
+                          "enum": [
+                            "PAYLOAD_TOO_LARGE"
+                          ]
                         }
                       }
                     }
@@ -7924,7 +8154,9 @@
                           "const": "Unsupported Media Type"
                         },
                         "code": {
-                          "enum": ["UNSUPPORTED_MEDIA_TYPE"]
+                          "enum": [
+                            "UNSUPPORTED_MEDIA_TYPE"
+                          ]
                         }
                       }
                     }
@@ -7968,7 +8200,10 @@
                           "const": "Unprocessable Entity"
                         },
                         "code": {
-                          "enum": ["VALIDATION_FAILED", "CATALOG_PRODUCT_UNAVAILABLE"]
+                          "enum": [
+                            "VALIDATION_FAILED",
+                            "CATALOG_PRODUCT_UNAVAILABLE"
+                          ]
                         }
                       }
                     }
@@ -8012,7 +8247,9 @@
                           "const": "Internal Server Error"
                         },
                         "code": {
-                          "enum": ["INTERNAL_ERROR"]
+                          "enum": [
+                            "INTERNAL_ERROR"
+                          ]
                         }
                       }
                     }
@@ -8056,7 +8293,11 @@
                           "const": "Service Unavailable"
                         },
                         "code": {
-                          "enum": ["AUTHORITY_UNAVAILABLE", "PERSISTENCE_UNAVAILABLE", "CATALOG_DEPENDENCY_UNAVAILABLE"]
+                          "enum": [
+                            "AUTHORITY_UNAVAILABLE",
+                            "PERSISTENCE_UNAVAILABLE",
+                            "CATALOG_DEPENDENCY_UNAVAILABLE"
+                          ]
                         }
                       }
                     }
@@ -8189,7 +8430,9 @@
                           "const": "Unauthorized"
                         },
                         "code": {
-                          "enum": ["UNAUTHORIZED"]
+                          "enum": [
+                            "UNAUTHORIZED"
+                          ]
                         }
                       }
                     }
@@ -8233,7 +8476,9 @@
                           "const": "Forbidden"
                         },
                         "code": {
-                          "enum": ["GIFT_OWNER_REQUIRED"]
+                          "enum": [
+                            "GIFT_OWNER_REQUIRED"
+                          ]
                         }
                       }
                     }
@@ -8277,7 +8522,10 @@
                           "const": "Not Found"
                         },
                         "code": {
-                          "enum": ["CELEBRATION_NOT_FOUND", "GIFT_LIST_NOT_FOUND"]
+                          "enum": [
+                            "CELEBRATION_NOT_FOUND",
+                            "GIFT_LIST_NOT_FOUND"
+                          ]
                         }
                       }
                     }
@@ -8321,7 +8569,10 @@
                           "const": "Unprocessable Entity"
                         },
                         "code": {
-                          "enum": ["VALIDATION_FAILED", "CATALOG_PRODUCT_UNAVAILABLE"]
+                          "enum": [
+                            "VALIDATION_FAILED",
+                            "CATALOG_PRODUCT_UNAVAILABLE"
+                          ]
                         }
                       }
                     }
@@ -8365,7 +8616,9 @@
                           "const": "Internal Server Error"
                         },
                         "code": {
-                          "enum": ["INTERNAL_ERROR"]
+                          "enum": [
+                            "INTERNAL_ERROR"
+                          ]
                         }
                       }
                     }
@@ -8409,7 +8662,11 @@
                           "const": "Service Unavailable"
                         },
                         "code": {
-                          "enum": ["AUTHORITY_UNAVAILABLE", "PERSISTENCE_UNAVAILABLE", "CATALOG_DEPENDENCY_UNAVAILABLE"]
+                          "enum": [
+                            "AUTHORITY_UNAVAILABLE",
+                            "PERSISTENCE_UNAVAILABLE",
+                            "CATALOG_DEPENDENCY_UNAVAILABLE"
+                          ]
                         }
                       }
                     }
@@ -8714,7 +8971,10 @@
                           "const": "Not Found"
                         },
                         "code": {
-                          "enum": ["CELEBRATION_NOT_FOUND", "GIFT_LIST_NOT_FOUND"]
+                          "enum": [
+                            "CELEBRATION_NOT_FOUND",
+                            "GIFT_LIST_NOT_FOUND"
+                          ]
                         }
                       }
                     }
@@ -8758,7 +9018,10 @@
                           "const": "Unprocessable Entity"
                         },
                         "code": {
-                          "enum": ["VALIDATION_FAILED", "CATALOG_PRODUCT_UNAVAILABLE"]
+                          "enum": [
+                            "VALIDATION_FAILED",
+                            "CATALOG_PRODUCT_UNAVAILABLE"
+                          ]
                         }
                       }
                     }
@@ -8802,7 +9065,9 @@
                           "const": "Internal Server Error"
                         },
                         "code": {
-                          "enum": ["INTERNAL_ERROR"]
+                          "enum": [
+                            "INTERNAL_ERROR"
+                          ]
                         }
                       }
                     }
@@ -8846,7 +9111,11 @@
                           "const": "Service Unavailable"
                         },
                         "code": {
-                          "enum": ["AUTHORITY_UNAVAILABLE", "PERSISTENCE_UNAVAILABLE", "CATALOG_DEPENDENCY_UNAVAILABLE"]
+                          "enum": [
+                            "AUTHORITY_UNAVAILABLE",
+                            "PERSISTENCE_UNAVAILABLE",
+                            "CATALOG_DEPENDENCY_UNAVAILABLE"
+                          ]
                         }
                       }
                     }
@@ -9089,7 +9358,9 @@
                           "const": "Unauthorized"
                         },
                         "code": {
-                          "enum": ["UNAUTHORIZED"]
+                          "enum": [
+                            "UNAUTHORIZED"
+                          ]
                         }
                       }
                     }
@@ -9133,7 +9404,9 @@
                           "const": "Forbidden"
                         },
                         "code": {
-                          "enum": ["GIFT_OWNER_REQUIRED"]
+                          "enum": [
+                            "GIFT_OWNER_REQUIRED"
+                          ]
                         }
                       }
                     }
@@ -9177,7 +9450,10 @@
                           "const": "Not Found"
                         },
                         "code": {
-                          "enum": ["CELEBRATION_NOT_FOUND", "GIFT_LIST_NOT_FOUND"]
+                          "enum": [
+                            "CELEBRATION_NOT_FOUND",
+                            "GIFT_LIST_NOT_FOUND"
+                          ]
                         }
                       }
                     }
@@ -9221,7 +9497,10 @@
                           "const": "Unprocessable Entity"
                         },
                         "code": {
-                          "enum": ["VALIDATION_FAILED", "CATALOG_PRODUCT_UNAVAILABLE"]
+                          "enum": [
+                            "VALIDATION_FAILED",
+                            "CATALOG_PRODUCT_UNAVAILABLE"
+                          ]
                         }
                       }
                     }
@@ -9265,7 +9544,9 @@
                           "const": "Internal Server Error"
                         },
                         "code": {
-                          "enum": ["INTERNAL_ERROR"]
+                          "enum": [
+                            "INTERNAL_ERROR"
+                          ]
                         }
                       }
                     }
@@ -9309,7 +9590,11 @@
                           "const": "Service Unavailable"
                         },
                         "code": {
-                          "enum": ["AUTHORITY_UNAVAILABLE", "PERSISTENCE_UNAVAILABLE", "CATALOG_DEPENDENCY_UNAVAILABLE"]
+                          "enum": [
+                            "AUTHORITY_UNAVAILABLE",
+                            "PERSISTENCE_UNAVAILABLE",
+                            "CATALOG_DEPENDENCY_UNAVAILABLE"
+                          ]
                         }
                       }
                     }
@@ -9572,7 +9857,9 @@
                           "const": "Bad Request"
                         },
                         "code": {
-                          "enum": ["INVALID_JSON"]
+                          "enum": [
+                            "INVALID_JSON"
+                          ]
                         }
                       }
                     }
@@ -9622,7 +9909,9 @@
                           "const": "Unauthorized"
                         },
                         "code": {
-                          "enum": ["UNAUTHORIZED"]
+                          "enum": [
+                            "UNAUTHORIZED"
+                          ]
                         }
                       }
                     }
@@ -9666,7 +9955,9 @@
                           "const": "Forbidden"
                         },
                         "code": {
-                          "enum": ["GIFT_OWNER_REQUIRED"]
+                          "enum": [
+                            "GIFT_OWNER_REQUIRED"
+                          ]
                         }
                       }
                     }
@@ -9710,7 +10001,10 @@
                           "const": "Not Found"
                         },
                         "code": {
-                          "enum": ["CELEBRATION_NOT_FOUND", "GIFT_LIST_NOT_FOUND"]
+                          "enum": [
+                            "CELEBRATION_NOT_FOUND",
+                            "GIFT_LIST_NOT_FOUND"
+                          ]
                         }
                       }
                     }
@@ -9754,7 +10048,9 @@
                           "const": "Request Timeout"
                         },
                         "code": {
-                          "enum": ["REQUEST_TIMEOUT"]
+                          "enum": [
+                            "REQUEST_TIMEOUT"
+                          ]
                         }
                       }
                     }
@@ -9798,7 +10094,9 @@
                           "const": "Payload Too Large"
                         },
                         "code": {
-                          "enum": ["PAYLOAD_TOO_LARGE"]
+                          "enum": [
+                            "PAYLOAD_TOO_LARGE"
+                          ]
                         }
                       }
                     }
@@ -9842,7 +10140,9 @@
                           "const": "Unsupported Media Type"
                         },
                         "code": {
-                          "enum": ["UNSUPPORTED_MEDIA_TYPE"]
+                          "enum": [
+                            "UNSUPPORTED_MEDIA_TYPE"
+                          ]
                         }
                       }
                     }
@@ -9886,7 +10186,10 @@
                           "const": "Unprocessable Entity"
                         },
                         "code": {
-                          "enum": ["VALIDATION_FAILED", "CATALOG_PRODUCT_UNAVAILABLE"]
+                          "enum": [
+                            "VALIDATION_FAILED",
+                            "CATALOG_PRODUCT_UNAVAILABLE"
+                          ]
                         }
                       }
                     }
@@ -9930,7 +10233,9 @@
                           "const": "Internal Server Error"
                         },
                         "code": {
-                          "enum": ["INTERNAL_ERROR"]
+                          "enum": [
+                            "INTERNAL_ERROR"
+                          ]
                         }
                       }
                     }
@@ -9974,7 +10279,11 @@
                           "const": "Service Unavailable"
                         },
                         "code": {
-                          "enum": ["AUTHORITY_UNAVAILABLE", "PERSISTENCE_UNAVAILABLE", "CATALOG_DEPENDENCY_UNAVAILABLE"]
+                          "enum": [
+                            "AUTHORITY_UNAVAILABLE",
+                            "PERSISTENCE_UNAVAILABLE",
+                            "CATALOG_DEPENDENCY_UNAVAILABLE"
+                          ]
                         }
                       }
                     }
@@ -10091,7 +10400,9 @@
                           "const": "Unauthorized"
                         },
                         "code": {
-                          "enum": ["UNAUTHORIZED"]
+                          "enum": [
+                            "UNAUTHORIZED"
+                          ]
                         }
                       }
                     }
@@ -10135,7 +10446,9 @@
                           "const": "Forbidden"
                         },
                         "code": {
-                          "enum": ["GIFT_OWNER_REQUIRED"]
+                          "enum": [
+                            "GIFT_OWNER_REQUIRED"
+                          ]
                         }
                       }
                     }
@@ -10228,7 +10541,9 @@
                           "const": "Unprocessable Entity"
                         },
                         "code": {
-                          "enum": ["VALIDATION_FAILED"]
+                          "enum": [
+                            "VALIDATION_FAILED"
+                          ]
                         }
                       }
                     }
@@ -10272,7 +10587,9 @@
                           "const": "Internal Server Error"
                         },
                         "code": {
-                          "enum": ["INTERNAL_ERROR"]
+                          "enum": [
+                            "INTERNAL_ERROR"
+                          ]
                         }
                       }
                     }
@@ -10316,7 +10633,10 @@
                           "const": "Service Unavailable"
                         },
                         "code": {
-                          "enum": ["AUTHORITY_UNAVAILABLE", "PERSISTENCE_UNAVAILABLE"]
+                          "enum": [
+                            "AUTHORITY_UNAVAILABLE",
+                            "PERSISTENCE_UNAVAILABLE"
+                          ]
                         }
                       }
                     }
@@ -10587,7 +10907,9 @@
                           "const": "Bad Request"
                         },
                         "code": {
-                          "enum": ["INVALID_JSON"]
+                          "enum": [
+                            "INVALID_JSON"
+                          ]
                         }
                       }
                     }
@@ -10637,7 +10959,9 @@
                           "const": "Unauthorized"
                         },
                         "code": {
-                          "enum": ["UNAUTHORIZED"]
+                          "enum": [
+                            "UNAUTHORIZED"
+                          ]
                         }
                       }
                     }
@@ -10681,7 +11005,9 @@
                           "const": "Forbidden"
                         },
                         "code": {
-                          "enum": ["GIFT_OWNER_REQUIRED"]
+                          "enum": [
+                            "GIFT_OWNER_REQUIRED"
+                          ]
                         }
                       }
                     }
@@ -10774,7 +11100,9 @@
                           "const": "Request Timeout"
                         },
                         "code": {
-                          "enum": ["REQUEST_TIMEOUT"]
+                          "enum": [
+                            "REQUEST_TIMEOUT"
+                          ]
                         }
                       }
                     }
@@ -10818,7 +11146,9 @@
                           "const": "Conflict"
                         },
                         "code": {
-                          "enum": ["GIFT_RESERVATION_CONFLICT"]
+                          "enum": [
+                            "GIFT_RESERVATION_CONFLICT"
+                          ]
                         }
                       }
                     }
@@ -10862,7 +11192,9 @@
                           "const": "Payload Too Large"
                         },
                         "code": {
-                          "enum": ["PAYLOAD_TOO_LARGE"]
+                          "enum": [
+                            "PAYLOAD_TOO_LARGE"
+                          ]
                         }
                       }
                     }
@@ -10906,7 +11238,9 @@
                           "const": "Unsupported Media Type"
                         },
                         "code": {
-                          "enum": ["UNSUPPORTED_MEDIA_TYPE"]
+                          "enum": [
+                            "UNSUPPORTED_MEDIA_TYPE"
+                          ]
                         }
                       }
                     }
@@ -10950,7 +11284,9 @@
                           "const": "Unprocessable Entity"
                         },
                         "code": {
-                          "enum": ["VALIDATION_FAILED"]
+                          "enum": [
+                            "VALIDATION_FAILED"
+                          ]
                         }
                       }
                     }
@@ -10994,7 +11330,9 @@
                           "const": "Internal Server Error"
                         },
                         "code": {
-                          "enum": ["INTERNAL_ERROR"]
+                          "enum": [
+                            "INTERNAL_ERROR"
+                          ]
                         }
                       }
                     }
@@ -11038,7 +11376,10 @@
                           "const": "Service Unavailable"
                         },
                         "code": {
-                          "enum": ["AUTHORITY_UNAVAILABLE", "PERSISTENCE_UNAVAILABLE"]
+                          "enum": [
+                            "AUTHORITY_UNAVAILABLE",
+                            "PERSISTENCE_UNAVAILABLE"
+                          ]
                         }
                       }
                     }
@@ -11148,7 +11489,9 @@
                           "const": "Bad Request"
                         },
                         "code": {
-                          "enum": ["INVALID_JSON"]
+                          "enum": [
+                            "INVALID_JSON"
+                          ]
                         }
                       }
                     }
@@ -11198,7 +11541,9 @@
                           "const": "Unauthorized"
                         },
                         "code": {
-                          "enum": ["UNAUTHORIZED"]
+                          "enum": [
+                            "UNAUTHORIZED"
+                          ]
                         }
                       }
                     }
@@ -11242,7 +11587,9 @@
                           "const": "Forbidden"
                         },
                         "code": {
-                          "enum": ["GIFT_OWNER_REQUIRED"]
+                          "enum": [
+                            "GIFT_OWNER_REQUIRED"
+                          ]
                         }
                       }
                     }
@@ -11335,7 +11682,9 @@
                           "const": "Request Timeout"
                         },
                         "code": {
-                          "enum": ["REQUEST_TIMEOUT"]
+                          "enum": [
+                            "REQUEST_TIMEOUT"
+                          ]
                         }
                       }
                     }
@@ -11379,7 +11728,9 @@
                           "const": "Conflict"
                         },
                         "code": {
-                          "enum": ["GIFT_RESERVATION_CONFLICT"]
+                          "enum": [
+                            "GIFT_RESERVATION_CONFLICT"
+                          ]
                         }
                       }
                     }
@@ -11423,7 +11774,9 @@
                           "const": "Payload Too Large"
                         },
                         "code": {
-                          "enum": ["PAYLOAD_TOO_LARGE"]
+                          "enum": [
+                            "PAYLOAD_TOO_LARGE"
+                          ]
                         }
                       }
                     }
@@ -11467,7 +11820,9 @@
                           "const": "Unsupported Media Type"
                         },
                         "code": {
-                          "enum": ["UNSUPPORTED_MEDIA_TYPE"]
+                          "enum": [
+                            "UNSUPPORTED_MEDIA_TYPE"
+                          ]
                         }
                       }
                     }
@@ -11511,7 +11866,9 @@
                           "const": "Unprocessable Entity"
                         },
                         "code": {
-                          "enum": ["VALIDATION_FAILED"]
+                          "enum": [
+                            "VALIDATION_FAILED"
+                          ]
                         }
                       }
                     }
@@ -11555,7 +11912,9 @@
                           "const": "Internal Server Error"
                         },
                         "code": {
-                          "enum": ["INTERNAL_ERROR"]
+                          "enum": [
+                            "INTERNAL_ERROR"
+                          ]
                         }
                       }
                     }
@@ -11599,7 +11958,10 @@
                           "const": "Service Unavailable"
                         },
                         "code": {
-                          "enum": ["AUTHORITY_UNAVAILABLE", "PERSISTENCE_UNAVAILABLE"]
+                          "enum": [
+                            "AUTHORITY_UNAVAILABLE",
+                            "PERSISTENCE_UNAVAILABLE"
+                          ]
                         }
                       }
                     }
@@ -11851,7 +12213,9 @@
                 "description": "true when the response replays a previous request with the same Idempotency-Key",
                 "schema": {
                   "type": "string",
-                  "enum": ["true"]
+                  "enum": [
+                    "true"
+                  ]
                 }
               }
             }
@@ -11921,6 +12285,12 @@
           },
           {
             "$ref": "#/components/parameters/DevCompatCorrelationId"
+          },
+          {
+            "$ref": "#/components/parameters/PageLimit"
+          },
+          {
+            "$ref": "#/components/parameters/PageCursor"
           }
         ],
         "responses": {
@@ -11929,7 +12299,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RsvpAwareReservationList"
+                  "$ref": "#/components/schemas/PagedReservationList"
                 }
               }
             }
@@ -12185,6 +12555,175 @@
         },
         "description": "Takes effect on the next read and is not retroactive for events already published (they carry only ids). Hidden requesters are nulled in GET /reservations and in approve/reject responses; `reservedByName` is omitted from the host list."
       }
+    },
+    "/celebrations/{celebrationId}/reservations/{reservationId}/cancel": {
+      "post": {
+        "operationId": "cancelReservation",
+        "summary": "Cancel a pending or committed reservation (the guest who made it, or the host); the gift returns to AVAILABLE",
+        "description": "D-3. With a guest link credential only that guest's own reservation can be cancelled (another guest's answers 404, never revealing it exists); the host can cancel any reservation of the celebration. A member JWT without host access answers 403 GUEST_IDENTITY_REQUIRED. Reservation and item move together with UPDATE ... WHERE version = ?, so a concurrent approve, reject or cancellation loses with 409 RESERVATION_NOT_ACTIVE. Emits gift.reservation.cancelled.v1 with reason GUEST_CANCELLED or HOST_CANCELLED.",
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "guestCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DevCompatCelebrationId"
+          },
+          {
+            "name": "reservationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/DevCompatCorrelationId"
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[\\x21-\\x7e]+$"
+            },
+            "description": "Repeating the cancellation with the same key returns the stored result (200 with Idempotency-Replayed: true) instead of 409 RESERVATION_NOT_ACTIVE; the same key for another reservation is 422 IDEMPOTENCY_KEY_REUSED. Keys are scoped to (celebration, caller)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cancelled (status CANCELLED, cancellationReason GUEST_CANCELLED or HOST_CANCELLED)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RsvpAwareGiftReservation"
+                }
+              }
+            },
+            "headers": {
+              "Idempotency-Replayed": {
+                "description": "true when the response replays a previous request with the same Idempotency-Key",
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "true"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/DevCompatUnauthorized"
+          },
+          "403": {
+            "description": "GUEST_IDENTITY_REQUIRED: neither the host nor a guest with their link credential",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DevCompatProblem"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/DevCompatNotFound"
+          },
+          "409": {
+            "description": "RESERVATION_NOT_ACTIVE: already cancelled, rejected, or changed concurrently",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DevCompatProblem"
+                },
+                "example": {
+                  "type": "https://rsvp.example/problems/reservation-not-active",
+                  "title": "Only a pending or committed reservation can be cancelled.",
+                  "status": 409,
+                  "code": "RESERVATION_NOT_ACTIVE"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "VALIDATION_FAILED (malformed Idempotency-Key) or IDEMPOTENCY_KEY_REUSED",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DevCompatProblem"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/DevCompatRateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/DevCompatDependencyUnavailable"
+          }
+        }
+      }
+    },
+    "/celebrations/{celebrationId}/my-reservations": {
+      "get": {
+        "operationId": "listMyReservations",
+        "summary": "The calling guest's own reservations in this celebration (any status), oldest first",
+        "description": "Guest link credential only: guestId comes from Guest's validation of the credential, never from the request. Lets the guest page show a reservation and offer to cancel it after a reload. Hosts and member JWTs answer 403 GUEST_IDENTITY_REQUIRED.",
+        "security": [
+          {
+            "guestCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DevCompatCelebrationId"
+          },
+          {
+            "$ref": "#/components/parameters/DevCompatCorrelationId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Own reservations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RsvpAwareReservationList"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/DevCompatUnauthorized"
+          },
+          "403": {
+            "description": "GUEST_IDENTITY_REQUIRED",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DevCompatProblem"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/DevCompatNotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/DevCompatRateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/DevCompatDependencyUnavailable"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -12307,12 +12846,38 @@
           "format": "uuid"
         },
         "description": "Echoed in the response header and in problem.correlationId; generated when absent."
+      },
+      "PageLimit": {
+        "name": "limit",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200,
+          "default": 100
+        },
+        "description": "Page size (L4). Never more than 200."
+      },
+      "PageCursor": {
+        "name": "cursor",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{1,512}$"
+        },
+        "description": "The nextCursor of the previous page, unchanged. Keyset based: rows added meanwhile never shift a page. An invalid cursor answers 422 VALIDATION_FAILED."
       }
     },
     "schemas": {
       "Problem": {
         "type": "object",
-        "required": ["type", "title", "status"],
+        "required": [
+          "type",
+          "title",
+          "status"
+        ],
         "properties": {
           "type": {
             "type": "string"
@@ -12328,7 +12893,10 @@
       "PrivateMoney": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["minor", "currency"],
+        "required": [
+          "minor",
+          "currency"
+        ],
         "properties": {
           "minor": {
             "type": "integer",
@@ -12346,7 +12914,9 @@
       "PrivateExternalReference": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["url"],
+        "required": [
+          "url"
+        ],
         "properties": {
           "url": {
             "type": "string",
@@ -12358,7 +12928,12 @@
       "PrivateExternalGiftInput": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["title", "source", "price", "external"],
+        "required": [
+          "title",
+          "source",
+          "price",
+          "external"
+        ],
         "properties": {
           "title": {
             "type": "string",
@@ -12381,7 +12956,16 @@
       "PrivateGiftItem": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "listId", "title", "price", "source", "status", "version", "external"],
+        "required": [
+          "id",
+          "listId",
+          "title",
+          "price",
+          "source",
+          "status",
+          "version",
+          "external"
+        ],
         "properties": {
           "id": {
             "type": "string",
@@ -12404,7 +12988,13 @@
           },
           "status": {
             "type": "string",
-            "enum": ["AVAILABLE", "PROPOSED", "PENDING_REVIEW", "COMMITTED", "REJECTED"]
+            "enum": [
+              "AVAILABLE",
+              "PROPOSED",
+              "PENDING_REVIEW",
+              "COMMITTED",
+              "REJECTED"
+            ]
           },
           "version": {
             "type": "integer",
@@ -12419,7 +13009,16 @@
       "ProposedPrivateExternalGift": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "listId", "title", "price", "source", "status", "version", "external"],
+        "required": [
+          "id",
+          "listId",
+          "title",
+          "price",
+          "source",
+          "status",
+          "version",
+          "external"
+        ],
         "properties": {
           "id": {
             "type": "string",
@@ -12454,7 +13053,11 @@
       "CreatedPrivateGiftList": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "celebrationId", "itemIds"],
+        "required": [
+          "id",
+          "celebrationId",
+          "itemIds"
+        ],
         "properties": {
           "id": {
             "type": "string",
@@ -12477,7 +13080,11 @@
       "PrivateGiftList": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["listId", "celebrationId", "items"],
+        "required": [
+          "listId",
+          "celebrationId",
+          "items"
+        ],
         "properties": {
           "listId": {
             "type": "string",
@@ -12512,7 +13119,13 @@
       "PrivateProblem": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["type", "title", "status", "code", "correlationId"],
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code",
+          "correlationId"
+        ],
         "properties": {
           "type": {
             "const": "about:blank"
@@ -12536,13 +13149,19 @@
       "ExternalGiftPublication": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["item", "publishedAt"],
+        "required": [
+          "item",
+          "publishedAt"
+        ],
         "properties": {
           "item": {
             "$ref": "#/components/schemas/PrivateGiftItem"
           },
           "publishedAt": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "oneOf": [
@@ -12629,7 +13248,9 @@
       "ApproveExternalGiftInput": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["expectedVersion"],
+        "required": [
+          "expectedVersion"
+        ],
         "properties": {
           "expectedVersion": {
             "type": "integer",
@@ -12642,7 +13263,16 @@
       "PublicExternalGiftItem": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "title", "price", "source", "status", "version", "external", "publishedAt"],
+        "required": [
+          "id",
+          "title",
+          "price",
+          "source",
+          "status",
+          "version",
+          "external",
+          "publishedAt"
+        ],
         "properties": {
           "id": {
             "type": "string",
@@ -12682,7 +13312,11 @@
       "PublicExternalGiftPage": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["celebrationId", "items", "nextCursor"],
+        "required": [
+          "celebrationId",
+          "items",
+          "nextCursor"
+        ],
         "properties": {
           "celebrationId": {
             "type": "string",
@@ -12712,7 +13346,9 @@
       "ManualReservationInput": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["expectedItemVersion"],
+        "required": [
+          "expectedItemVersion"
+        ],
         "properties": {
           "expectedItemVersion": {
             "type": "integer",
@@ -12821,7 +13457,10 @@
           {
             "properties": {
               "status": {
-                "enum": ["COMMITTED", "REJECTED"]
+                "enum": [
+                  "COMMITTED",
+                  "REJECTED"
+                ]
               },
               "resolvedAt": {
                 "type": "string",
@@ -12861,7 +13500,10 @@
       "ReservationResult": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["reservation", "itemVersion"],
+        "required": [
+          "reservation",
+          "itemVersion"
+        ],
         "properties": {
           "reservation": {
             "$ref": "#/components/schemas/ReservationView"
@@ -12877,7 +13519,10 @@
       "OwnerReservationPage": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["items", "nextCursor"],
+        "required": [
+          "items",
+          "nextCursor"
+        ],
         "properties": {
           "items": {
             "type": "array",
@@ -12903,7 +13548,14 @@
       "ReservationProblem": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["type", "title", "status", "code", "correlationId", "detail"],
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code",
+          "correlationId",
+          "detail"
+        ],
         "properties": {
           "type": {
             "const": "about:blank"
@@ -12999,10 +13651,19 @@
             ]
           },
           "reservationMode": {
-            "enum": ["RESTRICTED", "AUTO_ACCEPT", "UNKNOWN"]
+            "enum": [
+              "RESTRICTED",
+              "AUTO_ACCEPT",
+              "UNKNOWN"
+            ]
           },
           "resolutionType": {
-            "enum": ["PENDING", "MANUAL", "AUTOMATIC", "UNKNOWN"]
+            "enum": [
+              "PENDING",
+              "MANUAL",
+              "AUTOMATIC",
+              "UNKNOWN"
+            ]
           },
           "cancelledAt": {
             "type": "string",
@@ -13043,7 +13704,10 @@
           {
             "properties": {
               "status": {
-                "enum": ["COMMITTED", "REJECTED"]
+                "enum": [
+                  "COMMITTED",
+                  "REJECTED"
+                ]
               },
               "reservationMode": {
                 "const": "RESTRICTED"
@@ -13110,7 +13774,10 @@
       "ModeAwareReservationResult": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["reservation", "itemVersion"],
+        "required": [
+          "reservation",
+          "itemVersion"
+        ],
         "properties": {
           "reservation": {
             "$ref": "#/components/schemas/ModeAwareReservationView"
@@ -13126,7 +13793,10 @@
       "ModeAwareReservationPage": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["items", "nextCursor"],
+        "required": [
+          "items",
+          "nextCursor"
+        ],
         "properties": {
           "items": {
             "type": "array",
@@ -13152,7 +13822,9 @@
       "GiftCatalogedItemInput": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["productListingId"],
+        "required": [
+          "productListingId"
+        ],
         "properties": {
           "productListingId": {
             "type": "string",
@@ -13164,12 +13836,17 @@
       "GiftCatalogTranslations": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["es-BO"],
+        "required": [
+          "es-BO"
+        ],
         "properties": {
           "es-BO": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["title", "description"],
+            "required": [
+              "title",
+              "description"
+            ],
             "properties": {
               "title": {
                 "type": "string",
@@ -13190,7 +13867,10 @@
           "en-US": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["title", "description"],
+            "required": [
+              "title",
+              "description"
+            ],
             "properties": {
               "title": {
                 "type": "string",
@@ -13213,11 +13893,21 @@
       "GiftCatalogFulfillment": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["responsible", "coverageCityIds", "leadTimeDays", "conditions", "transportCost", "disclaimer"],
+        "required": [
+          "responsible",
+          "coverageCityIds",
+          "leadTimeDays",
+          "conditions",
+          "transportCost",
+          "disclaimer"
+        ],
         "properties": {
           "responsible": {
             "type": "string",
-            "enum": ["PROVIDER", "CUSTOMER"]
+            "enum": [
+              "PROVIDER",
+              "CUSTOMER"
+            ]
           },
           "coverageCityIds": {
             "type": "array",
@@ -13239,7 +13929,9 @@
           "conditions": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["es-BO"],
+            "required": [
+              "es-BO"
+            ],
             "properties": {
               "es-BO": {
                 "type": "string",
@@ -13260,7 +13952,10 @@
           "transportCost": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["minor", "currency"],
+            "required": [
+              "minor",
+              "currency"
+            ],
             "properties": {
               "minor": {
                 "type": "integer",
@@ -13276,7 +13971,11 @@
           "disclaimer": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["code", "version", "translations"],
+            "required": [
+              "code",
+              "version",
+              "translations"
+            ],
             "properties": {
               "code": {
                 "const": "PLATFORM_CONTACT_ONLY"
@@ -13287,7 +13986,10 @@
               "translations": {
                 "type": "object",
                 "additionalProperties": false,
-                "required": ["es-BO", "en-US"],
+                "required": [
+                  "es-BO",
+                  "en-US"
+                ],
                 "properties": {
                   "es-BO": {
                     "const": "La plataforma facilita el contacto. El traslado y la entrega corresponden al responsable declarado."
@@ -13384,14 +14086,21 @@
           },
           "stockHint": {
             "type": "string",
-            "enum": ["AVAILABLE", "UNAVAILABLE", "UNKNOWN"],
+            "enum": [
+              "AVAILABLE",
+              "UNAVAILABLE",
+              "UNKNOWN"
+            ],
             "description": "An indication only, without inventory reservation, purchase or payment. UNAVAILABLE prevents eligibility; UNKNOWN remains eligible without asserting real stock."
           },
           "fulfillment": {
             "$ref": "#/components/schemas/GiftCatalogFulfillment"
           },
           "redirectPath": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "uri",
             "description": "Derived current eligibility link on the configured trusted Provider origin, /r/{exact product ID}?destination=PRODUCT_PAGE. Never partner destination/token. Null for ineligible products; commercial fields remain immutable Gift snapshots."
           }
@@ -13428,7 +14137,12 @@
           },
           "status": {
             "type": "string",
-            "enum": ["AVAILABLE", "PENDING_REVIEW", "COMMITTED", "REJECTED"]
+            "enum": [
+              "AVAILABLE",
+              "PENDING_REVIEW",
+              "COMMITTED",
+              "REJECTED"
+            ]
           },
           "version": {
             "type": "integer",
@@ -13510,7 +14224,13 @@
           },
           "status": {
             "type": "string",
-            "enum": ["AVAILABLE", "PROPOSED", "PENDING_REVIEW", "COMMITTED", "REJECTED"]
+            "enum": [
+              "AVAILABLE",
+              "PROPOSED",
+              "PENDING_REVIEW",
+              "COMMITTED",
+              "REJECTED"
+            ]
           },
           "version": {
             "type": "integer",
@@ -13521,7 +14241,10 @@
             "$ref": "#/components/schemas/PrivateMoney"
           },
           "publishedAt": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "reservable": {
@@ -13552,7 +14275,12 @@
       "GiftPrivateMixedPage": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["listId", "celebrationId", "items", "nextCursor"],
+        "required": [
+          "listId",
+          "celebrationId",
+          "items",
+          "nextCursor"
+        ],
         "properties": {
           "listId": {
             "type": "string",
@@ -13570,7 +14298,10 @@
             }
           },
           "nextCursor": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "pattern": "^[A-Za-z0-9_-]+$",
             "maxLength": 1024
           }
@@ -13579,7 +14310,11 @@
       "GiftPublicMixedPage": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["celebrationId", "items", "nextCursor"],
+        "required": [
+          "celebrationId",
+          "items",
+          "nextCursor"
+        ],
         "properties": {
           "celebrationId": {
             "type": "string",
@@ -13609,7 +14344,10 @@
             }
           },
           "nextCursor": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "pattern": "^[A-Za-z0-9_-]+$",
             "maxLength": 1024
           }
@@ -13688,7 +14426,10 @@
           "price": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["minor", "currency"],
+            "required": [
+              "minor",
+              "currency"
+            ],
             "properties": {
               "minor": {
                 "type": "integer",
@@ -13703,7 +14444,11 @@
           },
           "stockHint": {
             "type": "string",
-            "enum": ["AVAILABLE", "UNAVAILABLE", "UNKNOWN"],
+            "enum": [
+              "AVAILABLE",
+              "UNAVAILABLE",
+              "UNKNOWN"
+            ],
             "description": "An indication only, without inventory reservation, purchase or payment. UNAVAILABLE prevents eligibility; UNKNOWN remains eligible without asserting real stock."
           },
           "fulfillment": {
@@ -13730,7 +14475,11 @@
       "GiftOptions": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["suggestions", "externalOption", "partnerPriorityEnabled"],
+        "required": [
+          "suggestions",
+          "externalOption",
+          "partnerPriorityEnabled"
+        ],
         "properties": {
           "suggestions": {
             "type": "array",
@@ -13744,7 +14493,10 @@
               {
                 "type": "object",
                 "additionalProperties": false,
-                "required": ["mode", "requiresApproval"],
+                "required": [
+                  "mode",
+                  "requiresApproval"
+                ],
                 "properties": {
                   "mode": {
                     "const": "RESTRICTED"
@@ -13757,7 +14509,10 @@
               {
                 "type": "object",
                 "additionalProperties": false,
-                "required": ["mode", "requiresApproval"],
+                "required": [
+                  "mode",
+                  "requiresApproval"
+                ],
                 "properties": {
                   "mode": {
                     "const": "AUTO_ACCEPT"
@@ -13795,7 +14550,10 @@
       "GiftExternalRequestResult": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["publication", "suggestions"],
+        "required": [
+          "publication",
+          "suggestions"
+        ],
         "properties": {
           "publication": {
             "$ref": "#/components/schemas/CreatedExternalGiftPublication"
@@ -13812,7 +14570,14 @@
       "GiftCatalogProblem": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["type", "title", "status", "code", "correlationId", "detail"],
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code",
+          "correlationId",
+          "detail"
+        ],
         "properties": {
           "type": {
             "const": "about:blank"
@@ -13917,13 +14682,25 @@
             ]
           },
           "reservationMode": {
-            "enum": ["RESTRICTED", "AUTO_ACCEPT", "UNKNOWN"]
+            "enum": [
+              "RESTRICTED",
+              "AUTO_ACCEPT",
+              "UNKNOWN"
+            ]
           },
           "resolutionType": {
-            "enum": ["PENDING", "MANUAL", "AUTOMATIC", "UNKNOWN"]
+            "enum": [
+              "PENDING",
+              "MANUAL",
+              "AUTOMATIC",
+              "UNKNOWN"
+            ]
           },
           "guestIdentityState": {
-            "enum": ["IDENTIFIED", "ERASED"]
+            "enum": [
+              "IDENTIFIED",
+              "ERASED"
+            ]
           },
           "cancelledAt": {
             "type": "string",
@@ -13964,7 +14741,10 @@
           {
             "properties": {
               "status": {
-                "enum": ["COMMITTED", "REJECTED"]
+                "enum": [
+                  "COMMITTED",
+                  "REJECTED"
+                ]
               },
               "reservationMode": {
                 "const": "RESTRICTED"
@@ -14056,7 +14836,10 @@
       "ReservationRecordResult": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["reservation", "itemVersion"],
+        "required": [
+          "reservation",
+          "itemVersion"
+        ],
         "properties": {
           "reservation": {
             "$ref": "#/components/schemas/ReservationRecordView"
@@ -14072,7 +14855,10 @@
       "ReservationRecordPage": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["items", "nextCursor"],
+        "required": [
+          "items",
+          "nextCursor"
+        ],
         "properties": {
           "items": {
             "type": "array",
@@ -14097,7 +14883,11 @@
       },
       "DevCompatProblem": {
         "type": "object",
-        "required": ["type", "title", "status"],
+        "required": [
+          "type",
+          "title",
+          "status"
+        ],
         "properties": {
           "type": {
             "type": "string"
@@ -14130,7 +14920,10 @@
       },
       "DevCompatMoney": {
         "type": "object",
-        "required": ["amountMinor", "currency"],
+        "required": [
+          "amountMinor",
+          "currency"
+        ],
         "additionalProperties": false,
         "properties": {
           "amountMinor": {
@@ -14141,25 +14934,45 @@
           "currency": {
             "type": "string",
             "pattern": "^[A-Z]{3}$",
-            "examples": ["BOB", "USD"]
+            "examples": [
+              "BOB",
+              "USD"
+            ]
           }
         }
       },
       "DevCompatGiftSource": {
         "type": "string",
-        "enum": ["CATALOGED", "EXTERNAL"]
+        "enum": [
+          "CATALOGED",
+          "EXTERNAL"
+        ]
       },
       "DevCompatGiftItemStatus": {
         "type": "string",
-        "enum": ["AVAILABLE", "PROPOSED", "PENDING_REVIEW", "COMMITTED", "REJECTED"]
+        "enum": [
+          "AVAILABLE",
+          "PROPOSED",
+          "PENDING_REVIEW",
+          "COMMITTED",
+          "REJECTED"
+        ]
       },
       "DevCompatReservationStatus": {
         "type": "string",
-        "enum": ["PENDING_REVIEW", "COMMITTED", "REJECTED"]
+        "enum": [
+          "PENDING_REVIEW",
+          "COMMITTED",
+          "REJECTED"
+        ]
       },
       "DevCompatGiftList": {
         "type": "object",
-        "required": ["id", "celebrationId", "createdAt"],
+        "required": [
+          "id",
+          "celebrationId",
+          "createdAt"
+        ],
         "properties": {
           "id": {
             "type": "string",
@@ -14177,7 +14990,17 @@
       },
       "DevCompatGiftItem": {
         "type": "object",
-        "required": ["id", "listId", "celebrationId", "title", "price", "source", "status", "version", "createdAt"],
+        "required": [
+          "id",
+          "listId",
+          "celebrationId",
+          "title",
+          "price",
+          "source",
+          "status",
+          "version",
+          "createdAt"
+        ],
         "properties": {
           "id": {
             "type": "string",
@@ -14196,7 +15019,10 @@
             "maxLength": 200
           },
           "description": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "price": {
             "$ref": "#/components/schemas/DevCompatMoney"
@@ -14213,15 +15039,24 @@
             "description": "Optimistic-lock counter"
           },
           "productListingId": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "uuid"
           },
           "providerId": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "uuid"
           },
           "externalUrl": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "uri"
           },
           "createdAt": {
@@ -14236,7 +15071,10 @@
       },
       "DevCompatGiftItemList": {
         "type": "object",
-        "required": ["items", "partnerPriorityEnabled"],
+        "required": [
+          "items",
+          "partnerPriorityEnabled"
+        ],
         "properties": {
           "items": {
             "type": "array",
@@ -14253,7 +15091,12 @@
       "DevCompatAddCatalogedGiftRequest": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["source", "title", "price", "productListingId"],
+        "required": [
+          "source",
+          "title",
+          "price",
+          "productListingId"
+        ],
         "properties": {
           "source": {
             "const": "CATALOGED"
@@ -14264,7 +15107,10 @@
             "maxLength": 200
           },
           "description": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "maxLength": 1000
           },
           "price": {
@@ -14279,7 +15125,12 @@
       "DevCompatAddExternalGiftRequest": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["source", "title", "price", "url"],
+        "required": [
+          "source",
+          "title",
+          "price",
+          "url"
+        ],
         "properties": {
           "source": {
             "const": "EXTERNAL"
@@ -14290,7 +15141,10 @@
             "maxLength": 200
           },
           "description": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "maxLength": 1000
           },
           "price": {
@@ -14312,18 +15166,30 @@
         "additionalProperties": false,
         "properties": {
           "guestDisplayName": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "maxLength": 120
           },
           "message": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "maxLength": 500
           }
         }
       },
       "DevCompatGiftReservation": {
         "type": "object",
-        "required": ["id", "itemId", "celebrationId", "status", "requestedAt"],
+        "required": [
+          "id",
+          "itemId",
+          "celebrationId",
+          "status",
+          "requestedAt"
+        ],
         "properties": {
           "id": {
             "type": "string",
@@ -14338,15 +15204,24 @@
             "format": "uuid"
           },
           "guestId": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "uuid",
             "description": "Null after guest erasure"
           },
           "guestDisplayName": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "message": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "status": {
             "$ref": "#/components/schemas/DevCompatReservationStatus"
@@ -14356,11 +15231,17 @@
             "format": "date-time"
           },
           "resolvedAt": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "resolvedBy": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "requesterHidden": {
             "type": "boolean",
@@ -14370,7 +15251,9 @@
       },
       "DevCompatReservationList": {
         "type": "object",
-        "required": ["items"],
+        "required": [
+          "items"
+        ],
         "properties": {
           "items": {
             "type": "array",
@@ -14382,7 +15265,10 @@
       },
       "DevCompatPartnerSuggestion": {
         "type": "object",
-        "required": ["productListingId", "title"],
+        "required": [
+          "productListingId",
+          "title"
+        ],
         "properties": {
           "productListingId": {
             "type": "string",
@@ -14395,7 +15281,11 @@
       },
       "DevCompatGiftSettings": {
         "type": "object",
-        "required": ["showRequesterToHost", "showRequesterToGuests", "version"],
+        "required": [
+          "showRequesterToHost",
+          "showRequesterToGuests",
+          "version"
+        ],
         "properties": {
           "showRequesterToHost": {
             "type": "boolean",
@@ -14415,7 +15305,10 @@
       "DevCompatUpdateGiftSettingsRequest": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["showRequesterToHost", "showRequesterToGuests"],
+        "required": [
+          "showRequesterToHost",
+          "showRequesterToGuests"
+        ],
         "properties": {
           "showRequesterToHost": {
             "type": "boolean"
@@ -14428,7 +15321,11 @@
       "LegacyCatalogReference": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["productListingId", "providerId", "profile"],
+        "required": [
+          "productListingId",
+          "providerId",
+          "profile"
+        ],
         "properties": {
           "productListingId": {
             "type": "string",
@@ -14446,7 +15343,16 @@
       "PrivateLegacyCatalogGiftItem": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "listId", "title", "price", "source", "status", "version", "catalog"],
+        "required": [
+          "id",
+          "listId",
+          "title",
+          "price",
+          "source",
+          "status",
+          "version",
+          "catalog"
+        ],
         "properties": {
           "id": {
             "type": "string",
@@ -14469,7 +15375,13 @@
           },
           "status": {
             "type": "string",
-            "enum": ["AVAILABLE", "PROPOSED", "PENDING_REVIEW", "COMMITTED", "REJECTED"]
+            "enum": [
+              "AVAILABLE",
+              "PROPOSED",
+              "PENDING_REVIEW",
+              "COMMITTED",
+              "REJECTED"
+            ]
           },
           "version": {
             "type": "integer",
@@ -14479,7 +15391,12 @@
           "catalog": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["productListingId", "providerId", "profile", "providerVerified"],
+            "required": [
+              "productListingId",
+              "providerId",
+              "profile",
+              "providerVerified"
+            ],
             "properties": {
               "productListingId": {
                 "type": "string",
@@ -14531,7 +15448,12 @@
           },
           "status": {
             "type": "string",
-            "enum": ["AVAILABLE", "PENDING_REVIEW", "COMMITTED", "REJECTED"]
+            "enum": [
+              "AVAILABLE",
+              "PENDING_REVIEW",
+              "COMMITTED",
+              "REJECTED"
+            ]
           },
           "version": {
             "type": "integer",
@@ -14542,7 +15464,10 @@
             "$ref": "#/components/schemas/PrivateMoney"
           },
           "publishedAt": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           },
           "reservable": {
@@ -14561,7 +15486,17 @@
       },
       "CanonicalUnknownCreatedGiftItem": {
         "type": "object",
-        "required": ["id", "listId", "celebrationId", "title", "price", "source", "status", "version", "createdAt"],
+        "required": [
+          "id",
+          "listId",
+          "celebrationId",
+          "title",
+          "price",
+          "source",
+          "status",
+          "version",
+          "createdAt"
+        ],
         "properties": {
           "id": {
             "type": "string",
@@ -14580,7 +15515,10 @@
             "maxLength": 200
           },
           "description": {
-            "type": ["string", "null"]
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "price": {
             "$ref": "#/components/schemas/DevCompatMoney"
@@ -14597,15 +15535,24 @@
             "description": "Optimistic-lock counter"
           },
           "productListingId": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "uuid"
           },
           "providerId": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "uuid"
           },
           "externalUrl": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "uri"
           },
           "createdAt": {
@@ -14620,7 +15567,10 @@
       },
       "CanonicalCompatGiftItemPage": {
         "type": "object",
-        "required": ["items", "partnerPriorityEnabled"],
+        "required": [
+          "items",
+          "partnerPriorityEnabled"
+        ],
         "properties": {
           "items": {
             "type": "array",
@@ -14735,6 +15685,9 @@
           },
           {
             "$ref": "#/components/schemas/RsvpCancelledGiftReservation"
+          },
+          {
+            "$ref": "#/components/schemas/ManuallyCancelledGiftReservation"
           }
         ]
       },
@@ -14751,6 +15704,144 @@
             }
           }
         }
+      },
+      "ManuallyCancelledGiftReservation": {
+        "type": "object",
+        "required": [
+          "id",
+          "itemId",
+          "celebrationId",
+          "status",
+          "requestedAt",
+          "cancelledAt",
+          "cancelledFromStatus",
+          "cancellationReason"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "celebrationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "guestId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Null after guest erasure"
+          },
+          "guestDisplayName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "const": "CANCELLED"
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "resolvedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "resolvedBy": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "requesterHidden": {
+            "type": "boolean",
+            "description": "true when the host chose not to see who asked: guestId, guestDisplayName and message are null"
+          },
+          "cancelledAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "cancelledFromStatus": {
+            "type": "string",
+            "enum": [
+              "PENDING_REVIEW",
+              "COMMITTED"
+            ]
+          },
+          "cancellationReason": {
+            "type": "string",
+            "enum": [
+              "GUEST_CANCELLED",
+              "HOST_CANCELLED"
+            ],
+            "description": "GUEST_CANCELLED: the guest withdrew it with their invitation link. HOST_CANCELLED: the host released it (D-3)."
+          }
+        },
+        "description": "A reservation cancelled by hand (since 1.10.0): the gift went back to AVAILABLE in the same transaction."
+      },
+      "PagedGiftItemPage": {
+        "description": "One page of CanonicalCompatGiftItemPage (since 1.12.0).",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CanonicalCompatGiftItemPage"
+          },
+          {
+            "type": "object",
+            "required": [
+              "nextCursor"
+            ],
+            "properties": {
+              "nextCursor": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Pass it as cursor to get the next page; null on the last page."
+              }
+            }
+          }
+        ]
+      },
+      "PagedReservationList": {
+        "description": "One page of RsvpAwareReservationList (since 1.12.0).",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/RsvpAwareReservationList"
+          },
+          {
+            "type": "object",
+            "required": [
+              "nextCursor"
+            ],
+            "properties": {
+              "nextCursor": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Pass it as cursor to get the next page; null on the last page."
+              }
+            }
+          }
+        ]
       }
     },
     "responses": {

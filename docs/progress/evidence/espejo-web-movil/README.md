@@ -308,3 +308,67 @@ node scripts/live/landing-mirror.mjs (Chrome real; app exportada contra dev en :
 ```
 
 Diferencias aceptadas con el sitio: el degradado del hero y las sombras del teléfono y las tarjetas no se replican; el JSON-LD (sitio y FAQ) es de la web indexable y no aplica a la app; el primer CTA lleva a `/registro` de la app (en el sitio lleva al login de la app). Movimiento: una sola entrada de la escena del hero con `Enter`, que respeta movimiento reducido. Ninguna línea base visual cubre `/` (`e2e/screens.ts`), así que no cambió ninguna.
+
+# Paridad de rutas públicas web ↔ app y estados sin salida del invitado
+
+Fecha: 2026-11-23 · Rama `fix/espejo-web-movil-paridad` (base `chore/deploy-contabo-coolify` @ `18db2c8`). Pedido de Pablo: «fíjate que en la web y mobile esté lo mismo».
+
+**Resultado observable:** cuando el enlace del invitado no sirve (inválido, vencido, revocado, enlace legado `/rsvp/{token}`), cuando no hay conexión, cuando la celebración solo admite enlace personal, cuando el plazo cerró o cuando la lista de regalos se abre sin enlace, el sitio público (seo-web) dice **lo mismo y con el mismo dibujo** que la app. Antes la web decía «Este enlace no está disponible» con una brújula y la app «Este enlace ya no funciona» con el enlace roto ([antes web](rutas-rsvp-enlace-invalido-web-360-antes.png) · [antes app](rutas-rsvp-enlace-invalido-app-360-antes.png) · [después web](rutas-rsvp-enlace-invalido-web-360-despues.png)).
+
+**Causa raíz:** el rediseño del recorrido del invitado en la app (modo Persuade) creó claves nuevas (`rsvp.invite.*`, `gifts.guest.*`) y dibujos nuevos (`linkExpired`, `noAccess`, `deadlineClosed`), y seo-web siguió con las claves antiguas y con solo tres dibujos copiados. Nada comprobaba que la web y la app dijeran lo mismo. Ahora:
+- las vistas de estado de seo-web (`components/rsvp/rsvp-status.tsx`, el bloqueo de `components/gift/gift-experience.tsx`) usan las mismas claves de `@rsvp/i18n` que la app;
+- seo-web tiene los dibujos `linkExpired`, `noAccess` y `deadlineClosed`, con el pastel de su grupo, y `notFound`/`offline` pasan al pastel de su grupo (gris), como en la app;
+- cada dibujo de estado lleva `data-art` (el gancho que la app expone como `data-illustration`) y `tests/state-art-sync.test.tsx` falla si un trazo o un pastel deja de coincidir con `packages/ui/src/illustrations.ts`;
+- `scripts/live/public-routes-mirror.mjs` recorre todas las rutas públicas en los dos lados y compara encabezados y dibujo; `scripts/live/guest-states-mirror.mjs` verifica los estados del invitado en 360/768/1280 × claro/oscuro × es-BO/en-US con axe.
+
+| ID | Requisito | Estado | Comando / artefacto | Resultado |
+|---|---|---|---|---|
+| PAR-01 | Enlace inválido (`/c/{slug}/rsvp/{token}` y `/rsvp/{token}`): mismo título, cuerpo, acción y dibujo | PASS | `guest-states-mirror.mjs` · [guest-states-results.json](guest-states-results.json) | 120/120 PASS en toda la matriz (5 estados × 2 lados × 12 combinaciones) |
+| PAR-02 | Sin conexión (gateway abortado en el navegador): mismo título y dibujo, con reintento | PASS | ídem + `tests/rsvp-page.test.tsx` | |
+| PAR-03 | Solo con enlace personal: mismo título, cuerpo, contacto y dibujo | PASS | ídem | la app además muestra la portada de la invitación (ver M21) |
+| PAR-04 | Plazo cerrado: mismo título, texto y dibujo | TESTED | `tests/rsvp-page.test.tsx` | TEST no tiene un enlace válido con plazo vencido: no observado en vivo |
+| PAR-05 | Regalos sin enlace: mismo título, acción y dibujo; 401/403/404/429/5xx con los textos y dibujos de la app | PASS (sin enlace) · TESTED (resto) | ídem + `tests/gifts.test.tsx` | |
+| PAR-06 | Directorio vacío: el título es un encabezado, como en la app | PASS | `public-routes-mirror.mjs` · [public-routes-results-despues-directorio-subset.json](public-routes-results-despues-directorio-subset.json) | |
+| PAR-07 | Los dibujos de la web son copia exacta de los de la app | TESTED | `tests/state-art-sync.test.tsx` | 6 dibujos + un caso negativo |
+| PAR-08 | 360/768/1280 × claro/oscuro × es-BO/en-US, axe, sin desborde, en web y app | PASS | `guest-states-mirror.mjs` | dibujo presente 1 vez, desborde 0, axe critical+serious 0, errores de consola 0 |
+| PAR-09 | 404 general: mismas palabras que la app (`notFound.*` de `common`; se quitan las duplicadas `landing.notFound`) | PASS | `public-routes-mirror.mjs` · [public-routes-results-despues-404-subset.json](public-routes-results-despues-404-subset.json) | mismos encabezados en es-BO y en-US. La app solo muestra el dibujo en pantallas anchas (`AuthLayout`): diferencia de maquetación aceptada |
+
+Capturas: `estado-{caso}-{web,app}-{360,1280}-{light,dark}.png` y `rutas-{ruta}-{web,app}-360-{antes,despues}.png`. Inventario completo antes: [public-routes-results-antes.json](public-routes-results-antes.json) y [public-routes-results-antes-resto.json](public-routes-results-antes-resto.json); después: [public-routes-results-despues.json](public-routes-results-despues.json) (16/34 iguales; las diferencias restantes están en la tabla del PR: portada del invitado y título de regalos → M21, `/catalogo` → L18, directorio y 404 solo semántica o maquetación, legales aún sin desplegar).
+
+**Cómo se recorrió:** Chrome real (Playwright con `/Applications/Google Chrome.app`). La app: `https://dev.done.arauzsoftware.com` (TEST). La web con el cambio: `next dev` local detrás de un proxy del mismo origen en `:3199` que reenvía `/api/*` al gateway de TEST (el gateway no permite CORS desde `localhost`); es decir, código nuevo contra el backend real de TEST. «Antes» de la web: `https://rsvp-web.161.97.85.216.sslip.io`.
+
+Re-ejecución de los scripts de espejo existentes contra TEST (2026-11-23): `invitation-mirror` (qa-espejo-movil) 21 PASS, exit 0; `directory-mirror` 34 PASS, exit 0; `landing-mirror` 16 PASS, exit 0; `partner-mirror` 8 PASS y luego espera la rejilla de la agenda, que no aparece porque `multicenter-59388c` no tiene disponibilidad (es el estado vacío AGV, ya documentado en ESP-56): el script es anterior a AGV y no se cambió aquí. No se sobrescribieron sus artefactos.
+
+**Diferencias que quedan, registradas en el catálogo** (`bugs/catalogo` de RSVPBackend): M21, el resto del recorrido del invitado (formulario de respuesta, confirmación, portada de la invitación, lista de regalos) sigue con las claves antiguas en la web; L18, `/catalogo` de seo-web es público. Por diseño (A13): `/c/{slug}/regalos/{x}` en la web es el detalle de un regalo y en la app también acepta el token del enlace en la dirección.
+
+**Límites:** no hay enlace de invitado válido en TEST para esta corrida, así que el formulario, el plazo cerrado y los bloqueos con credencial (401/403/404/429 de regalos) solo están `TESTED`. Privacidad y términos no existen todavía en TEST en ningún lado (llegan con fe-07, #61). No se probó en iOS ni Android: las pantallas de la app no cambiaron.
+
+# M21 · El recorrido del invitado en la web pública es el de la app
+
+Fecha: 2026-11-23 · Rama `fix/m21-invitado-web-paridad` (base `integracion/fe-07-web-e-higiene` @ `9945d65`, con #61, #62, #87, #88 y #89). Corrige: **M21** del catálogo.
+
+**Resultado observable:** quien abre su enlace personal en el sitio público (`/c/{slug}/rsvp/{token}`) ve lo mismo que en la app: la invitación en la portada (título, «Te invitan…», fecha · lugar), «¿Nos acompañas?» con **Voy / No puedo**, el contador de acompañantes, la restricción y el mensaje plegados, el check dibujado («Listo, estás dentro.») o el agradecimiento con dibujo si no viene, y un toque a «Ver la lista de regalos». La lista se llama **«Regalos»**, con la celebración debajo, y la reserva se hace en la fila del regalo (no en un diálogo). La portada también está encima de «solo con enlace personal», del plazo cerrado y de los bloqueos de la lista de regalos.
+
+**Causa raíz:** la app tenía su propio texto (`rsvp.invite.*`, `gifts.guest.*`) y su propia lógica de presentación (mensajes de error, cuenta atrás, contador, bloqueos de regalos, portada) dentro de `apps/universal`; seo-web conservaba su copia anterior. Ahora la lógica vive una sola vez en paquetes y las dos superficies la usan:
+- `@rsvp/query-hooks`: `rsvpIssueKeys`, `rsvpFailureNotice`, `rsvpSubmitKey`, `nearCountdown`, `companionCount`/`stepCompanions`, y las reglas de regalos (`reserveFieldErrors`, `reserveFailureKind`, `reserveFailureMessage`, `giftListBlocker`, `isReserveRetryable`; antes en `apps/universal/src/guest/reserve-rules.ts`).
+- `@rsvp/celebration-theme`: `guestCover` (la portada del invitado).
+- `@rsvp/i18n`: se quitan las claves antiguas que ya nadie usa (`rsvp.form/guest/confirmed/success/errors/...`, `gifts.title/reserve/mine/...`); `tests/state-art-sync.test.tsx` cubre también los dibujos nuevos de la web (`welcomeGuest`, `giftReserved`, `noGifts`).
+
+| ID | Requisito | Estado | Comando / artefacto | Resultado |
+|---|---|---|---|---|
+| M21-01 | Pendiente: portada + «¿Nos acompañas?» + «Voy / No puedo», igual en web y app | PASS (TEST real) | `guest-states-mirror.mjs` con `TOKEN_FILE` · [guest-states-results.json](guest-states-results.json) | 24/24 (2 lados × 360/768/1280 × claro/oscuro × es-BO/en-US), cover=1, axe crítico+serio 0, desborde 0, errores de consola 0 |
+| M21-02 | Respuesta real desde la web («Voy» + 1 acompañante), doble clic = 1 POST con Idempotency-Key, check y enlace a regalos | PASS (TEST real) | ídem · [antes de enviar](recorrido-invitado-voy-web-360-light.png) · [después](recorrido-invitado-listo-web-360-light.png) | `posts=1 idempotencyKey=yes giftsCta=1` |
+| M21-03 | Confirmado: «Tu asistencia está confirmada», resumen, «Ver la lista de regalos», «Cambiar mi respuesta» | PASS (TEST real) | ídem + [guest-states-results-m21-confirmado-reintento.json](guest-states-results-m21-confirmado-reintento.json) | 1.ª corrida 20/24, 2.ª 21/24: los fallos (distintos en cada corrida, en web y en app) son 429 de TEST por el límite del token de invitado (comprobado con curl: 200, 429, 429). Las 24 combinaciones pasaron en al menos una corrida |
+| M21-04 | Regalos con enlace: «Regalos» + celebración, regla, filtros, grupos, «Reservar» en la fila | PASS (TEST real) | ídem | 24/24 |
+| M21-05 | Solo con enlace personal: la portada encima del estado, en los dos lados | PASS (TEST real) | ídem | 24/24, cover=1 en web y app |
+| M21-06 | Estados sin salida (enlace inválido, legado, sin conexión, regalos sin enlace) siguen iguales | PASS (TEST real) | ídem | 96/96 |
+| M21-07 | Declinado con dibujo, plazo cerrado bajo la portada, 409 al enviar, 401 revocado, 429/503/422 que conservan el borrador, registro abierto y RESTRICTED, reserva en la fila, 409 «alguien se adelantó», 429/422 al reservar, nombre >120, filtros vacíos, lista vacía | TESTED | `tests/rsvp-page.test.tsx` (30), `tests/gifts.test.tsx` (32) contra el mock de contrato | no reproducibles en vivo sin tocar la configuración de la celebración compartida |
+| M21-08 | Una sola lógica y un solo texto | TESTED | `packages/query-hooks/test/guest-wording.test.ts` (cada clave que devuelven las reglas existe en es-BO), `packages/celebration-theme/src/guest-cover.test.ts` | |
+
+Total de la corrida completa: **189/193 PASS** (los 4 restantes son el 429 de M21-03). Capturas: `recorrido-{invitado-pendiente,invitado-confirmado,regalos}-{web,app}-{360,1280}-{light,dark}.png`, `…-360-light-en-US.png`, y `estado-*` regeneradas.
+
+**Cómo se recorrió:** Chrome real (Playwright con `/Applications/Google Chrome.app`). App: `https://dev.done.arauzsoftware.com` (TEST, la referencia). Web con el cambio: `next build` + `next start` en `:3199` con `NEXT_PUBLIC_API_URL=http://localhost:8300/api`, y un proxy local en `:8300` que reenvía `/api/*` al gateway de TEST con `Origin: https://dev.done.arauzsoftware.com`. Enlace válido: invitado QA **«Invitado QA M21»** (`fbe05144-6d91-4242-905d-4f91db67576c`, 2 acompañantes permitidos) creado en `qa-espejo-movil` con el anfitrión de prueba; respondió «Voy» con 1 acompañante. El token solo vivió en un archivo temporal fuera del repo y nunca se imprimió.
+
+**Límites:** la captura «listo» muestra la cabecera fija del sitio encima del título: es la captura de página completa después de que el foco movió la vista; se añadió `scroll-margin-top` a los títulos de la hoja, pero ese estado (primera respuesta) ya no se puede repetir con el mismo invitado, así que la corrección no se observó en vivo. No se probó en iOS ni Android: en la app solo cambió de dónde vienen las reglas (misma salida, 569 pruebas en verde) y se añadió el enlace a regalos en el plazo cerrado para un invitado confirmado, igual que en la web.
+
+**Líneas base visuales de seo-web** (`npx playwright test e2e/screens.visual.spec.ts`, Chrome real, mock de contrato): se regeneraron a ojo solo las 9 que este cambio mueve a propósito (`rsvp-sin-enlace`, `rsvp-enlace-invalido` y `regalos-sin-credencial` en 360/768/1280). Después: 13 PASS, 8 FAIL en pantallas que este PR no toca (`celebracion-publica` 360/768 y `directorio*` 360/768, diferencias de alto de página del 1-9 %); no se regeneraron y no se comprobó si ya fallaban sobre la base.

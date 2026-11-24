@@ -11,11 +11,16 @@ const email = z.string().trim().min(1, "required").max(MAX_EMAIL, "tooLong").reg
 
 export const loginSchema = z.object({ email, password: z.string().min(1, "required").max(MAX_PASSWORD, "tooLong") });
 export const recoverySchema = z.object({ email });
+/** Identity's PasswordPolicy: 12+ characters, at most 72 UTF-8 bytes (bcrypt). */
+const newPassword = z.string().min(MIN_REGISTER_PASSWORD, "passwordShort").max(MAX_PASSWORD, "tooLong").refine((value) => new TextEncoder().encode(value).length <= MAX_PASSWORD_BYTES, "passwordBytes");
+const MAX_LINK_TOKEN = 128;
+
 export const registerSchema = z.object({
   email,
-  password: z.string().min(MIN_REGISTER_PASSWORD, "passwordShort").max(MAX_PASSWORD, "tooLong").refine((value) => new TextEncoder().encode(value).length <= MAX_PASSWORD_BYTES, "passwordBytes"),
+  password: newPassword,
   role: z.enum(["HOST", "PLANNER", "PROVIDER"])
 });
+export const passwordResetSchema = z.object({ token: z.string().min(1, "linkInvalid").max(MAX_LINK_TOKEN, "linkInvalid"), newPassword });
 
 /** Validation keys are translated by the app (`auth.validation.<key>`); this returns the first issue per field. */
 export function validate<TSchema extends z.ZodTypeAny>(schema: TSchema, input: unknown): { readonly ok: true; readonly value: z.infer<TSchema> } | { readonly ok: false; readonly errors: Readonly<Record<string, string>> } {

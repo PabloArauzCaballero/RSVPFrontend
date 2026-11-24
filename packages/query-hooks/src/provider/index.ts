@@ -3,7 +3,7 @@ import type { ApiClient } from "@rsvp/api-client";
 import { providerService } from "./api.js";
 import type { UpdateProviderInput, ProviderDiscoveryQuery, DocumentInput, MicrositeInput, Availability, BookingRequestInput, BookingStatus, CreateListingInput, LeadConfig, QuoteInput, RegisterProviderInput } from "./types.js";
 export * from "./types.js";
-export { providerService } from "./api.js";
+export { BOOKINGS_PAGE_SIZE, providerService } from "./api.js";
 import { cachePolicy, retryTransient } from "../policy.js";
 import { providerSearchPath, type DirectoryQuery } from "./directory.js";
 import { queryKeys } from "../keys.js";
@@ -49,7 +49,30 @@ export function useListingSearch(client: ApiClient, q: string) {
 
 /** Public catalog metadata, shared by gift cards and cached across the list and detail page. Never sends the guest credential. */
 export function usePublicListing(client: ApiClient, listingId: string | undefined) {
-  return useQuery({ queryKey: ["providers", "public-listing", listingId] as const, queryFn: () => providerService(client).publicListing(listingId ?? ""), enabled: Boolean(listingId), staleTime: 5 * 60_000, retry: false });
+  const service = providerService(client);
+  const cache = { staleTime: 5 * 60_000, retry: false } as const;
+  const listing = useQuery({
+    queryKey: ["providers", "public-listing", listingId],
+    queryFn: () => service.publicListing(listingId ?? ""),
+    enabled: Boolean(listingId),
+    ...cache
+  });
+  const summary = listing.data;
+  // An explicit empty array means the listing has no usable destination.
+  const lookupDirectory = !listing.isError && summary?.id === listingId && summary?.published &&
+    summary.providerStatus === "VERIFIED" && summary.destinationTypes === undefined;
+  const providerId = lookupDirectory ? summary.providerId : undefined;
+  const directory = useQuery({
+    queryKey: ["providers", "public-directory-offers", providerId],
+    queryFn: () => service.publicDirectoryOffers(providerId ?? ""),
+    enabled: Boolean(providerId),
+    ...cache
+  });
+  const offer = directory.isError ? undefined : directory.data?.find((card) => card.listingId === listingId);
+  if (!summary || !lookupDirectory || !Array.isArray(offer?.destinations)) return listing;
+  // The older PRODUCT_PAGE redirect can reject the gift surface context. The detail endpoint confirms that capability.
+  const destinationTypes = offer.destinations.filter((destination) => destination !== "PRODUCT_PAGE");
+  return { ...listing, data: { ...summary, destinationTypes } };
 }
 
 export function useOfferCategories(client: ApiClient, locale: string) {
@@ -103,6 +126,19 @@ export function useInfiniteLeads(client: ApiClient, providerId: string | undefin
     getNextPageParam: (last, pages) => { const loaded = pages.reduce((sum, page) => sum + page.items.length, 0); return last.items.length === LEADS_PAGE_SIZE && (last.total === undefined || loaded < last.total) ? loaded : undefined; }
   });
 }
+export const QUOTES_PAGE_SIZE = 20;
+/** B11 · The provider's quote inbox, newest first, page by page (keyset cursor). */
+export function useInfiniteProviderQuotes(client: ApiClient, providerId: string | undefined) {
+  return useInfiniteQuery({
+    queryKey: P(providerId ?? "", "quotes", "pages"), initialPageParam: undefined as string | undefined, ...live, enabled: Boolean(providerId),
+    queryFn: ({ pageParam }) => providerService(client).quotes(providerId ?? "", QUOTES_PAGE_SIZE, pageParam),
+    getNextPageParam: (last) => last.nextCursor ?? undefined
+  });
+}
+/** One quote request with the requester's contact; loaded only when the provider opens it. */
+export function useProviderQuote(client: ApiClient, providerId: string | undefined, quoteId: string | undefined) {
+  return useQuery({ queryKey: P(providerId ?? "", "quotes", quoteId ?? ""), queryFn: () => providerService(client).quote(providerId ?? "", quoteId ?? ""), ...live, enabled: Boolean(providerId && quoteId) });
+}
 export function useMetrics(client: ApiClient, providerId: string | undefined, from: string, to: string, groupBy?: string) {
   return useQuery({ queryKey: P(providerId ?? "", "metrics", from, to, groupBy ?? ""), queryFn: () => providerService(client).metrics(providerId ?? "", from, to, groupBy), ...live, enabled: Boolean(providerId) });
 }
@@ -113,8 +149,13 @@ export function useSetAvailability(client: ApiClient, providerId: string) {
   const queryClient = useQueryClient();
   return useMutation({ mutationFn: (input: Pick<Availability, "capacityPerDay" | "rules" | "blackouts">) => providerService(client).setAvailability(providerId, input as never), onSuccess: () => queryClient.invalidateQueries({ queryKey: P(providerId) }) });
 }
+/** The owner's bookings in keyset pages of 50: `hasNextPage` follows the server's `nextCursor` (L4: the catalog no longer cuts at 200 in silence). */
 export function useProviderBookings(client: ApiClient, providerId: string | undefined, status?: BookingStatus) {
-  return useQuery({ queryKey: P(providerId ?? "", "bookings", status ?? "all"), queryFn: () => providerService(client).bookings(providerId ?? "", status), ...live, enabled: Boolean(providerId) });
+  return useInfiniteQuery({
+    queryKey: P(providerId ?? "", "bookings", status ?? "all"), initialPageParam: undefined as string | undefined, ...live, enabled: Boolean(providerId),
+    queryFn: ({ pageParam }) => providerService(client).bookings(providerId ?? "", status, pageParam),
+    getNextPageParam: (last) => last.nextCursor ?? undefined
+  });
 }
 export function useDecideBooking(client: ApiClient, providerId: string) {
   const queryClient = useQueryClient();

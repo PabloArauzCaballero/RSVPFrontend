@@ -1,0 +1,83 @@
+import { Component, type PropsWithChildren, type ReactNode } from "react";
+import { act, screen } from "@testing-library/react";
+import { Text } from "react-native";
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { join, relative } from "node:path";
+import { describe, expect, it, vi } from "vitest";
+import { lazyScreen } from "../src/platform/lazy-screen";
+import { fakeClient, renderApp } from "./support";
+
+/** M13 · the host workspace, the administration and the provider portal are separate web chunks. */
+
+function routeFiles(dir: string): string[] {
+  return readdirSync(dir).flatMap((entry) => {
+    const path = join(dir, entry);
+    return statSync(path).isDirectory() ? routeFiles(path) : /\.tsx$/.test(entry) && !entry.startsWith("_layout") ? [path] : [];
+  });
+}
+const app = join(process.cwd(), "app");
+const src = join(process.cwd(), "src");
+const ZONES = [{ group: "(host)", zone: "host" }, { group: "(admin)", zone: "admin" }, { group: "(provider)", zone: "provider" }] as const;
+/** Routes that render no screen of their zone (a redirect), so there is nothing to load lazily. */
+const NO_SCREEN = new Set(["(admin)/panel.tsx"]);
+
+describe("M13 · route files of the lazy zones", () => {
+  it.each(ZONES)("every $group route takes its screen through lazyScreen(load…), never with a static import of the zone", ({ group, zone }) => {
+    const problems: string[] = [];
+    for (const file of routeFiles(join(app, group))) {
+      const name = relative(app, file);
+      if (NO_SCREEN.has(name)) continue;
+      const code = readFileSync(file, "utf8");
+      if (!/lazyScreen\(load\w+Screens, \(zone\) => zone\.\w+\)/.test(code)) problems.push(`${name}: no lazyScreen`);
+      // A static import of a screen module of the zone would pull it back into the entry chunk (routes.ts holds constants only).
+      for (const match of code.matchAll(/from '((?:\.\.\/)+src\/[^']+)'/g)) {
+        const target = match[1]!.replace(/^(\.\.\/)+src\//, "");
+        if (/^(host|admin|provider)\//.test(target) && !/\/(load|routes)$/.test(target)) problems.push(`${name}: static import of ${target}`);
+      }
+    }
+    expect(problems, `${zone}`).toEqual([]);
+  });
+
+  it("nothing outside a zone imports its screens barrel statically (it is the chunk root)", () => {
+    const offenders: string[] = [];
+    const walk = (dir: string): string[] => readdirSync(dir).flatMap((entry) => { const path = join(dir, entry); return statSync(path).isDirectory() ? walk(path) : /\.tsx?$/.test(entry) ? [path] : []; });
+    for (const file of [...walk(src), ...walk(app)]) {
+      const code = readFileSync(file, "utf8");
+      if (/from ["'][^"']*\/(host|admin|provider)\/screens["']/.test(code) || /from ["']\.\/screens["']/.test(code)) offenders.push(relative(process.cwd(), file));
+    }
+    expect(offenders).toEqual([]);
+  });
+});
+
+class Boundary extends Component<PropsWithChildren<{ readonly onRetry?: () => void }>, { error?: Error }> {
+  override state: { error?: Error } = {};
+  static getDerivedStateFromError(error: Error) { return { error }; }
+  override render() { return this.state.error ? <Text testID="failed" onPress={() => this.setState({ error: undefined })}>{this.state.error.message}</Text> : this.props.children; }
+}
+
+describe("M13 · lazyScreen", () => {
+  it("shows the loading skeleton while the zone arrives, then the screen with its props", async () => {
+    let resolve!: (zone: { Screen: (props: { readonly name: string }) => ReactNode }) => void;
+    const load = vi.fn(() => new Promise<{ Screen: (props: { readonly name: string }) => ReactNode }>((done) => { resolve = done; }));
+    const Lazy = lazyScreen(load, (zone) => zone.Screen);
+    renderApp(<Lazy name="Ana" />, fakeClient({}).client);
+    expect(screen.getByTestId("screen-loading")).toBeTruthy();
+    expect(screen.getByRole("status").textContent).toBe("Cargando…");
+    await act(async () => { resolve({ Screen: ({ name }) => <Text>hola {name}</Text> }); });
+    expect(await screen.findByText("hola Ana")).toBeTruthy();
+    expect(load).toHaveBeenCalledTimes(1);
+  });
+
+  it("a failed download reaches the error boundary, and the retry asks for the chunk again instead of replaying the failure", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const load = vi.fn<() => Promise<{ Screen: () => ReactNode }>>()
+      .mockRejectedValueOnce(new Error("chunk failed"))
+      .mockResolvedValueOnce({ Screen: () => <Text>pantalla cargada</Text> });
+    const Lazy = lazyScreen(load, (zone) => zone.Screen);
+    renderApp(<Boundary><Lazy /></Boundary>, fakeClient({}).client);
+    expect((await screen.findByTestId("failed")).textContent).toBe("chunk failed");
+    await act(async () => { screen.getByTestId("failed").click(); });
+    expect(await screen.findByText("pantalla cargada")).toBeTruthy();
+    expect(load).toHaveBeenCalledTimes(2);
+  });
+});

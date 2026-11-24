@@ -11,17 +11,26 @@ ARG EXPO_PUBLIC_API_URL
 ARG EXPO_PUBLIC_SITE_URL
 # Origin of the guests' personal RSVP links.
 ARG EXPO_PUBLIC_RSVP_ORIGIN
+# M9 · Empty or relative values would bake relative links into the app: stop the build instead.
+RUN sh deploy/check-build-args.sh EXPO_PUBLIC_API_URL EXPO_PUBLIC_SITE_URL EXPO_PUBLIC_RSVP_ORIGIN
 # The public gateway URL configures nginx below. The browser always calls this app's own /api.
 ENV EXPO_PUBLIC_API_URL=/api EXPO_PUBLIC_SITE_URL=$EXPO_PUBLIC_SITE_URL EXPO_PUBLIC_RSVP_ORIGIN=$EXPO_PUBLIC_RSVP_ORIGIN
 RUN yarn workspace @rsvp/universal build
 
-FROM nginx:1.27-alpine
+# M14 · Pinned by digest (nginx 1.27.5-alpine): rebuilds are reproducible.
+FROM nginx:1.27.5-alpine@sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10
 ARG EXPO_PUBLIC_API_URL
 RUN apk add --no-cache ca-certificates
 COPY deploy/nginx-spa.conf /tmp/nginx-spa.conf.template
-# Keep the upstream paired with the exported app; replace only this variable, never nginx's $uri/$proxy_host.
+COPY deploy/nginx-api-proxy.conf /tmp/nginx-api-proxy.conf.template
+COPY deploy/render-nginx-spa.sh /tmp/render-nginx-spa.sh
+COPY deploy/nginx-security-headers.conf /etc/nginx/snippets/security-headers.conf
+# Keep the upstream paired with the exported app. L19 · The script substitutes only the upstream's origin and base path,
+# never nginx's own variables; nginx resolves the host per request (see nginx-spa.conf). L20 · The /api/ proxy is a snippet
+# shared by its two locations, rendered with the same upstream.
 RUN test -n "$EXPO_PUBLIC_API_URL" \
- && export RSVP_API_UPSTREAM="${EXPO_PUBLIC_API_URL%/}" \
- && envsubst '${RSVP_API_UPSTREAM}' < /tmp/nginx-spa.conf.template > /etc/nginx/conf.d/default.conf
+ && sh /tmp/render-nginx-spa.sh "$EXPO_PUBLIC_API_URL" /tmp/nginx-spa.conf.template > /etc/nginx/conf.d/default.conf \
+ && sh /tmp/render-nginx-spa.sh "$EXPO_PUBLIC_API_URL" /tmp/nginx-api-proxy.conf.template > /etc/nginx/snippets/api-proxy.conf \
+ && rm /tmp/nginx-spa.conf.template /tmp/nginx-api-proxy.conf.template /tmp/render-nginx-spa.sh
 COPY --from=build /workspace/apps/universal/web-build /usr/share/nginx/html
 EXPOSE 80

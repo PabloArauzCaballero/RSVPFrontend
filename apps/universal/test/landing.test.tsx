@@ -29,6 +29,24 @@ describe("Portada en la web · `/` sin sesión muestra la misma portada que el s
     expect(screen.getByTestId("landing-scene").getAttribute("aria-label")).toBe(es("landing.scene.label"));
   });
 
+  it("draws one decorative scene per side of the party, the same three as the site", () => {
+    show();
+    const art = [...screen.getByTestId("landing-roles").querySelectorAll("svg[data-illustration]")];
+    expect(art.map((svg) => svg.getAttribute("data-illustration"))).toEqual(["welcomeHost", "welcomeGuest", "welcomeProvider"]);
+    for (const svg of art) expect(svg.getAttribute("aria-hidden")).toBe("true");
+  });
+
+  it("draws the promise, one scene per tap and the closing envelope, the same drawings as the site", () => {
+    show();
+    const names = (root: HTMLElement) => [...root.querySelectorAll("svg[data-illustration]")].map((svg) => svg.getAttribute("data-illustration"));
+    expect(names(screen.getByTestId("landing-hero-art"))).toEqual(["landingSend"]);
+    expect(names(screen.getByTestId("landing-steps"))).toEqual(["landingCreate", "landingShare", "landingReplies"]);
+    expect(names(screen.getByTestId("landing-closing-art"))).toEqual(["invitation"]);
+    for (const id of ["landing-hero-art", "landing-steps", "landing-closing-art"]) {
+      for (const svg of screen.getByTestId(id).querySelectorAll("svg[data-illustration]")) expect(svg.getAttribute("aria-hidden")).toBe("true");
+    }
+  });
+
   it("shows the same sample content as the site (shared @rsvp/i18n landing content)", () => {
     show();
     expect(screen.getByTestId("landing-styles").querySelectorAll("[data-testid^='landing-style-']")).toHaveLength(LANDING_STYLES.length);

@@ -1,8 +1,8 @@
 import { Platform } from 'react-native';
 
 /**
- * Single source of the font stacks (minimalist system). Web names the loaded faces with safe fallbacks (loaded in
- * `apps/universal/app/+html.tsx`); native uses the platform face until the fonts are bundled with expo-font:
+ * Single source of the font stacks (minimalist system). Web names the loaded faces with safe fallbacks (loaded by
+ * `apps/universal/public/index.html`, generated from `src/platform/web-shell.ts`); native uses the platform face until the fonts are bundled with expo-font:
  * `undefined` keeps the system sans, mono falls back to the platform's own.
  * Usage: `fontFamily: fonts.display` for titles, `fonts.sans` for UI/body, `fonts.mono` for codes and metadata.
  */

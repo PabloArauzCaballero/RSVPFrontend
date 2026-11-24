@@ -1,6 +1,9 @@
-import { ContentEditorScreen } from '../../../src/host/content-editor';
+import { loadHostScreens } from '../../../src/host/load';
+import { lazyScreen } from '../../../src/platform/lazy-screen';
 import { EDITOR_SECTIONS, type EditorSection } from '../../../src/host/routes';
 import { useHostRoute } from '../../../src/platform/route';
+
+const ContentEditorScreen = lazyScreen(loadHostScreens, (zone) => zone.ContentEditorScreen);
 
 /** C7–C11 · Editor de contenido por sección. */
 export default function ContentEditorRoute() {
