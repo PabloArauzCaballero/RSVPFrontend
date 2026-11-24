@@ -1,6 +1,8 @@
 import type { CSSProperties, ReactNode } from "react";
 import { daysUntil, giftsPath, hasSectionContent, readContent, SECTION_PATHS, sectionTitleKey, type GalleryImage, type GiftsStatus, type PublicCelebrationView } from "./content.js";
+import { drawingById, InvitationArt, ornamentSetById, OrnamentSeparator } from "./art/index.js";
 import { formatDate } from "./format.js";
+import { SECTION_ART } from "./hero-art.js";
 import { SECTIONS } from "./sections/index.js";
 import { layoutOf, themeVariables, type ColorScheme } from "./theme.js";
 import type { CelebrationTheme, SectionId, Translate } from "./types.js";
@@ -48,23 +50,31 @@ function Hero({ props, cover }: { readonly props: CelebrationRendererProps; read
   const layout = layoutOf(theme);
   const days = daysUntil(content.eventDate, props.now ?? new Date());
   const countdownKey = days ? "celebration.hero.countdown" : "celebration.hero.today";
-  const image = cover?.variants.full && layout.hero !== "compact" ? cover.variants.full : null;
+  const image = cover?.variants.full ?? null;
+  const heroDrawing = theme.heroArt ? drawingById(theme.heroArt) : undefined;
+  const ornamentSet = theme.ornamentSet ? ornamentSetById(theme.ornamentSet) : undefined;
   // A title made of the hosts' names ("Ana y Luis") already says who: repeating them underneath is noise.
   const hostsInTitle = content.hosts.length > 0 && content.hosts.every((host) => content.title.includes(host.name));
   return (
     <header className="celebration-hero" data-hero={layout.hero} data-has-image={image ? "true" : "false"}>
       {image ? <img className="celebration-hero-image" src={image} alt="" fetchPriority="high" /> : null}
       <div className="celebration-hero-copy">
-        <p className="celebration-eyebrow">{view.eventType.name}</p>
+        {heroDrawing ? <InvitationArt drawing={heroDrawing} className="celebration-hero-art" animate /> : null}
         <h1>{content.title}</h1>
         {content.hosts.length && !hostsInTitle ? <p className="celebration-hosts">{content.hosts.map((host, index) => <span key={host.role}>{index ? <span className="celebration-amp"> &amp; </span> : null}{host.name}</span>)}</p> : null}
-        {layout.divider === "ornament" ? <Ornament /> : <span className="celebration-rule" aria-hidden="true" />}
+        {layout.divider === "ornament" && ornamentSet ? <OrnamentSeparator set={ornamentSet} className="celebration-ornament" /> : layout.divider === "ornament" ? <Ornament /> : <span className="celebration-rule" aria-hidden="true" />}
         {content.eventDate ? <p className="celebration-date"><time dateTime={content.eventDate}>{formatDate(content.eventDate, view.timeZone, view.locale)}</time></p> : null}
         {content.venueName ? <p className="celebration-venue">{content.venueName}</p> : null}
         {days !== null ? <p className="celebration-countdown">{t(countdownKey, { count: days })}</p> : null}
       </div>
     </header>
   );
+}
+
+/** The small drawing that heads a section: decorative, on the page ground, never the only carrier of meaning. */
+function SectionDrawing({ id }: { readonly id: string | undefined }): ReactNode {
+  const drawing = id ? drawingById(id) : undefined;
+  return drawing ? <InvitationArt drawing={drawing} className="celebration-section-art" animate /> : null;
 }
 
 function SectionNav({ props, sections }: { readonly props: CelebrationRendererProps; readonly sections: readonly SectionId[] }): ReactNode {
@@ -108,6 +118,7 @@ export function CelebrationRenderer(props: CelebrationRendererProps): ReactNode 
           return (
             <section key={section} id={section} data-section={section} aria-labelledby={headingId}>
               {/* On a section's own page the h1 already names it; the h2 stays for the outline only. */}
+              {layout.sectionArt && !props.only && SECTION_ART[section] ? <SectionDrawing id={SECTION_ART[section]} /> : null}
               <h2 id={headingId} className={props.only ? "celebration-visually-hidden" : undefined}>{t(sectionTitleKey(section))}</h2>
               <Body content={content} gallery={gallery} timeZone={view.timeZone} locale={view.locale} t={t} rsvpHref={props.rsvpHref} rsvpHelpHref={props.rsvpHelpHref} rsvpAdaptive={props.rsvpAdaptive}
                 giftsHref={giftsPath(view.slug)} giftsStatus={props.giftsStatus} />

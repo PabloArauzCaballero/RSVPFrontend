@@ -1,3 +1,5 @@
+import { artPalette, artVariables } from "./art/palette.js";
+import { resolveArt } from "./hero-art.js";
 import { LAYOUTS } from "./layouts/index.js";
 import { LAYOUT_IDS, SECTION_IDS, SECTION_STYLES, type CelebrationTheme, type LayoutId, type LayoutSpec, type Palette, type SectionId, type SectionStyle, type TemplateDocument } from "./types.js";
 
@@ -28,6 +30,7 @@ export function themeFromTemplate(template: TemplateDocument | null | undefined,
   const source = template ?? FALLBACK_TEMPLATE;
   const enabled = enabledSections.filter(isSection);
   const order = source.sectionOrder.filter(isSection);
+  const art = resolveArt(source.id, source.eventTypeTags);
   return {
     id: source.id,
     name: source.name,
@@ -36,7 +39,9 @@ export function themeFromTemplate(template: TemplateDocument | null | undefined,
     typography: { ...FALLBACK_TEMPLATE.theme.typography, ...source.theme.typography },
     sectionStyle: isStyle(source.theme.sectionStyle) ? source.theme.sectionStyle : FALLBACK_TEMPLATE.theme.sectionStyle,
     sections: withGifts(order.filter((section) => enabled.includes(section))),
-    hiddenSections: enabled.filter((section) => !order.includes(section) && section !== GIFTS)
+    hiddenSections: enabled.filter((section) => !order.includes(section) && section !== GIFTS),
+    heroArt: art.hero?.id,
+    ornamentSet: art.ornament?.id
   };
 }
 
@@ -203,6 +208,7 @@ export function themeVariables(theme: CelebrationTheme, scheme: ColorScheme = "l
     "--celebration-accent": palette.accent,
     "--celebration-accent-fill": fill.fill,
     "--celebration-on-accent": fill.ink,
+    ...artVariables(artPalette(palette)),
     "--celebration-muted": palette.muted,
     "--celebration-heading-font": theme.typography.heading,
     "--celebration-body-font": theme.typography.body,

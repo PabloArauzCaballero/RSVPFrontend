@@ -18,17 +18,16 @@
 .celebration a { color: var(--celebration-accent); text-underline-offset: .2em; }
 .celebration a:focus-visible, .celebration summary:focus-visible { outline: 3px solid var(--celebration-accent); outline-offset: 3px; }
 
-.celebration-eyebrow { margin: 0 0 .5rem; color: var(--celebration-accent); font-size: .85rem; letter-spacing: .14em; text-transform: uppercase; font-weight: 600; }
+.celebration-eyebrow { margin: 0 0 .5rem; color: var(--celebration-accent); font-size: .875rem; letter-spacing: .01em; font-weight: 600; }
 .celebration-note { color: var(--celebration-muted); font-size: .9rem; }
 .celebration-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* Cover. Each layout composes it its own way; without a photo the cover is still designed (frame, band or bar), never bare text. */
-.celebration-hero { position: relative; display: grid; gap: 1rem; padding: clamp(3rem, 11vw, 7rem) var(--celebration-space) clamp(2.5rem, 7vw, 4.5rem); background: radial-gradient(60rem 26rem at 50% 0%, color-mix(in srgb, var(--celebration-accent) 13%, transparent), transparent 70%); overflow: hidden; }
+.celebration-hero { position: relative; display: grid; gap: 1rem; padding: clamp(3rem, 11vw, 7rem) var(--celebration-space) clamp(2.5rem, 7vw, 4.5rem); overflow: hidden; }
 .celebration-hero-copy { position: relative; display: grid; gap: .6rem; width: min(100%, var(--celebration-max-width)); margin: 0 auto; }
 .celebration[data-align="center"] .celebration-hero-copy { text-align: center; justify-items: center; }
 .celebration-hero p { margin: 0; }
 .celebration-hero h1 { font-size: calc(clamp(2.5rem, 8.5vw, 5rem) * var(--celebration-heading-scale)); line-height: 1.02; letter-spacing: -.015em; overflow-wrap: anywhere; text-wrap: balance; }
-.celebration-hero .celebration-eyebrow { margin-bottom: .75rem; font-size: .8125rem; letter-spacing: .26em; }
 .celebration-hosts { font-family: var(--celebration-heading-font); font-size: clamp(1.2rem, 3.2vw, 1.6rem); }
 .celebration-amp { font-style: italic; color: var(--celebration-accent); }
 .celebration-ornament { display: block; width: clamp(6rem, 22vw, 9rem); height: auto; margin: .75rem 0; color: var(--celebration-accent); }
@@ -36,31 +35,31 @@
 .celebration-date { font-family: var(--celebration-heading-font); font-size: clamp(1.15rem, 3.2vw, 1.6rem); letter-spacing: .03em; }
 .celebration-date time::first-letter { text-transform: uppercase; }
 .celebration-venue { color: var(--celebration-muted); font-size: 1.05rem; }
-.celebration-countdown { margin-top: .75rem !important; width: fit-content; padding: .3rem 1rem; border: 1px solid color-mix(in srgb, currentColor 35%, transparent); border-radius: 9999px; font-size: .8125rem; letter-spacing: .12em; text-transform: uppercase; color: var(--celebration-muted); }
+.celebration-countdown { margin-top: .5rem !important; font-size: .9375rem; color: var(--celebration-muted); font-variant-numeric: tabular-nums; }
+.celebration-hero-art { display: block; width: clamp(5.5rem, 26vw, 9.5rem); height: auto; margin-bottom: .25rem; }
+.celebration-hero[data-has-image="true"] .celebration-hero-art { width: clamp(4rem, 16vw, 6rem); }
+.celebration-section-art { display: block; width: 3.5rem; height: auto; margin-bottom: .5rem; }
+.celebration[data-align="center"] .celebration-section-art { margin-inline: auto; }
 .celebration-hero-image { width: 100%; height: 100%; object-fit: cover; }
 
 /* centered (classic): a card with a double hairline, like a printed invitation. */
 .celebration-hero[data-hero="centered"] .celebration-hero-copy { padding: clamp(2.25rem, 7vw, 4.5rem) clamp(1.25rem, 5vw, 3.5rem); background: color-mix(in srgb, var(--celebration-surface) 82%, transparent); border: 1px solid color-mix(in srgb, var(--celebration-accent) 55%, transparent); outline: 1px solid color-mix(in srgb, var(--celebration-accent) 28%, transparent); outline-offset: 7px; }
-.celebration-hero[data-hero="centered"] .celebration-hero-image { max-height: 26rem; width: min(100%, var(--celebration-max-width)); margin: 0 auto 1.5rem; }
+.celebration-hero[data-hero="centered"] .celebration-hero-image { height: min(34vh, 17rem); width: min(72vw, 14rem); margin: 0 auto 1.5rem; border-radius: 999px 999px 0 0; border: 1px solid color-mix(in srgb, var(--celebration-accent) 55%, transparent); outline: 1px solid color-mix(in srgb, var(--celebration-accent) 28%, transparent); outline-offset: 6px; }
 
-/* overlay (editorial): the title over the photo; without one, over a band of the accent colour. */
-.celebration-hero[data-hero="overlay"] { min-height: min(78vh, 46rem); align-content: end; color: #fff; background: linear-gradient(160deg, var(--celebration-accent-fill), color-mix(in srgb, var(--celebration-accent-fill) 72%, #000)); }
+/* overlay (editorial): a magazine cover. Without a photo it is paper and ink with a heavy accent rule; with one, the title sits over the darkened photo. */
+.celebration-hero[data-hero="overlay"] { min-height: min(70vh, 40rem); align-content: end; border-bottom: 4px solid var(--celebration-accent); }
+.celebration-hero[data-hero="overlay"] .celebration-hero-copy { margin-inline: auto; }
+.celebration-hero[data-hero="overlay"] h1 { line-height: .95; letter-spacing: -.02em; font-size: calc(clamp(2.75rem, 10vw, 6.5rem) * var(--celebration-heading-scale)); }
+.celebration-hero[data-hero="overlay"][data-has-image="true"] { color: #fff; border-bottom-color: transparent; }
 .celebration-hero[data-hero="overlay"] .celebration-hero-image { position: absolute; inset: 0; filter: brightness(.5); }
-.celebration-hero[data-hero="overlay"] :is(.celebration-venue, .celebration-countdown, .celebration-eyebrow, .celebration-amp) { color: #fff; }
-.celebration-hero[data-hero="overlay"] .celebration-rule { width: 100%; height: 1px; background: rgb(255 255 255 / .55); }
-.celebration-hero[data-hero="overlay"] h1 { line-height: .95; letter-spacing: -.02em; }
+.celebration-hero[data-hero="overlay"][data-has-image="true"] :is(.celebration-venue, .celebration-countdown, .celebration-amp, .celebration-hosts, .celebration-date) { color: #fff; }
+.celebration-hero[data-hero="overlay"][data-has-image="true"] .celebration-rule { background: rgb(255 255 255 / .75); }
+.celebration-hero[data-hero="overlay"][data-has-image="true"] .celebration-hero-art { display: none; }
 
-/* banner (festive): a rounded block of the accent colour with confetti. */
-.celebration-hero[data-hero="banner"] { color: var(--celebration-on-accent); border-radius: 0 0 calc(var(--celebration-radius) * 1.6) calc(var(--celebration-radius) * 1.6); background:
-  radial-gradient(circle at 12% 22%, color-mix(in srgb, var(--celebration-surface) 55%, transparent) 0 .3rem, transparent .32rem),
-  radial-gradient(circle at 86% 18%, color-mix(in srgb, var(--celebration-surface) 40%, transparent) 0 .45rem, transparent .47rem),
-  radial-gradient(circle at 72% 78%, color-mix(in srgb, var(--celebration-surface) 30%, transparent) 0 .25rem, transparent .27rem),
-  radial-gradient(circle at 22% 84%, color-mix(in srgb, var(--celebration-surface) 38%, transparent) 0 .5rem, transparent .52rem),
-  radial-gradient(circle at 48% 8%, color-mix(in srgb, var(--celebration-surface) 30%, transparent) 0 .2rem, transparent .22rem),
-  var(--celebration-accent-fill); }
+/* banner (festive): paper and a big, friendly title; the accent only in small pieces (the drawing, the rule, the "&"). No saturated block, no confetti (PL-A3, PL-M6). */
+.celebration-hero[data-hero="banner"] { padding-top: clamp(2.5rem, 8vw, 5rem); }
+.celebration-hero[data-hero="banner"] h1 { font-weight: 700; }
 .celebration-hero[data-hero="banner"] .celebration-hero-image { max-height: 22rem; border-radius: var(--celebration-radius); order: 2; width: min(100%, var(--celebration-max-width)); margin: 0 auto; }
-.celebration-hero[data-hero="banner"] :is(.celebration-eyebrow, .celebration-venue, .celebration-countdown, .celebration-amp) { color: var(--celebration-on-accent); }
-.celebration-hero[data-hero="banner"] .celebration-rule { background: var(--celebration-on-accent); }
 
 /* split (corporate): the copy behind a bar of the accent colour, the photo beside it. */
 .celebration-hero[data-hero="split"] .celebration-hero-copy { padding-left: clamp(1rem, 4vw, 2rem); border-left: 6px solid var(--celebration-accent); }
@@ -69,6 +68,8 @@
 /* compact (minimal): quiet, left-aligned, all air. */
 .celebration-hero[data-hero="compact"] { padding-block: clamp(3rem, 9vw, 5.5rem) clamp(1.5rem, 4vw, 2.5rem); background: none; }
 .celebration-hero[data-hero="compact"] h1 { font-weight: 400; }
+.celebration-hero[data-hero="compact"] .celebration-hero-image { height: auto; max-height: 18rem; width: min(100%, var(--celebration-max-width)); margin: 0 auto; border-radius: var(--celebration-radius); }
+.celebration-hero[data-hero="compact"] .celebration-hero-art { width: clamp(4rem, 14vw, 5.5rem); }
 @media (min-width: 48rem) {
   .celebration-hero[data-hero="split"][data-has-image="true"] { grid-template-columns: 1fr 1fr; align-items: center; }
   .celebration-hero[data-hero="split"] .celebration-hero-copy { order: -1; }
@@ -137,6 +138,7 @@
 /* Story and dress code read as a letter: a narrow measure and a larger opening paragraph. */
 .celebration-sections > section[data-section="story"] p, .celebration-sections > section[data-section="dressCode"] p { max-width: 40rem; }
 .celebration[data-align="center"] .celebration-sections > section :is(p, details) { margin-inline: auto; }
+.celebration[data-align="center"] .celebration-sections > section:is([data-section="story"], [data-section="dressCode"]) p { text-align: start; }
 .celebration-sections > section[data-section="story"] p:first-of-type { font-size: 1.15em; }
 /* The reply is what the page is for: it gets its own tinted block. */
 .celebration-sections > section[data-section="rsvp"] { padding: clamp(1.75rem, 6vw, 3.5rem) clamp(1.25rem, 5vw, 3rem); border-radius: max(var(--celebration-radius), 2px); background: color-mix(in srgb, var(--celebration-accent) 9%, var(--celebration-surface)); border: 1px solid color-mix(in srgb, var(--celebration-accent) 30%, transparent); }

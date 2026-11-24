@@ -265,8 +265,9 @@ describe("styles.css and native styles keep the contract the theme assumes", () 
     expect(sizes.filter((size) => size < FLOOR_PX)).toEqual([]);
   });
 
-  it("the washes the theme validates against are the ones the stylesheet paints", () => {
-    expect(css).toContain(`color-mix(in srgb, var(--celebration-accent) ${COVER_WASH * 100}%, transparent)`);
+  it("F4 (PL-A3, PL-M6, PL-M8) · the stylesheet paints no gradient and no saturated cover block; the reply tint is the one the theme validates against", () => {
+    expect(css).not.toMatch(/linear-gradient|radial-gradient/);
+    expect(css).not.toContain(`color-mix(in srgb, var(--celebration-accent) ${COVER_WASH * 100}%, transparent)`);
     expect(css).toMatch(new RegExp(String.raw`data-section="rsvp"\][^}]*color-mix\(in srgb, var\(--celebration-accent\) ${RSVP_WASH * 100}%, var\(--celebration-surface\)\)`));
   });
 

@@ -51,6 +51,9 @@ export interface CelebrationTheme {
   readonly sections: readonly SectionId[];
   /** Enabled by the event type but not placed by this template: hidden, never deleted. */
   readonly hiddenSections: readonly SectionId[];
+  /** F4: ids of the cover drawing and of the ornament set of the template (see hero-art.ts); absent means a quiet cover. */
+  readonly heroArt?: string;
+  readonly ornamentSet?: string;
 }
 
 /** How a layout arranges the page. Layouts are data too. */
@@ -65,6 +68,8 @@ export interface LayoutSpec {
   readonly maxWidth: number;
   readonly divider: "none" | "line" | "ornament";
   readonly imageTreatment: "natural" | "rounded" | "framed";
+  /** F4: a small drawing heads each section (classic, festive, corporate); minimal and editorial stay typographic. */
+  readonly sectionArt: boolean;
 }
 
 export type Translate = (key: string, values?: Readonly<Record<string, string | number>>) => string;
