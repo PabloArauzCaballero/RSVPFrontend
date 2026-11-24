@@ -136,7 +136,7 @@ function RequestForm({ onNavigate, again, onSent }: { readonly onNavigate: (href
     });
   };
 
-  if ((categories.isPending && !categories.data) || (geo.isPending && !geo.data)) return <Loading />;
+  if ((categories.isPending && !categories.data) || (geo.isPending && !geo.data)) return <Loading kind="form" />;
   if (!categories.data || !geo.data) {
     return (
       <Notice kind="error">
