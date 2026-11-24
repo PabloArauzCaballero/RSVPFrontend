@@ -286,6 +286,627 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * @description A palette role; the renderer takes its value from the palette of the guest's colour scheme.
+         * @enum {string}
+         */
+        ColourRole: "canvas" | "surface" | "text" | "muted" | "accent" | "accentFill" | "onAccent" | "line";
+        /**
+         * @description Cover composition. The five values are the v1 layouts; F4 adds new ones.
+         * @enum {string}
+         */
+        CoverVariant: "classic" | "minimal" | "editorial" | "festive" | "corporate";
+        DesignAnimation: {
+            delayMs?: number;
+            durationMs?: number;
+            /**
+             * @description Played once on entering the viewport; prefers-reduced-motion shows the final state (P18).
+             * @enum {string}
+             */
+            entrance: "none" | "fade" | "rise" | "scale" | "draw" | "envelope";
+        };
+        DesignBackground: components["schemas"]["DesignColourBackground"] | components["schemas"]["DesignMediaBackground"] | components["schemas"]["DesignIllustrationBackground"];
+        /** @description Typed component registry (plan §5). */
+        DesignBlock: components["schemas"]["DesignBlockCover"] | components["schemas"]["DesignBlockGiftsCta"] | components["schemas"]["DesignBlockRsvpCta"] | components["schemas"]["DesignBlockHeading"] | components["schemas"]["DesignBlockText"] | components["schemas"]["DesignBlockStory"] | components["schemas"]["DesignBlockImage"] | components["schemas"]["DesignBlockImageText"] | components["schemas"]["DesignBlockGallery"] | components["schemas"]["DesignBlockSchedule"] | components["schemas"]["DesignBlockVenues"] | components["schemas"]["DesignBlockCountdown"] | components["schemas"]["DesignBlockDressCode"] | components["schemas"]["DesignBlockFaq"] | components["schemas"]["DesignBlockRecommendations"] | components["schemas"]["DesignBlockIllustration"] | components["schemas"]["DesignBlockMonogram"] | components["schemas"]["DesignBlockOrnament"] | components["schemas"]["DesignBlockSpacer"] | components["schemas"]["DesignBlockButton"] | components["schemas"]["DesignBlockQuote"] | components["schemas"]["DesignBlockWeddingParty"] | components["schemas"]["DesignBlockVideo"] | components["schemas"]["DesignBlockMusic"] | components["schemas"]["DesignBlockMap"] | components["schemas"]["DesignBlockHtml"];
+        DesignBlockButton: {
+            config: {
+                label: string;
+                /** @enum {string} */
+                style: "solid" | "outline" | "link";
+            };
+            id: components["schemas"]["DesignId"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "button";
+        };
+        DesignBlockCountdown: {
+            config: {
+                /** @enum {string} */
+                precision: "days" | "daysHours";
+            };
+            id: components["schemas"]["DesignId"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "countdown";
+        };
+        DesignBlockCover: {
+            config: {
+                /** @description Envelope opens on the cover (P18) */
+                envelope?: boolean;
+                variant: components["schemas"]["CoverVariant"];
+            };
+            id: components["schemas"]["DesignId"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "cover";
+        };
+        DesignBlockDressCode: {
+            config: {
+                swatches?: components["schemas"]["HexColour"][];
+            };
+            id: components["schemas"]["DesignId"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "dressCode";
+        };
+        DesignBlockFaq: {
+            config: Record<string, never>;
+            id: components["schemas"]["DesignId"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "faq";
+        };
+        DesignBlockGallery: {
+            config: {
+                /** @enum {string} */
+                display: "grid" | "carousel" | "mosaic";
+            };
+            id: components["schemas"]["DesignId"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "gallery";
+        };
+        DesignBlockGiftsCta: {
+            config: {
+                /** @description Custom label; without it the label follows gifts.status */
+                label?: string;
+                /** @enum {string} */
+                style: "solid" | "outline" | "link";
+            };
+            id: components["schemas"]["DesignId"];
+            /**
+             * @description Mandatory block (P22): it can be moved and restyled, never removed or hidden.
+             * @constant
+             */
+            required: true;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "giftsCta";
+        };
+        DesignBlockHeading: {
+            config: {
+                level: number;
+                text: string;
+            };
+            id: components["schemas"]["DesignId"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "heading";
+        };
+        DesignBlockHtml: {
+            config: Record<string, never>;
+            id: components["schemas"]["DesignId"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "html";
+        };
+        DesignBlockIllustration: {
+            config: {
+                drawOnEnter?: boolean;
+                illustrationId: components["schemas"]["DesignId"];
+                /** @enum {string} */
+                tint?: "none" | "accent";
+            };
+            id: components["schemas"]["DesignId"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "illustration";
+        };
+        DesignBlockImage: {
+            config: {
+                alt: string;
+                /** @enum {string} */
+                fit?: "cover" | "contain";
+                /** Format: uuid */
+                mediaId: string;
+                scrim?: number;
+            };
+            id: components["schemas"]["DesignId"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "image";
+        };
+        DesignBlockImageText: {
+            config: {
+                alt: string;
+                /** @enum {string} */
+                imageSide: "start" | "end";
+                /** Format: uuid */
+                mediaId: string;
+                text: string;
+            };
+            id: components["schemas"]["DesignId"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "imageText";
+        };
+        DesignBlockMap: {
+            config: {
+                venueIndex: number;
+            };
+            id: components["schemas"]["DesignId"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "map";
+        };
+        DesignBlockMonogram: {
+            config: {
+                initials?: string;
+                /** Format: uuid */
+                mediaId?: string;
+            };
+            id: components["schemas"]["DesignId"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "monogram";
+        };
+        DesignBlockMusic: {
+            config: {
+                ref: string;
+                rightsAcknowledged?: boolean;
+                /** @enum {string} */
+                source: "spotify" | "youtube" | "media";
+            };
+            id: components["schemas"]["DesignId"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "music";
+        };
+        DesignBlockOrnament: {
+            config: {
+                /** @enum {string} */
+                ornament: "flourish" | "rule";
+            };
+            id: components["schemas"]["DesignId"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "ornament";
+        };
+        DesignBlockQuote: {
+            config: {
+                author?: string;
+                text: string;
+            };
+            id: components["schemas"]["DesignId"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "quote";
+        };
+        DesignBlockRecommendations: {
+            config: Record<string, never>;
+            id: components["schemas"]["DesignId"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "recommendations";
+        };
+        DesignBlockRsvpCta: {
+            config: {
+                label?: string;
+                /** @enum {string} */
+                style: "solid" | "outline" | "link";
+            };
+            id: components["schemas"]["DesignId"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "rsvpCta";
+        };
+        DesignBlockSchedule: {
+            config: {
+                /** @enum {string} */
+                display: "timeline" | "cards" | "list";
+            };
+            id: components["schemas"]["DesignId"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "schedule";
+        };
+        DesignBlockSpacer: {
+            config: Record<string, never>;
+            id: components["schemas"]["DesignId"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "spacer";
+        };
+        DesignBlockStory: {
+            config: Record<string, never>;
+            id: components["schemas"]["DesignId"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "story";
+        };
+        DesignBlockText: {
+            config: {
+                text: string;
+            };
+            id: components["schemas"]["DesignId"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "text";
+        };
+        DesignBlockVenues: {
+            config: {
+                /** @enum {string} */
+                display: "cards" | "list";
+                mapOnTap?: boolean;
+            };
+            id: components["schemas"]["DesignId"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "venues";
+        };
+        DesignBlockVideo: {
+            config: {
+                /** @enum {string} */
+                provider: "youtube" | "vimeo";
+                videoId: string;
+            };
+            id: components["schemas"]["DesignId"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "video";
+        };
+        DesignBlockWeddingParty: {
+            config: {
+                people: {
+                    name: string;
+                    role: string;
+                }[];
+            };
+            id: components["schemas"]["DesignId"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "weddingParty";
+        };
+        DesignBorder: {
+            colour: components["schemas"]["ColourRole"];
+            /** @enum {string} */
+            style: "solid" | "dashed" | "dotted";
+            width: number;
+        };
+        /** @description Padding or margin in px, on the 4 px grid. */
+        DesignBox: {
+            bottom: number;
+            left: number;
+            right: number;
+            top: number;
+        };
+        DesignCanvas: {
+            /** @description Grid columns: 4 on mobile and 12 on desktop by default */
+            columns: number;
+            elements: components["schemas"]["DesignElement"][];
+            /**
+             * @description flow: elements stack by y with automatic height (documents converted from v1). free: absolute placement on the grid (P5).
+             * @enum {string}
+             */
+            mode: "flow" | "free";
+            /** @description Height of one grid row in px */
+            rowHeight: number;
+        };
+        /** @description Two free canvases (P9). Without desktop, the desktop view is the mobile canvas scaled. */
+        DesignCanvases: {
+            desktop?: components["schemas"]["DesignCanvas"];
+            mobile: components["schemas"]["DesignCanvas"];
+        };
+        DesignColourBackground: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "colour";
+            role: components["schemas"]["ColourRole"];
+        };
+        DesignCoverPage: {
+            background?: components["schemas"]["DesignBackground"];
+            canvases: components["schemas"]["DesignCanvases"];
+            id: components["schemas"]["DesignId"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "cover";
+            style: components["schemas"]["SectionStyle"];
+        };
+        DesignCustomCode: {
+            /** @description CSS scoped to the invitation when rendered: no @import, url(), position: fixed, escapes or comments (P2). */
+            css: string;
+            /** @description Allowlisted HTML (no script, iframe, form, object, embed, style or on* attributes). Checked when saved and sanitised again when rendered (P2). */
+            html: string;
+        };
+        /** @description Invitation design document v2 (plan F1). Single source of truth of its shape; the BE validator and the FE types derive from it. */
+        DesignDocumentV2: {
+            /** @description Must contain the gifts block (P22); a document without it is 422 GIFTS_BLOCK_REQUIRED. */
+            blocks: components["schemas"]["DesignBlock"][];
+            custom: components["schemas"]["DesignCustomCode"];
+            origin?: components["schemas"]["DesignOrigin"];
+            /** @description One cover page first, then the section pages in order. */
+            pages: components["schemas"]["DesignPage"][];
+            /** @constant */
+            schemaVersion: 2;
+            tokens: components["schemas"]["DesignTokens"];
+        };
+        /** @description One placed block. Coordinates are grid units of its canvas. */
+        DesignElement: {
+            animation?: components["schemas"]["DesignAnimation"];
+            background?: components["schemas"]["DesignBackground"];
+            block: components["schemas"]["DesignId"];
+            border?: components["schemas"]["DesignBorder"];
+            /** @description Height in rows (minimum height in a flow canvas) */
+            h: number;
+            id: components["schemas"]["DesignId"];
+            link?: components["schemas"]["DesignLink"];
+            margin?: components["schemas"]["DesignBox"];
+            /** @description Default 1 */
+            opacity?: number;
+            padding?: components["schemas"]["DesignBox"];
+            radius?: number;
+            /** @description Degrees; default 0 */
+            rotation?: number;
+            typography?: components["schemas"]["DesignTypographyOverride"];
+            /** @description Visibility in this canvas. The gifts block can never be hidden (P22). */
+            visible: boolean;
+            /** @description Width in columns */
+            w: number;
+            /** @description Column, in grid units */
+            x: number;
+            /** @description Row, in grid units */
+            y: number;
+            /** @description Layer; default 0 */
+            z?: number;
+        };
+        /** @description Identifier unique within one design document (kebab-case). */
+        DesignId: string;
+        DesignIllustrationBackground: {
+            illustrationId: components["schemas"]["DesignId"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "illustration";
+        };
+        DesignIssue: {
+            message: string;
+            /** @description JSONPath-like location, $ is the document */
+            path: string;
+        };
+        DesignLink: {
+            /** @description External https link, opened with rel="noopener noreferrer". */
+            href: string;
+            /** @constant */
+            kind: "url";
+        } | {
+            /** @constant */
+            kind: "section";
+            section: components["schemas"]["SectionId"];
+        } | {
+            /** @constant */
+            kind: "gifts";
+        } | {
+            /** @constant */
+            kind: "rsvp";
+        } | {
+            /** @constant */
+            kind: "listing";
+            /**
+             * Format: uuid
+             * @description Provider listing; always rendered through /r/{listingId} so the lead is counted.
+             */
+            listingId: string;
+        };
+        DesignMediaBackground: {
+            /** @enum {string} */
+            fit: "cover" | "contain";
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "media";
+            /** Format: uuid */
+            mediaId: string;
+            /** @description Veil over the image so text stays readable */
+            scrim?: number;
+        };
+        /** @description Provenance of a document converted from v1: the exact v1 font stacks, layout and section order, so the conversion is reversible. Renderers ignore it. */
+        DesignOrigin: {
+            /** @enum {string} */
+            layout: "classic" | "minimal" | "editorial" | "festive" | "corporate";
+            /** @constant */
+            schemaVersion: 1;
+            sectionOrder: components["schemas"]["SectionId"][];
+            typography: {
+                body: string;
+                heading: string;
+            };
+        };
+        DesignPage: components["schemas"]["DesignCoverPage"] | components["schemas"]["DesignSectionPage"];
+        /** @description The eight colour roles. accentFill is the accent used as a fill (cover band, buttons) and onAccent the ink set on it. */
+        DesignPalette: {
+            accent: components["schemas"]["HexColour"];
+            accentFill: components["schemas"]["HexColour"];
+            canvas: components["schemas"]["HexColour"];
+            line: components["schemas"]["HexColour"];
+            muted: components["schemas"]["HexColour"];
+            onAccent: components["schemas"]["HexColour"];
+            surface: components["schemas"]["HexColour"];
+            text: components["schemas"]["HexColour"];
+        };
+        /** @description 422 of a v2 design. code is INVALID_THEME (not an object or neither v1 nor v2), DESIGN_SCHEMA_INVALID (issues lists the paths), GIFTS_BLOCK_REQUIRED, GIFTS_BLOCK_HIDDEN, DESIGN_REFERENCE_INVALID or FONT_WEIGHT_UNAVAILABLE. */
+        DesignProblem: components["schemas"]["Problem"] & {
+            field?: string;
+            issues?: components["schemas"]["DesignIssue"][];
+        };
+        DesignSectionPage: {
+            background?: components["schemas"]["DesignBackground"];
+            canvases: components["schemas"]["DesignCanvases"];
+            id: components["schemas"]["DesignId"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "section";
+            section: components["schemas"]["SectionId"];
+            style: components["schemas"]["SectionStyle"];
+        };
+        DesignTokens: {
+            /**
+             * @description Illustration set id. F3 adds the invitation library.
+             * @enum {string}
+             */
+            illustrationSet: "none";
+            /**
+             * @description Ornament set id. F3 adds the per-template ornaments.
+             * @enum {string}
+             */
+            ornament: "none" | "flourish" | "rule";
+            /** @description Light and dark palettes of the same template (P8). The renderer follows the guest's prefers-color-scheme. */
+            palettes: {
+                dark: components["schemas"]["DesignPalette"];
+                light: components["schemas"]["DesignPalette"];
+            };
+            /** @description Corner radii in px */
+            radii: {
+                lg: number;
+                md: number;
+                sm: number;
+            };
+            spacing: {
+                /** @description Maximum width of the content column in px */
+                contentMaxWidth: number;
+                /** @description Gap between sections in px */
+                section: number;
+                /**
+                 * @description Spacing grid in px; every padding and margin is a multiple of 4.
+                 * @enum {integer}
+                 */
+                unit: 4 | 8;
+            };
+            typography: {
+                body: components["schemas"]["FontRole"];
+                heading: components["schemas"]["FontRole"];
+                monogram?: components["schemas"]["FontRole"];
+                scale: {
+                    /** @description Body size in px */
+                    base: number;
+                    /** @description Modular ratio between heading steps */
+                    ratio: number;
+                };
+            };
+        };
+        DesignTypographyOverride: {
+            /** @enum {string} */
+            align?: "start" | "center" | "end" | "justify";
+            colour?: components["schemas"]["ColourRole"];
+            /** @description em */
+            letterSpacing?: number;
+            lineHeight?: number;
+            /** @enum {string} */
+            role?: "heading" | "body" | "monogram";
+            /** @description px; 13 is the floor for any text (plan F5) */
+            size?: number;
+            /** @enum {string} */
+            transform?: "none" | "uppercase" | "lowercase" | "capitalize";
+            weight?: components["schemas"]["FontWeight"];
+        };
+        /** @description A palette pair under WCAG AA. The design is still saved (P19); suggestion is the nearest tone of the foreground that passes. */
+        DesignWarning: {
+            background: components["schemas"]["ColourRole"];
+            /** @enum {string} */
+            code: "LOW_CONTRAST";
+            foreground: components["schemas"]["ColourRole"];
+            minimum: number;
+            ratio: number;
+            /** @enum {string} */
+            scheme: "light" | "dark";
+            suggestion: components["schemas"]["HexColour"];
+        };
+        /**
+         * @description A family of the curated catalogue (P11). The catalogue, with the exact weights of each family and the tested pairs, is x-rsvp-font-catalog. Inter, Roboto and Open Sans are excluded.
+         * @enum {string}
+         */
+        FontFamilyId: "cormorant-garamond" | "cormorant" | "playfair-display" | "fraunces" | "lora" | "newsreader" | "libre-baskerville" | "eb-garamond" | "bodoni-moda" | "dm-serif-display" | "marcellus" | "cinzel" | "gilda-display" | "spectral" | "crimson-pro" | "young-serif" | "source-sans-3" | "dm-sans" | "nunito" | "nunito-sans" | "work-sans" | "ibm-plex-sans" | "poppins" | "quicksand" | "fredoka" | "geist" | "figtree" | "manrope" | "karla" | "mulish" | "jost" | "josefin-sans" | "great-vibes" | "pinyon-script" | "parisienne" | "dancing-script" | "allura" | "italianno" | "alex-brush";
+        FontRole: {
+            family: components["schemas"]["FontFamilyId"];
+            /** @description Exact weights to load; each must exist for the family in the catalogue (else 422 FONT_WEIGHT_UNAVAILABLE). */
+            weights: components["schemas"]["FontWeight"][];
+        };
+        /**
+         * @description 800 is excluded on purpose (DESIGN.md).
+         * @enum {integer}
+         */
+        FontWeight: 300 | 400 | 500 | 600 | 700 | 900;
+        /** @description sRGB colour as #RRGGBB. */
+        HexColour: string;
         MediaAsset: {
             /** Format: uuid */
             celebrationId?: string;
@@ -322,6 +943,10 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** @enum {string} */
+        SectionId: "story" | "schedule" | "venues" | "gallery" | "dressCode" | "faq" | "recommendations" | "gifts" | "rsvp";
+        /** @enum {string} */
+        SectionStyle: "plain" | "cards" | "bands";
         Template: components["schemas"]["TemplateInput"] & {
             /** Format: uuid */
             id?: string;
@@ -329,6 +954,8 @@ export interface components {
             /** @enum {string} */
             status?: "DRAFT" | "PUBLISHED" | "ARCHIVED";
             version?: number;
+            /** @description Only on create and edit responses of a v2 theme: colour pairs under WCAG AA. They never block saving (P19). */
+            warnings?: components["schemas"]["DesignWarning"][];
         };
         TemplateInput: {
             description?: string;
@@ -337,8 +964,10 @@ export interface components {
             layout: "classic" | "minimal" | "editorial" | "festive" | "corporate";
             name: string;
             sectionOrder: string[];
-            theme: components["schemas"]["Theme"];
+            theme: components["schemas"]["TemplateTheme"];
         };
+        /** @description v1 theme, or design document v2 when schemaVersion is 2. Any other shape is 422 INVALID_THEME. */
+        TemplateTheme: components["schemas"]["Theme"] | components["schemas"]["DesignDocumentV2"];
         Theme: {
             palette: {
                 [key: string]: string;
@@ -635,13 +1264,13 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Invalid theme, layout, tags or sections */
+            /** @description Invalid theme or design (see DesignProblem) */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": components["schemas"]["Problem"];
+                    "application/problem+json": components["schemas"]["DesignProblem"];
                 };
             };
         };
@@ -715,6 +1344,15 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Invalid theme or design (see DesignProblem) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["DesignProblem"];
                 };
             };
             /** @description If-Match required */
