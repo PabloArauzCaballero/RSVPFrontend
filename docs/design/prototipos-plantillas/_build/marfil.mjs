@@ -1,6 +1,6 @@
-import { page, ico } from './shared.mjs';
+import { page, ico, ctaHtml, barHtml, rsvpBtn, giftBtn, giftCopy, rsvpCopy, photoErr } from './shared.mjs';
 import { drawing } from './drawings.mjs';
-import { photoMarfil } from './photos.mjs';
+import { photoMarfil, phTag, galleryTiles } from './photos.mjs';
 
 const SLUG = 'ana-y-mateo';
 // Ornamento: trazo fino de 1,25 px, extremos redondos. Separador (línea · dos anillos · línea).
@@ -9,9 +9,9 @@ const sepMasked = (() => { let n = 0; return () => { const id = `sm${++n}`; retu
 const frame = `<svg class="arch-frame orn" viewBox="0 0 100 133" preserveAspectRatio="none" role="presentation" aria-hidden="true"><defs><mask id="mf" maskUnits="userSpaceOnUse" x="-5" y="-5" width="110" height="143"><rect class="wipe up" x="-5" y="-5" width="110" height="143"/></mask></defs><g mask="url(#mf)"><path d="M1 132V50A49 49 0 0 1 99 50V132Z"/><path class="inner" d="M5 132V50A45 45 0 0 1 95 50V132Z"/></g></svg>`;
 
 const css = `
-:root{--serif:'Cormorant Garamond',Georgia,'Times New Roman',serif;--sans:'Hanken Grotesk',system-ui,sans-serif}
-body{font:400 15.5px/1.62 var(--sans)}
-@media (min-width:900px){body{font-size:16px}}
+:root{--serif:'Cormorant Garamond',Georgia,'Times New Roman',serif;--sans:'Source Sans 3',system-ui,sans-serif;--r:2px}
+body{font:400 16px/1.6 var(--sans)}
+@media (min-width:900px){body{font-size:17px}}
 h1,h2,h3{font-family:var(--serif);font-weight:500;letter-spacing:-.01em;margin:0;text-wrap:balance}
 p{max-width:54ch;text-wrap:pretty}
 .muted{color:var(--muted)}
@@ -33,6 +33,7 @@ p{max-width:54ch;text-wrap:pretty}
 .seal span{white-space:nowrap}.seal i{font-size:.72em;padding:0 .08em}
 .seal{position:absolute;left:50%;bottom:-30px;translate:-50% 0;z-index:3;width:60px;height:60px;border-radius:50%;background:var(--fill);color:var(--onAccent);display:none;place-items:center;font:italic 500 22px/1 var(--serif);white-space:nowrap;box-shadow:0 0 0 5px var(--canvas)}
 html[data-photo="1"] .seal{display:grid}
+html[data-photoerr] .seal{display:none}
 .cover-text{display:grid;gap:14px;justify-items:center;text-align:center}
 .cover h1{font-size:clamp(50px,14.4vw,60px);line-height:.98}
 .cover h1 span{display:block}
@@ -87,12 +88,13 @@ details p{padding:0 0 20px;color:var(--muted);font-size:15px;max-width:54ch}
 .gifts{display:grid;gap:22px;justify-items:start}
 .gifts .dr{width:132px}
 .gifts .btn{min-height:52px;padding:0 26px;font-size:16px}
+.etq{display:grid;gap:14px;justify-items:start}
+.etq .dr{width:104px}
+.etq .sw{margin-top:8px}
 /* confirmar */
 .rsvp{display:grid;gap:18px;justify-items:start}
 .rsvp .btn{min-height:52px;padding:0 26px;font-size:16px}
 .rsvp .dr{width:104px}
-.rsvp .alt{font-size:14.5px;color:var(--muted)}
-.rsvp .alt a{display:inline-flex;align-items:center;min-height:44px}
 footer{padding:44px 22px 40px;border-top:1px solid var(--line);display:grid;gap:18px;justify-items:center;text-align:center}
 footer .mark{font-size:30px}
 footer ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;justify-content:center;gap:0 6px}
@@ -114,13 +116,11 @@ footer small a{color:var(--muted);display:inline-flex;align-items:center;min-hei
 @keyframes press{from{opacity:0;transform:scale(1.35)}to{opacity:1;transform:none}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 @keyframes traceUp{from{transform:translateY(145px)}to{transform:none}}
+@media (min-width:1200px){.idx{display:flex;gap:2px;margin:0 auto}.idx a{display:inline-flex;align-items:center;min-height:44px;padding:0 10px;color:var(--text);text-decoration:none;font-size:15px}.idx a:hover{color:var(--accent)}}
 /* escritorio: composición propia, no el móvil escalado (P9) */
 @media (min-width:900px){
  .top{padding:0 48px;min-height:72px}
  .top .date{display:none}
- .idx{display:flex;gap:2px;margin:0 auto}
- .idx a{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;color:var(--text);text-decoration:none;font-size:14.5px}
- .idx a:hover{color:var(--accent)}
  .cover{grid-template-columns:5fr 6fr;align-items:center;justify-items:start;gap:104px;max-width:1180px;margin:0 auto;padding:72px 48px 112px;min-height:calc(100svh - 72px)}
  .arch{width:min(100%,430px);margin:20px 0 0 24px}
  .seal{width:76px;height:76px;font-size:30px;bottom:-38px}
@@ -142,15 +142,18 @@ footer small a{color:var(--muted);display:inline-flex;align-items:center;min-hei
  .venue:nth-of-type(even){padding-left:56px}
  .sw li{width:80px}.sw i{width:52px;height:52px}
  .gifts{grid-template-columns:150px 1fr;align-items:center;column-gap:36px}
- .gifts .dr{width:150px;grid-row:1/4}
+ .gifts .dr{width:150px;grid-row:1/span 4}
  .rsvp{grid-template-columns:120px 1fr;column-gap:36px;align-items:center}
- .rsvp .dr{grid-row:1/4;width:120px}
+ .rsvp .dr{grid-row:1/span 4;width:120px}
+ .etq{grid-template-columns:120px 1fr;column-gap:32px;align-items:start}
+ .etq .dr{grid-row:1/span 3;width:120px}
+ .etq .sw{grid-column:2}
  summary{font-size:25px}
  footer{padding:64px 48px 56px}
 }
 `;
 
-const nav = [['historia', 'Historia'], ['programa', 'Programa'], ['lugares', 'Lugares'], ['vestimenta', 'Vestimenta'], ['preguntas', 'Preguntas'], ['regalos', 'Regalos']];
+const nav = [['historia', 'Historia'], ['programa', 'Programa'], ['lugares', 'Lugares'], ['galeria', 'Galería'], ['vestimenta', 'Vestimenta'], ['preguntas', 'Preguntas'], ['regalos', 'Regalos']];
 const swatches = [['#6B6F3F', 'Verde oliva'], ['#2F5D62', 'Azul petróleo'], ['#6D2B3A', 'Vino'], ['#C9B796', 'Arena'], ['#3A3F5C', 'Azul noche']];
 const faq = [
   ['¿Puedo ir con acompañante?', 'Tu invitación indica cuántos lugares tienes reservados. Si necesitas cambiar algo, escríbenos antes del 20 de febrero.'],
@@ -163,14 +166,14 @@ const body = `
 <header class="top"><a class="mark" href="#inicio" aria-label="Ana Lucía y Mateo, inicio">A<i>&amp;</i>M</a>
  <span class="date">20 · 03 · 2027</span>
  <nav class="idx" aria-label="Secciones">${nav.map(([h, t]) => `<a href="#${h}">${t}</a>`).join('')}</nav>
- <div class="cta"><a class="btn btn-alt" href="/c/${SLUG}/regalos">${ico.gift}Ver regalos</a><a class="btn btn-main" href="#confirmar">${ico.check}Confirmar asistencia</a></div>
+ ${ctaHtml(SLUG)}
 </header>
 <main id="main">
 <section class="cover" id="inicio" aria-labelledby="t">
  <figure class="arch" style="margin-inline:0">
   ${frame}
   <div class="arch-in" data-reveal>
-   <div class="ph-wrap has-photo" data-par="-0.05">${photoMarfil()}</div>
+   <div class="ph-wrap has-photo" data-par="-0.05">${photoMarfil()}</div>${phTag}${photoErr()}
    <div class="no-photo" style="width:100%">${drawing('rings')}</div>
   </div>
   <span class="seal" aria-hidden="true"><span>A<i>&amp;</i>M</span></span>
@@ -209,11 +212,16 @@ const body = `
  </div>
 </section>
 
+<section class="sec" id="galeria" aria-labelledby="h-galeria">${sepMasked()}
+ <h2 id="h-galeria">Galería</h2>
+ <div class="body"><ul class="gal">${galleryTiles('marfil', 3, photoErr())}</ul><p class="gal-cap">Fotos de ejemplo. Aquí van las fotos que suban los anfitriones.</p></div>
+</section>
+
 <section class="sec" id="vestimenta" aria-labelledby="h-vestimenta">${sepMasked()}
  <h2 id="h-vestimenta">Vestimenta</h2>
- <div class="body"><p class="lead rv">Formal, de tarde a noche. En La Paz anochece fresco —cerca de 7 °C—, así que trae un chal o un saco.</p>
+ <div class="body"><div class="etq">${drawing('hanger')}<p class="lead rv">Formal, de tarde a noche. En La Paz anochece fresco —cerca de 7 °C—, así que trae un chal o un saco.</p>
  <p class="rv" style="--d:60ms">Te sugerimos estos tonos. Evita el marfil y el blanco: son de la novia.</p>
- <ul class="sw rv" style="--d:100ms">${swatches.map(([c, n]) => `<li><i style="--c:${c}"></i>${n}</li>`).join('')}</ul></div>
+ <ul class="sw rv" style="--d:100ms">${swatches.map(([c, n]) => `<li><i style="--c:${c}"></i>${n}</li>`).join('')}</ul></div></div>
 </section>
 
 <section class="sec" id="preguntas" aria-labelledby="h-preguntas">${sepMasked()}
@@ -232,22 +240,22 @@ const body = `
 
 <section class="sec" id="regalos" aria-labelledby="h-regalos">${sepMasked()}
  <h2 id="h-regalos">Regalos</h2>
- <div class="body gifts">${drawing('gift')}<p class="lead rv">Preparamos una lista con cosas para la casa y para la luna de miel. Reserva la tuya y así evitamos que se repita.</p><a class="btn btn-main" href="/c/${SLUG}/regalos">${ico.gift}Ver regalos</a></div>
+ <div class="body gifts">${drawing('gift')}${giftCopy({ lead: 'Preparamos una lista con cosas para la casa y para la luna de miel. Reserva la tuya y así evitamos que se repita.' })}${giftBtn(SLUG, 'btn-main')}</div>
 </section>
 
 <section class="sec" id="confirmar" aria-labelledby="h-conf">${sepMasked()}
  <h2 id="h-conf">Confirma tu asistencia</h2>
- <div class="body rsvp">${drawing('envelope')}<p class="lead rv">Responde antes del 20 de febrero. Toma un minuto.</p><a class="btn btn-main" href="/c/${SLUG}/rsvp">${ico.check}Confirmar asistencia</a><p class="alt">¿No encuentras tu enlace personal? <a href="/c/${SLUG}/enlace">Recupéralo aquí</a></p></div>
+ <div class="body rsvp">${drawing('envelope')}${rsvpCopy({ ok: 'Responde antes del 20 de febrero. Toma un minuto.', past: 'El plazo para confirmar terminó el 20 de febrero. Si necesitas cambiar tu respuesta, escríbeles a los novios.' })}${rsvpBtn(SLUG)}</div>
 </section>
 </main>
 <footer><a class="mark" href="#inicio" aria-label="Volver al inicio">A<i>&amp;</i>M</a>
  <ul aria-label="Índice">${nav.map(([h, t]) => `<li><a href="#${h}">${t}</a></li>`).join('')}</ul>
  <small>Hecho con DOne. <a href="/c/${SLUG}/denunciar">Denunciar esta página</a></small></footer>
-<div class="bar" role="region" aria-label="Acciones principales"><a class="btn btn-alt" href="/c/${SLUG}/regalos">${ico.gift}Ver regalos</a><a class="btn btn-main" href="#confirmar">${ico.check}Confirmar asistencia</a></div>
+${barHtml(SLUG)}
 `;
 
 export default page({
   name: 'marfil', title: 'Prototipo · Clásico marfil · DOne',
-  fonts: 'family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Hanken+Grotesk:wght@400;500;600',
-  css, body
+  fonts: 'family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Source+Sans+3:wght@400;500;600',
+  css, body, slug: SLUG
 });

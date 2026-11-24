@@ -1,20 +1,37 @@
+// Genera FICHAS.md a partir de tokens.mjs, audit.json y contraste-dom.json (medidos con audit.cjs). Uso: node fichas.mjs
 import { writeFileSync, readFileSync } from 'node:fs';
-import { TOKENS, pairs, ratio } from './tokens.mjs';
+import { TOKENS, pairs } from './tokens.mjs';
 const audit = JSON.parse(readFileSync(new URL('./audit.json', import.meta.url)));
+const dom = JSON.parse(readFileSync(new URL('./contraste-dom.json', import.meta.url)));
 const roles = ['canvas', 'surface', 'text', 'muted', 'accent', 'accentFill', 'onAccent', 'line'];
-const tokTable = (k) => `| Rol | Claro | Oscuro |\n|---|---|---|\n${[...roles, 'stone (disco)', 'stone2 (piezas)', 'shadow (sombra plana)'].map((r) => { const key = r.split(' ')[0]; return `| \`${key}\` | \`${TOKENS[k].light[key]}\` | \`${TOKENS[k].dark[key]}\` |`; }).join('\n')}`;
-const ratioTable = (k) => { const L = pairs(TOKENS[k].light), D = pairs(TOKENS[k].dark); return `| Par | Mínimo | Claro | Oscuro |\n|---|---|---|---|\n${L.map((p, i) => `| ${p.n} | ${p.min}:1 | **${p.r.toFixed(2)}:1** ✓ | **${D[i].r.toFixed(2)}:1** ✓ |`).join('\n')}`; };
-const minC = (k) => { const v = Object.entries(audit).filter(([n]) => n.startsWith(k + '|') && !n.startsWith('anim')).map(([, r]) => r.contrast.min); return Math.min(...v).toFixed(2); };
-const ll = { marfil: '45 (390) · 63 (1280)', pinata: '47 (390) · 58 (1280)', gala: '46 (390) · 68 (1280)' };
+const tokTable = (k) => { const extra = ['stone', 'stone2', 'shadow', ...(TOKENS[k].dark.disc ? ['disc'] : [])]; return `| Rol | Claro | Oscuro |\n|---|---|---|\n${[...roles, ...extra].map((r) => `| \`${r}\` | \`${TOKENS[k].light[r]}\` | \`${TOKENS[k].dark[r]}\` |`).join('\n')}`; };
+const uiTable = (k) => { const L = pairs(TOKENS[k].light), D = pairs(TOKENS[k].dark); const mk = (p) => (p.r >= p.min ? `**${p.r.toFixed(2)}** ✓` : p.deco ? `${p.r.toFixed(2)} (decorativo)` : `**${p.r.toFixed(2)}** ✗`); return `| Par de tokens | Mín. | Claro | Oscuro |\n|---|---|---|---|\n${L.map((p, i) => `| ${p.n} | ${p.min}:1 | ${mk(p)} | ${mk(D[i])} |`).join('\n')}`; };
+const domTable = (k) => ['light', 'dark'].map((m) => { const rows = dom[`${k}|${m}`]; return `**${m === 'light' ? 'Claro' : 'Oscuro'}** (${rows.length} pares únicos)\n\n| Texto de ejemplo | Color | Fondo efectivo | Tamaño | Ratio | Mín. | |\n|---|---|---|---|---|---|---|\n${rows.map((r) => `| ${r.sample.replace(/\|/g, '/')} | \`${r.fg}\` | \`${r.bg}\` | ${r.large ? 'grande' : 'normal'} | **${r.ratio.toFixed(2)}** | ${r.need} | ${r.ratio >= r.need ? '✓' : '✗'} |`).join('\n')}`; }).join('\n\n');
+const minOf = (k, m) => Math.min(...dom[`${k}|${m}`].map((r) => r.ratio)).toFixed(2);
+const runs = Object.keys(audit).filter((n) => !n.startsWith('anim')).length;
+const maxOv = Math.max(...Object.values(audit).filter((r) => r.overflow !== undefined).map((r) => r.overflow));
 
 const md = `# Fichas de personalidad · prototipos de 3 plantillas (Q4 · F4)
 
-> **Son prototipos.** HTML estáticos de alta fidelidad para aprobar la dirección visual antes de rehacer las 16 plantillas. No usan el motor \`celebration-theme\`, no se conectan al backend y no cambian ninguna plantilla sembrada. El contenido (nombres, lugares, precios, proveedores) es **ficticio**; las fotos son ilustraciones marcadas «Foto de ejemplo». Los enlaces apuntan a las rutas reales (\`/c/{slug}/regalos\`, \`/r/{listingId}\`) que en el prototipo no existen.
+> **Son prototipos.** HTML estáticos de alta fidelidad para aprobar la dirección visual antes de rehacer las 16 plantillas. No usan el motor \`celebration-theme\`, no se conectan al backend y no cambian ninguna plantilla sembrada. El contenido (nombres, lugares, precios, proveedores) es **ficticio**; las fotos son ilustraciones planas marcadas «Foto de ejemplo». Los enlaces apuntan a las rutas reales (\`/c/{slug}/regalos\`, \`/c/{slug}/rsvp\`, \`/r/{listingId}\`) que en el prototipo no existen.
 
 - **Fuente de la decisión:** \`PLAN-PLANTILLAS.md\` (BE \`bugs/catalogo\`): §1 (P4, P8, P9, P18, P22), §3 (PL-A1, A2, A3, A6, A8, A9, M1, M7, M8), F3, F4 y Q4.
-- **Cómo verlos:** abre \`marfil.html\`, \`pinata.html\` o \`gala.html\` en un navegador (necesitan red para Google Fonts). Arriba hay una franja del prototipo con **Claro · Oscuro · Sistema** y **Sin foto / Con foto**. Parámetros: \`?theme=dark&photo=1&bare=1\` (\`bare\` oculta la franja) y \`?still=1\` (sin animación).
-- **Construcción de los dibujos** (igual que \`packages/ui/src/illustrations.ts\`): disco de piedra, sombra de contacto plana, figura rellena de tinta con detalles calados en el color del fondo y **una sola pieza de color, la del acento de la plantilla** (P4). Sin contornos, degradados, desenfoque ni caras. Nunca amarillo ni color fuera de la paleta. Hoja de contacto: [\`capturas/dibujitos.png\`](capturas/dibujitos.png).
-- **Lo que NO cambia entre plantillas (P22):** «Ver regalos» → \`/c/{slug}/regalos\` y «Confirmar asistencia» están siempre a la vista: barra fija inferior en móvil (<900 px), cabecera fija en escritorio, y de nuevo en las secciones Regalos y Confirmar.
+- **Cómo verlos:** abre \`marfil.html\`, \`pinata.html\` o \`gala.html\` en un navegador (necesitan red para Google Fonts). Arriba hay una franja plegable del prototipo con **tema** (claro, oscuro, sistema) y los selectores de **foto** (sin foto, con foto, error de carga), **regalos** (abierto, vacío, cerrado), **enlace personal** (con, sin) y **plazo** (vigente, vencido). Parámetros equivalentes: \`?theme=dark&photo=1&photoerr=1&gifts=empty|closed&link=none&deadline=past&bare=1\` (\`bare\` oculta la franja) y \`?still=1\` (sin animación).
+- **Construcción de los dibujos** (igual que \`packages/ui/src/illustrations.ts\`): disco de piedra, sombra de contacto plana, figura rellena de tinta con detalles calados en el color del fondo y **una sola pieza de color, la del acento de la plantilla** (P4). Sin contornos, degradados, desenfoque ni caras. Nunca amarillo ni color fuera de la paleta. Hoja de contacto: [\`dibujitos.png\`](../../progress/evidence/plantillas-prototipos/dibujitos.png).
+- **Lo que NO cambia entre plantillas (P22):** «Ver regalos» → \`/c/{slug}/regalos\` (sin token) está **siempre** a la vista, en cualquier estado: barra fija inferior en móvil (<900 px), cabecera fija en escritorio, y de nuevo en la sección Regalos. «Confirmar asistencia» (o «Busca tu enlace personal», ver estados) lo acompaña.
+- **Capturas** (Linux, Chromium; evidencia, no líneas base): [\`docs/progress/evidence/plantillas-prototipos/\`](../../progress/evidence/plantillas-prototipos/README.md).
+
+## 0. Cambios de la ronda de revisión 1
+
+| Id | Resolución |
+|---|---|
+| R1 · Gala usaba amarillo | El acento de Gala pasa a **vino** (\`#7B2A3C\` claro, matiz 347°; rosa palo \`#E6A3B1\` oscuro, 347°). Fuera de la franja 40–70° del amarillo del sistema. Se conserva el concepto «gala» con el marco art déco. Fotos de ejemplo planas y sin \`#E8C987\`. El dorado anterior queda como **alternativa pendiente de decisión de Pablo** (§6.4). La plantilla se titula «Gala art déco» en el prototipo mientras no se decida (la semilla se llama «Gala dorada»). |
+| R2 · Familias fuera del catálogo | Las seis familias salen ahora del **catálogo curado de F1** (\`packages/celebration-theme/src/design/catalog.ts\`, rama \`feat/f1-diseno-v2-esquema\`, PR #115, 41 familias). Se reemplazan Hanken Grotesk y Bricolage Grotesque. |
+| R3 · Banderines con contorno | Banderines como **figuras rellenas de tinta** sobre un cordel (algunos en el acento); el festón es una franja rellena de semicírculos. |
+| R4 · Estados | Prototipados y capturados: sin enlace personal, regalos OPEN/EMPTY/CLOSED, plazo vencido, galería y error de carga de la foto (§5). |
+| R5 · Barra móvil | Los botones encogen y parten la etiqueta; ocultan el icono bajo 400 px. Auditada a 320 y 360 px: 0 botones fuera de pantalla, objetivos ≥ 44 px. |
+| R6 · Cabecera 900–1024 | El índice de secciones solo aparece desde 1200 px; entre 900 y 1199 la cabecera lleva logo, fecha y los dos botones. 0 px de desbordamiento a 900, 960 y 1024. |
+| Menores | Capturas en \`docs/progress/evidence/plantillas-prototipos/\`; la percha de Marfil se usa en Vestimenta; titular de Piñata fluido con \`clamp()\` y sin desplazamiento por los banderines (recorte en el contenedor); Gala sin colisiones en el héroe a 1280; Piñata a 768 usa la composición de dos columnas; disco de la piñata en oscuro a ≥ 3:1; Gala con columnas en escritorio. |
 
 ---
 
@@ -24,101 +41,125 @@ const md = `# Fichas de personalidad · prototipos de 3 plantillas (Q4 · F4)
 
 **Firma (una sola).** *La ventana de arco*: el marco doble se traza de abajo hacia arriba, la foto (o los anillos) sube a la ventana y el sello con las iniciales se estampa al final.
 
-**Pareja tipográfica.** Cormorant Garamond 500/600 + cursiva 500 (titulares y horas) · Hanken Grotesk 400/500/600 (cuerpo y botones). Sin Inter ni peso 800.
+**Pareja tipográfica (catálogo de F1).** \`cormorant-garamond\` 500/600 + cursiva 500 (titulares y horas) · \`source-sans-3\` 400/500/600 (cuerpo y botones). Sin Inter ni peso 800.
 
 ### Tokens
 ${tokTable('marfil')}
 
-### Contraste (WCAG 2.x, calculado con \`_build/tokens.mjs\`)
-${ratioTable('marfil')}
+### Contraste de tokens (WCAG 2.x, \`_build/tokens.mjs\`)
+${uiTable('marfil')}
 
-Medido además en el DOM real de los 12 estados (390/768/1280 × claro/oscuro × con/sin foto): peor par texto/fondo efectivo **${minC('marfil')}:1**.
+### Contraste del texto medido en el DOM (Chromium, todos los estados)
+${domTable('marfil')}
 
-**Portada · móvil 390.** Columna centrada. Arco (70 vw, máx. 290 px) con marco doble; debajo, nombres en dos líneas (Cormorant 58 px), fecha en cursiva, lugar y «Faltan N días» como texto. Sin botones en la portada: los lleva la barra inferior.
-**Portada · escritorio 1280.** Asimétrica en dos columnas (5fr/6fr): arco de 430 px a la izquierda; a la derecha, nombres de 118 px alineados a la izquierda junto a una línea vertical con un nodo-anillo. Cabecera fija con índice y los dos botones.
-**Ornamento.** Trazo de 1,25 px con extremos redondos: separador *línea · dos anillos · línea* (se traza al entrar), marco de arco doble, nodos-anillo del itinerario, signo + de las preguntas.
+**Portada · móvil.** Columna centrada. Arco (70 vw, máx. 290 px) con marco doble; debajo, nombres en dos líneas, fecha en cursiva, lugar y «Faltan N días» como texto. Sin botones en la portada: los lleva la barra inferior.
+**Portada · escritorio 1280.** Asimétrica en dos columnas (5fr/6fr): arco de 430 px a la izquierda; a la derecha, nombres de 118 px alineados a la izquierda junto a una línea vertical con un nodo-anillo.
+**Ornamento.** Trazo de 1,25 px con extremos redondos: separador *línea · dos anillos · línea*, marco de arco doble, nodos-anillo del itinerario, signo + de las preguntas. Son filetes (no figuras); los dibujos sí siguen la construcción rellena.
 **Dibujos.** Anillos (portada sin foto, el segundo anillo es la pieza de color), alfiler en mapa (lugares), percha con saco (vestimenta), regalo, sobre (confirmar).
-**Animación (P18).** Trazado del marco con máscara que se desplaza (\`transform\`), ascenso de la foto, sello que se estampa (\`scale\`), cascada de textos de 70–80 ms, nodos del itinerario que aparecen, paralaje de 5 % en la foto. Una sola vez, sin bucles.
-**Foto.** Dentro del arco, recorte vertical con un 8 % de margen para el paralaje; marco doble alrededor y sello de acento superpuesto (única pieza de color de la portada con foto). Sin foto: los anillos sobre su disco, en el mismo arco, y sin sello.
-**Se diferencia de las otras dos por:** composición asimétrica y serena, fondo de papel, trazo fino redondeado, un solo elemento de color por pantalla; es la única con serif de contraste suave y columna de encabezados fija a la izquierda.
+**Animación (P18).** Trazado del marco con máscara que se desplaza (\`transform\`), ascenso de la foto, sello que se estampa (\`scale\`), cascada de textos, nodos del itinerario, paralaje de 5 % en la foto. Una sola vez, sin bucles.
+**Foto.** Dentro del arco, con marco doble y sello de acento superpuesto. Sin foto: los anillos sobre su disco. Con error de carga: panel de superficie con icono, «No pudimos cargar la foto» y «Reintentar».
+**Se diferencia por:** composición asimétrica y serena, fondo de papel, trazo fino redondeado, un solo elemento de color por pantalla; serif de contraste suave y columna de encabezados fija a la izquierda.
 
 ---
 
 ## 2. Piñata · cumpleaños infantil
 
-**Concepto.** Papel crema, banderines trazados y una piñata que cuelga: alegre por la forma y el tamaño del tipo, no por saturar el color.
+**Concepto.** Papel crema, banderines de tinta y una piñata que cuelga: alegre por la forma y el tamaño del tipo, no por saturar el color.
 
 **Firma (una sola).** *La piñata que se mece una vez*: cuelga del cordel, cae, oscila amortiguada y queda quieta; los banderines se despliegan uno a uno.
 
-**Pareja tipográfica.** Bricolage Grotesque 500/600/700 (titular enorme con interletrado negativo; el «6» va en acento) · Figtree 400/500/600 (cuerpo). Sin Fredoka ni peso 800.
+**Pareja tipográfica (catálogo de F1).** \`fredoka\` 500/600/700 (titular enorme; el «6» va en acento) · \`figtree\` 400/500/600 (cuerpo). Sin peso 800.
 
 ### Tokens
 ${tokTable('pinata')}
 
-### Contraste
-${ratioTable('pinata')}
+En oscuro, \`disc\` (\`#725F57\`) separa el disco de piedra del fondo a ≥ 3:1 y \`accentFill\` sube a \`#FFB5A0\` para que la pieza de color del dibujo mantenga ≥ 3:1 sobre ese disco.
 
-Medido en el DOM real de los 12 estados: peor par **${minC('pinata')}:1**.
+### Contraste de tokens
+${uiTable('pinata')}
 
-**Portada · móvil 390.** Banderines a todo el ancho, piñata colgada al centro (168 px; 112 px si hay foto), titular «Sofi / cumple 6» alineado a la izquierda a 82 px, datos y, con foto, el **disco de foto** con su sombra plana.
-**Portada · escritorio 1280.** Titular a la izquierda (≈135 px) y, a la derecha, el disco de foto de 430 px con la piñata colgando solapada en su borde; sin foto, la piñata sola a 280 px.
-**Ornamento.** Trazo de 2,25 px redondeado: festón de arcos como separador, banderines (algunos en acento) y líneas de puntos para filas y preguntas.
-**Dibujos.** Piñata de siete puntas (portada y «La piñata»), pastel con vela (la llama es la pieza de color), gorrito (confirmar), regalo, alfiler. El globo está en la biblioteca pero no se usa en la página.
-**Animación (P18).** Caída y balanceo de ~3 s con \`transform\` (una sola vez), despliegue de banderines escalonado (70 ms), titular que sube, disco de foto que entra, paralaje en la foto.
-**Foto.** Recorte circular que repite el **disco de piedra** de los dibujos, con la sombra plana debajo: la foto se siente un dibujito más. Sin foto: no hay disco y la piñata crece.
-**Se diferencia por:** titular gigante a la izquierda, trazo grueso y punteado, esquinas de 14 px; es la única con un objeto que se mueve de verdad y la única sin línea fina.
+### Contraste del texto medido en el DOM
+${domTable('pinata')}
+
+**Portada · móvil.** Banderines a todo el ancho, piñata colgada al centro (168 px; 112 px si hay foto), titular «Sofi / cumple 6» alineado a la izquierda (\`clamp(46px, 18vw, 82px)\`, parte palabras largas), datos y, con foto, el **disco de foto** con su sombra plana.
+**Portada · desde 720 px.** Dos columnas: titular a la izquierda y disco de foto a la derecha con la piñata colgando en su borde; sin foto, la piñata sola.
+**Ornamento.** Figuras rellenas: banderines de tinta (uno de cada tres en el acento) sobre un cordel, y festón en franja de semicírculos. Líneas de puntos de 2,25 px solo para filas y preguntas.
+**Dibujos.** Piñata de siete puntas (portada y «La piñata»), pastel con vela (la llama es la pieza de color), gorrito (confirmar), regalo, alfiler.
+**Animación (P18).** Caída y balanceo de ~3 s con \`transform\` (una sola vez), despliegue de banderines escalonado, titular que sube, disco de foto que entra, paralaje en la foto.
+**Foto.** Recorte circular que repite el **disco de piedra** de los dibujos, con la sombra plana debajo. Sin foto: no hay disco y la piñata crece.
+**Se diferencia por:** titular gigante a la izquierda, esquinas de 14 px, banderines rellenos; es la única con un objeto que se mueve de verdad.
 
 ---
 
-## 3. Gala dorada · corporativo y aniversario
+## 3. Gala art déco · corporativo y aniversario
 
-**Concepto.** Invitación de gala art déco: un eje de simetría, doble línea fina y chaflán a 45°; dorado solo como detalle.
+**Concepto.** Invitación de gala art déco: un eje de simetría, doble línea fina y chaflán a 45°; el acento vino (rosa palo en oscuro) solo como detalle.
 
 **Firma (una sola).** *Las puertas deco*: dos hojas con abanico de líneas se abren sobre la portada y revelan el marco; el «25» se asienta al final.
 
-**Pareja tipográfica.** Bodoni Moda 500/600 (cifras, titulares; el «25» a 150–176 px) · Jost 400/500 (cuerpo y botones). Sin Playfair ni IBM Plex.
+**Pareja tipográfica (catálogo de F1).** \`bodoni-moda\` 500/600 (cifras, titulares; el «25» a 150–176 px) · \`jost\` 400/500 (cuerpo y botones).
 
 ### Tokens
 ${tokTable('gala')}
 
-### Contraste
-${ratioTable('gala')}
+### Contraste de tokens
+${uiTable('gala')}
 
-Medido en el DOM real de los 12 estados: peor par **${minC('gala')}:1**. El oscuro es verde-negro profundo con champán; no es el claro invertido.
+### Contraste del texto medido en el DOM
+${domTable('gala')}
 
-**Portada · móvil 390.** Esquinas escalonadas en las cuatro esquinas, copa sobre disco (o foto con chaflán y marco desplazado en acento), «25» enorme, «años de Grupo Altiplano», y fecha y sede en bloques simétricos debajo.
-**Portada · escritorio 1280.** Tres columnas sobre un eje: fecha a la derecha-alineada, copa/foto y «25» al centro, sede a la izquierda-alineada.
+**Portada · móvil.** Esquinas escalonadas, copa sobre disco (o foto con chaflán y marco desplazado en acento), «25» enorme, «años de Grupo Altiplano», y fecha y sede en bloques simétricos debajo.
+**Portada · escritorio 1280.** Tres columnas sobre un eje: fecha a la derecha-alineada, foto o copa y «25» al centro, sede a la izquierda-alineada; los dos bloques laterales arrancan en la misma línea y el marco queda a 36 px del «25». La etiqueta «Foto de ejemplo» va dentro de la foto.
+**Secciones en escritorio.** Historia en dos columnas (texto y hitos), preguntas y recomendados en dos columnas, programa y etiqueta a 900 px de ancho.
 **Ornamento.** Trazo de 1 px con uniones en ángulo y chaflán: separador de doble línea con rombo, esquinas escalonadas, abanico de las puertas, chevrón de las preguntas.
 **Dibujos.** Copa de champán (el líquido es la pieza de color), medalla de reconocimiento, alfiler, percha, credencial con QR (confirmar), regalo.
 **Animación (P18).** Apertura de las dos hojas (1,7 s, \`translateX\`), asentamiento escalonado de foto/título/datos, esquinas que aparecen, trazado de separadores, paralaje en la foto.
-**Foto.** Recorte con chaflán de 28 px y un marco de 1 px en acento desplazado 12 px; sin recortar el contenido. Sin foto: copa sobre su disco.
+**Foto.** Recorte con chaflán de 28 px y un marco de 1 px en acento desplazado 12 px. Sin foto: copa sobre su disco.
+**Galería.** No lleva: la semilla real (\`016-gala-dorada\`) no incluye \`gallery\` ni \`gifts\` en \`sectionOrder\`; el botón de regalos sigue siempre visible.
 **Se diferencia por:** simetría y chaflán (frente a la asimetría de Marfil y la redondez de Piñata), cifras de Bodoni a tamaño de cartel y botones de esquina recta.
 
 ---
 
-## 4. Evidencia de verificación (Chromium 1243, Playwright, \`_build/audit.cjs\`)
+## 4. Evidencia de verificación (Chromium, Playwright, \`_build/audit.cjs\`)
 
-36 combinaciones (3 plantillas × 390/768/1280 × claro/oscuro × con/sin foto), **0 avisos**:
+${runs} combinaciones (ancho × claro/oscuro × con/sin foto, estados y nombres largos), **0 avisos**:
 
 | Comprobación | Resultado |
 |---|---|
-| Desbordamiento horizontal | ninguno en 36/36 |
+| Anchos de base | 320, 360, 390, 768, 900, 960, 1024, 1280 × claro/oscuro × con/sin foto, en las 3 plantillas |
+| Estados | regalos vacío, regalos cerrado, sin enlace, plazo vencido, error de foto y todos a la vez, a 320/360/768/1024/1280, claro y oscuro |
+| Desbordamiento horizontal | máximo ${maxOv} px en todas |
+| Botones de la barra (<900) y de la cabecera (≥900) dentro de la pantalla | sí, en todas; etiquetas largas incluidas |
 | Texto < 13 px | ninguno |
-| Objetivos táctiles < 44 px (enlaces, botones, resúmenes) | ninguno |
-| Contraste del texto en el DOM (fondo efectivo) | mín. ${minC('marfil')} (Marfil), ${minC('pinata')} (Piñata), ${minC('gala')} (Gala); todos ≥ 4,5 |
+| Objetivos táctiles < 44 px | ninguno |
+| Contraste del texto en el DOM | mín. claro: Marfil ${minOf('marfil', 'light')}, Piñata ${minOf('pinata', 'light')}, Gala ${minOf('gala', 'light')}; mín. oscuro: Marfil ${minOf('marfil', 'dark')}, Piñata ${minOf('pinata', 'dark')}, Gala ${minOf('gala', 'dark')}; todos ≥ AA |
 | «Ver regalos» visible en 0/25/50/75/100 % del scroll, 390 y 1280 | sí, en las 3 plantillas |
+| Nombres largos (320, 360, 1280) | sin desbordar en las 3 plantillas |
 | Foco visible con teclado | contorno sólido de 3 px en el acento |
 | \`prefers-reduced-motion: reduce\` | 0 animaciones activas y estado final |
 | Movimiento permitido | tras recorrer la página no queda ningún bloque sin revelar |
-| Largo de línea (mediana de párrafos, caracteres) | Marfil ${ll.marfil}; Piñata ${ll.pinata}; Gala ${ll.gala} |
 
-**Límites honestos.** En 390 px, algunas líneas sueltas (finales de párrafo y notas en columnas estrechas) bajan de 45 caracteres; la mediana de la lectura sí está en rango. En 1280, los párrafos llegan a 68–72 (Piñata ocasionalmente 78 en una nota). El «trazado» de dibujos y ornamentos se hace con una máscara animada con \`transform\` (no con \`stroke-dashoffset\`), para cumplir «solo transform/opacity»; visualmente es un barrido, no el recorrido de un lápiz. Las muestras de vestimenta son el único color fuera de la paleta (es contenido del anfitrión, con nombre escrito). No se probó en Safari ni Firefox ni en dispositivo real; las capturas se revisaron a ojo por quien las generó, no por una persona del equipo.
+**Límites honestos.** No se probó en Safari ni Firefox, en dispositivo real ni con lector de pantalla. El «trazado» de dibujos y ornamentos usa una máscara animada con \`transform\` (un barrido, no el recorrido de un lápiz). Las muestras de vestimenta son el único color fuera de la paleta (contenido del anfitrión, con nombre escrito). Las fotos son ilustraciones planas; con una foto real el recorte puede cambiar el equilibrio. El rendimiento de las animaciones no se midió. Las etiquetas «Ver mi respuesta» (plazo vencido) y los textos de los avisos son una **propuesta de redacción** que decide Pablo. Las capturas las revisó quien las generó, no una persona del equipo.
 
 ---
 
-## 5. Autocrítica con la rúbrica \`ui-quality-review\` (PLAN §3.2)
+## 5. Estados (dimensión 7)
 
-Bloqueantes: 1 Jerarquía, 4 Consistencia con el sistema, 5 Contraste y 7 Estados deben valer 2.
+| Estado | Cómo se ve | Cómo abrirlo |
+|---|---|---|
+| Sin enlace personal | El botón principal dice «Busca tu enlace personal» y va a \`/c/{slug}/rsvp\`; la sección Confirmar explica cómo encontrarlo | \`?link=none\` |
+| Regalos OPEN | «Ver regalos» | por defecto |
+| Regalos EMPTY | Etiqueta «Lista de regalos (pronto)»; mismo destino \`/c/{slug}/regalos\`; el texto avisa que aún no hay regalos | \`?gifts=empty\` |
+| Regalos CLOSED | «Ver regalos» con aviso de solo lectura | \`?gifts=closed\` |
+| Plazo de confirmación vencido | Aviso en Confirmar y el botón pasa a «Ver mi respuesta» | \`?deadline=past\` |
+| Galería | Mosaico de 6 fotos de ejemplo (Marfil y Piñata, como en sus semillas) | sección \`#galeria\` |
+| Error de carga de la foto | Panel con icono, «No pudimos cargar la foto» y «Reintentar» en portada y en una tesela de la galería | \`?photoerr=1\` |
+
+Además: hover, foco y pulsado, pregunta abierta/cerrada, con/sin foto, claro/oscuro/sistema y movimiento reducido. Capturas en \`docs/progress/evidence/plantillas-prototipos/estado-*.png\`. Siguen sin prototipar: carga (esqueletos), lista de regalos paginada y reintento de red real; son del trabajo de producción.
+
+## 5.1. Autoevaluación con la rúbrica \`ui-quality-review\` (PLAN §3.2)
+
+Bloqueantes: 1 Jerarquía, 4 Consistencia con el sistema, 5 Contraste y 7 Estados deben valer 2. Es una autoevaluación; la puntuación válida es la de quien revisa.
 
 | Dimensión | Marfil | Piñata | Gala |
 |---|---|---|---|
@@ -133,27 +174,26 @@ Bloqueantes: 1 Jerarquía, 4 Consistencia con el sistema, 5 Contraste y 7 Estado
 | **Total /16** | **15** | **15** | **14** |
 
 Motivos de lo que no es 2:
-- **Gala · densidad (1):** en escritorio la portada ocupa casi dos pantallas con foto; el eje simétrico deja aire a los lados.
-- **Pulido (1) en las tres:** las fotos son ilustraciones de ejemplo (el recorte real puede cambiar el equilibrio); en Piñata la columna vacía en las filas del programa sin dibujo y el disco de la piñata en oscuro se funden con el fondo; en Marfil el sello depende de la tipografía cargada; Gala no tiene aún estado «puertas» con un clic.
-- **Estados (2):** cubiertos hover/foco/pulsado, pregunta abierta/cerrada, con/sin foto, claro/oscuro/sistema y movimiento reducido. Quedan por diseñar al construir de verdad: lista de regalos vacía/cerrada (\`gifts.status\`), plazo vencido, error de carga de la foto.
-
-**Iteraciones sobre las capturas propias** (antes → después): marco del arco recortado por \`max-width\` de SVG; sello con iniciales apiladas; botón «Confirmar asistencia» partido en dos líneas; disco invisible dentro del arco (se pasó a superficie); título de Piñata en escritorio roto en tres líneas y piñata a la derecha del texto; «25» de Gala tapado por la foto (rejilla corregida); botones de Gala con borde cortado por el chaflán (ahora rectos); líneas de 35–40 caracteres en móvil (cuerpo 15,5 px, ancho de columna y dibujos apilados); enlace «Denunciar» de 17 px de alto (ahora 44).
+- **Gala · densidad (1):** aunque las secciones ya van en dos columnas, el héroe de escritorio sigue ocupando algo más de una pantalla y el eje simétrico deja aire a los lados.
+- **Pulido (1) en las tres:** fotos ilustradas de ejemplo, Safari/Firefox y dispositivo real sin probar, rendimiento de animaciones sin medir; en Marfil el sello depende de la tipografía cargada.
+- **Estados (2), con reserva:** los siete estados exigidos existen, pero la redacción de los avisos es propuesta y falta el esqueleto de carga.
 
 ---
 
 ## 6. Qué se pide aprobar
 
-1. **Dirección por plantilla:** ¿Marfil (arco y anillos), Piñata (piñata que se mece, disco de foto) y Gala (simetría y puertas deco) son la personalidad correcta?
+1. **Dirección por plantilla:** ¿Marfil (arco y anillos), Piñata (piñata que se mece, disco de foto, banderines de tinta) y Gala (simetría y puertas deco) son la personalidad correcta?
 2. **Familia de trazo por plantilla** (1,25 redondo / 2,25 punteado / 1 en ángulo) y la **foto como parte del dibujo** (arco, disco, chaflán).
 3. **Barra fija inferior en móvil y cabecera fija en escritorio** para «Ver regalos» y «Confirmar asistencia».
-4. **Dorado de Gala:** acento \`#6E5200\` en claro y champán \`#CDAE6C\` en oscuro; ningún amarillo.
-5. Si se aprueba, se rehacen las 16 con la misma ficha y las capturas pasan a ser las líneas base de F8.
+4. **Acento de Gala (decisión de Pablo).** El prototipo usa **vino** (\`#7B2A3C\` claro, \`#E6A3B1\` oscuro). La alternativa pendiente es el **dorado** anterior: \`#6E5200\` claro (matiz 45°) y \`#CDAE6C\` oscuro (matiz 41°), contrastes 6,60:1 y 10,03:1 sobre su canvas; es el tono del amarillo del sistema (\`packages/design-tokens/src/colors.ts\`), por eso no se usa sin tu visto bueno. Cambiarlo son dos tokens en \`_build/tokens.mjs\`.
+5. **Tipografías.** Las tres parejas salen del catálogo de F1, así que no se amplía el catálogo; \`DESIGN.md\` (Newsreader + Geist) sigue siendo la tipografía de la app, no de las plantillas.
+6. Si se aprueba, se rehacen las 16 con la misma ficha y las capturas pasan a ser las líneas base de F8.
 
 ## 7. Archivos
 
 - \`marfil.html\`, \`pinata.html\`, \`gala.html\`: autocontenidos (CSS y SVG en línea; solo Google Fonts por red).
-- \`capturas/\`: \`<plantilla>-<390|1280>-<claro|oscuro>-<foto|sinfoto>.png\` (24, página completa), \`pliegue-*.png\` (primer pliegue), \`animacion-*.png\` (cinco fotogramas de la entrada), \`dibujitos.png\`.
-- \`_build/\`: generador (\`build.mjs\`), tokens y contraste (\`tokens.mjs\`), dibujos (\`drawings.mjs\`), auditoría (\`audit.cjs\`, \`audit.json\`) y capturas (\`shoot.cjs\`). Regenerar: \`node _build/build.mjs && node _build/audit.cjs && node _build/shoot.cjs\`.
+- \`docs/progress/evidence/plantillas-prototipos/\`: capturas (base 390/1280, anchos 320–1024, barra a 320/360, estados, filmstrips, dibujos) y README.
+- \`_build/\`: generador (\`build.mjs\`), tokens y contraste (\`tokens.mjs\`), dibujos (\`drawings.mjs\`), fotos de ejemplo (\`photos.mjs\`), auditoría (\`audit.cjs\`, \`audit.json\`, \`contraste-dom.json\`), capturas (\`shoot.cjs\`). Regenerar: \`node _build/build.mjs && node _build/audit.cjs && node _build/fichas.mjs && node _build/shoot.cjs\`.
 `;
 writeFileSync(new URL('../FICHAS.md', import.meta.url), md);
 console.log('FICHAS.md', md.length);

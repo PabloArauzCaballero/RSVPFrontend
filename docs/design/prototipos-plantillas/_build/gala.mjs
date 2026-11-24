@@ -1,6 +1,6 @@
-import { page, ico } from './shared.mjs';
+import { page, ico, ctaHtml, barHtml, rsvpBtn, giftBtn, giftCopy, rsvpCopy, photoErr } from './shared.mjs';
 import { drawing } from './drawings.mjs';
-import { photoGala } from './photos.mjs';
+import { photoGala, phTag } from './photos.mjs';
 
 const SLUG = 'altiplano-25';
 let n = 0;
@@ -11,7 +11,7 @@ const fan = (side) => { const cx = side === 'l' ? 100 : 0; let d = ''; for (let 
 const chev = '<svg class="ic pm" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke-linejoin="miter" stroke-linecap="butt"/></svg>';
 
 const css = `
-:root{--disp:'Bodoni Moda','Didot',Georgia,serif;--sans:'Jost','Futura',system-ui,sans-serif}
+:root{--disp:'Bodoni Moda','Didot',Georgia,serif;--sans:'Jost','Futura',system-ui,sans-serif;--r:0px}
 body{font:400 15.5px/1.62 var(--sans)}
 @media (min-width:900px){body{font-size:16px}}
 h1,h2,h3{font-family:var(--disp);font-weight:500;letter-spacing:-.005em;margin:0;text-wrap:balance}
@@ -92,11 +92,9 @@ details p{padding:0 0 18px;color:var(--muted);font-size:15px;max-width:50ch}
 .rec h3{font-size:25px}
 .rec .meta{color:var(--muted);font-size:15px}
 .rec a{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-weight:500;color:var(--accent);text-underline-offset:4px}
-.gifts,.rsvp{display:grid;gap:18px;justify-items:start}
+.sec .gifts,.sec .rsvp,.gifts,.rsvp{display:grid;gap:18px;justify-items:start}
 .gifts .dr{width:120px}.rsvp .dr{width:110px}
 .gifts .btn,.rsvp .btn{min-height:54px;padding:0 28px;font-size:16.5px}
-.rsvp .alt{font-size:15px;color:var(--muted)}
-.rsvp .alt a{display:inline-flex;align-items:center;min-height:44px}
 footer{padding:44px 22px 40px;border-top:1px solid var(--line);display:grid;gap:14px;justify-items:center;text-align:center}
 footer ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;justify-content:center}
 footer li a{display:inline-flex;align-items:center;min-height:44px;padding:0 10px;color:var(--text);font-size:15px}
@@ -116,30 +114,34 @@ footer small a{color:var(--muted);display:inline-flex;align-items:center;min-hei
 @keyframes openR{from{transform:none}to{transform:translateX(102%)}}
 @keyframes settle{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@media (min-width:1200px){.idx{display:flex;gap:2px;margin:0 auto}.idx a{display:inline-flex;align-items:center;min-height:44px;padding:0 10px;color:var(--text);text-decoration:none;font-size:15px}.idx a:hover{color:var(--accent)}}
 /* escritorio: eje de simetría con tres columnas (P9) */
 @media (min-width:900px){
  .top{padding:0 56px;min-height:72px}
  .top .date{display:none}
- .idx{display:flex;gap:2px;margin:0 auto}
- .idx a{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;color:var(--text);text-decoration:none;font-size:15px}
- .idx a:hover{color:var(--accent)}
- .cover{grid-template-columns:1fr minmax(0,440px) 1fr;align-items:center;column-gap:56px;padding:72px 96px 88px;max-width:1280px;margin:0 auto;min-height:calc(100svh - 72px);justify-items:stretch}
+ .cover{grid-template-columns:1fr minmax(0,440px) 1fr;align-items:center;column-gap:56px;padding:56px 96px 64px;max-width:1280px;margin:0 auto;min-height:calc(100svh - 72px);justify-items:stretch}
  .corner{width:64px;height:64px}.c-tl{top:24px;left:40px}.c-tr{top:24px;right:40px}.c-bl{bottom:24px;left:40px}.c-br{bottom:24px;right:40px}
  .hero{grid-column:2;grid-row:1;gap:24px}
  .cover{grid-template-rows:auto auto}
  .hero .dr{width:190px}
- .photo{width:min(100%,300px);margin:0 12px 12px 0}
+ .photo{width:min(100%,300px);margin:0 12px 36px 0}
  .title{grid-column:2;grid-row:2}
  .title .n{font-size:176px}.title .y{font-size:34px}
- .facts{grid-row:1/3;align-self:center}
+ .facts{grid-row:1/3;align-self:start;margin-top:170px}
  .facts.l{grid-column:1;justify-items:end;text-align:right}
  .facts.r{grid-column:3;justify-items:start;text-align:left}
  .when{font-size:30px}.where{font-size:17px}
- .sec{max-width:980px;padding:40px 48px 104px}
+ .sec{max-width:980px;padding:32px 48px 80px}
  .sec>h2{font-size:56px;margin-bottom:28px}
  .sep{width:360px;margin-bottom:36px}
  .sec .body{max-width:680px;margin:0 auto}
  .sec .wide{max-width:900px}
+ .cols{display:grid;grid-template-columns:1fr 1fr;column-gap:56px;align-items:start}
+ .cols .mile{margin:0}
+ .faq2{display:grid;grid-template-columns:1fr 1fr;column-gap:48px;align-items:start;border-top:1px solid var(--line)}
+ .faq2 details{border-top:0;border-bottom:1px solid var(--line)}
+ .rec2{display:grid;grid-template-columns:1fr 1fr;column-gap:48px}
+ .rec2 li{border-bottom:1px solid var(--line)}
  .lead{font-size:20px}
  .prog li{grid-template-columns:130px 1fr 80px;padding:20px 0}.prog time{font-size:38px}.prog strong{font-size:19px}.prog .dr{width:80px}
  .mile div{grid-template-columns:110px 1fr}.mile dt{font-size:32px}
@@ -148,7 +150,7 @@ footer small a{color:var(--muted);display:inline-flex;align-items:center;min-hei
  .sw li{width:84px}.sw i{width:56px;height:56px}
  summary{font-size:23px}
  .gifts,.rsvp{grid-template-columns:150px 1fr;column-gap:36px;align-items:center}
- .gifts .dr,.rsvp .dr{grid-row:1/4;width:150px}
+ .gifts .dr,.rsvp .dr{grid-row:1/span 4;width:150px}
  footer{padding:56px}
 }
 `;
@@ -164,7 +166,7 @@ const body = `
 <a class="skip" href="#main">Saltar al contenido</a>
 <header class="top"><a class="mark" href="#inicio" aria-label="Grupo Altiplano, 25 años, inicio"><b>25</b><small>Grupo Altiplano</small></a><span class="date">05 · 03 · 2027</span>
  <nav class="idx" aria-label="Secciones">${nav.map(([h, t]) => `<a href="#${h}">${t}</a>`).join('')}</nav>
- <div class="cta"><a class="btn btn-alt" href="/c/${SLUG}/regalos">${ico.gift}Ver regalos</a><a class="btn btn-main" href="#confirmar">${ico.check}Confirmar asistencia</a></div>
+ ${ctaHtml(SLUG)}
 </header>
 <main id="main">
 <section class="cover" id="inicio" aria-labelledby="t">
@@ -172,7 +174,7 @@ const body = `
  <div class="facts l"><p class="when">Viernes<br>5 de marzo de 2027</p><p class="where">Cena de gala · 20:00</p></div>
  <div class="hero">
   <div class="no-photo">${drawing('coupe')}</div>
-  <div class="photo has-photo"><div class="in"><div class="ph-wrap" data-par="-0.05">${photoGala()}</div></div></div>
+  <div class="photo has-photo"><div class="in"><div class="ph-wrap" data-par="-0.05">${photoGala()}</div>${phTag}${photoErr()}</div></div>
  </div>
  <h1 class="title" id="t"><span class="n">25</span><span class="y">años de Grupo Altiplano</span><span class="g">Una noche para celebrarlos juntos</span></h1>
  <div class="facts r"><p class="when">Salón Cumbre</p><p class="where">Hotel Cruz del Este · Equipetrol<br>Santa Cruz de la Sierra</p><p class="count" data-count="2027-03-05T20:00:00-04:00">Faltan 101 días</p></div>
@@ -181,8 +183,8 @@ const body = `
 
 <section class="sec" id="historia" aria-labelledby="h-historia">${sep()}
  <h2 id="h-historia">Veinticinco años</h2>
- <div class="body"><p class="lead rv">En 2002 abrimos una oficina de dos escritorios en la calle Sucre, en La Paz. Hoy somos 480 personas en cinco ciudades.</p>
- <p class="rv" style="--d:70ms">Esta noche celebramos a quienes lo hicieron posible: clientes, aliados y el equipo que sostiene cada entrega.</p>
+ <div class="body wide cols"><div><p class="lead rv">En 2002 abrimos una oficina de dos escritorios en la calle Sucre, en La Paz. Hoy somos 480 personas en cinco ciudades.</p>
+ <p class="rv" style="--d:70ms">Esta noche celebramos a quienes lo hicieron posible: clientes, aliados y el equipo que sostiene cada entrega.</p></div>
  <dl class="mile rv" style="--d:110ms"><div><dt>2002</dt><dd>Primera oficina en La Paz</dd></div><div><dt>2009</dt><dd>Apertura en Santa Cruz de la Sierra</dd></div><div><dt>2016</dt><dd>Centro logístico en El Alto</dd></div><div><dt>2021</dt><dd>Operación en cinco ciudades</dd></div></dl></div>
 </section>
 
@@ -209,12 +211,12 @@ const body = `
 
 <section class="sec" id="preguntas" aria-labelledby="h-preguntas">${sep()}
  <h2 id="h-preguntas">Preguntas</h2>
- <div class="body">${faq.map(([q, a], i) => `<details class="rv"${i === 0 ? ' open' : ''} style="--d:${i * 50}ms"><summary>${q}${chev}</summary><p>${a}</p></details>`).join('')}</div>
+ <div class="body wide faq2">${faq.map(([q, a], i) => `<details class="rv"${i === 0 ? ' open' : ''} style="--d:${i * 50}ms"><summary>${q}${chev}</summary><p>${a}</p></details>`).join('')}</div>
 </section>
 
 <section class="sec" id="recomendaciones" aria-labelledby="h-rec">${sep()}
  <h2 id="h-rec">Recomendados</h2>
- <div class="body"><ul class="rec">
+ <div class="body wide"><ul class="rec rec2">
   <li class="rv"><h3>Hotel Plaza Norte</h3><span class="meta">Hospedaje · tarifa corporativa desde Bs 520 por noche</span><a href="/r/lst_e5b013" rel="sponsored noopener">Ver hospedaje${ico.arrow}</a></li>
   <li class="rv" style="--d:70ms"><h3>Traslados Ejecutivos Viru Viru</h3><span class="meta">Transporte · aeropuerto, hotel y salón, con chofer</span><a href="/r/lst_36f8d4" rel="sponsored noopener">Ver transporte${ico.arrow}</a></li>
  </ul><small class="muted" style="display:block;margin-top:12px;font-size:13px">Los enlaces pasan por DOne, que puede recibir una comisión del proveedor.</small></div>
@@ -222,19 +224,19 @@ const body = `
 
 <section class="sec" id="regalos" aria-labelledby="h-regalos">${sep()}
  <h2 id="h-regalos">Regalos</h2>
- <div class="body gifts">${drawing('gift')}<p class="lead rv">Si quieres obsequiar algo por los 25 años, dejamos una lista con aportes a la Fundación Altiplano y detalles para el equipo.</p><a class="btn btn-main" href="/c/${SLUG}/regalos">${ico.gift}Ver regalos</a></div>
+ <div class="body gifts">${drawing('gift')}${giftCopy({ lead: 'Si quieres obsequiar algo por los 25 años, dejamos una lista con aportes a la Fundación Altiplano y detalles para el equipo.' })}${giftBtn(SLUG, 'btn-main')}</div>
 </section>
 
 <section class="sec" id="confirmar" aria-labelledby="h-conf">${sep()}
  <h2 id="h-conf">Confirma tu asistencia</h2>
- <div class="body rsvp">${drawing('badge')}<p class="lead rv">Los cupos son limitados. Responde antes del 19 de febrero y recibirás tu código de acceso.</p><a class="btn btn-main" href="/c/${SLUG}/rsvp">${ico.check}Confirmar asistencia</a><p class="alt">¿No encuentras tu enlace personal? <a href="/c/${SLUG}/enlace">Recupéralo aquí</a></p></div>
+ <div class="body rsvp">${drawing('badge')}${rsvpCopy({ ok: 'Los cupos son limitados. Responde antes del 19 de febrero y recibirás tu código de acceso.', past: 'El plazo para confirmar terminó el 19 de febrero. Si necesitas cambiar tu respuesta, escribe a la organización.' })}${rsvpBtn(SLUG)}</div>
 </section>
 </main>
 <footer><ul aria-label="Índice">${nav.map(([h, t]) => `<li><a href="#${h}">${t}</a></li>`).join('')}</ul><small>Hecho con DOne. <a href="/c/${SLUG}/denunciar">Denunciar esta página</a></small></footer>
-<div class="bar" role="region" aria-label="Acciones principales"><a class="btn btn-alt" href="/c/${SLUG}/regalos">${ico.gift}Ver regalos</a><a class="btn btn-main" href="#confirmar">${ico.check}Confirmar asistencia</a></div>
+${barHtml(SLUG)}
 `;
 export default page({
-  name: 'gala', title: 'Prototipo · Gala dorada · DOne',
+  name: 'gala', title: 'Prototipo · Gala art déco · DOne',
   fonts: 'family=Bodoni+Moda:opsz,wght@6..96,500;6..96,600&family=Jost:wght@400;500',
-  css, body
+  css, body, slug: SLUG
 });

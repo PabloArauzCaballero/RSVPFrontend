@@ -1,0 +1,500 @@
+{
+ "marfil|light": [
+  {
+   "fg": "#665C52",
+   "bg": "#FBF7F0",
+   "large": false,
+   "need": 4.5,
+   "ratio": 6.111407490696729,
+   "sample": "20 · 03 · 2027",
+   "n": 1253
+  },
+  {
+   "fg": "#7A5230",
+   "bg": "#FBF7F0",
+   "large": false,
+   "need": 4.5,
+   "ratio": 6.390534695867315,
+   "sample": "&",
+   "n": 294
+  },
+  {
+   "fg": "#7A5230",
+   "bg": "#FBF7F0",
+   "large": true,
+   "need": 3,
+   "ratio": 6.39053863472353,
+   "sample": "&",
+   "n": 392
+  },
+  {
+   "fg": "#665C52",
+   "bg": "#FFFEFA",
+   "large": false,
+   "need": 4.5,
+   "ratio": 6.4671810884764716,
+   "sample": "Foto de ejemplo",
+   "n": 31
+  },
+  {
+   "fg": "#FFFDF8",
+   "bg": "#7A5230",
+   "large": false,
+   "need": 4.5,
+   "ratio": 6.7132984711862855,
+   "sample": "Saltar al contenido",
+   "n": 196
+  },
+  {
+   "fg": "#7A5230",
+   "bg": "#FFFEFA",
+   "large": false,
+   "need": 4.5,
+   "ratio": 6.762557593038878,
+   "sample": "Reintentar",
+   "n": 20
+  },
+  {
+   "fg": "#2B2622",
+   "bg": "#FBF7F0",
+   "large": true,
+   "need": 3,
+   "ratio": 14.01533998801275,
+   "sample": "A",
+   "n": 938
+  },
+  {
+   "fg": "#2B2622",
+   "bg": "#FBF7F0",
+   "large": false,
+   "need": 4.5,
+   "ratio": 14.01534862647755,
+   "sample": "Sábado 20 de marzo de 2027, ",
+   "n": 1271
+  },
+  {
+   "fg": "#2B2622",
+   "bg": "#FFFEFA",
+   "large": false,
+   "need": 4.5,
+   "ratio": 14.831238443357465,
+   "sample": "La lista de regalos está cer",
+   "n": 15
+  }
+ ],
+ "marfil|dark": [
+  {
+   "fg": "#1A120B",
+   "bg": "#C9966A",
+   "large": false,
+   "need": 4.5,
+   "ratio": 7.094444145917715,
+   "sample": "Saltar al contenido",
+   "n": 196
+  },
+  {
+   "fg": "#B3A592",
+   "bg": "#201912",
+   "large": false,
+   "need": 4.5,
+   "ratio": 7.206288863618936,
+   "sample": "Foto de ejemplo",
+   "n": 31
+  },
+  {
+   "fg": "#B3A592",
+   "bg": "#16110D",
+   "large": false,
+   "need": 4.5,
+   "ratio": 7.779495957136319,
+   "sample": "20 · 03 · 2027",
+   "n": 1253
+  },
+  {
+   "fg": "#DDAE7E",
+   "bg": "#201912",
+   "large": false,
+   "need": 4.5,
+   "ratio": 8.625624616805863,
+   "sample": "Reintentar",
+   "n": 20
+  },
+  {
+   "fg": "#DDAE7E",
+   "bg": "#16110D",
+   "large": false,
+   "need": 4.5,
+   "ratio": 9.311729394166719,
+   "sample": "&",
+   "n": 294
+  },
+  {
+   "fg": "#DDAE7E",
+   "bg": "#16110D",
+   "large": true,
+   "need": 3,
+   "ratio": 9.311729769817346,
+   "sample": "&",
+   "n": 392
+  },
+  {
+   "fg": "#EFE5D6",
+   "bg": "#201912",
+   "large": false,
+   "need": 4.5,
+   "ratio": 13.93388080452637,
+   "sample": "La lista de regalos está cer",
+   "n": 15
+  },
+  {
+   "fg": "#EFE5D6",
+   "bg": "#16110D",
+   "large": true,
+   "need": 3,
+   "ratio": 15.042218184353413,
+   "sample": "A",
+   "n": 938
+  },
+  {
+   "fg": "#EFE5D6",
+   "bg": "#16110D",
+   "large": false,
+   "need": 4.5,
+   "ratio": 15.042218791181472,
+   "sample": "Sábado 20 de marzo de 2027, ",
+   "n": 1271
+  }
+ ],
+ "pinata|light": [
+  {
+   "fg": "#C2330F",
+   "bg": "#FFF9EF",
+   "large": true,
+   "need": 3,
+   "ratio": 5.311898031765111,
+   "sample": "·6",
+   "n": 343
+  },
+  {
+   "fg": "#C2330F",
+   "bg": "#FFF9EF",
+   "large": false,
+   "need": 4.5,
+   "ratio": 5.311898031765111,
+   "sample": "Cómo llegar",
+   "n": 196
+  },
+  {
+   "fg": "#FFFFFF",
+   "bg": "#C2330F",
+   "large": false,
+   "need": 4.5,
+   "ratio": 5.563952576908683,
+   "sample": "Saltar al contenido",
+   "n": 196
+  },
+  {
+   "fg": "#C2330F",
+   "bg": "#FFFFFF",
+   "large": false,
+   "need": 4.5,
+   "ratio": 5.563952576908683,
+   "sample": "Reintentar",
+   "n": 20
+  },
+  {
+   "fg": "#6B5640",
+   "bg": "#FFF9EF",
+   "large": false,
+   "need": 4.5,
+   "ratio": 6.616049856731101,
+   "sample": "19 · 12 · 2026",
+   "n": 1106
+  },
+  {
+   "fg": "#6B5640",
+   "bg": "#FFFFFF",
+   "large": false,
+   "need": 4.5,
+   "ratio": 6.929987629503335,
+   "sample": "Foto de ejemplo",
+   "n": 31
+  },
+  {
+   "fg": "#2E2012",
+   "bg": "#FFF9EF",
+   "large": true,
+   "need": 3,
+   "ratio": 15.0571205442726,
+   "sample": "Sofi",
+   "n": 666
+  },
+  {
+   "fg": "#2E2012",
+   "bg": "#FFF9EF",
+   "large": false,
+   "need": 4.5,
+   "ratio": 15.0571205442726,
+   "sample": "Sábado 19 de diciembre, 15:0",
+   "n": 1298
+  },
+  {
+   "fg": "#2E2012",
+   "bg": "#FFFFFF",
+   "large": false,
+   "need": 4.5,
+   "ratio": 15.771595040443875,
+   "sample": "La lista de regalos está cer",
+   "n": 15
+  }
+ ],
+ "pinata|dark": [
+  {
+   "fg": "#FF9276",
+   "bg": "#271B18",
+   "large": false,
+   "need": 4.5,
+   "ratio": 7.661938448953788,
+   "sample": "Reintentar",
+   "n": 20
+  },
+  {
+   "fg": "#C2AD9C",
+   "bg": "#271B18",
+   "large": false,
+   "need": 4.5,
+   "ratio": 7.762397739210178,
+   "sample": "Foto de ejemplo",
+   "n": 31
+  },
+  {
+   "fg": "#FF9276",
+   "bg": "#1B1210",
+   "large": true,
+   "need": 3,
+   "ratio": 8.438625608875,
+   "sample": "·6",
+   "n": 343
+  },
+  {
+   "fg": "#FF9276",
+   "bg": "#1B1210",
+   "large": false,
+   "need": 4.5,
+   "ratio": 8.438625608875,
+   "sample": "Cómo llegar",
+   "n": 196
+  },
+  {
+   "fg": "#C2AD9C",
+   "bg": "#1B1210",
+   "large": false,
+   "need": 4.5,
+   "ratio": 8.54926841096156,
+   "sample": "19 · 12 · 2026",
+   "n": 1106
+  },
+  {
+   "fg": "#2B0F08",
+   "bg": "#FFB5A0",
+   "large": false,
+   "need": 4.5,
+   "ratio": 10.530942815702604,
+   "sample": "Saltar al contenido",
+   "n": 196
+  },
+  {
+   "fg": "#F6E9DD",
+   "bg": "#271B18",
+   "large": false,
+   "need": 4.5,
+   "ratio": 14.02468237252485,
+   "sample": "La lista de regalos está cer",
+   "n": 15
+  },
+  {
+   "fg": "#F6E9DD",
+   "bg": "#1B1210",
+   "large": true,
+   "need": 3,
+   "ratio": 15.446357943698462,
+   "sample": "Sofi",
+   "n": 666
+  },
+  {
+   "fg": "#F6E9DD",
+   "bg": "#1B1210",
+   "large": false,
+   "need": 4.5,
+   "ratio": 15.446357943698462,
+   "sample": "Sábado 19 de diciembre, 15:0",
+   "n": 1298
+  }
+ ],
+ "gala|light": [
+  {
+   "fg": "#57524D",
+   "bg": "#F5F3EE",
+   "large": false,
+   "need": 4.5,
+   "ratio": 6.9639757202196995,
+   "sample": "Grupo Altiplano",
+   "n": 1155
+  },
+  {
+   "fg": "#57524D",
+   "bg": "#FFFFFF",
+   "large": false,
+   "need": 4.5,
+   "ratio": 7.722493105238988,
+   "sample": "Foto de ejemplo",
+   "n": 21
+  },
+  {
+   "fg": "#7B2A3C",
+   "bg": "#F5F3EE",
+   "large": true,
+   "need": 3,
+   "ratio": 8.459361637579349,
+   "sample": "25",
+   "n": 490
+  },
+  {
+   "fg": "#7B2A3C",
+   "bg": "#F5F3EE",
+   "large": false,
+   "need": 4.5,
+   "ratio": 8.459361637579349,
+   "sample": "Una noche para celebrarlos j",
+   "n": 245
+  },
+  {
+   "fg": "#FFFFFF",
+   "bg": "#7B2A3C",
+   "large": false,
+   "need": 4.5,
+   "ratio": 9.380756703567135,
+   "sample": "Saltar al contenido",
+   "n": 196
+  },
+  {
+   "fg": "#7B2A3C",
+   "bg": "#FFFFFF",
+   "large": false,
+   "need": 4.5,
+   "ratio": 9.380756703567135,
+   "sample": "Reintentar",
+   "n": 10
+  },
+  {
+   "fg": "#14130F",
+   "bg": "#F5F3EE",
+   "large": false,
+   "need": 4.5,
+   "ratio": 16.761804378073084,
+   "sample": "Viernes",
+   "n": 1374
+  },
+  {
+   "fg": "#14130F",
+   "bg": "#F5F3EE",
+   "large": true,
+   "need": 3,
+   "ratio": 16.761804378073084,
+   "sample": "25",
+   "n": 679
+  },
+  {
+   "fg": "#14130F",
+   "bg": "#FFFFFF",
+   "large": false,
+   "need": 4.5,
+   "ratio": 18.587502877874826,
+   "sample": "La lista de regalos está cer",
+   "n": 15
+  }
+ ],
+ "gala|dark": [
+  {
+   "fg": "#AEB3A5",
+   "bg": "#161D1A",
+   "large": false,
+   "need": 4.5,
+   "ratio": 7.994188322534221,
+   "sample": "Foto de ejemplo",
+   "n": 21
+  },
+  {
+   "fg": "#E6A3B1",
+   "bg": "#161D1A",
+   "large": false,
+   "need": 4.5,
+   "ratio": 8.359352366170368,
+   "sample": "Reintentar",
+   "n": 10
+  },
+  {
+   "fg": "#AEB3A5",
+   "bg": "#0E1311",
+   "large": false,
+   "need": 4.5,
+   "ratio": 8.742709689830829,
+   "sample": "Grupo Altiplano",
+   "n": 1155
+  },
+  {
+   "fg": "#E6A3B1",
+   "bg": "#0E1311",
+   "large": true,
+   "need": 3,
+   "ratio": 9.142065208348749,
+   "sample": "25",
+   "n": 490
+  },
+  {
+   "fg": "#E6A3B1",
+   "bg": "#0E1311",
+   "large": false,
+   "need": 4.5,
+   "ratio": 9.142065208348749,
+   "sample": "Una noche para celebrarlos j",
+   "n": 245
+  },
+  {
+   "fg": "#1A0B10",
+   "bg": "#E6A3B1",
+   "large": false,
+   "need": 4.5,
+   "ratio": 9.313735102495478,
+   "sample": "Saltar al contenido",
+   "n": 196
+  },
+  {
+   "fg": "#ECE9E4",
+   "bg": "#161D1A",
+   "large": false,
+   "need": 4.5,
+   "ratio": 14.159662316981676,
+   "sample": "La lista de regalos está cer",
+   "n": 15
+  },
+  {
+   "fg": "#ECE9E4",
+   "bg": "#0E1311",
+   "large": false,
+   "need": 4.5,
+   "ratio": 15.485476692418539,
+   "sample": "Viernes",
+   "n": 1374
+  },
+  {
+   "fg": "#ECE9E4",
+   "bg": "#0E1311",
+   "large": true,
+   "need": 3,
+   "ratio": 15.485476692418539,
+   "sample": "25",
+   "n": 679
+  }
+ ]
+}

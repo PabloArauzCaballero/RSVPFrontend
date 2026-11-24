@@ -108,7 +108,7 @@ export function drawing(name, { cls = '' } = {}) {
 export const DRAWINGS = Object.keys(D);
 export const DRAWING_CSS = `
 .dr{display:block;width:100%;height:auto;overflow:visible}
-.dr .g-ground{fill:var(--stone)}.dr .g-shadow{fill:var(--shadow)}.dr .g-stone{fill:var(--stone2)}
+.dr .g-ground{fill:var(--disc)}.dr .g-shadow{fill:var(--shadow)}.dr .g-stone{fill:var(--stone2)}
 .dr .g-solid{fill:var(--ink)}.dr .g-eo{fill:var(--ink);fill-rule:evenodd}
 .dr .g-soft{fill:var(--fill)}.dr .g-softEo{fill:var(--fill);fill-rule:evenodd}
 .dr .g-knockFill{fill:var(--knock)}
