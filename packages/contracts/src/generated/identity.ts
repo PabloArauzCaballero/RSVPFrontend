@@ -1142,6 +1142,17 @@ export interface operations {
                 };
             };
             422: components["responses"]["Validation"];
+            /** @description Too many failed sign-ins for this e-mail (problem type too-many-attempts), the same for existing and unknown accounts. Also Kong's per-IP limit. */
+            429: {
+                headers: {
+                    /** @description Seconds until the e-mail may try again. */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     logout: {

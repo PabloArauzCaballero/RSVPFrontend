@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "RSVP Template and Media API",
-    "version": "1.1.0",
-    "description": "Template/Media Service (lane 16, Django + DRF). Behind Kong at /media (prefix stripped). Errors are RFC 9457 problems. 1.1.0 (F1, additive): a template theme is either the v1 theme (unchanged) or the invitation design document v2 (DesignDocumentV2, schemaVersion 2), validated against this contract; a v2 without the gifts block is 422 GIFTS_BLOCK_REQUIRED and low-contrast colour pairs come back as non-blocking warnings (P19)."
+    "version": "1.2.0",
+    "description": "Template/Media Service (lane 16, Django + DRF). Behind Kong at /media (prefix stripped). Errors are RFC 9457 problems. 1.2.0 (F1, additive; the unmerged 1.1.0 of the same change set is superseded): a template theme is either the v1 theme (unchanged) or the invitation design document v2 (DesignDocumentV2, schemaVersion 2), validated against this contract. A v2 without the gifts block is 422 GIFTS_BLOCK_REQUIRED; the mandatory gifts button cannot be redirected, hidden, shrunk below 44 px, moved out of the canvas, covered or left unreadable (GIFTS_BLOCK_LOCKED, GIFTS_BLOCK_HIDDEN, GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL, GIFTS_BLOCK_COVERED, GIFTS_BLOCK_LOW_CONTRAST). A v2 stays a draft until the renderer supports it: publishing one is 422 DESIGN_NOT_PUBLISHABLE. Custom HTML/CSS is 422 CUSTOM_CODE_UNAVAILABLE until the F5 sanitiser exists. A JSON body over 1 MB is 413 PAYLOAD_TOO_LARGE. Low-contrast colour pairs come back as non-blocking warnings (P19)."
   },
   "servers": [
     {
@@ -106,7 +106,7 @@
             }
           },
           "400": {
-            "description": "Body shape invalid",
+            "description": "Body shape invalid, or a document nested too deeply to parse",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -127,6 +127,16 @@
           },
           "403": {
             "description": "Not an admin",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The JSON body is larger than 1 MB (PAYLOAD_TOO_LARGE; limit MAX_JSON_BODY_BYTES)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -263,8 +273,8 @@
               }
             }
           },
-          "428": {
-            "description": "If-Match required",
+          "413": {
+            "description": "The JSON body is larger than 1 MB (PAYLOAD_TOO_LARGE; limit MAX_JSON_BODY_BYTES)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -274,11 +284,21 @@
             }
           },
           "422": {
-            "description": "Invalid theme or design (see DesignProblem)",
+            "description": "Invalid theme or design (see DesignProblem); editing a PUBLISHED template into a v2 is DESIGN_NOT_PUBLISHABLE",
             "content": {
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/DesignProblem"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "If-Match required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -328,6 +348,16 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A design document v2 cannot be published yet (DESIGN_NOT_PUBLISHABLE): it stays a draft until the renderer supports it (F4/F5)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DesignProblem"
                 }
               }
             }
@@ -2138,7 +2168,17 @@
                 ]
               }
             }
-          ]
+          ],
+          "preconnect": [
+            {
+              "href": "https://fonts.googleapis.com"
+            },
+            {
+              "href": "https://fonts.gstatic.com",
+              "crossorigin": true
+            }
+          ],
+          "description": "Curated families with their exact weights, tested pairs and the origins to preconnect before the stylesheet (PL-M10). The renderer loads only the weights a document uses (F6)."
         }
       },
       "FontRole": {
@@ -2717,7 +2757,7 @@
             "type": "number",
             "minimum": -180,
             "maximum": 180,
-            "description": "Degrees; default 0"
+            "description": "Degrees; default 0. The gifts block is never rotated (422 GIFTS_BLOCK_LOCKED)."
           },
           "z": {
             "type": "integer",
@@ -2727,7 +2767,7 @@
           },
           "visible": {
             "type": "boolean",
-            "description": "Visibility in this canvas. The gifts block can never be hidden (P22)."
+            "description": "Visibility in this canvas. The gifts block can never be hidden (422 GIFTS_BLOCK_HIDDEN)."
           },
           "padding": {
             "$ref": "#/components/schemas/DesignBox"
@@ -2750,7 +2790,7 @@
             "type": "number",
             "minimum": 0,
             "maximum": 1,
-            "description": "Default 1"
+            "description": "Default 1. The gifts block is always 1 (422 GIFTS_BLOCK_HIDDEN)."
           },
           "typography": {
             "$ref": "#/components/schemas/DesignTypographyOverride"
@@ -2759,7 +2799,8 @@
             "$ref": "#/components/schemas/DesignAnimation"
           },
           "link": {
-            "$ref": "#/components/schemas/DesignLink"
+            "$ref": "#/components/schemas/DesignLink",
+            "description": "Destination of the element. Not allowed on the element that places the gifts block: its destination is always /c/{slug}/regalos (422 GIFTS_BLOCK_LOCKED)."
           }
         },
         "required": [
@@ -2771,7 +2812,7 @@
           "h",
           "visible"
         ],
-        "description": "One placed block. Coordinates are grid units of its canvas."
+        "description": "One placed block. Coordinates are grid units of its canvas. A canvas is columns x rowHeight px and ends 4000 px below its top; an element lies inside it. The gifts element is at least 44 x 44 px (reference widths 320 px mobile, 768 px desktop, capped by contentMaxWidth), is not covered by a visible element that paints over it (higher z, or the same z and later in the list) and reads at 4.5:1 for its text and 3:1 for its contour in both palettes."
       },
       "DesignCanvas": {
         "type": "object",
@@ -2953,7 +2994,7 @@
           "required": {
             "type": "boolean",
             "const": true,
-            "description": "Mandatory block (P22): it can be moved and restyled, never removed or hidden."
+            "description": "Mandatory block (P22): it can be moved, resized and restyled, never removed, hidden, covered or redirected."
           },
           "config": {
             "type": "object",
@@ -3747,30 +3788,80 @@
             "const": "music"
           },
           "config": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "source": {
-                "type": "string",
-                "enum": [
-                  "spotify",
-                  "youtube",
-                  "media"
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "source": {
+                    "type": "string",
+                    "const": "youtube"
+                  },
+                  "ref": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "pattern": "^(?:https://(?:www\\.|music\\.|m\\.)?youtube\\.com/|https://youtu\\.be/)[A-Za-z0-9_\\-./?=&%]{1,150}$",
+                    "description": "https link to YouTube or YouTube Music."
+                  },
+                  "rightsAcknowledged": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "source",
+                  "ref"
                 ]
               },
-              "ref": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 200
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "source": {
+                    "type": "string",
+                    "const": "spotify"
+                  },
+                  "ref": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "pattern": "^https://open\\.spotify\\.com/(?:intl-[a-z]{2}/)?(?:track|album|playlist|episode|show|artist)/[A-Za-z0-9]{1,64}(?:\\?[A-Za-z0-9_\\-=&%.]{0,100})?$",
+                    "description": "https link to a Spotify track, album, playlist, episode, show or artist."
+                  },
+                  "rightsAcknowledged": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "source",
+                  "ref"
+                ]
               },
-              "rightsAcknowledged": {
-                "type": "boolean"
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "source": {
+                    "type": "string",
+                    "const": "media"
+                  },
+                  "ref": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Id of a media asset of the platform. Whether it exists and belongs to the same celebration or template is checked by the design store (BE #135)."
+                  },
+                  "rightsAcknowledged": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "source",
+                  "ref"
+                ]
               }
+            ],
+            "discriminator": {
+              "propertyName": "source"
             },
-            "required": [
-              "source",
-              "ref"
-            ]
+            "description": "The reference is checked against an allowlist per source when saved: never a free string that a renderer could turn into a URL."
           }
         },
         "required": [
@@ -3983,12 +4074,16 @@
               "heading": {
                 "type": "string",
                 "minLength": 1,
-                "maxLength": 200
+                "maxLength": 200,
+                "pattern": "^[A-Za-z0-9 ,'\"-]{1,200}$",
+                "description": "CSS font stack of the v1 template: family names, quotes, commas and hyphens only."
               },
               "body": {
                 "type": "string",
                 "minLength": 1,
-                "maxLength": 200
+                "maxLength": 200,
+                "pattern": "^[A-Za-z0-9 ,'\"-]{1,200}$",
+                "description": "CSS font stack of the v1 template: family names, quotes, commas and hyphens only."
               }
             },
             "required": [
@@ -4327,7 +4422,7 @@
                           "x": 0,
                           "y": 0,
                           "w": 4,
-                          "h": 1,
+                          "h": 6,
                           "visible": true
                         }
                       ]
@@ -4749,7 +4844,7 @@
                           "x": 0,
                           "y": 0,
                           "w": 4,
-                          "h": 1,
+                          "h": 6,
                           "visible": true
                         }
                       ]
@@ -5135,7 +5230,7 @@
                           "x": 0,
                           "y": 0,
                           "w": 4,
-                          "h": 1,
+                          "h": 6,
                           "visible": true
                         }
                       ]
@@ -5534,7 +5629,7 @@
                           "x": 0,
                           "y": 0,
                           "w": 4,
-                          "h": 1,
+                          "h": 6,
                           "visible": true
                         }
                       ]
@@ -5900,7 +5995,7 @@
                           "x": 0,
                           "y": 0,
                           "w": 4,
-                          "h": 1,
+                          "h": 6,
                           "visible": true
                         }
                       ]
@@ -6253,7 +6348,7 @@
                           "x": 0,
                           "y": 0,
                           "w": 4,
-                          "h": 1,
+                          "h": 6,
                           "visible": true
                         }
                       ]
@@ -6677,7 +6772,7 @@
                           "x": 0,
                           "y": 0,
                           "w": 4,
-                          "h": 1,
+                          "h": 6,
                           "visible": true
                         }
                       ]
@@ -7075,7 +7170,7 @@
                           "x": 0,
                           "y": 0,
                           "w": 4,
-                          "h": 1,
+                          "h": 6,
                           "visible": true
                         }
                       ]
@@ -7484,7 +7579,7 @@
                           "x": 0,
                           "y": 0,
                           "w": 4,
-                          "h": 1,
+                          "h": 6,
                           "visible": true
                         }
                       ]
@@ -7878,7 +7973,7 @@
                           "x": 0,
                           "y": 0,
                           "w": 4,
-                          "h": 1,
+                          "h": 6,
                           "visible": true
                         }
                       ]
@@ -8277,7 +8372,7 @@
                           "x": 0,
                           "y": 0,
                           "w": 4,
-                          "h": 1,
+                          "h": 6,
                           "visible": true
                         }
                       ]
@@ -8670,7 +8765,7 @@
                           "x": 0,
                           "y": 0,
                           "w": 4,
-                          "h": 1,
+                          "h": 6,
                           "visible": true
                         }
                       ]
@@ -9063,7 +9158,7 @@
                           "x": 0,
                           "y": 0,
                           "w": 4,
-                          "h": 1,
+                          "h": 6,
                           "visible": true
                         }
                       ]
@@ -9456,7 +9551,7 @@
                           "x": 0,
                           "y": 0,
                           "w": 4,
-                          "h": 1,
+                          "h": 6,
                           "visible": true
                         }
                       ]
@@ -9822,7 +9917,7 @@
                           "x": 0,
                           "y": 0,
                           "w": 4,
-                          "h": 1,
+                          "h": 6,
                           "visible": true
                         }
                       ]
@@ -10197,7 +10292,7 @@
                           "x": 0,
                           "y": 0,
                           "w": 4,
-                          "h": 1,
+                          "h": 6,
                           "visible": true
                         }
                       ]
@@ -10315,6 +10410,521 @@
             },
             "warnings": []
           }
+        ],
+        "x-rsvp-warning-goldens": [
+          {
+            "key": "claro-pasteles",
+            "palettes": {
+              "light": {
+                "canvas": "#FBF7F0",
+                "surface": "#FFFFFF",
+                "text": "#2B2622",
+                "muted": "#B8B0A8",
+                "accent": "#E8E0D0",
+                "accentFill": "#E8D8B8",
+                "onAccent": "#FFFFFF",
+                "line": "#DDD6CC"
+              },
+              "dark": {
+                "canvas": "#141218",
+                "surface": "#1E1C22",
+                "text": "#ECE6EE",
+                "muted": "#B9B1BF",
+                "accent": "#C9A27A",
+                "accentFill": "#865E36",
+                "onAccent": "#FFFFFF",
+                "line": "#3A3640"
+              }
+            },
+            "warnings": [
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "light",
+                "foreground": "muted",
+                "background": "canvas",
+                "ratio": 2.0,
+                "minimum": 4.5,
+                "suggestion": "#6E6A65"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "light",
+                "foreground": "muted",
+                "background": "surface",
+                "ratio": 2.14,
+                "minimum": 4.5,
+                "suggestion": "#78726D"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "light",
+                "foreground": "accent",
+                "background": "canvas",
+                "ratio": 1.23,
+                "minimum": 4.5,
+                "suggestion": "#747068"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "light",
+                "foreground": "accent",
+                "background": "surface",
+                "ratio": 1.31,
+                "minimum": 4.5,
+                "suggestion": "#747068"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "light",
+                "foreground": "onAccent",
+                "background": "accentFill",
+                "ratio": 1.41,
+                "minimum": 4.5,
+                "suggestion": "#595959"
+              }
+            ]
+          },
+          {
+            "key": "oscuro-apagado",
+            "palettes": {
+              "light": {
+                "canvas": "#FBF7F0",
+                "surface": "#FFFFFF",
+                "text": "#2B2622",
+                "muted": "#6F665D",
+                "accent": "#865E36",
+                "accentFill": "#865E36",
+                "onAccent": "#FFFFFF",
+                "line": "#DDD6CC"
+              },
+              "dark": {
+                "canvas": "#141218",
+                "surface": "#1E1C22",
+                "text": "#55505A",
+                "muted": "#3F3A44",
+                "accent": "#4A4550",
+                "accentFill": "#352F3A",
+                "onAccent": "#2A2630",
+                "line": "#3A3640"
+              }
+            },
+            "warnings": [
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "dark",
+                "foreground": "text",
+                "background": "canvas",
+                "ratio": 2.37,
+                "minimum": 4.5,
+                "suggestion": "#807C83"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "dark",
+                "foreground": "text",
+                "background": "surface",
+                "ratio": 2.15,
+                "minimum": 4.5,
+                "suggestion": "#88858C"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "dark",
+                "foreground": "muted",
+                "background": "canvas",
+                "ratio": 1.68,
+                "minimum": 4.5,
+                "suggestion": "#827F85"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "dark",
+                "foreground": "muted",
+                "background": "surface",
+                "ratio": 1.53,
+                "minimum": 4.5,
+                "suggestion": "#8C898F"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "dark",
+                "foreground": "accent",
+                "background": "canvas",
+                "ratio": 2.0,
+                "minimum": 4.5,
+                "suggestion": "#807D85"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "dark",
+                "foreground": "accent",
+                "background": "surface",
+                "ratio": 1.81,
+                "minimum": 4.5,
+                "suggestion": "#89868D"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "dark",
+                "foreground": "onAccent",
+                "background": "accentFill",
+                "ratio": 1.14,
+                "minimum": 4.5,
+                "suggestion": "#9F9DA2"
+              }
+            ]
+          },
+          {
+            "key": "limite-4-5",
+            "palettes": {
+              "light": {
+                "canvas": "#FFFFFF",
+                "surface": "#FFFFFF",
+                "text": "#767676",
+                "muted": "#777777",
+                "accent": "#757575",
+                "accentFill": "#865E36",
+                "onAccent": "#FFFFFF",
+                "line": "#DDD6CC"
+              },
+              "dark": {
+                "canvas": "#141218",
+                "surface": "#1E1C22",
+                "text": "#ECE6EE",
+                "muted": "#B9B1BF",
+                "accent": "#C9A27A",
+                "accentFill": "#865E36",
+                "onAccent": "#FFFFFF",
+                "line": "#3A3640"
+              }
+            },
+            "warnings": [
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "light",
+                "foreground": "muted",
+                "background": "canvas",
+                "ratio": 4.48,
+                "minimum": 4.5,
+                "suggestion": "#717171"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "light",
+                "foreground": "muted",
+                "background": "surface",
+                "ratio": 4.48,
+                "minimum": 4.5,
+                "suggestion": "#717171"
+              }
+            ]
+          },
+          {
+            "key": "sin-salida-gris",
+            "palettes": {
+              "light": {
+                "canvas": "#808080",
+                "surface": "#7F7F7F",
+                "text": "#818181",
+                "muted": "#7E7E7E",
+                "accent": "#808081",
+                "accentFill": "#7D7D7D",
+                "onAccent": "#848484",
+                "line": "#DDD6CC"
+              },
+              "dark": {
+                "canvas": "#7A7A7A",
+                "surface": "#777777",
+                "text": "#7C7C7C",
+                "muted": "#787878",
+                "accent": "#7B7B7B",
+                "accentFill": "#797979",
+                "onAccent": "#7D7D7D",
+                "line": "#3A3640"
+              }
+            },
+            "warnings": [
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "light",
+                "foreground": "text",
+                "background": "canvas",
+                "ratio": 1.01,
+                "minimum": 4.5,
+                "suggestion": "#131313"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "light",
+                "foreground": "text",
+                "background": "surface",
+                "ratio": 1.03,
+                "minimum": 4.5,
+                "suggestion": "#131313"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "light",
+                "foreground": "muted",
+                "background": "canvas",
+                "ratio": 1.03,
+                "minimum": 4.5,
+                "suggestion": "#131313"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "light",
+                "foreground": "muted",
+                "background": "surface",
+                "ratio": 1.01,
+                "minimum": 4.5,
+                "suggestion": "#131313"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "light",
+                "foreground": "accent",
+                "background": "canvas",
+                "ratio": 1.0,
+                "minimum": 4.5,
+                "suggestion": "#131313"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "light",
+                "foreground": "accent",
+                "background": "surface",
+                "ratio": 1.01,
+                "minimum": 4.5,
+                "suggestion": "#131313"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "light",
+                "foreground": "onAccent",
+                "background": "accentFill",
+                "ratio": 1.1,
+                "minimum": 4.5,
+                "suggestion": "#0D0D0D"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "dark",
+                "foreground": "text",
+                "background": "canvas",
+                "ratio": 1.03,
+                "minimum": 4.5,
+                "suggestion": "#0C0C0C"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "dark",
+                "foreground": "text",
+                "background": "surface",
+                "ratio": 1.07,
+                "minimum": 4.5,
+                "suggestion": "#060606"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "dark",
+                "foreground": "muted",
+                "background": "canvas",
+                "ratio": 1.03,
+                "minimum": 4.5,
+                "suggestion": "#0C0C0C"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "dark",
+                "foreground": "muted",
+                "background": "surface",
+                "ratio": 1.01,
+                "minimum": 4.5,
+                "suggestion": "#060606"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "dark",
+                "foreground": "accent",
+                "background": "canvas",
+                "ratio": 1.01,
+                "minimum": 4.5,
+                "suggestion": "#0C0C0C"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "dark",
+                "foreground": "accent",
+                "background": "surface",
+                "ratio": 1.06,
+                "minimum": 4.5,
+                "suggestion": "#060606"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "dark",
+                "foreground": "onAccent",
+                "background": "accentFill",
+                "ratio": 1.06,
+                "minimum": 4.5,
+                "suggestion": "#060606"
+              }
+            ]
+          },
+          {
+            "key": "ambos-bajos",
+            "palettes": {
+              "light": {
+                "canvas": "#FBF7F0",
+                "surface": "#FFFFFF",
+                "text": "#9A9A9A",
+                "muted": "#C8C8C8",
+                "accent": "#F0C040",
+                "accentFill": "#F0C040",
+                "onAccent": "#FFFFFF",
+                "line": "#DDD6CC"
+              },
+              "dark": {
+                "canvas": "#141218",
+                "surface": "#1E1C22",
+                "text": "#6A6A72",
+                "muted": "#505058",
+                "accent": "#303038",
+                "accentFill": "#5A5A66",
+                "onAccent": "#707078",
+                "line": "#3A3640"
+              }
+            },
+            "warnings": [
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "light",
+                "foreground": "text",
+                "background": "canvas",
+                "ratio": 2.63,
+                "minimum": 4.5,
+                "suggestion": "#6C6C6C"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "light",
+                "foreground": "text",
+                "background": "surface",
+                "ratio": 2.81,
+                "minimum": 4.5,
+                "suggestion": "#747474"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "light",
+                "foreground": "muted",
+                "background": "canvas",
+                "ratio": 1.57,
+                "minimum": 4.5,
+                "suggestion": "#6E6E6E"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "light",
+                "foreground": "muted",
+                "background": "surface",
+                "ratio": 1.67,
+                "minimum": 4.5,
+                "suggestion": "#6E6E6E"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "light",
+                "foreground": "accent",
+                "background": "canvas",
+                "ratio": 1.6,
+                "minimum": 4.5,
+                "suggestion": "#846A23"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "light",
+                "foreground": "accent",
+                "background": "surface",
+                "ratio": 1.7,
+                "minimum": 4.5,
+                "suggestion": "#907326"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "light",
+                "foreground": "onAccent",
+                "background": "accentFill",
+                "ratio": 1.7,
+                "minimum": 4.5,
+                "suggestion": "#4D4D4D"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "dark",
+                "foreground": "text",
+                "background": "canvas",
+                "ratio": 3.47,
+                "minimum": 4.5,
+                "suggestion": "#808087"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "dark",
+                "foreground": "text",
+                "background": "surface",
+                "ratio": 3.15,
+                "minimum": 4.5,
+                "suggestion": "#88888E"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "dark",
+                "foreground": "muted",
+                "background": "canvas",
+                "ratio": 2.33,
+                "minimum": 4.5,
+                "suggestion": "#85858A"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "dark",
+                "foreground": "muted",
+                "background": "surface",
+                "ratio": 2.11,
+                "minimum": 4.5,
+                "suggestion": "#85858A"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "dark",
+                "foreground": "accent",
+                "background": "canvas",
+                "ratio": 1.42,
+                "minimum": 4.5,
+                "suggestion": "#838388"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "dark",
+                "foreground": "accent",
+                "background": "surface",
+                "ratio": 1.29,
+                "minimum": 4.5,
+                "suggestion": "#8D8D92"
+              },
+              {
+                "code": "LOW_CONTRAST",
+                "scheme": "dark",
+                "foreground": "onAccent",
+                "background": "accentFill",
+                "ratio": 1.38,
+                "minimum": 4.5,
+                "suggestion": "#D4D4D7"
+              }
+            ]
+          }
         ]
       },
       "DesignWarning": {
@@ -10410,7 +11020,7 @@
             }
           }
         ],
-        "description": "422 of a v2 design. code is INVALID_THEME (not an object or neither v1 nor v2), DESIGN_SCHEMA_INVALID (issues lists the paths), GIFTS_BLOCK_REQUIRED, GIFTS_BLOCK_HIDDEN, DESIGN_REFERENCE_INVALID or FONT_WEIGHT_UNAVAILABLE."
+        "description": "422 of a v2 design (400 and 413 are plain Problems). code is INVALID_THEME (not an object, neither v1 nor v2, or a schemaVersion that is not the integer 2), DESIGN_SCHEMA_INVALID (issues lists the paths), GIFTS_BLOCK_REQUIRED (no gifts block, said before the schema errors), GIFTS_BLOCK_LOCKED (link or rotation on the gifts element), GIFTS_BLOCK_HIDDEN (not visible or translucent), GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL (under 44 px), GIFTS_BLOCK_COVERED (another element paints over it), GIFTS_BLOCK_LOW_CONTRAST (text under 4.5:1 or contour under 3:1 in either palette), DESIGN_REFERENCE_INVALID, FONT_WEIGHT_UNAVAILABLE, CUSTOM_CODE_UNAVAILABLE (custom html/css until the F5 sanitiser) or DESIGN_NOT_PUBLISHABLE (publishing a v2: it stays a draft until the renderer supports it)."
       }
     }
   }

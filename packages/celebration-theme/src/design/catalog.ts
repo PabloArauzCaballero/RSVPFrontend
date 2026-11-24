@@ -58,3 +58,12 @@ export const FONT_FAMILIES: readonly CatalogFamily[] = [
 const BY_ID: ReadonlyMap<string, CatalogFamily> = new Map(FONT_FAMILIES.map((family) => [family.id, family]));
 
 export const familyById = (id: string): CatalogFamily | undefined => BY_ID.get(id);
+
+/** Origins to preconnect before the font stylesheet (PL-M10). Mirror of `x-rsvp-font-catalog.preconnect` in the contract;
+ *  the renderer emits the `<link rel="preconnect">` in F6. */
+export interface FontPreconnect {
+  readonly href: string;
+  readonly crossorigin?: true;
+}
+
+export const FONT_PRECONNECT: readonly FontPreconnect[] = [{ href: "https://fonts.googleapis.com" }, { href: "https://fonts.gstatic.com", crossorigin: true }];

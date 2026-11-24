@@ -2,13 +2,14 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { FONT_FAMILIES } from "./catalog.js";
+import { FONT_FAMILIES, FONT_PRECONNECT } from "./catalog.js";
 import { contrastRatio, darkAccent, inkOnAccent, mix, nearestPassing, normalise, TEXT_CONTRAST } from "./colour.js";
-import { convertV1ToV2, convertV2ToV1, familyFor, kebab, pickWeights } from "./convert.js";
+import { convertV1ToV2, convertV2ToV1, DesignConversionError, familyFor, kebab, pickWeights } from "./convert.js";
 import type { DesignDocumentV2, DesignWarning, V1Template } from "./types.js";
 import { contrastWarnings } from "./warnings.js";
 
 interface Golden { readonly key: string; readonly v1: V1Template; readonly v2: DesignDocumentV2; readonly warnings: readonly DesignWarning[] }
+interface WarningGolden { readonly key: string; readonly palettes: DesignDocumentV2["tokens"]["palettes"]; readonly warnings: readonly DesignWarning[] }
 interface Spec {
   readonly components: { readonly schemas: { readonly DesignDocumentV2: Record<string, unknown>; readonly FontFamilyId: Record<string, unknown> } };
 }
@@ -17,7 +18,8 @@ interface Spec {
 const specPath = join(dirname(fileURLToPath(import.meta.url)), "../../../contracts/specs/template-media.openapi.json");
 const spec = JSON.parse(readFileSync(specPath, "utf8")) as Spec;
 const goldens = spec.components.schemas.DesignDocumentV2["x-rsvp-v1-goldens"] as readonly Golden[];
-const catalogue = spec.components.schemas.FontFamilyId["x-rsvp-font-catalog"] as { readonly families: readonly Record<string, unknown>[] };
+const warningGoldens = spec.components.schemas.DesignDocumentV2["x-rsvp-warning-goldens"] as readonly WarningGolden[];
+const catalogue = spec.components.schemas.FontFamilyId["x-rsvp-font-catalog"] as { readonly families: readonly Record<string, unknown>[]; readonly preconnect: readonly Record<string, unknown>[] };
 
 describe("design colour maths: same vectors as BE ColourTests", () => {
   it("darkAccent and inkOnAccent give the values of theme.ts (phase 0)", () => {
@@ -80,6 +82,14 @@ describe("v1 → v2 golden corpus carried by the contract", () => {
     }
   });
 
+  it("the gifts button is a 44 px tap target in every golden (P22)", () => {
+    for (const golden of goldens) {
+      const gifts = golden.v2.pages.find((entry) => entry.section === "gifts")?.canvases.mobile;
+      expect(gifts?.elements[0]?.h, golden.key).toBe(6);
+      expect((gifts?.elements[0]?.h ?? 0) * (gifts?.rowHeight ?? 0), golden.key).toBeGreaterThanOrEqual(44);
+    }
+  });
+
   it("every converted document has exactly one gifts block and reads as AA in dark", () => {
     for (const golden of goldens) {
       expect(golden.v2.blocks.filter((block) => block.type === "giftsCta"), golden.key).toHaveLength(1);
@@ -126,6 +136,44 @@ describe("font catalogue mirror and family mapping", () => {
     expect(() => convertV1ToV2(golden.v1.theme, "brutalist", [])).toThrow("Unknown layout");
     expect(() => convertV1ToV2(golden.v1.theme, "classic", ["music"])).toThrow("Unknown section");
     expect(() => convertV2ToV1({ ...golden.v2, origin: undefined })).toThrow("origin");
+  });
+
+  it("reads the lookup tables by own key only: prototype names are refused like the backend does (N7)", () => {
+    const golden = goldens[0] as Golden;
+    for (const name of ["constructor", "__proto__", "toString", "hasOwnProperty", "valueOf", ""]) {
+      expect(() => convertV1ToV2(golden.v1.theme, name, golden.v1.sectionOrder), `layout ${name}`).toThrow(DesignConversionError);
+      expect(() => convertV1ToV2(golden.v1.theme, golden.v1.layout, [name]), `section ${name}`).toThrow(DesignConversionError);
+    }
+    const layout = (() => { try { convertV1ToV2(golden.v1.theme, "constructor", []); } catch (error) { return error as DesignConversionError; } return undefined; })();
+    expect(layout?.code).toBe("INVALID_LAYOUT");
+    const section = (() => { try { convertV1ToV2(golden.v1.theme, "classic", ["toString"]); } catch (error) { return error as DesignConversionError; } return undefined; })();
+    expect(section?.code).toBe("INVALID_SECTIONS");
+    // A font stack that names a prototype key falls back to the catalogue instead of reading Object.prototype.
+    for (const stack of ["constructor, serif", "'__proto__', sans-serif", "toString", "hasOwnProperty, Georgia, serif"]) expect(["lora", "source-sans-3"]).toContain(familyFor(stack, "body"));
+    expect(({} as Record<string, unknown>)["polluted"]).toBeUndefined();
+  });
+
+  it("the preconnect origins are the contract's (PL-M10)", () => {
+    expect(FONT_PRECONNECT.map((origin) => ({ ...origin }))).toEqual(catalogue.preconnect);
+  });
+});
+
+describe("synthetic low-contrast goldens carried by the contract (R6)", () => {
+  it("there are five and contrastWarnings reproduces every one, ratios and suggestions included", () => {
+    expect(warningGoldens).toHaveLength(5);
+    for (const golden of warningGoldens) {
+      expect(golden.warnings.length, golden.key).toBeGreaterThan(0);
+      expect(contrastWarnings({ tokens: { palettes: golden.palettes } as DesignDocumentV2["tokens"] }), golden.key).toEqual(golden.warnings);
+    }
+  });
+
+  it("they cover light, dark, the 4.5:1 boundary and a palette no tone can fix", () => {
+    const byKey = new Map(warningGoldens.map((golden) => [golden.key, golden]));
+    expect(new Set(byKey.get("claro-pasteles")?.warnings.map((warning) => warning.scheme))).toEqual(new Set(["light"]));
+    expect(new Set(byKey.get("oscuro-apagado")?.warnings.map((warning) => warning.scheme))).toEqual(new Set(["dark"]));
+    expect(byKey.get("limite-4-5")?.warnings.map((warning) => warning.ratio)).toEqual([4.48, 4.48]);
+    expect(new Set(byKey.get("ambos-bajos")?.warnings.map((warning) => warning.scheme))).toEqual(new Set(["light", "dark"]));
+    expect(byKey.get("sin-salida-gris")?.warnings.some((warning) => warning.suggestion === "#131313")).toBe(true);
   });
 });
 

@@ -27,6 +27,22 @@ const LINE_AMOUNT = 0.16;
 const FIRST_FAMILY = /^\s*['"]?([^'",]+)['"]?/;
 const MOBILE_COLUMNS = 4;
 const ROW_HEIGHT = 8;
+/** P22: the mandatory gifts button is never smaller than a 44 px tap target (BE rules.GIFTS_MIN_PX). */
+const GIFTS_MIN_PX = 44;
+const GIFTS_ROWS = Math.ceil(GIFTS_MIN_PX / ROW_HEIGHT);
+
+/** What the converter refuses: the same codes as the backend's 422 (INVALID_LAYOUT, INVALID_SECTIONS), never a TypeError. */
+export class DesignConversionError extends Error {
+  constructor(readonly code: "INVALID_LAYOUT" | "INVALID_SECTIONS", message: string) {
+    super(message);
+    this.name = "DesignConversionError";
+  }
+}
+
+/** Own-property lookup: the tables are plain objects and the keys are data, so "constructor" or "__proto__" must miss (N7). */
+function own<T>(table: Readonly<Record<string, T>>, key: unknown): T | undefined {
+  return typeof key === "string" && Object.hasOwn(table, key) ? table[key] : undefined;
+}
 
 const SECTION_BLOCKS: Readonly<Record<string, readonly [string, string, Readonly<Record<string, unknown>>]>> = {
   story: ["story", "story", {}],
@@ -46,7 +62,7 @@ export const kebab = (name: string): string => name.replace(/(?<!^)(?=[A-Z])/g, 
 export function familyFor(stack: string, role: Role): string {
   const first = (FIRST_FAMILY.exec(stack)?.[1] ?? "").trim();
   const slug = first.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-  const resolved = RETIRED[slug] ?? slug;
+  const resolved = own(RETIRED, slug) ?? slug;
   if (familyById(resolved)) return resolved;
   const kind = /(^|[\s,])serif\s*$/i.test(stack.trim()) && !stack.toLowerCase().includes("sans-serif") ? "serif" : "sans";
   return GENERIC_FALLBACK[role][kind];
@@ -73,16 +89,22 @@ function palette(canvas: string, surface: string, text: string, muted: string, a
   return { canvas, surface, text, muted, accent, accentFill: fill, onAccent: inkOnAccent(surface, canvas, text, fill), line: mix(canvas, text, LINE_AMOUNT) };
 }
 
-const element = (blockId: string): DesignElement => ({ id: `el-${blockId}`, block: blockId, x: 0, y: 0, w: MOBILE_COLUMNS, h: 1, visible: true });
+const element = (blockId: string, rows = 1): DesignElement => ({ id: `el-${blockId}`, block: blockId, x: 0, y: 0, w: MOBILE_COLUMNS, h: rows, visible: true });
 
-const page = (id: string, kind: Pick<DesignPage, "kind"> & { section?: string }, style: string, blockId: string): DesignPage => ({
-  id, ...kind, style, canvases: { mobile: { mode: "flow", columns: MOBILE_COLUMNS, rowHeight: ROW_HEIGHT, elements: [element(blockId)] } }
+const page = (id: string, kind: Pick<DesignPage, "kind"> & { section?: string }, style: string, blockId: string, rows = 1): DesignPage => ({
+  id, ...kind, style, canvases: { mobile: { mode: "flow", columns: MOBILE_COLUMNS, rowHeight: ROW_HEIGHT, elements: [element(blockId, rows)] } }
 });
 
-/** The v2 document of a v1 template. Throws for an unknown layout or section: callers validate first. */
+/**
+ * The v2 document of a v1 template. An unknown layout or section throws a DesignConversionError (the backend answers 422
+ * INVALID_LAYOUT / INVALID_SECTIONS): callers validate first, and this still refuses what it cannot convert.
+ */
 export function convertV1ToV2(theme: V1Template["theme"], layout: string, sectionOrder: readonly string[]): DesignDocumentV2 {
-  const tokens = LAYOUT_TOKENS[layout];
-  if (!tokens) throw new Error(`Unknown layout ${layout}`);
+  const tokens = own(LAYOUT_TOKENS, layout);
+  if (!tokens) throw new DesignConversionError("INVALID_LAYOUT", `Unknown layout ${String(layout)}`);
+  for (const section of sectionOrder) {
+    if (section !== "gifts" && !own(SECTION_BLOCKS, section)) throw new DesignConversionError("INVALID_SECTIONS", `Unknown section ${String(section)}`);
+  }
   const [scale, radius, gap, width, ornament] = tokens;
   const colours = Object.fromEntries(Object.entries(theme.palette).map(([key, value]) => [key, normalise(value)])) as Record<keyof V1Template["theme"]["palette"], string>;
   const style = theme.sectionStyle;
@@ -99,16 +121,17 @@ export function convertV1ToV2(theme: V1Template["theme"], layout: string, sectio
   const pages: DesignPage[] = [page("page-cover", { kind: "cover" }, style, "cover")];
   for (const section of order) {
     let blockId: string;
+    let rows = 1;
     if (section === "gifts") {
       blockId = "gifts-cta";
+      rows = GIFTS_ROWS;
       blocks.push({ id: blockId, type: "giftsCta", required: true, config: { style: "solid" } });
     } else {
-      const entry = SECTION_BLOCKS[section];
-      if (!entry) throw new Error(`Unknown section ${section}`);
+      const entry = own(SECTION_BLOCKS, section) as readonly [string, string, Readonly<Record<string, unknown>>];
       blockId = entry[0];
       blocks.push({ id: blockId, type: entry[1], config: entry[2] });
     }
-    pages.push(page(`page-${kebab(section)}`, { kind: "section", section }, style, blockId));
+    pages.push(page(`page-${kebab(section)}`, { kind: "section", section }, style, blockId, rows));
   }
   return {
     schemaVersion: 2,

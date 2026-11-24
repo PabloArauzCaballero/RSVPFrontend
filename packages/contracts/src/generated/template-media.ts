@@ -387,7 +387,7 @@ export interface components {
             };
             id: components["schemas"]["DesignId"];
             /**
-             * @description Mandatory block (P22): it can be moved and restyled, never removed or hidden.
+             * @description Mandatory block (P22): it can be moved, resized and restyled, never removed, hidden, covered or redirected.
              * @constant
              */
             required: true;
@@ -489,11 +489,28 @@ export interface components {
             type: "monogram";
         };
         DesignBlockMusic: {
+            /** @description The reference is checked against an allowlist per source when saved: never a free string that a renderer could turn into a URL. */
             config: {
+                /** @description https link to YouTube or YouTube Music. */
                 ref: string;
                 rightsAcknowledged?: boolean;
-                /** @enum {string} */
-                source: "spotify" | "youtube" | "media";
+                /** @constant */
+                source: "youtube";
+            } | {
+                /** @description https link to a Spotify track, album, playlist, episode, show or artist. */
+                ref: string;
+                rightsAcknowledged?: boolean;
+                /** @constant */
+                source: "spotify";
+            } | {
+                /**
+                 * Format: uuid
+                 * @description Id of a media asset of the platform. Whether it exists and belongs to the same celebration or template is checked by the design store (BE #135).
+                 */
+                ref: string;
+                rightsAcknowledged?: boolean;
+                /** @constant */
+                source: "media";
             };
             id: components["schemas"]["DesignId"];
             /**
@@ -696,7 +713,7 @@ export interface components {
             schemaVersion: 2;
             tokens: components["schemas"]["DesignTokens"];
         };
-        /** @description One placed block. Coordinates are grid units of its canvas. */
+        /** @description One placed block. Coordinates are grid units of its canvas. A canvas is columns x rowHeight px and ends 4000 px below its top; an element lies inside it. The gifts element is at least 44 x 44 px (reference widths 320 px mobile, 768 px desktop, capped by contentMaxWidth), is not covered by a visible element that paints over it (higher z, or the same z and later in the list) and reads at 4.5:1 for its text and 3:1 for its contour in both palettes. */
         DesignElement: {
             animation?: components["schemas"]["DesignAnimation"];
             background?: components["schemas"]["DesignBackground"];
@@ -705,16 +722,17 @@ export interface components {
             /** @description Height in rows (minimum height in a flow canvas) */
             h: number;
             id: components["schemas"]["DesignId"];
+            /** @description Destination of the element. Not allowed on the element that places the gifts block: its destination is always /c/{slug}/regalos (422 GIFTS_BLOCK_LOCKED). */
             link?: components["schemas"]["DesignLink"];
             margin?: components["schemas"]["DesignBox"];
-            /** @description Default 1 */
+            /** @description Default 1. The gifts block is always 1 (422 GIFTS_BLOCK_HIDDEN). */
             opacity?: number;
             padding?: components["schemas"]["DesignBox"];
             radius?: number;
-            /** @description Degrees; default 0 */
+            /** @description Degrees; default 0. The gifts block is never rotated (422 GIFTS_BLOCK_LOCKED). */
             rotation?: number;
             typography?: components["schemas"]["DesignTypographyOverride"];
-            /** @description Visibility in this canvas. The gifts block can never be hidden (P22). */
+            /** @description Visibility in this canvas. The gifts block can never be hidden (422 GIFTS_BLOCK_HIDDEN). */
             visible: boolean;
             /** @description Width in columns */
             w: number;
@@ -785,7 +803,9 @@ export interface components {
             schemaVersion: 1;
             sectionOrder: components["schemas"]["SectionId"][];
             typography: {
+                /** @description CSS font stack of the v1 template: family names, quotes, commas and hyphens only. */
                 body: string;
+                /** @description CSS font stack of the v1 template: family names, quotes, commas and hyphens only. */
                 heading: string;
             };
         };
@@ -801,7 +821,7 @@ export interface components {
             surface: components["schemas"]["HexColour"];
             text: components["schemas"]["HexColour"];
         };
-        /** @description 422 of a v2 design. code is INVALID_THEME (not an object or neither v1 nor v2), DESIGN_SCHEMA_INVALID (issues lists the paths), GIFTS_BLOCK_REQUIRED, GIFTS_BLOCK_HIDDEN, DESIGN_REFERENCE_INVALID or FONT_WEIGHT_UNAVAILABLE. */
+        /** @description 422 of a v2 design (400 and 413 are plain Problems). code is INVALID_THEME (not an object, neither v1 nor v2, or a schemaVersion that is not the integer 2), DESIGN_SCHEMA_INVALID (issues lists the paths), GIFTS_BLOCK_REQUIRED (no gifts block, said before the schema errors), GIFTS_BLOCK_LOCKED (link or rotation on the gifts element), GIFTS_BLOCK_HIDDEN (not visible or translucent), GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL (under 44 px), GIFTS_BLOCK_COVERED (another element paints over it), GIFTS_BLOCK_LOW_CONTRAST (text under 4.5:1 or contour under 3:1 in either palette), DESIGN_REFERENCE_INVALID, FONT_WEIGHT_UNAVAILABLE, CUSTOM_CODE_UNAVAILABLE (custom html/css until the F5 sanitiser) or DESIGN_NOT_PUBLISHABLE (publishing a v2: it stays a draft until the renderer supports it). */
         DesignProblem: components["schemas"]["Problem"] & {
             field?: string;
             issues?: components["schemas"]["DesignIssue"][];
@@ -1237,7 +1257,7 @@ export interface operations {
                     "application/json": components["schemas"]["Template"];
                 };
             };
-            /** @description Body shape invalid */
+            /** @description Body shape invalid, or a document nested too deeply to parse */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -1257,6 +1277,15 @@ export interface operations {
             };
             /** @description Not an admin */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The JSON body is larger than 1 MB (PAYLOAD_TOO_LARGE; limit MAX_JSON_BODY_BYTES) */
+            413: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1346,7 +1375,16 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Invalid theme or design (see DesignProblem) */
+            /** @description The JSON body is larger than 1 MB (PAYLOAD_TOO_LARGE; limit MAX_JSON_BODY_BYTES) */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Invalid theme or design (see DesignProblem); editing a PUBLISHED template into a v2 is DESIGN_NOT_PUBLISHABLE */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -1434,6 +1472,15 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description A design document v2 cannot be published yet (DESIGN_NOT_PUBLISHABLE): it stays a draft until the renderer supports it (F4/F5) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["DesignProblem"];
                 };
             };
         };
