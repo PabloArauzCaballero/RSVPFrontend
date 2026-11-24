@@ -175,16 +175,17 @@ export function inkOnAccent(palette: Pick<Palette, "surface" | "canvas" | "text"
 
 /**
  * The accent as a fill (cover band, festive banner, reply button) and the ink set on it. In light the fill is the
- * template's own accent. In dark it is the same hue lightened just enough that the fill reads as a shape against both
- * dark backgrounds (3:1, WCAG 1.4.11), the ink on it reaches AA, and so does the white the editorial cover sets on
+ * template's own accent. In dark it is the same hue lightened just enough that the fill reads as a shape against the dark
+ * canvas, the surface and the accent washes the button can sit on (3:1, WCAG 1.4.11), the ink on it reaches AA, and so does the white the editorial cover sets on
  * it when it has no photo.
  */
 export function accentFill(theme: CelebrationTheme, scheme: ColorScheme): { readonly fill: string; readonly ink: string } {
   const palette = paletteFor(theme, scheme);
   const inkOn = (fill: string) => inkOnAccent({ ...palette, accent: fill });
   if (scheme === "light") return { fill: theme.palette.accent, ink: inkOn(theme.palette.accent) };
-  const fill = lightenUntil(theme.palette.accent, (candidate) => contrastRatio(candidate, DARK_CANVAS) >= COMPONENT_CONTRAST
-    && contrastRatio(candidate, DARK_SURFACE) >= COMPONENT_CONTRAST
+  // The button lives in the RSVP block (surface + 9 % of the accent text colour) and could sit on the cover wash: every backdrop the accent text is checked against.
+  const backdrops = darkBackdrops(palette.accent);
+  const fill = lightenUntil(theme.palette.accent, (candidate) => backdrops.every((background) => contrastRatio(candidate, background) >= COMPONENT_CONTRAST)
     && contrastRatio(inkOn(candidate), candidate) >= TEXT_CONTRAST
     && contrastRatio(WHITE, candidate) >= TEXT_CONTRAST) ?? palette.accent;
   return { fill, ink: inkOn(fill) };
