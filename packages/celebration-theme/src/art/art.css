@@ -1,0 +1,9 @@
+/* Invitation art (F3). Not imported by the templates yet: F4 wires it. Colours are the roles `--celebration-art-*`. */
+.celebration-art { display: block; flex: none; width: var(--celebration-art-size, 104px); height: auto; overflow: visible; }
+.celebration-art--draw path { animation: celebration-art-in 520ms cubic-bezier(0.16, 1, 0.3, 1) backwards; animation-delay: calc(var(--celebration-art-i, 0) * 70ms); transform-box: fill-box; }
+.celebration-art--draw path[data-stroke] { stroke-dasharray: 1; animation-name: celebration-art-trace; animation-duration: 760ms; }
+@keyframes celebration-art-in { from { opacity: 0; transform: translateY(6px); } }
+@keyframes celebration-art-trace { from { opacity: 0; stroke-dashoffset: 1; } 12% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .celebration-art--draw path, .celebration-art--draw path[data-stroke] { animation: none; }
+}
