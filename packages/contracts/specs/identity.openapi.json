@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "RSVP Identity API",
-    "version": "2.0.0",
-    "description": "2.0.0 (BREAKING, IDENTIDAD-SEG-003): joining an organization takes the invitee's consent. POST /organizations/{id}/members (addOrganizationMember) is retired: it revealed which e-mails have an account (422 vs 201 with the userId) and created the membership without the person's consent. Instead the owner or an ADMIN invites an e-mail with POST /organizations/{id}/invitations, which answers 202 with the same body whether or not the address has an account; Identity e-mails a 7-day single-use link (identity.organization.invitation-requested.v1, IDENTITY_PUBLIC_APP_URL + /invitaciones?invitacion={id}&token=...). Only the invitee creates the membership, with POST /invitations/{id}/accept, or refuses it with POST /invitations/{id}/decline; GET /invitations lists the open invitations of the signed-in account (only when its e-mail is verified; otherwise the link token is the proof). The owner lists open invitations (GET /organizations/{id}/invitations) and revokes them (DELETE /organizations/{id}/invitations/{invitationId}). Every step is audited. Consumers of addOrganizationMember (the frontend organizations screen) must switch to invitations. 1.7.0 (additive, A24; PR #42): GET /admin/users also accepts email (exact, case-insensitive match, to link the owner of a partner) and ids (comma-separated user ids, at most 100, to show the owners of a page of partners). Only one of query, email or ids per call (422 otherwise). Still ADMIN only (MANAGE_PLATFORM) and audited as users.list with the kind of filter, never its value. 1.6.0 (additive, B6/A22): POST /auth/register accepts an optional termsVersion (the version of the terms and privacy policy the person accepted; stored with the server time). DELETE /users/me (the account owner, confirming with the password) and DELETE /users/{id} (ADMIN) delete the account for real: roles, tokens, memberships and the organizations it owns go with it, every session ends and identity.user.deleted.v1 (AsyncAPI 1.13.0) tells the other services to purge their copies. The last ADMIN cannot be deleted. 1.5.0 (additive, A21): POST /auth/password (signed-in change; ends other sessions, returns a new one), POST /auth/logout-all, PUT/DELETE /users/{id}/suspension (ADMIN; a suspended account gets 403 account-suspended on sign-in and 401 on refresh), DELETE /users/{id}/roles/{role} (ADMIN; never the last role or the last ADMIN; ends the account's sessions) and DELETE /organizations/{id}/members/{userId} (owner or ADMIN removes, a member leaves). User and AdminUser carry status ACTIVE|SUSPENDED. 1.4.0 (additive, B10): POST /oauth/token (OAuth 2.0 client_credentials, RFC 6749 §4.4) for internal services. Each client holds (audience, scope) pairs; notification-service may obtain provider:notification-profile:read (aud provider-catalog-service) and guest:notification-profile:read (aud guest-rsvp-service), one audience per token. Clients and the audience/scopes each may obtain are declared in Identity; secrets are configured as SHA-256 in IDENTITY_SERVICE_CLIENTS. The token carries roles [SERVICE], aud, scope and client_id and lives 5 minutes; it is never issued to a person. 1.3.0 (additive, B4): real password recovery and e-mail verification. POST /auth/password-recovery now stores a single-use token (30 minutes, hash only) and asks Notification to send the link (event identity.user.password-reset-requested.v1); POST /auth/password-reset consumes it, sets the new password and ends every session; sign-up sends a 24-hour verification link (identity.user.email-verification-requested.v1), confirmed with POST /auth/email-verification/confirm and re-sent with POST /auth/email-verification. Registration and the access token expose whether the e-mail is verified (`emailVerified`, claim `email_verified`). 1.2.0 (additive, B9): the access token carries `memberships` [{organizationId, role}], the role of the subject IN each organization. `roles` now lists only the platform roles of the account (membership roles are no longer merged into it); `organizationIds` stays, derived from `memberships`, for visibility only. Consumers decide organization-scoped authority from `memberships` and must treat a token without it (minted by Identity < 1.2.0) as granting no organization management. 1.1.0 (additive, ADMIN only): GET /admin/users?query=&page=&size=, GET /admin/organizations and GET /admin/summary (served by Kong at /identity/admin/*). Reads of the user list and role grants are audited (actor, action, time; never the search text). Account status is always ACTIVE: suspension of accounts does not exist yet."
+    "version": "2.1.0",
+    "description": "2.1.0 (additive, perfil en el registro; supersedes PR #26): POST /auth/register accepts the optional profile givenName, familyName, phone (E.164; separators are removed), country (ISO 3166-1 alpha-2, default BO), city, locale (es-BO|en-US, default from Accept-Language), timeZone (IANA, default America/La_Paz) and marketingOptIn (default false); an invalid value answers 422 naming the field and nothing is created. The 201 adds `profile`. A body with only email and password keeps working and gets the default profile. GET /users/me (getOwnProfile) returns the signed-in account with its profile, termsVersion/termsAcceptedAt (B6) and marketingOptInAt; PATCH /users/me (updateOwnProfile) is a partial update (keys omitted are kept, null clears givenName, familyName, phone or city; email, roles, termsVersion and unknown keys are a 422). Both act only on the token subject. Names and phone are encrypted at rest and deleted with the account (DELETE /users/me); identity.* events do not carry the profile (AsyncAPI unchanged). 2.0.0 (BREAKING, IDENTIDAD-SEG-003): joining an organization takes the invitee's consent. POST /organizations/{id}/members (addOrganizationMember) is retired: it revealed which e-mails have an account (422 vs 201 with the userId) and created the membership without the person's consent. Instead the owner or an ADMIN invites an e-mail with POST /organizations/{id}/invitations, which answers 202 with the same body whether or not the address has an account; Identity e-mails a 7-day single-use link (identity.organization.invitation-requested.v1, IDENTITY_PUBLIC_APP_URL + /invitaciones?invitacion={id}&token=...). Only the invitee creates the membership, with POST /invitations/{id}/accept, or refuses it with POST /invitations/{id}/decline; GET /invitations lists the open invitations of the signed-in account (only when its e-mail is verified; otherwise the link token is the proof). The owner lists open invitations (GET /organizations/{id}/invitations) and revokes them (DELETE /organizations/{id}/invitations/{invitationId}). Every step is audited. Consumers of addOrganizationMember (the frontend organizations screen) must switch to invitations. 1.7.0 (additive, A24; PR #42): GET /admin/users also accepts email (exact, case-insensitive match, to link the owner of a partner) and ids (comma-separated user ids, at most 100, to show the owners of a page of partners). Only one of query, email or ids per call (422 otherwise). Still ADMIN only (MANAGE_PLATFORM) and audited as users.list with the kind of filter, never its value. 1.6.0 (additive, B6/A22): POST /auth/register accepts an optional termsVersion (the version of the terms and privacy policy the person accepted; stored with the server time). DELETE /users/me (the account owner, confirming with the password) and DELETE /users/{id} (ADMIN) delete the account for real: roles, tokens, memberships and the organizations it owns go with it, every session ends and identity.user.deleted.v1 (AsyncAPI 1.13.0) tells the other services to purge their copies. The last ADMIN cannot be deleted. 1.5.0 (additive, A21): POST /auth/password (signed-in change; ends other sessions, returns a new one), POST /auth/logout-all, PUT/DELETE /users/{id}/suspension (ADMIN; a suspended account gets 403 account-suspended on sign-in and 401 on refresh), DELETE /users/{id}/roles/{role} (ADMIN; never the last role or the last ADMIN; ends the account's sessions) and DELETE /organizations/{id}/members/{userId} (owner or ADMIN removes, a member leaves). User and AdminUser carry status ACTIVE|SUSPENDED. 1.4.0 (additive, B10): POST /oauth/token (OAuth 2.0 client_credentials, RFC 6749 §4.4) for internal services. Each client holds (audience, scope) pairs; notification-service may obtain provider:notification-profile:read (aud provider-catalog-service) and guest:notification-profile:read (aud guest-rsvp-service), one audience per token. Clients and the audience/scopes each may obtain are declared in Identity; secrets are configured as SHA-256 in IDENTITY_SERVICE_CLIENTS. The token carries roles [SERVICE], aud, scope and client_id and lives 5 minutes; it is never issued to a person. 1.3.0 (additive, B4): real password recovery and e-mail verification. POST /auth/password-recovery now stores a single-use token (30 minutes, hash only) and asks Notification to send the link (event identity.user.password-reset-requested.v1); POST /auth/password-reset consumes it, sets the new password and ends every session; sign-up sends a 24-hour verification link (identity.user.email-verification-requested.v1), confirmed with POST /auth/email-verification/confirm and re-sent with POST /auth/email-verification. Registration and the access token expose whether the e-mail is verified (`emailVerified`, claim `email_verified`). 1.2.0 (additive, B9): the access token carries `memberships` [{organizationId, role}], the role of the subject IN each organization. `roles` now lists only the platform roles of the account (membership roles are no longer merged into it); `organizationIds` stays, derived from `memberships`, for visibility only. Consumers decide organization-scoped authority from `memberships` and must treat a token without it (minted by Identity < 1.2.0) as granting no organization management. 1.1.0 (additive, ADMIN only): GET /admin/users?query=&page=&size=, GET /admin/organizations and GET /admin/summary (served by Kong at /identity/admin/*). Reads of the user list and role grants are audited (actor, action, time; never the search text). Account status is always ACTIVE: suspension of accounts does not exist yet."
   },
   "servers": [
     {
@@ -1162,6 +1162,69 @@
       }
     },
     "/users/me": {
+      "get": {
+        "operationId": "getOwnProfile",
+        "summary": "My account and profile (since 2.1.0)",
+        "description": "Any role with a person's Bearer token. The account is the token subject (no id in the path). Cache-Control: no-store. 401 if the account no longer exists.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The signed-in account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateOwnProfile",
+        "summary": "Edit my profile (since 2.1.0)",
+        "description": "Partial update of the token subject's profile under a row lock. 422 names the invalid or read-only field and never echoes its value.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The signed-in account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/Validation"
+          }
+        }
+      },
       "delete": {
         "operationId": "deleteOwnAccount",
         "summary": "Delete my account (A22, D-5)",
@@ -1599,6 +1662,54 @@
             "type": "string",
             "pattern": "^[A-Za-z0-9._-]{1,64}$",
             "description": "B6: version of the terms and privacy policy the person accepted (for example 2026-11-21-borrador). Optional for clients released before 1.6.0."
+          },
+          "givenName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "description": "Optional (since 2.1.0). Trimmed; 1 to 80 characters, no control characters. Personal data (encrypted at rest)."
+          },
+          "familyName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "description": "Optional (since 2.1.0). Trimmed; 1 to 80 characters, no control characters. Personal data (encrypted at rest)."
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 32,
+            "description": "Optional (since 2.1.0). E.164 (for example +59170000000). Spaces, dots, dashes and parentheses are removed before the check. Personal data (encrypted at rest)."
+          },
+          "country": {
+            "type": "string",
+            "pattern": "^[A-Za-z]{2}$",
+            "default": "BO",
+            "description": "Optional (since 2.1.0). ISO 3166-1 alpha-2; stored upper-case."
+          },
+          "city": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "description": "Optional (since 2.1.0). Free text, trimmed; 1 to 80 characters."
+          },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "es-BO",
+              "en-US"
+            ],
+            "description": "Optional (since 2.1.0). Preferred language. Default: en-US when Accept-Language prefers English, es-BO otherwise. It also picks the language of the verification e-mail."
+          },
+          "timeZone": {
+            "type": "string",
+            "maxLength": 64,
+            "default": "America/La_Paz",
+            "description": "Optional (since 2.1.0). IANA time zone."
+          },
+          "marketingOptIn": {
+            "type": "boolean",
+            "default": false,
+            "description": "Optional (since 2.1.0). Consent to product news. The time it was given is recorded (marketingOptInAt)."
           }
         }
       },
@@ -1675,6 +1786,10 @@
               "emailVerified": {
                 "type": "boolean",
                 "description": "Since 1.3.0. Always false right after sign-up: a verification e-mail is on its way."
+              },
+              "profile": {
+                "$ref": "#/components/schemas/UserProfile",
+                "description": "Since 2.1.0: the profile as stored (defaults filled in)."
               }
             }
           }
@@ -2410,6 +2525,203 @@
               "PLANNER"
             ],
             "description": "Role IN this organization (memberships claim). Never a platform role."
+          }
+        }
+      },
+      "UserProfile": {
+        "type": "object",
+        "description": "Since 2.1.0. Unset optional values are null, so the shape is stable.",
+        "required": [
+          "givenName",
+          "familyName",
+          "phone",
+          "country",
+          "city",
+          "locale",
+          "timeZone",
+          "marketingOptIn"
+        ],
+        "properties": {
+          "givenName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 80
+          },
+          "familyName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 80
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^\\+[1-9][0-9]{6,14}$",
+            "description": "E.164."
+          },
+          "country": {
+            "type": "string",
+            "pattern": "^[A-Z]{2}$"
+          },
+          "city": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 80
+          },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "es-BO",
+              "en-US"
+            ]
+          },
+          "timeZone": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "marketingOptIn": {
+            "type": "boolean"
+          }
+        }
+      },
+      "UpdateProfileRequest": {
+        "type": "object",
+        "minProperties": 0,
+        "additionalProperties": false,
+        "description": "Partial update (since 2.1.0): only the keys sent change. null clears givenName, familyName, phone or city; country, locale, timeZone and marketingOptIn cannot be null. Any other key (email, roles, termsVersion...) answers 422 naming it.",
+        "properties": {
+          "givenName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "familyName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 32,
+            "description": "E.164; separators are removed."
+          },
+          "country": {
+            "type": "string",
+            "pattern": "^[A-Za-z]{2}$"
+          },
+          "city": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "es-BO",
+              "en-US"
+            ]
+          },
+          "timeZone": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "marketingOptIn": {
+            "type": "boolean",
+            "description": "true records the time of the consent (kept if it was already given); false clears it."
+          }
+        }
+      },
+      "Me": {
+        "type": "object",
+        "description": "The signed-in account (since 2.1.0).",
+        "required": [
+          "id",
+          "email",
+          "roles",
+          "emailVerified",
+          "profile",
+          "termsVersion",
+          "termsAcceptedAt",
+          "marketingOptInAt",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "HOST",
+                "PLANNER",
+                "PROVIDER",
+                "ADMIN"
+              ]
+            }
+          },
+          "emailVerified": {
+            "type": "boolean"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/UserProfile"
+          },
+          "termsVersion": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "B6: accepted version of the terms and privacy policy; null if none was recorded."
+          },
+          "termsAcceptedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "marketingOptInAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "When the current marketing consent was given; null without consent."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last profile change (the creation time if it never changed)."
           }
         }
       }

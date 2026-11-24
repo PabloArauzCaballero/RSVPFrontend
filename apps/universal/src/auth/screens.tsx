@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Pressable, Text, View, useWindowDimensions } from "react-native";
-import { fieldErrorsOf, isInvalidLink, loginSchema, passwordResetSchema, recoverySchema, registerSchema, validate, type Role } from "@rsvp/auth";
+import { SIGN_UP_CITIES, fieldErrorsOf, isInvalidLink, loginSchema, passwordResetSchema, recoverySchema, validate, validateRegistration, type Role, type Session } from "@rsvp/auth";
 import { spacing } from "@rsvp/design-tokens";
-import { CheckMark, Checkbox, StickyActions, useColors } from "@rsvp/ui";
-import { useT } from "../platform/providers";
+import { CheckMark, Checkbox, FilterSelect, StickyActions, useColors } from "@rsvp/ui";
+import { useApiClient, useLocale, useT } from "../platform/providers";
 import { useAuth } from "./auth-context";
-import { AuthField, AuthLayout, Banner, SubmitButton, TextLink, useAuthFocusRing, useAuthStyles } from "./auth-ui";
+import { AuthField, AuthLayout, AuthPair, AuthSection, Banner, SubmitButton, TextLink, useAuthFocusRing, useAuthStyles } from "./auth-ui";
 import { ACCOUNT_LINK_ROUTES, AUTH_ROUTES, loginHref } from "./routes";
 import { IDLE, useAuthSubmit, type AuthSubmit } from "./use-auth-submit";
 
@@ -68,57 +68,119 @@ export function LoginScreen({ onNavigate, returnTo = null }: AuthScreenProps): R
   );
 }
 
+type SelfServiceRole = Extract<Role, "HOST" | "PLANNER" | "PROVIDER">;
+
 /** Said as what the person does, not as a system role: organise, offer services, help organise. */
-const SELF_SERVICE_ROLES: readonly { readonly role: Extract<Role, "HOST" | "PLANNER" | "PROVIDER">; readonly title: string; readonly hint: string }[] = [
+const SELF_SERVICE_ROLES: readonly { readonly role: SelfServiceRole; readonly title: string; readonly hint: string }[] = [
   { role: "HOST", title: "auth.roleHost", hint: "auth.roleHostHint" },
   { role: "PROVIDER", title: "auth.roleProvider", hint: "auth.roleProviderHint" },
   { role: "PLANNER", title: "auth.rolePlanner", hint: "auth.rolePlannerHint" }
 ];
 
+const OTHER_CITY = "OTHER";
+const FALLBACK_TIME_ZONE = "America/La_Paz";
+/** The device's zone (stored on the account for dates and reminders); Bolivia when the runtime cannot tell. */
+function deviceTimeZone(): string {
+  try { return Intl.DateTimeFormat().resolvedOptions().timeZone || FALLBACK_TIME_ZONE; } catch { return FALLBACK_TIME_ZONE; }
+}
+
+interface RegisterDraft {
+  role: SelfServiceRole; givenName: string; familyName: string; phone: string; city: string; otherCity: string; organizationName: string;
+  email: string; password: string; passwordConfirmation: string; marketingOptIn: boolean;
+}
+const EMPTY_DRAFT: RegisterDraft = { role: "HOST", givenName: "", familyName: "", phone: "+591 ", city: SIGN_UP_CITIES[0], otherCity: "", organizationName: "", email: "", password: "", passwordConfirmation: "", marketingOptIn: false };
+
+/**
+ * Sign-up asks for what the account needs from day one: who the person is (name, mobile, city), what they do and how they
+ * sign in. A planner's company or team is created with the account (an Identity organization), so the first screen after
+ * sign-up already shows it. A provider's business is not created here: partners are registered by an ADMIN (A24, DP-2).
+ */
 export function RegisterScreen({ onNavigate, returnTo = null }: AuthScreenProps): ReactNode {
   const authStyles = useAuthStyles();
   const t = useT();
+  const locale = useLocale();
+  const client = useApiClient();
   const compact = useWindowDimensions().width < 900;
   const auth = useAuth();
-  const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [role, setRole] = useState<Extract<Role, "HOST" | "PLANNER" | "PROVIDER">>("HOST");
+  const [draft, setDraft] = useState<RegisterDraft>(EMPTY_DRAFT);
+  const set = <K extends keyof RegisterDraft>(key: K) => (value: RegisterDraft[K]): void => setDraft((current) => ({ ...current, [key]: value }));
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({}); const submitState = useAuthSubmit(); const { busy, setStatus } = submitState;
   const submit = async (): Promise<void> => {
     if (busy || submitState.waitSeconds > 0) return;
-    const checked = validate(registerSchema, { email, password, role });
+    const city = draft.city === OTHER_CITY ? draft.otherCity : draft.city;
+    const checked = validateRegistration({ ...draft, city, organizationName: draft.role === "PLANNER" ? draft.organizationName : "" });
     // B6: the account is created only with an explicit acceptance of the terms and the privacy policy, and Identity records which version.
     const termsError: FieldErrors = termsAccepted ? {} : { terms: t("legal.consent.required") };
-    if (!checked.ok || !termsAccepted) { setErrors({ ...(checked.ok ? {} : fieldMessages(t, checked.errors)), ...termsError }); setStatus(IDLE); return; }
+    if (!checked.ok || !termsAccepted) {
+      const { city: cityError, ...rest } = checked.ok ? {} : checked.errors;
+      const fieldErrors = cityError ? { ...rest, [draft.city === OTHER_CITY ? "otherCity" : "city"]: cityError } : rest;
+      setErrors({ ...fieldMessages(t, fieldErrors), ...termsError }); setStatus(IDLE); return;
+    }
     setErrors({});
-    await submitState.run(async () => { await auth.register({ ...checked.value, termsVersion: t("legal.version") }); return { kind: "busy" }; });
+    const form = checked.value;
+    const prepare = async (session: Session): Promise<void> => {
+      if (form.role !== "PLANNER") return;
+      await client.request("/identity/organizations", { method: "POST", body: { name: form.organizationName }, headers: { Authorization: `Bearer ${session.accessToken}` }, auth: false });
+    };
+    await submitState.run(async () => {
+      await auth.register({
+        email: form.email, password: form.password, role: form.role, termsVersion: t("legal.version"),
+        givenName: form.givenName, familyName: form.familyName, phone: form.phone, city: form.city, country: form.country,
+        locale, timeZone: deviceTimeZone(), marketingOptIn: form.marketingOptIn
+      }, prepare);
+      return { kind: "busy" };
+    });
   };
+  const field = (key: Exclude<keyof RegisterDraft, "role" | "marketingOptIn">) => ({ value: draft[key], onChange: set(key), error: errors[key], editable: !busy, testID: `register-${key}` });
+  const next = { returnKeyType: "next" as const };
+  const submitButton = <SubmitButton label={t("auth.register")} busyLabel={t("auth.creating")} busy={busy} blocked={submitState.waitSeconds > 0} onPress={() => { void submit(); }} testID="register-submit" />;
   return (
     <AuthLayout title={t("auth.registerTitle")} intro={t("auth.registerIntro")} illustration="table">
-      <View style={authStyles.form}>
-        <View accessibilityRole="radiogroup" accessibilityLabel={t("auth.role")} style={{ gap: spacing[2] }}>
-          <Text style={authStyles.label}>{t("auth.role")}</Text>
-          {SELF_SERVICE_ROLES.map((option) => (
-            <ChoiceRow key={option.role} testID={`register-role-${option.role}`} title={t(option.title)} hint={t(option.hint)} selected={role === option.role} disabled={busy} onSelect={() => setRole(option.role)} />
-          ))}
-        </View>
-        <AuthField label={t("auth.email")} value={email} onChange={setEmail} error={errors["email"]} autoComplete="email" keyboardType="email-address" textContentType="emailAddress" returnKeyType="go" onSubmitEditing={() => { void submit(); }} editable={!busy} testID="register-email" />
-        <AuthField label={t("auth.password")} value={password} onChange={setPassword} error={errors["password"]} hint={t("auth.passwordHint")} secret autoComplete="new-password" textContentType="newPassword" returnKeyType="go" onSubmitEditing={() => { void submit(); }} editable={!busy} testID="register-password" />
-        <View style={{ gap: spacing[1] }}>
-          <Checkbox label={t("legal.consent.accept")} value={termsAccepted} onChange={setTermsAccepted} state={busy ? "disabled" : "default"} error={errors["terms"]} />
-          <View style={authStyles.switchRow}>
-            <TextLink label={t("legal.links.terms")} onPress={() => onNavigate("/terminos")} />
-            <TextLink label={t("legal.links.privacy")} onPress={() => onNavigate("/privacidad")} />
+      <View style={[authStyles.form, { gap: spacing[8] }]}>
+        <AuthSection title={t("auth.sectionRole")}>
+          <View accessibilityRole="radiogroup" accessibilityLabel={t("auth.role")} style={{ gap: spacing[2] }}>
+            {SELF_SERVICE_ROLES.map((option) => (
+              <ChoiceRow key={option.role} testID={`register-role-${option.role}`} title={t(option.title)} hint={t(option.hint)} selected={draft.role === option.role} disabled={busy} onSelect={() => set("role")(option.role)} />
+            ))}
           </View>
-        </View>
+          {draft.role === "PLANNER" ? (
+            <AuthField label={t("auth.organizationPlanner")} hint={t("auth.organizationPlannerHint")} autoCapitalize="words" autoComplete="organization" textContentType="organizationName" {...next} {...field("organizationName")} />
+          ) : null}
+        </AuthSection>
+        <AuthSection title={t("auth.sectionAbout")}>
+          <AuthPair>
+            <AuthField label={t("auth.givenName")} autoCapitalize="words" autoComplete="given-name" textContentType="givenName" {...next} {...field("givenName")} />
+            <AuthField label={t("auth.familyName")} autoCapitalize="words" autoComplete="family-name" textContentType="familyName" {...next} {...field("familyName")} />
+          </AuthPair>
+          <AuthField label={t("auth.phone")} hint={t("auth.phoneHint")} keyboardType="phone-pad" inputMode="tel" autoComplete="tel" textContentType="telephoneNumber" {...next} {...field("phone")} />
+          <View style={{ gap: spacing[1] }}>
+            <Text style={authStyles.label}>{t("auth.city")}</Text>
+            <FilterSelect label={t("auth.city")} value={draft.city} onChange={set("city")} options={[...SIGN_UP_CITIES.map((city) => ({ value: city, label: city })), { value: OTHER_CITY, label: t("auth.cityOther") }]} testID="register-city" />
+            {errors["city"] ? <Text accessibilityRole="alert" style={authStyles.fieldError}>{errors["city"]}</Text> : null}
+          </View>
+          {draft.city === OTHER_CITY ? <AuthField label={t("auth.cityOtherLabel")} autoCapitalize="words" textContentType="addressCity" {...next} {...field("otherCity")} /> : null}
+        </AuthSection>
+        <AuthSection title={t("auth.sectionAccess")}>
+          <AuthField label={t("auth.email")} autoComplete="email" keyboardType="email-address" textContentType="emailAddress" {...next} {...field("email")} />
+          <AuthField label={t("auth.password")} hint={t("auth.passwordHint")} secret autoComplete="new-password" textContentType="newPassword" {...next} {...field("password")} />
+          <AuthField label={t("auth.passwordConfirmation")} secret autoComplete="new-password" textContentType="newPassword" returnKeyType="go" onSubmitEditing={() => { void submit(); }} {...field("passwordConfirmation")} />
+          <View style={{ gap: spacing[1] }}>
+            <Checkbox label={t("legal.consent.accept")} value={termsAccepted} onChange={setTermsAccepted} state={busy ? "disabled" : "default"} error={errors["terms"]} />
+            <View style={authStyles.switchRow}>
+              <TextLink label={t("legal.links.terms")} onPress={() => onNavigate("/terminos")} />
+              <TextLink label={t("legal.links.privacy")} onPress={() => onNavigate("/privacidad")} />
+            </View>
+          </View>
+          <Checkbox label={t("auth.marketingOptIn")} value={draft.marketingOptIn} onChange={set("marketingOptIn")} state={busy ? "disabled" : "default"} />
+        </AuthSection>
         {compact ? (
-          <StickyActions summary={<FailureBanner submit={submitState} />}>
-            <SubmitButton label={t("auth.register")} busyLabel={t("auth.creating")} busy={busy} blocked={submitState.waitSeconds > 0} onPress={() => { void submit(); }} testID="register-submit" />
-          </StickyActions>
+          <StickyActions bleed={0} summary={<FailureBanner submit={submitState} />}>{submitButton}</StickyActions>
         ) : (
-          <>
-            <SubmitButton label={t("auth.register")} busyLabel={t("auth.creating")} busy={busy} blocked={submitState.waitSeconds > 0} onPress={() => { void submit(); }} testID="register-submit" />
+          <View style={{ gap: spacing[5] }}>
+            {submitButton}
             <FailureBanner submit={submitState} />
-          </>
+          </View>
         )}
       </View>
       <View style={authStyles.switchRow}>
@@ -137,7 +199,7 @@ function ChoiceRow({ title, hint, selected, disabled = false, onSelect, testID }
     <Pressable accessibilityRole="radio" aria-checked={selected} aria-disabled={disabled} disabled={disabled} accessibilityLabel={`${title}. ${hint}`} onPress={onSelect} testID={testID} style={[authStyles.roleOption, { flexDirection: "row", alignItems: "center", gap: spacing[3] }, selected && authStyles.roleOptionActive, disabled && authStyles.primaryBusy, authFocusRing]}>
       <View style={{ flex: 1 }}>
         <Text style={authStyles.roleTitle}>{title}</Text>
-        {selected ? <Text style={authStyles.hint}>{hint}</Text> : null}
+        <Text style={authStyles.hint}>{hint}</Text>
       </View>
       {selected ? <CheckMark size={28} /> : <View style={{ width: 28, height: 28, borderRadius: 14, borderWidth: 1, borderColor: palette.fieldBorder }} />}
     </Pressable>
