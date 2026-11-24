@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
-import { SkeletonList } from "@rsvp/ui";
+import { usePathname } from "expo-router";
 import { useCelebration, useEventTypes, useMyCelebrations, type Celebration, type TranslatedEventType } from "@rsvp/query-hooks";
+import { LoadingContent } from "../platform/loading-content";
+import { HOST_LOADING, loadingProfile } from "../platform/loading-profiles";
 import { useApiClient, useClaims, useLocale, useT } from "../platform/providers";
 import type { SessionClaims } from "../platform/session";
 import { ActionButton, EmptyState, ErrorNotice, Notice, Screen } from "./ui";
@@ -71,6 +73,8 @@ export function CelebrationScreen({ celebrationId, onNavigate, current, title, h
   const client = useApiClient();
   const locale = useLocale();
   const claims = useClaims();
+  const profile = loadingProfile(usePathname());
+  const loadingKind = profile?.area === "host" && profile.current === current ? profile.kind : HOST_LOADING[current].kind;
   const query = useCelebration(client, celebrationId ?? "");
   const types = useEventTypes(client, locale);
   // With no celebration chosen, a person who has exactly one open celebration goes straight to it instead of a dead-end "choose one".
@@ -87,9 +91,9 @@ export function CelebrationScreen({ celebrationId, onNavigate, current, title, h
     return <Screen title={screenTitle} {...(intro ? { intro } : {})} nav={nav} current={current} onNavigate={onNavigate} {...(actions ? { actions } : {})} {...(menu ? { menu } : {})} {...(status ? { status } : {})}>{body}</Screen>;
   };
   if (!canUseHostWorkspace(claims)) return frame(<Notice kind="error">{t("host.common.accessDenied")}</Notice>);
-  if (!celebrationId && (mine.isPending || onlyOne)) return frame(<SkeletonList count={3} row={{ minHeight: 64, avatar: false, trailing: false }} label={t("host.common.loading")} />);
+  if (!celebrationId && (mine.isPending || onlyOne)) return frame(<LoadingContent kind={loadingKind} />);
   if (!celebrationId) return frame(<EmptyState illustration="invitation" title={t("host.common.noCelebrationTitle")} body={t("host.common.noCelebrationBody")} action={<ActionButton icon="plus" label={t("host.common.chooseCelebration")} onPress={() => onNavigate(HOST_ROUTES.celebrations)} />} />);
-  if (query.isPending) return frame(<SkeletonList count={3} row={{ minHeight: 64, avatar: false, trailing: false }} label={t("host.common.loading")} />);
+  if (query.isPending) return frame(<LoadingContent kind={loadingKind} />);
   if (query.isError || !query.data) return frame(<ErrorNotice error={query.error} />);
   const celebration = query.data;
   if (manage && celebration.access === "READ") return frame(<Notice kind="error">{t("host.common.forbidden")}</Notice>);

@@ -2,7 +2,8 @@ import { useState, type PropsWithChildren, type ReactNode, type Ref } from "reac
 import { Modal, Pressable, StyleSheet, Text, View, type KeyboardTypeOptions, type TextInput } from "react-native";
 import { usePathname, useRouter, type Href } from "expo-router";
 import { ApiError } from "@rsvp/api-client";
-import { Button, CheckMark, DatePicker, Enter, fonts, Input, NoticeMark, OverlayEnter, overlayAnimation, pressVisual, SkeletonList, TimePicker, useColors, useReducedMotion, useTheme } from "@rsvp/ui";
+import { Button, CheckMark, DatePicker, Enter, fonts, Input, NoticeMark, OverlayEnter, overlayAnimation, pressVisual, TimePicker, useColors, useReducedMotion, useTheme } from "@rsvp/ui";
+import { LoadingContent, type LoadingKind } from "../platform/loading-content";
 import { colors, radius, spacing, typography, type ColorTheme } from "@rsvp/design-tokens";
 import type { AppLocale } from "@rsvp/i18n/server";
 import { loginHref } from "../auth/routes";
@@ -240,9 +241,8 @@ export function ErrorNotice({ error, onReload }: { readonly error: unknown; read
 }
 
 /** Loading state of a whole screen or section: rows shaped like the content that is coming (never a lone spinner). */
-export function Loading(): ReactNode {
-  const t = useT();
-  return <SkeletonList count={3} row={{ minHeight: 64 }} label={t("host.common.loading")} />;
+export function Loading({ kind = "list" }: { readonly kind?: LoadingKind }): ReactNode {
+  return <LoadingContent kind={kind} />;
 }
 
 /** `busy` shows the confirm button as loading and refuses a second confirm, Cancel and Escape until the request ends. */
