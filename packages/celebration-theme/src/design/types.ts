@@ -9,6 +9,31 @@ export interface DesignFont {
   readonly weights: readonly number[];
 }
 
+export interface DesignBox { readonly top: number; readonly right: number; readonly bottom: number; readonly left: number }
+export interface DesignBorder { readonly width: number; readonly style: "solid" | "dashed" | "dotted"; readonly colour: PaletteRole }
+export type DesignBackground =
+  | { readonly kind: "colour"; readonly colour: PaletteRole }
+  | { readonly kind: "media"; readonly mediaId: string; readonly scrim?: number }
+  | { readonly kind: "illustration"; readonly illustration: string };
+export interface DesignTypographyOverride {
+  readonly role?: "heading" | "body" | "monogram";
+  readonly size?: number;
+  readonly weight?: number;
+  readonly align?: "start" | "center" | "end" | "justify";
+  readonly lineHeight?: number;
+  readonly letterSpacing?: number;
+  readonly transform?: "none" | "uppercase" | "lowercase" | "capitalize";
+  readonly colour?: PaletteRole;
+}
+export type DesignEntrance = "none" | "fade" | "rise" | "scale" | "draw" | "envelope";
+export interface DesignAnimation { readonly entrance: DesignEntrance; readonly delayMs?: number; readonly durationMs?: number }
+export type DesignLink =
+  | { readonly kind: "url"; readonly href: string }
+  | { readonly kind: "section"; readonly section: string }
+  | { readonly kind: "gifts" }
+  | { readonly kind: "rsvp" }
+  | { readonly kind: "listing"; readonly listingId: string };
+
 export interface DesignElement {
   readonly id: string;
   readonly block: string;
@@ -17,6 +42,17 @@ export interface DesignElement {
   readonly w: number;
   readonly h: number;
   readonly visible: boolean;
+  readonly rotation?: number;
+  readonly z?: number;
+  readonly padding?: DesignBox;
+  readonly margin?: DesignBox;
+  readonly radius?: number;
+  readonly border?: DesignBorder;
+  readonly background?: DesignBackground;
+  readonly opacity?: number;
+  readonly typography?: DesignTypographyOverride;
+  readonly animation?: DesignAnimation;
+  readonly link?: DesignLink;
 }
 
 export interface DesignCanvas {
