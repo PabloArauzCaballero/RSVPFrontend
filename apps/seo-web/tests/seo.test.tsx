@@ -107,7 +107,12 @@ describe("rendered public page", () => {
     const document = dom(renderToStaticMarkup(<PublicCelebration page={page} />));
     const help = document.querySelector('section[data-section="rsvp"] a[data-action="rsvp-help"]');
     expect(help?.getAttribute("href")).toBe("/c/ana-y-luis/rsvp");
-    expect(help?.textContent).toBe("Busca tu enlace personal");
+    // Both faces share the button's box (no layout shift when the island switches); only «Busca tu enlace personal» is exposed until then.
+    expect(help?.getAttribute("data-credential")).toBe("absent");
+    expect(help?.querySelector('[data-face="find"]')?.textContent).toBe("Busca tu enlace personal");
+    expect(help?.querySelector('[data-face="find"]')?.hasAttribute("aria-hidden")).toBe(false);
+    expect(help?.querySelector('[data-face="confirm"]')?.textContent).toBe("Confirmar asistencia");
+    expect(help?.querySelector('[data-face="confirm"]')?.getAttribute("aria-hidden")).toBe("true");
     expect(help?.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
   });
 

@@ -256,9 +256,9 @@ export const GIFTS_CTA_KEYS: Readonly<Record<GiftsStatus, string>> = {
   CLOSED: "celebration.gifts.cta"
 };
 
-/** The gifts block is titled like the gift page (`gifts.guest.title`); every other section by its name in the menu. */
+/** A section is titled by its name in the menu. The gifts block has its own copy (`celebration.gifts.*`), not the gift page's (rsvp-f1's). */
 export function sectionTitleKey(section: SectionId): string {
-  return section === "gifts" ? "gifts.guest.title" : `celebration.sections.${section}`;
+  return `celebration.sections.${section}`;
 }
 
 export function sectionForPath(path: string): SectionId | undefined {

@@ -257,7 +257,7 @@ const NativeSections: Readonly<Record<SectionId, NativeSection>> = {
     const s = useStyles(scheme);
     return (
       <View style={{ gap: SPACE / 2 }}>
-        <Text style={s.body}>{t("gifts.guest.intro")}</Text>
+        <Text style={s.body}>{t("celebration.gifts.intro")}</Text>
         <ActionButton label={t(GIFTS_CTA_KEYS[giftsStatus ?? "OPEN"])} icon="gifts" scheme={scheme} renderIcon={renderIcon} onPress={actions ? () => actions.openSection("gifts") : undefined} testID="celebration-gifts-cta" />
       </View>
     );

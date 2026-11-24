@@ -108,10 +108,18 @@
 .celebration-venues strong, .celebration-recommendations strong { font-family: var(--celebration-heading-font); font-size: 1.3rem; font-weight: 600; line-height: 1.2; }
 .celebration-venues p, .celebration-recommendations p { margin: 0; }
 .celebration-venues a, .celebration-recommendations a, .celebration-cta { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; }
+/* DESIGN.md · Movimiento: solo transform y opacidad; scale(.98) al pulsar. Sin movimiento si el sistema lo reduce. */
+@media (prefers-reduced-motion: no-preference) {
+  .celebration-cta { transition: transform 120ms cubic-bezier(0.16, 1, 0.3, 1); }
+  .celebration-cta:hover { transform: translateY(-1px); }
+  .celebration-cta:active { transform: scale(.98); }
+}
 .celebration-cta { gap: .5rem; max-width: 100%; box-sizing: border-box; text-align: center; padding: .8rem clamp(1.25rem, 5vw, 2rem); font-size: 1.05rem; border-radius: var(--celebration-radius); background: var(--celebration-accent-fill); color: var(--celebration-on-accent) !important; text-decoration: none; }
-/* The ring sits outside the fill in the accent used as text, which reads on the canvas in both schemes (phase 0). */
-.celebration-cta:focus-visible { outline: 3px solid var(--celebration-accent); outline-offset: 3px; }
 .celebration-cta .celebration-icon { flex-shrink: 0; }
+/* The adaptive reply: both faces share one grid cell, so the button is as wide as the longer one and never moves when the face changes. */
+.celebration-cta[data-credential] { display: inline-grid; place-items: center; }
+.celebration-cta-face { grid-area: 1 / 1; display: inline-flex; align-items: center; justify-content: center; gap: .5rem; }
+.celebration-cta[data-credential="absent"] .celebration-cta-face[data-face="confirm"], .celebration-cta[data-credential="present"] .celebration-cta-face[data-face="find"] { visibility: hidden; }
 .celebration-gallery { list-style: none; padding: 0; margin: 0; display: grid; gap: .75rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr)); }
 .celebration-gallery img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; }
 .celebration[data-images="rounded"] .celebration-gallery img { border-radius: var(--celebration-radius); }
@@ -129,7 +137,8 @@
 .celebration-sections > section[data-section="story"] p:first-of-type { font-size: 1.15em; }
 /* The reply is what the page is for: it gets its own tinted block. */
 .celebration-sections > section[data-section="rsvp"] { padding: clamp(1.75rem, 6vw, 3.5rem) clamp(1.25rem, 5vw, 3rem); border-radius: max(var(--celebration-radius), 2px); background: color-mix(in srgb, var(--celebration-accent) 9%, var(--celebration-surface)); border: 1px solid color-mix(in srgb, var(--celebration-accent) 30%, transparent); }
-.celebration[data-section-style="bands"] .celebration-sections > section[data-section="rsvp"] { border-radius: 0; border-inline: 0; }
+/* Same specificity as the bands' alternate-band rule above and declared after it, so the reply's tint never depends on the section's parity (PL-114-V1). */
+.celebration[data-section-style="bands"] .celebration-sections > section[data-section="rsvp"] { border-radius: 0; border-inline: 0; background: color-mix(in srgb, var(--celebration-accent) 9%, var(--celebration-surface)); }
 /* Gifts (P22): on every invitation, quiet like the other sections, with the same filled button as the reply. */
 .celebration-sections > section[data-section="gifts"] p { max-width: 40rem; }
 .celebration-sections > section[data-section="gifts"] .celebration-cta, .celebration-sections > section[data-section="rsvp"] .celebration-cta { margin-top: .5rem; }

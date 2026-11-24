@@ -18,6 +18,8 @@ export interface CelebrationRendererProps {
   readonly rsvpHref?: string;
   /** Without a personal link: where the reply section sends the visitor to find it (`/c/{slug}/rsvp`). */
   readonly rsvpHelpHref?: string;
+  /** Render the help button with both faces so a client island can show «Confirmar asistencia» to a visitor who holds their link (see `SectionProps`). */
+  readonly rsvpAdaptive?: boolean;
   /** What the gift list holds (rsvp-f1's `gifts.status`); absent means OPEN. Only the gifts button's label changes. */
   readonly giftsStatus?: GiftsStatus;
   /** Injected for deterministic rendering in tests and previews. */
@@ -107,7 +109,7 @@ export function CelebrationRenderer(props: CelebrationRendererProps): ReactNode 
             <section key={section} id={section} data-section={section} aria-labelledby={headingId}>
               {/* On a section's own page the h1 already names it; the h2 stays for the outline only. */}
               <h2 id={headingId} className={props.only ? "celebration-visually-hidden" : undefined}>{t(sectionTitleKey(section))}</h2>
-              <Body content={content} gallery={gallery} timeZone={view.timeZone} locale={view.locale} t={t} rsvpHref={props.rsvpHref} rsvpHelpHref={props.rsvpHelpHref}
+              <Body content={content} gallery={gallery} timeZone={view.timeZone} locale={view.locale} t={t} rsvpHref={props.rsvpHref} rsvpHelpHref={props.rsvpHelpHref} rsvpAdaptive={props.rsvpAdaptive}
                 giftsHref={giftsPath(view.slug)} giftsStatus={props.giftsStatus} />
             </section>
           );

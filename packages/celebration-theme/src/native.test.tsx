@@ -129,7 +129,7 @@ describe("P22 · PL-A10 / PL-A11 · gifts and reply buttons in the app", () => {
     const omitted = { ...template, sectionOrder: withoutGifts(template.sectionOrder) };
     render(<CelebrationNativeRenderer theme={themeFromTemplate(omitted, withoutGifts(VIEW.enabledSections))} view={{ ...VIEW, enabledSections: withoutGifts(VIEW.enabledSections) }} gallery={GALLERY} t={t} now={NOW} actions={a} />);
     const section = screen.getByTestId("section-gifts");
-    expect(within(section).getByText("gifts.guest.title")).toBeTruthy();
+    expect(within(section).getByText("celebration.sections.gifts")).toBeTruthy();
     const button = screen.getByTestId("celebration-gifts-cta");
     expect(button.textContent).toBe("celebration.gifts.cta");
     expect(button.getAttribute("role")).toBe("link");

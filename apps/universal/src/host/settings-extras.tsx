@@ -26,7 +26,7 @@ export function EventTypeSection({ celebration, onSaved }: { readonly celebratio
   return (
     <Section title={t("host.settingsExtra.eventType.label")}>
       <Text style={styles.muted}>{draft ? t("host.settingsExtra.eventType.help") : t("host.settingsExtra.eventType.locked")}</Text>
-      {types.isPending ? <Loading /> : null}
+      {types.isPending ? <Loading kind="field" /> : null}
       <CelebrationErrorNotice error={types.error} />
       <ChoiceGroup label={t("host.settingsExtra.eventType.label")} value={code} onChange={draft ? setCode : () => undefined} choices={(types.data?.items ?? []).map((type) => ({ value: type.code, label: type.name }))} />
       <CelebrationErrorNotice error={assign.error} />

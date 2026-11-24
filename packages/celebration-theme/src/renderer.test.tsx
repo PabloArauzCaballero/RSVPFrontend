@@ -1,7 +1,10 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { cleanup, render, screen } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it } from "vitest";
-import { CelebrationRenderer, readContent, themeFromTemplate, daysUntil, sectionForPath, partnerHref, navigationHref, mapUrl, giftsPath, type GiftsStatus, type TemplateDocument } from "./index.js";
+import { CelebrationRenderer, COMPONENT_CONTRAST, contrastRatio, paletteFor, TEXT_CONTRAST, readContent, themeFromTemplate, daysUntil, sectionForPath, partnerHref, navigationHref, mapUrl, giftsPath, type GiftsStatus, type TemplateDocument } from "./index.js";
+import seeded from "../test/seeded-palettes.json";
 import { GALLERY, NOW, t, TEMPLATES, VIEW, WEDDING_SECTIONS } from "../test/fixtures.js";
 
 const renderWith = (template: TemplateDocument | null, extra: Partial<Parameters<typeof CelebrationRenderer>[0]> = {}): string =>
@@ -82,7 +85,7 @@ describe("P22 · PL-A10 · the gifts button on every invitation", () => {
     for (const colorScheme of ["light", "dark"] as const) {
       const document = parse(renderToStaticMarkup(<CelebrationRenderer theme={themeFromTemplate(omitted, view.enabledSections)} view={view} gallery={GALLERY} t={t} now={NOW} basePath={BASE} colorScheme={colorScheme} />));
       const section = document.querySelector('section[data-section="gifts"]');
-      expect(section?.querySelector("h2")?.textContent).toBe("gifts.guest.title");
+      expect(section?.querySelector("h2")?.textContent).toBe("celebration.sections.gifts");
       const button = section?.querySelector<HTMLAnchorElement>('a[data-action="gifts"]');
       expect(button?.getAttribute("href")).toBe(`${BASE}/regalos`);
       expect(button?.className).toBe("celebration-cta");
@@ -135,6 +138,25 @@ describe("PL-A11 · the reply always leads somewhere", () => {
     expect(own?.querySelector('a[data-action="rsvp"]')?.textContent).toBe("celebration.rsvp.cta");
     expect(own?.querySelector('a[data-action="rsvp"] svg[data-icon="check"]')).toBeTruthy();
     expect(own?.querySelector('a[data-action="rsvp-help"]')).toBeNull();
+  });
+
+  it.each(TEMPLATES.map((template) => [template.layout, template] as const))("%s · adaptive: both faces in one button to the same destination, the help face exposed first, no token", (_layout, template) => {
+    const button = parse(renderWith(template, { rsvpHelpHref: `${BASE}/rsvp`, rsvpAdaptive: true })).querySelector('section[data-section="rsvp"] a[data-action="rsvp-help"]');
+    expect(button?.getAttribute("href")).toBe(`${BASE}/rsvp`);
+    expect(button?.getAttribute("data-credential")).toBe("absent");
+    expect(button?.querySelector('[data-face="find"]')?.textContent).toBe("celebration.rsvp.findLink");
+    expect(button?.querySelector('[data-face="find"] svg[data-icon="invitation"]')).toBeTruthy();
+    expect(button?.querySelector('[data-face="confirm"]')?.textContent).toBe("celebration.rsvp.cta");
+    expect(button?.querySelector('[data-face="confirm"] svg[data-icon="check"]')).toBeTruthy();
+    expect(button?.querySelector('[data-face="confirm"]')?.getAttribute("aria-hidden")).toBe("true");
+    expect(button?.outerHTML).not.toMatch(/token|#t=/);
+  });
+
+  it("negative: adaptive does nothing when the visitor's own link is known (the link wins) or there is no destination", () => {
+    const own = parse(renderWith(TEMPLATES[0], { rsvpHref: `${BASE}/rsvp/token-abcdefghijklmnop`, rsvpHelpHref: `${BASE}/rsvp`, rsvpAdaptive: true })).querySelector('section[data-section="rsvp"]');
+    expect(own?.querySelector("[data-face]")).toBeNull();
+    expect(own?.querySelector('a[data-action="rsvp"]')?.textContent).toBe("celebration.rsvp.cta");
+    expect(parse(renderWith(TEMPLATES[0], { rsvpAdaptive: true })).querySelector('section[data-section="rsvp"] a')).toBeNull();
   });
 
   it("negative: with no destination at all (a still preview) the section stays text, no dead link", () => {
@@ -209,5 +231,25 @@ describe("content helpers", () => {
     expect(daysUntil(null, NOW)).toBeNull();
     expect(daysUntil("not a date", NOW)).toBeNull();
     expect(daysUntil("2026-10-01T00:00:00Z", NOW)).toBe(0);
+  });
+});
+
+describe("PL-114-V4 · the gifts button and the reply button read in the 16 seeded palettes, light and dark (same fill as phase 0's)", () => {
+  const cases = seeded.templates.flatMap((template) => (["light", "dark"] as const).map((scheme) => [`${template.key} · ${scheme}`, template.palette, scheme] as const));
+
+  it.each(cases)("%s", (_name, palette, scheme) => {
+    const theme = { ...themeFromTemplate(TEMPLATES[0], VIEW.enabledSections), palette };
+    const html = renderToStaticMarkup(<CelebrationRenderer theme={theme} view={VIEW} gallery={GALLERY} t={t} now={NOW} basePath={BASE} rsvpHelpHref={`${BASE}/rsvp`} colorScheme={scheme} />);
+    const root = parse(html);
+    const style = root.querySelector("article")?.getAttribute("style") ?? "";
+    const fill = /--celebration-accent-fill:(#[0-9A-Fa-f]{6})/.exec(style)?.[1];
+    const ink = /--celebration-on-accent:(#[0-9A-Fa-f]{6})/.exec(style)?.[1];
+    expect(fill && ink).toBeTruthy();
+    // Both buttons are the one `.celebration-cta`, and the stylesheet paints that class with the fill measured here.
+    expect(readFileSync(join(process.cwd(), "styles.css"), "utf8")).toMatch(/\n\.celebration-cta \{[^}]*background: var\(--celebration-accent-fill\); color: var\(--celebration-on-accent\)/);
+    for (const action of ["gifts", "rsvp-help"]) expect(root.querySelector(`a[data-action="${action}"]`)?.classList.contains("celebration-cta")).toBe(true);
+    const surfaces = paletteFor(theme, scheme);
+    expect(contrastRatio(ink!, fill!)).toBeGreaterThanOrEqual(TEXT_CONTRAST);
+    for (const background of [surfaces.canvas, surfaces.surface]) expect(contrastRatio(fill!, background)).toBeGreaterThanOrEqual(COMPONENT_CONTRAST);
   });
 });

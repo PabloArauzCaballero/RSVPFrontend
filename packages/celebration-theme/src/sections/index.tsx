@@ -15,6 +15,12 @@ export interface SectionProps {
   readonly rsvpHref?: string;
   /** Where a visitor without their personal link is helped (`/c/{slug}/rsvp`): «Busca tu enlace personal». */
   readonly rsvpHelpHref?: string;
+  /**
+   * The page is shared and server-rendered, so it cannot know whether the visitor holds their link. With this on, the help
+   * button carries both faces («Busca tu enlace personal» / «Confirmar asistencia») stacked in one box, so a client island
+   * can switch the face (`data-credential`) without moving anything. The destination is the same either way and never has a token.
+   */
+  readonly rsvpAdaptive?: boolean;
   /** The guest's gift list (`giftsPath`); never carries the guest's link. */
   readonly giftsHref: string;
   /** What the gift list holds; until the public view says it, OPEN. Only the button's label depends on it. */
@@ -115,12 +121,19 @@ function Recommendations({ content, t }: SectionProps): ReactNode {
  * PL-A11: the reply always leads somewhere. With the personal link, «Confirmar asistencia»; without it, the help that
  * explains the personal link and lets an open celebration register the visitor (`/c/{slug}/rsvp`).
  */
-function Rsvp({ t, rsvpHref, rsvpHelpHref }: SectionProps): ReactNode {
+function Rsvp({ t, rsvpHref, rsvpHelpHref, rsvpAdaptive }: SectionProps): ReactNode {
   const action = rsvpHref
     ? <a className="celebration-cta" href={rsvpHref} data-link-kind="internal" data-action="rsvp"><ActionIcon name="check" /><span>{t("celebration.rsvp.cta")}</span></a>
     : null;
   const help = !rsvpHref && rsvpHelpHref
-    ? <a className="celebration-cta" href={rsvpHelpHref} data-link-kind="internal" data-action="rsvp-help"><ActionIcon name="invitation" /><span>{t("celebration.rsvp.findLink")}</span></a>
+    ? rsvpAdaptive
+      ? (
+        <a className="celebration-cta" href={rsvpHelpHref} data-link-kind="internal" data-action="rsvp-help" data-credential="absent">
+          <span className="celebration-cta-face" data-face="find"><ActionIcon name="invitation" /><span>{t("celebration.rsvp.findLink")}</span></span>
+          <span className="celebration-cta-face" data-face="confirm" aria-hidden="true"><ActionIcon name="check" /><span>{t("celebration.rsvp.cta")}</span></span>
+        </a>
+      )
+      : <a className="celebration-cta" href={rsvpHelpHref} data-link-kind="internal" data-action="rsvp-help"><ActionIcon name="invitation" /><span>{t("celebration.rsvp.findLink")}</span></a>
     : null;
   return (
     <>
@@ -138,7 +151,7 @@ function Rsvp({ t, rsvpHref, rsvpHelpHref }: SectionProps): ReactNode {
 function Gifts({ t, giftsHref, giftsStatus }: SectionProps): ReactNode {
   return (
     <>
-      <p>{t("gifts.guest.intro")}</p>
+      <p>{t("celebration.gifts.intro")}</p>
       <a className="celebration-cta" href={giftsHref} data-link-kind="internal" data-action="gifts"><ActionIcon name="gifts" /><span>{t(GIFTS_CTA_KEYS[giftsStatus ?? "OPEN"])}</span></a>
     </>
   );

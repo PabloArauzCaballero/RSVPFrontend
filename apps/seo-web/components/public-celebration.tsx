@@ -4,6 +4,7 @@ import type { PublicPage } from "../lib/celebration";
 import { eventJsonLd, jsonLdScript } from "../lib/json-ld";
 import { uiLocale } from "../lib/locale";
 import { celebrationPath, siteUrl } from "../lib/metadata";
+import { RsvpCredentialIsland } from "./rsvp-credential-island";
 
 /** The public celebration (A1) or one of its sections (A2–A8), server-rendered with its theme. */
 export function PublicCelebration({ page, only }: { readonly page: PublicPage; readonly only?: SectionId }) {
@@ -30,10 +31,13 @@ export function PublicCelebration({ page, only }: { readonly page: PublicPage; r
           ))}
         </nav>
       ) : null}
-      {/* The page is shared and server-rendered, so it never knows the visitor's personal link: the reply sends them to the
-          help to find it (`/c/{slug}/rsvp`, which also registers them when the celebration is open). The guest with the link
-          arrives at `/c/{slug}/rsvp/{token}` directly. The gifts button needs nothing: it is always `/c/{slug}/regalos`. */}
-      <CelebrationRenderer theme={theme} view={view} gallery={gallery} t={t} only={only} basePath={basePath} rsvpHelpHref={celebrationPath(view.slug, "rsvp")} />
+      {/* The page is shared and server-rendered, so it never knows the visitor's personal link: the reply always goes to
+          `/c/{slug}/rsvp` (the help, which also registers them when the celebration is open) and starts as «Busca tu enlace
+          personal». `RsvpCredentialIsland` flips it to «Confirmar asistencia» when this tab holds the guest's credential; the
+          token is never put in the markup. The guest arriving by the personal link goes to `/c/{slug}/rsvp/{token}` directly.
+          The gifts button needs nothing: it is always `/c/{slug}/regalos`. */}
+      <CelebrationRenderer theme={theme} view={view} gallery={gallery} t={t} only={only} basePath={basePath} rsvpHelpHref={celebrationPath(view.slug, "rsvp")} rsvpAdaptive />
+      <RsvpCredentialIsland slug={view.slug} />
     </>
   );
 }
