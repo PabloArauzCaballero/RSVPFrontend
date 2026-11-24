@@ -51,12 +51,16 @@ function sheet(template, scheme) {
   const tiles = (items) => items.map((item) => `<figure>${markup(createElement(InvitationArt, { drawing: item, palette, style: { "--celebration-art-size": "132px" } }))}<figcaption>${item.id}</figcaption></figure>`).join("");
   const sections = groups.map((group) => `<h2>${EVENT_NAMES[group.event]}</h2><div class="grid">${tiles(group.items)}</div>`).join("");
   const ornaments = ids ? "" : `<h2>Ornamentos</h2><div class="orn">${ORNAMENT_SETS.map((set) => `<div class="row"><b>${set.id}</b>${markup(createElement(OrnamentSeparator, { set, palette, style: { "--celebration-art-size": "280px" } }))}${markup(createElement(OrnamentFrame, { set, palette, width: 240, height: 150, style: { "--celebration-art-size": "240px" } }))}</div>`).join("")}</div>`;
+  const SAMPLE = ["sobre", "anillos", "pinata", "cifra-25", "tijera-cinta", "cartel", "mascara-morenada", "paloma", "ramo", "laurel", "uvas", "rosario"];
+  const sample = DRAWINGS.filter((item) => SAMPLE.includes(item.id));
+  const small = ids ? "" : `<h2>A 48 px, para comprobar que se leen</h2><div class="grid">${sample.map((item) => `<figure style="width:64px">${markup(createElement(InvitationArt, { drawing: item, palette, style: { "--celebration-art-size": "48px" } }))}</figure>`).join("")}</div>`;
+  const onAccent = ids ? "" : `<h2>Sobre un bloque de acento (suelo «accent»: el disco es un halo del color del lienzo)</h2><div class="accentblock"><div class="grid">${sample.map((item) => `<figure style="width:96px">${markup(createElement(InvitationArt, { drawing: item, palette, ground: "accent", style: { "--celebration-art-size": "84px" } }))}</figure>`).join("")}</div></div>`;
   return `<!doctype html><meta charset="utf-8"><style>${artCss}
     body{margin:0;padding:24px 28px 40px;background:${palette.canvas};color:${palette.text};font:13px/1.3 system-ui,sans-serif;width:1240px}
     h1{font:600 20px system-ui;margin:0 0 4px} h2{font:600 15px system-ui;margin:26px 0 8px;padding-top:8px;border-top:1px solid ${palette.text}22}
     .grid{display:flex;flex-wrap:wrap;gap:10px 8px} figure{margin:0;width:150px;text-align:center} figcaption{font-size:11px;opacity:.7}
-    .celebration-art{margin:0 auto} .orn .row{display:flex;gap:28px;align-items:center;margin:10px 0} .orn b{width:110px;font-size:12px}
-  </style><h1>${template.name} · ${scheme === "dark" ? "oscuro" : "claro"}</h1>${sections}${ornaments}`;
+    .celebration-art{margin:0 auto} .accentblock{background:${palette.accent};padding:18px 12px;border-radius:12px} .orn .row{display:flex;gap:28px;align-items:center;margin:10px 0} .orn b{width:110px;font-size:12px}
+  </style><h1>${template.name} · ${scheme === "dark" ? "oscuro" : "claro"}</h1>${sections}${small}${onAccent}${ornaments}`;
 }
 
 await mkdir(out, { recursive: true });

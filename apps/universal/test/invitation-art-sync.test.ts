@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { EASE, MOTION } from "../../../packages/ui/src/motion-tokens";
+import { ART_MOTION } from "../../../packages/celebration-theme/src/art/motion";
 import { circle as uiCircle, ellipse as uiEllipse, ILLUSTRATIONS, rect as uiRect } from "../../../packages/ui/src/illustrations";
 import { capsule, circle, ellipse, rect } from "../../../packages/celebration-theme/src/art/geometry";
 
@@ -23,5 +25,13 @@ describe("Dibujitos de invitación · la geometría es la de las ilustraciones d
     const stage = ILLUSTRATIONS.gift.slice(0, 2).map((shape) => shape.d);
     expect(DRAWINGS[0]?.paths[0]?.d).toBe(stage[0]);
     expect(DRAWINGS.find((item) => item.id === "regalo")?.paths[1]?.d).toBe(uiEllipse(60, 99, 32, 5));
+  });
+
+  it("moves with DOne's motion tokens: 500 ms, 12 px, 70 ms per step, at most 8 steps and the same ease-out", () => {
+    expect(ART_MOTION.enterMs).toBe(MOTION.enterMs);
+    expect(ART_MOTION.enterDistance).toBe(MOTION.enterDistance);
+    expect(ART_MOTION.staggerMs).toBe(MOTION.staggerMs);
+    expect(ART_MOTION.staggerMax).toBe(MOTION.staggerMax);
+    expect(ART_MOTION.ease).toBe(`cubic-bezier(${EASE.out.join(", ")})`);
   });
 });

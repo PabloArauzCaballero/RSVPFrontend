@@ -48,10 +48,15 @@ export interface ArtOrnament {
   readonly paths: ArtPaths;
 }
 
+/** A corner also lists its `rails`: the distance from the edge of each parallel line that leaves it, so a frame can carry every line on. */
+export interface ArtCorner extends ArtOrnament {
+  readonly rails: readonly number[];
+}
+
 /** An ornament set: a separator, a corner (the frame repeats it four times) and its Spanish and English names. */
 export interface OrnamentSet {
   readonly id: string;
   readonly label: ArtLabel;
   readonly separator: ArtOrnament;
-  readonly corner: ArtOrnament;
+  readonly corner: ArtCorner;
 }

@@ -30,15 +30,20 @@ describe("seed palettes", () => {
   });
 });
 
-describe.each(CASES)("art palette · $name", ({ palette }) => {
-  const grounds = ["canvas", "surface"] as const;
+describe.each(CASES)("art palette · $name", ({ palette, scheme }) => {
+  const grounds = ["canvas", "surface", "accent", "photo"] as const;
+  const dark = scheme === "dark";
 
   it.each(grounds)("disc, shadow, secondary and accent hold their contrast floors on the %s", (ground) => {
     const colors = artPalette(palette, ground);
     const page = [palette.canvas, palette.surface];
+    const halo = ground === "accent" || ground === "photo";
+    if (!halo) for (const background of page) {
+      if (dark) expect(contrastRatio(colors.disc, background), "disc").toBeGreaterThanOrEqual(background === palette.canvas ? ART_FLOORS.discOnDarkCanvas : ART_FLOORS.discOnDarkSurface);
+      else expect(contrastRatio(colors.disc, background), "disc").toBeGreaterThanOrEqual(ART_FLOORS.discOnCanvas);
+    }
     for (const background of page) {
-      expect(contrastRatio(colors.disc, background), "disc").toBeGreaterThanOrEqual(ART_FLOORS.discOnCanvas);
-      expect(contrastRatio(colors.shadow, background), "shadow").toBeGreaterThanOrEqual(ART_FLOORS.shadowOnCanvas);
+      if (!dark) expect(contrastRatio(colors.shadow, background), "shadow").toBeGreaterThanOrEqual(ART_FLOORS.shadowOnCanvas);
       expect(contrastRatio(colors.secondary, background), "secondary").toBeGreaterThanOrEqual(ART_FLOORS.secondaryOnCanvas);
       expect(contrastRatio(colors.accent, background), "accent").toBeGreaterThanOrEqual(ART_FLOORS.accentOnCanvas);
     }
@@ -47,18 +52,28 @@ describe.each(CASES)("art palette · $name", ({ palette }) => {
     expect(contrastRatio(colors.accent, colors.disc), "accent on disc").toBeGreaterThanOrEqual(ART_FLOORS.accentOnDisc);
   });
 
-  it("L16: the shadow is never the page colour or the disc, in light and in dark", () => {
-    const colors = artPalette(palette);
+  it("V3: the dark disc is a whisper against the page (1.16 to 1.25, like DOne's), the light one no more than 1.3", () => {
+    const ratio = contrastRatio(artPalette(palette).disc, palette.canvas);
+    if (dark) { expect(ratio).toBeGreaterThanOrEqual(ART_FLOORS.discOnDarkCanvas); expect(ratio).toBeLessThanOrEqual(ART_FLOORS.discOnDarkMax); }
+    else { expect(ratio).toBeGreaterThanOrEqual(ART_FLOORS.discOnCanvas); expect(ratio).toBeLessThanOrEqual(1.3); }
+  });
+
+  it.each(grounds)("L16: the shadow is never the page colour, a card colour or the disc, and is always darker than the disc (%s)", (ground) => {
+    const colors = artPalette(palette, ground);
     expect(colors.shadow.toLowerCase()).not.toBe(palette.canvas.toLowerCase());
     expect(colors.shadow.toLowerCase()).not.toBe(palette.surface.toLowerCase());
     expect(colors.shadow.toLowerCase()).not.toBe(colors.disc.toLowerCase());
-    expect(contrastRatio(colors.shadow, palette.canvas)).toBeGreaterThan(1.19);
+    expect(luminance(colors.shadow)).toBeLessThan(luminance(colors.disc));
+    expect(contrastRatio(colors.shadow, palette.canvas)).toBeGreaterThanOrEqual(dark ? ART_FLOORS.shadowOnDarkCanvas : ART_FLOORS.shadowOnCanvas);
   });
 
-  it("the shadow is darker than the disc (a contact shadow), and the disc is a whisper next to the page", () => {
-    const colors = artPalette(palette);
-    expect(luminance(colors.shadow)).toBeLessThan(luminance(colors.disc));
-    expect(contrastRatio(colors.disc, palette.canvas)).toBeLessThan(2.2);
+  it("V5: on an accent block or a photo the disc is the page colour (a solid halo) and it stands out from the accent behind it", () => {
+    for (const ground of ["accent", "photo"] as const) {
+      const colors = artPalette(palette, ground);
+      expect(colors.disc).toBe(palette.canvas);
+      expect(colors.cutout).toBe(palette.canvas);
+      expect(contrastRatio(colors.disc, palette.accent), ground).toBeGreaterThanOrEqual(3);
+    }
   });
 
   it("keeps the template's own ink and cuts details out in the ground it sits on", () => {

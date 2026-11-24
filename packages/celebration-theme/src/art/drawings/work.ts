@@ -1,4 +1,4 @@
-import { circle, circleAt, ellipse, rect, rotate, rpoly, rrect, shape } from "../geometry.js";
+import { arcTrace, band, circle, circleAt, ellipse, rect, rotate, rpoly, rrect, shape } from "../geometry.js";
 import { acc, cut, drawing, ink, inkLine, sec } from "../kit.js";
 
 /** Work and milestones: corporativo, graduación, inauguración y despedidas y reuniones. */
@@ -9,7 +9,7 @@ export const WORK = [
   // ---- Corporativo -------------------------------------------------------------------------------------------------
   drawing("microfono", "Micrófono con su soporte", "Microphone on its stand", ["corporativo"], [
     ink(rrect(46, 14, 28, 44, 14)),
-    cut("M50 26H70M50 34H70M50 42H70", 2.2),
+    cut("M50 26H70M50 34H70M50 42H70", 2.5),
     acc(rrect(46, 48, 28, 8, 3)),
     inkLine(4, "M36 48C36 78 84 78 84 48"),
     inkLine(4, "M60 72V90"),
@@ -25,51 +25,60 @@ export const WORK = [
   drawing("laptop", "Computador portátil con un gráfico", "Laptop showing a chart", ["corporativo"], [
     ink(rrect(28, 28, 64, 46, 5)),
     cut(rrect(33, 33, 54, 36, 2)),
-    acc(rect(40, 56, 8, 8, 1) + rect(52, 48, 8, 16, 1) + rect(64, 40, 8, 24, 1)),
+    acc(rpoly([[40, 64], [40, 56], [52, 56], [52, 48], [64, 48], [64, 40], [76, 40], [76, 64]], 1)),
     ink(rpoly([[18, 78], [102, 78], [96, 90], [24, 90]], 3)),
-    cut("M52 82H68", 2.4)
+    cut("M52 82H68", 2.5)
   ], 42),
   drawing("libreta", "Libreta con un elástico", "Notebook with an elastic band", ["corporativo"], [
     ink(rrect(30, 20, 60, 78, 5)),
     cut(circle(37, 34, 2.6) + circle(37, 46, 2.6) + circle(37, 58, 2.6) + circle(37, 70, 2.6) + circle(37, 82, 2.6)),
-    cut("M48 36H76M48 46H70M48 56H76", 2.4),
+    cut("M48 36H76M48 46H70M48 56H76", 2.5),
     acc(rrect(75, 20, 8, 78, 1))
   ], 34),
   // ---- Graduación ----------------------------------------------------------------------------------------------------
   drawing("birrete", "Birrete con su borla", "Graduation cap with its tassel", ["graduacion"], [
     ink(shape([["M", 36, 56], ["L", 36, 74], ["C", 36, 86, 84, 86, 84, 74], ["L", 84, 56], ["L", 60, 66], ["Z"]])),
     ink(rpoly([[60, 24], [104, 44], [60, 64], [16, 44]], 4)),
-    acc(rect(95, 46, 3.2, 28, 1) + rrect(91.5, 72, 10.2, 16, 4)),
+    cut("M26 47L60 61L94 47", 2.5),
+    acc(rpoly([[94, 46], [97, 46], [97, 74], [102, 74], [102, 88], [91, 88], [91, 74], [94, 74]], 1)),
     ink(circle(60, 44, 4))
   ], 36),
   drawing("diploma", "Diploma enrollado con un listón", "Rolled diploma with a ribbon", ["graduacion"], [
     ink(rrect(22, 30, 12, 56, 6) + rrect(86, 30, 12, 56, 6)),
     ink(rect(30, 34, 60, 48, 3)),
     cut("M42 48H78M42 58H72", 2.6),
-    acc(rrect(54, 30, 12, 58, 2) + rpoly([[60, 88], [52, 100], [60, 96], [68, 100]], 1.5))
+    acc(rpoly([[54, 30], [66, 30], [66, 88], [68, 100], [60, 95], [52, 100], [54, 88]], 1.5))
   ], 40),
   drawing("toga", "Toga con una estola", "Graduation gown with a stole", ["graduacion"], [
     ink(rpoly([[42, 34], [52, 28], [60, 36], [68, 28], [78, 34], [100, 86], [86, 92], [78, 70], [78, 98], [42, 98], [42, 70], [34, 92], [20, 86]], 4)),
     acc(rpoly([[52, 28], [60, 36], [68, 28], [74, 98], [64, 98], [60, 52], [56, 98], [46, 98]], 2)),
-    cut("M44 52L38 76M76 52L82 76", 2.2)
+    cut("M44 52L38 76M76 52L82 76", 2.5)
   ], 34),
   drawing("libros", "Pila de libros", "Stack of books", ["graduacion"], [
     ink(rrect(22, 70, 76, 22, 4)),
     sec(rrect(28, 50, 64, 20, 4)),
     acc(rrect(24, 30, 68, 20, 4)),
-    cut("M32 81H88", 2.4),
-    cut("M36 60H80", 2.2),
-    cut("M32 40H84", 2.2)
+    cut("M32 81H88", 2.5),
+    cut("M36 60H80", 2.5),
+    cut("M32 40H84", 2.5)
   ], 40),
   // ---- Inauguración --------------------------------------------------------------------------------------------------
   drawing("tijera-cinta", "Tijera cortando una cinta", "Scissors cutting a ribbon", ["inauguracion"], [
-    acc(rpoly([[4, 28], [54, 26], [54, 40], [4, 42]], 2) + rpoly([[66, 26], [116, 28], [116, 42], [66, 40]], 2)),
-    inkLine(6.5, "M50 10L67 62M70 10L53 62"),
-    inkLine(5, "M67 62L80 82M53 62L40 82"),
-    { d: circle(84, 90, 9), role: "ink", stroke: 5 },
-    { d: circle(36, 90, 9), role: "ink", stroke: 5 },
-    cut(circle(60, 62, 3.6))
+    acc(rpoly([[14, 26], [106, 26], [106, 40], [14, 40]], 2)),
+    ink(band([[51, 12], [64, 62]], 7) + band([[69, 12], [56, 62]], 7)),
+    ink(band([[64, 62], [76, 78]], 6) + band([[56, 62], [44, 78]], 6)),
+    ink(band(arcTrace(78, 86, 11, 11, 0, 360), 6, true) + band(arcTrace(42, 86, 11, 11, 0, 360), 6, true)),
+    cut(circle(60, 52, 3.4)),
+    cut(rpoly([[53, 24], [67, 24], [67, 42], [53, 42]], 1))
   ], 40),
+  drawing("cartel", "Cartel «Abierto» colgado", "Hanging «Open» sign", ["inauguracion"], [
+    inkLine(3, "M44 46L60 22L76 46"),
+    ink(circle(60, 22, 4)),
+    ink(rrect(24, 44, 72, 42, 8)),
+    cut(rrect(31, 51, 58, 28, 4)),
+    acc(rrect(37, 58, 46, 14, 4)),
+    cut("M44 65H76", 2.5)
+  ], 38),
   drawing("llave", "Llave nueva con una piedra en el aro", "New key with a stone in its bow", ["inauguracion"], [
     ink(circleAt([60, 30], 17, KEY) + rrect(56.5, 44, 7, 50, 2, KEY) + rrect(63.5, 72, 13, 6, 1.5, KEY) + rrect(63.5, 84, 9, 6, 1.5, KEY)),
     cut(circleAt([60, 30], 10, KEY)),
@@ -85,7 +94,7 @@ export const WORK = [
     sec(rpoly([[48, 62], [30, 84], [48, 80]], 2) + rpoly([[72, 62], [90, 84], [72, 80]], 2)),
     ink(shape([["M", 60, 12], ["C", 76, 26, 78, 54, 72, 82], ["L", 48, 82], ["C", 42, 54, 44, 26, 60, 12], ["Z"]])),
     cut(circle(60, 44, 8)),
-    acc(shape([["M", 52, 86], ["L", 68, 86], ["C", 68, 96, 63, 102, 60, 108], ["C", 57, 102, 52, 96, 52, 86], ["Z"]]))
+    acc(shape([["M", 52, 86], ["L", 68, 86], ["C", 68, 94, 63, 98, 60, 102], ["C", 57, 98, 52, 94, 52, 86], ["Z"]]))
   ], 30),
   // ---- Despedidas y reuniones ----------------------------------------------------------------------------------------
   drawing("maleta", "Maleta con una etiqueta", "Suitcase with a tag", ["despedida-reunion"], [
@@ -98,8 +107,8 @@ export const WORK = [
   drawing("postal", "Postal con un sello", "Postcard with a stamp", ["despedida-reunion"], [
     sec(rrect(28, 30, 70, 50, 5, rotate(60, 56, 8))),
     ink(rrect(20, 38, 76, 52, 6)),
-    cut("M58 48V80", 2.4),
-    cut("M66 56H86M66 66H86M66 76H80", 2.4),
+    cut("M58 48V80", 2.5),
+    cut("M66 56H86M66 66H86M66 76H80", 2.5),
     acc(rrect(28, 48, 22, 28, 3)),
     cut(circle(39, 62, 4))
   ], 38),

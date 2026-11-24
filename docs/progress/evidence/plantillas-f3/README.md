@@ -7,8 +7,10 @@ Fecha: 2026-11-24. Corrige PL-A1 y PL-M7 (`PLAN-PLANTILLAS.md`, rama `bugs/catal
 - Módulo `@rsvp/celebration-theme/art` (`packages/celebration-theme/src/art/`): **82 dibujos** y **6 conjuntos de ornamentos**. **No está conectado a las plantillas** (eso es F4).
 - Cada dibujo es **dato**: trazados con rol `disc`, `shadow`, `ink`, `cutout`, `secondary` o `accent`. Ningún color: `artPalette` resuelve los roles desde la paleta de la plantilla (claro u oscuro) y el render pinta `var(--celebration-art-<rol>)`.
 - La **única pieza de color** toma el acento de la plantilla (P4). Si el acento no llega a 3:1 contra el fondo o el disco, se acerca a la tinta conservando el matiz.
-- Construcción de DOne/Cuotea: disco de piedra, sombra de contacto plana, figura de tinta con detalles calados, piezas secundarias en el color del borde de campo, un solo acento. Sin contornos, degradados, desenfoque, rostros ni personas.
-- Animación opcional (`animate`): trazo, opacidad y transformación, una vez, sin bucle; con `prefers-reduced-motion` queda el estado final.
+- Construcción de DOne/Cuotea: disco de piedra, sombra de contacto plana, figura de tinta con detalles calados, piezas secundarias en el color del borde de campo, un solo acento. Sin contornos, degradados, desenfoque, rostros ni personas. Un acento es **una sola forma conexa** (un trazado con un solo subtrazado); lo demás va en tinta o en secundario. Los anillos, las cifras, la percha, el vestido y la tijera son figuras rellenas de tinta (`band` convierte una línea en polígono relleno), no trazos gruesos. Las líneas miden 2,5 o más, ningún dibujo pasa de 13 subtrazados (el máximo de DOne) y cada figura cabe en el disco de 92 (96 de ancho y alto con el medio trazo del borde).
+- Animación opcional (`animate`): al **entrar en pantalla** (IntersectionObserver, una vez) las piezas suben 12 px y aparecen en 500 ms con la curva de DOne, en cascada de 70 ms y **máximo 8 pasos** (560 ms de retraso en total; el último paso arranca a los 490 ms); los calados entran con su tinta y las líneas se trazan. Los valores son los de `MOTION` de `packages/ui` (`motion.ts`, fijados por `invitation-art-sync.test.ts`). Sin JavaScript, sin IntersectionObserver o con `prefers-reduced-motion` el dibujo se ve en su estado final.
+- `InvitationArt` es **decorativo por defecto** (`aria-hidden`); `label` (texto o `true` para el nombre es-BO/en-US de la biblioteca) lo vuelve `role="img"`. El SVG tiene tamaño intrínseco (`width`/`height`) y `styles.css` importa `art.css`.
+- Suelos: `canvas`, `surface`, `accent` y `photo` (sobre un bloque de acento o una foto el disco es un halo sólido del color del lienzo). Sin paleta, disco, sombra y secundario retroceden a mezclas de los tokens de la invitación, nunca a negro.
 
 ## Dónde vive y por qué
 
@@ -30,22 +32,22 @@ Fecha: 2026-11-24. Corrige PL-A1 y PL-M7 (`PLAN-PLANTILLAS.md`, rama `bugs/catal
 | Baby shower y revelación | biberon, sonajero, globo-pregunta, chupete, cochecito |
 | Comunión y confirmación | caliz, rosario, biblia, vela, paloma |
 | Despedidas y reuniones | maleta, postal, mesa-larga, brujula |
-| Fiesta patronal | mascara-morenada, matraca, banderines, bombo |
-| Inauguración | tijera-cinta, llave, puerta, cohete |
+| Fiesta patronal | mascara-morenada (abstracta: corona, escudo y rayos; **sin cuencas, ojos, dientes ni boca**), matraca, banderines, bombo |
+| Inauguración | tijera-cinta, llave, cartel («Abierto» colgado), puerta, cohete |
 | Pedida y compromiso | caja-anillo, solitario, rosa, botella |
 | Despedida de soltero/a | antifaz, coctel, pajarita, sombrero-copa |
 | Bodas de oro y plata | cifra-25, cifra-50, medalla, laurel |
 | Reencuentro | cassette, anuario, marco-foto, mochila |
-| Fiesta temática y fin de año | bola-disco, uvas, popper, reloj-medianoche, vinilo |
+| Fiesta temática y fin de año | bola-disco, uvas, popper, vinilo, botella |
 
-Todos llevan nombre accesible en es-BO y en-US (`role="img"` + `aria-label`) o `aria-hidden` con `decorative`.
+Todos llevan nombre accesible en es-BO y en-US, que se expone con `label`; sin `label` son decorativos (`aria-hidden`).
 
 Ornamentos (un solo trazo de 1,8, tinta + un acento): laurel, art déco, filete, onda, banderines y arcos; cada uno con separador, esquina y marco (la esquina repetida cuatro veces).
 
 ## Pruebas (`yarn workspace @rsvp/celebration-theme test`)
 
-- `art-palette.test.ts`: las 16 plantillas sembradas (copiadas de BE `seeds/templates/data`, verificadas el 2026-11-24) en claro y oscuro, sobre lienzo y tarjeta: disco ≥ 1,1, sombra ≥ 1,2 contra el fondo y ≥ 1,08 contra el disco (L16: nunca el color de la página), secundario y acento ≥ 3:1 contra fondo y disco.
-- `art-library.test.tsx`: solo roles (sin hex ni color literal), exactamente un acento por dibujo, ≥ 4 dibujos por cada uno de los 18 tipos, nombres es-BO y en-US, `aria-hidden` decorativo, y **un golden por dibujo y por ornamento** (88 snapshots). También comprueba que la animación no tiene bucle, solo anima trazo, opacidad y transformación, y que `prefers-reduced-motion` la apaga.
+- `art-palette.test.ts`: las 16 plantillas sembradas (copiadas de BE `seeds/templates/data`, verificadas el 2026-11-24) en claro y oscuro, sobre lienzo, tarjeta, bloque de acento y foto. Disco ≥ 1,1 en claro y entre 1,16 y 1,25 en oscuro (el de DOne ronda 1,15); sombra siempre más oscura que el disco, ≥ 1,2 del fondo en claro, un paso bajo la página en oscuro (L16: nunca el color de la página) y ≥ 1,08 contra el disco; secundario y acento ≥ 3:1 contra fondo y disco; en `accent`/`photo` el disco es el lienzo.
+- `art-library.test.tsx` (por dibujo): solo roles (sin hex ni color literal); **un solo acento: un trazado con un solo subtrazado**; **tinta rellena sin trazo como figura principal**; **calado obligatorio salvo la lista `NO_CUTOUT`** (hoy solo `cifra-25`, justificada); **trazo mínimo 2,5**; **≤ 13 subtrazados**; **figura de a lo sumo 96 × 96 dentro de la cuadrícula**; nombres es-BO y en-US con `label`, decorativo por defecto; tamaño intrínseco; **un golden por dibujo y por ornamento**. De conjunto: ≥ 4 dibujos por cada uno de los 18 tipos; ornamentos con las líneas de la esquina continuadas en el lateral; pasos de la entrada (≤ 8, calado con su tinta); IntersectionObserver simulado (arma antes de pintar, revela una vez, estado final con movimiento reducido o sin observador); `art.css` con los números de DOne y `styles.css` que lo importa.
 - `apps/universal/test/invitation-art-sync.test.ts`: la geometría es la de `packages/ui`.
 - Chrome real: con `prefers-reduced-motion: reduce` `animation-name` es `none`; sin preferencia, `celebration-art-trace` / `celebration-art-in`, 1 iteración.
 

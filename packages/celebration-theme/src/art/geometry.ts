@@ -90,3 +90,62 @@ export const quadAt = (a: Pt, b: Pt, c: Pt, t: number): Pt => {
   const u = 1 - t;
   return [u * u * a[0] + 2 * u * t * b[0] + t * t * c[0], u * u * a[1] + 2 * u * t * b[1] + t * t * c[1]];
 };
+
+/** `count` points of a cubic curve (the start point included), for building a filled outline with `band`. */
+export const cubicPoints = (a: Pt, b: Pt, c: Pt, d: Pt, count = 10): Pt[] =>
+  Array.from({ length: count + 1 }, (_, index) => {
+    const t = index / count; const u = 1 - t;
+    return [u * u * u * a[0] + 3 * u * u * t * b[0] + 3 * u * t * t * c[0] + t * t * t * d[0], u * u * u * a[1] + 3 * u * u * t * b[1] + 3 * u * t * t * c[1] + t * t * t * d[1]] as Pt;
+  });
+/** A polyline through several cubic curves written as `[from, c1, c2, to]`, each starting where the last ended. */
+export const trace = (curves: ReadonlyArray<readonly [Pt, Pt, Pt, Pt]>, count = 10): Pt[] =>
+  curves.flatMap(([a, b, c, d], index) => cubicPoints(a, b, c, d, count).slice(index === 0 ? 0 : 1));
+/** The points of a circle or an ellipse, from `from` degrees to `to` degrees (0 = right, 90 = down). */
+export const arcTrace = (cx: number, cy: number, rx: number, ry: number, from: number, to: number, count = 24): Pt[] => arcPoints(cx, cy, rx, ry, from, to, count);
+
+/**
+ * A line turned into a FILLED shape: the polygon around a centre line `width` wide (round ends when open, an annulus when
+ * `closed`). It is how a ring, a hanger or a numeral is drawn as a figure of ink instead of a thick stroke (the figure of the set
+ * is never a stroke). Corners are mitred up to 1.8 times the half width.
+ */
+export function band(points: readonly Pt[], width: number, closed = false): string {
+  const half = width / 2;
+  const pts = points.filter((point, index) => index === 0 || Math.hypot(point[0] - points[index - 1]![0], point[1] - points[index - 1]![1]) > 0.01);
+  if (closed && pts.length > 1 && Math.hypot(pts[0]![0] - pts[pts.length - 1]![0], pts[0]![1] - pts[pts.length - 1]![1]) < 0.01) pts.pop();
+  const count = pts.length;
+  const unit = (from: Pt, to: Pt): Pt => { const len = Math.hypot(to[0] - from[0], to[1] - from[1]) || 1; return [(to[0] - from[0]) / len, (to[1] - from[1]) / len]; };
+  const side = (index: number, sign: 1 | -1): Pt => {
+    const here = pts[index]!;
+    const prev = closed ? pts[(index + count - 1) % count]! : pts[index - 1];
+    const next = closed ? pts[(index + 1) % count]! : pts[index + 1];
+    const normals: Pt[] = [];
+    if (prev) { const d = unit(prev, here); normals.push([-d[1], d[0]]); }
+    if (next) { const d = unit(here, next); normals.push([-d[1], d[0]]); }
+    const sum: Pt = normals.length === 1 ? normals[0]! : [normals[0]![0] + normals[1]![0], normals[0]![1] + normals[1]![1]];
+    const len = Math.hypot(sum[0], sum[1]) || 1;
+    const dir: Pt = [sum[0] / len, sum[1] / len];
+    const reach = Math.min(half / Math.max(dir[0] * normals[0]![0] + dir[1] * normals[0]![1], 0.001), half * 1.8);
+    return [here[0] + sign * dir[0] * reach, here[1] + sign * dir[1] * reach];
+  };
+  const write = (list: readonly Pt[], close: boolean): string => `M${list.map((point) => `${n(point[0])} ${n(point[1])}`).join("L")}${close ? "Z" : ""}`;
+  const left = pts.map((_, index) => side(index, 1));
+  const right = pts.map((_, index) => side(index, -1));
+  if (closed) return write(left, true) + write([...right].reverse(), true);
+  const cap = (end: Pt, back: Pt): Pt[] => {
+    const d = unit(back, end); const nx: Pt = [-d[1], d[0]];
+    return Array.from({ length: 4 }, (_, step) => { const a = ((step + 1) * Math.PI) / 5; return [end[0] + half * (nx[0] * Math.cos(a) + d[0] * Math.sin(a)), end[1] + half * (nx[1] * Math.cos(a) + d[1] * Math.sin(a))] as Pt; });
+  };
+  return write([...left, ...cap(pts[count - 1]!, pts[count - 2]!), ...[...right].reverse(), ...cap(pts[0]!, pts[1]!)], true);
+}
+/** A soft flower: `petals` rounded points around (cx, cy), `r` to the tips and `inner` to the notches. One shape. */
+export const flower = (cx: number, cy: number, r: number, inner: number, petals = 6, round = 3.2): string =>
+  rpoly(Array.from({ length: petals * 2 }, (_, index) => { const a = ((index * 180) / petals - 90) * (Math.PI / 180); const d = index % 2 ? inner : r; return [cx + d * Math.cos(a), cy + d * Math.sin(a)] as Pt; }), round);
+/** A bow: two triangles meeting at a knot, written as ONE outline (a single piece of colour). */
+export const bowtie = (cx: number, cy: number, w: number, h: number, round = 1.5): string =>
+  rpoly([[cx - w, cy - h], [cx - w * 0.18, cy - h * 0.22], [cx + w * 0.18, cy - h * 0.22], [cx + w, cy - h], [cx + w, cy + h], [cx + w * 0.18, cy + h * 0.22], [cx - w * 0.18, cy + h * 0.22], [cx - w, cy + h]], round);
+/** A Latin cross as one outline: the vertical arm is `w` wide, the bar `w` tall. */
+export const crossShape = (cx: number, top: number, height: number, span: number, w: number, barAt: number, round = 1.5): string =>
+  rpoly([[cx - w / 2, top], [cx + w / 2, top], [cx + w / 2, top + barAt], [cx + span / 2, top + barAt], [cx + span / 2, top + barAt + w], [cx + w / 2, top + barAt + w], [cx + w / 2, top + height], [cx - w / 2, top + height], [cx - w / 2, top + barAt + w], [cx - span / 2, top + barAt + w], [cx - span / 2, top + barAt], [cx - w / 2, top + barAt]], round);
+/** A balloon with its knot, as ONE outline (so it can be the single accent piece). */
+export const balloonKnot = (cx: number, cy: number, rx: number, ry: number): string =>
+  shape([["M", cx, cy - ry], ["C", cx + rx * 1.1, cy - ry, cx + rx * 1.1, cy + ry * 0.7, cx, cy + ry], ["L", cx + 4, cy + ry + 6], ["L", cx - 4, cy + ry + 6], ["L", cx, cy + ry], ["C", cx - rx * 1.1, cy + ry * 0.7, cx - rx * 1.1, cy - ry, cx, cy - ry], ["Z"]]);

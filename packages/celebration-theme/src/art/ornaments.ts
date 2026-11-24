@@ -36,7 +36,7 @@ const laurel: OrnamentSet = {
   },
   corner: {
     ...COR,
-    paths: [line("M2 54V16Q2 2 16 2H54"), sprig(11, 11, 18, 4.6, 45), sprig(11, 11, 15, 4.2, 12), sprig(11, 11, 15, 4.2, 78), acc(circle(7, 7, 2.6))]
+    paths: [line("M2 54V16Q2 2 16 2H54"), sprig(11, 11, 18, 4.6, 45), sprig(11, 11, 15, 4.2, 12), sprig(11, 11, 15, 4.2, 78), acc(circle(7, 7, 2.6))], rails: [2]
   }
 };
 
@@ -51,7 +51,7 @@ const deco: OrnamentSet = {
       acc(rpoly([[MID, 8], [MID + 6, Y], [MID, 20], [MID - 6, Y]], 1))
     ]
   },
-  corner: { ...COR, paths: [line("M2 54V18H18V2H54"), line("M10 54V26H26V10H54"), line("M18 54V34H34V18H54"), acc(rect(2, 2, 7, 7, 1.2))] }
+  corner: { ...COR, paths: [line("M2 54V18H18V2H54"), line("M10 54V26H26V10H54"), line("M18 54V34H34V18H54"), acc(rect(2, 2, 7, 7, 1.2))], rails: [2, 10, 18] }
 };
 
 const filete: OrnamentSet = {
@@ -61,7 +61,7 @@ const filete: OrnamentSet = {
     ...SEP,
     paths: [line(hair(8, 104, Y - 3) + hair(136, 232, Y - 3) + hair(40, 104, Y + 3) + hair(136, 200, Y + 3)), acc(rect(MID - 5, Y - 5, 10, 10, 1.5))]
   },
-  corner: { ...COR, paths: [line("M2 54V2H54"), line("M9 54V9H54"), acc(circle(2, 2, 3.4))] }
+  corner: { ...COR, paths: [line("M2 54V2H54"), line("M9 54V9H54"), acc(circle(2, 2, 3.4))], rails: [2, 9] }
 };
 
 const onda: OrnamentSet = {
@@ -71,7 +71,7 @@ const onda: OrnamentSet = {
     ...SEP,
     paths: [line("M8 14q8-9 16 0t16 0t16 0t16 0t16 0M168 14q8-9 16 0t16 0t16 0t16 0"), line(`M${MID - 18} ${Y}h8M${MID + 10} ${Y}h8`), acc(circle(MID, Y, 4.2))]
   },
-  corner: { ...COR, paths: [line("M2 54V30Q2 2 30 2H54"), line("M12 54V40Q12 12 40 12H54"), acc(circle(27, 27, 4))] }
+  corner: { ...COR, paths: [line("M2 54V30Q2 2 30 2H54"), line("M12 54V40Q12 12 40 12H54"), acc(circle(27, 27, 4))], rails: [2, 12] }
 };
 
 const sagLeft = (t: number): readonly [number, number] => quadAt([6, 5], [60, 24], [116, 5], t);
@@ -90,7 +90,7 @@ const banderin: OrnamentSet = {
   },
   corner: {
     ...COR,
-    paths: [line("M2 54V2H54"), line("M16 2L24 2L20 10ZM2 16L2 24L10 20ZM32 2L40 2L36 10ZM2 32L2 40L10 36Z"), acc("M8 8L20 8L8 20Z")]
+    paths: [line("M2 54V2H54"), line("M16 2L24 2L20 10ZM2 16L2 24L10 20ZM32 2L40 2L36 10ZM2 32L2 40L10 36Z"), acc("M8 8L20 8L8 20Z")], rails: [2]
   }
 };
 
@@ -99,7 +99,7 @@ const arcos: OrnamentSet = {
   id: "arcos",
   label: { "es-BO": "Arcos", "en-US": "Arches" },
   separator: { ...SEP, paths: [line(hair(12, 102, Y + 6) + hair(138, 228, Y + 6) + scallop(12, 5) + scallop(138, 5)), acc(circle(MID, Y + 1, 4.2))] },
-  corner: { ...COR, paths: [line("M2 54A52 52 0 0 1 54 2"), line("M2 38A36 36 0 0 1 38 2"), line("M2 22A20 20 0 0 1 22 2"), acc(circle(7, 7, 3.2))] }
+  corner: { ...COR, paths: [line("M2 54A52 52 0 0 1 54 2"), line("M2 38A36 36 0 0 1 38 2"), line("M2 22A20 20 0 0 1 22 2"), acc(circle(7, 7, 3.2))], rails: [2] }
 };
 
 export const ORNAMENT_SETS: readonly OrnamentSet[] = [laurel, deco, filete, onda, banderin, arcos];
