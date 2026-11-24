@@ -1,8 +1,15 @@
 import { lazy, Suspense, type ComponentType, type LazyExoticComponent, type ReactNode } from "react";
 import { View } from "react-native";
+import { usePathname } from "expo-router";
 import { spacing } from "@rsvp/design-tokens";
-import { SkeletonList } from "@rsvp/ui";
+import { adminNav } from "../admin/routes";
+import { hostNav } from "../host/routes";
+import { Screen } from "../host/shell";
+import { portalNav } from "../provider/routes";
+import { LoadingContent } from "./loading-content";
+import { loadingProfile } from "./loading-profiles";
 import { useT } from "./providers";
+import { useHostRoute } from "./route";
 
 /**
  * Code splitting by zone (M13). A route file of a zone that most visitors never open (administration, provider portal)
@@ -24,8 +31,20 @@ export function lazyScreen<TZone, TProps extends object>(load: () => Promise<TZo
   return LazyScreen;
 }
 
-/** While the zone's code arrives: rows shaped like content, announced as loading (never a blank page or a lone spinner). */
+/** The same title, navigation and content column as the route, without mounting a screen or requesting its data. */
 function ScreenLoading(): ReactNode {
   const t = useT();
-  return <View style={{ padding: spacing[6] }} testID="screen-loading"><SkeletonList count={3} row={{ minHeight: 64 }} label={t("common.loading")} /></View>;
+  const profile = loadingProfile(usePathname());
+  const { celebrationId, onNavigate } = useHostRoute();
+  if (!profile) return <View style={{ padding: spacing[6] }} testID="screen-loading"><LoadingContent kind="list" /></View>;
+  const nav = profile.area === "host" ? hostNav(t, celebrationId)
+    : profile.area === "admin" ? adminNav(t)
+    : profile.area === "portal" ? portalNav(t) : [];
+  return (
+    <View style={{ flex: 1 }} testID="screen-loading">
+      <Screen title={t(profile.title)} {...(profile.intro ? { intro: t(profile.intro) } : {})} nav={nav} current={profile.current} onNavigate={onNavigate} animate={false}>
+        <LoadingContent kind={profile.kind} />
+      </Screen>
+    </View>
+  );
 }

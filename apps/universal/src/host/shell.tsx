@@ -327,7 +327,7 @@ function BareFrame({ children }: PropsWithChildren): ReactNode {
  * `menu` stays at the top right and `actions` moves to a `StickyActions` bar at the foot of the content.
  * `status` is the one line that says where the work stands (see the prop).
  */
-export function Screen({ title, intro, nav, current, onNavigate, actions, menu, status, children }: PropsWithChildren<{ readonly title: string; readonly intro?: string; readonly nav?: readonly NavItem[]; readonly current?: string; readonly onNavigate?: (href: string) => void; readonly actions?: ReactNode; readonly menu?: ReactNode; /** One short line about the work in progress ("unsaved changes", "saved"). Sits above the sticky action bar below 768 px and at the top of the content from 768 px. */ readonly status?: ReactNode }>): ReactNode {
+export function Screen({ title, intro, nav, current, onNavigate, actions, menu, status, animate = true, children }: PropsWithChildren<{ readonly title: string; readonly intro?: string; readonly nav?: readonly NavItem[]; readonly current?: string; readonly onNavigate?: (href: string) => void; readonly actions?: ReactNode; readonly menu?: ReactNode; /** One short line about the work in progress ("unsaved changes", "saved"). Sits above the sticky action bar below 768 px and at the top of the content from 768 px. */ readonly status?: ReactNode; readonly animate?: boolean }>): ReactNode {
   const s = useThemedStyles(createShellStyles);
   const { width } = useWindowDimensions();
   const wide = width >= WIDE;
@@ -337,7 +337,8 @@ export function Screen({ title, intro, nav, current, onNavigate, actions, menu, 
   // A change of destination fades in with a short rise, sibling tabs only fade; scroll returns to the top and focus goes to the h1 (docs/design/motion.md).
   const actionsInHeader = width >= ACTIONS_IN_HEADER;
   // The transition wraps the children in its own box, so the column's gap would stop at it: the stack re-applies it, and a screen's blocks (a notice, then a card) never touch.
-  const content = <ScreenTransition routeKey={current ?? title} groupKey={destination?.key}><View testID="screen-stack" style={[s.stack, wide && s.stackWide]}>{status && actionsInHeader ? status : null}{children}</View></ScreenTransition>;
+  const stack = <View testID="screen-stack" style={[s.stack, wide && s.stackWide]}>{status && actionsInHeader ? status : null}{children}</View>;
+  const content = animate ? <ScreenTransition routeKey={current ?? title} groupKey={destination?.key}>{stack}</ScreenTransition> : stack;
   const headerActions = menu || (actions && actionsInHeader) ? <View style={s.headActions}>{menu}{actionsInHeader ? actions : null}</View> : null;
   const stickyActions = actions && !actionsInHeader ? <StickyActions testID="screen-sticky-actions" {...(status ? { summary: status } : {})}>{actions}</StickyActions> : null;
   const tabs = sectionTabs && sectionTabs.length > 1 ? sectionTabs : undefined;

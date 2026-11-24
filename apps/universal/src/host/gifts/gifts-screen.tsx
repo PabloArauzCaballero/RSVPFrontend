@@ -1,4 +1,4 @@
-import { Chip, SkeletonList, Stagger, SwitchRow, fonts, useColors } from "@rsvp/ui";
+import { Chip, Stagger, SwitchRow, fonts, useColors } from "@rsvp/ui";
 import { useRef, useState, type ReactNode } from "react";
 import { Text, View, useWindowDimensions } from "react-native";
 import { radius, spacing } from "@rsvp/design-tokens";
@@ -91,7 +91,7 @@ function RequesterVisibility({ celebrationId }: { readonly celebrationId: string
   const client = useApiClient();
   const settings = useGiftSettings(client, celebrationId);
   const update = useUpdateGiftSettings(client, celebrationId);
-  if (settings.isPending) return <Loading />;
+  if (settings.isPending) return <Loading kind="field" />;
   if (settings.isError) return <RetryNotice error={settings.error} onRetry={() => { void settings.refetch(); }} />;
   const current = settings.data;
   const rows = [
@@ -136,7 +136,7 @@ function GiftsBody({ celebrationId, onNavigate }: { readonly celebrationId: stri
   const go = (path: string) => () => onNavigate(withCelebration(path, celebrationId));
   // «Agregar regalo» is the screen's one action, always in the same place; the people waiting are a message, not a second primary.
   useScreenHeader({ actions: <ActionButton icon="plus" label={t("gifts.host.list.add")} onPress={go(HOST_ROUTES.giftCatalog)} testID="go-add" /> });
-  if (list.isPending) return <SkeletonList count={4} row={{ minHeight: 76, avatar: false, trailing: true }} label={t("host.common.loading")} />;
+  if (list.isPending) return <Loading kind="gifts" />;
   // A celebration that never had a gift gets 404 GIFT_LIST_NOT_FOUND: that is the empty list, not a failure.
   const noListYet = isGiftListMissing(list.error);
   if (list.isError && !noListYet) return <RetryNotice error={list.error} onRetry={() => { void list.refetch(); }} />;
