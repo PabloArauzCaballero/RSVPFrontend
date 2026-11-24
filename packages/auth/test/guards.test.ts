@@ -3,11 +3,11 @@ import { ROUTE_GROUPS, ROLES, canAccessRoute, decideRoute, homeGroupFor, safeRet
 
 /** REQ-F05-03: every role against every route group. */
 const expected: Record<Role, Record<RouteGroup, boolean>> = {
-  HOST: { auth: true, host: true, provider: false, admin: false, guest: true },
-  PLANNER: { auth: true, host: true, provider: false, admin: false, guest: true },
-  PROVIDER: { auth: true, host: false, provider: true, admin: false, guest: true },
-  ADMIN: { auth: true, host: true, provider: false, admin: true, guest: true },
-  GUEST: { auth: true, host: false, provider: false, admin: false, guest: true }
+  HOST: { auth: true, host: true, provider: false, admin: false, guest: true, account: true },
+  PLANNER: { auth: true, host: true, provider: false, admin: false, guest: true, account: true },
+  PROVIDER: { auth: true, host: false, provider: true, admin: false, guest: true, account: true },
+  ADMIN: { auth: true, host: true, provider: false, admin: true, guest: true, account: true },
+  GUEST: { auth: true, host: false, provider: false, admin: false, guest: true, account: true }
 };
 
 describe("route guards", () => {
@@ -26,6 +26,12 @@ describe("route guards", () => {
     expect(decideRoute(null, "provider")).toEqual({ type: "login" });
     expect(decideRoute(null, "auth")).toEqual({ type: "allow" });
     expect(decideRoute(null, "guest")).toEqual({ type: "allow" });
+    expect(decideRoute(null, "account")).toEqual({ type: "login" });
+  });
+  it("(account) only asks for a session: an account without roles, or without PROVIDER, enters (DPA-10)", () => {
+    expect(decideRoute([], "account")).toEqual({ type: "allow" });
+    expect(decideRoute(["HOST"], "account")).toEqual({ type: "allow" });
+    expect(homeGroupFor([])).toBeNull();
   });
   it("a signed-in account without roles is forbidden everywhere private, with no home", () => {
     expect(decideRoute([], "host")).toEqual({ type: "forbidden", home: null });

@@ -965,6 +965,83 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/providers/admin/partner-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Partner request queue with the OPEN / IN_REVIEW counts of the tab badge */
+        get: operations["listAdminPartnerRequests"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/admin/partner-requests/{requestId}/convert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Convert an OPEN or IN_REVIEW request into a partner intake owned by the requester (one transaction)
+         * @description Opens the intake (audited partner-intake.created with partnerRequestId) with identity {name, categoryCodes: [categoryCode]}, contact {whatsapp | phone} and coverage {departmentCode, cityCode} prefilled, exactly as POST /providers/admin/intakes followed by PATCH would; the request becomes CONVERTED with convertedIntakeId (audited partner-request.converted). The body, if any, must be empty.
+         */
+        post: operations["convertAdminPartnerRequest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/admin/partner-requests/{requestId}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reject an OPEN or IN_REVIEW request with a mandatory reason (shown to the requester)
+         * @description Audited as partner-request.rejected. 422 REASON_REQUIRED / REASON_TOO_LONG (more than 500 characters).
+         */
+        post: operations["rejectAdminPartnerRequest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/admin/partner-requests/{requestId}/take": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Take a request: OPEN -> IN_REVIEW, the administrator becomes the reviewer
+         * @description Audited as partner-request.taken. The body, if any, must be empty.
+         */
+        post: operations["takeAdminPartnerRequest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/providers/admin/partners": {
         parameters: {
             query?: never;
@@ -1279,6 +1356,63 @@ export interface paths {
         };
         /** Providers owned by the caller, in any status */
         get: operations["listMyProviders"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/partner-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ask to become a partner (any signed-in user who owns no provider)
+         * @description No role is required, only a valid token. Codes are validated against /providers/categories and /providers/geo (422 VALIDATION_FAILED, details maps each field to UNKNOWN_CATEGORY, UNKNOWN_DEPARTMENT, UNKNOWN_CITY, CITY_NOT_IN_DEPARTMENT, INVALID_PHONE, CONSENT_REQUIRED, TOO_LONG, REQUIRED, UNKNOWN_FIELD...). Enqueues provider.partner-request.submitted.v1 with ids only.
+         */
+        post: operations["submitPartnerRequest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/partner-requests/{requestId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Withdraw an OPEN own request (REJECTED with reason WITHDRAWN_BY_REQUESTER)
+         * @description Audited as partner-request.withdrawn. Another user's request answers 404.
+         */
+        delete: operations["withdrawPartnerRequest"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/partner-requests/mine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The caller's partner requests, newest first, with status and statusReason */
+        get: operations["listMyPartnerRequests"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3221,6 +3355,82 @@ export interface components {
         };
         PartnerPage: {
             items: components["schemas"]["PartnerRow"][];
+            page: number;
+            pageSize: number;
+            total: number;
+        };
+        PartnerRequest: {
+            businessName: string;
+            categoryCode: string;
+            cityCode: string;
+            /** @enum {string} */
+            contactChannel: "WHATSAPP" | "PHONE";
+            /** @constant */
+            contactConsent: true;
+            contactPhone: string;
+            /**
+             * Format: uuid
+             * @description Present once CONVERTED.
+             */
+            convertedIntakeId: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            departmentCode: string;
+            /** Format: uuid */
+            id: string;
+            message: string | null;
+            /** Format: uuid */
+            requesterUserId: string;
+            /**
+             * Format: uuid
+             * @description Administrator who took, rejected or converted it.
+             */
+            reviewedBy: string | null;
+            /** @enum {string} */
+            status: "OPEN" | "IN_REVIEW" | "CONVERTED" | "REJECTED";
+            /** @description Why it was rejected (the administrator's reason, or WITHDRAWN_BY_REQUESTER). */
+            statusReason: string | null;
+            /** Format: date-time */
+            updatedAt: string;
+            version: number;
+        };
+        PartnerRequestConversion: {
+            intake: components["schemas"]["Intake"];
+            request: components["schemas"]["PartnerRequest"];
+        };
+        PartnerRequestInput: {
+            businessName: string;
+            /** @description A code of GET /providers/categories. */
+            categoryCode: string;
+            /** @description A city slug of GET /providers/geo in that department. */
+            cityCode: string;
+            /**
+             * @description Whether contactPhone is a WhatsApp number or a phone line.
+             * @default WHATSAPP
+             * @enum {string}
+             */
+            contactChannel: "WHATSAPP" | "PHONE";
+            /**
+             * @description The requester agrees to be contacted; anything but true is 422 (CONSENT_REQUIRED).
+             * @constant
+             */
+            contactConsent: true;
+            /** @description 7 to 20 digits with an optional leading +; spaces, dashes, dots and parentheses are removed. */
+            contactPhone: string;
+            /** @description A departmentCode of GET /providers/geo. */
+            departmentCode: string;
+            message?: string | null;
+        };
+        PartnerRequestList: {
+            items: components["schemas"]["PartnerRequest"][];
+        };
+        PartnerRequestPage: {
+            /** @description Whole queue, whatever the filter (tab badge). */
+            counts: {
+                IN_REVIEW: number;
+                OPEN: number;
+            };
+            items: components["schemas"]["PartnerRequest"][];
             page: number;
             pageSize: number;
             total: number;
@@ -7118,6 +7328,161 @@ export interface operations {
             422: components["responses"]["Validation"];
         };
     };
+    listAdminPartnerRequests: {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
+                /** @description Case-insensitive substring of the business name. */
+                q?: string;
+                sort?: "-createdAt";
+                /** @description Statuses to include (repeatable; `status` and comma-separated values are also accepted). Absent: every status. */
+                "status[]"?: ("OPEN" | "IN_REVIEW" | "CONVERTED" | "REJECTED")[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Partner requests */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerRequestPage"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            422: components["responses"]["Validation"];
+        };
+    };
+    convertAdminPartnerRequest: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Partner request version ("3") from the ETag; a stale version gets 409 PARTNER_REQUEST_VERSION_CONFLICT. Absent: last writer wins. */
+                "If-Match"?: string;
+            };
+            path: {
+                requestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Converted request and its intake */
+            200: {
+                headers: {
+                    /** @description Partner request version, for If-Match. */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerRequestConversion"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            /** @description INVALID_REQUEST_TRANSITION (details: status, action) or PARTNER_REQUEST_VERSION_CONFLICT (details: currentVersion). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            422: components["responses"]["Validation"];
+        };
+    };
+    rejectAdminPartnerRequest: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Partner request version ("3") from the ETag; a stale version gets 409 PARTNER_REQUEST_VERSION_CONFLICT. Absent: last writer wins. */
+                "If-Match"?: string;
+            };
+            path: {
+                requestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonRequest"];
+            };
+        };
+        responses: {
+            /** @description Partner request */
+            200: {
+                headers: {
+                    /** @description Partner request version, for If-Match. */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerRequest"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            /** @description INVALID_REQUEST_TRANSITION (details: status, action) or PARTNER_REQUEST_VERSION_CONFLICT (details: currentVersion). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            422: components["responses"]["Validation"];
+        };
+    };
+    takeAdminPartnerRequest: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Partner request version ("3") from the ETag; a stale version gets 409 PARTNER_REQUEST_VERSION_CONFLICT. Absent: last writer wins. */
+                "If-Match"?: string;
+            };
+            path: {
+                requestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Partner request */
+            200: {
+                headers: {
+                    /** @description Partner request version, for If-Match. */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerRequest"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            /** @description INVALID_REQUEST_TRANSITION (details: status, action) or PARTNER_REQUEST_VERSION_CONFLICT (details: currentVersion). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            422: components["responses"]["Validation"];
+        };
+    };
     listAdminPartners: {
         parameters: {
             query?: {
@@ -7731,6 +8096,112 @@ export interface operations {
             };
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
+        };
+    };
+    submitPartnerRequest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PartnerRequestInput"];
+            };
+        };
+        responses: {
+            /** @description Partner request (OPEN) */
+            201: {
+                headers: {
+                    /** @description Partner request version, for If-Match. */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerRequest"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            /** @description REQUEST_ALREADY_OPEN (details: requestId, status) or ALREADY_PARTNER_OWNER. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            422: components["responses"]["Validation"];
+            /** @description REQUEST_LIMIT: 3 requests were already sent in the last 30 days (details: limit, windowDays). */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    withdrawPartnerRequest: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Partner request version ("3") from the ETag; a stale version gets 409 PARTNER_REQUEST_VERSION_CONFLICT. Absent: last writer wins. */
+                "If-Match"?: string;
+            };
+            path: {
+                requestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Withdrawn partner request */
+            200: {
+                headers: {
+                    /** @description Partner request version, for If-Match. */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerRequest"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            /** @description INVALID_REQUEST_TRANSITION (details: status, action) or PARTNER_REQUEST_VERSION_CONFLICT (details: currentVersion). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            422: components["responses"]["Validation"];
+        };
+    };
+    listMyPartnerRequests: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Own partner requests */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PartnerRequestList"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
         };
     };
     ready: {
