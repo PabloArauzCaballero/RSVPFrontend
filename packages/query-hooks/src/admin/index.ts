@@ -153,3 +153,4 @@ export function useIdentitySummary(client: ApiClient) {
   return useQuery({ queryKey: adminKeys.identitySummary, queryFn: () => client.request<IdentitySummary>("/identity/admin/summary"), ...FRESH, retry: false });
 }
 export * from "./partners.js";
+export * from "./partner-requests.js";
