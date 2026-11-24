@@ -50,7 +50,7 @@ function sheet(template, scheme) {
   const groups = ART_EVENTS.map((event) => ({ event, items: own(event) })).filter((group) => group.items.length);
   const tiles = (items) => items.map((item) => `<figure>${markup(createElement(InvitationArt, { drawing: item, palette, style: { "--celebration-art-size": "132px" } }))}<figcaption>${item.id}</figcaption></figure>`).join("");
   const sections = groups.map((group) => `<h2>${EVENT_NAMES[group.event]}</h2><div class="grid">${tiles(group.items)}</div>`).join("");
-  const ornaments = ids ? "" : `<h2>Ornamentos</h2><div class="orn">${ORNAMENT_SETS.map((set) => `<div class="row"><b>${set.id}</b>${markup(createElement(OrnamentSeparator, { set, palette, style: { "--celebration-art-size": "280px" } }))}${markup(createElement(OrnamentFrame, { set, palette, width: 240, height: 150, style: { "--celebration-art-size": "240px" } }))}</div>`).join("")}</div>`;
+  const ornaments = ids ? "" : `<h2>Ornamentos</h2><div class="orn">${ORNAMENT_SETS.map((set) => `<div class="row"><b>${set.id}</b>${markup(createElement(OrnamentSeparator, { set, palette, style: { width: "280px" } }))}${markup(createElement(OrnamentFrame, { set, palette, width: 240, height: 150 }))}</div>`).join("")}</div>`;
   const SAMPLE = ["sobre", "anillos", "pinata", "cifra-25", "tijera-cinta", "cartel", "mascara-morenada", "paloma", "ramo", "laurel", "uvas", "rosario"];
   const sample = DRAWINGS.filter((item) => SAMPLE.includes(item.id));
   const small = ids ? "" : `<h2>A 48 px, para comprobar que se leen</h2><div class="grid">${sample.map((item) => `<figure style="width:64px">${markup(createElement(InvitationArt, { drawing: item, palette, style: { "--celebration-art-size": "48px" } }))}</figure>`).join("")}</div>`;

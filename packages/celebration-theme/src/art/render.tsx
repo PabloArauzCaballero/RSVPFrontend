@@ -33,7 +33,7 @@ interface Common {
   readonly className?: string;
   readonly style?: CSSProperties;
   /**
-   * Enters when it scrolls into view (once): the pieces rise 12 px and fade in on a cascade of at most 8 steps, lines are traced,
+   * Enters when it scrolls into view (once; one that is already on screen when the page loads is just shown): the pieces rise 12 px and fade in on a cascade of at most 8 steps, lines are traced,
    * and a cutout arrives with its ink. Without JavaScript, without `IntersectionObserver` or under `prefers-reduced-motion` it is
    * simply drawn in its final state.
    */
@@ -75,13 +75,17 @@ interface Frame extends Common {
 function Frame({ width, height, kind, id, label, palette, ground = "canvas", className, style, animate = false, children }: Frame): ReactElement {
   const ref = useRef<SVGSVGElement>(null);
   /*
-   * Arm before paint, reveal on entry. The server and the first render are the final state, so without JavaScript nothing is ever
-   * hidden. Once armed, the observer fires a single time (`disconnect`) and the CSS animates the groups from their hidden state.
+   * Arm before paint, reveal on entry, but only what is not on screen yet. The server and the first render are the final state, so without
+   * JavaScript nothing is ever hidden. Once armed, the observer fires a single time (`disconnect`) and the CSS animates the groups from their hidden state.
    */
   useBeforePaint(() => {
     const node = ref.current;
     if (!animate || !node || node.getAttribute("data-art-phase") === "in") return undefined;
     if (typeof IntersectionObserver === "undefined" || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return undefined;
+    /* Already on screen when it hydrates: it was server-rendered in its final state and the person is looking at it. Arming it would hide it and
+       draw it in again (a 1, 0, 1 flicker). Only what is below the fold, or not yet scrolled to, enters. */
+    const box = node.getBoundingClientRect();
+    if (box.bottom > 0 && box.top < window.innerHeight && box.right > 0 && box.left < window.innerWidth) return undefined;
     node.setAttribute("data-art-phase", "armed");
     const observer = new IntersectionObserver((entries) => {
       if (!entries.some((entry) => entry.isIntersecting)) return;

@@ -259,6 +259,21 @@ describe("entering the viewport (R6, V4)", () => {
     expect(observers[0]!.disconnect).toHaveBeenCalledTimes(1);
   });
 
+  it("N3: does not arm a drawing that is already on screen when it hydrates (no 1, 0, 1 flicker): it stays in its final state", () => {
+    const spy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({ top: 40, bottom: 144, left: 20, right: 124, width: 104, height: 104, x: 20, y: 40, toJSON: () => ({}) });
+    const { container } = render(<InvitationArt drawing={drawing} animate />);
+    expect(phase(container)).toBeNull();
+    expect(observers).toHaveLength(0);
+    spy.mockRestore();
+  });
+
+  it("N3: arms one below the fold and reveals it when it arrives", () => {
+    const spy = vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({ top: window.innerHeight + 200, bottom: window.innerHeight + 304, left: 20, right: 124, width: 104, height: 104, x: 20, y: window.innerHeight + 200, toJSON: () => ({}) });
+    const { container } = render(<InvitationArt drawing={drawing} animate />);
+    expect(phase(container)).toBe("armed");
+    spy.mockRestore();
+  });
+
   it("does nothing without `animate`: no observer, the final state", () => {
     const { container } = render(<InvitationArt drawing={drawing} />);
     expect(phase(container)).toBeNull();
@@ -307,6 +322,16 @@ describe("entrance animation (art.css)", () => {
     expect(block).toMatch(/animation:\s*none/);
     expect(block).toMatch(/opacity:\s*1/);
     expect(block).toContain("[data-step]");
+  });
+
+  it("N2: only a drawing has a default size; separators, corners and frames keep their intrinsic width", () => {
+    expect(css).toMatch(/\.celebration-art\[data-art-kind="drawing"\] \{ width: var\(--celebration-art-size, 104px\); \}/);
+    const base = /^\.celebration-art \{([^}]*)\}/m.exec(css)?.[1] ?? "";
+    expect(base).not.toMatch(/(^|[^-])width:/);
+    for (const kind of ["separator", "corner", "frame"]) expect(css).not.toContain(`data-art-kind="${kind}"] { width`);
+    const frame = renderToStaticMarkup(<OrnamentFrame set={ORNAMENT_SETS[0]!} />);
+    expect(frame).toContain('width="320" height="200"');
+    expect(frame).toContain('data-art-kind="frame"');
   });
 
   it("holds the natural, final style outside the animation (backwards fill)", () => {

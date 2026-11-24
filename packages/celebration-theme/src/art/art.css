@@ -1,7 +1,9 @@
 /* Invitation art (F3). It is imported by styles.css, so every page that has the invitation has it. Colours are the roles
    `--celebration-art-*`. The motion is DOne's `MOTION` (apps/universal/test/invitation-art-sync.test.ts pins the numbers):
    500 ms, 12 px, 70 ms between steps, at most 8 steps. */
-.celebration-art { display: block; flex: none; width: var(--celebration-art-size, 104px); height: auto; overflow: visible; }
+.celebration-art { display: block; flex: none; max-width: 100%; height: auto; overflow: visible; }
+/* Only a drawing has a default size. Separators, corners and frames keep the intrinsic width of their `width` attribute (a frame is 320, not 104). */
+.celebration-art[data-art-kind="drawing"] { width: var(--celebration-art-size, 104px); }
 /* Armed before paint by render.tsx and revealed once on entering the viewport. No attribute (no JS, no observer, reduced motion) is the final state. */
 .celebration-art[data-art-phase="armed"] [data-step] { opacity: 0; }
 .celebration-art[data-art-phase="in"] [data-step] { animation: celebration-art-in 500ms cubic-bezier(0.16, 1, 0.3, 1) backwards; animation-delay: calc(var(--celebration-art-step, 0) * 70ms); }

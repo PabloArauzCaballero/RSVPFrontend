@@ -146,6 +146,6 @@ export const bowtie = (cx: number, cy: number, w: number, h: number, round = 1.5
 /** A Latin cross as one outline: the vertical arm is `w` wide, the bar `w` tall. */
 export const crossShape = (cx: number, top: number, height: number, span: number, w: number, barAt: number, round = 1.5): string =>
   rpoly([[cx - w / 2, top], [cx + w / 2, top], [cx + w / 2, top + barAt], [cx + span / 2, top + barAt], [cx + span / 2, top + barAt + w], [cx + w / 2, top + barAt + w], [cx + w / 2, top + height], [cx - w / 2, top + height], [cx - w / 2, top + barAt + w], [cx - span / 2, top + barAt + w], [cx - span / 2, top + barAt], [cx - w / 2, top + barAt]], round);
-/** A balloon with its knot, as ONE outline (so it can be the single accent piece). */
+/** A balloon with its knot, as ONE outline (so it can be the single accent piece). The knot is rooted in the balloon by a 5-wide neck, not joined at a point, so it is one connected shape when rasterised too. */
 export const balloonKnot = (cx: number, cy: number, rx: number, ry: number): string =>
-  shape([["M", cx, cy - ry], ["C", cx + rx * 1.1, cy - ry, cx + rx * 1.1, cy + ry * 0.7, cx, cy + ry], ["L", cx + 4, cy + ry + 6], ["L", cx - 4, cy + ry + 6], ["L", cx, cy + ry], ["C", cx - rx * 1.1, cy + ry * 0.7, cx - rx * 1.1, cy - ry, cx, cy - ry], ["Z"]]);
+  shape([["M", cx, cy - ry], ["C", cx + rx * 1.1, cy - ry, cx + rx * 1.1, cy + ry * 0.7, cx + 2.5, cy + ry - 0.4], ["L", cx + 5, cy + ry + 6], ["L", cx - 5, cy + ry + 6], ["L", cx - 2.5, cy + ry - 0.4], ["C", cx - rx * 1.1, cy + ry * 0.7, cx - rx * 1.1, cy - ry, cx, cy - ry], ["Z"]]);

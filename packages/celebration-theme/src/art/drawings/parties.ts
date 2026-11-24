@@ -96,12 +96,12 @@ export const PARTIES = [
     cut("M60 52V57M60 83V88M44 70H49M71 70H76M48 58L52 62M72 58L68 62M48 82L52 78M72 82L68 78", 3)
   ], 34),
   drawing("matraca", "Matraca de madera con su lengüeta", "Wooden ratchet with its tongue", ["patronal"], [
-    ink(capsule(28, 94, 58, 66, 7)),
-    ink(rpoly(Array.from({ length: 16 }, (_, index) => { const a = ((index * 22.5 - 11) * Math.PI) / 180; const r = index % 2 ? 22 : 29; return [66 + r * Math.cos(a), 50 + r * Math.sin(a)] as const; }), 1.5)),
-    cut(circle(66, 50, 15)),
-    ink(circle(66, 50, 8)),
-    cut(circle(66, 50, 3)),
-    acc(rrect(60, 12, 12, 34, 4))
+    ink(rrect(53, 64, 14, 36, 6)),
+    ink(rrect(18, 20, 84, 50, 7)),
+    cut(rrect(26, 28, 68, 34, 3)),
+    ink(rpoly(Array.from({ length: 24 }, (_, index) => { const a = ((index * 15) * Math.PI) / 180; const r = index % 2 ? 12 : 17; return [46 + r * Math.cos(a), 45 + r * Math.sin(a)] as const; }), 1)),
+    cut(circle(46, 45, 4.5)),
+    acc(rrect(56, 38, 36, 8, 4, rotate(56, 42, -8)))
   ], 40),
   drawing("banderines", "Guirnalda de banderines", "Bunting garland", ["patronal"], [
     inkLine(3, "M14 28Q60 62 106 28"),
