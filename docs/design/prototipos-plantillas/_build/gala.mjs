@@ -155,7 +155,7 @@ footer small a{color:var(--muted);display:inline-flex;align-items:center;min-hei
 }
 `;
 const nav = [['historia', 'Historia'], ['programa', 'Programa'], ['sede', 'Sede'], ['etiqueta', 'Etiqueta'], ['preguntas', 'Preguntas'], ['regalos', 'Regalos']];
-const swatches = [['#12161B', 'Negro'], ['#1B2A41', 'Azul noche'], ['#5B1F2B', 'Burdeos'], ['#1F4A3A', 'Verde botella']];
+const swatches = [['#14130F', 'Negro'], ['#7B2A3C', 'Burdeos'], ['#E6A3B1', 'Rosa palo'], ['#8A857E', 'Gris piedra']];
 const faq = [
   ['¿Puedo llevar acompañante?', 'Tu invitación incluye un acompañante personal. Indícalo al confirmar para registrar su nombre en la acreditación.'],
   ['¿Cómo ingreso al salón?', 'Con el código QR de tu confirmación. Lo escaneamos en la acreditación, desde las 19:30.'],

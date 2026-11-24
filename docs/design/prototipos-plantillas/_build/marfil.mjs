@@ -154,7 +154,7 @@ footer small a{color:var(--muted);display:inline-flex;align-items:center;min-hei
 `;
 
 const nav = [['historia', 'Historia'], ['programa', 'Programa'], ['lugares', 'Lugares'], ['galeria', 'Galería'], ['vestimenta', 'Vestimenta'], ['preguntas', 'Preguntas'], ['regalos', 'Regalos']];
-const swatches = [['#6B6F3F', 'Verde oliva'], ['#2F5D62', 'Azul petróleo'], ['#6D2B3A', 'Vino'], ['#C9B796', 'Arena'], ['#3A3F5C', 'Azul noche']];
+const swatches = [['#7A5230', 'Chocolate'], ['#A67C52', 'Caramelo'], ['#E2D6C2', 'Arena'], ['#8C7F6E', 'Gris cálido'], ['#2B2622', 'Tinta']];
 const faq = [
   ['¿Puedo ir con acompañante?', 'Tu invitación indica cuántos lugares tienes reservados. Si necesitas cambiar algo, escríbenos antes del 20 de febrero.'],
   ['¿Hay menú vegetariano?', 'Sí. Cuéntanos al confirmar tu asistencia y lo avisamos al equipo de la hacienda.'],

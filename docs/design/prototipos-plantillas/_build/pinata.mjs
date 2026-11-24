@@ -148,7 +148,7 @@ footer small a{color:var(--muted);display:inline-flex;align-items:center;min-hei
 }
 `;
 const nav = [['historia', 'Historia'], ['programa', 'Programa'], ['lugar', 'Lugar'], ['galeria', 'Galería'], ['vestimenta', 'Qué ponerse'], ['preguntas', 'Preguntas'], ['regalos', 'Regalos']];
-const swatches = [['#C2330F', 'Tomate'], ['#F1E2C8', 'Crema'], ['#3E7B52', 'Verde hoja'], ['#7FB0D6', 'Cielo']];
+const swatches = [['#C2330F', 'Tomate'], ['#E8A08F', 'Salmón'], ['#F6EBDA', 'Crema'], ['#2E2012', 'Chocolate']];
 const faq = [
   ['¿Puedo dejar a mi hijo o hija?', 'Desde los 4 años puede quedarse con una ficha de contacto del adulto. Los más pequeños se quedan con un adulto.'],
   ['¿Hay alergias o dietas especiales?', 'Cuéntanos al confirmar. La torta tendrá una opción sin lactosa y los snacks no llevan maní.'],

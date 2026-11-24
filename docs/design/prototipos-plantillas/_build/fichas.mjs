@@ -139,7 +139,7 @@ ${runs} combinaciones (ancho × claro/oscuro × con/sin foto, estados y nombres 
 | \`prefers-reduced-motion: reduce\` | 0 animaciones activas y estado final |
 | Movimiento permitido | tras recorrer la página no queda ningún bloque sin revelar |
 
-**Límites honestos.** No se probó en Safari ni Firefox, en dispositivo real ni con lector de pantalla. El «trazado» de dibujos y ornamentos usa una máscara animada con \`transform\` (un barrido, no el recorrido de un lápiz). Las muestras de vestimenta son el único color fuera de la paleta (contenido del anfitrión, con nombre escrito). Las fotos son ilustraciones planas; con una foto real el recorte puede cambiar el equilibrio. El rendimiento de las animaciones no se midió. Las etiquetas «Ver mi respuesta» (plazo vencido) y los textos de los avisos son una **propuesta de redacción** que decide Pablo. Las capturas las revisó quien las generó, no una persona del equipo.
+**Límites honestos.** No se probó en Safari ni Firefox, en dispositivo real ni con lector de pantalla. El «trazado» de dibujos y ornamentos usa una máscara animada con \`transform\` (un barrido, no el recorrido de un lápiz). Las muestras de vestimenta y las fotos de ejemplo usan solo tonos de la paleta de cada plantilla (acento, tinta y neutros), con el nombre del color escrito. Las fotos son ilustraciones planas; con una foto real el recorte puede cambiar el equilibrio. El rendimiento de las animaciones no se midió. Las etiquetas «Ver mi respuesta» (plazo vencido) y los textos de los avisos son una **propuesta de redacción** que decide Pablo. Las capturas las revisó quien las generó, no una persona del equipo.
 
 ---
 
