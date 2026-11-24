@@ -3,26 +3,14 @@ import { View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import { spacing } from "@rsvp/design-tokens";
 import { useMyProviders, useProviderProfile, type Provider } from "@rsvp/query-hooks";
+import { LoadingContent } from "../platform/loading-content";
+import { PORTAL_LOADING } from "../platform/loading-profiles";
 import { useApiClient, useClaims, useT } from "../platform/providers";
 import { readLocal, writeLocal } from "../platform/local-store";
-import type { Translate } from "@rsvp/i18n";
-import { ActionButton, ErrorNotice, Loading, Notice, OverflowMenu, Screen, type NavItem } from "../host/ui";
+import { ActionButton, ErrorNotice, Notice, OverflowMenu, Screen } from "../host/ui";
+import { PORTAL_ROUTES, portalActiveRoute, portalNav, type PortalRoute } from "./routes";
 
-/** Provider portal URLs. They live under /portal so the (provider) route guard covers them all. */
-export const PORTAL_ROUTES = { home: "/portal", onboarding: "/portal/alta", services: "/portal/servicios", products: "/portal/productos", delivery: "/portal/entrega", destinations: "/portal/destinos", agenda: "/portal/agenda", quotes: "/portal/cotizaciones", leads: "/portal/leads", metrics: "/portal/metricas", microsite: "/portal/perfil", documents: "/portal/documentos" } as const;
-export type PortalRoute = keyof typeof PORTAL_ROUTES;
-/** Provider navigation (brief §2): five destinations; the screens that were separate entries are their tabs. Routes do not move. */
-const NAV: readonly { readonly key: string; readonly tabs: readonly PortalRoute[] }[] = [
-  { key: "overview", tabs: ["home"] },
-  { key: "offers", tabs: ["services"] },
-  { key: "agenda", tabs: ["agenda"] },
-  { key: "clients", tabs: ["quotes", "leads", "metrics"] },
-  { key: "profile", tabs: ["microsite", "documents", "destinations"] }
-];
-export const portalNav = (t: Translate): NavItem[] => NAV.map((destination) => {
-  const tabs = destination.tabs.map((key) => ({ key, label: t(`portal.nav.${key}`), href: PORTAL_ROUTES[key] }));
-  return { key: destination.key, label: t(`portal.dest.${destination.key}`), href: tabs[0]?.href ?? PORTAL_ROUTES.home, tabs };
-});
+export { PORTAL_ROUTES, portalNav, type PortalRoute } from "./routes";
 
 const storageKey = (userId: string): string => `rsvp.provider.${userId}`;
 
@@ -79,14 +67,15 @@ export function PortalScreen({ title, current, requireProvider = true, children 
   const profile = useProviderProfile(client, providerId ?? undefined);
   const nav = portalNav(t);
   // Services, products and delivery terms are one list of offers: the three routes stay (shared links) and light the one tab.
-  const active: PortalRoute = current === "products" || current === "delivery" ? "services" : current;
+  const active = portalActiveRoute(current);
   const [header, setHeader] = useState<HeaderSpec | null>(null);
   const actions = header?.primary ? <ActionButton {...(header.primary.icon ? { icon: header.primary.icon } : {})} label={header.primary.label} onPress={header.primary.onPress} busy={header.primary.busy ?? false} disabled={header.primary.disabled ?? false} {...(header.primary.testID ? { testID: header.primary.testID } : {})} /> : undefined;
   const menu = header?.menu?.length ? <OverflowMenu testID="more-options" items={header.menu} /> : undefined;
   const frame = (body: ReactNode): ReactNode => <HeaderSlot.Provider value={setHeader}><Screen title={title} nav={nav} current={active} onNavigate={(href) => router.push(href as Href)} {...(actions ? { actions } : {})} {...(menu ? { menu } : {})}>{body}</Screen></HeaderSlot.Provider>;
-  if (providerId === undefined) return frame(<Loading />);
+  const loading = <LoadingContent kind={PORTAL_LOADING[!requireProvider && current === "home" ? "onboarding" : current].kind} />;
+  if (providerId === undefined) return frame(loading);
   if (!providerId) return frame(requireProvider ? <View style={{ gap: spacing[3] }}><Notice>{t("portal.errors.noProvider")}</Notice><ActionButton icon="arrow" label={t("portal.errors.goOnboarding")} onPress={() => router.push(PORTAL_ROUTES.onboarding as Href)} testID="go-onboarding" /></View> : children({} as Provider, () => undefined));
-  if (profile.isPending) return frame(<Loading />);
+  if (profile.isPending) return frame(loading);
   if (profile.isError || !profile.data) return frame(<ErrorNotice error={profile.error} onReload={() => { void profile.refetch(); }} />);
   return frame(children(profile.data, () => { void profile.refetch(); }));
 }

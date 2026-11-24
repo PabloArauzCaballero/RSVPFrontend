@@ -4603,6 +4603,7 @@ __metadata:
     "@expo-google-fonts/geist": "npm:0.4.2"
     "@playwright/test": "npm:1.62.1"
     "@react-native-community/datetimepicker": "npm:8.4.4"
+    "@react-navigation/native": "npm:^7.1.8"
     "@rsvp/api-client": "workspace:*"
     "@rsvp/auth": "workspace:*"
     "@rsvp/celebration-theme": "workspace:*"

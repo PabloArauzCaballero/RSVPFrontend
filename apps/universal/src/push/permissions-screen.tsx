@@ -11,6 +11,7 @@ import { BlockSkeleton } from "../host/guests/parts";
 import { ActionButton, EmptyState, ConfirmDialog, Notice, OverflowMenu, Section, useStyles } from "../host/ui";
 import { useApiClient, useLocale, useT } from "../platform/providers";
 import { currentPermission, enablePush, type PushOutcome, type PushPermission } from "./register";
+import { markRemoved, readRegistry, rememberDevice } from "./device-registry";
 
 /**
  * Push permission screen (REQ-F19-01 code path). Explains first, asks second, and says plainly what happens when it is denied or unsupported.
@@ -36,7 +37,8 @@ function DeviceRow({ celebrationId, device, timeZone }: { readonly celebrationId
   const remove = (): void => {
     setConfirm(false);
     if (!flight.begin()) return;
-    unregister.mutate(device.id, { onSettled: flight.end });
+    // F12: removing THIS phone also stops the silent registration from adding it back to this celebration.
+    unregister.mutate(device.id, { onSuccess: () => { void readRegistry().then((registry) => (registry[celebrationId] === device.id ? markRemoved(celebrationId) : undefined)); }, onSettled: flight.end });
   };
   return (
     <View role="listitem" testID={`device-${device.id}`} style={[styles.card, { gap: spacing[2] }]}>
@@ -97,7 +99,7 @@ function usePushState(celebrationId: string | undefined) {
     if (!flight.begin()) return;
     setBusy(true);
     try {
-      const result = await enablePush((body) => register.mutateAsync(body));
+      const result = await enablePush(async (body) => { const device = await register.mutateAsync(body); await rememberDevice(id, device.id); });
       setOutcome(result);
       setPermission(await currentPermission());
     } finally { setBusy(false); flight.end(); }
