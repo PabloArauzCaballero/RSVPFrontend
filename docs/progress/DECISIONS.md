@@ -113,9 +113,8 @@
 - **Las rutas de la API con credencial de invitado tienen su propia `location` sin error log de petición.** `/api/rsvp/…`, `/api/c/{slug}/rsvp/…` y `/api/c/{slug}/regalos/…` (las mismas que el `map` de A13 redacta en el access log) van a una `location` anidada en `/api/` con `error_log /dev/stderr emerg;`. nginx no escribe ninguna petición a ese nivel, así que un fallo del upstream (conexión, DNS, timeout, TLS) no deja la línea `request: "GET /api/rsvp/{token}"` en stderr; el access log sigue registrando el 502/504 con `/[guest-credential-path]`. El resto de `/api/` conserva su error log. Se descartó `crit`: un handshake TLS fallido con el upstream se registra en `crit` con la petición. Se descartó sacar la credencial de la ruta (cambio de contrato en Guest, mayor alcance).
 - **El proxy de `/api/` vive en un snippet** (`deploy/nginx-api-proxy.conf` → `/etc/nginx/snippets/api-proxy.conf`), incluido por las dos `location` y renderizado por `render-nginx-spa.sh` con la misma URL, para no duplicar la configuración de L19 y B1.
 
-## Prototipos de plantillas (PR #117, F4): decisiones pendientes de Pablo · 2026-11-24
+## Prototipos de plantillas (PR #117, F4): decisiones de Pablo y pendientes · 2026-11-24
 
-- **Acento de Gala: vino o dorado.** El prototipo usa vino (`#7B2A3C` claro, `#E6A3B1` oscuro, matiz 347°) porque el dorado anterior (`#6E5200`, `#CDAE6C`, matiz 41–45°) es el tono del amarillo del sistema y la regla es «nunca amarillo». Decide Pablo; cambiarlo son dos tokens en `docs/design/prototipos-plantillas/_build/tokens.mjs`.
-- **Nombre de la plantilla.** El prototipo se titula «Gala art déco»; la semilla `016` se llama «Gala dorada». Decide Pablo cuál se conserva.
-- **Redacción de los avisos y de «Ver mi respuesta»** (plazo vencido, regalos vacío/cerrado, sin enlace personal): son propuestas, no copy aprobado.
+- **Decidido por Pablo: acento de Gala vino y nombre «Gala art déco».** Gala lleva vino `#7B2A3C` en claro y `#E6A3B1` en oscuro (matiz 347°, fuera de la franja del amarillo del sistema). El dorado anterior (`#6E5200`, `#CDAE6C`) queda descartado. La semilla `016` del backend se sigue llamando «Gala dorada» hasta que F8 la renombre; no se toca la semilla desde este PR.
+- **Pendiente de Pablo: redacción de los avisos y de «Ver mi respuesta»** (plazo vencido, regalos vacío/cerrado, sin enlace personal): son propuestas, no copy aprobado.
 - Hecho sin decisión de Pablo (verificable en el catálogo): las tres parejas tipográficas salen del catálogo curado de F1, así que no se amplía el catálogo.
