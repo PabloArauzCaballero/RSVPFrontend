@@ -59,11 +59,20 @@ const DARK_MUTED = "#B9B1BF";
 
 /** WCAG 2.x minimum for body text; headings, links, times and the reply button use the accent as text. */
 export const TEXT_CONTRAST = 4.5;
+/** WCAG 1.4.11 minimum for the boundary of a control (the reply button against the page behind it). */
+export const COMPONENT_CONTRAST = 3;
+/**
+ * Share of the accent mixed into the page behind accent text in `styles.css`: the radial wash of the cover
+ * (`.celebration-hero`) and the RSVP section (`section[data-section="rsvp"]`, line 128). A test reads the
+ * stylesheet and fails if either percentage drifts from these constants.
+ */
+export const COVER_WASH = 0.13;
+export const RSVP_WASH = 0.09;
 const WHITE = "#FFFFFF";
 const BLACK = "#000000";
 const HEX = /^#?([0-9a-f]{6})$/i;
 const CHANNEL = 255;
-const LIGHTEN_STEPS = 20;
+const LIGHTEN_STEPS = 100;
 
 function channels(hex: string): readonly [number, number, number] | null {
   const match = HEX.exec(hex.trim());
@@ -98,16 +107,40 @@ function towardWhite(hex: string, amount: number): string {
   return rgb ? toHex(rgb.map((channel) => channel + (CHANNEL - channel) * amount) as [number, number, number]) : hex;
 }
 
+/** `top` over `base` at `share` opacity, in sRGB like CSS `color-mix(in srgb, top share, base)`. */
+function over(top: string, base: string, share: number): string {
+  const [topRgb, baseRgb] = [channels(top), channels(base)];
+  return topRgb && baseRgb ? toHex(topRgb.map((channel, index) => channel * share + baseRgb[index]! * (1 - share)) as [number, number, number]) : base;
+}
+
 /**
- * The template's accent, lightened in small steps until it reads as text on every dark background. Most seeded
- * accents are deep (granate, oliva, azul) and fall to 2:1 on charcoal; the hue stays, so the template is still recognisable.
+ * The first step of lightening `colour` (towards white, same hue) that `passes`. Returns `undefined` when not even
+ * white does, so the caller picks its own safe fallback.
+ */
+function lightenUntil(colour: string, passes: (candidate: string) => boolean): string | undefined {
+  for (let step = 0; step <= LIGHTEN_STEPS; step += 1) {
+    const candidate = towardWhite(colour, step / LIGHTEN_STEPS);
+    if (passes(candidate)) return candidate;
+  }
+  return undefined;
+}
+
+/**
+ * Every dark background accent text can land on: the flat canvas and surface, and the two washes of the accent itself
+ * that `styles.css` paints over them (13 % on the cover, 9 % on the RSVP block). The wash depends on the candidate, so
+ * the list is computed per candidate.
+ */
+export function darkBackdrops(accent: string): readonly string[] {
+  return [DARK_CANVAS, DARK_SURFACE, ...[COVER_WASH, RSVP_WASH].flatMap((share) => [over(accent, DARK_CANVAS, share), over(accent, DARK_SURFACE, share)])];
+}
+
+/**
+ * The template's accent, lightened in small steps until it reads as text on every dark background, washes included.
+ * Most seeded accents are deep (granate, oliva, azul) and fall to 2:1 on charcoal; the hue stays, so the template is
+ * still recognisable.
  */
 function darkAccent(accent: string): string {
-  for (let step = 0; step <= LIGHTEN_STEPS; step += 1) {
-    const candidate = towardWhite(accent, step / LIGHTEN_STEPS);
-    if (contrastRatio(candidate, DARK_CANVAS) >= TEXT_CONTRAST && contrastRatio(candidate, DARK_SURFACE) >= TEXT_CONTRAST) return candidate;
-  }
-  return DARK_TEXT;
+  return lightenUntil(accent, (candidate) => darkBackdrops(candidate).every((background) => contrastRatio(candidate, background) >= TEXT_CONTRAST)) ?? DARK_TEXT;
 }
 
 /** Dark variant of any template, composed rather than inverted: neutral dark surfaces and the template's accent lightened to AA. */
@@ -127,26 +160,34 @@ export function inkOnAccent(palette: Pick<Palette, "surface" | "canvas" | "text"
 }
 
 /**
- * The accent as a fill (cover band, festive banner, reply button) and the ink set on it. A fill keeps the template's
- * own accent in both schemes, so the cover looks the same at night; only the accent used as text is lightened.
+ * The accent as a fill (cover band, festive banner, reply button) and the ink set on it. In light the fill is the
+ * template's own accent. In dark it is the same hue lightened just enough that the fill reads as a shape against both
+ * dark backgrounds (3:1, WCAG 1.4.11), the ink on it reaches AA, and so does the white the editorial cover sets on
+ * it when it has no photo.
  */
 export function accentFill(theme: CelebrationTheme, scheme: ColorScheme): { readonly fill: string; readonly ink: string } {
   const palette = paletteFor(theme, scheme);
-  const fill = theme.palette.accent;
-  return { fill, ink: inkOnAccent({ ...palette, accent: fill }) };
+  const inkOn = (fill: string) => inkOnAccent({ ...palette, accent: fill });
+  if (scheme === "light") return { fill: theme.palette.accent, ink: inkOn(theme.palette.accent) };
+  const fill = lightenUntil(theme.palette.accent, (candidate) => contrastRatio(candidate, DARK_CANVAS) >= COMPONENT_CONTRAST
+    && contrastRatio(candidate, DARK_SURFACE) >= COMPONENT_CONTRAST
+    && contrastRatio(inkOn(candidate), candidate) >= TEXT_CONTRAST
+    && contrastRatio(WHITE, candidate) >= TEXT_CONTRAST) ?? palette.accent;
+  return { fill, ink: inkOn(fill) };
 }
 
 /** The palette as CSS custom properties for the web renderer (REQ-F09-04). */
 export function themeVariables(theme: CelebrationTheme, scheme: ColorScheme = "light"): CssVariables {
   const layout = layoutOf(theme);
   const palette = paletteFor(theme, scheme);
+  const fill = accentFill(theme, scheme);
   return {
     "--celebration-canvas": palette.canvas,
     "--celebration-surface": palette.surface,
     "--celebration-text": palette.text,
     "--celebration-accent": palette.accent,
-    "--celebration-accent-fill": accentFill(theme, scheme).fill,
-    "--celebration-on-accent": accentFill(theme, scheme).ink,
+    "--celebration-accent-fill": fill.fill,
+    "--celebration-on-accent": fill.ink,
     "--celebration-muted": palette.muted,
     "--celebration-heading-font": theme.typography.heading,
     "--celebration-body-font": theme.typography.body,

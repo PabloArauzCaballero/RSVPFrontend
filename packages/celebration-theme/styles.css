@@ -108,6 +108,12 @@
 .celebration-venues strong, .celebration-recommendations strong { font-family: var(--celebration-heading-font); font-size: 1.3rem; font-weight: 600; line-height: 1.2; }
 .celebration-venues p, .celebration-recommendations p { margin: 0; }
 .celebration-venues a, .celebration-recommendations a, .celebration-cta { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; }
+/* DESIGN.md · Movimiento: solo transform y opacidad; scale(.98) al pulsar. Sin movimiento si el sistema lo reduce. */
+@media (prefers-reduced-motion: no-preference) {
+  .celebration-cta { transition: transform 120ms cubic-bezier(0.16, 1, 0.3, 1); }
+  .celebration-cta:hover { transform: translateY(-1px); }
+  .celebration-cta:active { transform: scale(.98); }
+}
 .celebration-cta { padding: .8rem 2rem; font-size: 1.05rem; border-radius: var(--celebration-radius); background: var(--celebration-accent-fill); color: var(--celebration-on-accent) !important; text-decoration: none; }
 .celebration-gallery { list-style: none; padding: 0; margin: 0; display: grid; gap: .75rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr)); }
 .celebration-gallery img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; }
