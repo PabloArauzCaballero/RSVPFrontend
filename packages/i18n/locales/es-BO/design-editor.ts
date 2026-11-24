@@ -24,7 +24,8 @@ export const designEditorEsBO = {
   outline: {
     title: "Páginas",
     cover: "Portada",
-    elements: "{{count}} elementos",
+    elements_one: "{{count}} elemento",
+    elements_other: "{{count}} elementos",
     hidden: "oculto"
   },
   basic: {

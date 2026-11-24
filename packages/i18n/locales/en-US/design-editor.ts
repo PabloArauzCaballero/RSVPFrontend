@@ -27,7 +27,8 @@ export const designEditorEnUS: DeepStrings<typeof designEditorEsBO> = {
   outline: {
     title: "Pages",
     cover: "Cover",
-    elements: "{{count}} elements",
+    elements_one: "{{count}} element",
+    elements_other: "{{count}} elements",
     hidden: "hidden"
   },
   basic: {
