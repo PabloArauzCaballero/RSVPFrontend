@@ -1,6 +1,11 @@
 /**
  * The 16 seeded templates (BE `seeds/templates/data/*.json` on `chore/deploy-contabo-coolify`, copied 2026-11-24): key, name,
  * layout and palette, the inputs the invitation art is measured against. If a seed changes, copy it again here.
+ *
+ * Exception, decided by Pablo (2026-11-24): the row `gala-dorada` follows the new direction «Gala art déco» (wine accent, never
+ * yellow), not the BE seed `016` («Gala dorada», accent `#7A5A0E`, a mustard). The id stays `gala-dorada` because it is the seed's
+ * id and the evidence file names; palette and name follow the prototype (`docs/design/prototipos-plantillas`). Copy the BE seed
+ * again only once it carries the wine accent.
  */
 import type { LayoutId, Palette } from "../src/types.js";
 
@@ -22,5 +27,5 @@ export const SEED_TEMPLATES: readonly SeedTemplate[] = [
   { key: "fiesta-lila", name: "Fiesta lila", layout: "festive", palette: { canvas: "#F8F4FF", surface: "#FFFFFF", text: "#241A36", accent: "#6A3BBF", muted: "#625774" } },
   { key: "menta-infantil", name: "Menta infantil", layout: "festive", palette: { canvas: "#F0FAF6", surface: "#FFFFFF", text: "#14302A", accent: "#0C7566", muted: "#4C6A63" } },
   { key: "corporativo-grafito", name: "Corporativo grafito", layout: "corporate", palette: { canvas: "#F4F5F6", surface: "#FFFFFF", text: "#17191C", accent: "#0B6E6A", muted: "#50565C" } },
-  { key: "gala-dorada", name: "Gala dorada", layout: "corporate", palette: { canvas: "#F8F6F0", surface: "#FFFFFF", text: "#1D1B16", accent: "#7A5A0E", muted: "#5E5848" } },
+  { key: "gala-dorada", name: "Gala art déco", layout: "corporate", palette: { canvas: "#F5F3EE", surface: "#FFFFFF", text: "#14130F", accent: "#7B2A3C", muted: "#57524D" } },
 ];
