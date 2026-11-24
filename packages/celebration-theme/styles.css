@@ -1,3 +1,4 @@
+@import "./src/art/art.css";
 /* Celebration theme engine. Everything visual comes from the theme's CSS variables and the
    layout's data attributes set by <CelebrationRenderer>; no rule here names a template. */
 

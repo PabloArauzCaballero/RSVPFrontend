@@ -119,3 +119,15 @@
 - **Nombre de la plantilla.** El prototipo se titula «Gala art déco»; la semilla `016` se llama «Gala dorada». Decide Pablo cuál se conserva.
 - **Redacción de los avisos y de «Ver mi respuesta»** (plazo vencido, regalos vacío/cerrado, sin enlace personal): son propuestas, no copy aprobado.
 - Hecho sin decisión de Pablo (verificable en el catálogo): las tres parejas tipográficas salen del catálogo curado de F1, así que no se amplía el catálogo.
+
+## Biblioteca de dibujitos y ornamentos de invitación en `celebration-theme` (F3) · 2026-11-24
+
+- **Vive en `packages/celebration-theme/src/art` (`@rsvp/celebration-theme/art`).** Es el paquete que ya pintan las invitaciones en `apps/seo-web` y en la vista web de la app (P10); `apps/seo-web` no puede importar `packages/ui` y `celebration-theme` no depende de él. Alternativa descartada: ampliar `packages/ui/src/illustrations.ts`, que ata las invitaciones al kit de la app y a los pasteles de DOne (la invitación usa el acento de su plantilla, P4).
+- **Los trazados son dato con roles, nunca colores** (`disc`, `shadow`, `ink`, `cutout`, `secondary`, `accent`). Los constructores de trazado se reescriben en el paquete y un test los compara con `packages/ui`.
+- **La sombra siempre es más oscura que el disco y nunca el color de la página (L16).** En claro está un paso más allá del disco; en oscuro es un paso hacia el negro bajo la página y el disco queda apenas encima (1,16 a 1,25, como el de DOne), no una bola gris de 1,5.
+- **Un acento es una forma conexa.** Criterio del orquestador (PL-116-R1): un trazado con un solo subtrazado; lo demás va en tinta o secundario. Los detalles sobre el acento se calan (`cutout`), nunca en tinta (tinta sobre acento no llega a 3:1 en todas las plantillas).
+- **Las figuras son tinta rellena.** `band` convierte una línea en el polígono que la rodea (anillos, cifras, percha, vestido, tijera); no hay trazos gruesos como figura. Piso de línea 2,5 y máximo 13 subtrazados (los de DOne); tope de figura de **96 de ancho y alto** (el disco mide 92 y DOne llega a 100): decisión propia, no «cabe en 92».
+- **La máscara de morenada es abstracta** (corona, escudo y rayos): la regla de las caras de DOne no admite cuencas, ojos, dientes ni boca. Se retira el reloj de medianoche (no lo pide el plan y se confundía con el reloj) y se añade el cartel «Abierto» que sí pide.
+- **Entrada en pantalla con IntersectionObserver, una vez**, con los valores de `MOTION` (500 ms, 12 px, 70 ms por paso, máx. 8). Se arma antes de pintar solo si el dibujo aún no está en pantalla: sin JavaScript, o si ya se ve al hidratar, el dibujo se queda entero (sin parpadeo 1, 0, 1 con SSR). El tamaño por defecto de 104 px es solo de los dibujos. Los calados entran en el mismo grupo que su tinta.
+- **`InvitationArt` es decorativo por defecto**; el nombre es opt-in con `label`. Suelos `accent` y `photo` con el disco como halo del color del lienzo.
+- **Aún no se conecta a las plantillas:** F4 elige set y ornamento por plantilla. Los ornamentos se dibujan en un solo trazo (1,8) con un acento.
