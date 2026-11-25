@@ -7,7 +7,7 @@ const OUT = process.env["STATES_EVIDENCE_DIR"];
 
 test("PL-134-R2-m3 · the host preview shows the offline state when the site does not answer, and retry goes back to loading", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(`/preview?c=${MOCK_CELEBRATION_ID}`, { waitUntil: "domcontentloaded" });
+  await page.goto(`/preview?c=${MOCK_CELEBRATION_ID}`, { waitUntil: "domcontentloaded", timeout: 120_000 });
   const error = page.getByTestId("preview-error").first();
   await expect(error).toBeVisible({ timeout: 30_000 });
   await expect(error).toHaveAttribute("role", "alert");

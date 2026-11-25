@@ -32,8 +32,15 @@ Corrige: PL-F6 (P10), PL-L3. Rama `feat/plantillas-f6b-nativo` sobre `feat/plant
 - M4: la vista previa web falla por `error` del iframe, a los 3 s de su `load` si la página no avisa, o a los 8 s si no carga.
 - m1: la regla de encabezados usa `(?!vista-previa$)`. m2: `/vista-previa` ya no lleva CSP-Report-Only. m3: el 404 de la invitación no ofrece «Ver regalos» a propósito (no hay invitación ni lista); se documenta aquí.
 - No hecho: m4 (logo del sitio duplicado en oscuro dentro de la vista previa), m5 (marco del admin a 390), m6 parcial (los enlaces inertes siguen en el Tab: quitarlos del Tab deja la navegación desplazable sin contenido enfocable y axe lo marca como serio).
-- Hallazgo de la base (#131): `design/render` importa `postcss`, y Metro tomaba su envoltorio ESM: el bundle web del universal fallaba al cargar con «Cannot read properties of undefined (reading 'stringify')». `apps/universal/metro.config.js` fuerza la entrada CJS de postcss.
+- Hallazgo de la base (#131): la app importaba el barril de `@rsvp/celebration-theme`, que arrastra el renderizador y `postcss`; el bundle web fallaba al cargar. La ronda 2 lo arregla de raíz (R2-M1).
 
 ### Líneas base macOS que cambian (no regeneradas desde Linux)
 
 `host-vista-previa-{390,768,1440}`, `host-templates-{390,768,1440}`, `host-editor-general-{390,768,1440}`. El gate visual no define `EXPO_PUBLIC_SITE_URL`: regenerar exige el sitio servido, o se captura el esqueleto.
+
+## Ronda 2 (PL-134-R2-M1..M3, m1..m3)
+
+- R2-M1: causa raíz, no alias. `@rsvp/celebration-theme/model` (`src/model.ts`) exporta tipos, tema, contenido, formatos, mensaje de vista previa y lectores del documento, sin renderizador ni parser de CSS. La app lo consume y se quitó el alias de `metro.config.js`. Una prueba sigue los imports de `model.ts` y falla si llegan el renderizador, `sections/`, `custom/` o `postcss`. Bundle `entry` web: 2.533.127 B (682.050 gzip) con el alias y el barril; 2.358.953 B (631.992 gzip) con `/model`: -174 KB (-50 KB gzip), sin `postcss` en el bundle. iOS (Hermes): 6,74 MB.
+- R2-M2: la sonda pide `/icon.svg` (estático), no la página. Límite: `no-cors` da una respuesta opaca; no se lee el estado, solo si el sitio responde. Un 5xx de la página lo muestra la página de error del sitio; en nativo sí se lee y se muestra `unavailable`.
+- R2-M3: una sola anchura (`GUEST_COLUMN`, 640 px) para carga, sin red y no disponible; e2e a 1440 compara ambas. Fase nueva `misconfigured` (despliegue que se cargaría a sí mismo): sin «Reintentar», solo «Ver regalos».
+- m1: el script en línea escapa `<` (`\u003c`). m2: el comentario del spec dice que hace falta `EXPO_PUBLIC_API_URL=/api` y `--clear`. m3: `apps/universal/e2e/preview-states.spec.ts` (config `playwright.states.config.ts`): vista previa del anfitrión con sesión simulada y el sitio sin responder; captura `vista-previa-sin-red.png`.

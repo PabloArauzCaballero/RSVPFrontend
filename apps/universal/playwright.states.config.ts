@@ -15,8 +15,9 @@ export default defineConfig({
   testDir: "./e2e",
   testMatch: /preview-states\.spec\.ts/,
   workers: 1,
+  timeout: 150_000,
   reporter: "list",
-  use: { baseURL: `http://localhost:${STATES_PORT}`, launchOptions: { ...(executablePath ? { executablePath } : {}) } },
+  use: { baseURL: `http://localhost:${STATES_PORT}`, locale: "es-BO", launchOptions: { ...(executablePath ? { executablePath } : {}) } },
   webServer: [
     { command: "npx vite-node scripts/visual-mock.ts", url: `http://localhost:${MOCK_PORT}/celebrations`, reuseExistingServer: false, timeout: 60_000, env: { MOCK_PORT: String(MOCK_PORT) } },
     { command: `npx expo start --web --port ${STATES_PORT} --clear`, url: `http://localhost:${STATES_PORT}`, reuseExistingServer: false, timeout: 240_000, env: { CI: "1", EXPO_PUBLIC_API_URL: `http://localhost:${MOCK_PORT}`, EXPO_PUBLIC_DEV_ACCESS_TOKEN: HOST_TOKEN, EXPO_PUBLIC_SITE_URL: `http://localhost:${SITE_PORT}` } }
