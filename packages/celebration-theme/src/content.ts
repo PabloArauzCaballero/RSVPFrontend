@@ -45,6 +45,7 @@ export interface GalleryImage {
   readonly height: number | null;
   readonly isCover: boolean;
   readonly purpose?: string;
+  readonly durationMs?: number | null;
   readonly variants: Readonly<Partial<Record<"thumb" | "medium" | "full" | "webp" | "thumb_avif" | "medium_avif" | "full_avif" | "svg" | "audio", string>>>;
 }
 
