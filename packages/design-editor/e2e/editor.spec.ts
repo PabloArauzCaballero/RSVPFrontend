@@ -82,6 +82,22 @@ test.describe("editor shell (PR a, ronda 2)", () => {
     await expect(page.getByRole("status")).toContainText("Borrador guardado", { timeout: 5000 });
   });
 
+  test("el panel Colores no recorta el anillo de foco del selector de color (m-7)", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto("/");
+    const input = accent(page);
+    await input.focus();
+    const room = await input.evaluate((el) => {
+      const box = el.getBoundingClientRect();
+      const clip = el.closest(".de-sticky")!.getBoundingClientRect();
+      const ring = parseFloat(getComputedStyle(el).outlineWidth) + parseFloat(getComputedStyle(el).outlineOffset);
+      return { left: box.left - clip.left, right: clip.right - box.right, ring };
+    });
+    expect(room.ring).toBeGreaterThan(0);
+    expect(room.left).toBeGreaterThanOrEqual(room.ring);
+    expect(room.right).toBeGreaterThanOrEqual(room.ring);
+  });
+
   test("el lienzo de escritorio y el nivel Avanzado cambian el escenario", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto("/");
@@ -163,8 +179,15 @@ test.describe("editor shell (PR a, ronda 2)", () => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto("/?fail=401");
     await accent(page).fill("#1f6f5c");
-    await page.getByRole("button", { name: "Iniciar sesión en otra pestaña" }).click({ timeout: 5000 });
-    expect(await page.evaluate(() => window.__signIn)).toBe(1);
+    const login = page.getByRole("link", { name: "Iniciar sesión en otra pestaña" });
+    await expect(login).toHaveAttribute("target", "_blank", { timeout: 5000 });
+    await expect(login).toHaveAttribute("rel", "noopener");
+    await expect(login).toHaveAttribute("href", /^\/login\?returnTo=/);
+    // opening it leaves this tab (and its unsaved edit) where it is
+    const [popup] = await Promise.all([page.waitForEvent("popup"), login.click()]);
+    await popup.close();
+    expect(page.url()).toContain("fail=401");
+    expect(await accent(page).inputValue()).toBe("#1f6f5c");
     await page.screenshot({ path: shot("estado-sesion-1280") });
     await page.goto("/?fail=403");
     await accent(page).fill("#1f6f5c");

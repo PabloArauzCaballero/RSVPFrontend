@@ -25,7 +25,8 @@ export interface EditorShellProps {
    */
   readonly onReload?: () => Promise<EditableDesign | null | undefined>;
   /** The session ended (401): the host sends the person to sign in again. */
-  readonly onSignIn?: () => void;
+  /** Real link to the login. A link opens its own tab by the browser's own means, so no popup blocker can turn it into a same-tab navigation that drops the unsaved edits. */
+  readonly signInHref?: string;
   readonly now?: () => number;
   readonly debounceMs?: number;
   /** Extra panels of the following editor levels, rendered in the right column. */
@@ -168,7 +169,7 @@ interface NoticeProps {
   readonly onCancelReload: () => void;
   readonly onConfirmReload: () => void;
   readonly onRetry: () => void;
-  readonly onSignIn: (() => void) | undefined;
+  readonly signInHref: string | undefined;
   readonly loadRef: RefObject<HTMLButtonElement | null>;
   readonly confirmRef: RefObject<HTMLButtonElement | null>;
 }
@@ -206,7 +207,7 @@ function Notice(props: NoticeProps): ReactNode {
         <AlertIcon />
         <div className="de-notice-body"><p className="de-notice-title">{t(key("notice.signIn.title"))}</p><p>{t(key("notice.signIn.body"))}</p></div>
         <div className="de-notice-actions">
-          {props.onSignIn ? <button type="button" className="de-btn de-btn--primary" onClick={props.onSignIn}>{t(key("notice.signIn.action"))}</button> : null}
+          {props.signInHref ? <a className="de-btn de-btn--primary" href={props.signInHref} target="_blank" rel="noopener">{t(key("notice.signIn.action"))}</a> : null}
           <button type="button" className="de-btn" onClick={props.onRetry}>{t(key("notice.signIn.retry"))}</button>
         </div>
       </div>
@@ -233,7 +234,7 @@ function Notice(props: NoticeProps): ReactNode {
   );
 }
 
-export function EditorShell({ design: source, gateway, t, onReload, onSignIn, now = Date.now, debounceMs, children }: EditorShellProps) {
+export function EditorShell({ design: source, gateway, t, onReload, signInHref, now = Date.now, debounceMs, children }: EditorShellProps) {
   const [state, dispatch] = useReducer(editorReducer, source.document, initialEditorState);
   const [status, setStatus] = useState<SaveStatus>({ kind: "saved" });
   const [warnings, setWarnings] = useState<readonly design.DesignWarning[]>(source.warnings ?? []);
@@ -340,7 +341,7 @@ export function EditorShell({ design: source, gateway, t, onReload, onSignIn, no
       {stopped ? (
         <Notice status={status} t={t} canReload={onReload !== undefined} reloading={reloading} confirming={confirming} reloadFailed={reloadFailed}
           onAskReload={() => setConfirming(true)} onCancelReload={() => setConfirming(false)} onConfirmReload={() => { void loadNewer(); }}
-          onRetry={() => { void saver.current?.retry(); }} onSignIn={onSignIn} loadRef={loadRef} confirmRef={confirmRef} />
+          onRetry={() => { void saver.current?.retry(); }} signInHref={signInHref} loadRef={loadRef} confirmRef={confirmRef} />
       ) : null}
       {state.refusal ? (
         <div className="de-notice" role="alert" data-kind="refusal">

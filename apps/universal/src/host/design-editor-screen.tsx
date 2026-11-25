@@ -18,7 +18,7 @@ const toEditable = (record: DesignRecord): EditableDesign => ({ id: record.id, n
  * the editor does not exist on iOS or Android (`design-editor-screen.native.tsx`). Full-bleed: it does not use the host frame
  * because it needs the whole viewport for the canvas.
  */
-export function DesignEditorScreen({ celebrationId, onNavigate }: ScreenProps): ReactNode {
+export function DesignEditorScreen({ celebrationId }: ScreenProps): ReactNode {
   const t = useT();
   const client = useApiClient();
   const celebration = useCelebration(client, celebrationId ?? "");
@@ -36,15 +36,10 @@ export function DesignEditorScreen({ celebrationId, onNavigate }: ScreenProps): 
     const result = await refetch();
     return result.status === "success" && result.data ? toEditable(result.data) : null;
   }, [refetch]);
-  // The login opens in another tab: navigating this one would unmount the editor and drop the edits not yet saved. The session
-  // renews through the refresh cookie, so "Ya entré, reintentar" saves from the tab that still holds them. Without a window
-  // (popup blocked) it falls back to the same-tab navigation.
-  const signIn = useCallback(() => {
-    const href = loginHref(withCelebration(HOST_ROUTES.design, celebrationId));
-    const opened = typeof window === "undefined" ? null : window.open(href, "_blank");
-    if (opened) opened.opener = null;
-    else onNavigate(href);
-  }, [onNavigate, celebrationId]);
+  // The login is a real link that opens in another tab: navigating this one would unmount the editor and drop the edits not yet
+  // saved, and a link (unlike window.open) cannot be turned into a same-tab navigation by a popup blocker. The session renews
+  // through the refresh cookie, so "Ya entré, reintentar" saves from the tab that still holds the edits.
+  const signInHref = loginHref(withCelebration(HOST_ROUTES.design, celebrationId));
 
   if (!celebrationId) return <View style={{ padding: spacing[6] }}><EmptyState illustration="invitation" title={t("designEditor.title")} body={t("designEditor.noCelebration")} /></View>;
   if (celebration.isPending || found.isPending) return <LoadingContent kind="form" />;
@@ -64,5 +59,5 @@ export function DesignEditorScreen({ celebrationId, onNavigate }: ScreenProps): 
   }
   const record = found.data;
   // Keyed by the design alone: a refetch of the record (another tab saved) must not remount the editor and drop the open history.
-  return <EditorShell key={record.id} design={toEditable(record)} gateway={gateway} t={t} onReload={reload} onSignIn={signIn} />;
+  return <EditorShell key={record.id} design={toEditable(record)} gateway={gateway} t={t} onReload={reload} signInHref={signInHref} />;
 }

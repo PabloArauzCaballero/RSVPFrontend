@@ -4,7 +4,7 @@ import { createTranslator, type AppLocale } from "@rsvp/i18n";
 import { EditorShell, type EditableDesign } from "../../src/ui/index.js";
 import type { DraftGateway } from "../../src/save/autosave.js";
 
-declare global { interface Window { __saves: { id: string; version: number; accent: string }[]; __signIn: number } }
+declare global { interface Window { __saves: { id: string; version: number; accent: string }[] } }
 
 /**
  * ?fail=409|422|401|403|offline  the first saves fail that way (409 stops until the newer version is loaded)
@@ -28,7 +28,6 @@ const document0: design.DesignDocumentV2 = params.get("nopages") ? { ...base, pa
   : base;
 
 window.__saves = [];
-window.__signIn = 0;
 let version = 4;
 let failing = fail !== null;
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -56,5 +55,5 @@ const newer: EditableDesign = {
 const onReload = async (): Promise<EditableDesign> => { failing = false; return newer; };
 
 createRoot(window.document.getElementById("root") as HTMLElement).render(
-  <EditorShell design={{ id: "design-1", name: "Ana y Luis", draftVersion: 4, document: document0 }} gateway={gateway} t={createTranslator(locale)} onReload={onReload} onSignIn={() => { window.__signIn += 1; }} debounceMs={300} />
+  <EditorShell design={{ id: "design-1", name: "Ana y Luis", draftVersion: 4, document: document0 }} gateway={gateway} t={createTranslator(locale)} onReload={onReload} signInHref="/login?returnTo=%2Fdiseno%3Fc%3Dc-1" debounceMs={300} />
 );
