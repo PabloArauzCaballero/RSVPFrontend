@@ -73,6 +73,137 @@ describe("gifts block guards (P22)", () => {
   });
 });
 
+describe("gifts block guards: useful height and label size (mirror of rules.py)", () => {
+  const setup = () => {
+    const doc = fixture();
+    const placement = giftsPlacement(doc);
+    const element = placement?.element;
+    if (!placement || !element) throw new Error("no gifts element");
+    const codes = (next: design.DesignDocumentV2): string[] => giftsIssues(next).map((issue) => issue.code);
+    return { doc, id: element.id, rowHeight: placement.page.canvases.mobile.rowHeight, h: element.h, codes, pageId: placement.page.id };
+  };
+
+  it("padding and border that leave under 44 px of useful height make the block too small, and 44 px exactly is fine", () => {
+    const { doc, id, rowHeight, h, codes } = setup();
+    const spare = h * rowHeight - 44;
+    expect(spare).toBeGreaterThanOrEqual(0);
+    const exact = patchElement("mobile", id, { padding: { top: spare, right: 0, bottom: 0, left: 0 } })(doc);
+    expect(codes(exact)).not.toContain("GIFTS_BLOCK_TOO_SMALL");
+    const over = patchElement("mobile", id, { padding: { top: spare + 1, right: 0, bottom: 0, left: 0 } })(doc);
+    expect(codes(over)).toContain("GIFTS_BLOCK_TOO_SMALL");
+    const border = patchElement("mobile", id, { border: { width: Math.floor(spare / 2) + 1, colour: "accent", style: "solid" } as never })(doc);
+    expect(codes(border)).toContain("GIFTS_BLOCK_TOO_SMALL");
+  });
+
+  it("a label over 32 px, or whose line does not fit the useful height, is too large; the default line height is 1.25", () => {
+    const { doc, id, rowHeight, h, codes } = setup();
+    expect(codes(patchElement("mobile", id, { typography: { size: 33 } })(doc))).toContain("GIFTS_BLOCK_TEXT_TOO_LARGE");
+    const roomy = patchElement("mobile", id, { h: Math.ceil(80 / rowHeight) })(doc);
+    expect(codes(patchElement("mobile", id, { typography: { size: 32 } })(roomy))).not.toContain("GIFTS_BLOCK_TEXT_TOO_LARGE");
+    expect(codes(patchElement("mobile", id, { typography: { size: 32, lineHeight: 4 } })(roomy))).toContain("GIFTS_BLOCK_TEXT_TOO_LARGE");
+    const tight = h * rowHeight;
+    const size = Math.floor(tight / 1.25) + 1;
+    if (size <= 32) expect(codes(patchElement("mobile", id, { typography: { size } })(doc))).toContain("GIFTS_BLOCK_TEXT_TOO_LARGE");
+    expect(codes(patchElement("mobile", id, { typography: { size: 16, lineHeight: 1.25 } })(doc))).not.toContain("GIFTS_BLOCK_TEXT_TOO_LARGE");
+  });
+
+  it("every page that places the button is checked, not only the first", () => {
+    const { doc, id, codes } = setup();
+    const first = doc.pages.find((page) => page.canvases.mobile.elements.some((element) => element.id === id));
+    if (!first) throw new Error("no page");
+    const copy = structuredClone(first);
+    const element = copy.canvases.mobile.elements.find((candidate) => candidate.id === id);
+    if (!element) throw new Error("no element");
+    const second: design.DesignPage = { ...copy, id: "page-two", canvases: { mobile: { ...copy.canvases.mobile, elements: [{ ...element, id: "gifts-two", typography: { size: 40 } }] } } };
+    const twoPages = { ...doc, pages: [...doc.pages, second] };
+    expect(giftsIssues(twoPages).some((issue) => issue.code === "GIFTS_BLOCK_TEXT_TOO_LARGE")).toBe(true);
+    expect(codes(doc)).toEqual([]);
+  });
+});
+
+describe("gifts block guards: covered and contrast (mirror of the server rules)", () => {
+  const codes = (doc: design.DesignDocumentV2): string[] => giftsIssues(doc).map((issue) => issue.code);
+  const setStyle = (doc: design.DesignDocumentV2, style: string): design.DesignDocumentV2 => ({ ...doc, blocks: doc.blocks.map((block) => (block.type === "giftsCta" ? { ...block, config: { ...block.config, style } } : block)) });
+  const setAccent = (doc: design.DesignDocumentV2, scheme: "light" | "dark", accent: string): design.DesignDocumentV2 => setPaletteColour(scheme, "accent", accent)(doc);
+
+  /** The gifts page with a second element in its mobile canvas (the fixture's pages hold one element each). */
+  const withNeighbour = (patch: Partial<design.DesignElement>, giftsPatch: Partial<design.DesignElement> = {}, before = false): design.DesignDocumentV2 => {
+    const doc = fixture();
+    const placement = giftsPlacement(doc);
+    const gifts = placement?.element;
+    const blockId = doc.blocks.find((block) => block.type !== "giftsCta")?.id ?? "";
+    const neighbour: design.DesignElement = { id: "el-neighbour", block: blockId, x: gifts?.x ?? 0, y: gifts?.y ?? 0, w: gifts?.w ?? 1, h: gifts?.h ?? 1, visible: true, ...patch };
+    const pageId = placement?.page.id;
+    return {
+      ...doc,
+      pages: doc.pages.map((page) => {
+        if (page.id !== pageId) return page;
+        const mobile = page.canvases.mobile;
+        const own = mobile.elements.map((element) => (element.id === gifts?.id ? { ...element, ...giftsPatch } : element));
+        return { ...page, canvases: { ...page.canvases, mobile: { ...mobile, elements: before ? [neighbour, ...own] : [...own, neighbour] } } };
+      })
+    };
+  };
+
+  it("a visible element laid over the button covers it: by z, or by order at equal z; below it, hidden or beside it does not", () => {
+    expect(codes(withNeighbour({}))).toContain("GIFTS_BLOCK_COVERED");
+    expect(codes(withNeighbour({}, {}, true))).not.toContain("GIFTS_BLOCK_COVERED");
+    expect(codes(withNeighbour({ z: 5 }, {}, true))).toContain("GIFTS_BLOCK_COVERED");
+    expect(codes(withNeighbour({ z: 5 }, { z: 9 }))).not.toContain("GIFTS_BLOCK_COVERED");
+    expect(codes(withNeighbour({ z: -1 }))).not.toContain("GIFTS_BLOCK_COVERED");
+    expect(codes(withNeighbour({ visible: false }))).not.toContain("GIFTS_BLOCK_COVERED");
+    const gifts = giftsPlacement(fixture())?.element;
+    expect(codes(withNeighbour({ y: (gifts?.y ?? 0) + (gifts?.h ?? 1) }))).not.toContain("GIFTS_BLOCK_COVERED");
+    const state = editorReducer(initialEditorState(fixture()), { type: "edit", op: () => withNeighbour({}), at: 0 });
+    expect(state.refusal?.map((issue) => issue.code)).toContain("GIFTS_BLOCK_COVERED");
+  });
+
+  it("a rotated element is measured by its bounding box", () => {
+    const gifts = giftsPlacement(fixture())?.element;
+    const below = { x: gifts?.x ?? 0, y: (gifts?.y ?? 0) + (gifts?.h ?? 1), w: 4, h: 1 };
+    expect(codes(withNeighbour(below))).not.toContain("GIFTS_BLOCK_COVERED");
+    expect(codes(withNeighbour({ ...below, y: below.y - 1, rotation: 45, z: 5 }))).toContain("GIFTS_BLOCK_COVERED");
+    expect(codes(withNeighbour({ ...below, rotation: 45, z: 5 }))).toContain("GIFTS_BLOCK_COVERED");
+  });
+
+  it("an accent that breaks the outline button's text or contour is refused in the palette that carries it; solid is unaffected", () => {
+    const doc = fixture();
+    const canvas = doc.tokens.palettes.light.canvas;
+    const outline = setStyle(doc, "outline");
+    expect(codes(outline)).toEqual([]);
+    expect(codes(setAccent(outline, "light", canvas))).toContain("GIFTS_BLOCK_LOW_CONTRAST");
+    expect(codes(setAccent(outline, "dark", outline.tokens.palettes.dark.canvas))).toContain("GIFTS_BLOCK_LOW_CONTRAST");
+    expect(codes(setAccent(doc, "light", canvas))).toEqual([]);
+    expect(codes(setAccent(setStyle(doc, "link"), "light", canvas))).toContain("GIFTS_BLOCK_LOW_CONTRAST");
+    const state = editorReducer(initialEditorState(setStyle(doc, "outline")), { type: "edit", op: setPaletteColour("light", "accent", canvas), at: 0 });
+    expect(state.refusal?.map((issue) => issue.code)).toContain("GIFTS_BLOCK_LOW_CONTRAST");
+    expect(state.revision).toBe(0);
+  });
+
+  it("the contour of the button, its own colours and a picture behind it are read like the server does", () => {
+    const doc = fixture();
+    const id = giftsPlacement(doc)?.element.id ?? "";
+    const border = (colour: design.PaletteRole): design.DesignDocumentV2 => patchElement("mobile", id, { border: { width: 1, style: "solid", colour } })(doc);
+    expect(codes(border("text"))).toEqual([]);
+    expect(codes(border("surface"))).toContain("GIFTS_BLOCK_LOW_CONTRAST");
+    expect(codes(patchElement("mobile", id, { border: { width: 0, style: "solid", colour: "surface" } })(doc))).toEqual([]);
+    expect(codes(patchElement("mobile", id, { typography: { colour: "canvas" } })(doc))).toContain("GIFTS_BLOCK_LOW_CONTRAST");
+    expect(codes(patchElement("mobile", id, { background: { kind: "colour", role: "text" }, typography: { colour: "canvas" } })(doc))).toEqual([]);
+    expect(codes(patchElement("mobile", id, { background: { kind: "media", mediaId: "11111111-1111-4111-8111-111111111111", fit: "cover" } })(doc))).toContain("GIFTS_BLOCK_LOW_CONTRAST");
+    expect(codes(patchElement("mobile", id, { background: { kind: "illustration", illustrationId: "x" } })(doc))).toContain("GIFTS_BLOCK_LOW_CONTRAST");
+    const onImagePage = (style: string): design.DesignDocumentV2 => {
+      const placed = setStyle(doc, style);
+      const pageId = giftsPlacement(placed)?.page.id;
+      return { ...placed, pages: placed.pages.map((page) => (page.id === pageId ? { ...page, background: { kind: "media" as const, mediaId: "11111111-1111-4111-8111-111111111111", fit: "cover" as const } } : page)) };
+    };
+    expect(codes(onImagePage("solid"))).toEqual([]);
+    expect(codes(onImagePage("link"))).toContain("GIFTS_BLOCK_LOW_CONTRAST");
+    expect(codes(onImagePage("outline"))).toContain("GIFTS_BLOCK_LOW_CONTRAST");
+    const solidBordered = patchElement("mobile", id, { border: { width: 2, style: "solid", colour: "accent" } })(onImagePage("solid"));
+    expect(codes(solidBordered)).toContain("GIFTS_BLOCK_LOW_CONTRAST");
+  });
+});
+
 describe("document operations", () => {
   it("sets a palette colour in the light or dark palette and ignores bad hex", () => {
     const doc = fixture();

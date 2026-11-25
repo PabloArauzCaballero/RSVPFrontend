@@ -1,3 +1,4 @@
+import { focusManager } from "@tanstack/react-query";
 import { fireEvent, screen, waitFor, act } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { design } from "@rsvp/celebration-theme";
@@ -45,6 +46,82 @@ describe("plantillas F5 · pantalla del editor (web)", () => {
     fireEvent.click(screen.getAllByRole("button", { name: "Restaurar" })[1] as HTMLElement);
     expect(await screen.findByText(/Versión 1 copiada al borrador/)).toBeTruthy();
     expect(calls.filter((call) => call.path.endsWith("/publish"))).toHaveLength(1);
+  });
+
+  it("volver a la pestaña no reinicia el editor: conserva el historial y la versión con la que guarda (M1)", async () => {
+    let served = record;
+    const saves: string[] = [];
+    const handlers = {
+      ...baseHandlers(), "GET /media/celebrations/c-1/design": () => served,
+      "PUT /media/designs/d-1/draft": () => { saves.push("put"); served = { ...record, draftVersion: record.draftVersion + 1 }; return served; }
+    };
+    const { client, calls } = fakeClient(handlers);
+    renderApp(<DesignEditorScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    await screen.findByRole("heading", { level: 1, name: "Diseño de la invitación" });
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    fireEvent.change(screen.getByLabelText("Color de acento (claro)"), { target: { value: "#123456" } });
+    await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
+    vi.useRealTimers();
+    await waitFor(() => expect(screen.getByRole("status").textContent).toContain("Borrador guardado."));
+    const reads = calls.filter((call) => call.method === "GET" && call.path === "/media/celebrations/c-1/design").length;
+    await act(async () => { focusManager.setFocused(false); focusManager.setFocused(true); });
+    expect(calls.filter((call) => call.method === "GET" && call.path === "/media/celebrations/c-1/design")).toHaveLength(reads);
+    expect((screen.getByRole("button", { name: "Deshacer" }) as HTMLButtonElement).disabled).toBe(false);
+    expect((screen.getByLabelText("Color de acento (claro)") as HTMLInputElement).value).toBe("#123456");
+    expect(saves).toHaveLength(1);
+  });
+
+  it("tras un conflicto, «Cargar la versión nueva» trae el borrador del servidor, reemplaza el documento y guarda desde su versión", async () => {
+    const other = design.convertV1ToV2(
+      { palette: { canvas: "#FBF7F0", surface: "#FFFFFF", text: "#2B2622", accent: "#1F6F5C", muted: "#665C52" }, typography: { heading: "'Cormorant Garamond', Georgia, serif", body: "'Source Sans 3', Arial, sans-serif" }, sectionStyle: "bands" },
+      "classic", ["story", "schedule", "venues", "gallery", "dressCode", "gifts", "faq", "recommendations", "rsvp"]
+    );
+    let served = record;
+    let puts = 0;
+    const handlers = {
+      ...baseHandlers(), "GET /media/celebrations/c-1/design": () => served,
+      "PUT /media/designs/d-1/draft": () => { puts += 1; if (puts === 1) { served = { ...record, draftVersion: 9, document: other }; return new HttpFailure(409); } return { ...served, draftVersion: served.draftVersion + 1 }; }
+    };
+    const { client, calls } = fakeClient(handlers);
+    renderApp(<DesignEditorScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    await screen.findByRole("heading", { level: 1, name: "Diseño de la invitación" });
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    fireEvent.change(screen.getByLabelText("Color de acento (claro)"), { target: { value: "#123456" } });
+    await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
+    vi.useRealTimers();
+    fireEvent.click(await screen.findByRole("button", { name: "Cargar la versión nueva" }));
+    fireEvent.click(screen.getByRole("button", { name: "Sí, descartar y cargar" }));
+    await waitFor(() => expect((screen.getByLabelText("Color de acento (claro)") as HTMLInputElement).value).toBe("#1f6f5c"));
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    fireEvent.change(screen.getByLabelText("Color de acento (claro)"), { target: { value: "#654321" } });
+    await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
+    vi.useRealTimers();
+    const lastPut = calls.filter((call) => call.method === "PUT").at(-1);
+    expect(lastPut?.headers.get("if-match")).toBe('"9"');
+  });
+
+  it("si la sesión terminó al guardar (401) ofrece volver a entrar y regresa a este diseño", async () => {
+    const handlers = { ...baseHandlers(), "GET /media/celebrations/c-1/design": () => record, "PUT /media/designs/d-1/draft": () => new HttpFailure(401) };
+    const { client } = fakeClient(handlers);
+    const go = vi.fn();
+    const open = vi.spyOn(window, "open");
+    renderApp(<DesignEditorScreen celebrationId="c-1" onNavigate={go} />, client);
+    await screen.findByRole("heading", { level: 1, name: "Diseño de la invitación" });
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    fireEvent.change(screen.getByLabelText("Color de acento (claro)"), { target: { value: "#123456" } });
+    await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
+    vi.useRealTimers();
+    const href = `/login?returnTo=${encodeURIComponent("/diseno?c=c-1")}`;
+    // the login is a real link to another tab: nothing navigates this one (no window.open a popup blocker could refuse) and the unsaved edit stays
+    const login = await screen.findByRole("link", { name: "Iniciar sesión en otra pestaña" });
+    expect(login.getAttribute("href")).toBe(href);
+    expect(login.getAttribute("target")).toBe("_blank");
+    expect(login.getAttribute("rel")).toBe("noopener");
+    fireEvent.click(login);
+    expect(open).not.toHaveBeenCalled();
+    expect(go).not.toHaveBeenCalled();
+    expect((screen.getByLabelText("Color de acento (claro)") as HTMLInputElement).value.toLowerCase()).toBe("#123456");
+    open.mockRestore();
   });
 
   it("sin diseño (404) ofrece crearlo desde la plantilla de la celebración y lo abre", async () => {
