@@ -133,15 +133,18 @@ export interface UploadInput {
   readonly purpose?: MediaPurpose;
   readonly rightsNoticeVersion?: string | null;
   readonly signal?: AbortSignal;
+  /** The type and size the picker reported, when the Blob does not carry them (a browser leaves the type of a HEIC empty). */
+  readonly contentType?: string;
+  readonly size?: number;
 }
 
 /** presign (validated by the server first) → PUT to object storage → complete (variants). */
 export function useUploadMedia(client: ApiClient, celebrationId: string) {
   const invalidate = useInvalidate();
   return useMutation({
-    mutationFn: async ({ file, filename, onProgress, purpose, rightsNoticeVersion }: UploadInput): Promise<MediaAsset> => {
+    mutationFn: async ({ file, filename, onProgress, purpose, rightsNoticeVersion, contentType, size }: UploadInput): Promise<MediaAsset> => {
       const media = mediaApi(client);
-      const intent = await media.presign({ celebrationId, filename, contentType: file.type, sizeBytes: file.size, ...(purpose ? { purpose } : {}), ...(rightsNoticeVersion ? { rightsNoticeVersion } : {}) });
+      const intent = await media.presign({ celebrationId, filename, contentType: contentType || file.type, sizeBytes: size ?? file.size, ...(purpose ? { purpose } : {}), ...(rightsNoticeVersion ? { rightsNoticeVersion } : {}) });
       await uploadToPresignedUrl(intent, file, onProgress);
       return media.complete(intent.assetId);
     },

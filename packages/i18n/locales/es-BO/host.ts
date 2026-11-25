@@ -78,6 +78,18 @@ export const hostEsBO = {
     deleteTitle: "¿Eliminar esta foto?", deleteBody: "Se quita de tu invitación y no se puede deshacer.", deleted: "Foto eliminada.", orderSaved: "Orden guardado.",
     photo: "Foto {{n}}", invalidType: "Ese archivo no es una imagen JPG, PNG o WebP.", tooLarge: "La imagen supera los 10 MB. Prueba con una más liviana.", failed: "No pudimos subir {{name}}. Inténtalo de nuevo."
   },
+  media: {
+    title: "Archivos", quota: "{{assets}} de {{maxAssets}} archivos · {{used}} de {{max}} usados", quotaFull: "Llegaste al límite de archivos de esta invitación. Elimina alguno para subir otro.",
+    add: "Agregar archivos", addMusic: "Subir música (MP3)", help: "JPG, PNG, WebP, GIF, AVIF, SVG o HEIC, de hasta {{max}} MB cada uno.", helpMusic: "MP3 de hasta {{max}} MB y {{minutes}} minutos.",
+    queued: "En espera", uploading: "Subiendo {{name}}… {{percent}} %", processing: "Preparando {{name}}…", done: "{{name}} está lista.", retry: "Reintentar", remove: "Quitar de la lista", clear: "Limpiar lista",
+    rightsTitle: "Aviso de derechos de autor", rights: "Confirmo que tengo derecho a usar esta música en mi invitación y entiendo que se retirará si recibimos una denuncia de derechos de autor.", rightsRequired: "Acepta el aviso de derechos para subir música.",
+    failures: {
+      type: "{{name}}: este tipo de archivo no se puede subir aquí.", tooLarge: "{{name}} es demasiado grande. Prueba con una versión más liviana.", quotaAssets: "{{name}}: ya no caben más archivos en esta invitación.",
+      quotaBytes: "{{name}} no cabe en el espacio que te queda. Elimina algo o sube un archivo más liviano.", rights: "{{name}}: el aviso de derechos cambió. Léelo y acéptalo otra vez.", invalid: "{{name}} no se pudo leer como archivo válido. Prueba con otro.",
+      tooLong: "{{name}} es demasiado largo. Recórtalo e inténtalo de nuevo.", rejected: "No pudimos preparar {{name}}. Quítalo e intenta con otro.", forbidden: "No tienes permiso para subir archivos a esta invitación.",
+      network: "{{name}}: se cortó la conexión. Reintenta cuando vuelva.", server: "{{name}}: algo falló de nuestro lado. Reintenta en un momento."
+    }
+  },
   translations: {
     title: "Idiomas", intro: "Escribe tu invitación en cada idioma. Lo que no traduzcas se muestra en el idioma principal.",
     language: "Idioma", addLanguage: "Agregar idioma", emptyTitle: "Tu invitación habla un solo idioma", emptyBody: "Agrega otro y escribe aquí cómo se lee en él.", loadFailedTitle: "No pudimos cargar tus idiomas",

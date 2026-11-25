@@ -33,7 +33,7 @@ export interface QueueOptions {
   readonly rightsNoticeVersion?: string | null;
 }
 
-export type UploadOne = (input: { readonly file: Blob; readonly filename: string; readonly purpose: MediaPurpose; readonly rightsNoticeVersion?: string | null; readonly onProgress: (fraction: number) => void }) => Promise<MediaAsset>;
+export type UploadOne = (input: { readonly file: Blob; readonly filename: string; /** What the picker said: a browser can leave the Blob's own type empty (HEIC), so the declared one travels apart. */ readonly contentType: string; readonly size: number; readonly purpose: MediaPurpose; readonly rightsNoticeVersion?: string | null; readonly onProgress: (fraction: number) => void }) => Promise<MediaAsset>;
 
 export interface QueueSnapshot { readonly items: readonly QueueItem[]; readonly active: number }
 
@@ -118,7 +118,7 @@ export function createUploadQueue(upload: UploadOne, config: { readonly concurre
     patch(id, { status: "uploading", progress: 0, failure: undefined, retryable: undefined });
     try {
       const asset = await upload({
-        file: source.file.file, filename: source.file.name, purpose: source.options.purpose, rightsNoticeVersion: source.options.rightsNoticeVersion ?? null,
+        file: source.file.file, filename: source.file.name, contentType: source.file.type, size: source.file.size, purpose: source.options.purpose, rightsNoticeVersion: source.options.rightsNoticeVersion ?? null,
         onProgress: (fraction) => patch(id, { progress: Math.max(0, Math.min(1, fraction)) })
       });
       patch(id, { status: asset.status === "PROCESSED" ? "done" : "processing", progress: 1, asset });
