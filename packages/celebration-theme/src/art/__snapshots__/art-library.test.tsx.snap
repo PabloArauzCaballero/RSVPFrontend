@@ -1013,6 +1013,51 @@ exports[`drawing 'zapatito' > is a golden: its paths, roles and strokes are pinn
 ]
 `;
 
+exports[`ornaments (PL-M7) > 'anillos-dobles' is a golden 1`] = `
+{
+  "corner": {
+    "height": 56,
+    "paths": [
+      {
+        "d": "M2 54V2H54",
+        "role": "ink",
+        "stroke": 1.8,
+      },
+      {
+        "d": "M9 54V9H54",
+        "role": "ink",
+        "stroke": 1.8,
+      },
+      {
+        "d": "M-1.4 2a3.4 3.4 0 1 0 6.8 0a3.4 3.4 0 1 0 -6.8 0Z",
+        "role": "accent",
+      },
+    ],
+    "rails": [
+      2,
+      9,
+    ],
+    "width": 56,
+  },
+  "separator": {
+    "height": 28,
+    "paths": [
+      {
+        "d": "M8 14H100M140 14H232M103 14a7 7 0 1 0 14 0a7 7 0 1 0 -14 0Z",
+        "role": "ink",
+        "stroke": 1.8,
+      },
+      {
+        "d": "M123 14a7 7 0 1 0 14 0a7 7 0 1 0 -14 0Z",
+        "role": "accent",
+        "stroke": 1.8,
+      },
+    ],
+    "width": 240,
+  },
+}
+`;
+
 exports[`ornaments (PL-M7) > 'arcos' is a golden 1`] = `
 {
   "corner": {
