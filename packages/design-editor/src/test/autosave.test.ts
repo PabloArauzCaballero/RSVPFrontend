@@ -99,6 +99,65 @@ describe("autosaver", () => {
     expect(second.saver.status).toEqual({ kind: "rejected", status: 403 });
   });
 
+  it("a refused document is not sent again, but the next edit resumes saving with the same version (M2)", async () => {
+    let refuse = true;
+    const save = vi.fn(async (_id: string, version: number) => { if (refuse) throw failure(422, { problem: { code: "GIFTS_BLOCK_COVERED" } }); return { draftVersion: version + 1 }; });
+    const { saver } = setup(save);
+    const [original, one, two] = docs();
+    saver.notify(one); await vi.advanceTimersByTimeAsync(DEBOUNCE_MS * 5);
+    expect(saver.status).toEqual({ kind: "rejected", status: 422, code: "GIFTS_BLOCK_COVERED" });
+    expect(save).toHaveBeenCalledTimes(1);
+    await saver.flush();
+    expect(save).toHaveBeenCalledTimes(1);
+    saver.notify(one);
+    expect(saver.status.kind).toBe("rejected");
+    refuse = false;
+    saver.notify(two);
+    expect(saver.status).toEqual({ kind: "dirty" });
+    await vi.advanceTimersByTimeAsync(DEBOUNCE_MS);
+    expect(save).toHaveBeenLastCalledWith("d1", 3, two);
+    expect(saver.status).toEqual({ kind: "saved" });
+    expect(saver.draftVersion).toBe(4);
+    refuse = true;
+    saver.notify(one); await vi.advanceTimersByTimeAsync(DEBOUNCE_MS);
+    expect(saver.status.kind).toBe("rejected");
+    saver.notify(original);
+    expect(saver.status.kind).toBe("dirty");
+  });
+
+  it("undoing back to the saved document clears a rejection", async () => {
+    const { saver } = setup(async () => { throw failure(422); });
+    const [original, one] = docs();
+    saver.notify(one); await vi.advanceTimersByTimeAsync(DEBOUNCE_MS);
+    expect(saver.status.kind).toBe("rejected");
+    saver.notify(original);
+    expect(saver.status).toEqual({ kind: "dirty" });
+  });
+
+  it("retry sends the refused document again, e.g. after signing in again (401)", async () => {
+    let signedIn = false;
+    const save = vi.fn(async (_id: string, version: number) => { if (!signedIn) throw failure(401); return { draftVersion: version + 1 }; });
+    const { saver } = setup(save);
+    const [, one] = docs();
+    saver.notify(one); await vi.advanceTimersByTimeAsync(DEBOUNCE_MS);
+    expect(saver.status).toEqual({ kind: "rejected", status: 401 });
+    signedIn = true;
+    await saver.retry();
+    expect(save).toHaveBeenCalledTimes(2);
+    expect(save).toHaveBeenLastCalledWith("d1", 3, one);
+    expect(saver.status).toEqual({ kind: "saved" });
+    saver.dispose(); await saver.retry();
+    expect(save).toHaveBeenCalledTimes(2);
+  });
+
+  it("retry does nothing while a conflict halts the saver", async () => {
+    const save = vi.fn(async (): Promise<{ draftVersion: number }> => { throw failure(409); });
+    const { saver } = setup(save);
+    saver.notify(docs()[1]); await vi.advanceTimersByTimeAsync(DEBOUNCE_MS);
+    await saver.retry();
+    expect(save).toHaveBeenCalledTimes(1);
+  });
+
   it("network failures and 5xx retry with exponential backoff, capped, then recover", async () => {
     let calls = 0;
     const save = vi.fn(async (_id: string, version: number) => { calls += 1; if (calls <= 3) throw (calls === 1 ? new TypeError("offline") : failure(503)); return { draftVersion: version + 1 }; });

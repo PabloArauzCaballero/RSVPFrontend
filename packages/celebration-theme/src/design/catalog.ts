@@ -35,8 +35,6 @@ export const FONT_FAMILIES: readonly CatalogFamily[] = [
   { id: "nunito", family: "Nunito", category: "sans", weights: [300, 400, 500, 600, 700, 900], fallback: "Arial, sans-serif" },
   { id: "nunito-sans", family: "Nunito Sans", category: "sans", weights: [300, 400, 500, 600, 700, 900], fallback: "Arial, sans-serif" },
   { id: "work-sans", family: "Work Sans", category: "sans", weights: [300, 400, 500, 600, 700, 900], fallback: "Arial, sans-serif" },
-  { id: "ibm-plex-sans", family: "IBM Plex Sans", category: "sans", weights: [300, 400, 500, 600, 700], fallback: "Arial, sans-serif" },
-  { id: "poppins", family: "Poppins", category: "sans", weights: [300, 400, 500, 600, 700, 900], fallback: "Arial, sans-serif" },
   { id: "quicksand", family: "Quicksand", category: "sans", weights: [300, 400, 500, 600, 700], fallback: "Arial, sans-serif" },
   { id: "fredoka", family: "Fredoka", category: "sans", weights: [300, 400, 500, 600, 700], fallback: "Arial, sans-serif" },
   { id: "geist", family: "Geist", category: "sans", weights: [300, 400, 500, 600, 700, 900], fallback: "Arial, sans-serif" },

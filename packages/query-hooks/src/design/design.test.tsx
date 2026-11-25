@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { focusManager, onlineManager, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor, act } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -42,6 +42,17 @@ describe("design hooks", () => {
     await waitFor(() => expect(failed.result.current.isError).toBe(true));
     const idle = renderHook(() => useCelebrationDesign(ok, undefined), { wrapper: wrapper(fresh()) });
     expect(idle.result.current.fetchStatus).toBe("idle");
+  });
+
+  it("does not refetch when the window regains focus or the network returns: the editor holds its own copy (M1)", async () => {
+    const request = vi.fn(async () => record);
+    const client = { request } as unknown as ApiClient;
+    const { result } = renderHook(() => useCelebrationDesign(client, "c1"), { wrapper: wrapper(fresh()) });
+    await waitFor(() => expect(result.current.data).toEqual(record));
+    await act(async () => { focusManager.setFocused(false); focusManager.setFocused(true); onlineManager.setOnline(false); onlineManager.setOnline(true); });
+    expect(request).toHaveBeenCalledTimes(1);
+    await act(async () => { await result.current.refetch(); });
+    expect(request).toHaveBeenCalledTimes(2);
   });
 
   it("useCreateDesign seeds the celebration's query with the new design", async () => {
