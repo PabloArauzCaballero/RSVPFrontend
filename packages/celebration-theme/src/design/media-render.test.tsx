@@ -198,7 +198,7 @@ describe("F6 · the advanced CSS (F5) is rebuilt from the allowlist and goes in 
   it("is the text of a <style>, scoped under the root class and away from the gifts and reply buttons; markup inside stays text", () => {
     const { container } = draw(documentWith([], { css: "p { color: #333 }" }));
     const style = container.querySelector("style[data-celebration-custom]") as HTMLStyleElement;
-    expect(style.textContent).toBe(".celebration-design p:not(.rsvp-protected):not(.rsvp-protected *){color:#333}");
+    expect(style.textContent).toBe(".cdesign-author p:not(.rsvp-protected):not(.rsvp-protected *){color:#333}");
     expect(style.children).toHaveLength(0);
   });
 
@@ -208,6 +208,15 @@ describe("F6 · the advanced CSS (F5) is rebuilt from the allowlist and goes in 
     expect(links.length).toBeGreaterThanOrEqual(2);
     for (const link of links) expect(link.closest(".rsvp-protected"), link.outerHTML.slice(0, 80)).not.toBeNull();
     expect(container.querySelector(".cdesign-dock")?.classList.contains("rsvp-protected")).toBe(true);
+  });
+
+  it("the gifts and reply buttons are never inside the author's container, and everything else of the blocks is (the stylesheet's scope)", () => {
+    const { container } = draw(documentWith([{ block: block("txt", "text", { text: "hola" }), element: {} }]));
+    expect(container.querySelectorAll(".cdesign-author").length).toBeGreaterThan(0);
+    for (const link of container.querySelectorAll('a[data-action="gifts"], a[data-action="rsvp"], a[data-action="rsvp-help"]')) expect(link.closest(".cdesign-author"), link.outerHTML.slice(0, 60)).toBeNull();
+    expect(container.querySelector(".cdesign-author .cdesign-text")).toBeTruthy();
+    expect(container.querySelector(".cdesign-author .cdesign-el, .cdesign-author .cdesign-canvas, .cdesign-author .cdesign-page")).toBeNull();
+    expect(container.querySelector("style[data-celebration-custom]")).toBeNull();
   });
 
   it.each([

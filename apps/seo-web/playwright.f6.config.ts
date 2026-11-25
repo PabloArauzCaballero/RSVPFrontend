@@ -7,7 +7,7 @@ import { defineConfig } from "@playwright/test";
 const executablePath = process.env.CHROMIUM_PATH;
 export default defineConfig({
   testDir: "./e2e",
-  testMatch: /plantillas-f6-medios\.spec\.ts/,
+  testMatch: /plantillas-f6-(medios|ataques)\.spec\.ts/,
   workers: 1,
   reporter: "list",
   use: { baseURL: `http://localhost:${process.env.E2E_PORT ?? 3110}`, locale: "es-BO", launchOptions: { ...(executablePath ? { executablePath } : {}) } }
