@@ -123,8 +123,12 @@ for (const [width, theme] of [[1280, "light"], [768, "dark"], [360, "light"], [3
     await page.keyboard.press("PageUp");
     await expect(live).toHaveText("Texto al frente.");
     await page.keyboard.press("r");
-    // next to the gifts button the first turn is refused: the reason is said aloud
-    await expect(live.or(page.getByRole("alert"))).toContainText(/giro de 5 grados|No se hizo el cambio|Otro elemento quedaría encima/);
+    // the text is far from the gifts button by now: it turns 5 degrees clockwise, and Shift+R turns it back
+    await expect(live).toHaveText("Texto: giro de 5 grados.");
+    expect(await text.evaluate((node) => (node as HTMLElement).style.transform)).toBe("rotate(5deg)");
+    await page.keyboard.press("Shift+r");
+    await expect(live).toHaveText("Texto: giro de 0 grados.");
+    expect(await text.evaluate((node) => (node as HTMLElement).style.transform)).toBe("");
     // the inspector is reachable by keyboard
     await page.getByRole("button", { name: "Ir al inspector del elemento" }).focus();
     await page.keyboard.press("Enter");
@@ -263,4 +267,141 @@ test.describe("touch at 360 px (A5, m4)", () => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
     expect(await everything(page)).toEqual([]);
   });
+});
+
+for (const [width, height] of [[360, 800], [768, 1024]] as const) {
+  test(`the open inspector sheet keeps the selected element in view at ${width}x${height} (WCAG 2.4.11, PL-125-R2-V1, V2)`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await page.goto("/?theme=light");
+    const region = await free(page);
+    const text = region.getByRole("group", { name: "Texto" });
+    await text.click();
+    await expect(text).toHaveAttribute("aria-current", "true");
+    const sheet = page.getByTestId("inspector-sheet");
+    const summary = sheet.locator("summary");
+    // the chevron: drawn by the summary, up while closed and down once open
+    const chevron = (): Promise<string> => summary.evaluate((node) => getComputedStyle(node, "::after").transform);
+    const closedChevron = await chevron();
+    expect(closedChevron).not.toBe("none");
+    await summary.click();
+    await expect(sheet.getByLabel("Ancho (columnas)")).toBeVisible();
+    expect(await chevron()).not.toBe(closedChevron);
+    const sheetBox = await sheet.boundingBox();
+    const elementBox = await text.boundingBox();
+    if (!sheetBox || !elementBox) throw new Error("no box");
+    expect(sheetBox.height).toBeLessThanOrEqual(height * 0.45 + 1);
+    expect(elementBox.y + elementBox.height).toBeLessThanOrEqual(sheetBox.y);
+    expect(elementBox.y).toBeGreaterThanOrEqual(0);
+    await expect(sheet.getByRole("button", { name: "Cerrar" })).toBeVisible();
+    await page.screenshot({ path: join(EVIDENCE, `c2-hoja-abierta-elemento-visible-${width}.png`) });
+    // the sheet's own button closes it and Escape does too, the focus going back to the element
+    await sheet.getByRole("button", { name: "Cerrar" }).click();
+    await expect(sheet.getByLabel("Ancho (columnas)")).toBeHidden();
+    await summary.click();
+    await sheet.getByLabel("Ancho (columnas)").focus();
+    await page.keyboard.press("Escape");
+    await expect(sheet.getByLabel("Ancho (columnas)")).toBeHidden();
+    await expect(text).toBeFocused();
+    // once more, from the summary
+    await summary.focus();
+    await page.keyboard.press("Enter");
+    await expect(sheet.getByLabel("Ancho (columnas)")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(sheet.getByLabel("Ancho (columnas)")).toBeHidden();
+  });
+}
+
+test("Escape leaves the element: the focus goes to the page and the scrolling keys are no longer taken (PL-125-R2-V6)", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 400 });
+  await page.goto("/");
+  const region = await free(page);
+  const text = region.getByRole("group", { name: "Texto" });
+  const taken = async (key: string): Promise<boolean> => {
+    await page.evaluate(() => { (window as unknown as { __taken: boolean | null }).__taken = null; window.addEventListener("keydown", (event) => { (window as unknown as { __taken: boolean | null }).__taken = event.defaultPrevented; }, { once: true }); });
+    await page.keyboard.press(key);
+    return page.evaluate(() => (window as unknown as { __taken: boolean | null }).__taken === true);
+  };
+  await text.focus();
+  // with the element focused, the keys act on it (the browser does not scroll)
+  expect(await taken("PageDown")).toBe(true);
+  await text.focus();
+  await page.keyboard.press("Escape");
+  await expect(text).not.toBeFocused();
+  expect(await page.evaluate(() => document.activeElement === document.body)).toBe(true);
+  for (const key of ["ArrowDown", "ArrowUp", " ", "PageDown", "PageUp"]) expect(await taken(key), key).toBe(false);
+  // and Tab still comes back to the canvas
+  await page.keyboard.press("Tab");
+  expect(await page.evaluate(() => document.activeElement !== document.body)).toBe(true);
+});
+
+test("on the gifts button, Alt+arrows, moving and changing layer are refused with the reason and change nothing (PL-125-R2)", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("/");
+  const region = await free(page);
+  const gifts = region.getByRole("group", { name: "Botón de regalos" });
+  const text = region.getByRole("group", { name: "Texto" });
+  const live = page.getByTestId("canvas-announcer");
+  const style = (node: Locator): Promise<string | null> => node.getAttribute("style");
+  const dismiss = async (): Promise<void> => { await page.getByRole("button", { name: "Entendido" }).click(); };
+  const refused = async (reason: RegExp): Promise<void> => { await expect(live).toContainText(reason); await expect(page.getByRole("alert")).toContainText(reason); await dismiss(); };
+  const giftsStart = await style(gifts);
+  const textStart = await style(text);
+  // Alt+ArrowUp would shrink the button below 44 px
+  await gifts.focus();
+  await page.keyboard.press("Alt+ArrowUp");
+  await refused(/mide al menos 44 px/);
+  expect(await style(gifts)).toBe(giftsStart);
+  // the text may not turn next to the button, nor move up onto it
+  await text.focus();
+  await page.keyboard.press("r");
+  await refused(/Otro elemento quedaría encima del botón de regalos/);
+  await text.focus();
+  await page.keyboard.press("ArrowUp");
+  await page.keyboard.press("ArrowUp");
+  await refused(/Otro elemento quedaría encima del botón de regalos/);
+  expect(await style(text)).toContain("top: 48px");
+  // moving the button down over the text is refused too
+  await gifts.focus();
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowDown");
+  await refused(/Otro elemento quedaría encima del botón de regalos/);
+  expect(await style(gifts)).toBe(giftsStart);
+  // text above the button's layer while overlapping would hide it: sending the button back is refused and its layer stays
+  await gifts.focus();
+  await page.keyboard.press("PageUp");
+  await text.focus();
+  await page.keyboard.press("PageDown");
+  await page.keyboard.press("ArrowUp");
+  await page.keyboard.press("ArrowUp");
+  const overlapped = await style(gifts);
+  expect(overlapped).toContain("z-index: 1");
+  await gifts.focus();
+  await page.keyboard.press("PageDown");
+  await refused(/Otro elemento quedaría encima del botón de regalos/);
+  expect(await style(gifts)).toBe(overlapped);
+  expect(textStart).toContain("top: 56px");
+});
+
+test("the halo of a rotate handle over the gifts button does not take the tap from the button (PL-125-R2-V3)", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("/");
+  const region = await free(page);
+  const gifts = region.getByRole("group", { name: "Botón de regalos" });
+  const text = region.getByRole("group", { name: "Texto" });
+  await text.click();
+  await expect(text).toHaveAttribute("aria-current", "true");
+  const handle = region.locator('[data-handle="rotate"]');
+  const hb = await handle.boundingBox();
+  const gb = await gifts.boundingBox();
+  if (!hb || !gb) throw new Error("no box");
+  const cx = hb.x + hb.width / 2;
+  const cy = hb.y + hb.height / 2;
+  // 16 px above the handle's centre: outside the drawn circle (10 px), inside its 44 px area and inside the button
+  expect(cy - 16).toBeGreaterThan(gb.y);
+  expect(await handle.evaluate((node, [x, y]) => node.contains(document.elementFromPoint(x ?? 0, y ?? 0)), [cx, cy - 16])).toBe(true);
+  const before = await text.getAttribute("style");
+  await page.mouse.click(cx, cy - 16);
+  await expect(gifts).toHaveAttribute("aria-current", "true");
+  await expect(text).toHaveAttribute("aria-current", "false");
+  expect(await text.getAttribute("style")).toBe(before);
 });
