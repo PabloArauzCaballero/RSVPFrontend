@@ -33,3 +33,10 @@ Rama apilada sobre `feat/f1-diseno-v2-esquema` (FE #115). Plan: `PLAN-PLANTILLAS
 - `BasicPanel`: cambiar de plantilla (compatibles con el tipo de evento; se convierten con `convertV1ToV2`, un solo paso de deshacer, el código propio se conserva), colores de las dos paletas, tipografías solo del catálogo curado (Poppins e IBM Plex ya no están), preajustes de espaciado y de relleno, secciones activas/inactivas y su orden (la de regalos siempre visible y bloqueada), textos de bloques (título, párrafo, cita, botón; un cuadro vaciado se ignora).
 - Pantalla `/diseno` trae las plantillas con `templateApi.compatible`.
 - Nivel `TESTED` (arnés y cliente simulado); sin backend real.
+
+## PR c · lienzo libre (2026-11-25)
+
+- Modelo (`model/canvas.ts`): pasar un lienzo `flow` a `free` (altos por defecto, apilado en orden), crear el lienzo de escritorio a partir del móvil (×3, 12 columnas, P9), colocar con límites (columnas y 4000 px), giro en pasos de 5°, capas (frente/fondo, ±100), relleno y margen en múltiplos de 4, paleta de componentes sin medios (título, texto, cita, botón, cuenta atrás, ornamento, espaciador, HTML) y quitar elementos (la portada y el botón de regalos no se quitan).
+- UI: arrastre, tirador de tamaño y de giro por puntero, flechas (Shift cambia el tamaño) y Suprimir, inspector numérico y paleta. El botón de regalos se mueve y cambia de tamaño pero el editor rechaza girarlo, ocultarlo, quitarlo o dejarlo bajo 44 px, diciendo por qué.
+- Pendiente (no hecho): guías de alineación, selección múltiple, imagen/galería/video/mapa/música/dibujo en la paleta (necesitan medios o F3/F6) y animación por elemento. «Tapado por otro elemento» solo lo comprueba el servidor.
+- Nivel `TESTED`.

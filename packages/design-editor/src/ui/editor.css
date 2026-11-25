@@ -100,3 +100,5 @@
 .de-row--wrap { flex-wrap: wrap; }
 .de-field--check { display: flex; gap: 8px; align-items: center; min-height: 44px; }
 .de-field--check input { width: 20px; height: 20px; }
+.de-canvas-editor .de-free { margin: 36px auto 20px; }
+.de-canvas-editor .de-el { overflow: visible; }
