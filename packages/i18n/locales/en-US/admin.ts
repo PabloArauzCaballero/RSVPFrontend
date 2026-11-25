@@ -16,6 +16,7 @@ export const adminEnUS: DeepStrings<typeof adminEsBO> = {
     listingsPublished: "Published offers", leadsValid: "Valid leads", leadsInvalid: "Discarded leads", leadsRecent: "Valid leads (30 days)", quotes: "Quotes", bookings: "Confirmed bookings",
     users: "Accounts", usersByRole: "Accounts with role {{role}}", organizations: "Organizations" },
   templates: {
+    designReadOnly: "This template is a design document v2. The design editor arrives in a later phase: here you can view, publish or archive it.", designSummary: "Heading font: {{heading}}. Body font: {{body}}. Pages: {{pages}}.",
     title: "Invitation templates", intro: "The designs hosts choose for their invitation.", new: "New template", edit: "Edit {{name}}", name: "Name", description: "Description", tags: "Event type tags", tagsHelp: "Comma separated, for example: wedding, anniversary.",
     layout: "Layout", layouts: { classic: "Classic", minimal: "Minimal", editorial: "Editorial", festive: "Festive", corporate: "Corporate" },
     palette: "Palette", colors: { canvas: "Background", surface: "Surface", text: "Text", accent: "Accent", muted: "Secondary" }, colorHelp: "Hex color, for example #865E36.",

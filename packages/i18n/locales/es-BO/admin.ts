@@ -13,6 +13,7 @@ export const adminEsBO = {
     listingsPublished: "Ofertas publicadas", leadsValid: "Leads válidos", leadsInvalid: "Leads descartados", leadsRecent: "Leads válidos (30 días)", quotes: "Cotizaciones", bookings: "Reservas confirmadas",
     users: "Cuentas", usersByRole: "Cuentas con rol {{role}}", organizations: "Organizaciones" },
   templates: {
+    designReadOnly: "Esta plantilla es un documento de diseño v2. El editor de diseños llega en una fase posterior: aquí puedes verla, publicarla o archivarla.", designSummary: "Tipografía de titulares: {{heading}}. Texto: {{body}}. Páginas: {{pages}}.",
     title: "Plantillas de invitación", intro: "Los diseños que los anfitriones eligen para su invitación.", new: "Nuevo template", edit: "Editar {{name}}", name: "Nombre", description: "Descripción", tags: "Etiquetas de tipo de evento", tagsHelp: "Separadas por comas, por ejemplo: wedding, anniversary.",
     layout: "Layout", layouts: { classic: "Clásico", minimal: "Minimalista", editorial: "Editorial", festive: "Festivo", corporate: "Corporativo" },
     palette: "Paleta", colors: { canvas: "Fondo", surface: "Superficie", text: "Texto", accent: "Acento", muted: "Secundario" }, colorHelp: "Color hexadecimal, por ejemplo #865E36.",
