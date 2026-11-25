@@ -10,7 +10,7 @@ Rama FE `feat/plantillas-f4c4-sobrio` y rama BE `feat/plantillas-f4c4-sobrio`, a
 - Pruebas: `src/design/sobrio.test.tsx` (81), `apps/seo-web/e2e/plantillas-v2-sobrio.spec.ts`, BE `tests/test_design_v2_sobrio_seeds.py` (6).
 
 ## Límites honestos
-Ver la sección «Aproximaciones dentro del contrato» de las fichas: no hay cuencos en la biblioteca de dibujos (taza y onda), el ornamento del documento solo admite `none`, `flourish` o `rule`, el tamaño del titular es uno por elemento (el del escritorio no se lee) y las variantes `corporate` y `classic` centran la portada. Minimalista y las dos corporativas conservan la lista de secciones de su semilla v1 (sin recomendaciones, código de vestimenta o galería según el caso).
+Ver la sección «Aproximaciones dentro del contrato» de las fichas: no hay cuencos en la biblioteca de dibujos (taza y onda), el ornamento del documento solo admite `none`, `flourish` o `rule`, el tamaño del titular es uno por elemento (el del escritorio no se lee) y las variantes `corporate` y `classic` centran la portada. Minimalista, Corporativo y Corporativo grafito, y Fiesta patronal conservan el `sectionOrder` y el `layout` v1. Arena y terracota mueve `dressCode` antes de `gifts` y pasa a `classic`; Inauguración pasa a `classic` y Otros a `editorial` (detalle en la pregunta 4 de las fichas).
 
 ## Líneas base macOS que cambiarían
 Ninguna: el PR solo añade documentos, pruebas y rutas de fixture.

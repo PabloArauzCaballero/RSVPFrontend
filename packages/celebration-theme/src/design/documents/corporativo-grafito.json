@@ -203,7 +203,7 @@
         "canvases": {
           "mobile": {
             "mode": "flow",
-            "columns": 4,
+            "columns": 8,
             "rowHeight": 8,
             "elements": [
               {
@@ -211,7 +211,7 @@
                 "block": "schedule",
                 "x": 0,
                 "y": 0,
-                "w": 4,
+                "w": 8,
                 "h": 1,
                 "visible": true
               }
@@ -227,7 +227,7 @@
         "canvases": {
           "mobile": {
             "mode": "flow",
-            "columns": 4,
+            "columns": 8,
             "rowHeight": 8,
             "elements": [
               {
@@ -235,7 +235,7 @@
                 "block": "story",
                 "x": 0,
                 "y": 0,
-                "w": 4,
+                "w": 8,
                 "h": 1,
                 "visible": true
               }
@@ -251,7 +251,7 @@
         "canvases": {
           "mobile": {
             "mode": "flow",
-            "columns": 4,
+            "columns": 8,
             "rowHeight": 8,
             "elements": [
               {
@@ -259,7 +259,7 @@
                 "block": "venues",
                 "x": 0,
                 "y": 0,
-                "w": 4,
+                "w": 8,
                 "h": 1,
                 "visible": true
               }
@@ -275,7 +275,7 @@
         "canvases": {
           "mobile": {
             "mode": "flow",
-            "columns": 4,
+            "columns": 8,
             "rowHeight": 8,
             "elements": [
               {
@@ -283,7 +283,7 @@
                 "block": "dress-code",
                 "x": 0,
                 "y": 0,
-                "w": 4,
+                "w": 8,
                 "h": 1,
                 "visible": true
               }
@@ -299,7 +299,7 @@
         "canvases": {
           "mobile": {
             "mode": "flow",
-            "columns": 4,
+            "columns": 8,
             "rowHeight": 8,
             "elements": [
               {
@@ -307,7 +307,7 @@
                 "block": "gifts-cta",
                 "x": 0,
                 "y": 0,
-                "w": 4,
+                "w": 8,
                 "h": 6,
                 "visible": true
               }
@@ -323,7 +323,7 @@
         "canvases": {
           "mobile": {
             "mode": "flow",
-            "columns": 4,
+            "columns": 8,
             "rowHeight": 8,
             "elements": [
               {
@@ -331,7 +331,7 @@
                 "block": "faq",
                 "x": 0,
                 "y": 0,
-                "w": 4,
+                "w": 8,
                 "h": 1,
                 "visible": true
               }
@@ -347,7 +347,7 @@
         "canvases": {
           "mobile": {
             "mode": "flow",
-            "columns": 4,
+            "columns": 8,
             "rowHeight": 8,
             "elements": [
               {
@@ -355,7 +355,7 @@
                 "block": "recommendations",
                 "x": 0,
                 "y": 0,
-                "w": 4,
+                "w": 8,
                 "h": 1,
                 "visible": true
               }
@@ -371,7 +371,7 @@
         "canvases": {
           "mobile": {
             "mode": "flow",
-            "columns": 4,
+            "columns": 8,
             "rowHeight": 8,
             "elements": [
               {
@@ -379,7 +379,7 @@
                 "block": "rsvp-cta",
                 "x": 0,
                 "y": 0,
-                "w": 4,
+                "w": 8,
                 "h": 6,
                 "visible": true
               }
