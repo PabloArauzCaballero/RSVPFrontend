@@ -85,3 +85,18 @@
 .de-sections li { grid-template-columns: minmax(0, 1fr) auto; }
 .de-sections label { min-width: 0; }
 .de-move .de-btn { min-width: 40px; }
+.de-canvas-editor { width: 100%; display: grid; gap: 12px; justify-items: center; }
+.de-canvas-editor .de-page { width: 100%; max-width: 1024px; background: var(--de-surface); border: 1px solid var(--de-border); }
+.de-canvas-editor .de-free { margin: 0 auto; background: var(--de-canvas); outline: 1px dashed var(--de-border); touch-action: none; }
+.de-canvas-editor .de-el { cursor: grab; user-select: none; touch-action: none; }
+.de-canvas-editor .de-el[data-selected="true"] { outline: 2px solid var(--de-focus); outline-offset: 1px; }
+.de-handle { position: absolute; width: 20px; height: 20px; background: var(--de-surface); border: 2px solid var(--de-focus); border-radius: 50%; touch-action: none; }
+.de-handle--resize { right: -10px; bottom: -10px; cursor: nwse-resize; }
+.de-handle--rotate { left: 50%; top: -26px; margin-left: -10px; cursor: grab; }
+.de-inspector, .de-palette { margin-top: 20px; border-top: 1px solid var(--de-border); padding-top: 16px; }
+.de-inspector h2, .de-palette h2 { font: 500 16px/1.3 Newsreader, Georgia, serif; margin: 0 0 12px; }
+.de-inspector input[type="number"] { min-height: 44px; width: 100%; border: 1px solid var(--de-field); border-radius: 6px; padding: 0 8px; background: var(--de-surface); color: var(--de-text); font: inherit; }
+.de-row { display: flex; gap: 8px; margin: 8px 0; }
+.de-row--wrap { flex-wrap: wrap; }
+.de-field--check { display: flex; gap: 8px; align-items: center; min-height: 44px; }
+.de-field--check input { width: 20px; height: 20px; }

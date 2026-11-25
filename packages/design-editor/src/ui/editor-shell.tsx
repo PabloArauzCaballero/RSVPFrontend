@@ -3,6 +3,8 @@ import type { design } from "@rsvp/celebration-theme";
 import { createAutosaver, type Autosaver, type DraftGateway, type SaveStatus } from "../save/autosave.js";
 import { canRedo, canUndo, documentOf, editorReducer, initialEditorState, type CanvasName, type EditorMode } from "../model/state.js";
 import { BasicPanel, type TemplateSource } from "./basic-panel.js";
+import { CanvasEditor } from "./canvas-editor.js";
+import { ComponentPalette, ElementInspector } from "./canvas-panels.js";
 import { ContrastPanel } from "./contrast-panel.js";
 import { PublishPanel, type VersionsApi } from "./publish-panel.js";
 import type { PublishOutcome, VersionSummary, VersionsGateway } from "../save/versions.js";
@@ -232,13 +234,13 @@ export function EditorShell({ design: source, gateway, t, onReload, now = Date.n
             })}
           </ul>
         </nav>
-        <main className="de-stage"><Wireframe document={document} canvas={state.canvas} t={t} /></main>
+        <main className="de-stage">{state.mode === "advanced" ? <CanvasEditor /> : <Wireframe document={document} canvas={state.canvas} t={t} />}</main>
         <aside className="de-panel">
           <BasicPanel {...(templates ? { templates } : {})} />
           <p className="de-hint">{t(key("basic.hint"))}</p>
           <ContrastPanel />
           {versionsGateway ? <PublishPanel versions={versionsApi} timeZone={timeZone} locale={locale} /> : null}
-          {state.mode === "advanced" ? <CustomCodePanel /> : null}
+          {state.mode === "advanced" ? <><ElementInspector /><ComponentPalette /><CustomCodePanel /></> : null}
           {children}
         </aside>
       </div>

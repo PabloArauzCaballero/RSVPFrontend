@@ -102,6 +102,20 @@ export const designEditorEnUS: DeepStrings<typeof designEditorEsBO> = {
       MEDIA_REJECTED: "We removed an @media query that isn't allowed ({{detail}})."
     }
   },
+  canvasEditor: {
+    stage: "Canvas",
+    pickPrompt: "Tap an element to select it; drag it, resize it or rotate it.",
+    free: "Make this canvas free",
+    freeHint: "So far the elements stack on their own. In free mode you place them wherever you want.",
+    desktopCreate: "Create the desktop canvas from the mobile one",
+    desktopHint: "It inherits the mobile design, scaled up, until you edit it.",
+    resize: "Resize {{block}}",
+    rotate: "Rotate {{block}}",
+    element: "{{block}}",
+    inspector: { title: "Element", none: "Choose an element on the canvas.", x: "Column", y: "Row", w: "Width (columns)", h: "Height (rows)", rotation: "Rotation (degrees)", z: "Layer", padding: "Padding", margin: "Margin", top: "Top", right: "Right", bottom: "Bottom", left: "Left", front: "Bring to front", back: "Send to back", visible: "Visible on this canvas", remove: "Remove", locked: "This element is mandatory: you can move and resize it, but not remove, hide or rotate it." },
+    palette: { title: "Add", page: "On page", heading: "Heading", text: "Text", quote: "Quote", button: "Button", countdown: "Countdown", ornament: "Ornament", spacer: "Spacer", html: "Custom HTML" },
+    block: { cover: "Cover", giftsCta: "Gifts button", rsvpCta: "RSVP", heading: "Heading", text: "Text", story: "Story", image: "Image", imageText: "Image and text", gallery: "Gallery", schedule: "Schedule", venues: "Venues", countdown: "Countdown", dressCode: "Dress code", faq: "FAQ", recommendations: "Recommendations", illustration: "Drawing", monogram: "Monogram", ornament: "Ornament", spacer: "Spacer", button: "Button", quote: "Quote", weddingParty: "Wedding party", video: "Video", music: "Music", map: "Map", html: "HTML" }
+  },
   refusal: {
     title: "That change can't be made",
     dismiss: "Got it",

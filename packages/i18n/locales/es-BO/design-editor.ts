@@ -99,6 +99,20 @@ export const designEditorEsBO = {
       MEDIA_REJECTED: "Quitamos una consulta @media no permitida ({{detail}})."
     }
   },
+  canvasEditor: {
+    stage: "Lienzo",
+    pickPrompt: "Toca un elemento para moverlo; arrástralo, cambia su tamaño o gíralo.",
+    free: "Pasar este lienzo a libre",
+    freeHint: "Hasta ahora los elementos se apilan solos. En libre los colocas donde quieras.",
+    desktopCreate: "Crear el lienzo de escritorio a partir del móvil",
+    desktopHint: "Hereda el diseño móvil, ampliado, hasta que lo edites.",
+    resize: "Cambiar tamaño de {{block}}",
+    rotate: "Girar {{block}}",
+    element: "{{block}}",
+    inspector: { title: "Elemento", none: "Elige un elemento del lienzo.", x: "Columna", y: "Fila", w: "Ancho (columnas)", h: "Alto (filas)", rotation: "Giro (grados)", z: "Capa", padding: "Relleno", margin: "Margen", top: "Arriba", right: "Derecha", bottom: "Abajo", left: "Izquierda", front: "Traer al frente", back: "Enviar al fondo", visible: "Visible en este lienzo", remove: "Quitar", locked: "Este elemento es obligatorio: puedes moverlo y cambiarle el tamaño, pero no quitarlo, ocultarlo ni girarlo." },
+    palette: { title: "Agregar", page: "En la página", heading: "Título", text: "Texto", quote: "Cita", button: "Botón", countdown: "Cuenta atrás", ornament: "Ornamento", spacer: "Espaciador", html: "HTML propio" },
+    block: { cover: "Portada", giftsCta: "Botón de regalos", rsvpCta: "Confirmar asistencia", heading: "Título", text: "Texto", story: "Historia", image: "Imagen", imageText: "Imagen y texto", gallery: "Galería", schedule: "Itinerario", venues: "Lugares", countdown: "Cuenta atrás", dressCode: "Vestimenta", faq: "Preguntas", recommendations: "Recomendaciones", illustration: "Dibujo", monogram: "Monograma", ornament: "Ornamento", spacer: "Espaciador", button: "Botón", quote: "Cita", weddingParty: "Cortejo", video: "Video", music: "Música", map: "Mapa", html: "HTML" }
+  },
   refusal: {
     title: "Ese cambio no se puede hacer",
     dismiss: "Entendido",
