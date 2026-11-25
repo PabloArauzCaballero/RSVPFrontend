@@ -113,6 +113,6 @@ export interface AudioPlayerProps {
 export function AudioPlayer({ media, title, t }: AudioPlayerProps): ReactNode {
   const src = media.variants.audio;
   if (!src) return null;
-  const labels: AudioLabels = { play: t("celebration.media.play", { title }), pause: t("celebration.media.pause", { title }), progress: t("celebration.media.progress", { title }), error: t("celebration.media.audioError") };
+  const labels: AudioLabels = { shortPlay: t("celebration.media.openMusic"), shortPause: t("celebration.media.pauseShort"), play: t("celebration.media.play", { title }), pause: t("celebration.media.pause", { title }), progress: t("celebration.media.progress", { title }), error: t("celebration.media.audioError") };
   return <AudioPlayerView src={src} durationMs={media.durationMs ?? null} labels={labels} />;
 }

@@ -184,7 +184,10 @@ describe("F6 · embeds (P17)", () => {
     expect(audio.getAttribute("src")).toBe("https://media.test/song.mp3");
     expect(audio.hasAttribute("autoplay")).toBe(false);
     expect(audio.getAttribute("preload")).toBe("none");
-    expect(container.querySelector("button.celebration-audio-button")?.textContent).toContain("celebration.media.play");
+    const button = container.querySelector("button.celebration-audio-button") as HTMLElement;
+    expect(button.getAttribute("aria-label")).toContain("celebration.media.play");
+    expect(button.textContent).toBe("celebration.media.openMusic");
+    expect(container.querySelector(".celebration-embed[data-kind=\"audio\"] audio")).toBeTruthy();
     expect(container.querySelector("progress")).toBeTruthy();
   });
 });

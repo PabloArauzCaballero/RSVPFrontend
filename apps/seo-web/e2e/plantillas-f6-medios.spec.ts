@@ -194,31 +194,51 @@ test("the song sits in the same card as the video and the map, and the map label
   expect(await page.getByRole("button", { name: /Ver el mapa/ }).evaluate((node) => getComputedStyle(node).textAlign)).toMatch(/^(start|left)$/);
 });
 
-// R2-M1 (P22): whatever z-index the host's stylesheet gives the page, the gifts and reply buttons stay the element under their own centre.
+// R2-M1 / R3-M1 (P22): whatever the host's stylesheet does to the page, every gifts and reply button stays the element under its own centre AND a real click on it navigates.
+// The CSS goes through the real sanitiser (`scopeCss`), exactly as the renderer does, so what is injected is what a guest would get.
 const COVERING_CSS = [
   "section{position:relative;z-index:100;min-height:200vh}",
   "div{position:relative;z-index:100;width:100vw;height:100vh}",
-  "*{position:relative;z-index:100}"
+  "*{position:relative;z-index:100}",
+  "section::before{content:'';position:absolute;inset:0;width:100vw;height:100vh;z-index:100}",
+  "section::after{content:'';position:absolute;inset:0;width:100vw;height:100vh;z-index:100}",
+  "section,div{position:absolute;inset:-100vh;z-index:100}",
+  "*::before,*::after{content:'';position:absolute;inset:-100vh;z-index:100}",
+  "header{position:absolute;inset:-100vh;z-index:100}",
+  "section > div{position:absolute;top:0;left:0;width:100vw;height:200vh;z-index:100}",
+  "div{display:none}", "section{display:none}", "div{height:0}", "div{width:0}", "section{height:0}", "div{margin:-400px}", "div{max-height:0}", "section{max-height:0}",
+  "p,h2,ul,li,span,a{position:absolute;inset:-50vh;width:200vw;height:200vh;z-index:100}",
+  "div{position:relative;z-index:100;display:grid;grid-template-columns:0}",
+  "div > div{position:absolute;inset:0;width:100vw;height:100vh;z-index:100}",
+  "section,header,h2,p,ul,li,span{margin:-400px}", "section{margin-top:-400px;margin-bottom:-400px}", "div{position:relative;top:-400px;left:-400px;z-index:100}",
+  "div{grid-column:1 / 2;grid-row:1 / 2;order:-1}", "div{position:relative;z-index:100;padding:400px}", "section{position:relative;z-index:100;padding:400px}",
+  "div{min-height:2000px;width:1600px;min-width:1600px}", "*{max-width:0;max-height:0}", "div{display:contents}", "section{display:contents}", "div{display:flex;flex-direction:column;height:0}"
 ];
-for (const css of COVERING_CSS) {
+for (const [index, css] of COVERING_CSS.entries()) {
   for (const width of [360, 1280] as const) {
-    test(`author CSS ${css} at ${width}px never covers the gifts and reply buttons`, async ({ page }) => {
-      await open(page, width);
-      const scoped = scopeCss(css, { scope: ".celebration-design" }).css;
-      expect(scoped).toContain("z-index:100");
-      await page.addStyleTag({ content: scoped });
+    test(`author CSS #${index} (${css.slice(0, 60)}) at ${width}px never covers, moves or hides the gifts and reply buttons`, async ({ page }) => {
+      const { css: scoped, issues } = scopeCss(css, { scope: ".celebration-design" });
+      // A declaration the sanitiser refuses outright (display:none, say) never reaches the page: nothing to attack with.
+      if (scoped === "") { expect(issues.length).toBeGreaterThan(0); return; }
+      const inject = async (): Promise<void> => { await open(page, width); await page.addStyleTag({ content: scoped }); };
+      await inject();
       const links = page.locator('a[data-action="gifts"], a[data-action="rsvp"], a[data-action="rsvp-help"]');
       const count = await links.count();
       expect(count).toBeGreaterThanOrEqual(2);
-      for (let index = 0; index < count; index += 1) {
-        const link = links.nth(index);
+      for (let position = 0; position < count; position += 1) {
+        await inject();
+        const link = links.nth(position);
         await link.scrollIntoViewIfNeeded();
+        const box = await link.boundingBox();
+        expect(box && box.width > 20 && box.height > 20, `button ${position} has a box`).toBe(true);
         const covered = await link.evaluate((node) => {
-          const box = node.getBoundingClientRect();
-          const top = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
-          return top === null || (top !== node && !node.contains(top));
+          const rect = node.getBoundingClientRect();
+          const top = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+          return top === null || (top !== node && !node.contains(top)) ? (top ? top.tagName + "." + top.className : "null") : "";
         });
-        expect(covered, `button ${index} (${await link.getAttribute("data-action")}) is covered`).toBe(false);
+        expect(covered, `button ${position} (${await link.getAttribute("data-action")}) is covered`).toBe("");
+        const before = page.url();
+        await Promise.all([page.waitForURL((url) => url.toString() !== before, { timeout: 5000 }), link.click({ timeout: 5000 })]);
       }
     });
   }
