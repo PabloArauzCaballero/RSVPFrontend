@@ -44,3 +44,9 @@ Corrige: PL-F6 (P10), PL-L3. Rama `feat/plantillas-f6b-nativo` sobre `feat/plant
 - R2-M2: la sonda pide `/icon.svg` (estático), no la página. Límite: `no-cors` da una respuesta opaca; no se lee el estado, solo si el sitio responde. Un 5xx de la página lo muestra la página de error del sitio; en nativo sí se lee y se muestra `unavailable`.
 - R2-M3: una sola anchura (`GUEST_COLUMN`, 640 px) para carga, sin red y no disponible; e2e a 1440 compara ambas. Fase nueva `misconfigured` (despliegue que se cargaría a sí mismo): sin «Reintentar», solo «Ver regalos».
 - m1: el script en línea escapa `<` (`\u003c`). m2: el comentario del spec dice que hace falta `EXPO_PUBLIC_API_URL=/api` y `--clear`. m3: `apps/universal/e2e/preview-states.spec.ts` (config `playwright.states.config.ts`): vista previa del anfitrión con sesión simulada y el sitio sin responder; captura `vista-previa-sin-red.png`.
+
+## Ronda 3 (PL-134-R3-M1, m1)
+
+- R3-M1: `misconfigured` usa la ilustración `maintenance` y claves propias `celebration.app.misconfiguredTitle/Body` (es-BO, en-US), sin «de nuevo» ni reintento; queda «Ver regalos». Prueba: `guest-invitation.test.tsx`.
+- m1: el error de la vista previa arranca cerca del borde superior del marco, con el texto centrado y un hueco inferior reservado para la barra fija; `preview-states.spec.ts` comprueba que el centro de «Reintentar vista previa» no está cubierto (captura `vista-previa-sin-red.png`, 390×844).
+- Integrada la capa protegida rehecha de #131 (939b63a); `/model` sigue sin renderizador (prueba) y el bundle web `entry` pesa 2.359.429 B sin `postcss`.

@@ -2,7 +2,7 @@ import { act, fireEvent, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { resetSecureStore } from "./stubs/expo-secure-store";
 import { resetWebViews, webViews } from "./stubs/react-native-webview";
-import { InvitationScreen, giftsRoute, invitationPath, replyPath } from "../src/guest/invitation-screen";
+import { InvitationScreen, Misconfigured, giftsRoute, invitationPath, replyPath } from "../src/guest/invitation-screen";
 import { clearGiftCredential, saveGiftCredential } from "../src/guest/gift-credential";
 import { groupOfPath } from "../src/auth/routes";
 import { GUEST_COLUMN } from "../src/guest/frame";
@@ -152,6 +152,19 @@ describe("P10 · A1 the public invitation in the app is the public page in a web
     show({ section: "inventado" });
     expect(screen.getByText("Esta celebración no está disponible")).toBeTruthy();
     expect(webViews.current).toBeNull();
+  });
+});
+
+describe("PL-134-R3-M1 · a deployment that cannot show the site", () => {
+  it("says so without promising a retry: neutral picture, no «de nuevo», no retry button, the gifts button still there", () => {
+    const { client } = fakeClient({});
+    const onNavigate = vi.fn();
+    renderApp(<Misconfigured slug={SLUG} onNavigate={onNavigate} />, client, GUEST);
+    expect(screen.getByText("Esta invitación no se puede abrir desde aquí")).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/de nuevo|intentar/i);
+    expect(screen.queryByTestId("guest-retry")).toBeNull();
+    fireEvent.click(screen.getByTestId("invitation-gifts"));
+    expect(onNavigate).toHaveBeenCalledWith(giftsRoute(SLUG));
   });
 });
 

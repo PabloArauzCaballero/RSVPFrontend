@@ -9,6 +9,9 @@ import { useT } from "../platform/providers";
 import { publicSiteOrigin } from "../platform/site-origin";
 import { ActionButton, useStyles } from "./ui";
 
+/** The host screens end with a fixed action bar: the error keeps clear of it, so its retry is never half covered. It starts near the top of the frame, which can run below the fold, and its text is centred. */
+const ERROR_BAR_CLEARANCE = spacing[16];
+
 /**
  * P10 · The invitation the host (or the admin) is editing, drawn by the public site's own renderer inside a web view: the app
  * hands the look, the content and the photos to the site's preview page, so the preview and the published page cannot differ.
@@ -30,8 +33,8 @@ export function InvitationPreview({ theme, view, gallery = [], title, testID }: 
   const failed = phase === "offline" || phase === "unavailable" || phase === "notFound";
   if (failed) {
     return (
-      <View role="alert" style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: spacing[3], padding: spacing[4], backgroundColor: palette.canvas }} testID="preview-error">
-        <Text style={styles.body}>{t("celebration.app.previewError")}</Text>
+      <View role="alert" style={{ flex: 1, alignItems: "center", justifyContent: "flex-start", gap: spacing[3], padding: spacing[4], paddingTop: spacing[12], paddingBottom: ERROR_BAR_CLEARANCE, backgroundColor: palette.canvas }} testID="preview-error">
+        <Text style={[styles.body, { textAlign: "center" }]}>{t("celebration.app.previewError")}</Text>
         <ActionButton icon="refresh" variant="secondary" label={t("celebration.app.previewRetry")} onPress={retry} testID="preview-retry" />
       </View>
     );

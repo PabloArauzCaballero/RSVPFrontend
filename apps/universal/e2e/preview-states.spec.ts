@@ -12,6 +12,12 @@ test("PL-134-R2-m3 · the host preview shows the offline state when the site doe
   await expect(error).toBeVisible({ timeout: 30_000 });
   await expect(error).toHaveAttribute("role", "alert");
   await expect(error).toContainText("No pudimos cargar la vista previa");
+  // m1: the retry is not under the fixed action bar: the element at its centre is the retry itself.
+  const retry = page.getByTestId("preview-retry").first();
+  const box = await retry.boundingBox();
+  expect(box).not.toBeNull();
+  const covered = await retry.evaluate((node, point) => !node.contains(document.elementFromPoint(point.x, point.y)), { x: (box?.x ?? 0) + (box?.width ?? 0) / 2, y: (box?.y ?? 0) + (box?.height ?? 0) / 2 });
+  expect(covered).toBe(false);
   if (OUT) { mkdirSync(OUT, { recursive: true }); await page.screenshot({ path: `${OUT}/vista-previa-sin-red.png` }); }
   await page.getByTestId("preview-retry").first().click();
   await expect(page.getByTestId("preview-loading").first()).toBeVisible();

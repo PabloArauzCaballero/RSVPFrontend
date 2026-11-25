@@ -71,6 +71,12 @@ function Loading({ slug, onNavigate }: { readonly slug: string; readonly onNavig
   );
 }
 
+/** This deployment cannot show the site at all: nothing the guest does fixes it, so no retry and no «try again» in the words. */
+export function Misconfigured({ slug, onNavigate }: { readonly slug: string; readonly onNavigate: (path: string) => void }): ReactNode {
+  const t = useT();
+  return <LinkState illustration="maintenance" title={t("celebration.app.misconfiguredTitle")} body={t("celebration.app.misconfiguredBody")}><GiftsButton slug={slug} onNavigate={onNavigate} /></LinkState>;
+}
+
 function NotFound({ onNavigate }: { readonly onNavigate: (path: string) => void }): ReactNode {
   const t = useT();
   return (
@@ -102,9 +108,7 @@ function Invitation({ slug, only, onNavigate, openUrl = openExternally }: Invita
   if (phase === "notFound") return <NotFound onNavigate={onNavigate} />;
   // The site itself failing (5xx) or no connection: trying again can work. A deployment that would load this screen into itself
   // cannot be fixed by the guest: no retry, only the way to the gifts.
-  if (phase === "misconfigured") {
-    return <LinkState illustration="offline" title={t("rsvp.invite.unavailableTitle")} body={t("rsvp.invite.unavailableBody")}><GiftsButton slug={slug} onNavigate={onNavigate} /></LinkState>;
-  }
+  if (phase === "misconfigured") return <Misconfigured slug={slug} onNavigate={onNavigate} />;
   if (phase === "offline" || phase === "unavailable") {
     return <OfflineState unavailable={phase === "unavailable"} onRetry={retry}><GiftsButton slug={slug} onNavigate={onNavigate} /></OfflineState>;
   }
