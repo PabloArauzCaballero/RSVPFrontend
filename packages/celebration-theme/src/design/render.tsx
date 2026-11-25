@@ -13,6 +13,7 @@ import { embedFromConfig, mapEmbed } from "../media/embed.js";
 import { clampScrim, type PublicMedia } from "../media/variants.js";
 import { layoutOf, themeVariables } from "../theme.js";
 import type { CelebrationTheme, SectionId, Translate } from "../types.js";
+import { scopeCss } from "../custom/css.js";
 import { requiredScrim } from "./colour.js";
 import { designPalette, fontStack } from "./read.js";
 import type { DesignBackground, PaletteRole, DesignBlock, DesignCanvas, DesignDocumentV2, DesignElement, DesignLink, DesignPage } from "./types.js";
@@ -261,7 +262,7 @@ function Canvas({ page, context }: { readonly page: DesignPage; readonly context
         const body = <BlockBody block={block} element={element} context={context} />;
         const href = block.type === "button" || block.type === "giftsCta" || block.type === "rsvpCta" ? undefined : hrefOf(element.link, context);
         return (
-          <div key={id} className="cdesign-el" data-block={block.type} data-m={phone.has(id) ? "" : undefined} data-d={wide.has(id) || (!desktop && phone.has(id)) ? "" : undefined}
+          <div key={id} className={block.type === "giftsCta" || block.type === "rsvpCta" ? "cdesign-el rsvp-protected" : "cdesign-el"} data-block={block.type} data-m={phone.has(id) ? "" : undefined} data-d={wide.has(id) || (!desktop && phone.has(id)) ? "" : undefined}
             data-entrance={element.animation && element.animation.entrance !== "none" ? element.animation.entrance : undefined} data-sized={element.typography?.size !== undefined ? "" : undefined} data-round={element.radius ? "" : undefined} data-bg-media={element.background?.kind === "media" ? "" : undefined}
             style={elementStyle(element, phone.get(id), wide.get(id) ?? (desktop ? undefined : phone.get(id)))}>
             <BackgroundMedia background={element.background} context={context} />
@@ -287,16 +288,20 @@ function SystemColours({ theme }: { readonly theme: CelebrationTheme }): ReactNo
   return <style>{`${scope}{${rule("light")};color-scheme:light}@media (prefers-color-scheme:dark){${scope}{${rule("dark")};color-scheme:dark}}`}</style>;
 }
 
-/** Text a stylesheet may not carry whatever the server did: a way out of the element, an import or a script URL. The server's sanitiser is the first lock; this is the second. */
-const UNSAFE_CSS = /<\/?style|<!--|@import|javascript:|expression\s*\(|behavior\s*:|-moz-binding/i;
+/** The invitation's root class: every rule of the author's stylesheet is rebuilt under it. */
+const CUSTOM_SCOPE = ".celebration-design";
 
 /**
- * The advanced CSS of the document (F5, P12). It goes in as the TEXT of a `<style>` (React sets `textContent`; never `innerHTML`, never an
- * attribute), so the browser can only read it as a stylesheet. A sheet with one of the unsafe forms above is dropped whole.
+ * The advanced CSS of the document (F5, P12). It is not trusted: it is parsed and rebuilt from the typed allowlist of F5 (`custom/css.ts`, a copy of the
+ * one in the editor, FE #122): every selector under the root class and away from the gifts and reply buttons (`.rsvp-protected`), no escapes, no
+ * `@import`, `image-set()`, `attr()`, `expression()`, and `url()` only toward the media store. The result goes in as the TEXT of a `<style>`
+ * (React sets `textContent`; never `innerHTML`), and "<" cannot occur in it. What the allowlist drops is simply not painted.
  */
 export function CustomCss({ design }: { readonly design: DesignDocumentV2 }): ReactNode {
-  const css = typeof design.custom?.css === "string" ? design.custom.css : "";
-  return css.trim() && !UNSAFE_CSS.test(css) ? <style data-celebration-custom="">{css}</style> : null;
+  const source = typeof design.custom?.css === "string" ? design.custom.css : "";
+  if (!source.trim()) return null;
+  const { css } = scopeCss(source, { scope: CUSTOM_SCOPE });
+  return css ? <style data-celebration-custom="">{css}</style> : null;
 }
 
 function PageBlock({ page, context, only }: { readonly page: DesignPage; readonly context: Context; readonly only?: SectionId }): ReactNode {

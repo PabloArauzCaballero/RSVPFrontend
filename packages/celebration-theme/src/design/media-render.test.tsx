@@ -189,17 +189,36 @@ describe("F6 · embeds (P17)", () => {
   });
 });
 
-describe("F6 · the advanced CSS (F5) goes in as text", () => {
-  it("is the text of a <style>: markup inside it stays text and no element is created from it", () => {
-    const { container } = draw(documentWith([], { css: ".celebration-design .cdesign-heading { color: red }" }));
+describe("F6 · the advanced CSS (F5) is rebuilt from the allowlist and goes in as text", () => {
+  const painted = (css: string): string | null => draw(documentWith([], { css })).container.querySelector("style[data-celebration-custom]")?.textContent ?? null;
+
+  it("is the text of a <style>, scoped under the root class and away from the gifts and reply buttons; markup inside stays text", () => {
+    const { container } = draw(documentWith([], { css: "p { color: #333 }" }));
     const style = container.querySelector("style[data-celebration-custom]") as HTMLStyleElement;
-    expect(style.textContent).toBe(".celebration-design .cdesign-heading { color: red }");
+    expect(style.textContent).toBe(".celebration-design p:not(.rsvp-protected):not(.rsvp-protected *){color:#333}");
     expect(style.children).toHaveLength(0);
   });
 
-  it.each(["</style><script>alert(1)</script>", "@import url(https://evil.example/x.css);", "a{background:url(javascript:alert(1))}", "a{width:expression(alert(1))}", "<!-- x"])("a sheet with %s is dropped whole", (css) => {
-    const { container } = draw(documentWith([], { css }));
-    expect(container.querySelector("style[data-celebration-custom]")).toBeNull();
-    expect(container.querySelector("script")).toBeNull();
+  it("the gifts and reply buttons and the dock carry the protected class the guard keys on", () => {
+    const { container } = draw(documentWith([]));
+    const links = container.querySelectorAll('a[data-action="gifts"], a[data-action="rsvp"], a[data-action="rsvp-help"]');
+    expect(links.length).toBeGreaterThanOrEqual(2);
+    for (const link of links) expect(link.closest(".rsvp-protected"), link.outerHTML.slice(0, 80)).not.toBeNull();
+    expect(container.querySelector(".cdesign-dock")?.classList.contains("rsvp-protected")).toBe(true);
+  });
+
+  it.each([
+    "</style><script>alert(1)</script>", "@import url(https://evil.example/x.css);", "@\\69mport url(//evil.test/x.css);", ".a{background:url(https://evil.test/p.png)}",
+    ".a{background:url(//evil.test/p.png)}", ".a{background-image:image-set(url(/media/public/assets/a.png) 1x)}", "a{background:url(javascript:alert(1))}",
+    "a{width:expression(alert(1))}", "a{color:\\72 ed}", ".\\72 svp-x{color:red}", "<!-- x", "body{color:red}", ":root{color:red}", "a{position:fixed}", "a{content:attr(href)}"
+  ])("a rule with %s paints nothing", (css) => {
+    const text = painted(css);
+    expect(text === null || !/evil|import|image-set|javascript|expression|attr\(|<|\\|position:fixed|body|:root/.test(text)).toBe(true);
+    expect(draw(documentWith([], { css })).container.querySelector("script")).toBeNull();
+  });
+
+  it("url() toward the media store is kept; toward anything else it is dropped", () => {
+    expect(painted(".a{background:url(/media/public/assets/a.png)}")).toContain("url(/media/public/assets/a.png)");
+    expect(painted(".a{background:url(/media/public/assets/../../x)}")).toBeNull();
   });
 });

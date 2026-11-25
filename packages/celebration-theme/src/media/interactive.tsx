@@ -80,7 +80,7 @@ export function AudioPlayerView({ src, durationMs, labels }: AudioPlayerViewProp
     element.play().catch(() => setState("error"));
   };
   return (
-    <div className="celebration-audio" data-state={state}>
+    <div className="celebration-embed" data-kind="audio" data-provider="upload" data-loaded="false" data-phase={state}>
       <audio
         ref={audio} src={src} preload="none" onPlay={() => setState("playing")} onPause={() => setState((current) => (current === "error" ? current : "paused"))}
         onEnded={() => { setState("idle"); setPosition(0); }} onError={() => setState("error")} onTimeUpdate={(event) => setPosition(event.currentTarget.currentTime)}

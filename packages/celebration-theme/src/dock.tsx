@@ -7,7 +7,7 @@ import { GiftsAction, RsvpAction, type SectionProps } from "./sections/index.js"
  */
 export function Dock({ t, giftsHref, giftsStatus, rsvpHref, rsvpHelpHref, rsvpAdaptive }: Pick<SectionProps, "t" | "giftsHref" | "giftsStatus" | "rsvpHref" | "rsvpHelpHref" | "rsvpAdaptive">): ReactNode {
   return (
-    <div className="cdesign-dock" role="group" aria-label={t("celebration.dock.label")} data-dock="">
+    <div className="cdesign-dock rsvp-protected" role="group" aria-label={t("celebration.dock.label")} data-dock="">
       <GiftsAction t={t} giftsHref={giftsHref} giftsStatus={giftsStatus} dock />
       <RsvpAction t={t} rsvpHref={rsvpHref} rsvpHelpHref={rsvpHelpHref} rsvpAdaptive={rsvpAdaptive} />
     </div>

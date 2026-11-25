@@ -6,7 +6,8 @@ const path = require('node:path');
  */
 /**
  * F6 · The only origins an iframe of the invitation may load (P17). Keep it equal to FRAME_HOSTS in
- * packages/celebration-theme/src/media/embed.ts: media/csp.test.ts fails when they differ. Privacy-enhanced hosts only
+ * packages/celebration-theme/src/media/embed.ts: the test in media/media.test.tsx (frame-src) fails when they differ. The CSP below is still Report-Only, so today `frame-src` reports and does not block: the allowlist of embed.ts (and the server's) is what holds, and this is the third lock only once the CSP is enforced.
+ * Privacy-enhanced hosts only
  * (youtube-nocookie, Vimeo with dnt). Nothing else may be framed, and `frame-ancestors 'none'` still forbids framing this site.
  */
 const frameHosts = ['www.youtube-nocookie.com', 'player.vimeo.com', 'open.spotify.com', 'w.soundcloud.com', 'www.google.com'];
