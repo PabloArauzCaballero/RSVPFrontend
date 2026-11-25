@@ -36,7 +36,15 @@ export function DesignEditorScreen({ celebrationId, onNavigate }: ScreenProps): 
     const result = await refetch();
     return result.status === "success" && result.data ? toEditable(result.data) : null;
   }, [refetch]);
-  const signIn = useCallback(() => { onNavigate(loginHref(withCelebration(HOST_ROUTES.design, celebrationId))); }, [onNavigate, celebrationId]);
+  // The login opens in another tab: navigating this one would unmount the editor and drop the edits not yet saved. The session
+  // renews through the refresh cookie, so "Ya entré, reintentar" saves from the tab that still holds them. Without a window
+  // (popup blocked) it falls back to the same-tab navigation.
+  const signIn = useCallback(() => {
+    const href = loginHref(withCelebration(HOST_ROUTES.design, celebrationId));
+    const opened = typeof window === "undefined" ? null : window.open(href, "_blank");
+    if (opened) opened.opener = null;
+    else onNavigate(href);
+  }, [onNavigate, celebrationId]);
 
   if (!celebrationId) return <View style={{ padding: spacing[6] }}><EmptyState illustration="invitation" title={t("designEditor.title")} body={t("designEditor.noCelebration")} /></View>;
   if (celebration.isPending || found.isPending) return <LoadingContent kind="form" />;

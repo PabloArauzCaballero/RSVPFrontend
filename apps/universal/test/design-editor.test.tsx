@@ -85,14 +85,26 @@ describe("plantillas F5 · pantalla del editor (web)", () => {
     const handlers = { ...baseHandlers(), "GET /media/celebrations/c-1/design": () => record, "PUT /media/designs/d-1/draft": () => new HttpFailure(401) };
     const { client } = fakeClient(handlers);
     const go = vi.fn();
+    const popup = { opener: {} as unknown };
+    const open = vi.spyOn(window, "open").mockReturnValue(popup as unknown as Window);
     renderApp(<DesignEditorScreen celebrationId="c-1" onNavigate={go} />, client);
     await screen.findByRole("heading", { level: 1, name: "Diseño de la invitación" });
     vi.useFakeTimers({ shouldAdvanceTime: true });
     fireEvent.change(screen.getByLabelText("Color de acento (claro)"), { target: { value: "#123456" } });
     await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
     vi.useRealTimers();
-    fireEvent.click(await screen.findByRole("button", { name: "Iniciar sesión de nuevo" }));
-    expect(go).toHaveBeenCalledWith(`/login?returnTo=${encodeURIComponent("/diseno?c=c-1")}`);
+    const href = `/login?returnTo=${encodeURIComponent("/diseno?c=c-1")}`;
+    // the editor stays mounted with the unsaved edit: the login goes to another tab, not to this one
+    fireEvent.click(await screen.findByRole("button", { name: "Iniciar sesión en otra pestaña" }));
+    expect(open).toHaveBeenCalledWith(href, "_blank");
+    expect(popup.opener).toBeNull();
+    expect(go).not.toHaveBeenCalled();
+    expect((screen.getByLabelText("Color de acento (claro)") as HTMLInputElement).value.toLowerCase()).toBe("#123456");
+    // popup blocked: the same-tab navigation is the fallback
+    open.mockReturnValue(null);
+    fireEvent.click(screen.getByRole("button", { name: "Iniciar sesión en otra pestaña" }));
+    expect(go).toHaveBeenCalledWith(href);
+    open.mockRestore();
   });
 
   it("sin diseño (404) ofrece crearlo desde la plantilla de la celebración y lo abre", async () => {

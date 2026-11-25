@@ -83,7 +83,7 @@ export const designEditorEnUS: DeepStrings<typeof designEditorEsBO> = {
       FONT_WEIGHT_UNAVAILABLE: "The chosen font doesn't have that weight. Pick another weight or font.",
       CUSTOM_CODE_UNAVAILABLE: "Custom code isn't available yet. Remove that change."
     },
-    signIn: { title: "Your session ended", body: "We couldn't save because you need to sign in again. Your previous draft is still saved and what you see here isn't lost.", action: "Sign in again", retry: "I signed in, retry" },
+    signIn: { title: "Your session ended", body: "We couldn't save because you need to sign in again. Your previous draft is still saved. Sign in on the new tab and come back here: the changes you see in this tab stay intact.", action: "Sign in on another tab", retry: "I signed in, retry" },
     forbidden: { title: "You can't change this design", body: "Only the celebration's hosts or planner can save changes. What you see here won't be saved." }
   },
   refusal: {

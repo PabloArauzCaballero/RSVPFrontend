@@ -180,13 +180,13 @@ describe("EditorShell", () => {
     mount({ saveDraft: fail(401) }, { onSignIn });
     await editAndWait();
     expect(screen.getByRole("alert").textContent).toContain("Tu sesión terminó");
-    fireEvent.click(screen.getByRole("button", { name: "Iniciar sesión de nuevo" }));
+    fireEvent.click(screen.getByRole("button", { name: "Iniciar sesión en otra pestaña" }));
     expect(onSignIn).toHaveBeenCalled();
     expect(screen.getByRole("button", { name: "Ya entré, reintentar" })).toBeTruthy();
     cleanup();
     mount({ saveDraft: fail(401) });
     await editAndWait();
-    expect(screen.queryByRole("button", { name: "Iniciar sesión de nuevo" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Iniciar sesión en otra pestaña" })).toBeNull();
     cleanup();
     mount({ saveDraft: fail(403) });
     await editAndWait();

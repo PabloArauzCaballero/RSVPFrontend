@@ -30,6 +30,23 @@ test.describe("editor shell (PR a, ronda 2)", () => {
         const stage = await page.getByRole("main").boundingBox();
         expect(stage?.y ?? 9999).toBeLessThan(width === 360 ? 330 : 200);
         expect(await serious(page)).toEqual([]);
+        // WCAG 1.4.11: the border of a control against the surface it sits on, from the computed styles
+        const ratios = await page.evaluate(() => {
+          const rgb = (v: string) => (v.match(/[\d.]+/g) ?? []).slice(0, 3).map(Number);
+          const lum = (c: number[]) => { const [r, g, b] = c.map((x) => { const v = (x ?? 0) / 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * (r ?? 0) + 0.7152 * (g ?? 0) + 0.0722 * (b ?? 0); };
+          const cr = (a: number[], b: number[]) => { const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x); return ((hi ?? 0) + 0.05) / ((lo ?? 0) + 0.05); };
+          const out: number[] = [];
+          for (const el of document.querySelectorAll(".de-group, .de-btn:not(.de-btn--primary)")) {
+            const border = rgb(getComputedStyle(el).borderTopColor);
+            const parent = el.parentElement ? rgb(getComputedStyle(el.parentElement).backgroundColor) : [255, 255, 255];
+            out.push(cr(border, parent));
+          }
+          const stage = document.querySelector(".de-stage"); const group = document.querySelector(".de-group");
+          if (stage && group) out.push(cr(rgb(getComputedStyle(group).borderTopColor), rgb(getComputedStyle(stage).backgroundColor)));
+          return out;
+        });
+        expect(ratios.length).toBeGreaterThan(0);
+        for (const ratio of ratios) expect(ratio).toBeGreaterThanOrEqual(3);
         await page.screenshot({ path: shot(`lienzo-${tema}-${width}`), fullPage: width === 360 });
         await context.close();
       });
@@ -146,7 +163,7 @@ test.describe("editor shell (PR a, ronda 2)", () => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto("/?fail=401");
     await accent(page).fill("#1f6f5c");
-    await page.getByRole("button", { name: "Iniciar sesión de nuevo" }).click({ timeout: 5000 });
+    await page.getByRole("button", { name: "Iniciar sesión en otra pestaña" }).click({ timeout: 5000 });
     expect(await page.evaluate(() => window.__signIn)).toBe(1);
     await page.screenshot({ path: shot("estado-sesion-1280") });
     await page.goto("/?fail=403");

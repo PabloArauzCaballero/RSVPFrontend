@@ -80,7 +80,7 @@ export const designEditorEsBO = {
       FONT_WEIGHT_UNAVAILABLE: "La tipografía elegida no tiene ese grosor. Elige otro grosor u otra tipografía.",
       CUSTOM_CODE_UNAVAILABLE: "El código propio todavía no está disponible. Quita ese cambio."
     },
-    signIn: { title: "Tu sesión terminó", body: "No pudimos guardar porque hay que volver a entrar. Tu borrador anterior sigue guardado y lo que ves aquí no se ha perdido.", action: "Iniciar sesión de nuevo", retry: "Ya entré, reintentar" },
+    signIn: { title: "Tu sesión terminó", body: "No pudimos guardar porque hay que volver a entrar. Tu borrador anterior sigue guardado. Entra en la pestaña nueva y vuelve aquí: los cambios que ves en esta pestaña siguen sin perderse.", action: "Iniciar sesión en otra pestaña", retry: "Ya entré, reintentar" },
     forbidden: { title: "No puedes cambiar este diseño", body: "Solo los anfitriones o el planner de la celebración pueden guardar cambios. Lo que ves aquí no se guardará." }
   },
   refusal: {
