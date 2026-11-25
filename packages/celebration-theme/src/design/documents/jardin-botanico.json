@@ -1,7 +1,7 @@
 {
   "key": "jardin-botanico",
   "name": "Jardín botánico",
-  "description": "Herbario: una hoja de papel con la etiqueta del ejemplar, laurel que se traza y un ramo prensado; serif de jardín y verde profundo.",
+  "description": "Herbario: una hoja de papel con la etiqueta del ejemplar, hojas prensadas en las esquinas que se trazan y un ramo; serif de jardín y verde profundo.",
   "layout": "classic",
   "eventTypeTags": [
     "anniversary",
@@ -90,12 +90,12 @@
             "rowHeight": 8,
             "elements": [
               {
-                "id": "el-laurel",
-                "block": "art-laurel",
+                "id": "el-esquina",
+                "block": "art-esquina",
                 "x": 0,
                 "y": 0,
-                "w": 4,
-                "h": 3,
+                "w": 1,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "draw",
@@ -107,9 +107,9 @@
                 "id": "el-ramo",
                 "block": "art-ramo",
                 "x": 1,
-                "y": 3,
+                "y": 0,
                 "w": 2,
-                "h": 11,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "scale",
@@ -118,12 +118,27 @@
                 }
               },
               {
+                "id": "el-esquina-d",
+                "block": "art-esquina",
+                "x": 3,
+                "y": 0,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "rotation": 90,
+                "animation": {
+                  "entrance": "draw",
+                  "delayMs": 0,
+                  "durationMs": 1200
+                }
+              },
+              {
                 "id": "el-cover",
                 "block": "cover",
                 "x": 0,
-                "y": 14,
+                "y": 8,
                 "w": 4,
-                "h": 18,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "fade",
@@ -144,20 +159,6 @@
                   "bottom": 24,
                   "left": 16
                 }
-              },
-              {
-                "id": "el-laurel-base",
-                "block": "art-laurel-base",
-                "x": 0,
-                "y": 32,
-                "w": 4,
-                "h": 3,
-                "visible": true,
-                "animation": {
-                  "entrance": "fade",
-                  "delayMs": 1300,
-                  "durationMs": 600
-                }
               }
             ]
           },
@@ -170,9 +171,9 @@
                 "id": "el-cover",
                 "block": "cover",
                 "x": 0,
-                "y": 4,
+                "y": 0,
                 "w": 7,
-                "h": 20,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "fade",
@@ -195,12 +196,12 @@
                 }
               },
               {
-                "id": "el-laurel",
-                "block": "art-laurel",
-                "x": 0,
-                "y": 0,
-                "w": 7,
-                "h": 3,
+                "id": "el-esquina",
+                "block": "art-esquina",
+                "x": 7,
+                "y": 8,
+                "w": 1,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "draw",
@@ -212,11 +213,11 @@
                 "id": "el-ramo",
                 "block": "art-ramo",
                 "x": 8,
-                "y": 0,
-                "w": 4,
-                "h": 26,
+                "y": 8,
+                "w": 3,
+                "h": 8,
                 "visible": true,
-                "rotation": -6,
+                "rotation": -4,
                 "animation": {
                   "entrance": "scale",
                   "delayMs": 500,
@@ -224,17 +225,18 @@
                 }
               },
               {
-                "id": "el-laurel-base",
-                "block": "art-laurel-base",
-                "x": 0,
-                "y": 24,
-                "w": 7,
-                "h": 3,
+                "id": "el-esquina-d",
+                "block": "art-esquina",
+                "x": 11,
+                "y": 8,
+                "w": 1,
+                "h": 8,
                 "visible": true,
+                "rotation": 90,
                 "animation": {
-                  "entrance": "fade",
-                  "delayMs": 1300,
-                  "durationMs": 600
+                  "entrance": "draw",
+                  "delayMs": 0,
+                  "durationMs": 1200
                 }
               }
             ]
@@ -277,12 +279,12 @@
             "rowHeight": 8,
             "elements": [
               {
-                "id": "el-art-laurel-sec",
-                "block": "art-laurel-sec",
-                "x": 1,
+                "id": "el-art-esquina-sec",
+                "block": "art-esquina-sec",
+                "x": 0,
                 "y": 0,
-                "w": 2,
-                "h": 3,
+                "w": 1,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "fade",
@@ -294,7 +296,7 @@
                 "id": "el-schedule",
                 "block": "schedule",
                 "x": 0,
-                "y": 3,
+                "y": 8,
                 "w": 4,
                 "h": 1,
                 "visible": true
@@ -315,12 +317,12 @@
             "rowHeight": 8,
             "elements": [
               {
-                "id": "el-art-laurel-sec",
-                "block": "art-laurel-sec",
-                "x": 1,
+                "id": "el-art-esquina-sec",
+                "block": "art-esquina-sec",
+                "x": 0,
                 "y": 0,
-                "w": 2,
-                "h": 3,
+                "w": 1,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "fade",
@@ -332,7 +334,7 @@
                 "id": "el-venues",
                 "block": "venues",
                 "x": 0,
-                "y": 3,
+                "y": 8,
                 "w": 4,
                 "h": 1,
                 "visible": true
@@ -353,12 +355,12 @@
             "rowHeight": 8,
             "elements": [
               {
-                "id": "el-art-laurel-sec",
-                "block": "art-laurel-sec",
-                "x": 1,
+                "id": "el-art-esquina-sec",
+                "block": "art-esquina-sec",
+                "x": 0,
                 "y": 0,
-                "w": 2,
-                "h": 3,
+                "w": 1,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "fade",
@@ -370,7 +372,7 @@
                 "id": "el-gallery",
                 "block": "gallery",
                 "x": 0,
-                "y": 3,
+                "y": 8,
                 "w": 4,
                 "h": 1,
                 "visible": true
@@ -391,12 +393,12 @@
             "rowHeight": 8,
             "elements": [
               {
-                "id": "el-art-laurel-sec",
-                "block": "art-laurel-sec",
-                "x": 1,
+                "id": "el-art-esquina-sec",
+                "block": "art-esquina-sec",
+                "x": 0,
                 "y": 0,
-                "w": 2,
-                "h": 3,
+                "w": 1,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "fade",
@@ -408,7 +410,7 @@
                 "id": "el-dress-code",
                 "block": "dress-code",
                 "x": 0,
-                "y": 3,
+                "y": 8,
                 "w": 4,
                 "h": 1,
                 "visible": true
@@ -429,12 +431,12 @@
             "rowHeight": 8,
             "elements": [
               {
-                "id": "el-art-laurel-sec",
-                "block": "art-laurel-sec",
-                "x": 1,
+                "id": "el-art-esquina-sec",
+                "block": "art-esquina-sec",
+                "x": 0,
                 "y": 0,
-                "w": 2,
-                "h": 3,
+                "w": 1,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "fade",
@@ -446,7 +448,7 @@
                 "id": "el-gifts-cta",
                 "block": "gifts-cta",
                 "x": 0,
-                "y": 3,
+                "y": 8,
                 "w": 4,
                 "h": 6,
                 "visible": true
@@ -467,12 +469,12 @@
             "rowHeight": 8,
             "elements": [
               {
-                "id": "el-art-laurel-sec",
-                "block": "art-laurel-sec",
-                "x": 1,
+                "id": "el-art-esquina-sec",
+                "block": "art-esquina-sec",
+                "x": 0,
                 "y": 0,
-                "w": 2,
-                "h": 3,
+                "w": 1,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "fade",
@@ -484,7 +486,7 @@
                 "id": "el-faq",
                 "block": "faq",
                 "x": 0,
-                "y": 3,
+                "y": 8,
                 "w": 4,
                 "h": 1,
                 "visible": true
@@ -505,12 +507,12 @@
             "rowHeight": 8,
             "elements": [
               {
-                "id": "el-art-laurel-sec",
-                "block": "art-laurel-sec",
-                "x": 1,
+                "id": "el-art-esquina-sec",
+                "block": "art-esquina-sec",
+                "x": 0,
                 "y": 0,
-                "w": 2,
-                "h": 3,
+                "w": 1,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "fade",
@@ -522,7 +524,7 @@
                 "id": "el-recommendations",
                 "block": "recommendations",
                 "x": 0,
-                "y": 3,
+                "y": 8,
                 "w": 4,
                 "h": 1,
                 "visible": true
@@ -543,12 +545,12 @@
             "rowHeight": 8,
             "elements": [
               {
-                "id": "el-art-laurel-sec",
-                "block": "art-laurel-sec",
-                "x": 1,
+                "id": "el-art-esquina-sec",
+                "block": "art-esquina-sec",
+                "x": 0,
                 "y": 0,
-                "w": 2,
-                "h": 3,
+                "w": 1,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "fade",
@@ -560,7 +562,7 @@
                 "id": "el-rsvp-cta",
                 "block": "rsvp-cta",
                 "x": 0,
-                "y": 3,
+                "y": 8,
                 "w": 4,
                 "h": 6,
                 "visible": true
@@ -580,21 +582,12 @@
         }
       },
       {
-        "id": "art-laurel",
+        "id": "art-esquina",
         "type": "illustration",
         "config": {
-          "illustrationId": "laurel",
+          "illustrationId": "laurel-esquina",
           "tint": "accent",
           "drawOnEnter": true
-        }
-      },
-      {
-        "id": "art-laurel-base",
-        "type": "illustration",
-        "config": {
-          "illustrationId": "laurel",
-          "tint": "accent",
-          "drawOnEnter": false
         }
       },
       {
@@ -612,10 +605,10 @@
         "config": {}
       },
       {
-        "id": "art-laurel-sec",
+        "id": "art-esquina-sec",
         "type": "illustration",
         "config": {
-          "illustrationId": "laurel",
+          "illustrationId": "laurel-esquina",
           "tint": "accent",
           "drawOnEnter": false
         }

@@ -259,3 +259,5 @@
 .celebration-design .cdesign-section-body[data-display="list"] .celebration-schedule li { counter-increment: act; }
 .celebration-design .cdesign-section-body[data-display="list"] .celebration-schedule li::before { content: counter(act, upper-roman); left: 6.75rem; top: .95rem; width: 2.5rem; height: auto; border-radius: 0; background: none; box-shadow: none; text-align: center; font-family: var(--celebration-heading-font); font-weight: 600; font-size: 1rem; line-height: 1.6; color: var(--celebration-accent); }
 .celebration-design .cdesign-section-body[data-display="list"] .celebration-schedule li::after { display: none; }
+/* A monogram that asks for its own colour (the wax seal of Rosa antiguo: `onAccent` on `accentFill`) keeps it; the default stays the accent. */
+.celebration-design .cdesign-el[data-block="monogram"][data-sized] .cdesign-monogram { color: inherit; }

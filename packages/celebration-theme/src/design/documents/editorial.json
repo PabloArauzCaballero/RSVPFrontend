@@ -48,7 +48,7 @@
           "family": "playfair-display",
           "weights": [
             600,
-            900
+            700
           ]
         },
         "body": {
@@ -94,7 +94,7 @@
                 "x": 0,
                 "y": 0,
                 "w": 4,
-                "h": 2,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "draw",
@@ -106,9 +106,9 @@
                 "id": "el-cover",
                 "block": "cover",
                 "x": 0,
-                "y": 2,
+                "y": 8,
                 "w": 4,
-                "h": 30,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "rise",
@@ -118,7 +118,6 @@
                 "typography": {
                   "role": "heading",
                   "size": 72,
-                  "weight": 900,
                   "align": "start",
                   "lineHeight": 1.02
                 }
@@ -127,9 +126,9 @@
                 "id": "el-filete-base",
                 "block": "art-filete-base",
                 "x": 0,
-                "y": 32,
+                "y": 16,
                 "w": 4,
-                "h": 2,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "fade",
@@ -147,10 +146,10 @@
               {
                 "id": "el-filete",
                 "block": "art-filete",
-                "x": 0,
+                "x": 4,
                 "y": 0,
-                "w": 12,
-                "h": 2,
+                "w": 4,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "draw",
@@ -162,9 +161,9 @@
                 "id": "el-cover",
                 "block": "cover",
                 "x": 0,
-                "y": 2,
+                "y": 8,
                 "w": 12,
-                "h": 40,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "rise",
@@ -174,7 +173,6 @@
                 "typography": {
                   "role": "heading",
                   "size": 120,
-                  "weight": 900,
                   "align": "start",
                   "lineHeight": 1.0
                 }
@@ -182,10 +180,10 @@
               {
                 "id": "el-filete-base",
                 "block": "art-filete-base",
-                "x": 0,
-                "y": 42,
-                "w": 12,
-                "h": 2,
+                "x": 4,
+                "y": 16,
+                "w": 4,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "fade",

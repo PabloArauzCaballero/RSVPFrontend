@@ -48,7 +48,7 @@
           "family": "fraunces",
           "weights": [
             500,
-            700
+            600
           ]
         },
         "body": {
@@ -94,7 +94,7 @@
                 "x": 0,
                 "y": 0,
                 "w": 4,
-                "h": 4,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "draw",
@@ -106,9 +106,9 @@
                 "id": "el-copas",
                 "block": "art-copas",
                 "x": 1,
-                "y": 4,
+                "y": 8,
                 "w": 2,
-                "h": 11,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "rise",
@@ -120,9 +120,9 @@
                 "id": "el-cover",
                 "block": "cover",
                 "x": 0,
-                "y": 15,
+                "y": 16,
                 "w": 4,
-                "h": 22,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "fade",
@@ -133,7 +133,6 @@
                   "align": "center",
                   "role": "heading",
                   "size": 56,
-                  "weight": 700,
                   "lineHeight": 1.05
                 },
                 "padding": {
@@ -152,9 +151,9 @@
                 "id": "el-arcos-base",
                 "block": "art-arcos-base",
                 "x": 0,
-                "y": 37,
+                "y": 24,
                 "w": 4,
-                "h": 4,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "fade",
@@ -172,10 +171,10 @@
               {
                 "id": "el-arcos",
                 "block": "art-arcos",
-                "x": 0,
+                "x": 3,
                 "y": 0,
-                "w": 12,
-                "h": 4,
+                "w": 6,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "draw",
@@ -187,9 +186,9 @@
                 "id": "el-copas",
                 "block": "art-copas",
                 "x": 5,
-                "y": 5,
+                "y": 8,
                 "w": 2,
-                "h": 11,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "rise",
@@ -201,9 +200,9 @@
                 "id": "el-cover",
                 "block": "cover",
                 "x": 2,
-                "y": 17,
+                "y": 16,
                 "w": 8,
-                "h": 24,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "fade",
@@ -214,7 +213,6 @@
                   "align": "center",
                   "role": "heading",
                   "size": 88,
-                  "weight": 700,
                   "lineHeight": 1.05
                 },
                 "padding": {
@@ -232,10 +230,10 @@
               {
                 "id": "el-arcos-base",
                 "block": "art-arcos-base",
-                "x": 0,
-                "y": 42,
-                "w": 12,
-                "h": 4,
+                "x": 3,
+                "y": 24,
+                "w": 6,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "fade",

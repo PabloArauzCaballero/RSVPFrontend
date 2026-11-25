@@ -94,7 +94,7 @@
                 "x": 1,
                 "y": 0,
                 "w": 2,
-                "h": 11,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "envelope",
@@ -106,9 +106,9 @@
                 "id": "el-cover",
                 "block": "cover",
                 "x": 0,
-                "y": 11,
+                "y": 8,
                 "w": 4,
-                "h": 20,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "rise",
@@ -138,9 +138,9 @@
                 "id": "el-monogram",
                 "block": "monogram",
                 "x": 1,
-                "y": 31,
-                "w": 2,
-                "h": 10,
+                "y": 16,
+                "w": 1,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "scale",
@@ -176,9 +176,9 @@
                 "id": "el-sobre",
                 "block": "art-sobre",
                 "x": 0,
-                "y": 4,
+                "y": 0,
                 "w": 3,
-                "h": 16,
+                "h": 8,
                 "visible": true,
                 "rotation": -6,
                 "animation": {
@@ -191,9 +191,9 @@
                 "id": "el-cover",
                 "block": "cover",
                 "x": 3,
-                "y": 2,
+                "y": 0,
                 "w": 7,
-                "h": 22,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "rise",
@@ -220,12 +220,26 @@
                 }
               },
               {
+                "id": "el-rosa",
+                "block": "art-rosa",
+                "x": 10,
+                "y": 0,
+                "w": 2,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 1200,
+                  "durationMs": 600
+                }
+              },
+              {
                 "id": "el-monogram",
                 "block": "monogram",
                 "x": 9,
-                "y": 24,
-                "w": 2,
-                "h": 10,
+                "y": 8,
+                "w": 1,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "scale",
@@ -248,20 +262,6 @@
                   "right": 8,
                   "bottom": 8,
                   "left": 8
-                }
-              },
-              {
-                "id": "el-rosa",
-                "block": "art-rosa",
-                "x": 10,
-                "y": 3,
-                "w": 2,
-                "h": 8,
-                "visible": true,
-                "animation": {
-                  "entrance": "fade",
-                  "delayMs": 1200,
-                  "durationMs": 600
                 }
               }
             ]

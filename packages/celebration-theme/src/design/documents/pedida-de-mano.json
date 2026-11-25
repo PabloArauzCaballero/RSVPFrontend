@@ -90,7 +90,7 @@
                 "x": 0,
                 "y": 0,
                 "w": 4,
-                "h": 22,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "envelope",
@@ -102,9 +102,9 @@
                 "id": "el-cover",
                 "block": "cover",
                 "x": 0,
-                "y": 22,
+                "y": 8,
                 "w": 4,
-                "h": 20,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "rise",
@@ -115,7 +115,6 @@
                   "align": "start",
                   "role": "heading",
                   "size": 48,
-                  "weight": 400,
                   "lineHeight": 1.1
                 },
                 "padding": {
@@ -129,7 +128,7 @@
                 "id": "el-rosa",
                 "block": "art-rosa",
                 "x": 3,
-                "y": 42,
+                "y": 16,
                 "w": 1,
                 "h": 8,
                 "visible": true,
@@ -152,7 +151,7 @@
                 "x": 0,
                 "y": 0,
                 "w": 6,
-                "h": 32,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "envelope",
@@ -164,9 +163,9 @@
                 "id": "el-cover",
                 "block": "cover",
                 "x": 7,
-                "y": 8,
-                "w": 5,
-                "h": 22,
+                "y": 0,
+                "w": 4,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "rise",
@@ -177,15 +176,14 @@
                   "align": "start",
                   "role": "heading",
                   "size": 64,
-                  "weight": 400,
                   "lineHeight": 1.1
                 }
               },
               {
                 "id": "el-rosa",
                 "block": "art-rosa",
-                "x": 7,
-                "y": 3,
+                "x": 11,
+                "y": 0,
                 "w": 1,
                 "h": 8,
                 "visible": true,
@@ -199,7 +197,7 @@
                 "id": "el-solitario",
                 "block": "art-solitario",
                 "x": 11,
-                "y": 30,
+                "y": 8,
                 "w": 1,
                 "h": 8,
                 "visible": true,

@@ -2,7 +2,7 @@
   "key": "bodas-de-plata",
   "name": "Bodas de plata",
   "description": "Veinticinco años: la cifra y el laurel en un azul acero sobre papel plata, con una composición asimétrica y el texto alineado a la izquierda.",
-  "layout": "corporate",
+  "layout": "editorial",
   "eventTypeTags": [
     "silver-wedding"
   ],
@@ -92,7 +92,7 @@
                 "x": 0,
                 "y": 0,
                 "w": 3,
-                "h": 14,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "scale",
@@ -104,9 +104,9 @@
                 "id": "el-laurel",
                 "block": "art-laurel",
                 "x": 0,
-                "y": 14,
+                "y": 8,
                 "w": 4,
-                "h": 3,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "draw",
@@ -118,9 +118,9 @@
                 "id": "el-cover",
                 "block": "cover",
                 "x": 0,
-                "y": 17,
+                "y": 16,
                 "w": 4,
-                "h": 20,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "fade",
@@ -131,7 +131,6 @@
                   "align": "start",
                   "role": "heading",
                   "size": 48,
-                  "weight": 500,
                   "lineHeight": 1.08
                 }
               }
@@ -146,9 +145,9 @@
                 "id": "el-cover",
                 "block": "cover",
                 "x": 0,
-                "y": 4,
+                "y": 0,
                 "w": 7,
-                "h": 24,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "fade",
@@ -159,7 +158,6 @@
                   "align": "start",
                   "role": "heading",
                   "size": 72,
-                  "weight": 500,
                   "lineHeight": 1.05
                 }
               },
@@ -169,7 +167,7 @@
                 "x": 8,
                 "y": 0,
                 "w": 4,
-                "h": 26,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "scale",
@@ -180,10 +178,10 @@
               {
                 "id": "el-laurel",
                 "block": "art-laurel",
-                "x": 0,
-                "y": 30,
-                "w": 12,
-                "h": 3,
+                "x": 4,
+                "y": 8,
+                "w": 4,
+                "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "draw",
@@ -491,7 +489,7 @@
         "id": "cover",
         "type": "cover",
         "config": {
-          "variant": "corporate",
+          "variant": "editorial",
           "envelope": false
         }
       },
