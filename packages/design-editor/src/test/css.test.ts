@@ -138,7 +138,50 @@ describe("scopeCss: hostile corpus", () => {
     "@media (min-width: 1px) { @media (max-width: 9px) { p { color: red } } }",
     "@media screen and (-webkit-min-device-pixel-ratio: 0) { p { color: red } }",
     "@media (min-width: expression(alert(1))) { p { color: red } }",
-    "p { color: red\u0000; background: url(x) }"
+    "p { color: red\u0000; background: url(x) }",
+    // Round 1 (M2): encoded dot segments in the media-store path.
+    "p { background: url(/media/public/assets/%2e%2e/%2e%2e/etc/passwd) }",
+    "p { background: url(/media/public/assets/%2E%2E/secret) }",
+    "p { background: url(/media/public/assets/%252e%252e/secret) }",
+    "p { background: url(/media/public/assets/.%2e/secret) }",
+    "p { background: url(/media/public/assets/%2e./secret) }",
+    "p { background: url(/media/public/assets/a%2f%2fb) }",
+    "p { background: url(/media/public/assets/a%5cb) }",
+    // Round 1 (M3, m2): selectors that start with a combinator or carry a namespace.
+    "+ .a { color: red }",
+    "~ .a { color: red }",
+    "> .a { color: red }",
+    "svg|a { color: red }",
+    "*|* { color: red }",
+    "|a { color: red }",
+    // Round 1 (M6, P22): sizes that could push or cover the protected blocks.
+    "p { padding-top: 99999px }",
+    "p { padding: 0 0 5000px }",
+    "p { padding-left: 99999rem }",
+    "p { height: 99999px }",
+    "p { min-height: 100000px }",
+    "p { max-height: 3000px }",
+    "p { width: 99999px }",
+    "p { inset: -99999px }",
+    "p { top: 5000px; position: relative }",
+    "p { bottom: 99999px; position: absolute }",
+    "p { grid-template-columns: repeat(99999, 1fr) }",
+    "p { grid-template-rows: repeat(1000, 10px) }",
+    "p { grid-template-columns: 99999px 1fr }",
+    "p { outline: 99999px solid red }",
+    "p { outline-width: 500px }",
+    "p { box-shadow: 0 0 99999px red }",
+    "p { box-shadow: 0 0 0 5000px red }",
+    "p { letter-spacing: 999px }",
+    "p { word-spacing: 9999px }",
+    "p { line-height: 99999 }",
+    "p { line-height: 9999px }",
+    "p { font-size: 99999px }",
+    "p { font-size: clamp(13px, 5vw, 99999px) }",
+    "p { padding: calc(1px * 99999) }",
+    "p { padding: calc(1rem*20000) }",
+    "p { padding: calc(100% + 99999px) }",
+    "p { padding: 100000vh }"
   ];
 
   it.each(vectors)("neutralises %s", (vector) => { attack(vector); });
@@ -190,5 +233,44 @@ describe("scopeCss: hostile corpus", () => {
   it("an unparseable sheet gives an empty result with a SYNTAX issue", () => {
     expect(scope("p { color: red; } @media").issues.length).toBeGreaterThan(0);
     expect(scope("}}}{{{").css).toBe("");
+  });
+});
+
+describe("scopeCss: round 1 (M3, M4, M6, m2)", () => {
+  it("is idempotent: scoping its own output returns the same text and no issues", () => {
+    const samples = [
+      "p { color: #333; margin: 0 0 12px } h2, .titulo > span { font-size: 24px }",
+      "a:hover::before { content: 'x'; color: red }",
+      "li:nth-child(2n+1) { color: red } p:not(.a) { color: red }",
+      "@media (max-width: 600px) and (prefers-color-scheme: dark) { p { color: #fff } }",
+      ".a { font-family: \"Playfair Display\", serif; background: linear-gradient(#fff, #eee); margin-left: -12px; transform: rotate(-3deg) scale(1.1); line-height: 1.5; padding: 8px 16px }"
+    ];
+    for (const sample of samples) {
+      const once = scope(sample);
+      const twice = scope(once.css);
+      expect(twice.issues, sample).toEqual([]);
+      expect(twice.css, sample).toBe(once.css);
+    }
+  });
+
+  it("an author who writes the scope class themselves is read as a descendant of it, and cannot reach the protected blocks", () => {
+    expect(scope(".rsvp-invitation p { color: red }").css).toBe(scope("p { color: red }").css);
+    expect(scope(".rsvp-invitation .rsvp-protected { color: red }").css).toBe("");
+  });
+
+  it("keeps a combinator between compounds but refuses one at the start", () => {
+    expect(scope("p + p { color: red }").css).toContain("p + p");
+    expect(codes("+ .a { color: red }")).toContain("SELECTOR_REJECTED");
+    expect(scope("+ .a, p { color: red }").css).toBe(`${DEFAULT_SCOPE} p${GUARD}{color:red}`);
+  });
+
+  it("keeps sizes inside the documented bounds and accepts ordinary designs", () => {
+    const ok = "section { padding: 48px 24px; margin: 0 auto; max-width: 640px; width: 100%; min-height: 100vh; height: auto; line-height: 1.6; letter-spacing: 0.05em; box-shadow: 0 8px 24px rgba(0,0,0,.2); outline: 2px solid #333; font-size: clamp(1.5rem, 4vw, 3rem); display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px }";
+    const { css, issues } = scope(ok);
+    expect(issues).toEqual([]);
+    for (const part of ["padding:48px 24px", "min-height:100vh", "repeat(3, 1fr)", "line-height:1.6", "box-shadow:0 8px 24px rgba(0,0,0,.2)"]) expect(css).toContain(part);
+    expect(codes("p { padding-top: 99999px }")).toContain("VALUE_REJECTED");
+    expect(scope("p { padding-top: 99999px }").css).toBe("");
+    expect(scope("p { padding-top: 400px }").css).toContain("padding-top:400px");
   });
 });

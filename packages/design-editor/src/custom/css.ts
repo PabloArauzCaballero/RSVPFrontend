@@ -2,7 +2,7 @@ import postcss, { type ChildNode, type Declaration, type Rule } from "postcss";
 import selectorParser, { type Node as SelectorNode, type Selector } from "postcss-selector-parser";
 import valueParser, { type Node as ValueNode } from "postcss-value-parser";
 import { design } from "@rsvp/celebration-theme";
-import { DEFAULT_MEDIA_PREFIXES, MAX_HTML_LENGTH } from "./html.js";
+import { DEFAULT_MEDIA_PREFIXES, MAX_HTML_LENGTH, isMediaStoreUrl } from "./html.js";
 
 /**
  * The stylesheet of the Advanced level (P2). Written by the host, so nothing in it is trusted: it is parsed (postcss), every
@@ -15,7 +15,11 @@ import { DEFAULT_MEDIA_PREFIXES, MAX_HTML_LENGTH } from "./html.js";
  *    (visibility, opacity, overflow, clip-path, filter, mask, pointer-events…), position is never fixed or sticky,
  *    z-index is capped below the layer the renderer gives protected blocks, offsets and negative margins are bounded,
  *    and text can never be smaller than 13 px.
- * The server runs the same checks when saving and the renderer scopes again when painting; this is the client's copy.
+ * Sizes are bounded too (see LIMITS_PX): padding, margin, width, height, offsets, grid repeat counts, shadows, outlines, spacing,
+ * line-height and font-size stay inside ranges that cannot push a protected block off the screen or paint over it.
+ * The editor checks this on the client and the renderer scopes again when painting. The server does not accept custom CSS yet
+ * (it answers 422 to `custom`), so nothing here is a copy of a server check.
+ * Idempotent: scoping its own output returns the same text (the scope prefix and the guard it adds are recognised and dropped first).
  */
 
 export const MAX_CSS_LENGTH = MAX_HTML_LENGTH;
@@ -69,8 +73,23 @@ const PROPERTIES: ReadonlySet<string> = new Set([
 ]);
 const BACKGROUND_PROPERTIES: ReadonlySet<string> = new Set(["background", "background-image"]);
 const BOUNDED_GEOMETRY: ReadonlySet<string> = new Set([
-  "margin", "margin-top", "margin-right", "margin-bottom", "margin-left", "top", "right", "bottom", "left", "inset", "text-indent", "word-spacing", "outline-offset", "text-underline-offset"
+  "margin", "margin-top", "margin-right", "margin-bottom", "margin-left", "top", "right", "bottom", "left", "inset", "text-indent", "outline-offset", "text-underline-offset"
 ]);
+/** Largest length (in px; rem and em count 16 px) any length inside these properties may reach. Percent and viewport units stay within 100. */
+const LIMITS_PX: Readonly<Record<string, number>> = {
+  padding: 400, "padding-top": 400, "padding-right": 400, "padding-bottom": 400, "padding-left": 400,
+  width: 1600, "min-width": 1600, "max-width": 1600, height: 2000, "min-height": 2000, "max-height": 2000,
+  gap: 200, "row-gap": 200, "column-gap": 200,
+  grid: 1600, "grid-template": 1600, "grid-template-columns": 1600, "grid-template-rows": 1600, "grid-auto-columns": 1600, "grid-auto-rows": 1600,
+  outline: 20, "outline-width": 20, "box-shadow": 100, "text-shadow": 100, "letter-spacing": 20, "word-spacing": 40
+};
+const MAX_GRID_REPEAT = 24;
+const MAX_FONT_PX = 128;
+const MAX_LINE_HEIGHT_PX = 96;
+const PX_PER_UNIT: Readonly<Record<string, number>> = { px: 1, rem: REM_PX, em: REM_PX, cm: 37.8, mm: 3.78, in: 96, pt: 4 / 3, pc: 16, q: 0.945, ch: 8, ex: 8 };
+const RELATIVE_UNITS: ReadonlySet<string> = new Set(["%", "vw", "vh", "vmin", "vmax", "svw", "svh", "lvw", "lvh", "dvw", "dvh"]);
+const NEUTRAL_UNITS: ReadonlySet<string> = new Set(["", "s", "ms", "deg", "fr", "turn", "rad"]);
+const MATH_FUNCTIONS: ReadonlySet<string> = new Set(["calc", "min", "max", "clamp"]);
 const FUNCTIONS: ReadonlySet<string> = new Set([
   "rgb", "rgba", "hsl", "hsla", "calc", "min", "max", "clamp", "var", "url", "linear-gradient", "radial-gradient", "conic-gradient", "repeating-linear-gradient", "repeating-radial-gradient",
   "cubic-bezier", "steps", "rotate", "scale", "scalex", "scaley", "repeat", "minmax", "fit-content"
@@ -111,7 +130,7 @@ function checkUrl(node: ValueNode, property: string, prefixes: readonly string[]
   const argument = node.nodes[0];
   const target = argument && (argument.type === "string" || argument.type === "word") ? argument.value.trim() : "";
   const prefix = prefixes.find((candidate) => target.startsWith(candidate));
-  if (!prefix || target.includes("..") || target.includes("\\") || target.slice(prefix.length).includes("//") || /[()'"\s]/.test(target.slice(prefix.length))) reject("url() outside the media store");
+  if (!prefix || !isMediaStoreUrl(target, prefixes) || /[()'"\s]/.test(target.slice(prefix.length))) reject("url() outside the media store");
 }
 
 function checkBounded(property: string, nodes: readonly ValueNode[]): void {
@@ -129,17 +148,61 @@ function checkBounded(property: string, nodes: readonly ValueNode[]): void {
   }
 }
 
+/** Every length anywhere in `nodes` (function arguments included) within `capPx`; unknown units and math that scales a length are refused. */
+function checkScan(property: string, nodes: readonly ValueNode[], capPx: number, insideMath = false): void {
+  for (const node of nodes) {
+    if (node.type === "function") {
+      const name = node.value.toLowerCase();
+      if (name === "var" || name === "url") continue;
+      if (name === "repeat") {
+        const count = node.nodes[0];
+        const ok = count !== undefined && count.type === "word" && (/^(auto-fill|auto-fit)$/i.test(count.value) || (/^\d{1,3}$/.test(count.value) && Number(count.value) >= 1 && Number(count.value) <= MAX_GRID_REPEAT));
+        if (!ok) reject(`${property}: repeat() count above ${MAX_GRID_REPEAT}`);
+      }
+      checkScan(property, node.nodes, capPx, insideMath || MATH_FUNCTIONS.has(name));
+    } else if (node.type === "div" && insideMath && node.value === "/") reject(`${property}: no division inside math`);
+    else if (node.type === "word") {
+      if (insideMath && (node.value === "*" || node.value === "/")) reject(`${property}: no multiplication inside math`);
+      const parsed = dimension(node);
+      if (!parsed) continue;
+      const unit = parsed.unit.toLowerCase();
+      const factor = PX_PER_UNIT[unit];
+      if (factor !== undefined) { if (Math.abs(parsed.number * factor) > capPx) reject(`${property}: ${parsed.number}${parsed.unit} is out of bounds (max ${capPx}px)`); }
+      else if (RELATIVE_UNITS.has(unit)) { if (Math.abs(parsed.number) > 100) reject(`${property}: ${parsed.number}${parsed.unit} is out of bounds`); }
+      else if (!NEUTRAL_UNITS.has(unit)) reject(`${property}: unit ${parsed.unit}`);
+    }
+  }
+}
+
+function checkLineHeight(nodes: readonly ValueNode[]): void {
+  for (const node of nodes) {
+    if (node.type === "space" || node.type === "div") continue;
+    if (node.type === "function") { checkScan("line-height", [node], MAX_LINE_HEIGHT_PX); continue; }
+    if (node.type !== "word") reject("line-height: only plain values");
+    if (["normal", "inherit", "initial", "unset"].includes(node.value.toLowerCase())) continue;
+    const parsed = dimension(node);
+    if (!parsed) reject("line-height: not a length");
+    const { number, unit } = parsed as { number: number; unit: string };
+    if (unit === "" && (number < 0.8 || number > 4)) reject("line-height: between 0.8 and 4");
+    else if (unit === "%" && (number < 80 || number > 400)) reject("line-height: between 80% and 400%");
+    else if (unit !== "" && unit !== "%") checkScan("line-height", [node], MAX_LINE_HEIGHT_PX);
+  }
+}
+
 function checkFontSize(nodes: readonly ValueNode[]): void {
   const first = nodes.find((node) => node.type !== "space");
   if (!first) return reject("font-size: empty");
   if (nodes.filter((node) => node.type !== "space").length !== 1) return reject("font-size: one value");
   if (first.type === "function" && first.value.toLowerCase() === "clamp") {
     const smallest = first.nodes.find((node) => node.type === "word");
-    return smallest ? checkFontSize([smallest]) : reject("font-size: clamp");
+    if (!smallest) return reject("font-size: clamp");
+    checkFontSize([smallest]);
+    return checkScan("font-size", first.nodes, MAX_FONT_PX, true);
   }
   const parsed = dimension(first);
   const px = parsed ? toPx(parsed.number, parsed.unit) : null;
   if (px === null || px < MIN_FONT_PX) reject(`font-size: at least ${MIN_FONT_PX}px`);
+  if ((px as number) > MAX_FONT_PX) reject(`font-size: at most ${MAX_FONT_PX}px`);
 }
 
 function checkFontFamily(nodes: readonly ValueNode[]): void {
@@ -177,6 +240,7 @@ function checkValue(property: string, value: string, context: Context): string {
     }
     case "font-size": checkFontSize(top); break;
     case "font-family": checkFontFamily(top); break;
+    case "line-height": checkLineHeight(top); break;
     case "content": if (top.some((node) => node.type !== "string" && node.type !== "space")) reject("content: only text"); break;
     case "transform": {
       for (const node of top) {
@@ -194,7 +258,11 @@ function checkValue(property: string, value: string, context: Context): string {
       }
       break;
     }
-    default: if (BOUNDED_GEOMETRY.has(property)) checkBounded(property, top);
+    default: {
+      if (BOUNDED_GEOMETRY.has(property)) checkBounded(property, top);
+      const cap = LIMITS_PX[property];
+      if (cap !== undefined) checkScan(property, top, cap);
+    }
   }
   return valueParser.stringify(parsed.nodes).trim();
 }
@@ -234,10 +302,28 @@ function checkSimpleSelector(node: SelectorNode): void {
   }
 }
 
+const GUARD = `:not(.${PROTECTED_CLASS}):not(.${PROTECTED_CLASS} *)`;
+
+/**
+ * Scoping is idempotent: a selector this module already wrote ("<scope> a:not(.rsvp-protected):not(.rsvp-protected *)") is read
+ * back as the author's selector, by dropping the leading scope and the guard (both are added again, in place, afterwards).
+ * Anything else that starts with the scope is the author's own and is kept as a descendant of it.
+ */
+function ownOutputStripped(selector: Selector, scope: string): Selector {
+  const text = selector.toString().trim();
+  const lead = new RegExp(`^(?:${scope.replace(/[.\\-]/g, "\\$&")}\\s+)+`);
+  if (!text.includes(GUARD) && !lead.test(text)) return selector;
+  const stripped = text.split(GUARD).join("").replace(lead, "");
+  let rebuilt: Selector | undefined;
+  selectorParser((root) => { rebuilt = root.first; }).processSync(stripped);
+  return rebuilt ?? selector;
+}
+
 /** The selector rewritten under the scope with the protected-block guard on its last compound, or null (with the reason in `reason`). */
 function scopeSelector(selector: Selector, scope: string): string {
   const parts: string[] = [];
   let lastCombinator = -1;
+  if (selector.first?.type === "combinator") reject("a selector cannot start with a combinator");
   selector.each((node, index) => { if (node.type === "combinator") lastCombinator = index; });
   let guardAt = -1;
   selector.each((node, index) => {
@@ -264,20 +350,20 @@ function scopeSelector(selector: Selector, scope: string): string {
     parts.push(String(node));
   });
   if (parts.length === 0) reject("empty selector");
-  const guard = `:not(.${PROTECTED_CLASS}):not(.${PROTECTED_CLASS} *)`;
-  if (guardAt === -1) parts.push(guard); else parts.splice(guardAt, 0, guard);
+  if (guardAt === -1) parts.push(GUARD); else parts.splice(guardAt, 0, GUARD);
   return `${scope} ${parts.join("").replace(/\s+/g, " ").trim()}`;
 }
 
 function transformRule(rule: Rule, context: Context): string | null {
   context.counters.rules += 1;
   if (context.counters.rules > MAX_RULES) { if (context.counters.rules === MAX_RULES + 1) context.issues.push({ code: "TOO_MANY_RULES", detail: `more than ${MAX_RULES}` }); return null; }
+  if (rule.selector.includes("|")) { context.issues.push({ code: "SELECTOR_REJECTED", detail: "namespace selectors are not allowed" }); return null; }
   if (rule.selector.includes("\\")) { context.issues.push({ code: "ESCAPE_REJECTED", detail: rule.selector.slice(0, 60) }); return null; }
   const selectors: string[] = [];
   try {
     selectorParser((root) => {
       root.each((selector) => {
-        try { selectors.push(scopeSelector(selector, context.scope)); }
+        try { selectors.push(scopeSelector(ownOutputStripped(selector, context.scope), context.scope)); }
         catch (error) { if (!(error instanceof Reject)) throw error; context.issues.push({ code: "SELECTOR_REJECTED", detail: `${selector.toString().trim().slice(0, 60)}: ${error.message}` }); }
       });
     }).processSync(rule.selector);

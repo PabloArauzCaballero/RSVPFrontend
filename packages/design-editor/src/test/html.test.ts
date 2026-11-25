@@ -165,3 +165,50 @@ describe("sanitizeHtml: hostile corpus", () => {
     expect(codes("<custom-tag>x</custom-tag>")).toContain("TAG_UNWRAPPED");
   });
 });
+
+describe("sanitizeHtml: hostile corpus, round 1 (M1, M2, M5)", () => {
+  const hrefs: readonly string[] = [
+    "/\\evil.example", "\\evil.example", "\\\\evil.example", "/\\/evil.example", "//evil.example", "/%5cevil.example", "/%5Cevil.example", "/%255cevil.example",
+    "/\n/evil.example", "/\t/evil.example", "/\r\\evil.example", "/%2f/evil.example", "/%2Fevil.example", "/%252fevil.example",
+    "https://ok.example\\@evil.example", "/ /evil.example"
+  ];
+  it.each(hrefs)("drops the href %j that a browser would send off-site", (href) => {
+    const html = `<a href="${href.replace(/\t/g, "&#9;").replace(/\n/g, "&#10;").replace(/\r/g, "&#13;")}">x</a>`;
+    const output = clean(html).html;
+    expect(output, output).not.toMatch(/href=/);
+    expect(codes(html)).toContain("URL_REJECTED");
+  });
+
+  it("still keeps honest site-relative, in-page and https links", () => {
+    expect(clean('<a href="/c/boda/regalos">x</a>').html).toContain('href="/c/boda/regalos"');
+    expect(clean('<a href="/r/11111111-1111-1111-1111-111111111111?a=b">x</a>').html).toContain("href=");
+    expect(clean('<a href="#info">x</a>').html).toContain('href="#info"');
+    expect(clean('<a href="https://ok.example/p">x</a>').html).toContain('href="https://ok.example/p"');
+  });
+
+  const sources: readonly string[] = [
+    "/media/public/assets/%2e%2e/%2e%2e/etc/passwd", "/media/public/assets/%2E%2E/x", "/media/public/assets/%252e%252e/x", "/media/public/assets/.%2e/x",
+    "/media/public/assets/%2e./x", "/media/public/assets/%252e%252e%252f/x", "/media/public/assets/a%2f%2fb", "/media/public/assets/a%5cb", "/media/public/assets/a%00b", "/media/public/assets/%zz"
+  ];
+  it.each(sources)("drops the image whose src %s climbs out of the media store", (src) => {
+    const html = `<img src="${src}" alt="x">`;
+    expect(clean(html).html).toBe("");
+    expect(codes(html)).toContain("URL_REJECTED");
+  });
+
+  it("keeps a normal media-store image, with percent-encoding that stays inside", () => {
+    expect(clean('<img src="/media/public/assets/abc%20d/full" alt="x">').html).toContain('src="/media/public/assets/abc%20d/full"');
+  });
+
+  it("the reserved classes (rsvp-*, de-*) never survive in HTML, so nothing can pose as a protected block or the editor", () => {
+    expect(clean('<div class="rsvp-protected">x</div>').html).toBe("<div>x</div>");
+    expect(clean('<div class="RSVP-gifts-cta DE-bar ok">x</div>').html).toBe('<div class="ok">x</div>');
+    expect(clean('<p class="de-code">x</p>').html).toBe("<p>x</p>");
+    expect(codes('<p class="rsvp-protected">x</p>')).toContain("ATTRIBUTE_REMOVED");
+  });
+
+  it("ids are not an allowed attribute at all", () => {
+    expect(clean('<div id="rsvp-protected" class="a">x</div>').html).toBe('<div class="a">x</div>');
+    expect(clean('<div id="de-bar">x</div>').html).toBe("<div>x</div>");
+  });
+});
