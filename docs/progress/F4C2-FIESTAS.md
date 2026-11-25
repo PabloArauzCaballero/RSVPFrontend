@@ -1,6 +1,6 @@
 # F4 c2 · grupo de fiestas como documentos de diseño v2 (estado)
 
-Rama FE `feat/plantillas-f4c2-fiestas` (sobre `feat/plantillas-f4c1-bodas`), rama BE `feat/plantillas-f4c2-fiestas` (sobre `feat/plantillas-f4c1-bodas`). Pila: ... → PR b → c1 → este.
+Rama FE `feat/plantillas-f4c2-fiestas` (sobre `feat/plantillas-f4c1-bodas`, integrada por merge en `63ec2c3`), rama BE `feat/plantillas-f4c2-fiestas` (sobre `feat/plantillas-f4c1-bodas`). Pila: ... → PR b → c1 → este.
 
 ## Qué hay
 - Siete documentos v2: Festivo, Fiesta lila, Cumpleaños adulto, Fiesta temática, Fin de año, Despedida y Reencuentro (`packages/celebration-theme/src/design/documents/*.json`; los mismos bytes en BE `seeds/templates/design-v2/`). Los genera y valida `scripts/design-documents/fiestas.py` (reutiliza `bodas.py`: contraste AA, matiz fuera del amarillo).
@@ -16,9 +16,9 @@ Rama FE `feat/plantillas-f4c2-fiestas` (sobre `feat/plantillas-f4c1-bodas`), ram
 5. Solo Reencuentro conserva recomendaciones en su lista de secciones.
 
 ## Verificación (qué se ejecutó, 2026-11-25)
-- `packages/celebration-theme`: `vitest run` → 2647 en verde (87 nuevas); `tsc --noEmit` limpio; eslint `--max-warnings 0` sobre `src/design` y el spec nuevo, limpio.
+- `packages/celebration-theme`: `vitest run` → 2669 en verde (87 nuevas de c2 sobre la base c1 corregida); `tsc --noEmit` limpio; eslint `--max-warnings 0` sobre `src/design` y el spec nuevo, limpio.
 - BE: `DJANGO_ENV=development manage.py test tests.test_design_v2_fiestas_seeds tests.test_design_v2_bodas_seeds` → 12 en verde (`validate_design`, sin avisos de contraste, claves = semillas v1, sin amarillo). **No** se corrió la suite completa con Postgres.
-- Playwright (Chromium 1243 preinstalado, `next build` + `next start` + fixture de contrato, **no** backend real): `plantillas-v2-fiestas.spec.ts` → **113 pasadas** (7 × con/sin foto × claro/oscuro × 360/768/1280: regalos visible ≥ 44 px, sin desborde, AA medido en DOM, paleta del documento; axe en 360; una sola entrada y movimiento reducido).
+- Playwright con Google Chrome for Testing 158.0.8127.36 (`/usr/bin/google-chrome`, vía `CHROMIUM_PATH`; no el Chromium 1243 empaquetado), `next build` + `next start` + fixture de contrato, **no** backend real: `plantillas-v2-fiestas.spec.ts` → **113 pasadas** (recorrido repetido tras la integración de c1 y la regeneración de los JSON) (7 × con/sin foto × claro/oscuro × 360/768/1280: regalos visible ≥ 44 px, sin desborde, AA medido en DOM, paleta del documento; axe en 360; una sola entrada y movimiento reducido).
 - Capturas Linux (evidencia, no líneas base): `docs/progress/evidence/plantillas-f4c2/`.
 - **Sin ejecutar:** backend real, iOS/Android, Safari/Firefox, lector de pantalla, gitleaks, `harness:validate`, `apps/universal`, texto sobre foto real.
 

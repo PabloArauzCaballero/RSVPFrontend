@@ -22,7 +22,7 @@
     "app",
     "next-env.d.ts",
     "tests",
-    ".next-c2/types/**/*.ts"
+    ".next-c2e2e/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"
