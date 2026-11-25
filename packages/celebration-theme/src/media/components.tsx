@@ -87,6 +87,8 @@ export interface EmbedFacadeProps {
   readonly onLoad?: () => void;
 }
 
+const FACADE_SHORT: Readonly<Record<Embed["kind"], string>> = { video: "celebration.media.openVideo", audio: "celebration.media.openMusic", map: "celebration.media.openMap" };
+
 const FACADE_LABEL: Readonly<Record<Embed["kind"], string>> = { video: "celebration.media.playVideo", audio: "celebration.media.playMusic", map: "celebration.media.showMap" };
 
 /** Click-to-load facade. Nothing from the provider is requested until the guest taps: no iframe, no script, no cookie, no IP. Then the iframe
@@ -94,7 +96,7 @@ const FACADE_LABEL: Readonly<Record<Embed["kind"], string>> = { video: "celebrat
 export function EmbedFacade({ embed, title, t, poster, onLoad }: EmbedFacadeProps): ReactNode {
   if (!embed || !isAllowedEmbedUrl(embed.url)) return null;
   const labels: EmbedLabels = {
-    open: t(FACADE_LABEL[embed.kind], { title }), retry: t("celebration.media.retry", { title }), privacy: t("celebration.media.privacy", { provider: embed.label }),
+    shortOpen: t(FACADE_SHORT[embed.kind]), shortRetry: t("celebration.media.retryShort"), open: t(FACADE_LABEL[embed.kind], { title }), retry: t("celebration.media.retry", { title }), privacy: t("celebration.media.privacy", { provider: embed.label }),
     loading: t("celebration.media.loading", { provider: embed.label }), failed: t("celebration.media.loadFailed", { provider: embed.label })
   };
   return <EmbedFacadeView embed={embed} title={title} labels={labels} poster={poster ? <MediaImage media={poster} alt="" /> : null} {...(onLoad ? { onLoad } : {})} />;

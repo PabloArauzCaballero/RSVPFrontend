@@ -15,7 +15,7 @@ export { MAX_AUTHOR_Z_INDEX, MIN_FONT_PX };
  *  - url() only toward the media store; no expression(), javascript:, image-set(), attr();
  *  - properties that could hide, move or cover the protected blocks by acting on an ancestor are not in the list at all
  *    (visibility, opacity, overflow, clip-path, filter, mask, pointer-events…), position is never fixed or sticky,
- *    z-index is capped below the layer the renderer gives protected blocks, offsets and negative margins are bounded,
+ *    z-index is capped (100) below the layer the renderer gives protected blocks (1000 for the blocks and their page, 2000 for the dock: styles.css, R2-M1), offsets and negative margins are bounded,
  *    and text can never be smaller than 13 px.
  * Values are typed per property (see css-values.ts): only properties in SPECS exist, and every length is evaluated as an interval in px in
  * the worst case (em up to 128 px, % against the largest box, vw/vh against the largest screen, calc/min/max/clamp evaluated, sums added up),
@@ -31,7 +31,7 @@ export { MAX_AUTHOR_Z_INDEX, MIN_FONT_PX };
 export const MAX_CSS_LENGTH = MAX_HTML_LENGTH;
 export const DEFAULT_SCOPE = ".rsvp-invitation";
 export const PROTECTED_CLASS = "rsvp-protected";
-/** z-index the renderer gives protected blocks; a stylesheet may never reach it. */
+/** z-index the renderer gives protected blocks (styles.css, with `!important`, which a stylesheet cannot use: it is stripped); a stylesheet may never reach it. */
 export const PROTECTED_Z_INDEX = 1000;
 const MAX_RULES = 400;
 const MAX_DECLARATIONS = 3_000;

@@ -8,7 +8,7 @@ import type { Embed } from "./embed.js";
 /** How long the guest waits for the provider before the facade offers to try again. */
 const LOAD_DEADLINE_MS = 12000;
 
-export interface EmbedLabels { readonly open: string; readonly retry: string; readonly privacy: string; readonly loading: string; readonly failed: string }
+export interface EmbedLabels { /** Visible text of the button: short, so it fits a phone. The full name (with the title) is its accessible name. */ readonly shortOpen: string; readonly shortRetry: string; readonly open: string; readonly retry: string; readonly privacy: string; readonly loading: string; readonly failed: string }
 
 export interface EmbedFacadeViewProps {
   readonly embed: Embed;
@@ -46,9 +46,9 @@ export function EmbedFacadeView({ embed, title, labels, poster, onLoad }: EmbedF
       ) : (
         <>
           {poster}
-          <button type="button" className="celebration-embed-play" onClick={start} aria-describedby={noteId}>
+          <button type="button" className="celebration-embed-play" onClick={start} aria-describedby={noteId} aria-label={phase === "failed" ? labels.retry : labels.open}>
             <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M8 5v14l11-7z" fill="currentColor" /></svg>
-            <span>{phase === "failed" ? labels.retry : labels.open}</span>
+            <span>{phase === "failed" ? labels.shortRetry : labels.shortOpen}</span>
           </button>
           {phase === "failed" ? <p role="alert" className="celebration-note">{labels.failed}</p> : null}
           <p id={noteId} className="celebration-note">{labels.privacy}</p>

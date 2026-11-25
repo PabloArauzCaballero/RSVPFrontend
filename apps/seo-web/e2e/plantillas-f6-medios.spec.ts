@@ -2,6 +2,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { AxeBuilder } from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import sharp from "sharp";
+import { scopeCss } from "../../../packages/celebration-theme/src/custom/css";
 
 // F6 · medios y embebidos del renderizador v2, dibujados por el sitio real (next build + start) sobre el fixture de contrato.
 // Afirma lo que debe cumplirse; solo escribe imágenes cuando F6_EVIDENCE_DIR está definido (evidencia, nunca línea base).
@@ -191,4 +192,45 @@ test("the song sits in the same card as the video and the map, and the map label
   await expect(page.locator('.celebration-embed[data-kind="audio"] .celebration-audio-button')).toBeVisible();
   expect(await page.locator(".celebration-embed").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-kind")))).toEqual(["video", "map", "audio"]);
   expect(await page.getByRole("button", { name: /Ver el mapa/ }).evaluate((node) => getComputedStyle(node).textAlign)).toMatch(/^(start|left)$/);
+});
+
+// R2-M1 (P22): whatever z-index the host's stylesheet gives the page, the gifts and reply buttons stay the element under their own centre.
+const COVERING_CSS = [
+  "section{position:relative;z-index:100;min-height:200vh}",
+  "div{position:relative;z-index:100;width:100vw;height:100vh}",
+  "*{position:relative;z-index:100}"
+];
+for (const css of COVERING_CSS) {
+  for (const width of [360, 1280] as const) {
+    test(`author CSS ${css} at ${width}px never covers the gifts and reply buttons`, async ({ page }) => {
+      await open(page, width);
+      const scoped = scopeCss(css, { scope: ".celebration-design" }).css;
+      expect(scoped).toContain("z-index:100");
+      await page.addStyleTag({ content: scoped });
+      const links = page.locator('a[data-action="gifts"], a[data-action="rsvp"], a[data-action="rsvp-help"]');
+      const count = await links.count();
+      expect(count).toBeGreaterThanOrEqual(2);
+      for (let index = 0; index < count; index += 1) {
+        const link = links.nth(index);
+        await link.scrollIntoViewIfNeeded();
+        const covered = await link.evaluate((node) => {
+          const box = node.getBoundingClientRect();
+          const top = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+          return top === null || (top !== node && !node.contains(top));
+        });
+        expect(covered, `button ${index} (${await link.getAttribute("data-action")}) is covered`).toBe(false);
+      }
+    });
+  }
+}
+
+test("at 768 the song, the video and the map are cards of the same height, and the map button fits its content at 360", async ({ page }) => {
+  await open(page, 768);
+  const heights = await page.locator(".celebration-embed").evaluateAll((nodes) => nodes.map((node) => Math.round(node.getBoundingClientRect().height)));
+  expect(heights).toHaveLength(3);
+  expect(Math.max(...heights) - Math.min(...heights)).toBeLessThanOrEqual(2);
+  await open(page, 360);
+  const map = await page.getByRole("button", { name: /Ver el mapa/ }).evaluate((node) => ({ button: node.getBoundingClientRect().width, card: node.parentElement!.getBoundingClientRect().width, lines: node.getBoundingClientRect().height }));
+  expect(map.button).toBeLessThan(map.card - 32);
+  expect(map.lines).toBeLessThan(60);
 });
