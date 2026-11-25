@@ -8,6 +8,10 @@ const JS_EXTENSION = '.js';
 const resolveRequest = config.resolver.resolveRequest;
 config.resolver.resolveRequest = (context, moduleName, platform) => {
   const resolve = resolveRequest ?? context.resolveRequest;
+  // The invitation renderer (design/render -> custom/css) parses advanced CSS with postcss. Metro takes postcss's ESM wrapper
+  // (postcss.mjs), which re-enters its own CJS entry and evaluates with `default` undefined: the web bundle then throws
+  // «Cannot read properties of undefined (reading 'stringify')» when it loads. The CJS entry is the same code without the wrapper.
+  if (moduleName === 'postcss') return { type: 'sourceFile', filePath: require('node:path').join(require('node:path').dirname(require.resolve('postcss/package.json')), 'lib', 'postcss.js') };
   if (moduleName.startsWith('.') && moduleName.endsWith(JS_EXTENSION)) {
     try {
       return resolve(context, moduleName.slice(0, -JS_EXTENSION.length), platform);

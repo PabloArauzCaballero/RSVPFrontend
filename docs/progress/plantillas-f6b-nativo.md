@@ -23,3 +23,17 @@ Corrige: PL-F6 (P10), PL-L3. Rama `feat/plantillas-f6b-nativo` sobre `feat/plant
 - `onHttpError` de Android: se asume que solo avisa de la navegación principal; falta confirmarlo en un dispositivo.
 - Línea base Playwright del universal (macOS): `host-vista-previa` y las demás pantallas con vista previa cambian de aspecto (ahora un iframe al sitio); no se regeneró desde Linux.
 - Recorrido de Expo web contra el backend real.
+
+## Ronda 1 del orquestador (PL-134-M1..M4, m1, m2, m3)
+
+- M1: `/c/{slug}` guarda el token del fragmento `#t=` y limpia la dirección con un script en línea al comienzo de la página (antes de cualquier iframe o recurso de terceros) y, de respaldo, `readGuestCredential` en la isla. e2e: `location.hash === ""`, token en sessionStorage, «Confirmar asistencia» visible, ninguna petición ni Referer con el token, sin iframes.
+- M2: en web, antes de navegar al sitio se sondea (`HEAD`, `no-cors`, sin cookies ni Referer, 6 s). Sin respuesta: `OfflineState` con reintento y «Ver regalos». Límite: `no-cors` solo distingue «el sitio responde» de «no responde»; un 5xx del sitio lo muestra el propio sitio. e2e con red bloqueada y reintento.
+- M3: el esqueleto de carga usa la columna de 720 px centrada (e2e a 1440).
+- M4: la vista previa web falla por `error` del iframe, a los 3 s de su `load` si la página no avisa, o a los 8 s si no carga.
+- m1: la regla de encabezados usa `(?!vista-previa$)`. m2: `/vista-previa` ya no lleva CSP-Report-Only. m3: el 404 de la invitación no ofrece «Ver regalos» a propósito (no hay invitación ni lista); se documenta aquí.
+- No hecho: m4 (logo del sitio duplicado en oscuro dentro de la vista previa), m5 (marco del admin a 390), m6 parcial (los enlaces inertes siguen en el Tab: quitarlos del Tab deja la navegación desplazable sin contenido enfocable y axe lo marca como serio).
+- Hallazgo de la base (#131): `design/render` importa `postcss`, y Metro tomaba su envoltorio ESM: el bundle web del universal fallaba al cargar con «Cannot read properties of undefined (reading 'stringify')». `apps/universal/metro.config.js` fuerza la entrada CJS de postcss.
+
+### Líneas base macOS que cambian (no regeneradas desde Linux)
+
+`host-vista-previa-{390,768,1440}`, `host-templates-{390,768,1440}`, `host-editor-general-{390,768,1440}`. El gate visual no define `EXPO_PUBLIC_SITE_URL`: regenerar exige el sitio servido, o se captura el esqueleto.

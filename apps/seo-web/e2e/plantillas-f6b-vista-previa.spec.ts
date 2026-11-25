@@ -44,6 +44,7 @@ let current: unknown = null;
 test.beforeAll(async () => {
   harness = createServer((request, response) => {
     const path = new URL(request.url ?? "/", APP).pathname;
+    if (path.startsWith("/api/")) { response.writeHead(404, { "content-type": "application/problem+json" }); response.end("{}"); return; }
     if (path !== "/harness" && DIST) {
       // The exported Expo web app (SPA): a file when there is one, index.html otherwise.
       const file = join(DIST, path);
