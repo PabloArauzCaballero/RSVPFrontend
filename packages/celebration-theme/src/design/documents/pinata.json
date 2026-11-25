@@ -135,6 +135,28 @@
                   "align": "start",
                   "lineHeight": 1.02
                 }
+              },
+              {
+                "id": "el-age",
+                "block": "age",
+                "x": 0,
+                "y": 38,
+                "w": 4,
+                "h": 12,
+                "visible": true,
+                "animation": {
+                  "entrance": "scale",
+                  "delayMs": 800,
+                  "durationMs": 600
+                },
+                "typography": {
+                  "role": "heading",
+                  "size": 120,
+                  "weight": 700,
+                  "align": "start",
+                  "lineHeight": 1,
+                  "colour": "accent"
+                }
               }
             ]
           },
@@ -163,7 +185,7 @@
                 "x": 0,
                 "y": 6,
                 "w": 7,
-                "h": 26,
+                "h": 28,
                 "visible": true,
                 "animation": {
                   "entrance": "rise",
@@ -181,15 +203,37 @@
               {
                 "id": "el-pinata",
                 "block": "art-pinata",
-                "x": 8,
+                "x": 9,
                 "y": 5,
-                "w": 4,
-                "h": 28,
+                "w": 3,
+                "h": 16,
                 "visible": true,
                 "animation": {
                   "entrance": "rise",
                   "delayMs": 250,
                   "durationMs": 900
+                }
+              },
+              {
+                "id": "el-age",
+                "block": "age",
+                "x": 8,
+                "y": 22,
+                "w": 4,
+                "h": 16,
+                "visible": true,
+                "animation": {
+                  "entrance": "scale",
+                  "delayMs": 800,
+                  "durationMs": 600
+                },
+                "typography": {
+                  "role": "heading",
+                  "size": 160,
+                  "weight": 700,
+                  "align": "center",
+                  "lineHeight": 1,
+                  "colour": "accent"
                 }
               }
             ]
@@ -474,6 +518,13 @@
           "illustrationId": "pinata",
           "tint": "accent",
           "drawOnEnter": false
+        }
+      },
+      {
+        "id": "age",
+        "type": "text",
+        "config": {
+          "text": "6"
         }
       },
       {
