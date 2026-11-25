@@ -94,8 +94,8 @@
             "rowHeight": 8,
             "elements": [
               {
-                "id": "el-figure",
-                "block": "figure",
+                "id": "el-monogram",
+                "block": "monogram",
                 "x": 0,
                 "y": 0,
                 "w": 4,
@@ -178,8 +178,8 @@
             "rowHeight": 8,
             "elements": [
               {
-                "id": "el-figure",
-                "block": "figure",
+                "id": "el-monogram",
+                "block": "monogram",
                 "x": 3,
                 "y": 0,
                 "w": 6,
@@ -559,11 +559,9 @@
         }
       },
       {
-        "id": "figure",
-        "type": "text",
-        "config": {
-          "text": "25"
-        }
+        "id": "monogram",
+        "type": "monogram",
+        "config": {}
       },
       {
         "id": "art-deco",

@@ -135,28 +135,6 @@
                   "align": "start",
                   "lineHeight": 1.02
                 }
-              },
-              {
-                "id": "el-age",
-                "block": "age",
-                "x": 0,
-                "y": 38,
-                "w": 4,
-                "h": 12,
-                "visible": true,
-                "animation": {
-                  "entrance": "scale",
-                  "delayMs": 800,
-                  "durationMs": 600
-                },
-                "typography": {
-                  "role": "heading",
-                  "size": 120,
-                  "weight": 700,
-                  "align": "start",
-                  "lineHeight": 1,
-                  "colour": "accent"
-                }
               }
             ]
           },
@@ -212,28 +190,6 @@
                   "entrance": "rise",
                   "delayMs": 250,
                   "durationMs": 900
-                }
-              },
-              {
-                "id": "el-age",
-                "block": "age",
-                "x": 8,
-                "y": 22,
-                "w": 4,
-                "h": 16,
-                "visible": true,
-                "animation": {
-                  "entrance": "scale",
-                  "delayMs": 800,
-                  "durationMs": 600
-                },
-                "typography": {
-                  "role": "heading",
-                  "size": 160,
-                  "weight": 700,
-                  "align": "center",
-                  "lineHeight": 1,
-                  "colour": "accent"
                 }
               }
             ]
@@ -518,13 +474,6 @@
           "illustrationId": "pinata",
           "tint": "accent",
           "drawOnEnter": false
-        }
-      },
-      {
-        "id": "age",
-        "type": "text",
-        "config": {
-          "text": "6"
         }
       },
       {
