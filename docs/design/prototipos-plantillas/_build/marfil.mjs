@@ -17,7 +17,7 @@ p{max-width:54ch;text-wrap:pretty}
 .muted{color:var(--muted)}
 .btn{border-radius:2px;font-family:var(--sans);letter-spacing:.01em}
 /* encabezado */
-.top{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 22px;min-height:64px;background:color-mix(in srgb,var(--canvas) 94%,transparent);border-bottom:1px solid var(--line)}
+.top{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 22px;min-height:64px;background:var(--canvas);border-bottom:1px solid var(--line)}
 .mark{font:italic 500 26px/1 var(--serif);text-decoration:none;color:var(--text);display:flex;align-items:center;min-height:44px}
 .mark i{color:var(--accent);padding:0 .12em;font-size:.82em}
 .top .date{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
