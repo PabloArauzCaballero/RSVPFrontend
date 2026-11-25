@@ -209,7 +209,7 @@ test.describe("editor shell (PR a, ronda 2)", () => {
     await expect(page.getByTestId("design-warnings")).toContainText("En el tema oscuro, acento sobre fondo tiene contraste 3.21:1", { timeout: 5000 });
     await page.screenshot({ path: shot("estado-avisos-contraste-1280") });
     expect(await serious(page)).toEqual([]);
-    await page.getByRole("button", { name: /Cambiar acento del tema oscuro a #C9A27A/i }).click();
+    await page.getByRole("button", { name: /Usar #C9A27A en acento del tema oscuro/i }).click();
     await expect(page.getByLabel("Color de acento (oscuro)")).toHaveValue("#c9a27a");
   });
 
