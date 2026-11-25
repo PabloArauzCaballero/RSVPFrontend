@@ -76,7 +76,6 @@ a.de-btn { text-decoration: none; box-sizing: border-box; }
 .de-free { position: relative; }
 .de-el { display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 1px solid var(--de-border); background: var(--de-canvas); border-radius: 4px; padding: 6px 10px; font-size: 14px; color: var(--de-muted); overflow: hidden; }
 .de-el[data-required="true"] { border: 2px solid var(--de-text); background: var(--de-surface); color: var(--de-text); font-weight: 600; }
-.de-el[data-visible="false"] { border-style: dashed; }
 .de-el[data-visible="false"] .de-el-name { text-decoration: line-through; }
 .de-free .de-el { position: absolute; }
 .de-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 500; color: var(--de-muted); white-space: nowrap; }
@@ -137,13 +136,26 @@ a.de-btn { text-decoration: none; box-sizing: border-box; }
 .de-sections label { min-width: 0; }
 .de-move .de-btn { min-width: 44px; }
 .de-canvas-editor { width: 100%; display: grid; gap: 12px; justify-items: center; }
+.de-canvas-editor > .de-hint, .de-canvas-editor > .de-skip { justify-self: stretch; margin: 0; }
 .de-canvas-editor .de-page { width: 100%; max-width: 1024px; background: var(--de-surface); border: 1px solid var(--de-border); }
-.de-canvas-editor .de-free { margin: 0 auto; background: var(--de-canvas); outline: 1px dashed var(--de-border); touch-action: none; }
-.de-canvas-editor .de-el { cursor: grab; user-select: none; touch-action: none; }
-.de-canvas-editor .de-el[data-selected="true"] { outline: 2px solid var(--de-focus); outline-offset: 1px; }
+.de-page-heading { font: 500 12px/1 Geist, system-ui, sans-serif; letter-spacing: 0.04em; text-transform: uppercase; color: var(--de-muted); margin: 0 0 10px; }
+/* Contornos: los elementos sin seleccionar y el borde del lienzo usan --de-field (>= 3:1 sobre el papel, WCAG 1.4.11). */
+.de-canvas-editor .de-free { margin: 36px auto 20px; background: var(--de-canvas); outline: 1px dashed var(--de-field); }
+.de-canvas-editor .de-el { border: 1px solid var(--de-field); cursor: grab; user-select: none; overflow: visible; }
+.de-canvas-editor .de-el[data-selected="true"] { outline: 2px solid var(--de-focus); outline-offset: 1px; touch-action: none; }
+.de-canvas-editor .de-el[data-required="true"] { border: 2px solid var(--de-text); }
+/* Oculto: borde discontinuo, nombre tachado y una etiqueta con icono; nunca solo el borde. */
+.de-canvas-editor .de-el[data-visible="false"] { border-style: dashed; background: var(--de-surface-muted); }
+.de-el-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; line-height: 1.2; color: var(--de-text); border: 1px solid var(--de-field); border-radius: 3px; padding: 2px 6px; background: var(--de-surface); flex: none; }
+/* Asas: el dibujo mide 20 px y el área que responde al toque, 44 px (el pseudoelemento hereda los eventos del asa). Solo ellas y el elemento seleccionado quitan el desplazamiento táctil. */
 .de-handle { position: absolute; width: 20px; height: 20px; background: var(--de-surface); border: 2px solid var(--de-focus); border-radius: 50%; touch-action: none; }
+.de-handle::after { content: ""; position: absolute; inset: -14px; border-radius: 50%; }
 .de-handle--resize { right: -10px; bottom: -10px; cursor: nwse-resize; }
 .de-handle--rotate { left: 50%; top: -26px; margin-left: -10px; cursor: grab; }
+.de-live { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.de-field-error { grid-column: 1 / -1; color: var(--de-danger); font-size: 13px; font-weight: 500; }
+.de-field--inline > label { min-width: 0; }
+.de-field--inline input[aria-invalid="true"] { border-color: var(--de-danger); outline: 1px solid var(--de-danger); }
 .de-inspector, .de-palette { margin-top: 20px; border-top: 1px solid var(--de-border); padding-top: 16px; }
 .de-inspector h2, .de-palette h2 { font: 500 16px/1.3 Newsreader, Georgia, serif; margin: 0 0 12px; }
 .de-inspector input[type="number"] { min-height: 44px; width: 100%; border: 1px solid var(--de-field); border-radius: 6px; padding: 0 8px; background: var(--de-surface); color: var(--de-text); font: inherit; }
@@ -151,8 +163,14 @@ a.de-btn { text-decoration: none; box-sizing: border-box; }
 .de-row--wrap { flex-wrap: wrap; }
 .de-field--check { display: flex; gap: 8px; align-items: center; min-height: 44px; }
 .de-field--check input { width: 20px; height: 20px; }
-.de-canvas-editor .de-free { margin: 36px auto 20px; }
-.de-canvas-editor .de-el { overflow: visible; }
+
+/* Estrecho: el inspector es una hoja plegable pegada abajo, a un toque del elemento (no al final de todo el lienzo). */
+@media (max-width: 960px) {
+  .de-inspector--sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; margin: 0; padding: 0; border-top: 2px solid var(--de-text); background: var(--de-surface); max-height: 70vh; overflow: auto; }
+  .de-inspector--sheet > summary { position: sticky; top: 0; display: flex; align-items: center; min-height: 48px; padding: 0 16px; background: var(--de-surface); font: 500 15px/1.3 Newsreader, Georgia, serif; cursor: pointer; }
+  .de-inspector-body { padding: 4px 16px 24px; }
+  .de-shell:has(.de-inspector--sheet) { padding-bottom: 56px; }
+}
 @media (max-width: 640px) {
   .de-bar { padding: 10px 16px; }
   .de-group button { padding: 0 10px; gap: 6px; }
