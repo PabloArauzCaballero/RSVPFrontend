@@ -2,14 +2,14 @@
    Jerarquía: el lienzo es el protagonista (papel blanco sobre mesa gris, al centro); la barra, las páginas y los colores lo acompañan en un segundo plano. */
 .de-shell {
   --de-canvas: #F7F6F3; --de-surface: #FFFFFF; --de-surface-muted: #ECEBE6; --de-text: #111111; --de-muted: #5C5B57;
-  --de-border: #D9D7D1; --de-field: #8A8880; --de-primary: #111111; --de-on-primary: #FFFFFF; --de-danger: #8F2A22; --de-danger-bg: #F8E6E3; --de-focus: #1F4FD1;
+  --de-border: #D9D7D1; --de-field: #858379; --de-primary: #111111; --de-on-primary: #FFFFFF; --de-danger: #8F2A22; --de-danger-bg: #F8E6E3; --de-focus: #1F4FD1;
   --de-warn: #6B4A00; --de-warn-bg: #F6EDD9; --de-ok: #1F5F3A;
   color: var(--de-text); background: var(--de-canvas); font: 400 15px/1.55 Geist, system-ui, sans-serif; box-sizing: border-box; min-height: 100vh; display: flex; flex-direction: column;
 }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .de-shell { --de-canvas: #151514; --de-surface: #1E1E1C; --de-surface-muted: #0F0F0E; --de-text: #EDECE8; --de-muted: #B5B3AC; --de-border: #3A3935; --de-field: #8C8A83; --de-primary: #EDECE8; --de-on-primary: #151514; --de-danger: #F0B3AC; --de-danger-bg: #3A1F1C; --de-focus: #8FB0FF; --de-warn: #F0D9A0; --de-warn-bg: #33291A; --de-ok: #9FD8B3; }
+  :root:not([data-theme="light"]) .de-shell { --de-canvas: #151514; --de-surface: #1E1E1C; --de-surface-muted: #272725; --de-text: #EDECE8; --de-muted: #B5B3AC; --de-border: #3A3935; --de-field: #8C8A83; --de-primary: #EDECE8; --de-on-primary: #151514; --de-danger: #F0B3AC; --de-danger-bg: #3A1F1C; --de-focus: #8FB0FF; --de-warn: #F0D9A0; --de-warn-bg: #33291A; --de-ok: #9FD8B3; }
 }
-:root[data-theme="dark"] .de-shell { --de-canvas: #151514; --de-surface: #1E1E1C; --de-surface-muted: #0F0F0E; --de-text: #EDECE8; --de-muted: #B5B3AC; --de-border: #3A3935; --de-field: #8C8A83; --de-primary: #EDECE8; --de-on-primary: #151514; --de-danger: #F0B3AC; --de-danger-bg: #3A1F1C; --de-focus: #8FB0FF; --de-warn: #F0D9A0; --de-warn-bg: #33291A; --de-ok: #9FD8B3; }
+:root[data-theme="dark"] .de-shell { --de-canvas: #151514; --de-surface: #1E1E1C; --de-surface-muted: #272725; --de-text: #EDECE8; --de-muted: #B5B3AC; --de-border: #3A3935; --de-field: #8C8A83; --de-primary: #EDECE8; --de-on-primary: #151514; --de-danger: #F0B3AC; --de-danger-bg: #3A1F1C; --de-focus: #8FB0FF; --de-warn: #F0D9A0; --de-warn-bg: #33291A; --de-ok: #9FD8B3; }
 .de-shell *, .de-shell *::before, .de-shell *::after { box-sizing: border-box; }
 .de-shell :focus-visible { outline: 2px solid var(--de-focus); outline-offset: 2px; }
 
@@ -31,7 +31,7 @@
 .de-btn:active:not(:disabled) { transform: scale(0.98); }
 .de-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .de-btn--primary { background: var(--de-primary); color: var(--de-on-primary); border-color: var(--de-primary); }
-.de-btn--danger { background: var(--de-danger); color: var(--de-danger-bg); border-color: var(--de-danger); }
+.de-btn--danger { background: var(--de-danger-bg); color: var(--de-danger); border-color: var(--de-danger); }
 .de-btn--small { min-height: 44px; font-size: 14px; }
 .de-swatch { width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--de-field); flex: none; }
 
@@ -46,7 +46,7 @@
 .de-notice-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .de-notice .de-btn { color: var(--de-text); background: var(--de-surface); }
 .de-notice .de-btn--primary { color: var(--de-on-primary); background: var(--de-primary); }
-.de-notice .de-btn--danger { color: var(--de-danger-bg); background: var(--de-danger); border-color: var(--de-danger); }
+.de-notice .de-btn--danger { color: var(--de-danger); background: var(--de-danger-bg); border-color: var(--de-danger); }
 
 /* Cuerpo: páginas | lienzo | colores. El lienzo ocupa lo que sobra y se centra. */
 .de-body { flex: 1; display: grid; grid-template-columns: 200px minmax(0, 1fr) 260px; min-height: 0; align-items: stretch; }
