@@ -1,6 +1,6 @@
-import { useCallback, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useRef, useState, type ReactNode } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import type { CelebrationTheme, GalleryImage, PublicCelebrationView } from "@rsvp/celebration-theme";
+import type { CelebrationTheme, GalleryImage, PreviewPayload, PublicCelebrationView } from "@rsvp/celebration-theme";
 import { spacing } from "@rsvp/design-tokens";
 import { Skeleton, useColors } from "@rsvp/ui";
 import type { FramePhase } from "../platform/site-frame-types";
@@ -21,8 +21,9 @@ export function InvitationPreview({ theme, view, gallery = [], title, testID }: 
   const origin = publicSiteOrigin();
   // The editors rebuild the theme on every keystroke; the page only needs to hear when something actually changed.
   const serialized = JSON.stringify({ theme, view, gallery });
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- `serialized` is the identity of the three values.
-  const payload = useMemo(() => ({ theme, view, gallery }), [serialized]);
+  const latest = useRef<{ readonly key: string; readonly payload: PreviewPayload } | null>(null);
+  if (latest.current?.key !== serialized) latest.current = { key: serialized, payload: { theme, view, gallery } };
+  const payload = latest.current.payload;
   const [phase, setPhase] = useState<FramePhase>("loading");
   const [attempt, setAttempt] = useState(0);
   const retry = useCallback(() => { setPhase("loading"); setAttempt((value) => value + 1); }, []);

@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, screen } from "@testing-library/react";
+import { act, fireEvent, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { resetSecureStore } from "./stubs/expo-secure-store";
 import { resetWebViews, webViews } from "./stubs/react-native-webview";

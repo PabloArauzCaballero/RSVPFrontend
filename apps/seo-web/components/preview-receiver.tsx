@@ -7,7 +7,7 @@ import { uiLocale } from "../lib/locale";
 
 declare global {
   interface Window {
-    ReactNativeWebView?: unknown;
+    ReactNativeWebView?: { postMessage: (message: string) => void };
     [PREVIEW_BRIDGE]?: (payload: unknown) => void;
   }
 }
@@ -29,6 +29,7 @@ export function PreviewReceiver({ origins }: { readonly origins: readonly string
     window.addEventListener("message", onMessage);
     if (window.ReactNativeWebView) window[PREVIEW_BRIDGE] = (raw) => { const next = parsePreviewPayload(raw); if (next) setPayload(next); };
     // Tell the app we listen: it answers with the payload (and again whenever the host edits).
+    window.ReactNativeWebView?.postMessage(PREVIEW_READY);
     if (window.parent !== window) for (const origin of origins) window.parent.postMessage({ type: PREVIEW_READY }, origin);
     return () => { window.removeEventListener("message", onMessage); if (window[PREVIEW_BRIDGE]) delete window[PREVIEW_BRIDGE]; };
   }, [origins]);
