@@ -2,7 +2,8 @@ import { useCallback, useMemo, type ReactNode } from "react";
 import { View } from "react-native";
 import { ApiError } from "@rsvp/api-client";
 import { EditorShell } from "@rsvp/design-editor/ui";
-import { designApi, useCelebration, useCelebrationDesign, useCreateDesign, type DesignRecord } from "@rsvp/query-hooks";
+import { design } from "@rsvp/celebration-theme";
+import { designApi, templateApi, useCelebration, useEventTypes, useCelebrationDesign, useCreateDesign, type DesignRecord } from "@rsvp/query-hooks";
 import { spacing } from "@rsvp/design-tokens";
 import { LoadingContent } from "../platform/loading-content";
 import { useApiClient, useLocale, useT } from "../platform/providers";
@@ -19,6 +20,7 @@ export function DesignEditorScreen({ celebrationId }: ScreenProps): ReactNode {
   const locale = useLocale();
   const client = useApiClient();
   const celebration = useCelebration(client, celebrationId ?? "");
+  const eventTypes = useEventTypes(client, locale);
   const found = useCelebrationDesign(client, celebrationId);
   const create = useCreateDesign(client);
   const gateway = useMemo(() => ({
@@ -35,6 +37,18 @@ export function DesignEditorScreen({ celebrationId }: ScreenProps): ReactNode {
       restore: async (id: string, version: number, draftVersion: number) => { const done = await api.restore(id, version, draftVersion); return { draftVersion: done.draftVersion, document: done.document }; }
     };
   }, [client]);
+  const tags = eventTypes.data?.items.find((type) => type.code === celebration.data?.eventTypeCode)?.compatibleTemplateTags ?? [];
+  const tagKey = tags.join(",");
+  const templates = useMemo(() => ({
+    list: async () => {
+      if (tags.length === 0) return [];
+      const { items } = await templateApi(client).compatible(tags);
+      return items.flatMap((template) => {
+        try { return [{ id: template.id, name: template.name, document: design.convertV1ToV2(template.theme, template.layout, template.sectionOrder) }]; }
+        catch { return []; }
+      });
+    }
+  }), [client, tagKey]);
   const reload = useCallback(() => { void found.refetch(); }, [found]);
 
   if (!celebrationId) return <View style={{ padding: spacing[6] }}><EmptyState illustration="invitation" title={t("designEditor.title")} body={t("designEditor.noCelebration")} /></View>;
@@ -54,5 +68,5 @@ export function DesignEditorScreen({ celebrationId }: ScreenProps): ReactNode {
     );
   }
   const record = found.data;
-  return <EditorShell key={`${record.id}:${record.draftVersion}`} design={{ id: record.id, name: record.name, draftVersion: record.draftVersion, document: record.document }} gateway={gateway} versions={versions} timeZone={celebration.data.timeZone} locale={locale} t={t} onReload={reload} />;
+  return <EditorShell key={`${record.id}:${record.draftVersion}`} design={{ id: record.id, name: record.name, draftVersion: record.draftVersion, document: record.document }} gateway={gateway} versions={versions} templates={templates} timeZone={celebration.data.timeZone} locale={locale} t={t} onReload={reload} />;
 }

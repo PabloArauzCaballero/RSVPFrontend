@@ -1,8 +1,8 @@
-import { fireEvent, screen, waitFor, act } from "@testing-library/react";
+import { fireEvent, screen, waitFor, act, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { design } from "@rsvp/celebration-theme";
 import { DesignEditorScreen } from "../src/host/design-editor-screen";
-import { baseHandlers, CELEBRATION, fakeClient, HttpFailure, renderApp } from "./support";
+import { baseHandlers, CELEBRATION, fakeClient, HttpFailure, renderApp, TEMPLATES } from "./support";
 
 const navigate = vi.fn();
 const document = design.convertV1ToV2(
@@ -18,7 +18,7 @@ describe("plantillas F5 · pantalla del editor (web)", () => {
     renderApp(<DesignEditorScreen celebrationId="c-1" onNavigate={navigate} />, client);
     expect(await screen.findByRole("heading", { level: 1, name: "Diseño de la invitación" })).toBeTruthy();
     vi.useFakeTimers({ shouldAdvanceTime: true });
-    fireEvent.change(screen.getByLabelText("Color de acento (claro)"), { target: { value: "#123456" } });
+    fireEvent.change(within(screen.getByRole("group", { name: "Modo claro" })).getByLabelText("Acento"), { target: { value: "#123456" } });
     await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
     vi.useRealTimers();
     const save = calls.find((call) => call.method === "PUT");
@@ -45,6 +45,15 @@ describe("plantillas F5 · pantalla del editor (web)", () => {
     fireEvent.click(screen.getAllByRole("button", { name: "Restaurar" })[1] as HTMLElement);
     expect(await screen.findByText(/Versión 1 copiada al borrador/)).toBeTruthy();
     expect(calls.filter((call) => call.path.endsWith("/publish"))).toHaveLength(1);
+  });
+
+  it("ofrece las plantillas compatibles con el tipo de evento y las convierte al documento v2", async () => {
+    const handlers = { ...baseHandlers(), "GET /media/celebrations/c-1/design": () => record, "GET /media/designs/d-1/versions": () => ({ items: [] }), "GET /media/templates": () => ({ items: TEMPLATES }) };
+    const { client, calls } = fakeClient(handlers);
+    renderApp(<DesignEditorScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    const select = await screen.findByLabelText("Cambiar de plantilla");
+    expect([...(select as HTMLSelectElement).options].map((option) => option.text)).toContain(TEMPLATES[0]?.name);
+    expect(calls.some((call) => call.path === "/media/templates")).toBe(true);
   });
 
   it("sin diseño (404) ofrece crearlo desde la plantilla de la celebración y lo abre", async () => {

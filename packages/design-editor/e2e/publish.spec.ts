@@ -11,7 +11,7 @@ test("contrast warns live and suggests a fix; publishing creates a version; rest
   await page.setViewportSize({ width: 1280, height: 1000 });
   await page.goto("/");
   await expect(page.getByText("Todos los textos se leen bien")).toBeVisible();
-  await page.getByLabel("Color de acento (claro)").fill("#cccccc");
+  await page.getByRole("group", { name: "Modo claro" }).getByLabel("Acento").fill("#cccccc");
   await expect(page.getByText(/el acento sobre el fondo en modo claro/)).toBeVisible();
   await expect(page.getByText(/puedes publicar igual/)).toBeVisible();
   await page.screenshot({ path: join(EVIDENCE, "e-aviso-contraste-1280.png"), fullPage: true });
@@ -23,7 +23,7 @@ test("contrast warns live and suggests a fix; publishing creates a version; rest
   await page.getByRole("button", { name: "Publicar" }).click();
   await expect(page.getByText("Publicada la versión 2.")).toBeVisible();
   await page.screenshot({ path: join(EVIDENCE, "e-publicar-versiones-1280.png"), fullPage: true });
-  const accent = page.getByLabel("Color de acento (claro)");
+  const accent = page.getByRole("group", { name: "Modo claro" }).getByLabel("Acento");
   const published = await accent.inputValue();
   await accent.fill("#1f6f5c");
   await page.getByRole("button", { name: "Restaurar" }).last().click();

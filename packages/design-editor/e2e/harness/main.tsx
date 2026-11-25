@@ -44,6 +44,12 @@ const versions: VersionsGateway = {
   async restore(_id, version, draftVersion) { return { draftVersion: draftVersion + 1, document: history[version] ?? document0 }; }
 };
 
+const minimal = design.convertV1ToV2(
+  { palette: { canvas: "#F7F6F3", surface: "#FFFFFF", text: "#111111", accent: "#2F5D50", muted: "#5C5B57" }, typography: { heading: "'Fraunces', Georgia, serif", body: "'Work Sans', Arial, sans-serif" }, sectionStyle: "plain" },
+  "minimal", ["story", "schedule", "venues", "gallery", "dressCode", "gifts", "faq", "recommendations", "rsvp"]
+);
+const templates = { async list() { return [{ id: "t-min", name: "Minimalista", document: minimal }]; } };
+
 createRoot(window.document.getElementById("root") as HTMLElement).render(
-  <EditorShell design={{ id: "design-1", name: "Ana y Luis", draftVersion: 4, document: document0 }} gateway={gateway} t={createTranslator(locale)} onReload={() => undefined} versions={versions} timeZone="America/La_Paz" debounceMs={300} />
+  <EditorShell design={{ id: "design-1", name: "Ana y Luis", draftVersion: 4, document: document0 }} gateway={gateway} t={createTranslator(locale)} onReload={() => undefined} versions={versions} templates={templates} timeZone="America/La_Paz" debounceMs={300} />
 );

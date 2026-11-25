@@ -30,9 +30,17 @@ export const designEditorEsBO = {
   },
   basic: {
     title: "Colores",
-    accentLight: "Color de acento (claro)",
-    accentDark: "Color de acento (oscuro)",
-    hint: "Los cambios se guardan solos y puedes deshacerlos."
+    schemeLight: "Modo claro",
+    schemeDark: "Modo oscuro",
+    role: { accent: "Acento", canvas: "Fondo", text: "Texto", surface: "Tarjeta", muted: "Texto secundario" },
+    hint: "Los cambios se guardan solos y puedes deshacerlos.",
+    giftsNote: "El botón de regalos siempre está en la invitación: puedes moverlo y cambiarle el estilo, pero no quitarlo.",
+    template: { title: "Plantilla", label: "Cambiar de plantilla", placeholder: "Elige una plantilla", hint: "Cambia el diseño, los colores y las tipografías. Tu código propio se conserva y puedes deshacerlo." },
+    fonts: { title: "Tipografías", heading: "Títulos", body: "Texto" },
+    spacing: { title: "Espaciado", section: "Aire entre secciones", compact: "Compacto", normal: "Normal", airy: "Amplio" },
+    padding: { title: "Relleno de los elementos", none: "Ninguno", small: "Pequeño", medium: "Mediano", large: "Grande" },
+    sections: { title: "Secciones", locked: "Siempre visible", up: "Subir {{section}}", down: "Bajar {{section}}" },
+    texts: { title: "Textos", heading: { text: "Título" }, text: { text: "Párrafo" }, quote: { text: "Cita", author: "Autor de la cita" }, button: { label: "Texto del botón" } }
   },
   contrast: {
     title: "Contraste",

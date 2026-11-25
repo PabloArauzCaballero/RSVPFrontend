@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import type { design } from "@rsvp/celebration-theme";
 import { createAutosaver, type Autosaver, type DraftGateway, type SaveStatus } from "../save/autosave.js";
-import { setPaletteColour } from "../model/ops.js";
 import { canRedo, canUndo, documentOf, editorReducer, initialEditorState, type CanvasName, type EditorMode } from "../model/state.js";
+import { BasicPanel, type TemplateSource } from "./basic-panel.js";
 import { ContrastPanel } from "./contrast-panel.js";
 import { PublishPanel, type VersionsApi } from "./publish-panel.js";
 import type { PublishOutcome, VersionSummary, VersionsGateway } from "../save/versions.js";
@@ -27,6 +27,8 @@ export interface EditorShellProps {
   readonly debounceMs?: number;
   /** Publishing, history and restore. Without it the editor only keeps the draft. */
   readonly versions?: VersionsGateway;
+  /** Templates the host can switch to (Basic level). */
+  readonly templates?: TemplateSource;
   /** IANA zone of the celebration: the times of the history show in it (never the device's). */
   readonly timeZone?: string;
   readonly locale?: string;
@@ -81,8 +83,8 @@ function Wireframe({ document, canvas, t }: { readonly document: design.DesignDo
       {document.pages.map((page) => {
         const grid = page.canvases[canvas] ?? page.canvases.mobile;
         return (
-          <section key={page.id} className="de-page" aria-label={page.kind === "cover" ? t(key("outline.cover")) : (page.section ?? page.id)}>
-            <h3>{page.kind === "cover" ? t(key("outline.cover")) : page.section}</h3>
+          <section key={page.id} className="de-page" aria-label={page.kind === "cover" ? t(key("outline.cover")) : t(`celebration.sections.${page.section ?? ""}`)}>
+            <h3>{page.kind === "cover" ? t(key("outline.cover")) : t(`celebration.sections.${page.section ?? ""}`)}</h3>
             <div className={grid.mode === "free" ? "de-free" : "de-flow"} style={grid.mode === "free" ? { height: Math.max(...grid.elements.map((element) => (element.y + element.h) * grid.rowHeight), grid.rowHeight) } : undefined}>
               {grid.elements.map((element) => {
                 const block = blocks.get(element.block);
@@ -99,7 +101,7 @@ function Wireframe({ document, canvas, t }: { readonly document: design.DesignDo
   );
 }
 
-export function EditorShell({ design: source, gateway, t, onReload, now = Date.now, debounceMs, versions: versionsGateway, timeZone = "America/La_Paz", locale = "es-BO", children }: EditorShellProps) {
+export function EditorShell({ design: source, gateway, t, onReload, now = Date.now, debounceMs, versions: versionsGateway, templates, timeZone = "America/La_Paz", locale = "es-BO", children }: EditorShellProps) {
   const [state, dispatch] = useReducer(editorReducer, source.document, initialEditorState);
   const [status, setStatus] = useState<SaveStatus>({ kind: "saved" });
   const saver = useRef<Autosaver | null>(null);
@@ -226,19 +228,13 @@ export function EditorShell({ design: source, gateway, t, onReload, now = Date.n
             {document.pages.map((page) => {
               const grid = page.canvases[state.canvas] ?? page.canvases.mobile;
               const hidden = grid.elements.length > 0 && grid.elements.every((element) => !element.visible);
-              return <li key={page.id}><span>{page.kind === "cover" ? t(key("outline.cover")) : page.section}</span><small>{hidden ? t(key("outline.hidden")) : t(key("outline.elements"), { count: grid.elements.length })}</small></li>;
+              return <li key={page.id}><span>{page.kind === "cover" ? t(key("outline.cover")) : t(`celebration.sections.${page.section ?? ""}`)}</span><small>{hidden ? t(key("outline.hidden")) : t(key("outline.elements"), { count: grid.elements.length })}</small></li>;
             })}
           </ul>
         </nav>
         <main className="de-stage"><Wireframe document={document} canvas={state.canvas} t={t} /></main>
         <aside className="de-panel">
-          <h2><SlidersIcon />{t(key("basic.title"))}</h2>
-          {(["light", "dark"] as const).map((scheme) => (
-            <label key={scheme} className="de-field">
-              <span>{t(key(scheme === "light" ? "basic.accentLight" : "basic.accentDark"))}</span>
-              <input type="color" value={document.tokens.palettes[scheme].accent.toLowerCase()} onChange={(event) => dispatch({ type: "edit", op: setPaletteColour(scheme, "accent", event.target.value), key: `palette:${scheme}:accent`, at: now() })} />
-            </label>
-          ))}
+          <BasicPanel {...(templates ? { templates } : {})} />
           <p className="de-hint">{t(key("basic.hint"))}</p>
           <ContrastPanel />
           {versionsGateway ? <PublishPanel versions={versionsApi} timeZone={timeZone} locale={locale} /> : null}

@@ -84,3 +84,71 @@ export const setCustomCode = (patch: Partial<Doc["custom"]>): DocumentOp => (doc
 export function switchableSections(doc: Doc, giftsPageId: string | undefined): string[] {
   return doc.pages.filter((page) => page.kind === "section" && page.id !== giftsPageId && page.section !== undefined).map((page) => page.section ?? "");
 }
+
+/** Spacing presets of the Basic level: the gap between sections and the width of the content, both on the 4 px grid. */
+export const SPACING_PRESETS = {
+  compact: { section: 32, contentMaxWidth: 560 },
+  normal: { section: 48, contentMaxWidth: 720 },
+  airy: { section: 72, contentMaxWidth: 880 }
+} as const;
+export type SpacingPreset = keyof typeof SPACING_PRESETS;
+
+export const spacingPresetOf = (doc: Doc): SpacingPreset | null => {
+  const { section, contentMaxWidth } = doc.tokens.spacing;
+  return (Object.keys(SPACING_PRESETS) as SpacingPreset[]).find((name) => SPACING_PRESETS[name].section === section && SPACING_PRESETS[name].contentMaxWidth === contentMaxWidth) ?? null;
+};
+
+export const applySpacingPreset = (preset: SpacingPreset): DocumentOp => setSpacing(SPACING_PRESETS[preset]);
+
+/** Padding presets (px, multiples of 4): the same padding on every element of every canvas. */
+export const PADDING_PRESETS = { none: 0, small: 8, medium: 16, large: 32 } as const;
+export type PaddingPreset = keyof typeof PADDING_PRESETS;
+
+export const applyPaddingPreset = (preset: PaddingPreset): DocumentOp => (doc) => {
+  const value = PADDING_PRESETS[preset];
+  const box = { top: value, right: value, bottom: value, left: value };
+  let changed = false;
+  const pages = doc.pages.map((page) => {
+    const retouch = (grid: design.DesignCanvas): design.DesignCanvas => ({
+      ...grid,
+      elements: grid.elements.map((element) => {
+        const current = element.padding;
+        if (current && current.top === value && current.right === value && current.bottom === value && current.left === value) return element;
+        if (!current && value === 0) return element;
+        changed = true;
+        return { ...element, padding: box };
+      })
+    });
+    return { ...page, canvases: { mobile: retouch(page.canvases.mobile), ...(page.canvases.desktop ? { desktop: retouch(page.canvases.desktop) } : {}) } };
+  });
+  return changed ? { ...doc, pages } : doc;
+};
+
+/** The padding every element shares, or null when they differ (so the preset buttons show none selected). */
+export function sharedPadding(doc: Doc): PaddingPreset | null {
+  const values = new Set<number>();
+  for (const page of doc.pages) for (const grid of [page.canvases.mobile, page.canvases.desktop]) for (const element of grid?.elements ?? []) {
+    const box = element.padding;
+    if (!box) values.add(0); else if (box.top === box.right && box.right === box.bottom && box.bottom === box.left) values.add(box.top); else values.add(-1);
+  }
+  if (values.size !== 1) return null;
+  const [only] = [...values];
+  return (Object.keys(PADDING_PRESETS) as PaddingPreset[]).find((name) => PADDING_PRESETS[name] === only) ?? null;
+}
+
+/**
+ * Picks another template: its design replaces the layout, palettes and fonts. The host's own code (HTML/CSS) is kept and
+ * the whole change is one undo step. The incoming document must already satisfy the gifts rules (the reducer refuses it if not).
+ */
+export const applyTemplateDocument = (incoming: Doc): DocumentOp => (doc) => ({ ...incoming, custom: doc.custom });
+
+/** The text a block shows, for the blocks whose text the Basic level edits. */
+export type TextField = { readonly blockId: string; readonly type: string; readonly field: "text" | "label" | "author"; readonly value: string };
+const TEXT_FIELDS: Readonly<Record<string, readonly TextField["field"][]>> = { heading: ["text"], text: ["text"], quote: ["text", "author"], button: ["label"] };
+
+export function editableTexts(doc: Doc): TextField[] {
+  return doc.blocks.flatMap((block) => (TEXT_FIELDS[block.type] ?? []).flatMap((field) => {
+    const value = block.config[field];
+    return typeof value === "string" ? [{ blockId: block.id, type: block.type, field, value }] : [];
+  }));
+}

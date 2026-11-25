@@ -27,3 +27,9 @@ Rama apilada sobre `feat/f1-diseno-v2-esquema` (FE #115). Plan: `PLAN-PLANTILLAS
 - `PublishPanel` + `VersionsGateway`: publicar con nombre (vacía la caja, vacía antes el autoguardado y publica con la versión de borrador ya guardada), historial con hora en la zona de la celebración, restaurar (copia al borrador, **no publica**; reanuda el autoguardado desde la versión nueva). Publicar con un guardado en conflicto/rechazado se detiene con mensaje.
 - Pantalla `/diseno` conectada a `designApi.publish/versions/restore`.
 - Nivel `TESTED` (arnés en memoria y cliente simulado); sin backend real.
+
+## PR b · modo Básico (2026-11-25)
+
+- `BasicPanel`: cambiar de plantilla (compatibles con el tipo de evento; se convierten con `convertV1ToV2`, un solo paso de deshacer, el código propio se conserva), colores de las dos paletas, tipografías solo del catálogo curado (Poppins e IBM Plex ya no están), preajustes de espaciado y de relleno, secciones activas/inactivas y su orden (la de regalos siempre visible y bloqueada), textos de bloques (título, párrafo, cita, botón; un cuadro vaciado se ignora).
+- Pantalla `/diseno` trae las plantillas con `templateApi.compatible`.
+- Nivel `TESTED` (arnés y cliente simulado); sin backend real.

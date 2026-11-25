@@ -33,9 +33,17 @@ export const designEditorEnUS: DeepStrings<typeof designEditorEsBO> = {
   },
   basic: {
     title: "Colors",
-    accentLight: "Accent color (light)",
-    accentDark: "Accent color (dark)",
-    hint: "Changes save on their own and you can undo them."
+    schemeLight: "Light mode",
+    schemeDark: "Dark mode",
+    role: { accent: "Accent", canvas: "Background", text: "Text", surface: "Card", muted: "Secondary text" },
+    hint: "Changes save on their own and you can undo them.",
+    giftsNote: "The gifts button is always in the invitation: you can move it and restyle it, but not remove it.",
+    template: { title: "Template", label: "Switch template", placeholder: "Choose a template", hint: "This changes the layout, colors and fonts. Your own code is kept and you can undo it." },
+    fonts: { title: "Fonts", heading: "Headings", body: "Text" },
+    spacing: { title: "Spacing", section: "Space between sections", compact: "Compact", normal: "Normal", airy: "Airy" },
+    padding: { title: "Padding of the elements", none: "None", small: "Small", medium: "Medium", large: "Large" },
+    sections: { title: "Sections", locked: "Always visible", up: "Move {{section}} up", down: "Move {{section}} down" },
+    texts: { title: "Texts", heading: { text: "Heading" }, text: { text: "Paragraph" }, quote: { text: "Quote", author: "Quote author" }, button: { label: "Button text" } }
   },
   contrast: {
     title: "Contrast",

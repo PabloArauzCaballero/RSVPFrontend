@@ -22,7 +22,7 @@ test.describe("editor shell (PR a)", () => {
 
   test("editing autosaves with If-Match and undo/redo restore the colour", async ({ page }) => {
     await page.goto("/");
-    const accent = page.getByLabel("Color de acento (claro)");
+    const accent = page.getByRole("group", { name: "Modo claro" }).getByLabel("Acento");
     const original = await accent.inputValue();
     await accent.fill("#1f6f5c");
     await expect(page.getByTestId("save-status")).toContainText("Cambios sin guardar");
@@ -74,12 +74,12 @@ test.describe("editor shell (PR a)", () => {
 
   test("a 409 stops saving and offers the newer version; offline retries", async ({ page }) => {
     await page.goto("/?fail=409");
-    await page.getByLabel("Color de acento (claro)").fill("#1f6f5c");
+    await page.getByRole("group", { name: "Modo claro" }).getByLabel("Acento").fill("#1f6f5c");
     await expect(page.getByTestId("save-status")).toContainText("Alguien guardó otra versión", { timeout: 5000 });
     await expect(page.getByRole("button", { name: "Cargar la versión nueva" })).toBeVisible();
     await page.screenshot({ path: shot("conflicto-1280") });
     await page.goto("/?fail=offline");
-    await page.getByLabel("Color de acento (claro)").fill("#1f6f5c");
+    await page.getByRole("group", { name: "Modo claro" }).getByLabel("Acento").fill("#1f6f5c");
     await expect(page.getByTestId("save-status")).toContainText("Reintentamos en 2 s", { timeout: 5000 });
   });
 });
