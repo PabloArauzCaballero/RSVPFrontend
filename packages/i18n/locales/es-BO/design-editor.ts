@@ -90,7 +90,8 @@ export const designEditorEsBO = {
     GIFTS_BLOCK_LOCKED: "El botón de regalos siempre lleva a la lista de regalos: no se puede girar ni cambiarle el destino.",
     GIFTS_BLOCK_HIDDEN: "El botón de regalos siempre se ve: no se puede ocultar ni hacer transparente.",
     GIFTS_BLOCK_OUT_OF_CANVAS: "El botón de regalos tiene que quedar dentro del lienzo.",
-    GIFTS_BLOCK_TOO_SMALL: "El botón de regalos mide al menos 44 px para que se pueda tocar sin errores.",
+    GIFTS_BLOCK_TOO_SMALL: "El botón de regalos mide al menos 44 px para que se pueda tocar sin errores, también después de descontar el relleno y el borde.",
+    GIFTS_BLOCK_TEXT_TOO_LARGE: "La etiqueta del botón de regalos mide hasta 32 px y su línea debe caber en el alto útil del botón.",
     GIFTS_BLOCK_COVERED: "Otro elemento quedaría encima del botón de regalos: el botón siempre tiene que poder tocarse.",
     GIFTS_BLOCK_LOW_CONTRAST: "Con ese color el botón de regalos no se leería bien: su texto necesita contraste 4,5:1 y su contorno 3:1, en el tema claro y en el oscuro."
   }

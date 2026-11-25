@@ -93,7 +93,8 @@ export const designEditorEnUS: DeepStrings<typeof designEditorEsBO> = {
     GIFTS_BLOCK_LOCKED: "The gifts button always opens the gift list: it can't be rotated or given another destination.",
     GIFTS_BLOCK_HIDDEN: "The gifts button is always visible: it can't be hidden or made transparent.",
     GIFTS_BLOCK_OUT_OF_CANVAS: "The gifts button has to stay inside the canvas.",
-    GIFTS_BLOCK_TOO_SMALL: "The gifts button is at least 44 px so it can be tapped without mistakes.",
+    GIFTS_BLOCK_TOO_SMALL: "The gifts button is at least 44 px so it can be tapped without mistakes, even after padding and border are taken out.",
+    GIFTS_BLOCK_TEXT_TOO_LARGE: "The gifts button label is at most 32 px and its line must fit the usable height of the button.",
     GIFTS_BLOCK_COVERED: "Another element would sit on top of the gifts button: it always has to be tappable.",
     GIFTS_BLOCK_LOW_CONTRAST: "With that color the gifts button would be hard to read: its text needs 4.5:1 contrast and its outline 3:1, in both the light and the dark theme."
   }

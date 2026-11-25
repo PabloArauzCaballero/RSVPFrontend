@@ -73,6 +73,54 @@ describe("gifts block guards (P22)", () => {
   });
 });
 
+describe("gifts block guards: useful height and label size (mirror of rules.py)", () => {
+  const setup = () => {
+    const doc = fixture();
+    const placement = giftsPlacement(doc);
+    const element = placement?.element;
+    if (!placement || !element) throw new Error("no gifts element");
+    const codes = (next: design.DesignDocumentV2): string[] => giftsIssues(next).map((issue) => issue.code);
+    return { doc, id: element.id, rowHeight: placement.page.canvases.mobile.rowHeight, h: element.h, codes, pageId: placement.page.id };
+  };
+
+  it("padding and border that leave under 44 px of useful height make the block too small, and 44 px exactly is fine", () => {
+    const { doc, id, rowHeight, h, codes } = setup();
+    const spare = h * rowHeight - 44;
+    expect(spare).toBeGreaterThanOrEqual(0);
+    const exact = patchElement("mobile", id, { padding: { top: spare, right: 0, bottom: 0, left: 0 } })(doc);
+    expect(codes(exact)).not.toContain("GIFTS_BLOCK_TOO_SMALL");
+    const over = patchElement("mobile", id, { padding: { top: spare + 1, right: 0, bottom: 0, left: 0 } })(doc);
+    expect(codes(over)).toContain("GIFTS_BLOCK_TOO_SMALL");
+    const border = patchElement("mobile", id, { border: { width: Math.floor(spare / 2) + 1, colour: "accent", style: "solid" } as never })(doc);
+    expect(codes(border)).toContain("GIFTS_BLOCK_TOO_SMALL");
+  });
+
+  it("a label over 32 px, or whose line does not fit the useful height, is too large; the default line height is 1.25", () => {
+    const { doc, id, rowHeight, h, codes } = setup();
+    expect(codes(patchElement("mobile", id, { typography: { size: 33 } })(doc))).toContain("GIFTS_BLOCK_TEXT_TOO_LARGE");
+    const roomy = patchElement("mobile", id, { h: Math.ceil(80 / rowHeight) })(doc);
+    expect(codes(patchElement("mobile", id, { typography: { size: 32 } })(roomy))).not.toContain("GIFTS_BLOCK_TEXT_TOO_LARGE");
+    expect(codes(patchElement("mobile", id, { typography: { size: 32, lineHeight: 4 } })(roomy))).toContain("GIFTS_BLOCK_TEXT_TOO_LARGE");
+    const tight = h * rowHeight;
+    const size = Math.floor(tight / 1.25) + 1;
+    if (size <= 32) expect(codes(patchElement("mobile", id, { typography: { size } })(doc))).toContain("GIFTS_BLOCK_TEXT_TOO_LARGE");
+    expect(codes(patchElement("mobile", id, { typography: { size: 16, lineHeight: 1.25 } })(doc))).not.toContain("GIFTS_BLOCK_TEXT_TOO_LARGE");
+  });
+
+  it("every page that places the button is checked, not only the first", () => {
+    const { doc, id, codes } = setup();
+    const first = doc.pages.find((page) => page.canvases.mobile.elements.some((element) => element.id === id));
+    if (!first) throw new Error("no page");
+    const copy = structuredClone(first);
+    const element = copy.canvases.mobile.elements.find((candidate) => candidate.id === id);
+    if (!element) throw new Error("no element");
+    const second: design.DesignPage = { ...copy, id: "page-two", canvases: { mobile: { ...copy.canvases.mobile, elements: [{ ...element, id: "gifts-two", typography: { size: 40 } }] } } };
+    const twoPages = { ...doc, pages: [...doc.pages, second] };
+    expect(giftsIssues(twoPages).some((issue) => issue.code === "GIFTS_BLOCK_TEXT_TOO_LARGE")).toBe(true);
+    expect(codes(doc)).toEqual([]);
+  });
+});
+
 describe("gifts block guards: covered and contrast (mirror of the server rules)", () => {
   const codes = (doc: design.DesignDocumentV2): string[] => giftsIssues(doc).map((issue) => issue.code);
   const setStyle = (doc: design.DesignDocumentV2, style: string): design.DesignDocumentV2 => ({ ...doc, blocks: doc.blocks.map((block) => (block.type === "giftsCta" ? { ...block, config: { ...block.config, style } } : block)) });
