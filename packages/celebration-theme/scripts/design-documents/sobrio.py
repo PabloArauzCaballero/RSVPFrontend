@@ -32,7 +32,7 @@ minimalista = dict(
 # ---- 2 · Arena y terracota · Cerámica ----------------------------------------------------------------------------------
 BOWL = dict(background=dict(kind="colour", role="surface"), border=RULE_BOX, radius=24)
 arena = dict(
-    key="arena-terracota", name="Arena y terracota", variant="classic", style="plain", ratio=1.25, gap=56, width=1040, ornament="onda",
+    key="arena-terracota", name="Arena y terracota", variant="classic", style="plain", ratio=1.25, gap=56, width=1040, ornament="flourish",
     radii=dict(sm=4, md=12, lg=24), heading=dict(family="jost", weights=[400, 500]), body=dict(family="dm-sans", weights=[400, 500, 600]),
     palettes=dict(light=pal("#F6EEE3", "#FFFBF5", "#2A211B", "#66564A", "#A2431F", "#A2431F", "#FFFFFF", "#957F6D"),
                   dark=pal("#1C1511", "#261D17", "#F3E8DC", "#C7B4A3", "#E8996F", "#D98558", "#230E04", "#8A7461")),
@@ -83,7 +83,7 @@ grafito = dict(
 
 # ---- 5 · Inauguración · Tijera y cinta -----------------------------------------------------------------------------------------
 inauguracion = dict(
-    key="inauguracion", name="Inauguración", variant="classic", style="plain", ratio=1.25, gap=48, width=1080, ornament="filete",
+    key="inauguracion", name="Inauguración", variant="classic", style="plain", ratio=1.25, gap=48, width=1080, ornament="rule",
     radii=dict(sm=2, md=6, lg=12), heading=dict(family="manrope", weights=[600, 700]), body=dict(family="source-sans-3", weights=[400, 500, 600]),
     palettes=dict(light=pal("#F8F6F3", "#FFFFFF", "#1E1A17", "#5C5249", "#B03F00", "#B03F00", "#FFFFFF", "#8E8378"),
                   dark=pal("#17120F", "#211A15", "#F3EBE4", "#C4B6A9", "#F0A07A", "#E88A5C", "#230D03", "#887A6E")),
@@ -102,7 +102,7 @@ inauguracion = dict(
 # ---- 6 · Fiesta patronal · Entrada de fraternidad ----------------------------------------------------------------------------
 GUILD = dict(background=dict(kind="colour", role="surface"), border=RULE_BOX)
 patronal = dict(
-    key="fiesta-patronal", name="Fiesta patronal", variant="festive", style="cards", ratio=1.333, gap=56, width=1080, ornament="banderin",
+    key="fiesta-patronal", name="Fiesta patronal", variant="festive", style="cards", ratio=1.333, gap=56, width=1080, ornament="flourish",
     radii=dict(sm=2, md=8, lg=16), heading=dict(family="playfair-display", weights=[600, 700]), body=dict(family="figtree", weights=[400, 500, 600]),
     palettes=dict(light=pal("#FFF7EC", "#FFFFFF", "#2B1622", "#634854", "#8E2D6B", "#8E2D6B", "#FFFFFF", "#957C8A"),
                   dark=pal("#1B0F17", "#261822", "#F8E9F0", "#CDB1C0", "#E79ACB", "#D681B7", "#2A0A1F", "#917182")),
@@ -120,7 +120,7 @@ patronal = dict(
 
 # ---- 7 · Otros eventos · Postal en blanco -----------------------------------------------------------------------------------
 otros = dict(
-    key="otros-evento", name="Otros eventos", variant="editorial", style="plain", ratio=1.25, gap=64, width=960, ornament="filete",
+    key="otros-evento", name="Otros eventos", variant="editorial", style="plain", ratio=1.25, gap=64, width=960, ornament="rule",
     radii=dict(sm=0, md=4, lg=8), heading=dict(family="newsreader", weights=[400, 600]), body=dict(family="figtree", weights=[400, 500, 600]),
     palettes=dict(light=pal("#F9F9F7", "#FFFFFF", "#1B1C1E", "#55575C", "#4F5D95", "#4F5D95", "#FFFFFF", "#8A8C93"),
                   dark=pal("#111216", "#1A1C21", "#E9EAEE", "#AEB1BA", "#A9B5EE", "#97A5E6", "#0C1030", "#6E727C")),
