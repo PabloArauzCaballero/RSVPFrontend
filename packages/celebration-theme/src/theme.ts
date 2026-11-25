@@ -1,10 +1,12 @@
 import { artPalette, artVariables } from "./art/palette.js";
 import { resolveArt } from "./hero-art.js";
+import { designFontStylesheet, designLayout, designPalette, fontStack, isDesignV2, readDesign } from "./design/read.js";
+import type { DesignDocumentV2 } from "./design/types.js";
 import { LAYOUTS } from "./layouts/index.js";
-import { LAYOUT_IDS, SECTION_IDS, SECTION_STYLES, type CelebrationTheme, type LayoutId, type LayoutSpec, type Palette, type SectionId, type SectionStyle, type TemplateDocument } from "./types.js";
+import { LAYOUT_IDS, SECTION_IDS, SECTION_STYLES, type CelebrationTheme, type LayoutId, type LayoutSpec, type Palette, type SectionId, type SectionStyle, type TemplateDocument, type TemplateThemeV1 } from "./types.js";
 
 /** Neutral theme used while a celebration has no template yet. */
-export const FALLBACK_TEMPLATE: TemplateDocument = {
+export const FALLBACK_TEMPLATE: TemplateDocument & { readonly theme: TemplateThemeV1 } = {
   id: "fallback",
   name: "RSVP",
   eventTypeTags: [],
@@ -27,21 +29,51 @@ const isStyle = (value: string): value is SectionStyle => (SECTION_STYLES as rea
  * of breaking the public page.
  */
 export function themeFromTemplate(template: TemplateDocument | null | undefined, enabledSections: readonly string[]): CelebrationTheme {
-  const source = template ?? FALLBACK_TEMPLATE;
+  const requested = template ?? FALLBACK_TEMPLATE;
+  const design = readDesign(requested.theme);
+  // A row that says v2 but is not a document the renderers can read is treated as no template, never as a crash of the public page.
+  const source: TemplateDocument = isDesignV2(requested.theme) && !design ? FALLBACK_TEMPLATE : requested;
   const enabled = enabledSections.filter(isSection);
+  if (design) return themeFromDesign(source, design, enabled);
+  const v1 = source.theme as TemplateThemeV1;
   const order = source.sectionOrder.filter(isSection);
   const art = resolveArt(source.id, source.eventTypeTags);
   return {
     id: source.id,
     name: source.name,
     layout: isLayout(source.layout) ? source.layout : FALLBACK_TEMPLATE.layout,
-    palette: { ...FALLBACK_TEMPLATE.theme.palette, ...source.theme.palette },
-    typography: { ...FALLBACK_TEMPLATE.theme.typography, ...source.theme.typography },
-    sectionStyle: isStyle(source.theme.sectionStyle) ? source.theme.sectionStyle : FALLBACK_TEMPLATE.theme.sectionStyle,
+    palette: { ...FALLBACK_V1.palette, ...v1.palette },
+    typography: { ...FALLBACK_V1.typography, ...v1.typography },
+    sectionStyle: isStyle(v1.sectionStyle) ? v1.sectionStyle : FALLBACK_V1.sectionStyle,
     sections: withGifts(order.filter((section) => enabled.includes(section))),
     hiddenSections: enabled.filter((section) => !order.includes(section) && section !== GIFTS),
     heroArt: art.hero?.id,
     ornamentSet: art.ornament?.id
+  };
+}
+
+const FALLBACK_V1 = FALLBACK_TEMPLATE.theme;
+
+/**
+ * F4 b: the theme of a design document v2. Sections come from the document's pages, in its order (the template's `sectionOrder`
+ * is the v1 field and only a fallback); `palette`, `typography` and `layout` are filled from the document so every consumer that
+ * reads them (the admin card, the host preview, the page's `theme-color`) keeps working, and `design` carries the rest.
+ */
+function themeFromDesign(source: TemplateDocument, design: DesignDocumentV2, enabled: readonly SectionId[]): CelebrationTheme {
+  const light = designPalette(design, "light");
+  const placed = design.pages.flatMap((page) => (page.kind === "section" && page.section && isSection(page.section) ? [page.section] : []));
+  const order = placed.length ? placed : source.sectionOrder.filter(isSection);
+  const first = design.pages.find((page) => page.kind === "section");
+  return {
+    id: source.id,
+    name: source.name,
+    layout: isLayout(source.layout) ? source.layout : FALLBACK_TEMPLATE.layout,
+    palette: { canvas: light.canvas, surface: light.surface, text: light.text, accent: light.accent, muted: light.muted },
+    typography: { heading: fontStack(design.tokens.typography.heading), body: fontStack(design.tokens.typography.body) },
+    sectionStyle: first && isStyle(first.style) ? first.style : FALLBACK_V1.sectionStyle,
+    sections: withGifts(order.filter((section) => enabled.includes(section))),
+    hiddenSections: enabled.filter((section) => !order.includes(section) && section !== GIFTS),
+    design
   };
 }
 
@@ -60,7 +92,7 @@ export function withGifts(sections: readonly SectionId[]): readonly SectionId[] 
 }
 
 export function layoutOf(theme: CelebrationTheme): LayoutSpec {
-  return LAYOUTS[theme.layout];
+  return theme.design ? designLayout(theme.design, LAYOUTS[theme.layout]) : LAYOUTS[theme.layout];
 }
 
 /** Only templates sharing a tag with the event type are offered (REQ-F09-06). */
@@ -164,6 +196,11 @@ function darkAccent(accent: string): string {
 
 /** Dark variant of any template, composed rather than inverted: neutral dark surfaces and the template's accent lightened to AA. */
 export function paletteFor(theme: CelebrationTheme, scheme: ColorScheme): Palette {
+  // A v2 document carries both palettes (P8): the dark one is the author's, never derived.
+  if (theme.design) {
+    const { canvas, surface, text, muted, accent } = designPalette(theme.design, scheme);
+    return { canvas, surface, text, muted, accent };
+  }
   return scheme === "dark" ? { canvas: DARK_CANVAS, surface: DARK_SURFACE, text: DARK_TEXT, muted: DARK_MUTED, accent: darkAccent(theme.palette.accent) } : theme.palette;
 }
 
@@ -185,6 +222,10 @@ export function inkOnAccent(palette: Pick<Palette, "surface" | "canvas" | "text"
  * it when it has no photo.
  */
 export function accentFill(theme: CelebrationTheme, scheme: ColorScheme): { readonly fill: string; readonly ink: string } {
+  if (theme.design) {
+    const { accentFill: fill, onAccent } = designPalette(theme.design, scheme);
+    return { fill, ink: onAccent };
+  }
   const palette = paletteFor(theme, scheme);
   const inkOn = (fill: string) => inkOnAccent({ ...palette, accent: fill });
   if (scheme === "light") return { fill: theme.palette.accent, ink: inkOn(theme.palette.accent) };
@@ -215,7 +256,8 @@ export function themeVariables(theme: CelebrationTheme, scheme: ColorScheme = "l
     "--celebration-radius": `${layout.radius}px`,
     "--celebration-gap": `${layout.sectionGap}px`,
     "--celebration-max-width": `${layout.maxWidth}px`,
-    "--celebration-heading-scale": String(layout.headingScale)
+    "--celebration-heading-scale": String(layout.headingScale),
+    ...(theme.design ? { "--celebration-line": designPalette(theme.design, scheme).line } : {})
   };
 }
 
@@ -227,6 +269,7 @@ const GOOGLE_FONTS = "https://fonts.googleapis.com/css2";
 
 /** Web fonts the theme needs, as one Google Fonts stylesheet URL (undefined when only system fonts are used). */
 export function fontStylesheet(theme: CelebrationTheme): string | undefined {
+  if (theme.design) return designFontStylesheet(theme.design);
   const families = [...new Set([theme.typography.heading, theme.typography.body].map((stack) => FIRST_FAMILY.exec(stack)?.[1]?.trim() ?? ""))]
     .filter((family) => family && !GENERIC_FAMILIES.has(family));
   if (!families.length) return undefined;

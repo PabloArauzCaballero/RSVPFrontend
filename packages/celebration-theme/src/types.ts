@@ -1,3 +1,5 @@
+import type { DesignDocumentV2 } from "./design/types.js";
+
 /**
  * The theme contract. A template is a row in template_db (Template/Media Service); this
  * package turns that row into a rendered site without one component per template.
@@ -26,6 +28,12 @@ export interface Typography {
   readonly body: string;
 }
 
+/** The v1 theme: five colours, two font stacks and a section style. */
+export interface TemplateThemeV1 { readonly palette: Palette; readonly typography: Typography; readonly sectionStyle: SectionStyle }
+
+/** What `theme` holds: a v1 theme or, since F4, a design document v2 (`schemaVersion: 2`, read with `design.readDesign`). */
+export type TemplateTheme = TemplateThemeV1 | DesignDocumentV2;
+
 /** Exactly what GET /media/templates/{id} returns. */
 export interface TemplateDocument {
   readonly id: string;
@@ -34,7 +42,7 @@ export interface TemplateDocument {
   readonly status?: string;
   readonly eventTypeTags: readonly string[];
   readonly layout: LayoutId;
-  readonly theme: { readonly palette: Palette; readonly typography: Typography; readonly sectionStyle: SectionStyle };
+  readonly theme: TemplateTheme;
   readonly sectionOrder: readonly SectionId[];
   readonly version?: number;
 }
@@ -54,6 +62,8 @@ export interface CelebrationTheme {
   /** F4: ids of the cover drawing and of the ornament set of the template (see hero-art.ts); absent means a quiet cover. */
   readonly heroArt?: string;
   readonly ornamentSet?: string;
+  /** F4 b: the design document v2 this theme was resolved from. The renderers draw its pages and canvases; `palette`, `typography` and `layout` stay filled from it for the consumers that only read those. */
+  readonly design?: DesignDocumentV2;
 }
 
 /** How a layout arranges the page. Layouts are data too. */
