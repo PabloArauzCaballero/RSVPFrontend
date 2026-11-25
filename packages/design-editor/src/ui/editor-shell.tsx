@@ -4,8 +4,8 @@ import { createAutosaver, type Autosaver, type DraftGateway, type SaveStatus } f
 import { setPaletteColour } from "../model/ops.js";
 import { canRedo, canUndo, documentOf, editorReducer, initialEditorState, type CanvasName, type EditorMode } from "../model/state.js";
 import { ContrastPanel } from "./contrast-panel.js";
-import { PublishPanel, type VersionsApi } from "./publish-panel.js";
-import type { PublishOutcome, VersionSummary, VersionsGateway } from "../save/versions.js";
+import { PublishPanel, type VersionsApi, type VersionsList } from "./publish-panel.js";
+import type { PublishOutcome, VersionsGateway } from "../save/versions.js";
 import { EditorProvider, type Translate } from "./editor-context.js";
 import { CustomCodePanel } from "./custom-code-panel.js";
 import { AlertIcon, CheckIcon, ClockIcon, DesktopIcon, DotIcon, LayersIcon, LockIcon, PhoneIcon, RedoIcon, SlidersIcon, SpinnerIcon, UndoIcon } from "./icons.js";
@@ -14,6 +14,8 @@ export interface EditableDesign {
   readonly id: string;
   readonly name: string;
   readonly draftVersion: number;
+  /** The latest published version, if any: it tells «nothing new to publish» from a new version even when the history did not load. */
+  readonly publishedVersion?: number | null;
   readonly document: design.DesignDocumentV2;
   /** Contrast warnings (P19) the server attached to this draft, if it did. */
   readonly warnings?: readonly design.DesignWarning[];
@@ -46,6 +48,10 @@ const NARROW_QUERY = "(max-width: 960px)";
 const UNAUTHORIZED = 401;
 const FORBIDDEN = 403;
 const TOO_LARGE = 413;
+/** The saver gave up for now: what was typed after the last save is only in this editor. */
+const UNSAVED: ReadonlySet<SaveStatus["kind"]> = new Set(["retrying", "conflict", "rejected"]);
+const CONFLICT = 409;
+const INVALID = 422;
 
 /** A translated label, or the raw id when the catalogue has none (a block type of a later release). */
 function labelOf(t: Translate, group: string, id: string | undefined): string {
@@ -245,7 +251,8 @@ function Notice(props: NoticeProps): ReactNode {
 export function EditorShell({ design: source, gateway, t, onReload, signInHref, now = Date.now, debounceMs, versions: versionsGateway, timeZone = "America/La_Paz", locale = "es-BO", children }: EditorShellProps) {
   const [state, dispatch] = useReducer(editorReducer, source.document, initialEditorState);
   const [status, setStatus] = useState<SaveStatus>({ kind: "saved" });
-  const [warnings, setWarnings] = useState<readonly design.DesignWarning[]>(source.warnings ?? []);
+  /** The server's answer about the draft it holds (P19), or null while it has not said anything. */
+  const [serverWarnings, setServerWarnings] = useState<readonly design.DesignWarning[] | null>(source.warnings ?? null);
   const [confirming, setConfirming] = useState(false);
   const [reloading, setReloading] = useState(false);
   const [reloadFailed, setReloadFailed] = useState(false);
@@ -263,67 +270,152 @@ export function EditorShell({ design: source, gateway, t, onReload, signInHref, 
     const live: DraftGateway = { saveDraft: (id, version, doc) => initial.current.gateway.saveDraft(id, version, doc) };
     const created = createAutosaver({
       designId: source.id, draftVersion: initial.current.draftVersion, gateway: live, onStatus: setStatus,
-      onSaved: (result) => setWarnings(result.warnings ?? []), ...(debounceMs === undefined ? {} : { debounceMs })
+      onSaved: (result) => setServerWarnings(result.warnings ?? null), ...(debounceMs === undefined ? {} : { debounceMs })
     });
     saver.current = created;
     return () => { void created.flush().finally(() => created.dispose()); saver.current = null; };
   }, [source.id, debounceMs]);
 
-  const [items, setItems] = useState<readonly VersionSummary[]>([]);
-  const [busy, setBusy] = useState(false);
+  const [list, setList] = useState<VersionsList>({ kind: "loading" });
+  const [busy, setBusy] = useState<VersionsApi["busy"]>(null);
   const [message, setMessage] = useState<VersionsApi["message"]>(null);
+  const [asked, setAsked] = useState<number | null>(null);
   const documentRef = useRef(document);
   documentRef.current = document;
+  const nextBefore = useRef<number | null>(null);
+  const listRun = useRef(0);
+  /** The newest published version this editor knows of: the record's, the history's and the ones published here. */
+  const published = useRef(0);
+  published.current = Math.max(published.current, source.publishedVersion ?? 0);
 
-  useEffect(() => {
-    if (!versionsGateway) return undefined;
-    let live = true;
-    versionsGateway.list(source.id).then((list) => { if (live) setItems(list); }, () => undefined);
-    return () => { live = false; };
+  const loadList = useCallback(() => {
+    if (!versionsGateway) return;
+    const run = ++listRun.current;
+    setList({ kind: "loading" });
+    versionsGateway.list(source.id).then(
+      (page) => {
+        if (run !== listRun.current) return;
+        nextBefore.current = page.nextBefore;
+        published.current = Math.max(published.current, ...page.items.map((item) => item.version));
+        setList({ kind: "ready", items: page.items, hasMore: page.nextBefore !== null, more: "idle" });
+      },
+      () => { if (run === listRun.current) setList({ kind: "error" }); }
+    );
   }, [versionsGateway, source.id]);
+  useEffect(() => { loadList(); return () => { listRun.current += 1; }; }, [loadList]);
+
+  const loadMore = useCallback(() => {
+    const before = nextBefore.current;
+    if (!versionsGateway || before === null) return;
+    const run = listRun.current;
+    setList((current) => (current.kind === "ready" ? { ...current, more: "loading" } : current));
+    versionsGateway.list(source.id, before).then(
+      (page) => {
+        if (run !== listRun.current) return;
+        nextBefore.current = page.nextBefore;
+        setList((current) => {
+          if (current.kind !== "ready") return current;
+          const known = new Set(current.items.map((item) => item.version));
+          return { kind: "ready", items: [...current.items, ...page.items.filter((item) => !known.has(item.version))], hasMore: page.nextBefore !== null, more: "idle" };
+        });
+      },
+      () => { if (run === listRun.current) setList((current) => (current.kind === "ready" ? { ...current, more: "error" } : current)); }
+    );
+  }, [versionsGateway, source.id]);
+
+  /** What the host says when a call about the draft is refused: each answer has its own words and, for a 409, the way out the editor already has. */
+  const refused = useCallback((error: unknown): { readonly kind: "conflict" | "signIn" | "forbidden" | "rejected" | "failed"; readonly code?: string; readonly current?: number } => {
+    const failure = error as { status?: number; problem?: { code?: string; currentVersion?: number } };
+    const code = failure.problem?.code;
+    if (failure.status === CONFLICT) return { kind: "conflict", ...(failure.problem?.currentVersion === undefined ? {} : { current: failure.problem.currentVersion }) };
+    if (failure.status === UNAUTHORIZED) return { kind: "signIn" };
+    if (failure.status === FORBIDDEN) return { kind: "forbidden" };
+    if (failure.status === INVALID) return { kind: "rejected", ...(code ? { code } : {}) };
+    return { kind: "failed" };
+  }, []);
 
   const publish = useCallback(async (label: string): Promise<PublishOutcome> => {
     if (!versionsGateway || !saver.current) return { kind: "failed" };
-    setBusy(true); setMessage(null);
+    const gate = saver.current;
+    setBusy({ kind: "publishing" }); setMessage(null);
     const finish = (outcome: PublishOutcome): PublishOutcome => {
       const text = outcome.kind === "published" ? t(key("publish.done"), { version: outcome.version })
         : outcome.kind === "unchanged" ? t(key("publish.unchanged"))
         : outcome.kind === "blocked" ? t(key("publish.blocked"))
+        : outcome.kind === "conflict" ? t(key("publish.conflict"))
+        : outcome.kind === "signIn" ? t(key("publish.signIn"))
+        : outcome.kind === "forbidden" ? t(key("publish.forbidden"))
         : outcome.kind === "rejected" ? t(key("publish.notPublishable"), { code: outcome.code })
         : t(key("publish.failed"));
-      setMessage({ kind: outcome.kind === "published" || outcome.kind === "unchanged" ? "ok" : "error", text });
-      setBusy(false);
+      setMessage({ kind: outcome.kind === "published" || outcome.kind === "unchanged" ? "ok" : "error", text, ...(outcome.kind === "conflict" ? { reload: true } : {}) });
+      setBusy(null);
       return outcome;
     };
-    await saver.current.flush();
-    if (saver.current.status.kind !== "saved") return finish({ kind: "blocked" });
+    await gate.flush();
+    if (gate.status.kind !== "saved") return finish({ kind: "blocked" });
+    // What is published is what was saved; whatever is typed while the request runs is a later edit and is saved afterwards.
+    const sent = documentRef.current;
+    const release = gate.hold();
     try {
-      const result = await versionsGateway.publish(source.id, saver.current.draftVersion, label.trim());
-      saver.current.resume(result.draftVersion, documentRef.current);
-      const known = items.some((item) => item.version === result.version.version);
-      setItems((list) => (list.some((item) => item.version === result.version.version) ? list : [...list, result.version]));
-      return finish({ kind: known ? "unchanged" : "published", version: result.version.version });
+      const result = await versionsGateway.publish(source.id, gate.draftVersion, label.trim());
+      gate.resume(result.draftVersion, sent);
+      const unchanged = result.version.version <= published.current;
+      published.current = Math.max(published.current, result.version.version);
+      setList((current) => (current.kind === "ready" && !current.items.some((item) => item.version === result.version.version) ? { ...current, items: [...current.items, result.version] } : current));
+      release();
+      if (documentRef.current !== sent) gate.notify(documentRef.current);
+      return finish({ kind: unchanged ? "unchanged" : "published", version: result.version.version });
     } catch (error) {
-      const failure = error as { status?: number; problem?: { code?: string } };
-      if (failure.status === 422 || failure.status === 409) return finish({ kind: "rejected", code: failure.problem?.code ?? String(failure.status) });
-      return finish({ kind: "failed" });
+      const why = refused(error);
+      if (why.kind === "conflict") gate.markConflict(why.current);
+      release();
+      return finish(why.kind === "rejected" ? { kind: "rejected", code: why.code ?? String(INVALID) } : { kind: why.kind });
     }
-  }, [versionsGateway, source.id, items, t]);
+  }, [versionsGateway, source.id, t, refused]);
 
-  const restore = useCallback(async (version: number): Promise<void> => {
-    if (!versionsGateway || !saver.current) return;
-    setBusy(true); setMessage(null);
-    await saver.current.flush();
+  const confirmRestore = useCallback(async (): Promise<void> => {
+    if (!versionsGateway || !saver.current || asked === null) return;
+    const gate = saver.current;
+    const version = asked;
+    const warned = UNSAVED.has(status.kind);
+    setBusy({ kind: "restoring", version }); setMessage(null);
+    await gate.flush();
+    // The edits could not be saved and she was not told: say so now and let her decide again.
+    if (gate.status.kind !== "saved" && !warned) { setBusy(null); return; }
+    const release = gate.hold();
     try {
-      const result = await versionsGateway.restore(source.id, version, saver.current.draftVersion);
-      dispatch({ type: "load", document: result.document });
-      saver.current.resume(result.draftVersion, result.document);
+      const result = await versionsGateway.restore(source.id, version, gate.draftVersion);
+      // One undoable step: the previous document stays in the history, so «Deshacer» really brings it back.
+      dispatch({ type: "replace", document: result.document, at: now() });
+      gate.resume(result.draftVersion, result.document);
+      setServerWarnings(result.warnings ?? null);
+      setAsked(null);
+      release();
       setMessage({ kind: "ok", text: t(key("publish.restored"), { version }) });
-    } catch { setMessage({ kind: "error", text: t(key("publish.restoreFailed")) }); }
-    setBusy(false);
-  }, [versionsGateway, source.id, t]);
+    } catch (error) {
+      const why = refused(error);
+      if (why.kind === "conflict") gate.markConflict(why.current);
+      release();
+      setAsked(null);
+      setMessage({
+        kind: "error",
+        text: why.kind === "conflict" ? t(key("publish.restoreConflict")) : why.kind === "signIn" ? t(key("publish.restoreSignIn")) : why.kind === "forbidden" ? t(key("publish.restoreForbidden"))
+          : why.kind === "rejected" ? t(key("publish.restoreInvalid")) : t(key("publish.restoreFailed")),
+        ...(why.kind === "conflict" ? { reload: true } : {})
+      });
+    }
+    setBusy(null);
+  }, [versionsGateway, source.id, t, refused, asked, status.kind, now]);
 
-  const versionsApi = useMemo<VersionsApi>(() => ({ items, busy, message, publish: async (label) => { await publish(label); }, restore }), [items, busy, message, publish, restore]);
+  const versionsApi = useMemo<VersionsApi>(() => ({
+    list, busy, message, canReload: onReload !== undefined,
+    confirming: asked === null ? null : { version: asked, unsaved: UNSAVED.has(status.kind) },
+    publish: async (label) => { await publish(label); },
+    askRestore: (version) => { setMessage(null); setAsked(version); },
+    cancelRestore: () => setAsked(null),
+    confirmRestore, retryList: loadList, loadMore,
+    reload: () => setConfirming(true)
+  }), [list, busy, message, onReload, asked, status.kind, publish, confirmRestore, loadList, loadMore]);
 
   const revision = useRef(0);
   useEffect(() => {
@@ -355,7 +447,7 @@ export function EditorShell({ design: source, gateway, t, onReload, signInHref, 
       dispatch({ type: "load", document: next.document });
       revision.current = 0;
       saver.current?.resume(next.draftVersion, next.document);
-      setWarnings(next.warnings ?? []);
+      setServerWarnings(next.warnings ?? null);
       setConfirming(false);
     } catch { setReloadFailed(true); } finally { setReloading(false); }
   }, [onReload]);
@@ -445,31 +537,9 @@ export function EditorShell({ design: source, gateway, t, onReload, signInHref, 
             </label>
           ))}
           <p className="de-hint">{t(key("basic.hint"))}</p>
-          <ContrastPanel />
+          <ContrastPanel server={serverWarnings} fresh={status.kind === "saved"} />
           {versionsGateway ? <PublishPanel versions={versionsApi} timeZone={timeZone} locale={locale} /> : null}
           {state.mode === "advanced" ? <CustomCodePanel /> : null}
-          <div aria-live="polite">
-            {warnings.length > 0 ? (
-              <section className="de-warnings" aria-labelledby="de-warnings-title" data-testid="design-warnings">
-                <h3 id="de-warnings-title"><AlertIcon size={16} />{t(key("warnings.title"))}</h3>
-                <ul>
-                  {warnings.map((warning) => {
-                    const names = { scheme: t(key(`scheme.${warning.scheme}`)), foreground: t(key(`role.${warning.foreground}`)), background: t(key(`role.${warning.background}`)) };
-                    return (
-                      <li key={`${warning.scheme}:${warning.foreground}:${warning.background}`}>
-                        <span>{t(key("warnings.item"), { ...names, ratio: warning.ratio.toFixed(2), minimum: warning.minimum })}</span>
-                        <button type="button" className="de-btn de-btn--small" aria-label={t(key("warnings.useLabel"), { foreground: names.foreground, scheme: names.scheme, colour: warning.suggestion })}
-                          onClick={() => dispatch({ type: "edit", op: setPaletteColour(warning.scheme, warning.foreground, warning.suggestion), at: now() })}>
-                          <span className="de-swatch" style={{ background: warning.suggestion }} aria-hidden="true" />{t(key("warnings.use"), { colour: warning.suggestion })}
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-                <p className="de-hint">{t(key("warnings.hint"))}</p>
-              </section>
-            ) : null}
-          </div>
           {children}
           </div>
         </aside>
