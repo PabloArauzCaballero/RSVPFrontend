@@ -4,10 +4,10 @@
   "cpu": "4x slowdown",
   "entries": [
     {
-      "time": 1316,
+      "time": 1116,
       "tag": "IMG",
       "url": "http://localhost:41224/img/5-960.avif"
     }
   ],
-  "lcpMs": 1316
+  "lcpMs": 1116
 }
