@@ -103,6 +103,19 @@ describe("E2, E3, E7, E12", () => {
     await waitFor(() => expect(calls.some((call) => call.path.endsWith("/archive"))).toBe(true));
   });
 
+  it("F4 b · templates: a design document v2 opens read-only (no TypeError on theme.palette) and can be published", async () => {
+    const { designTemplate } = await import("@rsvp/celebration-theme/design-documents");
+    const draft = { ...designTemplate("marfil"), id: "t-v2", status: "DRAFT", version: 1, publishedAt: null } as unknown as Template;
+    const { client, calls } = fakeClient({ "GET /media/admin/templates": () => ({ items: [draft] }), "POST /media/templates/t-v2/publish": () => ({ ...draft, status: "PUBLISHED", version: 2 }) });
+    renderApp(<TemplatesAdminScreen onNavigate={navigate} />, client, ADMIN);
+    fireEvent.change(await screen.findByRole("combobox", { name: "Plantillas de invitación" }), { target: { value: "t-v2" } });
+    expect(await screen.findByText(/documento de diseño v2/)).toBeTruthy();
+    expect(screen.queryByTestId("save-template")).toBeNull();
+    fireEvent.click(await screen.findByRole("button", { name: "Otras acciones" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Publicar" }));
+    await waitFor(() => expect(calls.find((call) => call.path.endsWith("/publish"))?.headers.get("if-match")).toBe('"1"'));
+  });
+
   it("operations: health of both services and a confirmed replay", async () => {
     const { client, calls } = fakeClient({ "GET /celebrations/health": () => ({ status: "ok" }), "POST /celebrations/admin/projections/public/replay": () => ({ applied: 42 }) });
     renderApp(<OperationsScreen onNavigate={navigate} />, client, ADMIN);
