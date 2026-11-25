@@ -25,7 +25,7 @@ cielo = dict(
     cover_blocks=[art("art-nube-alta", "onda", True), art("art-nube-baja", "onda", True), art("art-paloma", "paloma", True), art("art-nube-base", "onda")],
     cover_mobile=[el("el-nube-alta", "art-nube-alta", 0, 0, 3, 8, animation=anim("draw", 0, 1200)),
                   el("el-paloma", "art-paloma", 3, 0, 1, 8, animation=anim("draw", 600, 1400)),
-                  el("el-cover", "cover", 0, 1, 4, 8, animation=anim("rise", 1100, 800), typography=dict(align="center", role="heading", size=48, lineHeight=1.08), padding=box(4, 16, 8), **HAIR),
+                  el("el-cover", "cover", 0, 1, 4, 8, animation=anim("rise", 1100, 800), typography=dict(align="center", role="heading", size=44, lineHeight=1.08), padding=box(8, 16, 8), **HAIR),
                   el("el-nube-baja", "art-nube-baja", 1, 2, 3, 8, animation=anim("draw", 1300, 1200)),
                   el("el-nube-base", "art-nube-base", 0, 3, 4, 8, animation=anim("fade", 1600, 600))],
     cover_desktop=[el("el-nube-alta", "art-nube-alta", 0, 0, 4, 8, animation=anim("draw", 0, 1200)),

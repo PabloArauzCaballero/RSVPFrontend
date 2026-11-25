@@ -130,11 +130,11 @@
                 "typography": {
                   "align": "center",
                   "role": "heading",
-                  "size": 48,
+                  "size": 44,
                   "lineHeight": 1.08
                 },
                 "padding": {
-                  "top": 4,
+                  "top": 8,
                   "right": 16,
                   "bottom": 8,
                   "left": 16
