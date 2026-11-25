@@ -2,6 +2,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { AxeBuilder } from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import sharp from "sharp";
+import { scopeCss } from "../../../packages/celebration-theme/src/custom/css";
 
 // F6 · medios y embebidos del renderizador v2, dibujados por el sitio real (next build + start) sobre el fixture de contrato.
 // Afirma lo que debe cumplirse; solo escribe imágenes cuando F6_EVIDENCE_DIR está definido (evidencia, nunca línea base).
@@ -35,9 +36,16 @@ test("the cover and the pictures are <picture> with AVIF first and the browser t
   expect(await page.locator("picture img").evaluateAll((nodes) => nodes.every((node) => (node as HTMLImageElement).getAttribute("height")))).toBe(true);
 });
 
-for (const scheme of ["light", "dark"] as const) {
-  for (const width of [360, 768, 1280] as const) {
-    test(`${scheme} ${width}px: the title over the background picture reads at AA over the real pixels (veil per scheme)`, async ({ page }) => {
+// The veil has to hold for ANY picture, so besides the fixture's mid-tone gradient the worst two are tried: pure black and pure white.
+const PHOTOS = { fixture: null, black: 0, white: 255 } as const;
+for (const [photo, level] of Object.entries(PHOTOS)) {
+  for (const scheme of ["light", "dark"] as const) {
+    for (const width of [360, 768, 1280] as const) {
+      test(`${photo} photo, ${scheme} ${width}px: the cover text over the background picture reads at AA over the real pixels (veil per scheme)`, async ({ page }) => {
+      if (level !== null) {
+        const solid = await sharp({ create: { width: 64, height: 64, channels: 3, background: { r: level, g: level, b: level } } }).png().toBuffer();
+        await page.route(/\/img\/5-\d+\.(avif|webp)$/, (route) => route.fulfill({ status: 200, contentType: "image/png", body: solid }));
+      }
       await open(page, width, scheme);
       await page.waitForFunction(() => [...document.querySelectorAll(".celebration-media-backdrop img")].every((node) => (node as HTMLImageElement).complete && (node as HTMLImageElement).naturalWidth > 0));
       const lum = (r: number, g: number, b: number): number => { const f = (v: number): number => { const c = v / 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
@@ -58,8 +66,9 @@ for (const scheme of ["light", "dark"] as const) {
           worst = Math.min(worst, (Math.max(l, inkLum) + 0.05) / (Math.min(l, inkLum) + 0.05));
         }
       }
-      expect(worst, `worst contrast of the cover text over the veiled picture`).toBeGreaterThanOrEqual(4.5);
-    });
+      expect(worst, `worst contrast of the cover text over the veiled ${photo} picture`).toBeGreaterThanOrEqual(4.5);
+      });
+    }
   }
 }
 
@@ -176,4 +185,52 @@ test("LCP of the cover under 4G (1.6 Mbit/s, 150 ms) and a 4x slower CPU, measur
   const last = entries.at(-1)!;
   if (OUT) { mkdirSync(OUT, { recursive: true }); writeFileSync(`${OUT}/lcp-4g.json`, JSON.stringify({ viewport: "390x844", network: "4G 1.6 Mbit/s, 150 ms RTT", cpu: "4x slowdown", entries, lcpMs: Math.round(last.time) }, null, 2)); }
   expect(last.time).toBeLessThan(2500);
+});
+
+test("the song sits in the same card as the video and the map, and the map label is left-aligned at 360", async ({ page }) => {
+  await open(page, 360);
+  await expect(page.locator('.celebration-embed[data-kind="audio"] .celebration-audio-button')).toBeVisible();
+  expect(await page.locator(".celebration-embed").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-kind")))).toEqual(["video", "map", "audio"]);
+  expect(await page.getByRole("button", { name: /Ver el mapa/ }).evaluate((node) => getComputedStyle(node).textAlign)).toMatch(/^(start|left)$/);
+});
+
+// R2-M1 (P22): whatever z-index the host's stylesheet gives the page, the gifts and reply buttons stay the element under their own centre.
+const COVERING_CSS = [
+  "section{position:relative;z-index:100;min-height:200vh}",
+  "div{position:relative;z-index:100;width:100vw;height:100vh}",
+  "*{position:relative;z-index:100}"
+];
+for (const css of COVERING_CSS) {
+  for (const width of [360, 1280] as const) {
+    test(`author CSS ${css} at ${width}px never covers the gifts and reply buttons`, async ({ page }) => {
+      await open(page, width);
+      const scoped = scopeCss(css, { scope: ".celebration-design" }).css;
+      expect(scoped).toContain("z-index:100");
+      await page.addStyleTag({ content: scoped });
+      const links = page.locator('a[data-action="gifts"], a[data-action="rsvp"], a[data-action="rsvp-help"]');
+      const count = await links.count();
+      expect(count).toBeGreaterThanOrEqual(2);
+      for (let index = 0; index < count; index += 1) {
+        const link = links.nth(index);
+        await link.scrollIntoViewIfNeeded();
+        const covered = await link.evaluate((node) => {
+          const box = node.getBoundingClientRect();
+          const top = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+          return top === null || (top !== node && !node.contains(top));
+        });
+        expect(covered, `button ${index} (${await link.getAttribute("data-action")}) is covered`).toBe(false);
+      }
+    });
+  }
+}
+
+test("at 768 the song, the video and the map are cards of the same height, and the map button fits its content at 360", async ({ page }) => {
+  await open(page, 768);
+  const heights = await page.locator(".celebration-embed").evaluateAll((nodes) => nodes.map((node) => Math.round(node.getBoundingClientRect().height)));
+  expect(heights).toHaveLength(3);
+  expect(Math.max(...heights) - Math.min(...heights)).toBeLessThanOrEqual(2);
+  await open(page, 360);
+  const map = await page.getByRole("button", { name: /Ver el mapa/ }).evaluate((node) => ({ button: node.getBoundingClientRect().width, card: node.parentElement!.getBoundingClientRect().width, lines: node.getBoundingClientRect().height }));
+  expect(map.button).toBeLessThan(map.card - 32);
+  expect(map.lines).toBeLessThan(60);
 });

@@ -20,7 +20,10 @@
     "art:hydration": "node scripts/art-hydration-check.mjs"
   },
   "dependencies": {
-    "@rsvp/design-tokens": "workspace:*"
+    "@rsvp/design-tokens": "workspace:*",
+    "postcss": "^8.5.3",
+    "postcss-selector-parser": "^6.1.2",
+    "postcss-value-parser": "^4.2.0"
   },
   "peerDependencies": {
     "react": ">=18"
