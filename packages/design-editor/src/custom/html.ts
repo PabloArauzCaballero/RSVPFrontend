@@ -125,7 +125,7 @@ function cleanLink(raw: string, options: SanitizeHtmlOptions, issues: HtmlIssue[
   if (scheme !== "https") { issues.push({ code: "URL_REJECTED", detail: scheme }); return null; }
   const host = lowerHost(value);
   if (host === null || value.includes("\\")) { issues.push({ code: "URL_REJECTED", detail: "https" }); return null; }
-  if (options.isProviderHost?.(host)) { issues.push({ code: "PROVIDER_LINK", detail: host }); return null; }
+  if (options.isProviderHost?.(host.replace(/\.+$/, ""))) { issues.push({ code: "PROVIDER_LINK", detail: host }); return null; }
   return value;
 }
 

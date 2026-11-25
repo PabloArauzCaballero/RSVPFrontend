@@ -130,6 +130,7 @@ describe("sanitizeHtml: hostile corpus", () => {
     const options = { isProviderHost: (host: string) => host === "proveedor.example" || host.endsWith(".proveedor.example") };
     expect(clean('<a href="https://tienda.proveedor.example/x">comprar</a>', options).html).toBe("<a>comprar</a>");
     expect(codes('<a href="https://PROVEEDOR.example/x">c</a>', options)).toContain("PROVIDER_LINK");
+    for (const trailing of ['https://proveedor.example./x', 'https://PROVEEDOR.EXAMPLE../x', 'https://tienda.proveedor.example./x']) expect(clean(`<a href="${trailing}">c</a>`, options).html, trailing).toBe("<a>c</a>");
     expect(clean('<a href="https://otro.example/x">ok</a>', options).html).toContain('href="https://otro.example/x"');
     expect(clean('<a href="/r/11111111-1111-1111-1111-111111111111">ok</a>', options).html).toContain('href="/r/11111111-1111-1111-1111-111111111111"');
   });
