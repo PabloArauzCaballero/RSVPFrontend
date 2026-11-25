@@ -171,9 +171,9 @@
               {
                 "id": "el-arcos",
                 "block": "art-arcos",
-                "x": 3,
+                "x": 4,
                 "y": 0,
-                "w": 6,
+                "w": 4,
                 "h": 8,
                 "visible": true,
                 "animation": {
@@ -183,24 +183,10 @@
                 }
               },
               {
-                "id": "el-copas",
-                "block": "art-copas",
-                "x": 5,
-                "y": 8,
-                "w": 2,
-                "h": 8,
-                "visible": true,
-                "animation": {
-                  "entrance": "rise",
-                  "delayMs": 600,
-                  "durationMs": 800
-                }
-              },
-              {
                 "id": "el-cover",
                 "block": "cover",
                 "x": 2,
-                "y": 16,
+                "y": 8,
                 "w": 8,
                 "h": 8,
                 "visible": true,
@@ -228,11 +214,25 @@
                 }
               },
               {
+                "id": "el-copas",
+                "block": "art-copas",
+                "x": 5,
+                "y": 16,
+                "w": 2,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "rise",
+                  "delayMs": 600,
+                  "durationMs": 800
+                }
+              },
+              {
                 "id": "el-arcos-base",
                 "block": "art-arcos-base",
-                "x": 3,
+                "x": 4,
                 "y": 24,
-                "w": 6,
+                "w": 4,
                 "h": 8,
                 "visible": true,
                 "animation": {
@@ -253,7 +253,7 @@
         "canvases": {
           "mobile": {
             "mode": "flow",
-            "columns": 4,
+            "columns": 8,
             "rowHeight": 8,
             "elements": [
               {
@@ -261,7 +261,7 @@
                 "block": "art-arcos-sec",
                 "x": 0,
                 "y": 0,
-                "w": 4,
+                "w": 8,
                 "h": 3,
                 "visible": true,
                 "animation": {
@@ -275,7 +275,7 @@
                 "block": "story",
                 "x": 0,
                 "y": 3,
-                "w": 4,
+                "w": 8,
                 "h": 1,
                 "visible": true
               }
@@ -291,7 +291,7 @@
         "canvases": {
           "mobile": {
             "mode": "flow",
-            "columns": 4,
+            "columns": 8,
             "rowHeight": 8,
             "elements": [
               {
@@ -299,7 +299,7 @@
                 "block": "art-arcos-sec",
                 "x": 0,
                 "y": 0,
-                "w": 4,
+                "w": 8,
                 "h": 3,
                 "visible": true,
                 "animation": {
@@ -313,7 +313,7 @@
                 "block": "schedule",
                 "x": 0,
                 "y": 3,
-                "w": 4,
+                "w": 8,
                 "h": 1,
                 "visible": true
               }
@@ -329,7 +329,7 @@
         "canvases": {
           "mobile": {
             "mode": "flow",
-            "columns": 4,
+            "columns": 8,
             "rowHeight": 8,
             "elements": [
               {
@@ -337,7 +337,7 @@
                 "block": "art-arcos-sec",
                 "x": 0,
                 "y": 0,
-                "w": 4,
+                "w": 8,
                 "h": 3,
                 "visible": true,
                 "animation": {
@@ -351,7 +351,7 @@
                 "block": "venues",
                 "x": 0,
                 "y": 3,
-                "w": 4,
+                "w": 8,
                 "h": 1,
                 "visible": true
               }
@@ -367,7 +367,7 @@
         "canvases": {
           "mobile": {
             "mode": "flow",
-            "columns": 4,
+            "columns": 8,
             "rowHeight": 8,
             "elements": [
               {
@@ -375,7 +375,7 @@
                 "block": "art-arcos-sec",
                 "x": 0,
                 "y": 0,
-                "w": 4,
+                "w": 8,
                 "h": 3,
                 "visible": true,
                 "animation": {
@@ -389,7 +389,7 @@
                 "block": "dress-code",
                 "x": 0,
                 "y": 3,
-                "w": 4,
+                "w": 8,
                 "h": 1,
                 "visible": true
               }
@@ -405,7 +405,7 @@
         "canvases": {
           "mobile": {
             "mode": "flow",
-            "columns": 4,
+            "columns": 8,
             "rowHeight": 8,
             "elements": [
               {
@@ -413,7 +413,7 @@
                 "block": "art-arcos-sec",
                 "x": 0,
                 "y": 0,
-                "w": 4,
+                "w": 8,
                 "h": 3,
                 "visible": true,
                 "animation": {
@@ -427,7 +427,7 @@
                 "block": "gallery",
                 "x": 0,
                 "y": 3,
-                "w": 4,
+                "w": 8,
                 "h": 1,
                 "visible": true
               }
@@ -443,7 +443,7 @@
         "canvases": {
           "mobile": {
             "mode": "flow",
-            "columns": 4,
+            "columns": 8,
             "rowHeight": 8,
             "elements": [
               {
@@ -451,7 +451,7 @@
                 "block": "art-arcos-sec",
                 "x": 0,
                 "y": 0,
-                "w": 4,
+                "w": 8,
                 "h": 3,
                 "visible": true,
                 "animation": {
@@ -465,7 +465,7 @@
                 "block": "gifts-cta",
                 "x": 0,
                 "y": 3,
-                "w": 4,
+                "w": 8,
                 "h": 6,
                 "visible": true
               }
@@ -481,7 +481,7 @@
         "canvases": {
           "mobile": {
             "mode": "flow",
-            "columns": 4,
+            "columns": 8,
             "rowHeight": 8,
             "elements": [
               {
@@ -489,7 +489,7 @@
                 "block": "art-arcos-sec",
                 "x": 0,
                 "y": 0,
-                "w": 4,
+                "w": 8,
                 "h": 3,
                 "visible": true,
                 "animation": {
@@ -503,7 +503,7 @@
                 "block": "faq",
                 "x": 0,
                 "y": 3,
-                "w": 4,
+                "w": 8,
                 "h": 1,
                 "visible": true
               }
@@ -519,7 +519,7 @@
         "canvases": {
           "mobile": {
             "mode": "flow",
-            "columns": 4,
+            "columns": 8,
             "rowHeight": 8,
             "elements": [
               {
@@ -527,7 +527,7 @@
                 "block": "art-arcos-sec",
                 "x": 0,
                 "y": 0,
-                "w": 4,
+                "w": 8,
                 "h": 3,
                 "visible": true,
                 "animation": {
@@ -541,7 +541,7 @@
                 "block": "recommendations",
                 "x": 0,
                 "y": 3,
-                "w": 4,
+                "w": 8,
                 "h": 1,
                 "visible": true
               }
@@ -557,7 +557,7 @@
         "canvases": {
           "mobile": {
             "mode": "flow",
-            "columns": 4,
+            "columns": 8,
             "rowHeight": 8,
             "elements": [
               {
@@ -565,7 +565,7 @@
                 "block": "art-arcos-sec",
                 "x": 0,
                 "y": 0,
-                "w": 4,
+                "w": 8,
                 "h": 3,
                 "visible": true,
                 "animation": {
@@ -579,7 +579,7 @@
                 "block": "rsvp-cta",
                 "x": 0,
                 "y": 3,
-                "w": 4,
+                "w": 8,
                 "h": 6,
                 "visible": true
               }

@@ -203,7 +203,7 @@
         "canvases": {
           "mobile": {
             "mode": "flow",
-            "columns": 4,
+            "columns": 8,
             "rowHeight": 8,
             "elements": [
               {
@@ -211,7 +211,7 @@
                 "block": "art-filete-sec",
                 "x": 0,
                 "y": 0,
-                "w": 4,
+                "w": 8,
                 "h": 2,
                 "visible": true,
                 "animation": {
@@ -225,7 +225,7 @@
                 "block": "story",
                 "x": 0,
                 "y": 2,
-                "w": 4,
+                "w": 8,
                 "h": 1,
                 "visible": true
               }
@@ -241,7 +241,7 @@
         "canvases": {
           "mobile": {
             "mode": "flow",
-            "columns": 4,
+            "columns": 8,
             "rowHeight": 8,
             "elements": [
               {
@@ -249,7 +249,7 @@
                 "block": "art-filete-sec",
                 "x": 0,
                 "y": 0,
-                "w": 4,
+                "w": 8,
                 "h": 2,
                 "visible": true,
                 "animation": {
@@ -263,7 +263,7 @@
                 "block": "gallery",
                 "x": 0,
                 "y": 2,
-                "w": 4,
+                "w": 8,
                 "h": 1,
                 "visible": true
               }
@@ -279,7 +279,7 @@
         "canvases": {
           "mobile": {
             "mode": "flow",
-            "columns": 4,
+            "columns": 8,
             "rowHeight": 8,
             "elements": [
               {
@@ -287,7 +287,7 @@
                 "block": "art-filete-sec",
                 "x": 0,
                 "y": 0,
-                "w": 4,
+                "w": 8,
                 "h": 2,
                 "visible": true,
                 "animation": {
@@ -301,7 +301,7 @@
                 "block": "schedule",
                 "x": 0,
                 "y": 2,
-                "w": 4,
+                "w": 8,
                 "h": 1,
                 "visible": true
               }
@@ -317,7 +317,7 @@
         "canvases": {
           "mobile": {
             "mode": "flow",
-            "columns": 4,
+            "columns": 8,
             "rowHeight": 8,
             "elements": [
               {
@@ -325,7 +325,7 @@
                 "block": "art-filete-sec",
                 "x": 0,
                 "y": 0,
-                "w": 4,
+                "w": 8,
                 "h": 2,
                 "visible": true,
                 "animation": {
@@ -339,7 +339,7 @@
                 "block": "venues",
                 "x": 0,
                 "y": 2,
-                "w": 4,
+                "w": 8,
                 "h": 1,
                 "visible": true
               }
@@ -355,7 +355,7 @@
         "canvases": {
           "mobile": {
             "mode": "flow",
-            "columns": 4,
+            "columns": 8,
             "rowHeight": 8,
             "elements": [
               {
@@ -363,7 +363,7 @@
                 "block": "art-filete-sec",
                 "x": 0,
                 "y": 0,
-                "w": 4,
+                "w": 8,
                 "h": 2,
                 "visible": true,
                 "animation": {
@@ -377,7 +377,7 @@
                 "block": "dress-code",
                 "x": 0,
                 "y": 2,
-                "w": 4,
+                "w": 8,
                 "h": 1,
                 "visible": true
               }
@@ -393,7 +393,7 @@
         "canvases": {
           "mobile": {
             "mode": "flow",
-            "columns": 4,
+            "columns": 8,
             "rowHeight": 8,
             "elements": [
               {
@@ -401,7 +401,7 @@
                 "block": "art-filete-sec",
                 "x": 0,
                 "y": 0,
-                "w": 4,
+                "w": 8,
                 "h": 2,
                 "visible": true,
                 "animation": {
@@ -415,7 +415,7 @@
                 "block": "gifts-cta",
                 "x": 0,
                 "y": 2,
-                "w": 4,
+                "w": 8,
                 "h": 6,
                 "visible": true
               }
@@ -431,7 +431,7 @@
         "canvases": {
           "mobile": {
             "mode": "flow",
-            "columns": 4,
+            "columns": 8,
             "rowHeight": 8,
             "elements": [
               {
@@ -439,7 +439,7 @@
                 "block": "art-filete-sec",
                 "x": 0,
                 "y": 0,
-                "w": 4,
+                "w": 8,
                 "h": 2,
                 "visible": true,
                 "animation": {
@@ -453,7 +453,7 @@
                 "block": "faq",
                 "x": 0,
                 "y": 2,
-                "w": 4,
+                "w": 8,
                 "h": 1,
                 "visible": true
               }
@@ -469,7 +469,7 @@
         "canvases": {
           "mobile": {
             "mode": "flow",
-            "columns": 4,
+            "columns": 8,
             "rowHeight": 8,
             "elements": [
               {
@@ -477,7 +477,7 @@
                 "block": "art-filete-sec",
                 "x": 0,
                 "y": 0,
-                "w": 4,
+                "w": 8,
                 "h": 2,
                 "visible": true,
                 "animation": {
@@ -491,7 +491,7 @@
                 "block": "recommendations",
                 "x": 0,
                 "y": 2,
-                "w": 4,
+                "w": 8,
                 "h": 1,
                 "visible": true
               }
@@ -507,7 +507,7 @@
         "canvases": {
           "mobile": {
             "mode": "flow",
-            "columns": 4,
+            "columns": 8,
             "rowHeight": 8,
             "elements": [
               {
@@ -515,7 +515,7 @@
                 "block": "art-filete-sec",
                 "x": 0,
                 "y": 0,
-                "w": 4,
+                "w": 8,
                 "h": 2,
                 "visible": true,
                 "animation": {
@@ -529,7 +529,7 @@
                 "block": "rsvp-cta",
                 "x": 0,
                 "y": 2,
-                "w": 4,
+                "w": 8,
                 "h": 6,
                 "visible": true
               }

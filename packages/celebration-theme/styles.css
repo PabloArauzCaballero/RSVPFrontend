@@ -125,9 +125,9 @@
 .celebration-cta-face { grid-area: 1 / 1; display: inline-flex; align-items: center; justify-content: center; gap: .5rem; }
 .celebration-cta[data-credential="absent"] .celebration-cta-face[data-face="confirm"], .celebration-cta[data-credential="present"] .celebration-cta-face[data-face="find"] { visibility: hidden; }
 .celebration-gallery { list-style: none; padding: 0; margin: 0; display: grid; gap: .75rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr)); }
-.celebration-gallery img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; }
-.celebration[data-images="rounded"] .celebration-gallery img { border-radius: var(--celebration-radius); }
-.celebration[data-images="framed"] .celebration-gallery img { border: 6px solid var(--celebration-surface); box-shadow: 0 1px 4px rgb(0 0 0 / .15); }
+.celebration-gallery :is(img, [data-photo-failed]) { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; }
+.celebration[data-images="rounded"] .celebration-gallery :is(img, [data-photo-failed]) { border-radius: var(--celebration-radius); }
+.celebration[data-images="framed"] .celebration-gallery :is(img, [data-photo-failed]) { border: 6px solid var(--celebration-surface); box-shadow: 0 1px 4px rgb(0 0 0 / .15); }
 .celebration details { text-align: start; border-bottom: 1px solid color-mix(in srgb, var(--celebration-muted) 30%, transparent); padding: .75rem 0; }
 .celebration summary { cursor: pointer; font-weight: 600; min-height: 44px; display: flex; align-items: center; }
 
@@ -155,13 +155,14 @@
    --------------------------------------------------------------------------------------------------------------------- */
 .celebration-design { overflow-x: clip; }
 .celebration { --cd-line: var(--celebration-line, color-mix(in srgb, var(--celebration-text) 30%, var(--celebration-canvas))); }
-.celebration:has(> .cdesign-dock) { padding-bottom: 5.5rem; }
+/* The bar covers the foot of the page on the phone: the whole document (footer included) ends above it. */
+body:has(.cdesign-dock) { padding-bottom: 5.5rem; }
 .celebration-design h1 { font-size: calc(clamp(2.4rem, 8vw, 4.75rem) * var(--celebration-heading-scale)); font-weight: 600; line-height: 1.02; }
 .celebration-design .cdesign-heading { font-size: calc(clamp(1.4rem, 3.4vw, 1.9rem) * var(--celebration-heading-scale)); color: var(--celebration-text); margin: 0; }
-.celebration-design .cdesign-page-title { width: min(100%, var(--celebration-max-width)); margin: 0 auto .75rem; padding-inline: var(--celebration-space); box-sizing: border-box; }
+.celebration-design .cdesign-page-title { width: min(100%, var(--celebration-max-width)); margin: calc(var(--celebration-gap) / 2) auto .5rem; padding-inline: var(--celebration-space); box-sizing: border-box; }
 .celebration-design .cdesign-text, .celebration-design .cdesign-quote p { margin: 0; max-width: 40rem; }
 .celebration-design .cdesign-quote { margin: 0; border-inline-start: 2px solid var(--celebration-accent); padding-inline-start: 1rem; font-family: var(--celebration-heading-font); font-size: 1.25rem; }
-.celebration-design .cdesign-monogram { margin: 0; font-family: var(--celebration-monogram-font); font-size: clamp(2.5rem, 12vw, 5rem); line-height: 1; color: var(--celebration-accent); }
+.celebration-design .cdesign-monogram { margin: 0; font-family: var(--celebration-monogram-font); font-size: clamp(2.5rem, 12vw, 5rem); line-height: 1; color: var(--cd-ink, var(--celebration-accent)); }
 .celebration-design .cdesign-spacer { display: block; height: 100%; }
 .celebration-design .cdesign-image { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
 .celebration-design .cdesign-art { display: block; width: 100%; height: auto; max-height: 100%; }
@@ -179,11 +180,15 @@
   width: min(100%, var(--celebration-max-width)); margin: 0 auto; padding: var(--celebration-gap) var(--celebration-space); box-sizing: border-box; }
 .celebration-design .cdesign-canvas[data-mode="free"] { grid-auto-rows: var(--cd-row-m); }
 .celebration-design .cdesign-page[data-page-kind="cover"] .cdesign-canvas { padding-block: clamp(2rem, 7vw, 4rem); }
+/* The phone canvas does not stretch with a tablet: the drawings of the cover are sized by the width of their columns, so past 30rem (480 px) the canvas stays centred and the title keeps its place in the first screen. */
+@media (max-width: 56.1875rem) { .celebration-design .cdesign-page[data-page-kind="cover"] .cdesign-canvas { width: min(100%, 30rem); } }
 .celebration-design .cdesign-el { display: none; min-width: 0; box-sizing: border-box; position: relative; container-type: inline-size; align-self: start;
   grid-column: var(--mx) / span var(--mw); grid-row: var(--my) / span var(--mh); }
 .celebration-design .cdesign-canvas[data-mode="free"] .cdesign-el { align-self: stretch; }
 .celebration-design .cdesign-el[data-m] { display: block; }
 .celebration-design .cdesign-el[data-round] { overflow: clip; }
+/* The monogram of a rounded element is a seal: a circle in ink with a fine rule, centred on its columns. It has no fill and no action, so nothing about it reads as a button. */
+.celebration-design .cdesign-el[data-block="monogram"][data-round] { width: min(100%, 6.5rem); aspect-ratio: 1; justify-self: center; display: grid; place-items: center; background: none; }
 .celebration-design .cdesign-el p { margin: 0; }
 @media (min-width: 56.25rem) {
   .celebration-design .cdesign-canvas { grid-template-columns: repeat(var(--cd-cols-d), minmax(0, 1fr)); grid-auto-rows: minmax(var(--cd-row-d), auto); }
@@ -210,7 +215,7 @@
   .cdesign-cover[data-variant="classic"] { justify-items: start; text-align: start; }
   .cdesign-cover[data-variant="classic"] .cdesign-cover-copy { justify-items: start; }
 }
-.celebration-design .cdesign-intro { width: min(100%, var(--celebration-max-width)); margin: 0 auto .75rem; padding-inline: var(--celebration-space); box-sizing: border-box; }
+.celebration-design .cdesign-intro { width: min(100%, var(--celebration-max-width)); margin: 0 auto .5rem; padding-inline: var(--celebration-space); box-sizing: border-box; }
 .celebration-design .cdesign-intro p { max-width: 40rem; }
 .celebration-design .cdesign-page[data-section="gifts"] .celebration-cta, .celebration-design .cdesign-page[data-section="rsvp"] .celebration-cta { width: 100%; max-width: 22rem; }
 
@@ -225,7 +230,7 @@
 .celebration .cdesign-dock .celebration-cta[data-action="rsvp"], .celebration .cdesign-dock .celebration-cta[data-action="rsvp-help"] { background: transparent; color: var(--celebration-accent) !important; border: 2px solid var(--celebration-accent); }
 @media (max-width: 25rem) { .celebration .cdesign-dock .celebration-icon { display: none; } }
 @media (min-width: 56.25rem) {
-  .celebration:has(> .cdesign-dock) { padding-bottom: 0; }
+  body:has(.cdesign-dock) { padding-bottom: 0; }
   .celebration .cdesign-dock { position: sticky; inset: 0 0 auto 0; justify-content: flex-end; border-top: 0; border-bottom: 1px solid var(--cd-line); padding-inline: var(--celebration-space); }
   .celebration .cdesign-dock .celebration-cta { flex: 0 0 auto; padding-inline: 1.25rem; }
 }
@@ -243,6 +248,21 @@
     .celebration-design .cdesign-page[data-page-kind="section"] .cdesign-el[data-entrance]:not([data-entrance="draw"]) { animation-duration: 1ms; animation-timing-function: linear; animation-fill-mode: both; animation-timeline: view(); animation-range: entry 0% entry 55%; }
   }
 }
+/* A titled section keeps the section gap split around the title and below the content (half above, half below), not between its title and its content: the canvas starts one grid step under the title (8 px), so the title, its drawing and the first line read as one group. */
+.celebration-design .cdesign-page[data-page-kind="section"] > :is(.cdesign-page-title, .cdesign-intro) ~ .cdesign-canvas { padding-top: .5rem; }
+.celebration-design .cdesign-page-title ~ .cdesign-canvas { padding-bottom: calc(var(--celebration-gap) / 2); }
+/* A tablet in portrait (600 to 899 px) draws the phone canvas on a much wider page: the cover drawings stop at 13 rem so the title, with a photo above it, still starts in the first screen instead of under the fixed bar. */
+@media (min-width: 37.5rem) and (max-width: 56.1875rem) {
+  .celebration-design .cdesign-page[data-page-kind="cover"] .cdesign-art { max-height: 13rem; width: auto; max-width: 100%; margin-inline: auto; }
+}
+/* The three states of «Ver regalos» (`giftsStatus`): the button stays and keeps its link; OPEN is the solid accent button, EMPTY (no gifts yet) a dashed accent outline on the surface, CLOSED a quiet line-and-muted one. Colours are palette roles, so each holds its contrast in both schemes. */
+.celebration .celebration-cta[data-action="gifts"][data-gifts-status="EMPTY"] { background: var(--celebration-surface); color: var(--celebration-accent) !important; border: 2px dashed var(--celebration-accent); }
+.celebration .celebration-cta[data-action="gifts"][data-gifts-status="CLOSED"] { background: var(--celebration-surface); color: var(--celebration-muted) !important; border: 2px solid var(--cd-line); }
+@media (hover: hover) { .celebration .celebration-cta[data-action="gifts"]:is([data-gifts-status="EMPTY"], [data-gifts-status="CLOSED"]):hover { background: color-mix(in srgb, var(--celebration-accent) 8%, var(--celebration-surface)); } }
+/* A photo that did not load (`Photo`): the same box on the palette's surface with the camera drawing, never a broken hole. */
+.celebration [data-photo-failed] { display: grid; place-items: center; box-sizing: border-box; background: var(--celebration-surface); border: 1px solid var(--cd-line); aspect-ratio: 4 / 3; width: 100%; overflow: clip; }
+.celebration .celebration-photo-art { display: block; width: min(40%, 6rem); height: auto; }
+.celebration-design .cdesign-image[data-photo-failed] { height: 100%; }
 /* The drawing that heads a section is a small mark, not a block: 72 px whatever the columns say. */
 .celebration-design .cdesign-page[data-page-kind="section"] .cdesign-el[data-block="illustration"] { max-width: 4.5rem; }
 
@@ -260,8 +280,10 @@ html:has(.cdesign-dock) { scroll-padding-bottom: 6rem; }
    Design document v2 (F4 c1 · bodas). Two things the documents of the wedding group need and the contract cannot say per element:
    the editorial cover as a spread, and the numbered acts of the programme. Keyed to `.celebration-design`. */
 .celebration-design .cdesign-cover[data-variant="editorial"] .cdesign-cover-photo { width: 100%; max-height: none; aspect-ratio: 4 / 5; object-fit: cover; }
+/* On the phone the title comes first and the photo under it, so the names are in the first screen whatever the photo weighs. */
+@media (max-width: 56.1875rem) { .celebration-design .cdesign-cover[data-variant="editorial"] .cdesign-cover-photo { order: 1; max-height: 28rem; } }
 @media (min-width: 900px) {
-  .celebration-design .cdesign-cover[data-variant="editorial"][data-has-image="true"] { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); column-gap: clamp(1.5rem, 4vw, 3.5rem); align-items: end; }
+  .celebration-design .cdesign-cover[data-variant="editorial"][data-has-image="true"] { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); column-gap: clamp(1.5rem, 4vw, 3.5rem); align-items: center; }
   .celebration-design .cdesign-cover[data-variant="editorial"][data-has-image="true"] .cdesign-cover-photo { grid-column: 1; grid-row: 1; }
   .celebration-design .cdesign-cover[data-variant="editorial"][data-has-image="true"] .cdesign-cover-copy { grid-column: 2; grid-row: 1; }
 }
@@ -270,5 +292,3 @@ html:has(.cdesign-dock) { scroll-padding-bottom: 6rem; }
 .celebration-design .cdesign-section-body[data-display="list"] .celebration-schedule li { counter-increment: act; }
 .celebration-design .cdesign-section-body[data-display="list"] .celebration-schedule li::before { content: counter(act, upper-roman); left: 6.75rem; top: .95rem; width: 2.5rem; height: auto; border-radius: 0; background: none; box-shadow: none; text-align: center; font-family: var(--celebration-heading-font); font-weight: 600; font-size: 1rem; line-height: 1.6; color: var(--celebration-accent); }
 .celebration-design .cdesign-section-body[data-display="list"] .celebration-schedule li::after { display: none; }
-/* A monogram that asks for its own colour (the wax seal of Rosa antiguo: `onAccent` on `accentFill`) keeps it; the default stays the accent. */
-.celebration-design .cdesign-el[data-block="monogram"][data-sized] .cdesign-monogram { color: inherit; }

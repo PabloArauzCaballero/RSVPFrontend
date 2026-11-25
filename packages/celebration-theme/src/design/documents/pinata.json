@@ -163,7 +163,7 @@
                 "x": 0,
                 "y": 6,
                 "w": 7,
-                "h": 26,
+                "h": 28,
                 "visible": true,
                 "animation": {
                   "entrance": "rise",
@@ -181,10 +181,10 @@
               {
                 "id": "el-pinata",
                 "block": "art-pinata",
-                "x": 8,
+                "x": 9,
                 "y": 5,
-                "w": 4,
-                "h": 28,
+                "w": 3,
+                "h": 16,
                 "visible": true,
                 "animation": {
                   "entrance": "rise",
