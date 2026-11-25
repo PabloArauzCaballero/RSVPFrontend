@@ -13,7 +13,7 @@ const record = { id: "d-1", kind: "CELEBRATION", celebrationId: "c-1", name: "Di
 
 describe("plantillas F5 · pantalla del editor (web)", () => {
   it("abre el diseño de la celebración y guarda el borrador con If-Match y la versión que editó", async () => {
-    const handlers = { ...baseHandlers(), "GET /media/celebrations/c-1/design": () => record, "PUT /media/designs/d-1/draft": () => ({ ...record, draftVersion: 5 }) };
+    const handlers = { ...baseHandlers(), "GET /media/celebrations/c-1/design": () => record, "PUT /media/designs/d-1/draft": () => ({ ...record, draftVersion: 5 }), "GET /media/designs/d-1/versions": () => ({ items: [{ version: 1, label: "Inicial", createdBy: "u-host", createdAt: "2026-11-20T15:30:00Z" }] }) };
     const { client, calls } = fakeClient(handlers);
     renderApp(<DesignEditorScreen celebrationId="c-1" onNavigate={navigate} />, client);
     expect(await screen.findByRole("heading", { level: 1, name: "Diseño de la invitación" })).toBeTruthy();
@@ -25,7 +25,26 @@ describe("plantillas F5 · pantalla del editor (web)", () => {
     expect(save?.path).toBe("/media/designs/d-1/draft");
     expect(save?.headers.get("if-match")).toBe('"4"');
     expect((save?.body as { document: { tokens: { palettes: { light: { accent: string } } } } }).document.tokens.palettes.light.accent).toBe("#123456");
-    await waitFor(() => expect(screen.getByRole("status").textContent).toContain("Borrador guardado."));
+    await waitFor(() => expect(screen.getByTestId("save-status").textContent).toContain("Borrador guardado."));
+  });
+
+  it("publica con la versión de borrador guardada, muestra el historial en la zona de la celebración y restaura sin publicar", async () => {
+    const handlers = {
+      ...baseHandlers(), "GET /media/celebrations/c-1/design": () => record,
+      "GET /media/designs/d-1/versions": () => ({ items: [{ version: 1, label: "Inicial", createdBy: "u-host", createdAt: "2026-11-20T15:30:00Z" }] }),
+      "POST /media/designs/d-1/publish": () => ({ design: record, version: { version: 2, label: "Final", createdBy: "u-host", createdAt: "2026-11-24T12:00:00Z" } }),
+      "POST /media/designs/d-1/versions/1/restore": () => ({ ...record, draftVersion: 5 })
+    };
+    const { client, calls } = fakeClient(handlers);
+    renderApp(<DesignEditorScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    expect(await screen.findByText("Versión 1")).toBeTruthy();
+    expect(screen.getByText(/11:30/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Publicar" }));
+    expect(await screen.findByText("Publicada la versión 2.")).toBeTruthy();
+    expect(calls.find((call) => call.method === "POST" && call.path.endsWith("/publish"))?.headers.get("if-match")).toBe('"4"');
+    fireEvent.click(screen.getAllByRole("button", { name: "Restaurar" })[1] as HTMLElement);
+    expect(await screen.findByText(/Versión 1 copiada al borrador/)).toBeTruthy();
+    expect(calls.filter((call) => call.path.endsWith("/publish"))).toHaveLength(1);
   });
 
   it("sin diseño (404) ofrece crearlo desde la plantilla de la celebración y lo abre", async () => {
