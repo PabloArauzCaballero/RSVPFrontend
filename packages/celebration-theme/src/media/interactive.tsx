@@ -60,7 +60,7 @@ export function EmbedFacadeView({ embed, title, labels, poster, onLoad }: EmbedF
 
 let playing: HTMLAudioElement | null = null;
 
-export interface AudioLabels { readonly play: string; readonly pause: string; readonly progress: string; readonly error: string }
+export interface AudioLabels { readonly shortPlay: string; readonly shortPause: string; readonly play: string; readonly pause: string; readonly progress: string; readonly error: string }
 export interface AudioPlayerViewProps { readonly src: string; readonly durationMs: number | null; readonly labels: AudioLabels }
 
 const clock = (seconds: number): string => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
@@ -85,11 +85,11 @@ export function AudioPlayerView({ src, durationMs, labels }: AudioPlayerViewProp
         ref={audio} src={src} preload="none" onPlay={() => setState("playing")} onPause={() => setState((current) => (current === "error" ? current : "paused"))}
         onEnded={() => { setState("idle"); setPosition(0); }} onError={() => setState("error")} onTimeUpdate={(event) => setPosition(event.currentTarget.currentTime)}
       />
-      <button type="button" className="celebration-audio-button" onClick={toggle} aria-pressed={state === "playing"}>
+      <button type="button" className="celebration-audio-button" onClick={toggle} aria-pressed={state === "playing"} aria-label={state === "playing" ? labels.pause : labels.play}>
         <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
           {state === "playing" ? <path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="currentColor" /> : <path d="M8 5v14l11-7z" fill="currentColor" />}
         </svg>
-        <span>{state === "playing" ? labels.pause : labels.play}</span>
+        <span>{state === "playing" ? labels.shortPause : labels.shortPlay}</span>
       </button>
       {total ? <progress className="celebration-audio-progress" max={total} value={Math.min(position, total)} aria-label={labels.progress} /> : null}
       {total ? <span className="celebration-note">{clock(position)} / {clock(total)}</span> : null}

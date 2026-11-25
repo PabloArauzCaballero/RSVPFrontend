@@ -226,11 +226,11 @@ function elementStyle(element: DesignElement, mobile: DesignElement | undefined,
   const sized = typography?.size !== undefined;
   return {
     ...style,
+    ...(element.margin ? { "--cd-margin": box(element.margin) } : {}),
     ...(typography?.colour ? { "--cd-ink": role(typography.colour) } : {}),
     ...(sized ? { "--cd-size": fontSize(typography.size as number) } : {}),
     zIndex: element.z,
     padding: box(element.padding),
-    margin: box(element.margin),
     borderRadius: element.radius,
     border: border ? `${border.width}px ${border.style} ${role(border.colour)}` : undefined,
     opacity: element.opacity,
