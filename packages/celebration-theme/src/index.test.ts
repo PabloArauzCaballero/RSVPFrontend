@@ -303,9 +303,8 @@ describe("template colours read in both schemes (WCAG AA)", () => {
   });
 });
 
-describe("styles.css and native styles keep the contract the theme assumes", () => {
+describe("styles.css keeps the contract the theme assumes", () => {
   const css = readFileSync(join(process.cwd(), "styles.css"), "utf8");
-  const native = readFileSync(join(process.cwd(), "src/native.tsx"), "utf8");
   const FLOOR_PX = 13;
   const ROOT_PX = 16;
 
@@ -313,12 +312,6 @@ describe("styles.css and native styles keep the contract the theme assumes", () 
     const sizes = [...css.matchAll(/font-size:\s*([^;}]+)[;}]/g)].flatMap((match) => [...match[1]!.matchAll(/(-?\d*\.?\d+)(rem|em|px)/g)].map((value) => ({ rule: match[0], px: Number(value[1]) * (value[2] === "px" ? 1 : ROOT_PX) })));
     expect(sizes.length).toBeGreaterThan(10);
     expect(sizes.filter((size) => size.px < FLOOR_PX)).toEqual([]);
-  });
-
-  it("no fontSize in native.tsx falls below 13 px", () => {
-    const sizes = [...native.matchAll(/fontSize:\s*(\d+(?:\.\d+)?)/g)].map((match) => Number(match[1]));
-    expect(sizes.length).toBeGreaterThan(5);
-    expect(sizes.filter((size) => size < FLOOR_PX)).toEqual([]);
   });
 
   it("F4 (PL-A3, PL-M6, PL-M8) · the stylesheet paints no gradient and no saturated cover block; the reply tint is the one the theme validates against", () => {

@@ -44,7 +44,17 @@ const nextConfig = {
   async headers() {
     const privateHeaders = [{ key: 'Cache-Control', value: 'no-store' }, { key: 'Referrer-Policy', value: 'no-referrer' }, { key: 'X-Robots-Tag', value: 'noindex, nofollow' }];
     // Order matters: for the same key the later rule wins, so credential paths keep `no-referrer`.
-    return [{ source: '/:path*', headers: securityHeaders }, { source: '/c/:slug/rsvp/:path*', headers: privateHeaders }, { source: '/c/:slug/rsvp', headers: privateHeaders }, { source: '/rsvp/:path*', headers: privateHeaders }];
+    // P10 · `/vista-previa` is the one page the app may frame: it leaves the global rule (X-Frame-Options: DENY would block it) and
+    // answers its own: only the app's origin may embed it, and it is never cached or indexed.
+    const appOrigin = (() => { try { return new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:8100').origin; } catch { return "'none'"; } })();
+    const previewHeaders = [
+      ...securityHeaders.filter((header) => header.key !== 'X-Frame-Options'),
+      { key: 'Content-Security-Policy', value: `frame-ancestors ${appOrigin}` },
+      { key: 'Cache-Control', value: 'no-store' },
+      { key: 'Referrer-Policy', value: 'no-referrer' },
+      { key: 'X-Robots-Tag', value: 'noindex, nofollow' }
+    ];
+    return [{ source: '/((?!vista-previa).*)', headers: securityHeaders }, { source: '/vista-previa', headers: previewHeaders }, { source: '/c/:slug/rsvp/:path*', headers: privateHeaders }, { source: '/c/:slug/rsvp', headers: privateHeaders }, { source: '/rsvp/:path*', headers: privateHeaders }];
   },
   webpack: (config) => {
     // Workspace packages use NodeNext-style "./x.js" imports that point to .ts sources.

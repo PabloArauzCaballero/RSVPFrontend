@@ -1,13 +1,12 @@
 import { useState, type ReactNode } from "react";
 import { Pressable, Text, View } from "react-native";
 import { design, themeFromTemplate, type PublicCelebrationView, type TemplateDocument } from "@rsvp/celebration-theme";
-import { CelebrationNativeRenderer } from "@rsvp/celebration-theme/native";
 import { useAdminTemplates, useSaveTemplate, useTemplateTransition, type LayoutId, type SectionId, type Template, type TemplateInput, type TemplateTheme } from "@rsvp/query-hooks";
 import type { Translate } from "@rsvp/i18n";
 import { useApiClient, useLocale, useT } from "../platform/providers";
 import { ChoiceGroup, ConfirmDialog, Field, FilterSelect, Notice, PageIntro, Section, useStyles } from "../host/ui";
 import { RowsSkeleton } from "../provider/parts";
-import { invitationIcon } from "../guest/invitation-icon";
+import { InvitationPreview } from "../host/invitation-preview";
 import { AdminErrorNotice, AdminListError, Stack } from "./shared";
 import { AdminScreen, splitList, useHeaderSlot } from "./admin-screen";
 import { SECTION_IDS } from "./event-types";
@@ -91,7 +90,7 @@ function Editor({ template, onSaved }: { readonly template: Template | undefined
         ))}
       </View>
       <Text style={styles.label}>{t("admin.templates.preview")}</Text>
-      <View style={[styles.card, { maxHeight: PREVIEW_HEIGHT, overflow: "hidden", padding: 0 }]}><CelebrationNativeRenderer theme={preview} view={sampleView(t, locale)} t={t} renderIcon={invitationIcon} /></View>
+      <View style={[styles.card, { height: PREVIEW_HEIGHT, overflow: "hidden", padding: 0 }]}><InvitationPreview theme={preview} view={sampleView(t, locale)} title={t("admin.templates.preview")} testID="admin-preview" /></View>
       <AdminErrorNotice error={save.error ?? transition.error} onRetry={() => saveOnce({ target: template, input }, { onSuccess: onSaved })} />
       {save.isSuccess || transition.isSuccess ? <Notice kind="success">{t("admin.saved")}</Notice> : null}
       <ConfirmDialog visible={confirmArchive} danger title={t("admin.templates.archive")} body={t("admin.templates.archiveConfirm")} confirmLabel={t("admin.templates.archive")}
@@ -133,7 +132,7 @@ function DesignReader({ template, onSaved }: { readonly template: Template; read
         ))}
       </View>
       <Text style={styles.label}>{t("admin.templates.preview")}</Text>
-      <View style={[styles.card, { maxHeight: PREVIEW_HEIGHT, overflow: "hidden", padding: 0 }]}><CelebrationNativeRenderer theme={preview} view={sampleView(t, locale)} t={t} renderIcon={invitationIcon} /></View>
+      <View style={[styles.card, { height: PREVIEW_HEIGHT, overflow: "hidden", padding: 0 }]}><InvitationPreview theme={preview} view={sampleView(t, locale)} title={t("admin.templates.preview")} testID="admin-preview" /></View>
       <AdminErrorNotice error={transition.error} onRetry={() => undefined} />
       {transition.isSuccess ? <Notice kind="success">{t("admin.saved")}</Notice> : null}
       <ConfirmDialog visible={confirmArchive} danger title={t("admin.templates.archive")} body={t("admin.templates.archiveConfirm")} confirmLabel={t("admin.templates.archive")}
