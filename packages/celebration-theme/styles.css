@@ -242,3 +242,5 @@
     .celebration-design .cdesign-page[data-page-kind="section"] .cdesign-el[data-entrance]:not([data-entrance="draw"]) { animation-duration: 1ms; animation-timing-function: linear; animation-fill-mode: both; animation-timeline: view(); animation-range: entry 0% entry 55%; }
   }
 }
+/* The drawing that heads a section is a small mark, not a block: 72 px whatever the columns say. */
+.celebration-design .cdesign-page[data-page-kind="section"] .cdesign-el[data-block="illustration"] { max-width: 4.5rem; }
