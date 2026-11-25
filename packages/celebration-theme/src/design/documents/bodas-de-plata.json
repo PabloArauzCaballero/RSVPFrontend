@@ -174,20 +174,6 @@
                   "delayMs": 200,
                   "durationMs": 900
                 }
-              },
-              {
-                "id": "el-laurel",
-                "block": "art-laurel",
-                "x": 4,
-                "y": 8,
-                "w": 4,
-                "h": 8,
-                "visible": true,
-                "animation": {
-                  "entrance": "draw",
-                  "delayMs": 700,
-                  "durationMs": 1200
-                }
               }
             ]
           }

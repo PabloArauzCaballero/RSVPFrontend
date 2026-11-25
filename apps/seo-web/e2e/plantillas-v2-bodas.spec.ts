@@ -102,20 +102,24 @@ for (const name of NAMES) {
   }
 }
 
-// PL-128-M3/M4/M5 · the names are in the first screen whatever the template, the photo or the width: the phone canvas stops stretching at 480 px.
+// PL-128-M3/M4/M5 · the names are in the first screen and above the dock whatever the template, the photo or the width: the phone canvas stops stretching at 480 px.
 const ALL = [...NAMES, "marfil", "pinata", "gala"] as const;
 const SCREENS = [{ width: 360, height: 800 }, { width: 768, height: 1024 }, { width: 1280, height: 900 }] as const;
 for (const name of ALL) {
   for (const variant of ["", "-sinfoto"] as const) {
     for (const screen of SCREENS) {
-      test(`${name}${variant} ${screen.width}x${screen.height}: the title is in the first screen`, async ({ page }) => {
+      test(`${name}${variant} ${screen.width}x${screen.height}: the title ends above the dock`, async ({ page }) => {
         await page.setViewportSize(screen);
         await page.emulateMedia({ colorScheme: "light", reducedMotion: "reduce" });
         await page.goto(`/c/fixture-v2-${name}${variant}`);
         await page.evaluate(() => document.fonts.ready);
         const box = await page.locator(".celebration-design h1").first().boundingBox();
+        const dock = await page.locator(".cdesign-dock").boundingBox();
         expect(box).not.toBeNull();
-        expect((box?.y ?? 0) + (box?.height ?? 0)).toBeLessThanOrEqual(screen.height);
+        expect(dock).not.toBeNull();
+        // The dock sits at the bottom of the phone and covers what is under it: the title must end above it. When it sits at the top (wide screens) the limit is the window.
+        const limit = dock && dock.y > screen.height / 2 ? dock.y : screen.height;
+        expect((box?.y ?? 0) + (box?.height ?? 0)).toBeLessThanOrEqual(limit);
       });
     }
   }
