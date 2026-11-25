@@ -4,6 +4,7 @@ import { createAutosaver, type Autosaver, type DraftGateway, type SaveStatus } f
 import { setPaletteColour } from "../model/ops.js";
 import { canRedo, canUndo, documentOf, editorReducer, initialEditorState, type CanvasName, type EditorMode } from "../model/state.js";
 import { EditorProvider, type Translate } from "./editor-context.js";
+import { CustomCodePanel } from "./custom-code-panel.js";
 import { AlertIcon, CheckIcon, DesktopIcon, LayersIcon, PhoneIcon, RedoIcon, SlidersIcon, UndoIcon } from "./icons.js";
 
 export interface EditableDesign {
@@ -175,6 +176,7 @@ export function EditorShell({ design: source, gateway, t, onReload, now = Date.n
             </label>
           ))}
           <p className="de-hint">{t(key("basic.hint"))}</p>
+          {state.mode === "advanced" ? <CustomCodePanel /> : null}
           {children}
         </aside>
       </div>

@@ -37,6 +37,36 @@ export const designEditorEnUS: DeepStrings<typeof designEditorEsBO> = {
     accentDark: "Accent color (dark)",
     hint: "Changes save on their own and you can undo them."
   },
+  customCode: {
+    title: "Custom code",
+    html: "HTML",
+    css: "CSS",
+    htmlHelp: "Text tags, lists, tables, https links and your photos. No scripts, forms or frames.",
+    cssHelp: "It only applies inside your invitation and can't touch the gifts or RSVP buttons. Text is at least 13 px.",
+    clean: "All the code is valid.",
+    issues_one: "1 thing in your code was adjusted or removed.",
+    issues_other: "{{count}} things in your code were adjusted or removed.",
+    issue: {
+      TOO_LONG: "It's longer than allowed (20,000 characters).",
+      TAG_REMOVED: "We removed the '{{detail}}' tag and what's inside it: it isn't allowed.",
+      TAG_UNWRAPPED: "The '{{detail}}' tag doesn't exist in invitations; we kept only its text.",
+      ATTRIBUTE_REMOVED: "We removed '{{detail}}': that attribute isn't allowed.",
+      URL_REJECTED: "We removed a link or image that isn't allowed ({{detail}}). Images have to come from your uploaded photos.",
+      PROVIDER_LINK: "We removed a direct link to a provider ({{detail}}). Provider links go through the recommendations page.",
+      TOO_DEEP: "There are too many nested levels; we trimmed the deepest.",
+      TOO_MANY_NODES: "There are too many elements; we trimmed the end.",
+      UNSTABLE: "This HTML changes every time it's read, so we can't save it. Simplify it.",
+      SYNTAX: "The CSS has a syntax error and couldn't be read. Check the braces and semicolons.",
+      AT_RULE_REMOVED: "We removed '{{detail}}': it isn't allowed in an invitation's CSS.",
+      SELECTOR_REJECTED: "We removed a selector that isn't allowed ({{detail}}). You can only style elements of your own content.",
+      PROPERTY_REJECTED: "We removed the '{{detail}}' property: it isn't allowed.",
+      VALUE_REJECTED: "We removed a value that isn't allowed ({{detail}}).",
+      IMPORTANT_REMOVED: "We removed '!important' from '{{detail}}'.",
+      ESCAPE_REJECTED: "We removed a line with escape characters ({{detail}}): they aren't allowed.",
+      TOO_MANY_RULES: "There are too many rules; we ignored the last ones.",
+      MEDIA_REJECTED: "We removed an @media query that isn't allowed ({{detail}})."
+    }
+  },
   refusal: {
     title: "That change can't be made",
     dismiss: "Got it",
