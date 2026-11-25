@@ -456,3 +456,44 @@ describe("scopeCss: round 3 (R3-M1, R3-m1, R3-m2, R3-m3)", () => {
     }
   });
 });
+
+describe("scopeCss: the scope is a container that holds only the author's content (F6, PL-131-R4-M1/M2)", () => {
+  const SCOPE = ".cdesign-author";
+  const HOSTILE = [
+    "section{transform:translate(800px)}", ".cdesign-pages{transform:translate(800px)}", ".cdesign-page{padding:400px}", ".cdesign-canvas{margin-left:-400px}", ".cdesign-el{position:absolute;inset:-400px}",
+    "*{position:absolute;inset:-400px;z-index:100}", "*{color:#fff}", "div{display:none}", "main{padding:400px}", "article{transform:scale(2)}", "header{position:absolute}",
+    ":root{color:red}", "html{font-size:128px}", "body{margin:-400px}", ":root *{color:#fff}", "html body{margin:0}", ".celebration-design{color:#fff}", ".cdesign-dock{display:none}",
+    "section:has(a){transform:scale(2)}", "div:has(.rsvp-protected){display:none}", ":is(section,div){padding:400px}", ":where(.cdesign-pages){padding:400px}", "* + *{margin:-400px}",
+    "section ~ section{margin:-400px}", "section > *{position:absolute;inset:-400px}", ".rsvp-protected{display:none}", "a.rsvp-protected{color:#fff}", ".cdesign-author{transform:scale(2)}",
+    ".cdesign-author *{color:#fff}", "*:hover{transform:scale(2)}", "section::before{content:'';position:absolute;inset:-400px;z-index:100}", "@media (min-width:1px){section{padding:400px}}"
+  ];
+
+  it("every rule that survives starts with the container and a descendant combinator", () => {
+    for (const css of HOSTILE) {
+      const out = scopeCss(css, { scope: SCOPE }).css;
+      const selectors = out.replace(/@media[^{]*\{/g, "").split("}").map((chunk) => chunk.split("{")[0] ?? "").filter(Boolean).flatMap((list) => list.split(/,(?![^(]*\))/));
+      for (const selector of selectors) expect(selector.trim().startsWith(`${SCOPE} `), `${css} -> ${selector}`).toBe(true);
+    }
+  });
+
+  it("no surviving selector matches the root, main, a page, the canvas, a grid item, the container itself or a protected block, in a real DOM", () => {
+    document.body.innerHTML = `<article class="celebration celebration-design"><div class="cdesign-dock rsvp-protected"><a class="rsvp-protected" href="/x">x</a></div>
+      <main class="cdesign-pages"><section class="cdesign-page"><h2 class="cdesign-page-title">t</h2><div class="cdesign-intro"><p>i</p></div><div class="cdesign-canvas">
+      <div class="cdesign-el rsvp-protected"><a class="celebration-cta" href="/r">regalos</a></div>
+      <div class="cdesign-el"><div class="cdesign-author"><p>texto</p><div><span>x</span></div></div></div></div></section><header class="cdesign-page"><div class="cdesign-canvas"><div class="cdesign-el"><div class="cdesign-author"><h1>h</h1></div></div></div></header></main></article>`;
+    const protectedNodes = [document.documentElement, document.body, ...document.querySelectorAll("article, main, section, header, h2, .cdesign-intro, .cdesign-intro p, .cdesign-canvas, .cdesign-el, .cdesign-author, .cdesign-dock, .cdesign-dock a, .rsvp-protected, .rsvp-protected a")];
+    const inside = [...document.querySelectorAll(".cdesign-author p, .cdesign-author div, .cdesign-author span, .cdesign-author h1")];
+    let reachable = 0;
+    for (const css of HOSTILE) {
+      const out = scopeCss(css, { scope: SCOPE }).css;
+      const selectors = out.replace(/@media[^{]*\{/g, "").split("}").map((chunk) => chunk.split("{")[0] ?? "").filter(Boolean).flatMap((list) => list.split(/,(?![^(]*\))/)).map((item) => item.trim());
+      for (const selector of selectors) {
+        let matches: Element[] = [];
+        try { matches = [...document.querySelectorAll(selector)]; } catch { continue; }
+        for (const node of matches) { expect(protectedNodes.includes(node), `${css} -> ${selector} reaches <${node.tagName.toLowerCase()} class="${node.className}">`).toBe(false); }
+        reachable += matches.filter((node) => inside.includes(node)).length;
+      }
+    }
+    expect(reachable, "the container's own content is still reachable").toBeGreaterThan(0);
+  });
+});

@@ -281,9 +281,12 @@ html:has(.cdesign-dock) { scroll-padding-bottom: 6rem; }
 .celebration-media-background-image { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -2; border-radius: 0; }
 .celebration-media-veil { position: absolute; inset: 0; z-index: -1; background: color-mix(in srgb, var(--celebration-canvas) var(--celebration-scrim, 40%), transparent); }
 .celebration-media-content { position: relative; }
-.celebration-embed { position: relative; display: grid; gap: .5rem; justify-items: start; width: 100%; max-width: min(var(--celebration-max-width, 40rem), 40rem); aspect-ratio: 16 / 9; align-content: center; background: var(--celebration-surface); border: 1px solid color-mix(in srgb, var(--celebration-text) 18%, transparent); border-radius: var(--celebration-radius, 0); overflow: hidden; padding: 1rem; }
+.celebration-embed { position: relative; display: grid; gap: .5rem; justify-items: start; width: 100%; margin-inline: auto; max-width: min(var(--celebration-max-width, 40rem), 40rem); height: 14rem; align-content: center; background: var(--celebration-surface); border: 1px solid color-mix(in srgb, var(--celebration-text) 18%, transparent); border-radius: var(--celebration-radius, 0); overflow: hidden; padding: 1rem; }
 /* The three cards (video, map, song) are one structure and one height: a 16:9 area with at least 11 rem, the action centred in it. */
 .celebration-embed { min-height: 11rem; }
+/* Once tapped, a video or a map takes the 16:9 of its player. */
+.celebration-embed[data-loaded="true"]:is([data-kind="video"], [data-kind="map"]) { height: auto; aspect-ratio: 16 / 9; }
+.celebration-design .cdesign-el:has(> .cdesign-author > .celebration-embed) { padding-block: .5rem; }
 .celebration-embed[data-loaded="true"] { padding: 0; }
 .celebration-embed-frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .celebration-embed > .celebration-media-image { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
@@ -312,26 +315,10 @@ html:has(.cdesign-dock) { scroll-padding-bottom: 6rem; }
 /* On a picture the muted ink is the text ink: a veil can make the text pass AA over any photo, but not an ink that is already near 4.5 on the plain canvas. */
 .celebration-design .cdesign-page[data-bg-media], .celebration-design .cdesign-el[data-bg-media] { --celebration-muted: var(--celebration-text); }
 
-/* R2-M1 / R3-M1 · P22: the gifts and reply buttons are never covered, moved, shrunk or hidden, whatever the author's stylesheet does. The author's z-index tops out at 100
-   (MAX_AUTHOR_Z_INDEX) and `!important` is stripped from it, so what is pinned here with `!important` always wins. Two rules make it hold:
-   1. no ancestor of a protected block (main, the page, the canvas) may create a stacking context below the author's layers: the main and the canvas have `z-index:auto`,
-      the page that holds a protected block is itself the layer above the author's (1000), and the block is above its page mates (1000); the dock is above all (2000);
-   2. the ancestors keep their box: display, position, offsets and size are pinned, so `display:none`, `height:0`, `inset:-100vh` and the like cannot hide or move the block. */
+/* P22 · the gifts and reply buttons. The dock is above everything (the author's z-index tops out at 100). Inside the page they are a grid item of their own, OUTSIDE every `.cdesign-author`:
+   the author's stylesheet is scoped to that container (see CustomCss), so it cannot match the page, the canvas, `main` or these blocks, nor inherit anything into them. Whatever the
+   author draws inside a container is clipped to it (plus a small margin for shadows) and lives in its own stacking context, below the protected blocks. */
 .celebration .cdesign-dock { z-index: 2000 !important; }
-.celebration-design .cdesign-pages { position: static !important; z-index: auto !important; display: block !important; }
-.celebration-design .cdesign-canvas { z-index: auto !important; }
-.celebration-design .cdesign-page:has(.rsvp-protected) { margin: 0 !important; position: relative !important; z-index: 1000 !important; inset: auto !important; display: block !important; width: auto !important; max-width: none !important; height: auto !important; max-height: none !important; }
-.celebration-design .cdesign-page:has(.rsvp-protected) .cdesign-canvas { margin: 0 auto !important; position: relative !important; inset: auto !important; display: grid !important; width: min(100%, var(--celebration-max-width)) !important; max-width: none !important; height: auto !important; max-height: none !important; }
-.celebration-design .cdesign-el.rsvp-protected { position: relative !important; z-index: 1000 !important; }
-.celebration-design .cdesign-el { margin: var(--cd-margin, 0) !important; }
-/* Negative margins of the author (bounded, but they add up across pages) must not pull a protected block above the top of the document: every box of the page flow keeps its own margins. */
-.celebration-design .cdesign-page { margin: 0 !important; }
-.celebration-design .cdesign-canvas { margin: 0 auto !important; }
-.celebration-design .cdesign-intro { margin: 0 auto .5rem !important; }
-.celebration-design .cdesign-page-title { margin: calc(var(--celebration-gap) / 2) auto .5rem !important; }
-/* Padding too: a 400 px padding on a page or canvas would squeeze the block off a phone. The canvas keeps the padding the renderer gave it (the three rules below repeat the earlier ones, pinned). */
-.celebration-design .cdesign-page { padding: 0 !important; }
-.celebration-design .cdesign-canvas { padding: var(--celebration-gap) var(--celebration-space) !important; }
-.celebration-design .cdesign-page[data-page-kind="cover"] .cdesign-canvas { padding-block: clamp(2rem, 7vw, 4rem) !important; }
-.celebration-design .cdesign-page[data-page-kind="section"] > :is(.cdesign-page-title, .cdesign-intro) ~ .cdesign-canvas { padding-top: .5rem !important; }
-.celebration-design .cdesign-page-title ~ .cdesign-canvas { padding-bottom: calc(var(--celebration-gap) / 2) !important; }
+.celebration-design .cdesign-el.rsvp-protected { position: relative; z-index: 1000; }
+.celebration-design .cdesign-author { position: relative; display: block; height: 100%; min-width: 0; isolation: isolate; contain: layout; overflow: clip; overflow-clip-margin: 1.5rem; border-radius: inherit; }
+.celebration-design .cdesign-el[data-block="monogram"][data-round] .cdesign-author { display: grid; place-items: center; }

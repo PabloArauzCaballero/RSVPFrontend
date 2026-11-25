@@ -226,10 +226,10 @@ function elementStyle(element: DesignElement, mobile: DesignElement | undefined,
   const sized = typography?.size !== undefined;
   return {
     ...style,
-    ...(element.margin ? { "--cd-margin": box(element.margin) } : {}),
     ...(typography?.colour ? { "--cd-ink": role(typography.colour) } : {}),
     ...(sized ? { "--cd-size": fontSize(typography.size as number) } : {}),
     zIndex: element.z,
+    margin: box(element.margin),
     padding: box(element.padding),
     borderRadius: element.radius,
     border: border ? `${border.width}px ${border.style} ${role(border.colour)}` : undefined,
@@ -259,7 +259,10 @@ function Canvas({ page, context }: { readonly page: DesignPage; readonly context
         const element = (phone.get(id) ?? wide.get(id)) as DesignElement;
         const block = blocks.get(element.block);
         if (!block) return null;
-        const body = <BlockBody block={block} element={element} context={context} />;
+        const protectedBlock = block.type === "giftsCta" || block.type === "rsvpCta";
+        // The block's content goes in the author container; the gifts and reply buttons do not: they are the grid item itself, a sibling layer the stylesheet cannot reach.
+        const content = <BlockBody block={block} element={element} context={context} />;
+        const body = protectedBlock ? content : <div className="cdesign-author">{content}</div>;
         const href = block.type === "button" || block.type === "giftsCta" || block.type === "rsvpCta" ? undefined : hrefOf(element.link, context);
         return (
           <div key={id} className={block.type === "giftsCta" || block.type === "rsvpCta" ? "cdesign-el rsvp-protected" : "cdesign-el"} data-block={block.type} data-m={phone.has(id) ? "" : undefined} data-d={wide.has(id) || (!desktop && phone.has(id)) ? "" : undefined}
@@ -288,8 +291,8 @@ function SystemColours({ theme }: { readonly theme: CelebrationTheme }): ReactNo
   return <style>{`${scope}{${rule("light")};color-scheme:light}@media (prefers-color-scheme:dark){${scope}{${rule("dark")};color-scheme:dark}}`}</style>;
 }
 
-/** The invitation's root class: every rule of the author's stylesheet is rebuilt under it. */
-const CUSTOM_SCOPE = ".celebration-design";
+/** The scope of the author's stylesheet: the container that holds ONLY the content of the blocks (`.cdesign-author`). Every rule is rebuilt as `.cdesign-author <selector>`, so no author selector can match the root, `main`, a page, the canvas, a grid item or the protected blocks, which are not inside any `.cdesign-author`. */
+const CUSTOM_SCOPE = ".cdesign-author";
 
 /**
  * The advanced CSS of the document (F5, P12). It is not trusted: it is parsed and rebuilt from the typed allowlist of F5 (`custom/css.ts`, a copy of the
