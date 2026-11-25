@@ -105,8 +105,10 @@ describe("the wedding group as documents v2", () => {
   it.each(NAMES)("%s: the partner recommendation goes through /r/{listingId}", (name) => {
     render(<CelebrationRenderer theme={themeFromTemplate(bodasTemplate(name), SECTIONS)} view={VIEW} gallery={GALLERY} t={t} now={NOW} />);
     const partners = document.querySelectorAll('a[data-link-kind="partner"]');
-    expect(partners).toHaveLength(1);
-    expect(partners[0]?.getAttribute("href")).toBe("/r/listing-42");
+    // Oro, Plata and Pedida keep the sections of their v1 seed, which place no recommendations: there is no provider on their page to link.
+    const places = (bodasTemplate(name).sectionOrder as readonly string[]).includes("recommendations");
+    expect(partners).toHaveLength(places ? 1 : 0);
+    if (places) expect(partners[0]?.getAttribute("href")).toBe("/r/listing-42");
   });
 
   it.each(NAMES)("%s: one h1 with the names, the date in the celebration's zone and the venue, in es-BO and en-US", (name) => {

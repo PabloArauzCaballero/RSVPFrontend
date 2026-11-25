@@ -258,7 +258,7 @@ html:has(.cdesign-dock) { scroll-padding-bottom: 6rem; }
 @media (hover: hover) { .celebration-cta:hover { background: color-mix(in srgb, var(--celebration-accent-fill) 86%, var(--celebration-text)); } }
 /* ---------------------------------------------------------------------------------------------------------------------------
    Design document v2 (F4 c1 · bodas). Two things the documents of the wedding group need and the contract cannot say per element:
-   the editorial cover as a spread, and the numbered acts of the programme. Keyed to `.celebration-design`; no gradient, no capitals. */
+   the editorial cover as a spread, and the numbered acts of the programme. Keyed to `.celebration-design`. */
 .celebration-design .cdesign-cover[data-variant="editorial"] .cdesign-cover-photo { width: 100%; max-height: none; aspect-ratio: 4 / 5; object-fit: cover; }
 @media (min-width: 900px) {
   .celebration-design .cdesign-cover[data-variant="editorial"][data-has-image="true"] { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); column-gap: clamp(1.5rem, 4vw, 3.5rem); align-items: end; }
