@@ -147,12 +147,11 @@
                   "role": "heading",
                   "size": 28,
                   "align": "center",
-                  "colour": "accent"
+                  "colour": "onAccent"
                 },
-                "border": {
-                  "width": 1,
-                  "style": "solid",
-                  "colour": "accent"
+                "background": {
+                  "kind": "colour",
+                  "role": "accentFill"
                 },
                 "radius": 999,
                 "padding": {
@@ -231,12 +230,11 @@
                   "role": "heading",
                   "size": 28,
                   "align": "center",
-                  "colour": "accent"
+                  "colour": "onAccent"
                 },
-                "border": {
-                  "width": 1,
-                  "style": "solid",
-                  "colour": "accent"
+                "background": {
+                  "kind": "colour",
+                  "role": "accentFill"
                 },
                 "radius": 999,
                 "padding": {

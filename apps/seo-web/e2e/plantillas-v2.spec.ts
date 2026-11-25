@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { AxeBuilder } from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 
@@ -30,7 +31,7 @@ for (const name of TEMPLATES) {
           await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
           await expect(gifts).toBeInViewport();
           await page.evaluate(() => window.scrollTo(0, 0));
-          if (OUT && (width === 390 || width === 1280 || width === 320)) await page.screenshot({ path: `${OUT}/${name}${variant}-${width}-${scheme}.png`, fullPage: true });
+          if (OUT && (width === 390 || width === 1280 || width === 320)) await page.screenshot({ path: `${OUT}/${name}${variant}-${width}-${scheme}.png`, fullPage: width === 1280 });
         });
       }
       test(`${name}${variant} ${scheme}: axe finds no contrast or structure violations`, async ({ page }) => {
@@ -57,3 +58,52 @@ test("the partner link of the recommendations goes through /r/{listingId}", asyn
   const hrefs = await page.locator('a[data-link-kind="partner"]').evaluateAll((nodes) => nodes.map((node) => node.getAttribute("href")));
   expect(hrefs).toEqual(["/r/7d1c1a34-5d4c-4a39-9a2e-0f4f2d3d7b11"]);
 });
+
+const documentOf = (name: string): { tokens: { palettes: Record<"light" | "dark", Record<string, string>> } } =>
+  (JSON.parse(readFileSync(new URL(`../../../packages/celebration-theme/src/design/documents/${name}.json`, import.meta.url), "utf8")) as { theme: { tokens: { palettes: Record<"light" | "dark", Record<string, string>> } } }).theme;
+const rgb = (hex: string): string => `rgb(${[1, 3, 5].map((i) => Number.parseInt(hex.slice(i, i + 2), 16)).join(", ")})`;
+
+// B1 of the visual review: the document's own dark palette must be what the page paints, not only what axe could measure.
+for (const name of TEMPLATES) {
+  for (const width of [360, 768, 1280] as const) {
+    for (const scheme of ["light", "dark"] as const) {
+      test(`${name} ${scheme} ${width}px: the canvas and the text are the document's ${scheme} palette`, async ({ page }) => {
+        await open(page, `fixture-v2-${name}`, width, scheme);
+        const palette = documentOf(name).tokens.palettes[scheme];
+        const measured = await page.evaluate(() => {
+          const article = document.querySelector(".celebration-design") as HTMLElement;
+          const title = document.querySelector(".celebration-design h1") as HTMLElement;
+          return { canvas: getComputedStyle(article).backgroundColor, text: getComputedStyle(title).color, scheme: getComputedStyle(article).colorScheme };
+        });
+        expect(measured.canvas).toBe(rgb(palette["canvas"] as string));
+        expect(measured.text).toBe(rgb(palette["text"] as string));
+      });
+    }
+  }
+}
+
+// B2: the fixed bar of the phone never covers the element that has focus (WCAG 2.4.11, P22).
+for (const name of TEMPLATES) {
+  for (const width of [360, 768, 1280] as const) {
+    test(`${name} ${width}px: with Tab no focused element ends under the dock`, async ({ page }) => {
+      await open(page, `fixture-v2-${name}`, width, "light");
+      const checked = new Set<string>();
+      for (let step = 0; step < 70; step += 1) {
+        await page.keyboard.press("Tab");
+        const result = await page.evaluate(() => {
+          const active = document.activeElement as HTMLElement | null;
+          const dock = document.querySelector(".cdesign-dock") as HTMLElement;
+          if (!active || active === document.body || dock.contains(active)) return null;
+          const a = active.getBoundingClientRect();
+          const d = dock.getBoundingClientRect();
+          const overlap = a.width > 0 && a.height > 0 && a.bottom > d.top + 0.5 && a.top < d.bottom - 0.5 && a.right > d.left && a.left < d.right;
+          return { overlap, label: `${active.tagName} ${(active.textContent ?? "").trim().slice(0, 30)}`, y: Math.round(a.bottom), dockTop: Math.round(d.top) };
+        });
+        if (!result) continue;
+        checked.add(result.label);
+        expect(result.overlap, `${result.label} bottom ${result.y} under the dock at ${result.dockTop}`).toBe(false);
+      }
+      expect(checked.size).toBeGreaterThan(8);
+    });
+  }
+}
