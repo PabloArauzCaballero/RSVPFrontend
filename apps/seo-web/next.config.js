@@ -49,13 +49,14 @@ const nextConfig = {
     // answers its own: only the app's origin may embed it, and it is never cached or indexed.
     const appOrigin = (() => { try { return new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:8100').origin; } catch { return "'none'"; } })();
     const previewHeaders = [
-      ...securityHeaders.filter((header) => header.key !== 'X-Frame-Options'),
+      // Neither X-Frame-Options nor the report-only CSP (its `frame-ancestors 'none'` would contradict the real one).
+      ...securityHeaders.filter((header) => header.key !== 'X-Frame-Options' && header.key !== 'Content-Security-Policy-Report-Only'),
       { key: 'Content-Security-Policy', value: `frame-ancestors ${appOrigin}` },
       { key: 'Cache-Control', value: 'no-store' },
       { key: 'Referrer-Policy', value: 'no-referrer' },
       { key: 'X-Robots-Tag', value: 'noindex, nofollow' }
     ];
-    return [{ source: '/((?!vista-previa).*)', headers: securityHeaders }, { source: '/vista-previa', headers: previewHeaders }, { source: '/c/:slug/rsvp/:path*', headers: privateHeaders }, { source: '/c/:slug/rsvp', headers: privateHeaders }, { source: '/rsvp/:path*', headers: privateHeaders }];
+    return [{ source: '/((?!vista-previa$).*)', headers: securityHeaders }, { source: '/vista-previa', headers: previewHeaders }, { source: '/c/:slug/rsvp/:path*', headers: privateHeaders }, { source: '/c/:slug/rsvp', headers: privateHeaders }, { source: '/rsvp/:path*', headers: privateHeaders }];
   },
   webpack: (config) => {
     // Workspace packages use NodeNext-style "./x.js" imports that point to .ts sources.

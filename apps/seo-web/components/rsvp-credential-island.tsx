@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { hasGuestCredential } from "../lib/guest-credential";
+import { hasGuestCredential, readGuestCredential } from "../lib/guest-credential";
 
 /**
  * The public celebration is shared and server-rendered, so its reply button starts as «Busca tu enlace personal». A guest who
@@ -13,6 +13,7 @@ import { hasGuestCredential } from "../lib/guest-credential";
 export function RsvpCredentialIsland({ slug }: { readonly slug: string }) {
   useEffect(() => {
     // The reply is on the page more than once (the always-visible dock and the reply section): every one flips together.
+    readGuestCredential(slug);
     const buttons = document.querySelectorAll<HTMLElement>('a[data-action="rsvp-help"][data-credential]');
     if (!buttons.length) return;
     const present = hasGuestCredential(slug);

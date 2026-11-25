@@ -1,4 +1,5 @@
-import { mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, statSync } from "node:fs";
+import { extname, join } from "node:path";
 import { createServer, type Server } from "node:http";
 import { AxeBuilder } from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
@@ -13,6 +14,9 @@ const APP = `http://localhost:${APP_PORT}`;
 const OTHER = `http://127.0.0.1:${APP_PORT}`;
 const SLUG = "fixture-v2-medios";
 const OUT = process.env.F6B_EVIDENCE_DIR;
+/** `expo export --platform web` built with EXPO_PUBLIC_SITE_URL=http://localhost:$E2E_PORT (only the web-app cases need it). */
+const DIST = process.env.F6B_APP_DIST;
+const TYPES: Record<string, string> = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".ico": "image/x-icon", ".png": "image/png", ".ttf": "font/ttf", ".svg": "image/svg+xml" };
 
 /** The harness plays the app: it frames the site's preview page and answers its ready message with the payload. */
 const HARNESS = (site: string, payload: unknown) => `<!doctype html><meta charset="utf-8"><title>harness</title>
@@ -38,7 +42,19 @@ async function payloadFromApi(page: Page) {
 let harness: Server;
 let current: unknown = null;
 test.beforeAll(async () => {
-  harness = createServer((_request, response) => { response.writeHead(200, { "content-type": "text/html" }); response.end(HARNESS(`http://localhost:${SITE_PORT}`, current)); });
+  harness = createServer((request, response) => {
+    const path = new URL(request.url ?? "/", APP).pathname;
+    if (path !== "/harness" && DIST) {
+      // The exported Expo web app (SPA): a file when there is one, index.html otherwise.
+      const file = join(DIST, path);
+      const found = existsSync(file) && statSync(file).isFile() ? file : join(DIST, "index.html");
+      response.writeHead(200, { "content-type": TYPES[extname(found)] ?? "application/octet-stream" });
+      response.end(readFileSync(found));
+      return;
+    }
+    response.writeHead(200, { "content-type": "text/html" });
+    response.end(HARNESS(`http://localhost:${SITE_PORT}`, current));
+  });
   await new Promise<void>((resolve) => harness.listen(APP_PORT, resolve));
 });
 test.afterAll(async () => { await new Promise((resolve) => harness.close(resolve)); });
@@ -102,4 +118,44 @@ test("negative: a page that posts without being the parent, or from another orig
   await page.evaluate((type) => window.postMessage({ type, payload: {} }, "*"), PREVIEW_PAYLOAD);
   await page.waitForTimeout(300);
   await expect(page.getByTestId("preview-render")).toHaveCount(0);
+});
+
+test("PL-134-M1 · a credential in the fragment is stored and the address cleaned before anything of a third party loads; the reply says «Confirmar asistencia»", async ({ page }) => {
+  const token = "g".repeat(43);
+  // A Referer never carries a fragment; the check is that no request (first or third party) leaks the token, and that no third-party FRAME exists while the hash is there.
+  const leaked: string[] = [];
+  page.on("request", (request) => { if (/t=g{16}|#t=/.test(`${request.url()} ${request.headers()["referer"] ?? ""}`)) leaked.push(request.url()); });
+  await page.goto(`/c/${SLUG}#t=${token}`);
+  await expect(page.locator('a[data-action="rsvp-help"]:visible').first()).toContainText("Confirmar asistencia");
+  expect(await page.evaluate(() => location.hash)).toBe("");
+  expect(await page.evaluate((slug) => sessionStorage.getItem(`rsvp.guest.credential.${slug}`), SLUG)).toBe(token);
+  expect(leaked).toEqual([]);
+  expect(page.frames().filter((frame) => frame !== page.mainFrame())).toEqual([]);
+});
+
+test("PL-134-M2 · web app: with the site unreachable the guest sees the offline state with retry and the gifts button, and retry goes to the site once it answers", async ({ page }) => {
+  test.skip(!DIST, "needs F6B_APP_DIST (expo export --platform web)");
+  let blocked = true;
+  await page.route(`http://localhost:${SITE_PORT}/**`, (route) => (blocked ? route.abort("connectionrefused") : route.continue()));
+  await page.goto(`${APP}/c/${SLUG}`);
+  await expect(page.getByTestId("guest-retry")).toBeVisible({ timeout: 15000 });
+  await expect(page.getByTestId("invitation-gifts")).toBeVisible();
+  if (OUT) { mkdirSync(OUT, { recursive: true }); await page.screenshot({ path: `${OUT}/web-sin-red.png` }); }
+  blocked = false;
+  await page.getByTestId("guest-retry").click();
+  await page.waitForURL(new RegExp(`^http://localhost:${SITE_PORT}/c/${SLUG}`), { timeout: 15000 });
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+});
+
+test("PL-134-M3 · web app at 1440: the loading state keeps the 720 px column, centred", async ({ page }) => {
+  test.skip(!DIST, "needs F6B_APP_DIST (expo export --platform web)");
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.route(`http://localhost:${SITE_PORT}/**`, () => undefined);
+  await page.goto(`${APP}/c/${SLUG}`);
+  const column = page.getByTestId("invitation-loading-column");
+  await expect(column).toBeVisible();
+  const box = await column.boundingBox();
+  expect(box?.width).toBeLessThanOrEqual(720);
+  expect(Math.abs((box?.x ?? 0) + (box?.width ?? 0) / 2 - 720)).toBeLessThan(4);
+  if (OUT) await page.screenshot({ path: `${OUT}/web-cargando-1440.png` });
 });

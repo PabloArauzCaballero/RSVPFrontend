@@ -62,6 +62,13 @@ describe("P10 · A1 the public invitation in the app is the public page in a web
     expect(screen.getByTestId("invitation-screen")).toBeTruthy();
   });
 
+  it("PL-134-M3 · loading keeps the invitation's column: centred and at most 720 px, so the gifts button is not at the edge of a wide window", () => {
+    show();
+    const column = getComputedStyle(screen.getByTestId("invitation-loading-column"));
+    expect(column.maxWidth).toBe("720px");
+    expect(column.alignSelf).toBe("center");
+  });
+
   it("P22 · the gifts button is reachable while loading and when the page failed: it opens /c/{slug}/regalos with no token", () => {
     saveGiftCredential(SLUG, "tok-1234567890abcdef");
     const { onNavigate } = show();

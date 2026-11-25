@@ -2,8 +2,12 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { PREVIEW_PATH, PREVIEW_READY, previewMessage } from "@rsvp/celebration-theme";
 import type { PageFrameProps, PreviewFrameProps, SiteFrameProps } from "./site-frame-types";
 
-/** No answer from the preview page in this time is a page that did not load (a blocked frame, no network, the site down). */
-export const PREVIEW_READY_TIMEOUT_MS = 12_000;
+/** The frame's document loaded but the preview page never said it listens (a refused frame, an error page): this long after `onload`. */
+export const PREVIEW_READY_TIMEOUT_MS = 3_000;
+/** The frame never loaded at all (no network, the site down). */
+export const PREVIEW_LOAD_TIMEOUT_MS = 8_000;
+/** Before leaving for the site, how long the reachability probe waits. */
+export const PAGE_PROBE_TIMEOUT_MS = 6_000;
 
 /**
  * Web: the public site refuses to be framed (X-Frame-Options), so the invitation itself is a navigation to the site, with the
@@ -19,7 +23,16 @@ function PageHandOff({ origin, url, credential, onPhase }: PageFrameProps): Reac
     // The same origin would load this very screen again: a deployment that serves both must route /c/* to the site.
     if (typeof window === "undefined" || window.location.origin === origin) { onPhase("unavailable"); return; }
     onPhase("loading");
-    window.location.replace(withCredentialFragment(url, credential));
+    // Leaving for a site that is down shows the browser's error page, with no retry and no way to the gifts: probe first.
+    // `no-cors` sees only whether the site answers (a network error or a timeout rejects), which is the state this screen can offer.
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), PAGE_PROBE_TIMEOUT_MS);
+    let left = false;
+    fetch(url, { method: "HEAD", mode: "no-cors", cache: "no-store", credentials: "omit", referrerPolicy: "no-referrer", signal: controller.signal })
+      .then(() => { left = true; window.location.replace(withCredentialFragment(url, credential)); })
+      .catch(() => { if (!left) onPhase("offline"); })
+      .finally(() => clearTimeout(timer));
+    return () => { clearTimeout(timer); controller.abort(); };
   }, [origin, url, credential, onPhase]);
   return null;
 }
@@ -33,7 +46,13 @@ function PreviewIframe({ origin, payload, title, testID, onPhase }: PreviewFrame
   useEffect(() => {
     ready.current = false;
     onPhase("loading");
-    const timer = setTimeout(() => { if (!ready.current) onPhase("offline"); }, PREVIEW_READY_TIMEOUT_MS);
+    let timer = setTimeout(() => { if (!ready.current) onPhase("offline"); }, PREVIEW_LOAD_TIMEOUT_MS);
+    const element = frame.current;
+    // The document loaded: the page must now say it listens, soon. A refused frame loads an error page that never will.
+    const onLoad = (): void => { clearTimeout(timer); timer = setTimeout(() => { if (!ready.current) onPhase("offline"); }, PREVIEW_READY_TIMEOUT_MS); };
+    const onError = (): void => { clearTimeout(timer); onPhase("offline"); };
+    element?.addEventListener("load", onLoad);
+    element?.addEventListener("error", onError);
     const onMessage = (event: MessageEvent): void => {
       // Only the frame we created, from the site's origin, saying it listens.
       if (event.source !== frame.current?.contentWindow || event.origin !== origin) return;
@@ -45,7 +64,7 @@ function PreviewIframe({ origin, payload, title, testID, onPhase }: PreviewFrame
       onPhase("ready");
     };
     window.addEventListener("message", onMessage);
-    return () => { clearTimeout(timer); window.removeEventListener("message", onMessage); };
+    return () => { clearTimeout(timer); element?.removeEventListener("load", onLoad); element?.removeEventListener("error", onError); window.removeEventListener("message", onMessage); };
   }, [origin, onPhase]);
 
   // Every edit is sent again, to the site's origin only.

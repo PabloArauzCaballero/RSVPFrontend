@@ -53,16 +53,22 @@ function GiftsButton({ slug, onNavigate }: { readonly slug: string; readonly onN
   return <ActionButton icon="gift" variant="secondary" label={t("celebration.gifts.cta")} onPress={() => onNavigate(giftsRoute(slug))} testID="invitation-gifts" />;
 }
 
+/** Same width as the classic layout's column (`--celebration-max-width`). */
+const LOADING_COLUMN = 720;
+
 function Loading({ slug, onNavigate }: { readonly slug: string; readonly onNavigate: (path: string) => void }): ReactNode {
   const t = useT();
   const palette = useColors();
   return (
     <View role="status" accessibilityLabel={t("celebration.app.loading")} aria-busy style={[StyleSheet.absoluteFill, { backgroundColor: palette.canvas, padding: spacing[4], gap: spacing[4] }]} testID="invitation-loading">
-      <View style={{ alignItems: "center", gap: spacing[3], paddingVertical: spacing[8] }}>
-        <Skeleton width={96} height={12} /><Skeleton width="80%" height={40} /><Skeleton width="50%" height={16} />
+      {/* The column the invitation itself has: a wide window does not stretch the skeleton or push the button to the edge. */}
+      <View style={{ width: "100%", maxWidth: LOADING_COLUMN, alignSelf: "center", gap: spacing[4] }} testID="invitation-loading-column">
+        <View style={{ alignItems: "center", gap: spacing[3], paddingVertical: spacing[8] }}>
+          <Skeleton width={96} height={12} /><Skeleton width="80%" height={40} /><Skeleton width="50%" height={16} />
+        </View>
+        {[0, 1, 2].map((row) => <View key={row} style={{ gap: spacing[2] }}><Skeleton width="40%" height={20} /><Skeleton width="100%" height={14} /><Skeleton width="90%" height={14} /></View>)}
+        <GiftsButton slug={slug} onNavigate={onNavigate} />
       </View>
-      {[0, 1, 2].map((row) => <View key={row} style={{ gap: spacing[2] }}><Skeleton width="40%" height={20} /><Skeleton width="100%" height={14} /><Skeleton width="90%" height={14} /></View>)}
-      <GiftsButton slug={slug} onNavigate={onNavigate} />
     </View>
   );
 }
