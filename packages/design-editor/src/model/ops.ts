@@ -100,11 +100,16 @@ export const spacingPresetOf = (doc: Doc): SpacingPreset | null => {
 
 export const applySpacingPreset = (preset: SpacingPreset): DocumentOp => setSpacing(SPACING_PRESETS[preset]);
 
-/** Padding presets (px, multiples of 4): the same padding on every element of every canvas. */
+/**
+ * Padding presets (px, multiples of 4): the same padding on every element of every canvas, except the gifts button. Its box is as
+ * tall as the 44 px touch target needs (P22) and padding is taken out of that height, so a preset would always be refused for it;
+ * the host changes the button's own padding in the inspector, where the guard refuses what would leave it under 44 px.
+ */
 export const PADDING_PRESETS = { none: 0, small: 8, medium: 16, large: 32 } as const;
 export type PaddingPreset = keyof typeof PADDING_PRESETS;
 
 export const applyPaddingPreset = (preset: PaddingPreset): DocumentOp => (doc) => {
+  const giftsId = doc.blocks.find((block) => block.type === "giftsCta")?.id;
   const value = PADDING_PRESETS[preset];
   const box = { top: value, right: value, bottom: value, left: value };
   let changed = false;
@@ -112,6 +117,7 @@ export const applyPaddingPreset = (preset: PaddingPreset): DocumentOp => (doc) =
     const retouch = (grid: design.DesignCanvas): design.DesignCanvas => ({
       ...grid,
       elements: grid.elements.map((element) => {
+        if (element.block === giftsId) return element;
         const current = element.padding;
         if (current && current.top === value && current.right === value && current.bottom === value && current.left === value) return element;
         if (!current && value === 0) return element;
@@ -127,7 +133,9 @@ export const applyPaddingPreset = (preset: PaddingPreset): DocumentOp => (doc) =
 /** The padding every element shares, or null when they differ (so the preset buttons show none selected). */
 export function sharedPadding(doc: Doc): PaddingPreset | null {
   const values = new Set<number>();
+  const giftsId = doc.blocks.find((block) => block.type === "giftsCta")?.id;
   for (const page of doc.pages) for (const grid of [page.canvases.mobile, page.canvases.desktop]) for (const element of grid?.elements ?? []) {
+    if (element.block === giftsId) continue;
     const box = element.padding;
     if (!box) values.add(0); else if (box.top === box.right && box.right === box.bottom && box.bottom === box.left) values.add(box.top); else values.add(-1);
   }
