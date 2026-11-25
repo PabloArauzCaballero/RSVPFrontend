@@ -45,9 +45,16 @@ const V2_IDS = { marfil: "73477f09-c9a6-544e-9477-948866a907c6", pinata: "c5c5c2
   // F4 c1 · the wedding group (the id is the v1 seed's: uuid5 of the key, P20).
   "jardin-botanico": "1437aaef-2fdf-5aff-ba78-10139d8c8e24", "rosa-antiguo": "984f5f85-66e1-5226-9f58-af6ca5fd4963", editorial: "eee0b5bb-a4aa-5091-93b0-696da7b7bab5",
   "editorial-granate": "637c1fe4-e88a-5e6c-802c-c4832d881519", "editorial-oliva": "7a69536f-1bb7-5cb5-b905-4b42e1626032", "bodas-de-oro": "2430166f-d9cd-52d8-b999-ef1c9ed7040c",
-  "bodas-de-plata": "a3d91e73-703b-5f8e-ae78-a9da05402bed", "pedida-de-mano": "2b64a4fb-e239-5855-9816-6f73a2f7d8d7" };
+  "bodas-de-plata": "a3d91e73-703b-5f8e-ae78-a9da05402bed", "pedida-de-mano": "2b64a4fb-e239-5855-9816-6f73a2f7d8d7",
+  // F4 c2 · the party group (uuid5 of the key as well, P20).
+  festivo: "1bfedee4-6e88-58df-ac37-dd678802ecca", "fiesta-lila": "e829f1a7-3c06-5260-a8ab-b12f03db3b10", "cumpleanos-adulto": "7da50455-1248-51fb-a837-d5e1374eafe1",
+  "fiesta-tematica": "4093243c-3b63-5fad-99fd-43d516bd5e9f", "fin-de-ano": "b3d69753-f079-5e99-84df-287f4d5ab290", despedida: "e58c00b3-465f-5b5f-8062-28e56763f05b",
+  reencuentro: "f970f429-662e-5f16-9111-47c6901da9d0" };
 const V2_CONTENT = { pinata: { title: "Sofi cumple 6", hosts: {}, eventDate: "2026-12-19T19:00:00.000Z" }, "bodas-de-oro": { title: "Rosa y Mario", hosts: { BRIDE: "Rosa", GROOM: "Mario" } },
-  "bodas-de-plata": { title: "Carla y Jorge", hosts: { BRIDE: "Carla", GROOM: "Jorge" } }, "pedida-de-mano": { title: "Lucía y Marco", hosts: { BRIDE: "Lucía", GROOM: "Marco" } } };
+  "bodas-de-plata": { title: "Carla y Jorge", hosts: { BRIDE: "Carla", GROOM: "Jorge" } }, "pedida-de-mano": { title: "Lucía y Marco", hosts: { BRIDE: "Lucía", GROOM: "Marco" } },
+  festivo: { title: "Camila cumple 15", hosts: {} }, "fiesta-lila": { title: "Fiesta lila de Dani", hosts: {} }, "cumpleanos-adulto": { title: "Los 50 de Marcela", hosts: {} },
+  "fiesta-tematica": { title: "Noche de los 80", hosts: {} }, "fin-de-ano": { title: "Recibimos el 2027", hosts: {} }, despedida: { title: "Despedida de Andrés", hosts: {} },
+  reencuentro: { title: "Promoción 2006", hosts: {} } };
 // F4 c3 · the children and rites group (the id is the seed's: uuid5 of the key, P20), each with the title its event would carry.
 Object.assign(V2_IDS, { "cielo-bautizo": "14924a38-0623-5076-880e-b1b2c631853f", "menta-infantil": "4e35035d-2da1-517c-9ffa-1133d9836c63", "baby-shower": "e983a0c1-0fc2-5e1a-b26b-7ad27d06f673",
   "primera-comunion": "76bc1ae5-77da-53e9-a4bd-f85babf7fe8b", graduacion: "82ffe36e-53f2-52d2-9e0d-42a6982fa983" });

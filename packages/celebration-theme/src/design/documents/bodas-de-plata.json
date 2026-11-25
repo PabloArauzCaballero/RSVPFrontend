@@ -91,7 +91,7 @@
                 "block": "art-cifra",
                 "x": 0,
                 "y": 0,
-                "w": 3,
+                "w": 2,
                 "h": 8,
                 "visible": true,
                 "animation": {
@@ -103,9 +103,9 @@
               {
                 "id": "el-laurel",
                 "block": "art-laurel",
-                "x": 0,
-                "y": 8,
-                "w": 4,
+                "x": 2,
+                "y": 0,
+                "w": 2,
                 "h": 8,
                 "visible": true,
                 "animation": {
@@ -118,7 +118,7 @@
                 "id": "el-cover",
                 "block": "cover",
                 "x": 0,
-                "y": 16,
+                "y": 8,
                 "w": 4,
                 "h": 8,
                 "visible": true,
@@ -201,7 +201,7 @@
         "canvases": {
           "mobile": {
             "mode": "flow",
-            "columns": 4,
+            "columns": 8,
             "rowHeight": 8,
             "elements": [
               {
@@ -209,9 +209,12 @@
                 "block": "story",
                 "x": 0,
                 "y": 0,
-                "w": 4,
+                "w": 8,
                 "h": 1,
-                "visible": true
+                "visible": true,
+                "typography": {
+                  "align": "end"
+                }
               }
             ]
           }
@@ -225,16 +228,16 @@
         "canvases": {
           "mobile": {
             "mode": "flow",
-            "columns": 4,
+            "columns": 8,
             "rowHeight": 8,
             "elements": [
               {
                 "id": "el-art-reloj",
                 "block": "art-reloj",
-                "x": 3,
+                "x": 7,
                 "y": 0,
                 "w": 1,
-                "h": 8,
+                "h": 5,
                 "visible": true,
                 "animation": {
                   "entrance": "fade",
@@ -246,10 +249,13 @@
                 "id": "el-schedule",
                 "block": "schedule",
                 "x": 0,
-                "y": 8,
-                "w": 4,
+                "y": 5,
+                "w": 8,
                 "h": 1,
-                "visible": true
+                "visible": true,
+                "typography": {
+                  "align": "end"
+                }
               }
             ]
           }
@@ -263,16 +269,16 @@
         "canvases": {
           "mobile": {
             "mode": "flow",
-            "columns": 4,
+            "columns": 8,
             "rowHeight": 8,
             "elements": [
               {
                 "id": "el-art-mapa-pin",
                 "block": "art-mapa-pin",
-                "x": 3,
+                "x": 7,
                 "y": 0,
                 "w": 1,
-                "h": 8,
+                "h": 5,
                 "visible": true,
                 "animation": {
                   "entrance": "fade",
@@ -284,10 +290,13 @@
                 "id": "el-venues",
                 "block": "venues",
                 "x": 0,
-                "y": 8,
-                "w": 4,
+                "y": 5,
+                "w": 8,
                 "h": 1,
-                "visible": true
+                "visible": true,
+                "typography": {
+                  "align": "end"
+                }
               }
             ]
           }
@@ -301,16 +310,16 @@
         "canvases": {
           "mobile": {
             "mode": "flow",
-            "columns": 4,
+            "columns": 8,
             "rowHeight": 8,
             "elements": [
               {
                 "id": "el-art-camara",
                 "block": "art-camara",
-                "x": 3,
+                "x": 7,
                 "y": 0,
                 "w": 1,
-                "h": 8,
+                "h": 5,
                 "visible": true,
                 "animation": {
                   "entrance": "fade",
@@ -322,10 +331,13 @@
                 "id": "el-gallery",
                 "block": "gallery",
                 "x": 0,
-                "y": 8,
-                "w": 4,
+                "y": 5,
+                "w": 8,
                 "h": 1,
-                "visible": true
+                "visible": true,
+                "typography": {
+                  "align": "end"
+                }
               }
             ]
           }
@@ -339,16 +351,16 @@
         "canvases": {
           "mobile": {
             "mode": "flow",
-            "columns": 4,
+            "columns": 8,
             "rowHeight": 8,
             "elements": [
               {
                 "id": "el-art-percha",
                 "block": "art-percha",
-                "x": 3,
+                "x": 7,
                 "y": 0,
                 "w": 1,
-                "h": 8,
+                "h": 5,
                 "visible": true,
                 "animation": {
                   "entrance": "fade",
@@ -360,10 +372,13 @@
                 "id": "el-dress-code",
                 "block": "dress-code",
                 "x": 0,
-                "y": 8,
-                "w": 4,
+                "y": 5,
+                "w": 8,
                 "h": 1,
-                "visible": true
+                "visible": true,
+                "typography": {
+                  "align": "end"
+                }
               }
             ]
           }
@@ -377,16 +392,16 @@
         "canvases": {
           "mobile": {
             "mode": "flow",
-            "columns": 4,
+            "columns": 8,
             "rowHeight": 8,
             "elements": [
               {
                 "id": "el-art-regalo",
                 "block": "art-regalo",
-                "x": 3,
+                "x": 7,
                 "y": 0,
                 "w": 1,
-                "h": 8,
+                "h": 5,
                 "visible": true,
                 "animation": {
                   "entrance": "fade",
@@ -398,8 +413,8 @@
                 "id": "el-gifts-cta",
                 "block": "gifts-cta",
                 "x": 0,
-                "y": 8,
-                "w": 4,
+                "y": 5,
+                "w": 8,
                 "h": 6,
                 "visible": true
               }
@@ -415,16 +430,16 @@
         "canvases": {
           "mobile": {
             "mode": "flow",
-            "columns": 4,
+            "columns": 8,
             "rowHeight": 8,
             "elements": [
               {
                 "id": "el-art-pregunta",
                 "block": "art-pregunta",
-                "x": 3,
+                "x": 7,
                 "y": 0,
                 "w": 1,
-                "h": 8,
+                "h": 5,
                 "visible": true,
                 "animation": {
                   "entrance": "fade",
@@ -436,10 +451,13 @@
                 "id": "el-faq",
                 "block": "faq",
                 "x": 0,
-                "y": 8,
-                "w": 4,
+                "y": 5,
+                "w": 8,
                 "h": 1,
-                "visible": true
+                "visible": true,
+                "typography": {
+                  "align": "end"
+                }
               }
             ]
           }
@@ -453,16 +471,16 @@
         "canvases": {
           "mobile": {
             "mode": "flow",
-            "columns": 4,
+            "columns": 8,
             "rowHeight": 8,
             "elements": [
               {
                 "id": "el-art-sobre",
                 "block": "art-sobre",
-                "x": 3,
+                "x": 7,
                 "y": 0,
                 "w": 1,
-                "h": 8,
+                "h": 5,
                 "visible": true,
                 "animation": {
                   "entrance": "fade",
@@ -474,8 +492,8 @@
                 "id": "el-rsvp-cta",
                 "block": "rsvp-cta",
                 "x": 0,
-                "y": 8,
-                "w": 4,
+                "y": 5,
+                "w": 8,
                 "h": 6,
                 "visible": true
               }
