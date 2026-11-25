@@ -87,9 +87,9 @@
               {
                 "id": "el-caja",
                 "block": "art-caja",
-                "x": 0,
+                "x": 1,
                 "y": 0,
-                "w": 4,
+                "w": 2,
                 "h": 8,
                 "visible": true,
                 "animation": {
