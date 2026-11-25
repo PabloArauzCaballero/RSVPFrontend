@@ -119,11 +119,11 @@
                 "typography": {
                   "align": "start",
                   "role": "heading",
-                  "size": 48,
+                  "size": 40,
                   "lineHeight": 1.08
                 },
                 "padding": {
-                  "top": 24,
+                  "top": 8,
                   "right": 24,
                   "bottom": 24,
                   "left": 24

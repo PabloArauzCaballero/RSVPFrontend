@@ -14,7 +14,7 @@ Rama FE `feat/plantillas-f4c1-bodas` (sobre `feat/plantillas-f4b-render-v2`, fus
 2. Sello de lacre, telón y arco son aproximaciones: el elemento solo tiene `radius`, sin máscara ni `clip-path`.
 3. Oro, Plata y Pedida conservan la lista de secciones de su semilla v1, que no incluye recomendaciones. ¿Se añaden?
 4. El ornamento `laurel` como separador no es alcanzable: el id `laurel` ya es un dibujo (la corona). Se usa `laurel-esquina`.
-5. Plata en variante `editorial` y Marfil (b) comparten foto en arco con Oro en `classic`: Plata y Marfil comparten el arco de la foto.
+5. Plata y Marfil comparten el arco.
 
 ## Ronda 1 del orquestador (PL-128-M1..M6, m1-m3, m6)
 - M1: merge (no rebase) de `feat/plantillas-f4b-render-v2` (FE) y `feat/plantillas-f4b-v2` (BE).
@@ -26,16 +26,21 @@ Rama FE `feat/plantillas-f4c1-bodas` (sobre `feat/plantillas-f4b-render-v2`, fus
 - Aserción nueva en `plantillas-v2-bodas.spec.ts`: el `h1` de las 11 plantillas (8 + Marfil, Piñata, Gala), con y sin foto, queda dentro de la primera pantalla a 360×800, 768×1024 y 1280×900.
 - Posición del `h1` (borde inferior, px) medida tras la ronda, con foto, 360 / 768 / 1280: Oliva 733/614/580, Oro 750/757/832, Plata 364/349/411, Pedida 741/622/512, Editorial 285/317/664, Granate 696/750/765. Marfil 686/693/687, Gala 613/727/893: sin cambios; Piñata 766/800/755 (a 768 baja de 744 a 800, dentro de la pantalla de 1024).
 
+## Ronda 2 (PL-128-M7)
+- El dock móvil empieza en y=723 a 360×800 y tapaba el nombre. La aserción e2e compara ahora el borde inferior del `h1` con `dock.top` (o con el alto de la ventana si el dock va arriba) en las 11 plantillas, con y sin foto, a 360×800, 768×1024 y 1280×900.
+- Oro: el filete baja tras el nombre. Pedida: la caja móvil pasa a 2 columnas. Oliva: tarjeta de portada más compacta (titular 40 px). Piñata (b): titular móvil de 88 a 56 px. m4: Gala, monograma de escritorio de 160 a 128 px (el `h1` pasa de 893 a 877). m5: Plata en escritorio queda con la foto y la cifra, sin el laurel suelto.
+- Bordes inferiores del `h1` con foto a 360×800 (dock en 723): Oro 686, Pedida 577, Oliva 710, Piñata 661, Jardín 694, Rosa 624, Granate 696, Marfil 686.
+
 ## Verificación (qué se ejecutó, 2026-11-25, tras la ronda 1)
 - `packages/celebration-theme`: `vitest run` → 2582 pruebas en verde; `tsc --noEmit` y `eslint` limpios.
 - BE: `manage.py test tests.test_design_v2_bodas_seeds tests.test_design_v2_seeds tests.test_design_v2 tests.test_design_hardening tests.test_design_gifts_useful_height` → 107 OK (validador, sin avisos de contraste, sin amarillo). La suite completa con Postgres 16 no se repitió en esta ronda (los cambios son solo bytes de semillas); la última corrida completa fue 239 OK.
 - Los ocho JSON son idénticos byte a byte en FE y BE (`cmp`).
-- Playwright (Chromium 1243, `next build` + `next start` + fixture de contrato, **no** el backend real): `e2e/plantillas-v2-bodas.spec.ts` → **197 pasadas** (130 anteriores + 66 del `h1` en primera pantalla + sello de Rosa).
+- Playwright (Chromium 1243, `next build` + `next start` + fixture de contrato, **no** el backend real): `e2e/plantillas-v2-bodas.spec.ts` → **197 pasadas** (130 anteriores + 66 del `h1` sobre el dock + sello de Rosa).
 - Capturas Linux (evidencia, no líneas base): `docs/progress/evidence/plantillas-f4c1/` recapturadas.
 - **Sin ejecutar:** recorrido con backend real, iOS/Android, Safari/Firefox, lector de pantalla, gitleaks, `harness:validate`, `apps/universal`, texto sobre foto real, galería real (m5).
 
 ## Líneas base macOS que cambiarían
-Cambian las de la portada de Marfil, Piñata y Gala (b) entre 481 y 899 px de ancho (p. ej. 768 px): el lienzo móvil de la portada ya no pasa de 480 px. No se tocaron las líneas base: hay que regenerarlas en el Mac de Pablo. Las del dock y B2/M4 son de PR b.
+Ninguna: no hay líneas base v2 commiteadas (el lienzo de la portada solo cambia en documentos v2). Las del dock y B2/M4 son de PR b.
 
 ## Reversión
 Revertir el PR: los documentos no se siembran (la migración es F4 z), así que no hay datos que deshacer. El CSS añadido solo actúa bajo `.celebration-design` con variante `editorial` o `display: "list"`.

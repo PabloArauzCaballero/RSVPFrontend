@@ -130,7 +130,7 @@
                 },
                 "typography": {
                   "role": "heading",
-                  "size": 88,
+                  "size": 56,
                   "weight": 700,
                   "align": "start",
                   "lineHeight": 1.02
