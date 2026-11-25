@@ -42,6 +42,17 @@ export function CanvasEditor() {
 
   const start = (event: PointerEvent<HTMLElement>, element: Element, kind: Gesture["kind"]): void => {
     event.stopPropagation();
+    // The 44 px area of a handle may reach over the gifts button of another element: there the touch belongs to the button, not to the handle.
+    if (kind !== "move") {
+      const handle = event.currentTarget.getBoundingClientRect();
+      const reach = Math.hypot(event.clientX - (handle.left + handle.width / 2), event.clientY - (handle.top + handle.height / 2)) > handle.width / 2;
+      const under = reach ? [...(event.currentTarget.closest<HTMLElement>("[data-stage]")?.querySelectorAll<HTMLElement>('[data-element][data-required="true"]') ?? [])].find((node) => {
+        const box = node.getBoundingClientRect();
+        return node.dataset["elementId"] !== element.id && event.clientX >= box.left && event.clientX <= box.right && event.clientY >= box.top && event.clientY <= box.bottom;
+      }) : undefined;
+      const covered = under ? elementOf(document, canvas, under.dataset["elementId"] ?? null) : null;
+      if (covered) { select(covered, true); return; }
+    }
     // A finger on an element that is not selected yet scrolls the page (it has no `touch-action: none` until it is selected): the tap selects it.
     if (event.pointerType === "touch" && state.selection !== element.id) return;
     dispatch({ type: "select", id: element.id });
@@ -87,6 +98,8 @@ export function CanvasEditor() {
     const block = blockName(document, element, t);
     const id = element.id;
     const handled = (): void => { event.preventDefault(); select(element, false); };
+    // A way out of the element: the focus goes back to the page, so arrows, Space and Page Up/Down scroll it again (without it only Tab leaves).
+    if (event.key === "Escape") { event.preventDefault(); event.currentTarget.blur(); return; }
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       dispatch({ type: "select", id });
@@ -121,7 +134,7 @@ export function CanvasEditor() {
   const goInspector = (): void => {
     const root = window.document.getElementById("de-inspector");
     if (root instanceof HTMLDetailsElement) root.open = true;
-    root?.querySelector<HTMLElement>("input, button")?.focus();
+    root?.querySelector<HTMLElement>("input, button:not(.de-sheet-close)")?.focus();
   };
 
   return (

@@ -166,10 +166,19 @@ a.de-btn { text-decoration: none; box-sizing: border-box; }
 
 /* Estrecho: el inspector es una hoja plegable pegada abajo, a un toque del elemento (no al final de todo el lienzo). */
 @media (max-width: 960px) {
-  .de-inspector--sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; margin: 0; padding: 0; border-top: 2px solid var(--de-text); background: var(--de-surface); max-height: 70vh; overflow: auto; }
-  .de-inspector--sheet > summary { position: sticky; top: 0; display: flex; align-items: center; min-height: 48px; padding: 0 16px; background: var(--de-surface); font: 500 15px/1.3 Newsreader, Georgia, serif; cursor: pointer; }
+  .de-inspector--sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; margin: 0; padding: 0; border-top: 2px solid var(--de-text); background: var(--de-surface); }
+  .de-inspector--sheet > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; padding: 0 16px; background: var(--de-surface); font: 500 15px/1.3 Newsreader, Georgia, serif; cursor: pointer; list-style: none; }
+  .de-inspector--sheet > summary::-webkit-details-marker { display: none; }
+  /* The chevron points where the sheet goes: up while it is closed (it opens upward), down while it is open. */
+  .de-inspector--sheet > summary::after { content: ""; flex: none; width: 10px; height: 10px; margin-right: 4px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: translateY(2px) rotate(-135deg); }
+  .de-inspector--sheet[open] > summary { padding-right: 112px; }
+  .de-inspector--sheet[open] > summary::after { transform: translateY(-2px) rotate(45deg); }
+  .de-sheet-close { position: absolute; top: 2px; right: 8px; min-height: 44px; min-width: 88px; }
+  /* Open, the sheet is at most 45 vh: the rest of the screen keeps the selected element in view; its content scrolls inside it. */
+  .de-inspector--sheet[open] > .de-inspector-body { max-height: calc(45vh - 50px); overflow: auto; overscroll-behavior: contain; }
   .de-inspector-body { padding: 4px 16px 24px; }
   .de-shell:has(.de-inspector--sheet) { padding-bottom: 56px; }
+  .de-shell:has(.de-inspector--sheet[open]) { padding-bottom: 45vh; }
 }
 @media (max-width: 640px) {
   .de-bar { padding: 10px 16px; }

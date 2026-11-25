@@ -1,4 +1,4 @@
-import { useEffect, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { addBlock, canRemove, PALETTE, placeElement, reorderLayer, rotateElement, setElementBox } from "../model/canvas.js";
 import { isGiftsElement } from "../model/guards.js";
 import { patchElement, setElementVisible } from "../model/ops.js";
@@ -30,7 +30,7 @@ function NumberField({ id, label, value, min, max, step = 1, disabled = false, o
   };
   const keys = (event: KeyboardEvent<HTMLInputElement>): void => {
     if (event.key === "Enter") { event.preventDefault(); commit(); }
-    else if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); setDraft(String(value)); setInvalid(false); }
+    else if (event.key === "Escape" && (invalid || draft !== String(value))) { event.preventDefault(); event.stopPropagation(); setDraft(String(value)); setInvalid(false); }
   };
   const errorId = `${id}-error`;
   return (
@@ -50,6 +50,21 @@ export function ElementInspector() {
   const narrow = useNarrow();
   const element = elementOf(document, canvas, state.selection);
   const title = t(key("inspector.title"));
+  const sheet = useRef<HTMLDetailsElement | null>(null);
+  const [open, setOpen] = useState(false);
+  const selectedId = element?.id ?? null;
+  // The open sheet covers the lower part of the screen: the selected element is brought into the strip that stays free above it (WCAG 2.4.11).
+  useEffect(() => {
+    if (!narrow || !open || !selectedId) return;
+    const node = window.document.querySelector<HTMLElement>(`[data-element-id="${selectedId}"]`);
+    const top = sheet.current?.getBoundingClientRect().top;
+    if (!node || top === undefined) return;
+    const rect = node.getBoundingClientRect();
+    const margin = 24;
+    if (rect.bottom <= top - margin && rect.top >= margin) return;
+    const tall = rect.height > top - 2 * margin;
+    window.scrollBy({ top: tall ? rect.top - margin : rect.bottom - (top - margin), behavior: "instant" });
+  }, [narrow, open, selectedId]);
   if (!element) return <section className="de-inspector" id="de-inspector" aria-label={title}><h2>{title}</h2><p className="de-hint">{t(key("inspector.none"))}</p></section>;
   const block = blockName(document, element, t);
   const required = isGiftsElement(document, element.id, canvas);
@@ -86,11 +101,15 @@ export function ElementInspector() {
       </div>
     </>
   );
-  // Narrow: a collapsible sheet docked to the bottom, so the inspector is one tap from the element instead of below the whole canvas.
+  // Narrow: a collapsible sheet docked to the bottom (at most 45 vh), so the inspector is one tap from the element and the element stays in view.
   if (narrow) {
+    const close = (): void => { if (sheet.current) sheet.current.open = false; setOpen(false); sheet.current?.querySelector("summary")?.focus(); };
     return (
-      <details className="de-inspector de-inspector--sheet" id="de-inspector" data-testid="inspector-sheet">
+      <details ref={sheet} className="de-inspector de-inspector--sheet" id="de-inspector" data-testid="inspector-sheet" open={open}
+        onToggle={(event) => setOpen(event.currentTarget.open)}
+        onKeyDown={(event) => { if (event.key === "Escape" && event.currentTarget.open) { event.preventDefault(); event.stopPropagation(); event.currentTarget.open = false; setOpen(false); back(); } }}>
         <summary>{t(key("sheet"), { block })}</summary>
+        <button type="button" className="de-btn de-sheet-close" onClick={close}>{t(key("inspector.close"))}</button>
         <div className="de-inspector-body" role="group" aria-label={title}>{body}</div>
       </details>
     );
