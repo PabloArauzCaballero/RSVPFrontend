@@ -156,10 +156,10 @@
                 },
                 "radius": 999,
                 "padding": {
-                  "top": 12,
-                  "right": 12,
-                  "bottom": 12,
-                  "left": 12
+                  "top": 16,
+                  "right": 16,
+                  "bottom": 16,
+                  "left": 16
                 }
               }
             ]
@@ -240,10 +240,10 @@
                 },
                 "radius": 999,
                 "padding": {
-                  "top": 12,
-                  "right": 12,
-                  "bottom": 12,
-                  "left": 12
+                  "top": 16,
+                  "right": 16,
+                  "bottom": 16,
+                  "left": 16
                 }
               }
             ]

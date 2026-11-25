@@ -108,7 +108,9 @@ describe("E2, E3, E7, E12", () => {
     const draft = { ...designTemplate("marfil"), id: "t-v2", status: "DRAFT", version: 1, publishedAt: null } as unknown as Template;
     const { client, calls } = fakeClient({ "GET /media/admin/templates": () => ({ items: [draft] }), "POST /media/templates/t-v2/publish": () => ({ ...draft, status: "PUBLISHED", version: 2 }) });
     renderApp(<TemplatesAdminScreen onNavigate={navigate} />, client, ADMIN);
-    fireEvent.change(await screen.findByRole("combobox", { name: "Plantillas de invitación" }), { target: { value: "t-v2" } });
+    // The list loads after the combobox appears: wait for the option before choosing it.
+    const choice = await screen.findByRole("option", { name: /Clásico marfil/ });
+    fireEvent.change(screen.getByRole("combobox", { name: "Plantillas de invitación" }), { target: { value: choice.getAttribute("value") ?? "t-v2" } });
     expect(await screen.findByText(/documento de diseño v2/)).toBeTruthy();
     expect(screen.queryByTestId("save-template")).toBeNull();
     fireEvent.click(await screen.findByRole("button", { name: "Otras acciones" }));

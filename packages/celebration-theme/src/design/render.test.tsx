@@ -23,7 +23,7 @@ describe("the three prototyped templates as design documents v2", () => {
     const design = readDesign(template.theme);
     expect(design).not.toBeNull();
     const theme = themeFromTemplate(template, WEDDING_VIEW.enabledSections);
-    expect(theme.design).toBe(design);
+    expect(theme.design).toEqual(design);
     expect(theme.palette.accent).toBe((design as DesignDocumentV2).tokens.palettes.light.accent);
     expect(theme.sections.at(-1)).toBe("rsvp");
     expect(theme.sections).toContain("gifts");
@@ -169,6 +169,51 @@ describe("a v2 row the renderers cannot read", () => {
     const markup = renderToStaticMarkup(<CelebrationRenderer theme={themeFromTemplate({ ...template, theme: design }, WEDDING_VIEW.enabledSections)} view={WEDDING_VIEW} t={t} now={NOW} />);
     expect(markup).not.toContain("<img src=x");
     expect(markup).toContain("&lt;img src=x");
+  });
+});
+
+describe("m1 · readDesign is defensive in depth", () => {
+  interface Loose { tokens: { spacing: Record<string, unknown>; typography: { scale: Record<string, unknown> }; radii: Record<string, unknown> }; pages: { canvases: { mobile: Record<string, unknown> & { elements: unknown[] } } }[] }
+  const base = (): Loose => JSON.parse(JSON.stringify(designTemplate("pinata").theme)) as Loose;
+  const render = (design: unknown): string => {
+    const template = { ...designTemplate("pinata"), theme: design } as unknown as TemplateDocument;
+    return renderToStaticMarkup(<CelebrationRenderer theme={themeFromTemplate(template, WEDDING_VIEW.enabledSections)} view={WEDDING_VIEW} t={t} now={NOW} />);
+  };
+
+  it("a null or malformed element is dropped, the page still renders", () => {
+    const design = base();
+    (design.pages[0] as Loose["pages"][number]).canvases.mobile.elements.unshift(null, 7, "x", { id: "e", block: "cover", x: "0", y: 0, w: 4, h: 1, visible: true });
+    expect(() => render(design)).not.toThrow();
+    expect(render(design)).toContain("<h1>");
+    expect(readDesign(design)?.pages[0]?.canvases.mobile.elements.every((item) => item && typeof item.x === "number")).toBe(true);
+  });
+
+  it("style values that are not the contract's numbers or enums never reach the markup", () => {
+    const design = base();
+    const first = design.pages[0]?.canvases.mobile.elements[2] as Record<string, unknown>;
+    first.typography = { size: "1px;background:url(//evil.test);position:fixed", weight: "700;x", align: "left;}", transform: "uppercase;color:red", lineHeight: "9", colour: "red;x" };
+    first.padding = { top: "0;x", right: 0, bottom: 0, left: 0 };
+    first.border = { width: "1px;x", style: "solid;x", colour: "accent" };
+    first.radius = "9px;x"; first.z = "1;x"; first.opacity = "1;x"; first.rotation = "9deg;x";
+    first.animation = { entrance: "rise;x", delayMs: "1;x" };
+    first.link = { kind: "url", href: "javascript:alert(1)" };
+    const markup = render(design);
+    for (const needle of ["evil.test", "position:fixed", "url(", "expression", "javascript:", "uppercase;color"]) expect(markup).not.toContain(needle);
+    expect(markup).not.toMatch(/style="[^"]*[{}]/);
+  });
+
+  it("out-of-range structure falls back to the neutral template", () => {
+    for (const mutate of [
+      (d: Loose) => { d.tokens.spacing.contentMaxWidth = "720px;x"; },
+      (d: Loose) => { d.tokens.typography.scale.ratio = 99; },
+      (d: Loose) => { (d.pages[0] as Loose["pages"][number]).canvases.mobile.columns = "4"; },
+      (d: Loose) => { d.tokens.radii.md = -1; }
+    ]) {
+      const design = base();
+      mutate(design);
+      expect(readDesign(design)).toBeNull();
+      expect(() => render(design)).not.toThrow();
+    }
   });
 });
 
