@@ -155,13 +155,14 @@
    --------------------------------------------------------------------------------------------------------------------- */
 .celebration-design { overflow-x: clip; }
 .celebration { --cd-line: var(--celebration-line, color-mix(in srgb, var(--celebration-text) 30%, var(--celebration-canvas))); }
-.celebration:has(> .cdesign-dock) { padding-bottom: 5.5rem; }
+/* The bar covers the foot of the page on the phone: the whole document (footer included) ends above it. */
+body:has(.cdesign-dock) { padding-bottom: 5.5rem; }
 .celebration-design h1 { font-size: calc(clamp(2.4rem, 8vw, 4.75rem) * var(--celebration-heading-scale)); font-weight: 600; line-height: 1.02; }
 .celebration-design .cdesign-heading { font-size: calc(clamp(1.4rem, 3.4vw, 1.9rem) * var(--celebration-heading-scale)); color: var(--celebration-text); margin: 0; }
 .celebration-design .cdesign-page-title { width: min(100%, var(--celebration-max-width)); margin: 0 auto .75rem; padding-inline: var(--celebration-space); box-sizing: border-box; }
 .celebration-design .cdesign-text, .celebration-design .cdesign-quote p { margin: 0; max-width: 40rem; }
 .celebration-design .cdesign-quote { margin: 0; border-inline-start: 2px solid var(--celebration-accent); padding-inline-start: 1rem; font-family: var(--celebration-heading-font); font-size: 1.25rem; }
-.celebration-design .cdesign-monogram { margin: 0; font-family: var(--celebration-monogram-font); font-size: clamp(2.5rem, 12vw, 5rem); line-height: 1; color: var(--celebration-accent); }
+.celebration-design .cdesign-monogram { margin: 0; font-family: var(--celebration-monogram-font); font-size: clamp(2.5rem, 12vw, 5rem); line-height: 1; color: var(--cd-ink, var(--celebration-accent)); }
 .celebration-design .cdesign-spacer { display: block; height: 100%; }
 .celebration-design .cdesign-image { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
 .celebration-design .cdesign-art { display: block; width: 100%; height: auto; max-height: 100%; }
@@ -225,7 +226,7 @@
 .celebration .cdesign-dock .celebration-cta[data-action="rsvp"], .celebration .cdesign-dock .celebration-cta[data-action="rsvp-help"] { background: transparent; color: var(--celebration-accent) !important; border: 2px solid var(--celebration-accent); }
 @media (max-width: 25rem) { .celebration .cdesign-dock .celebration-icon { display: none; } }
 @media (min-width: 56.25rem) {
-  .celebration:has(> .cdesign-dock) { padding-bottom: 0; }
+  body:has(.cdesign-dock) { padding-bottom: 0; }
   .celebration .cdesign-dock { position: sticky; inset: 0 0 auto 0; justify-content: flex-end; border-top: 0; border-bottom: 1px solid var(--cd-line); padding-inline: var(--celebration-space); }
   .celebration .cdesign-dock .celebration-cta { flex: 0 0 auto; padding-inline: 1.25rem; }
 }

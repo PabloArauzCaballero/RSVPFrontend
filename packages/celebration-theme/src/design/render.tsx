@@ -189,6 +189,7 @@ function elementStyle(element: DesignElement, mobile: DesignElement | undefined,
   const sized = typography?.size !== undefined;
   return {
     ...style,
+    ...(typography?.colour ? { "--cd-ink": role(typography.colour) } : {}),
     ...(sized ? { "--cd-size": fontSize(typography.size as number) } : {}),
     zIndex: element.z,
     padding: box(element.padding),

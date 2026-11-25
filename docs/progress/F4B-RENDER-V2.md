@@ -11,6 +11,9 @@ Rama FE `feat/plantillas-f4b-render-v2` (sobre `feat/plantillas-f4-rediseno`), r
 - Admin: una plantilla v2 se abre en solo lectura (el editor de diseños es F5).
 - Revisión de F4 a: B2 (titulares en tinta, barras de acento a filete), M1 (dock), M2 (ornamento de la plantilla en cualquier layout), M4 (foto editorial a brightness .35: 7:1 con foto blanca, probado).
 
+## Cambios de las revisiones (a) y (b) de la ronda 1
+Semilla Marfil a la rejilla de 8 px y con sello relleno; isla de credencial voltea todos los botones (dock y sección); `readDesign` valida tipos y rangos y descarta elementos nulos; oscuro propio aplicado con reglas (no en línea); `scroll-padding` y relleno de página para el dock; navegación bajo la portada en una fila; intro de Regalos/Confirmar alineada; banderines rellenos de tinta; hover con color; el encabezado del sitio deja de ser sticky en invitaciones (compartía el borde superior con el dock). **No cerrado, por el contrato 1.2.0 o por tiempo:** composición 5fr/6fr de Marfil, «6» en acento y columnas de Piñata, eje simétrico y cifra de Gala, separador de dos anillos (hoy `filete`), estado de foto con error, `giftsStatus` (costura hasta BE #128).
+
 ## Límites honestos del contrato 1.2.0 (preguntas para Pablo)
 1. **Firmas de movimiento** (ventana de arco que se traza, puertas deco, piñata que se mece): el contrato solo ofrece entradas `fade|rise|scale|draw|envelope`. Se aproximan; la firma completa pide ampliar el contrato (animaciones nombradas por plantilla o una `frame`/`mask` de elemento).
 2. **Arco de la foto de Marfil** y **chaflán/doble línea de Gala**: el arco sale de CSS de la variante `classic`; el chaflán no es expresable (el elemento solo tiene `radius`).
@@ -21,11 +24,12 @@ Rama FE `feat/plantillas-f4b-render-v2` (sobre `feat/plantillas-f4-rediseno`), r
 ## Reversión
 BE: `DESIGN_V2_ACCEPTED=false` y redeploy: POST/PATCH de v2 vuelven a 422 `DESIGN_V2_NOT_AVAILABLE` y el admin deja de listar filas v2. Un v2 ya publicado se sigue leyendo en lo público; para retirarlo, `POST /templates/{id}/archive`. FE: revertir el PR (el v1 no cambia salvo el dock y B2/M4).
 
-## Verificación (qué se ejecutó)
-- `packages/celebration-theme`: `tsc --noEmit` y `vitest run` → **2467 pruebas en verde** (incluye 42 nuevas del renderizador v2, contraste AA claro/oscuro de las tres paletas, P22, `/r/{listingId}`, zona horaria, es-BO/en-US, XSS en texto, v2 ilegible → neutra, lector nativo).
-- `apps/seo-web` y `apps/universal`: `tsc --noEmit` limpio. `next build` de seo-web correcto.
-- Playwright (Chrome 158 real, sitio real `next build` + `next start`, API de contrato `scripts/fixture-api.mjs`, **no** el backend real): `e2e/plantillas-v2.spec.ts` → **74 pasadas**: 3 plantillas × con/sin foto × claro/oscuro × 320/360/390/768/1280: «Ver regalos» visible, a `/c/{slug}/regalos`, ≥ 44 px, siempre en pantalla al final del scroll, sin desborde horizontal; axe (wcag2a/aa/21aa/22aa) sin violaciones a 390; movimiento reducido sin animación y la entrada de portada una sola vez; enlace de proveedor `/r/{listingId}`. Capturas Linux en `docs/progress/evidence/plantillas-f4b/` (evidencia, no líneas base). Se tomaron antes del último commit de CSS (dibujo de sección a 72 px).
-- **Sin ejecutar:** pruebas de `apps/universal` (en este entorno fallan 10 de 13 de `admin.test.tsx` también sin mis cambios: dos copias de React), pruebas Python del BE (no hay Django), recorrido con backend real, iOS/Android, Safari/Firefox, lector de pantalla, gitleaks.
+## Verificación (ejecutado el 2026-11-25, tras las revisiones a y b)
+- `eslint . --max-warnings 0` → 0. `tsc --noEmit` en celebration-theme, seo-web, universal y query-hooks → 0.
+- vitest: celebration-theme **2470**, seo-web **196/196**, universal **667/667** (57 archivos). `next build` de seo-web → 0.
+- Playwright (Chrome 158 real, `next build` + `next start`, API de contrato `fixture-api.mjs`, **no** el backend real): `e2e/plantillas-v2.spec.ts` → **101 pasadas**: «Ver regalos» visible, a `/c/{slug}/regalos`, ≥ 44 px y siempre en pantalla; sin desborde; axe a 390 sin violaciones en claro y oscuro; **el lienzo y el titular miden la paleta clara u oscura del documento** (360/768/1280); **con Tab ningún elemento enfocado queda bajo el dock** (360/768/1280); movimiento reducido; `/r/{listingId}`. Una primera corrida con el servidor aún arrancando dio 13 fallos que no se repitieron (arranque en frío); la corrida válida es la última.
+- BE (`wt-be-f4b`, Postgres 16 real con rol `template_owner` NOSUPERUSER NOBYPASSRLS, venv con `requirements.txt`): `manage.py test tests` → **233 pruebas OK** (3 omitidas), `ruff check` OK, `manage.py check` OK.
+- Sin ejecutar: recorrido con backend real, iOS/Android, Safari/Firefox, lector de pantalla, gitleaks, `harness:validate`, `contracts check:source`, Playwright de `apps/universal`.
 
 ## Líneas base macOS que cambiarían (no se tocó ninguna)
 Todas las que dibujan una invitación v1: `celebracion-publica-{360,768,1280}` (seo-web), `host-templates-*`, `host-vista-previa-*` y las de invitado de la app, por el dock fijo de regalos, los titulares en tinta, las barras de acento a filete y el velo editorial. Regenerar en el Mac de Pablo y revisar a ojo.

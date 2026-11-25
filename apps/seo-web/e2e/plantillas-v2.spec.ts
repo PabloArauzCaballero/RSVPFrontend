@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { AxeBuilder } from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 
@@ -60,7 +61,7 @@ test("the partner link of the recommendations goes through /r/{listingId}", asyn
 });
 
 const documentOf = (name: string): { tokens: { palettes: Record<"light" | "dark", Record<string, string>> } } =>
-  (JSON.parse(readFileSync(new URL(`../../../packages/celebration-theme/src/design/documents/${name}.json`, import.meta.url), "utf8")) as { theme: { tokens: { palettes: Record<"light" | "dark", Record<string, string>> } } }).theme;
+  (JSON.parse(readFileSync(join(__dirname, `../../../packages/celebration-theme/src/design/documents/${name}.json`), "utf8")) as { theme: { tokens: { palettes: Record<"light" | "dark", Record<string, string>> } } }).theme;
 const rgb = (hex: string): string => `rgb(${[1, 3, 5].map((i) => Number.parseInt(hex.slice(i, i + 2), 16)).join(", ")})`;
 
 // B1 of the visual review: the document's own dark palette must be what the page paints, not only what axe could measure.
