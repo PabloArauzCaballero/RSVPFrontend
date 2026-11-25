@@ -20,3 +20,12 @@ Rama FE `feat/plantillas-f4b-render-v2` (sobre `feat/plantillas-f4-rediseno`), r
 
 ## Reversión
 BE: `DESIGN_V2_ACCEPTED=false` y redeploy: POST/PATCH de v2 vuelven a 422 `DESIGN_V2_NOT_AVAILABLE` y el admin deja de listar filas v2. Un v2 ya publicado se sigue leyendo en lo público; para retirarlo, `POST /templates/{id}/archive`. FE: revertir el PR (el v1 no cambia salvo el dock y B2/M4).
+
+## Verificación (qué se ejecutó)
+- `packages/celebration-theme`: `tsc --noEmit` y `vitest run` → **2467 pruebas en verde** (incluye 42 nuevas del renderizador v2, contraste AA claro/oscuro de las tres paletas, P22, `/r/{listingId}`, zona horaria, es-BO/en-US, XSS en texto, v2 ilegible → neutra, lector nativo).
+- `apps/seo-web` y `apps/universal`: `tsc --noEmit` limpio. `next build` de seo-web correcto.
+- Playwright (Chrome 158 real, sitio real `next build` + `next start`, API de contrato `scripts/fixture-api.mjs`, **no** el backend real): `e2e/plantillas-v2.spec.ts` → **74 pasadas**: 3 plantillas × con/sin foto × claro/oscuro × 320/360/390/768/1280: «Ver regalos» visible, a `/c/{slug}/regalos`, ≥ 44 px, siempre en pantalla al final del scroll, sin desborde horizontal; axe (wcag2a/aa/21aa/22aa) sin violaciones a 390; movimiento reducido sin animación y la entrada de portada una sola vez; enlace de proveedor `/r/{listingId}`. Capturas Linux en `docs/progress/evidence/plantillas-f4b/` (evidencia, no líneas base). Se tomaron antes del último commit de CSS (dibujo de sección a 72 px).
+- **Sin ejecutar:** pruebas de `apps/universal` (en este entorno fallan 10 de 13 de `admin.test.tsx` también sin mis cambios: dos copias de React), pruebas Python del BE (no hay Django), recorrido con backend real, iOS/Android, Safari/Firefox, lector de pantalla, gitleaks.
+
+## Líneas base macOS que cambiarían (no se tocó ninguna)
+Todas las que dibujan una invitación v1: `celebracion-publica-{360,768,1280}` (seo-web), `host-templates-*`, `host-vista-previa-*` y las de invitado de la app, por el dock fijo de regalos, los titulares en tinta, las barras de acento a filete y el velo editorial. Regenerar en el Mac de Pablo y revisar a ojo.
