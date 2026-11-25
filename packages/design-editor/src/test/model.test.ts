@@ -106,7 +106,7 @@ describe("gifts block guards: covered and contrast (mirror of the server rules)"
     expect(codes(withNeighbour({ visible: false }))).not.toContain("GIFTS_BLOCK_COVERED");
     const gifts = giftsPlacement(fixture())?.element;
     expect(codes(withNeighbour({ y: (gifts?.y ?? 0) + (gifts?.h ?? 1) }))).not.toContain("GIFTS_BLOCK_COVERED");
-    const state = editorReducer(initialEditorState(fixture()), { type: "edit", op: (doc) => withNeighbour({}), at: 0 });
+    const state = editorReducer(initialEditorState(fixture()), { type: "edit", op: () => withNeighbour({}), at: 0 });
     expect(state.refusal?.map((issue) => issue.code)).toContain("GIFTS_BLOCK_COVERED");
   });
 

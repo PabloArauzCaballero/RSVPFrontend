@@ -30,5 +30,5 @@ const gateway: DraftGateway = {
 };
 
 createRoot(window.document.getElementById("root") as HTMLElement).render(
-  <EditorShell design={{ id: "design-1", name: "Ana y Luis", draftVersion: 4, document: document0 }} gateway={gateway} t={createTranslator(locale)} onReload={() => undefined} debounceMs={300} />
+  <EditorShell design={{ id: "design-1", name: "Ana y Luis", draftVersion: 4, document: document0 }} gateway={gateway} t={createTranslator(locale)} onReload={async () => undefined} debounceMs={300} />
 );
