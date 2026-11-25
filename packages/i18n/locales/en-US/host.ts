@@ -81,6 +81,18 @@ export const hostEnUS: DeepStrings<typeof hostEsBO> = {
     deleteTitle: "Delete this photo?", deleteBody: "It's removed from your invitation and can't be undone.", deleted: "Photo deleted.", orderSaved: "Order saved.",
     photo: "Photo {{n}}", invalidType: "That file is not a JPG, PNG or WebP image.", tooLarge: "The image is over 10 MB. Try a lighter one.", failed: "We couldn't upload {{name}}. Try again."
   },
+  media: {
+    title: "Files", quota: "{{assets}} of {{maxAssets}} files · {{used}} of {{max}} used", quotaFull: "You reached the file limit of this invitation. Delete one to upload another.",
+    add: "Add files", addMusic: "Upload music (MP3)", help: "JPG, PNG, WebP, GIF, AVIF, SVG or HEIC, up to {{max}} MB each.", helpMusic: "MP3 up to {{max}} MB and {{minutes}} minutes.",
+    queued: "Waiting", uploading: "Uploading {{name}}… {{percent}} %", processing: "Preparing {{name}}…", done: "{{name}} is ready.", retry: "Retry", remove: "Remove from list", clear: "Clear list",
+    rightsTitle: "Copyright notice", rights: "I confirm I have the right to use this music in my invitation and I understand it will be removed if we receive a copyright report.", rightsRequired: "Accept the rights notice to upload music.",
+    failures: {
+      type: "{{name}}: this file type cannot be uploaded here.", tooLarge: "{{name}} is too large. Try a lighter version.", quotaAssets: "{{name}}: this invitation has no room for more files.",
+      quotaBytes: "{{name}} does not fit in the space you have left. Delete something or upload a lighter file.", rights: "{{name}}: the rights notice changed. Read and accept it again.", invalid: "{{name}} could not be read as a valid file. Try another one.",
+      tooLong: "{{name}} is too long. Trim it and try again.", rejected: "We could not prepare {{name}}. Remove it and try another one.", forbidden: "You do not have permission to upload files to this invitation.",
+      network: "{{name}}: the connection dropped. Retry when it is back.", server: "{{name}}: something failed on our side. Retry in a moment."
+    }
+  },
   translations: {
     title: "Languages", intro: "Write your invitation in each language. Whatever you don't translate shows in the main language.",
     language: "Language", addLanguage: "Add language", emptyTitle: "Your invitation speaks one language", emptyBody: "Add another and write here how it reads in it.", loadFailedTitle: "We couldn't load your languages",

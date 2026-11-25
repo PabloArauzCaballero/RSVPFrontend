@@ -5,7 +5,7 @@ import { queryKeys } from "../keys.js";
 import { invalidation } from "../invalidation.js";
 import { celebrationApi, mediaApi, templateApi, type Versioned } from "./api.js";
 import { uploadToPresignedUrl } from "../media/upload.js";
-import type { Celebration, CelebrationPatch, CreateCelebrationInput, EventTypeDefinition, MediaAsset, SettingsPatch, TemplateInput } from "./types.js";
+import type { EmbedIntent, Celebration, CelebrationPatch, CreateCelebrationInput, EventTypeDefinition, MediaAsset, MediaPurpose, SettingsPatch, TemplateInput } from "./types.js";
 
 export * from "./types.js";
 export * from "./api.js";
@@ -126,20 +126,38 @@ export function useMediaAssets(client: ApiClient, celebrationId: string) {
 
 const MEDIA_PROCESSING_INTERVAL_MS = 2_000;
 
-export interface UploadInput { readonly file: Blob; readonly filename: string; readonly onProgress: (fraction: number) => void }
+export interface UploadInput {
+  readonly file: Blob;
+  readonly filename: string;
+  readonly onProgress: (fraction: number) => void;
+  readonly purpose?: MediaPurpose;
+  readonly rightsNoticeVersion?: string | null;
+  readonly signal?: AbortSignal;
+  /** The type and size the picker reported, when the Blob does not carry them (a browser leaves the type of a HEIC empty). */
+  readonly contentType?: string;
+  readonly size?: number;
+}
 
 /** presign (validated by the server first) → PUT to object storage → complete (variants). */
 export function useUploadMedia(client: ApiClient, celebrationId: string) {
   const invalidate = useInvalidate();
   return useMutation({
-    mutationFn: async ({ file, filename, onProgress }: UploadInput): Promise<MediaAsset> => {
+    mutationFn: async ({ file, filename, onProgress, purpose, rightsNoticeVersion, contentType, size }: UploadInput): Promise<MediaAsset> => {
       const media = mediaApi(client);
-      const intent = await media.presign({ celebrationId, filename, contentType: file.type, sizeBytes: file.size });
+      const intent = await media.presign({ celebrationId, filename, contentType: contentType || file.type, sizeBytes: size ?? file.size, ...(purpose ? { purpose } : {}), ...(rightsNoticeVersion ? { rightsNoticeVersion } : {}) });
       await uploadToPresignedUrl(intent, file, onProgress);
       return media.complete(intent.assetId);
     },
     onSuccess: () => invalidate(invalidation.mediaChanged(celebrationId))
   });
+}
+/** Quota used and left by the celebration (100 files / 500 MiB by default). The list also carries it as `usage`. */
+export function useMediaUsage(client: ApiClient, celebrationId: string) {
+  return useQuery({ queryKey: [...queryKeys.media.list(celebrationId), "usage"] as const, queryFn: ({ signal }) => mediaApi(client).usage(celebrationId, signal), ...cachePolicy.celebration, enabled: Boolean(celebrationId) });
+}
+/** Turns a pasted link into the embed the invitation may load. A 422 means the link is off the allowlist. */
+export function useResolveEmbed(client: ApiClient) {
+  return useMutation({ mutationFn: ({ url, intent }: { readonly url: string; readonly intent?: EmbedIntent }) => mediaApi(client).resolveEmbed(url, intent) });
 }
 export function useReorderMedia(client: ApiClient, celebrationId: string) {
   const invalidate = useInvalidate();

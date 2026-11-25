@@ -274,3 +274,23 @@ html:has(.cdesign-dock) { scroll-padding-bottom: 6rem; }
 }
 /* Hover changes the colour too, not only the scale: the fill moves a step towards the text colour (never lowers the ink's contrast). */
 @media (hover: hover) { .celebration-cta:hover { background: color-mix(in srgb, var(--celebration-accent-fill) 86%, var(--celebration-text)); } }
+
+/* F6 · media roles, embeds and the music player. Everything reads the theme variables; nothing animates except a short fade that reduced motion removes. */
+.celebration-media-image { display: block; max-width: 100%; height: auto; border-radius: var(--celebration-radius, 0); }
+.celebration-media-background { position: relative; isolation: isolate; overflow: hidden; }
+.celebration-media-background-image { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -2; border-radius: 0; }
+.celebration-media-veil { position: absolute; inset: 0; z-index: -1; background: color-mix(in srgb, var(--celebration-canvas) var(--celebration-scrim, 40%), transparent); }
+.celebration-media-content { position: relative; }
+.celebration-embed { position: relative; display: grid; gap: .5rem; justify-items: start; width: 100%; max-width: var(--celebration-max-width, 40rem); aspect-ratio: 16 / 9; align-content: center; background: var(--celebration-surface); border: 1px solid color-mix(in srgb, var(--celebration-text) 18%, transparent); border-radius: var(--celebration-radius, 0); overflow: hidden; padding: 1rem; }
+.celebration-embed[data-kind="audio"] { aspect-ratio: auto; min-height: 9.5rem; }
+.celebration-embed[data-loaded="true"] { padding: 0; }
+.celebration-embed-frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.celebration-embed[data-kind="audio"][data-loaded="true"] { min-height: 10rem; }
+.celebration-embed > .celebration-media-image { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
+.celebration-embed-play, .celebration-audio-button { position: relative; z-index: 1; display: inline-flex; align-items: center; gap: .6rem; min-height: 44px; min-width: 44px; padding: .5rem 1.1rem; border: 2px solid var(--celebration-accent); border-radius: 9999px; background: var(--celebration-surface); color: var(--celebration-text); font: inherit; font-weight: 600; cursor: pointer; transition: background-color .15s ease; }
+.celebration-embed-play:hover, .celebration-audio-button:hover { background: color-mix(in srgb, var(--celebration-accent) 14%, var(--celebration-surface)); }
+.celebration-embed-play:focus-visible, .celebration-audio-button:focus-visible { outline: 3px solid var(--celebration-accent); outline-offset: 3px; }
+.celebration-embed .celebration-note { position: relative; z-index: 1; margin: 0; background: color-mix(in srgb, var(--celebration-surface) 88%, transparent); padding: .15rem .4rem; border-radius: 4px; }
+.celebration-audio { display: grid; gap: .5rem; justify-items: start; }
+.celebration-audio-progress { width: min(100%, 24rem); height: .5rem; accent-color: var(--celebration-accent); }
+@media (prefers-reduced-motion: reduce) { .celebration-embed-play, .celebration-audio-button { transition: none; } }

@@ -4,6 +4,14 @@ const path = require('node:path');
  * A6 · Security headers for every page. CSP starts report-only: violations appear in the browser console without
  * breaking the site; enforce it once the console is clean in TEST. Next needs inline scripts for hydration.
  */
+/**
+ * F6 · The only origins an iframe of the invitation may load (P17). Keep it equal to FRAME_HOSTS in
+ * packages/celebration-theme/src/media/embed.ts: media/csp.test.ts fails when they differ. Privacy-enhanced hosts only
+ * (youtube-nocookie, Vimeo with dnt). Nothing else may be framed, and `frame-ancestors 'none'` still forbids framing this site.
+ */
+const frameHosts = ['www.youtube-nocookie.com', 'player.vimeo.com', 'open.spotify.com', 'w.soundcloud.com', 'www.google.com'];
+const frameSrc = `frame-src ${frameHosts.map((host) => `https://${host}`).join(' ')}`;
+
 const securityHeaders = [
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'X-Frame-Options', value: 'DENY' },
@@ -12,7 +20,7 @@ const securityHeaders = [
   { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=()' },
   {
     key: 'Content-Security-Policy-Report-Only',
-    value: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+    value: `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' https:; connect-src 'self' https:; ${frameSrc}; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'`
   }
 ];
 
