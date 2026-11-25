@@ -1,6 +1,6 @@
 # Evidencia F6 (frontend, parte a): medios y embebidos en el renderizador v2
 
-Capturas **Linux** (Chrome 1xx estable, sitio real `next build` + `next start` sobre `apps/seo-web/scripts/fixture-api.mjs`, celebración `fixture-v2-medios`).
+Capturas **Linux** (Google Chrome 158.0.8127.36, sitio real `next build` + `next start` sobre `apps/seo-web/scripts/fixture-api.mjs`, celebración `fixture-v2-medios`).
 No son líneas base: las líneas base commiteadas son de macOS y no se tocan.
 
 - `portada-{360,768,1280}-{light,dark}.png` y `medios-{360,768,1280}-{light,dark}.png`: portada con fondo de foto bajo velo y bloques imagen, video, mapa y canción.
