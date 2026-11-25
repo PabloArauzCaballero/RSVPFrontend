@@ -37,6 +37,13 @@ describe("PL-134-M1 · the early script stores a fragment credential and cleans 
     expect(window.location.hash).toBe("");
     expect(window.location.pathname + window.location.search).toBe("/c/ana?lang=es-BO");
   });
+  it("PL-134-R2-m1 · a slug cannot close the script element or open a comment", async () => {
+    const { earlyCredentialScript } = await import("../lib/guest-credential");
+    const script = earlyCredentialScript("</script><!--x");
+    expect(script).not.toContain("</script>");
+    expect(script).not.toContain("<!--");
+    expect(script).toContain("\\u003c/script>");
+  });
   it("does nothing without a fragment credential, and ignores a malformed one", async () => {
     const { earlyCredentialScript, credentialKey } = await import("../lib/guest-credential");
     window.sessionStorage.clear();

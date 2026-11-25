@@ -1,11 +1,13 @@
 import { useEffect, useRef, type ReactNode } from "react";
-import { PREVIEW_PATH, PREVIEW_READY, previewMessage } from "@rsvp/celebration-theme";
+import { PREVIEW_PATH, PREVIEW_READY, previewMessage } from "@rsvp/celebration-theme/model";
 import type { PageFrameProps, PreviewFrameProps, SiteFrameProps } from "./site-frame-types";
 
 /** The frame's document loaded but the preview page never said it listens (a refused frame, an error page): this long after `onload`. */
 export const PREVIEW_READY_TIMEOUT_MS = 3_000;
 /** The frame never loaded at all (no network, the site down). */
 export const PREVIEW_LOAD_TIMEOUT_MS = 8_000;
+/** The site's smallest static file (`app/icon.svg`): what the reachability probe asks for. */
+export const PROBE_PATH = "/icon.svg";
 /** Before leaving for the site, how long the reachability probe waits. */
 export const PAGE_PROBE_TIMEOUT_MS = 6_000;
 
@@ -21,14 +23,17 @@ export const withCredentialFragment = (url: string, token: string | null): strin
 function PageHandOff({ origin, url, credential, onPhase }: PageFrameProps): ReactNode {
   useEffect(() => {
     // The same origin would load this very screen again: a deployment that serves both must route /c/* to the site.
-    if (typeof window === "undefined" || window.location.origin === origin) { onPhase("unavailable"); return; }
+    if (typeof window === "undefined" || window.location.origin === origin) { onPhase("misconfigured"); return; }
     onPhase("loading");
     // Leaving for a site that is down shows the browser's error page, with no retry and no way to the gifts: probe first.
-    // `no-cors` sees only whether the site answers (a network error or a timeout rejects), which is the state this screen can offer.
+    // The probe is the site's smallest static file, not the invitation (a HEAD of the page would render it a second time).
+    // LIMIT: `no-cors` gives an opaque response, so the status cannot be read: this sees «the site answers» or «it does not»
+    // (a network error or a timeout rejects). A 5xx of the page itself is shown by the site's own error page; the native
+    // build, which reads the status, shows `unavailable` for it.
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), PAGE_PROBE_TIMEOUT_MS);
     let left = false;
-    fetch(url, { method: "HEAD", mode: "no-cors", cache: "no-store", credentials: "omit", referrerPolicy: "no-referrer", signal: controller.signal })
+    fetch(`${origin}${PROBE_PATH}`, { method: "GET", mode: "no-cors", cache: "no-store", credentials: "omit", referrerPolicy: "no-referrer", signal: controller.signal })
       .then(() => { left = true; window.location.replace(withCredentialFragment(url, credential)); })
       .catch(() => { if (!left) onPhase("offline"); })
       .finally(() => clearTimeout(timer));

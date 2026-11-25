@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState, type ReactNode } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import type { CelebrationTheme, GalleryImage, PreviewPayload, PublicCelebrationView } from "@rsvp/celebration-theme";
+import type { CelebrationTheme, GalleryImage, PreviewPayload, PublicCelebrationView } from "@rsvp/celebration-theme/model";
 import { spacing } from "@rsvp/design-tokens";
 import { Skeleton, useColors } from "@rsvp/ui";
 import type { FramePhase } from "../platform/site-frame-types";

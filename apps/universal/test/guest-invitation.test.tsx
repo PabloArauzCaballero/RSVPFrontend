@@ -5,6 +5,7 @@ import { resetWebViews, webViews } from "./stubs/react-native-webview";
 import { InvitationScreen, giftsRoute, invitationPath, replyPath } from "../src/guest/invitation-screen";
 import { clearGiftCredential, saveGiftCredential } from "../src/guest/gift-credential";
 import { groupOfPath } from "../src/auth/routes";
+import { GUEST_COLUMN } from "../src/guest/frame";
 import { decideNavigation, credentialScript } from "../src/guest/invitation-web-model";
 import { GUEST, fakeClient, renderApp } from "./support";
 
@@ -62,10 +63,10 @@ describe("P10 · A1 the public invitation in the app is the public page in a web
     expect(screen.getByTestId("invitation-screen")).toBeTruthy();
   });
 
-  it("PL-134-M3 · loading keeps the invitation's column: centred and at most 720 px, so the gifts button is not at the edge of a wide window", () => {
+  it("PL-134-R2-M3 · loading keeps the guest column (640 px, the one the offline and not-found cards use): centred, so the gifts button is not at the edge of a wide window", () => {
     show();
     const column = getComputedStyle(screen.getByTestId("invitation-loading-column"));
-    expect(column.maxWidth).toBe("720px");
+    expect(column.maxWidth).toBe(`${GUEST_COLUMN}px`);
     expect(column.alignSelf).toBe("center");
   });
 

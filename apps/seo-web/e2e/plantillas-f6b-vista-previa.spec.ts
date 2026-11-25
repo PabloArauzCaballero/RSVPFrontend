@@ -5,6 +5,8 @@ import { AxeBuilder } from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { PREVIEW_PAYLOAD, PREVIEW_READY, themeFromTemplate, type TemplateDocument } from "@rsvp/celebration-theme";
 
+// Los casos «web app» (M2, M3) necesitan F6B_APP_DIST: `EXPO_PUBLIC_SITE_URL=http://localhost:$E2E_PORT EXPO_PUBLIC_API_URL=/api npx expo export --clear --platform web`
+// (API relativa: una URL http de API falla en un build de release; `--clear`: Metro cachea las variables EXPO_PUBLIC_*).
 // F6-b (P10) · /vista-previa en el sitio real, embebida por un arnés que hace de la app en OTRO origen. Afirma lo que debe cumplirse;
 // solo escribe imágenes cuando F6B_EVIDENCE_DIR está definido (evidencia, nunca línea base).
 const SITE_PORT = Number(process.env.E2E_PORT ?? 3110);
@@ -136,11 +138,14 @@ test("PL-134-M1 · a credential in the fragment is stored and the address cleane
 
 test("PL-134-M2 · web app: with the site unreachable the guest sees the offline state with retry and the gifts button, and retry goes to the site once it answers", async ({ page }) => {
   test.skip(!DIST, "needs F6B_APP_DIST (expo export --platform web)");
+  await page.setViewportSize({ width: 1440, height: 900 });
   let blocked = true;
   await page.route(`http://localhost:${SITE_PORT}/**`, (route) => (blocked ? route.abort("connectionrefused") : route.continue()));
   await page.goto(`${APP}/c/${SLUG}`);
   await expect(page.getByTestId("guest-retry")).toBeVisible({ timeout: 15000 });
   await expect(page.getByTestId("invitation-gifts")).toBeVisible();
+  // One column for every state: the offline card is as wide as the loading column.
+  expect((await page.getByTestId("guest-column").boundingBox())?.width).toBe(640);
   if (OUT) { mkdirSync(OUT, { recursive: true }); await page.screenshot({ path: `${OUT}/web-sin-red.png` }); }
   blocked = false;
   await page.getByTestId("guest-retry").click();
@@ -148,7 +153,7 @@ test("PL-134-M2 · web app: with the site unreachable the guest sees the offline
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 });
 
-test("PL-134-M3 · web app at 1440: the loading state keeps the 720 px column, centred", async ({ page }) => {
+test("PL-134-M3 · web app at 1440: the loading state keeps the guest column (640 px, the offline card's), centred", async ({ page }) => {
   test.skip(!DIST, "needs F6B_APP_DIST (expo export --platform web)");
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.route(`http://localhost:${SITE_PORT}/**`, () => undefined);
@@ -156,7 +161,7 @@ test("PL-134-M3 · web app at 1440: the loading state keeps the 720 px column, c
   const column = page.getByTestId("invitation-loading-column");
   await expect(column).toBeVisible();
   const box = await column.boundingBox();
-  expect(box?.width).toBeLessThanOrEqual(720);
+  expect(box?.width).toBe(640);
   expect(Math.abs((box?.x ?? 0) + (box?.width ?? 0) / 2 - 720)).toBeLessThan(4);
   if (OUT) await page.screenshot({ path: `${OUT}/web-cargando-1440.png` });
 });

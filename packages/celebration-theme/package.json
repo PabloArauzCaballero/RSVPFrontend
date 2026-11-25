@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.tsx",
+    "./model": "./src/model.ts",
     "./styles.css": "./styles.css",
     "./art": "./src/art/index.tsx",
     "./art.css": "./src/art/art.css",

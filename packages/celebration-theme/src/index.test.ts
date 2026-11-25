@@ -355,3 +355,26 @@ describe("styles.css keeps the contract the theme assumes", () => {
     expect(css).toMatch(/\.celebration a:focus-visible/);
   });
 });
+
+describe("PL-134-R2-M1 · the app's entry (`./model`) carries no renderer and no CSS parser", () => {
+  it("none of its modules, followed through their imports, reaches the renderer, the sections or postcss", async () => {
+    const { existsSync, readFileSync } = await import("node:fs");
+    const { dirname, join, resolve } = await import("node:path");
+    const seen = new Set<string>();
+    const visit = (file: string): void => {
+      if (seen.has(file)) return;
+      seen.add(file);
+      for (const match of readFileSync(file, "utf8").matchAll(/(?:from|import)\s*\(?\s*["']([^"']+)["']/g)) {
+        const target = match[1] as string;
+        if (!target.startsWith(".")) { expect(["postcss", "postcss-selector-parser", "postcss-value-parser"]).not.toContain(target); continue; }
+        const base = resolve(dirname(file), target.replace(/\.js$/, ""));
+        const found = [`${base}.ts`, `${base}.tsx`, join(base, "index.ts"), join(base, "index.tsx")].find(existsSync);
+        if (found) visit(found);
+      }
+    };
+    visit(join(process.cwd(), "src/model.ts"));
+    const names = [...seen].map((file) => file.replace(`${process.cwd()}/src/`, ""));
+    expect(names.filter((name) => /^(renderer|custom\/|sections\/|design\/render|theme-context|media\/components)/.test(name))).toEqual([]);
+    expect(names.length).toBeGreaterThan(5);
+  });
+});

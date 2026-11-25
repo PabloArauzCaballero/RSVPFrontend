@@ -1,4 +1,4 @@
-import type { PreviewPayload } from "@rsvp/celebration-theme";
+import type { PreviewPayload } from "@rsvp/celebration-theme/model";
 
 /**
  * P10 · A window onto the public site: the invitation itself (`page`) or the preview page the app feeds (`preview`).
@@ -6,7 +6,11 @@ import type { PreviewPayload } from "@rsvp/celebration-theme";
  */
 
 /** What the frame is doing, so the screen can show loading, a retry, or its own fallbacks (the gift button). */
-export type FramePhase = "loading" | "ready" | "notFound" | "unavailable" | "offline";
+/**
+ * `offline`: no connection or the site does not answer. `unavailable`: the site answered with a server error. `misconfigured`:
+ * this deployment cannot show the site at all (it would load itself), which a retry does not fix.
+ */
+export type FramePhase = "loading" | "ready" | "notFound" | "unavailable" | "offline" | "misconfigured";
 
 export interface SiteFrameBase {
   /** Origin of the public site: the only one the frame loads, messages or hands a credential to. */

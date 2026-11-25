@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { Linking, StyleSheet, View } from "react-native";
-import { SECTION_PATHS, sectionForPath, type SectionId } from "@rsvp/celebration-theme";
+import { SECTION_PATHS, sectionForPath, type SectionId } from "@rsvp/celebration-theme/model";
 import { spacing } from "@rsvp/design-tokens";
 import { Skeleton, useColors } from "@rsvp/ui";
 import { ActionButton } from "../host/ui";
@@ -10,6 +10,7 @@ import { useLocalePreference, useT } from "../platform/providers";
 import { publicSiteOrigin } from "../platform/site-origin";
 import { readGiftCredential } from "./gift-credential";
 import { invitationUrl } from "./invitation-web-model";
+import { GUEST_COLUMN } from "./frame";
 import { LinkState, OfflineState } from "./link-states";
 
 /**
@@ -53,16 +54,13 @@ function GiftsButton({ slug, onNavigate }: { readonly slug: string; readonly onN
   return <ActionButton icon="gift" variant="secondary" label={t("celebration.gifts.cta")} onPress={() => onNavigate(giftsRoute(slug))} testID="invitation-gifts" />;
 }
 
-/** Same width as the classic layout's column (`--celebration-max-width`). */
-const LOADING_COLUMN = 720;
-
 function Loading({ slug, onNavigate }: { readonly slug: string; readonly onNavigate: (path: string) => void }): ReactNode {
   const t = useT();
   const palette = useColors();
   return (
     <View role="status" accessibilityLabel={t("celebration.app.loading")} aria-busy style={[StyleSheet.absoluteFill, { backgroundColor: palette.canvas, padding: spacing[4], gap: spacing[4] }]} testID="invitation-loading">
-      {/* The column the invitation itself has: a wide window does not stretch the skeleton or push the button to the edge. */}
-      <View style={{ width: "100%", maxWidth: LOADING_COLUMN, alignSelf: "center", gap: spacing[4] }} testID="invitation-loading-column">
+      {/* The same column as the offline and not-found cards (`GUEST_COLUMN`): the screen does not change width between states. */}
+      <View style={{ width: "100%", maxWidth: GUEST_COLUMN, alignSelf: "center", gap: spacing[4] }} testID="invitation-loading-column">
         <View style={{ alignItems: "center", gap: spacing[3], paddingVertical: spacing[8] }}>
           <Skeleton width={96} height={12} /><Skeleton width="80%" height={40} /><Skeleton width="50%" height={16} />
         </View>
@@ -102,6 +100,11 @@ function Invitation({ slug, only, onNavigate, openUrl = openExternally }: Invita
 
   // 404 is the answer for an unknown or unpublished slug, or a section the invitation does not have (A21).
   if (phase === "notFound") return <NotFound onNavigate={onNavigate} />;
+  // The site itself failing (5xx) or no connection: trying again can work. A deployment that would load this screen into itself
+  // cannot be fixed by the guest: no retry, only the way to the gifts.
+  if (phase === "misconfigured") {
+    return <LinkState illustration="offline" title={t("rsvp.invite.unavailableTitle")} body={t("rsvp.invite.unavailableBody")}><GiftsButton slug={slug} onNavigate={onNavigate} /></LinkState>;
+  }
   if (phase === "offline" || phase === "unavailable") {
     return <OfflineState unavailable={phase === "unavailable"} onRetry={retry}><GiftsButton slug={slug} onNavigate={onNavigate} /></OfflineState>;
   }

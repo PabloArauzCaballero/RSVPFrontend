@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { View, type LayoutChangeEvent } from "react-native";
-import type { CelebrationTheme, GalleryImage, PublicCelebrationView } from "@rsvp/celebration-theme";
+import type { CelebrationTheme, GalleryImage, PublicCelebrationView } from "@rsvp/celebration-theme/model";
 import { radius } from "@rsvp/design-tokens";
 import { useT } from "../platform/providers";
 import { useColors } from "@rsvp/ui";

@@ -1,6 +1,6 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { pointUrl } from "@rsvp/celebration-theme";
+import { pointUrl } from "@rsvp/celebration-theme/model";
 import { ContentEditorScreen } from "../src/host/content-editor";
 import { readyCount, sectionStates } from "../src/host/editor-sections";
 import { GalleryEditorScreen } from "../src/host/gallery-editor";

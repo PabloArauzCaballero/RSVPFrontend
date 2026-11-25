@@ -1,4 +1,4 @@
-import { SECTION_PATHS, type SectionId } from "@rsvp/celebration-theme";
+import { SECTION_PATHS, type SectionId } from "@rsvp/celebration-theme/model";
 
 /**
  * P10 · The app shows the invitation by loading the public site's own page in a web view. This is the part of that decision

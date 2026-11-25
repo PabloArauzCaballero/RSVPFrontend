@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, type ReactNode } from "react";
 import { WebView } from "react-native-webview";
 import type { WebViewMessageEvent } from "react-native-webview";
 import type { ShouldStartLoadRequest, WebViewHttpErrorEvent } from "react-native-webview/lib/WebViewTypes";
-import { PREVIEW_BRIDGE, PREVIEW_PATH, PREVIEW_READY, type PreviewPayload } from "@rsvp/celebration-theme";
+import { PREVIEW_BRIDGE, PREVIEW_PATH, PREVIEW_READY, type PreviewPayload } from "@rsvp/celebration-theme/model";
 import { credentialScript, decideNavigation } from "../guest/invitation-web-model";
 import type { PageFrameProps, PreviewFrameProps, SiteFrameProps } from "./site-frame-types";
 

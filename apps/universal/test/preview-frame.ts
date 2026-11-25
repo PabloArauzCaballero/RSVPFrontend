@@ -1,6 +1,6 @@
 import { expect } from "vitest";
 import { act } from "@testing-library/react";
-import { PREVIEW_BRIDGE, PREVIEW_READY } from "@rsvp/celebration-theme";
+import { PREVIEW_BRIDGE, PREVIEW_READY } from "@rsvp/celebration-theme/model";
 import { webViews } from "./stubs/react-native-webview";
 
 /**

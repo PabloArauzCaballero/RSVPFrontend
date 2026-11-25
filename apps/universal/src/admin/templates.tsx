@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Pressable, Text, View } from "react-native";
-import { design, themeFromTemplate, type PublicCelebrationView, type TemplateDocument } from "@rsvp/celebration-theme";
+import { design, themeFromTemplate, type PublicCelebrationView, type TemplateDocument } from "@rsvp/celebration-theme/model";
 import { useAdminTemplates, useSaveTemplate, useTemplateTransition, type LayoutId, type SectionId, type Template, type TemplateInput, type TemplateTheme } from "@rsvp/query-hooks";
 import type { Translate } from "@rsvp/i18n";
 import { useApiClient, useLocale, useT } from "../platform/providers";

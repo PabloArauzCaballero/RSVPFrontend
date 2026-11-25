@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { PREVIEW_READY, themeFromTemplate, type PublicCelebrationView } from "@rsvp/celebration-theme";
+import { PREVIEW_READY, themeFromTemplate, type PublicCelebrationView } from "@rsvp/celebration-theme/model";
 import { PreviewFrame } from "../src/host/preview-stage";
-import { PAGE_PROBE_TIMEOUT_MS, PREVIEW_LOAD_TIMEOUT_MS, PREVIEW_READY_TIMEOUT_MS, SiteFrame, withCredentialFragment } from "../src/platform/site-frame.web";
+import { PAGE_PROBE_TIMEOUT_MS, PROBE_PATH, PREVIEW_LOAD_TIMEOUT_MS, PREVIEW_READY_TIMEOUT_MS, SiteFrame, withCredentialFragment } from "../src/platform/site-frame.web";
 import { fakeClient, renderApp } from "./support";
 import { previewSeenBy } from "./preview-frame";
 import { webViews } from "./stubs/react-native-webview";
@@ -151,17 +151,18 @@ describe("P10 · web: an iframe of the preview page, fed by postMessage from the
   it("the invitation on the web build is a navigation to the site; a deployment that would load itself says unavailable instead of looping", () => {
     const onPhase = vi.fn();
     render(<SiteFrame mode="page" origin={window.location.origin} url={`${window.location.origin}/c/ana`} slug="ana" credential={null} title="Invitación" testID="page" onApp={vi.fn()} onExternal={vi.fn()} onPhase={onPhase} />);
-    expect(onPhase).toHaveBeenLastCalledWith("unavailable");
+    expect(onPhase).toHaveBeenLastCalledWith("misconfigured");
   });
 
-  it("PL-134-M2 · before leaving for the site the web build probes it (HEAD, no cookies, no Referer); a site that does not answer is the offline state, not the browser's error page", async () => {
+  it("PL-134-M2 · before leaving for the site the web build probes its smallest static file, not the invitation (no cookies, no Referer); a site that does not answer is the offline state, not the browser's error page", async () => {
     const calls: { url: string; init: RequestInit }[] = [];
     vi.stubGlobal("fetch", vi.fn(async (url: string, init: RequestInit) => { calls.push({ url, init }); throw new TypeError("Failed to fetch"); }));
     const onPhase = vi.fn();
     render(<SiteFrame mode="page" origin={SITE} url={`${SITE}/c/ana?lang=es-BO`} slug="ana" credential="tok-1234567890abcdef" title="Invitación" testID="page" onApp={vi.fn()} onExternal={vi.fn()} onPhase={onPhase} />);
     await act(async () => { await Promise.resolve(); await Promise.resolve(); });
-    expect(calls[0]?.url).toBe(`${SITE}/c/ana?lang=es-BO`);
-    expect(calls[0]?.init).toMatchObject({ method: "HEAD", mode: "no-cors", credentials: "omit", referrerPolicy: "no-referrer" });
+    expect(calls[0]?.url).toBe(`${SITE}${PROBE_PATH}`);
+    expect(PROBE_PATH).toBe("/icon.svg");
+    expect(calls[0]?.init).toMatchObject({ method: "GET", mode: "no-cors", credentials: "omit", referrerPolicy: "no-referrer" });
     expect(calls[0]?.url).not.toContain("tok-");
     expect(onPhase).toHaveBeenLastCalledWith("offline");
     expect(PAGE_PROBE_TIMEOUT_MS).toBeLessThanOrEqual(6_000);
