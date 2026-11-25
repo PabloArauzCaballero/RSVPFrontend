@@ -421,6 +421,16 @@ describe("PL-114-R6 · «Confirmar asistencia» abre la respuesta del invitado, 
     expect(screen.queryByTestId("rsvp-register")).toBeNull();
   });
 
+  it("PL-114-a1 · an expired stored credential is dropped and the same visit falls to the registration flow, not to «Este enlace ya no funciona»", async () => {
+    const mock = seeded({ token: null }, { unregisteredMode: "AUTO_ACCEPT" });
+    window.sessionStorage.setItem(credentialKey(mock.slug), MOCK_VALID_TOKEN);
+    openWithoutRoute(mock);
+    expect(await screen.findByRole("heading", { name: "Confirma que vienes" })).toBeTruthy();
+    expect(screen.getByTestId("rsvp-register")).toBeTruthy();
+    expect(screen.queryByRole("heading", { level: 1, name: "Este enlace ya no funciona" })).toBeNull();
+    expect(window.sessionStorage.getItem(credentialKey(mock.slug))).toBeNull();
+  });
+
   it("without a credential the registration flow is unchanged (negative case)", async () => {
     const mock = seeded({}, { unregisteredMode: "AUTO_ACCEPT" });
     openWithoutRoute(mock);
