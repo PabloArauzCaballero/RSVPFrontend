@@ -3,6 +3,9 @@ import { daysUntil, giftsPath, hasSectionContent, readContent, SECTION_PATHS, se
 import { drawingById, InvitationArt, ornamentSetById, OrnamentSeparator } from "./art/index.js";
 import { formatDate } from "./format.js";
 import { SECTION_ART } from "./hero-art.js";
+import { DesignRenderer } from "./design/render.js";
+import { Flourish } from "./flourish.js";
+import { SectionNav } from "./section-nav.js";
 import { SECTIONS } from "./sections/index.js";
 import { layoutOf, themeVariables, type ColorScheme } from "./theme.js";
 import type { CelebrationTheme, SectionId, Translate } from "./types.js";
@@ -29,17 +32,6 @@ export interface CelebrationRendererProps {
   readonly colorScheme?: ColorScheme;
 }
 
-/** The flourish of the layouts that ask for an ornament; it takes the accent colour of the template. */
-function Ornament(): ReactNode {
-  return (
-    <svg className="celebration-ornament" viewBox="0 0 120 24" width="120" height="24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-      <path d="M4 12h44M72 12h44" />
-      <path d="M60 5c-4 3-4 11 0 14c4-3 4-11 0-14Z" />
-      <path d="M52 12c-3-4-8-4-10-1c3 3 7 3 10 1ZM68 12c3-4 8-4 10-1c-3 3-7 3-10 1Z" />
-    </svg>
-  );
-}
-
 /**
  * The cover of the invitation: who, when and where, composed by the layout (`data-hero`) and with or without a photo
  * (`data-has-image`), so a template without a cover picture still gets a designed cover instead of bare text.
@@ -62,7 +54,7 @@ function Hero({ props, cover }: { readonly props: CelebrationRendererProps; read
         {heroDrawing ? <InvitationArt drawing={heroDrawing} className="celebration-hero-art" animate /> : null}
         <h1>{content.title}</h1>
         {content.hosts.length && !hostsInTitle ? <p className="celebration-hosts">{content.hosts.map((host, index) => <span key={host.role}>{index ? <span className="celebration-amp"> &amp; </span> : null}{host.name}</span>)}</p> : null}
-        {layout.divider === "ornament" && ornamentSet ? <OrnamentSeparator set={ornamentSet} className="celebration-ornament" /> : layout.divider === "ornament" ? <Ornament /> : <span className="celebration-rule" aria-hidden="true" />}
+        {layout.divider === "ornament" && ornamentSet ? <OrnamentSeparator set={ornamentSet} className="celebration-ornament" /> : layout.divider === "ornament" ? <Flourish /> : <span className="celebration-rule" aria-hidden="true" />}
         {content.eventDate ? <p className="celebration-date"><time dateTime={content.eventDate}>{formatDate(content.eventDate, view.timeZone, view.locale)}</time></p> : null}
         {content.venueName ? <p className="celebration-venue">{content.venueName}</p> : null}
         {days !== null ? <p className="celebration-countdown">{t(countdownKey, { count: days })}</p> : null}
@@ -77,21 +69,6 @@ function SectionDrawing({ id }: { readonly id: string | undefined }): ReactNode 
   return drawing ? <InvitationArt drawing={drawing} className="celebration-section-art" animate /> : null;
 }
 
-function SectionNav({ props, sections }: { readonly props: CelebrationRendererProps; readonly sections: readonly SectionId[] }): ReactNode {
-  const linked = sections.filter((section) => SECTION_PATHS[section]);
-  if (!props.basePath || !linked.length) return null;
-  return (
-    <nav className="celebration-nav" aria-label={props.t("celebration.nav.label")}>
-      <a href={props.basePath} aria-current={props.only ? undefined : "page"} data-link-kind="internal">{props.t("celebration.nav.home")}</a>
-      {linked.map((section) => (
-        <a key={section} href={`${props.basePath}/${SECTION_PATHS[section]}`} aria-current={props.only === section ? "page" : undefined} data-link-kind="internal">
-          {props.t(`celebration.sections.${section}`)}
-        </a>
-      ))}
-    </nav>
-  );
-}
-
 /**
  * One component for every template (REQ-F09-03): the layout spec and the palette are data,
  * applied as data attributes and CSS custom properties. Sections without content are not
@@ -99,6 +76,8 @@ function SectionNav({ props, sections }: { readonly props: CelebrationRendererPr
  */
 export function CelebrationRenderer(props: CelebrationRendererProps): ReactNode {
   const { theme, view, t } = props;
+  // F4 b: a design document v2 is drawn from its pages and canvases; v1 templates keep the layout engine below.
+  if (theme.design) return <DesignRenderer {...props} design={theme.design} />;
   const gallery = props.gallery ?? [];
   const content = readContent(view);
   const layout = layoutOf(theme);

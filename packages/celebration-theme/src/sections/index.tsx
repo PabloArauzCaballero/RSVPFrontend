@@ -121,38 +121,50 @@ function Recommendations({ content, t }: SectionProps): ReactNode {
  * PL-A11: the reply always leads somewhere. With the personal link, «Confirmar asistencia»; without it, the help that
  * explains the personal link and lets an open celebration register the visitor (`/c/{slug}/rsvp`).
  */
-function Rsvp({ t, rsvpHref, rsvpHelpHref, rsvpAdaptive }: SectionProps): ReactNode {
+export function RsvpAction({ t, rsvpHref, rsvpHelpHref, rsvpAdaptive, label, variant }: Pick<SectionProps, "t" | "rsvpHref" | "rsvpHelpHref" | "rsvpAdaptive"> & { readonly label?: string; readonly variant?: string }): ReactNode {
+  const confirm = label ?? t("celebration.rsvp.cta");
   const action = rsvpHref
-    ? <a className="celebration-cta" href={rsvpHref} data-link-kind="internal" data-action="rsvp"><ActionIcon name="check" /><span>{t("celebration.rsvp.cta")}</span></a>
+    ? <a className="celebration-cta" href={rsvpHref} data-link-kind="internal" data-action="rsvp" data-variant={variant}><ActionIcon name="check" /><span>{confirm}</span></a>
     : null;
   const help = !rsvpHref && rsvpHelpHref
     ? rsvpAdaptive
       ? (
-        <a className="celebration-cta" href={rsvpHelpHref} data-link-kind="internal" data-action="rsvp-help" data-credential="absent">
+        <a className="celebration-cta" href={rsvpHelpHref} data-link-kind="internal" data-action="rsvp-help" data-credential="absent" data-variant={variant}>
           <span className="celebration-cta-face" data-face="find"><ActionIcon name="invitation" /><span>{t("celebration.rsvp.findLink")}</span></span>
-          <span className="celebration-cta-face" data-face="confirm" aria-hidden="true"><ActionIcon name="check" /><span>{t("celebration.rsvp.cta")}</span></span>
+          <span className="celebration-cta-face" data-face="confirm" aria-hidden="true"><ActionIcon name="check" /><span>{confirm}</span></span>
         </a>
       )
-      : <a className="celebration-cta" href={rsvpHelpHref} data-link-kind="internal" data-action="rsvp-help"><ActionIcon name="invitation" /><span>{t("celebration.rsvp.findLink")}</span></a>
+      : <a className="celebration-cta" href={rsvpHelpHref} data-link-kind="internal" data-action="rsvp-help" data-variant={variant}><ActionIcon name="invitation" /><span>{t("celebration.rsvp.findLink")}</span></a>
     : null;
+  return <>{action}{help}</>;
+}
+
+function Rsvp(props: SectionProps): ReactNode {
   return (
     <>
-      <p>{t("celebration.rsvp.body")}</p>
-      {action}
-      {help}
+      <p>{props.t("celebration.rsvp.body")}</p>
+      <RsvpAction {...props} />
     </>
   );
+}
+
+/**
+ * P22 / PL-A10: the gifts button. Always `giftsHref` (`/c/{slug}/regalos`, never the guest's token); only its label depends on the
+ * gift list's status, unless a design document gives it a label of its own.
+ */
+export function GiftsAction({ t, giftsHref, giftsStatus, label, variant, dock }: Pick<SectionProps, "t" | "giftsHref" | "giftsStatus"> & { readonly label?: string; readonly variant?: string; readonly dock?: boolean }): ReactNode {
+  return <a className="celebration-cta" href={giftsHref} data-link-kind="internal" data-action="gifts" data-variant={variant} data-dock={dock ? "" : undefined}><ActionIcon name="gifts" /><span>{label ?? t(GIFTS_CTA_KEYS[giftsStatus ?? "OPEN"])}</span></a>;
 }
 
 /**
  * P22 / PL-A10: the gifts button, present on every invitation. The list itself lives on its own page, which resolves the
  * guest's credential; this link never carries it.
  */
-function Gifts({ t, giftsHref, giftsStatus }: SectionProps): ReactNode {
+function Gifts(props: SectionProps): ReactNode {
   return (
     <>
-      <p>{t("celebration.gifts.intro")}</p>
-      <a className="celebration-cta" href={giftsHref} data-link-kind="internal" data-action="gifts"><ActionIcon name="gifts" /><span>{t(GIFTS_CTA_KEYS[giftsStatus ?? "OPEN"])}</span></a>
+      <p>{props.t("celebration.gifts.intro")}</p>
+      <GiftsAction {...props} />
     </>
   );
 }

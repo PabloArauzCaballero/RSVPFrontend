@@ -147,3 +147,96 @@
 /* Gifts (P22): on every invitation, quiet like the other sections, with the same filled button as the reply. */
 .celebration-sections > section[data-section="gifts"] p { max-width: 40rem; }
 .celebration-sections > section[data-section="gifts"] .celebration-cta, .celebration-sections > section[data-section="rsvp"] .celebration-cta { margin-top: .5rem; }
+
+/* ---------------------------------------------------------------------------------------------------------------------
+   Design document v2 (F4 b). Everything below is keyed to `.celebration-design`; v1 templates never match it.
+   The canvases are grids: the phone's from the document's `mobile` canvas, and from 900 px the `desktop` one when it has one.
+   The tokens (palette, fonts, radii, spacing) arrive as the same custom properties the v1 engine uses.
+   --------------------------------------------------------------------------------------------------------------------- */
+.celebration-design { --cd-line: var(--celebration-line, color-mix(in srgb, var(--celebration-text) 30%, var(--celebration-canvas))); padding-bottom: 5.5rem; overflow-x: clip; }
+.celebration-design h1 { font-size: calc(clamp(2.4rem, 8vw, 4.75rem) * var(--celebration-heading-scale)); font-weight: 600; line-height: 1.02; }
+.celebration-design .cdesign-heading { font-size: calc(clamp(1.4rem, 3.4vw, 1.9rem) * var(--celebration-heading-scale)); color: var(--celebration-text); margin: 0; }
+.celebration-design .cdesign-page-title { width: min(100%, var(--celebration-max-width)); margin: 0 auto .75rem; padding-inline: var(--celebration-space); box-sizing: border-box; }
+.celebration-design .cdesign-text, .celebration-design .cdesign-quote p { margin: 0; max-width: 40rem; }
+.celebration-design .cdesign-quote { margin: 0; border-inline-start: 2px solid var(--celebration-accent); padding-inline-start: 1rem; font-family: var(--celebration-heading-font); font-size: 1.25rem; }
+.celebration-design .cdesign-monogram { margin: 0; font-family: var(--celebration-monogram-font); font-size: clamp(2.5rem, 12vw, 5rem); line-height: 1; color: var(--celebration-accent); }
+.celebration-design .cdesign-spacer { display: block; height: 100%; }
+.celebration-design .cdesign-image { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+.celebration-design .cdesign-art { display: block; width: 100%; height: auto; max-height: 100%; }
+.celebration-design .cdesign-ornament { display: block; width: 100%; height: auto; color: var(--celebration-accent); }
+.celebration-design .cdesign-frame, .celebration-design .cdesign-corner { display: block; width: 100%; height: auto; }
+.celebration-design .cdesign-bg-art { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .5; pointer-events: none; z-index: 0; }
+.celebration-design .cdesign-el-link { display: block; color: inherit; text-decoration: none; }
+
+/* The canvas: a grid of the document's columns. In a flow canvas the rows grow with their content, in a free one they are exact. */
+.celebration-design .cdesign-pages { display: block; }
+.celebration-design .cdesign-page { position: relative; display: block; }
+.celebration-design .cdesign-page[data-style="cards"] { background-color: var(--celebration-surface); }
+.celebration-design .cdesign-page[data-style="bands"]:nth-of-type(even) { background-color: var(--celebration-surface); }
+.celebration-design .cdesign-canvas { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(var(--cd-cols-m), minmax(0, 1fr)); grid-auto-rows: minmax(var(--cd-row-m), auto);
+  width: min(100%, var(--celebration-max-width)); margin: 0 auto; padding: var(--celebration-gap) var(--celebration-space); box-sizing: border-box; }
+.celebration-design .cdesign-canvas[data-mode="free"] { grid-auto-rows: var(--cd-row-m); }
+.celebration-design .cdesign-page[data-page-kind="cover"] .cdesign-canvas { padding-block: clamp(2rem, 7vw, 4rem); }
+.celebration-design .cdesign-el { display: none; min-width: 0; box-sizing: border-box; position: relative; container-type: inline-size; align-self: start;
+  grid-column: var(--mx) / span var(--mw); grid-row: var(--my) / span var(--mh); }
+.celebration-design .cdesign-canvas[data-mode="free"] .cdesign-el { align-self: stretch; }
+.celebration-design .cdesign-el[data-m] { display: block; }
+.celebration-design .cdesign-el[data-round] { overflow: clip; }
+.celebration-design .cdesign-el p { margin: 0; }
+@media (min-width: 56.25rem) {
+  .celebration-design .cdesign-canvas { grid-template-columns: repeat(var(--cd-cols-d), minmax(0, 1fr)); grid-auto-rows: minmax(var(--cd-row-d), auto); }
+  .celebration-design .cdesign-canvas[data-mode="free"] { grid-auto-rows: var(--cd-row-d); }
+  .celebration-design .cdesign-el { grid-column: var(--dx) / span var(--dw); grid-row: var(--dy) / span var(--dh); }
+  .celebration-design .cdesign-el[data-m]:not([data-d]) { display: none; }
+  .celebration-design .cdesign-el[data-d] { display: block; }
+}
+/* An element with its own size: the cover title scales with it and the lines under it stay readable. */
+.celebration-design .cdesign-el[data-sized] :is(h1, h2, h3, .cdesign-monogram) { font-size: 1em; }
+.celebration-design .cdesign-el[data-sized] :is(.celebration-date, .celebration-hosts) { font-size: max(1.1rem, calc(var(--cd-size, 16px) * .3)); }
+.celebration-design .cdesign-el[data-sized] .celebration-venue { font-size: max(1rem, calc(var(--cd-size, 16px) * .22)); }
+
+/* Cover block. The photo and the copy are one block; where the block sits and how wide it is is the document's call. */
+.celebration-design .cdesign-cover { display: grid; gap: 1rem; justify-items: start; align-content: start; }
+.celebration-design .cdesign-cover-copy { display: grid; gap: .5rem; justify-items: inherit; min-width: 0; }
+.celebration-design .cdesign-cover-photo { display: block; width: 100%; max-height: 22rem; object-fit: cover; border-radius: inherit; }
+.celebration-design .cdesign-cover h1, .celebration-design .cdesign-cover p { overflow-wrap: anywhere; text-wrap: balance; }
+.celebration-design .cdesign-cover[data-variant="classic"], .celebration-design .cdesign-cover[data-variant="corporate"] { justify-items: center; text-align: center; }
+.celebration-design .cdesign-cover[data-variant="classic"] .cdesign-cover-photo { width: min(72%, 14rem); aspect-ratio: 3 / 4; height: auto; max-height: none; border-radius: 999px 999px 0 0; border: 1px solid color-mix(in srgb, var(--celebration-accent) 55%, transparent); outline: 1px solid color-mix(in srgb, var(--celebration-accent) 28%, transparent); outline-offset: 6px; }
+.celebration-design .cdesign-cover[data-variant="festive"] .cdesign-cover-photo { width: min(72%, 16rem); aspect-ratio: 1; height: auto; border-radius: 50%; box-shadow: .5rem .5rem 0 0 color-mix(in srgb, var(--celebration-text) 14%, var(--celebration-canvas)); }
+.celebration-design .cdesign-cover[data-variant="corporate"] .cdesign-cover-photo { aspect-ratio: 4 / 3; height: auto; }
+@container (min-width: 34rem) {
+  .cdesign-cover[data-variant="classic"] { justify-items: start; text-align: start; }
+  .cdesign-cover[data-variant="classic"] .cdesign-cover-copy { justify-items: start; }
+}
+.celebration-design .cdesign-intro { width: min(100%, var(--celebration-max-width)); margin: 0 auto; padding-inline: var(--celebration-space); box-sizing: border-box; max-width: 40rem; }
+.celebration-design .cdesign-page[data-section="gifts"] .celebration-cta, .celebration-design .cdesign-page[data-section="rsvp"] .celebration-cta { width: 100%; max-width: 22rem; }
+
+/* Buttons of the document (gifts, reply, link). Solid is the default of .celebration-cta; outline and link are quieter. */
+.celebration-design .celebration-cta[data-variant="outline"] { background: transparent; color: var(--celebration-accent) !important; border: 2px solid var(--celebration-accent); }
+.celebration-design .celebration-cta[data-variant="link"] { background: transparent; color: var(--celebration-accent) !important; text-decoration: underline; padding-inline: .25rem; }
+
+/* The dock (P22): the gifts button and the reply are always in view. Bottom bar on the phone, top bar from 900 px. */
+.celebration-design .cdesign-dock { position: fixed; z-index: 40; inset: auto 0 0 0; display: flex; gap: .5rem; padding: .5rem max(.75rem, env(safe-area-inset-right)) max(.5rem, env(safe-area-inset-bottom)) max(.75rem, env(safe-area-inset-left));
+  background: var(--celebration-canvas); border-top: 1px solid var(--cd-line); box-sizing: border-box; }
+.celebration-design .cdesign-dock .celebration-cta { flex: 1 1 0; min-width: 0; padding: .6rem .75rem; font-size: .95rem; line-height: 1.2; }
+.celebration-design .cdesign-dock .celebration-cta[data-action="rsvp"], .celebration-design .cdesign-dock .celebration-cta[data-action="rsvp-help"] { background: transparent; color: var(--celebration-accent) !important; border: 2px solid var(--celebration-accent); }
+@media (max-width: 25rem) { .celebration-design .cdesign-dock .celebration-icon { display: none; } }
+@media (min-width: 56.25rem) {
+  .celebration-design { padding-bottom: 0; }
+  .celebration-design .cdesign-dock { position: sticky; inset: 0 0 auto 0; justify-content: flex-end; border-top: 0; border-bottom: 1px solid var(--cd-line); padding-inline: var(--celebration-space); }
+  .celebration-design .cdesign-dock .celebration-cta { flex: 0 0 auto; padding-inline: 1.25rem; }
+}
+
+/* Entrance (P18): one time, transform and opacity only. Without motion preference the final state is what you get. */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes cdesign-fade { from { opacity: 0 } to { opacity: 1 } }
+  @keyframes cdesign-rise { from { opacity: 0; transform: translateY(14px) } to { opacity: 1; transform: none } }
+  @keyframes cdesign-scale { from { opacity: 0; transform: scale(.86) } to { opacity: 1; transform: none } }
+  .celebration-design .cdesign-page[data-page-kind="cover"] .cdesign-el[data-entrance] { animation-duration: var(--cdesign-duration, 700ms); animation-delay: var(--cdesign-delay, 0ms); animation-fill-mode: both; animation-timing-function: cubic-bezier(.16, 1, .3, 1); }
+  .celebration-design .cdesign-el[data-entrance="fade"] { animation-name: cdesign-fade; }
+  .celebration-design .cdesign-el[data-entrance="rise"], .celebration-design .cdesign-el[data-entrance="envelope"] { animation-name: cdesign-rise; }
+  .celebration-design .cdesign-el[data-entrance="scale"] { animation-name: cdesign-scale; }
+  @supports (animation-timeline: view()) {
+    .celebration-design .cdesign-page[data-page-kind="section"] .cdesign-el[data-entrance]:not([data-entrance="draw"]) { animation-duration: 1ms; animation-timing-function: linear; animation-fill-mode: both; animation-timeline: view(); animation-range: entry 0% entry 55%; }
+  }
+}
