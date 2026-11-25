@@ -1,5 +1,5 @@
 import { circle, leaf, n, quadAt, rect, rpoly } from "./geometry.js";
-import { acc, inkLine } from "./kit.js";
+import { acc, accLine, inkLine } from "./kit.js";
 import type { ArtPath, OrnamentSet } from "./types.js";
 
 /**
@@ -64,6 +64,14 @@ const filete: OrnamentSet = {
   corner: { ...COR, paths: [line("M2 54V2H54"), line("M9 54V9H54"), acc(circle(2, 2, 3.4))], rails: [2, 9] }
 };
 
+/** The two rings of the wedding band as a separator (the approved Marfil prototype): a line, one ring in ink, one in the accent, a line. */
+const anillosDobles: OrnamentSet = {
+  id: "anillos-dobles",
+  label: { "es-BO": "Dos anillos", "en-US": "Two rings" },
+  separator: { ...SEP, paths: [line(hair(8, 100) + hair(140, 232) + circle(110, Y, 7)), accLine(ORNAMENT_STROKE, circle(130, Y, 7))] },
+  corner: { ...COR, paths: [line("M2 54V2H54"), line("M9 54V9H54"), acc(circle(2, 2, 3.4))], rails: [2, 9] }
+};
+
 const onda: OrnamentSet = {
   id: "onda",
   label: { "es-BO": "Onda", "en-US": "Wave" },
@@ -104,5 +112,5 @@ const arcos: OrnamentSet = {
   corner: { ...COR, paths: [line("M2 54A52 52 0 0 1 54 2"), line("M2 38A36 36 0 0 1 38 2"), line("M2 22A20 20 0 0 1 22 2"), acc(circle(7, 7, 3.2))], rails: [2] }
 };
 
-export const ORNAMENT_SETS: readonly OrnamentSet[] = [laurel, deco, filete, onda, banderin, arcos];
+export const ORNAMENT_SETS: readonly OrnamentSet[] = [laurel, deco, filete, onda, banderin, arcos, anillosDobles];
 export const ornamentSetById = (id: string): OrnamentSet | undefined => ORNAMENT_SETS.find((set) => set.id === id);

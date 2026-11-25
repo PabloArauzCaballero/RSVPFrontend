@@ -102,6 +102,42 @@ for (const name of NAMES) {
   }
 }
 
+// PL-128-M3/M4/M5 · the names are in the first screen whatever the template, the photo or the width: the phone canvas stops stretching at 480 px.
+const ALL = [...NAMES, "marfil", "pinata", "gala"] as const;
+const SCREENS = [{ width: 360, height: 800 }, { width: 768, height: 1024 }, { width: 1280, height: 900 }] as const;
+for (const name of ALL) {
+  for (const variant of ["", "-sinfoto"] as const) {
+    for (const screen of SCREENS) {
+      test(`${name}${variant} ${screen.width}x${screen.height}: the title is in the first screen`, async ({ page }) => {
+        await page.setViewportSize(screen);
+        await page.emulateMedia({ colorScheme: "light", reducedMotion: "reduce" });
+        await page.goto(`/c/fixture-v2-${name}${variant}`);
+        await page.evaluate(() => document.fonts.ready);
+        const box = await page.locator(".celebration-design h1").first().boundingBox();
+        expect(box).not.toBeNull();
+        expect((box?.y ?? 0) + (box?.height ?? 0)).toBeLessThanOrEqual(screen.height);
+      });
+    }
+  }
+}
+
+test("the wax seal of Rosa antiguo keeps its initial in the middle of the disc", async ({ page }) => {
+  for (const width of [360, 1280]) {
+    await open(page, "fixture-v2-rosa-antiguo", width, "light");
+    const off = await page.evaluate(() => {
+      const seal = document.querySelector('.cdesign-el[data-block="monogram"]') as HTMLElement;
+      const text = seal.querySelector(".cdesign-monogram") as HTMLElement;
+      const range = document.createRange();
+      range.selectNodeContents(text);
+      const outer = seal.getBoundingClientRect();
+      const inner = range.getBoundingClientRect();
+      return { dx: Math.abs(outer.left + outer.width / 2 - (inner.left + inner.width / 2)), dy: Math.abs(outer.top + outer.height / 2 - (inner.top + inner.height / 2)) };
+    });
+    expect(off.dx).toBeLessThanOrEqual(2);
+    expect(off.dy).toBeLessThanOrEqual(4);
+  }
+});
+
 test("the acts of Editorial granate are numbered and the others keep the timeline", async ({ page }) => {
   await open(page, "fixture-v2-editorial-granate", 360, "light");
   const acts = await page.locator(".celebration-schedule li").evaluateAll((items) => items.map((item) => getComputedStyle(item, "::before").content));

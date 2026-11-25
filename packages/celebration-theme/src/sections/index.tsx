@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { GIFTS_CTA_KEYS, navigationHref, partnerHref, shownVenues, type CelebrationContent, type GalleryImage, type GiftsStatus } from "../content.js";
 import { formatTime, zoneLabel } from "../format.js";
 import { ActionIcon } from "../icon.js";
+import { Photo } from "../photo.js";
 import type { SectionId, Translate } from "../types.js";
 
 /** What every section receives. Sections never fetch and never hold copy of their own. */
@@ -79,7 +80,7 @@ function Gallery({ gallery, t }: SectionProps): ReactNode {
         return (
           <li key={image.id}>
             <a href={image.variants.full ?? image.variants.webp} data-link-kind="image" aria-label={t("celebration.gallery.open", { label })}>
-              <img src={image.variants.medium ?? image.variants.webp} srcSet={srcSet || undefined} sizes="(min-width: 768px) 33vw, 100vw" alt={label}
+              <Photo src={image.variants.medium ?? image.variants.webp} srcSet={srcSet || undefined} sizes="(min-width: 768px) 33vw, 100vw" alt={label}
                 width={image.width ?? undefined} height={image.height ?? undefined} loading={index ? "lazy" : "eager"} decoding="async" />
             </a>
           </li>
@@ -153,7 +154,7 @@ function Rsvp(props: SectionProps): ReactNode {
  * gift list's status, unless a design document gives it a label of its own.
  */
 export function GiftsAction({ t, giftsHref, giftsStatus, label, variant, dock }: Pick<SectionProps, "t" | "giftsHref" | "giftsStatus"> & { readonly label?: string; readonly variant?: string; readonly dock?: boolean }): ReactNode {
-  return <a className="celebration-cta" href={giftsHref} data-link-kind="internal" data-action="gifts" data-variant={variant} data-dock={dock ? "" : undefined}><ActionIcon name="gifts" /><span>{label ?? t(GIFTS_CTA_KEYS[giftsStatus ?? "OPEN"])}</span></a>;
+  return <a className="celebration-cta" href={giftsHref} data-link-kind="internal" data-action="gifts" data-gifts-status={giftsStatus} data-variant={variant} data-dock={dock ? "" : undefined}><ActionIcon name="gifts" /><span>{label ?? t(GIFTS_CTA_KEYS[giftsStatus ?? "OPEN"])}</span></a>;
 }
 
 /**

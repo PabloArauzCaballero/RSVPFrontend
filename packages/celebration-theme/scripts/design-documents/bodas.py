@@ -8,6 +8,7 @@ import json
 import sys
 
 ROW = 8
+SEC_COLS = 8  # las secciones usan ocho columnas: el icono de cabecera mide una (unos 40 px) y queda pegado al título
 KEBAB = {"dressCode": "dress-code"}
 SECTION_ART = {"schedule": "reloj", "venues": "mapa-pin", "gallery": "camara", "dressCode": "percha", "faq": "pregunta", "gifts": "regalo", "rsvp": "sobre", "recommendations": "auto"}
 BLOCK_OF = {"story": ("story", "story", {}), "schedule": ("schedule", "schedule", {"display": "timeline"}), "venues": ("venues", "venues", {"display": "cards", "mapOnTap": True}),
@@ -118,18 +119,18 @@ def build(spec):
             y = head["h"]
         if section == "gifts":
             add(dict(id="gifts-cta", type="giftsCta", required=True, config=dict(style="solid")))
-            els.append(el("el-gifts-cta", "gifts-cta", 0, y, 4, 6))
+            els.append(el("el-gifts-cta", "gifts-cta", 0, y, SEC_COLS, 6))
         elif section == "rsvp":
             add(dict(id="rsvp-cta", type="rsvpCta", config=dict(style="solid")))
-            els.append(el("el-rsvp-cta", "rsvp-cta", 0, y, 4, 6))
+            els.append(el("el-rsvp-cta", "rsvp-cta", 0, y, SEC_COLS, 6))
         else:
             bid, btype, cfg = BLOCK_OF[section]
             cfg = dict(cfg)
             if section == "schedule" and spec.get("schedule"):
                 cfg["display"] = spec["schedule"]
             add(dict(id=bid, type=btype, config=cfg))
-            els.append(el("el-" + bid, bid, 0, y, 4, 1))
-        pages.append(dict(id="page-" + KEBAB.get(section, section), kind="section", section=section, style=spec["style"], canvases=dict(mobile=canvas(els, 4))))
+            els.append(el("el-" + bid, bid, 0, y, SEC_COLS, 1, **spec.get("sec_el", {})))
+        pages.append(dict(id="page-" + KEBAB.get(section, section), kind="section", section=section, style=spec["style"], canvases=dict(mobile=canvas(els, SEC_COLS))))
     typ = dict(heading=spec["heading"], body=spec["body"], scale=dict(base=16, ratio=spec["ratio"]))
     if "monogram" in spec:
         typ["monogram"] = spec["monogram"]
@@ -140,12 +141,12 @@ def build(spec):
     return dict(key=spec["key"], name=spec["name"], description=spec["description"], layout=spec["variant"], eventTypeTags=spec["tags"], sectionOrder=spec["sections"], theme=doc)
 
 
-def drawing_head(section, x=0, w=1, h=8):
+def drawing_head(section, x=0, w=1, h=5):
     ill = SECTION_ART.get(section)
     return dict(block=art("art-" + ill, ill), x=x, w=w, h=h) if ill else None
 
 
-def ornament_head(ornament, x=0, w=4, h=2, draw=False):
+def ornament_head(ornament, x=0, w=SEC_COLS, h=2, draw=False):
     return lambda section: dict(block=art("art-" + ornament + "-sec", ornament, draw), x=x, w=w, h=h)
 
 
@@ -170,10 +171,10 @@ jardin = dict(
                    el("el-esquina", "art-esquina", 7, 0, 1, 8, animation=anim("draw", 0, 1200)),
                    el("el-ramo", "art-ramo", 8, 0, 3, 24, rotation=-4, animation=anim("scale", 500, 800)),
                    el("el-esquina-d", "art-esquina", 11, 0, 1, 8, rotation=90, animation=anim("draw", 0, 1200))],
-    header=lambda s: dict(block=art("art-esquina-sec", "laurel-esquina"), x=0, w=1, h=8) if s != "story" else None)
+    header=lambda s: dict(block=art("art-esquina-sec", "laurel-esquina"), x=0, w=1, h=5) if s != "story" else None)
 
 # ---- 2 · Rosa antiguo · Carta lacrada --------------------------------------------------------------------------------
-SEAL = dict(typography=dict(role="heading", size=32, align="center", colour="onAccent"), background=dict(kind="colour", role="accentFill"), radius=999, padding=box(24, 8, 8, 8))
+SEAL = dict(typography=dict(role="heading", size=32, align="center", colour="onAccent"), background=dict(kind="colour", role="accentFill"), radius=999, padding=box(8))
 LETTER = dict(background=dict(kind="colour", role="surface"), border=RULE_BOX)
 rosa = dict(
     key="rosa-antiguo", name="Rosa antiguo", variant="festive", style="cards", ratio=1.25, gap=48, width=1040, ornament="flourish",
@@ -190,7 +191,7 @@ rosa = dict(
                    el("el-cover", "cover", 3, 0, 7, 8, animation=anim("rise", 700, 800), typography=dict(align="start"), padding=box(40, 40), **LETTER),
                    el("el-rosa", "art-rosa", 10, 0, 2, 8, animation=anim("fade", 1200, 600)),
                    el("el-monogram", "monogram", 9, 1, 1, 10, animation=anim("scale", 1500, 600), **SEAL)],
-    header=lambda s: drawing_head(s, 0, 1, 8))
+    header=lambda s: drawing_head(s, 0, 1, 5))
 
 # ---- 3 · Editorial · Revista ------------------------------------------------------------------------------------------
 EDIT_TITLE_M = dict(role="heading", size=72, align="start", lineHeight=1.02)
@@ -209,7 +210,7 @@ editorial = dict(
     cover_desktop=[el("el-filete", "art-filete", 4, 0, 4, 2, animation=anim("draw", 0, 900)),
                    el("el-cover", "cover", 0, 2, 12, 4, animation=anim("rise", 300, 800), typography=EDIT_TITLE_D),
                    el("el-filete-base", "art-filete-base", 4, 6, 4, 2, animation=anim("fade", 900, 600))],
-    header=ornament_head("filete", 0, 4, 2))
+    header=ornament_head("filete", 0, SEC_COLS, 2))
 
 # ---- 4 · Editorial granate · Programa de teatro -----------------------------------------------------------------------
 PROGRAMA = dict(border=dict(width=1, style="solid", colour="accent"))
@@ -225,11 +226,11 @@ granate = dict(
                   el("el-copas", "art-copas", 1, 4, 2, 11, animation=anim("rise", 600, 800)),
                   el("el-cover", "cover", 0, 15, 4, 22, animation=anim("fade", 900, 800), typography=dict(align="center", role="heading", size=56, lineHeight=1.05), padding=box(24, 16), **PROGRAMA),
                   el("el-arcos-base", "art-arcos-base", 0, 37, 4, 4, animation=anim("fade", 1500, 600))],
-    cover_desktop=[el("el-arcos", "art-arcos", 3, 0, 6, 4, animation=anim("draw", 0, 1400)),
-                   el("el-copas", "art-copas", 5, 5, 2, 11, animation=anim("rise", 600, 800)),
-                   el("el-cover", "cover", 2, 17, 8, 24, animation=anim("fade", 900, 800), typography=dict(align="center", role="heading", size=88, lineHeight=1.05), padding=box(40), **PROGRAMA),
-                   el("el-arcos-base", "art-arcos-base", 3, 29, 6, 4, animation=anim("fade", 1500, 600))],
-    header=ornament_head("arcos", 0, 4, 3))
+    cover_desktop=[el("el-arcos", "art-arcos", 4, 0, 4, 4, animation=anim("draw", 0, 1400)),
+                   el("el-cover", "cover", 2, 4, 8, 24, animation=anim("fade", 900, 800), typography=dict(align="center", role="heading", size=88, lineHeight=1.05), padding=box(40), **PROGRAMA),
+                   el("el-copas", "art-copas", 5, 28, 2, 11, animation=anim("rise", 600, 800)),
+                   el("el-arcos-base", "art-arcos-base", 4, 39, 4, 4, animation=anim("fade", 1500, 600))],
+    header=ornament_head("arcos", 0, SEC_COLS, 3))
 
 # ---- 5 · Editorial oliva · Mesa de campo ------------------------------------------------------------------------------
 MAT = dict(background=dict(kind="colour", role="surface"), border=RULE_BOX)
@@ -247,7 +248,7 @@ oliva = dict(
     cover_desktop=[el("el-mesa", "art-mesa", 0, 0, 7, 8, animation=anim("rise", 100, 900)),
                    el("el-cover", "cover", 7, 0, 5, 8, animation=anim("fade", 600, 800), typography=dict(align="start", role="heading", size=64, lineHeight=1.08), padding=box(32), **MAT),
                    el("el-copa", "art-copa", 11, 1, 1, 8, animation=anim("fade", 1200, 600))],
-    header=lambda s: drawing_head(s, 0, 1, 8) if s in ("gifts", "rsvp", "venues") else None)
+    header=lambda s: drawing_head(s, 0, 1, 5) if s in ("gifts", "rsvp", "venues") else None)
 
 # ---- 6 · Bodas de oro · Medalla ---------------------------------------------------------------------------------------
 oro = dict(
@@ -258,15 +259,16 @@ oro = dict(
     description="Cincuenta años: la cifra como medalla, centrada y simétrica, en cobre oscuro sobre papel marfil, sin amarillo.",
     tags=["golden-wedding"], sections=SHORT,
     cover_blocks=[art("art-cifra", "cifra-50"), art("art-medalla", "medalla"), art("art-filete", "filete")],
-    cover_mobile=[el("el-cifra", "art-cifra", 0, 0, 4, 22, animation=anim("scale", 200, 900)),
-                  el("el-filete", "art-filete", 0, 22, 4, 2, animation=anim("fade", 800, 600)),
-                  el("el-cover", "cover", 0, 24, 4, 18, animation=anim("rise", 900, 800), typography=dict(align="center")),
-                  el("el-medalla", "art-medalla", 1, 42, 2, 9, animation=anim("scale", 1500, 600))],
-    cover_desktop=[el("el-cifra", "art-cifra", 4, 0, 4, 26, animation=anim("scale", 200, 900)),
-                   el("el-filete", "art-filete", 3, 26, 6, 2, animation=anim("fade", 800, 600)),
-                   el("el-cover", "cover", 2, 28, 8, 20, animation=anim("rise", 900, 800), typography=dict(align="center")),
-                   el("el-medalla", "art-medalla", 5, 48, 2, 10, animation=anim("scale", 1500, 600))],
-    header=lambda s: dict(block=art("art-medalla", "medalla"), x=1, w=2, h=8) if s == "gifts" else drawing_head(s, 1, 2, 8))
+    cover_mobile=[el("el-cifra", "art-cifra", 1, 0, 2, 14, animation=anim("scale", 200, 900)),
+                  el("el-filete", "art-filete", 0, 14, 4, 2, animation=anim("fade", 800, 600)),
+                  el("el-cover", "cover", 0, 16, 4, 18, animation=anim("rise", 900, 800), typography=dict(align="center")),
+                  el("el-medalla", "art-medalla", 1, 34, 2, 9, animation=anim("scale", 1500, 600))],
+    cover_desktop=[el("el-cifra", "art-cifra", 5, 0, 2, 14, animation=anim("scale", 200, 900)),
+                   el("el-cover", "cover", 2, 14, 8, 20, animation=anim("rise", 900, 800), typography=dict(align="center")),
+                   el("el-filete", "art-filete", 3, 34, 6, 2, animation=anim("fade", 800, 600)),
+                   el("el-medalla", "art-medalla", 5, 36, 2, 10, animation=anim("scale", 1500, 600))],
+    header=lambda s: dict(block=art("art-medalla", "medalla"), x=3, w=2, h=5) if s == "gifts" else drawing_head(s, 3, 2, 5),
+    sec_el=dict(typography=dict(align="center")))
 
 # ---- 7 · Bodas de plata · Laurel -------------------------------------------------------------------------------------
 BAND = dict(border=dict(width=1, style="solid", colour="line"))
@@ -278,13 +280,13 @@ plata = dict(
     description="Veinticinco años: la cifra y el laurel en un azul acero sobre papel plata, con una composición asimétrica y el texto alineado a la izquierda.",
     tags=["silver-wedding"], sections=SHORT,
     cover_blocks=[art("art-laurel", "laurel", True), art("art-cifra", "cifra-25")],
-    cover_mobile=[el("el-cifra", "art-cifra", 0, 0, 3, 14, animation=anim("scale", 200, 900)),
-                  el("el-laurel", "art-laurel", 0, 14, 4, 3, animation=anim("draw", 700, 1200)),
-                  el("el-cover", "cover", 0, 17, 4, 20, animation=anim("fade", 1000, 800), typography=dict(align="start", role="heading", size=48, lineHeight=1.08))],
+    cover_mobile=[el("el-cifra", "art-cifra", 0, 0, 2, 12, animation=anim("scale", 200, 900)),
+                  el("el-laurel", "art-laurel", 2, 0, 2, 12, animation=anim("draw", 700, 1200)),
+                  el("el-cover", "cover", 0, 12, 4, 20, animation=anim("fade", 1000, 800), typography=dict(align="start", role="heading", size=48, lineHeight=1.08))],
     cover_desktop=[el("el-cover", "cover", 0, 0, 7, 8, animation=anim("fade", 1000, 800), typography=dict(align="start", role="heading", size=72, lineHeight=1.05)),
                    el("el-cifra", "art-cifra", 8, 0, 4, 8, animation=anim("scale", 200, 900)),
                    el("el-laurel", "art-laurel", 4, 1, 4, 8, animation=anim("draw", 700, 1200))],
-    header=lambda s: drawing_head(s, 3, 1, 8))
+    header=lambda s: drawing_head(s, 7, 1, 5), sec_el=dict(typography=dict(align="end")))
 
 # ---- 8 · Pedida de mano · La caja que se abre ---------------------------------------------------------------------------
 pedida = dict(
@@ -292,17 +294,16 @@ pedida = dict(
     radii=dict(sm=2, md=8, lg=16), heading=dict(family="gilda-display", weights=[400]), body=dict(family="nunito-sans", weights=[400, 600]),
     palettes=dict(light=pal("#F7F4FA", "#FFFFFF", "#241C2E", "#5E5470", "#5B4B8A", "#5B4B8A", "#FFFFFF", "#8C82A0"),
                   dark=pal("#14111C", "#1E1928", "#EDE8F5", "#B7AECA", "#B9ABE6", "#A394DB", "#130E22", "#71678C")),
-    description="Una pregunta con respuesta: la caja del anillo se abre en la portada y una rosa pequeña, en el acento violeta, acompaña el texto íntimo.",
+    description="Una pregunta con respuesta: la caja del anillo se abre en la portada y una copa pequeña, en el acento violeta, acompaña el texto íntimo.",
     tags=["engagement"], sections=SHORT,
-    cover_blocks=[art("art-caja", "caja-anillo"), art("art-rosa", "rosa"), art("art-solitario", "solitario")],
+    cover_blocks=[art("art-caja", "caja-anillo"), art("art-copas", "copas")],
     cover_mobile=[el("el-caja", "art-caja", 0, 0, 4, 22, animation=anim("envelope", 200, 1000)),
                   el("el-cover", "cover", 0, 22, 4, 20, animation=anim("rise", 900, 800), typography=dict(align="start", role="heading", size=48, lineHeight=1.1), padding=box(0, 16)),
-                  el("el-rosa", "art-rosa", 3, 3, 1, 8, animation=anim("fade", 1500, 600))],
+                  el("el-copas", "art-copas", 3, 3, 1, 8, animation=anim("fade", 1500, 600))],
     cover_desktop=[el("el-caja", "art-caja", 0, 0, 6, 8, animation=anim("envelope", 200, 1000)),
                    el("el-cover", "cover", 7, 0, 4, 8, animation=anim("rise", 900, 800), typography=dict(align="start", role="heading", size=64, lineHeight=1.1)),
-                   el("el-rosa", "art-rosa", 11, 0, 1, 8, animation=anim("fade", 1500, 600)),
-                   el("el-solitario", "art-solitario", 11, 1, 1, 8, animation=anim("fade", 1700, 600))],
-    header=lambda s: drawing_head(s, 1, 2, 8) if s in ("gifts", "rsvp") else None)
+                   el("el-copas", "art-copas", 11, 0, 1, 8, animation=anim("fade", 1500, 600))],
+    header=lambda s: drawing_head(s, 3, 2, 5) if s in ("gifts", "rsvp") else None, sec_el=dict(typography=dict(align="center")))
 
 ALL = (jardin, rosa, editorial, granate, oliva, oro, plata, pedida)
 

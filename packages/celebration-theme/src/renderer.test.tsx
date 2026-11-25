@@ -112,9 +112,11 @@ describe("P22 · PL-A10 · the gifts button on every invitation", () => {
     expect(giftsPath("ana y luis")).toBe("/c/ana%20y%20luis/regalos");
   });
 
-  it.each(["OPEN", "EMPTY", "CLOSED"] as const)("giftsStatus %s keeps the button and, until rsvp-f1 adds its labels, says «Ver regalos»", (status: GiftsStatus) => {
+  it.each([["OPEN", "celebration.gifts.cta"], ["EMPTY", "celebration.gifts.ctaEmpty"], ["CLOSED", "celebration.gifts.ctaClosed"]] as const)("giftsStatus %s keeps the button on /regalos and says its own label", (status: GiftsStatus, label: string) => {
     const gifts = parse(renderWith(TEMPLATES[2], { giftsStatus: status })).querySelector('a[data-action="gifts"]');
-    expect(gifts?.textContent).toBe("celebration.gifts.cta");
+    expect(gifts?.textContent).toBe(label);
+    expect(gifts?.getAttribute("href")).toBe(giftsPath(VIEW.slug));
+    expect(gifts?.getAttribute("data-gifts-status")).toBe(status);
   });
 
   it("is always in view (the dock), also on a section's own page, which keeps it in the navigation too", () => {

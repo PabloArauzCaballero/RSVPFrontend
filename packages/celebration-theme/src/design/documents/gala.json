@@ -99,7 +99,7 @@
                 "x": 0,
                 "y": 0,
                 "w": 4,
-                "h": 12,
+                "h": 16,
                 "visible": true,
                 "animation": {
                   "entrance": "scale",
@@ -108,16 +108,17 @@
                 },
                 "typography": {
                   "role": "monogram",
-                  "size": 96,
+                  "size": 128,
                   "align": "center",
-                  "colour": "accent"
+                  "colour": "accent",
+                  "lineHeight": 1
                 }
               },
               {
                 "id": "el-deco",
                 "block": "art-deco",
                 "x": 1,
-                "y": 12,
+                "y": 16,
                 "w": 2,
                 "h": 3,
                 "visible": true,
@@ -131,7 +132,7 @@
                 "id": "el-cover",
                 "block": "cover",
                 "x": 0,
-                "y": 15,
+                "y": 19,
                 "w": 4,
                 "h": 20,
                 "visible": true,
@@ -159,7 +160,7 @@
                 "id": "el-deco-base",
                 "block": "art-deco-base",
                 "x": 1,
-                "y": 35,
+                "y": 39,
                 "w": 2,
                 "h": 3,
                 "visible": true,
@@ -179,10 +180,10 @@
               {
                 "id": "el-monogram",
                 "block": "monogram",
-                "x": 4,
+                "x": 3,
                 "y": 0,
-                "w": 4,
-                "h": 14,
+                "w": 6,
+                "h": 18,
                 "visible": true,
                 "animation": {
                   "entrance": "scale",
@@ -191,16 +192,17 @@
                 },
                 "typography": {
                   "role": "monogram",
-                  "size": 128,
+                  "size": 160,
                   "align": "center",
-                  "colour": "accent"
+                  "colour": "accent",
+                  "lineHeight": 1
                 }
               },
               {
                 "id": "el-deco",
                 "block": "art-deco",
                 "x": 5,
-                "y": 14,
+                "y": 18,
                 "w": 2,
                 "h": 3,
                 "visible": true,
@@ -214,7 +216,7 @@
                 "id": "el-cover",
                 "block": "cover",
                 "x": 2,
-                "y": 17,
+                "y": 21,
                 "w": 8,
                 "h": 20,
                 "visible": true,
@@ -242,7 +244,7 @@
                 "id": "el-deco-base",
                 "block": "art-deco-base",
                 "x": 5,
-                "y": 37,
+                "y": 41,
                 "w": 2,
                 "h": 3,
                 "visible": true,
