@@ -2,7 +2,8 @@ import { defineConfig } from "@playwright/test";
 
 // Evidence of the invitation editor: real Chromium against the harness (packages/design-editor/e2e). Screenshots go to
 // docs/progress/evidence/plantillas-f5/ by explicit path; the committed visual baselines (macOS) are never touched.
-const port = process.env["PW_PORT"] ?? "4173";
+const port = process.env["E2E_PORT"] ?? "4173";
+
 export default defineConfig({
   testDir: "./e2e",
   testMatch: /.*\.spec\.ts/,
