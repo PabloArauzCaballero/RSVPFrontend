@@ -10,6 +10,7 @@ const FORBIDDEN = [/@import/i, /@font-face/i, /@keyframes/i, /expression\s*\(/i,
 
 function attack(css: string): string {
   const out = scope(css).css;
+  expect(out, `"<" in ${JSON.stringify(out)} from ${JSON.stringify(css)}`).not.toMatch(/</);
   for (const pattern of FORBIDDEN) expect(out, `${pattern} in ${JSON.stringify(out)} from ${JSON.stringify(css)}`).not.toMatch(pattern);
   for (const selector of out.split("}").map((chunk) => chunk.split("{")[0] ?? "").filter((chunk) => chunk && !chunk.startsWith("@media"))) {
     for (const piece of selector.split(",")) expect(piece.trim().startsWith(DEFAULT_SCOPE), `unscoped selector ${piece}`).toBe(true);
@@ -399,6 +400,59 @@ describe("scopeCss: round 2 (R2-M1, R2-M2, R2-M3, R2-m2): typed values evaluated
   it("properties outside the allowlist are refused with a property issue", () => {
     for (const property of ["zoom", "translate", "scale", "rotate", "font", "padding-block", "inset-inline", "inline-size", "perspective", "cursor", "resize", "contain", "will-change", "animation", "mix-blend-mode", "backdrop-filter", "text-size-adjust", "border-image", "scroll-margin"]) {
       expect(declaration(`${property}: 1px`).issues.map((issue) => issue.code), property).toContain("PROPERTY_REJECTED");
+    }
+  });
+});
+
+describe("scopeCss: round 3 (R3-M1, R3-m1, R3-m2, R3-m3)", () => {
+  const refused = (css: string) => { const out = scope(css); return out.css === "" && out.issues.length > 0; };
+
+  it("R3-M1: nothing that closes or opens markup survives in a value, a string or a selector", () => {
+    const vectors = [
+      'p::before { content: "</style><script>alert(1)</script>" }',
+      'p::before { content: "</STYLE><img src=x onerror=alert(1)>" }',
+      'p::before { content: "<!--" }',
+      'p::before { content: "-->" }',
+      'p::before { content: "a</b" }',
+      "p::before { content: '</style>' }",
+      "p.a<b { color: red }",
+      "p.a</style><script>alert(1)</script> { color: red }",
+      "p.a<!-- { color: red }",
+      "p { font-family: \"</style>\" }",
+      "p { background: url(/media/public/assets/a</style>/full) }",
+      "p { color: red; } /* </style> */ q { color: <red }"
+    ];
+    for (const vector of vectors) {
+      const out = attack(vector);
+      expect(out, vector).not.toMatch(/<|-->/);
+    }
+    expect(refused('p::before { content: "</style><script>alert(1)</script>" }')).toBe(true);
+    expect(refused("p.a<b { color: red }")).toBe(true);
+    expect(scope("p::before { content: 'a > b' }").css).toBe("");
+  });
+
+  it("R3-m1: a non-finite result of the evaluator is refused, not read as inside the bound", () => {
+    for (const vector of ["width: calc(1e308 * 1e308 * 0 * 1px)", "padding: calc(1e308px * 1e308 * 0)", "margin: calc(1e308px * 1e308)", "font-size: calc(1e308 * 1e308 * 0 * 1px)", "top: min(calc(1e308px * 1e308 * 0), 1px)", "line-height: calc(1e308 * 1e308 * 0 * 1px)", "gap: calc(1e308px + 1e308px + 1e308px * 1e308)", "width: clamp(1px, calc(1e308px * 1e308 * 0), 2px)"]) {
+      expect(refused(`p { ${vector} }`), vector).toBe(true);
+      attack(`p { ${vector} }`);
+    }
+  });
+
+  it("R3-m2: a length property takes a bare number only when it is 0", () => {
+    for (const vector of ["padding: 1000", "margin: -1000", "top: -1000", "width: 999", "height: 1000", "gap: 5", "padding: calc(1000 * 1)", "grid-template-columns: 100 1fr", "border-radius: 10"]) {
+      expect(refused(`p { ${vector} }`), vector).toBe(true);
+    }
+    for (const vector of ["padding: 0", "margin: 0 auto", "top: 0", "flex: 1 1 0", "columns: 3 200px", "columns: 200px 3"]) {
+      expect(scope(`p { ${vector} }`).css, vector).not.toBe("");
+    }
+  });
+
+  it("R3-m3: columns cannot produce more than 4 columns and a grid shorthand bounds its rows to 2000px", () => {
+    for (const vector of ["columns: 1px", "columns: 200px", "columns: 399px", "columns: 10em", "columns: 1px 5", "columns: 1px 0.5em", "grid-template: repeat(24, 1600px) / 1fr", "grid-template: repeat(2, 1100px) / 1fr", "grid: repeat(2, 1100px) / 1fr", "grid-template: 1fr / repeat(2, 1000px)"]) {
+      expect(refused(`p { ${vector} }`), vector).toBe(true);
+    }
+    for (const vector of ["columns: 400px", "columns: 2", "columns: 3 420px", "columns: 1px 4", "columns: 200px 2", "grid-template: repeat(2, 900px) / repeat(2, 700px)", "grid-template: auto 1fr / 1fr 1fr"]) {
+      expect(scope(`p { ${vector} }`).css, vector).not.toBe("");
     }
   });
 });

@@ -56,7 +56,7 @@ export interface Spec {
   readonly gradient?: boolean;
   /** Functions (besides colours, math and var) whose arguments follow the same grammar. */
   readonly fns?: ReadonlySet<string>;
-  readonly special?: "position" | "display" | "z-index" | "font-size" | "font-family" | "line-height" | "transform" | "aspect-ratio" | "tracks" | "content" | "color-only";
+  readonly special?: "position" | "display" | "z-index" | "font-size" | "font-family" | "line-height" | "transform" | "aspect-ratio" | "tracks" | "tracks-both" | "columns" | "content" | "color-only";
   /** Sum cap for grid track lists. */
   readonly sum?: number;
 }
@@ -78,7 +78,7 @@ const TRANSITION = { time: true, layers: 8, max: 100, fns: new Set(["cubic-bezie
 const GRADIENT_ARGUMENTS = length(4000, 1600, { angle: true });
 const TRACKS_COLUMNS = { special: "tracks", sum: 1600, cap: 1600, pct: 1600, fr: true, strings: true, slash: true, max: 100 } satisfies Spec;
 const TRACKS_ROWS = { ...TRACKS_COLUMNS, sum: 2000, cap: 2000 } satisfies Spec;
-const TRACKS_BOTH = { ...TRACKS_COLUMNS, sum: 3600, cap: 2000 } satisfies Spec;
+const TRACKS_BOTH = { ...TRACKS_COLUMNS, special: "tracks-both", sum: 1600, cap: 2000 } satisfies Spec;
 
 /** The whole property allowlist: a property that is not a key here does not survive. */
 export const SPECS: Readonly<Record<string, Spec>> = {
@@ -106,12 +106,19 @@ export const SPECS: Readonly<Record<string, Spec>> = {
   "white-space": KEYWORDS, "word-break": KEYWORDS, "overflow-wrap": KEYWORDS, hyphens: KEYWORDS, "list-style": KEYWORDS, "list-style-type": KEYWORDS, "list-style-position": KEYWORDS,
   content: { special: "content" }, quotes: { strings: true },
   transform: { special: "transform" }, "transform-origin": OFFSET, transition: TRANSITION, "transition-property": TRANSITION, "transition-duration": TRANSITION, "transition-timing-function": TRANSITION, "transition-delay": TRANSITION,
-  columns: length(1600, null, { max: 4 }), "column-count": { max: 4 }
+  columns: length(1600, null, { max: 4, special: "columns" }), "column-count": { max: 4 }
 };
 
 const GENERIC_FAMILIES: ReadonlySet<string> = new Set(["serif", "sans-serif", "cursive", "monospace", "system-ui", "inherit"]);
 const FAMILY_NAMES: ReadonlySet<string> = new Set(design.FONT_FAMILIES.map((family) => family.family.toLowerCase()));
 const BAD_WORDS = /(javascript|vbscript|expression|behavior|binding|data:)/i;
+/**
+ * Nothing that can open or close markup is ever a value (R3-M1): a string such as "</style><script>…" would end a <style> element
+ * it is inlined in. "<" and ">" are never needed in a value (a combinator ">" lives in selectors, not here), and "-->" needs ">".
+ */
+const MARKUP = /[<>]/;
+/** Narrowest a column of `columns` may be: 1600 / 400 = 4 columns at most (R3-m3). */
+const MIN_COLUMN_WIDTH_PX = 400;
 const COLOR_FUNCTIONS: ReadonlySet<string> = new Set(["rgb", "rgba", "hsl", "hsla"]);
 const MATH_FUNCTIONS: ReadonlySet<string> = new Set(["", "calc", "min", "max", "clamp"]);
 const GRADIENTS: ReadonlySet<string> = new Set(["linear-gradient", "radial-gradient", "conic-gradient", "repeating-linear-gradient", "repeating-radial-gradient"]);
@@ -143,7 +150,11 @@ interface Val { readonly len: boolean; readonly lo: number; readonly hi: number 
 interface Budget { terms: number }
 interface Environment { readonly property: string; readonly prefixes: readonly string[] }
 
-const interval = (len: boolean, a: number, b: number): Val => ({ len, lo: Math.min(a, b), hi: Math.max(a, b) });
+/** Every operation ends here, so a NaN or an Infinity (1e308 * 1e308 * 0) is refused instead of being read as "inside the bound" (R3-m1). */
+const interval = (len: boolean, a: number, b: number): Val => {
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return reject("math: the result is not a finite number");
+  return { len, lo: Math.min(a, b), hi: Math.max(a, b) };
+};
 const magnitude = (value: Val): number => Math.max(Math.abs(value.lo), Math.abs(value.hi));
 
 function dimension(value: string): { readonly number: number; readonly unit: string } | null {
@@ -262,10 +273,15 @@ function evaluateToken(node: ValueNode, spec: Spec): Val | null {
 }
 
 function acceptValue(value: Val, spec: Spec, property: string): void {
+  const size = magnitude(value);
+  if (Number.isNaN(size)) reject(`${property}: not a finite number`);
   if (value.len) {
     if (!spec.cap) reject(`${property}: lengths are not accepted`);
-    if (magnitude(value) > (spec.cap as number)) reject(`${property}: up to ${magnitude(value)}px in the worst case, max ${spec.cap}px`);
-  } else if (magnitude(value) > (spec.max ?? 1000)) reject(`${property}: number out of bounds`);
+    if (!(size <= (spec.cap as number))) reject(`${property}: up to ${size}px in the worst case, max ${spec.cap}px`);
+  } else if (spec.cap !== undefined && spec.max === undefined) {
+    // A bare number is no length: only 0 is one (quirks mode would read 1000 as 1000px) (R3-m2).
+    if (size !== 0) reject(`${property}: a length needs a unit (only 0 may go without)`);
+  } else if (!(size <= (spec.max ?? 1000))) reject(`${property}: number out of bounds`);
 }
 
 function checkUrl(node: FunctionNode, environment: Environment): void {
@@ -366,6 +382,7 @@ function trackSum(nodes: readonly ValueNode[], spec: Spec, depth: number, enviro
       if (!parsed) return reject(`grid: cannot evaluate ${node.value}`);
       if (parsed.unit === "fr") { if (parsed.number < 0 || parsed.number > 1000) reject("grid: fr out of bounds"); continue; }
       const value = unitValue(parsed.number, parsed.unit, spec);
+      if (!value.len && parsed.number !== 0) reject("grid: a track size needs a unit (only 0 may go without)");
       acceptValue(value, spec, environment.property);
       total += value.len ? magnitude(value) : 0;
       continue;
@@ -393,6 +410,7 @@ function trackSum(nodes: readonly ValueNode[], spec: Spec, depth: number, enviro
     if (name === "fit-content") { total += trackSum(node.nodes, spec, depth + 1, environment); continue; }
     if (MATH_FUNCTIONS.has(name) && name !== "") {
       const value = evaluateMath(node, spec, 1, { terms: 0 });
+      if (!value.len && magnitude(value) !== 0) reject("grid: a track size needs a unit (only 0 may go without)");
       acceptValue(value, spec, environment.property);
       total += value.len ? magnitude(value) : 0;
       continue;
@@ -423,8 +441,8 @@ function checkFontSize(nodes: readonly ValueNode[]): void {
   const spec: Spec = { cap: MAX_FONT_PX, pct: null, fontRelative: false };
   const value = evaluateToken(node, spec);
   if (!value || !value.len) return reject("font-size: a length in px, rem or viewport units");
-  if (value.lo < MIN_FONT_PX) reject(`font-size: at least ${MIN_FONT_PX}px in the worst case (it can be ${value.lo}px)`);
-  if (value.hi > MAX_FONT_PX) reject(`font-size: at most ${MAX_FONT_PX}px in the worst case (it can be ${value.hi}px)`);
+  if (!(value.lo >= MIN_FONT_PX)) reject(`font-size: at least ${MIN_FONT_PX}px in the worst case (it can be ${value.lo}px)`);
+  if (!(value.hi <= MAX_FONT_PX)) reject(`font-size: at most ${MAX_FONT_PX}px in the worst case (it can be ${value.hi}px)`);
 }
 
 function checkLineHeight(nodes: readonly ValueNode[]): void {
@@ -437,8 +455,8 @@ function checkLineHeight(nodes: readonly ValueNode[]): void {
   }
   const value = evaluateToken(node, { cap: MAX_LINE_HEIGHT_PX, pct: null });
   if (!value) return reject("line-height: not a value");
-  if (!value.len) { if (value.lo < 0.8 || value.hi > 4) reject("line-height: between 0.8 and 4"); return; }
-  if (value.lo < MIN_LINE_HEIGHT_PX || value.hi > MAX_LINE_HEIGHT_PX) reject(`line-height: between ${MIN_LINE_HEIGHT_PX}px and ${MAX_LINE_HEIGHT_PX}px in the worst case`);
+  if (!value.len) { if (!(value.lo >= 0.8 && value.hi <= 4)) reject("line-height: between 0.8 and 4"); return; }
+  if (!(value.lo >= MIN_LINE_HEIGHT_PX && value.hi <= MAX_LINE_HEIGHT_PX)) reject(`line-height: between ${MIN_LINE_HEIGHT_PX}px and ${MAX_LINE_HEIGHT_PX}px in the worst case`);
 }
 
 function checkAspectRatio(nodes: readonly ValueNode[]): void {
@@ -481,7 +499,7 @@ function checkTransform(nodes: readonly ValueNode[], environment: Environment): 
  * (or the property) is outside it.
  */
 export function checkDeclarationValue(property: string, value: string, prefixes: readonly string[]): string {
-  if (BAD_WORDS.test(value) || value.includes("\\") || value.includes("\0")) reject("forbidden text in value");
+  if (BAD_WORDS.test(value) || MARKUP.test(value) || value.includes("\\") || value.includes("\0")) reject("forbidden text in value");
   const spec = SPECS[property];
   if (!spec) return reject("property not allowed");
   const parsed = valueParser(value);
@@ -503,6 +521,25 @@ export function checkDeclarationValue(property: string, value: string, prefixes:
     case "transform": checkTransform(nodes, environment); break;
     case "content": if (nodes.some((node) => node.type !== "string" && node.type !== "space")) reject("content: only text"); break;
     case "color-only": scanLayers(nodes, { max: 0 }, environment); break;
+    case "columns": {
+      scanLayers(nodes, spec, environment);
+      // With a count (<= 4, checked above) the width cannot make more columns; without one the width alone decides how many fit.
+      const hasCount = nodes.some((node) => node.type === "word" && dimension(node.value)?.unit === "" && /^\d/.test(node.value));
+      for (const node of nodes) {
+        const width = node.type === "space" ? null : evaluateToken(node, spec);
+        if (!hasCount && width?.len && !(width.lo >= MIN_COLUMN_WIDTH_PX)) reject(`columns: a width under ${MIN_COLUMN_WIDTH_PX}px needs a column count (4 at most), or it could make more than 4 columns`);
+      }
+      break;
+    }
+    case "tracks-both": {
+      // grid / grid-template are "rows / columns": each side has its own bound, so rows cannot take the room of columns.
+      const at = nodes.findIndex((node) => node.type === "div" && node.value === "/");
+      if (nodes.filter((node) => node.type === "div" && node.value === "/").length > 1) reject(`${property}: one "/" at most`);
+      const rows = trackSum(at === -1 ? nodes : nodes.slice(0, at), TRACKS_ROWS, 0, environment);
+      const columns = at === -1 ? 0 : trackSum(nodes.slice(at + 1), TRACKS_COLUMNS, 0, environment);
+      if (rows > TRACKS_ROWS.sum || columns > TRACKS_COLUMNS.sum) reject(`${property}: rows add up to ${Math.round(rows)}px (max ${TRACKS_ROWS.sum}), columns to ${Math.round(columns)}px (max ${TRACKS_COLUMNS.sum})`);
+      break;
+    }
     case "tracks": {
       const total = trackSum(nodes, spec, 0, environment);
       if (total > (spec.sum as number)) reject(`${property}: tracks add up to ${Math.round(total)}px, max ${spec.sum}px`);

@@ -19,6 +19,9 @@ export { MAX_AUTHOR_Z_INDEX, MIN_FONT_PX };
  * Values are typed per property (see css-values.ts): only properties in SPECS exist, and every length is evaluated as an interval in px in
  * the worst case (em up to 128 px, % against the largest box, vw/vh against the largest screen, calc/min/max/clamp evaluated, sums added up),
  * so no bound can be dodged by a unit, a sum, a product or a second layer. What cannot be evaluated is refused.
+ * Markup safety (R3-M1): "<" never appears in a value, a string or a selector, and ">" never in a value, so the output cannot end a <style> element it is
+ * inlined in. No serialiser in this package puts the output into a page; the renderer (F6) that does must still treat it as text: build the <style> element
+ * with textContent (or, if it builds a string, escape "</style" and "<!--"), never splice it into an HTML string.
  * The editor checks this on the client and the renderer scopes again when painting. The server does not accept custom CSS yet
  * (it answers 422 to `custom`), so nothing here is a copy of a server check.
  * Idempotent: scoping its own output returns the same text (the scope prefix and the guard it adds are recognised and dropped first).
@@ -159,6 +162,7 @@ function transformRule(rule: Rule, context: Context): string | null {
   context.counters.rules += 1;
   if (context.counters.rules > MAX_RULES) { if (context.counters.rules === MAX_RULES + 1) context.issues.push({ code: "TOO_MANY_RULES", detail: `more than ${MAX_RULES}` }); return null; }
   if (rule.selector.includes("|")) { context.issues.push({ code: "SELECTOR_REJECTED", detail: "namespace selectors are not allowed" }); return null; }
+  if (rule.selector.includes("<")) { context.issues.push({ code: "SELECTOR_REJECTED", detail: "markup characters are not allowed in a selector" }); return null; }
   if (rule.selector.includes("\\")) { context.issues.push({ code: "ESCAPE_REJECTED", detail: rule.selector.slice(0, 60) }); return null; }
   const selectors: string[] = [];
   try {
@@ -215,5 +219,8 @@ export function scopeCss(input: string, options: ScopeCssOptions = {}): ScopedCs
   const context: Context = { issues: [], prefixes: options.mediaPrefixes ?? DEFAULT_MEDIA_PREFIXES, scope, counters: { rules: 0, declarations: 0 } };
   let root;
   try { root = postcss.parse(input); } catch { return { css: "", issues: [{ code: "SYNTAX", detail: "the stylesheet does not parse" }] }; }
-  return { css: transformNodes(root.nodes, context, false).join("\n"), issues: context.issues };
+  const css = transformNodes(root.nodes, context, false).join("\n");
+  // Last line of defence: whatever the parts let through, "<" never leaves this function.
+  if (css.includes("<")) return { css: "", issues: [...context.issues, { code: "VALUE_REJECTED", detail: "markup characters in the output" }] };
+  return { css, issues: context.issues };
 }
