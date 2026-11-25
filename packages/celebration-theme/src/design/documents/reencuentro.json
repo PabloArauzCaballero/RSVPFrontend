@@ -97,6 +97,12 @@
                   "entrance": "rise",
                   "delayMs": 100,
                   "durationMs": 800
+                },
+                "padding": {
+                  "top": 0,
+                  "right": 24,
+                  "bottom": 0,
+                  "left": 24
                 }
               },
               {
@@ -111,6 +117,12 @@
                   "entrance": "fade",
                   "delayMs": 400,
                   "durationMs": 700
+                },
+                "padding": {
+                  "top": 0,
+                  "right": 24,
+                  "bottom": 0,
+                  "left": 24
                 }
               },
               {
@@ -129,7 +141,7 @@
                 "typography": {
                   "align": "start",
                   "role": "heading",
-                  "size": 56,
+                  "size": 48,
                   "lineHeight": 1.05
                 },
                 "padding": {

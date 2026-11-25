@@ -112,6 +112,12 @@
                   "entrance": "scale",
                   "delayMs": 100,
                   "durationMs": 900
+                },
+                "padding": {
+                  "top": 0,
+                  "right": 80,
+                  "bottom": 0,
+                  "left": 0
                 }
               },
               {
@@ -130,7 +136,7 @@
                 "typography": {
                   "align": "start",
                   "role": "heading",
-                  "size": 64,
+                  "size": 48,
                   "lineHeight": 1.0
                 }
               },

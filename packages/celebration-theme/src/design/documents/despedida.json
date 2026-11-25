@@ -101,8 +101,8 @@
                 "typography": {
                   "align": "start",
                   "role": "heading",
-                  "size": 64,
-                  "lineHeight": 1.0
+                  "size": 44,
+                  "lineHeight": 1.05
                 }
               },
               {

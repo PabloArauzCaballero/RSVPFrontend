@@ -102,6 +102,54 @@ for (const name of NAMES) {
   }
 }
 
+// PL-129-M1/M2 · the names are in the first screen and above the dock whatever the template, the photo or the width (the phone canvas stops stretching at 480 px), the
+// whole cover text (title and date) clears the dock too, and no word of the title is cut in the middle.
+const SCREENS = [{ width: 360, height: 800 }, { width: 768, height: 1024 }, { width: 1280, height: 900 }] as const;
+for (const name of NAMES) {
+  for (const variant of ["", "-sinfoto"] as const) {
+    for (const screen of SCREENS) {
+      test(`${name}${variant} ${screen.width}x${screen.height}: the title ends above the dock and no word is cut`, async ({ page }) => {
+        await page.setViewportSize(screen);
+        await page.emulateMedia({ colorScheme: "light", reducedMotion: "reduce" });
+        await page.goto(`/c/fixture-v2-${name}${variant}`);
+        await page.evaluate(() => document.fonts.ready);
+        const box = await page.locator(".celebration-design h1").first().boundingBox();
+        const cover = await page.locator(".celebration-design h1").first().evaluate((node) => {
+          // The text actually drawn (title, date, place), not the photo or the grid area the cover element reserves.
+          const range = document.createRange();
+          range.selectNodeContents(node.closest(".cdesign-cover-copy") ?? node);
+          const rect = range.getBoundingClientRect();
+          return { y: rect.y + window.scrollY, height: rect.height };
+        });
+        const dock = await page.locator(".cdesign-dock").boundingBox();
+        expect(box).not.toBeNull();
+        expect(dock).not.toBeNull();
+        // The dock sits at the bottom of the phone and covers what is under it: the title must end above it. When it sits at the top (wide screens) the limit is the window.
+        const limit = dock && dock.y > screen.height / 2 ? dock.y : screen.height;
+        expect((box?.y ?? 0) + (box?.height ?? 0), "title").toBeLessThanOrEqual(limit);
+        expect(cover.y + cover.height, "cover text (title and date)").toBeLessThanOrEqual(limit);
+        // A word that wraps in the middle has client rects on two lines.
+        const cut = await page.locator(".celebration-design h1").first().evaluate((node) => {
+          const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
+          const broken: string[] = [];
+          for (let text = walker.nextNode(); text; text = walker.nextNode()) {
+            const value = text.textContent ?? "";
+            for (const match of value.matchAll(/\S+/g)) {
+              const range = document.createRange();
+              range.setStart(text, match.index ?? 0);
+              range.setEnd(text, (match.index ?? 0) + match[0].length);
+              const lines = new Set([...range.getClientRects()].map((rect) => Math.round(rect.top)));
+              if (lines.size > 1) broken.push(match[0]);
+            }
+          }
+          return broken;
+        });
+        expect(cut, "words cut across lines").toEqual([]);
+      });
+    }
+  }
+}
+
 test("the entrance of every cover plays once and, with reduced motion, nothing is hidden", async ({ page }) => {
   for (const name of NAMES) {
     await page.setViewportSize({ width: 390, height: 900 });
