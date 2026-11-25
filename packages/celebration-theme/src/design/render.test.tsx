@@ -1,19 +1,23 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { cleanup, render } from "@testing-library/react";
+import { cleanup, fireEvent, render } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { GALLERY, NOW, t, VIEW } from "../../test/fixtures.js";
 import { CelebrationRenderer, contrastRatio, fontStylesheet, giftsPath, themeFromTemplate, type TemplateDocument } from "../index.js";
 import { CelebrationNativeRenderer } from "../native.js";
 import { DESIGN_TEMPLATES, designTemplate } from "./documents/index.js";
-import { designPalette, readDesign } from "./read.js";
+import { designFontStylesheet, designPalette, readDesign } from "./read.js";
 import type { DesignDocumentV2, PaletteRole } from "./types.js";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 
 const NAMES = ["marfil", "pinata", "gala"] as const;
 const WEDDING_VIEW = { ...VIEW, enabledSections: [...VIEW.enabledSections] };
+const parse = (markup: string): Document => new DOMParser().parseFromString(markup, "text/html");
 const html = (name: (typeof NAMES)[number], extra: Partial<Parameters<typeof CelebrationRenderer>[0]> = {}): string =>
   renderToStaticMarkup(<CelebrationRenderer theme={themeFromTemplate(designTemplate(name), WEDDING_VIEW.enabledSections)} view={WEDDING_VIEW} gallery={GALLERY} t={t} now={NOW} basePath="/c/ana-y-luis" {...extra} />);
 
@@ -214,6 +218,104 @@ describe("m1 · readDesign is defensive in depth", () => {
       expect(readDesign(design)).toBeNull();
       expect(() => render(design)).not.toThrow();
     }
+  });
+});
+
+describe("m5 · a monogram face without weights never breaks the font sheet", () => {
+  const withMonogram = (monogram: unknown): unknown => {
+    const theme = JSON.parse(JSON.stringify(designTemplate("gala").theme)) as { tokens: { typography: Record<string, unknown> } };
+    theme.tokens.typography["monogram"] = monogram;
+    return theme;
+  };
+  it.each([{ family: "bodoni-moda" }, { family: "bodoni-moda", weights: "x" }, { family: "bodoni-moda", weights: [500.5] }, { weights: [500] }, 7, null] as const)("%j is dropped and the heading's face stands in", (monogram) => {
+    const design = readDesign(withMonogram(monogram)) as DesignDocumentV2;
+    expect(design).not.toBeNull();
+    expect(design.tokens.typography.monogram).toBeUndefined();
+    expect(() => designFontStylesheet(design)).not.toThrow();
+    const template = { ...designTemplate("gala"), theme: withMonogram(monogram) } as unknown as TemplateDocument;
+    const theme = themeFromTemplate(template, WEDDING_VIEW.enabledSections);
+    expect(() => fontStylesheet(theme)).not.toThrow();
+    expect(() => renderToStaticMarkup(<CelebrationRenderer theme={theme} view={WEDDING_VIEW} t={t} now={NOW} />)).not.toThrow();
+  });
+  it("a valid monogram face is kept and asked from Google Fonts", () => {
+    const design = readDesign(designTemplate("gala").theme) as DesignDocumentV2;
+    expect(design.tokens.typography.monogram?.family).toBe("bodoni-moda");
+    expect(designFontStylesheet(design)).toContain("Bodoni+Moda");
+  });
+});
+
+describe("state · the photo fails to load", () => {
+  const draw = (name: (typeof NAMES)[number]): ReturnType<typeof render> =>
+    render(<CelebrationRenderer theme={themeFromTemplate(designTemplate(name), WEDDING_VIEW.enabledSections)} view={WEDDING_VIEW} gallery={GALLERY} t={t} now={NOW} basePath="/c/ana-y-luis" />);
+
+  it.each(NAMES)("%s: the cover photo that errors becomes the palette's surface with the camera drawing, in the same place, and the title stays", (name) => {
+    const { container } = draw(name);
+    const photo = container.querySelector("img.cdesign-cover-photo") as HTMLImageElement;
+    expect(photo).toBeTruthy();
+    const parent = photo.parentElement;
+    fireEvent.error(photo);
+    expect(container.querySelector("img.cdesign-cover-photo")).toBeNull();
+    const fallback = container.querySelector(".cdesign-cover-photo[data-photo-failed]") as HTMLElement;
+    expect(fallback.parentElement).toBe(parent);
+    expect(fallback.querySelector('svg[data-art="camara"]')).toBeTruthy();
+    expect(fallback.getAttribute("aria-hidden")).toBe("true");
+    expect(container.querySelector(".cdesign-cover h1")?.textContent).toBe(VIEW.content.title);
+    expect(container.querySelectorAll('a[data-action="gifts"]').length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("a gallery photo that errors keeps its link and its name and shows the drawing", () => {
+    const { container } = draw("marfil");
+    const photos = [...container.querySelectorAll(".celebration-gallery img")];
+    expect(photos.length).toBeGreaterThan(0);
+    fireEvent.error(photos[0] as HTMLImageElement);
+    const fallback = container.querySelector(".celebration-gallery [data-photo-failed]") as HTMLElement;
+    expect(fallback.getAttribute("role")).toBe("img");
+    expect(fallback.getAttribute("aria-label")).toBeTruthy();
+    expect(fallback.querySelector('svg[data-art="camara"]')).toBeTruthy();
+    expect(fallback.closest("a")?.getAttribute("href")).toBeTruthy();
+    expect(container.querySelectorAll(".celebration-gallery img")).toHaveLength(photos.length - 1);
+  });
+
+  it("an image that failed before the page was interactive is caught when it mounts", () => {
+    vi.spyOn(HTMLImageElement.prototype, "complete", "get").mockReturnValue(true);
+    vi.spyOn(HTMLImageElement.prototype, "naturalWidth", "get").mockReturnValue(0);
+    vi.spyOn(HTMLImageElement.prototype, "currentSrc", "get").mockReturnValue("http://x.test/cover.jpg");
+    const { container } = draw("pinata");
+    expect(container.querySelector("img.cdesign-cover-photo")).toBeNull();
+    expect(container.querySelector(".cdesign-cover-photo[data-photo-failed]")).toBeTruthy();
+  });
+
+  it("negative: a photo that loads is untouched", () => {
+    const { container } = draw("gala");
+    expect(container.querySelector("img.cdesign-cover-photo")).toBeTruthy();
+    expect(container.querySelector("[data-photo-failed]")).toBeNull();
+  });
+});
+
+describe("state · «Ver regalos» in its three states (giftsStatus seam, BE #128 not connected)", () => {
+  const LABEL = { OPEN: "celebration.gifts.cta", EMPTY: "celebration.gifts.ctaEmpty", CLOSED: "celebration.gifts.ctaClosed" } as const;
+  it.each(NAMES)("%s: OPEN, EMPTY and CLOSED each say their own words, look different and keep the link, twice", (name) => {
+    for (const status of ["OPEN", "EMPTY", "CLOSED"] as const) {
+      const markup = html(name, { giftsStatus: status });
+      const buttons = [...parse(markup).querySelectorAll('a[data-action="gifts"]')];
+      expect(buttons.length, `${name} ${status}`).toBeGreaterThanOrEqual(2);
+      for (const button of buttons) {
+        expect(button.getAttribute("href")).toBe(giftsPath("ana-y-luis"));
+        expect(button.textContent).toBe(LABEL[status]);
+        expect(button.getAttribute("data-gifts-status")).toBe(status);
+      }
+      expect(markup).not.toContain("gifts.guest.cta");
+    }
+  });
+  it("the stylesheet gives EMPTY and CLOSED a look of their own on palette roles", () => {
+    const css = readFileSync(join(__dirname, "../../styles.css"), "utf8");
+    expect(css).toMatch(/\[data-gifts-status="EMPTY"\][^}]*dashed/);
+    expect(css).toMatch(/\[data-gifts-status="CLOSED"\][^}]*var\(--celebration-muted\)/);
+  });
+  it("the labels exist in both languages and none is a gifts.guest key", () => {
+    const es = readFileSync(join(__dirname, "../../../i18n/locales/es-BO/celebration.ts"), "utf8");
+    const en = readFileSync(join(__dirname, "../../../i18n/locales/en-US/celebration.ts"), "utf8");
+    for (const source of [es, en]) for (const key of ["ctaEmpty", "ctaClosed"]) expect(source).toContain(key);
   });
 });
 

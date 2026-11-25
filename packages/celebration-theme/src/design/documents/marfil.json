@@ -147,11 +147,7 @@
                   "role": "heading",
                   "size": 28,
                   "align": "center",
-                  "colour": "onAccent"
-                },
-                "background": {
-                  "kind": "colour",
-                  "role": "accentFill"
+                  "colour": "text"
                 },
                 "radius": 999,
                 "padding": {
@@ -159,6 +155,11 @@
                   "right": 16,
                   "bottom": 16,
                   "left": 16
+                },
+                "border": {
+                  "width": 1,
+                  "style": "solid",
+                  "colour": "accent"
                 }
               }
             ]
@@ -210,7 +211,7 @@
                 "block": "art-filete",
                 "x": 5,
                 "y": 23,
-                "w": 5,
+                "w": 6,
                 "h": 3,
                 "visible": true,
                 "animation": {
@@ -228,8 +229,8 @@
               {
                 "id": "el-monogram",
                 "block": "monogram",
-                "x": 10,
-                "y": 24,
+                "x": 7,
+                "y": 26,
                 "w": 2,
                 "h": 8,
                 "visible": true,
@@ -242,11 +243,7 @@
                   "role": "heading",
                   "size": 28,
                   "align": "center",
-                  "colour": "onAccent"
-                },
-                "background": {
-                  "kind": "colour",
-                  "role": "accentFill"
+                  "colour": "text"
                 },
                 "radius": 999,
                 "padding": {
@@ -254,6 +251,11 @@
                   "right": 16,
                   "bottom": 16,
                   "left": 16
+                },
+                "border": {
+                  "width": 1,
+                  "style": "solid",
+                  "colour": "accent"
                 }
               }
             ]

@@ -8,6 +8,7 @@ import { formatDate } from "../format.js";
 import type { CelebrationRendererProps } from "../renderer.js";
 import { SectionNav } from "../section-nav.js";
 import { GiftsAction, RsvpAction, SECTIONS } from "../sections/index.js";
+import { Photo } from "../photo.js";
 import { layoutOf, themeVariables } from "../theme.js";
 import type { CelebrationTheme, SectionId, Translate } from "../types.js";
 import { designPalette, fontStack } from "./read.js";
@@ -87,7 +88,7 @@ function CoverBlock({ block, context }: { readonly block: DesignBlock; readonly 
   const days = daysUntil(content.eventDate, context.now);
   return (
     <div className="cdesign-cover" data-variant={str(config(block)["variant"])} data-has-image={image ? "true" : "false"}>
-      {image ? <img className="cdesign-cover-photo" src={image} alt="" fetchPriority="high" /> : null}
+      {image ? <Photo className="cdesign-cover-photo" src={image} alt="" fetchPriority="high" /> : null}
       <div className="cdesign-cover-copy">
         <h1>{content.title}</h1>
         {content.hosts.length && !hostsInTitle ? <p className="celebration-hosts">{content.hosts.map((host) => host.name).join(" & ")}</p> : null}
@@ -158,7 +159,7 @@ function BlockBody({ block, element, context }: { readonly block: DesignBlock; r
     case "image": {
       const photo = gallery.find((item) => item.id === settings["mediaId"]);
       const src = photo?.variants.medium ?? photo?.variants.full;
-      return src ? <img className="cdesign-image" src={src} alt={str(settings["alt"]) ?? ""} loading="lazy" decoding="async" /> : null;
+      return src ? <Photo className="cdesign-image" src={src} alt={str(settings["alt"]) ?? ""} loading="lazy" decoding="async" /> : null;
     }
     // Blocks the renderer does not draw yet (video, music, map, wedding party, free HTML) are left out, never half-drawn.
     default: return null;

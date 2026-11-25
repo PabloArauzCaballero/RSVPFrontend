@@ -125,7 +125,10 @@ export function readDesign(value: unknown): DesignDocumentV2 | null {
   if (pages.some((page) => page === null)) return null;
   const blocksOk = value["blocks"].every((block) => isRecord(block) && typeof block["id"] === "string" && typeof block["type"] === "string" && isRecord(block["config"]));
   if (!blocksOk) return null;
-  return { ...(value as unknown as DesignDocumentV2), pages: pages as DesignPage[] };
+  // The optional monogram face is read like the other two; one without family or weights is dropped (the heading's face stands in), never left to throw in the font sheet.
+  const monogram = typography["monogram"];
+  const readTypography = monogram === undefined || isFont(monogram) ? typography : Object.fromEntries(Object.entries(typography).filter(([key]) => key !== "monogram"));
+  return { ...(value as unknown as DesignDocumentV2), tokens: { ...(tokens as unknown as DesignDocumentV2["tokens"]), typography: readTypography as unknown as DesignDocumentV2["tokens"]["typography"] }, pages: pages as DesignPage[] };
 }
 
 export const designPalette = (document: DesignDocumentV2, scheme: ColourScheme): DesignPalette => document.tokens.palettes[scheme];
