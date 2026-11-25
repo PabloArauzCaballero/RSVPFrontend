@@ -52,6 +52,45 @@ const v2Celebrations = Object.entries(V2_IDS).flatMap(([name, templateId], index
     content: name === "pinata" ? { ...view.content, title: "Sofi cumple 6", hosts: {}, eventDate: "2026-12-19T19:00:00.000Z" } : view.content }
 })));
 
+// F6 · media on the public invitation: `fixture-v2-medios` is Marfil with a picture behind the cover, a picture block, a video, the map of the first venue and the host's own song.
+// AVIF and WebP are real files (made from the same drawing with sharp when it is installed), so the browser's <picture> choice is what the evidence shows.
+const MEDIOS = { bg: "11111111-1111-4111-8111-111111111111", pic: "33333333-3333-4333-8333-333333333333", song: "22222222-2222-4222-8222-222222222222" };
+const raster = (n) => ({ thumb: `http://localhost:${PORT}/img/${n}-320.webp`, medium: `http://localhost:${PORT}/img/${n}-960.webp`, full: `http://localhost:${PORT}/img/${n}-1920.webp`, webp: `http://localhost:${PORT}/img/${n}-960.webp`,
+  thumb_avif: `http://localhost:${PORT}/img/${n}-320.avif`, medium_avif: `http://localhost:${PORT}/img/${n}-960.avif`, full_avif: `http://localhost:${PORT}/img/${n}-1920.avif` });
+const mediosGallery = [
+  { id: "g1", width: 1920, height: 1280, isCover: true, purpose: "cover", variants: raster(1) },
+  { id: "g2", width: 1920, height: 1280, isCover: false, purpose: "gallery", variants: raster(2) },
+  { id: MEDIOS.bg, width: 1920, height: 1280, isCover: false, purpose: "background", variants: raster(5) },
+  { id: MEDIOS.pic, width: 1920, height: 1280, isCover: false, purpose: "block", variants: raster(3) },
+  { id: MEDIOS.song, width: null, height: null, isCover: false, purpose: "music", durationMs: 2000, variants: { audio: `http://localhost:${PORT}/audio/song.wav` } }
+];
+const mediosTemplate = () => {
+  const base = v2Template("marfil");
+  const theme = structuredClone(base.theme);
+  theme.pages = theme.pages.map((page) => {
+    if (page.kind === "cover") return { ...page, background: { kind: "media", mediaId: MEDIOS.bg, fit: "cover" } };
+    if (page.section !== "story") return page;
+    const at = (id, block, y) => ({ id, block, x: 0, y, w: 4, h: 1, visible: true });
+    return { ...page, canvases: { ...page.canvases, mobile: { ...page.canvases.mobile, elements: [...page.canvases.mobile.elements, at("m-pic", "m-pic", 1), at("m-vid", "m-vid", 2), at("m-map", "m-map", 3), at("m-song", "m-song", 4)] } } };
+  });
+  theme.blocks = [...theme.blocks,
+    { id: "m-pic", type: "image", config: { mediaId: MEDIOS.pic, alt: "Ana y Luis en el jardín" } },
+    { id: "m-vid", type: "video", config: { provider: "youtube", videoId: "dQw4w9WgXcQ" } },
+    { id: "m-map", type: "map", config: { venueIndex: 0 } },
+    { id: "m-song", type: "music", config: { source: "media", ref: MEDIOS.song } }];
+  return { ...base, id: "5e5e5e5e-5e5e-45e5-85e5-5e5e5e5e5e5e", theme };
+};
+const medios = { slug: "fixture-v2-medios", view: { ...view, celebrationId: "00000000-0000-4000-8000-000000000199", slug: "fixture-v2-medios", templateId: "5e5e5e5e-5e5e-45e5-85e5-5e5e5e5e5e5e" } };
+const silence = () => { const rate = 8000, samples = rate * 2, data = Buffer.alloc(samples * 2); const head = Buffer.alloc(44); head.write("RIFF", 0); head.writeUInt32LE(36 + data.length, 4); head.write("WAVEfmt ", 8); head.writeUInt32LE(16, 16); head.writeUInt16LE(1, 20); head.writeUInt16LE(1, 22); head.writeUInt32LE(rate, 24); head.writeUInt32LE(rate * 2, 28); head.writeUInt16LE(2, 32); head.writeUInt16LE(16, 34); head.write("data", 36); head.writeUInt32LE(data.length, 40); return Buffer.concat([head, data]); };
+let sharpModule;
+const encoded = new Map();
+async function rasterOf(n, width, format) {
+  sharpModule ??= (await import("sharp")).default;
+  const key = `${n}-${width}-${format}`;
+  if (!encoded.has(key)) encoded.set(key, await sharpModule(Buffer.from(image(n * 70))).resize({ width }).toFormat(format).toBuffer());
+  return encoded.get(key);
+}
+
 const providers = [
   { listingId: "7d1c1a34-5d4c-4a39-9a2e-0f4f2d3d7b11", providerSlug: "hotel-andino", name: "Hotel Andino", category: "ACCOMMODATION", city: "La Paz", department: "La Paz", verified: true, summary: "Hospedaje boutique en el centro histórico, con salón para recepciones de hasta 120 personas.", priceFrom: { amountMinor: 45000, currency: "BOB" }, imageUrl: img(1), destinations: ["WHATSAPP", "PHONE", "EMAIL", "OFFICIAL_SITE"], coverage: ["La Paz", "El Alto"], address: "Calle Comercio 123, La Paz", hours: ["Lu-Do 08:00-22:00"], lat: -16.4955, lng: -68.1336 },
   { listingId: "8e2d2b45-6e5d-4b4a-8b3f-1a5a3e4e8c22", providerSlug: "salon-del-sol", name: "Salón del Sol", category: "VENUE", city: "La Paz", department: "La Paz", verified: true, summary: "Salón de eventos con jardín y estacionamiento.", priceFrom: { amountMinor: 1200000, currency: "BOB" }, imageUrl: img(2), destinations: ["WHATSAPP", "INSTAGRAM"], coverage: ["La Paz", "Achumani"], lat: -16.54, lng: -68.08 },
@@ -75,7 +114,7 @@ function search(q) {
 
 const json = (res, status, body, headers = {}) => { res.writeHead(status, { "content-type": "application/json", ...headers }); res.end(JSON.stringify(body)); };
 
-createServer((req, res) => {
+createServer(async (req, res) => {
   const url = new URL(req.url ?? "/", `http://localhost:${PORT}`);
   const path = url.pathname;
   // The browser calls the API directly from another origin (like the gateway in production): without CORS the client
@@ -91,6 +130,12 @@ createServer((req, res) => {
   if (req.method === "OPTIONS") { res.writeHead(204); return res.end(); }
   // Gift List through the gateway: a visitor without the link credential gets the same 401 the real service answers.
   if (/^\/gifts\/celebrations\/[^/]+\/items$/.test(path) && !req.headers.authorization) return json(res, 401, { type: "https://rsvp.example/problems/Unauthorized", title: "A valid credential is required", status: 401, code: "Unauthorized" });
+  const rasterMatch = path.match(/^\/img\/(\d+)-(\d+)\.(avif|webp)$/);
+  if (rasterMatch) { res.writeHead(200, { "content-type": `image/${rasterMatch[3]}`, "cache-control": "public, max-age=3600" }); return res.end(await rasterOf(Number(rasterMatch[1]), Number(rasterMatch[2]), rasterMatch[3])); }
+  if (path === "/audio/song.wav") { res.writeHead(200, { "content-type": "audio/wav", "cache-control": "public, max-age=3600" }); return res.end(silence()); }
+  if (path === `/celebrations/public/${medios.slug}`) return json(res, 200, medios.view);
+  if (path === `/media/public/celebrations/${medios.view.celebrationId}/assets`) return json(res, 200, { items: mediosGallery });
+  if (path === `/media/templates/${medios.view.templateId}`) return json(res, 200, mediosTemplate());
   if (path.startsWith("/img/")) { res.writeHead(200, { "content-type": "image/svg+xml", "cache-control": "public, max-age=3600" }); return res.end(image(Number(path.match(/(\d+)/)?.[1] ?? 1) * 70)); }
   if (path === "/celebrations/public") return json(res, 200, { items: [{ slug: SLUG, updatedAt: "2026-11-01T00:00:00Z", supportedLocales: ["es-BO", "en-US"] }] });
   if (path === `/celebrations/public/${SLUG}`) return json(res, 200, view);
