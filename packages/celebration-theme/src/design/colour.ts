@@ -95,12 +95,13 @@ const SCRIM_STEP = 0.05;
 const SCRIM_MAX = 0.8;
 
 /**
- * F6 (P3): the lightest veil, in steps of .05 up to the contract's .8, that keeps `text` and `muted` at AA over ANY picture. The veil is
+ * F6 (P3): the lightest veil, in steps of .05 up to the contract's .8, that keeps `text` at AA over ANY picture. (The muted ink cannot be guaranteed by a veil
+ * alone, since its contrast with the canvas is already close to 4.5; on a picture the renderer sets it to the text colour instead.) The veil is
  * the canvas colour at that opacity; the worst pictures are pure black and pure white, and every other pixel lies between them, so the
  * luminance range of the veiled picture is the one between those two. The text passes when its luminance is outside that range with
  * the contrast on the nearer end, never inside it (there the contrast would fall to 1).
  */
-export function requiredScrim(palette: { readonly canvas: string; readonly text: string; readonly muted: string }): number {
+export function requiredScrim(palette: { readonly canvas: string; readonly text: string }): number {
   const ranged = (veil: number, ink: string): number => {
     const low = luminance(mix(BLACK, palette.canvas, veil));
     const high = luminance(mix(WHITE, palette.canvas, veil));
@@ -112,7 +113,7 @@ export function requiredScrim(palette: { readonly canvas: string; readonly text:
   };
   for (let step = 0; step * SCRIM_STEP <= SCRIM_MAX + 1e-9; step += 1) {
     const veil = Math.min(SCRIM_MAX, step * SCRIM_STEP);
-    if (ranged(veil, palette.text) >= TEXT_CONTRAST && ranged(veil, palette.muted) >= TEXT_CONTRAST) return Number(veil.toFixed(2));
+    if (ranged(veil, palette.text) >= TEXT_CONTRAST) return Number(veil.toFixed(2));
   }
   return SCRIM_MAX;
 }

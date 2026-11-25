@@ -40,22 +40,25 @@ for (const scheme of ["light", "dark"] as const) {
     test(`${scheme} ${width}px: the title over the background picture reads at AA over the real pixels (veil per scheme)`, async ({ page }) => {
       await open(page, width, scheme);
       await page.waitForFunction(() => [...document.querySelectorAll(".celebration-media-backdrop img")].every((node) => (node as HTMLImageElement).complete && (node as HTMLImageElement).naturalWidth > 0));
-      const title = page.locator(".cdesign-cover h1");
-      const ink = await title.evaluate((node) => getComputedStyle(node).color);
-      const clip = (await title.boundingBox())!;
+      const lum = (r: number, g: number, b: number): number => { const f = (v: number): number => { const c = v / 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
+      // Every line of text of the cover: the title, the date and the venue (the date and the venue use the muted ink, which on a picture is the text ink).
+      const lines = [".cdesign-cover h1", ".cdesign-cover .celebration-date", ".cdesign-cover .celebration-venue"];
+      const inks = await Promise.all(lines.map((selector) => page.locator(selector).evaluate((node) => getComputedStyle(node).color)));
+      const boxes = await Promise.all(lines.map(async (selector) => (await page.locator(selector).boundingBox())!));
       // Hide the glyphs and read what is behind them: the picture under its veil.
       await page.addStyleTag({ content: ".cdesign-cover h1, .cdesign-cover p { color: transparent !important }" });
-      const shot = await page.screenshot({ clip, animations: "disabled" });
-      const { data, info } = await sharp(shot).removeAlpha().raw().toBuffer({ resolveWithObject: true });
-      const lum = (r: number, g: number, b: number): number => { const f = (v: number): number => { const c = v / 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
-      const [ir, ig, ib] = (/\d+/g.exec(ink) ? ink.match(/\d+/g)! : []).map(Number) as [number, number, number];
-      const inkLum = lum(ir, ig, ib);
       let worst = Infinity;
-      for (let i = 0; i < info.width * info.height * 3; i += 3) {
-        const l = lum(data[i]!, data[i + 1]!, data[i + 2]!);
-        worst = Math.min(worst, (Math.max(l, inkLum) + 0.05) / (Math.min(l, inkLum) + 0.05));
+      for (const [index, clip] of boxes.entries()) {
+        const shot = await page.screenshot({ clip, animations: "disabled" });
+        const { data, info } = await sharp(shot).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+        const [ir, ig, ib] = inks[index]!.match(/\d+/g)!.map(Number) as [number, number, number];
+        const inkLum = lum(ir, ig, ib);
+        for (let i = 0; i < info.width * info.height * 3; i += 3) {
+          const l = lum(data[i]!, data[i + 1]!, data[i + 2]!);
+          worst = Math.min(worst, (Math.max(l, inkLum) + 0.05) / (Math.min(l, inkLum) + 0.05));
+        }
       }
-      expect(worst, `worst contrast of ${ink} over the veiled picture`).toBeGreaterThanOrEqual(4.5);
+      expect(worst, `worst contrast of the cover text over the veiled picture`).toBeGreaterThanOrEqual(4.5);
     });
   }
 }

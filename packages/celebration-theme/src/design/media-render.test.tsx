@@ -74,17 +74,19 @@ describe("F6 · pictures", () => {
     expect(backdrop.querySelector("img")?.getAttribute("loading")).toBe("eager");
   });
 
-  it.each(["light", "dark"] as const)("requiredScrim · text and muted over the worst picture (black or white) reach 4.5 in %s, for the three prototypes", (scheme) => {
+  it.each(["light", "dark"] as const)("requiredScrim · the text over the worst picture (pure black or pure white) reaches 4.5 in %s, for the three prototypes, and the veil is the lightest that does", (scheme) => {
     for (const name of ["marfil", "pinata", "gala"] as const) {
       const palette = designPalette(readDesign(designTemplate(name).theme) as DesignDocumentV2, scheme);
       const veil = requiredScrim(palette);
-      expect(veil).toBeLessThanOrEqual(0.8);
-      for (const picture of [BLACK, WHITE]) for (const ink of [palette.text, palette.muted]) {
-        const ratio = contrastRatio(ink, mix(picture, palette.canvas, veil));
-        // Reaching AA is possible with a veil of at most .8 for these palettes; when it is not, the veil is the maximum.
-        if (veil < 0.8) expect(ratio, `${name} ${scheme} ${ink} over ${picture}`).toBeGreaterThanOrEqual(4.5);
-      }
+      expect(veil, `${name} ${scheme}`).toBeLessThan(0.8);
+      for (const picture of [BLACK, WHITE]) expect(contrastRatio(palette.text, mix(picture, palette.canvas, veil)), `${name} ${scheme} over ${picture}`).toBeGreaterThanOrEqual(4.5);
+      const lighter = Math.round((veil - 0.05) * 100) / 100;
+      expect([BLACK, WHITE].some((picture) => contrastRatio(palette.text, mix(picture, palette.canvas, lighter)) < 4.5), `${name} ${scheme}: ${lighter} would already pass`).toBe(true);
     }
+  });
+
+  it("a palette whose text cannot reach AA over any veil gets the maximum the contract allows, never more", () => {
+    expect(requiredScrim({ canvas: "#808080", text: "#7F7F7F" })).toBe(0.8);
   });
 
   it("a veil the document sets can raise the automatic one, never lower it", () => {

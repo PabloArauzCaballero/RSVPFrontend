@@ -304,12 +304,12 @@ function PageBlock({ page, context, only }: { readonly page: DesignPage; readonl
   const section = page.section as SectionId | undefined;
   const inner = <><BackgroundArt background={page.background} /><BackgroundMedia background={page.background} context={context} priority={page.kind === "cover"} /><Canvas page={page} context={context} /></>;
   if (page.kind === "cover") {
-    return <header className="cdesign-page" data-page-kind="cover" data-page={page.id} data-style={page.style} style={backgroundStyle(page.background)}>{inner}</header>;
+    return <header className="cdesign-page" data-page-kind="cover" data-page={page.id} data-style={page.style} data-bg-media={page.background?.kind === "media" ? "" : undefined} style={backgroundStyle(page.background)}>{inner}</header>;
   }
   if (!section) return null;
   const headingId = `section-${section}`;
   return (
-    <section id={section} className="cdesign-page" data-page-kind="section" data-section={section} data-page={page.id} data-style={page.style} aria-labelledby={headingId} style={backgroundStyle(page.background)}>
+    <section id={section} className="cdesign-page" data-page-kind="section" data-section={section} data-page={page.id} data-style={page.style} data-bg-media={page.background?.kind === "media" ? "" : undefined} aria-labelledby={headingId} style={backgroundStyle(page.background)}>
       <h2 id={headingId} className={only ? "celebration-visually-hidden" : "cdesign-page-title"}>{t(sectionTitleKey(section))}</h2>
       {section === "gifts" || section === "rsvp" ? <div className="cdesign-intro"><p>{t(`celebration.${section}.${section === "gifts" ? "intro" : "body"}`)}</p></div> : null}
       {inner}

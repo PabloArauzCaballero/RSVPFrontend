@@ -307,3 +307,5 @@ html:has(.cdesign-dock) { scroll-padding-bottom: 6rem; }
 .celebration-design .cdesign-el[data-block="video"], .celebration-design .cdesign-el[data-block="music"], .celebration-design .cdesign-el[data-block="map"] { align-self: start; }
 .celebration-embed-status { position: absolute; inset: auto 0 0 0; z-index: 2; margin: 0; padding: .4rem .75rem; text-align: center; background: color-mix(in srgb, var(--celebration-surface) 92%, transparent); color: var(--celebration-text); font-size: .9rem; }
 .celebration-embed[data-phase="failed"] .celebration-embed-play { border-color: var(--celebration-text); }
+/* On a picture the muted ink is the text ink: a veil can make the text pass AA over any photo, but not an ink that is already near 4.5 on the plain canvas. */
+.celebration-design .cdesign-page[data-bg-media], .celebration-design .cdesign-el[data-bg-media] { --celebration-muted: var(--celebration-text); }
