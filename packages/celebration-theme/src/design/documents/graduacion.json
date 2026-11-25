@@ -87,24 +87,10 @@
             "rowHeight": 8,
             "elements": [
               {
-                "id": "el-filete",
-                "block": "art-filete",
-                "x": 0,
-                "y": 0,
-                "w": 4,
-                "h": 8,
-                "visible": true,
-                "animation": {
-                  "entrance": "draw",
-                  "delayMs": 0,
-                  "durationMs": 900
-                }
-              },
-              {
                 "id": "el-birrete",
                 "block": "art-birrete",
                 "x": 0,
-                "y": 8,
+                "y": 0,
                 "w": 2,
                 "h": 8,
                 "visible": true,
@@ -113,13 +99,19 @@
                   "entrance": "draw",
                   "delayMs": 300,
                   "durationMs": 1200
+                },
+                "padding": {
+                  "top": 0,
+                  "right": 40,
+                  "bottom": 0,
+                  "left": 40
                 }
               },
               {
                 "id": "el-diploma",
                 "block": "art-diploma",
                 "x": 2,
-                "y": 8,
+                "y": 0,
                 "w": 2,
                 "h": 8,
                 "visible": true,
@@ -128,13 +120,19 @@
                   "entrance": "rise",
                   "delayMs": 900,
                   "durationMs": 800
+                },
+                "padding": {
+                  "top": 0,
+                  "right": 40,
+                  "bottom": 0,
+                  "left": 40
                 }
               },
               {
                 "id": "el-cover",
                 "block": "cover",
                 "x": 0,
-                "y": 16,
+                "y": 8,
                 "w": 4,
                 "h": 8,
                 "visible": true,
@@ -148,6 +146,20 @@
                   "role": "heading",
                   "size": 56,
                   "lineHeight": 1.04
+                }
+              },
+              {
+                "id": "el-filete",
+                "block": "art-filete",
+                "x": 0,
+                "y": 16,
+                "w": 4,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "draw",
+                  "delayMs": 1800,
+                  "durationMs": 900
                 }
               }
             ]
