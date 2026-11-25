@@ -55,7 +55,7 @@ function Hero({ props, cover }: { readonly props: CelebrationRendererProps; read
         {heroDrawing ? <InvitationArt drawing={heroDrawing} className="celebration-hero-art" animate /> : null}
         <h1>{content.title}</h1>
         {content.hosts.length && !hostsInTitle ? <p className="celebration-hosts">{content.hosts.map((host, index) => <span key={host.role}>{index ? <span className="celebration-amp"> &amp; </span> : null}{host.name}</span>)}</p> : null}
-        {layout.divider === "ornament" && ornamentSet ? <OrnamentSeparator set={ornamentSet} className="celebration-ornament" /> : layout.divider === "ornament" ? <Flourish /> : <span className="celebration-rule" aria-hidden="true" />}
+        {ornamentSet ? <OrnamentSeparator set={ornamentSet} className="celebration-ornament" /> : layout.divider === "ornament" ? <Flourish /> : <span className="celebration-rule" aria-hidden="true" />}
         {content.eventDate ? <p className="celebration-date"><time dateTime={content.eventDate}>{formatDate(content.eventDate, view.timeZone, view.locale)}</time></p> : null}
         {content.venueName ? <p className="celebration-venue">{content.venueName}</p> : null}
         {days !== null ? <p className="celebration-countdown">{t(countdownKey, { count: days })}</p> : null}

@@ -11,7 +11,7 @@ import { GiftsAction, RsvpAction, SECTIONS } from "../sections/index.js";
 import { layoutOf, themeVariables } from "../theme.js";
 import type { CelebrationTheme, SectionId, Translate } from "../types.js";
 import { designPalette, fontStack } from "./read.js";
-import type { ColourRole, DesignBackground, DesignBlock, DesignCanvas, DesignDocumentV2, DesignElement, DesignLink, DesignPage } from "./types.js";
+import type { DesignBackground, PaletteRole, DesignBlock, DesignCanvas, DesignDocumentV2, DesignElement, DesignLink, DesignPage } from "./types.js";
 
 /**
  * F4 b · the renderer of the design document v2 (web). The document is data: tokens become CSS custom properties, every page
@@ -39,11 +39,11 @@ interface Context {
   readonly now: Date;
 }
 
-const ROLE_VAR: Readonly<Record<ColourRole, string>> = {
+const ROLE_VAR: Readonly<Record<PaletteRole, string>> = {
   canvas: "var(--celebration-canvas)", surface: "var(--celebration-surface)", text: "var(--celebration-text)", muted: "var(--celebration-muted)",
   accent: "var(--celebration-accent)", accentFill: "var(--celebration-accent-fill)", onAccent: "var(--celebration-on-accent)", line: "var(--celebration-line)"
 };
-const role = (value: ColourRole | undefined): string | undefined => (value && Object.hasOwn(ROLE_VAR, value) ? ROLE_VAR[value] : undefined);
+const role = (value: PaletteRole | undefined): string | undefined => (value && Object.hasOwn(ROLE_VAR, value) ? ROLE_VAR[value] : undefined);
 const FONT_VAR = { heading: "var(--celebration-heading-font)", body: "var(--celebration-body-font)", monogram: "var(--celebration-monogram-font)" } as const;
 const BIG_TEXT = 40;
 const FLUID_DIVISOR = 4.2;

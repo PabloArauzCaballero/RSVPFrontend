@@ -9,15 +9,12 @@ export interface DesignFont {
   readonly weights: readonly number[];
 }
 
-export type ColourRole = PaletteRole;
 export interface DesignBox { readonly top: number; readonly right: number; readonly bottom: number; readonly left: number }
-export interface DesignBorder { readonly width: number; readonly style: "solid" | "dashed" | "dotted"; readonly colour: ColourRole }
+export interface DesignBorder { readonly width: number; readonly style: "solid" | "dashed" | "dotted"; readonly colour: PaletteRole }
 export type DesignBackground =
-  | { readonly kind: "colour"; readonly role: ColourRole }
-  | { readonly kind: "media"; readonly mediaId: string }
+  | { readonly kind: "colour"; readonly role: PaletteRole }
+  | { readonly kind: "media"; readonly mediaId: string; readonly fit: "cover" | "contain"; readonly scrim?: number }
   | { readonly kind: "illustration"; readonly illustrationId: string };
-export type DesignEntrance = "none" | "fade" | "rise" | "scale" | "draw" | "envelope";
-export interface DesignAnimation { readonly entrance: DesignEntrance; readonly delayMs?: number; readonly durationMs?: number }
 export interface DesignTypographyOverride {
   readonly role?: "heading" | "body" | "monogram";
   readonly size?: number;
@@ -26,8 +23,10 @@ export interface DesignTypographyOverride {
   readonly lineHeight?: number;
   readonly letterSpacing?: number;
   readonly transform?: "none" | "uppercase" | "lowercase" | "capitalize";
-  readonly colour?: ColourRole;
+  readonly colour?: PaletteRole;
 }
+export type DesignEntrance = "none" | "fade" | "rise" | "scale" | "draw" | "envelope";
+export interface DesignAnimation { readonly entrance: DesignEntrance; readonly delayMs?: number; readonly durationMs?: number }
 export type DesignLink =
   | { readonly kind: "url"; readonly href: string }
   | { readonly kind: "section"; readonly section: string }
