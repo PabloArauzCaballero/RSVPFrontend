@@ -61,12 +61,28 @@ export const patchElement = (canvas: CanvasName, elementId: string, patch: Parti
 export const setElementVisible = (canvas: CanvasName, elementId: string, visible: boolean): DocumentOp => (doc) =>
   mapElements(doc, canvas, elementId, (element) => (element.visible === visible ? element : { ...element, visible }));
 
-/** A section on or off in both canvases (Basic mode). The cover page has no switch. */
-export const setSectionVisible = (section: string, visible: boolean): DocumentOp => (doc) =>
+/** What the host had hidden by hand inside a section before switching it off: `canvas:elementId` keys. */
+export type HiddenByHand = ReadonlySet<string>;
+export const hiddenElements = (doc: Doc, section: string): HiddenByHand => {
+  const keys = new Set<string>();
+  for (const page of doc.pages) {
+    if (page.kind !== "section" || page.section !== section) continue;
+    for (const name of ["mobile", "desktop"] as const) for (const element of page.canvases[name]?.elements ?? []) if (!element.visible) keys.add(`${name}:${element.id}`);
+  }
+  return keys;
+};
+
+/**
+ * A section on or off in both canvases (Basic mode). The cover page has no switch. Switching it on leaves hidden the elements
+ * in `keepHidden` (what the host had hidden by hand in Advanced before switching the section off).
+ */
+export const setSectionVisible = (section: string, visible: boolean, keepHidden: HiddenByHand = new Set()): DocumentOp => (doc) =>
   mapPages(doc, (page) => {
     if (page.kind !== "section" || page.section !== section) return page;
-    const turn = (grid: design.DesignCanvas): design.DesignCanvas => ({ ...grid, elements: grid.elements.map((element) => (element.visible === visible ? element : { ...element, visible })) });
-    return { ...page, canvases: { mobile: turn(page.canvases.mobile), ...(page.canvases.desktop ? { desktop: turn(page.canvases.desktop) } : {}) } };
+    const turn = (grid: design.DesignCanvas, name: CanvasName): design.DesignCanvas => ({
+      ...grid, elements: grid.elements.map((element) => { const shown = visible && !keepHidden.has(`${name}:${element.id}`); return element.visible === shown ? element : { ...element, visible: shown }; })
+    });
+    return { ...page, canvases: { mobile: turn(page.canvases.mobile, "mobile"), ...(page.canvases.desktop ? { desktop: turn(page.canvases.desktop, "desktop") } : {}) } };
   });
 
 /** The order of the section pages (Basic mode); the cover stays first and unknown ids are ignored. */
@@ -150,13 +166,93 @@ export function sharedPadding(doc: Doc): PaddingPreset | null {
  */
 export const applyTemplateDocument = (incoming: Doc): DocumentOp => (doc) => ({ ...incoming, custom: doc.custom });
 
-/** The text a block shows, for the blocks whose text the Basic level edits. */
-export type TextField = { readonly blockId: string; readonly type: string; readonly field: "text" | "label" | "author"; readonly value: string };
-const TEXT_FIELDS: Readonly<Record<string, readonly TextField["field"][]>> = { heading: ["text"], text: ["text"], quote: ["text", "author"], button: ["label"] };
+/**
+ * The text a block shows, for the blocks whose text the Basic level edits. `optional` fields are overrides of an automatic
+ * text (the gifts and confirm buttons follow their status until the host writes their own): emptying one gives the automatic
+ * text back. A required field (a heading, a paragraph, a quote, a button) can never be left empty.
+ */
+export type TextField = { readonly blockId: string; readonly type: string; readonly field: "text" | "label" | "author"; readonly value: string; readonly optional: boolean };
+const TEXT_FIELDS: Readonly<Record<string, readonly (readonly [TextField["field"], boolean])[]>> = {
+  heading: [["text", false]], text: [["text", false]], quote: [["text", false], ["author", true]], button: [["label", false]],
+  giftsCta: [["label", true]], rsvpCta: [["label", true]]
+};
+/** The most a button label may hold (it sits in a 44 px button); the rest is generous but bounded (the server caps the document). */
+export const TEXT_LIMITS = { label: 60, text: 1000, author: 120 } as const;
 
+/**
+ * The texts the host can edit in the blocks the document has. A converted v1 template (convertV1ToV2) only carries the gifts
+ * and confirm buttons here: the story, the programme, the questions and the venues read the celebration's own data, so they are
+ * edited with the celebration and never appear in this list.
+ */
 export function editableTexts(doc: Doc): TextField[] {
-  return doc.blocks.flatMap((block) => (TEXT_FIELDS[block.type] ?? []).flatMap((field) => {
+  return doc.blocks.flatMap((block) => (TEXT_FIELDS[block.type] ?? []).flatMap(([field, optional]) => {
     const value = block.config[field];
-    return typeof value === "string" ? [{ blockId: block.id, type: block.type, field, value }] : [];
+    if (typeof value === "string") return [{ blockId: block.id, type: block.type, field, value, optional }];
+    return optional && value === undefined ? [{ blockId: block.id, type: block.type, field, value: "", optional }] : [];
   }));
 }
+
+/** Writes a block's text, or removes an optional one (null) so the automatic text comes back. */
+export const setBlockText = (blockId: string, field: TextField["field"], value: string | null): DocumentOp => (doc) => {
+  const block = doc.blocks.find((candidate) => candidate.id === blockId);
+  if (!block) return doc;
+  const { [field]: _previous, ...rest } = block.config;
+  const config = value === null ? rest : { ...rest, [field]: value };
+  if (value !== null && block.config[field] === value) return doc;
+  if (value === null && !(field in block.config)) return doc;
+  return { ...doc, blocks: doc.blocks.map((candidate) => (candidate.id === blockId ? { ...candidate, config } : candidate)) };
+};
+
+/** Block and element ids of the cover drawing the Basic level adds. */
+export const COVER_DRAWING_BLOCK = "cover-drawing";
+const COVER_DRAWING_ELEMENT = "el-cover-drawing";
+const COVER_DRAWING_ROWS = 14;
+
+/** The id of the drawing on the cover (an `illustration` block), or null. */
+export const coverDrawingOf = (doc: Doc): string | null => {
+  const id = doc.blocks.find((block) => block.id === COVER_DRAWING_BLOCK && block.type === "illustration")?.config["illustrationId"];
+  return typeof id === "string" ? id : null;
+};
+
+/**
+ * Puts the drawing `drawingId` (an id of the invitation drawing library, tinted with the template accent) on the cover, below its
+ * other elements, or takes it off (null). Changing it keeps its place. The gifts button is never touched.
+ */
+export const setCoverDrawing = (drawingId: string | null): DocumentOp => (doc) => {
+  const cover = doc.pages.find((page) => page.kind === "cover");
+  if (!cover) return doc;
+  const current = coverDrawingOf(doc);
+  if (current === drawingId) return doc;
+  if (drawingId === null) {
+    const blocks = doc.blocks.filter((block) => block.id !== COVER_DRAWING_BLOCK);
+    const strip = (grid: design.DesignCanvas | undefined): design.DesignCanvas | undefined => (grid ? { ...grid, elements: grid.elements.filter((element) => element.block !== COVER_DRAWING_BLOCK) } : grid);
+    return { ...doc, blocks, pages: doc.pages.map((page) => (page.id !== cover.id ? page : { ...page, canvases: { mobile: strip(page.canvases.mobile) as design.DesignCanvas, ...(page.canvases.desktop ? { desktop: strip(page.canvases.desktop) as design.DesignCanvas } : {}) } })) };
+  }
+  const config = { illustrationId: drawingId, tint: "accent", drawOnEnter: true };
+  if (current !== null) return { ...doc, blocks: doc.blocks.map((block) => (block.id === COVER_DRAWING_BLOCK ? { ...block, config } : block)) };
+  const place = (grid: design.DesignCanvas): design.DesignCanvas => {
+    const below = grid.elements.reduce((end, element) => Math.max(end, element.y + element.h), 0);
+    return { ...grid, elements: [...grid.elements, { id: COVER_DRAWING_ELEMENT, block: COVER_DRAWING_BLOCK, x: 0, y: below, w: grid.columns, h: COVER_DRAWING_ROWS, visible: true }] };
+  };
+  return {
+    ...doc,
+    blocks: [...doc.blocks, { id: COVER_DRAWING_BLOCK, type: "illustration", config }],
+    pages: doc.pages.map((page) => (page.id !== cover.id ? page : { ...page, canvases: { mobile: place(page.canvases.mobile), ...(page.canvases.desktop ? { desktop: place(page.canvases.desktop) } : {}) } }))
+  };
+};
+
+/** The photo of the cover (the media id of its page background), or null. */
+export const coverPhotoOf = (doc: Doc): string | null => {
+  const background = doc.pages.find((page) => page.kind === "cover")?.background;
+  return background?.kind === "media" ? background.mediaId : null;
+};
+
+/** Sets the cover photo from the media store (by id) or takes it off (null); a scrim keeps the text on top readable. */
+export const setCoverPhoto = (mediaId: string | null): DocumentOp => (doc) => {
+  if (coverPhotoOf(doc) === mediaId) return doc;
+  return mapPages(doc, (page) => {
+    if (page.kind !== "cover") return page;
+    if (mediaId === null) { const { background: _removed, ...rest } = page; return rest; }
+    return { ...page, background: { kind: "media", mediaId, fit: "cover", scrim: 0.35 } };
+  });
+};

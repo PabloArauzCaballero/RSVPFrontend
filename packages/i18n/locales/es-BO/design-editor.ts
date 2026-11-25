@@ -30,15 +30,35 @@ export const designEditorEsBO = {
     title: "Colores",
     schemeLight: "Modo claro",
     schemeDark: "Modo oscuro",
-    role: { accent: "Acento", canvas: "Fondo", text: "Texto", surface: "Tarjeta", muted: "Texto secundario" },
+    role: { accent: "Acento", canvas: "Fondo", text: "Color del texto", surface: "Tarjeta", muted: "Texto secundario" },
     hint: "Los cambios se guardan solos y puedes deshacerlos.",
-    giftsNote: "El botón de regalos siempre está en la invitación: puedes moverlo y cambiarle el estilo, pero no quitarlo.",
-    template: { title: "Plantilla", label: "Cambiar de plantilla", placeholder: "Elige una plantilla", hint: "Cambia el diseño, los colores y las tipografías. Tu código propio se conserva y puedes deshacerlo." },
+    giftsNote: "El botón de regalos siempre está en la invitación: puedes moverlo y cambiarle el estilo, pero no quitarlo. El relleno de los elementos que eliges arriba no lo cambia: el botón conserva el suyo para que siempre se lea y se pueda tocar.",
+    template: { loading: "Cargando plantillas…", failed: "No pudimos cargar las plantillas. Revisa tu conexión e inténtalo otra vez.", none: "No hay otras plantillas disponibles para este tipo de evento.", title: "Plantilla", label: "Cambiar de plantilla", placeholder: "Elige una plantilla", hint: "Cambia el diseño, los colores y las tipografías. Tu código propio se conserva y puedes deshacerlo." },
     fonts: { title: "Tipografías", heading: "Títulos", body: "Texto" },
     spacing: { title: "Espaciado", section: "Aire entre secciones", compact: "Compacto", normal: "Normal", airy: "Amplio" },
     padding: { title: "Relleno de los elementos", none: "Ninguno", small: "Pequeño", medium: "Mediano", large: "Grande" },
     sections: { title: "Secciones", locked: "Siempre visible", up: "Subir {{section}}", down: "Bajar {{section}}" },
-    texts: { title: "Textos", heading: { text: "Título" }, text: { text: "Párrafo" }, quote: { text: "Cita", author: "Autor de la cita" }, button: { label: "Texto del botón" } }
+    retry: "Reintentar",
+    texts: {
+      title: "Textos", none: "Esta invitación no tiene textos propios que cambiar aquí.",
+      celebrationData: "La historia, el itinerario, las preguntas y los lugares se editan con los datos de tu celebración.",
+      empty: "Este texto no puede quedar vacío. Escribe algo o pasa a otro campo para volver al texto anterior.",
+      restored: "Volvimos al texto anterior porque no puede quedar vacío.",
+      automatic: "Si lo dejas vacío, usamos el texto automático.",
+      heading: { text: "Título" }, text: { text: "Párrafo" }, quote: { text: "Cita", author: "Autor de la cita" }, button: { label: "Texto del botón" },
+      giftsCta: { label: "Texto del botón de regalos" }, rsvpCta: { label: "Texto del botón de confirmar" }
+    },
+    photos: {
+      title: "Fotos", loading: "Cargando tus fotos…", failed: "No pudimos cargar tus fotos. Revisa tu conexión e inténtalo otra vez.", empty: "Todavía no tienes fotos subidas.",
+      cover: "Foto de portada", placeholder: "Elige una foto", remove: "Quitar la foto de portada",
+      unavailable: "Elegir y quitar la foto de portada estará aquí cuando termine la subida de fotos. Todavía no está disponible.",
+      gallery: "Las fotos de la galería son las de tu celebración y se cambian con sus datos."
+    },
+    drawings: {
+      title: "Dibujos", loading: "Cargando los dibujos…", failed: "No pudimos cargar los dibujos. Revisa tu conexión e inténtalo otra vez.", cover: "Dibujo de la portada", none: "Sin dibujo",
+      hint: "Los dibujos usan el color de acento de tu plantilla.",
+      unavailable: "Elegir dibujos estará aquí cuando se publique la biblioteca de dibujos. Todavía no está disponible."
+    }
   },
   contrast: {
     title: "Contraste",

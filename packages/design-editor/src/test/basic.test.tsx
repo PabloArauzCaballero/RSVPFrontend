@@ -1,19 +1,20 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { createTranslator } from "@rsvp/i18n";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { patchElement, applyPaddingPreset, applySpacingPreset, applyTemplateDocument, editableTexts, setBlockConfig, setSectionOrder, setSectionVisible, sharedPadding, spacingPresetOf } from "../model/ops.js";
+import { patchElement, applyPaddingPreset, applySpacingPreset, applyTemplateDocument, coverDrawingOf, coverPhotoOf, editableTexts, hiddenElements, setBlockConfig, setBlockText, setCoverDrawing, setCoverPhoto, setSectionOrder, setSectionVisible, sharedPadding, spacingPresetOf } from "../model/ops.js";
 import { giftsIssues, giftsBlock, giftsPlacement, usefulHeightPx } from "../model/guards.js";
 import { documentOf, editorReducer, initialEditorState } from "../model/state.js";
 import { EditorShell } from "../ui/editor-shell.js";
-import type { TemplateSource } from "../ui/basic-panel.js";
+import type { DrawingSource, MediaSource, TemplateSource } from "../ui/basic-panel.js";
+import { GOLDENS } from "./fixture.js";
 import { fixture } from "./fixture.js";
 
 const t = createTranslator("es-BO");
 afterEach(cleanup);
 const gateway = { saveDraft: vi.fn(async (_id: string, version: number) => ({ draftVersion: version + 1 })) };
 
-function open(document = fixture(), templates?: TemplateSource) {
-  render(<EditorShell design={{ id: "d1", name: "Mi invitación", draftVersion: 1, document }} gateway={gateway} templates={templates} t={t} debounceMs={50} />);
+function open(document = fixture(), templates?: TemplateSource, extra: { drawings?: DrawingSource; media?: MediaSource } = {}) {
+  render(<EditorShell design={{ id: "d1", name: "Mi invitación", draftVersion: 1, document }} gateway={gateway} templates={templates} {...extra} t={t} debounceMs={50} />);
 }
 
 describe("Basic level operations", () => {
@@ -97,7 +98,7 @@ describe("Basic panel", () => {
     expect((dark.getByLabelText("Fondo") as HTMLInputElement).value).toBe("#101820");
     fireEvent.change(screen.getByLabelText("Títulos"), { target: { value: "fraunces" } });
     expect((screen.getByLabelText("Títulos") as HTMLSelectElement).value).toBe("fraunces");
-    expect([...(screen.getByLabelText("Texto", { selector: "select" }) as HTMLSelectElement).options].some((option) => option.text === "Poppins")).toBe(false);
+    expect([...(screen.getByLabelText("Texto", { selector: "select", exact: true }) as HTMLSelectElement).options].some((option) => option.text === "Poppins")).toBe(false);
     fireEvent.click(screen.getByRole("radio", { name: "Amplio" }));
     expect(screen.getByRole("radio", { name: "Amplio" }).getAttribute("aria-checked")).toBe("true");
     fireEvent.click(screen.getByRole("radio", { name: "Mediano" }));
@@ -160,7 +161,7 @@ describe("Basic panel", () => {
     expect(screen.queryByLabelText("Cambiar de plantilla")).toBeNull();
   });
 
-  it("edits the text of heading, text, quote and button blocks, and ignores an emptied box", () => {
+  it("edits the text of heading blocks; an emptied required box says why inline and goes back on leaving it", () => {
     const base = fixture();
     const doc = { ...base, blocks: [...base.blocks, { id: "b-h", type: "heading", config: { text: "Hola", level: 1 } }] } as unknown as typeof base;
     open(doc);
@@ -168,6 +169,179 @@ describe("Basic panel", () => {
     fireEvent.change(box, { target: { value: "Bienvenidos" } });
     expect(box.value).toBe("Bienvenidos");
     fireEvent.change(box, { target: { value: "   " } });
+    expect(box.getAttribute("aria-invalid")).toBe("true");
+    expect(screen.getByText(/no puede quedar vacío\. Escribe algo/)).toBeTruthy();
+    fireEvent.blur(box);
     expect(box.value).toBe("Bienvenidos");
+    expect(box.getAttribute("aria-invalid")).toBe("false");
+    expect(screen.getByText(/Volvimos al texto anterior/)).toBeTruthy();
+  });
+});
+
+describe("Basic panel with real converted documents (the 16 goldens)", () => {
+  it("every golden offers the gifts and confirm button texts, never an empty Textos panel", () => {
+    for (const golden of GOLDENS) {
+      const fields = editableTexts(golden.v2).map((entry) => `${entry.type}.${entry.field}`);
+      expect(fields, golden.key).toEqual(["giftsCta.label", "rsvpCta.label"]);
+    }
+  });
+
+  it("edits the gifts button label on a converted template, and emptying it gives the automatic text back", () => {
+    open();
+    const box = screen.getByLabelText("Texto del botón de regalos") as HTMLTextAreaElement;
+    expect(box.value).toBe("");
+    fireEvent.change(box, { target: { value: "Ver la lista de regalos" } });
+    expect(box.value).toBe("Ver la lista de regalos");
+    expect(giftsIssues(documentOf(editorReducer(initialEditorState(fixture()), { type: "edit", op: setBlockText("gifts-cta", "label", "Ver la lista de regalos"), at: 0 })))).toEqual([]);
+    fireEvent.change(box, { target: { value: "" } });
+    expect(box.getAttribute("aria-invalid")).toBe("false");
+    expect(setBlockText("gifts-cta", "label", null)(fixture()).blocks.find((block) => block.id === "gifts-cta")?.config).not.toHaveProperty("label");
+    expect(screen.getByText(/La historia, el itinerario/)).toBeTruthy();
+  });
+
+  it("the converted rsvp button label is editable and bounded", () => {
+    const doc = setBlockText("rsvp-cta", "label", "Confirmo")(fixture());
+    expect(editableTexts(doc).find((entry) => entry.type === "rsvpCta")?.value).toBe("Confirmo");
+  });
+});
+
+describe("Cover drawing and photo", () => {
+  const catalogue: DrawingSource = { list: async () => [{ id: "anillos", name: "Anillos" }, { id: "paloma", name: "Paloma" }] };
+
+  it("puts a drawing on the cover below its elements, swaps it in place and takes it off, in both canvases, without touching the gifts button", () => {
+    const doc = fixture();
+    const placed = setCoverDrawing("anillos")(doc);
+    expect(coverDrawingOf(placed)).toBe("anillos");
+    expect(placed.blocks.find((block) => block.type === "illustration")?.config).toMatchObject({ illustrationId: "anillos", tint: "accent", drawOnEnter: true });
+    const cover = placed.pages.find((page) => page.kind === "cover");
+    expect(cover?.canvases.mobile.elements.map((element) => element.block)).toEqual(["cover", "cover-drawing"]);
+    expect(giftsIssues(placed)).toEqual([]);
+    const swapped = setCoverDrawing("paloma")(placed);
+    expect(coverDrawingOf(swapped)).toBe("paloma");
+    expect(swapped.blocks.filter((block) => block.type === "illustration")).toHaveLength(1);
+    expect(setCoverDrawing("paloma")(swapped)).toBe(swapped);
+    const removed = setCoverDrawing(null)(swapped);
+    expect(removed).toEqual(doc);
+    expect(setCoverDrawing(null)(doc)).toBe(doc);
+  });
+
+  it("lets the host pick a drawing from the catalogue and undo it (loading, then ready)", async () => {
+    open(fixture(), undefined, { drawings: catalogue });
+    expect(screen.getByText("Cargando los dibujos…")).toBeTruthy();
+    const select = (await screen.findByLabelText("Dibujo de la portada")) as HTMLSelectElement;
+    fireEvent.change(select, { target: { value: "paloma" } });
+    expect(select.value).toBe("paloma");
+    fireEvent.click(screen.getByRole("button", { name: "Deshacer" }));
+    expect((screen.getByLabelText("Dibujo de la portada") as HTMLSelectElement).value).toBe("");
+  });
+
+  it("says plainly that drawings and photos are not available yet when there is no source, and never offers a fake control", () => {
+    open();
+    expect(screen.getByTestId("drawings-unavailable").textContent).toMatch(/Todavía no está disponible/);
+    expect(screen.getByTestId("photos-unavailable").textContent).toMatch(/Todavía no está disponible/);
+    expect(screen.queryByLabelText("Foto de portada")).toBeNull();
+    expect(screen.queryByLabelText("Dibujo de la portada")).toBeNull();
+  });
+
+  it("sets and removes the cover photo by media id", async () => {
+    const doc = setCoverPhoto("0b1e7a40-1111-4c3a-9d33-aaaaaaaaaaaa")(fixture());
+    expect(coverPhotoOf(doc)).toBe("0b1e7a40-1111-4c3a-9d33-aaaaaaaaaaaa");
+    expect(doc.pages.find((page) => page.kind === "cover")?.background).toMatchObject({ kind: "media", fit: "cover" });
+    expect(coverPhotoOf(setCoverPhoto(null)(doc))).toBeNull();
+    expect(setCoverPhoto(null)(fixture())).toEqual(fixture());
+    const media: MediaSource = { list: async () => [{ id: "m-1", name: "Foto 1" }] };
+    open(fixture(), undefined, { media });
+    const select = (await screen.findByLabelText("Foto de portada")) as HTMLSelectElement;
+    expect((screen.getByRole("button", { name: "Quitar la foto de portada" }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.change(select, { target: { value: "m-1" } });
+    expect((screen.getByRole("button", { name: "Quitar la foto de portada" }) as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(screen.getByRole("button", { name: "Quitar la foto de portada" }));
+    expect((screen.getByLabelText("Foto de portada") as HTMLSelectElement).value).toBe("");
+  });
+});
+
+describe("Basic panel states (loading, error, retry)", () => {
+  it("shows loading, then an error with a retry that recovers", async () => {
+    const list = vi.fn().mockRejectedValueOnce(new Error("down")).mockResolvedValue([{ id: "t-min", name: "Minimalista", document: fixture("minimalista") }]);
+    open(fixture(), { list });
+    expect(screen.getByText("Cargando plantillas…")).toBeTruthy();
+    const alert = await screen.findByText(/No pudimos cargar las plantillas/);
+    expect(alert.closest('[role="alert"]')).toBeTruthy();
+    expect(screen.queryByLabelText("Cambiar de plantilla")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Reintentar" }));
+    expect(await screen.findByLabelText("Cambiar de plantilla")).toBeTruthy();
+    expect(list).toHaveBeenCalledTimes(2);
+  });
+
+  it("an empty template list says so instead of vanishing", async () => {
+    open(fixture(), { list: async () => [] });
+    expect(await screen.findByText(/No hay otras plantillas/)).toBeTruthy();
+  });
+});
+
+describe("Choice radiogroup keyboard", () => {
+  it("has one tab stop and the arrows move and select, wrapping, with Home and End", () => {
+    open();
+    const group = screen.getByRole("radiogroup", { name: "Aire entre secciones" });
+    const radios = within(group).getAllByRole("radio");
+    expect(radios.map((radio) => radio.tabIndex)).toEqual([-1, 0, -1]);
+    radios[1]?.focus();
+    fireEvent.keyDown(radios[1] as HTMLElement, { key: "ArrowRight" });
+    expect(radios[2]?.getAttribute("aria-checked")).toBe("true");
+    expect(document.activeElement).toBe(radios[2]);
+    fireEvent.keyDown(radios[2] as HTMLElement, { key: "ArrowRight" });
+    expect(radios[0]?.getAttribute("aria-checked")).toBe("true");
+    fireEvent.keyDown(radios[0] as HTMLElement, { key: "ArrowLeft" });
+    expect(radios[2]?.getAttribute("aria-checked")).toBe("true");
+    fireEvent.keyDown(radios[2] as HTMLElement, { key: "Home" });
+    expect(radios[0]?.getAttribute("aria-checked")).toBe("true");
+    fireEvent.keyDown(radios[0] as HTMLElement, { key: "End" });
+    expect(radios[2]?.getAttribute("aria-checked")).toBe("true");
+  });
+
+  it("with nothing selected the first option is the tab stop", () => {
+    open();
+    const group = screen.getByRole("radiogroup", { name: "Relleno de los elementos" });
+    expect(within(group).getAllByRole("radio").map((radio) => radio.tabIndex)).toEqual([0, -1, -1, -1]);
+  });
+});
+
+describe("Re-enabling a section respects what the host hid by hand", () => {
+  it("the op keeps hidden the elements in keepHidden", () => {
+    const hidden = hiddenElements(fixture(), "faq");
+    expect(hidden.size).toBe(0);
+    const doc = { ...fixture(), pages: fixture().pages.map((page) => (page.section === "faq" ? { ...page, canvases: { mobile: { ...page.canvases.mobile, elements: [...page.canvases.mobile.elements, { ...page.canvases.mobile.elements[0], id: "el-extra", visible: false }] as never } } } : page)) };
+    const off = setSectionVisible("faq", false)(doc);
+    const on = setSectionVisible("faq", true, hiddenElements(doc, "faq"))(off);
+    expect(on.pages.find((page) => page.section === "faq")?.canvases.mobile.elements.map((element) => element.visible)).toEqual([true, false]);
+    expect(setSectionVisible("faq", true)(off).pages.find((page) => page.section === "faq")?.canvases.mobile.elements.every((element) => element.visible)).toBe(true);
+  });
+
+  it("the panel remembers the hand-hidden element across off and on", () => {
+    const base = fixture();
+    const doc = { ...base, pages: base.pages.map((page) => (page.section === "faq" ? { ...page, canvases: { mobile: { ...page.canvases.mobile, elements: [...page.canvases.mobile.elements, { ...page.canvases.mobile.elements[0], id: "el-extra", visible: false }] as never } } } : page)) };
+    open(doc);
+    const faq = screen.getByRole("checkbox", { name: /Preguntas frecuentes/ }) as HTMLInputElement;
+    fireEvent.click(faq);
+    expect(faq.checked).toBe(false);
+    fireEvent.click(faq);
+    expect(faq.checked).toBe(true);
+    expect(hiddenElements(doc, "faq")).toEqual(new Set(["mobile:el-extra"]));
+  });
+});
+
+describe("Canvas wireframe paints the chosen palette", () => {
+  it("uses the document's palette and fonts, and the gifts button shows its own fill and ink", () => {
+    const doc = fixture();
+    open(doc);
+    const frame = screen.getByTestId("design-frame");
+    const scheme = (frame.getAttribute("data-scheme") ?? "light") as "light" | "dark";
+    const palette = doc.tokens.palettes[scheme];
+    expect(frame.style.getPropertyValue("--wf-fill").toLowerCase()).toBe(palette.accentFill.toLowerCase());
+    expect(frame.style.getPropertyValue("--wf-on").toLowerCase()).toBe(palette.onAccent.toLowerCase());
+    expect(frame.style.getPropertyValue("--wf-heading")).toMatch(/serif|sans/);
+    expect(frame.querySelector('[data-required="true"]')?.getAttribute("data-style")).toBe("solid");
+    fireEvent.change(within(screen.getByRole("group", { name: scheme === "dark" ? "Modo oscuro" : "Modo claro" })).getByLabelText("Fondo"), { target: { value: "#102030" } });
+    expect(frame.style.getPropertyValue("--wf-canvas").toLowerCase()).toBe("#102030");
   });
 });
