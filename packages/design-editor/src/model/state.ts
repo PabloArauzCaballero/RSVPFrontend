@@ -40,7 +40,7 @@ export const canRedo = (state: EditorState): boolean => state.history.future.len
 const issueKey = (issue: GiftsIssue): string => `${issue.code}:${issue.canvas ?? ""}`;
 
 /** Issues the candidate introduces: a document that already arrived broken (an old one) does not freeze the editor. */
-function introduced(before: Doc, after: Doc): GiftsIssue[] {
+export function introduced(before: Doc, after: Doc): GiftsIssue[] {
   const known = new Set(giftsIssues(before).map(issueKey));
   return giftsIssues(after).filter((issue) => !known.has(issueKey(issue)));
 }

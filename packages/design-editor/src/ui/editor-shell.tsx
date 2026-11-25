@@ -9,8 +9,9 @@ import { ComponentPalette, ElementInspector } from "./canvas-panels.js";
 import { ContrastPanel } from "./contrast-panel.js";
 import { PublishPanel, type VersionsApi } from "./publish-panel.js";
 import type { PublishOutcome, VersionSummary, VersionsGateway } from "../save/versions.js";
-import { EditorProvider, type Translate } from "./editor-context.js";
+import { EditorProvider, type FocusTarget, type Translate } from "./editor-context.js";
 import { CustomCodePanel } from "./custom-code-panel.js";
+import { useNarrow } from "./use-narrow.js";
 import { AlertIcon, CheckIcon, ClockIcon, DesktopIcon, DotIcon, LayersIcon, LockIcon, PhoneIcon, RedoIcon, SlidersIcon, SpinnerIcon, UndoIcon } from "./icons.js";
 
 export interface EditableDesign {
@@ -47,7 +48,6 @@ export interface EditorShellProps {
 }
 
 const key = (name: string): string => `designEditor.${name}`;
-const NARROW_QUERY = "(max-width: 960px)";
 const UNAUTHORIZED = 401;
 const FORBIDDEN = 403;
 const TOO_LARGE = 413;
@@ -65,19 +65,6 @@ const isEditableText = (target: EventTarget | null): boolean => {
   if (target.isContentEditable || target instanceof HTMLTextAreaElement) return true;
   return target instanceof HTMLInputElement && !["color", "checkbox", "radio", "range", "button"].includes(target.type);
 };
-
-function useNarrow(): boolean {
-  const query = typeof window !== "undefined" && typeof window.matchMedia === "function" ? window.matchMedia(NARROW_QUERY) : null;
-  const [narrow, setNarrow] = useState(query?.matches ?? false);
-  useEffect(() => {
-    if (!query) return undefined;
-    const update = (): void => setNarrow(query.matches);
-    update();
-    query.addEventListener("change", update);
-    return () => query.removeEventListener("change", update);
-  }, [query]);
-  return narrow;
-}
 
 const STOPPED: ReadonlySet<SaveStatus["kind"]> = new Set(["conflict", "rejected"]);
 
@@ -375,7 +362,20 @@ export function EditorShell({ design: source, gateway, t, onReload, signInHref, 
   const setMode = useCallback((mode: EditorMode) => dispatch({ type: "setMode", mode }), []);
   const setCanvas = useCallback((canvas: CanvasName) => dispatch({ type: "setCanvas", canvas }), []);
 
-  const api = useMemo(() => ({ state, document, dispatch, t, now }), [state, document, t, now]);
+  const [announcement, setAnnouncement] = useState<{ readonly text: string; readonly n: number }>({ text: "", n: 0 });
+  const announce = useCallback((text: string) => setAnnouncement((last) => ({ text, n: last.n + 1 })), []);
+  const shellRef = useRef<HTMLDivElement | null>(null);
+  const focusTarget = useRef<FocusTarget | null>(null);
+  const focusAfter = useCallback((target: FocusTarget) => { focusTarget.current = target; }, []);
+  useEffect(() => {
+    const target = focusTarget.current;
+    if (!target) return;
+    focusTarget.current = null;
+    const nodes = Array.from(shellRef.current?.querySelectorAll<HTMLElement>("[data-element-id], [data-stage-page]") ?? []);
+    nodes.find((node) => ("element" in target ? node.dataset["elementId"] === target.element : node.dataset["stagePage"] === target.stage))?.focus();
+  }, [document]);
+
+  const api = useMemo(() => ({ state, document, dispatch, t, now, announce, focusAfter }), [state, document, t, now, announce, focusAfter]);
 
   const pages = (
     <ul className="de-pages">
@@ -390,7 +390,8 @@ export function EditorShell({ design: source, gateway, t, onReload, signInHref, 
 
   return (
     <EditorProvider value={api}>
-    <div className="de-shell" onKeyDown={onKeyDown}>
+    <div className="de-shell" ref={shellRef} onKeyDown={onKeyDown}>
+      <div className="de-live" role="status" aria-live="polite" aria-atomic="true" data-testid="canvas-announcer"><span key={announcement.n}>{announcement.text}</span></div>
       <header className="de-bar">
         <h1 className="de-title">{source.name}</h1>
         <span className="de-status" data-testid="save-status" role="status" aria-live="polite" data-kind={status.kind}>

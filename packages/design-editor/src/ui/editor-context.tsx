@@ -10,7 +10,13 @@ export interface EditorApi {
   readonly dispatch: Dispatch<EditorAction>;
   readonly t: Translate;
   readonly now: () => number;
+  /** Says something to assistive technology (one polite live region for the whole editor). */
+  readonly announce: (text: string) => void;
+  /** After the next change of the document, moves the focus to an element or to the stage of a page (the one that was just removed no longer exists). */
+  readonly focusAfter: (target: FocusTarget) => void;
 }
+
+export type FocusTarget = { readonly element: string } | { readonly stage: string };
 
 const EditorContext = createContext<EditorApi | null>(null);
 export const EditorProvider = EditorContext.Provider;

@@ -20,12 +20,15 @@ export const DEFAULT_ROWS: Readonly<Record<string, number>> = {
   dressCode: 16, faq: 24, recommendations: 24, illustration: 16, monogram: 12, ornament: 4, spacer: 4, button: 6, quote: 12, weddingParty: 24, video: 24, music: 8, map: 24, html: 16
 };
 
-/** Components the host can add from the palette: the ones that need no uploaded media or celebration data to exist. */
-export const PALETTE: readonly { readonly type: string; readonly config: Readonly<Record<string, unknown>> }[] = [
-  { type: "heading", config: { text: "Título", level: 2 } },
-  { type: "text", config: { text: "Escribe aquí tu mensaje." } },
-  { type: "quote", config: { text: "Una frase que te represente." } },
-  { type: "button", config: { label: "Ver más", style: "outline" } },
+/**
+ * Components the host can add from the palette: the ones that need no uploaded media or celebration data to exist.
+ * `textField` names the config field that carries the visible default text; the UI fills it from the catalogue (`palette.default.<type>`) so it follows the editor's language.
+ */
+export const PALETTE: readonly { readonly type: string; readonly config: Readonly<Record<string, unknown>>; readonly textField?: string }[] = [
+  { type: "heading", config: { level: 2 }, textField: "text" },
+  { type: "text", config: {}, textField: "text" },
+  { type: "quote", config: {}, textField: "text" },
+  { type: "button", config: { style: "outline" }, textField: "label" },
   { type: "countdown", config: { precision: "days" } },
   { type: "ornament", config: { ornament: "rule" } },
   { type: "spacer", config: {} },
