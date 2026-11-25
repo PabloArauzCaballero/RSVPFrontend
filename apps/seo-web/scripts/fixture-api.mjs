@@ -52,6 +52,11 @@ const v2Template = (name) => {
   const file = JSON.parse(readFileSync(new URL(`../../../packages/celebration-theme/src/design/documents/${name}.json`, import.meta.url), "utf8"));
   return { id: V2_IDS[name], name: file.name, description: file.description, status: "PUBLISHED", layout: file.layout, eventTypeTags: file.eventTypeTags, theme: file.theme, sectionOrder: file.sectionOrder, version: 2 };
 };
+// F4 c4 · the sober group (uuid5 of the key, P20). Kept apart from the lines above so the parallel groups merge without touching each other.
+Object.assign(V2_IDS, { minimalista: "869eeeec-3666-5b8b-bde6-ee717e43568f", "arena-terracota": "12cfb5c1-0072-5374-84ad-24ccbc4c8ff6", corporativo: "ba708189-7218-5d19-a15f-c0f13e11381e",
+  "corporativo-grafito": "31f50a64-17fe-5ddf-84e2-6a2d1812fb30", inauguracion: "c075dcc9-346f-5238-b56c-22d6ae7c948c", "fiesta-patronal": "effedaf6-1f6c-5446-b263-dd9438e2feac", "otros-evento": "e72b06cb-5175-5121-8e05-23854a78d1af" });
+Object.assign(V2_CONTENT, { minimalista: { title: "Valeria y Tomás", hosts: { BRIDE: "Valeria", GROOM: "Tomás" } }, "arena-terracota": { title: "Bautizo de Emilia", hosts: {} }, corporativo: { title: "Cumbre de Innovación 2026", hosts: {} },
+  "corporativo-grafito": { title: "Asamblea anual 2026", hosts: {} }, inauguracion: { title: "Inauguración de Café Altiplano", hosts: {} }, "fiesta-patronal": { title: "Fiesta de la Virgen de Urkupiña", hosts: {} }, "otros-evento": { title: "Encuentro de la familia Rojas", hosts: {} } });
 const v2Celebrations = Object.entries(V2_IDS).flatMap(([name, templateId], index) => [false, true].map((bare) => ({
   slug: `fixture-v2-${name}${bare ? "-sinfoto" : ""}`, templateId, bare,
   view: { ...view, celebrationId: `00000000-0000-4000-8000-${String(100 + index * 2 + (bare ? 1 : 0)).padStart(12, "0")}`, slug: `fixture-v2-${name}${bare ? "-sinfoto" : ""}`, templateId,

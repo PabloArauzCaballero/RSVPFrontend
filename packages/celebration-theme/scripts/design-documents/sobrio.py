@@ -23,9 +23,9 @@ minimalista = dict(
     description="Solo tipografía y una línea: papel, tinta y mucho aire; la portada tiene un único objeto, un filete, y el acento vive en un cuadrado pequeño.",
     tags=["anniversary", "baptism", "birthday", "quinceanera", "wedding"], sections=["schedule", "venues", "story", "gallery", "faq", "gifts", "rsvp"],
     cover_blocks=[art("art-linea", "filete", True)],
-    cover_mobile=[el("el-cover", "cover", 0, 0, 4, 8, animation=anim("fade", 200, 800), typography=dict(align="start", role="heading", size=56, lineHeight=1.04, weight=400)),
+    cover_mobile=[el("el-cover", "cover", 0, 0, 4, 8, animation=anim("fade", 200, 800), typography=dict(align="start", role="heading", size=72, lineHeight=1.04, weight=400)),
                   el("el-linea", "art-linea", 0, 1, 3, 2, animation=anim("draw", 700, 1200))],
-    cover_desktop=[el("el-cover", "cover", 0, 0, 9, 8, animation=anim("fade", 200, 800), typography=dict(align="start", role="heading", size=104, lineHeight=1.0, weight=400)),
+    cover_desktop=[el("el-cover", "cover", 0, 0, 9, 8, animation=anim("fade", 200, 800), typography=dict(align="start", role="heading", size=72, lineHeight=1.0, weight=400)),
                    el("el-linea", "art-linea", 0, 1, 4, 2, animation=anim("draw", 700, 1200))],
     header=lambda s: None)
 
@@ -74,10 +74,10 @@ grafito = dict(
     tags=["corporate"], sections=["schedule", "story", "venues", "dressCode", "gifts", "faq", "recommendations", "rsvp"],
     cover_blocks=[art("art-libreta", "libreta"), art("art-regla", "filete", True)],
     cover_mobile=[el("el-regla", "art-regla", 0, 0, 4, 2, animation=anim("draw", 0, 1000)),
-                  el("el-cover", "cover", 0, 2, 4, 20, animation=anim("rise", 400, 800), typography=dict(align="start", role="heading", size=52, lineHeight=1.04, weight=700)),
+                  el("el-cover", "cover", 0, 2, 4, 20, animation=anim("rise", 400, 800), typography=dict(align="start", role="heading", size=68, lineHeight=1.04, weight=700)),
                   el("el-libreta", "art-libreta", 2, 22, 2, 9, animation=anim("fade", 1100, 600))],
     cover_desktop=[el("el-regla", "art-regla", 0, 0, 12, 2, animation=anim("draw", 0, 1000)),
-                   el("el-cover", "cover", 0, 2, 12, 12, animation=anim("rise", 400, 800), typography=dict(align="start", role="heading", size=112, lineHeight=1.0, weight=700)),
+                   el("el-cover", "cover", 0, 2, 12, 12, animation=anim("rise", 400, 800), typography=dict(align="start", role="heading", size=68, lineHeight=1.0, weight=700)),
                    el("el-libreta", "art-libreta", 10, 14, 2, 9, animation=anim("fade", 1100, 600))],
     header=lambda s: None)
 

@@ -105,7 +105,7 @@
                 "typography": {
                   "align": "start",
                   "role": "heading",
-                  "size": 56,
+                  "size": 72,
                   "lineHeight": 1.04,
                   "weight": 400
                 }
@@ -147,7 +147,7 @@
                 "typography": {
                   "align": "start",
                   "role": "heading",
-                  "size": 104,
+                  "size": 72,
                   "lineHeight": 1.0,
                   "weight": 400
                 }
