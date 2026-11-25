@@ -1,0 +1,613 @@
+{
+  "key": "editorial-oliva",
+  "name": "Editorial oliva",
+  "description": "Mesa de campo: una mesa larga dibujada, la foto montada sobre papel con márgenes amplios y un verde oliva frío; serif de lectura y sans amable.",
+  "layout": "minimal",
+  "eventTypeTags": [
+    "birthday",
+    "quinceanera",
+    "wedding"
+  ],
+  "sectionOrder": [
+    "story",
+    "gallery",
+    "venues",
+    "schedule",
+    "dressCode",
+    "gifts",
+    "faq",
+    "recommendations",
+    "rsvp"
+  ],
+  "theme": {
+    "schemaVersion": 2,
+    "tokens": {
+      "palettes": {
+        "light": {
+          "canvas": "#F4F4EA",
+          "surface": "#FFFFFF",
+          "text": "#20241A",
+          "muted": "#556047",
+          "accent": "#4A6A2A",
+          "accentFill": "#4A6A2A",
+          "onAccent": "#FFFFFF",
+          "line": "#7E8A6E"
+        },
+        "dark": {
+          "canvas": "#12150E",
+          "surface": "#1B2015",
+          "text": "#E9EDDF",
+          "muted": "#B0B99F",
+          "accent": "#A9CC7B",
+          "accentFill": "#9BBF6C",
+          "onAccent": "#10170A",
+          "line": "#6B775A"
+        }
+      },
+      "typography": {
+        "heading": {
+          "family": "newsreader",
+          "weights": [
+            400,
+            600
+          ]
+        },
+        "body": {
+          "family": "figtree",
+          "weights": [
+            400,
+            500,
+            600
+          ]
+        },
+        "scale": {
+          "base": 16,
+          "ratio": 1.2
+        }
+      },
+      "spacing": {
+        "unit": 8,
+        "section": 64,
+        "contentMaxWidth": 1120
+      },
+      "radii": {
+        "sm": 0,
+        "md": 2,
+        "lg": 4
+      },
+      "ornament": "none",
+      "illustrationSet": "none"
+    },
+    "pages": [
+      {
+        "id": "page-cover",
+        "kind": "cover",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-mesa",
+                "block": "art-mesa",
+                "x": 0,
+                "y": 0,
+                "w": 4,
+                "h": 14,
+                "visible": true,
+                "animation": {
+                  "entrance": "rise",
+                  "delayMs": 100,
+                  "durationMs": 900
+                }
+              },
+              {
+                "id": "el-cover",
+                "block": "cover",
+                "x": 0,
+                "y": 14,
+                "w": 4,
+                "h": 24,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 600,
+                  "durationMs": 800
+                },
+                "typography": {
+                  "align": "start",
+                  "role": "heading",
+                  "weight": 400,
+                  "size": 48,
+                  "lineHeight": 1.08
+                },
+                "padding": {
+                  "top": 24,
+                  "right": 24,
+                  "bottom": 24,
+                  "left": 24
+                },
+                "margin": {
+                  "top": 0,
+                  "right": 16,
+                  "bottom": 0,
+                  "left": 16
+                },
+                "background": {
+                  "kind": "colour",
+                  "role": "surface"
+                },
+                "border": {
+                  "width": 1,
+                  "style": "solid",
+                  "colour": "line"
+                }
+              },
+              {
+                "id": "el-copa",
+                "block": "art-copa",
+                "x": 3,
+                "y": 38,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 1200,
+                  "durationMs": 600
+                }
+              }
+            ]
+          },
+          "desktop": {
+            "mode": "flow",
+            "columns": 12,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-mesa",
+                "block": "art-mesa",
+                "x": 0,
+                "y": 2,
+                "w": 7,
+                "h": 28,
+                "visible": true,
+                "animation": {
+                  "entrance": "rise",
+                  "delayMs": 100,
+                  "durationMs": 900
+                }
+              },
+              {
+                "id": "el-cover",
+                "block": "cover",
+                "x": 7,
+                "y": 4,
+                "w": 5,
+                "h": 28,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 600,
+                  "durationMs": 800
+                },
+                "typography": {
+                  "align": "start",
+                  "role": "heading",
+                  "weight": 400,
+                  "size": 64,
+                  "lineHeight": 1.08
+                },
+                "padding": {
+                  "top": 32,
+                  "right": 32,
+                  "bottom": 32,
+                  "left": 32
+                },
+                "background": {
+                  "kind": "colour",
+                  "role": "surface"
+                },
+                "border": {
+                  "width": 1,
+                  "style": "solid",
+                  "colour": "line"
+                }
+              },
+              {
+                "id": "el-copa",
+                "block": "art-copa",
+                "x": 11,
+                "y": 33,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 1200,
+                  "durationMs": 600
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-story",
+        "kind": "section",
+        "section": "story",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-story",
+                "block": "story",
+                "x": 0,
+                "y": 0,
+                "w": 4,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-gallery",
+        "kind": "section",
+        "section": "gallery",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-gallery",
+                "block": "gallery",
+                "x": 0,
+                "y": 0,
+                "w": 4,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-venues",
+        "kind": "section",
+        "section": "venues",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-mapa-pin",
+                "block": "art-mapa-pin",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-venues",
+                "block": "venues",
+                "x": 0,
+                "y": 8,
+                "w": 4,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-schedule",
+        "kind": "section",
+        "section": "schedule",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-schedule",
+                "block": "schedule",
+                "x": 0,
+                "y": 0,
+                "w": 4,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-dress-code",
+        "kind": "section",
+        "section": "dressCode",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-dress-code",
+                "block": "dress-code",
+                "x": 0,
+                "y": 0,
+                "w": 4,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-gifts",
+        "kind": "section",
+        "section": "gifts",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-regalo",
+                "block": "art-regalo",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-gifts-cta",
+                "block": "gifts-cta",
+                "x": 0,
+                "y": 8,
+                "w": 4,
+                "h": 6,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-faq",
+        "kind": "section",
+        "section": "faq",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-faq",
+                "block": "faq",
+                "x": 0,
+                "y": 0,
+                "w": 4,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-recommendations",
+        "kind": "section",
+        "section": "recommendations",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-recommendations",
+                "block": "recommendations",
+                "x": 0,
+                "y": 0,
+                "w": 4,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-rsvp",
+        "kind": "section",
+        "section": "rsvp",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-sobre",
+                "block": "art-sobre",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-rsvp-cta",
+                "block": "rsvp-cta",
+                "x": 0,
+                "y": 8,
+                "w": 4,
+                "h": 6,
+                "visible": true
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "blocks": [
+      {
+        "id": "cover",
+        "type": "cover",
+        "config": {
+          "variant": "minimal",
+          "envelope": false
+        }
+      },
+      {
+        "id": "art-mesa",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "mesa-larga",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "art-copa",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "copa-vino",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "story",
+        "type": "story",
+        "config": {}
+      },
+      {
+        "id": "gallery",
+        "type": "gallery",
+        "config": {
+          "display": "grid"
+        }
+      },
+      {
+        "id": "art-mapa-pin",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "mapa-pin",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "venues",
+        "type": "venues",
+        "config": {
+          "display": "cards",
+          "mapOnTap": true
+        }
+      },
+      {
+        "id": "schedule",
+        "type": "schedule",
+        "config": {
+          "display": "timeline"
+        }
+      },
+      {
+        "id": "dress-code",
+        "type": "dressCode",
+        "config": {}
+      },
+      {
+        "id": "art-regalo",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "regalo",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "gifts-cta",
+        "type": "giftsCta",
+        "required": true,
+        "config": {
+          "style": "solid"
+        }
+      },
+      {
+        "id": "faq",
+        "type": "faq",
+        "config": {}
+      },
+      {
+        "id": "recommendations",
+        "type": "recommendations",
+        "config": {}
+      },
+      {
+        "id": "art-sobre",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "sobre",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "rsvp-cta",
+        "type": "rsvpCta",
+        "config": {
+          "style": "solid"
+        }
+      }
+    ],
+    "custom": {
+      "html": "",
+      "css": ""
+    }
+  }
+}

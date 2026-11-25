@@ -1,0 +1,701 @@
+{
+  "key": "editorial-granate",
+  "name": "Editorial granate",
+  "description": "Programa de teatro: un telón de arcos abre la portada, el programa va en un marco fino y el itinerario se numera por actos.",
+  "layout": "corporate",
+  "eventTypeTags": [
+    "anniversary",
+    "wedding"
+  ],
+  "sectionOrder": [
+    "story",
+    "schedule",
+    "venues",
+    "dressCode",
+    "gallery",
+    "gifts",
+    "faq",
+    "recommendations",
+    "rsvp"
+  ],
+  "theme": {
+    "schemaVersion": 2,
+    "tokens": {
+      "palettes": {
+        "light": {
+          "canvas": "#F4EFEA",
+          "surface": "#FFFDFB",
+          "text": "#211719",
+          "muted": "#5D5053",
+          "accent": "#8A2638",
+          "accentFill": "#8A2638",
+          "onAccent": "#FFFFFF",
+          "line": "#8E7E81"
+        },
+        "dark": {
+          "canvas": "#170E10",
+          "surface": "#22171A",
+          "text": "#F3E7E9",
+          "muted": "#C3AEB2",
+          "accent": "#E69AA9",
+          "accentFill": "#D4788A",
+          "onAccent": "#2A0C14",
+          "line": "#836770"
+        }
+      },
+      "typography": {
+        "heading": {
+          "family": "fraunces",
+          "weights": [
+            500,
+            700
+          ]
+        },
+        "body": {
+          "family": "newsreader",
+          "weights": [
+            400,
+            500,
+            600
+          ]
+        },
+        "scale": {
+          "base": 16,
+          "ratio": 1.25
+        }
+      },
+      "spacing": {
+        "unit": 8,
+        "section": 56,
+        "contentMaxWidth": 1080
+      },
+      "radii": {
+        "sm": 0,
+        "md": 0,
+        "lg": 0
+      },
+      "ornament": "rule",
+      "illustrationSet": "none"
+    },
+    "pages": [
+      {
+        "id": "page-cover",
+        "kind": "cover",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-arcos",
+                "block": "art-arcos",
+                "x": 0,
+                "y": 0,
+                "w": 4,
+                "h": 4,
+                "visible": true,
+                "animation": {
+                  "entrance": "draw",
+                  "delayMs": 0,
+                  "durationMs": 1400
+                }
+              },
+              {
+                "id": "el-copas",
+                "block": "art-copas",
+                "x": 1,
+                "y": 4,
+                "w": 2,
+                "h": 11,
+                "visible": true,
+                "animation": {
+                  "entrance": "rise",
+                  "delayMs": 600,
+                  "durationMs": 800
+                }
+              },
+              {
+                "id": "el-cover",
+                "block": "cover",
+                "x": 0,
+                "y": 15,
+                "w": 4,
+                "h": 22,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 900,
+                  "durationMs": 800
+                },
+                "typography": {
+                  "align": "center",
+                  "role": "heading",
+                  "size": 56,
+                  "weight": 700,
+                  "lineHeight": 1.05
+                },
+                "padding": {
+                  "top": 24,
+                  "right": 16,
+                  "bottom": 24,
+                  "left": 16
+                },
+                "border": {
+                  "width": 1,
+                  "style": "solid",
+                  "colour": "accent"
+                }
+              },
+              {
+                "id": "el-arcos-base",
+                "block": "art-arcos-base",
+                "x": 0,
+                "y": 37,
+                "w": 4,
+                "h": 4,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 1500,
+                  "durationMs": 600
+                }
+              }
+            ]
+          },
+          "desktop": {
+            "mode": "flow",
+            "columns": 12,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-arcos",
+                "block": "art-arcos",
+                "x": 0,
+                "y": 0,
+                "w": 12,
+                "h": 4,
+                "visible": true,
+                "animation": {
+                  "entrance": "draw",
+                  "delayMs": 0,
+                  "durationMs": 1400
+                }
+              },
+              {
+                "id": "el-copas",
+                "block": "art-copas",
+                "x": 5,
+                "y": 5,
+                "w": 2,
+                "h": 11,
+                "visible": true,
+                "animation": {
+                  "entrance": "rise",
+                  "delayMs": 600,
+                  "durationMs": 800
+                }
+              },
+              {
+                "id": "el-cover",
+                "block": "cover",
+                "x": 2,
+                "y": 17,
+                "w": 8,
+                "h": 24,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 900,
+                  "durationMs": 800
+                },
+                "typography": {
+                  "align": "center",
+                  "role": "heading",
+                  "size": 88,
+                  "weight": 700,
+                  "lineHeight": 1.05
+                },
+                "padding": {
+                  "top": 40,
+                  "right": 40,
+                  "bottom": 40,
+                  "left": 40
+                },
+                "border": {
+                  "width": 1,
+                  "style": "solid",
+                  "colour": "accent"
+                }
+              },
+              {
+                "id": "el-arcos-base",
+                "block": "art-arcos-base",
+                "x": 0,
+                "y": 42,
+                "w": 12,
+                "h": 4,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 1500,
+                  "durationMs": 600
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-story",
+        "kind": "section",
+        "section": "story",
+        "style": "cards",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-arcos-sec",
+                "block": "art-arcos-sec",
+                "x": 0,
+                "y": 0,
+                "w": 4,
+                "h": 3,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-story",
+                "block": "story",
+                "x": 0,
+                "y": 3,
+                "w": 4,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-schedule",
+        "kind": "section",
+        "section": "schedule",
+        "style": "cards",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-arcos-sec",
+                "block": "art-arcos-sec",
+                "x": 0,
+                "y": 0,
+                "w": 4,
+                "h": 3,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-schedule",
+                "block": "schedule",
+                "x": 0,
+                "y": 3,
+                "w": 4,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-venues",
+        "kind": "section",
+        "section": "venues",
+        "style": "cards",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-arcos-sec",
+                "block": "art-arcos-sec",
+                "x": 0,
+                "y": 0,
+                "w": 4,
+                "h": 3,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-venues",
+                "block": "venues",
+                "x": 0,
+                "y": 3,
+                "w": 4,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-dress-code",
+        "kind": "section",
+        "section": "dressCode",
+        "style": "cards",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-arcos-sec",
+                "block": "art-arcos-sec",
+                "x": 0,
+                "y": 0,
+                "w": 4,
+                "h": 3,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-dress-code",
+                "block": "dress-code",
+                "x": 0,
+                "y": 3,
+                "w": 4,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-gallery",
+        "kind": "section",
+        "section": "gallery",
+        "style": "cards",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-arcos-sec",
+                "block": "art-arcos-sec",
+                "x": 0,
+                "y": 0,
+                "w": 4,
+                "h": 3,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-gallery",
+                "block": "gallery",
+                "x": 0,
+                "y": 3,
+                "w": 4,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-gifts",
+        "kind": "section",
+        "section": "gifts",
+        "style": "cards",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-arcos-sec",
+                "block": "art-arcos-sec",
+                "x": 0,
+                "y": 0,
+                "w": 4,
+                "h": 3,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-gifts-cta",
+                "block": "gifts-cta",
+                "x": 0,
+                "y": 3,
+                "w": 4,
+                "h": 6,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-faq",
+        "kind": "section",
+        "section": "faq",
+        "style": "cards",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-arcos-sec",
+                "block": "art-arcos-sec",
+                "x": 0,
+                "y": 0,
+                "w": 4,
+                "h": 3,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-faq",
+                "block": "faq",
+                "x": 0,
+                "y": 3,
+                "w": 4,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-recommendations",
+        "kind": "section",
+        "section": "recommendations",
+        "style": "cards",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-arcos-sec",
+                "block": "art-arcos-sec",
+                "x": 0,
+                "y": 0,
+                "w": 4,
+                "h": 3,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-recommendations",
+                "block": "recommendations",
+                "x": 0,
+                "y": 3,
+                "w": 4,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-rsvp",
+        "kind": "section",
+        "section": "rsvp",
+        "style": "cards",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-arcos-sec",
+                "block": "art-arcos-sec",
+                "x": 0,
+                "y": 0,
+                "w": 4,
+                "h": 3,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-rsvp-cta",
+                "block": "rsvp-cta",
+                "x": 0,
+                "y": 3,
+                "w": 4,
+                "h": 6,
+                "visible": true
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "blocks": [
+      {
+        "id": "cover",
+        "type": "cover",
+        "config": {
+          "variant": "corporate",
+          "envelope": false
+        }
+      },
+      {
+        "id": "art-arcos",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "arcos",
+          "tint": "accent",
+          "drawOnEnter": true
+        }
+      },
+      {
+        "id": "art-arcos-base",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "arcos",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "art-copas",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "copas",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "art-arcos-sec",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "arcos",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "story",
+        "type": "story",
+        "config": {}
+      },
+      {
+        "id": "schedule",
+        "type": "schedule",
+        "config": {
+          "display": "list"
+        }
+      },
+      {
+        "id": "venues",
+        "type": "venues",
+        "config": {
+          "display": "cards",
+          "mapOnTap": true
+        }
+      },
+      {
+        "id": "dress-code",
+        "type": "dressCode",
+        "config": {}
+      },
+      {
+        "id": "gallery",
+        "type": "gallery",
+        "config": {
+          "display": "grid"
+        }
+      },
+      {
+        "id": "gifts-cta",
+        "type": "giftsCta",
+        "required": true,
+        "config": {
+          "style": "solid"
+        }
+      },
+      {
+        "id": "faq",
+        "type": "faq",
+        "config": {}
+      },
+      {
+        "id": "recommendations",
+        "type": "recommendations",
+        "config": {}
+      },
+      {
+        "id": "rsvp-cta",
+        "type": "rsvpCta",
+        "config": {
+          "style": "solid"
+        }
+      }
+    ],
+    "custom": {
+      "html": "",
+      "css": ""
+    }
+  }
+}

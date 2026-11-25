@@ -244,3 +244,18 @@
 }
 /* The drawing that heads a section is a small mark, not a block: 72 px whatever the columns say. */
 .celebration-design .cdesign-page[data-page-kind="section"] .cdesign-el[data-block="illustration"] { max-width: 4.5rem; }
+
+/* ---------------------------------------------------------------------------------------------------------------------------
+   Design document v2 (F4 c1 · bodas). Two things the documents of the wedding group need and the contract cannot say per element:
+   the editorial cover as a spread, and the numbered acts of the programme. Keyed to `.celebration-design`; no gradient, no capitals. */
+.celebration-design .cdesign-cover[data-variant="editorial"] .cdesign-cover-photo { width: 100%; max-height: none; aspect-ratio: 4 / 5; object-fit: cover; }
+@media (min-width: 900px) {
+  .celebration-design .cdesign-cover[data-variant="editorial"][data-has-image="true"] { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); column-gap: clamp(1.5rem, 4vw, 3.5rem); align-items: end; }
+  .celebration-design .cdesign-cover[data-variant="editorial"][data-has-image="true"] .cdesign-cover-photo { grid-column: 1; grid-row: 1; }
+  .celebration-design .cdesign-cover[data-variant="editorial"][data-has-image="true"] .cdesign-cover-copy { grid-column: 2; grid-row: 1; }
+}
+/* The schedule is a sequence: with `display: "list"` each item is an act, in Roman numerals in the accent, and the timeline dot gives way to it. */
+.celebration-design .cdesign-section-body[data-display="list"] .celebration-schedule { counter-reset: act; }
+.celebration-design .cdesign-section-body[data-display="list"] .celebration-schedule li { counter-increment: act; }
+.celebration-design .cdesign-section-body[data-display="list"] .celebration-schedule li::before { content: counter(act, upper-roman); left: 6.75rem; top: .95rem; width: 2.5rem; height: auto; border-radius: 0; background: none; box-shadow: none; text-align: center; font-family: var(--celebration-heading-font); font-weight: 600; font-size: 1rem; line-height: 1.6; color: var(--celebration-accent); }
+.celebration-design .cdesign-section-body[data-display="list"] .celebration-schedule li::after { display: none; }
