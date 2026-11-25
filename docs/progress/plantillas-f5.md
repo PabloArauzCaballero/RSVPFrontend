@@ -80,3 +80,16 @@ Rama `feat/plantillas-f5b-guarda-altura-util`, sobre `feat/plantillas-f5-editor`
 - **Antes/después:** las pruebas nuevas contra el código anterior: vitest 21 fallos de 29; Playwright 10 fallos de 11. Después: 313/313 en `design-editor`, 11/11 en Playwright.
 - **Pendiente (no hecho):** la hoja abierta tapa parte del lienzo hasta que se pliega (se decide a mano); guías de alineación y selección múltiple; verificación en Safari/iOS con dedo real; lectores de pantalla reales (solo se comprobó el árbol de accesibilidad y axe); animación por elemento sigue fuera (sin movimiento nuevo salvo el giro del guardado).
 - **Nivel:** `TESTED` (vitest y Chromium de Linux con el arnés). Líneas base macOS que cambian: ninguna.
+
+## PR c · ronda 2 (revisión del orquestador: PL-125-R2-V1..V6)
+
+- **V1 (mayor):** a ≤ 960 px la hoja del inspector mide como máximo 45 vh (el cuerpo se desplaza dentro de ella), tiene botón «Cerrar» visible (es-BO «Cerrar», en-US «Close») y, al abrirla o al cambiar de elemento seleccionado, el elemento se desplaza a la franja libre sobre la hoja (margen 24 px; el pie de la página crece 45 vh mientras está abierta). Prueba Playwright a 360×800 y 768×1024: el rect del elemento termina por encima de la hoja y la hoja no pasa de 45 vh.
+- **V2:** el `summary` lleva chevron (arriba cerrada, abajo abierta; la prueba compara su transformación) y Escape cierra la hoja devolviendo el foco al elemento. Un Escape dentro de un campo con borrador sigue revirtiendo el borrador primero.
+- **V3:** el área de 44 px de un asa que cae dentro del botón de regalos de otro elemento ya no inicia el gesto: el toque selecciona el botón. El dibujo de 20 px del asa conserva su prioridad. La prueba falla sin el cambio y pasa con él.
+- **V4:** la prueba de «r» afirma «Texto: giro de 5 grados.» y `rotate(5deg)`, y Mayús+R vuelve a 0.
+- **V5:** `E2E_PORT` en `playwright.config.ts` (idéntico al de #124) y en `e2e/vite.config.ts`.
+- **V6:** Escape suelta el foco del elemento (el foco pasa a `body`); la prueba comprueba que ↓, ↑, Espacio, Re Pág y Av Pág ya no llegan con `defaultPrevented` (con el elemento enfocado, Av Pág sí lo toma). No se mide el desplazamiento real: el Chromium sin cabeza de Linux no desplaza con teclas ni en una página sin foco.
+- **Pruebas nuevas** sobre el botón de regalos: Alt+↑ por debajo de 44 px, girar y mover el texto junto a él, mover el botón sobre el texto y enviarlo al fondo con el texto encima; todo se rechaza con su motivo en `role="status"` y `role="alert"` sin cambiar el estilo.
+- **Cifras (Linux, Chromium real, puerto 42634):** `eslint packages/design-editor packages/i18n` sin salida; `tsc --noEmit` en design-editor sin errores; vitest design-editor 313/313, i18n 15/15, universal 667/667; Playwright `design-editor` 44/44 (eran 39 de este carril más las del arnés base; 5 nuevas del carril). Salidas en `docs/progress/evidence/plantillas-f5/`.
+- **Pendiente:** NVDA/JAWS y dedo real en Safari/iOS; el desplazamiento por teclado en un navegador con cabeza.
+- **Nivel:** `TESTED`. Líneas base macOS que cambian: ninguna (capturas Linux en `docs/progress/evidence/plantillas-f5/c2-*.png`).
