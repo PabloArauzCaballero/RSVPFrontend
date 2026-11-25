@@ -17,12 +17,11 @@
     ".next-f10/types/**/*.ts",
     ".next-f22/types/**/*.ts",
     ".next-live/types/**/*.ts",
-    ".next-visual/types/**/*.ts",
     ".next/types/**/*.ts",
     "app",
     "next-env.d.ts",
     "tests",
-    ".next-c2e2e/types/**/*.ts"
+    ".next-visual/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"
