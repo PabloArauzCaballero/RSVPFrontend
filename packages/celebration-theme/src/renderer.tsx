@@ -4,6 +4,7 @@ import { drawingById, InvitationArt, ornamentSetById, OrnamentSeparator } from "
 import { formatDate } from "./format.js";
 import { SECTION_ART } from "./hero-art.js";
 import { DesignRenderer } from "./design/render.js";
+import { Dock } from "./dock.js";
 import { Flourish } from "./flourish.js";
 import { SectionNav } from "./section-nav.js";
 import { SECTIONS } from "./sections/index.js";
@@ -88,6 +89,7 @@ export function CelebrationRenderer(props: CelebrationRendererProps): ReactNode 
   return (
     <article className="celebration" data-layout={theme.layout} data-color-scheme={props.colorScheme ?? "light"} data-section-style={theme.sectionStyle} data-divider={layout.divider}
       data-align={layout.align} data-heading-case={layout.headingCase} data-images={layout.imageTreatment} lang={view.locale} style={style}>
+      <Dock t={t} giftsHref={giftsPath(view.slug)} giftsStatus={props.giftsStatus} rsvpHref={props.rsvpHref} rsvpHelpHref={props.rsvpHelpHref} rsvpAdaptive={props.rsvpAdaptive} />
       {props.only ? <header className="celebration-hero" data-hero="compact"><p className="celebration-eyebrow">{content.title}</p><h1>{t(`celebration.sections.${props.only}`)}</h1></header> : <Hero props={props} cover={gallery.find((image) => image.isCover)} />}
       <SectionNav props={props} sections={available} />
       <main className="celebration-sections">

@@ -2,6 +2,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { artPalette, artVariables } from "../art/palette.js";
 import { drawingById, InvitationArt, ornamentSetById, OrnamentCorner, OrnamentFrame, OrnamentSeparator } from "../art/index.js";
 import { daysUntil, giftsPath, hasSectionContent, partnerHref, readContent, SECTION_PATHS, sectionTitleKey, type CelebrationContent, type GalleryImage, type PublicCelebrationView } from "../content.js";
+import { Dock } from "../dock.js";
 import { Flourish } from "../flourish.js";
 import { formatDate } from "../format.js";
 import type { CelebrationRendererProps } from "../renderer.js";
@@ -234,21 +235,6 @@ function Canvas({ page, context }: { readonly page: DesignPage; readonly context
   );
 }
 
-/**
- * P22: the gifts button and the reply, always in view. Fixed at the bottom of the phone, sticky on top of the desktop. This is
- * the renderer's chrome, not an element of the document: a design cannot hide, cover or remove it.
- */
-function Dock({ context }: { readonly context: Context }): ReactNode {
-  const { props, t } = context;
-  const base = { t, rsvpHref: props.rsvpHref, rsvpHelpHref: props.rsvpHelpHref, rsvpAdaptive: props.rsvpAdaptive };
-  return (
-    <div className="cdesign-dock" role="group" aria-label={t("celebration.dock.label")} data-dock="">
-      <GiftsAction t={t} giftsHref={context.giftsHref} giftsStatus={props.giftsStatus} dock />
-      <RsvpAction {...base} />
-    </div>
-  );
-}
-
 /** The dark palette as the system preference asks for it, when the host page does not force a scheme. Values are validated `#RRGGBB`. */
 function SystemDark({ design, theme }: { readonly design: DesignDocumentV2; readonly theme: CelebrationTheme }): ReactNode {
   const dark = designPalette(design, "dark");
@@ -301,7 +287,7 @@ export function DesignRenderer(props: DesignRendererProps): ReactNode {
     <article className="celebration celebration-design" data-design="2" data-layout={theme.layout} data-color-scheme={scheme ?? "light"} data-scheme-source={scheme ? "prop" : "system"}
       data-section-style={theme.sectionStyle} data-divider={layout.divider} data-images={layout.imageTreatment} lang={view.locale} style={style}>
       {scheme ? null : <SystemDark design={design} theme={theme} />}
-      <Dock context={context} />
+      <Dock t={t} giftsHref={context.giftsHref} giftsStatus={props.giftsStatus} rsvpHref={props.rsvpHref} rsvpHelpHref={props.rsvpHelpHref} rsvpAdaptive={props.rsvpAdaptive} />
       {props.only ? <header className="celebration-hero" data-hero="compact"><p className="celebration-eyebrow">{content.title}</p><h1>{t(`celebration.sections.${props.only}`)}</h1></header> : null}
       <SectionNav props={props} sections={available} />
       <main className="cdesign-pages">
