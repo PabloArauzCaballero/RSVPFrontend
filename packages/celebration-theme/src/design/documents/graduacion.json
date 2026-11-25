@@ -301,7 +301,7 @@
               {
                 "id": "el-art-mapa-pin",
                 "block": "art-mapa-pin",
-                "x": 3,
+                "x": 0,
                 "y": 0,
                 "w": 1,
                 "h": 8,
@@ -387,7 +387,7 @@
               {
                 "id": "el-art-regalo",
                 "block": "art-regalo",
-                "x": 3,
+                "x": 0,
                 "y": 0,
                 "w": 1,
                 "h": 8,
@@ -449,7 +449,7 @@
               {
                 "id": "el-art-sobre",
                 "block": "art-sobre",
-                "x": 3,
+                "x": 0,
                 "y": 0,
                 "w": 1,
                 "h": 8,

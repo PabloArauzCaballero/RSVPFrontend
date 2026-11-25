@@ -201,7 +201,7 @@
                 "block": "cover",
                 "x": 0,
                 "y": 8,
-                "w": 6,
+                "w": 7,
                 "h": 8,
                 "visible": true,
                 "animation": {
@@ -212,8 +212,8 @@
                 "typography": {
                   "align": "start",
                   "role": "heading",
-                  "size": 96,
-                  "lineHeight": 1.02
+                  "size": 64,
+                  "lineHeight": 1.04
                 }
               },
               {

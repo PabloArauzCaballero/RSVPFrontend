@@ -200,7 +200,7 @@ Matiz del acento: claro 255°, oscuro 254° (fuera de la franja 40–70° del am
 
 **Portada · móvil.** Filete trazado, título grande alineado al inicio (60 px) y, en una fila, vela · cáliz · paloma; filete de cierre.
 
-**Portada · escritorio.** Título de 96 px en seis columnas a la izquierda y, a la derecha, vela, cáliz y paloma en una fila; filete corto arriba y abajo.
+**Portada · escritorio.** Título de 64 px en siete columnas a la izquierda y, a la derecha, vela, cáliz y paloma en una fila; filete corto arriba y abajo.
 
 **Ornamento.** `filete` como encabezado de cada sección; secciones sin caja (`plain`), mucho aire.
 
@@ -208,7 +208,7 @@ Matiz del acento: claro 255°, oscuro 254° (fuera de la franja 40–70° del am
 
 **Foto.** Con foto: retrato vertical a la izquierda en escritorio, a todo el ancho en móvil. Sin foto: el cáliz es el protagonista.
 
-**Se diferencia por.** Es la única con título tipográfico enorme y trío de objetos en fila; el violeta (255°) la separa de Cielo (azul) y de Graduación (marino).
+**Se diferencia por.** Es la única con título tipográfico grande en serif y trío de objetos en fila; el violeta (255°) la separa de Cielo (azul) y de Graduación (marino).
 
 ---
 

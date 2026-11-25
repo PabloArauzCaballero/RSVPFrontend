@@ -85,7 +85,7 @@ comunion = dict(
                   el("el-paloma", "art-paloma", 3, 2, 1, 8, animation=anim("fade", 1400, 600)),
                   el("el-filete-base", "art-filete-base", 0, 3, 4, 8, animation=anim("fade", 1700, 600))],
     cover_desktop=[el("el-filete", "art-filete", 0, 0, 5, 8, animation=anim("draw", 0, 900)),
-                   el("el-cover", "cover", 0, 1, 6, 8, animation=anim("rise", 400, 800), typography=dict(align="start", role="heading", size=96, lineHeight=1.02)),
+                   el("el-cover", "cover", 0, 1, 7, 8, animation=anim("rise", 400, 800), typography=dict(align="start", role="heading", size=64, lineHeight=1.04)),
                    el("el-vela", "art-vela", 7, 1, 1, 8, animation=anim("fade", 1200, 600)),
                    el("el-caliz", "art-caliz", 8, 1, 2, 8, animation=anim("draw", 900, 1300)),
                    el("el-paloma", "art-paloma", 10, 1, 2, 8, animation=anim("fade", 1400, 600)),
@@ -110,7 +110,7 @@ grado = dict(
                    el("el-birrete", "art-birrete", 8, 1, 2, 8, rotation=8, animation=anim("draw", 300, 1200)),
                    el("el-libros", "art-libros", 10, 1, 1, 8, animation=anim("fade", 1500, 600)),
                    el("el-diploma", "art-diploma", 11, 1, 1, 8, rotation=4, animation=anim("rise", 900, 800))],
-    header=lambda s: drawing_head(s, 3, 1, 8) if s in ("gifts", "rsvp", "venues") else None)
+    header=lambda s: drawing_head(s, 0, 1, 8) if s in ("gifts", "rsvp", "venues") else None)
 
 ALL = (cielo, menta, baby, comunion, grado)
 
