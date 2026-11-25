@@ -41,6 +41,14 @@ test("free canvas: add, drag, resize, rotate; the gifts block can be moved but n
   await page.mouse.down();
   await page.mouse.move(rb.x + 200, rb.y + 60, { steps: 6 });
   await page.mouse.up();
+  // turned this close to the gifts button its bounding box would cover it: the editor refuses the gesture and says why (P22)
+  expect(await title.evaluate((node) => (node as HTMLElement).style.transform)).not.toContain("rotate(");
+  await expect(page.getByRole("alert")).toContainText("Otro elemento quedaría encima del botón de regalos");
+  await page.getByRole("button", { name: "Entendido" }).click();
+  // far from the button the same element turns freely
+  await title.click();
+  await page.getByLabel("Fila", { exact: true }).fill("60");
+  await page.getByLabel("Giro (grados)").fill("15");
   expect(await title.evaluate((node) => (node as HTMLElement).style.transform)).toContain("rotate(");
   const gifts = region.getByRole("group", { name: "Botón de regalos" });
   await gifts.dispatchEvent("click");
