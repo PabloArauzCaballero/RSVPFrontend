@@ -121,7 +121,7 @@ function Wireframe({ document, canvas, t }: { readonly document: design.DesignDo
         const title = pageTitle(page, t);
         return (
           <div key={page.id} className="de-page" role="group" aria-label={title}>
-            <h3>{title}</h3>
+            <div className="de-page-title" aria-hidden="true">{title}</div>
             {grid.elements.length === 0 ? <p className="de-empty">{t(key("stage.emptyPage"))}</p> : (
               <div className={grid.mode === "free" ? "de-free" : "de-flow"} style={grid.mode === "free" ? { height: Math.max(...grid.elements.map((element) => (element.y + element.h) * grid.rowHeight), grid.rowHeight) } : undefined}>
                 {grid.elements.map((element) => {
@@ -331,9 +331,10 @@ export function EditorShell({ design: source, gateway, t, onReload, onSignIn, no
           <Segmented label={t(key("mode.label"))} value={state.mode} onChange={setMode} options={[
             { value: "basic", text: t(key("mode.basic")), icon: <SlidersIcon /> }, { value: "advanced", text: t(key("mode.advanced")), icon: <LayersIcon /> }
           ]} />
-          <span className="de-spacer" />
-          <button type="button" className="de-btn de-btn--icon" disabled={!canUndo(state)} onClick={() => dispatch({ type: "undo" })}><UndoIcon /><span className="de-btn-text">{t(key("history.undo"))}</span></button>
-          <button type="button" className="de-btn de-btn--icon" disabled={!canRedo(state)} onClick={() => dispatch({ type: "redo" })}><RedoIcon /><span className="de-btn-text">{t(key("history.redo"))}</span></button>
+          <div className="de-history">
+            <button type="button" className="de-btn de-btn--icon" disabled={!canUndo(state)} onClick={() => dispatch({ type: "undo" })}><UndoIcon /><span className="de-btn-text">{t(key("history.undo"))}</span></button>
+            <button type="button" className="de-btn de-btn--icon" disabled={!canRedo(state)} onClick={() => dispatch({ type: "redo" })}><RedoIcon /><span className="de-btn-text">{t(key("history.redo"))}</span></button>
+          </div>
         </div>
       </header>
       {stopped ? (
@@ -353,12 +354,12 @@ export function EditorShell({ design: source, gateway, t, onReload, onSignIn, no
       ) : null}
       <div className="de-body">
         <nav className="de-side" aria-label={t(key("outline.title"))}>
-          {narrow ? (
+          <div className="de-sticky">{narrow ? (
             <details className="de-pages-fold">
               <summary><LayersIcon />{t(key("outline.summary"), { count: document.pages.length })}</summary>
               {pages}
             </details>
-          ) : <><h2><LayersIcon />{t(key("outline.title"))}</h2>{pages}</>}
+          ) : <><h2><LayersIcon />{t(key("outline.title"))}</h2>{pages}</>}</div>
         </nav>
         <main className="de-stage" aria-label={t(key("stage.label"))}>
           <div className="de-stage-head">
@@ -370,6 +371,7 @@ export function EditorShell({ design: source, gateway, t, onReload, onSignIn, no
           <Wireframe document={document} canvas={state.canvas} t={t} />
         </main>
         <aside className="de-panel" aria-label={t(key("basic.title"))}>
+          <div className="de-sticky">
           <h2><SlidersIcon />{t(key("basic.title"))}</h2>
           {(["light", "dark"] as const).map((scheme) => (
             <label key={scheme} className="de-field">
@@ -401,6 +403,7 @@ export function EditorShell({ design: source, gateway, t, onReload, onSignIn, no
             ) : null}
           </div>
           {children}
+          </div>
         </aside>
       </div>
     </div>
