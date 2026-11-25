@@ -4,3 +4,6 @@ export * from "./model/ops.js";
 export * from "./model/state.js";
 export * from "./save/autosave.js";
 export * from "./save/versions.js";
+export * from "./custom/html.js";
+export * from "./custom/css.js";
+export * from "./custom/ops.js";

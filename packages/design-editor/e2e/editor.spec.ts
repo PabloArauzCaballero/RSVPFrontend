@@ -25,8 +25,8 @@ test.describe("editor shell (PR a)", () => {
     const accent = page.getByLabel("Color de acento (claro)");
     const original = await accent.inputValue();
     await accent.fill("#1f6f5c");
-    await expect(page.getByRole("status")).toContainText("Cambios sin guardar");
-    await expect(page.getByRole("status")).toContainText("Borrador guardado", { timeout: 5000 });
+    await expect(page.getByTestId("save-status")).toContainText("Cambios sin guardar");
+    await expect(page.getByTestId("save-status")).toContainText("Borrador guardado", { timeout: 5000 });
     const saves = await page.evaluate(() => window.__saves);
     expect(saves).toEqual([{ id: "design-1", version: 4, accent: "#1F6F5C" }]);
     await page.getByRole("button", { name: "Deshacer" }).click();
@@ -38,7 +38,7 @@ test.describe("editor shell (PR a)", () => {
     expect(await accent.inputValue()).toBe(original);
     await page.getByRole("button", { name: "Rehacer" }).click();
     expect(await accent.inputValue()).toBe("#1f6f5c");
-    await expect(page.getByRole("status")).toContainText("Borrador guardado", { timeout: 5000 });
+    await expect(page.getByTestId("save-status")).toContainText("Borrador guardado", { timeout: 5000 });
   });
 
   test("the desktop canvas and the Advanced level switch the stage", async ({ page }) => {
@@ -75,11 +75,11 @@ test.describe("editor shell (PR a)", () => {
   test("a 409 stops saving and offers the newer version; offline retries", async ({ page }) => {
     await page.goto("/?fail=409");
     await page.getByLabel("Color de acento (claro)").fill("#1f6f5c");
-    await expect(page.getByRole("status")).toContainText("Alguien guardó otra versión", { timeout: 5000 });
+    await expect(page.getByTestId("save-status")).toContainText("Alguien guardó otra versión", { timeout: 5000 });
     await expect(page.getByRole("button", { name: "Cargar la versión nueva" })).toBeVisible();
     await page.screenshot({ path: shot("conflicto-1280") });
     await page.goto("/?fail=offline");
     await page.getByLabel("Color de acento (claro)").fill("#1f6f5c");
-    await expect(page.getByRole("status")).toContainText("Reintentamos en 2 s", { timeout: 5000 });
+    await expect(page.getByTestId("save-status")).toContainText("Reintentamos en 2 s", { timeout: 5000 });
   });
 });

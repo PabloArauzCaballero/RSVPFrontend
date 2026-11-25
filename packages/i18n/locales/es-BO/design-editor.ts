@@ -61,6 +61,36 @@ export const designEditorEsBO = {
     restored: "Versión {{version}} copiada al borrador. Revísala y publícala cuando quieras.",
     restoreFailed: "No pudimos restaurar esa versión. Tu borrador no cambió."
   },
+  customCode: {
+    title: "Código propio",
+    html: "HTML",
+    css: "CSS",
+    htmlHelp: "Etiquetas de texto, listas, tablas, enlaces https y tus fotos. Sin scripts, formularios ni marcos.",
+    cssHelp: "Solo se aplica dentro de tu invitación y no puede tocar el botón de regalos ni el de confirmar. El texto mínimo es de 13 px.",
+    clean: "Todo el código es válido.",
+    issues_one: "Se ajustó o quitó 1 cosa de tu código.",
+    issues_other: "Se ajustaron o quitaron {{count}} cosas de tu código.",
+    issue: {
+      TOO_LONG: "Es más largo de lo permitido (20 000 caracteres).",
+      TAG_REMOVED: "Quitamos la etiqueta «{{detail}}» y lo que contiene: no está permitida.",
+      TAG_UNWRAPPED: "La etiqueta «{{detail}}» no existe en las invitaciones; dejamos solo su texto.",
+      ATTRIBUTE_REMOVED: "Quitamos «{{detail}}»: ese atributo no está permitido.",
+      URL_REJECTED: "Quitamos un enlace o imagen no permitido ({{detail}}). Las imágenes tienen que venir de tus fotos subidas.",
+      PROVIDER_LINK: "Quitamos el enlace directo a un proveedor ({{detail}}). Los enlaces a proveedores van por la página de recomendaciones.",
+      TOO_DEEP: "Hay demasiados niveles anidados; recortamos los más profundos.",
+      TOO_MANY_NODES: "Hay demasiados elementos; recortamos el final.",
+      UNSTABLE: "Este HTML cambia cada vez que se lee, así que no lo podemos guardar. Simplifícalo.",
+      SYNTAX: "El CSS tiene un error de sintaxis y no se pudo leer. Revisa las llaves y los punto y coma.",
+      AT_RULE_REMOVED: "Quitamos «{{detail}}»: no está permitido en el CSS de una invitación.",
+      SELECTOR_REJECTED: "Quitamos un selector no permitido ({{detail}}). Solo puedes dar estilo a elementos de tu contenido.",
+      PROPERTY_REJECTED: "Quitamos la propiedad «{{detail}}»: no se permite.",
+      VALUE_REJECTED: "Quitamos un valor no permitido ({{detail}}).",
+      IMPORTANT_REMOVED: "Quitamos «!important» de «{{detail}}».",
+      ESCAPE_REJECTED: "Quitamos una línea con caracteres de escape ({{detail}}): no se permiten.",
+      TOO_MANY_RULES: "Hay demasiadas reglas; ignoramos las del final.",
+      MEDIA_REJECTED: "Quitamos una consulta @media no permitida ({{detail}})."
+    }
+  },
   refusal: {
     title: "Ese cambio no se puede hacer",
     dismiss: "Entendido",

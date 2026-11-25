@@ -3,8 +3,9 @@ import { design } from "@rsvp/celebration-theme";
 import { createTranslator, type AppLocale } from "@rsvp/i18n";
 import { EditorShell } from "../../src/ui/index.js";
 import type { DraftGateway } from "../../src/save/autosave.js";
+import type { VersionSummary, VersionsGateway } from "../../src/save/versions.js";
 
-declare global { interface Window { __saves: { id: string; version: number; accent: string }[] } }
+declare global { interface Window { __saves: { id: string; version: number; accent: string }[]; __lastDocument: ReturnType<typeof design.convertV1ToV2> } }
 
 const params = new URLSearchParams(window.location.search);
 const locale = (params.get("lang") ?? "es-BO") as AppLocale;
@@ -21,6 +22,7 @@ window.__saves = [];
 let version = 4;
 const gateway: DraftGateway = {
   async saveDraft(id, draftVersion, doc) {
+    window.__lastDocument = doc;
     window.__saves.push({ id, version: draftVersion, accent: doc.tokens.palettes.light.accent });
     if (fail === "409") throw Object.assign(new Error("conflict"), { status: 409, problem: { code: "VERSION_CONFLICT", currentVersion: 9 } });
     if (fail === "offline") throw new TypeError("offline");
@@ -29,6 +31,19 @@ const gateway: DraftGateway = {
   }
 };
 
+let published: VersionSummary[] = [{ version: 1, label: "Inicial", createdAt: "2026-11-20T15:30:00Z" }];
+const history: Record<number, typeof document0> = { 1: document0 };
+const versions: VersionsGateway = {
+  async list() { return published; },
+  async publish(_id, draftVersion, label) {
+    const next = { version: published.length + 1, label, createdAt: "2026-11-24T12:00:00Z" };
+    published = [...published, next];
+    history[next.version] = window.__lastDocument ?? document0;
+    return { draftVersion, version: next };
+  },
+  async restore(_id, version, draftVersion) { return { draftVersion: draftVersion + 1, document: history[version] ?? document0 }; }
+};
+
 createRoot(window.document.getElementById("root") as HTMLElement).render(
-  <EditorShell design={{ id: "design-1", name: "Ana y Luis", draftVersion: 4, document: document0 }} gateway={gateway} t={createTranslator(locale)} onReload={() => undefined} debounceMs={300} />
+  <EditorShell design={{ id: "design-1", name: "Ana y Luis", draftVersion: 4, document: document0 }} gateway={gateway} t={createTranslator(locale)} onReload={() => undefined} versions={versions} timeZone="America/La_Paz" debounceMs={300} />
 );

@@ -26,7 +26,7 @@ describe("EditorShell", () => {
     expect((screen.getByRole("button", { name: "Deshacer" }) as HTMLButtonElement).disabled).toBe(true);
     expect(screen.getByTestId("design-frame").getAttribute("data-canvas")).toBe("mobile");
     expect(document.querySelector('[data-required="true"]')?.getAttribute("data-block")).toBe("giftsCta");
-    expect(screen.getByRole("status").textContent).toContain("Borrador guardado.");
+    expect(screen.getByTestId("save-status").textContent).toContain("Borrador guardado.");
   });
 
   it("switches level and canvas by click and by arrow keys", () => {
@@ -43,12 +43,12 @@ describe("EditorShell", () => {
   it("an edit marks the draft dirty, saves once after the debounce with If-Match and shows saved", async () => {
     const gateway = mount();
     fireEvent.change(accentLight(), { target: { value: "#123456" } });
-    expect(screen.getByRole("status").textContent).toContain("Cambios sin guardar");
+    expect(screen.getByTestId("save-status").textContent).toContain("Cambios sin guardar");
     await act(async () => { await vi.advanceTimersByTimeAsync(100); });
     expect(gateway.saveDraft).toHaveBeenCalledTimes(1);
     const [id, version, document] = (gateway.saveDraft as ReturnType<typeof vi.fn>).mock.calls[0] as [string, number, ReturnType<typeof fixture>];
     expect([id, version, document.tokens.palettes.light.accent]).toEqual(["d1", 5, "#123456"]);
-    expect(screen.getByRole("status").textContent).toContain("Borrador guardado.");
+    expect(screen.getByTestId("save-status").textContent).toContain("Borrador guardado.");
   });
 
   it("undo and redo work from the buttons and from Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y", () => {
@@ -83,24 +83,24 @@ describe("EditorShell", () => {
     expect(conflict).toBeTruthy();
     fireEvent.change(accentLight(), { target: { value: "#123456" } });
     await act(async () => { await vi.advanceTimersByTimeAsync(100); });
-    expect(screen.getByRole("status").textContent).toContain("Alguien guardó otra versión");
+    expect(screen.getByTestId("save-status").textContent).toContain("Alguien guardó otra versión");
     fireEvent.click(screen.getByRole("button", { name: "Cargar la versión nueva" }));
     expect(onReload).toHaveBeenCalled();
     cleanup();
     mount({ saveDraft: async () => { throw Object.assign(new Error("x"), { status: 422, problem: { code: "DESIGN_TOO_LARGE" } }); } });
     fireEvent.change(accentLight(), { target: { value: "#123456" } });
     await act(async () => { await vi.advanceTimersByTimeAsync(100); });
-    expect(screen.getByRole("status").textContent).toContain("DESIGN_TOO_LARGE");
+    expect(screen.getByTestId("save-status").textContent).toContain("DESIGN_TOO_LARGE");
     cleanup();
     mount({ saveDraft: async () => { throw Object.assign(new Error("x"), { status: 403 }); } });
     fireEvent.change(accentLight(), { target: { value: "#123456" } });
     await act(async () => { await vi.advanceTimersByTimeAsync(100); });
-    expect(screen.getByRole("status").textContent).toContain("No tienes permiso");
+    expect(screen.getByTestId("save-status").textContent).toContain("No tienes permiso");
     cleanup();
     mount({ saveDraft: async () => { throw new TypeError("offline"); } });
     fireEvent.change(accentLight(), { target: { value: "#123456" } });
     await act(async () => { await vi.advanceTimersByTimeAsync(100); });
-    expect(screen.getByRole("status").textContent).toContain("Reintentamos en 2 s");
+    expect(screen.getByTestId("save-status").textContent).toContain("Reintentamos en 2 s");
   });
 
   it("warns before leaving while changes are unsaved, never when saved", () => {

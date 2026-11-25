@@ -5,7 +5,7 @@ import { EditorShell } from "@rsvp/design-editor/ui";
 import { designApi, useCelebration, useCelebrationDesign, useCreateDesign, type DesignRecord } from "@rsvp/query-hooks";
 import { spacing } from "@rsvp/design-tokens";
 import { LoadingContent } from "../platform/loading-content";
-import { useApiClient, useT } from "../platform/providers";
+import { useApiClient, useLocale, useT } from "../platform/providers";
 import { ActionButton, EmptyState, ErrorNotice, Notice } from "./ui";
 import type { ScreenProps } from "./gate";
 
@@ -16,6 +16,7 @@ import type { ScreenProps } from "./gate";
  */
 export function DesignEditorScreen({ celebrationId }: ScreenProps): ReactNode {
   const t = useT();
+  const locale = useLocale();
   const client = useApiClient();
   const celebration = useCelebration(client, celebrationId ?? "");
   const found = useCelebrationDesign(client, celebrationId);
@@ -26,6 +27,14 @@ export function DesignEditorScreen({ celebrationId }: ScreenProps): ReactNode {
       return { draftVersion: saved.draftVersion, ...(saved.warnings ? { warnings: saved.warnings } : {}) };
     }
   }), [client]);
+  const versions = useMemo(() => {
+    const api = designApi(client);
+    return {
+      list: async (id: string) => (await api.versions(id)).items,
+      publish: async (id: string, draftVersion: number, label: string) => { const done = await api.publish(id, draftVersion, label); return { draftVersion: done.design.draftVersion, version: done.version }; },
+      restore: async (id: string, version: number, draftVersion: number) => { const done = await api.restore(id, version, draftVersion); return { draftVersion: done.draftVersion, document: done.document }; }
+    };
+  }, [client]);
   const reload = useCallback(() => { void found.refetch(); }, [found]);
 
   if (!celebrationId) return <View style={{ padding: spacing[6] }}><EmptyState illustration="invitation" title={t("designEditor.title")} body={t("designEditor.noCelebration")} /></View>;
@@ -45,5 +54,5 @@ export function DesignEditorScreen({ celebrationId }: ScreenProps): ReactNode {
     );
   }
   const record = found.data;
-  return <EditorShell key={`${record.id}:${record.draftVersion}`} design={{ id: record.id, name: record.name, draftVersion: record.draftVersion, document: record.document }} gateway={gateway} t={t} onReload={reload} />;
+  return <EditorShell key={`${record.id}:${record.draftVersion}`} design={{ id: record.id, name: record.name, draftVersion: record.draftVersion, document: record.document }} gateway={gateway} versions={versions} timeZone={celebration.data.timeZone} locale={locale} t={t} onReload={reload} />;
 }

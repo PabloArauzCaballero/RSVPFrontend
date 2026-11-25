@@ -7,6 +7,7 @@ import { ContrastPanel } from "./contrast-panel.js";
 import { PublishPanel, type VersionsApi } from "./publish-panel.js";
 import type { PublishOutcome, VersionSummary, VersionsGateway } from "../save/versions.js";
 import { EditorProvider, type Translate } from "./editor-context.js";
+import { CustomCodePanel } from "./custom-code-panel.js";
 import { AlertIcon, CheckIcon, DesktopIcon, LayersIcon, PhoneIcon, RedoIcon, SlidersIcon, UndoIcon } from "./icons.js";
 
 export interface EditableDesign {
@@ -205,7 +206,7 @@ export function EditorShell({ design: source, gateway, t, onReload, now = Date.n
         <button type="button" className="de-btn" disabled={!canUndo(state)} onClick={() => dispatch({ type: "undo" })}><UndoIcon />{t(key("history.undo"))}</button>
         <button type="button" className="de-btn" disabled={!canRedo(state)} onClick={() => dispatch({ type: "redo" })}><RedoIcon />{t(key("history.redo"))}</button>
         <span className="de-spacer" />
-        <span className="de-status" role="status" aria-live="polite" data-kind={status.kind}>
+        <span className="de-status" data-testid="save-status" role="status" aria-live="polite" data-kind={status.kind}>
           {status.kind === "saved" ? <CheckIcon /> : status.kind === "conflict" || status.kind === "rejected" ? <AlertIcon /> : null}
           {statusText(status, t)}
           {status.kind === "conflict" && onReload ? <button type="button" className="de-btn" onClick={onReload}>{t(key("save.conflictAction"))}</button> : null}
@@ -241,6 +242,7 @@ export function EditorShell({ design: source, gateway, t, onReload, now = Date.n
           <p className="de-hint">{t(key("basic.hint"))}</p>
           <ContrastPanel />
           {versionsGateway ? <PublishPanel versions={versionsApi} timeZone={timeZone} locale={locale} /> : null}
+          {state.mode === "advanced" ? <CustomCodePanel /> : null}
           {children}
         </aside>
       </div>

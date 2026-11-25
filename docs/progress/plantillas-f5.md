@@ -13,3 +13,17 @@ Rama apilada sobre `feat/f1-diseno-v2-esquema` (FE #115). Plan: `PLAN-PLANTILLAS
 ### Pendiente / abierto
 - Contrato 1.3.0 de Template/Media aún no vendorizado: `designApi` está tipada a mano; falta prueba de conformidad cuando #135 se fusione.
 - Los dibujos del lienzo en PR a son un esquema de cajas (wireframe); el renderizador real llega con F6.
+
+## PR d · HTML saneado y CSS acotado (2026-11-25)
+
+- `sanitizeHtml` (parse5, lista blanca, idempotente, sin scripts/iframes/formularios/svg/estilos en línea, enlaces solo https/mailto/tel, imágenes solo del almacén de medios, enlaces directos a proveedores sin `href`) y `scopeCss` (postcss: todo bajo `.rsvp-invitation`, guarda `:not(.rsvp-protected)`, sin `@import`/`@font-face`/`@keyframes`, `url()` solo a medios, sin `position: fixed|sticky`, `z-index` ≤ 100, texto ≥ 13 px, propiedades que ocultan o mueven ancestros fuera de la lista).
+- Corpus hostil: 61 vectores HTML y 82 de CSS en `src/test/{html,css}.test.ts`.
+- **Bloqueo para publicar código propio:** el backend (`rules.py`) responde 422 `CUSTOM_CODE_UNAVAILABLE` a cualquier `custom` no vacío. Hace falta un PR de BE con la misma validación (sin él, el editor sanea pero el servidor lo rechaza al guardar). No abierto en esta ejecución.
+- El renderizador (F6) debe aplicar `scopeCss`/`sanitizeHtml` al pintar y dar a `.rsvp-protected` un `z-index` de 1000 (`PROTECTED_Z_INDEX`).
+
+## PR e · contraste en vivo, publicar y versiones (2026-11-25)
+
+- `ContrastPanel`: `design.contrastWarnings` en vivo (ambas paletas); avisa y ofrece el color más cercano que pasa; **nunca bloquea** (P19).
+- `PublishPanel` + `VersionsGateway`: publicar con nombre (vacía la caja, vacía antes el autoguardado y publica con la versión de borrador ya guardada), historial con hora en la zona de la celebración, restaurar (copia al borrador, **no publica**; reanuda el autoguardado desde la versión nueva). Publicar con un guardado en conflicto/rechazado se detiene con mensaje.
+- Pantalla `/diseno` conectada a `designApi.publish/versions/restore`.
+- Nivel `TESTED` (arnés en memoria y cliente simulado); sin backend real.
