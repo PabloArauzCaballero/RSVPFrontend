@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "RSVP Template and Media API",
-    "version": "1.2.0",
-    "description": "Template/Media Service (lane 16, Django + DRF). Behind Kong at /media (prefix stripped). Errors are RFC 9457 problems. 1.2.0 (F1, additive; the unmerged 1.1.0 of the same change set is superseded): a template theme is either the v1 theme (unchanged) or the invitation design document v2 (DesignDocumentV2, schemaVersion 2), validated against this contract. A v2 without the gifts block is 422 GIFTS_BLOCK_REQUIRED; the mandatory gifts button cannot be redirected, hidden, shrunk below 44 px, moved out of the canvas, covered or left unreadable (GIFTS_BLOCK_LOCKED, GIFTS_BLOCK_HIDDEN, GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL, GIFTS_BLOCK_COVERED, GIFTS_BLOCK_LOW_CONTRAST). A v2 stays a draft until the renderer supports it: publishing one is 422 DESIGN_NOT_PUBLISHABLE. Custom HTML/CSS is 422 CUSTOM_CODE_UNAVAILABLE until the F5 sanitiser exists. A JSON body over 1 MB is 413 PAYLOAD_TOO_LARGE. Low-contrast colour pairs come back as non-blocking warnings (P19)."
+    "version": "1.4.0",
+    "description": "Template/Media Service (lane 16, Django + DRF). Behind Kong at /media (prefix stripped). Errors are RFC 9457 problems. 1.2.0 (F1, additive; the unmerged 1.1.0 of the same change set is superseded): a template theme is either the v1 theme (unchanged) or the invitation design document v2 (DesignDocumentV2, schemaVersion 2), validated against this contract. A v2 without the gifts block is 422 GIFTS_BLOCK_REQUIRED; the mandatory gifts button cannot be redirected, hidden, shrunk below 44 px, moved out of the canvas, covered or left unreadable (GIFTS_BLOCK_LOCKED, GIFTS_BLOCK_HIDDEN, GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL, GIFTS_BLOCK_COVERED, GIFTS_BLOCK_LOW_CONTRAST). A v2 stays a draft until the renderer supports it: publishing one is 422 DESIGN_NOT_PUBLISHABLE. Custom HTML/CSS is 422 CUSTOM_CODE_UNAVAILABLE until the F5 sanitiser exists. A JSON body over 1 MB is 413 PAYLOAD_TOO_LARGE. Low-contrast colour pairs come back as non-blocking warnings (P19). 1.3.0 (F1, additive): per-celebration design storage. A design has a working draft, immutable published versions that can be restored into the draft (P15) and may be a host's private template (P21). Endpoints under /designs; publishing a celebration design emits template.design.published.v1 (AsyncAPI 1.23.0). 1.4.0 (F6, additive): more image types (gif, avif, svg, heic), MP3 music, `purpose`, per-celebration quota (409 MEDIA_QUOTA_*), AVIF variants, `POST /embeds/resolve` and `GET /celebrations/{celebrationId}/media-usage`. Nothing was removed or renamed."
   },
   "servers": [
     {
@@ -228,7 +228,7 @@
             "name": "If-Match",
             "in": "header",
             "required": true,
-            "description": "Version being edited, e.g. \"3\". Missing \u2192 428; stale \u2192 409 VERSION_CONFLICT.",
+            "description": "Version being edited, e.g. \"3\". Missing → 428; stale → 409 VERSION_CONFLICT.",
             "schema": {
               "type": "string"
             }
@@ -317,7 +317,7 @@
             "name": "If-Match",
             "in": "header",
             "required": true,
-            "description": "Version being edited, e.g. \"3\". Missing \u2192 428; stale \u2192 409 VERSION_CONFLICT.",
+            "description": "Version being edited, e.g. \"3\". Missing → 428; stale → 409 VERSION_CONFLICT.",
             "schema": {
               "type": "string"
             }
@@ -376,7 +376,7 @@
             "name": "If-Match",
             "in": "header",
             "required": true,
-            "description": "Version being edited, e.g. \"3\". Missing \u2192 428; stale \u2192 409 VERSION_CONFLICT.",
+            "description": "Version being edited, e.g. \"3\". Missing → 428; stale → 409 VERSION_CONFLICT.",
             "schema": {
               "type": "string"
             }
@@ -483,13 +483,45 @@
                     "enum": [
                       "image/jpeg",
                       "image/png",
-                      "image/webp"
-                    ]
+                      "image/webp",
+                      "image/gif",
+                      "image/avif",
+                      "image/svg+xml",
+                      "image/heic",
+                      "image/heif",
+                      "audio/mpeg"
+                    ],
+                    "description": "Images (SVG is sanitised, HEIC is converted, GIF becomes an animated WebP) or audio/mpeg for purpose music. audio/mpeg is only valid with purpose music and the reverse."
                   },
                   "sizeBytes": {
                     "type": "integer",
                     "minimum": 1,
-                    "maximum": 10485760
+                    "maximum": 15728640,
+                    "description": "Images: up to MEDIA_MAX_IMAGE_BYTES (10 MiB by default). Music: up to MEDIA_MAX_AUDIO_BYTES (15 MiB by default)."
+                  },
+                  "purpose": {
+                    "type": "string",
+                    "enum": [
+                      "gallery",
+                      "cover",
+                      "background",
+                      "section",
+                      "element",
+                      "block",
+                      "logo",
+                      "monogram",
+                      "illustration",
+                      "music"
+                    ],
+                    "default": "gallery",
+                    "description": "What the file is for. gallery and cover are the ordered photos of the gallery; the rest are placed by the design document. music is MP3 only."
+                  },
+                  "rightsNoticeVersion": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Required for purpose music: the version of the rights notice the host accepted (currentVersion in the 422 RIGHTS_NOTICE_REQUIRED / RIGHTS_NOTICE_OUTDATED problem). Stored with the asset as audit."
                   }
                 }
               }
@@ -538,7 +570,17 @@
             }
           },
           "422": {
-            "description": "Unsupported MIME type or size, checked before signing",
+            "description": "Unsupported MIME type, purpose, or size; RIGHTS_NOTICE_REQUIRED / RIGHTS_NOTICE_OUTDATED for music; checked before signing",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "MEDIA_QUOTA_ASSETS_EXCEEDED or MEDIA_QUOTA_BYTES_EXCEEDED: the celebration reached its quota (100 files / 500 MiB by default). The problem carries `quota`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -570,7 +612,7 @@
             }
           },
           "422": {
-            "description": "Stored object does not match declared type/size, or is not an image (cheap header check done in the request)",
+            "description": "Stored object does not match declared type/size, or is not an image (cheap header check done in the request); INVALID_IMAGE, IMAGE_TOO_LARGE, ANIMATION_TOO_LONG, INVALID_SVG, SVG_TOO_COMPLEX, INVALID_AUDIO or AUDIO_TOO_LONG",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -644,6 +686,9 @@
                       "items": {
                         "$ref": "#/components/schemas/MediaAsset"
                       }
+                    },
+                    "usage": {
+                      "$ref": "#/components/schemas/MediaQuota"
                     }
                   }
                 }
@@ -720,7 +765,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Order and cover of the gallery photos (purpose gallery or cover). Other purposes are not part of the order."
       }
     },
     "/public/celebrations/{celebrationId}/assets": {
@@ -774,7 +820,12 @@
                 "thumb",
                 "medium",
                 "full",
-                "webp"
+                "webp",
+                "thumb_avif",
+                "medium_avif",
+                "full_avif",
+                "svg",
+                "audio"
               ]
             }
           }
@@ -792,6 +843,866 @@
           },
           "404": {
             "description": "Unknown asset, variant, or celebration not published",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/designs": {
+      "get": {
+        "operationId": "listPrivateTemplates",
+        "summary": "The caller's private templates (P21)",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "const": "PRIVATE_TEMPLATE"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Private templates of the caller",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "items"
+                  ],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Design"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "kind is not PRIVATE_TEMPLATE",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createDesign",
+        "summary": "Create the design of a celebration, or a private template",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DesignInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Design"
+                }
+              }
+            },
+            "headers": {
+              "Location": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed body or not exactly one source",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Can read but not change it",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown, or not visible to the caller (never 403 for what the caller cannot see)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "DESIGN_EXISTS or PRIVATE_TEMPLATE_LIMIT",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid document",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DesignProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/celebrations/{celebrationId}/design": {
+      "get": {
+        "operationId": "getCelebrationDesign",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CelebrationId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The celebration's design",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Design"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "description": "draftVersion, to send back in If-Match",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown, or not visible to the caller (never 403 for what the caller cannot see)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/designs/{designId}": {
+      "get": {
+        "operationId": "getDesign",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DesignId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The design with its draft",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Design"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "description": "draftVersion, to send back in If-Match",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown, or not visible to the caller (never 403 for what the caller cannot see)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteDesign",
+        "summary": "Deletes a design and all its versions (PF-1)",
+        "description": "A private template is deleted by its owner (or an administrator); a celebration design by whoever manages the celebration. A celebration design that was ever published is 409 DESIGN_PUBLISHED: Celebration keeps the reference of its published version, so it is replaced by publishing again and goes away with the celebration (celebration.celebration.deleted.v1). Deleting an account deletes its private templates too (identity.user.deleted.v1).",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DesignId"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "401": {
+            "description": "Missing or invalid bearer token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller can read the design but not change it",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "DESIGN_PUBLISHED: a published celebration design is replaced, not deleted",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/designs/{designId}/draft": {
+      "put": {
+        "operationId": "saveDesignDraft",
+        "summary": "Replace the working draft",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DesignId"
+          },
+          {
+            "$ref": "#/components/parameters/DraftIfMatch"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DesignDraftInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved (an identical draft changes nothing)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Design"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "description": "draftVersion, to send back in If-Match",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed body",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Can read but not change it",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown, or not visible to the caller (never 403 for what the caller cannot see)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "VERSION_CONFLICT",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "If-Match required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid design",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DesignProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/designs/{designId}/publish": {
+      "post": {
+        "operationId": "publishDesign",
+        "summary": "Publish the draft as the next immutable version",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DesignId"
+          },
+          {
+            "$ref": "#/components/parameters/DraftIfMatch"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DesignPublishInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "New version published",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DesignPublished"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "description": "draftVersion, to send back in If-Match",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Already the latest published version; nothing emitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DesignPublished"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "description": "draftVersion, to send back in If-Match",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed body",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Can read but not change it",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown, or not visible to the caller (never 403 for what the caller cannot see)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "VERSION_CONFLICT",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "If-Match required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid design",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DesignProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/designs/{designId}/versions": {
+      "get": {
+        "operationId": "listDesignVersions",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DesignId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Published versions, newest first",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "items"
+                  ],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/DesignVersionSummary"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown, or not visible to the caller (never 403 for what the caller cannot see)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/designs/{designId}/versions/{version}": {
+      "get": {
+        "operationId": "getDesignVersion",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DesignId"
+          },
+          {
+            "$ref": "#/components/parameters/DesignVersionNumber"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A published version with its document",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DesignVersion"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown, or not visible to the caller (never 403 for what the caller cannot see)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/designs/{designId}/versions/{version}/restore": {
+      "post": {
+        "operationId": "restoreDesignVersion",
+        "summary": "Copy a published version into the draft (P15); it does not publish",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DesignId"
+          },
+          {
+            "$ref": "#/components/parameters/DesignVersionNumber"
+          },
+          {
+            "$ref": "#/components/parameters/DraftIfMatch"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Draft now holds that version",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Design"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "description": "draftVersion, to send back in If-Match",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Can read but not change it",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown, or not visible to the caller (never 403 for what the caller cannot see)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "VERSION_CONFLICT",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "If-Match required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The version no longer satisfies today's contract",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DesignProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/celebrations/{celebrationId}/media-usage": {
+      "get": {
+        "operationId": "getMediaUsage",
+        "summary": "Quota used and left by the celebration",
+        "parameters": [
+          {
+            "name": "celebrationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Usage and limits",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaQuota"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid RS256 bearer token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown celebration or not yours",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/embeds/resolve": {
+      "post": {
+        "operationId": "resolveEmbed",
+        "summary": "Normalises a pasted link to its allowlisted embed",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmbedResolveRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The embed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Embed"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed body",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid RS256 bearer token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "EMBED_NOT_ALLOWED (any host or shape off the list), EMBED_PROVIDER_NOT_ALLOWED_HERE or EMBED_INTENT_UNKNOWN",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -829,6 +1740,42 @@
         "schema": {
           "type": "string",
           "format": "uuid"
+        }
+      },
+      "DesignId": {
+        "name": "designId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "DesignVersionNumber": {
+        "name": "version",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "CelebrationId": {
+        "name": "celebrationId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "DraftIfMatch": {
+        "name": "If-Match",
+        "in": "header",
+        "required": true,
+        "description": "draftVersion being edited, e.g. \"3\". Missing → 428; stale → 409 VERSION_CONFLICT.",
+        "schema": {
+          "type": "string"
         }
       }
     },
@@ -1018,6 +1965,9 @@
           },
           "maxBytes": {
             "type": "integer"
+          },
+          "quota": {
+            "$ref": "#/components/schemas/MediaQuota"
           }
         }
       },
@@ -1084,9 +2034,61 @@
               },
               "webp": {
                 "type": "string"
+              },
+              "thumb_avif": {
+                "type": "string"
+              },
+              "medium_avif": {
+                "type": "string"
+              },
+              "full_avif": {
+                "type": "string"
+              },
+              "svg": {
+                "type": "string",
+                "description": "Sanitised SVG (only for image/svg+xml)"
+              },
+              "audio": {
+                "type": "string",
+                "description": "Rebuilt MP3 without tags (only for music)"
               }
             },
-            "description": "Presigned GET URLs"
+            "description": "Presigned GET URLs. Photos: thumb, medium, full, webp (WebP) and thumb_avif, medium_avif, full_avif (AVIF). An animated GIF has an animated WebP in full and webp. SVG: svg. Music: audio."
+          },
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "gallery",
+              "cover",
+              "background",
+              "section",
+              "element",
+              "block",
+              "logo",
+              "monogram",
+              "illustration",
+              "music"
+            ]
+          },
+          "durationMs": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Music only, measured from the MP3 frames"
+          },
+          "rightsNoticeVersion": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rightsAcknowledgedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
           }
         }
       },
@@ -4037,7 +5039,7 @@
             "html": "#/components/schemas/DesignBlockHtml"
           }
         },
-        "description": "Typed component registry (plan \u00a75)."
+        "description": "Typed component registry (plan §5)."
       },
       "DesignCustomCode": {
         "type": "object",
@@ -11020,7 +12022,323 @@
             }
           }
         ],
-        "description": "422 of a v2 design (400 and 413 are plain Problems). code is INVALID_THEME (not an object, neither v1 nor v2, or a schemaVersion that is not the integer 2), DESIGN_SCHEMA_INVALID (issues lists the paths), GIFTS_BLOCK_REQUIRED (no gifts block, said before the schema errors), GIFTS_BLOCK_LOCKED (link or rotation on the gifts element), GIFTS_BLOCK_HIDDEN (not visible or translucent), GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL (under 44 px), GIFTS_BLOCK_COVERED (another element paints over it), GIFTS_BLOCK_LOW_CONTRAST (text under 4.5:1 or contour under 3:1 in either palette), DESIGN_REFERENCE_INVALID, FONT_WEIGHT_UNAVAILABLE, CUSTOM_CODE_UNAVAILABLE (custom html/css until the F5 sanitiser) or DESIGN_NOT_PUBLISHABLE (publishing a v2: it stays a draft until the renderer supports it)."
+        "description": "422 of a v2 design (400 and 413 are plain Problems). code is INVALID_THEME (not an object, neither v1 nor v2, or a schemaVersion that is not the integer 2), DESIGN_SCHEMA_INVALID (issues lists the paths), GIFTS_BLOCK_REQUIRED (no gifts block, said before the schema errors), GIFTS_BLOCK_LOCKED (link or rotation on the gifts element), GIFTS_BLOCK_HIDDEN (not visible or translucent), GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL (under 44 px), GIFTS_BLOCK_COVERED (another element paints over it), GIFTS_BLOCK_LOW_CONTRAST (text under 4.5:1 or contour under 3:1 in either palette), DESIGN_REFERENCE_INVALID, FONT_WEIGHT_UNAVAILABLE, CUSTOM_CODE_UNAVAILABLE (custom html/css until the F5 sanitiser) or DESIGN_NOT_PUBLISHABLE (publishing a v2: it stays a draft until the renderer supports it) Design endpoints add VERSION_CONFLICT (409, currentVersion), DESIGN_EXISTS (409), PRIVATE_TEMPLATE_LIMIT (409), DESIGN_TOO_LARGE, CELEBRATION_REQUIRED, CELEBRATION_NOT_ALLOWED and KIND_REQUIRED (422)."
+      },
+      "DesignKind": {
+        "type": "string",
+        "enum": [
+          "CELEBRATION",
+          "PRIVATE_TEMPLATE"
+        ]
+      },
+      "DesignInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "name"
+        ],
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/DesignKind"
+          },
+          "celebrationId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Required for CELEBRATION; absent for PRIVATE_TEMPLATE"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "templateId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Start from a published template (a v1 template is converted to v2)"
+          },
+          "fromDesignId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Start from another design the caller can read (P21: save a celebration design as a private template)"
+          },
+          "document": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DesignDocumentV2"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Start from this v2 document"
+          }
+        },
+        "description": "Send exactly one of templateId, fromDesignId or document."
+      },
+      "Design": {
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "celebrationId",
+          "name",
+          "draftVersion",
+          "publishedVersion",
+          "hasUnpublishedChanges",
+          "document",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/DesignKind"
+          },
+          "celebrationId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "draftVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Optimistic-concurrency token of the draft; send it in If-Match"
+          },
+          "publishedVersion": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "description": "Latest published version, null until the first publish"
+          },
+          "hasUnpublishedChanges": {
+            "type": "boolean"
+          },
+          "document": {
+            "$ref": "#/components/schemas/DesignDocumentV2",
+            "description": "The working draft"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DesignWarning"
+            },
+            "description": "Contrast warnings of the draft; present on create, save and restore. They never block (P19)"
+          }
+        }
+      },
+      "DesignDraftInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "document"
+        ],
+        "properties": {
+          "document": {
+            "$ref": "#/components/schemas/DesignDocumentV2"
+          }
+        }
+      },
+      "DesignPublishInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "type": "string",
+            "maxLength": 80
+          }
+        }
+      },
+      "DesignVersionSummary": {
+        "type": "object",
+        "required": [
+          "version",
+          "label",
+          "createdBy",
+          "createdAt"
+        ],
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "label": {
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "DesignVersion": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/DesignVersionSummary"
+          },
+          {
+            "type": "object",
+            "required": [
+              "document"
+            ],
+            "properties": {
+              "document": {
+                "$ref": "#/components/schemas/DesignDocumentV2"
+              }
+            }
+          }
+        ]
+      },
+      "DesignPublished": {
+        "type": "object",
+        "required": [
+          "design",
+          "version"
+        ],
+        "properties": {
+          "design": {
+            "$ref": "#/components/schemas/Design"
+          },
+          "version": {
+            "$ref": "#/components/schemas/DesignVersionSummary"
+          }
+        },
+        "description": "201 when a new version was created; 200 when the draft was already the latest published version (idempotent)"
+      },
+      "MediaQuota": {
+        "type": "object",
+        "required": [
+          "assets",
+          "bytes",
+          "maxAssets",
+          "maxBytes"
+        ],
+        "properties": {
+          "assets": {
+            "type": "integer"
+          },
+          "bytes": {
+            "type": "integer"
+          },
+          "maxAssets": {
+            "type": "integer",
+            "description": "100 by default, configurable per plan"
+          },
+          "maxBytes": {
+            "type": "integer",
+            "description": "500 MiB by default, configurable per plan"
+          }
+        },
+        "description": "Files and bytes the celebration holds (ready, being processed, or reserved by an upload that is still in its window) against its limits."
+      },
+      "EmbedResolveRequest": {
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "properties": {
+          "url": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "intent": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "video",
+              "music",
+              "map",
+              null
+            ],
+            "description": "Narrows the providers: video = YouTube, Vimeo; music = YouTube, Spotify, SoundCloud; map = Google Maps"
+          }
+        }
+      },
+      "Embed": {
+        "type": "object",
+        "required": [
+          "provider",
+          "kind",
+          "embedUrl",
+          "canonicalUrl",
+          "ref",
+          "sandbox",
+          "allow"
+        ],
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": [
+              "youtube",
+              "vimeo",
+              "spotify",
+              "soundcloud",
+              "google_maps"
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "video",
+              "audio",
+              "map"
+            ]
+          },
+          "embedUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "The only URL a renderer may put in an iframe. https, on the allowlist, privacy-enhanced (youtube-nocookie, vimeo dnt=1)."
+          },
+          "canonicalUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "ref": {
+            "type": "string",
+            "description": "Provider identifier: YouTube/Vimeo id, Spotify kind/id, SoundCloud path, or the map query"
+          },
+          "sandbox": {
+            "type": "string",
+            "description": "Value of the iframe sandbox attribute"
+          },
+          "allow": {
+            "type": "string",
+            "description": "Value of the iframe allow attribute"
+          }
+        }
       }
     }
   }

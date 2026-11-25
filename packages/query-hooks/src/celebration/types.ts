@@ -125,14 +125,41 @@ export interface TemplateTheme {
 export interface TemplateInput { readonly name: string; readonly description?: string; readonly eventTypeTags: readonly string[]; readonly layout: LayoutId; readonly theme: TemplateTheme; readonly sectionOrder: readonly SectionId[] }
 export interface Template extends TemplateInput { readonly id: string; readonly status: "DRAFT" | "PUBLISHED" | "ARCHIVED"; readonly version: number; readonly publishedAt: string | null }
 
-export interface UploadIntent { readonly assetId: string; readonly objectKey: string; readonly uploadUrl: string; readonly method: "PUT"; readonly requiredHeaders: Readonly<Record<string, string>>; readonly maxBytes: number }
+export interface UploadIntent { readonly assetId: string; readonly objectKey: string; readonly uploadUrl: string; readonly method: "PUT"; readonly requiredHeaders: Readonly<Record<string, string>>; readonly maxBytes: number; readonly quota?: MediaQuota }
+
+/** What a file is for (F6). `gallery` and `cover` are the ordered photos; the rest are placed by the design document. `music` is MP3 only. */
+export type MediaPurpose = "gallery" | "cover" | "background" | "section" | "element" | "block" | "logo" | "monogram" | "illustration" | "music";
+export type MediaVariantName = "thumb" | "medium" | "full" | "webp" | "thumb_avif" | "medium_avif" | "full_avif" | "svg" | "audio";
+/** Files and bytes a celebration holds against its limits (100 files / 500 MiB by default). */
+export interface MediaQuota { readonly assets: number; readonly bytes: number; readonly maxAssets: number; readonly maxBytes: number }
+export interface PresignInput {
+  readonly celebrationId: string;
+  readonly filename: string;
+  readonly contentType: string;
+  readonly sizeBytes: number;
+  readonly purpose?: MediaPurpose;
+  /** Required for `music`: the version of the rights notice the host accepted. */
+  readonly rightsNoticeVersion?: string | null;
+}
+export type EmbedIntent = "video" | "music" | "map";
+export interface ResolvedEmbed {
+  readonly provider: "youtube" | "vimeo" | "spotify" | "soundcloud" | "google_maps";
+  readonly kind: "video" | "audio" | "map";
+  readonly embedUrl: string;
+  readonly canonicalUrl: string;
+  readonly ref: string;
+  readonly sandbox: string;
+  readonly allow: string;
+}
 /** One photo of GET /media/public/celebrations/{id}/assets: only what a guest may see (no filename or upload state). */
 export interface PublicGalleryImage {
   readonly id: string;
   readonly width: number | null;
   readonly height: number | null;
   readonly isCover: boolean;
-  readonly variants: Readonly<Partial<Record<"thumb" | "medium" | "full" | "webp", string>>>;
+  readonly purpose?: MediaPurpose;
+  readonly durationMs?: number | null;
+  readonly variants: Readonly<Partial<Record<MediaVariantName, string>>>;
 }
 
 export interface MediaAsset {
@@ -146,7 +173,14 @@ export interface MediaAsset {
   readonly height: number | null;
   readonly sortOrder: number;
   readonly isCover: boolean;
-  readonly variants: Readonly<Partial<Record<"thumb" | "medium" | "full" | "webp", string>>>;
+  readonly purpose?: MediaPurpose;
+  readonly durationMs?: number | null;
+  readonly rightsNoticeVersion?: string | null;
+  readonly rightsAcknowledgedAt?: string | null;
+  readonly variants: Readonly<Partial<Record<MediaVariantName, string>>>;
 }
+
+/** GET /celebrations/{id}/assets: the files and, since 1.4.0 of the contract, what the celebration has used of its quota. */
+export interface MediaList { readonly items: readonly MediaAsset[]; readonly usage?: MediaQuota }
 
 export interface Items<TItem> { readonly items: readonly TItem[] }

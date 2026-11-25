@@ -56,8 +56,180 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
+        /** @description Order and cover of the gallery photos (purpose gallery or cover). Other purposes are not part of the order. */
         put: operations["reorderAssets"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/celebrations/{celebrationId}/design": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getCelebrationDesign"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/celebrations/{celebrationId}/media-usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Quota used and left by the celebration */
+        get: operations["getMediaUsage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/designs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The caller's private templates (P21) */
+        get: operations["listPrivateTemplates"];
+        put?: never;
+        /** Create the design of a celebration, or a private template */
+        post: operations["createDesign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/designs/{designId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getDesign"];
+        put?: never;
+        post?: never;
+        /**
+         * Deletes a design and all its versions (PF-1)
+         * @description A private template is deleted by its owner (or an administrator); a celebration design by whoever manages the celebration. A celebration design that was ever published is 409 DESIGN_PUBLISHED: Celebration keeps the reference of its published version, so it is replaced by publishing again and goes away with the celebration (celebration.celebration.deleted.v1). Deleting an account deletes its private templates too (identity.user.deleted.v1).
+         */
+        delete: operations["deleteDesign"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/designs/{designId}/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Replace the working draft */
+        put: operations["saveDesignDraft"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/designs/{designId}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Publish the draft as the next immutable version */
+        post: operations["publishDesign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/designs/{designId}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listDesignVersions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/designs/{designId}/versions/{version}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getDesignVersion"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/designs/{designId}/versions/{version}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Copy a published version into the draft (P15); it does not publish */
+        post: operations["restoreDesignVersion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/embeds/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Normalises a pasted link to its allowlisted embed */
+        post: operations["resolveEmbed"];
         delete?: never;
         options?: never;
         head?: never;
@@ -296,6 +468,27 @@ export interface components {
          * @enum {string}
          */
         CoverVariant: "classic" | "minimal" | "editorial" | "festive" | "corporate";
+        Design: {
+            /** Format: uuid */
+            celebrationId: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** @description The working draft */
+            document: components["schemas"]["DesignDocumentV2"];
+            /** @description Optimistic-concurrency token of the draft; send it in If-Match */
+            draftVersion: number;
+            hasUnpublishedChanges: boolean;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["DesignKind"];
+            name: string;
+            /** @description Latest published version, null until the first publish */
+            publishedVersion: number | null;
+            /** Format: date-time */
+            updatedAt: string;
+            /** @description Contrast warnings of the draft; present on create, save and restore. They never block (P19) */
+            warnings?: components["schemas"]["DesignWarning"][];
+        };
         DesignAnimation: {
             delayMs?: number;
             durationMs?: number;
@@ -713,6 +906,9 @@ export interface components {
             schemaVersion: 2;
             tokens: components["schemas"]["DesignTokens"];
         };
+        DesignDraftInput: {
+            document: components["schemas"]["DesignDocumentV2"];
+        };
         /** @description One placed block. Coordinates are grid units of its canvas. A canvas is columns x rowHeight px and ends 4000 px below its top; an element lies inside it. The gifts element is at least 44 x 44 px (reference widths 320 px mobile, 768 px desktop, capped by contentMaxWidth), is not covered by a visible element that paints over it (higher z, or the same z and later in the list) and reads at 4.5:1 for its text and 3:1 for its contour in both palettes. */
         DesignElement: {
             animation?: components["schemas"]["DesignAnimation"];
@@ -753,11 +949,35 @@ export interface components {
              */
             kind: "illustration";
         };
+        /** @description Send exactly one of templateId, fromDesignId or document. */
+        DesignInput: {
+            /**
+             * Format: uuid
+             * @description Required for CELEBRATION; absent for PRIVATE_TEMPLATE
+             */
+            celebrationId?: string | null;
+            /** @description Start from this v2 document */
+            document?: components["schemas"]["DesignDocumentV2"] | null;
+            /**
+             * Format: uuid
+             * @description Start from another design the caller can read (P21: save a celebration design as a private template)
+             */
+            fromDesignId?: string | null;
+            kind: components["schemas"]["DesignKind"];
+            name: string;
+            /**
+             * Format: uuid
+             * @description Start from a published template (a v1 template is converted to v2)
+             */
+            templateId?: string | null;
+        };
         DesignIssue: {
             message: string;
             /** @description JSONPath-like location, $ is the document */
             path: string;
         };
+        /** @enum {string} */
+        DesignKind: "CELEBRATION" | "PRIVATE_TEMPLATE";
         DesignLink: {
             /** @description External https link, opened with rel="noopener noreferrer". */
             href: string;
@@ -821,10 +1041,18 @@ export interface components {
             surface: components["schemas"]["HexColour"];
             text: components["schemas"]["HexColour"];
         };
-        /** @description 422 of a v2 design (400 and 413 are plain Problems). code is INVALID_THEME (not an object, neither v1 nor v2, or a schemaVersion that is not the integer 2), DESIGN_SCHEMA_INVALID (issues lists the paths), GIFTS_BLOCK_REQUIRED (no gifts block, said before the schema errors), GIFTS_BLOCK_LOCKED (link or rotation on the gifts element), GIFTS_BLOCK_HIDDEN (not visible or translucent), GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL (under 44 px), GIFTS_BLOCK_COVERED (another element paints over it), GIFTS_BLOCK_LOW_CONTRAST (text under 4.5:1 or contour under 3:1 in either palette), DESIGN_REFERENCE_INVALID, FONT_WEIGHT_UNAVAILABLE, CUSTOM_CODE_UNAVAILABLE (custom html/css until the F5 sanitiser) or DESIGN_NOT_PUBLISHABLE (publishing a v2: it stays a draft until the renderer supports it). */
+        /** @description 422 of a v2 design (400 and 413 are plain Problems). code is INVALID_THEME (not an object, neither v1 nor v2, or a schemaVersion that is not the integer 2), DESIGN_SCHEMA_INVALID (issues lists the paths), GIFTS_BLOCK_REQUIRED (no gifts block, said before the schema errors), GIFTS_BLOCK_LOCKED (link or rotation on the gifts element), GIFTS_BLOCK_HIDDEN (not visible or translucent), GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL (under 44 px), GIFTS_BLOCK_COVERED (another element paints over it), GIFTS_BLOCK_LOW_CONTRAST (text under 4.5:1 or contour under 3:1 in either palette), DESIGN_REFERENCE_INVALID, FONT_WEIGHT_UNAVAILABLE, CUSTOM_CODE_UNAVAILABLE (custom html/css until the F5 sanitiser) or DESIGN_NOT_PUBLISHABLE (publishing a v2: it stays a draft until the renderer supports it) Design endpoints add VERSION_CONFLICT (409, currentVersion), DESIGN_EXISTS (409), PRIVATE_TEMPLATE_LIMIT (409), DESIGN_TOO_LARGE, CELEBRATION_REQUIRED, CELEBRATION_NOT_ALLOWED and KIND_REQUIRED (422). */
         DesignProblem: components["schemas"]["Problem"] & {
             field?: string;
             issues?: components["schemas"]["DesignIssue"][];
+        };
+        /** @description 201 when a new version was created; 200 when the draft was already the latest published version (idempotent) */
+        DesignPublished: {
+            design: components["schemas"]["Design"];
+            version: components["schemas"]["DesignVersionSummary"];
+        };
+        DesignPublishInput: {
+            label?: string;
         };
         DesignSectionPage: {
             background?: components["schemas"]["DesignBackground"];
@@ -898,6 +1126,17 @@ export interface components {
             transform?: "none" | "uppercase" | "lowercase" | "capitalize";
             weight?: components["schemas"]["FontWeight"];
         };
+        DesignVersion: components["schemas"]["DesignVersionSummary"] & {
+            document: components["schemas"]["DesignDocumentV2"];
+        };
+        DesignVersionSummary: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            createdBy: string;
+            label: string;
+            version: number;
+        };
         /** @description A palette pair under WCAG AA. The design is still saved (P19); suggestion is the nearest tone of the foreground that passes. */
         DesignWarning: {
             background: components["schemas"]["ColourRole"];
@@ -909,6 +1148,33 @@ export interface components {
             /** @enum {string} */
             scheme: "light" | "dark";
             suggestion: components["schemas"]["HexColour"];
+        };
+        Embed: {
+            /** @description Value of the iframe allow attribute */
+            allow: string;
+            /** Format: uri */
+            canonicalUrl: string;
+            /**
+             * Format: uri
+             * @description The only URL a renderer may put in an iframe. https, on the allowlist, privacy-enhanced (youtube-nocookie, vimeo dnt=1).
+             */
+            embedUrl: string;
+            /** @enum {string} */
+            kind: "video" | "audio" | "map";
+            /** @enum {string} */
+            provider: "youtube" | "vimeo" | "spotify" | "soundcloud" | "google_maps";
+            /** @description Provider identifier: YouTube/Vimeo id, Spotify kind/id, SoundCloud path, or the map query */
+            ref: string;
+            /** @description Value of the iframe sandbox attribute */
+            sandbox: string;
+        };
+        EmbedResolveRequest: {
+            /**
+             * @description Narrows the providers: video = YouTube, Vimeo; music = YouTube, Spotify, SoundCloud; map = Google Maps
+             * @enum {string|null}
+             */
+            intent?: "video" | "music" | "map" | null;
+            url: string;
         };
         /**
          * @description A family of the curated catalogue (P11). The catalogue, with the exact weights of each family and the tested pairs, is x-rsvp-font-catalog. Inter, Roboto and Open Sans are excluded.
@@ -931,11 +1197,18 @@ export interface components {
             /** Format: uuid */
             celebrationId?: string;
             contentType?: string;
+            /** @description Music only, measured from the MP3 frames */
+            durationMs?: number | null;
             filename?: string;
             height?: number | null;
             /** Format: uuid */
             id?: string;
             isCover?: boolean;
+            /** @enum {string} */
+            purpose?: "gallery" | "cover" | "background" | "section" | "element" | "block" | "logo" | "monogram" | "illustration" | "music";
+            /** Format: date-time */
+            rightsAcknowledgedAt?: string | null;
+            rightsNoticeVersion?: string | null;
             sizeBytes?: number;
             sortOrder?: number;
             /**
@@ -943,14 +1216,30 @@ export interface components {
              * @enum {string}
              */
             status?: "PENDING_UPLOAD" | "PROCESSING" | "PROCESSED" | "REJECTED" | "DELETED";
-            /** @description Presigned GET URLs */
+            /** @description Presigned GET URLs. Photos: thumb, medium, full, webp (WebP) and thumb_avif, medium_avif, full_avif (AVIF). An animated GIF has an animated WebP in full and webp. SVG: svg. Music: audio. */
             variants?: {
+                /** @description Rebuilt MP3 without tags (only for music) */
+                audio?: string;
                 full?: string;
+                full_avif?: string;
                 medium?: string;
+                medium_avif?: string;
+                /** @description Sanitised SVG (only for image/svg+xml) */
+                svg?: string;
                 thumb?: string;
+                thumb_avif?: string;
                 webp?: string;
             };
             width?: number | null;
+        };
+        /** @description Files and bytes the celebration holds (ready, being processed, or reserved by an upload that is still in its window) against its limits. */
+        MediaQuota: {
+            assets: number;
+            bytes: number;
+            /** @description 100 by default, configurable per plan */
+            maxAssets: number;
+            /** @description 500 MiB by default, configurable per plan */
+            maxBytes: number;
         };
         Problem: {
             code?: string;
@@ -1006,6 +1295,7 @@ export interface components {
             /** @constant */
             method?: "PUT";
             objectKey?: string;
+            quota?: components["schemas"]["MediaQuota"];
             requiredHeaders?: Record<string, never>;
             /** Format: uri */
             uploadUrl?: string;
@@ -1014,6 +1304,11 @@ export interface components {
     responses: never;
     parameters: {
         AssetId: string;
+        CelebrationId: string;
+        DesignId: string;
+        DesignVersionNumber: number;
+        /** @description draftVersion being edited, e.g. "3". Missing → 428; stale → 409 VERSION_CONFLICT. */
+        DraftIfMatch: string;
         TemplateId: string;
     };
     requestBodies: never;
@@ -1097,6 +1392,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         items?: components["schemas"]["MediaAsset"][];
+                        usage?: components["schemas"]["MediaQuota"];
                     };
                 };
             };
@@ -1148,13 +1444,730 @@ export interface operations {
             };
         };
     };
+    getCelebrationDesign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                celebrationId: components["parameters"]["CelebrationId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The celebration's design */
+            200: {
+                headers: {
+                    /** @description draftVersion, to send back in If-Match */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Design"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unknown, or not visible to the caller (never 403 for what the caller cannot see) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    getMediaUsage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                celebrationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Usage and limits */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaQuota"];
+                };
+            };
+            /** @description Missing or invalid RS256 bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unknown celebration or not yours */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    listPrivateTemplates: {
+        parameters: {
+            query: {
+                kind: "PRIVATE_TEMPLATE";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Private templates of the caller */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["Design"][];
+                    };
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description kind is not PRIVATE_TEMPLATE */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    createDesign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DesignInput"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    ETag?: string;
+                    Location?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Design"];
+                };
+            };
+            /** @description Malformed body or not exactly one source */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Can read but not change it */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unknown, or not visible to the caller (never 403 for what the caller cannot see) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description DESIGN_EXISTS or PRIVATE_TEMPLATE_LIMIT */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Invalid document */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["DesignProblem"];
+                };
+            };
+        };
+    };
+    getDesign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                designId: components["parameters"]["DesignId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The design with its draft */
+            200: {
+                headers: {
+                    /** @description draftVersion, to send back in If-Match */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Design"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unknown, or not visible to the caller (never 403 for what the caller cannot see) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    deleteDesign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                designId: components["parameters"]["DesignId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The caller can read the design but not change it */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unknown, or not visible to the caller */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description DESIGN_PUBLISHED: a published celebration design is replaced, not deleted */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    saveDesignDraft: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description draftVersion being edited, e.g. "3". Missing → 428; stale → 409 VERSION_CONFLICT. */
+                "If-Match": components["parameters"]["DraftIfMatch"];
+            };
+            path: {
+                designId: components["parameters"]["DesignId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DesignDraftInput"];
+            };
+        };
+        responses: {
+            /** @description Saved (an identical draft changes nothing) */
+            200: {
+                headers: {
+                    /** @description draftVersion, to send back in If-Match */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Design"];
+                };
+            };
+            /** @description Malformed body */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Can read but not change it */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unknown, or not visible to the caller (never 403 for what the caller cannot see) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description VERSION_CONFLICT */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Invalid design */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["DesignProblem"];
+                };
+            };
+            /** @description If-Match required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    publishDesign: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description draftVersion being edited, e.g. "3". Missing → 428; stale → 409 VERSION_CONFLICT. */
+                "If-Match": components["parameters"]["DraftIfMatch"];
+            };
+            path: {
+                designId: components["parameters"]["DesignId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["DesignPublishInput"];
+            };
+        };
+        responses: {
+            /** @description Already the latest published version; nothing emitted */
+            200: {
+                headers: {
+                    /** @description draftVersion, to send back in If-Match */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DesignPublished"];
+                };
+            };
+            /** @description New version published */
+            201: {
+                headers: {
+                    /** @description draftVersion, to send back in If-Match */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DesignPublished"];
+                };
+            };
+            /** @description Malformed body */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Can read but not change it */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unknown, or not visible to the caller (never 403 for what the caller cannot see) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description VERSION_CONFLICT */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Invalid design */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["DesignProblem"];
+                };
+            };
+            /** @description If-Match required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    listDesignVersions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                designId: components["parameters"]["DesignId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Published versions, newest first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["DesignVersionSummary"][];
+                    };
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unknown, or not visible to the caller (never 403 for what the caller cannot see) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    getDesignVersion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                designId: components["parameters"]["DesignId"];
+                version: components["parameters"]["DesignVersionNumber"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A published version with its document */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DesignVersion"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unknown, or not visible to the caller (never 403 for what the caller cannot see) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    restoreDesignVersion: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description draftVersion being edited, e.g. "3". Missing → 428; stale → 409 VERSION_CONFLICT. */
+                "If-Match": components["parameters"]["DraftIfMatch"];
+            };
+            path: {
+                designId: components["parameters"]["DesignId"];
+                version: components["parameters"]["DesignVersionNumber"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Draft now holds that version */
+            200: {
+                headers: {
+                    /** @description draftVersion, to send back in If-Match */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Design"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Can read but not change it */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unknown, or not visible to the caller (never 403 for what the caller cannot see) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description VERSION_CONFLICT */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The version no longer satisfies today's contract */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["DesignProblem"];
+                };
+            };
+            /** @description If-Match required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    resolveEmbed: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmbedResolveRequest"];
+            };
+        };
+        responses: {
+            /** @description The embed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Embed"];
+                };
+            };
+            /** @description Malformed body */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing or invalid RS256 bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description EMBED_NOT_ALLOWED (any host or shape off the list), EMBED_PROVIDER_NOT_ALLOWED_HERE or EMBED_INTENT_UNKNOWN */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
     publicVariant: {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 assetId: components["parameters"]["AssetId"];
-                variant: "thumb" | "medium" | "full" | "webp";
+                variant: "thumb" | "medium" | "full" | "webp" | "thumb_avif" | "medium_avif" | "full_avif" | "svg" | "audio";
             };
             cookie?: never;
         };
@@ -1541,7 +2554,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Stored object does not match declared type/size, or is not an image (cheap header check done in the request) */
+            /** @description Stored object does not match declared type/size, or is not an image (cheap header check done in the request); INVALID_IMAGE, IMAGE_TOO_LARGE, ANIMATION_TOO_LONG, INVALID_SVG, SVG_TOO_COMPLEX, INVALID_AUDIO or AUDIO_TOO_LONG */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -1564,9 +2577,21 @@ export interface operations {
                 "application/json": {
                     /** Format: uuid */
                     celebrationId: string;
-                    /** @enum {string} */
-                    contentType: "image/jpeg" | "image/png" | "image/webp";
+                    /**
+                     * @description Images (SVG is sanitised, HEIC is converted, GIF becomes an animated WebP) or audio/mpeg for purpose music. audio/mpeg is only valid with purpose music and the reverse.
+                     * @enum {string}
+                     */
+                    contentType: "image/jpeg" | "image/png" | "image/webp" | "image/gif" | "image/avif" | "image/svg+xml" | "image/heic" | "image/heif" | "audio/mpeg";
                     filename: string;
+                    /**
+                     * @description What the file is for. gallery and cover are the ordered photos of the gallery; the rest are placed by the design document. music is MP3 only.
+                     * @default gallery
+                     * @enum {string}
+                     */
+                    purpose?: "gallery" | "cover" | "background" | "section" | "element" | "block" | "logo" | "monogram" | "illustration" | "music";
+                    /** @description Required for purpose music: the version of the rights notice the host accepted (currentVersion in the 422 RIGHTS_NOTICE_REQUIRED / RIGHTS_NOTICE_OUTDATED problem). Stored with the asset as audit. */
+                    rightsNoticeVersion?: string | null;
+                    /** @description Images: up to MEDIA_MAX_IMAGE_BYTES (10 MiB by default). Music: up to MEDIA_MAX_AUDIO_BYTES (15 MiB by default). */
                     sizeBytes: number;
                 };
             };
@@ -1608,7 +2633,16 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Unsupported MIME type or size, checked before signing */
+            /** @description MEDIA_QUOTA_ASSETS_EXCEEDED or MEDIA_QUOTA_BYTES_EXCEEDED: the celebration reached its quota (100 files / 500 MiB by default). The problem carries `quota`. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unsupported MIME type, purpose, or size; RIGHTS_NOTICE_REQUIRED / RIGHTS_NOTICE_OUTDATED for music; checked before signing */
             422: {
                 headers: {
                     [name: string]: unknown;
