@@ -20,6 +20,12 @@ Rama apilada sobre `feat/f1-diseno-v2-esquema` (FE #115). Plan: `PLAN-PLANTILLAS
 - **Movimiento:** la única animación nueva es el giro del anillo «guardando» (transform, 900 ms, estado de progreso del guardado); con `prefers-reduced-motion` queda quieto y el texto sigue diciendo «Guardando…». Se mantienen la transición de ancho del lienzo (240 ms, orienta el cambio móvil/escritorio) y el toque de 120 ms; ambos se anulan con movimiento reducido.
 - **Evidencia (Chromium de Linux):** `a-lienzo-{claro,oscuro}-{360,768,1280}.png`, `a-estado-*.png`. 21 pruebas Playwright con axe sin hallazgos a 360/768/1280, claro y oscuro. **Líneas base macOS que cambiarían: ninguna** (el repositorio no versiona líneas base de `/diseno` ni del paquete `design-editor`).
 
+## PR a · ronda 3 (revisión 2: 0 bloqueantes, 0 mayores, menores)
+
+- **PL-121-R2-M1 (WCAG 1.4.11):** `--de-field` claro `#8A8880` -> `#858379`. Contraste del borde sobre surface / canvas / surface-muted / danger-bg: claro 3,80 / 3,52 / 3,19 / 3,16 (antes 3,55 / 3,29 / 2,97 / 2,95); oscuro 4,83 / 5,29 / 4,33 / 4,36 (sin cambio de token). Prueba `src/test/contrast.test.ts` (lee `editor.css`; falla con los valores anteriores) y aserción en el Playwright (bordes calculados desde estilos de Chrome).
+- **m-B (401):** el aviso decía que lo que se ve no se pierde, pero «Iniciar sesión de nuevo» navegaba en la misma pestaña (`router.push`, el editor se desmonta y la pantalla nueva carga del servidor). No se pudo recorrer la navegación real (sin backend); se resolvió por diseño: el login se abre en otra pestaña (`window.open`, con respaldo a la navegación si el navegador lo bloquea), el editor sigue montado con las ediciones y «Ya entré, reintentar» guarda desde él. Texto es-BO/en-US ajustado. NO VERIFICADO contra el backend real: que la renovación por cookie de refresco permita el reintento tras entrar en la otra pestaña.
+- **m-2:** botón de peligro con fondo pastel (`danger-bg`) y texto `danger` (6,91:1 claro, 8,44:1 oscuro); mesa del lienzo en oscuro `#272725` (`surfaceMuted` de DESIGN.md), más clara que el canvas `#151514`.
+
 ### Pendiente / abierto
 - `GIFTS_BLOCK_TEXT_TOO_LARGE` y la altura útil (padding + borde) del botón de regalos no están espejados en `guards.ts`: ningún gesto del editor de PR a los provoca; hay que espejarlos cuando lleguen los controles de tipografía y relleno (PR b/c).
 - Los avisos P19 solo se muestran tras un guardado (o los que traiga el registro); el servidor los envía al crear, guardar y restaurar.
