@@ -12,9 +12,9 @@ export interface DesignFont {
 export interface DesignBox { readonly top: number; readonly right: number; readonly bottom: number; readonly left: number }
 export interface DesignBorder { readonly width: number; readonly style: "solid" | "dashed" | "dotted"; readonly colour: PaletteRole }
 export type DesignBackground =
-  | { readonly kind: "colour"; readonly colour: PaletteRole }
-  | { readonly kind: "media"; readonly mediaId: string; readonly scrim?: number }
-  | { readonly kind: "illustration"; readonly illustration: string };
+  | { readonly kind: "colour"; readonly role: PaletteRole }
+  | { readonly kind: "media"; readonly mediaId: string; readonly fit: "cover" | "contain"; readonly scrim?: number }
+  | { readonly kind: "illustration"; readonly illustrationId: string };
 export interface DesignTypographyOverride {
   readonly role?: "heading" | "body" | "monogram";
   readonly size?: number;
@@ -67,6 +67,7 @@ export interface DesignPage {
   readonly kind: "cover" | "section";
   readonly section?: string;
   readonly style: string;
+  readonly background?: DesignBackground;
   readonly canvases: { readonly mobile: DesignCanvas; readonly desktop?: DesignCanvas };
 }
 

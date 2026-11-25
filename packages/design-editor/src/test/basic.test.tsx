@@ -1,8 +1,9 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { createTranslator } from "@rsvp/i18n";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { applyPaddingPreset, applySpacingPreset, applyTemplateDocument, editableTexts, setBlockConfig, setSectionOrder, setSectionVisible, sharedPadding, spacingPresetOf } from "../model/ops.js";
-import { giftsIssues } from "../model/guards.js";
+import { patchElement, applyPaddingPreset, applySpacingPreset, applyTemplateDocument, editableTexts, setBlockConfig, setSectionOrder, setSectionVisible, sharedPadding, spacingPresetOf } from "../model/ops.js";
+import { giftsIssues, giftsBlock, giftsPlacement, usefulHeightPx } from "../model/guards.js";
+import { documentOf, editorReducer, initialEditorState } from "../model/state.js";
 import { EditorShell } from "../ui/editor-shell.js";
 import type { TemplateSource } from "../ui/basic-panel.js";
 import { fixture } from "./fixture.js";
@@ -29,13 +30,37 @@ describe("Basic level operations", () => {
     const doc = fixture();
     expect(sharedPadding(doc)).toBe("none");
     expect(applyPaddingPreset("none")(doc)).toBe(doc);
-    const padded = applyPaddingPreset("medium")(doc);
-    expect(sharedPadding(padded)).toBe("medium");
-    expect(padded.pages.every((page) => page.canvases.mobile.elements.every((element) => element.padding?.left === 16))).toBe(true);
+    const padded = applyPaddingPreset("small")(doc);
+    expect(sharedPadding(padded)).toBe("small");
+    expect(padded.pages.every((page) => page.canvases.mobile.elements.every((element) => element.block === giftsBlock(doc)?.id || element.padding?.left === 8))).toBe(true);
     expect(giftsIssues(padded)).toEqual([]);
-    expect(applyPaddingPreset("medium")(padded)).toBe(padded);
+    expect(applyPaddingPreset("small")(padded)).toBe(padded);
     const mixed = { ...padded, pages: padded.pages.map((page, index) => (index === 0 ? { ...page, canvases: { mobile: { ...page.canvases.mobile, elements: page.canvases.mobile.elements.map((element) => ({ ...element, padding: { top: 4, right: 8, bottom: 4, left: 8 } })) } } } : page)) };
     expect(sharedPadding(mixed)).toBeNull();
+  });
+
+  it("padding presets never touch the gifts button, and every gesture that would shrink or cover it is refused with its reason (P22)", () => {
+    const doc = fixture();
+    const placement = giftsPlacement(doc);
+    if (!placement) throw new Error("fixture without gifts button");
+    const { page, element } = placement;
+    for (const name of ["small", "medium", "large"] as const) {
+      const padded = applyPaddingPreset(name)(doc);
+      const gifts = giftsPlacement(padded)?.element;
+      expect(gifts?.padding).toBeUndefined();
+      expect(giftsIssues(padded)).toEqual([]);
+      expect(sharedPadding(padded)).toBe(name);
+    }
+    const refuses = (op: ReturnType<typeof patchElement>, code: string) => {
+      const state = editorReducer(initialEditorState(doc), { type: "edit", op, at: 0 });
+      expect(state.refusal?.map((issue) => issue.code)).toContain(code);
+      expect(documentOf(state)).toBe(doc);
+      expect(state.revision).toBe(0);
+    };
+    expect(usefulHeightPx(element, page.canvases.mobile)).toBeGreaterThanOrEqual(44);
+    refuses(patchElement("mobile", element.id, { padding: { top: 16, right: 0, bottom: 16, left: 0 } }), "GIFTS_BLOCK_TOO_SMALL");
+    refuses(patchElement("mobile", element.id, { border: { width: 8, style: "solid", colour: "accent" } }), "GIFTS_BLOCK_TOO_SMALL");
+    refuses(patchElement("mobile", element.id, { typography: { size: 40 } }), "GIFTS_BLOCK_TEXT_TOO_LARGE");
   });
 
   it("templates replace the design but keep the host's own code", () => {
@@ -43,6 +68,17 @@ describe("Basic level operations", () => {
     const next = applyTemplateDocument(fixture("minimalista"))(current);
     expect(next.custom.html).toBe("<p>mío</p>");
     expect(next.tokens).toEqual(fixture("minimalista").tokens);
+  });
+
+  it("a template whose gifts button would be too small or covered is refused instead of replacing the design", () => {
+    const doc = fixture();
+    const incoming = fixture("minimalista");
+    const placement = giftsPlacement(incoming);
+    if (!placement) throw new Error("template without gifts button");
+    const broken = patchElement("mobile", placement.element.id, { h: 1 })(incoming);
+    const state = editorReducer(initialEditorState(doc), { type: "edit", op: applyTemplateDocument(broken), at: 0 });
+    expect(state.refusal?.map((issue) => issue.code)).toContain("GIFTS_BLOCK_TOO_SMALL");
+    expect(documentOf(state)).toBe(doc);
   });
 
   it("finds the texts a block shows", () => {
@@ -68,6 +104,19 @@ describe("Basic panel", () => {
     expect(screen.getByRole("radio", { name: "Mediano" }).getAttribute("aria-checked")).toBe("true");
     fireEvent.click(screen.getByRole("button", { name: "Deshacer" }));
     expect(screen.getByRole("radio", { name: "Mediano" }).getAttribute("aria-checked")).toBe("false");
+  });
+
+  it("a colour that would make the gifts button unreadable is refused in the panel with the reason and the picker keeps the old colour", () => {
+    const base = fixture();
+    const doc = { ...base, blocks: base.blocks.map((block) => (block.type === "giftsCta" ? { ...block, config: { ...block.config, style: "outline" } } : block)) };
+    open(doc);
+    const light = within(screen.getByRole("group", { name: "Modo claro" }));
+    const accent = light.getByLabelText("Acento") as HTMLInputElement;
+    const before = accent.value;
+    fireEvent.change(accent, { target: { value: doc.tokens.palettes.light.canvas.toLowerCase() } });
+    expect(screen.getByRole("alert").textContent).toContain("no se leería bien");
+    expect((light.getByLabelText("Acento") as HTMLInputElement).value).toBe(before);
+    expect((screen.getByRole("button", { name: "Deshacer" }) as HTMLButtonElement).disabled).toBe(true);
   });
 
   it("the gifts section is always visible and locked; the others switch off and on and reorder", () => {

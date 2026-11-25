@@ -104,6 +104,19 @@ describe("inspector and palette", () => {
     expect(giftsIssues(fixture())).toEqual([]);
   });
 
+  it("a padding from the inspector are refused with the reason when they would break the gifts button", () => {
+    advanced();
+    makeFree("Regalos");
+    fireEvent.click(within(page("Regalos")).getByRole("group", { name: "Botón de regalos" }));
+    const inspector = screen.getByRole("region", { name: "Elemento" });
+    const before = within(page("Regalos")).getByRole("group", { name: "Botón de regalos" }).getAttribute("style");
+    fireEvent.change(within(inspector).getByLabelText("Arriba", { selector: "#de-i-padding-top" }), { target: { value: "16" } });
+    fireEvent.change(within(inspector).getByLabelText("Abajo", { selector: "#de-i-padding-bottom" }), { target: { value: "16" } });
+    expect(screen.getByRole("alert").textContent).toContain("después de descontar el relleno y el borde");
+    expect((within(inspector).getByLabelText("Abajo", { selector: "#de-i-padding-bottom" }) as HTMLInputElement).value).toBe("0");
+    expect(within(page("Regalos")).getByRole("group", { name: "Botón de regalos" }).getAttribute("style")).toBe(before);
+  });
+
   it("the desktop canvas is created from the mobile one and then edited on its own", () => {
     advanced();
     fireEvent.click(screen.getByRole("radio", { name: "Escritorio" }));

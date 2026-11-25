@@ -13,3 +13,8 @@ export const CheckIcon = draw(<path d="m5 12.5 4.5 4.5L19 7.5" />);
 export const AlertIcon = draw(<><path d="M12 4 2.5 20h19L12 4Z" /><path d="M12 10v4.5M12 17.5v.01" /></>);
 export const SlidersIcon = draw(<><path d="M4 7h10M18 7h2M4 17h2M10 17h10" /><circle cx="16" cy="7" r="2" /><circle cx="8" cy="17" r="2" /></>);
 export const LayersIcon = draw(<><path d="m12 3 9 5-9 5-9-5 9-5Z" /><path d="m3 13 9 5 9-5" /></>);
+export const LockIcon = draw(<><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></>);
+export const ClockIcon = draw(<><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></>);
+export const DotIcon = draw(<circle cx="12" cy="12" r="4" fill="currentColor" />);
+/** An open ring: it turns while the draft is being saved (a still ring under reduced motion). */
+export const SpinnerIcon = draw(<path d="M12 3.5a8.5 8.5 0 1 0 8.5 8.5" />);

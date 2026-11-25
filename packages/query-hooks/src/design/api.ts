@@ -27,7 +27,10 @@ export interface DesignRecord {
 }
 
 export interface DesignVersionSummary { readonly version: number; readonly label: string; readonly createdBy: string; readonly createdAt: string }
-export interface DesignVersion extends DesignVersionSummary { readonly document?: design.DesignDocumentV2 }
+export interface DesignVersion extends DesignVersionSummary { readonly document: design.DesignDocumentV2 }
+/** One page of published versions, newest first: pass `nextBefore` as `before` for the next page; it is null on the last one. */
+export interface DesignVersionPage { readonly items: readonly DesignVersionSummary[]; readonly nextBefore: number | null }
+export interface DesignVersionsQuery { /** 1 to 100; the server defaults to 50. */ readonly limit?: number; readonly before?: number }
 export interface DesignPublishResult { readonly design: DesignRecord; readonly version: DesignVersionSummary }
 
 /** Exactly one source for the first draft. */
@@ -50,7 +53,13 @@ export function designApi(client: ApiClient) {
       client.request<DesignRecord, { document: design.DesignDocumentV2 }>(`${BASE}/designs/${id}/draft`, { method: "PUT", headers: ifMatch(draftVersion), body: { document }, signal }),
     publish: (id: string, draftVersion: number, label: string) =>
       client.request<DesignPublishResult, { label: string }>(`${BASE}/designs/${id}/publish`, { method: "POST", headers: ifMatch(draftVersion), body: { label } }),
-    versions: (id: string) => client.request<Items<DesignVersionSummary>>(`${BASE}/designs/${id}/versions`),
+    versions: (id: string, query: DesignVersionsQuery = {}) => {
+      const params = new URLSearchParams();
+      if (query.limit !== undefined) params.set("limit", String(query.limit));
+      if (query.before !== undefined) params.set("before", String(query.before));
+      const suffix = params.size > 0 ? `?${params.toString()}` : "";
+      return client.request<DesignVersionPage>(`${BASE}/designs/${id}/versions${suffix}`);
+    },
     version: (id: string, version: number) => client.request<DesignVersion>(`${BASE}/designs/${id}/versions/${version}`),
     /** P15: restoring copies the version into the draft; it does not publish. */
     restore: (id: string, version: number, draftVersion: number) =>

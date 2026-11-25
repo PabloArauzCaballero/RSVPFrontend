@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { addBlock, canRemove, clampToCanvas, createDesktopCanvas, DEFAULT_ROWS, GRID, makeFree, MAX_Z, PALETTE, placeElement, removeElement, reorderLayer, rotateElement, setElementBox } from "../model/canvas.js";
 import { giftsIssues, giftsPlacement } from "../model/guards.js";
 import { documentOf, editorReducer, initialEditorState } from "../model/state.js";
+import { patchElement, type DocumentOp } from "../model/ops.js";
 import { fixture } from "./fixture.js";
 
 const doc0 = () => fixture();
@@ -128,10 +129,31 @@ describe("palette: adding and removing components", () => {
     expect(state.refusal?.map((issue) => issue.code)).toContain("GIFTS_BLOCK_REQUIRED");
   });
 
-  it("covering the gifts block with another element is a rejected gesture only on the server; the editor keeps both valid shapes", () => {
+  it("every gesture that covers, shrinks, pads or rotates the gifts button is refused by the editor with its reason and leaves the document as it was (P22)", () => {
     const doc = addBlock(giftsPage(), "text", { text: "x" })(freeGifts());
+    const placement = giftsPlacement(doc);
+    if (!placement) throw new Error("fixture without gifts button");
+    const giftsId = placement.element.id;
     const covering = doc.pages.find((page) => page.id === giftsPage())?.canvases.mobile.elements.at(-1)?.id ?? "";
-    const moved = placeElement("mobile", covering, { y: 0 })(doc);
-    expect(giftsIssues(moved)).toEqual([]);
+    const refuses = (op: DocumentOp, code: string, from = doc) => {
+      const state = editorReducer(initialEditorState(from), { type: "edit", op, at: 0 });
+      expect(state.refusal?.map((issue) => issue.code)).toContain(code);
+      expect(documentOf(state)).toBe(from);
+      expect(state.revision).toBe(0);
+    };
+    // another element dropped over the button (it is added below it, then dragged up)
+    expect(giftsIssues(doc)).toEqual([]);
+    refuses(placeElement("mobile", covering, { y: 0 }), "GIFTS_BLOCK_COVERED");
+    refuses(placeElement("mobile", covering, { y: 0, h: 6 }), "GIFTS_BLOCK_COVERED");
+    // the layer: a neighbour sent in front of it, or the button sent behind a neighbour that overlaps it
+    const overlapping = placeElement("mobile", covering, { y: 0 })(doc);
+    const behind = patchElement("mobile", covering, { z: -1 })(overlapping);
+    expect(giftsIssues(behind)).toEqual([]);
+    refuses(reorderLayer("mobile", giftsId, "back"), "GIFTS_BLOCK_COVERED", behind);
+    refuses(reorderLayer("mobile", covering, "front"), "GIFTS_BLOCK_COVERED", behind);
+    // size, padding and rotation of the button itself
+    refuses(placeElement("mobile", giftsId, { h: 1 }), "GIFTS_BLOCK_TOO_SMALL");
+    refuses(setElementBox("mobile", giftsId, "padding", "top", 8), "GIFTS_BLOCK_TOO_SMALL");
+    refuses(rotateElement("mobile", giftsId, 15), "GIFTS_BLOCK_LOCKED");
   });
 });
