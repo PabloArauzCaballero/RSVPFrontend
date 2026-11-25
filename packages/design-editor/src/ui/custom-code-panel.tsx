@@ -44,7 +44,7 @@ export function CustomCodePanel() {
           : (
             <>
               <p className="de-issues-title"><AlertIcon />{t(key("issues"), { count: issues.length })}</p>
-              <ul className="de-issues">{issues.slice(0, 20).map((issue, index) => <li key={`${issue.area}-${index}`}><b>{issue.area.toUpperCase()}</b> {t(key(`issue.${issue.code}`), { detail: issue.detail })}</li>)}</ul>
+              <ul className="de-issues">{issues.slice(0, 20).map((issue, index) => <li key={`${issue.area}-${index}`}><b>{issue.area.toUpperCase()}</b> {t(key(`issue.${issue.code}`), { detail: issue.code === "VALUE_REJECTED" || issue.code === "SELECTOR_REJECTED" ? (issue.detail.split(":")[0] ?? issue.detail) : issue.detail })}</li>)}</ul>
             </>
           )}
       </div>

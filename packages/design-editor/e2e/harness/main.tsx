@@ -4,7 +4,7 @@ import { createTranslator, type AppLocale } from "@rsvp/i18n";
 import { EditorShell } from "../../src/ui/index.js";
 import type { DraftGateway } from "../../src/save/autosave.js";
 
-declare global { interface Window { __saves: { id: string; version: number; accent: string }[] } }
+declare global { interface Window { __saves: { id: string; version: number; accent: string }[]; __lastDocument: ReturnType<typeof design.convertV1ToV2> } }
 
 const params = new URLSearchParams(window.location.search);
 const locale = (params.get("lang") ?? "es-BO") as AppLocale;
@@ -21,6 +21,7 @@ window.__saves = [];
 let version = 4;
 const gateway: DraftGateway = {
   async saveDraft(id, draftVersion, doc) {
+    window.__lastDocument = doc;
     window.__saves.push({ id, version: draftVersion, accent: doc.tokens.palettes.light.accent });
     if (fail === "409") throw Object.assign(new Error("conflict"), { status: 409, problem: { code: "VERSION_CONFLICT", currentVersion: 9 } });
     if (fail === "offline") throw new TypeError("offline");
