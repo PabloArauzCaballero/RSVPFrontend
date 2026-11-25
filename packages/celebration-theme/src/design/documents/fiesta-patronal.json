@@ -88,24 +88,10 @@
             "rowHeight": 8,
             "elements": [
               {
-                "id": "el-banderin",
-                "block": "art-banderin",
-                "x": 0,
-                "y": 0,
-                "w": 4,
-                "h": 8,
-                "visible": true,
-                "animation": {
-                  "entrance": "draw",
-                  "delayMs": 0,
-                  "durationMs": 1200
-                }
-              },
-              {
                 "id": "el-mascara",
                 "block": "art-mascara",
                 "x": 1,
-                "y": 8,
+                "y": 0,
                 "w": 2,
                 "h": 8,
                 "visible": true,
@@ -113,13 +99,19 @@
                   "entrance": "rise",
                   "delayMs": 400,
                   "durationMs": 900
+                },
+                "padding": {
+                  "top": 0,
+                  "right": 40,
+                  "bottom": 0,
+                  "left": 40
                 }
               },
               {
                 "id": "el-cover",
                 "block": "cover",
                 "x": 0,
-                "y": 16,
+                "y": 8,
                 "w": 4,
                 "h": 8,
                 "visible": true,
@@ -135,9 +127,9 @@
                   "lineHeight": 1.06
                 },
                 "padding": {
-                  "top": 24,
+                  "top": 8,
                   "right": 16,
-                  "bottom": 24,
+                  "bottom": 8,
                   "left": 16
                 },
                 "background": {
@@ -148,6 +140,20 @@
                   "width": 1,
                   "style": "solid",
                   "colour": "line"
+                }
+              },
+              {
+                "id": "el-banderin",
+                "block": "art-banderin",
+                "x": 0,
+                "y": 16,
+                "w": 4,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "draw",
+                  "delayMs": 1400,
+                  "durationMs": 1200
                 }
               }
             ]

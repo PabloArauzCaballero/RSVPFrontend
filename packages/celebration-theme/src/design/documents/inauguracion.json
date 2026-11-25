@@ -98,27 +98,19 @@
                   "entrance": "scale",
                   "delayMs": 300,
                   "durationMs": 900
-                }
-              },
-              {
-                "id": "el-cinta",
-                "block": "art-cinta",
-                "x": 0,
-                "y": 8,
-                "w": 4,
-                "h": 8,
-                "visible": true,
-                "animation": {
-                  "entrance": "draw",
-                  "delayMs": 1000,
-                  "durationMs": 1000
+                },
+                "padding": {
+                  "top": 0,
+                  "right": 120,
+                  "bottom": 0,
+                  "left": 120
                 }
               },
               {
                 "id": "el-cover",
                 "block": "cover",
                 "x": 0,
-                "y": 16,
+                "y": 8,
                 "w": 4,
                 "h": 8,
                 "visible": true,
@@ -130,8 +122,22 @@
                 "typography": {
                   "align": "center",
                   "role": "heading",
-                  "size": 48,
+                  "size": 40,
                   "lineHeight": 1.08
+                }
+              },
+              {
+                "id": "el-cinta",
+                "block": "art-cinta",
+                "x": 0,
+                "y": 16,
+                "w": 4,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "draw",
+                  "delayMs": 1800,
+                  "durationMs": 1000
                 }
               }
             ]
