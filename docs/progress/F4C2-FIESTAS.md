@@ -18,9 +18,14 @@ Rama FE `feat/plantillas-f4c2-fiestas` (sobre `feat/plantillas-f4c1-bodas`, inte
 ## Verificación (qué se ejecutó, 2026-11-25)
 - `packages/celebration-theme`: `vitest run` → 2669 en verde (87 nuevas de c2 sobre la base c1 corregida); `tsc --noEmit` limpio; eslint `--max-warnings 0` sobre `src/design` y el spec nuevo, limpio.
 - BE: `DJANGO_ENV=development manage.py test tests.test_design_v2_fiestas_seeds tests.test_design_v2_bodas_seeds` → 12 en verde (`validate_design`, sin avisos de contraste, claves = semillas v1, sin amarillo). **No** se corrió la suite completa con Postgres.
-- Playwright con Google Chrome for Testing 158.0.8127.36 (`/usr/bin/google-chrome`, vía `CHROMIUM_PATH`; no el Chromium 1243 empaquetado), `next build` + `next start` + fixture de contrato, **no** backend real: `plantillas-v2-fiestas.spec.ts` → **113 pasadas** (recorrido repetido tras la integración de c1 y la regeneración de los JSON) (7 × con/sin foto × claro/oscuro × 360/768/1280: regalos visible ≥ 44 px, sin desborde, AA medido en DOM, paleta del documento; axe en 360; una sola entrada y movimiento reducido).
+- Playwright con Google Chrome for Testing 158.0.8127.36 (`/usr/bin/google-chrome`, vía `CHROMIUM_PATH`; no el Chromium 1243 empaquetado), `next build` + `next start` + fixture de contrato, **no** backend real: `plantillas-v2-fiestas.spec.ts` → **155 pasadas** (113 anteriores + 42 de la ronda 2) (7 × con/sin foto × claro/oscuro × 360/768/1280: regalos visible ≥ 44 px, sin desborde, AA medido en DOM, paleta del documento; axe en 360; una sola entrada y movimiento reducido).
 - Capturas Linux (evidencia, no líneas base): `docs/progress/evidence/plantillas-f4c2/`.
 - **Sin ejecutar:** backend real, iOS/Android, Safari/Firefox, lector de pantalla, gitleaks, `harness:validate`, `apps/universal`, texto sobre foto real.
+
+## Ronda 2 (PL-129-M1, PL-129-M2, m1, m2)
+- Defecto: a 360×800 el título (y la fecha) de cinco portadas quedaba bajo el dock (y=723) o se cortaba a mitad de palabra. El spec no lo medía.
+- Pruebas nuevas en `plantillas-v2-fiestas.spec.ts` (42: 7 plantillas × con/sin foto × 360×800, 768×1024 y 1280×900): el h1 y el texto de la portada (título, fecha y lugar) terminan por encima de `dock.top` y ninguna palabra del h1 se parte entre líneas. Antes de corregir fallaban 6 (Festivo, Fiesta lila, Fiesta temática y Reencuentro con foto a 360 por texto bajo el dock; Despedida con y sin foto por corte de palabra, «Despedid/a»).
+- Corrección en `fiestas.py` (portadas móviles): Festivo (tiara más pequeña, titular 48), Fiesta lila (vinilo más pequeño, titular 48), Fiesta temática (bola más pequeña, titular 48), Reencuentro (anuario y marco más pequeños, titular 48) y Despedida (titular 44 en w=3, sin corte). El dibujo se reduce con relleno horizontal del elemento (múltiplo de 4, regla del validador).
 
 ## Líneas base macOS que cambiarían
 Ninguna (solo añade documentos, rutas de fixture y pruebas).
