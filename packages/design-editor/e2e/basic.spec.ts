@@ -68,7 +68,7 @@ test("an emptied required text is never silent; the optional label goes back to 
   await expect(page.getByTestId("save-status")).toContainText("Borrador guardado", { timeout: 5000 });
   const doc = await page.evaluate(() => window.__lastDocument);
   expect(doc.blocks.find((block: { id: string }) => block.id === "rsvp-cta").config).not.toHaveProperty("label");
-  await expect(label).toHaveAccessibleDescription("Si lo dejas vacío, usamos el texto automático.");
+  await expect(label).toHaveAccessibleDescription("Si lo dejas vacío, usamos el texto automático. 0 de 40 caracteres");
   await expect(label).toHaveAttribute("aria-invalid", "false");
 });
 
@@ -113,3 +113,40 @@ for (const width of [360, 768, 1280]) for (const theme of ["light", "dark"]) {
     await page.screenshot({ path: join(EVIDENCE, `b-lienzo-paleta-${theme}-${width}.png`), fullPage: true });
   });
 }
+
+test("typing past the contract limit is impossible: 40 characters in the gifts label, with a count, and the draft is accepted", async ({ page }) => {
+  await page.goto("/");
+  const label = page.getByLabel("Texto del botón de regalos");
+  await label.fill("x".repeat(41));
+  await expect(label).toHaveValue("x".repeat(40));
+  await expect(page.getByText("40 de 40 caracteres")).toBeVisible();
+  await expect(label).toHaveAccessibleDescription(/Llegaste al límite de 40 caracteres\..*40 de 40 caracteres/);
+  await expect(page.getByTestId("save-status")).toContainText("Borrador guardado", { timeout: 5000 });
+  const doc = await page.evaluate(() => window.__lastDocument);
+  expect(doc.blocks.find((block: { type: string }) => block.type === "giftsCta").config.label).toHaveLength(40);
+});
+
+test("at 1280 px the radio groups are laid out evenly, one row of equal buttons or one column, never an orphan", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("/");
+  for (const group of await page.locator(".de-basic").getByRole("radiogroup").all()) {
+    const boxes = await group.getByRole("radio").evaluateAll((nodes) => nodes.map((node) => { const r = node.getBoundingClientRect(); return { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width) }; }));
+    const rows = new Set(boxes.map((box) => box.y)).size;
+    expect(rows === 1 || rows === boxes.length).toBe(true);
+    expect(boxes.map((box) => box.w), JSON.stringify(boxes)).toEqual(boxes.map(() => boxes[0]?.w));
+  }
+});
+
+test("the Oculto tag is painted with the canvas muted colour on the canvas surface (m5), with at least 4.5:1", async ({ page }) => {
+  await page.goto("/");
+  await page.locator(".de-sections input[type=checkbox]:not([disabled])").first().uncheck();
+  const tag = page.locator(".de-el:not([data-required=\"true\"]) .de-tag").first();
+  await expect(tag).toBeVisible();
+  const { ink, surface, title } = await tag.evaluate((node) => {
+    const element = node.closest(".de-el") as HTMLElement;
+    return { ink: getComputedStyle(node).color, surface: getComputedStyle(element).backgroundColor, title: getComputedStyle(document.querySelector(".de-page-title") as Element).color };
+  });
+  expect(ink).toBe(title);
+  const luminance = (rgb: string): number => { const [r, g, b] = (rgb.match(/\d+/g) ?? []).map(Number).map((value) => { const c = (value ?? 0) / 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; }) as [number, number, number]; return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+  expect((Math.max(luminance(ink), luminance(surface)) + 0.05) / (Math.min(luminance(ink), luminance(surface)) + 0.05)).toBeGreaterThanOrEqual(4.5);
+});
