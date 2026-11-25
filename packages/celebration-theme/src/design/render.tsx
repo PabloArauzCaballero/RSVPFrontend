@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from "react";
+import { Fragment, type CSSProperties, type ReactNode } from "react";
 import { artPalette, artVariables } from "../art/palette.js";
 import { drawingById, InvitationArt, ornamentSetById, OrnamentCorner, OrnamentFrame, OrnamentSeparator } from "../art/index.js";
 import { daysUntil, giftsPath, hasSectionContent, partnerHref, readContent, SECTION_PATHS, sectionTitleKey, type CelebrationContent, type GalleryImage, type PublicCelebrationView } from "../content.js";
@@ -235,15 +235,18 @@ function Canvas({ page, context }: { readonly page: DesignPage; readonly context
   );
 }
 
-/** The dark palette as the system preference asks for it, when the host page does not force a scheme. Values are validated `#RRGGBB`. */
-function SystemDark({ design, theme }: { readonly design: DesignDocumentV2; readonly theme: CelebrationTheme }): ReactNode {
-  const dark = designPalette(design, "dark");
-  const variables = themeVariables(theme, "dark");
-  const pick = (name: string): boolean => name.startsWith("--celebration-") && !name.endsWith("-font") && !["--celebration-radius", "--celebration-gap", "--celebration-max-width", "--celebration-heading-scale"].includes(name);
-  const declarations = Object.entries(variables).filter(([name]) => pick(name)).map(([name, value]) => `${name}:${value}`).join(";");
-  const hex = /^#[0-9a-fA-F]{6}$/;
-  if (![dark.canvas, dark.surface, dark.text, dark.accent].every((value) => hex.test(value))) return null;
-  return <style>{`@media (prefers-color-scheme:dark){.celebration-design[data-scheme-source="system"]{${declarations};color-scheme:dark}}`}</style>;
+const NOT_COLOUR = new Set(["--celebration-radius", "--celebration-gap", "--celebration-max-width", "--celebration-heading-scale"]);
+const isColourVariable = (name: string): boolean => name.startsWith("--celebration-") && !name.endsWith("-font") && !NOT_COLOUR.has(name);
+
+/**
+ * The colours of both schemes as rules, not inline (an inline value always wins over a media query, so the dark palette could never
+ * apply): light as the base and the document's own dark palette under `prefers-color-scheme: dark`, both scoped to the article that
+ * follows the system. Values come from `readDesign`, which accepts only `#RRGGBB`, and from art colour mixes computed from them.
+ */
+function SystemColours({ theme }: { readonly theme: CelebrationTheme }): ReactNode {
+  const rule = (scheme: "light" | "dark"): string => Object.entries(themeVariables(theme, scheme)).filter(([name]) => isColourVariable(name)).map(([name, value]) => `${name}:${value}`).join(";");
+  const scope = '.celebration-design[data-scheme-source="system"]';
+  return <style>{`${scope}{${rule("light")};color-scheme:light}@media (prefers-color-scheme:dark){${scope}{${rule("dark")};color-scheme:dark}}`}</style>;
 }
 
 function PageBlock({ page, context, only }: { readonly page: DesignPage; readonly context: Context; readonly only?: SectionId }): ReactNode {
@@ -258,7 +261,7 @@ function PageBlock({ page, context, only }: { readonly page: DesignPage; readonl
   return (
     <section id={section} className="cdesign-page" data-page-kind="section" data-section={section} data-page={page.id} data-style={page.style} aria-labelledby={headingId} style={backgroundStyle(page.background)}>
       <h2 id={headingId} className={only ? "celebration-visually-hidden" : "cdesign-page-title"}>{t(sectionTitleKey(section))}</h2>
-      {section === "gifts" || section === "rsvp" ? <p className="cdesign-intro">{t(`celebration.${section}.${section === "gifts" ? "intro" : "body"}`)}</p> : null}
+      {section === "gifts" || section === "rsvp" ? <div className="cdesign-intro"><p>{t(`celebration.${section}.${section === "gifts" ? "intro" : "body"}`)}</p></div> : null}
       {inner}
     </section>
   );
@@ -275,23 +278,30 @@ export function DesignRenderer(props: DesignRendererProps): ReactNode {
   const context: Context = { props, design, theme, view, content, gallery, ...(cover ? { cover } : {}), t, giftsHref: giftsPath(view.slug), now: props.now ?? new Date() };
   const available = theme.sections.filter((section) => hasSectionContent(section, content, gallery));
   const monogram = design.tokens.typography.monogram;
+  // Following the system, the colours live in `SystemColours` rules; a forced scheme sets them inline.
   const style = {
-    ...themeVariables(theme, scheme ?? "light"),
+    ...Object.fromEntries(Object.entries(themeVariables(theme, scheme ?? "light")).filter(([name]) => scheme !== undefined || !isColourVariable(name))),
     "--celebration-monogram-font": monogram ? fontStack(monogram) : "var(--celebration-heading-font)",
     "--celebration-space": "clamp(1rem, 4vw, 2rem)",
-    ...artVariables(artPalette(palette))
+    ...(scheme ? artVariables(artPalette(palette)) : {})
   } as CSSProperties;
   const placed = design.pages.filter((page) => page.kind === "cover" || (page.section && available.includes(page.section as SectionId)));
   const pages = props.only ? placed.filter((page) => page.kind === "section" && page.section === props.only) : placed;
   return (
     <article className="celebration celebration-design" data-design="2" data-layout={theme.layout} data-color-scheme={scheme ?? "light"} data-scheme-source={scheme ? "prop" : "system"}
       data-section-style={theme.sectionStyle} data-divider={layout.divider} data-images={layout.imageTreatment} lang={view.locale} style={style}>
-      {scheme ? null : <SystemDark design={design} theme={theme} />}
+      {scheme ? null : <SystemColours theme={theme} />}
       <Dock t={t} giftsHref={context.giftsHref} giftsStatus={props.giftsStatus} rsvpHref={props.rsvpHref} rsvpHelpHref={props.rsvpHelpHref} rsvpAdaptive={props.rsvpAdaptive} />
       {props.only ? <header className="celebration-hero" data-hero="compact"><p className="celebration-eyebrow">{content.title}</p><h1>{t(`celebration.sections.${props.only}`)}</h1></header> : null}
-      <SectionNav props={props} sections={available} />
+      {props.only ? <SectionNav props={props} sections={available} /> : null}
       <main className="cdesign-pages">
-        {pages.map((page) => <PageBlock key={page.id} page={page} context={context} {...(props.only ? { only: props.only } : {})} />)}
+        {pages.map((page, index) => (
+          <Fragment key={page.id}>
+            <PageBlock page={page} context={context} {...(props.only ? { only: props.only } : {})} />
+            {/* The section links sit under the cover, so the first screen says who and when before it lists sections. */}
+            {!props.only && index === 0 ? <SectionNav props={props} sections={available} /> : null}
+          </Fragment>
+        ))}
       </main>
     </article>
   );

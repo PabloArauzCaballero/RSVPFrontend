@@ -210,7 +210,8 @@
   .cdesign-cover[data-variant="classic"] { justify-items: start; text-align: start; }
   .cdesign-cover[data-variant="classic"] .cdesign-cover-copy { justify-items: start; }
 }
-.celebration-design .cdesign-intro { width: min(100%, var(--celebration-max-width)); margin: 0 auto; padding-inline: var(--celebration-space); box-sizing: border-box; max-width: 40rem; }
+.celebration-design .cdesign-intro { width: min(100%, var(--celebration-max-width)); margin: 0 auto .75rem; padding-inline: var(--celebration-space); box-sizing: border-box; }
+.celebration-design .cdesign-intro p { max-width: 40rem; }
 .celebration-design .cdesign-page[data-section="gifts"] .celebration-cta, .celebration-design .cdesign-page[data-section="rsvp"] .celebration-cta { width: 100%; max-width: 22rem; }
 
 /* Buttons of the document (gifts, reply, link). Solid is the default of .celebration-cta; outline and link are quieter. */
@@ -245,6 +246,16 @@
 /* The drawing that heads a section is a small mark, not a block: 72 px whatever the columns say. */
 .celebration-design .cdesign-page[data-page-kind="section"] .cdesign-el[data-block="illustration"] { max-width: 4.5rem; }
 
+/* Focus is never hidden under the dock (WCAG 2.4.11, P22): the page scrolls a focused element clear of the bottom bar on the phone and of the header on the desktop. */
+html:has(.cdesign-dock) { scroll-padding-bottom: 6rem; }
+@media (min-width: 56.25rem) { html:has(.cdesign-dock) { scroll-padding-bottom: 0; scroll-padding-top: 5rem; } }
+/* One row of section links on the phone (scrolls sideways) instead of three, so the cover stays in the first screen. */
+@media (max-width: 56.1875rem) {
+  .celebration-design .celebration-nav { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; scrollbar-width: thin; }
+  .celebration-design .celebration-nav a { white-space: nowrap; flex: 0 0 auto; }
+}
+/* Hover changes the colour too, not only the scale: the fill moves a step towards the text colour (never lowers the ink's contrast). */
+@media (hover: hover) { .celebration-cta:hover { background: color-mix(in srgb, var(--celebration-accent-fill) 86%, var(--celebration-text)); } }
 /* ---------------------------------------------------------------------------------------------------------------------------
    Design document v2 (F4 c1 · bodas). Two things the documents of the wedding group need and the contract cannot say per element:
    the editorial cover as a spread, and the numbered acts of the programme. Keyed to `.celebration-design`; no gradient, no capitals. */

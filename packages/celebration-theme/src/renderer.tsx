@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
-import { daysUntil, giftsPath, hasSectionContent, readContent, SECTION_PATHS, sectionTitleKey, type GalleryImage, type GiftsStatus, type PublicCelebrationView } from "./content.js";
+import { daysUntil, giftsPath, hasSectionContent, readContent, sectionTitleKey, type GalleryImage, type GiftsStatus, type PublicCelebrationView } from "./content.js";
 import { drawingById, InvitationArt, ornamentSetById, OrnamentSeparator } from "./art/index.js";
 import { formatDate } from "./format.js";
 import { SECTION_ART } from "./hero-art.js";

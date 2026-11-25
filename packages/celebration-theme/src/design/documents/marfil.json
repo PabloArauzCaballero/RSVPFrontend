@@ -147,19 +147,18 @@
                   "role": "heading",
                   "size": 28,
                   "align": "center",
-                  "colour": "accent"
+                  "colour": "onAccent"
                 },
-                "border": {
-                  "width": 1,
-                  "style": "solid",
-                  "colour": "accent"
+                "background": {
+                  "kind": "colour",
+                  "role": "accentFill"
                 },
                 "radius": 999,
                 "padding": {
-                  "top": 12,
-                  "right": 12,
-                  "bottom": 12,
-                  "left": 12
+                  "top": 16,
+                  "right": 16,
+                  "bottom": 16,
+                  "left": 16
                 }
               }
             ]
@@ -231,19 +230,18 @@
                   "role": "heading",
                   "size": 28,
                   "align": "center",
-                  "colour": "accent"
+                  "colour": "onAccent"
                 },
-                "border": {
-                  "width": 1,
-                  "style": "solid",
-                  "colour": "accent"
+                "background": {
+                  "kind": "colour",
+                  "role": "accentFill"
                 },
                 "radius": 999,
                 "padding": {
-                  "top": 12,
-                  "right": 12,
-                  "bottom": 12,
-                  "left": 12
+                  "top": 16,
+                  "right": 16,
+                  "bottom": 16,
+                  "left": 16
                 }
               }
             ]

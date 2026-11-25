@@ -76,6 +76,8 @@ const onda: OrnamentSet = {
 
 const sagLeft = (t: number): readonly [number, number] => quadAt([6, 5], [60, 24], [116, 5], t);
 const sagRight = (t: number): readonly [number, number] => quadAt([124, 5], [180, 24], [234, 5], t);
+/** A pennant is a filled figure of ink (the approved prototypes, R3), never an outline. */
+const fill = (d: string): ArtPath => ({ d, role: "ink" });
 const banderin: OrnamentSet = {
   id: "banderin",
   label: { "es-BO": "Banderines", "en-US": "Bunting" },
@@ -83,9 +85,9 @@ const banderin: OrnamentSet = {
     ...SEP,
     paths: [
       line("M6 5Q60 24 116 5M124 5Q180 24 234 5"),
-      ...[0.12, 0.32, 0.5, 0.68, 0.88].map((t) => line(flagPath(flag(...sagLeft(t), 6)))),
+      ...[0.12, 0.32, 0.5, 0.68, 0.88].map((t) => fill(flagPath(flag(...sagLeft(t), 6)))),
       acc(`${flagPath(flag(...sagRight(0.5), 6))}`),
-      ...[0.12, 0.32, 0.68, 0.88].map((t) => line(flagPath(flag(...sagRight(t), 6))))
+      ...[0.12, 0.32, 0.68, 0.88].map((t) => fill(flagPath(flag(...sagRight(t), 6))))
     ]
   },
   corner: {
