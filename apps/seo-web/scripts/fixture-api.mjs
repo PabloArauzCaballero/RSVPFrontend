@@ -80,6 +80,16 @@ const mediosTemplate = () => {
     { id: "m-song", type: "music", config: { source: "media", ref: MEDIOS.song } }];
   return { ...base, id: "5e5e5e5e-5e5e-45e5-85e5-5e5e5e5e5e5e", theme };
 };
+// F6 R5 · `fixture-v2-libre`: Marfil with every canvas FREE (rows are fixed by the document, the editor's Advanced level) and an advanced stylesheet published in `design.custom.css`,
+// with two things the renderer must drop (an @import and a url() to a third party) next to one it must keep.
+const libreTemplate = () => {
+  const base = v2Template("marfil");
+  const theme = structuredClone(base.theme);
+  theme.pages = theme.pages.map((page) => ({ ...page, canvases: Object.fromEntries(Object.entries(page.canvases).map(([key, canvas]) => [key, { ...canvas, mode: "free" }])) }));
+  theme.custom = { html: "", css: "@import url(https://evil.example/x.css);\n.cdesign-author a{background:url(https://evil.example/p.png)}\np{color:#112233}" };
+  return { ...base, id: "6f6f6f6f-6f6f-46f6-86f6-6f6f6f6f6f6f", theme };
+};
+const libre = { slug: "fixture-v2-libre", view: { ...view, celebrationId: "00000000-0000-4000-8000-000000000198", slug: "fixture-v2-libre", templateId: "6f6f6f6f-6f6f-46f6-86f6-6f6f6f6f6f6f" } };
 const medios = { slug: "fixture-v2-medios", view: { ...view, celebrationId: "00000000-0000-4000-8000-000000000199", slug: "fixture-v2-medios", templateId: "5e5e5e5e-5e5e-45e5-85e5-5e5e5e5e5e5e" } };
 const silence = () => { const rate = 8000, samples = rate * 2, data = Buffer.alloc(samples * 2); const head = Buffer.alloc(44); head.write("RIFF", 0); head.writeUInt32LE(36 + data.length, 4); head.write("WAVEfmt ", 8); head.writeUInt32LE(16, 16); head.writeUInt16LE(1, 20); head.writeUInt16LE(1, 22); head.writeUInt32LE(rate, 24); head.writeUInt32LE(rate * 2, 28); head.writeUInt16LE(2, 32); head.writeUInt16LE(16, 34); head.write("data", 36); head.writeUInt32LE(data.length, 40); return Buffer.concat([head, data]); };
 let sharpModule;
@@ -133,6 +143,9 @@ createServer(async (req, res) => {
   const rasterMatch = path.match(/^\/img\/(\d+)-(\d+)\.(avif|webp)$/);
   if (rasterMatch) { res.writeHead(200, { "content-type": `image/${rasterMatch[3]}`, "cache-control": "public, max-age=3600" }); return res.end(await rasterOf(Number(rasterMatch[1]), Number(rasterMatch[2]), rasterMatch[3])); }
   if (path === "/audio/song.wav") { res.writeHead(200, { "content-type": "audio/wav", "cache-control": "public, max-age=3600" }); return res.end(silence()); }
+  if (path === `/celebrations/public/${libre.slug}`) return json(res, 200, libre.view);
+  if (path === `/media/public/celebrations/${libre.view.celebrationId}/assets`) return json(res, 200, { items: gallery });
+  if (path === `/media/templates/${libre.view.templateId}`) return json(res, 200, libreTemplate());
   if (path === `/celebrations/public/${medios.slug}`) return json(res, 200, medios.view);
   if (path === `/media/public/celebrations/${medios.view.celebrationId}/assets`) return json(res, 200, { items: mediosGallery });
   if (path === `/media/templates/${medios.view.templateId}`) return json(res, 200, mediosTemplate());

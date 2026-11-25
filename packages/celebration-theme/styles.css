@@ -178,7 +178,8 @@ body:has(.cdesign-dock) { padding-bottom: 5.5rem; }
 .celebration-design .cdesign-page[data-style="bands"]:nth-of-type(even) { background-color: var(--celebration-surface); }
 .celebration-design .cdesign-canvas { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(var(--cd-cols-m), minmax(0, 1fr)); grid-auto-rows: minmax(var(--cd-row-m), auto);
   width: min(100%, var(--celebration-max-width)); margin: 0 auto; padding: var(--celebration-gap) var(--celebration-space); box-sizing: border-box; }
-.celebration-design .cdesign-canvas[data-mode="free"] { grid-auto-rows: var(--cd-row-m); }
+/* A free canvas places by rows, but a row is a MINIMUM: text enlarged to 200% (WCAG 1.4.4) makes its cell grow instead of being cut. */
+.celebration-design .cdesign-canvas[data-mode="free"] { grid-auto-rows: minmax(var(--cd-row-m), auto); }
 .celebration-design .cdesign-page[data-page-kind="cover"] .cdesign-canvas { padding-block: clamp(2rem, 7vw, 4rem); }
 .celebration-design .cdesign-el { display: none; min-width: 0; box-sizing: border-box; position: relative; container-type: inline-size; align-self: start;
   grid-column: var(--mx) / span var(--mw); grid-row: var(--my) / span var(--mh); }
@@ -190,7 +191,7 @@ body:has(.cdesign-dock) { padding-bottom: 5.5rem; }
 .celebration-design .cdesign-el p { margin: 0; }
 @media (min-width: 56.25rem) {
   .celebration-design .cdesign-canvas { grid-template-columns: repeat(var(--cd-cols-d), minmax(0, 1fr)); grid-auto-rows: minmax(var(--cd-row-d), auto); }
-  .celebration-design .cdesign-canvas[data-mode="free"] { grid-auto-rows: var(--cd-row-d); }
+  .celebration-design .cdesign-canvas[data-mode="free"] { grid-auto-rows: minmax(var(--cd-row-d), auto); }
   .celebration-design .cdesign-el { grid-column: var(--dx) / span var(--dw); grid-row: var(--dy) / span var(--dh); }
   .celebration-design .cdesign-el[data-m]:not([data-d]) { display: none; }
   .celebration-design .cdesign-el[data-d] { display: block; }
@@ -281,16 +282,17 @@ html:has(.cdesign-dock) { scroll-padding-bottom: 6rem; }
 .celebration-media-background-image { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -2; border-radius: 0; }
 .celebration-media-veil { position: absolute; inset: 0; z-index: -1; background: color-mix(in srgb, var(--celebration-canvas) var(--celebration-scrim, 40%), transparent); }
 .celebration-media-content { position: relative; }
-.celebration-embed { position: relative; display: grid; gap: .5rem; justify-items: start; width: 100%; margin-inline: auto; max-width: min(var(--celebration-max-width, 40rem), 40rem); height: 14rem; align-content: center; background: var(--celebration-surface); border: 1px solid color-mix(in srgb, var(--celebration-text) 18%, transparent); border-radius: var(--celebration-radius, 0); overflow: hidden; padding: 1rem; }
+.celebration-embed { position: relative; display: grid; gap: .5rem; width: 100%; margin-inline: auto; max-width: min(var(--celebration-max-width, 40rem), 40rem); align-content: center; justify-items: center; text-align: center; background: var(--celebration-surface); border: 1px solid color-mix(in srgb, var(--celebration-text) 18%, transparent); border-radius: var(--celebration-radius, 0); overflow: hidden; padding: 1rem; }
 /* The three cards (video, map, song) are one structure and one height: a 16:9 area with at least 11 rem, the action centred in it. */
-.celebration-embed { min-height: 11rem; }
+.celebration-embed { min-height: 10rem; }
+/* Air around pictures and cards: the document sets its own margins inline, which win over this. */
+.celebration-design .cdesign-el:is([data-block="image"], [data-block="video"], [data-block="map"], [data-block="music"]) { margin-block: 1rem; }
 /* Once tapped, a video or a map takes the 16:9 of its player. */
-.celebration-embed[data-loaded="true"]:is([data-kind="video"], [data-kind="map"]) { height: auto; aspect-ratio: 16 / 9; }
-.celebration-design .cdesign-el:has(> .cdesign-author > .celebration-embed) { padding-block: .5rem; }
+.celebration-embed[data-loaded="true"]:is([data-kind="video"], [data-kind="map"]) { aspect-ratio: 16 / 9; padding: 0; }
 .celebration-embed[data-loaded="true"] { padding: 0; }
 .celebration-embed-frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .celebration-embed > .celebration-media-image { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
-.celebration-embed-play, .celebration-audio-button { justify-self: start; max-width: 100%; text-align: start; position: relative; z-index: 1; display: inline-flex; align-items: center; gap: .6rem; min-height: 44px; min-width: 44px; padding: .5rem 1.1rem; border: 2px solid var(--celebration-accent); border-radius: 9999px; background: var(--celebration-surface); color: var(--celebration-text); font: inherit; font-weight: 600; cursor: pointer; transition: background-color .15s ease; }
+.celebration-embed-play, .celebration-audio-button { justify-self: center; max-width: 100%; text-align: start; position: relative; z-index: 1; display: inline-flex; align-items: center; gap: .6rem; min-height: 44px; min-width: 44px; padding: .5rem 1.1rem; border: 2px solid var(--celebration-accent); border-radius: 9999px; background: var(--celebration-surface); color: var(--celebration-text); font: inherit; font-weight: 600; cursor: pointer; transition: background-color .15s ease; }
 .celebration-embed-play:hover, .celebration-audio-button:hover { background: color-mix(in srgb, var(--celebration-accent) 14%, var(--celebration-surface)); }
 .celebration-embed-play:focus-visible, .celebration-audio-button:focus-visible { outline: 3px solid var(--celebration-accent); outline-offset: 3px; }
 .celebration-embed .celebration-note { position: relative; z-index: 1; margin: 0; background: color-mix(in srgb, var(--celebration-surface) 88%, transparent); padding: .15rem .4rem; border-radius: 4px; }
@@ -320,5 +322,7 @@ html:has(.cdesign-dock) { scroll-padding-bottom: 6rem; }
    author draws inside a container is clipped to it (plus a small margin for shadows) and lives in its own stacking context, below the protected blocks. */
 .celebration .cdesign-dock { z-index: 2000 !important; }
 .celebration-design .cdesign-el.rsvp-protected { position: relative; z-index: 1000; }
-.celebration-design .cdesign-author { position: relative; display: block; height: 100%; min-width: 0; isolation: isolate; contain: layout; overflow: clip; overflow-clip-margin: 1.5rem; border-radius: inherit; }
+.celebration-design .cdesign-author { position: relative; display: block; min-height: 100%; min-width: 0; isolation: isolate; contain: layout; overflow: clip; overflow-clip-margin: 1.5rem; border-radius: inherit; }
+/* Blocks that are a picture or a shape, not text, fill their cell. */
+.celebration-design .cdesign-el:is([data-block="image"], [data-block="spacer"], [data-block="illustration"], [data-block="ornament"]) .cdesign-author { height: 100%; }
 .celebration-design .cdesign-el[data-block="monogram"][data-round] .cdesign-author { display: grid; place-items: center; }
