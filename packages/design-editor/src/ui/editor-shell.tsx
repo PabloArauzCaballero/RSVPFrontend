@@ -3,6 +3,9 @@ import type { design } from "@rsvp/celebration-theme";
 import { createAutosaver, type Autosaver, type DraftGateway, type SaveStatus } from "../save/autosave.js";
 import { setPaletteColour } from "../model/ops.js";
 import { canRedo, canUndo, documentOf, editorReducer, initialEditorState, type CanvasName, type EditorMode } from "../model/state.js";
+import { ContrastPanel } from "./contrast-panel.js";
+import { PublishPanel, type VersionsApi } from "./publish-panel.js";
+import type { PublishOutcome, VersionSummary, VersionsGateway } from "../save/versions.js";
 import { EditorProvider, type Translate } from "./editor-context.js";
 import { AlertIcon, CheckIcon, DesktopIcon, LayersIcon, PhoneIcon, RedoIcon, SlidersIcon, UndoIcon } from "./icons.js";
 
@@ -21,6 +24,11 @@ export interface EditorShellProps {
   readonly onReload?: () => void;
   readonly now?: () => number;
   readonly debounceMs?: number;
+  /** Publishing, history and restore. Without it the editor only keeps the draft. */
+  readonly versions?: VersionsGateway;
+  /** IANA zone of the celebration: the times of the history show in it (never the device's). */
+  readonly timeZone?: string;
+  readonly locale?: string;
   /** Extra panels of the following editor levels, rendered in the right column. */
   readonly children?: ReactNode;
 }
@@ -90,7 +98,7 @@ function Wireframe({ document, canvas, t }: { readonly document: design.DesignDo
   );
 }
 
-export function EditorShell({ design: source, gateway, t, onReload, now = Date.now, debounceMs, children }: EditorShellProps) {
+export function EditorShell({ design: source, gateway, t, onReload, now = Date.now, debounceMs, versions: versionsGateway, timeZone = "America/La_Paz", locale = "es-BO", children }: EditorShellProps) {
   const [state, dispatch] = useReducer(editorReducer, source.document, initialEditorState);
   const [status, setStatus] = useState<SaveStatus>({ kind: "saved" });
   const saver = useRef<Autosaver | null>(null);
@@ -101,6 +109,62 @@ export function EditorShell({ design: source, gateway, t, onReload, now = Date.n
     saver.current = created;
     return () => { void created.flush().finally(() => created.dispose()); saver.current = null; };
   }, [source.id, source.draftVersion, gateway, debounceMs]);
+
+  const [items, setItems] = useState<readonly VersionSummary[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<VersionsApi["message"]>(null);
+  const documentRef = useRef(document);
+  documentRef.current = document;
+
+  useEffect(() => {
+    if (!versionsGateway) return undefined;
+    let live = true;
+    versionsGateway.list(source.id).then((list) => { if (live) setItems(list); }, () => undefined);
+    return () => { live = false; };
+  }, [versionsGateway, source.id]);
+
+  const publish = useCallback(async (label: string): Promise<PublishOutcome> => {
+    if (!versionsGateway || !saver.current) return { kind: "failed" };
+    setBusy(true); setMessage(null);
+    const finish = (outcome: PublishOutcome): PublishOutcome => {
+      const text = outcome.kind === "published" ? t(key("publish.done"), { version: outcome.version })
+        : outcome.kind === "unchanged" ? t(key("publish.unchanged"))
+        : outcome.kind === "blocked" ? t(key("publish.blocked"))
+        : outcome.kind === "rejected" ? t(key("publish.notPublishable"), { code: outcome.code })
+        : t(key("publish.failed"));
+      setMessage({ kind: outcome.kind === "published" || outcome.kind === "unchanged" ? "ok" : "error", text });
+      setBusy(false);
+      return outcome;
+    };
+    await saver.current.flush();
+    if (saver.current.status.kind !== "saved") return finish({ kind: "blocked" });
+    try {
+      const result = await versionsGateway.publish(source.id, saver.current.draftVersion, label.trim());
+      saver.current.resume(result.draftVersion, documentRef.current);
+      const known = items.some((item) => item.version === result.version.version);
+      setItems((list) => (list.some((item) => item.version === result.version.version) ? list : [...list, result.version]));
+      return finish({ kind: known ? "unchanged" : "published", version: result.version.version });
+    } catch (error) {
+      const failure = error as { status?: number; problem?: { code?: string } };
+      if (failure.status === 422 || failure.status === 409) return finish({ kind: "rejected", code: failure.problem?.code ?? String(failure.status) });
+      return finish({ kind: "failed" });
+    }
+  }, [versionsGateway, source.id, items, t]);
+
+  const restore = useCallback(async (version: number): Promise<void> => {
+    if (!versionsGateway || !saver.current) return;
+    setBusy(true); setMessage(null);
+    await saver.current.flush();
+    try {
+      const result = await versionsGateway.restore(source.id, version, saver.current.draftVersion);
+      dispatch({ type: "load", document: result.document });
+      saver.current.resume(result.draftVersion, result.document);
+      setMessage({ kind: "ok", text: t(key("publish.restored"), { version }) });
+    } catch { setMessage({ kind: "error", text: t(key("publish.restoreFailed")) }); }
+    setBusy(false);
+  }, [versionsGateway, source.id, t]);
+
+  const versionsApi = useMemo<VersionsApi>(() => ({ items, busy, message, publish: async (label) => { await publish(label); }, restore }), [items, busy, message, publish, restore]);
 
   const revision = useRef(0);
   useEffect(() => {
@@ -175,6 +239,8 @@ export function EditorShell({ design: source, gateway, t, onReload, now = Date.n
             </label>
           ))}
           <p className="de-hint">{t(key("basic.hint"))}</p>
+          <ContrastPanel />
+          {versionsGateway ? <PublishPanel versions={versionsApi} timeZone={timeZone} locale={locale} /> : null}
           {children}
         </aside>
       </div>

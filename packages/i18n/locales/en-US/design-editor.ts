@@ -37,6 +37,33 @@ export const designEditorEnUS: DeepStrings<typeof designEditorEsBO> = {
     accentDark: "Accent color (dark)",
     hint: "Changes save on their own and you can undo them."
   },
+  contrast: {
+    title: "Contrast",
+    ok: "All text reads well (4.5:1 or more) in light and dark.",
+    warning: "{{foreground}} on {{background}} in {{scheme}}: {{ratio}}:1 (4.5:1 recommended).",
+    note: "This is a warning: you can publish anyway, but some people will find it hard to read.",
+    apply: "Use {{hex}}",
+    scheme: { light: "light mode", dark: "dark mode" },
+    role: { canvas: "the background", surface: "the card", text: "the text", muted: "the secondary text", accent: "the accent", accentFill: "the accent fill", onAccent: "the text on the accent", line: "the line" }
+  },
+  publish: {
+    title: "Publish and versions",
+    label: "Name of this version (optional)",
+    action: "Publish",
+    busy: "Publishing…",
+    done: "Version {{version}} published.",
+    unchanged: "There are no new changes since the last published version.",
+    failed: "We couldn't publish. Check your connection; your draft is safe.",
+    blocked: "Resolve the saving problem before publishing.",
+    notPublishable: "The server didn't accept the design for publishing ({{code}}).",
+    history: "Published versions",
+    empty: "You haven't published any version yet.",
+    version: "Version {{version}}",
+    restore: "Restore",
+    restoreHint: "Restoring copies that version into your draft; it isn't published until you do it. You can undo it.",
+    restored: "Version {{version}} copied to the draft. Review it and publish when you want.",
+    restoreFailed: "We couldn't restore that version. Your draft didn't change."
+  },
   refusal: {
     title: "That change can't be made",
     dismiss: "Got it",

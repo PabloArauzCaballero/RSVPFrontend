@@ -34,6 +34,33 @@ export const designEditorEsBO = {
     accentDark: "Color de acento (oscuro)",
     hint: "Los cambios se guardan solos y puedes deshacerlos."
   },
+  contrast: {
+    title: "Contraste",
+    ok: "Todos los textos se leen bien (4,5:1 o más) en claro y en oscuro.",
+    warning: "{{foreground}} sobre {{background}} en {{scheme}}: {{ratio}}:1 (se recomienda {{minimum}}:1).",
+    note: "Es un aviso: puedes publicar igual, pero habrá quien lo lea con dificultad.",
+    apply: "Usar {{hex}}",
+    scheme: { light: "modo claro", dark: "modo oscuro" },
+    role: { canvas: "el fondo", surface: "la tarjeta", text: "el texto", muted: "el texto secundario", accent: "el acento", accentFill: "el relleno del acento", onAccent: "el texto sobre el acento", line: "la línea" }
+  },
+  publish: {
+    title: "Publicar y versiones",
+    label: "Nombre de esta versión (opcional)",
+    action: "Publicar",
+    busy: "Publicando…",
+    done: "Publicada la versión {{version}}.",
+    unchanged: "No hay cambios nuevos desde la última versión publicada.",
+    failed: "No pudimos publicar. Revisa tu conexión; tu borrador está a salvo.",
+    blocked: "Antes de publicar hay que resolver el problema de guardado.",
+    notPublishable: "El servidor no aceptó el diseño para publicar ({{code}}).",
+    history: "Versiones publicadas",
+    empty: "Todavía no publicaste ninguna versión.",
+    version: "Versión {{version}}",
+    restore: "Restaurar",
+    restoreHint: "Restaurar copia esa versión a tu borrador; no se publica hasta que tú lo hagas. Puedes deshacerlo.",
+    restored: "Versión {{version}} copiada al borrador. Revísala y publícala cuando quieras.",
+    restoreFailed: "No pudimos restaurar esa versión. Tu borrador no cambió."
+  },
   refusal: {
     title: "Ese cambio no se puede hacer",
     dismiss: "Entendido",
