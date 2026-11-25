@@ -8,6 +8,6 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   reporter: "list",
-  use: { baseURL: "http://127.0.0.1:4173", ...(process.env["CHROMIUM_PATH"] ? { launchOptions: { executablePath: process.env["CHROMIUM_PATH"] } } : {}) },
+  use: { baseURL: "http://127.0.0.1:4173", ...(process.env["CHROMIUM_PATH"] ? { launchOptions: { executablePath: process.env["CHROMIUM_PATH"], args: ["--no-sandbox"] } } : {}) },
   webServer: { command: "npx vite --config e2e/vite.config.ts", url: "http://127.0.0.1:4173", reuseExistingServer: true, timeout: 60_000 }
 });

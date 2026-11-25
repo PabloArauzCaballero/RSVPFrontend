@@ -1,13 +1,17 @@
 import { useCallback, useMemo, type ReactNode } from "react";
 import { View } from "react-native";
 import { ApiError } from "@rsvp/api-client";
-import { EditorShell } from "@rsvp/design-editor/ui";
+import { EditorShell, type EditableDesign } from "@rsvp/design-editor/ui";
 import { designApi, useCelebration, useCelebrationDesign, useCreateDesign, type DesignRecord } from "@rsvp/query-hooks";
 import { spacing } from "@rsvp/design-tokens";
+import { loginHref } from "../auth/routes";
 import { LoadingContent } from "../platform/loading-content";
 import { useApiClient, useT } from "../platform/providers";
 import { ActionButton, EmptyState, ErrorNotice, Notice } from "./ui";
 import type { ScreenProps } from "./gate";
+import { HOST_ROUTES, withCelebration } from "./routes";
+
+const toEditable = (record: DesignRecord): EditableDesign => ({ id: record.id, name: record.name, draftVersion: record.draftVersion, document: record.document, ...(record.warnings ? { warnings: record.warnings } : {}) });
 
 /**
  * The invitation editor (plantillas F5), web only: the invitation is web-first and the app shows it in a web view (P10), so
@@ -26,7 +30,16 @@ export function DesignEditorScreen({ celebrationId }: ScreenProps): ReactNode {
       return { draftVersion: saved.draftVersion, ...(saved.warnings ? { warnings: saved.warnings } : {}) };
     }
   }), [client]);
-  const reload = useCallback(() => { void found.refetch(); }, [found]);
+  // The only way the editor receives a newer draft than the one it opened: the host asked for it after a conflict.
+  const { refetch } = found;
+  const reload = useCallback(async (): Promise<EditableDesign | null> => {
+    const result = await refetch();
+    return result.status === "success" && result.data ? toEditable(result.data) : null;
+  }, [refetch]);
+  // The login is a real link that opens in another tab: navigating this one would unmount the editor and drop the edits not yet
+  // saved, and a link (unlike window.open) cannot be turned into a same-tab navigation by a popup blocker. The session renews
+  // through the refresh cookie, so "Ya entré, reintentar" saves from the tab that still holds the edits.
+  const signInHref = loginHref(withCelebration(HOST_ROUTES.design, celebrationId));
 
   if (!celebrationId) return <View style={{ padding: spacing[6] }}><EmptyState illustration="invitation" title={t("designEditor.title")} body={t("designEditor.noCelebration")} /></View>;
   if (celebration.isPending || found.isPending) return <LoadingContent kind="form" />;
@@ -45,5 +58,6 @@ export function DesignEditorScreen({ celebrationId }: ScreenProps): ReactNode {
     );
   }
   const record = found.data;
-  return <EditorShell key={`${record.id}:${record.draftVersion}`} design={{ id: record.id, name: record.name, draftVersion: record.draftVersion, document: record.document }} gateway={gateway} t={t} onReload={reload} />;
+  // Keyed by the design alone: a refetch of the record (another tab saved) must not remount the editor and drop the open history.
+  return <EditorShell key={record.id} design={toEditable(record)} gateway={gateway} t={t} onReload={reload} signInHref={signInHref} />;
 }

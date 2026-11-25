@@ -44,6 +44,17 @@ describe("design hooks", () => {
     expect(idle.result.current.fetchStatus).toBe("idle");
   });
 
+  it("lists versions with the contract's limit/before paging and returns nextBefore", async () => {
+    const request = vi.fn(async () => ({ items: [], nextBefore: 7 }));
+    const api = designApi({ request } as unknown as ApiClient);
+    expect(await api.versions("d1", { limit: 20, before: 31 })).toEqual({ items: [], nextBefore: 7 });
+    await api.versions("d1", { before: 7 });
+    await api.versions("d1", { limit: 100 });
+    expect((request.mock.calls as unknown as [string][]).map(([path]) => path)).toEqual([
+      "/media/designs/d1/versions?limit=20&before=31", "/media/designs/d1/versions?before=7", "/media/designs/d1/versions?limit=100"
+    ]);
+  });
+
   it("does not refetch when the window regains focus or the network returns: the editor holds its own copy (M1)", async () => {
     const request = vi.fn(async () => record);
     const client = { request } as unknown as ApiClient;
