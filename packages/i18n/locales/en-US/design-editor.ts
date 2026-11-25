@@ -48,6 +48,7 @@ export const designEditorEnUS: DeepStrings<typeof designEditorEsBO> = {
       empty: "This text cannot be empty. Type something, or move to another field to go back to the previous text.",
       restored: "We went back to the previous text because it cannot be empty.",
       automatic: "If you leave it empty, we use the automatic text.",
+      atLimit: "You reached the limit of {{max}} characters.", count: "{{current}} of {{max}} characters",
       heading: { text: "Heading" }, text: { text: "Paragraph" }, quote: { text: "Quote", author: "Quote author" }, button: { label: "Button text" },
       giftsCta: { label: "Gifts button text" }, rsvpCta: { label: "Confirm button text" }
     },

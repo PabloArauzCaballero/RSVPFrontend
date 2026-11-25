@@ -45,6 +45,7 @@ export const designEditorEsBO = {
       empty: "Este texto no puede quedar vacío. Escribe algo o pasa a otro campo para volver al texto anterior.",
       restored: "Volvimos al texto anterior porque no puede quedar vacío.",
       automatic: "Si lo dejas vacío, usamos el texto automático.",
+      atLimit: "Llegaste al límite de {{max}} caracteres.", count: "{{current}} de {{max}} caracteres",
       heading: { text: "Título" }, text: { text: "Párrafo" }, quote: { text: "Cita", author: "Autor de la cita" }, button: { label: "Texto del botón" },
       giftsCta: { label: "Texto del botón de regalos" }, rsvpCta: { label: "Texto del botón de confirmar" }
     },

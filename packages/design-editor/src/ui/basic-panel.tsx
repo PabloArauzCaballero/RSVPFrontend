@@ -1,7 +1,7 @@
 import { design } from "@rsvp/celebration-theme";
 import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { giftsBlock, giftsPlacement } from "../model/guards.js";
-import { applyPaddingPreset, applySpacingPreset, applyTemplateDocument, coverDrawingOf, coverPhotoOf, editableTexts, hiddenElements, PADDING_PRESETS, setBlockText, setCoverDrawing, setCoverPhoto, setFontFamily, setPaletteColour, setSectionOrder, setSectionVisible, sharedPadding, SPACING_PRESETS, spacingPresetOf, switchableSections, TEXT_LIMITS, type PaddingPreset, type SpacingPreset, type TextField } from "../model/ops.js";
+import { applyPaddingPreset, applySpacingPreset, applyTemplateDocument, coverDrawingOf, coverPhotoOf, editableTexts, hiddenElements, PADDING_PRESETS, setBlockText, setCoverDrawing, setCoverPhoto, setFontFamily, setPaletteColour, setSectionOrder, setSectionVisible, sharedPadding, SPACING_PRESETS, spacingPresetOf, switchableSections, textLimit, type PaddingPreset, type SpacingPreset, type TextField } from "../model/ops.js";
 import { useEditor } from "./editor-context.js";
 
 const key = (name: string): string => `designEditor.basic.${name}`;
@@ -72,12 +72,12 @@ function TextRow({ entry }: { readonly entry: TextField }) {
   const [problem, setProblem] = useState<"empty" | "restored" | null>(null);
   const id = useId();
   useEffect(() => { setDraft(entry.value); setProblem(null); }, [entry.value]);
-  const limit = TEXT_LIMITS[entry.field];
+  const limit = textLimit(entry.type, entry.field);
   const commit = (value: string): void => dispatch({ type: "edit", op: setBlockText(entry.blockId, entry.field, entry.optional && value.trim() === "" ? null : value), key: `text:${entry.blockId}:${entry.field}`, at: now() });
   return (
     <div className="de-field">
       <label htmlFor={id}>{t(key(`texts.${entry.type}.${entry.field}`))}</label>
-      <textarea id={id} rows={entry.field === "text" && entry.type === "text" ? 4 : 2} value={draft} maxLength={limit} aria-invalid={problem === "empty"} aria-describedby={`${id}-note`}
+      <textarea id={id} rows={entry.field === "text" && entry.type === "text" ? 4 : 2} value={draft} maxLength={limit} aria-invalid={problem === "empty"} aria-describedby={`${id}-note ${id}-count`}
         onChange={(event) => {
           const value = event.target.value;
           setDraft(value);
@@ -87,8 +87,9 @@ function TextRow({ entry }: { readonly entry: TextField }) {
         }}
         onBlur={() => { if (problem === "empty") { setDraft(entry.value); setProblem("restored"); } }} />
       <p id={`${id}-note`} className={problem === "empty" ? "de-error" : "de-hint"} role="status">
-        {problem === "empty" ? t(key("texts.empty")) : problem === "restored" ? t(key("texts.restored")) : entry.optional ? t(key("texts.automatic")) : ""}
+        {problem === "empty" ? t(key("texts.empty")) : problem === "restored" ? t(key("texts.restored")) : draft.length >= limit ? t(key("texts.atLimit"), { max: limit }) : entry.optional ? t(key("texts.automatic")) : ""}
       </p>
+      <p id={`${id}-count`} className="de-hint de-count" data-at-limit={draft.length >= limit}>{t(key("texts.count"), { current: draft.length, max: limit })}</p>
     </div>
   );
 }

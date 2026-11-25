@@ -172,12 +172,21 @@ export const applyTemplateDocument = (incoming: Doc): DocumentOp => (doc) => ({ 
  * text back. A required field (a heading, a paragraph, a quote, a button) can never be left empty.
  */
 export type TextField = { readonly blockId: string; readonly type: string; readonly field: "text" | "label" | "author"; readonly value: string; readonly optional: boolean };
-const TEXT_FIELDS: Readonly<Record<string, readonly (readonly [TextField["field"], boolean])[]>> = {
+export const TEXT_FIELDS: Readonly<Record<string, readonly (readonly [TextField["field"], boolean])[]>> = {
   heading: [["text", false]], text: [["text", false]], quote: [["text", false], ["author", true]], button: [["label", false]],
   giftsCta: [["label", true]], rsvpCta: [["label", true]]
 };
-/** The most a button label may hold (it sits in a 44 px button); the rest is generous but bounded (the server caps the document). */
-export const TEXT_LIMITS = { label: 60, text: 1000, author: 120 } as const;
+/**
+ * The most each editable text may hold, per block type and field: the `maxLength` the published contract
+ * (`components.schemas.DesignBlock*` in `@rsvp/contracts` template-media) gives it. The server answers 422 to anything longer,
+ * so the box stops at the limit. A test walks every editable field against the vendored contract and fails if one diverges.
+ */
+export const TEXT_LIMITS: Readonly<Record<string, Readonly<Partial<Record<TextField["field"], number>>>>> = {
+  heading: { text: 200 }, text: { text: 5000 }, quote: { text: 1000, author: 120 }, button: { label: 60 },
+  giftsCta: { label: 40 }, rsvpCta: { label: 40 }
+};
+/** The limit of one editable text (every field in TEXT_FIELDS has one). */
+export const textLimit = (type: string, field: TextField["field"]): number => TEXT_LIMITS[type]?.[field] ?? 0;
 
 /**
  * The texts the host can edit in the blocks the document has. A converted v1 template (convertV1ToV2) only carries the gifts
