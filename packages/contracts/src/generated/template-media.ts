@@ -7,6 +7,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Until F4/F5 the list leaves out templates whose theme is a design document v2 (the admin cannot open them); one that already exists is archived by id with POST /templates/{id}/archive. */
         get: operations["listAllTemplates"];
         put?: never;
         post?: never;
@@ -713,7 +714,7 @@ export interface components {
             schemaVersion: 2;
             tokens: components["schemas"]["DesignTokens"];
         };
-        /** @description One placed block. Coordinates are grid units of its canvas. A canvas is columns x rowHeight px and ends 4000 px below its top; an element lies inside it. The gifts element is at least 44 x 44 px (reference widths 320 px mobile, 768 px desktop, capped by contentMaxWidth), is not covered by a visible element that paints over it (higher z, or the same z and later in the list) and reads at 4.5:1 for its text and 3:1 for its contour in both palettes. */
+        /** @description One placed block. Coordinates are grid units of its canvas. A canvas is columns x rowHeight px and ends 4000 px below its top; an element lies inside it. The gifts element is at least 44 x 44 px (reference widths 320 px mobile, 768 px desktop, capped by contentMaxWidth), keeps 44 px of height once its top and bottom padding and twice its border width are taken out (GIFTS_BLOCK_TOO_SMALL), has a label of at most 32 px whose line fits that height (GIFTS_BLOCK_TEXT_TOO_LARGE), is not covered by a visible element that paints over it (higher z, or the same z and later in the list) and reads at 4.5:1 for its text and 3:1 for its contour in both palettes. */
         DesignElement: {
             animation?: components["schemas"]["DesignAnimation"];
             background?: components["schemas"]["DesignBackground"];
@@ -821,7 +822,7 @@ export interface components {
             surface: components["schemas"]["HexColour"];
             text: components["schemas"]["HexColour"];
         };
-        /** @description 422 of a v2 design (400 and 413 are plain Problems). code is INVALID_THEME (not an object, neither v1 nor v2, or a schemaVersion that is not the integer 2), DESIGN_SCHEMA_INVALID (issues lists the paths), GIFTS_BLOCK_REQUIRED (no gifts block, said before the schema errors), GIFTS_BLOCK_LOCKED (link or rotation on the gifts element), GIFTS_BLOCK_HIDDEN (not visible or translucent), GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL (under 44 px), GIFTS_BLOCK_COVERED (another element paints over it), GIFTS_BLOCK_LOW_CONTRAST (text under 4.5:1 or contour under 3:1 in either palette), DESIGN_REFERENCE_INVALID, FONT_WEIGHT_UNAVAILABLE, CUSTOM_CODE_UNAVAILABLE (custom html/css until the F5 sanitiser) or DESIGN_NOT_PUBLISHABLE (publishing a v2: it stays a draft until the renderer supports it). */
+        /** @description 422 of a v2 design (400 and 413 are plain Problems). code is INVALID_THEME (not an object, neither v1 nor v2, or a schemaVersion that is not the integer 2), DESIGN_SCHEMA_INVALID (issues lists the paths), GIFTS_BLOCK_REQUIRED (no gifts block, said before the schema errors), GIFTS_BLOCK_LOCKED (link or rotation on the gifts element), GIFTS_BLOCK_HIDDEN (not visible or translucent), GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL (under 44 px, or under 44 px of height left once vertical padding and border are taken out), GIFTS_BLOCK_TEXT_TOO_LARGE (label over 32 px or taller than the useful height), GIFTS_BLOCK_COVERED (another element paints over it), GIFTS_BLOCK_LOW_CONTRAST (text under 4.5:1 or contour under 3:1 in either palette), DESIGN_REFERENCE_INVALID, FONT_WEIGHT_UNAVAILABLE, CUSTOM_CODE_UNAVAILABLE (custom html/css until the F5 sanitiser), DESIGN_NOT_PUBLISHABLE (publishing a v2: it stays a draft until the renderer supports it) or DESIGN_V2_NOT_AVAILABLE (POST/PATCH of any v2 theme until F4/F5: the admin and the renderer cannot read it yet; checked before the document is validated). */
         DesignProblem: components["schemas"]["Problem"] & {
             field?: string;
             issues?: components["schemas"]["DesignIssue"][];
@@ -911,10 +912,10 @@ export interface components {
             suggestion: components["schemas"]["HexColour"];
         };
         /**
-         * @description A family of the curated catalogue (P11). The catalogue, with the exact weights of each family and the tested pairs, is x-rsvp-font-catalog. Inter, Roboto and Open Sans are excluded.
+         * @description A family of the curated catalogue (P11). The catalogue, with the exact weights of each family and the tested pairs, is x-rsvp-font-catalog. Inter, Roboto, Open Sans, Poppins and IBM Plex are excluded (Poppins became DM Sans and IBM Plex Sans became Source Sans 3 in templates, by data migration 0002).
          * @enum {string}
          */
-        FontFamilyId: "cormorant-garamond" | "cormorant" | "playfair-display" | "fraunces" | "lora" | "newsreader" | "libre-baskerville" | "eb-garamond" | "bodoni-moda" | "dm-serif-display" | "marcellus" | "cinzel" | "gilda-display" | "spectral" | "crimson-pro" | "young-serif" | "source-sans-3" | "dm-sans" | "nunito" | "nunito-sans" | "work-sans" | "ibm-plex-sans" | "poppins" | "quicksand" | "fredoka" | "geist" | "figtree" | "manrope" | "karla" | "mulish" | "jost" | "josefin-sans" | "great-vibes" | "pinyon-script" | "parisienne" | "dancing-script" | "allura" | "italianno" | "alex-brush";
+        FontFamilyId: "cormorant-garamond" | "cormorant" | "playfair-display" | "fraunces" | "lora" | "newsreader" | "libre-baskerville" | "eb-garamond" | "bodoni-moda" | "dm-serif-display" | "marcellus" | "cinzel" | "gilda-display" | "spectral" | "crimson-pro" | "young-serif" | "source-sans-3" | "dm-sans" | "nunito" | "nunito-sans" | "work-sans" | "quicksand" | "fredoka" | "geist" | "figtree" | "manrope" | "karla" | "mulish" | "jost" | "josefin-sans" | "great-vibes" | "pinyon-script" | "parisienne" | "dancing-script" | "allura" | "italianno" | "alex-brush";
         FontRole: {
             family: components["schemas"]["FontFamilyId"];
             /** @description Exact weights to load; each must exist for the family in the catalogue (else 422 FONT_WEIGHT_UNAVAILABLE). */
@@ -1293,7 +1294,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Invalid theme or design (see DesignProblem) */
+            /** @description Invalid theme or design (see DesignProblem); a v2 theme is DESIGN_V2_NOT_AVAILABLE until F4/F5 */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -1384,7 +1385,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Invalid theme or design (see DesignProblem); editing a PUBLISHED template into a v2 is DESIGN_NOT_PUBLISHABLE */
+            /** @description Invalid theme or design (see DesignProblem); editing a PUBLISHED template into a v2 is DESIGN_NOT_PUBLISHABLE; a v2 theme is DESIGN_V2_NOT_AVAILABLE until F4/F5, before any validation */
             422: {
                 headers: {
                     [name: string]: unknown;
