@@ -65,6 +65,144 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/celebrations/{celebrationId}/design": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getCelebrationDesign"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/designs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The caller's private templates (P21) */
+        get: operations["listPrivateTemplates"];
+        put?: never;
+        /** Create the design of a celebration, or a private template */
+        post: operations["createDesign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/designs/{designId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getDesign"];
+        put?: never;
+        post?: never;
+        /**
+         * Deletes a design and all its versions (PF-1)
+         * @description A private template is deleted by its owner (or an administrator); a celebration design by whoever manages the celebration. A celebration design that was ever published is 409 DESIGN_PUBLISHED: Celebration keeps the reference of its published version, so it is replaced by publishing again and goes away with the celebration (celebration.celebration.deleted.v1). Deleting an account deletes its private templates too (identity.user.deleted.v1).
+         */
+        delete: operations["deleteDesign"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/designs/{designId}/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Replace the working draft */
+        put: operations["saveDesignDraft"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/designs/{designId}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Publish the draft as the next immutable version */
+        post: operations["publishDesign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/designs/{designId}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Newest first and paged. A design keeps its newest 100 published versions: publishing the 101st prunes the oldest (its number is never reused, and restoring it is 404). */
+        get: operations["listDesignVersions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/designs/{designId}/versions/{version}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getDesignVersion"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/designs/{designId}/versions/{version}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Copy a published version into the draft (P15); it does not publish */
+        post: operations["restoreDesignVersion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -297,6 +435,27 @@ export interface components {
          * @enum {string}
          */
         CoverVariant: "classic" | "minimal" | "editorial" | "festive" | "corporate";
+        Design: {
+            /** Format: uuid */
+            celebrationId: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** @description The working draft */
+            document: components["schemas"]["DesignDocumentV2"];
+            /** @description Optimistic-concurrency token of the draft; send it in If-Match */
+            draftVersion: number;
+            hasUnpublishedChanges: boolean;
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["DesignKind"];
+            name: string;
+            /** @description Latest published version, null until the first publish */
+            publishedVersion: number | null;
+            /** Format: date-time */
+            updatedAt: string;
+            /** @description Contrast warnings of the draft; present on create, save and restore. They never block (P19) */
+            warnings?: components["schemas"]["DesignWarning"][];
+        };
         DesignAnimation: {
             delayMs?: number;
             durationMs?: number;
@@ -714,6 +873,9 @@ export interface components {
             schemaVersion: 2;
             tokens: components["schemas"]["DesignTokens"];
         };
+        DesignDraftInput: {
+            document: components["schemas"]["DesignDocumentV2"];
+        };
         /** @description One placed block. Coordinates are grid units of its canvas. A canvas is columns x rowHeight px and ends 4000 px below its top; an element lies inside it. The gifts element is at least 44 x 44 px (reference widths 320 px mobile, 768 px desktop, capped by contentMaxWidth), keeps 44 px of height once its top and bottom padding and twice its border width are taken out (GIFTS_BLOCK_TOO_SMALL), has a label of at most 32 px whose line fits that height (GIFTS_BLOCK_TEXT_TOO_LARGE), is not covered by a visible element that paints over it (higher z, or the same z and later in the list) and reads at 4.5:1 for its text and 3:1 for its contour in both palettes. */
         DesignElement: {
             animation?: components["schemas"]["DesignAnimation"];
@@ -754,11 +916,35 @@ export interface components {
              */
             kind: "illustration";
         };
+        /** @description Send exactly one of templateId, fromDesignId or document. */
+        DesignInput: {
+            /**
+             * Format: uuid
+             * @description Required for CELEBRATION; absent for PRIVATE_TEMPLATE
+             */
+            celebrationId?: string | null;
+            /** @description Start from this v2 document */
+            document?: components["schemas"]["DesignDocumentV2"] | null;
+            /**
+             * Format: uuid
+             * @description Start from another design the caller can read (P21: save a celebration design as a private template)
+             */
+            fromDesignId?: string | null;
+            kind: components["schemas"]["DesignKind"];
+            name: string;
+            /**
+             * Format: uuid
+             * @description Start from a published template (a v1 template is converted to v2)
+             */
+            templateId?: string | null;
+        };
         DesignIssue: {
             message: string;
             /** @description JSONPath-like location, $ is the document */
             path: string;
         };
+        /** @enum {string} */
+        DesignKind: "CELEBRATION" | "PRIVATE_TEMPLATE";
         DesignLink: {
             /** @description External https link, opened with rel="noopener noreferrer". */
             href: string;
@@ -822,10 +1008,19 @@ export interface components {
             surface: components["schemas"]["HexColour"];
             text: components["schemas"]["HexColour"];
         };
-        /** @description 422 of a v2 design (400 and 413 are plain Problems). code is INVALID_THEME (not an object, neither v1 nor v2, or a schemaVersion that is not the integer 2), DESIGN_SCHEMA_INVALID (issues lists the paths), GIFTS_BLOCK_REQUIRED (no gifts block, said before the schema errors), GIFTS_BLOCK_LOCKED (link or rotation on the gifts element), GIFTS_BLOCK_HIDDEN (not visible or translucent), GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL (under 44 px, or under 44 px of height left once vertical padding and border are taken out), GIFTS_BLOCK_TEXT_TOO_LARGE (label over 32 px or taller than the useful height), GIFTS_BLOCK_COVERED (another element paints over it), GIFTS_BLOCK_LOW_CONTRAST (text under 4.5:1 or contour under 3:1 in either palette), DESIGN_REFERENCE_INVALID, FONT_WEIGHT_UNAVAILABLE, CUSTOM_CODE_UNAVAILABLE (custom html/css until the F5 sanitiser), DESIGN_NOT_PUBLISHABLE (publishing a v2: it stays a draft until the renderer supports it) or DESIGN_V2_NOT_AVAILABLE (POST/PATCH of any v2 theme until F4/F5: the admin and the renderer cannot read it yet; checked before the document is validated). */
+        /** @description 422 of a v2 design (400 and 413 are plain Problems). code is INVALID_THEME (not an object, neither v1 nor v2, or a schemaVersion that is not the integer 2), DESIGN_SCHEMA_INVALID (issues lists the paths), GIFTS_BLOCK_REQUIRED (no gifts block, said before the schema errors), GIFTS_BLOCK_LOCKED (link or rotation on the gifts element), GIFTS_BLOCK_HIDDEN (not visible or translucent), GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL (under 44 px, or under 44 px of height left once vertical padding and border are taken out), GIFTS_BLOCK_TEXT_TOO_LARGE (label over 32 px or taller than the useful height), GIFTS_BLOCK_COVERED (another element paints over it), GIFTS_BLOCK_LOW_CONTRAST (text under 4.5:1 or contour under 3:1 in either palette), DESIGN_REFERENCE_INVALID, FONT_WEIGHT_UNAVAILABLE, CUSTOM_CODE_UNAVAILABLE (custom html/css until the F5 sanitiser), DESIGN_NOT_PUBLISHABLE (publishing a v2: it stays a draft until the renderer supports it) or DESIGN_V2_NOT_AVAILABLE (POST/PATCH of any v2 theme until F4/F5: the admin and the renderer cannot read it yet; checked before the document is validated). Design endpoints add VERSION_CONFLICT (409, currentVersion), DESIGN_EXISTS (409), PRIVATE_TEMPLATE_LIMIT (409), DESIGN_PUBLISHED (409, a published celebration design cannot be deleted), DESIGN_TOO_LARGE, DESIGN_MEDIA_INVALID (a mediaId that is not a usable photo of the celebration; mediaIds lists them), DESIGN_MEDIA_NOT_ALLOWED (a private template cannot reference photos; mediaIds lists them), CELEBRATION_REQUIRED, CELEBRATION_NOT_ALLOWED and KIND_REQUIRED (422). */
         DesignProblem: components["schemas"]["Problem"] & {
             field?: string;
             issues?: components["schemas"]["DesignIssue"][];
+            mediaIds?: string[];
+        };
+        /** @description 201 when a new version was created; 200 when the draft was already the latest published version (idempotent) */
+        DesignPublished: {
+            design: components["schemas"]["Design"];
+            version: components["schemas"]["DesignVersionSummary"];
+        };
+        DesignPublishInput: {
+            label?: string;
         };
         DesignSectionPage: {
             background?: components["schemas"]["DesignBackground"];
@@ -898,6 +1093,17 @@ export interface components {
             /** @enum {string} */
             transform?: "none" | "uppercase" | "lowercase" | "capitalize";
             weight?: components["schemas"]["FontWeight"];
+        };
+        DesignVersion: components["schemas"]["DesignVersionSummary"] & {
+            document: components["schemas"]["DesignDocumentV2"];
+        };
+        DesignVersionSummary: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            createdBy: string;
+            label: string;
+            version: number;
         };
         /** @description A palette pair under WCAG AA. The design is still saved (P19); suggestion is the nearest tone of the foreground that passes. */
         DesignWarning: {
@@ -1015,6 +1221,11 @@ export interface components {
     responses: never;
     parameters: {
         AssetId: string;
+        CelebrationId: string;
+        DesignId: string;
+        DesignVersionNumber: number;
+        /** @description draftVersion being edited, e.g. "3". Missing → 428; stale → 409 VERSION_CONFLICT. */
+        DraftIfMatch: string;
         TemplateId: string;
     };
     requestBodies: never;
@@ -1140,6 +1351,827 @@ export interface operations {
             };
             /** @description Every processed asset exactly once */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    getCelebrationDesign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                celebrationId: components["parameters"]["CelebrationId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The celebration's design */
+            200: {
+                headers: {
+                    /** @description draftVersion, to send back in If-Match */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Design"];
+                };
+            };
+            /** @description Malformed request: a body or parameter that is not valid (BAD_REQUEST), or JSON nested too deeply to parse */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unknown, or not visible to the caller (never 403 for what the caller cannot see) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unexpected error (INTERNAL); nothing was stored */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    listPrivateTemplates: {
+        parameters: {
+            query: {
+                kind: "PRIVATE_TEMPLATE";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Private templates of the caller */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["Design"][];
+                    };
+                };
+            };
+            /** @description Malformed request: a body or parameter that is not valid (BAD_REQUEST), or JSON nested too deeply to parse */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description kind is not PRIVATE_TEMPLATE */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unexpected error (INTERNAL); nothing was stored */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    createDesign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DesignInput"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    ETag?: string;
+                    Location?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Design"];
+                };
+            };
+            /** @description Malformed body or not exactly one source */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Can read but not change it */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unknown, or not visible to the caller (never 403 for what the caller cannot see) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description DESIGN_EXISTS or PRIVATE_TEMPLATE_LIMIT */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The JSON body is larger than 1 MB (PAYLOAD_TOO_LARGE) */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Invalid document */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["DesignProblem"];
+                };
+            };
+            /** @description Unexpected error (INTERNAL); nothing was stored */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    getDesign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                designId: components["parameters"]["DesignId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The design with its draft */
+            200: {
+                headers: {
+                    /** @description draftVersion, to send back in If-Match */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Design"];
+                };
+            };
+            /** @description Malformed request: a body or parameter that is not valid (BAD_REQUEST), or JSON nested too deeply to parse */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unknown, or not visible to the caller (never 403 for what the caller cannot see) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unexpected error (INTERNAL); nothing was stored */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    deleteDesign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                designId: components["parameters"]["DesignId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Malformed request: a body or parameter that is not valid (BAD_REQUEST), or JSON nested too deeply to parse */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The caller can read the design but not change it */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unknown, or not visible to the caller */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description DESIGN_PUBLISHED: a published celebration design is replaced, not deleted */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unexpected error (INTERNAL); nothing was stored */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    saveDesignDraft: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description draftVersion being edited, e.g. "3". Missing → 428; stale → 409 VERSION_CONFLICT. */
+                "If-Match": components["parameters"]["DraftIfMatch"];
+            };
+            path: {
+                designId: components["parameters"]["DesignId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DesignDraftInput"];
+            };
+        };
+        responses: {
+            /** @description Saved (an identical draft changes nothing) */
+            200: {
+                headers: {
+                    /** @description draftVersion, to send back in If-Match */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Design"];
+                };
+            };
+            /** @description Malformed body */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Can read but not change it */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unknown, or not visible to the caller (never 403 for what the caller cannot see) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description VERSION_CONFLICT */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The JSON body is larger than 1 MB (PAYLOAD_TOO_LARGE) */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Invalid design */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["DesignProblem"];
+                };
+            };
+            /** @description If-Match required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unexpected error (INTERNAL); nothing was stored */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    publishDesign: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description draftVersion being edited, e.g. "3". Missing → 428; stale → 409 VERSION_CONFLICT. */
+                "If-Match": components["parameters"]["DraftIfMatch"];
+            };
+            path: {
+                designId: components["parameters"]["DesignId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["DesignPublishInput"];
+            };
+        };
+        responses: {
+            /** @description Already the latest published version; nothing emitted */
+            200: {
+                headers: {
+                    /** @description draftVersion, to send back in If-Match */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DesignPublished"];
+                };
+            };
+            /** @description New version published */
+            201: {
+                headers: {
+                    /** @description draftVersion, to send back in If-Match */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DesignPublished"];
+                };
+            };
+            /** @description Malformed body */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Can read but not change it */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unknown, or not visible to the caller (never 403 for what the caller cannot see) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description VERSION_CONFLICT */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The JSON body is larger than 1 MB (PAYLOAD_TOO_LARGE) */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Invalid design */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["DesignProblem"];
+                };
+            };
+            /** @description If-Match required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unexpected error (INTERNAL); nothing was stored */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    listDesignVersions: {
+        parameters: {
+            query?: {
+                /** @description Version number the previous page ended at (its nextBefore) */
+                before?: number;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                designId: components["parameters"]["DesignId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Published versions, newest first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["DesignVersionSummary"][];
+                        /** @description Pass it as `before` for the next page; null on the last page */
+                        nextBefore: number | null;
+                    };
+                };
+            };
+            /** @description limit or before is not an integer in range (BAD_REQUEST, field) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unknown, or not visible to the caller (never 403 for what the caller cannot see) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unexpected error (INTERNAL); nothing was stored */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    getDesignVersion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                designId: components["parameters"]["DesignId"];
+                version: components["parameters"]["DesignVersionNumber"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A published version with its document */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DesignVersion"];
+                };
+            };
+            /** @description Malformed request: a body or parameter that is not valid (BAD_REQUEST), or JSON nested too deeply to parse */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unknown, or not visible to the caller (never 403 for what the caller cannot see) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unexpected error (INTERNAL); nothing was stored */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    restoreDesignVersion: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description draftVersion being edited, e.g. "3". Missing → 428; stale → 409 VERSION_CONFLICT. */
+                "If-Match": components["parameters"]["DraftIfMatch"];
+            };
+            path: {
+                designId: components["parameters"]["DesignId"];
+                version: components["parameters"]["DesignVersionNumber"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Draft now holds that version */
+            200: {
+                headers: {
+                    /** @description draftVersion, to send back in If-Match */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Design"];
+                };
+            };
+            /** @description Malformed request: a body or parameter that is not valid (BAD_REQUEST), or JSON nested too deeply to parse */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing or invalid bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Can read but not change it */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unknown, or not visible to the caller (never 403 for what the caller cannot see) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description VERSION_CONFLICT */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The JSON body is larger than 1 MB (PAYLOAD_TOO_LARGE) */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The version no longer satisfies today's contract */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["DesignProblem"];
+                };
+            };
+            /** @description If-Match required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unexpected error (INTERNAL); nothing was stored */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -32,3 +32,6 @@ apps/universal/scripts/seed/.last-run.json
 # Python bytecode de los generadores de documentos
 __pycache__/
 *.pyc
+
+packages/design-editor/test-results/
+packages/design-editor/dist-harness/
