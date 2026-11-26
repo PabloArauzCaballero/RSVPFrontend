@@ -54,6 +54,12 @@ límite por caso. Cada prueba verifica su mensaje y que el borrador se
 conserve. El 409 también comprueba el estado de conflicto.
 [Ejecución que registró el timeout](https://github.com/PabloArauzCaballero/RSVPFrontend/actions/runs/45902783888/job/140192308213)
 
+La siguiente ejecución pasó la compilación y las pruebas de paquetes
+afectados. Durante la cobertura se agotó el tiempo de dos pruebas del
+lienzo, en la edición numérica y los atajos de teclado. La cobertura del
+editor usa un solo worker para limitar la contención entre sus pruebas.
+[Ejecución de cobertura](https://github.com/PabloArauzCaballero/RSVPFrontend/actions/runs/45904068475/job/140196503128)
+
 ## Reversión
 
 Revertir este PR en `chore/deploy-contabo-coolify`.
