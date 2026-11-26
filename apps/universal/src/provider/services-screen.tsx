@@ -64,6 +64,7 @@ function OfferRow({ provider, listing, cities, publishing, duplicating, onPublis
       </View>
       {!sheet && !listing.published && !listing.fulfillment ? <Text style={styles.muted} testID={`publish-blocked-${listing.id}`}>{t("portal.services.needsTerms")}</Text> : null}
       {sheet && missing.length ? <Text style={styles.muted} testID={`listing-missing-${listing.id}`}>{missingShort(missing, t)}</Text> : null}
+      {sheet && listing.completeness === "INCOMPLETE" ? <Text style={styles.muted} testID={`listing-not-gift-${listing.id}`}>{t("portal.product.notGift")}</Text> : null}
       {sheet ? (
         <View style={{ alignSelf: "flex-start" }}>
           <ActionButton variant="secondary" icon="arrow" label={t("portal.product.actions.edit")} onPress={() => router.push(productHref(listing.id, missing[0] ? MISSING_STEP[missing[0]] : "summary") as Href)} testID={`listing-edit-${listing.id}`} />

@@ -135,6 +135,7 @@ export const portalEsBO = {
       hidden: "El equipo ocultó este producto. Motivo: {{reason}}", hiddenNoReason: "El equipo ocultó este producto.", duplicated: "Copia creada como borrador. Le faltan las fotos."
     },
     completeness: { COMPLETE: "Completo", INCOMPLETE: "Incompleto", HIDDEN_BY_ADMIN: "Oculto" },
+    notGift: "Completa tu ficha para aparecer como regalo",
     missing: {
       title: "Te falta para publicar", go: "{{item}}. Ir al paso {{step}}", short: "Falta: {{list}}",
       TITLE: "El nombre (3 a 120 caracteres)", DESCRIPTION: "La descripción (30 a 2000 caracteres)", CATEGORY: "Una categoría de productos", GIFT_IDEA: "Al menos una idea de regalo", PHOTO: "Al menos una foto lista", PRICE: "El precio", STOCK: "La disponibilidad", COVERAGE: "Las ciudades donde entregas", DELIVERY: "El plazo y el costo de envío", DESTINATION: "Un WhatsApp o la página del producto"

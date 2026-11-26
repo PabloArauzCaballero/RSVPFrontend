@@ -138,6 +138,7 @@ export const portalEnUS: DeepStrings<typeof portalEsBO> = {
       hidden: "Our team hid this product. Reason: {{reason}}", hiddenNoReason: "Our team hid this product.", duplicated: "Copy created as a draft. It still needs photos."
     },
     completeness: { COMPLETE: "Complete", INCOMPLETE: "Incomplete", HIDDEN_BY_ADMIN: "Hidden" },
+    notGift: "Complete your sheet to show up as a gift",
     missing: {
       title: "Still needed to publish", go: "{{item}}. Go to step {{step}}", short: "Missing: {{list}}",
       TITLE: "The name (3 to 120 characters)", DESCRIPTION: "The description (30 to 2000 characters)", CATEGORY: "A product category", GIFT_IDEA: "At least one gift idea", PHOTO: "At least one ready photo", PRICE: "The price", STOCK: "The availability", COVERAGE: "The cities you deliver to", DELIVERY: "The lead time and shipping cost", DESTINATION: "A WhatsApp or the product page"

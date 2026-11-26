@@ -213,6 +213,7 @@ describe("offers list (OfferRow)", () => {
     renderApp(<ServicesScreen />, client, HOST);
     expect((await screen.findByTestId(`listing-completeness-${LID}`)).textContent).toBe("Incompleto");
     expect(screen.getByTestId(`listing-missing-${LID}`).textContent).toBe("Falta: Al menos una foto lista");
+    expect(screen.getByTestId(`listing-not-gift-${LID}`).textContent).toBe("Completa tu ficha para aparecer como regalo");
     fireEvent.click(within(screen.getByTestId(`listing-${LID}`)).getByRole("button", { name: /Más opciones/ }));
     expect((await screen.findByRole("menuitem", { name: "Publicar" })).getAttribute("aria-disabled")).toBe("true");
     fireEvent.click(screen.getByTestId(`listing-edit-${LID}`));
