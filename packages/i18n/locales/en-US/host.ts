@@ -84,7 +84,7 @@ export const hostEnUS: DeepStrings<typeof hostEsBO> = {
   media: {
     title: "Files", quota: "{{assets}} of {{maxAssets}} files · {{used}} of {{max}} used", quotaFull: "You reached the file limit of this invitation. Delete one to upload another.",
     add: "Add files", addMusic: "Upload music (MP3)", help: "JPG, PNG, WebP, GIF, AVIF, SVG or HEIC, up to {{max}} MB each.", helpMusic: "MP3 up to {{max}} MB and {{minutes}} minutes.",
-    queued: "Waiting", uploading: "Uploading {{name}}… {{percent}} %", processing: "Preparing {{name}}…", done: "{{name}} is ready.", retry: "Retry", remove: "Remove from list", clear: "Clear list",
+    queued: "Waiting", uploading: "Uploading {{name}}…", progressLabel: "Progress of {{name}}", quotaLabel: "Space used", processing: "Preparing {{name}}…", done: "Done: {{name}}.", retry: "Retry", remove: "Remove from list", clear: "Clear list",
     rightsTitle: "Copyright notice", rights: "I confirm I have the right to use this music in my invitation and I understand it will be removed if we receive a copyright report.", rightsRequired: "Accept the rights notice to upload music.",
     failures: {
       type: "{{name}}: this file type cannot be uploaded here.", tooLarge: "{{name}} is too large. Try a lighter version.", quotaAssets: "{{name}}: this invitation has no room for more files.",

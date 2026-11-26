@@ -33,12 +33,12 @@ const FAILURE_KEY: Readonly<Record<UploadFailure, string>> = {
   type: "type", tooLarge: "tooLarge", quotaAssets: "quotaAssets", quotaBytes: "quotaBytes", rights: "rights", invalid: "invalid", tooLong: "tooLong", rejected: "rejected", forbidden: "forbidden", network: "network", server: "server"
 };
 
-function Bar({ now, max }: { readonly now: number; readonly max: number }): ReactNode {
+function Bar({ now, max, label }: { readonly now: number; readonly max: number; readonly label: string }): ReactNode {
   const palette = useColors();
   const percent = Math.min(PERCENT, Math.round((now / max) * PERCENT));
   return (
-    <View accessibilityRole="progressbar" accessibilityValue={{ min: 0, max, now: Math.min(now, max) }} style={{ height: 6, borderRadius: 3, backgroundColor: palette.primaryMuted }}>
-      <View style={{ width: `${percent}%`, height: 6, borderRadius: 3, backgroundColor: palette.primary }} />
+    <View accessibilityRole="progressbar" accessibilityLabel={label} aria-valuemin={0} aria-valuemax={max} aria-valuenow={Math.min(now, max)} style={{ height: 8, borderRadius: 4, borderWidth: 1, borderColor: palette.fieldBorder, overflow: "hidden", backgroundColor: palette.primaryMuted }}>
+      <View style={{ width: `${percent}%`, height: 6, backgroundColor: palette.primary }} />
     </View>
   );
 }
@@ -54,7 +54,8 @@ function Row({ item, onRetry, onRemove }: { readonly item: QueueItem; readonly o
   return (
     <View style={{ gap: spacing[2] }} testID={`media-row-${item.id}`}>
       {item.status === "error" ? <Notice kind="error">{text}</Notice> : <Text style={styles.body} accessibilityLiveRegion="polite">{text}</Text>}
-      {item.status === "uploading" ? <Bar now={percent} max={PERCENT} /> : null}
+      {/* The live region above only changes with the STATE of the file; the progress travels in the bar's value, so a screen reader asks for it instead of hearing every tick. */}
+      {item.status === "uploading" ? <><Bar now={percent} max={PERCENT} label={t("host.media.progressLabel", { name: item.name })} /><Text style={styles.body}>{percent} %</Text></> : null}
       <View style={{ flexDirection: "row", gap: spacing[3], flexWrap: "wrap" }}>
         {item.status === "error" && item.retryable ? <ActionButton variant="secondary" label={t("host.media.retry")} onPress={onRetry} testID={`media-retry-${item.id}`} /> : null}
         {item.status === "error" || item.status === "queued" || item.status === "processing" ? <ActionButton variant="secondary" label={t("host.media.remove")} onPress={onRemove} testID={`media-remove-${item.id}`} /> : null}
@@ -85,7 +86,8 @@ export function MediaUploader({ celebrationId, purpose, pick = defaultPick, onUp
   const snapshot = useSyncExternalStore(queue.subscribe, queue.getSnapshot, queue.getSnapshot);
   // The worker answers after the upload: each re-read of the list settles the rows still "Preparing" (processed, rejected or deleted).
   const listed = assets.data?.items;
-  useEffect(() => { if (listed) queue.reconcile(listed); }, [queue, listed]);
+  // It also runs when the queue itself changes: an upload that just ended can already be settled in the list that was read while it uploaded.
+  useEffect(() => { if (listed) queue.reconcile(listed); }, [queue, listed, snapshot]);
   const full = Boolean(quota && quota.assets >= quota.maxAssets);
 
   const add = async (): Promise<void> => {
@@ -101,7 +103,7 @@ export function MediaUploader({ celebrationId, purpose, pick = defaultPick, onUp
       {quota ? (
         <View style={{ gap: spacing[2] }}>
           <Text style={styles.body} testID="media-quota">{t("host.media.quota", { assets: quota.assets, maxAssets: quota.maxAssets, used: `${megabytes(quota.bytes)} MB`, max: `${megabytes(quota.maxBytes)} MB` })}</Text>
-          <Bar now={quota.bytes} max={quota.maxBytes} />
+          <Bar now={quota.bytes} max={quota.maxBytes} label={t("host.media.quotaLabel")} />
         </View>
       ) : null}
       {full ? <Notice kind="error">{t("host.media.quotaFull")}</Notice> : null}

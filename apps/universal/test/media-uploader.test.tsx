@@ -10,6 +10,8 @@ const picked = (name: string, type = "image/png", size = 1000) => ({ file: new B
 
 class FakeXhr {
   static failWith: number | null = null;
+  /** Leaves the request open after the first progress event, to look at the screen while the file is uploading. */
+  static hold = false;
   static sent: string[] = [];
   upload: { onprogress?: (event: { lengthComputable: boolean; loaded: number; total: number }) => void } = {};
   status = 200;
@@ -21,13 +23,14 @@ class FakeXhr {
   send(): void {
     FakeXhr.sent.push(this.url);
     this.upload.onprogress?.({ lengthComputable: true, loaded: 5, total: 10 });
+    if (FakeXhr.hold) return;
     if (FakeXhr.failWith === 0) { this.onerror?.(); return; }
     this.status = FakeXhr.failWith ?? 200;
     this.onload?.();
   }
 }
 
-beforeEach(() => { FakeXhr.failWith = null; FakeXhr.sent = []; vi.stubGlobal("XMLHttpRequest", FakeXhr); });
+beforeEach(() => { FakeXhr.hold = false; FakeXhr.failWith = null; FakeXhr.sent = []; vi.stubGlobal("XMLHttpRequest", FakeXhr); });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 const listWithQuota = (usage = QUOTA) => ({ "GET /media/celebrations/c-1/assets": () => ({ items: [], usage }) });
@@ -88,6 +91,31 @@ describe("F6 · MediaUploader", () => {
     expect(screen.queryByRole("button", { name: "Reintentar" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Quitar de la lista" }));
     expect(screen.queryByText(/rota\.png/)).toBeNull();
+  });
+
+  it("the live region says the state of a file, never its percentage: that lives in the progress bar's value", async () => {
+    FakeXhr.hold = true;
+    const { client } = fakeClient({ ...baseHandlers(), ...listWithQuota(), "POST /media/uploads/presign": () => intent("p1") });
+    renderApp(<MediaUploader celebrationId="c-1" purpose="gallery" pick={async () => [picked("lenta.png")]} />, client);
+    await screen.findByTestId("media-quota");
+    fireEvent.click(screen.getByTestId("media-add"));
+    const status = await screen.findByText("Subiendo lenta.png…");
+    expect(status.textContent).not.toMatch(/%/);
+    const bars = screen.getAllByRole("progressbar");
+    expect(bars.map((bar) => bar.getAttribute("aria-label"))).toEqual(["Espacio usado", "Avance de lenta.png"]);
+    expect(bars[1]?.getAttribute("aria-valuenow")).toBe("50");
+  });
+
+  it("an upload that ends while the list already says REJECTED settles at once, without waiting for another read", async () => {
+    const { client } = fakeClient({
+      ...baseHandlers(),
+      "GET /media/celebrations/c-1/assets": () => ({ items: [asset("z1", "REJECTED")], usage: QUOTA }),
+      "POST /media/uploads/presign": () => intent("z1"), "POST /media/uploads/z1/complete": () => asset("z1")
+    });
+    renderApp(<MediaUploader celebrationId="c-1" purpose="gallery" pick={async () => [picked("tarde.png")]} />, client);
+    await screen.findByTestId("media-quota");
+    fireEvent.click(screen.getByTestId("media-add"));
+    expect(await screen.findByText("No pudimos preparar tarde.png. Quítalo e intenta con otro.")).toBeTruthy();
   });
 
   it("the server's quota answer becomes a message about space, with no retry button", async () => {
