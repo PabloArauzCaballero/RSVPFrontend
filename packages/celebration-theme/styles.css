@@ -282,8 +282,7 @@ html:has(.cdesign-dock) { scroll-padding-bottom: 6rem; }
 /* F6 · media roles, embeds and the music player. Everything reads the theme variables; nothing animates except a short fade that reduced motion removes. */
 .celebration-media-image { display: block; max-width: 100%; height: auto; border-radius: var(--celebration-radius, 0); }
 .celebration-media-background-image { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -2; border-radius: 0; }
-.celebration-media-veil { position: absolute; inset: 0; z-index: -1; background: color-mix(in srgb, var(--celebration-canvas) var(--celebration-scrim, 40%), transparent); }
-.celebration-embed { position: relative; display: grid; gap: .5rem; width: 100%; margin-inline: auto; max-width: min(var(--celebration-max-width, 40rem), 40rem); align-content: center; justify-items: center; text-align: center; background: var(--celebration-surface); border: 1px solid color-mix(in srgb, var(--celebration-text) 18%, transparent); border-radius: var(--celebration-radius, 0); overflow: hidden; padding: 1rem; }
+.celebration-embed { box-sizing: border-box; position: relative; display: grid; gap: .5rem; width: 100%; margin-inline: auto; max-width: min(var(--celebration-max-width, 40rem), 40rem); align-content: center; justify-items: center; text-align: center; background: var(--celebration-surface); border: 1px solid color-mix(in srgb, var(--celebration-text) 18%, transparent); border-radius: var(--celebration-radius, 0); overflow: hidden; padding: 1rem; }
 /* The three cards (video, map, song) are one structure and one height: a 16:9 area with at least 11 rem, the action centred in it. */
 .celebration-embed { min-height: 10rem; }
 /* Air around pictures and cards: the document sets its own margins inline, which win over this. */
@@ -297,7 +296,7 @@ html:has(.cdesign-dock) { scroll-padding-bottom: 6rem; }
 .celebration-embed-play:hover, .celebration-audio-button:hover { background: color-mix(in srgb, var(--celebration-accent) 14%, var(--celebration-surface)); }
 .celebration-embed-play:focus-visible, .celebration-audio-button:focus-visible { outline: 3px solid var(--celebration-accent); outline-offset: 3px; }
 .celebration-embed .celebration-note { position: relative; z-index: 1; margin: 0; background: color-mix(in srgb, var(--celebration-surface) 88%, transparent); padding: .15rem .4rem; border-radius: 4px; }
-.celebration-audio-progress { width: 100%; height: .5rem; appearance: none; border: 0; border-radius: 9999px; overflow: hidden; background: color-mix(in srgb, var(--celebration-text) 18%, var(--celebration-surface)); }
+.celebration-audio-progress { box-sizing: border-box; width: 100%; height: .625rem; appearance: none; border: 1px solid color-mix(in srgb, var(--celebration-text) 60%, var(--celebration-surface)); border-radius: 9999px; overflow: hidden; background: color-mix(in srgb, var(--celebration-text) 18%, var(--celebration-surface)); }
 .celebration-audio-progress::-webkit-progress-bar { background: color-mix(in srgb, var(--celebration-text) 18%, var(--celebration-surface)); }
 .celebration-audio-progress::-webkit-progress-value { background: var(--celebration-accent-fill, var(--celebration-accent)); border-radius: 9999px; }
 .celebration-audio-progress::-moz-progress-bar { background: var(--celebration-accent-fill, var(--celebration-accent)); border-radius: 9999px; }
@@ -308,9 +307,10 @@ html:has(.cdesign-dock) { scroll-padding-bottom: 6rem; }
 .celebration-design .cdesign-el[data-bg-media] { overflow: clip; }
 .celebration-media-backdrop { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
 .celebration-media-backdrop .celebration-media-background-image { position: absolute; inset: 0; width: 100%; height: 100%; z-index: auto; border-radius: 0; }
-.celebration-media-backdrop .celebration-media-veil { position: absolute; inset: 0; z-index: auto; background: color-mix(in srgb, var(--celebration-canvas) var(--cd-veil-l, 40%), transparent); }
-@media (prefers-color-scheme: dark) { .celebration-design[data-scheme-source="system"] .celebration-media-backdrop .celebration-media-veil { background: color-mix(in srgb, var(--celebration-canvas) var(--cd-veil-d, 40%), transparent); } }
-.celebration-design[data-scheme-source="prop"][data-color-scheme="dark"] .celebration-media-backdrop .celebration-media-veil { background: color-mix(in srgb, var(--celebration-canvas) var(--cd-veil-d, 40%), transparent); }
+/* The ONE definition of the veil. Both values are always set by MediaBackdrop; if one were ever missing the fallback is the contract's maximum (80 %), never a thinner veil. */
+.celebration-media-backdrop .celebration-media-veil { position: absolute; inset: 0; z-index: auto; background: color-mix(in srgb, var(--celebration-canvas) var(--cd-veil-l, 80%), transparent); }
+@media (prefers-color-scheme: dark) { .celebration-design[data-scheme-source="system"] .celebration-media-backdrop .celebration-media-veil { background: color-mix(in srgb, var(--celebration-canvas) var(--cd-veil-d, 80%), transparent); } }
+.celebration-design[data-scheme-source="prop"][data-color-scheme="dark"] .celebration-media-backdrop .celebration-media-veil { background: color-mix(in srgb, var(--celebration-canvas) var(--cd-veil-d, 80%), transparent); }
 .celebration-design .cdesign-el > .celebration-media-backdrop ~ * { position: relative; z-index: 1; }
 .celebration-design .cdesign-el[data-block="video"], .celebration-design .cdesign-el[data-block="music"], .celebration-design .cdesign-el[data-block="map"] { align-self: start; }
 .celebration-embed-status { position: absolute; inset: auto 0 0 0; z-index: 2; margin: 0; padding: .4rem .75rem; text-align: center; background: color-mix(in srgb, var(--celebration-surface) 92%, transparent); color: var(--celebration-text); font-size: .9rem; }

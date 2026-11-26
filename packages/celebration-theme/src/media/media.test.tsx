@@ -120,6 +120,11 @@ describe("AudioPlayer", () => {
     expect(html).not.toContain("autoplay");
     expect(html).not.toContain("autoPlay");
     expect(html).toContain("celebration.media.play|Vals");
+    expect(html).toContain("<span>celebration.media.playShort</span>");
+  });
+
+  it("a toggle whose label changes does not also say it is pressed", () => {
+    expect(renderToStaticMarkup(<AudioPlayer media={SONG} title="Vals" t={t} />)).not.toContain("aria-pressed");
   });
 
   it("plays on press, pauses on the second press, and only one player plays at a time", async () => {
@@ -211,5 +216,30 @@ describe("reduced motion", () => {
     const css = readFileSync(resolve(__dirname, "../../styles.css"), "utf8");
     expect(css).toMatch(/prefers-reduced-motion: reduce\) \{ \.celebration-embed-play, \.celebration-audio-button \{ transition: none; \} \}/);
     expect(css).not.toMatch(/@keyframes[^}]*audio/);
+  });
+});
+
+describe("styles of F6", () => {
+  const css = readFileSync(resolve(__dirname, "../../styles.css"), "utf8");
+
+  it("the veil has ONE definition and no literal 40 % fallback: a missing value falls to the contract's maximum, never to a thinner veil", () => {
+    // One base rule (light) and its two dark-scheme switches (system and forced); nothing else paints a veil.
+    expect(css.match(/\.celebration-media-veil\s*\{[^}]*background/g)?.length).toBe(3);
+    expect(css.match(/var\(--cd-veil-l,/g)?.length).toBe(1);
+    expect(css.match(/var\(--cd-veil-d,/g)?.length).toBe(2);
+    expect(css).not.toMatch(/--celebration-scrim/);
+    expect(css).not.toMatch(/--cd-veil-[ld],\s*40%/);
+    expect(css.match(/var\(--cd-veil-[ld], 80%\)/g)?.length).toBe(3);
+  });
+
+  it.each([{ canvas: "#FFFFFF", text: "#2B2622", surface: "#FFFFFF" }, { canvas: "#141218", text: "#ECE6EE", surface: "#1E1C22" }])("the progress track's edge reaches 3:1 against the card, $surface", ({ text, surface }) => {
+    const rule = css.match(/\.celebration-audio-progress \{[^}]*border: 1px solid color-mix\(in srgb, var\(--celebration-text\) (\d+)%, var\(--celebration-surface\)\)/);
+    expect(rule).not.toBeNull();
+    const edge = mix(text, surface, 1 - Number(rule?.[1]) / 100);
+    expect(contrastRatio(edge, surface)).toBeGreaterThanOrEqual(3);
+  });
+
+  it("the card sizes its padding inside its width (box-sizing)", () => {
+    expect(css).toMatch(/\.celebration-embed \{ box-sizing: border-box;/);
   });
 });
