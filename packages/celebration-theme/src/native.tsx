@@ -3,7 +3,7 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, View, type ImageStyle, 
 import { daysUntil, hasSectionContent, navigationHref, readContent, SECTION_PATHS, shownVenues, type CelebrationContent, type GalleryImage, type PublicCelebrationView } from "./content.js";
 import { formatDate, formatTime, zoneLabel } from "./format.js";
 import { CelebrationThemeProvider, useCelebrationTheme } from "./theme-context.js";
-import { paletteFor, type ColorScheme } from "./theme.js";
+import { accentFill, paletteFor, type ColorScheme } from "./theme.js";
 import type { CelebrationTheme, SectionId, Translate } from "./types.js";
 
 /**
@@ -72,21 +72,22 @@ function useStyles(scheme: ColorScheme): Styles {
   const align: TextStyle["textAlign"] = centered ? "center" : "left";
   const cards = theme.sectionStyle === "cards";
   const band = layout.hero === "overlay" || layout.hero === "banner";
-  const coverInk = band ? (layout.hero === "overlay" ? ON_PHOTO : palette.surface) : palette.text;
+  const fill = accentFill(theme, scheme);
+  const coverInk = band ? (layout.hero === "overlay" ? ON_PHOTO : fill.ink) : palette.text;
   const coverAccent = band ? coverInk : palette.accent;
   const upper: TextStyle["textTransform"] = layout.headingCase === "uppercase" ? "uppercase" : "none";
   return {
     coverInk, coverAccent,
     ...StyleSheet.create({
       page: { backgroundColor: palette.canvas, gap: layout.sectionGap / 2, paddingBottom: SPACE * 2 },
-      cover: { padding: SPACE, paddingVertical: SPACE * 2, backgroundColor: band ? palette.accent : "transparent", borderBottomLeftRadius: layout.hero === "banner" ? layout.radius : 0, borderBottomRightRadius: layout.hero === "banner" ? layout.radius : 0 },
+      cover: { padding: SPACE, paddingVertical: SPACE * 2, backgroundColor: band ? fill.fill : "transparent", borderBottomLeftRadius: layout.hero === "banner" ? layout.radius : 0, borderBottomRightRadius: layout.hero === "banner" ? layout.radius : 0 },
       coverInner: {
         gap: SPACE / 2, alignItems: centered ? "center" : "flex-start",
         ...(layout.hero === "centered" ? { padding: SPACE * 1.5, margin: FRAME_GAP, borderWidth: HAIRLINE, borderColor: palette.accent, backgroundColor: palette.surface } : {}),
         ...(layout.hero === "split" ? { paddingLeft: SPACE, borderLeftWidth: FRAME_GAP, borderLeftColor: palette.accent } : {})
       },
       section: { gap: SPACE / 2, marginHorizontal: SPACE, padding: cards ? SPACE : 0, borderRadius: layout.radius, backgroundColor: cards ? palette.surface : "transparent" },
-      eyebrow: { color: coverAccent, fontFamily: theme.typography.body, fontSize: 11, letterSpacing: 3, textTransform: "uppercase", textAlign: align },
+      eyebrow: { color: coverAccent, fontFamily: theme.typography.body, fontSize: 13, letterSpacing: 3, textTransform: "uppercase", textAlign: align },
       heading: { color: coverInk, fontFamily: theme.typography.heading, fontSize: BASE_HEADING * layout.headingScale, lineHeight: BASE_HEADING * layout.headingScale * 1.08, textAlign: align, textTransform: upper },
       hosts: { color: coverInk, fontFamily: theme.typography.heading, fontSize: 18, textAlign: align },
       date: { color: coverInk, fontFamily: theme.typography.heading, fontSize: 18, letterSpacing: 0.5, textAlign: align },
@@ -96,7 +97,7 @@ function useStyles(scheme: ColorScheme): Styles {
       accent: { color: palette.accent, fontWeight: "700", fontFamily: theme.typography.body },
       rule: { width: layout.divider === "none" ? RULE_WIDTH * 2 : RULE_WIDTH, height: layout.divider === "ornament" ? HAIRLINE : 2, backgroundColor: coverAccent, marginVertical: SPACE / 2 },
       pill: { marginTop: SPACE / 2, paddingHorizontal: SPACE, paddingVertical: 4, borderRadius: PILL, borderWidth: HAIRLINE, borderColor: band ? coverInk : palette.muted },
-      pillText: { color: band ? coverInk : palette.muted, fontFamily: theme.typography.body, fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase" },
+      pillText: { color: band ? coverInk : palette.muted, fontFamily: theme.typography.body, fontSize: 13, letterSpacing: 1.5, textTransform: "uppercase" },
       card: { gap: 2, padding: SPACE, borderWidth: HAIRLINE, borderColor: palette.muted, borderRadius: Math.max(layout.radius, 2), backgroundColor: palette.surface },
       time: { width: TIME_COLUMN, color: palette.accent, fontFamily: theme.typography.heading, fontWeight: "700", fontSize: 16, textAlign: "right" },
       dot: { width: DOT, height: DOT, borderRadius: DOT / 2, backgroundColor: palette.accent, marginTop: 6 },

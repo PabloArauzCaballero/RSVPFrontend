@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { VISUAL_NOW } from "./clock";
 
 // Visual baseline of the public web screens of F15-F28 (web only), rendered against the LOCAL CONTRACT FIXTURE
 // (scripts/fixture-api.mjs), never the real backend, so the pixels are deterministic.
@@ -21,6 +22,8 @@ for (const screen of SCREENS) {
     test(`${screen.lane} ${screen.name} ${width}px`, async ({ page }) => {
       await page.setViewportSize({ width, height: 900 });
       await page.emulateMedia({ colorScheme: "light", reducedMotion: "reduce" });
+      // Same instant as the visual server (playwright.config.ts): the hero counts the days to the event and the RSVP screens count down to the deadline.
+      await page.clock.setFixedTime(VISUAL_NOW);
       await page.goto(screen.path, { waitUntil: "networkidle" });
       await page.evaluate(() => document.fonts.ready);
       // Lazy images only load once scrolled into view: walk the page, then wait for every image so the height is stable.
@@ -35,3 +38,10 @@ for (const screen of SCREENS) {
     });
   }
 }
+
+// L25 · The countdown is a few glyphs on a long page, so the screenshot tolerance alone would not notice it drifting: read it.
+test("F08-F13 celebracion-publica counts the days from the frozen instant", async ({ page }) => {
+  await page.clock.setFixedTime(VISUAL_NOW);
+  await page.goto(`/c/${SLUG}`, { waitUntil: "networkidle" });
+  await expect(page.locator(".celebration-countdown")).toHaveText(/\b40\b/);
+});

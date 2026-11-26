@@ -44,4 +44,20 @@ describe("custom code panel (Advanced level)", () => {
     fireEvent.change(screen.getByLabelText("CSS"), { target: { value: "p { color: red; position: fixed }" } });
     expect(screen.getAllByRole("status").at(-1)?.textContent).toContain("Se ajustó o quitó 1 cosa");
   });
+
+  it("undo, redo and reopening the panel never empty the stylesheet or report problems in what the editor itself wrote (M4)", () => {
+    open();
+    fireEvent.click(screen.getByRole("radio", { name: "Avanzado" }));
+    fireEvent.change(screen.getByLabelText("CSS"), { target: { value: "p { color: red }" } });
+    fireEvent.click(screen.getByRole("button", { name: "Deshacer" }));
+    expect((screen.getByLabelText("CSS") as HTMLTextAreaElement).value).toBe("");
+    fireEvent.click(screen.getByRole("button", { name: "Rehacer" }));
+    const stored = (screen.getByLabelText("CSS") as HTMLTextAreaElement).value;
+    expect(stored).toContain(".rsvp-invitation p");
+    expect(screen.getAllByRole("status").at(-1)?.textContent).toContain("Todo el código es válido.");
+    fireEvent.click(screen.getByRole("radio", { name: "Básico" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Avanzado" }));
+    expect((screen.getByLabelText("CSS") as HTMLTextAreaElement).value).toBe(stored);
+    expect(screen.getAllByRole("status").at(-1)?.textContent).toContain("Todo el código es válido.");
+  });
 });

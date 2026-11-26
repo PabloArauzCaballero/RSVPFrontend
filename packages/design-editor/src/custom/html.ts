@@ -56,6 +56,8 @@ const TAG_ATTRIBUTES: Readonly<Record<string, ReadonlySet<string>>> = {
   details: new Set(["open"])
 };
 const CLASS_NAME = /^[A-Za-z_][A-Za-z0-9_-]{0,63}$/;
+/** Classes the app owns (the protected blocks, the editor's own chrome): the same list the stylesheet reserves. */
+const RESERVED_CLASS = /^(rsvp|de)-/i;
 const MAX_CLASSES = 12;
 const DIMENSION = /^\d{1,4}$/;
 const SCHEME = /^([a-z][a-z0-9+.-]*):/i;
@@ -69,27 +71,67 @@ function lowerHost(value: string): string | null {
   try { return new URL(value).hostname.toLowerCase(); } catch { return null; }
 }
 
+/** A made-up origin to resolve relative references against: whatever resolves anywhere else escaped the site. */
+const PROBE_ORIGIN = "https://invitation.invalid";
+
+/** The URL parser's own reading of `value` against the probe origin, or null when it does not parse. */
+function resolveProbe(value: string): URL | null {
+  try { return new URL(value, PROBE_ORIGIN); } catch { return null; }
+}
+
+/** Percent-decodes until it stops changing (so %252e and %5c are seen for what they become), or null if it never settles or is malformed. */
+export function decodeFully(value: string): string | null {
+  let current = value;
+  for (let round = 0; round < 4; round += 1) {
+    let decoded: string;
+    try { decoded = decodeURIComponent(current); } catch { return null; }
+    if (decoded === current) return current;
+    current = decoded;
+  }
+  return null;
+}
+
+/**
+ * True when `value` points inside one of the media-store `prefixes`: after decoding every layer of percent-encoding there is no
+ * dot segment, backslash, control character or empty segment, and the URL parser agrees the result stays under the prefix.
+ */
+export function isMediaStoreUrl(value: string, prefixes: readonly string[]): boolean {
+  const decoded = decodeFully(value);
+  if (decoded === null) return false;
+  // eslint-disable-next-line no-control-regex
+  if (decoded.includes("..") || decoded.includes("\\") || /[\u0000-\u001f\u007f]/.test(decoded)) return false;
+  const prefix = prefixes.find((candidate) => value.startsWith(candidate));
+  if (prefix === undefined || !decoded.startsWith(prefix) || decoded.slice(prefix.length).includes("//")) return false;
+  const resolved = resolveProbe(value);
+  const base = resolveProbe(prefix);
+  return resolved !== null && base !== null && resolved.href.startsWith(base.href);
+}
+
 function cleanLink(raw: string, options: SanitizeHtmlOptions, issues: HtmlIssue[]): string | null {
   const value = raw.replace(URL_NOISE, "");
   if (value === "") return null;
   const scheme = SCHEME.exec(value)?.[1]?.toLowerCase();
   if (scheme === undefined) {
-    if (value.startsWith("#") || (value.startsWith("/") && !value.startsWith("//"))) return value;
+    // Browsers read "\" as "/", so "/\evil.com" is "//evil.com". Decode first, then let the URL parser say where it lands.
+    const decoded = decodeFully(value);
+    const resolved = resolveProbe(value);
+    const local = decoded !== null && !decoded.includes("\\") && resolved !== null && resolved.origin === PROBE_ORIGIN
+      && (value.startsWith("#") || (value.startsWith("/") && !value.startsWith("//") && !decoded.startsWith("//")));
+    if (local) return value;
     issues.push({ code: "URL_REJECTED", detail: "relative link" });
     return null;
   }
   if (scheme === "mailto" || scheme === "tel") return value;
   if (scheme !== "https") { issues.push({ code: "URL_REJECTED", detail: scheme }); return null; }
   const host = lowerHost(value);
-  if (host === null) { issues.push({ code: "URL_REJECTED", detail: "https" }); return null; }
-  if (options.isProviderHost?.(host)) { issues.push({ code: "PROVIDER_LINK", detail: host }); return null; }
+  if (host === null || value.includes("\\")) { issues.push({ code: "URL_REJECTED", detail: "https" }); return null; }
+  if (options.isProviderHost?.(host.replace(/\.+$/, ""))) { issues.push({ code: "PROVIDER_LINK", detail: host }); return null; }
   return value;
 }
 
 function cleanImageSource(raw: string, prefixes: readonly string[], issues: HtmlIssue[]): string | null {
   const value = raw.replace(URL_NOISE, "");
-  const prefix = prefixes.find((candidate) => value.startsWith(candidate));
-  const ok = prefix !== undefined && !value.includes("..") && !value.includes("\\") && !value.slice(prefix.length).includes("//");
+  const ok = isMediaStoreUrl(value, prefixes);
   if (!ok) issues.push({ code: "URL_REJECTED", detail: "img src outside the media store" });
   return ok ? value : null;
 }
@@ -103,7 +145,7 @@ function cleanAttributes(element: Element, options: SanitizeHtmlOptions, issues:
     if (!GLOBAL_ATTRIBUTES.has(name) && !allowed?.has(name)) { issues.push({ code: "ATTRIBUTE_REMOVED", detail: `${tag}[${name}]` }); continue; }
     if (name === "class") {
       const classes = attribute.value.split(/\s+/).filter(Boolean);
-      const valid = classes.filter((entry) => CLASS_NAME.test(entry)).slice(0, MAX_CLASSES);
+      const valid = classes.filter((entry) => CLASS_NAME.test(entry) && !RESERVED_CLASS.test(entry)).slice(0, MAX_CLASSES);
       if (valid.length !== classes.length) issues.push({ code: "ATTRIBUTE_REMOVED", detail: "class name" });
       if (valid.length > 0) kept.push({ name, value: valid.join(" ") });
     } else if (name === "href") {
