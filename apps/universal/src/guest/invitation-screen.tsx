@@ -14,6 +14,8 @@ import { asTemplateDocument } from "../host/template-gallery";
 import { ActionButton } from "../host/ui";
 import { partnerRedirectUrl } from "../platform/partner-link";
 import { useApiClient, useLocalePreference, useT } from "../platform/providers";
+import { readGiftCredential } from "./gift-credential";
+import { invitationIcon } from "./invitation-icon";
 import { LinkState, OfflineState } from "./link-states";
 
 /**
@@ -38,6 +40,11 @@ export function invitationPath(slug: string, section: SectionId | null): string 
   const base = `/c/${encodeURIComponent(slug)}`;
   const path = section ? SECTION_PATHS[section] : undefined;
   return path ? `${base}/${path}` : base;
+}
+
+/** `/c/{slug}/rsvp`: the guest's own answer when this session holds their link, the RSVP without a link otherwise. */
+export function replyPath(slug: string): string {
+  return `/c/${encodeURIComponent(slug)}/rsvp`;
 }
 
 /** The redirector URL for a recommendation, or null when the listing id is not one the redirector accepts. */
@@ -106,8 +113,11 @@ function Invitation({ slug, only, onNavigate, openUrl = openExternally }: Invita
   const actions = useMemo<NativeRendererActions | undefined>(() => view ? {
     openUrl,
     partnerUrl: partnerUrlFor(view.celebrationId),
-    openSection: (next) => onNavigate(invitationPath(slug, next))
+    openSection: (next) => onNavigate(invitationPath(slug, next)),
+    openRsvp: () => onNavigate(replyPath(slug))
   } : undefined, [view, openUrl, onNavigate, slug]);
+  // Read once per slug: the credential lives in memory (native) or in this tab's sessionStorage (web), never in the URL.
+  const hasPersonalLink = useMemo(() => Boolean(slug && readGiftCredential(slug)), [slug]);
 
   if (celebration.isPending) return <Loading />;
   if (celebration.isError || !view) {
@@ -129,7 +139,7 @@ function Invitation({ slug, only, onNavigate, openUrl = openExternally }: Invita
       {/* The layout's column width, centred, as the web page's --celebration-max-width: a tablet or desktop window does not stretch the invitation. */}
       <View style={{ width: "100%", maxWidth: layoutOf(theme).maxWidth, alignSelf: "center" }} testID="invitation-column">
         <CelebrationLanguages available={view.availableLocales} ink={theme.palette.text} accent={theme.palette.accent} />
-        <CelebrationNativeRenderer theme={theme} view={view} gallery={photos} t={t} {...(only ? { only } : {})} {...(actions ? { actions } : {})} />
+        <CelebrationNativeRenderer theme={theme} view={view} gallery={photos} t={t} {...(only ? { only } : {})} {...(actions ? { actions } : {})} renderIcon={invitationIcon} hasPersonalLink={hasPersonalLink} />
       </View>
     </ScrollView>
   );

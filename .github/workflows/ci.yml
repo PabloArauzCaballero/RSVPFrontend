@@ -17,11 +17,19 @@ jobs:
       - run: yarn harness:validate
       - run: yarn lint:code  # ESLint over the whole repo, including rsvp/no-literal-strings (REQ-F06-06)
       - run: yarn workspace @rsvp/contracts check:generated
-      # M8: the vendored specs must be the backend commit pinned in packages/contracts/backend.lock.json. Read through the
-      # GitHub API with a read-only token of the backend repository; without the secret this step fails (it never skips).
+      # M8: the vendored specs must be the backend commit pinned in packages/contracts/backend.lock.json. The backend is
+      # read from a git clone made with a READ-ONLY deploy key of RSVPBackend (secret RSVP_BACKEND_CONTRACTS_DEPLOY_KEY):
+      # it does not expire and is not tied to a personal account. Without the secret the clone fails (it never skips).
+      - uses: actions/checkout@v4
+        with:
+          repository: PabloArauzCaballero/RSVPBackend
+          ssh-key: ${{ secrets.RSVP_BACKEND_CONTRACTS_DEPLOY_KEY }}
+          path: .backend-contracts
+          fetch-depth: 0
       - run: yarn workspace @rsvp/contracts check:source
         env:
-          RSVP_BACKEND_TOKEN: ${{ secrets.RSVP_BACKEND_CONTRACTS_TOKEN }}
+          RSVP_BACKEND_REPO: ${{ github.workspace }}/.backend-contracts
+      - run: rm -rf .backend-contracts
       - run: yarn turbo run build lint typecheck test --affected
       # Coverage gate: lines/statements >= 85 % in the packages with logic and both apps (vitest thresholds fail the job below it).
       - run: yarn test:coverage
