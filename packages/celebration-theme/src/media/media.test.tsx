@@ -243,6 +243,10 @@ describe("styles of F6", () => {
     expect(css).toMatch(/\.cdesign-el\[data-bg-media\]\) \.cdesign-monogram \{ color: var\(--celebration-text\); \}/);
   });
 
+  it("each link of the section nav is at least 44 x 44 (a short word such as «Inicio» measured 42 wide)", () => {
+    expect(css).toMatch(/\.celebration-nav a \{ min-height: 44px; min-width: 44px;/);
+  });
+
   it("the card sizes its padding inside its width (box-sizing)", () => {
     expect(css).toMatch(/\.celebration-embed \{ box-sizing: border-box;/);
   });

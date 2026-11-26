@@ -78,7 +78,7 @@
 /* Navigation */
 .celebration-nav { display: flex; flex-wrap: wrap; gap: .25rem 1rem; justify-content: center; padding: .75rem var(--celebration-space); border-block: 1px solid color-mix(in srgb, var(--celebration-muted) 30%, transparent); }
 .celebration[data-align="start"] .celebration-nav { justify-content: flex-start; }
-.celebration-nav a { min-height: 44px; display: inline-flex; align-items: center; text-decoration: none; color: var(--celebration-text); }
+.celebration-nav a { min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; color: var(--celebration-text); }
 .celebration-nav a[aria-current="page"] { color: var(--celebration-accent); font-weight: 700; text-decoration: underline; }
 
 /* Sections */
