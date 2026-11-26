@@ -81,7 +81,7 @@ export interface PublishCheck { readonly ready: boolean; readonly missingFields:
  * GET /celebrations/{id}/public-page (A18): whether the public page agrees with the publication
  * decision. Only LIVE means a guest opening the link sees the invitation.
  */
-export type PublicPageState = "LIVE" | "PUBLISHING" | "UNPUBLISHING" | "OFFLINE";
+export type PublicPageState = "LIVE" | "PUBLISHING" | "UNPUBLISHING" | "OFFLINE" | "HIDDEN";
 export interface PublicPageStatus {
   readonly celebrationId: string;
   readonly status: CelebrationStatus;
