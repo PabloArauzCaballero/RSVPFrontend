@@ -116,6 +116,336 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/celebrations/{celebrationId}/list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read the owner’s existing private list
+         * @description Private owner operation. Entity UUIDs are compared semantically and canonicalized; a valid correlation UUID preserves its original echo. Authority is consulted for each operation, before a database transaction. Errors are safe, closed RFC 9457 objects. No public visibility or state transition is enabled. H05B compatibility: this external-only legacy representation excludes only new cataloged-format rows in SQL. Use /list/gift-items for the complete mixed list; previous external DTO/order/legacy remain unchanged.
+         */
+        get: operations["getPrivateGiftList"];
+        put?: never;
+        /**
+         * Create the owner’s unique private gift list
+         * @description Private owner operation. Entity UUIDs are compared semantically and canonicalized; a valid correlation UUID preserves its original echo. Authority is consulted for each operation, before a database transaction. Errors are safe, closed RFC 9457 objects. No public visibility or state transition is enabled.
+         */
+        post: operations["createPrivateGiftList"];
+        delete?: never;
+        options?: never;
+        /**
+         * Check the owner’s private gift list without a response body
+         * @description Same JWT, authoritative ownership, correlation and privacy controls as GET on every request. Success and error responses contain zero body bytes. Reading never creates rows or events. H05B compatibility: this external-only legacy representation excludes only new cataloged-format rows in SQL. Use /list/gift-items for the complete mixed list; previous external DTO/order/legacy remain unchanged.
+         */
+        head: operations["headPrivateGiftList"];
+        patch?: never;
+        trace?: never;
+    };
+    "/celebrations/{celebrationId}/list/cataloged-items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Authorize actual Celebration owner, consult fixed trusted GIFT_PROVIDER_CATALOG_BASE_URL actual public product endpoint before Gift locks, then atomically store immutable commercial snapshot and CATALOGED/AVAILABLE/version0/publication plus GiftItemAdded. No credentials forwarded. Missing/ineligible/nonproduct422; absent config or operational/protocol failure503 and zero Gift effects. Currency must be supported by Gift Money without conversion. */
+        post: operations["addCatalogedGift"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/celebrations/{celebrationId}/list/external-gift-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Closed existing external input, independent wrapper response. Owner authorization -> valid temporal settings -> required partner search -> externalGiftMode decision -> Gift transaction. Provider failure with priority active503 and zero mutations/outbox. RESTRICTED/PROPOSED or AUTO_ACCEPT/AVAILABLE publication semantics unchanged. No client mode/verification/source authority. */
+        post: operations["requestExternalGiftWithOptions"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/celebrations/{celebrationId}/list/external-items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Owner creates an external gift using the current authoritative mode
+         * @description Owner is revalidated through RS256/JWKS and Celebration on every operation. RESTRICTED creates PROPOSED/version0/null publication. AUTO_ACCEPT creates AVAILABLE/version0/server publication and enqueues GiftItemAdded. Missing/inconsistent/future settings are503; partnerPriorityEnabled=true is422 with no writes. The observed snapshot precedes the database transaction; changing modes never approves existing proposals. Aggregate and original canonical event commit atomically; broker availability does not gate the commit. Historical POST /list/items remains restricted-only. H05B partner priority guard: when authoritative partnerPriorityEnabled is true,422 VALIDATION_FAILED without effects; use /list/external-gift-requests which searches partners first. False/absent preserves this prior closed response.
+         */
+        post: operations["createExternalGiftPublication"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/celebrations/{celebrationId}/list/gift-items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Current-state mixed page. CATALOGED first, EXTERNAL second, ascending UUID within each source across pages. Tenant/content/status filters before limit+1. Batch revalidates page catalog eligibility without silently changing commercial snapshot or dropping ineligible rows: reservable:false/redirectPath:null. Provider failure503, never a partial success or permissive fallback. Unknown/duplicate query rejected. */
+        get: operations["readPrivateMixedGiftItems"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        /** @description Current-state mixed page. CATALOGED first, EXTERNAL second, ascending UUID within each source across pages. Tenant/content/status filters before limit+1. Batch revalidates page catalog eligibility without silently changing commercial snapshot or dropping ineligible rows: reservable:false/redirectPath:null. Provider failure503, never a partial success or permissive fallback. Unknown/duplicate query rejected. */
+        head: operations["headReadPrivateMixedGiftItems"];
+        patch?: never;
+        trace?: never;
+    };
+    "/celebrations/{celebrationId}/list/gift-options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Owner-only, no query. Authorize -> valid temporal Celebration settings snapshot -> if partnerPriorityEnabled true search up to10 eligible actual products -> return suggestions before external option. False/absent flag yields empty suggestions without requiring Provider. Invalid present flag fails safe. Never uses giftReservationMode or client flags. Empty proved catalog permits external; no fake viewed-screen ticket or purchase requirement. */
+        get: operations["readGiftOptions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        /** @description Owner-only, no query. Authorize -> valid temporal Celebration settings snapshot -> if partnerPriorityEnabled true search up to10 eligible actual products -> return suggestions before external option. False/absent flag yields empty suggestions without requiring Provider. Invalid present flag fails safe. Never uses giftReservationMode or client flags. Empty proved catalog permits external; no fake viewed-screen ticket or purchase requirement. */
+        head: operations["headReadGiftOptions"];
+        patch?: never;
+        trace?: never;
+    };
+    "/celebrations/{celebrationId}/list/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Propose a restricted external gift privately
+         * @description Private owner operation. Entity UUIDs are compared semantically and canonicalized; a valid correlation UUID preserves its original echo. Authority is consulted for each operation, before a database transaction. Errors are safe, closed RFC 9457 objects. No public visibility or state transition is enabled. H05B partner priority guard: when authoritative partnerPriorityEnabled is true,422 VALIDATION_FAILED without effects; use /list/external-gift-requests which searches partners first. False/absent preserves this prior closed response.
+         */
+        post: operations["proposePrivateExternalGift"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/celebrations/{celebrationId}/list/items/{giftItemId}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Owner approves one PROPOSED external gift with optimistic version
+         * @description Ownership is resolved before the transaction. CAS scopes celebration/list/item/source/status/version; one increment and server publication timestamp plus original ExternalGiftApproved event commit together. Foreign or missing child is404 without disclosing another tenant. Stale version, AVAILABLE or exhausted signed32 version is409; retry adds no effects. Approval does not depend on a later mode change and never changes other proposals.
+         */
+        post: operations["approveExternalGiftPublication"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/celebrations/{celebrationId}/list/reservation-records": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Owner reads identified and erased reservation records
+         * @description Celebration owner authorization is required. Includes both formats without restoring erased identity. ERASED means invitado eliminado; reservation state and quantity remain effective. Tenant/status/afterId filters precede LIMIT+1. HEAD returns headers only and never changes state.
+         */
+        get: operations["listOwnerGiftReservationRecords"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        /**
+         * Owner reads identified and erased reservation records
+         * @description Celebration owner authorization is required. Includes both formats without restoring erased identity. ERASED means invitado eliminado; reservation state and quantity remain effective. Tenant/status/afterId filters precede LIMIT+1. HEAD returns headers only and never changes state.
+         */
+        head: operations["headOwnerGiftReservationRecords"];
+        patch?: never;
+        trace?: never;
+    };
+    "/celebrations/{celebrationId}/list/reservation-records/{reservationId}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Owner confirms an identified or erased pending manual reservation
+         * @description Owner-only, authoritative Celebration and tenant authorization. Exactly expectedItemVersion. Selects identity and persisted format under locks. Identified records retain v1 facts; erased records emit declared privacy v2 facts without former guest identity. Erasure never resolves a reservation automatically. AUTO already committed, resolved rows, stale versions and incompatible modes return409 without mutation. Cataloged confirmation revalidates Provider before locks and increases itemVersion by1.
+         */
+        post: operations["confirmOwnerGiftReservationRecord"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/celebrations/{celebrationId}/list/reservation-records/{reservationId}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Owner rejects an identified or erased pending manual reservation
+         * @description Owner-only, authoritative Celebration and tenant authorization. Exactly expectedItemVersion. Selects identity and persisted format under locks. Identified records retain v1 facts; erased records emit declared privacy v2 facts without former guest identity. Erasure never resolves a reservation automatically. AUTO already committed, resolved rows, stale versions and incompatible modes return409 without mutation. Rejection releases the item atomically with two facts and increases itemVersion by2; it remains available when Provider is unavailable.
+         */
+        post: operations["rejectOwnerGiftReservationRecord"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/celebrations/{celebrationId}/list/reservation-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read complete manual and automatic reservations
+         * @description Authorized on every request. Guest routes use the configured GIFT_GUEST_BASE_URL adapter to revalidate opaque credentials with no positive cache before reading Gift own validated ListCreated root for explicit organizationId and before accessing reservations; without configuration they retain401/503 before DB. Remote401 maps to UNAUTHORIZED,404 to GIFT_RESERVATION_NOT_FOUND;429, timeout, redirect, invalid response and upstream failure map to503 AUTHORITY_UNAVAILABLE. Contradictory/missing root context fails503, an absent list404 and own persistence failures503 PERSISTENCE_UNAVAILABLE. Owner routes retain their existing JWT and ownership checks. Complete format1 manual and format2 automatic rows only; legacy incomplete rows are not fabricated. Tenant and owner/guest filters apply in SQL before pagination. No credentials, database marker or settings/broker provenance is exposed.
+         */
+        get: operations["listOwnerModeAwareGiftReservations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        /**
+         * Read reservation headers without response bytes
+         * @description Authorized on every request. Guest routes use the configured GIFT_GUEST_BASE_URL adapter to revalidate opaque credentials with no positive cache before reading Gift own validated ListCreated root for explicit organizationId and before accessing reservations; without configuration they retain401/503 before DB. Remote401 maps to UNAUTHORIZED,404 to GIFT_RESERVATION_NOT_FOUND;429, timeout, redirect, invalid response and upstream failure map to503 AUTHORITY_UNAVAILABLE. Contradictory/missing root context fails503, an absent list404 and own persistence failures503 PERSISTENCE_UNAVAILABLE. Owner routes retain their existing JWT and ownership checks. Complete format1 manual and format2 automatic rows only; legacy incomplete rows are not fabricated. Tenant and owner/guest filters apply in SQL before pagination. No credentials, database marker or settings/broker provenance is exposed.
+         */
+        head: operations["headOwnerModeAwareGiftReservations"];
+        patch?: never;
+        trace?: never;
+    };
+    "/celebrations/{celebrationId}/list/reservations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Owner reads a paginated reservation tray
+         * @description RS256 and authoritative Celebration owner are revalidated. No HOST/ADMIN/planner bypass. Query is closed and singular: status(optional),limit canonical1..50/default20,afterId exclusiveUUID. Format1/tenant/status/cursor apply in SQL before LIMIT+1, order reservation.id ASC. Resolved historical rows remain readable without reactivation; itemVersion is current.
+         */
+        get: operations["listOwnerGiftReservations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        /**
+         * Status and headers with zero response body, including errors.
+         * @description RS256 and authoritative Celebration owner are revalidated. No HOST/ADMIN/planner bypass. Query is closed and singular: status(optional),limit canonical1..50/default20,afterId exclusiveUUID. Format1/tenant/status/cursor apply in SQL before LIMIT+1, order reservation.id ASC. Resolved historical rows remain readable without reactivation; itemVersion is current.
+         */
+        head: operations["headOwnerGiftReservations"];
+        patch?: never;
+        trace?: never;
+    };
+    "/celebrations/{celebrationId}/list/reservations/{reservationId}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Owner confirms one pending reservation
+         * @description Authorize actual owner before transaction. Consistent lock order item then reservation, tenant/parent/state/version CAS; pending item becomes COMMITTED/version+1 and reservation is resolved with server UTC/owner. One Confirmed fact commits atomically. Other parent/reservation404; stale/nonpending/overflow409 controlled. No client authority or unconditional save. H05B cataloged manual confirmation revalidates current Provider eligibility before locks: ineligible existing409, dependency existing503. No remote network inside Gift locks. No retroactive cancellation; historical bodies/codes unchanged.
+         */
+        post: operations["confirmManualGiftReservation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/celebrations/{celebrationId}/list/reservations/{reservationId}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Owner rejects and atomically releases an item
+         * @description Pure shared policy computes PENDING_REVIEW→REJECTED→AVAILABLE, two logical version increments. One transaction/CAS persists final AVAILABLE/version+2, historical REJECTED reservation with server resolution and two coherent Rejected/Released facts. No intermediate availability window, second ignored CAS or separate commits. publishedAt and prior envelopes remain exact. A new authorized guest can win immediately after commit. Stale/nonpending/insufficient version room409; failure of either outbox insert rolls all effects back. H05B rejection/release of a cataloged pending reservation works even with Provider unavailable/suspended, preserving original publication and +2 item version; no new catalog fields in reservation/result/event.
+         */
+        post: operations["rejectManualGiftReservation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/celebrations/{celebrationId}/my-reservations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The calling guest's own reservations in this celebration (any status), oldest first
+         * @description Guest link credential only: guestId comes from Guest's validation of the credential, never from the request. Lets the guest page show a reservation and offer to cancel it after a reload. Hosts and member JWTs answer 403 GUEST_IDENTITY_REQUIRED.
+         */
+        get: operations["listMyReservations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/celebrations/{celebrationId}/reservations": {
         parameters: {
             query?: never;
@@ -150,6 +480,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/celebrations/{celebrationId}/reservations/{reservationId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel a pending or committed reservation (the guest who made it, or the host); the gift returns to AVAILABLE
+         * @description D-3. With a guest link credential only that guest's own reservation can be cancelled (another guest's answers 404, never revealing it exists); the host can cancel any reservation of the celebration. A member JWT without host access answers 403 GUEST_IDENTITY_REQUIRED. Reservation and item move together with UPDATE ... WHERE version = ?, so a concurrent approve, reject or cancellation loses with 409 RESERVATION_NOT_ACTIVE. Emits gift.reservation.cancelled.v1 with reason GUEST_CANCELLED or HOST_CANCELLED.
+         */
+        post: operations["cancelReservation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/celebrations/{celebrationId}/reservations/{reservationId}/reject": {
         parameters: {
             query?: never;
@@ -164,6 +514,94 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/guest/celebrations/{celebrationId}/items/{giftItemId}/reservation-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Request a reservation using the effective durable mode
+         * @description Authorized on every request. Guest routes use the configured GIFT_GUEST_BASE_URL adapter to revalidate opaque credentials with no positive cache before reading Gift own validated ListCreated root for explicit organizationId and before accessing reservations; without configuration they retain401/503 before DB. Remote401 maps to UNAUTHORIZED,404 to GIFT_RESERVATION_NOT_FOUND;429, timeout, redirect, invalid response and upstream failure map to503 AUTHORITY_UNAVAILABLE. Contradictory/missing root context fails503, an absent list404 and own persistence failures503 PERSISTENCE_UNAVAILABLE. Owner routes retain their existing JWT and ownership checks. Complete format1 manual and format2 automatic rows only; legacy incomplete rows are not fabricated. Tenant and owner/guest filters apply in SQL before pagination. No credentials, database marker or settings/broker provenance is exposed. A single server decisionAt and visible confirmed local settings snapshot determine RESTRICTED/PENDING_REVIEW or AUTO_ACCEPT/COMMITTED. Unknown, conflicting or tenant-incompatible settings fail restrictively. CAS increments the item once, creates one reservation and one Requested or AutoCommitted fact in one transaction; losing requests return409 GiftNotAvailable. Later settings updates never mutate prior reservations. H05B also supports complete CATALOGED items. After existing Guest and own ListCreated tenant authority, revalidate current Provider eligibility before Gift locks; ineligible409 GiftNotAvailable, dependency503 under existing safe Problem/codes with zero effects. CAS then commits locally; no distributed commit, so a later remote suspension may occur in flight. Reservation bodies/formats/events are unchanged.
+         */
+        post: operations["requestModeAwareGiftReservation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/guest/celebrations/{celebrationId}/items/{giftItemId}/reservations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Request a manual reservation as an authorized guest
+         * @description Guest credential is opaque and authorized through a dedicated port on every operation. Without GIFT_GUEST_BASE_URL, main/image retain401 for missing/malformed credentials and503 for a well-formed credential before DB. With the configured real adapter, each request validates the opaque token remotely before reading the own ListCreated root for explicit organizationId and before reservation DB access. Guest401/404 map to the existing uniform401/404;429, timeout, redirect, invalid response and upstream failure map to503 AUTHORITY_UNAVAILABLE; own persistence failures map to503 PERSISTENCE_UNAVAILABLE. Manual RESTRICTED without fabricated settingsVersion/effectiveFrom or use of externalGiftMode. CAS scopes item/celebration/source EXTERNAL/publication/AVAILABLE/version, increments once and atomically writes PENDING_REVIEW reservation and Requested. Foreign/missing item404; unavailable/stale/overflow409 GiftNotAvailable with safe detail to refresh and choose another gift. Pool remains3; requests awaiting pool are not concurrent DB connections. The effective local giftReservationMode is read inside the request transaction. If AUTO_ACCEPT applies, this manual-only operation returns422 VALIDATION_FAILED without writes; use requestModeAwareGiftReservation at reservation-requests. H05B this historical manual route remains external-only: a CATALOGED item returns existing422 without effects. Use mode-aware /reservation-requests.
+         */
+        post: operations["requestManualGiftReservation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/guest/celebrations/{celebrationId}/reservation-requests/{reservationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read complete manual and automatic reservations
+         * @description Authorized on every request. Guest routes use the configured GIFT_GUEST_BASE_URL adapter to revalidate opaque credentials with no positive cache before reading Gift own validated ListCreated root for explicit organizationId and before accessing reservations; without configuration they retain401/503 before DB. Remote401 maps to UNAUTHORIZED,404 to GIFT_RESERVATION_NOT_FOUND;429, timeout, redirect, invalid response and upstream failure map to503 AUTHORITY_UNAVAILABLE. Contradictory/missing root context fails503, an absent list404 and own persistence failures503 PERSISTENCE_UNAVAILABLE. Owner routes retain their existing JWT and ownership checks. Complete format1 manual and format2 automatic rows only; legacy incomplete rows are not fabricated. Tenant and owner/guest filters apply in SQL before pagination. No credentials, database marker or settings/broker provenance is exposed.
+         */
+        get: operations["getGuestModeAwareGiftReservation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        /**
+         * Read reservation headers without response bytes
+         * @description Authorized on every request. Guest routes use the configured GIFT_GUEST_BASE_URL adapter to revalidate opaque credentials with no positive cache before reading Gift own validated ListCreated root for explicit organizationId and before accessing reservations; without configuration they retain401/503 before DB. Remote401 maps to UNAUTHORIZED,404 to GIFT_RESERVATION_NOT_FOUND;429, timeout, redirect, invalid response and upstream failure map to503 AUTHORITY_UNAVAILABLE. Contradictory/missing root context fails503, an absent list404 and own persistence failures503 PERSISTENCE_UNAVAILABLE. Owner routes retain their existing JWT and ownership checks. Complete format1 manual and format2 automatic rows only; legacy incomplete rows are not fabricated. Tenant and owner/guest filters apply in SQL before pagination. No credentials, database marker or settings/broker provenance is exposed.
+         */
+        head: operations["headGuestModeAwareGiftReservation"];
+        patch?: never;
+        trace?: never;
+    };
+    "/guest/celebrations/{celebrationId}/reservations/{reservationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Guest reads only their own complete reservation
+         * @description Reauthorize opaque guest credential each request; SQL scopes tenant and guest ownership before reading reservation format1. Other guest/tenant or legacy incomplete row404. No token is returned or cached. itemVersion is current observed item version, independent of reservation historical status/timestamps.
+         */
+        get: operations["readGuestGiftReservation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        /**
+         * Status and headers with zero response body, including errors.
+         * @description Reauthorize opaque guest credential each request; SQL scopes tenant and guest ownership before reading reservation format1. Other guest/tenant or legacy incomplete row404. No token is returned or cached. itemVersion is current observed item version, independent of reservation historical status/timestamps.
+         */
+        head: operations["headGuestGiftReservation"];
         patch?: never;
         trace?: never;
     };
@@ -183,31 +621,132 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/public/celebrations/{slug}/gift-items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Current-state mixed page. CATALOGED first, EXTERNAL second, ascending UUID within each source across pages. Tenant/content/status filters before limit+1. Batch revalidates page catalog eligibility without silently changing commercial snapshot or dropping ineligible rows: reservable:false/redirectPath:null. Provider failure503, never a partial success or permissive fallback. Unknown/duplicate query rejected. Revalidate published Celebration slug/gifts each call; only locally AVAILABLE/published rows, no Guest identities, credentials or internal endpoints. Fulfillment/disclaimer displayed before contacting; frontend adoption/render remain pending. */
+        get: operations["readPublicMixedGiftItems"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        /** @description Current-state mixed page. CATALOGED first, EXTERNAL second, ascending UUID within each source across pages. Tenant/content/status filters before limit+1. Batch revalidates page catalog eligibility without silently changing commercial snapshot or dropping ineligible rows: reservable:false/redirectPath:null. Provider failure503, never a partial success or permissive fallback. Unknown/duplicate query rejected. Revalidate published Celebration slug/gifts each call; only locally AVAILABLE/published rows, no Guest identities, credentials or internal endpoints. Fulfillment/disclaimer displayed before contacting; frontend adoption/render remain pending. */
+        head: operations["headReadPublicMixedGiftItems"];
+        patch?: never;
+        trace?: never;
+    };
+    "/public/celebrations/{slug}/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List published available external gifts for a published celebration
+         * @description Public without JWT or JWKS even when Authorization is invalid. Existing process business configuration remains required. Every request resolves the authoritative published Celebration through GET /celebrations/public/{slug}; no positive publication cache. Missing/unpublished/gifts-disabled is404, inconsistent dependency/timeout or DB unavailability is503. Includes only EXTERNAL/AVAILABLE with non-null publication and valid complete content, scoped in SQL before LIMIT+1. Legacy incomplete/unpublished rows are excluded without backfill. Price and external URL are intentionally public; no commercial /r links. Query parameters are closed and singular. Current-state pagination is not a distributed snapshot. H05B compatibility: external-only surface excludes new CATALOGED rows; use /public/celebrations/{slug}/gift-items for the complete mixed page. Previous external behavior/schema/order preserved.
+         */
+        get: operations["listPublicExternalGiftPublications"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        /**
+         * Public external gift status and headers without body
+         * @description Public without JWT or JWKS even when Authorization is invalid. Existing process business configuration remains required. Every request resolves the authoritative published Celebration through GET /celebrations/public/{slug}; no positive publication cache. Missing/unpublished/gifts-disabled is404, inconsistent dependency/timeout or DB unavailability is503. Includes only EXTERNAL/AVAILABLE with non-null publication and valid complete content, scoped in SQL before LIMIT+1. Legacy incomplete/unpublished rows are excluded without backfill. Price and external URL are intentionally public; no commercial /r links. Query parameters are closed and singular. Current-state pagination is not a distributed snapshot. H05B compatibility: external-only surface excludes new CATALOGED rows; use /public/celebrations/{slug}/gift-items for the complete mixed page. Previous external behavior/schema/order preserved.
+         */
+        head: operations["headPublicExternalGiftPublications"];
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        AddCatalogedGiftRequest: {
+        ApprovedExternalGiftPublication: components["schemas"]["ExternalGiftPublication"] & {
+            item?: {
+                /** @constant */
+                status?: "AVAILABLE";
+                version?: number;
+            };
+            /**
+             * Format: date-time
+             * @description Server publication instant in UTC; no legacy backfill.
+             */
+            publishedAt?: string;
+        };
+        ApproveExternalGiftInput: {
+            /** @description Exact nonnegative signed32 numeric value. Original JSON lexeme is validated before IEEE-754 rounding; rounded fractions are rejected. Exact integral decimal/exponent spelling remains accepted. */
+            expectedVersion: number;
+        };
+        CanonicalCompatGiftItemPage: {
+            items: (components["schemas"]["DevCompatGiftItem"] | components["schemas"]["CanonicalUnknownCreatedGiftItem"])[];
+            /** @description From celebration.settings.updated.v1; when true, external gifts require acknowledging partner suggestions first */
+            partnerPriorityEnabled: boolean;
+        };
+        CanonicalUnknownCreatedGiftItem: {
+            /** Format: uuid */
+            celebrationId: string;
+            /** @description No creation instant was recorded in the pre-existing canonical row. */
+            createdAt: null;
             description?: string | null;
-            price: components["schemas"]["Money"];
+            /** Format: uri */
+            externalUrl?: string | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            listId: string;
+            price: components["schemas"]["DevCompatMoney"];
+            /** Format: uuid */
+            productListingId?: string | null;
+            /** Format: uuid */
+            providerId?: string | null;
+            /** @description Display name of the active requester; present only when the host allows this viewer (host or other guests) to see it */
+            reservedByName?: string;
+            source: components["schemas"]["DevCompatGiftSource"];
+            status: components["schemas"]["DevCompatGiftItemStatus"];
+            title: string;
+            /** @description Optimistic-lock counter */
+            version: number;
+        };
+        CreatedExternalGiftPublication: components["schemas"]["ExternalGiftPublication"] & {
+            item?: {
+                /** @constant */
+                version?: 0;
+            };
+        };
+        CreatedPrivateGiftList: {
+            /** Format: uuid */
+            celebrationId: string;
+            /** Format: uuid */
+            id: string;
+            itemIds: string[];
+        };
+        DevCompatAddCatalogedGiftRequest: {
+            description?: string | null;
+            price: components["schemas"]["DevCompatMoney"];
             /** Format: uuid */
             productListingId: string;
             /**
              * @description discriminator enum property added by openapi-typescript
              * @enum {string}
              */
-            source: "AddCatalogedGiftRequest";
+            source: "DevCompatAddCatalogedGiftRequest";
             title: string;
         };
-        AddExternalGiftRequest: {
+        DevCompatAddExternalGiftRequest: {
             description?: string | null;
             partnerSuggestionsAcknowledged?: boolean;
-            price: components["schemas"]["Money"];
+            price: components["schemas"]["DevCompatMoney"];
             /**
              * @description discriminator enum property added by openapi-typescript
              * @enum {string}
              */
-            source: "AddExternalGiftRequest";
+            source: "DevCompatAddExternalGiftRequest";
             title: string;
             /**
              * Format: uri
@@ -215,7 +754,7 @@ export interface components {
              */
             url: string;
         };
-        GiftItem: {
+        DevCompatGiftItem: {
             /** Format: uuid */
             celebrationId: string;
             /** Format: date-time */
@@ -227,27 +766,27 @@ export interface components {
             id: string;
             /** Format: uuid */
             listId: string;
-            price: components["schemas"]["Money"];
+            price: components["schemas"]["DevCompatMoney"];
             /** Format: uuid */
             productListingId?: string | null;
             /** Format: uuid */
             providerId?: string | null;
             /** @description Display name of the active requester; present only when the host allows this viewer (host or other guests) to see it */
             reservedByName?: string;
-            source: components["schemas"]["GiftSource"];
-            status: components["schemas"]["GiftItemStatus"];
+            source: components["schemas"]["DevCompatGiftSource"];
+            status: components["schemas"]["DevCompatGiftItemStatus"];
             title: string;
             /** @description Optimistic-lock counter */
             version: number;
         };
-        GiftItemList: {
-            items: components["schemas"]["GiftItem"][];
+        DevCompatGiftItemList: {
+            items: components["schemas"]["DevCompatGiftItem"][];
             /** @description From celebration.settings.updated.v1; when true, external gifts require acknowledging partner suggestions first */
             partnerPriorityEnabled: boolean;
         };
         /** @enum {string} */
-        GiftItemStatus: "AVAILABLE" | "PROPOSED" | "PENDING_REVIEW" | "COMMITTED" | "REJECTED";
-        GiftList: {
+        DevCompatGiftItemStatus: "AVAILABLE" | "PROPOSED" | "PENDING_REVIEW" | "COMMITTED" | "REJECTED";
+        DevCompatGiftList: {
             /** Format: uuid */
             celebrationId: string;
             /** Format: date-time */
@@ -255,7 +794,7 @@ export interface components {
             /** Format: uuid */
             id: string;
         };
-        GiftReservation: {
+        DevCompatGiftReservation: {
             /** Format: uuid */
             celebrationId: string;
             guestDisplayName?: string | null;
@@ -276,9 +815,9 @@ export interface components {
             /** Format: date-time */
             resolvedAt?: string | null;
             resolvedBy?: string | null;
-            status: components["schemas"]["ReservationStatus"];
+            status: components["schemas"]["DevCompatReservationStatus"];
         };
-        GiftSettings: {
+        DevCompatGiftSettings: {
             /** @description default false */
             showRequesterToGuests: boolean;
             /** @description default true */
@@ -287,8 +826,8 @@ export interface components {
             version: number;
         };
         /** @enum {string} */
-        GiftSource: "CATALOGED" | "EXTERNAL";
-        Money: {
+        DevCompatGiftSource: "CATALOGED" | "EXTERNAL";
+        DevCompatMoney: {
             /** @description Integer minor units; never a float */
             amountMinor: number;
             /**
@@ -297,50 +836,693 @@ export interface components {
              */
             currency: string;
         };
-        PartnerSuggestion: {
+        DevCompatPartnerSuggestion: {
             /** Format: uuid */
             productListingId: string;
             title: string;
         };
-        Problem: {
+        DevCompatProblem: {
             /** @description Stable machine code, for example GIFT_NOT_AVAILABLE, HOST_REQUIRED, GIFT_LIST_EXISTS, INVALID_GIFT_TRANSITION, CATALOG_PRODUCT_UNAVAILABLE, INVALID_EXTERNAL_URL, INVALID_MONEY, PARTNER_CATALOG_FIRST, RESERVATION_NOT_PENDING */
             code?: string;
             correlationId?: string;
             detail?: string;
             status: number;
             /** @description Only on 409 PARTNER_CATALOG_FIRST */
-            suggestions?: components["schemas"]["PartnerSuggestion"][];
+            suggestions?: components["schemas"]["DevCompatPartnerSuggestion"][];
             title: string;
             type: string;
         } & {
             [key: string]: unknown;
         };
-        ReservationList: {
-            items: components["schemas"]["GiftReservation"][];
+        DevCompatReservationList: {
+            items: components["schemas"]["DevCompatGiftReservation"][];
         };
         /** @enum {string} */
-        ReservationStatus: "PENDING_REVIEW" | "COMMITTED" | "REJECTED";
-        ReserveGiftRequest: {
+        DevCompatReservationStatus: "PENDING_REVIEW" | "COMMITTED" | "REJECTED";
+        DevCompatReserveGiftRequest: {
             guestDisplayName?: string | null;
             message?: string | null;
         };
-        UpdateGiftSettingsRequest: {
+        DevCompatUpdateGiftSettingsRequest: {
             showRequesterToGuests: boolean;
             showRequesterToHost: boolean;
+        };
+        ExternalGiftPublication: {
+            item: components["schemas"]["PrivateGiftItem"];
+            publishedAt: string | null;
+        } & ({
+            item?: {
+                /** @constant */
+                status?: "PROPOSED";
+            };
+            publishedAt?: null;
+        } | {
+            item?: {
+                /** @constant */
+                status?: "AVAILABLE";
+            };
+            /**
+             * Format: date-time
+             * @description Server publication instant in UTC; no legacy backfill.
+             */
+            publishedAt?: string;
+        });
+        GiftCatalogedItem: {
+            catalog: components["schemas"]["GiftCatalogSnapshot"];
+            external: null;
+            /** Format: uuid */
+            id: string;
+            price: components["schemas"]["PrivateMoney"];
+            /** Format: date-time */
+            publishedAt: string;
+            reservable: boolean;
+            /** @constant */
+            source: "CATALOGED";
+            /** @enum {string} */
+            status: "AVAILABLE" | "PENDING_REVIEW" | "COMMITTED" | "REJECTED";
+            title: string;
+            version: number;
+        } & unknown;
+        /** @description Only the product ID is accepted. All commercial content/provider/versions/verification/status/publication come from the current actual public Provider product API, never the client. */
+        GiftCatalogedItemInput: {
+            /** Format: uuid */
+            productListingId: string;
+        };
+        GiftCatalogFulfillment: {
+            conditions: {
+                /** @description Plain text, trim/NFC normalized, Unicode code-point limit; markup/angle brackets and unsafe controls rejected. No HTML rendering. */
+                "en-US"?: string;
+                /** @description Plain text, trim/NFC normalized, Unicode code-point limit; markup/angle brackets and unsafe controls rejected. No HTML rendering. */
+                "es-BO": string;
+            };
+            /** @description Explicit cities served; never inferred from physical cityId. */
+            coverageCityIds: string[];
+            /** @description Server-controlled operational text version1; human text review remains pending. No legal approval or delivery state is claimed. */
+            disclaimer: {
+                /** @constant */
+                code: "PLATFORM_CONTACT_ONLY";
+                translations: {
+                    /** @constant */
+                    "en-US": "The platform facilitates contact. Transport and delivery are the responsibility of the declared responsible party.";
+                    /** @constant */
+                    "es-BO": "La plataforma facilita el contacto. El traslado y la entrega corresponden al responsable declarado.";
+                };
+                /** @constant */
+                version: 1;
+            };
+            leadTimeDays: number;
+            /** @enum {string} */
+            responsible: "PROVIDER" | "CUSTOMER";
+            transportCost: {
+                currency: string;
+                minor: number;
+            };
+        };
+        /** @description Independent six-field safe Problem for new H05B routes; catalog unavailable422/CATALOG_PRODUCT_UNAVAILABLE, operational dependency503/CATALOG_DEPENDENCY_UNAVAILABLE. Existing route error schemas/codes remain unchanged. */
+        GiftCatalogProblem: {
+            code: string;
+            /** Format: uuid */
+            correlationId: string;
+            /** @description Static safe actionable detail, never raw request/IDs/credentials/SQL/upstream messages. This new problem shape is used only on the new reservation routes. */
+            detail: string;
+            status: number;
+            title: string;
+            /** @constant */
+            type: "about:blank";
+        };
+        /** @description Commercial/provenance snapshot captured at creation. Money is the enclosing item price. No later read silently refreshes price, text, stockHint or fulfillment. They do not promise current shop price, stock, inventory hold, platform logistics or payment. */
+        GiftCatalogSnapshot: {
+            /** @enum {string} */
+            categoryCode: "VENUE" | "CATERING" | "PHOTOGRAPHY" | "MUSIC" | "DECORATION" | "MAKEUP" | "TRANSPORT" | "INVITATIONS" | "WEDDING_PLANNER" | "ACCOMMODATION" | "HONEYMOON";
+            cityId: string;
+            fulfillment: components["schemas"]["GiftCatalogFulfillment"];
+            /** Format: uuid */
+            productListingId: string;
+            /** Format: date-time */
+            productPublishedAt: string;
+            productVersion: number;
+            /** Format: uuid */
+            providerId: string;
+            providerVersion: number;
+            providerVersionAtPublication: number;
+            /**
+             * Format: uri
+             * @description Derived current eligibility link on the configured trusted Provider origin, /r/{exact product ID}?destination=PRODUCT_PAGE. Never partner destination/token. Null for ineligible products; commercial fields remain immutable Gift snapshots.
+             */
+            redirectPath: string | null;
+            sku: string;
+            /** Format: date-time */
+            snapshotAt: string;
+            /**
+             * @description An indication only, without inventory reservation, purchase or payment. UNAVAILABLE prevents eligibility; UNKNOWN remains eligible without asserting real stock.
+             * @enum {string}
+             */
+            stockHint: "AVAILABLE" | "UNAVAILABLE" | "UNKNOWN";
+            translations: components["schemas"]["GiftCatalogTranslations"];
+        };
+        /** @description Only complete published PRODUCT with currently VERIFIED provider and stockHint other than UNAVAILABLE. Provider version is current at observation; providerVersionAtPublication and publication snapshot remain factual. No owner or contact destination. PLATFORM_CONTACT_ONLY fulfillment must be displayed before contacting; frontend adoption remains pending. */
+        GiftCatalogSuggestion: {
+            /** @enum {string} */
+            categoryCode: "VENUE" | "CATERING" | "PHOTOGRAPHY" | "MUSIC" | "DECORATION" | "MAKEUP" | "TRANSPORT" | "INVITATIONS" | "WEDDING_PLANNER" | "ACCOMMODATION" | "HONEYMOON";
+            /** @description GeoNames ID as text. Physical cityId is distinct from fulfillment.coverageCityIds (cities served). */
+            cityId: string;
+            fulfillment: components["schemas"]["GiftCatalogFulfillment"];
+            /** Format: uuid */
+            id: string;
+            price: {
+                currency: string;
+                minor: number;
+            };
+            /** Format: uuid */
+            providerId: string;
+            providerVersion: number;
+            providerVersionAtPublication: number;
+            /** Format: date-time */
+            publishedAt: string;
+            /**
+             * Format: uri
+             * @description Absolute trusted Provider-origin redirect link; never direct partner/contact destination or token.
+             */
+            redirectPath: string;
+            sku: string;
+            /**
+             * @description An indication only, without inventory reservation, purchase or payment. UNAVAILABLE prevents eligibility; UNKNOWN remains eligible without asserting real stock.
+             * @enum {string}
+             */
+            stockHint: "AVAILABLE" | "UNAVAILABLE" | "UNKNOWN";
+            translations: components["schemas"]["GiftCatalogTranslations"];
+            /** @constant */
+            type: "PRODUCT";
+            version: number;
+        };
+        GiftCatalogTranslations: {
+            "en-US"?: {
+                /** @description Plain text, trim/NFC normalized, Unicode code-point limit; markup/angle brackets and unsafe controls rejected. No HTML rendering. */
+                description: string;
+                /** @description Plain text, trim/NFC normalized, Unicode code-point limit; markup/angle brackets and unsafe controls rejected. No HTML rendering. */
+                title: string;
+            };
+            "es-BO": {
+                /** @description Plain text, trim/NFC normalized, Unicode code-point limit; markup/angle brackets and unsafe controls rejected. No HTML rendering. */
+                description: string;
+                /** @description Plain text, trim/NFC normalized, Unicode code-point limit; markup/angle brackets and unsafe controls rejected. No HTML rendering. */
+                title: string;
+            };
+        };
+        GiftExternalRequestResult: {
+            publication: components["schemas"]["CreatedExternalGiftPublication"];
+            suggestions: components["schemas"]["GiftCatalogSuggestion"][];
+        };
+        GiftLegacyCatalogedItem: {
+            catalog: null;
+            external: null;
+            /** Format: uuid */
+            id: string;
+            legacyCatalog: components["schemas"]["LegacyCatalogReference"];
+            price: components["schemas"]["PrivateMoney"];
+            /** Format: date-time */
+            publishedAt: string | null;
+            reservable: boolean;
+            /** @constant */
+            source: "CATALOGED";
+            /** @enum {string} */
+            status: "AVAILABLE" | "PENDING_REVIEW" | "COMMITTED" | "REJECTED";
+            title: string;
+            version: number;
+        };
+        GiftMixedExternalItem: {
+            catalog: null;
+            external: components["schemas"]["PrivateExternalReference"];
+            /** Format: uuid */
+            id: string;
+            price: components["schemas"]["PrivateMoney"];
+            /** Format: date-time */
+            publishedAt: string | null;
+            reservable: boolean;
+            /** @constant */
+            source: "EXTERNAL";
+            /** @enum {string} */
+            status: "AVAILABLE" | "PROPOSED" | "PENDING_REVIEW" | "COMMITTED" | "REJECTED";
+            title: string;
+            version: number;
+        };
+        GiftOptions: {
+            externalOption: {
+                /** @constant */
+                mode: "RESTRICTED";
+                /** @constant */
+                requiresApproval: true;
+            } | {
+                /** @constant */
+                mode: "AUTO_ACCEPT";
+                /** @constant */
+                requiresApproval: false;
+            };
+            partnerPriorityEnabled: boolean;
+            suggestions: components["schemas"]["GiftCatalogSuggestion"][];
+        } & unknown;
+        GiftPrivateMixedPage: {
+            /** Format: uuid */
+            celebrationId: string;
+            items: components["schemas"]["MixedGiftItem"][];
+            /** Format: uuid */
+            listId: string;
+            nextCursor: string | null;
+        };
+        GiftPublicMixedPage: {
+            /** Format: uuid */
+            celebrationId: string;
+            items: (components["schemas"]["MixedGiftItem"] & {
+                /** Format: date-time */
+                publishedAt?: string;
+                /** @constant */
+                status?: "AVAILABLE";
+            })[];
+            nextCursor: string | null;
+        };
+        LegacyCatalogReference: {
+            /** Format: uuid */
+            productListingId: string;
+            /** @constant */
+            profile: "LEGACY_REFERENCE";
+            /** Format: uuid */
+            providerId: string;
+        };
+        /** @description A reservation cancelled by hand (since 1.10.0): the gift went back to AVAILABLE in the same transaction. */
+        ManuallyCancelledGiftReservation: {
+            /**
+             * @description GUEST_CANCELLED: the guest withdrew it with their invitation link. HOST_CANCELLED: the host released it (D-3).
+             * @enum {string}
+             */
+            cancellationReason: "GUEST_CANCELLED" | "HOST_CANCELLED";
+            /** Format: date-time */
+            cancelledAt: string;
+            /** @enum {string} */
+            cancelledFromStatus: "PENDING_REVIEW" | "COMMITTED";
+            /** Format: uuid */
+            celebrationId: string;
+            guestDisplayName?: string | null;
+            /**
+             * Format: uuid
+             * @description Null after guest erasure
+             */
+            guestId?: string | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            itemId: string;
+            message?: string | null;
+            /** Format: date-time */
+            requestedAt: string;
+            /** @description true when the host chose not to see who asked: guestId, guestDisplayName and message are null */
+            requesterHidden?: boolean;
+            /** Format: date-time */
+            resolvedAt?: string | null;
+            resolvedBy?: string | null;
+            /** @constant */
+            status: "CANCELLED";
+        };
+        ManualReservationInput: {
+            /** @description Exact nonnegative signed32 original JSON number lexeme; rounded fractions, duplicate/extra fields and overflow are rejected. Integer-equivalent decimal/exponent notation remains accepted. */
+            expectedItemVersion: number;
+        };
+        /** @description Closed source-discriminated item without reservation identities or private contact destinations. CATALOGED precedes EXTERNAL, then ascending UUID within source. AVAILABLE is local reservation state; catalog reservability also requires current Provider eligibility. */
+        MixedGiftItem: components["schemas"]["GiftCatalogedItem"] | components["schemas"]["GiftMixedExternalItem"] | components["schemas"]["GiftLegacyCatalogedItem"];
+        /** @description Tenant/status/afterId filters before LIMIT+1; ascending reservation UUID, current item version per wrapper. Resolved rows remain historical and do not reactivate. */
+        ModeAwareReservationPage: {
+            items: components["schemas"]["ModeAwareReservationResult"][];
+            nextCursor: string | null;
+        };
+        ModeAwareReservationResult: {
+            /** @description Current observed item version, not historical reservation version. Later reservation cycles can advance this number while resolved reservation history remains unchanged. */
+            itemVersion: number;
+            reservation: components["schemas"]["ModeAwareReservationView"];
+        };
+        /** @description Independent complete manual/automatic view. AUTOMATIC has resolvedAt exactly equal to requestedAt and a null owner resolver; PENDING has null resolution; MANUAL has an owner UUID. Only these ten public fields are exposed. Settings provenance remains server-side. UNKNOWN preserves recognized legacy decisions without attributing a mode or resolution that was never recorded. */
+        ModeAwareReservationView: ({
+            /** @constant */
+            cancellationReason?: "RSVP_DECLINED";
+            /** Format: date-time */
+            cancelledAt?: string;
+            /** @enum {string} */
+            cancelledFromStatus?: "PENDING_REVIEW" | "COMMITTED";
+            /** Format: uuid */
+            celebrationId: string;
+            /** Format: uuid */
+            giftItemId: string;
+            /** Format: uuid */
+            guestId: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            requestedAt: string;
+            /** @enum {unknown} */
+            reservationMode: "RESTRICTED" | "AUTO_ACCEPT" | "UNKNOWN";
+            /** @enum {unknown} */
+            resolutionType: "PENDING" | "MANUAL" | "AUTOMATIC" | "UNKNOWN";
+            resolvedAt: string | null;
+            resolvedByUserId: string | null;
+            /** @enum {unknown} */
+            status: "PENDING_REVIEW" | "COMMITTED" | "REJECTED" | "CANCELLED";
+        } & unknown) & ({
+            /** @constant */
+            reservationMode?: "RESTRICTED";
+            /** @constant */
+            resolutionType?: "PENDING";
+            resolvedAt?: null;
+            resolvedByUserId?: null;
+            /** @constant */
+            status?: "PENDING_REVIEW";
+        } | {
+            /** @constant */
+            reservationMode?: "RESTRICTED";
+            /** @constant */
+            resolutionType?: "MANUAL";
+            /** Format: date-time */
+            resolvedAt?: string;
+            /** Format: uuid */
+            resolvedByUserId?: string;
+            /** @enum {unknown} */
+            status?: "COMMITTED" | "REJECTED";
+        } | {
+            /** @constant */
+            reservationMode?: "AUTO_ACCEPT";
+            /** @constant */
+            resolutionType?: "AUTOMATIC";
+            /** Format: date-time */
+            resolvedAt?: string;
+            resolvedByUserId?: null;
+            /** @constant */
+            status?: "COMMITTED";
+        });
+        /** @description Tenant/status/afterId filters before LIMIT+1; ascending reservation UUID, current item version per wrapper. Resolved rows remain historical and do not reactivate. */
+        OwnerReservationPage: {
+            items: components["schemas"]["ReservationResult"][];
+            nextCursor: string | null;
+        };
+        /** @description One page of CanonicalCompatGiftItemPage (since 1.12.0). */
+        PagedGiftItemPage: components["schemas"]["CanonicalCompatGiftItemPage"] & {
+            /** @description Pass it as cursor to get the next page; null on the last page. */
+            nextCursor: string | null;
+        };
+        /** @description One page of RsvpAwareReservationList (since 1.12.0). */
+        PagedReservationList: components["schemas"]["RsvpAwareReservationList"] & {
+            /** @description Pass it as cursor to get the next page; null on the last page. */
+            nextCursor: string | null;
+        };
+        PrivateCreateGiftListInput: Record<string, never>;
+        PrivateExternalGiftInput: {
+            external: components["schemas"]["PrivateExternalReference"];
+            price: components["schemas"]["PrivateMoney"];
+            /** @constant */
+            source: "EXTERNAL";
+            /** @description Normative producer validation: ECMAScript trim(), then require 1–200 Unicode code points. The original untrimmed string has no raw 200-character bound; the HTTP body remains bounded to 65536 bytes. */
+            title: string;
+        };
+        PrivateExternalReference: {
+            /** @description Original string, at most 2048 Unicode code points. Must be accepted by the WHATWG URL constructor with http: or https: protocol and no username/password. Unicode and whitespace retain the existing WHATWG policy. No resource is downloaded; format:uri is intentionally absent. */
+            url: string;
+        };
+        PrivateGiftItem: {
+            external: components["schemas"]["PrivateExternalReference"];
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            listId: string;
+            price: components["schemas"]["PrivateMoney"];
+            /** @constant */
+            source: "EXTERNAL";
+            /** @enum {string} */
+            status: "AVAILABLE" | "PROPOSED" | "PENDING_REVIEW" | "COMMITTED" | "REJECTED";
+            title: string;
+            version: number;
+        };
+        PrivateGiftList: {
+            /** Format: uuid */
+            celebrationId: string;
+            /** @description Private items ordered ascending by ID; does not expose proposals through the public endpoint. */
+            items: (components["schemas"]["PrivateGiftItem"] | components["schemas"]["PrivateLegacyCatalogGiftItem"])[];
+            /** Format: uuid */
+            listId: string;
+        };
+        PrivateLegacyCatalogGiftItem: {
+            catalog: {
+                /** Format: uuid */
+                productListingId: string;
+                /** @constant */
+                profile: "LEGACY_REFERENCE";
+                /** Format: uuid */
+                providerId: string;
+                /** @description Historical verification was not recorded. Current eligibility is checked separately. */
+                providerVerified: null;
+            };
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            listId: string;
+            price: components["schemas"]["PrivateMoney"];
+            /** @constant */
+            source: "CATALOGED";
+            /** @enum {string} */
+            status: "AVAILABLE" | "PROPOSED" | "PENDING_REVIEW" | "COMMITTED" | "REJECTED";
+            title: string;
+            version: number;
+        };
+        PrivateMoney: {
+            /** @description Three uppercase ASCII letters; BOB and USD supported without currency conversion. This is not complete ISO currency membership validation. */
+            currency: string;
+            /** @description Exact JSON numeric value in minor units; the producer validates the original numeric lexeme before IEEE-754 rounding. Integer-equivalent exponent or decimal notation is accepted. */
+            minor: number;
+        };
+        PrivateProblem: {
+            code: string;
+            /** Format: uuid */
+            correlationId: string;
+            status: number;
+            title: string;
+            /** @constant */
+            type: "about:blank";
+        };
+        Problem: {
+            status: number;
+            title: string;
+            type: string;
+        };
+        ProposedPrivateExternalGift: {
+            external: components["schemas"]["PrivateExternalReference"];
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            listId: string;
+            price: components["schemas"]["PrivateMoney"];
+            /** @constant */
+            source: "EXTERNAL";
+            /** @constant */
+            status: "PROPOSED";
+            title: string;
+            /** @constant */
+            version: 0;
+        };
+        /** @description Deliberately public external title, exact price and external URL only after explicit approval or AUTO_ACCEPT. No list/owner/guest/reservation/settings/outbox/configuration or commercial Provider link. */
+        PublicExternalGiftItem: {
+            external: components["schemas"]["PrivateExternalReference"];
+            /** Format: uuid */
+            id: string;
+            price: components["schemas"]["PrivateMoney"];
+            /**
+             * Format: date-time
+             * @description Server publication instant in UTC; no legacy backfill.
+             */
+            publishedAt: string;
+            /** @constant */
+            source: "EXTERNAL";
+            /** @constant */
+            status: "AVAILABLE";
+            title: string;
+            version: number;
+        };
+        /** @description Current eligible state in ascending PostgreSQL UUID order. Exclusive afterId; nextCursor is last returned UUID only when another eligible row exists. No list or item is created by reading. */
+        PublicExternalGiftPage: {
+            /** Format: uuid */
+            celebrationId: string;
+            items: components["schemas"]["PublicExternalGiftItem"][];
+            nextCursor: string | null;
+        };
+        ReservationProblem: {
+            code: string;
+            /** Format: uuid */
+            correlationId: string;
+            /** @description Static safe actionable detail, never raw request/IDs/credentials/SQL/upstream messages. This new problem shape is used only on the new reservation routes. */
+            detail: string;
+            status: number;
+            title: string;
+            /** @constant */
+            type: "about:blank";
+        };
+        /** @description Owner-only records of both persisted formats, identified and erased. Tenant/status/afterId filters run before LIMIT+1; ascending reservation UUID. Legacy trays omit erased records before pagination. No erasure metadata or former guest UUID is exposed. */
+        ReservationRecordPage: {
+            items: components["schemas"]["ReservationRecordResult"][];
+            nextCursor: string | null;
+        };
+        ReservationRecordResult: {
+            /** @description Current observed item version, not historical reservation version. Later reservation cycles can advance this number while resolved reservation history remains unchanged. */
+            itemVersion: number;
+            reservation: components["schemas"]["ReservationRecordView"];
+        };
+        /** @description Owner-only record including identified and erased guests. ERASED is displayed as invitado eliminado, with guestId null; identity state does not change reservation status, quantity or resolution. Exactly eleven fields; no erasure IDs, tombstones, hashes or former identity. Automatic resolution retains a null owner resolver and resolvedAt equal to requestedAt. Manual pending records remain pending when settings change. UNKNOWN preserves recognized legacy decisions without attributing a mode or resolution that was never recorded. */
+        ReservationRecordView: ({
+            /** @constant */
+            cancellationReason?: "RSVP_DECLINED";
+            /** Format: date-time */
+            cancelledAt?: string;
+            /** @enum {string} */
+            cancelledFromStatus?: "PENDING_REVIEW" | "COMMITTED";
+            /** Format: uuid */
+            celebrationId: string;
+            /** Format: uuid */
+            giftItemId: string;
+            guestId: string | null;
+            /** @enum {unknown} */
+            guestIdentityState: "IDENTIFIED" | "ERASED";
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            requestedAt: string;
+            /** @enum {unknown} */
+            reservationMode: "RESTRICTED" | "AUTO_ACCEPT" | "UNKNOWN";
+            /** @enum {unknown} */
+            resolutionType: "PENDING" | "MANUAL" | "AUTOMATIC" | "UNKNOWN";
+            resolvedAt: string | null;
+            resolvedByUserId: string | null;
+            /** @enum {unknown} */
+            status: "PENDING_REVIEW" | "COMMITTED" | "REJECTED" | "CANCELLED";
+        } & (({
+            /** Format: uuid */
+            guestId?: string;
+            /** @constant */
+            guestIdentityState?: "IDENTIFIED";
+        } | {
+            guestId?: null;
+            /** @constant */
+            guestIdentityState?: "ERASED";
+        }) & unknown)) & ({
+            /** @constant */
+            reservationMode?: "RESTRICTED";
+            /** @constant */
+            resolutionType?: "PENDING";
+            resolvedAt?: null;
+            resolvedByUserId?: null;
+            /** @constant */
+            status?: "PENDING_REVIEW";
+        } | {
+            /** @constant */
+            reservationMode?: "RESTRICTED";
+            /** @constant */
+            resolutionType?: "MANUAL";
+            /** Format: date-time */
+            resolvedAt?: string;
+            /** Format: uuid */
+            resolvedByUserId?: string;
+            /** @enum {unknown} */
+            status?: "COMMITTED" | "REJECTED";
+        } | {
+            /** @constant */
+            reservationMode?: "AUTO_ACCEPT";
+            /** @constant */
+            resolutionType?: "AUTOMATIC";
+            /** Format: date-time */
+            resolvedAt?: string;
+            resolvedByUserId?: null;
+            /** @constant */
+            status?: "COMMITTED";
+        });
+        ReservationResult: {
+            /** @description Current observed item version, not historical reservation version. Later reservation cycles can advance this number while resolved reservation history remains unchanged. */
+            itemVersion: number;
+            reservation: components["schemas"]["ReservationView"];
+        };
+        /** @description Only complete reservationSchemaVersion1 rows. requestedAt maps to created_at written by the server. Status/time/resolver are reservation history; no names/messages/credentials. */
+        ReservationView: ({
+            /** @constant */
+            cancellationReason?: "RSVP_DECLINED";
+            /** Format: date-time */
+            cancelledAt?: string;
+            /** @enum {string} */
+            cancelledFromStatus?: "PENDING_REVIEW" | "COMMITTED";
+            /** Format: uuid */
+            celebrationId: string;
+            /** Format: uuid */
+            giftItemId: string;
+            /** Format: uuid */
+            guestId: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            requestedAt: string;
+            resolvedAt: string | null;
+            resolvedByUserId: string | null;
+            /** @enum {unknown} */
+            status: "PENDING_REVIEW" | "COMMITTED" | "REJECTED" | "CANCELLED";
+        } & unknown) & ({
+            resolvedAt?: null;
+            resolvedByUserId?: null;
+            /** @constant */
+            status?: "PENDING_REVIEW";
+        } | {
+            /** Format: date-time */
+            resolvedAt?: string;
+            /** Format: uuid */
+            resolvedByUserId?: string;
+            /** @enum {unknown} */
+            status?: "COMMITTED" | "REJECTED";
+        });
+        RsvpAwareGiftReservation: components["schemas"]["DevCompatGiftReservation"] | components["schemas"]["RsvpCancelledGiftReservation"] | components["schemas"]["ManuallyCancelledGiftReservation"];
+        RsvpAwareReservationList: {
+            items: components["schemas"]["RsvpAwareGiftReservation"][];
+        };
+        RsvpCancelledGiftReservation: {
+            /** @constant */
+            cancellationReason: "RSVP_DECLINED";
+            /** Format: date-time */
+            cancelledAt: string;
+            /** @enum {string} */
+            cancelledFromStatus: "PENDING_REVIEW" | "COMMITTED";
+            /** Format: uuid */
+            celebrationId: string;
+            guestDisplayName?: string | null;
+            /**
+             * Format: uuid
+             * @description Null after guest erasure
+             */
+            guestId?: string | null;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            itemId: string;
+            message?: string | null;
+            /** Format: date-time */
+            requestedAt: string;
+            /** @description true when the host chose not to see who asked: guestId, guestDisplayName and message are null */
+            requesterHidden?: boolean;
+            /** Format: date-time */
+            resolvedAt?: string | null;
+            resolvedBy?: string | null;
+            /** @constant */
+            status: "CANCELLED";
         };
     };
     responses: {
         /** @description Celebration or Provider Catalog is unavailable (fail closed) */
-        DependencyUnavailable: {
+        DevCompatDependencyUnavailable: {
             headers: {
                 [name: string]: unknown;
             };
             content: {
-                "application/problem+json": components["schemas"]["Problem"];
+                "application/problem+json": components["schemas"]["DevCompatProblem"];
             };
         };
         /** @description Host role required (HOST_REQUIRED) or the guest identity was erased (GUEST_ERASED) */
-        Forbidden: {
+        DevCompatForbidden: {
             headers: {
                 [name: string]: unknown;
             };
@@ -351,20 +1533,20 @@ export interface components {
                  *       "status": 403,
                  *       "code": "HOST_REQUIRED"
                  *     } */
-                "application/problem+json": components["schemas"]["Problem"];
+                "application/problem+json": components["schemas"]["DevCompatProblem"];
             };
         };
         /** @description Forbidden transition (INVALID_GIFT_TRANSITION) or concurrent change (GIFT_NOT_AVAILABLE) */
-        GiftConflict: {
+        DevCompatGiftConflict: {
             headers: {
                 [name: string]: unknown;
             };
             content: {
-                "application/problem+json": components["schemas"]["Problem"];
+                "application/problem+json": components["schemas"]["DevCompatProblem"];
             };
         };
         /** @description The gift is no longer available */
-        GiftNotAvailable: {
+        DevCompatGiftNotAvailable: {
             headers: {
                 [name: string]: unknown;
             };
@@ -376,30 +1558,30 @@ export interface components {
                  *       "code": "GIFT_NOT_AVAILABLE",
                  *       "suggestion": "LIST_ALTERNATIVES"
                  *     } */
-                "application/problem+json": components["schemas"]["Problem"];
+                "application/problem+json": components["schemas"]["DevCompatProblem"];
             };
         };
         /** @description Unknown resource, or one that belongs to another celebration (existence is never disclosed) */
-        NotFound: {
+        DevCompatNotFound: {
             headers: {
                 [name: string]: unknown;
             };
             content: {
-                "application/problem+json": components["schemas"]["Problem"];
+                "application/problem+json": components["schemas"]["DevCompatProblem"];
             };
         };
         /** @description Too many requests (the Guest service throttles credential checks); retry after the indicated seconds */
-        RateLimited: {
+        DevCompatRateLimited: {
             headers: {
                 "Retry-After"?: number;
                 [name: string]: unknown;
             };
             content: {
-                "application/problem+json": components["schemas"]["Problem"];
+                "application/problem+json": components["schemas"]["DevCompatProblem"];
             };
         };
         /** @description Missing, malformed, expired or non-RS256 token */
-        Unauthorized: {
+        DevCompatUnauthorized: {
             headers: {
                 [name: string]: unknown;
             };
@@ -410,23 +1592,68 @@ export interface components {
                  *       "status": 401,
                  *       "code": "UNAUTHORIZED"
                  *     } */
-                "application/problem+json": components["schemas"]["Problem"];
+                "application/problem+json": components["schemas"]["DevCompatProblem"];
             };
         };
         /** @description Invalid request (INVALID_MONEY, INVALID_EXTERNAL_URL, CATALOG_PRODUCT_UNAVAILABLE, VALIDATION_FAILED, INVALID_TITLE) */
-        Validation: {
+        DevCompatValidation: {
             headers: {
                 [name: string]: unknown;
             };
             content: {
-                "application/problem+json": components["schemas"]["Problem"];
+                "application/problem+json": components["schemas"]["DevCompatProblem"];
             };
+        };
+        /** @description Host role required */
+        Forbidden: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content?: never;
+        };
+        /** @description Gift unavailable */
+        GiftNotAvailable: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content?: never;
+        };
+        /** @description Not found */
+        NotFound: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content?: never;
+        };
+        /** @description Invalid request */
+        Validation: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content?: never;
         };
     };
     parameters: {
         CelebrationId: string;
+        DevCompatCelebrationId: string;
         /** @description Echoed in the response header and in problem.correlationId; generated when absent. */
-        CorrelationId: string;
+        DevCompatCorrelationId: string;
+        /** @description Single optional status filter; unknown, duplicate, empty or invalid parameters return422. */
+        OwnerReservationStatus: "PENDING_REVIEW" | "COMMITTED" | "REJECTED" | "CANCELLED";
+        /** @description The nextCursor of the previous page, unchanged. Keyset based: rows added meanwhile never shift a page. An invalid cursor answers 422 VALIDATION_FAILED. */
+        PageCursor: string;
+        /** @description Page size (L4). Never more than 200. */
+        PageLimit: number;
+        /** @description Optional single UUID. Echoed unchanged when valid. Missing value generates a UUID. Invalid or duplicate values return 422 with a fresh UUID and never echo arbitrary text. */
+        PrivateCorrelationId: string;
+        PublicationGiftItemId: string;
+        /** @description Exclusive PostgreSQL UUID position in the currently resolved celebration. Eligibility and position apply before LIMIT+1. */
+        PublicGiftAfterId: string;
+        /** @description Single canonical textual integer1..50, default20; unknown, duplicate or invalid query is422. */
+        PublicGiftLimit: string;
+        /** @description Published Celebration slug, encoded once; invalid slug is422. Publication and enabled gifts section are resolved from GET /celebrations/public/{slug} for every request without visitor JWT. */
+        PublicGiftSlug: string;
+        ReservationId: string;
     };
     requestBodies: never;
     headers: never;
@@ -439,10 +1666,10 @@ export interface operations {
             query?: never;
             header?: {
                 /** @description Echoed in the response header and in problem.correlationId; generated when absent. */
-                "X-Correlation-Id"?: components["parameters"]["CorrelationId"];
+                "X-Correlation-Id"?: components["parameters"]["DevCompatCorrelationId"];
             };
             path: {
-                celebrationId: components["parameters"]["CelebrationId"];
+                celebrationId: components["parameters"]["DevCompatCelebrationId"];
             };
             cookie?: never;
         };
@@ -454,12 +1681,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GiftList"];
+                    "application/json": components["schemas"]["DevCompatGiftList"];
                 };
             };
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            404: components["responses"]["NotFound"];
+            401: components["responses"]["DevCompatUnauthorized"];
+            403: components["responses"]["DevCompatForbidden"];
+            404: components["responses"]["DevCompatNotFound"];
             /** @description The celebration already has a list */
             409: {
                 headers: {
@@ -472,10 +1699,10 @@ export interface operations {
                      *       "status": 409,
                      *       "code": "GIFT_LIST_EXISTS"
                      *     } */
-                    "application/problem+json": components["schemas"]["Problem"];
+                    "application/problem+json": components["schemas"]["DevCompatProblem"];
                 };
             };
-            503: components["responses"]["DependencyUnavailable"];
+            503: components["responses"]["DevCompatDependencyUnavailable"];
         };
     };
     getGiftSettings: {
@@ -483,10 +1710,10 @@ export interface operations {
             query?: never;
             header?: {
                 /** @description Echoed in the response header and in problem.correlationId; generated when absent. */
-                "X-Correlation-Id"?: components["parameters"]["CorrelationId"];
+                "X-Correlation-Id"?: components["parameters"]["DevCompatCorrelationId"];
             };
             path: {
-                celebrationId: components["parameters"]["CelebrationId"];
+                celebrationId: components["parameters"]["DevCompatCelebrationId"];
             };
             cookie?: never;
         };
@@ -498,13 +1725,13 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GiftSettings"];
+                    "application/json": components["schemas"]["DevCompatGiftSettings"];
                 };
             };
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            404: components["responses"]["NotFound"];
-            503: components["responses"]["DependencyUnavailable"];
+            401: components["responses"]["DevCompatUnauthorized"];
+            403: components["responses"]["DevCompatForbidden"];
+            404: components["responses"]["DevCompatNotFound"];
+            503: components["responses"]["DevCompatDependencyUnavailable"];
         };
     };
     putGiftSettings: {
@@ -512,16 +1739,16 @@ export interface operations {
             query?: never;
             header?: {
                 /** @description Echoed in the response header and in problem.correlationId; generated when absent. */
-                "X-Correlation-Id"?: components["parameters"]["CorrelationId"];
+                "X-Correlation-Id"?: components["parameters"]["DevCompatCorrelationId"];
             };
             path: {
-                celebrationId: components["parameters"]["CelebrationId"];
+                celebrationId: components["parameters"]["DevCompatCelebrationId"];
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["UpdateGiftSettingsRequest"];
+                "application/json": components["schemas"]["DevCompatUpdateGiftSettingsRequest"];
             };
         };
         responses: {
@@ -531,25 +1758,30 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GiftSettings"];
+                    "application/json": components["schemas"]["DevCompatGiftSettings"];
                 };
             };
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            404: components["responses"]["NotFound"];
-            422: components["responses"]["Validation"];
-            503: components["responses"]["DependencyUnavailable"];
+            401: components["responses"]["DevCompatUnauthorized"];
+            403: components["responses"]["DevCompatForbidden"];
+            404: components["responses"]["DevCompatNotFound"];
+            422: components["responses"]["DevCompatValidation"];
+            503: components["responses"]["DevCompatDependencyUnavailable"];
         };
     };
     listGiftItems: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description The nextCursor of the previous page, unchanged. Keyset based: rows added meanwhile never shift a page. An invalid cursor answers 422 VALIDATION_FAILED. */
+                cursor?: components["parameters"]["PageCursor"];
+                /** @description Page size (L4). Never more than 200. */
+                limit?: components["parameters"]["PageLimit"];
+            };
             header?: {
                 /** @description Echoed in the response header and in problem.correlationId; generated when absent. */
-                "X-Correlation-Id"?: components["parameters"]["CorrelationId"];
+                "X-Correlation-Id"?: components["parameters"]["DevCompatCorrelationId"];
             };
             path: {
-                celebrationId: components["parameters"]["CelebrationId"];
+                celebrationId: components["parameters"]["DevCompatCelebrationId"];
             };
             cookie?: never;
         };
@@ -561,13 +1793,13 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GiftItemList"];
+                    "application/json": components["schemas"]["PagedGiftItemPage"];
                 };
             };
-            401: components["responses"]["Unauthorized"];
-            404: components["responses"]["NotFound"];
-            429: components["responses"]["RateLimited"];
-            503: components["responses"]["DependencyUnavailable"];
+            401: components["responses"]["DevCompatUnauthorized"];
+            404: components["responses"]["DevCompatNotFound"];
+            429: components["responses"]["DevCompatRateLimited"];
+            503: components["responses"]["DevCompatDependencyUnavailable"];
         };
     };
     addGiftItem: {
@@ -575,16 +1807,16 @@ export interface operations {
             query?: never;
             header?: {
                 /** @description Echoed in the response header and in problem.correlationId; generated when absent. */
-                "X-Correlation-Id"?: components["parameters"]["CorrelationId"];
+                "X-Correlation-Id"?: components["parameters"]["DevCompatCorrelationId"];
             };
             path: {
-                celebrationId: components["parameters"]["CelebrationId"];
+                celebrationId: components["parameters"]["DevCompatCelebrationId"];
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["AddCatalogedGiftRequest"] | components["schemas"]["AddExternalGiftRequest"];
+                "application/json": components["schemas"]["DevCompatAddCatalogedGiftRequest"] | components["schemas"]["DevCompatAddExternalGiftRequest"];
             };
         };
         responses: {
@@ -594,12 +1826,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GiftItem"];
+                    "application/json": components["schemas"]["DevCompatGiftItem"];
                 };
             };
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            404: components["responses"]["NotFound"];
+            401: components["responses"]["DevCompatUnauthorized"];
+            403: components["responses"]["DevCompatForbidden"];
+            404: components["responses"]["DevCompatNotFound"];
             /** @description partnerPriorityEnabled: the partner catalog must be checked first; resend with partnerSuggestionsAcknowledged=true */
             409: {
                 headers: {
@@ -618,11 +1850,11 @@ export interface operations {
                      *         }
                      *       ]
                      *     } */
-                    "application/problem+json": components["schemas"]["Problem"];
+                    "application/problem+json": components["schemas"]["DevCompatProblem"];
                 };
             };
-            422: components["responses"]["Validation"];
-            503: components["responses"]["DependencyUnavailable"];
+            422: components["responses"]["DevCompatValidation"];
+            503: components["responses"]["DevCompatDependencyUnavailable"];
         };
     };
     approveExternalGift: {
@@ -630,10 +1862,10 @@ export interface operations {
             query?: never;
             header?: {
                 /** @description Echoed in the response header and in problem.correlationId; generated when absent. */
-                "X-Correlation-Id"?: components["parameters"]["CorrelationId"];
+                "X-Correlation-Id"?: components["parameters"]["DevCompatCorrelationId"];
             };
             path: {
-                celebrationId: components["parameters"]["CelebrationId"];
+                celebrationId: components["parameters"]["DevCompatCelebrationId"];
                 giftItemId: string;
             };
             cookie?: never;
@@ -646,14 +1878,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GiftItem"];
+                    "application/json": components["schemas"]["DevCompatGiftItem"];
                 };
             };
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            404: components["responses"]["NotFound"];
-            409: components["responses"]["GiftConflict"];
-            503: components["responses"]["DependencyUnavailable"];
+            401: components["responses"]["DevCompatUnauthorized"];
+            403: components["responses"]["DevCompatForbidden"];
+            404: components["responses"]["DevCompatNotFound"];
+            409: components["responses"]["DevCompatGiftConflict"];
+            503: components["responses"]["DevCompatDependencyUnavailable"];
         };
     };
     rejectExternalGift: {
@@ -661,10 +1893,10 @@ export interface operations {
             query?: never;
             header?: {
                 /** @description Echoed in the response header and in problem.correlationId; generated when absent. */
-                "X-Correlation-Id"?: components["parameters"]["CorrelationId"];
+                "X-Correlation-Id"?: components["parameters"]["DevCompatCorrelationId"];
             };
             path: {
-                celebrationId: components["parameters"]["CelebrationId"];
+                celebrationId: components["parameters"]["DevCompatCelebrationId"];
                 giftItemId: string;
             };
             cookie?: never;
@@ -677,14 +1909,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GiftItem"];
+                    "application/json": components["schemas"]["DevCompatGiftItem"];
                 };
             };
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            404: components["responses"]["NotFound"];
-            409: components["responses"]["GiftConflict"];
-            503: components["responses"]["DependencyUnavailable"];
+            401: components["responses"]["DevCompatUnauthorized"];
+            403: components["responses"]["DevCompatForbidden"];
+            404: components["responses"]["DevCompatNotFound"];
+            409: components["responses"]["DevCompatGiftConflict"];
+            503: components["responses"]["DevCompatDependencyUnavailable"];
         };
     };
     reserveGift: {
@@ -694,17 +1926,17 @@ export interface operations {
                 /** @description Replays the stored reservation (201 with Idempotency-Replayed: true) when the same actor repeats the request for the same gift; another gift with the same key is 422 IDEMPOTENCY_KEY_REUSED. Keys are scoped to (celebration, actor). */
                 "Idempotency-Key"?: string;
                 /** @description Echoed in the response header and in problem.correlationId; generated when absent. */
-                "X-Correlation-Id"?: components["parameters"]["CorrelationId"];
+                "X-Correlation-Id"?: components["parameters"]["DevCompatCorrelationId"];
             };
             path: {
-                celebrationId: components["parameters"]["CelebrationId"];
+                celebrationId: components["parameters"]["DevCompatCelebrationId"];
                 giftItemId: string;
             };
             cookie?: never;
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["ReserveGiftRequest"];
+                "application/json": components["schemas"]["DevCompatReserveGiftRequest"];
             };
         };
         responses: {
@@ -716,37 +1948,4393 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GiftReservation"];
+                    "application/json": components["schemas"]["RsvpAwareGiftReservation"];
                 };
             };
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            404: components["responses"]["NotFound"];
-            409: components["responses"]["GiftNotAvailable"];
+            401: components["responses"]["DevCompatUnauthorized"];
+            403: components["responses"]["DevCompatForbidden"];
+            404: components["responses"]["DevCompatNotFound"];
+            409: components["responses"]["DevCompatGiftNotAvailable"];
             /** @description Invalid request: VALIDATION_FAILED (also for guestId or any unknown field in the body), IDEMPOTENCY_KEY_REUSED, RESERVATION_LIMIT_REACHED */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/problem+json": components["schemas"]["Problem"];
+                    "application/problem+json": components["schemas"]["DevCompatProblem"];
                 };
             };
-            429: components["responses"]["RateLimited"];
-            503: components["responses"]["DependencyUnavailable"];
+            429: components["responses"]["DevCompatRateLimited"];
+            503: components["responses"]["DevCompatDependencyUnavailable"];
+        };
+    };
+    getPrivateGiftList: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Optional single UUID. Echoed unchanged when valid. Missing value generates a UUID. Invalid or duplicate values return 422 with a fresh UUID and never echo arbitrary text. */
+                "X-Correlation-ID"?: components["parameters"]["PrivateCorrelationId"];
+            };
+            path: {
+                celebrationId: components["parameters"]["CelebrationId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Private representation. */
+            200: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrivateGiftList"];
+                };
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Bearer authentication challenge. */
+                    "WWW-Authenticate": "Bearer";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Unauthorized",
+                     *       "status": 401,
+                     *       "code": "UNAUTHORIZED",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "UNAUTHORIZED";
+                        /** @constant */
+                        status?: 401;
+                        /** @constant */
+                        title?: "Unauthorized";
+                    };
+                };
+            };
+            /** @description GIFT_OWNER_REQUIRED */
+            403: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Forbidden",
+                     *       "status": 403,
+                     *       "code": "GIFT_OWNER_REQUIRED",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "GIFT_OWNER_REQUIRED";
+                        /** @constant */
+                        status?: 403;
+                        /** @constant */
+                        title?: "Forbidden";
+                    };
+                };
+            };
+            /** @description CELEBRATION_NOT_FOUND / GIFT_LIST_NOT_FOUND */
+            404: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Not Found",
+                     *       "status": 404,
+                     *       "code": "CELEBRATION_NOT_FOUND",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "CELEBRATION_NOT_FOUND" | "GIFT_LIST_NOT_FOUND";
+                        /** @constant */
+                        status?: 404;
+                        /** @constant */
+                        title?: "Not Found";
+                    };
+                };
+            };
+            /** @description VALIDATION_FAILED */
+            422: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Unprocessable Entity",
+                     *       "status": 422,
+                     *       "code": "VALIDATION_FAILED",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "VALIDATION_FAILED";
+                        /** @constant */
+                        status?: 422;
+                        /** @constant */
+                        title?: "Unprocessable Entity";
+                    };
+                };
+            };
+            /** @description GIFT_LEGACY_DATA_INCOMPLETE / GIFT_MONEY_OUT_OF_RANGE / INTERNAL_ERROR */
+            500: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Internal Server Error",
+                     *       "status": 500,
+                     *       "code": "GIFT_LEGACY_DATA_INCOMPLETE",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "GIFT_LEGACY_DATA_INCOMPLETE" | "GIFT_MONEY_OUT_OF_RANGE" | "INTERNAL_ERROR";
+                        /** @constant */
+                        status?: 500;
+                        /** @constant */
+                        title?: "Internal Server Error";
+                    };
+                };
+            };
+            /** @description AUTHORITY_UNAVAILABLE / PERSISTENCE_UNAVAILABLE */
+            503: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Service Unavailable",
+                     *       "status": 503,
+                     *       "code": "AUTHORITY_UNAVAILABLE",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "AUTHORITY_UNAVAILABLE" | "PERSISTENCE_UNAVAILABLE";
+                        /** @constant */
+                        status?: 503;
+                        /** @constant */
+                        title?: "Service Unavailable";
+                    };
+                };
+            };
+        };
+    };
+    createPrivateGiftList: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Optional single UUID. Echoed unchanged when valid. Missing value generates a UUID. Invalid or duplicate values return 422 with a fresh UUID and never echo arbitrary text. */
+                "X-Correlation-ID"?: components["parameters"]["PrivateCorrelationId"];
+            };
+            path: {
+                celebrationId: components["parameters"]["CelebrationId"];
+            };
+            cookie?: never;
+        };
+        /** @description UTF-8 application/json with optional UTF-8 charset; no compression. Maximum 65536 original bytes, including streamed requests without Content-Length. Invalid JSON/UTF-8 is 400; valid JSON with invalid shape is 422. No coercion. Total body-read deadline: GIFT_HTTP_BODY_TIMEOUT_MS, default 5000 ms, configured integer 100–30000 ms. Receiving more chunks does not reset it. After headers identify this private route, an unfinished body returns 408 REQUEST_TIMEOUT and the connection closes; no business operation is executed. This deadline is separate from remote-authority and database timeouts. HTTP parser errors before route recognition are outside this application guarantee. */
+        requestBody: {
+            content: {
+                /** @example {} */
+                "application/json": components["schemas"]["PrivateCreateGiftListInput"];
+            };
+        };
+        responses: {
+            /** @description Private representation. */
+            201: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreatedPrivateGiftList"];
+                };
+            };
+            /** @description INVALID_JSON */
+            400: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Bad Request",
+                     *       "status": 400,
+                     *       "code": "INVALID_JSON",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "INVALID_JSON";
+                        /** @constant */
+                        status?: 400;
+                        /** @constant */
+                        title?: "Bad Request";
+                    };
+                };
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Bearer authentication challenge. */
+                    "WWW-Authenticate": "Bearer";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Unauthorized",
+                     *       "status": 401,
+                     *       "code": "UNAUTHORIZED",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "UNAUTHORIZED";
+                        /** @constant */
+                        status?: 401;
+                        /** @constant */
+                        title?: "Unauthorized";
+                    };
+                };
+            };
+            /** @description GIFT_OWNER_REQUIRED */
+            403: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Forbidden",
+                     *       "status": 403,
+                     *       "code": "GIFT_OWNER_REQUIRED",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "GIFT_OWNER_REQUIRED";
+                        /** @constant */
+                        status?: 403;
+                        /** @constant */
+                        title?: "Forbidden";
+                    };
+                };
+            };
+            /** @description CELEBRATION_NOT_FOUND */
+            404: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Not Found",
+                     *       "status": 404,
+                     *       "code": "CELEBRATION_NOT_FOUND",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "CELEBRATION_NOT_FOUND";
+                        /** @constant */
+                        status?: 404;
+                        /** @constant */
+                        title?: "Not Found";
+                    };
+                };
+            };
+            /** @description REQUEST_TIMEOUT: the total private body-read deadline expired. */
+            408: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Request Timeout",
+                     *       "status": 408,
+                     *       "code": "REQUEST_TIMEOUT",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "REQUEST_TIMEOUT";
+                        /** @constant */
+                        status?: 408;
+                        /** @constant */
+                        title?: "Request Timeout";
+                    };
+                };
+            };
+            /** @description GIFT_LIST_EXISTS */
+            409: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Conflict",
+                     *       "status": 409,
+                     *       "code": "GIFT_LIST_EXISTS",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "GIFT_LIST_EXISTS";
+                        /** @constant */
+                        status?: 409;
+                        /** @constant */
+                        title?: "Conflict";
+                    };
+                };
+            };
+            /** @description PAYLOAD_TOO_LARGE */
+            413: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Payload Too Large",
+                     *       "status": 413,
+                     *       "code": "PAYLOAD_TOO_LARGE",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "PAYLOAD_TOO_LARGE";
+                        /** @constant */
+                        status?: 413;
+                        /** @constant */
+                        title?: "Payload Too Large";
+                    };
+                };
+            };
+            /** @description UNSUPPORTED_MEDIA_TYPE */
+            415: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Unsupported Media Type",
+                     *       "status": 415,
+                     *       "code": "UNSUPPORTED_MEDIA_TYPE",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "UNSUPPORTED_MEDIA_TYPE";
+                        /** @constant */
+                        status?: 415;
+                        /** @constant */
+                        title?: "Unsupported Media Type";
+                    };
+                };
+            };
+            /** @description VALIDATION_FAILED */
+            422: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Unprocessable Entity",
+                     *       "status": 422,
+                     *       "code": "VALIDATION_FAILED",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "VALIDATION_FAILED";
+                        /** @constant */
+                        status?: 422;
+                        /** @constant */
+                        title?: "Unprocessable Entity";
+                    };
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Internal Server Error",
+                     *       "status": 500,
+                     *       "code": "INTERNAL_ERROR",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "INTERNAL_ERROR";
+                        /** @constant */
+                        status?: 500;
+                        /** @constant */
+                        title?: "Internal Server Error";
+                    };
+                };
+            };
+            /** @description AUTHORITY_UNAVAILABLE / PERSISTENCE_UNAVAILABLE */
+            503: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Service Unavailable",
+                     *       "status": 503,
+                     *       "code": "AUTHORITY_UNAVAILABLE",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "AUTHORITY_UNAVAILABLE" | "PERSISTENCE_UNAVAILABLE";
+                        /** @constant */
+                        status?: 503;
+                        /** @constant */
+                        title?: "Service Unavailable";
+                    };
+                };
+            };
+        };
+    };
+    headPrivateGiftList: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Optional single UUID. Echoed unchanged when valid. Missing value generates a UUID. Invalid or duplicate values return 422 with a fresh UUID and never echo arbitrary text. */
+                "X-Correlation-ID"?: components["parameters"]["PrivateCorrelationId"];
+            };
+            path: {
+                celebrationId: components["parameters"]["CelebrationId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Private representation. HEAD returns no response body. */
+            200: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description UNAUTHORIZED HEAD returns no response body. */
+            401: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Bearer authentication challenge. */
+                    "WWW-Authenticate": "Bearer";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description GIFT_OWNER_REQUIRED HEAD returns no response body. */
+            403: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description CELEBRATION_NOT_FOUND / GIFT_LIST_NOT_FOUND HEAD returns no response body. */
+            404: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description VALIDATION_FAILED HEAD returns no response body. */
+            422: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description GIFT_LEGACY_DATA_INCOMPLETE / GIFT_MONEY_OUT_OF_RANGE / INTERNAL_ERROR HEAD returns no response body. */
+            500: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description AUTHORITY_UNAVAILABLE / PERSISTENCE_UNAVAILABLE HEAD returns no response body. */
+            503: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    addCatalogedGift: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                celebrationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GiftCatalogedItemInput"];
+            };
+        };
+        responses: {
+            /** @description H05B closed representation. No-store; correlation retained. */
+            201: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GiftCatalogedItem"];
+                };
+            };
+            /** @description INVALID_JSON */
+            400: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "INVALID_JSON";
+                        /** @constant */
+                        status?: 400;
+                        /** @constant */
+                        title?: "Bad Request";
+                    };
+                };
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    "WWW-Authenticate": "Bearer";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "UNAUTHORIZED";
+                        /** @constant */
+                        status?: 401;
+                        /** @constant */
+                        title?: "Unauthorized";
+                    };
+                };
+            };
+            /** @description GIFT_OWNER_REQUIRED */
+            403: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "GIFT_OWNER_REQUIRED";
+                        /** @constant */
+                        status?: 403;
+                        /** @constant */
+                        title?: "Forbidden";
+                    };
+                };
+            };
+            /** @description CELEBRATION_NOT_FOUND / GIFT_LIST_NOT_FOUND */
+            404: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "CELEBRATION_NOT_FOUND" | "GIFT_LIST_NOT_FOUND";
+                        /** @constant */
+                        status?: 404;
+                        /** @constant */
+                        title?: "Not Found";
+                    };
+                };
+            };
+            /** @description REQUEST_TIMEOUT */
+            408: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "REQUEST_TIMEOUT";
+                        /** @constant */
+                        status?: 408;
+                        /** @constant */
+                        title?: "Request Timeout";
+                    };
+                };
+            };
+            /** @description PAYLOAD_TOO_LARGE */
+            413: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "PAYLOAD_TOO_LARGE";
+                        /** @constant */
+                        status?: 413;
+                        /** @constant */
+                        title?: "Payload Too Large";
+                    };
+                };
+            };
+            /** @description UNSUPPORTED_MEDIA_TYPE */
+            415: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "UNSUPPORTED_MEDIA_TYPE";
+                        /** @constant */
+                        status?: 415;
+                        /** @constant */
+                        title?: "Unsupported Media Type";
+                    };
+                };
+            };
+            /** @description VALIDATION_FAILED / CATALOG_PRODUCT_UNAVAILABLE */
+            422: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "VALIDATION_FAILED" | "CATALOG_PRODUCT_UNAVAILABLE";
+                        /** @constant */
+                        status?: 422;
+                        /** @constant */
+                        title?: "Unprocessable Entity";
+                    };
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "INTERNAL_ERROR";
+                        /** @constant */
+                        status?: 500;
+                        /** @constant */
+                        title?: "Internal Server Error";
+                    };
+                };
+            };
+            /** @description AUTHORITY_UNAVAILABLE / PERSISTENCE_UNAVAILABLE / CATALOG_DEPENDENCY_UNAVAILABLE */
+            503: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "AUTHORITY_UNAVAILABLE" | "PERSISTENCE_UNAVAILABLE" | "CATALOG_DEPENDENCY_UNAVAILABLE";
+                        /** @constant */
+                        status?: 503;
+                        /** @constant */
+                        title?: "Service Unavailable";
+                    };
+                };
+            };
+        };
+    };
+    requestExternalGiftWithOptions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                celebrationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PrivateExternalGiftInput"];
+            };
+        };
+        responses: {
+            /** @description H05B closed representation. No-store; correlation retained. */
+            201: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GiftExternalRequestResult"];
+                };
+            };
+            /** @description INVALID_JSON */
+            400: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "INVALID_JSON";
+                        /** @constant */
+                        status?: 400;
+                        /** @constant */
+                        title?: "Bad Request";
+                    };
+                };
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    "WWW-Authenticate": "Bearer";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "UNAUTHORIZED";
+                        /** @constant */
+                        status?: 401;
+                        /** @constant */
+                        title?: "Unauthorized";
+                    };
+                };
+            };
+            /** @description GIFT_OWNER_REQUIRED */
+            403: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "GIFT_OWNER_REQUIRED";
+                        /** @constant */
+                        status?: 403;
+                        /** @constant */
+                        title?: "Forbidden";
+                    };
+                };
+            };
+            /** @description CELEBRATION_NOT_FOUND / GIFT_LIST_NOT_FOUND */
+            404: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "CELEBRATION_NOT_FOUND" | "GIFT_LIST_NOT_FOUND";
+                        /** @constant */
+                        status?: 404;
+                        /** @constant */
+                        title?: "Not Found";
+                    };
+                };
+            };
+            /** @description REQUEST_TIMEOUT */
+            408: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "REQUEST_TIMEOUT";
+                        /** @constant */
+                        status?: 408;
+                        /** @constant */
+                        title?: "Request Timeout";
+                    };
+                };
+            };
+            /** @description PAYLOAD_TOO_LARGE */
+            413: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "PAYLOAD_TOO_LARGE";
+                        /** @constant */
+                        status?: 413;
+                        /** @constant */
+                        title?: "Payload Too Large";
+                    };
+                };
+            };
+            /** @description UNSUPPORTED_MEDIA_TYPE */
+            415: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "UNSUPPORTED_MEDIA_TYPE";
+                        /** @constant */
+                        status?: 415;
+                        /** @constant */
+                        title?: "Unsupported Media Type";
+                    };
+                };
+            };
+            /** @description VALIDATION_FAILED / CATALOG_PRODUCT_UNAVAILABLE */
+            422: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "VALIDATION_FAILED" | "CATALOG_PRODUCT_UNAVAILABLE";
+                        /** @constant */
+                        status?: 422;
+                        /** @constant */
+                        title?: "Unprocessable Entity";
+                    };
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "INTERNAL_ERROR";
+                        /** @constant */
+                        status?: 500;
+                        /** @constant */
+                        title?: "Internal Server Error";
+                    };
+                };
+            };
+            /** @description AUTHORITY_UNAVAILABLE / PERSISTENCE_UNAVAILABLE / CATALOG_DEPENDENCY_UNAVAILABLE */
+            503: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "AUTHORITY_UNAVAILABLE" | "PERSISTENCE_UNAVAILABLE" | "CATALOG_DEPENDENCY_UNAVAILABLE";
+                        /** @constant */
+                        status?: 503;
+                        /** @constant */
+                        title?: "Service Unavailable";
+                    };
+                };
+            };
+        };
+    };
+    createExternalGiftPublication: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Optional single UUID. Echoed unchanged when valid. Missing value generates a UUID. Invalid or duplicate values return 422 with a fresh UUID and never echo arbitrary text. */
+                "X-Correlation-ID"?: components["parameters"]["PrivateCorrelationId"];
+            };
+            path: {
+                celebrationId: components["parameters"]["CelebrationId"];
+            };
+            cookie?: never;
+        };
+        /** @description UTF-8 application/json with optional UTF-8 charset; no compression. Maximum 65536 original bytes, including streamed requests without Content-Length. Invalid JSON/UTF-8 is 400; valid JSON with invalid shape is 422. No coercion. Total body-read deadline: GIFT_HTTP_BODY_TIMEOUT_MS, default 5000 ms, configured integer 100–30000 ms. Receiving more chunks does not reset it. After headers identify this private route, an unfinished body returns 408 REQUEST_TIMEOUT and the connection closes; no business operation is executed. This deadline is separate from remote-authority and database timeouts. HTTP parser errors before route recognition are outside this application guarantee. */
+        requestBody: {
+            content: {
+                /** @example {
+                 *       "title": " A gift ",
+                 *       "source": "EXTERNAL",
+                 *       "price": {
+                 *         "minor": 1500,
+                 *         "currency": "BOB"
+                 *       },
+                 *       "external": {
+                 *         "url": "https://example.test/gift"
+                 *       }
+                 *     } */
+                "application/json": components["schemas"]["PrivateExternalGiftInput"];
+            };
+        };
+        responses: {
+            /** @description External gift with publication state. */
+            201: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreatedExternalGiftPublication"];
+                };
+            };
+            /** @description INVALID_JSON */
+            400: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Bad Request",
+                     *       "status": 400,
+                     *       "code": "INVALID_JSON",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "INVALID_JSON";
+                        /** @constant */
+                        status?: 400;
+                        /** @constant */
+                        title?: "Bad Request";
+                    };
+                };
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Bearer authentication challenge. */
+                    "WWW-Authenticate": "Bearer";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Unauthorized",
+                     *       "status": 401,
+                     *       "code": "UNAUTHORIZED",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "UNAUTHORIZED";
+                        /** @constant */
+                        status?: 401;
+                        /** @constant */
+                        title?: "Unauthorized";
+                    };
+                };
+            };
+            /** @description GIFT_OWNER_REQUIRED */
+            403: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Forbidden",
+                     *       "status": 403,
+                     *       "code": "GIFT_OWNER_REQUIRED",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "GIFT_OWNER_REQUIRED";
+                        /** @constant */
+                        status?: 403;
+                        /** @constant */
+                        title?: "Forbidden";
+                    };
+                };
+            };
+            /** @description CELEBRATION_NOT_FOUND / GIFT_LIST_NOT_FOUND */
+            404: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "CELEBRATION_NOT_FOUND" | "GIFT_LIST_NOT_FOUND";
+                        /** @constant */
+                        status?: 404;
+                        /** @constant */
+                        title?: "Not Found";
+                    };
+                };
+            };
+            /** @description REQUEST_TIMEOUT: the total private body-read deadline expired. */
+            408: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Request Timeout",
+                     *       "status": 408,
+                     *       "code": "REQUEST_TIMEOUT",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "REQUEST_TIMEOUT";
+                        /** @constant */
+                        status?: 408;
+                        /** @constant */
+                        title?: "Request Timeout";
+                    };
+                };
+            };
+            /** @description PAYLOAD_TOO_LARGE */
+            413: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Payload Too Large",
+                     *       "status": 413,
+                     *       "code": "PAYLOAD_TOO_LARGE",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "PAYLOAD_TOO_LARGE";
+                        /** @constant */
+                        status?: 413;
+                        /** @constant */
+                        title?: "Payload Too Large";
+                    };
+                };
+            };
+            /** @description UNSUPPORTED_MEDIA_TYPE */
+            415: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Unsupported Media Type",
+                     *       "status": 415,
+                     *       "code": "UNSUPPORTED_MEDIA_TYPE",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "UNSUPPORTED_MEDIA_TYPE";
+                        /** @constant */
+                        status?: 415;
+                        /** @constant */
+                        title?: "Unsupported Media Type";
+                    };
+                };
+            };
+            /** @description VALIDATION_FAILED / CATALOG_FLOW_REQUIRED */
+            422: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "VALIDATION_FAILED" | "CATALOG_FLOW_REQUIRED";
+                        /** @constant */
+                        status?: 422;
+                        /** @constant */
+                        title?: "Unprocessable Entity";
+                    };
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Internal Server Error",
+                     *       "status": 500,
+                     *       "code": "INTERNAL_ERROR",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "INTERNAL_ERROR";
+                        /** @constant */
+                        status?: 500;
+                        /** @constant */
+                        title?: "Internal Server Error";
+                    };
+                };
+            };
+            /** @description AUTHORITY_UNAVAILABLE / PERSISTENCE_UNAVAILABLE */
+            503: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Service Unavailable",
+                     *       "status": 503,
+                     *       "code": "AUTHORITY_UNAVAILABLE",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "AUTHORITY_UNAVAILABLE" | "PERSISTENCE_UNAVAILABLE";
+                        /** @constant */
+                        status?: 503;
+                        /** @constant */
+                        title?: "Service Unavailable";
+                    };
+                };
+            };
+        };
+    };
+    readPrivateMixedGiftItems: {
+        parameters: {
+            query?: {
+                /** @description Opaque canonical versioned base64url sourceRank+UUID cursor bound to query kind and celebration. Tampered, noncanonical, duplicate or cross-context cursor422. No global concurrent snapshot promise. */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                celebrationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description H05B closed representation. No-store; correlation retained. */
+            200: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GiftPrivateMixedPage"];
+                };
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    "WWW-Authenticate": "Bearer";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "UNAUTHORIZED";
+                        /** @constant */
+                        status?: 401;
+                        /** @constant */
+                        title?: "Unauthorized";
+                    };
+                };
+            };
+            /** @description GIFT_OWNER_REQUIRED */
+            403: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "GIFT_OWNER_REQUIRED";
+                        /** @constant */
+                        status?: 403;
+                        /** @constant */
+                        title?: "Forbidden";
+                    };
+                };
+            };
+            /** @description CELEBRATION_NOT_FOUND / GIFT_LIST_NOT_FOUND */
+            404: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "CELEBRATION_NOT_FOUND" | "GIFT_LIST_NOT_FOUND";
+                        /** @constant */
+                        status?: 404;
+                        /** @constant */
+                        title?: "Not Found";
+                    };
+                };
+            };
+            /** @description VALIDATION_FAILED / CATALOG_PRODUCT_UNAVAILABLE */
+            422: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "VALIDATION_FAILED" | "CATALOG_PRODUCT_UNAVAILABLE";
+                        /** @constant */
+                        status?: 422;
+                        /** @constant */
+                        title?: "Unprocessable Entity";
+                    };
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "INTERNAL_ERROR";
+                        /** @constant */
+                        status?: 500;
+                        /** @constant */
+                        title?: "Internal Server Error";
+                    };
+                };
+            };
+            /** @description AUTHORITY_UNAVAILABLE / PERSISTENCE_UNAVAILABLE / CATALOG_DEPENDENCY_UNAVAILABLE */
+            503: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "AUTHORITY_UNAVAILABLE" | "PERSISTENCE_UNAVAILABLE" | "CATALOG_DEPENDENCY_UNAVAILABLE";
+                        /** @constant */
+                        status?: 503;
+                        /** @constant */
+                        title?: "Service Unavailable";
+                    };
+                };
+            };
+        };
+    };
+    headReadPrivateMixedGiftItems: {
+        parameters: {
+            query?: {
+                /** @description Opaque canonical versioned base64url sourceRank+UUID cursor bound to query kind and celebration. Tampered, noncanonical, duplicate or cross-context cursor422. No global concurrent snapshot promise. */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                celebrationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description H05B closed representation. No-store; correlation retained. */
+            200: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    "WWW-Authenticate": "Bearer";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description GIFT_OWNER_REQUIRED */
+            403: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description CELEBRATION_NOT_FOUND / GIFT_LIST_NOT_FOUND */
+            404: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description VALIDATION_FAILED / CATALOG_PRODUCT_UNAVAILABLE */
+            422: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description AUTHORITY_UNAVAILABLE / PERSISTENCE_UNAVAILABLE / CATALOG_DEPENDENCY_UNAVAILABLE */
+            503: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    readGiftOptions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                celebrationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description H05B closed representation. No-store; correlation retained. */
+            200: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GiftOptions"];
+                };
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    "WWW-Authenticate": "Bearer";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "UNAUTHORIZED";
+                        /** @constant */
+                        status?: 401;
+                        /** @constant */
+                        title?: "Unauthorized";
+                    };
+                };
+            };
+            /** @description GIFT_OWNER_REQUIRED */
+            403: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "GIFT_OWNER_REQUIRED";
+                        /** @constant */
+                        status?: 403;
+                        /** @constant */
+                        title?: "Forbidden";
+                    };
+                };
+            };
+            /** @description CELEBRATION_NOT_FOUND / GIFT_LIST_NOT_FOUND */
+            404: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "CELEBRATION_NOT_FOUND" | "GIFT_LIST_NOT_FOUND";
+                        /** @constant */
+                        status?: 404;
+                        /** @constant */
+                        title?: "Not Found";
+                    };
+                };
+            };
+            /** @description VALIDATION_FAILED / CATALOG_PRODUCT_UNAVAILABLE */
+            422: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "VALIDATION_FAILED" | "CATALOG_PRODUCT_UNAVAILABLE";
+                        /** @constant */
+                        status?: 422;
+                        /** @constant */
+                        title?: "Unprocessable Entity";
+                    };
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "INTERNAL_ERROR";
+                        /** @constant */
+                        status?: 500;
+                        /** @constant */
+                        title?: "Internal Server Error";
+                    };
+                };
+            };
+            /** @description AUTHORITY_UNAVAILABLE / PERSISTENCE_UNAVAILABLE / CATALOG_DEPENDENCY_UNAVAILABLE */
+            503: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "AUTHORITY_UNAVAILABLE" | "PERSISTENCE_UNAVAILABLE" | "CATALOG_DEPENDENCY_UNAVAILABLE";
+                        /** @constant */
+                        status?: 503;
+                        /** @constant */
+                        title?: "Service Unavailable";
+                    };
+                };
+            };
+        };
+    };
+    headReadGiftOptions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                celebrationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description H05B closed representation. No-store; correlation retained. */
+            200: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    "WWW-Authenticate": "Bearer";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description GIFT_OWNER_REQUIRED */
+            403: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description CELEBRATION_NOT_FOUND / GIFT_LIST_NOT_FOUND */
+            404: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description VALIDATION_FAILED / CATALOG_PRODUCT_UNAVAILABLE */
+            422: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description AUTHORITY_UNAVAILABLE / PERSISTENCE_UNAVAILABLE / CATALOG_DEPENDENCY_UNAVAILABLE */
+            503: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    proposePrivateExternalGift: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Optional single UUID. Echoed unchanged when valid. Missing value generates a UUID. Invalid or duplicate values return 422 with a fresh UUID and never echo arbitrary text. */
+                "X-Correlation-ID"?: components["parameters"]["PrivateCorrelationId"];
+            };
+            path: {
+                celebrationId: components["parameters"]["CelebrationId"];
+            };
+            cookie?: never;
+        };
+        /** @description UTF-8 application/json with optional UTF-8 charset; no compression. Maximum 65536 original bytes, including streamed requests without Content-Length. Invalid JSON/UTF-8 is 400; valid JSON with invalid shape is 422. No coercion. Total body-read deadline: GIFT_HTTP_BODY_TIMEOUT_MS, default 5000 ms, configured integer 100–30000 ms. Receiving more chunks does not reset it. After headers identify this private route, an unfinished body returns 408 REQUEST_TIMEOUT and the connection closes; no business operation is executed. This deadline is separate from remote-authority and database timeouts. HTTP parser errors before route recognition are outside this application guarantee. */
+        requestBody: {
+            content: {
+                /** @example {
+                 *       "title": " A gift ",
+                 *       "source": "EXTERNAL",
+                 *       "price": {
+                 *         "minor": 1500,
+                 *         "currency": "BOB"
+                 *       },
+                 *       "external": {
+                 *         "url": "https://example.test/gift"
+                 *       }
+                 *     } */
+                "application/json": components["schemas"]["PrivateExternalGiftInput"];
+            };
+        };
+        responses: {
+            /** @description Private representation. */
+            201: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposedPrivateExternalGift"];
+                };
+            };
+            /** @description INVALID_JSON */
+            400: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Bad Request",
+                     *       "status": 400,
+                     *       "code": "INVALID_JSON",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "INVALID_JSON";
+                        /** @constant */
+                        status?: 400;
+                        /** @constant */
+                        title?: "Bad Request";
+                    };
+                };
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Bearer authentication challenge. */
+                    "WWW-Authenticate": "Bearer";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Unauthorized",
+                     *       "status": 401,
+                     *       "code": "UNAUTHORIZED",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "UNAUTHORIZED";
+                        /** @constant */
+                        status?: 401;
+                        /** @constant */
+                        title?: "Unauthorized";
+                    };
+                };
+            };
+            /** @description GIFT_OWNER_REQUIRED */
+            403: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Forbidden",
+                     *       "status": 403,
+                     *       "code": "GIFT_OWNER_REQUIRED",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "GIFT_OWNER_REQUIRED";
+                        /** @constant */
+                        status?: 403;
+                        /** @constant */
+                        title?: "Forbidden";
+                    };
+                };
+            };
+            /** @description CELEBRATION_NOT_FOUND / GIFT_LIST_NOT_FOUND */
+            404: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Not Found",
+                     *       "status": 404,
+                     *       "code": "CELEBRATION_NOT_FOUND",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "CELEBRATION_NOT_FOUND" | "GIFT_LIST_NOT_FOUND";
+                        /** @constant */
+                        status?: 404;
+                        /** @constant */
+                        title?: "Not Found";
+                    };
+                };
+            };
+            /** @description REQUEST_TIMEOUT: the total private body-read deadline expired. */
+            408: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Request Timeout",
+                     *       "status": 408,
+                     *       "code": "REQUEST_TIMEOUT",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "REQUEST_TIMEOUT";
+                        /** @constant */
+                        status?: 408;
+                        /** @constant */
+                        title?: "Request Timeout";
+                    };
+                };
+            };
+            /** @description PAYLOAD_TOO_LARGE */
+            413: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Payload Too Large",
+                     *       "status": 413,
+                     *       "code": "PAYLOAD_TOO_LARGE",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "PAYLOAD_TOO_LARGE";
+                        /** @constant */
+                        status?: 413;
+                        /** @constant */
+                        title?: "Payload Too Large";
+                    };
+                };
+            };
+            /** @description UNSUPPORTED_MEDIA_TYPE */
+            415: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Unsupported Media Type",
+                     *       "status": 415,
+                     *       "code": "UNSUPPORTED_MEDIA_TYPE",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "UNSUPPORTED_MEDIA_TYPE";
+                        /** @constant */
+                        status?: 415;
+                        /** @constant */
+                        title?: "Unsupported Media Type";
+                    };
+                };
+            };
+            /** @description VALIDATION_FAILED / EXTERNAL_MODE_NOT_IN_SLICE / CATALOG_FLOW_REQUIRED */
+            422: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Unprocessable Entity",
+                     *       "status": 422,
+                     *       "code": "VALIDATION_FAILED",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "VALIDATION_FAILED" | "EXTERNAL_MODE_NOT_IN_SLICE" | "CATALOG_FLOW_REQUIRED";
+                        /** @constant */
+                        status?: 422;
+                        /** @constant */
+                        title?: "Unprocessable Entity";
+                    };
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Internal Server Error",
+                     *       "status": 500,
+                     *       "code": "INTERNAL_ERROR",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "INTERNAL_ERROR";
+                        /** @constant */
+                        status?: 500;
+                        /** @constant */
+                        title?: "Internal Server Error";
+                    };
+                };
+            };
+            /** @description AUTHORITY_UNAVAILABLE / PERSISTENCE_UNAVAILABLE */
+            503: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Service Unavailable",
+                     *       "status": 503,
+                     *       "code": "AUTHORITY_UNAVAILABLE",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "AUTHORITY_UNAVAILABLE" | "PERSISTENCE_UNAVAILABLE";
+                        /** @constant */
+                        status?: 503;
+                        /** @constant */
+                        title?: "Service Unavailable";
+                    };
+                };
+            };
+        };
+    };
+    approveExternalGiftPublication: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Optional single UUID. Echoed unchanged when valid. Missing value generates a UUID. Invalid or duplicate values return 422 with a fresh UUID and never echo arbitrary text. */
+                "X-Correlation-ID"?: components["parameters"]["PrivateCorrelationId"];
+            };
+            path: {
+                celebrationId: components["parameters"]["CelebrationId"];
+                giftItemId: components["parameters"]["PublicationGiftItemId"];
+            };
+            cookie?: never;
+        };
+        /** @description UTF-8 application/json with optional UTF-8 charset; no compression. Maximum 65536 original bytes, including streamed requests without Content-Length. Invalid JSON/UTF-8 is 400; valid JSON with invalid shape is 422. No coercion. Total body-read deadline: GIFT_HTTP_BODY_TIMEOUT_MS, default 5000 ms, configured integer 100–30000 ms. Receiving more chunks does not reset it. After headers identify this private route, an unfinished body returns 408 REQUEST_TIMEOUT and the connection closes; no business operation is executed. This deadline is separate from remote-authority and database timeouts. HTTP parser errors before route recognition are outside this application guarantee. */
+        requestBody: {
+            content: {
+                /** @example {
+                 *       "expectedVersion": 0
+                 *     } */
+                "application/json": components["schemas"]["ApproveExternalGiftInput"];
+            };
+        };
+        responses: {
+            /** @description Approved AVAILABLE gift with publication timestamp. */
+            200: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApprovedExternalGiftPublication"];
+                };
+            };
+            /** @description INVALID_JSON */
+            400: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Bad Request",
+                     *       "status": 400,
+                     *       "code": "INVALID_JSON",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "INVALID_JSON";
+                        /** @constant */
+                        status?: 400;
+                        /** @constant */
+                        title?: "Bad Request";
+                    };
+                };
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Bearer authentication challenge. */
+                    "WWW-Authenticate": "Bearer";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Unauthorized",
+                     *       "status": 401,
+                     *       "code": "UNAUTHORIZED",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "UNAUTHORIZED";
+                        /** @constant */
+                        status?: 401;
+                        /** @constant */
+                        title?: "Unauthorized";
+                    };
+                };
+            };
+            /** @description GIFT_OWNER_REQUIRED */
+            403: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Forbidden",
+                     *       "status": 403,
+                     *       "code": "GIFT_OWNER_REQUIRED",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "GIFT_OWNER_REQUIRED";
+                        /** @constant */
+                        status?: 403;
+                        /** @constant */
+                        title?: "Forbidden";
+                    };
+                };
+            };
+            /** @description CELEBRATION_NOT_FOUND / GIFT_LIST_NOT_FOUND / GIFT_ITEM_NOT_FOUND */
+            404: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "CELEBRATION_NOT_FOUND" | "GIFT_LIST_NOT_FOUND" | "GIFT_ITEM_NOT_FOUND";
+                        /** @constant */
+                        status?: 404;
+                        /** @constant */
+                        title?: "Not Found";
+                    };
+                };
+            };
+            /** @description REQUEST_TIMEOUT: the total private body-read deadline expired. */
+            408: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Request Timeout",
+                     *       "status": 408,
+                     *       "code": "REQUEST_TIMEOUT",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "REQUEST_TIMEOUT";
+                        /** @constant */
+                        status?: 408;
+                        /** @constant */
+                        title?: "Request Timeout";
+                    };
+                };
+            };
+            /** @description GIFT_ITEM_CONFLICT */
+            409: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "GIFT_ITEM_CONFLICT";
+                        /** @constant */
+                        status?: 409;
+                        /** @constant */
+                        title?: "Conflict";
+                    };
+                };
+            };
+            /** @description PAYLOAD_TOO_LARGE */
+            413: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Payload Too Large",
+                     *       "status": 413,
+                     *       "code": "PAYLOAD_TOO_LARGE",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "PAYLOAD_TOO_LARGE";
+                        /** @constant */
+                        status?: 413;
+                        /** @constant */
+                        title?: "Payload Too Large";
+                    };
+                };
+            };
+            /** @description UNSUPPORTED_MEDIA_TYPE */
+            415: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Unsupported Media Type",
+                     *       "status": 415,
+                     *       "code": "UNSUPPORTED_MEDIA_TYPE",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "UNSUPPORTED_MEDIA_TYPE";
+                        /** @constant */
+                        status?: 415;
+                        /** @constant */
+                        title?: "Unsupported Media Type";
+                    };
+                };
+            };
+            /** @description VALIDATION_FAILED */
+            422: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "VALIDATION_FAILED";
+                        /** @constant */
+                        status?: 422;
+                        /** @constant */
+                        title?: "Unprocessable Entity";
+                    };
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Internal Server Error",
+                     *       "status": 500,
+                     *       "code": "INTERNAL_ERROR",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "INTERNAL_ERROR";
+                        /** @constant */
+                        status?: 500;
+                        /** @constant */
+                        title?: "Internal Server Error";
+                    };
+                };
+            };
+            /** @description AUTHORITY_UNAVAILABLE / PERSISTENCE_UNAVAILABLE */
+            503: {
+                headers: {
+                    /** @description Private responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "about:blank",
+                     *       "title": "Service Unavailable",
+                     *       "status": 503,
+                     *       "code": "AUTHORITY_UNAVAILABLE",
+                     *       "correlationId": "00000000-0000-4000-8000-000000000001"
+                     *     } */
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "AUTHORITY_UNAVAILABLE" | "PERSISTENCE_UNAVAILABLE";
+                        /** @constant */
+                        status?: 503;
+                        /** @constant */
+                        title?: "Service Unavailable";
+                    };
+                };
+            };
+        };
+    };
+    listOwnerGiftReservationRecords: {
+        parameters: {
+            query?: {
+                /** @description Exclusive PostgreSQL UUID position in the currently resolved celebration. Eligibility and position apply before LIMIT+1. */
+                afterId?: components["parameters"]["PublicGiftAfterId"];
+                /** @description Single canonical textual integer1..50, default20; unknown, duplicate or invalid query is422. */
+                limit?: components["parameters"]["PublicGiftLimit"];
+                /** @description Single optional status filter; unknown, duplicate, empty or invalid parameters return422. */
+                status?: components["parameters"]["OwnerReservationStatus"];
+            };
+            header?: {
+                /** @description Optional single UUID. Echoed unchanged when valid. Missing value generates a UUID. Invalid or duplicate values return 422 with a fresh UUID and never echo arbitrary text. */
+                "X-Correlation-ID"?: components["parameters"]["PrivateCorrelationId"];
+            };
+            path: {
+                celebrationId: components["parameters"]["CelebrationId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Reservation representation. */
+            200: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReservationRecordPage"];
+                };
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    "WWW-Authenticate": "Bearer";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "UNAUTHORIZED";
+                        /** @constant */
+                        status?: 401;
+                        /** @constant */
+                        title?: "Unauthorized";
+                    };
+                };
+            };
+            /** @description GIFT_OWNER_REQUIRED */
+            403: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "GIFT_OWNER_REQUIRED";
+                        /** @constant */
+                        status?: 403;
+                        /** @constant */
+                        title?: "Forbidden";
+                    };
+                };
+            };
+            /** @description CELEBRATION_NOT_FOUND / GIFT_LIST_NOT_FOUND / GIFT_ITEM_NOT_FOUND / GIFT_RESERVATION_NOT_FOUND */
+            404: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "CELEBRATION_NOT_FOUND" | "GIFT_LIST_NOT_FOUND" | "GIFT_ITEM_NOT_FOUND" | "GIFT_RESERVATION_NOT_FOUND";
+                        /** @constant */
+                        status?: 404;
+                        /** @constant */
+                        title?: "Not Found";
+                    };
+                };
+            };
+            /** @description VALIDATION_FAILED */
+            422: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "VALIDATION_FAILED";
+                        /** @constant */
+                        status?: 422;
+                        /** @constant */
+                        title?: "Unprocessable Entity";
+                    };
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "INTERNAL_ERROR";
+                        /** @constant */
+                        status?: 500;
+                        /** @constant */
+                        title?: "Internal Server Error";
+                    };
+                };
+            };
+            /** @description AUTHORITY_UNAVAILABLE / PERSISTENCE_UNAVAILABLE */
+            503: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "AUTHORITY_UNAVAILABLE" | "PERSISTENCE_UNAVAILABLE";
+                        /** @constant */
+                        status?: 503;
+                        /** @constant */
+                        title?: "Service Unavailable";
+                    };
+                };
+            };
+        };
+    };
+    headOwnerGiftReservationRecords: {
+        parameters: {
+            query?: {
+                /** @description Exclusive PostgreSQL UUID position in the currently resolved celebration. Eligibility and position apply before LIMIT+1. */
+                afterId?: components["parameters"]["PublicGiftAfterId"];
+                /** @description Single canonical textual integer1..50, default20; unknown, duplicate or invalid query is422. */
+                limit?: components["parameters"]["PublicGiftLimit"];
+                /** @description Single optional status filter; unknown, duplicate, empty or invalid parameters return422. */
+                status?: components["parameters"]["OwnerReservationStatus"];
+            };
+            header?: {
+                /** @description Optional single UUID. Echoed unchanged when valid. Missing value generates a UUID. Invalid or duplicate values return 422 with a fresh UUID and never echo arbitrary text. */
+                "X-Correlation-ID"?: components["parameters"]["PrivateCorrelationId"];
+            };
+            path: {
+                celebrationId: components["parameters"]["CelebrationId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Reservation representation. */
+            200: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    "WWW-Authenticate": "Bearer";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description GIFT_OWNER_REQUIRED */
+            403: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description CELEBRATION_NOT_FOUND / GIFT_LIST_NOT_FOUND / GIFT_ITEM_NOT_FOUND / GIFT_RESERVATION_NOT_FOUND */
+            404: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description VALIDATION_FAILED */
+            422: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description AUTHORITY_UNAVAILABLE / PERSISTENCE_UNAVAILABLE */
+            503: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    confirmOwnerGiftReservationRecord: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Optional single UUID. Echoed unchanged when valid. Missing value generates a UUID. Invalid or duplicate values return 422 with a fresh UUID and never echo arbitrary text. */
+                "X-Correlation-ID"?: components["parameters"]["PrivateCorrelationId"];
+            };
+            path: {
+                celebrationId: components["parameters"]["CelebrationId"];
+                reservationId: components["parameters"]["ReservationId"];
+            };
+            cookie?: never;
+        };
+        /** @description At most65536 original bytes, fatalUTF8, application/json with optionalUTF8charset and identity encoding. Total body deadline and graceful lifecycle preserve existing Gift policy. Exactly expectedItemVersion; source numeric lexeme and duplicates validated before rounding/coercion. No guest/host/status/mode/resolver/time/event identifiers from client. */
+        requestBody: {
+            content: {
+                /** @example {
+                 *       "expectedItemVersion": 1
+                 *     } */
+                "application/json": components["schemas"]["ManualReservationInput"];
+            };
+        };
+        responses: {
+            /** @description Reservation representation. */
+            200: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReservationRecordResult"];
+                };
+            };
+            /** @description INVALID_JSON */
+            400: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "INVALID_JSON";
+                        /** @constant */
+                        status?: 400;
+                        /** @constant */
+                        title?: "Bad Request";
+                    };
+                };
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    "WWW-Authenticate": "Bearer";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "UNAUTHORIZED";
+                        /** @constant */
+                        status?: 401;
+                        /** @constant */
+                        title?: "Unauthorized";
+                    };
+                };
+            };
+            /** @description GIFT_OWNER_REQUIRED */
+            403: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "GIFT_OWNER_REQUIRED";
+                        /** @constant */
+                        status?: 403;
+                        /** @constant */
+                        title?: "Forbidden";
+                    };
+                };
+            };
+            /** @description CELEBRATION_NOT_FOUND / GIFT_LIST_NOT_FOUND / GIFT_ITEM_NOT_FOUND / GIFT_RESERVATION_NOT_FOUND */
+            404: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "CELEBRATION_NOT_FOUND" | "GIFT_LIST_NOT_FOUND" | "GIFT_ITEM_NOT_FOUND" | "GIFT_RESERVATION_NOT_FOUND";
+                        /** @constant */
+                        status?: 404;
+                        /** @constant */
+                        title?: "Not Found";
+                    };
+                };
+            };
+            /** @description REQUEST_TIMEOUT */
+            408: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "REQUEST_TIMEOUT";
+                        /** @constant */
+                        status?: 408;
+                        /** @constant */
+                        title?: "Request Timeout";
+                    };
+                };
+            };
+            /** @description GIFT_RESERVATION_CONFLICT */
+            409: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "GIFT_RESERVATION_CONFLICT";
+                        /** @constant */
+                        status?: 409;
+                        /** @constant */
+                        title?: "Conflict";
+                    };
+                };
+            };
+            /** @description PAYLOAD_TOO_LARGE */
+            413: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "PAYLOAD_TOO_LARGE";
+                        /** @constant */
+                        status?: 413;
+                        /** @constant */
+                        title?: "Payload Too Large";
+                    };
+                };
+            };
+            /** @description UNSUPPORTED_MEDIA_TYPE */
+            415: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "UNSUPPORTED_MEDIA_TYPE";
+                        /** @constant */
+                        status?: 415;
+                        /** @constant */
+                        title?: "Unsupported Media Type";
+                    };
+                };
+            };
+            /** @description VALIDATION_FAILED */
+            422: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "VALIDATION_FAILED";
+                        /** @constant */
+                        status?: 422;
+                        /** @constant */
+                        title?: "Unprocessable Entity";
+                    };
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "INTERNAL_ERROR";
+                        /** @constant */
+                        status?: 500;
+                        /** @constant */
+                        title?: "Internal Server Error";
+                    };
+                };
+            };
+            /** @description AUTHORITY_UNAVAILABLE / PERSISTENCE_UNAVAILABLE */
+            503: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "AUTHORITY_UNAVAILABLE" | "PERSISTENCE_UNAVAILABLE";
+                        /** @constant */
+                        status?: 503;
+                        /** @constant */
+                        title?: "Service Unavailable";
+                    };
+                };
+            };
+        };
+    };
+    rejectOwnerGiftReservationRecord: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Optional single UUID. Echoed unchanged when valid. Missing value generates a UUID. Invalid or duplicate values return 422 with a fresh UUID and never echo arbitrary text. */
+                "X-Correlation-ID"?: components["parameters"]["PrivateCorrelationId"];
+            };
+            path: {
+                celebrationId: components["parameters"]["CelebrationId"];
+                reservationId: components["parameters"]["ReservationId"];
+            };
+            cookie?: never;
+        };
+        /** @description At most65536 original bytes, fatalUTF8, application/json with optionalUTF8charset and identity encoding. Total body deadline and graceful lifecycle preserve existing Gift policy. Exactly expectedItemVersion; source numeric lexeme and duplicates validated before rounding/coercion. No guest/host/status/mode/resolver/time/event identifiers from client. */
+        requestBody: {
+            content: {
+                /** @example {
+                 *       "expectedItemVersion": 1
+                 *     } */
+                "application/json": components["schemas"]["ManualReservationInput"];
+            };
+        };
+        responses: {
+            /** @description Reservation representation. */
+            200: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReservationRecordResult"];
+                };
+            };
+            /** @description INVALID_JSON */
+            400: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "INVALID_JSON";
+                        /** @constant */
+                        status?: 400;
+                        /** @constant */
+                        title?: "Bad Request";
+                    };
+                };
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    "WWW-Authenticate": "Bearer";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "UNAUTHORIZED";
+                        /** @constant */
+                        status?: 401;
+                        /** @constant */
+                        title?: "Unauthorized";
+                    };
+                };
+            };
+            /** @description GIFT_OWNER_REQUIRED */
+            403: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "GIFT_OWNER_REQUIRED";
+                        /** @constant */
+                        status?: 403;
+                        /** @constant */
+                        title?: "Forbidden";
+                    };
+                };
+            };
+            /** @description CELEBRATION_NOT_FOUND / GIFT_LIST_NOT_FOUND / GIFT_ITEM_NOT_FOUND / GIFT_RESERVATION_NOT_FOUND */
+            404: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "CELEBRATION_NOT_FOUND" | "GIFT_LIST_NOT_FOUND" | "GIFT_ITEM_NOT_FOUND" | "GIFT_RESERVATION_NOT_FOUND";
+                        /** @constant */
+                        status?: 404;
+                        /** @constant */
+                        title?: "Not Found";
+                    };
+                };
+            };
+            /** @description REQUEST_TIMEOUT */
+            408: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "REQUEST_TIMEOUT";
+                        /** @constant */
+                        status?: 408;
+                        /** @constant */
+                        title?: "Request Timeout";
+                    };
+                };
+            };
+            /** @description GIFT_RESERVATION_CONFLICT */
+            409: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "GIFT_RESERVATION_CONFLICT";
+                        /** @constant */
+                        status?: 409;
+                        /** @constant */
+                        title?: "Conflict";
+                    };
+                };
+            };
+            /** @description PAYLOAD_TOO_LARGE */
+            413: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "PAYLOAD_TOO_LARGE";
+                        /** @constant */
+                        status?: 413;
+                        /** @constant */
+                        title?: "Payload Too Large";
+                    };
+                };
+            };
+            /** @description UNSUPPORTED_MEDIA_TYPE */
+            415: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "UNSUPPORTED_MEDIA_TYPE";
+                        /** @constant */
+                        status?: 415;
+                        /** @constant */
+                        title?: "Unsupported Media Type";
+                    };
+                };
+            };
+            /** @description VALIDATION_FAILED */
+            422: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "VALIDATION_FAILED";
+                        /** @constant */
+                        status?: 422;
+                        /** @constant */
+                        title?: "Unprocessable Entity";
+                    };
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "INTERNAL_ERROR";
+                        /** @constant */
+                        status?: 500;
+                        /** @constant */
+                        title?: "Internal Server Error";
+                    };
+                };
+            };
+            /** @description AUTHORITY_UNAVAILABLE / PERSISTENCE_UNAVAILABLE */
+            503: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "AUTHORITY_UNAVAILABLE" | "PERSISTENCE_UNAVAILABLE";
+                        /** @constant */
+                        status?: 503;
+                        /** @constant */
+                        title?: "Service Unavailable";
+                    };
+                };
+            };
+        };
+    };
+    listOwnerModeAwareGiftReservations: {
+        parameters: {
+            query?: {
+                /** @description Exclusive PostgreSQL UUID position in the currently resolved celebration. Eligibility and position apply before LIMIT+1. */
+                afterId?: components["parameters"]["PublicGiftAfterId"];
+                /** @description Single canonical textual integer1..50, default20; unknown, duplicate or invalid query is422. */
+                limit?: components["parameters"]["PublicGiftLimit"];
+                /** @description Single optional status filter; unknown, duplicate, empty or invalid parameters return422. */
+                status?: components["parameters"]["OwnerReservationStatus"];
+            };
+            header?: {
+                /** @description Optional single UUID. Echoed unchanged when valid. Missing value generates a UUID. Invalid or duplicate values return 422 with a fresh UUID and never echo arbitrary text. */
+                "X-Correlation-ID"?: components["parameters"]["PrivateCorrelationId"];
+            };
+            path: {
+                celebrationId: components["parameters"]["CelebrationId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Reservation representation. */
+            200: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModeAwareReservationPage"];
+                };
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    "WWW-Authenticate": "Bearer";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "UNAUTHORIZED";
+                        /** @constant */
+                        status?: 401;
+                        /** @constant */
+                        title?: "Unauthorized";
+                    };
+                };
+            };
+            /** @description GIFT_OWNER_REQUIRED */
+            403: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "GIFT_OWNER_REQUIRED";
+                        /** @constant */
+                        status?: 403;
+                        /** @constant */
+                        title?: "Forbidden";
+                    };
+                };
+            };
+            /** @description CELEBRATION_NOT_FOUND / GIFT_LIST_NOT_FOUND / GIFT_ITEM_NOT_FOUND / GIFT_RESERVATION_NOT_FOUND */
+            404: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "CELEBRATION_NOT_FOUND" | "GIFT_LIST_NOT_FOUND" | "GIFT_ITEM_NOT_FOUND" | "GIFT_RESERVATION_NOT_FOUND";
+                        /** @constant */
+                        status?: 404;
+                        /** @constant */
+                        title?: "Not Found";
+                    };
+                };
+            };
+            /** @description VALIDATION_FAILED */
+            422: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "VALIDATION_FAILED";
+                        /** @constant */
+                        status?: 422;
+                        /** @constant */
+                        title?: "Unprocessable Entity";
+                    };
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "INTERNAL_ERROR";
+                        /** @constant */
+                        status?: 500;
+                        /** @constant */
+                        title?: "Internal Server Error";
+                    };
+                };
+            };
+            /** @description AUTHORITY_UNAVAILABLE / PERSISTENCE_UNAVAILABLE */
+            503: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "AUTHORITY_UNAVAILABLE" | "PERSISTENCE_UNAVAILABLE";
+                        /** @constant */
+                        status?: 503;
+                        /** @constant */
+                        title?: "Service Unavailable";
+                    };
+                };
+            };
+        };
+    };
+    headOwnerModeAwareGiftReservations: {
+        parameters: {
+            query?: {
+                /** @description Exclusive PostgreSQL UUID position in the currently resolved celebration. Eligibility and position apply before LIMIT+1. */
+                afterId?: components["parameters"]["PublicGiftAfterId"];
+                /** @description Single canonical textual integer1..50, default20; unknown, duplicate or invalid query is422. */
+                limit?: components["parameters"]["PublicGiftLimit"];
+                /** @description Single optional status filter; unknown, duplicate, empty or invalid parameters return422. */
+                status?: components["parameters"]["OwnerReservationStatus"];
+            };
+            header?: {
+                /** @description Optional single UUID. Echoed unchanged when valid. Missing value generates a UUID. Invalid or duplicate values return 422 with a fresh UUID and never echo arbitrary text. */
+                "X-Correlation-ID"?: components["parameters"]["PrivateCorrelationId"];
+            };
+            path: {
+                celebrationId: components["parameters"]["CelebrationId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Reservation representation. */
+            200: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    "WWW-Authenticate": "Bearer";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description GIFT_OWNER_REQUIRED */
+            403: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description CELEBRATION_NOT_FOUND / GIFT_LIST_NOT_FOUND / GIFT_ITEM_NOT_FOUND / GIFT_RESERVATION_NOT_FOUND */
+            404: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description VALIDATION_FAILED */
+            422: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description AUTHORITY_UNAVAILABLE / PERSISTENCE_UNAVAILABLE */
+            503: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listOwnerGiftReservations: {
+        parameters: {
+            query?: {
+                /** @description Exclusive PostgreSQL UUID position in the currently resolved celebration. Eligibility and position apply before LIMIT+1. */
+                afterId?: components["parameters"]["PublicGiftAfterId"];
+                /** @description Single canonical textual integer1..50, default20; unknown, duplicate or invalid query is422. */
+                limit?: components["parameters"]["PublicGiftLimit"];
+                /** @description Single optional status filter; unknown, duplicate, empty or invalid parameters return422. */
+                status?: components["parameters"]["OwnerReservationStatus"];
+            };
+            header?: {
+                /** @description Optional single UUID. Echoed unchanged when valid. Missing value generates a UUID. Invalid or duplicate values return 422 with a fresh UUID and never echo arbitrary text. */
+                "X-Correlation-ID"?: components["parameters"]["PrivateCorrelationId"];
+            };
+            path: {
+                celebrationId: components["parameters"]["CelebrationId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Reservation representation. */
+            200: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnerReservationPage"];
+                };
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    "WWW-Authenticate": "Bearer";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "UNAUTHORIZED";
+                        /** @constant */
+                        status?: 401;
+                        /** @constant */
+                        title?: "Unauthorized";
+                    };
+                };
+            };
+            /** @description GIFT_OWNER_REQUIRED */
+            403: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "GIFT_OWNER_REQUIRED";
+                        /** @constant */
+                        status?: 403;
+                        /** @constant */
+                        title?: "Forbidden";
+                    };
+                };
+            };
+            /** @description CELEBRATION_NOT_FOUND / GIFT_LIST_NOT_FOUND / GIFT_ITEM_NOT_FOUND / GIFT_RESERVATION_NOT_FOUND */
+            404: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "CELEBRATION_NOT_FOUND" | "GIFT_LIST_NOT_FOUND" | "GIFT_ITEM_NOT_FOUND" | "GIFT_RESERVATION_NOT_FOUND";
+                        /** @constant */
+                        status?: 404;
+                        /** @constant */
+                        title?: "Not Found";
+                    };
+                };
+            };
+            /** @description VALIDATION_FAILED */
+            422: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "VALIDATION_FAILED";
+                        /** @constant */
+                        status?: 422;
+                        /** @constant */
+                        title?: "Unprocessable Entity";
+                    };
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "INTERNAL_ERROR";
+                        /** @constant */
+                        status?: 500;
+                        /** @constant */
+                        title?: "Internal Server Error";
+                    };
+                };
+            };
+            /** @description AUTHORITY_UNAVAILABLE / PERSISTENCE_UNAVAILABLE */
+            503: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "AUTHORITY_UNAVAILABLE" | "PERSISTENCE_UNAVAILABLE";
+                        /** @constant */
+                        status?: 503;
+                        /** @constant */
+                        title?: "Service Unavailable";
+                    };
+                };
+            };
+        };
+    };
+    headOwnerGiftReservations: {
+        parameters: {
+            query?: {
+                /** @description Exclusive PostgreSQL UUID position in the currently resolved celebration. Eligibility and position apply before LIMIT+1. */
+                afterId?: components["parameters"]["PublicGiftAfterId"];
+                /** @description Single canonical textual integer1..50, default20; unknown, duplicate or invalid query is422. */
+                limit?: components["parameters"]["PublicGiftLimit"];
+                /** @description Single optional status filter; unknown, duplicate, empty or invalid parameters return422. */
+                status?: components["parameters"]["OwnerReservationStatus"];
+            };
+            header?: {
+                /** @description Optional single UUID. Echoed unchanged when valid. Missing value generates a UUID. Invalid or duplicate values return 422 with a fresh UUID and never echo arbitrary text. */
+                "X-Correlation-ID"?: components["parameters"]["PrivateCorrelationId"];
+            };
+            path: {
+                celebrationId: components["parameters"]["CelebrationId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Reservation representation. */
+            200: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    "WWW-Authenticate": "Bearer";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description GIFT_OWNER_REQUIRED */
+            403: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description CELEBRATION_NOT_FOUND / GIFT_LIST_NOT_FOUND / GIFT_ITEM_NOT_FOUND / GIFT_RESERVATION_NOT_FOUND */
+            404: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description VALIDATION_FAILED */
+            422: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description AUTHORITY_UNAVAILABLE / PERSISTENCE_UNAVAILABLE */
+            503: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    confirmManualGiftReservation: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Optional single UUID. Echoed unchanged when valid. Missing value generates a UUID. Invalid or duplicate values return 422 with a fresh UUID and never echo arbitrary text. */
+                "X-Correlation-ID"?: components["parameters"]["PrivateCorrelationId"];
+            };
+            path: {
+                celebrationId: components["parameters"]["CelebrationId"];
+                reservationId: components["parameters"]["ReservationId"];
+            };
+            cookie?: never;
+        };
+        /** @description At most65536 original bytes, fatalUTF8, application/json with optionalUTF8charset and identity encoding. Total body deadline and graceful lifecycle preserve existing Gift policy. Exactly expectedItemVersion; source numeric lexeme and duplicates validated before rounding/coercion. No guest/host/status/mode/resolver/time/event identifiers from client. */
+        requestBody: {
+            content: {
+                /** @example {
+                 *       "expectedItemVersion": 1
+                 *     } */
+                "application/json": components["schemas"]["ManualReservationInput"];
+            };
+        };
+        responses: {
+            /** @description Reservation representation. */
+            200: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReservationResult"];
+                };
+            };
+            /** @description INVALID_JSON */
+            400: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "INVALID_JSON";
+                        /** @constant */
+                        status?: 400;
+                        /** @constant */
+                        title?: "Bad Request";
+                    };
+                };
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    "WWW-Authenticate": "Bearer";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "UNAUTHORIZED";
+                        /** @constant */
+                        status?: 401;
+                        /** @constant */
+                        title?: "Unauthorized";
+                    };
+                };
+            };
+            /** @description GIFT_OWNER_REQUIRED */
+            403: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "GIFT_OWNER_REQUIRED";
+                        /** @constant */
+                        status?: 403;
+                        /** @constant */
+                        title?: "Forbidden";
+                    };
+                };
+            };
+            /** @description CELEBRATION_NOT_FOUND / GIFT_LIST_NOT_FOUND / GIFT_ITEM_NOT_FOUND / GIFT_RESERVATION_NOT_FOUND */
+            404: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "CELEBRATION_NOT_FOUND" | "GIFT_LIST_NOT_FOUND" | "GIFT_ITEM_NOT_FOUND" | "GIFT_RESERVATION_NOT_FOUND";
+                        /** @constant */
+                        status?: 404;
+                        /** @constant */
+                        title?: "Not Found";
+                    };
+                };
+            };
+            /** @description REQUEST_TIMEOUT */
+            408: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "REQUEST_TIMEOUT";
+                        /** @constant */
+                        status?: 408;
+                        /** @constant */
+                        title?: "Request Timeout";
+                    };
+                };
+            };
+            /** @description GIFT_RESERVATION_CONFLICT */
+            409: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "GIFT_RESERVATION_CONFLICT";
+                        /** @constant */
+                        status?: 409;
+                        /** @constant */
+                        title?: "Conflict";
+                    };
+                };
+            };
+            /** @description PAYLOAD_TOO_LARGE */
+            413: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "PAYLOAD_TOO_LARGE";
+                        /** @constant */
+                        status?: 413;
+                        /** @constant */
+                        title?: "Payload Too Large";
+                    };
+                };
+            };
+            /** @description UNSUPPORTED_MEDIA_TYPE */
+            415: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "UNSUPPORTED_MEDIA_TYPE";
+                        /** @constant */
+                        status?: 415;
+                        /** @constant */
+                        title?: "Unsupported Media Type";
+                    };
+                };
+            };
+            /** @description VALIDATION_FAILED */
+            422: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "VALIDATION_FAILED";
+                        /** @constant */
+                        status?: 422;
+                        /** @constant */
+                        title?: "Unprocessable Entity";
+                    };
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "INTERNAL_ERROR";
+                        /** @constant */
+                        status?: 500;
+                        /** @constant */
+                        title?: "Internal Server Error";
+                    };
+                };
+            };
+            /** @description AUTHORITY_UNAVAILABLE / PERSISTENCE_UNAVAILABLE */
+            503: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "AUTHORITY_UNAVAILABLE" | "PERSISTENCE_UNAVAILABLE";
+                        /** @constant */
+                        status?: 503;
+                        /** @constant */
+                        title?: "Service Unavailable";
+                    };
+                };
+            };
+        };
+    };
+    rejectManualGiftReservation: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Optional single UUID. Echoed unchanged when valid. Missing value generates a UUID. Invalid or duplicate values return 422 with a fresh UUID and never echo arbitrary text. */
+                "X-Correlation-ID"?: components["parameters"]["PrivateCorrelationId"];
+            };
+            path: {
+                celebrationId: components["parameters"]["CelebrationId"];
+                reservationId: components["parameters"]["ReservationId"];
+            };
+            cookie?: never;
+        };
+        /** @description At most65536 original bytes, fatalUTF8, application/json with optionalUTF8charset and identity encoding. Total body deadline and graceful lifecycle preserve existing Gift policy. Exactly expectedItemVersion; source numeric lexeme and duplicates validated before rounding/coercion. No guest/host/status/mode/resolver/time/event identifiers from client. */
+        requestBody: {
+            content: {
+                /** @example {
+                 *       "expectedItemVersion": 1
+                 *     } */
+                "application/json": components["schemas"]["ManualReservationInput"];
+            };
+        };
+        responses: {
+            /** @description Reservation representation. */
+            200: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReservationResult"];
+                };
+            };
+            /** @description INVALID_JSON */
+            400: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "INVALID_JSON";
+                        /** @constant */
+                        status?: 400;
+                        /** @constant */
+                        title?: "Bad Request";
+                    };
+                };
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    "WWW-Authenticate": "Bearer";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "UNAUTHORIZED";
+                        /** @constant */
+                        status?: 401;
+                        /** @constant */
+                        title?: "Unauthorized";
+                    };
+                };
+            };
+            /** @description GIFT_OWNER_REQUIRED */
+            403: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "GIFT_OWNER_REQUIRED";
+                        /** @constant */
+                        status?: 403;
+                        /** @constant */
+                        title?: "Forbidden";
+                    };
+                };
+            };
+            /** @description CELEBRATION_NOT_FOUND / GIFT_LIST_NOT_FOUND / GIFT_ITEM_NOT_FOUND / GIFT_RESERVATION_NOT_FOUND */
+            404: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "CELEBRATION_NOT_FOUND" | "GIFT_LIST_NOT_FOUND" | "GIFT_ITEM_NOT_FOUND" | "GIFT_RESERVATION_NOT_FOUND";
+                        /** @constant */
+                        status?: 404;
+                        /** @constant */
+                        title?: "Not Found";
+                    };
+                };
+            };
+            /** @description REQUEST_TIMEOUT */
+            408: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "REQUEST_TIMEOUT";
+                        /** @constant */
+                        status?: 408;
+                        /** @constant */
+                        title?: "Request Timeout";
+                    };
+                };
+            };
+            /** @description GIFT_RESERVATION_CONFLICT */
+            409: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "GIFT_RESERVATION_CONFLICT";
+                        /** @constant */
+                        status?: 409;
+                        /** @constant */
+                        title?: "Conflict";
+                    };
+                };
+            };
+            /** @description PAYLOAD_TOO_LARGE */
+            413: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "PAYLOAD_TOO_LARGE";
+                        /** @constant */
+                        status?: 413;
+                        /** @constant */
+                        title?: "Payload Too Large";
+                    };
+                };
+            };
+            /** @description UNSUPPORTED_MEDIA_TYPE */
+            415: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "UNSUPPORTED_MEDIA_TYPE";
+                        /** @constant */
+                        status?: 415;
+                        /** @constant */
+                        title?: "Unsupported Media Type";
+                    };
+                };
+            };
+            /** @description VALIDATION_FAILED */
+            422: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "VALIDATION_FAILED";
+                        /** @constant */
+                        status?: 422;
+                        /** @constant */
+                        title?: "Unprocessable Entity";
+                    };
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "INTERNAL_ERROR";
+                        /** @constant */
+                        status?: 500;
+                        /** @constant */
+                        title?: "Internal Server Error";
+                    };
+                };
+            };
+            /** @description AUTHORITY_UNAVAILABLE / PERSISTENCE_UNAVAILABLE */
+            503: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "AUTHORITY_UNAVAILABLE" | "PERSISTENCE_UNAVAILABLE";
+                        /** @constant */
+                        status?: 503;
+                        /** @constant */
+                        title?: "Service Unavailable";
+                    };
+                };
+            };
+        };
+    };
+    listMyReservations: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Echoed in the response header and in problem.correlationId; generated when absent. */
+                "X-Correlation-Id"?: components["parameters"]["DevCompatCorrelationId"];
+            };
+            path: {
+                celebrationId: components["parameters"]["DevCompatCelebrationId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Own reservations */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RsvpAwareReservationList"];
+                };
+            };
+            401: components["responses"]["DevCompatUnauthorized"];
+            /** @description GUEST_IDENTITY_REQUIRED */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["DevCompatProblem"];
+                };
+            };
+            404: components["responses"]["DevCompatNotFound"];
+            429: components["responses"]["DevCompatRateLimited"];
+            503: components["responses"]["DevCompatDependencyUnavailable"];
         };
     };
     listReservations: {
         parameters: {
             query?: {
-                status?: components["schemas"]["ReservationStatus"];
+                /** @description The nextCursor of the previous page, unchanged. Keyset based: rows added meanwhile never shift a page. An invalid cursor answers 422 VALIDATION_FAILED. */
+                cursor?: components["parameters"]["PageCursor"];
+                /** @description Page size (L4). Never more than 200. */
+                limit?: components["parameters"]["PageLimit"];
+                status?: components["schemas"]["DevCompatReservationStatus"];
             };
             header?: {
                 /** @description Echoed in the response header and in problem.correlationId; generated when absent. */
-                "X-Correlation-Id"?: components["parameters"]["CorrelationId"];
+                "X-Correlation-Id"?: components["parameters"]["DevCompatCorrelationId"];
             };
             path: {
-                celebrationId: components["parameters"]["CelebrationId"];
+                celebrationId: components["parameters"]["DevCompatCelebrationId"];
             };
             cookie?: never;
         };
@@ -758,14 +6346,14 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ReservationList"];
+                    "application/json": components["schemas"]["PagedReservationList"];
                 };
             };
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            404: components["responses"]["NotFound"];
-            422: components["responses"]["Validation"];
-            503: components["responses"]["DependencyUnavailable"];
+            401: components["responses"]["DevCompatUnauthorized"];
+            403: components["responses"]["DevCompatForbidden"];
+            404: components["responses"]["DevCompatNotFound"];
+            422: components["responses"]["DevCompatValidation"];
+            503: components["responses"]["DevCompatDependencyUnavailable"];
         };
     };
     approveReservation: {
@@ -773,10 +6361,10 @@ export interface operations {
             query?: never;
             header?: {
                 /** @description Echoed in the response header and in problem.correlationId; generated when absent. */
-                "X-Correlation-Id"?: components["parameters"]["CorrelationId"];
+                "X-Correlation-Id"?: components["parameters"]["DevCompatCorrelationId"];
             };
             path: {
-                celebrationId: components["parameters"]["CelebrationId"];
+                celebrationId: components["parameters"]["DevCompatCelebrationId"];
                 reservationId: string;
             };
             cookie?: never;
@@ -789,12 +6377,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GiftReservation"];
+                    "application/json": components["schemas"]["RsvpAwareGiftReservation"];
                 };
             };
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            404: components["responses"]["NotFound"];
+            401: components["responses"]["DevCompatUnauthorized"];
+            403: components["responses"]["DevCompatForbidden"];
+            404: components["responses"]["DevCompatNotFound"];
             /** @description Not pending, or the gift changed concurrently */
             409: {
                 headers: {
@@ -807,10 +6395,77 @@ export interface operations {
                      *       "status": 409,
                      *       "code": "RESERVATION_NOT_PENDING"
                      *     } */
-                    "application/problem+json": components["schemas"]["Problem"];
+                    "application/problem+json": components["schemas"]["DevCompatProblem"];
                 };
             };
-            503: components["responses"]["DependencyUnavailable"];
+            503: components["responses"]["DevCompatDependencyUnavailable"];
+        };
+    };
+    cancelReservation: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Repeating the cancellation with the same key returns the stored result (200 with Idempotency-Replayed: true) instead of 409 RESERVATION_NOT_ACTIVE; the same key for another reservation is 422 IDEMPOTENCY_KEY_REUSED. Keys are scoped to (celebration, caller). */
+                "Idempotency-Key"?: string;
+                /** @description Echoed in the response header and in problem.correlationId; generated when absent. */
+                "X-Correlation-Id"?: components["parameters"]["DevCompatCorrelationId"];
+            };
+            path: {
+                celebrationId: components["parameters"]["DevCompatCelebrationId"];
+                reservationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Cancelled (status CANCELLED, cancellationReason GUEST_CANCELLED or HOST_CANCELLED) */
+            200: {
+                headers: {
+                    /** @description true when the response replays a previous request with the same Idempotency-Key */
+                    "Idempotency-Replayed"?: "true";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RsvpAwareGiftReservation"];
+                };
+            };
+            401: components["responses"]["DevCompatUnauthorized"];
+            /** @description GUEST_IDENTITY_REQUIRED: neither the host nor a guest with their link credential */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["DevCompatProblem"];
+                };
+            };
+            404: components["responses"]["DevCompatNotFound"];
+            /** @description RESERVATION_NOT_ACTIVE: already cancelled, rejected, or changed concurrently */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @example {
+                     *       "type": "https://rsvp.example/problems/reservation-not-active",
+                     *       "title": "Only a pending or committed reservation can be cancelled.",
+                     *       "status": 409,
+                     *       "code": "RESERVATION_NOT_ACTIVE"
+                     *     } */
+                    "application/problem+json": components["schemas"]["DevCompatProblem"];
+                };
+            };
+            /** @description VALIDATION_FAILED (malformed Idempotency-Key) or IDEMPOTENCY_KEY_REUSED */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["DevCompatProblem"];
+                };
+            };
+            429: components["responses"]["DevCompatRateLimited"];
+            503: components["responses"]["DevCompatDependencyUnavailable"];
         };
     };
     rejectReservation: {
@@ -818,10 +6473,10 @@ export interface operations {
             query?: never;
             header?: {
                 /** @description Echoed in the response header and in problem.correlationId; generated when absent. */
-                "X-Correlation-Id"?: components["parameters"]["CorrelationId"];
+                "X-Correlation-Id"?: components["parameters"]["DevCompatCorrelationId"];
             };
             path: {
-                celebrationId: components["parameters"]["CelebrationId"];
+                celebrationId: components["parameters"]["DevCompatCelebrationId"];
                 reservationId: string;
             };
             cookie?: never;
@@ -834,12 +6489,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GiftReservation"];
+                    "application/json": components["schemas"]["RsvpAwareGiftReservation"];
                 };
             };
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            404: components["responses"]["NotFound"];
+            401: components["responses"]["DevCompatUnauthorized"];
+            403: components["responses"]["DevCompatForbidden"];
+            404: components["responses"]["DevCompatNotFound"];
             /** @description Not pending */
             409: {
                 headers: {
@@ -852,10 +6507,918 @@ export interface operations {
                      *       "status": 409,
                      *       "code": "RESERVATION_NOT_PENDING"
                      *     } */
-                    "application/problem+json": components["schemas"]["Problem"];
+                    "application/problem+json": components["schemas"]["DevCompatProblem"];
                 };
             };
-            503: components["responses"]["DependencyUnavailable"];
+            503: components["responses"]["DevCompatDependencyUnavailable"];
+        };
+    };
+    requestModeAwareGiftReservation: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Optional single UUID. Echoed unchanged when valid. Missing value generates a UUID. Invalid or duplicate values return 422 with a fresh UUID and never echo arbitrary text. */
+                "X-Correlation-ID"?: components["parameters"]["PrivateCorrelationId"];
+            };
+            path: {
+                celebrationId: components["parameters"]["CelebrationId"];
+                giftItemId: components["parameters"]["PublicationGiftItemId"];
+            };
+            cookie?: never;
+        };
+        /** @description At most65536 original bytes, fatalUTF8, application/json with optionalUTF8charset and identity encoding. Total body deadline and graceful lifecycle preserve existing Gift policy. Exactly expectedItemVersion; source numeric lexeme and duplicates validated before rounding/coercion. No guest/host/status/mode/resolver/time/event identifiers from client. */
+        requestBody: {
+            content: {
+                /** @example {
+                 *       "expectedItemVersion": 1
+                 *     } */
+                "application/json": components["schemas"]["ManualReservationInput"];
+            };
+        };
+        responses: {
+            /** @description Reservation representation. */
+            201: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModeAwareReservationResult"];
+                };
+            };
+            /** @description INVALID_JSON */
+            400: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "INVALID_JSON";
+                        /** @constant */
+                        status?: 400;
+                        /** @constant */
+                        title?: "Bad Request";
+                    };
+                };
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    "WWW-Authenticate": "Bearer";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "UNAUTHORIZED";
+                        /** @constant */
+                        status?: 401;
+                        /** @constant */
+                        title?: "Unauthorized";
+                    };
+                };
+            };
+            /** @description CELEBRATION_NOT_FOUND / GIFT_LIST_NOT_FOUND / GIFT_ITEM_NOT_FOUND / GIFT_RESERVATION_NOT_FOUND */
+            404: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "CELEBRATION_NOT_FOUND" | "GIFT_LIST_NOT_FOUND" | "GIFT_ITEM_NOT_FOUND" | "GIFT_RESERVATION_NOT_FOUND";
+                        /** @constant */
+                        status?: 404;
+                        /** @constant */
+                        title?: "Not Found";
+                    };
+                };
+            };
+            /** @description REQUEST_TIMEOUT */
+            408: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "REQUEST_TIMEOUT";
+                        /** @constant */
+                        status?: 408;
+                        /** @constant */
+                        title?: "Request Timeout";
+                    };
+                };
+            };
+            /** @description GiftNotAvailable */
+            409: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "GiftNotAvailable";
+                        /** @constant */
+                        status?: 409;
+                        /** @constant */
+                        title?: "Conflict";
+                    };
+                };
+            };
+            /** @description PAYLOAD_TOO_LARGE */
+            413: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "PAYLOAD_TOO_LARGE";
+                        /** @constant */
+                        status?: 413;
+                        /** @constant */
+                        title?: "Payload Too Large";
+                    };
+                };
+            };
+            /** @description UNSUPPORTED_MEDIA_TYPE */
+            415: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "UNSUPPORTED_MEDIA_TYPE";
+                        /** @constant */
+                        status?: 415;
+                        /** @constant */
+                        title?: "Unsupported Media Type";
+                    };
+                };
+            };
+            /** @description VALIDATION_FAILED; includes an effective AUTO_ACCEPT mode: use the mode-aware reservation-requests operation. */
+            422: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "VALIDATION_FAILED";
+                        /** @constant */
+                        status?: 422;
+                        /** @constant */
+                        title?: "Unprocessable Entity";
+                    };
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "INTERNAL_ERROR";
+                        /** @constant */
+                        status?: 500;
+                        /** @constant */
+                        title?: "Internal Server Error";
+                    };
+                };
+            };
+            /** @description AUTHORITY_UNAVAILABLE / PERSISTENCE_UNAVAILABLE */
+            503: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "AUTHORITY_UNAVAILABLE" | "PERSISTENCE_UNAVAILABLE";
+                        /** @constant */
+                        status?: 503;
+                        /** @constant */
+                        title?: "Service Unavailable";
+                    };
+                };
+            };
+        };
+    };
+    requestManualGiftReservation: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Optional single UUID. Echoed unchanged when valid. Missing value generates a UUID. Invalid or duplicate values return 422 with a fresh UUID and never echo arbitrary text. */
+                "X-Correlation-ID"?: components["parameters"]["PrivateCorrelationId"];
+            };
+            path: {
+                celebrationId: components["parameters"]["CelebrationId"];
+                giftItemId: components["parameters"]["PublicationGiftItemId"];
+            };
+            cookie?: never;
+        };
+        /** @description At most65536 original bytes, fatalUTF8, application/json with optionalUTF8charset and identity encoding. Total body deadline and graceful lifecycle preserve existing Gift policy. Exactly expectedItemVersion; source numeric lexeme and duplicates validated before rounding/coercion. No guest/host/status/mode/resolver/time/event identifiers from client. */
+        requestBody: {
+            content: {
+                /** @example {
+                 *       "expectedItemVersion": 1
+                 *     } */
+                "application/json": components["schemas"]["ManualReservationInput"];
+            };
+        };
+        responses: {
+            /** @description Reservation representation. */
+            201: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReservationResult"];
+                };
+            };
+            /** @description INVALID_JSON */
+            400: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "INVALID_JSON";
+                        /** @constant */
+                        status?: 400;
+                        /** @constant */
+                        title?: "Bad Request";
+                    };
+                };
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    "WWW-Authenticate": "Bearer";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "UNAUTHORIZED";
+                        /** @constant */
+                        status?: 401;
+                        /** @constant */
+                        title?: "Unauthorized";
+                    };
+                };
+            };
+            /** @description CELEBRATION_NOT_FOUND / GIFT_LIST_NOT_FOUND / GIFT_ITEM_NOT_FOUND / GIFT_RESERVATION_NOT_FOUND */
+            404: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "CELEBRATION_NOT_FOUND" | "GIFT_LIST_NOT_FOUND" | "GIFT_ITEM_NOT_FOUND" | "GIFT_RESERVATION_NOT_FOUND";
+                        /** @constant */
+                        status?: 404;
+                        /** @constant */
+                        title?: "Not Found";
+                    };
+                };
+            };
+            /** @description REQUEST_TIMEOUT */
+            408: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "REQUEST_TIMEOUT";
+                        /** @constant */
+                        status?: 408;
+                        /** @constant */
+                        title?: "Request Timeout";
+                    };
+                };
+            };
+            /** @description GiftNotAvailable */
+            409: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "GiftNotAvailable";
+                        /** @constant */
+                        status?: 409;
+                        /** @constant */
+                        title?: "Conflict";
+                    };
+                };
+            };
+            /** @description PAYLOAD_TOO_LARGE */
+            413: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "PAYLOAD_TOO_LARGE";
+                        /** @constant */
+                        status?: 413;
+                        /** @constant */
+                        title?: "Payload Too Large";
+                    };
+                };
+            };
+            /** @description UNSUPPORTED_MEDIA_TYPE */
+            415: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "UNSUPPORTED_MEDIA_TYPE";
+                        /** @constant */
+                        status?: 415;
+                        /** @constant */
+                        title?: "Unsupported Media Type";
+                    };
+                };
+            };
+            /** @description VALIDATION_FAILED; includes an effective AUTO_ACCEPT mode: use the mode-aware reservation-requests operation. */
+            422: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "VALIDATION_FAILED";
+                        /** @constant */
+                        status?: 422;
+                        /** @constant */
+                        title?: "Unprocessable Entity";
+                    };
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "INTERNAL_ERROR";
+                        /** @constant */
+                        status?: 500;
+                        /** @constant */
+                        title?: "Internal Server Error";
+                    };
+                };
+            };
+            /** @description AUTHORITY_UNAVAILABLE / PERSISTENCE_UNAVAILABLE */
+            503: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "AUTHORITY_UNAVAILABLE" | "PERSISTENCE_UNAVAILABLE";
+                        /** @constant */
+                        status?: 503;
+                        /** @constant */
+                        title?: "Service Unavailable";
+                    };
+                };
+            };
+        };
+    };
+    getGuestModeAwareGiftReservation: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Optional single UUID. Echoed unchanged when valid. Missing value generates a UUID. Invalid or duplicate values return 422 with a fresh UUID and never echo arbitrary text. */
+                "X-Correlation-ID"?: components["parameters"]["PrivateCorrelationId"];
+            };
+            path: {
+                celebrationId: components["parameters"]["CelebrationId"];
+                reservationId: components["parameters"]["ReservationId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Reservation representation. */
+            200: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModeAwareReservationResult"];
+                };
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    "WWW-Authenticate": "Bearer";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "UNAUTHORIZED";
+                        /** @constant */
+                        status?: 401;
+                        /** @constant */
+                        title?: "Unauthorized";
+                    };
+                };
+            };
+            /** @description CELEBRATION_NOT_FOUND / GIFT_LIST_NOT_FOUND / GIFT_ITEM_NOT_FOUND / GIFT_RESERVATION_NOT_FOUND */
+            404: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "CELEBRATION_NOT_FOUND" | "GIFT_LIST_NOT_FOUND" | "GIFT_ITEM_NOT_FOUND" | "GIFT_RESERVATION_NOT_FOUND";
+                        /** @constant */
+                        status?: 404;
+                        /** @constant */
+                        title?: "Not Found";
+                    };
+                };
+            };
+            /** @description VALIDATION_FAILED */
+            422: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "VALIDATION_FAILED";
+                        /** @constant */
+                        status?: 422;
+                        /** @constant */
+                        title?: "Unprocessable Entity";
+                    };
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "INTERNAL_ERROR";
+                        /** @constant */
+                        status?: 500;
+                        /** @constant */
+                        title?: "Internal Server Error";
+                    };
+                };
+            };
+            /** @description AUTHORITY_UNAVAILABLE / PERSISTENCE_UNAVAILABLE */
+            503: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "AUTHORITY_UNAVAILABLE" | "PERSISTENCE_UNAVAILABLE";
+                        /** @constant */
+                        status?: 503;
+                        /** @constant */
+                        title?: "Service Unavailable";
+                    };
+                };
+            };
+        };
+    };
+    headGuestModeAwareGiftReservation: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Optional single UUID. Echoed unchanged when valid. Missing value generates a UUID. Invalid or duplicate values return 422 with a fresh UUID and never echo arbitrary text. */
+                "X-Correlation-ID"?: components["parameters"]["PrivateCorrelationId"];
+            };
+            path: {
+                celebrationId: components["parameters"]["CelebrationId"];
+                reservationId: components["parameters"]["ReservationId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Reservation representation. */
+            200: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    "WWW-Authenticate": "Bearer";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description CELEBRATION_NOT_FOUND / GIFT_LIST_NOT_FOUND / GIFT_ITEM_NOT_FOUND / GIFT_RESERVATION_NOT_FOUND */
+            404: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description VALIDATION_FAILED */
+            422: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description AUTHORITY_UNAVAILABLE / PERSISTENCE_UNAVAILABLE */
+            503: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    readGuestGiftReservation: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Optional single UUID. Echoed unchanged when valid. Missing value generates a UUID. Invalid or duplicate values return 422 with a fresh UUID and never echo arbitrary text. */
+                "X-Correlation-ID"?: components["parameters"]["PrivateCorrelationId"];
+            };
+            path: {
+                celebrationId: components["parameters"]["CelebrationId"];
+                reservationId: components["parameters"]["ReservationId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Reservation representation. */
+            200: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReservationResult"];
+                };
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    "WWW-Authenticate": "Bearer";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "UNAUTHORIZED";
+                        /** @constant */
+                        status?: 401;
+                        /** @constant */
+                        title?: "Unauthorized";
+                    };
+                };
+            };
+            /** @description CELEBRATION_NOT_FOUND / GIFT_LIST_NOT_FOUND / GIFT_ITEM_NOT_FOUND / GIFT_RESERVATION_NOT_FOUND */
+            404: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "CELEBRATION_NOT_FOUND" | "GIFT_LIST_NOT_FOUND" | "GIFT_ITEM_NOT_FOUND" | "GIFT_RESERVATION_NOT_FOUND";
+                        /** @constant */
+                        status?: 404;
+                        /** @constant */
+                        title?: "Not Found";
+                    };
+                };
+            };
+            /** @description VALIDATION_FAILED */
+            422: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "VALIDATION_FAILED";
+                        /** @constant */
+                        status?: 422;
+                        /** @constant */
+                        title?: "Unprocessable Entity";
+                    };
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "INTERNAL_ERROR";
+                        /** @constant */
+                        status?: 500;
+                        /** @constant */
+                        title?: "Internal Server Error";
+                    };
+                };
+            };
+            /** @description AUTHORITY_UNAVAILABLE / PERSISTENCE_UNAVAILABLE */
+            503: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ReservationProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "AUTHORITY_UNAVAILABLE" | "PERSISTENCE_UNAVAILABLE";
+                        /** @constant */
+                        status?: 503;
+                        /** @constant */
+                        title?: "Service Unavailable";
+                    };
+                };
+            };
+        };
+    };
+    headGuestGiftReservation: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Optional single UUID. Echoed unchanged when valid. Missing value generates a UUID. Invalid or duplicate values return 422 with a fresh UUID and never echo arbitrary text. */
+                "X-Correlation-ID"?: components["parameters"]["PrivateCorrelationId"];
+            };
+            path: {
+                celebrationId: components["parameters"]["CelebrationId"];
+                reservationId: components["parameters"]["ReservationId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Reservation representation. */
+            200: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description UNAUTHORIZED */
+            401: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    "WWW-Authenticate": "Bearer";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description CELEBRATION_NOT_FOUND / GIFT_LIST_NOT_FOUND / GIFT_ITEM_NOT_FOUND / GIFT_RESERVATION_NOT_FOUND */
+            404: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description VALIDATION_FAILED */
+            422: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description AUTHORITY_UNAVAILABLE / PERSISTENCE_UNAVAILABLE */
+            503: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
     getHealth: {
@@ -879,7 +7442,381 @@ export interface operations {
                     };
                 };
             };
-            503: components["responses"]["DependencyUnavailable"];
+            503: components["responses"]["DevCompatDependencyUnavailable"];
+        };
+    };
+    readPublicMixedGiftItems: {
+        parameters: {
+            query?: {
+                /** @description Opaque canonical versioned base64url sourceRank+UUID cursor bound to query kind and celebration. Tampered, noncanonical, duplicate or cross-context cursor422. No global concurrent snapshot promise. */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description H05B closed representation. No-store; correlation retained. */
+            200: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GiftPublicMixedPage"];
+                };
+            };
+            /** @description CELEBRATION_NOT_FOUND / GIFT_LIST_NOT_FOUND */
+            404: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "CELEBRATION_NOT_FOUND" | "GIFT_LIST_NOT_FOUND";
+                        /** @constant */
+                        status?: 404;
+                        /** @constant */
+                        title?: "Not Found";
+                    };
+                };
+            };
+            /** @description VALIDATION_FAILED / CATALOG_PRODUCT_UNAVAILABLE */
+            422: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "VALIDATION_FAILED" | "CATALOG_PRODUCT_UNAVAILABLE";
+                        /** @constant */
+                        status?: 422;
+                        /** @constant */
+                        title?: "Unprocessable Entity";
+                    };
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "INTERNAL_ERROR";
+                        /** @constant */
+                        status?: 500;
+                        /** @constant */
+                        title?: "Internal Server Error";
+                    };
+                };
+            };
+            /** @description AUTHORITY_UNAVAILABLE / PERSISTENCE_UNAVAILABLE / CATALOG_DEPENDENCY_UNAVAILABLE */
+            503: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["GiftCatalogProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "AUTHORITY_UNAVAILABLE" | "PERSISTENCE_UNAVAILABLE" | "CATALOG_DEPENDENCY_UNAVAILABLE";
+                        /** @constant */
+                        status?: 503;
+                        /** @constant */
+                        title?: "Service Unavailable";
+                    };
+                };
+            };
+        };
+    };
+    headReadPublicMixedGiftItems: {
+        parameters: {
+            query?: {
+                /** @description Opaque canonical versioned base64url sourceRank+UUID cursor bound to query kind and celebration. Tampered, noncanonical, duplicate or cross-context cursor422. No global concurrent snapshot promise. */
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description H05B closed representation. No-store; correlation retained. */
+            200: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description CELEBRATION_NOT_FOUND / GIFT_LIST_NOT_FOUND */
+            404: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description VALIDATION_FAILED / CATALOG_PRODUCT_UNAVAILABLE */
+            422: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description AUTHORITY_UNAVAILABLE / PERSISTENCE_UNAVAILABLE / CATALOG_DEPENDENCY_UNAVAILABLE */
+            503: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listPublicExternalGiftPublications: {
+        parameters: {
+            query?: {
+                /** @description Exclusive PostgreSQL UUID position in the currently resolved celebration. Eligibility and position apply before LIMIT+1. */
+                afterId?: components["parameters"]["PublicGiftAfterId"];
+                /** @description Single canonical textual integer1..50, default20; unknown, duplicate or invalid query is422. */
+                limit?: components["parameters"]["PublicGiftLimit"];
+            };
+            header?: {
+                /** @description Optional single UUID. Echoed unchanged when valid. Missing value generates a UUID. Invalid or duplicate values return 422 with a fresh UUID and never echo arbitrary text. */
+                "X-Correlation-ID"?: components["parameters"]["PrivateCorrelationId"];
+            };
+            path: {
+                /** @description Published Celebration slug, encoded once; invalid slug is422. Publication and enabled gifts section are resolved from GET /celebrations/public/{slug} for every request without visitor JWT. */
+                slug: components["parameters"]["PublicGiftSlug"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Public external gifts; valid celebration with no list or eligible items returns an empty page. */
+            200: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicExternalGiftPage"];
+                };
+            };
+            /** @description CELEBRATION_NOT_FOUND */
+            404: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "CELEBRATION_NOT_FOUND";
+                        /** @constant */
+                        status?: 404;
+                        /** @constant */
+                        title?: "Not Found";
+                    };
+                };
+            };
+            /** @description VALIDATION_FAILED */
+            422: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "VALIDATION_FAILED";
+                        /** @constant */
+                        status?: 422;
+                        /** @constant */
+                        title?: "Unprocessable Entity";
+                    };
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "INTERNAL_ERROR";
+                        /** @constant */
+                        status?: 500;
+                        /** @constant */
+                        title?: "Internal Server Error";
+                    };
+                };
+            };
+            /** @description AUTHORITY_UNAVAILABLE / PERSISTENCE_UNAVAILABLE */
+            503: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["PrivateProblem"] & {
+                        /** @enum {unknown} */
+                        code?: "AUTHORITY_UNAVAILABLE" | "PERSISTENCE_UNAVAILABLE";
+                        /** @constant */
+                        status?: 503;
+                        /** @constant */
+                        title?: "Service Unavailable";
+                    };
+                };
+            };
+        };
+    };
+    headPublicExternalGiftPublications: {
+        parameters: {
+            query?: {
+                /** @description Exclusive PostgreSQL UUID position in the currently resolved celebration. Eligibility and position apply before LIMIT+1. */
+                afterId?: components["parameters"]["PublicGiftAfterId"];
+                /** @description Single canonical textual integer1..50, default20; unknown, duplicate or invalid query is422. */
+                limit?: components["parameters"]["PublicGiftLimit"];
+            };
+            header?: {
+                /** @description Optional single UUID. Echoed unchanged when valid. Missing value generates a UUID. Invalid or duplicate values return 422 with a fresh UUID and never echo arbitrary text. */
+                "X-Correlation-ID"?: components["parameters"]["PrivateCorrelationId"];
+            };
+            path: {
+                /** @description Published Celebration slug, encoded once; invalid slug is422. Publication and enabled gifts section are resolved from GET /celebrations/public/{slug} for every request without visitor JWT. */
+                slug: components["parameters"]["PublicGiftSlug"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Public external gifts; valid celebration with no list or eligible items returns an empty page. */
+            200: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description CELEBRATION_NOT_FOUND */
+            404: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description VALIDATION_FAILED */
+            422: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description AUTHORITY_UNAVAILABLE / PERSISTENCE_UNAVAILABLE */
+            503: {
+                headers: {
+                    /** @description Responses are never stored. */
+                    "Cache-Control": "no-store";
+                    /** @description Request correlation UUID, also present on failures before controller execution. */
+                    "X-Correlation-ID": string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
 }

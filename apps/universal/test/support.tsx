@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { render, type RenderResult } from "@testing-library/react";
+import { fireEvent, render, screen, type RenderResult } from "@testing-library/react";
 import { QueryClient } from "@tanstack/react-query";
 import { createApiClient, toApiError, type ApiClient, type RequestOptions } from "@rsvp/api-client";
 import { MOCK_HOST_JWT, type ContractMock } from "@rsvp/testing/contract-mock";
@@ -8,7 +8,7 @@ import { AppProviders } from "../src/platform/providers";
 import type { SessionClaims } from "../src/platform/session";
 
 /** A fake gateway: handlers by "METHOD path" (path without query), every call recorded. */
-export interface Call { readonly method: string; readonly path: string; readonly body: unknown; readonly headers: Headers }
+export interface Call { readonly method: string; readonly path: string; /** The path with its query string. */ readonly url: string; readonly body: unknown; readonly headers: Headers }
 export type Handler = (call: Call) => unknown;
 
 export class HttpFailure {
@@ -19,7 +19,7 @@ export function fakeClient(handlers: Readonly<Record<string, Handler>>): { reado
   const calls: Call[] = [];
   const client: ApiClient = {
     request: async <TResponse,>(path: string, options: RequestOptions<unknown> = {}): Promise<TResponse> => {
-      const call = { method: options.method ?? "GET", path: path.split("?")[0] ?? path, body: options.body, headers: new Headers(options.headers) };
+      const call = { method: options.method ?? "GET", path: path.split("?")[0] ?? path, url: path, body: options.body, headers: new Headers(options.headers) };
       calls.push(call);
       const handler = handlers[`${call.method} ${call.path}`];
       if (!handler) throw toApiError(404, "test", { title: "Not found", status: 404 });
@@ -50,7 +50,7 @@ export const BAUTIZO: TranslatedEventType = { ...WEDDING, code: "BAUTIZO", name:
 
 export const CELEBRATION: Celebration = {
   id: "c-1", slug: "ana-y-luis", ownerId: "u-host", organizationId: null, eventTypeCode: "WEDDING", status: "DRAFT", version: 3, defaultLocale: "es-BO", supportedLocales: ["es-BO", "en-US"],
-  timeZone: "America/La_Paz", currency: "BOB", content: { title: "Ana y Luis", eventDate: "2026-12-19T23:00:00.000Z", hosts: { BRIDE: "Ana" }, schedule: [{ id: "s1", title: "Ceremonia", startsAt: "2026-12-19T23:00:00.000Z" }] },
+  timeZone: "America/La_Paz", currency: "BOB", content: { title: "Ana y Luis", eventDate: "2026-12-19T23:00:00.000Z", venueName: "Salón Las Palmas", hosts: { BRIDE: "Ana", GROOM: "Luis" }, schedule: [{ id: "s1", title: "Ceremonia", startsAt: "2026-12-19T23:00:00.000Z" }] },
   translations: {}, settings: { giftReservationMode: "RESTRICTED", unregisteredRsvpMode: "RESTRICTED", extraCompanionMode: "RESTRICTED", externalGiftMode: "RESTRICTED", rsvpDeadline: null, partnerPriorityEnabled: false, settingsVersion: 1, effectiveFrom: "2026-10-17T00:00:00Z" },
   templateId: "t-classic", collaborators: [], publishedAt: null, createdAt: "2026-10-17T00:00:00Z", updatedAt: "2026-10-17T00:00:00Z", access: "MANAGE",
   localTimes: { eventDate: { date: "2026-12-19", time: "19:00", timeZone: "America/La_Paz", utcOffset: "-04:00" }, "schedule.0.startsAt": { date: "2026-12-19", time: "19:00", timeZone: "America/La_Paz", utcOffset: "-04:00" } }
@@ -62,6 +62,13 @@ export const TEMPLATES: readonly Template[] = [
 ];
 
 /** Handlers every host screen needs: the celebration and the event types. */
+/** GET /providers/geo as provider-catalog serves it (a subset): slugs are stored, names are shown. */
+export const GEO = { country: "BO", source: "test", items: [
+  { slug: "la-paz", name: "La Paz", department: "La Paz", departmentCode: "LP", capital: true },
+  { slug: "el-alto", name: "El Alto", department: "La Paz", departmentCode: "LP", capital: false },
+  { slug: "santa-cruz", name: "Santa Cruz de la Sierra", department: "Santa Cruz", departmentCode: "SC", capital: true }
+] };
+
 export function baseHandlers(celebration: Celebration = CELEBRATION): Record<string, Handler> {
   return {
     [`GET /celebrations/${celebration.id}`]: () => celebration,
@@ -88,4 +95,34 @@ export function contractClient(mock: ContractMock, celebration: Celebration = { 
     }
   };
   return { client, celebration };
+}
+
+const two = (n: number): string => String(n).padStart(2, "0");
+export function pickOnboardingDate(value: string, testId = "onboarding-date"): void {
+  fireEvent.click(screen.getByTestId(testId));
+  const shown = screen.getByRole("grid").querySelector("button[tabindex='0']")?.getAttribute("data-testid");
+  if (!shown) throw new Error("No active day in the invitation calendar");
+  const [year, month] = value.split("-").map(Number) as [number, number, number];
+  const [currentYear, currentMonth] = shown.slice(-10).split("-").map(Number) as [number, number, number];
+  const distance = (year - currentYear) * 12 + month - currentMonth;
+  const step = distance > 0 ? "calendar-next-month" : "calendar-previous-month";
+  for (let index = 0; index < Math.abs(distance); index++) fireEvent.click(screen.getByTestId(step));
+  fireEvent.click(screen.getByTestId(`calendar-day-${value}`));
+}
+
+/** The product's own time field: a button named "<label>: <shown time>" that opens the clock panel. */
+export const timeField = (label: string, index = 0): HTMLElement => screen.getAllByRole("button", { name: new RegExp(`^${label}: `) })[index] as HTMLElement;
+/** Chooses a 24-hour `HH:MM` in the clock panel as a person would (hour, minutes, morning or afternoon); an empty value clears it. */
+export function pickTime(label: string, value: string, index = 0): void {
+  fireEvent.click(timeField(label, index));
+  if (!value) {
+    const clear = screen.getByTestId("time-clear");
+    fireEvent.click(clear.getAttribute("aria-disabled") === "true" ? screen.getByTestId("time-done") : clear);
+    return;
+  }
+  const [hours = 0, minutes = 0] = value.split(":").map(Number);
+  fireEvent.click(screen.getByTestId(`time-hour-${hours % 12 || 12}`));
+  fireEvent.click(screen.getByTestId(`time-minute-${two(minutes)}`));
+  fireEvent.click(screen.getByTestId(hours >= 12 ? "time-pm" : "time-am"));
+  fireEvent.click(screen.getByTestId("time-done"));
 }

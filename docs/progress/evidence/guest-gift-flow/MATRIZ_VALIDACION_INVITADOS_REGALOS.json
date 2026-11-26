@@ -1,0 +1,3701 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-18T11:18:56.139Z",
+  "scope": "Cierre invitados/regalos para revisión humana; sin merge ni Coolify",
+  "initial": {
+    "backend": "eed1137a38673aea7daecf47837637928d1fdc92",
+    "frontend": "d1aef5aae064726776e252b152da6a1ddaab6353"
+  },
+  "codeHeads": {
+    "backend": "12308a4c9ed55d359724fa5bd3edb64e228db2b9",
+    "backendFoundation": "abb082fec87579d0836ec547d76be37f004aac61",
+    "frontend": "665ca50044912678edbd2266a0a9927dd8f97157"
+  },
+  "prospective": {
+    "date": "2026-11-18T10:59:29.221Z",
+    "head": "665ca50044912678edbd2266a0a9927dd8f97157",
+    "base": "dc00f164b8e357852dc3f02a5a0c10db5d739aa1",
+    "prospectiveTree": "bf33a86022e1f9fbe2ce32d6173106ef3255e55c",
+    "conflicts": false,
+    "mergePerformed": false
+  },
+  "summary": {
+    "requiredFailures": 0,
+    "counts": {
+      "PASS": 86,
+      "FAIL": 2,
+      "BLOCKED": 2
+    }
+  },
+  "rows": [
+    {
+      "case": "replay-historical-outbox",
+      "reservationMode": "RESTRICTED",
+      "expected": "Estado coherente en Guest/Gift; sin duplicados y con historia preservada",
+      "observed": {
+        "reservation": {
+          "id": "360099a2-c05e-4630-8bbe-3aed5b5b8c30",
+          "status": "CANCELLED",
+          "version": 1,
+          "resolved_at": null,
+          "resolved_by_user_id": null,
+          "cancelled_at": "2026-11-17T23:57:55.444Z",
+          "cancelled_from_status": "PENDING_REVIEW",
+          "rsvp_version": null
+        },
+        "item": {
+          "id": "bff86892-b029-4475-b89d-051a3a2eec4b",
+          "status": "AVAILABLE",
+          "version": 3
+        }
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node stack-proof.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/stack-proof.json",
+      "log": "evidencia/stack-proof-6.log",
+      "date": "2026-11-18T00:06:13.836Z"
+    },
+    {
+      "case": "idempotent-reservation",
+      "reservationMode": "RESTRICTED",
+      "expected": "Estado coherente en Guest/Gift; sin duplicados y con historia preservada",
+      "observed": {
+        "id": "d8afe4e1-2e74-40d2-a0bd-bb2667eb58ad",
+        "status": "PENDING_REVIEW"
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node stack-proof.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/stack-proof.json",
+      "log": "evidencia/stack-proof-6.log",
+      "date": "2026-11-18T00:06:13.836Z"
+    },
+    {
+      "case": "attendance-cancellation",
+      "reservationMode": "RESTRICTED",
+      "expected": "Estado coherente en Guest/Gift; sin duplicados y con historia preservada",
+      "observed": {
+        "before": {
+          "id": "d8afe4e1-2e74-40d2-a0bd-bb2667eb58ad",
+          "status": "PENDING_REVIEW",
+          "version": 0,
+          "resolved_at": null,
+          "resolved_by_user_id": null,
+          "cancelled_at": null,
+          "cancelled_from_status": null,
+          "rsvp_version": "1"
+        },
+        "after": {
+          "id": "d8afe4e1-2e74-40d2-a0bd-bb2667eb58ad",
+          "status": "CANCELLED",
+          "version": 1,
+          "resolved_at": null,
+          "resolved_by_user_id": null,
+          "cancelled_at": "2026-11-18T00:04:00.718Z",
+          "cancelled_from_status": "PENDING_REVIEW",
+          "rsvp_version": "1"
+        },
+        "item": {
+          "id": "202b9a43-fe3d-4563-9d43-404e10c15223",
+          "status": "AVAILABLE",
+          "version": 3
+        }
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node stack-proof.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/stack-proof.json",
+      "log": "evidencia/stack-proof-6.log",
+      "date": "2026-11-18T00:06:13.836Z"
+    },
+    {
+      "case": "declined-denied-both-http-surfaces",
+      "reservationMode": "RESTRICTED",
+      "expected": "Estado coherente en Guest/Gift; sin duplicados y con historia preservada",
+      "observed": {
+        "compatible": 403,
+        "canonical": 403
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node stack-proof.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/stack-proof.json",
+      "log": "evidencia/stack-proof-6.log",
+      "date": "2026-11-18T00:06:13.836Z"
+    },
+    {
+      "case": "cancelled-idempotent-replay",
+      "reservationMode": "RESTRICTED",
+      "expected": "Estado coherente en Guest/Gift; sin duplicados y con historia preservada",
+      "observed": {
+        "id": "d8afe4e1-2e74-40d2-a0bd-bb2667eb58ad",
+        "status": "CANCELLED"
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node stack-proof.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/stack-proof.json",
+      "log": "evidencia/stack-proof-6.log",
+      "date": "2026-11-18T00:06:13.836Z"
+    },
+    {
+      "case": "reconfirmation-old-outbox-replay",
+      "reservationMode": "RESTRICTED",
+      "expected": "Estado coherente en Guest/Gift; sin duplicados y con historia preservada",
+      "observed": {
+        "reservation": {
+          "id": "1bfc9b10-6bcf-470a-8258-dd3262b07f68",
+          "status": "PENDING_REVIEW",
+          "version": 0,
+          "resolved_at": null,
+          "resolved_by_user_id": null,
+          "cancelled_at": null,
+          "cancelled_from_status": null,
+          "rsvp_version": "3"
+        },
+        "cancellationFacts": 1
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node stack-proof.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/stack-proof.json",
+      "log": "evidencia/stack-proof-6.log",
+      "date": "2026-11-18T00:06:13.836Z"
+    },
+    {
+      "case": "idempotent-reservation",
+      "reservationMode": "AUTO_ACCEPT",
+      "expected": "Estado coherente en Guest/Gift; sin duplicados y con historia preservada",
+      "observed": {
+        "id": "af26eddf-9e6a-44b5-a6c6-b10110ba864e",
+        "status": "COMMITTED"
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node stack-proof.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/stack-proof.json",
+      "log": "evidencia/stack-proof-6.log",
+      "date": "2026-11-18T00:06:13.836Z"
+    },
+    {
+      "case": "attendance-cancellation",
+      "reservationMode": "AUTO_ACCEPT",
+      "expected": "Estado coherente en Guest/Gift; sin duplicados y con historia preservada",
+      "observed": {
+        "before": {
+          "id": "af26eddf-9e6a-44b5-a6c6-b10110ba864e",
+          "status": "COMMITTED",
+          "version": 0,
+          "resolved_at": "2026-11-18T00:04:03.964Z",
+          "resolved_by_user_id": null,
+          "cancelled_at": null,
+          "cancelled_from_status": null,
+          "rsvp_version": "1"
+        },
+        "after": {
+          "id": "af26eddf-9e6a-44b5-a6c6-b10110ba864e",
+          "status": "CANCELLED",
+          "version": 1,
+          "resolved_at": "2026-11-18T00:04:03.964Z",
+          "resolved_by_user_id": null,
+          "cancelled_at": "2026-11-18T00:04:04.482Z",
+          "cancelled_from_status": "COMMITTED",
+          "rsvp_version": "1"
+        },
+        "item": {
+          "id": "7f19bf5b-8ea1-4966-a728-861ec2c2e11e",
+          "status": "AVAILABLE",
+          "version": 3
+        }
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node stack-proof.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/stack-proof.json",
+      "log": "evidencia/stack-proof-6.log",
+      "date": "2026-11-18T00:06:13.836Z"
+    },
+    {
+      "case": "declined-denied-both-http-surfaces",
+      "reservationMode": "AUTO_ACCEPT",
+      "expected": "Estado coherente en Guest/Gift; sin duplicados y con historia preservada",
+      "observed": {
+        "compatible": 403,
+        "canonical": 403
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node stack-proof.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/stack-proof.json",
+      "log": "evidencia/stack-proof-6.log",
+      "date": "2026-11-18T00:06:13.836Z"
+    },
+    {
+      "case": "cancelled-idempotent-replay",
+      "reservationMode": "AUTO_ACCEPT",
+      "expected": "Estado coherente en Guest/Gift; sin duplicados y con historia preservada",
+      "observed": {
+        "id": "af26eddf-9e6a-44b5-a6c6-b10110ba864e",
+        "status": "CANCELLED"
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node stack-proof.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/stack-proof.json",
+      "log": "evidencia/stack-proof-6.log",
+      "date": "2026-11-18T00:06:13.836Z"
+    },
+    {
+      "case": "reconfirmation-old-outbox-replay",
+      "reservationMode": "AUTO_ACCEPT",
+      "expected": "Estado coherente en Guest/Gift; sin duplicados y con historia preservada",
+      "observed": {
+        "reservation": {
+          "id": "a3c2c4f0-b9be-4ab4-8955-da6c387444a6",
+          "status": "COMMITTED",
+          "version": 0,
+          "resolved_at": "2026-11-18T00:04:04.855Z",
+          "resolved_by_user_id": null,
+          "cancelled_at": null,
+          "cancelled_from_status": null,
+          "rsvp_version": "3"
+        },
+        "cancellationFacts": 1
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node stack-proof.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/stack-proof.json",
+      "log": "evidencia/stack-proof-6.log",
+      "date": "2026-11-18T00:06:13.836Z"
+    },
+    {
+      "case": "outbox-during-outage",
+      "reservationMode": "RESTRICTED",
+      "expected": "Estado coherente en Guest/Gift; sin duplicados y con historia preservada",
+      "observed": [
+        {
+          "id": "ccd4be17-b576-453a-b135-235fbe409456",
+          "event_type": "guest.rsvp.changed.v1",
+          "published_at": null
+        }
+      ],
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node stack-proof.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/stack-proof.json",
+      "log": "evidencia/stack-proof-6.log",
+      "date": "2026-11-18T00:06:13.836Z"
+    },
+    {
+      "case": "real-business-broker-outage-and-recovery",
+      "reservationMode": "RESTRICTED",
+      "expected": "Estado coherente en Guest/Gift; sin duplicados y con historia preservada",
+      "observed": {
+        "reservation": {
+          "id": "ab7d8f38-e88d-4629-b148-da0102b52120",
+          "status": "CANCELLED",
+          "version": 1,
+          "resolved_at": null,
+          "resolved_by_user_id": null,
+          "cancelled_at": "2026-11-18T00:06:13.424Z",
+          "cancelled_from_status": "PENDING_REVIEW",
+          "rsvp_version": "1"
+        },
+        "item": {
+          "id": "97c56948-9f87-4df8-a5f2-bc85d69960c0",
+          "status": "AVAILABLE",
+          "version": 3
+        },
+        "workerReady": 200
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node stack-proof.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/stack-proof.json",
+      "log": "evidencia/stack-proof-6.log",
+      "date": "2026-11-18T00:06:13.836Z"
+    },
+    {
+      "case": "sql-overlap",
+      "reservationMode": "RESTRICTED",
+      "expected": "Denegación sin mutaciones o única reserva válida según el caso",
+      "observed": {
+        "waitingTransactions": 2
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node negative-and-race-proof.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/negative-and-race-proof.json",
+      "log": "evidencia/negative-and-race-recovered.log",
+      "date": "2026-11-18T10:53:23.222Z"
+    },
+    {
+      "case": "two-guests-overlap-through-real-kong",
+      "reservationMode": "RESTRICTED",
+      "expected": "Denegación sin mutaciones o única reserva válida según el caso",
+      "observed": {
+        "statuses": [
+          201,
+          409
+        ],
+        "reservationId": "e777b8a6-32ba-4510-b921-898fdd1a171e",
+        "idempotentReplayId": "e777b8a6-32ba-4510-b921-898fdd1a171e"
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node negative-and-race-proof.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/negative-and-race-proof.json",
+      "log": "evidencia/negative-and-race-recovered.log",
+      "date": "2026-11-18T10:53:23.222Z"
+    },
+    {
+      "case": "release-to-second-guest-and-preserve-manual-approval",
+      "reservationMode": "RESTRICTED",
+      "expected": "Denegación sin mutaciones o única reserva válida según el caso",
+      "observed": {
+        "approved": {
+          "id": "f3d9106d-9efa-4ac3-a3f5-69ba82f87e4d",
+          "status": "COMMITTED",
+          "version": 1,
+          "resolved_at": "2026-11-18T10:52:20.275Z",
+          "resolved_by_user_id": "88302a39-57e6-4e9a-93bc-73c8509f9eb7",
+          "cancelled_from_status": null
+        },
+        "after": {
+          "id": "f3d9106d-9efa-4ac3-a3f5-69ba82f87e4d",
+          "status": "CANCELLED",
+          "version": 2,
+          "resolved_at": "2026-11-18T10:52:20.275Z",
+          "resolved_by_user_id": "88302a39-57e6-4e9a-93bc-73c8509f9eb7",
+          "cancelled_from_status": "COMMITTED"
+        }
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node negative-and-race-proof.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/negative-and-race-proof.json",
+      "log": "evidencia/negative-and-race-recovered.log",
+      "date": "2026-11-18T10:53:23.222Z"
+    },
+    {
+      "case": "token-unknown",
+      "reservationMode": "RESTRICTED",
+      "expected": "Denegación sin mutaciones o única reserva válida según el caso",
+      "observed": {
+        "resourceStatus": 401,
+        "reservationStatus": 401,
+        "unchanged": true
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node negative-and-race-proof.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/negative-and-race-proof.json",
+      "log": "evidencia/negative-and-race-recovered.log",
+      "date": "2026-11-18T10:53:23.222Z"
+    },
+    {
+      "case": "token-revoked-by-reissue",
+      "reservationMode": "RESTRICTED",
+      "expected": "Denegación sin mutaciones o única reserva válida según el caso",
+      "observed": {
+        "resourceStatus": 401,
+        "reservationStatus": 401,
+        "unchanged": true
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node negative-and-race-proof.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/negative-and-race-proof.json",
+      "log": "evidencia/negative-and-race-recovered.log",
+      "date": "2026-11-18T10:53:23.222Z"
+    },
+    {
+      "case": "token-cross-celebration",
+      "reservationMode": "RESTRICTED",
+      "expected": "Denegación sin mutaciones o única reserva válida según el caso",
+      "observed": {
+        "resourceStatus": 404,
+        "reservationStatus": 404,
+        "unchanged": true
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node negative-and-race-proof.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/negative-and-race-proof.json",
+      "log": "evidencia/negative-and-race-recovered.log",
+      "date": "2026-11-18T10:53:23.222Z"
+    },
+    {
+      "case": "expired-token-with-real-clock",
+      "reservationMode": "RESTRICTED",
+      "expected": "Denegación sin mutaciones o única reserva válida según el caso",
+      "observed": {
+        "resourceStatus": 401,
+        "reservationStatus": 401,
+        "realClock": true,
+        "unchanged": true
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node negative-and-race-proof.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/negative-and-race-proof.json",
+      "log": "evidencia/negative-and-race-recovered.log",
+      "date": "2026-11-18T10:53:23.222Z"
+    },
+    {
+      "case": "deadline-still-permits-confirmed-guest-gifts",
+      "reservationMode": "RESTRICTED",
+      "expected": "Denegación sin mutaciones o única reserva válida según el caso",
+      "observed": {
+        "editStatus": 409,
+        "reservationStatus": 201,
+        "reservationId": "0fab8e3c-4a24-407a-8e09-d18f20ed7e53"
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node negative-and-race-proof.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/negative-and-race-proof.json",
+      "log": "evidencia/negative-and-race-recovered.log",
+      "date": "2026-11-18T10:53:23.222Z"
+    },
+    {
+      "case": "cancelación atómica, deduplicación e incrementos únicos",
+      "reservationMode": "RESTRICTED",
+      "expected": "CANCELLED + AVAILABLE; inbox único, un incremento por entidad y un hecho; nueva reserva HTTP 403",
+      "observed": "Aserciones de filas/versiones/índices/inbox/outbox pasadas",
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "bash gift-coverage.sh",
+      "exitCode": 0,
+      "evidence": "evidencia/gift-coverage-measured.log",
+      "log": "evidencia/gift-coverage-measured.log",
+      "date": "2026-11-17T23:57:26.707Z",
+      "source": "backend/apps/gift-list-service/test/integration/rsvp-cancellation.test.mjs"
+    },
+    {
+      "case": "orden invertido y reconfirmación",
+      "reservationMode": "RESTRICTED",
+      "expected": "Rechazo antiguo libera la reserva antigua y conserva la nueva con rsvpVersion=3",
+      "observed": "Prueba real PostgreSQL/RabbitMQ pasó; proyección conserva la versión más reciente",
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "bash gift-coverage.sh",
+      "exitCode": 0,
+      "evidence": "evidencia/gift-coverage-measured.log",
+      "log": "evidencia/gift-coverage-measured.log",
+      "date": "2026-11-17T23:57:26.707Z",
+      "source": "backend/apps/gift-list-service/test/integration/rsvp-cancellation.test.mjs"
+    },
+    {
+      "case": "carrera de reserva/cancelación con solapamiento SQL",
+      "reservationMode": "RESTRICTED",
+      "expected": "Ambas operaciones se solapan bajo bloqueo observable; ninguna reserva activa huérfana al terminar",
+      "observed": "Prueba real con pg_stat_activity y liberación del bloqueo pasó",
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "bash gift-coverage.sh",
+      "exitCode": 0,
+      "evidence": "evidencia/gift-coverage-measured.log",
+      "log": "evidencia/gift-coverage-measured.log",
+      "date": "2026-11-17T23:57:26.707Z",
+      "source": "backend/apps/gift-list-service/test/integration/rsvp-cancellation.test.mjs"
+    },
+    {
+      "case": "cancelación atómica, deduplicación e incrementos únicos",
+      "reservationMode": "AUTO_ACCEPT",
+      "expected": "CANCELLED + AVAILABLE; inbox único, un incremento por entidad y un hecho; nueva reserva HTTP 403",
+      "observed": "Aserciones de filas/versiones/índices/inbox/outbox pasadas",
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "bash gift-coverage.sh",
+      "exitCode": 0,
+      "evidence": "evidencia/gift-coverage-measured.log",
+      "log": "evidencia/gift-coverage-measured.log",
+      "date": "2026-11-17T23:57:26.707Z",
+      "source": "backend/apps/gift-list-service/test/integration/rsvp-cancellation.test.mjs"
+    },
+    {
+      "case": "orden invertido y reconfirmación",
+      "reservationMode": "AUTO_ACCEPT",
+      "expected": "Rechazo antiguo libera la reserva antigua y conserva la nueva con rsvpVersion=3",
+      "observed": "Prueba real PostgreSQL/RabbitMQ pasó; proyección conserva la versión más reciente",
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "bash gift-coverage.sh",
+      "exitCode": 0,
+      "evidence": "evidencia/gift-coverage-measured.log",
+      "log": "evidencia/gift-coverage-measured.log",
+      "date": "2026-11-17T23:57:26.707Z",
+      "source": "backend/apps/gift-list-service/test/integration/rsvp-cancellation.test.mjs"
+    },
+    {
+      "case": "carrera de reserva/cancelación con solapamiento SQL",
+      "reservationMode": "AUTO_ACCEPT",
+      "expected": "Ambas operaciones se solapan bajo bloqueo observable; ninguna reserva activa huérfana al terminar",
+      "observed": "Prueba real con pg_stat_activity y liberación del bloqueo pasó",
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "bash gift-coverage.sh",
+      "exitCode": 0,
+      "evidence": "evidencia/gift-coverage-measured.log",
+      "log": "evidencia/gift-coverage-measured.log",
+      "date": "2026-11-17T23:57:26.707Z",
+      "source": "backend/apps/gift-list-service/test/integration/rsvp-cancellation.test.mjs"
+    },
+    {
+      "case": "historial de aprobación manual",
+      "reservationMode": "RESTRICTED",
+      "expected": "Cancelación de COMMITTED conserva resolved_at, actor y modo",
+      "observed": "Aserciones pasadas en la suite real de integración",
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "bash gift-coverage.sh",
+      "exitCode": 0,
+      "evidence": "evidencia/gift-coverage-measured.log",
+      "log": "evidencia/gift-coverage-measured.log",
+      "date": "2026-11-17T23:57:26.707Z",
+      "source": "backend/apps/gift-list-service/test/integration/rsvp-cancellation.test.mjs"
+    },
+    {
+      "case": "procedencia RSVP histórica desconocida",
+      "reservationMode": "RESTRICTED",
+      "expected": "No fabricar una versión histórica ni cancelar una reserva nueva a partir de un rechazo antiguo",
+      "observed": "Aserciones pasadas en la suite real de integración",
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "bash gift-coverage.sh",
+      "exitCode": 0,
+      "evidence": "evidencia/gift-coverage-measured.log",
+      "log": "evidencia/gift-coverage-measured.log",
+      "date": "2026-11-17T23:57:26.707Z",
+      "source": "backend/apps/gift-list-service/test/integration/rsvp-cancellation.test.mjs"
+    },
+    {
+      "case": "aprobación del host contra cancelación",
+      "reservationMode": "RESTRICTED",
+      "expected": "Historia y disponibilidad consistentes bajo la misma barrera SQL",
+      "observed": "Aserciones pasadas en la suite real de integración",
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "bash gift-coverage.sh",
+      "exitCode": 0,
+      "evidence": "evidencia/gift-coverage-measured.log",
+      "log": "evidencia/gift-coverage-measured.log",
+      "date": "2026-11-17T23:57:26.707Z",
+      "source": "backend/apps/gift-list-service/test/integration/rsvp-cancellation.test.mjs"
+    },
+    {
+      "case": "rechazo del host contra cancelación",
+      "reservationMode": "RESTRICTED",
+      "expected": "Historia y disponibilidad consistentes bajo la misma barrera SQL",
+      "observed": "Aserciones pasadas en la suite real de integración",
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "bash gift-coverage.sh",
+      "exitCode": 0,
+      "evidence": "evidencia/gift-coverage-measured.log",
+      "log": "evidencia/gift-coverage-measured.log",
+      "date": "2026-11-17T23:57:26.707Z",
+      "source": "backend/apps/gift-list-service/test/integration/rsvp-cancellation.test.mjs"
+    },
+    {
+      "case": "sobre/actor/tenant forjados",
+      "reservationMode": "RESTRICTED",
+      "expected": "Parking; cero mutaciones de ambos tenants, incluso colisión de eventId",
+      "observed": "Aserciones pasadas en la suite real de integración",
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "bash gift-coverage.sh",
+      "exitCode": 0,
+      "evidence": "evidencia/gift-coverage-measured.log",
+      "log": "evidencia/gift-coverage-measured.log",
+      "date": "2026-11-17T23:57:26.707Z",
+      "source": "backend/apps/gift-list-service/test/integration/rsvp-cancellation.test.mjs"
+    },
+    {
+      "case": "invitado anonimizado",
+      "reservationMode": "RESTRICTED",
+      "expected": "Liberar sin restituir nombre, mensaje ni guestId borrados",
+      "observed": "Aserciones pasadas en la suite real de integración",
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "bash gift-coverage.sh",
+      "exitCode": 0,
+      "evidence": "evidencia/gift-coverage-measured.log",
+      "log": "evidencia/gift-coverage-measured.log",
+      "date": "2026-11-17T23:57:26.707Z",
+      "source": "backend/apps/gift-list-service/test/integration/rsvp-cancellation.test.mjs"
+    },
+    {
+      "case": "caída real de RabbitMQ",
+      "reservationMode": "RESTRICTED",
+      "expected": "Reconexión observable y procesamiento posterior",
+      "observed": "Aserciones pasadas en la suite real de integración",
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "bash gift-coverage.sh",
+      "exitCode": 0,
+      "evidence": "evidencia/gift-coverage-measured.log",
+      "log": "evidencia/gift-coverage-measured.log",
+      "date": "2026-11-17T23:57:26.707Z",
+      "source": "backend/apps/gift-list-service/test/integration/rsvp-cancellation.test.mjs"
+    },
+    {
+      "case": "crash tras commit antes de ACK",
+      "reservationMode": "RESTRICTED",
+      "expected": "Redelivery DUPLICATE; sin segunda liberación ni segundo outbox",
+      "observed": "Aserciones pasadas en la suite real de integración",
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "bash gift-coverage.sh",
+      "exitCode": 0,
+      "evidence": "evidencia/gift-coverage-measured.log",
+      "log": "evidencia/gift-coverage-measured.log",
+      "date": "2026-11-17T23:57:26.707Z",
+      "source": "backend/apps/gift-list-service/test/integration/rsvp-cancellation.test.mjs"
+    },
+    {
+      "case": "outbox pendiente y reinicio del broker",
+      "reservationMode": "RESTRICTED",
+      "expected": "La liberación ocurre tras recuperar el mismo nodo/volumen; worker ready, sin reinicio del proceso",
+      "observed": {
+        "status": "PASS",
+        "date": "2026-11-18T00:14:44.961Z",
+        "started": "2026-11-18T00:14:01.175Z",
+        "hostname": "f30958024d57",
+        "restartCount": 0,
+        "pending": [
+          {
+            "id": "761ee9f3-26f8-4e48-a817-253f456ec025",
+            "event_type": "guest.rsvp.changed.v1",
+            "published_at": null
+          }
+        ],
+        "after": {
+          "id": "e7f4e5e4-000b-4602-8159-bbfaa1ce346a",
+          "status": "CANCELLED",
+          "cancelled_from_status": "PENDING_REVIEW",
+          "version": 1
+        },
+        "workerReady": 200,
+        "recoveredWithoutProcessRestart": true,
+        "bootImportErrors": 0
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node broker-final-proof.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/broker-final-proof.json",
+      "log": "evidencia/broker-final-proof.log",
+      "date": "2026-11-18T00:14:44.994Z"
+    },
+    {
+      "case": "Chrome chrome 360-light-es-BO",
+      "reservationMode": "RESTRICTED",
+      "expected": "Nombre, confirmación, fotos/fallback, reserva 201, cancelación SQL, recuperación 403 con borrador, teclado y axe 0",
+      "observed": {
+        "key": "360-light-es-BO",
+        "width": 360,
+        "theme": "light",
+        "locale": "es-BO",
+        "status": "PASS",
+        "confirmed": {
+          "serious": 0,
+          "other": []
+        },
+        "gifts": {
+          "serious": 0,
+          "other": []
+        },
+        "dialog": {
+          "serious": 0,
+          "other": []
+        },
+        "reservationHttp": {
+          "status": 201
+        },
+        "recovery": {
+          "serious": 0,
+          "other": []
+        },
+        "keyboard": "Enter opens and navigates; Escape restores focus; fields retained after real HTTP 403",
+        "sql": {
+          "reservationId": "b2f28e9d-6d24-47cf-b0b4-01841f691e33",
+          "status": "CANCELLED"
+        }
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node browser-matrix.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/chrome/matrix.json",
+      "log": "evidencia/chrome-matrix-final.log",
+      "date": "2026-11-18T00:18:11.002Z"
+    },
+    {
+      "case": "Chrome chrome 360-light-en-US",
+      "reservationMode": "RESTRICTED",
+      "expected": "Nombre, confirmación, fotos/fallback, reserva 201, cancelación SQL, recuperación 403 con borrador, teclado y axe 0",
+      "observed": {
+        "key": "360-light-en-US",
+        "width": 360,
+        "theme": "light",
+        "locale": "en-US",
+        "status": "PASS",
+        "confirmed": {
+          "serious": 0,
+          "other": []
+        },
+        "gifts": {
+          "serious": 0,
+          "other": []
+        },
+        "dialog": {
+          "serious": 0,
+          "other": []
+        },
+        "reservationHttp": {
+          "status": 201
+        },
+        "recovery": {
+          "serious": 0,
+          "other": []
+        },
+        "keyboard": "Enter opens and navigates; Escape restores focus; fields retained after real HTTP 403",
+        "sql": {
+          "reservationId": "7f18faff-8cc5-439c-b576-2e4406b104a4",
+          "status": "CANCELLED"
+        }
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node browser-matrix.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/chrome/matrix.json",
+      "log": "evidencia/chrome-matrix-final.log",
+      "date": "2026-11-18T00:18:11.002Z"
+    },
+    {
+      "case": "Chrome chrome 360-dark-es-BO",
+      "reservationMode": "RESTRICTED",
+      "expected": "Nombre, confirmación, fotos/fallback, reserva 201, cancelación SQL, recuperación 403 con borrador, teclado y axe 0",
+      "observed": {
+        "key": "360-dark-es-BO",
+        "width": 360,
+        "theme": "dark",
+        "locale": "es-BO",
+        "status": "PASS",
+        "confirmed": {
+          "serious": 0,
+          "other": []
+        },
+        "gifts": {
+          "serious": 0,
+          "other": []
+        },
+        "dialog": {
+          "serious": 0,
+          "other": []
+        },
+        "reservationHttp": {
+          "status": 201
+        },
+        "recovery": {
+          "serious": 0,
+          "other": []
+        },
+        "keyboard": "Enter opens and navigates; Escape restores focus; fields retained after real HTTP 403",
+        "sql": {
+          "reservationId": "5f2df134-c339-4db6-a314-02bc7edbc81d",
+          "status": "CANCELLED"
+        }
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node browser-matrix.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/chrome/matrix.json",
+      "log": "evidencia/chrome-matrix-final.log",
+      "date": "2026-11-18T00:18:11.002Z"
+    },
+    {
+      "case": "Chrome chrome 360-dark-en-US",
+      "reservationMode": "RESTRICTED",
+      "expected": "Nombre, confirmación, fotos/fallback, reserva 201, cancelación SQL, recuperación 403 con borrador, teclado y axe 0",
+      "observed": {
+        "key": "360-dark-en-US",
+        "width": 360,
+        "theme": "dark",
+        "locale": "en-US",
+        "status": "PASS",
+        "confirmed": {
+          "serious": 0,
+          "other": []
+        },
+        "gifts": {
+          "serious": 0,
+          "other": []
+        },
+        "dialog": {
+          "serious": 0,
+          "other": []
+        },
+        "reservationHttp": {
+          "status": 201
+        },
+        "recovery": {
+          "serious": 0,
+          "other": []
+        },
+        "keyboard": "Enter opens and navigates; Escape restores focus; fields retained after real HTTP 403",
+        "sql": {
+          "reservationId": "fc2a4757-f817-4612-815f-9c9335b7597f",
+          "status": "CANCELLED"
+        }
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node browser-matrix.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/chrome/matrix.json",
+      "log": "evidencia/chrome-matrix-final.log",
+      "date": "2026-11-18T00:18:11.002Z"
+    },
+    {
+      "case": "Chrome chrome 768-light-es-BO",
+      "reservationMode": "RESTRICTED",
+      "expected": "Nombre, confirmación, fotos/fallback, reserva 201, cancelación SQL, recuperación 403 con borrador, teclado y axe 0",
+      "observed": {
+        "key": "768-light-es-BO",
+        "width": 768,
+        "theme": "light",
+        "locale": "es-BO",
+        "status": "PASS",
+        "confirmed": {
+          "serious": 0,
+          "other": []
+        },
+        "gifts": {
+          "serious": 0,
+          "other": []
+        },
+        "dialog": {
+          "serious": 0,
+          "other": []
+        },
+        "reservationHttp": {
+          "status": 201
+        },
+        "recovery": {
+          "serious": 0,
+          "other": []
+        },
+        "keyboard": "Enter opens and navigates; Escape restores focus; fields retained after real HTTP 403",
+        "sql": {
+          "reservationId": "f4337c1e-9985-46ed-9f4c-787554336f46",
+          "status": "CANCELLED"
+        }
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node browser-matrix.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/chrome/matrix.json",
+      "log": "evidencia/chrome-matrix-final.log",
+      "date": "2026-11-18T00:18:11.002Z"
+    },
+    {
+      "case": "Chrome chrome 768-light-en-US",
+      "reservationMode": "RESTRICTED",
+      "expected": "Nombre, confirmación, fotos/fallback, reserva 201, cancelación SQL, recuperación 403 con borrador, teclado y axe 0",
+      "observed": {
+        "key": "768-light-en-US",
+        "width": 768,
+        "theme": "light",
+        "locale": "en-US",
+        "status": "PASS",
+        "confirmed": {
+          "serious": 0,
+          "other": []
+        },
+        "gifts": {
+          "serious": 0,
+          "other": []
+        },
+        "dialog": {
+          "serious": 0,
+          "other": []
+        },
+        "reservationHttp": {
+          "status": 201
+        },
+        "recovery": {
+          "serious": 0,
+          "other": []
+        },
+        "keyboard": "Enter opens and navigates; Escape restores focus; fields retained after real HTTP 403",
+        "sql": {
+          "reservationId": "3d9fe88e-2cb9-41bc-b814-128605e94c6e",
+          "status": "CANCELLED"
+        }
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node browser-matrix.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/chrome/matrix.json",
+      "log": "evidencia/chrome-matrix-final.log",
+      "date": "2026-11-18T00:18:11.002Z"
+    },
+    {
+      "case": "Chrome chrome 768-dark-es-BO",
+      "reservationMode": "RESTRICTED",
+      "expected": "Nombre, confirmación, fotos/fallback, reserva 201, cancelación SQL, recuperación 403 con borrador, teclado y axe 0",
+      "observed": {
+        "key": "768-dark-es-BO",
+        "width": 768,
+        "theme": "dark",
+        "locale": "es-BO",
+        "status": "PASS",
+        "confirmed": {
+          "serious": 0,
+          "other": []
+        },
+        "gifts": {
+          "serious": 0,
+          "other": []
+        },
+        "dialog": {
+          "serious": 0,
+          "other": []
+        },
+        "reservationHttp": {
+          "status": 201
+        },
+        "recovery": {
+          "serious": 0,
+          "other": []
+        },
+        "keyboard": "Enter opens and navigates; Escape restores focus; fields retained after real HTTP 403",
+        "sql": {
+          "reservationId": "65d03105-5e1e-435d-ad95-8df2a7f789d8",
+          "status": "CANCELLED"
+        }
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node browser-matrix.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/chrome/matrix.json",
+      "log": "evidencia/chrome-matrix-final.log",
+      "date": "2026-11-18T00:18:11.002Z"
+    },
+    {
+      "case": "Chrome chrome 768-dark-en-US",
+      "reservationMode": "RESTRICTED",
+      "expected": "Nombre, confirmación, fotos/fallback, reserva 201, cancelación SQL, recuperación 403 con borrador, teclado y axe 0",
+      "observed": {
+        "key": "768-dark-en-US",
+        "width": 768,
+        "theme": "dark",
+        "locale": "en-US",
+        "status": "PASS",
+        "confirmed": {
+          "serious": 0,
+          "other": []
+        },
+        "gifts": {
+          "serious": 0,
+          "other": []
+        },
+        "dialog": {
+          "serious": 0,
+          "other": []
+        },
+        "reservationHttp": {
+          "status": 201
+        },
+        "recovery": {
+          "serious": 0,
+          "other": []
+        },
+        "keyboard": "Enter opens and navigates; Escape restores focus; fields retained after real HTTP 403",
+        "sql": {
+          "reservationId": "37933cd6-f736-44fb-8943-3f215108fa79",
+          "status": "CANCELLED"
+        }
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node browser-matrix.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/chrome/matrix.json",
+      "log": "evidencia/chrome-matrix-final.log",
+      "date": "2026-11-18T00:18:11.002Z"
+    },
+    {
+      "case": "Chrome chrome 1280-light-es-BO",
+      "reservationMode": "RESTRICTED",
+      "expected": "Nombre, confirmación, fotos/fallback, reserva 201, cancelación SQL, recuperación 403 con borrador, teclado y axe 0",
+      "observed": {
+        "key": "1280-light-es-BO",
+        "width": 1280,
+        "theme": "light",
+        "locale": "es-BO",
+        "status": "PASS",
+        "confirmed": {
+          "serious": 0,
+          "other": []
+        },
+        "gifts": {
+          "serious": 0,
+          "other": []
+        },
+        "dialog": {
+          "serious": 0,
+          "other": []
+        },
+        "reservationHttp": {
+          "status": 201
+        },
+        "recovery": {
+          "serious": 0,
+          "other": []
+        },
+        "keyboard": "Enter opens and navigates; Escape restores focus; fields retained after real HTTP 403",
+        "sql": {
+          "reservationId": "8a44e9d4-5b17-4f8f-9fe9-bb36ca140cb6",
+          "status": "CANCELLED"
+        }
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node browser-matrix.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/chrome/matrix.json",
+      "log": "evidencia/chrome-matrix-final.log",
+      "date": "2026-11-18T00:18:11.002Z"
+    },
+    {
+      "case": "Chrome chrome 1280-light-en-US",
+      "reservationMode": "RESTRICTED",
+      "expected": "Nombre, confirmación, fotos/fallback, reserva 201, cancelación SQL, recuperación 403 con borrador, teclado y axe 0",
+      "observed": {
+        "key": "1280-light-en-US",
+        "width": 1280,
+        "theme": "light",
+        "locale": "en-US",
+        "status": "PASS",
+        "confirmed": {
+          "serious": 0,
+          "other": []
+        },
+        "gifts": {
+          "serious": 0,
+          "other": []
+        },
+        "dialog": {
+          "serious": 0,
+          "other": []
+        },
+        "reservationHttp": {
+          "status": 201
+        },
+        "recovery": {
+          "serious": 0,
+          "other": []
+        },
+        "keyboard": "Enter opens and navigates; Escape restores focus; fields retained after real HTTP 403",
+        "sql": {
+          "reservationId": "c5cd9d4f-c302-4eb6-952a-8bee62a07f7c",
+          "status": "CANCELLED"
+        }
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node browser-matrix.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/chrome/matrix.json",
+      "log": "evidencia/chrome-matrix-final.log",
+      "date": "2026-11-18T00:18:11.002Z"
+    },
+    {
+      "case": "Chrome chrome 1280-dark-es-BO",
+      "reservationMode": "RESTRICTED",
+      "expected": "Nombre, confirmación, fotos/fallback, reserva 201, cancelación SQL, recuperación 403 con borrador, teclado y axe 0",
+      "observed": {
+        "key": "1280-dark-es-BO",
+        "width": 1280,
+        "theme": "dark",
+        "locale": "es-BO",
+        "status": "PASS",
+        "confirmed": {
+          "serious": 0,
+          "other": []
+        },
+        "gifts": {
+          "serious": 0,
+          "other": []
+        },
+        "dialog": {
+          "serious": 0,
+          "other": []
+        },
+        "reservationHttp": {
+          "status": 201
+        },
+        "recovery": {
+          "serious": 0,
+          "other": []
+        },
+        "keyboard": "Enter opens and navigates; Escape restores focus; fields retained after real HTTP 403",
+        "sql": {
+          "reservationId": "d46383d7-4a0a-41bd-a969-8da1fd33d9e4",
+          "status": "CANCELLED"
+        }
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node browser-matrix.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/chrome/matrix.json",
+      "log": "evidencia/chrome-matrix-final.log",
+      "date": "2026-11-18T00:18:11.002Z"
+    },
+    {
+      "case": "Chrome chrome 1280-dark-en-US",
+      "reservationMode": "RESTRICTED",
+      "expected": "Nombre, confirmación, fotos/fallback, reserva 201, cancelación SQL, recuperación 403 con borrador, teclado y axe 0",
+      "observed": {
+        "key": "1280-dark-en-US",
+        "width": 1280,
+        "theme": "dark",
+        "locale": "en-US",
+        "status": "PASS",
+        "confirmed": {
+          "serious": 0,
+          "other": []
+        },
+        "gifts": {
+          "serious": 0,
+          "other": []
+        },
+        "dialog": {
+          "serious": 0,
+          "other": []
+        },
+        "reservationHttp": {
+          "status": 201
+        },
+        "recovery": {
+          "serious": 0,
+          "other": []
+        },
+        "keyboard": "Enter opens and navigates; Escape restores focus; fields retained after real HTTP 403",
+        "sql": {
+          "reservationId": "a88adf28-2ed7-4213-b2a2-0836b8a768f9",
+          "status": "CANCELLED"
+        }
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node browser-matrix.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/chrome/matrix.json",
+      "log": "evidencia/chrome-matrix-final.log",
+      "date": "2026-11-18T00:18:11.002Z"
+    },
+    {
+      "case": "Chrome chrome-prospective-verified 360-light-es-BO",
+      "reservationMode": "RESTRICTED",
+      "expected": "Nombre, confirmación, fotos/fallback, reserva 201, cancelación SQL, recuperación 403 con borrador, teclado y axe 0",
+      "observed": {
+        "key": "360-light-es-BO",
+        "width": 360,
+        "theme": "light",
+        "locale": "es-BO",
+        "status": "PASS",
+        "publicProjectionReadyMs": 12,
+        "http": [
+          {
+            "method": "GET",
+            "path": "/celebrations/public/guest-chrome-360-light-es-bo-949af8a1",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/d0a8dc23-6345-4d52-b7a6-35f2d12f4f99/guest",
+            "status": 200,
+            "remaining": "28"
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/d0a8dc23-6345-4d52-b7a6-35f2d12f4f99/rsvp",
+            "status": 200,
+            "remaining": "27"
+          },
+          {
+            "method": "POST",
+            "path": "/rsvp/celebrations/d0a8dc23-6345-4d52-b7a6-35f2d12f4f99/rsvp",
+            "status": 201,
+            "remaining": "26"
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/d0a8dc23-6345-4d52-b7a6-35f2d12f4f99/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/listings/41ced6c2-8c03-4751-abcf-31411eba7df0",
+            "status": 200,
+            "remaining": "119"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/ee6c025b-a6b6-4cb4-93ae-05da3032ca0a",
+            "status": 200,
+            "remaining": "117"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/c93dd91e-1086-4905-bb9e-da5ac3dcdb23",
+            "status": 200,
+            "remaining": "119"
+          },
+          {
+            "method": "POST",
+            "path": "/gifts/celebrations/d0a8dc23-6345-4d52-b7a6-35f2d12f4f99/items/90d8342d-7144-46a1-913b-48895099e726/reservations",
+            "status": 201,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/d0a8dc23-6345-4d52-b7a6-35f2d12f4f99/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/celebrations/public/guest-chrome-360-light-es-bo-949af8a1",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/d0a8dc23-6345-4d52-b7a6-35f2d12f4f99/guest",
+            "status": 200,
+            "remaining": "25"
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/d0a8dc23-6345-4d52-b7a6-35f2d12f4f99/rsvp",
+            "status": 200,
+            "remaining": "25"
+          },
+          {
+            "method": "PATCH",
+            "path": "/rsvp/celebrations/d0a8dc23-6345-4d52-b7a6-35f2d12f4f99/rsvp",
+            "status": 200,
+            "remaining": "23"
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/d0a8dc23-6345-4d52-b7a6-35f2d12f4f99/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/listings/c93dd91e-1086-4905-bb9e-da5ac3dcdb23",
+            "status": 200,
+            "remaining": "115"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/41ced6c2-8c03-4751-abcf-31411eba7df0",
+            "status": 200,
+            "remaining": "116"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/ee6c025b-a6b6-4cb4-93ae-05da3032ca0a",
+            "status": 200,
+            "remaining": "115"
+          },
+          {
+            "method": "POST",
+            "path": "/gifts/celebrations/d0a8dc23-6345-4d52-b7a6-35f2d12f4f99/items/90d8342d-7144-46a1-913b-48895099e726/reservations",
+            "status": 403,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/d0a8dc23-6345-4d52-b7a6-35f2d12f4f99/items",
+            "status": 200,
+            "remaining": null
+          }
+        ],
+        "confirmed": {
+          "serious": 0,
+          "other": []
+        },
+        "gifts": {
+          "serious": 0,
+          "other": []
+        },
+        "dialog": {
+          "serious": 0,
+          "other": []
+        },
+        "reservationHttp": {
+          "status": 201
+        },
+        "recovery": {
+          "serious": 0,
+          "other": []
+        },
+        "keyboard": "Enter opens and navigates; Escape restores focus; fields retained after real HTTP 403",
+        "sql": {
+          "reservationId": "bbb0506e-ce83-46fc-82d1-ffd371dc81a7",
+          "status": "CANCELLED"
+        }
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node browser-matrix.mjs chrome-prospective-verified",
+      "exitCode": 0,
+      "evidence": "evidencia/chrome-prospective-verified/matrix.json",
+      "log": "evidencia/chrome-prospective-verified.log",
+      "date": "2026-11-18T11:17:14.844Z"
+    },
+    {
+      "case": "Chrome chrome-prospective-verified 360-light-en-US",
+      "reservationMode": "RESTRICTED",
+      "expected": "Nombre, confirmación, fotos/fallback, reserva 201, cancelación SQL, recuperación 403 con borrador, teclado y axe 0",
+      "observed": {
+        "key": "360-light-en-US",
+        "width": 360,
+        "theme": "light",
+        "locale": "en-US",
+        "status": "PASS",
+        "publicProjectionReadyMs": 19,
+        "http": [
+          {
+            "method": "GET",
+            "path": "/celebrations/public/guest-chrome-360-light-en-us-7a5260c6",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/bcae400c-1247-44a0-8f3a-47216535213b/guest",
+            "status": 200,
+            "remaining": "21"
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/bcae400c-1247-44a0-8f3a-47216535213b/rsvp",
+            "status": 200,
+            "remaining": "20"
+          },
+          {
+            "method": "POST",
+            "path": "/rsvp/celebrations/bcae400c-1247-44a0-8f3a-47216535213b/rsvp",
+            "status": 201,
+            "remaining": "19"
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/bcae400c-1247-44a0-8f3a-47216535213b/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/listings/c93dd91e-1086-4905-bb9e-da5ac3dcdb23",
+            "status": 200,
+            "remaining": "113"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/41ced6c2-8c03-4751-abcf-31411eba7df0",
+            "status": 200,
+            "remaining": "113"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/ee6c025b-a6b6-4cb4-93ae-05da3032ca0a",
+            "status": 200,
+            "remaining": "111"
+          },
+          {
+            "method": "POST",
+            "path": "/gifts/celebrations/bcae400c-1247-44a0-8f3a-47216535213b/items/ed5e1c56-fdab-42e3-8f30-9b88bbdde82e/reservations",
+            "status": 201,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/bcae400c-1247-44a0-8f3a-47216535213b/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/celebrations/public/guest-chrome-360-light-en-us-7a5260c6",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/bcae400c-1247-44a0-8f3a-47216535213b/guest",
+            "status": 200,
+            "remaining": "18"
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/bcae400c-1247-44a0-8f3a-47216535213b/rsvp",
+            "status": 200,
+            "remaining": "17"
+          },
+          {
+            "method": "PATCH",
+            "path": "/rsvp/celebrations/bcae400c-1247-44a0-8f3a-47216535213b/rsvp",
+            "status": 200,
+            "remaining": "16"
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/bcae400c-1247-44a0-8f3a-47216535213b/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/listings/41ced6c2-8c03-4751-abcf-31411eba7df0",
+            "status": 200,
+            "remaining": "110"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/c93dd91e-1086-4905-bb9e-da5ac3dcdb23",
+            "status": 200,
+            "remaining": "110"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/ee6c025b-a6b6-4cb4-93ae-05da3032ca0a",
+            "status": 200,
+            "remaining": "108"
+          },
+          {
+            "method": "POST",
+            "path": "/gifts/celebrations/bcae400c-1247-44a0-8f3a-47216535213b/items/ed5e1c56-fdab-42e3-8f30-9b88bbdde82e/reservations",
+            "status": 403,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/bcae400c-1247-44a0-8f3a-47216535213b/items",
+            "status": 200,
+            "remaining": null
+          }
+        ],
+        "confirmed": {
+          "serious": 0,
+          "other": []
+        },
+        "gifts": {
+          "serious": 0,
+          "other": []
+        },
+        "dialog": {
+          "serious": 0,
+          "other": []
+        },
+        "reservationHttp": {
+          "status": 201
+        },
+        "recovery": {
+          "serious": 0,
+          "other": []
+        },
+        "keyboard": "Enter opens and navigates; Escape restores focus; fields retained after real HTTP 403",
+        "sql": {
+          "reservationId": "3e5627a4-1b9d-4c9b-bfbb-6517d5c35760",
+          "status": "CANCELLED"
+        }
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node browser-matrix.mjs chrome-prospective-verified",
+      "exitCode": 0,
+      "evidence": "evidencia/chrome-prospective-verified/matrix.json",
+      "log": "evidencia/chrome-prospective-verified.log",
+      "date": "2026-11-18T11:17:14.844Z"
+    },
+    {
+      "case": "Chrome chrome-prospective-verified 360-dark-es-BO",
+      "reservationMode": "RESTRICTED",
+      "expected": "Nombre, confirmación, fotos/fallback, reserva 201, cancelación SQL, recuperación 403 con borrador, teclado y axe 0",
+      "observed": {
+        "key": "360-dark-es-BO",
+        "width": 360,
+        "theme": "dark",
+        "locale": "es-BO",
+        "status": "PASS",
+        "publicProjectionReadyMs": 9,
+        "http": [
+          {
+            "method": "GET",
+            "path": "/celebrations/public/guest-chrome-360-dark-es-bo-666b480d",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/6bd2b17c-7fee-45f4-9a4f-1fc324212e6e/guest",
+            "status": 200,
+            "remaining": "14"
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/6bd2b17c-7fee-45f4-9a4f-1fc324212e6e/rsvp",
+            "status": 200,
+            "remaining": "13"
+          },
+          {
+            "method": "POST",
+            "path": "/rsvp/celebrations/6bd2b17c-7fee-45f4-9a4f-1fc324212e6e/rsvp",
+            "status": 201,
+            "remaining": "12"
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/6bd2b17c-7fee-45f4-9a4f-1fc324212e6e/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/listings/c93dd91e-1086-4905-bb9e-da5ac3dcdb23",
+            "status": 200,
+            "remaining": "107"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/ee6c025b-a6b6-4cb4-93ae-05da3032ca0a",
+            "status": 200,
+            "remaining": "105"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/41ced6c2-8c03-4751-abcf-31411eba7df0",
+            "status": 200,
+            "remaining": "106"
+          },
+          {
+            "method": "POST",
+            "path": "/gifts/celebrations/6bd2b17c-7fee-45f4-9a4f-1fc324212e6e/items/d179e582-7320-4bd2-8863-9b706c4fdc92/reservations",
+            "status": 201,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/6bd2b17c-7fee-45f4-9a4f-1fc324212e6e/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/celebrations/public/guest-chrome-360-dark-es-bo-666b480d",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/6bd2b17c-7fee-45f4-9a4f-1fc324212e6e/guest",
+            "status": 200,
+            "remaining": "11"
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/6bd2b17c-7fee-45f4-9a4f-1fc324212e6e/rsvp",
+            "status": 200,
+            "remaining": "11"
+          },
+          {
+            "method": "PATCH",
+            "path": "/rsvp/celebrations/6bd2b17c-7fee-45f4-9a4f-1fc324212e6e/rsvp",
+            "status": 200,
+            "remaining": "9"
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/6bd2b17c-7fee-45f4-9a4f-1fc324212e6e/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/listings/41ced6c2-8c03-4751-abcf-31411eba7df0",
+            "status": 200,
+            "remaining": "104"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/c93dd91e-1086-4905-bb9e-da5ac3dcdb23",
+            "status": 200,
+            "remaining": "104"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/ee6c025b-a6b6-4cb4-93ae-05da3032ca0a",
+            "status": 200,
+            "remaining": "102"
+          },
+          {
+            "method": "POST",
+            "path": "/gifts/celebrations/6bd2b17c-7fee-45f4-9a4f-1fc324212e6e/items/d179e582-7320-4bd2-8863-9b706c4fdc92/reservations",
+            "status": 403,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/6bd2b17c-7fee-45f4-9a4f-1fc324212e6e/items",
+            "status": 200,
+            "remaining": null
+          }
+        ],
+        "confirmed": {
+          "serious": 0,
+          "other": []
+        },
+        "gifts": {
+          "serious": 0,
+          "other": []
+        },
+        "dialog": {
+          "serious": 0,
+          "other": []
+        },
+        "reservationHttp": {
+          "status": 201
+        },
+        "recovery": {
+          "serious": 0,
+          "other": []
+        },
+        "keyboard": "Enter opens and navigates; Escape restores focus; fields retained after real HTTP 403",
+        "sql": {
+          "reservationId": "c7691edc-9b44-4b3e-82e6-a885092b1567",
+          "status": "CANCELLED"
+        }
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node browser-matrix.mjs chrome-prospective-verified",
+      "exitCode": 0,
+      "evidence": "evidencia/chrome-prospective-verified/matrix.json",
+      "log": "evidencia/chrome-prospective-verified.log",
+      "date": "2026-11-18T11:17:14.844Z"
+    },
+    {
+      "case": "Chrome chrome-prospective-verified 360-dark-en-US",
+      "reservationMode": "RESTRICTED",
+      "expected": "Nombre, confirmación, fotos/fallback, reserva 201, cancelación SQL, recuperación 403 con borrador, teclado y axe 0",
+      "observed": {
+        "key": "360-dark-en-US",
+        "width": 360,
+        "theme": "dark",
+        "locale": "en-US",
+        "status": "PASS",
+        "publicProjectionReadyMs": 233,
+        "http": [
+          {
+            "method": "GET",
+            "path": "/celebrations/public/guest-chrome-360-dark-en-us-4fd583f9",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/2b2d8c3d-15bd-4dd1-8181-978c76817ed8/guest",
+            "status": 200,
+            "remaining": "28"
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/2b2d8c3d-15bd-4dd1-8181-978c76817ed8/rsvp",
+            "status": 200,
+            "remaining": "27"
+          },
+          {
+            "method": "POST",
+            "path": "/rsvp/celebrations/2b2d8c3d-15bd-4dd1-8181-978c76817ed8/rsvp",
+            "status": 201,
+            "remaining": "26"
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/2b2d8c3d-15bd-4dd1-8181-978c76817ed8/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/listings/41ced6c2-8c03-4751-abcf-31411eba7df0",
+            "status": 200,
+            "remaining": "118"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/ee6c025b-a6b6-4cb4-93ae-05da3032ca0a",
+            "status": 200,
+            "remaining": "117"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/c93dd91e-1086-4905-bb9e-da5ac3dcdb23",
+            "status": 200,
+            "remaining": "119"
+          },
+          {
+            "method": "POST",
+            "path": "/gifts/celebrations/2b2d8c3d-15bd-4dd1-8181-978c76817ed8/items/ec8230f1-24f8-4e53-a7e2-283626c14ea3/reservations",
+            "status": 201,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/2b2d8c3d-15bd-4dd1-8181-978c76817ed8/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/celebrations/public/guest-chrome-360-dark-en-us-4fd583f9",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/2b2d8c3d-15bd-4dd1-8181-978c76817ed8/guest",
+            "status": 200,
+            "remaining": "25"
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/2b2d8c3d-15bd-4dd1-8181-978c76817ed8/rsvp",
+            "status": 200,
+            "remaining": "25"
+          },
+          {
+            "method": "PATCH",
+            "path": "/rsvp/celebrations/2b2d8c3d-15bd-4dd1-8181-978c76817ed8/rsvp",
+            "status": 200,
+            "remaining": "23"
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/2b2d8c3d-15bd-4dd1-8181-978c76817ed8/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/listings/41ced6c2-8c03-4751-abcf-31411eba7df0",
+            "status": 200,
+            "remaining": "115"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/c93dd91e-1086-4905-bb9e-da5ac3dcdb23",
+            "status": 200,
+            "remaining": "116"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/ee6c025b-a6b6-4cb4-93ae-05da3032ca0a",
+            "status": 200,
+            "remaining": "115"
+          },
+          {
+            "method": "POST",
+            "path": "/gifts/celebrations/2b2d8c3d-15bd-4dd1-8181-978c76817ed8/items/ec8230f1-24f8-4e53-a7e2-283626c14ea3/reservations",
+            "status": 403,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/2b2d8c3d-15bd-4dd1-8181-978c76817ed8/items",
+            "status": 200,
+            "remaining": null
+          }
+        ],
+        "confirmed": {
+          "serious": 0,
+          "other": []
+        },
+        "gifts": {
+          "serious": 0,
+          "other": []
+        },
+        "dialog": {
+          "serious": 0,
+          "other": []
+        },
+        "reservationHttp": {
+          "status": 201
+        },
+        "recovery": {
+          "serious": 0,
+          "other": []
+        },
+        "keyboard": "Enter opens and navigates; Escape restores focus; fields retained after real HTTP 403",
+        "sql": {
+          "reservationId": "dea43451-f7ac-4c08-b2b8-069e8d5f81e8",
+          "status": "CANCELLED"
+        }
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node browser-matrix.mjs chrome-prospective-verified",
+      "exitCode": 0,
+      "evidence": "evidencia/chrome-prospective-verified/matrix.json",
+      "log": "evidencia/chrome-prospective-verified.log",
+      "date": "2026-11-18T11:17:14.844Z"
+    },
+    {
+      "case": "Chrome chrome-prospective-verified 768-light-es-BO",
+      "reservationMode": "RESTRICTED",
+      "expected": "Nombre, confirmación, fotos/fallback, reserva 201, cancelación SQL, recuperación 403 con borrador, teclado y axe 0",
+      "observed": {
+        "key": "768-light-es-BO",
+        "width": 768,
+        "theme": "light",
+        "locale": "es-BO",
+        "status": "PASS",
+        "publicProjectionReadyMs": 9,
+        "http": [
+          {
+            "method": "GET",
+            "path": "/celebrations/public/guest-chrome-768-light-es-bo-8ea200d6",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/7e75870b-a7b5-4528-b6b8-8c17bb3c81e9/guest",
+            "status": 200,
+            "remaining": "21"
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/7e75870b-a7b5-4528-b6b8-8c17bb3c81e9/rsvp",
+            "status": 200,
+            "remaining": "20"
+          },
+          {
+            "method": "POST",
+            "path": "/rsvp/celebrations/7e75870b-a7b5-4528-b6b8-8c17bb3c81e9/rsvp",
+            "status": 201,
+            "remaining": "19"
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/7e75870b-a7b5-4528-b6b8-8c17bb3c81e9/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/listings/41ced6c2-8c03-4751-abcf-31411eba7df0",
+            "status": 200,
+            "remaining": "113"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/c93dd91e-1086-4905-bb9e-da5ac3dcdb23",
+            "status": 200,
+            "remaining": "112"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/ee6c025b-a6b6-4cb4-93ae-05da3032ca0a",
+            "status": 200,
+            "remaining": "111"
+          },
+          {
+            "method": "POST",
+            "path": "/gifts/celebrations/7e75870b-a7b5-4528-b6b8-8c17bb3c81e9/items/8221afb3-290d-41dc-9eb6-a068f44f8c3e/reservations",
+            "status": 201,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/7e75870b-a7b5-4528-b6b8-8c17bb3c81e9/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/celebrations/public/guest-chrome-768-light-es-bo-8ea200d6",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/7e75870b-a7b5-4528-b6b8-8c17bb3c81e9/guest",
+            "status": 200,
+            "remaining": "18"
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/7e75870b-a7b5-4528-b6b8-8c17bb3c81e9/rsvp",
+            "status": 200,
+            "remaining": "18"
+          },
+          {
+            "method": "PATCH",
+            "path": "/rsvp/celebrations/7e75870b-a7b5-4528-b6b8-8c17bb3c81e9/rsvp",
+            "status": 200,
+            "remaining": "16"
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/7e75870b-a7b5-4528-b6b8-8c17bb3c81e9/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/listings/c93dd91e-1086-4905-bb9e-da5ac3dcdb23",
+            "status": 200,
+            "remaining": "110"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/41ced6c2-8c03-4751-abcf-31411eba7df0",
+            "status": 200,
+            "remaining": "109"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/ee6c025b-a6b6-4cb4-93ae-05da3032ca0a",
+            "status": 200,
+            "remaining": "109"
+          },
+          {
+            "method": "POST",
+            "path": "/gifts/celebrations/7e75870b-a7b5-4528-b6b8-8c17bb3c81e9/items/8221afb3-290d-41dc-9eb6-a068f44f8c3e/reservations",
+            "status": 403,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/7e75870b-a7b5-4528-b6b8-8c17bb3c81e9/items",
+            "status": 200,
+            "remaining": null
+          }
+        ],
+        "confirmed": {
+          "serious": 0,
+          "other": []
+        },
+        "gifts": {
+          "serious": 0,
+          "other": []
+        },
+        "dialog": {
+          "serious": 0,
+          "other": []
+        },
+        "reservationHttp": {
+          "status": 201
+        },
+        "recovery": {
+          "serious": 0,
+          "other": []
+        },
+        "keyboard": "Enter opens and navigates; Escape restores focus; fields retained after real HTTP 403",
+        "sql": {
+          "reservationId": "589d3689-58e3-488b-b03d-517d79cfd9d8",
+          "status": "CANCELLED"
+        }
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node browser-matrix.mjs chrome-prospective-verified",
+      "exitCode": 0,
+      "evidence": "evidencia/chrome-prospective-verified/matrix.json",
+      "log": "evidencia/chrome-prospective-verified.log",
+      "date": "2026-11-18T11:17:14.844Z"
+    },
+    {
+      "case": "Chrome chrome-prospective-verified 768-light-en-US",
+      "reservationMode": "RESTRICTED",
+      "expected": "Nombre, confirmación, fotos/fallback, reserva 201, cancelación SQL, recuperación 403 con borrador, teclado y axe 0",
+      "observed": {
+        "key": "768-light-en-US",
+        "width": 768,
+        "theme": "light",
+        "locale": "en-US",
+        "status": "PASS",
+        "publicProjectionReadyMs": 11,
+        "http": [
+          {
+            "method": "GET",
+            "path": "/celebrations/public/guest-chrome-768-light-en-us-6e1e2ac6",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/c2f0d41b-8690-4038-9749-db926e1d67db/guest",
+            "status": 200,
+            "remaining": "14"
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/c2f0d41b-8690-4038-9749-db926e1d67db/rsvp",
+            "status": 200,
+            "remaining": "13"
+          },
+          {
+            "method": "POST",
+            "path": "/rsvp/celebrations/c2f0d41b-8690-4038-9749-db926e1d67db/rsvp",
+            "status": 201,
+            "remaining": "12"
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/c2f0d41b-8690-4038-9749-db926e1d67db/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/listings/c93dd91e-1086-4905-bb9e-da5ac3dcdb23",
+            "status": 200,
+            "remaining": "107"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/41ced6c2-8c03-4751-abcf-31411eba7df0",
+            "status": 200,
+            "remaining": "106"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/ee6c025b-a6b6-4cb4-93ae-05da3032ca0a",
+            "status": 200,
+            "remaining": "105"
+          },
+          {
+            "method": "POST",
+            "path": "/gifts/celebrations/c2f0d41b-8690-4038-9749-db926e1d67db/items/23d442d7-6c77-4569-9086-810cb4ffc889/reservations",
+            "status": 201,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/c2f0d41b-8690-4038-9749-db926e1d67db/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/celebrations/public/guest-chrome-768-light-en-us-6e1e2ac6",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/c2f0d41b-8690-4038-9749-db926e1d67db/guest",
+            "status": 200,
+            "remaining": "11"
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/c2f0d41b-8690-4038-9749-db926e1d67db/rsvp",
+            "status": 200,
+            "remaining": "10"
+          },
+          {
+            "method": "PATCH",
+            "path": "/rsvp/celebrations/c2f0d41b-8690-4038-9749-db926e1d67db/rsvp",
+            "status": 200,
+            "remaining": "9"
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/c2f0d41b-8690-4038-9749-db926e1d67db/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/listings/41ced6c2-8c03-4751-abcf-31411eba7df0",
+            "status": 200,
+            "remaining": "104"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/c93dd91e-1086-4905-bb9e-da5ac3dcdb23",
+            "status": 200,
+            "remaining": "103"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/ee6c025b-a6b6-4cb4-93ae-05da3032ca0a",
+            "status": 200,
+            "remaining": "102"
+          },
+          {
+            "method": "POST",
+            "path": "/gifts/celebrations/c2f0d41b-8690-4038-9749-db926e1d67db/items/23d442d7-6c77-4569-9086-810cb4ffc889/reservations",
+            "status": 403,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/c2f0d41b-8690-4038-9749-db926e1d67db/items",
+            "status": 200,
+            "remaining": null
+          }
+        ],
+        "confirmed": {
+          "serious": 0,
+          "other": []
+        },
+        "gifts": {
+          "serious": 0,
+          "other": []
+        },
+        "dialog": {
+          "serious": 0,
+          "other": []
+        },
+        "reservationHttp": {
+          "status": 201
+        },
+        "recovery": {
+          "serious": 0,
+          "other": []
+        },
+        "keyboard": "Enter opens and navigates; Escape restores focus; fields retained after real HTTP 403",
+        "sql": {
+          "reservationId": "6d2c6329-40c8-4266-a275-6add3c155b76",
+          "status": "CANCELLED"
+        }
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node browser-matrix.mjs chrome-prospective-verified",
+      "exitCode": 0,
+      "evidence": "evidencia/chrome-prospective-verified/matrix.json",
+      "log": "evidencia/chrome-prospective-verified.log",
+      "date": "2026-11-18T11:17:14.844Z"
+    },
+    {
+      "case": "Chrome chrome-prospective-verified 768-dark-es-BO",
+      "reservationMode": "RESTRICTED",
+      "expected": "Nombre, confirmación, fotos/fallback, reserva 201, cancelación SQL, recuperación 403 con borrador, teclado y axe 0",
+      "observed": {
+        "key": "768-dark-es-BO",
+        "width": 768,
+        "theme": "dark",
+        "locale": "es-BO",
+        "status": "PASS",
+        "publicProjectionReadyMs": 12,
+        "http": [
+          {
+            "method": "GET",
+            "path": "/celebrations/public/guest-chrome-768-dark-es-bo-1c2427fb",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/4a707564-89ec-44bb-9c8f-a54c1c1ade33/guest",
+            "status": 200,
+            "remaining": "28"
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/4a707564-89ec-44bb-9c8f-a54c1c1ade33/rsvp",
+            "status": 200,
+            "remaining": "27"
+          },
+          {
+            "method": "POST",
+            "path": "/rsvp/celebrations/4a707564-89ec-44bb-9c8f-a54c1c1ade33/rsvp",
+            "status": 201,
+            "remaining": "26"
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/4a707564-89ec-44bb-9c8f-a54c1c1ade33/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/listings/41ced6c2-8c03-4751-abcf-31411eba7df0",
+            "status": 200,
+            "remaining": "118"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/c93dd91e-1086-4905-bb9e-da5ac3dcdb23",
+            "status": 200,
+            "remaining": "119"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/ee6c025b-a6b6-4cb4-93ae-05da3032ca0a",
+            "status": 200,
+            "remaining": "117"
+          },
+          {
+            "method": "POST",
+            "path": "/gifts/celebrations/4a707564-89ec-44bb-9c8f-a54c1c1ade33/items/a2b2f648-0b92-4287-8a2a-e4de18b4b207/reservations",
+            "status": 201,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/4a707564-89ec-44bb-9c8f-a54c1c1ade33/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/celebrations/public/guest-chrome-768-dark-es-bo-1c2427fb",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/4a707564-89ec-44bb-9c8f-a54c1c1ade33/guest",
+            "status": 200,
+            "remaining": "25"
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/4a707564-89ec-44bb-9c8f-a54c1c1ade33/rsvp",
+            "status": 200,
+            "remaining": "25"
+          },
+          {
+            "method": "PATCH",
+            "path": "/rsvp/celebrations/4a707564-89ec-44bb-9c8f-a54c1c1ade33/rsvp",
+            "status": 200,
+            "remaining": "23"
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/4a707564-89ec-44bb-9c8f-a54c1c1ade33/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/listings/c93dd91e-1086-4905-bb9e-da5ac3dcdb23",
+            "status": 200,
+            "remaining": "116"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/41ced6c2-8c03-4751-abcf-31411eba7df0",
+            "status": 200,
+            "remaining": "115"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/ee6c025b-a6b6-4cb4-93ae-05da3032ca0a",
+            "status": 200,
+            "remaining": "115"
+          },
+          {
+            "method": "POST",
+            "path": "/gifts/celebrations/4a707564-89ec-44bb-9c8f-a54c1c1ade33/items/a2b2f648-0b92-4287-8a2a-e4de18b4b207/reservations",
+            "status": 403,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/4a707564-89ec-44bb-9c8f-a54c1c1ade33/items",
+            "status": 200,
+            "remaining": null
+          }
+        ],
+        "confirmed": {
+          "serious": 0,
+          "other": []
+        },
+        "gifts": {
+          "serious": 0,
+          "other": []
+        },
+        "dialog": {
+          "serious": 0,
+          "other": []
+        },
+        "reservationHttp": {
+          "status": 201
+        },
+        "recovery": {
+          "serious": 0,
+          "other": []
+        },
+        "keyboard": "Enter opens and navigates; Escape restores focus; fields retained after real HTTP 403",
+        "sql": {
+          "reservationId": "b1c3ac32-1377-4953-9c53-58d9210095a9",
+          "status": "CANCELLED"
+        }
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node browser-matrix.mjs chrome-prospective-verified",
+      "exitCode": 0,
+      "evidence": "evidencia/chrome-prospective-verified/matrix.json",
+      "log": "evidencia/chrome-prospective-verified.log",
+      "date": "2026-11-18T11:17:14.844Z"
+    },
+    {
+      "case": "Chrome chrome-prospective-verified 768-dark-en-US",
+      "reservationMode": "RESTRICTED",
+      "expected": "Nombre, confirmación, fotos/fallback, reserva 201, cancelación SQL, recuperación 403 con borrador, teclado y axe 0",
+      "observed": {
+        "key": "768-dark-en-US",
+        "width": 768,
+        "theme": "dark",
+        "locale": "en-US",
+        "status": "PASS",
+        "publicProjectionReadyMs": 14,
+        "http": [
+          {
+            "method": "GET",
+            "path": "/celebrations/public/guest-chrome-768-dark-en-us-426b43bb",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/e7699e97-9063-438d-8767-2542394af9ca/guest",
+            "status": 200,
+            "remaining": "21"
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/e7699e97-9063-438d-8767-2542394af9ca/rsvp",
+            "status": 200,
+            "remaining": "20"
+          },
+          {
+            "method": "POST",
+            "path": "/rsvp/celebrations/e7699e97-9063-438d-8767-2542394af9ca/rsvp",
+            "status": 201,
+            "remaining": "19"
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/e7699e97-9063-438d-8767-2542394af9ca/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/listings/c93dd91e-1086-4905-bb9e-da5ac3dcdb23",
+            "status": 200,
+            "remaining": "113"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/41ced6c2-8c03-4751-abcf-31411eba7df0",
+            "status": 200,
+            "remaining": "112"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/ee6c025b-a6b6-4cb4-93ae-05da3032ca0a",
+            "status": 200,
+            "remaining": "111"
+          },
+          {
+            "method": "POST",
+            "path": "/gifts/celebrations/e7699e97-9063-438d-8767-2542394af9ca/items/4f6b9197-1de7-47c2-980d-0a7427aa54bb/reservations",
+            "status": 201,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/e7699e97-9063-438d-8767-2542394af9ca/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/celebrations/public/guest-chrome-768-dark-en-us-426b43bb",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/e7699e97-9063-438d-8767-2542394af9ca/guest",
+            "status": 200,
+            "remaining": "18"
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/e7699e97-9063-438d-8767-2542394af9ca/rsvp",
+            "status": 200,
+            "remaining": "17"
+          },
+          {
+            "method": "PATCH",
+            "path": "/rsvp/celebrations/e7699e97-9063-438d-8767-2542394af9ca/rsvp",
+            "status": 200,
+            "remaining": "16"
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/e7699e97-9063-438d-8767-2542394af9ca/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/listings/c93dd91e-1086-4905-bb9e-da5ac3dcdb23",
+            "status": 200,
+            "remaining": "110"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/41ced6c2-8c03-4751-abcf-31411eba7df0",
+            "status": 200,
+            "remaining": "109"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/ee6c025b-a6b6-4cb4-93ae-05da3032ca0a",
+            "status": 200,
+            "remaining": "109"
+          },
+          {
+            "method": "POST",
+            "path": "/gifts/celebrations/e7699e97-9063-438d-8767-2542394af9ca/items/4f6b9197-1de7-47c2-980d-0a7427aa54bb/reservations",
+            "status": 403,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/e7699e97-9063-438d-8767-2542394af9ca/items",
+            "status": 200,
+            "remaining": null
+          }
+        ],
+        "confirmed": {
+          "serious": 0,
+          "other": []
+        },
+        "gifts": {
+          "serious": 0,
+          "other": []
+        },
+        "dialog": {
+          "serious": 0,
+          "other": []
+        },
+        "reservationHttp": {
+          "status": 201
+        },
+        "recovery": {
+          "serious": 0,
+          "other": []
+        },
+        "keyboard": "Enter opens and navigates; Escape restores focus; fields retained after real HTTP 403",
+        "sql": {
+          "reservationId": "f8b62d34-23df-4ac5-8611-650271b35c45",
+          "status": "CANCELLED"
+        }
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node browser-matrix.mjs chrome-prospective-verified",
+      "exitCode": 0,
+      "evidence": "evidencia/chrome-prospective-verified/matrix.json",
+      "log": "evidencia/chrome-prospective-verified.log",
+      "date": "2026-11-18T11:17:14.844Z"
+    },
+    {
+      "case": "Chrome chrome-prospective-verified 1280-light-es-BO",
+      "reservationMode": "RESTRICTED",
+      "expected": "Nombre, confirmación, fotos/fallback, reserva 201, cancelación SQL, recuperación 403 con borrador, teclado y axe 0",
+      "observed": {
+        "key": "1280-light-es-BO",
+        "width": 1280,
+        "theme": "light",
+        "locale": "es-BO",
+        "status": "PASS",
+        "publicProjectionReadyMs": 445,
+        "http": [
+          {
+            "method": "GET",
+            "path": "/celebrations/public/guest-chrome-1280-light-es-bo-37e10211",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/79dd67aa-320d-4290-a2bf-b2b5250f3d76/guest",
+            "status": 200,
+            "remaining": "14"
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/79dd67aa-320d-4290-a2bf-b2b5250f3d76/rsvp",
+            "status": 200,
+            "remaining": "13"
+          },
+          {
+            "method": "POST",
+            "path": "/rsvp/celebrations/79dd67aa-320d-4290-a2bf-b2b5250f3d76/rsvp",
+            "status": 201,
+            "remaining": "12"
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/79dd67aa-320d-4290-a2bf-b2b5250f3d76/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/listings/41ced6c2-8c03-4751-abcf-31411eba7df0",
+            "status": 200,
+            "remaining": "107"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/c93dd91e-1086-4905-bb9e-da5ac3dcdb23",
+            "status": 200,
+            "remaining": "106"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/ee6c025b-a6b6-4cb4-93ae-05da3032ca0a",
+            "status": 200,
+            "remaining": "105"
+          },
+          {
+            "method": "POST",
+            "path": "/gifts/celebrations/79dd67aa-320d-4290-a2bf-b2b5250f3d76/items/717964f5-b5a1-4c39-92b1-6b50de48532f/reservations",
+            "status": 201,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/79dd67aa-320d-4290-a2bf-b2b5250f3d76/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/celebrations/public/guest-chrome-1280-light-es-bo-37e10211",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/79dd67aa-320d-4290-a2bf-b2b5250f3d76/guest",
+            "status": 200,
+            "remaining": "11"
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/79dd67aa-320d-4290-a2bf-b2b5250f3d76/rsvp",
+            "status": 200,
+            "remaining": "11"
+          },
+          {
+            "method": "PATCH",
+            "path": "/rsvp/celebrations/79dd67aa-320d-4290-a2bf-b2b5250f3d76/rsvp",
+            "status": 200,
+            "remaining": "9"
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/79dd67aa-320d-4290-a2bf-b2b5250f3d76/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/listings/c93dd91e-1086-4905-bb9e-da5ac3dcdb23",
+            "status": 200,
+            "remaining": "104"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/41ced6c2-8c03-4751-abcf-31411eba7df0",
+            "status": 200,
+            "remaining": "103"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/ee6c025b-a6b6-4cb4-93ae-05da3032ca0a",
+            "status": 200,
+            "remaining": "103"
+          },
+          {
+            "method": "POST",
+            "path": "/gifts/celebrations/79dd67aa-320d-4290-a2bf-b2b5250f3d76/items/717964f5-b5a1-4c39-92b1-6b50de48532f/reservations",
+            "status": 403,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/79dd67aa-320d-4290-a2bf-b2b5250f3d76/items",
+            "status": 200,
+            "remaining": null
+          }
+        ],
+        "confirmed": {
+          "serious": 0,
+          "other": []
+        },
+        "gifts": {
+          "serious": 0,
+          "other": []
+        },
+        "dialog": {
+          "serious": 0,
+          "other": []
+        },
+        "reservationHttp": {
+          "status": 201
+        },
+        "recovery": {
+          "serious": 0,
+          "other": []
+        },
+        "keyboard": "Enter opens and navigates; Escape restores focus; fields retained after real HTTP 403",
+        "sql": {
+          "reservationId": "903ca779-b69a-446c-ac26-39d381973c7d",
+          "status": "CANCELLED"
+        }
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node browser-matrix.mjs chrome-prospective-verified",
+      "exitCode": 0,
+      "evidence": "evidencia/chrome-prospective-verified/matrix.json",
+      "log": "evidencia/chrome-prospective-verified.log",
+      "date": "2026-11-18T11:17:14.844Z"
+    },
+    {
+      "case": "Chrome chrome-prospective-verified 1280-light-en-US",
+      "reservationMode": "RESTRICTED",
+      "expected": "Nombre, confirmación, fotos/fallback, reserva 201, cancelación SQL, recuperación 403 con borrador, teclado y axe 0",
+      "observed": {
+        "key": "1280-light-en-US",
+        "width": 1280,
+        "theme": "light",
+        "locale": "en-US",
+        "status": "PASS",
+        "publicProjectionReadyMs": 236,
+        "http": [
+          {
+            "method": "GET",
+            "path": "/celebrations/public/guest-chrome-1280-light-en-us-69753c09",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/45c295ce-e27c-42b2-a02e-3c7e99c68385/guest",
+            "status": 200,
+            "remaining": "28"
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/45c295ce-e27c-42b2-a02e-3c7e99c68385/rsvp",
+            "status": 200,
+            "remaining": "27"
+          },
+          {
+            "method": "POST",
+            "path": "/rsvp/celebrations/45c295ce-e27c-42b2-a02e-3c7e99c68385/rsvp",
+            "status": 201,
+            "remaining": "26"
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/45c295ce-e27c-42b2-a02e-3c7e99c68385/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/listings/41ced6c2-8c03-4751-abcf-31411eba7df0",
+            "status": 200,
+            "remaining": "118"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/c93dd91e-1086-4905-bb9e-da5ac3dcdb23",
+            "status": 200,
+            "remaining": "119"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/ee6c025b-a6b6-4cb4-93ae-05da3032ca0a",
+            "status": 200,
+            "remaining": "117"
+          },
+          {
+            "method": "POST",
+            "path": "/gifts/celebrations/45c295ce-e27c-42b2-a02e-3c7e99c68385/items/2e5e68a5-8e9a-4fd4-bb21-4b16f8bc3341/reservations",
+            "status": 201,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/45c295ce-e27c-42b2-a02e-3c7e99c68385/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/celebrations/public/guest-chrome-1280-light-en-us-69753c09",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/45c295ce-e27c-42b2-a02e-3c7e99c68385/guest",
+            "status": 200,
+            "remaining": "25"
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/45c295ce-e27c-42b2-a02e-3c7e99c68385/rsvp",
+            "status": 200,
+            "remaining": "24"
+          },
+          {
+            "method": "PATCH",
+            "path": "/rsvp/celebrations/45c295ce-e27c-42b2-a02e-3c7e99c68385/rsvp",
+            "status": 200,
+            "remaining": "23"
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/45c295ce-e27c-42b2-a02e-3c7e99c68385/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/listings/c93dd91e-1086-4905-bb9e-da5ac3dcdb23",
+            "status": 200,
+            "remaining": "116"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/ee6c025b-a6b6-4cb4-93ae-05da3032ca0a",
+            "status": 200,
+            "remaining": "115"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/41ced6c2-8c03-4751-abcf-31411eba7df0",
+            "status": 200,
+            "remaining": "115"
+          },
+          {
+            "method": "POST",
+            "path": "/gifts/celebrations/45c295ce-e27c-42b2-a02e-3c7e99c68385/items/2e5e68a5-8e9a-4fd4-bb21-4b16f8bc3341/reservations",
+            "status": 403,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/45c295ce-e27c-42b2-a02e-3c7e99c68385/items",
+            "status": 200,
+            "remaining": null
+          }
+        ],
+        "confirmed": {
+          "serious": 0,
+          "other": []
+        },
+        "gifts": {
+          "serious": 0,
+          "other": []
+        },
+        "dialog": {
+          "serious": 0,
+          "other": []
+        },
+        "reservationHttp": {
+          "status": 201
+        },
+        "recovery": {
+          "serious": 0,
+          "other": []
+        },
+        "keyboard": "Enter opens and navigates; Escape restores focus; fields retained after real HTTP 403",
+        "sql": {
+          "reservationId": "96e71aa9-c1fd-4773-a29e-2772725688bf",
+          "status": "CANCELLED"
+        }
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node browser-matrix.mjs chrome-prospective-verified",
+      "exitCode": 0,
+      "evidence": "evidencia/chrome-prospective-verified/matrix.json",
+      "log": "evidencia/chrome-prospective-verified.log",
+      "date": "2026-11-18T11:17:14.844Z"
+    },
+    {
+      "case": "Chrome chrome-prospective-verified 1280-dark-es-BO",
+      "reservationMode": "RESTRICTED",
+      "expected": "Nombre, confirmación, fotos/fallback, reserva 201, cancelación SQL, recuperación 403 con borrador, teclado y axe 0",
+      "observed": {
+        "key": "1280-dark-es-BO",
+        "width": 1280,
+        "theme": "dark",
+        "locale": "es-BO",
+        "status": "PASS",
+        "publicProjectionReadyMs": 232,
+        "http": [
+          {
+            "method": "GET",
+            "path": "/celebrations/public/guest-chrome-1280-dark-es-bo-900d1d4c",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/1c6b61f8-acea-4d37-bae1-ae1cc258c82d/guest",
+            "status": 200,
+            "remaining": "21"
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/1c6b61f8-acea-4d37-bae1-ae1cc258c82d/rsvp",
+            "status": 200,
+            "remaining": "20"
+          },
+          {
+            "method": "POST",
+            "path": "/rsvp/celebrations/1c6b61f8-acea-4d37-bae1-ae1cc258c82d/rsvp",
+            "status": 201,
+            "remaining": "19"
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/1c6b61f8-acea-4d37-bae1-ae1cc258c82d/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/listings/41ced6c2-8c03-4751-abcf-31411eba7df0",
+            "status": 200,
+            "remaining": "113"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/c93dd91e-1086-4905-bb9e-da5ac3dcdb23",
+            "status": 200,
+            "remaining": "113"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/ee6c025b-a6b6-4cb4-93ae-05da3032ca0a",
+            "status": 200,
+            "remaining": "111"
+          },
+          {
+            "method": "POST",
+            "path": "/gifts/celebrations/1c6b61f8-acea-4d37-bae1-ae1cc258c82d/items/2169857d-2728-46ff-9c97-94002268f73d/reservations",
+            "status": 201,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/1c6b61f8-acea-4d37-bae1-ae1cc258c82d/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/celebrations/public/guest-chrome-1280-dark-es-bo-900d1d4c",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/1c6b61f8-acea-4d37-bae1-ae1cc258c82d/guest",
+            "status": 200,
+            "remaining": "18"
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/1c6b61f8-acea-4d37-bae1-ae1cc258c82d/rsvp",
+            "status": 200,
+            "remaining": "18"
+          },
+          {
+            "method": "PATCH",
+            "path": "/rsvp/celebrations/1c6b61f8-acea-4d37-bae1-ae1cc258c82d/rsvp",
+            "status": 200,
+            "remaining": "16"
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/1c6b61f8-acea-4d37-bae1-ae1cc258c82d/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/listings/c93dd91e-1086-4905-bb9e-da5ac3dcdb23",
+            "status": 200,
+            "remaining": "110"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/41ced6c2-8c03-4751-abcf-31411eba7df0",
+            "status": 200,
+            "remaining": "109"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/ee6c025b-a6b6-4cb4-93ae-05da3032ca0a",
+            "status": 200,
+            "remaining": "109"
+          },
+          {
+            "method": "POST",
+            "path": "/gifts/celebrations/1c6b61f8-acea-4d37-bae1-ae1cc258c82d/items/2169857d-2728-46ff-9c97-94002268f73d/reservations",
+            "status": 403,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/1c6b61f8-acea-4d37-bae1-ae1cc258c82d/items",
+            "status": 200,
+            "remaining": null
+          }
+        ],
+        "confirmed": {
+          "serious": 0,
+          "other": []
+        },
+        "gifts": {
+          "serious": 0,
+          "other": []
+        },
+        "dialog": {
+          "serious": 0,
+          "other": []
+        },
+        "reservationHttp": {
+          "status": 201
+        },
+        "recovery": {
+          "serious": 0,
+          "other": []
+        },
+        "keyboard": "Enter opens and navigates; Escape restores focus; fields retained after real HTTP 403",
+        "sql": {
+          "reservationId": "13b533ca-6acc-42aa-bee9-bbf7b4db0f06",
+          "status": "CANCELLED"
+        }
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node browser-matrix.mjs chrome-prospective-verified",
+      "exitCode": 0,
+      "evidence": "evidencia/chrome-prospective-verified/matrix.json",
+      "log": "evidencia/chrome-prospective-verified.log",
+      "date": "2026-11-18T11:17:14.844Z"
+    },
+    {
+      "case": "Chrome chrome-prospective-verified 1280-dark-en-US",
+      "reservationMode": "RESTRICTED",
+      "expected": "Nombre, confirmación, fotos/fallback, reserva 201, cancelación SQL, recuperación 403 con borrador, teclado y axe 0",
+      "observed": {
+        "key": "1280-dark-en-US",
+        "width": 1280,
+        "theme": "dark",
+        "locale": "en-US",
+        "status": "PASS",
+        "publicProjectionReadyMs": 229,
+        "http": [
+          {
+            "method": "GET",
+            "path": "/celebrations/public/guest-chrome-1280-dark-en-us-5da83a7e",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/1fc5c072-02cd-4735-b59b-d355343567f4/guest",
+            "status": 200,
+            "remaining": "14"
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/1fc5c072-02cd-4735-b59b-d355343567f4/rsvp",
+            "status": 200,
+            "remaining": "13"
+          },
+          {
+            "method": "POST",
+            "path": "/rsvp/celebrations/1fc5c072-02cd-4735-b59b-d355343567f4/rsvp",
+            "status": 201,
+            "remaining": "12"
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/1fc5c072-02cd-4735-b59b-d355343567f4/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/listings/c93dd91e-1086-4905-bb9e-da5ac3dcdb23",
+            "status": 200,
+            "remaining": "106"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/41ced6c2-8c03-4751-abcf-31411eba7df0",
+            "status": 200,
+            "remaining": "107"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/ee6c025b-a6b6-4cb4-93ae-05da3032ca0a",
+            "status": 200,
+            "remaining": "105"
+          },
+          {
+            "method": "POST",
+            "path": "/gifts/celebrations/1fc5c072-02cd-4735-b59b-d355343567f4/items/c94fc60f-247f-4a32-8006-06224792c36e/reservations",
+            "status": 201,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/1fc5c072-02cd-4735-b59b-d355343567f4/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/celebrations/public/guest-chrome-1280-dark-en-us-5da83a7e",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/1fc5c072-02cd-4735-b59b-d355343567f4/guest",
+            "status": 200,
+            "remaining": "11"
+          },
+          {
+            "method": "GET",
+            "path": "/rsvp/celebrations/1fc5c072-02cd-4735-b59b-d355343567f4/rsvp",
+            "status": 200,
+            "remaining": "11"
+          },
+          {
+            "method": "PATCH",
+            "path": "/rsvp/celebrations/1fc5c072-02cd-4735-b59b-d355343567f4/rsvp",
+            "status": 200,
+            "remaining": "9"
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/1fc5c072-02cd-4735-b59b-d355343567f4/items",
+            "status": 200,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/listings/41ced6c2-8c03-4751-abcf-31411eba7df0",
+            "status": 200,
+            "remaining": "104"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/ee6c025b-a6b6-4cb4-93ae-05da3032ca0a",
+            "status": 200,
+            "remaining": "102"
+          },
+          {
+            "method": "GET",
+            "path": "/listings/c93dd91e-1086-4905-bb9e-da5ac3dcdb23",
+            "status": 200,
+            "remaining": "104"
+          },
+          {
+            "method": "POST",
+            "path": "/gifts/celebrations/1fc5c072-02cd-4735-b59b-d355343567f4/items/c94fc60f-247f-4a32-8006-06224792c36e/reservations",
+            "status": 403,
+            "remaining": null
+          },
+          {
+            "method": "GET",
+            "path": "/gifts/celebrations/1fc5c072-02cd-4735-b59b-d355343567f4/items",
+            "status": 200,
+            "remaining": null
+          }
+        ],
+        "confirmed": {
+          "serious": 0,
+          "other": []
+        },
+        "gifts": {
+          "serious": 0,
+          "other": []
+        },
+        "dialog": {
+          "serious": 0,
+          "other": []
+        },
+        "reservationHttp": {
+          "status": 201
+        },
+        "recovery": {
+          "serious": 0,
+          "other": []
+        },
+        "keyboard": "Enter opens and navigates; Escape restores focus; fields retained after real HTTP 403",
+        "sql": {
+          "reservationId": "0668f7bf-caf4-4f0e-8c4f-6bd36c5bc02d",
+          "status": "CANCELLED"
+        }
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node browser-matrix.mjs chrome-prospective-verified",
+      "exitCode": 0,
+      "evidence": "evidencia/chrome-prospective-verified/matrix.json",
+      "log": "evidencia/chrome-prospective-verified.log",
+      "date": "2026-11-18T11:17:14.844Z"
+    },
+    {
+      "case": "catalog-down-does-not-block-reservation",
+      "reservationMode": "RESTRICTED",
+      "expected": "Catálogo 503 no impide reservar; plazo cerrado conserva regalos; token vencido no revela nombre",
+      "observed": {
+        "case": "catalog-down-does-not-block-reservation",
+        "status": "PASS",
+        "catalogHttp": [
+          503
+        ],
+        "reservationHttp": 201,
+        "freshBrowserContext": true
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node extra-browser-proof.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/chrome-extra/matrix.json",
+      "log": "evidencia/chrome-extra-boundaries-2.log",
+      "date": "2026-11-18T10:57:17.121Z"
+    },
+    {
+      "case": "closed-deadline-ui-es-BO",
+      "reservationMode": "RESTRICTED",
+      "expected": "Catálogo 503 no impide reservar; plazo cerrado conserva regalos; token vencido no revela nombre",
+      "observed": {
+        "case": "closed-deadline-ui-es-BO",
+        "status": "PASS",
+        "editControls": 0,
+        "giftsAccessible": true,
+        "privacy": {
+          "tokenInHtml": true,
+          "globalTokenHrefCount": 3,
+          "htmlSaved": false
+        }
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node extra-browser-proof.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/chrome-extra/matrix.json",
+      "log": "evidencia/chrome-extra-boundaries-2.log",
+      "date": "2026-11-18T10:57:17.121Z"
+    },
+    {
+      "case": "closed-deadline-ui-en-US",
+      "reservationMode": "RESTRICTED",
+      "expected": "Catálogo 503 no impide reservar; plazo cerrado conserva regalos; token vencido no revela nombre",
+      "observed": {
+        "case": "closed-deadline-ui-en-US",
+        "status": "PASS",
+        "editControls": 0,
+        "giftsAccessible": true,
+        "privacy": {
+          "tokenInHtml": true,
+          "globalTokenHrefCount": 3,
+          "htmlSaved": false
+        }
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node extra-browser-proof.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/chrome-extra/matrix.json",
+      "log": "evidencia/chrome-extra-boundaries-2.log",
+      "date": "2026-11-18T10:57:17.121Z"
+    },
+    {
+      "case": "expired-token-ui",
+      "reservationMode": "RESTRICTED",
+      "expected": "Catálogo 503 no impide reservar; plazo cerrado conserva regalos; token vencido no revela nombre",
+      "observed": {
+        "case": "expired-token-ui",
+        "status": "PASS",
+        "guestNameVisible": false
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node extra-browser-proof.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/chrome-extra/matrix.json",
+      "log": "evidencia/chrome-extra-boundaries-2.log",
+      "date": "2026-11-18T10:57:17.121Z"
+    },
+    {
+      "case": "foundation-http-and-paused-worker",
+      "reservationMode": "RESTRICTED",
+      "expected": "Revertir HTTP al fundamento compatible, pausar/reanudar worker y preservar migraciones/historia",
+      "observed": {
+        "case": "foundation-http-and-paused-worker",
+        "status": "PASS",
+        "newReservationHttp": 403,
+        "reservationStatus": "PENDING_REVIEW",
+        "durablePending": true,
+        "migrationCount": 11
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node rollback-proof.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/rollback-proof.json",
+      "log": "evidencia/rollback-real-final.log",
+      "date": "2026-11-18T11:04:03.658Z"
+    },
+    {
+      "case": "forward-recovery-and-compatible-code-rollback",
+      "reservationMode": "RESTRICTED",
+      "expected": "Revertir HTTP al fundamento compatible, pausar/reanudar worker y preservar migraciones/historia",
+      "observed": {
+        "case": "forward-recovery-and-compatible-code-rollback",
+        "status": "PASS",
+        "reservationStatus": "CANCELLED",
+        "itemStatus": "AVAILABLE",
+        "cancellationFacts": 1,
+        "migrationsAndChecksumsPreserved": true,
+        "foundationReadsCancelled": true
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node rollback-proof.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/rollback-proof.json",
+      "log": "evidencia/rollback-real-final.log",
+      "date": "2026-11-18T11:04:03.658Z"
+    },
+    {
+      "case": "migración expansiva sobre datos existentes",
+      "reservationMode": "ambos",
+      "expected": "11 migraciones; diez checksums y todas las filas previas preservados",
+      "observed": {
+        "migrations": 11,
+        "preserved": true
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node snapshot-business.mjs after-migration",
+      "exitCode": 0,
+      "evidence": "evidencia/snapshot-after-migration.json",
+      "log": "evidencia/snapshot-after-migration.log",
+      "date": "2026-11-17T23:21:26.391Z"
+    },
+    {
+      "case": "gate gift-unit-final-serial",
+      "reservationMode": "N/A",
+      "expected": "Comando sale 0; alcance y skips descritos en el informe",
+      "observed": {
+        "exitCode": 0
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "cd apps/gift-list-service && node --test --test-concurrency=1 test/*.test.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/gift-unit-final-serial.log",
+      "log": "evidencia/gift-unit-final-serial.log",
+      "date": "2026-11-17T23:46:19.897Z"
+    },
+    {
+      "case": "gate gift-coverage-measured",
+      "reservationMode": "N/A",
+      "expected": "Comando sale 0; alcance y skips descritos en el informe",
+      "observed": {
+        "exitCode": 0
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "bash gift-coverage.sh",
+      "exitCode": 0,
+      "evidence": "evidencia/gift-coverage-measured.log",
+      "log": "evidencia/gift-coverage-measured.log",
+      "date": "2026-11-17T23:57:26.707Z"
+    },
+    {
+      "case": "gate guest-tests-final-2",
+      "reservationMode": "N/A",
+      "expected": "Comando sale 0; alcance y skips descritos en el informe",
+      "observed": {
+        "exitCode": 0
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "corepack yarn workspace @rsvp/guest-rsvp-service test:all",
+      "exitCode": 0,
+      "evidence": "evidencia/guest-tests-final-2.log",
+      "log": "evidencia/guest-tests-final-2.log",
+      "date": "2026-11-17T23:22:45.426Z"
+    },
+    {
+      "case": "gate guest-replay-regression-4",
+      "reservationMode": "N/A",
+      "expected": "Comando sale 0; alcance y skips descritos en el informe",
+      "observed": {
+        "exitCode": 0
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "RELAY_IT_PORT=5689 node --test --test-concurrency=1 apps/guest-rsvp-service/test/integration/relay-recovery.test.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/guest-replay-regression-4.log",
+      "log": "evidencia/guest-replay-regression-4.log",
+      "date": "2026-11-17T23:55:52.096Z"
+    },
+    {
+      "case": "gate notification-regression-final-2",
+      "reservationMode": "N/A",
+      "expected": "Comando sale 0; alcance y skips descritos en el informe",
+      "observed": {
+        "exitCode": 0
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "corepack yarn workspace @rsvp/notification-service test:all",
+      "exitCode": 0,
+      "evidence": "evidencia/notification-regression-final-2.log",
+      "log": "evidencia/notification-regression-final-2.log",
+      "date": "2026-11-17T23:59:42.695Z"
+    },
+    {
+      "case": "gate frontend-tests-final",
+      "reservationMode": "N/A",
+      "expected": "Comando sale 0; alcance y skips descritos en el informe",
+      "observed": {
+        "exitCode": 0
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "VITEST_MAX_THREADS=1 VITEST_MIN_THREADS=1 VITEST_MAX_FORKS=1 VITEST_MIN_FORKS=1 corepack yarn turbo run test --concurrency=1 --env-mode=loose && corepack yarn typecheck && corepack yarn harness:validate && corepack yarn workspace @rsvp/contracts check:generated",
+      "exitCode": 0,
+      "evidence": "evidencia/frontend-tests-final.log",
+      "log": "evidencia/frontend-tests-final.log",
+      "date": "2026-11-17T23:45:37.928Z"
+    },
+    {
+      "case": "gate frontend-coverage-final",
+      "reservationMode": "N/A",
+      "expected": "Comando sale 0; alcance y skips descritos en el informe",
+      "observed": {
+        "exitCode": 0
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "VITEST_MAX_THREADS=1 VITEST_MIN_THREADS=1 VITEST_MAX_FORKS=1 VITEST_MIN_FORKS=1 corepack yarn turbo run test:coverage --concurrency=1 --env-mode=loose",
+      "exitCode": 0,
+      "evidence": "evidencia/frontend-coverage-final.log",
+      "log": "evidencia/frontend-coverage-final.log",
+      "date": "2026-11-17T23:53:33.431Z"
+    },
+    {
+      "case": "gate frontend-prospective-gates",
+      "reservationMode": "N/A",
+      "expected": "Comando sale 0; alcance y skips descritos en el informe",
+      "observed": {
+        "exitCode": 0
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "NEXT_PUBLIC_API_URL=http://localhost:8010 NEXT_PUBLIC_SITE_URL=http://localhost:8091 corepack yarn turbo run build --concurrency=1 && corepack yarn turbo run lint test typecheck --concurrency=1 && corepack yarn lint:code && corepack yarn harness:validate && corepack yarn workspace @rsvp/contracts check:generated",
+      "exitCode": 0,
+      "evidence": "evidencia/frontend-prospective-gates.log",
+      "log": "evidencia/frontend-prospective-gates.log",
+      "date": "2026-11-18T11:05:36.014Z"
+    },
+    {
+      "case": "gate final-static-backend",
+      "reservationMode": "N/A",
+      "expected": "Comando sale 0; alcance y skips descritos en el informe",
+      "observed": {
+        "exitCode": 0
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "corepack yarn turbo run build lint --filter=@rsvp/gift-list-service... --filter=@rsvp/guest-rsvp-service... --filter=@rsvp/contracts-openapi --filter=@rsvp/contracts-asyncapi && corepack yarn contracts:validate && corepack yarn harness:validate",
+      "exitCode": 0,
+      "evidence": "evidencia/final-static-backend.log",
+      "log": "evidencia/final-static-backend.log",
+      "date": "2026-11-17T23:48:08.631Z"
+    },
+    {
+      "case": "gate final-static-frontend",
+      "reservationMode": "N/A",
+      "expected": "Comando sale 0; alcance y skips descritos en el informe",
+      "observed": {
+        "exitCode": 0
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "corepack yarn lint && corepack yarn typecheck && corepack yarn harness:validate && corepack yarn workspace @rsvp/contracts check:generated",
+      "exitCode": 0,
+      "evidence": "evidencia/final-static-frontend.log",
+      "log": "evidencia/final-static-frontend.log",
+      "date": "2026-11-17T23:49:01.160Z"
+    },
+    {
+      "case": "gate identity-static-jdk21",
+      "reservationMode": "N/A",
+      "expected": "Comando sale 0; alcance y skips descritos en el informe",
+      "observed": {
+        "exitCode": 0
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "bash ../identity-static.sh",
+      "exitCode": 0,
+      "evidence": "evidencia/identity-static-jdk21.log",
+      "log": "evidencia/identity-static-jdk21.log",
+      "date": "2026-11-18T11:15:57.778Z"
+    },
+    {
+      "case": "gate gateway-route-regression-final",
+      "reservationMode": "N/A",
+      "expected": "Comando sale 0; alcance y skips descritos en el informe",
+      "observed": {
+        "exitCode": 0
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "node --test --test-concurrency=1 e2e/gateway/validate-config.mjs e2e/gateway/kong-live.mjs e2e/gateway/rotation-live.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/gateway-route-regression-final.log",
+      "log": "evidencia/gateway-route-regression-final.log",
+      "date": "2026-11-17T23:58:17.406Z"
+    },
+    {
+      "case": "gate gateway-real-identity-rotation",
+      "reservationMode": "N/A",
+      "expected": "Comando sale 0; alcance y skips descritos en el informe",
+      "observed": {
+        "exitCode": 0
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "IDENTITY_URL=http://localhost:8010/identity node --test e2e/gateway/rotation-live.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/gateway-real-identity-rotation.log",
+      "log": "evidencia/gateway-real-identity-rotation.log",
+      "date": "2026-11-18T00:03:53.960Z"
+    },
+    {
+      "case": "gate pact-provider-guest-through-kong",
+      "reservationMode": "N/A",
+      "expected": "Comando sale 0; alcance y skips descritos en el informe",
+      "observed": {
+        "exitCode": 0
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "PACT_REQUIRE_PROVIDERS=1 GUEST_RSVP_URL=http://localhost:8010 GUEST_RSVP_HEALTH_URL=http://localhost:8010/guests/health node scripts/pact-verify.mjs contracts/pacts/rsvp-frontend-guest-rsvp-service.json",
+      "exitCode": 0,
+      "evidence": "evidencia/pact-provider-guest-through-kong.log",
+      "log": "evidencia/pact-provider-guest-through-kong.log",
+      "date": "2026-11-18T00:17:13.982Z"
+    },
+    {
+      "case": "gate pact-regression-final",
+      "reservationMode": "N/A",
+      "expected": "Comando sale 0; alcance y skips descritos en el informe",
+      "observed": {
+        "exitCode": 0
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "PACT_REQUIRE_PROVIDERS=1 GUEST_RSVP_URL=http://localhost:8010 GUEST_RSVP_HEALTH_URL=http://localhost:8010/guests/health corepack yarn pact:test",
+      "exitCode": 0,
+      "evidence": "evidencia/pact-regression-final.log",
+      "log": "evidencia/pact-regression-final.log",
+      "date": "2026-11-18T00:18:21.490Z"
+    },
+    {
+      "case": "gate codegraph-final-backend",
+      "reservationMode": "N/A",
+      "expected": "Comando sale 0; alcance y skips descritos en el informe",
+      "observed": {
+        "exitCode": 0
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "corepack yarn codegraph sync && corepack yarn codegraph status",
+      "exitCode": 0,
+      "evidence": "evidencia/codegraph-final-backend.log",
+      "log": "evidencia/codegraph-final-backend.log",
+      "date": "2026-11-18T10:56:45.979Z"
+    },
+    {
+      "case": "gate codegraph-final-frontend",
+      "reservationMode": "N/A",
+      "expected": "Comando sale 0; alcance y skips descritos en el informe",
+      "observed": {
+        "exitCode": 0
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "corepack yarn codegraph sync && corepack yarn codegraph status",
+      "exitCode": 0,
+      "evidence": "evidencia/codegraph-final-frontend.log",
+      "log": "evidencia/codegraph-final-frontend.log",
+      "date": "2026-11-18T10:56:36.003Z"
+    },
+    {
+      "case": "gate history-secrets-backend",
+      "reservationMode": "N/A",
+      "expected": "Comando sale 0; alcance y skips descritos en el informe",
+      "observed": {
+        "exitCode": 0
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "bash ../scan-history-backend.sh",
+      "exitCode": 0,
+      "evidence": "evidencia/history-secrets-backend.log",
+      "log": "evidencia/history-secrets-backend.log",
+      "date": "2026-11-18T11:04:08.985Z"
+    },
+    {
+      "case": "gate history-secrets-frontend",
+      "reservationMode": "N/A",
+      "expected": "Comando sale 0; alcance y skips descritos en el informe",
+      "observed": {
+        "exitCode": 0
+      },
+      "status": "PASS",
+      "requiredForScope": true,
+      "command": "bash ../scan-history-frontend.sh",
+      "exitCode": 0,
+      "evidence": "evidencia/history-secrets-frontend.log",
+      "log": "evidencia/history-secrets-frontend.log",
+      "date": "2026-11-18T11:04:08.964Z"
+    },
+    {
+      "case": "Pact agregado interrumpido y comprobación separada",
+      "reservationMode": "N/A",
+      "expected": "Los cinco providers disponibles",
+      "observed": "El comando agregado salió 1 al coincidir Guest con la prueba de caída. Los otros cuatro providers pasaron; Guest pasó después con 2 interacciones por Kong.",
+      "status": "FAIL",
+      "requiredForScope": false,
+      "command": "PACT_REQUIRE_PROVIDERS=1 GUEST_RSVP_URL=http://localhost:8010 GUEST_RSVP_HEALTH_URL=http://localhost:8010/guests/health corepack yarn pact:verify",
+      "exitCode": 1,
+      "evidence": "evidencia/pact-provider-final-2.log",
+      "supersededBy": "evidencia/pact-provider-guest-through-kong.log"
+    },
+    {
+      "case": "harness histórico H01B1 ausente",
+      "reservationMode": "N/A",
+      "expected": "Provisionar la fixture histórica",
+      "observed": "No existe docs/progress/fabio/infra/h01b1/compose.yaml en el SHA inicial; comando salió 1. Las suites actuales reales sí pasaron.",
+      "status": "BLOCKED",
+      "requiredForScope": false,
+      "command": "corepack yarn workspace @rsvp/gift-list-service test:h01b1",
+      "exitCode": 1,
+      "evidence": "evidencia/gift-h01b1-regression.log",
+      "log": "evidencia/gift-h01b1-regression.log",
+      "date": "2026-11-18T00:17:41.023Z"
+    },
+    {
+      "case": "build global: caché Python en ruta larga Windows",
+      "reservationMode": "N/A",
+      "expected": "Todos los workspaces del monorepo",
+      "observed": "36/38 tareas pasaron, incluidas build y lint Identity con JDK21. Template Media sin cambios falló al escribir la ruta larga del pycache con Python3.10; Django/Ruff tampoco están instalados en ese intérprete. Los 13 workspaces Node afectados y sus dependencias pasaron por separado.",
+      "status": "BLOCKED",
+      "requiredForScope": false,
+      "command": "bash ../backend-all-static.sh",
+      "exitCode": 1,
+      "evidence": "evidencia/backend-all-static-jdk21.log",
+      "log": "evidencia/backend-all-static-jdk21.log",
+      "date": "2026-11-18T11:12:44.337Z"
+    },
+    {
+      "case": "privacidad previa del HTML completo y enlaces globales",
+      "reservationMode": "N/A",
+      "expected": "HTML y enlaces globales sin token",
+      "observed": "Token observado en bootstrap/HTML y 3 hrefs globales; no se guardó HTML sensible. La recuperación nueva usa un botón sin token en href.",
+      "status": "FAIL",
+      "requiredForScope": false,
+      "command": "node extra-browser-proof.mjs",
+      "exitCode": 0,
+      "evidence": "evidencia/chrome-extra/matrix.json",
+      "log": "evidencia/chrome-extra-boundaries-2.log",
+      "date": "2026-11-18T10:57:17.121Z"
+    }
+  ]
+}

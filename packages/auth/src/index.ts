@@ -2,6 +2,7 @@ export * from "./session/types.js";
 export * from "./session/claims.js";
 export * from "./session/stores.js";
 export * from "./session/session-manager.js";
+export * from "./session/coordination.js";
 export * from "./identity/client.js";
 export * from "./identity/errors.js";
 export * from "./identity/schemas.js";

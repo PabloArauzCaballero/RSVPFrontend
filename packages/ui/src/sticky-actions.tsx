@@ -10,6 +10,11 @@ export interface StickyActionsProps {
   /** Optional line above the buttons (a total, "3 changes"). Keep it to one short line. */
   summary?: ReactNode;
   testID?: string;
+  /**
+   * How far the bar reaches past its column on each side (default `spacing[4]`, for screens whose content sits 16 px from
+   * the edge). Pass 0 in a centred column with its own padding, so the top line lines up with the fields above it.
+   */
+  bleed?: number;
 }
 
 /**
@@ -19,7 +24,7 @@ export interface StickyActionsProps {
  * avoidance belongs to the screen's scroll view). It has a top border and a surface colour so content never shows
  * through; reduced motion is irrelevant (it does not move).
  */
-export function StickyActions({ children, summary, testID }: StickyActionsProps) {
+export function StickyActions({ children, summary, testID, bleed = spacing[4] }: StickyActionsProps) {
   const { palette } = useTheme();
   const stick = Platform.OS === 'web'
     ? ({ position: 'sticky', bottom: 0, zIndex: 5, paddingBottom: 'max(12px, env(safe-area-inset-bottom))', backdropFilter: 'saturate(180%) blur(20px)', WebkitBackdropFilter: 'saturate(180%) blur(20px)' } as unknown as ViewStyle)
@@ -28,7 +33,7 @@ export function StickyActions({ children, summary, testID }: StickyActionsProps)
     <View
       role="group"
       testID={testID}
-      style={[{ backgroundColor: Platform.OS === 'web' ? `${palette.canvas}E6` : palette.canvas, borderTopWidth: 1, borderTopColor: palette.border, paddingTop: spacing[3], paddingHorizontal: spacing[4], gap: spacing[2], marginHorizontal: -spacing[4] }, stick]}
+      style={[{ backgroundColor: Platform.OS === 'web' ? `${palette.canvas}E6` : palette.canvas, borderTopWidth: 1, borderTopColor: palette.border, paddingTop: spacing[3], paddingHorizontal: bleed, gap: spacing[2], marginHorizontal: -bleed }, stick]}
     >
       {summary}
       <ButtonAlignContext.Provider value="center">

@@ -31,6 +31,9 @@ describe("two-level navigation", () => {
     const settings = nav.find((item) => item.key === "settings")?.tabs ?? [];
     expect(settings.find((tab) => tab.key === "celebrations")?.href).toBe("/celebraciones");
     expect(settings.find((tab) => tab.key === "organizations")?.href).toBe("/organizaciones");
+    // "Ajustes" lands on Configuración, not on Publicar (QA 2026-11-13).
+    expect(nav.find((item) => item.key === "settings")?.href).toBe("/configuracion?c=c%201");
+    expect(settings[0]?.key).toBe("settings");
   });
 
   it("provider: five destinations covering all ten portal routes; admin: four groups covering all modules", () => {
@@ -41,6 +44,10 @@ describe("two-level navigation", () => {
     const admin = adminNav(t);
     expect(admin.map((item) => item.key)).toEqual(["review", "catalog", "people", "operation"]);
     expect(tabKeys(admin).sort()).toEqual(Object.keys(ADMIN_ROUTES).sort());
+    // A24: Partners is a tab of "people", after users and organizations, so the destination still opens on users.
+    const people = admin.find((item) => item.key === "people");
+    expect(people?.tabs?.map((tab) => [tab.key, tab.href])).toEqual([["users", "/admin/usuarios"], ["organizations", "/admin/organizaciones"], ["partners", "/admin/partners"]]);
+    expect(people?.href).toBe("/admin/usuarios");
   });
 
   it("a destination is current for any of its tabs; the bottom bar keeps five slots", () => {
@@ -71,6 +78,14 @@ describe("Screen shows the section tabs of the active destination", () => {
     expect(document.activeElement).toBe(tabs[2]);
     fireEvent.keyDown(tabs[2] as HTMLElement, { key: "ArrowRight" });
     expect(document.activeElement).toBe(tabs[0]);
+  });
+
+  it("keeps the column gap between a screen's blocks: the transition box does not swallow it (QA 2026-11-13, Equipo)", () => {
+    const { client } = fakeClient({ ...baseHandlers() });
+    renderApp(<Screen title="Equipo" nav={hostNav(t, undefined)} current="organizations" onNavigate={vi.fn()}><span>aviso</span><span>tarjeta</span></Screen>, client);
+    const stack = screen.getByTestId("screen-stack");
+    expect([...stack.children].map((child) => child.textContent)).toEqual(["aviso", "tarjeta"]);
+    expect(getComputedStyle(stack).rowGap || getComputedStyle(stack).gap).not.toBe("");
   });
 
   it("shows no tab bar for a one-screen destination", () => {

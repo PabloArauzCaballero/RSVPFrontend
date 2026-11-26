@@ -1,7 +1,7 @@
 import type { ApiClient } from "@rsvp/api-client";
 import type {
-  AuditEntry, Celebration, CelebrationPatch, CreateCelebrationInput, EventTypeDefinition, Items, MediaAsset, PublishCheck,
-  SettingsPatch, Template, TemplateInput, TranslatedEventType, UploadIntent
+  AuditEntry, Celebration, CelebrationPatch, CreateCelebrationInput, EventTypeDefinition, Items, MediaAsset, PublicPageStatus, PublishCheck,
+  PublicGalleryImage, SettingsPatch, Template, TemplateInput, TranslatedEventType, UploadIntent
 } from "./types.js";
 
 /**
@@ -31,6 +31,8 @@ export function celebrationApi(client: ApiClient) {
     setCollaborator: (target: Versioned, userId: string, role: "CO_HOST" | "VIEWER") => mutate(`${BASE}/${target.id}/collaborators/${userId}`, "PUT", target, { role }),
     removeCollaborator: (target: Versioned, userId: string) => mutate(`${BASE}/${target.id}/collaborators/${userId}`, "DELETE", target),
     publishCheck: (id: string) => client.request<PublishCheck>(`${BASE}/${id}/publish-check`),
+    /** Never cached by the server (no-store): the publish screen polls it while the page is being built or withdrawn. */
+    publicPage: (id: string, signal?: AbortSignal) => client.request<PublicPageStatus>(`${BASE}/${id}/public-page`, { signal }),
     publish: (target: Versioned) => mutate(`${BASE}/${target.id}/publish`, "POST", target),
     unpublish: (target: Versioned, reason: string | null) => mutate(`${BASE}/${target.id}/unpublish`, "POST", target, { reason }),
     archive: (target: Versioned) => mutate(`${BASE}/${target.id}/archive`, "POST", target),
@@ -62,9 +64,12 @@ export function mediaApi(client: ApiClient) {
     presign: (input: { readonly celebrationId: string; readonly filename: string; readonly contentType: string; readonly sizeBytes: number }) =>
       client.request<UploadIntent, typeof input>(`${MEDIA}/uploads/presign`, { method: "POST", body: input }),
     complete: (assetId: string) => client.request<MediaAsset>(`${MEDIA}/uploads/${assetId}/complete`, { method: "POST" }),
-    list: (celebrationId: string) => client.request<Items<MediaAsset>>(`${MEDIA}/celebrations/${celebrationId}/assets`),
+    list: (celebrationId: string, signal?: AbortSignal) => client.request<Items<MediaAsset>>(`${MEDIA}/celebrations/${celebrationId}/assets`, { signal }),
     reorder: (celebrationId: string, assetIds: readonly string[], coverAssetId: string | null) =>
       client.request<Items<MediaAsset>, { readonly assetIds: readonly string[]; readonly coverAssetId: string | null }>(`${MEDIA}/celebrations/${celebrationId}/assets/order`, { method: "PUT", body: { assetIds, coverAssetId } }),
-    remove: (assetId: string) => client.request<void>(`${MEDIA}/assets/${assetId}`, { method: "DELETE" })
+    remove: (assetId: string) => client.request<void>(`${MEDIA}/assets/${assetId}`, { method: "DELETE" }),
+    /** GET /media/public/celebrations/{id}/assets: the processed photos of a published celebration, read without a session. */
+    publicGallery: (celebrationId: string, signal?: AbortSignal) =>
+      client.request<Items<PublicGalleryImage>>(`${MEDIA}/public/celebrations/${encodeURIComponent(celebrationId)}/assets`, { auth: false, signal })
   } as const;
 }

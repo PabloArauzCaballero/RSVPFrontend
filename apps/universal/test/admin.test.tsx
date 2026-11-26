@@ -1,14 +1,18 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { fireEvent, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { Linking } from "react-native";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { EventTypeDefinition, Template, TranslatedEventType } from "@rsvp/query-hooks";
 import { definitionOf, EventTypesScreen, formOf } from "../src/admin/event-types";
 import { DashboardScreen, OperationsScreen } from "../src/admin/other-screens";
 import { TemplatesAdminScreen } from "../src/admin/templates";
 import { VerificationScreen } from "../src/admin/queues";
 import { OnboardingScreen } from "../src/host/onboarding";
-import { ADMIN, fakeClient, GUEST, HOST, renderApp, TEMPLATES, WEDDING, type Handler } from "./support";
+import { ADMIN, fakeClient, GUEST, HOST, renderApp, TEMPLATES, WEDDING, type Handler, pickOnboardingDate, pickTime } from "./support";
+
+// L8: the observability links depend on build variables; each test sets its own.
+afterEach(() => { vi.unstubAllEnvs(); });
 
 const navigate = vi.fn();
 const type = (label: string, value: string): void => { fireEvent.change(screen.getByLabelText(label), { target: { value } }); };
@@ -22,12 +26,16 @@ describe("REQ-F14-06 · only ADMIN reaches administration", () => {
 });
 
 describe("REQ-F14-02 · event type editor", () => {
+  afterEach(() => vi.useRealTimers());
+
   it("form and definition round-trip, with roles uppercased and empty translations dropped", () => {
     const definition: EventTypeDefinition = { code: "GRADUATION", status: "ACTIVE", defaultLocale: "es-BO", hostRoles: ["GRADUATE"], enabledSections: ["story"], requiredFieldsForPublish: ["title"], compatibleTemplateTags: ["graduation"], translations: [{ locale: "es-BO", name: "Graduación", hostRoleLabels: { GRADUATE: "Graduado" } }] };
     expect(definitionOf(formOf(definition))).toEqual(definition);
   });
 
   it("E2E (component level): an admin creates GRADUACION; a host can choose it right away and create a celebration with it", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2027-10-20T12:00:00Z"));
     const types: TranslatedEventType[] = [WEDDING];
     const definitions: EventTypeDefinition[] = [];
     const handlers: Record<string, Handler> = {
@@ -59,6 +67,7 @@ describe("REQ-F14-02 · event type editor", () => {
     fireEvent.click(await screen.findByRole("radio", { name: "Graduación" }));
     fireEvent.click(screen.getByTestId("onboarding-next"));
     type("Graduada o graduado", "Sofía");
+    pickOnboardingDate("2027-11-20"); pickTime("Hora", "19:00"); type("Ubicación", "Aula Magna");
     fireEvent.click(screen.getByTestId("onboarding-next")); // the name and link are the third short step
     type("Nombre de la celebración", "Grado de Sofía");
     fireEvent.click(screen.getByTestId("onboarding-create"));
@@ -105,7 +114,10 @@ describe("E2, E3, E7, E12", () => {
     expect(calls.some((call) => call.method === "POST")).toBe(true);
   });
 
-  it("operations: one primary action in the header; the observability links sit behind the Otras acciones menu", async () => {
+  it("operations: one primary action in the header; the configured observability links sit behind the Otras acciones menu", async () => {
+    vi.stubEnv("EXPO_PUBLIC_GRAFANA_URL", "https://grafana.example.test");
+    vi.stubEnv("EXPO_PUBLIC_RABBITMQ_URL", "https://rabbit.example.test");
+    const open = vi.spyOn(Linking, "openURL").mockResolvedValue(true);
     const { client } = fakeClient({ "GET /celebrations/health": () => ({ status: "ok" }) });
     renderApp(<OperationsScreen onNavigate={navigate} />, client, ADMIN);
     expect(await screen.findByText("celebration-site-service: Disponible")).toBeTruthy();
@@ -114,6 +126,29 @@ describe("E2, E3, E7, E12", () => {
     expect(await screen.findByRole("menuitem", { name: "Abrir Grafana" })).toBeTruthy();
     expect(screen.getByRole("menuitem", { name: "Abrir RabbitMQ" })).toBeTruthy();
     expect(screen.getAllByTestId("replay")).toHaveLength(1);
+    fireEvent.click(screen.getByRole("menuitem", { name: "Abrir Grafana" }));
+    await waitFor(() => expect(open).toHaveBeenCalledWith("https://grafana.example.test"));
+    open.mockRestore();
+  });
+
+  it("L8 · operations: without the variables there is no Grafana or RabbitMQ link and no menu, never a localhost fallback", async () => {
+    vi.stubEnv("EXPO_PUBLIC_GRAFANA_URL", "");
+    vi.stubEnv("EXPO_PUBLIC_RABBITMQ_URL", "not a url");
+    const { client } = fakeClient({ "GET /celebrations/health": () => ({ status: "ok" }) });
+    const { container } = renderApp(<OperationsScreen onNavigate={navigate} />, client, ADMIN);
+    expect(await screen.findByText("celebration-site-service: Disponible")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Otras acciones" })).toBeNull();
+    expect(container.innerHTML).not.toContain("localhost");
+  });
+
+  it("L8 · only one of the two configured: only that link", async () => {
+    vi.stubEnv("EXPO_PUBLIC_GRAFANA_URL", "");
+    vi.stubEnv("EXPO_PUBLIC_RABBITMQ_URL", "https://rabbit.example.test");
+    const { client } = fakeClient({ "GET /celebrations/health": () => ({ status: "ok" }) });
+    renderApp(<OperationsScreen onNavigate={navigate} />, client, ADMIN);
+    fireEvent.click(await screen.findByRole("button", { name: "Otras acciones" }));
+    expect(await screen.findByRole("menuitem", { name: "Abrir RabbitMQ" })).toBeTruthy();
+    expect(screen.queryByRole("menuitem", { name: "Abrir Grafana" })).toBeNull();
   });
 
   it("verification: four statuses are a select, not chips; the negative action is behind the row menu", async () => {

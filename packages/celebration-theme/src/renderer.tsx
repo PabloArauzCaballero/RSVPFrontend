@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
-import { daysUntil, hasSectionContent, readContent, SECTION_PATHS, type GalleryImage, type PublicCelebrationView } from "./content.js";
+import { daysUntil, giftsPath, hasSectionContent, readContent, SECTION_PATHS, sectionTitleKey, type GalleryImage, type GiftsStatus, type PublicCelebrationView } from "./content.js";
 import { formatDate } from "./format.js";
 import { SECTIONS } from "./sections/index.js";
 import { layoutOf, themeVariables, type ColorScheme } from "./theme.js";
@@ -14,25 +14,51 @@ export interface CelebrationRendererProps {
   readonly only?: SectionId;
   /** Base path of the public site for the section navigation, e.g. "/c/ana-y-luis". */
   readonly basePath?: string;
+  /** The visitor's own reply page (they hold their personal link): the reply section offers «Confirmar asistencia». */
   readonly rsvpHref?: string;
+  /** Without a personal link: where the reply section sends the visitor to find it (`/c/{slug}/rsvp`). */
+  readonly rsvpHelpHref?: string;
+  /** Render the help button with both faces so a client island can show «Confirmar asistencia» to a visitor who holds their link (see `SectionProps`). */
+  readonly rsvpAdaptive?: boolean;
+  /** What the gift list holds (rsvp-f1's `gifts.status`); absent means OPEN. Only the gifts button's label changes. */
+  readonly giftsStatus?: GiftsStatus;
   /** Injected for deterministic rendering in tests and previews. */
   readonly now?: Date;
   readonly colorScheme?: ColorScheme;
 }
 
+/** The flourish of the layouts that ask for an ornament; it takes the accent colour of the template. */
+function Ornament(): ReactNode {
+  return (
+    <svg className="celebration-ornament" viewBox="0 0 120 24" width="120" height="24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <path d="M4 12h44M72 12h44" />
+      <path d="M60 5c-4 3-4 11 0 14c4-3 4-11 0-14Z" />
+      <path d="M52 12c-3-4-8-4-10-1c3 3 7 3 10 1ZM68 12c3-4 8-4 10-1c-3 3-7 3-10 1Z" />
+    </svg>
+  );
+}
+
+/**
+ * The cover of the invitation: who, when and where, composed by the layout (`data-hero`) and with or without a photo
+ * (`data-has-image`), so a template without a cover picture still gets a designed cover instead of bare text.
+ */
 function Hero({ props, cover }: { readonly props: CelebrationRendererProps; readonly cover?: GalleryImage }): ReactNode {
   const { view, t, theme } = props;
   const content = readContent(view);
   const layout = layoutOf(theme);
   const days = daysUntil(content.eventDate, props.now ?? new Date());
   const countdownKey = days ? "celebration.hero.countdown" : "celebration.hero.today";
+  const image = cover?.variants.full && layout.hero !== "compact" ? cover.variants.full : null;
+  // A title made of the hosts' names ("Ana y Luis") already says who: repeating them underneath is noise.
+  const hostsInTitle = content.hosts.length > 0 && content.hosts.every((host) => content.title.includes(host.name));
   return (
-    <header className="celebration-hero" data-hero={layout.hero}>
-      {cover?.variants.full && layout.hero !== "compact" ? <img className="celebration-hero-image" src={cover.variants.full} alt="" fetchPriority="high" /> : null}
+    <header className="celebration-hero" data-hero={layout.hero} data-has-image={image ? "true" : "false"}>
+      {image ? <img className="celebration-hero-image" src={image} alt="" fetchPriority="high" /> : null}
       <div className="celebration-hero-copy">
         <p className="celebration-eyebrow">{view.eventType.name}</p>
         <h1>{content.title}</h1>
-        {content.hosts.length ? <p className="celebration-hosts">{content.hosts.map((host) => host.name).join(" & ")}</p> : null}
+        {content.hosts.length && !hostsInTitle ? <p className="celebration-hosts">{content.hosts.map((host, index) => <span key={host.role}>{index ? <span className="celebration-amp"> &amp; </span> : null}{host.name}</span>)}</p> : null}
+        {layout.divider === "ornament" ? <Ornament /> : <span className="celebration-rule" aria-hidden="true" />}
         {content.eventDate ? <p className="celebration-date"><time dateTime={content.eventDate}>{formatDate(content.eventDate, view.timeZone, view.locale)}</time></p> : null}
         {content.venueName ? <p className="celebration-venue">{content.venueName}</p> : null}
         {days !== null ? <p className="celebration-countdown">{t(countdownKey, { count: days })}</p> : null}
@@ -82,8 +108,9 @@ export function CelebrationRenderer(props: CelebrationRendererProps): ReactNode 
           return (
             <section key={section} id={section} data-section={section} aria-labelledby={headingId}>
               {/* On a section's own page the h1 already names it; the h2 stays for the outline only. */}
-              <h2 id={headingId} className={props.only ? "celebration-visually-hidden" : undefined}>{t(`celebration.sections.${section}`)}</h2>
-              <Body content={content} gallery={gallery} timeZone={view.timeZone} locale={view.locale} t={t} rsvpHref={props.rsvpHref} />
+              <h2 id={headingId} className={props.only ? "celebration-visually-hidden" : undefined}>{t(sectionTitleKey(section))}</h2>
+              <Body content={content} gallery={gallery} timeZone={view.timeZone} locale={view.locale} t={t} rsvpHref={props.rsvpHref} rsvpHelpHref={props.rsvpHelpHref} rsvpAdaptive={props.rsvpAdaptive}
+                giftsHref={giftsPath(view.slug)} giftsStatus={props.giftsStatus} />
             </section>
           );
         })}

@@ -26,3 +26,17 @@
 - **Snapshots visuales en Linux:** no existen. Hay que generarlos con el workflow `visual-baselines` (modo `generate`), revisarlos a mano y commitearlos (ver `docs/runbooks/visual-baselines.md`). Los PNG de macOS no son válidos en CI. Además `catalogo.visual.spec.ts` fluctúa ~1 % de píxeles en 768 px claro / 360 px oscuro entre corridas (observado en 2 de 4 corridas; las otras pasan): causa no investigada.
 - **Cobertura:** la puerta `yarn test:coverage` exige líneas/sentencias >= 85 % (funciones >= 80 % y ramas >= 75 % en los paquetes); apps/universal y apps/seo-web miden 92 % de líneas pero solo ~76-78 % de funciones (sin umbral de funciones en las apps). Los 85 % no cubren pantallas nativas iOS/Android.
 - **Aviso por correo tras el alta pública:** la sincronización de destinatarios exige credencial de anfitrión; el formulario público ahora lo dice sin prometer un correo (`rsvp.unregistered.emailNotice`). Pedido a backend si se quiere prometerlo: que Notification derive el destinatario del evento de alta pública sin credencial del anfitrión.
+
+## Deriva de contratos con el backend · 2026-11-20 (`@rsvp/contracts#test` en rojo)
+
+`node scripts/generate.mjs --check` falla porque tres specs vendorizadas no coinciden con el backend de la rama de despliegue. **No se regeneran:** en dos casos el frontend va por delante de lo publicado y regenerar degradaría el contrato; en el tercero el backend cambió el contrato sin subir la versión. Comparación byte a byte (2026-11-20):
+
+| Spec | Vendorizada (frontend) | Backend `chore/deploy-contabo-coolify` y `dev` | Backend PR #27 (`fix/guest-rsvp-gifts-coolify`, **abierto**) |
+|---|---|---|---|
+| gift-list | 1.9.0 | 1.8.0 | 1.9.0, idéntica a la vendorizada |
+| guest-rsvp | 1.11.0 | 1.10.0 | 1.11.0, idéntica a la vendorizada |
+| provider-catalog | 2.4.0, 44 rutas | 2.4.0, 70 rutas (`dev`: 2.3.0, 70) | 2.4.0, 70 rutas |
+
+- **Causa 1 (gift-list, guest-rsvp):** el PR #27 del frontend (fusionado el 2026-11-18) adoptó el contrato del PR #27 del backend (cancelación de reservas por asistencia: `RsvpAwareGiftReservation`, `RsvpCancelledGiftReservation`, `GuestTokenResource`), que **sigue sin fusionarse** en `RSVPBackend`. Se resuelve fusionando el PR #27 del backend (aprobación humana; sus checks rojos son la facturación de Actions, ver memoria del equipo). Volver a 1.8.0/1.10.0 rompería lo ya fusionado en el frontend.
+- **Causa 2 (provider-catalog):** el backend agregó 26 rutas y cambió contratos que el frontend consume **sin subir de 2.4.0**: `GET /providers` responde `CanonicalCompatProviderPage`, `Provider.name` y `Provider.slug` pasan a ser `string | null`, y `GET /r/{listingId}` se describe como «H05B minimal PRODUCT_PAGE redirect only» con nuevos 404/422/503. Pedido al backend: publicar la versión que corresponde (al menos 2.5.0; 3.0.0 si `name`/`slug` nulos son intencionales) con nota de compatibilidad. Recién entonces el frontend la adopta en un PR propio con revisión de consumidores (directorio, micrositio, portal y los contactos que pasan por `/r/` con `destination` distinto de `PRODUCT_PAGE`).
+- **Mientras tanto:** la falla es esperada y se declara en la evidencia de cada PR; no se debilita la prueba ni se regenera contra una rama no publicada.

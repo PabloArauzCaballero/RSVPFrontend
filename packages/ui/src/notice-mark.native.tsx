@@ -1,6 +1,6 @@
 import Svg, { Circle, Path } from 'react-native-svg';
 import { CHECK_GROUND_R, CHECK_STROKE, CHECK_VIEWBOX } from './check-geometry';
-import { NOTICE_GLYPHS, type NoticeMarkProps } from './notice-mark';
+import { NOTICE_GLYPHS, type NoticeMarkProps } from './notice-glyphs';
 import { useTheme } from './theme';
 
 /** Native: the same disc, stem and dot as the web icon, with `react-native-svg`. */

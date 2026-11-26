@@ -144,7 +144,7 @@ describe('REQ-F06-02 · primitive copy comes from the i18n catalog', () => {
   it('es-BO by default, en-US through stringsFor, in the native and the web primitives', () => {
     const { stringsFor } = native;
     const view = render(<UiProvider strings={stringsFor('en-US')}><DatePicker label="Date" /><Table columns={['A']} rows={[]} /><native.ComponentCatalog /></UiProvider>);
-    expect(screen.getAllByPlaceholderText('YYYY-MM-DD')[0]).toBeTruthy();
+    expect(screen.getAllByLabelText('Date')[0]?.getAttribute('type')).toBe('date');
     expect(screen.getAllByText('No records.')[0]).toBeTruthy();
     expect(screen.getAllByText('Component catalog')[0]).toBeTruthy();
     view.unmount();

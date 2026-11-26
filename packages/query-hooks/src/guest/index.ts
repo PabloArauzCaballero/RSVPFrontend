@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
-import { ApiError, type ApiClient } from "@rsvp/api-client";
-import { cachePolicy } from "../policy.js";
+import type { ApiClient } from "@rsvp/api-client";
+import { cachePolicy, retryTransient } from "../policy.js";
 import { queryKeys } from "../keys.js";
 import { invalidation } from "../invalidation.js";
 import { usePublicCelebration } from "../celebration/index.js";
@@ -15,11 +15,6 @@ export * from "./csv.js";
 
 const refetchAll = (queryClient: ReturnType<typeof useQueryClient>, keys: readonly (readonly unknown[])[]) => Promise.all(keys.map((queryKey) => queryClient.invalidateQueries({ queryKey })));
 
-/** 4xx answers are final (bad token, closed window…); only network and 5xx failures are worth another try. */
-export const retryTransient = (count: number, error: unknown): boolean => {
-  if (error instanceof ApiError && error.status < 500 && error.status !== 429) return false;
-  return count < 1;
-};
 
 /** GET /celebrations/public/{slug}: the real public read that turns a slug into a celebrationId (never the deprecated slug helper). */
 export function useCelebrationBySlug<TView extends PublicCelebrationRef = PublicCelebrationRef>(client: ApiClient, slug: string) {
@@ -85,11 +80,15 @@ export function useRegisterUnregistered(client: ApiClient, celebrationId: string
 
 export interface GuestListFilters { readonly status?: "PENDING" | "CONFIRMED" | "DECLINED"; readonly groupId?: string; readonly search?: string; readonly limit?: number; readonly offset?: number }
 
+const PROJECTION_REFRESH_MS = 2_000;
+
 export function useGuestList(client: ApiClient, celebrationId: string, filters: GuestListFilters = {}) {
-  return useQuery({ queryKey: queryKeys.guest.list(celebrationId, filters), queryFn: ({ signal }) => hostGuestsApi(client).list(celebrationId, filters, signal), enabled: Boolean(celebrationId), placeholderData: keepPreviousData, ...cachePolicy.guest });
+  return useQuery({ queryKey: queryKeys.guest.list(celebrationId, filters), queryFn: ({ signal }) => hostGuestsApi(client).list(celebrationId, filters, signal), enabled: Boolean(celebrationId), placeholderData: keepPreviousData, ...cachePolicy.guest,
+    refetchInterval: (query) => !query.state.error && (query.state.data?.freshness?.pendingEvents ?? 0) > 0 ? PROJECTION_REFRESH_MS : false,
+    refetchIntervalInBackground: false });
 }
 export function useGuestSummary(client: ApiClient, celebrationId: string) {
-  return useQuery({ queryKey: queryKeys.guest.summary(celebrationId), queryFn: () => hostGuestsApi(client).summary(celebrationId), enabled: Boolean(celebrationId), refetchInterval: 30_000, refetchIntervalInBackground: false, ...cachePolicy.guest });
+  return useQuery({ queryKey: queryKeys.guest.summary(celebrationId), queryFn: () => hostGuestsApi(client).summary(celebrationId), enabled: Boolean(celebrationId), refetchInterval: (query) => (query.state.data?.freshness?.pendingEvents ?? 0) > 0 ? PROJECTION_REFRESH_MS : 30_000, refetchIntervalInBackground: false, ...cachePolicy.guest });
 }
 export function useHostRsvps(client: ApiClient, celebrationId: string) {
   return useQuery({ queryKey: queryKeys.guest.rsvps(celebrationId), queryFn: () => hostGuestsApi(client).rsvps(celebrationId, { limit: 1000, offset: 0 }), enabled: Boolean(celebrationId), ...cachePolicy.guest });
@@ -126,19 +125,33 @@ export function useChangeGuestGroup(client: ApiClient, celebrationId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ guestId, groupId }: { readonly guestId: string; readonly groupId: string | null }) => hostGuestsApi(client).changeGroup(celebrationId, guestId, groupId),
-    onSuccess: () => Promise.all([refetchAll(queryClient, invalidation.guestsChanged(celebrationId)), queryClient.invalidateQueries({ queryKey: queryKeys.guest.groups(celebrationId) })])
+    onSuccess: (_saved, { guestId }) => refetchAll(queryClient, [...invalidation.guestsChanged(celebrationId), queryKeys.guest.detail(celebrationId, guestId)])
   });
 }
 export function useCreateGuestGroup(client: ApiClient, celebrationId: string) {
   const queryClient = useQueryClient();
-  return useMutation({ mutationFn: (name: string) => hostGuestsApi(client).createGroup(celebrationId, name), onSuccess: () => Promise.all([refetchAll(queryClient, invalidation.guestsChanged(celebrationId)), queryClient.invalidateQueries({ queryKey: queryKeys.guest.groups(celebrationId) })]) });
+  return useMutation({ mutationFn: (name: string) => hostGuestsApi(client).createGroup(celebrationId, name), onSuccess: () => refetchAll(queryClient, invalidation.guestsChanged(celebrationId)) });
 }
 /** Issue or replace the guest's link; the response carries the raw token once. Do not put it in a cache: callers keep it in component state. */
+export interface IssueGuestTokenInput { readonly guestId: string; /** Replace a working link (the current one stops working). */ readonly rotate?: boolean }
 export function useIssueGuestToken(client: ApiClient, celebrationId: string) {
-  return useMutation({ mutationFn: (guestId: string) => hostGuestsApi(client).issueToken(celebrationId, guestId), gcTime: 0 });
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ guestId, rotate = false }: IssueGuestTokenInput) => hostGuestsApi(client).issueToken(celebrationId, guestId, rotate),
+    onSettled: (_data, _error, { guestId }) => queryClient.invalidateQueries({ queryKey: queryKeys.guest.linkStatus(celebrationId, guestId) }),
+    gcTime: 0
+  });
 }
 export function useRevokeGuestToken(client: ApiClient, celebrationId: string) {
-  return useMutation({ mutationFn: (guestId: string) => hostGuestsApi(client).revokeToken(celebrationId, guestId) });
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (guestId: string) => hostGuestsApi(client).revokeToken(celebrationId, guestId),
+    onSettled: (_data, _error, guestId) => queryClient.invalidateQueries({ queryKey: queryKeys.guest.linkStatus(celebrationId, guestId) })
+  });
+}
+/** A11 · whether the guest already has a working personal link (and until when), so the screen never claims there is none. */
+export function useGuestLinkStatus(client: ApiClient, celebrationId: string, guestId: string) {
+  return useQuery({ queryKey: queryKeys.guest.linkStatus(celebrationId, guestId), queryFn: () => hostGuestsApi(client).linkStatus(celebrationId, guestId), enabled: Boolean(celebrationId && guestId), staleTime: 0, gcTime: cachePolicy.guest.gcTime });
 }
 export function useCompanionRequests(client: ApiClient, celebrationId: string) {
   return useQuery({ queryKey: queryKeys.guest.companionRequests(celebrationId), queryFn: () => hostGuestsApi(client).companionRequests(celebrationId), enabled: Boolean(celebrationId), ...cachePolicy.guest });
@@ -172,6 +185,6 @@ export function useEraseGuest(client: ApiClient, celebrationId: string) {
   return useMutation({
     mutationFn: (guestId: string) => hostGuestsApi(client).erase(celebrationId, guestId),
     // The detail query is left alone on purpose: refetching it would 404 and unmount the screen that is about to navigate away.
-    onSuccess: () => Promise.all([refetchAll(queryClient, invalidation.guestsChanged(celebrationId)), queryClient.invalidateQueries({ queryKey: queryKeys.guest.groups(celebrationId) })])
+    onSuccess: () => refetchAll(queryClient, invalidation.guestsChanged(celebrationId))
   });
 }

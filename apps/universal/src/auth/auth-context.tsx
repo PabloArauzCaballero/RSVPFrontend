@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useSyncExternalStore, type PropsWithChildren, type ReactNode } from "react";
-import { IdentityClient, type SessionManager, type AuthState, type LoginInput, type PasswordRecoveryInput, type RegisterInput, type Session } from "@rsvp/auth";
+import { IdentityClient, type SessionManager, type AuthState, type LoginInput, type PasswordRecoveryInput, type PasswordResetInput, type RegisterInput, type Session } from "@rsvp/auth";
 import type { ApiClient } from "@rsvp/api-client";
 import { claimsOf, type SessionClaims } from "../platform/session";
 
@@ -8,9 +8,16 @@ export interface AuthApi {
   readonly state: AuthState;
   readonly claims: SessionClaims;
   signIn(input: LoginInput): Promise<Session>;
-  register(input: RegisterInput): Promise<Session>;
+  register(input: RegisterInput, prepare?: (session: Session) => Promise<void>): Promise<Session>;
   requestRecovery(input: PasswordRecoveryInput): Promise<void>;
+  /** Sets the new password from a recovery link. Identity ends every session, so this one is closed too. */
+  resetPassword(input: PasswordResetInput): Promise<void>;
+  /** Confirms the e-mail from a verification link; a signed-in session is renewed so it knows. */
+  confirmEmail(token: string): Promise<void>;
+  /** Asks Identity for a new verification link for the signed-in account. */
+  resendVerification(): Promise<void>;
   signOut(): Promise<void>;
+  retrySession(): Promise<void>;
 }
 
 const AuthContext = createContext<AuthApi | null>(null);
@@ -30,9 +37,17 @@ export function AuthProvider({ manager, identityClient, children }: PropsWithChi
     return {
       state, claims: claimsOf(state.session),
       signIn: (input) => manager.signIn(input),
-      register: (input) => manager.register(input),
+      register: (input, prepare) => manager.register(input, prepare),
       requestRecovery: (input) => identity.requestPasswordRecovery(input),
-      signOut: () => manager.logout().catch(() => undefined)
+      resetPassword: async (input) => { await identity.resetPassword(input); await manager.logout().catch(() => undefined); },
+      confirmEmail: async (token) => { await identity.confirmEmail(token); if (manager.getState().session) await manager.refresh().catch(() => undefined); },
+      resendVerification: async () => {
+        const accessToken = await manager.tokenStore.getAccessToken();
+        if (!accessToken) throw new Error("Sign in to ask for a new link");
+        await identity.resendEmailVerification(accessToken);
+      },
+      signOut: () => manager.logout().catch(() => undefined),
+      retrySession: async () => { await manager.restore(); }
     };
   }, [manager, identityClient, state]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -46,7 +61,11 @@ export function StaticAuthProvider({ claims, children }: PropsWithChildren<{ rea
     signIn: async () => { throw new Error("Static session"); },
     register: async () => { throw new Error("Static session"); },
     requestRecovery: async () => undefined,
-    signOut: async () => undefined
+    resetPassword: async () => undefined,
+    confirmEmail: async () => undefined,
+    resendVerification: async () => undefined,
+    signOut: async () => undefined,
+    retrySession: async () => undefined
   }), [claims]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

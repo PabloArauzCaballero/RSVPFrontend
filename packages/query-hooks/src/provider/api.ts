@@ -1,21 +1,45 @@
 import { ApiError, type ApiClient } from "@rsvp/api-client";
-import type { ProviderDiscoveryQuery, ProviderPage, Availability, Booking, BookingRequestInput, BookingStatus, Calendar, CreateListingInput, Lead, ListingHit, ListingSummary, LeadConfig, Metrics, OwnListing, Provider, QuoteInput, QuoteReceipt, RegisterProviderInput, UpdateProviderInput, Microsite, MicrositeInput, ProviderDocument, DocumentInput, DocumentRegistration, DocumentDownload } from "./types.js";
+import type { ProviderCard, ProviderDiscoveryQuery, ProviderPage, Availability, Booking, BookingPage, BookingRequestInput, BookingStatus, Calendar, CreateListingInput, Lead, ListingHit, ListingSummary, LeadConfig, Metrics, OfferCategory, OwnListing, Provider, QuoteInput, QuoteReceipt, ProviderQuote, ProviderQuotePage, RegisterProviderInput, UpdateProviderInput, Microsite, MicrositeInput, ProviderDocument, DocumentInput, DocumentRegistration, DocumentDownload } from "./types.js";
+import { pageCount } from "./directory.js";
 
 const qs = (params: Record<string, string | number | undefined>): string => {
   const entries = Object.entries(params).filter((entry): entry is [string, string | number] => entry[1] !== undefined && entry[1] !== "");
   return entries.length ? `?${new URLSearchParams(entries.map(([key, value]) => [key, String(value)]))}` : "";
 };
 const NOT_ROUTED = 404;
+/** Bookings per page (the catalog accepts 1 to 100). */
+export const BOOKINGS_PAGE_SIZE = 50;
+const MAX_DIRECTORY_PAGE_SIZE = 50;
+type ListingSearchItem = ListingHit & Pick<ProviderCard, "priceFrom">;
 
 /** Provider Catalog through Kong (`/providers`, `/r`). Public reads use auth:false; the portal uses the PROVIDER session. */
 export function providerService(client: ApiClient) {
   const base = (providerId: string) => `/providers/${providerId}`;
+  const discover = (query: ProviderDiscoveryQuery, locale = "es-BO") =>
+    client.request<ProviderPage>(`/providers${qs({ ...query, locale })}`, { auth: false });
   return {
+    publicListing: (listingId: string) => client.request<ListingSummary>(`/listings/${encodeURIComponent(listingId)}`, { auth: false }),
+    /** Public offer cards for older catalogs that omit contact channels from the listing detail. */
+    publicDirectoryOffers: async (providerId: string): Promise<readonly ProviderCard[]> => {
+      const provider = await client.request<Pick<Provider, "id" | "slug" | "status">>(base(encodeURIComponent(providerId)), { auth: false });
+      if (provider.id !== providerId || provider.status !== "VERIFIED" || !provider.slug) return [];
+
+      const query = { slug: provider.slug, pageSize: MAX_DIRECTORY_PAGE_SIZE };
+      const first = await discover({ ...query, page: 1 });
+      const offers = [...first.items];
+      const pages = pageCount(first);
+      for (let page = 2; page <= pages; page += 1) {
+        const result = await discover({ ...query, page });
+        if (result.items.length === 0) break;
+        offers.push(...result.items);
+      }
+      return offers.filter((offer) => offer.verified && offer.providerId === providerId);
+    },
     register: (body: RegisterProviderInput) => client.request<Provider, RegisterProviderInput>("/providers", { method: "POST", body }),
     /** With the owner's session a DRAFT/PENDING provider is readable; anonymous callers only see VERIFIED ones (404 otherwise). */
     get: (providerId: string) => client.request<Provider>(base(providerId)),
     /** GET /providers (public, VERIFIED only): the discovery the host panel uses to pick partners (REQ-F23-05). */
-    discover: (query: ProviderDiscoveryQuery, locale = "es-BO") => client.request<ProviderPage>(`/providers${qs({ ...query, locale })}`, { auth: false }),
+    discover,
     /** GET /providers/mine (provider-catalog 2.1.0): every provider the caller owns, in any status, oldest first. */
     mine: () => client.request<{ items: readonly Provider[] }>("/providers/mine"),
     /** GET/PUT /providers/{id}/microsite: version 0 until first saved; `If-Match` carries the version loaded (409 MICROSITE_VERSION_CONFLICT otherwise). */
@@ -33,6 +57,7 @@ export function providerService(client: ApiClient) {
     submit: (providerId: string) => client.request<Provider>(`${base(providerId)}/submit`, { method: "POST" }),
     configureLeads: (providerId: string, body: LeadConfig) => client.request<Provider, LeadConfig>(`${base(providerId)}/lead-config`, { method: "PUT", body }),
     ownListings: (providerId: string, locale: string) => client.request<{ items: readonly OwnListing[] }>(`${base(providerId)}/listings${qs({ locale })}`),
+    categories: (locale: string) => client.request<{ items: readonly OfferCategory[] }>(`/providers/categories${qs({ locale })}`, { auth: false }),
     createListing: (providerId: string, body: CreateListingInput, locale: string) => client.request<OwnListing, CreateListingInput>(`${base(providerId)}/listings${qs({ locale })}`, { method: "POST", body }),
     publishListing: (providerId: string, listingId: string, locale: string) => client.request<OwnListing>(`${base(providerId)}/listings/${listingId}/publish${qs({ locale })}`, { method: "POST" }),
     leads: (providerId: string, limit = 50, offset = 0) => client.request<{ items: readonly Lead[]; total?: number }>(`${base(providerId)}/leads${qs({ limit, offset })}`),
@@ -40,26 +65,40 @@ export function providerService(client: ApiClient) {
     availability: (providerId: string) => client.request<Availability>(`${base(providerId)}/availability`),
     setAvailability: (providerId: string, body: Omit<Availability, "timeZone" | "providerId" | "version">) => client.request<Availability, typeof body>(`${base(providerId)}/availability`, { method: "PUT", body }),
     calendar: (providerId: string, month: string) => client.request<Calendar>(`${base(providerId)}/calendar${qs({ month })}`, { auth: false }),
-    bookings: (providerId: string, status?: BookingStatus) => client.request<{ items: readonly Booking[] }>(`${base(providerId)}/bookings${qs({ status })}`),
-    myBookings: () => client.request<{ items: readonly Booking[] }>("/providers/me/bookings"),
+    /** One page of the owner's bookings; pass the previous page's `nextCursor` to read the next one (L4). */
+    bookings: (providerId: string, status?: BookingStatus, cursor?: string, limit = BOOKINGS_PAGE_SIZE) => client.request<BookingPage>(`${base(providerId)}/bookings${qs({ status, limit, cursor })}`),
+    myBookings: (cursor?: string, limit = BOOKINGS_PAGE_SIZE) => client.request<BookingPage>(`/providers/me/bookings${qs({ limit, cursor })}`),
     requestBooking: (providerId: string, body: BookingRequestInput) => client.request<Booking, BookingRequestInput>(`${base(providerId)}/bookings`, { method: "POST", body }),
     decideBooking: (providerId: string, bookingId: string, action: "confirm" | "reject" | "cancel") => client.request<Booking>(`${base(providerId)}/bookings/${bookingId}/${action}`, { method: "POST" }),
+    /** GET /providers/{id}/quotes (provider-catalog 2.5.0, owner only): newest first; `cursor` is the previous page's nextCursor. */
+    quotes: (providerId: string, limit = 20, cursor?: string) => client.request<ProviderQuotePage>(`${base(providerId)}/quotes${qs({ limit, cursor })}`),
+    /** GET /providers/{id}/quotes/{quoteId}: the contact the requester gave, to answer them. */
+    quote: (providerId: string, quoteId: string) => client.request<ProviderQuote>(`${base(providerId)}/quotes/${encodeURIComponent(quoteId)}`),
     requestQuote: (providerId: string, body: QuoteInput, locale: string) => client.request<QuoteReceipt, QuoteInput>(`${base(providerId)}/quotes${qs({ locale })}`, { method: "POST", body }),
     /**
-     * GET /listings?q= (host picker for cataloged gifts). The running gateway has no `/listings` route yet (404 "no Route matched"),
-     * so a 404 falls back to the public `GET /providers` cards filtered by `q` on the client; both yield `{id,title}`.
+     * GET /listings?q= (host picker for cataloged gifts). Older gateways without this route fall back to public provider cards.
      */
     searchListings: async (q: string, limit = 20, locale = "es-BO"): Promise<{ items: readonly ListingHit[]; viaFallback: boolean }> => {
       try {
-        const result = await client.request<{ items: readonly ListingHit[] }>(`/listings${qs({ q, type: "PRODUCT", limit, locale })}`, { auth: false });
-        return { items: result.items, viaFallback: false };
+        const result = await client.request<{ items: readonly ListingSearchItem[] }>(`/listings${qs({ q, type: "PRODUCT", limit, locale })}`, { auth: false });
+        const items = result.items.map(({ priceFrom, ...item }): ListingHit => priceFrom
+          ? { ...item, priceFromMinor: priceFrom.amountMinor, currency: priceFrom.currency }
+          : item);
+        return { items, viaFallback: false };
       } catch (error) {
         // Kong answers an unrouted path with a bare 404 that carries no CORS headers, so in a browser it surfaces as a network TypeError, not an ApiError.
         if (error instanceof ApiError && error.status !== NOT_ROUTED) throw error;
-        const page = await client.request<{ items: readonly { listingId: string; providerSlug: string; name: string; summary?: string; category?: string; priceFrom?: { amountMinor: number; currency: string } }[] }>(`/providers${qs({ pageSize: 50 })}`, { auth: false });
+        const page = await client.request<Pick<ProviderPage, "items">>(`/providers${qs({ pageSize: 50 })}`, { auth: false });
         const needle = q.trim().toLowerCase();
         const items = page.items.filter((card) => !needle || `${card.name} ${card.summary ?? ""}`.toLowerCase().includes(needle)).slice(0, limit)
-          .map((card): ListingHit => ({ id: card.listingId, providerId: card.providerSlug, title: card.summary ?? card.name, ...(card.category ? { category: card.category } : {}), ...(card.priceFrom ? { priceFromMinor: card.priceFrom.amountMinor, currency: card.priceFrom.currency } : {}) }));
+          .map((card): ListingHit => ({
+            id: card.listingId,
+            providerId: card.providerSlug,
+            title: card.summary ?? card.name,
+            ...(card.category ? { category: card.category } : {}),
+            ...(card.priceFrom ? { priceFromMinor: card.priceFrom.amountMinor, currency: card.priceFrom.currency } : {}),
+            ...(card.imageUrl ? { imageUrl: card.imageUrl } : {})
+          }));
         return { items, viaFallback: true };
       }
     }

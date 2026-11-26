@@ -44,6 +44,8 @@ export interface Celebration {
   readonly templateId: string | null;
   readonly collaborators: readonly Collaborator[];
   readonly publishedAt: string | null;
+  /** D-1 (celebration 1.4.0): search engines may index the public page and the sitemap lists it. Off by default. */
+  readonly searchIndexing?: boolean;
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly access?: AccessLevel;
@@ -70,9 +72,23 @@ export interface CelebrationPatch {
   readonly currency?: string;
   readonly content?: Readonly<Record<string, unknown>>;
   readonly translations?: Readonly<Record<string, Readonly<Record<string, unknown>> | null>>;
+  readonly searchIndexing?: boolean;
 }
 
 export interface PublishCheck { readonly ready: boolean; readonly missingFields: readonly string[]; readonly status: CelebrationStatus; readonly version: number }
+
+/**
+ * GET /celebrations/{id}/public-page (A18): whether the public page agrees with the publication
+ * decision. Only LIVE means a guest opening the link sees the invitation.
+ */
+export type PublicPageState = "LIVE" | "PUBLISHING" | "UNPUBLISHING" | "OFFLINE";
+export interface PublicPageStatus {
+  readonly celebrationId: string;
+  readonly status: CelebrationStatus;
+  readonly state: PublicPageState;
+  readonly version: number;
+  readonly publicVersion: number | null;
+}
 
 export interface AuditEntry { readonly id: string; readonly action: string; readonly actorId: string | null; readonly at: string; readonly details: Readonly<Record<string, unknown>> }
 
@@ -110,13 +126,22 @@ export interface TemplateInput { readonly name: string; readonly description?: s
 export interface Template extends TemplateInput { readonly id: string; readonly status: "DRAFT" | "PUBLISHED" | "ARCHIVED"; readonly version: number; readonly publishedAt: string | null }
 
 export interface UploadIntent { readonly assetId: string; readonly objectKey: string; readonly uploadUrl: string; readonly method: "PUT"; readonly requiredHeaders: Readonly<Record<string, string>>; readonly maxBytes: number }
+/** One photo of GET /media/public/celebrations/{id}/assets: only what a guest may see (no filename or upload state). */
+export interface PublicGalleryImage {
+  readonly id: string;
+  readonly width: number | null;
+  readonly height: number | null;
+  readonly isCover: boolean;
+  readonly variants: Readonly<Partial<Record<"thumb" | "medium" | "full" | "webp", string>>>;
+}
+
 export interface MediaAsset {
   readonly id: string;
   readonly celebrationId: string;
   readonly filename: string;
   readonly contentType: string;
   readonly sizeBytes: number;
-  readonly status: "PENDING_UPLOAD" | "PROCESSED" | "REJECTED" | "DELETED";
+  readonly status: "PENDING_UPLOAD" | "PROCESSING" | "PROCESSED" | "REJECTED" | "DELETED";
   readonly width: number | null;
   readonly height: number | null;
   readonly sortOrder: number;

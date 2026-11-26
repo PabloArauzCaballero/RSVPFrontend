@@ -10,7 +10,8 @@ import { NavIcon } from './nav-icon';
 import { useReducedMotion, MOTION } from './motion';
 
 export { UiProvider, useTheme, useColors, useTones, useThemedStyles, tracking, depth, type ColorScheme, type Palette, type Tones } from './theme';
-import { DateField } from './date-field';
+import { DateField, type DateFieldProps } from './date-field';
+import { TimeField } from './time-field';
 export { Logo, type LogoProps, type LogoTone } from './logo';
 export { CheckMark, type CheckMarkProps } from './scheme-check';
 export { NoticeMark, type NoticeMarkProps, type NoticeMarkTone } from './notice-mark';
@@ -95,14 +96,19 @@ export function Button({ children, onPress, variant = 'primary', state = 'defaul
   );
 }
 
-export function Input({ label, error, state = 'default', style, ...props }: { label: string; error?: string; state?: State } & React.ComponentProps<typeof TextInput>) {
+export function Input({ label, error, state = 'default', style, trailing, inputRef, ...props }: { label: string; error?: string; state?: State; trailing?: React.ReactNode; inputRef?: React.Ref<TextInput> | undefined } & React.ComponentProps<typeof TextInput>) {
   const { palette, styles } = useTheme();
   const disabled = unavailable(state);
   const invalid = state === 'error' || Boolean(error);
+  const control = <TextInput ref={inputRef} accessibilityLabel={label} accessibilityState={{ disabled }} aria-invalid={invalid || undefined} editable={!disabled} placeholderTextColor={palette.textMuted} style={[styles.input, invalid && styles.inputError, trailing ? { flex: 1, minWidth: 0 } : null, style]} {...props} />;
   return (
     <View>
       <Text style={styles.label}>{label}</Text>
-      {state === 'empty' ? <StateHint state={state} /> : <TextInput accessibilityLabel={label} accessibilityState={{ disabled }} aria-invalid={invalid || undefined} editable={!disabled} placeholderTextColor={palette.textMuted} style={[styles.input, invalid && styles.inputError, style]} {...props} />}
+      {state === 'empty' ? <StateHint state={state} /> : trailing ? (
+        <View style={{ flexDirection: 'row', gap: spacing[2], alignItems: 'center' }}>
+          {control}<View>{trailing}</View>
+        </View>
+      ) : control}
       <StateHint state={state === 'empty' ? undefined : state} error={error} />
     </View>
   );
@@ -246,9 +252,14 @@ export function Table({ columns, rows, state = 'default', emptyMessage }: { colu
   );
 }
 
-/** ISO `YYYY-MM-DD` value. iOS/Android open the system picker (`date-field.native.tsx`); web and tests type the date. */
-export function DatePicker({ label, value, onChange, state = 'default', error }: { label: string; value?: string; onChange?: (value: string) => void; state?: State; error?: string }) {
-  return <DateField label={label} value={value} onChange={onChange} state={state} error={error} />;
+/** Calendar input with an ISO `YYYY-MM-DD` value on each platform. */
+export function DatePicker({ state = 'default', ...props }: Omit<DateFieldProps, 'state'> & { state?: State }) {
+  return <DateField {...props} state={state} />;
+}
+
+/** 24-hour `HH:MM` value behind the device's clock: the system picker on iOS/Android (`time-field.native.tsx`), the browser's on web. */
+export function TimePicker({ label, value, onChange, state = 'default', error, testID }: { label: string; value?: string; onChange?: (value: string) => void; state?: State; error?: string; testID?: string }) {
+  return <TimeField label={label} value={value} onChange={onChange} state={state} error={error} testID={testID} />;
 }
 
 export function FileUpload({ label, fileName, onSelect, state = 'default', error }: { label: string; fileName?: string; onSelect?: () => void; state?: State; error?: string }) {

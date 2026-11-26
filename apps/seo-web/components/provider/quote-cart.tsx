@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react
 import { ApiError } from '@rsvp/api-client';
 import { createTranslator, formatMinor, type AppLocale } from '@rsvp/i18n/server';
 import { isFutureDate, quoteSchema, toMinor } from '@rsvp/forms';
-import { useQuote, type QuoteReceipt } from '@rsvp/query-hooks';
+import { quoteFailureMessage, useQuote, type QuoteReceipt } from '@rsvp/query-hooks';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { appUrl } from '../../lib/app-url';
 import { createVisitorClient, readVisitorToken } from '../../lib/visitor-client';
@@ -127,12 +127,6 @@ function Field({ id, label, help, error, ...input }: { readonly id: string; read
 
 /** One message per failure the anonymous path adds: rate limits (with the wait), a failed captcha, a rejected (bot-like) request. */
 export function quoteFailure(status: number | undefined, code: string | undefined, retryAfter: number | undefined, t: ReturnType<typeof createTranslator>): string {
-  if (status === 429) {
-    if (code === 'QUOTE_LIMIT_REACHED') return t('quote.errors.limitContact');
-    return retryAfter ? t('quote.errors.rateLimitedWait', { minutes: Math.max(1, Math.ceil(retryAfter / 60)) }) : t('quote.errors.rateLimited');
-  }
-  if (status === 403) return t('quote.errors.captcha');
-  if (status === 422) return code === 'QUOTE_REJECTED' ? t('quote.errors.rejected') : t('quote.errors.validation');
-  if (status === 404) return t('quote.errors.notFound');
-  return t('quote.errors.generic');
+  const message = quoteFailureMessage(status, code, retryAfter);
+  return t(message.key, message.values);
 }

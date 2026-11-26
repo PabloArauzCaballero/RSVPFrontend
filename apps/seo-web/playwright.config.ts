@@ -1,4 +1,5 @@
 import { defineConfig } from "@playwright/test";
+import { VISUAL_NOW } from "./e2e/clock";
 
 // Visual regression (REQ-F02-02, REQ-F03-06): `yarn workspace @rsvp/seo-web test:visual`.
 // Baselines live in e2e/__screenshots__ and are reviewed in the PR; update with `test:visual -- --update-snapshots`.
@@ -29,7 +30,10 @@ export default defineConfig({
       reuseExistingServer: false,
       timeout: 300_000,
       // Own build dir: the visual server must not share `.next` with a `next dev` a developer already runs on :3000.
-      env: { NEXT_DIST_DIR: ".next-visual", RSVP_API_URL: `http://localhost:${FIXTURE_PORT}`, NEXT_PUBLIC_API_URL: `http://localhost:${FIXTURE_PORT}` }
+      // L18 · RSVP_VISUAL_TEST_CATALOG=1 builds the dev-only /catalogo into THIS test build only (lib/dev-surfaces.ts); the
+      // deployed image never sets it, so there /catalogo is a 404.
+      // L25 · RSVP_VISUAL_NOW freezes the server-rendered countdown of the public celebration at the specs' instant (e2e/clock.ts).
+      env: { NEXT_DIST_DIR: ".next-visual", RSVP_VISUAL_TEST_CATALOG: "1", RSVP_VISUAL_NOW: VISUAL_NOW.toISOString(), RSVP_API_URL: `http://localhost:${FIXTURE_PORT}`, NEXT_PUBLIC_API_URL: `http://localhost:${FIXTURE_PORT}` }
     }
   ]
 });

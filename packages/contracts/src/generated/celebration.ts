@@ -9,6 +9,7 @@ export interface paths {
         };
         get: operations["listCelebrations"];
         put?: never;
+        /** @description The date is optional in a draft. When provided, content.eventDate must be a date-time after the server's current instant. A date that has already started returns 422 EVENT_DATE_NOT_IN_FUTURE; a non-string date returns 422 INVALID_EVENT_DATE. Null represents an unset date. */
         post: operations["createCelebration"];
         delete?: never;
         options?: never;
@@ -29,6 +30,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
+        /** @description When content.eventDate is added or changed, it must be a date-time after the server's current instant (422 EVENT_DATE_NOT_IN_FUTURE, or INVALID_EVENT_DATE for a non-string date). Existing dates may be kept. Null removes the date from content. */
         patch: operations["editCelebration"];
         trace?: never;
     };
@@ -90,6 +92,26 @@ export interface paths {
         get?: never;
         /** @description DRAFT only; content is kept. */
         put: operations["assignEventType"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/celebrations/{celebrationId}/public-page": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Whether the public page exists for the current publication decision
+         * @description Publishing commits the decision and the public page is then built from the event, so for a moment (or longer, if the event is stuck) they can disagree. Any collaborator who may read the celebration may ask. Never cached (Cache-Control: no-store).
+         */
+        get: operations["getPublicPageStatus"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -318,6 +340,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Sitemap source: only published celebrations whose host enabled searchIndexing (D-1). */
         get: operations["listPublicCelebrations"];
         put?: never;
         post?: never;
@@ -428,6 +451,8 @@ export interface components {
             ownerId: string;
             /** Format: date-time */
             publishedAt?: string | null;
+            /** @description D-1: the host allowed search engines to index the public page and list it in the sitemap. false by default. */
+            searchIndexing: boolean;
             settings: components["schemas"]["CelebrationSettings"];
             slug: string;
             /** @enum {string} */
@@ -492,6 +517,8 @@ export interface components {
             };
             currency?: string;
             defaultLocale?: string;
+            /** @description D-1: let search engines index the public page (true) or keep it noindex and out of the sitemap (false). */
+            searchIndexing?: boolean;
             /** @description Immutable once published (409 SLUG_IMMUTABLE) */
             slug?: string;
             supportedLocales?: string[];
@@ -561,6 +588,8 @@ export interface components {
                 }[];
                 name?: string;
             };
+            /** @description D-1: true only when the host allowed indexing; otherwise clients must send noindex. */
+            indexable?: boolean;
             locale?: string;
             localTimes?: {
                 [key: string]: components["schemas"]["LocalDateTime"];
@@ -571,6 +600,24 @@ export interface components {
             templateId?: string | null;
             timeZone?: string;
             version?: number;
+        };
+        PublicPageStatus: {
+            /** Format: uuid */
+            celebrationId: string;
+            /** @description Celebration version the public page was built from; null without page */
+            publicVersion: number | null;
+            /**
+             * @description LIVE: published and the page exists. PUBLISHING: published, page not built yet. UNPUBLISHING: withdrawn, page still served. OFFLINE: not published and no page.
+             * @enum {string}
+             */
+            state: "LIVE" | "PUBLISHING" | "UNPUBLISHING" | "OFFLINE";
+            /**
+             * @description Publication decision (write model)
+             * @enum {string}
+             */
+            status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
+            /** @description Celebration version */
+            version: number;
         };
         PublicSlug: {
             slug: string;
@@ -1305,6 +1352,47 @@ export interface operations {
             };
             /** @description If-Match required */
             428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    getPublicPageStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                celebrationId: components["parameters"]["CelebrationId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Publication decision and public page state */
+            200: {
+                headers: {
+                    "Cache-Control"?: "no-store";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicPageStatus"];
+                };
+            };
+            /** @description Missing or invalid RS256 bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Not found or not yours (cross-tenant access is always 404, never 403) */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2070,7 +2158,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Published slugs for the sitemap */
+            /** @description Published, indexable slugs for the sitemap */
             200: {
                 headers: {
                     [name: string]: unknown;

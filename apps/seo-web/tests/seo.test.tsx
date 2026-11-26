@@ -68,6 +68,16 @@ describe("data loading (contract responses)", () => {
     const { client } = clientFor({ "/celebrations/public": json(200, { items: [{ slug: "a", updatedAt: "2026-10-17T00:00:00Z", supportedLocales: ["es-BO"] }] }) });
     expect((await loadPublicSlugs(client)).map((item) => item.slug)).toEqual(["a"]);
   });
+
+  it("M10 · D-1 · the sitemap drops any item the API marks as not indexable", async () => {
+    const items = [
+      { slug: "listed", updatedAt: "2026-10-17T00:00:00Z", supportedLocales: ["es-BO"] },
+      { slug: "opted-in", updatedAt: "2026-10-17T00:00:00Z", supportedLocales: ["es-BO"], indexable: true },
+      { slug: "hidden", updatedAt: "2026-10-17T00:00:00Z", supportedLocales: ["es-BO"], indexable: false }
+    ];
+    const { client } = clientFor({ "/celebrations/public": json(200, { items }) });
+    expect((await loadPublicSlugs(client)).map((item) => item.slug)).toEqual(["listed", "opted-in"]);
+  });
 });
 
 describe("rendered public page", () => {
@@ -79,6 +89,31 @@ describe("rendered public page", () => {
     const outbound = anchors.filter((anchor) => /^https?:/.test(anchor.getAttribute("href") ?? ""));
     expect(outbound.every((anchor) => ["navigation", "image"].includes(anchor.dataset["linkKind"] ?? ""))).toBe(true);
     expect(anchors.every((anchor) => anchor.dataset["linkKind"])).toBe(true);
+  });
+
+  it("P22 / PL-A10 · the gifts button is on the public page whatever the template and the event type say, and goes to /c/{slug}/regalos with no token", () => {
+    const view = { ...VIEW, enabledSections: VIEW.enabledSections.filter((section) => section !== "gifts") };
+    const template = { ...(TEMPLATES[4] as NonNullable<typeof page.template>) };
+    const document = dom(renderToStaticMarkup(<PublicCelebration page={{ ...page, view, template }} />));
+    const button = document.querySelector('section[data-section="gifts"] a[data-action="gifts"]');
+    expect(button?.getAttribute("href")).toBe("/c/ana-y-luis/regalos");
+    expect(button?.textContent).toBe("Ver regalos");
+    expect(document.querySelector('section[data-section="gifts"] h2')?.textContent).toBe("Regalos");
+    expect(document.querySelector('.celebration-nav a[href="/c/ana-y-luis/regalos"]')?.textContent).toBe("Regalos");
+    expect(document.documentElement.innerHTML).not.toMatch(/token|rsvp\/[A-Za-z0-9_-]{16,}/);
+  });
+
+  it("PL-A11 · the public reply is not a dead end: it leads to the help to find the personal link", () => {
+    const document = dom(renderToStaticMarkup(<PublicCelebration page={page} />));
+    const help = document.querySelector('section[data-section="rsvp"] a[data-action="rsvp-help"]');
+    expect(help?.getAttribute("href")).toBe("/c/ana-y-luis/rsvp");
+    // Both faces share the button's box (no layout shift when the island switches); only «Busca tu enlace personal» is exposed until then.
+    expect(help?.getAttribute("data-credential")).toBe("absent");
+    expect(help?.querySelector('[data-face="find"]')?.textContent).toBe("Busca tu enlace personal");
+    expect(help?.querySelector('[data-face="find"]')?.hasAttribute("aria-hidden")).toBe(false);
+    expect(help?.querySelector('[data-face="confirm"]')?.textContent).toBe("Confirmar asistencia");
+    expect(help?.querySelector('[data-face="confirm"]')?.getAttribute("aria-hidden")).toBe("true");
+    expect(help?.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
   });
 
   it("REQ-F08-04 · JSON-LD Event in the page, with the celebration's own UTC offset", () => {
@@ -124,6 +159,13 @@ describe("metadata and crawling", () => {
     expect(metadata.openGraph).toMatchObject({ type: "website", locale: "es_BO", images: [{ url: GALLERY[0]?.variants.full, width: 1920, height: 1280 }] });
     expect(celebrationMetadata(VIEW, GALLERY, t, { id: "faq", path: "faq" }).title).toBe("Preguntas frecuentes · Ana y Luis");
     expect(celebrationMetadata({ ...VIEW, content: { title: "X" } }, [], t).description).toBe("Toda la información de la celebración en un solo lugar.");
+  });
+
+  it("M10 · D-1 · a celebration is noindex unless its host enabled indexing", () => {
+    expect(celebrationMetadata(VIEW, GALLERY, t).robots).toEqual({ index: false, follow: false });
+    expect(celebrationMetadata({ ...VIEW, indexable: false }, GALLERY, t).robots).toEqual({ index: false, follow: false });
+    expect(celebrationMetadata({ ...VIEW, indexable: true }, GALLERY, t).robots).toEqual({ index: true, follow: true });
+    expect(celebrationMetadata({ ...VIEW, indexable: true }, GALLERY, t, { id: "faq", path: "faq" }).robots).toEqual({ index: true, follow: true });
   });
 
   it("REQ-F08-05 · robots keeps private surfaces and magic links out", () => {
@@ -181,5 +223,9 @@ describe("provider directory (F24)", () => {
   it("an empty category says so", async () => {
     const { client } = clientFor({ "/providers": json(200, { items: [], total: 0, page: 1, pageSize: 12 }) });
     expect(renderToStaticMarkup(<ProviderResults page={await searchProviders({}, client)} t={t} locale="es-BO" path="/proveedores" />)).toContain("Todavía no hay proveedores");
+    // Espejo web/móvil: the empty result is a heading with the app's drawing, as the app's `EmptyState`.
+    const empty = renderToStaticMarkup(<ProviderResults page={await searchProviders({}, client)} t={t} locale="es-BO" path="/proveedores" />);
+    expect(empty).toMatch(/<h2 class="state__title">Todavía no hay proveedores[^<]*<\/h2>/);
+    expect(empty).toContain('data-art="emptySearch"');
   });
 });

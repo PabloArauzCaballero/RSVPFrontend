@@ -3,6 +3,7 @@ import { ScrollView, View, type LayoutChangeEvent } from "react-native";
 import type { CelebrationTheme, GalleryImage, PublicCelebrationView } from "@rsvp/celebration-theme";
 import { CelebrationNativeRenderer } from "@rsvp/celebration-theme/native";
 import { radius } from "@rsvp/design-tokens";
+import { invitationIcon } from "../guest/invitation-icon";
 import { useT } from "../platform/providers";
 import { useColors } from "@rsvp/ui";
 import { ChoiceGroup } from "./ui";
@@ -35,8 +36,9 @@ export function PreviewFrame({ device, theme, view, gallery = [], label, height 
     <View onLayout={onLayout} style={{ width: "100%", alignItems: "center" }}>
       <View testID={`preview-${device}`} role="region" aria-label={label} style={{ width: width * scale, height: frameHeight * scale, overflow: "hidden", borderRadius: radius.lg, borderWidth: 1, borderColor: palette.border, backgroundColor: theme.palette.canvas }}>
         <View style={{ width, height: frameHeight, transform: [{ scale }], transformOrigin: "top left" }}>
-          <ScrollView style={{ flex: 1 }} nestedScrollEnabled>
-            <CelebrationNativeRenderer theme={theme} view={view} gallery={gallery} t={t} />
+          {/* Focusable: a taller invitation scrolls inside the frame, and a scroll area must be reachable with the keyboard. */}
+          <ScrollView style={{ flex: 1 }} nestedScrollEnabled tabIndex={0}>
+            <CelebrationNativeRenderer theme={theme} view={view} gallery={gallery} t={t} renderIcon={invitationIcon} />
           </ScrollView>
         </View>
       </View>

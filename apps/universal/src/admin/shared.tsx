@@ -83,18 +83,22 @@ export function QueryBoundary<TData extends { readonly items: readonly unknown[]
 }
 
 /** A confirmation that asks for a written reason; an empty reason is refused in place and the dialog stays open. */
-export function ReasonDialog({ visible, title, body, confirmLabel, onConfirm, onCancel }: {
+/** A required reason; `maxLength` (the server's limit) caps the field and blocks a longer paste with its own message. */
+export function ReasonDialog({ visible, title, body, confirmLabel, onConfirm, onCancel, maxLength }: {
   readonly visible: boolean; readonly title: string; readonly body: string; readonly confirmLabel: string;
-  readonly onConfirm: (reason: string) => void; readonly onCancel: () => void;
+  readonly onConfirm: (reason: string) => void; readonly onCancel: () => void; readonly maxLength?: number;
 }): ReactNode {
   const t = useT();
   const [reason, setReason] = useState("");
   const [touched, setTouched] = useState(false);
   const close = (): void => { setReason(""); setTouched(false); onCancel(); };
+  const value = reason.trim();
+  const tooLong = maxLength !== undefined && value.length > maxLength;
+  const error = touched && !value ? t("admin.common.reasonRequired") : tooLong ? t("admin.common.reasonTooLong", { max: maxLength ?? 0 }) : undefined;
   return (
     <ConfirmDialog visible={visible} danger title={title} body={body} confirmLabel={confirmLabel} onCancel={close}
-      onConfirm={() => { if (!reason.trim()) { setTouched(true); return; } const value = reason.trim(); setReason(""); setTouched(false); onConfirm(value); }}>
-      <Field label={t("admin.common.reason")} value={reason} onChange={setReason} multiline testID="admin-reason" {...(touched && !reason.trim() ? { error: t("admin.common.reasonRequired") } : {})} />
+      onConfirm={() => { if (!value || tooLong) { setTouched(true); return; } setReason(""); setTouched(false); onConfirm(value); }}>
+      <Field label={t("admin.common.reason")} value={reason} onChange={setReason} multiline testID="admin-reason" {...(maxLength !== undefined ? { maxLength } : {})} {...(error ? { error } : {})} />
     </ConfirmDialog>
   );
 }

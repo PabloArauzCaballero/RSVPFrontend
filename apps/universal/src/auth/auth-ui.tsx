@@ -67,6 +67,10 @@ function createAuthStyles(palette: (typeof colors)[ColorTheme]) {
   languageActive: { backgroundColor: palette.surfaceMuted, borderColor: palette.text },
   roleOption: { minHeight: MIN_TOUCH + 12, justifyContent: "center", paddingHorizontal: spacing[4], paddingVertical: spacing[3], borderWidth: 1, borderColor: palette.fieldBorder, borderRadius: radius.md, backgroundColor: palette.surface },
   roleOptionActive: { borderColor: palette.text, backgroundColor: palette.surfaceMuted },
+  section: { gap: spacing[4], paddingTop: spacing[2] },
+  sectionTitle: { color: palette.textMuted, fontSize: typography.fontSize.xs, fontWeight: "600", letterSpacing: 0.6, textTransform: "uppercase", fontFamily: textFamily },
+  pair: { flexDirection: "row", flexWrap: "wrap", gap: spacing[4] },
+  pairItem: { flexGrow: 1, flexShrink: 1, flexBasis: 160, minWidth: 0 },
   roleTitle: { color: palette.text, fontSize: typography.fontSize.base, fontWeight: "600", fontFamily: textFamily },
   centered: { flex: 1, alignItems: "center", justifyContent: "center", padding: spacing[6], backgroundColor: palette.canvas, gap: spacing[4] }
   });
@@ -109,7 +113,7 @@ export function AuthLayout({ title, intro, illustration = "invitation", children
         <View style={authStyles.brand}>
           <Logo tone="auto" height={32} />
           <View style={{ gap: spacing[6] }}>
-            <Illustration name={illustration} tone="auto" size={104} />
+            <Illustration name={illustration} tone="auto" size="lg" />
             <Text accessibilityElementsHidden aria-hidden style={authStyles.pitch}>{t("auth.brandPitch")}</Text>
             <Text accessibilityElementsHidden aria-hidden style={authStyles.pitchBody}>{t("auth.brandBody")}</Text>
           </View>
@@ -131,7 +135,7 @@ export function AuthLayout({ title, intro, illustration = "invitation", children
   );
 }
 
-export interface AuthFieldProps extends Pick<TextInputProps, "autoComplete" | "keyboardType" | "returnKeyType" | "onSubmitEditing" | "textContentType"> {
+export interface AuthFieldProps extends Pick<TextInputProps, "autoComplete" | "keyboardType" | "returnKeyType" | "onSubmitEditing" | "textContentType" | "autoCapitalize" | "inputMode"> {
   readonly label: string;
   readonly value: string;
   readonly onChange: (value: string) => void;
@@ -159,7 +163,7 @@ export function AuthField({ label, value, onChange, error, hint, secret = false,
           style={[authStyles.input, secret && authStyles.inputWithToggle, error ? authStyles.inputError : null, focusRing]} {...input}
         />
         {secret ? (
-          <Pressable accessibilityRole="button" accessibilityLabel={revealed ? t("auth.hidePassword") : t("auth.showPassword")} aria-pressed={revealed} onPress={() => setRevealed((current) => !current)} style={[authStyles.toggle, focusRing]}>
+          <Pressable accessibilityRole="button" accessibilityLabel={revealed ? t("auth.hidePassword") : t("auth.showPassword")} aria-pressed={revealed} onPress={() => setRevealed((current) => !current)} style={[authStyles.toggle, error ? authStyles.inputError : null, focusRing]}>
             <Text style={authStyles.toggleText}>{revealed ? t("auth.hidePassword") : t("auth.showPassword")}</Text>
           </Pressable>
         ) : null}
@@ -201,3 +205,20 @@ export function Banner({ kind, children }: PropsWithChildren<{ readonly kind: "e
   );
 }
 
+/** A group of fields under a quiet heading, so a long form reads as three short steps. */
+export function AuthSection({ title, children }: PropsWithChildren<{ readonly title: string }>): ReactNode {
+  const authStyles = useAuthStyles();
+  return (
+    <View role="group" aria-label={title} style={authStyles.section}>
+      <Text accessibilityRole="header" aria-level={2} style={authStyles.sectionTitle}>{title}</Text>
+      {children}
+    </View>
+  );
+}
+
+/** Two short fields side by side when there is room (first and last name), stacked on a phone. */
+export function AuthPair({ children }: PropsWithChildren): ReactNode {
+  const authStyles = useAuthStyles();
+  const items = Array.isArray(children) ? children : [children];
+  return <View style={authStyles.pair}>{items.map((child, index) => <View key={index} style={authStyles.pairItem}>{child}</View>)}</View>;
+}

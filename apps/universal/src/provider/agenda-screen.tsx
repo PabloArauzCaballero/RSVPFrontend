@@ -6,7 +6,7 @@ import { ApiError } from "@rsvp/api-client";
 import { formatCelebrationDate } from "@rsvp/i18n";
 import { useAvailability, useDecideBooking, useProviderBookings, useSetAvailability, type Blackout, type Provider } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../platform/providers";
-import { ActionButton, ConfirmDialog, EmptyState, Field, OverflowMenu, PageIntro, Notice, Section, ToggleChip, useStyles } from "../host/ui";
+import { ActionButton, ConfirmDialog, DateInput, EmptyState, Field, TimeInput, OverflowMenu, PageIntro, Notice, Section, ToggleChip, useStyles } from "../host/ui";
 import { PortalErrorNotice as ErrorNotice } from "./errors";
 import { TIME, blackoutProblem, validCapacity } from "./agenda-rules";
 import { PortalScreen, usePortalHeader } from "./frame";
@@ -81,13 +81,17 @@ function Agenda({ provider }: { readonly provider: Provider }): ReactNode {
   const weekdayLabels = t("portal.agenda.weekday", { returnObjects: true } as never) as unknown as readonly string[];
   const labelOf = (day: number): string => (Array.isArray(weekdayLabels) ? weekdayLabels[day] : undefined) ?? String(day);
 
-  const pending = (bookings.data?.items ?? []).filter((booking) => booking.status === "REQUESTED").length;
+  const shownBookings = bookings.data?.pages.flatMap((page) => page.items) ?? [];
+  const pending = shownBookings.filter((booking) => booking.status === "REQUESTED").length;
+  // With more pages still on the server the count is a lower bound, and the heading says so (PF-2).
+  const pendingTitle = bookings.hasNextPage ? t("portal.agenda.bookingsPendingAtLeast", { count: pending }) : t("portal.agenda.bookingsPending", { count: pending });
+  const listFailed = bookings.isError && !bookings.isFetchNextPageError;
   return (
     <View style={{ gap: spacing[8] }}>
       <PageIntro>{t("portal.agenda.intro", { zone: provider.timeZone })}</PageIntro>
       {notice ? <Notice kind={notice.kind}>{notice.text}</Notice> : null}
-      <View style={{ gap: spacing[1] }}><Text accessibilityRole="header" style={styles.subtitle}>{pending > 0 ? t("portal.agenda.bookingsPending", { count: pending }) : t("portal.agenda.bookings")}</Text>
-        {bookings.isPending ? <RowsSkeleton count={2} minHeight={120} trailing /> : bookings.isError ? <ErrorNotice error={bookings.error} onReload={() => { void bookings.refetch(); }} /> : bookings.data.items.length === 0 ? <EmptyState illustration="freeAgenda" title={t("portal.agenda.bookingsEmptyTitle")} body={t("portal.agenda.bookingsEmpty")} /> : <Stagger>{[...bookings.data.items].sort((a, b) => Number(b.status === "REQUESTED") - Number(a.status === "REQUESTED")).map((booking) => {
+      <View style={{ gap: spacing[1] }}><Text accessibilityRole="header" style={styles.subtitle}>{pending > 0 ? pendingTitle : t("portal.agenda.bookings")}</Text>
+        {bookings.isPending ? <RowsSkeleton count={2} minHeight={120} trailing /> : listFailed ? <ErrorNotice error={bookings.error} onReload={() => { void bookings.refetch(); }} /> : shownBookings.length === 0 ? <EmptyState illustration="freeAgenda" title={t("portal.agenda.bookingsEmptyTitle")} body={t("portal.agenda.bookingsEmpty")} /> : <Stagger>{[...shownBookings].sort((a, b) => Number(b.status === "REQUESTED") - Number(a.status === "REQUESTED")).map((booking) => {
           const busy = decide.isPending && decide.variables?.bookingId === booking.id ? decide.variables.action : null;
           return (
             <View key={booking.id} style={{ gap: spacing[2], paddingVertical: spacing[5], borderTopWidth: 1, borderTopColor: palette.border }} testID={`booking-${booking.id}`}>
@@ -105,6 +109,8 @@ function Agenda({ provider }: { readonly provider: Provider }): ReactNode {
             </View>
           );
         })}</Stagger>}
+        {bookings.isFetchNextPageError ? <ErrorNotice error={bookings.error} onRetry={() => { void bookings.fetchNextPage(); }} /> : null}
+        {bookings.hasNextPage ? <ActionButton icon="arrow" variant="secondary" label={t("portal.agenda.bookingsMore")} busy={bookings.isFetchingNextPage} disabled={bookings.isFetchingNextPage} onPress={() => { void bookings.fetchNextPage(); }} testID="bookings-more" /> : null}
         {decide.isError && !conflict ? <ErrorNotice error={decide.error} onRetry={() => { if (decide.variables) decideOnce(decide.variables); }} /> : null}
       </View>
       {availability.isError && !(availability.error instanceof ApiError && availability.error.status === 404) ? <ErrorNotice error={availability.error} onReload={() => { void availability.refetch(); }} /> : null}
@@ -112,12 +118,12 @@ function Agenda({ provider }: { readonly provider: Provider }): ReactNode {
         <Field label={t("portal.agenda.capacity")} value={capacity} onChange={setCapacity} keyboardType="number-pad" testID="agenda-capacity" />
         <Text style={styles.label}>{t("portal.agenda.weekdays")}</Text>
         <View style={styles.row}>{[0, 1, 2, 3, 4, 5, 6].map((day) => <ToggleChip key={day} on={days.includes(day)} label={labelOf(day)} onPress={() => setDays((current) => current.includes(day) ? current.filter((item) => item !== day) : [...current, day])} testID={`weekday-${day}`} />)}</View>
-        <View style={styles.row}><Field label={t("portal.agenda.start")} value={start} onChange={setStart} testID="agenda-start" /><Field label={t("portal.agenda.end")} value={end} onChange={setEnd} testID="agenda-end" /></View>
+        <View style={[styles.row, { alignItems: "flex-start" }]}><View style={{ flexGrow: 1, flexBasis: 150 }}><TimeInput label={t("portal.agenda.start")} value={start} onChange={setStart} testID="agenda-start" /></View><View style={{ flexGrow: 1, flexBasis: 150 }}><TimeInput label={t("portal.agenda.end")} value={end} onChange={setEnd} testID="agenda-end" /></View></View>
         <Text accessibilityRole="header" style={[styles.subtitle, { marginTop: spacing[6] }]}>{t("portal.agenda.blackouts")}</Text>
         {blackouts.map((item, index) => (
           <View key={`${item.start}-${index}`} style={styles.row} testID={`blackout-${item.start}`}><Text style={styles.body}>{item.start}{item.end && item.end !== item.start ? ` → ${item.end}` : ""}{item.reason ? ` · ${item.reason}` : ""}</Text><Button variant="ghost" accessibilityLabel={t("portal.agenda.removeBlackout")} state="default" onPress={() => setBlackouts((current) => current.filter((_, position) => position !== index))} testID={`blackout-remove-${item.start}`}>{t("portal.agenda.removeBlackout")}</Button></View>
         ))}
-        <View style={styles.row}><Field label={t("portal.agenda.blackoutDate")} value={newDate} onChange={setNewDate} testID="blackout-date" /><Field label={t("portal.agenda.blackoutEnd")} value={newEnd} onChange={setNewEnd} testID="blackout-end" /><Field label={t("portal.agenda.blackoutReason")} value={newReason} onChange={setNewReason} testID="blackout-reason" /></View>
+        <View style={[styles.row, { alignItems: "flex-start" }]}><View style={{ flexGrow: 1, flexBasis: 160 }}><DateInput label={t("portal.agenda.blackoutDate")} value={newDate} onChange={setNewDate} testID="blackout-date" /></View><View style={{ flexGrow: 1, flexBasis: 160 }}><DateInput label={t("portal.agenda.blackoutEnd")} value={newEnd} onChange={setNewEnd} testID="blackout-end" /></View><Field label={t("portal.agenda.blackoutReason")} value={newReason} onChange={setNewReason} testID="blackout-reason" /></View>
         <ActionButton icon="plus" variant="secondary" label={t("portal.agenda.addBlackout")} onPress={addBlackout} testID="blackout-add" />
         {errors.length ? <Notice kind="error">{errors.map((message) => <Text key={message} style={styles.body}>{message}</Text>)}</Notice> : null}
         <ErrorNotice error={save.error} onRetry={submit} />

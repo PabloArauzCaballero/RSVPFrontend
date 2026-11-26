@@ -1,0 +1,58 @@
+{
+  "app": "https://dev.done.arauzsoftware.com",
+  "site": "http://localhost:3199",
+  "results": [
+    {
+      "route": "404",
+      "path": "/ruta-que-no-existe-espejo",
+      "locale": "es-BO",
+      "same": false,
+      "webStatus": 404,
+      "appUrl": "https://dev.done.arauzsoftware.com/ruta-que-no-existe-espejo",
+      "web": [
+        "Esta página no existe"
+      ],
+      "app": [
+        "Esta página no existe"
+      ],
+      "webArt": [
+        "notFound"
+      ],
+      "appArt": [],
+      "webActions": [
+        "Ir al inicio"
+      ],
+      "appActions": [
+        "Ir al inicio"
+      ],
+      "detail": "art web=[\"notFound\"] app=[]",
+      "at": "2026-11-23T12:17:16.429Z"
+    },
+    {
+      "route": "404",
+      "path": "/ruta-que-no-existe-espejo",
+      "locale": "en-US",
+      "same": false,
+      "webStatus": 404,
+      "appUrl": "https://dev.done.arauzsoftware.com/ruta-que-no-existe-espejo",
+      "web": [
+        "This page does not exist"
+      ],
+      "app": [
+        "This page does not exist"
+      ],
+      "webArt": [
+        "notFound"
+      ],
+      "appArt": [],
+      "webActions": [
+        "Go to the start"
+      ],
+      "appActions": [
+        "Go to the start"
+      ],
+      "detail": "art web=[\"notFound\"] app=[]",
+      "at": "2026-11-23T12:17:22.973Z"
+    }
+  ]
+}

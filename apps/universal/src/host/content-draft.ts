@@ -2,8 +2,7 @@ import type { Celebration } from "@rsvp/query-hooks";
 
 /**
  * Editing helpers. Instants are edited as the wall clock of the celebration (the API returns
- * `localTimes` and accepts YYYY-MM-DDTHH:mm in the celebration zone), so the app never does
- * time-zone arithmetic.
+ * `localTimes` and accepts YYYY-MM-DDTHH:mm in the celebration zone), and the API stores them as UTC.
  */
 
 export interface WallClock { readonly date: string; readonly time: string }

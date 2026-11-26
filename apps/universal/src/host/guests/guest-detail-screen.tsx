@@ -5,7 +5,7 @@ import { Avatar, fonts } from "@rsvp/ui";
 import { formatCelebrationDate } from "@rsvp/i18n";
 import { personalLinkPath } from "@rsvp/auth";
 import { ApiError } from "@rsvp/api-client";
-import { maskSecret, useCelebration, useChangeGuestGroup, useEraseGuest, useGuestDetail, useGuestGroups, useGuestList, useIssueGuestToken, useRevokeGuestToken, type Celebration } from "@rsvp/query-hooks";
+import { maskSecret, useCelebration, useChangeGuestGroup, useEraseGuest, useGuestDetail, useGuestGroups, useGuestLinkStatus, useGuestList, useIssueGuestToken, useRevokeGuestToken, type Celebration } from "@rsvp/query-hooks";
 import { copyText } from "../../platform/clipboard";
 import { useApiClient, useLocale, useT } from "../../platform/providers";
 import { shareText } from "../../platform/share";
@@ -29,16 +29,20 @@ function useGuestLink(celebration: Celebration | undefined, guestId: string) {
   const client = useApiClient();
   const issue = useIssueGuestToken(client, celebration?.id ?? "");
   const revoke = useRevokeGuestToken(client, celebration?.id ?? "");
+  // A11: whether the guest already has a working link. The link itself cannot be shown again (only its hash is stored),
+  // so a working link is replaced only after the host confirms that the one already sent will stop working.
+  const status = useGuestLinkStatus(client, celebration?.id ?? "", guestId);
+  const hasWorkingLink = status.data?.active === true;
   const [issued, setIssued] = useState<Issued | null>(null);
   const [confirm, setConfirm] = useState<"revoke" | "reissue" | null>(null);
   const [message, setMessage] = useState("");
   const flight = useSingleFlightGate();
 
   const origin = siteOrigin();
-  const generate = (): void => {
+  const generate = (rotate: boolean): void => {
     if (!celebration || !flight.begin()) return;
     setMessage("");
-    issue.mutate(guestId, {
+    issue.mutate({ guestId, rotate }, {
       onSettled: flight.end,
       // The backend's canonical URL when it sent one; otherwise the same format built here from the configured origin.
       onSuccess: (token) => {
@@ -60,10 +64,12 @@ function useGuestLink(celebration: Celebration | undefined, guestId: string) {
   const confirmed = (): void => {
     const action = confirm;
     setConfirm(null);
-    if (action === "reissue") generate();
+    if (action === "reissue") generate(true);
     if (action === "revoke" && flight.begin()) { setMessage(""); revoke.mutate(guestId, { onSuccess: () => { setIssued(null); setMessage(t("guests.detail.link.revoked")); }, onSettled: flight.end }); }
   };
-  return { issue, revoke, issued, confirm, setConfirm, message, generate, copy, share, confirmed, timeZone: celebration?.timeZone ?? "UTC" };
+  /** The primary action: a first link is generated at once; replacing a working one always asks first. */
+  const start = (): void => { if (hasWorkingLink) setConfirm("reissue"); else generate(false); };
+  return { issue, revoke, issued, status, hasWorkingLink, confirm, setConfirm, message, generate, start, copy, share, confirmed, timeZone: celebration?.timeZone ?? "UTC" };
 }
 type GuestLink = ReturnType<typeof useGuestLink>;
 
@@ -86,7 +92,10 @@ function LinkSection({ link, name }: { readonly link: GuestLink; readonly name: 
             <ActionButton icon="share" variant="secondary" label={t("guests.detail.link.share")} onPress={() => { void link.share(); }} testID="share-link" />
           </View>
         </Celebrate>
-      ) : <Text style={styles.muted}>{t("guests.detail.link.none")}</Text>}
+      ) : link.hasWorkingLink && link.status.data?.expiresAt ? (
+        <Text style={styles.body} testID="link-active">{t("guests.detail.link.active", { date: formatCelebrationDate(link.status.data.expiresAt, { locale, timeZone: link.timeZone }) })}</Text>
+      ) : link.status.isSuccess ? <Text style={styles.muted}>{t("guests.detail.link.none")}</Text>
+        : link.status.isError ? <Text style={styles.muted}>{t("guests.detail.link.unknown")}</Text> : null}
       {message ? <Notice kind="success">{message}</Notice> : null}
       <FailureNotice error={issue.error ?? revoke.error} />
       <ConfirmDialog visible={confirm !== null} danger title={confirm === "reissue" ? t("guests.detail.link.reissueTitle") : t("guests.detail.link.revokeTitle")} body={confirm === "reissue" ? t("guests.detail.link.reissueBody") : t("guests.detail.link.revokeBody")}
@@ -178,13 +187,13 @@ export function GuestDetailScreen(props: ScreenProps & { readonly guestId?: stri
   const ready = Boolean(guest.data);
   const primary = link.issued
     ? <ActionButton icon="copy" label={t("guests.detail.link.copy")} onPress={() => { void link.copy(); }} testID="copy-link" />
-    : <ActionButton icon="check" label={t("guests.detail.link.issue")} busy={link.issue.isPending} onPress={link.generate} testID="issue-link" />;
+    : <ActionButton icon="check" label={t(link.hasWorkingLink ? "guests.detail.link.issueNew" : "guests.detail.link.issue")} busy={link.issue.isPending || link.status.isPending} disabled={link.status.isPending} onPress={link.start} testID="issue-link" />;
   return (
     <CelebrationScreen {...props} current="guests" title={t("guests.detail.title")} intro={t("guests.detail.intro")}
       actions={ready ? primary : undefined}
       menu={ready ? (
         <OverflowMenu label={t("guests.more")} testID="guest-more" items={[
-          ...(link.issued ? [{ key: "reissue", label: t("guests.detail.link.reissue"), onPress: () => link.setConfirm("reissue") }] : []),
+          ...(link.issued || link.hasWorkingLink ? [{ key: "reissue", label: t("guests.detail.link.reissue"), onPress: () => link.setConfirm("reissue") }] : []),
           { key: "revoke", label: t("guests.detail.link.revoke"), testID: "revoke-link", destructive: true, disabled: link.revoke.isPending, onPress: () => link.setConfirm("revoke") },
           { key: "erase", label: t("guests.detail.erase.action"), testID: "erase-guest", destructive: true, disabled: eraser.erase.isPending, onPress: () => eraser.setConfirm(true) }
         ]} />

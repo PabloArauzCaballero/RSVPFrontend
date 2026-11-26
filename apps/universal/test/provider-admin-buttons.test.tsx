@@ -6,7 +6,7 @@ import { VerificationScreen } from "../src/admin/queues";
 import { TemplatesAdminScreen } from "../src/admin/templates";
 import { blackoutProblem, isRealDate, validCapacity } from "../src/provider/agenda-rules";
 import { failureKind, isRetryable } from "../src/provider/errors";
-import { mergeMicrosite } from "../src/provider/microsite-screen";
+import { mergeMicrosite, MicrositeScreen } from "../src/provider/microsite-screen";
 import { AgendaScreen } from "../src/provider/agenda-screen";
 import { DocumentsScreen } from "../src/provider/documents-screen";
 import { LeadsScreen } from "../src/provider/leads-screen";
@@ -14,13 +14,13 @@ import { ProductsScreen } from "../src/provider/services-screen";
 import { OverviewScreen } from "../src/provider/overview-screen";
 import { writeLocal } from "../src/platform/local-store";
 import { resetSecureStore } from "./stubs/expo-secure-store";
-import { ADMIN, fakeClient, HOST, HttpFailure, renderApp, type Handler } from "./support";
+import { ADMIN, fakeClient, GEO, HOST, HttpFailure, renderApp, type Handler } from "./support";
 
 const PID = "4f0f2d3d-0000-4000-8000-0000000000aa";
 const navigate = vi.fn();
 const type = (label: string, value: string): void => { fireEvent.change(screen.getByLabelText(label), { target: { value } }); };
 const profile = { id: PID, slug: "dulce-sol", name: "Dulce Sol", status: "VERIFIED", plan: "FREE", currency: "BOB", timeZone: "America/La_Paz", version: 1, ownerId: "u-host" };
-const portal = (extra: Record<string, Handler> = {}): Record<string, Handler> => ({ [`GET /providers/${PID}`]: () => profile, [`GET /providers/${PID}/listings`]: () => ({ items: [] }), [`GET /providers/${PID}/metrics`]: () => ({ providerId: PID, from: "", to: "", totals: { impressions: 0, clicks: 0, validLeads: 0, invalidLeads: 0, ctr: 0 } }), ...extra });
+const portal = (extra: Record<string, Handler> = {}): Record<string, Handler> => ({ [`GET /providers/${PID}`]: () => profile, "GET /providers/geo": () => GEO, [`GET /providers/${PID}/listings`]: () => ({ items: [] }), [`GET /providers/${PID}/metrics`]: () => ({ providerId: PID, from: "", to: "", totals: { impressions: 0, clicks: 0, validLeads: 0, invalidLeads: 0, ctr: 0 } }), ...extra });
 /** Secondary actions live behind a "⋯" menu: open the trigger named `trigger` (inside `scope`) and return the menu item named `item`. */
 const menuItem = async (trigger: string | RegExp, item: string, scope: { readonly findByRole: typeof screen.findByRole } = screen): Promise<HTMLElement> => {
   fireEvent.click(await scope.findByRole("button", { name: trigger }));
@@ -126,6 +126,19 @@ describe("provider · rename (PATCH /providers/{id})", () => {
     fireEvent.click(screen.getByTestId("submit-verification"));
     await waitFor(() => expect(calls.some((call) => call.path === `/providers/${PID}/submit`)).toBe(true));
   });
+  it("A20: the administrator's reason of a rejection and of a suspension reaches the provider", async () => {
+    await withProvider();
+    for (const status of ["REJECTED", "SUSPENDED"]) {
+      const { client } = fakeClient(portal({ [`GET /providers/${PID}`]: () => ({ ...profile, status, statusReason: "Falta el NIT vigente.", statusChangedAt: "2026-11-21T15:00:00Z" }) }));
+      renderApp(<OverviewScreen />, client, HOST);
+      expect((await screen.findByTestId("provider-status-reason")).textContent).toBe("Motivo del equipo: Falta el NIT vigente.");
+      cleanup();
+    }
+    const { client } = fakeClient(portal({ [`GET /providers/${PID}`]: () => ({ ...profile, status: "PENDING_VERIFICATION", statusReason: null }) }));
+    renderApp(<OverviewScreen />, client, HOST);
+    await screen.findByTestId("provider-status");
+    expect(screen.queryByTestId("provider-status-reason")).toBeNull();
+  });
 });
 
 describe("provider · documents delete", () => {
@@ -172,13 +185,14 @@ describe("provider · agenda", () => {
     expect(await screen.findByText(/entre 1 y 1000/)).toBeTruthy();
     type("Cupos por día", "1001"); fireEvent.click(screen.getByTestId("agenda-save"));
     expect(await screen.findByText(/entre 1 y 1000/)).toBeTruthy();
-    type("Fecha (AAAA-MM-DD)", "2027-02-30"); fireEvent.click(screen.getByTestId("blackout-add"));
-    expect(await screen.findByText("Esa fecha no existe en el calendario.")).toBeTruthy();
-    type("Fecha (AAAA-MM-DD)", "2027-03-05"); type("Hasta (opcional, AAAA-MM-DD)", "2027-03-01"); fireEvent.click(screen.getByTestId("blackout-add"));
+    // the date picker cannot hold a day that does not exist (30 February): the field stays empty and adding is refused
+    type("Fecha", "2027-02-30"); fireEvent.click(screen.getByTestId("blackout-add"));
+    expect(await screen.findByText("Elige la fecha.")).toBeTruthy();
+    type("Fecha", "2027-03-05"); type("Hasta (opcional)", "2027-03-01"); fireEvent.click(screen.getByTestId("blackout-add"));
     expect(await screen.findByText("La fecha final no puede ser anterior a la inicial.")).toBeTruthy();
-    type("Hasta (opcional, AAAA-MM-DD)", "2027-03-07"); fireEvent.click(screen.getByTestId("blackout-add"));
+    type("Hasta (opcional)", "2027-03-07"); fireEvent.click(screen.getByTestId("blackout-add"));
     await screen.findByTestId("blackout-2027-03-05");
-    type("Fecha (AAAA-MM-DD)", "2027-03-05"); fireEvent.click(screen.getByTestId("blackout-add"));
+    type("Fecha", "2027-03-05"); fireEvent.click(screen.getByTestId("blackout-add"));
     expect(await screen.findByText("Ese día ya está bloqueado.")).toBeTruthy();
     expect(calls.some((call) => call.method === "PUT")).toBe(false);
     type("Cupos por día", "1000"); fireEvent.click(screen.getByTestId("agenda-save"));
@@ -232,6 +246,46 @@ describe("provider · leads pagination", () => {
     limited = false;
     fireEvent.click(screen.getByTestId("error-retry"));
     expect(await screen.findByText("Cuando una pareja toque tu contacto o pida una cotización, aparecerá aquí.")).toBeTruthy();
+  });
+});
+
+describe("provider · agenda bookings follow the cursor (L4)", () => {
+  beforeEach(() => { resetSecureStore(); });
+  const booking = (n: number, status = "CONFIRMED") => ({ id: `bk-${n}`, providerId: PID, requesterId: "u", date: `2027-02-${String(1 + (n % 28)).padStart(2, "0")}`, status, expiresAt: "2027-03-01T00:00:00Z" });
+  it("loads the next page only on request, with the server's cursor, and stops when nextCursor is null", async () => {
+    await withProvider();
+    const { client, paths } = rawClient({ [`GET /providers/${PID}`]: () => profile, [`GET /providers/${PID}/availability`]: () => ({ providerId: PID, capacityPerDay: 1, rules: [], blackouts: [] }),
+      [`GET /providers/${PID}/bookings`]: (path) => new URL(path, "http://x").searchParams.get("cursor") === "c2"
+        ? { items: Array.from({ length: 3 }, (_, i) => booking(50 + i, i === 0 ? "REQUESTED" : "CONFIRMED")), nextCursor: null }
+        : { items: Array.from({ length: 50 }, (_, i) => booking(i, i === 0 ? "REQUESTED" : "CONFIRMED")), nextCursor: "c2" } });
+    renderApp(<AgendaScreen />, client, HOST);
+    expect(await screen.findByText("Al menos 1 fecha por confirmar")).toBeTruthy();
+    expect(screen.getAllByTestId(/^booking-bk-/)).toHaveLength(50);
+    fireEvent.click(screen.getByTestId("bookings-more"));
+    await waitFor(() => expect(screen.getAllByTestId(/^booking-bk-/)).toHaveLength(53));
+    expect(screen.getByText("2 fechas por confirmar")).toBeTruthy();
+    expect(screen.queryByTestId("bookings-more")).toBeNull();
+    expect(paths.filter((path) => path.includes("/bookings"))).toEqual([`GET /providers/${PID}/bookings?limit=50`, `GET /providers/${PID}/bookings?limit=50&cursor=c2`]);
+  });
+  it("a failed next page keeps the bookings already shown and offers a retry", async () => {
+    await withProvider();
+    let calls = 0;
+    const { client } = rawClient({ [`GET /providers/${PID}`]: () => profile, [`GET /providers/${PID}/availability`]: () => ({ providerId: PID, capacityPerDay: 1, rules: [], blackouts: [] }),
+      [`GET /providers/${PID}/bookings`]: (path) => { if (new URL(path, "http://x").searchParams.get("cursor")) { calls += 1; if (calls === 1) return problem(503, "UNAVAILABLE"); return { items: [booking(99)], nextCursor: null }; } return { items: [booking(1)], nextCursor: "c2" }; } });
+    renderApp(<AgendaScreen />, client, HOST);
+    fireEvent.click(await screen.findByTestId("bookings-more"));
+    await waitFor(() => expect(screen.getByTestId("booking-bk-1")).toBeTruthy());
+    const retry = await screen.findByTestId("error-retry");
+    expect(screen.getByTestId("booking-bk-1")).toBeTruthy();
+    fireEvent.click(retry);
+    await waitFor(() => expect(screen.getByTestId("booking-bk-99")).toBeTruthy());
+  });
+  it("an older catalog without nextCursor shows its single page and no 'show more'", async () => {
+    await withProvider();
+    const { client } = fakeClient(portal({ [`GET /providers/${PID}/availability`]: () => ({ providerId: PID, capacityPerDay: 1, rules: [], blackouts: [] }), [`GET /providers/${PID}/bookings`]: () => ({ items: [booking(1, "REQUESTED")] }) }));
+    renderApp(<AgendaScreen />, client, HOST);
+    expect(await screen.findByText("1 fecha por confirmar")).toBeTruthy();
+    expect(screen.queryByTestId("bookings-more")).toBeNull();
   });
 });
 
@@ -350,5 +404,25 @@ describe("provider · ready-to-sell journey and agenda priorities", () => {
     expect(await screen.findByText("1 fecha por confirmar")).toBeTruthy();
     const order = screen.getAllByTestId(/^booking-b[12]$/).map((node) => node.getAttribute("data-testid"));
     expect(order).toEqual(["booking-b2", "booking-b1"]);
+  });
+});
+
+describe("provider · microsite moderation (A20)", () => {
+  const microsite = { providerId: PID, version: 3, descriptions: { "es-BO": "Hola" }, gallery: [], hours: { weekly: [] }, social: {}, address: null };
+  it("a rejected microsite tells the owner it is unpublished and why; a held one says it waits for review", async () => {
+    await withProvider();
+    const { client } = fakeClient(portal({ [`GET /providers/${PID}/microsite`]: () => ({ ...microsite, moderation: { status: "REJECTED", reason: "La galería muestra un documento.", submittedAt: "2026-11-21T15:00:00Z", published: false } }) }));
+    renderApp(<MicrositeScreen />, client, HOST);
+    expect((await screen.findByTestId("microsite-moderation-rejected")).textContent).toContain("Motivo: La galería muestra un documento.");
+    cleanup();
+    const held = fakeClient(portal({ [`GET /providers/${PID}/microsite`]: () => ({ ...microsite, moderation: { status: "PENDING", reason: null, submittedAt: "2026-11-21T15:00:00Z", published: false } }) }));
+    renderApp(<MicrositeScreen />, held.client, HOST);
+    await screen.findByTestId("microsite-moderation-held");
+    cleanup();
+    const approved = fakeClient(portal({ [`GET /providers/${PID}/microsite`]: () => ({ ...microsite, moderation: { status: "APPROVED", reason: null, submittedAt: "2026-11-21T15:00:00Z", published: true } }) }));
+    renderApp(<MicrositeScreen />, approved.client, HOST);
+    await screen.findByTestId("microsite-desc-es");
+    expect(screen.queryByTestId("microsite-moderation-rejected")).toBeNull();
+    expect(screen.queryByTestId("microsite-moderation-held")).toBeNull();
   });
 });

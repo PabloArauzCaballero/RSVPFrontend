@@ -80,11 +80,12 @@ export const guestsEnUS: DeepStrings<typeof guestsEsBO> = {
     },
     link: {
       title: "Their personal link", intro: "Each guest replies with a unique link. We never show it in full, so nobody can read it over your shoulder.",
+      active: "They already have a link that works until {{date}}. For safety we cannot show it again: if it was lost, generate a new one (the previous one will stop working).", unknown: "We could not check whether they already have a link. Try again before generating one.", issueNew: "Generate a new link",
       none: "They do not have a link yet. Generate one and send it.", issue: "Generate and copy link", reissue: "Reissue link", revoke: "Revoke link", manage: "Reissue or revoke the link", copy: "Copy link", copied: "Link copied.", copyFailed: "We could not copy. Use Share.",
       readyTitle: "Link ready for {{name}}", readyBody: "Copy it or share it: one tap and they can reply.",
       share: "Share", shareTitle: "Your invitation", shareText: "You are invited to {{title}}. Confirm your attendance here:", masked: "Link: {{value}}", expires: "Expires on {{date}}",
       once: "For safety, the full link only exists on this screen while you keep it open. If you lose it, reissue it.",
-      revokeTitle: "Revoke this link?", revokeBody: "The guest will no longer be able to open it right away. You can generate a new one whenever you want.", reissueTitle: "Reissue the link?", reissueBody: "The previous link stops working and a new one is generated.", revoked: "Link revoked."
+      revokeTitle: "Revoke this link?", revokeBody: "The guest will no longer be able to open it right away. You can generate a new one whenever you want.", reissueTitle: "Reissue the link?", reissueBody: "The link you already sent will stop working and a new one is generated, which you will have to send again.", revoked: "Link revoked."
     }
   },
   settings: {
@@ -132,6 +133,7 @@ export const guestsEnUS: DeepStrings<typeof guestsEsBO> = {
     enable: "Turn on push notices", registering: "Turning on…", enabled: "This device will receive push notices.", denied: "Notices are blocked. Turn them on in the system settings for this app.", openSettings: "Open settings",
     unsupported: "Push notices need a real phone with the app installed. This environment does not support them.", failed: "We could not turn notices on. Try again.", noProject: "The app's notification project is not configured.", disable: "Remove this device", preferences: "Notice preferences",
     state: { ready: "Instant alerts", enabled: "This phone already gets alerts", denied: "Alerts are turned off", unsupported: "No push alerts here" },
+    invite: { title: "Get these notices on your phone", body: "We tell you right away when someone confirms, changes their reply or asks for companions, even with the app closed.", action: "Turn on push notices" },
     readyBody: "Turn them on and this phone gets every alert right away.", 
     advanced: "Devices and deliveries",
     devicesTitle: "Registered devices", devicesEmpty: "No devices are registered for push notices yet.", platform: { ios: "iPhone", android: "Android" },

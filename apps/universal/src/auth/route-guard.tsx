@@ -6,8 +6,9 @@ import { typography } from "@rsvp/design-tokens";
 import { useColors } from "@rsvp/ui";
 import { useT } from "../platform/providers";
 import { useAuth } from "./auth-context";
+import { useConfirmSignOut } from "./sign-out";
 import { AuthLayout, useAuthStyles, SubmitButton } from "./auth-ui";
-import { destinationAfterSignIn, firstStepFor, homeFor, loginHref } from "./routes";
+import { destinationAfterSignIn, firstStepFor, homeFor, loginHref, PARTNER_REQUEST_ROUTE } from "./routes";
 
 
 /** The path the person was trying to open, with its query, so sign-in can bring them back to it. */
@@ -36,16 +37,28 @@ export function Checking(): ReactNode {
   );
 }
 
-function Forbidden({ home }: { readonly home: string | null }): ReactNode {
+function SessionUnavailable(): ReactNode {
+  const auth = useAuth();
+  const t = useT();
+  return (
+    <AuthLayout title={t("auth.restoreUnavailable.title")} intro={t("auth.restoreUnavailable.body")} illustration="offline">
+      <SubmitButton label={t("auth.restoreUnavailable.retry")} busyLabel={t("auth.guard.checking")} busy={false} onPress={() => { void auth.retrySession(); }} testID="retry-session" />
+    </AuthLayout>
+  );
+}
+
+/** `group` is the one that refused: a signed-in account kept out of (provider) is offered the partner request (DPA-10). */
+function Forbidden({ home, group }: { readonly home: string | null; readonly group: RouteGroup }): ReactNode {
+  const confirmSignOut = useConfirmSignOut();
   const authStyles = useAuthStyles();
   const t = useT();
-  const auth = useAuth();
   const goTo = useNavigateTo();
   return (
     <AuthLayout title={t("auth.guard.forbiddenTitle")} intro={home ? t("auth.guard.forbiddenBody") : t("auth.guard.noRole")} illustration="noAccess">
       <View style={authStyles.form}>
         {home ? <SubmitButton label={t("auth.guard.goHome")} busyLabel={t("auth.guard.goHome")} busy={false} onPress={() => goTo(home)} testID="forbidden-home" /> : null}
-        <Pressable accessibilityRole="button" accessibilityLabel={t("common.signOut")} onPress={() => { void auth.signOut(); }} style={authStyles.link}><Text style={authStyles.linkText}>{t("common.signOut")}</Text></Pressable>
+        {group === "provider" ? <Pressable accessibilityRole="link" accessibilityLabel={t("auth.guard.partnerRequest")} onPress={() => goTo(PARTNER_REQUEST_ROUTE)} style={authStyles.link} testID="forbidden-partner-request"><Text style={authStyles.linkText}>{t("auth.guard.partnerRequest")}</Text></Pressable> : null}
+        <Pressable accessibilityRole="button" accessibilityLabel={t("common.signOut")} onPress={() => confirmSignOut()} style={authStyles.link}><Text style={authStyles.linkText}>{t("common.signOut")}</Text></Pressable>
       </View>
     </AuthLayout>
   );
@@ -65,9 +78,10 @@ export function RouteGuard({ group, children }: PropsWithChildren<{ readonly gro
   const pathname = usePathname();
   const params = useGlobalSearchParams();
   if (state.status === "loading") return <Checking />;
+  if (state.status === "unavailable") return <SessionUnavailable />;
   const decision = decideRoute(state.session ? state.session.roles : null, group);
   if (decision.type === "login") return <Redirect href={loginHref(currentLocation(pathname, params)) as Href} />;
-  if (decision.type === "forbidden") return <Forbidden home={state.session ? homeFor(state.session.roles) : null} />;
+  if (decision.type === "forbidden") return <Forbidden home={state.session ? homeFor(state.session.roles) : null} group={group} />;
   return <>{children}</>;
 }
 
@@ -76,6 +90,7 @@ export function RedirectIfSignedIn({ returnTo, newAccount = false, children }: P
   const { state } = useAuth();
   const arrivedAnonymous = useRef<boolean | null>(null);
   if (state.status === "loading") return <Checking />;
+  if (state.status === "unavailable") return <SessionUnavailable />;
   if (arrivedAnonymous.current === null) arrivedAnonymous.current = !state.session;
   if (state.session) {
     const fresh = newAccount && arrivedAnonymous.current && !safeReturnTo(returnTo) ? firstStepFor(state.session.roles) : null;

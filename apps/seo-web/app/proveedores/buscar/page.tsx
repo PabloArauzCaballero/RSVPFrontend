@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { siteI18n } from "../../../lib/site-locale";
 import { PageTop, ProviderResults, SearchForm } from "../../../components/provider-directory";
-import { categoryBySlug, cityBySlug, pageParam, parseGeo, searchProviders } from "../../../lib/providers";
+import { categoryBySlug, cityBySlug, loadCategoryNames, pageParam, parseGeo, searchProviders } from "../../../lib/providers";
 
 /** B4 · Filtered results. Filter combinations are endless, so this page is not indexed (but its links are followed). */
 const MINOR_PER_UNIT = 100;
@@ -22,6 +22,7 @@ export default async function SearchPage({ searchParams }: { readonly searchPara
   // Proximity wins when the coordinates are valid; otherwise the city filter is the fallback.
   const near = parseGeo(values.lat, values.lng, values.radio);
   const effective = near ? { ...values, lat: String(near.lat), lng: String(near.lng), radio: String(near.radiusKm) } : { ...values, lat: "", lng: "", radio: "" };
+  const categoryNames = loadCategoryNames(locale);
   const results = await searchProviders({
     category: categoryBySlug(values.categoria)?.code,
     city: cityBySlug(values.ciudad)?.slug,
@@ -37,7 +38,7 @@ export default async function SearchPage({ searchParams }: { readonly searchPara
       <PageTop t={t} items={[{ label: t("directory.searchTitle") }]} title={t("directory.searchTitle")} lead={t("directory.searchDescription")} />
       <div className="dir-body">
         <SearchForm t={t} values={effective} />
-        <ProviderResults page={results} t={t} locale={locale} path="/proveedores/buscar" query={query} />
+        <ProviderResults page={results} t={t} locale={locale} path="/proveedores/buscar" query={query} categoryNames={await categoryNames} />
       </div>
     </main>
   );

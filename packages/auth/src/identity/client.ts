@@ -4,8 +4,20 @@ import type { Role, Session } from "../session/types.js";
 
 
 export interface LoginInput { email: string; password: string; }
-export interface RegisterInput extends LoginInput { role: Extract<Role, "HOST" | "PLANNER" | "PROVIDER">; }
+export interface RegisterInput extends LoginInput {
+  role: Extract<Role, "HOST" | "PLANNER" | "PROVIDER">;
+  /** B6: version of the terms and privacy policy the person accepted (`legal.version`); Identity records it with the time. */
+  termsVersion?: string;
+  /**
+   * Identity 2.1.0 profile. Optional on the wire (older clients send only email, password and role); the app sends it.
+   * Names and phone are personal data: Identity stores them encrypted and deletes them with the account.
+   */
+  givenName?: string; familyName?: string; phone?: string; country?: string; city?: string;
+  locale?: "es-BO" | "en-US"; timeZone?: string; marketingOptIn?: boolean;
+}
 export interface PasswordRecoveryInput { email: string; }
+/** `token` is the `token` query parameter of the e-mail link. */
+export interface PasswordResetInput { token: string; newPassword: string; }
 
 /**
  * How the refresh token travels. `body` (native): in JSON, kept in the keychain. `cookie` (web):
@@ -32,6 +44,18 @@ export class IdentityClient {
   }
   async requestPasswordRecovery(input: PasswordRecoveryInput): Promise<void> {
     await this.api.request<void, PasswordRecoveryInput>("/identity/auth/password-recovery", { method: "POST", body: input, auth: false });
+  }
+  /** Consumes the single-use link, sets the new password and ends every session (Identity 1.3.0). */
+  async resetPassword(input: PasswordResetInput): Promise<void> {
+    await this.api.request<void, PasswordResetInput>("/identity/auth/password-reset", { method: "POST", body: input, auth: false, headers: this.headers });
+  }
+  /** Consumes the single-use verification link (Identity 1.3.0). */
+  async confirmEmail(token: string): Promise<void> {
+    await this.api.request<void, { token: string }>("/identity/auth/email-verification/confirm", { method: "POST", body: { token }, auth: false });
+  }
+  /** Sends a new verification link to the signed-in account (202; a no-op when already verified). */
+  async resendEmailVerification(accessToken: string): Promise<void> {
+    await this.api.request<void>("/identity/auth/email-verification", { method: "POST", auth: false, headers: { authorization: `Bearer ${accessToken}` } });
   }
   async logout(refreshToken: string): Promise<void> {
     if (this.transport === "cookie") { await this.api.request<void>("/identity/auth/logout", { method: "POST", auth: false, headers: this.headers }); return; }

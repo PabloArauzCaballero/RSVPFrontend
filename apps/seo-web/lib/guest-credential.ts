@@ -10,8 +10,15 @@ function store(): Storage | null {
   try { return typeof window === "undefined" ? null : window.sessionStorage; } catch { return null; }
 }
 export const credentialKey = (slug: string): string => `${PREFIX}${slug}`;
-export function saveGuestCredential(slug: string, token: string): void { store()?.setItem(credentialKey(slug), token); }
-export function clearGuestCredential(slug: string): void { store()?.removeItem(credentialKey(slug)); }
+export function saveGuestCredential(slug: string, token: string): void {
+  try { store()?.setItem(credentialKey(slug), token); } catch { /* Private browsing can make storage read-only; the link fragment remains usable. */ }
+}
+export function clearGuestCredential(slug: string): void {
+  try { store()?.removeItem(credentialKey(slug)); } catch { /* Storage may be unavailable. */ }
+}
+
+/** Client-only handoff. The fragment never reaches the server and also works when opening a new tab. */
+export const guestGiftPath = (slug: string, token: string, locale?: string): string => `/c/${encodeURIComponent(slug)}/regalos${locale ? `?lang=${encodeURIComponent(locale)}` : ''}#t=${encodeURIComponent(token)}`;
 
 /** Reads `#t=` once (and removes it from the address bar), otherwise the stored credential. */
 export function readGuestCredential(slug: string): string | null {
@@ -22,5 +29,14 @@ export function readGuestCredential(slug: string): string | null {
     window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
     return match[1];
   }
-  return store()?.getItem(credentialKey(slug)) ?? null;
+  try { return store()?.getItem(credentialKey(slug)) ?? null; } catch { return null; }
+}
+
+/**
+ * Whether this tab holds the guest's credential, without reading its value into the page and without touching the address
+ * bar (unlike `readGuestCredential`, which consumes the `#t=` fragment). The public celebration only needs the yes/no.
+ */
+export function hasGuestCredential(slug: string): boolean {
+  if (typeof window === "undefined") return false;
+  try { return Boolean(store()?.getItem(credentialKey(slug))); } catch { return false; }
 }

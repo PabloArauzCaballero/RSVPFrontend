@@ -1,0 +1,294 @@
+{
+  "app": "http://localhost:8300",
+  "slug": "multicenter-59388c",
+  "results": [
+    {
+      "case": "B5 h1 = the provider's business name",
+      "ok": true,
+      "detail": "h1=\"Katering Grecia\" api=\"Katering Grecia\"",
+      "at": "2026-11-20T21:30:50.110Z"
+    },
+    {
+      "case": "B5 offers = the partner's verified cards",
+      "ok": true,
+      "detail": "links=7 (cards=6 + catalogue link)",
+      "at": "2026-11-20T21:30:50.112Z"
+    },
+    {
+      "case": "B5 disclaimer before contact (REQ-F25-05)",
+      "ok": true,
+      "detail": "partner-disclaimer,contact-WHATSAPP,contact-OFFICIAL_SITE",
+      "at": "2026-11-20T21:30:50.129Z"
+    },
+    {
+      "case": "B5 contact goes through /r/{listingId}",
+      "ok": true,
+      "detail": "/r/5b383c88-f312-40e2-8b7b-f6d18defef1a?destination=WHATSAPP&surface=APP",
+      "at": "2026-11-20T21:30:50.180Z"
+    },
+    {
+      "case": "B5 coverage zones shown once",
+      "ok": true,
+      "detail": "santa cruz de la sierra | barrio equipetrol",
+      "at": "2026-11-20T21:30:50.182Z"
+    },
+    {
+      "case": "Runtime (microsite)",
+      "ok": true,
+      "detail": "no console errors",
+      "at": "2026-11-20T21:30:50.218Z"
+    },
+    {
+      "case": "B6 catalogue",
+      "ok": true,
+      "detail": "offers=6",
+      "at": "2026-11-20T21:30:51.663Z"
+    },
+    {
+      "case": "B7 fulfillment before quote and contact (REQ-F25-04)",
+      "ok": true,
+      "detail": "fulfillment@1 quote@2",
+      "at": "2026-11-20T21:30:53.148Z"
+    },
+    {
+      "case": "B10 calendar = GET /calendar (provider's zone) — NOT OBSERVED",
+      "ok": true,
+      "observed": false,
+      "detail": "days=0/0 free=0/0 zone=America/La_Paz (the provider has no availability configured: nothing to compare)",
+      "at": "2026-11-20T21:30:55.638Z"
+    },
+    {
+      "case": "B11 negative: no session",
+      "ok": true,
+      "detail": "N/A: no free day this month",
+      "at": "2026-11-20T21:30:55.652Z"
+    },
+    {
+      "case": "B8 preselected offer, incomplete form refused, nothing sent",
+      "ok": true,
+      "detail": "alerts=4 posts=/api/identity/auth/refresh",
+      "at": "2026-11-20T21:30:58.126Z"
+    },
+    {
+      "case": "Negative: unknown partner → not found",
+      "ok": true,
+      "at": "2026-11-20T21:30:59.131Z"
+    },
+    {
+      "case": "/p/{slug} 360px light es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:31:01.995Z"
+    },
+    {
+      "case": "/p/{slug} 360px light en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:31:04.618Z"
+    },
+    {
+      "case": "/p/{slug} 360px dark es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:31:07.295Z"
+    },
+    {
+      "case": "/p/{slug} 360px dark en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:31:09.938Z"
+    },
+    {
+      "case": "/p/{slug} 768px light es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:31:12.552Z"
+    },
+    {
+      "case": "/p/{slug} 768px light en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:31:15.230Z"
+    },
+    {
+      "case": "/p/{slug} 768px dark es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:31:17.891Z"
+    },
+    {
+      "case": "/p/{slug} 768px dark en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:31:20.552Z"
+    },
+    {
+      "case": "/p/{slug} 1280px light es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:31:23.254Z"
+    },
+    {
+      "case": "/p/{slug} 1280px light en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:31:25.888Z"
+    },
+    {
+      "case": "/p/{slug} 1280px dark es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:31:28.568Z"
+    },
+    {
+      "case": "/p/{slug} 1280px dark en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:31:31.271Z"
+    },
+    {
+      "case": "/p/{slug}/agenda 360px light es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:31:34.045Z"
+    },
+    {
+      "case": "/p/{slug}/agenda 360px light en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:31:36.822Z"
+    },
+    {
+      "case": "/p/{slug}/agenda 360px dark es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:31:40.407Z"
+    },
+    {
+      "case": "/p/{slug}/agenda 360px dark en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:31:43.057Z"
+    },
+    {
+      "case": "/p/{slug}/agenda 768px light es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:31:45.722Z"
+    },
+    {
+      "case": "/p/{slug}/agenda 768px light en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:31:48.376Z"
+    },
+    {
+      "case": "/p/{slug}/agenda 768px dark es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:31:51.025Z"
+    },
+    {
+      "case": "/p/{slug}/agenda 768px dark en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:31:53.674Z"
+    },
+    {
+      "case": "/p/{slug}/agenda 1280px light es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:31:57.128Z"
+    },
+    {
+      "case": "/p/{slug}/agenda 1280px light en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:32:00.031Z"
+    },
+    {
+      "case": "/p/{slug}/agenda 1280px dark es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:32:02.903Z"
+    },
+    {
+      "case": "/p/{slug}/agenda 1280px dark en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:32:06.386Z"
+    },
+    {
+      "case": "/p/{slug}/cotizar 360px light es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:32:09.000Z"
+    },
+    {
+      "case": "/p/{slug}/cotizar 360px light en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:32:11.455Z"
+    },
+    {
+      "case": "/p/{slug}/cotizar 360px dark es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:32:13.875Z"
+    },
+    {
+      "case": "/p/{slug}/cotizar 360px dark en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:32:16.356Z"
+    },
+    {
+      "case": "/p/{slug}/cotizar 768px light es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:32:19.164Z"
+    },
+    {
+      "case": "/p/{slug}/cotizar 768px light en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:32:21.617Z"
+    },
+    {
+      "case": "/p/{slug}/cotizar 768px dark es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:32:24.174Z"
+    },
+    {
+      "case": "/p/{slug}/cotizar 768px dark en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:32:26.677Z"
+    },
+    {
+      "case": "/p/{slug}/cotizar 1280px light es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:32:29.064Z"
+    },
+    {
+      "case": "/p/{slug}/cotizar 1280px light en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:32:31.537Z"
+    },
+    {
+      "case": "/p/{slug}/cotizar 1280px dark es-BO",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:32:33.954Z"
+    },
+    {
+      "case": "/p/{slug}/cotizar 1280px dark en-US",
+      "ok": true,
+      "detail": "overflow=0 axe(critical+serious)=0 errors=0",
+      "at": "2026-11-20T21:32:36.414Z"
+    }
+  ]
+}

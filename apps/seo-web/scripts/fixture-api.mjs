@@ -1,16 +1,17 @@
 // Local contract fixture for the public API, for visual/Lighthouse evidence when the live backend has no content
 // (celebrations with every section) or no Provider Catalog HTTP service yet.
-//   node apps/seo-web/scripts/fixture-api.mjs   (PORT=28100)
+//   node apps/seo-web/scripts/fixture-api.mjs   (PORT=28100; FIXTURE_LOCALE=en-US to serve the view in English)
 // It is NOT the backend: evidence produced against it is labelled "fixture" and proves rendering only.
 import { createServer } from "node:http";
 
 const PORT = Number(process.env.PORT ?? 28100);
 const SLUG = "fixture-ana-y-luis";
+const CONTACT_SLUG = "fixture-contacto-rsvp";
 const image = (hue) => `<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1280" viewBox="0 0 1920 1280"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="hsl(${hue} 45% 78%)"/><stop offset="1" stop-color="hsl(${hue + 40} 40% 52%)"/></linearGradient></defs><rect width="1920" height="1280" fill="url(#g)"/></svg>`;
 const img = (n) => `http://localhost:${PORT}/img/${n}.svg`;
 
 const view = {
-  celebrationId: "00000000-0000-4000-8000-000000000001", slug: SLUG, locale: "es-BO", availableLocales: ["es-BO", "en-US"],
+  celebrationId: "00000000-0000-4000-8000-000000000001", slug: SLUG, locale: process.env.FIXTURE_LOCALE ?? "es-BO", availableLocales: ["es-BO", "en-US"],
   eventType: { code: "WEDDING", name: "Boda", hostRoles: [{ role: "BRIDE", label: "Novia" }, { role: "GROOM", label: "Novio" }] },
   enabledSections: ["story", "schedule", "venues", "gallery", "dressCode", "faq", "recommendations", "gifts", "rsvp"],
   timeZone: "America/La_Paz", currency: "BOB", templateId: "t-classic",
@@ -24,6 +25,15 @@ const view = {
   },
   localTimes: { eventDate: { date: "2026-12-19", time: "19:00", timeZone: "America/La_Paz", utcOffset: "-04:00" } },
   rsvpDeadline: null, publishedAt: "2026-10-17T12:00:00.000Z", version: 5
+};
+const restrictedRsvp = {
+  ...view,
+  celebrationId: "00000000-0000-4000-8000-000000000002",
+  slug: CONTACT_SLUG,
+  content: {
+    ...view.content,
+    hostContact: { email: "confirmacionesinvitadosmatrimoniocivil2026@example.test", consentPublic: true }
+  }
 };
 const template = { id: "t-classic", name: "Clásico marfil", layout: "classic", eventTypeTags: ["wedding"], theme: { palette: { canvas: "#FFFBF4", surface: "#FFFFFF", text: "#302C28", accent: "#865E36", muted: "#6F665D" }, typography: { heading: "'Cormorant Garamond', Georgia, serif", body: "'Source Sans 3', Arial, sans-serif" }, sectionStyle: "bands" }, sectionOrder: ["story", "schedule", "venues", "gallery", "dressCode", "gifts", "faq", "recommendations", "rsvp"] };
 const gallery = [1, 2, 3].map((n) => ({ id: `g${n}`, width: 1920, height: 1280, isCover: n === 1, variants: { thumb: img(n), medium: img(n), full: img(n), webp: img(n) } }));
@@ -70,11 +80,13 @@ createServer((req, res) => {
   if (path.startsWith("/img/")) { res.writeHead(200, { "content-type": "image/svg+xml", "cache-control": "public, max-age=3600" }); return res.end(image(Number(path.match(/(\d+)/)?.[1] ?? 1) * 70)); }
   if (path === "/celebrations/public") return json(res, 200, { items: [{ slug: SLUG, updatedAt: "2026-11-01T00:00:00Z", supportedLocales: ["es-BO", "en-US"] }] });
   if (path === `/celebrations/public/${SLUG}`) return json(res, 200, view);
+  if (path === `/celebrations/public/${CONTACT_SLUG}`) return json(res, 200, restrictedRsvp);
   if (path.startsWith("/celebrations/public/")) return json(res, 404, { title: "Not found", status: 404 });
   if (path === "/media/templates/t-classic") return json(res, 200, template);
   if (path === `/media/public/celebrations/${view.celebrationId}/assets`) return json(res, 200, { items: gallery });
   if (path === "/providers" || path === "/providers/") return json(res, 200, search(url.searchParams));
   if (path === `/rsvp/celebrations/${view.celebrationId}/public-settings`) return json(res, 200, { unregisteredRsvpMode: "AUTO_ACCEPT", publicRegistrationEnabled: true });
+  if (path === `/rsvp/celebrations/${restrictedRsvp.celebrationId}/public-settings`) return json(res, 200, { unregisteredRsvpMode: "RESTRICTED", publicRegistrationEnabled: false });
   const redirect = path.match(/^\/r\/([0-9a-f-]{36})$/);
   if (redirect) {
     const cid = req.headers["x-correlation-id"] ?? "none";

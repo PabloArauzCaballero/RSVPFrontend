@@ -77,11 +77,12 @@ export const guestsEsBO = {
     },
     link: {
       title: "Su enlace personal", intro: "Cada invitado responde con un enlace único. No lo mostramos completo para que nadie lo vea de reojo.",
+      active: "Ya tiene un enlace que funciona hasta el {{date}}. Por seguridad no podemos mostrarlo otra vez: si lo perdiste, genera uno nuevo (el anterior dejará de funcionar).", unknown: "No pudimos comprobar si ya tiene un enlace. Vuelve a intentarlo antes de generar uno.", issueNew: "Generar enlace nuevo",
       none: "Todavía no tiene enlace. Genera uno y envíaselo.", issue: "Generar y copiar enlace", reissue: "Reemitir enlace", revoke: "Revocar enlace", manage: "Reemitir o revocar el enlace", copy: "Copiar enlace", copied: "Enlace copiado.", copyFailed: "No pudimos copiar. Usa Compartir.",
       readyTitle: "Enlace listo para {{name}}", readyBody: "Cópialo o compártelo: con un toque, responde.",
       share: "Compartir", shareTitle: "Tu invitación", shareText: "Te invitamos a {{title}}. Confirma tu asistencia aquí:", masked: "Enlace: {{value}}", expires: "Vence el {{date}}",
       once: "Por seguridad, el enlace completo solo existe en esta pantalla mientras no la cierres. Si lo pierdes, reemítelo.",
-      revokeTitle: "¿Revocar este enlace?", revokeBody: "El invitado dejará de poder abrirlo de inmediato. Puedes generar uno nuevo cuando quieras.", reissueTitle: "¿Reemitir el enlace?", reissueBody: "El enlace anterior dejará de funcionar y se generará uno nuevo.", revoked: "Enlace revocado."
+      revokeTitle: "¿Revocar este enlace?", revokeBody: "El invitado dejará de poder abrirlo de inmediato. Puedes generar uno nuevo cuando quieras.", reissueTitle: "¿Reemitir el enlace?", reissueBody: "El enlace que ya le enviaste dejará de funcionar y se generará uno nuevo que tendrás que enviarle otra vez.", revoked: "Enlace revocado."
     }
   },
   settings: {
@@ -128,6 +129,7 @@ export const guestsEsBO = {
     title: "Avisos en este dispositivo", intro: "Te avisamos cuando alguien confirme o pida acompañantes. Puedes apagarlos cuando quieras en Preferencias.",
     enable: "Activar avisos push", registering: "Activando…", enabled: "Este dispositivo recibirá avisos push.", denied: "Los avisos están bloqueados. Actívalos en los ajustes del sistema para esta app.", openSettings: "Abrir ajustes",
     unsupported: "Los avisos push necesitan un teléfono real con la app instalada. Este entorno no los admite.", failed: "No pudimos activar los avisos. Inténtalo de nuevo.", noProject: "Falta configurar el proyecto de notificaciones de la app.", disable: "Quitar este dispositivo", preferences: "Preferencias de avisos",
+    invite: { title: "Recibe estos avisos en tu teléfono", body: "Te avisamos al momento cuando alguien confirme, cambie su respuesta o pida acompañantes, aunque la app esté cerrada.", action: "Activar avisos push" },
     readyBody: "Actívalos y este teléfono recibe cada aviso al momento.", 
     advanced: "Dispositivos y envíos",
     state: { ready: "Avisos al instante", enabled: "Este teléfono ya recibe avisos", denied: "Los avisos están apagados", unsupported: "Aquí no hay avisos push" },

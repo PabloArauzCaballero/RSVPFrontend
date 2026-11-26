@@ -1,16 +1,21 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { pointUrl } from "@rsvp/celebration-theme";
 import { ContentEditorScreen } from "../src/host/content-editor";
 import { readyCount, sectionStates } from "../src/host/editor-sections";
 import { GalleryEditorScreen } from "../src/host/gallery-editor";
 import { fitScale } from "../src/host/preview-stage";
 import { TemplatesScreen } from "../src/host/templates-screen";
 import { TranslationEditorScreen, translationProgress } from "../src/host/translation-editor";
-import { baseHandlers, CELEBRATION, fakeClient, HttpFailure, renderApp, TEMPLATES, WEDDING } from "./support";
+import { baseHandlers, CELEBRATION, fakeClient, HttpFailure, renderApp, TEMPLATES, WEDDING, pickTime } from "./support";
 
 const navigate = vi.fn();
 const draft = { title: "Ana y Luis", subtitle: "Los esperamos", venueName: "Iglesia", hosts: { BRIDE: "Ana", GROOM: "Luis" } };
 const date = { date: "2026-12-19", time: "19:00" };
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.useRealTimers();
+});
 
 describe("parts of the invitation and their progress", () => {
   it("required parts are ready or missing; optional parts are ready only when they have something", () => {
@@ -53,13 +58,69 @@ describe("parts of the invitation and their progress", () => {
     await waitFor(() => expect(calls.some((call) => call.method === "PATCH")).toBe(true));
   });
 
-  it("a bad date is explained in plain words and nothing is sent", async () => {
+  it("what the event type needs to publish is mandatory when saving: an emptied field is named, marked and nothing is sent", async () => {
     const { client, calls } = fakeClient(baseHandlers());
     renderApp(<ContentEditorScreen section="general" celebrationId="c-1" onNavigate={navigate} />, client);
-    fireEvent.change(await screen.findByLabelText("Fecha (AAAA-MM-DD)"), { target: { value: "2026-13-45" } });
+    fireEvent.change(await screen.findByLabelText("Ubicación"), { target: { value: " " } });
     fireEvent.click(screen.getByTestId("save-content"));
-    expect(await screen.findByText(/Revisa la fecha: usa AAAA-MM-DD/)).toBeTruthy();
+    expect(await screen.findByText("Para guardar falta: Ubicación.")).toBeTruthy();
+    expect(screen.getByText("Completa este campo.")).toBeTruthy();
     expect(calls.some((call) => call.method === "PATCH")).toBe(false);
+    fireEvent.change(screen.getByLabelText("Ubicación"), { target: { value: "Hacienda El Carmen" } });
+    fireEvent.click(screen.getByTestId("save-content"));
+    await waitFor(() => expect(calls.some((call) => call.method === "PATCH")).toBe(true));
+  });
+
+  it("a day without its time is explained in plain words and nothing is sent", async () => {
+    const { client, calls } = fakeClient(baseHandlers());
+    renderApp(<ContentEditorScreen section="general" celebrationId="c-1" onNavigate={navigate} />, client);
+    expect((await screen.findByTestId("field-event-date")).getAttribute("aria-haspopup")).toBe("dialog");
+    pickTime("Hora", "");
+    fireEvent.click(screen.getByTestId("save-content"));
+    expect(await screen.findByText("Elige la hora.")).toBeTruthy();
+    expect(calls.some((call) => call.method === "PATCH")).toBe(false);
+  });
+
+  it("can pick a place directly, keeping the pasted map link until a result is chosen", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-20T12:00:00Z"));
+    const point = { lat: -17.8, lng: -63.2 };
+    const mapUrl = "https://maps.app.goo.gl/ABCD";
+    const fetch = vi.fn().mockResolvedValue(Response.json([{ place_id: 1, name: "Floresta", display_name: "Floresta, Santa Cruz", lat: "-17.8", lon: "-63.2" }]));
+    vi.stubGlobal("fetch", fetch);
+    const { client, calls } = fakeClient({ ...baseHandlers(), "PATCH /celebrations/c-1": () => ({ ...CELEBRATION, version: 4 }) });
+    renderApp(<ContentEditorScreen section="general" celebrationId="c-1" onNavigate={navigate} />, client);
+    const venue = await screen.findByTestId("field-venue-name") as HTMLInputElement;
+    const link = screen.getByTestId("field-venue-link") as HTMLInputElement;
+    fireEvent.change(link, { target: { value: mapUrl } });
+    fireEvent.change(venue, { target: { value: "floresta" } });
+    expect(fetch).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByTestId("field-venue-search"));
+    const result = await screen.findByRole("button", { name: "Floresta, Santa Cruz" });
+    expect(link.value).toBe(mapUrl);
+    fireEvent.click(result);
+    expect(venue.value).toBe("Floresta");
+    expect(link.value).toBe(pointUrl(point));
+    expect(screen.queryByTestId("map-picker")).toBeNull();
+    fireEvent.click(screen.getByTestId("field-event-date"));
+    fireEvent.click(screen.getByTestId("calendar-day-2026-12-20"));
+    fireEvent.click(screen.getByTestId("save-content"));
+    await waitFor(() => expect(calls.find((call) => call.method === "PATCH")?.body).toMatchObject({ content: { eventDate: "2026-12-20T19:00", venueName: "Floresta", venueMapUrl: pointUrl(point) } }));
+  });
+
+  it("keeps the address and allows retry when a search fails or returns no places", async () => {
+    const fetch = vi.fn().mockResolvedValueOnce(new Response('', { status: 429 })).mockResolvedValueOnce(Response.json([]));
+    vi.stubGlobal("fetch", fetch);
+    const { client } = fakeClient(baseHandlers());
+    renderApp(<ContentEditorScreen section="general" celebrationId="c-1" onNavigate={navigate} />, client);
+    const venue = await screen.findByTestId("field-venue-name") as HTMLInputElement;
+    fireEvent.change(venue, { target: { value: "Avenida desconocida" } });
+    fireEvent.click(screen.getByTestId("field-venue-search"));
+    expect(await screen.findByText(/No pudimos buscar ahora/)).toBeTruthy();
+    expect(venue.value).toBe("Avenida desconocida");
+    fireEvent.click(screen.getByTestId("field-venue-search"));
+    expect(await screen.findByText(/No encontramos ese lugar/)).toBeTruthy();
+    expect(venue.value).toBe("Avenida desconocida");
   });
 });
 

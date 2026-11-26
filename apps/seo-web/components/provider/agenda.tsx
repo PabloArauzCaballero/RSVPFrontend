@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { ApiError } from '@rsvp/api-client';
 import { createTranslator, type AppLocale } from '@rsvp/i18n/server';
-import { useBookDate, useMonthCalendar, type CalendarDay } from '@rsvp/query-hooks';
+import { agendaEmptiness, dayState, shiftMonth, useBookDate, useMonthCalendar } from '@rsvp/query-hooks';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { appUrl } from '../../lib/app-url';
 import { createVisitorClient } from '../../lib/visitor-client';
@@ -16,12 +16,7 @@ export function Agenda(props: AgendaProps) {
   return <QueryClientProvider client={client}><AgendaBody {...props} /></QueryClientProvider>;
 }
 
-export function shiftMonth(month: string, delta: number): string {
-  const [year = 0, mon = 1] = month.split('-').map(Number);
-  const date = new Date(Date.UTC(year, mon - 1 + delta, 1));
-  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
-}
-export const dayState = (day: CalendarDay): 'free' | 'blocked' | 'full' => (day.available ? 'free' : day.reason === 'FULL' ? 'full' : 'blocked');
+export { dayState, shiftMonth } from '@rsvp/query-hooks';
 
 /** B10 calendar of free days in the PROVIDER's time zone and B11 date request: 422 (blocked day) and 409 (last slot gone) read differently (REQ-F26-05). */
 function AgendaBody({ slug, providerId, providerName, timeZone, locale, initialMonth }: AgendaProps) {
@@ -52,6 +47,8 @@ function AgendaBody({ slug, providerId, providerName, timeZone, locale, initialM
   };
 
   const days = calendar.data?.days ?? [];
+  // A month with nothing to pick says why and what to do instead of leaving an empty grid (no availability published, or all taken).
+  const empty = calendar.data ? agendaEmptiness(days) : null;
   const lead = days[0] ? days[0].weekday : 0;
   return (
     <main className="directory partner">
@@ -65,7 +62,17 @@ function AgendaBody({ slug, providerId, providerName, timeZone, locale, initialM
       </div>
       {calendar.isPending ? <p role="status">{t('agenda.loading')}</p> : null}
       {calendar.isError ? <div role="alert"><p>{t('agenda.error')}</p><button type="button" className="rsvp-button" onClick={() => { void calendar.refetch(); }}>{t('agenda.retry')}</button></div> : null}
-      {calendar.data ? (
+      {empty ? (
+        <section className="gifts__notice" role="status" aria-labelledby="agenda-empty-title" data-testid="agenda-empty" data-empty={empty}>
+          <h2 id="agenda-empty-title">{t(`agenda.empty.${empty}Title`, { name: providerName, month: monthLabel })}</h2>
+          <p>{t(`agenda.empty.${empty}Body`)}</p>
+          <div className="rsvp-actions">
+            <a className="rsvp-button" href={`/p/${encodeURIComponent(slug)}/cotizar`}>{t('agenda.empty.quote')}</a>
+            <button type="button" className="rsvp-button rsvp-button--secondary" onClick={() => { setMonth(shiftMonth(month, 1)); setPicked(null); }}>{t('agenda.empty.nextMonth')}</button>
+          </div>
+        </section>
+      ) : null}
+      {calendar.data && empty !== 'unpublished' ? (
         <div role="group" aria-label={t('agenda.month', { month: monthLabel })}>
           <ul className="agenda-grid" aria-hidden="true">{weekdays.map((name, index) => <li key={index} className="agenda-head">{name}</li>)}</ul>
           <ul className="agenda-grid" data-testid="agenda-grid">
@@ -87,8 +94,12 @@ function AgendaBody({ slug, providerId, providerName, timeZone, locale, initialM
       <div aria-live="polite" data-testid="agenda-outcome">
         {outcome ? <p className={outcome.kind === 'requested' ? 'gifts__notice gifts__notice--ok' : 'gifts__notice gifts__notice--warn'} data-outcome={outcome.kind} role={outcome.kind === 'requested' ? 'status' : 'alert'}>{outcome.kind === 'requested' ? <strong>{t('agenda.outcome.requestedTitle')}. </strong> : null}{outcome.text}{outcome.kind === 'signin' ? <> <a className="rsvp-button" href={appUrl(`/login?returnTo=${encodeURIComponent(`/p/${slug}/agenda`)}`)}>{t('quote.signIn.action')}</a></> : null}</p> : null}
       </div>
-      <p>{picked ? t('agenda.selected', { date: dateLabel(picked) }) : t('agenda.select')}</p>
-      <div className="rsvp-actions"><button type="button" className="rsvp-button" disabled={!picked || book.isPending} onClick={request}>{book.isPending ? t('agenda.requesting') : t('agenda.request')}</button></div>
+      {empty ? null : (
+        <>
+          <p>{picked ? t('agenda.selected', { date: dateLabel(picked) }) : t('agenda.select')}</p>
+          <div className="rsvp-actions"><button type="button" className="rsvp-button" disabled={!picked || book.isPending} onClick={request}>{book.isPending ? t('agenda.requesting') : t('agenda.request')}</button></div>
+        </>
+      )}
     </main>
   );
 }

@@ -7,7 +7,7 @@ import { PublishScreen } from "../src/host/publish-checklist";
 import { SettingsScreen } from "../src/host/settings-screen";
 import { TemplatesScreen } from "../src/host/templates-screen";
 import { ANONYMOUS } from "../src/platform/session";
-import { ADMIN, baseHandlers, CELEBRATION, fakeClient, GUEST, HOST, renderApp, TEMPLATES } from "./support";
+import { ADMIN, baseHandlers, CELEBRATION, fakeClient, GUEST, HOST, HttpFailure, renderApp, TEMPLATES, pickTime, timeField } from "./support";
 
 /** Tests for requirements that had no proof: F13-01 save, F11-02 screens, F12-02/05/06, F13-05. */
 const navigate = vi.fn();
@@ -70,7 +70,7 @@ describe("REQ-F11-02 · C8/C10/C11 screens: venues, schedule, extra sections", (
     expect(venues[0]).toMatchObject({ name: "Iglesia San Francisco", address: "Plaza San Francisco", kind: "reception" });
   });
 
-  it("C10 schedule: rows in the celebration's wall clock, reorder, and a malformed time is refused before any request", async () => {
+  it("C10 schedule: rows in the celebration's wall clock, reorder, and an activity with a day but no time is refused before any request", async () => {
     const { client, calls } = fakeClient({ ...baseHandlers(), "PATCH /celebrations/c-1": () => ({ ...CELEBRATION, version: 4 }) });
     renderApp(<ContentEditorScreen section="itinerario" celebrationId="c-1" onNavigate={navigate} />, client);
     await screen.findByLabelText("Actividad 1");
@@ -80,12 +80,13 @@ describe("REQ-F11-02 · C8/C10/C11 screens: venues, schedule, extra sections", (
     const titles = screen.getAllByLabelText("Actividad");
     expect(titles).toHaveLength(2);
     fireEvent.change(titles[1] as HTMLElement, { target: { value: "Fiesta" } });
-    fireEvent.change(screen.getAllByLabelText("Fecha (AAAA-MM-DD)")[1] as HTMLElement, { target: { value: "2026-12-19" } });
-    fireEvent.change(screen.getAllByLabelText("Hora (HH:MM)")[1] as HTMLElement, { target: { value: "7pm" } });
+    fireEvent.change(screen.getAllByLabelText("Fecha")[1] as HTMLElement, { target: { value: "2026-12-19" } });
+    // the clock control cannot hold "7pm": an activity with a day and no time is what is left to refuse
+    expect(timeField("Hora", 1).getAttribute("aria-haspopup")).toBe("dialog");
     fireEvent.click(screen.getByTestId("save-content"));
     expect(screen.getByRole("alert").textContent).toContain("Actividad 2");
     expect(calls.some((call) => call.method === "PATCH")).toBe(false);
-    fireEvent.change(screen.getAllByLabelText("Hora (HH:MM)")[1] as HTMLElement, { target: { value: "23:30" } });
+    pickTime("Hora", "23:30", 1);
     fireEvent.click(screen.getAllByRole("button", { name: /^Más opciones: Actividad/ })[1] as HTMLElement);
     fireEvent.click(await screen.findByRole("menuitem", { name: "Subir" }));
     fireEvent.click(screen.getByTestId("save-content"));
@@ -160,12 +161,90 @@ describe("REQ-F12-06 · copy the public link", () => {
   it("writes the public URL to the clipboard and confirms it", async () => {
     const writeText = vi.fn(async () => undefined);
     vi.stubGlobal("navigator", { ...globalThis.navigator, clipboard: { writeText } });
-    const { client } = fakeClient({ ...baseHandlers({ ...CELEBRATION, status: "PUBLISHED" }), "GET /celebrations/c-1/publish-check": () => ({ ready: true, missingFields: [], status: "PUBLISHED", version: 3 }), "GET /media/celebrations/c-1/assets": () => ({ items: [] }) });
+    const { client } = fakeClient({ ...baseHandlers({ ...CELEBRATION, status: "PUBLISHED" }), "GET /celebrations/c-1/publish-check": () => ({ ready: true, missingFields: [], status: "PUBLISHED", version: 3 }), "GET /media/celebrations/c-1/assets": () => ({ items: [] }), "GET /celebrations/c-1/public-page": () => ({ celebrationId: "c-1", status: "PUBLISHED", state: "LIVE", version: 3, publicVersion: 3 }) });
     renderApp(<PublishScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    await waitFor(() => expect((screen.getByTestId("copy-link") as HTMLElement).getAttribute("aria-disabled")).not.toBe("true"));
     fireEvent.click(await screen.findByText("Copiar enlace"));
     await waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
     expect(String((writeText.mock.calls[0] as unknown[])[0])).toMatch(/\/c\/ana-y-luis$/);
     expect(await screen.findByText("Enlace copiado.")).toBeTruthy();
+  });
+});
+
+describe("A18 · «publicada» only when the public page exists", () => {
+  const page = (state: string) => ({ celebrationId: "c-1", status: state === "OFFLINE" || state === "UNPUBLISHING" ? "DRAFT" : "PUBLISHED", state, version: 4, publicVersion: state === "LIVE" || state === "UNPUBLISHING" ? 4 : null });
+
+  it("after publishing, it says «Publicando…» and offers no link until the page is LIVE; then it celebrates", async () => {
+    let current = { ...CELEBRATION };
+    let pageState = "OFFLINE";
+    const { client, calls } = fakeClient({
+      ...baseHandlers(),
+      "GET /celebrations/c-1": () => current,
+      "GET /celebrations/c-1/publish-check": () => ({ ready: true, missingFields: [], status: current.status, version: current.version }),
+      "GET /media/celebrations/c-1/assets": () => ({ items: [] }),
+      "GET /celebrations/c-1/public-page": () => page(pageState),
+      "POST /celebrations/c-1/publish": () => { current = { ...CELEBRATION, status: "PUBLISHED", version: 4 }; pageState = "PUBLISHING"; return current; }
+    });
+    renderApp(<PublishScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    await screen.findByText("Tu celebración está lista para publicar.");
+    fireEvent.click(screen.getByTestId("publish"));
+    fireEvent.click(screen.getAllByText("Publicar celebración").at(-1) as HTMLElement);
+    expect(await screen.findByText(/^Publicando…/)).toBeTruthy();
+    expect(screen.queryByText("Tu invitación ya está publicada")).toBeNull();
+    expect(screen.queryByText("Publicada: cualquiera con el enlace la ve.")).toBeNull();
+    expect(screen.queryByText("Comparte el enlace")).toBeNull();
+    expect((screen.getByTestId("copy-link") as HTMLElement).getAttribute("aria-disabled")).toBe("true");
+    pageState = "LIVE";
+    expect(await screen.findByText("Tu invitación ya está publicada", undefined, { timeout: 5000 })).toBeTruthy();
+    expect(screen.queryByTestId("public-page-pending")).toBeNull();
+    expect((screen.getByTestId("copy-link") as HTMLElement).getAttribute("aria-disabled")).not.toBe("true");
+    expect(calls.filter((call) => call.path === "/celebrations/c-1/public-page").length).toBeGreaterThan(1);
+  });
+
+  it("a published celebration whose page is still served after unpublishing says it is being taken down", async () => {
+    const { client } = fakeClient({ ...baseHandlers(), "GET /celebrations/c-1/publish-check": () => ({ ready: true, missingFields: [], status: "DRAFT", version: 4 }), "GET /media/celebrations/c-1/assets": () => ({ items: [] }), "GET /celebrations/c-1/public-page": () => page("UNPUBLISHING") });
+    renderApp(<PublishScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    expect(await screen.findByText(/^Retirando tu invitación…/)).toBeTruthy();
+  });
+
+  it("if the state cannot be read, it never claims the page is visible and offers to retry", async () => {
+    const { client } = fakeClient({ ...baseHandlers({ ...CELEBRATION, status: "PUBLISHED" }), "GET /celebrations/c-1/publish-check": () => ({ ready: true, missingFields: [], status: "PUBLISHED", version: 3 }), "GET /media/celebrations/c-1/assets": () => ({ items: [] }) });
+    renderApp(<PublishScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    expect(await screen.findByText(/No pudimos comprobar si tu invitación ya está visible/)).toBeTruthy();
+    expect(screen.getByTestId("retry-public-page")).toBeTruthy();
+    expect(screen.queryByText("Comparte el enlace")).toBeNull();
+    expect((screen.getByTestId("copy-link") as HTMLElement).getAttribute("aria-disabled")).toBe("true");
+  });
+});
+
+describe("M10 · D-1 · search engines only when the host turns them on", () => {
+  const published = { ...CELEBRATION, status: "PUBLISHED" as const, version: 3, searchIndexing: false };
+  const live = () => ({ celebrationId: "c-1", status: "PUBLISHED", state: "LIVE", version: 3, publicVersion: 3 });
+  const handlers = (celebration: typeof published, extra: Record<string, (call: { readonly body: unknown }) => unknown> = {}) => ({
+    ...baseHandlers(celebration), "GET /celebrations/c-1/publish-check": () => ({ ready: true, missingFields: [], status: "PUBLISHED", version: 3 }),
+    "GET /media/celebrations/c-1/assets": () => ({ items: [] }), "GET /celebrations/c-1/public-page": live, ...extra
+  });
+
+  it("starts off and says only people with the link see it; turning it on sends PATCH {searchIndexing: true} with the version", async () => {
+    const { client, calls } = fakeClient(handlers(published, { "PATCH /celebrations/c-1": () => ({ ...published, version: 4, searchIndexing: true }) }));
+    renderApp(<PublishScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    const toggle = await screen.findByTestId("search-indexing-switch");
+    expect(toggle.getAttribute("aria-checked")).toBe("false");
+    expect(screen.getByText(/Solo la ve quien tiene el enlace/)).toBeTruthy();
+    fireEvent.click(toggle);
+    await waitFor(() => expect(calls.some((call) => call.method === "PATCH")).toBe(true));
+    const patch = calls.find((call) => call.method === "PATCH");
+    expect(patch?.body).toEqual({ searchIndexing: true });
+    expect(patch?.headers.get("if-match")).toBe('"3"');
+  });
+
+  it("if the change is refused (someone else edited first) it says so and the switch keeps the stored value", async () => {
+    const { client, calls } = fakeClient(handlers(published, { "PATCH /celebrations/c-1": () => new HttpFailure(409, { code: "VERSION_CONFLICT" }) }));
+    renderApp(<PublishScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    fireEvent.click(await screen.findByTestId("search-indexing-switch"));
+    await waitFor(() => expect(calls.some((call) => call.method === "PATCH")).toBe(true));
+    await waitFor(() => expect(screen.getByTestId("search-indexing").textContent).toContain("Alguien guardó cambios mientras editabas"));
+    expect(screen.getByTestId("search-indexing-switch").getAttribute("aria-checked")).toBe("false");
   });
 });
 

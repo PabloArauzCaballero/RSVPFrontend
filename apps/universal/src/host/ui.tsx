@@ -1,9 +1,11 @@
-import { useState, type PropsWithChildren, type ReactNode } from "react";
-import { Modal, Pressable, StyleSheet, Text, View, type KeyboardTypeOptions } from "react-native";
+import { useState, type PropsWithChildren, type ReactNode, type Ref } from "react";
+import { Modal, Pressable, StyleSheet, Text, View, type KeyboardTypeOptions, type TextInput } from "react-native";
 import { usePathname, useRouter, type Href } from "expo-router";
 import { ApiError } from "@rsvp/api-client";
-import { Button, CheckMark, Enter, fonts, Input, NoticeMark, OverlayEnter, overlayAnimation, pressVisual, SkeletonList, useColors, useReducedMotion, useTheme } from "@rsvp/ui";
+import { Button, CheckMark, DatePicker, Enter, fonts, Input, NoticeMark, OverlayEnter, overlayAnimation, pressVisual, TimePicker, useColors, useReducedMotion, useTheme } from "@rsvp/ui";
+import { LoadingContent, type LoadingKind } from "../platform/loading-content";
 import { colors, radius, spacing, typography, type ColorTheme } from "@rsvp/design-tokens";
+import type { AppLocale } from "@rsvp/i18n/server";
 import { loginHref } from "../auth/routes";
 import { useT } from "../platform/providers";
 
@@ -90,18 +92,47 @@ export interface FieldProps {
   readonly testID?: string;
   /** Enter in a single-line field. */
   readonly onSubmit?: () => void;
+  readonly trailing?: ReactNode;
+  readonly inputRef?: Ref<TextInput>;
   readonly maxLength?: number;
   readonly editable?: boolean;
   /** Data, not prose (a CSV, a code): the mono face. It also keeps a very long unbroken paste fast: kerning a 200 000-character run in Geist took seconds. */
   readonly mono?: boolean;
 }
 
-export function Field({ label, value, onChange, help, error, multiline, placeholder, keyboardType, testID, onSubmit, maxLength, editable = true, mono = false }: FieldProps): ReactNode {
+export function Field({ label, value, onChange, help, error, multiline, placeholder, keyboardType, testID, onSubmit, trailing, inputRef, maxLength, editable = true, mono = false }: FieldProps): ReactNode {
   const styles = useStyles();
   return (
     <View style={{ gap: spacing[1] }}>
-      <Input label={label} accessibilityHint={help} value={value} onChangeText={onChange} placeholder={placeholder} keyboardType={keyboardType} testID={testID} error={error} state={editable ? "default" : "disabled"}
+      <Input inputRef={inputRef} label={label} accessibilityHint={help} value={value} onChangeText={onChange} placeholder={placeholder} keyboardType={keyboardType} testID={testID} error={error} state={editable ? "default" : "disabled"} trailing={trailing}
         multiline={multiline} maxLength={maxLength} autoCapitalize={keyboardType === "email-address" ? "none" : undefined} autoCorrect={keyboardType === "email-address" ? false : undefined} onSubmitEditing={multiline ? undefined : onSubmit} returnKeyType={onSubmit && !multiline ? "go" : undefined} style={[multiline ? { minHeight: MULTILINE_HEIGHT, paddingVertical: spacing[2], textAlignVertical: "top" as const } : null, mono ? { fontFamily: fonts.mono } : null]} />
+      {help ? <Text style={styles.muted}>{help}</Text> : null}
+    </View>
+  );
+}
+
+export interface PickerInputProps { readonly label: string; readonly value: string; readonly onChange: (value: string) => void; readonly help?: string; readonly error?: string; readonly testID?: string }
+
+/** The invitation calendar uses the celebration's zone for its Today shortcut. */
+export function DateInput({ label, value, onChange, help, error, testID, calendar, minimumDate }: PickerInputProps & {
+  readonly calendar?: { readonly locale: AppLocale; readonly timeZone: string };
+  readonly minimumDate?: string;
+}): ReactNode {
+  const styles = useStyles();
+  return (
+    <View style={{ gap: spacing[1] }}>
+      <DatePicker label={label} value={value} onChange={onChange} {...(calendar ? { calendar } : {})} {...(minimumDate ? { minimumDate } : {})} {...(error ? { error } : {})} {...(testID ? { testID } : {})} />
+      {help ? <Text style={styles.muted}>{help}</Text> : null}
+    </View>
+  );
+}
+
+/** A time of day chosen with the device's clock; the value stays 24-hour `HH:MM`. */
+export function TimeInput({ label, value, onChange, help, error, testID }: PickerInputProps): ReactNode {
+  const styles = useStyles();
+  return (
+    <View style={{ gap: spacing[1] }}>
+      <TimePicker label={label} value={value} onChange={onChange} {...(error ? { error } : {})} {...(testID ? { testID } : {})} />
       {help ? <Text style={styles.muted}>{help}</Text> : null}
     </View>
   );
@@ -210,17 +241,16 @@ export function ErrorNotice({ error, onReload }: { readonly error: unknown; read
 }
 
 /** Loading state of a whole screen or section: rows shaped like the content that is coming (never a lone spinner). */
-export function Loading(): ReactNode {
-  const t = useT();
-  return <SkeletonList count={3} row={{ minHeight: 64 }} label={t("host.common.loading")} />;
+export function Loading({ kind = "list" }: { readonly kind?: LoadingKind }): ReactNode {
+  return <LoadingContent kind={kind} />;
 }
 
 /** `busy` shows the confirm button as loading and refuses a second confirm, Cancel and Escape until the request ends. */
-export function ConfirmDialog({ visible, title, body, confirmLabel, danger, busy = false, confirmTestID, cancelTestID, onConfirm, onCancel, children }: PropsWithChildren<{ readonly visible: boolean; readonly title: string; readonly body: string; readonly confirmLabel: string; readonly danger?: boolean; readonly busy?: boolean; readonly confirmTestID?: string; readonly cancelTestID?: string; readonly onConfirm: () => void; readonly onCancel: () => void }>): ReactNode {
+export function ConfirmDialog({ visible, title, body, confirmLabel, cancelLabel, danger, busy = false, confirmTestID, cancelTestID, onConfirm, onCancel, onDismiss, children }: PropsWithChildren<{ readonly visible: boolean; readonly title: string; readonly body: string; readonly confirmLabel: string; /** When «Cancelar» would be ambiguous (the action itself cancels something), name the way back. */ readonly cancelLabel?: string; readonly danger?: boolean; readonly busy?: boolean; readonly confirmTestID?: string; readonly cancelTestID?: string; readonly onConfirm: () => void; readonly onCancel: () => void; readonly onDismiss?: () => void }>): ReactNode {
   const styles = useStyles();
   const t = useT();
   return (
-    <Modal visible={visible} transparent animationType={overlayAnimation("fade")} onRequestClose={busy ? () => undefined : onCancel}>
+    <Modal visible={visible} accessibilityLabel={title} transparent animationType={overlayAnimation("fade")} onDismiss={onDismiss} onRequestClose={busy ? () => undefined : onCancel}>
       <View style={styles.overlay}>
         <OverlayEnter from="none"><View accessibilityViewIsModal accessibilityRole="alert" style={styles.dialog}>
           <Text accessibilityRole="header" style={styles.subtitle}>{title}</Text>
@@ -228,7 +258,7 @@ export function ConfirmDialog({ visible, title, body, confirmLabel, danger, busy
           {children}
           <View style={styles.row}>
             <ActionButton label={confirmLabel} variant={danger ? "danger" : "primary"} busy={busy} onPress={onConfirm} {...(confirmTestID ? { testID: confirmTestID } : {})} />
-            <ActionButton icon="close" label={t("host.common.cancel")} variant="secondary" disabled={busy} onPress={onCancel} {...(cancelTestID ? { testID: cancelTestID } : {})} />
+            <ActionButton icon="close" label={cancelLabel ?? t("host.common.cancel")} variant="secondary" disabled={busy} onPress={onCancel} {...(cancelTestID ? { testID: cancelTestID } : {})} />
           </View>
         </View></OverlayEnter>
       </View>

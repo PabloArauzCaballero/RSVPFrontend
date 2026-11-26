@@ -1,37 +1,57 @@
-/* F22 · public gift list. Calm card grid; one primary action per card. */
-.gifts { width: min(100% - 2.5rem, 60rem); margin: 0 auto; padding: clamp(1.5rem, 5vw, 3rem) 0 4rem; display: grid; gap: 1.25rem; }
-.gifts h1 { margin: 0; font-size: clamp(2.2rem, 6vw, 3.5rem); line-height: 1.05; }
-.gifts h2 { margin: 0; font-size: 1.6rem; }
-.gifts__intro { margin: 0; color: var(--text-muted); max-width: 42rem; }
-.gifts__filters { display: flex; flex-wrap: wrap; gap: .75rem 1rem; align-items: end; padding: 1.25rem; border: 1px solid var(--border); border-radius: var(--radius-cell, 12px); background: var(--surface); }
-.gifts__filters label { display: grid; gap: .3rem; font-weight: 500; font-size: .9rem; }
-.gifts__filters input[type="number"], .gifts__filters select { min-height: 2.75rem; padding: .5rem .7rem; border: 1px solid var(--field-border); border-radius: var(--radius-button, 6px); background: var(--surface); color: var(--text); min-width: 9rem; }
-.gifts__check { display: flex !important; align-items: center; gap: .5rem; min-height: 2.75rem; }
-.gifts__check input { width: 1.25rem; height: 1.25rem; accent-color: var(--primary); }
-.gifts__count { margin: 0; color: var(--text-muted); font-family: var(--font-mono); font-size: .85rem; font-variant-numeric: tabular-nums; }
-.gifts__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); gap: 1rem; list-style: none; padding: 0; margin: 0; }
-.gift-card { display: grid; gap: .5rem; align-content: start; padding: 1.5rem; border: 1px solid var(--border); border-radius: var(--radius-cell, 12px); background: var(--surface); }
-.gift-card--partner { border-color: var(--field-border); }
-.gift-card h3 { margin: 0; font-size: 1.35rem; }
-.gift-card h3 a { color: var(--text); text-decoration: none; }
-.gift-card h3 a:hover { text-decoration: underline; }
-.gift-card__price { margin: 0; font-family: var(--font-mono); font-size: 1.05rem; font-variant-numeric: tabular-nums; }
-.gift-card__desc { margin: 0; color: var(--text-muted); font-size: .95rem; }
-.gift-badge { background: var(--tone-green-bg, var(--success-bg)); color: var(--tone-green-fg, var(--success)); }
-.gift-badge--pending { background: var(--tone-yellow-bg, var(--accent-muted)); color: var(--tone-yellow-fg, var(--warning)); }
-.gift-badge--taken { background: var(--surface-muted); color: var(--text-muted); }
-.gift-card__actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .25rem; align-items: center; }
-.gifts__notice { padding: 1.25rem 1.5rem; border-radius: var(--radius-cell, 12px); border: 1px solid var(--border); background: var(--surface-muted); display: grid; gap: .6rem; }
-.gifts__notice h2 { margin: 0; }
-.gifts__notice p { margin: 0; }
-.gifts__notice--warn { border-color: var(--warning, var(--accent)); background: var(--tone-yellow-bg, var(--accent-muted)); }
-.gifts__notice--ok { border-color: var(--success); background: var(--success-bg); }
+/*
+ * A14/A15 · The guest's gift list (M21: the app's `GuestGiftsScreen`). It sits on the guest sheet (globals.css `.guest-sheet`):
+ * gifts are rows separated by a 1 px rule, the reservation opens inside the row, one primary action per row.
+ */
+.gifts h2.gift-group { margin: 0; font-size: 1.375rem; font-weight: 500; letter-spacing: -.02em; }
+.gift-links { display: flex; flex-direction: column; align-items: flex-start; }
+.gift-link { display: inline-flex; align-items: center; min-height: 44px; padding: 0; border: 0; background: none; color: var(--text); font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: .2em; cursor: pointer; text-align: start; }
+.gift-filters { display: grid; gap: 1rem; }
+.gift-filters input[type="text"] { width: 100%; max-width: 14rem; min-height: 3rem; padding: .65rem .9rem; border: 1px solid var(--field-border); border-radius: var(--radius-button); background: var(--surface); color: var(--text); font-size: 1rem; }
+.gift-filters input[type="text"]:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.gift-filters > .rsvp-button { justify-self: start; }
+.gift-choice { margin: 0; padding: 0; border: 0; min-width: 0; display: grid; gap: .5rem; }
+.gift-choice legend { padding: 0; margin-bottom: .5rem; font-weight: 500; font-size: .95rem; }
+.gift-choice__options { display: flex; flex-wrap: wrap; gap: .5rem; }
+.gift-choice__option { position: relative; display: inline-flex; align-items: center; min-height: 44px; padding: 0 1rem; border: 1px solid var(--field-border); border-radius: 9999px; background: var(--surface); color: var(--text); cursor: pointer; }
+.gift-choice__option input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.gift-choice__option:has(input:checked) { border-color: var(--text); font-weight: 600; background: var(--surface-muted); }
+.gift-choice__option:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+.gifts__count { margin: 0; color: var(--text-muted); font-size: .9rem; font-variant-numeric: tabular-nums; }
+.gift-rows { list-style: none; padding: 0; margin: .5rem 0 0; display: grid; }
+.gift-row { display: grid; gap: .5rem; padding: 1rem 0; border-bottom: 1px solid var(--border); min-width: 0; }
+.gift-row__head { display: flex; justify-content: space-between; align-items: baseline; gap: .75rem; }
+.gift-row__title { margin: 0; flex: 1; min-width: 0; font-size: 1.2rem; font-weight: 500; overflow-wrap: anywhere; }
+.gift-row__title a { display: inline-flex; align-items: center; min-height: 44px; color: var(--text); text-decoration: underline; text-underline-offset: .2em; }
+.gift-row__price { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.gift-card__photo { display: block; width: 100%; height: auto; aspect-ratio: 3 / 2; object-fit: cover; border-radius: var(--radius-cell); background: var(--surface-muted); }
+.gift-actions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.gift-actions--stack { display: grid; gap: .5rem; justify-items: stretch; width: 100%; max-width: 22rem; }
+.gift-actions--stack .rsvp-button { width: 100%; }
+.gift-partner-link { min-height: 2.75rem; }
+.gift-mine { display: grid; gap: .5rem; justify-items: start; }
+.gift-mine p { margin: 0; font-weight: 600; }
+.gift-form { display: grid; gap: 1rem; padding-top: .5rem; }
+.gift-form__title { margin: 0; font-size: 1rem; font-weight: 600; letter-spacing: 0; }
+.gift-form input[type="text"], .gift-form textarea { width: 100%; min-height: 3rem; padding: .65rem .9rem; border: 1px solid var(--field-border); border-radius: var(--radius-button); background: var(--surface); color: var(--text); font-size: 1rem; }
+.gift-form textarea { min-height: 6rem; resize: vertical; }
+.gift-form [aria-invalid="true"] { border-color: var(--danger); }
+.gift-form input:focus-visible, .gift-form textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.gift-note { display: grid; gap: .6rem; justify-items: center; padding: 1rem; border-radius: var(--radius-inner); border: 1px solid var(--border); background: var(--surface); }
+.gift-note:focus { outline: none; }
+.gift-note:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.gift-note h3, .gift-note p { margin: 0; }
+.gift-note--warn { justify-items: start; border-color: var(--danger); background: var(--danger-bg); }
+.gift-note--info { justify-items: start; background: var(--surface-muted); }
+.gift-note__art { width: 6rem; }
+.gift-success { display: flex; align-items: center; gap: .75rem; justify-self: stretch; }
+.gift-success__mark { flex: none; color: var(--success); }
+.gift-success__title { font-weight: 600; }
+.gift-taken { display: grid; gap: .5rem; }
+.gift-alternatives { display: grid; gap: .25rem; justify-items: start; }
+.gift-empty { padding: 1rem 0; }
+.gift-empty .state__art { width: 7rem; }
+.gift-skeleton-row { display: grid; gap: .5rem; min-height: 7rem; }
 .gift-dialog { width: min(100% - 2rem, 30rem); border: 1px solid var(--border); border-radius: var(--radius-cell, 12px); padding: 0; background: var(--surface); color: var(--text); box-shadow: var(--shadow-float); }
 .gift-dialog::backdrop { background: var(--scrim); }
 .gift-dialog form, .gift-dialog > div { display: grid; gap: 1rem; padding: 1.5rem; }
 .gift-dialog h2 { margin: 0; }
-.gift-dialog input, .gift-dialog textarea { width: 100%; min-height: 2.75rem; padding: .6rem .8rem; border: 1px solid var(--field-border); border-radius: var(--radius-button, 6px); background: var(--surface); color: var(--text); font-size: 1rem; }
-.gift-dialog textarea { min-height: 5.5rem; resize: vertical; }
-.gift-skeleton { height: 9rem; border-radius: var(--radius-cell, 12px); border: 1px solid var(--border); background: var(--surface-muted); animation: gift-pulse 1.6s ease-in-out infinite; }
-@keyframes gift-pulse { 50% { opacity: .55; } }
-@media (prefers-reduced-motion: reduce) { .gift-skeleton { animation: none; } }

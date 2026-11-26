@@ -1,4 +1,4 @@
-import { toApiError, type ProblemDetails } from "./errors.js";
+import { ApiError, toApiError, type ProblemDetails } from "./errors.js";
 import type { ApiClient, RefreshSession, RequestOptions, TokenStore } from "./types.js";
 
 export interface CreateApiClientOptions {
@@ -58,7 +58,12 @@ export function createApiClient(options: CreateApiClientOptions): ApiClient {
     });
     if (response.status === 401 && authenticate && !retried && !path.endsWith("/auth/refresh")) {
       try { await refresh(correlationId); }
-      catch (error) { await options.tokenStore.clear(); await options.onUnauthorized?.(); throw error; }
+      catch (error) {
+        if (error instanceof ApiError && error.status === 401) {
+          await options.tokenStore.clear(); await options.onUnauthorized?.();
+        }
+        throw error;
+      }
       return send(path, request, true);
     }
     if (!response.ok) {

@@ -17,6 +17,31 @@ jobs:
       - run: yarn harness:validate
       - run: yarn lint:code  # ESLint over the whole repo, including rsvp/no-literal-strings (REQ-F06-06)
       - run: yarn workspace @rsvp/contracts check:generated
+      # M8: the vendored specs must be the backend commit pinned in packages/contracts/backend.lock.json. The backend is
+      # read from a git clone made with a READ-ONLY deploy key of RSVPBackend (secret RSVP_BACKEND_CONTRACTS_DEPLOY_KEY):
+      # it does not expire and is not tied to a personal account. Without the secret the clone fails (it never skips).
+      - uses: actions/checkout@v4
+        with:
+          repository: PabloArauzCaballero/RSVPBackend
+          ssh-key: ${{ secrets.RSVP_BACKEND_CONTRACTS_DEPLOY_KEY }}
+          path: .backend-contracts
+          fetch-depth: 0
+      - run: yarn workspace @rsvp/contracts check:source
+        env:
+          RSVP_BACKEND_REPO: ${{ github.workspace }}/.backend-contracts
+      - run: rm -rf .backend-contracts
       - run: yarn turbo run build lint typecheck test --affected
       # Coverage gate: lines/statements >= 85 % in the packages with logic and both apps (vitest thresholds fail the job below it).
       - run: yarn test:coverage
+
+  deploy-config:
+    # A6/B1/M9 · nginx of the web app with its real image, rendered config and expected headers; build-arg validation.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sh deploy/nginx-check.sh
+      - name: Empty or relative build args stop the image build (M9)
+        run: |
+          if EXPO_PUBLIC_API_URL='' sh deploy/check-build-args.sh EXPO_PUBLIC_API_URL; then exit 1; fi
+          if EXPO_PUBLIC_API_URL=/api sh deploy/check-build-args.sh EXPO_PUBLIC_API_URL; then exit 1; fi
+          EXPO_PUBLIC_API_URL=https://api.example.com sh deploy/check-build-args.sh EXPO_PUBLIC_API_URL

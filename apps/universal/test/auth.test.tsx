@@ -30,6 +30,14 @@ function setup(ui: React.ReactNode, handlers: Record<string, Handler> = {}, stor
 }
 const type = (label: string, value: string): void => { fireEvent.change(screen.getByLabelText(label), { target: { value } }); };
 const press = (label: string): void => { fireEvent.click(screen.getByRole("button", { name: label })); };
+const acceptTerms = (): void => { fireEvent.click(screen.getByRole("checkbox", { name: "Acepto los Términos de uso y la Política de privacidad." })); };
+/** Fills every required sign-up field and accepts the terms (the role stays as chosen by the test). */
+const fillSignUp = (email = "ana@example.com", password = "correct-horse-battery"): void => {
+  type("Nombre", "Ana"); type("Apellido", "Rojas"); type("Celular", "+591 7123 4567");
+  type("Correo", email); type("Contraseña", password); type("Repite la contraseña", password); acceptTerms();
+};
+/** What the app sends to Identity 2.1.0 besides the credentials (the test renders es-BO). */
+const PROFILE = { termsVersion: "2026-11-21-borrador", givenName: "Ana", familyName: "Rojas", phone: "+59171234567", city: "La Paz", country: "BO", locale: "es-BO", marketingOptIn: false, timeZone: expect.any(String) };
 
 beforeEach(() => { resetSecureStore(); localStorage.clear(); });
 
@@ -98,16 +106,87 @@ describe("REQ-F05-01 · sign in", () => {
 describe("REQ-F05-01 · sign up and recovery", () => {
   it("blocks a short password locally and never calls Identity", async () => {
     const { calls } = setup(<RegisterScreen onNavigate={vi.fn()} />);
-    type("Correo", "ana@example.com"); type("Contraseña", "corta"); press("Crear mi cuenta");
+    fillSignUp("ana@example.com", "corta"); press("Crear mi cuenta");
     expect(await screen.findByText("Usa al menos 12 caracteres. Una frase corta funciona bien.")).toBeTruthy();
     expect(calls).toHaveLength(0);
   });
-  it("registers with the chosen role and starts the session", async () => {
+  it("an empty form marks every required field the same way, empty password included, and the reveal button carries the error border (QA 2026-11-13, #103)", async () => {
+    const { calls } = setup(<RegisterScreen onNavigate={vi.fn()} />);
+    press("Crear mi cuenta");
+    // Nombre, Apellido, Celular (the prefilled +591 alone counts as empty), Correo, Contraseña, Repite la contraseña.
+    expect(await screen.findAllByText("Falta este dato.")).toHaveLength(6);
+    expect(screen.getByText("Para crear tu cuenta necesitas aceptar los términos y la política de privacidad.")).toBeTruthy();
+    expect(screen.queryByText("Usa al menos 12 caracteres. Una frase corta funciona bien.")).toBeNull();
+    const input = screen.getByLabelText("Contraseña");
+    const toggle = screen.getAllByRole("button", { name: "Mostrar" })[0]!;
+    expect(getComputedStyle(toggle).borderTopColor).toBe(getComputedStyle(input).borderTopColor);
+    expect(calls).toHaveLength(0);
+  });
+  it("registers a provider with the chosen role and the profile; no business is created at sign-up (A24, DP-2)", async () => {
     const { manager, calls } = setup(<RegisterScreen onNavigate={vi.fn()} />, { "POST /identity/auth/register": () => ({ id: "u", email: "p@x.co", roles: ["PROVIDER"], ...tokenResponse(["PROVIDER"]) }) });
-    type("Correo", "p@x.co"); type("Contraseña", "correct-horse-battery");
-    fireEvent.click(screen.getByRole("radio", { name: /Ofrezco servicios/ })); press("Crear mi cuenta");
+    fireEvent.click(screen.getByRole("radio", { name: /Ofrezco servicios/ }));
+    expect(screen.queryByLabelText("Nombre de tu empresa o equipo")).toBeNull();
+    fillSignUp("p@x.co"); press("Crear mi cuenta");
     await waitFor(() => expect(manager.getState().session?.roles).toEqual(["PROVIDER"]));
-    expect(calls[0]?.body).toEqual({ email: "p@x.co", password: "correct-horse-battery", role: "PROVIDER" });
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.body).toEqual({ email: "p@x.co", password: "correct-horse-battery", role: "PROVIDER", ...PROFILE });
+  });
+  it("cross-field rules: different passwords, a malformed phone and a missing company are reported together", async () => {
+    const { calls } = setup(<RegisterScreen onNavigate={vi.fn()} />);
+    fireEvent.click(screen.getByRole("radio", { name: /Ayudo a organizar/ }));
+    fillSignUp(); type("Repite la contraseña", "otra-contrasena-larga"); type("Celular", "71234567");
+    press("Crear mi cuenta");
+    expect(await screen.findByText("Las contraseñas no coinciden.")).toBeTruthy();
+    expect(screen.getByText("Revisa el celular: escribe el código de país, por ejemplo +591 71234567.")).toBeTruthy();
+    expect(screen.getAllByText("Falta este dato.")).toHaveLength(1);
+    expect(calls).toHaveLength(0);
+  });
+  it("a host sends the whole profile to Identity, with the city picked and the marketing consent, and nothing else is created", async () => {
+    const { manager, calls } = setup(<RegisterScreen onNavigate={vi.fn()} />, { "POST /identity/auth/register": () => ({ id: "u", email: "ana@example.com", roles: ["HOST"], ...tokenResponse(["HOST"]) }) });
+    fillSignUp(); fireEvent.change(screen.getByLabelText("Ciudad"), { target: { value: "Cochabamba" } });
+    fireEvent.click(screen.getByRole("checkbox", { name: "Quiero recibir novedades y consejos por correo (opcional)." })); press("Crear mi cuenta");
+    await waitFor(() => expect(manager.getState().session?.roles).toEqual(["HOST"]));
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.body).toEqual({ email: "ana@example.com", password: "correct-horse-battery", role: "HOST", ...PROFILE, city: "Cochabamba", marketingOptIn: true });
+  });
+  it("another city can be typed when it is not in the list", async () => {
+    const { calls } = setup(<RegisterScreen onNavigate={vi.fn()} />, { "POST /identity/auth/register": () => ({ id: "u", email: "ana@example.com", roles: ["HOST"], ...tokenResponse(["HOST"]) }) });
+    fillSignUp(); fireEvent.change(screen.getByLabelText("Ciudad"), { target: { value: "OTHER" } });
+    press("Crear mi cuenta");
+    expect(await screen.findByText("Falta este dato.")).toBeTruthy();
+    expect(calls).toHaveLength(0);
+    type("¿En qué ciudad estás?", "Montero"); press("Crear mi cuenta");
+    await waitFor(() => expect(calls[0]?.body).toMatchObject({ city: "Montero" }));
+  });
+  it("registers a planner and creates the company with the new session before anyone sees the session", async () => {
+    const { manager, calls } = setup(<RegisterScreen onNavigate={vi.fn()} />, {
+      "POST /identity/auth/register": () => ({ id: "u", email: "pl@x.co", roles: ["PLANNER"], ...tokenResponse(["PLANNER"]) }),
+      "POST /identity/organizations": () => { expect(manager.getState().session).toBeNull(); return { id: "org-9", name: "Eventos Illimani", ownerUserId: "u", members: [] }; }
+    });
+    fireEvent.click(screen.getByRole("radio", { name: /Ayudo a organizar/ }));
+    fillSignUp("pl@x.co"); type("Nombre de tu empresa o equipo", "Eventos Illimani"); press("Crear mi cuenta");
+    await waitFor(() => expect(manager.getState().session?.roles).toEqual(["PLANNER"]));
+    expect(calls[1]).toMatchObject({ method: "POST", path: "/identity/organizations", body: { name: "Eventos Illimani" } });
+    expect(calls[1]?.headers.get("Authorization")).toMatch(/^Bearer /);
+  });
+  it("if the company cannot be created the account still signs in (the organizations screen offers to create it)", async () => {
+    const { manager } = setup(<RegisterScreen onNavigate={vi.fn()} />, {
+      "POST /identity/auth/register": () => ({ id: "u", email: "pl@x.co", roles: ["PLANNER"], ...tokenResponse(["PLANNER"]) }),
+      "POST /identity/organizations": () => new HttpFailure(503, { title: "Unavailable" })
+    });
+    fireEvent.click(screen.getByRole("radio", { name: /Ayudo a organizar/ }));
+    fillSignUp("pl@x.co"); type("Nombre de tu empresa o equipo", "Eventos Illimani"); press("Crear mi cuenta");
+    await waitFor(() => expect(manager.getState().session?.roles).toEqual(["PLANNER"]));
+  });
+  it("B6: without an explicit acceptance of the terms and the privacy policy no account is created; both texts are one tap away", async () => {
+    const navigate = vi.fn();
+    const { calls } = setup(<RegisterScreen onNavigate={navigate} />);
+    type("Nombre", "Ana"); type("Apellido", "Rojas"); type("Celular", "+59171234567");
+    type("Correo", "p@x.co"); type("Contraseña", "correct-horse-battery"); type("Repite la contraseña", "correct-horse-battery"); press("Crear mi cuenta");
+    expect(await screen.findByText("Para crear tu cuenta necesitas aceptar los términos y la política de privacidad.")).toBeTruthy();
+    expect(calls).toHaveLength(0);
+    fireEvent.click(screen.getByRole("link", { name: "Términos de uso" })); fireEvent.click(screen.getByRole("link", { name: "Política de privacidad" }));
+    expect(navigate.mock.calls.map(([href]) => href)).toEqual(["/terminos", "/privacidad"]);
   });
   it("offers only the self-service roles (ADMIN never appears)", () => {
     setup(<RegisterScreen onNavigate={vi.fn()} />);
@@ -132,19 +211,19 @@ describe("REQ-F05-01 · sign up and recovery", () => {
   });
   it("409: the e-mail already exists, with a way out", async () => {
     setup(<RegisterScreen onNavigate={vi.fn()} />, { "POST /identity/auth/register": () => new HttpFailure(409, { title: "Conflict" }) });
-    type("Correo", "ana@example.com"); type("Contraseña", "correct-horse-battery"); press("Crear mi cuenta");
+    fillSignUp(); press("Crear mi cuenta");
     expect(await screen.findByText("No pudimos crear la cuenta con esos datos. Prueba con otro correo, o entra si ya tienes cuenta.")).toBeTruthy();
   });
   it("422 from the server is reported without leaking its technical text", async () => {
     setup(<RegisterScreen onNavigate={vi.fn()} />, { "POST /identity/auth/register": () => new HttpFailure(422, { errors: [{ field: "password", message: "bean validation: size must be between 12 and 128" }] }) });
-    type("Correo", "ana@example.com"); type("Contraseña", "correct-horse-battery"); press("Crear mi cuenta");
+    fillSignUp(); press("Crear mi cuenta");
     expect(await screen.findByText("Algunos datos no son válidos. Revisa los campos marcados.")).toBeTruthy();
     expect(screen.queryByText(/bean validation/)).toBeNull();
   });
   it("recovery: confirms without revealing whether the account exists", async () => {
     const { calls } = setup(<RecoveryScreen onNavigate={vi.fn()} />, { "POST /identity/auth/password-recovery": () => undefined });
     type("Correo", "nadie@example.com"); press("Enviar instrucciones");
-    expect(await screen.findByText("Listo. Si hay una cuenta con ese correo, te llegarán las instrucciones.")).toBeTruthy();
+    expect(await screen.findByText("Listo. Si hay una cuenta con ese correo, te enviamos un enlace que vence en 30 minutos. Revisa también la carpeta de spam.")).toBeTruthy();
     expect(calls[0]).toMatchObject({ path: "/identity/auth/password-recovery", body: { email: "nadie@example.com" } });
   });
   it("recovery offline shows the connection message and keeps the e-mail", async () => {
@@ -156,6 +235,20 @@ describe("REQ-F05-01 · sign up and recovery", () => {
 });
 
 describe("REQ-F05-03 · route guards", () => {
+  it("an offline reload keeps private content guarded and recovers the same route on retry", async () => {
+    let offline = true;
+    const { client } = fakeClient({ "POST /identity/auth/refresh": () => offline ? new HttpFailure(503, { title: "Unavailable" }) : tokenResponse(["HOST"]) });
+    const manager = new SessionManager(createMemorySessionStore(), new IdentityClient(client, "cookie"));
+    render(<AppProviders runtime={{ manager, client, identityClient: client }} locale="es-BO"><RouteGuard group="host"><p>Mi invitación privada</p></RouteGuard></AppProviders>);
+    expect(await screen.findByText("No pudimos recuperar tu sesión")).toBeTruthy();
+    expect(manager.getState().status).toBe("unavailable");
+    expect(screen.queryByText("Mi invitación privada")).toBeNull();
+    expect(screen.queryByText(/^redirect:/)).toBeNull();
+    offline = false;
+    fireEvent.click(screen.getByTestId("retry-session"));
+    expect(await screen.findByText("Mi invitación privada")).toBeTruthy();
+    expect(manager.getState().status).toBe("authenticated");
+  });
   const guarded = (group: "host" | "admin" | "provider"): React.ReactNode => <RouteGuard group={group}><p>contenido privado</p></RouteGuard>;
   const withRoles = async (roles: Role[], node: React.ReactNode): Promise<void> => {
     const store = createMemorySessionStore(sessionFromTokens(tokenResponse(roles)));
@@ -190,6 +283,13 @@ describe("REQ-F05-03 · route guards", () => {
     const { manager, calls } = setup(guarded("admin"), { "POST /identity/auth/logout": () => undefined }, store);
     await waitFor(() => screen.getByText("Esta sección es de otra cuenta"));
     press("Cerrar sesión");
+    expect(await screen.findByText("¿Estás seguro de cerrar sesión?")).toBeTruthy();
+    expect(await screen.findByRole("dialog", { name: "¿Estás seguro de cerrar sesión?" })).toBeTruthy();
+    expect(calls.some((call) => call.path === "/identity/auth/logout")).toBe(false);
+    fireEvent.click(screen.getByTestId("cancel-sign-out"));
+    expect(manager.getState().status).toBe("authenticated");
+    press("Cerrar sesión");
+    fireEvent.click(await screen.findByTestId("confirm-sign-out"));
     await waitFor(() => expect(manager.getState().status).toBe("anonymous"));
     expect(calls.find((call) => call.path === "/identity/auth/logout")?.body).toEqual({ refreshToken: "r".repeat(40) });
     expect(await store.getSession()).toBeNull();

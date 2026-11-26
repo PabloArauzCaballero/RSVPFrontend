@@ -1,13 +1,23 @@
 import type { Role } from "../session/types.js";
 
-export type RouteGroup = "auth" | "host" | "provider" | "admin" | "guest";
-export const ROUTE_GROUPS: readonly RouteGroup[] = ["auth", "host", "provider", "admin", "guest"];
+export type RouteGroup = "auth" | "host" | "provider" | "admin" | "guest" | "account";
+export const ROUTE_GROUPS: readonly RouteGroup[] = ["auth", "host", "provider", "admin", "guest", "account"];
 
-/** Roles allowed per group. An empty list means the group is public (login, and guests who arrive by magic link without an account). */
-const access: Record<RouteGroup, readonly Role[]> = { auth: [], host: ["HOST", "PLANNER", "ADMIN"], provider: ["PROVIDER"], admin: ["ADMIN"], guest: [] };
+/** Any account that is signed in, whatever its roles (or none): the (account) group, e.g. the partner request of DPA-10. */
+const SIGNED_IN = "signed-in";
 
+/**
+ * Roles allowed per group. An empty list means the group is public (login, and guests who arrive by magic link without an account);
+ * `SIGNED_IN` asks only for a session, so a user without PROVIDER (DPA-1) can still ask to become a partner.
+ */
+const access: Record<RouteGroup, readonly Role[] | typeof SIGNED_IN> = { auth: [], host: ["HOST", "PLANNER", "ADMIN"], provider: ["PROVIDER"], admin: ["ADMIN"], guest: [], account: SIGNED_IN };
+
+const isPublic = (group: RouteGroup): boolean => { const allowed = access[group]; return allowed !== SIGNED_IN && allowed.length === 0; };
+
+/** `roles` are those of a signed-in person (see decideRoute for the anonymous visitor). */
 export function canAccessRoute(roles: readonly Role[], group: RouteGroup): boolean {
   const allowed = access[group];
+  if (allowed === SIGNED_IN) return true;
   return allowed.length === 0 || allowed.some((role) => roles.includes(role));
 }
 
@@ -24,7 +34,7 @@ export function homeGroupFor(roles: readonly Role[]): RouteGroup | null {
 
 /** `roles === null` means nobody is signed in. */
 export function decideRoute(roles: readonly Role[] | null, group: RouteGroup): GuardDecision {
-  if (access[group].length === 0) return { type: "allow" };
+  if (isPublic(group)) return { type: "allow" };
   if (roles === null) return { type: "login" };
   return canAccessRoute(roles, group) ? { type: "allow" } : { type: "forbidden", home: homeGroupFor(roles) };
 }

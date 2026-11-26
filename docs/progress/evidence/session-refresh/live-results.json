@@ -1,0 +1,143 @@
+{
+  "status": "PASS",
+  "date": "2026-11-17T19:37:14.357Z",
+  "app": "http://localhost:8340",
+  "uploadBrowserOrigin": "https://dev.done.arauzsoftware.com",
+  "matrixOrigin": "http://localhost:8340",
+  "browser": {
+    "engine": "chromium",
+    "version": "151.0.7922.34",
+    "source": "Playwright bundled"
+  },
+  "results": [
+    {
+      "name": "login through nginx preserves Secure, HttpOnly, Strict and rewrites the cookie path"
+    },
+    {
+      "name": "real upload 202 -> worker PROCESSED -> visible photo, without document navigation"
+    },
+    {
+      "name": "real guest registration returns to an updated list"
+    },
+    {
+      "name": "real gift creation returns to an updated list"
+    },
+    {
+      "name": "simulated auth connection loss offers retry; real refresh restores the same route"
+    },
+    {
+      "name": "reload, cancel logout, axe and overflow 360-light-es-BO",
+      "authRefreshes": 2,
+      "keyboard": {
+        "tabTrapped": true,
+        "escapeCancelled": true,
+        "focusReturned": true
+      }
+    },
+    {
+      "name": "reload, cancel logout, axe and overflow 360-light-en-US",
+      "authRefreshes": 2,
+      "keyboard": {
+        "tabTrapped": true,
+        "escapeCancelled": true,
+        "focusReturned": true
+      }
+    },
+    {
+      "name": "reload, cancel logout, axe and overflow 360-dark-es-BO",
+      "authRefreshes": 2,
+      "keyboard": {
+        "tabTrapped": true,
+        "escapeCancelled": true,
+        "focusReturned": true
+      }
+    },
+    {
+      "name": "reload, cancel logout, axe and overflow 360-dark-en-US",
+      "authRefreshes": 2,
+      "keyboard": {
+        "tabTrapped": true,
+        "escapeCancelled": true,
+        "focusReturned": true
+      }
+    },
+    {
+      "name": "reload, cancel logout, axe and overflow 768-light-es-BO",
+      "authRefreshes": 2,
+      "keyboard": {
+        "tabTrapped": true,
+        "escapeCancelled": true,
+        "focusReturned": true
+      }
+    },
+    {
+      "name": "reload, cancel logout, axe and overflow 768-light-en-US",
+      "authRefreshes": 2,
+      "keyboard": {
+        "tabTrapped": true,
+        "escapeCancelled": true,
+        "focusReturned": true
+      }
+    },
+    {
+      "name": "reload, cancel logout, axe and overflow 768-dark-es-BO",
+      "authRefreshes": 2,
+      "keyboard": {
+        "tabTrapped": true,
+        "escapeCancelled": true,
+        "focusReturned": true
+      }
+    },
+    {
+      "name": "reload, cancel logout, axe and overflow 768-dark-en-US",
+      "authRefreshes": 2,
+      "keyboard": {
+        "tabTrapped": true,
+        "escapeCancelled": true,
+        "focusReturned": true
+      }
+    },
+    {
+      "name": "reload, cancel logout, axe and overflow 1280-light-es-BO",
+      "authRefreshes": 2,
+      "keyboard": {
+        "tabTrapped": true,
+        "escapeCancelled": true,
+        "focusReturned": true
+      }
+    },
+    {
+      "name": "reload, cancel logout, axe and overflow 1280-light-en-US",
+      "authRefreshes": 2,
+      "keyboard": {
+        "tabTrapped": true,
+        "escapeCancelled": true,
+        "focusReturned": true
+      }
+    },
+    {
+      "name": "reload, cancel logout, axe and overflow 1280-dark-es-BO",
+      "authRefreshes": 2,
+      "keyboard": {
+        "tabTrapped": true,
+        "escapeCancelled": true,
+        "focusReturned": true
+      }
+    },
+    {
+      "name": "reload, cancel logout, axe and overflow 1280-dark-en-US",
+      "authRefreshes": 2,
+      "keyboard": {
+        "tabTrapped": true,
+        "escapeCancelled": true,
+        "focusReturned": true
+      }
+    },
+    {
+      "name": "mobile cancellation restores focus with default motion too"
+    },
+    {
+      "name": "confirmed logout revokes the session; reload stays signed out"
+    }
+  ]
+}

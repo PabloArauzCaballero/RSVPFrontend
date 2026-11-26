@@ -163,14 +163,25 @@ describe("REQ-F14-01 · categories, geography, users, organizations", () => {
   it("categories: lists, validates the code, then saves with PUT", async () => {
     const { client, calls } = fakeClient({ "GET /providers/admin/categories": () => ({ items: [{ code: "CATERING", names: { "es-BO": "Catering" }, active: true }] }), "PUT /providers/admin/categories/FOTOGRAFIA": (call) => call.body });
     renderApp(<CategoriesScreen onNavigate={navigate} />, client, ADMIN);
-    expect(await screen.findByText(/Catering · CATERING · Activo/)).toBeTruthy();
+    // one row per category: its name, its code and its state; the form only exists while creating or editing
+    const row = await screen.findByRole("button", { name: "Editar Catering" });
+    expect(row.textContent).toContain("CATERING");
+    expect(row.textContent).toContain("Activo");
+    expect(screen.getByText("1 categoría")).toBeTruthy();
+    expect(screen.queryByTestId("save-category")).toBeNull();
+    fireEvent.click(screen.getByTestId("new-category"));
     fireEvent.click(screen.getByTestId("save-category"));
     expect(await screen.findByText(/Usa de 2 a 40 caracteres/)).toBeTruthy();
     expect(screen.getByText("Escribe al menos un nombre.")).toBeTruthy();
-    type("Código", "fotografia"); type("Nombre (es-BO)", "Fotografía"); type("Nombre (en-US)", "Photography");
+    type("Código", "fotografia"); type("Nombre en Español", "Fotografía"); type("Nombre en English", "Photography");
     fireEvent.click(screen.getByTestId("save-category"));
     expect(await screen.findByText("Guardado.")).toBeTruthy();
     expect(calls.find((call) => call.method === "PUT")?.body).toEqual({ names: { "es-BO": "Fotografía", "en-US": "Photography" }, active: true });
+    // saving closes the form and leaves the list
+    await waitFor(() => expect(screen.queryByTestId("save-category")).toBeNull());
+    // an existing category opens with its code fixed
+    fireEvent.click(screen.getByRole("button", { name: "Editar Catering" }));
+    expect((screen.getByLabelText("Código") as HTMLInputElement).disabled || (screen.getByLabelText("Código") as HTMLInputElement).readOnly).toBe(true);
   });
 
   it("categories: empty state invites the first one", async () => {
@@ -180,17 +191,20 @@ describe("REQ-F14-01 · categories, geography, users, organizations", () => {
   });
 
   it("geography: a city is a lowercase slug with a parent and coordinates; the country is read-only", async () => {
-    const { client, calls } = fakeClient({ "GET /providers/admin/geography": () => ({ items: [{ code: "BO", kind: "COUNTRY", parentCode: null, names: { "es-BO": "Bolivia" }, active: true }] }), "PUT /providers/admin/geography/santa-cruz": (call) => call.body });
+    const { client, calls } = fakeClient({ "GET /providers/admin/geography": () => ({ items: [{ code: "BO", kind: "COUNTRY", parentCode: null, names: { "es-BO": "Bolivia" }, active: true }, { code: "SC", kind: "REGION", parentCode: "BO", names: { "es-BO": "Santa Cruz (departamento)" }, active: true }] }), "PUT /providers/admin/geography/santa-cruz": (call) => call.body });
     renderApp(<GeographyScreen onNavigate={navigate} />, client, ADMIN);
-    expect(await screen.findByText(/Bolivia · País · Activo/)).toBeTruthy();
-    type("Código", "Santa-Cruz"); type("Nombre (es-BO)", "Santa Cruz");
+    expect((await screen.findByRole("button", { name: "Editar Bolivia" })).textContent).toContain("País");
+    expect(screen.getByRole("button", { name: "Editar Santa Cruz (departamento)" }).textContent).toContain("Región · en Bolivia");
+    fireEvent.click(screen.getByTestId("new-geo"));
+    type("Código", "Santa-Cruz"); type("Nombre en Español", "Santa Cruz");
     fireEvent.click(screen.getByTestId("save-geo"));
     expect(await screen.findByText("Indica a qué ubicación pertenece.")).toBeTruthy();
-    type("Código de la ubicación superior", "sc");
+    // the parent is chosen among the existing countries and regions, never typed
+    fireEvent.change(screen.getByTestId("geo-parent"), { target: { value: "SC" } });
     fireEvent.click(screen.getByTestId("save-geo"));
     expect(await screen.findByText("Una ciudad nueva necesita latitud y longitud válidas.")).toBeTruthy();
     expect(calls.some((call) => call.method === "PUT")).toBe(false);
-    type("Latitud (-90 a 90)", "-17.78"); type("Longitud (-180 a 180)", "-63.18");
+    type("Latitud", "-17.78"); type("Longitud", "-63.18");
     fireEvent.click(screen.getByTestId("save-geo"));
     expect(await screen.findByText("Guardado.")).toBeTruthy();
     expect(calls.find((call) => call.method === "PUT")?.body).toMatchObject({ kind: "CITY", parentCode: "SC", names: { "es-BO": "Santa Cruz" }, latitude: -17.78, longitude: -63.18 });
@@ -201,6 +215,7 @@ describe("REQ-F14-01 · categories, geography, users, organizations", () => {
     renderApp(<GeographyScreen onNavigate={navigate} />, client, ADMIN);
     fireEvent.click(await screen.findByRole("button", { name: "Editar Bolivia" }));
     expect(await screen.findByText("El país no se puede modificar.")).toBeTruthy();
+    expect(screen.getByTestId("save-geo").getAttribute("aria-disabled")).toBe("true");
     fireEvent.click(screen.getByTestId("save-geo"));
     expect(calls.some((call) => call.method === "PUT")).toBe(false);
   });

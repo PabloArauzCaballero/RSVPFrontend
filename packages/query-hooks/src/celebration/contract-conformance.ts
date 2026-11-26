@@ -1,7 +1,7 @@
 import type { CelebrationComponents, TemplateMediaComponents } from "@rsvp/contracts";
 import type {
   AccessLevel, ApprovalMode, AuditEntry, Celebration, CelebrationSettings, CelebrationStatus, Collaborator, CreateCelebrationInput,
-  LocalDateTime, MediaAsset, PublishCheck, Template, TemplateInput, TranslatedEventType, UploadIntent
+  LocalDateTime, MediaAsset, PublicPageStatus, PublishCheck, Template, TemplateInput, TranslatedEventType, UploadIntent
 } from "./types.js";
 
 /**
@@ -27,10 +27,13 @@ export type ContractChecks = [
   Expect<FieldsExist<LocalDateTime, C["LocalDateTime"]>>,
   Expect<FieldsExist<CreateCelebrationInput, C["CreateCelebration"]>>,
   Expect<FieldsExist<PublishCheck, C["PublishCheck"]>>,
+  Expect<FieldsExist<PublicPageStatus, C["PublicPageStatus"]>>,
+  Expect<Equal<PublicPageStatus["state"], C["PublicPageStatus"]["state"]>>,
   Expect<FieldsExist<AuditEntry, C["AuditEntry"]>>,
   Expect<FieldsExist<TranslatedEventType, C["TranslatedEventType"]>>,
   Expect<FieldsExist<Template, T["Template"]>>,
   Expect<FieldsExist<TemplateInput, T["TemplateInput"]>>,
   Expect<FieldsExist<UploadIntent, T["UploadIntent"]>>,
+  Expect<Equal<MediaAsset["status"], NonNullable<T["MediaAsset"]["status"]>>>,
   Expect<FieldsExist<MediaAsset, T["MediaAsset"]>>
 ];

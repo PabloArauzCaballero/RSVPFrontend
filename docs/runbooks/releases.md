@@ -6,6 +6,11 @@ Los secretos `EXPO_TOKEN`, credenciales de Apple/Google y `EXPO_ASC_APP_ID` se c
 
 Configurar estas variables de despliegue en EAS/GitHub, nunca en el repositorio: `EXPO_PUBLIC_EAS_PROJECT_ID`, `EXPO_PUBLIC_LINK_DOMAIN`, `EXPO_IOS_BUNDLE_IDENTIFIER`, `EXPO_ANDROID_PACKAGE`, `RSVP_APPLE_APP_ID`, `RSVP_ANDROID_PACKAGE` y `RSVP_ANDROID_SHA256_FINGERPRINTS`.
 
+La app (nativa, EAS y la imagen web de Coolify) necesita dos orígenes distintos, ambos incrustados al compilar:
+
+- `EXPO_PUBLIC_SITE_URL`: el sitio público (seo-web). Ahí viven el redirector de proveedores `/r/{listingId}` y las páginas indexables. Es **obligatoria** cuando el sitio no está en el mismo dominio que la app; sin ella, los enlaces a proveedores usan `EXPO_PUBLIC_RSVP_ORIGIN`, lo que solo es correcto si un único dominio sirve las dos cosas. En TEST: `https://rsvp-web.161.97.85.216.sslip.io`.
+- `EXPO_PUBLIC_RSVP_ORIGIN`: el dominio de los enlaces personales de RSVP. En TEST: `https://dev.done.arauzsoftware.com`.
+
 El sitio SEO sirve `/.well-known/apple-app-site-association` y `/.well-known/assetlinks.json` de forma dinámica. Ambos responden 404 hasta contar con los identificadores verificados: publicar valores de ejemplo puede dejar los enlaces universales invalidados por caché.
 
 ## Preview para QA
@@ -27,3 +32,11 @@ yarn eas update --channel production --message "Descripción del parche"
 O desde Actions: workflow **EAS update** (`.github/workflows/eas-update.yml`), con canal y mensaje. Requiere `EXPO_TOKEN` y `EXPO_PUBLIC_EAS_PROJECT_ID`; hasta tenerlos, no se ha ejecutado.
 
 Si cambia código nativo, se requiere una nueva build de producción, no una actualización OTA.
+
+## iOS · TestFlight (F12 / A8)
+
+- Proyecto EAS: `@pablo28809s-team/rsvp` (`a7c4435b-6494-458c-b142-83b2b0705ef1`). Bundle iOS y paquete Android: `com.arauzsoftware.done` (no se cambia después del primer build subido).
+- Perfiles en `apps/universal/eas.json`; todos heredan `base`, que fija `EXPO_PUBLIC_API_URL`, `EXPO_PUBLIC_SITE_URL` y `EXPO_PUBLIC_RSVP_ORIGIN`. Hoy apuntan a TEST; cuando exista producción se cambian ahí y se compila un build nuevo.
+- Un build de release sin `EXPO_PUBLIC_API_URL`, o con una URL `http://`, falla al arrancar (`resolveApiUrl`, A8).
+- Primer build y envío (interactivo, requiere la cuenta de Apple Developer y su 2FA): `cd apps/universal && eas build -p ios --profile production --auto-submit`. EAS registra el bundle id, crea certificado y perfil, y `--auto-submit` crea la app en App Store Connect si no existe y sube el build a TestFlight.
+- Ficha de la tienda: `docs/release/app-store-connect.md`.

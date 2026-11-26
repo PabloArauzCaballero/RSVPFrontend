@@ -53,7 +53,7 @@ describe("REQ-F05-05 / REQ-F15-01 · legacy link /rsvp/{token} resolved with POS
     const mock = createContractMock();
     const navigate = vi.fn();
     open("x".repeat(43), mock.fetch, "es-BO", navigate);
-    expect(await screen.findByRole("heading", { name: "Este enlace no está disponible" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Este enlace ya no funciona" })).toBeTruthy();
     expect(navigate).not.toHaveBeenCalled();
   });
 

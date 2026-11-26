@@ -57,3 +57,17 @@ Se construyó `@rsvp/universal` con `EXPO_PUBLIC_API_URL=https://rsvp-api.161.97
 **Estado de evidencia.** `TESTED` en navegador real (Google Chrome + Playwright) contra Kong y servicios reales de TEST (`https://rsvp-api.161.97.85.216.sslip.io`). Pendiente revisión humana del PR hacia `dev` y actualización de la rama de despliegue `chore/deploy-contabo-coolify` en Coolify.
 
 **Reversión.** Revertir el cambio del frontend mediante PR y reconstruir la aplicación si ya se desplegó. Las listas y regalos creados usan los endpoints y datos existentes de Gift.
+
+## Promoción a la rama de Coolify · 2026-11-13
+
+Base de despliegue `a7f2f37`. Se incorporó el squash de [#21](https://github.com/PabloArauzCaballero/RSVPFrontend/pull/21), `a392529`, mediante cherry-pick. El código de producción coincide con el de `dev` para los seis archivos del arreglo. La prueba de integración de regalos conserva los casos de agenda que ya tenía la rama de despliegue.
+
+| Verificación de la rama candidata | Resultado |
+| --- | --- |
+| `corepack yarn install --immutable`, `corepack yarn lint`, `corepack yarn typecheck`, `corepack yarn harness:validate`, `corepack yarn workspace @rsvp/contracts check:generated`, `git diff --check` y Gitleaks sobre el diff | Salida 0. Tipos y lint en 18 workspaces, 8 contratos vendorizados y cero hallazgos de secretos. |
+| `corepack yarn test`; `corepack yarn workspace @rsvp/universal test test/gifts-portal.test.tsx`; `corepack yarn workspace @rsvp/universal test:coverage --maxWorkers 2` | Salida 0. Suite general 30/30 tareas al repetirla, 38 pruebas dirigidas y 370 pruebas de la app con cobertura de líneas de 90,34 %. La primera ejecución concurrente dio fallos intermitentes en pruebas de invitados y proveedor. |
+| `corepack yarn workspace @rsvp/universal build` y `corepack yarn workspace @rsvp/seo-web build` | Salida 0. Se inspeccionó el bundle de Expo `entry-af1dea7afb0bfcb2517358cfbe9bb0cc.js` con el entorno de TEST. |
+| Chromium y Playwright con Kong de TEST | Salida 0. Se sirvieron los archivos de la versión publicada y de la candidata en el navegador bajo el mismo origen. Las peticiones de la app se reenviaron al gateway real por HTTPS. El bundle publicado devolvió `404 GIFT_LIST_NOT_FOUND` en el único POST y mostró el aviso de acceso. La candidata creó la lista y guardó el primer ítem con la secuencia `404 → 201 → 201 PROPOSED`. El segundo se guardó con un solo POST y los dos aparecieron en «Mi lista» con `GET 200`. Una celebración inexistente conservó el aviso de acceso. |
+| Accesibilidad web del formulario | 12 de 12 combinaciones con 360, 768 y 1280 px, tema claro y oscuro, español e inglés y movimiento reducido. Sin desborde horizontal ni hallazgos serios o críticos de axe. |
+
+La prueba usó una cuenta sintética y una celebración de prueba sin publicar, archivada al finalizar. Pendiente incorporar esta rama y verificar el bundle servido por Coolify tras la compilación. Reversión mediante PR y reconstrucción de Expo web desde la referencia anterior.

@@ -1,0 +1,19 @@
+node_modules
+**/node_modules
+.git
+.next
+**/.next
+.expo
+**/.expo
+web-build
+**/web-build
+.turbo
+**/.turbo
+coverage
+**/coverage
+# M14 · Local secrets never enter a build context (Coolify clones only tracked files, a developer's checkout does not).
+**/.env
+**/.env.*
+!**/.env.example
+**/*.pem
+**/*.key

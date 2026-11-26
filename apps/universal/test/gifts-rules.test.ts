@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ApiError } from "@rsvp/api-client";
 import { alreadyListed, isHttpUrl, MAX_MINOR, parseMinor, TITLE_MAX } from "../src/host/gifts/money";
-import { isRetryable, MESSAGE_MAX, NAME_MAX, reserveFailureKind, reserveFieldErrors } from "../src/guest/reserve-rules";
+import { isReserveRetryable, MESSAGE_MAX, NAME_MAX, reserveFailureKind, reserveFieldErrors } from "@rsvp/query-hooks";
 
 const failure = (status: number, code?: string): ApiError => new ApiError(status, "corr", code ? { type: "t", title: "x", status, code } : undefined);
 
@@ -50,7 +50,7 @@ describe("guest reservation rules", () => {
     expect(reserveFailureKind(new TypeError("Failed to fetch"))).toBe("offline");
   });
   it("offers a retry only where the same tap can succeed", () => {
-    expect(["busy", "offline", "generic"].every((kind) => isRetryable(kind as never))).toBe(true);
-    expect(["taken", "limit", "expired", "forbidden", "notFound", "validation"].some((kind) => isRetryable(kind as never))).toBe(false);
+    expect(["busy", "offline", "generic"].every((kind) => isReserveRetryable(kind as never))).toBe(true);
+    expect(["taken", "limit", "expired", "forbidden", "notFound", "validation"].some((kind) => isReserveRetryable(kind as never))).toBe(false);
   });
 });

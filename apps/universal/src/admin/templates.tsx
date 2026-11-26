@@ -7,6 +7,7 @@ import type { Translate } from "@rsvp/i18n";
 import { useApiClient, useLocale, useT } from "../platform/providers";
 import { ChoiceGroup, ConfirmDialog, Field, FilterSelect, Notice, PageIntro, Section, useStyles } from "../host/ui";
 import { RowsSkeleton } from "../provider/parts";
+import { invitationIcon } from "../guest/invitation-icon";
 import { AdminErrorNotice, AdminListError, Stack } from "./shared";
 import { AdminScreen, splitList, useHeaderSlot } from "./admin-screen";
 import { SECTION_IDS } from "./event-types";
@@ -90,7 +91,7 @@ function Editor({ template, onSaved }: { readonly template: Template | undefined
         ))}
       </View>
       <Text style={styles.label}>{t("admin.templates.preview")}</Text>
-      <View style={[styles.card, { maxHeight: PREVIEW_HEIGHT, overflow: "hidden", padding: 0 }]}><CelebrationNativeRenderer theme={preview} view={sampleView(t, locale)} t={t} /></View>
+      <View style={[styles.card, { maxHeight: PREVIEW_HEIGHT, overflow: "hidden", padding: 0 }]}><CelebrationNativeRenderer theme={preview} view={sampleView(t, locale)} t={t} renderIcon={invitationIcon} /></View>
       <AdminErrorNotice error={save.error ?? transition.error} onRetry={() => saveOnce({ target: template, input }, { onSuccess: onSaved })} />
       {save.isSuccess || transition.isSuccess ? <Notice kind="success">{t("admin.saved")}</Notice> : null}
       <ConfirmDialog visible={confirmArchive} danger title={t("admin.templates.archive")} body={t("admin.templates.archiveConfirm")} confirmLabel={t("admin.templates.archive")}

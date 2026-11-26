@@ -5,7 +5,7 @@ import { formatNumber } from "@rsvp/i18n";
 import { Stagger, useColors } from "@rsvp/ui";
 import { useMetrics, type MetricTotals, type Provider } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../platform/providers";
-import { ChoiceGroup, EmptyState, Field, FilterSelect, Notice, PageIntro, useStyles } from "../host/ui";
+import { ChoiceGroup, DateInput, EmptyState, FilterSelect, Notice, PageIntro, useStyles } from "../host/ui";
 import { PortalErrorNotice as ErrorNotice } from "./errors";
 import { PortalScreen, usePortalHeader } from "./frame";
 import { RowsSkeleton } from "./parts";
@@ -103,8 +103,8 @@ function Metrics({ provider }: { readonly provider: Provider }): ReactNode {
       </View>
       {period === "custom" ? (
         <View style={styles.row}>
-          <Field label={t("portal.metrics.from")} value={from} onChange={setFrom} testID="metrics-from" />
-          <Field label={t("portal.metrics.to")} value={to} onChange={setTo} testID="metrics-to" />
+          <View style={{ flexGrow: 1, flexBasis: 160 }}><DateInput label={t("portal.metrics.from")} value={from} onChange={setFrom} testID="metrics-from" /></View>
+          <View style={{ flexGrow: 1, flexBasis: 160 }}><DateInput label={t("portal.metrics.to")} value={to} onChange={setTo} testID="metrics-to" /></View>
         </View>
       ) : null}
       <ChoiceGroup<Group> label={t("portal.metrics.groupBy")} value={group} onChange={setGroup} choices={(["day", "category", "destination"] as const).map((value) => ({ value, label: t(`portal.metrics.group.${value}`) }))} />
