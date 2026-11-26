@@ -178,7 +178,7 @@
                 "block": "art-anillos",
                 "x": 0,
                 "y": 0,
-                "w": 5,
+                "w": 4,
                 "h": 28,
                 "visible": true,
                 "animation": {
@@ -190,9 +190,9 @@
               {
                 "id": "el-cover",
                 "block": "cover",
-                "x": 5,
+                "x": 4,
                 "y": 3,
-                "w": 6,
+                "w": 8,
                 "h": 20,
                 "visible": true,
                 "animation": {
@@ -213,9 +213,9 @@
               {
                 "id": "el-filete",
                 "block": "art-filete",
-                "x": 5,
+                "x": 4,
                 "y": 23,
-                "w": 6,
+                "w": 8,
                 "h": 3,
                 "visible": true,
                 "animation": {

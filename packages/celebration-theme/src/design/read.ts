@@ -32,13 +32,14 @@ function box(value: unknown): DesignBox | undefined {
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** A background as the renderer may trust it: a palette role, a drawing id, or (F6) a file id with its fit and a veil in 0..0.8. */
+/** A background as the renderer may trust it: a palette role, a drawing id, or (F6) a file id with its fit and a veil in 0..0.8.
+ * The veil kind is normalised here, explicitly: a document saved before 1.8.0 has none and keeps the uniform veil it always had (`even`); only a document that says `graded` gets the graded one. */
 function backgroundOf(value: unknown): DesignBackground | undefined {
   if (!isRecord(value)) return undefined;
   if (value["kind"] === "colour" && oneOf(value["role"], ROLES)) return { kind: "colour", role: value["role"] };
   if (value["kind"] === "illustration" && typeof value["illustrationId"] === "string") return { kind: "illustration", illustrationId: value["illustrationId"] };
   if (value["kind"] === "media" && typeof value["mediaId"] === "string" && UUID.test(value["mediaId"]) && oneOf(value["fit"], ["cover", "contain"] as const)) {
-    return { kind: "media", mediaId: value["mediaId"], fit: value["fit"], ...(num(value["scrim"], 0, 0.8) ? { scrim: value["scrim"] } : {}), ...(oneOf(value["veil"], DESIGN_VEILS) ? { veil: value["veil"] } : {}) };
+    return { kind: "media", mediaId: value["mediaId"], fit: value["fit"], ...(num(value["scrim"], 0, 0.8) ? { scrim: value["scrim"] } : {}), veil: oneOf(value["veil"], DESIGN_VEILS) ? value["veil"] : "even" };
   }
   return undefined;
 }

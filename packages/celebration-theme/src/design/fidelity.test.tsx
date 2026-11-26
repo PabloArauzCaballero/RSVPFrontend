@@ -8,6 +8,7 @@ import { CelebrationRenderer, giftsPath, themeFromTemplate, type GalleryImage } 
 import { BLACK, contrastRatio, gradedVeil, GRADED_ELSEWHERE_VEIL, GRADED_TEXT_VEIL, mix, requiredScrim, WHITE } from "./colour.js";
 import { designTemplate } from "./documents/index.js";
 import { designPalette, readDesign } from "./read.js";
+import { NO_TEXT_BLOCKS, TEXT_BLOCK_TYPES } from "./render.js";
 import type { DesignBlock, DesignDocumentV2, DesignElement } from "./types.js";
 
 afterEach(cleanup);
@@ -87,11 +88,11 @@ describe("readDesign · the fidelity fields (contract 1.8.0)", () => {
     expect(withPage({ entrance: "none", name: "mecerse" }).pages[0]?.animation).toEqual({ entrance: "none" });
   });
 
-  it("the veil of a picture is `graded` or `even`; anything else is read as absent (graded by default)", () => {
+  it("the veil of a picture is `graded` or `even`; anything else, or nothing, is read as `even` explicitly (PL-FE145-1: a document saved before 1.8.0 keeps its look)", () => {
     const background = (veil: unknown): unknown => documentWith([], (doc) => { ((doc["pages"] as Json[])[0] as Json)["background"] = { kind: "media", mediaId: BG, fit: "cover", veil }; }).pages[0]?.background;
     expect(background("even")).toMatchObject({ veil: "even" });
     expect(background("graded")).toMatchObject({ veil: "graded" });
-    for (const veil of ["EVEN", "", 1, null, "heavy"]) expect(background(veil), String(veil)).not.toHaveProperty("veil");
+    for (const veil of ["EVEN", "", 1, null, "heavy", undefined]) expect(background(veil), String(veil)).toMatchObject({ veil: "even" });
   });
 });
 
@@ -211,8 +212,16 @@ describe("render · the poster of a video", () => {
 describe("render · the graded veil", () => {
   const cover = (veil?: "graded" | "even", scrim?: number) => draw(documentWith([], (doc) => { ((doc["pages"] as Json[])[0] as Json)["background"] = { kind: "media", mediaId: BG, fit: "cover", ...(veil ? { veil } : {}), ...(scrim === undefined ? {} : { scrim }) }; }));
 
-  it("is the default: light over the picture, and the page marks itself so every block of text rides on the strong level", () => {
-    const { container } = cover();
+  it("an absent veil is the uniform one every v2 document had before 1.8.0 (PL-FE145-1): no text panels, one veil", () => {
+    const page = cover().container.querySelector('[data-page-kind="cover"]') as HTMLElement;
+    expect(page.hasAttribute("data-veil")).toBe(false);
+    const absent = (page.querySelector(".celebration-media-backdrop") as HTMLElement).style.getPropertyValue("--cd-veil-l");
+    const even = (cover("even").container.querySelector(".celebration-media-backdrop") as HTMLElement).style.getPropertyValue("--cd-veil-l");
+    expect(absent).toBe(even);
+  });
+
+  it("`graded`, written in the document: light over the picture, and the page marks itself so every block of text rides on the strong level", () => {
+    const { container } = cover("graded");
     const page = container.querySelector('[data-page-kind="cover"]') as HTMLElement;
     expect(page.getAttribute("data-veil")).toBe("graded");
     const backdrop = page.querySelector(".celebration-media-backdrop") as HTMLElement;
@@ -291,5 +300,15 @@ describe("motion · the stylesheet and the tokens", () => {
     expect(fidelity).toMatch(/cdesign-sway var\(--cd-motion-sway\) ease-in-out var\(--cdesign-delay, 0ms\) 1 both/);
     expect(fidelity).toMatch(/100% \{ transform: rotate\(0\) \}/);
     for (const [, ms] of fidelity.matchAll(/--cd-motion-(?:sway|reveal): (\d+)ms/g)) expect(Number(ms)).toBeLessThan(2500);
+  });
+});
+
+describe("render · which blocks carry the strong panel (PL-FE145-2)", () => {
+  it("every block type of the contract is decided once: text (panel) or no text (none)", () => {
+    const spec = JSON.parse(readFileSync(join(__dirname, "../../../contracts/specs/template-media.openapi.json"), "utf8")) as { components: { schemas: Record<string, unknown> } };
+    const types = Object.keys(spec.components.schemas).filter((name) => /^DesignBlock[A-Z]/.test(name)).map((name) => name.slice("DesignBlock".length)).map((name) => name[0]!.toLowerCase() + name.slice(1)).sort();
+    const decided = [...TEXT_BLOCK_TYPES, ...NO_TEXT_BLOCKS];
+    expect(new Set(decided).size, "no type is in both lists").toBe(decided.length);
+    expect([...decided].sort()).toEqual(types);
   });
 });

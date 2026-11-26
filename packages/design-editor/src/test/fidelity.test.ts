@@ -91,14 +91,14 @@ describe("element animation", () => {
     expect((elementOfBlock(setElementAnimation("mobile", image.id, null)(both), "image") as { animation?: unknown }).animation).toEqual({ entrance: "none", delayMs: 80 });
   });
 
-  it("never offers or writes mecerse on the gifts and reply buttons, nor a page-only animation anywhere", () => {
+  it("never offers or writes a named animation on the gifts and reply buttons (PL-164-1), nor a page-only animation anywhere", () => {
     const doc = withBlocks();
     const gifts = elementOfBlock(doc, "giftsCta");
-    expect(elementAnimationsFor(doc, gifts)).toEqual(["aparecer"]);
-    expect(elementAnimationsFor(doc, elementOfBlock(doc, "image"))).toEqual(["aparecer", "mecerse"]);
-    expect(setElementAnimation("mobile", gifts.id, "mecerse")(doc)).toBe(doc);
-    expect(setElementAnimation("mobile", gifts.id, "aparecer")(doc)).not.toBe(doc);
-    for (const hostile of ["abrir-puertas", "revelar-telon", "fade", "", "__proto__"]) expect(setElementAnimation("mobile", elementOfBlock(doc, "image").id, hostile as never)(doc)).toBe(doc);
+    expect(elementAnimationsFor(doc, gifts)).toEqual([]);
+    expect(elementAnimationsFor(doc, elementOfBlock(doc, "image"))).toEqual(["aparecer", "mecerse", "revelar-telon"]);
+    for (const name of ["mecerse", "aparecer", "revelar-telon"] as const) expect(setElementAnimation("mobile", gifts.id, name)(doc)).toBe(doc);
+    expect(setElementAnimation("mobile", elementOfBlock(doc, "image").id, "revelar-telon")(doc)).not.toBe(doc);
+    for (const hostile of ["abrir-puertas", "fade", "", "__proto__"]) expect(setElementAnimation("mobile", elementOfBlock(doc, "image").id, hostile as never)(doc)).toBe(doc);
   });
 
   it("reads a hostile stored name as none", () => {
@@ -160,21 +160,25 @@ describe("frame", () => {
 });
 
 describe("cover veil", () => {
-  it("is null without a cover photo and graded by default with one", () => {
+  it("is null without a cover photo, graded and explicit for a first photo chosen here, and even when a saved document says nothing (PL-FE145-1)", () => {
     const doc = fixture();
     expect(coverVeilOf(doc)).toBeNull();
     expect(setCoverVeil("even")(doc)).toBe(doc);
     expect(coverVeilOf(withCoverPhoto(doc))).toBe("graded");
+    expect(withCoverPhoto(doc).pages[0]?.background).toMatchObject({ veil: "graded" });
+    const saved = withCoverPhoto(doc);
+    const legacy = { ...saved, pages: saved.pages.map((page) => (page.kind === "cover" ? { ...page, background: { kind: "media", mediaId: MEDIA, fit: "cover" } } : page)) } as Doc;
+    expect(coverVeilOf(legacy)).toBe("even");
   });
 
-  it("switches to even and back; graded is stored as no value", () => {
+  it("switches to even and back; both are always written explicitly", () => {
     const photo = withCoverPhoto(fixture());
     const even = setCoverVeil("even")(photo);
     expect(coverVeilOf(even)).toBe("even");
     expect((even.pages[0]?.background as { veil?: string }).veil).toBe("even");
     const back = setCoverVeil("graded")(even);
     expect(coverVeilOf(back)).toBe("graded");
-    expect(back.pages[0]?.background).not.toHaveProperty("veil");
+    expect(back.pages[0]?.background).toMatchObject({ veil: "graded" });
     expect(back).toEqual(photo);
     for (const hostile of ["uniform", "", "Graded", null]) expect(setCoverVeil(hostile as never)(even)).toBe(even);
   });

@@ -1047,7 +1047,7 @@ export interface components {
             /** @description Veil over the image so text stays readable */
             scrim?: number;
             /**
-             * @description 1.8.0. graded (the default when absent): the veil is strong only behind the text (about 0.85) and light elsewhere (about 0.2). even: one veil over the whole photo, the v2 behaviour. In both modes the renderer raises the veil behind the text as far as the palette needs for 4.5:1 on any photo (F0), so `scrim` can only add to it.
+             * @description 1.8.0. even (what an absent `veil` means, so every v2 document saved before 1.8.0 renders as it always did): one veil over the whole photo, the v2 behaviour. graded (explicit, written by the editor and by the new templates): the veil is strong only behind the text (about 0.85) and light elsewhere (about 0.2). In both modes the renderer raises the veil behind the text as far as the palette needs for 4.5:1 on any photo (F0), so `scrim` can only add to it.
              * @enum {string}
              */
             veil?: "graded" | "even";

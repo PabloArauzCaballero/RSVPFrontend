@@ -172,7 +172,7 @@ export const designEditorEsBO = {
       title: "Animación, máscara y marco",
       animation: "Animación del elemento", animations: { none: "Ninguna", aparecer: "Aparecer", mecerse: "Mecerse", "revelar-telon": "Revelar como telón" },
       animationHint: "Se juega una vez. La duración la fija el diseño y no se puede cambiar.",
-      protectedNote: "Este botón no admite máscara ni marco, y no puede mecerse.",
+      protectedNote: "Este botón no admite máscara, marco ni animación: se queda quieto y a la vista.",
       mask: "Máscara", masks: { none: "Ninguna", arch: "Arco", "deco-doors": "Puertas art déco", chamfer: "Esquinas cortadas", circle: "Círculo", rounded: "Redondeada", stamp: "Sello" },
       maskHint: "Solo se ofrece en imágenes, galerías, dibujos, monogramas, ornamentos, videos y mapas.",
       frame: "Marco", frames: { none: "Sin marco", double: "Doble", deco: "Art déco", hairline: "Línea fina" },

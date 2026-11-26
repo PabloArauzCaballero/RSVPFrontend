@@ -26,7 +26,7 @@ export interface DesignTypographyOverride {
   readonly colour?: PaletteRole;
 }
 export type DesignEntrance = "none" | "fade" | "rise" | "scale" | "draw" | "envelope";
-/** Contract 1.8.0 (fidelity): the veil of a photo background. `graded` (the default when absent) is strong behind the text and light elsewhere; `even` is one veil over the whole photo. */
+/** Contract 1.8.0 (fidelity): the veil of a photo background. `even` (what an absent value means: every document saved before 1.8.0 keeps its uniform veil) is one veil over the whole photo; `graded` (explicit) is strong behind the text and light elsewhere. */
 export type DesignVeil = "graded" | "even";
 export const DESIGN_VEILS: readonly DesignVeil[] = ["graded", "even"];
 /** Curated named animations. The renderer owns their duration and easing; every one is off under `prefers-reduced-motion`. */

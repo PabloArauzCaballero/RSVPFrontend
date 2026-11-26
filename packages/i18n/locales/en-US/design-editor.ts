@@ -175,7 +175,7 @@ export const designEditorEnUS: DeepStrings<typeof designEditorEsBO> = {
       title: "Animation, mask and frame",
       animation: "Element animation", animations: { none: "None", aparecer: "Fade in", mecerse: "Sway", "revelar-telon": "Curtain reveal" },
       animationHint: "Plays once. The design sets the duration and it cannot be changed.",
-      protectedNote: "This button takes no mask or frame, and it cannot sway.",
+      protectedNote: "This button takes no mask, frame or animation: it stays still and in view.",
       mask: "Mask", masks: { none: "None", arch: "Arch", "deco-doors": "Art deco doors", chamfer: "Cut corners", circle: "Circle", rounded: "Rounded", stamp: "Stamp" },
       maskHint: "Only offered on images, galleries, drawings, monograms, ornaments, videos and maps.",
       frame: "Frame", frames: { none: "No frame", double: "Double", deco: "Art deco", hairline: "Hairline" },

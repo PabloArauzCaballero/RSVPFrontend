@@ -57,7 +57,7 @@ describe("Basic: cover and animations", () => {
     await waitFor(() => expect(lastSaved(saved).pages[0]).not.toHaveProperty("animation"));
   });
 
-  it("switches the photo veil between graded (the default) and even, and says so when there is no photo", async () => {
+  it("switches the photo veil between graded and even, and says so when there is no photo", async () => {
     const { saved } = open("es-BO");
     const box = screen.getByRole("checkbox", { name: /Velo de la foto: Degradado/ }) as HTMLInputElement;
     expect(box.checked).toBe(true);

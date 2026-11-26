@@ -87,18 +87,22 @@ function backgroundStyle(background: DesignBackground | undefined): CSSPropertie
   return background?.kind === "colour" ? { background: role(background.role) } : {};
 }
 
-/** The blocks whose text sits over the picture an element carries as its own background (the whole element is then the text zone). */
-const TEXT_BLOCKS: ReadonlySet<string> = new Set(["cover", "story", "schedule", "venues", "faq", "recommendations", "dressCode", "heading", "text", "quote", "countdown", "monogram"]);
+/** The blocks whose text sits over the picture an element carries as its own background (the whole element is then the text zone), and over a page photo with a graded veil (each gets the strong panel).
+ *  Every block type of the contract is in exactly one of the two lists (a test reads the contract), so a new block cannot reach a photo without a decision about its text. The gifts and reply buttons
+ *  are the protected layer: they paint their own surface and take no panel. */
+export const NO_TEXT_BLOCKS: readonly string[] = ["image", "illustration", "ornament", "spacer", "giftsCta", "rsvpCta"];
+export const TEXT_BLOCK_TYPES: readonly string[] = ["cover", "story", "schedule", "venues", "faq", "recommendations", "dressCode", "heading", "text", "quote", "countdown", "monogram", "imageText", "gallery", "music", "map", "video", "button", "weddingParty", "html"];
+const TEXT_BLOCKS: ReadonlySet<string> = new Set(TEXT_BLOCK_TYPES);
 
 /** The veil of a photo, per scheme, as percentages the stylesheet reads. `even` (contract 1.8.0): one veil over the whole photo, raised to what the palette needs for AA. `graded`
- *  (the default): light over the photo (`elsewhere`) and strong only behind the text (`text`), which the stylesheet paints as a feathered panel behind every text block. Either
+ *  (explicit in the document): light over the photo (`elsewhere`) and strong only behind the text (`text`), which the stylesheet paints as a feathered panel behind every text block. Either
  *  way the text sits under at least the veil the palette needs, so it is AA over any picture; the document's own `scrim` can only add. */
 function veilLevels(background: Extract<DesignBackground, { kind: "media" }>, context: Context): { readonly graded: boolean; readonly backdrop: { readonly light: number; readonly dark: number }; readonly text: { readonly light: number; readonly dark: number } } {
   const own = background.scrim === undefined ? 0 : clampScrim(background.scrim);
   const light = gradedVeil(designPalette(context.design, "light"), own);
   const dark = gradedVeil(designPalette(context.design, "dark"), own);
   const even = { light: Math.max(own, context.veil.light), dark: Math.max(own, context.veil.dark) };
-  const graded = background.veil !== "even";
+  const graded = background.veil === "graded";
   return { graded, backdrop: graded ? { light: light.elsewhere, dark: dark.elsewhere } : even, text: graded ? { light: light.text, dark: dark.text } : even };
 }
 

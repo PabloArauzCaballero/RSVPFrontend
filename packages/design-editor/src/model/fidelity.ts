@@ -26,11 +26,11 @@ export interface ElementFrame { readonly style: FrameStyle; readonly colour: des
 
 /** Animations a page can play, and the ones an element can be offered (the contract: `mecerse` only on elements, `abrir-puertas` only on pages). */
 export const PAGE_ANIMATIONS = ["aparecer", "revelar-telon", "abrir-puertas"] as const satisfies readonly AnimationName[];
-export const ELEMENT_ANIMATIONS = ["aparecer", "mecerse"] as const satisfies readonly AnimationName[];
+export const ELEMENT_ANIMATIONS = ["aparecer", "mecerse", "revelar-telon"] as const satisfies readonly AnimationName[];
 
 /** Blocks a mask can clip (blocks with text never take one: the server answers 422 DESIGN_DECORATION_INVALID). */
 export const MASKABLE_BLOCKS: ReadonlySet<string> = new Set(design.MASKABLE_BLOCKS);
-/** The gifts and reply buttons: no mask, no frame, no `mecerse`. Their layer is the protected one. */
+/** The gifts and reply buttons: no mask, no frame, no named animation (the server answers 422 DESIGN_DECORATION_INVALID: it would move, hide or cover them). Their layer is the protected one. */
 export const PROTECTED_BLOCKS: ReadonlySet<string> = new Set(["giftsCta", "rsvpCta"]);
 
 const oneOf = <T extends string>(list: readonly T[], value: unknown): value is T => typeof value === "string" && (list as readonly string[]).includes(value);
@@ -47,8 +47,8 @@ const fidelity = (element: Element): FidelityElement => element as unknown as Fi
 export const blockTypeOf = (doc: Doc, element: Element): string | undefined => doc.blocks.find((block) => block.id === element.block)?.type;
 export const isProtectedBlock = (doc: Doc, element: Element): boolean => PROTECTED_BLOCKS.has(blockTypeOf(doc, element) ?? "");
 export const canMask = (doc: Doc, element: Element): boolean => MASKABLE_BLOCKS.has(blockTypeOf(doc, element) ?? "") && !isProtectedBlock(doc, element);
-/** Animations the inspector offers for an element: `mecerse` never for the protected buttons. */
-export const elementAnimationsFor = (doc: Doc, element: Element): readonly AnimationName[] => (isProtectedBlock(doc, element) ? ELEMENT_ANIMATIONS.filter((name) => name !== "mecerse") : ELEMENT_ANIMATIONS);
+/** Animations the inspector offers for an element: none for the protected buttons (a named animation would move, hide or cover them; PL-164-1). */
+export const elementAnimationsFor = (doc: Doc, element: Element): readonly AnimationName[] => (isProtectedBlock(doc, element) ? [] : ELEMENT_ANIMATIONS);
 
 export const elementAnimationOf = (element: Element): AnimationName | null => { const name = fidelity(element).animation?.name; return oneOf(ANIMATION_NAMES, name) ? name : null; };
 export const elementMaskOf = (element: Element): DesignMask | null => { const mask = fidelity(element).mask; return oneOf(MASKS, mask) ? mask : null; };
@@ -82,12 +82,12 @@ function without<T extends object>(value: T, key: string): T {
 
 /**
  * A named animation on one element, or none (null). With a name the entrance is `none` and there is no duration (it comes from the
- * motion tokens); `mecerse` is refused for the gifts and reply buttons. Anything outside the list leaves the document as it was.
+ * motion tokens); no name is accepted for the gifts and reply buttons (clearing one is). Anything outside the list leaves the document as it was.
  */
 export const setElementAnimation = (canvas: CanvasName, elementId: string, name: AnimationName | null): DocumentOp => (doc) => {
   if (name !== null && !oneOf(ELEMENT_ANIMATIONS, name)) return doc;
   const target = findElement(doc, canvas, elementId);
-  if (!target || (name === "mecerse" && isProtectedBlock(doc, target))) return doc;
+  if (!target || (name !== null && isProtectedBlock(doc, target))) return doc;
   return mapElement(doc, canvas, elementId, (element) => {
     const current = fidelity(element).animation;
     if (name === null) {
@@ -148,20 +148,20 @@ export const setCoverVariant = (variant: CoverVariant): DocumentOp => (doc) => {
   return { ...doc, blocks: doc.blocks.map((candidate) => (candidate === block ? { ...candidate, config: { ...candidate.config, variant } } : candidate)) };
 };
 
-/** The veil of the cover photo, or null while the cover has no photo. A missing value is `graded`, the default. */
+/** The veil of the cover photo, or null while the cover has no photo. A missing value is `even`: a document saved before 1.8.0 keeps the uniform veil it always had. */
 export const coverVeilOf = (doc: Doc): Veil | null => {
   const background = doc.pages.find((page) => page.kind === "cover")?.background;
   if (background?.kind !== "media") return null;
-  return (background as unknown as { veil?: unknown }).veil === "even" ? "even" : "graded";
+  return (background as unknown as { veil?: unknown }).veil === "graded" ? "graded" : "even";
 };
 
-/** Graded (the default: stored as no value) or even. Without a cover photo there is nothing to veil and nothing changes. */
+/** Graded or even, always written explicitly. Without a cover photo there is nothing to veil and nothing changes. */
 export const setCoverVeil = (veil: Veil): DocumentOp => (doc) => {
   const current = coverVeilOf(doc);
   if (!oneOf(VEILS, veil) || current === null || current === veil) return doc;
   return {
     ...doc,
-    pages: doc.pages.map((page) => (page.kind !== "cover" || page.background?.kind !== "media" ? page : ({ ...page, background: veil === "even" ? { ...page.background, veil: "even" } : without(page.background, "veil") } as Page)))
+    pages: doc.pages.map((page) => (page.kind !== "cover" || page.background?.kind !== "media" ? page : ({ ...page, background: { ...page.background, veil } } as Page)))
   };
 };
 

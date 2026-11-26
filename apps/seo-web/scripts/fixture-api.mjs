@@ -91,7 +91,7 @@ const mediosTemplate = () => {
   const base = v2Template("marfil");
   const theme = structuredClone(base.theme);
   theme.pages = theme.pages.map((page) => {
-    if (page.kind === "cover") return { ...page, background: { kind: "media", mediaId: MEDIOS.bg, fit: "cover" } };
+    if (page.kind === "cover") return { ...page, background: { kind: "media", mediaId: MEDIOS.bg, fit: "cover", veil: "graded" } };
     if (page.section !== "story") return page;
     const at = (id, block, y) => ({ id, block, x: 0, y, w: 4, h: 1, visible: true });
     return { ...page, canvases: { ...page.canvases, mobile: { ...page.canvases.mobile, elements: [...page.canvases.mobile.elements, at("m-pic", "m-pic", 1), at("m-vid", "m-vid", 2), at("m-map", "m-map", 3), at("m-song", "m-song", 4)] } } };
@@ -115,14 +115,41 @@ const libreTemplate = () => {
 const libre = { slug: "fixture-v2-libre", view: { ...view, celebrationId: "00000000-0000-4000-8000-000000000198", slug: "fixture-v2-libre", templateId: "6f6f6f6f-6f6f-46f6-86f6-6f6f6f6f6f6f" } };
 const medios = { slug: "fixture-v2-medios", view: { ...view, celebrationId: "00000000-0000-4000-8000-000000000199", slug: "fixture-v2-medios", templateId: "5e5e5e5e-5e5e-45e5-85e5-5e5e5e5e5e5e" } };
 const silence = () => { const rate = 8000, samples = rate * 2, data = Buffer.alloc(samples * 2); const head = Buffer.alloc(44); head.write("RIFF", 0); head.writeUInt32LE(36 + data.length, 4); head.write("WAVEfmt ", 8); head.writeUInt32LE(16, 16); head.writeUInt16LE(1, 20); head.writeUInt16LE(1, 22); head.writeUInt32LE(rate, 24); head.writeUInt32LE(rate * 2, 28); head.writeUInt16LE(2, 32); head.writeUInt16LE(16, 34); head.write("data", 36); head.writeUInt32LE(data.length, 40); return Buffer.concat([head, data]); };
+// The worst picture for text: 12 columns of pure black and pure white squares, so every patch under a line of text is an extreme.
+const checkerboard = () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1280" width="1920" height="1280"><rect width="1920" height="1280" fill="#fff"/>${Array.from({ length: 8 * 12 }, (_, i) => ((i % 12) + Math.floor(i / 12)) % 2 === 0 ? `<rect x="${(i % 12) * 160}" y="${Math.floor(i / 12) * 160}" width="160" height="160" fill="#000"/>` : "").join("")}</svg>`;
 let sharpModule;
 const encoded = new Map();
 async function rasterOf(n, width, format) {
   sharpModule ??= (await import("sharp")).default;
   const key = `${n}-${width}-${format}`;
-  if (!encoded.has(key)) encoded.set(key, await sharpModule(Buffer.from(image(n * 70))).resize({ width }).toFormat(format).toBuffer());
+  if (!encoded.has(key)) encoded.set(key, await sharpModule(Buffer.from(n === 9 ? checkerboard() : image(n * 70))).resize({ width }).toFormat(format).toBuffer());
   return encoded.get(key);
 }
+
+// PL-FE145-2 / V6 · `fixture-v2-velo`: Marfil with the WORST picture (a black and white checkerboard, every pixel a pure extreme) behind every page, under the graded veil, and a block of every kind
+// that carries text over it. The e2e measures the painted panel and the ink of each text against that picture.
+const VELO = { bg: "44444444-4444-4444-8444-444444444444" };
+const veloGallery = [{ id: "g1", width: 1920, height: 1280, isCover: true, purpose: "cover", variants: raster(1) }, { id: "g2", width: 1920, height: 1280, isCover: false, purpose: "gallery", variants: raster(2) },
+  { id: VELO.bg, width: 1920, height: 1280, isCover: false, purpose: "background", variants: raster(9) }, { id: MEDIOS.song, width: null, height: null, isCover: false, purpose: "music", durationMs: 2000, variants: { audio: `http://localhost:${PORT}/audio/song.wav` } }];
+const veloTemplate = () => {
+  const base = v2Template("marfil");
+  const theme = structuredClone(base.theme);
+  theme.pages = theme.pages.map((page) => {
+    const withBg = { ...page, background: { kind: "media", mediaId: VELO.bg, fit: "cover", veil: "graded" } };
+    if (page.section !== "story") return withBg;
+    const at = (id, block, y) => ({ id, block, x: 0, y, w: 4, h: 1, visible: true });
+    return { ...withBg, canvases: { ...withBg.canvases, mobile: { ...withBg.canvases.mobile, elements: [...withBg.canvases.mobile.elements, at("v-btn", "v-btn", 1), at("v-vid", "v-vid", 2), at("v-map", "v-map", 3), at("v-song", "v-song", 4), at("v-party", "v-party", 5), at("v-gal", "v-gal", 6)] } } };
+  });
+  theme.blocks = [...theme.blocks,
+    { id: "v-btn", type: "button", config: { label: "Saber más", style: "outline" } },
+    { id: "v-vid", type: "video", config: { provider: "youtube", videoId: "dQw4w9WgXcQ" } },
+    { id: "v-map", type: "map", config: { venueIndex: 0 } },
+    { id: "v-song", type: "music", config: { source: "media", ref: MEDIOS.song } },
+    { id: "v-party", type: "weddingParty", config: { people: [{ name: "Camila Rojas", role: "Dama de honor" }, { name: "Tomás Vega", role: "Padrino" }] } },
+    { id: "v-gal", type: "gallery", config: { display: "grid" } }];
+  return { ...base, id: "7a7a7a7a-7a7a-47a7-87a7-7a7a7a7a7a7a", theme };
+};
+const velo = { slug: "fixture-v2-velo", view: { ...view, celebrationId: "00000000-0000-4000-8000-000000000197", slug: "fixture-v2-velo", templateId: "7a7a7a7a-7a7a-47a7-87a7-7a7a7a7a7a7a" } };
 
 const providers = [
   { listingId: "7d1c1a34-5d4c-4a39-9a2e-0f4f2d3d7b11", providerSlug: "hotel-andino", name: "Hotel Andino", category: "ACCOMMODATION", city: "La Paz", department: "La Paz", verified: true, summary: "Hospedaje boutique en el centro histórico, con salón para recepciones de hasta 120 personas.", priceFrom: { amountMinor: 45000, currency: "BOB" }, imageUrl: img(1), destinations: ["WHATSAPP", "PHONE", "EMAIL", "OFFICIAL_SITE"], coverage: ["La Paz", "El Alto"], address: "Calle Comercio 123, La Paz", hours: ["Lu-Do 08:00-22:00"], lat: -16.4955, lng: -68.1336 },
@@ -169,6 +196,9 @@ createServer(async (req, res) => {
   if (path === `/celebrations/public/${libre.slug}`) return json(res, 200, libre.view);
   if (path === `/media/public/celebrations/${libre.view.celebrationId}/assets`) return json(res, 200, { items: gallery });
   if (path === `/media/templates/${libre.view.templateId}`) return json(res, 200, libreTemplate());
+  if (path === `/celebrations/public/${velo.slug}`) return json(res, 200, velo.view);
+  if (path === `/media/public/celebrations/${velo.view.celebrationId}/assets`) return json(res, 200, { items: veloGallery });
+  if (path === `/media/templates/${velo.view.templateId}`) return json(res, 200, veloTemplate());
   if (path === `/celebrations/public/${medios.slug}`) return json(res, 200, medios.view);
   if (path === `/media/public/celebrations/${medios.view.celebrationId}/assets`) return json(res, 200, { items: mediosGallery });
   if (path === `/media/templates/${medios.view.templateId}`) return json(res, 200, mediosTemplate());

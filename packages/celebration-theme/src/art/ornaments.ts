@@ -92,7 +92,7 @@ const banderin: OrnamentSet = {
   separator: {
     ...SEP,
     paths: [
-      line("M6 5Q60 24 116 5M124 5Q180 24 234 5"),
+      line("M6 5Q60 24 116 5L124 5Q180 24 234 5"),
       ...[0.12, 0.32, 0.5, 0.68, 0.88].map((t) => fill(flagPath(flag(...sagLeft(t), 6)))),
       acc(`${flagPath(flag(...sagRight(0.5), 6))}`),
       ...[0.12, 0.32, 0.68, 0.88].map((t) => fill(flagPath(flag(...sagRight(t), 6))))
