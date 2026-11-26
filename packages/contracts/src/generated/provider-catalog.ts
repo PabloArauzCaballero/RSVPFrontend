@@ -3269,7 +3269,7 @@ export interface components {
         Listing: {
             category: string;
             city: string;
-            /** @description R2: null for SERVICE and for the own gift catalog. */
+            /** @description R2: absent for SERVICE. For a product of the own gift catalog (SNAPSHOT_V1) it is INCOMPLETE with incompleteReason OWN_CATALOG_NO_SHEET: it has no sheet yet, is not editable and is not offered as a gift. */
             completeness?: components["schemas"]["CompletenessState"] | null;
             descriptions?: Record<string, never>;
             destinations?: components["schemas"]["Destination"][];
@@ -3281,6 +3281,11 @@ export interface components {
             id: string;
             /** @description For a PRODUCT, the card rendition of its cover photo (R2); an external URL stored before R2 is kept as a fallback. */
             imageUrl?: string;
+            /**
+             * @description Only on a product of the own gift catalog (SNAPSHOT_V1): it has no product sheet in R2 (PATCH, photos and delivery answer 409 LISTING_NOT_EDITABLE / PHOTOS_PRODUCT_ONLY) and is not offered as a gift. The portal shows «Completa tu ficha para aparecer como regalo»; the sheet is enabled for these products in a later stage (see DECISIONS).
+             * @enum {string}
+             */
+            incompleteReason?: "OWN_CATALOG_NO_SHEET";
             missing?: components["schemas"]["MissingCode"][];
             priceFromMinor?: number;
             /** Format: uuid */
@@ -4274,7 +4279,7 @@ export interface components {
             /** Format: date-time */
             submittedAt: string;
         };
-        /** @description WhatsApp message by locale (§5.8). Variables: {producto} {version} {precio} {cantidad} {celebracion} {fecha} {ciudad} {entrega} {proveedor}; any other is 422 UNKNOWN_TEMPLATE_VARIABLE; a phone or web address is 422 TEMPLATE_CONTAINS_CONTACT. Stored in R2, resolved by /r in R5. Never guest data. null or {} clears it. */
+        /** @description WhatsApp message by locale (§5.8). Variables: {producto} {version} {precio} {cantidad} {celebracion} {fecha} {ciudad} {entrega} {proveedor}; any other is 422 UNKNOWN_TEMPLATE_VARIABLE; a phone or web address is 422 CONTACT_IN_TEXT (details {field, fragment}, the same code as titles and descriptions). Stored in R2, resolved by /r in R5. Never guest data. null or {} clears it. */
         WhatsappTemplate: {
             "en-US"?: string;
             "es-BO"?: string;
@@ -7110,7 +7115,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description PHOTO_LIMIT_REACHED (details.scope PRODUCT: 5 per product, VARIANT: 3 per variant; details.limit), MEDIA_QUOTA_EXCEEDED (details.quotaBytes, details.usedBytes) or IDEMPOTENCY_KEY_REUSED */
+            /** @description PHOTO_LIMIT_REACHED (details.scope PRODUCT: 5 per product, counting the photos of its variants too; VARIANT: 3 per variant; details.limit), MEDIA_QUOTA_EXCEEDED (details.quotaBytes, details.usedBytes) or IDEMPOTENCY_KEY_REUSED */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -7578,7 +7583,7 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
-            /** @description UNKNOWN_TEMPLATE_VARIABLE, TEMPLATE_CONTAINS_CONTACT or VALIDATION_FAILED */
+            /** @description UNKNOWN_TEMPLATE_VARIABLE, CONTACT_IN_TEXT or VALIDATION_FAILED */
             422: {
                 headers: {
                     [name: string]: unknown;

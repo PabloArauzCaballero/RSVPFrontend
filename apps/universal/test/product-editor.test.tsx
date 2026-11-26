@@ -208,6 +208,15 @@ describe("editing a product", () => {
 
 describe("offers list (OfferRow)", () => {
   const product = { id: LID, providerId: PID, type: "PRODUCT", category: "TABLEWARE", city: "la-paz", title: "Juego de 6 copas", published: false, completeness: "INCOMPLETE", missing: ["PHOTO"], version: 3 };
+  it("an own-catalog product without sheet (OWN_CATALOG_NO_SHEET, missing empty) says to complete the sheet and offers no Editar", async () => {
+    const own = { ...product, missing: [], incompleteReason: "OWN_CATALOG_NO_SHEET" };
+    const { client } = fakeClient(handlers({ [`GET /providers/${PID}/listings`]: () => ({ items: [own] }) }));
+    renderApp(<ServicesScreen />, client, HOST);
+    expect((await screen.findByTestId(`listing-not-gift-${LID}`)).textContent).toBe("Completa tu ficha para aparecer como regalo");
+    expect(screen.queryByTestId(`listing-missing-${LID}`)).toBeNull();
+    expect(screen.queryByTestId(`listing-edit-${LID}`)).toBeNull();
+    expect(within(screen.getByTestId(`listing-${LID}`)).queryByRole("button", { name: /Más opciones/ })).toBeNull();
+  });
   it("a product shows Completo/Incompleto and what is missing; Publicar is off while something is missing; Editar opens the first missing step", async () => {
     const { client, calls } = fakeClient(handlers({ [`GET /providers/${PID}/listings`]: () => ({ items: [product] }) }));
     renderApp(<ServicesScreen />, client, HOST);
@@ -342,15 +351,15 @@ describe("the business WhatsApp message (§5.8, «Cómo te contactan»)", () => 
     expect(calls.filter((call) => call.method === "PUT").at(-1)?.body).toEqual({ template: null });
   });
 
-  it("422 TEMPLATE_CONTAINS_CONTACT names the fragment and keeps what was typed", async () => {
-    const { client } = fakeClient(destinationHandlers({ [`PUT /providers/${PID}/whatsapp-template`]: () => new HttpFailure(422, { code: "TEMPLATE_CONTAINS_CONTACT", details: { fragment: "www.copas.bo" } }) }));
+  it("422 CONTACT_IN_TEXT on the template names the fragment and keeps what was typed", async () => {
+    const { client } = fakeClient(destinationHandlers({ [`PUT /providers/${PID}/whatsapp-template`]: () => new HttpFailure(422, { code: "CONTACT_IN_TEXT", details: { field: "whatsappTemplate", fragment: "www.copas.bo" } }) }));
     renderApp(<DestinationsScreen />, client, HOST);
     const section = await screen.findByTestId("business-template");
     await within(section).findByTestId("template-preview");
     fireEvent.click(within(section).getByTestId("template-own"));
     fireEvent.change(within(section).getByTestId("template-text"), { target: { value: "Visita www.copas.bo" } });
     fireEvent.click(within(section).getByTestId("business-template-save"));
-    expect(await within(section).findByText("Quita el teléfono o el enlace del mensaje: «www.copas.bo».")).toBeTruthy();
+    expect(await within(section).findByText("Quita el teléfono o el enlace del texto: «www.copas.bo».")).toBeTruthy();
     expect((within(section).getByTestId("template-text") as HTMLTextAreaElement).value).toBe("Visita www.copas.bo");
   });
 

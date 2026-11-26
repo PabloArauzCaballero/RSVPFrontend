@@ -24,7 +24,7 @@ function problemOf(own: boolean, value: string): Problem | null {
 /**
  * §5.8 · The business's WhatsApp message (`PUT /providers/{id}/whatsapp-template`): every product without a message of its own
  * uses it, and without it the DOne message. Turning the switch off and saving clears it (`template: null`). The server stays the
- * judge (422 UNKNOWN_TEMPLATE_VARIABLE, TEMPLATE_CONTAINS_CONTACT); the redirector resolves it in R5.
+ * judge (422 UNKNOWN_TEMPLATE_VARIABLE, CONTACT_IN_TEXT with {field, fragment}); the redirector resolves it in R5.
  */
 export function BusinessTemplateSection({ provider }: { readonly provider: Provider }): ReactNode {
   const t = useT();

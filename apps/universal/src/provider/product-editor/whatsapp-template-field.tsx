@@ -26,7 +26,7 @@ function VariableButton({ variable, disabled, onPress }: { readonly variable: Te
 /**
  * §5.8 · The product's own WhatsApp message, or the provider's general one when it has none. Variables are inserted by tapping
  * them (no braces to type), unknown ones are flagged before saving, and the preview shows the message filled with sample data.
- * The server still validates it (422 UNKNOWN_TEMPLATE_VARIABLE, TEMPLATE_CONTAINS_CONTACT) and resolves it in R5.
+ * The server still validates it (422 UNKNOWN_TEMPLATE_VARIABLE, CONTACT_IN_TEXT with {field, fragment}) and resolves it in R5.
  */
 export function WhatsappTemplateField({ own, value, fallback, fallbackIsProvider, sample, error, disabled = false, ownLabel, heading = true, onOwn, onChange }: {
   readonly own: boolean; readonly value: string; readonly fallback: string; readonly fallbackIsProvider: boolean; readonly sample: TemplateSample;

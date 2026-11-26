@@ -29,6 +29,8 @@ function OfferRow({ provider, listing, cities, publishing, duplicating, onPublis
   const router = useRouter();
   const sheet = listing.type === "PRODUCT" && listing.completeness !== undefined && listing.completeness !== null;
   const missing = listing.missing ?? [];
+  // R2: a product of the own gift catalog has no sheet yet (`missing` comes empty): it is not editable and is not offered as a gift.
+  const noSheet = listing.incompleteReason === "OWN_CATALOG_NO_SHEET";
   // R2: a product publishes only when its sheet is COMPLETE (the catalog answers 422 LISTING_INCOMPLETE otherwise).
   const publishBlocked = sheet ? listing.completeness !== "COMPLETE" : !listing.fulfillment;
   const t = useT();
@@ -48,7 +50,7 @@ function OfferRow({ provider, listing, cities, publishing, duplicating, onPublis
         <Text accessibilityRole="header" style={[styles.subtitle, { flex: 1 }]}>{listing.title}</Text>
         <View testID={`listing-state-${listing.id}`}><Chip tone={listing.published ? "yes" : "wait"}>{listing.published ? t("portal.services.published") : t("portal.services.draft")}</Chip></View>
         {sheet ? <View testID={`listing-completeness-${listing.id}`}><CompletenessChip state={listing.completeness ?? null} /></View> : null}
-        {sheet ? (
+        {sheet && noSheet ? null : sheet ? (
           <OverflowMenu label={t("portal.product.actions.rowMenu", { title: listing.title })} items={[
             { key: "duplicate", label: duplicating ? t("portal.product.actions.duplicating") : t("portal.product.actions.duplicate"), disabled: duplicating || listing.completeness === "HIDDEN_BY_ADMIN", onPress: onDuplicate },
             ...(listing.published ? [] : [{ key: "publish", label: publishing ? t("portal.product.actions.publishing") : t("portal.product.actions.publish"), disabled: publishBlocked || publishing, onPress: onPublish }])
@@ -64,8 +66,8 @@ function OfferRow({ provider, listing, cities, publishing, duplicating, onPublis
       </View>
       {!sheet && !listing.published && !listing.fulfillment ? <Text style={styles.muted} testID={`publish-blocked-${listing.id}`}>{t("portal.services.needsTerms")}</Text> : null}
       {sheet && missing.length ? <Text style={styles.muted} testID={`listing-missing-${listing.id}`}>{missingShort(missing, t)}</Text> : null}
-      {sheet && listing.completeness === "INCOMPLETE" ? <Text style={styles.muted} testID={`listing-not-gift-${listing.id}`}>{t("portal.product.notGift")}</Text> : null}
-      {sheet ? (
+      {sheet && (noSheet || listing.completeness === "INCOMPLETE") ? <Text style={styles.muted} testID={`listing-not-gift-${listing.id}`}>{t("portal.product.notGift")}</Text> : null}
+      {sheet && !noSheet ? (
         <View style={{ alignSelf: "flex-start" }}>
           <ActionButton variant="secondary" icon="arrow" label={t("portal.product.actions.edit")} onPress={() => router.push(productHref(listing.id, missing[0] ? MISSING_STEP[missing[0]] : "summary") as Href)} testID={`listing-edit-${listing.id}`} />
         </View>
