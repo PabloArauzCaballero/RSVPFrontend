@@ -37,6 +37,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/celebrations/{celebrationId}/gift-list/delivery-notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set the delivery notes of the list (host or organizer)
+         * @description Since 1.17.0 (R4). MANAGE only (PF-3). PUT semantics, idempotent (PF-4). Free text of at most 200 characters, published by the host: tell them not to write the exact address. 404 GIFT_LIST_NOT_FOUND without a list.
+         */
+        put: operations["putGiftListDeliveryNotes"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/celebrations/{celebrationId}/gift-settings": {
         parameters: {
             query?: never;
@@ -80,6 +100,26 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/celebrations/{celebrationId}/items/{giftItemId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change the quantity or the coordinated-contribution switch of a gift (host or organizer)
+         * @description Since 1.17.0 (R4). MANAGE only (PF-3). Only a cataloged gift that is not UNAVAILABLE or REJECTED. version is the optimistic lock (409 GIFT_VERSION_CONFLICT when stale). The quantity cannot go below the units reserved (409 QUANTITY_BELOW_RESERVED) and the switch cannot be turned off while several guests contribute (409 GROUP_GIFT_IN_USE). Sending the current values again changes nothing (PF-4).
+         */
+        patch: operations["updateGiftItem"];
         trace?: never;
     };
     "/celebrations/{celebrationId}/items/{giftItemId}/approve": {
@@ -130,6 +170,26 @@ export interface paths {
          * @description Concurrency-safe: the transition is UPDATE ... WHERE id = ? AND version = ?. With N simultaneous requests exactly one receives 201 and the others 409 GIFT_NOT_AVAILABLE. The guest is identified by the server: with a link credential, guestId is the one Guest returned for that credential; with a member JWT it is the JWT sub. The body never carries identity.
          */
         post: operations["reserveGift"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/celebrations/{celebrationId}/items/batch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add the gifts of the host assistant in one call (host or organizer)
+         * @description Since 1.17.0 (R4). MANAGE only (PF-3): a READ account or a guest link answers 403 HOST_REQUIRED before the body is read. Idempotency-Key is required (428 IDEMPOTENCY_KEY_REQUIRED); a replay answers the original items with Idempotency-Replayed: true. All or nothing: any entry that is not an eligible product answers 422 with the stable code of the first failing entry (CATALOG_PRODUCT_UNAVAILABLE, GIFT_LISTING_NOT_PRODUCT, GIFT_LISTING_NOT_ELIGIBLE, INVALID_QUANTITY, INVALID_GIFT_IDEA, INVALID_VARIANT, DUPLICATE_GIFT_IDEA: the same idea twice in the request, or an idea that already has a gift on the list that is not REJECTED or UNAVAILABLE), itemIndex and, for catalog failures, failures [{itemIndex, code, productListingId}]. Emits gift.item.added.v1 per gift. 404 GIFT_LIST_NOT_FOUND without a list. Provider Catalog unavailable: 503.
+         */
+        post: operations["addGiftItemsBatch"];
         delete?: never;
         options?: never;
         head?: never;
@@ -927,6 +987,28 @@ export interface components {
              */
             publishedAt?: string;
         });
+        GiftBatchEntry: {
+            giftIdeaCode: string;
+            /** @default false */
+            groupGiftEnabled: boolean;
+            /** Format: uuid */
+            productListingId: string;
+            /**
+             * @description Business cap 50 by default (422 INVALID_QUANTITY above GIFT_MAX_QUANTITY_PER_GIFT).
+             * @default 1
+             */
+            quantity: number;
+            variantCode?: string | null;
+        };
+        GiftBatchRequest: {
+            /** @description Omit to keep the current notes; null or an empty text clears them. */
+            deliveryNotes?: string | null;
+            items: components["schemas"]["GiftBatchEntry"][];
+        };
+        GiftBatchResult: {
+            deliveryNotes: string | null;
+            items: components["schemas"]["GiftItemView"][];
+        };
         GiftCatalogedItem: {
             /**
              * @description Since 1.14.0 (M-6, R1). Present only when the gift's Provider Catalog listing is no longer a PRODUCT, so it can no longer be reserved; absent means available (the response of an unmarked gift is unchanged). Separate from status, which never says UNAVAILABLE. Only the owner's private lists carry it: the public guest page never has an UNAVAILABLE gift.
@@ -1078,6 +1160,25 @@ export interface components {
             publication: components["schemas"]["CreatedExternalGiftPublication"];
             suggestions: components["schemas"]["GiftCatalogSuggestion"][];
         };
+        /** @description Since 1.17.0 (R4): what the host assistant adds to a gift. */
+        GiftItemAssistantFields: {
+            /** @description Since 1.17.0 (R4): the Provider Catalog gift idea the host picked the product for; null outside the assistant. */
+            giftIdeaCode: string | null;
+            /** @description Since 1.17.0 (R4): the host allows several guests to contribute to this gift. */
+            groupGiftEnabled: boolean;
+            /** @description Since 1.17.0 (R4): units wanted. 1 for every gift added before the assistant. Business cap 50 (GIFT_MAX_QUANTITY_PER_GIFT). */
+            quantity: number;
+            /** @description Since 1.17.0 (R4): the product version the host picked; null when none. The price stored is the listing price Provider Catalog reports (version prices are an open decision). */
+            variantCode: string | null;
+        };
+        GiftItemUpdateRequest: {
+            groupGiftEnabled?: boolean;
+            quantity?: number;
+            /** @description The version of the gift you read. */
+            version: number;
+        };
+        /** @description Since 1.17.0 (R4): DevCompatGiftItem plus quantity, groupGiftEnabled, giftIdeaCode and variantCode. Every gift answered by addGiftItem, approveExternalGift, rejectExternalGift, listGiftItems, addGiftItemsBatch and updateGiftItem carries them. */
+        GiftItemView: components["schemas"]["DevCompatGiftItem"] & components["schemas"]["GiftItemAssistantFields"];
         GiftLegacyCatalogedItem: {
             /**
              * @description Since 1.14.0 (M-6, R1). Present only when the gift's Provider Catalog listing is no longer a PRODUCT, so it can no longer be reserved; absent means available (the response of an unmarked gift is unchanged). Separate from status, which never says UNAVAILABLE. Only the owner's private lists carry it: the public guest page never has an UNAVAILABLE gift.
@@ -1104,6 +1205,10 @@ export interface components {
         GiftListClosureRequest: {
             closed: boolean;
         };
+        GiftListDeliveryNotesRequest: {
+            /** @description Delivery instructions, no exact address. null or an empty text clears them. */
+            deliveryNotes: string | null;
+        };
         /** @description Since 1.13.0 (R8a): DevCompatGiftList plus its manual closure state. */
         GiftListView: components["schemas"]["DevCompatGiftList"] & {
             /** @description Since 1.13.0 (R8a): the host or the organizer closed the list by hand (putGiftListClosure). The event-date closure is not reflected here; it is reported by getPublicGiftsSummary. */
@@ -1113,6 +1218,8 @@ export interface components {
              * @description Since 1.13.0 (R8a): when the list was closed by hand; null while it is open. Closing an already closed list keeps the first instant.
              */
             closedAt: string | null;
+            /** @description Since 1.17.0 (R4): delivery instructions published by the host; null when none. */
+            deliveryNotes?: string | null;
         };
         GiftMixedExternalItem: {
             catalog: null;
@@ -1162,6 +1269,29 @@ export interface components {
                 /** @constant */
                 status?: "AVAILABLE";
             })[];
+            nextCursor: string | null;
+        };
+        /** @description Since 1.17.0 (R4): every reservation object (reserveGift, listReservations, approve, reject, cancel, listMyReservations) also carries units, role and showName. In 1.17.0 every reservation is 1 unit and SOLE; reserving part of a quantity and joining a coordinated gift arrive with R5. Composed by GiftReservationView. */
+        GiftReservationUnitFields: {
+            /**
+             * @description Since 1.17.0 (R4): SOLE until R5.
+             * @enum {string}
+             */
+            role: "SOLE" | "COORDINATOR" | "CONTRIBUTOR";
+            /** @description Since 1.17.0 (R4): the guest agreed to show their name to the coordinator and contributors. */
+            showName: boolean;
+            /** @description Since 1.17.0 (R4): units this reservation holds; always 1 until R5. */
+            units: number;
+        };
+        /** @description Since 1.17.0 (R4): RsvpAwareGiftReservation composed (allOf, per variant) with GiftReservationUnitFields: units, role and showName. Answered by reserveGift, listReservations, approve, reject, cancel and listMyReservations. The frozen DevCompat and RsvpAware schemas are untouched. */
+        GiftReservationView: (components["schemas"]["DevCompatGiftReservation"] & components["schemas"]["GiftReservationUnitFields"]) | (components["schemas"]["RsvpCancelledGiftReservation"] & components["schemas"]["GiftReservationUnitFields"]) | (components["schemas"]["ManuallyCancelledGiftReservation"] & components["schemas"]["GiftReservationUnitFields"]);
+        /** @description Since 1.17.0 (R4): RsvpAwareReservationList with GiftReservationView items. */
+        GiftReservationViewList: {
+            items: components["schemas"]["GiftReservationView"][];
+        };
+        /** @description Since 1.17.0 (R4): PagedReservationList with GiftReservationView items. */
+        GiftReservationViewPage: components["schemas"]["GiftReservationViewList"] & {
+            /** @description Pass it as cursor to get the next page; null on the last page. */
             nextCursor: string | null;
         };
         LegacyCatalogReference: {
@@ -1288,6 +1418,8 @@ export interface components {
         PagedGiftItemPage: components["schemas"]["CanonicalCompatGiftItemPage"] & {
             /** @description Since 1.13.0 (R8a): the host or the organizer closed the list by hand (putGiftListClosure). Informative; it does not block reservations in 1.13.0. */
             closed: boolean;
+            /** @description Since 1.17.0 (R4): the list delivery notes. */
+            deliveryNotes?: string | null;
             /** @description Each item of the page also carries availability (since 1.14.0). */
             items: {
                 /**
@@ -1295,7 +1427,17 @@ export interface components {
                  * @enum {string}
                  */
                 availability: "AVAILABLE" | "UNAVAILABLE";
+                /** @description Since 1.17.0 (R4): the Provider Catalog gift idea the host picked the product for; null outside the assistant. */
+                giftIdeaCode?: string | null;
+                /** @description Since 1.17.0 (R4): the host allows several guests to contribute to this gift. */
+                groupGiftEnabled?: boolean;
+                /** @description Since 1.17.0 (R4): units wanted. 1 for every gift added before the assistant. Business cap 50 (GIFT_MAX_QUANTITY_PER_GIFT). */
+                quantity?: number;
+                /** @description Since 1.17.0 (R4): the product version the host picked; null when none. The price stored is the listing price Provider Catalog reports (version prices are an open decision). */
+                variantCode?: string | null;
             }[];
+            /** @description Since 1.16.0 (R6a): signed lead context of this viewer, or null. Present for an account that is a member of the celebration; append it unchanged as ctx to every /r/{listingId} link of this list. Opaque and short-lived (re-read the list to refresh it); never shown and never stored. */
+            leadContext?: string | null;
             /** @description Pass it as cursor to get the next page; null on the last page. */
             nextCursor: string | null;
         };
@@ -1825,6 +1967,40 @@ export interface operations {
             503: components["responses"]["DevCompatDependencyUnavailable"];
         };
     };
+    putGiftListDeliveryNotes: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Echoed in the response header and in problem.correlationId; generated when absent. */
+                "X-Correlation-Id"?: components["parameters"]["DevCompatCorrelationId"];
+            };
+            path: {
+                celebrationId: components["parameters"]["DevCompatCelebrationId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GiftListDeliveryNotesRequest"];
+            };
+        };
+        responses: {
+            /** @description The list */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GiftListView"];
+                };
+            };
+            401: components["responses"]["DevCompatUnauthorized"];
+            403: components["responses"]["DevCompatForbidden"];
+            404: components["responses"]["DevCompatNotFound"];
+            422: components["responses"]["DevCompatValidation"];
+            503: components["responses"]["DevCompatDependencyUnavailable"];
+        };
+    };
     getGiftSettings: {
         parameters: {
             query?: never;
@@ -1946,7 +2122,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DevCompatGiftItem"];
+                    "application/json": components["schemas"]["GiftItemView"];
                 };
             };
             401: components["responses"]["DevCompatUnauthorized"];
@@ -1977,6 +2153,42 @@ export interface operations {
             503: components["responses"]["DevCompatDependencyUnavailable"];
         };
     };
+    updateGiftItem: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Echoed in the response header and in problem.correlationId; generated when absent. */
+                "X-Correlation-Id"?: components["parameters"]["DevCompatCorrelationId"];
+            };
+            path: {
+                celebrationId: components["parameters"]["DevCompatCelebrationId"];
+                giftItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GiftItemUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description The gift */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GiftItemView"];
+                };
+            };
+            401: components["responses"]["DevCompatUnauthorized"];
+            403: components["responses"]["DevCompatForbidden"];
+            404: components["responses"]["DevCompatNotFound"];
+            409: components["responses"]["DevCompatGiftConflict"];
+            422: components["responses"]["DevCompatValidation"];
+            503: components["responses"]["DevCompatDependencyUnavailable"];
+        };
+    };
     approveExternalGift: {
         parameters: {
             query?: never;
@@ -1998,7 +2210,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DevCompatGiftItem"];
+                    "application/json": components["schemas"]["GiftItemView"];
                 };
             };
             401: components["responses"]["DevCompatUnauthorized"];
@@ -2029,7 +2241,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DevCompatGiftItem"];
+                    "application/json": components["schemas"]["GiftItemView"];
                 };
             };
             401: components["responses"]["DevCompatUnauthorized"];
@@ -2068,7 +2280,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RsvpAwareGiftReservation"];
+                    "application/json": components["schemas"]["GiftReservationView"];
                 };
             };
             401: components["responses"]["DevCompatUnauthorized"];
@@ -2085,6 +2297,51 @@ export interface operations {
                 };
             };
             429: components["responses"]["DevCompatRateLimited"];
+            503: components["responses"]["DevCompatDependencyUnavailable"];
+        };
+    };
+    addGiftItemsBatch: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+                /** @description Echoed in the response header and in problem.correlationId; generated when absent. */
+                "X-Correlation-Id"?: components["parameters"]["DevCompatCorrelationId"];
+            };
+            path: {
+                celebrationId: components["parameters"]["DevCompatCelebrationId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GiftBatchRequest"];
+            };
+        };
+        responses: {
+            /** @description The gifts created (or the stored ones on a replay) */
+            201: {
+                headers: {
+                    "Idempotency-Replayed"?: "true";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GiftBatchResult"];
+                };
+            };
+            401: components["responses"]["DevCompatUnauthorized"];
+            403: components["responses"]["DevCompatForbidden"];
+            404: components["responses"]["DevCompatNotFound"];
+            422: components["responses"]["DevCompatValidation"];
+            /** @description Idempotency-Key missing (IDEMPOTENCY_KEY_REQUIRED) */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["DevCompatProblem"];
+                };
+            };
             503: components["responses"]["DevCompatDependencyUnavailable"];
         };
     };
@@ -6422,7 +6679,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RsvpAwareReservationList"];
+                    "application/json": components["schemas"]["GiftReservationViewList"];
                 };
             };
             401: components["responses"]["DevCompatUnauthorized"];
@@ -6466,7 +6723,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PagedReservationList"];
+                    "application/json": components["schemas"]["GiftReservationViewPage"];
                 };
             };
             401: components["responses"]["DevCompatUnauthorized"];
@@ -6497,7 +6754,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RsvpAwareGiftReservation"];
+                    "application/json": components["schemas"]["GiftReservationView"];
                 };
             };
             401: components["responses"]["DevCompatUnauthorized"];
@@ -6546,7 +6803,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RsvpAwareGiftReservation"];
+                    "application/json": components["schemas"]["GiftReservationView"];
                 };
             };
             401: components["responses"]["DevCompatUnauthorized"];
@@ -6609,7 +6866,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RsvpAwareGiftReservation"];
+                    "application/json": components["schemas"]["GiftReservationView"];
                 };
             };
             401: components["responses"]["DevCompatUnauthorized"];
