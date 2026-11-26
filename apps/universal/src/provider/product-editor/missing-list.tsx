@@ -37,9 +37,12 @@ export function MissingList({ missing, onOpen, title = true }: { readonly missin
   const styles = useStyles();
   if (missing.length === 0) return null;
   return (
-    <View role="list" aria-label={t("portal.product.missing.title")} style={{ gap: spacing[2] }} testID="missing-list">
+    <View style={{ gap: spacing[2] }} testID="missing-list">
       {title ? <Text accessibilityRole="header" style={styles.itemTitle}>{t("portal.product.missing.title")}</Text> : null}
-      {missing.map((code) => <View key={code} role="listitem"><MissingRow code={code} onOpen={onOpen} /></View>)}
+      {/* Only list items inside the list: the heading stays outside (axe aria-required-children). */}
+      <View role="list" aria-label={t("portal.product.missing.title")} style={{ gap: spacing[2] }}>
+        {missing.map((code) => <View key={code} role="listitem"><MissingRow code={code} onOpen={onOpen} /></View>)}
+      </View>
     </View>
   );
 }

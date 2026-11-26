@@ -136,17 +136,19 @@ export function PriceStep({ draft, set, problems, disabled }: StepProps): ReactN
           <InlineError message={problem(t, problems, "stock")} />
         </>
       ) : (
-        <View role="list" style={{ gap: spacing[3] }}>
-          {draft.variants.map((variant, index) => (
-            <View key={variant.id ?? `new-${index}`} role="listitem" style={{ gap: spacing[3], padding: spacing[4], borderWidth: 1, borderColor: palette.border, borderRadius: radius.md }} testID={`variant-${index}`}>
-              <Text accessibilityRole="header" style={styles.itemTitle}>{t("portal.product.price.variant", { n: index + 1 })}</Text>
-              <Field label={t("portal.product.price.variantLabel")} value={variant.label} onChange={(label) => update(index, { label })} help={t("portal.product.price.variantLabelHelp")} maxLength={60} editable={!disabled} testID={`variant-label-${index}`} />
-              <Field label={t("portal.product.price.price")} value={variant.price} onChange={(price) => update(index, { price })} keyboardType="decimal-pad" editable={!disabled} testID={`variant-price-${index}`} />
-              <StockChoice label={t("portal.product.price.stock")} value={variant.stock} onChange={(stock) => update(index, { stock })} disabled={disabled} />
-              <ToggleChip label={t("portal.product.price.variantDefault")} on={variant.isDefault} disabled={disabled} onPress={() => markDefault(index)} testID={`variant-default-${index}`} />
-              {draft.variants.length > 1 ? <View style={{ alignSelf: "flex-start" }}><ActionButton variant="secondary" icon="trash" label={t("portal.product.price.removeVariant", { n: index + 1 })} disabled={disabled} onPress={() => remove(index)} testID={`variant-remove-${index}`} /></View> : null}
-            </View>
-          ))}
+        <View style={{ gap: spacing[3] }}>
+          <View role="list" aria-label={t("portal.product.price.variantsList")} style={{ gap: spacing[3] }}>
+            {draft.variants.map((variant, index) => (
+              <View key={variant.id ?? `new-${index}`} role="listitem" style={{ gap: spacing[3], padding: spacing[4], borderWidth: 1, borderColor: palette.border, borderRadius: radius.md }} testID={`variant-${index}`}>
+                <Text accessibilityRole="header" style={styles.itemTitle}>{t("portal.product.price.variant", { n: index + 1 })}</Text>
+                <Field label={t("portal.product.price.variantLabel")} value={variant.label} onChange={(label) => update(index, { label })} help={t("portal.product.price.variantLabelHelp")} maxLength={60} editable={!disabled} testID={`variant-label-${index}`} />
+                <Field label={t("portal.product.price.price")} value={variant.price} onChange={(price) => update(index, { price })} keyboardType="decimal-pad" editable={!disabled} testID={`variant-price-${index}`} />
+                <StockChoice label={t("portal.product.price.stock")} value={variant.stock} onChange={(stock) => update(index, { stock })} disabled={disabled} />
+                <ToggleChip label={t("portal.product.price.variantDefault")} on={variant.isDefault} disabled={disabled} onPress={() => markDefault(index)} testID={`variant-default-${index}`} />
+                {draft.variants.length > 1 ? <View style={{ alignSelf: "flex-start" }}><ActionButton variant="secondary" icon="trash" label={t("portal.product.price.removeVariant", { n: index + 1 })} disabled={disabled} onPress={() => remove(index)} testID={`variant-remove-${index}`} /></View> : null}
+              </View>
+            ))}
+          </View>
           <InlineError message={problem(t, problems, "variantLabel", "variantPrice", "variantsMax")} />
           <Text style={styles.muted} testID="variant-photos-hint">{t("portal.product.price.variantPhotosHint")}</Text>
           {draft.variants.length < MAX_VARIANTS ? <View style={{ alignSelf: "flex-start" }}><ActionButton variant="secondary" icon="plus" label={t("portal.product.price.addVariant")} disabled={disabled} onPress={add} testID="variant-add" /></View> : <Text style={styles.muted}>{t("portal.product.price.maxVariants")}</Text>}

@@ -116,7 +116,7 @@ export const portalEsBO = {
     },
     price: {
       mode: "Precio", single: "Un solo precio", variants: "Varias versiones", modeHelp: "Las versiones son tamaño, color o sabor, cada una con su precio.", price: "Precio (Bs.)", priceHelp: "Precio exacto, por ejemplo 350 o 350.50.", stock: "Disponibilidad",
-      variant: "Versión {{n}}", variantLabel: "Nombre de la versión", variantLabelHelp: "Por ejemplo «Talla M» o «Dorado».", variantDefault: "Se muestra primero", addVariant: "Agregar versión", removeVariant: "Quitar versión {{n}}", maxVariants: "Hasta 20 versiones.", variantPhotosHint: "Después de guardar las versiones puedes darle a cada una su foto en el paso Fotos."
+      variant: "Versión {{n}}", variantLabel: "Nombre de la versión", variantLabelHelp: "Por ejemplo «Talla M» o «Dorado».", variantDefault: "Se muestra primero", addVariant: "Agregar versión", removeVariant: "Quitar versión {{n}}", maxVariants: "Hasta 20 versiones.", variantsList: "Versiones del producto", variantPhotosHint: "Después de guardar las versiones puedes darle a cada una su foto en el paso Fotos."
     },
     stock: { AVAILABLE: "Disponible", MADE_TO_ORDER: "Bajo pedido", OUT_OF_STOCK: "Agotado" },
     delivery: { coverage: "Ciudades donde entregas", coverageHelp: "Toca las ciudades donde entregas.", lead: "Días que necesitas para entregar", leadHelp: "De 0 a 90 días.", shipping: "Costo de envío (Bs.)", shippingHelp: "Escribe 0 si el envío es gratis.", pickup: "También se puede recoger en tu tienda", conditions: "Condiciones de entrega (opcional)", conditionsHelp: "Hasta 500 caracteres." },

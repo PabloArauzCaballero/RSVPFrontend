@@ -119,7 +119,7 @@ export const portalEnUS: DeepStrings<typeof portalEsBO> = {
     },
     price: {
       mode: "Price", single: "One price", variants: "Several versions", modeHelp: "Versions are size, colour or flavour, each with its own price.", price: "Price (Bs.)", priceHelp: "Exact price, for example 350 or 350.50.", stock: "Availability",
-      variant: "Version {{n}}", variantLabel: "Version name", variantLabelHelp: "For example “Size M” or “Gold”.", variantDefault: "Shown first", addVariant: "Add version", removeVariant: "Remove version {{n}}", maxVariants: "Up to 20 versions.", variantPhotosHint: "Once the versions are saved you can give each one its photo in the Photos step."
+      variant: "Version {{n}}", variantLabel: "Version name", variantLabelHelp: "For example “Size M” or “Gold”.", variantDefault: "Shown first", addVariant: "Add version", removeVariant: "Remove version {{n}}", maxVariants: "Up to 20 versions.", variantsList: "Product versions", variantPhotosHint: "Once the versions are saved you can give each one its photo in the Photos step."
     },
     stock: { AVAILABLE: "Available", MADE_TO_ORDER: "Made to order", OUT_OF_STOCK: "Out of stock" },
     delivery: { coverage: "Cities you deliver to", coverageHelp: "Tap the cities you deliver to.", lead: "Days you need to deliver", leadHelp: "0 to 90 days.", shipping: "Shipping cost (Bs.)", shippingHelp: "Enter 0 for free shipping.", pickup: "Can also be picked up at your shop", conditions: "Delivery conditions (optional)", conditionsHelp: "Up to 500 characters." },
