@@ -9,6 +9,7 @@ import { forwardedFor } from "./client-address";
 
 export const REDIRECT_STATUS = 302;
 export const DESTINATIONS = ["OFFICIAL_SITE", "LANDING", "WHATSAPP", "PHONE", "EMAIL", "INSTAGRAM", "PRODUCT_PAGE"] as const;
+/** Surfaces Provider Catalog accepts; the backend validates `surface` (an unknown one is its 422), so it is forwarded as received, not filtered here. */
 export const SURFACES = ["PUBLIC_SITE", "SEARCH", "CELEBRATION_SITE", "GIFT_LIST", "EMAIL", "APP", "QUOTE_FORM", "PREVIEW"] as const;
 export const CORRELATION_HEADER = "x-correlation-id";
 

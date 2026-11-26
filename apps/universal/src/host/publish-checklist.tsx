@@ -122,6 +122,7 @@ function Checklist({ celebration, eventType, onNavigate, refetch }: { readonly c
           {slow ? <Text style={styles.muted}>{t("host.publish.live.slow")}</Text> : null}
         </View>
       ) : null}
+      {celebration.status === "PUBLISHED" && pageState === "HIDDEN" ? <Notice kind="info"><Text testID="public-page-hidden">{t("host.publish.live.HIDDEN")}</Text></Notice> : null}
       {page.isError && celebration.status === "PUBLISHED" ? (
         <View style={{ gap: spacing[2], maxWidth: 720 }}>
           <Notice kind="error">{t("host.publish.live.unknown")}</Notice>

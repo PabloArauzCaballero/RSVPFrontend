@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { GiftItem } from "@rsvp/query-hooks";
 import { GiftExperience, arrange } from "../components/gift/gift-experience";
-import { loadGiftPage, partnerGiftHref } from "../lib/gifts";
+import { loadGiftPage } from "../lib/gifts";
 import { createApiClient } from "@rsvp/api-client";
 
 const CELEBRATION = "4f0f2d3d-0000-4000-8000-000000000001";
@@ -374,12 +374,5 @@ describe("R6a · ctx del miembro en los enlaces /r/ de la lista", () => {
     renderList();
     await screen.findAllByRole("link", { name: "Consultar por WhatsApp" });
     for (const href of partnerHrefs()) expect(href).not.toContain("ctx");
-  });
-
-  it("partnerGiftHref adds ctx only when there is one", () => {
-    const listingId = "7d1c1a34-5d4c-4a39-9a2e-0f4f2d3d7b11";
-    expect(partnerGiftHref({ productListingId: listingId }, CELEBRATION)).toBe(`/r/${listingId}?surface=GIFT_LIST&celebrationId=${CELEBRATION}`);
-    expect(partnerGiftHref({ productListingId: listingId }, CELEBRATION, TOKEN)).toBe(`/r/${listingId}?surface=GIFT_LIST&celebrationId=${CELEBRATION}&ctx=${TOKEN}`);
-    expect(partnerGiftHref({ productListingId: null }, CELEBRATION, TOKEN)).toBeNull();
   });
 });

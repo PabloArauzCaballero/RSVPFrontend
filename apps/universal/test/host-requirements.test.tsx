@@ -215,6 +215,7 @@ describe("A18 · «publicada» only when the public page exists", () => {
     expect(screen.queryByText(/^Publicando…/)).toBeNull();
     expect(screen.queryByTestId("public-page-pending")).toBeNull();
     expect(screen.queryByTestId("copy-link")).toBeNull();
+    expect((await screen.findByTestId("public-page-hidden")).textContent).toBe("Tu página está oculta por moderación. Los invitados no pueden verla.");
   });
 
   it("if the state cannot be read, it never claims the page is visible and offers to retry", async () => {

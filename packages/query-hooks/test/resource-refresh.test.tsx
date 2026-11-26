@@ -151,11 +151,20 @@ describe("R6a · lead context of the gift list", () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     let reads = 0;
     const h = setup(() => ({ items: [], partnerPriorityEnabled: true, leadContext: `ctx-${++reads}` }));
-    const view = renderHook(() => useGiftList(h.client, "c-1"), { wrapper: h.wrapper });
+    const view = renderHook(() => useGiftList(h.client, "c-1", undefined, undefined, { refreshLeadContext: true }), { wrapper: h.wrapper });
     await waitFor(() => expect(view.result.current.data?.leadContext).toBe("ctx-1"));
     await act(async () => { await vi.advanceTimersByTimeAsync(LEAD_CONTEXT_REFRESH_MS + 1_000); });
     await waitFor(() => expect(view.result.current.data?.leadContext).toBe("ctx-2"));
     expect(h.calls.filter((call) => call.startsWith("GET"))).toHaveLength(2);
+  });
+
+  it("a member's read without refreshLeadContext (default) never polls", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const h = setup(() => ({ items: [], partnerPriorityEnabled: true, leadContext: "ctx-1" }));
+    const view = renderHook(() => useGiftList(h.client, "c-1"), { wrapper: h.wrapper });
+    await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
+    await act(async () => { await vi.advanceTimersByTimeAsync(LEAD_CONTEXT_REFRESH_MS * 3); });
+    expect(h.calls.filter((call) => call.startsWith("GET"))).toHaveLength(1);
   });
 
   it("a read without context (guest) never polls", async () => {

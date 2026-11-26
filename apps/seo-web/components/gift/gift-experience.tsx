@@ -85,7 +85,8 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
   useEffect(() => { setCredential(readGuestCredential(slug)); }, [slug]);
   const ready = credential !== undefined;
   const list = useGiftList(client, ready ? celebrationId : undefined, credential ?? null, credential ? undefined : initial);
-  // R6a: null for a guest; present only when this read came from a celebration member's session.
+  // R6a: this list is read with the guest's link credential (auth:false), and Gift List answers leadContext null to a guest, so
+  // today no ctx is added here. It is wired so a member read (host list, once it shows partner links) uses the same link builder.
   const leadCtx = leadContextOf(list.data);
   const reserve = useReserveGiftItem(client, celebrationId, credential ?? null);
   // D-3 · the guest's own reservations (needs the link credential): after a reload the row still offers to cancel.
