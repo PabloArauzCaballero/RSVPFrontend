@@ -361,4 +361,8 @@ describe("styles.css and native styles keep the contract the theme assumes", () 
     expect(css).not.toMatch(/\.celebration-cta:focus-visible/);
     expect(css).toMatch(/\.celebration a:focus-visible/);
   });
+
+  it("pressing with a mouse wins over hovering: :hover:active keeps scale(.98), inside the same hover and motion media query", () => {
+    expect(css).toMatch(/@media \(hover: hover\) and \(prefers-reduced-motion: no-preference\) \{[^@]*\.celebration-cta:hover:active \{ transform: scale\(\.98\); \}/);
+  });
 });

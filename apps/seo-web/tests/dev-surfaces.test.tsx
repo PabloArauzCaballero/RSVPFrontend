@@ -7,7 +7,7 @@ const notFound = vi.fn(() => { throw new Error("NEXT_NOT_FOUND"); });
 vi.mock("next/navigation", () => ({ notFound }));
 vi.mock("@rsvp/ui-web", () => ({ ComponentCatalog: () => null }));
 
-const { componentCatalogEnabled, VISUAL_TEST_CATALOG_FLAG } = await import("../lib/dev-surfaces");
+const { componentCatalogEnabled, visualTestNow, VISUAL_TEST_CATALOG_FLAG, VISUAL_TEST_NOW } = await import("../lib/dev-surfaces");
 const { default: CatalogPage, metadata } = await import("../app/catalogo/page");
 
 afterEach(() => { vi.unstubAllEnvs(); notFound.mockClear(); });
@@ -41,5 +41,19 @@ describe("L18 · /catalogo exists only in development", () => {
     const root = join(__dirname, "../../..");
     for (const file of ["deploy/Dockerfile.seo-web", "docker-compose.coolify.yml"]) expect(readFileSync(join(root, file), "utf8")).not.toContain(VISUAL_TEST_CATALOG_FLAG);
     expect(readFileSync(join(__dirname, "../playwright.config.ts"), "utf8")).toContain(`${VISUAL_TEST_CATALOG_FLAG}: "1"`);
+  });
+});
+
+describe("L25 · the visual build freezes the server clock, nothing else does", () => {
+  it("returns the baked instant only together with the visual-test flag", () => {
+    expect(visualTestNow({ [VISUAL_TEST_CATALOG_FLAG]: "1", [VISUAL_TEST_NOW]: "2026-11-10T15:00:00.000Z" })?.toISOString()).toBe("2026-11-10T15:00:00.000Z");
+    expect(visualTestNow({ [VISUAL_TEST_CATALOG_FLAG]: "", [VISUAL_TEST_NOW]: "2026-11-10T15:00:00.000Z" })).toBeUndefined();
+    for (const value of [undefined, "", "not-a-date"]) expect(visualTestNow({ [VISUAL_TEST_CATALOG_FLAG]: "1", [VISUAL_TEST_NOW]: value })).toBeUndefined();
+  });
+
+  it("the deployed image and compose never set it; the visual suite does", () => {
+    const root = join(__dirname, "../../..");
+    for (const file of ["deploy/Dockerfile.seo-web", "docker-compose.coolify.yml"]) expect(readFileSync(join(root, file), "utf8")).not.toContain(VISUAL_TEST_NOW);
+    expect(readFileSync(join(__dirname, "../playwright.config.ts"), "utf8")).toContain(`${VISUAL_TEST_NOW}: VISUAL_NOW.toISOString()`);
   });
 });
