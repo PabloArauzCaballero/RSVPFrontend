@@ -82,6 +82,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/celebrations/{celebrationId}/design-reference": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Reference of the published invitation design */
+        get: operations["getDesignReference"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/celebrations/{celebrationId}/event-type": {
         parameters: {
             query?: never;
@@ -509,6 +526,19 @@ export interface components {
             translations?: {
                 [key: string]: Record<string, never>;
             };
+        };
+        DesignReference: {
+            /** Format: uuid */
+            celebrationId: string;
+            /**
+             * Format: uuid
+             * @description Design in Template/Media
+             */
+            designId: string;
+            /** Format: date-time */
+            publishedAt: string;
+            /** @description Latest published version of that design */
+            version: number;
         };
         EditCelebration: {
             /** @description Merged by key; null removes a key Optional `hostContact` {email?, phone? (E.164), consentPublic: true} is validated; see info.description (1.1.0). */
@@ -1256,6 +1286,46 @@ export interface operations {
             };
             /** @description If-Match required */
             428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    getDesignReference: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                celebrationId: components["parameters"]["CelebrationId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The published design version */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DesignReference"];
+                };
+            };
+            /** @description Missing or invalid RS256 bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description The celebration is not yours, or it has no published design yet (never 403) */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

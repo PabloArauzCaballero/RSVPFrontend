@@ -1,0 +1,189 @@
+{
+  "_origin": {
+    "repo": "PabloArauzCaballero/RSVPBackend",
+    "branch": "chore/deploy-contabo-coolify",
+    "commit": "1e338bf79b8a9ebff87e267ffaca809551bbc12d",
+    "path": "seeds/templates/data/*.json",
+    "field": "theme.palette",
+    "generated": "2026-11-24",
+    "note": "Copia literal de la paleta de cada semilla. Si una semilla cambia, regenera este archivo y revisa la prueba de contraste."
+  },
+  "templates": [
+    {
+      "key": "clasico-marfil",
+      "file": "001-clasico-marfil.json",
+      "palette": {
+        "canvas": "#FBF7F0",
+        "surface": "#FFFFFF",
+        "text": "#2B2622",
+        "accent": "#7A5230",
+        "muted": "#665C52"
+      }
+    },
+    {
+      "key": "minimalista",
+      "file": "002-minimalista.json",
+      "palette": {
+        "canvas": "#FFFFFF",
+        "surface": "#F6F6F3",
+        "text": "#1C1C1A",
+        "accent": "#2F5D50",
+        "muted": "#5C5C57"
+      }
+    },
+    {
+      "key": "editorial",
+      "file": "003-editorial.json",
+      "palette": {
+        "canvas": "#F4EFE9",
+        "surface": "#FFFFFF",
+        "text": "#211D1A",
+        "accent": "#9C3526",
+        "muted": "#675C55"
+      }
+    },
+    {
+      "key": "festivo",
+      "file": "004-festivo.json",
+      "palette": {
+        "canvas": "#FFF5FA",
+        "surface": "#FFFFFF",
+        "text": "#2B1730",
+        "accent": "#B3134F",
+        "muted": "#6A506E"
+      }
+    },
+    {
+      "key": "corporativo",
+      "file": "005-corporativo.json",
+      "palette": {
+        "canvas": "#F5F7FA",
+        "surface": "#FFFFFF",
+        "text": "#14202B",
+        "accent": "#1F5FAD",
+        "muted": "#4F5C68"
+      }
+    },
+    {
+      "key": "jardin-botanico",
+      "file": "006-jardin-botanico.json",
+      "palette": {
+        "canvas": "#F5F8F2",
+        "surface": "#FFFFFF",
+        "text": "#222B25",
+        "accent": "#386247",
+        "muted": "#58645B"
+      }
+    },
+    {
+      "key": "rosa-antiguo",
+      "file": "007-rosa-antiguo.json",
+      "palette": {
+        "canvas": "#FBF3F2",
+        "surface": "#FFFFFF",
+        "text": "#2D2224",
+        "accent": "#9A3F55",
+        "muted": "#695A5D"
+      }
+    },
+    {
+      "key": "cielo-bautizo",
+      "file": "008-cielo-bautizo.json",
+      "palette": {
+        "canvas": "#F2F7FC",
+        "surface": "#FFFFFF",
+        "text": "#1F2933",
+        "accent": "#2F5F94",
+        "muted": "#55626F"
+      }
+    },
+    {
+      "key": "arena-terracota",
+      "file": "009-arena-terracota.json",
+      "palette": {
+        "canvas": "#FAF6F0",
+        "surface": "#F2EBE0",
+        "text": "#2A231D",
+        "accent": "#A2431F",
+        "muted": "#615548"
+      }
+    },
+    {
+      "key": "editorial-granate",
+      "file": "010-editorial-granate.json",
+      "palette": {
+        "canvas": "#F3F0EB",
+        "surface": "#FFFFFF",
+        "text": "#161412",
+        "accent": "#8A2638",
+        "muted": "#625A55"
+      }
+    },
+    {
+      "key": "editorial-oliva",
+      "file": "011-editorial-oliva.json",
+      "palette": {
+        "canvas": "#F5F4EC",
+        "surface": "#FFFFFF",
+        "text": "#1D2119",
+        "accent": "#5B6B1F",
+        "muted": "#5D6155"
+      }
+    },
+    {
+      "key": "pinata",
+      "file": "012-pinata.json",
+      "palette": {
+        "canvas": "#FFF8E6",
+        "surface": "#FFFFFF",
+        "text": "#2E2012",
+        "accent": "#C2330F",
+        "muted": "#6B5640"
+      }
+    },
+    {
+      "key": "fiesta-lila",
+      "file": "013-fiesta-lila.json",
+      "palette": {
+        "canvas": "#F8F4FF",
+        "surface": "#FFFFFF",
+        "text": "#241A36",
+        "accent": "#6A3BBF",
+        "muted": "#625774"
+      }
+    },
+    {
+      "key": "menta-infantil",
+      "file": "014-menta-infantil.json",
+      "palette": {
+        "canvas": "#F0FAF6",
+        "surface": "#FFFFFF",
+        "text": "#14302A",
+        "accent": "#0C7566",
+        "muted": "#4C6A63"
+      }
+    },
+    {
+      "key": "corporativo-grafito",
+      "file": "015-corporativo-grafito.json",
+      "palette": {
+        "canvas": "#F4F5F6",
+        "surface": "#FFFFFF",
+        "text": "#17191C",
+        "accent": "#0B6E6A",
+        "muted": "#50565C"
+      }
+    },
+    {
+      "key": "gala-dorada",
+      "file": "016-gala-dorada.json",
+      "palette": {
+        "canvas": "#F8F6F0",
+        "surface": "#FFFFFF",
+        "text": "#1D1B16",
+        "accent": "#7A5A0E",
+        "muted": "#5E5848"
+      }
+    }
+  ]
+}
