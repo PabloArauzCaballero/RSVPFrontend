@@ -6,6 +6,7 @@ import { formatMinor } from "@rsvp/i18n";
 import { problemCode, useAddGift, useGiftList, useListingSearch, useProductCategories, type ListingHit } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../../platform/providers";
 import { alreadyListed } from "./money";
+import { classifyFailure } from "../guests/failure";
 import { Hint, Row, RowList } from "./offer-row";
 import { GiftErrorNotice } from "./gift-errors";
 import { SkeletonList, Stagger } from "@rsvp/ui";
@@ -64,7 +65,7 @@ export function CatalogPanel({ celebrationId, currency, onSeeList }: { readonly 
       {categories.isError ? (
         // One message and one retry: the generic notice would repeat both.
         <View testID="catalog-categories-error">
-          <Notice kind="error"><Text style={styles.body}>{t("gifts.host.catalog.categoriesError")}</Text><ActionButton icon="refresh" variant="secondary" label={t("gifts.host.errors.retry")} onPress={() => { void categories.refetch(); }} testID="catalog-categories-retry" /></Notice>
+          <Notice kind="error"><Text style={styles.body}>{t(classifyFailure(categories.error).kind === "offline" ? "gifts.host.catalog.categoriesOffline" : "gifts.host.catalog.categoriesError")}</Text><ActionButton icon="refresh" variant="secondary" label={t("gifts.host.errors.retry")} onPress={() => { void categories.refetch(); }} testID="catalog-categories-retry" /></Notice>
         </View>
       ) : null}
       <Text style={styles.muted}>{t("gifts.host.catalog.disclaimer")}</Text>
@@ -75,7 +76,7 @@ export function CatalogPanel({ celebrationId, currency, onSeeList }: { readonly 
       {search.isError ? (
         // One message and one retry: the generic notice would repeat both.
         <View testID="catalog-error">
-          <Notice kind="error"><Text style={styles.body}>{t("gifts.host.catalog.error")}</Text><ActionButton icon="refresh" variant="secondary" label={t("gifts.host.errors.retry")} onPress={() => { void search.refetch(); }} testID="catalog-retry" /></Notice>
+          <Notice kind="error"><Text style={styles.body}>{t(classifyFailure(search.error).kind === "offline" ? "gifts.host.catalog.offline" : "gifts.host.catalog.error")}</Text><ActionButton icon="refresh" variant="secondary" label={t("gifts.host.errors.retry")} onPress={() => { void search.refetch(); }} testID="catalog-retry" /></Notice>
         </View>
       ) : null}
       {search.data && !search.isError && items.length === 0 ? <View testID="catalog-empty"><Hint>{t(narrowed ? "gifts.host.catalog.none" : "gifts.host.catalog.empty")}</Hint></View> : null}

@@ -147,6 +147,7 @@ function GiftsBody({ celebrationId, onNavigate }: { readonly celebrationId: stri
   const all = list.data ? catalogedFirst(list.data.items) : [];
   const items = all.filter((item) => !isGiftUnavailable(item));
   const unavailable = all.filter(isGiftUnavailable);
+  // The pending count comes from the reservations endpoint, not from these rows: a reservation waiting on a gift that became unavailable still counts, because the host still has to answer it.
   const waiting = reservations.data?.items.filter((entry) => entry.status === "PENDING_REVIEW").length ?? 0;
   const renderRow = (item: GiftItem, index: number): ReactNode => <GiftRow key={item.id} first={index === 0} item={item} currencyLocale={locale} onApprove={(id) => { setRejected(null); reject.reset(); if (flight.begin()) approve.mutate(id, { onSettled: flight.end }); }} onReject={(target) => { setRejected(null); approve.reset(); reject.reset(); setRejectTarget(target); }} approving={approve.isPending && approve.variables === item.id} rejecting={reject.isPending && reject.variables === item.id} locked={locked} {...(item.status === "COMMITTED" && held.get(item.id) ? { onRelease: () => { const reservation = held.get(item.id); if (!reservation) return; setReleased(null); release.reset(); setReleaseTarget({ item, reservation }); }, releasing: release.isPending && release.variables?.reservationId === held.get(item.id)?.id } : {})} />;
   return (
@@ -172,9 +173,13 @@ function GiftsBody({ celebrationId, onNavigate }: { readonly celebrationId: stri
         <>
           <GiftFigures items={items} />
           <RequesterVisibility celebrationId={celebrationId} />
-          <RowList>
-            <Stagger>{items.map(renderRow)}</Stagger>
-          </RowList>
+          {items.length > 0 ? (
+            <View testID="gift-list">
+              <RowList>
+                <Stagger>{items.map(renderRow)}</Stagger>
+              </RowList>
+            </View>
+          ) : null}
           {unavailable.length > 0 ? (
             <View testID="gift-unavailable-section" role="region" aria-labelledby="gift-unavailable-title" style={{ gap: spacing[3] }}>
               <Text nativeID="gift-unavailable-title" accessibilityRole="header" aria-level={2} style={styles.subtitle} testID="gift-unavailable">{t("gifts.host.unavailable.title", { count: unavailable.length })}</Text>
