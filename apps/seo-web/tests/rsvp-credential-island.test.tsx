@@ -60,10 +60,11 @@ describe("PL-114-R1 · the public reply offers «Confirmar asistencia» to the g
     } finally { Storage.prototype.getItem = original; }
   });
 
-  it("a fragment `#t=` in the address bar is left alone (the island only tests presence)", () => {
-    window.history.replaceState(null, "", `/#t=${TOKEN}`);
+  it("PL-134-M1 · a fragment `#t=` (the app on the web) is stored and removed from the address bar, and the reply becomes «Confirmar asistencia»", () => {
+    window.history.replaceState(null, "", `/c/ana-y-luis#t=${TOKEN}`);
     render(<PublicCelebration page={page} />);
-    expect(window.location.hash).toBe(`#t=${TOKEN}`);
-    expect(states()).toEqual(["absent", "absent"]);
+    expect(window.location.hash).toBe("");
+    expect(window.sessionStorage.getItem(credentialKey("ana-y-luis"))).toBe(TOKEN);
+    expect(states()).toEqual(["present", "present"]);
   });
 });

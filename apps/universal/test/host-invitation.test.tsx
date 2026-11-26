@@ -1,6 +1,6 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { pointUrl } from "@rsvp/celebration-theme";
+import { pointUrl } from "@rsvp/celebration-theme/model";
 import { ContentEditorScreen } from "../src/host/content-editor";
 import { readyCount, sectionStates } from "../src/host/editor-sections";
 import { GalleryEditorScreen } from "../src/host/gallery-editor";
@@ -8,6 +8,7 @@ import { fitScale } from "../src/host/preview-stage";
 import { TemplatesScreen } from "../src/host/templates-screen";
 import { TranslationEditorScreen, translationProgress } from "../src/host/translation-editor";
 import { baseHandlers, CELEBRATION, fakeClient, HttpFailure, renderApp, TEMPLATES, WEDDING, pickTime } from "./support";
+import { previewSeenBy } from "./preview-frame";
 
 const navigate = vi.fn();
 const draft = { title: "Ana y Luis", subtitle: "Los esperamos", venueName: "Iglesia", hosts: { BRIDE: "Ana", GROOM: "Luis" } };
@@ -51,7 +52,7 @@ describe("parts of the invitation and their progress", () => {
     fireEvent.click(screen.getByRole("button", { name: "Más opciones" }));
     fireEvent.click(await screen.findByTestId("view-preview"));
     expect(await screen.findByRole("dialog", { name: "Así la ven tus invitados" })).toBeTruthy();
-    await waitFor(() => expect(screen.getByTestId("preview-mobile").textContent).toContain("Boda de Ana y Luis"));
+    await waitFor(() => expect(previewSeenBy("preview-frame-mobile")).toContain("Boda de Ana y Luis"));
     expect(calls.some((call) => call.method === "PATCH")).toBe(false);
     fireEvent.click(screen.getByTestId("close-preview"));
     fireEvent.click(screen.getByTestId("save-content"));
@@ -151,7 +152,7 @@ describe("photos, languages and styles: empty and failed states", () => {
     const { client } = fakeClient({ ...baseHandlers(), "GET /media/templates": () => ({ items: TEMPLATES }), "PUT /celebrations/c-1/template": () => CELEBRATION });
     renderApp(<TemplatesScreen celebrationId="c-1" onNavigate={navigate} />, client);
     fireEvent.click(await screen.findByRole("radio", { name: "Minimalista" }));
-    expect(screen.getByTestId("preview-mobile").textContent).toContain("Ana y Luis");
+    expect(previewSeenBy("preview-frame-mobile")).toContain("Ana y Luis");
     fireEvent.click(screen.getByTestId("apply-template"));
     expect(await screen.findByText("Listo, tu invitación ahora usa Minimalista.")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Más opciones" }));

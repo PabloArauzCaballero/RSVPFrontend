@@ -13,6 +13,7 @@ import { TranslationEditorScreen } from "../src/host/translation-editor";
 import { DevicePreviewScreen } from "../src/host/device-preview";
 import { createTranslator } from "@rsvp/i18n";
 import { baseHandlers, BAUTIZO, CELEBRATION, fakeClient, GUEST, HttpFailure, QUINCE, renderApp, TEMPLATES, WEDDING, pickOnboardingDate, pickTime, timeField } from "./support";
+import { previewSeenBy } from "./preview-frame";
 
 const navigate = vi.fn();
 const field = (label: string): HTMLInputElement => screen.getByLabelText(label) as HTMLInputElement;
@@ -133,13 +134,12 @@ describe("C2–C5 · picker and onboarding", () => {
     fireEvent.click(screen.getByTestId("onboarding-next"));
     type("Novia", "Ana");
     type("Novio", "Luis");
-    const frame = screen.getAllByTestId("preview-mobile")[0] as HTMLElement;
-    expect(frame.textContent).toContain("Ana");
+    expect(previewSeenBy("preview-frame-mobile")).toContain("Ana");
     fillWhenWhere();
     fireEvent.click(screen.getByTestId("onboarding-next"));
     expect(field("Nombre de la celebración").value).toBe("Ana y Luis");
     type("Nombre de la celebración", "Boda de Ana y Luis");
-    await waitFor(() => expect((screen.getAllByTestId("preview-mobile")[0] as HTMLElement).textContent).toContain("Boda de Ana y Luis"));
+    await waitFor(() => expect(previewSeenBy("preview-frame-mobile")).toContain("Boda de Ana y Luis"));
   });
 
   it("every field of the second step is mandatory: an empty one stops the step, says so next to the field and nothing is sent", async () => {
@@ -221,7 +221,7 @@ describe("C2–C5 · picker and onboarding", () => {
     const { client } = fakeClient({ ...baseHandlers(), "GET /celebrations/c-1": () => CELEBRATION });
     renderApp(<OnboardingScreen step={1} celebrationId="c-1" onNavigate={navigate} />, client);
     expect(await screen.findByText("Tu invitación está lista")).toBeTruthy();
-    expect(screen.getByTestId("preview-mobile").textContent).toContain("Ana y Luis");
+    expect(previewSeenBy("preview-frame-mobile")).toContain("Ana y Luis");
     // The milestone is a quiet status region with the drawn check: the decorative backdrop of the old identity is gone.
     expect(screen.getByText("Tu invitación está lista").closest('[role="status"]')).not.toBeNull();
     expect(document.querySelector('[data-illustration^="moment-"]')).toBeNull();

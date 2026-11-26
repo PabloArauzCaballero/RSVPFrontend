@@ -1,4 +1,4 @@
-import type { PublicCelebrationView } from "@rsvp/celebration-theme";
+import type { PublicCelebrationView } from "@rsvp/celebration-theme/model";
 import type { Celebration, TranslatedEventType } from "@rsvp/query-hooks";
 
 /** What the preview needs of a celebration: a saved one, or the draft being typed in the guided sign-up. */

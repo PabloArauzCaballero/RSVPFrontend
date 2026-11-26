@@ -3,7 +3,6 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it } from "vitest";
 import { GALLERY, NOW, t, VIEW } from "../../test/fixtures.js";
 import { CelebrationRenderer, contrastRatio, fontStylesheet, giftsPath, themeFromTemplate } from "../index.js";
-import { CelebrationNativeRenderer } from "../native.js";
 import { BODAS_TEMPLATES, BODAS_TEMPLATE_IDS, bodasTemplate, type BodasName } from "./documents/bodas.js";
 import { designPalette, readDesign } from "./read.js";
 import type { DesignDocumentV2, PaletteRole } from "./types.js";
@@ -137,8 +136,8 @@ describe("the wedding group as documents v2", () => {
     for (const page of design(name).pages) for (const canvas of Object.values(page.canvases)) for (const item of canvas.elements) if (item.animation) expect(allowed).toContain(item.animation.entrance);
   });
 
-  it.each(NAMES)("%s: the native reader draws it too", (name) => {
-    const { getByTestId } = render(<CelebrationNativeRenderer theme={themeFromTemplate(bodasTemplate(name), SECTIONS)} view={VIEW} gallery={GALLERY} t={t} now={NOW} />);
-    expect(getByTestId("celebration-gifts-cta")).toBeTruthy();
+  it.each(NAMES)("%s: the web view of the app (the native reader was retired in F6 b) draws the gifts button too", (name) => {
+    const { container } = render(<CelebrationRenderer theme={themeFromTemplate(bodasTemplate(name), SECTIONS)} view={VIEW} gallery={GALLERY} t={t} now={NOW} basePath="/c/ana-y-luis" />);
+    expect(container.querySelector('a[data-action="gifts"]')).not.toBeNull();
   });
 });

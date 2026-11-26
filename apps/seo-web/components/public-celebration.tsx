@@ -5,6 +5,7 @@ import { visualTestNow } from "../lib/dev-surfaces";
 import { eventJsonLd, jsonLdScript } from "../lib/json-ld";
 import { uiLocale } from "../lib/locale";
 import { celebrationPath, siteUrl } from "../lib/metadata";
+import { earlyCredentialScript } from "../lib/guest-credential";
 import { RsvpCredentialIsland } from "./rsvp-credential-island";
 
 /** The public celebration (A1) or one of its sections (A2–A8), server-rendered with its theme. */
@@ -21,6 +22,8 @@ export function PublicCelebration({ page, only }: { readonly page: PublicPage; r
     <>
       {/* The invitation is the guest's page: the site's sales navigation and pitch step back (see `body:has([data-quiet-chrome])` in globals.css). */}
       <span hidden data-quiet-chrome="" />
+      {/* PL-134-M1: a credential in the fragment is stored and the address cleaned before anything of a third party can load. */}
+      <script dangerouslySetInnerHTML={{ __html: earlyCredentialScript(view.slug) }} />
       {fonts ? <link rel="stylesheet" href={fonts} precedence="default" /> : null}
       {jsonLd ? <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} /> : null}
       {languages.length > 1 ? (

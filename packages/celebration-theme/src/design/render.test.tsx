@@ -5,7 +5,6 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { GALLERY, NOW, t, VIEW } from "../../test/fixtures.js";
 import { CelebrationRenderer, contrastRatio, fontStylesheet, giftsPath, themeFromTemplate, type TemplateDocument } from "../index.js";
-import { CelebrationNativeRenderer } from "../native.js";
 import { DESIGN_TEMPLATES, designTemplate } from "./documents/index.js";
 import { designFontStylesheet, designPalette, readDesign } from "./read.js";
 import type { DesignDocumentV2, PaletteRole } from "./types.js";
@@ -318,21 +317,6 @@ describe("state · «Ver regalos» in its three states (giftsStatus seam, BE #12
     const es = readFileSync(join(__dirname, "../../../i18n/locales/es-BO/celebration.ts"), "utf8");
     const en = readFileSync(join(__dirname, "../../../i18n/locales/en-US/celebration.ts"), "utf8");
     for (const source of [es, en]) for (const key of ["ctaEmpty", "ctaClosed"]) expect(source).toContain(key);
-  });
-});
-
-describe("native: informative reading of a design document", () => {
-  it.each(NAMES)("%s: the app draws the same sections in the document's order, with its palette, and the gifts button", (name) => {
-    const theme = themeFromTemplate(designTemplate(name), WEDDING_VIEW.enabledSections);
-    const { container, getByTestId } = render(<CelebrationNativeRenderer theme={theme} view={WEDDING_VIEW} gallery={GALLERY} t={t} now={NOW} />);
-    const order = [...container.querySelectorAll("[data-testid^='section-']")].map((node) => node.getAttribute("data-testid")?.replace("section-", ""));
-    expect(order).toEqual(theme.sections.filter((section) => ["story", "schedule", "venues", "gallery", "dressCode", "faq", "recommendations", "gifts", "rsvp"].includes(section)));
-    expect(getByTestId("celebration-gifts-cta")).toBeTruthy();
-    const design = theme.design as DesignDocumentV2;
-    const css = [...document.styleSheets].flatMap((sheet) => [...sheet.cssRules].map((rule) => rule.cssText)).join(" ");
-    const hex = design.tokens.palettes.light.canvas;
-    const [r, g, b] = [1, 3, 5].map((i) => Number.parseInt(hex.slice(i, i + 2), 16));
-    expect(css).toContain(`rgba(${r},${g},${b},1.00)`);
   });
 });
 
