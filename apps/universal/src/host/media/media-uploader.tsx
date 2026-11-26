@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { Text, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
 import { createUploadQueue, DEFAULT_LIMITS, useMediaAssets, useUploadMedia, type MediaPurpose, type QueueItem, type UploadFailure } from "@rsvp/query-hooks";
@@ -57,7 +57,7 @@ function Row({ item, onRetry, onRemove }: { readonly item: QueueItem; readonly o
       {item.status === "uploading" ? <Bar now={percent} max={PERCENT} /> : null}
       <View style={{ flexDirection: "row", gap: spacing[3], flexWrap: "wrap" }}>
         {item.status === "error" && item.retryable ? <ActionButton variant="secondary" label={t("host.media.retry")} onPress={onRetry} testID={`media-retry-${item.id}`} /> : null}
-        {item.status === "error" || item.status === "queued" ? <ActionButton variant="secondary" label={t("host.media.remove")} onPress={onRemove} testID={`media-remove-${item.id}`} /> : null}
+        {item.status === "error" || item.status === "queued" || item.status === "processing" ? <ActionButton variant="secondary" label={t("host.media.remove")} onPress={onRemove} testID={`media-remove-${item.id}`} /> : null}
       </View>
     </View>
   );
@@ -83,6 +83,9 @@ export function MediaUploader({ celebrationId, purpose, pick = defaultPick, onUp
     return asset;
   }, { quota: () => ref.current.quota, limits: DEFAULT_LIMITS }), [ref]);
   const snapshot = useSyncExternalStore(queue.subscribe, queue.getSnapshot, queue.getSnapshot);
+  // The worker answers after the upload: each re-read of the list settles the rows still "Preparing" (processed, rejected or deleted).
+  const listed = assets.data?.items;
+  useEffect(() => { if (listed) queue.reconcile(listed); }, [queue, listed]);
   const full = Boolean(quota && quota.assets >= quota.maxAssets);
 
   const add = async (): Promise<void> => {

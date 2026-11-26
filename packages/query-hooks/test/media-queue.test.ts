@@ -43,6 +43,22 @@ describe("upload queue", () => {
     expect(queue.getSnapshot().items[0]).toMatchObject({ status: "processing", progress: 1, purpose: "background" });
   });
 
+  it("reconcile settles a processing file: PROCESSED closes it, REJECTED is an error that cannot be retried as is, DELETED removes it", async () => {
+    let n = 0;
+    const queue = createUploadQueue(async () => ({ ...asset("PROCESSING"), id: `a${++n}` }));
+    queue.add([file("ok.png"), file("mala.png"), file("borrada.png"), file("sigue.png")], { purpose: "gallery" });
+    await settle();
+    const before = queue.getSnapshot();
+    queue.reconcile([{ ...asset("PROCESSED"), id: "a1" }, { ...asset("REJECTED"), id: "a2" }, { ...asset("DELETED"), id: "a3" }, { ...asset("PROCESSING"), id: "a4" }]);
+    const items = queue.getSnapshot().items;
+    expect(items.map((item) => [item.name, item.status])).toEqual([["ok.png", "done"], ["mala.png", "error"], ["sigue.png", "processing"]]);
+    expect(items[1]).toMatchObject({ failure: "rejected", retryable: false });
+    expect(queue.getSnapshot()).not.toBe(before);
+    const settled = queue.getSnapshot();
+    queue.reconcile([{ ...asset("PROCESSING"), id: "a4" }]);
+    expect(queue.getSnapshot()).toBe(settled);
+  });
+
   it("one failed file does not stop the others, and says what to do", async () => {
     const upload: UploadOne = async ({ filename }) => {
       if (filename === "bad.png") throw problem(422, "INVALID_IMAGE");

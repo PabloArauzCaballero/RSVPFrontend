@@ -71,6 +71,25 @@ describe("F6 · MediaUploader", () => {
     expect(await screen.findByText("Preparando uno.png…")).toBeTruthy();
   });
 
+  it("a file the worker rejects stops saying Preparing: it becomes an error the person can remove", async () => {
+    let worker: "PROCESSING" | "REJECTED" = "PROCESSING";
+    const { client } = fakeClient({
+      ...baseHandlers(),
+      "GET /media/celebrations/c-1/assets": () => ({ items: [asset("r1", worker)], usage: QUOTA }),
+      "POST /media/uploads/presign": () => intent("r1"), "POST /media/uploads/r1/complete": () => asset("r1")
+    });
+    renderApp(<MediaUploader celebrationId="c-1" purpose="gallery" pick={async () => [picked("rota.png")]} />, client);
+    await screen.findByTestId("media-quota");
+    fireEvent.click(screen.getByTestId("media-add"));
+    expect(await screen.findByText("Preparando rota.png…")).toBeTruthy();
+    worker = "REJECTED";
+    expect(await screen.findByText("No pudimos preparar rota.png. Quítalo e intenta con otro.", {}, { timeout: 8000 })).toBeTruthy();
+    expect(screen.queryByText("Preparando rota.png…")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Reintentar" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Quitar de la lista" }));
+    expect(screen.queryByText(/rota\.png/)).toBeNull();
+  });
+
   it("the server's quota answer becomes a message about space, with no retry button", async () => {
     const { client } = fakeClient({
       ...baseHandlers(), ...listWithQuota(),
