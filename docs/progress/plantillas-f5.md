@@ -27,7 +27,17 @@ Rama apilada sobre `feat/f1-diseno-v2-esquema` (FE #115). Plan: `PLAN-PLANTILLAS
 - **m-2:** botón de peligro con fondo pastel (`danger-bg`) y texto `danger` (6,91:1 claro, 8,44:1 oscuro); mesa del lienzo en oscuro `#272725` (`surfaceMuted` de DESIGN.md), más clara que el canvas `#151514`.
 
 ### Pendiente / abierto
-- `GIFTS_BLOCK_TEXT_TOO_LARGE` y la altura útil (padding + borde) del botón de regalos no están espejados en `guards.ts`: ningún gesto del editor de PR a los provoca; hay que espejarlos cuando lleguen los controles de tipografía y relleno (PR b/c).
+- ~~`GIFTS_BLOCK_TEXT_TOO_LARGE` y la altura útil del botón~~: espejados en la rama `feat/plantillas-f5b-guarda-altura-util` (ver abajo).
 - Los avisos P19 solo se muestran tras un guardado (o los que traiga el registro); el servidor los envía al crear, guardar y restaurar.
 - Contrato 1.3.0 de Template/Media aún no vendorizado: `designApi` está tipada a mano; falta prueba de conformidad cuando #135 se fusione.
 - Los dibujos del lienzo en PR a son un esquema de cajas (wireframe); el renderizador real llega con F6.
+
+## PR b · prerrequisito: guardas de altura útil y tamaño de etiqueta (2026-11-25)
+
+Rama `feat/plantillas-f5b-guarda-altura-util`, sobre `feat/plantillas-f5-editor` (1a0ddf4). Hay que fusionarla (o apilar la cadena #122-#125 sobre ella) **antes** de exponer los controles de relleno, borde, tamaño y tipografía.
+
+- `guards.ts` espeja `rules.py` (BE `feat/f1-diseno-v2-almacen`): altura útil = h·rowHeight − (padding superior + inferior) − 2·borde; menos de 44 px es `GIFTS_BLOCK_TOO_SMALL`; etiqueta > 32 px o con `size × lineHeight` (por defecto 1,25) mayor que la altura útil es `GIFTS_BLOCK_TEXT_TOO_LARGE`.
+- `giftsIssues` revisa **todas** las páginas cuyo lienzo móvil aloja el botón (antes solo la primera), como el servidor.
+- i18n es-BO/en-US del nuevo código; `TOO_SMALL` explica que se descuentan relleno y borde.
+- Pruebas vitest: 44 px útiles exactos pasan y 36 px (relleno superior, inferior o borde) fallan; caja rotada; 33 px; línea que no cabe; segunda página. Nivel `TESTED`. Paridad con `validate_design` del BE (`rules.py`) comparada sobre 4000 documentos generados: 0 diferencias en estas reglas sin rotación; con rotación, `guards.ts` mide la caja envolvente igual que el BE (prueba vitest dedicada). Las pruebas de borde usan valores literales en rejilla de 8 px y se comprobaron con mutaciones locales de `guards.ts` (`>`→`>=`, línea 1,25→1,2, ignorar `padding.bottom`/`padding.top`, caja sin rotar): cada una hace fallar al menos una prueba.
+- **Aviso de apilado:** las ramas #122-#125 parten de a42a687 (anterior a las rondas 2-3 de #121 y a esta guarda) y sus controles de relleno (#124) y del inspector (#125) hoy no pasan por estas guardas.

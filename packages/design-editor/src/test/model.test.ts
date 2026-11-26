@@ -73,6 +73,68 @@ describe("gifts block guards (P22)", () => {
   });
 });
 
+describe("gifts block guards: useful height and label size (mirror of rules.py)", () => {
+  const setup = () => {
+    const doc = fixture();
+    const placement = giftsPlacement(doc);
+    const element = placement?.element;
+    if (!placement || !element) throw new Error("no gifts element");
+    const codes = (next: design.DesignDocumentV2): string[] => giftsIssues(next).map((issue) => issue.code);
+    return { doc, id: element.id, rowHeight: placement.page.canvases.mobile.rowHeight, h: element.h, codes, pageId: placement.page.id };
+  };
+
+  // The fixture button is 4 columns (320 px) wide and h 6 x rowHeight 8 = 48 px tall; every figure below is a literal on the 8 px grid.
+  const pad = (top: number, bottom: number) => ({ top, right: 0, bottom, left: 0 });
+  const border = (width: number) => ({ width, colour: "accent", style: "solid" }) as never;
+
+  it("44 px of useful height exactly is fine; one more px of top padding, bottom padding or border makes it too small", () => {
+    const { doc, id, codes } = setup();
+    // h 8 = 64 px box; padding 8 + 8 and a 2 px border (4 px) leave exactly 44 px.
+    const box = patchElement("mobile", id, { h: 8 })(doc);
+    expect(codes(patchElement("mobile", id, { padding: pad(8, 8), border: border(2) })(box))).not.toContain("GIFTS_BLOCK_TOO_SMALL");
+    expect(codes(patchElement("mobile", id, { padding: pad(16, 8), border: border(2) })(box))).toContain("GIFTS_BLOCK_TOO_SMALL");
+    expect(codes(patchElement("mobile", id, { padding: pad(8, 16), border: border(2) })(box))).toContain("GIFTS_BLOCK_TOO_SMALL");
+    expect(codes(patchElement("mobile", id, { padding: pad(0, 24) })(box))).toContain("GIFTS_BLOCK_TOO_SMALL");
+    expect(codes(patchElement("mobile", id, { padding: pad(8, 8), border: border(4) })(box))).toContain("GIFTS_BLOCK_TOO_SMALL");
+  });
+
+  it("a rotated button is measured by its bounding box, as the validator does (and is locked anyway)", () => {
+    const { doc, id, codes } = setup();
+    // 2 columns x 48 px = 160 x 48 px; turned 90 degrees its box is 48 x 160, so 16 px of padding leaves 144 px, not 32.
+    const turned = patchElement("mobile", id, { w: 2, rotation: 90, padding: pad(8, 8) })(doc);
+    expect(codes(turned)).toContain("GIFTS_BLOCK_LOCKED");
+    expect(codes(turned)).not.toContain("GIFTS_BLOCK_TOO_SMALL");
+  });
+
+  it("a label over 32 px, or whose line does not fit the useful height, is too large; the default line height is 1.25", () => {
+    const { doc, id, codes } = setup();
+    const size = (value: number, lineHeight?: number) => ({ typography: lineHeight === undefined ? { size: value } : { size: value, lineHeight } });
+    expect(codes(patchElement("mobile", id, size(33))(patchElement("mobile", id, { h: 10 })(doc)))).toContain("GIFTS_BLOCK_TEXT_TOO_LARGE");
+    // 48 px of useful height: a line of exactly 48 px (32 x 1.5) fits, 56 px (32 x 1.75) does not.
+    expect(codes(patchElement("mobile", id, size(32, 1.5))(doc))).not.toContain("GIFTS_BLOCK_TEXT_TOO_LARGE");
+    expect(codes(patchElement("mobile", id, size(32, 1.75))(doc))).toContain("GIFTS_BLOCK_TEXT_TOO_LARGE");
+    // h 5 = 40 px and a 2 px border leave 36 px: 29 x 1.25 = 36.25 does not fit, 28 x 1.25 = 35 does (1.2 would let 29 through).
+    const snug = patchElement("mobile", id, { h: 5, border: border(2) })(doc);
+    expect(codes(patchElement("mobile", id, size(29))(snug))).toContain("GIFTS_BLOCK_TEXT_TOO_LARGE");
+    expect(codes(patchElement("mobile", id, size(28))(snug))).not.toContain("GIFTS_BLOCK_TEXT_TOO_LARGE");
+    expect(codes(patchElement("mobile", id, size(32))(patchElement("mobile", id, { h: 10 })(doc)))).not.toContain("GIFTS_BLOCK_TEXT_TOO_LARGE");
+    expect(codes(patchElement("mobile", id, size(32, 4))(patchElement("mobile", id, { h: 10 })(doc)))).toContain("GIFTS_BLOCK_TEXT_TOO_LARGE");
+  });
+
+  it("every page that places the button is checked, not only the first", () => {
+    const { doc, id, codes } = setup();
+    const first = doc.pages.find((page) => page.canvases.mobile.elements.some((element) => element.id === id));
+    if (!first) throw new Error("no page");
+    const copy = structuredClone(first);
+    const element = copy.canvases.mobile.elements.find((candidate) => candidate.id === id);
+    if (!element) throw new Error("no element");
+    const second: design.DesignPage = { ...copy, id: "page-two", canvases: { mobile: { ...copy.canvases.mobile, elements: [{ ...element, id: "gifts-two", typography: { size: 40 } }] } } };
+    const twoPages = { ...doc, pages: [...doc.pages, second] };
+    expect(giftsIssues(twoPages).some((issue) => issue.code === "GIFTS_BLOCK_TEXT_TOO_LARGE")).toBe(true);
+    expect(codes(doc)).toEqual([]);
+  });
+});
+
 describe("gifts block guards: covered and contrast (mirror of the server rules)", () => {
   const codes = (doc: design.DesignDocumentV2): string[] => giftsIssues(doc).map((issue) => issue.code);
   const setStyle = (doc: design.DesignDocumentV2, style: string): design.DesignDocumentV2 => ({ ...doc, blocks: doc.blocks.map((block) => (block.type === "giftsCta" ? { ...block, config: { ...block.config, style } } : block)) });

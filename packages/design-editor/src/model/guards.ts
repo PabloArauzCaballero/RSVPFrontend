@@ -7,7 +7,7 @@ type Canvas = design.DesignCanvas;
 /** P22. Mirror of the gifts-block rules of the backend validator (design/rules.py); the server stays the authority. */
 export type GiftsIssueCode =
   | "GIFTS_BLOCK_REQUIRED" | "GIFTS_BLOCK_LOCKED" | "GIFTS_BLOCK_HIDDEN" | "GIFTS_BLOCK_OUT_OF_CANVAS" | "GIFTS_BLOCK_TOO_SMALL"
-  | "GIFTS_BLOCK_COVERED" | "GIFTS_BLOCK_LOW_CONTRAST";
+  | "GIFTS_BLOCK_TEXT_TOO_LARGE" | "GIFTS_BLOCK_COVERED" | "GIFTS_BLOCK_LOW_CONTRAST";
 
 export interface GiftsIssue { readonly code: GiftsIssueCode; readonly canvas?: "mobile" | "desktop" }
 
@@ -15,6 +15,9 @@ export interface GiftsIssue { readonly code: GiftsIssueCode; readonly canvas?: "
 export const MIN_TARGET_PX = 44;
 export const REFERENCE_WIDTH = { mobile: 320, desktop: 768 } as const;
 export const MAX_CANVAS_HEIGHT_PX = 4000;
+/** The label is one line inside the useful height: at most 32 px, and the line (size x line height) fits what padding and border leave. */
+export const GIFTS_MAX_FONT_PX = 32;
+export const GIFTS_DEFAULT_LINE_HEIGHT = 1.25;
 /** WCAG 1.4.11, for the contour of the button; its text reads at design.TEXT_CONTRAST (4.5:1). */
 export const NON_TEXT_CONTRAST = 3;
 
@@ -45,11 +48,6 @@ export const isGiftsElement = (doc: Doc, elementId: string, canvas?: "mobile" | 
   if (!block) return false;
   return doc.pages.some((page) => canvasesOf(page).some(([name, grid]) => (canvas === undefined || canvas === name) && grid.elements.some((element) => element.id === elementId && element.block === block.id)));
 };
-
-function sizePx(element: Element, canvas: Canvas, name: "mobile" | "desktop", maxWidth: number): { readonly width: number; readonly height: number } {
-  const reference = Math.min(REFERENCE_WIDTH[name], maxWidth);
-  return { width: (element.w / canvas.columns) * reference, height: element.h * canvas.rowHeight };
-}
 
 type Box = readonly [left: number, top: number, right: number, bottom: number];
 
@@ -101,29 +99,42 @@ function giftsReadable(doc: Doc, page: design.DesignPage, element: Element, styl
   });
 }
 
+/** Height the box loses to padding and border on top and bottom (`_vertical_inset` in rules.py). */
+const verticalInset = (element: Element): number => (element.padding?.top ?? 0) + (element.padding?.bottom ?? 0) + 2 * (element.border?.width ?? 0);
+
+/** Height left for the label once padding and border are taken out of the (bounding) box (never negative). */
+export const usefulHeightPx = (box: Box, element: Element): number => Math.max(0, box[3] - box[1] - verticalInset(element));
+
 /**
- * Everything that would make the backend answer 422 for the gifts block (all of P22 but the label size, which no gesture of this editor can change yet), computed on the client so the editor can refuse
+ * Everything that would make the backend answer 422 for the gifts block (all of P22), computed on the client so the editor can refuse
  * the gesture instead of letting the host find out when saving. Returns [] when the block is fine.
  */
 export function giftsIssues(doc: Doc): GiftsIssue[] {
   const block = giftsBlock(doc);
   if (!block || block.required !== true) return [{ code: "GIFTS_BLOCK_REQUIRED" }];
-  const placement = giftsPlacement(doc);
-  if (!placement) return [{ code: "GIFTS_BLOCK_REQUIRED" }];
+  const hosts = doc.pages.filter((page) => page.canvases.mobile.elements.some((candidate) => candidate.block === block.id));
+  if (hosts.length === 0) return [{ code: "GIFTS_BLOCK_REQUIRED" }];
   const issues: GiftsIssue[] = [];
   const style = typeof block.config["style"] === "string" ? block.config["style"] : "solid";
-  for (const [name, canvas] of canvasesOf(placement.page)) {
-    const index = canvas.elements.findIndex((candidate) => candidate.block === block.id);
-    const element = canvas.elements[index];
-    if (!element) { issues.push({ code: "GIFTS_BLOCK_REQUIRED", canvas: name }); continue; }
-    if (element.link !== undefined || (element.rotation ?? 0) !== 0) issues.push({ code: "GIFTS_BLOCK_LOCKED", canvas: name });
-    if (!element.visible || (element.opacity ?? 1) < 1) issues.push({ code: "GIFTS_BLOCK_HIDDEN", canvas: name });
-    if (element.x + element.w > canvas.columns || (element.y + element.h) * canvas.rowHeight > MAX_CANVAS_HEIGHT_PX) issues.push({ code: "GIFTS_BLOCK_OUT_OF_CANVAS", canvas: name });
-    const size = sizePx(element, canvas, name, doc.tokens.spacing.contentMaxWidth);
-    if (size.width < MIN_TARGET_PX || size.height < MIN_TARGET_PX) issues.push({ code: "GIFTS_BLOCK_TOO_SMALL", canvas: name });
-    const width = Math.min(REFERENCE_WIDTH[name], doc.tokens.spacing.contentMaxWidth);
-    if (coveredBy(canvas.elements, index, boxPx(element, canvas, width), canvas, width)) issues.push({ code: "GIFTS_BLOCK_COVERED", canvas: name });
-    if (!giftsReadable(doc, placement.page, element, style)) issues.push({ code: "GIFTS_BLOCK_LOW_CONTRAST", canvas: name });
+  // Every page that places the button is checked, as the server does (a page can carry it, not only the first one).
+  for (const page of hosts) {
+    for (const [name, canvas] of canvasesOf(page)) {
+      const index = canvas.elements.findIndex((candidate) => candidate.block === block.id);
+      const element = canvas.elements[index];
+      if (!element) { issues.push({ code: "GIFTS_BLOCK_REQUIRED", canvas: name }); continue; }
+      if (element.link !== undefined || (element.rotation ?? 0) !== 0) issues.push({ code: "GIFTS_BLOCK_LOCKED", canvas: name });
+      if (!element.visible || (element.opacity ?? 1) < 1) issues.push({ code: "GIFTS_BLOCK_HIDDEN", canvas: name });
+      // Same box the validator measures (the bounding box when rotated, which also raises LOCKED), so both sides agree on every document.
+      const width = Math.min(REFERENCE_WIDTH[name], doc.tokens.spacing.contentMaxWidth);
+      const box = boxPx(element, canvas, width);
+      if (element.x + element.w > canvas.columns || box[3] > MAX_CANVAS_HEIGHT_PX) issues.push({ code: "GIFTS_BLOCK_OUT_OF_CANVAS", canvas: name });
+      const useful = usefulHeightPx(box, element);
+      if (box[2] - box[0] < MIN_TARGET_PX || box[3] - box[1] < MIN_TARGET_PX || useful < MIN_TARGET_PX) issues.push({ code: "GIFTS_BLOCK_TOO_SMALL", canvas: name });
+      const label = element.typography?.size;
+      if (label !== undefined && (label > GIFTS_MAX_FONT_PX || label * (element.typography?.lineHeight || GIFTS_DEFAULT_LINE_HEIGHT) > useful)) issues.push({ code: "GIFTS_BLOCK_TEXT_TOO_LARGE", canvas: name });
+      if (coveredBy(canvas.elements, index, box, canvas, width)) issues.push({ code: "GIFTS_BLOCK_COVERED", canvas: name });
+      if (!giftsReadable(doc, page, element, style)) issues.push({ code: "GIFTS_BLOCK_LOW_CONTRAST", canvas: name });
+    }
   }
   return issues;
 }
