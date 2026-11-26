@@ -82,7 +82,7 @@ describe("P22 · PL-A10 · the gifts section is on every invitation", () => {
 const SEEDED_PALETTES: readonly (readonly [string, Palette])[] = seeded.templates.map((template) => [template.key, template.palette]);
 const themeOf = (palette: Palette) => ({ ...themeFromTemplate(null, []), palette });
 
-/** Light-scheme fill and ink of the 30 seeds after the F4 redesign (computed by accentFill on each light palette; light accents already read, so the fill is the accent itself). */
+/** Light-scheme fill and ink of the 36 seeds after the F4 redesign (computed by accentFill on each light palette; light accents already read, so the fill is the accent itself). */
 const LIGHT_FILLS: Readonly<Record<string, { readonly fill: string; readonly ink: string }>> = {
   "clasico-marfil": {
     "fill": "#7A5230",
@@ -203,6 +203,30 @@ const LIGHT_FILLS: Readonly<Record<string, { readonly fill: string; readonly ink
   "primera-comunion": {
     "fill": "#3C6E8F",
     "ink": "#FFFFFF"
+  },
+  "otros-rumbo": {
+    "fill": "#0B5F7A",
+    "ink": "#FFFFFF"
+  },
+  "otros-mesa": {
+    "fill": "#1F6B4A",
+    "ink": "#FFFEFA"
+  },
+  "despedida-disco": {
+    "fill": "#8E1F8F",
+    "ink": "#FFFFFF"
+  },
+  "despedida-esmoquin": {
+    "fill": "#B4262A",
+    "ink": "#FFFFFF"
+  },
+  "pedida-solitario": {
+    "fill": "#2A3F8F",
+    "ink": "#FFFFFF"
+  },
+  "pedida-rosa": {
+    "fill": "#A82E58",
+    "ink": "#FFFFFF"
   }
 };
 
@@ -218,11 +242,11 @@ function hue(hex: string): number {
 const hueDistance = (first: string, second: string) => { const gap = Math.abs(hue(first) - hue(second)); return Math.min(gap, 360 - gap); };
 
 describe("palette fixture", () => {
-  it("is a literal copy of the 30 seeds of RSVPBackend, with its origin", () => {
+  it("is a literal copy of the 36 seeds of RSVPBackend, with its origin", () => {
     expect(seeded._origin.repo).toBe("PabloArauzCaballero/RSVPBackend");
     expect(seeded._origin.commit).toMatch(/^[0-9a-f]{40}$/);
-    expect(seeded.templates).toHaveLength(30);
-    expect(new Set(seeded.templates.map((template) => template.key)).size).toBe(30);
+    expect(seeded.templates).toHaveLength(36);
+    expect(new Set(seeded.templates.map((template) => template.key)).size).toBe(36);
     for (const template of seeded.templates) {
       expect(template.file).toMatch(/^\d{3}-[a-z-]+\.json$/);
       expect(Object.keys(template.palette).sort()).toEqual(["accent", "canvas", "muted", "surface", "text"]);

@@ -1,12 +1,12 @@
 {
   "_origin": {
     "repo": "PabloArauzCaballero/RSVPBackend",
-    "branch": "feat/plantillas-f4-semillas",
-    "commit": "4bc3df48baffc016ff63b4b106e2e123246bbb40",
+    "branch": "feat/plantillas-extra-otros-despedida-pedida",
+    "commit": "5ba9a370d481aba9580c16b66402c2914a3bc7cd",
     "path": "seeds/templates/data/*.json",
     "field": "theme.palette",
-    "generated": "2026-11-24",
-    "note": "Copia literal de la paleta de cada semilla. Si una semilla cambia, regenera este archivo y revisa la prueba de contraste."
+    "generated": "2026-11-26",
+    "note": "Copia literal de la paleta de cada semilla. Si una semilla cambia, regenera este archivo y revisa la prueba de contraste. Las 6 últimas (031 a 036) son de la decisión 6 de Pablo (2026-11-25): feat/plantillas-extra-otros-despedida-pedida."
   },
   "templates": [
     {
@@ -337,6 +337,72 @@
         "text": "#1A2530",
         "accent": "#3C6E8F",
         "muted": "#4F6070"
+      }
+    },
+    {
+      "key": "otros-rumbo",
+      "file": "031-otros-rumbo.json",
+      "palette": {
+        "canvas": "#EDF4F6",
+        "surface": "#FFFFFF",
+        "text": "#0E2128",
+        "accent": "#0B5F7A",
+        "muted": "#44606A"
+      }
+    },
+    {
+      "key": "otros-mesa",
+      "file": "032-otros-mesa.json",
+      "palette": {
+        "canvas": "#F8F4EA",
+        "surface": "#FFFEFA",
+        "text": "#22201A",
+        "accent": "#1F6B4A",
+        "muted": "#5B5648"
+      }
+    },
+    {
+      "key": "despedida-disco",
+      "file": "033-despedida-disco.json",
+      "palette": {
+        "canvas": "#FBF3FC",
+        "surface": "#FFFFFF",
+        "text": "#25132A",
+        "accent": "#8E1F8F",
+        "muted": "#5E4663"
+      }
+    },
+    {
+      "key": "despedida-esmoquin",
+      "file": "034-despedida-esmoquin.json",
+      "palette": {
+        "canvas": "#F5F4F2",
+        "surface": "#FFFFFF",
+        "text": "#0F0F11",
+        "accent": "#B4262A",
+        "muted": "#4F4F55"
+      }
+    },
+    {
+      "key": "pedida-solitario",
+      "file": "035-pedida-solitario.json",
+      "palette": {
+        "canvas": "#F3F5FA",
+        "surface": "#FFFFFF",
+        "text": "#141B2E",
+        "accent": "#2A3F8F",
+        "muted": "#4A5570"
+      }
+    },
+    {
+      "key": "pedida-rosa",
+      "file": "036-pedida-rosa.json",
+      "palette": {
+        "canvas": "#FCF3F5",
+        "surface": "#FFFFFF",
+        "text": "#2D1620",
+        "accent": "#A82E58",
+        "muted": "#6A4A56"
       }
     }
   ]

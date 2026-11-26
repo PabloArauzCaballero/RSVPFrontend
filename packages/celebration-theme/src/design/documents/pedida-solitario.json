@@ -1,0 +1,464 @@
+{
+  "key": "pedida-solitario",
+  "name": "Pedida · Solitario",
+  "description": "Una sola piedra: un solitario grande al centro y mucho aire, la tipografía de inscripción y un azul zafiro que toca una pieza.",
+  "layout": "classic",
+  "eventTypeTags": [
+    "engagement"
+  ],
+  "sectionOrder": [
+    "story",
+    "schedule",
+    "venues",
+    "gallery",
+    "gifts",
+    "faq",
+    "rsvp"
+  ],
+  "theme": {
+    "schemaVersion": 2,
+    "tokens": {
+      "palettes": {
+        "light": {
+          "canvas": "#F3F5FA",
+          "surface": "#FFFFFF",
+          "text": "#141B2E",
+          "muted": "#4A5570",
+          "accent": "#2A3F8F",
+          "accentFill": "#2A3F8F",
+          "onAccent": "#FFFFFF",
+          "line": "#7C86A3"
+        },
+        "dark": {
+          "canvas": "#0A0E1B",
+          "surface": "#121829",
+          "text": "#E6EAF6",
+          "muted": "#A7B1CE",
+          "accent": "#9FB0F2",
+          "accentFill": "#8497E6",
+          "onAccent": "#071033",
+          "line": "#64709A"
+        }
+      },
+      "typography": {
+        "heading": {
+          "family": "marcellus",
+          "weights": [
+            400
+          ]
+        },
+        "body": {
+          "family": "source-sans-3",
+          "weights": [
+            400,
+            500,
+            600
+          ]
+        },
+        "scale": {
+          "base": 16,
+          "ratio": 1.25
+        }
+      },
+      "spacing": {
+        "unit": 8,
+        "section": 80,
+        "contentMaxWidth": 920
+      },
+      "radii": {
+        "sm": 0,
+        "md": 2,
+        "lg": 6
+      },
+      "ornament": "none",
+      "illustrationSet": "none"
+    },
+    "pages": [
+      {
+        "id": "page-cover",
+        "kind": "cover",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-solitario",
+                "block": "art-solitario",
+                "x": 1,
+                "y": 0,
+                "w": 2,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "scale",
+                  "delayMs": 200,
+                  "durationMs": 1000
+                },
+                "padding": {
+                  "top": 0,
+                  "right": 0,
+                  "bottom": 0,
+                  "left": 0
+                }
+              },
+              {
+                "id": "el-cover",
+                "block": "cover",
+                "x": 0,
+                "y": 8,
+                "w": 4,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 900,
+                  "durationMs": 900
+                },
+                "typography": {
+                  "align": "center",
+                  "role": "heading",
+                  "size": 44,
+                  "lineHeight": 1.12,
+                  "weight": 400
+                },
+                "padding": {
+                  "top": 8,
+                  "right": 24,
+                  "bottom": 8,
+                  "left": 24
+                }
+              }
+            ]
+          },
+          "desktop": {
+            "mode": "flow",
+            "columns": 12,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-solitario",
+                "block": "art-solitario",
+                "x": 0,
+                "y": 0,
+                "w": 5,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "scale",
+                  "delayMs": 200,
+                  "durationMs": 1000
+                }
+              },
+              {
+                "id": "el-cover",
+                "block": "cover",
+                "x": 5,
+                "y": 0,
+                "w": 7,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 900,
+                  "durationMs": 900
+                },
+                "typography": {
+                  "align": "start",
+                  "role": "heading",
+                  "size": 72,
+                  "lineHeight": 1.08,
+                  "weight": 400
+                },
+                "padding": {
+                  "top": 24,
+                  "right": 0,
+                  "bottom": 24,
+                  "left": 0
+                }
+              },
+              {
+                "id": "el-botella",
+                "block": "art-botella",
+                "x": 11,
+                "y": 8,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 1500,
+                  "durationMs": 600
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-story",
+        "kind": "section",
+        "section": "story",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-story",
+                "block": "story",
+                "x": 0,
+                "y": 0,
+                "w": 8,
+                "h": 1,
+                "visible": true,
+                "typography": {
+                  "align": "center"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-schedule",
+        "kind": "section",
+        "section": "schedule",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-schedule",
+                "block": "schedule",
+                "x": 0,
+                "y": 0,
+                "w": 8,
+                "h": 1,
+                "visible": true,
+                "typography": {
+                  "align": "center"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-venues",
+        "kind": "section",
+        "section": "venues",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-venues",
+                "block": "venues",
+                "x": 0,
+                "y": 0,
+                "w": 8,
+                "h": 1,
+                "visible": true,
+                "typography": {
+                  "align": "center"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-gallery",
+        "kind": "section",
+        "section": "gallery",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-gallery",
+                "block": "gallery",
+                "x": 0,
+                "y": 0,
+                "w": 8,
+                "h": 1,
+                "visible": true,
+                "typography": {
+                  "align": "center"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-gifts",
+        "kind": "section",
+        "section": "gifts",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-gifts-cta",
+                "block": "gifts-cta",
+                "x": 0,
+                "y": 0,
+                "w": 8,
+                "h": 6,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-faq",
+        "kind": "section",
+        "section": "faq",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-faq",
+                "block": "faq",
+                "x": 0,
+                "y": 0,
+                "w": 8,
+                "h": 1,
+                "visible": true,
+                "typography": {
+                  "align": "center"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-rsvp",
+        "kind": "section",
+        "section": "rsvp",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-rsvp-cta",
+                "block": "rsvp-cta",
+                "x": 0,
+                "y": 0,
+                "w": 8,
+                "h": 6,
+                "visible": true
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "blocks": [
+      {
+        "id": "cover",
+        "type": "cover",
+        "config": {
+          "variant": "classic",
+          "envelope": false
+        }
+      },
+      {
+        "id": "art-solitario",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "solitario",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "art-botella",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "botella",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "story",
+        "type": "story",
+        "config": {}
+      },
+      {
+        "id": "schedule",
+        "type": "schedule",
+        "config": {
+          "display": "timeline"
+        }
+      },
+      {
+        "id": "venues",
+        "type": "venues",
+        "config": {
+          "display": "cards",
+          "mapOnTap": true
+        }
+      },
+      {
+        "id": "gallery",
+        "type": "gallery",
+        "config": {
+          "display": "grid"
+        }
+      },
+      {
+        "id": "gifts-cta",
+        "type": "giftsCta",
+        "required": true,
+        "config": {
+          "style": "solid"
+        }
+      },
+      {
+        "id": "faq",
+        "type": "faq",
+        "config": {}
+      },
+      {
+        "id": "rsvp-cta",
+        "type": "rsvpCta",
+        "config": {
+          "style": "solid"
+        }
+      }
+    ],
+    "custom": {
+      "html": "",
+      "css": ""
+    }
+  }
+}
