@@ -1,0 +1,710 @@
+[
+ {
+  "loc": "es-BO",
+  "scheme": "light",
+  "w": 360,
+  "absent": {
+   "gifts": {
+    "t": "Ver regalos",
+    "href": "/c/fixture-ana-y-luis/regalos",
+    "w": 147.3,
+    "h": 52.5
+   },
+   "reply": {
+    "href": "/c/fixture-ana-y-luis/rsvp",
+    "cred": "absent",
+    "visible": [
+     "Busca tu enlace personal"
+    ],
+    "acc": null,
+    "w": 246.4,
+    "h": 52.5
+   },
+   "rsvpBg": "color(srgb 0.957294 0.943177 0.929059)",
+   "scheme": "light",
+   "ox": false,
+   "tokenInDom": false
+  },
+  "present": {
+   "gifts": {
+    "t": "Ver regalos",
+    "href": "/c/fixture-ana-y-luis/regalos",
+    "w": 147.3,
+    "h": 52.5
+   },
+   "reply": {
+    "href": "/c/fixture-ana-y-luis/rsvp",
+    "cred": "present",
+    "visible": [
+     "Confirmar asistencia"
+    ],
+    "acc": null,
+    "w": 246.4,
+    "h": 52.5
+   },
+   "rsvpBg": "color(srgb 0.957294 0.943177 0.929059)",
+   "scheme": "light",
+   "ox": false,
+   "tokenInDom": false
+  },
+  "sameBox": true,
+  "bgWith": "color(srgb 0.957294 0.943177 0.929059)",
+  "bgWithout": "color(srgb 0.957294 0.943177 0.929059)",
+  "bgBase": "rgba(0, 0, 0, 0)",
+  "axeCritSerious": [],
+  "axeAll": [
+   "moderate:landmark-unique",
+   "moderate:region"
+  ],
+  "nav": " gifts->/c/fixture-ana-y-luis/regalos reply->/c/fixture-ana-y-luis/rsvp"
+ },
+ {
+  "loc": "es-BO",
+  "scheme": "light",
+  "w": 768,
+  "absent": {
+   "gifts": {
+    "t": "Ver regalos",
+    "href": "/c/fixture-ana-y-luis/regalos",
+    "w": 171.3,
+    "h": 52.5
+   },
+   "reply": {
+    "href": "/c/fixture-ana-y-luis/rsvp",
+    "cred": "absent",
+    "visible": [
+     "Busca tu enlace personal"
+    ],
+    "acc": null,
+    "w": 270.4,
+    "h": 52.5
+   },
+   "rsvpBg": "color(srgb 0.957294 0.943177 0.929059)",
+   "scheme": "light",
+   "ox": false,
+   "tokenInDom": false
+  },
+  "present": {
+   "gifts": {
+    "t": "Ver regalos",
+    "href": "/c/fixture-ana-y-luis/regalos",
+    "w": 171.3,
+    "h": 52.5
+   },
+   "reply": {
+    "href": "/c/fixture-ana-y-luis/rsvp",
+    "cred": "present",
+    "visible": [
+     "Confirmar asistencia"
+    ],
+    "acc": null,
+    "w": 270.4,
+    "h": 52.5
+   },
+   "rsvpBg": "color(srgb 0.957294 0.943177 0.929059)",
+   "scheme": "light",
+   "ox": false,
+   "tokenInDom": false
+  },
+  "sameBox": true,
+  "bgWith": "color(srgb 0.957294 0.943177 0.929059)",
+  "bgWithout": "color(srgb 0.957294 0.943177 0.929059)",
+  "bgBase": "rgba(0, 0, 0, 0)",
+  "axeCritSerious": [],
+  "axeAll": [
+   "moderate:landmark-unique",
+   "moderate:region"
+  ],
+  "nav": ""
+ },
+ {
+  "loc": "es-BO",
+  "scheme": "light",
+  "w": 1280,
+  "absent": {
+   "gifts": {
+    "t": "Ver regalos",
+    "href": "/c/fixture-ana-y-luis/regalos",
+    "w": 171.3,
+    "h": 52.5
+   },
+   "reply": {
+    "href": "/c/fixture-ana-y-luis/rsvp",
+    "cred": "absent",
+    "visible": [
+     "Busca tu enlace personal"
+    ],
+    "acc": null,
+    "w": 270.4,
+    "h": 52.5
+   },
+   "rsvpBg": "color(srgb 0.957294 0.943177 0.929059)",
+   "scheme": "light",
+   "ox": false,
+   "tokenInDom": false
+  },
+  "present": {
+   "gifts": {
+    "t": "Ver regalos",
+    "href": "/c/fixture-ana-y-luis/regalos",
+    "w": 171.3,
+    "h": 52.5
+   },
+   "reply": {
+    "href": "/c/fixture-ana-y-luis/rsvp",
+    "cred": "present",
+    "visible": [
+     "Confirmar asistencia"
+    ],
+    "acc": null,
+    "w": 270.4,
+    "h": 52.5
+   },
+   "rsvpBg": "color(srgb 0.957294 0.943177 0.929059)",
+   "scheme": "light",
+   "ox": false,
+   "tokenInDom": false
+  },
+  "sameBox": true,
+  "bgWith": "color(srgb 0.957294 0.943177 0.929059)",
+  "bgWithout": "color(srgb 0.957294 0.943177 0.929059)",
+  "bgBase": "rgba(0, 0, 0, 0)",
+  "axeCritSerious": [],
+  "axeAll": [
+   "moderate:landmark-unique",
+   "moderate:region"
+  ],
+  "nav": ""
+ },
+ {
+  "loc": "es-BO",
+  "scheme": "dark",
+  "w": 360,
+  "absent": {
+   "gifts": {
+    "t": "Ver regalos",
+    "href": "/c/fixture-ana-y-luis/regalos",
+    "w": 147.3,
+    "h": 52.5
+   },
+   "reply": {
+    "href": "/c/fixture-ana-y-luis/rsvp",
+    "cred": "absent",
+    "visible": [
+     "Busca tu enlace personal"
+    ],
+    "acc": null,
+    "w": 246.4,
+    "h": 52.5
+   },
+   "rsvpBg": "color(srgb 0.957294 0.943177 0.929059)",
+   "scheme": "light",
+   "ox": false,
+   "tokenInDom": false
+  },
+  "present": {
+   "gifts": {
+    "t": "Ver regalos",
+    "href": "/c/fixture-ana-y-luis/regalos",
+    "w": 147.3,
+    "h": 52.5
+   },
+   "reply": {
+    "href": "/c/fixture-ana-y-luis/rsvp",
+    "cred": "present",
+    "visible": [
+     "Confirmar asistencia"
+    ],
+    "acc": null,
+    "w": 246.4,
+    "h": 52.5
+   },
+   "rsvpBg": "color(srgb 0.957294 0.943177 0.929059)",
+   "scheme": "light",
+   "ox": false,
+   "tokenInDom": false
+  },
+  "sameBox": true,
+  "bgWith": "color(srgb 0.957294 0.943177 0.929059)",
+  "bgWithout": "color(srgb 0.957294 0.943177 0.929059)",
+  "bgBase": "rgba(0, 0, 0, 0)",
+  "axeCritSerious": [],
+  "axeAll": [
+   "moderate:landmark-unique",
+   "moderate:region"
+  ],
+  "nav": ""
+ },
+ {
+  "loc": "es-BO",
+  "scheme": "dark",
+  "w": 768,
+  "absent": {
+   "gifts": {
+    "t": "Ver regalos",
+    "href": "/c/fixture-ana-y-luis/regalos",
+    "w": 171.3,
+    "h": 52.5
+   },
+   "reply": {
+    "href": "/c/fixture-ana-y-luis/rsvp",
+    "cred": "absent",
+    "visible": [
+     "Busca tu enlace personal"
+    ],
+    "acc": null,
+    "w": 270.4,
+    "h": 52.5
+   },
+   "rsvpBg": "color(srgb 0.957294 0.943177 0.929059)",
+   "scheme": "light",
+   "ox": false,
+   "tokenInDom": false
+  },
+  "present": {
+   "gifts": {
+    "t": "Ver regalos",
+    "href": "/c/fixture-ana-y-luis/regalos",
+    "w": 171.3,
+    "h": 52.5
+   },
+   "reply": {
+    "href": "/c/fixture-ana-y-luis/rsvp",
+    "cred": "present",
+    "visible": [
+     "Confirmar asistencia"
+    ],
+    "acc": null,
+    "w": 270.4,
+    "h": 52.5
+   },
+   "rsvpBg": "color(srgb 0.957294 0.943177 0.929059)",
+   "scheme": "light",
+   "ox": false,
+   "tokenInDom": false
+  },
+  "sameBox": true,
+  "bgWith": "color(srgb 0.957294 0.943177 0.929059)",
+  "bgWithout": "color(srgb 0.957294 0.943177 0.929059)",
+  "bgBase": "rgba(0, 0, 0, 0)",
+  "axeCritSerious": [],
+  "axeAll": [
+   "moderate:landmark-unique",
+   "moderate:region"
+  ],
+  "nav": ""
+ },
+ {
+  "loc": "es-BO",
+  "scheme": "dark",
+  "w": 1280,
+  "absent": {
+   "gifts": {
+    "t": "Ver regalos",
+    "href": "/c/fixture-ana-y-luis/regalos",
+    "w": 171.3,
+    "h": 52.5
+   },
+   "reply": {
+    "href": "/c/fixture-ana-y-luis/rsvp",
+    "cred": "absent",
+    "visible": [
+     "Busca tu enlace personal"
+    ],
+    "acc": null,
+    "w": 270.4,
+    "h": 52.5
+   },
+   "rsvpBg": "color(srgb 0.957294 0.943177 0.929059)",
+   "scheme": "light",
+   "ox": false,
+   "tokenInDom": false
+  },
+  "present": {
+   "gifts": {
+    "t": "Ver regalos",
+    "href": "/c/fixture-ana-y-luis/regalos",
+    "w": 171.3,
+    "h": 52.5
+   },
+   "reply": {
+    "href": "/c/fixture-ana-y-luis/rsvp",
+    "cred": "present",
+    "visible": [
+     "Confirmar asistencia"
+    ],
+    "acc": null,
+    "w": 270.4,
+    "h": 52.5
+   },
+   "rsvpBg": "color(srgb 0.957294 0.943177 0.929059)",
+   "scheme": "light",
+   "ox": false,
+   "tokenInDom": false
+  },
+  "sameBox": true,
+  "bgWith": "color(srgb 0.957294 0.943177 0.929059)",
+  "bgWithout": "color(srgb 0.957294 0.943177 0.929059)",
+  "bgBase": "rgba(0, 0, 0, 0)",
+  "axeCritSerious": [],
+  "axeAll": [
+   "moderate:landmark-unique",
+   "moderate:region"
+  ],
+  "nav": ""
+ },
+ {
+  "loc": "en-US",
+  "scheme": "light",
+  "w": 360,
+  "absent": {
+   "gifts": {
+    "t": "See gifts",
+    "href": "/c/fixture-ana-y-luis/regalos",
+    "w": 128.5,
+    "h": 52.5
+   },
+   "reply": {
+    "href": "/c/fixture-ana-y-luis/rsvp",
+    "cred": "absent",
+    "visible": [
+     "Find your personal link"
+    ],
+    "acc": null,
+    "w": 233.2,
+    "h": 52.5
+   },
+   "rsvpBg": "color(srgb 0.957294 0.943177 0.929059)",
+   "scheme": "light",
+   "ox": false,
+   "tokenInDom": false
+  },
+  "present": {
+   "gifts": {
+    "t": "See gifts",
+    "href": "/c/fixture-ana-y-luis/regalos",
+    "w": 128.5,
+    "h": 52.5
+   },
+   "reply": {
+    "href": "/c/fixture-ana-y-luis/rsvp",
+    "cred": "present",
+    "visible": [
+     "Reply now"
+    ],
+    "acc": null,
+    "w": 233.2,
+    "h": 52.5
+   },
+   "rsvpBg": "color(srgb 0.957294 0.943177 0.929059)",
+   "scheme": "light",
+   "ox": false,
+   "tokenInDom": false
+  },
+  "sameBox": true,
+  "bgWith": "color(srgb 0.957294 0.943177 0.929059)",
+  "bgWithout": "color(srgb 0.957294 0.943177 0.929059)",
+  "bgBase": "rgba(0, 0, 0, 0)",
+  "axeCritSerious": [],
+  "axeAll": [
+   "moderate:landmark-unique",
+   "moderate:region"
+  ],
+  "nav": " gifts->/c/fixture-ana-y-luis/regalos reply->/c/fixture-ana-y-luis/rsvp"
+ },
+ {
+  "loc": "en-US",
+  "scheme": "light",
+  "w": 768,
+  "absent": {
+   "gifts": {
+    "t": "See gifts",
+    "href": "/c/fixture-ana-y-luis/regalos",
+    "w": 152.5,
+    "h": 52.5
+   },
+   "reply": {
+    "href": "/c/fixture-ana-y-luis/rsvp",
+    "cred": "absent",
+    "visible": [
+     "Find your personal link"
+    ],
+    "acc": null,
+    "w": 257.2,
+    "h": 52.5
+   },
+   "rsvpBg": "color(srgb 0.957294 0.943177 0.929059)",
+   "scheme": "light",
+   "ox": false,
+   "tokenInDom": false
+  },
+  "present": {
+   "gifts": {
+    "t": "See gifts",
+    "href": "/c/fixture-ana-y-luis/regalos",
+    "w": 152.5,
+    "h": 52.5
+   },
+   "reply": {
+    "href": "/c/fixture-ana-y-luis/rsvp",
+    "cred": "present",
+    "visible": [
+     "Reply now"
+    ],
+    "acc": null,
+    "w": 257.2,
+    "h": 52.5
+   },
+   "rsvpBg": "color(srgb 0.957294 0.943177 0.929059)",
+   "scheme": "light",
+   "ox": false,
+   "tokenInDom": false
+  },
+  "sameBox": true,
+  "bgWith": "color(srgb 0.957294 0.943177 0.929059)",
+  "bgWithout": "color(srgb 0.957294 0.943177 0.929059)",
+  "bgBase": "rgba(0, 0, 0, 0)",
+  "axeCritSerious": [],
+  "axeAll": [
+   "moderate:landmark-unique",
+   "moderate:region"
+  ],
+  "nav": ""
+ },
+ {
+  "loc": "en-US",
+  "scheme": "light",
+  "w": 1280,
+  "absent": {
+   "gifts": {
+    "t": "See gifts",
+    "href": "/c/fixture-ana-y-luis/regalos",
+    "w": 152.5,
+    "h": 52.5
+   },
+   "reply": {
+    "href": "/c/fixture-ana-y-luis/rsvp",
+    "cred": "absent",
+    "visible": [
+     "Find your personal link"
+    ],
+    "acc": null,
+    "w": 257.2,
+    "h": 52.5
+   },
+   "rsvpBg": "color(srgb 0.957294 0.943177 0.929059)",
+   "scheme": "light",
+   "ox": false,
+   "tokenInDom": false
+  },
+  "present": {
+   "gifts": {
+    "t": "See gifts",
+    "href": "/c/fixture-ana-y-luis/regalos",
+    "w": 152.5,
+    "h": 52.5
+   },
+   "reply": {
+    "href": "/c/fixture-ana-y-luis/rsvp",
+    "cred": "present",
+    "visible": [
+     "Reply now"
+    ],
+    "acc": null,
+    "w": 257.2,
+    "h": 52.5
+   },
+   "rsvpBg": "color(srgb 0.957294 0.943177 0.929059)",
+   "scheme": "light",
+   "ox": false,
+   "tokenInDom": false
+  },
+  "sameBox": true,
+  "bgWith": "color(srgb 0.957294 0.943177 0.929059)",
+  "bgWithout": "color(srgb 0.957294 0.943177 0.929059)",
+  "bgBase": "rgba(0, 0, 0, 0)",
+  "axeCritSerious": [],
+  "axeAll": [
+   "moderate:landmark-unique",
+   "moderate:region"
+  ],
+  "nav": ""
+ },
+ {
+  "loc": "en-US",
+  "scheme": "dark",
+  "w": 360,
+  "absent": {
+   "gifts": {
+    "t": "See gifts",
+    "href": "/c/fixture-ana-y-luis/regalos",
+    "w": 128.5,
+    "h": 52.5
+   },
+   "reply": {
+    "href": "/c/fixture-ana-y-luis/rsvp",
+    "cred": "absent",
+    "visible": [
+     "Find your personal link"
+    ],
+    "acc": null,
+    "w": 233.2,
+    "h": 52.5
+   },
+   "rsvpBg": "color(srgb 0.957294 0.943177 0.929059)",
+   "scheme": "light",
+   "ox": false,
+   "tokenInDom": false
+  },
+  "present": {
+   "gifts": {
+    "t": "See gifts",
+    "href": "/c/fixture-ana-y-luis/regalos",
+    "w": 128.5,
+    "h": 52.5
+   },
+   "reply": {
+    "href": "/c/fixture-ana-y-luis/rsvp",
+    "cred": "present",
+    "visible": [
+     "Reply now"
+    ],
+    "acc": null,
+    "w": 233.2,
+    "h": 52.5
+   },
+   "rsvpBg": "color(srgb 0.957294 0.943177 0.929059)",
+   "scheme": "light",
+   "ox": false,
+   "tokenInDom": false
+  },
+  "sameBox": true,
+  "bgWith": "color(srgb 0.957294 0.943177 0.929059)",
+  "bgWithout": "color(srgb 0.957294 0.943177 0.929059)",
+  "bgBase": "rgba(0, 0, 0, 0)",
+  "axeCritSerious": [],
+  "axeAll": [
+   "moderate:landmark-unique",
+   "moderate:region"
+  ],
+  "nav": ""
+ },
+ {
+  "loc": "en-US",
+  "scheme": "dark",
+  "w": 768,
+  "absent": {
+   "gifts": {
+    "t": "See gifts",
+    "href": "/c/fixture-ana-y-luis/regalos",
+    "w": 152.5,
+    "h": 52.5
+   },
+   "reply": {
+    "href": "/c/fixture-ana-y-luis/rsvp",
+    "cred": "absent",
+    "visible": [
+     "Find your personal link"
+    ],
+    "acc": null,
+    "w": 257.2,
+    "h": 52.5
+   },
+   "rsvpBg": "color(srgb 0.957294 0.943177 0.929059)",
+   "scheme": "light",
+   "ox": false,
+   "tokenInDom": false
+  },
+  "present": {
+   "gifts": {
+    "t": "See gifts",
+    "href": "/c/fixture-ana-y-luis/regalos",
+    "w": 152.5,
+    "h": 52.5
+   },
+   "reply": {
+    "href": "/c/fixture-ana-y-luis/rsvp",
+    "cred": "present",
+    "visible": [
+     "Reply now"
+    ],
+    "acc": null,
+    "w": 257.2,
+    "h": 52.5
+   },
+   "rsvpBg": "color(srgb 0.957294 0.943177 0.929059)",
+   "scheme": "light",
+   "ox": false,
+   "tokenInDom": false
+  },
+  "sameBox": true,
+  "bgWith": "color(srgb 0.957294 0.943177 0.929059)",
+  "bgWithout": "color(srgb 0.957294 0.943177 0.929059)",
+  "bgBase": "rgba(0, 0, 0, 0)",
+  "axeCritSerious": [],
+  "axeAll": [
+   "moderate:landmark-unique",
+   "moderate:region"
+  ],
+  "nav": ""
+ },
+ {
+  "loc": "en-US",
+  "scheme": "dark",
+  "w": 1280,
+  "absent": {
+   "gifts": {
+    "t": "See gifts",
+    "href": "/c/fixture-ana-y-luis/regalos",
+    "w": 152.5,
+    "h": 52.5
+   },
+   "reply": {
+    "href": "/c/fixture-ana-y-luis/rsvp",
+    "cred": "absent",
+    "visible": [
+     "Find your personal link"
+    ],
+    "acc": null,
+    "w": 257.2,
+    "h": 52.5
+   },
+   "rsvpBg": "color(srgb 0.957294 0.943177 0.929059)",
+   "scheme": "light",
+   "ox": false,
+   "tokenInDom": false
+  },
+  "present": {
+   "gifts": {
+    "t": "See gifts",
+    "href": "/c/fixture-ana-y-luis/regalos",
+    "w": 152.5,
+    "h": 52.5
+   },
+   "reply": {
+    "href": "/c/fixture-ana-y-luis/rsvp",
+    "cred": "present",
+    "visible": [
+     "Reply now"
+    ],
+    "acc": null,
+    "w": 257.2,
+    "h": 52.5
+   },
+   "rsvpBg": "color(srgb 0.957294 0.943177 0.929059)",
+   "scheme": "light",
+   "ox": false,
+   "tokenInDom": false
+  },
+  "sameBox": true,
+  "bgWith": "color(srgb 0.957294 0.943177 0.929059)",
+  "bgWithout": "color(srgb 0.957294 0.943177 0.929059)",
+  "bgBase": "rgba(0, 0, 0, 0)",
+  "axeCritSerious": [],
+  "axeAll": [
+   "moderate:landmark-unique",
+   "moderate:region"
+  ],
+  "nav": ""
+ }
+]

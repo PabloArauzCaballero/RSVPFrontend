@@ -1,4 +1,4 @@
-/** One line icon set for the navigation: 24-unit box, 1.75 stroke, round caps and joins, no fills. Keys are the destination keys of the host, provider and admin menus. */
+/** One line icon set for the whole product: 24-unit box, 1.75 stroke, round caps and joins, no fills. Data only (like `logo.ts`), so the app (`NavIcon` in `@rsvp/ui`), the public site and the invitation renderer (`@rsvp/celebration-theme`) draw the same shapes. Keys are the destination keys of the host, provider and admin menus plus the action icons of buttons. */
 export type NavShape =
   | { readonly t: 'path'; readonly d: string }
   | { readonly t: 'circle'; readonly cx: number; readonly cy: number; readonly r: number }

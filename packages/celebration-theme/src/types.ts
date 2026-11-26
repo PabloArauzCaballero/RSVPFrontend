@@ -47,7 +47,7 @@ export interface CelebrationTheme {
   readonly palette: Palette;
   readonly typography: Typography;
   readonly sectionStyle: SectionStyle;
-  /** Sections the template places, in its order, limited to what the event type enables. */
+  /** Sections the template places, in its order, limited to what the event type enables, plus the gifts section, which is always present (P22). */
   readonly sections: readonly SectionId[];
   /** Enabled by the event type but not placed by this template: hidden, never deleted. */
   readonly hiddenSections: readonly SectionId[];
