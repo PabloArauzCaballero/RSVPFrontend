@@ -45,6 +45,15 @@ La captura a 768 px mostró superposición de paneles del editor. El HTML
 publicado y el del candidato referencian el mismo archivo CSS
 `editor-8758c018b8d25d5b02004485ddd554a5.css`.
 
+## Prueba de restauración en CI
+
+La prueba de `versions.test.tsx` superó su límite de cinco segundos al
+ejecutar cinco escenarios dentro de un solo caso. Los errores 409, 401, 403
+y 422 y la pérdida de conexión ahora se prueban por separado con el mismo
+límite por caso. Cada prueba verifica su mensaje y que el borrador se
+conserve. El 409 también comprueba el estado de conflicto.
+[Ejecución que registró el timeout](https://github.com/PabloArauzCaballero/RSVPFrontend/actions/runs/45902783888/job/140192308213)
+
 ## Reversión
 
 Revertir este PR en `chore/deploy-contabo-coolify`.
