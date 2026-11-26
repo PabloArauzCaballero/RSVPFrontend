@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Catalogue of the invitation art (F3): every drawing and ornament on four seeded palettes (Clásico marfil, Piñata, Gala dorada,
- * Editorial granate), light and dark, rendered by Chromium. One sheet per palette and scheme, written to the evidence folder.
+ * Catalogue of the invitation art (F3): every drawing and ornament on four seeded palettes (Clásico marfil, Piñata, Gala art déco
+ * (wine accent; the seed id stays `gala-dorada`), Editorial granate), light and dark, rendered by Chromium. One sheet per palette and scheme, written to the evidence folder.
  *
  *   yarn workspace @rsvp/celebration-theme art:catalogue [--out <dir>] [--ids a,b,c] [--only <palette-key>] [--scale 1]
  *
