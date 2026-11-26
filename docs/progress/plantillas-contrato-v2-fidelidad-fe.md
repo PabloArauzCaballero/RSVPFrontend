@@ -20,24 +20,22 @@ Fecha: 2026-11-26 (Linux, Node 22, Chrome real `/usr/bin/google-chrome`). Contra
 - **PL-FE145-V3**: el tramo de hilo suelto bajo la piñata se elimina (la ilustración ya trae su hilo) y la guirnalda del ornamento `banderin` pasa a un solo cordel continuo (cambia el snapshot de la biblioteca de arte; lo usan Festivo, Fiesta patronal y Despedida como separador).
 - **V6**: `fixture-v2-velo` es la captura de peor caso que faltaba (no es una foto real).
 
-## Resultados observados
+## Resultados observados (tras la ronda 1)
 | Comando | Resultado |
 |---|---|
 | `yarn typecheck` | 19/19 tareas OK |
 | `yarn eslint . --max-warnings 0` | salida 0 |
-| `yarn workspace @rsvp/celebration-theme test` | 18 archivos, 3068 pruebas OK |
-| `yarn workspace @rsvp/design-editor test` | 474 OK |
-| `yarn workspace @rsvp/design-tokens test` / `build` | 92 OK / tokens verificados |
-| `yarn workspace @rsvp/seo-web test` | 210 OK |
-| `yarn workspace @rsvp/contracts check:generated`, `check:source` (contra BE local), `test` | OK; template-media 1.8.0 |
-| Playwright con Chrome real, `playwright.v2f.config.ts`, sitio `next build` + `next start` sobre el fixture del contrato | 50/50 (Marfil/Piñata/Gala, con y sin foto, claro/oscuro, 360/768/1280: variante de portada, botón de regalos ≥ 44 px y no cubierto, sin desborde, axe sin hallazgos, sin paneles ni balanceo con movimiento reducido; puertas de Gala sin tomar el clic y fuera de la vista al final; la piñata se mece y vuelve a reposo) |
+| `yarn test` (turbo) | celebration-theme 3070, design-editor 474, design-tokens 92, query-hooks 149, ui 333, seo-web 210, forms 65, auth 89 (+1 skip previo), api-client 17, i18n 15, contracts 6: OK. En la corrida completa bajo carga fallaron 2 pruebas de `versions.test.tsx` (timeouts de 5000 ms, archivo no tocado; el CI de la oficial ya los tiene) y una de `account-links.test.tsx` en universal; las dos pasan al repetirlas solas (474/474 y 16/16) |
+| `yarn workspace @rsvp/contracts check:generated` y `check:source` (contra BE local) | OK; BE `25976e7d`, template-media 1.8.0, celebration 1.6.0 |
+| Playwright con Chrome real, `playwright.v2f.config.ts`, `next build` + `next start` sobre el fixture | 54/54: Marfil/Piñata/Gala, con y sin foto, claro/oscuro, 360/768/1280 (variante de portada, foto en el eje o en las columnas del prototipo, botón de regalos ≥ 44 px y no cubierto, sin desborde, axe sin hallazgos, sin paneles ni balanceo con movimiento reducido, puertas sin tomar el clic, piñata que se mece) y 4 de AA medido sobre `fixture-v2-velo` |
+| `playwright.f6.config.ts` (medios, libre) | 40/40 |
+| `playwright.f6.config.ts` (ataques) | solo se corrieron las 23 primeras de 414 (hojas #0 a #8 a 360 y 1280) antes de detenerlas por el tiempo de la máquina: 23/23 OK; **no se corrió la batería completa** |
 
-Capturas (evidencia, no líneas base): `docs/progress/evidence/plantillas-v2-fidelidad/`. Líneas base commiteadas que cambian: ninguna (no se ejecutó `test:visual` ni se actualizó ningún `__screenshots__`).
+Capturas (evidencia, no líneas base): `docs/progress/evidence/plantillas-v2-fidelidad/`. Se regeneraron las capturas de evidencia de esta carpeta (28 PNG; evidencia, no líneas base). Líneas base commiteadas que cambian: ninguna (no se ejecutó `test:visual` ni se actualizó ningún `__screenshots__`).
 
 ## No probado
-- Fondo de foto real con velo degradado en el navegador: ningún fixture lo trae; está cubierto por pruebas unitarias y el cálculo de peor caso, no por captura.
+- Una foto real con velo degradado: `fixture-v2-velo` usa un tablero blanco y negro (el peor caso), no una fotografía.
 - iOS/Android: el invitado ve la web (P10). gitleaks no está instalado en este entorno.
-- Gala escritorio: la foto de portada (chaflán) queda alineada a la izquierda dentro del marco; pendiente de criterio de diseño.
 
 ## Reversión
 Revertir el PR vuelve al contrato 1.4.2 vendorizado; los documentos con campos 1.8.0 dejan de verse decorados pero se leen (campos ignorados). Revertir primero este PR y luego el del BE.
