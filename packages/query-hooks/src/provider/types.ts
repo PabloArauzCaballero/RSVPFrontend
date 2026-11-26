@@ -1,4 +1,6 @@
-/** Provider Catalog contract 2.0.0 (provider-catalog.openapi.json). */
+import type { ProviderCatalogComponents } from "@rsvp/contracts";
+
+/** Provider Catalog (provider-catalog.openapi.json; vendored version in packages/contracts/backend.lock.json). */
 export type ProviderStatus = "DRAFT" | "PENDING_VERIFICATION" | "VERIFIED" | "REJECTED" | "SUSPENDED";
 export type Destination = "OFFICIAL_SITE" | "LANDING" | "WHATSAPP" | "PHONE" | "EMAIL" | "INSTAGRAM" | "PRODUCT_PAGE";
 export type BookingStatus = "REQUESTED" | "CONFIRMED" | "REJECTED" | "CANCELLED" | "EXPIRED";
@@ -33,7 +35,8 @@ export interface ProviderQuoteSummary { readonly id: string; readonly providerId
 export interface ProviderQuote extends ProviderQuoteSummary { readonly contact: { readonly name: string; readonly email: string; readonly phone: string | null }; readonly message: string | null; readonly leadId: string | null }
 export interface ProviderQuotePage { readonly items: readonly ProviderQuoteSummary[]; readonly nextCursor: string | null }
 export interface QuoteReceipt { readonly id: string; readonly providerId?: string; readonly status: "REQUESTED"; readonly leadId: string; readonly disclaimer: string; readonly listings: readonly { readonly listingId: string; readonly fulfillment?: FulfillmentView }[] }
-export interface ListingHit { readonly id: string; readonly providerId: string; readonly title: string; readonly type?: string; readonly category?: string; readonly published?: boolean; readonly providerStatus?: ProviderStatus; readonly priceFromMinor?: number; readonly currency?: string; readonly imageUrl?: string }
+/** A GET /listings hit for the gift picker. `type` comes from the contract (ListingSummary, required since 3.4.0). */
+export interface ListingHit { readonly id: string; readonly providerId: string; readonly title: string; readonly type: ProviderCatalogComponents["schemas"]["ListingSummary"]["type"]; readonly category?: string; readonly published?: boolean; readonly providerStatus?: ProviderStatus; readonly priceFromMinor?: number; readonly currency?: string; readonly imageUrl?: string }
 export interface OfferCategory { readonly code: string; readonly name: string; readonly listingType?: CreateListingInput["type"] | null }
 /** PATCH /providers/{id}: the owner renames; the plan is admin-only and not offered here. */
 export interface UpdateProviderInput { readonly name: string }

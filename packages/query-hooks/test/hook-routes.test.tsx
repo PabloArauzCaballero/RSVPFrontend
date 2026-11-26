@@ -89,7 +89,7 @@ describe("gift hooks", () => {
     expect(h.calls).toHaveLength(0);
     const items = [{ source: "EXTERNAL", n: 1 }, { source: "CATALOGED", n: 2 }, { source: "EXTERNAL", n: 3 }];
     expect(hooks.catalogedFirst(items).map((item) => item.n)).toEqual([2, 1, 3]);
-    expect(hooks.guestVisible([{ status: "AVAILABLE" }, { status: "PROPOSED" }, { status: "REJECTED" }, { status: "COMMITTED" }, { status: "PENDING_REVIEW" }]).map((item) => item.status)).toEqual(["AVAILABLE", "COMMITTED", "PENDING_REVIEW"]);
+    expect(hooks.guestVisible([{ status: "AVAILABLE" }, { status: "PROPOSED" }, { status: "REJECTED" }, { status: "COMMITTED" }, { status: "PENDING_REVIEW" }, { status: "UNAVAILABLE" }]).map((item) => item.status)).toEqual(["AVAILABLE", "COMMITTED", "PENDING_REVIEW"]);
   });
 
   it("suggestionsOf reads the three shapes an ApiError can carry and ignores anything else", () => {
@@ -129,12 +129,8 @@ describe("provider hooks (portal, quotes, schedule, documents)", () => {
     await check((h) => hooks.useMonthCalendar(h.client, "p-1", "2026-12"), "/providers/p-1/calendar?month=2026-12");
   });
 
-  it("calendar and discovery are public (no session); discovery drops empty filters and sends the locale", async () => {
+  it("the calendar is public (no session)", async () => {
     const cal = harness(); expect((await runQuery(cal, () => hooks.useMonthCalendar(cal.client, "p-1", "2026-12"))).headers.get("authorization")).toBeNull();
-    const found = harness(() => ({ body: { items: [], total: 0, page: 1, pageSize: 20 } }));
-    const seen = await runQuery(found, () => hooks.useProviderDiscovery(found.client, { category: "CATERING", city: "", page: 2 } as never, "en-US"));
-    expect(seen.path).toBe("/providers?category=CATERING&page=2&locale=en-US");
-    expect(seen.headers.get("authorization")).toBeNull();
   });
 
   it("writes: register, submit, listing create and publish, lead config, availability, microsite If-Match, booking decisions, quotes", async () => {
@@ -183,8 +179,8 @@ describe("provider hooks (portal, quotes, schedule, documents)", () => {
   });
 
   it("listing search asks /listings for products only, in the given language", async () => {
-    const routed = harness(() => ({ body: { items: [{ id: "l-1", providerId: "p-1", title: "Torta", priceFrom: { amountMinor: 45000, currency: "BOB" } }] } }));
-    expect(await hooks.providerService(routed.client).searchListings("torta")).toEqual({ items: [{ id: "l-1", providerId: "p-1", title: "Torta", priceFromMinor: 45000, currency: "BOB" }] });
+    const routed = harness(() => ({ body: { items: [{ id: "l-1", providerId: "p-1", title: "Torta", type: "PRODUCT", priceFrom: { amountMinor: 45000, currency: "BOB" } }] } }));
+    expect(await hooks.providerService(routed.client).searchListings("torta")).toEqual({ items: [{ id: "l-1", providerId: "p-1", title: "Torta", type: "PRODUCT", priceFromMinor: 45000, currency: "BOB" }] });
     expect(routed.last().path).toBe("/listings?q=torta&type=PRODUCT&limit=50&locale=es-BO");
     await hooks.providerService(routed.client).searchListings("cake", "en-US");
     expect(routed.last().path).toBe("/listings?q=cake&type=PRODUCT&limit=50&locale=en-US");
@@ -199,14 +195,14 @@ describe("provider hooks (portal, quotes, schedule, documents)", () => {
     }
   });
 
-  it("A28 · a hit the catalog marks as SERVICE never comes out of listing search", async () => {
+  it("A28 · listing search fails closed: only hits typed PRODUCT come out; SERVICE and an untyped hit are dropped", async () => {
     const mixed = harness(() => ({ body: { items: [
       { id: "l-1", providerId: "p-1", title: "Torta", type: "PRODUCT" },
       { id: "l-2", providerId: "p-1", title: "Catering", type: "SERVICE" },
       { id: "l-3", providerId: "p-1", title: "Platos" }
     ] } }));
     const result = await hooks.providerService(mixed.client).searchListings("");
-    expect(result.items.map((item) => item.id)).toEqual(["l-1", "l-3"]);
+    expect(result.items.map((item) => item.id)).toEqual(["l-1"]);
   });
 
   it("M23 · product categories come from /providers/categories?type=PRODUCT and keep only product and shared ones", async () => {

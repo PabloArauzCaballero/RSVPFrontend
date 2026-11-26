@@ -1,0 +1,9 @@
+== medios+libre
+  ✓  39 e2e/plantillas-f6-medios.spec.ts:189:5 › the song sits in the same card as the video and the map, and the map label is left-aligned at 360 (681ms)
+  ✓  40 e2e/plantillas-f6-medios.spec.ts:196:5 › at 768 the song, the video and the map are cards of the same height, and the map button fits its content at 360 (901ms)
+
+  40 passed (40.7s)
+== ataques
+  Slow test file: e2e/plantillas-f6-ataques.spec.ts (13.6m)
+  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
+  414 passed (13.7m)

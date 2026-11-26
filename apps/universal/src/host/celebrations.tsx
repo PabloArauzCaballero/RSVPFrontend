@@ -7,7 +7,7 @@ import { canUseHostWorkspace } from "./gate";
 import { asText } from "./content-draft";
 import { editorPath, HOST_ROUTES, hostNav, withCelebration } from "./routes";
 import { CelebrationErrorNotice } from "./celebration-errors";
-import { formatDate } from "@rsvp/celebration-theme";
+import { formatDate } from "@rsvp/celebration-theme/model";
 import { spacing } from "@rsvp/design-tokens";
 import { RowList } from "./gifts/offer-row";
 import { ActionButton, EmptyState, Notice, Screen, useStyles } from "./ui";

@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { GIFTS_CTA_KEYS, navigationHref, partnerHref, shownVenues, type CelebrationContent, type GalleryImage, type GiftsStatus } from "../content.js";
 import { formatTime, zoneLabel } from "../format.js";
 import { ActionIcon } from "../icon.js";
-import { Photo } from "../photo.js";
+import { MediaImage } from "../media/components.js";
 import type { SectionId, Translate } from "../types.js";
 
 /** What every section receives. Sections never fetch and never hold copy of their own. */
@@ -67,21 +67,16 @@ function Venues({ content, t }: SectionProps): ReactNode {
   );
 }
 
-const IMAGE_WIDTHS = { thumb: 320, medium: 960, full: 1920 } as const;
-
+/** Photos of the gallery (F6): AVIF, then WebP, in a <picture> with the size reserved. They are below the cover, so every one is lazy: only the cover competes for the first paint. */
 function Gallery({ gallery, t }: SectionProps): ReactNode {
   return (
     <ul className="celebration-gallery">
       {gallery.map((image, index) => {
-        const srcSet = (["thumb", "medium", "full"] as const)
-          .filter((size) => image.variants[size])
-          .map((size) => `${image.variants[size]} ${IMAGE_WIDTHS[size]}w`).join(", ");
         const label = t("celebration.gallery.photo", { n: index + 1, total: gallery.length });
         return (
           <li key={image.id}>
             <a href={image.variants.full ?? image.variants.webp} data-link-kind="image" aria-label={t("celebration.gallery.open", { label })}>
-              <Photo src={image.variants.medium ?? image.variants.webp} srcSet={srcSet || undefined} sizes="(min-width: 768px) 33vw, 100vw" alt={label}
-                width={image.width ?? undefined} height={image.height ?? undefined} loading={index ? "lazy" : "eager"} decoding="async" />
+              <MediaImage media={{ id: image.id, width: image.width, height: image.height, variants: image.variants }} alt={label} sizes="(min-width: 768px) 33vw, 100vw" />
             </a>
           </li>
         );

@@ -15,7 +15,7 @@ import { RetryNotice } from "../guests/parts";
 import { useSingleFlightGate } from "../../platform/single-flight";
 
 type ChipTone = "yes" | "maybe" | "wait" | "no";
-const STATUS_TONE: Readonly<Record<GiftItem["status"], ChipTone>> = { AVAILABLE: "wait", PROPOSED: "maybe", PENDING_REVIEW: "maybe", COMMITTED: "yes", REJECTED: "no" };
+const STATUS_TONE: Readonly<Record<GiftItem["status"], ChipTone>> = { AVAILABLE: "wait", PROPOSED: "maybe", PENDING_REVIEW: "maybe", COMMITTED: "yes", REJECTED: "no", UNAVAILABLE: "no" };
 
 /** A square monogram: the first letter of the gift on a quiet ground, so every row has a face before it has a photo. */
 function Monogram({ title }: { readonly title: string }): ReactNode {
@@ -42,6 +42,7 @@ function GiftRow({ item, first, currencyLocale, onApprove, onReject, approving, 
         <View style={{ flex: 1, minWidth: 0, gap: spacing[1] }}>
           <Text style={styles.itemTitle} numberOfLines={2}>{item.title}</Text>
           <Text style={styles.muted} numberOfLines={1}>{origin}{narrow ? ` · ${price}` : ""}</Text>
+          {item.status === "UNAVAILABLE" ? <Text style={styles.muted} testID={`gift-unavailable-${item.id}`}>{t("gifts.host.list.unavailableNote")}</Text> : null}
           {item.reservedByName ? <Text style={styles.muted} testID={`gift-by-${item.id}`}>{t("gifts.host.list.reservedBy", { name: item.reservedByName })}</Text> : null}
           {narrow ? <View testID={`gift-status-${item.id}`} style={{ alignSelf: "flex-start", paddingTop: spacing[1] }}><Chip tone={STATUS_TONE[item.status]}>{t(`gifts.host.status.${item.status}`)}</Chip></View> : null}
         </View>
@@ -67,19 +68,21 @@ function GiftRow({ item, first, currencyLocale, onApprove, onReject, approving, 
   );
 }
 
-/** The list at a glance: how many gifts, and how many are open, taken or waiting for the host. */
+/** The list at a glance: how many gifts, and how many are open, taken, waiting for the host or no longer available (R1). */
 function GiftFigures({ items }: { readonly items: readonly GiftItem[] }): ReactNode {
   const t = useT();
   const live = items.filter((item) => item.status !== "REJECTED");
   const available = live.filter((item) => item.status === "AVAILABLE").length;
   const reserved = live.filter((item) => item.status === "COMMITTED").length;
   const review = live.filter((item) => item.status === "PROPOSED" || item.status === "PENDING_REVIEW").length;
+  const unavailable = live.filter((item) => item.status === "UNAVAILABLE").length;
   return (
     <View testID="gift-figures" style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing[4] }}>
       <Figure testID="gift-count" label={t("gifts.host.figures.gifts")} value={live.length} />
       <Figure testID="gift-available" label={t("gifts.host.figures.available")} value={available} />
       <Figure testID="gift-reserved" label={t("gifts.host.figures.reserved")} value={reserved} />
       {review > 0 ? <Figure testID="gift-review" label={t("gifts.host.figures.review")} value={review} /> : null}
+      {unavailable > 0 ? <Figure testID="gift-unavailable" label={t("gifts.host.figures.unavailable")} value={unavailable} /> : null}
     </View>
   );
 }

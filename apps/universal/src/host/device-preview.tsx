@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Linking, Text, View } from "react-native";
-import { themeFromTemplate } from "@rsvp/celebration-theme";
+import { themeFromTemplate } from "@rsvp/celebration-theme/model";
 import { spacing } from "@rsvp/design-tokens";
 import { useMediaAssets, useTemplate, type Celebration, type MediaAsset, type TranslatedEventType } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../platform/providers";

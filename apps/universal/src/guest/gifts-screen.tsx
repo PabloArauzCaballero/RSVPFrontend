@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Image, Linking, Pressable, Text, View } from "react-native";
 import { ApiError } from "@rsvp/api-client";
-import type { PublicCelebrationView } from "@rsvp/celebration-theme";
+import type { PublicCelebrationView } from "@rsvp/celebration-theme/model";
 import { spacing } from "@rsvp/design-tokens";
 import { formatMinor } from "@rsvp/i18n";
 import { Checkbox, Chip, EmptyState, Illustration, Skeleton, Stagger, SuccessNote, useColors } from "@rsvp/ui";

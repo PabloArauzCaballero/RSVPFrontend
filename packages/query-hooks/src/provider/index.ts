@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ApiClient } from "@rsvp/api-client";
 import { providerService } from "./api.js";
-import type { UpdateProviderInput, ProviderDiscoveryQuery, DocumentInput, MicrositeInput, Availability, BookingRequestInput, BookingStatus, CreateListingInput, LeadConfig, QuoteInput, RegisterProviderInput } from "./types.js";
+import type { UpdateProviderInput, DocumentInput, MicrositeInput, Availability, BookingRequestInput, BookingStatus, CreateListingInput, LeadConfig, QuoteInput, RegisterProviderInput } from "./types.js";
 export * from "./types.js";
 export { BOOKINGS_PAGE_SIZE, providerService } from "./api.js";
 import { cachePolicy, retryTransient } from "../policy.js";
@@ -206,11 +206,6 @@ export function useUploadDocument(client: ApiClient, providerId: string) {
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: P(providerId, "documents") })
   });
-}
-
-/** REQ-F23-05 · public discovery of verified providers from the host panel. */
-export function useProviderDiscovery(client: ApiClient, query: ProviderDiscoveryQuery, locale = "es-BO") {
-  return useQuery({ queryKey: ["providers", "discover", locale, query] as const, queryFn: () => providerService(client).discover(query, locale), staleTime: 30_000, placeholderData: (previous) => previous });
 }
 
 export * from "./directory.js";

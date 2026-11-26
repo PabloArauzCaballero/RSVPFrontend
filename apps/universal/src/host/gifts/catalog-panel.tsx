@@ -10,7 +10,6 @@ import { Hint, Row, RowList } from "./offer-row";
 import { GiftErrorNotice } from "./gift-errors";
 import { SkeletonList, Stagger } from "@rsvp/ui";
 import { ActionButton, Field, FilterSelect, Notice, useStyles } from "../ui";
-import { RetryNotice } from "../guests/parts";
 import { useSingleFlightGate } from "../../platform/single-flight";
 
 function ProductPhoto({ url, label }: { readonly url: string; readonly label: string }): ReactNode {
@@ -63,9 +62,9 @@ export function CatalogPanel({ celebrationId, currency, onSeeList }: { readonly 
           onChange={setCategory} />
       ) : null}
       {categories.isError ? (
-        <View style={{ gap: spacing[2] }} testID="catalog-categories-error">
-          <Text style={styles.muted}>{t("gifts.host.catalog.categoriesError")}</Text>
-          <RetryNotice error={categories.error} onRetry={() => { void categories.refetch(); }} />
+        // One message and one retry: the generic notice would repeat both.
+        <View testID="catalog-categories-error">
+          <Notice kind="error"><Text style={styles.body}>{t("gifts.host.catalog.categoriesError")}</Text><ActionButton icon="refresh" variant="secondary" label={t("gifts.host.errors.retry")} onPress={() => { void categories.refetch(); }} testID="catalog-categories-retry" /></Notice>
         </View>
       ) : null}
       <Text style={styles.muted}>{t("gifts.host.catalog.disclaimer")}</Text>
@@ -74,9 +73,9 @@ export function CatalogPanel({ celebrationId, currency, onSeeList }: { readonly 
       {!search.data && !search.isFetching && !search.isError ? <Hint>{t("gifts.host.catalog.prompt")}</Hint> : null}
       {search.isFetching && !search.data ? <SkeletonList count={3} row={{ minHeight: 120, avatar: false, trailing: false }} label={t("host.common.loading")} /> : null}
       {search.isError ? (
-        <View style={{ gap: spacing[2] }} testID="catalog-error">
-          <Text style={styles.body}>{t("gifts.host.catalog.error")}</Text>
-          <RetryNotice error={search.error} onRetry={() => { void search.refetch(); }} />
+        // One message and one retry: the generic notice would repeat both.
+        <View testID="catalog-error">
+          <Notice kind="error"><Text style={styles.body}>{t("gifts.host.catalog.error")}</Text><ActionButton icon="refresh" variant="secondary" label={t("gifts.host.errors.retry")} onPress={() => { void search.refetch(); }} testID="catalog-retry" /></Notice>
         </View>
       ) : null}
       {search.data && !search.isError && items.length === 0 ? <View testID="catalog-empty"><Hint>{t(narrowed ? "gifts.host.catalog.none" : "gifts.host.catalog.empty")}</Hint></View> : null}

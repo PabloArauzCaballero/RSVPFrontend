@@ -4,6 +4,15 @@ const path = require('node:path');
  * A6 · Security headers for every page. CSP starts report-only: violations appear in the browser console without
  * breaking the site; enforce it once the console is clean in TEST. Next needs inline scripts for hydration.
  */
+/**
+ * F6 · The only origins an iframe of the invitation may load (P17). Keep it equal to FRAME_HOSTS in
+ * packages/celebration-theme/src/media/embed.ts: the test in media/media.test.tsx (frame-src) fails when they differ. The CSP below is still Report-Only, so today `frame-src` reports and does not block: the allowlist of embed.ts (and the server's) is what holds, and this is the third lock only once the CSP is enforced.
+ * Privacy-enhanced hosts only
+ * (youtube-nocookie, Vimeo with dnt). Nothing else may be framed, and `frame-ancestors 'none'` still forbids framing this site.
+ */
+const frameHosts = ['www.youtube-nocookie.com', 'player.vimeo.com', 'open.spotify.com', 'www.google.com'];
+const frameSrc = `frame-src ${frameHosts.map((host) => `https://${host}`).join(' ')}`;
+
 const securityHeaders = [
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'X-Frame-Options', value: 'DENY' },
@@ -12,7 +21,7 @@ const securityHeaders = [
   { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=()' },
   {
     key: 'Content-Security-Policy-Report-Only',
-    value: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+    value: `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' https:; connect-src 'self' https:; ${frameSrc}; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'`
   }
 ];
 
@@ -37,7 +46,18 @@ const nextConfig = {
   async headers() {
     const privateHeaders = [{ key: 'Cache-Control', value: 'no-store' }, { key: 'Referrer-Policy', value: 'no-referrer' }, { key: 'X-Robots-Tag', value: 'noindex, nofollow' }];
     // Order matters: for the same key the later rule wins, so credential paths keep `no-referrer`.
-    return [{ source: '/:path*', headers: securityHeaders }, { source: '/c/:slug/rsvp/:path*', headers: privateHeaders }, { source: '/c/:slug/rsvp', headers: privateHeaders }, { source: '/rsvp/:path*', headers: privateHeaders }];
+    // P10 · `/vista-previa` is the one page the app may frame: it leaves the global rule (X-Frame-Options: DENY would block it) and
+    // answers its own: only the app's origin may embed it, and it is never cached or indexed.
+    const appOrigin = (() => { try { return new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:8100').origin; } catch { return "'none'"; } })();
+    const previewHeaders = [
+      // Neither X-Frame-Options nor the report-only CSP (its `frame-ancestors 'none'` would contradict the real one).
+      ...securityHeaders.filter((header) => header.key !== 'X-Frame-Options' && header.key !== 'Content-Security-Policy-Report-Only'),
+      { key: 'Content-Security-Policy', value: `frame-ancestors ${appOrigin}` },
+      { key: 'Cache-Control', value: 'no-store' },
+      { key: 'Referrer-Policy', value: 'no-referrer' },
+      { key: 'X-Robots-Tag', value: 'noindex, nofollow' }
+    ];
+    return [{ source: '/((?!vista-previa$).*)', headers: securityHeaders }, { source: '/vista-previa', headers: previewHeaders }, { source: '/c/:slug/rsvp/:path*', headers: privateHeaders }, { source: '/c/:slug/rsvp', headers: privateHeaders }, { source: '/rsvp/:path*', headers: privateHeaders }];
   },
   webpack: (config) => {
     // Workspace packages use NodeNext-style "./x.js" imports that point to .ts sources.

@@ -68,6 +68,54 @@ describe("REQ-F23-04 · status of each gift", () => {
   });
 });
 
+describe("R1 · M-6 · a gift that can no longer be given (UNAVAILABLE)", () => {
+  const WITH_UNAVAILABLE = { items: [gift("Torta"), gift("Musica", { status: "UNAVAILABLE" }), gift("Mesa", { status: "COMMITTED" })], partnerPriorityEnabled: true };
+  it("the host sees it marked with words, not only a color, and counted apart; no action is offered on it", async () => {
+    const { client } = fakeClient(handlers({ "GET /gifts/celebrations/c-1/items": () => WITH_UNAVAILABLE }));
+    renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    await screen.findByTestId("gift-Musica");
+    expect(screen.getByTestId("gift-status-Musica").textContent).toBe("No disponible");
+    expect(screen.getByTestId("gift-unavailable-Musica").textContent).toMatch(/Tus invitados ya no lo ven/);
+    expect(screen.queryByTestId("gift-unavailable-Torta")).toBeNull();
+    expect(screen.getByTestId("gift-unavailable").getAttribute("aria-label")).toBe("No disponibles: 1");
+    expect(screen.getByTestId("gift-available").getAttribute("aria-label")).toBe("Disponibles: 1");
+    expect(within(screen.getByTestId("gift-Musica")).queryAllByRole("button")).toEqual([]);
+  });
+  it("without unavailable gifts the figure does not appear", async () => {
+    const { client } = fakeClient(handlers({ "GET /gifts/celebrations/c-1/items": () => GIFTS }));
+    renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    await screen.findByTestId("gift-Torta");
+    expect(screen.queryByTestId("gift-unavailable")).toBeNull();
+  });
+  it("in English the mark and the note are translated", async () => {
+    const { client } = fakeClient(handlers({ "GET /gifts/celebrations/c-1/items": () => WITH_UNAVAILABLE }));
+    renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client, HOST, "en-US");
+    await screen.findByTestId("gift-Musica");
+    expect(screen.getByTestId("gift-status-Musica").textContent).toBe("Unavailable");
+    expect(screen.getByTestId("gift-unavailable-Musica").textContent).toMatch(/Your guests no longer see it/);
+  });
+  it("the guest never sees it, even if a response carried it", async () => {
+    const { client } = fakeClient(handlers({
+      "GET /celebrations/public/ana-luis": () => ({ celebrationId: "c-1", slug: "ana-luis", content: { title: "Ana y Luis" } }),
+      "GET /gifts/celebrations/c-1/items": () => WITH_UNAVAILABLE
+    }));
+    renderApp(<GuestGiftsScreen slug="ana-luis" token={"T".repeat(43)} onNavigate={navigate} />, client);
+    await screen.findByTestId("reserve-Torta");
+    expect(screen.queryByText("Musica")).toBeNull();
+    expect(screen.queryByText("No disponible")).toBeNull();
+  });
+  it("422 GIFT_LISTING_NOT_PRODUCT on add says it is a service, in the host's language", async () => {
+    const itemsPath = "/gifts/celebrations/c-1/items";
+    const { client } = fakeClient(handlers({ "GET /listings": () => ({ items: [{ id: LISTING, providerId: PID, title: "Torta", type: "PRODUCT" }] }), [`POST ${itemsPath}`]: () => new HttpFailure(422, { code: "GIFT_LISTING_NOT_PRODUCT", title: "Listing is not a product" }) }));
+    renderApp(<CatalogScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    await screen.findByTestId("catalog-query");
+    fireEvent.click(screen.getByTestId("catalog-search"));
+    fireEvent.click(await screen.findByTestId(`add-${LISTING}`));
+    expect(await screen.findByText(/Eso es un servicio, no un producto/)).toBeTruthy();
+    expect(screen.queryByText(/Listing is not a product/)).toBeNull();
+  });
+});
+
 describe("REQ-F23-01 · pending reservations inbox", () => {
   const RES = { items: [{ id: "r1", itemId: "Torta", celebrationId: "c-1", guestDisplayName: "Marta", message: "Felicidades", status: "PENDING_REVIEW", requestedAt: "2026-11-02T15:00:00Z" }] };
   it("names the requester in full, with the group, when the guest record can be read", async () => {
@@ -115,7 +163,7 @@ describe("REQ-F23-02 · build the list from the partner catalog", () => {
     let hasList = existingList;
     const price = { amountMinor: 45000, currency: "BOB" };
     const { client, calls } = fakeClient(handlers({
-      "GET /listings": () => ({ items: [{ id: LISTING, providerId: PID, title: "Torta de bodas", priceFrom: price }] }),
+      "GET /listings": () => ({ items: [{ id: LISTING, providerId: PID, title: "Torta de bodas", type: "PRODUCT", priceFrom: price }] }),
       [`POST ${listPath}`]: () => {
         hasList = true;
         return { id: "l", celebrationId: "c-1" };
@@ -150,14 +198,36 @@ describe("REQ-F23-02 · build the list from the partner catalog", () => {
     fireEvent.click(screen.getByTestId("catalog-search"));
     const error = await screen.findByTestId("catalog-error");
     expect(error.textContent).toMatch(/No pudimos cargar los productos del catálogo/);
+    // One message and one retry, not the generic notice repeating both.
+    // (Before, the generic notice added «No encontramos esta celebración…», which is false for a missing /listings route.)
+    expect(error.textContent).toBe("No pudimos cargar los productos del catálogo.Reintentar");
+    expect(within(error).getAllByRole("button")).toHaveLength(1);
     expect(screen.queryByTestId(`hit-${LISTING}`)).toBeNull();
     expect(screen.queryByText(/catálogo público de proveedores/)).toBeNull();
     expect(calls.some((call) => call.path === "/providers")).toBe(false);
     routed = true;
-    fireEvent.click(within(error).getAllByText("Reintentar")[0] as HTMLElement);
+    fireEvent.click(within(error).getByText("Reintentar"));
     expect(await screen.findByTestId(`hit-${LISTING}`)).toBeTruthy();
     expect(screen.queryByTestId("catalog-error")).toBeNull();
     expect(calls.some((call) => call.path === "/providers")).toBe(false);
+  });
+  it("M23 · a failed category read says so once, keeps the search usable and retries with one button", async () => {
+    let fail = true;
+    const { client, calls } = fakeClient(handlers({
+      "GET /providers/categories": () => (fail ? new HttpFailure(503, { title: "down" }) : { items: [{ code: "PASTRY", name: "Repostería", listingType: "PRODUCT" }] }),
+      "GET /listings": () => ({ items: [{ id: LISTING, providerId: PID, title: "Torta", type: "PRODUCT" }] })
+    }));
+    renderApp(<CatalogScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    const error = await screen.findByTestId("catalog-categories-error");
+    expect(error.textContent).toBe("No pudimos cargar las categorías; puedes buscar igual.Reintentar");
+    expect(within(error).getAllByRole("button")).toHaveLength(1);
+    fireEvent.click(screen.getByTestId("catalog-search"));
+    expect(await screen.findByTestId(`hit-${LISTING}`)).toBeTruthy();
+    fail = false;
+    fireEvent.click(within(error).getByText("Reintentar"));
+    expect(await screen.findByTestId("catalog-category")).toBeTruthy();
+    expect(screen.queryByTestId("catalog-categories-error")).toBeNull();
+    expect(calls.filter((call) => call.path === "/providers/categories").length).toBeGreaterThanOrEqual(2);
   });
   it("A27 · no product at all is an honest empty state, not provider cards", async () => {
     const { client, calls } = fakeClient(handlers({ "GET /listings": () => ({ items: [] }), "GET /providers": () => ({ items: [{ listingId: LISTING, providerSlug: "s", name: "Catering" }], total: 1, page: 1, pageSize: 50 }) }));
@@ -204,7 +274,7 @@ describe("REQ-F23-02 · build the list from the partner catalog", () => {
     expect((await screen.findByTestId("catalog-empty")).textContent).toMatch(/esa búsqueda o categoría/);
   });
   it("422 CATALOG_PRODUCT_UNAVAILABLE explains and keeps the search", async () => {
-    const { client, calls } = fakeClient(handlers({ "GET /listings": () => ({ items: [{ id: LISTING, providerId: PID, title: "Torta" }] }), [`POST ${itemsPath}`]: () => new HttpFailure(422, { code: "CATALOG_PRODUCT_UNAVAILABLE" }) }));
+    const { client, calls } = fakeClient(handlers({ "GET /listings": () => ({ items: [{ id: LISTING, providerId: PID, title: "Torta", type: "PRODUCT" }] }), [`POST ${itemsPath}`]: () => new HttpFailure(422, { code: "CATALOG_PRODUCT_UNAVAILABLE" }) }));
     renderApp(<CatalogScreen celebrationId="c-1" onNavigate={navigate} />, client);
     await screen.findByTestId("catalog-query");
     fireEvent.click(screen.getByTestId("catalog-search"));
