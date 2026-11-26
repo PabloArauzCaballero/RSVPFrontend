@@ -62,3 +62,7 @@ Ornamentos (un solo trazo de 1,8, tinta + un acento): laurel, art déco, filete,
 - El oscuro de la plantilla (`paletteFor(..., "dark")`) vive en la rama `fix/plantillas-fase0-contraste-oscuro`, que aún no está en la base. `test/dark-palette.ts` copia esa composición y `art-palette.test.ts` la fija; al entrar esa rama se borra y se importa `paletteFor`.
 - Pendiente de F4: conectar los dibujos a las plantillas, elegir el set por tipo de evento y el ornamento por plantilla, y el sobre que se abre.
 - No se probó en iOS/Android nativos ni en el backend real: el módulo no toca ni contratos ni API.
+
+## Ronda 2 (PL-138-R2-1)
+
+La greca de la máscara de morenada mide ahora 44,4 de ancho (x 37,8 a 82,2) y el huevo mide 42,3 a 48,5 entre y 49 y 54 (45,7 a media banda): antes medía 38 (x 41 a 79) y quedaba flotante. La prueba compara el ancho de la banda con el ancho real del huevo a su altura (±2) y exige que cada extremo caiga a ±2 del contorno. Capturas de la invitación `/c/fiesta-patronal` a 360, 768 y 1280 px, con y sin foto, en claro y oscuro: `invitacion-r2/` (evidencia Linux, no líneas base).
