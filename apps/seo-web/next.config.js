@@ -28,7 +28,8 @@ const nextConfig = {
   reactStrictMode: true,
   // L18 · Baked at build time (not read from the running server's environment): only the visual test build opens the dev-only
   // /catalogo (lib/dev-surfaces.ts). The deployed image is built without it, and setting it on a running container changes nothing.
-  env: { RSVP_VISUAL_TEST_CATALOG: process.env.RSVP_VISUAL_TEST_CATALOG === '1' ? '1' : '' },
+  // L25 · RSVP_VISUAL_NOW (the visual suite's fixed instant) is baked the same way and only honored together with that flag.
+  env: { RSVP_VISUAL_TEST_CATALOG: process.env.RSVP_VISUAL_TEST_CATALOG === '1' ? '1' : '', RSVP_VISUAL_NOW: process.env.RSVP_VISUAL_TEST_CATALOG === '1' ? process.env.RSVP_VISUAL_NOW ?? '' : '' },
   // Metadata in <head> for every user agent: WhatsApp, Lighthouse and many crawlers are not in Next's bot list,
   // and streamed metadata (in <body>) would leave them without title, description or Open Graph card.
   htmlLimitedBots: /.*/,
