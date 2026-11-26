@@ -496,7 +496,7 @@ export interface components {
             /** @description Contrast warnings of the draft; present on create, save and restore. They never block (P19) */
             warnings?: components["schemas"]["DesignWarning"][];
         };
-        /** @description How an element or a page enters. `entrance` is the v2 kind; `name` (1.8.0) picks a named animation whose duration comes from the motion tokens, so it cannot carry `durationMs` (422 DESIGN_DECORATION_INVALID). With a `name`, `entrance` is ignored by the renderer: send `none`. */
+        /** @description How an element or a page enters. `entrance` is the v2 kind; `name` (1.8.0) picks a named animation whose duration comes from the motion tokens, so it cannot carry `durationMs` (422 DESIGN_DECORATION_INVALID). With a `name`, `entrance` is ignored by the renderer: send `none` (the service tolerates another value and stores it, so documents saved earlier keep validating, and the renderer ignores it). The gifts and reply buttons take no `name` at all: it would move, hide or cover them (422 DESIGN_DECORATION_INVALID); the inherited `entrance` stays accepted there. */
         DesignAnimation: {
             delayMs?: number;
             durationMs?: number;
@@ -1241,6 +1241,8 @@ export interface components {
             durationMs?: number | null;
             filename?: string;
             height?: number | null;
+            /** @description F7 / PL-142-R4: an administrator hid this file (the whole page, the gallery section or the file itself) and it is not served. `variants` is empty while true. Absent in responses of services older than 1.5.0, which read as false. Never true in the public gallery, which omits hidden files. */
+            hidden?: boolean;
             /** Format: uuid */
             id?: string;
             isCover?: boolean;
@@ -2416,7 +2418,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Unknown asset, variant, or celebration not published */
+            /** @description Unknown asset, variant, or celebration not published, or the file is hidden by moderation (F7 / PL-142-R4): the same answer, so the public learns nothing about the moderation. It answers 302 again as soon as the hiding is lifted. */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -2438,7 +2440,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Gallery of a published celebration; variant URLs are the stable /public/assets/{id}/{variant} links */
+            /** @description Gallery of a published celebration; variant URLs are the stable /public/assets/{id}/{variant} links. Files hidden by moderation (F7) are not listed. */
             200: {
                 headers: {
                     [name: string]: unknown;
