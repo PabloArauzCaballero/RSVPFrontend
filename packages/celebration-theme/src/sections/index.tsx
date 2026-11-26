@@ -135,15 +135,6 @@ export function RsvpAction({ t, rsvpHref, rsvpHelpHref, rsvpAdaptive, label, var
   return <>{action}{help}</>;
 }
 
-function Rsvp(props: SectionProps): ReactNode {
-  return (
-    <>
-      <p>{props.t("celebration.rsvp.body")}</p>
-      <RsvpAction {...props} />
-    </>
-  );
-}
-
 /**
  * P22 / PL-A10: the gifts button. Always `giftsHref` (`/c/{slug}/regalos`, never the guest's token); only its label depends on the
  * gift list's status, unless a design document gives it a label of its own.
@@ -153,16 +144,27 @@ export function GiftsAction({ t, giftsHref, giftsStatus, label, variant, dock }:
 }
 
 /**
- * P22 / PL-A10: the gifts button, present on every invitation. The list itself lives on its own page, which resolves the
- * guest's credential; this link never carries it.
+ * PL-114 decision 8: «Confirmar asistencia» and «Regalos» are ONE block, both primary and with the same visual weight (side by
+ * side from 600 px, stacked on the phone). Gifts are always visible: they are the business model. The block is the renderer's own
+ * layer (`.rsvp-protected`), never inside the author's container, so no stylesheet of a design can reach it, and the destinations
+ * stay as they were: the adaptive reply (`/c/{slug}/rsvp`, whose face the credential island switches) and `/c/{slug}/regalos`.
+ * It carries no `variant`: a design cannot make one of the two quieter than the other.
  */
-function Gifts(props: SectionProps): ReactNode {
+export function ActionsBlock({ t, rsvpHref, rsvpHelpHref, rsvpAdaptive, giftsHref, giftsStatus, rsvpLabel, giftsLabel, intro = true }: Pick<SectionProps, "t" | "rsvpHref" | "rsvpHelpHref" | "rsvpAdaptive" | "giftsHref" | "giftsStatus"> & { readonly rsvpLabel?: string; readonly giftsLabel?: string; readonly intro?: boolean }): ReactNode {
   return (
-    <>
-      <p>{props.t("celebration.gifts.intro")}</p>
-      <GiftsAction {...props} />
-    </>
+    <div className="celebration-actions rsvp-protected" role="group" aria-label={t("celebration.actions.label")} data-actions="">
+      {intro ? <p className="celebration-actions-intro">{t("celebration.actions.intro")}</p> : null}
+      <div className="celebration-actions-buttons">
+        <RsvpAction t={t} rsvpHref={rsvpHref} rsvpHelpHref={rsvpHelpHref} rsvpAdaptive={rsvpAdaptive} label={rsvpLabel} />
+        <GiftsAction t={t} giftsHref={giftsHref} giftsStatus={giftsStatus} label={giftsLabel} />
+      </div>
+    </div>
   );
+}
+
+/** The v1 sections `gifts` and `rsvp` are the same block: whichever page is asked for (or the one section that holds it in the full page) shows both buttons. */
+function Actions(props: SectionProps): ReactNode {
+  return <ActionsBlock {...props} />;
 }
 
 export const SECTIONS: Readonly<Record<SectionId, Section>> = {
@@ -173,6 +175,6 @@ export const SECTIONS: Readonly<Record<SectionId, Section>> = {
   dressCode: DressCode,
   faq: Faq,
   recommendations: Recommendations,
-  gifts: Gifts,
-  rsvp: Rsvp
+  gifts: Actions,
+  rsvp: Actions
 };

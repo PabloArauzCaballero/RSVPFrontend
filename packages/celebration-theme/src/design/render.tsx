@@ -7,7 +7,7 @@ import { Flourish } from "../flourish.js";
 import { formatDate } from "../format.js";
 import type { CelebrationRendererProps } from "../renderer.js";
 import { SectionNav } from "../section-nav.js";
-import { GiftsAction, RsvpAction, SECTIONS } from "../sections/index.js";
+import { ActionsBlock, GiftsAction, RsvpAction, SECTIONS } from "../sections/index.js";
 import { AudioPlayer, EmbedFacade, MediaBackdrop, MediaImage } from "../media/components.js";
 import { embedFromConfig, mapEmbed } from "../media/embed.js";
 import { clampScrim, type PublicMedia } from "../media/variants.js";
@@ -245,13 +245,30 @@ function elementStyle(element: DesignElement, mobile: DesignElement | undefined,
   } as CSSProperties;
 }
 
+const isProtectedBlock = (block: DesignBlock | undefined): boolean => block?.type === "giftsCta" || block?.type === "rsvpCta";
+
+/** The label the author gave a button of the document, if any: the block keeps its text, never its look. */
+function buttonLabel(context: Context, type: "giftsCta" | "rsvpCta"): string | undefined {
+  const label = context.design.blocks.find((block) => block.type === type)?.config["label"];
+  return typeof label === "string" && label ? label : undefined;
+}
+
+/** The one block with «Confirmar asistencia» and «Regalos» (decision 8), as the renderer's own layer: a sibling of the canvas, outside `.cdesign-author`. */
+function ActionsLayer({ context }: { readonly context: Context }): ReactNode {
+  const { props } = context;
+  return <ActionsBlock t={context.t} rsvpHref={props.rsvpHref} rsvpHelpHref={props.rsvpHelpHref} rsvpAdaptive={props.rsvpAdaptive} giftsHref={context.giftsHref} giftsStatus={props.giftsStatus}
+    rsvpLabel={buttonLabel(context, "rsvpCta")} giftsLabel={buttonLabel(context, "giftsCta")} />;
+}
+
 function Canvas({ page, context }: { readonly page: DesignPage; readonly context: Context }): ReactNode {
   const { mobile, desktop } = page.canvases;
   const byId = (canvas: DesignCanvas | undefined): Map<string, DesignElement> => new Map((canvas?.elements ?? []).filter((item) => item.visible).map((item) => [item.id, item]));
   const phone = byId(mobile);
   const wide = byId(desktop);
-  const ids = [...new Set([...phone.keys(), ...wide.keys()])];
   const blocks = new Map(context.design.blocks.map((block) => [block.id, block]));
+  // PL-114 decision 8: the gifts and reply buttons are drawn together by `ActionsBlock`, never as elements of a canvas: where the author placed them (or hid them) does not matter.
+  const ids = [...new Set([...phone.keys(), ...wide.keys()])].filter((id) => !isProtectedBlock(blocks.get((phone.get(id) ?? wide.get(id))?.block ?? "")));
+  if (!ids.length) return null;
   const vars = { "--cd-cols-m": mobile.columns, "--cd-row-m": `${mobile.rowHeight}px`, "--cd-cols-d": desktop?.columns ?? mobile.columns, "--cd-row-d": `${(desktop ?? mobile).rowHeight}px` } as CSSProperties;
   return (
     <div className="cdesign-canvas" data-mode={mobile.mode} data-desktop={desktop ? "" : undefined} style={vars}>
@@ -319,7 +336,7 @@ function PageBlock({ page, context, only }: { readonly page: DesignPage; readonl
   return (
     <section id={section} className="cdesign-page" data-page-kind="section" data-section={section} data-page={page.id} data-style={page.style} data-bg-media={page.background?.kind === "media" ? "" : undefined} aria-labelledby={headingId} style={backgroundStyle(page.background)}>
       <h2 id={headingId} className={only ? "celebration-visually-hidden" : "cdesign-page-title"}>{t(sectionTitleKey(section))}</h2>
-      {section === "gifts" || section === "rsvp" ? <div className="cdesign-intro"><p>{t(`celebration.${section}.${section === "gifts" ? "intro" : "body"}`)}</p></div> : null}
+      {section === "gifts" || section === "rsvp" ? <div className="cdesign-intro"><ActionsLayer context={context} /></div> : null}
       {inner}
     </section>
   );
@@ -346,7 +363,13 @@ export function DesignRenderer(props: DesignRendererProps): ReactNode {
     ...(scheme ? artVariables(artPalette(palette)) : {})
   } as CSSProperties;
   const placed = design.pages.filter((page) => page.kind === "cover" || (page.section && available.includes(page.section as SectionId)));
-  const pages = props.only ? placed.filter((page) => page.kind === "section" && page.section === props.only) : placed;
+  // PL-114 decision 8: in the full page `gifts` and `rsvp` are ONE block, drawn once at the reply; each keeps its own page under `only`.
+  const hasReply = placed.some((page) => page.section === "rsvp");
+  const hasGifts = placed.some((page) => page.section === "gifts");
+  const merged = !props.only && hasReply && hasGifts;
+  const pages = props.only ? placed.filter((page) => page.kind === "section" && page.section === props.only) : merged ? placed.filter((page) => page.section !== "gifts") : placed;
+  // A document that dropped both pages still carries the block: it is the renderer's, not the document's.
+  const orphan = !props.only && !hasReply && !hasGifts;
   return (
     <article className="celebration celebration-design" data-design="2" data-layout={theme.layout} data-color-scheme={scheme ?? "light"} data-scheme-source={scheme ? "prop" : "system"}
       data-section-style={theme.sectionStyle} data-divider={layout.divider} data-images={layout.imageTreatment} lang={view.locale} style={style}>
@@ -363,6 +386,7 @@ export function DesignRenderer(props: DesignRendererProps): ReactNode {
             {!props.only && index === 0 ? <SectionNav props={props} sections={available} /> : null}
           </Fragment>
         ))}
+        {orphan ? <section id="rsvp" className="cdesign-page" data-page-kind="section" data-section="rsvp" aria-labelledby="section-rsvp"><h2 id="section-rsvp" className="cdesign-page-title">{t(sectionTitleKey("rsvp"))}</h2><div className="cdesign-intro"><ActionsLayer context={context} /></div></section> : null}
       </main>
     </article>
   );

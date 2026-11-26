@@ -83,7 +83,9 @@ export function CelebrationRenderer(props: CelebrationRendererProps): ReactNode 
   const content = readContent(view);
   const layout = layoutOf(theme);
   const available = theme.sections.filter((section) => hasSectionContent(section, content, gallery));
-  const shown = props.only ? available.filter((section) => section === props.only) : available;
+  // PL-114 decision 8: in the full page `gifts` and `rsvp` are ONE block (both buttons), drawn once where the reply sits; their own pages keep each heading.
+  const merged = !props.only && available.includes("gifts") && available.includes("rsvp");
+  const shown = props.only ? available.filter((section) => section === props.only) : merged ? available.filter((section) => section !== "gifts") : available;
   // Custom properties are valid inline style keys; React passes them through untouched.
   const style = { ...themeVariables(theme, props.colorScheme) } as CSSProperties;
   return (

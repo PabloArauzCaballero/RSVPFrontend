@@ -134,13 +134,30 @@ describe("the three prototyped templates as design documents v2", () => {
     expect(markup).toMatch(/--dx:6;--dy:4;--dw:6;/);
   });
 
-  it("an element hidden in the document is not drawn, but the dock still carries the gifts button (P22)", () => {
+  it("PL-114 decisión 8: un elemento oculto del documento no quita el bloque; el bloque es una capa protegida única fuera del contenedor del autor", () => {
     const template = designTemplate("pinata");
     const design = JSON.parse(JSON.stringify(template.theme)) as DesignDocumentV2 & { pages: { canvases: { mobile: { elements: { block: string; visible: boolean }[] } } }[] };
-    for (const page of design.pages) for (const item of page.canvases.mobile.elements) if (item.block === "gifts-cta") item.visible = false;
-    const markup = renderToStaticMarkup(<CelebrationRenderer theme={themeFromTemplate({ ...template, theme: design as unknown as TemplateDocument["theme"] }, WEDDING_VIEW.enabledSections)} view={WEDDING_VIEW} t={t} now={NOW} />);
-    expect([...markup.matchAll(/data-action="gifts"/g)]).toHaveLength(1);
+    for (const page of design.pages) for (const item of page.canvases.mobile.elements) if (item.block === "gifts-cta" || item.block === "rsvp-cta") item.visible = false;
+    const markup = renderToStaticMarkup(<CelebrationRenderer theme={themeFromTemplate({ ...template, theme: design as unknown as TemplateDocument["theme"] }, WEDDING_VIEW.enabledSections)} view={WEDDING_VIEW} t={t} now={NOW} rsvpHelpHref="/c/ana-y-luis/rsvp" rsvpAdaptive />);
+    const document = new DOMParser().parseFromString(markup, "text/html");
+    const blocks = document.querySelectorAll("main .celebration-actions.rsvp-protected");
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0]?.closest(".cdesign-author")).toBeNull();
+    // The block and the dock: two gifts links, both always there (P22).
+    expect([...markup.matchAll(/data-action="gifts"/g)]).toHaveLength(2);
     expect(markup).toContain('data-dock=""');
+    expect([...(blocks[0] as Element).querySelectorAll("a.celebration-cta")].map((button) => button.getAttribute("data-action"))).toEqual(["rsvp-help", "gifts"]);
+    for (const button of blocks[0]?.querySelectorAll("a.celebration-cta") ?? []) expect(button.hasAttribute("data-variant")).toBe(false);
+  });
+
+  it("PL-114 decisión 8: un documento sin páginas de regalos ni de confirmación conserva el bloque (es del renderizador, no del documento)", () => {
+    const template = designTemplate("pinata");
+    const design = JSON.parse(JSON.stringify(template.theme)) as { pages: { section?: string }[] };
+    design.pages = design.pages.filter((page) => page.section !== "gifts" && page.section !== "rsvp");
+    const markup = renderToStaticMarkup(<CelebrationRenderer theme={themeFromTemplate({ ...template, theme: design as unknown as TemplateDocument["theme"] }, WEDDING_VIEW.enabledSections)} view={WEDDING_VIEW} t={t} now={NOW} />);
+    const document = new DOMParser().parseFromString(markup, "text/html");
+    expect(document.querySelectorAll("main .celebration-actions")).toHaveLength(1);
+    expect(document.querySelector('main .celebration-actions a[data-action="gifts"]')?.getAttribute("href")).toBe("/c/ana-y-luis/regalos");
   });
 
   it("a link of the document: listing goes through the redirector, gifts to the list, url only https", () => {
@@ -308,10 +325,9 @@ describe("state · «Ver regalos» in its three states (giftsStatus seam, BE #12
       expect(markup).not.toContain("gifts.guest.cta");
     }
   });
-  it("the stylesheet gives EMPTY and CLOSED a look of their own on palette roles", () => {
+  it("PL-114 decisión 8: ningún estado aligera el botón de regalos (sin línea punteada ni color atenuado)", () => {
     const css = readFileSync(join(__dirname, "../../styles.css"), "utf8");
-    expect(css).toMatch(/\[data-gifts-status="EMPTY"\][^}]*dashed/);
-    expect(css).toMatch(/\[data-gifts-status="CLOSED"\][^}]*var\(--celebration-muted\)/);
+    expect(css).not.toMatch(/\[data-gifts-status="(EMPTY|CLOSED)"\][^}]*(dashed|var\(--celebration-muted\))/);
   });
   it("the labels exist in both languages and none is a gifts.guest key", () => {
     const es = readFileSync(join(__dirname, "../../../i18n/locales/es-BO/celebration.ts"), "utf8");

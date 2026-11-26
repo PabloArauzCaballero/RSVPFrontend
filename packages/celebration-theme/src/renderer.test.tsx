@@ -32,7 +32,7 @@ describe("CelebrationRenderer", () => {
   it("sections in the template's order, and empty ones leave no hole", () => {
     const html = renderWith(TEMPLATES[1]);
     const order = [...html.matchAll(/data-section="(\w+)"/g)].map((match) => match[1]);
-    expect(order).toEqual(["schedule", "venues", "story", "gallery", "faq", "gifts", "rsvp"]);
+    expect(order).toEqual(["schedule", "venues", "story", "gallery", "faq", "rsvp"]);
     const noDressCode = renderToStaticMarkup(<CelebrationRenderer theme={themeFromTemplate(TEMPLATES[0], VIEW.enabledSections)} view={{ ...VIEW, content: { ...VIEW.content, dressCode: "", faq: [] } }} t={t} now={NOW} />);
     expect(noDressCode).not.toContain('data-section="dressCode"');
     expect(noDressCode).not.toContain('data-section="faq"');
@@ -84,9 +84,11 @@ describe("P22 · PL-A10 · the gifts button on every invitation", () => {
     const view = { ...VIEW, enabledSections: withoutGifts(WEDDING_SECTIONS) };
     for (const colorScheme of ["light", "dark"] as const) {
       const document = parse(renderToStaticMarkup(<CelebrationRenderer theme={themeFromTemplate(omitted, view.enabledSections)} view={view} gallery={GALLERY} t={t} now={NOW} basePath={BASE} colorScheme={colorScheme} />));
-      const section = document.querySelector('section[data-section="gifts"]');
-      expect(section?.querySelector("h2")?.textContent).toBe("celebration.sections.gifts");
-      const button = section?.querySelector<HTMLAnchorElement>('a[data-action="gifts"]');
+      // PL-114 decision 8: gifts and reply are ONE block, in the reply's section.
+      const section = document.querySelector('section[data-section="rsvp"]');
+      expect(document.querySelector('section[data-section="gifts"]')).toBeNull();
+      expect(section?.querySelectorAll(".celebration-actions")).toHaveLength(1);
+      const button = section?.querySelector<HTMLAnchorElement>('.celebration-actions a[data-action="gifts"]');
       expect(button?.getAttribute("href")).toBe(`${BASE}/regalos`);
       expect(button?.className).toBe("celebration-cta");
       expect(button?.textContent).toBe("celebration.gifts.cta");
@@ -97,11 +99,11 @@ describe("P22 · PL-A10 · the gifts button on every invitation", () => {
     }
   });
 
-  it("goes where the template places it, otherwise right before the reply", () => {
+  it("the block sits where the reply sits, whatever order the template gave gifts", () => {
     const placed = parse(renderWith(TEMPLATES[0]));
-    expect([...placed.querySelectorAll("[data-section]")].map((node) => node.getAttribute("data-section"))).toEqual(["story", "schedule", "venues", "gallery", "dressCode", "gifts", "faq", "recommendations", "rsvp"]);
+    expect([...placed.querySelectorAll("[data-section]")].map((node) => node.getAttribute("data-section"))).toEqual(["story", "schedule", "venues", "gallery", "dressCode", "faq", "recommendations", "rsvp"]);
     const corporate = parse(renderWith(TEMPLATES[4]));
-    expect([...corporate.querySelectorAll("[data-section]")].map((node) => node.getAttribute("data-section"))).toEqual(["schedule", "venues", "faq", "recommendations", "gifts", "rsvp"]);
+    expect([...corporate.querySelectorAll("[data-section]")].map((node) => node.getAttribute("data-section"))).toEqual(["schedule", "venues", "faq", "recommendations", "rsvp"]);
   });
 
   it("never carries the guest's personal link, even when the page knows it", () => {
@@ -127,6 +129,32 @@ describe("P22 · PL-A10 · the gifts button on every invitation", () => {
   });
 });
 
+describe("PL-114 decisión 8 · «Confirmar asistencia» y «Regalos» en el mismo bloque, ambos primarios", () => {
+  it.each(TEMPLATES.map((template) => [template.layout, template] as const))("%s · un solo bloque protegido, dos botones con la misma clase y sin variante que aligere a uno", (_layout, template) => {
+    const document = parse(renderWith(template, { rsvpHelpHref: `${BASE}/rsvp`, rsvpAdaptive: true, giftsStatus: "CLOSED" }));
+    const blocks = document.querySelectorAll("main .celebration-actions");
+    expect(blocks).toHaveLength(1);
+    const block = blocks[0] as Element;
+    expect(block.classList.contains("rsvp-protected")).toBe(true);
+    const buttons = [...block.querySelectorAll("a.celebration-cta")];
+    expect(buttons.map((button) => button.getAttribute("data-action"))).toEqual(["rsvp-help", "gifts"]);
+    for (const button of buttons) {
+      expect(button.className).toBe("celebration-cta");
+      expect(button.hasAttribute("data-variant")).toBe(false);
+    }
+    expect(block.querySelector('a[data-action="gifts"]')?.getAttribute("href")).toBe(`${BASE}/regalos`);
+    expect(block.querySelector('a[data-action="rsvp-help"]')?.getAttribute("href")).toBe(`${BASE}/rsvp`);
+  });
+
+  it("el CSS no aligera a ninguno: ni contorno, ni línea punteada, ni color atenuado para el botón de regalos o de confirmar", () => {
+    const css = readFileSync(join(__dirname, "../styles.css"), "utf8");
+    expect(css).not.toMatch(/\[data-gifts-status="(EMPTY|CLOSED)"\][^}]*(dashed|var\(--celebration-muted\))/);
+    expect(css).not.toMatch(/\.cdesign-dock \.celebration-cta\[data-action="rsvp(-help)?"\]/);
+    expect(css).toMatch(/\.celebration-actions-buttons \{[^}]*flex-direction: column/);
+    expect(css).toMatch(/@media \(min-width: 37\.5rem\) \{\s*\.celebration \.celebration-actions-buttons \{ flex-direction: row;/);
+  });
+});
+
 describe("M4 (revisión de F4 a) · el texto blanco sobre la foto de portada editorial", () => {
   it("llega a 4.5:1 con la foto más clara posible (blanco puro)", () => {
     const css = readFileSync(join(__dirname, "../styles.css"), "utf8");
@@ -147,7 +175,7 @@ describe("PL-A11 · the reply always leads somewhere", () => {
   it.each(TEMPLATES.map((template) => [template.layout, template] as const))("%s · without a personal link: the help to find it; with it: «Confirmar asistencia»", (_layout, template) => {
     const help = parse(renderWith(template, { rsvpHelpHref: `${BASE}/rsvp` })).querySelector('section[data-section="rsvp"]');
     const helpLink = help?.querySelector('a[data-action="rsvp-help"]');
-    expect(help?.textContent).toContain("celebration.rsvp.body");
+    expect(help?.textContent).toContain("celebration.actions.intro");
     expect(helpLink?.getAttribute("href")).toBe(`${BASE}/rsvp`);
     expect(helpLink?.textContent).toBe("celebration.rsvp.findLink");
     expect(helpLink?.querySelector('svg[data-icon="invitation"]')).toBeTruthy();
@@ -175,12 +203,14 @@ describe("PL-A11 · the reply always leads somewhere", () => {
     const own = parse(renderWith(TEMPLATES[0], { rsvpHref: `${BASE}/rsvp/token-abcdefghijklmnop`, rsvpHelpHref: `${BASE}/rsvp`, rsvpAdaptive: true })).querySelector('section[data-section="rsvp"]');
     expect(own?.querySelector("[data-face]")).toBeNull();
     expect(own?.querySelector('a[data-action="rsvp"]')?.textContent).toBe("celebration.rsvp.cta");
-    expect(parse(renderWith(TEMPLATES[0], { rsvpAdaptive: true })).querySelector('section[data-section="rsvp"] a')).toBeNull();
+    expect(parse(renderWith(TEMPLATES[0], { rsvpAdaptive: true })).querySelector('section[data-section="rsvp"] a[data-action^="rsvp"]')).toBeNull();
   });
 
   it("negative: with no destination at all (a still preview) the section stays text, no dead link", () => {
     const section = parse(renderWith(TEMPLATES[0])).querySelector('section[data-section="rsvp"]');
-    expect(section?.querySelector("a")).toBeNull();
+    expect(section?.querySelector('a[data-action^="rsvp"]')).toBeNull();
+    // Gifts never depend on the reply: they are always a link of the block.
+    expect(section?.querySelector('a[data-action="gifts"]')?.getAttribute("href")).toBe(`${BASE}/regalos`);
   });
 });
 
