@@ -59,6 +59,23 @@ export const designEditorEsBO = {
       title: "Dibujos", loading: "Cargando los dibujos…", failed: "No pudimos cargar los dibujos. Revisa tu conexión e inténtalo otra vez.", cover: "Dibujo de la portada", none: "Sin dibujo",
       hint: "Los dibujos usan el color de acento de tu plantilla.",
       unavailable: "Elegir dibujos estará aquí cuando se publique la biblioteca de dibujos. Todavía no está disponible."
+    },
+    look: {
+      title: "Portada y animaciones",
+      variant: "Variante de portada",
+      variants: { classic: "Clásica", minimal: "Minimalista", editorial: "Editorial", festive: "Festiva", corporate: "Corporativa", arch: "Arco con marco doble", hanging: "Colgante de cordel", deco: "Art déco con puertas", poster: "Póster a sangre" },
+      animation: "Animación de {{page}}",
+      animations: { none: "Ninguna", aparecer: "Aparecer", "revelar-telon": "Revelar como telón", "abrir-puertas": "Abrir puertas" },
+      animationHint: "Se juega una vez y se omite si la persona pidió menos movimiento. La duración la fija el diseño.",
+      veil: "Velo de la foto",
+      veilGraded: "Degradado: fuerte solo detrás del texto",
+      veilHint: "Si lo apagas, el velo es uniforme sobre toda la foto. El texto siempre se lee bien con cualquier foto.",
+      veilNeedsPhoto: "El velo aparece cuando la portada tiene una foto.",
+      poster: "Foto de portada del video",
+      posterProvider: "Usar la miniatura del proveedor",
+      posterMissing: "Foto que ya no está en tu lista",
+      posterHint: "La miniatura del proveedor solo se pide cuando alguien toca el video.",
+      posterUnavailable: "Elegir la foto de portada del video estará aquí cuando termine la subida de fotos."
     }
   },
   contrast: {
@@ -151,6 +168,17 @@ export const designEditorEsBO = {
     rotate: "Girar {{block}}",
     element: "{{block}}",
     inspector: { close: "Cerrar", title: "Elemento", none: "Elige un elemento del lienzo.", x: "Columna", y: "Fila", w: "Ancho (columnas)", h: "Alto (filas)", rotation: "Giro (grados)", z: "Capa", padding: "Relleno", margin: "Margen", top: "Arriba", right: "Derecha", bottom: "Abajo", left: "Izquierda", front: "Traer al frente", back: "Enviar al fondo", visible: "Visible en este lienzo", remove: "Quitar", invalid: "Escribe un número entero entre {{min}} y {{max}}.", locked: "Este elemento es obligatorio: puedes moverlo y cambiarle el tamaño, pero no quitarlo, ocultarlo ni girarlo." },
+    fx: {
+      title: "Animación, máscara y marco",
+      animation: "Animación del elemento", animations: { none: "Ninguna", aparecer: "Aparecer", mecerse: "Mecerse", "revelar-telon": "Revelar como telón" },
+      animationHint: "Se juega una vez. La duración la fija el diseño y no se puede cambiar.",
+      protectedNote: "Este botón no admite máscara ni marco, y no puede mecerse.",
+      mask: "Máscara", masks: { none: "Ninguna", arch: "Arco", "deco-doors": "Puertas art déco", chamfer: "Esquinas cortadas", circle: "Círculo", rounded: "Redondeada", stamp: "Sello" },
+      maskHint: "Solo se ofrece en imágenes, galerías, dibujos, monogramas, ornamentos, videos y mapas.",
+      frame: "Marco", frames: { none: "Sin marco", double: "Doble", deco: "Art déco", hairline: "Línea fina" },
+      frameColour: "Color del marco",
+      colours: { canvas: "Fondo", surface: "Tarjeta", text: "Texto", muted: "Texto secundario", accent: "Acento", accentFill: "Relleno de acento", onAccent: "Texto sobre acento", line: "Línea" }
+    },
     palette: { title: "Agregar", page: "En la página", heading: "Título", text: "Texto", quote: "Cita", button: "Botón", countdown: "Cuenta atrás", ornament: "Ornamento", spacer: "Espaciador", html: "HTML propio", default: { heading: "Título", text: "Escribe aquí tu mensaje.", quote: "Una frase que te represente.", button: "Ver más" } },
     block: { cover: "Portada", giftsCta: "Botón de regalos", rsvpCta: "Confirmar asistencia", heading: "Título", text: "Texto", story: "Historia", image: "Imagen", imageText: "Imagen y texto", gallery: "Galería", schedule: "Itinerario", venues: "Lugares", countdown: "Cuenta atrás", dressCode: "Vestimenta", faq: "Preguntas", recommendations: "Recomendaciones", illustration: "Dibujo", monogram: "Monograma", ornament: "Ornamento", spacer: "Espaciador", button: "Botón", quote: "Cita", weddingParty: "Cortejo", video: "Video", music: "Música", map: "Mapa", html: "HTML" },
     announce: {
