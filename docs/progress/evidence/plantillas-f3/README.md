@@ -32,7 +32,7 @@ Fecha: 2026-11-24. Corrige PL-A1 y PL-M7 (`PLAN-PLANTILLAS.md`, rama `bugs/catal
 | Baby shower y revelación | biberon, sonajero, globo-pregunta, chupete, cochecito |
 | Comunión y confirmación | caliz, rosario, biblia, vela, paloma |
 | Despedidas y reuniones | maleta, postal, mesa-larga, brujula |
-| Fiesta patronal | mascara-morenada (abstracta: corona, escudo y rayos; **sin cuencas, ojos, dientes ni boca**), matraca, banderines, bombo |
+| Fiesta patronal | mascara-morenada (silueta con cuernos y corona; su ornamento es una cresta de dos franjas en zigzag en la frente; **sin cuencas, ojos, dientes ni boca**, ni anillo, punto o par de aberturas en el centro; ver `mascara-morenada-claro.png` y `-oscuro.png` a 48, 104 y 240 px), matraca, banderines, bombo |
 | Inauguración | tijera-cinta, llave, cartel («Abierto» colgado), puerta, cohete |
 | Pedida y compromiso | caja-anillo, solitario, rosa, botella |
 | Despedida de soltero/a | antifaz, coctel, pajarita, sombrero-copa |

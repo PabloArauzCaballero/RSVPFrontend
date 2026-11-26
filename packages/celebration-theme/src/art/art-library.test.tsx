@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import { cleanup, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { pathBox, subpathCount, unionBox } from "../../test/path-geometry.js";
+import { pathBox, subpathCount, unionBox, type Box } from "../../test/path-geometry.js";
 import { SEED_TEMPLATES } from "../../test/seed-palettes.js";
 import { ART_MOTION, stepsOf } from "./motion.js";
 import { ORNAMENT_SETS, ORNAMENT_STROKE } from "./ornaments.js";
@@ -397,4 +397,54 @@ describe("ornaments (PL-M7)", () => {
     expect(markup.match(/<g transform=/g)).toHaveLength(4);
     expect(markup).toContain('viewBox="0 0 300 180"');
   });
+});
+
+/**
+ * PL-116-R5-1 · «sin caras». A drawing that must not read as a face has no element, isolated and small, where eyes or a mouth would
+ * sit: a ring, a dot, a pair of openings or a short line in the middle of the figure all read as features (a lone ring and dot
+ * read as a cyclops). Its ornament is a band, a crest or a rim, wide enough to be read as a stripe.
+ */
+const FACELESS: Readonly<Record<string, { readonly zone: Box; readonly maxWidth: number }>> = {
+  "mascara-morenada": { zone: { x0: 36, y0: 63, x1: 84, y1: 102 }, maxWidth: 34 }
+};
+/** A piece is in the zone when its centre is (a ring that only grazes the zone's edge still reads as an eye). */
+const inside = (box: Box, zone: Box): boolean => { const x = (box.x0 + box.x1) / 2; const y = (box.y0 + box.y1) / 2; return x >= zone.x0 && x <= zone.x1 && y >= zone.y0 && y <= zone.y1; };
+/** Every feature-like piece: a sub-path of a cutout, secondary or accent role that is small and has its centre inside the face zone. */
+const featureLike = (paths: readonly { readonly d: string; readonly role: string }[], zone: Box, maxWidth: number): string[] =>
+  paths
+    .filter((path) => path.role !== "ink" && path.role !== "disc" && path.role !== "shadow")
+    .flatMap((path) => path.d.split(/(?=M)/).filter((part) => part.length > 0).map((part) => ({ role: path.role, d: part })))
+    .filter(({ d }) => { const box = pathBox(d); return inside(box, zone) && box.x1 - box.x0 < maxWidth; })
+    .map(({ role, d }) => `${role}: ${d}`);
+
+describe("faceless drawings (PL-116-R5-1)", () => {
+  for (const [id, { zone, maxWidth }] of Object.entries(FACELESS)) {
+    const item = DRAWINGS.find((drawing) => drawing.id === id)!;
+
+    it(`${id}: no isolated small piece, ring, dot or pair in the eye and mouth zone`, () => {
+      expect(item, id).toBeDefined();
+      expect(featureLike(item.paths, zone, maxWidth), `${id} has an element where eyes or a mouth would go`).toEqual([]);
+    });
+
+    it(`${id}: no cutout or secondary piece is a circle or a closed ellipse in the middle of the figure`, () => {
+      const figure = unionBox(item.paths.filter((path) => path.role === "ink" && path.stroke === undefined).map((path) => pathBox(path.d)));
+      const centre = (figure.x0 + figure.x1) / 2;
+      for (const path of item.paths.filter((entry) => entry.role === "cutout" || entry.role === "secondary")) {
+        for (const part of path.d.split(/(?=M)/)) {
+          const box = pathBox(part);
+          const round = /a/i.test(part) && /Z\s*$/i.test(part);
+          const centred = Math.abs((box.x0 + box.x1) / 2 - centre) < 6;
+          expect(round && centred, `${id}: a centred round cutout reads as an eye: ${part}`).toBe(false);
+        }
+      }
+    });
+
+    it(`${id}: the detector does catch the old ring and dot, and a pair of dots`, () => {
+      const ring = [{ role: "cutout", d: "M52 70a8 8 0 1 0 16 0a8 8 0 1 0 -16 0Z" }, { role: "cutout", d: "M42 70a18 18 0 1 0 36 0a18 18 0 1 0 -36 0Z" }];
+      expect(featureLike(ring, zone, maxWidth).length, "the ring and the dot").toBeGreaterThan(0);
+      const pair = [{ role: "cutout", d: "M44 66a4 4 0 1 0 8 0a4 4 0 1 0 -8 0Z" }, { role: "cutout", d: "M68 66a4 4 0 1 0 8 0a4 4 0 1 0 -8 0Z" }];
+      expect(featureLike(pair, zone, maxWidth).length, "a pair of openings").toBe(2);
+      expect(featureLike([{ role: "cutout", d: "M50 88H70" }], zone, maxWidth).length, "a short line like a mouth").toBe(1);
+    });
+  }
 });
