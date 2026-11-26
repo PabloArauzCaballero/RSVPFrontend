@@ -7,7 +7,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Until F4/F5 the list leaves out templates whose theme is a design document v2 (the admin cannot open them); one that already exists is archived by id with POST /templates/{id}/archive. */
+        /** @description The list includes templates whose theme is a design document v2. Only while the service gate DESIGN_V2_ACCEPTED is off (on by default since F4 b) does it leave them out, because the admin cannot open them then; one that already exists is archived by id with POST /templates/{id}/archive. */
         get: operations["listAllTemplates"];
         put?: never;
         post?: never;
@@ -1043,7 +1043,7 @@ export interface components {
             surface: components["schemas"]["HexColour"];
             text: components["schemas"]["HexColour"];
         };
-        /** @description 422 of a v2 design (400 and 413 are plain Problems). code is INVALID_THEME (not an object, neither v1 nor v2, or a schemaVersion that is not the integer 2), DESIGN_SCHEMA_INVALID (issues lists the paths), GIFTS_BLOCK_REQUIRED (no gifts block, said before the schema errors), GIFTS_BLOCK_LOCKED (link or rotation on the gifts element), GIFTS_BLOCK_HIDDEN (not visible or translucent), GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL (under 44 px, or under 44 px of height left once vertical padding and border are taken out), GIFTS_BLOCK_TEXT_TOO_LARGE (label over 32 px or taller than the useful height), GIFTS_BLOCK_COVERED (another element paints over it), GIFTS_BLOCK_LOW_CONTRAST (text under 4.5:1 or contour under 3:1 in either palette), DESIGN_REFERENCE_INVALID, FONT_WEIGHT_UNAVAILABLE, CUSTOM_CODE_UNAVAILABLE (custom html/css until the F5 sanitiser), DESIGN_NOT_PUBLISHABLE (publishing a v2: it stays a draft until the renderer supports it) or DESIGN_V2_NOT_AVAILABLE (POST/PATCH of any v2 theme until F4/F5: the admin and the renderer cannot read it yet; checked before the document is validated). Design endpoints add VERSION_CONFLICT (409, currentVersion), DESIGN_EXISTS (409), PRIVATE_TEMPLATE_LIMIT (409), DESIGN_PUBLISHED (409, a published celebration design cannot be deleted), DESIGN_TOO_LARGE, DESIGN_MEDIA_INVALID (a mediaId that is not a usable photo of the celebration; mediaIds lists them), DESIGN_MEDIA_NOT_ALLOWED (a private template cannot reference photos; mediaIds lists them), CELEBRATION_REQUIRED, CELEBRATION_NOT_ALLOWED and KIND_REQUIRED (422). */
+        /** @description 422 of a v2 design (400 and 413 are plain Problems). code is INVALID_THEME (not an object, neither v1 nor v2, or a schemaVersion that is not the integer 2), DESIGN_SCHEMA_INVALID (issues lists the paths), GIFTS_BLOCK_REQUIRED (no gifts block, said before the schema errors), GIFTS_BLOCK_LOCKED (link or rotation on the gifts element), GIFTS_BLOCK_HIDDEN (not visible or translucent), GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL (under 44 px, or under 44 px of height left once vertical padding and border are taken out), GIFTS_BLOCK_TEXT_TOO_LARGE (label over 32 px or taller than the useful height), GIFTS_BLOCK_COVERED (another element paints over it), GIFTS_BLOCK_LOW_CONTRAST (text under 4.5:1 or contour under 3:1 in either palette), DESIGN_REFERENCE_INVALID, FONT_WEIGHT_UNAVAILABLE, CUSTOM_CODE_UNAVAILABLE (custom html/css until the F5 sanitiser), or DESIGN_V2_NOT_AVAILABLE (POST/PATCH of any v2 theme while the service gate DESIGN_V2_ACCEPTED is off, which is not the default since F4 b; checked before the document is validated). Design endpoints add VERSION_CONFLICT (409, currentVersion), DESIGN_EXISTS (409), PRIVATE_TEMPLATE_LIMIT (409), DESIGN_PUBLISHED (409, a published celebration design cannot be deleted), DESIGN_TOO_LARGE, DESIGN_MEDIA_INVALID (a mediaId that is not a usable photo of the celebration; mediaIds lists them), DESIGN_MEDIA_NOT_ALLOWED (a private template cannot reference photos; mediaIds lists them), CELEBRATION_REQUIRED, CELEBRATION_NOT_ALLOWED and KIND_REQUIRED (422). */
         DesignProblem: components["schemas"]["Problem"] & {
             field?: string;
             issues?: components["schemas"]["DesignIssue"][];
@@ -1165,15 +1165,15 @@ export interface components {
             /** @enum {string} */
             kind: "video" | "audio" | "map";
             /** @enum {string} */
-            provider: "youtube" | "vimeo" | "spotify" | "soundcloud" | "google_maps";
-            /** @description Provider identifier: YouTube/Vimeo id, Spotify kind/id, SoundCloud path, or the map query */
+            provider: "youtube" | "vimeo" | "spotify" | "google_maps";
+            /** @description Provider identifier: YouTube/Vimeo id, Spotify kind/id, or the map query */
             ref: string;
             /** @description Value of the iframe sandbox attribute */
             sandbox: string;
         };
         EmbedResolveRequest: {
             /**
-             * @description Narrows the providers: video = YouTube, Vimeo; music = YouTube, Spotify, SoundCloud; map = Google Maps
+             * @description Narrows the providers: video = YouTube, Vimeo; music = YouTube, Spotify; map = Google Maps
              * @enum {string|null}
              */
             intent?: "video" | "music" | "map" | null;
@@ -2504,7 +2504,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Invalid theme or design (see DesignProblem); a v2 theme is DESIGN_V2_NOT_AVAILABLE until F4/F5 */
+            /** @description Invalid theme or design (see DesignProblem); a v2 theme is DESIGN_V2_NOT_AVAILABLE only while the service gate DESIGN_V2_ACCEPTED is off (it is on by default since F4 b) */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -2595,7 +2595,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Invalid theme or design (see DesignProblem); editing a PUBLISHED template into a v2 is DESIGN_NOT_PUBLISHABLE; a v2 theme is DESIGN_V2_NOT_AVAILABLE until F4/F5, before any validation */
+            /** @description Invalid theme or design (see DesignProblem); a v2 theme is DESIGN_V2_NOT_AVAILABLE only while the service gate DESIGN_V2_ACCEPTED is off, before any validation. A PUBLISHED template can be edited into a v2 */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -2683,15 +2683,6 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["Problem"];
-                };
-            };
-            /** @description A design document v2 cannot be published yet (DESIGN_NOT_PUBLISHABLE): it stays a draft until the renderer supports it (F4/F5) */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["DesignProblem"];
                 };
             };
         };

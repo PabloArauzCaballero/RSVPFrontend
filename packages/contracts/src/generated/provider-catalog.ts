@@ -2407,7 +2407,7 @@ export interface components {
              */
             imageUrl?: string;
             priceFromMinor?: number;
-            /** @description R2: exact price in BOB minor units, at most PROVIDER_LISTING_MAX_PRICE_MINOR (20 000 000 by default; 422 PRICE_OUT_OF_RANGE). With variants it is the default variant's price. */
+            /** @description R2: exact price in BOB minor units, greater than 0 and below PROVIDER_LISTING_MAX_PRICE_MINOR (20 000 000 = Bs 200 000 by default, §5.13; otherwise 422 PRICE_OUT_OF_RANGE). With variants it is the default variant's price. */
             priceMinor?: number;
             stock?: components["schemas"]["Stock"];
             titles: {
@@ -3392,7 +3392,11 @@ export interface components {
             providerStatus: components["schemas"]["ProviderStatus"];
             published: boolean;
             title: string;
-            type?: string;
+            /**
+             * @description Listing type. Always present (3.4.0); gift-list refuses SERVICE listings as gifts (GIFT_LISTING_NOT_PRODUCT).
+             * @enum {string}
+             */
+            type: "PRODUCT" | "SERVICE";
         };
         Metrics: {
             /** Format: date */
@@ -3788,7 +3792,7 @@ export interface components {
             /** @description Every photo id of the product exactly once, in the new order (the first READY one is the cover). */
             photoOrder?: string[];
             priceFromMinor?: number;
-            /** @description R2: exact price in BOB minor units, at most PROVIDER_LISTING_MAX_PRICE_MINOR (20 000 000 by default; 422 PRICE_OUT_OF_RANGE). With variants it is the default variant's price. */
+            /** @description R2: exact price in BOB minor units, greater than 0 and below PROVIDER_LISTING_MAX_PRICE_MINOR (20 000 000 = Bs 200 000 by default, §5.13; otherwise 422 PRICE_OUT_OF_RANGE). With variants it is the default variant's price. */
             priceMinor?: number;
             stock?: components["schemas"]["Stock"];
             titles?: {

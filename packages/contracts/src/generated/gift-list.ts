@@ -882,7 +882,7 @@ export interface components {
             title: string;
         };
         DevCompatProblem: {
-            /** @description Stable machine code, for example GIFT_NOT_AVAILABLE, HOST_REQUIRED, GIFT_LIST_EXISTS, INVALID_GIFT_TRANSITION, CATALOG_PRODUCT_UNAVAILABLE, INVALID_EXTERNAL_URL, INVALID_MONEY, PARTNER_CATALOG_FIRST, RESERVATION_NOT_PENDING */
+            /** @description Stable machine code, for example GIFT_NOT_AVAILABLE, HOST_REQUIRED, GIFT_LIST_EXISTS, INVALID_GIFT_TRANSITION, CATALOG_PRODUCT_UNAVAILABLE, INVALID_EXTERNAL_URL, INVALID_MONEY, PARTNER_CATALOG_FIRST, RESERVATION_NOT_PENDING; since 1.14.0 also GIFT_LISTING_NOT_PRODUCT (422 of addGiftItem: the CATALOGED listing is a SERVICE, only products can be gifts) */
             code?: string;
             correlationId?: string;
             detail?: string;
@@ -1658,7 +1658,7 @@ export interface components {
                 "application/problem+json": components["schemas"]["DevCompatProblem"];
             };
         };
-        /** @description Invalid request (INVALID_MONEY, INVALID_EXTERNAL_URL, CATALOG_PRODUCT_UNAVAILABLE, VALIDATION_FAILED, INVALID_TITLE) */
+        /** @description Invalid request (INVALID_MONEY, INVALID_EXTERNAL_URL, CATALOG_PRODUCT_UNAVAILABLE, VALIDATION_FAILED, INVALID_TITLE; since 1.14.0 also GIFT_LISTING_NOT_PRODUCT from addGiftItem when the CATALOGED listing is a SERVICE) */
         DevCompatValidation: {
             headers: {
                 [name: string]: unknown;
