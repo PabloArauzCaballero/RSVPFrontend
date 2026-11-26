@@ -79,7 +79,7 @@ export function BasicStep({ draft, set, problems, disabled, creating, categories
 }
 
 /** Ideas: the ideas of the category (§5.4) as on/off options, up to 10. A category without ideas says why the product cannot be recommended. */
-export function IdeasStep({ draft, set, problems, disabled, ideas }: StepProps & { readonly ideas: { readonly items: readonly GiftIdea[] | undefined; readonly pending: boolean; readonly error: ReactNode } }): ReactNode {
+export function IdeasStep({ draft, set, problems, disabled, ideas, categoryUnsaved = false }: StepProps & { readonly categoryUnsaved?: boolean; readonly ideas: { readonly items: readonly GiftIdea[] | undefined; readonly pending: boolean; readonly error: ReactNode } }): ReactNode {
   const t = useT();
   const styles = useStyles();
   const toggle = (code: string): void => set({ giftIdeas: draft.giftIdeas.includes(code) ? draft.giftIdeas.filter((item) => item !== code) : [...draft.giftIdeas, code] });
@@ -87,6 +87,7 @@ export function IdeasStep({ draft, set, problems, disabled, ideas }: StepProps &
   return (
     <View style={{ gap: spacing[3] }}>
       <Text style={styles.body}>{t("portal.product.ideas.intro")}</Text>
+      {categoryUnsaved ? <Text style={styles.muted} testID="ideas-category-unsaved">{t("portal.product.ideas.categoryUnsaved")}</Text> : null}
       {ideas.pending ? <RowsSkeleton count={2} minHeight={44} /> : ideas.error ? ideas.error : (ideas.items ?? []).length === 0 ? (
         <Text style={styles.body} testID="ideas-empty">{t("portal.product.ideas.empty")}</Text>
       ) : (

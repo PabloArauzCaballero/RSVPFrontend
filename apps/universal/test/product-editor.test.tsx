@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { Linking, Platform } from "react-native";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NewProductScreen, ProductEditorScreen } from "../src/provider/product-editor/product-editor-screen";
 import { ServicesScreen } from "../src/provider/services-screen";
@@ -597,5 +598,74 @@ describe("review fixes of R2", () => {
     renderApp(<ProductEditorScreen />, client, HOST, "en-US");
     fireEvent.click(await screen.findByTestId("photo-add"));
     expect((await screen.findByTestId("sheet-error")).textContent).toMatch(/permission to see your photos.*device settings/);
+  });
+
+  it("while the ideas of the new category are being read the step list is locked: changing step does not save Básico or navigate on its own", async () => {
+    setSearchParams({ lid: LID, paso: "basico" });
+    let release: (value: unknown) => void = () => undefined;
+    const gate = new Promise((resolve) => { release = resolve; });
+    const { client, calls } = fakeClient(handlers({
+      "GET /providers/gift-ideas": (call) => (call.url.includes("category=PASTRY") ? gate.then(() => PASTRY_IDEAS) : IDEAS),
+      [`PATCH /providers/${PID}/listings/${LID}`]: () => ({ ...SHEET, category: "PASTRY", version: 4 })
+    }));
+    renderApp(<ProductEditorScreen />, client, HOST);
+    await screen.findByTestId("product-title");
+    fireEvent.change(await screen.findByTestId("product-category"), { target: { value: "PASTRY" } });
+    fireEvent.click(screen.getByTestId("step-next"));
+    await waitFor(() => expect(screen.getByTestId("step-fotos").getAttribute("aria-disabled")).toBe("true"));
+    fireEvent.click(screen.getByTestId("step-fotos"));
+    expect(patches(calls)).toHaveLength(0);
+    release(undefined);
+    await waitFor(() => expect(patches(calls)).toHaveLength(1));
+    expect(screen.getByTestId("step-fotos").getAttribute("aria-disabled")).not.toBe("true");
+  });
+
+  it("Ideas says so when the category changed in Básico is not saved yet", async () => {
+    setSearchParams({ lid: LID, paso: "basico" });
+    const { client } = fakeClient(handlers({ "GET /providers/gift-ideas": ideasOf }));
+    renderApp(<ProductEditorScreen />, client, HOST);
+    await screen.findByTestId("product-title");
+    fireEvent.change(await screen.findByTestId("product-category"), { target: { value: "PASTRY" } });
+    fireEvent.click(screen.getByTestId("step-ideas"));
+    expect((await screen.findByTestId("ideas-category-unsaved")).textContent).toMatch(/se ajustarán al guardar Básico/);
+  });
+
+  it("a finished reorder is forgotten: «Reintentar» of a later error does not repeat it", async () => {
+    setSearchParams({ lid: LID, paso: "fotos" });
+    const sheet = { ...SHEET, photos: [photo("ph-1", "READY"), photo("ph-2", "READY")] };
+    const { client, calls } = fakeClient(handlers({
+      [`GET /providers/${PID}/listings/${LID}`]: () => sheet,
+      [`PATCH /providers/${PID}/listings/${LID}`]: () => ({ ...sheet, version: 4 }),
+      [`POST /providers/${PID}/listings/${LID}/duplicate`]: () => new HttpFailure(503)
+    }));
+    renderApp(<ProductEditorScreen />, client, HOST);
+    fireEvent.click(await screen.findByTestId("photo-cover-ph-2"));
+    await waitFor(() => expect(patches(calls)).toHaveLength(1));
+    fireEvent.click(await screen.findByRole("button", { name: /Más opciones/ }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Duplicar" }));
+    fireEvent.click(await screen.findByTestId("error-retry"));
+    await waitFor(() => expect(calls.filter((call) => call.path.endsWith("/duplicate"))).toHaveLength(2));
+    expect(patches(calls)).toHaveLength(1);
+  });
+
+  it("M-3: on a device (iOS) the denied-permission notice offers «Abrir ajustes», which opens the app settings", async () => {
+    setSearchParams({ lid: LID, paso: "fotos" });
+    picked.denied = true;
+    const openSettings = vi.fn(async () => undefined);
+    const rn = Linking as unknown as { openSettings?: unknown };
+    const platform = Platform as unknown as { OS: string };
+    const before = platform.OS;
+    rn.openSettings = openSettings;
+    platform.OS = "ios";
+    try {
+      const { client } = fakeClient(handlers());
+      renderApp(<ProductEditorScreen />, client, HOST);
+      fireEvent.click(await screen.findByTestId("photo-add"));
+      fireEvent.click(await screen.findByTestId("photo-open-settings"));
+      expect(openSettings).toHaveBeenCalledTimes(1);
+    } finally {
+      platform.OS = before;
+      delete rn.openSettings;
+    }
   });
 });

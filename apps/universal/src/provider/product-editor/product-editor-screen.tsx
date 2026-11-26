@@ -54,11 +54,11 @@ function StepLink({ step, index, current, missing, enabled, onPress }: { readonl
   );
 }
 
-function StepList({ step, missing, created, onOpen }: { readonly step: EditorStep; readonly missing: ReadonlySet<StepKey>; readonly created: boolean; readonly onOpen: (step: EditorStep) => void }): ReactNode {
+function StepList({ step, missing, created, locked, onOpen }: { readonly step: EditorStep; readonly missing: ReadonlySet<StepKey>; readonly created: boolean; readonly locked: boolean; readonly onOpen: (step: EditorStep) => void }): ReactNode {
   const t = useT();
   return (
     <View role="navigation" aria-label={t("portal.product.steps.label")} style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing[2] }}>
-      {ALL_STEPS.map((key, index) => <StepLink key={key} step={key} index={index} current={key === step} missing={key !== "summary" && missing.has(key)} enabled={created || key === "basic"} onPress={() => onOpen(key)} />)}
+      {ALL_STEPS.map((key, index) => <StepLink key={key} step={key} index={index} current={key === step} missing={key !== "summary" && missing.has(key)} enabled={!locked && (created || key === "basic")} onPress={() => onOpen(key)} />)}
     </View>
   );
 }
@@ -225,7 +225,7 @@ function ProductEditor({ provider, listingId, initialStep, duplicated }: EditorP
   const body = (() => {
     switch (step) {
       case "basic": return <BasicStep {...stepProps} creating={creating} categories={{ items: categories.data?.items, pending: categories.isPending, error: categoriesError }} cities={geo.data?.items} />;
-      case "ideas": return <IdeasStep {...stepProps} ideas={{ items: ideas.data, pending: ideas.isPending && Boolean(draft.category), error: ideas.isError ? <PortalErrorNotice error={ideas.error} onRetry={() => { void ideas.refetch(); }} /> : null }} />;
+      case "ideas": return <IdeasStep {...stepProps} categoryUnsaved={Boolean(sheet && draft.category !== sheet.category)} ideas={{ items: ideas.data, pending: ideas.isPending && Boolean(draft.category), error: ideas.isError ? <PortalErrorNotice error={ideas.error} onRetry={() => { void ideas.refetch(); }} /> : null }} />;
       case "photos": return sheet ? <PhotoUploader sheet={sheet} providerId={provider.id} locale={locale} reordering={patch.isPending} onReorder={reorder} /> : null;
       case "price": return <PriceStep {...stepProps} />;
       case "delivery": return <DeliveryStep {...stepProps} cities={geo.data?.items} citiesError={geo.isError ? <PortalErrorNotice error={geo.error} onRetry={() => { void geo.refetch(); }} /> : null} />;
@@ -239,7 +239,7 @@ function ProductEditor({ provider, listingId, initialStep, duplicated }: EditorP
     <View style={{ gap: spacing[5] }}>
       <PageIntro>{t("portal.product.intro")}</PageIntro>
       {showCopyNote ? <SuccessNote message={t("portal.product.summary.duplicated")} /> : null}
-      <StepList step={step} missing={missing} created={!creating} onOpen={open} />
+      <StepList step={step} missing={missing} created={!creating} locked={busy} onOpen={open} />
       {sheet ? <View style={[styles.row, { gap: spacing[2] }]}><CompletenessChip state={sheet.completeness} /><Text style={styles.muted}>{sheet.title}</Text></View> : null}
       <Section title={announce}>
         <StepTransition step={stepIndex + 1} announce={announce}>
@@ -251,7 +251,7 @@ function ProductEditor({ provider, listingId, initialStep, duplicated }: EditorP
           <>
             {versionLost ? <Notice kind="error"><View style={{ gap: spacing[2] }} testID="sheet-no-version"><Text style={styles.body}>{t("portal.product.errors.noVersion")}</Text><ActionButton icon="refresh" variant="secondary" label={t("portal.product.actions.reload")} onPress={() => { setVersionLost(false); reload(); }} testID="sheet-reload" /></View></Notice> : null}
             {ideasFailed ? <Notice kind="error"><View style={{ gap: spacing[2] }} testID="ideas-load-error"><Text style={styles.body}>{t("portal.product.errors.ideasLoad")}</Text><ActionButton icon="refresh" variant="secondary" label={t("portal.errors.retry")} onPress={() => save("basic")} testID="ideas-load-retry" /></View></Notice> : null}
-            <SheetErrorNotice error={create.error ?? patch.error ?? duplicate.error} onReload={reload} onRetry={() => { if (step !== "photos") save(step); else if (lastOrder.current) reorder(lastOrder.current); }} />
+            <SheetErrorNotice error={create.error ?? patch.error ?? duplicate.error} onReload={reload} onRetry={() => { if (duplicate.error && !create.error && !patch.error) duplicateNow(); else if (step !== "photos") save(step); else if (lastOrder.current) reorder(lastOrder.current); }} />
             <StickyActions ground="surface">
               {step === "photos" ? (
                 <ActionButton icon="arrow" label={t("portal.product.actions.next")} disabled={busy} onPress={() => open(nextStep(step))} testID="step-next" />
