@@ -354,6 +354,10 @@ describe("styles.css keeps the contract the theme assumes", () => {
     expect(css).not.toMatch(/\.celebration-cta:focus-visible/);
     expect(css).toMatch(/\.celebration a:focus-visible/);
   });
+
+  it("pressing with a mouse wins over hovering: :hover:active keeps scale(.98), inside the same hover and motion media query", () => {
+    expect(css).toMatch(/@media \(hover: hover\) and \(prefers-reduced-motion: no-preference\) \{[^@]*\.celebration-cta:hover:active \{ transform: scale\(\.98\); \}/);
+  });
 });
 
 describe("PL-134-R2-M1 · the app's entry (`./model`) carries no renderer and no CSS parser", () => {
