@@ -1,0 +1,3362 @@
+[
+ {
+  "template": "clasico-marfil",
+  "layout": "classic",
+  "scheme": "light",
+  "width": 360,
+  "gifts": {
+   "top": 3268,
+   "height": 52,
+   "width": 159,
+   "right": 259,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(122, 82, 48)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 6.82
+  },
+  "help": {
+   "top": 3576,
+   "height": 52,
+   "width": 270,
+   "right": 315,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 655,
+   "height": 44,
+   "width": 59,
+   "right": 209,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "clasico-marfil",
+  "layout": "classic",
+  "scheme": "light",
+  "width": 768,
+  "gifts": {
+   "top": 3176,
+   "height": 52,
+   "width": 183,
+   "right": 475,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(122, 82, 48)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 6.82
+  },
+  "help": {
+   "top": 3468,
+   "height": 52,
+   "width": 294,
+   "right": 531,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 696,
+   "height": 44,
+   "width": 59,
+   "right": 572,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "clasico-marfil",
+  "layout": "classic",
+  "scheme": "light",
+  "width": 1280,
+  "gifts": {
+   "top": 3278,
+   "height": 52,
+   "width": 183,
+   "right": 731,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(122, 82, 48)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 6.82
+  },
+  "help": {
+   "top": 3574,
+   "height": 52,
+   "width": 294,
+   "right": 787,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 751,
+   "height": 44,
+   "width": 59,
+   "right": 1116,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "clasico-marfil",
+  "layout": "classic",
+  "scheme": "dark",
+  "width": 360,
+  "gifts": {
+   "top": 3268,
+   "height": 52,
+   "width": 159,
+   "right": 259,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(122, 82, 48)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 5.56
+  },
+  "help": {
+   "top": 3576,
+   "height": 52,
+   "width": 270,
+   "right": 315,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 655,
+   "height": 44,
+   "width": 59,
+   "right": 209,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "clasico-marfil",
+  "layout": "classic",
+  "scheme": "dark",
+  "width": 768,
+  "gifts": {
+   "top": 3176,
+   "height": 52,
+   "width": 183,
+   "right": 475,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(122, 82, 48)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 5.56
+  },
+  "help": {
+   "top": 3468,
+   "height": 52,
+   "width": 294,
+   "right": 531,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 696,
+   "height": 44,
+   "width": 59,
+   "right": 572,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "clasico-marfil",
+  "layout": "classic",
+  "scheme": "dark",
+  "width": 1280,
+  "gifts": {
+   "top": 3278,
+   "height": 52,
+   "width": 183,
+   "right": 731,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(122, 82, 48)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 5.56
+  },
+  "help": {
+   "top": 3574,
+   "height": 52,
+   "width": 294,
+   "right": 787,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 751,
+   "height": 44,
+   "width": 59,
+   "right": 1116,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "minimalista",
+  "layout": "minimal",
+  "scheme": "light",
+  "width": 360,
+  "gifts": {
+   "top": 2058,
+   "height": 52,
+   "width": 160,
+   "right": 176,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(47, 93, 80)",
+   "ink": "rgb(246, 246, 243)",
+   "contrast": 6.92
+  },
+  "help": {
+   "top": 2369,
+   "height": 52,
+   "width": 272,
+   "right": 309,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 441,
+   "height": 44,
+   "width": 60,
+   "right": 255,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "minimalista",
+  "layout": "minimal",
+  "scheme": "light",
+  "width": 768,
+  "gifts": {
+   "top": 1966,
+   "height": 52,
+   "width": 184,
+   "right": 215,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(47, 93, 80)",
+   "ink": "rgb(246, 246, 243)",
+   "contrast": 6.92
+  },
+  "help": {
+   "top": 2204,
+   "height": 52,
+   "width": 296,
+   "right": 366,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 411,
+   "height": 44,
+   "width": 60,
+   "right": 693,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "minimalista",
+  "layout": "minimal",
+  "scheme": "light",
+  "width": 1280,
+  "gifts": {
+   "top": 2042,
+   "height": 52,
+   "width": 184,
+   "right": 464,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(47, 93, 80)",
+   "ink": "rgb(246, 246, 243)",
+   "contrast": 6.92
+  },
+  "help": {
+   "top": 2284,
+   "height": 52,
+   "width": 296,
+   "right": 625,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 458,
+   "height": 44,
+   "width": 60,
+   "right": 694,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "minimalista",
+  "layout": "minimal",
+  "scheme": "dark",
+  "width": 360,
+  "gifts": {
+   "top": 2058,
+   "height": 52,
+   "width": 160,
+   "right": 176,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(47, 93, 80)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 6.11
+  },
+  "help": {
+   "top": 2369,
+   "height": 52,
+   "width": 272,
+   "right": 309,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 441,
+   "height": 44,
+   "width": 60,
+   "right": 255,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "minimalista",
+  "layout": "minimal",
+  "scheme": "dark",
+  "width": 768,
+  "gifts": {
+   "top": 1966,
+   "height": 52,
+   "width": 184,
+   "right": 215,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(47, 93, 80)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 6.11
+  },
+  "help": {
+   "top": 2204,
+   "height": 52,
+   "width": 296,
+   "right": 366,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 411,
+   "height": 44,
+   "width": 60,
+   "right": 693,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "minimalista",
+  "layout": "minimal",
+  "scheme": "dark",
+  "width": 1280,
+  "gifts": {
+   "top": 2042,
+   "height": 52,
+   "width": 184,
+   "right": 464,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(47, 93, 80)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 6.11
+  },
+  "help": {
+   "top": 2284,
+   "height": 52,
+   "width": 296,
+   "right": 625,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 458,
+   "height": 44,
+   "width": 60,
+   "right": 694,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "editorial",
+  "layout": "editorial",
+  "scheme": "light",
+  "width": 360,
+  "gifts": {
+   "top": 3333,
+   "height": 52,
+   "width": 148,
+   "right": 184,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(156, 53, 38)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 7.12
+  },
+  "help": {
+   "top": 3659,
+   "height": 52,
+   "width": 245,
+   "right": 282,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 781,
+   "height": 44,
+   "width": 52,
+   "right": 68,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "editorial",
+  "layout": "editorial",
+  "scheme": "light",
+  "width": 768,
+  "gifts": {
+   "top": 3217,
+   "height": 52,
+   "width": 172,
+   "right": 234,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(156, 53, 38)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 7.12
+  },
+  "help": {
+   "top": 3511,
+   "height": 52,
+   "width": 269,
+   "right": 331,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 685,
+   "height": 44,
+   "width": 52,
+   "right": 215,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "editorial",
+  "layout": "editorial",
+  "scheme": "light",
+  "width": 1280,
+  "gifts": {
+   "top": 3299,
+   "height": 52,
+   "width": 172,
+   "right": 312,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(156, 53, 38)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 7.12
+  },
+  "help": {
+   "top": 3616,
+   "height": 52,
+   "width": 269,
+   "right": 410,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 637,
+   "height": 44,
+   "width": 52,
+   "right": 899,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "editorial",
+  "layout": "editorial",
+  "scheme": "dark",
+  "width": 360,
+  "gifts": {
+   "top": 3333,
+   "height": 52,
+   "width": 148,
+   "right": 184,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(156, 53, 38)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 5.8
+  },
+  "help": {
+   "top": 3659,
+   "height": 52,
+   "width": 245,
+   "right": 282,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 781,
+   "height": 44,
+   "width": 52,
+   "right": 68,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "editorial",
+  "layout": "editorial",
+  "scheme": "dark",
+  "width": 768,
+  "gifts": {
+   "top": 3217,
+   "height": 52,
+   "width": 172,
+   "right": 234,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(156, 53, 38)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 5.8
+  },
+  "help": {
+   "top": 3511,
+   "height": 52,
+   "width": 269,
+   "right": 331,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 685,
+   "height": 44,
+   "width": 52,
+   "right": 215,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "editorial",
+  "layout": "editorial",
+  "scheme": "dark",
+  "width": 1280,
+  "gifts": {
+   "top": 3299,
+   "height": 52,
+   "width": 172,
+   "right": 312,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(156, 53, 38)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 5.8
+  },
+  "help": {
+   "top": 3616,
+   "height": 52,
+   "width": 269,
+   "right": 410,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 637,
+   "height": 44,
+   "width": 52,
+   "right": 899,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "festivo",
+  "layout": "festive",
+  "scheme": "light",
+  "width": 360,
+  "gifts": {
+   "top": 2325,
+   "height": 52,
+   "width": 159,
+   "right": 259,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(179, 19, 79)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 6.72
+  },
+  "help": {
+   "top": 2614,
+   "height": 52,
+   "width": 270,
+   "right": 315,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 502,
+   "height": 44,
+   "width": 59,
+   "right": 293,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "festivo",
+  "layout": "festive",
+  "scheme": "light",
+  "width": 768,
+  "gifts": {
+   "top": 2492,
+   "height": 52,
+   "width": 183,
+   "right": 475,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(179, 19, 79)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 6.72
+  },
+  "help": {
+   "top": 2751,
+   "height": 52,
+   "width": 294,
+   "right": 531,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 547,
+   "height": 44,
+   "width": 59,
+   "right": 497,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "festivo",
+  "layout": "festive",
+  "scheme": "light",
+  "width": 1280,
+  "gifts": {
+   "top": 2624,
+   "height": 52,
+   "width": 183,
+   "right": 731,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(179, 19, 79)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 6.72
+  },
+  "help": {
+   "top": 2905,
+   "height": 52,
+   "width": 294,
+   "right": 787,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 566,
+   "height": 44,
+   "width": 59,
+   "right": 1042,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "festivo",
+  "layout": "festive",
+  "scheme": "dark",
+  "width": 360,
+  "gifts": {
+   "top": 2325,
+   "height": 52,
+   "width": 159,
+   "right": 259,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(179, 19, 79)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 5.48
+  },
+  "help": {
+   "top": 2614,
+   "height": 52,
+   "width": 270,
+   "right": 315,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 502,
+   "height": 44,
+   "width": 59,
+   "right": 293,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "festivo",
+  "layout": "festive",
+  "scheme": "dark",
+  "width": 768,
+  "gifts": {
+   "top": 2492,
+   "height": 52,
+   "width": 183,
+   "right": 475,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(179, 19, 79)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 5.48
+  },
+  "help": {
+   "top": 2751,
+   "height": 52,
+   "width": 294,
+   "right": 531,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 547,
+   "height": 44,
+   "width": 59,
+   "right": 497,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "festivo",
+  "layout": "festive",
+  "scheme": "dark",
+  "width": 1280,
+  "gifts": {
+   "top": 2624,
+   "height": 52,
+   "width": 183,
+   "right": 731,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(179, 19, 79)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 5.48
+  },
+  "help": {
+   "top": 2905,
+   "height": 52,
+   "width": 294,
+   "right": 787,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 566,
+   "height": 44,
+   "width": 59,
+   "right": 1042,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "corporativo",
+  "layout": "corporate",
+  "scheme": "light",
+  "width": 360,
+  "gifts": {
+   "top": 1807,
+   "height": 52,
+   "width": 159,
+   "right": 175,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(31, 95, 173)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 6.37
+  },
+  "help": {
+   "top": 2045,
+   "height": 52,
+   "width": 270,
+   "right": 307,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 491,
+   "height": 44,
+   "width": 59,
+   "right": 75,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "corporativo",
+  "layout": "corporate",
+  "scheme": "light",
+  "width": 768,
+  "gifts": {
+   "top": 1777,
+   "height": 52,
+   "width": 183,
+   "right": 213,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(31, 95, 173)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 6.37
+  },
+  "help": {
+   "top": 1998,
+   "height": 52,
+   "width": 294,
+   "right": 365,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 556,
+   "height": 44,
+   "width": 59,
+   "right": 616,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "corporativo",
+  "layout": "corporate",
+  "scheme": "light",
+  "width": 1280,
+  "gifts": {
+   "top": 1759,
+   "height": 52,
+   "width": 183,
+   "right": 283,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(31, 95, 173)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 6.37
+  },
+  "help": {
+   "top": 1983,
+   "height": 52,
+   "width": 294,
+   "right": 443,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 510,
+   "height": 44,
+   "width": 59,
+   "right": 617,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "corporativo",
+  "layout": "corporate",
+  "scheme": "dark",
+  "width": 360,
+  "gifts": {
+   "top": 1807,
+   "height": 52,
+   "width": 159,
+   "right": 175,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(31, 95, 173)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 5.19
+  },
+  "help": {
+   "top": 2045,
+   "height": 52,
+   "width": 270,
+   "right": 307,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 491,
+   "height": 44,
+   "width": 59,
+   "right": 75,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "corporativo",
+  "layout": "corporate",
+  "scheme": "dark",
+  "width": 768,
+  "gifts": {
+   "top": 1777,
+   "height": 52,
+   "width": 183,
+   "right": 213,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(31, 95, 173)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 5.19
+  },
+  "help": {
+   "top": 1998,
+   "height": 52,
+   "width": 294,
+   "right": 365,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 556,
+   "height": 44,
+   "width": 59,
+   "right": 616,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "corporativo",
+  "layout": "corporate",
+  "scheme": "dark",
+  "width": 1280,
+  "gifts": {
+   "top": 1759,
+   "height": 52,
+   "width": 183,
+   "right": 283,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(31, 95, 173)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 5.19
+  },
+  "help": {
+   "top": 1983,
+   "height": 52,
+   "width": 294,
+   "right": 443,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 510,
+   "height": 44,
+   "width": 59,
+   "right": 617,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "jardin-botanico",
+  "layout": "classic",
+  "scheme": "light",
+  "width": 360,
+  "gifts": {
+   "top": 3268,
+   "height": 52,
+   "width": 159,
+   "right": 259,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(56, 98, 71)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 6.99
+  },
+  "help": {
+   "top": 3576,
+   "height": 52,
+   "width": 270,
+   "right": 315,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 655,
+   "height": 44,
+   "width": 59,
+   "right": 209,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "jardin-botanico",
+  "layout": "classic",
+  "scheme": "light",
+  "width": 768,
+  "gifts": {
+   "top": 3176,
+   "height": 52,
+   "width": 183,
+   "right": 475,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(56, 98, 71)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 6.99
+  },
+  "help": {
+   "top": 3468,
+   "height": 52,
+   "width": 294,
+   "right": 531,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 696,
+   "height": 44,
+   "width": 59,
+   "right": 572,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "jardin-botanico",
+  "layout": "classic",
+  "scheme": "light",
+  "width": 1280,
+  "gifts": {
+   "top": 3278,
+   "height": 52,
+   "width": 183,
+   "right": 731,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(56, 98, 71)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 6.99
+  },
+  "help": {
+   "top": 3574,
+   "height": 52,
+   "width": 294,
+   "right": 787,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 751,
+   "height": 44,
+   "width": 59,
+   "right": 1116,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "jardin-botanico",
+  "layout": "classic",
+  "scheme": "dark",
+  "width": 360,
+  "gifts": {
+   "top": 3268,
+   "height": 52,
+   "width": 159,
+   "right": 259,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(56, 98, 71)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 5.69
+  },
+  "help": {
+   "top": 3576,
+   "height": 52,
+   "width": 270,
+   "right": 315,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 655,
+   "height": 44,
+   "width": 59,
+   "right": 209,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "jardin-botanico",
+  "layout": "classic",
+  "scheme": "dark",
+  "width": 768,
+  "gifts": {
+   "top": 3176,
+   "height": 52,
+   "width": 183,
+   "right": 475,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(56, 98, 71)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 5.69
+  },
+  "help": {
+   "top": 3468,
+   "height": 52,
+   "width": 294,
+   "right": 531,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 696,
+   "height": 44,
+   "width": 59,
+   "right": 572,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "jardin-botanico",
+  "layout": "classic",
+  "scheme": "dark",
+  "width": 1280,
+  "gifts": {
+   "top": 3278,
+   "height": 52,
+   "width": 183,
+   "right": 731,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(56, 98, 71)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 5.69
+  },
+  "help": {
+   "top": 3574,
+   "height": 52,
+   "width": 294,
+   "right": 787,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 751,
+   "height": 44,
+   "width": 59,
+   "right": 1116,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "rosa-antiguo",
+  "layout": "classic",
+  "scheme": "light",
+  "width": 360,
+  "gifts": {
+   "top": 3268,
+   "height": 52,
+   "width": 159,
+   "right": 259,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(154, 63, 85)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 6.53
+  },
+  "help": {
+   "top": 3576,
+   "height": 52,
+   "width": 270,
+   "right": 315,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 655,
+   "height": 44,
+   "width": 59,
+   "right": 209,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "rosa-antiguo",
+  "layout": "classic",
+  "scheme": "light",
+  "width": 768,
+  "gifts": {
+   "top": 3176,
+   "height": 52,
+   "width": 183,
+   "right": 475,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(154, 63, 85)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 6.53
+  },
+  "help": {
+   "top": 3468,
+   "height": 52,
+   "width": 294,
+   "right": 531,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 696,
+   "height": 44,
+   "width": 59,
+   "right": 572,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "rosa-antiguo",
+  "layout": "classic",
+  "scheme": "light",
+  "width": 1280,
+  "gifts": {
+   "top": 3278,
+   "height": 52,
+   "width": 183,
+   "right": 731,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(154, 63, 85)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 6.53
+  },
+  "help": {
+   "top": 3574,
+   "height": 52,
+   "width": 294,
+   "right": 787,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 751,
+   "height": 44,
+   "width": 59,
+   "right": 1116,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "rosa-antiguo",
+  "layout": "classic",
+  "scheme": "dark",
+  "width": 360,
+  "gifts": {
+   "top": 3268,
+   "height": 52,
+   "width": 159,
+   "right": 259,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(154, 63, 85)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 5.32
+  },
+  "help": {
+   "top": 3576,
+   "height": 52,
+   "width": 270,
+   "right": 315,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 655,
+   "height": 44,
+   "width": 59,
+   "right": 209,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "rosa-antiguo",
+  "layout": "classic",
+  "scheme": "dark",
+  "width": 768,
+  "gifts": {
+   "top": 3176,
+   "height": 52,
+   "width": 183,
+   "right": 475,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(154, 63, 85)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 5.32
+  },
+  "help": {
+   "top": 3468,
+   "height": 52,
+   "width": 294,
+   "right": 531,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 696,
+   "height": 44,
+   "width": 59,
+   "right": 572,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "rosa-antiguo",
+  "layout": "classic",
+  "scheme": "dark",
+  "width": 1280,
+  "gifts": {
+   "top": 3278,
+   "height": 52,
+   "width": 183,
+   "right": 731,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(154, 63, 85)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 5.32
+  },
+  "help": {
+   "top": 3574,
+   "height": 52,
+   "width": 294,
+   "right": 787,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 751,
+   "height": 44,
+   "width": 59,
+   "right": 1116,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "cielo-bautizo",
+  "layout": "classic",
+  "scheme": "light",
+  "width": 360,
+  "gifts": {
+   "top": 2528,
+   "height": 52,
+   "width": 159,
+   "right": 259,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(47, 95, 148)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 6.59
+  },
+  "help": {
+   "top": 2836,
+   "height": 52,
+   "width": 270,
+   "right": 315,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 559,
+   "height": 44,
+   "width": 59,
+   "right": 328,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "cielo-bautizo",
+  "layout": "classic",
+  "scheme": "light",
+  "width": 768,
+  "gifts": {
+   "top": 2562,
+   "height": 52,
+   "width": 183,
+   "right": 475,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(47, 95, 148)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 6.59
+  },
+  "help": {
+   "top": 2854,
+   "height": 52,
+   "width": 294,
+   "right": 531,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 648,
+   "height": 44,
+   "width": 59,
+   "right": 701,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "cielo-bautizo",
+  "layout": "classic",
+  "scheme": "light",
+  "width": 1280,
+  "gifts": {
+   "top": 2698,
+   "height": 52,
+   "width": 183,
+   "right": 731,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(47, 95, 148)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 6.59
+  },
+  "help": {
+   "top": 2994,
+   "height": 52,
+   "width": 294,
+   "right": 787,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 751,
+   "height": 44,
+   "width": 59,
+   "right": 957,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "cielo-bautizo",
+  "layout": "classic",
+  "scheme": "dark",
+  "width": 360,
+  "gifts": {
+   "top": 2528,
+   "height": 52,
+   "width": 159,
+   "right": 259,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(47, 95, 148)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 5.37
+  },
+  "help": {
+   "top": 2836,
+   "height": 52,
+   "width": 270,
+   "right": 315,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 559,
+   "height": 44,
+   "width": 59,
+   "right": 328,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "cielo-bautizo",
+  "layout": "classic",
+  "scheme": "dark",
+  "width": 768,
+  "gifts": {
+   "top": 2562,
+   "height": 52,
+   "width": 183,
+   "right": 475,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(47, 95, 148)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 5.37
+  },
+  "help": {
+   "top": 2854,
+   "height": 52,
+   "width": 294,
+   "right": 531,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 648,
+   "height": 44,
+   "width": 59,
+   "right": 701,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "cielo-bautizo",
+  "layout": "classic",
+  "scheme": "dark",
+  "width": 1280,
+  "gifts": {
+   "top": 2698,
+   "height": 52,
+   "width": 183,
+   "right": 731,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(47, 95, 148)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 5.37
+  },
+  "help": {
+   "top": 2994,
+   "height": 52,
+   "width": 294,
+   "right": 787,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 751,
+   "height": 44,
+   "width": 59,
+   "right": 957,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "arena-terracota",
+  "layout": "minimal",
+  "scheme": "light",
+  "width": 360,
+  "gifts": {
+   "top": 2227,
+   "height": 52,
+   "width": 159,
+   "right": 175,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(162, 67, 31)",
+   "ink": "rgb(242, 235, 224)",
+   "contrast": 5.28
+  },
+  "help": {
+   "top": 2482,
+   "height": 52,
+   "width": 270,
+   "right": 307,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 441,
+   "height": 44,
+   "width": 59,
+   "right": 243,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "arena-terracota",
+  "layout": "minimal",
+  "scheme": "light",
+  "width": 768,
+  "gifts": {
+   "top": 2191,
+   "height": 52,
+   "width": 183,
+   "right": 213,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(162, 67, 31)",
+   "ink": "rgb(242, 235, 224)",
+   "contrast": 5.28
+  },
+  "help": {
+   "top": 2429,
+   "height": 52,
+   "width": 294,
+   "right": 365,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 459,
+   "height": 44,
+   "width": 59,
+   "right": 258,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "arena-terracota",
+  "layout": "minimal",
+  "scheme": "light",
+  "width": 1280,
+  "gifts": {
+   "top": 2223,
+   "height": 52,
+   "width": 183,
+   "right": 463,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(162, 67, 31)",
+   "ink": "rgb(242, 235, 224)",
+   "contrast": 5.28
+  },
+  "help": {
+   "top": 2465,
+   "height": 52,
+   "width": 294,
+   "right": 623,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 458,
+   "height": 44,
+   "width": 59,
+   "right": 836,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "arena-terracota",
+  "layout": "minimal",
+  "scheme": "dark",
+  "width": 360,
+  "gifts": {
+   "top": 2227,
+   "height": 52,
+   "width": 159,
+   "right": 175,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(162, 67, 31)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 5.1
+  },
+  "help": {
+   "top": 2482,
+   "height": 52,
+   "width": 270,
+   "right": 307,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 441,
+   "height": 44,
+   "width": 59,
+   "right": 243,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "arena-terracota",
+  "layout": "minimal",
+  "scheme": "dark",
+  "width": 768,
+  "gifts": {
+   "top": 2191,
+   "height": 52,
+   "width": 183,
+   "right": 213,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(162, 67, 31)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 5.1
+  },
+  "help": {
+   "top": 2429,
+   "height": 52,
+   "width": 294,
+   "right": 365,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 459,
+   "height": 44,
+   "width": 59,
+   "right": 258,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "arena-terracota",
+  "layout": "minimal",
+  "scheme": "dark",
+  "width": 1280,
+  "gifts": {
+   "top": 2223,
+   "height": 52,
+   "width": 183,
+   "right": 463,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(162, 67, 31)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 5.1
+  },
+  "help": {
+   "top": 2465,
+   "height": 52,
+   "width": 294,
+   "right": 623,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 458,
+   "height": 44,
+   "width": 59,
+   "right": 836,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "editorial-granate",
+  "layout": "editorial",
+  "scheme": "light",
+  "width": 360,
+  "gifts": {
+   "top": 3333,
+   "height": 52,
+   "width": 148,
+   "right": 184,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(138, 38, 56)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 8.7
+  },
+  "help": {
+   "top": 3659,
+   "height": 52,
+   "width": 245,
+   "right": 282,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 781,
+   "height": 44,
+   "width": 52,
+   "right": 68,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "editorial-granate",
+  "layout": "editorial",
+  "scheme": "light",
+  "width": 768,
+  "gifts": {
+   "top": 3217,
+   "height": 52,
+   "width": 172,
+   "right": 234,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(138, 38, 56)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 8.7
+  },
+  "help": {
+   "top": 3511,
+   "height": 52,
+   "width": 269,
+   "right": 331,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 685,
+   "height": 44,
+   "width": 52,
+   "right": 215,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "editorial-granate",
+  "layout": "editorial",
+  "scheme": "light",
+  "width": 1280,
+  "gifts": {
+   "top": 3299,
+   "height": 52,
+   "width": 172,
+   "right": 312,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(138, 38, 56)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 8.7
+  },
+  "help": {
+   "top": 3616,
+   "height": 52,
+   "width": 269,
+   "right": 410,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 637,
+   "height": 44,
+   "width": 52,
+   "right": 899,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "editorial-granate",
+  "layout": "editorial",
+  "scheme": "dark",
+  "width": 360,
+  "gifts": {
+   "top": 3333,
+   "height": 52,
+   "width": 148,
+   "right": 184,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(138, 38, 56)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 7.09
+  },
+  "help": {
+   "top": 3659,
+   "height": 52,
+   "width": 245,
+   "right": 282,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 781,
+   "height": 44,
+   "width": 52,
+   "right": 68,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "editorial-granate",
+  "layout": "editorial",
+  "scheme": "dark",
+  "width": 768,
+  "gifts": {
+   "top": 3217,
+   "height": 52,
+   "width": 172,
+   "right": 234,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(138, 38, 56)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 7.09
+  },
+  "help": {
+   "top": 3511,
+   "height": 52,
+   "width": 269,
+   "right": 331,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 685,
+   "height": 44,
+   "width": 52,
+   "right": 215,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "editorial-granate",
+  "layout": "editorial",
+  "scheme": "dark",
+  "width": 1280,
+  "gifts": {
+   "top": 3299,
+   "height": 52,
+   "width": 172,
+   "right": 312,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(138, 38, 56)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 7.09
+  },
+  "help": {
+   "top": 3616,
+   "height": 52,
+   "width": 269,
+   "right": 410,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 637,
+   "height": 44,
+   "width": 52,
+   "right": 899,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "editorial-oliva",
+  "layout": "editorial",
+  "scheme": "light",
+  "width": 360,
+  "gifts": {
+   "top": 2844,
+   "height": 52,
+   "width": 159,
+   "right": 195,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(91, 107, 31)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 5.89
+  },
+  "help": {
+   "top": 3170,
+   "height": 52,
+   "width": 270,
+   "right": 307,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 733,
+   "height": 44,
+   "width": 59,
+   "right": 243,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "editorial-oliva",
+  "layout": "editorial",
+  "scheme": "light",
+  "width": 768,
+  "gifts": {
+   "top": 2879,
+   "height": 52,
+   "width": 183,
+   "right": 244,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(91, 107, 31)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 5.89
+  },
+  "help": {
+   "top": 3173,
+   "height": 52,
+   "width": 294,
+   "right": 357,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 685,
+   "height": 44,
+   "width": 59,
+   "right": 258,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "editorial-oliva",
+  "layout": "editorial",
+  "scheme": "light",
+  "width": 1280,
+  "gifts": {
+   "top": 2933,
+   "height": 52,
+   "width": 183,
+   "right": 323,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(91, 107, 31)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 5.89
+  },
+  "help": {
+   "top": 3250,
+   "height": 52,
+   "width": 294,
+   "right": 435,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 637,
+   "height": 44,
+   "width": 59,
+   "right": 836,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "editorial-oliva",
+  "layout": "editorial",
+  "scheme": "dark",
+  "width": 360,
+  "gifts": {
+   "top": 2844,
+   "height": 52,
+   "width": 159,
+   "right": 195,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(91, 107, 31)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 4.8
+  },
+  "help": {
+   "top": 3170,
+   "height": 52,
+   "width": 270,
+   "right": 307,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 733,
+   "height": 44,
+   "width": 59,
+   "right": 243,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "editorial-oliva",
+  "layout": "editorial",
+  "scheme": "dark",
+  "width": 768,
+  "gifts": {
+   "top": 2879,
+   "height": 52,
+   "width": 183,
+   "right": 244,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(91, 107, 31)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 4.8
+  },
+  "help": {
+   "top": 3173,
+   "height": 52,
+   "width": 294,
+   "right": 357,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 685,
+   "height": 44,
+   "width": 59,
+   "right": 258,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "editorial-oliva",
+  "layout": "editorial",
+  "scheme": "dark",
+  "width": 1280,
+  "gifts": {
+   "top": 2933,
+   "height": 52,
+   "width": 183,
+   "right": 323,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(91, 107, 31)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 4.8
+  },
+  "help": {
+   "top": 3250,
+   "height": 52,
+   "width": 294,
+   "right": 435,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 637,
+   "height": 44,
+   "width": 59,
+   "right": 836,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "pinata",
+  "layout": "festive",
+  "scheme": "light",
+  "width": 360,
+  "gifts": {
+   "top": 2325,
+   "height": 52,
+   "width": 159,
+   "right": 259,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(194, 51, 15)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 5.56
+  },
+  "help": {
+   "top": 2614,
+   "height": 52,
+   "width": 270,
+   "right": 315,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 502,
+   "height": 44,
+   "width": 59,
+   "right": 293,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "pinata",
+  "layout": "festive",
+  "scheme": "light",
+  "width": 768,
+  "gifts": {
+   "top": 2492,
+   "height": 52,
+   "width": 183,
+   "right": 475,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(194, 51, 15)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 5.56
+  },
+  "help": {
+   "top": 2751,
+   "height": 52,
+   "width": 294,
+   "right": 531,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 547,
+   "height": 44,
+   "width": 59,
+   "right": 497,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "pinata",
+  "layout": "festive",
+  "scheme": "light",
+  "width": 1280,
+  "gifts": {
+   "top": 2624,
+   "height": 52,
+   "width": 183,
+   "right": 731,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(194, 51, 15)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 5.56
+  },
+  "help": {
+   "top": 2905,
+   "height": 52,
+   "width": 294,
+   "right": 787,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 566,
+   "height": 44,
+   "width": 59,
+   "right": 1042,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "pinata",
+  "layout": "festive",
+  "scheme": "dark",
+  "width": 360,
+  "gifts": {
+   "top": 2325,
+   "height": 52,
+   "width": 159,
+   "right": 259,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(194, 51, 15)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 4.54
+  },
+  "help": {
+   "top": 2614,
+   "height": 52,
+   "width": 270,
+   "right": 315,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 502,
+   "height": 44,
+   "width": 59,
+   "right": 293,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "pinata",
+  "layout": "festive",
+  "scheme": "dark",
+  "width": 768,
+  "gifts": {
+   "top": 2492,
+   "height": 52,
+   "width": 183,
+   "right": 475,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(194, 51, 15)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 4.54
+  },
+  "help": {
+   "top": 2751,
+   "height": 52,
+   "width": 294,
+   "right": 531,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 547,
+   "height": 44,
+   "width": 59,
+   "right": 497,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "pinata",
+  "layout": "festive",
+  "scheme": "dark",
+  "width": 1280,
+  "gifts": {
+   "top": 2624,
+   "height": 52,
+   "width": 183,
+   "right": 731,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(194, 51, 15)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 4.54
+  },
+  "help": {
+   "top": 2905,
+   "height": 52,
+   "width": 294,
+   "right": 787,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 566,
+   "height": 44,
+   "width": 59,
+   "right": 1042,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "fiesta-lila",
+  "layout": "festive",
+  "scheme": "light",
+  "width": 360,
+  "gifts": {
+   "top": 2325,
+   "height": 52,
+   "width": 159,
+   "right": 259,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(106, 59, 191)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 7.02
+  },
+  "help": {
+   "top": 2614,
+   "height": 52,
+   "width": 270,
+   "right": 315,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 502,
+   "height": 44,
+   "width": 59,
+   "right": 293,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "fiesta-lila",
+  "layout": "festive",
+  "scheme": "light",
+  "width": 768,
+  "gifts": {
+   "top": 2492,
+   "height": 52,
+   "width": 183,
+   "right": 475,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(106, 59, 191)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 7.02
+  },
+  "help": {
+   "top": 2751,
+   "height": 52,
+   "width": 294,
+   "right": 531,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 547,
+   "height": 44,
+   "width": 59,
+   "right": 497,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "fiesta-lila",
+  "layout": "festive",
+  "scheme": "light",
+  "width": 1280,
+  "gifts": {
+   "top": 2624,
+   "height": 52,
+   "width": 183,
+   "right": 731,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(106, 59, 191)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 7.02
+  },
+  "help": {
+   "top": 2905,
+   "height": 52,
+   "width": 294,
+   "right": 787,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 566,
+   "height": 44,
+   "width": 59,
+   "right": 1042,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "fiesta-lila",
+  "layout": "festive",
+  "scheme": "dark",
+  "width": 360,
+  "gifts": {
+   "top": 2325,
+   "height": 52,
+   "width": 159,
+   "right": 259,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(106, 59, 191)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 5.72
+  },
+  "help": {
+   "top": 2614,
+   "height": 52,
+   "width": 270,
+   "right": 315,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 502,
+   "height": 44,
+   "width": 59,
+   "right": 293,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "fiesta-lila",
+  "layout": "festive",
+  "scheme": "dark",
+  "width": 768,
+  "gifts": {
+   "top": 2492,
+   "height": 52,
+   "width": 183,
+   "right": 475,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(106, 59, 191)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 5.72
+  },
+  "help": {
+   "top": 2751,
+   "height": 52,
+   "width": 294,
+   "right": 531,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 547,
+   "height": 44,
+   "width": 59,
+   "right": 497,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "fiesta-lila",
+  "layout": "festive",
+  "scheme": "dark",
+  "width": 1280,
+  "gifts": {
+   "top": 2624,
+   "height": 52,
+   "width": 183,
+   "right": 731,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(106, 59, 191)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 5.72
+  },
+  "help": {
+   "top": 2905,
+   "height": 52,
+   "width": 294,
+   "right": 787,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 566,
+   "height": 44,
+   "width": 59,
+   "right": 1042,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "menta-infantil",
+  "layout": "festive",
+  "scheme": "light",
+  "width": 360,
+  "gifts": {
+   "top": 2325,
+   "height": 52,
+   "width": 159,
+   "right": 259,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(12, 117, 102)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 5.6
+  },
+  "help": {
+   "top": 2614,
+   "height": 52,
+   "width": 270,
+   "right": 315,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 502,
+   "height": 44,
+   "width": 59,
+   "right": 293,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "menta-infantil",
+  "layout": "festive",
+  "scheme": "light",
+  "width": 768,
+  "gifts": {
+   "top": 2492,
+   "height": 52,
+   "width": 183,
+   "right": 475,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(12, 117, 102)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 5.6
+  },
+  "help": {
+   "top": 2751,
+   "height": 52,
+   "width": 294,
+   "right": 531,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 547,
+   "height": 44,
+   "width": 59,
+   "right": 497,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "menta-infantil",
+  "layout": "festive",
+  "scheme": "light",
+  "width": 1280,
+  "gifts": {
+   "top": 2624,
+   "height": 52,
+   "width": 183,
+   "right": 731,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(12, 117, 102)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 5.6
+  },
+  "help": {
+   "top": 2905,
+   "height": 52,
+   "width": 294,
+   "right": 787,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 566,
+   "height": 44,
+   "width": 59,
+   "right": 1042,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "menta-infantil",
+  "layout": "festive",
+  "scheme": "dark",
+  "width": 360,
+  "gifts": {
+   "top": 2325,
+   "height": 52,
+   "width": 159,
+   "right": 259,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(12, 117, 102)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 4.56
+  },
+  "help": {
+   "top": 2614,
+   "height": 52,
+   "width": 270,
+   "right": 315,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 502,
+   "height": 44,
+   "width": 59,
+   "right": 293,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "menta-infantil",
+  "layout": "festive",
+  "scheme": "dark",
+  "width": 768,
+  "gifts": {
+   "top": 2492,
+   "height": 52,
+   "width": 183,
+   "right": 475,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(12, 117, 102)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 4.56
+  },
+  "help": {
+   "top": 2751,
+   "height": 52,
+   "width": 294,
+   "right": 531,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 547,
+   "height": 44,
+   "width": 59,
+   "right": 497,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "menta-infantil",
+  "layout": "festive",
+  "scheme": "dark",
+  "width": 1280,
+  "gifts": {
+   "top": 2624,
+   "height": 52,
+   "width": 183,
+   "right": 731,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(12, 117, 102)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 4.56
+  },
+  "help": {
+   "top": 2905,
+   "height": 52,
+   "width": 294,
+   "right": 787,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 566,
+   "height": 44,
+   "width": 59,
+   "right": 1042,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "corporativo-grafito",
+  "layout": "corporate",
+  "scheme": "light",
+  "width": 360,
+  "gifts": {
+   "top": 1837,
+   "height": 52,
+   "width": 160,
+   "right": 176,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(11, 110, 106)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 6.08
+  },
+  "help": {
+   "top": 2100,
+   "height": 52,
+   "width": 272,
+   "right": 309,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 521,
+   "height": 44,
+   "width": 60,
+   "right": 76,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "corporativo-grafito",
+  "layout": "corporate",
+  "scheme": "light",
+  "width": 768,
+  "gifts": {
+   "top": 1777,
+   "height": 52,
+   "width": 184,
+   "right": 215,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(11, 110, 106)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 6.08
+  },
+  "help": {
+   "top": 1998,
+   "height": 52,
+   "width": 296,
+   "right": 366,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 556,
+   "height": 44,
+   "width": 60,
+   "right": 643,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "corporativo-grafito",
+  "layout": "corporate",
+  "scheme": "light",
+  "width": 1280,
+  "gifts": {
+   "top": 1759,
+   "height": 52,
+   "width": 184,
+   "right": 284,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(11, 110, 106)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 6.08
+  },
+  "help": {
+   "top": 1983,
+   "height": 52,
+   "width": 296,
+   "right": 445,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 510,
+   "height": 44,
+   "width": 60,
+   "right": 645,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "corporativo-grafito",
+  "layout": "corporate",
+  "scheme": "dark",
+  "width": 360,
+  "gifts": {
+   "top": 1837,
+   "height": 52,
+   "width": 160,
+   "right": 176,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(11, 110, 106)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 4.96
+  },
+  "help": {
+   "top": 2100,
+   "height": 52,
+   "width": 272,
+   "right": 309,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 521,
+   "height": 44,
+   "width": 60,
+   "right": 76,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "corporativo-grafito",
+  "layout": "corporate",
+  "scheme": "dark",
+  "width": 768,
+  "gifts": {
+   "top": 1777,
+   "height": 52,
+   "width": 184,
+   "right": 215,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(11, 110, 106)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 4.96
+  },
+  "help": {
+   "top": 1998,
+   "height": 52,
+   "width": 296,
+   "right": 366,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 556,
+   "height": 44,
+   "width": 60,
+   "right": 643,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "corporativo-grafito",
+  "layout": "corporate",
+  "scheme": "dark",
+  "width": 1280,
+  "gifts": {
+   "top": 1759,
+   "height": 52,
+   "width": 184,
+   "right": 284,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(11, 110, 106)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 4.96
+  },
+  "help": {
+   "top": 1983,
+   "height": 52,
+   "width": 296,
+   "right": 445,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 510,
+   "height": 44,
+   "width": 60,
+   "right": 645,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "gala-dorada",
+  "layout": "corporate",
+  "scheme": "light",
+  "width": 360,
+  "gifts": {
+   "top": 2161,
+   "height": 52,
+   "width": 159,
+   "right": 175,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(122, 90, 14)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 6.37
+  },
+  "help": {
+   "top": 2398,
+   "height": 52,
+   "width": 270,
+   "right": 307,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 491,
+   "height": 44,
+   "width": 59,
+   "right": 223,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "gala-dorada",
+  "layout": "corporate",
+  "scheme": "light",
+  "width": 768,
+  "gifts": {
+   "top": 2195,
+   "height": 52,
+   "width": 183,
+   "right": 213,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(122, 90, 14)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 6.37
+  },
+  "help": {
+   "top": 2415,
+   "height": 52,
+   "width": 294,
+   "right": 365,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 604,
+   "height": 44,
+   "width": 59,
+   "right": 238,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "gala-dorada",
+  "layout": "corporate",
+  "scheme": "light",
+  "width": 1280,
+  "gifts": {
+   "top": 2136,
+   "height": 52,
+   "width": 183,
+   "right": 283,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(122, 90, 14)",
+   "ink": "rgb(255, 255, 255)",
+   "contrast": 6.37
+  },
+  "help": {
+   "top": 2359,
+   "height": 52,
+   "width": 294,
+   "right": 443,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 510,
+   "height": 44,
+   "width": 59,
+   "right": 916,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "gala-dorada",
+  "layout": "corporate",
+  "scheme": "dark",
+  "width": 360,
+  "gifts": {
+   "top": 2161,
+   "height": 52,
+   "width": 159,
+   "right": 175,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(122, 90, 14)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 5.19
+  },
+  "help": {
+   "top": 2398,
+   "height": 52,
+   "width": 270,
+   "right": 307,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 491,
+   "height": 44,
+   "width": 59,
+   "right": 223,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "gala-dorada",
+  "layout": "corporate",
+  "scheme": "dark",
+  "width": 768,
+  "gifts": {
+   "top": 2195,
+   "height": 52,
+   "width": 183,
+   "right": 213,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(122, 90, 14)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 5.19
+  },
+  "help": {
+   "top": 2415,
+   "height": 52,
+   "width": 294,
+   "right": 365,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 604,
+   "height": 44,
+   "width": 59,
+   "right": 238,
+   "font": 16
+  },
+  "overflowX": false
+ },
+ {
+  "template": "gala-dorada",
+  "layout": "corporate",
+  "scheme": "dark",
+  "width": 1280,
+  "gifts": {
+   "top": 2136,
+   "height": 52,
+   "width": 183,
+   "right": 283,
+   "font": 16.8,
+   "label": "Ver regalos",
+   "icon": true,
+   "ground": "rgb(122, 90, 14)",
+   "ink": "rgb(236, 230, 238)",
+   "contrast": 5.19
+  },
+  "help": {
+   "top": 2359,
+   "height": 52,
+   "width": 294,
+   "right": 443,
+   "font": 16.8,
+   "label": "Busca tu enlace personal",
+   "icon": true
+  },
+  "nav": {
+   "top": 510,
+   "height": 44,
+   "width": 59,
+   "right": 916,
+   "font": 16
+  },
+  "overflowX": false
+ }
+]

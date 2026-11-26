@@ -1,6 +1,6 @@
 // Local contract fixture for the public API, for visual/Lighthouse evidence when the live backend has no content
 // (celebrations with every section) or no Provider Catalog HTTP service yet.
-//   node apps/seo-web/scripts/fixture-api.mjs   (PORT=28100)
+//   node apps/seo-web/scripts/fixture-api.mjs   (PORT=28100; FIXTURE_LOCALE=en-US to serve the view in English)
 // It is NOT the backend: evidence produced against it is labelled "fixture" and proves rendering only.
 import { createServer } from "node:http";
 
@@ -11,7 +11,7 @@ const image = (hue) => `<svg xmlns="http://www.w3.org/2000/svg" width="1920" hei
 const img = (n) => `http://localhost:${PORT}/img/${n}.svg`;
 
 const view = {
-  celebrationId: "00000000-0000-4000-8000-000000000001", slug: SLUG, locale: "es-BO", availableLocales: ["es-BO", "en-US"],
+  celebrationId: "00000000-0000-4000-8000-000000000001", slug: SLUG, locale: process.env.FIXTURE_LOCALE ?? "es-BO", availableLocales: ["es-BO", "en-US"],
   eventType: { code: "WEDDING", name: "Boda", hostRoles: [{ role: "BRIDE", label: "Novia" }, { role: "GROOM", label: "Novio" }] },
   enabledSections: ["story", "schedule", "venues", "gallery", "dressCode", "faq", "recommendations", "gifts", "rsvp"],
   timeZone: "America/La_Paz", currency: "BOB", templateId: "t-classic",

@@ -1,9 +1,10 @@
 import { useState, type ReactNode } from "react";
 import { Image, Pressable, ScrollView, StyleSheet, Text, View, type ImageStyle, type TextStyle, type ViewStyle } from "react-native";
-import { daysUntil, hasSectionContent, navigationHref, readContent, SECTION_PATHS, shownVenues, type CelebrationContent, type GalleryImage, type PublicCelebrationView } from "./content.js";
+import { daysUntil, GIFTS_CTA_KEYS, hasSectionContent, navigationHref, readContent, SECTION_PATHS, sectionTitleKey, shownVenues, type CelebrationContent, type GalleryImage, type GiftsStatus, type PublicCelebrationView } from "./content.js";
 import { formatDate, formatTime, zoneLabel } from "./format.js";
+import type { CelebrationIcon } from "./icon.js";
 import { CelebrationThemeProvider, useCelebrationTheme } from "./theme-context.js";
-import { paletteFor, type ColorScheme } from "./theme.js";
+import { accentFill, paletteFor, type ColorScheme } from "./theme.js";
 import type { CelebrationTheme, SectionId, Translate } from "./types.js";
 
 /**
@@ -19,9 +20,14 @@ export interface NativeRendererActions {
   readonly openUrl: (url: string) => void;
   /** Absolute URL of the partner redirector for a listing (every partner link goes through it); null hides a listing the app cannot link. */
   readonly partnerUrl: (listingId: string) => string | null;
-  /** Moves to a section's own page, or back to the cover with null. */
+  /** Moves to a section's own page, or back to the cover with null. `gifts` is the guest's gift list (`/c/{slug}/regalos`). */
   readonly openSection: (section: SectionId | null) => void;
+  /** Opens the reply (`/c/{slug}/rsvp`): the guest's own answer when the session holds their link, the help to find it otherwise. */
+  readonly openRsvp: () => void;
 }
+
+/** Draws an icon of the product's set (`NavIcon` of `@rsvp/ui` in the app) in the given ink; this package has no SVG of its own. */
+export type NativeIconRenderer = (name: CelebrationIcon, color: string) => ReactNode;
 
 export interface NativeRendererProps {
   readonly theme: CelebrationTheme;
@@ -33,6 +39,12 @@ export interface NativeRendererProps {
   /** Render only this section (its own page): the cover gives way to a compact header, as on the web. */
   readonly only?: SectionId;
   readonly actions?: NativeRendererActions;
+  /** Icons of the buttons (DESIGN.md: icon + text). Without it the buttons show their label only. */
+  readonly renderIcon?: NativeIconRenderer;
+  /** The session holds the guest's personal link: the reply offers «Confirmar asistencia» instead of the help to find it. */
+  readonly hasPersonalLink?: boolean;
+  /** What the gift list holds (rsvp-f1's `gifts.status`); absent means OPEN. Only the gifts button's label changes. */
+  readonly giftsStatus?: GiftsStatus;
 }
 
 const SPACE = 16;
@@ -53,6 +65,9 @@ const COVER_MIN_HEIGHT = 320;
 const COVER_MAX_HEIGHT = 352;
 const TOUCH = 44;
 const GALLERY_COLUMNS = 3;
+const FOCUS_RING = 3;
+const FOCUS_GAP = 2;
+const BUTTON_TEXT = 16;
 
 type Styles = {
   readonly page: ViewStyle; readonly cover: ViewStyle; readonly coverInner: ViewStyle; readonly section: ViewStyle; readonly eyebrow: TextStyle; readonly heading: TextStyle; readonly hosts: TextStyle;
@@ -72,21 +87,22 @@ function useStyles(scheme: ColorScheme): Styles {
   const align: TextStyle["textAlign"] = centered ? "center" : "left";
   const cards = theme.sectionStyle === "cards";
   const band = layout.hero === "overlay" || layout.hero === "banner";
-  const coverInk = band ? (layout.hero === "overlay" ? ON_PHOTO : palette.surface) : palette.text;
+  const fill = accentFill(theme, scheme);
+  const coverInk = band ? (layout.hero === "overlay" ? ON_PHOTO : fill.ink) : palette.text;
   const coverAccent = band ? coverInk : palette.accent;
   const upper: TextStyle["textTransform"] = layout.headingCase === "uppercase" ? "uppercase" : "none";
   return {
     coverInk, coverAccent,
     ...StyleSheet.create({
       page: { backgroundColor: palette.canvas, gap: layout.sectionGap / 2, paddingBottom: SPACE * 2 },
-      cover: { padding: SPACE, paddingVertical: SPACE * 2, backgroundColor: band ? palette.accent : "transparent", borderBottomLeftRadius: layout.hero === "banner" ? layout.radius : 0, borderBottomRightRadius: layout.hero === "banner" ? layout.radius : 0 },
+      cover: { padding: SPACE, paddingVertical: SPACE * 2, backgroundColor: band ? fill.fill : "transparent", borderBottomLeftRadius: layout.hero === "banner" ? layout.radius : 0, borderBottomRightRadius: layout.hero === "banner" ? layout.radius : 0 },
       coverInner: {
         gap: SPACE / 2, alignItems: centered ? "center" : "flex-start",
         ...(layout.hero === "centered" ? { padding: SPACE * 1.5, margin: FRAME_GAP, borderWidth: HAIRLINE, borderColor: palette.accent, backgroundColor: palette.surface } : {}),
         ...(layout.hero === "split" ? { paddingLeft: SPACE, borderLeftWidth: FRAME_GAP, borderLeftColor: palette.accent } : {})
       },
       section: { gap: SPACE / 2, marginHorizontal: SPACE, padding: cards ? SPACE : 0, borderRadius: layout.radius, backgroundColor: cards ? palette.surface : "transparent" },
-      eyebrow: { color: coverAccent, fontFamily: theme.typography.body, fontSize: 11, letterSpacing: 3, textTransform: "uppercase", textAlign: align },
+      eyebrow: { color: coverAccent, fontFamily: theme.typography.body, fontSize: 13, letterSpacing: 3, textTransform: "uppercase", textAlign: align },
       heading: { color: coverInk, fontFamily: theme.typography.heading, fontSize: BASE_HEADING * layout.headingScale, lineHeight: BASE_HEADING * layout.headingScale * 1.08, textAlign: align, textTransform: upper },
       hosts: { color: coverInk, fontFamily: theme.typography.heading, fontSize: 18, textAlign: align },
       date: { color: coverInk, fontFamily: theme.typography.heading, fontSize: 18, letterSpacing: 0.5, textAlign: align },
@@ -96,7 +112,7 @@ function useStyles(scheme: ColorScheme): Styles {
       accent: { color: palette.accent, fontWeight: "700", fontFamily: theme.typography.body },
       rule: { width: layout.divider === "none" ? RULE_WIDTH * 2 : RULE_WIDTH, height: layout.divider === "ornament" ? HAIRLINE : 2, backgroundColor: coverAccent, marginVertical: SPACE / 2 },
       pill: { marginTop: SPACE / 2, paddingHorizontal: SPACE, paddingVertical: 4, borderRadius: PILL, borderWidth: HAIRLINE, borderColor: band ? coverInk : palette.muted },
-      pillText: { color: band ? coverInk : palette.muted, fontFamily: theme.typography.body, fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase" },
+      pillText: { color: band ? coverInk : palette.muted, fontFamily: theme.typography.body, fontSize: 13, letterSpacing: 1.5, textTransform: "uppercase" },
       card: { gap: 2, padding: SPACE, borderWidth: HAIRLINE, borderColor: palette.muted, borderRadius: Math.max(layout.radius, 2), backgroundColor: palette.surface },
       time: { width: TIME_COLUMN, color: palette.accent, fontFamily: theme.typography.heading, fontWeight: "700", fontSize: 16, textAlign: "right" },
       dot: { width: DOT, height: DOT, borderRadius: DOT / 2, backgroundColor: palette.accent, marginTop: 6 },
@@ -113,13 +129,46 @@ function useStyles(scheme: ColorScheme): Styles {
   };
 }
 
-type NativeSectionProps = { readonly content: CelebrationContent; readonly gallery: readonly GalleryImage[]; readonly view: PublicCelebrationView; readonly t: Translate; readonly scheme: ColorScheme; readonly actions?: NativeRendererActions };
+type NativeSectionProps = {
+  readonly content: CelebrationContent; readonly gallery: readonly GalleryImage[]; readonly view: PublicCelebrationView; readonly t: Translate; readonly scheme: ColorScheme; readonly actions?: NativeRendererActions;
+  readonly renderIcon?: NativeIconRenderer; readonly hasPersonalLink?: boolean; readonly giftsStatus?: GiftsStatus;
+};
 type NativeSection = (props: NativeSectionProps) => ReactNode;
 
 /** A text link of the invitation: underlined in the accent colour, 44 pt tall, announced as a link. */
 function TextLink({ label, onPress, scheme, hint }: { readonly label: string; readonly onPress: () => void; readonly scheme: ColorScheme; readonly hint?: string }): ReactNode {
   const s = useStyles(scheme);
   return <Pressable accessibilityRole="link" accessibilityHint={hint} onPress={onPress} style={s.navItem}><Text style={s.link}>{label}</Text></Pressable>;
+}
+
+/**
+ * A filled action of the invitation (the gifts button, the reply): the template's accent fill with its AA ink (phase 0),
+ * icon + label, at least 44 pt, and a ring in the accent used as text while it has focus (keyboard and web). Without
+ * `onPress` (host preview, admin) it is drawn exactly the same but is not a control.
+ */
+function ActionButton({ label, icon, scheme, onPress, renderIcon, testID }: {
+  readonly label: string; readonly icon: CelebrationIcon; readonly scheme: ColorScheme; readonly onPress?: () => void; readonly renderIcon?: NativeIconRenderer; readonly testID: string;
+}): ReactNode {
+  const { theme, layout } = useCelebrationTheme();
+  const palette = paletteFor(theme, scheme);
+  const { fill, ink } = accentFill(theme, scheme);
+  const [focused, setFocused] = useState(false);
+  const ring: ViewStyle = {
+    alignSelf: layout.align === CENTER ? "center" : "flex-start", maxWidth: "100%", padding: FOCUS_GAP, borderWidth: FOCUS_RING,
+    borderColor: focused ? palette.accent : "transparent", borderRadius: layout.radius + FOCUS_GAP + FOCUS_RING
+  };
+  const body = (
+    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: SPACE / 2, minHeight: TOUCH, paddingHorizontal: SPACE * 1.5, paddingVertical: SPACE / 2, borderRadius: layout.radius, backgroundColor: fill }}>
+      {renderIcon ? renderIcon(icon, ink) : null}
+      <Text style={{ flexShrink: 1, color: ink, fontFamily: theme.typography.body, fontWeight: "600", fontSize: BUTTON_TEXT, textAlign: "center" }}>{label}</Text>
+    </View>
+  );
+  if (!onPress) return <View style={ring} testID={testID}>{body}</View>;
+  return (
+    <Pressable accessibilityRole="link" accessibilityLabel={label} onPress={onPress} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} style={ring} testID={testID}>
+      {body}
+    </Pressable>
+  );
 }
 
 /** A question that opens to its answer, like `<details>` on the web: closed by default, its state announced. */
@@ -203,8 +252,26 @@ const NativeSections: Readonly<Record<SectionId, NativeSection>> = {
       );
     });
   },
-  gifts: () => null,
-  rsvp: ({ t, scheme }) => { const s = useStyles(scheme); return <Text style={s.muted}>{t("celebration.rsvp.body")}</Text>; }
+  // P22 / PL-A10: on every invitation; the gift list opens on its own screen, which resolves the guest's link.
+  gifts: ({ t, scheme, actions, renderIcon, giftsStatus }) => {
+    const s = useStyles(scheme);
+    return (
+      <View style={{ gap: SPACE / 2 }}>
+        <Text style={s.body}>{t("celebration.gifts.intro")}</Text>
+        <ActionButton label={t(GIFTS_CTA_KEYS[giftsStatus ?? "OPEN"])} icon="gifts" scheme={scheme} renderIcon={renderIcon} onPress={actions ? () => actions.openSection("gifts") : undefined} testID="celebration-gifts-cta" />
+      </View>
+    );
+  },
+  // PL-A11: the reply leads somewhere: the guest's answer with their link, the help to find it without.
+  rsvp: ({ t, scheme, actions, renderIcon, hasPersonalLink }) => {
+    const s = useStyles(scheme);
+    return (
+      <View style={{ gap: SPACE / 2 }}>
+        <Text style={s.body}>{t("celebration.rsvp.body")}</Text>
+        {actions ? <ActionButton label={t(hasPersonalLink ? "celebration.rsvp.cta" : "celebration.rsvp.findLink")} icon={hasPersonalLink ? "check" : "invitation"} scheme={scheme} renderIcon={renderIcon} onPress={actions.openRsvp} testID="celebration-rsvp-cta" /> : null}
+      </View>
+    );
+  }
 };
 
 /** The cover photo, placed as the layout places it on the web: behind the copy (overlay), before it, or after it (banner). */
@@ -319,8 +386,9 @@ function Page(props: NativeRendererProps): ReactNode {
         return (
           <View key={section} style={s.section} testID={`section-${section}`}>
             {/* On a section's own page the header already names it. */}
-            {props.only ? null : <Text accessibilityRole="header" aria-level={2} style={s.title}>{props.t(`celebration.sections.${section}`)}</Text>}
-            <Body content={content} gallery={gallery} view={props.view} t={props.t} scheme={scheme} {...(props.actions ? { actions: props.actions } : {})} />
+            {props.only ? null : <Text accessibilityRole="header" aria-level={2} style={s.title}>{props.t(sectionTitleKey(section))}</Text>}
+            <Body content={content} gallery={gallery} view={props.view} t={props.t} scheme={scheme} {...(props.actions ? { actions: props.actions } : {})}
+              renderIcon={props.renderIcon} hasPersonalLink={props.hasPersonalLink} giftsStatus={props.giftsStatus} />
           </View>
         );
       })}
