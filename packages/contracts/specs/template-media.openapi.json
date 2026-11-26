@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "RSVP Template and Media API",
-    "version": "1.2.0",
-    "description": "Template/Media Service (lane 16, Django + DRF). Behind Kong at /media (prefix stripped). Errors are RFC 9457 problems. 1.2.0 (F1, additive; the unmerged 1.1.0 of the same change set is superseded): a template theme is either the v1 theme (unchanged) or the invitation design document v2 (DesignDocumentV2, schemaVersion 2), validated against this contract. A v2 without the gifts block is 422 GIFTS_BLOCK_REQUIRED; the mandatory gifts button cannot be redirected, hidden, shrunk below 44 px, moved out of the canvas, covered or left unreadable (GIFTS_BLOCK_LOCKED, GIFTS_BLOCK_HIDDEN, GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL, GIFTS_BLOCK_COVERED, GIFTS_BLOCK_LOW_CONTRAST). Until F4/F5 the admin and the renderer cannot read a v2: POST/PATCH with a v2 theme is 422 DESIGN_V2_NOT_AVAILABLE, the admin list leaves v2 rows out and publishing one is 422 DESIGN_NOT_PUBLISHABLE. The gifts button keeps 44 px of useful height after padding and border and a label of at most 32 px. Poppins and IBM Plex leave the font catalogue. Custom HTML/CSS is 422 CUSTOM_CODE_UNAVAILABLE until the F5 sanitiser exists. A JSON body over 1 MB is 413 PAYLOAD_TOO_LARGE. Low-contrast colour pairs come back as non-blocking warnings (P19)."
+    "version": "1.3.0",
+    "description": "Template/Media Service (lane 16, Django + DRF). Behind Kong at /media (prefix stripped). Errors are RFC 9457 problems. 1.2.0 (F1, additive; the unmerged 1.1.0 of the same change set is superseded): a template theme is either the v1 theme (unchanged) or the invitation design document v2 (DesignDocumentV2, schemaVersion 2), validated against this contract. A v2 without the gifts block is 422 GIFTS_BLOCK_REQUIRED; the mandatory gifts button cannot be redirected, hidden, shrunk below 44 px, moved out of the canvas, covered or left unreadable (GIFTS_BLOCK_LOCKED, GIFTS_BLOCK_HIDDEN, GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL, GIFTS_BLOCK_COVERED, GIFTS_BLOCK_LOW_CONTRAST). Until F4/F5 the admin and the renderer cannot read a v2: POST/PATCH with a v2 theme is 422 DESIGN_V2_NOT_AVAILABLE, the admin list leaves v2 rows out and publishing one is 422 DESIGN_NOT_PUBLISHABLE. The gifts button keeps 44 px of useful height after padding and border and a label of at most 32 px. Poppins and IBM Plex leave the font catalogue. Custom HTML/CSS is 422 CUSTOM_CODE_UNAVAILABLE until the F5 sanitiser exists. A JSON body over 1 MB is 413 PAYLOAD_TOO_LARGE. Low-contrast colour pairs come back as non-blocking warnings (P19). 1.3.0 (F1, additive): per-celebration design storage. A design has a working draft, immutable published versions that can be restored into the draft (P15) and may be a host's private template (P21). Endpoints under /designs; publishing a celebration design emits template.design.published.v1 (AsyncAPI 1.23.0)."
   },
   "servers": [
     {
@@ -803,6 +803,1000 @@
           }
         }
       }
+    },
+    "/designs": {
+      "get": {
+        "operationId": "listPrivateTemplates",
+        "summary": "The caller's private templates (P21)",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "const": "PRIVATE_TEMPLATE"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Private templates of the caller",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "items"
+                  ],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Design"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "kind is not PRIVATE_TEMPLATE",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request: a body or parameter that is not valid (BAD_REQUEST), or JSON nested too deeply to parse",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error (INTERNAL); nothing was stored",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createDesign",
+        "summary": "Create the design of a celebration, or a private template",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DesignInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Design"
+                }
+              }
+            },
+            "headers": {
+              "Location": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed body or not exactly one source",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Can read but not change it",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown, or not visible to the caller (never 403 for what the caller cannot see)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "DESIGN_EXISTS or PRIVATE_TEMPLATE_LIMIT",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid document",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DesignProblem"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The JSON body is larger than 1 MB (PAYLOAD_TOO_LARGE)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error (INTERNAL); nothing was stored",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/celebrations/{celebrationId}/design": {
+      "get": {
+        "operationId": "getCelebrationDesign",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CelebrationId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The celebration's design",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Design"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "description": "draftVersion, to send back in If-Match",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown, or not visible to the caller (never 403 for what the caller cannot see)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request: a body or parameter that is not valid (BAD_REQUEST), or JSON nested too deeply to parse",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error (INTERNAL); nothing was stored",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/designs/{designId}": {
+      "get": {
+        "operationId": "getDesign",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DesignId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The design with its draft",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Design"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "description": "draftVersion, to send back in If-Match",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown, or not visible to the caller (never 403 for what the caller cannot see)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request: a body or parameter that is not valid (BAD_REQUEST), or JSON nested too deeply to parse",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error (INTERNAL); nothing was stored",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteDesign",
+        "summary": "Deletes a design and all its versions (PF-1)",
+        "description": "A private template is deleted by its owner (or an administrator); a celebration design by whoever manages the celebration. A celebration design that was ever published is 409 DESIGN_PUBLISHED: Celebration keeps the reference of its published version, so it is replaced by publishing again and goes away with the celebration (celebration.celebration.deleted.v1). Deleting an account deletes its private templates too (identity.user.deleted.v1).",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DesignId"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "401": {
+            "description": "Missing or invalid bearer token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller can read the design but not change it",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown, or not visible to the caller",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "DESIGN_PUBLISHED: a published celebration design is replaced, not deleted",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request: a body or parameter that is not valid (BAD_REQUEST), or JSON nested too deeply to parse",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error (INTERNAL); nothing was stored",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/designs/{designId}/draft": {
+      "put": {
+        "operationId": "saveDesignDraft",
+        "summary": "Replace the working draft",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DesignId"
+          },
+          {
+            "$ref": "#/components/parameters/DraftIfMatch"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DesignDraftInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved (an identical draft changes nothing)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Design"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "description": "draftVersion, to send back in If-Match",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed body",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Can read but not change it",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown, or not visible to the caller (never 403 for what the caller cannot see)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "VERSION_CONFLICT",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "If-Match required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid design",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DesignProblem"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The JSON body is larger than 1 MB (PAYLOAD_TOO_LARGE)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error (INTERNAL); nothing was stored",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/designs/{designId}/publish": {
+      "post": {
+        "operationId": "publishDesign",
+        "summary": "Publish the draft as the next immutable version",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DesignId"
+          },
+          {
+            "$ref": "#/components/parameters/DraftIfMatch"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DesignPublishInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "New version published",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DesignPublished"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "description": "draftVersion, to send back in If-Match",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Already the latest published version; nothing emitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DesignPublished"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "description": "draftVersion, to send back in If-Match",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed body",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Can read but not change it",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown, or not visible to the caller (never 403 for what the caller cannot see)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "VERSION_CONFLICT",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "If-Match required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid design",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DesignProblem"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The JSON body is larger than 1 MB (PAYLOAD_TOO_LARGE)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error (INTERNAL); nothing was stored",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/designs/{designId}/versions": {
+      "get": {
+        "operationId": "listDesignVersions",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DesignId"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "required": false,
+            "description": "Version number the previous page ended at (its nextBefore)",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2147483647
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Published versions, newest first",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "items",
+                    "nextBefore"
+                  ],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/DesignVersionSummary"
+                      }
+                    },
+                    "nextBefore": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "description": "Pass it as `before` for the next page; null on the last page"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown, or not visible to the caller (never 403 for what the caller cannot see)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "limit or before is not an integer in range (BAD_REQUEST, field)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error (INTERNAL); nothing was stored",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "description": "Newest first and paged. A design keeps its newest 100 published versions: publishing the 101st prunes the oldest (its number is never reused, and restoring it is 404)."
+      }
+    },
+    "/designs/{designId}/versions/{version}": {
+      "get": {
+        "operationId": "getDesignVersion",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DesignId"
+          },
+          {
+            "$ref": "#/components/parameters/DesignVersionNumber"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A published version with its document",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DesignVersion"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown, or not visible to the caller (never 403 for what the caller cannot see)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request: a body or parameter that is not valid (BAD_REQUEST), or JSON nested too deeply to parse",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error (INTERNAL); nothing was stored",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/designs/{designId}/versions/{version}/restore": {
+      "post": {
+        "operationId": "restoreDesignVersion",
+        "summary": "Copy a published version into the draft (P15); it does not publish",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DesignId"
+          },
+          {
+            "$ref": "#/components/parameters/DesignVersionNumber"
+          },
+          {
+            "$ref": "#/components/parameters/DraftIfMatch"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Draft now holds that version",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Design"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "description": "draftVersion, to send back in If-Match",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid bearer token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Can read but not change it",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown, or not visible to the caller (never 403 for what the caller cannot see)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "VERSION_CONFLICT",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "If-Match required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The version no longer satisfies today's contract",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DesignProblem"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request: a body or parameter that is not valid (BAD_REQUEST), or JSON nested too deeply to parse",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "The JSON body is larger than 1 MB (PAYLOAD_TOO_LARGE)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error (INTERNAL); nothing was stored",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -830,6 +1824,42 @@
         "schema": {
           "type": "string",
           "format": "uuid"
+        }
+      },
+      "DesignId": {
+        "name": "designId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "DesignVersionNumber": {
+        "name": "version",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "CelebrationId": {
+        "name": "celebrationId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "DraftIfMatch": {
+        "name": "If-Match",
+        "in": "header",
+        "required": true,
+        "description": "draftVersion being edited, e.g. \"3\". Missing \u2192 428; stale \u2192 409 VERSION_CONFLICT.",
+        "schema": {
+          "type": "string"
         }
       }
     },
@@ -10988,11 +12018,231 @@
               },
               "field": {
                 "type": "string"
+              },
+              "mediaIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "maxItems": 200
               }
             }
           }
         ],
-        "description": "422 of a v2 design (400 and 413 are plain Problems). code is INVALID_THEME (not an object, neither v1 nor v2, or a schemaVersion that is not the integer 2), DESIGN_SCHEMA_INVALID (issues lists the paths), GIFTS_BLOCK_REQUIRED (no gifts block, said before the schema errors), GIFTS_BLOCK_LOCKED (link or rotation on the gifts element), GIFTS_BLOCK_HIDDEN (not visible or translucent), GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL (under 44 px, or under 44 px of height left once vertical padding and border are taken out), GIFTS_BLOCK_TEXT_TOO_LARGE (label over 32 px or taller than the useful height), GIFTS_BLOCK_COVERED (another element paints over it), GIFTS_BLOCK_LOW_CONTRAST (text under 4.5:1 or contour under 3:1 in either palette), DESIGN_REFERENCE_INVALID, FONT_WEIGHT_UNAVAILABLE, CUSTOM_CODE_UNAVAILABLE (custom html/css until the F5 sanitiser), DESIGN_NOT_PUBLISHABLE (publishing a v2: it stays a draft until the renderer supports it) or DESIGN_V2_NOT_AVAILABLE (POST/PATCH of any v2 theme until F4/F5: the admin and the renderer cannot read it yet; checked before the document is validated)."
+        "description": "422 of a v2 design (400 and 413 are plain Problems). code is INVALID_THEME (not an object, neither v1 nor v2, or a schemaVersion that is not the integer 2), DESIGN_SCHEMA_INVALID (issues lists the paths), GIFTS_BLOCK_REQUIRED (no gifts block, said before the schema errors), GIFTS_BLOCK_LOCKED (link or rotation on the gifts element), GIFTS_BLOCK_HIDDEN (not visible or translucent), GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL (under 44 px, or under 44 px of height left once vertical padding and border are taken out), GIFTS_BLOCK_TEXT_TOO_LARGE (label over 32 px or taller than the useful height), GIFTS_BLOCK_COVERED (another element paints over it), GIFTS_BLOCK_LOW_CONTRAST (text under 4.5:1 or contour under 3:1 in either palette), DESIGN_REFERENCE_INVALID, FONT_WEIGHT_UNAVAILABLE, CUSTOM_CODE_UNAVAILABLE (custom html/css until the F5 sanitiser), DESIGN_NOT_PUBLISHABLE (publishing a v2: it stays a draft until the renderer supports it) or DESIGN_V2_NOT_AVAILABLE (POST/PATCH of any v2 theme until F4/F5: the admin and the renderer cannot read it yet; checked before the document is validated). Design endpoints add VERSION_CONFLICT (409, currentVersion), DESIGN_EXISTS (409), PRIVATE_TEMPLATE_LIMIT (409), DESIGN_PUBLISHED (409, a published celebration design cannot be deleted), DESIGN_TOO_LARGE, DESIGN_MEDIA_INVALID (a mediaId that is not a usable photo of the celebration; mediaIds lists them), DESIGN_MEDIA_NOT_ALLOWED (a private template cannot reference photos; mediaIds lists them), CELEBRATION_REQUIRED, CELEBRATION_NOT_ALLOWED and KIND_REQUIRED (422)."
+      },
+      "DesignKind": {
+        "type": "string",
+        "enum": [
+          "CELEBRATION",
+          "PRIVATE_TEMPLATE"
+        ]
+      },
+      "DesignInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "name"
+        ],
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/DesignKind"
+          },
+          "celebrationId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Required for CELEBRATION; absent for PRIVATE_TEMPLATE"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "templateId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Start from a published template (a v1 template is converted to v2)"
+          },
+          "fromDesignId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Start from another design the caller can read (P21: save a celebration design as a private template)"
+          },
+          "document": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DesignDocumentV2"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Start from this v2 document"
+          }
+        },
+        "description": "Send exactly one of templateId, fromDesignId or document."
+      },
+      "Design": {
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "celebrationId",
+          "name",
+          "draftVersion",
+          "publishedVersion",
+          "hasUnpublishedChanges",
+          "document",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/DesignKind"
+          },
+          "celebrationId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "draftVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Optimistic-concurrency token of the draft; send it in If-Match"
+          },
+          "publishedVersion": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "description": "Latest published version, null until the first publish"
+          },
+          "hasUnpublishedChanges": {
+            "type": "boolean"
+          },
+          "document": {
+            "$ref": "#/components/schemas/DesignDocumentV2",
+            "description": "The working draft"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DesignWarning"
+            },
+            "description": "Contrast warnings of the draft; present on create, save and restore. They never block (P19)"
+          }
+        }
+      },
+      "DesignDraftInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "document"
+        ],
+        "properties": {
+          "document": {
+            "$ref": "#/components/schemas/DesignDocumentV2"
+          }
+        }
+      },
+      "DesignPublishInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "type": "string",
+            "maxLength": 80
+          }
+        }
+      },
+      "DesignVersionSummary": {
+        "type": "object",
+        "required": [
+          "version",
+          "label",
+          "createdBy",
+          "createdAt"
+        ],
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "label": {
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "DesignVersion": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/DesignVersionSummary"
+          },
+          {
+            "type": "object",
+            "required": [
+              "document"
+            ],
+            "properties": {
+              "document": {
+                "$ref": "#/components/schemas/DesignDocumentV2"
+              }
+            }
+          }
+        ]
+      },
+      "DesignPublished": {
+        "type": "object",
+        "required": [
+          "design",
+          "version"
+        ],
+        "properties": {
+          "design": {
+            "$ref": "#/components/schemas/Design"
+          },
+          "version": {
+            "$ref": "#/components/schemas/DesignVersionSummary"
+          }
+        },
+        "description": "201 when a new version was created; 200 when the draft was already the latest published version (idempotent)"
       }
     }
   }
