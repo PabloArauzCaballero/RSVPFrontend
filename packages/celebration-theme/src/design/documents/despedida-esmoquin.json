@@ -2,7 +2,7 @@
   "key": "despedida-esmoquin",
   "name": "Despedida · Black tie",
   "description": "Black tie: blanco y negro a toda tinta, una pajarita y un sombrero de copa en fila y un rojo escarlata en una sola pieza.",
-  "layout": "editorial",
+  "layout": "corporate",
   "eventTypeTags": [
     "bachelor-party"
   ],
@@ -466,7 +466,7 @@
         "id": "cover",
         "type": "cover",
         "config": {
-          "variant": "editorial",
+          "variant": "corporate",
           "envelope": false
         }
       },

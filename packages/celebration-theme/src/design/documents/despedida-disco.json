@@ -96,6 +96,12 @@
                   "entrance": "fade",
                   "delayMs": 200,
                   "durationMs": 800
+                },
+                "padding": {
+                  "top": 0,
+                  "right": 16,
+                  "bottom": 0,
+                  "left": 16
                 }
               },
               {
@@ -111,6 +117,12 @@
                   "entrance": "scale",
                   "delayMs": 500,
                   "durationMs": 800
+                },
+                "padding": {
+                  "top": 0,
+                  "right": 16,
+                  "bottom": 0,
+                  "left": 16
                 }
               },
               {

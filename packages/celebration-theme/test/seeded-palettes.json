@@ -2,7 +2,7 @@
   "_origin": {
     "repo": "PabloArauzCaballero/RSVPBackend",
     "branch": "feat/plantillas-extra-otros-despedida-pedida",
-    "commit": "5ba9a370d481aba9580c16b66402c2914a3bc7cd",
+    "commit": "199af7801e23d58d6f7513140a3f3975b3c3c727",
     "path": "seeds/templates/data/*.json",
     "field": "theme.palette",
     "generated": "2026-11-26",

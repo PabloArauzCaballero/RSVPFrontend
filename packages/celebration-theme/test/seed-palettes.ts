@@ -45,7 +45,7 @@ export const SEED_TEMPLATES: readonly SeedTemplate[] = [
   { key: "otros-rumbo", name: "Otros eventos · Rumbo", layout: "minimal", palette: { canvas: "#EDF4F6", surface: "#FFFFFF", text: "#0E2128", accent: "#0B5F7A", muted: "#44606A" } },
   { key: "otros-mesa", name: "Otros eventos · Mesa larga", layout: "classic", palette: { canvas: "#F8F4EA", surface: "#FFFEFA", text: "#22201A", accent: "#1F6B4A", muted: "#5B5648" } },
   { key: "despedida-disco", name: "Despedida · Disco", layout: "festive", palette: { canvas: "#FBF3FC", surface: "#FFFFFF", text: "#25132A", accent: "#8E1F8F", muted: "#5E4663" } },
-  { key: "despedida-esmoquin", name: "Despedida · Black tie", layout: "editorial", palette: { canvas: "#F5F4F2", surface: "#FFFFFF", text: "#0F0F11", accent: "#B4262A", muted: "#4F4F55" } },
+  { key: "despedida-esmoquin", name: "Despedida · Black tie", layout: "corporate", palette: { canvas: "#F5F4F2", surface: "#FFFFFF", text: "#0F0F11", accent: "#B4262A", muted: "#4F4F55" } },
   { key: "pedida-solitario", name: "Pedida · Solitario", layout: "classic", palette: { canvas: "#F3F5FA", surface: "#FFFFFF", text: "#141B2E", accent: "#2A3F8F", muted: "#4A5570" } },
   { key: "pedida-rosa", name: "Pedida · Rosa y carta", layout: "festive", palette: { canvas: "#FCF3F5", surface: "#FFFFFF", text: "#2D1620", accent: "#A82E58", muted: "#6A4A56" } },
 ];
