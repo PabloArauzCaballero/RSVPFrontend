@@ -85,57 +85,16 @@
             "rowHeight": 8,
             "elements": [
               {
-                "id": "el-bola",
-                "block": "art-bola",
-                "x": 0,
-                "y": 0,
-                "w": 2,
-                "h": 8,
-                "visible": true,
-                "animation": {
-                  "entrance": "fade",
-                  "delayMs": 200,
-                  "durationMs": 800
-                },
-                "padding": {
-                  "top": 0,
-                  "right": 16,
-                  "bottom": 0,
-                  "left": 16
-                }
-              },
-              {
-                "id": "el-vinilo",
-                "block": "art-vinilo",
-                "x": 2,
-                "y": 0,
-                "w": 2,
-                "h": 8,
-                "visible": true,
-                "rotation": 10,
-                "animation": {
-                  "entrance": "scale",
-                  "delayMs": 500,
-                  "durationMs": 800
-                },
-                "padding": {
-                  "top": 0,
-                  "right": 16,
-                  "bottom": 0,
-                  "left": 16
-                }
-              },
-              {
                 "id": "el-cover",
                 "block": "cover",
                 "x": 0,
-                "y": 8,
+                "y": 0,
                 "w": 4,
                 "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "rise",
-                  "delayMs": 900,
+                  "delayMs": 200,
                   "durationMs": 800
                 },
                 "typography": {
@@ -163,6 +122,47 @@
                 "radius": 16
               },
               {
+                "id": "el-bola",
+                "block": "art-bola",
+                "x": 0,
+                "y": 8,
+                "w": 2,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 700,
+                  "durationMs": 800
+                },
+                "padding": {
+                  "top": 0,
+                  "right": 16,
+                  "bottom": 0,
+                  "left": 16
+                }
+              },
+              {
+                "id": "el-vinilo",
+                "block": "art-vinilo",
+                "x": 2,
+                "y": 8,
+                "w": 2,
+                "h": 8,
+                "visible": true,
+                "rotation": 10,
+                "animation": {
+                  "entrance": "scale",
+                  "delayMs": 1000,
+                  "durationMs": 800
+                },
+                "padding": {
+                  "top": 0,
+                  "right": 16,
+                  "bottom": 0,
+                  "left": 16
+                }
+              },
+              {
                 "id": "el-popper",
                 "block": "art-popper",
                 "x": 2,
@@ -184,25 +184,11 @@
             "rowHeight": 8,
             "elements": [
               {
-                "id": "el-bola",
-                "block": "art-bola",
-                "x": 0,
-                "y": 0,
-                "w": 3,
-                "h": 8,
-                "visible": true,
-                "animation": {
-                  "entrance": "fade",
-                  "delayMs": 200,
-                  "durationMs": 800
-                }
-              },
-              {
                 "id": "el-cover",
                 "block": "cover",
-                "x": 3,
+                "x": 0,
                 "y": 0,
-                "w": 6,
+                "w": 7,
                 "h": 8,
                 "visible": true,
                 "animation": {
@@ -235,10 +221,30 @@
                 "radius": 16
               },
               {
+                "id": "el-bola",
+                "block": "art-bola",
+                "x": 7,
+                "y": 0,
+                "w": 5,
+                "h": 44,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 200,
+                  "durationMs": 800
+                },
+                "padding": {
+                  "top": 0,
+                  "right": 24,
+                  "bottom": 0,
+                  "left": 24
+                }
+              },
+              {
                 "id": "el-vinilo",
                 "block": "art-vinilo",
-                "x": 9,
-                "y": 0,
+                "x": 3,
+                "y": 44,
                 "w": 3,
                 "h": 8,
                 "visible": true,
@@ -252,8 +258,8 @@
               {
                 "id": "el-popper",
                 "block": "art-popper",
-                "x": 9,
-                "y": 8,
+                "x": 6,
+                "y": 44,
                 "w": 3,
                 "h": 8,
                 "visible": true,

@@ -85,58 +85,16 @@
             "rowHeight": 8,
             "elements": [
               {
-                "id": "el-rosa",
-                "block": "art-rosa",
-                "x": 0,
-                "y": 0,
-                "w": 2,
-                "h": 8,
-                "visible": true,
-                "rotation": -10,
-                "animation": {
-                  "entrance": "rise",
-                  "delayMs": 200,
-                  "durationMs": 900
-                },
-                "padding": {
-                  "top": 0,
-                  "right": 24,
-                  "bottom": 0,
-                  "left": 24
-                }
-              },
-              {
-                "id": "el-sobre",
-                "block": "art-sobre",
-                "x": 2,
-                "y": 0,
-                "w": 2,
-                "h": 8,
-                "visible": true,
-                "rotation": 6,
-                "animation": {
-                  "entrance": "envelope",
-                  "delayMs": 600,
-                  "durationMs": 900
-                },
-                "padding": {
-                  "top": 0,
-                  "right": 24,
-                  "bottom": 0,
-                  "left": 24
-                }
-              },
-              {
                 "id": "el-cover",
                 "block": "cover",
                 "x": 0,
-                "y": 8,
+                "y": 0,
                 "w": 4,
                 "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "fade",
-                  "delayMs": 1000,
+                  "delayMs": 200,
                   "durationMs": 800
                 },
                 "typography": {
@@ -162,6 +120,48 @@
                   "colour": "line"
                 },
                 "radius": 4
+              },
+              {
+                "id": "el-rosa",
+                "block": "art-rosa",
+                "x": 0,
+                "y": 8,
+                "w": 2,
+                "h": 8,
+                "visible": true,
+                "rotation": -10,
+                "animation": {
+                  "entrance": "rise",
+                  "delayMs": 800,
+                  "durationMs": 900
+                },
+                "padding": {
+                  "top": 0,
+                  "right": 24,
+                  "bottom": 0,
+                  "left": 24
+                }
+              },
+              {
+                "id": "el-sobre",
+                "block": "art-sobre",
+                "x": 2,
+                "y": 8,
+                "w": 2,
+                "h": 8,
+                "visible": true,
+                "rotation": 6,
+                "animation": {
+                  "entrance": "envelope",
+                  "delayMs": 1100,
+                  "durationMs": 900
+                },
+                "padding": {
+                  "top": 0,
+                  "right": 24,
+                  "bottom": 0,
+                  "left": 24
+                }
               },
               {
                 "id": "el-filete",

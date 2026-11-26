@@ -87,51 +87,16 @@
             "rowHeight": 8,
             "elements": [
               {
-                "id": "el-brujula",
-                "block": "art-brujula",
-                "x": 0,
-                "y": 0,
-                "w": 3,
-                "h": 8,
-                "visible": true,
-                "rotation": -8,
-                "animation": {
-                  "entrance": "scale",
-                  "delayMs": 200,
-                  "durationMs": 900
-                },
-                "padding": {
-                  "top": 0,
-                  "right": 56,
-                  "bottom": 0,
-                  "left": 56
-                }
-              },
-              {
-                "id": "el-pin",
-                "block": "art-pin",
-                "x": 3,
-                "y": 0,
-                "w": 1,
-                "h": 8,
-                "visible": true,
-                "animation": {
-                  "entrance": "fade",
-                  "delayMs": 1200,
-                  "durationMs": 600
-                }
-              },
-              {
                 "id": "el-cover",
                 "block": "cover",
                 "x": 0,
-                "y": 8,
+                "y": 0,
                 "w": 4,
                 "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "rise",
-                  "delayMs": 700,
+                  "delayMs": 200,
                   "durationMs": 800
                 },
                 "typography": {
@@ -157,6 +122,41 @@
                 }
               },
               {
+                "id": "el-brujula",
+                "block": "art-brujula",
+                "x": 0,
+                "y": 8,
+                "w": 3,
+                "h": 8,
+                "visible": true,
+                "rotation": -8,
+                "animation": {
+                  "entrance": "scale",
+                  "delayMs": 800,
+                  "durationMs": 900
+                },
+                "padding": {
+                  "top": 0,
+                  "right": 56,
+                  "bottom": 0,
+                  "left": 56
+                }
+              },
+              {
+                "id": "el-pin",
+                "block": "art-pin",
+                "x": 3,
+                "y": 8,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 1200,
+                  "durationMs": 600
+                }
+              },
+              {
                 "id": "el-regla",
                 "block": "art-regla",
                 "x": 0,
@@ -178,11 +178,32 @@
             "rowHeight": 8,
             "elements": [
               {
-                "id": "el-cover",
-                "block": "cover",
+                "id": "el-brujula",
+                "block": "art-brujula",
                 "x": 0,
                 "y": 0,
-                "w": 7,
+                "w": 6,
+                "h": 64,
+                "visible": true,
+                "rotation": -8,
+                "animation": {
+                  "entrance": "scale",
+                  "delayMs": 200,
+                  "durationMs": 900
+                },
+                "padding": {
+                  "top": 24,
+                  "right": 24,
+                  "bottom": 0,
+                  "left": 24
+                }
+              },
+              {
+                "id": "el-cover",
+                "block": "cover",
+                "x": 6,
+                "y": 0,
+                "w": 6,
                 "h": 8,
                 "visible": true,
                 "animation": {
@@ -213,25 +234,10 @@
                 }
               },
               {
-                "id": "el-brujula",
-                "block": "art-brujula",
-                "x": 7,
-                "y": 0,
-                "w": 4,
-                "h": 8,
-                "visible": true,
-                "rotation": -8,
-                "animation": {
-                  "entrance": "scale",
-                  "delayMs": 200,
-                  "durationMs": 900
-                }
-              },
-              {
                 "id": "el-pin",
                 "block": "art-pin",
-                "x": 11,
-                "y": 0,
+                "x": 0,
+                "y": 64,
                 "w": 1,
                 "h": 8,
                 "visible": true,
@@ -244,9 +250,9 @@
               {
                 "id": "el-regla",
                 "block": "art-regla",
-                "x": 0,
-                "y": 8,
-                "w": 12,
+                "x": 1,
+                "y": 64,
+                "w": 11,
                 "h": 8,
                 "visible": true,
                 "animation": {

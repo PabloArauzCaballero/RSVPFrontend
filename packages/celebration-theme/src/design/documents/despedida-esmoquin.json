@@ -1,7 +1,7 @@
 {
   "key": "despedida-esmoquin",
   "name": "Despedida · Black tie",
-  "description": "Black tie: blanco y negro a toda tinta, una pajarita y un sombrero de copa en fila y un rojo escarlata en una sola pieza.",
+  "description": "Black tie: blanco y negro a toda tinta, una pajarita y una copa de vino en fila y un rojo escarlata en una sola pieza.",
   "layout": "corporate",
   "eventTypeTags": [
     "bachelor-party"
@@ -85,30 +85,16 @@
             "rowHeight": 8,
             "elements": [
               {
-                "id": "el-filete",
-                "block": "art-filete",
+                "id": "el-cover",
+                "block": "cover",
                 "x": 0,
                 "y": 0,
                 "w": 4,
                 "h": 8,
                 "visible": true,
                 "animation": {
-                  "entrance": "draw",
-                  "delayMs": 0,
-                  "durationMs": 900
-                }
-              },
-              {
-                "id": "el-cover",
-                "block": "cover",
-                "x": 0,
-                "y": 8,
-                "w": 4,
-                "h": 8,
-                "visible": true,
-                "animation": {
                   "entrance": "fade",
-                  "delayMs": 600,
+                  "delayMs": 200,
                   "durationMs": 800
                 },
                 "typography": {
@@ -117,6 +103,20 @@
                   "size": 56,
                   "lineHeight": 1.04,
                   "weight": 400
+                }
+              },
+              {
+                "id": "el-filete",
+                "block": "art-filete",
+                "x": 0,
+                "y": 8,
+                "w": 4,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "draw",
+                  "delayMs": 800,
+                  "durationMs": 900
                 }
               },
               {
@@ -134,8 +134,8 @@
                 }
               },
               {
-                "id": "el-sombrero",
-                "block": "art-sombrero",
+                "id": "el-copa",
+                "block": "art-copa",
                 "x": 2,
                 "y": 16,
                 "w": 2,
@@ -204,8 +204,8 @@
                 }
               },
               {
-                "id": "el-sombrero",
-                "block": "art-sombrero",
+                "id": "el-copa",
+                "block": "art-copa",
                 "x": 5,
                 "y": 16,
                 "w": 2,
@@ -480,10 +480,10 @@
         }
       },
       {
-        "id": "art-sombrero",
+        "id": "art-copa",
         "type": "illustration",
         "config": {
-          "illustrationId": "sombrero-copa",
+          "illustrationId": "copa-vino",
           "tint": "accent",
           "drawOnEnter": false
         }

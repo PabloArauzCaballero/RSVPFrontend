@@ -15,6 +15,7 @@ import { layoutOf, themeVariables } from "../theme.js";
 import type { CelebrationTheme, SectionId, Translate } from "../types.js";
 import { scopeCss } from "../custom/css.js";
 import { requiredScrim } from "./colour.js";
+import { familyById } from "./catalog.js";
 import { designPalette, fontStack } from "./read.js";
 import type { DesignBackground, PaletteRole, DesignBlock, DesignCanvas, DesignDocumentV2, DesignElement, DesignLink, DesignPage } from "./types.js";
 
@@ -349,7 +350,7 @@ export function DesignRenderer(props: DesignRendererProps): ReactNode {
   const pages = props.only ? placed.filter((page) => page.kind === "section" && page.section === props.only) : placed;
   return (
     <article className="celebration celebration-design" data-design="2" data-layout={theme.layout} data-color-scheme={scheme ?? "light"} data-scheme-source={scheme ? "prop" : "system"}
-      data-section-style={theme.sectionStyle} data-divider={layout.divider} data-images={layout.imageTreatment} lang={view.locale} style={style}>
+      data-section-style={theme.sectionStyle} data-divider={layout.divider} data-images={layout.imageTreatment} data-heading-face={familyById(design.tokens.typography.heading.family)?.category === "script" ? "script" : undefined} lang={view.locale} style={style}>
       {scheme ? null : <SystemColours theme={theme} />}
       <CustomCss design={design} />
       <Dock t={t} giftsHref={context.giftsHref} giftsStatus={props.giftsStatus} rsvpHref={props.rsvpHref} rsvpHelpHref={props.rsvpHelpHref} rsvpAdaptive={props.rsvpAdaptive} />

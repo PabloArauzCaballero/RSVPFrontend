@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { cleanup, render } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it } from "vitest";
@@ -174,6 +176,34 @@ describe("the six extra templates as documents v2", () => {
       const art = design(name).blocks.filter((block) => block.type === "illustration");
       expect(art.length, name).toBeGreaterThanOrEqual(2);
       for (const block of art) expect(block.config["tint"]).toBe("accent");
+    }
+  });
+  it.each(NAMES)("%s: PL-130-M2 · on the phone the cover text is the first thing of the cover, before any drawing", (name) => {
+    const [first] = design(name).pages[0]?.canvases.mobile.elements ?? [];
+    expect(first?.block).toBe("cover");
+  });
+
+  it("PL-FE143-V1 · only a script heading marks the page, so the date, the place and the times keep the body face (and nothing else changes)", () => {
+    for (const name of NAMES) {
+      const marked = html(name).includes('data-heading-face="script"');
+      expect(marked, name).toBe(design(name).tokens.typography.heading.family === "allura");
+    }
+    expect(NAMES.filter((name) => design(name).tokens.typography.heading.family === "allura")).toEqual(["pedida-rosa"]);
+    const css = readFileSync(join(__dirname, "../../styles.css"), "utf8");
+    expect(css).toMatch(/\[data-heading-face="script"\] :is\([^)]*\.celebration-date[^)]*\) \{ font-family: var\(--celebration-body-font\); \}/);
+    expect(css).toMatch(/\[data-heading-face="script"\] :is\(h1, h2, h3[^)]*\) \{ font-family: var\(--celebration-heading-font\); \}/);
+  });
+
+  it("PL-FE143-V5 · the accents of the templates of one event type are at least 30 degrees apart (light), whatever the other templates are", () => {
+    const dir = join(__dirname, "documents");
+    const documents = readdirSync(dir).filter((file) => file.endsWith(".json")).map((file) => JSON.parse(readFileSync(join(dir, file), "utf8")) as { key: string; eventTypeTags: string[]; theme: { tokens: { palettes: { light: { accent: string } } } } });
+    for (const tag of ["other", "bachelor-party", "engagement"]) {
+      const siblings = documents.filter((document) => document.eventTypeTags.includes(tag));
+      expect(siblings.length).toBeGreaterThanOrEqual(2);
+      for (const [index, first] of siblings.entries()) for (const second of siblings.slice(index + 1)) {
+        const gap = Math.abs(hue(first.theme.tokens.palettes.light.accent) - hue(second.theme.tokens.palettes.light.accent));
+        expect(Math.min(gap, 360 - gap), `${first.key} / ${second.key}`).toBeGreaterThanOrEqual(30);
+      }
     }
   });
 });

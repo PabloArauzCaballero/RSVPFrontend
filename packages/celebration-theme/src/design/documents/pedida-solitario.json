@@ -1,7 +1,7 @@
 {
   "key": "pedida-solitario",
   "name": "Pedida · Solitario",
-  "description": "Una sola piedra: un solitario grande al centro y mucho aire, la tipografía de inscripción y un azul zafiro que toca una pieza.",
+  "description": "Una sola piedra: un solitario grande al centro y mucho aire, la tipografía de inscripción y un azul hielo que toca una pieza.",
   "layout": "classic",
   "eventTypeTags": [
     "engagement"
@@ -20,24 +20,24 @@
     "tokens": {
       "palettes": {
         "light": {
-          "canvas": "#F3F5FA",
+          "canvas": "#F2F6FA",
           "surface": "#FFFFFF",
-          "text": "#141B2E",
-          "muted": "#4A5570",
-          "accent": "#2A3F8F",
-          "accentFill": "#2A3F8F",
+          "text": "#12202E",
+          "muted": "#46586B",
+          "accent": "#1D5E91",
+          "accentFill": "#1D5E91",
           "onAccent": "#FFFFFF",
-          "line": "#7C86A3"
+          "line": "#76899E"
         },
         "dark": {
-          "canvas": "#0A0E1B",
-          "surface": "#121829",
-          "text": "#E6EAF6",
-          "muted": "#A7B1CE",
-          "accent": "#9FB0F2",
-          "accentFill": "#8497E6",
-          "onAccent": "#071033",
-          "line": "#64709A"
+          "canvas": "#09111A",
+          "surface": "#111B27",
+          "text": "#E4EDF6",
+          "muted": "#A3B4C7",
+          "accent": "#86BDEB",
+          "accentFill": "#6AA8DC",
+          "onAccent": "#06182A",
+          "line": "#5E7287"
         }
       },
       "typography": {
@@ -85,36 +85,16 @@
             "rowHeight": 8,
             "elements": [
               {
-                "id": "el-solitario",
-                "block": "art-solitario",
-                "x": 1,
-                "y": 0,
-                "w": 2,
-                "h": 8,
-                "visible": true,
-                "animation": {
-                  "entrance": "scale",
-                  "delayMs": 200,
-                  "durationMs": 1000
-                },
-                "padding": {
-                  "top": 0,
-                  "right": 32,
-                  "bottom": 0,
-                  "left": 32
-                }
-              },
-              {
                 "id": "el-cover",
                 "block": "cover",
                 "x": 0,
-                "y": 8,
+                "y": 0,
                 "w": 4,
                 "h": 8,
                 "visible": true,
                 "animation": {
                   "entrance": "fade",
-                  "delayMs": 900,
+                  "delayMs": 200,
                   "durationMs": 900
                 },
                 "typography": {
@@ -130,6 +110,26 @@
                   "bottom": 8,
                   "left": 24
                 }
+              },
+              {
+                "id": "el-solitario",
+                "block": "art-solitario",
+                "x": 1,
+                "y": 8,
+                "w": 2,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "scale",
+                  "delayMs": 900,
+                  "durationMs": 1000
+                },
+                "padding": {
+                  "top": 0,
+                  "right": 32,
+                  "bottom": 0,
+                  "left": 32
+                }
               }
             ]
           },
@@ -143,21 +143,27 @@
                 "block": "art-solitario",
                 "x": 0,
                 "y": 0,
-                "w": 5,
-                "h": 8,
+                "w": 6,
+                "h": 64,
                 "visible": true,
                 "animation": {
                   "entrance": "scale",
                   "delayMs": 200,
                   "durationMs": 1000
+                },
+                "padding": {
+                  "top": 24,
+                  "right": 24,
+                  "bottom": 0,
+                  "left": 24
                 }
               },
               {
                 "id": "el-cover",
                 "block": "cover",
-                "x": 5,
+                "x": 6,
                 "y": 0,
-                "w": 7,
+                "w": 6,
                 "h": 8,
                 "visible": true,
                 "animation": {
@@ -182,9 +188,9 @@
               {
                 "id": "el-botella",
                 "block": "art-botella",
-                "x": 11,
-                "y": 8,
-                "w": 1,
+                "x": 8,
+                "y": 64,
+                "w": 2,
                 "h": 8,
                 "visible": true,
                 "animation": {

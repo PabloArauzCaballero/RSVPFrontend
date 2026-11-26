@@ -1,12 +1,11 @@
 {
   "_origin": {
     "repo": "PabloArauzCaballero/RSVPBackend",
-    "branch": "feat/plantillas-extra-otros-despedida-pedida",
-    "commit": "199af7801e23d58d6f7513140a3f3975b3c3c727",
+    "commit": "61860ba98281b39d73fcd82a6065cb97fc1dd3e1",
     "path": "seeds/templates/data/*.json",
     "field": "theme.palette",
     "generated": "2026-11-26",
-    "note": "Copia literal de la paleta de cada semilla. Si una semilla cambia, regenera este archivo y revisa la prueba de contraste. Las 6 últimas (031 a 036) son de la decisión 6 de Pablo (2026-11-25): feat/plantillas-extra-otros-despedida-pedida."
+    "note": "Copia literal de la paleta de cada semilla (la fuente es el archivo, no una rama: las ramas se borran tras el squash). Si una semilla cambia, regenera este archivo y revisa la prueba de contraste. Las 6 últimas (031 a 036) son de la decisión 6 de Pablo (2026-11-25), PR RSVPBackend #163."
   },
   "templates": [
     {
@@ -387,11 +386,11 @@
       "key": "pedida-solitario",
       "file": "035-pedida-solitario.json",
       "palette": {
-        "canvas": "#F3F5FA",
+        "canvas": "#F2F6FA",
         "surface": "#FFFFFF",
-        "text": "#141B2E",
-        "accent": "#2A3F8F",
-        "muted": "#4A5570"
+        "text": "#12202E",
+        "accent": "#1D5E91",
+        "muted": "#46586B"
       }
     },
     {

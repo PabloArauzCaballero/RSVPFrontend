@@ -74,14 +74,15 @@ def canvas(elements, cols=4):
 
 def stack(elements):
     """Apila los elementos de la portada: los que comparten `y` van en la misma fila (lado a lado) y cada fila empieza donde acaba la
-    anterior. Todos miden 8 filas como mínimo: la cuadrícula crece sola con el contenido (una foto, un nombre largo) y no deja huecos."""
+    anterior. Todos miden 8 filas como mínimo (un dibujo héroe pide más con `hero=<filas>`, p. ej. 64: ancla la portada de escritorio): la cuadrícula crece sola con el contenido (una foto, un nombre largo) y no deja huecos."""
     out, cursor, last_y, row_end = [], 0, None, 0
     for item in elements:
         if last_y is None or item["y"] != last_y:
             cursor = row_end
             last_y = item["y"]
-        item = dict(item, y=cursor, h=8)
-        row_end = max(row_end, cursor + 8)
+        rows = item.pop("hero", 8)
+        item = dict(item, y=cursor, h=rows)
+        row_end = max(row_end, cursor + rows)
         out.append(item)
     return out
 

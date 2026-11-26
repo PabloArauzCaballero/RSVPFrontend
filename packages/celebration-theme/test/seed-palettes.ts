@@ -1,5 +1,5 @@
 /**
- * The 36 seeded templates (the 30 of the F4 redesign plus the 6 of decision 6, 2026-11-25) (BE `seeds/templates/data/*.json` on `feat/plantillas-f4-semillas`, copied 2026-11-24): key, name,
+ * The 36 seeded templates (the 30 of the F4 redesign plus the 6 of decision 6, 2026-11-25) (BE `seeds/templates/data/*.json`, copied 2026-11-26; the source is the file, not a branch): key, name,
  * layout and palette, the inputs the invitation art is measured against. If a seed changes, copy it again here.
  *
  * Exception, decided by Pablo (2026-11-24): the row `gala-dorada` follows the new direction «Gala art déco» (wine accent, never
@@ -46,6 +46,6 @@ export const SEED_TEMPLATES: readonly SeedTemplate[] = [
   { key: "otros-mesa", name: "Otros eventos · Mesa larga", layout: "classic", palette: { canvas: "#F8F4EA", surface: "#FFFEFA", text: "#22201A", accent: "#1F6B4A", muted: "#5B5648" } },
   { key: "despedida-disco", name: "Despedida · Disco", layout: "festive", palette: { canvas: "#FBF3FC", surface: "#FFFFFF", text: "#25132A", accent: "#8E1F8F", muted: "#5E4663" } },
   { key: "despedida-esmoquin", name: "Despedida · Black tie", layout: "corporate", palette: { canvas: "#F5F4F2", surface: "#FFFFFF", text: "#0F0F11", accent: "#B4262A", muted: "#4F4F55" } },
-  { key: "pedida-solitario", name: "Pedida · Solitario", layout: "classic", palette: { canvas: "#F3F5FA", surface: "#FFFFFF", text: "#141B2E", accent: "#2A3F8F", muted: "#4A5570" } },
+  { key: "pedida-solitario", name: "Pedida · Solitario", layout: "classic", palette: { canvas: "#F2F6FA", surface: "#FFFFFF", text: "#12202E", accent: "#1D5E91", muted: "#46586B" } },
   { key: "pedida-rosa", name: "Pedida · Rosa y carta", layout: "festive", palette: { canvas: "#FCF3F5", surface: "#FFFFFF", text: "#2D1620", accent: "#A82E58", muted: "#6A4A56" } },
 ];

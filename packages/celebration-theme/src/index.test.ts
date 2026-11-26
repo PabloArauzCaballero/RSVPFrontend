@@ -221,7 +221,7 @@ const LIGHT_FILLS: Readonly<Record<string, { readonly fill: string; readonly ink
     "ink": "#FFFFFF"
   },
   "pedida-solitario": {
-    "fill": "#2A3F8F",
+    "fill": "#1D5E91",
     "ink": "#FFFFFF"
   },
   "pedida-rosa": {

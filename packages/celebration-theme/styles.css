@@ -204,6 +204,11 @@ body:has(.cdesign-dock) { padding-bottom: 5.5rem; }
 .celebration-design .cdesign-el[data-sized] :is(.celebration-date, .celebration-hosts) { font-size: max(1.1rem, calc(var(--cd-size, 16px) * .3)); }
 .celebration-design .cdesign-el[data-sized] .celebration-venue { font-size: max(1rem, calc(var(--cd-size, 16px) * .22)); }
 
+/* A script face (Allura) is for the title only (PL-FE143-V1): at 15 to 21 px its x-height is 5 to 7 px, so the date, the place, the countdown, the times and the venue names (the facts a guest
+   comes for) keep the body face. Headings at 32 px and up keep the script. */
+.celebration-design[data-heading-face="script"] :is(.celebration-hosts, .celebration-date, .celebration-venue, .celebration-countdown, p, li, time, strong, dt, dd, summary, label, small, a, button, .cdesign-el, .cdesign-cover) { font-family: var(--celebration-body-font); }
+.celebration-design[data-heading-face="script"] :is(h1, h2, h3, .cdesign-monogram) { font-family: var(--celebration-heading-font); }
+
 /* Cover block. The photo and the copy are one block; where the block sits and how wide it is is the document's call. */
 .celebration-design .cdesign-cover { display: grid; gap: 1rem; justify-items: start; align-content: start; }
 .celebration-design .cdesign-cover-copy { display: grid; gap: .5rem; justify-items: inherit; min-width: 0; }
