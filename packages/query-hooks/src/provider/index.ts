@@ -222,3 +222,4 @@ export function useDirectorySearch<TPage>(client: ApiClient, query: DirectoryQue
   return useQuery({ queryKey: ["providers", "directory", path] as const, queryFn: ({ signal }) => client.request<TPage>(path, { auth: false, signal }), staleTime: 60_000, retry: retryTransient, enabled });
 }
 export * from "./partner-requests.js";
+export * from "./product-sheet.js";
