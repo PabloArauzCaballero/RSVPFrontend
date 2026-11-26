@@ -186,7 +186,7 @@ describe("F6 · embeds (P17)", () => {
     expect(audio.getAttribute("preload")).toBe("none");
     const button = container.querySelector("button.celebration-audio-button") as HTMLElement;
     expect(button.getAttribute("aria-label")).toContain("celebration.media.play");
-    expect(button.textContent).toBe("celebration.media.openMusic");
+    expect(button.textContent).toBe("celebration.media.playShort");
     expect(container.querySelector(".celebration-embed[data-kind=\"audio\"] audio")).toBeTruthy();
     expect(container.querySelector("progress")).toBeTruthy();
   });

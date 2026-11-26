@@ -317,6 +317,8 @@ html:has(.cdesign-dock) { scroll-padding-bottom: 6rem; }
 .celebration-embed[data-phase="failed"] .celebration-embed-play { border-color: var(--celebration-text); }
 /* On a picture the muted ink is the text ink: a veil can make the text pass AA over any photo, but not an ink that is already near 4.5 on the plain canvas. */
 .celebration-design .cdesign-page[data-bg-media], .celebration-design .cdesign-el[data-bg-media] { --celebration-muted: var(--celebration-text); }
+/* Same for the monogram: the veil is sized for the text ink, and the accent over a photo measured 2.57:1 (Gala). */
+.celebration-design :is(.cdesign-page[data-bg-media], .cdesign-el[data-bg-media]) .cdesign-monogram { color: var(--celebration-text); }
 
 /* P22 · the gifts and reply buttons. The dock is above everything (the author's z-index tops out at 100). Inside the page they are a grid item of their own, OUTSIDE every `.cdesign-author`:
    the author's stylesheet is scoped to that container (see CustomCss), so it cannot match the page, the canvas, `main` or these blocks, nor inherit anything into them. Whatever the

@@ -239,6 +239,10 @@ describe("styles of F6", () => {
     expect(contrastRatio(edge, surface)).toBeGreaterThanOrEqual(3);
   });
 
+  it("over a photo the monogram takes the text ink, the one the veil is sized for, not the accent", () => {
+    expect(css).toMatch(/\.cdesign-el\[data-bg-media\]\) \.cdesign-monogram \{ color: var\(--celebration-text\); \}/);
+  });
+
   it("the card sizes its padding inside its width (box-sizing)", () => {
     expect(css).toMatch(/\.celebration-embed \{ box-sizing: border-box;/);
   });
