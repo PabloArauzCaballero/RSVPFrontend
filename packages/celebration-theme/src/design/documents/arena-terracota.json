@@ -1,0 +1,679 @@
+{
+  "key": "arena-terracota",
+  "name": "Arena y terracota",
+  "description": "Cerámica: una taza sobre su plato, ondas de esmalte y una sans geométrica; el terracota apagado solo marca una pieza pequeña.",
+  "layout": "classic",
+  "eventTypeTags": [
+    "anniversary",
+    "baptism",
+    "birthday",
+    "wedding"
+  ],
+  "sectionOrder": [
+    "story",
+    "schedule",
+    "venues",
+    "gallery",
+    "dressCode",
+    "gifts",
+    "faq",
+    "recommendations",
+    "rsvp"
+  ],
+  "theme": {
+    "schemaVersion": 2,
+    "tokens": {
+      "palettes": {
+        "light": {
+          "canvas": "#F6EEE3",
+          "surface": "#FFFBF5",
+          "text": "#2A211B",
+          "muted": "#66564A",
+          "accent": "#A2431F",
+          "accentFill": "#A2431F",
+          "onAccent": "#FFFFFF",
+          "line": "#957F6D"
+        },
+        "dark": {
+          "canvas": "#1C1511",
+          "surface": "#261D17",
+          "text": "#F3E8DC",
+          "muted": "#C7B4A3",
+          "accent": "#E8996F",
+          "accentFill": "#D98558",
+          "onAccent": "#230E04",
+          "line": "#8A7461"
+        }
+      },
+      "typography": {
+        "heading": {
+          "family": "jost",
+          "weights": [
+            400,
+            500
+          ]
+        },
+        "body": {
+          "family": "dm-sans",
+          "weights": [
+            400,
+            500,
+            600
+          ]
+        },
+        "scale": {
+          "base": 16,
+          "ratio": 1.25
+        }
+      },
+      "spacing": {
+        "unit": 8,
+        "section": 56,
+        "contentMaxWidth": 1040
+      },
+      "radii": {
+        "sm": 4,
+        "md": 12,
+        "lg": 24
+      },
+      "ornament": "flourish",
+      "illustrationSet": "none"
+    },
+    "pages": [
+      {
+        "id": "page-cover",
+        "kind": "cover",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-tazas",
+                "block": "art-tazas",
+                "x": 1,
+                "y": 0,
+                "w": 2,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "scale",
+                  "delayMs": 500,
+                  "durationMs": 800
+                },
+                "padding": {
+                  "top": 0,
+                  "right": 48,
+                  "bottom": 0,
+                  "left": 48
+                }
+              },
+              {
+                "id": "el-cover",
+                "block": "cover",
+                "x": 0,
+                "y": 8,
+                "w": 4,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "rise",
+                  "delayMs": 900,
+                  "durationMs": 800
+                },
+                "typography": {
+                  "align": "center",
+                  "role": "heading",
+                  "size": 48,
+                  "weight": 400
+                },
+                "padding": {
+                  "top": 8,
+                  "right": 16,
+                  "bottom": 8,
+                  "left": 16
+                },
+                "background": {
+                  "kind": "colour",
+                  "role": "surface"
+                },
+                "border": {
+                  "width": 1,
+                  "style": "solid",
+                  "colour": "line"
+                },
+                "radius": 24
+              },
+              {
+                "id": "el-onda",
+                "block": "art-onda",
+                "x": 0,
+                "y": 16,
+                "w": 4,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "draw",
+                  "delayMs": 1400,
+                  "durationMs": 1200
+                }
+              }
+            ]
+          },
+          "desktop": {
+            "mode": "flow",
+            "columns": 12,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-tazas",
+                "block": "art-tazas",
+                "x": 0,
+                "y": 0,
+                "w": 4,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "scale",
+                  "delayMs": 500,
+                  "durationMs": 800
+                }
+              },
+              {
+                "id": "el-cover",
+                "block": "cover",
+                "x": 4,
+                "y": 0,
+                "w": 8,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "rise",
+                  "delayMs": 900,
+                  "durationMs": 800
+                },
+                "typography": {
+                  "align": "start",
+                  "role": "heading",
+                  "weight": 400
+                },
+                "padding": {
+                  "top": 40,
+                  "right": 40,
+                  "bottom": 40,
+                  "left": 40
+                },
+                "background": {
+                  "kind": "colour",
+                  "role": "surface"
+                },
+                "border": {
+                  "width": 1,
+                  "style": "solid",
+                  "colour": "line"
+                },
+                "radius": 24
+              },
+              {
+                "id": "el-onda",
+                "block": "art-onda",
+                "x": 4,
+                "y": 8,
+                "w": 8,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "draw",
+                  "delayMs": 0,
+                  "durationMs": 1200
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-story",
+        "kind": "section",
+        "section": "story",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-onda-sec",
+                "block": "art-onda-sec",
+                "x": 0,
+                "y": 0,
+                "w": 4,
+                "h": 2,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-story",
+                "block": "story",
+                "x": 0,
+                "y": 2,
+                "w": 8,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-schedule",
+        "kind": "section",
+        "section": "schedule",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-onda-sec",
+                "block": "art-onda-sec",
+                "x": 0,
+                "y": 0,
+                "w": 4,
+                "h": 2,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-schedule",
+                "block": "schedule",
+                "x": 0,
+                "y": 2,
+                "w": 8,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-venues",
+        "kind": "section",
+        "section": "venues",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-onda-sec",
+                "block": "art-onda-sec",
+                "x": 0,
+                "y": 0,
+                "w": 4,
+                "h": 2,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-venues",
+                "block": "venues",
+                "x": 0,
+                "y": 2,
+                "w": 8,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-gallery",
+        "kind": "section",
+        "section": "gallery",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-onda-sec",
+                "block": "art-onda-sec",
+                "x": 0,
+                "y": 0,
+                "w": 4,
+                "h": 2,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-gallery",
+                "block": "gallery",
+                "x": 0,
+                "y": 2,
+                "w": 8,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-dress-code",
+        "kind": "section",
+        "section": "dressCode",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-onda-sec",
+                "block": "art-onda-sec",
+                "x": 0,
+                "y": 0,
+                "w": 4,
+                "h": 2,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-dress-code",
+                "block": "dress-code",
+                "x": 0,
+                "y": 2,
+                "w": 8,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-gifts",
+        "kind": "section",
+        "section": "gifts",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-onda-sec",
+                "block": "art-onda-sec",
+                "x": 0,
+                "y": 0,
+                "w": 4,
+                "h": 2,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-gifts-cta",
+                "block": "gifts-cta",
+                "x": 0,
+                "y": 2,
+                "w": 8,
+                "h": 6,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-faq",
+        "kind": "section",
+        "section": "faq",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-onda-sec",
+                "block": "art-onda-sec",
+                "x": 0,
+                "y": 0,
+                "w": 4,
+                "h": 2,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-faq",
+                "block": "faq",
+                "x": 0,
+                "y": 2,
+                "w": 8,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-recommendations",
+        "kind": "section",
+        "section": "recommendations",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-onda-sec",
+                "block": "art-onda-sec",
+                "x": 0,
+                "y": 0,
+                "w": 4,
+                "h": 2,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-recommendations",
+                "block": "recommendations",
+                "x": 0,
+                "y": 2,
+                "w": 8,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-rsvp",
+        "kind": "section",
+        "section": "rsvp",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-onda-sec",
+                "block": "art-onda-sec",
+                "x": 0,
+                "y": 0,
+                "w": 4,
+                "h": 2,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-rsvp-cta",
+                "block": "rsvp-cta",
+                "x": 0,
+                "y": 2,
+                "w": 8,
+                "h": 6,
+                "visible": true
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "blocks": [
+      {
+        "id": "cover",
+        "type": "cover",
+        "config": {
+          "variant": "classic",
+          "envelope": false
+        }
+      },
+      {
+        "id": "art-onda",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "onda",
+          "tint": "accent",
+          "drawOnEnter": true
+        }
+      },
+      {
+        "id": "art-tazas",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "tazas",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "art-onda-sec",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "onda",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "story",
+        "type": "story",
+        "config": {}
+      },
+      {
+        "id": "schedule",
+        "type": "schedule",
+        "config": {
+          "display": "timeline"
+        }
+      },
+      {
+        "id": "venues",
+        "type": "venues",
+        "config": {
+          "display": "cards",
+          "mapOnTap": true
+        }
+      },
+      {
+        "id": "gallery",
+        "type": "gallery",
+        "config": {
+          "display": "grid"
+        }
+      },
+      {
+        "id": "dress-code",
+        "type": "dressCode",
+        "config": {}
+      },
+      {
+        "id": "gifts-cta",
+        "type": "giftsCta",
+        "required": true,
+        "config": {
+          "style": "solid"
+        }
+      },
+      {
+        "id": "faq",
+        "type": "faq",
+        "config": {}
+      },
+      {
+        "id": "recommendations",
+        "type": "recommendations",
+        "config": {}
+      },
+      {
+        "id": "rsvp-cta",
+        "type": "rsvpCta",
+        "config": {
+          "style": "solid"
+        }
+      }
+    ],
+    "custom": {
+      "html": "",
+      "css": ""
+    }
+  }
+}

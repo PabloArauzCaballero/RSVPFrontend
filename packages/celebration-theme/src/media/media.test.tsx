@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { AudioPlayer, EmbedFacade, MediaBackground, MediaImage, embedFromConfig, FRAME_HOSTS, frameSrcDirective, isAllowedEmbedUrl, mapEmbed, soundcloudEmbed, spotifyEmbed, vimeoEmbed, youtubeEmbed, youtubeFromLink, imageSources, clampScrim, type PublicMedia } from "../index.js";
+import { AudioPlayer, EmbedFacade, MediaBackground, MediaImage, embedFromConfig, FRAME_HOSTS, frameSrcDirective, isAllowedEmbedUrl, mapEmbed, spotifyEmbed, vimeoEmbed, youtubeEmbed, youtubeFromLink, imageSources, clampScrim, type PublicMedia } from "../index.js";
 
 afterEach(cleanup);
 
@@ -19,7 +19,6 @@ describe("embeds: allowlist", () => {
     expect(vimeoEmbed("76979871")?.url).toBe("https://player.vimeo.com/video/76979871?dnt=1");
     expect(spotifyEmbed("https://open.spotify.com/intl-es/track/4uLU6hMCjMI75M1A2tKUQC?si=x")?.url).toBe("https://open.spotify.com/embed/track/4uLU6hMCjMI75M1A2tKUQC");
     expect(spotifyEmbed("playlist/37i9dQZF1DXcBWIGoYBM5M")?.url).toBe("https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M");
-    expect(soundcloudEmbed("https://soundcloud.com/artista/tema-1")?.url).toContain("https://w.soundcloud.com/player/?url=https%3A%2F%2Fsoundcloud.com%2Fartista%2Ftema-1");
     expect(mapEmbed("Plaza Murillo, La Paz")?.url).toBe("https://www.google.com/maps?q=Plaza%20Murillo%2C%20La%20Paz&output=embed");
   });
 
@@ -29,7 +28,14 @@ describe("embeds: allowlist", () => {
   ])("refuses %s", (raw) => {
     expect(youtubeFromLink(raw)).toBeNull();
     expect(spotifyEmbed(raw)).toBeNull();
-    expect(soundcloudEmbed(raw)).toBeNull();
+  });
+
+  it("SoundCloud is not a provider: its links and its source never produce an embed", () => {
+    expect(spotifyEmbed("https://soundcloud.com/artista/tema-1")).toBeNull();
+    expect(youtubeFromLink("https://soundcloud.com/artista/tema-1")).toBeNull();
+    expect(embedFromConfig("music", { source: "soundcloud", ref: "https://soundcloud.com/artista/tema-1" })).toBeNull();
+    expect(isAllowedEmbedUrl("https://w.soundcloud.com/player/?url=https%3A%2F%2Fsoundcloud.com%2Fartista%2Ftema-1")).toBe(false);
+    expect(FRAME_HOSTS).not.toContain("w.soundcloud.com");
   });
 
   it("a hostile id never reaches a URL", () => {
@@ -59,7 +65,7 @@ describe("embeds: allowlist", () => {
     const hosts = /const frameHosts = \[([^\]]+)\]/.exec(config)?.[1]?.split(",").map((item) => item.trim().replace(/'/g, "")) ?? [];
     expect(hosts).toEqual([...FRAME_HOSTS]);
     expect(config).toContain("${frameSrc}");
-    expect(frameSrcDirective()).toBe("frame-src https://www.youtube-nocookie.com https://player.vimeo.com https://open.spotify.com https://w.soundcloud.com https://www.google.com");
+    expect(frameSrcDirective()).toBe("frame-src https://www.youtube-nocookie.com https://player.vimeo.com https://open.spotify.com https://www.google.com");
   });
 });
 

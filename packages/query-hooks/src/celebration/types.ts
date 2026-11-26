@@ -143,7 +143,7 @@ export interface PresignInput {
 }
 export type EmbedIntent = "video" | "music" | "map";
 export interface ResolvedEmbed {
-  readonly provider: "youtube" | "vimeo" | "spotify" | "soundcloud" | "google_maps";
+  readonly provider: "youtube" | "vimeo" | "spotify" | "google_maps";
   readonly kind: "video" | "audio" | "map";
   readonly embedUrl: string;
   readonly canonicalUrl: string;
