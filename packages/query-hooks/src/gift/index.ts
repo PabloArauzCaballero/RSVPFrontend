@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError, type ApiClient } from "@rsvp/api-client";
 import { cachePolicy } from "../policy.js";
@@ -167,4 +168,37 @@ export function useGiftSettings(client: ApiClient, celebrationId: string | undef
 export function useUpdateGiftSettings(client: ApiClient, celebrationId: string) {
   const queryClient = useQueryClient();
   return useMutation({ mutationFn: (input: UpdateGiftSettingsInput) => giftService(client).updateSettings(celebrationId, input), onSuccess: () => refetchAll(queryClient, invalidation.giftReservationChanged(celebrationId)) });
+}
+
+// ---- R4 · host assistant (gift-list 1.17.0). ----
+import { assistantApi, createBatchKeys, type GiftBatchRequest, type GiftItemUpdateRequest } from "./assistant.js";
+import { newIdempotencyKey } from "../guest/rsvp-flow.js";
+export * from "./assistant.js";
+
+/**
+ * Adds the gifts of the assistant in ONE call (all or nothing). The key is stable for the same selection: a retry after a lost answer or a 5xx replays it
+ * and the server answers the stored result, so nothing is added twice; another selection gets a new key.
+ */
+export function useAddGiftBatch(client: ApiClient, celebrationId: string) {
+  const queryClient = useQueryClient();
+  const [keyFor] = useState(() => createBatchKeys(newIdempotencyKey));
+  return useMutation({
+    mutationFn: (body: GiftBatchRequest) => assistantApi(client).addBatch(celebrationId, body, keyFor(body)),
+    onSettled: () => refetchAll(queryClient, invalidation.giftReservationChanged(celebrationId))
+  });
+}
+/** PATCH /items/{id}: quantity and coordinated-gift switch, with the version the host read (409 GIFT_VERSION_CONFLICT when stale). */
+export function useUpdateGiftItem(client: ApiClient, celebrationId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ giftItemId, body }: { readonly giftItemId: string; readonly body: GiftItemUpdateRequest }) => assistantApi(client).updateItem(celebrationId, giftItemId, body),
+    onSettled: () => refetchAll(queryClient, invalidation.giftReservationChanged(celebrationId))
+  });
+}
+export function useSetDeliveryNotes(client: ApiClient, celebrationId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (deliveryNotes: string | null) => assistantApi(client).putDeliveryNotes(celebrationId, deliveryNotes),
+    onSettled: () => refetchAll(queryClient, invalidation.giftReservationChanged(celebrationId))
+  });
 }

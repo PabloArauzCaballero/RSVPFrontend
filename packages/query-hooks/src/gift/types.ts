@@ -1,4 +1,4 @@
-/** Gift List (gift-list.openapi.json; vendored version in packages/contracts/backend.lock.json, 1.14.0). Money is integer minor units, never a float. */
+/** Gift List (gift-list.openapi.json; vendored version in packages/contracts/backend.lock.json, 1.17.0). Money is integer minor units, never a float. */
 export interface Money { readonly amountMinor: number; readonly currency: string }
 export type GiftSource = "CATALOGED" | "EXTERNAL";
 /**
@@ -16,8 +16,10 @@ export interface GiftItem {
   readonly productListingId?: string | null; readonly providerId?: string | null; readonly externalUrl?: string | null; readonly createdAt: string;
   /** Present only when the host lets this viewer see who reserved (gift-settings). */
   readonly reservedByName?: string;
+  /** 1.17.0 (R4): units wanted (1 before the assistant), the coordinated-gift switch, and the idea and version the host picked. */
+  readonly quantity?: number; readonly groupGiftEnabled?: boolean; readonly giftIdeaCode?: string | null; readonly variantCode?: string | null;
 }
-export interface GiftItemList { readonly items: readonly GiftItem[]; readonly partnerPriorityEnabled: boolean; /** L4 (1.12.0): next page, null on the last one. */ readonly nextCursor?: string | null }
+export interface GiftItemList { readonly items: readonly GiftItem[]; readonly partnerPriorityEnabled: boolean; /** L4 (1.12.0): next page, null on the last one. */ readonly nextCursor?: string | null; /** 1.17.0 (R4): the delivery notes the host published for the whole list; absent or null when none. */ readonly deliveryNotes?: string | null }
 export interface GiftReservation {
   readonly id: string; readonly itemId: string; readonly celebrationId: string; readonly guestId?: string | null; readonly guestDisplayName?: string | null;
   readonly message?: string | null; readonly status: ReservationStatus; readonly requestedAt: string; readonly resolvedAt?: string | null; readonly resolvedBy?: string | null;
