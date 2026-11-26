@@ -1,0 +1,441 @@
+import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
+import axe from "axe-core";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { AddGiftScreen } from "../src/host/gifts/add-screen";
+import { GiftsScreen } from "../src/host/gifts/gifts-screen";
+import { resetSecureStore } from "./stubs/expo-secure-store";
+import { baseHandlers, CELEBRATION, fakeClient, HttpFailure, renderApp, type Handler } from "./support";
+
+const navigate = vi.fn();
+/** The hook retries one transient failure (the shared policy), so its error state shows after the retry delay. */
+const SLOW = 5000;
+const RECS = "GET /providers/gift-ideas/recommendations";
+const ITEMS = "/gifts/celebrations/c-1/items";
+const BATCH = `POST ${ITEMS}/batch`;
+const LIST = "/gifts/celebrations/c-1/gift-list";
+const photo = (name: string) => ({ thumb: `https://media.test/${name}-t.webp`, card: `https://media.test/${name}-c.webp`, altText: null });
+const product = (id: string, over: Record<string, unknown> = {}) => ({
+  listingId: id, title: `Producto ${id}`, photo: photo(id), price: { amountMinor: 30_000, currency: "BOB" }, stock: "AVAILABLE", variants: [],
+  provider: { name: "Dulce Sol", slug: "dulce-sol", verified: true }, deliversToCity: true, leadTimeDays: 3, shippingCostMinor: 0, destinations: ["PRODUCT_PAGE", "WHATSAPP"], featured: false, ...over
+});
+const idea = (code: string, name: string, products: readonly Record<string, unknown>[]) => {
+  const prices = products.map((item) => (item["price"] as { amountMinor: number }).amountMinor);
+  return { idea: { code, name }, productCount: products.length, priceRange: { minMinor: Math.min(...prices), maxMinor: Math.max(...prices), currency: "BOB" }, products, nextOffset: null };
+};
+const CAKE = idea("CAKE", "Torta o repostería", [product("torta", { price: { amountMinor: 15_000, currency: "BOB" } }), product("tres-leches", { price: { amountMinor: 18_000, currency: "BOB" } })]);
+const DINNER = idea("DINNERWARE_SET", "Juego de vajilla", [product("vajilla", { price: { amountMinor: 120_000, currency: "BOB" }, variants: [
+  { id: "v-oro", label: "Dorado", price: { amountMinor: 120_000, currency: "BOB" }, stock: "AVAILABLE" },
+  { id: "v-plata", label: "Plateado", price: { amountMinor: 110_000, currency: "BOB" }, stock: "OUT_OF_STOCK" }
+] }), product("vajilla-lejos", { deliversToCity: false, price: { amountMinor: 90_000, currency: "BOB" } })]);
+const RECOMMENDATIONS = { eventType: "WEDDING", city: null, scope: "EVENT_TYPE", items: [CAKE, DINNER] };
+const gift = (id: string, over: Record<string, unknown> = {}) => ({ id, listId: "l", celebrationId: "c-1", title: id, price: { amountMinor: 10_000, currency: "BOB" }, source: "CATALOGED", status: "AVAILABLE", version: 0, createdAt: "2026-11-01T00:00:00Z", quantity: 1, groupGiftEnabled: false, giftIdeaCode: null, variantCode: null, ...over });
+const EMPTY_LIST = { items: [], partnerPriorityEnabled: false, nextCursor: null, deliveryNotes: null };
+const created = (items: readonly Record<string, unknown>[]) => ({ items, deliveryNotes: null });
+
+const handlers = (extra: Record<string, Handler> = {}): Record<string, Handler> => ({
+  ...baseHandlers(CELEBRATION),
+  [RECS]: () => RECOMMENDATIONS,
+  "GET /providers/geo": () => ({ country: "BO", items: [{ slug: "santa-cruz", name: "Santa Cruz de la Sierra", department: "Santa Cruz", departmentCode: "SC" }, { slug: "la-paz", name: "La Paz", department: "La Paz", departmentCode: "LP" }] }),
+  [`GET ${ITEMS}`]: () => EMPTY_LIST,
+  "GET /guests/celebrations/c-1/guest-summary": () => ({ celebrationId: "c-1", total: 0, confirmed: 0, declined: 0, pending: 0, companions: 0, openCompanionRequests: 0, freshness: { pendingEvents: 0 } }),
+  ...extra
+});
+const open = async (extra: Record<string, Handler> = {}, claims?: Parameters<typeof renderApp>[2], locale?: "es-BO" | "en-US") => {
+  const made = fakeClient(handlers(extra));
+  renderApp(<AddGiftScreen celebrationId="c-1" initial="catalog" onNavigate={navigate} />, made.client, claims, locale);
+  await screen.findByTestId("idea-CAKE");
+  return made;
+};
+const click = (id: string): void => { fireEvent.click(screen.getByTestId(id)); };
+const next = async (title: RegExp): Promise<void> => { click("wizard-next"); await screen.findByRole("heading", { name: title }); };
+const posts = (calls: readonly { method: string; path: string }[]) => calls.filter((call) => call.method === "POST" && call.path.endsWith("/items/batch"));
+
+beforeEach(() => { navigate.mockClear(); resetSecureStore(); });
+afterEach(() => { cleanup(); vi.unstubAllEnvs(); });
+
+describe("R4 · step 1 · ideas recommended for the event type and the city", () => {
+  it("asks only for the event type and the language, shows each idea with its count and range, and no other source is read", async () => {
+    const { calls } = await open();
+    const read = calls.find((call) => call.path === "/providers/gift-ideas/recommendations");
+    expect(read?.url).toBe("/providers/gift-ideas/recommendations?eventType=WEDDING&locale=es-BO");
+    expect(screen.getByTestId("wizard-headline").textContent).toBe("Recomendado para tu boda");
+    expect(screen.getByTestId("idea-CAKE").getAttribute("aria-label")).toMatch(/^Elegir la idea Torta o repostería\. 2 productos · Bs\s?150 – Bs\s?180$/);
+    expect(calls.some((call) => call.path === "/providers" || call.path === "/listings")).toBe(false);
+  });
+
+  it("choosing the city asks again with it, names it in the headline and shows the delivery notes of each product", async () => {
+    const { calls } = await open();
+    fireEvent.change(screen.getByTestId("wizard-city"), { target: { value: "santa-cruz" } });
+    await waitFor(() => expect(calls.some((call) => call.url === "/providers/gift-ideas/recommendations?eventType=WEDDING&city=santa-cruz&locale=es-BO")).toBe(true));
+    expect((await screen.findByTestId("wizard-headline")).textContent).toBe("Recomendado para tu boda en Santa Cruz de la Sierra");
+    click("idea-DINNERWARE_SET");
+    await next(/Elige un producto por idea/);
+    expect(screen.getByTestId("product-vajilla").textContent).toContain("Entrega en tu ciudad");
+    expect(screen.getByTestId("product-vajilla-lejos").textContent).toContain("Entrega en otra ciudad");
+  });
+
+  it("an idea that already has a gift says so, cannot be ticked and does not count as a selection", async () => {
+    await open({ [`GET ${ITEMS}`]: () => ({ ...EMPTY_LIST, items: [gift("g1", { giftIdeaCode: "CAKE" })] }) });
+    await waitFor(() => expect(screen.getByTestId("idea-listed-CAKE").textContent).toBe("Ya en tu lista"));
+    const card = screen.getByTestId("idea-CAKE");
+    expect(card.getAttribute("aria-disabled")).toBe("true");
+    fireEvent.click(card);
+    expect(card.getAttribute("aria-checked")).toBe("false");
+    expect(screen.getByTestId("wizard-selected").textContent).toBe("Marca al menos una idea para seguir.");
+    expect((screen.getByTestId("wizard-next") as HTMLButtonElement).disabled || screen.getByTestId("wizard-next").getAttribute("aria-disabled") === "true").toBe(true);
+  });
+
+  it("states: loading, empty (with the way to a store), error with «Reintentar» and no connection", async () => {
+    let mode: "empty" | "down" | "offline" | "ok" = "empty";
+    const { client, calls } = fakeClient(handlers({ [RECS]: () => {
+      if (mode === "empty") return { ...RECOMMENDATIONS, items: [] };
+      if (mode === "offline") throw new TypeError("fetch failed");
+      return mode === "down" ? new HttpFailure(503, { title: "down" }) : RECOMMENDATIONS;
+    } }));
+    renderApp(<AddGiftScreen celebrationId="c-1" initial="catalog" onNavigate={navigate} />, client);
+    expect((await screen.findByTestId("wizard-ideas-empty")).textContent).toMatch(/Todavía no hay productos para tu celebración/);
+    fireEvent.click(screen.getByTestId("wizard-empty-store"));
+    expect(await screen.findByTestId("external-title")).toBeTruthy();
+    cleanup();
+    mode = "down";
+    renderApp(<AddGiftScreen celebrationId="c-1" initial="catalog" onNavigate={navigate} />, client);
+    const error = await screen.findByTestId("wizard-ideas-error", {}, { timeout: SLOW });
+    expect(error.textContent).toBe("No pudimos cargar las ideas de regalo.Reintentar");
+    mode = "ok";
+    fireEvent.click(within(error).getByText("Reintentar"));
+    expect(await screen.findByTestId("idea-CAKE")).toBeTruthy();
+    expect(calls.some((call) => call.path === "/providers" || call.path === "/listings")).toBe(false);
+    cleanup();
+    mode = "offline";
+    renderApp(<AddGiftScreen celebrationId="c-1" initial="catalog" onNavigate={navigate} />, client);
+    expect((await screen.findByTestId("wizard-ideas-error", {}, { timeout: SLOW })).textContent).toMatch(/Sin conexión por ahora/);
+  });
+});
+
+describe("R4 · the whole flow: ideas, one product per idea, summary, one idempotent call", () => {
+  const walk = async (): Promise<ReturnType<typeof fakeClient>> => {
+    const made = await open({ [BATCH]: () => created([gift("n1", { giftIdeaCode: "CAKE" }), gift("n2", { giftIdeaCode: "DINNERWARE_SET" })]) });
+    click("idea-CAKE");
+    click("idea-DINNERWARE_SET");
+    expect(screen.getByTestId("wizard-selected").textContent).toBe("2 ideas elegidas");
+    await next(/Elige un producto por idea/);
+    return made;
+  };
+
+  it("adds the chosen products in ONE call with the Idempotency-Key, the idea, the version, the quantity and the switch", async () => {
+    const { calls } = await walk();
+    // One product per idea: choosing another one replaces the first, and the next step is closed until every idea has one.
+    expect(screen.getByTestId("wizard-missing").textContent).toMatch(/Torta o repostería, Juego de vajilla/);
+    click("choose-torta");
+    click("choose-tres-leches");
+    expect(screen.getByTestId("choose-torta").getAttribute("aria-checked")).toBe("false");
+    expect(screen.getByTestId("choose-tres-leches").getAttribute("aria-checked")).toBe("true");
+    click("choose-vajilla");
+    // The sold-out version is listed and cannot be chosen; the first version in stock is preselected; above Bs 1 000 the switch is suggested on.
+    expect(screen.getByTestId("variant-v-oro").getAttribute("aria-checked")).toBe("true");
+    expect(screen.getByTestId("variant-v-plata").getAttribute("aria-disabled")).toBe("true");
+    expect(screen.getByTestId("group-DINNERWARE_SET").getAttribute("aria-checked")).toBe("true");
+    expect(screen.getByTestId("group-CAKE").getAttribute("aria-checked")).toBe("false");
+    // Quantity is behind a build flag that is off by default.
+    expect(screen.queryByTestId("quantity-CAKE")).toBeNull();
+    await next(/Revisa tu lista/);
+    expect(screen.getByTestId("line-CAKE").textContent).toContain("Torta o repostería: Producto tres-leches");
+    expect(screen.getByTestId("line-DINNERWARE_SET").textContent).toContain("Juego de vajilla: Producto vajilla (Dorado)");
+    expect(screen.getByTestId("wizard-total").textContent).toMatch(/Bs\s?1[.,\s]?380/);
+    click("wizard-submit");
+    expect(await screen.findByTestId("wizard-done")).toBeTruthy();
+    expect(screen.getByTestId("wizard-done-title").textContent).toBe("Listo: agregamos 2 regalos");
+    const sent = posts(calls);
+    expect(sent).toHaveLength(1);
+    const call = calls.find((entry) => entry.path === `${ITEMS}/batch`);
+    expect(call?.headers.get("idempotency-key")).toMatch(/\S{8,}/);
+    expect(call?.body).toEqual({ items: [
+      { productListingId: "tres-leches", giftIdeaCode: "CAKE", quantity: 1, groupGiftEnabled: false },
+      { productListingId: "vajilla", giftIdeaCode: "DINNERWARE_SET", variantCode: "v-oro", quantity: 1, groupGiftEnabled: true }
+    ] });
+    fireEvent.click(screen.getByTestId("wizard-see-list"));
+    expect(navigate).toHaveBeenCalledWith("/regalos?c=c-1");
+  });
+
+  it("the planner uses the very same assistant with their permissions", async () => {
+    const made = fakeClient(handlers());
+    renderApp(<AddGiftScreen celebrationId="c-1" initial="catalog" onNavigate={navigate} />, made.client, { userId: "u-planner", roles: ["PLANNER"], organizationIds: [] });
+    expect(await screen.findByTestId("idea-CAKE")).toBeTruthy();
+    click("idea-CAKE");
+    await next(/Elige un producto por idea/);
+    expect(screen.getByTestId("choose-torta")).toBeTruthy();
+  });
+
+  it("quantity appears only with the build flag, is sent as chosen and turns the switch on by the whole price", async () => {
+    vi.stubEnv("EXPO_PUBLIC_GIFT_QUANTITY", "true");
+    const { calls } = await open({ [BATCH]: () => created([gift("n1")]) });
+    click("idea-CAKE");
+    await next(/Elige un producto por idea/);
+    click("choose-torta");
+    expect(screen.getByTestId("quantity-CAKE").textContent).toBe("1");
+    expect(screen.getByTestId("group-CAKE").getAttribute("aria-checked")).toBe("false");
+    for (let index = 0; index < 6; index++) click("quantity-more-CAKE");
+    expect(screen.getByTestId("quantity-CAKE").textContent).toBe("7");
+    // 7 × Bs 150 = Bs 1 050 > Bs 1 000: the switch followed the price because the host had not touched it.
+    expect(screen.getByTestId("group-CAKE").getAttribute("aria-checked")).toBe("true");
+    click("quantity-less-CAKE");
+    click("quantity-less-CAKE");
+    expect(screen.getByTestId("group-CAKE").getAttribute("aria-checked")).toBe("false");
+    click("group-CAKE");
+    click("quantity-more-CAKE");
+    expect(screen.getByTestId("group-CAKE").getAttribute("aria-checked")).toBe("true");
+    await next(/Revisa tu lista/);
+    click("wizard-submit");
+    await screen.findByTestId("wizard-done");
+    expect(calls.find((entry) => entry.path === `${ITEMS}/batch`)?.body).toMatchObject({ items: [{ productListingId: "torta", quantity: 6, groupGiftEnabled: true }] });
+  });
+
+  it("a double tap on «Agregar» sends one request", async () => {
+    const { calls } = await walk();
+    click("choose-torta");
+    click("choose-vajilla");
+    await next(/Revisa tu lista/);
+    fireEvent.click(screen.getByTestId("wizard-submit"));
+    fireEvent.click(screen.getByTestId("wizard-submit"));
+    await screen.findByTestId("wizard-done");
+    expect(posts(calls)).toHaveLength(1);
+  });
+
+  it("without a list yet it creates it and sends the same request with the same key", async () => {
+    let hasList = false;
+    const { calls } = await open({
+      [`POST ${LIST}`]: () => { hasList = true; return { id: "l", celebrationId: "c-1" }; },
+      [BATCH]: () => (hasList ? created([gift("n1")]) : new HttpFailure(404, { code: "GIFT_LIST_NOT_FOUND" }))
+    });
+    click("idea-CAKE");
+    await next(/Elige un producto por idea/);
+    click("choose-torta");
+    await next(/Revisa tu lista/);
+    click("wizard-submit");
+    await screen.findByTestId("wizard-done");
+    const sent = calls.filter((call) => call.path === `${ITEMS}/batch`);
+    expect(sent.map((call) => call.headers.get("idempotency-key"))).toHaveLength(2);
+    expect(sent[0]?.headers.get("idempotency-key")).toBe(sent[1]?.headers.get("idempotency-key"));
+    expect(calls.filter((call) => call.method === "POST").map((call) => call.path.split("/").pop())).toEqual(["batch", "gift-list", "batch"]);
+  });
+});
+
+describe("R4 · retries and errors of the batch", () => {
+  const toSummary = async (extra: Record<string, Handler>): Promise<ReturnType<typeof fakeClient>> => {
+    const made = await open(extra);
+    click("idea-CAKE");
+    click("idea-DINNERWARE_SET");
+    await next(/Elige un producto por idea/);
+    click("choose-torta");
+    click("choose-vajilla");
+    await next(/Revisa tu lista/);
+    return made;
+  };
+
+  it("a retry after a lost answer or a 5xx replays the SAME Idempotency-Key and the selection is kept", async () => {
+    const answers: Array<() => unknown> = [() => { throw new TypeError("fetch failed"); }, () => new HttpFailure(503, { title: "down" }), () => created([gift("n1"), gift("n2")])];
+    const { calls } = await toSummary({ [BATCH]: () => (answers.shift() ?? (() => undefined))() as never });
+    click("wizard-submit");
+    expect((await screen.findByTestId("wizard-submit-error")).textContent).toMatch(/Sin conexión por ahora/);
+    await waitFor(() => expect(screen.getByTestId("wizard-submit").getAttribute("aria-disabled")).not.toBe("true"));
+    click("wizard-submit");
+    await waitFor(() => expect(calls.filter((call) => call.path === `${ITEMS}/batch`)).toHaveLength(2));
+    expect((await screen.findByTestId("wizard-submit-error")).textContent).toMatch(/no se agregará dos veces/);
+    expect(screen.getByTestId("line-CAKE")).toBeTruthy();
+    await waitFor(() => expect(screen.getByTestId("wizard-submit").getAttribute("aria-disabled")).not.toBe("true"));
+    click("wizard-submit");
+    await screen.findByTestId("wizard-done");
+    const keys = calls.filter((call) => call.path === `${ITEMS}/batch`).map((call) => call.headers.get("idempotency-key"));
+    expect(keys).toHaveLength(3);
+    expect(new Set(keys).size).toBe(1);
+    const bodies = calls.filter((call) => call.path === `${ITEMS}/batch`).map((call) => JSON.stringify(call.body));
+    expect(new Set(bodies).size).toBe(1);
+  });
+
+  it("a 422 points at the entry by itemIndex: nothing was added, the product shows its words, the list is read again and another product gets a new key", async () => {
+    let attempt = 0;
+    const { calls } = await toSummary({ [BATCH]: () => {
+      attempt += 1;
+      return attempt === 1 ? new HttpFailure(422, { code: "CATALOG_PRODUCT_UNAVAILABLE", itemIndex: 1, productListingId: "vajilla", failures: [{ itemIndex: 1, code: "CATALOG_PRODUCT_UNAVAILABLE", productListingId: "vajilla" }, { itemIndex: 0, code: "GIFT_LISTING_NOT_ELIGIBLE", productListingId: "torta" }] }) : created([gift("n1"), gift("n2")]);
+    } });
+    const before = calls.filter((call) => call.path === "/providers/gift-ideas/recommendations").length;
+    click("wizard-submit");
+    const error = await screen.findByTestId("wizard-submit-error");
+    expect(error.textContent).toMatch(/No se agregó ningún regalo: 2 necesitan un cambio/);
+    expect(screen.getByTestId("line-problem-DINNERWARE_SET").textContent).toMatch(/ya no está en el catálogo/);
+    expect(screen.getByTestId("line-problem-CAKE").textContent).toMatch(/ya no se puede recomendar/);
+    await waitFor(() => expect(calls.filter((call) => call.path === "/providers/gift-ideas/recommendations").length).toBeGreaterThan(before));
+    expect(screen.queryByTestId("wizard-done")).toBeNull();
+    click("wizard-fix");
+    await screen.findByRole("heading", { name: /Elige un producto por idea/ });
+    expect(screen.getByTestId("product-problem-vajilla").textContent).toMatch(/ya no está en el catálogo/);
+    expect(screen.getByTestId("product-problem-torta").textContent).toMatch(/ya no se puede recomendar/);
+    expect((screen.getByTestId("wizard-next") as HTMLButtonElement).disabled || screen.getByTestId("wizard-next").getAttribute("aria-disabled") === "true").toBe(true);
+    click("choose-tres-leches");
+    click("choose-vajilla-lejos");
+    await next(/Revisa tu lista/);
+    click("wizard-submit");
+    await screen.findByTestId("wizard-done");
+    const sent = calls.filter((call) => call.path === `${ITEMS}/batch`);
+    expect(sent).toHaveLength(2);
+    expect(sent[0]?.headers.get("idempotency-key")).not.toBe(sent[1]?.headers.get("idempotency-key"));
+  });
+
+  it.each([
+    ["INVALID_QUANTITY", /La cantidad no es válida\. Elige entre 1 y 50/],
+    ["INVALID_GIFT_IDEA", /Esa idea no corresponde a este producto/],
+    ["INVALID_VARIANT", /Esa versión ya no existe/],
+    ["DUPLICATE_GIFT_IDEA", /Esa idea ya tiene un regalo en tu lista/],
+    ["GIFT_LISTING_NOT_PRODUCT", /Eso es un servicio, no un producto/]
+  ])("422 %s is worded for the entry that failed", async (code, words) => {
+    await toSummary({ [BATCH]: () => new HttpFailure(422, { code, itemIndex: 0, failures: [{ itemIndex: 0, code }] }) });
+    click("wizard-submit");
+    expect((await screen.findByTestId("line-problem-CAKE")).textContent).toMatch(words);
+    expect(screen.queryByTestId("line-problem-DINNERWARE_SET")).toBeNull();
+  });
+
+  it("the other answers keep the selection: 403 says who may manage, 409 conflicts refresh, 428 and a reused key never show a stack of codes", async () => {
+    for (const [status, code, words] of [[403, "HOST_REQUIRED", /Solo los anfitriones/], [422, "IDEMPOTENCY_KEY_REUSED", /ya se envió con otros datos/], [409, "GIFT_LIST_NOT_FOUND", /./]] as const) {
+      cleanup();
+      await toSummary({ [BATCH]: () => new HttpFailure(status, { code }) });
+      click("wizard-submit");
+      expect((await screen.findByTestId("wizard-submit-error")).textContent).toMatch(words);
+      expect(screen.getByTestId("line-CAKE")).toBeTruthy();
+    }
+  });
+});
+
+describe("R4 · step 3 · balance and delivery notes", () => {
+  const guestsOf = (confirmed: number, pending: number) => ({ "GET /guests/celebrations/c-1/guest-summary": () => ({ celebrationId: "c-1", total: confirmed + pending, confirmed, declined: 0, pending, companions: 0, openCompanionRequests: 0, freshness: { pendingEvents: 0 } }) });
+  const toSummary = async (extra: Record<string, Handler>): Promise<ReturnType<typeof fakeClient>> => {
+    const made = await open(extra);
+    click("idea-CAKE");
+    click("idea-DINNERWARE_SET");
+    await next(/Elige un producto por idea/);
+    click("choose-torta");
+    click("choose-vajilla");
+    await next(/Revisa tu lista/);
+    return made;
+  };
+
+  it("counts the units of the list and the new gifts by price range and compares the cheap range with the guests (the plan's example)", async () => {
+    await toSummary({ ...guestsOf(10, 30) });
+    await waitFor(() => expect(screen.getByTestId("balance-sentence").textContent).toMatch(/^Tienes 1 regalo hasta Bs\s?200 y 40 invitados: agrega ideas económicas\.$/));
+    expect(screen.getByTestId("balance-b1").getAttribute("aria-label")).toMatch(/^Hasta Bs\s?200: 1 regalo$/);
+    expect(screen.getByTestId("balance-b4").getAttribute("aria-label")).toMatch(/^Más de Bs\s?1[.,\s]000: 1 regalo$/);
+    expect(screen.getByTestId("balance-b2").getAttribute("aria-label")).toMatch(/^De Bs\s?200 a Bs\s?500: 0 regalos$/);
+    // The link goes back to step 1 filtered by that range: the idea whose prices do not reach it disappears.
+    click("balance-see-cheap");
+    await screen.findByTestId("wizard-band-filter");
+    expect(screen.getByTestId("idea-CAKE")).toBeTruthy();
+    expect(screen.queryByTestId("idea-DINNERWARE_SET")).toBeNull();
+    click("wizard-band-clear");
+    expect(await screen.findByTestId("idea-DINNERWARE_SET")).toBeTruthy();
+  });
+
+  it("with enough cheap gifts it says the list is balanced, with no guests it does not judge and when guests fail it says so", async () => {
+    await toSummary({ ...guestsOf(1, 1) });
+    await waitFor(() => expect(screen.getByTestId("balance-sentence").textContent).toBe("Tu lista tiene regalos para distintos bolsillos."));
+    cleanup();
+    await toSummary({});
+    await waitFor(() => expect(screen.getByTestId("balance-sentence").textContent).toBe("Cuando invites personas, comparamos tu lista con ellas."));
+    cleanup();
+    await toSummary({ "GET /guests/celebrations/c-1/guest-summary": () => new HttpFailure(503) });
+    await waitFor(() => expect(screen.getByTestId("balance-sentence").textContent).toMatch(/No pudimos leer tus invitados/));
+  });
+
+  it("the delivery notes go along only when changed, count the 200 characters and block the call above them", async () => {
+    const { calls } = await toSummary({ [BATCH]: () => created([gift("n1"), gift("n2")]) });
+    const notes = screen.getByTestId("wizard-notes") as HTMLTextAreaElement;
+    expect(screen.getByTestId("wizard-notes-counter").textContent).toBe("0 de 200 caracteres");
+    expect(screen.getByText(/No escribas la dirección exacta/)).toBeTruthy();
+    fireEvent.change(notes, { target: { value: "x".repeat(201) } });
+    expect(screen.getByText("Quita 1 carácter: el máximo es 200.")).toBeTruthy();
+    expect(screen.getByTestId("wizard-submit").getAttribute("aria-disabled")).toBe("true");
+    fireEvent.click(screen.getByTestId("wizard-submit"));
+    expect(posts(calls)).toHaveLength(0);
+    fireEvent.change(notes, { target: { value: "  Entregar en portería, por la tarde  " } });
+    click("wizard-submit");
+    await screen.findByTestId("wizard-done");
+    expect(calls.find((call) => call.path === `${ITEMS}/batch`)?.body).toMatchObject({ deliveryNotes: "Entregar en portería, por la tarde" });
+  });
+
+  it("saved notes are prefilled and omitted when untouched; clearing them sends null; 422 INVALID_DELIVERY_NOTES is worded", async () => {
+    const saved = { ...EMPTY_LIST, deliveryNotes: "Portón verde" };
+    const first = await toSummary({ [`GET ${ITEMS}`]: () => saved, [BATCH]: () => created([gift("n1")]) });
+    expect((screen.getByTestId("wizard-notes") as HTMLTextAreaElement).value).toBe("Portón verde");
+    click("wizard-submit");
+    await screen.findByTestId("wizard-done");
+    expect(Object.keys(first.calls.find((call) => call.path === `${ITEMS}/batch`)?.body as object)).toEqual(["items"]);
+    cleanup();
+    const second = await toSummary({ [`GET ${ITEMS}`]: () => saved, [BATCH]: () => new HttpFailure(422, { code: "INVALID_DELIVERY_NOTES" }) });
+    fireEvent.change(screen.getByTestId("wizard-notes"), { target: { value: "" } });
+    click("wizard-submit");
+    expect((await screen.findByTestId("wizard-submit-error")).textContent).toMatch(/Revisa las indicaciones de entrega/);
+    expect(second.calls.find((call) => call.path === `${ITEMS}/batch`)?.body).toMatchObject({ deliveryNotes: null });
+  });
+});
+
+describe("R4 · the host list shows what the assistant adds", () => {
+  it("quantity, the coordinated-gift switch and the delivery notes", async () => {
+    const { client } = fakeClient(handlers({ [`GET ${ITEMS}`]: () => ({ items: [gift("Vajilla", { quantity: 4, groupGiftEnabled: true })], partnerPriorityEnabled: false, nextCursor: null, deliveryNotes: "Portón verde" }) }));
+    renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    expect((await screen.findByTestId("gift-quantity-Vajilla")).textContent).toBe("Cantidad: 4");
+    expect(screen.getByTestId("gift-group-Vajilla").textContent).toBe("Se puede regalar entre varios");
+    expect(screen.getByTestId("gift-delivery-notes").textContent).toBe("Indicaciones de entrega: Portón verde");
+  });
+});
+
+describe("R4 · accessibility and language", () => {
+  it("roles and names: checkboxes for ideas, radios for products and versions, a switch, a progress bar; the focus moves to each step's heading", async () => {
+    await open();
+    expect(screen.getByRole("progressbar", { name: "Tus pasos" }).getAttribute("aria-valuetext")).toBe("Paso 1: Ideas");
+    expect(screen.getByRole("checkbox", { name: /Torta o repostería/ })).toBeTruthy();
+    click("idea-DINNERWARE_SET");
+    await next(/Elige un producto por idea/);
+    expect(document.activeElement).toBe(screen.getByTestId("wizard-step-title"));
+    expect(screen.getByRole("radiogroup", { name: "Productos para Juego de vajilla" })).toBeTruthy();
+    click("choose-vajilla");
+    expect(screen.getByRole("radiogroup", { name: /Versión/ })).toBeTruthy();
+    expect(screen.getByRole("switch", { name: "Se puede regalar entre varios" })).toBeTruthy();
+    expect(screen.getByRole("radio", { name: /Producto vajilla, Bs/ }).getAttribute("aria-checked")).toBe("true");
+    click("wizard-back");
+    await screen.findByTestId("idea-CAKE");
+    expect(document.activeElement).toBe(screen.getByTestId("wizard-step-title"));
+  });
+
+  it("axe finds no structural violation on each step (contrast needs a real browser and is in the pending list)", async () => {
+    const { container } = render3();
+    await screen.findByTestId("idea-CAKE");
+    const run = async (): Promise<string[]> => (await axe.run(container, { rules: { "color-contrast": { enabled: false }, region: { enabled: false } } })).violations.map((violation) => `${violation.id}: ${violation.nodes.map((node) => node.target.join(" ")).join(" | ")}`);
+    expect(await run()).toEqual([]);
+    click("idea-CAKE");
+    click("idea-DINNERWARE_SET");
+    await next(/Elige un producto por idea/);
+    click("choose-torta");
+    click("choose-vajilla");
+    expect(await run()).toEqual([]);
+    await next(/Revisa tu lista/);
+    expect(await run()).toEqual([]);
+  });
+
+  it("in English every step and the errors are translated", async () => {
+    const made = fakeClient(handlers({ [BATCH]: () => new HttpFailure(422, { code: "CATALOG_PRODUCT_UNAVAILABLE", itemIndex: 0 }) }));
+    renderApp(<AddGiftScreen celebrationId="c-1" initial="catalog" onNavigate={navigate} />, made.client, undefined, "en-US");
+    await screen.findByTestId("idea-CAKE");
+    expect(screen.getByRole("heading", { name: "Pick gift ideas" })).toBeTruthy();
+    click("idea-CAKE");
+    await next(/Choose one product per idea/);
+    click("choose-torta");
+    await next(/Review your list/);
+    click("wizard-submit");
+    expect((await screen.findByTestId("wizard-submit-error")).textContent).toMatch(/No gift was added: 1 needs a change/);
+    expect(screen.getByTestId("line-problem-CAKE").textContent).toMatch(/no longer in the catalog/);
+    expect(made.calls.some((call) => call.url.includes("locale=en-US"))).toBe(true);
+  });
+});
+
+function render3(): ReturnType<typeof renderApp> {
+  const made = fakeClient(handlers());
+  return renderApp(<AddGiftScreen celebrationId="c-1" initial="catalog" onNavigate={navigate} />, made.client);
+}

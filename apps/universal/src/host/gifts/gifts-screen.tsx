@@ -42,6 +42,8 @@ function GiftRow({ item, first, currencyLocale, onApprove, onReject, approving, 
         <View style={{ flex: 1, minWidth: 0, gap: spacing[1] }}>
           <Text style={styles.itemTitle} numberOfLines={2}>{item.title}</Text>
           <Text style={styles.muted} numberOfLines={1}>{origin}{narrow ? ` · ${price}` : ""}</Text>
+          {(item.quantity ?? 1) > 1 ? <Text style={styles.muted} testID={`gift-quantity-${item.id}`}>{t("gifts.host.wizard.list.quantity", { count: item.quantity ?? 1 })}</Text> : null}
+          {item.groupGiftEnabled ? <Text style={styles.muted} testID={`gift-group-${item.id}`}>{t("gifts.host.wizard.list.group")}</Text> : null}
           {item.status === "UNAVAILABLE" ? <Text style={styles.muted} testID={`gift-unavailable-${item.id}`}>{t("gifts.host.list.unavailableNote")}</Text> : null}
           {item.reservedByName ? <Text style={styles.muted} testID={`gift-by-${item.id}`}>{t("gifts.host.list.reservedBy", { name: item.reservedByName })}</Text> : null}
           {narrow ? <View testID={`gift-status-${item.id}`} style={{ alignSelf: "flex-start", paddingTop: spacing[1] }}><Chip tone={STATUS_TONE[item.status]}>{t(`gifts.host.status.${item.status}`)}</Chip></View> : null}
@@ -167,6 +169,7 @@ function GiftsBody({ celebrationId, onNavigate }: { readonly celebrationId: stri
       ) : (
         <>
           <GiftFigures items={items} />
+          {list.data?.deliveryNotes ? <Text style={styles.body} testID="gift-delivery-notes">{t("gifts.host.wizard.list.delivery", { notes: list.data.deliveryNotes })}</Text> : null}
           <RequesterVisibility celebrationId={celebrationId} />
           <RowList>
             <Stagger>{items.map((item, index) => <GiftRow key={item.id} first={index === 0} item={item} currencyLocale={locale} onApprove={(id) => { setRejected(null); reject.reset(); if (flight.begin()) approve.mutate(id, { onSettled: flight.end }); }} onReject={(target) => { setRejected(null); approve.reset(); reject.reset(); setRejectTarget(target); }} approving={approve.isPending && approve.variables === item.id} rejecting={reject.isPending && reject.variables === item.id} locked={locked} {...(item.status === "COMMITTED" && held.get(item.id) ? { onRelease: () => { const reservation = held.get(item.id); if (!reservation) return; setReleased(null); release.reset(); setReleaseTarget({ item, reservation }); }, releasing: release.isPending && release.variables?.reservationId === held.get(item.id)?.id } : {})} />)}</Stagger>

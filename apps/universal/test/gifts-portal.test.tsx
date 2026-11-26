@@ -104,16 +104,6 @@ describe("R1 · M-6 · a gift that can no longer be given (UNAVAILABLE)", () => 
     expect(screen.queryByText("Musica")).toBeNull();
     expect(screen.queryByText("No disponible")).toBeNull();
   });
-  it("422 GIFT_LISTING_NOT_PRODUCT on add says it is a service, in the host's language", async () => {
-    const itemsPath = "/gifts/celebrations/c-1/items";
-    const { client } = fakeClient(handlers({ "GET /listings": () => ({ items: [{ id: LISTING, providerId: PID, title: "Torta", type: "PRODUCT" }] }), [`POST ${itemsPath}`]: () => new HttpFailure(422, { code: "GIFT_LISTING_NOT_PRODUCT", title: "Listing is not a product" }) }));
-    renderApp(<CatalogScreen celebrationId="c-1" onNavigate={navigate} />, client);
-    await screen.findByTestId("catalog-query");
-    fireEvent.click(screen.getByTestId("catalog-search"));
-    fireEvent.click(await screen.findByTestId(`add-${LISTING}`));
-    expect(await screen.findByText(/Eso es un servicio, no un producto/)).toBeTruthy();
-    expect(screen.queryByText(/Listing is not a product/)).toBeNull();
-  });
 });
 
 describe("REQ-F23-01 · pending reservations inbox", () => {
@@ -149,138 +139,6 @@ describe("REQ-F23-01 · pending reservations inbox", () => {
     const denied = fakeClient(handlers({ "GET /gifts/celebrations/c-1/reservations": () => new HttpFailure(403), "GET /gifts/celebrations/c-1/items": () => GIFTS }));
     renderApp(<GiftInboxScreen celebrationId="c-1" onNavigate={navigate} />, denied.client);
     expect(await screen.findByText(/Puedes ver esta celebración|No tienes permisos/i)).toBeTruthy();
-  });
-});
-
-describe("REQ-F23-02 · build the list from the partner catalog", () => {
-  const listPath = "/gifts/celebrations/c-1/gift-list";
-  const itemsPath = "/gifts/celebrations/c-1/items";
-
-  it.each([
-    { existingList: true, expectedPaths: [itemsPath] },
-    { existingList: false, expectedPaths: [itemsPath, listPath, itemsPath] }
-  ])("adds a search result at the published price (existing list: $existingList)", async ({ existingList, expectedPaths }) => {
-    let hasList = existingList;
-    const price = { amountMinor: 45000, currency: "BOB" };
-    const { client, calls } = fakeClient(handlers({
-      "GET /listings": () => ({ items: [{ id: LISTING, providerId: PID, title: "Torta de bodas", type: "PRODUCT", priceFrom: price }] }),
-      [`POST ${listPath}`]: () => {
-        hasList = true;
-        return { id: "l", celebrationId: "c-1" };
-      },
-      [`POST ${itemsPath}`]: () => hasList
-        ? gift("n1", { price })
-        : new HttpFailure(404, { code: "GIFT_LIST_NOT_FOUND" })
-    }));
-    renderApp(<CatalogScreen celebrationId="c-1" onNavigate={navigate} />, client);
-    await screen.findByTestId("catalog-query");
-    fireEvent.change(screen.getByTestId("catalog-query"), { target: { value: "torta" } });
-    fireEvent.click(screen.getByTestId("catalog-search"));
-    fireEvent.click(await screen.findByTestId(`add-${LISTING}`));
-    expect(await screen.findByText("Agregado: Torta de bodas")).toBeTruthy();
-    const posts = calls.filter((call) => call.method === "POST");
-    expect(posts.map((call) => call.path)).toEqual(expectedPaths);
-    for (const post of posts.filter((call) => call.path === itemsPath)) {
-      expect(post.body).toEqual({ source: "CATALOGED", title: "Torta de bodas", price, productListingId: LISTING });
-    }
-    expect(within(screen.getByTestId(`hit-${LISTING}`)).getByText(/Desde.*450/)).toBeTruthy();
-  });
-  it("A27 · when GET /listings fails it shows the error with «Reintentar» and never reads another source", async () => {
-    let routed = false;
-    const card = { listingId: LISTING, providerSlug: "s", name: "Torta", summary: "Torta de bodas", priceFrom: { amountMinor: 45000, currency: "BOB" } };
-    const { client, calls } = fakeClient(handlers({
-      "GET /listings": () => routed ? { items: [{ id: LISTING, providerId: PID, title: "Torta de bodas", type: "PRODUCT" }] } : new HttpFailure(404, { title: "no route" }),
-      "GET /providers": () => ({ items: [card], total: 1, page: 1, pageSize: 50 })
-    }));
-    renderApp(<CatalogScreen celebrationId="c-1" onNavigate={navigate} />, client);
-    await screen.findByTestId("catalog-query");
-    fireEvent.change(screen.getByTestId("catalog-query"), { target: { value: "torta" } });
-    fireEvent.click(screen.getByTestId("catalog-search"));
-    const error = await screen.findByTestId("catalog-error");
-    expect(error.textContent).toMatch(/No pudimos cargar los productos del catálogo/);
-    // One message and one retry, not the generic notice repeating both.
-    // (Before, the generic notice added «No encontramos esta celebración…», which is false for a missing /listings route.)
-    expect(error.textContent).toBe("No pudimos cargar los productos del catálogo.Reintentar");
-    expect(within(error).getAllByRole("button")).toHaveLength(1);
-    expect(screen.queryByTestId(`hit-${LISTING}`)).toBeNull();
-    expect(screen.queryByText(/catálogo público de proveedores/)).toBeNull();
-    expect(calls.some((call) => call.path === "/providers")).toBe(false);
-    routed = true;
-    fireEvent.click(within(error).getByText("Reintentar"));
-    expect(await screen.findByTestId(`hit-${LISTING}`)).toBeTruthy();
-    expect(screen.queryByTestId("catalog-error")).toBeNull();
-    expect(calls.some((call) => call.path === "/providers")).toBe(false);
-  });
-  it("M23 · a failed category read says so once, keeps the search usable and retries with one button", async () => {
-    let fail = true;
-    const { client, calls } = fakeClient(handlers({
-      "GET /providers/categories": () => (fail ? new HttpFailure(503, { title: "down" }) : { items: [{ code: "PASTRY", name: "Repostería", listingType: "PRODUCT" }] }),
-      "GET /listings": () => ({ items: [{ id: LISTING, providerId: PID, title: "Torta", type: "PRODUCT" }] })
-    }));
-    renderApp(<CatalogScreen celebrationId="c-1" onNavigate={navigate} />, client);
-    const error = await screen.findByTestId("catalog-categories-error");
-    expect(error.textContent).toBe("No pudimos cargar las categorías; puedes buscar igual.Reintentar");
-    expect(within(error).getAllByRole("button")).toHaveLength(1);
-    fireEvent.click(screen.getByTestId("catalog-search"));
-    expect(await screen.findByTestId(`hit-${LISTING}`)).toBeTruthy();
-    fail = false;
-    fireEvent.click(within(error).getByText("Reintentar"));
-    expect(await screen.findByTestId("catalog-category")).toBeTruthy();
-    expect(screen.queryByTestId("catalog-categories-error")).toBeNull();
-    expect(calls.filter((call) => call.path === "/providers/categories").length).toBeGreaterThanOrEqual(2);
-  });
-  it("A27 · no product at all is an honest empty state, not provider cards", async () => {
-    const { client, calls } = fakeClient(handlers({ "GET /listings": () => ({ items: [] }), "GET /providers": () => ({ items: [{ listingId: LISTING, providerSlug: "s", name: "Catering" }], total: 1, page: 1, pageSize: 50 }) }));
-    renderApp(<CatalogScreen celebrationId="c-1" onNavigate={navigate} />, client);
-    expect((await screen.findByTestId("catalog-empty")).textContent).toMatch(/Todavía no hay productos de proveedores verificados/);
-    expect(calls.find((call) => call.path === "/listings")?.url).toContain("type=PRODUCT");
-    expect(calls.some((call) => call.path === "/providers")).toBe(false);
-  });
-  it("A28 · asks only for products and never offers a SERVICE hit as a gift", async () => {
-    const { client } = fakeClient(handlers({ "GET /listings": () => ({ items: [
-      { id: LISTING, providerId: PID, title: "Torta de bodas", type: "PRODUCT", category: "PASTRY" },
-      { id: "svc-1", providerId: PID, title: "Servicio de catering", type: "SERVICE", category: "CATERING" }
-    ] }) }));
-    renderApp(<CatalogScreen celebrationId="c-1" onNavigate={navigate} />, client);
-    expect(await screen.findByTestId(`hit-${LISTING}`)).toBeTruthy();
-    expect(screen.queryByTestId("hit-svc-1")).toBeNull();
-    expect(screen.queryByTestId("add-svc-1")).toBeNull();
-  });
-  it("M23 · the categories come from GET /providers/categories?type=PRODUCT in the host's language and narrow the products", async () => {
-    const { client, calls } = fakeClient(handlers({
-      "GET /providers/categories": () => ({ items: [
-        { code: "VENUE", name: "Salones de eventos", listingType: "SERVICE" },
-        { code: "DECORATION", name: "Decoración", listingType: null },
-        { code: "PASTRY", name: "Pastelería", listingType: "PRODUCT" },
-        { code: "KITCHENWARE", name: "Utensilios de cocina", listingType: "PRODUCT" }
-      ] }),
-      "GET /listings": () => ({ items: [
-        { id: LISTING, providerId: PID, title: "Torta de bodas", type: "PRODUCT", category: "PASTRY" },
-        { id: "k-1", providerId: PID, title: "Juego de platos", type: "PRODUCT", category: "KITCHENWARE" }
-      ] })
-    }));
-    renderApp(<CatalogScreen celebrationId="c-1" onNavigate={navigate} />, client);
-    const select = await screen.findByTestId("catalog-category");
-    const options = Array.from(select.querySelectorAll("option")).map((option) => option.textContent);
-    expect(options).toEqual(["Todas", "Decoración", "Pastelería", "Utensilios de cocina"]);
-    const read = calls.find((call) => call.path === "/providers/categories");
-    expect(read?.url).toContain("type=PRODUCT");
-    expect(read?.url).toContain("locale=es-BO");
-    expect(await screen.findByTestId("hit-k-1")).toBeTruthy();
-    fireEvent.change(select, { target: { value: "PASTRY" } });
-    expect(screen.getByTestId(`hit-${LISTING}`)).toBeTruthy();
-    expect(screen.queryByTestId("hit-k-1")).toBeNull();
-    fireEvent.change(select, { target: { value: "DECORATION" } });
-    expect((await screen.findByTestId("catalog-empty")).textContent).toMatch(/esa búsqueda o categoría/);
-  });
-  it("422 CATALOG_PRODUCT_UNAVAILABLE explains and keeps the search", async () => {
-    const { client, calls } = fakeClient(handlers({ "GET /listings": () => ({ items: [{ id: LISTING, providerId: PID, title: "Torta", type: "PRODUCT" }] }), [`POST ${itemsPath}`]: () => new HttpFailure(422, { code: "CATALOG_PRODUCT_UNAVAILABLE" }) }));
-    renderApp(<CatalogScreen celebrationId="c-1" onNavigate={navigate} />, client);
-    await screen.findByTestId("catalog-query");
-    fireEvent.click(screen.getByTestId("catalog-search"));
-    fireEvent.click(await screen.findByTestId(`add-${LISTING}`));
-    expect(await screen.findByText(/ya no está en el catálogo/)).toBeTruthy();
-    expect(calls.filter((call) => call.method === "POST").map((call) => call.path)).toEqual([itemsPath]);
   });
 });
 
@@ -390,16 +248,16 @@ describe("REQ-F23-03 · external gift with explicit friction (PARTNER_CATALOG_FI
     expect(await screen.findByText(/te mostramos productos parecidos de aliados/)).toBeTruthy();
   });
   it("the two origins are one flow: switching origin keeps the screen and shows that origin's form; «De un proveedor» is gone (A28)", async () => {
-    const { client } = fakeClient(handlers({ "GET /listings": () => ({ items: [] }) }));
+    const { client } = fakeClient(handlers({ "GET /providers/gift-ideas/recommendations": () => ({ eventType: "WEDDING", city: null, scope: "EVENT_TYPE", items: [] }) }));
     renderApp(<CatalogScreen celebrationId="c-1" onNavigate={navigate} />, client);
-    await screen.findByTestId("catalog-query");
+    await screen.findByTestId("gift-assistant");
     expect(screen.queryByTestId("origin-provider")).toBeNull();
     expect(screen.queryByText("De un proveedor")).toBeNull();
     fireEvent.click(screen.getByTestId("origin-store"));
     expect(await screen.findByTestId("external-title")).toBeTruthy();
-    expect(screen.queryByTestId("catalog-query")).toBeNull();
+    expect(screen.queryByTestId("gift-assistant")).toBeNull();
     fireEvent.click(screen.getByTestId("origin-catalog"));
-    expect(await screen.findByTestId("catalog-query")).toBeTruthy();
+    expect(await screen.findByTestId("gift-assistant")).toBeTruthy();
   });
 
 });
