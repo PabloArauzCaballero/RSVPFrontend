@@ -139,8 +139,10 @@ describe("the three prototyped templates as design documents v2", () => {
     const design = JSON.parse(JSON.stringify(template.theme)) as DesignDocumentV2 & { pages: { canvases: { mobile: { elements: { block: string; visible: boolean }[] } } }[] };
     for (const page of design.pages) for (const item of page.canvases.mobile.elements) if (item.block === "gifts-cta") item.visible = false;
     const markup = renderToStaticMarkup(<CelebrationRenderer theme={themeFromTemplate({ ...template, theme: design as unknown as TemplateDocument["theme"] }, WEDDING_VIEW.enabledSections)} view={WEDDING_VIEW} t={t} now={NOW} />);
-    expect([...markup.matchAll(/data-action="gifts"/g)]).toHaveLength(1);
+    // The document's own button is replaced by the one block of the reply page, so a hidden element cannot take the button away: block + dock.
+    expect([...markup.matchAll(/data-action="gifts"/g)]).toHaveLength(2);
     expect(markup).toContain('data-dock=""');
+    expect(markup).toContain('data-actions-block=""');
   });
 
   it("a link of the document: listing goes through the redirector, gifts to the list, url only https", () => {

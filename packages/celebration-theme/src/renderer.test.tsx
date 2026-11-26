@@ -32,7 +32,7 @@ describe("CelebrationRenderer", () => {
   it("sections in the template's order, and empty ones leave no hole", () => {
     const html = renderWith(TEMPLATES[1]);
     const order = [...html.matchAll(/data-section="(\w+)"/g)].map((match) => match[1]);
-    expect(order).toEqual(["schedule", "venues", "story", "gallery", "faq", "gifts", "rsvp"]);
+    expect(order).toEqual(["schedule", "venues", "story", "gallery", "faq", "rsvp"]);
     const noDressCode = renderToStaticMarkup(<CelebrationRenderer theme={themeFromTemplate(TEMPLATES[0], VIEW.enabledSections)} view={{ ...VIEW, content: { ...VIEW.content, dressCode: "", faq: [] } }} t={t} now={NOW} />);
     expect(noDressCode).not.toContain('data-section="dressCode"');
     expect(noDressCode).not.toContain('data-section="faq"');
@@ -84,8 +84,10 @@ describe("P22 · PL-A10 · the gifts button on every invitation", () => {
     const view = { ...VIEW, enabledSections: withoutGifts(WEDDING_SECTIONS) };
     for (const colorScheme of ["light", "dark"] as const) {
       const document = parse(renderToStaticMarkup(<CelebrationRenderer theme={themeFromTemplate(omitted, view.enabledSections)} view={view} gallery={GALLERY} t={t} now={NOW} basePath={BASE} colorScheme={colorScheme} />));
-      const section = document.querySelector('section[data-section="gifts"]');
-      expect(section?.querySelector("h2")?.textContent).toBe("celebration.sections.gifts");
+      // Decision 8: the gifts button is in the reply's block, not in a section of its own.
+      expect(document.querySelector('section[data-section="gifts"]')).toBeNull();
+      const section = document.querySelector('section[data-section="rsvp"]');
+      expect(section?.querySelector("h2")?.textContent).toBe("celebration.actions.title");
       const button = section?.querySelector<HTMLAnchorElement>('a[data-action="gifts"]');
       expect(button?.getAttribute("href")).toBe(`${BASE}/regalos`);
       expect(button?.className).toBe("celebration-cta");
@@ -97,11 +99,13 @@ describe("P22 · PL-A10 · the gifts button on every invitation", () => {
     }
   });
 
-  it("goes where the template places it, otherwise right before the reply", () => {
+  it("goes in the reply's block, wherever the template places the gifts section", () => {
     const placed = parse(renderWith(TEMPLATES[0]));
-    expect([...placed.querySelectorAll("[data-section]")].map((node) => node.getAttribute("data-section"))).toEqual(["story", "schedule", "venues", "gallery", "dressCode", "gifts", "faq", "recommendations", "rsvp"]);
+    expect([...placed.querySelectorAll("[data-section]")].map((node) => node.getAttribute("data-section"))).toEqual(["story", "schedule", "venues", "gallery", "dressCode", "faq", "recommendations", "rsvp"]);
+    expect(placed.querySelector('section[data-section="rsvp"] [data-actions-block] a[data-action="gifts"]')).toBeTruthy();
     const corporate = parse(renderWith(TEMPLATES[4]));
-    expect([...corporate.querySelectorAll("[data-section]")].map((node) => node.getAttribute("data-section"))).toEqual(["schedule", "venues", "faq", "recommendations", "gifts", "rsvp"]);
+    expect([...corporate.querySelectorAll("[data-section]")].map((node) => node.getAttribute("data-section"))).toEqual(["schedule", "venues", "faq", "recommendations", "rsvp"]);
+    expect(corporate.querySelector('section[data-section="rsvp"] [data-actions-block] a[data-action="gifts"]')).toBeTruthy();
   });
 
   it("never carries the guest's personal link, even when the page knows it", () => {
@@ -175,12 +179,14 @@ describe("PL-A11 · the reply always leads somewhere", () => {
     const own = parse(renderWith(TEMPLATES[0], { rsvpHref: `${BASE}/rsvp/token-abcdefghijklmnop`, rsvpHelpHref: `${BASE}/rsvp`, rsvpAdaptive: true })).querySelector('section[data-section="rsvp"]');
     expect(own?.querySelector("[data-face]")).toBeNull();
     expect(own?.querySelector('a[data-action="rsvp"]')?.textContent).toBe("celebration.rsvp.cta");
-    expect(parse(renderWith(TEMPLATES[0], { rsvpAdaptive: true })).querySelector('section[data-section="rsvp"] a')).toBeNull();
+    expect(parse(renderWith(TEMPLATES[0], { rsvpAdaptive: true })).querySelector('section[data-section="rsvp"] a[data-action^="rsvp"]')).toBeNull();
   });
 
   it("negative: with no destination at all (a still preview) the section stays text, no dead link", () => {
     const section = parse(renderWith(TEMPLATES[0])).querySelector('section[data-section="rsvp"]');
-    expect(section?.querySelector("a")).toBeNull();
+    // The reply has nowhere to go, so it is not drawn; the gifts button is still there (it never depends on the guest).
+    expect(section?.querySelector('a[data-action^="rsvp"]')).toBeNull();
+    expect([...(section?.querySelectorAll("a") ?? [])].map((anchor) => anchor.getAttribute("data-action"))).toEqual(["gifts"]);
   });
 });
 
