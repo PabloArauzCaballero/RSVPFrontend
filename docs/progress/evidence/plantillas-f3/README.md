@@ -53,7 +53,7 @@ Ornamentos (un solo trazo de 1,8, tinta + un acento): laurel, art déco, filete,
 
 ## Catálogo visual
 
-`yarn workspace @rsvp/celebration-theme art:catalogue` (con `CHROMIUM_PATH` si el Chromium no es el que pide Playwright) renderiza todos los dibujos y ornamentos con Chromium sobre cuatro paletas sembradas, en claro y oscuro: `clasico-marfil`, `pinata`, `gala-dorada` y `editorial-granate` (`*-claro.png`, `*-oscuro.png`). Se revisaron a ojo; se rehicieron copas, ramo, zapatilla, matraca, tijera, pastel, chupete (parecía una cara), banderines y los marcos.
+`yarn workspace @rsvp/celebration-theme art:catalogue` (con `CHROMIUM_PATH` si el Chromium no es el que pide Playwright) renderiza todos los dibujos y ornamentos con Chromium sobre cuatro paletas sembradas, en claro y oscuro: `clasico-marfil`, `pinata`, `gala-dorada` y `editorial-granate` (la fila `gala-dorada` conserva el id de la semilla del backend pero usa la dirección «Gala art déco», con acento vino `#7B2A3C`, decidida por Pablo; ver `test/seed-palettes.ts`) (`*-claro.png`, `*-oscuro.png`). Se revisaron a ojo; se rehicieron copas, ramo, zapatilla, matraca, tijera, pastel, chupete (parecía una cara), banderines y los marcos.
 
 ## Límites
 
