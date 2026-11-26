@@ -147,7 +147,7 @@
 .celebration[data-section-style="bands"] .celebration-sections > section[data-section="rsvp"] { border-radius: 0; border-inline: 0; background: color-mix(in srgb, var(--celebration-accent) 9%, var(--celebration-surface)); }
 /* Gifts (P22): on every invitation, quiet like the other sections, with the same filled button as the reply. */
 .celebration-sections > section[data-section="gifts"] p { max-width: 40rem; }
-.celebration-sections > section[data-section="gifts"] .celebration-cta, .celebration-sections > section[data-section="rsvp"] .celebration-cta { margin-top: .5rem; }
+.celebration-sections > section[data-section="gifts"] .celebration-cta { margin-top: .5rem; }
 
 /* ---------------------------------------------------------------------------------------------------------------------
    Design document v2 (F4 b). Everything below is keyed to `.celebration-design`; v1 templates never match it.
@@ -219,7 +219,13 @@ body:has(.cdesign-dock) { padding-bottom: 5.5rem; }
 }
 .celebration-design .cdesign-intro { width: min(100%, var(--celebration-max-width)); margin: 0 auto .5rem; padding-inline: var(--celebration-space); box-sizing: border-box; }
 .celebration-design .cdesign-intro p { max-width: 40rem; }
-.celebration-design .cdesign-page[data-section="gifts"] .celebration-cta, .celebration-design .cdesign-page[data-section="rsvp"] .celebration-cta { width: 100%; max-width: 22rem; }
+.celebration-design .cdesign-page[data-section="gifts"] .celebration-cta { width: 100%; max-width: 22rem; }
+/* The reply and the gifts button are ONE block (FE #114 follow-up, decision 8): two primaries of the same weight, stacked on the phone and side by side from 768 px. Each one fills its half, so both have the same width and height; the block is renderer chrome, outside every canvas. */
+.celebration .celebration-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: .75rem; width: 100%; max-width: 36rem; box-sizing: border-box; align-items: stretch; margin-top: .5rem; }
+.celebration[data-align="center"] .celebration-actions, .celebration-design .celebration-actions { margin-inline: auto; }
+.celebration .celebration-actions .celebration-cta { width: 100%; max-width: none; min-height: 3rem; margin-top: 0; box-sizing: border-box; }
+@media (min-width: 48rem) { .celebration .celebration-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.celebration-design .cdesign-actions { width: min(100%, var(--celebration-max-width)); margin: 0 auto; padding: .5rem var(--celebration-space) 0; box-sizing: border-box; }
 
 /* Buttons of the document (gifts, reply, link). Solid is the default of .celebration-cta; outline and link are quieter. */
 .celebration .celebration-cta[data-variant="outline"] { background: transparent; color: var(--celebration-accent) !important; border: 2px solid var(--celebration-accent); }
@@ -229,7 +235,6 @@ body:has(.cdesign-dock) { padding-bottom: 5.5rem; }
 .celebration .cdesign-dock { position: fixed; z-index: 40; inset: auto 0 0 0; display: flex; gap: .5rem; padding: .5rem max(.75rem, env(safe-area-inset-right)) max(.5rem, env(safe-area-inset-bottom)) max(.75rem, env(safe-area-inset-left));
   background: var(--celebration-canvas); border-top: 1px solid var(--cd-line); box-sizing: border-box; }
 .celebration .cdesign-dock .celebration-cta { flex: 1 1 0; min-width: 0; padding: .6rem .75rem; font-size: .95rem; line-height: 1.2; }
-.celebration .cdesign-dock .celebration-cta[data-action="rsvp"], .celebration .cdesign-dock .celebration-cta[data-action="rsvp-help"] { background: transparent; color: var(--celebration-accent) !important; border: 2px solid var(--celebration-accent); }
 @media (max-width: 25rem) { .celebration .cdesign-dock .celebration-icon { display: none; } }
 @media (min-width: 56.25rem) {
   body:has(.cdesign-dock) { padding-bottom: 0; }

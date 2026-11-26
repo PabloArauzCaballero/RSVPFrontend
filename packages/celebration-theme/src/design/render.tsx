@@ -7,7 +7,7 @@ import { Flourish } from "../flourish.js";
 import { formatDate } from "../format.js";
 import type { CelebrationRendererProps } from "../renderer.js";
 import { SectionNav } from "../section-nav.js";
-import { GiftsAction, RsvpAction, SECTIONS } from "../sections/index.js";
+import { ActionsBlock, GiftsAction, RsvpAction, SECTIONS } from "../sections/index.js";
 import { AudioPlayer, EmbedFacade, MediaBackdrop, MediaImage } from "../media/components.js";
 import { embedFromConfig, mapEmbed } from "../media/embed.js";
 import { clampScrim, type PublicMedia } from "../media/variants.js";
@@ -245,13 +245,18 @@ function elementStyle(element: DesignElement, mobile: DesignElement | undefined,
   } as CSSProperties;
 }
 
+/** The reply page carries the one actions block (decision 8): the document's own gifts and reply buttons are replaced by it, so they never appear twice or apart. */
+const isActionsBlock = (page: DesignPage): boolean => page.kind === "section" && page.section === "rsvp";
+
 function Canvas({ page, context }: { readonly page: DesignPage; readonly context: Context }): ReactNode {
   const { mobile, desktop } = page.canvases;
   const byId = (canvas: DesignCanvas | undefined): Map<string, DesignElement> => new Map((canvas?.elements ?? []).filter((item) => item.visible).map((item) => [item.id, item]));
-  const phone = byId(mobile);
-  const wide = byId(desktop);
-  const ids = [...new Set([...phone.keys(), ...wide.keys()])];
+  const replaced = isActionsBlock(page);
   const blocks = new Map(context.design.blocks.map((block) => [block.id, block]));
+  const without = (map: Map<string, DesignElement>): Map<string, DesignElement> => (replaced ? new Map([...map].filter(([, item]) => !["giftsCta", "rsvpCta"].includes(blocks.get(item.block)?.type ?? ""))) : map);
+  const phone = without(byId(mobile));
+  const wide = without(byId(desktop));
+  const ids = [...new Set([...phone.keys(), ...wide.keys()])];
   const vars = { "--cd-cols-m": mobile.columns, "--cd-row-m": `${mobile.rowHeight}px`, "--cd-cols-d": desktop?.columns ?? mobile.columns, "--cd-row-d": `${(desktop ?? mobile).rowHeight}px` } as CSSProperties;
   return (
     <div className="cdesign-canvas" data-mode={mobile.mode} data-desktop={desktop ? "" : undefined} style={vars}>
@@ -318,9 +323,11 @@ function PageBlock({ page, context, only }: { readonly page: DesignPage; readonl
   const headingId = `section-${section}`;
   return (
     <section id={section} className="cdesign-page" data-page-kind="section" data-section={section} data-page={page.id} data-style={page.style} data-bg-media={page.background?.kind === "media" ? "" : undefined} aria-labelledby={headingId} style={backgroundStyle(page.background)}>
-      <h2 id={headingId} className={only ? "celebration-visually-hidden" : "cdesign-page-title"}>{t(sectionTitleKey(section))}</h2>
-      {section === "gifts" || section === "rsvp" ? <div className="cdesign-intro"><p>{t(`celebration.${section}.${section === "gifts" ? "intro" : "body"}`)}</p></div> : null}
+      <h2 id={headingId} className={only ? "celebration-visually-hidden" : "cdesign-page-title"}>{t(section === "rsvp" ? "celebration.actions.title" : sectionTitleKey(section))}</h2>
+      {section === "gifts" ? <div className="cdesign-intro"><p>{t("celebration.gifts.intro")}</p></div> : null}
+      {section === "rsvp" ? <div className="cdesign-intro"><p>{t("celebration.rsvp.body")}</p><p>{t("celebration.gifts.intro")}</p></div> : null}
       {inner}
+      {section === "rsvp" ? <div className="cdesign-actions"><ActionsBlock t={t} giftsHref={context.giftsHref} giftsStatus={context.props.giftsStatus} rsvpHref={context.props.rsvpHref} rsvpHelpHref={context.props.rsvpHelpHref} rsvpAdaptive={context.props.rsvpAdaptive} /></div> : null}
     </section>
   );
 }
@@ -346,7 +353,9 @@ export function DesignRenderer(props: DesignRendererProps): ReactNode {
     ...(scheme ? artVariables(artPalette(palette)) : {})
   } as CSSProperties;
   const placed = design.pages.filter((page) => page.kind === "cover" || (page.section && available.includes(page.section as SectionId)));
-  const pages = props.only ? placed.filter((page) => page.kind === "section" && page.section === props.only) : placed;
+  // Decision 8: the gifts page does not stand apart when the reply page is placed; its button lives in the reply page's one block.
+  const merged = placed.some((page) => isActionsBlock(page));
+  const pages = props.only ? placed.filter((page) => page.kind === "section" && page.section === props.only) : placed.filter((page) => !(merged && page.kind === "section" && page.section === "gifts"));
   return (
     <article className="celebration celebration-design" data-design="2" data-layout={theme.layout} data-color-scheme={scheme ?? "light"} data-scheme-source={scheme ? "prop" : "system"}
       data-section-style={theme.sectionStyle} data-divider={layout.divider} data-images={layout.imageTreatment} lang={view.locale} style={style}>

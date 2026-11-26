@@ -83,7 +83,9 @@ export function CelebrationRenderer(props: CelebrationRendererProps): ReactNode 
   const content = readContent(view);
   const layout = layoutOf(theme);
   const available = theme.sections.filter((section) => hasSectionContent(section, content, gallery));
-  const shown = props.only ? available.filter((section) => section === props.only) : available;
+  // Decision 8: the gifts button and the reply are ONE block (the reply section's), so the gifts section does not stand apart on the page.
+  const merged = !props.only && available.includes("rsvp");
+  const shown = props.only ? available.filter((section) => section === props.only) : available.filter((section) => !(merged && section === "gifts"));
   // Custom properties are valid inline style keys; React passes them through untouched.
   const style = { ...themeVariables(theme, props.colorScheme) } as CSSProperties;
   return (
@@ -97,10 +99,10 @@ export function CelebrationRenderer(props: CelebrationRendererProps): ReactNode 
           const Body = SECTIONS[section];
           const headingId = `section-${section}`;
           return (
-            <section key={section} id={section} data-section={section} aria-labelledby={headingId}>
+            <section key={section} id={section} data-section={section} data-actions={merged && section === "rsvp" ? "merged" : undefined} aria-labelledby={headingId}>
               {/* On a section's own page the h1 already names it; the h2 stays for the outline only. */}
               {layout.sectionArt && !props.only && SECTION_ART[section] ? <SectionDrawing id={SECTION_ART[section]} /> : null}
-              <h2 id={headingId} className={props.only ? "celebration-visually-hidden" : undefined}>{t(sectionTitleKey(section))}</h2>
+              <h2 id={headingId} className={props.only ? "celebration-visually-hidden" : undefined}>{t(merged && section === "rsvp" ? "celebration.actions.title" : sectionTitleKey(section))}</h2>
               <Body content={content} gallery={gallery} timeZone={view.timeZone} locale={view.locale} t={t} rsvpHref={props.rsvpHref} rsvpHelpHref={props.rsvpHelpHref} rsvpAdaptive={props.rsvpAdaptive}
                 giftsHref={giftsPath(view.slug)} giftsStatus={props.giftsStatus} />
             </section>

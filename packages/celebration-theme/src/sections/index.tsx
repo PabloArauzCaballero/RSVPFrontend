@@ -135,11 +135,26 @@ export function RsvpAction({ t, rsvpHref, rsvpHelpHref, rsvpAdaptive, label, var
   return <>{action}{help}</>;
 }
 
+/**
+ * FE #114 follow-up, decision 8: the reply and the gifts button are ONE block, both primary and of the same weight, side by side
+ * from 768 px and stacked on the phone. It is the renderer's chrome (`rsvp-protected`), not an element of a canvas: no document can
+ * hide, cover or move one of the two apart from the other. The gifts link is always `giftsHref` and never carries the guest's link.
+ */
+export function ActionsBlock(props: Pick<SectionProps, "t" | "rsvpHref" | "rsvpHelpHref" | "rsvpAdaptive" | "giftsHref" | "giftsStatus">): ReactNode {
+  return (
+    <div className="celebration-actions rsvp-protected" role="group" aria-label={props.t("celebration.dock.label")} data-actions-block="">
+      <RsvpAction {...props} />
+      <GiftsAction {...props} />
+    </div>
+  );
+}
+
 function Rsvp(props: SectionProps): ReactNode {
   return (
     <>
       <p>{props.t("celebration.rsvp.body")}</p>
-      <RsvpAction {...props} />
+      <p>{props.t("celebration.gifts.intro")}</p>
+      <ActionsBlock {...props} />
     </>
   );
 }

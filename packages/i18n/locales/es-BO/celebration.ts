@@ -3,6 +3,7 @@ export const celebrationEsBO = {
   sections: { story: "Nuestra historia", schedule: "Itinerario", venues: "Lugares", gallery: "Galería", dressCode: "Código de vestimenta", faq: "Preguntas frecuentes", recommendations: "Recomendaciones", gifts: "Regalos", rsvp: "Confirma tu asistencia" },
   hero: { countdown_one: "Falta {{count}} día", countdown_other: "Faltan {{count}} días", today: "Es hoy" },
   dock: { label: "Acciones de la invitación" },
+  actions: { title: "Confirma y elige tu regalo" },
   nav: { label: "Secciones de la celebración", home: "Inicio" },
   schedule: { zoneNote: "Los horarios están en la hora local del evento ({{zone}})." },
   venues: { howToGetThere: "Cómo llegar", kind: { ceremony: "Ceremonia", reception: "Recepción", other: "Lugar" } },
