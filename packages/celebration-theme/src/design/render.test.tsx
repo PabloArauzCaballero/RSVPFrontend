@@ -321,10 +321,13 @@ describe("state · «Ver regalos» in its three states (giftsStatus seam, BE #12
 });
 
 describe("the documents themselves", () => {
-  it("PL-OF-1 · on the phone the editorial cover moves the <picture> wrapper (the grid item), not only the <img>, so the title stays above the photo and the dock", () => {
+  it("PL-OF-1 · the cover photo's <picture> is a direct child of the cover and the stylesheet takes it out of the grid (display: contents), so every rule on the <img> places it", () => {
     const css = readFileSync(join(__dirname, "../../styles.css"), "utf8");
-    const phone = (css.split("On the phone the title comes first and the photo under it")[1] as string).split("@media (min-width: 900px)")[0] as string;
-    expect(phone).toMatch(/@media \(max-width: 56\.1875rem\) \{[^@]*\.cdesign-cover\[data-variant="editorial"\] > :is\(picture, \.cdesign-cover-photo\) \{ order: 1; \}/);
+    expect(css).toMatch(/\.celebration-design \.cdesign-cover > picture \{ display: contents; \}/);
+    expect(css).toMatch(/\.celebration-design \.cdesign-cover > picture > source \{ display: none; \}/);
+    // The editorial phone rule is keyed to the <img> and is no longer needed on the wrapper.
+    expect(css).toMatch(/@media \(max-width: 56\.1875rem\) \{ \.celebration-design \.cdesign-cover\[data-variant="editorial"\] \.cdesign-cover-photo \{ order: 1;/);
+    expect(css).not.toMatch(/:is\(picture, /);
   });
   it.each(NAMES)("%s: exactly one gifts button, required, and no link on it (the destination is the renderer's)", (name) => {
     const design = DESIGN_TEMPLATES[name].theme as unknown as DesignDocumentV2;
