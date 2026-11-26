@@ -321,6 +321,11 @@ describe("state · «Ver regalos» in its three states (giftsStatus seam, BE #12
 });
 
 describe("the documents themselves", () => {
+  it("PL-OF-1 · on the phone the editorial cover moves the <picture> wrapper (the grid item), not only the <img>, so the title stays above the photo and the dock", () => {
+    const css = readFileSync(join(__dirname, "../../styles.css"), "utf8");
+    const phone = (css.split("On the phone the title comes first and the photo under it")[1] as string).split("@media (min-width: 900px)")[0] as string;
+    expect(phone).toMatch(/@media \(max-width: 56\.1875rem\) \{[^@]*\.cdesign-cover\[data-variant="editorial"\] > :is\(picture, \.cdesign-cover-photo\) \{ order: 1; \}/);
+  });
   it.each(NAMES)("%s: exactly one gifts button, required, and no link on it (the destination is the renderer's)", (name) => {
     const design = DESIGN_TEMPLATES[name].theme as unknown as DesignDocumentV2;
     const gifts = design.blocks.filter((block) => block.type === "giftsCta");

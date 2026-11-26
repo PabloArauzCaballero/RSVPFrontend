@@ -334,8 +334,12 @@ html:has(.cdesign-dock) { scroll-padding-bottom: 6rem; }
    Design document v2 (F4 c1 · bodas). Two things the documents of the wedding group need and the contract cannot say per element:
    the editorial cover as a spread, and the numbered acts of the programme. Keyed to `.celebration-design`. */
 .celebration-design .cdesign-cover[data-variant="editorial"] .cdesign-cover-photo { width: 100%; max-height: none; aspect-ratio: 4 / 5; object-fit: cover; }
-/* On the phone the title comes first and the photo under it, so the names are in the first screen whatever the photo weighs. */
-@media (max-width: 56.1875rem) { .celebration-design .cdesign-cover[data-variant="editorial"] .cdesign-cover-photo { order: 1; max-height: 28rem; } }
+/* On the phone the title comes first and the photo under it, so the names are in the first screen whatever the photo weighs. The photo is wrapped in a
+   <picture>, which is the grid item: `order` on the <img> alone never moved it (PL-OF-1), so the wrapper takes the order and the <img> the height cap. */
+@media (max-width: 56.1875rem) {
+  .celebration-design .cdesign-cover[data-variant="editorial"] > :is(picture, .cdesign-cover-photo) { order: 1; }
+  .celebration-design .cdesign-cover[data-variant="editorial"] .cdesign-cover-photo { max-height: 28rem; }
+}
 @media (min-width: 900px) {
   .celebration-design .cdesign-cover[data-variant="editorial"][data-has-image="true"] { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); column-gap: clamp(1.5rem, 4vw, 3.5rem); align-items: center; }
   .celebration-design .cdesign-cover[data-variant="editorial"][data-has-image="true"] .cdesign-cover-photo { grid-column: 1; grid-row: 1; }
