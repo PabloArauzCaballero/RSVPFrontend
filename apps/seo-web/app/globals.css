@@ -540,6 +540,8 @@ html:has(.rsvp-shell, .rsvp-status) body { overflow-x: clip; }
 [data-theme="dark"] .result__thumb img, [data-theme="dark"] .partner-hero__media img { filter: saturate(.65) sepia(.14) brightness(.88); }
 
 /* Invitation pages: no sales navigation or pitch around a guest's invitation; the logo and the footer link stay. */
+/* The invitation's own bar (gifts and reply, sticky on the desktop) takes the top: the site header scrolls away instead of sharing it. */
+body:has(.cdesign-dock) .site-header { position: static; }
 body:has([data-quiet-chrome]) .site-nav, body:has([data-quiet-chrome]) .site-footer__line { display: none; }
 
 /* B6 · Legal pages: one readable column, the draft notice first. */

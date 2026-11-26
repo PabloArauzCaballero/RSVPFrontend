@@ -31,3 +31,24 @@ export function readGuestCredential(slug: string): string | null {
   }
   try { return store()?.getItem(credentialKey(slug)) ?? null; } catch { return null; }
 }
+
+/**
+ * Whether this tab holds the guest's credential, without reading its value into the page and without touching the address
+ * bar (unlike `readGuestCredential`, which consumes the `#t=` fragment). The public celebration only needs the yes/no.
+ */
+export function hasGuestCredential(slug: string): boolean {
+  if (typeof window === "undefined") return false;
+  try { return Boolean(store()?.getItem(credentialKey(slug))); } catch { return false; }
+}
+
+/**
+ * Inline script for the top of `/c/{slug}`: runs while the page is parsed, before any third-party frame (video, map) can load,
+ * so a credential that arrived in the fragment (`#t=`, e.g. from the app on the web) is stored and removed from the address bar
+ * and the history entry at once. Same rule as `readGuestCredential`; the token is never written anywhere else.
+ */
+/** `<` as an escape, so a slug can never close the script element or open a comment (`</script>`, `<!--`), as `jsonLdScript` does. */
+const escapeForScript = (json: string): string => json.replace(/</g, "\\u003c");
+
+export function earlyCredentialScript(slug: string): string {
+  return `(function(){try{var m=/(?:^|[#&])t=([A-Za-z0-9._~+\\/=-]{16,512})/.exec(location.hash);if(!m)return;sessionStorage.setItem(${escapeForScript(JSON.stringify(credentialKey(slug)))},m[1]);history.replaceState(null,"",location.pathname+location.search);}catch(e){}})();`;
+}

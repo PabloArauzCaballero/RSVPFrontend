@@ -7,6 +7,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description The list includes templates whose theme is a design document v2. Only while the service gate DESIGN_V2_ACCEPTED is off (on by default since F4 b) does it leave them out, because the admin cannot open them then; one that already exists is archived by id with POST /templates/{id}/archive. */
         get: operations["listAllTemplates"];
         put?: never;
         post?: never;
@@ -177,6 +178,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        /** @description Newest first and paged. A design keeps its newest 100 published versions: publishing the 101st prunes the oldest (its number is never reused, and restoring it is 404). */
         get: operations["listDesignVersions"];
         put?: never;
         post?: never;
@@ -909,7 +911,7 @@ export interface components {
         DesignDraftInput: {
             document: components["schemas"]["DesignDocumentV2"];
         };
-        /** @description One placed block. Coordinates are grid units of its canvas. A canvas is columns x rowHeight px and ends 4000 px below its top; an element lies inside it. The gifts element is at least 44 x 44 px (reference widths 320 px mobile, 768 px desktop, capped by contentMaxWidth), is not covered by a visible element that paints over it (higher z, or the same z and later in the list) and reads at 4.5:1 for its text and 3:1 for its contour in both palettes. */
+        /** @description One placed block. Coordinates are grid units of its canvas. A canvas is columns x rowHeight px and ends 4000 px below its top; an element lies inside it. The gifts element is at least 44 x 44 px (reference widths 320 px mobile, 768 px desktop, capped by contentMaxWidth), keeps 44 px of height once its top and bottom padding and twice its border width are taken out (GIFTS_BLOCK_TOO_SMALL), has a label of at most 32 px whose line fits that height (GIFTS_BLOCK_TEXT_TOO_LARGE), is not covered by a visible element that paints over it (higher z, or the same z and later in the list) and reads at 4.5:1 for its text and 3:1 for its contour in both palettes. */
         DesignElement: {
             animation?: components["schemas"]["DesignAnimation"];
             background?: components["schemas"]["DesignBackground"];
@@ -1041,10 +1043,11 @@ export interface components {
             surface: components["schemas"]["HexColour"];
             text: components["schemas"]["HexColour"];
         };
-        /** @description 422 of a v2 design (400 and 413 are plain Problems). code is INVALID_THEME (not an object, neither v1 nor v2, or a schemaVersion that is not the integer 2), DESIGN_SCHEMA_INVALID (issues lists the paths), GIFTS_BLOCK_REQUIRED (no gifts block, said before the schema errors), GIFTS_BLOCK_LOCKED (link or rotation on the gifts element), GIFTS_BLOCK_HIDDEN (not visible or translucent), GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL (under 44 px), GIFTS_BLOCK_COVERED (another element paints over it), GIFTS_BLOCK_LOW_CONTRAST (text under 4.5:1 or contour under 3:1 in either palette), DESIGN_REFERENCE_INVALID, FONT_WEIGHT_UNAVAILABLE, CUSTOM_CODE_UNAVAILABLE (custom html/css until the F5 sanitiser) or DESIGN_NOT_PUBLISHABLE (publishing a v2: it stays a draft until the renderer supports it) Design endpoints add VERSION_CONFLICT (409, currentVersion), DESIGN_EXISTS (409), PRIVATE_TEMPLATE_LIMIT (409), DESIGN_TOO_LARGE, CELEBRATION_REQUIRED, CELEBRATION_NOT_ALLOWED and KIND_REQUIRED (422). */
+        /** @description 422 of a v2 design (400 and 413 are plain Problems). code is INVALID_THEME (not an object, neither v1 nor v2, or a schemaVersion that is not the integer 2), DESIGN_SCHEMA_INVALID (issues lists the paths), GIFTS_BLOCK_REQUIRED (no gifts block, said before the schema errors), GIFTS_BLOCK_LOCKED (link or rotation on the gifts element), GIFTS_BLOCK_HIDDEN (not visible or translucent), GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL (under 44 px, or under 44 px of height left once vertical padding and border are taken out), GIFTS_BLOCK_TEXT_TOO_LARGE (label over 32 px or taller than the useful height), GIFTS_BLOCK_COVERED (another element paints over it), GIFTS_BLOCK_LOW_CONTRAST (text under 4.5:1 or contour under 3:1 in either palette), DESIGN_REFERENCE_INVALID, FONT_WEIGHT_UNAVAILABLE, CUSTOM_CODE_UNAVAILABLE (custom html/css until the F5 sanitiser), or DESIGN_V2_NOT_AVAILABLE (POST/PATCH of any v2 theme while the service gate DESIGN_V2_ACCEPTED is off, which is not the default since F4 b; checked before the document is validated). Design endpoints add VERSION_CONFLICT (409, currentVersion), DESIGN_EXISTS (409), PRIVATE_TEMPLATE_LIMIT (409), DESIGN_PUBLISHED (409, a published celebration design cannot be deleted), DESIGN_TOO_LARGE, DESIGN_MEDIA_INVALID (a mediaId that is not a usable photo of the celebration; mediaIds lists them), DESIGN_MEDIA_NOT_ALLOWED (a private template cannot reference photos; mediaIds lists them), CELEBRATION_REQUIRED, CELEBRATION_NOT_ALLOWED and KIND_REQUIRED (422). */
         DesignProblem: components["schemas"]["Problem"] & {
             field?: string;
             issues?: components["schemas"]["DesignIssue"][];
+            mediaIds?: string[];
         };
         /** @description 201 when a new version was created; 200 when the draft was already the latest published version (idempotent) */
         DesignPublished: {
@@ -1162,25 +1165,25 @@ export interface components {
             /** @enum {string} */
             kind: "video" | "audio" | "map";
             /** @enum {string} */
-            provider: "youtube" | "vimeo" | "spotify" | "soundcloud" | "google_maps";
-            /** @description Provider identifier: YouTube/Vimeo id, Spotify kind/id, SoundCloud path, or the map query */
+            provider: "youtube" | "vimeo" | "spotify" | "google_maps";
+            /** @description Provider identifier: YouTube/Vimeo id, Spotify kind/id, or the map query */
             ref: string;
             /** @description Value of the iframe sandbox attribute */
             sandbox: string;
         };
         EmbedResolveRequest: {
             /**
-             * @description Narrows the providers: video = YouTube, Vimeo; music = YouTube, Spotify, SoundCloud; map = Google Maps
+             * @description Narrows the providers: video = YouTube, Vimeo; music = YouTube, Spotify; map = Google Maps
              * @enum {string|null}
              */
             intent?: "video" | "music" | "map" | null;
             url: string;
         };
         /**
-         * @description A family of the curated catalogue (P11). The catalogue, with the exact weights of each family and the tested pairs, is x-rsvp-font-catalog. Inter, Roboto and Open Sans are excluded.
+         * @description A family of the curated catalogue (P11). The catalogue, with the exact weights of each family and the tested pairs, is x-rsvp-font-catalog. Inter, Roboto, Open Sans, Poppins and IBM Plex are excluded (Poppins became DM Sans and IBM Plex Sans became Source Sans 3 in templates, by data migration 0002).
          * @enum {string}
          */
-        FontFamilyId: "cormorant-garamond" | "cormorant" | "playfair-display" | "fraunces" | "lora" | "newsreader" | "libre-baskerville" | "eb-garamond" | "bodoni-moda" | "dm-serif-display" | "marcellus" | "cinzel" | "gilda-display" | "spectral" | "crimson-pro" | "young-serif" | "source-sans-3" | "dm-sans" | "nunito" | "nunito-sans" | "work-sans" | "ibm-plex-sans" | "poppins" | "quicksand" | "fredoka" | "geist" | "figtree" | "manrope" | "karla" | "mulish" | "jost" | "josefin-sans" | "great-vibes" | "pinyon-script" | "parisienne" | "dancing-script" | "allura" | "italianno" | "alex-brush";
+        FontFamilyId: "cormorant-garamond" | "cormorant" | "playfair-display" | "fraunces" | "lora" | "newsreader" | "libre-baskerville" | "eb-garamond" | "bodoni-moda" | "dm-serif-display" | "marcellus" | "cinzel" | "gilda-display" | "spectral" | "crimson-pro" | "young-serif" | "source-sans-3" | "dm-sans" | "nunito" | "nunito-sans" | "work-sans" | "quicksand" | "fredoka" | "geist" | "figtree" | "manrope" | "karla" | "mulish" | "jost" | "josefin-sans" | "great-vibes" | "pinyon-script" | "parisienne" | "dancing-script" | "allura" | "italianno" | "alex-brush";
         FontRole: {
             family: components["schemas"]["FontFamilyId"];
             /** @description Exact weights to load; each must exist for the family in the catalogue (else 422 FONT_WEIGHT_UNAVAILABLE). */
@@ -1466,6 +1469,15 @@ export interface operations {
                     "application/json": components["schemas"]["Design"];
                 };
             };
+            /** @description Malformed request: a body or parameter that is not valid (BAD_REQUEST), or JSON nested too deeply to parse */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
             /** @description Missing or invalid bearer token */
             401: {
                 headers: {
@@ -1477,6 +1489,15 @@ export interface operations {
             };
             /** @description Unknown, or not visible to the caller (never 403 for what the caller cannot see) */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unexpected error (INTERNAL); nothing was stored */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1548,6 +1569,15 @@ export interface operations {
                     };
                 };
             };
+            /** @description Malformed request: a body or parameter that is not valid (BAD_REQUEST), or JSON nested too deeply to parse */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
             /** @description Missing or invalid bearer token */
             401: {
                 headers: {
@@ -1559,6 +1589,15 @@ export interface operations {
             };
             /** @description kind is not PRIVATE_TEMPLATE */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unexpected error (INTERNAL); nothing was stored */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1637,6 +1676,15 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
+            /** @description The JSON body is larger than 1 MB (PAYLOAD_TOO_LARGE) */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
             /** @description Invalid document */
             422: {
                 headers: {
@@ -1644,6 +1692,15 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["DesignProblem"];
+                };
+            };
+            /** @description Unexpected error (INTERNAL); nothing was stored */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
                 };
             };
         };
@@ -1670,6 +1727,15 @@ export interface operations {
                     "application/json": components["schemas"]["Design"];
                 };
             };
+            /** @description Malformed request: a body or parameter that is not valid (BAD_REQUEST), or JSON nested too deeply to parse */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
             /** @description Missing or invalid bearer token */
             401: {
                 headers: {
@@ -1681,6 +1747,15 @@ export interface operations {
             };
             /** @description Unknown, or not visible to the caller (never 403 for what the caller cannot see) */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unexpected error (INTERNAL); nothing was stored */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1707,6 +1782,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Malformed request: a body or parameter that is not valid (BAD_REQUEST), or JSON nested too deeply to parse */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
             };
             /** @description Missing or invalid bearer token */
             401: {
@@ -1737,6 +1821,15 @@ export interface operations {
             };
             /** @description DESIGN_PUBLISHED: a published celebration design is replaced, not deleted */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unexpected error (INTERNAL); nothing was stored */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1820,6 +1913,15 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
+            /** @description The JSON body is larger than 1 MB (PAYLOAD_TOO_LARGE) */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
             /** @description Invalid design */
             422: {
                 headers: {
@@ -1831,6 +1933,15 @@ export interface operations {
             };
             /** @description If-Match required */
             428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unexpected error (INTERNAL); nothing was stored */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1925,6 +2036,15 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
+            /** @description The JSON body is larger than 1 MB (PAYLOAD_TOO_LARGE) */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
             /** @description Invalid design */
             422: {
                 headers: {
@@ -1943,11 +2063,24 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
+            /** @description Unexpected error (INTERNAL); nothing was stored */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     listDesignVersions: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Version number the previous page ended at (its nextBefore) */
+                before?: number;
+                limit?: number;
+            };
             header?: never;
             path: {
                 designId: components["parameters"]["DesignId"];
@@ -1964,7 +2097,18 @@ export interface operations {
                 content: {
                     "application/json": {
                         items: components["schemas"]["DesignVersionSummary"][];
+                        /** @description Pass it as `before` for the next page; null on the last page */
+                        nextBefore: number | null;
                     };
+                };
+            };
+            /** @description limit or before is not an integer in range (BAD_REQUEST, field) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
                 };
             };
             /** @description Missing or invalid bearer token */
@@ -1978,6 +2122,15 @@ export interface operations {
             };
             /** @description Unknown, or not visible to the caller (never 403 for what the caller cannot see) */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unexpected error (INTERNAL); nothing was stored */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2008,6 +2161,15 @@ export interface operations {
                     "application/json": components["schemas"]["DesignVersion"];
                 };
             };
+            /** @description Malformed request: a body or parameter that is not valid (BAD_REQUEST), or JSON nested too deeply to parse */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
             /** @description Missing or invalid bearer token */
             401: {
                 headers: {
@@ -2019,6 +2181,15 @@ export interface operations {
             };
             /** @description Unknown, or not visible to the caller (never 403 for what the caller cannot see) */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unexpected error (INTERNAL); nothing was stored */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2052,6 +2223,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Design"];
+                };
+            };
+            /** @description Malformed request: a body or parameter that is not valid (BAD_REQUEST), or JSON nested too deeply to parse */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
                 };
             };
             /** @description Missing or invalid bearer token */
@@ -2090,6 +2270,15 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
+            /** @description The JSON body is larger than 1 MB (PAYLOAD_TOO_LARGE) */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
             /** @description The version no longer satisfies today's contract */
             422: {
                 headers: {
@@ -2101,6 +2290,15 @@ export interface operations {
             };
             /** @description If-Match required */
             428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unexpected error (INTERNAL); nothing was stored */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2306,7 +2504,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Invalid theme or design (see DesignProblem) */
+            /** @description Invalid theme or design (see DesignProblem); a v2 theme is DESIGN_V2_NOT_AVAILABLE only while the service gate DESIGN_V2_ACCEPTED is off (it is on by default since F4 b) */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -2397,7 +2595,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Invalid theme or design (see DesignProblem); editing a PUBLISHED template into a v2 is DESIGN_NOT_PUBLISHABLE */
+            /** @description Invalid theme or design (see DesignProblem); a v2 theme is DESIGN_V2_NOT_AVAILABLE only while the service gate DESIGN_V2_ACCEPTED is off, before any validation. A PUBLISHED template can be edited into a v2 */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -2485,15 +2683,6 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["Problem"];
-                };
-            };
-            /** @description A design document v2 cannot be published yet (DESIGN_NOT_PUBLISHABLE): it stays a draft until the renderer supports it (F4/F5) */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["DesignProblem"];
                 };
             };
         };

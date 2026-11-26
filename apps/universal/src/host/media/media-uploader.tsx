@@ -1,4 +1,4 @@
-import { useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { Text, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
 import { createUploadQueue, DEFAULT_LIMITS, useMediaAssets, useUploadMedia, type MediaPurpose, type QueueItem, type UploadFailure } from "@rsvp/query-hooks";
@@ -75,7 +75,7 @@ export function MediaUploader({ celebrationId, purpose, pick = defaultPick, onUp
   const [needsRights, setNeedsRights] = useState(false);
   // The queue is created once per celebration; it reads the quota and the rights version through refs so a new value never recreates it.
   const latest = useMemo(() => ({ quota, upload: upload.mutateAsync, onUploaded }), [quota, upload.mutateAsync, onUploaded]);
-  const ref = useMemo(() => ({ current: latest }), []); // eslint-disable-line react-hooks/exhaustive-deps -- a stable box whose content is refreshed below
+  const ref = useRef(latest); // a stable box whose content is refreshed below
   ref.current = latest;
   const queue = useMemo(() => createUploadQueue(async ({ file, filename, contentType, size, purpose: filePurpose, rightsNoticeVersion: version, onProgress }) => {
     const asset = await ref.current.upload({ file, filename, contentType, size, onProgress, purpose: filePurpose, rightsNoticeVersion: version });

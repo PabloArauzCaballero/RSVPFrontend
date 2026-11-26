@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Modal, ScrollView, Text, View, useWindowDimensions } from "react-native";
-import { themeFromTemplate } from "@rsvp/celebration-theme";
+import { themeFromTemplate } from "@rsvp/celebration-theme/model";
 import { spacing } from "@rsvp/design-tokens";
 import { useEditCelebration, useMediaAssets, useTemplate, type Celebration, type TranslatedEventType } from "@rsvp/query-hooks";
 import type { Translate } from "@rsvp/i18n";

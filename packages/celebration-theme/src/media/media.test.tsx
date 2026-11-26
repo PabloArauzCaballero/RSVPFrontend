@@ -30,6 +30,14 @@ describe("embeds: allowlist", () => {
     expect(spotifyEmbed(raw)).toBeNull();
   });
 
+  it("SoundCloud is not a provider: its links and its source never produce an embed", () => {
+    expect(spotifyEmbed("https://soundcloud.com/artista/tema-1")).toBeNull();
+    expect(youtubeFromLink("https://soundcloud.com/artista/tema-1")).toBeNull();
+    expect(embedFromConfig("music", { source: "soundcloud", ref: "https://soundcloud.com/artista/tema-1" })).toBeNull();
+    expect(isAllowedEmbedUrl("https://w.soundcloud.com/player/?url=https%3A%2F%2Fsoundcloud.com%2Fartista%2Ftema-1")).toBe(false);
+    expect(FRAME_HOSTS).not.toContain("w.soundcloud.com");
+  });
+
   it("a hostile id never reaches a URL", () => {
     for (const id of ["../../x", "abc\"onload=\"x", "dQw4w9WgXcQ&autoplay=1", "dQw4w9WgXcQ/../x", "a".repeat(40)]) expect(youtubeEmbed(id)).toBeNull();
     for (const id of ["abc", "1234567890123456789", "12345?x=1"]) expect(vimeoEmbed(id)).toBeNull();

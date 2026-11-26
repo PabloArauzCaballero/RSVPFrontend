@@ -123,6 +123,18 @@ describe("font catalogue mirror and family mapping", () => {
     expect(familyFor("'Fredoka', 'Trebuchet MS', sans-serif", "heading")).toBe("fredoka");
   });
 
+  it("Poppins and IBM Plex left the catalogue: they map to the closest family, like the backend (PL-132)", () => {
+    const ids = FONT_FAMILIES.map((family) => family.id);
+    expect(ids.filter((id) => id === "poppins" || id.startsWith("ibm-plex"))).toEqual([]);
+    expect((spec.components.schemas.FontFamilyId["enum"] as readonly string[]).filter((id) => id === "poppins" || id.startsWith("ibm-plex"))).toEqual([]);
+    expect(familyFor("'Poppins', Arial, sans-serif", "heading")).toBe("dm-sans");
+    expect(familyFor("IBM Plex Sans, Arial, sans-serif", "body")).toBe("source-sans-3");
+    expect(familyFor("\"IBM Plex Serif\", Georgia, serif", "body")).toBe("lora");
+    const converted = convertV1ToV2({ palette: { canvas: "#F8F4FF", surface: "#FFFFFF", text: "#241A36", accent: "#6A3BBF", muted: "#625774" }, typography: { heading: "'Poppins', Arial, sans-serif", body: "'IBM Plex Sans', Arial, sans-serif" }, sectionStyle: "cards" }, "festive", ["story", "rsvp"]);
+    expect([converted.tokens.typography.heading.family, converted.tokens.typography.body.family]).toEqual(["dm-sans", "source-sans-3"]);
+    for (const id of ["dm-sans", "source-sans-3", "lora"]) expect(FONT_FAMILIES.find((family) => family.id === id)?.weights).toEqual(expect.arrayContaining([400, 600, 700]));
+  });
+
   it("picks the nearest available weights and kebab-cases ids", () => {
     expect(pickWeights([400], [500, 600])).toEqual([400]);
     expect(pickWeights([300, 400, 500, 600, 700], [500, 600])).toEqual([500, 600]);

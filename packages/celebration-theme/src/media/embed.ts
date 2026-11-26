@@ -29,7 +29,10 @@ const YOUTUBE_ID = /^[A-Za-z0-9_-]{11}$/;
 const VIMEO_ID = /^\d{5,12}$/;
 const SPOTIFY_REF = /^(track|album|playlist|episode|show|artist)\/[A-Za-z0-9]{10,64}$/;
 const SPOTIFY_PATH = /^\/(?:intl-[a-z]{2}(?:-[a-z]{2})?\/)?(track|album|playlist|episode|show|artist)\/([A-Za-z0-9]{10,64})\/?$/;
-const PLACE = /^[^\u0000-\u001f<>"'`\\{}|^]{1,200}$/u;
+const PLACE = /^[^<>"'`\\{}|^]{1,200}$/u;
+/** Control characters, space and anything past ASCII: none belongs in a link the guest's browser will follow. */
+const hasControl = (text: string): boolean => [...text].some((char) => (char.codePointAt(0) ?? 0) < 0x20);
+const hasUnsafeCharacter = (text: string): boolean => [...text].some((char) => (char.codePointAt(0) ?? 0) <= 0x20 || (char.codePointAt(0) ?? 0) >= 0x7f);
 const YOUTUBE_HOSTS = new Set(["youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com", "youtube-nocookie.com", "www.youtube-nocookie.com", "youtu.be"]);
 const MAX_LINK = 300;
 
@@ -46,7 +49,7 @@ export function isAllowedEmbedUrl(value: string): boolean {
 }
 
 function link(raw: string): URL | null {
-  if (raw.length > MAX_LINK || /[\u0000- \u007f]/.test(raw)) return null;
+  if (raw.length > MAX_LINK || hasUnsafeCharacter(raw)) return null;
   try {
     const url = new URL(raw);
     return url.protocol === "https:" && !url.username && !url.password && !url.port ? url : null;
@@ -89,7 +92,7 @@ export function spotifyEmbed(linkOrRef: string): Embed | null {
 /** The map of a venue: `query` is its name and address, or "lat,lng". Loaded only when the guest taps. */
 export function mapEmbed(query: string): Embed | null {
   const place = query.trim();
-  return PLACE.test(place) ? make("google_maps", `https://www.google.com/maps?q=${encodeURIComponent(place)}&output=embed`) : null;
+  return !hasControl(place) && PLACE.test(place) ? make("google_maps", `https://www.google.com/maps?q=${encodeURIComponent(place)}&output=embed`) : null;
 }
 
 /** Block config of the design document → embed. Any shape it does not know is `null`. */

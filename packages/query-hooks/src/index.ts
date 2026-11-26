@@ -1,4 +1,5 @@
 export * from "./celebration/index.js";
+export * from "./design/index.js";
 export * from "./guest/index.js";
 export * from "./gift/index.js";
 export * from "./provider/index.js";

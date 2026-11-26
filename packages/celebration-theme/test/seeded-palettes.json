@@ -1,0 +1,343 @@
+{
+  "_origin": {
+    "repo": "PabloArauzCaballero/RSVPBackend",
+    "branch": "feat/plantillas-f4-semillas",
+    "commit": "4bc3df48baffc016ff63b4b106e2e123246bbb40",
+    "path": "seeds/templates/data/*.json",
+    "field": "theme.palette",
+    "generated": "2026-11-24",
+    "note": "Copia literal de la paleta de cada semilla. Si una semilla cambia, regenera este archivo y revisa la prueba de contraste."
+  },
+  "templates": [
+    {
+      "key": "clasico-marfil",
+      "file": "001-clasico-marfil.json",
+      "palette": {
+        "canvas": "#FBF7F0",
+        "surface": "#FFFEFA",
+        "text": "#2B2622",
+        "accent": "#7A5230",
+        "muted": "#665C52"
+      }
+    },
+    {
+      "key": "minimalista",
+      "file": "002-minimalista.json",
+      "palette": {
+        "canvas": "#FFFFFF",
+        "surface": "#FAFAF7",
+        "text": "#161616",
+        "accent": "#2F5D50",
+        "muted": "#5A5A56"
+      }
+    },
+    {
+      "key": "editorial",
+      "file": "003-editorial.json",
+      "palette": {
+        "canvas": "#F4EFE9",
+        "surface": "#FFFFFF",
+        "text": "#1F1A17",
+        "accent": "#9C3526",
+        "muted": "#5E534B"
+      }
+    },
+    {
+      "key": "festivo",
+      "file": "004-festivo.json",
+      "palette": {
+        "canvas": "#FFF5FA",
+        "surface": "#FFFFFF",
+        "text": "#2A1520",
+        "accent": "#B3134F",
+        "muted": "#6A4A58"
+      }
+    },
+    {
+      "key": "corporativo",
+      "file": "005-corporativo.json",
+      "palette": {
+        "canvas": "#F5F7FA",
+        "surface": "#FFFFFF",
+        "text": "#14202E",
+        "accent": "#1F5FAD",
+        "muted": "#4B5A6B"
+      }
+    },
+    {
+      "key": "jardin-botanico",
+      "file": "006-jardin-botanico.json",
+      "palette": {
+        "canvas": "#F5F8F2",
+        "surface": "#FFFFFF",
+        "text": "#1F2A22",
+        "accent": "#386247",
+        "muted": "#556158"
+      }
+    },
+    {
+      "key": "rosa-antiguo",
+      "file": "007-rosa-antiguo.json",
+      "palette": {
+        "canvas": "#FBF3F2",
+        "surface": "#FFFFFF",
+        "text": "#2B1D20",
+        "accent": "#9A3F55",
+        "muted": "#6A5256"
+      }
+    },
+    {
+      "key": "cielo-bautizo",
+      "file": "008-cielo-bautizo.json",
+      "palette": {
+        "canvas": "#F2F7FC",
+        "surface": "#FFFFFF",
+        "text": "#1B2733",
+        "accent": "#2F5F94",
+        "muted": "#4F6072"
+      }
+    },
+    {
+      "key": "arena-terracota",
+      "file": "009-arena-terracota.json",
+      "palette": {
+        "canvas": "#FAF6F0",
+        "surface": "#FFFFFF",
+        "text": "#2A211B",
+        "accent": "#A2431F",
+        "muted": "#6A5B50"
+      }
+    },
+    {
+      "key": "editorial-granate",
+      "file": "010-editorial-granate.json",
+      "palette": {
+        "canvas": "#F3F0EB",
+        "surface": "#FFFFFF",
+        "text": "#1E1719",
+        "accent": "#8A2638",
+        "muted": "#5E5154"
+      }
+    },
+    {
+      "key": "editorial-oliva",
+      "file": "011-editorial-oliva.json",
+      "palette": {
+        "canvas": "#F5F4EC",
+        "surface": "#FFFFFF",
+        "text": "#22241A",
+        "accent": "#5B6B1F",
+        "muted": "#585B48"
+      }
+    },
+    {
+      "key": "pinata",
+      "file": "012-pinata.json",
+      "palette": {
+        "canvas": "#FFF9EF",
+        "surface": "#FFFFFF",
+        "text": "#2E2012",
+        "accent": "#C2330F",
+        "muted": "#6B5640"
+      }
+    },
+    {
+      "key": "fiesta-lila",
+      "file": "013-fiesta-lila.json",
+      "palette": {
+        "canvas": "#F8F4FF",
+        "surface": "#FFFFFF",
+        "text": "#22152F",
+        "accent": "#6A3BBF",
+        "muted": "#5E5070"
+      }
+    },
+    {
+      "key": "menta-infantil",
+      "file": "014-menta-infantil.json",
+      "palette": {
+        "canvas": "#F0FAF6",
+        "surface": "#FFFFFF",
+        "text": "#142822",
+        "accent": "#0C7566",
+        "muted": "#4A6158"
+      }
+    },
+    {
+      "key": "corporativo-grafito",
+      "file": "015-corporativo-grafito.json",
+      "palette": {
+        "canvas": "#F4F5F6",
+        "surface": "#FFFFFF",
+        "text": "#17191C",
+        "accent": "#0B6E6A",
+        "muted": "#52585E"
+      }
+    },
+    {
+      "key": "gala-dorada",
+      "file": "016-gala-dorada.json",
+      "palette": {
+        "canvas": "#F5F3EE",
+        "surface": "#FFFFFF",
+        "text": "#14130F",
+        "accent": "#7B2A3C",
+        "muted": "#57524D"
+      }
+    },
+    {
+      "key": "cumpleanos-adulto",
+      "file": "017-cumpleanos-adulto.json",
+      "palette": {
+        "canvas": "#F7F5F0",
+        "surface": "#FFFFFF",
+        "text": "#1C1B19",
+        "accent": "#1D5C73",
+        "muted": "#55534D"
+      }
+    },
+    {
+      "key": "fiesta-patronal",
+      "file": "018-fiesta-patronal.json",
+      "palette": {
+        "canvas": "#FFF7EC",
+        "surface": "#FFFFFF",
+        "text": "#2B1622",
+        "accent": "#8E2D6B",
+        "muted": "#634854"
+      }
+    },
+    {
+      "key": "inauguracion",
+      "file": "019-inauguracion.json",
+      "palette": {
+        "canvas": "#F8F6F3",
+        "surface": "#FFFFFF",
+        "text": "#1E1A17",
+        "accent": "#B03F00",
+        "muted": "#5C5249"
+      }
+    },
+    {
+      "key": "pedida-de-mano",
+      "file": "020-pedida-de-mano.json",
+      "palette": {
+        "canvas": "#F8F5FA",
+        "surface": "#FFFFFF",
+        "text": "#251C2B",
+        "accent": "#5B4B8A",
+        "muted": "#5F5568"
+      }
+    },
+    {
+      "key": "despedida",
+      "file": "021-despedida.json",
+      "palette": {
+        "canvas": "#F2FAFC",
+        "surface": "#FFFFFF",
+        "text": "#10242C",
+        "accent": "#0B6B8A",
+        "muted": "#476069"
+      }
+    },
+    {
+      "key": "bodas-de-oro",
+      "file": "022-bodas-de-oro.json",
+      "palette": {
+        "canvas": "#FBF6EF",
+        "surface": "#FFFEFA",
+        "text": "#2A2019",
+        "accent": "#8A4A1E",
+        "muted": "#65584C"
+      }
+    },
+    {
+      "key": "bodas-de-plata",
+      "file": "023-bodas-de-plata.json",
+      "palette": {
+        "canvas": "#F4F6F8",
+        "surface": "#FFFFFF",
+        "text": "#181D22",
+        "accent": "#3E5C76",
+        "muted": "#4E5963"
+      }
+    },
+    {
+      "key": "reencuentro",
+      "file": "024-reencuentro.json",
+      "palette": {
+        "canvas": "#F6F1EA",
+        "surface": "#FFFFFF",
+        "text": "#211A16",
+        "accent": "#9A3412",
+        "muted": "#5F544B"
+      }
+    },
+    {
+      "key": "fiesta-tematica",
+      "file": "025-fiesta-tematica.json",
+      "palette": {
+        "canvas": "#F5F7FF",
+        "surface": "#FFFFFF",
+        "text": "#161A33",
+        "accent": "#2F4FBF",
+        "muted": "#505673"
+      }
+    },
+    {
+      "key": "fin-de-ano",
+      "file": "026-fin-de-ano.json",
+      "palette": {
+        "canvas": "#F3F5F9",
+        "surface": "#FFFFFF",
+        "text": "#121826",
+        "accent": "#1F3A6B",
+        "muted": "#4C5568"
+      }
+    },
+    {
+      "key": "otros-evento",
+      "file": "027-otros-evento.json",
+      "palette": {
+        "canvas": "#F9F9F7",
+        "surface": "#FFFFFF",
+        "text": "#1B1C1E",
+        "accent": "#4F5D95",
+        "muted": "#55575C"
+      }
+    },
+    {
+      "key": "graduacion",
+      "file": "028-graduacion.json",
+      "palette": {
+        "canvas": "#F5F6FA",
+        "surface": "#FFFFFF",
+        "text": "#141826",
+        "accent": "#1E3A8A",
+        "muted": "#4B5169"
+      }
+    },
+    {
+      "key": "baby-shower",
+      "file": "029-baby-shower.json",
+      "palette": {
+        "canvas": "#FBF6F9",
+        "surface": "#FFFFFF",
+        "text": "#2A1B25",
+        "accent": "#A3406F",
+        "muted": "#68525E"
+      }
+    },
+    {
+      "key": "primera-comunion",
+      "file": "030-primera-comunion.json",
+      "palette": {
+        "canvas": "#F7FAFC",
+        "surface": "#FFFFFF",
+        "text": "#1A2530",
+        "accent": "#3C6E8F",
+        "muted": "#4F6070"
+      }
+    }
+  ]
+}

@@ -15,8 +15,12 @@ const LAYOUT_TOKENS: Readonly<Record<string, readonly [number, number, number, n
   festive: [1.3, 20, 32, 880, "none"],
   corporate: [1.05, 8, 32, 1080, "rule"]
 };
-/** v1 families the curated catalogue retired (PL-A5) and the family that stands in for them. */
-const RETIRED: Readonly<Record<string, string>> = { inter: "geist" };
+/**
+ * v1 families the curated catalogue retired (PL-A5; Pablo retired Poppins and IBM Plex in PL-132) and the family that
+ * stands in for them. Mirror of RETIRED in templates_app/design/converter.py: DM Sans descends from Poppins, Source Sans 3
+ * is the nearest to IBM Plex Sans and Lora takes IBM Plex Serif.
+ */
+const RETIRED: Readonly<Record<string, string>> = { inter: "geist", poppins: "dm-sans", "ibm-plex-sans": "source-sans-3", "ibm-plex-serif": "lora" };
 type Role = "heading" | "body";
 const GENERIC_FALLBACK: Readonly<Record<Role, Readonly<Record<"serif" | "sans", string>>>> = {
   heading: { serif: "lora", sans: "source-sans-3" },

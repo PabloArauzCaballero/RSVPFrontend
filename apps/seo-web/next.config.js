@@ -6,7 +6,8 @@ const path = require('node:path');
  */
 /**
  * F6 · The only origins an iframe of the invitation may load (P17). Keep it equal to FRAME_HOSTS in
- * packages/celebration-theme/src/media/embed.ts: media/csp.test.ts fails when they differ. Privacy-enhanced hosts only
+ * packages/celebration-theme/src/media/embed.ts: the test in media/media.test.tsx (frame-src) fails when they differ. The CSP below is still Report-Only, so today `frame-src` reports and does not block: the allowlist of embed.ts (and the server's) is what holds, and this is the third lock only once the CSP is enforced.
+ * Privacy-enhanced hosts only
  * (youtube-nocookie, Vimeo with dnt). Nothing else may be framed, and `frame-ancestors 'none'` still forbids framing this site.
  */
 const frameHosts = ['www.youtube-nocookie.com', 'player.vimeo.com', 'open.spotify.com', 'www.google.com'];
@@ -36,7 +37,8 @@ const nextConfig = {
   reactStrictMode: true,
   // L18 · Baked at build time (not read from the running server's environment): only the visual test build opens the dev-only
   // /catalogo (lib/dev-surfaces.ts). The deployed image is built without it, and setting it on a running container changes nothing.
-  env: { RSVP_VISUAL_TEST_CATALOG: process.env.RSVP_VISUAL_TEST_CATALOG === '1' ? '1' : '' },
+  // L25 · RSVP_VISUAL_NOW (the visual suite's fixed instant) is baked the same way and only honored together with that flag.
+  env: { RSVP_VISUAL_TEST_CATALOG: process.env.RSVP_VISUAL_TEST_CATALOG === '1' ? '1' : '', RSVP_VISUAL_NOW: process.env.RSVP_VISUAL_TEST_CATALOG === '1' ? process.env.RSVP_VISUAL_NOW ?? '' : '' },
   // Metadata in <head> for every user agent: WhatsApp, Lighthouse and many crawlers are not in Next's bot list,
   // and streamed metadata (in <body>) would leave them without title, description or Open Graph card.
   htmlLimitedBots: /.*/,
@@ -44,7 +46,18 @@ const nextConfig = {
   async headers() {
     const privateHeaders = [{ key: 'Cache-Control', value: 'no-store' }, { key: 'Referrer-Policy', value: 'no-referrer' }, { key: 'X-Robots-Tag', value: 'noindex, nofollow' }];
     // Order matters: for the same key the later rule wins, so credential paths keep `no-referrer`.
-    return [{ source: '/:path*', headers: securityHeaders }, { source: '/c/:slug/rsvp/:path*', headers: privateHeaders }, { source: '/c/:slug/rsvp', headers: privateHeaders }, { source: '/rsvp/:path*', headers: privateHeaders }];
+    // P10 · `/vista-previa` is the one page the app may frame: it leaves the global rule (X-Frame-Options: DENY would block it) and
+    // answers its own: only the app's origin may embed it, and it is never cached or indexed.
+    const appOrigin = (() => { try { return new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:8100').origin; } catch { return "'none'"; } })();
+    const previewHeaders = [
+      // Neither X-Frame-Options nor the report-only CSP (its `frame-ancestors 'none'` would contradict the real one).
+      ...securityHeaders.filter((header) => header.key !== 'X-Frame-Options' && header.key !== 'Content-Security-Policy-Report-Only'),
+      { key: 'Content-Security-Policy', value: `frame-ancestors ${appOrigin}` },
+      { key: 'Cache-Control', value: 'no-store' },
+      { key: 'Referrer-Policy', value: 'no-referrer' },
+      { key: 'X-Robots-Tag', value: 'noindex, nofollow' }
+    ];
+    return [{ source: '/((?!vista-previa$).*)', headers: securityHeaders }, { source: '/vista-previa', headers: previewHeaders }, { source: '/c/:slug/rsvp/:path*', headers: privateHeaders }, { source: '/c/:slug/rsvp', headers: privateHeaders }, { source: '/rsvp/:path*', headers: privateHeaders }];
   },
   webpack: (config) => {
     // Workspace packages use NodeNext-style "./x.js" imports that point to .ts sources.

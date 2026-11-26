@@ -1,9 +1,13 @@
-import { useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
+import { Photo } from "../photo.js";
 import type { Translate } from "../types.js";
 import { isAllowedEmbedUrl, type Embed } from "./embed.js";
+import { AudioPlayerView, EmbedFacadeView, type AudioLabels, type EmbedLabels } from "./interactive.js";
 import { clampScrim, hasImage, imageSources, type PublicMedia } from "./variants.js";
 
-/** Components of F6 for the public invitation and for the editor to import. Web only: the native app shows the web invitation (P10). */
+/** Components of F6 for the public invitation and for the editor to import. Web only: the native app shows the web invitation (P10).
+ *  This file runs on the server: what needs the browser (the facade's tap, the player) lives in `interactive.tsx`, a client module that receives text already
+ *  translated, because a function such as `t` cannot cross from a server component to a client one. */
 
 /** A veil that is laid on a photo when the document does not set one, so text on top stays readable (AA) on any picture. */
 export const AUTO_SCRIM = 0.4;
@@ -28,13 +32,27 @@ export function MediaImage({ media, alt, fit = "cover", sizes = "100vw", priorit
     alt, className: ["celebration-media-image", className].filter(Boolean).join(" "), width: media.width ?? undefined, height: media.height ?? undefined, decoding: "async" as const,
     loading: priority ? ("eager" as const) : ("lazy" as const), fetchPriority: priority ? ("high" as const) : undefined, style: { objectFit: fit } satisfies CSSProperties
   };
-  if (sources.svg) return <img {...common} src={sources.svg} />;
+  if (sources.svg) return <Photo {...common} src={sources.svg} />;
+  const set = [
+    sources.avif ? <source key="avif" type="image/avif" srcSet={sources.avif} sizes={sizes} /> : null,
+    sources.webp ? <source key="webp" type="image/webp" srcSet={sources.webp} sizes={sizes} /> : null
+  ];
+  return <Photo {...common} src={sources.fallback ?? undefined} sources={set} />;
+}
+
+/** A veil (canvas colour over the picture) that keeps text on top at AA. `light` and `dark` are the opacities for each scheme, already raised to what
+ *  the palette needs (`requiredScrim`): the stylesheet picks one with `prefers-color-scheme` or with the forced scheme. */
+export interface MediaBackdropProps { readonly media: PublicMedia; readonly fit?: "cover" | "contain"; readonly light: number; readonly dark: number; readonly priority?: boolean }
+
+/** The picture behind a page or an element, with its veil, as an absolutely positioned decoration: the content that goes over it is a sibling. */
+export function MediaBackdrop({ media, fit = "cover", light, dark, priority = false }: MediaBackdropProps): ReactNode {
+  if (!hasImage(media)) return null;
+  const style = { "--cd-veil-l": `${Math.round(clampScrim(light) * 100)}%`, "--cd-veil-d": `${Math.round(clampScrim(dark) * 100)}%` } as CSSProperties;
   return (
-    <picture>
-      {sources.avif ? <source type="image/avif" srcSet={sources.avif} sizes={sizes} /> : null}
-      {sources.webp ? <source type="image/webp" srcSet={sources.webp} sizes={sizes} /> : null}
-      <img {...common} src={sources.fallback ?? undefined} />
-    </picture>
+    <div className="celebration-media-backdrop" aria-hidden="true" style={style}>
+      <MediaImage media={media} alt="" fit={fit} priority={priority} className="celebration-media-background-image" />
+      <div className="celebration-media-veil" />
+    </div>
   );
 }
 
@@ -65,41 +83,24 @@ export interface EmbedFacadeProps {
   readonly t: Translate;
   /** Own poster picture (the host's, so nothing is requested from the provider before the guest taps). */
   readonly poster?: PublicMedia;
-  /** Called when the iframe is put in the page, for tests and analytics. */
+  /** Called when the guest taps. A function: only for trees that are client-side from the root (tests, the editor). */
   readonly onLoad?: () => void;
 }
+
+const FACADE_SHORT: Readonly<Record<Embed["kind"], string>> = { video: "celebration.media.openVideo", audio: "celebration.media.openMusic", map: "celebration.media.openMap" };
 
 const FACADE_LABEL: Readonly<Record<Embed["kind"], string>> = { video: "celebration.media.playVideo", audio: "celebration.media.playMusic", map: "celebration.media.showMap" };
 
 /** Click-to-load facade. Nothing from the provider is requested until the guest taps: no iframe, no script, no cookie, no IP. Then the iframe
  *  loads sandboxed, lazy, with a strict referrer policy and on a privacy-enhanced host. An embed off the allowlist renders nothing. */
 export function EmbedFacade({ embed, title, t, poster, onLoad }: EmbedFacadeProps): ReactNode {
-  const [loaded, setLoaded] = useState(false);
-  const noteId = useId();
   if (!embed || !isAllowedEmbedUrl(embed.url)) return null;
-  const start = (): void => { setLoaded(true); onLoad?.(); };
-  return (
-    <div className="celebration-embed" data-kind={embed.kind} data-provider={embed.provider} data-loaded={loaded ? "true" : "false"}>
-      {loaded ? (
-        <iframe
-          className="celebration-embed-frame" src={embed.url} title={title} loading="lazy" sandbox={embed.sandbox} allow={embed.allow || undefined}
-          referrerPolicy="strict-origin-when-cross-origin" allowFullScreen={embed.kind === "video"}
-        />
-      ) : (
-        <>
-          {poster ? <MediaImage media={poster} alt="" /> : null}
-          <button type="button" className="celebration-embed-play" onClick={start} aria-describedby={noteId}>
-            <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M8 5v14l11-7z" fill="currentColor" /></svg>
-            <span>{t(FACADE_LABEL[embed.kind], { title })}</span>
-          </button>
-          <p id={noteId} className="celebration-note">{t("celebration.media.privacy", { provider: embed.label })}</p>
-        </>
-      )}
-    </div>
-  );
+  const labels: EmbedLabels = {
+    shortOpen: t(FACADE_SHORT[embed.kind]), shortRetry: t("celebration.media.retryShort"), open: t(FACADE_LABEL[embed.kind], { title }), retry: t("celebration.media.retry", { title }), privacy: t("celebration.media.privacy", { provider: embed.label }),
+    loading: t("celebration.media.loading", { provider: embed.label }), failed: t("celebration.media.loadFailed", { provider: embed.label })
+  };
+  return <EmbedFacadeView embed={embed} title={title} labels={labels} poster={poster ? <MediaImage media={poster} alt="" /> : null} {...(onLoad ? { onLoad } : {})} />;
 }
-
-let playing: HTMLAudioElement | null = null;
 
 export interface AudioPlayerProps {
   readonly media: PublicMedia;
@@ -107,41 +108,11 @@ export interface AudioPlayerProps {
   readonly t: Translate;
 }
 
-const clock = (seconds: number): string => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
-
 /** The host's own MP3. Never starts by itself (no `autoplay`, `preload="none"`: nothing is downloaded until the guest presses play), only one plays at a
  *  time, and it has no animated meter, so there is nothing to switch off for reduced motion. */
 export function AudioPlayer({ media, title, t }: AudioPlayerProps): ReactNode {
-  const audio = useRef<HTMLAudioElement>(null);
-  const [state, setState] = useState<"idle" | "playing" | "paused" | "error">("idle");
-  const [position, setPosition] = useState(0);
-  const total = media.durationMs ? media.durationMs / 1000 : 0;
   const src = media.variants.audio;
-  useEffect(() => () => { if (audio.current && playing === audio.current) playing = null; }, []);
   if (!src) return null;
-  const toggle = (): void => {
-    const element = audio.current;
-    if (!element) return;
-    if (state === "playing") { element.pause(); return; }
-    if (playing && playing !== element) playing.pause();
-    playing = element;
-    element.play().catch(() => setState("error"));
-  };
-  return (
-    <div className="celebration-audio" data-state={state}>
-      <audio
-        ref={audio} src={src} preload="none" onPlay={() => setState("playing")} onPause={() => setState((current) => (current === "error" ? current : "paused"))}
-        onEnded={() => { setState("idle"); setPosition(0); }} onError={() => setState("error")} onTimeUpdate={(event) => setPosition(event.currentTarget.currentTime)}
-      />
-      <button type="button" className="celebration-audio-button" onClick={toggle} aria-pressed={state === "playing"}>
-        <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
-          {state === "playing" ? <path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="currentColor" /> : <path d="M8 5v14l11-7z" fill="currentColor" />}
-        </svg>
-        <span>{state === "playing" ? t("celebration.media.pause", { title }) : t("celebration.media.play", { title })}</span>
-      </button>
-      {total ? <progress className="celebration-audio-progress" max={total} value={Math.min(position, total)} aria-label={t("celebration.media.progress", { title })} /> : null}
-      {total ? <span className="celebration-note">{clock(position)} / {clock(total)}</span> : null}
-      {state === "error" ? <p role="alert" className="celebration-note">{t("celebration.media.audioError")}</p> : null}
-    </div>
-  );
+  const labels: AudioLabels = { shortPlay: t("celebration.media.openMusic"), shortPause: t("celebration.media.pauseShort"), play: t("celebration.media.play", { title }), pause: t("celebration.media.pause", { title }), progress: t("celebration.media.progress", { title }), error: t("celebration.media.audioError") };
+  return <AudioPlayerView src={src} durationMs={media.durationMs ?? null} labels={labels} />;
 }
