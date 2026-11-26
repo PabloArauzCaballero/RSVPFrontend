@@ -1,7 +1,12 @@
-/** Gift List contract 1.2.0 (gift-list.openapi.json). Money is integer minor units, never a float. */
+/** Gift List (gift-list.openapi.json; vendored version in packages/contracts/backend.lock.json, 1.14.0). Money is integer minor units, never a float. */
 export interface Money { readonly amountMinor: number; readonly currency: string }
 export type GiftSource = "CATALOGED" | "EXTERNAL";
-/** UNAVAILABLE (1.14.0, R1): the gift can no longer be given (its catalog listing is not a product). Guests never see it; the host sees it marked. */
+/**
+ * UNAVAILABLE (1.14.0, R1, M-6): the gift can no longer be given (its catalog listing is not a product). Guests never see it;
+ * the host sees it marked. Written by hand, not derived: gift-list 1.14.0 declares UNAVAILABLE in GiftCatalogedItem and the
+ * legacy schemas, but listGiftItems answers DevCompatGiftItem, whose DevCompatGiftItemStatus still omits it although the
+ * service returns it. Derive it from the contract once that enum is fixed in the backend.
+ */
 export type GiftItemStatus = "AVAILABLE" | "PROPOSED" | "PENDING_REVIEW" | "COMMITTED" | "REJECTED" | "UNAVAILABLE";
 export type ReservationStatus = "PENDING_REVIEW" | "COMMITTED" | "REJECTED" | "CANCELLED";
 export type CancellationReason = "RSVP_DECLINED" | "GUEST_CANCELLED" | "HOST_CANCELLED";

@@ -79,13 +79,15 @@ export function providerService(client: ApiClient) {
     requestQuote: (providerId: string, body: QuoteInput, locale: string) => client.request<QuoteReceipt, QuoteInput>(`${base(providerId)}/quotes${qs({ locale })}`, { method: "POST", body }),
     /**
      * GET /listings?q=&type=PRODUCT (host picker for cataloged gifts, A27/A28). This is the only source: when it fails the
-     * error reaches the screen, which offers «Reintentar»; there is no alternative source. A hit that says it is not a
-     * PRODUCT is dropped, because only products can become gifts (D-10 decision 7).
+     * error reaches the screen, which offers «Reintentar»; there is no alternative source. Fails closed: only a hit whose
+     * `type` is PRODUCT is kept (provider-catalog 3.4.0 always sends it); one without a type or with SERVICE is dropped,
+     * because only products can become gifts (D-10 decision 7). At most `limit` (50) hits: the category filter of the
+     * screen narrows these on the client; the server-side filter and the recommendation arrive in R3.
      */
     searchListings: async (q: string, locale = "es-BO", limit = MAX_LISTING_SEARCH): Promise<{ items: readonly ListingHit[] }> => {
       const result = await client.request<{ items: readonly ListingSearchItem[] }>(`/listings${qs({ q, type: PRODUCT, limit, locale })}`, { auth: false });
       const items = result.items
-        .filter((item) => item.type === undefined || item.type === PRODUCT)
+        .filter((item) => item.type === PRODUCT)
         .map(({ priceFrom, ...item }): ListingHit => priceFrom
           ? { ...item, priceFromMinor: priceFrom.amountMinor, currency: priceFrom.currency }
           : item);

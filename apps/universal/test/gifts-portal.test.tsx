@@ -163,7 +163,7 @@ describe("REQ-F23-02 · build the list from the partner catalog", () => {
     let hasList = existingList;
     const price = { amountMinor: 45000, currency: "BOB" };
     const { client, calls } = fakeClient(handlers({
-      "GET /listings": () => ({ items: [{ id: LISTING, providerId: PID, title: "Torta de bodas", priceFrom: price }] }),
+      "GET /listings": () => ({ items: [{ id: LISTING, providerId: PID, title: "Torta de bodas", type: "PRODUCT", priceFrom: price }] }),
       [`POST ${listPath}`]: () => {
         hasList = true;
         return { id: "l", celebrationId: "c-1" };
@@ -198,14 +198,36 @@ describe("REQ-F23-02 · build the list from the partner catalog", () => {
     fireEvent.click(screen.getByTestId("catalog-search"));
     const error = await screen.findByTestId("catalog-error");
     expect(error.textContent).toMatch(/No pudimos cargar los productos del catálogo/);
+    // One message and one retry, not the generic notice repeating both.
+    // (Before, the generic notice added «No encontramos esta celebración…», which is false for a missing /listings route.)
+    expect(error.textContent).toBe("No pudimos cargar los productos del catálogo.Reintentar");
+    expect(within(error).getAllByRole("button")).toHaveLength(1);
     expect(screen.queryByTestId(`hit-${LISTING}`)).toBeNull();
     expect(screen.queryByText(/catálogo público de proveedores/)).toBeNull();
     expect(calls.some((call) => call.path === "/providers")).toBe(false);
     routed = true;
-    fireEvent.click(within(error).getAllByText("Reintentar")[0] as HTMLElement);
+    fireEvent.click(within(error).getByText("Reintentar"));
     expect(await screen.findByTestId(`hit-${LISTING}`)).toBeTruthy();
     expect(screen.queryByTestId("catalog-error")).toBeNull();
     expect(calls.some((call) => call.path === "/providers")).toBe(false);
+  });
+  it("M23 · a failed category read says so once, keeps the search usable and retries with one button", async () => {
+    let fail = true;
+    const { client, calls } = fakeClient(handlers({
+      "GET /providers/categories": () => (fail ? new HttpFailure(503, { title: "down" }) : { items: [{ code: "PASTRY", name: "Repostería", listingType: "PRODUCT" }] }),
+      "GET /listings": () => ({ items: [{ id: LISTING, providerId: PID, title: "Torta", type: "PRODUCT" }] })
+    }));
+    renderApp(<CatalogScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    const error = await screen.findByTestId("catalog-categories-error");
+    expect(error.textContent).toBe("No pudimos cargar las categorías; puedes buscar igual.Reintentar");
+    expect(within(error).getAllByRole("button")).toHaveLength(1);
+    fireEvent.click(screen.getByTestId("catalog-search"));
+    expect(await screen.findByTestId(`hit-${LISTING}`)).toBeTruthy();
+    fail = false;
+    fireEvent.click(within(error).getByText("Reintentar"));
+    expect(await screen.findByTestId("catalog-category")).toBeTruthy();
+    expect(screen.queryByTestId("catalog-categories-error")).toBeNull();
+    expect(calls.filter((call) => call.path === "/providers/categories").length).toBeGreaterThanOrEqual(2);
   });
   it("A27 · no product at all is an honest empty state, not provider cards", async () => {
     const { client, calls } = fakeClient(handlers({ "GET /listings": () => ({ items: [] }), "GET /providers": () => ({ items: [{ listingId: LISTING, providerSlug: "s", name: "Catering" }], total: 1, page: 1, pageSize: 50 }) }));
@@ -252,7 +274,7 @@ describe("REQ-F23-02 · build the list from the partner catalog", () => {
     expect((await screen.findByTestId("catalog-empty")).textContent).toMatch(/esa búsqueda o categoría/);
   });
   it("422 CATALOG_PRODUCT_UNAVAILABLE explains and keeps the search", async () => {
-    const { client, calls } = fakeClient(handlers({ "GET /listings": () => ({ items: [{ id: LISTING, providerId: PID, title: "Torta" }] }), [`POST ${itemsPath}`]: () => new HttpFailure(422, { code: "CATALOG_PRODUCT_UNAVAILABLE" }) }));
+    const { client, calls } = fakeClient(handlers({ "GET /listings": () => ({ items: [{ id: LISTING, providerId: PID, title: "Torta", type: "PRODUCT" }] }), [`POST ${itemsPath}`]: () => new HttpFailure(422, { code: "CATALOG_PRODUCT_UNAVAILABLE" }) }));
     renderApp(<CatalogScreen celebrationId="c-1" onNavigate={navigate} />, client);
     await screen.findByTestId("catalog-query");
     fireEvent.click(screen.getByTestId("catalog-search"));
