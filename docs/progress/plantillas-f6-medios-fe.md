@@ -15,3 +15,13 @@ Rama `feat/plantillas-f6-medios`, base `chore/deploy-contabo-coolify` (FE #115, 
 | Playwright con Chrome real contra el backend real, axe, línea base visual | NO PROBADO | sin stack Docker; las líneas base de macOS no se tocaron |
 
 La CSP sigue en `Report-Only` (decisión previa de A6). SoundCloud no está en el renderizador ni en el contrato (decisión de Pablo, 2026-11-25).
+
+## Capturas Linux: cómo se regeneran
+
+Las capturas usan `MediaBackdrop` con el velo de cada paleta (`requiredScrim`), no un velo fijo. Se rehacen con:
+
+```
+CHROMIUM_PATH=/usr/bin/google-chrome bash docs/progress/evidence/plantillas-f6/harness/build.sh
+```
+
+`build.sh` empaqueta `entry.tsx` con esbuild, crea una foto de relleno (degradado gris, con `sharp`) y corre `shoot.mjs`, que escribe los PNG y cuenta las peticiones antes del toque (0 a la red en los cuatro casos). El peor caso del velo (foto negra y blanca) lo miden las pruebas unitarias, no la captura.
