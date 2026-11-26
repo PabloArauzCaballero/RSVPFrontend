@@ -1,7 +1,7 @@
 {
   "_origin": {
     "repo": "PabloArauzCaballero/RSVPBackend",
-    "commit": "61860ba98281b39d73fcd82a6065cb97fc1dd3e1",
+    "commit": "5ce0d10814af648f439838bcc5f27a4a1cdf2ba2",
     "path": "seeds/templates/data/*.json",
     "field": "theme.palette",
     "generated": "2026-11-26",

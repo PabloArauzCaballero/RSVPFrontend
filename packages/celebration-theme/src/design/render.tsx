@@ -103,15 +103,16 @@ function BackgroundArt({ background }: { readonly background: DesignBackground |
   return drawing ? <InvitationArt drawing={drawing} className="cdesign-bg-art" /> : null;
 }
 
-/** The title block of the cover: who, when and where. The photo, when there is one, is part of the same block (PL-A9: every template decides where it goes). */
-function CoverBlock({ block, context }: { readonly block: DesignBlock; readonly context: Context }): ReactNode {
+/** The title block of the cover: who, when and where. The photo, when there is one, is part of the same block (PL-A9: every template decides where it goes). When the document centres the text
+ * (`typography.align: "center"`) the photo shares its axis (PL-FE143-V2). */
+function CoverBlock({ block, context, centred }: { readonly block: DesignBlock; readonly context: Context; readonly centred: boolean }): ReactNode {
   const { content, view, t, cover } = context;
   const image = cover && (cover.variants.medium || cover.variants.full || cover.variants.webp || cover.variants.svg) ? asMedia(cover) : null;
   // A title made of the hosts' names ("Ana y Luis") already says who: repeating them underneath is noise.
   const hostsInTitle = content.hosts.length > 0 && content.hosts.every((host) => content.title.includes(host.name));
   const days = daysUntil(content.eventDate, context.now);
   return (
-    <div className="cdesign-cover" data-variant={str(config(block)["variant"])} data-has-image={image ? "true" : "false"}>
+    <div className="cdesign-cover" data-variant={str(config(block)["variant"])} data-has-image={image ? "true" : "false"} data-align={centred ? "center" : undefined}>
       {image ? <MediaImage media={image} alt="" priority sizes={COVER_SIZES} className="cdesign-cover-photo" /> : null}
       <div className="cdesign-cover-copy">
         <h1>{content.title}</h1>
@@ -145,7 +146,7 @@ function BlockBody({ block, element, context }: { readonly block: DesignBlock; r
     giftsHref: context.giftsHref, giftsStatus: props.giftsStatus
   };
   switch (block.type) {
-    case "cover": return <CoverBlock block={block} context={context} />;
+    case "cover": return <CoverBlock block={block} context={context} centred={element.typography?.align === "center"} />;
     case "giftsCta": return <GiftsAction {...sectionProps} label={str(settings["label"])} variant={str(settings["style"])} />;
     case "rsvpCta": return <RsvpAction {...sectionProps} label={str(settings["label"])} variant={str(settings["style"])} />;
     case "story": case "schedule": case "venues": case "gallery": case "faq": case "recommendations": {

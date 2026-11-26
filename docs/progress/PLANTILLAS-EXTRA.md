@@ -10,6 +10,15 @@ Ramas FE y BE `feat/plantillas-extra-otros-despedida-pedida` (se retoma el WIP `
 ## Hallazgos propios
 - PL-EXTRA-1: la prueba `plantillas-v2-sobrio.spec.ts` de la rama oficial falla para `otros-evento 360x800` con foto en este entorno (h1 en 839 > dock 723). No se toca (fuera de alcance); se informa.
 
+## Ronda 1 del orquestador (corrección)
+- PL-FE143-V1 (alta): Allura solo en titulos de 32 px o mas; fecha, lugar, cuenta atras, horarios y sedes usan Mulish (`data-heading-face="script"` en `render.tsx` y regla en `styles.css`). Prueba e2e: ningun nodo de texto con Allura bajo 32 px, en las seis a 360/768/1280.
+- PL-FE143-V2: la foto en arco o circulo comparte eje con el texto cuando el documento centra la portada (`data-align="center"`); el aro del arco queda a 13 px de los nombres. Prueba e2e: eje de la foto = eje del h1 (±1,5 px).
+- PL-FE143-V3: los nombres van primero en el telefono en las seis; 360×640 no es parte de la regla PL-130-M2 (360×800 y 390×844): cifras en la ficha; pregunta a Pablo.
+- PL-FE143-V4: Rumbo, Disco y Solitario tienen dibujo heroe en escritorio (`hero=` de `bodas.py:stack`).
+- PL-FE143-V5: Solitario 206° (a 51° de Pedida de mano), Black tie con copa de vino; prueba de matiz >= 30° entre hermanas de un tipo.
+- PL-FE143-1/-3: se registra PL-EXTRA-2 en `bugs/catalogo`; `seeded-palettes.json` y `seed-palettes.ts` ya no citan ramas que se borran tras el squash.
+- Hallazgo nuevo (no corregido aqui): `Canvas` toma la tipografia del elemento movil (`phone.get(id) ?? wide.get(id)`), de modo que `typography` del lienzo de escritorio (tamano 72/80/104, alineacion) no se aplica; las portadas de escritorio usan el tamano fluido del movil. Se registra en `bugs/catalogo`.
+
 ## Líneas base macOS que cambian
 Ninguna. Capturas nuevas solo en `docs/progress/evidence/plantillas-extra/` (360/768/1280, claro y oscuro, con y sin foto) y `contraste.md` / `contrast.jsonl`.
 

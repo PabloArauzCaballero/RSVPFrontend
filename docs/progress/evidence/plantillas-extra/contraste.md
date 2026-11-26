@@ -1,6 +1,6 @@
 # Contraste medido de las seis plantillas extra (decisión 6)
 
-Calculado con la fórmula WCAG 2.x sobre las paletas de `src/design/documents/*.json` (`python3` + `ratio` de `bodas.py`). Mínimos: texto 4.5:1, controles y líneas 3:1. El contraste de texto medido en el DOM de la web real está en `contrast.jsonl`.
+Calculado con la fórmula WCAG 2.x sobre las paletas de `src/design/documents/*.json` (`python3` + `ratio` de `bodas.py`). Mínimos: texto 4.5:1, controles y líneas 3:1. El contraste de texto medido en el DOM de la web real está en `contrast.jsonl` (peor caso por plantilla, 360/768/1280, claro y oscuro, con y sin foto, Chrome real: Rumbo 6.04, Mesa 5.86, Disco 6.40, Black tie 5.78, Solitario 6.32, Rosa 6.03; mínimo 5.78).
 
 
 ## otros-rumbo
@@ -63,15 +63,15 @@ Calculado con la fórmula WCAG 2.x sobre las paletas de `src/design/documents/*.
 
 | Par | Mín. | Claro | Oscuro |
 |---|---|---|---|
-| text sobre canvas | 4.5 | 15.70 | 16.00 |
-| text sobre surface | 4.5 | 17.13 | 14.70 |
-| muted sobre canvas | 4.5 | 6.82 | 9.00 |
-| muted sobre surface | 4.5 | 7.43 | 8.27 |
-| accent sobre canvas | 4.5 | 8.73 | 9.13 |
-| accent sobre surface | 4.5 | 9.52 | 8.39 |
-| onAccent sobre accentFill | 4.5 | 9.52 | 6.68 |
-| line sobre canvas | 3 | 3.32 | 3.96 |
-| accentFill sobre canvas | 3 | 8.73 | 6.92 |
+| text sobre canvas | 4.5 | 15.21 | 16.03 |
+| text sobre surface | 4.5 | 16.51 | 14.66 |
+| muted sobre canvas | 4.5 | 6.74 | 8.95 |
+| muted sobre surface | 4.5 | 7.32 | 8.19 |
+| accent sobre canvas | 4.5 | 6.32 | 9.48 |
+| accent sobre surface | 4.5 | 6.86 | 8.67 |
+| onAccent sobre accentFill | 4.5 | 6.86 | 7.04 |
+| line sobre canvas | 3 | 3.31 | 3.82 |
+| accentFill sobre canvas | 3 | 6.32 | 7.45 |
 
 ## pedida-rosa
 

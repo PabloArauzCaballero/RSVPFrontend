@@ -152,6 +152,36 @@ for (const name of NAMES) {
   }
 }
 
+// PL-FE143-V1 · a script face is for titles only: no text node under 32 px (31.5 px, the fluid heading size rounds to 31.99) wears it (the date, the place, the countdown, the times and the venue names are facts a guest reads at 15 to 21 px).
+// PL-FE143-V2 · the photo and the cover text share one axis when the document centres the text.
+for (const name of NAMES) {
+  for (const width of WIDTHS) {
+    test(`${name} ${width}px: no script text under 32 px and the cover photo shares the axis of the text`, async ({ page }) => {
+      await open(page, `fixture-v2-${name}`, width, "light");
+      const small = await page.evaluate(() => {
+        const found: string[] = [];
+        const walker = document.createTreeWalker(document.querySelector(".celebration") as Node, NodeFilter.SHOW_TEXT);
+        for (let text = walker.nextNode(); text; text = walker.nextNode()) {
+          const el = text.parentElement;
+          if (!el || !(text.textContent ?? "").trim() || el.closest("svg, style, script")) continue;
+          const style = getComputedStyle(el);
+          if (/allura/i.test(style.fontFamily) && parseFloat(style.fontSize) < 31.5) found.push(`${(text.textContent ?? "").trim().slice(0, 24)} ${style.fontSize}`);
+        }
+        return found;
+      });
+      expect(small, "script text under 32 px").toEqual([]);
+      const axes = await page.evaluate(() => {
+        const cover = [...document.querySelectorAll<HTMLElement>(".cdesign-cover")].find((node) => node.getBoundingClientRect().width > 0) as HTMLElement;
+        const photo = cover.querySelector(".cdesign-cover-photo")?.getBoundingClientRect();
+        const copy = cover.querySelector(".cdesign-cover-copy h1")?.getBoundingClientRect();
+        return { centred: cover.dataset["align"] === "center", photo: photo ? photo.x + photo.width / 2 : null, copy: copy ? copy.x + copy.width / 2 : null, photoWidth: photo?.width ?? 0, coverWidth: cover.getBoundingClientRect().width };
+      });
+      // A photo as wide as the whole cover (Black tie, Rumbo) has no axis to lose; a narrower one (arch, circle) must sit on the text's axis when the text is centred.
+      if (axes.centred && axes.photo !== null && axes.copy !== null && axes.photoWidth < axes.coverWidth - 1) expect(Math.abs(axes.photo - axes.copy), "photo axis vs text axis").toBeLessThanOrEqual(1.5);
+    });
+  }
+}
+
 test("the entrance of every cover plays once and, with reduced motion, nothing is hidden", async ({ page }) => {
   for (const name of NAMES) {
     await page.setViewportSize({ width: 390, height: 900 });

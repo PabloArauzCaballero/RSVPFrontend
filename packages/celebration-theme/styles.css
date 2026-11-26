@@ -222,6 +222,11 @@ body:has(.cdesign-dock) { padding-bottom: 5.5rem; }
   .cdesign-cover[data-variant="classic"] { justify-items: start; text-align: start; }
   .cdesign-cover[data-variant="classic"] .cdesign-cover-copy { justify-items: start; }
 }
+/* The document centres the cover text: the photo (inside its <picture>) and the copy share that axis, also from 34 rem up (PL-FE143-V2). */
+.celebration-design .cdesign-cover[data-align="center"] { justify-items: center; text-align: center; }
+.celebration-design .cdesign-cover[data-align="center"] .cdesign-cover-copy { justify-items: center; }
+.celebration-design .cdesign-cover[data-align="center"][data-variant="classic"] { row-gap: 1.25rem; } /* the arch's ring is 7 px outside the photo: the names do not touch it */
+.celebration-design .cdesign-cover[data-align="center"] picture { display: flex; justify-content: center; width: 100%; }
 .celebration-design .cdesign-intro { width: min(100%, var(--celebration-max-width)); margin: 0 auto .5rem; padding-inline: var(--celebration-space); box-sizing: border-box; }
 .celebration-design .cdesign-intro p { max-width: 40rem; }
 .celebration-design .cdesign-page[data-section="gifts"] .celebration-cta, .celebration-design .cdesign-page[data-section="rsvp"] .celebration-cta { width: 100%; max-width: 22rem; }
