@@ -928,6 +928,11 @@ export interface components {
             publishedAt?: string;
         });
         GiftCatalogedItem: {
+            /**
+             * @description Since 1.14.0 (M-6, R1). Present only when the gift's Provider Catalog listing is no longer a PRODUCT, so it can no longer be reserved; absent means available (the response of an unmarked gift is unchanged). Separate from status, which never says UNAVAILABLE. Only the owner's private lists carry it: the public guest page never has an UNAVAILABLE gift.
+             * @enum {string}
+             */
+            availability?: "UNAVAILABLE";
             catalog: components["schemas"]["GiftCatalogSnapshot"];
             external: null;
             /** Format: uuid */
@@ -939,7 +944,7 @@ export interface components {
             /** @constant */
             source: "CATALOGED";
             /** @enum {string} */
-            status: "AVAILABLE" | "PENDING_REVIEW" | "COMMITTED" | "REJECTED" | "UNAVAILABLE";
+            status: "AVAILABLE" | "PENDING_REVIEW" | "COMMITTED" | "REJECTED";
             title: string;
             version: number;
         } & unknown;
@@ -1074,6 +1079,11 @@ export interface components {
             suggestions: components["schemas"]["GiftCatalogSuggestion"][];
         };
         GiftLegacyCatalogedItem: {
+            /**
+             * @description Since 1.14.0 (M-6, R1). Present only when the gift's Provider Catalog listing is no longer a PRODUCT, so it can no longer be reserved; absent means available (the response of an unmarked gift is unchanged). Separate from status, which never says UNAVAILABLE. Only the owner's private lists carry it: the public guest page never has an UNAVAILABLE gift.
+             * @enum {string}
+             */
+            availability?: "UNAVAILABLE";
             catalog: null;
             external: null;
             /** Format: uuid */
@@ -1086,7 +1096,7 @@ export interface components {
             /** @constant */
             source: "CATALOGED";
             /** @enum {string} */
-            status: "AVAILABLE" | "PENDING_REVIEW" | "COMMITTED" | "REJECTED" | "UNAVAILABLE";
+            status: "AVAILABLE" | "PENDING_REVIEW" | "COMMITTED" | "REJECTED";
             title: string;
             version: number;
         };
@@ -1278,6 +1288,14 @@ export interface components {
         PagedGiftItemPage: components["schemas"]["CanonicalCompatGiftItemPage"] & {
             /** @description Since 1.13.0 (R8a): the host or the organizer closed the list by hand (putGiftListClosure). Informative; it does not block reservations in 1.13.0. */
             closed: boolean;
+            /** @description Each item of the page also carries availability (since 1.14.0). */
+            items: {
+                /**
+                 * @description Since 1.14.0 (M-6, R1; decisión de Pablo 2026-11-26). UNAVAILABLE: the gift's Provider Catalog listing is no longer a PRODUCT, so it cannot be reserved. It is a field of its own: the frozen status (DevCompatGiftItemStatus) never answers UNAVAILABLE and keeps the value the gift had. Only the host (MANAGE) receives an UNAVAILABLE gift; guest lists, the public summary and READ-only guests leave it out.
+                 * @enum {string}
+                 */
+                availability: "AVAILABLE" | "UNAVAILABLE";
+            }[];
             /** @description Pass it as cursor to get the next page; null on the last page. */
             nextCursor: string | null;
         };
@@ -1322,6 +1340,11 @@ export interface components {
             listId: string;
         };
         PrivateLegacyCatalogGiftItem: {
+            /**
+             * @description Since 1.14.0 (M-6, R1). Present only when the gift's Provider Catalog listing is no longer a PRODUCT, so it can no longer be reserved; absent means available (the response of an unmarked gift is unchanged). Separate from status, which never says UNAVAILABLE. Only the owner's private lists carry it: the public guest page never has an UNAVAILABLE gift.
+             * @enum {string}
+             */
+            availability?: "UNAVAILABLE";
             catalog: {
                 /** Format: uuid */
                 productListingId: string;
@@ -1340,7 +1363,7 @@ export interface components {
             /** @constant */
             source: "CATALOGED";
             /** @enum {string} */
-            status: "AVAILABLE" | "PROPOSED" | "PENDING_REVIEW" | "COMMITTED" | "REJECTED" | "UNAVAILABLE";
+            status: "AVAILABLE" | "PROPOSED" | "PENDING_REVIEW" | "COMMITTED" | "REJECTED";
             title: string;
             version: number;
         };

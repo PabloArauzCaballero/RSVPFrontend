@@ -3109,7 +3109,7 @@ export interface components {
             names: {
                 [key: string]: string;
             };
-            /** @description null in all 25 ideas for now (decision 10). */
+            /** @description null in every idea for now (decision 10). */
             priceHintMinor: number | null;
         };
         /** @description A whole directory page in one request: 1 to 50 distinct listing ids (duplicates collapse). Ids that are unknown, unpublished or of a non-VERIFIED provider are skipped, not rejected. */
@@ -3277,15 +3277,18 @@ export interface components {
             /** @description Set by ADMIN only; shown as «Patrocinado». Off today (decision 18). */
             featured?: boolean;
             fulfillment?: components["schemas"]["FulfillmentView"];
+            /** @description Why this listing is hidden; null when it is not. Since 3.4.0 (R1, M-2 bis; decisión de Pablo 2026-11-26) the platform sets CATEGORY_TYPE_MISMATCH (not an enum: since 3.5.0 an administrator's free text, with completeness HIDDEN_BY_ADMIN, travels here too). CATEGORY_TYPE_MISMATCH: the listing's type does not match its category's type (a SERVICE in a PRODUCT category or the other way around), so it is not published and not listed publicly; the provider must create it again in a category of its type. Always present in the provider's own listing responses. */
+            hiddenReason?: string | null;
             /** Format: uuid */
             id: string;
             /** @description For a PRODUCT, the card rendition of its cover photo (R2); an external URL stored before R2 is kept as a fallback. */
             imageUrl?: string;
             /**
-             * @description Only on a product of the own gift catalog (SNAPSHOT_V1): it has no product sheet in R2 (PATCH, photos and delivery answer 409 LISTING_NOT_EDITABLE / PHOTOS_PRODUCT_ONLY) and is not offered as a gift. The portal shows «Completa tu ficha para aparecer como regalo»; the sheet is enabled for these products in a later stage (see DECISIONS).
+             * @description Only on a product of the own gift catalog (SNAPSHOT_V1); when present, completeness is INCOMPLETE and missing is always empty (there is no sheet to complete, so no step to open). It has no product sheet in R2 (PATCH, photos and delivery answer 409 LISTING_NOT_EDITABLE / PHOTOS_PRODUCT_ONLY) and is not offered as a gift. The portal shows «Completa tu ficha para aparecer como regalo»; the sheet is enabled for these products in a later stage (see DECISIONS).
              * @enum {string}
              */
             incompleteReason?: "OWN_CATALOG_NO_SHEET";
+            /** @description What the sheet still lacks. Always empty when incompleteReason is present. */
             missing?: components["schemas"]["MissingCode"][];
             priceFromMinor?: number;
             /** Format: uuid */
