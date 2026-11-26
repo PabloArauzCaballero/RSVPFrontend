@@ -14,7 +14,7 @@ test("contrast warns live in ONE list and suggests a fix; publishing creates a v
   await page.setViewportSize({ width: 1280, height: 1000 });
   await page.goto("/");
   await expect(page.getByText("Todos los textos se leen bien")).toBeVisible();
-  await page.getByLabel("Color de acento (claro)").fill("#cccccc");
+  await page.getByRole("group", { name: "Modo claro" }).getByLabel("Acento").fill("#cccccc");
   await expect(page.getByTestId("design-warnings")).toHaveCount(1);
   await expect(page.getByTestId("design-warnings")).toContainText("En el tema claro, acento sobre fondo tiene contraste");
   await expect(page.getByText(/puedes publicar igual/)).toHaveCount(1);
@@ -27,7 +27,7 @@ test("contrast warns live in ONE list and suggests a fix; publishing creates a v
   await page.getByRole("button", { name: "Publicar" }).click();
   await expect(page.getByText("Publicada la versión 2.")).toBeVisible();
   await page.screenshot({ path: join(EVIDENCE, "e-publicar-versiones-1280.png"), fullPage: true });
-  const accent = page.getByLabel("Color de acento (claro)");
+  const accent = page.getByRole("group", { name: "Modo claro" }).getByLabel("Acento");
   const published = await accent.inputValue();
   await accent.fill("#1f6f5c");
   await page.getByRole("button", { name: "Restaurar versión 1" }).click();

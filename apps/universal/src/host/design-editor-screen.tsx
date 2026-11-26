@@ -2,7 +2,8 @@ import { useCallback, useMemo, type ReactNode } from "react";
 import { View } from "react-native";
 import { ApiError } from "@rsvp/api-client";
 import { EditorShell, type EditableDesign } from "@rsvp/design-editor/ui";
-import { designApi, useCelebration, useCelebrationDesign, useCreateDesign, type DesignRecord } from "@rsvp/query-hooks";
+import { design } from "@rsvp/celebration-theme";
+import { designApi, templateApi, useCelebration, useEventTypes, useCelebrationDesign, useCreateDesign, type DesignRecord } from "@rsvp/query-hooks";
 import { spacing } from "@rsvp/design-tokens";
 import { loginHref } from "../auth/routes";
 import { LoadingContent } from "../platform/loading-content";
@@ -23,6 +24,7 @@ export function DesignEditorScreen({ celebrationId }: ScreenProps): ReactNode {
   const locale = useLocale();
   const client = useApiClient();
   const celebration = useCelebration(client, celebrationId ?? "");
+  const eventTypes = useEventTypes(client, locale);
   const found = useCelebrationDesign(client, celebrationId);
   const create = useCreateDesign(client);
   const gateway = useMemo(() => ({
@@ -42,6 +44,18 @@ export function DesignEditorScreen({ celebrationId }: ScreenProps): ReactNode {
       restore: async (id: string, version: number, draftVersion: number) => { const done = await api.restore(id, version, draftVersion); return { draftVersion: done.draftVersion, document: done.document, ...(done.warnings ? { warnings: done.warnings } : {}) }; }
     };
   }, [client]);
+  const tags = eventTypes.data?.items.find((type) => type.code === celebration.data?.eventTypeCode)?.compatibleTemplateTags ?? [];
+  const tagKey = tags.join(",");
+  const templates = useMemo(() => ({
+    list: async () => {
+      if (tags.length === 0) return [];
+      const { items } = await templateApi(client).compatible(tags);
+      return items.flatMap((template) => {
+        try { return [{ id: template.id, name: template.name, document: design.convertV1ToV2(template.theme, template.layout, template.sectionOrder) }]; }
+        catch { return []; }
+      });
+    }
+  }), [client, tagKey]);
   // The only way the editor receives a newer draft than the one it opened: the host asked for it after a conflict.
   const { refetch } = found;
   const reload = useCallback(async (): Promise<EditableDesign | null> => {
@@ -71,5 +85,5 @@ export function DesignEditorScreen({ celebrationId }: ScreenProps): ReactNode {
   }
   const record = found.data;
   // Keyed by the design alone: a refetch of the record (another tab saved) must not remount the editor and drop the open history.
-  return <EditorShell key={record.id} design={toEditable(record)} gateway={gateway} versions={versions} timeZone={celebration.data.timeZone} locale={locale} t={t} onReload={reload} signInHref={signInHref} />;
+  return <EditorShell key={record.id} design={toEditable(record)} gateway={gateway} versions={versions} templates={templates} timeZone={celebration.data.timeZone} locale={locale} t={t} onReload={reload} signInHref={signInHref} />;
 }

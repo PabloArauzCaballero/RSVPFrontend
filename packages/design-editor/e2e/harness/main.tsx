@@ -12,6 +12,8 @@ declare global { interface Window { __saves: { id: string; version: number; acce
  * ?warn=1                        the server answers with a P19 contrast warning
  * ?slow=1                        a save takes 4 s (to see the saving state)
  * ?empty=1                       the first section page has no elements; ?nopages=1 the design has no pages
+ * ?templatesFail=1                 the first call of the template list fails (error and retry)
+ * ?nodrawings=1                    no drawing catalogue (the "not available yet" state)
  * ?versions=loading|error|empty|many  the history never answers / fails the first time / is empty / has 100 versions in two pages
  * ?publish=409|422|offline ?restore=slow|409|422|401  publishing or restoring fails that way (restore=slow takes 3 s)
  * ?theme=dark|light ?lang=en-US
@@ -86,6 +88,22 @@ const versions: VersionsGateway = {
   }
 };
 
+const minimal = design.convertV1ToV2(
+  { palette: { canvas: "#F7F6F3", surface: "#FFFFFF", text: "#111111", accent: "#2F5D50", muted: "#5C5B57" }, typography: { heading: "'Fraunces', Georgia, serif", body: "'Work Sans', Arial, sans-serif" }, sectionStyle: "plain" },
+  "minimal", ["story", "schedule", "venues", "gallery", "dressCode", "gifts", "faq", "recommendations", "rsvp"]
+);
+let templateCalls = 0;
+const templates = {
+  async list() {
+    templateCalls += 1;
+    if (params.get("templatesFail") && templateCalls === 1) throw new TypeError("offline");
+    return [{ id: "t-min", name: "Minimalista", document: minimal }];
+  }
+};
+/** Ids of the invitation drawing library (F3, branch feat/plantillas-f3-dibujitos); this harness has no F3 package, so it lists a few of them by id. */
+const drawings = { async list() { return [{ id: "anillos", name: "Dos anillos entrelazados con una piedra" }, { id: "ramo", name: "Ramo de flores atado con un lazo" }, { id: "pastel-bodas", name: "Pastel de bodas de tres pisos" }]; } };
+
+
 const newer: EditableDesign = {
   id: "design-1", name: "Ana y Luis", draftVersion: 9,
   document: { ...document0, tokens: { ...document0.tokens, palettes: { ...document0.tokens.palettes, light: { ...document0.tokens.palettes.light, accent: "#1F6F5C" } } } }
@@ -93,5 +111,5 @@ const newer: EditableDesign = {
 const onReload = async (): Promise<EditableDesign> => { failing = false; return newer; };
 
 createRoot(window.document.getElementById("root") as HTMLElement).render(
-  <EditorShell design={{ id: "design-1", name: "Ana y Luis", draftVersion: 4, document: document0 }} gateway={gateway} t={createTranslator(locale)} onReload={onReload} signInHref="/login?returnTo=%2Fdiseno%3Fc%3Dc-1" versions={versions} timeZone="America/La_Paz" debounceMs={300} />
+  <EditorShell design={{ id: "design-1", name: "Ana y Luis", draftVersion: 4, document: document0 }} gateway={gateway} t={createTranslator(locale)} onReload={onReload} signInHref="/login?returnTo=%2Fdiseno%3Fc%3Dc-1" versions={versions} templates={templates} {...(params.get("nodrawings") ? {} : { drawings })} timeZone="America/La_Paz" debounceMs={300} />
 );

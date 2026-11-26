@@ -31,9 +31,38 @@ export const designEditorEnUS: DeepStrings<typeof designEditorEsBO> = {
   },
   basic: {
     title: "Colors",
-    accentLight: "Accent color (light)",
-    accentDark: "Accent color (dark)",
-    hint: "Changes save on their own and you can undo them."
+    schemeLight: "Light mode",
+    schemeDark: "Dark mode",
+    role: { accent: "Accent", canvas: "Background", text: "Text colour", surface: "Card", muted: "Secondary text" },
+    hint: "Changes save on their own and you can undo them.",
+    giftsNote: "The gifts button is always in the invitation: you can move it and restyle it, but not remove it. The padding you choose above does not change it: the button keeps its own so it always reads well and is easy to tap.",
+    template: { loading: "Loading templates…", failed: "We could not load the templates. Check your connection and try again.", none: "There are no other templates for this kind of event.", title: "Template", label: "Switch template", placeholder: "Choose a template", hint: "This changes the layout, colors and fonts. Your own code is kept and you can undo it." },
+    fonts: { title: "Fonts", heading: "Headings", body: "Body text" },
+    spacing: { title: "Spacing", section: "Space between sections", compact: "Compact", normal: "Normal", airy: "Airy" },
+    padding: { title: "Padding of the elements", none: "None", small: "Small", medium: "Medium", large: "Large" },
+    sections: { title: "Sections", locked: "Always visible", up: "Move {{section}} up", down: "Move {{section}} down" },
+    retry: "Try again",
+    texts: {
+      title: "Texts", none: "This invitation has no texts of its own to change here.",
+      celebrationData: "The story, the schedule, the questions and the venues are edited with your celebration's details.",
+      empty: "This text cannot be empty. Type something, or move to another field to go back to the previous text.",
+      restored: "We went back to the previous text because it cannot be empty.",
+      automatic: "If you leave it empty, we use the automatic text.",
+      atLimit: "You reached the limit of {{max}} characters.", count: "{{current}} of {{max}} characters",
+      heading: { text: "Heading" }, text: { text: "Paragraph" }, quote: { text: "Quote", author: "Quote author" }, button: { label: "Button text" },
+      giftsCta: { label: "Gifts button text" }, rsvpCta: { label: "Confirm button text" }
+    },
+    photos: {
+      title: "Photos", loading: "Loading your photos…", failed: "We could not load your photos. Check your connection and try again.", empty: "You have not uploaded any photos yet.",
+      cover: "Cover photo", placeholder: "Choose a photo", remove: "Remove the cover photo",
+      unavailable: "Choosing and removing the cover photo will be here once photo upload is ready. It is not available yet.",
+      gallery: "The gallery photos are your celebration's own and change with its details."
+    },
+    drawings: {
+      title: "Drawings", loading: "Loading the drawings…", failed: "We could not load the drawings. Check your connection and try again.", cover: "Cover drawing", none: "No drawing",
+      hint: "Drawings use your template's accent colour.",
+      unavailable: "Choosing drawings will be here once the drawing library is published. It is not available yet."
+    }
   },
   contrast: {
     title: "Contrast",

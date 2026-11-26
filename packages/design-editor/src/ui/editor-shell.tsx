@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type KeyboardEvent, type ReactNode, type RefObject } from "react";
-import type { design } from "@rsvp/celebration-theme";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode, type RefObject } from "react";
+import { design } from "@rsvp/celebration-theme";
 import { createAutosaver, type Autosaver, type DraftGateway, type SaveStatus } from "../save/autosave.js";
-import { setPaletteColour } from "../model/ops.js";
 import { canRedo, canUndo, documentOf, editorReducer, initialEditorState, type CanvasName, type EditorMode } from "../model/state.js";
+import { BasicPanel, type DrawingSource, type MediaSource, type TemplateSource } from "./basic-panel.js";
 import { ContrastPanel } from "./contrast-panel.js";
 import { PublishPanel, type VersionsApi, type VersionsList } from "./publish-panel.js";
 import type { PublishOutcome, VersionsGateway } from "../save/versions.js";
@@ -36,6 +36,12 @@ export interface EditorShellProps {
   readonly debounceMs?: number;
   /** Publishing, history and restore. Without it the editor only keeps the draft. */
   readonly versions?: VersionsGateway;
+  /** Templates the host can switch to (Basic level). */
+  readonly templates?: TemplateSource;
+  /** Drawings of the invitation library the host can put on the cover (Basic level). Without it the editor says they are not available yet. */
+  readonly drawings?: DrawingSource;
+  /** The host's photos in the media store (Basic level). Without it the editor says photos are not available yet; it never simulates an upload. */
+  readonly media?: MediaSource;
   /** IANA zone of the celebration: the times of the history show in it (never the device's). */
   readonly timeZone?: string;
   readonly locale?: string;
@@ -78,6 +84,27 @@ function useNarrow(): boolean {
     return () => query.removeEventListener("change", update);
   }, [query]);
   return narrow;
+}
+
+/** The colour scheme the editor is shown in (the page's `data-theme`, else the system's), so the canvas can paint that palette. */
+function useScheme(): design.ColourScheme {
+  const read = (): design.ColourScheme => {
+    if (typeof window === "undefined") return "light";
+    const forced = window.document.documentElement.getAttribute("data-theme");
+    if (forced === "dark" || forced === "light") return forced;
+    return typeof window.matchMedia === "function" && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  };
+  const [scheme, setScheme] = useState<design.ColourScheme>(read);
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const update = (): void => setScheme(read());
+    const query = typeof window.matchMedia === "function" ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+    query?.addEventListener("change", update);
+    const observer = typeof MutationObserver === "undefined" ? null : new MutationObserver(update);
+    observer?.observe(window.document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => { query?.removeEventListener("change", update); observer?.disconnect(); };
+  }, []);
+  return scheme;
 }
 
 const STOPPED: ReadonlySet<SaveStatus["kind"]> = new Set(["conflict", "rejected"]);
@@ -125,11 +152,21 @@ function Segmented<T extends string>({ label, value, options, onChange }: {
 
 const pageTitle = (page: design.DesignPage, t: Translate): string => (page.kind === "cover" ? t(key("outline.cover")) : labelOf(t, "section", page.section ?? page.id));
 
-/** A wireframe of the page in the active canvas. The next editor levels replace it with the real renderer and handles. */
-function Wireframe({ document, canvas, t }: { readonly document: design.DesignDocumentV2; readonly canvas: CanvasName; readonly t: Translate }) {
+/** The chosen palette and fonts as CSS variables of the canvas, so a colour or font change shows on it (and the gifts button's contrast is visible). */
+function frameStyle(document: design.DesignDocumentV2, scheme: design.ColourScheme): CSSProperties {
+  const palette = document.tokens.palettes[scheme];
+  const stack = (role: "heading" | "body"): string => { const family = design.familyById(document.tokens.typography[role].family); return family ? `'${family.family}', ${family.fallback}` : "inherit"; };
+  return {
+    "--wf-canvas": palette.canvas, "--wf-surface": palette.surface, "--wf-text": palette.text, "--wf-muted": palette.muted, "--wf-line": palette.line,
+    "--wf-accent": palette.accent, "--wf-fill": palette.accentFill, "--wf-on": palette.onAccent, "--wf-heading": stack("heading"), "--wf-body": stack("body")
+  } as CSSProperties;
+}
+
+/** A wireframe of the page in the active canvas, painted with the document's own palette and fonts. The next editor levels replace it with the real renderer and handles. */
+function Wireframe({ document, canvas, scheme, t }: { readonly document: design.DesignDocumentV2; readonly canvas: CanvasName; readonly scheme: design.ColourScheme; readonly t: Translate }) {
   const blocks = new Map(document.blocks.map((block) => [block.id, block]));
   return (
-    <div className="de-frame" data-canvas={canvas} data-testid="design-frame">
+    <div className="de-frame" data-canvas={canvas} data-scheme={scheme} data-testid="design-frame" style={frameStyle(document, scheme)}>
       {document.pages.length === 0 ? <p className="de-empty">{t(key("stage.empty"))}</p> : null}
       {document.pages.map((page) => {
         const grid = page.canvases[canvas] ?? page.canvases.mobile;
@@ -146,7 +183,7 @@ function Wireframe({ document, canvas, t }: { readonly document: design.DesignDo
                     : { minHeight: element.h * grid.rowHeight };
                   const required = block?.required === true;
                   return (
-                    <div key={element.id} className="de-el" style={style} data-visible={element.visible} data-required={required} data-block={block?.type}>
+                    <div key={element.id} className="de-el" style={style} data-visible={element.visible} data-required={required} data-block={block?.type} data-style={required ? String(block?.config["style"] ?? "solid") : undefined}>
                       <span className="de-el-name">{labelOf(t, "block", block?.type)}</span>
                       {required ? <span className="de-tag"><LockIcon size={14} />{t(key("stage.required"))}</span> : null}
                       {!element.visible ? <span className="de-tag">{t(key("stage.hidden"))}</span> : null}
@@ -248,7 +285,7 @@ function Notice(props: NoticeProps): ReactNode {
   );
 }
 
-export function EditorShell({ design: source, gateway, t, onReload, signInHref, now = Date.now, debounceMs, versions: versionsGateway, timeZone = "America/La_Paz", locale = "es-BO", children }: EditorShellProps) {
+export function EditorShell({ design: source, gateway, t, onReload, signInHref, now = Date.now, debounceMs, versions: versionsGateway, templates, drawings, media, timeZone = "America/La_Paz", locale = "es-BO", children }: EditorShellProps) {
   const [state, dispatch] = useReducer(editorReducer, source.document, initialEditorState);
   const [status, setStatus] = useState<SaveStatus>({ kind: "saved" });
   /** The server's answer about the draft it holds (P19), or null while it has not said anything. */
@@ -260,6 +297,7 @@ export function EditorShell({ design: source, gateway, t, onReload, signInHref, 
   const loadRef = useRef<HTMLButtonElement | null>(null);
   const confirmRef = useRef<HTMLButtonElement | null>(null);
   const narrow = useNarrow();
+  const scheme = useScheme();
   const document = documentOf(state);
 
   // The saver belongs to this design for as long as the editor is open: its version is the one the server last answered with,
@@ -525,17 +563,11 @@ export function EditorShell({ design: source, gateway, t, onReload, signInHref, 
             ]} />
             <p className="de-caption">{t(key(`stage.caption.${state.canvas}`))}</p>
           </div>
-          <Wireframe document={document} canvas={state.canvas} t={t} />
+          <Wireframe document={document} canvas={state.canvas} scheme={scheme} t={t} />
         </main>
         <aside className="de-panel" aria-label={t(key("basic.title"))}>
           <div className="de-sticky">
-          <h2><SlidersIcon />{t(key("basic.title"))}</h2>
-          {(["light", "dark"] as const).map((scheme) => (
-            <label key={scheme} className="de-field">
-              <span>{t(key(scheme === "light" ? "basic.accentLight" : "basic.accentDark"))}</span>
-              <input type="color" value={document.tokens.palettes[scheme].accent.toLowerCase()} onChange={(event) => dispatch({ type: "edit", op: setPaletteColour(scheme, "accent", event.target.value), key: `palette:${scheme}:accent`, at: now() })} />
-            </label>
-          ))}
+          <BasicPanel {...(templates ? { templates } : {})} {...(drawings ? { drawings } : {})} {...(media ? { media } : {})} />
           <p className="de-hint">{t(key("basic.hint"))}</p>
           <ContrastPanel server={serverWarnings} fresh={status.kind === "saved"} />
           {versionsGateway ? <PublishPanel versions={versionsApi} timeZone={timeZone} locale={locale} /> : null}

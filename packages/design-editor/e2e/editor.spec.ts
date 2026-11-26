@@ -9,7 +9,7 @@ mkdirSync(EVIDENCE, { recursive: true });
 const shot = (name: string) => join(EVIDENCE, `a-${name}.png`);
 const WIDTHS = [360, 768, 1280] as const;
 const THEMES = ["claro", "oscuro"] as const;
-const accent = (page: Page) => page.getByLabel(/Color de acento \(claro\)|Accent color \(light\)/);
+const accent = (page: Page) => page.getByRole("group", { name: /Modo claro|Light mode/ }).getByLabel(/Acento|Accent/);
 const serious = async (page: Page) => (await new AxeBuilder({ page }).analyze()).violations;
 
 test.describe("editor shell (PR a, ronda 2)", () => {
@@ -210,7 +210,7 @@ test.describe("editor shell (PR a, ronda 2)", () => {
     await page.screenshot({ path: shot("estado-avisos-contraste-1280") });
     expect(await serious(page)).toEqual([]);
     await page.getByRole("button", { name: /Usar #C9A27A en acento del tema oscuro/i }).click();
-    await expect(page.getByLabel("Color de acento (oscuro)")).toHaveValue("#c9a27a");
+    await expect(page.getByRole("group", { name: "Modo oscuro" }).getByLabel("Acento")).toHaveValue("#c9a27a");
   });
 
   test("el aviso de conflicto no desborda a 360 px y los botones llevan nombre", async ({ page }) => {

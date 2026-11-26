@@ -1,9 +1,9 @@
 import { focusManager } from "@tanstack/react-query";
-import { fireEvent, screen, waitFor, act } from "@testing-library/react";
+import { fireEvent, screen, waitFor, act, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { design } from "@rsvp/celebration-theme";
 import { DesignEditorScreen } from "../src/host/design-editor-screen";
-import { baseHandlers, CELEBRATION, fakeClient, HttpFailure, renderApp } from "./support";
+import { baseHandlers, CELEBRATION, fakeClient, HttpFailure, renderApp, TEMPLATES } from "./support";
 
 const navigate = vi.fn();
 const document = design.convertV1ToV2(
@@ -12,6 +12,9 @@ const document = design.convertV1ToV2(
 );
 const record = { id: "d-1", kind: "CELEBRATION", celebrationId: "c-1", name: "Diseño de la invitación", draftVersion: 4, publishedVersion: null, hasUnpublishedChanges: true, document, createdAt: "2026-11-24T00:00:00Z", updatedAt: "2026-11-24T00:00:00Z" };
 
+// The Basic panel groups the colours by theme: the light accent is the "Acento" of the "Modo claro" group.
+const accentLight = (): HTMLInputElement => within(screen.getByRole("group", { name: "Modo claro" })).getByLabelText("Acento") as HTMLInputElement;
+
 describe("plantillas F5 · pantalla del editor (web)", () => {
   it("abre el diseño de la celebración y guarda el borrador con If-Match y la versión que editó", async () => {
     const handlers = { ...baseHandlers(), "GET /media/celebrations/c-1/design": () => record, "PUT /media/designs/d-1/draft": () => ({ ...record, draftVersion: 5 }), "GET /media/designs/d-1/versions": () => ({ items: [{ version: 1, label: "Inicial", createdBy: "u-host", createdAt: "2026-11-20T15:30:00Z" }] }) };
@@ -19,7 +22,7 @@ describe("plantillas F5 · pantalla del editor (web)", () => {
     renderApp(<DesignEditorScreen celebrationId="c-1" onNavigate={navigate} />, client);
     expect(await screen.findByRole("heading", { level: 1, name: "Diseño de la invitación" })).toBeTruthy();
     vi.useFakeTimers({ shouldAdvanceTime: true });
-    fireEvent.change(screen.getByLabelText("Color de acento (claro)"), { target: { value: "#123456" } });
+    fireEvent.change(within(screen.getByRole("group", { name: "Modo claro" })).getByLabelText("Acento"), { target: { value: "#123456" } });
     await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
     vi.useRealTimers();
     const save = calls.find((call) => call.method === "PUT");
@@ -51,6 +54,15 @@ describe("plantillas F5 · pantalla del editor (web)", () => {
     expect(calls.filter((call) => call.path.endsWith("/publish"))).toHaveLength(1);
   });
 
+  it("ofrece las plantillas compatibles con el tipo de evento y las convierte al documento v2", async () => {
+    const handlers = { ...baseHandlers(), "GET /media/celebrations/c-1/design": () => record, "GET /media/designs/d-1/versions": () => ({ items: [] }), "GET /media/templates": () => ({ items: TEMPLATES }) };
+    const { client, calls } = fakeClient(handlers);
+    renderApp(<DesignEditorScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    const select = await screen.findByLabelText("Cambiar de plantilla");
+    expect([...(select as HTMLSelectElement).options].map((option) => option.text)).toContain(TEMPLATES[0]?.name);
+    expect(calls.some((call) => call.path === "/media/templates")).toBe(true);
+  });
+
   it("pagina el historial con nextBefore: «Ver más versiones» pide la página siguiente y la lista no pierde las ya cargadas", async () => {
     const page = (version: number) => ({ version, label: `V${version}`, createdBy: "u-host", createdAt: "2026-11-20T15:30:00Z" });
     const handlers = {
@@ -79,7 +91,7 @@ describe("plantillas F5 · pantalla del editor (web)", () => {
     renderApp(<DesignEditorScreen celebrationId="c-1" onNavigate={navigate} />, client);
     await screen.findByRole("heading", { level: 1, name: "Diseño de la invitación" });
     vi.useFakeTimers({ shouldAdvanceTime: true });
-    fireEvent.change(screen.getByLabelText("Color de acento (claro)"), { target: { value: "#123456" } });
+    fireEvent.change(accentLight(), { target: { value: "#123456" } });
     await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
     vi.useRealTimers();
     await waitFor(() => expect(screen.getByTestId("save-status").textContent).toContain("Borrador guardado."));
@@ -87,7 +99,7 @@ describe("plantillas F5 · pantalla del editor (web)", () => {
     await act(async () => { focusManager.setFocused(false); focusManager.setFocused(true); });
     expect(calls.filter((call) => call.method === "GET" && call.path === "/media/celebrations/c-1/design")).toHaveLength(reads);
     expect((screen.getByRole("button", { name: "Deshacer" }) as HTMLButtonElement).disabled).toBe(false);
-    expect((screen.getByLabelText("Color de acento (claro)") as HTMLInputElement).value).toBe("#123456");
+    expect(accentLight().value).toBe("#123456");
     expect(saves).toHaveLength(1);
   });
 
@@ -106,14 +118,14 @@ describe("plantillas F5 · pantalla del editor (web)", () => {
     renderApp(<DesignEditorScreen celebrationId="c-1" onNavigate={navigate} />, client);
     await screen.findByRole("heading", { level: 1, name: "Diseño de la invitación" });
     vi.useFakeTimers({ shouldAdvanceTime: true });
-    fireEvent.change(screen.getByLabelText("Color de acento (claro)"), { target: { value: "#123456" } });
+    fireEvent.change(accentLight(), { target: { value: "#123456" } });
     await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
     vi.useRealTimers();
     fireEvent.click(await screen.findByRole("button", { name: "Cargar la versión nueva" }));
     fireEvent.click(screen.getByRole("button", { name: "Sí, descartar y cargar" }));
-    await waitFor(() => expect((screen.getByLabelText("Color de acento (claro)") as HTMLInputElement).value).toBe("#1f6f5c"));
+    await waitFor(() => expect(accentLight().value).toBe("#1f6f5c"));
     vi.useFakeTimers({ shouldAdvanceTime: true });
-    fireEvent.change(screen.getByLabelText("Color de acento (claro)"), { target: { value: "#654321" } });
+    fireEvent.change(accentLight(), { target: { value: "#654321" } });
     await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
     vi.useRealTimers();
     const lastPut = calls.filter((call) => call.method === "PUT").at(-1);
@@ -128,7 +140,7 @@ describe("plantillas F5 · pantalla del editor (web)", () => {
     renderApp(<DesignEditorScreen celebrationId="c-1" onNavigate={go} />, client);
     await screen.findByRole("heading", { level: 1, name: "Diseño de la invitación" });
     vi.useFakeTimers({ shouldAdvanceTime: true });
-    fireEvent.change(screen.getByLabelText("Color de acento (claro)"), { target: { value: "#123456" } });
+    fireEvent.change(accentLight(), { target: { value: "#123456" } });
     await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
     vi.useRealTimers();
     const href = `/login?returnTo=${encodeURIComponent("/diseno?c=c-1")}`;
@@ -140,7 +152,7 @@ describe("plantillas F5 · pantalla del editor (web)", () => {
     fireEvent.click(login);
     expect(open).not.toHaveBeenCalled();
     expect(go).not.toHaveBeenCalled();
-    expect((screen.getByLabelText("Color de acento (claro)") as HTMLInputElement).value.toLowerCase()).toBe("#123456");
+    expect(accentLight().value.toLowerCase()).toBe("#123456");
     open.mockRestore();
   });
 

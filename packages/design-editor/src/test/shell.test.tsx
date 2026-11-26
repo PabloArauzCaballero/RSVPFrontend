@@ -15,7 +15,7 @@ function mount(gateway: DraftGateway = { saveDraft: vi.fn(async (_id: string, ve
   render(<EditorShell design={design} gateway={gateway} t={t} debounceMs={100} {...extra} />);
   return gateway;
 }
-const accentLight = () => screen.getByLabelText("Color de acento (claro)") as HTMLInputElement;
+const accentLight = () => within(screen.getByRole("group", { name: "Modo claro" })).getByLabelText("Acento") as HTMLInputElement;
 
 describe("EditorShell", () => {
   it("renders the toolbar, pages and a wireframe of the active canvas in es-BO", () => {
@@ -71,9 +71,9 @@ describe("EditorShell", () => {
   });
 
   it("typing in a text field keeps the browser's own undo", () => {
-    mount(undefined, { children: <input aria-label="Texto" /> });
+    mount(undefined, { children: <input aria-label="Campo libre" /> });
     fireEvent.change(accentLight(), { target: { value: "#123456" } });
-    fireEvent.keyDown(screen.getByLabelText("Texto"), { key: "z", ctrlKey: true });
+    fireEvent.keyDown(screen.getByLabelText("Campo libre"), { key: "z", ctrlKey: true });
     expect(accentLight().value).toBe("#123456");
   });
 
@@ -239,7 +239,7 @@ describe("EditorShell", () => {
     expect(list.textContent).toContain("Es un aviso: puedes publicar igual");
     warnings = undefined;
     fireEvent.click(within(list).getByRole("button", { name: "Usar #abcdef en acento del tema oscuro, sobre fondo" }));
-    expect((screen.getByLabelText("Color de acento (oscuro)") as HTMLInputElement).value).toBe("#abcdef");
+    expect((within(screen.getByRole("group", { name: "Modo oscuro" })).getByLabelText("Acento") as HTMLInputElement).value).toBe("#abcdef");
     await act(async () => { await vi.advanceTimersByTimeAsync(100); });
     expect(screen.queryByTestId("design-warnings")).toBeNull();
   });
