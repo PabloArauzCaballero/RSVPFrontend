@@ -1,12 +1,17 @@
 import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NewProductScreen, ProductEditorScreen } from "../src/provider/product-editor/product-editor-screen";
 import { ServicesScreen } from "../src/provider/services-screen";
+import { DestinationsScreen } from "../src/provider/destinations-screen";
 import { createBody, draftFromSheet, EMPTY_DRAFT, keepStep, MISSING_STEP, patchBody, stepFromSlug, stepProblems, waLink, waNumber, type SheetDraft } from "../src/provider/product-editor/model";
 import { writeLocal } from "../src/platform/local-store";
 import { resetSecureStore } from "./stubs/expo-secure-store";
 import { resetRouter, routerCalls, setSearchParams } from "./stubs/expo-router";
 import { fakeClient, GEO, HOST, HttpFailure, renderApp, type Handler } from "./support";
+
+/** The device picker is the platform's; the tests hand it a file (web: an <input type=file>, native: expo-image-picker). */
+const picked = vi.hoisted(() => ({ next: null as null | { file: Blob; name: string; type: string; size: number } }));
+vi.mock("../src/platform/pick-image", () => ({ pickImage: async () => picked.next }));
 
 /** R2 · the product sheet of the provider portal: steps, missing list, photos, publishing and the catalog's refusals. */
 const PID = "4f0f2d3d-0000-4000-8000-0000000000bb";
@@ -41,7 +46,7 @@ const handlers = (extra: Record<string, Handler> = {}): Record<string, Handler> 
 const type = (label: string, value: string): void => { fireEvent.change(screen.getByLabelText(label), { target: { value } }); };
 
 beforeEach(async () => { resetSecureStore(); resetRouter(); await writeLocal("rsvp.provider.u-host", PID); });
-afterEach(() => { cleanup(); });
+afterEach(() => { cleanup(); picked.next = null; vi.unstubAllGlobals(); });
 
 describe("model (pure)", () => {
   it("every missing code opens a step, and step slugs round-trip", () => {
@@ -260,5 +265,101 @@ describe("eb9818d · price cap and hidden products", () => {
     expect((await screen.findByTestId(`listing-completeness-${LID}`)).textContent).toBe("Oculto");
     fireEvent.click(within(screen.getByTestId(`listing-${LID}`)).getByRole("button", { name: /Más opciones/ }));
     expect((await screen.findByRole("menuitem", { name: "Duplicar" })).getAttribute("aria-disabled")).toBe("true");
+  });
+});
+
+describe("photos of each version (§5.1, decision 13)", () => {
+  const VARIANTS = [
+    { id: "v-gold", label: "Dorado", priceMinor: 35000, stock: "AVAILABLE", sku: null, position: 0, isDefault: true },
+    { id: "v-silver", label: "Plateado", priceMinor: 32000, stock: "AVAILABLE", sku: null, position: 1, isDefault: false }
+  ];
+  it("the provider says which version a photo shows: the upload carries variantId and the row names the version", async () => {
+    setSearchParams({ lid: LID, paso: "fotos" });
+    let uploaded = false;
+    const sheet = () => ({ ...SHEET, variants: VARIANTS, photos: uploaded ? [photo("ph-9", "READY", { variantId: "v-silver" })] : [] });
+    const put = vi.fn(async () => new Response(null, { status: 200 }));
+    vi.stubGlobal("fetch", put);
+    const { client, calls } = fakeClient(handlers({
+      [`GET /providers/${PID}/listings/${LID}`]: sheet,
+      [`POST /providers/${PID}/listings/${LID}/photos/uploads`]: () => ({ id: "ph-9", status: "PENDING_UPLOAD", upload: { method: "PUT", url: "https://media.test/upload/ph-9", headers: { "Content-Type": "image/jpeg" }, expiresAt: "2026-11-26T10:10:00Z" } }),
+      [`POST /providers/${PID}/listings/${LID}/photos/ph-9/complete`]: () => { uploaded = true; return photo("ph-9", "QUEUED", { variantId: "v-silver" }); }
+    }));
+    renderApp(<ProductEditorScreen />, client, HOST);
+    const select = await screen.findByTestId("photo-variant") as HTMLSelectElement;
+    expect([...select.options].map((option) => option.textContent)).toEqual(["Todo el producto", "Dorado", "Plateado"]);
+    fireEvent.change(select, { target: { value: "v-silver" } });
+    picked.next = { file: new Blob([new Uint8Array(1024)], { type: "image/jpeg" }), name: "copa.jpg", type: "image/jpeg", size: 1024 };
+    fireEvent.click(screen.getByTestId("photo-add"));
+    await waitFor(() => expect(within(screen.getByTestId("photo-ph-9")).getByText("Foto 1 · Portada · Plateado")).toBeTruthy());
+    expect(calls.find((call) => call.path.endsWith("/photos/uploads"))?.body).toEqual({ contentType: "image/jpeg", bytes: 1024, variantId: "v-silver" });
+    expect(put).toHaveBeenCalledWith("https://media.test/upload/ph-9", expect.objectContaining({ method: "PUT" }));
+    expect(screen.getByTestId("photo-stage").textContent).toBe("Foto lista.");
+  });
+
+  it("a version with 3 photos says so and does not offer another upload for it; the whole product still can", async () => {
+    setSearchParams({ lid: LID, paso: "fotos" });
+    const sheet = { ...SHEET, variants: VARIANTS, photos: ["a", "b", "c"].map((id) => photo(`ph-${id}`, "READY", { variantId: "v-gold" })) };
+    const { client } = fakeClient(handlers({ [`GET /providers/${PID}/listings/${LID}`]: () => sheet }));
+    renderApp(<ProductEditorScreen />, client, HOST);
+    fireEvent.change(await screen.findByTestId("photo-variant"), { target: { value: "v-gold" } });
+    expect(screen.getByTestId("photo-variant-limit").textContent).toBe("«Dorado» ya tiene 3 fotos. Elige otra versión o quita una de sus fotos.");
+    expect(screen.getByTestId("photo-add").getAttribute("aria-disabled")).toBe("true");
+    fireEvent.change(screen.getByTestId("photo-variant"), { target: { value: "" } });
+    expect(screen.queryByTestId("photo-variant-limit")).toBeNull();
+    expect(screen.getByTestId("photo-add").getAttribute("aria-disabled")).not.toBe("true");
+  });
+
+  it("without versions there is nothing to choose", async () => {
+    setSearchParams({ lid: LID, paso: "fotos" });
+    const { client } = fakeClient(handlers());
+    renderApp(<ProductEditorScreen />, client, HOST);
+    await screen.findByTestId("photo-add");
+    expect(screen.queryByTestId("photo-variant")).toBeNull();
+  });
+});
+
+describe("the business WhatsApp message (§5.8, «Cómo te contactan»)", () => {
+  const destinationHandlers = (extra: Record<string, Handler> = {}): Record<string, Handler> => handlers({ [`GET /providers/${PID}`]: () => ({ ...profile, leadConfig: { enabledDestinations: ["WHATSAPP"], utmSource: "done", utmMedium: "referral", dedupeMinutes: 60, monthlyCap: 0, billingModel: "CPC" } }), ...extra });
+  it("writes the message with variables, previews it with sample data and saves it with PUT; turning it off clears it", async () => {
+    const { client, calls } = fakeClient(destinationHandlers({ [`PUT /providers/${PID}/whatsapp-template`]: (call) => ({ ...TEMPLATE, template: (call.body as { template: unknown }).template }) }));
+    renderApp(<DestinationsScreen />, client, HOST);
+    const section = await screen.findByTestId("business-template");
+    await waitFor(() => expect(within(section).getByTestId("template-preview").textContent).toMatch(/^Hola Cristalería Andina, quiero Juego de 6 copas \(Dorado\)/));
+    fireEvent.click(within(section).getByTestId("template-own"));
+    fireEvent.click(within(section).getByTestId("business-template-save"));
+    expect(await within(section).findByText("Escribe el mensaje o desactiva el mensaje propio.")).toBeTruthy();
+    expect(calls.some((call) => call.method === "PUT")).toBe(false);
+    fireEvent.click(within(section).getByTestId("template-var-proveedor"));
+    fireEvent.change(within(section).getByTestId("template-text"), { target: { value: "Hola {proveedor}, quiero {producto}" } });
+    expect(within(section).getByTestId("template-preview").textContent).toBe("Hola Cristalería Andina, quiero Juego de 6 copas");
+    fireEvent.click(within(section).getByTestId("business-template-save"));
+    expect(await within(section).findByText("Mensaje guardado. Lo usan tus productos sin mensaje propio.")).toBeTruthy();
+    expect(calls.find((call) => call.method === "PUT")?.body).toEqual({ template: { "es-BO": "Hola {proveedor}, quiero {producto}" } });
+    fireEvent.click(within(section).getByTestId("template-own"));
+    fireEvent.click(within(section).getByTestId("business-template-save"));
+    expect(await within(section).findByText("Listo. Tus productos usan el mensaje de DOne.")).toBeTruthy();
+    expect(calls.filter((call) => call.method === "PUT").at(-1)?.body).toEqual({ template: null });
+  });
+
+  it("422 TEMPLATE_CONTAINS_CONTACT names the fragment and keeps what was typed", async () => {
+    const { client } = fakeClient(destinationHandlers({ [`PUT /providers/${PID}/whatsapp-template`]: () => new HttpFailure(422, { code: "TEMPLATE_CONTAINS_CONTACT", details: { fragment: "www.copas.bo" } }) }));
+    renderApp(<DestinationsScreen />, client, HOST);
+    const section = await screen.findByTestId("business-template");
+    await within(section).findByTestId("template-preview");
+    fireEvent.click(within(section).getByTestId("template-own"));
+    fireEvent.change(within(section).getByTestId("template-text"), { target: { value: "Visita www.copas.bo" } });
+    fireEvent.click(within(section).getByTestId("business-template-save"));
+    expect(await within(section).findByText("Quita el teléfono o el enlace del mensaje: «www.copas.bo».")).toBeTruthy();
+    expect((within(section).getByTestId("template-text") as HTMLTextAreaElement).value).toBe("Visita www.copas.bo");
+  });
+
+  it("a stored message opens switched on, and a failed read offers «Reintentar»", async () => {
+    const { client } = fakeClient(destinationHandlers({ [`GET /providers/${PID}/whatsapp-template`]: () => ({ ...TEMPLATE, template: { "es-BO": "Hola {proveedor}" } }) }));
+    renderApp(<DestinationsScreen />, client, HOST);
+    expect((await screen.findByTestId("template-text") as HTMLTextAreaElement).value).toBe("Hola {proveedor}");
+    cleanup();
+    const failing = fakeClient(destinationHandlers({ [`GET /providers/${PID}/whatsapp-template`]: () => new HttpFailure(503, { code: "UNAVAILABLE" }) }));
+    renderApp(<DestinationsScreen />, failing.client, HOST);
+    expect(await within(await screen.findByTestId("business-template")).findByRole("button", { name: /Reintentar/ })).toBeTruthy();
   });
 });

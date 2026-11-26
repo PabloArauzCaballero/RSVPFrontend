@@ -28,9 +28,14 @@ function VariableButton({ variable, disabled, onPress }: { readonly variable: Te
  * them (no braces to type), unknown ones are flagged before saving, and the preview shows the message filled with sample data.
  * The server still validates it (422 UNKNOWN_TEMPLATE_VARIABLE, TEMPLATE_CONTAINS_CONTACT) and resolves it in R5.
  */
-export function WhatsappTemplateField({ own, value, fallback, fallbackIsProvider, sample, error, disabled = false, onOwn, onChange }: {
+export function WhatsappTemplateField({ own, value, fallback, fallbackIsProvider, sample, error, disabled = false, ownLabel, heading = true, onOwn, onChange }: {
   readonly own: boolean; readonly value: string; readonly fallback: string; readonly fallbackIsProvider: boolean; readonly sample: TemplateSample;
-  readonly error?: string | undefined; readonly disabled?: boolean; readonly onOwn: (own: boolean) => void; readonly onChange: (value: string) => void;
+  readonly error?: string | undefined; readonly disabled?: boolean;
+  /** The switch's wording: the product's own message by default, the business's one on «Cómo te contactan». */
+  readonly ownLabel?: string;
+  /** False when the surrounding section already names the message. */
+  readonly heading?: boolean;
+  readonly onOwn: (own: boolean) => void; readonly onChange: (value: string) => void;
 }): ReactNode {
   const t = useT();
   const styles = useStyles();
@@ -48,8 +53,8 @@ export function WhatsappTemplateField({ own, value, fallback, fallbackIsProvider
   };
   return (
     <View style={{ gap: spacing[3] }} testID="whatsapp-template">
-      <Text accessibilityRole="header" style={styles.itemTitle}>{t("portal.product.whatsapp.title")}</Text>
-      <ToggleChip label={t("portal.product.whatsapp.useOwn")} on={own} disabled={disabled} onPress={() => onOwn(!own)} testID="template-own" />
+      {heading ? <Text accessibilityRole="header" style={styles.itemTitle}>{t("portal.product.whatsapp.title")}</Text> : null}
+      <ToggleChip label={ownLabel ?? t("portal.product.whatsapp.useOwn")} on={own} disabled={disabled} onPress={() => onOwn(!own)} testID="template-own" />
       {own ? (
         <>
           <Field label={t("portal.product.whatsapp.field")} value={value} onChange={onChange} multiline maxLength={TEMPLATE_MAX} help={t("portal.product.whatsapp.help")} editable={!disabled}

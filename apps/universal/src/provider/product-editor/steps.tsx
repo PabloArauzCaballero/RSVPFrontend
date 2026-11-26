@@ -148,6 +148,7 @@ export function PriceStep({ draft, set, problems, disabled }: StepProps): ReactN
             </View>
           ))}
           <InlineError message={problem(t, problems, "variantLabel", "variantPrice", "variantsMax")} />
+          <Text style={styles.muted} testID="variant-photos-hint">{t("portal.product.price.variantPhotosHint")}</Text>
           {draft.variants.length < MAX_VARIANTS ? <View style={{ alignSelf: "flex-start" }}><ActionButton variant="secondary" icon="plus" label={t("portal.product.price.addVariant")} disabled={disabled} onPress={add} testID="variant-add" /></View> : <Text style={styles.muted}>{t("portal.product.price.maxVariants")}</Text>}
         </View>
       )}

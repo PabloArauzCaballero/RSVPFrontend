@@ -33,6 +33,8 @@ export const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
 export type PhotoType = (typeof PHOTO_TYPES)[number];
 export const MAX_PHOTO_BYTES = 5_242_880;
 export const MAX_PHOTOS = 5;
+/** §5.1: a version may show up to 3 of the product's photos (409 PHOTO_LIMIT_REACHED beyond that). */
+export const MAX_PHOTOS_PER_VARIANT = 3;
 export const MAX_VARIANTS = 20;
 /** §5.13: a price is above 0 and below PROVIDER_LISTING_MAX_PRICE_MINOR (Bs 200 000 by default). A deployment with another cap still answers 422 PRICE_OUT_OF_RANGE. */
 export const PRICE_CAP_MINOR = 20_000_000;
