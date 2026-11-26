@@ -3084,6 +3084,11 @@ export interface components {
             destinations?: components["schemas"]["Destination"][];
             disclaimer: string;
             fulfillment?: components["schemas"]["FulfillmentView"];
+            /**
+             * @description Since 3.4.0 (R1, M-2 bis; decisión de Pablo 2026-11-26). Why the platform hid this listing; null when it is not hidden. CATEGORY_TYPE_MISMATCH: the listing's type does not match its category's type (a SERVICE in a PRODUCT category or the other way around), so it is not published and not listed publicly; the provider must create it again in a category of its type. Always present in the provider's own listing responses.
+             * @enum {string|null}
+             */
+            hiddenReason?: "CATEGORY_TYPE_MISMATCH" | null;
             /** Format: uuid */
             id: string;
             imageUrl?: string;

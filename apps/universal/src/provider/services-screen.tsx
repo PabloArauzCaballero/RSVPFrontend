@@ -59,6 +59,7 @@ function OfferRow({ provider, listing, cities, publishing, onPublish }: { readon
       <View style={{ gap: spacing[3], paddingTop: spacing[3], borderTopWidth: 1, borderTopColor: palette.border }} testID={`delivery-${listing.id}`}>
         {terms ? <><Text style={styles.muted}>{terms}</Text>{f?.conditions ? <Text style={styles.body}>{f.conditions}</Text> : null}</> : listing.published ? <Notice kind="error">{t("portal.delivery.missing")}</Notice> : null}
       </View>
+      {listing.hiddenReason === "CATEGORY_TYPE_MISMATCH" ? <Notice kind="error"><Text style={styles.body} testID={`listing-hidden-${listing.id}`}>{t("portal.services.hidden.CATEGORY_TYPE_MISMATCH")}</Text></Notice> : null}
       {!listing.published && !listing.fulfillment ? <Text style={styles.muted} testID={`publish-blocked-${listing.id}`}>{t("portal.services.needsTerms")}</Text> : null}
     </View>
   );

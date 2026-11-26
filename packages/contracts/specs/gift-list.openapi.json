@@ -3,7 +3,7 @@
   "info": {
     "title": "RSVP Gift List API",
     "version": "1.14.0",
-    "description": "Gift List v2 is the canonical surface (D-4). Authorization since 1.11.0 (A9): acting as a guest (reserveGift, listMyReservations, cancelReservation of one's own reservation) requires the guest's own link credential (guestCredential), validated by Guest; any account JWT, including the host and read-only collaborators or organization members (Celebration access READ), answers 403 GUEST_IDENTITY_REQUIRED there. Adding, approving or rejecting gifts, deciding or listing reservations and the gift settings require Celebration access MANAGE (403 HOST_REQUIRED otherwise). READ accounts may only list the items. Reservation events (gift.reservation.requested/auto-committed/confirmed/rejected.v1 and gift.item.released.v1 on rejection) carry payload.guestId while the guest is identified. 1.8.1 (correction, no runtime change): removes POST /items/{giftItemId}/reservations and POST /reservations/{reservationId}/approve. The service never served those paths (reservations go through /guest/celebrations/{celebrationId}/items/{giftItemId}/reservations and /celebrations/{celebrationId}/reservations/{reservationId}/approve), and they duplicated the operationIds reserveGift and approveReservation, which OpenAPI requires to be unique. 1.13.0 (additive, M28; plan de regalos R8a): GET /public/celebrations/{slug}/gifts/summary answers { status: OPEN|EMPTY|CLOSED, itemCount } for the public invitation, anonymous and without personal data (see getPublicGiftsSummary). The host or the organizer (MANAGE) closes or reopens the list by hand with PUT /celebrations/{celebrationId}/gift-list/closure (idempotent); putGiftListClosure answers GiftListView (the list plus closed and closedAt) and listGiftItems gains closed. CLOSED in the summary means closed by hand or the event day is over. Since 1.12.0 (L4) listGiftItems and listReservations return bounded pages: limit 1..200 (default 100) and an opaque cursor; nextCursor is null on the last page. Unknown or repeated query parameters answer 422. 1.10.0 (additive, A5/D-3; PR #60): the guest (link credential) and the host (JWT) cancel an active reservation with POST /celebrations/{celebrationId}/reservations/{reservationId}/cancel, and the guest reads their own reservations back with GET /celebrations/{celebrationId}/my-reservations. 1.14.0 (R1 of the gift series, A28): POST /celebrations/{celebrationId}/items with source CATALOGED refuses a Provider Catalog listing of type SERVICE with 422 GIFT_LISTING_NOT_PRODUCT (only products can be gifts). A v1 item that references a legacy listing which is now a SERVICE stays listed and is answered as not reservable (reservable false; a v1 reservation request is 409 with code GiftNotAvailable) instead of failing the whole list with 503 AUTHORITY_UNAVAILABLE. Also in 1.14.0 (M-6): item status UNAVAILABLE for a cataloged gift whose listing is no longer a PRODUCT (GiftCatalogedItem, GiftLegacyCatalogedItem, PrivateLegacyCatalogGiftItem; DevCompatGiftItemStatus, the frozen v2 item status of GET /celebrations/{celebrationId}/items, is preserved byte for byte by the dev compatibility check and does not list it yet, pending an owner decision). Only the host sees it (status UNAVAILABLE, reservable false); guest lists and the public summary leave it out, and a reservation attempt is refused. Gift reconciles it against Provider Catalog in the background of its worker (a first pass once the worker is ready, then periodically, each pass within a time budget) and through the CLI gift:reconcile-listing-types; it goes back to AVAILABLE when the listing is a PRODUCT again. No event is published for it in 1.14.0 (gift.item.unavailable.v1 arrives with R7). The frozen DevCompatValidation response and DevCompatProblem.code document GIFT_LISTING_NOT_PRODUCT in their descriptions (no structural change)."
+    "description": "Gift List v2 is the canonical surface (D-4). Authorization since 1.11.0 (A9): acting as a guest (reserveGift, listMyReservations, cancelReservation of one's own reservation) requires the guest's own link credential (guestCredential), validated by Guest; any account JWT, including the host and read-only collaborators or organization members (Celebration access READ), answers 403 GUEST_IDENTITY_REQUIRED there. Adding, approving or rejecting gifts, deciding or listing reservations and the gift settings require Celebration access MANAGE (403 HOST_REQUIRED otherwise). READ accounts may only list the items. Reservation events (gift.reservation.requested/auto-committed/confirmed/rejected.v1 and gift.item.released.v1 on rejection) carry payload.guestId while the guest is identified. 1.8.1 (correction, no runtime change): removes POST /items/{giftItemId}/reservations and POST /reservations/{reservationId}/approve. The service never served those paths (reservations go through /guest/celebrations/{celebrationId}/items/{giftItemId}/reservations and /celebrations/{celebrationId}/reservations/{reservationId}/approve), and they duplicated the operationIds reserveGift and approveReservation, which OpenAPI requires to be unique. 1.13.0 (additive, M28; plan de regalos R8a): GET /public/celebrations/{slug}/gifts/summary answers { status: OPEN|EMPTY|CLOSED, itemCount } for the public invitation, anonymous and without personal data (see getPublicGiftsSummary). The host or the organizer (MANAGE) closes or reopens the list by hand with PUT /celebrations/{celebrationId}/gift-list/closure (idempotent); putGiftListClosure answers GiftListView (the list plus closed and closedAt) and listGiftItems gains closed. CLOSED in the summary means closed by hand or the event day is over. Since 1.12.0 (L4) listGiftItems and listReservations return bounded pages: limit 1..200 (default 100) and an opaque cursor; nextCursor is null on the last page. Unknown or repeated query parameters answer 422. 1.10.0 (additive, A5/D-3; PR #60): the guest (link credential) and the host (JWT) cancel an active reservation with POST /celebrations/{celebrationId}/reservations/{reservationId}/cancel, and the guest reads their own reservations back with GET /celebrations/{celebrationId}/my-reservations. 1.14.0 (R1 of the gift series, A28): POST /celebrations/{celebrationId}/items with source CATALOGED refuses a Provider Catalog listing of type SERVICE with 422 GIFT_LISTING_NOT_PRODUCT (only products can be gifts). A v1 item that references a legacy listing which is now a SERVICE stays listed and is answered as not reservable (reservable false; a v1 reservation request is 409 with code GiftNotAvailable) instead of failing the whole list with 503 AUTHORITY_UNAVAILABLE. Also in 1.14.0 (M-6): a cataloged gift whose listing is no longer a PRODUCT is marked with the new field availability: UNAVAILABLE (always present, AVAILABLE or UNAVAILABLE, in listGiftItems items; in the owner's private legacy lists, schemas GiftCatalogedItem, GiftLegacyCatalogedItem and PrivateLegacyCatalogGiftItem, where it is optional and present only as UNAVAILABLE, absent meaning available). It is a field of its own, additive and separate from status: DevCompatGiftItemStatus, the frozen v2 item status of GET /celebrations/{celebrationId}/items, is preserved byte for byte by the dev compatibility check and never answers UNAVAILABLE (the gift keeps the status it had, AVAILABLE), and neither do the status enums of the legacy item schemas. Only the host sees it (availability UNAVAILABLE, reservable false in the legacy list); guest lists and the public summary leave it out, and a reservation attempt is refused. Gift reconciles it against Provider Catalog in the background of its worker (a first pass once the worker is ready, then periodically, each pass within a time budget) and through the CLI gift:reconcile-listing-types; it goes back to AVAILABLE when the listing is a PRODUCT again. No event is published for it in 1.14.0 (gift.item.unavailable.v1 arrives with R7). The frozen DevCompatValidation response and DevCompatProblem.code document GIFT_LISTING_NOT_PRODUCT in their descriptions (no structural change)."
   },
   "servers": [
     {
@@ -14324,8 +14324,7 @@
               "AVAILABLE",
               "PENDING_REVIEW",
               "COMMITTED",
-              "REJECTED",
-              "UNAVAILABLE"
+              "REJECTED"
             ]
           },
           "version": {
@@ -14349,6 +14348,13 @@
           },
           "external": {
             "type": "null"
+          },
+          "availability": {
+            "type": "string",
+            "enum": [
+              "UNAVAILABLE"
+            ],
+            "description": "Since 1.14.0 (M-6, R1). Present only when the gift's Provider Catalog listing is no longer a PRODUCT, so it can no longer be reserved; absent means available (the response of an unmarked gift is unchanged). Separate from status, which never says UNAVAILABLE. Only the owner's private lists carry it: the public guest page never has an UNAVAILABLE gift."
           }
         },
         "allOf": [
@@ -15593,8 +15599,7 @@
               "PROPOSED",
               "PENDING_REVIEW",
               "COMMITTED",
-              "REJECTED",
-              "UNAVAILABLE"
+              "REJECTED"
             ]
           },
           "version": {
@@ -15628,6 +15633,13 @@
                 "description": "Historical verification was not recorded. Current eligibility is checked separately."
               }
             }
+          },
+          "availability": {
+            "type": "string",
+            "enum": [
+              "UNAVAILABLE"
+            ],
+            "description": "Since 1.14.0 (M-6, R1). Present only when the gift's Provider Catalog listing is no longer a PRODUCT, so it can no longer be reserved; absent means available (the response of an unmarked gift is unchanged). Separate from status, which never says UNAVAILABLE. Only the owner's private lists carry it: the public guest page never has an UNAVAILABLE gift."
           }
         }
       },
@@ -15666,8 +15678,7 @@
               "AVAILABLE",
               "PENDING_REVIEW",
               "COMMITTED",
-              "REJECTED",
-              "UNAVAILABLE"
+              "REJECTED"
             ]
           },
           "version": {
@@ -15696,6 +15707,13 @@
           },
           "legacyCatalog": {
             "$ref": "#/components/schemas/LegacyCatalogReference"
+          },
+          "availability": {
+            "type": "string",
+            "enum": [
+              "UNAVAILABLE"
+            ],
+            "description": "Since 1.14.0 (M-6, R1). Present only when the gift's Provider Catalog listing is no longer a PRODUCT, so it can no longer be reserved; absent means available (the response of an unmarked gift is unchanged). Separate from status, which never says UNAVAILABLE. Only the owner's private lists carry it: the public guest page never has an UNAVAILABLE gift."
           }
         }
       },
@@ -16022,7 +16040,8 @@
             "type": "object",
             "required": [
               "nextCursor",
-              "closed"
+              "closed",
+              "items"
             ],
             "properties": {
               "nextCursor": {
@@ -16035,6 +16054,26 @@
               "closed": {
                 "type": "boolean",
                 "description": "Since 1.13.0 (R8a): the host or the organizer closed the list by hand (putGiftListClosure). Informative; it does not block reservations in 1.13.0."
+              },
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "availability"
+                  ],
+                  "properties": {
+                    "availability": {
+                      "type": "string",
+                      "enum": [
+                        "AVAILABLE",
+                        "UNAVAILABLE"
+                      ],
+                      "description": "Since 1.14.0 (M-6, R1; decisión de Pablo 2026-11-26). UNAVAILABLE: the gift's Provider Catalog listing is no longer a PRODUCT, so it cannot be reserved. It is a field of its own: the frozen status (DevCompatGiftItemStatus) never answers UNAVAILABLE and keeps the value the gift had. Only the host (MANAGE) receives an UNAVAILABLE gift; guest lists, the public summary and READ-only guests leave it out."
+                    }
+                  }
+                },
+                "description": "Each item of the page also carries availability (since 1.14.0)."
               }
             }
           }

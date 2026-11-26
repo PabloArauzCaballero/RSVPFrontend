@@ -69,19 +69,37 @@ describe("REQ-F23-04 · status of each gift", () => {
 });
 
 describe("R1 · M-6 · a gift that can no longer be given (UNAVAILABLE)", () => {
-  const WITH_UNAVAILABLE = { items: [gift("Torta"), gift("Musica", { status: "UNAVAILABLE" }), gift("Mesa", { status: "COMMITTED" })], partnerPriorityEnabled: true };
-  it("the host sees it marked with words, not only a color, and counted apart; no action is offered on it", async () => {
+  // gift-list 1.14.0: availability is its own field; status never says UNAVAILABLE and keeps the gift's own value.
+  const WITH_UNAVAILABLE = { items: [gift("Torta", { availability: "AVAILABLE" }), gift("Musica", { status: "AVAILABLE", availability: "UNAVAILABLE" }), gift("Mesa", { status: "COMMITTED", availability: "AVAILABLE" })], partnerPriorityEnabled: true };
+  it("the host sees it marked with words, in its own section «No disponibles (n)», outside the total; no action is offered on it", async () => {
     const { client } = fakeClient(handlers({ "GET /gifts/celebrations/c-1/items": () => WITH_UNAVAILABLE }));
     renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
     await screen.findByTestId("gift-Musica");
     expect(screen.getByTestId("gift-status-Musica").textContent).toBe("No disponible");
     expect(screen.getByTestId("gift-unavailable-Musica").textContent).toMatch(/Tus invitados ya no lo ven/);
     expect(screen.queryByTestId("gift-unavailable-Torta")).toBeNull();
-    expect(screen.getByTestId("gift-unavailable").getAttribute("aria-label")).toBe("No disponibles: 1");
+    expect(screen.getByTestId("gift-unavailable").textContent).toBe("No disponibles (1)");
+    expect(within(screen.getByTestId("gift-unavailable-section")).getByTestId("gift-Musica")).toBeTruthy();
+    expect(within(screen.getByTestId("gift-unavailable-section")).queryByTestId("gift-Torta")).toBeNull();
+    // the total excludes it: Torta and Mesa count, Musica does not
+    expect(screen.getByTestId("gift-count").getAttribute("aria-label")).toBe("Regalos: 2");
     expect(screen.getByTestId("gift-available").getAttribute("aria-label")).toBe("Disponibles: 1");
     expect(within(screen.getByTestId("gift-Musica")).queryAllByRole("button")).toEqual([]);
   });
-  it("without unavailable gifts the figure does not appear", async () => {
+  it("the mark follows availability, not status: a legacy status UNAVAILABLE no longer marks anything", async () => {
+    const { client } = fakeClient(handlers({ "GET /gifts/celebrations/c-1/items": () => ({ items: [gift("Vieja", { status: "UNAVAILABLE" })], partnerPriorityEnabled: true }) }));
+    renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    await screen.findByTestId("gift-Vieja");
+    expect(screen.queryByTestId("gift-unavailable")).toBeNull();
+  });
+  it("when every gift is unavailable the list shows the zero total and the section, not the empty state", async () => {
+    const { client } = fakeClient(handlers({ "GET /gifts/celebrations/c-1/items": () => ({ items: [gift("Musica", { availability: "UNAVAILABLE" })], partnerPriorityEnabled: true }) }));
+    renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    await screen.findByTestId("gift-unavailable-section");
+    expect(screen.getByTestId("gift-count").getAttribute("aria-label")).toBe("Regalos: 0");
+    expect(screen.queryByText("Tu lista empieza con un regalo")).toBeNull();
+  });
+  it("without unavailable gifts the section does not appear", async () => {
     const { client } = fakeClient(handlers({ "GET /gifts/celebrations/c-1/items": () => GIFTS }));
     renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
     await screen.findByTestId("gift-Torta");
@@ -93,6 +111,7 @@ describe("R1 · M-6 · a gift that can no longer be given (UNAVAILABLE)", () => 
     await screen.findByTestId("gift-Musica");
     expect(screen.getByTestId("gift-status-Musica").textContent).toBe("Unavailable");
     expect(screen.getByTestId("gift-unavailable-Musica").textContent).toMatch(/Your guests no longer see it/);
+    expect(screen.getByTestId("gift-unavailable").textContent).toBe("Unavailable (1)");
   });
   it("the guest never sees it, even if a response carried it", async () => {
     const { client } = fakeClient(handlers({
@@ -103,6 +122,7 @@ describe("R1 · M-6 · a gift that can no longer be given (UNAVAILABLE)", () => 
     await screen.findByTestId("reserve-Torta");
     expect(screen.queryByText("Musica")).toBeNull();
     expect(screen.queryByText("No disponible")).toBeNull();
+    expect(screen.queryByText(/No disponibles/)).toBeNull();
   });
   it("422 GIFT_LISTING_NOT_PRODUCT on add says it is a service, in the host's language", async () => {
     const itemsPath = "/gifts/celebrations/c-1/items";
@@ -465,6 +485,18 @@ describe("REQ-F28-03/05 · services with delivery conditions", () => {
     expect(screen.getByText(/al menos un destino/)).toBeTruthy();
     expect(screen.getByText(/ciudad de cobertura/)).toBeTruthy();
     expect(calls.filter((call) => call.method === "POST" && call.path.endsWith("/listings"))).toHaveLength(0);
+  });
+  it("R1 · a listing the platform hid for a type/category mismatch says so, in both languages; a normal one says nothing", async () => {
+    await withProvider();
+    const items = [{ id: "h1", providerId: PID, type: "SERVICE", category: "DECORATION", city: "la-paz", title: "Torta mal categorizada", published: false, hiddenReason: "CATEGORY_TYPE_MISMATCH" }, { id: "h2", providerId: PID, type: "PRODUCT", category: "DECORATION", city: "la-paz", title: "Normal", published: false, hiddenReason: null }];
+    const { client } = fakeClient(providerHandlers({ [`GET /providers/${PID}/listings`]: () => ({ items }) }));
+    renderApp(<ProductsScreen />, client, HOST);
+    expect((await screen.findByTestId("listing-hidden-h1")).textContent).toMatch(/Oculto: el tipo no coincide con la categoría/);
+    expect(screen.queryByTestId("listing-hidden-h2")).toBeNull();
+    cleanup();
+    const second = fakeClient(providerHandlers({ [`GET /providers/${PID}/listings`]: () => ({ items }) }));
+    renderApp(<ProductsScreen />, second.client, HOST, "en-US");
+    expect((await screen.findByTestId("listing-hidden-h1")).textContent).toMatch(/Hidden: the type does not match the category/);
   });
   it("lists product categories and creates a product with an HTTPS photo and fulfillment in minor units", async () => {
     await withProvider();

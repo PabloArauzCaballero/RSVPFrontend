@@ -43,12 +43,13 @@ export const giftsEsBO = {
   },
   host: {
     title: "Regalos", intro: "Lo que agregues aquí lo ven tus invitados y lo reservan con un toque.", nav: "Regalos",
-    figures: { gifts: "Regalos", available: "Disponibles", reserved: "Reservados", review: "Por revisar", unavailable: "No disponibles" }, list: {
+    figures: { gifts: "Regalos", available: "Disponibles", reserved: "Reservados", review: "Por revisar" }, list: {
       emptyTitle: "Tu lista empieza con un regalo", emptyBody: "Elige productos de nuestros aliados o enlaza uno de tu tienda favorita. Tus invitados lo reservan y nadie regala lo mismo dos veces.",
       add: "Agregar regalo", fromPartner: "De un aliado", external: "De una tienda", reservedBy: "Reservado por {{name}}",
       more: "Más opciones", pending: "Reservas por revisar: {{count}}", pendingBody: "Tus invitados esperan tu respuesta.", pendingAction: "Revisar reservas",
       unavailableNote: "Tus invitados ya no lo ven: este regalo dejó de estar disponible en el catálogo."
     },
+    unavailable: { title: "No disponibles ({{count}})", body: "Estos regalos ya no se pueden dar y tus invitados no los ven. No cuentan en el total de tu lista." },
     status: { AVAILABLE: "Disponible", PROPOSED: "Por revisar", PENDING_REVIEW: "Reserva por revisar", COMMITTED: "Reservado", REJECTED: "Rechazado", UNAVAILABLE: "No disponible" },
     visibility: { title: "Quién ve quién reservó", intro: "Tú decides si los nombres salen en tu panel y en la lista de tus invitados.", host: "Ver el nombre en mi panel", hostHelp: "Si lo apagas, verás las reservas sin nombre.", guests: "Mostrar el nombre a otros invitados", guestsHelp: "Apagado: los invitados solo ven que el regalo ya está reservado.", saved: "Preferencia guardada. Aplica desde ahora." },
     approveProposal: "Aprobar propuesta", approvingProposal: "Aprobando…",

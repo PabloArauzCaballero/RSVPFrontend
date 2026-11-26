@@ -45,12 +45,13 @@ export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
   },
   host: {
     title: "Gifts", intro: "What you add here your guests see and reserve with one tap.", nav: "Gifts",
-    figures: { gifts: "Gifts", available: "Available", reserved: "Reserved", review: "To review", unavailable: "Unavailable" }, list: {
+    figures: { gifts: "Gifts", available: "Available", reserved: "Reserved", review: "To review" }, list: {
       emptyTitle: "Your list starts with one gift", emptyBody: "Pick products from our partners or link one from your favorite store. Guests reserve it, so nobody gives the same thing twice.",
       add: "Add a gift", fromPartner: "From a partner", external: "From a store", reservedBy: "Reserved by {{name}}",
       more: "More options", pending: "Reservations to review: {{count}}", pendingBody: "Your guests are waiting for your answer.", pendingAction: "Review reservations",
       unavailableNote: "Your guests no longer see it: this gift is no longer available in the catalog."
     },
+    unavailable: { title: "Unavailable ({{count}})", body: "These gifts can no longer be given and your guests do not see them. They are not counted in your list total." },
     status: { AVAILABLE: "Available", PROPOSED: "To review", PENDING_REVIEW: "Reservation to review", COMMITTED: "Reserved", REJECTED: "Rejected", UNAVAILABLE: "Unavailable" },
     visibility: { title: "Who sees who reserved", intro: "You decide whether names show in your dashboard and in your guests' list.", host: "Show the name in my dashboard", hostHelp: "If you turn it off, you see reservations without a name.", guests: "Show the name to other guests", guestsHelp: "Off: guests only see that the gift is already reserved.", saved: "Preference saved. It applies from now on." },
     approveProposal: "Approve proposal", approvingProposal: "Approving…",
