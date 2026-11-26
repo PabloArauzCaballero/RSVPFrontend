@@ -6954,7 +6954,7 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
-            /** @description IDEMPOTENCY_KEY_REUSED or LISTING_NOT_EDITABLE */
+            /** @description IDEMPOTENCY_KEY_REUSED, LISTING_NOT_EDITABLE (SNAPSHOT_V1) or LISTING_HIDDEN (an administrator hid the product) */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -7119,7 +7119,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description UNSUPPORTED_MEDIA_TYPE (details.accepted), PHOTO_TOO_LARGE (details.maxBytes), PHOTOS_PRODUCT_ONLY (SERVICE or SNAPSHOT_V1 listing) or VALIDATION_FAILED (details names bytes, variantId, altText or idempotencyKey) */
+            /** @description UNSUPPORTED_MEDIA_TYPE (details.accepted), PHOTO_TOO_LARGE (details.maxBytes), PHOTOS_PRODUCT_ONLY (SERVICE or SNAPSHOT_V1 listing), CONTACT_IN_TEXT (altText carries a phone or a web address; details.field altText, details.fragment) or VALIDATION_FAILED (details names bytes, variantId, altText or idempotencyKey; also when the variant was removed by a concurrent edit) */
             422: {
                 headers: {
                     [name: string]: unknown;
