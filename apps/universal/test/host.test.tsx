@@ -303,7 +303,8 @@ describe("C7–C11 · content editor", () => {
   it("states: loading, not found, read-only, no celebration chosen, and roles", async () => {
     const missing = fakeClient({ "GET /celebrations/event-types": () => ({ items: [] }) });
     renderApp(<ContentEditorScreen section="general" celebrationId="nope" onNavigate={navigate} />, missing.client);
-    expect(screen.getAllByRole("status").length).toBeGreaterThan(0);
+    // The skeleton waits out MOTION.loadingDelayMs: this fast answer never flashes it (test/shell-persistence.test.tsx covers the slow one).
+    expect(screen.queryAllByRole("status")).toHaveLength(0);
     expect(await screen.findByText(/No encontramos esta celebración/)).toBeTruthy();
     const readOnly = fakeClient(baseHandlers({ ...CELEBRATION, access: "READ" }));
     renderApp(<ContentEditorScreen section="general" celebrationId="c-1" onNavigate={navigate} />, readOnly.client);

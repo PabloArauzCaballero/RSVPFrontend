@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type PropsWithChildren, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type PropsWithChildren, type ReactNode } from "react";
 import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type LayoutChangeEvent, type ViewStyle } from "react-native";
 import { radius, spacing } from "@rsvp/design-tokens";
 import { Logo, NavIcon, OverlayEnter, PageIntro, PressFeedback, ScreenTransition, SwitchRow, StickyActions, fonts, overlayAnimation, useColors, useThemedStyles, type Palette } from "@rsvp/ui";
@@ -320,6 +320,53 @@ function BareFrame({ children }: PropsWithChildren): ReactNode {
 }
 
 /**
+ * What the persistent frame draws: the destinations and which one is current. A screen reports them (`Screen` does it in a layout
+ * effect, before paint) and the frame, mounted once in the group layout, redraws only its highlight: the sidebar, the top bar and
+ * the bottom bar never unmount while the person moves between screens. `onNavigate` is kept as "the latest one" so a screen that
+ * builds a new callback every render does not republish.
+ */
+export class ShellStore {
+  private state: { readonly nav: readonly NavItem[]; readonly current: string | undefined } = { nav: [], current: undefined };
+  private signature = "";
+  private latest: ((href: string) => void) | undefined;
+  private readonly listeners = new Set<() => void>();
+  /** Counts publishes that changed what the frame draws (the tests assert that a tab change republishes without remounting). */
+  publishes = 0;
+  readonly subscribe = (listener: () => void): (() => void) => { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; };
+  readonly snapshot = (): typeof this.state => this.state;
+  readonly navigate = (href: string): void => { this.latest?.(href); };
+  publish(nav: readonly NavItem[], current: string | undefined, onNavigate: ((href: string) => void) | undefined): void {
+    this.latest = onNavigate;
+    const signature = `${current ?? ""}|${nav.map((item) => `${item.key}:${item.href}:${item.label}:${item.tabs?.map((tab) => tab.key).join(",") ?? ""}`).join("|")}`;
+    if (signature === this.signature) return;
+    this.signature = signature;
+    this.state = { nav, current };
+    this.publishes += 1;
+    this.listeners.forEach((listener) => listener());
+  }
+}
+
+const ShellFrameContext = createContext<ShellStore | null>(null);
+/** The store of the persistent frame this screen sits in, or `null` when it draws its own (guest and account screens, tests). */
+export const useShellStore = (): ShellStore | null => useContext(ShellFrameContext);
+
+/**
+ * The frame of every signed-in area, mounted once by the group layout (`(host)`, `(provider)`, `(admin)`) around the `Stack`.
+ * Moving between screens swaps only the content area: the nav keeps its state, scroll position of the menu and focus, and
+ * nothing blanks while the next screen loads. Wide: sidebar beside the content. Narrow: top bar, content, bottom bar.
+ */
+export function PersistentShell({ store, children }: PropsWithChildren<{ readonly store?: ShellStore }>): ReactNode {
+  const [own] = useState(() => store ?? new ShellStore());
+  const s = useThemedStyles(createShellStyles);
+  const { width } = useWindowDimensions();
+  const { nav, current } = useSyncExternalStore(own.subscribe, own.snapshot, own.snapshot);
+  const content = <ShellFrameContext.Provider value={own}>{children}</ShellFrameContext.Provider>;
+  if (nav.length === 0) return <View style={s.root} testID="persistent-shell"><BareFrame>{content}</BareFrame></View>;
+  if (width >= WIDE) return <View style={[s.root, s.rootWide]} testID="persistent-shell"><Sidebar nav={nav} current={current} onNavigate={own.navigate} /><View style={s.scroll}>{content}</View></View>;
+  return <View style={s.root} testID="persistent-shell"><MobileFrame nav={nav} current={current} onNavigate={own.navigate}>{content}</MobileFrame></View>;
+}
+
+/**
  * `intro` is the optional warm line under the title (`PageIntro`). The tab bar of the active destination appears
  * under the title when `nav` has one with two or more tabs; a screen never builds its own.
  * `actions` is the screen's single primary action (one button) and `menu` its secondary actions (`OverflowMenu`).
@@ -332,6 +379,9 @@ export function Screen({ title, intro, nav, current, onNavigate, actions, menu, 
   const { width } = useWindowDimensions();
   const wide = width >= WIDE;
   const items = nav ?? [];
+  const shell = useShellStore();
+  // Before paint, so the highlight is already right in the first frame of the new screen.
+  useLayoutEffect(() => { shell?.publish(items, current, onNavigate); });
   const destination = items.find((item) => isCurrentDestination(item, current));
   const sectionTabs = destination?.tabs;
   // A change of destination fades in with a short rise, sibling tabs only fade; scroll returns to the top and focus goes to the h1 (docs/design/motion.md).
@@ -358,6 +408,7 @@ export function Screen({ title, intro, nav, current, onNavigate, actions, menu, 
         <ScrollView role="main" tabIndex={0} style={s.scroll} contentContainerStyle={[s.content, s.contentWide]} keyboardShouldPersistTaps="handled">{content}</ScrollView>
       </View>
     );
+    if (shell) return main;
     if (items.length === 0) return <View style={s.root}><BareFrame>{main}</BareFrame></View>;
     return <View style={[s.root, s.rootWide]}><Sidebar nav={items} current={current} onNavigate={onNavigate} />{main}</View>;
   }
@@ -376,6 +427,7 @@ export function Screen({ title, intro, nav, current, onNavigate, actions, menu, 
       <View style={s.mSheet}>{content}{stickyActions}</View>
     </ScrollView>
   );
+  if (shell) return body;
   if (items.length === 0) return <View style={s.root}><BareFrame>{body}</BareFrame></View>;
   return <View style={s.root}><MobileFrame nav={items} current={current} onNavigate={onNavigate}>{body}</MobileFrame></View>;
 }
