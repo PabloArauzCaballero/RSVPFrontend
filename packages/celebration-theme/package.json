@@ -6,14 +6,21 @@
   "exports": {
     ".": "./src/index.tsx",
     "./native": "./src/native.tsx",
-    "./styles.css": "./styles.css"
+    "./styles.css": "./styles.css",
+    "./art": "./src/art/index.tsx",
+    "./art.css": "./src/art/art.css"
   },
   "scripts": {
     "build": "tsc --noEmit",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "coverage": "vitest run --coverage"
+    "coverage": "vitest run --coverage",
+    "art:catalogue": "node scripts/art-catalogue.mjs",
+    "art:hydration": "node scripts/art-hydration-check.mjs"
+  },
+  "dependencies": {
+    "@rsvp/design-tokens": "workspace:*"
   },
   "peerDependencies": {
     "react": ">=18",

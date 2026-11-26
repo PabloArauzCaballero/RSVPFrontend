@@ -9,7 +9,7 @@ Copia vendorizada de los OpenAPI 3.1 del backend (`specs/`) y los tipos generado
 | Comando | Qué comprueba | Dónde corre |
 |---|---|---|
 | `yarn workspace @rsvp/contracts check:generated` | `specs/` es byte a byte lo que fija `backend.lock.json` y `src/generated/` está al día. Sin red | CI y `test` |
-| `yarn workspace @rsvp/contracts check:source` | `backend.lock.json` coincide con el backend en el commit fijado (misma lista de specs, mismos bytes) | CI, con el secreto `RSVP_BACKEND_CONTRACTS_TOKEN` |
+| `yarn workspace @rsvp/contracts check:source` | `backend.lock.json` coincide con el backend en el commit fijado (misma lista de specs, mismos bytes) | CI, con un clon del backend hecho con la deploy key de solo lectura `RSVP_BACKEND_CONTRACTS_DEPLOY_KEY` |
 | `yarn workspace @rsvp/contracts generate [--ref <sha\|rama\|tag>]` | Vendoriza los specs de ese commit, reescribe el lock y regenera los tipos | Local, al subir de versión |
 
 El origen de los specs se elige por variables de entorno, sin valores por defecto:
