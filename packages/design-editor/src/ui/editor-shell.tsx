@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode, type RefObject } from "react";
 import { design } from "@rsvp/celebration-theme";
 import { createAutosaver, type Autosaver, type DraftGateway, type SaveStatus } from "../save/autosave.js";
-import { setPaletteColour } from "../model/ops.js";
 import { canRedo, canUndo, documentOf, editorReducer, initialEditorState, type CanvasName, type EditorMode } from "../model/state.js";
 import { BasicPanel, type DrawingSource, type MediaSource, type TemplateSource } from "./basic-panel.js";
 import { ContrastPanel } from "./contrast-panel.js";

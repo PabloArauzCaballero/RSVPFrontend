@@ -58,7 +58,7 @@ describe("Basic level operations", () => {
       expect(documentOf(state)).toBe(doc);
       expect(state.revision).toBe(0);
     };
-    expect(usefulHeightPx(element, page.canvases.mobile)).toBeGreaterThanOrEqual(44);
+    expect(usefulHeightPx([0, 0, 0, element.h * page.canvases.mobile.rowHeight], element)).toBeGreaterThanOrEqual(44);
     refuses(patchElement("mobile", element.id, { padding: { top: 16, right: 0, bottom: 16, left: 0 } }), "GIFTS_BLOCK_TOO_SMALL");
     refuses(patchElement("mobile", element.id, { border: { width: 8, style: "solid", colour: "accent" } }), "GIFTS_BLOCK_TOO_SMALL");
     refuses(patchElement("mobile", element.id, { typography: { size: 40 } }), "GIFTS_BLOCK_TEXT_TOO_LARGE");
