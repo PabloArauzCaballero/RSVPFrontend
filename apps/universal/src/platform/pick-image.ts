@@ -6,11 +6,14 @@ export interface PickedImage { readonly file: Blob; readonly name: string; reado
 const DEFAULT_TYPE = "image/jpeg";
 const DEFAULT_NAME = "photo.jpg";
 
-/** iOS and Android: the system photo library (asks for permission the first time). */
+/**
+ * iOS and Android: the system photo library (asks for permission the first time). `Compatible` makes iOS hand over a JPEG instead of the
+ * HEIC original, which the catalog rejects (decision 1). Not yet verified on a device.
+ */
 export async function pickImage(): Promise<PickedImage | null> {
   const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!permission.granted) return null;
-  const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 1, exif: false });
+  const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 1, exif: false, preferredAssetRepresentationMode: ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible });
   const asset = result.canceled ? undefined : result.assets[0];
   if (!asset) return null;
   const blob = await (await fetch(asset.uri)).blob();

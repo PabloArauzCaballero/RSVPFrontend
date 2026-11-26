@@ -141,6 +141,9 @@ export const portalEsBO = {
       TITLE: "El nombre (3 a 120 caracteres)", DESCRIPTION: "La descripción (30 a 2000 caracteres)", CATEGORY: "Una categoría de productos", GIFT_IDEA: "Al menos una idea de regalo", PHOTO: "Al menos una foto lista", PRICE: "El precio", STOCK: "La disponibilidad", COVERAGE: "Las ciudades donde entregas", DELIVERY: "El plazo y el costo de envío", DESTINATION: "Un WhatsApp o la página del producto"
     },
     errors: {
+      CONTACT_IN_TEXT_AT: "Quita el teléfono o el enlace del campo {{where}}: «{{fragment}}».",
+      contactFields: { titles: "Nombre", descriptions: "Descripción", details: "Detalles", variants: "Nombre de la versión", delivery: "Condiciones de entrega", template: "Mensaje de WhatsApp", altText: "Texto de la foto" },
+      noVersion: "No tenemos la versión actual de la ficha, así que no podemos guardar sin riesgo. Recárgala y vuelve a intentarlo.",
       notFound: "No encontramos este producto. Puede que sea de otro negocio o que ya no exista.", forbidden: "Este producto es de otro negocio.", notProduct: "Esta oferta es un servicio: solo los productos tienen ficha.",
       LISTING_INCOMPLETE: "Todavía falta información para publicar. Revisa la lista de lo que falta.", CONTACT_IN_TEXT: "Quita el teléfono o el enlace del texto: «{{fragment}}».", DESCRIPTION_REPEATS_TITLE: "La descripción debe contar qué incluye el producto, no repetir el nombre.",
       PRICE_OUT_OF_RANGE: "El precio debe ser mayor que cero y menor que el máximo permitido (Bs 200.000).", GIFT_IDEA_NOT_ALLOWED: "Algunas ideas no corresponden a la categoría. Revísalas en el paso Ideas.", UNKNOWN_CITY: "Alguna ciudad ya no está en el catálogo. Vuelve a elegirlas.",

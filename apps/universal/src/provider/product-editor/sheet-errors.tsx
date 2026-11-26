@@ -27,7 +27,23 @@ export function sheetErrorMessage(error: unknown, t: Translate): string | null {
   const code = error.problem?.code ?? "";
   if (!(SHEET_CODES as readonly string[]).includes(code)) return null;
   const details = sheetProblemDetails(error);
+  // CONTACT_IN_TEXT names the field the catalog found the phone or link in (`titles.es-BO`, `variants[0].label`, `whatsappTemplate.es-BO`…).
+  const where = code === "CONTACT_IN_TEXT" ? contactFieldKey(details.field) : null;
+  if (where) return t("portal.product.errors.CONTACT_IN_TEXT_AT", { where: t(`portal.product.errors.contactFields.${where}`), fragment: details.fragment ?? "" });
   return t(`portal.product.errors.${code}`, { fragment: details.fragment ?? "", variable: details.variable ?? "" });
+}
+
+/** The i18n key under `contactFields` for a field of the catalog's `details.field`, or null when it is not one the portal names. */
+export function contactFieldKey(field: string | undefined): "titles" | "descriptions" | "details" | "variants" | "delivery" | "template" | "altText" | null {
+  if (!field) return null;
+  if (field.startsWith("titles")) return "titles";
+  if (field.startsWith("descriptions")) return "descriptions";
+  if (field.startsWith("details")) return "details";
+  if (field.startsWith("variants")) return "variants";
+  if (field.startsWith("delivery")) return "delivery";
+  if (field.startsWith("whatsappTemplate")) return "template";
+  if (field === "altText") return "altText";
+  return null;
 }
 
 export const needsReload = (error: unknown): boolean => error instanceof ApiError && RELOAD_CODES.has(error.problem?.code ?? "");

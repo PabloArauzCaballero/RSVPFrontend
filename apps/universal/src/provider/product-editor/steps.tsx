@@ -163,7 +163,7 @@ export function DeliveryStep({ draft, set, problems, disabled, cities, citiesErr
   const t = useT();
   return (
     <View style={{ gap: spacing[4] }}>
-      <CoveragePicker cities={cities} value={draft.coverage} onChange={(coverage) => set({ coverage })} label={t("portal.product.delivery.coverage")} help={t("portal.product.delivery.coverageHelp")} error={problem(t, problems, "coverage")} disabled={disabled} />
+      <CoveragePicker cities={cities} value={draft.coverage} onChange={(coverage) => set({ coverage })} label={t("portal.product.delivery.coverage")} help={t("portal.product.delivery.coverageHelp")} error={problem(t, problems, "coverage")} disabled={disabled} failed={Boolean(citiesError)} />
       {citiesError}
       <Field label={t("portal.product.delivery.lead")} value={draft.leadDays} onChange={(leadDays) => set({ leadDays })} keyboardType="number-pad" help={t("portal.product.delivery.leadHelp")} editable={!disabled} {...errorProp(problem(t, problems, "lead"))} testID="product-lead" />
       <Field label={t("portal.product.delivery.shipping")} value={draft.shipping} onChange={(shipping) => set({ shipping })} keyboardType="decimal-pad" help={t("portal.product.delivery.shippingHelp")} editable={!disabled} {...errorProp(problem(t, problems, "shipping"))} testID="product-shipping" />

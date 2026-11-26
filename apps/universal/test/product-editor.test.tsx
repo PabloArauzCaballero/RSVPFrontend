@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NewProductScreen, ProductEditorScreen } from "../src/provider/product-editor/product-editor-screen";
 import { ServicesScreen } from "../src/provider/services-screen";
 import { DestinationsScreen } from "../src/provider/destinations-screen";
-import { createBody, draftFromSheet, EMPTY_DRAFT, keepStep, MISSING_STEP, patchBody, stepFromSlug, stepProblems, waLink, waNumber, type SheetDraft } from "../src/provider/product-editor/model";
+import { createBody, draftFromSheet, EMPTY_DRAFT, keepStep, keepSteps, MISSING_STEP, patchBody, stepFromSlug, stepProblems, waLink, waNumber, type SheetDraft } from "../src/provider/product-editor/model";
 import { writeLocal } from "../src/platform/local-store";
 import { resetSecureStore } from "./stubs/expo-secure-store";
 import { resetRouter, routerCalls, setSearchParams } from "./stubs/expo-router";
@@ -90,6 +90,7 @@ describe("model (pure)", () => {
     expect(createBody({ ...EMPTY_DRAFT, title: " Copas ", category: "TABLEWARE", whatsapp: "+59170012345" })).toEqual({ type: "PRODUCT", category: "TABLEWARE", city: "la-paz", titles: { "es-BO": "Copas" }, destinations: { WHATSAPP: "https://wa.me/59170012345" } });
     const fresh = draftFromSheet(SHEET as never, "es-BO");
     const typed = { ...fresh, price: "999", title: "Otro" };
+    expect(keepSteps(["price", "basic"], { ...fresh, title: "Del servidor" }, typed).title).toBe("Otro");
     const merged = keepStep("price", { ...fresh, title: "Del servidor" }, typed);
     expect(merged.price).toBe("999");
     expect(merged.title).toBe("Del servidor");
@@ -177,7 +178,92 @@ describe("editing a product", () => {
     renderApp(<ProductEditorScreen />, client, HOST);
     await screen.findByTestId("product-title");
     fireEvent.click(screen.getByTestId("step-next"));
-    expect(await screen.findByText("Quita el teléfono o el enlace del texto: «70012345».")).toBeTruthy();
+    expect(await screen.findByText("Quita el teléfono o el enlace del campo Descripción: «70012345».")).toBeTruthy();
+  });
+
+  it("CONTACT_IN_TEXT in a variant label names the variant name, and without a known field keeps the general sentence", async () => {
+    setSearchParams({ lid: LID, paso: "basico" });
+    let field: string | undefined = "variants[1].label";
+    const { client } = fakeClient(handlers({ [`PATCH /providers/${PID}/listings/${LID}`]: () => new HttpFailure(422, { code: "CONTACT_IN_TEXT", details: { ...(field ? { field } : {}), fragment: "www.copas.bo" } }) }));
+    renderApp(<ProductEditorScreen />, client, HOST);
+    await screen.findByTestId("product-title");
+    fireEvent.click(screen.getByTestId("step-next"));
+    expect(await screen.findByText("Quita el teléfono o el enlace del campo Nombre de la versión: «www.copas.bo».")).toBeTruthy();
+    field = undefined;
+    fireEvent.click(screen.getByTestId("step-next"));
+    expect(await screen.findByText("Quita el teléfono o el enlace del texto: «www.copas.bo».")).toBeTruthy();
+  });
+
+  it("428 IF_MATCH_REQUIRED asks to reload the product", async () => {
+    setSearchParams({ lid: LID, paso: "precio" });
+    const { client } = fakeClient(handlers({ [`PATCH /providers/${PID}/listings/${LID}`]: () => new HttpFailure(428, { code: "IF_MATCH_REQUIRED" }) }));
+    renderApp(<ProductEditorScreen />, client, HOST);
+    await screen.findByTestId("product-price");
+    fireEvent.click(screen.getByTestId("step-next"));
+    expect(await screen.findByText("Recarga el producto antes de guardar.")).toBeTruthy();
+    expect(screen.getByTestId("sheet-reload")).toBeTruthy();
+  });
+
+  it("offline while saving keeps what was typed and says there is no connection", async () => {
+    setSearchParams({ lid: LID, paso: "precio" });
+    const { client } = fakeClient(handlers({ [`PATCH /providers/${PID}/listings/${LID}`]: () => { throw new TypeError("Failed to fetch"); } }));
+    renderApp(<ProductEditorScreen />, client, HOST);
+    await screen.findByTestId("product-price");
+    type("Precio (Bs.)", "777");
+    fireEvent.click(screen.getByTestId("step-next"));
+    expect(await screen.findByText(/No hay conexión con el servidor/)).toBeTruthy();
+    expect((screen.getByTestId("product-price") as HTMLInputElement).value).toBe("777");
+  });
+
+  it("a SNAPSHOT_V1 product opened by link shows only the notice and a way back: no steps, no Duplicar", async () => {
+    setSearchParams({ lid: LID, paso: "resumen" });
+    const own = { ...SHEET, completeness: "INCOMPLETE", missing: [], incompleteReason: "OWN_CATALOG_NO_SHEET" };
+    const { client } = fakeClient(handlers({ [`GET /providers/${PID}/listings/${LID}`]: () => own }));
+    renderApp(<ProductEditorScreen />, client, HOST);
+    expect(await screen.findByText("Completa tu ficha para aparecer como regalo")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("product-back"));
+    expect(routerCalls).toContainEqual({ method: "push", target: "/portal/servicios" });
+    expect(screen.queryByTestId("step-precio")).toBeNull();
+    expect(screen.queryByTestId("step-next")).toBeNull();
+  });
+
+  it("clearing the description sends descriptions without es-BO, and saving Básico keeps the en-US texts", async () => {
+    setSearchParams({ lid: LID, paso: "basico" });
+    const sheet = { ...SHEET, titles: { "es-BO": "Juego de 6 copas", "en-US": "Set of 6 glasses" }, descriptions: { "es-BO": SHEET.descriptions["es-BO"], "en-US": "Six hand blown glasses, 250 ml, gift box." } };
+    const { client, calls } = fakeClient(handlers({ [`GET /providers/${PID}/listings/${LID}`]: () => sheet, [`PATCH /providers/${PID}/listings/${LID}`]: () => ({ ...sheet, version: 4 }) }));
+    renderApp(<ProductEditorScreen />, client, HOST);
+    await screen.findByTestId("product-title");
+    fireEvent.change(screen.getByTestId("product-description"), { target: { value: "" } });
+    fireEvent.click(screen.getByTestId("step-next"));
+    await waitFor(() => expect(calls.some((call) => call.method === "PATCH")).toBe(true));
+    const body = calls.find((call) => call.method === "PATCH")?.body as { titles: Record<string, string>; descriptions: Record<string, string> };
+    expect(body.titles).toEqual({ "es-BO": "Juego de 6 copas", "en-US": "Set of 6 glasses" });
+    expect(body.descriptions).toEqual({ "en-US": "Six hand blown glasses, 250 ml, gift box." });
+  });
+
+  it("jumping to another step from the list keeps what was typed in the step left", async () => {
+    setSearchParams({ lid: LID, paso: "basico" });
+    const { client } = fakeClient(handlers({ [`PATCH /providers/${PID}/listings/${LID}`]: () => ({ ...SHEET, version: 4, priceMinor: 42050 }) }));
+    renderApp(<ProductEditorScreen />, client, HOST);
+    await screen.findByTestId("product-title");
+    fireEvent.change(screen.getByTestId("product-title"), { target: { value: "Juego de 8 copas" } });
+    fireEvent.click(screen.getByTestId("step-precio"));
+    await screen.findByTestId("product-price");
+    type("Precio (Bs.)", "420.50");
+    fireEvent.click(screen.getByTestId("step-next"));
+    await screen.findByText("Ciudades donde entregas");
+    fireEvent.click(screen.getByTestId("step-basico"));
+    expect((await screen.findByTestId("product-title") as HTMLInputElement).value).toBe("Juego de 8 copas");
+  });
+
+  it("the «Copia creada» note shows on arrival and goes with the first step change", async () => {
+    setSearchParams({ lid: LID, paso: "fotos", copia: "1" });
+    const { client } = fakeClient(handlers());
+    renderApp(<ProductEditorScreen />, client, HOST);
+    expect(await screen.findByText(/Copia creada como borrador/)).toBeTruthy();
+    fireEvent.click(screen.getByTestId("step-precio"));
+    await screen.findByTestId("product-price");
+    expect(screen.queryByText(/Copia creada como borrador/)).toBeNull();
   });
 
   it("photos: the first READY one is the cover, a rejected HEIC says how to fix it, and the add button stays while under 5", async () => {
@@ -365,7 +451,7 @@ describe("the business WhatsApp message (§5.8, «Cómo te contactan»)", () => 
     fireEvent.click(within(section).getByTestId("template-own"));
     fireEvent.change(within(section).getByTestId("template-text"), { target: { value: "Visita www.copas.bo" } });
     fireEvent.click(within(section).getByTestId("business-template-save"));
-    expect(await within(section).findByText("Quita el teléfono o el enlace del texto: «www.copas.bo».")).toBeTruthy();
+    expect(await within(section).findByText("Quita el teléfono o el enlace del campo Mensaje de WhatsApp: «www.copas.bo».")).toBeTruthy();
     expect((within(section).getByTestId("template-text") as HTMLTextAreaElement).value).toBe("Visita www.copas.bo");
   });
 

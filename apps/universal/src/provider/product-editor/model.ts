@@ -157,17 +157,24 @@ function detailsOf(draft: SheetDraft): PatchListingInput["details"] | undefined 
   return Object.keys(details).length ? details : undefined;
 }
 
+/** The texts a sheet already holds in languages other than es-BO (en-US): the portal edits es-BO only and must not erase the rest. */
+const otherLocales = (map: unknown): Record<string, string> => Object.fromEntries(Object.entries((map ?? {}) as Record<string, string>).filter(([locale]) => locale !== "es-BO"));
+
 /**
  * The PATCH of one step: only that step's fields, so a stale field of another step is never sent back. `variants[]` replaces the
  * list (kept ids keep their photos) and `priceMinor` follows the default variant, as §5.1 requires.
  */
-export function patchBody(step: StepKey, draft: SheetDraft): PatchListingInput | null {
+export function patchBody(step: StepKey, draft: SheetDraft, loaded?: Pick<ProductSheet, "titles" | "descriptions" | "delivery">): PatchListingInput | null {
   switch (step) {
     case "basic": {
       const description = draft.description.trim();
+      const others = otherLocales;
+      // PATCH replaces each text map whole: the other languages the sheet already holds (en-US) go back as they came, and an empty
+      // description is sent as a map without es-BO (the catalog then lists DESCRIPTION as missing) instead of being left out, which
+      // would keep the old text.
       return {
-        titles: { "es-BO": draft.title.trim() }, category: draft.category, city: draft.city,
-        ...(description ? { descriptions: { "es-BO": description } } : {}),
+        titles: { ...others(loaded?.titles), "es-BO": draft.title.trim() }, category: draft.category, city: draft.city,
+        descriptions: { ...others(loaded?.descriptions), ...(description ? { "es-BO": description } : {}) },
         details: detailsOf(draft) ?? null
       };
     }
@@ -190,7 +197,7 @@ export function patchBody(step: StepKey, draft: SheetDraft): PatchListingInput |
       return {
         delivery: {
           coverageCities: [...draft.coverage], leadTimeDays: Number(draft.leadDays), shippingCostMinor: parseMinor(draft.shipping) ?? 0, pickupAvailable: draft.pickup,
-          ...(conditions ? { conditions: { "es-BO": conditions } } : {})
+          conditions: { ...otherLocales(loaded?.delivery?.conditions), ...(conditions ? { "es-BO": conditions } : {}) }
         }
       };
     }
@@ -217,7 +224,11 @@ export const STEP_FIELDS: Readonly<Record<StepKey, readonly (keyof SheetDraft)[]
   contact: ["whatsapp", "productPage", "ownTemplate", "template"]
 };
 export function keepStep(step: EditorStep, fresh: SheetDraft, typed: SheetDraft): SheetDraft {
-  if (step === "summary") return { ...fresh, whatsapp: typed.whatsapp, productPage: typed.productPage };
-  const kept = Object.fromEntries(STEP_FIELDS[step].map((field) => [field, typed[field]]));
+  return keepSteps([step], fresh, typed);
+}
+/** Like `keepStep` for every step with unsaved edits: jumping between steps from the list must not drop what was typed in the one left. */
+export function keepSteps(steps: readonly EditorStep[], fresh: SheetDraft, typed: SheetDraft): SheetDraft {
+  const fields = steps.flatMap((step) => (step === "summary" ? [] : STEP_FIELDS[step]));
+  const kept = Object.fromEntries(fields.map((field) => [field, typed[field]]));
   return { ...fresh, whatsapp: typed.whatsapp, productPage: typed.productPage, ...kept };
 }

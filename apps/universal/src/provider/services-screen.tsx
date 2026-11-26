@@ -169,7 +169,7 @@ function NewOffer({ providerId, onClose, onCreated }: { readonly providerId: str
       <Field label={t(isProduct ? "portal.services.new.productPrice" : "portal.services.new.price")} value={price} onChange={setPrice} help={t("portal.services.new.priceHelp")} keyboardType="decimal-pad" testID="listing-price" />
       <Field label={t("portal.services.new.whatsapp")} value={whatsapp} onChange={setWhatsapp} help={t("portal.services.new.destinationsHelp")} keyboardType="url" testID="listing-whatsapp" />
       <Text accessibilityRole="header" style={styles.subtitle}>{t("portal.services.new.fulfillmentTitle")}</Text>
-      <CoveragePicker cities={cities} value={coverage} onChange={setCoverage} label={t("portal.services.new.coverage")} help={t("portal.services.new.coverageHelp")} />
+      <CoveragePicker cities={cities} value={coverage} onChange={setCoverage} label={t("portal.services.new.coverage")} help={t("portal.services.new.coverageHelp")} failed={geo.isError} />
       {geo.isError ? <ErrorNotice error={geo.error} onRetry={() => { void geo.refetch(); }} /> : null}
       <Field label={t("portal.services.new.lead")} value={lead} onChange={setLead} keyboardType="number-pad" testID="listing-lead" />
       <Field label={t("portal.services.new.conditions")} value={conditions} onChange={setConditions} multiline testID="listing-conditions" />

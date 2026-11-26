@@ -10,9 +10,9 @@ import { RowsSkeleton } from "./parts";
  * Coverage as the catalogue's cities, by name (GET /providers/geo): no slugs to type, nothing the server will reject as unknown
  * (L23). Shared by the service offer form and the product sheet's delivery step.
  */
-export function CoveragePicker({ cities, value, onChange, label, help, error, disabled = false }: {
+export function CoveragePicker({ cities, value, onChange, label, help, error, disabled = false, failed = false }: {
   readonly cities: readonly ProviderGeoCity[] | undefined; readonly value: readonly string[]; readonly onChange: (next: readonly string[]) => void;
-  readonly label: string; readonly help: string; readonly error?: string | undefined; readonly disabled?: boolean;
+  readonly label: string; readonly help: string; readonly error?: string | undefined; readonly disabled?: boolean; readonly failed?: boolean;
 }): ReactNode {
   const styles = useStyles();
   const palette = useColors();
@@ -25,7 +25,7 @@ export function CoveragePicker({ cities, value, onChange, label, help, error, di
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing[2] }}>
           {cities.map((city) => <ToggleChip key={city.slug} label={city.name} on={value.includes(city.slug)} disabled={disabled} onPress={() => toggle(city.slug)} testID={`coverage-${city.slug}`} />)}
         </View>
-      ) : <RowsSkeleton count={1} minHeight={44} />}
+      ) : failed ? null : <RowsSkeleton count={1} minHeight={44} />}
       {error ? <Text role="alert" style={[styles.muted, { color: palette.danger }]}>{error}</Text> : null}
     </View>
   );

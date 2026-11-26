@@ -17,7 +17,7 @@ import { PortalErrorNotice, PortalErrorState } from "../errors";
 import { PORTAL_ROUTES, PortalScreen, usePortalHeader } from "../frame";
 import { RowsSkeleton, StickyActions } from "../parts";
 import {
-  createBody, draftFromSheet, EMPTY_DRAFT, keepStep, nextStep, patchBody, previousStep, STEP_SLUG, stepFromSlug, stepProblems, STEPS, stepsMissing,
+  createBody, draftFromSheet, EMPTY_DRAFT, keepSteps, nextStep, patchBody, previousStep, STEP_SLUG, stepFromSlug, stepProblems, STEPS, stepsMissing,
   type EditorStep, type LocalProblem, type SheetDraft, type StepKey
 } from "./model";
 import { BasicStep, ContactStep, DeliveryStep, IdeasStep, PriceStep } from "./steps";
@@ -107,6 +107,10 @@ function ProductEditor({ provider, listingId, initialStep, duplicated }: EditorP
   const duplicateKey = useRef(newIdempotencyKey());
   const ideas = useGiftIdeas(client, draft.category || undefined, locale);
   const [published, setPublished] = useState(false);
+  // Steps with unsaved edits: leaving one from the step list keeps what was typed there when a newer version of the sheet arrives.
+  const dirty = useRef(new Set<EditorStep>());
+  const [showCopyNote, setShowCopyNote] = useState(duplicated);
+  const [versionLost, setVersionLost] = useState(false);
 
   // The draft follows the server whenever a newer version arrives (first load, a save, a photo, a reload after 409); the open
   // step keeps what was typed so a conflict never throws work away.
@@ -114,7 +118,7 @@ function ProductEditor({ provider, listingId, initialStep, duplicated }: EditorP
     if (!sheet || loadedVersion.current === sheet.version) return;
     const first = loadedVersion.current === null;
     loadedVersion.current = sheet.version ?? null;
-    setDraft((typed) => (first ? draftFromSheet(sheet, locale) : keepStep(step, draftFromSheet(sheet, locale), typed)));
+    setDraft((typed) => (first ? draftFromSheet(sheet, locale) : keepSteps([step, ...dirty.current], draftFromSheet(sheet, locale), typed)));
   }, [sheet, locale, step]);
   // A new product starts on the first product category, so «Categoría» never shows a value the draft does not hold.
   useEffect(() => {
@@ -122,11 +126,13 @@ function ProductEditor({ provider, listingId, initialStep, duplicated }: EditorP
     if (creating && !draft.category && first) setDraft((current) => ({ ...current, category: first }));
   }, [categories.data, creating, draft.category]);
 
-  const set = (change: Partial<SheetDraft>): void => { setDraft((current) => ({ ...current, ...change })); if (problems.length) setProblems([]); };
+  const set = (change: Partial<SheetDraft>): void => { dirty.current.add(step); setDraft((current) => ({ ...current, ...change })); if (problems.length) setProblems([]); };
   const open = (target: EditorStep): void => {
-    setProblems([]); patch.reset(); publish.reset();
+    setProblems([]); patch.reset(); publish.reset(); setVersionLost(false);
+    // The «Copia creada» note belongs to the arrival, not to the product: it goes with the first step change.
+    setShowCopyNote(false);
     setStep(target);
-    if (listingId) router.setParams({ paso: STEP_SLUG[target] });
+    if (listingId) router.setParams({ paso: STEP_SLUG[target], copia: undefined });
   };
   const missing = stepsMissing(sheet?.missing);
   const busy = create.isPending || patch.isPending || publish.isPending || duplicate.isPending;
@@ -142,21 +148,25 @@ function ProductEditor({ provider, listingId, initialStep, duplicated }: EditorP
       create.mutate({ input: createBody(draft), idempotencyKey: createKey.current }, { onSuccess: (created) => router.replace(productHref(created.id, "ideas") as Href) });
       return;
     }
-    const body = patchBody(current, draft);
-    if (!body || !sheet?.version) { open(nextStep(current)); return; }
-    patch.mutate({ version: sheet.version, input: body }, { onSuccess: () => open(nextStep(current)) });
+    const body = patchBody(current, draft, sheet);
+    if (!body) { open(nextStep(current)); return; }
+    // Without a version there is no If-Match: say so and offer to reload, never move on as if it had been saved.
+    if (!sheet?.version) { setVersionLost(true); return; }
+    patch.mutate({ version: sheet.version, input: body }, { onSuccess: () => { dirty.current.delete(current); open(nextStep(current)); } });
   };
-  const reorder = (order: readonly string[]): void => { if (sheet?.version) patch.mutate({ version: sheet.version, input: { photoOrder: [...order] } }); };
+  const reorder = (order: readonly string[]): void => { if (!sheet?.version) { setVersionLost(true); return; } patch.mutate({ version: sheet.version, input: { photoOrder: [...order] } }); };
   const publishNow = (): void => { if (sheet && !busy) publish.mutate(sheet.id, { onSuccess: () => { setPublished(true); void sheetQuery.refetch(); } }); };
   const duplicateNow = (): void => {
     if (!sheet || busy) return;
     duplicate.mutate({ listingId: sheet.id, idempotencyKey: duplicateKey.current }, { onSuccess: (copy) => { duplicateKey.current = newIdempotencyKey(); router.push(productHref(copy.id, "photos", "&copia=1") as Href); } });
   };
 
+  // A product of the own gift catalog (SNAPSHOT_V1) has no sheet yet: PATCH and photos answer 409/422, so there is nothing to edit.
+  const noSheet = sheet?.incompleteReason === "OWN_CATALOG_NO_SHEET";
   const canPublish = Boolean(sheet && sheet.completeness === "COMPLETE" && !sheet.published);
   usePortalHeader(
     step === "summary" && sheet && !sheet.published ? { icon: "check", label: publish.isPending ? t("portal.product.actions.publishing") : t("portal.product.actions.publish"), busy: publish.isPending, disabled: !canPublish || busy, onPress: publishNow, testID: "product-publish" } : undefined,
-    sheet ? [{ key: "duplicate", label: duplicate.isPending ? t("portal.product.actions.duplicating") : t("portal.product.actions.duplicate"), disabled: busy || sheet.completeness === "HIDDEN_BY_ADMIN", onPress: duplicateNow }, { key: "offers", label: t("portal.product.actions.backToOffers"), onPress: () => router.push(PORTAL_ROUTES.services as Href) }] : undefined
+    sheet && !noSheet ? [{ key: "duplicate", label: duplicate.isPending ? t("portal.product.actions.duplicating") : t("portal.product.actions.duplicate"), disabled: busy || sheet.completeness === "HIDDEN_BY_ADMIN", onPress: duplicateNow }, { key: "offers", label: t("portal.product.actions.backToOffers"), onPress: () => router.push(PORTAL_ROUTES.services as Href) }] : undefined
   );
 
   if (!creating && sheetQuery.isPending) return <RowsSkeleton count={4} minHeight={96} />;
@@ -168,6 +178,14 @@ function ProductEditor({ provider, listingId, initialStep, duplicated }: EditorP
     return <PortalErrorState error={sheetQuery.error} onRetry={() => { void sheetQuery.refetch(); }} />;
   }
   if (sheet && sheet.type !== "PRODUCT") return <Notice>{t("portal.product.errors.notProduct")}</Notice>;
+  if (noSheet) {
+    return (
+      <View style={{ gap: spacing[4] }} testID="product-no-sheet">
+        <Notice>{t("portal.product.notGift")}</Notice>
+        <View style={{ alignSelf: "flex-start" }}><ActionButton variant="secondary" icon="back" label={t("portal.product.actions.backToOffers")} onPress={() => router.push(PORTAL_ROUTES.services as Href)} testID="product-back" /></View>
+      </View>
+    );
+  }
 
   const stepIndex = ALL_STEPS.indexOf(step);
   const stepName = t(`portal.product.steps.${step}`);
@@ -198,7 +216,7 @@ function ProductEditor({ provider, listingId, initialStep, duplicated }: EditorP
   return (
     <View style={{ gap: spacing[5] }}>
       <PageIntro>{t("portal.product.intro")}</PageIntro>
-      {duplicated ? <SuccessNote message={t("portal.product.summary.duplicated")} /> : null}
+      {showCopyNote ? <SuccessNote message={t("portal.product.summary.duplicated")} /> : null}
       <StepList step={step} missing={missing} created={!creating} onOpen={open} />
       {sheet ? <View style={[styles.row, { gap: spacing[2] }]}><CompletenessChip state={sheet.completeness} /><Text style={styles.muted}>{sheet.title}</Text></View> : null}
       <Section title={announce}>
@@ -209,6 +227,7 @@ function ProductEditor({ provider, listingId, initialStep, duplicated }: EditorP
           <SheetErrorNotice error={publish.error ?? duplicate.error} onReload={reload} onRetry={publish.error ? publishNow : duplicateNow} onMissing={(codes) => <MissingList missing={codes} onOpen={open} title={false} />} />
         ) : (
           <>
+            {versionLost ? <Notice kind="error"><View style={{ gap: spacing[2] }} testID="sheet-no-version"><Text style={styles.body}>{t("portal.product.errors.noVersion")}</Text><ActionButton icon="refresh" variant="secondary" label={t("portal.product.actions.reload")} onPress={() => { setVersionLost(false); reload(); }} testID="sheet-reload" /></View></Notice> : null}
             <SheetErrorNotice error={create.error ?? patch.error ?? duplicate.error} onReload={reload} onRetry={() => { if (step !== "photos") save(step); }} />
             <StickyActions ground="surface">
               {step === "photos" ? (

@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import type { ApiClient } from "@rsvp/api-client";
 import type { ProviderCatalogComponents } from "@rsvp/contracts";
@@ -96,7 +97,7 @@ export function productSheetService(client: ApiClient, put: typeof fetch = (inpu
     get: (providerId: string, listingId: string, locale: string, signal?: AbortSignal): Promise<ProductSheet> =>
       api.get("/providers/{providerId}/listings/{listingId}", { path: { providerId, listingId }, query: { locale: sheetLocale(locale) }, ...(signal ? { signal } : {}) }),
     create: (providerId: string, body: CreateProductInput, locale: string, idempotencyKey: string): Promise<ProductSheet> =>
-      api.post("/providers/{providerId}/listings", { path: { providerId }, query: { locale: sheetLocale(locale) }, header: { "Idempotency-Key": idempotencyKey }, body }) as Promise<ProductSheet>,
+      api.post("/providers/{providerId}/listings", { path: { providerId }, query: { locale: sheetLocale(locale) }, header: { "Idempotency-Key": idempotencyKey }, body }),
     patch: (providerId: string, listingId: string, version: number, body: PatchListingInput, locale: string): Promise<ProductSheet> =>
       api.patch("/providers/{providerId}/listings/{listingId}", { path: { providerId, listingId }, query: { locale: sheetLocale(locale) }, header: { "If-Match": ifMatch(version) }, body }),
     duplicate: (providerId: string, listingId: string, locale: string, idempotencyKey: string): Promise<ProductSheet> =>
@@ -121,7 +122,7 @@ export function productSheetService(client: ApiClient, put: typeof fetch = (inpu
     whatsappTemplate: (providerId: string): Promise<WhatsappTemplateView> =>
       api.get("/providers/{providerId}/whatsapp-template", { path: { providerId } }),
     saveWhatsappTemplate: (providerId: string, template: WhatsappTemplate): Promise<WhatsappTemplateView> =>
-      api.put("/providers/{providerId}/whatsapp-template", { path: { providerId }, body: { template } as never })
+      api.put("/providers/{providerId}/whatsapp-template", { path: { providerId }, body: { template } })
   } as const;
 }
 export type ProductSheetService = ReturnType<typeof productSheetService>;
@@ -214,6 +215,9 @@ export interface UploadPhotoVariables {
  */
 export function useUploadListingPhoto(client: ApiClient, providerId: string, listingId: string, locale: string, options: { readonly put?: typeof fetch; readonly poll?: PollOptions } = {}) {
   const queryClient = useQueryClient();
+  // The wait polls the sheet for up to 60 s: leaving the screen stops it instead of reading in the background.
+  const controller = useRef<AbortController | null>(null);
+  useEffect(() => () => { controller.current?.abort(); }, []);
   return useMutation({
     mutationFn: async ({ file, contentType, idempotencyKey, altText, variantId, onStage }: UploadPhotoVariables): Promise<ListingPhoto | undefined> => {
       const problem = photoInputProblem({ type: contentType, size: file.size });
@@ -230,7 +234,8 @@ export function useUploadListingPhoto(client: ApiClient, providerId: string, lis
       }
       onStage?.("processing");
       if (registered.status === "PENDING_UPLOAD" || registered.upload) await service.completePhoto(providerId, listingId, registered.id);
-      const { sheet, photo } = await waitForPhoto(service, { providerId, listingId, photoId: registered.id, locale }, options.poll);
+      controller.current = new AbortController();
+      const { sheet, photo } = await waitForPhoto(service, { providerId, listingId, photoId: registered.id, locale }, { ...options.poll, signal: controller.current.signal });
       remember(queryClient, providerId, locale, sheet);
       return photo;
     },

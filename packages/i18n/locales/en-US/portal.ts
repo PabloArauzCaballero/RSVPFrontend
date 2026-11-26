@@ -144,6 +144,9 @@ export const portalEnUS: DeepStrings<typeof portalEsBO> = {
       TITLE: "The name (3 to 120 characters)", DESCRIPTION: "The description (30 to 2000 characters)", CATEGORY: "A product category", GIFT_IDEA: "At least one gift idea", PHOTO: "At least one ready photo", PRICE: "The price", STOCK: "The availability", COVERAGE: "The cities you deliver to", DELIVERY: "The lead time and shipping cost", DESTINATION: "A WhatsApp or the product page"
     },
     errors: {
+      CONTACT_IN_TEXT_AT: "Remove the phone number or link from the {{where}} field: “{{fragment}}”.",
+      contactFields: { titles: "Name", descriptions: "Description", details: "Details", variants: "Version name", delivery: "Delivery conditions", template: "WhatsApp message", altText: "Photo text" },
+      noVersion: "We do not have the current version of the sheet, so we cannot save it safely. Reload it and try again.",
       notFound: "We could not find this product. It may belong to another business or no longer exist.", forbidden: "This product belongs to another business.", notProduct: "This offer is a service: only products have a sheet.",
       LISTING_INCOMPLETE: "Some information is still missing to publish. Check the missing list.", CONTACT_IN_TEXT: "Remove the phone number or link from the text: “{{fragment}}”.", DESCRIPTION_REPEATS_TITLE: "The description must say what the product includes, not repeat the name.",
       PRICE_OUT_OF_RANGE: "The price must be above zero and below the allowed maximum (Bs 200,000).", GIFT_IDEA_NOT_ALLOWED: "Some ideas do not belong to the category. Review them in the Ideas step.", UNKNOWN_CITY: "A city is no longer in the catalog. Choose them again.",
