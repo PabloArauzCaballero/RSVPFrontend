@@ -54,6 +54,8 @@ export function IdeasStep({ ideas, ticked, listed, headline, cities, city, onCit
   const locale = useLocale();
   const shown = (ideas ?? []).filter((entry) => band === null || ideaOverlapsBand(entry.priceRange, band));
   const fresh = (ideas ?? []).filter((entry) => !listed.has(entry.idea.code));
+  const hasIdeas = (ideas?.length ?? 0) > 0;
+  const nothingNew = hasIdeas && fresh.length === 0;
   return (
     <View style={{ gap: spacing[4] }}>
       <Text style={styles.body}>{t("gifts.host.wizard.ideas.intro")}</Text>
@@ -75,8 +77,8 @@ export function IdeasStep({ ideas, ticked, listed, headline, cities, city, onCit
           <View style={styles.row}><ActionButton variant="secondary" label={t("gifts.host.wizard.ideas.emptyStore")} onPress={onStore} testID="wizard-empty-store" /></View>
         </View>
       ) : null}
-      {ideas && ideas.length > 0 ? <Text accessibilityRole="header" aria-level={3} style={styles.itemTitle} testID="wizard-headline">{headline}</Text> : null}
-      {ideas && ideas.length > 0 && fresh.length === 0 ? (
+      {hasIdeas ? <Text accessibilityRole="header" aria-level={3} style={styles.itemTitle} testID="wizard-headline">{headline}</Text> : null}
+      {nothingNew ? (
         <Notice kind="info"><Text style={styles.body}>{t("gifts.host.wizard.ideas.allListed")}</Text><ActionButton variant="secondary" label={t("gifts.host.wizard.summary.seeList")} onPress={onSeeList} testID="wizard-all-listed-see" /></Notice>
       ) : null}
       {band !== null ? (
@@ -85,7 +87,7 @@ export function IdeasStep({ ideas, ticked, listed, headline, cities, city, onCit
           <ActionButton variant="secondary" label={t("gifts.host.wizard.ideas.clearFilter")} onPress={onClearBand} testID="wizard-band-clear" />
         </View>
       ) : null}
-      {band !== null && ideas && ideas.length > 0 && shown.length === 0 ? <Text style={styles.body} testID="wizard-band-none">{t("gifts.host.wizard.ideas.filterNone")}</Text> : null}
+      {band !== null && hasIdeas && shown.length === 0 ? <Text style={styles.body} testID="wizard-band-none">{t("gifts.host.wizard.ideas.filterNone")}</Text> : null}
       <View role="group" accessibilityRole="none" accessibilityLabel={headline} style={{ gap: spacing[3] }}>
         <Stagger>{shown.map((entry) => {
           const code = entry.idea.code;

@@ -168,9 +168,20 @@ export function createContractMock(options: MockOptions = {}) {
       return json(200, path === "/celebrations" ? { items: [celebration] } : celebration);
     }
 
-    // Contract 1.3.0 (A18): the demo celebration is PUBLISHED and its public page (/celebrations/public/{slug}, above) exists, so it is LIVE.
+    // provider-catalog 3.6.0 (R3, §5.5): what the host assistant of «Agregar regalo» reads. No photo (null) so a visual run never leaves the machine.
+    if (method === "GET" && path === "/providers/geo") return json(200, { country: "BO", items: [{ slug: "santa-cruz", name: "Santa Cruz de la Sierra", department: "Santa Cruz", departmentCode: "SC", capital: true }, { slug: "la-paz", name: "La Paz", department: "La Paz", departmentCode: "LP", capital: true }] });
+    if (method === "GET" && path === "/providers/gift-ideas/recommendations") {
+      const card = (listingId: string, title: string, amountMinor: number) => ({ listingId, title, photo: null, price: { amountMinor, currency: "BOB" }, stock: "AVAILABLE", variants: [], provider: { name: "Dulce Sol", slug: "dulce-sol", verified: true }, deliversToCity: true, leadTimeDays: 3, shippingCostMinor: 0, destinations: ["PRODUCT_PAGE", "WHATSAPP"], featured: false });
+      const idea = (code: string, name: string, products: ReturnType<typeof card>[]) => ({ idea: { code, name }, productCount: products.length, priceRange: { minMinor: Math.min(...products.map((item) => item.price.amountMinor)), maxMinor: Math.max(...products.map((item) => item.price.amountMinor)), currency: "BOB" }, products, nextOffset: null });
+      return json(200, { eventType: "WEDDING", city: null, scope: "EVENT_TYPE", items: [
+        idea("DINNERWARE_SET", "Juego de vajilla", [card("00000000-0000-4000-8000-0000000000a1", "Juego de platos dorados", 30_000), card("00000000-0000-4000-8000-0000000000a2", "Vajilla de porcelana", 90_000)]),
+        idea("CAKE", "Torta o repostería", [card("00000000-0000-4000-8000-0000000000a3", "Torta de bodas", 45_000)])
+      ] }, { "cache-control": "public, max-age=60" });
+    }
+
+    // Contract 1.3.0 (A18): the demo celebration is PUBLISHED and its public page (/celebrations/public/{slug}, above) exists, so it is LIVE (and not hidden by moderation: `moderation` is null, contract 1.6.0).
     if (method === "GET" && path === `/celebrations/${celebrationId}/public-page`) {
-      return json(200, { celebrationId, status: "PUBLISHED", state: "LIVE", version: 3, publicVersion: 3 }, { "cache-control": "no-store" });
+      return json(200, { celebrationId, status: "PUBLISHED", state: "LIVE", version: 3, publicVersion: 3, moderation: null }, { "cache-control": "no-store" });
     }
 
     // ---- guest surface: opaque token as Bearer ----

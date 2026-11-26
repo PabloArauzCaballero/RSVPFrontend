@@ -24,19 +24,26 @@ function Stepper({ value, onChange, idea }: { readonly value: number; readonly o
   const palette = useColors();
   const styles = useStyles();
   const t = useT();
-  const button = (label: string, next: number, disabled: boolean, testID: string, glyph: string): ReactNode => (
+  // The sign is drawn (a bar, or two crossed bars), not typed: it is a mark, not text, and it keeps the same weight in every font.
+  const sign = (plus: boolean): ReactNode => (
+    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: 14, height: 14, alignItems: "center", justifyContent: "center" }}>
+      <View style={{ position: "absolute", width: 14, height: 2, borderRadius: 1, backgroundColor: palette.text }} />
+      {plus ? <View style={{ position: "absolute", width: 2, height: 14, borderRadius: 1, backgroundColor: palette.text }} /> : null}
+    </View>
+  );
+  const button = (label: string, next: number, disabled: boolean, testID: string, plus: boolean): ReactNode => (
     <Pressable role="button" accessibilityRole="button" accessibilityLabel={`${label} · ${idea}`} aria-disabled={disabled} disabled={disabled} onPress={() => onChange(next)} testID={testID}
       style={[styles.choice, { minWidth: TOUCH, minHeight: TOUCH, alignItems: "center" }, disabled && styles.buttonDisabled]}>
-      <Text style={[styles.itemTitle, { color: palette.text }]}>{glyph}</Text>
+      {sign(plus)}
     </Pressable>
   );
   return (
     <View style={{ gap: spacing[1] }}>
       <Text style={styles.label}>{t("gifts.host.wizard.products.quantity")}</Text>
       <View style={{ flexDirection: "row", alignItems: "center", gap: spacing[3] }}>
-        {button(t("gifts.host.wizard.products.quantityLess"), value - 1, value <= 1, `quantity-less-${idea}`, "−")}
+        {button(t("gifts.host.wizard.products.quantityLess"), value - 1, value <= 1, `quantity-less-${idea}`, false)}
         <Text aria-live="polite" accessibilityLiveRegion="polite" accessibilityLabel={t("gifts.host.wizard.products.quantityValue", { count: value })} style={[styles.itemTitle, { minWidth: 32, textAlign: "center" }]} testID={`quantity-${idea}`}>{value}</Text>
-        {button(t("gifts.host.wizard.products.quantityMore"), value + 1, value >= MAX_GIFT_QUANTITY, `quantity-more-${idea}`, "+")}
+        {button(t("gifts.host.wizard.products.quantityMore"), value + 1, value >= MAX_GIFT_QUANTITY, `quantity-more-${idea}`, true)}
       </View>
       <Text style={styles.muted}>{t("gifts.host.wizard.products.quantityHelp", { max: MAX_GIFT_QUANTITY })}</Text>
     </View>

@@ -47,7 +47,7 @@ describe("visual mock behaves like the gateway the app talks to", () => {
     const schema = spec.components.schemas["PublicPageStatus"]!;
     expect(Object.keys(reply.body).sort()).toEqual(Object.keys(schema.properties).sort());
     for (const field of schema.required) expect(reply.body).toHaveProperty(field);
-    expect(reply.body).toEqual({ celebrationId: demo.id, status: demo.status, state: "LIVE", version: demo.version, publicVersion: demo.version });
+    expect(reply.body).toEqual({ celebrationId: demo.id, status: demo.status, state: "LIVE", version: demo.version, publicVersion: demo.version, moderation: null });
     // Every field the contract requires on a Celebration is present (searchIndexing is required since 1.4.0).
     for (const field of spec.components.schemas["Celebration"]!.required) expect(demo).toHaveProperty(field);
   });

@@ -460,10 +460,10 @@ describe("REQ-F23-06 · who sees the requester", () => {
 describe("A28 · the old «De un proveedor» route no longer adds provider offers", () => {
   it("/regalos/proveedores opens the product catalog and never lists GET /providers offers as gifts", async () => {
     const card = { listingId: "svc-1", providerId: PID, providerSlug: "dulce", providerName: "Dulce Sol", name: "Servicio de catering", category: "CATERING", city: "La Paz", verified: true, destinations: ["WHATSAPP"] };
-    const { client, calls } = fakeClient(handlers({ "GET /providers": () => ({ items: [card], total: 1, page: 1, pageSize: 6 }), "GET /listings": () => ({ items: [] }) }));
+    const { client, calls } = fakeClient(handlers({ "GET /providers": () => ({ items: [card], total: 1, page: 1, pageSize: 6 }), "GET /providers/gift-ideas/recommendations": () => ({ eventType: "WEDDING", city: null, scope: "EVENT_TYPE", items: [] }) }));
     renderApp(<ProvidersScreen celebrationId="c-1" onNavigate={navigate} />, client);
-    expect(await screen.findByTestId("catalog-query")).toBeTruthy();
-    expect(await screen.findByTestId("catalog-empty")).toBeTruthy();
+    expect(await screen.findByTestId("gift-assistant")).toBeTruthy();
+    expect(await screen.findByTestId("wizard-ideas-empty")).toBeTruthy();
     expect(screen.queryByTestId("provider-svc-1")).toBeNull();
     expect(screen.queryByTestId("add-provider-svc-1")).toBeNull();
     expect(calls.some((call) => call.path === "/providers")).toBe(false);
