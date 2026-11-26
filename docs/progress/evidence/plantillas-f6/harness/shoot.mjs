@@ -1,9 +1,14 @@
-// Linux screenshots of the F6 components. Usage: node shoot.mjs <outDir>  (bundle.js, bg.webp and bg.avif next to it come from the build step in the PR body)
+// Linux screenshots of the F6 components. Usage: node shoot.mjs <outDir> [workDir]
+// workDir (or the HARNESS_DIR variable) is the folder with bundle.js, bg.webp and bg.avif that build.sh produces; build.sh sets it.
 import { chromium } from "playwright";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 
-const work = process.env.HARNESS_DIR ?? "/tmp/claude-0/h";
+const work = process.argv[3] ?? process.env.HARNESS_DIR;
+if (!work) {
+  console.error("shoot.mjs: falta la carpeta de trabajo. Pásala como segundo argumento (node shoot.mjs <outDir> <workDir>) o con HARNESS_DIR; build.sh la crea y la exporta.");
+  process.exit(2);
+}
 const out = resolve(process.argv[2] ?? ".");
 const css = readFileSync(new URL("../../../../../packages/celebration-theme/styles.css", import.meta.url), "utf8");
 const palettes = {
