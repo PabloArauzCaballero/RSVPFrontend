@@ -400,30 +400,53 @@ describe("ornaments (PL-M7)", () => {
 });
 
 /**
- * PL-116-R5-1 · «sin caras». A drawing that must not read as a face has no element, isolated and small, where eyes or a mouth would
- * sit: a ring, a dot, a pair of openings or a short line in the middle of the figure all read as features (a lone ring and dot
- * read as a cyclops). Its ornament is a band, a crest or a rim, wide enough to be read as a stripe.
+ * PL-116-R5-1 · PL-138-1/2 · «sin caras». A drawing that must not read as a face has nothing on its figure that could be an eye, a brow or a mouth
+ * (a ring, a dot, a pair of openings, a short line, a W or a V). The only thing allowed on the egg is its ornament: ONE continuous band
+ * (a greca of small teeth, like a diadem ribbon) that crosses the egg from edge to edge high on the forehead. Everything else on the egg,
+ * the forehead above the band included, is plain ink.
  */
-const FACELESS: Readonly<Record<string, { readonly zone: Box; readonly maxWidth: number }>> = {
-  "mascara-morenada": { zone: { x0: 30, y0: 54, x1: 90, y1: 104 }, maxWidth: 34 }
+interface Faceless { readonly egg: Box; readonly band: Box; readonly minWidth: number; readonly minTeeth: number }
+const FACELESS: Readonly<Record<string, Faceless>> = {
+  "mascara-morenada": { egg: { x0: 32, y0: 38, x1: 88, y1: 102 }, band: { x0: 36, y0: 44, x1: 84, y1: 58 }, minWidth: 36, minTeeth: 4 }
 };
-/** A piece is in the zone when its centre is (a ring that only grazes the zone's edge still reads as an eye). */
+type Piece = { readonly role: string; readonly d: string };
+/** A piece is in a zone when its centre is (a ring that only grazes the zone's edge still reads as an eye). */
 const inside = (box: Box, zone: Box): boolean => { const x = (box.x0 + box.x1) / 2; const y = (box.y0 + box.y1) / 2; return x >= zone.x0 && x <= zone.x1 && y >= zone.y0 && y <= zone.y1; };
-/** Every feature-like piece: a sub-path of a cutout, secondary or accent role that is small and has its centre inside the face zone. */
-const featureLike = (paths: readonly { readonly d: string; readonly role: string }[], zone: Box, maxWidth: number): string[] =>
-  paths
-    .filter((path) => path.role !== "ink" && path.role !== "disc" && path.role !== "shadow")
-    .flatMap((path) => path.d.split(/(?=M)/).filter((part) => part.length > 0).map((part) => ({ role: path.role, d: part })))
-    .filter(({ d }) => { const box = pathBox(d); return inside(box, zone) && box.x1 - box.x0 < maxWidth; })
-    .map(({ role, d }) => `${role}: ${d}`);
+const touches = (box: Box, zone: Box): boolean => box.x0 < zone.x1 && box.x1 > zone.x0 && box.y0 < zone.y1 && box.y1 > zone.y0;
+/** The sub-paths of every piece that is drawn on top of the figure: cutout, secondary and accent (the ink is the figure itself). */
+const overlay = (paths: readonly Piece[]): Piece[] =>
+  paths.filter((path) => path.role === "cutout" || path.role === "secondary" || path.role === "accent").flatMap((path) => path.d.split(/(?=M)/).filter((part) => part.length > 0).map((part) => ({ role: path.role, d: part })));
+/** Is this piece the ornament: a band as wide as the egg, in the forehead band? */
+const isOrnament = (piece: Piece, face: Faceless): boolean => { const box = pathBox(piece.d); return piece.role === "cutout" && inside(box, face.band) && box.x1 - box.x0 >= face.minWidth; };
+/** Pieces on the egg that are not the ornament: any size, anywhere (forehead above the band included). */
+const loose = (paths: readonly Piece[], face: Faceless): string[] =>
+  overlay(paths).filter((piece) => inside(pathBox(piece.d), face.egg) && !isOrnament(piece, face)).map((piece) => `${piece.role}: ${piece.d}`);
+/** What reaches the plain face under the ornament (the box test, not the centre test: a long line that only crosses it counts too). */
+const lowerFace = (face: Faceless): Box => ({ x0: face.egg.x0, y0: face.band.y1, x1: face.egg.x1, y1: face.egg.y1 });
+const reachesLowerFace = (paths: readonly Piece[], face: Faceless): string[] =>
+  [...overlay(paths), ...paths.filter((path) => path.role === "ink" && (path as { stroke?: number }).stroke !== undefined)].filter((piece) => touches(pathBox(piece.d), lowerFace(face))).map((piece) => `${piece.role}: ${piece.d}`);
 
-describe("faceless drawings (PL-116-R5-1)", () => {
-  for (const [id, { zone, maxWidth }] of Object.entries(FACELESS)) {
+describe("faceless drawings (PL-116-R5-1, PL-138-1, PL-138-2)", () => {
+  for (const [id, face] of Object.entries(FACELESS)) {
     const item = DRAWINGS.find((drawing) => drawing.id === id)!;
 
-    it(`${id}: no isolated small piece, ring, dot or pair in the eye and mouth zone`, () => {
+    it(`${id}: its ornament is ONE continuous cutout band of ${face.minTeeth}+ small teeth that crosses the egg from edge to edge in the forehead`, () => {
       expect(item, id).toBeDefined();
-      expect(featureLike(item.paths, zone, maxWidth), `${id} has an element where eyes or a mouth would go`).toEqual([]);
+      const ornaments = overlay(item.paths).filter((piece) => piece.role === "cutout" || piece.role === "secondary");
+      expect(ornaments, `${id}: exactly one ornament piece besides the crown`).toHaveLength(1);
+      const [band] = ornaments;
+      expect(isOrnament(band!, face), `${id}: the ornament is a cutout (no second colour) at least ${face.minWidth} wide, centred in the forehead band`).toBe(true);
+      const box = pathBox(band!.d);
+      expect(subpathCount(band!.d), "continuous: one stroke").toBe(1);
+      expect(box.x0, "left end on the egg").toBeLessThanOrEqual(face.egg.x0 + 10);
+      expect(box.x1, "right end on the egg").toBeGreaterThanOrEqual(face.egg.x1 - 10);
+      expect(Math.abs((box.x0 + box.x1) / 2 - 60), "centred on the figure's axis").toBeLessThan(1);
+      expect((band!.d.match(/V/g) ?? []).length, "vertical steps: two per tooth").toBeGreaterThanOrEqual(face.minTeeth * 2);
+      expect(item.paths.find((path) => path.d === band!.d)?.stroke, "a stroked band, not a closed shape").toBeDefined();
+    });
+
+    it(`${id}: nothing else on the egg: no loose piece of any size anywhere, the forehead above the band included`, () => {
+      expect(loose(item.paths, face), `${id} has an element where eyes, brows or a mouth would go`).toEqual([]);
     });
 
     it(`${id}: no cutout or secondary piece is a circle or a closed ellipse in the middle of the figure`, () => {
@@ -439,16 +462,21 @@ describe("faceless drawings (PL-116-R5-1)", () => {
       }
     });
 
-    it(`${id}: the middle and the lower face are plain ink, whatever the width of a piece (a wide zigzag there reads as a grin)`, () => {
-      expect(featureLike(item.paths, zone, Number.POSITIVE_INFINITY), `${id} has a piece in the middle or lower face`).toEqual([]);
+    it(`${id}: the middle and the lower face under the ornament are plain ink: no piece of any kind reaches them`, () => {
+      expect(reachesLowerFace(item.paths, face), `${id} has a piece in the middle or lower face`).toEqual([]);
     });
 
-    it(`${id}: the detector does catch the old ring and dot, and a pair of dots`, () => {
-      const ring = [{ role: "cutout", d: "M52 70a8 8 0 1 0 16 0a8 8 0 1 0 -16 0Z" }, { role: "cutout", d: "M42 70a18 18 0 1 0 36 0a18 18 0 1 0 -36 0Z" }];
-      expect(featureLike(ring, zone, maxWidth).length, "the ring and the dot").toBeGreaterThan(0);
-      const pair = [{ role: "cutout", d: "M44 66a4 4 0 1 0 8 0a4 4 0 1 0 -8 0Z" }, { role: "cutout", d: "M68 66a4 4 0 1 0 8 0a4 4 0 1 0 -8 0Z" }];
-      expect(featureLike(pair, zone, maxWidth).length, "a pair of openings").toBe(2);
-      expect(featureLike([{ role: "cutout", d: "M50 88H70" }], zone, maxWidth).length, "a short line like a mouth").toBe(1);
+    it(`${id}: the detectors catch the old designs: ring and dot, pair of openings at the eyes or the brow, short line, W, V`, () => {
+      const catches = (d: string): number => loose([{ role: "cutout", d }], face).length;
+      expect(catches("M52 70a8 8 0 1 0 16 0a8 8 0 1 0 -16 0Z"), "ring").toBe(1);
+      expect(catches("M44 66a4 4 0 1 0 8 0a4 4 0 1 0 -8 0Z") + catches("M68 66a4 4 0 1 0 8 0a4 4 0 1 0 -8 0Z"), "pair at the eyes").toBe(2);
+      expect(catches("M44 50a4 4 0 1 0 8 0a4 4 0 1 0 -8 0Z") + catches("M68 50a4 4 0 1 0 8 0a4 4 0 1 0 -8 0Z"), "pair in the forehead (y 50)").toBe(2);
+      expect(catches("M50 88H70"), "short line like a mouth").toBe(1);
+      expect(catches("M44 45L52 51L60 45L68 51L76 45"), "the old two-peak zigzag (W)").toBe(1);
+      expect(catches("M41 46L50 52L60 46"), "a V brow").toBe(1);
+      expect(reachesLowerFace([{ role: "cutout", d: "M41 55L50 61L60 55L70 61L79 55" }], face).length, "the second band that read as a grin").toBe(1);
+      expect(reachesLowerFace([{ role: "cutout", d: "M32 70H88" }], face).length, "a long line across the face, whatever its width").toBe(1);
+      expect(loose([{ role: "cutout", d: "M41 54V49H45.75V54H50.5V49H55.25V54H60V49H64.75V54H69.5V49H74.25V54H79V49" }], face).length, "the ornament itself is allowed").toBe(0);
     });
   }
 });

@@ -11,6 +11,8 @@ const banner = (t: number, hang: number, width: number): string => {
 };
 /** A curved horn rising from the left side of the morenada mask; the right one is its mirror. A silhouette only: no eyes, no mouth. */
 const HORN: readonly Cmd[] = [["M", 36, 56], ["C", 22, 54, 16, 40, 24, 28], ["C", 28, 40, 36, 44, 46, 48], ["Z"]];
+/** The greca of the morenada mask: eight square steps of 4.75 across the forehead, 38 wide: the egg is 42 wide at that height, so the band runs from edge to edge. */
+const GRECA = "M41 54V49H45.75V54H50.5V49H55.25V54H60V49H64.75V54H69.5V49H74.25V54H79V49";
 const BANNERS = [0.08, 0.22, 0.36, 0.5, 0.64, 0.78, 0.92];
 
 export const PARTIES = [
@@ -94,9 +96,9 @@ export const PARTIES = [
     acc(rpoly([[28, 52], [30, 24], [44, 38], [50, 14], [60, 34], [70, 14], [76, 38], [90, 24], [92, 52]], 3)),
     ink(shape(HORN) + shape(HORN, mirrorX(60))),
     ink(ellipse(60, 70, 28, 32)),
-    // The ornament is one zigzag band across the top of the forehead, like a headband under the crown. Nothing sits in the middle or the lower
-    // face (plain ink), and it is never a ring, a dot, a pair of openings or a stack of bands that reads as a grin.
-    cut("M44 45L52 51L60 45L68 51L76 45", 2.5)
+    // The ornament is one continuous band of small square teeth (a greca, like a diadem ribbon) that crosses the egg from edge to edge high on
+    // the forehead, a cutout with no second colour. Nothing else sits on the egg (plain ink): no ring, dot, pair of openings, brow or mouth.
+    cut(GRECA, 2.5)
   ], 34),
   drawing("matraca", "Matraca de madera con su lengüeta", "Wooden ratchet with its tongue", ["patronal"], [
     ink(rrect(53, 64, 14, 36, 6)),
