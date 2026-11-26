@@ -3,7 +3,7 @@ import { Photo } from "../photo.js";
 import type { Translate } from "../types.js";
 import { isAllowedEmbedUrl, type Embed } from "./embed.js";
 import { AudioPlayerView, EmbedFacadeView, type AudioLabels, type EmbedLabels } from "./interactive.js";
-import { clampScrim, hasImage, imageSources, type PublicMedia } from "./variants.js";
+import { clampScrim, clampVeil, hasImage, imageSources, type PublicMedia } from "./variants.js";
 
 /** Components of F6 for the public invitation and for the editor to import. Web only: the native app shows the web invitation (P10).
  *  This file runs on the server: what needs the browser (the facade's tap, the player) lives in `interactive.tsx`, a client module that receives text already
@@ -47,7 +47,7 @@ export interface MediaBackdropProps { readonly media: PublicMedia; readonly fit?
 /** The picture behind a page or an element, with its veil, as an absolutely positioned decoration: the content that goes over it is a sibling. */
 export function MediaBackdrop({ media, fit = "cover", light, dark, priority = false }: MediaBackdropProps): ReactNode {
   if (!hasImage(media)) return null;
-  const style = { "--cd-veil-l": `${Math.round(clampScrim(light) * 100)}%`, "--cd-veil-d": `${Math.round(clampScrim(dark) * 100)}%` } as CSSProperties;
+  const style = { "--cd-veil-l": `${Math.round(clampVeil(light) * 100)}%`, "--cd-veil-d": `${Math.round(clampVeil(dark) * 100)}%` } as CSSProperties;
   return (
     <div className="celebration-media-backdrop" aria-hidden="true" style={style}>
       <MediaImage media={media} alt="" fit={fit} priority={priority} className="celebration-media-background-image" />

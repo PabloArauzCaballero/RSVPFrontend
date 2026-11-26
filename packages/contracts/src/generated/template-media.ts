@@ -461,7 +461,7 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /**
-         * @description Curated named animations (1.5.0). aparecer: fade and rise once. mecerse: a damped swing that settles, for an element that hangs (a piñata); never on a page or on the gifts and reply buttons. revelar-telon: a curtain that slides away to show the page. abrir-puertas: two art déco doors that open to show the page; pages only. Duration and easing come from the motion tokens of the renderer, never from the document. All of them play once and are off under prefers-reduced-motion (the final state shows at once).
+         * @description Curated named animations (1.8.0). aparecer: fade and rise once. mecerse: a damped swing that settles, for an element that hangs (a piñata); never on a page or on the gifts and reply buttons. revelar-telon: a curtain that slides away to show the page. abrir-puertas: two art déco doors that open to show the page; pages only. Duration and easing come from the motion tokens of the renderer, never from the document. All of them play once and are off under prefers-reduced-motion (the final state shows at once).
          * @enum {string}
          */
         AnimationName: "aparecer" | "mecerse" | "revelar-telon" | "abrir-puertas";
@@ -471,7 +471,7 @@ export interface components {
          */
         ColourRole: "canvas" | "surface" | "text" | "muted" | "accent" | "accentFill" | "onAccent" | "line";
         /**
-         * @description Cover composition. classic, minimal, editorial, festive and corporate are the v1 layouts. 1.5.0 adds arch (photo in an arch window with a double frame), hanging (a piece hanging from a cord over the title), deco (art déco frame, the photo behind two doors) and poster (the photo fills the cover under the graded veil).
+         * @description Cover composition. classic, minimal, editorial, festive and corporate are the v1 layouts. 1.8.0 adds arch (photo in an arch window with a double frame), hanging (a piece hanging from a cord over the title), deco (art déco frame, the photo behind two doors) and poster (the photo fills the cover under the graded veil).
          * @enum {string}
          */
         CoverVariant: "classic" | "minimal" | "editorial" | "festive" | "corporate" | "arch" | "hanging" | "deco" | "poster";
@@ -496,7 +496,7 @@ export interface components {
             /** @description Contrast warnings of the draft; present on create, save and restore. They never block (P19) */
             warnings?: components["schemas"]["DesignWarning"][];
         };
-        /** @description How an element or a page enters. `entrance` is the v2 kind; `name` (1.5.0) picks a named animation whose duration comes from the motion tokens, so it cannot carry `durationMs` (422 DESIGN_DECORATION_INVALID). With a `name`, `entrance` is ignored by the renderer: send `none`. */
+        /** @description How an element or a page enters. `entrance` is the v2 kind; `name` (1.8.0) picks a named animation whose duration comes from the motion tokens, so it cannot carry `durationMs` (422 DESIGN_DECORATION_INVALID). With a `name`, `entrance` is ignored by the renderer: send `none`. */
         DesignAnimation: {
             delayMs?: number;
             durationMs?: number;
@@ -825,7 +825,7 @@ export interface components {
             config: {
                 /**
                  * Format: uuid
-                 * @description 1.5.0. A photo of the celebration the host picks as the cover of the video. Without one the renderer shows the provider thumbnail, loaded only when the guest taps.
+                 * @description 1.8.0. A photo of the celebration the host picks as the cover of the video. Without one the renderer shows the provider thumbnail, loaded only when the guest taps.
                  */
                 posterMediaId?: string;
                 /** @enum {string} */
@@ -892,7 +892,7 @@ export interface components {
             role: components["schemas"]["ColourRole"];
         };
         DesignCoverPage: {
-            /** @description How the section enters (1.5.0). Only the named animations aparecer, revelar-telon and abrir-puertas are allowed on a page. The gifts and reply buttons stay reachable and on top while it plays. */
+            /** @description How the section enters (1.8.0). Only the named animations aparecer, revelar-telon and abrir-puertas are allowed on a page. The gifts and reply buttons stay reachable and on top while it plays. */
             animation?: components["schemas"]["DesignAnimation"];
             background?: components["schemas"]["DesignBackground"];
             canvases: components["schemas"]["DesignCanvases"];
@@ -957,7 +957,7 @@ export interface components {
             /** @description Layer; default 0 */
             z?: number;
         };
-        /** @description A decorative frame drawn around the element (1.5.0). Never on the gifts and reply buttons. */
+        /** @description A decorative frame drawn around the element (1.8.0). Never on the gifts and reply buttons. */
         DesignFrame: {
             colour: components["schemas"]["ColourRole"];
             /**
@@ -1030,7 +1030,7 @@ export interface components {
             listingId: string;
         };
         /**
-         * @description Shape an element is clipped to (1.5.0): arch (round top, flat base), deco-doors (two arched doors side by side), chamfer (cut corners), circle, rounded, stamp (a postage-stamp edge). Allowed on image, gallery, illustration, monogram, ornament, video and map blocks only: a mask would cut text, and it is never allowed on the gifts and reply buttons.
+         * @description Shape an element is clipped to (1.8.0): arch (round top, flat base), deco-doors (two arched doors side by side), chamfer (cut corners), circle, rounded, stamp (a postage-stamp edge). Allowed on image, gallery, illustration, monogram, ornament, video and map blocks only: a mask would cut text, and it is never allowed on the gifts and reply buttons.
          * @enum {string}
          */
         DesignMask: "arch" | "deco-doors" | "chamfer" | "circle" | "rounded" | "stamp";
@@ -1047,7 +1047,7 @@ export interface components {
             /** @description Veil over the image so text stays readable */
             scrim?: number;
             /**
-             * @description 1.5.0. graded (the default when absent): the veil is strong only behind the text (about 0.85) and light elsewhere (about 0.2). even: one veil over the whole photo, the v2 behaviour. In both modes the renderer raises the veil behind the text as far as the palette needs for 4.5:1 on any photo (F0), so `scrim` can only add to it.
+             * @description 1.8.0. graded (the default when absent): the veil is strong only behind the text (about 0.85) and light elsewhere (about 0.2). even: one veil over the whole photo, the v2 behaviour. In both modes the renderer raises the veil behind the text as far as the palette needs for 4.5:1 on any photo (F0), so `scrim` can only add to it.
              * @enum {string}
              */
             veil?: "graded" | "even";
@@ -1078,7 +1078,7 @@ export interface components {
             surface: components["schemas"]["HexColour"];
             text: components["schemas"]["HexColour"];
         };
-        /** @description 422 of a v2 design (400 and 413 are plain Problems). code is INVALID_THEME (not an object, neither v1 nor v2, or a schemaVersion that is not the integer 2), DESIGN_SCHEMA_INVALID (issues lists the paths), GIFTS_BLOCK_REQUIRED (no gifts block, said before the schema errors), GIFTS_BLOCK_LOCKED (link or rotation on the gifts element), GIFTS_BLOCK_HIDDEN (not visible or translucent), GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL (under 44 px, or under 44 px of height left once vertical padding and border are taken out), GIFTS_BLOCK_TEXT_TOO_LARGE (label over 32 px or taller than the useful height), GIFTS_BLOCK_COVERED (another element paints over it), GIFTS_BLOCK_LOW_CONTRAST (text under 4.5:1 or contour under 3:1 in either palette), DESIGN_REFERENCE_INVALID, FONT_WEIGHT_UNAVAILABLE, CUSTOM_CODE_UNAVAILABLE (custom html/css until the F5 sanitiser), DESIGN_DECORATION_INVALID (1.5.0: a named animation with durationMs, mecerse on a page, abrir-puertas on an element, a mask on a block with text, or a mask, frame or mecerse on the gifts or reply buttons), or DESIGN_V2_NOT_AVAILABLE (POST/PATCH of any v2 theme while the service gate DESIGN_V2_ACCEPTED is off, which is not the default since F4 b; checked before the document is validated). Design endpoints add VERSION_CONFLICT (409, currentVersion), DESIGN_EXISTS (409), PRIVATE_TEMPLATE_LIMIT (409), DESIGN_PUBLISHED (409, a published celebration design cannot be deleted), DESIGN_TOO_LARGE, DESIGN_MEDIA_INVALID (a mediaId that is not a usable photo of the celebration; mediaIds lists them), DESIGN_MEDIA_NOT_ALLOWED (a private template cannot reference photos; mediaIds lists them), CELEBRATION_REQUIRED, CELEBRATION_NOT_ALLOWED and KIND_REQUIRED (422). */
+        /** @description 422 of a v2 design (400 and 413 are plain Problems). code is INVALID_THEME (not an object, neither v1 nor v2, or a schemaVersion that is not the integer 2), DESIGN_SCHEMA_INVALID (issues lists the paths), GIFTS_BLOCK_REQUIRED (no gifts block, said before the schema errors), GIFTS_BLOCK_LOCKED (link or rotation on the gifts element), GIFTS_BLOCK_HIDDEN (not visible or translucent), GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL (under 44 px, or under 44 px of height left once vertical padding and border are taken out), GIFTS_BLOCK_TEXT_TOO_LARGE (label over 32 px or taller than the useful height), GIFTS_BLOCK_COVERED (another element paints over it), GIFTS_BLOCK_LOW_CONTRAST (text under 4.5:1 or contour under 3:1 in either palette), DESIGN_REFERENCE_INVALID, FONT_WEIGHT_UNAVAILABLE, CUSTOM_CODE_UNAVAILABLE (custom html/css until the F5 sanitiser), DESIGN_DECORATION_INVALID (1.8.0: a named animation with durationMs, mecerse on a page, abrir-puertas on an element, a mask on a block with text, or a mask, frame or mecerse on the gifts or reply buttons), or DESIGN_V2_NOT_AVAILABLE (POST/PATCH of any v2 theme while the service gate DESIGN_V2_ACCEPTED is off, which is not the default since F4 b; checked before the document is validated). Design endpoints add VERSION_CONFLICT (409, currentVersion), DESIGN_EXISTS (409), PRIVATE_TEMPLATE_LIMIT (409), DESIGN_PUBLISHED (409, a published celebration design cannot be deleted), DESIGN_TOO_LARGE, DESIGN_MEDIA_INVALID (a mediaId that is not a usable photo of the celebration; mediaIds lists them), DESIGN_MEDIA_NOT_ALLOWED (a private template cannot reference photos; mediaIds lists them), CELEBRATION_REQUIRED, CELEBRATION_NOT_ALLOWED and KIND_REQUIRED (422). */
         DesignProblem: components["schemas"]["Problem"] & {
             field?: string;
             issues?: components["schemas"]["DesignIssue"][];
@@ -1093,7 +1093,7 @@ export interface components {
             label?: string;
         };
         DesignSectionPage: {
-            /** @description How the section enters (1.5.0). Only the named animations aparecer, revelar-telon and abrir-puertas are allowed on a page. The gifts and reply buttons stay reachable and on top while it plays. */
+            /** @description How the section enters (1.8.0). Only the named animations aparecer, revelar-telon and abrir-puertas are allowed on a page. The gifts and reply buttons stay reachable and on top while it plays. */
             animation?: components["schemas"]["DesignAnimation"];
             background?: components["schemas"]["DesignBackground"];
             canvases: components["schemas"]["DesignCanvases"];

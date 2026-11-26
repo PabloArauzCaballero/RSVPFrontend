@@ -346,3 +346,82 @@ html:has(.cdesign-dock) { scroll-padding-bottom: 6rem; }
 .celebration-design .cdesign-section-body[data-display="list"] .celebration-schedule li { counter-increment: act; }
 .celebration-design .cdesign-section-body[data-display="list"] .celebration-schedule li::before { content: counter(act, upper-roman); left: 6.75rem; top: .95rem; width: 2.5rem; height: auto; border-radius: 0; background: none; box-shadow: none; text-align: center; font-family: var(--celebration-heading-font); font-weight: 600; font-size: 1rem; line-height: 1.6; color: var(--celebration-accent); }
 .celebration-design .cdesign-section-body[data-display="list"] .celebration-schedule li::after { display: none; }
+
+/* =====================================================================================================================
+   Contract 1.8.0 · fidelity: cover variants, masks, frames, named animations, graded veil. Everything here is decoration over the same content: the gifts and
+   reply buttons (`.rsvp-protected`) and the dock are never masked, framed, animated or covered (P22), and the renderer does not even emit the attributes for them. */
+
+/* Motion tokens: the values of `motion` in @rsvp/design-tokens (a test fails if they drift). Named animations take duration and curve from here, never from a document. */
+.celebration-design { --cd-motion-appear: 700ms; --cd-motion-settle: 1200ms; --cd-motion-sway: 2200ms; --cd-motion-reveal: 1700ms; --cd-ease-out: cubic-bezier(.16, 1, .3, 1); --cd-ease-in-out: cubic-bezier(.77, 0, .18, 1); }
+
+/* Masks: the shape of what the element draws. The author container is the one clipped, so a frame (outside it) keeps its line. */
+.celebration-design .cdesign-el[data-mask="arch"] .cdesign-author { clip-path: inset(0 round 999px 999px 0 0); }
+.celebration-design .cdesign-el[data-mask="circle"] .cdesign-author { clip-path: inset(0 round 50%); }
+.celebration-design .cdesign-el[data-mask="rounded"] .cdesign-author { clip-path: inset(0 round 1.5rem); }
+.celebration-design .cdesign-el[data-mask="chamfer"] .cdesign-author { clip-path: polygon(1.5rem 0, calc(100% - 1.5rem) 0, 100% 1.5rem, 100% calc(100% - 1.5rem), calc(100% - 1.5rem) 100%, 1.5rem 100%, 0 calc(100% - 1.5rem), 0 1.5rem); }
+/* Two arched doors side by side: one polygon, the two shapes joined along the base by a zero-width seam. */
+.celebration-design .cdesign-el[data-mask="deco-doors"] .cdesign-author { clip-path: polygon(3.0% 100.0%, 3.0% 26.0%, 3.8% 19.3%, 6.0% 13.0%, 9.6% 7.6%, 14.2% 3.5%, 19.7% 0.9%, 25.5% 0.0%, 31.3% 0.9%, 36.7% 3.5%, 41.4% 7.6%, 45.0% 13.0%, 47.2% 19.3%, 48.0% 26.0%, 48.0% 100.0%, 52.0% 100.0%, 52.0% 26.0%, 52.8% 19.3%, 55.0% 13.0%, 58.6% 7.6%, 63.2% 3.5%, 68.7% 0.9%, 74.5% 0.0%, 80.3% 0.9%, 85.8% 3.5%, 90.4% 7.6%, 94.0% 13.0%, 96.2% 19.3%, 97.0% 26.0%, 97.0% 100.0%); }
+/* A postage-stamp edge: a serrated outline (teeth 6 px deep, twelve per side). */
+.celebration-design .cdesign-el[data-mask="stamp"] .cdesign-author { clip-path: polygon(0.00% 0, 4.17% 6px, 8.33% 0, 12.50% 6px, 16.67% 0, 20.83% 6px, 25.00% 0, 29.17% 6px, 33.33% 0, 37.50% 6px, 41.67% 0, 45.83% 6px, 50.00% 0, 54.17% 6px, 58.33% 0, 62.50% 6px, 66.67% 0, 70.83% 6px, 75.00% 0, 79.17% 6px, 83.33% 0, 87.50% 6px, 91.67% 0, 95.83% 6px, 100% 0.00%, calc(100% - 6px) 4.17%, 100% 8.33%, calc(100% - 6px) 12.50%, 100% 16.67%, calc(100% - 6px) 20.83%, 100% 25.00%, calc(100% - 6px) 29.17%, 100% 33.33%, calc(100% - 6px) 37.50%, 100% 41.67%, calc(100% - 6px) 45.83%, 100% 50.00%, calc(100% - 6px) 54.17%, 100% 58.33%, calc(100% - 6px) 62.50%, 100% 66.67%, calc(100% - 6px) 70.83%, 100% 75.00%, calc(100% - 6px) 79.17%, 100% 83.33%, calc(100% - 6px) 87.50%, 100% 91.67%, calc(100% - 6px) 95.83%, 100.00% 100%, 95.83% calc(100% - 6px), 91.67% 100%, 87.50% calc(100% - 6px), 83.33% 100%, 79.17% calc(100% - 6px), 75.00% 100%, 70.83% calc(100% - 6px), 66.67% 100%, 62.50% calc(100% - 6px), 58.33% 100%, 54.17% calc(100% - 6px), 50.00% 100%, 45.83% calc(100% - 6px), 41.67% 100%, 37.50% calc(100% - 6px), 33.33% 100%, 29.17% calc(100% - 6px), 25.00% 100%, 20.83% calc(100% - 6px), 16.67% 100%, 12.50% calc(100% - 6px), 8.33% 100%, 4.17% calc(100% - 6px), 0 100.00%, 6px 95.83%, 0 91.67%, 6px 87.50%, 0 83.33%, 6px 79.17%, 0 75.00%, 6px 70.83%, 0 66.67%, 6px 62.50%, 0 58.33%, 6px 54.17%, 0 50.00%, 6px 45.83%, 0 41.67%, 6px 37.50%, 0 33.33%, 6px 29.17%, 0 25.00%, 6px 20.83%, 0 16.67%, 6px 12.50%, 0 8.33%, 6px 4.17%); }
+
+/* Frames: a line drawn around the element, outside it, never taking a click. The colour is the palette role the document names. */
+.celebration-design .cdesign-el[data-frame]::after { content: ""; position: absolute; inset: -.5rem; pointer-events: none; z-index: 0; border: 1px solid var(--cd-frame, var(--celebration-accent)); }
+.celebration-design .cdesign-el[data-frame="double"]::after { inset: -.4rem; outline: 1px solid var(--cd-frame, var(--celebration-accent)); outline-offset: .3rem; }
+.celebration-design .cdesign-el[data-frame="hairline"]::after { inset: -.4rem; }
+/* Art déco: stepped corners, drawn as a ring (outer outline minus inner outline) filled with the frame colour. */
+.celebration-design .cdesign-el[data-frame="deco"]::after { inset: -.6rem; border: 0; background: var(--cd-frame, var(--celebration-accent));
+  clip-path: polygon(evenodd, 14px 0, calc(100% - 14px) 0, 100% 14px, 100% calc(100% - 14px), calc(100% - 14px) 100%, 14px 100%, 0 calc(100% - 14px), 0 14px, 14px 0,
+    15px 1px, 1px 15px, 1px calc(100% - 15px), 15px calc(100% - 1px), calc(100% - 15px) calc(100% - 1px), calc(100% - 1px) calc(100% - 15px), calc(100% - 1px) 15px, calc(100% - 15px) 1px, 15px 1px); }
+
+/* Cover variants. They shape the photo and the block; the template still decides where the block goes. */
+.celebration-design .cdesign-cover:is([data-variant="arch"], [data-variant="hanging"], [data-variant="deco"]) { justify-items: center; text-align: center; }
+.celebration-design .cdesign-cover[data-variant="arch"] .cdesign-cover-photo { width: min(72%, 15rem); aspect-ratio: 3 / 4; height: auto; max-height: none; border-radius: 999px 999px 0 0; border: 1px solid var(--celebration-accent); outline: 1px solid color-mix(in srgb, var(--celebration-accent) 55%, transparent); outline-offset: 6px; }
+.celebration-design .cdesign-cover[data-variant="hanging"] { position: relative; padding-top: 0; }
+.celebration-design .cdesign-cover[data-variant="hanging"][data-has-image="true"] { padding-top: 3rem; }
+.celebration-design .cdesign-cover[data-variant="hanging"][data-has-image="true"]::before { content: ""; position: absolute; top: 0; left: 50%; width: 2px; height: 2.75rem; margin-left: -1px; background: var(--celebration-accent); }
+.celebration-design .cdesign-cover[data-variant="hanging"] .cdesign-cover-photo { width: min(70%, 15rem); aspect-ratio: 1; height: auto; max-height: none; border-radius: 50%; box-shadow: .5rem .5rem 0 0 color-mix(in srgb, var(--celebration-text) 14%, var(--celebration-canvas)); }
+.celebration-design .cdesign-cover[data-variant="deco"] { position: relative; padding-block: 1.5rem; border-block: 1px solid var(--celebration-accent); }
+.celebration-design .cdesign-cover[data-variant="deco"]::before, .celebration-design .cdesign-cover[data-variant="deco"]::after { content: ""; position: absolute; inset-inline: 0; height: 1px; background: var(--celebration-accent); }
+.celebration-design .cdesign-cover[data-variant="deco"]::before { top: 4px; }
+.celebration-design .cdesign-cover[data-variant="deco"]::after { bottom: 4px; }
+.celebration-design .cdesign-cover[data-variant="deco"] .cdesign-cover-photo { width: min(72%, 16rem); aspect-ratio: 4 / 5; height: auto; max-height: none; clip-path: polygon(1.5rem 0, 100% 0, 100% calc(100% - 1.5rem), calc(100% - 1.5rem) 100%, 0 100%, 0 1.5rem); }
+/* Poster: the photo fills the block; the text rides on its own strong veil (below), the rest of the photo under the light one. */
+.celebration-design .cdesign-cover[data-variant="poster"][data-has-image="true"] { position: relative; isolation: isolate; align-content: end; justify-items: center; text-align: center; min-height: 24rem; padding: clamp(9rem, 38vw, 14rem) 1.5rem 1.5rem; overflow: clip; }
+.celebration-design .cdesign-cover[data-variant="poster"][data-has-image="true"] .cdesign-cover-photo { position: absolute; inset: 0; width: 100%; height: 100%; max-height: none; z-index: -2; border-radius: 0; }
+.celebration-design .cdesign-cover[data-variant="poster"][data-has-image="true"]::before { content: ""; position: absolute; inset: 0; z-index: -1; background: color-mix(in srgb, var(--celebration-canvas) 20%, transparent); }
+.celebration-design .cdesign-cover[data-variant="poster"] { --celebration-muted: var(--celebration-text); }
+
+/* Graded veil: the picture sits under a light veil (`--cd-veil-*` of the backdrop) and every block of text rides on a panel of the canvas colour at the strong level
+   of the palette (`--cd-tv`, at least .85 and at least what AA needs over the worst picture). The panel is the text box itself, solid at that level; only the blurred rim around it feathers. */
+.celebration-design, .celebration-design .cdesign-page { --cd-tv: var(--cd-tv-l); }
+@media (prefers-color-scheme: dark) { .celebration-design[data-scheme-source="system"], .celebration-design[data-scheme-source="system"] .cdesign-page { --cd-tv: var(--cd-tv-d); } }
+.celebration-design[data-scheme-source="prop"][data-color-scheme="dark"], .celebration-design[data-scheme-source="prop"][data-color-scheme="dark"] .cdesign-page { --cd-tv: var(--cd-tv-d); }
+.celebration-design .cdesign-page[data-veil="graded"] { overflow-x: clip; }
+.celebration-design .cdesign-page[data-veil="graded"] .cdesign-el[data-text]::before, .celebration-design .cdesign-page[data-veil="graded"] :is(.cdesign-page-title, .cdesign-intro)::before, .celebration-design .cdesign-cover[data-variant="poster"][data-has-image="true"] .cdesign-cover-copy::before {
+  content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none; --cd-panel: color-mix(in srgb, var(--celebration-canvas) var(--cd-tv, 85%), transparent);
+  background: var(--cd-panel); box-shadow: 0 0 1.25rem .75rem var(--cd-panel); }
+.celebration-design .cdesign-page[data-veil="graded"] :is(.cdesign-page-title, .cdesign-intro) { position: relative; }
+.celebration-design .cdesign-cover[data-variant="poster"][data-has-image="true"] .cdesign-cover-copy { position: relative; }
+
+/* Named animations (rsvp-motion-design). One time, transform and opacity only (the curtain also trims with clip-path, which never changes layout), off under reduced motion
+   (the final state shows at once, nothing is hidden), never interactive: the panels take no click and sit below the protected blocks, so the gifts and reply buttons stay reachable while they play.
+   They finish in under 2.5 s, well inside the five seconds after which WCAG asks for a pause control. */
+.celebration-design .cdesign-doors { display: none; }
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes cdesign-sway { 0% { transform: rotate(0) } 14% { transform: rotate(7deg) } 32% { transform: rotate(-5deg) } 50% { transform: rotate(3.2deg) } 66% { transform: rotate(-1.8deg) } 82% { transform: rotate(.7deg) } 100% { transform: rotate(0) } }
+  @keyframes cdesign-door-l { from { transform: none } to { transform: translateX(-102%) } }
+  @keyframes cdesign-door-r { from { transform: none } to { transform: translateX(102%) } }
+  @keyframes cdesign-curtain { from { transform: none } to { transform: translateX(-102%) } }
+  @keyframes cdesign-reveal { from { clip-path: inset(0 100% 0 0) } to { clip-path: inset(0 0 0 0) } }
+  .celebration-design .cdesign-el[data-anim="mecerse"] .cdesign-author { transform-origin: 50% 0; animation: cdesign-sway var(--cd-motion-sway) ease-in-out var(--cdesign-delay, 0ms) 1 both; }
+  .celebration-design .cdesign-el[data-anim="revelar-telon"] .cdesign-author { animation: cdesign-reveal var(--cd-motion-reveal) var(--cd-ease-in-out) var(--cdesign-delay, 0ms) 1 both; }
+  .celebration-design .cdesign-page[data-page-anim="aparecer"] > .cdesign-canvas { animation: cdesign-rise var(--cd-motion-appear) var(--cd-ease-out) both; }
+  .celebration-design .cdesign-doors { display: block; position: absolute; inset: 0; z-index: 500; overflow: hidden; pointer-events: none; }
+  .celebration-design .cdesign-door { position: absolute; top: 0; bottom: 0; background: var(--celebration-surface); will-change: transform; }
+  .celebration-design .cdesign-doors[data-kind="abrir-puertas"] .cdesign-door { width: 50.5%; }
+  .celebration-design .cdesign-doors[data-kind="abrir-puertas"] .cdesign-door[data-side="l"] { left: 0; border-right: 1.5px solid var(--celebration-accent); animation: cdesign-door-l var(--cd-motion-reveal) var(--cd-ease-in-out) 500ms both; }
+  .celebration-design .cdesign-doors[data-kind="abrir-puertas"] .cdesign-door[data-side="r"] { right: 0; border-left: 1.5px solid var(--celebration-accent); animation: cdesign-door-r var(--cd-motion-reveal) var(--cd-ease-in-out) 500ms both; }
+  .celebration-design .cdesign-doors[data-kind="revelar-telon"] .cdesign-door { left: 0; width: 100%; border-right: 1.5px solid var(--celebration-accent); animation: cdesign-curtain var(--cd-motion-reveal) var(--cd-ease-in-out) 400ms both; }
+  /* The panels leave the layer once they finish, so nothing is left to paint or to promote. */
+  .celebration-design .cdesign-door { animation-fill-mode: both; }
+}

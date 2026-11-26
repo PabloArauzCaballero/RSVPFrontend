@@ -110,9 +110,9 @@
                 "h": 14,
                 "visible": true,
                 "animation": {
-                  "entrance": "rise",
-                  "delayMs": 250,
-                  "durationMs": 900
+                  "entrance": "none",
+                  "name": "mecerse",
+                  "delayMs": 600
                 }
               },
               {
@@ -187,9 +187,9 @@
                 "h": 16,
                 "visible": true,
                 "animation": {
-                  "entrance": "rise",
-                  "delayMs": 250,
-                  "durationMs": 900
+                  "entrance": "none",
+                  "name": "mecerse",
+                  "delayMs": 600
                 }
               }
             ]
@@ -454,7 +454,7 @@
         "id": "cover",
         "type": "cover",
         "config": {
-          "variant": "festive",
+          "variant": "hanging",
           "envelope": false
         }
       },

@@ -1,10 +1,9 @@
-import type { design } from "@rsvp/celebration-theme";
+import { design } from "@rsvp/celebration-theme";
 import type { DocumentOp } from "./ops.js";
 
 /**
- * Contract v2 of fidelity (Template/Media 1.5.0): cover variants, named animations, masks, frames, the veil of the cover photo and
- * the poster of a video. The shared design types do not carry these fields yet, so they are written here as the published contract
- * gives them; when `design` has them, the local aliases below are replaced by the shared ones. Every operation is a pure function
+ * Contract v2 of fidelity (Template/Media 1.8.0): cover variants, named animations, masks, frames, the veil of the cover photo and
+ * the poster of a video. The value lists and types are the shared ones of `design` (`@rsvp/celebration-theme`), the same the renderer reads. Every operation is a pure function
  * that ignores a value outside its list (a hostile or stale one never reaches the document) and keeps every other field as it was.
  */
 type Doc = design.DesignDocumentV2;
@@ -14,15 +13,15 @@ type CanvasName = "mobile" | "desktop";
 
 export const COVER_VARIANTS = ["classic", "minimal", "editorial", "festive", "corporate", "arch", "hanging", "deco", "poster"] as const;
 export type CoverVariant = (typeof COVER_VARIANTS)[number];
-export const ANIMATION_NAMES = ["aparecer", "mecerse", "revelar-telon", "abrir-puertas"] as const;
-export type AnimationName = (typeof ANIMATION_NAMES)[number];
-export const MASKS = ["arch", "deco-doors", "chamfer", "circle", "rounded", "stamp"] as const;
-export type DesignMask = (typeof MASKS)[number];
-export const FRAME_STYLES = ["double", "deco", "hairline"] as const;
-export type FrameStyle = (typeof FRAME_STYLES)[number];
+export const ANIMATION_NAMES = design.ANIMATION_NAMES;
+export type AnimationName = design.AnimationName;
+export const MASKS = design.DESIGN_MASKS;
+export type DesignMask = design.DesignMask;
+export const FRAME_STYLES = design.DESIGN_FRAME_STYLES;
+export type FrameStyle = design.DesignFrameStyle;
 export const FRAME_COLOURS = ["canvas", "surface", "text", "muted", "accent", "accentFill", "onAccent", "line"] as const satisfies readonly design.PaletteRole[];
-export const VEILS = ["graded", "even"] as const;
-export type Veil = (typeof VEILS)[number];
+export const VEILS = design.DESIGN_VEILS;
+export type Veil = design.DesignVeil;
 export interface ElementFrame { readonly style: FrameStyle; readonly colour: design.PaletteRole }
 
 /** Animations a page can play, and the ones an element can be offered (the contract: `mecerse` only on elements, `abrir-puertas` only on pages). */
@@ -30,7 +29,7 @@ export const PAGE_ANIMATIONS = ["aparecer", "revelar-telon", "abrir-puertas"] as
 export const ELEMENT_ANIMATIONS = ["aparecer", "mecerse"] as const satisfies readonly AnimationName[];
 
 /** Blocks a mask can clip (blocks with text never take one: the server answers 422 DESIGN_DECORATION_INVALID). */
-export const MASKABLE_BLOCKS: ReadonlySet<string> = new Set(["image", "gallery", "illustration", "monogram", "ornament", "video", "map"]);
+export const MASKABLE_BLOCKS: ReadonlySet<string> = new Set(design.MASKABLE_BLOCKS);
 /** The gifts and reply buttons: no mask, no frame, no `mecerse`. Their layer is the protected one. */
 export const PROTECTED_BLOCKS: ReadonlySet<string> = new Set(["giftsCta", "rsvpCta"]);
 

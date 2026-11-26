@@ -38,3 +38,7 @@ export const hasImage = (media: PublicMedia): boolean => Boolean(media.variants.
 /** Veil opacity that keeps text readable on a photo: the document's own value, clamped to what the contract allows (0 to 0.8). */
 export const MAX_SCRIM = 0.8;
 export const clampScrim = (value: number | undefined): number => (Number.isFinite(value) ? Math.min(MAX_SCRIM, Math.max(0, value as number)) : 0);
+
+/** The strongest veil the renderer paints behind text (the graded veil of contract 1.8.0 is .85, above what a document may ask for). */
+export const MAX_TEXT_VEIL = 0.95;
+export const clampVeil = (value: number | undefined): number => (Number.isFinite(value) ? Math.min(MAX_TEXT_VEIL, Math.max(0, value as number)) : 0);

@@ -6,7 +6,7 @@
  */
 import type { LayoutSpec } from "../types.js";
 import { familyById } from "./catalog.js";
-import type { ColourScheme, DesignBackground, DesignBox, DesignCanvas, DesignDocumentV2, DesignElement, DesignFont, DesignLink, DesignPage, DesignPalette, DesignTypographyOverride, PaletteRole } from "./types.js";
+import { ANIMATION_NAMES, DESIGN_FRAME_STYLES, ELEMENT_ANIMATIONS, DESIGN_MASKS, DESIGN_VEILS, PAGE_ANIMATIONS, type AnimationName, type ColourScheme, type DesignAnimation, type DesignBackground, type DesignFrame, type DesignMask, type DesignBox, type DesignCanvas, type DesignDocumentV2, type DesignElement, type DesignFont, type DesignLink, type DesignPage, type DesignPalette, type DesignTypographyOverride, type PaletteRole } from "./types.js";
 
 const ROLES: readonly PaletteRole[] = ["canvas", "surface", "text", "muted", "accent", "accentFill", "onAccent", "line"];
 const HEX = /^#[0-9a-fA-F]{6}$/;
@@ -38,7 +38,7 @@ function backgroundOf(value: unknown): DesignBackground | undefined {
   if (value["kind"] === "colour" && oneOf(value["role"], ROLES)) return { kind: "colour", role: value["role"] };
   if (value["kind"] === "illustration" && typeof value["illustrationId"] === "string") return { kind: "illustration", illustrationId: value["illustrationId"] };
   if (value["kind"] === "media" && typeof value["mediaId"] === "string" && UUID.test(value["mediaId"]) && oneOf(value["fit"], ["cover", "contain"] as const)) {
-    return { kind: "media", mediaId: value["mediaId"], fit: value["fit"], ...(num(value["scrim"], 0, 0.8) ? { scrim: value["scrim"] } : {}) };
+    return { kind: "media", mediaId: value["mediaId"], fit: value["fit"], ...(num(value["scrim"], 0, 0.8) ? { scrim: value["scrim"] } : {}), ...(oneOf(value["veil"], DESIGN_VEILS) ? { veil: value["veil"] } : {}) };
   }
   return undefined;
 }
@@ -55,6 +55,23 @@ function typographyOf(value: unknown): DesignTypographyOverride | undefined {
   if (oneOf(value["transform"], ["none", "uppercase", "lowercase", "capitalize"] as const)) out["transform"] = value["transform"];
   if (oneOf(value["colour"], ROLES)) out["colour"] = value["colour"];
   return out as DesignTypographyOverride;
+}
+
+/**
+ * An animation as the renderer may trust it. A named animation (contract 1.8.0) takes its duration from the renderer's tokens, so a `name` carries no
+ * `durationMs`; a name outside the curated list is dropped and the entrance stands; `allowed` is what the place accepts (a page cannot sway).
+ */
+function animationOf(value: unknown, allowed: readonly AnimationName[]): DesignAnimation | undefined {
+  if (!isRecord(value) || !oneOf(value["entrance"], ["none", "fade", "rise", "scale", "draw", "envelope"] as const)) return undefined;
+  const name = oneOf(value["name"], ANIMATION_NAMES) && allowed.includes(value["name"]) ? value["name"] : undefined;
+  return {
+    entrance: value["entrance"], ...(name ? { name } : {}), ...(int(value["delayMs"], 0, 5000) ? { delayMs: value["delayMs"] } : {}),
+    ...(!name && int(value["durationMs"], 100, 3000) ? { durationMs: value["durationMs"] } : {})
+  };
+}
+
+function frameOf(value: unknown): DesignFrame | undefined {
+  return isRecord(value) && oneOf(value["style"], DESIGN_FRAME_STYLES) && oneOf(value["colour"], ROLES) ? { style: value["style"], colour: value["colour"] } : undefined;
 }
 
 function linkOf(value: unknown): DesignLink | undefined {
@@ -78,8 +95,10 @@ function elementOf(value: unknown): DesignElement | null {
   if (!isRecord(value) || typeof value["id"] !== "string" || typeof value["block"] !== "string" || value["visible"] !== true && value["visible"] !== false) return null;
   if (!int(value["x"], 0, 999) || !int(value["y"], 0, 999) || !int(value["w"], 1, 999) || !int(value["h"], 1, 999)) return null;
   const border = value["border"];
-  const animation = value["animation"];
+  const animation = animationOf(value["animation"], ELEMENT_ANIMATIONS);
   const background = value["background"];
+  const mask: DesignMask | undefined = oneOf(value["mask"], DESIGN_MASKS) ? value["mask"] : undefined;
+  const frame = frameOf(value["frame"]);
   const padding = box(value["padding"]);
   const margin = box(value["margin"]);
   const typography = typographyOf(value["typography"]);
@@ -94,9 +113,9 @@ function elementOf(value: unknown): DesignElement | null {
     ...(isRecord(border) && int(border["width"], 0, 16) && oneOf(border["style"], ["solid", "dashed", "dotted"] as const) && oneOf(border["colour"], ROLES) ? { border: { width: border["width"], style: border["style"], colour: border["colour"] } } : {}),
     ...(backgroundOf(background) ? { background: backgroundOf(background) } : {}),
     ...(typography ? { typography } : {}),
-    ...(isRecord(animation) && oneOf(animation["entrance"], ["none", "fade", "rise", "scale", "draw", "envelope"] as const)
-      ? { animation: { entrance: animation["entrance"], ...(int(animation["delayMs"], 0, 5000) ? { delayMs: animation["delayMs"] } : {}), ...(int(animation["durationMs"], 100, 3000) ? { durationMs: animation["durationMs"] } : {}) } } : {}),
-    ...(link ? { link } : {})
+    ...(animation ? { animation } : {}),
+    ...(link ? { link } : {}),
+    ...(mask ? { mask } : {}), ...(frame ? { frame } : {})
   };
 }
 
@@ -112,8 +131,9 @@ function pageOf(value: unknown): DesignPage | null {
   if (!mobile) return null;
   const desktop = value["canvases"]["desktop"] === undefined ? null : canvasOf(value["canvases"]["desktop"]);
   const background = value["background"];
+  const animation = animationOf(value["animation"], PAGE_ANIMATIONS);
   return {
-    id: value["id"], kind: value["kind"], ...(typeof value["section"] === "string" ? { section: value["section"] } : {}),
+    id: value["id"], kind: value["kind"], ...(animation ? { animation } : {}), ...(typeof value["section"] === "string" ? { section: value["section"] } : {}),
     style: oneOf(value["style"], ["plain", "cards", "bands"] as const) ? value["style"] : "plain",
     ...(backgroundOf(background) ? { background: backgroundOf(background) } : {}),
     canvases: { mobile, ...(desktop ? { desktop } : {}) }

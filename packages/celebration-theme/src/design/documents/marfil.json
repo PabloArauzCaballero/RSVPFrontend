@@ -160,6 +160,10 @@
                   "width": 1,
                   "style": "solid",
                   "colour": "accent"
+                },
+                "frame": {
+                  "style": "double",
+                  "colour": "accent"
                 }
               }
             ]
@@ -255,6 +259,10 @@
                 "border": {
                   "width": 1,
                   "style": "solid",
+                  "colour": "accent"
+                },
+                "frame": {
+                  "style": "double",
                   "colour": "accent"
                 }
               }
@@ -596,7 +604,7 @@
         "id": "cover",
         "type": "cover",
         "config": {
-          "variant": "classic",
+          "variant": "arch",
           "envelope": false
         }
       },
