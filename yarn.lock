@@ -4425,6 +4425,28 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@rsvp/design-editor@workspace:*, @rsvp/design-editor@workspace:packages/design-editor":
+  version: 0.0.0-use.local
+  resolution: "@rsvp/design-editor@workspace:packages/design-editor"
+  dependencies:
+    "@rsvp/celebration-theme": "workspace:*"
+    "@rsvp/config-ts": "workspace:*"
+    "@rsvp/i18n": "workspace:*"
+    "@testing-library/dom": "npm:^10.4.1"
+    "@testing-library/react": "npm:^16.3.0"
+    "@types/react": "npm:~19.1.0"
+    "@types/react-dom": "npm:~19.1.0"
+    "@vitest/coverage-v8": "npm:^3.1.2"
+    jsdom: "npm:^26.1.0"
+    react: "npm:19.1.0"
+    react-dom: "npm:19.1.0"
+    typescript: "npm:^5.8.3"
+    vitest: "npm:^3.1.2"
+  peerDependencies:
+    react: ">=18"
+  languageName: unknown
+  linkType: soft
+
 "@rsvp/design-tokens@workspace:*, @rsvp/design-tokens@workspace:packages/design-tokens":
   version: 0.0.0-use.local
   resolution: "@rsvp/design-tokens@workspace:packages/design-tokens"
@@ -4469,6 +4491,7 @@ __metadata:
   resolution: "@rsvp/query-hooks@workspace:packages/query-hooks"
   dependencies:
     "@rsvp/api-client": "workspace:*"
+    "@rsvp/celebration-theme": "workspace:*"
     "@rsvp/config-ts": "workspace:*"
     "@rsvp/contracts": "workspace:*"
     "@rsvp/testing": "workspace:*"
@@ -4609,6 +4632,7 @@ __metadata:
     "@rsvp/auth": "workspace:*"
     "@rsvp/celebration-theme": "workspace:*"
     "@rsvp/config-ts": "workspace:*"
+    "@rsvp/design-editor": "workspace:*"
     "@rsvp/design-tokens": "workspace:*"
     "@rsvp/i18n": "workspace:*"
     "@rsvp/query-hooks": "workspace:*"
