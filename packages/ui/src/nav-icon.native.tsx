@@ -1,5 +1,5 @@
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
-import { NAV_ICONS, NAV_ICON_STROKE } from './nav-icon-shapes';
+import { NAV_ICONS, NAV_ICON_STROKE } from '@rsvp/design-tokens';
 import type { NavIconProps } from './nav-icon';
 
 /** Native: the same shapes with `react-native-svg`. */

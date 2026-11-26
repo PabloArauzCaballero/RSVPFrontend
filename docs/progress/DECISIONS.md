@@ -132,6 +132,12 @@
 - **R7 · `preconnect`.** `FONT_PRECONNECT` espeja `x-rsvp-font-catalog.preconnect` (prueba de igualdad con el contrato). La emisión del `<link rel="preconnect">` y la carga de pesos exactos son de F6.
 - **Reversión:** igual que antes; revertir el PR y volver a vendorizar el commit anterior del backend.
 
+## Prototipos de plantillas (PR #117, F4): decisiones de Pablo y pendientes · 2026-11-24
+
+- **Decidido por Pablo: acento de Gala vino y nombre «Gala art déco».** Gala lleva vino `#7B2A3C` en claro y `#E6A3B1` en oscuro (matiz 347°, fuera de la franja del amarillo del sistema). El dorado anterior (`#6E5200`, `#CDAE6C`) queda descartado. La semilla `016` del backend se sigue llamando «Gala dorada» hasta que F8 la renombre; no se toca la semilla desde este PR.
+- **Pendiente de Pablo: redacción de los avisos y de «Ver mi respuesta»** (plazo vencido, regalos vacío/cerrado, sin enlace personal): son propuestas, no copy aprobado.
+- Hecho sin decisión de Pablo (verificable en el catálogo): las tres parejas tipográficas salen del catálogo curado de F1, así que no se amplía el catálogo.
+
 ## Biblioteca de dibujitos y ornamentos de invitación en `celebration-theme` (F3) · 2026-11-24
 
 - **Vive en `packages/celebration-theme/src/art` (`@rsvp/celebration-theme/art`).** Es el paquete que ya pintan las invitaciones en `apps/seo-web` y en la vista web de la app (P10); `apps/seo-web` no puede importar `packages/ui` y `celebration-theme` no depende de él. Alternativa descartada: ampliar `packages/ui/src/illustrations.ts`, que ata las invitaciones al kit de la app y a los pasteles de DOne (la invitación usa el acento de su plantilla, P4).
