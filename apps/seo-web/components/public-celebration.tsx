@@ -1,6 +1,7 @@
 import { CelebrationRenderer, fontStylesheet, themeFromTemplate, type SectionId } from "@rsvp/celebration-theme";
 import { createTranslator, supportedLocales } from "@rsvp/i18n/server";
 import type { PublicPage } from "../lib/celebration";
+import { visualTestNow } from "../lib/dev-surfaces";
 import { eventJsonLd, jsonLdScript } from "../lib/json-ld";
 import { uiLocale } from "../lib/locale";
 import { celebrationPath, siteUrl } from "../lib/metadata";
@@ -30,7 +31,7 @@ export function PublicCelebration({ page, only }: { readonly page: PublicPage; r
           ))}
         </nav>
       ) : null}
-      <CelebrationRenderer theme={theme} view={view} gallery={gallery} t={t} only={only} basePath={basePath} />
+      <CelebrationRenderer theme={theme} view={view} gallery={gallery} t={t} only={only} basePath={basePath} now={visualTestNow()} />
     </>
   );
 }
