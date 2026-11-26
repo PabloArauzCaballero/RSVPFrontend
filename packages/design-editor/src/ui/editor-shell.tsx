@@ -4,6 +4,7 @@ import { createAutosaver, type Autosaver, type DraftGateway, type SaveStatus } f
 import { setPaletteColour } from "../model/ops.js";
 import { canRedo, canUndo, documentOf, editorReducer, initialEditorState, type CanvasName, type EditorMode } from "../model/state.js";
 import { EditorProvider, type Translate } from "./editor-context.js";
+import { CustomCodePanel } from "./custom-code-panel.js";
 import { AlertIcon, CheckIcon, ClockIcon, DesktopIcon, DotIcon, LayersIcon, LockIcon, PhoneIcon, RedoIcon, SlidersIcon, SpinnerIcon, UndoIcon } from "./icons.js";
 
 export interface EditableDesign {
@@ -381,6 +382,7 @@ export function EditorShell({ design: source, gateway, t, onReload, signInHref, 
             </label>
           ))}
           <p className="de-hint">{t(key("basic.hint"))}</p>
+          {state.mode === "advanced" ? <CustomCodePanel /> : null}
           <div aria-live="polite">
             {warnings.length > 0 ? (
               <section className="de-warnings" aria-labelledby="de-warnings-title" data-testid="design-warnings">

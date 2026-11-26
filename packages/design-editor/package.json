@@ -19,7 +19,11 @@
     "react": ">=18"
   },
   "dependencies": {
-    "@rsvp/celebration-theme": "workspace:*"
+    "@rsvp/celebration-theme": "workspace:*",
+    "parse5": "^7.3.0",
+    "postcss": "^8.5.3",
+    "postcss-selector-parser": "^6.1.2",
+    "postcss-value-parser": "^4.2.0"
   },
   "devDependencies": {
     "@rsvp/config-ts": "workspace:*",

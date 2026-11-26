@@ -4,7 +4,7 @@ import { createTranslator, type AppLocale } from "@rsvp/i18n";
 import { EditorShell, type EditableDesign } from "../../src/ui/index.js";
 import type { DraftGateway } from "../../src/save/autosave.js";
 
-declare global { interface Window { __saves: { id: string; version: number; accent: string }[] } }
+declare global { interface Window { __saves: { id: string; version: number; accent: string }[]; __lastDocument: ReturnType<typeof design.convertV1ToV2> } }
 
 /**
  * ?fail=409|422|401|403|offline  the first saves fail that way (409 stops until the newer version is loaded)
@@ -33,6 +33,7 @@ let failing = fail !== null;
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const gateway: DraftGateway = {
   async saveDraft(id, draftVersion, doc) {
+    window.__lastDocument = doc;
     window.__saves.push({ id, version: draftVersion, accent: doc.tokens.palettes.light.accent });
     if (params.get("slow")) await sleep(4000);
     if (failing && fail === "409") throw Object.assign(new Error("conflict"), { status: 409, problem: { code: "VERSION_CONFLICT", currentVersion: 9 } });
