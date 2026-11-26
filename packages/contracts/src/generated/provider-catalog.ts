@@ -113,7 +113,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Published listings of verified providers by title (consumed by gift-list-service) */
+        /**
+         * Published listings of verified providers by title (consumed by gift-list-service)
+         * @description R2 (3.5.0, decision 11): a PRODUCT is listed only when published, COMPLETE and not hidden, from a VERIFIED provider; SERVICE listings as before. imageUrl of a product is the card of its cover photo.
+         */
         get: operations["searchListings"];
         put?: never;
         post?: never;
@@ -508,11 +511,115 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Own listings, published or not */
+        /**
+         * Own listings, published or not
+         * @description R2: each item carries version, completeness, missing and featured; a product's imageUrl is its cover photo.
+         */
         get: operations["listOwnListings"];
         put?: never;
-        /** Create an unpublished listing */
+        /**
+         * Create an unpublished listing
+         * @description 422 CATEGORY_TYPE_MISMATCH when the listing type differs from the category's listingType (R1, 3.4.0). R2 (3.5.0): Idempotency-Key; PRODUCT sheet fields; 422 IMAGE_URL_NOT_ALLOWED, PRICE_OUT_OF_RANGE, GIFT_IDEA_NOT_ALLOWED, UNKNOWN_CITY, CONTACT_IN_TEXT, DESCRIPTION_REPEATS_TITLE, PRODUCT_FIELDS_ONLY. The response is the ProductSheet (a superset of Listing) with completeness and missing.
+         */
         post: operations["createListing"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/{providerId}/listings/{listingId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One own listing with its full product sheet and photos (owner/admin) */
+        get: operations["getListingSheet"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Edit a listing (R2); a published product stays published and its completeness is recomputed
+         * @description variants[] replaces the list (kept ids keep their photos), photoOrder reorders the photos. provider.listing.completeness-changed.v1 is emitted only when the state or missing[] changes. HIDDEN_BY_ADMIN survives the edit. The own gift catalog (SNAPSHOT_V1) is 409 LISTING_NOT_EDITABLE.
+         */
+        patch: operations["patchListing"];
+        trace?: never;
+    };
+    "/providers/{providerId}/listings/{listingId}/duplicate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Copy a listing as a new unpublished draft, without photos (decision 4) */
+        post: operations["duplicateListing"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/{providerId}/listings/{listingId}/photos/{photoId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete a product photo and its files (owner/admin)
+         * @description The photo stops counting at once (DELETING) and the product's completeness is recomputed; the photo worker removes the original, the renditions and the row.
+         */
+        delete: operations["deleteListingPhoto"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/{providerId}/listings/{listingId}/photos/{photoId}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Step 3 of 3: confirm the upload and queue the photo for processing (idempotent)
+         * @description Checks the stored object: present (else 409 UPLOAD_NOT_FOUND), 1 byte up to the declared size, and its first 32 bytes are those of the declared type (JPEG FFD8FF, PNG signature, RIFF....WEBP, or an ISO-BMFF ftyp box with a HEIC brand). Otherwise the object is deleted and the photo turns REJECTED with rejectReason UNREADABLE (422 PHOTO_MISMATCH; it no longer counts against the limits or the quota and is removed after 7 days). Answers 202 with the photo QUEUED; repeated later it answers 202 with the current state (also REJECTED). The worker checks the type of the original again before decoding it, so an object replaced after this call with the still valid upload link is REJECTED UNREADABLE. The photo worker then renders WebP renditions thumb (160 px), card (480 px) and full (1280 px; longest side, never enlarged) without EXIF or GPS, deletes the original and leaves the photo READY, or REJECTED with UNREADABLE, HEIC_UNSUPPORTED (HEIC is converted on the client; the server cannot decode HEVC), TOO_MANY_PIXELS (more than 60 MP) or PROCESSING_FAILED (3 attempts).
+         */
+        post: operations["completeListingPhotoUpload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/{providerId}/listings/{listingId}/photos/uploads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Step 1 of 3: register a product photo and get a presigned PUT URL (owner/admin)
+         * @description R2 (A30). Flow: (1) this call; (2) PUT the image bytes to upload.url with upload.headers directly against the object store, no bearer token; the URL also signs Content-Length, so the body must be exactly `bytes` long (declare the file's real size; the store answers 403 to any other length); (3) POST .../photos/{photoId}/complete. Only a marketplace PRODUCT takes photos (not SERVICE, not the SNAPSHOT_V1 gift catalog). JPEG, PNG, WebP or HEIC up to 5 MB; at most 5 photos per product and 3 per variant; a per-provider storage quota (PROVIDER_MEDIA_MAX_BYTES_PER_PROVIDER, 200 MB by default) reserves the declared size until the upload completes or is abandoned (1 hour). The object key is built from ids only. With Idempotency-Key, repeating the same request returns the same photo (200), with a fresh upload link while it is still PENDING_UPLOAD and upload null afterwards; the same key with another listing, type, size, variantId or altText is 409 IDEMPOTENCY_KEY_REUSED. Another provider gets 403 whether the listing exists or not.
+         */
+        post: operations["requestListingPhotoUpload"];
         delete?: never;
         options?: never;
         head?: never;
@@ -528,7 +635,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Publish; destinations and fulfillment are mandatory (422, message translated by locale) */
+        /**
+         * Publish; destinations and fulfillment are mandatory (422, message translated by locale)
+         * @description 422 CATEGORY_TYPE_MISMATCH when the listing type differs from the category's listingType (R1, 3.4.0). R2 (3.5.0): idempotent (publishing again returns the listing and emits nothing). A marketplace PRODUCT must be COMPLETE: 422 LISTING_INCOMPLETE with details.missing (MissingCode[]), 409 LISTING_HIDDEN when an administrator hid it, plus CONTACT_IN_TEXT and DESCRIPTION_REPEATS_TITLE.
+         */
         post: operations["publishListing"];
         delete?: never;
         options?: never;
@@ -689,6 +799,24 @@ export interface paths {
         put?: never;
         /** PENDING_VERIFICATION -> VERIFIED (administrator only) */
         post: operations["verifyProvider"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/{providerId}/whatsapp-template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The provider's WhatsApp message template (owner/admin) */
+        get: operations["getProviderWhatsappTemplate"];
+        /** Replace the provider's WhatsApp message template (R2 stores it; R5 resolves it) */
+        put: operations["putProviderWhatsappTemplate"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -891,6 +1019,23 @@ export interface paths {
         put?: never;
         /** Verify the uploaded object (HEAD) */
         post: operations["completePartnerIntakeDocument"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/admin/listings/{listingId}/featured": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Feature a product (ADMIN only; prepared and off, decision 18) */
+        put: operations["setListingFeatured"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1263,7 +1408,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Eleven categories with translations */
+        /** Active categories with translations */
         get: operations["listCategories"];
         put?: never;
         post?: never;
@@ -1282,6 +1427,23 @@ export interface paths {
         };
         /** Bolivia departments and main cities with coordinates and source */
         get: operations["listGeo"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/gift-ideas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The gift ideas of §5.4 (public, Cache-Control: public, max-age=300) */
+        get: operations["listGiftIdeas"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2217,10 +2379,17 @@ export interface components {
             /** @constant */
             confirmReviewed: true;
         };
+        /**
+         * @description R2 (§5.1). Only COMPLETE can be published, recommended or added to a gift list.
+         * @enum {string}
+         */
+        CompletenessState: "COMPLETE" | "INCOMPLETE" | "HIDDEN_BY_ADMIN";
+        /** @description R2 (3.5.0): a PRODUCT also takes the product-sheet fields (a SERVICE sending them is 422 PRODUCT_FIELDS_ONLY). Send delivery or fulfillment, not both. Titles and descriptions of a PRODUCT may not carry phones or web addresses (422 CONTACT_IN_TEXT with details.fragment) and the es-BO description may not repeat the title (422 DESCRIPTION_REPEATS_TITLE). */
         CreateListing: {
             category: string;
             /** @description City slug from /providers/geo. */
             city: string;
+            delivery?: components["schemas"]["ProductDeliveryInput"];
             descriptions?: {
                 [key: string]: string;
             };
@@ -2228,15 +2397,27 @@ export interface components {
             destinations: {
                 [key: string]: string;
             };
+            details?: components["schemas"]["ProductDetails"];
             fulfillment?: components["schemas"]["Fulfillment"];
-            /** Format: uri */
+            /** @description Codes of GET /providers/gift-ideas compatible with the category (422 GIFT_IDEA_NOT_ALLOWED). */
+            giftIdeas?: string[];
+            /**
+             * Format: uri
+             * @description SERVICE only. Since 3.5.0 a PRODUCT with imageUrl is 422 IMAGE_URL_NOT_ALLOWED: its image is the cover of its uploaded photos.
+             */
             imageUrl?: string;
             priceFromMinor?: number;
+            /** @description R2: exact price in BOB minor units, at most PROVIDER_LISTING_MAX_PRICE_MINOR (20 000 000 by default; 422 PRICE_OUT_OF_RANGE). With variants it is the default variant's price. */
+            priceMinor?: number;
+            stock?: components["schemas"]["Stock"];
             titles: {
                 [key: string]: string;
             };
             /** @enum {string} */
             type: "SERVICE" | "PRODUCT";
+            /** @description Replaces the whole list. */
+            variants?: components["schemas"]["ProductVariantInput"][];
+            whatsappTemplate?: components["schemas"]["WhatsappTemplate"];
         };
         /** @enum {string} */
         Destination: "OFFICIAL_SITE" | "LANDING" | "WHATSAPP" | "PHONE" | "EMAIL" | "INSTAGRAM" | "PRODUCT_PAGE";
@@ -2917,6 +3098,20 @@ export interface components {
             }[];
             source?: string;
         };
+        GiftIdea: {
+            /** @description Product categories whose products can cover the idea. */
+            categories: string[];
+            code: string;
+            /** @description Event types of celebration-site (WEDDING, QUINCEANERA, BAUTIZO, ANNIVERSARY, BIRTHDAY, CORPORATE). */
+            eventTypes: string[];
+            /** @description In the requested locale. */
+            name: string;
+            names: {
+                [key: string]: string;
+            };
+            /** @description null in all 25 ideas for now (decision 10). */
+            priceHintMinor: number | null;
+        };
         /** @description A whole directory page in one request: 1 to 50 distinct listing ids (duplicates collapse). Ids that are unknown, unpublished or of a non-VERIFIED provider are skipped, not rejected. */
         ImpressionsRequest: {
             listingIds: string[];
@@ -3074,13 +3269,19 @@ export interface components {
         Listing: {
             category: string;
             city: string;
+            /** @description R2: null for SERVICE and for the own gift catalog. */
+            completeness?: components["schemas"]["CompletenessState"] | null;
             descriptions?: Record<string, never>;
             destinations?: components["schemas"]["Destination"][];
             disclaimer: string;
+            /** @description Set by ADMIN only; shown as «Patrocinado». Off today (decision 18). */
+            featured?: boolean;
             fulfillment?: components["schemas"]["FulfillmentView"];
             /** Format: uuid */
             id: string;
+            /** @description For a PRODUCT, the card rendition of its cover photo (R2); an external URL stored before R2 is kept as a fallback. */
             imageUrl?: string;
+            missing?: components["schemas"]["MissingCode"][];
             priceFromMinor?: number;
             /** Format: uuid */
             providerId: string;
@@ -3088,6 +3289,94 @@ export interface components {
             title: string;
             titles?: Record<string, never>;
             type: string;
+            /** @description R2: optimistic-lock version (ETag). */
+            version?: number;
+        };
+        ListingPhoto: {
+            altText: string | null;
+            /**
+             * @description Type of the uploaded original; renditions are always WebP.
+             * @enum {unknown}
+             */
+            contentType: "image/jpeg" | "image/png" | "image/webp" | "image/heic";
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            listingId: string;
+            /** @description Order inside the product; the first READY photo is the cover. */
+            position: number;
+            /**
+             * @description Only with REJECTED. REJECTED photos are removed after 7 days.
+             * @enum {unknown}
+             */
+            rejectReason: "UNREADABLE" | "HEIC_UNSUPPORTED" | "TOO_MANY_PIXELS" | "PROCESSING_FAILED" | null;
+            /** @description WebP renditions without EXIF/GPS; present only when READY. */
+            renditions: null | {
+                card: {
+                    height: number;
+                    /**
+                     * Format: uri
+                     * @description Anonymous URL: <object-store public origin>/provider-media/public/providers/{providerId}/listings/{listingId}/{photoId}/{size}.webp, immutable (Cache-Control: public, max-age=31536000, immutable).
+                     */
+                    url: string;
+                    width: number;
+                };
+                full: {
+                    height: number;
+                    /**
+                     * Format: uri
+                     * @description Anonymous URL: <object-store public origin>/provider-media/public/providers/{providerId}/listings/{listingId}/{photoId}/{size}.webp, immutable (Cache-Control: public, max-age=31536000, immutable).
+                     */
+                    url: string;
+                    width: number;
+                };
+                thumb: {
+                    height: number;
+                    /**
+                     * Format: uri
+                     * @description Anonymous URL: <object-store public origin>/provider-media/public/providers/{providerId}/listings/{listingId}/{photoId}/{size}.webp, immutable (Cache-Control: public, max-age=31536000, immutable).
+                     */
+                    url: string;
+                    width: number;
+                };
+            };
+            /** @enum {unknown} */
+            status: "PENDING_UPLOAD" | "QUEUED" | "PROCESSING" | "READY" | "REJECTED" | "DELETING";
+            /** Format: date-time */
+            updatedAt: string;
+            /** Format: uuid */
+            variantId: string | null;
+        };
+        ListingPhotoUpload: components["schemas"]["ListingPhoto"] & {
+            /** @description Null on an idempotent replay once the photo left PENDING_UPLOAD. */
+            upload: null | {
+                /** Format: date-time */
+                expiresAt: string;
+                headers: {
+                    [key: string]: string;
+                };
+                /** @constant */
+                method: "PUT";
+                /**
+                 * Format: uri
+                 * @description Presigned (AWS SigV4, 10 minutes). PUT the raw image bytes from the browser, sending exactly `headers`.
+                 */
+                url: string;
+            };
+        };
+        ListingPhotoUploadInput: {
+            altText?: string | null;
+            /** @description Size of the file that will be PUT; the stored object may not be larger. */
+            bytes: number;
+            /** @enum {unknown} */
+            contentType: "image/jpeg" | "image/png" | "image/webp" | "image/heic";
+            /**
+             * Format: uuid
+             * @description Variant of this product the photo shows (at most 3 per variant).
+             */
+            variantId?: string | null;
         };
         ListingSummary: {
             category?: string;
@@ -3189,6 +3478,11 @@ export interface components {
                 youtube?: string;
             };
         };
+        /**
+         * @description What a product still lacks, in this fixed order (each code opens its portal step).
+         * @enum {string}
+         */
+        MissingCode: "TITLE" | "DESCRIPTION" | "CATEGORY" | "GIFT_IDEA" | "PHOTO" | "PRICE" | "STOCK" | "COVERAGE" | "DELIVERY" | "DESTINATION";
         ModerationItem: {
             /** Format: uuid */
             id: string;
@@ -3469,6 +3763,41 @@ export interface components {
             kyp?: components["schemas"]["PartnerKyp"];
             representativeInRegistration?: boolean;
         };
+        /** @description R2: partial edit; absent fields keep their value. type cannot change. */
+        PatchListing: {
+            category?: string;
+            /** @description City slug from /providers/geo. */
+            city?: string;
+            delivery?: components["schemas"]["ProductDeliveryInput"];
+            descriptions?: {
+                [key: string]: string;
+            };
+            /** @description Destination -> URL (https; tel: for PHONE; mailto: for EMAIL). */
+            destinations?: {
+                [key: string]: string;
+            };
+            details?: components["schemas"]["ProductDetails"];
+            fulfillment?: components["schemas"]["Fulfillment"];
+            /** @description Codes of GET /providers/gift-ideas compatible with the category (422 GIFT_IDEA_NOT_ALLOWED). */
+            giftIdeas?: string[];
+            /**
+             * Format: uri
+             * @description SERVICE only. Since 3.5.0 a PRODUCT with imageUrl is 422 IMAGE_URL_NOT_ALLOWED: its image is the cover of its uploaded photos.
+             */
+            imageUrl?: string;
+            /** @description Every photo id of the product exactly once, in the new order (the first READY one is the cover). */
+            photoOrder?: string[];
+            priceFromMinor?: number;
+            /** @description R2: exact price in BOB minor units, at most PROVIDER_LISTING_MAX_PRICE_MINOR (20 000 000 by default; 422 PRICE_OUT_OF_RANGE). With variants it is the default variant's price. */
+            priceMinor?: number;
+            stock?: components["schemas"]["Stock"];
+            titles?: {
+                [key: string]: string;
+            };
+            /** @description Replaces the whole list. */
+            variants?: components["schemas"]["ProductVariantInput"][];
+            whatsappTemplate?: components["schemas"]["WhatsappTemplate"];
+        };
         /** @enum {string} */
         PersonType: "NATURAL" | "UNIPERSONAL" | "JURIDICA";
         /** @enum {string} */
@@ -3628,6 +3957,76 @@ export interface components {
             /** @description Localized by locale/Accept-Language when a translation exists. */
             title: string;
             type: string;
+        };
+        ProductDelivery: {
+            conditions: {
+                [key: string]: string;
+            };
+            coverageCities: string[];
+            /** @description null while not declared (rows from before R2). */
+            leadTimeDays: number | null;
+            pickupAvailable: boolean;
+            shippingCostMinor: number | null;
+        } | null;
+        ProductDeliveryInput: {
+            conditions?: {
+                "en-US"?: string;
+                "es-BO"?: string;
+            };
+            /** @description City slugs of GET /providers/geo (L23: never free text); unknown ones are 422 UNKNOWN_CITY. */
+            coverageCities: string[];
+            leadTimeDays: number;
+            pickupAvailable?: boolean;
+            /** @description 0 = free shipping. */
+            shippingCostMinor: number;
+        };
+        ProductDetails: {
+            care?: string;
+            dimensions?: string;
+            personalizable?: boolean;
+            /** @description Only with personalizable true. */
+            personalizationNote?: string;
+            warranty?: string;
+            weight?: string;
+        } | null;
+        ProductSheet: components["schemas"]["Listing"] & {
+            /** @constant */
+            currency?: "BOB";
+            delivery?: components["schemas"]["ProductDelivery"];
+            details?: components["schemas"]["ProductDetails"];
+            giftIdeas?: string[];
+            hiddenReason?: string | null;
+            photos?: components["schemas"]["ListingPhoto"][];
+            priceMinor?: number | null;
+            stock?: components["schemas"]["Stock"] | null;
+            variants?: components["schemas"]["ProductVariant"][];
+            whatsappTemplate?: components["schemas"]["WhatsappTemplate"];
+        };
+        ProductVariant: {
+            /**
+             * Format: uuid
+             * @description The «version» Gift stores (R4).
+             */
+            id: string;
+            isDefault: boolean;
+            label: string;
+            position: number;
+            priceMinor: number;
+            sku: string | null;
+            stock: components["schemas"]["Stock"];
+        };
+        ProductVariantInput: {
+            /**
+             * Format: uuid
+             * @description Keep an existing variant (PATCH); absent or null creates one.
+             */
+            id?: string | null;
+            /** @description Exactly one; the first variant when none is marked. */
+            isDefault?: boolean;
+            label: string;
+            priceMinor: number;
+            sku?: string | null;
+            stock: components["schemas"]["Stock"];
         };
         Provider: {
             currency: string;
@@ -3838,6 +4237,8 @@ export interface components {
              */
             timeZone: string;
         };
+        /** @enum {string} */
+        Stock: "AVAILABLE" | "OUT_OF_STOCK" | "MADE_TO_ORDER";
         UpdateProvider: {
             name?: string;
             plan?: components["schemas"]["Plan"];
@@ -3867,6 +4268,21 @@ export interface components {
             status: "PENDING" | "VERIFIED" | "REJECTED" | "SUSPENDED";
             /** Format: date-time */
             submittedAt: string;
+        };
+        /** @description WhatsApp message by locale (§5.8). Variables: {producto} {version} {precio} {cantidad} {celebracion} {fecha} {ciudad} {entrega} {proveedor}; any other is 422 UNKNOWN_TEMPLATE_VARIABLE; a phone or web address is 422 TEMPLATE_CONTAINS_CONTACT. Stored in R2, resolved by /r in R5. Never guest data. null or {} clears it. */
+        WhatsappTemplate: {
+            "en-US"?: string;
+            "es-BO"?: string;
+        } | null;
+        WhatsappTemplateView: {
+            /** @description Used when neither the product nor the provider wrote one. */
+            defaultTemplate: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            providerId: string;
+            template: components["schemas"]["WhatsappTemplate"];
+            variables: string[];
         };
     };
     responses: {
@@ -6349,7 +6765,10 @@ export interface operations {
                 /** @description Overrides Accept-Language. */
                 locale?: "es-BO" | "en-US";
             };
-            header?: never;
+            header?: {
+                /** @description Repeating the same request with the same key returns the first result (200); another body with that key is 409 IDEMPOTENCY_KEY_REUSED. */
+                "Idempotency-Key"?: string;
+            };
             path: {
                 providerId: string;
             };
@@ -6361,18 +6780,358 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Listing created */
-            201: {
+            /** @description Idempotent replay (same Idempotency-Key and body) */
+            200: {
                 headers: {
+                    /** @description "<version>" for the next If-Match. */
+                    ETag?: string;
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Listing"];
+                    "application/json": components["schemas"]["ProductSheet"];
+                };
+            };
+            /** @description Listing created */
+            201: {
+                headers: {
+                    /** @description "<version>" for the next If-Match. */
+                    ETag?: string;
+                    Location?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductSheet"];
                 };
             };
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
+            /** @description IDEMPOTENCY_KEY_REUSED */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
             422: components["responses"]["Validation"];
+        };
+    };
+    getListingSheet: {
+        parameters: {
+            query?: {
+                /** @description Overrides Accept-Language. */
+                locale?: "es-BO" | "en-US";
+            };
+            header?: never;
+            path: {
+                listingId: string;
+                providerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Listing */
+            200: {
+                headers: {
+                    /** @description "<version>" for the next If-Match. */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductSheet"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    patchListing: {
+        parameters: {
+            query?: {
+                /** @description Overrides Accept-Language. */
+                locale?: "es-BO" | "en-US";
+            };
+            header?: {
+                /** @description Version the editor loaded (the ETag of GET). Mandatory for a PRODUCT (428 IF_MATCH_REQUIRED); a stale one is 409 VERSION_CONFLICT with details.currentVersion. */
+                "If-Match"?: string;
+            };
+            path: {
+                listingId: string;
+                providerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PatchListing"];
+            };
+        };
+        responses: {
+            /** @description Edited */
+            200: {
+                headers: {
+                    /** @description "<version>" for the next If-Match. */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductSheet"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            /** @description VERSION_CONFLICT (details.currentVersion) or LISTING_NOT_EDITABLE */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            422: components["responses"]["Validation"];
+            /** @description IF_MATCH_REQUIRED (PRODUCT without If-Match) */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    duplicateListing: {
+        parameters: {
+            query?: {
+                /** @description Overrides Accept-Language. */
+                locale?: "es-BO" | "en-US";
+            };
+            header?: {
+                /** @description Repeating the same request with the same key returns the first result (200); another body with that key is 409 IDEMPOTENCY_KEY_REUSED. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                listingId: string;
+                providerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Idempotent replay */
+            200: {
+                headers: {
+                    /** @description "<version>" for the next If-Match. */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductSheet"];
+                };
+            };
+            /** @description Copy created (a product is INCOMPLETE with PHOTO) */
+            201: {
+                headers: {
+                    /** @description "<version>" for the next If-Match. */
+                    ETag?: string;
+                    Location?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductSheet"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            /** @description IDEMPOTENCY_KEY_REUSED or LISTING_NOT_EDITABLE */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            422: components["responses"]["Validation"];
+        };
+    };
+    deleteListingPhoto: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                listingId: string;
+                photoId: string;
+                providerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted (also when it did not exist or was already being deleted) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            /** @description MEDIA_STORAGE_NOT_CONFIGURED (no media bucket in this environment) or STORAGE_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    completeListingPhotoUpload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                listingId: string;
+                photoId: string;
+                providerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Queued for the photo worker (or already processed) */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListingPhoto"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            /** @description PROVIDER_NOT_FOUND or PHOTO_NOT_FOUND (unknown, of another listing, or being deleted) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description UPLOAD_NOT_FOUND: nothing was uploaded yet or the link expired */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description PHOTO_MISMATCH: not the declared image type or larger than declared; the file was deleted and the photo is REJECTED (UNREADABLE) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description MEDIA_STORAGE_NOT_CONFIGURED (no media bucket in this environment) or STORAGE_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    requestListingPhotoUpload: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                listingId: string;
+                providerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ListingPhotoUploadInput"];
+            };
+        };
+        responses: {
+            /** @description Idempotent replay of an earlier request with the same Idempotency-Key */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListingPhotoUpload"];
+                };
+            };
+            /** @description PENDING_UPLOAD */
+            201: {
+                headers: {
+                    Location?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListingPhotoUpload"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            /** @description PROVIDER_NOT_FOUND or LISTING_NOT_FOUND (also a listing of another provider) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description PHOTO_LIMIT_REACHED (details.scope PRODUCT: 5 per product, VARIANT: 3 per variant; details.limit), MEDIA_QUOTA_EXCEEDED (details.quotaBytes, details.usedBytes) or IDEMPOTENCY_KEY_REUSED */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description UNSUPPORTED_MEDIA_TYPE (details.accepted), PHOTO_TOO_LARGE (details.maxBytes), PHOTOS_PRODUCT_ONLY (SERVICE or SNAPSHOT_V1 listing) or VALIDATION_FAILED (details names bytes, variantId, altText or idempotencyKey) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description MEDIA_STORAGE_NOT_CONFIGURED (no media bucket in this environment) or STORAGE_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     publishListing: {
@@ -6402,6 +7161,15 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
+            /** @description LISTING_HIDDEN or LISTING_NOT_EDITABLE */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
             422: components["responses"]["Validation"];
         };
     };
@@ -6749,6 +7517,71 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
+        };
+    };
+    getProviderWhatsappTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                providerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Template */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WhatsappTemplateView"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    putProviderWhatsappTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                providerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    template: components["schemas"]["WhatsappTemplate"];
+                };
+            };
+        };
+        responses: {
+            /** @description Stored */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WhatsappTemplateView"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            /** @description UNKNOWN_TEMPLATE_VARIABLE, TEMPLATE_CONTAINS_CONTACT or VALIDATION_FAILED */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     adminListCategories: {
@@ -7200,6 +8033,49 @@ export interface operations {
             422: components["responses"]["Validation"];
             /** @description STORAGE_NOT_CONFIGURED or KYP_ENCRYPTION_NOT_CONFIGURED: the deployment lacks object storage or the KYP key (fails closed). */
             503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    setListingFeatured: {
+        parameters: {
+            query?: {
+                /** @description Overrides Accept-Language. */
+                locale?: "es-BO" | "en-US";
+            };
+            header?: never;
+            path: {
+                listingId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    featured: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description Updated (audited) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductSheet"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            /** @description FEATURED_PRODUCT_ONLY or VALIDATION_FAILED */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -7962,6 +8838,8 @@ export interface operations {
             query?: {
                 /** @description Overrides Accept-Language. */
                 locale?: "es-BO" | "en-US";
+                /** @description Keeps the categories that accept this listing type: listingType equal to it or null (null accepts both). Another value is 422 INVALID_QUERY. */
+                type?: "PRODUCT" | "SERVICE";
             };
             header?: never;
             path?: never;
@@ -7978,6 +8856,7 @@ export interface operations {
                     "application/json": components["schemas"]["CategoryList"];
                 };
             };
+            422: components["responses"]["Validation"];
         };
     };
     listGeo: {
@@ -7998,6 +8877,35 @@ export interface operations {
                     "application/json": components["schemas"]["GeoList"];
                 };
             };
+        };
+    };
+    listGiftIdeas: {
+        parameters: {
+            query?: {
+                /** @description Category code or slug; an unknown one returns no items. */
+                category?: string;
+                eventType?: string;
+                /** @description Overrides Accept-Language. */
+                locale?: "es-BO" | "en-US";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Ideas in the approved order */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["GiftIdea"][];
+                    };
+                };
+            };
+            422: components["responses"]["Validation"];
         };
     };
     healthPrefixed: {
