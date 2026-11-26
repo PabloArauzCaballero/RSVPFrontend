@@ -3,7 +3,7 @@ import { Modal, ScrollView, Text, View, useWindowDimensions } from "react-native
 import "leaflet/dist/leaflet.css";
 import type { Map as LeafletMap } from "leaflet";
 import type { MapPlace } from "@rsvp/api-client";
-import type { MapPoint } from "@rsvp/celebration-theme";
+import type { MapPoint } from "@rsvp/celebration-theme/model";
 import { Button, overlayAnimation, useColors } from "@rsvp/ui";
 import { colors, radius, spacing } from "@rsvp/design-tokens";
 import { useT } from "../platform/providers";

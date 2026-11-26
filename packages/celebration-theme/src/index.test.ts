@@ -303,9 +303,8 @@ describe("template colours read in both schemes (WCAG AA)", () => {
   });
 });
 
-describe("styles.css and native styles keep the contract the theme assumes", () => {
+describe("styles.css keeps the contract the theme assumes", () => {
   const css = readFileSync(join(process.cwd(), "styles.css"), "utf8");
-  const native = readFileSync(join(process.cwd(), "src/native.tsx"), "utf8");
   const FLOOR_PX = 13;
   const ROOT_PX = 16;
 
@@ -313,12 +312,6 @@ describe("styles.css and native styles keep the contract the theme assumes", () 
     const sizes = [...css.matchAll(/font-size:\s*([^;}]+)[;}]/g)].flatMap((match) => [...match[1]!.matchAll(/(-?\d*\.?\d+)(rem|em|px)/g)].map((value) => ({ rule: match[0], px: Number(value[1]) * (value[2] === "px" ? 1 : ROOT_PX) })));
     expect(sizes.length).toBeGreaterThan(10);
     expect(sizes.filter((size) => size.px < FLOOR_PX)).toEqual([]);
-  });
-
-  it("no fontSize in native.tsx falls below 13 px", () => {
-    const sizes = [...native.matchAll(/fontSize:\s*(\d+(?:\.\d+)?)/g)].map((match) => Number(match[1]));
-    expect(sizes.length).toBeGreaterThan(5);
-    expect(sizes.filter((size) => size < FLOOR_PX)).toEqual([]);
   });
 
   it("F4 (PL-A3, PL-M6, PL-M8) · the stylesheet paints no gradient and no saturated cover block; the reply tint is the one the theme validates against", () => {
@@ -364,5 +357,28 @@ describe("styles.css and native styles keep the contract the theme assumes", () 
 
   it("pressing with a mouse wins over hovering: :hover:active keeps scale(.98), inside the same hover and motion media query", () => {
     expect(css).toMatch(/@media \(hover: hover\) and \(prefers-reduced-motion: no-preference\) \{[^@]*\.celebration-cta:hover:active \{ transform: scale\(\.98\); \}/);
+  });
+});
+
+describe("PL-134-R2-M1 · the app's entry (`./model`) carries no renderer and no CSS parser", () => {
+  it("none of its modules, followed through their imports, reaches the renderer, the sections or postcss", async () => {
+    const { existsSync, readFileSync } = await import("node:fs");
+    const { dirname, join, resolve } = await import("node:path");
+    const seen = new Set<string>();
+    const visit = (file: string): void => {
+      if (seen.has(file)) return;
+      seen.add(file);
+      for (const match of readFileSync(file, "utf8").matchAll(/(?:from|import)\s*\(?\s*["']([^"']+)["']/g)) {
+        const target = match[1] as string;
+        if (!target.startsWith(".")) { expect(["postcss", "postcss-selector-parser", "postcss-value-parser"]).not.toContain(target); continue; }
+        const base = resolve(dirname(file), target.replace(/\.js$/, ""));
+        const found = [`${base}.ts`, `${base}.tsx`, join(base, "index.ts"), join(base, "index.tsx")].find(existsSync);
+        if (found) visit(found);
+      }
+    };
+    visit(join(process.cwd(), "src/model.ts"));
+    const names = [...seen].map((file) => file.replace(`${process.cwd()}/src/`, ""));
+    expect(names.filter((name) => /^(renderer|custom\/|sections\/|design\/render|theme-context|media\/components)/.test(name))).toEqual([]);
+    expect(names.length).toBeGreaterThan(5);
   });
 });

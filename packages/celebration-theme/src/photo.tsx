@@ -9,10 +9,11 @@ import { drawingById } from "./art/library.js";
  * plain `<img>` with exactly the attributes it was given, so the server markup is the same as before. If the file does not load
  * (a deleted or blocked upload, a lost connection) it is replaced by a box of the same class and proportions on the palette's
  * surface with the camera drawing in the template's ink, so the layout keeps its place and the page still looks designed.
- * An image that failed before the page was hydrated is caught by checking `complete` once mounted: `error` is not replayed.
+ * With `sources` (F6: AVIF and WebP) the image sits in a `<picture>`. An image that failed before the page was hydrated is caught by checking `complete` once mounted: `error` is not replayed.
  */
-export function Photo(props: ImgHTMLAttributes<HTMLImageElement> & { readonly alt: string }): ReactNode {
-  const { alt, width, height, className, src } = props;
+export function Photo(props: ImgHTMLAttributes<HTMLImageElement> & { readonly alt: string; readonly sources?: ReactNode }): ReactNode {
+  const { sources, ...imgProps } = props;
+  const { alt, width, height, className, src } = imgProps;
   const [failed, setFailed] = useState(false);
   const ref = useRef<HTMLImageElement>(null);
   useEffect(() => {
@@ -29,5 +30,7 @@ export function Photo(props: ImgHTMLAttributes<HTMLImageElement> & { readonly al
       </span>
     );
   }
-  return <img ref={ref} {...props} onError={() => setFailed(true)} />;
+  const image = <img ref={ref} {...imgProps} onError={() => setFailed(true)} />;
+  // F6: AVIF and WebP sources go in a <picture>; when the file fails, the whole picture is replaced by the box above.
+  return sources ? <picture>{sources}{image}</picture> : image;
 }

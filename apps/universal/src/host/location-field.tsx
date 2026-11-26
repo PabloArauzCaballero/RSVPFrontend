@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
-import { mapUrl, pointOf, pointUrl } from "@rsvp/celebration-theme";
+import { mapUrl, pointOf, pointUrl } from "@rsvp/celebration-theme/model";
 import { spacing } from "@rsvp/design-tokens";
 import { useT } from "../platform/providers";
 import { LIMITS, overLimit } from "./limits";

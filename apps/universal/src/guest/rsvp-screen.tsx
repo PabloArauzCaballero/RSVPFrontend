@@ -3,7 +3,7 @@ import { Linking, Text, View } from "react-native";
 import { router } from "expo-router";
 import { ApiError } from "@rsvp/api-client";
 import { nativeMagicLink, personalLinkOrigin, personalLinkUrl } from "@rsvp/auth";
-import { guestCover, readContent, type HostContact, type PublicCelebrationView } from "@rsvp/celebration-theme";
+import { guestCover, readContent, type HostContact, type PublicCelebrationView } from "@rsvp/celebration-theme/model";
 import { spacing } from "@rsvp/design-tokens";
 import { Celebrate, Checkbox, CheckMark, Chip, Enter, Skeleton, StickyActions, useColors } from "@rsvp/ui";
 import { rsvpSchema, unregisteredRsvpSchema } from "@rsvp/forms";

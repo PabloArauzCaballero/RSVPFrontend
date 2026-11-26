@@ -2,8 +2,8 @@
   "$comment": "Backend commit whose OpenAPI specs are vendored in specs/. It must be the backend deployed with this frontend. Change it only with: yarn workspace @rsvp/contracts generate --ref <sha|branch|tag> (see README.md).",
   "repository": "PabloArauzCaballero/RSVPBackend",
   "path": "packages/contracts-openapi/specs",
-  "ref": "fbb91f30bb8d41df6313a2e0cb3a0e03fbe9a905",
-  "refName": "fbb91f30bb8d41df6313a2e0cb3a0e03fbe9a905",
+  "ref": "4d23614b1d5a081e68a1cc16843c6d2b6fd4a7cc",
+  "refName": "4d23614b1d5a081e68a1cc16843c6d2b6fd4a7cc",
   "specs": {
     "celebration": {
       "version": "1.5.0",

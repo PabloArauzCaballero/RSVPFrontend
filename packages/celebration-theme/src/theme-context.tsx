@@ -4,7 +4,7 @@ import { createContext, useContext, type PropsWithChildren, type ReactNode } fro
 import { layoutOf, themeFromTemplate } from "./theme.js";
 import type { CelebrationTheme, LayoutSpec } from "./types.js";
 
-/** The theme as React context: React Native reads it where the web uses CSS variables (REQ-F09-04). */
+/** The theme as React context, for components that read it where CSS variables do not reach (REQ-F09-04). */
 export interface ThemeContextValue {
   readonly theme: CelebrationTheme;
   readonly layout: LayoutSpec;

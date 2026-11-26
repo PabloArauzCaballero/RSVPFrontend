@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Text, View, useWindowDimensions } from "react-native";
-import { themeFromTemplate } from "@rsvp/celebration-theme";
+import { themeFromTemplate } from "@rsvp/celebration-theme/model";
 import { Enter, PressFeedback, Skeleton, SkeletonList, StepTransition, useColors } from "@rsvp/ui";
 import { radius, spacing } from "@rsvp/design-tokens";
 import { useCelebration, useCreateCelebration, useEventTypes, type Celebration, type TranslatedEventType } from "@rsvp/query-hooks";
