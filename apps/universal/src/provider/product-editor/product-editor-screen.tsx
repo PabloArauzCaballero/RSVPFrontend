@@ -217,7 +217,6 @@ function ProductEditor({ provider, listingId, initialStep, duplicated }: EditorP
                 <ActionButton icon="arrow" label={creating ? (create.isPending ? t("portal.product.actions.creating") : t("portal.product.actions.create")) : patch.isPending ? t("portal.product.actions.saving") : t("portal.product.actions.next")} busy={create.isPending || patch.isPending} disabled={busy} onPress={() => save(step)} testID="step-next" />
               )}
               {back && !creating ? <ActionButton icon="back" variant="secondary" label={t("portal.product.actions.back")} disabled={busy} onPress={() => open(back)} testID="step-back" /> : null}
-              {!creating ? <ActionButton icon="catalog" variant="secondary" label={t("portal.product.actions.toSummary")} disabled={busy} onPress={() => open("summary")} testID="step-summary" /> : null}
             </StickyActions>
           </>
         )}
