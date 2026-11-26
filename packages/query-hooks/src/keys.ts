@@ -11,6 +11,7 @@ export const queryKeys = {
   },
   eventType: { all: ["event-types"] as const, list: (locale: string) => ["event-types", locale] as const, admin: ["event-types", "admin"] as const },
   template: { all: ["templates"] as const, compatible: (tags: string) => ["templates", "compatible", tags] as const, detail: (id: string) => ["templates", id] as const, admin: ["templates", "admin"] as const },
+  design: { celebration: (celebrationId: string) => ["designs", "celebration", celebrationId] as const, versions: (designId: string) => ["designs", designId, "versions"] as const },
   media: { list: (celebrationId: string) => ["media", celebrationId] as const, publicGallery: (celebrationId: string) => ["media", "public", celebrationId] as const },
   // The guest token never appears in a key: `rsvp` is keyed by celebration + a non-reversible fingerprint.
   guest: {

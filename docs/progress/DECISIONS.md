@@ -150,3 +150,10 @@
 - **R6 · goldens sintéticos de contraste bajo.** `design.test.ts` lee `x-rsvp-warning-goldens` del contrato (5 paletas) y exige que `contrastWarnings` dé exactamente los avisos del backend (razones redondeadas y tono sugerido incluidos), incluido el caso de 4,48:1 y una paleta sin salida.
 - **R7 · `preconnect`.** `FONT_PRECONNECT` espeja `x-rsvp-font-catalog.preconnect` (prueba de igualdad con el contrato). La emisión del `<link rel="preconnect">` y la carga de pesos exactos son de F6.
 - **Reversión:** igual que antes; revertir el PR y volver a vendorizar el commit anterior del backend.
+
+## Prototipos de plantillas (PR #117, F4): decisiones de Pablo y pendientes · 2026-11-24
+
+- **Decidido por Pablo: acento de Gala vino y nombre «Gala art déco».** Gala lleva vino `#7B2A3C` en claro y `#E6A3B1` en oscuro (matiz 347°, fuera de la franja del amarillo del sistema). El dorado anterior (`#6E5200`, `#CDAE6C`) queda descartado. La semilla `016` del backend se sigue llamando «Gala dorada» hasta que F8 la renombre; no se toca la semilla desde este PR.
+- **Pendiente de Pablo: redacción de los avisos y de «Ver mi respuesta»** (plazo vencido, regalos vacío/cerrado, sin enlace personal): son propuestas, no copy aprobado.
+- Hecho sin decisión de Pablo (verificable en el catálogo): las tres parejas tipográficas salen del catálogo curado de F1, así que no se amplía el catálogo.
+

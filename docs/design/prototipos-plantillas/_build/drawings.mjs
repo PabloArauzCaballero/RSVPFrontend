@@ -68,7 +68,7 @@ const D = {
     { l: 'soft', d: ellipse(76, 54, 18, 23) }, { l: 'soft', d: poly([[72.5, 76], [79.5, 76], [76, 81]], true) },
     { l: 'knock', w: 3, d: 'M36 36C38 31 42 29 46 29' },
     { l: 'line', w: 2.5, d: 'M45 77C47 86 55 90 60 96M76 81C74 88 66 91 60 96' }],
-  // — Gala dorada —
+  // — Gala art déco (acento vino, decidido por Pablo 2026-11-24) —
   coupe: [...stage(26),
     { l: 'solid', d: 'M28 34H92C92 54 78 66 60 66C42 66 28 54 28 34Z' }, { l: 'solid', d: rect(56.5, 64, 7, 26, 2) }, { l: 'solid', d: ellipse(60, 92, 20, 4.5) },
     { l: 'soft', d: 'M33 42H87C84 54 74 60 60 60C46 60 36 54 33 42Z' },
