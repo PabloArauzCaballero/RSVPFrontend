@@ -14,21 +14,20 @@
 .celebration h1, .celebration h2 { font-family: var(--celebration-heading-font); line-height: 1.15; margin: 0; }
 .celebration[data-heading-case="uppercase"] h1, .celebration[data-heading-case="uppercase"] h2 { text-transform: uppercase; letter-spacing: .04em; }
 .celebration h1 { font-size: calc(clamp(2.2rem, 7vw, 4.5rem) * var(--celebration-heading-scale)); }
-.celebration h2 { font-size: calc(clamp(1.5rem, 4vw, 2.1rem) * var(--celebration-heading-scale)); color: var(--celebration-accent); margin-bottom: 1rem; }
+.celebration h2 { font-size: calc(clamp(1.5rem, 4vw, 2.1rem) * var(--celebration-heading-scale)); color: var(--celebration-text); margin-bottom: 1rem; }
 .celebration a { color: var(--celebration-accent); text-underline-offset: .2em; }
 .celebration a:focus-visible, .celebration summary:focus-visible { outline: 3px solid var(--celebration-accent); outline-offset: 3px; }
 
-.celebration-eyebrow { margin: 0 0 .5rem; color: var(--celebration-accent); font-size: .85rem; letter-spacing: .14em; text-transform: uppercase; font-weight: 600; }
+.celebration-eyebrow { margin: 0 0 .5rem; color: var(--celebration-muted); font-size: .875rem; letter-spacing: .01em; font-weight: 600; }
 .celebration-note { color: var(--celebration-muted); font-size: .9rem; }
 .celebration-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* Cover. Each layout composes it its own way; without a photo the cover is still designed (frame, band or bar), never bare text. */
-.celebration-hero { position: relative; display: grid; gap: 1rem; padding: clamp(3rem, 11vw, 7rem) var(--celebration-space) clamp(2.5rem, 7vw, 4.5rem); background: radial-gradient(60rem 26rem at 50% 0%, color-mix(in srgb, var(--celebration-accent) 13%, transparent), transparent 70%); overflow: hidden; }
+.celebration-hero { position: relative; display: grid; gap: 1rem; padding: clamp(3rem, 11vw, 7rem) var(--celebration-space) clamp(2.5rem, 7vw, 4.5rem); overflow: hidden; }
 .celebration-hero-copy { position: relative; display: grid; gap: .6rem; width: min(100%, var(--celebration-max-width)); margin: 0 auto; }
 .celebration[data-align="center"] .celebration-hero-copy { text-align: center; justify-items: center; }
 .celebration-hero p { margin: 0; }
 .celebration-hero h1 { font-size: calc(clamp(2.5rem, 8.5vw, 5rem) * var(--celebration-heading-scale)); line-height: 1.02; letter-spacing: -.015em; overflow-wrap: anywhere; text-wrap: balance; }
-.celebration-hero .celebration-eyebrow { margin-bottom: .75rem; font-size: .8125rem; letter-spacing: .26em; }
 .celebration-hosts { font-family: var(--celebration-heading-font); font-size: clamp(1.2rem, 3.2vw, 1.6rem); }
 .celebration-amp { font-style: italic; color: var(--celebration-accent); }
 .celebration-ornament { display: block; width: clamp(6rem, 22vw, 9rem); height: auto; margin: .75rem 0; color: var(--celebration-accent); }
@@ -36,39 +35,41 @@
 .celebration-date { font-family: var(--celebration-heading-font); font-size: clamp(1.15rem, 3.2vw, 1.6rem); letter-spacing: .03em; }
 .celebration-date time::first-letter { text-transform: uppercase; }
 .celebration-venue { color: var(--celebration-muted); font-size: 1.05rem; }
-.celebration-countdown { margin-top: .75rem !important; width: fit-content; padding: .3rem 1rem; border: 1px solid color-mix(in srgb, currentColor 35%, transparent); border-radius: 9999px; font-size: .8125rem; letter-spacing: .12em; text-transform: uppercase; color: var(--celebration-muted); }
+.celebration-countdown { margin-top: .5rem !important; font-size: .9375rem; color: var(--celebration-muted); font-variant-numeric: tabular-nums; }
+.celebration-hero-art { display: block; width: clamp(5.5rem, 26vw, 9.5rem); height: auto; margin-bottom: .25rem; }
+.celebration-hero[data-has-image="true"] .celebration-hero-art { width: clamp(4rem, 16vw, 6rem); }
+.celebration-section-art { display: block; width: 3.5rem; height: auto; margin-bottom: .5rem; }
+.celebration[data-align="center"] .celebration-section-art { margin-inline: auto; }
 .celebration-hero-image { width: 100%; height: 100%; object-fit: cover; }
 
 /* centered (classic): a card with a double hairline, like a printed invitation. */
 .celebration-hero[data-hero="centered"] .celebration-hero-copy { padding: clamp(2.25rem, 7vw, 4.5rem) clamp(1.25rem, 5vw, 3.5rem); background: color-mix(in srgb, var(--celebration-surface) 82%, transparent); border: 1px solid color-mix(in srgb, var(--celebration-accent) 55%, transparent); outline: 1px solid color-mix(in srgb, var(--celebration-accent) 28%, transparent); outline-offset: 7px; }
-.celebration-hero[data-hero="centered"] .celebration-hero-image { max-height: 26rem; width: min(100%, var(--celebration-max-width)); margin: 0 auto 1.5rem; }
+.celebration-hero[data-hero="centered"] .celebration-hero-image { height: min(34vh, 17rem); width: min(72vw, 14rem); margin: 0 auto 1.5rem; border-radius: 999px 999px 0 0; border: 1px solid color-mix(in srgb, var(--celebration-accent) 55%, transparent); outline: 1px solid color-mix(in srgb, var(--celebration-accent) 28%, transparent); outline-offset: 6px; }
 
-/* overlay (editorial): the title over the photo; without one, over a band of the accent colour. */
-.celebration-hero[data-hero="overlay"] { min-height: min(78vh, 46rem); align-content: end; color: #fff; background: linear-gradient(160deg, var(--celebration-accent-fill), color-mix(in srgb, var(--celebration-accent-fill) 72%, #000)); }
-.celebration-hero[data-hero="overlay"] .celebration-hero-image { position: absolute; inset: 0; filter: brightness(.5); }
-.celebration-hero[data-hero="overlay"] :is(.celebration-venue, .celebration-countdown, .celebration-eyebrow, .celebration-amp) { color: #fff; }
-.celebration-hero[data-hero="overlay"] .celebration-rule { width: 100%; height: 1px; background: rgb(255 255 255 / .55); }
-.celebration-hero[data-hero="overlay"] h1 { line-height: .95; letter-spacing: -.02em; }
+/* overlay (editorial): a magazine cover. Without a photo it is paper and ink with a heavy accent rule; with one, the title sits over the darkened photo. */
+.celebration-hero[data-hero="overlay"] { min-height: min(70vh, 40rem); align-content: end; border-bottom: 1px solid var(--celebration-accent); }
+.celebration-hero[data-hero="overlay"] .celebration-hero-copy { margin-inline: auto; }
+.celebration-hero[data-hero="overlay"] h1 { line-height: .95; letter-spacing: -.02em; font-size: calc(clamp(2.75rem, 10vw, 6.5rem) * var(--celebration-heading-scale)); }
+.celebration-hero[data-hero="overlay"][data-has-image="true"] { color: #fff; border-bottom-color: transparent; }
+.celebration-hero[data-hero="overlay"] .celebration-hero-image { position: absolute; inset: 0; filter: brightness(.35); }
+.celebration-hero[data-hero="overlay"][data-has-image="true"] :is(.celebration-venue, .celebration-countdown, .celebration-amp, .celebration-hosts, .celebration-date) { color: #fff; }
+.celebration-hero[data-hero="overlay"][data-has-image="true"] .celebration-rule { background: rgb(255 255 255 / .75); }
+.celebration-hero[data-hero="overlay"][data-has-image="true"] .celebration-hero-art { display: none; }
 
-/* banner (festive): a rounded block of the accent colour with confetti. */
-.celebration-hero[data-hero="banner"] { color: var(--celebration-on-accent); border-radius: 0 0 calc(var(--celebration-radius) * 1.6) calc(var(--celebration-radius) * 1.6); background:
-  radial-gradient(circle at 12% 22%, color-mix(in srgb, var(--celebration-surface) 55%, transparent) 0 .3rem, transparent .32rem),
-  radial-gradient(circle at 86% 18%, color-mix(in srgb, var(--celebration-surface) 40%, transparent) 0 .45rem, transparent .47rem),
-  radial-gradient(circle at 72% 78%, color-mix(in srgb, var(--celebration-surface) 30%, transparent) 0 .25rem, transparent .27rem),
-  radial-gradient(circle at 22% 84%, color-mix(in srgb, var(--celebration-surface) 38%, transparent) 0 .5rem, transparent .52rem),
-  radial-gradient(circle at 48% 8%, color-mix(in srgb, var(--celebration-surface) 30%, transparent) 0 .2rem, transparent .22rem),
-  var(--celebration-accent-fill); }
+/* banner (festive): paper and a big, friendly title; the accent only in small pieces (the drawing, the rule, the "&"). No saturated block, no confetti (PL-A3, PL-M6). */
+.celebration-hero[data-hero="banner"] { padding-top: clamp(2.5rem, 8vw, 5rem); }
+.celebration-hero[data-hero="banner"] h1 { font-weight: 700; }
 .celebration-hero[data-hero="banner"] .celebration-hero-image { max-height: 22rem; border-radius: var(--celebration-radius); order: 2; width: min(100%, var(--celebration-max-width)); margin: 0 auto; }
-.celebration-hero[data-hero="banner"] :is(.celebration-eyebrow, .celebration-venue, .celebration-countdown, .celebration-amp) { color: var(--celebration-on-accent); }
-.celebration-hero[data-hero="banner"] .celebration-rule { background: var(--celebration-on-accent); }
 
 /* split (corporate): the copy behind a bar of the accent colour, the photo beside it. */
-.celebration-hero[data-hero="split"] .celebration-hero-copy { padding-left: clamp(1rem, 4vw, 2rem); border-left: 6px solid var(--celebration-accent); }
+.celebration-hero[data-hero="split"] .celebration-hero-copy { padding-left: clamp(1rem, 4vw, 2rem); border-left: 2px solid var(--celebration-accent); }
 .celebration-hero[data-hero="split"] .celebration-hero-image { max-height: 18rem; border-radius: var(--celebration-radius); }
 
 /* compact (minimal): quiet, left-aligned, all air. */
 .celebration-hero[data-hero="compact"] { padding-block: clamp(3rem, 9vw, 5.5rem) clamp(1.5rem, 4vw, 2.5rem); background: none; }
 .celebration-hero[data-hero="compact"] h1 { font-weight: 400; }
+.celebration-hero[data-hero="compact"] .celebration-hero-image { height: auto; max-height: 18rem; width: min(100%, var(--celebration-max-width)); margin: 0 auto; border-radius: var(--celebration-radius); }
+.celebration-hero[data-hero="compact"] .celebration-hero-art { width: clamp(4rem, 14vw, 5.5rem); }
 @media (min-width: 48rem) {
   .celebration-hero[data-hero="split"][data-has-image="true"] { grid-template-columns: 1fr 1fr; align-items: center; }
   .celebration-hero[data-hero="split"] .celebration-hero-copy { order: -1; }
@@ -100,7 +101,7 @@
 .celebration-schedule li::before { content: ""; position: absolute; left: 7.7rem; top: 1.45rem; width: .6rem; height: .6rem; border-radius: 50%; background: var(--celebration-accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--celebration-accent) 18%, transparent); }
 .celebration-schedule li::after { content: ""; position: absolute; left: calc(7.7rem + .3rem - .5px); top: 0; bottom: 0; width: 1px; background: color-mix(in srgb, var(--celebration-muted) 40%, transparent); }
 .celebration-schedule li:first-child::after { top: 1.45rem; } .celebration-schedule li:last-child::after { bottom: calc(100% - 1.45rem); } .celebration-schedule li:only-child::after { display: none; }
-.celebration-schedule time { font-family: var(--celebration-heading-font); font-weight: 700; font-size: 1.1rem; color: var(--celebration-accent); text-align: end; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.celebration-schedule time { font-family: var(--celebration-heading-font); font-weight: 700; font-size: 1.1rem; color: var(--celebration-text); text-align: end; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .celebration-schedule strong { font-size: 1.05rem; }
 .celebration-schedule p { margin: .25rem 0 0; color: var(--celebration-muted); }
 .celebration-venues, .celebration-recommendations { list-style: none; padding: 0; margin: 0; display: grid; gap: 1.25rem; }
@@ -125,9 +126,9 @@
 .celebration-cta-face { grid-area: 1 / 1; display: inline-flex; align-items: center; justify-content: center; gap: .5rem; }
 .celebration-cta[data-credential="absent"] .celebration-cta-face[data-face="confirm"], .celebration-cta[data-credential="present"] .celebration-cta-face[data-face="find"] { visibility: hidden; }
 .celebration-gallery { list-style: none; padding: 0; margin: 0; display: grid; gap: .75rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr)); }
-.celebration-gallery img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; }
-.celebration[data-images="rounded"] .celebration-gallery img { border-radius: var(--celebration-radius); }
-.celebration[data-images="framed"] .celebration-gallery img { border: 6px solid var(--celebration-surface); box-shadow: 0 1px 4px rgb(0 0 0 / .15); }
+.celebration-gallery :is(img, [data-photo-failed]) { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; }
+.celebration[data-images="rounded"] .celebration-gallery :is(img, [data-photo-failed]) { border-radius: var(--celebration-radius); }
+.celebration[data-images="framed"] .celebration-gallery :is(img, [data-photo-failed]) { border: 6px solid var(--celebration-surface); box-shadow: 0 1px 4px rgb(0 0 0 / .15); }
 .celebration details { text-align: start; border-bottom: 1px solid color-mix(in srgb, var(--celebration-muted) 30%, transparent); padding: .75rem 0; }
 .celebration summary { cursor: pointer; font-weight: 600; min-height: 44px; display: flex; align-items: center; }
 
@@ -138,6 +139,7 @@
 /* Story and dress code read as a letter: a narrow measure and a larger opening paragraph. */
 .celebration-sections > section[data-section="story"] p, .celebration-sections > section[data-section="dressCode"] p { max-width: 40rem; }
 .celebration[data-align="center"] .celebration-sections > section :is(p, details) { margin-inline: auto; }
+.celebration[data-align="center"] .celebration-sections > section:is([data-section="story"], [data-section="dressCode"]) p { text-align: start; }
 .celebration-sections > section[data-section="story"] p:first-of-type { font-size: 1.15em; }
 /* The reply is what the page is for: it gets its own tinted block. */
 .celebration-sections > section[data-section="rsvp"] { padding: clamp(1.75rem, 6vw, 3.5rem) clamp(1.25rem, 5vw, 3rem); border-radius: max(var(--celebration-radius), 2px); background: color-mix(in srgb, var(--celebration-accent) 9%, var(--celebration-surface)); border: 1px solid color-mix(in srgb, var(--celebration-accent) 30%, transparent); }
@@ -146,3 +148,148 @@
 /* Gifts (P22): on every invitation, quiet like the other sections, with the same filled button as the reply. */
 .celebration-sections > section[data-section="gifts"] p { max-width: 40rem; }
 .celebration-sections > section[data-section="gifts"] .celebration-cta, .celebration-sections > section[data-section="rsvp"] .celebration-cta { margin-top: .5rem; }
+
+/* ---------------------------------------------------------------------------------------------------------------------
+   Design document v2 (F4 b). Everything below is keyed to `.celebration-design`; v1 templates never match it.
+   The canvases are grids: the phone's from the document's `mobile` canvas, and from 900 px the `desktop` one when it has one.
+   The tokens (palette, fonts, radii, spacing) arrive as the same custom properties the v1 engine uses.
+   --------------------------------------------------------------------------------------------------------------------- */
+.celebration-design { overflow-x: clip; }
+.celebration { --cd-line: var(--celebration-line, color-mix(in srgb, var(--celebration-text) 30%, var(--celebration-canvas))); }
+/* The bar covers the foot of the page on the phone: the whole document (footer included) ends above it. */
+body:has(.cdesign-dock) { padding-bottom: 5.5rem; }
+.celebration-design h1 { font-size: calc(clamp(2.4rem, 8vw, 4.75rem) * var(--celebration-heading-scale)); font-weight: 600; line-height: 1.02; }
+.celebration-design .cdesign-heading { font-size: calc(clamp(1.4rem, 3.4vw, 1.9rem) * var(--celebration-heading-scale)); color: var(--celebration-text); margin: 0; }
+.celebration-design .cdesign-page-title { width: min(100%, var(--celebration-max-width)); margin: calc(var(--celebration-gap) / 2) auto .5rem; padding-inline: var(--celebration-space); box-sizing: border-box; }
+.celebration-design .cdesign-text, .celebration-design .cdesign-quote p { margin: 0; max-width: 40rem; }
+.celebration-design .cdesign-quote { margin: 0; border-inline-start: 2px solid var(--celebration-accent); padding-inline-start: 1rem; font-family: var(--celebration-heading-font); font-size: 1.25rem; }
+.celebration-design .cdesign-monogram { margin: 0; font-family: var(--celebration-monogram-font); font-size: clamp(2.5rem, 12vw, 5rem); line-height: 1; color: var(--cd-ink, var(--celebration-accent)); }
+.celebration-design .cdesign-spacer { display: block; height: 100%; }
+.celebration-design .cdesign-image { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+.celebration-design .cdesign-art { display: block; width: 100%; height: auto; max-height: 100%; }
+.celebration-design .cdesign-ornament { display: block; width: 100%; height: auto; color: var(--celebration-accent); }
+.celebration-design .cdesign-frame, .celebration-design .cdesign-corner { display: block; width: 100%; height: auto; }
+.celebration-design .cdesign-bg-art { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .5; pointer-events: none; z-index: 0; }
+.celebration-design .cdesign-el-link { display: block; color: inherit; text-decoration: none; }
+
+/* The canvas: a grid of the document's columns. In a flow canvas the rows grow with their content, in a free one they are exact. */
+.celebration-design .cdesign-pages { display: block; }
+.celebration-design .cdesign-page { position: relative; display: block; }
+.celebration-design .cdesign-page[data-style="cards"] { background-color: var(--celebration-surface); }
+.celebration-design .cdesign-page[data-style="bands"]:nth-of-type(even) { background-color: var(--celebration-surface); }
+.celebration-design .cdesign-canvas { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(var(--cd-cols-m), minmax(0, 1fr)); grid-auto-rows: minmax(var(--cd-row-m), auto);
+  width: min(100%, var(--celebration-max-width)); margin: 0 auto; padding: var(--celebration-gap) var(--celebration-space); box-sizing: border-box; }
+.celebration-design .cdesign-canvas[data-mode="free"] { grid-auto-rows: var(--cd-row-m); }
+.celebration-design .cdesign-page[data-page-kind="cover"] .cdesign-canvas { padding-block: clamp(2rem, 7vw, 4rem); }
+/* The phone canvas does not stretch with a tablet: the drawings of the cover are sized by the width of their columns, so past 30rem (480 px) the canvas stays centred and the title keeps its place in the first screen. */
+@media (max-width: 56.1875rem) { .celebration-design .cdesign-page[data-page-kind="cover"] .cdesign-canvas { width: min(100%, 30rem); } }
+.celebration-design .cdesign-el { display: none; min-width: 0; box-sizing: border-box; position: relative; container-type: inline-size; align-self: start;
+  grid-column: var(--mx) / span var(--mw); grid-row: var(--my) / span var(--mh); }
+.celebration-design .cdesign-canvas[data-mode="free"] .cdesign-el { align-self: stretch; }
+.celebration-design .cdesign-el[data-m] { display: block; }
+.celebration-design .cdesign-el[data-round] { overflow: clip; }
+/* The monogram of a rounded element is a seal: a circle in ink with a fine rule, centred on its columns. It has no fill and no action, so nothing about it reads as a button. */
+.celebration-design .cdesign-el[data-block="monogram"][data-round] { width: min(100%, 6.5rem); aspect-ratio: 1; justify-self: center; display: grid; place-items: center; background: none; }
+.celebration-design .cdesign-el p { margin: 0; }
+@media (min-width: 56.25rem) {
+  .celebration-design .cdesign-canvas { grid-template-columns: repeat(var(--cd-cols-d), minmax(0, 1fr)); grid-auto-rows: minmax(var(--cd-row-d), auto); }
+  .celebration-design .cdesign-canvas[data-mode="free"] { grid-auto-rows: var(--cd-row-d); }
+  .celebration-design .cdesign-el { grid-column: var(--dx) / span var(--dw); grid-row: var(--dy) / span var(--dh); }
+  .celebration-design .cdesign-el[data-m]:not([data-d]) { display: none; }
+  .celebration-design .cdesign-el[data-d] { display: block; }
+}
+/* An element with its own size: the cover title scales with it and the lines under it stay readable. */
+.celebration-design .cdesign-el[data-sized] :is(h1, h2, h3, .cdesign-monogram) { font-size: 1em; }
+.celebration-design .cdesign-el[data-sized] :is(.celebration-date, .celebration-hosts) { font-size: max(1.1rem, calc(var(--cd-size, 16px) * .3)); }
+.celebration-design .cdesign-el[data-sized] .celebration-venue { font-size: max(1rem, calc(var(--cd-size, 16px) * .22)); }
+
+/* Cover block. The photo and the copy are one block; where the block sits and how wide it is is the document's call. */
+.celebration-design .cdesign-cover { display: grid; gap: 1rem; justify-items: start; align-content: start; }
+.celebration-design .cdesign-cover-copy { display: grid; gap: .5rem; justify-items: inherit; min-width: 0; }
+.celebration-design .cdesign-cover-photo { display: block; width: 100%; max-height: 22rem; object-fit: cover; border-radius: inherit; }
+.celebration-design .cdesign-cover h1, .celebration-design .cdesign-cover p { overflow-wrap: anywhere; text-wrap: balance; }
+.celebration-design .cdesign-cover[data-variant="classic"], .celebration-design .cdesign-cover[data-variant="corporate"] { justify-items: center; text-align: center; }
+.celebration-design .cdesign-cover[data-variant="classic"] .cdesign-cover-photo { width: min(72%, 14rem); aspect-ratio: 3 / 4; height: auto; max-height: none; border-radius: 999px 999px 0 0; border: 1px solid color-mix(in srgb, var(--celebration-accent) 55%, transparent); outline: 1px solid color-mix(in srgb, var(--celebration-accent) 28%, transparent); outline-offset: 6px; }
+.celebration-design .cdesign-cover[data-variant="festive"] .cdesign-cover-photo { width: min(72%, 16rem); aspect-ratio: 1; height: auto; border-radius: 50%; box-shadow: .5rem .5rem 0 0 color-mix(in srgb, var(--celebration-text) 14%, var(--celebration-canvas)); }
+.celebration-design .cdesign-cover[data-variant="corporate"] .cdesign-cover-photo { aspect-ratio: 4 / 3; height: auto; }
+@container (min-width: 34rem) {
+  .cdesign-cover[data-variant="classic"] { justify-items: start; text-align: start; }
+  .cdesign-cover[data-variant="classic"] .cdesign-cover-copy { justify-items: start; }
+}
+.celebration-design .cdesign-intro { width: min(100%, var(--celebration-max-width)); margin: 0 auto .5rem; padding-inline: var(--celebration-space); box-sizing: border-box; }
+.celebration-design .cdesign-intro p { max-width: 40rem; }
+.celebration-design .cdesign-page[data-section="gifts"] .celebration-cta, .celebration-design .cdesign-page[data-section="rsvp"] .celebration-cta { width: 100%; max-width: 22rem; }
+
+/* Buttons of the document (gifts, reply, link). Solid is the default of .celebration-cta; outline and link are quieter. */
+.celebration .celebration-cta[data-variant="outline"] { background: transparent; color: var(--celebration-accent) !important; border: 2px solid var(--celebration-accent); }
+.celebration-design .celebration-cta[data-variant="link"] { background: transparent; color: var(--celebration-accent) !important; text-decoration: underline; padding-inline: .25rem; }
+
+/* The dock (P22): the gifts button and the reply are always in view. Bottom bar on the phone, top bar from 900 px. */
+.celebration .cdesign-dock { position: fixed; z-index: 40; inset: auto 0 0 0; display: flex; gap: .5rem; padding: .5rem max(.75rem, env(safe-area-inset-right)) max(.5rem, env(safe-area-inset-bottom)) max(.75rem, env(safe-area-inset-left));
+  background: var(--celebration-canvas); border-top: 1px solid var(--cd-line); box-sizing: border-box; }
+.celebration .cdesign-dock .celebration-cta { flex: 1 1 0; min-width: 0; padding: .6rem .75rem; font-size: .95rem; line-height: 1.2; }
+.celebration .cdesign-dock .celebration-cta[data-action="rsvp"], .celebration .cdesign-dock .celebration-cta[data-action="rsvp-help"] { background: transparent; color: var(--celebration-accent) !important; border: 2px solid var(--celebration-accent); }
+@media (max-width: 25rem) { .celebration .cdesign-dock .celebration-icon { display: none; } }
+@media (min-width: 56.25rem) {
+  body:has(.cdesign-dock) { padding-bottom: 0; }
+  .celebration .cdesign-dock { position: sticky; inset: 0 0 auto 0; justify-content: flex-end; border-top: 0; border-bottom: 1px solid var(--cd-line); padding-inline: var(--celebration-space); }
+  .celebration .cdesign-dock .celebration-cta { flex: 0 0 auto; padding-inline: 1.25rem; }
+}
+
+/* Entrance (P18): one time, transform and opacity only. Without motion preference the final state is what you get. */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes cdesign-fade { from { opacity: 0 } to { opacity: 1 } }
+  @keyframes cdesign-rise { from { opacity: 0; transform: translateY(14px) } to { opacity: 1; transform: none } }
+  @keyframes cdesign-scale { from { opacity: 0; transform: scale(.86) } to { opacity: 1; transform: none } }
+  .celebration-design .cdesign-page[data-page-kind="cover"] .cdesign-el[data-entrance] { animation-duration: var(--cdesign-duration, 700ms); animation-delay: var(--cdesign-delay, 0ms); animation-fill-mode: both; animation-timing-function: cubic-bezier(.16, 1, .3, 1); }
+  .celebration-design .cdesign-el[data-entrance="fade"] { animation-name: cdesign-fade; }
+  .celebration-design .cdesign-el[data-entrance="rise"], .celebration-design .cdesign-el[data-entrance="envelope"] { animation-name: cdesign-rise; }
+  .celebration-design .cdesign-el[data-entrance="scale"] { animation-name: cdesign-scale; }
+  @supports (animation-timeline: view()) {
+    .celebration-design .cdesign-page[data-page-kind="section"] .cdesign-el[data-entrance]:not([data-entrance="draw"]) { animation-duration: 1ms; animation-timing-function: linear; animation-fill-mode: both; animation-timeline: view(); animation-range: entry 0% entry 55%; }
+  }
+}
+/* A titled section keeps the section gap split around the title and below the content (half above, half below), not between its title and its content: the canvas starts one grid step under the title (8 px), so the title, its drawing and the first line read as one group. */
+.celebration-design .cdesign-page[data-page-kind="section"] > :is(.cdesign-page-title, .cdesign-intro) ~ .cdesign-canvas { padding-top: .5rem; }
+.celebration-design .cdesign-page-title ~ .cdesign-canvas { padding-bottom: calc(var(--celebration-gap) / 2); }
+/* A tablet in portrait (600 to 899 px) draws the phone canvas on a much wider page: the cover drawings stop at 13 rem so the title, with a photo above it, still starts in the first screen instead of under the fixed bar. */
+@media (min-width: 37.5rem) and (max-width: 56.1875rem) {
+  .celebration-design .cdesign-page[data-page-kind="cover"] .cdesign-art { max-height: 13rem; width: auto; max-width: 100%; margin-inline: auto; }
+}
+/* The three states of «Ver regalos» (`giftsStatus`): the button stays and keeps its link; OPEN is the solid accent button, EMPTY (no gifts yet) a dashed accent outline on the surface, CLOSED a quiet line-and-muted one. Colours are palette roles, so each holds its contrast in both schemes. */
+.celebration .celebration-cta[data-action="gifts"][data-gifts-status="EMPTY"] { background: var(--celebration-surface); color: var(--celebration-accent) !important; border: 2px dashed var(--celebration-accent); }
+.celebration .celebration-cta[data-action="gifts"][data-gifts-status="CLOSED"] { background: var(--celebration-surface); color: var(--celebration-muted) !important; border: 2px solid var(--cd-line); }
+@media (hover: hover) { .celebration .celebration-cta[data-action="gifts"]:is([data-gifts-status="EMPTY"], [data-gifts-status="CLOSED"]):hover { background: color-mix(in srgb, var(--celebration-accent) 8%, var(--celebration-surface)); } }
+/* A photo that did not load (`Photo`): the same box on the palette's surface with the camera drawing, never a broken hole. */
+.celebration [data-photo-failed] { display: grid; place-items: center; box-sizing: border-box; background: var(--celebration-surface); border: 1px solid var(--cd-line); aspect-ratio: 4 / 3; width: 100%; overflow: clip; }
+.celebration .celebration-photo-art { display: block; width: min(40%, 6rem); height: auto; }
+.celebration-design .cdesign-image[data-photo-failed] { height: 100%; }
+/* The drawing that heads a section is a small mark, not a block: 72 px whatever the columns say. */
+.celebration-design .cdesign-page[data-page-kind="section"] .cdesign-el[data-block="illustration"] { max-width: 4.5rem; }
+
+/* Focus is never hidden under the dock (WCAG 2.4.11, P22): the page scrolls a focused element clear of the bottom bar on the phone and of the header on the desktop. */
+html:has(.cdesign-dock) { scroll-padding-bottom: 6rem; }
+@media (min-width: 56.25rem) { html:has(.cdesign-dock) { scroll-padding-bottom: 0; scroll-padding-top: 5rem; } }
+/* One row of section links on the phone (scrolls sideways) instead of three, so the cover stays in the first screen. */
+@media (max-width: 56.1875rem) {
+  .celebration-design .celebration-nav { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; scrollbar-width: thin; }
+  .celebration-design .celebration-nav a { white-space: nowrap; flex: 0 0 auto; }
+}
+/* Hover changes the colour too, not only the scale: the fill moves a step towards the text colour (never lowers the ink's contrast). */
+@media (hover: hover) { .celebration-cta:hover { background: color-mix(in srgb, var(--celebration-accent-fill) 86%, var(--celebration-text)); } }
+/* ---------------------------------------------------------------------------------------------------------------------------
+   Design document v2 (F4 c1 · bodas). Two things the documents of the wedding group need and the contract cannot say per element:
+   the editorial cover as a spread, and the numbered acts of the programme. Keyed to `.celebration-design`. */
+.celebration-design .cdesign-cover[data-variant="editorial"] .cdesign-cover-photo { width: 100%; max-height: none; aspect-ratio: 4 / 5; object-fit: cover; }
+/* On the phone the title comes first and the photo under it, so the names are in the first screen whatever the photo weighs. */
+@media (max-width: 56.1875rem) { .celebration-design .cdesign-cover[data-variant="editorial"] .cdesign-cover-photo { order: 1; max-height: 28rem; } }
+@media (min-width: 900px) {
+  .celebration-design .cdesign-cover[data-variant="editorial"][data-has-image="true"] { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); column-gap: clamp(1.5rem, 4vw, 3.5rem); align-items: center; }
+  .celebration-design .cdesign-cover[data-variant="editorial"][data-has-image="true"] .cdesign-cover-photo { grid-column: 1; grid-row: 1; }
+  .celebration-design .cdesign-cover[data-variant="editorial"][data-has-image="true"] .cdesign-cover-copy { grid-column: 2; grid-row: 1; }
+}
+/* The schedule is a sequence: with `display: "list"` each item is an act, in Roman numerals in the accent, and the timeline dot gives way to it. */
+.celebration-design .cdesign-section-body[data-display="list"] .celebration-schedule { counter-reset: act; }
+.celebration-design .cdesign-section-body[data-display="list"] .celebration-schedule li { counter-increment: act; }
+.celebration-design .cdesign-section-body[data-display="list"] .celebration-schedule li::before { content: counter(act, upper-roman); left: 6.75rem; top: .95rem; width: 2.5rem; height: auto; border-radius: 0; background: none; box-shadow: none; text-align: center; font-family: var(--celebration-heading-font); font-weight: 600; font-size: 1rem; line-height: 1.6; color: var(--celebration-accent); }
+.celebration-design .cdesign-section-body[data-display="list"] .celebration-schedule li::after { display: none; }

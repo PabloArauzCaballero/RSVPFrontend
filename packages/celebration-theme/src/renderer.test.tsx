@@ -112,15 +112,34 @@ describe("P22 · PL-A10 · the gifts button on every invitation", () => {
     expect(giftsPath("ana y luis")).toBe("/c/ana%20y%20luis/regalos");
   });
 
-  it.each(["OPEN", "EMPTY", "CLOSED"] as const)("giftsStatus %s keeps the button and, until rsvp-f1 adds its labels, says «Ver regalos»", (status: GiftsStatus) => {
+  it.each([["OPEN", "celebration.gifts.cta"], ["EMPTY", "celebration.gifts.ctaEmpty"], ["CLOSED", "celebration.gifts.ctaClosed"]] as const)("giftsStatus %s keeps the button on /regalos and says its own label", (status: GiftsStatus, label: string) => {
     const gifts = parse(renderWith(TEMPLATES[2], { giftsStatus: status })).querySelector('a[data-action="gifts"]');
-    expect(gifts?.textContent).toBe("celebration.gifts.cta");
+    expect(gifts?.textContent).toBe(label);
+    expect(gifts?.getAttribute("href")).toBe(giftsPath(VIEW.slug));
+    expect(gifts?.getAttribute("data-gifts-status")).toBe(status);
   });
 
-  it("is on the cover page; a section's own page keeps it in the navigation", () => {
+  it("is always in view (the dock), also on a section's own page, which keeps it in the navigation too", () => {
     const faqPage = parse(renderWith(TEMPLATES[0], { only: "faq" }));
-    expect(faqPage.querySelector('a[data-action="gifts"]')).toBeNull();
+    expect(faqPage.querySelector('.cdesign-dock a[data-action="gifts"]')?.getAttribute("href")).toBe(`${BASE}/regalos`);
+    expect(faqPage.querySelector('section a[data-action="gifts"]')).toBeNull();
     expect(faqPage.querySelector(`.celebration-nav a[href="${BASE}/regalos"]`)).toBeTruthy();
+  });
+});
+
+describe("M4 (revisión de F4 a) · el texto blanco sobre la foto de portada editorial", () => {
+  it("llega a 4.5:1 con la foto más clara posible (blanco puro)", () => {
+    const css = readFileSync(join(__dirname, "../styles.css"), "utf8");
+    const brightness = Number(/data-hero="overlay"\] \.celebration-hero-image \{[^}]*brightness\(([\d.]+)\)/.exec(css)?.[1]);
+    expect(brightness).toBeGreaterThan(0);
+    const level = Math.round(255 * brightness);
+    const hex = `#${level.toString(16).padStart(2, "0").repeat(3)}`;
+    expect(contrastRatio("#FFFFFF", hex)).toBeGreaterThanOrEqual(TEXT_CONTRAST);
+  });
+  it("B2 · los titulares van en tinta y el acento queda para filetes, iconos y botones", () => {
+    const css = readFileSync(join(__dirname, "../styles.css"), "utf8");
+    expect(css).toMatch(/\.celebration h2 \{[^}]*color: var\(--celebration-text\)/);
+    expect(css).not.toMatch(/border-bottom: [4-9]px solid var\(--celebration-accent\)|border-left: [4-9]px solid var\(--celebration-accent\)/);
   });
 });
 

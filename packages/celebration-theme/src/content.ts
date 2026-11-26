@@ -247,13 +247,15 @@ export function giftsPath(slug: string): string {
 export type GiftsStatus = "OPEN" | "EMPTY" | "CLOSED";
 
 /**
- * The label of the gifts button for each status. One label for now («Ver regalos»): when rsvp-f1 publishes
- * `gifts.guest.cta.open|empty|closed`, this map points at them and the callers pass `giftsStatus`.
+ * The label of the gifts button for each status, in the renderer's own copy (`celebration.gifts.cta*`; the gift page's
+ * `gifts.guest.cta.*` belongs to rsvp-f1 and is not used here). The button is always there and always goes to `/c/{slug}/regalos`:
+ * only its words and its look (`data-gifts-status`) change. Callers pass `giftsStatus` once the public summary exists (BE #128);
+ * until then every invitation is OPEN.
  */
 export const GIFTS_CTA_KEYS: Readonly<Record<GiftsStatus, string>> = {
   OPEN: "celebration.gifts.cta",
-  EMPTY: "celebration.gifts.cta",
-  CLOSED: "celebration.gifts.cta"
+  EMPTY: "celebration.gifts.ctaEmpty",
+  CLOSED: "celebration.gifts.ctaClosed"
 };
 
 /** A section is titled by its name in the menu. The gifts block has its own copy (`celebration.gifts.*`), not the gift page's (rsvp-f1's). */

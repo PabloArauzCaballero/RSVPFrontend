@@ -1,0 +1,640 @@
+{
+  "key": "gala-dorada",
+  "name": "Gala art déco",
+  "description": "Invitación de gala art déco: simetría, doble línea fina y chaflán, con acento vino y números de cartel.",
+  "layout": "corporate",
+  "eventTypeTags": [
+    "anniversary",
+    "corporate"
+  ],
+  "sectionOrder": [
+    "story",
+    "schedule",
+    "venues",
+    "dressCode",
+    "gifts",
+    "faq",
+    "recommendations",
+    "rsvp"
+  ],
+  "theme": {
+    "schemaVersion": 2,
+    "tokens": {
+      "palettes": {
+        "light": {
+          "canvas": "#F5F3EE",
+          "surface": "#FFFFFF",
+          "text": "#14130F",
+          "muted": "#57524D",
+          "accent": "#7B2A3C",
+          "accentFill": "#7B2A3C",
+          "onAccent": "#FFFFFF",
+          "line": "#8A857E"
+        },
+        "dark": {
+          "canvas": "#0E1311",
+          "surface": "#161D1A",
+          "text": "#ECE9E4",
+          "muted": "#AEB3A5",
+          "accent": "#E6A3B1",
+          "accentFill": "#E6A3B1",
+          "onAccent": "#1A0B10",
+          "line": "#6F7769"
+        }
+      },
+      "typography": {
+        "heading": {
+          "family": "bodoni-moda",
+          "weights": [
+            500,
+            600
+          ]
+        },
+        "body": {
+          "family": "jost",
+          "weights": [
+            400,
+            500
+          ]
+        },
+        "scale": {
+          "base": 16,
+          "ratio": 1.05
+        },
+        "monogram": {
+          "family": "bodoni-moda",
+          "weights": [
+            500,
+            600
+          ]
+        }
+      },
+      "spacing": {
+        "unit": 8,
+        "section": 48,
+        "contentMaxWidth": 1080
+      },
+      "radii": {
+        "sm": 0,
+        "md": 0,
+        "lg": 0
+      },
+      "ornament": "rule",
+      "illustrationSet": "none"
+    },
+    "pages": [
+      {
+        "id": "page-cover",
+        "kind": "cover",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-monogram",
+                "block": "monogram",
+                "x": 0,
+                "y": 0,
+                "w": 4,
+                "h": 16,
+                "visible": true,
+                "animation": {
+                  "entrance": "scale",
+                  "delayMs": 700,
+                  "durationMs": 700
+                },
+                "typography": {
+                  "role": "monogram",
+                  "size": 128,
+                  "align": "center",
+                  "colour": "accent",
+                  "lineHeight": 1
+                }
+              },
+              {
+                "id": "el-deco",
+                "block": "art-deco",
+                "x": 1,
+                "y": 16,
+                "w": 2,
+                "h": 3,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 300,
+                  "durationMs": 600
+                }
+              },
+              {
+                "id": "el-cover",
+                "block": "cover",
+                "x": 0,
+                "y": 19,
+                "w": 4,
+                "h": 20,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 150,
+                  "durationMs": 800
+                },
+                "typography": {
+                  "align": "center"
+                },
+                "border": {
+                  "width": 1,
+                  "style": "solid",
+                  "colour": "accent"
+                },
+                "padding": {
+                  "top": 24,
+                  "right": 16,
+                  "bottom": 24,
+                  "left": 16
+                }
+              },
+              {
+                "id": "el-deco-base",
+                "block": "art-deco-base",
+                "x": 1,
+                "y": 39,
+                "w": 2,
+                "h": 3,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 900,
+                  "durationMs": 600
+                }
+              }
+            ]
+          },
+          "desktop": {
+            "mode": "flow",
+            "columns": 12,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-monogram",
+                "block": "monogram",
+                "x": 3,
+                "y": 0,
+                "w": 6,
+                "h": 16,
+                "visible": true,
+                "animation": {
+                  "entrance": "scale",
+                  "delayMs": 700,
+                  "durationMs": 700
+                },
+                "typography": {
+                  "role": "monogram",
+                  "size": 128,
+                  "align": "center",
+                  "colour": "accent",
+                  "lineHeight": 1
+                }
+              },
+              {
+                "id": "el-deco",
+                "block": "art-deco",
+                "x": 5,
+                "y": 16,
+                "w": 2,
+                "h": 3,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 300,
+                  "durationMs": 600
+                }
+              },
+              {
+                "id": "el-cover",
+                "block": "cover",
+                "x": 2,
+                "y": 19,
+                "w": 8,
+                "h": 20,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 150,
+                  "durationMs": 800
+                },
+                "typography": {
+                  "align": "center"
+                },
+                "border": {
+                  "width": 1,
+                  "style": "solid",
+                  "colour": "accent"
+                },
+                "padding": {
+                  "top": 32,
+                  "right": 32,
+                  "bottom": 32,
+                  "left": 32
+                }
+              },
+              {
+                "id": "el-deco-base",
+                "block": "art-deco-base",
+                "x": 5,
+                "y": 39,
+                "w": 2,
+                "h": 3,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 900,
+                  "durationMs": 600
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-story",
+        "kind": "section",
+        "section": "story",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-story",
+                "block": "story",
+                "x": 0,
+                "y": 0,
+                "w": 4,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-schedule",
+        "kind": "section",
+        "section": "schedule",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-deco",
+                "block": "art-deco",
+                "x": 1,
+                "y": 0,
+                "w": 2,
+                "h": 3,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-schedule",
+                "block": "schedule",
+                "x": 0,
+                "y": 3,
+                "w": 4,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-venues",
+        "kind": "section",
+        "section": "venues",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-deco",
+                "block": "art-deco",
+                "x": 1,
+                "y": 0,
+                "w": 2,
+                "h": 3,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-venues",
+                "block": "venues",
+                "x": 0,
+                "y": 3,
+                "w": 4,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-dress-code",
+        "kind": "section",
+        "section": "dressCode",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-deco",
+                "block": "art-deco",
+                "x": 1,
+                "y": 0,
+                "w": 2,
+                "h": 3,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-dress-code",
+                "block": "dress-code",
+                "x": 0,
+                "y": 3,
+                "w": 4,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-gifts",
+        "kind": "section",
+        "section": "gifts",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-deco",
+                "block": "art-deco",
+                "x": 1,
+                "y": 0,
+                "w": 2,
+                "h": 3,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-gifts-cta",
+                "block": "gifts-cta",
+                "x": 0,
+                "y": 3,
+                "w": 4,
+                "h": 6,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-faq",
+        "kind": "section",
+        "section": "faq",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-deco",
+                "block": "art-deco",
+                "x": 1,
+                "y": 0,
+                "w": 2,
+                "h": 3,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-faq",
+                "block": "faq",
+                "x": 0,
+                "y": 3,
+                "w": 4,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-recommendations",
+        "kind": "section",
+        "section": "recommendations",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-deco",
+                "block": "art-deco",
+                "x": 1,
+                "y": 0,
+                "w": 2,
+                "h": 3,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-recommendations",
+                "block": "recommendations",
+                "x": 0,
+                "y": 3,
+                "w": 4,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-rsvp",
+        "kind": "section",
+        "section": "rsvp",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-deco",
+                "block": "art-deco",
+                "x": 1,
+                "y": 0,
+                "w": 2,
+                "h": 3,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-rsvp-cta",
+                "block": "rsvp-cta",
+                "x": 0,
+                "y": 3,
+                "w": 4,
+                "h": 6,
+                "visible": true
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "blocks": [
+      {
+        "id": "cover",
+        "type": "cover",
+        "config": {
+          "variant": "corporate",
+          "envelope": false
+        }
+      },
+      {
+        "id": "monogram",
+        "type": "monogram",
+        "config": {}
+      },
+      {
+        "id": "art-deco",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "deco",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "art-deco-base",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "deco",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "story",
+        "type": "story",
+        "config": {}
+      },
+      {
+        "id": "schedule",
+        "type": "schedule",
+        "config": {
+          "display": "timeline"
+        }
+      },
+      {
+        "id": "venues",
+        "type": "venues",
+        "config": {
+          "display": "cards",
+          "mapOnTap": true
+        }
+      },
+      {
+        "id": "dress-code",
+        "type": "dressCode",
+        "config": {}
+      },
+      {
+        "id": "gifts-cta",
+        "type": "giftsCta",
+        "required": true,
+        "config": {
+          "style": "solid"
+        }
+      },
+      {
+        "id": "faq",
+        "type": "faq",
+        "config": {}
+      },
+      {
+        "id": "recommendations",
+        "type": "recommendations",
+        "config": {}
+      },
+      {
+        "id": "rsvp-cta",
+        "type": "rsvpCta",
+        "config": {
+          "style": "solid"
+        }
+      }
+    ],
+    "custom": {
+      "html": "",
+      "css": ""
+    }
+  }
+}

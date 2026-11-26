@@ -1,0 +1,675 @@
+{
+  "key": "bodas-de-oro",
+  "name": "Bodas de oro",
+  "description": "Cincuenta años: la cifra como medalla, centrada y simétrica, en cobre oscuro sobre papel marfil, sin amarillo.",
+  "layout": "classic",
+  "eventTypeTags": [
+    "golden-wedding"
+  ],
+  "sectionOrder": [
+    "story",
+    "schedule",
+    "venues",
+    "gallery",
+    "dressCode",
+    "gifts",
+    "faq",
+    "rsvp"
+  ],
+  "theme": {
+    "schemaVersion": 2,
+    "tokens": {
+      "palettes": {
+        "light": {
+          "canvas": "#FBF5EC",
+          "surface": "#FFFEFA",
+          "text": "#2A1F17",
+          "muted": "#66584B",
+          "accent": "#8A4A1E",
+          "accentFill": "#8A4A1E",
+          "onAccent": "#FFFFFF",
+          "line": "#9B8573"
+        },
+        "dark": {
+          "canvas": "#1A120C",
+          "surface": "#251A12",
+          "text": "#F4E8DB",
+          "muted": "#C4B09C",
+          "accent": "#E3A87A",
+          "accentFill": "#D08A5A",
+          "onAccent": "#1F0F05",
+          "line": "#7F6753"
+        }
+      },
+      "typography": {
+        "heading": {
+          "family": "cormorant-garamond",
+          "weights": [
+            500,
+            600
+          ]
+        },
+        "body": {
+          "family": "dm-sans",
+          "weights": [
+            400,
+            500,
+            600
+          ]
+        },
+        "scale": {
+          "base": 16,
+          "ratio": 1.25
+        }
+      },
+      "spacing": {
+        "unit": 8,
+        "section": 56,
+        "contentMaxWidth": 1080
+      },
+      "radii": {
+        "sm": 0,
+        "md": 2,
+        "lg": 4
+      },
+      "ornament": "flourish",
+      "illustrationSet": "none"
+    },
+    "pages": [
+      {
+        "id": "page-cover",
+        "kind": "cover",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-cifra",
+                "block": "art-cifra",
+                "x": 1,
+                "y": 0,
+                "w": 2,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "scale",
+                  "delayMs": 200,
+                  "durationMs": 900
+                }
+              },
+              {
+                "id": "el-cover",
+                "block": "cover",
+                "x": 0,
+                "y": 8,
+                "w": 4,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "rise",
+                  "delayMs": 900,
+                  "durationMs": 800
+                },
+                "typography": {
+                  "align": "center"
+                }
+              },
+              {
+                "id": "el-filete",
+                "block": "art-filete",
+                "x": 0,
+                "y": 16,
+                "w": 4,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 800,
+                  "durationMs": 600
+                }
+              },
+              {
+                "id": "el-medalla",
+                "block": "art-medalla",
+                "x": 1,
+                "y": 24,
+                "w": 2,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "scale",
+                  "delayMs": 1500,
+                  "durationMs": 600
+                }
+              }
+            ]
+          },
+          "desktop": {
+            "mode": "flow",
+            "columns": 12,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-cifra",
+                "block": "art-cifra",
+                "x": 5,
+                "y": 0,
+                "w": 2,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "scale",
+                  "delayMs": 200,
+                  "durationMs": 900
+                }
+              },
+              {
+                "id": "el-cover",
+                "block": "cover",
+                "x": 2,
+                "y": 8,
+                "w": 8,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "rise",
+                  "delayMs": 900,
+                  "durationMs": 800
+                },
+                "typography": {
+                  "align": "center"
+                }
+              },
+              {
+                "id": "el-filete",
+                "block": "art-filete",
+                "x": 3,
+                "y": 16,
+                "w": 6,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 800,
+                  "durationMs": 600
+                }
+              },
+              {
+                "id": "el-medalla",
+                "block": "art-medalla",
+                "x": 5,
+                "y": 24,
+                "w": 2,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "scale",
+                  "delayMs": 1500,
+                  "durationMs": 600
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-story",
+        "kind": "section",
+        "section": "story",
+        "style": "bands",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-story",
+                "block": "story",
+                "x": 0,
+                "y": 0,
+                "w": 8,
+                "h": 1,
+                "visible": true,
+                "typography": {
+                  "align": "center"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-schedule",
+        "kind": "section",
+        "section": "schedule",
+        "style": "bands",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-reloj",
+                "block": "art-reloj",
+                "x": 3,
+                "y": 0,
+                "w": 2,
+                "h": 5,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-schedule",
+                "block": "schedule",
+                "x": 0,
+                "y": 5,
+                "w": 8,
+                "h": 1,
+                "visible": true,
+                "typography": {
+                  "align": "center"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-venues",
+        "kind": "section",
+        "section": "venues",
+        "style": "bands",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-mapa-pin",
+                "block": "art-mapa-pin",
+                "x": 3,
+                "y": 0,
+                "w": 2,
+                "h": 5,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-venues",
+                "block": "venues",
+                "x": 0,
+                "y": 5,
+                "w": 8,
+                "h": 1,
+                "visible": true,
+                "typography": {
+                  "align": "center"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-gallery",
+        "kind": "section",
+        "section": "gallery",
+        "style": "bands",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-camara",
+                "block": "art-camara",
+                "x": 3,
+                "y": 0,
+                "w": 2,
+                "h": 5,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-gallery",
+                "block": "gallery",
+                "x": 0,
+                "y": 5,
+                "w": 8,
+                "h": 1,
+                "visible": true,
+                "typography": {
+                  "align": "center"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-dress-code",
+        "kind": "section",
+        "section": "dressCode",
+        "style": "bands",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-percha",
+                "block": "art-percha",
+                "x": 3,
+                "y": 0,
+                "w": 2,
+                "h": 5,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-dress-code",
+                "block": "dress-code",
+                "x": 0,
+                "y": 5,
+                "w": 8,
+                "h": 1,
+                "visible": true,
+                "typography": {
+                  "align": "center"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-gifts",
+        "kind": "section",
+        "section": "gifts",
+        "style": "bands",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-medalla",
+                "block": "art-medalla",
+                "x": 3,
+                "y": 0,
+                "w": 2,
+                "h": 5,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-gifts-cta",
+                "block": "gifts-cta",
+                "x": 0,
+                "y": 5,
+                "w": 8,
+                "h": 6,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-faq",
+        "kind": "section",
+        "section": "faq",
+        "style": "bands",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-pregunta",
+                "block": "art-pregunta",
+                "x": 3,
+                "y": 0,
+                "w": 2,
+                "h": 5,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-faq",
+                "block": "faq",
+                "x": 0,
+                "y": 5,
+                "w": 8,
+                "h": 1,
+                "visible": true,
+                "typography": {
+                  "align": "center"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-rsvp",
+        "kind": "section",
+        "section": "rsvp",
+        "style": "bands",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-sobre",
+                "block": "art-sobre",
+                "x": 3,
+                "y": 0,
+                "w": 2,
+                "h": 5,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-rsvp-cta",
+                "block": "rsvp-cta",
+                "x": 0,
+                "y": 5,
+                "w": 8,
+                "h": 6,
+                "visible": true
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "blocks": [
+      {
+        "id": "cover",
+        "type": "cover",
+        "config": {
+          "variant": "classic",
+          "envelope": false
+        }
+      },
+      {
+        "id": "art-cifra",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "cifra-50",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "art-medalla",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "medalla",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "art-filete",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "filete",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "story",
+        "type": "story",
+        "config": {}
+      },
+      {
+        "id": "art-reloj",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "reloj",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "schedule",
+        "type": "schedule",
+        "config": {
+          "display": "timeline"
+        }
+      },
+      {
+        "id": "art-mapa-pin",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "mapa-pin",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "venues",
+        "type": "venues",
+        "config": {
+          "display": "cards",
+          "mapOnTap": true
+        }
+      },
+      {
+        "id": "art-camara",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "camara",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "gallery",
+        "type": "gallery",
+        "config": {
+          "display": "grid"
+        }
+      },
+      {
+        "id": "art-percha",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "percha",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "dress-code",
+        "type": "dressCode",
+        "config": {}
+      },
+      {
+        "id": "gifts-cta",
+        "type": "giftsCta",
+        "required": true,
+        "config": {
+          "style": "solid"
+        }
+      },
+      {
+        "id": "art-pregunta",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "pregunta",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "faq",
+        "type": "faq",
+        "config": {}
+      },
+      {
+        "id": "art-sobre",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "sobre",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "rsvp-cta",
+        "type": "rsvpCta",
+        "config": {
+          "style": "solid"
+        }
+      }
+    ],
+    "custom": {
+      "html": "",
+      "css": ""
+    }
+  }
+}

@@ -62,7 +62,8 @@ html[data-photoerr] .ph-wrap,html[data-photoerr] .ph-tag{display:none!important}
 .gal .ph-err p{font-size:13px}
 .gal li:not(.err-tile) .ph-err{display:none!important}
 .gal-cap{font-size:13px;color:var(--muted);margin-top:10px}
-@media (min-width:720px){.gal{grid-template-columns:repeat(3,minmax(0,1fr))}.gal li:nth-child(1),.gal li:nth-child(6){grid-column:span 2;aspect-ratio:2/1}}
+/* 6 fotos: 2+1 / 1+1+1 / 3. La última ocupa la fila entera para que ninguna fila quede con un hueco (PL-117-M1). */
+@media (min-width:720px){.gal{grid-template-columns:repeat(3,minmax(0,1fr))}.gal li:nth-child(1){grid-column:span 2;aspect-ratio:2/1}.gal li:nth-child(6){grid-column:1/-1;aspect-ratio:3/1}}
 /* avisos (solo texto + icono, sin cromo de alerta) */
 .note{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r,0);font-size:15px;line-height:1.5;color:var(--text);max-width:52ch}
 .note .ic{color:var(--accent);margin-top:2px}
@@ -125,7 +126,7 @@ p{max-width:54ch;text-wrap:pretty}
 .muted{color:var(--muted)}
 .btn{border-radius:2px;font-family:var(--sans);letter-spacing:.01em}
 /* encabezado */
-.top{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 22px;min-height:64px;background:color-mix(in srgb,var(--canvas) 94%,transparent);border-bottom:1px solid var(--line)}
+.top{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 22px;min-height:64px;background:var(--canvas);border-bottom:1px solid var(--line)}
 .mark{font:italic 500 26px/1 var(--serif);text-decoration:none;color:var(--text);display:flex;align-items:center;min-height:44px}
 .mark i{color:var(--accent);padding:0 .12em;font-size:.82em}
 .top .date{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}

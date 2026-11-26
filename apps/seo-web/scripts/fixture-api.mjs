@@ -2,6 +2,7 @@
 // (celebrations with every section) or no Provider Catalog HTTP service yet.
 //   node apps/seo-web/scripts/fixture-api.mjs   (PORT=28100; FIXTURE_LOCALE=en-US to serve the view in English)
 // It is NOT the backend: evidence produced against it is labelled "fixture" and proves rendering only.
+import { readFileSync } from "node:fs";
 import { createServer } from "node:http";
 
 const PORT = Number(process.env.PORT ?? 28100);
@@ -37,6 +38,42 @@ const restrictedRsvp = {
 };
 const template = { id: "t-classic", name: "Clásico marfil", layout: "classic", eventTypeTags: ["wedding"], theme: { palette: { canvas: "#FFFBF4", surface: "#FFFFFF", text: "#302C28", accent: "#865E36", muted: "#6F665D" }, typography: { heading: "'Cormorant Garamond', Georgia, serif", body: "'Source Sans 3', Arial, sans-serif" }, sectionStyle: "bands" }, sectionOrder: ["story", "schedule", "venues", "gallery", "dressCode", "gifts", "faq", "recommendations", "rsvp"] };
 const gallery = [1, 2, 3].map((n) => ({ id: `g${n}`, width: 1920, height: 1280, isCover: n === 1, variants: { thumb: img(n), medium: img(n), full: img(n), webp: img(n) } }));
+
+// F4 b · the three prototyped templates as design documents v2, read from the very files the backend seeds. Each one is served as a
+// celebration with a cover photo (`fixture-v2-<name>`) and without it (`fixture-v2-<name>-sinfoto`), to prove both covers on the real site.
+const V2_IDS = { marfil: "73477f09-c9a6-544e-9477-948866a907c6", pinata: "c5c5c247-bfaf-52c2-b932-e0ce9f2cb8c7", gala: "e6a5911c-2e0b-5381-a2f8-9d9e0a9b24e8",
+  // F4 c1 · the wedding group (the id is the v1 seed's: uuid5 of the key, P20).
+  "jardin-botanico": "1437aaef-2fdf-5aff-ba78-10139d8c8e24", "rosa-antiguo": "984f5f85-66e1-5226-9f58-af6ca5fd4963", editorial: "eee0b5bb-a4aa-5091-93b0-696da7b7bab5",
+  "editorial-granate": "637c1fe4-e88a-5e6c-802c-c4832d881519", "editorial-oliva": "7a69536f-1bb7-5cb5-b905-4b42e1626032", "bodas-de-oro": "2430166f-d9cd-52d8-b999-ef1c9ed7040c",
+  "bodas-de-plata": "a3d91e73-703b-5f8e-ae78-a9da05402bed", "pedida-de-mano": "2b64a4fb-e239-5855-9816-6f73a2f7d8d7",
+  // F4 c2 · the party group (uuid5 of the key as well, P20).
+  festivo: "1bfedee4-6e88-58df-ac37-dd678802ecca", "fiesta-lila": "e829f1a7-3c06-5260-a8ab-b12f03db3b10", "cumpleanos-adulto": "7da50455-1248-51fb-a837-d5e1374eafe1",
+  "fiesta-tematica": "4093243c-3b63-5fad-99fd-43d516bd5e9f", "fin-de-ano": "b3d69753-f079-5e99-84df-287f4d5ab290", despedida: "e58c00b3-465f-5b5f-8062-28e56763f05b",
+  reencuentro: "f970f429-662e-5f16-9111-47c6901da9d0" };
+const V2_CONTENT = { pinata: { title: "Sofi cumple 6", hosts: {}, eventDate: "2026-12-19T19:00:00.000Z" }, "bodas-de-oro": { title: "Rosa y Mario", hosts: { BRIDE: "Rosa", GROOM: "Mario" } },
+  "bodas-de-plata": { title: "Carla y Jorge", hosts: { BRIDE: "Carla", GROOM: "Jorge" } }, "pedida-de-mano": { title: "Lucía y Marco", hosts: { BRIDE: "Lucía", GROOM: "Marco" } },
+  festivo: { title: "Camila cumple 15", hosts: {} }, "fiesta-lila": { title: "Fiesta lila de Dani", hosts: {} }, "cumpleanos-adulto": { title: "Los 50 de Marcela", hosts: {} },
+  "fiesta-tematica": { title: "Noche de los 80", hosts: {} }, "fin-de-ano": { title: "Recibimos el 2027", hosts: {} }, despedida: { title: "Despedida de Andrés", hosts: {} },
+  reencuentro: { title: "Promoción 2006", hosts: {} } };
+// F4 c3 · the children and rites group (the id is the seed's: uuid5 of the key, P20), each with the title its event would carry.
+Object.assign(V2_IDS, { "cielo-bautizo": "14924a38-0623-5076-880e-b1b2c631853f", "menta-infantil": "4e35035d-2da1-517c-9ffa-1133d9836c63", "baby-shower": "e983a0c1-0fc2-5e1a-b26b-7ad27d06f673",
+  "primera-comunion": "76bc1ae5-77da-53e9-a4bd-f85babf7fe8b", graduacion: "82ffe36e-53f2-52d2-9e0d-42a6982fa983" });
+Object.assign(V2_CONTENT, { "cielo-bautizo": { title: "Bautizo de Emma", hosts: {} }, "menta-infantil": { title: "Leo cumple 3", hosts: {} }, "baby-shower": { title: "Baby shower de Valentina", hosts: {} },
+  "primera-comunion": { title: "Primera comunión de Sofía", hosts: {} }, graduacion: { title: "Promoción de Camila", hosts: {} } });
+const v2Template = (name) => {
+  const file = JSON.parse(readFileSync(new URL(`../../../packages/celebration-theme/src/design/documents/${name}.json`, import.meta.url), "utf8"));
+  return { id: V2_IDS[name], name: file.name, description: file.description, status: "PUBLISHED", layout: file.layout, eventTypeTags: file.eventTypeTags, theme: file.theme, sectionOrder: file.sectionOrder, version: 2 };
+};
+// F4 c4 · the sober group (uuid5 of the key, P20). Kept apart from the lines above so the parallel groups merge without touching each other.
+Object.assign(V2_IDS, { minimalista: "869eeeec-3666-5b8b-bde6-ee717e43568f", "arena-terracota": "12cfb5c1-0072-5374-84ad-24ccbc4c8ff6", corporativo: "ba708189-7218-5d19-a15f-c0f13e11381e",
+  "corporativo-grafito": "31f50a64-17fe-5ddf-84e2-6a2d1812fb30", inauguracion: "c075dcc9-346f-5238-b56c-22d6ae7c948c", "fiesta-patronal": "effedaf6-1f6c-5446-b263-dd9438e2feac", "otros-evento": "e72b06cb-5175-5121-8e05-23854a78d1af" });
+Object.assign(V2_CONTENT, { minimalista: { title: "Valeria y Tomás", hosts: { BRIDE: "Valeria", GROOM: "Tomás" } }, "arena-terracota": { title: "Bautizo de Emilia", hosts: {} }, corporativo: { title: "Cumbre de Innovación 2026", hosts: {} },
+  "corporativo-grafito": { title: "Asamblea anual 2026", hosts: {} }, inauguracion: { title: "Inauguración de Café Altiplano", hosts: {} }, "fiesta-patronal": { title: "Fiesta de la Virgen de Urkupiña", hosts: {} }, "otros-evento": { title: "Encuentro de la familia Rojas", hosts: {} } });
+const v2Celebrations = Object.entries(V2_IDS).flatMap(([name, templateId], index) => [false, true].map((bare) => ({
+  slug: `fixture-v2-${name}${bare ? "-sinfoto" : ""}`, templateId, bare,
+  view: { ...view, celebrationId: `00000000-0000-4000-8000-${String(100 + index * 2 + (bare ? 1 : 0)).padStart(12, "0")}`, slug: `fixture-v2-${name}${bare ? "-sinfoto" : ""}`, templateId,
+    content: V2_CONTENT[name] ? { ...view.content, ...V2_CONTENT[name] } : view.content }
+})));
 
 const providers = [
   { listingId: "7d1c1a34-5d4c-4a39-9a2e-0f4f2d3d7b11", providerSlug: "hotel-andino", name: "Hotel Andino", category: "ACCOMMODATION", city: "La Paz", department: "La Paz", verified: true, summary: "Hospedaje boutique en el centro histórico, con salón para recepciones de hasta 120 personas.", priceFrom: { amountMinor: 45000, currency: "BOB" }, imageUrl: img(1), destinations: ["WHATSAPP", "PHONE", "EMAIL", "OFFICIAL_SITE"], coverage: ["La Paz", "El Alto"], address: "Calle Comercio 123, La Paz", hours: ["Lu-Do 08:00-22:00"], lat: -16.4955, lng: -68.1336 },
@@ -81,6 +118,12 @@ createServer((req, res) => {
   if (path === "/celebrations/public") return json(res, 200, { items: [{ slug: SLUG, updatedAt: "2026-11-01T00:00:00Z", supportedLocales: ["es-BO", "en-US"] }] });
   if (path === `/celebrations/public/${SLUG}`) return json(res, 200, view);
   if (path === `/celebrations/public/${CONTACT_SLUG}`) return json(res, 200, restrictedRsvp);
+  const v2 = v2Celebrations.find((item) => path === `/celebrations/public/${item.slug}`);
+  if (v2) return json(res, 200, v2.view);
+  const v2Assets = v2Celebrations.find((item) => path === `/media/public/celebrations/${item.view.celebrationId}/assets`);
+  if (v2Assets) return json(res, 200, { items: v2Assets.bare ? [] : gallery });
+  const v2Name = Object.keys(V2_IDS).find((name) => path === `/media/templates/${V2_IDS[name]}`);
+  if (v2Name) return json(res, 200, v2Template(v2Name));
   if (path.startsWith("/celebrations/public/")) return json(res, 404, { title: "Not found", status: 404 });
   if (path === "/media/templates/t-classic") return json(res, 200, template);
   if (path === `/media/public/celebrations/${view.celebrationId}/assets`) return json(res, 200, { items: gallery });

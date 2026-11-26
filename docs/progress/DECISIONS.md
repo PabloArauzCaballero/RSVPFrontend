@@ -113,6 +113,25 @@
 - **Las rutas de la API con credencial de invitado tienen su propia `location` sin error log de petición.** `/api/rsvp/…`, `/api/c/{slug}/rsvp/…` y `/api/c/{slug}/regalos/…` (las mismas que el `map` de A13 redacta en el access log) van a una `location` anidada en `/api/` con `error_log /dev/stderr emerg;`. nginx no escribe ninguna petición a ese nivel, así que un fallo del upstream (conexión, DNS, timeout, TLS) no deja la línea `request: "GET /api/rsvp/{token}"` en stderr; el access log sigue registrando el 502/504 con `/[guest-credential-path]`. El resto de `/api/` conserva su error log. Se descartó `crit`: un handshake TLS fallido con el upstream se registra en `crit` con la petición. Se descartó sacar la credencial de la ruta (cambio de contrato en Guest, mayor alcance).
 - **El proxy de `/api/` vive en un snippet** (`deploy/nginx-api-proxy.conf` → `/etc/nginx/snippets/api-proxy.conf`), incluido por las dos `location` y renderizado por `render-nginx-spa.sh` con la misma URL, para no duplicar la configuración de L19 y B1.
 
+## Prototipos de plantillas (PR #117, F4): decisiones pendientes de Pablo · 2026-11-24
+
+- **Acento de Gala: vino o dorado.** El prototipo usa vino (`#7B2A3C` claro, `#E6A3B1` oscuro, matiz 347°) porque el dorado anterior (`#6E5200`, `#CDAE6C`, matiz 41–45°) es el tono del amarillo del sistema y la regla es «nunca amarillo». Decide Pablo; cambiarlo son dos tokens en `docs/design/prototipos-plantillas/_build/tokens.mjs`.
+- **Nombre de la plantilla.** El prototipo se titula «Gala art déco»; la semilla `016` se llama «Gala dorada». Decide Pablo cuál se conserva.
+- **Redacción de los avisos y de «Ver mi respuesta»** (plazo vencido, regalos vacío/cerrado, sin enlace personal): son propuestas, no copy aprobado.
+- Hecho sin decisión de Pablo (verificable en el catálogo): las tres parejas tipográficas salen del catálogo curado de F1, así que no se amplía el catálogo.
+
+## Biblioteca de dibujitos y ornamentos de invitación en `celebration-theme` (F3) · 2026-11-24
+
+- **Vive en `packages/celebration-theme/src/art` (`@rsvp/celebration-theme/art`).** Es el paquete que ya pintan las invitaciones en `apps/seo-web` y en la vista web de la app (P10); `apps/seo-web` no puede importar `packages/ui` y `celebration-theme` no depende de él. Alternativa descartada: ampliar `packages/ui/src/illustrations.ts`, que ata las invitaciones al kit de la app y a los pasteles de DOne (la invitación usa el acento de su plantilla, P4).
+- **Los trazados son dato con roles, nunca colores** (`disc`, `shadow`, `ink`, `cutout`, `secondary`, `accent`). Los constructores de trazado se reescriben en el paquete y un test los compara con `packages/ui`.
+- **La sombra siempre es más oscura que el disco y nunca el color de la página (L16).** En claro está un paso más allá del disco; en oscuro es un paso hacia el negro bajo la página y el disco queda apenas encima (1,16 a 1,25, como el de DOne), no una bola gris de 1,5.
+- **Un acento es una forma conexa.** Criterio del orquestador (PL-116-R1): un trazado con un solo subtrazado; lo demás va en tinta o secundario. Los detalles sobre el acento se calan (`cutout`), nunca en tinta (tinta sobre acento no llega a 3:1 en todas las plantillas).
+- **Las figuras son tinta rellena.** `band` convierte una línea en el polígono que la rodea (anillos, cifras, percha, vestido, tijera); no hay trazos gruesos como figura. Piso de línea 2,5 y máximo 13 subtrazados (los de DOne); tope de figura de **96 de ancho y alto** (el disco mide 92 y DOne llega a 100): decisión propia, no «cabe en 92».
+- **La máscara de morenada es abstracta** (corona, escudo y rayos): la regla de las caras de DOne no admite cuencas, ojos, dientes ni boca. Se retira el reloj de medianoche (no lo pide el plan y se confundía con el reloj) y se añade el cartel «Abierto» que sí pide.
+- **Entrada en pantalla con IntersectionObserver, una vez**, con los valores de `MOTION` (500 ms, 12 px, 70 ms por paso, máx. 8). Se arma antes de pintar solo si el dibujo aún no está en pantalla: sin JavaScript, o si ya se ve al hidratar, el dibujo se queda entero (sin parpadeo 1, 0, 1 con SSR). El tamaño por defecto de 104 px es solo de los dibujos. Los calados entran en el mismo grupo que su tinta.
+- **`InvitationArt` es decorativo por defecto**; el nombre es opt-in con `label`. Suelos `accent` y `photo` con el disco como halo del color del lienzo.
+- **Aún no se conecta a las plantillas:** F4 elige set y ornamento por plantilla. Los ornamentos se dibujan en un solo trazo (1,8) con un acento.
+
 ## Espejo del documento de diseño v2 y del conversor v1→v2 (F1 de plantillas, Template/Media 1.2.0) · 2026-11-24
 
 - **Qué entra:** `packages/celebration-theme/src/design/` (exportado como `design` desde el índice del paquete): `colour.ts`, `convert.ts`, `warnings.ts`, `catalog.ts` y `types.ts`. Es el espejo línea a línea de `templates_app/design/` del backend (BE PR #132). Los tipos del contrato (`@rsvp/contracts`) se regeneraron con `generate --ref 888ad84`; nada generado se editó a mano.
@@ -138,14 +157,3 @@
 - **Pendiente de Pablo: redacción de los avisos y de «Ver mi respuesta»** (plazo vencido, regalos vacío/cerrado, sin enlace personal): son propuestas, no copy aprobado.
 - Hecho sin decisión de Pablo (verificable en el catálogo): las tres parejas tipográficas salen del catálogo curado de F1, así que no se amplía el catálogo.
 
-## Biblioteca de dibujitos y ornamentos de invitación en `celebration-theme` (F3) · 2026-11-24
-
-- **Vive en `packages/celebration-theme/src/art` (`@rsvp/celebration-theme/art`).** Es el paquete que ya pintan las invitaciones en `apps/seo-web` y en la vista web de la app (P10); `apps/seo-web` no puede importar `packages/ui` y `celebration-theme` no depende de él. Alternativa descartada: ampliar `packages/ui/src/illustrations.ts`, que ata las invitaciones al kit de la app y a los pasteles de DOne (la invitación usa el acento de su plantilla, P4).
-- **Los trazados son dato con roles, nunca colores** (`disc`, `shadow`, `ink`, `cutout`, `secondary`, `accent`). Los constructores de trazado se reescriben en el paquete y un test los compara con `packages/ui`.
-- **La sombra siempre es más oscura que el disco y nunca el color de la página (L16).** En claro está un paso más allá del disco; en oscuro es un paso hacia el negro bajo la página y el disco queda apenas encima (1,16 a 1,25, como el de DOne), no una bola gris de 1,5.
-- **Un acento es una forma conexa.** Criterio del orquestador (PL-116-R1): un trazado con un solo subtrazado; lo demás va en tinta o secundario. Los detalles sobre el acento se calan (`cutout`), nunca en tinta (tinta sobre acento no llega a 3:1 en todas las plantillas).
-- **Las figuras son tinta rellena.** `band` convierte una línea en el polígono que la rodea (anillos, cifras, percha, vestido, tijera); no hay trazos gruesos como figura. Piso de línea 2,5 y máximo 13 subtrazados (los de DOne); tope de figura de **96 de ancho y alto** (el disco mide 92 y DOne llega a 100): decisión propia, no «cabe en 92».
-- **La máscara de morenada es abstracta** (corona, escudo y rayos): la regla de las caras de DOne no admite cuencas, ojos, dientes ni boca. Se retira el reloj de medianoche (no lo pide el plan y se confundía con el reloj) y se añade el cartel «Abierto» que sí pide.
-- **Entrada en pantalla con IntersectionObserver, una vez**, con los valores de `MOTION` (500 ms, 12 px, 70 ms por paso, máx. 8). Se arma antes de pintar solo si el dibujo aún no está en pantalla: sin JavaScript, o si ya se ve al hidratar, el dibujo se queda entero (sin parpadeo 1, 0, 1 con SSR). El tamaño por defecto de 104 px es solo de los dibujos. Los calados entran en el mismo grupo que su tinta.
-- **`InvitationArt` es decorativo por defecto**; el nombre es opt-in con `label`. Suelos `accent` y `photo` con el disco como halo del color del lienzo.
-- **Aún no se conecta a las plantillas:** F4 elige set y ornamento por plantilla. Los ornamentos se dibujan en un solo trazo (1,8) con un acento.

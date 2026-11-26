@@ -12,13 +12,16 @@ import { hasGuestCredential } from "../lib/guest-credential";
  */
 export function RsvpCredentialIsland({ slug }: { readonly slug: string }) {
   useEffect(() => {
-    const button = document.querySelector<HTMLElement>('a[data-action="rsvp-help"][data-credential]');
-    if (!button) return;
+    // The reply is on the page more than once (the always-visible dock and the reply section): every one flips together.
+    const buttons = document.querySelectorAll<HTMLElement>('a[data-action="rsvp-help"][data-credential]');
+    if (!buttons.length) return;
     const present = hasGuestCredential(slug);
-    button.dataset["credential"] = present ? "present" : "absent";
-    for (const face of button.querySelectorAll<HTMLElement>("[data-face]")) {
-      const visible = present ? face.dataset["face"] === "confirm" : face.dataset["face"] === "find";
-      if (visible) face.removeAttribute("aria-hidden"); else face.setAttribute("aria-hidden", "true");
+    for (const button of buttons) {
+      button.dataset["credential"] = present ? "present" : "absent";
+      for (const face of button.querySelectorAll<HTMLElement>("[data-face]")) {
+        const visible = present ? face.dataset["face"] === "confirm" : face.dataset["face"] === "find";
+        if (visible) face.removeAttribute("aria-hidden"); else face.setAttribute("aria-hidden", "true");
+      }
     }
   }, [slug]);
   return null;
