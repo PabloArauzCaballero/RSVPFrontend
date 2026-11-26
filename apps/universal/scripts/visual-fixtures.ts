@@ -16,8 +16,29 @@ const NOW = "2026-11-04T15:00:00.000Z";
 const provider = { id: P, slug: "foto-altiplano", name: "Foto Altiplano", status: "VERIFIED", plan: "FREE", currency: "BOB", timeZone: "America/La_Paz", version: 3, leadConfig: { mode: "REDIRECT" } };
 const listings = [
   { id: L1, providerId: P, type: "SERVICE", category: "FOTOGRAFIA", city: "La Paz", title: "Cobertura de boda", published: true, priceFromMinor: 450000 },
-  { id: L2, providerId: P, type: "PRODUCT", category: "FOTOGRAFIA", city: "La Paz", title: "Álbum de 40 páginas", published: false, priceFromMinor: 90000 }
+  { id: L2, providerId: P, type: "PRODUCT", category: "BOOKS_STATIONERY", city: "La Paz", title: "Álbum de 40 páginas", published: false, priceFromMinor: 90000 }
 ];
+/**
+ * GET /providers/categories: a sample of the catalog's categories (provider-catalog migration M-1 adds the product ones).
+ * `listingType: null` is a category both offer types use. Like the service, `type` keeps that type plus the shared ones.
+ */
+const categories = [
+  { code: "FOTOGRAFIA", slug: "fotografia", names: { "es-BO": "Fotografía", "en-US": "Photography" }, listingType: "SERVICE" },
+  { code: "CATERING", slug: "catering", names: { "es-BO": "Catering", "en-US": "Catering" }, listingType: "SERVICE" },
+  { code: "DECORATION", slug: "decoration", names: { "es-BO": "Decoración", "en-US": "Decoration" }, listingType: null },
+  { code: "TABLEWARE", slug: "tableware", names: { "es-BO": "Vajilla y cristalería", "en-US": "Tableware and glassware" }, listingType: "PRODUCT" },
+  { code: "SMALL_APPLIANCES", slug: "small-appliances", names: { "es-BO": "Electrodomésticos", "en-US": "Home appliances" }, listingType: "PRODUCT" },
+  { code: "BOOKS_STATIONERY", slug: "books-stationery", names: { "es-BO": "Libros y papelería", "en-US": "Books and stationery" }, listingType: "PRODUCT" }
+] as const;
+const query = (path: string): URLSearchParams => new URLSearchParams(path.split("?")[1] ?? "");
+const categoryList = (path: string) => {
+  const params = query(path);
+  const type = params.get("type");
+  const locale = params.get("locale") === "en-US" ? "en-US" : "es-BO";
+  return categories
+    .filter((category) => !type || category.listingType === null || category.listingType === type)
+    .map(({ names, ...category }) => ({ ...category, name: names[locale], names }));
+};
 const templates = [
   { id: "t-classic", name: "Clásico marfil", status: "PUBLISHED", version: 1, publishedAt: NOW, eventTypeTags: ["wedding"], layout: "classic", theme: { palette: { canvas: "#FFFBF4", surface: "#FFFFFF", text: "#302C28", accent: "#865E36", muted: "#6F665D" }, typography: { heading: "Georgia, serif", body: "Arial, sans-serif" }, sectionStyle: "bands" }, sectionOrder: ["story", "schedule", "venues", "faq", "rsvp"] },
   { id: "t-minimal", name: "Minimalista", status: "PUBLISHED", version: 1, publishedAt: NOW, eventTypeTags: ["wedding", "quinceanera"], layout: "minimal", theme: { palette: { canvas: "#FFFFFF", surface: "#F7F7F5", text: "#1C1C1A", accent: "#2F5D50", muted: "#5F5F5A" }, typography: { heading: "Arial, sans-serif", body: "Arial, sans-serif" }, sectionStyle: "plain" }, sectionOrder: ["schedule", "story"] },
@@ -47,7 +68,8 @@ const routes: readonly (readonly [RegExp, (request: Request) => Reply])[] = [
   [new RegExp(`^/providers/${P}/microsite`), () => ok({ providerId: P, version: 1, descriptions: { "es-BO": "Fotografía de bodas en La Paz." }, gallery: [], hours: { weekly: [{ weekdays: [1, 2, 3, 4, 5], opens: "09:00", closes: "18:00" }] }, social: {}, address: { line: "Av. Arce 2000", city: "La Paz" } })],
   [new RegExp(`^/providers/${P}/documents`), () => ok({ items: [{ id: "d-1", providerId: P, kind: "IDENTITY", fileName: "ci.pdf", contentType: "application/pdf", sizeBytes: 204800, status: "UPLOADED", createdAt: NOW, uploadedAt: NOW }] })],
   [/^\/providers(\?.*)?$/, () => ok({ items: [card], total: 1, page: 1, pageSize: 6 })],
-  [/^\/listings/, () => ok({ items: listings.map((l) => ({ id: l.id, providerId: P, title: l.title, type: l.type, category: l.category, published: l.published, providerStatus: "VERIFIED", priceFromMinor: l.priceFromMinor, currency: "BOB" })) })],
+  [/^\/providers\/categories(\?.*)?$/, (request) => ok({ items: categoryList(request.path) })],
+  [/^\/listings/, (request) => ok({ items: listings.filter((l) => [null, l.type].includes(query(request.path).get("type"))).map((l) => ({ id: l.id, providerId: P, title: l.title, type: l.type, category: l.category, published: l.published, providerStatus: "VERIFIED", priceFromMinor: l.priceFromMinor, currency: "BOB" })) })],
   // Admin
   [/^\/providers\/admin\/verification-queue/, () => ok({ items: [{ providerId: "p-2", name: "Catering Sol", category: "CATERING", city: "Santa Cruz", submittedAt: "2026-11-02T15:00:00Z", status: "PENDING" }, { providerId: "p-3", name: "DJ Andino", category: "MUSICA", city: "Cochabamba", submittedAt: "2026-11-03T15:00:00Z", status: "PENDING" }] })],
   [/^\/providers\/admin\/moderation/, () => ok({ items: [{ id: "m-1", kind: "MICROSITE", title: "Sitio de Foto Altiplano", url: "https://example.com/foto", submittedBy: "foto@example.com", submittedAt: NOW, status: "PENDING" }, { id: "g-1", kind: "EXTERNAL_GIFT", title: "Licuadora en tienda externa", submittedBy: "ana@example.com", submittedAt: NOW, status: "PENDING" }] })],
