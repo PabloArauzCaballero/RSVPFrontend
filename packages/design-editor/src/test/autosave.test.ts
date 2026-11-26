@@ -242,4 +242,32 @@ describe("autosaver", () => {
     expect(save).toHaveBeenCalledTimes(1);
     saver.notify(docs()[1]);
   });
+  it("while held it sends nothing (a publish is in flight), flush does not wait for it, and on release the pending edit is sent after the debounce", async () => {
+    const save = vi.fn(async (_id: string, version: number) => ({ draftVersion: version + 1 }));
+    const { saver } = setup(save);
+    const release = saver.hold();
+    saver.notify(docs()[1]);
+    await vi.advanceTimersByTimeAsync(DEBOUNCE_MS * 3);
+    expect(save).not.toHaveBeenCalled();
+    await saver.flush();
+    expect(save).not.toHaveBeenCalled();
+    release();
+    release(); // releasing twice is harmless
+    await vi.advanceTimersByTimeAsync(DEBOUNCE_MS);
+    expect(save).toHaveBeenCalledTimes(1);
+  });
+
+  it("markConflict halts like a 409 from a save: nothing more is sent until resume", async () => {
+    const save = vi.fn(async (_id: string, version: number) => ({ draftVersion: version + 1 }));
+    const { saver, statuses } = setup(save);
+    saver.markConflict(9);
+    expect(statuses.at(-1)).toEqual({ kind: "conflict", currentVersion: 9 });
+    saver.notify(docs()[1]);
+    await vi.advanceTimersByTimeAsync(DEBOUNCE_MS * 2);
+    expect(save).not.toHaveBeenCalled();
+    saver.resume(9, docs()[0]);
+    saver.notify(docs()[2]);
+    await vi.advanceTimersByTimeAsync(DEBOUNCE_MS);
+    expect(save).toHaveBeenCalledWith("d1", 9, expect.anything());
+  });
 });

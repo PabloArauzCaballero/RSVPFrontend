@@ -40,12 +40,12 @@ Rama apilada sobre `feat/f1-diseno-v2-esquema` (FE #115). Plan: `PLAN-PLANTILLAS
 - El renderizador (F6) debe aplicar `scopeCss`/`sanitizeHtml` al pintar y dar a `.rsvp-protected` un `z-index` de 1000 (`PROTECTED_Z_INDEX`).
 ## PR b · prerrequisito: guardas de altura útil y tamaño de etiqueta (2026-11-25)
 
-Rama `feat/plantillas-f5b-guarda-altura-util`, sobre `feat/plantillas-f5-editor` (fbf83cd). Hay que fusionarla (o apilar la cadena #122-#125 sobre ella) **antes** de exponer los controles de relleno, borde, tamaño y tipografía.
+Rama `feat/plantillas-f5b-guarda-altura-util`, sobre `feat/plantillas-f5-editor` (1a0ddf4). Hay que fusionarla (o apilar la cadena #122-#125 sobre ella) **antes** de exponer los controles de relleno, borde, tamaño y tipografía.
 
 - `guards.ts` espeja `rules.py` (BE `feat/f1-diseno-v2-almacen`): altura útil = h·rowHeight − (padding superior + inferior) − 2·borde; menos de 44 px es `GIFTS_BLOCK_TOO_SMALL`; etiqueta > 32 px o con `size × lineHeight` (por defecto 1,25) mayor que la altura útil es `GIFTS_BLOCK_TEXT_TOO_LARGE`.
 - `giftsIssues` revisa **todas** las páginas cuyo lienzo móvil aloja el botón (antes solo la primera), como el servidor.
 - i18n es-BO/en-US del nuevo código; `TOO_SMALL` explica que se descuentan relleno y borde.
-- Pruebas vitest: 44 px exactos pasan, 45 px de relleno fallan; borde; 33 px; línea que no cabe; segunda página. Nivel `TESTED`. No se comparó otra vez contra `validate_design` del BE (sin entorno Python aquí): la comparación de 584 documentos de PR a no cubre estas dos reglas.
+- Pruebas vitest: 44 px útiles exactos pasan y 36 px (relleno superior, inferior o borde) fallan; caja rotada; 33 px; línea que no cabe; segunda página. Nivel `TESTED`. Paridad con `validate_design` del BE (`rules.py`) comparada sobre 4000 documentos generados: 0 diferencias en estas reglas sin rotación; con rotación, `guards.ts` mide la caja envolvente igual que el BE (prueba vitest dedicada). Las pruebas de borde usan valores literales en rejilla de 8 px y se comprobaron con mutaciones locales de `guards.ts` (`>`→`>=`, línea 1,25→1,2, ignorar `padding.bottom`/`padding.top`, caja sin rotar): cada una hace fallar al menos una prueba.
 - **Aviso de apilado:** las ramas #122-#125 parten de a42a687 (anterior a las rondas 2-3 de #121 y a esta guarda) y sus controles de relleno (#124) y del inspector (#125) hoy no pasan por estas guardas.
 
 
@@ -56,11 +56,27 @@ Rama `feat/plantillas-f5b-guarda-altura-util`, sobre `feat/plantillas-f5-editor`
 - Pantalla `/diseno` conectada a `designApi.publish/versions/restore`.
 - Nivel `TESTED` (arnés en memoria y cliente simulado); sin backend real.
 
-## PR b · modo Básico (2026-11-25)
+## PR b · modo Básico (2026-11-25, corregido en la ronda 1 de revisión)
 
-- `BasicPanel`: cambiar de plantilla (compatibles con el tipo de evento; se convierten con `convertV1ToV2`, un solo paso de deshacer, el código propio se conserva), colores de las dos paletas, tipografías solo del catálogo curado (Poppins e IBM Plex ya no están), preajustes de espaciado y de relleno, secciones activas/inactivas y su orden (la de regalos siempre visible y bloqueada), textos de bloques (título, párrafo, cita, botón; un cuadro vaciado se ignora).
-- Pantalla `/diseno` trae las plantillas con `templateApi.compatible`.
-- Nivel `TESTED` (arnés y cliente simulado); sin backend real.
+- `BasicPanel`: cambiar de plantilla (compatibles con el tipo de evento; se convierten con `convertV1ToV2`, un solo paso de deshacer, el código propio se conserva), colores de las dos paletas, tipografías solo del catálogo curado (Poppins e IBM Plex ya no están), preajustes de espaciado y de relleno, secciones activas/inactivas y su orden (la de regalos siempre visible y bloqueada).
+- **Textos, con la verdad sobre los datos reales.** `convertV1ToV2` no produce bloques de título, párrafo, cita ni botón: sus bloques son `cover, story, schedule, venues, gallery, dressCode, faq, recommendations, rsvpCta, giftsCta`, y la historia, el itinerario, las preguntas y los lugares leen los datos de la celebración, no el documento. Lo que un documento convertido sí tiene de texto propio son las etiquetas opcionales de los botones de **regalos** y de **confirmar** (`config.label`): el panel «Textos» las edita (vaciarlas devuelve el texto automático) y los 16 documentos de referencia del contrato lo prueban. Los bloques `heading`, `text`, `quote` y `button` se editan cuando el documento los trae (p. ej. tras añadirlos en Avanzado). Un texto obligatorio que se vacía muestra el motivo en línea y, al salir del cuadro, vuelve al anterior con aviso: nunca en silencio.
+- **Dibujos:** «Dibujo de la portada» guarda el **id** del catálogo de dibujitos (F3, PR #116) como bloque `illustration` (acento de la plantilla, trazado al entrar) bajo los elementos de la portada, en los dos lienzos. **La biblioteca F3 no está en la base de esta rama** y el contrato sigue declarando `illustrationSet: "none"`: el editor recibe el catálogo por la prop `drawings` y, sin ella, dice «todavía no está disponible». La pantalla `/diseno` aún no la pasa. El arnés de e2e lista tres ids reales de F3 (`anillos`, `ramo`, `pastel-bodas`). **Confirmado con BE** (`feat/f1-diseno-v2-almacen` 93caaee, `validate_design`): acepta el bloque `illustration` de portada con `illustrationSet: "none"` (112 documentos verificados: 16 goldens x base, dibujo, dibujo cambiado, dibujo quitado, foto, foto quitada, textos). **Pendiente:** conectar el catálogo real cuando F3 esté fusionado.
+- **Fotos:** «Foto de portada» (elegir y quitar, por id de medio, como fondo `media` de la página de portada con velo) está implementada contra la costura `media` y probada con un doble; **la API de medios (F6) no está en la base**, así que sin fuente el panel dice «todavía no está disponible» y no simula subidas. La galería no se elige en el diseño: usa las fotos de la celebración.
+- Estados: cargando y error con «Reintentar» en las listas de plantillas, dibujos y fotos; lista vacía de plantillas con mensaje. Las opciones de espaciado y relleno siguen el patrón de radiogrupo con flechas, Inicio y Fin. Al reactivar una sección se respetan los elementos que el anfitrión había ocultado a mano (mientras dure la sesión del editor; deshacer lo cubre siempre). Los títulos del panel no llevan iconos y «Texto» ya no se repite («Color del texto»).
+- El esquema del lienzo pinta la paleta y las tipografías elegidas (variables `--wf-*`, esquema claro u oscuro de la página), y el botón de regalos con su relleno y su tinta; la nota del botón avisa de que el relleno global no lo cambia. Sigue siendo un esquema, no el renderizador real (F6).
+- Nivel `TESTED` (vitest y arnés en Chrome real); sin backend real.
+
+- **Límites de texto (PL-124-R2-N1):** `TEXT_LIMITS` va por tipo y campo y coincide con el `maxLength` del contrato vendorizado (botón de regalos y de confirmar 40, título 200, párrafo 5000, cita 1000, autor 120, botón 60). La prueba `text-limits.test.tsx` recorre todos los campos editables contra `components.schemas.DesignBlock*` y falla si uno diverge o si aparece un texto del contrato sin límite. El campo se detiene en el límite, muestra el contador («n de N caracteres», ligado por `aria-describedby`) y avisa al llegar. El autoguardado ya no puede chocar con un 422 por longitud.
+
+### Ronda 1 de la revisión del PR #123 (2026-11-25)
+
+- **B1** la prueba de la pantalla usa `getByTestId("save-status")` (hay tres regiones `status`); sin debilitar la aserción.
+- **M1** restaurar siempre pregunta («Sí, restaurar la versión N») y dice qué se reemplaza; si hay cambios que no llegaron al servidor (reintentando, conflicto o rechazado) lo dice con todas las letras, y si el guardado falla al pulsar sin haberlo avisado, vuelve a preguntar. Restaurar es **un paso deshacible** (`replace` conserva el historial): «Puedes deshacerlo» ahora es verdad.
+- **M2** una sola lista de avisos de contraste: la del servidor cuando respondió sobre este mismo documento y, hasta entonces, la vista previa local con la misma regla (`design.contrastWarnings`, espejo de `colour.py`). Se retiró la sección duplicada; el botón dice «Usar #… en … del tema …, sobre …» (nombre único y que contiene el texto visible).
+- **M3** publicar retiene el autoguardado (`hold`): lo escrito mientras publica no se marca guardado, no compite con la publicación y se guarda después desde la versión que respondió el servidor.
+- **M4** historial con estados cargando, error (con «Reintentar»), vacío y «Ver más versiones» (`nextBefore`); «Restaurando…» propio; 409/401/403/422 de publicar y de restaurar con mensajes propios; el 409 detiene el guardado como un conflicto normal y ofrece «Cargar la versión del servidor».
+- **Menores** m1 paginación, m2 «sin cambios» desde la versión publicada que ya conoce el editor (no de la lista), m3 `{{minimum}}` en en-US, m4 mayúscula inicial, m5 nombre accesible por versión, m6 pruebas; estilos: `ul` ya no hereda la caja ámbar y `.de-swatch` no se redefine.
+- Nivel `TESTED` (vitest, arnés Playwright con Chrome); sin backend real. Las capturas Linux nuevas están en `evidence/plantillas-f5/e-versiones-*` y `e-restaurar-confirmar-1280.png`; no se tocó ninguna línea base de macOS.
 
 ## PR c · lienzo libre (2026-11-25)
 

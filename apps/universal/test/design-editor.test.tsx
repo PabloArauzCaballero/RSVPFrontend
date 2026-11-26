@@ -46,8 +46,11 @@ describe("plantillas F5 · pantalla del editor (web)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Publicar" }));
     expect(await screen.findByText("Publicada la versión 2.")).toBeTruthy();
     expect(calls.find((call) => call.method === "POST" && call.path.endsWith("/publish"))?.headers.get("if-match")).toBe('"4"');
-    fireEvent.click(screen.getAllByRole("button", { name: "Restaurar" })[1] as HTMLElement);
+    fireEvent.click(screen.getByRole("button", { name: "Restaurar versión 1" }));
+    expect(calls.filter((call) => call.path.endsWith("/restore"))).toHaveLength(0); // it asks first
+    fireEvent.click(screen.getByRole("button", { name: "Sí, restaurar la versión 1" }));
     expect(await screen.findByText(/Versión 1 copiada al borrador/)).toBeTruthy();
+    expect(calls.find((call) => call.path.endsWith("/restore"))?.headers.get("if-match")).toBe('"4"');
     expect(calls.filter((call) => call.path.endsWith("/publish"))).toHaveLength(1);
   });
 
@@ -58,6 +61,23 @@ describe("plantillas F5 · pantalla del editor (web)", () => {
     const select = await screen.findByLabelText("Cambiar de plantilla");
     expect([...(select as HTMLSelectElement).options].map((option) => option.text)).toContain(TEMPLATES[0]?.name);
     expect(calls.some((call) => call.path === "/media/templates")).toBe(true);
+  });
+
+  it("pagina el historial con nextBefore: «Ver más versiones» pide la página siguiente y la lista no pierde las ya cargadas", async () => {
+    const page = (version: number) => ({ version, label: `V${version}`, createdBy: "u-host", createdAt: "2026-11-20T15:30:00Z" });
+    const handlers = {
+      ...baseHandlers(), "GET /media/celebrations/c-1/design": () => record,
+      "GET /media/designs/d-1/versions": () => ({ items: [page(3)], nextBefore: 3 })
+    };
+    const { client, calls } = fakeClient(handlers);
+    renderApp(<DesignEditorScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    expect(await screen.findByText("Versión 3")).toBeTruthy();
+    handlers["GET /media/designs/d-1/versions"] = () => ({ items: [page(2), page(1)], nextBefore: null });
+    fireEvent.click(screen.getByRole("button", { name: "Ver más versiones" }));
+    expect(await screen.findByText("Versión 1")).toBeTruthy();
+    expect(screen.getByText("Versión 3")).toBeTruthy();
+    expect(calls.filter((call) => call.path === "/media/designs/d-1/versions").map((call) => call.url)).toEqual(["/media/designs/d-1/versions", "/media/designs/d-1/versions?before=3"]);
+    expect(screen.queryByRole("button", { name: "Ver más versiones" })).toBeNull();
   });
 
   it("volver a la pestaña no reinicia el editor: conserva el historial y la versión con la que guarda (M1)", async () => {

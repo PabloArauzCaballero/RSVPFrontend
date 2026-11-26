@@ -1,43 +1,116 @@
 import { design } from "@rsvp/celebration-theme";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { giftsBlock, giftsPlacement } from "../model/guards.js";
-import { applyPaddingPreset, applySpacingPreset, applyTemplateDocument, editableTexts, PADDING_PRESETS, setBlockConfig, setFontFamily, setPaletteColour, setSectionOrder, setSectionVisible, sharedPadding, SPACING_PRESETS, spacingPresetOf, switchableSections, type PaddingPreset, type SpacingPreset } from "../model/ops.js";
+import { applyPaddingPreset, applySpacingPreset, applyTemplateDocument, coverDrawingOf, coverPhotoOf, editableTexts, hiddenElements, PADDING_PRESETS, setBlockText, setCoverDrawing, setCoverPhoto, setFontFamily, setPaletteColour, setSectionOrder, setSectionVisible, sharedPadding, SPACING_PRESETS, spacingPresetOf, switchableSections, textLimit, type PaddingPreset, type SpacingPreset, type TextField } from "../model/ops.js";
 import { useEditor } from "./editor-context.js";
-import { LayersIcon, SlidersIcon } from "./icons.js";
 
 const key = (name: string): string => `designEditor.basic.${name}`;
 
 export interface TemplateChoice { readonly id: string; readonly name: string; readonly document: design.DesignDocumentV2 }
 export interface TemplateSource { readonly list: () => Promise<readonly TemplateChoice[]> }
+/** A drawing of the invitation drawing library (F3), by id. The host app owns the catalogue; the editor only stores the id. */
+export interface DrawingChoice { readonly id: string; readonly name: string }
+export interface DrawingSource { readonly list: () => Promise<readonly DrawingChoice[]> }
+/** A photo of the host's media store (F6), by media id. Without a source the editor says so instead of pretending to upload. */
+export interface MediaChoice { readonly id: string; readonly name: string }
+export interface MediaSource { readonly list: () => Promise<readonly MediaChoice[]> }
 
 const COLOUR_ROLES = ["accent", "canvas", "text", "surface", "muted"] as const;
 const HEADING_CATEGORIES: readonly design.FontCategory[] = ["serif", "script"];
 
+type Load<T> = { readonly state: "idle" | "loading" | "error" } | { readonly state: "ready"; readonly items: readonly T[] };
+
+/** Loads a list from an optional source: loading, error (with retry) and ready are three distinct states, never a silent absence. */
+function useList<T>(source: { readonly list: () => Promise<readonly T[]> } | undefined): readonly [Load<T>, () => void] {
+  const [load, setLoad] = useState<Load<T>>({ state: source ? "loading" : "idle" });
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    if (!source) { setLoad({ state: "idle" }); return undefined; }
+    let live = true;
+    setLoad({ state: "loading" });
+    source.list().then((items) => { if (live) setLoad({ state: "ready", items }); }, () => { if (live) setLoad({ state: "error" }); });
+    return () => { live = false; };
+  }, [source, attempt]);
+  return [load, useCallback(() => setAttempt((count) => count + 1), [])];
+}
+
+function ListStatus({ load, retry, loading, failed, retryLabel }: { readonly load: Load<unknown>; readonly retry: () => void; readonly loading: string; readonly failed: string; readonly retryLabel: string }) {
+  if (load.state === "loading") return <p className="de-hint" role="status" aria-busy="true">{loading}</p>;
+  if (load.state === "error") return <div className="de-inline-error" role="alert"><p>{failed}</p><button type="button" className="de-btn" onClick={retry}>{retryLabel}</button></div>;
+  return null;
+}
+
+/** Radio group with the arrow pattern: one tab stop (the selected one, or the first), arrows move and select, Home and End jump. */
 function Choice<T extends string>({ label, value, options, onChange }: { readonly label: string; readonly value: T | null; readonly options: readonly { readonly value: T; readonly text: string }[]; readonly onChange: (next: T) => void }) {
+  const stop = options.some((option) => option.value === value) ? value : options[0]?.value;
+  const move = (event: KeyboardEvent<HTMLButtonElement>, index: number): void => {
+    const last = options.length - 1;
+    const to = event.key === "ArrowRight" || event.key === "ArrowDown" ? (index === last ? 0 : index + 1)
+      : event.key === "ArrowLeft" || event.key === "ArrowUp" ? (index === 0 ? last : index - 1)
+      : event.key === "Home" ? 0 : event.key === "End" ? last : -1;
+    const next = options[to];
+    if (!next) return;
+    event.preventDefault();
+    onChange(next.value);
+    (event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="radio"]')[to])?.focus();
+  };
   return (
     <div className="de-field" role="radiogroup" aria-label={label}>
       <span>{label}</span>
-      <div className="de-group">{options.map((option) => <button key={option.value} type="button" role="radio" aria-checked={option.value === value} onClick={() => onChange(option.value)}>{option.text}</button>)}</div>
+      <div className="de-group">{options.map((option, index) => <button key={option.value} type="button" role="radio" aria-checked={option.value === value} tabIndex={option.value === stop ? 0 : -1} onKeyDown={(event) => move(event, index)} onClick={() => onChange(option.value)}>{option.text}</button>)}</div>
     </div>
   );
 }
 
-/** The Basic level: pick a template, texts, colours, fonts from the catalogue, spacing and padding presets, sections on and off (gifts always on). */
-export function BasicPanel({ templates }: { readonly templates?: TemplateSource }) {
+/**
+ * One text box with its own draft. A required text left empty shows why inline and, on leaving the box, goes back to the last
+ * text with a notice (never silently); an optional one (the automatic button label) may be emptied to get the automatic text.
+ */
+function TextRow({ entry }: { readonly entry: TextField }) {
+  const { dispatch, t, now } = useEditor();
+  const [draft, setDraft] = useState(entry.value);
+  const [problem, setProblem] = useState<"empty" | "restored" | null>(null);
+  const id = useId();
+  useEffect(() => { setDraft(entry.value); setProblem(null); }, [entry.value]);
+  const limit = textLimit(entry.type, entry.field);
+  const commit = (value: string): void => dispatch({ type: "edit", op: setBlockText(entry.blockId, entry.field, entry.optional && value.trim() === "" ? null : value), key: `text:${entry.blockId}:${entry.field}`, at: now() });
+  return (
+    <div className="de-field">
+      <label htmlFor={id}>{t(key(`texts.${entry.type}.${entry.field}`))}</label>
+      <textarea id={id} rows={entry.field === "text" && entry.type === "text" ? 4 : 2} value={draft} maxLength={limit} aria-invalid={problem === "empty"} aria-describedby={`${id}-note ${id}-count`}
+        onChange={(event) => {
+          const value = event.target.value;
+          setDraft(value);
+          if (value.trim() === "" && !entry.optional) { setProblem("empty"); return; }
+          setProblem(null);
+          commit(value);
+        }}
+        onBlur={() => { if (problem === "empty") { setDraft(entry.value); setProblem("restored"); } }} />
+      <p id={`${id}-note`} className={problem === "empty" ? "de-error" : "de-hint"} role="status">
+        {problem === "empty" ? t(key("texts.empty")) : problem === "restored" ? t(key("texts.restored")) : draft.length >= limit ? t(key("texts.atLimit"), { max: limit }) : entry.optional ? t(key("texts.automatic")) : ""}
+      </p>
+      <p id={`${id}-count`} className="de-hint de-count" data-at-limit={draft.length >= limit}>{t(key("texts.count"), { current: draft.length, max: limit })}</p>
+    </div>
+  );
+}
+
+/** The Basic level: pick a template, texts, photos, drawings, colours, fonts from the catalogue, spacing and padding presets, sections on and off (gifts always on). */
+export function BasicPanel({ templates, drawings, media }: { readonly templates?: TemplateSource; readonly drawings?: DrawingSource; readonly media?: MediaSource }) {
   const { document, dispatch, t, now } = useEditor();
-  const [choices, setChoices] = useState<readonly TemplateChoice[]>([]);
-  useEffect(() => {
-    if (!templates) return undefined;
-    let live = true;
-    templates.list().then((list) => { if (live) setChoices(list); }, () => undefined);
-    return () => { live = false; };
-  }, [templates]);
+  const [templateLoad, retryTemplates] = useList(templates);
+  const [drawingLoad, retryDrawings] = useList(drawings);
+  const [mediaLoad, retryMedia] = useList(media);
+  /** What the host hid by hand inside a section, kept while the section is off so switching it on again respects it (m2). */
+  const hiddenByHand = useRef(new Map<string, ReadonlySet<string>>());
 
   const giftsPageId = giftsPlacement(document)?.page.id;
   const gifts = giftsBlock(document);
   const sections = document.pages.filter((page) => page.kind === "section" && page.section !== undefined);
   const switchable = switchableSections(document, giftsPageId);
   const typography = document.tokens.typography;
+  const texts = editableTexts(document);
+  const drawing = coverDrawingOf(document);
+  const photo = coverPhotoOf(document);
 
   const move = (section: string, by: -1 | 1): void => {
     const order = sections.map((page) => page.section ?? "");
@@ -48,25 +121,86 @@ export function BasicPanel({ templates }: { readonly templates?: TemplateSource 
     [next[at], next[to]] = [next[to] as string, next[at] as string];
     dispatch({ type: "edit", op: setSectionOrder(next), at: now() });
   };
+  const toggle = (section: string, on: boolean, currentlyOn: boolean): void => {
+    if (!on && currentlyOn) hiddenByHand.current.set(section, hiddenElements(document, section));
+    dispatch({ type: "edit", op: setSectionVisible(section, on, on ? hiddenByHand.current.get(section) : undefined), at: now() });
+  };
+  const choose = <T extends { readonly id: string }>(items: readonly T[], id: string, apply: (picked: T) => void): void => { const picked = items.find((item) => item.id === id); if (picked) apply(picked); };
 
   return (
     <div className="de-basic">
-      {choices.length > 0 ? (
+      {templates ? (
         <section aria-label={t(key("template.title"))}>
-          <h2><LayersIcon />{t(key("template.title"))}</h2>
-          <label className="de-field">
-            <span>{t(key("template.label"))}</span>
-            <select defaultValue="" onChange={(event) => { const picked = choices.find((choice) => choice.id === event.target.value); if (picked) dispatch({ type: "edit", op: applyTemplateDocument(picked.document), at: now() }); event.target.value = ""; }}>
-              <option value="" disabled>{t(key("template.placeholder"))}</option>
-              {choices.map((choice) => <option key={choice.id} value={choice.id}>{choice.name}</option>)}
-            </select>
-          </label>
-          <p className="de-hint">{t(key("template.hint"))}</p>
+          <h2>{t(key("template.title"))}</h2>
+          <ListStatus load={templateLoad} retry={retryTemplates} loading={t(key("template.loading"))} failed={t(key("template.failed"))} retryLabel={t(key("retry"))} />
+          {templateLoad.state === "ready" && templateLoad.items.length > 0 ? (
+            <>
+              <label className="de-field">
+                <span>{t(key("template.label"))}</span>
+                <select defaultValue="" onChange={(event) => { choose(templateLoad.items, event.target.value, (picked) => dispatch({ type: "edit", op: applyTemplateDocument(picked.document), at: now() })); event.target.value = ""; }}>
+                  <option value="" disabled>{t(key("template.placeholder"))}</option>
+                  {templateLoad.items.map((choice) => <option key={choice.id} value={choice.id}>{choice.name}</option>)}
+                </select>
+              </label>
+              <p className="de-hint">{t(key("template.hint"))}</p>
+            </>
+          ) : null}
+          {templateLoad.state === "ready" && templateLoad.items.length === 0 ? <p className="de-hint">{t(key("template.none"))}</p> : null}
         </section>
       ) : null}
 
+      <section aria-label={t(key("texts.title"))}>
+        <h2>{t(key("texts.title"))}</h2>
+        {texts.map((entry) => <TextRow key={`${entry.blockId}-${entry.field}`} entry={entry} />)}
+        {texts.length === 0 ? <p className="de-hint">{t(key("texts.none"))}</p> : null}
+        <p className="de-hint">{t(key("texts.celebrationData"))}</p>
+      </section>
+
+      <section aria-label={t(key("photos.title"))}>
+        <h2>{t(key("photos.title"))}</h2>
+        {media ? (
+          <>
+            <ListStatus load={mediaLoad} retry={retryMedia} loading={t(key("photos.loading"))} failed={t(key("photos.failed"))} retryLabel={t(key("retry"))} />
+            {mediaLoad.state === "ready" ? (
+              mediaLoad.items.length === 0 ? <p className="de-hint">{t(key("photos.empty"))}</p> : (
+                <>
+                  <label className="de-field">
+                    <span>{t(key("photos.cover"))}</span>
+                    <select value={photo ?? ""} onChange={(event) => choose(mediaLoad.items, event.target.value, (picked) => dispatch({ type: "edit", op: setCoverPhoto(picked.id), at: now() }))}>
+                      <option value="" disabled>{t(key("photos.placeholder"))}</option>
+                      {mediaLoad.items.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                    </select>
+                  </label>
+                  <button type="button" className="de-btn" disabled={photo === null} onClick={() => dispatch({ type: "edit", op: setCoverPhoto(null), at: now() })}>{t(key("photos.remove"))}</button>
+                </>
+              )
+            ) : null}
+          </>
+        ) : <p className="de-hint" data-testid="photos-unavailable">{t(key("photos.unavailable"))}</p>}
+        <p className="de-hint">{t(key("photos.gallery"))}</p>
+      </section>
+
+      <section aria-label={t(key("drawings.title"))}>
+        <h2>{t(key("drawings.title"))}</h2>
+        {drawings ? (
+          <>
+            <ListStatus load={drawingLoad} retry={retryDrawings} loading={t(key("drawings.loading"))} failed={t(key("drawings.failed"))} retryLabel={t(key("retry"))} />
+            {drawingLoad.state === "ready" ? (
+              <label className="de-field">
+                <span>{t(key("drawings.cover"))}</span>
+                <select value={drawing ?? ""} onChange={(event) => dispatch({ type: "edit", op: setCoverDrawing(event.target.value === "" ? null : event.target.value), at: now() })}>
+                  <option value="">{t(key("drawings.none"))}</option>
+                  {drawingLoad.items.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                </select>
+              </label>
+            ) : null}
+            <p className="de-hint">{t(key("drawings.hint"))}</p>
+          </>
+        ) : <p className="de-hint" data-testid="drawings-unavailable">{t(key("drawings.unavailable"))}</p>}
+      </section>
+
       <section aria-label={t(key("title"))}>
-        <h2><SlidersIcon />{t(key("title"))}</h2>
+        <h2>{t(key("title"))}</h2>
         {(["light", "dark"] as const).map((scheme) => (
           <fieldset key={scheme} className="de-fieldset">
             <legend>{t(key(scheme === "light" ? "schemeLight" : "schemeDark"))}</legend>
@@ -110,7 +244,7 @@ export function BasicPanel({ templates }: { readonly templates?: TemplateSource 
             return (
               <li key={page.id}>
                 <label>
-                  <input type="checkbox" checked={locked || on} disabled={locked} onChange={(event) => dispatch({ type: "edit", op: setSectionVisible(section, event.target.checked), at: now() })} />
+                  <input type="checkbox" checked={locked || on} disabled={locked} onChange={(event) => toggle(section, event.target.checked, on)} />
                   <span>{t(`celebration.sections.${section}`)}</span>
                 </label>
                 {locked ? <small className="de-hint">{t(key("sections.locked"))}</small> : null}
@@ -124,17 +258,6 @@ export function BasicPanel({ templates }: { readonly templates?: TemplateSource 
         </ul>
       </section>
 
-      {editableTexts(document).length > 0 ? (
-        <section aria-label={t(key("texts.title"))}>
-          <h2>{t(key("texts.title"))}</h2>
-          {editableTexts(document).map((entry) => (
-            <label key={`${entry.blockId}-${entry.field}`} className="de-field">
-              <span>{t(key(`texts.${entry.type}.${entry.field}`))}</span>
-              <textarea rows={entry.type === "text" ? 4 : 2} value={entry.value} maxLength={entry.type === "button" ? 60 : 1000} onChange={(event) => { if (event.target.value.trim() !== "") dispatch({ type: "edit", op: setBlockConfig(entry.blockId, { [entry.field]: event.target.value }), key: `text:${entry.blockId}:${entry.field}`, at: now() }); }} />
-            </label>
-          ))}
-        </section>
-      ) : null}
       {gifts ? <p className="de-hint">{t(key("giftsNote"))}</p> : null}
     </div>
   );

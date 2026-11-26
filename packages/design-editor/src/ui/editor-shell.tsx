@@ -1,13 +1,12 @@
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type KeyboardEvent, type ReactNode, type RefObject } from "react";
-import type { design } from "@rsvp/celebration-theme";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode, type RefObject } from "react";
+import { design } from "@rsvp/celebration-theme";
 import { createAutosaver, type Autosaver, type DraftGateway, type SaveStatus } from "../save/autosave.js";
-import { setPaletteColour } from "../model/ops.js";
 import { canRedo, canUndo, documentOf, editorReducer, initialEditorState, type CanvasName, type EditorMode } from "../model/state.js";
-import { BasicPanel, type TemplateSource } from "./basic-panel.js";
+import { BasicPanel, type DrawingSource, type MediaSource, type TemplateSource } from "./basic-panel.js";
 import { CanvasEditor } from "./canvas-editor.js";
 import { ComponentPalette, ElementInspector } from "./canvas-panels.js";
 import { ContrastPanel } from "./contrast-panel.js";
-import { PublishPanel, type VersionsApi } from "./publish-panel.js";
+import { PublishPanel, type VersionsApi, type VersionsList } from "./publish-panel.js";
 import type { PublishOutcome, VersionSummary, VersionsGateway } from "../save/versions.js";
 import { EditorProvider, type FocusTarget, type Translate } from "./editor-context.js";
 import { CustomCodePanel } from "./custom-code-panel.js";
@@ -18,6 +17,8 @@ export interface EditableDesign {
   readonly id: string;
   readonly name: string;
   readonly draftVersion: number;
+  /** The latest published version, if any: it tells «nothing new to publish» from a new version even when the history did not load. */
+  readonly publishedVersion?: number | null;
   readonly document: design.DesignDocumentV2;
   /** Contrast warnings (P19) the server attached to this draft, if it did. */
   readonly warnings?: readonly design.DesignWarning[];
@@ -40,6 +41,10 @@ export interface EditorShellProps {
   readonly versions?: VersionsGateway;
   /** Templates the host can switch to (Basic level). */
   readonly templates?: TemplateSource;
+  /** Drawings of the invitation library the host can put on the cover (Basic level). Without it the editor says they are not available yet. */
+  readonly drawings?: DrawingSource;
+  /** The host's photos in the media store (Basic level). Without it the editor says photos are not available yet; it never simulates an upload. */
+  readonly media?: MediaSource;
   /** IANA zone of the celebration: the times of the history show in it (never the device's). */
   readonly timeZone?: string;
   readonly locale?: string;
@@ -51,6 +56,10 @@ const key = (name: string): string => `designEditor.${name}`;
 const UNAUTHORIZED = 401;
 const FORBIDDEN = 403;
 const TOO_LARGE = 413;
+/** The saver gave up for now: what was typed after the last save is only in this editor. */
+const UNSAVED: ReadonlySet<SaveStatus["kind"]> = new Set(["retrying", "conflict", "rejected"]);
+const CONFLICT = 409;
+const INVALID = 422;
 
 /** A translated label, or the raw id when the catalogue has none (a block type of a later release). */
 function labelOf(t: Translate, group: string, id: string | undefined): string {
@@ -65,6 +74,27 @@ const isEditableText = (target: EventTarget | null): boolean => {
   if (target.isContentEditable || target instanceof HTMLTextAreaElement) return true;
   return target instanceof HTMLInputElement && !["color", "checkbox", "radio", "range", "button"].includes(target.type);
 };
+
+/** The colour scheme the editor is shown in (the page's `data-theme`, else the system's), so the canvas can paint that palette. */
+function useScheme(): design.ColourScheme {
+  const read = (): design.ColourScheme => {
+    if (typeof window === "undefined") return "light";
+    const forced = window.document.documentElement.getAttribute("data-theme");
+    if (forced === "dark" || forced === "light") return forced;
+    return typeof window.matchMedia === "function" && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  };
+  const [scheme, setScheme] = useState<design.ColourScheme>(read);
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const update = (): void => setScheme(read());
+    const query = typeof window.matchMedia === "function" ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+    query?.addEventListener("change", update);
+    const observer = typeof MutationObserver === "undefined" ? null : new MutationObserver(update);
+    observer?.observe(window.document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => { query?.removeEventListener("change", update); observer?.disconnect(); };
+  }, []);
+  return scheme;
+}
 
 const STOPPED: ReadonlySet<SaveStatus["kind"]> = new Set(["conflict", "rejected"]);
 
@@ -111,11 +141,21 @@ function Segmented<T extends string>({ label, value, options, onChange }: {
 
 const pageTitle = (page: design.DesignPage, t: Translate): string => (page.kind === "cover" ? t(key("outline.cover")) : labelOf(t, "section", page.section ?? page.id));
 
-/** A wireframe of the page in the active canvas. The next editor levels replace it with the real renderer and handles. */
-function Wireframe({ document, canvas, t }: { readonly document: design.DesignDocumentV2; readonly canvas: CanvasName; readonly t: Translate }) {
+/** The chosen palette and fonts as CSS variables of the canvas, so a colour or font change shows on it (and the gifts button's contrast is visible). */
+function frameStyle(document: design.DesignDocumentV2, scheme: design.ColourScheme): CSSProperties {
+  const palette = document.tokens.palettes[scheme];
+  const stack = (role: "heading" | "body"): string => { const family = design.familyById(document.tokens.typography[role].family); return family ? `'${family.family}', ${family.fallback}` : "inherit"; };
+  return {
+    "--wf-canvas": palette.canvas, "--wf-surface": palette.surface, "--wf-text": palette.text, "--wf-muted": palette.muted, "--wf-line": palette.line,
+    "--wf-accent": palette.accent, "--wf-fill": palette.accentFill, "--wf-on": palette.onAccent, "--wf-heading": stack("heading"), "--wf-body": stack("body")
+  } as CSSProperties;
+}
+
+/** A wireframe of the page in the active canvas, painted with the document's own palette and fonts. The next editor levels replace it with the real renderer and handles. */
+function Wireframe({ document, canvas, scheme, t }: { readonly document: design.DesignDocumentV2; readonly canvas: CanvasName; readonly scheme: design.ColourScheme; readonly t: Translate }) {
   const blocks = new Map(document.blocks.map((block) => [block.id, block]));
   return (
-    <div className="de-frame" data-canvas={canvas} data-testid="design-frame">
+    <div className="de-frame" data-canvas={canvas} data-scheme={scheme} data-testid="design-frame" style={frameStyle(document, scheme)}>
       {document.pages.length === 0 ? <p className="de-empty">{t(key("stage.empty"))}</p> : null}
       {document.pages.map((page) => {
         const grid = page.canvases[canvas] ?? page.canvases.mobile;
@@ -132,7 +172,7 @@ function Wireframe({ document, canvas, t }: { readonly document: design.DesignDo
                     : { minHeight: element.h * grid.rowHeight };
                   const required = block?.required === true;
                   return (
-                    <div key={element.id} className="de-el" style={style} data-visible={element.visible} data-required={required} data-block={block?.type}>
+                    <div key={element.id} className="de-el" style={style} data-visible={element.visible} data-required={required} data-block={block?.type} data-style={required ? String(block?.config["style"] ?? "solid") : undefined}>
                       <span className="de-el-name">{labelOf(t, "block", block?.type)}</span>
                       {required ? <span className="de-tag"><LockIcon size={14} />{t(key("stage.required"))}</span> : null}
                       {!element.visible ? <span className="de-tag">{t(key("stage.hidden"))}</span> : null}
@@ -234,10 +274,11 @@ function Notice(props: NoticeProps): ReactNode {
   );
 }
 
-export function EditorShell({ design: source, gateway, t, onReload, signInHref, now = Date.now, debounceMs, versions: versionsGateway, templates, timeZone = "America/La_Paz", locale = "es-BO", children }: EditorShellProps) {
+export function EditorShell({ design: source, gateway, t, onReload, signInHref, now = Date.now, debounceMs, versions: versionsGateway, templates, drawings, media, timeZone = "America/La_Paz", locale = "es-BO", children }: EditorShellProps) {
   const [state, dispatch] = useReducer(editorReducer, source.document, initialEditorState);
   const [status, setStatus] = useState<SaveStatus>({ kind: "saved" });
-  const [warnings, setWarnings] = useState<readonly design.DesignWarning[]>(source.warnings ?? []);
+  /** The server's answer about the draft it holds (P19), or null while it has not said anything. */
+  const [serverWarnings, setServerWarnings] = useState<readonly design.DesignWarning[] | null>(source.warnings ?? null);
   const [confirming, setConfirming] = useState(false);
   const [reloading, setReloading] = useState(false);
   const [reloadFailed, setReloadFailed] = useState(false);
@@ -245,6 +286,7 @@ export function EditorShell({ design: source, gateway, t, onReload, signInHref, 
   const loadRef = useRef<HTMLButtonElement | null>(null);
   const confirmRef = useRef<HTMLButtonElement | null>(null);
   const narrow = useNarrow();
+  const scheme = useScheme();
   const document = documentOf(state);
 
   // The saver belongs to this design for as long as the editor is open: its version is the one the server last answered with,
@@ -255,67 +297,152 @@ export function EditorShell({ design: source, gateway, t, onReload, signInHref, 
     const live: DraftGateway = { saveDraft: (id, version, doc) => initial.current.gateway.saveDraft(id, version, doc) };
     const created = createAutosaver({
       designId: source.id, draftVersion: initial.current.draftVersion, gateway: live, onStatus: setStatus,
-      onSaved: (result) => setWarnings(result.warnings ?? []), ...(debounceMs === undefined ? {} : { debounceMs })
+      onSaved: (result) => setServerWarnings(result.warnings ?? null), ...(debounceMs === undefined ? {} : { debounceMs })
     });
     saver.current = created;
     return () => { void created.flush().finally(() => created.dispose()); saver.current = null; };
   }, [source.id, debounceMs]);
 
-  const [items, setItems] = useState<readonly VersionSummary[]>([]);
-  const [busy, setBusy] = useState(false);
+  const [list, setList] = useState<VersionsList>({ kind: "loading" });
+  const [busy, setBusy] = useState<VersionsApi["busy"]>(null);
   const [message, setMessage] = useState<VersionsApi["message"]>(null);
+  const [asked, setAsked] = useState<number | null>(null);
   const documentRef = useRef(document);
   documentRef.current = document;
+  const nextBefore = useRef<number | null>(null);
+  const listRun = useRef(0);
+  /** The newest published version this editor knows of: the record's, the history's and the ones published here. */
+  const published = useRef(0);
+  published.current = Math.max(published.current, source.publishedVersion ?? 0);
 
-  useEffect(() => {
-    if (!versionsGateway) return undefined;
-    let live = true;
-    versionsGateway.list(source.id).then((list) => { if (live) setItems(list); }, () => undefined);
-    return () => { live = false; };
+  const loadList = useCallback(() => {
+    if (!versionsGateway) return;
+    const run = ++listRun.current;
+    setList({ kind: "loading" });
+    versionsGateway.list(source.id).then(
+      (page) => {
+        if (run !== listRun.current) return;
+        nextBefore.current = page.nextBefore;
+        published.current = Math.max(published.current, ...page.items.map((item) => item.version));
+        setList({ kind: "ready", items: page.items, hasMore: page.nextBefore !== null, more: "idle" });
+      },
+      () => { if (run === listRun.current) setList({ kind: "error" }); }
+    );
   }, [versionsGateway, source.id]);
+  useEffect(() => { loadList(); return () => { listRun.current += 1; }; }, [loadList]);
+
+  const loadMore = useCallback(() => {
+    const before = nextBefore.current;
+    if (!versionsGateway || before === null) return;
+    const run = listRun.current;
+    setList((current) => (current.kind === "ready" ? { ...current, more: "loading" } : current));
+    versionsGateway.list(source.id, before).then(
+      (page) => {
+        if (run !== listRun.current) return;
+        nextBefore.current = page.nextBefore;
+        setList((current) => {
+          if (current.kind !== "ready") return current;
+          const known = new Set(current.items.map((item) => item.version));
+          return { kind: "ready", items: [...current.items, ...page.items.filter((item) => !known.has(item.version))], hasMore: page.nextBefore !== null, more: "idle" };
+        });
+      },
+      () => { if (run === listRun.current) setList((current) => (current.kind === "ready" ? { ...current, more: "error" } : current)); }
+    );
+  }, [versionsGateway, source.id]);
+
+  /** What the host says when a call about the draft is refused: each answer has its own words and, for a 409, the way out the editor already has. */
+  const refused = useCallback((error: unknown): { readonly kind: "conflict" | "signIn" | "forbidden" | "rejected" | "failed"; readonly code?: string; readonly current?: number } => {
+    const failure = error as { status?: number; problem?: { code?: string; currentVersion?: number } };
+    const code = failure.problem?.code;
+    if (failure.status === CONFLICT) return { kind: "conflict", ...(failure.problem?.currentVersion === undefined ? {} : { current: failure.problem.currentVersion }) };
+    if (failure.status === UNAUTHORIZED) return { kind: "signIn" };
+    if (failure.status === FORBIDDEN) return { kind: "forbidden" };
+    if (failure.status === INVALID) return { kind: "rejected", ...(code ? { code } : {}) };
+    return { kind: "failed" };
+  }, []);
 
   const publish = useCallback(async (label: string): Promise<PublishOutcome> => {
     if (!versionsGateway || !saver.current) return { kind: "failed" };
-    setBusy(true); setMessage(null);
+    const gate = saver.current;
+    setBusy({ kind: "publishing" }); setMessage(null);
     const finish = (outcome: PublishOutcome): PublishOutcome => {
       const text = outcome.kind === "published" ? t(key("publish.done"), { version: outcome.version })
         : outcome.kind === "unchanged" ? t(key("publish.unchanged"))
         : outcome.kind === "blocked" ? t(key("publish.blocked"))
+        : outcome.kind === "conflict" ? t(key("publish.conflict"))
+        : outcome.kind === "signIn" ? t(key("publish.signIn"))
+        : outcome.kind === "forbidden" ? t(key("publish.forbidden"))
         : outcome.kind === "rejected" ? t(key("publish.notPublishable"), { code: outcome.code })
         : t(key("publish.failed"));
-      setMessage({ kind: outcome.kind === "published" || outcome.kind === "unchanged" ? "ok" : "error", text });
-      setBusy(false);
+      setMessage({ kind: outcome.kind === "published" || outcome.kind === "unchanged" ? "ok" : "error", text, ...(outcome.kind === "conflict" ? { reload: true } : {}) });
+      setBusy(null);
       return outcome;
     };
-    await saver.current.flush();
-    if (saver.current.status.kind !== "saved") return finish({ kind: "blocked" });
+    await gate.flush();
+    if (gate.status.kind !== "saved") return finish({ kind: "blocked" });
+    // What is published is what was saved; whatever is typed while the request runs is a later edit and is saved afterwards.
+    const sent = documentRef.current;
+    const release = gate.hold();
     try {
-      const result = await versionsGateway.publish(source.id, saver.current.draftVersion, label.trim());
-      saver.current.resume(result.draftVersion, documentRef.current);
-      const known = items.some((item) => item.version === result.version.version);
-      setItems((list) => (list.some((item) => item.version === result.version.version) ? list : [...list, result.version]));
-      return finish({ kind: known ? "unchanged" : "published", version: result.version.version });
+      const result = await versionsGateway.publish(source.id, gate.draftVersion, label.trim());
+      gate.resume(result.draftVersion, sent);
+      const unchanged = result.version.version <= published.current;
+      published.current = Math.max(published.current, result.version.version);
+      setList((current) => (current.kind === "ready" && !current.items.some((item) => item.version === result.version.version) ? { ...current, items: [...current.items, result.version] } : current));
+      release();
+      if (documentRef.current !== sent) gate.notify(documentRef.current);
+      return finish({ kind: unchanged ? "unchanged" : "published", version: result.version.version });
     } catch (error) {
-      const failure = error as { status?: number; problem?: { code?: string } };
-      if (failure.status === 422 || failure.status === 409) return finish({ kind: "rejected", code: failure.problem?.code ?? String(failure.status) });
-      return finish({ kind: "failed" });
+      const why = refused(error);
+      if (why.kind === "conflict") gate.markConflict(why.current);
+      release();
+      return finish(why.kind === "rejected" ? { kind: "rejected", code: why.code ?? String(INVALID) } : { kind: why.kind });
     }
-  }, [versionsGateway, source.id, items, t]);
+  }, [versionsGateway, source.id, t, refused]);
 
-  const restore = useCallback(async (version: number): Promise<void> => {
-    if (!versionsGateway || !saver.current) return;
-    setBusy(true); setMessage(null);
-    await saver.current.flush();
+  const confirmRestore = useCallback(async (): Promise<void> => {
+    if (!versionsGateway || !saver.current || asked === null) return;
+    const gate = saver.current;
+    const version = asked;
+    const warned = UNSAVED.has(status.kind);
+    setBusy({ kind: "restoring", version }); setMessage(null);
+    await gate.flush();
+    // The edits could not be saved and she was not told: say so now and let her decide again.
+    if (gate.status.kind !== "saved" && !warned) { setBusy(null); return; }
+    const release = gate.hold();
     try {
-      const result = await versionsGateway.restore(source.id, version, saver.current.draftVersion);
-      dispatch({ type: "load", document: result.document });
-      saver.current.resume(result.draftVersion, result.document);
+      const result = await versionsGateway.restore(source.id, version, gate.draftVersion);
+      // One undoable step: the previous document stays in the history, so «Deshacer» really brings it back.
+      dispatch({ type: "replace", document: result.document, at: now() });
+      gate.resume(result.draftVersion, result.document);
+      setServerWarnings(result.warnings ?? null);
+      setAsked(null);
+      release();
       setMessage({ kind: "ok", text: t(key("publish.restored"), { version }) });
-    } catch { setMessage({ kind: "error", text: t(key("publish.restoreFailed")) }); }
-    setBusy(false);
-  }, [versionsGateway, source.id, t]);
+    } catch (error) {
+      const why = refused(error);
+      if (why.kind === "conflict") gate.markConflict(why.current);
+      release();
+      setAsked(null);
+      setMessage({
+        kind: "error",
+        text: why.kind === "conflict" ? t(key("publish.restoreConflict")) : why.kind === "signIn" ? t(key("publish.restoreSignIn")) : why.kind === "forbidden" ? t(key("publish.restoreForbidden"))
+          : why.kind === "rejected" ? t(key("publish.restoreInvalid")) : t(key("publish.restoreFailed")),
+        ...(why.kind === "conflict" ? { reload: true } : {})
+      });
+    }
+    setBusy(null);
+  }, [versionsGateway, source.id, t, refused, asked, status.kind, now]);
 
-  const versionsApi = useMemo<VersionsApi>(() => ({ items, busy, message, publish: async (label) => { await publish(label); }, restore }), [items, busy, message, publish, restore]);
+  const versionsApi = useMemo<VersionsApi>(() => ({
+    list, busy, message, canReload: onReload !== undefined,
+    confirming: asked === null ? null : { version: asked, unsaved: UNSAVED.has(status.kind) },
+    publish: async (label) => { await publish(label); },
+    askRestore: (version) => { setMessage(null); setAsked(version); },
+    cancelRestore: () => setAsked(null),
+    confirmRestore, retryList: loadList, loadMore,
+    reload: () => setConfirming(true)
+  }), [list, busy, message, onReload, asked, status.kind, publish, confirmRestore, loadList, loadMore]);
 
   const revision = useRef(0);
   useEffect(() => {
@@ -347,7 +474,7 @@ export function EditorShell({ design: source, gateway, t, onReload, signInHref, 
       dispatch({ type: "load", document: next.document });
       revision.current = 0;
       saver.current?.resume(next.draftVersion, next.document);
-      setWarnings(next.warnings ?? []);
+      setServerWarnings(next.warnings ?? null);
       setConfirming(false);
     } catch { setReloadFailed(true); } finally { setReloading(false); }
   }, [onReload]);
@@ -439,37 +566,15 @@ export function EditorShell({ design: source, gateway, t, onReload, signInHref, 
             ]} />
             <p className="de-caption">{t(key(`stage.caption.${state.canvas}`))}</p>
           </div>
-          {state.mode === "advanced" ? <CanvasEditor /> : <Wireframe document={document} canvas={state.canvas} t={t} />}
+          {state.mode === "advanced" ? <CanvasEditor /> : <Wireframe document={document} canvas={state.canvas} scheme={scheme} t={t} />}
         </main>
         <aside className="de-panel" aria-label={t(key("basic.title"))}>
           <div className="de-sticky">
-          <BasicPanel {...(templates ? { templates } : {})} />
+          <BasicPanel {...(templates ? { templates } : {})} {...(drawings ? { drawings } : {})} {...(media ? { media } : {})} />
           <p className="de-hint">{t(key("basic.hint"))}</p>
-          <ContrastPanel />
+          <ContrastPanel server={serverWarnings} fresh={status.kind === "saved"} />
           {versionsGateway ? <PublishPanel versions={versionsApi} timeZone={timeZone} locale={locale} /> : null}
           {state.mode === "advanced" ? <><ElementInspector /><ComponentPalette /><CustomCodePanel /></> : null}
-          <div aria-live="polite">
-            {warnings.length > 0 ? (
-              <section className="de-warnings" aria-labelledby="de-warnings-title" data-testid="design-warnings">
-                <h3 id="de-warnings-title"><AlertIcon size={16} />{t(key("warnings.title"))}</h3>
-                <ul>
-                  {warnings.map((warning) => {
-                    const names = { scheme: t(key(`scheme.${warning.scheme}`)), foreground: t(key(`role.${warning.foreground}`)), background: t(key(`role.${warning.background}`)) };
-                    return (
-                      <li key={`${warning.scheme}:${warning.foreground}:${warning.background}`}>
-                        <span>{t(key("warnings.item"), { ...names, ratio: warning.ratio.toFixed(2), minimum: warning.minimum })}</span>
-                        <button type="button" className="de-btn de-btn--small" aria-label={t(key("warnings.useLabel"), { foreground: names.foreground, scheme: names.scheme, colour: warning.suggestion })}
-                          onClick={() => dispatch({ type: "edit", op: setPaletteColour(warning.scheme, warning.foreground, warning.suggestion), at: now() })}>
-                          <span className="de-swatch" style={{ background: warning.suggestion }} aria-hidden="true" />{t(key("warnings.use"), { colour: warning.suggestion })}
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-                <p className="de-hint">{t(key("warnings.hint"))}</p>
-              </section>
-            ) : null}
-          </div>
           {children}
           </div>
         </aside>

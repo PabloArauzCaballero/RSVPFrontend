@@ -238,7 +238,7 @@ describe("EditorShell", () => {
     expect(list.textContent).toContain("En el tema oscuro, acento sobre fondo tiene contraste 3.21:1 y el mínimo es 4.5:1.");
     expect(list.textContent).toContain("Es un aviso: puedes publicar igual");
     warnings = undefined;
-    fireEvent.click(within(list).getByRole("button", { name: "Cambiar acento del tema oscuro a #abcdef" }));
+    fireEvent.click(within(list).getByRole("button", { name: "Usar #abcdef en acento del tema oscuro, sobre fondo" }));
     expect((within(screen.getByRole("group", { name: "Modo oscuro" })).getByLabelText("Acento") as HTMLInputElement).value).toBe("#abcdef");
     await act(async () => { await vi.advanceTimersByTimeAsync(100); });
     expect(screen.queryByTestId("design-warnings")).toBeNull();
