@@ -1,0 +1,3596 @@
+{
+ "base|marfil|320|light|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "20 · 03 · 2027",
+  "lines": {
+   "min": 27,
+   "max": 48
+  }
+ },
+ "base|marfil|320|light|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "20 · 03 · 2027",
+  "lines": {
+   "min": 27,
+   "max": 48
+  }
+ },
+ "base|marfil|360|light|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "20 · 03 · 2027",
+  "lines": {
+   "min": 36,
+   "max": 51
+  }
+ },
+ "base|marfil|360|light|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "20 · 03 · 2027",
+  "lines": {
+   "min": 36,
+   "max": 51
+  }
+ },
+ "base|marfil|390|light|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "20 · 03 · 2027",
+  "lines": {
+   "min": 38,
+   "max": 57
+  }
+ },
+ "base|marfil|390|light|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "20 · 03 · 2027",
+  "lines": {
+   "min": 38,
+   "max": 57
+  }
+ },
+ "base|marfil|768|light|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "20 · 03 · 2027",
+  "lines": {
+   "min": 57,
+   "max": 67
+  }
+ },
+ "base|marfil|768|light|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "20 · 03 · 2027",
+  "lines": {
+   "min": 57,
+   "max": 67
+  }
+ },
+ "base|marfil|900|light|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "Parroquia San Miguel, Calacoto · La Paz",
+  "lines": {
+   "min": 27,
+   "max": 67
+  }
+ },
+ "base|marfil|900|light|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "Parroquia San Miguel, Calacoto · La Paz",
+  "lines": {
+   "min": 27,
+   "max": 67
+  }
+ },
+ "base|marfil|960|light|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "Parroquia San Miguel, Calacoto · La Paz",
+  "lines": {
+   "min": 35,
+   "max": 67
+  }
+ },
+ "base|marfil|960|light|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "Parroquia San Miguel, Calacoto · La Paz",
+  "lines": {
+   "min": 35,
+   "max": 67
+  }
+ },
+ "base|marfil|1024|light|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "Parroquia San Miguel, Calacoto · La Paz",
+  "lines": {
+   "min": 38,
+   "max": 67
+  }
+ },
+ "base|marfil|1024|light|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "Parroquia San Miguel, Calacoto · La Paz",
+  "lines": {
+   "min": 38,
+   "max": 67
+  }
+ },
+ "base|marfil|1280|light|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "Parroquia San Miguel, Calacoto · La Paz",
+  "lines": {
+   "min": 50,
+   "max": 67
+  }
+ },
+ "base|marfil|1280|light|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "Parroquia San Miguel, Calacoto · La Paz",
+  "lines": {
+   "min": 50,
+   "max": 67
+  }
+ },
+ "estado|marfil|regalos_vacio|320|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "20 · 03 · 2027",
+  "lines": {
+   "min": 27,
+   "max": 48
+  }
+ },
+ "estado|marfil|regalos_vacio|360|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "20 · 03 · 2027",
+  "lines": {
+   "min": 36,
+   "max": 51
+  }
+ },
+ "estado|marfil|regalos_vacio|768|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "20 · 03 · 2027",
+  "lines": {
+   "min": 57,
+   "max": 67
+  }
+ },
+ "estado|marfil|regalos_vacio|1024|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "Parroquia San Miguel, Calacoto · La Paz",
+  "lines": {
+   "min": 38,
+   "max": 67
+  }
+ },
+ "estado|marfil|regalos_vacio|1280|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "Parroquia San Miguel, Calacoto · La Paz",
+  "lines": {
+   "min": 50,
+   "max": 67
+  }
+ },
+ "estado|marfil|regalos_cerrado|320|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "20 · 03 · 2027",
+  "lines": {
+   "min": 27,
+   "max": 48
+  }
+ },
+ "estado|marfil|regalos_cerrado|360|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "20 · 03 · 2027",
+  "lines": {
+   "min": 36,
+   "max": 51
+  }
+ },
+ "estado|marfil|regalos_cerrado|768|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "20 · 03 · 2027",
+  "lines": {
+   "min": 57,
+   "max": 67
+  }
+ },
+ "estado|marfil|regalos_cerrado|1024|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "Parroquia San Miguel, Calacoto · La Paz",
+  "lines": {
+   "min": 38,
+   "max": 67
+  }
+ },
+ "estado|marfil|regalos_cerrado|1280|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "Parroquia San Miguel, Calacoto · La Paz",
+  "lines": {
+   "min": 50,
+   "max": 67
+  }
+ },
+ "estado|marfil|sin_enlace|320|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "20 · 03 · 2027",
+  "lines": {
+   "min": 27,
+   "max": 48
+  }
+ },
+ "estado|marfil|sin_enlace|360|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "20 · 03 · 2027",
+  "lines": {
+   "min": 36,
+   "max": 51
+  }
+ },
+ "estado|marfil|sin_enlace|768|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "20 · 03 · 2027",
+  "lines": {
+   "min": 57,
+   "max": 67
+  }
+ },
+ "estado|marfil|sin_enlace|1024|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "Parroquia San Miguel, Calacoto · La Paz",
+  "lines": {
+   "min": 38,
+   "max": 67
+  }
+ },
+ "estado|marfil|sin_enlace|1280|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "Parroquia San Miguel, Calacoto · La Paz",
+  "lines": {
+   "min": 50,
+   "max": 67
+  }
+ },
+ "estado|marfil|plazo_vencido|320|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "20 · 03 · 2027",
+  "lines": {
+   "min": 27,
+   "max": 48
+  }
+ },
+ "estado|marfil|plazo_vencido|360|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "20 · 03 · 2027",
+  "lines": {
+   "min": 36,
+   "max": 51
+  }
+ },
+ "estado|marfil|plazo_vencido|768|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "20 · 03 · 2027",
+  "lines": {
+   "min": 57,
+   "max": 67
+  }
+ },
+ "estado|marfil|plazo_vencido|1024|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "Parroquia San Miguel, Calacoto · La Paz",
+  "lines": {
+   "min": 38,
+   "max": 67
+  }
+ },
+ "estado|marfil|plazo_vencido|1280|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "Parroquia San Miguel, Calacoto · La Paz",
+  "lines": {
+   "min": 50,
+   "max": 67
+  }
+ },
+ "estado|marfil|foto_error|320|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "20 · 03 · 2027",
+  "lines": {
+   "min": 17,
+   "max": 48
+  }
+ },
+ "estado|marfil|foto_error|360|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "20 · 03 · 2027",
+  "lines": {
+   "min": 17,
+   "max": 51
+  }
+ },
+ "estado|marfil|foto_error|768|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "20 · 03 · 2027",
+  "lines": {
+   "min": 57,
+   "max": 67
+  }
+ },
+ "estado|marfil|foto_error|1024|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "Parroquia San Miguel, Calacoto · La Paz",
+  "lines": {
+   "min": 17,
+   "max": 67
+  }
+ },
+ "estado|marfil|foto_error|1280|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "Parroquia San Miguel, Calacoto · La Paz",
+  "lines": {
+   "min": 50,
+   "max": 67
+  }
+ },
+ "estado|marfil|todos|320|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "20 · 03 · 2027",
+  "lines": {
+   "min": 17,
+   "max": 48
+  }
+ },
+ "estado|marfil|todos|360|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "20 · 03 · 2027",
+  "lines": {
+   "min": 17,
+   "max": 51
+  }
+ },
+ "estado|marfil|todos|768|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "20 · 03 · 2027",
+  "lines": {
+   "min": 57,
+   "max": 67
+  }
+ },
+ "estado|marfil|todos|1024|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "Parroquia San Miguel, Calacoto · La Paz",
+  "lines": {
+   "min": 17,
+   "max": 67
+  }
+ },
+ "estado|marfil|todos|1280|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "Parroquia San Miguel, Calacoto · La Paz",
+  "lines": {
+   "min": 50,
+   "max": 67
+  }
+ },
+ "estres|marfil|320|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "20 · 03 · 2027",
+  "lines": {
+   "min": 27,
+   "max": 48
+  }
+ },
+ "estres|marfil|360|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "20 · 03 · 2027",
+  "lines": {
+   "min": 36,
+   "max": 51
+  }
+ },
+ "estres|marfil|1280|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.11,
+  "worst": "Parroquia San Miguel, Calacoto · La Paz",
+  "lines": {
+   "min": 50,
+   "max": 67
+  }
+ },
+ "base|marfil|320|dark|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 27,
+   "max": 48
+  }
+ },
+ "base|marfil|320|dark|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 27,
+   "max": 48
+  }
+ },
+ "base|marfil|360|dark|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 36,
+   "max": 51
+  }
+ },
+ "base|marfil|360|dark|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 36,
+   "max": 51
+  }
+ },
+ "base|marfil|390|dark|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 38,
+   "max": 57
+  }
+ },
+ "base|marfil|390|dark|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 38,
+   "max": 57
+  }
+ },
+ "base|marfil|768|dark|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 57,
+   "max": 67
+  }
+ },
+ "base|marfil|768|dark|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 57,
+   "max": 67
+  }
+ },
+ "base|marfil|900|dark|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 27,
+   "max": 67
+  }
+ },
+ "base|marfil|900|dark|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 27,
+   "max": 67
+  }
+ },
+ "base|marfil|960|dark|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 35,
+   "max": 67
+  }
+ },
+ "base|marfil|960|dark|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 35,
+   "max": 67
+  }
+ },
+ "base|marfil|1024|dark|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 38,
+   "max": 67
+  }
+ },
+ "base|marfil|1024|dark|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 38,
+   "max": 67
+  }
+ },
+ "base|marfil|1280|dark|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 50,
+   "max": 67
+  }
+ },
+ "base|marfil|1280|dark|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 50,
+   "max": 67
+  }
+ },
+ "estado|marfil|regalos_vacio|320|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 27,
+   "max": 48
+  }
+ },
+ "estado|marfil|regalos_vacio|360|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 36,
+   "max": 51
+  }
+ },
+ "estado|marfil|regalos_vacio|768|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 57,
+   "max": 67
+  }
+ },
+ "estado|marfil|regalos_vacio|1024|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 38,
+   "max": 67
+  }
+ },
+ "estado|marfil|regalos_vacio|1280|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 50,
+   "max": 67
+  }
+ },
+ "estado|marfil|regalos_cerrado|320|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 27,
+   "max": 48
+  }
+ },
+ "estado|marfil|regalos_cerrado|360|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 36,
+   "max": 51
+  }
+ },
+ "estado|marfil|regalos_cerrado|768|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 57,
+   "max": 67
+  }
+ },
+ "estado|marfil|regalos_cerrado|1024|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 38,
+   "max": 67
+  }
+ },
+ "estado|marfil|regalos_cerrado|1280|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 50,
+   "max": 67
+  }
+ },
+ "estado|marfil|sin_enlace|320|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 27,
+   "max": 48
+  }
+ },
+ "estado|marfil|sin_enlace|360|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 36,
+   "max": 51
+  }
+ },
+ "estado|marfil|sin_enlace|768|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 57,
+   "max": 67
+  }
+ },
+ "estado|marfil|sin_enlace|1024|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 38,
+   "max": 67
+  }
+ },
+ "estado|marfil|sin_enlace|1280|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 50,
+   "max": 67
+  }
+ },
+ "estado|marfil|plazo_vencido|320|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 27,
+   "max": 48
+  }
+ },
+ "estado|marfil|plazo_vencido|360|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 36,
+   "max": 51
+  }
+ },
+ "estado|marfil|plazo_vencido|768|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 57,
+   "max": 67
+  }
+ },
+ "estado|marfil|plazo_vencido|1024|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 38,
+   "max": 67
+  }
+ },
+ "estado|marfil|plazo_vencido|1280|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 50,
+   "max": 67
+  }
+ },
+ "estado|marfil|foto_error|320|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 17,
+   "max": 48
+  }
+ },
+ "estado|marfil|foto_error|360|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 17,
+   "max": 51
+  }
+ },
+ "estado|marfil|foto_error|768|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 57,
+   "max": 67
+  }
+ },
+ "estado|marfil|foto_error|1024|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 17,
+   "max": 67
+  }
+ },
+ "estado|marfil|foto_error|1280|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 50,
+   "max": 67
+  }
+ },
+ "estado|marfil|todos|320|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 17,
+   "max": 48
+  }
+ },
+ "estado|marfil|todos|360|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 17,
+   "max": 51
+  }
+ },
+ "estado|marfil|todos|768|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 57,
+   "max": 67
+  }
+ },
+ "estado|marfil|todos|1024|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 17,
+   "max": 67
+  }
+ },
+ "estado|marfil|todos|1280|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 50,
+   "max": 67
+  }
+ },
+ "estres|marfil|320|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 27,
+   "max": 48
+  }
+ },
+ "estres|marfil|360|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 36,
+   "max": 51
+  }
+ },
+ "estres|marfil|1280|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.09,
+  "worst": "Saltar al contenido",
+  "lines": {
+   "min": 50,
+   "max": 67
+  }
+ },
+ "base|pinata|320|light|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 8,
+   "max": 46
+  }
+ },
+ "base|pinata|320|light|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 8,
+   "max": 46
+  }
+ },
+ "base|pinata|360|light|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 15,
+   "max": 51
+  }
+ },
+ "base|pinata|360|light|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 15,
+   "max": 51
+  }
+ },
+ "base|pinata|390|light|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 22,
+   "max": 51
+  }
+ },
+ "base|pinata|390|light|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 22,
+   "max": 51
+  }
+ },
+ "base|pinata|768|light|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 66,
+   "max": 78
+  }
+ },
+ "base|pinata|768|light|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 66,
+   "max": 78
+  }
+ },
+ "base|pinata|900|light|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 19,
+   "max": 68
+  }
+ },
+ "base|pinata|900|light|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 19,
+   "max": 68
+  }
+ },
+ "base|pinata|960|light|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 23,
+   "max": 73
+  }
+ },
+ "base|pinata|960|light|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 23,
+   "max": 73
+  }
+ },
+ "base|pinata|1024|light|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 20,
+   "max": 78
+  }
+ },
+ "base|pinata|1024|light|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 20,
+   "max": 78
+  }
+ },
+ "base|pinata|1280|light|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 37,
+   "max": 78
+  }
+ },
+ "base|pinata|1280|light|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 37,
+   "max": 78
+  }
+ },
+ "estado|pinata|regalos_vacio|320|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 8,
+   "max": 46
+  }
+ },
+ "estado|pinata|regalos_vacio|360|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 15,
+   "max": 51
+  }
+ },
+ "estado|pinata|regalos_vacio|768|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 66,
+   "max": 78
+  }
+ },
+ "estado|pinata|regalos_vacio|1024|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 28,
+   "max": 78
+  }
+ },
+ "estado|pinata|regalos_vacio|1280|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 42,
+   "max": 78
+  }
+ },
+ "estado|pinata|regalos_cerrado|320|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 8,
+   "max": 46
+  }
+ },
+ "estado|pinata|regalos_cerrado|360|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 15,
+   "max": 51
+  }
+ },
+ "estado|pinata|regalos_cerrado|768|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 66,
+   "max": 78
+  }
+ },
+ "estado|pinata|regalos_cerrado|1024|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 20,
+   "max": 78
+  }
+ },
+ "estado|pinata|regalos_cerrado|1280|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 37,
+   "max": 78
+  }
+ },
+ "estado|pinata|sin_enlace|320|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 8,
+   "max": 46
+  }
+ },
+ "estado|pinata|sin_enlace|360|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 15,
+   "max": 51
+  }
+ },
+ "estado|pinata|sin_enlace|768|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 66,
+   "max": 78
+  }
+ },
+ "estado|pinata|sin_enlace|1024|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 20,
+   "max": 78
+  }
+ },
+ "estado|pinata|sin_enlace|1280|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 34,
+   "max": 78
+  }
+ },
+ "estado|pinata|plazo_vencido|320|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 8,
+   "max": 46
+  }
+ },
+ "estado|pinata|plazo_vencido|360|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 15,
+   "max": 51
+  }
+ },
+ "estado|pinata|plazo_vencido|768|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 66,
+   "max": 78
+  }
+ },
+ "estado|pinata|plazo_vencido|1024|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 20,
+   "max": 78
+  }
+ },
+ "estado|pinata|plazo_vencido|1280|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 37,
+   "max": 78
+  }
+ },
+ "estado|pinata|foto_error|320|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 8,
+   "max": 46
+  }
+ },
+ "estado|pinata|foto_error|360|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 15,
+   "max": 51
+  }
+ },
+ "estado|pinata|foto_error|768|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 66,
+   "max": 78
+  }
+ },
+ "estado|pinata|foto_error|1024|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 17,
+   "max": 78
+  }
+ },
+ "estado|pinata|foto_error|1280|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 37,
+   "max": 78
+  }
+ },
+ "estado|pinata|todos|320|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 8,
+   "max": 46
+  }
+ },
+ "estado|pinata|todos|360|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 15,
+   "max": 51
+  }
+ },
+ "estado|pinata|todos|768|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 66,
+   "max": 78
+  }
+ },
+ "estado|pinata|todos|1024|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 17,
+   "max": 78
+  }
+ },
+ "estado|pinata|todos|1280|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 42,
+   "max": 78
+  }
+ },
+ "estres|pinata|320|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 8,
+   "max": 46
+  }
+ },
+ "estres|pinata|360|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 15,
+   "max": 51
+  }
+ },
+ "estres|pinata|1280|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 5.31,
+  "worst": "·6",
+  "lines": {
+   "min": 37,
+   "max": 78
+  }
+ },
+ "base|pinata|320|dark|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.44,
+  "worst": "·6",
+  "lines": {
+   "min": 8,
+   "max": 46
+  }
+ },
+ "base|pinata|320|dark|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.76,
+  "worst": "Foto de ejemplo",
+  "lines": {
+   "min": 8,
+   "max": 46
+  }
+ },
+ "base|pinata|360|dark|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.44,
+  "worst": "·6",
+  "lines": {
+   "min": 15,
+   "max": 51
+  }
+ },
+ "base|pinata|360|dark|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.76,
+  "worst": "Foto de ejemplo",
+  "lines": {
+   "min": 15,
+   "max": 51
+  }
+ },
+ "base|pinata|390|dark|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.44,
+  "worst": "·6",
+  "lines": {
+   "min": 22,
+   "max": 51
+  }
+ },
+ "base|pinata|390|dark|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.76,
+  "worst": "Foto de ejemplo",
+  "lines": {
+   "min": 22,
+   "max": 51
+  }
+ },
+ "base|pinata|768|dark|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.44,
+  "worst": "·6",
+  "lines": {
+   "min": 66,
+   "max": 78
+  }
+ },
+ "base|pinata|768|dark|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.76,
+  "worst": "Foto de ejemplo",
+  "lines": {
+   "min": 66,
+   "max": 78
+  }
+ },
+ "base|pinata|900|dark|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.44,
+  "worst": "·6",
+  "lines": {
+   "min": 19,
+   "max": 68
+  }
+ },
+ "base|pinata|900|dark|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.76,
+  "worst": "Foto de ejemplo",
+  "lines": {
+   "min": 19,
+   "max": 68
+  }
+ },
+ "base|pinata|960|dark|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.44,
+  "worst": "·6",
+  "lines": {
+   "min": 23,
+   "max": 73
+  }
+ },
+ "base|pinata|960|dark|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.76,
+  "worst": "Foto de ejemplo",
+  "lines": {
+   "min": 23,
+   "max": 73
+  }
+ },
+ "base|pinata|1024|dark|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.44,
+  "worst": "·6",
+  "lines": {
+   "min": 20,
+   "max": 78
+  }
+ },
+ "base|pinata|1024|dark|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.76,
+  "worst": "Foto de ejemplo",
+  "lines": {
+   "min": 20,
+   "max": 78
+  }
+ },
+ "base|pinata|1280|dark|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.44,
+  "worst": "·6",
+  "lines": {
+   "min": 37,
+   "max": 78
+  }
+ },
+ "base|pinata|1280|dark|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.76,
+  "worst": "Foto de ejemplo",
+  "lines": {
+   "min": 37,
+   "max": 78
+  }
+ },
+ "estado|pinata|regalos_vacio|320|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.44,
+  "worst": "·6",
+  "lines": {
+   "min": 8,
+   "max": 46
+  }
+ },
+ "estado|pinata|regalos_vacio|360|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.44,
+  "worst": "·6",
+  "lines": {
+   "min": 15,
+   "max": 51
+  }
+ },
+ "estado|pinata|regalos_vacio|768|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.44,
+  "worst": "·6",
+  "lines": {
+   "min": 66,
+   "max": 78
+  }
+ },
+ "estado|pinata|regalos_vacio|1024|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.44,
+  "worst": "·6",
+  "lines": {
+   "min": 28,
+   "max": 78
+  }
+ },
+ "estado|pinata|regalos_vacio|1280|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.44,
+  "worst": "·6",
+  "lines": {
+   "min": 42,
+   "max": 78
+  }
+ },
+ "estado|pinata|regalos_cerrado|320|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.44,
+  "worst": "·6",
+  "lines": {
+   "min": 8,
+   "max": 46
+  }
+ },
+ "estado|pinata|regalos_cerrado|360|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.44,
+  "worst": "·6",
+  "lines": {
+   "min": 15,
+   "max": 51
+  }
+ },
+ "estado|pinata|regalos_cerrado|768|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.44,
+  "worst": "·6",
+  "lines": {
+   "min": 66,
+   "max": 78
+  }
+ },
+ "estado|pinata|regalos_cerrado|1024|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.44,
+  "worst": "·6",
+  "lines": {
+   "min": 20,
+   "max": 78
+  }
+ },
+ "estado|pinata|regalos_cerrado|1280|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.44,
+  "worst": "·6",
+  "lines": {
+   "min": 37,
+   "max": 78
+  }
+ },
+ "estado|pinata|sin_enlace|320|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.44,
+  "worst": "·6",
+  "lines": {
+   "min": 8,
+   "max": 46
+  }
+ },
+ "estado|pinata|sin_enlace|360|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.44,
+  "worst": "·6",
+  "lines": {
+   "min": 15,
+   "max": 51
+  }
+ },
+ "estado|pinata|sin_enlace|768|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.44,
+  "worst": "·6",
+  "lines": {
+   "min": 66,
+   "max": 78
+  }
+ },
+ "estado|pinata|sin_enlace|1024|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.44,
+  "worst": "·6",
+  "lines": {
+   "min": 20,
+   "max": 78
+  }
+ },
+ "estado|pinata|sin_enlace|1280|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.44,
+  "worst": "·6",
+  "lines": {
+   "min": 34,
+   "max": 78
+  }
+ },
+ "estado|pinata|plazo_vencido|320|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.44,
+  "worst": "·6",
+  "lines": {
+   "min": 8,
+   "max": 46
+  }
+ },
+ "estado|pinata|plazo_vencido|360|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.44,
+  "worst": "·6",
+  "lines": {
+   "min": 15,
+   "max": 51
+  }
+ },
+ "estado|pinata|plazo_vencido|768|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.44,
+  "worst": "·6",
+  "lines": {
+   "min": 66,
+   "max": 78
+  }
+ },
+ "estado|pinata|plazo_vencido|1024|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.44,
+  "worst": "·6",
+  "lines": {
+   "min": 20,
+   "max": 78
+  }
+ },
+ "estado|pinata|plazo_vencido|1280|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.44,
+  "worst": "·6",
+  "lines": {
+   "min": 37,
+   "max": 78
+  }
+ },
+ "estado|pinata|foto_error|320|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.66,
+  "worst": "Reintentar",
+  "lines": {
+   "min": 8,
+   "max": 46
+  }
+ },
+ "estado|pinata|foto_error|360|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.66,
+  "worst": "Reintentar",
+  "lines": {
+   "min": 15,
+   "max": 51
+  }
+ },
+ "estado|pinata|foto_error|768|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.66,
+  "worst": "Reintentar",
+  "lines": {
+   "min": 66,
+   "max": 78
+  }
+ },
+ "estado|pinata|foto_error|1024|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.66,
+  "worst": "Reintentar",
+  "lines": {
+   "min": 17,
+   "max": 78
+  }
+ },
+ "estado|pinata|foto_error|1280|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.66,
+  "worst": "Reintentar",
+  "lines": {
+   "min": 37,
+   "max": 78
+  }
+ },
+ "estado|pinata|todos|320|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.66,
+  "worst": "Reintentar",
+  "lines": {
+   "min": 8,
+   "max": 46
+  }
+ },
+ "estado|pinata|todos|360|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.66,
+  "worst": "Reintentar",
+  "lines": {
+   "min": 15,
+   "max": 51
+  }
+ },
+ "estado|pinata|todos|768|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.66,
+  "worst": "Reintentar",
+  "lines": {
+   "min": 66,
+   "max": 78
+  }
+ },
+ "estado|pinata|todos|1024|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.66,
+  "worst": "Reintentar",
+  "lines": {
+   "min": 17,
+   "max": 78
+  }
+ },
+ "estado|pinata|todos|1280|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.66,
+  "worst": "Reintentar",
+  "lines": {
+   "min": 42,
+   "max": 78
+  }
+ },
+ "estres|pinata|320|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.76,
+  "worst": "Foto de ejemplo",
+  "lines": {
+   "min": 8,
+   "max": 46
+  }
+ },
+ "estres|pinata|360|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.76,
+  "worst": "Foto de ejemplo",
+  "lines": {
+   "min": 15,
+   "max": 51
+  }
+ },
+ "estres|pinata|1280|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.76,
+  "worst": "Foto de ejemplo",
+  "lines": {
+   "min": 37,
+   "max": 78
+  }
+ },
+ "base|gala|320|light|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 11,
+   "max": 46
+  }
+ },
+ "base|gala|320|light|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 11,
+   "max": 46
+  }
+ },
+ "base|gala|360|light|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 17,
+   "max": 53
+  }
+ },
+ "base|gala|360|light|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 17,
+   "max": 53
+  }
+ },
+ "base|gala|390|light|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 25,
+   "max": 59
+  }
+ },
+ "base|gala|390|light|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 25,
+   "max": 59
+  }
+ },
+ "base|gala|768|light|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 56,
+   "max": 72
+  }
+ },
+ "base|gala|768|light|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 56,
+   "max": 72
+  }
+ },
+ "base|gala|900|light|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 34,
+   "max": 72
+  }
+ },
+ "base|gala|900|light|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 34,
+   "max": 72
+  }
+ },
+ "base|gala|960|light|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 40,
+   "max": 72
+  }
+ },
+ "base|gala|960|light|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 40,
+   "max": 72
+  }
+ },
+ "base|gala|1024|light|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 49,
+   "max": 72
+  }
+ },
+ "base|gala|1024|light|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 49,
+   "max": 72
+  }
+ },
+ "base|gala|1280|light|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 49,
+   "max": 72
+  }
+ },
+ "base|gala|1280|light|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 49,
+   "max": 72
+  }
+ },
+ "estado|gala|regalos_vacio|320|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 11,
+   "max": 46
+  }
+ },
+ "estado|gala|regalos_vacio|360|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 17,
+   "max": 53
+  }
+ },
+ "estado|gala|regalos_vacio|768|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 56,
+   "max": 72
+  }
+ },
+ "estado|gala|regalos_vacio|1024|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 49,
+   "max": 72
+  }
+ },
+ "estado|gala|regalos_vacio|1280|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 49,
+   "max": 72
+  }
+ },
+ "estado|gala|regalos_cerrado|320|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 11,
+   "max": 46
+  }
+ },
+ "estado|gala|regalos_cerrado|360|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 17,
+   "max": 53
+  }
+ },
+ "estado|gala|regalos_cerrado|768|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 56,
+   "max": 72
+  }
+ },
+ "estado|gala|regalos_cerrado|1024|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 49,
+   "max": 72
+  }
+ },
+ "estado|gala|regalos_cerrado|1280|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 49,
+   "max": 72
+  }
+ },
+ "estado|gala|sin_enlace|320|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 11,
+   "max": 46
+  }
+ },
+ "estado|gala|sin_enlace|360|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 17,
+   "max": 53
+  }
+ },
+ "estado|gala|sin_enlace|768|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 56,
+   "max": 72
+  }
+ },
+ "estado|gala|sin_enlace|1024|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 49,
+   "max": 72
+  }
+ },
+ "estado|gala|sin_enlace|1280|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 49,
+   "max": 72
+  }
+ },
+ "estado|gala|plazo_vencido|320|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 11,
+   "max": 46
+  }
+ },
+ "estado|gala|plazo_vencido|360|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 17,
+   "max": 53
+  }
+ },
+ "estado|gala|plazo_vencido|768|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 56,
+   "max": 72
+  }
+ },
+ "estado|gala|plazo_vencido|1024|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 49,
+   "max": 72
+  }
+ },
+ "estado|gala|plazo_vencido|1280|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 49,
+   "max": 72
+  }
+ },
+ "estado|gala|foto_error|320|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 11,
+   "max": 46
+  }
+ },
+ "estado|gala|foto_error|360|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 17,
+   "max": 53
+  }
+ },
+ "estado|gala|foto_error|768|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 56,
+   "max": 72
+  }
+ },
+ "estado|gala|foto_error|1024|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 49,
+   "max": 72
+  }
+ },
+ "estado|gala|foto_error|1280|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 49,
+   "max": 72
+  }
+ },
+ "estado|gala|todos|320|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 11,
+   "max": 46
+  }
+ },
+ "estado|gala|todos|360|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 17,
+   "max": 53
+  }
+ },
+ "estado|gala|todos|768|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 56,
+   "max": 72
+  }
+ },
+ "estado|gala|todos|1024|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 49,
+   "max": 72
+  }
+ },
+ "estado|gala|todos|1280|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 49,
+   "max": 72
+  }
+ },
+ "estres|gala|320|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 11,
+   "max": 46
+  }
+ },
+ "estres|gala|360|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 17,
+   "max": 53
+  }
+ },
+ "estres|gala|1280|light": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 6.96,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 49,
+   "max": 72
+  }
+ },
+ "base|gala|320|dark|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.74,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 11,
+   "max": 46
+  }
+ },
+ "base|gala|320|dark|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.99,
+  "worst": "Foto de ejemplo",
+  "lines": {
+   "min": 11,
+   "max": 46
+  }
+ },
+ "base|gala|360|dark|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.74,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 17,
+   "max": 53
+  }
+ },
+ "base|gala|360|dark|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.99,
+  "worst": "Foto de ejemplo",
+  "lines": {
+   "min": 17,
+   "max": 53
+  }
+ },
+ "base|gala|390|dark|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.74,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 25,
+   "max": 59
+  }
+ },
+ "base|gala|390|dark|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.99,
+  "worst": "Foto de ejemplo",
+  "lines": {
+   "min": 25,
+   "max": 59
+  }
+ },
+ "base|gala|768|dark|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.74,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 56,
+   "max": 72
+  }
+ },
+ "base|gala|768|dark|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.99,
+  "worst": "Foto de ejemplo",
+  "lines": {
+   "min": 56,
+   "max": 72
+  }
+ },
+ "base|gala|900|dark|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.74,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 34,
+   "max": 72
+  }
+ },
+ "base|gala|900|dark|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.99,
+  "worst": "Foto de ejemplo",
+  "lines": {
+   "min": 34,
+   "max": 72
+  }
+ },
+ "base|gala|960|dark|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.74,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 40,
+   "max": 72
+  }
+ },
+ "base|gala|960|dark|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.99,
+  "worst": "Foto de ejemplo",
+  "lines": {
+   "min": 40,
+   "max": 72
+  }
+ },
+ "base|gala|1024|dark|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.74,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 49,
+   "max": 72
+  }
+ },
+ "base|gala|1024|dark|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.99,
+  "worst": "Foto de ejemplo",
+  "lines": {
+   "min": 49,
+   "max": 72
+  }
+ },
+ "base|gala|1280|dark|sin": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.74,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 49,
+   "max": 72
+  }
+ },
+ "base|gala|1280|dark|foto": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.99,
+  "worst": "Foto de ejemplo",
+  "lines": {
+   "min": 49,
+   "max": 72
+  }
+ },
+ "estado|gala|regalos_vacio|320|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.74,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 11,
+   "max": 46
+  }
+ },
+ "estado|gala|regalos_vacio|360|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.74,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 17,
+   "max": 53
+  }
+ },
+ "estado|gala|regalos_vacio|768|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.74,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 56,
+   "max": 72
+  }
+ },
+ "estado|gala|regalos_vacio|1024|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.74,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 49,
+   "max": 72
+  }
+ },
+ "estado|gala|regalos_vacio|1280|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.74,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 49,
+   "max": 72
+  }
+ },
+ "estado|gala|regalos_cerrado|320|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.74,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 11,
+   "max": 46
+  }
+ },
+ "estado|gala|regalos_cerrado|360|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.74,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 17,
+   "max": 53
+  }
+ },
+ "estado|gala|regalos_cerrado|768|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.74,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 56,
+   "max": 72
+  }
+ },
+ "estado|gala|regalos_cerrado|1024|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.74,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 49,
+   "max": 72
+  }
+ },
+ "estado|gala|regalos_cerrado|1280|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.74,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 49,
+   "max": 72
+  }
+ },
+ "estado|gala|sin_enlace|320|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.74,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 11,
+   "max": 46
+  }
+ },
+ "estado|gala|sin_enlace|360|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.74,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 17,
+   "max": 53
+  }
+ },
+ "estado|gala|sin_enlace|768|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.74,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 56,
+   "max": 72
+  }
+ },
+ "estado|gala|sin_enlace|1024|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.74,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 49,
+   "max": 72
+  }
+ },
+ "estado|gala|sin_enlace|1280|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.74,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 49,
+   "max": 72
+  }
+ },
+ "estado|gala|plazo_vencido|320|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.74,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 11,
+   "max": 46
+  }
+ },
+ "estado|gala|plazo_vencido|360|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.74,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 17,
+   "max": 53
+  }
+ },
+ "estado|gala|plazo_vencido|768|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.74,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 56,
+   "max": 72
+  }
+ },
+ "estado|gala|plazo_vencido|1024|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.74,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 49,
+   "max": 72
+  }
+ },
+ "estado|gala|plazo_vencido|1280|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 8.74,
+  "worst": "Grupo Altiplano",
+  "lines": {
+   "min": 49,
+   "max": 72
+  }
+ },
+ "estado|gala|foto_error|320|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.99,
+  "worst": "No pudimos cargar la foto",
+  "lines": {
+   "min": 11,
+   "max": 46
+  }
+ },
+ "estado|gala|foto_error|360|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.99,
+  "worst": "No pudimos cargar la foto",
+  "lines": {
+   "min": 17,
+   "max": 53
+  }
+ },
+ "estado|gala|foto_error|768|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.99,
+  "worst": "No pudimos cargar la foto",
+  "lines": {
+   "min": 56,
+   "max": 72
+  }
+ },
+ "estado|gala|foto_error|1024|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.99,
+  "worst": "No pudimos cargar la foto",
+  "lines": {
+   "min": 49,
+   "max": 72
+  }
+ },
+ "estado|gala|foto_error|1280|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.99,
+  "worst": "No pudimos cargar la foto",
+  "lines": {
+   "min": 49,
+   "max": 72
+  }
+ },
+ "estado|gala|todos|320|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.99,
+  "worst": "No pudimos cargar la foto",
+  "lines": {
+   "min": 11,
+   "max": 46
+  }
+ },
+ "estado|gala|todos|360|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.99,
+  "worst": "No pudimos cargar la foto",
+  "lines": {
+   "min": 17,
+   "max": 53
+  }
+ },
+ "estado|gala|todos|768|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.99,
+  "worst": "No pudimos cargar la foto",
+  "lines": {
+   "min": 56,
+   "max": 72
+  }
+ },
+ "estado|gala|todos|1024|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.99,
+  "worst": "No pudimos cargar la foto",
+  "lines": {
+   "min": 49,
+   "max": 72
+  }
+ },
+ "estado|gala|todos|1280|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.99,
+  "worst": "No pudimos cargar la foto",
+  "lines": {
+   "min": 49,
+   "max": 72
+  }
+ },
+ "estres|gala|320|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.99,
+  "worst": "Foto de ejemplo",
+  "lines": {
+   "min": 11,
+   "max": 46
+  }
+ },
+ "estres|gala|360|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.99,
+  "worst": "Foto de ejemplo",
+  "lines": {
+   "min": 17,
+   "max": 53
+  }
+ },
+ "estres|gala|1280|dark": {
+  "overflow": 0,
+  "small": 0,
+  "tap": 0,
+  "offscreen": [],
+  "minContrast": 7.99,
+  "worst": "Foto de ejemplo",
+  "lines": {
+   "min": 49,
+   "max": 72
+  }
+ },
+ "anim|marfil|390": {
+  "gifts": [
+   true,
+   true,
+   true,
+   true,
+   true
+  ],
+  "hidden": 0,
+  "focus": "A outline=solid 3px"
+ },
+ "anim|marfil|1280": {
+  "gifts": [
+   true,
+   true,
+   true,
+   true,
+   true
+  ],
+  "hidden": 0,
+  "focus": "A outline=solid 3px"
+ },
+ "anim|pinata|390": {
+  "gifts": [
+   true,
+   true,
+   true,
+   true,
+   true
+  ],
+  "hidden": 0,
+  "focus": "A outline=solid 3px"
+ },
+ "anim|pinata|1280": {
+  "gifts": [
+   true,
+   true,
+   true,
+   true,
+   true
+  ],
+  "hidden": 0,
+  "focus": "A outline=solid 3px"
+ },
+ "anim|gala|390": {
+  "gifts": [
+   true,
+   true,
+   true,
+   true,
+   true
+  ],
+  "hidden": 0,
+  "focus": "A outline=solid 3px"
+ },
+ "anim|gala|1280": {
+  "gifts": [
+   true,
+   true,
+   true,
+   true,
+   true
+  ],
+  "hidden": 0,
+  "focus": "A outline=solid 3px"
+ }
+}

@@ -31,3 +31,12 @@ export function readGuestCredential(slug: string): string | null {
   }
   try { return store()?.getItem(credentialKey(slug)) ?? null; } catch { return null; }
 }
+
+/**
+ * Whether this tab holds the guest's credential, without reading its value into the page and without touching the address
+ * bar (unlike `readGuestCredential`, which consumes the `#t=` fragment). The public celebration only needs the yes/no.
+ */
+export function hasGuestCredential(slug: string): boolean {
+  if (typeof window === "undefined") return false;
+  try { return Boolean(store()?.getItem(credentialKey(slug))); } catch { return false; }
+}
