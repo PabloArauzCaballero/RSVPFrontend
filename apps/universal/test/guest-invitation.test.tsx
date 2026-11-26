@@ -1,9 +1,10 @@
-import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { PublicCelebrationView } from "@rsvp/celebration-theme";
 import type { Template } from "@rsvp/query-hooks";
 import { resetSecureStore } from "./stubs/expo-secure-store";
 import { InvitationScreen, invitationPath } from "../src/guest/invitation-screen";
+import { clearGiftCredential, saveGiftCredential } from "../src/guest/gift-credential";
 import { groupOfPath } from "../src/auth/routes";
 import { GUEST, HttpFailure, TEMPLATES, fakeClient, renderApp, type Handler } from "./support";
 
@@ -52,7 +53,7 @@ describe("Espejo web · A1 the public invitation in the app (/c/{slug})", () => 
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Ana y Luis");
     expect(screen.getByTestId("celebration-cover-photo")).toBeTruthy();
     const nav = within(screen.getByTestId("celebration-nav"));
-    expect(nav.getAllByRole("link").map((link) => link.textContent)).toEqual(["Inicio", "Nuestra historia", "Itinerario", "Lugares", "Galería", "Preguntas frecuentes", "Recomendaciones"]);
+    expect(nav.getAllByRole("link").map((link) => link.textContent)).toEqual(["Inicio", "Nuestra historia", "Itinerario", "Lugares", "Galería", "Preguntas frecuentes", "Recomendaciones", "Regalos"]);
     expect(screen.getByText("Los horarios están en la hora local del evento", { exact: false })).toBeTruthy();
     expect(calls.map((call) => `${call.method} ${call.path}`)).toEqual(expect.arrayContaining(["GET /celebrations/public/ana-y-luis", "GET /media/templates/t-classic", "GET /media/public/celebrations/c-1/assets"]));
     expect(calls.every((call) => !call.headers.has("authorization"))).toBe(true);
@@ -82,6 +83,33 @@ describe("Espejo web · A1 the public invitation in the app (/c/{slug})", () => 
     expect(partner.searchParams.get("surface")).toBe("APP");
     expect(partner.searchParams.get("celebrationId")).toBe("c-1");
     expect(screen.getByText("Taxi sin ficha")).toBeTruthy();
+  });
+
+  it("P22 · the gifts button is always there, even when the template and the event type omit gifts; it opens /c/{slug}/regalos with no token", async () => {
+    const { onNavigate } = show();
+    await screen.findByTestId("invitation-screen");
+    const button = screen.getByTestId("celebration-gifts-cta");
+    expect(button.textContent).toBe("Ver regalos");
+    fireEvent.click(button);
+    expect(onNavigate).toHaveBeenLastCalledWith("/c/ana-y-luis/regalos");
+    fireEvent.click(within(screen.getByTestId("celebration-nav")).getByText("Regalos"));
+    expect(onNavigate).toHaveBeenLastCalledWith("/c/ana-y-luis/regalos");
+    expect(onNavigate.mock.calls.every(([path]) => !String(path).includes("token"))).toBe(true);
+  });
+
+  it("PL-A11 · the reply leads to the help to find the personal link, or to «Confirmar asistencia» when the session holds it", async () => {
+    const first = show();
+    await screen.findByTestId("invitation-screen");
+    expect(screen.getByTestId("celebration-rsvp-cta").textContent).toBe("Busca tu enlace personal");
+    fireEvent.click(screen.getByTestId("celebration-rsvp-cta"));
+    expect(first.onNavigate).toHaveBeenLastCalledWith("/c/ana-y-luis/rsvp");
+    cleanup();
+    saveGiftCredential("ana-y-luis", "tok-1234567890abcdef");
+    try {
+      show();
+      await screen.findByTestId("invitation-screen");
+      expect(screen.getByTestId("celebration-rsvp-cta").textContent).toBe("Confirmar asistencia");
+    } finally { clearGiftCredential("ana-y-luis"); }
   });
 
   it("the celebration's languages: choosing English reads the invitation again with Accept-Language en-US", async () => {
