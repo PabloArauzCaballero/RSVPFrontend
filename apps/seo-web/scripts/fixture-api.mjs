@@ -41,15 +41,21 @@ const gallery = [1, 2, 3].map((n) => ({ id: `g${n}`, width: 1920, height: 1280, 
 
 // F4 b · the three prototyped templates as design documents v2, read from the very files the backend seeds. Each one is served as a
 // celebration with a cover photo (`fixture-v2-<name>`) and without it (`fixture-v2-<name>-sinfoto`), to prove both covers on the real site.
-const V2_IDS = { marfil: "73477f09-c9a6-544e-9477-948866a907c6", pinata: "c5c5c247-bfaf-52c2-b932-e0ce9f2cb8c7", gala: "e6a5911c-2e0b-5381-a2f8-9d9e0a9b24e8" };
+const V2_IDS = { marfil: "73477f09-c9a6-544e-9477-948866a907c6", pinata: "c5c5c247-bfaf-52c2-b932-e0ce9f2cb8c7", gala: "e6a5911c-2e0b-5381-a2f8-9d9e0a9b24e8",
+  // F4 c1 · the wedding group (the id is the v1 seed's: uuid5 of the key, P20).
+  "jardin-botanico": "1437aaef-2fdf-5aff-ba78-10139d8c8e24", "rosa-antiguo": "984f5f85-66e1-5226-9f58-af6ca5fd4963", editorial: "eee0b5bb-a4aa-5091-93b0-696da7b7bab5",
+  "editorial-granate": "637c1fe4-e88a-5e6c-802c-c4832d881519", "editorial-oliva": "7a69536f-1bb7-5cb5-b905-4b42e1626032", "bodas-de-oro": "2430166f-d9cd-52d8-b999-ef1c9ed7040c",
+  "bodas-de-plata": "a3d91e73-703b-5f8e-ae78-a9da05402bed", "pedida-de-mano": "2b64a4fb-e239-5855-9816-6f73a2f7d8d7" };
+const V2_CONTENT = { pinata: { title: "Sofi cumple 6", hosts: {}, eventDate: "2026-12-19T19:00:00.000Z" }, "bodas-de-oro": { title: "Rosa y Mario", hosts: { BRIDE: "Rosa", GROOM: "Mario" } },
+  "bodas-de-plata": { title: "Carla y Jorge", hosts: { BRIDE: "Carla", GROOM: "Jorge" } }, "pedida-de-mano": { title: "Lucía y Marco", hosts: { BRIDE: "Lucía", GROOM: "Marco" } } };
 const v2Template = (name) => {
   const file = JSON.parse(readFileSync(new URL(`../../../packages/celebration-theme/src/design/documents/${name}.json`, import.meta.url), "utf8"));
   return { id: V2_IDS[name], name: file.name, description: file.description, status: "PUBLISHED", layout: file.layout, eventTypeTags: file.eventTypeTags, theme: file.theme, sectionOrder: file.sectionOrder, version: 2 };
 };
 const v2Celebrations = Object.entries(V2_IDS).flatMap(([name, templateId], index) => [false, true].map((bare) => ({
   slug: `fixture-v2-${name}${bare ? "-sinfoto" : ""}`, templateId, bare,
-  view: { ...view, celebrationId: `00000000-0000-4000-8000-0000000001${index}${bare ? 1 : 0}`, slug: `fixture-v2-${name}${bare ? "-sinfoto" : ""}`, templateId,
-    content: name === "pinata" ? { ...view.content, title: "Sofi cumple 6", hosts: {}, eventDate: "2026-12-19T19:00:00.000Z" } : view.content }
+  view: { ...view, celebrationId: `00000000-0000-4000-8000-${String(100 + index * 2 + (bare ? 1 : 0)).padStart(12, "0")}`, slug: `fixture-v2-${name}${bare ? "-sinfoto" : ""}`, templateId,
+    content: V2_CONTENT[name] ? { ...view.content, ...V2_CONTENT[name] } : view.content }
 })));
 
 const providers = [

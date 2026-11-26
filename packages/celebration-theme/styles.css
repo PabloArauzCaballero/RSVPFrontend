@@ -181,6 +181,8 @@ body:has(.cdesign-dock) { padding-bottom: 5.5rem; }
   width: min(100%, var(--celebration-max-width)); margin: 0 auto; padding: var(--celebration-gap) var(--celebration-space); box-sizing: border-box; }
 .celebration-design .cdesign-canvas[data-mode="free"] { grid-auto-rows: var(--cd-row-m); }
 .celebration-design .cdesign-page[data-page-kind="cover"] .cdesign-canvas { padding-block: clamp(2rem, 7vw, 4rem); }
+/* The phone canvas does not stretch with a tablet: the drawings of the cover are sized by the width of their columns, so past 30rem (480 px) the canvas stays centred and the title keeps its place in the first screen. */
+@media (max-width: 56.1875rem) { .celebration-design .cdesign-page[data-page-kind="cover"] .cdesign-canvas { width: min(100%, 30rem); } }
 .celebration-design .cdesign-el { display: none; min-width: 0; box-sizing: border-box; position: relative; container-type: inline-size; align-self: start;
   grid-column: var(--mx) / span var(--mw); grid-row: var(--my) / span var(--mh); }
 .celebration-design .cdesign-canvas[data-mode="free"] .cdesign-el { align-self: stretch; }
@@ -275,3 +277,19 @@ html:has(.cdesign-dock) { scroll-padding-bottom: 6rem; }
 }
 /* Hover changes the colour too, not only the scale: the fill moves a step towards the text colour (never lowers the ink's contrast). */
 @media (hover: hover) { .celebration-cta:hover { background: color-mix(in srgb, var(--celebration-accent-fill) 86%, var(--celebration-text)); } }
+/* ---------------------------------------------------------------------------------------------------------------------------
+   Design document v2 (F4 c1 · bodas). Two things the documents of the wedding group need and the contract cannot say per element:
+   the editorial cover as a spread, and the numbered acts of the programme. Keyed to `.celebration-design`. */
+.celebration-design .cdesign-cover[data-variant="editorial"] .cdesign-cover-photo { width: 100%; max-height: none; aspect-ratio: 4 / 5; object-fit: cover; }
+/* On the phone the title comes first and the photo under it, so the names are in the first screen whatever the photo weighs. */
+@media (max-width: 56.1875rem) { .celebration-design .cdesign-cover[data-variant="editorial"] .cdesign-cover-photo { order: 1; max-height: 28rem; } }
+@media (min-width: 900px) {
+  .celebration-design .cdesign-cover[data-variant="editorial"][data-has-image="true"] { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); column-gap: clamp(1.5rem, 4vw, 3.5rem); align-items: center; }
+  .celebration-design .cdesign-cover[data-variant="editorial"][data-has-image="true"] .cdesign-cover-photo { grid-column: 1; grid-row: 1; }
+  .celebration-design .cdesign-cover[data-variant="editorial"][data-has-image="true"] .cdesign-cover-copy { grid-column: 2; grid-row: 1; }
+}
+/* The schedule is a sequence: with `display: "list"` each item is an act, in Roman numerals in the accent, and the timeline dot gives way to it. */
+.celebration-design .cdesign-section-body[data-display="list"] .celebration-schedule { counter-reset: act; }
+.celebration-design .cdesign-section-body[data-display="list"] .celebration-schedule li { counter-increment: act; }
+.celebration-design .cdesign-section-body[data-display="list"] .celebration-schedule li::before { content: counter(act, upper-roman); left: 6.75rem; top: .95rem; width: 2.5rem; height: auto; border-radius: 0; background: none; box-shadow: none; text-align: center; font-family: var(--celebration-heading-font); font-weight: 600; font-size: 1rem; line-height: 1.6; color: var(--celebration-accent); }
+.celebration-design .cdesign-section-body[data-display="list"] .celebration-schedule li::after { display: none; }
