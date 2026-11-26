@@ -7,7 +7,7 @@ import { CanvasEditor } from "./canvas-editor.js";
 import { ComponentPalette, ElementInspector } from "./canvas-panels.js";
 import { ContrastPanel } from "./contrast-panel.js";
 import { PublishPanel, type VersionsApi, type VersionsList } from "./publish-panel.js";
-import type { PublishOutcome, VersionSummary, VersionsGateway } from "../save/versions.js";
+import type { PublishOutcome, VersionsGateway } from "../save/versions.js";
 import { EditorProvider, type FocusTarget, type Translate } from "./editor-context.js";
 import { CustomCodePanel } from "./custom-code-panel.js";
 import { useNarrow } from "./use-narrow.js";
