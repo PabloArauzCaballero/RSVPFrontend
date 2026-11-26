@@ -290,6 +290,19 @@ describe("editor reducer", () => {
     expect(editorReducer(initialEditorState(fixture()), { type: "undo" }).revision).toBe(0);
   });
 
+  it("replace puts a document in as one undoable step (a restored version), unlike load which starts over", () => {
+    let state = initialEditorState(fixture());
+    state = editorReducer(state, { type: "edit", op: setPaletteColour("light", "accent", "#112233"), at });
+    const restored = fixture("minimalista");
+    const replaced = editorReducer(state, { type: "replace", document: restored, at: 5000 });
+    expect(documentOf(replaced)).toBe(restored);
+    expect(replaced.revision).toBe(state.revision + 1);
+    expect(canUndo(replaced)).toBe(true);
+    expect(documentOf(editorReducer(replaced, { type: "undo" })).tokens.palettes.light.accent).toBe("#112233");
+    expect(editorReducer(state, { type: "replace", document: documentOf(state), at })).toBe(state);
+    expect(canUndo(editorReducer(state, { type: "load", document: restored }))).toBe(false);
+  });
+
   it("a no-op edit changes nothing", () => {
     const state = initialEditorState(fixture());
     expect(editorReducer(state, { type: "edit", op: (doc) => doc, at })).toBe(state);

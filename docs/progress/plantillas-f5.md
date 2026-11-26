@@ -47,3 +47,21 @@ Rama `feat/plantillas-f5b-guarda-altura-util`, sobre `feat/plantillas-f5-editor`
 - i18n es-BO/en-US del nuevo código; `TOO_SMALL` explica que se descuentan relleno y borde.
 - Pruebas vitest: 44 px útiles exactos pasan y 36 px (relleno superior, inferior o borde) fallan; caja rotada; 33 px; línea que no cabe; segunda página. Nivel `TESTED`. Paridad con `validate_design` del BE (`rules.py`) comparada sobre 4000 documentos generados: 0 diferencias en estas reglas sin rotación; con rotación, `guards.ts` mide la caja envolvente igual que el BE (prueba vitest dedicada). Las pruebas de borde usan valores literales en rejilla de 8 px y se comprobaron con mutaciones locales de `guards.ts` (`>`→`>=`, línea 1,25→1,2, ignorar `padding.bottom`/`padding.top`, caja sin rotar): cada una hace fallar al menos una prueba.
 - **Aviso de apilado:** las ramas #122-#125 parten de a42a687 (anterior a las rondas 2-3 de #121 y a esta guarda) y sus controles de relleno (#124) y del inspector (#125) hoy no pasan por estas guardas.
+
+
+## PR e · contraste en vivo, publicar y versiones (2026-11-25)
+
+- `ContrastPanel`: `design.contrastWarnings` en vivo (ambas paletas); avisa y ofrece el color más cercano que pasa; **nunca bloquea** (P19).
+- `PublishPanel` + `VersionsGateway`: publicar con nombre (vacía la caja, vacía antes el autoguardado y publica con la versión de borrador ya guardada), historial con hora en la zona de la celebración, restaurar (copia al borrador, **no publica**; reanuda el autoguardado desde la versión nueva). Publicar con un guardado en conflicto/rechazado se detiene con mensaje.
+- Pantalla `/diseno` conectada a `designApi.publish/versions/restore`.
+- Nivel `TESTED` (arnés en memoria y cliente simulado); sin backend real.
+
+### Ronda 1 de la revisión del PR #123 (2026-11-25)
+
+- **B1** la prueba de la pantalla usa `getByTestId("save-status")` (hay tres regiones `status`); sin debilitar la aserción.
+- **M1** restaurar siempre pregunta («Sí, restaurar la versión N») y dice qué se reemplaza; si hay cambios que no llegaron al servidor (reintentando, conflicto o rechazado) lo dice con todas las letras, y si el guardado falla al pulsar sin haberlo avisado, vuelve a preguntar. Restaurar es **un paso deshacible** (`replace` conserva el historial): «Puedes deshacerlo» ahora es verdad.
+- **M2** una sola lista de avisos de contraste: la del servidor cuando respondió sobre este mismo documento y, hasta entonces, la vista previa local con la misma regla (`design.contrastWarnings`, espejo de `colour.py`). Se retiró la sección duplicada; el botón dice «Usar #… en … del tema …, sobre …» (nombre único y que contiene el texto visible).
+- **M3** publicar retiene el autoguardado (`hold`): lo escrito mientras publica no se marca guardado, no compite con la publicación y se guarda después desde la versión que respondió el servidor.
+- **M4** historial con estados cargando, error (con «Reintentar»), vacío y «Ver más versiones» (`nextBefore`); «Restaurando…» propio; 409/401/403/422 de publicar y de restaurar con mensajes propios; el 409 detiene el guardado como un conflicto normal y ofrece «Cargar la versión del servidor».
+- **Menores** m1 paginación, m2 «sin cambios» desde la versión publicada que ya conoce el editor (no de la lista), m3 `{{minimum}}` en en-US, m4 mayúscula inicial, m5 nombre accesible por versión, m6 pruebas; estilos: `ul` ya no hereda la caja ámbar y `.de-swatch` no se redefine.
+- Nivel `TESTED` (vitest, arnés Playwright con Chrome); sin backend real. Las capturas Linux nuevas están en `evidence/plantillas-f5/e-versiones-*` y `e-restaurar-confirmar-1280.png`; no se tocó ninguna línea base de macOS.

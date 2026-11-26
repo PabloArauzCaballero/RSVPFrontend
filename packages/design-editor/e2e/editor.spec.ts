@@ -67,8 +67,8 @@ test.describe("editor shell (PR a, ronda 2)", () => {
     const input = accent(page);
     const original = await input.inputValue();
     await input.fill("#1f6f5c");
-    await expect(page.getByRole("status")).toContainText("Cambios sin guardar");
-    await expect(page.getByRole("status")).toContainText("Borrador guardado", { timeout: 5000 });
+    await expect(page.getByTestId("save-status")).toContainText("Cambios sin guardar");
+    await expect(page.getByTestId("save-status")).toContainText("Borrador guardado", { timeout: 5000 });
     expect(await page.evaluate(() => window.__saves)).toEqual([{ id: "design-1", version: 4, accent: "#1F6F5C" }]);
     await page.getByRole("button", { name: "Deshacer" }).click();
     expect(await input.inputValue()).toBe(original);
@@ -79,7 +79,7 @@ test.describe("editor shell (PR a, ronda 2)", () => {
     expect(await input.inputValue()).toBe(original);
     await page.getByRole("button", { name: "Rehacer" }).click();
     expect(await input.inputValue()).toBe("#1f6f5c");
-    await expect(page.getByRole("status")).toContainText("Borrador guardado", { timeout: 5000 });
+    await expect(page.getByTestId("save-status")).toContainText("Borrador guardado", { timeout: 5000 });
   });
 
   test("el panel Colores no recorta el anillo de foco del selector de color (m-7)", async ({ page }) => {
@@ -123,7 +123,7 @@ test.describe("editor shell (PR a, ronda 2)", () => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto("/?slow=1");
     await accent(page).fill("#1f6f5c");
-    await expect(page.getByRole("status")).toContainText("Guardando el borrador", { timeout: 3000 });
+    await expect(page.getByTestId("save-status")).toContainText("Guardando el borrador", { timeout: 3000 });
     await page.screenshot({ path: shot("estado-guardando-1280") });
   });
 
@@ -145,7 +145,7 @@ test.describe("editor shell (PR a, ronda 2)", () => {
         await page.goto(`/?fail=409&theme=${tema === "oscuro" ? "dark" : "light"}`);
         await accent(page).fill("#1f6f5c");
         await expect(page.getByRole("alert")).toContainText("Alguien guardó otra versión mientras editabas", { timeout: 5000 });
-        await expect(page.getByRole("status")).toContainText("El guardado se detuvo");
+        await expect(page.getByTestId("save-status")).toContainText("El guardado se detuvo");
         await page.getByRole("button", { name: "Cargar la versión nueva" }).click();
         await expect(page.getByRole("button", { name: "Sí, descartar y cargar" })).toBeFocused();
         await page.screenshot({ path: shot(`estado-conflicto-${tema}-${width}`) });
@@ -154,7 +154,7 @@ test.describe("editor shell (PR a, ronda 2)", () => {
         await expect(page.getByRole("alert")).toHaveCount(0);
         expect(await accent(page).inputValue()).toBe("#1f6f5c");
         await accent(page).fill("#654321");
-        await expect(page.getByRole("status")).toContainText("Borrador guardado", { timeout: 5000 });
+        await expect(page.getByTestId("save-status")).toContainText("Borrador guardado", { timeout: 5000 });
         const saves = await page.evaluate(() => window.__saves);
         expect(saves.at(-1)?.version).toBe(9);
         await context.close();
@@ -198,7 +198,7 @@ test.describe("editor shell (PR a, ronda 2)", () => {
   test("sin conexión reintenta con cuenta atrás", async ({ page }) => {
     await page.goto("/?fail=offline");
     await accent(page).fill("#1f6f5c");
-    await expect(page.getByRole("status")).toContainText("Reintentamos en 2 s", { timeout: 5000 });
+    await expect(page.getByTestId("save-status")).toContainText("Reintentamos en 2 s", { timeout: 5000 });
     await expect(page.getByRole("alert")).toHaveCount(0);
   });
 
@@ -209,7 +209,7 @@ test.describe("editor shell (PR a, ronda 2)", () => {
     await expect(page.getByTestId("design-warnings")).toContainText("En el tema oscuro, acento sobre fondo tiene contraste 3.21:1", { timeout: 5000 });
     await page.screenshot({ path: shot("estado-avisos-contraste-1280") });
     expect(await serious(page)).toEqual([]);
-    await page.getByRole("button", { name: /Cambiar acento del tema oscuro a #C9A27A/i }).click();
+    await page.getByRole("button", { name: /Usar #C9A27A en acento del tema oscuro/i }).click();
     await expect(page.getByLabel("Color de acento (oscuro)")).toHaveValue("#c9a27a");
   });
 

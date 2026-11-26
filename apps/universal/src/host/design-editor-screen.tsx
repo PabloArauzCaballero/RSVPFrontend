@@ -6,12 +6,12 @@ import { designApi, useCelebration, useCelebrationDesign, useCreateDesign, type 
 import { spacing } from "@rsvp/design-tokens";
 import { loginHref } from "../auth/routes";
 import { LoadingContent } from "../platform/loading-content";
-import { useApiClient, useT } from "../platform/providers";
+import { useApiClient, useLocale, useT } from "../platform/providers";
 import { ActionButton, EmptyState, ErrorNotice, Notice } from "./ui";
 import type { ScreenProps } from "./gate";
 import { HOST_ROUTES, withCelebration } from "./routes";
 
-const toEditable = (record: DesignRecord): EditableDesign => ({ id: record.id, name: record.name, draftVersion: record.draftVersion, document: record.document, ...(record.warnings ? { warnings: record.warnings } : {}) });
+const toEditable = (record: DesignRecord): EditableDesign => ({ id: record.id, name: record.name, draftVersion: record.draftVersion, publishedVersion: record.publishedVersion, document: record.document, ...(record.warnings ? { warnings: record.warnings } : {}) });
 
 /**
  * The invitation editor (plantillas F5), web only: the invitation is web-first and the app shows it in a web view (P10), so
@@ -20,6 +20,7 @@ const toEditable = (record: DesignRecord): EditableDesign => ({ id: record.id, n
  */
 export function DesignEditorScreen({ celebrationId }: ScreenProps): ReactNode {
   const t = useT();
+  const locale = useLocale();
   const client = useApiClient();
   const celebration = useCelebration(client, celebrationId ?? "");
   const found = useCelebrationDesign(client, celebrationId);
@@ -30,6 +31,17 @@ export function DesignEditorScreen({ celebrationId }: ScreenProps): ReactNode {
       return { draftVersion: saved.draftVersion, ...(saved.warnings ? { warnings: saved.warnings } : {}) };
     }
   }), [client]);
+  const versions = useMemo(() => {
+    const api = designApi(client);
+    return {
+      list: async (id: string, before?: number) => {
+        const page = await api.versions(id, before === undefined ? {} : { before });
+        return { items: page.items, nextBefore: page.nextBefore ?? null };
+      },
+      publish: async (id: string, draftVersion: number, label: string) => { const done = await api.publish(id, draftVersion, label); return { draftVersion: done.design.draftVersion, version: done.version }; },
+      restore: async (id: string, version: number, draftVersion: number) => { const done = await api.restore(id, version, draftVersion); return { draftVersion: done.draftVersion, document: done.document, ...(done.warnings ? { warnings: done.warnings } : {}) }; }
+    };
+  }, [client]);
   // The only way the editor receives a newer draft than the one it opened: the host asked for it after a conflict.
   const { refetch } = found;
   const reload = useCallback(async (): Promise<EditableDesign | null> => {
@@ -59,5 +71,5 @@ export function DesignEditorScreen({ celebrationId }: ScreenProps): ReactNode {
   }
   const record = found.data;
   // Keyed by the design alone: a refetch of the record (another tab saved) must not remount the editor and drop the open history.
-  return <EditorShell key={record.id} design={toEditable(record)} gateway={gateway} t={t} onReload={reload} signInHref={signInHref} />;
+  return <EditorShell key={record.id} design={toEditable(record)} gateway={gateway} versions={versions} timeZone={celebration.data.timeZone} locale={locale} t={t} onReload={reload} signInHref={signInHref} />;
 }

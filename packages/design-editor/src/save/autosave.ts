@@ -69,6 +69,8 @@ export function createAutosaver(options: AutosaverOptions) {
   /** The document a 4xx refused: it is not sent again until it changes or the host retries. */
   let refused: Doc | null = null;
   let disposed = false;
+  /** Callers that asked for silence (a publish or a restore is on its way): nothing is sent while any is outstanding. */
+  let holds = 0;
   let status: SaveStatus = { kind: "saved" };
 
   const setStatus = (next: SaveStatus): void => { status = next; options.onStatus?.(next); };
@@ -76,7 +78,7 @@ export function createAutosaver(options: AutosaverOptions) {
   const schedule = (ms: number): void => { cancelTimer(); handle = timers.set(() => { handle = null; void run(); }, ms); };
 
   async function run(): Promise<void> {
-    if (disposed || halted || inFlight || latest === null || latest === saved || latest === refused) return;
+    if (disposed || halted || holds > 0 || inFlight || latest === null || latest === saved || latest === refused) return;
     const sending = latest;
     setStatus({ kind: "saving" });
     inFlight = (async () => {
@@ -128,7 +130,7 @@ export function createAutosaver(options: AutosaverOptions) {
       cancelTimer();
       for (;;) {
         if (inFlight) await inFlight;
-        if (disposed || halted || latest === null || latest === saved || latest === refused) return;
+        if (disposed || halted || holds > 0 || latest === null || latest === saved || latest === refused) return;
         await run();
         if (status.kind === "retrying") return;
       }
@@ -142,6 +144,25 @@ export function createAutosaver(options: AutosaverOptions) {
     /** After the host chose what to do with a conflict: continue from the server's version. */
     resume(draftVersion: number, document: Doc): void {
       version = draftVersion; halted = false; refused = null; attempt = 0; saved = document; latest = document; cancelTimer(); setStatus({ kind: "saved" });
+    },
+    /**
+     * Stop sending while the host talks to the server about the draft (publish, restore): a save with the old If-Match racing it
+     * would conflict with itself. Edits keep being noted and go out after the returned release, on the usual debounce.
+     */
+    hold(): () => void {
+      holds += 1; cancelTimer();
+      let released = false;
+      return () => {
+        if (released) return;
+        released = true; holds -= 1;
+        if (holds === 0 && !disposed && !halted && latest !== null && latest !== saved && latest !== refused) schedule(debounceMs);
+      };
+    },
+    /** The server answered a call of the host (publish, restore) with 409: the draft moved on, so stop exactly as a 409 from a save does. */
+    markConflict(currentVersion?: number): void {
+      if (disposed) return;
+      halted = true; cancelTimer();
+      setStatus(currentVersion === undefined ? { kind: "conflict" } : { kind: "conflict", currentVersion });
     },
     dispose(): void { disposed = true; cancelTimer(); }
   };

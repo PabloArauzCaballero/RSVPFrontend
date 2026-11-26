@@ -26,7 +26,7 @@ describe("EditorShell", () => {
     expect((screen.getByRole("button", { name: "Deshacer" }) as HTMLButtonElement).disabled).toBe(true);
     expect(screen.getByTestId("design-frame").getAttribute("data-canvas")).toBe("mobile");
     expect(document.querySelector('[data-required="true"]')?.getAttribute("data-block")).toBe("giftsCta");
-    expect(screen.getByRole("status").textContent).toContain("Borrador guardado.");
+    expect(screen.getByTestId("save-status").textContent).toContain("Borrador guardado.");
   });
 
   it("switches level and canvas by click and by arrow keys", () => {
@@ -43,12 +43,12 @@ describe("EditorShell", () => {
   it("an edit marks the draft dirty, saves once after the debounce with If-Match and shows saved", async () => {
     const gateway = mount();
     fireEvent.change(accentLight(), { target: { value: "#123456" } });
-    expect(screen.getByRole("status").textContent).toContain("Cambios sin guardar");
+    expect(screen.getByTestId("save-status").textContent).toContain("Cambios sin guardar");
     await act(async () => { await vi.advanceTimersByTimeAsync(100); });
     expect(gateway.saveDraft).toHaveBeenCalledTimes(1);
     const [id, version, document] = (gateway.saveDraft as ReturnType<typeof vi.fn>).mock.calls[0] as [string, number, ReturnType<typeof fixture>];
     expect([id, version, document.tokens.palettes.light.accent]).toEqual(["d1", 5, "#123456"]);
-    expect(screen.getByRole("status").textContent).toContain("Borrador guardado.");
+    expect(screen.getByTestId("save-status").textContent).toContain("Borrador guardado.");
   });
 
   it("undo and redo work from the buttons and from Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y", () => {
@@ -89,7 +89,7 @@ describe("EditorShell", () => {
     const saveDraft = vi.fn(async (_id: string, version: number): Promise<{ draftVersion: number }> => { if (version === 5) throw Object.assign(new Error("x"), { status: 409 }); return { draftVersion: version + 1 }; });
     mount({ saveDraft }, { onReload });
     await editAndWait();
-    expect(screen.getByRole("status").textContent).toContain("El guardado se detuvo");
+    expect(screen.getByTestId("save-status").textContent).toContain("El guardado se detuvo");
     const alert = screen.getByRole("alert");
     expect(alert.textContent).toContain("Alguien guardó otra versión mientras editabas");
     expect(alert.textContent).toContain("se descartan");
@@ -107,7 +107,7 @@ describe("EditorShell", () => {
     expect(onReload).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole("alert")).toBeNull();
     expect(accentLight().value).toBe(newer.document.tokens.palettes.light.accent.toLowerCase());
-    expect(screen.getByRole("status").textContent).toContain("Borrador guardado.");
+    expect(screen.getByTestId("save-status").textContent).toContain("Borrador guardado.");
     expect((screen.getByRole("button", { name: "Deshacer" }) as HTMLButtonElement).disabled).toBe(true);
     fireEvent.change(accentLight(), { target: { value: "#654321" } });
     await act(async () => { await vi.advanceTimersByTimeAsync(100); });
@@ -142,7 +142,7 @@ describe("EditorShell", () => {
     const saveDraft = vi.fn(async (_id: string, version: number): Promise<{ draftVersion: number }> => { if (refuse) throw Object.assign(new Error("x"), { status: 422, problem: { code: "DESIGN_TOO_LARGE" } }); return { draftVersion: version + 1 }; });
     mount({ saveDraft });
     await editAndWait();
-    expect(screen.getByRole("status").textContent).toContain("El guardado se detuvo");
+    expect(screen.getByTestId("save-status").textContent).toContain("El guardado se detuvo");
     expect(screen.getByRole("alert").textContent).toContain("demasiado grande");
     expect(screen.getByRole("alert").textContent).toContain("Código para soporte: DESIGN_TOO_LARGE");
     refuse = false;
@@ -150,7 +150,7 @@ describe("EditorShell", () => {
     await act(async () => { await vi.advanceTimersByTimeAsync(100); });
     expect(saveDraft).toHaveBeenLastCalledWith("d1", 5, expect.anything());
     expect(screen.queryByRole("alert")).toBeNull();
-    expect(screen.getByRole("status").textContent).toContain("Borrador guardado.");
+    expect(screen.getByTestId("save-status").textContent).toContain("Borrador guardado.");
   });
 
   it("an unknown refusal code gets a generic text and the retry button sends the draft again", async () => {
@@ -199,7 +199,7 @@ describe("EditorShell", () => {
   it("a network failure shows the retry countdown without an alert", async () => {
     mount({ saveDraft: async () => { throw new TypeError("offline"); } });
     await editAndWait();
-    expect(screen.getByRole("status").textContent).toContain("Reintentamos en 2 s");
+    expect(screen.getByTestId("save-status").textContent).toContain("Reintentamos en 2 s");
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
@@ -208,9 +208,9 @@ describe("EditorShell", () => {
     mount({ saveDraft: (_id, version) => new Promise((resolve) => { release = () => resolve({ draftVersion: version + 1 }); }) });
     fireEvent.change(accentLight(), { target: { value: "#123456" } });
     await act(async () => { await vi.advanceTimersByTimeAsync(100); });
-    expect(screen.getByRole("status").textContent).toContain("Guardando el borrador");
+    expect(screen.getByTestId("save-status").textContent).toContain("Guardando el borrador");
     await act(async () => { release?.(); await vi.advanceTimersByTimeAsync(0); });
-    expect(screen.getByRole("status").textContent).toContain("Borrador guardado.");
+    expect(screen.getByTestId("save-status").textContent).toContain("Borrador guardado.");
   });
 
   it("a refetch of the record (new props for the same design) does not reset the editor nor rewind the version (M1)", async () => {
@@ -238,7 +238,7 @@ describe("EditorShell", () => {
     expect(list.textContent).toContain("En el tema oscuro, acento sobre fondo tiene contraste 3.21:1 y el mínimo es 4.5:1.");
     expect(list.textContent).toContain("Es un aviso: puedes publicar igual");
     warnings = undefined;
-    fireEvent.click(within(list).getByRole("button", { name: "Cambiar acento del tema oscuro a #abcdef" }));
+    fireEvent.click(within(list).getByRole("button", { name: "Usar #abcdef en acento del tema oscuro, sobre fondo" }));
     expect((screen.getByLabelText("Color de acento (oscuro)") as HTMLInputElement).value).toBe("#abcdef");
     await act(async () => { await vi.advanceTimersByTimeAsync(100); });
     expect(screen.queryByTestId("design-warnings")).toBeNull();

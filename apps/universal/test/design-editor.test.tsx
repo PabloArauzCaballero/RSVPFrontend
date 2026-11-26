@@ -14,7 +14,7 @@ const record = { id: "d-1", kind: "CELEBRATION", celebrationId: "c-1", name: "Di
 
 describe("plantillas F5 · pantalla del editor (web)", () => {
   it("abre el diseño de la celebración y guarda el borrador con If-Match y la versión que editó", async () => {
-    const handlers = { ...baseHandlers(), "GET /media/celebrations/c-1/design": () => record, "PUT /media/designs/d-1/draft": () => ({ ...record, draftVersion: 5 }) };
+    const handlers = { ...baseHandlers(), "GET /media/celebrations/c-1/design": () => record, "PUT /media/designs/d-1/draft": () => ({ ...record, draftVersion: 5 }), "GET /media/designs/d-1/versions": () => ({ items: [{ version: 1, label: "Inicial", createdBy: "u-host", createdAt: "2026-11-20T15:30:00Z" }] }) };
     const { client, calls } = fakeClient(handlers);
     renderApp(<DesignEditorScreen celebrationId="c-1" onNavigate={navigate} />, client);
     expect(await screen.findByRole("heading", { level: 1, name: "Diseño de la invitación" })).toBeTruthy();
@@ -26,7 +26,46 @@ describe("plantillas F5 · pantalla del editor (web)", () => {
     expect(save?.path).toBe("/media/designs/d-1/draft");
     expect(save?.headers.get("if-match")).toBe('"4"');
     expect((save?.body as { document: { tokens: { palettes: { light: { accent: string } } } } }).document.tokens.palettes.light.accent).toBe("#123456");
-    await waitFor(() => expect(screen.getByRole("status").textContent).toContain("Borrador guardado."));
+    await waitFor(() => expect(screen.getByTestId("save-status").textContent).toContain("Borrador guardado."));
+  });
+
+  it("publica con la versión de borrador guardada, muestra el historial en la zona de la celebración y restaura sin publicar", async () => {
+    const handlers = {
+      ...baseHandlers(), "GET /media/celebrations/c-1/design": () => record,
+      "GET /media/designs/d-1/versions": () => ({ items: [{ version: 1, label: "Inicial", createdBy: "u-host", createdAt: "2026-11-20T15:30:00Z" }] }),
+      "POST /media/designs/d-1/publish": () => ({ design: record, version: { version: 2, label: "Final", createdBy: "u-host", createdAt: "2026-11-24T12:00:00Z" } }),
+      "POST /media/designs/d-1/versions/1/restore": () => ({ ...record, draftVersion: 5 })
+    };
+    const { client, calls } = fakeClient(handlers);
+    renderApp(<DesignEditorScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    expect(await screen.findByText("Versión 1")).toBeTruthy();
+    expect(screen.getByText(/11:30/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Publicar" }));
+    expect(await screen.findByText("Publicada la versión 2.")).toBeTruthy();
+    expect(calls.find((call) => call.method === "POST" && call.path.endsWith("/publish"))?.headers.get("if-match")).toBe('"4"');
+    fireEvent.click(screen.getByRole("button", { name: "Restaurar versión 1" }));
+    expect(calls.filter((call) => call.path.endsWith("/restore"))).toHaveLength(0); // it asks first
+    fireEvent.click(screen.getByRole("button", { name: "Sí, restaurar la versión 1" }));
+    expect(await screen.findByText(/Versión 1 copiada al borrador/)).toBeTruthy();
+    expect(calls.find((call) => call.path.endsWith("/restore"))?.headers.get("if-match")).toBe('"4"');
+    expect(calls.filter((call) => call.path.endsWith("/publish"))).toHaveLength(1);
+  });
+
+  it("pagina el historial con nextBefore: «Ver más versiones» pide la página siguiente y la lista no pierde las ya cargadas", async () => {
+    const page = (version: number) => ({ version, label: `V${version}`, createdBy: "u-host", createdAt: "2026-11-20T15:30:00Z" });
+    const handlers = {
+      ...baseHandlers(), "GET /media/celebrations/c-1/design": () => record,
+      "GET /media/designs/d-1/versions": () => ({ items: [page(3)], nextBefore: 3 })
+    };
+    const { client, calls } = fakeClient(handlers);
+    renderApp(<DesignEditorScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    expect(await screen.findByText("Versión 3")).toBeTruthy();
+    handlers["GET /media/designs/d-1/versions"] = () => ({ items: [page(2), page(1)], nextBefore: null });
+    fireEvent.click(screen.getByRole("button", { name: "Ver más versiones" }));
+    expect(await screen.findByText("Versión 1")).toBeTruthy();
+    expect(screen.getByText("Versión 3")).toBeTruthy();
+    expect(calls.filter((call) => call.path === "/media/designs/d-1/versions").map((call) => call.url)).toEqual(["/media/designs/d-1/versions", "/media/designs/d-1/versions?before=3"]);
+    expect(screen.queryByRole("button", { name: "Ver más versiones" })).toBeNull();
   });
 
   it("volver a la pestaña no reinicia el editor: conserva el historial y la versión con la que guarda (M1)", async () => {
@@ -43,7 +82,7 @@ describe("plantillas F5 · pantalla del editor (web)", () => {
     fireEvent.change(screen.getByLabelText("Color de acento (claro)"), { target: { value: "#123456" } });
     await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
     vi.useRealTimers();
-    await waitFor(() => expect(screen.getByRole("status").textContent).toContain("Borrador guardado."));
+    await waitFor(() => expect(screen.getByTestId("save-status").textContent).toContain("Borrador guardado."));
     const reads = calls.filter((call) => call.method === "GET" && call.path === "/media/celebrations/c-1/design").length;
     await act(async () => { focusManager.setFocused(false); focusManager.setFocused(true); });
     expect(calls.filter((call) => call.method === "GET" && call.path === "/media/celebrations/c-1/design")).toHaveLength(reads);

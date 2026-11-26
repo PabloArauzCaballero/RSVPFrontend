@@ -12,11 +12,11 @@ test("Advanced code panel: hostile HTML and CSS are listed and never reach the d
   await page.getByRole("radio", { name: "Avanzado" }).click();
   await page.getByLabel("HTML").fill('<p onclick="alert(1)">Hola</p><script>alert(1)</script><a href="javascript:alert(1)">x</a><iframe src="https://evil.example"></iframe>');
   await page.getByLabel("CSS").fill("p { color: red; position: fixed; background: url(https://evil.example/t.gif) } body { display: none } @import url(https://evil.example/x.css);");
-  const status = page.getByRole("status").last();
+  const status = page.locator('.de-code [role="status"]');
   await expect(status).toContainText("Se ajustaron o quitaron");
   await expect(status).toContainText("Quitamos la etiqueta «script»");
   await expect(status).toContainText("Quitamos un selector no permitido");
-  await expect(page.getByRole("status").first()).toContainText("Borrador guardado", { timeout: 5000 });
+  await expect(page.getByTestId("save-status")).toContainText("Borrador guardado", { timeout: 5000 });
   const saved = await page.evaluate(() => window.__lastDocument);
   expect(saved.custom.html).toBe("<p>Hola</p><a>x</a>");
   expect(saved.custom.css).toContain(".rsvp-invitation p:not(.rsvp-protected)");
