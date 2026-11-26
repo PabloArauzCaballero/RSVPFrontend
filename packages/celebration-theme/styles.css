@@ -281,10 +281,8 @@ html:has(.cdesign-dock) { scroll-padding-bottom: 6rem; }
 
 /* F6 · media roles, embeds and the music player. Everything reads the theme variables; nothing animates except a short fade that reduced motion removes. */
 .celebration-media-image { display: block; max-width: 100%; height: auto; border-radius: var(--celebration-radius, 0); }
-.celebration-media-background { position: relative; isolation: isolate; overflow: hidden; }
 .celebration-media-background-image { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -2; border-radius: 0; }
 .celebration-media-veil { position: absolute; inset: 0; z-index: -1; background: color-mix(in srgb, var(--celebration-canvas) var(--celebration-scrim, 40%), transparent); }
-.celebration-media-content { position: relative; }
 .celebration-embed { position: relative; display: grid; gap: .5rem; width: 100%; margin-inline: auto; max-width: min(var(--celebration-max-width, 40rem), 40rem); align-content: center; justify-items: center; text-align: center; background: var(--celebration-surface); border: 1px solid color-mix(in srgb, var(--celebration-text) 18%, transparent); border-radius: var(--celebration-radius, 0); overflow: hidden; padding: 1rem; }
 /* The three cards (video, map, song) are one structure and one height: a 16:9 area with at least 11 rem, the action centred in it. */
 .celebration-embed { min-height: 10rem; }

@@ -3,7 +3,8 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { AudioPlayer, EmbedFacade, MediaBackground, MediaImage, embedFromConfig, FRAME_HOSTS, frameSrcDirective, isAllowedEmbedUrl, mapEmbed, spotifyEmbed, vimeoEmbed, youtubeEmbed, youtubeFromLink, imageSources, clampScrim, type PublicMedia } from "../index.js";
+import { AudioPlayer, EmbedFacade, MediaBackdrop, MediaImage, embedFromConfig, FRAME_HOSTS, frameSrcDirective, isAllowedEmbedUrl, mapEmbed, spotifyEmbed, vimeoEmbed, youtubeEmbed, youtubeFromLink, imageSources, clampScrim, type PublicMedia } from "../index.js";
+import { BLACK, WHITE, contrastRatio, mix, requiredScrim } from "../design/colour.js";
 
 afterEach(cleanup);
 
@@ -180,13 +181,24 @@ describe("MediaImage and MediaBackground", () => {
     expect(renderToStaticMarkup(<MediaImage media={SONG} alt="" />)).toBe("");
   });
 
-  it("a background has an automatic veil and clamps the document's own to 0.8", () => {
-    expect(renderToStaticMarkup(<MediaBackground media={PHOTO}><h2>Hola</h2></MediaBackground>)).toContain("--celebration-scrim:40%");
-    expect(renderToStaticMarkup(<MediaBackground media={PHOTO} scrim={0.7}>x</MediaBackground>)).toContain("--celebration-scrim:70%");
-    expect(renderToStaticMarkup(<MediaBackground media={PHOTO} scrim={5}>x</MediaBackground>)).toContain("--celebration-scrim:80%");
+  it("the veil is never a fixed default: MediaBackdrop takes the opacity per scheme the palette needs, clamped to the contract's 0.8", () => {
+    const html = renderToStaticMarkup(<MediaBackdrop media={PHOTO} light={0.35} dark={5} />);
+    expect(html).toContain("--cd-veil-l:35%");
+    expect(html).toContain("--cd-veil-d:80%");
+    expect(html).toContain('aria-hidden="true"');
+    expect(renderToStaticMarkup(<MediaBackdrop media={SONG} light={0.4} dark={0.4} />)).toBe("");
     expect(clampScrim(-1)).toBe(0);
     expect(clampScrim(Number.NaN)).toBe(0);
-    expect(renderToStaticMarkup(<MediaBackground media={PHOTO}>x</MediaBackground>)).toContain('aria-hidden="true"');
+  });
+
+  it.each(["light", "dark"] as const)("text over the worst photo (pure black and pure white) reaches 4.5:1 with the veil the palette needs, %s, for ink on canvas pairs a fixed 40% cannot serve", (scheme) => {
+    const palettes = scheme === "light" ? [{ canvas: "#FFFFFF", text: "#000000" }, { canvas: "#F4EFE6", text: "#2B2B2B" }] : [{ canvas: "#000000", text: "#FFFFFF" }, { canvas: "#14161A", text: "#E6E1D8" }];
+    for (const palette of palettes) {
+      const veil = requiredScrim(palette);
+      for (const picture of [BLACK, WHITE]) expect(contrastRatio(palette.text, mix(picture, palette.canvas, veil)), `${palette.canvas}/${palette.text} over ${picture}`).toBeGreaterThanOrEqual(4.5);
+      // The fixed 40% of the first version fails at least one of the two photos for these pairs: that is why it is gone.
+      expect([BLACK, WHITE].some((picture) => contrastRatio(palette.text, mix(picture, palette.canvas, 0.4)) < 4.5)).toBe(true);
+    }
   });
 
   it("imageSources reads only the variants that exist", () => {
