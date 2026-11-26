@@ -295,21 +295,20 @@ describe("restore (P15, M1)", () => {
     await waitFor(() => expect(screen.getByText(/copiada al borrador/)).toBeTruthy());
   });
 
-  it("each failure has its own words and leaves the draft alone: 409 (and the conflict flow), 401, 403, 422, network", async () => {
-    const cases: readonly [number | undefined, RegExp][] = [
-      [409, /Otra pestaña o persona guardó un borrador más nuevo.*No se restauró/s], [401, /Tu sesión terminó/], [403, /No tienes permiso para restaurar/],
-      [422, /ya no cumple las reglas del diseño/], [undefined, /No pudimos restaurar esa versión\. Tu borrador no cambió/]
-    ];
-    for (const [status, pattern] of cases) {
-      open(gateway({ restore: async () => { throw status === undefined ? new TypeError("offline") : failure(status); } }));
-      const before = accent().value;
-      fireEvent.click(await restoreButton(1));
-      fireEvent.click(confirmRestore(1));
-      await waitFor(() => expect(screen.getByText(pattern), String(status)).toBeTruthy());
-      expect(accent().value).toBe(before);
-      if (status === 409) expect(screen.getByTestId("save-status").getAttribute("data-kind")).toBe("conflict");
-      cleanup();
-    }
+  it.each([
+    [409, /Otra pestaña o persona guardó un borrador más nuevo.*No se restauró/s],
+    [401, /Tu sesión terminó/],
+    [403, /No tienes permiso para restaurar/],
+    [422, /ya no cumple las reglas del diseño/],
+    ["offline", /No pudimos restaurar esa versión\. Tu borrador no cambió/],
+  ] as const)("explains restore failure %s and leaves the draft alone", async (status, pattern) => {
+    open(gateway({ restore: async () => { throw status === "offline" ? new TypeError("offline") : failure(status); } }));
+    const before = accent().value;
+    fireEvent.click(await restoreButton(1));
+    fireEvent.click(confirmRestore(1));
+    expect(await screen.findByText(pattern)).toBeTruthy();
+    expect(accent().value).toBe(before);
+    if (status === 409) expect(screen.getByTestId("save-status").getAttribute("data-kind")).toBe("conflict");
   });
 
   it("uses the warnings the restore answered with", async () => {
