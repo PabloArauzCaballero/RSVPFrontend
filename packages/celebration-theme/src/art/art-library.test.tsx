@@ -405,7 +405,7 @@ describe("ornaments (PL-M7)", () => {
  * read as a cyclops). Its ornament is a band, a crest or a rim, wide enough to be read as a stripe.
  */
 const FACELESS: Readonly<Record<string, { readonly zone: Box; readonly maxWidth: number }>> = {
-  "mascara-morenada": { zone: { x0: 36, y0: 63, x1: 84, y1: 102 }, maxWidth: 34 }
+  "mascara-morenada": { zone: { x0: 30, y0: 54, x1: 90, y1: 104 }, maxWidth: 34 }
 };
 /** A piece is in the zone when its centre is (a ring that only grazes the zone's edge still reads as an eye). */
 const inside = (box: Box, zone: Box): boolean => { const x = (box.x0 + box.x1) / 2; const y = (box.y0 + box.y1) / 2; return x >= zone.x0 && x <= zone.x1 && y >= zone.y0 && y <= zone.y1; };
@@ -437,6 +437,10 @@ describe("faceless drawings (PL-116-R5-1)", () => {
           expect(round && centred, `${id}: a centred round cutout reads as an eye: ${part}`).toBe(false);
         }
       }
+    });
+
+    it(`${id}: the middle and the lower face are plain ink, whatever the width of a piece (a wide zigzag there reads as a grin)`, () => {
+      expect(featureLike(item.paths, zone, Number.POSITIVE_INFINITY), `${id} has a piece in the middle or lower face`).toEqual([]);
     });
 
     it(`${id}: the detector does catch the old ring and dot, and a pair of dots`, () => {
