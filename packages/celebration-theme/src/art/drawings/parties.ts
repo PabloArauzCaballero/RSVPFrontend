@@ -92,11 +92,12 @@ export const PARTIES = [
   // ---- Fiesta patronal ---------------------------------------------------------------------------------------------
   drawing("mascara-morenada", "Máscara de morenada con su corona", "Morenada mask with its crown", ["patronal"], [
     acc(rpoly([[28, 52], [30, 24], [44, 38], [50, 14], [60, 34], [70, 14], [76, 38], [90, 24], [92, 52]], 3)),
-    sec(circle(26, 70, 7) + circle(94, 70, 7)),
     ink(shape(HORN) + shape(HORN, mirrorX(60))),
     ink(ellipse(60, 70, 28, 32)),
-    cut(circle(60, 70, 8)),
-    cut(circle(60, 70, 18), 2.6)
+    // The ornament is a crest of two zigzag bands stacked high on the forehead, each as wide as the brow: never a ring, a dot or a pair of
+    // openings where eyes or a mouth would go (the middle and the lower face stay plain ink).
+    cut("M41 46L50 52L60 46L70 52L79 46", 2.5),
+    cut("M41 55L50 61L60 55L70 61L79 55", 2.5)
   ], 34),
   drawing("matraca", "Matraca de madera con su lengüeta", "Wooden ratchet with its tongue", ["patronal"], [
     ink(rrect(53, 64, 14, 36, 6)),

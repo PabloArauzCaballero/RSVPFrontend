@@ -3,7 +3,9 @@
  * Catalogue of the invitation art (F3): every drawing and ornament on four seeded palettes (Clásico marfil, Piñata, Gala art déco
  * (wine accent; the seed id stays `gala-dorada`), Editorial granate), light and dark, rendered by Chromium. One sheet per palette and scheme, written to the evidence folder.
  *
- *   yarn workspace @rsvp/celebration-theme art:catalogue [--out <dir>] [--ids a,b,c] [--only <palette-key>] [--scale 1]
+ *   yarn workspace @rsvp/celebration-theme art:catalogue [--out <dir>] [--ids a,b,c] [--only <palette-key>] [--scale 1] [--sizes <id>]
+ *
+ * `--sizes <id>` renders one drawing at 48, 104 and 240 px on the four palettes, light and dark (`<id>-claro.png`, `<id>-oscuro.png`).
  *
  * It bundles the real module (`src/art`) with esbuild and renders it with react-dom/server, so the screenshots show exactly the
  * data the tests pin; nothing is drawn by hand here.
@@ -64,6 +66,32 @@ function sheet(template, scheme) {
 }
 
 await mkdir(out, { recursive: true });
+if (args.sizes) {
+  const only = DRAWINGS.find((drawing) => drawing.id === args.sizes);
+  if (!only) throw new Error(`unknown drawing ${args.sizes}`);
+  const sizeBrowser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH, args: ["--no-sandbox"] } : {});
+  try {
+    for (const scheme of ["light", "dark"]) {
+      const rows = KEYS.map((key) => {
+        const template = SEED_TEMPLATES.find((item) => item.key === key);
+        const palette = scheme === "dark" ? darkPaletteOf(template.palette) : template.palette;
+        const figures = [48, 104, 240].map((px) => `<figure>${markup(createElement(InvitationArt, { drawing: only, palette, style: { "--celebration-art-size": `${px}px` } }))}<figcaption>${px} px</figcaption></figure>`).join("");
+        return `<div class="r" style="background:${palette.canvas};color:${palette.text}"><b>${template.name}</b>${figures}</div>`;
+      }).join("");
+      const page = await sizeBrowser.newPage({ viewport: { width: 760, height: 400 } });
+      await page.setContent(`<!doctype html><meta charset="utf-8"><style>${artCss} body{margin:0;font:12px system-ui} .r{display:flex;align-items:flex-end;gap:28px;padding:14px 20px} b{width:130px} figure{margin:0;text-align:center} .celebration-art{display:block;margin:0 auto 4px}</style>${rows}`);
+      const file = join(out, `${only.id}-${scheme === "dark" ? "oscuro" : "claro"}.png`);
+      await page.screenshot({ path: file, fullPage: true });
+      console.log(file);
+      await page.close();
+    }
+  } finally {
+    await sizeBrowser.close();
+    await rm(work, { recursive: true, force: true });
+  }
+  process.exit(0);
+}
+
 const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH, args: ["--no-sandbox"] } : {});
 try {
   for (const key of KEYS) {
