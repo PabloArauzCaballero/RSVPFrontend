@@ -123,7 +123,7 @@ describe("REQ-F27-02/03 · /r/{listingId} redirector", () => {
 
   it("R6a · ctx (the member's lead context) is forwarded to Provider Catalog unchanged and never reaches the partner URL", async () => {
     const fetchFn = gateway(upstream302("https://shop.example/torta?utm_source=rsvp"));
-    const token = "v2.eyJhIjoiYiJ9.c2ln-_";
+    const token = "lead-context-de-prueba";
     const response = await GET(new Request(`http://site.test/r/${LISTING}?surface=GIFT_LIST&celebrationId=22222222-3333-4444-8555-666666666666&ctx=${token}`), ctx);
     expect(response.status).toBe(302);
     const [url] = fetchFn.mock.calls[0] as unknown as [URL];

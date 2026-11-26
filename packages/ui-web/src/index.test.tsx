@@ -131,7 +131,7 @@ describe('PartnerLink: always through /r/{listingId}', () => {
     expect(() => partnerRedirectHref('https://tienda.example/x')).toThrow(/listing id/);
   });
   it('R6a: carries the member lead context as ctx, encoded, and the PREVIEW surface', () => {
-    const ctx = 'v2.eyJhIjoiYiJ9.c2ln+/=';
+    const ctx = 'lead context+/=de prueba';
     const url = new URL(partnerRedirectHref(ID, { destination: 'PRODUCT_PAGE', surface: 'GIFT_LIST', celebrationId: 'c1', ctx }), 'http://site.test');
     expect(url.pathname).toBe(`/r/${ID}`);
     expect(url.searchParams.get('ctx')).toBe(ctx);

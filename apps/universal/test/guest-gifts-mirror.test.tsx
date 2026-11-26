@@ -96,9 +96,9 @@ describe("Espejo web · A14 the gift list at /c/{slug}/regalos in the app", () =
     const launch = vi.spyOn(Linking, "openURL").mockResolvedValue(undefined);
     try {
       const withCtx = (leadContext: string | null) => ({ "GET /gifts/celebrations/c-1/items": () => ({ items: ITEMS, partnerPriorityEnabled: true, leadContext }), [`GET /listings/${LISTING}`]: () => ({ id: LISTING, destinationTypes: ["WHATSAPP"] }) });
-      show({ token: TOKEN }, withCtx("v2.eyJhIjoiYiJ9.c2ln-_"));
+      show({ token: TOKEN }, withCtx("lead-context-de-prueba"));
       fireEvent.click(await screen.findByRole("button", { name: "Consultar por WhatsApp" }));
-      expect(new URL(launch.mock.calls[0]![0]).searchParams.get("ctx")).toBe("v2.eyJhIjoiYiJ9.c2ln-_");
+      expect(new URL(launch.mock.calls[0]![0]).searchParams.get("ctx")).toBe("lead-context-de-prueba");
     } finally {
       launch.mockRestore();
     }

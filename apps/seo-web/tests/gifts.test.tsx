@@ -354,7 +354,7 @@ describe("D-3 · the guest cancels their own reservation from the gift page", ()
 });
 
 describe("R6a · ctx del miembro en los enlaces /r/ de la lista", () => {
-  const TOKEN = "v2.eyJhIjoiYiJ9.c2ln-_";
+  const TOKEN = "lead-context-de-prueba";
   const partnerHrefs = () => screen.getAllByRole("link").map((a) => a.getAttribute("href") ?? "").filter((href) => href.startsWith("/r/"));
 
   it("a list read that carries leadContext puts it as ctx on every /r/ link, next to celebrationId", async () => {
