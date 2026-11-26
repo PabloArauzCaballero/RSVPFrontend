@@ -3,8 +3,8 @@
 export const phTag = '<span class="ph-tag has-photo">Foto de ejemplo</span>';
 const svg = (vb, label, inner) => `<svg class="ph" viewBox="${vb}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="${label}">${inner}</svg>`;
 
-export const photoMarfil = () => svg('0 0 300 400', 'Foto de ejemplo: montañas al atardecer', '<rect width="300" height="400" fill="#E2D6C2"/><circle cx="212" cy="196" r="34" fill="#FBF7F0"/><path d="M-10 300L84 150L128 206L172 120L230 220L262 190L330 300Z" fill="#8C7F6E"/><path d="M172 120L150 160L166 152L174 168L190 150Z" fill="#FBF7F0"/><path d="M84 150L66 182L80 176L90 190L102 172Z" fill="#FBF7F0"/><path d="M-10 318C60 280 120 300 180 292C230 285 280 300 330 280V410H-10Z" fill="#A67C52"/><path d="M-10 350C70 326 140 346 210 336C260 330 300 340 330 332V410H-10Z" fill="#7A5230"/><rect x="132" y="296" width="14" height="46" rx="6" fill="#2B2622"/><circle cx="139" cy="290" r="8" fill="#2B2622"/><path d="M158 342L164 300Q172 292 180 300L186 342Z" fill="#FBF7F0"/><circle cx="172" cy="292" r="8" fill="#2B2622"/>');
-export const photoPinata = () => svg('0 0 300 300', 'Foto de ejemplo: globos en un patio', '<rect width="300" height="300" fill="#E8D8C0"/><path d="M-10 214C60 190 130 206 190 196C240 188 280 198 310 190V310H-10Z" fill="#B09A82"/><path d="M-10 250C80 232 150 250 230 240C270 236 292 240 310 238V310H-10Z" fill="#8A7660"/><g stroke="#2E2012" stroke-width="1.2" fill="none"><path d="M96 120L130 236M150 96L150 236M204 126L170 236"/></g><ellipse cx="96" cy="100" rx="24" ry="30" fill="#C2330F"/><ellipse cx="150" cy="76" rx="24" ry="30" fill="#FFFFFF"/><ellipse cx="204" cy="106" rx="24" ry="30" fill="#2E2012"/><ellipse cx="124" cy="64" rx="20" ry="26" fill="#E8A08F"/><ellipse cx="176" cy="130" rx="18" ry="24" fill="#C2330F"/>');
+export const photoMarfil = () => svg('0 0 300 400', 'Foto de ejemplo: montañas al atardecer', '<rect width="300" height="400" fill="#E2D6C2"/><circle cx="212" cy="196" r="34" fill="#FBF7F0"/><path d="M-10 300L84 150L128 206L172 120L230 220L262 190L330 300Z" fill="#8C7F6E"/><path d="M172 120L150 160L166 152L174 168L190 150Z" fill="#FBF7F0"/><path d="M84 150L66 182L80 176L90 190L102 172Z" fill="#FBF7F0"/><path d="M-10 318C60 280 120 300 180 292C230 285 280 300 330 280V410H-10Z" fill="#C9966A"/><path d="M-10 350C70 326 140 346 210 336C260 330 300 340 330 332V410H-10Z" fill="#7A5230"/><rect x="132" y="296" width="14" height="46" rx="6" fill="#2B2622"/><circle cx="139" cy="290" r="8" fill="#2B2622"/><path d="M158 342L164 300Q172 292 180 300L186 342Z" fill="#FBF7F0"/><circle cx="172" cy="292" r="8" fill="#2B2622"/>');
+export const photoPinata = () => svg('0 0 300 300', 'Foto de ejemplo: globos en un patio', '<rect width="300" height="300" fill="#E8D8C0"/><path d="M-10 214C60 190 130 206 190 196C240 188 280 198 310 190V310H-10Z" fill="#8A7660"/><path d="M-10 250C80 232 150 250 230 240C270 236 292 240 310 238V310H-10Z" fill="#6B5640"/><g stroke="#2E2012" stroke-width="1.2" fill="none"><path d="M96 120L130 236M150 96L150 236M204 126L170 236"/></g><ellipse cx="96" cy="100" rx="24" ry="30" fill="#C2330F"/><ellipse cx="150" cy="76" rx="24" ry="30" fill="#FFFFFF"/><ellipse cx="204" cy="106" rx="24" ry="30" fill="#2E2012"/><ellipse cx="124" cy="64" rx="20" ry="26" fill="#FFB5A0"/><ellipse cx="176" cy="130" rx="18" ry="24" fill="#C2330F"/>');
 export const photoGala = () => {
   const w = [];
   for (let x = 18; x < 300; x += 34) {
@@ -18,7 +18,7 @@ export const photoGala = () => {
 // Galería de ejemplo (6 teselas planas). Cada plantilla usa su paleta.
 const PAL = {
   marfil: ['#E2D6C2', '#F1E9DB', '#8C7F6E', '#7A5230', '#FBF7F0', '#2B2622'],
-  pinata: ['#F6EBDA', '#E8D8C0', '#C2330F', '#E8A08F', '#8A7660', '#2E2012'],
+  pinata: ['#F6EBDA', '#E8D8C0', '#C2330F', '#FFB5A0', '#6B5640', '#2E2012'],
   gala: ['#26322D', '#0E1311', '#ECE9E4', '#7B2A3C', '#6F7769', '#0E1311']
 };
 const scenes = [

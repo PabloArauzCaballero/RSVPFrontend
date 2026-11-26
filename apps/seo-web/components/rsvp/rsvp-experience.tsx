@@ -12,7 +12,7 @@ import {
 import { useParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { createGuestClient } from '../../lib/guest-client';
-import { clearGuestCredential, guestGiftPath } from '../../lib/guest-credential';
+import { clearGuestCredential, guestGiftPath, readGuestCredential, saveGuestCredential } from '../../lib/guest-credential';
 import { CheckMark } from '../brand/check-mark';
 import { clearDraft, emptyDraft, loadDraft, saveDraft, type RsvpDraft } from './rsvp-draft';
 import { AttendanceChoice, CompanionsStepper, ExtrasFields, FailureNotice, TextField, validateAnswer, validateRegistration, type FieldErrors, type RegistrationDraft } from './rsvp-form';
@@ -31,12 +31,23 @@ import { AnswerSummary, Celebrate, ClosedView, Countdown, DeadlineLine, Declined
 interface Props { readonly slug: string; readonly token?: string; readonly locale: AppLocale; readonly siteOrigin: string; readonly client?: ApiClient }
 type Saved = 'first' | 'edit' | null;
 
-/** Entry of /c/{slug}/rsvp[/{token}]: everything that needs the personal token runs in the browser, after a no-store request. */
+/**
+ * Entry of /c/{slug}/rsvp[/{token}]: everything that needs the personal token runs in the browser, after a no-store request.
+ * The token comes from the personal link (and is stored in this tab, never kept in the address); without it in the route,
+ * the credential this tab already holds opens the guest's own answer, as in the app (`apps/universal/app/(guest)/c/[slug]/rsvp`).
+ */
 export function RsvpExperience(props: Props): ReactNode {
   // The token is read from the browser route instead of being passed down as a prop, so it is not repeated in server-rendered props.
   const params = useParams<{ token?: string }>();
-  const token = props.token ?? safeDecode(params?.token);
-  return <RsvpProviders><Flow {...props} token={token} /></RsvpProviders>;
+  const routeToken = props.token ?? safeDecode(params?.token);
+  // `undefined` until the browser has been asked: sessionStorage does not exist while rendering on the server.
+  const [stored, setStored] = useState<string | null | undefined>(routeToken ? null : undefined);
+  useEffect(() => {
+    if (routeToken) saveGuestCredential(props.slug, routeToken);
+    else setStored(readGuestCredential(props.slug));
+  }, [routeToken, props.slug]);
+  if (!routeToken && stored === undefined) return <RsvpProviders><LoadingView t={createTranslator(props.locale)} /></RsvpProviders>;
+  return <RsvpProviders><Flow {...props} token={routeToken ?? stored ?? undefined} fromStored={!routeToken && !!stored} /></RsvpProviders>;
 }
 
 function safeDecode(value: string | undefined): string | undefined {
@@ -52,7 +63,8 @@ const initialFrom = (state: RsvpState): RsvpDraft => ({
 const coverFor = (view: PublicCelebrationView, locale: AppLocale, t: Translate): GuestCover =>
   guestCover(view, { locale, t, formatDate: (iso) => formatCelebrationDate(iso, { locale, timeZone: view.timeZone }, { dateStyle: 'full' }) });
 
-function Flow({ slug, token, locale, siteOrigin, client: injected }: Props): ReactNode {
+/** `fromStored`: the token is the one this tab saved, not the one in the route; if it no longer works the visit falls to the registration, as if there were none. */
+function Flow({ slug, token, fromStored = false, locale, siteOrigin, client: injected }: Props & { readonly fromStored?: boolean }): ReactNode {
   const t = useMemo(() => createTranslator(locale), [locale]);
   const client = useMemo(() => injected ?? createGuestClient(), [injected]);
   const celebration = useCelebrationBySlug<PublicCelebrationView>(client, slug);
@@ -79,7 +91,8 @@ function Flow({ slug, token, locale, siteOrigin, client: injected }: Props): Rea
   const contact = content.hostContact;
   const cover = coverFor(view, locale, t);
 
-  if (!token) return <UnregisteredFlow client={client} view={view} slug={slug} t={t} locale={locale} siteOrigin={siteOrigin} cover={cover} hosts={hosts} contact={contact} />;
+  // A saved credential that expired or was revoked is dropped (the effect above) and the guest registers instead of meeting a dead end.
+  if (!token || (fromStored && classifyRsvpError(rsvp.error).kind === 'invalid')) return <UnregisteredFlow client={client} view={view} slug={slug} t={t} locale={locale} siteOrigin={siteOrigin} cover={cover} hosts={hosts} contact={contact} />;
 
   if (rsvp.isError) {
     const failure = classifyRsvpError(rsvp.error);

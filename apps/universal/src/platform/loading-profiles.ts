@@ -17,6 +17,7 @@ export const HOST_LOADING = {
   gallery: { kind: "gallery", title: "host.gallery.title", intro: "host.gallery.intro" },
   translations: { kind: "form", title: "host.translations.title", intro: "host.translations.intro" },
   templates: { kind: "preview", title: "host.templates.title", intro: "host.templates.intro" },
+  design: { kind: "form", title: "designEditor.title" },
   preview: { kind: "preview", title: "host.preview.title", intro: "host.preview.intro" },
   publish: { kind: "checklist", title: "host.publish.title", intro: "host.publish.intro" },
   settings: { kind: "form", title: "host.settings.title", intro: "host.settings.intro" },

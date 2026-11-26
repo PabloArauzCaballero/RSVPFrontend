@@ -8,6 +8,7 @@ const route = vi.hoisted(() => ({ params: {} as Record<string, string> }));
 vi.mock("next/navigation", () => ({ useParams: () => route.params }));
 
 import { RsvpExperience } from "../components/rsvp/rsvp-experience";
+import { credentialKey } from "../lib/guest-credential";
 
 const NOW = new Date("2026-12-04T12:00:00Z");
 const anonymous = { getAccessToken: async () => null, getRefreshToken: async () => null, setTokens: async () => undefined, clear: async () => undefined };
@@ -25,7 +26,8 @@ const seeded = (overrides: Partial<ReturnType<ContractMock["addGuest"]>> = {}, m
   mock.addGuest({ name: "Marta Quispe", allowedCompanions: 2, token: MOCK_VALID_TOKEN, ...overrides });
   return mock;
 };
-const storageDump = () => JSON.stringify({ ...window.sessionStorage, ...window.localStorage });
+// The guest credential has its own, single home (`credentialKey`, sessionStorage of this tab); everything else must never hold the token.
+const storageDump = () => JSON.stringify(Object.fromEntries(Object.entries({ ...window.sessionStorage, ...window.localStorage }).filter(([key]) => !key.startsWith(credentialKey("")))));
 
 beforeEach(() => { vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(NOW); window.sessionStorage.clear(); window.localStorage.clear(); });
 afterEach(() => { cleanup(); vi.useRealTimers(); });
@@ -327,7 +329,8 @@ describe("REQ-F15-06 · conexión lenta o caída: el formulario no se pierde", (
     const posts = mock.state.log.filter((call) => call.method === "POST");
     expect(posts).toHaveLength(1);
     expect(mock.listGuests()[0]?.version).toBe(1);
-    expect(window.sessionStorage.length).toBe(0);
+    // Only the guest credential stays (the personal link opened it); the draft is gone.
+    expect(Object.keys(window.sessionStorage)).toEqual([credentialKey(mock.slug)]);
   });
 
   it("a restored draft is shown again (extras open) after the page is reopened", async () => {
@@ -383,5 +386,56 @@ describe("REQ-F15 · privacidad del enlace personal", () => {
     expect(mock.state.log.every((call) => !call.path.includes(MOCK_VALID_TOKEN))).toBe(true);
     expect(view.container.innerHTML).not.toContain(MOCK_VALID_TOKEN);
     expect(storageDump()).not.toContain(MOCK_VALID_TOKEN);
+    // The one place the personal link leaves its token: this tab's credential, so `/c/{slug}/rsvp` can reopen the answer.
+    expect(window.sessionStorage.getItem(credentialKey(mock.slug))).toBe(MOCK_VALID_TOKEN);
+  });
+});
+
+describe("PL-114-R6 · «Confirmar asistencia» abre la respuesta del invitado, no un registro nuevo", () => {
+  const openWithoutRoute = (mock: ContractMock) => {
+    route.params = {};
+    return render(<RsvpExperience slug={mock.slug} locale="es-BO" siteOrigin="https://done.example" client={setup(mock)} />);
+  };
+
+  it("/c/{slug}/rsvp with the stored credential shows the guest's own form, and the token stays out of the URL, the requests and the DOM", async () => {
+    const mock = seeded({}, { unregisteredMode: "AUTO_ACCEPT" });
+    window.sessionStorage.setItem(credentialKey(mock.slug), MOCK_VALID_TOKEN);
+    const view = openWithoutRoute(mock);
+    expect(await screen.findByRole("heading", { level: 2, name: "¿Nos acompañas?" })).toBeTruthy();
+    expect(screen.queryByTestId("rsvp-register")).toBeNull();
+    expect(screen.queryByLabelText("Tu nombre")).toBeNull();
+    expect(mock.state.log.some((call) => call.path.includes("public-settings"))).toBe(false);
+    expect(view.container.innerHTML).not.toContain(MOCK_VALID_TOKEN);
+    expect(window.location.href).not.toContain(MOCK_VALID_TOKEN);
+    expect(storageDump()).not.toContain(MOCK_VALID_TOKEN);
+  });
+
+  it("/c/{slug}/rsvp/{token} stores the credential so the next /c/{slug}/rsvp finds it", async () => {
+    const mock = seeded();
+    open(mock, MOCK_VALID_TOKEN);
+    await screen.findByRole("heading", { level: 2, name: "¿Nos acompañas?" });
+    expect(window.sessionStorage.getItem(credentialKey(mock.slug))).toBe(MOCK_VALID_TOKEN);
+    cleanup();
+    openWithoutRoute(mock);
+    expect(await screen.findByRole("heading", { level: 2, name: "¿Nos acompañas?" })).toBeTruthy();
+    expect(screen.queryByTestId("rsvp-register")).toBeNull();
+  });
+
+  it("PL-114-a1 · an expired stored credential is dropped and the same visit falls to the registration flow, not to «Este enlace ya no funciona»", async () => {
+    const mock = seeded({ token: null }, { unregisteredMode: "AUTO_ACCEPT" });
+    window.sessionStorage.setItem(credentialKey(mock.slug), MOCK_VALID_TOKEN);
+    openWithoutRoute(mock);
+    expect(await screen.findByRole("heading", { name: "Confirma que vienes" })).toBeTruthy();
+    expect(screen.getByTestId("rsvp-register")).toBeTruthy();
+    expect(screen.queryByRole("heading", { level: 1, name: "Este enlace ya no funciona" })).toBeNull();
+    expect(window.sessionStorage.getItem(credentialKey(mock.slug))).toBeNull();
+  });
+
+  it("without a credential the registration flow is unchanged (negative case)", async () => {
+    const mock = seeded({}, { unregisteredMode: "AUTO_ACCEPT" });
+    openWithoutRoute(mock);
+    expect(await screen.findByRole("heading", { name: "Confirma que vienes" })).toBeTruthy();
+    expect(screen.getByTestId("rsvp-register")).toBeTruthy();
+    expect(window.sessionStorage.length).toBe(0);
   });
 });
