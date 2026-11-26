@@ -89,7 +89,8 @@ function Checklist({ celebration, eventType, onNavigate, refetch }: { readonly c
   const draft = celebration.status === "DRAFT";
   const ready = draft && check.isSuccess && !missing.length;
   const live = celebration.status === "PUBLISHED" && pageState === "LIVE";
-  const publishing = celebration.status === "PUBLISHED" && !live;
+  // A page hidden by moderation (celebration 1.6.0) is neither live nor being built: it must not read «Publicando…» forever.
+  const publishing = celebration.status === "PUBLISHED" && !live && pageState !== "HIDDEN";
   const justPublished = live && action.isSuccess && action.variables?.action.kind === "publish";
   // One action per state, top right (a fixed bar on a phone): publish a draft, copy the link of a published page. The rest is in «⋯».
   const menuItems = [

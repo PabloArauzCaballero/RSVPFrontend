@@ -358,9 +358,9 @@ describe("R6a · ctx del miembro en los enlaces /r/ de la lista", () => {
   const partnerHrefs = () => screen.getAllByRole("link").map((a) => a.getAttribute("href") ?? "").filter((href) => href.startsWith("/r/"));
 
   it("a list read that carries leadContext puts it as ctx on every /r/ link, next to celebrationId", async () => {
-    stubFetch(() => json(201, {}), () => json(200, { items: ITEMS, partnerPriorityEnabled: true, leadContext: TOKEN }));
+    stubFetch(() => json(201, {}), () => json(200, { items: ITEMS, partnerPriorityEnabled: true, leadContext: TOKEN }), () => json(200, { destinationTypes: ["PRODUCT_PAGE", "WHATSAPP"] }));
     renderList();
-    await waitFor(() => expect(partnerHrefs().length).toBeGreaterThan(0));
+    await screen.findAllByRole("link", { name: "Consultar por WhatsApp" });
     for (const href of partnerHrefs()) {
       const url = new URL(href, "http://site.test");
       expect(url.searchParams.get("ctx")).toBe(TOKEN);
@@ -370,9 +370,9 @@ describe("R6a · ctx del miembro en los enlaces /r/ de la lista", () => {
   });
 
   it("a guest's list (leadContext null) has no ctx on any /r/ link", async () => {
-    stubFetch(() => json(201, {}), () => json(200, { items: ITEMS, partnerPriorityEnabled: true, leadContext: null }));
+    stubFetch(() => json(201, {}), () => json(200, { items: ITEMS, partnerPriorityEnabled: true, leadContext: null }), () => json(200, { destinationTypes: ["PRODUCT_PAGE", "WHATSAPP"] }));
     renderList();
-    await waitFor(() => expect(partnerHrefs().length).toBeGreaterThan(0));
+    await screen.findAllByRole("link", { name: "Consultar por WhatsApp" });
     for (const href of partnerHrefs()) expect(href).not.toContain("ctx");
   });
 

@@ -92,6 +92,18 @@ describe("Espejo web · A14 the gift list at /c/{slug}/regalos in the app", () =
     }
   });
 
+  it("R6a: a list read that carries leadContext sends it as ctx on the redirector link (without it, the link keeps the exact query asserted above)", async () => {
+    const launch = vi.spyOn(Linking, "openURL").mockResolvedValue(undefined);
+    try {
+      const withCtx = (leadContext: string | null) => ({ "GET /gifts/celebrations/c-1/items": () => ({ items: ITEMS, partnerPriorityEnabled: true, leadContext }), [`GET /listings/${LISTING}`]: () => ({ id: LISTING, destinationTypes: ["WHATSAPP"] }) });
+      show({ token: TOKEN }, withCtx("v2.eyJhIjoiYiJ9.c2ln-_"));
+      fireEvent.click(await screen.findByRole("button", { name: "Consultar por WhatsApp" }));
+      expect(new URL(launch.mock.calls[0]![0]).searchParams.get("ctx")).toBe("v2.eyJhIjoiYiJ9.c2ln-_");
+    } finally {
+      launch.mockRestore();
+    }
+  });
+
   it("keeps the reservation available if the catalog offer is no longer public", async () => {
     const { calls } = show({ token: TOKEN }, { [`GET /listings/${LISTING}`]: () => new HttpFailure(404) });
     await screen.findByTestId(`reserve-${TORTA}`);

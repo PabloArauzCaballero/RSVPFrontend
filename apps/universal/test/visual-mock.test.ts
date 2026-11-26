@@ -45,7 +45,11 @@ describe("visual mock behaves like the gateway the app talks to", () => {
     expect(reply.headers["cache-control"]).toBe("no-store");
     const spec = JSON.parse(readFileSync(resolve(REPO, "packages/contracts/specs/celebration.openapi.json"), "utf8")) as { components: { schemas: Record<string, { required: string[]; properties: Record<string, unknown> }> } };
     const schema = spec.components.schemas["PublicPageStatus"]!;
-    expect(Object.keys(reply.body).sort()).toEqual(Object.keys(schema.properties).sort());
+    // Celebration 1.6.0: `moderation` is optional and only present while a moderator hides the page, so a LIVE page has the required
+    // fields and nothing the contract does not declare.
+    const optional = Object.keys(schema.properties).filter((field) => !schema.required.includes(field));
+    expect(optional).toEqual(["moderation"]);
+    expect(Object.keys(reply.body).sort()).toEqual(schema.required.slice().sort());
     for (const field of schema.required) expect(reply.body).toHaveProperty(field);
     expect(reply.body).toEqual({ celebrationId: demo.id, status: demo.status, state: "LIVE", version: demo.version, publicVersion: demo.version });
     // Every field the contract requires on a Celebration is present (searchIndexing is required since 1.4.0).
