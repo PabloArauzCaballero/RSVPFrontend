@@ -9,7 +9,7 @@ const path = require('node:path');
  * packages/celebration-theme/src/media/embed.ts: media/csp.test.ts fails when they differ. Privacy-enhanced hosts only
  * (youtube-nocookie, Vimeo with dnt). Nothing else may be framed, and `frame-ancestors 'none'` still forbids framing this site.
  */
-const frameHosts = ['www.youtube-nocookie.com', 'player.vimeo.com', 'open.spotify.com', 'w.soundcloud.com', 'www.google.com'];
+const frameHosts = ['www.youtube-nocookie.com', 'player.vimeo.com', 'open.spotify.com', 'www.google.com'];
 const frameSrc = `frame-src ${frameHosts.map((host) => `https://${host}`).join(' ')}`;
 
 const securityHeaders = [

@@ -139,7 +139,9 @@
 .celebration-embed[data-loaded="true"] { padding: 0; }
 .celebration-embed-frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .celebration-embed[data-kind="audio"][data-loaded="true"] { min-height: 10rem; }
-.celebration-embed > .celebration-media-image { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
+.celebration-embed > picture, .celebration-embed > picture > img, .celebration-embed > img { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; object-fit: cover; border-radius: 0; }
+/* Before the tap the facade is as tall as its content (button and privacy note); the 16:9 frame appears when the iframe does. */
+.celebration-embed[data-loaded="false"] { aspect-ratio: auto; min-height: 9.5rem; align-content: end; padding: 1rem; }
 .celebration-embed-play, .celebration-audio-button { position: relative; z-index: 1; display: inline-flex; align-items: center; gap: .6rem; min-height: 44px; min-width: 44px; padding: .5rem 1.1rem; border: 2px solid var(--celebration-accent); border-radius: 9999px; background: var(--celebration-surface); color: var(--celebration-text); font: inherit; font-weight: 600; cursor: pointer; transition: background-color .15s ease; }
 .celebration-embed-play:hover, .celebration-audio-button:hover { background: color-mix(in srgb, var(--celebration-accent) 14%, var(--celebration-surface)); }
 .celebration-embed-play:focus-visible, .celebration-audio-button:focus-visible { outline: 3px solid var(--celebration-accent); outline-offset: 3px; }
