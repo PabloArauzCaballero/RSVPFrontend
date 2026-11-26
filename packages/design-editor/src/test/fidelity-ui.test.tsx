@@ -108,7 +108,7 @@ describe("Advanced: animation, mask and frame of one element", () => {
     selectElement("Portada", "Imagen");
     const inspector = screen.getByTestId("inspector-effects");
     const animation = within(inspector).getByRole("combobox", { name: "Animación del elemento" });
-    expect(within(animation).getAllByRole("option").map((option) => option.textContent)).toEqual(["Ninguna", "Aparecer", "Mecerse"]);
+    expect(within(animation).getAllByRole("option").map((option) => option.textContent)).toEqual(["Ninguna", "Aparecer", "Mecerse", "Revelar como telón"]);
     expect(within(inspector).getByText(/La duración la fija el diseño/)).toBeTruthy();
     const mask = within(inspector).getByRole("combobox", { name: "Máscara" });
     expect(within(mask).getAllByRole("option")).toHaveLength(7);
@@ -134,14 +134,15 @@ describe("Advanced: animation, mask and frame of one element", () => {
     expect(within(inspector).getByRole("combobox", { name: "Marco" })).toBeTruthy();
   });
 
-  it("the gifts button offers no mask, no frame and no «Mecerse»", () => {
+  it("the gifts button offers no mask, no frame and no named animation (PL-164-1)", () => {
     open("es-BO");
     selectElement("Regalos", "Botón de regalos");
     const inspector = screen.getByTestId("inspector-effects");
     expect(within(inspector).queryByRole("combobox", { name: "Máscara" })).toBeNull();
     expect(within(inspector).queryByRole("combobox", { name: "Marco" })).toBeNull();
     expect(within(inspector).queryByRole("option", { name: "Mecerse" })).toBeNull();
-    expect(within(inspector).getByRole("option", { name: "Aparecer" })).toBeTruthy();
+    for (const name of ["Aparecer", "Revelar como telón"]) expect(within(inspector).queryByRole("option", { name })).toBeNull();
+    expect(within(within(inspector).getByRole("combobox", { name: "Animación del elemento" })).getAllByRole("option").map((option) => option.textContent)).toEqual(["Ninguna"]);
     expect(screen.getByTestId("effects-protected")).toBeTruthy();
   });
 
