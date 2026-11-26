@@ -114,7 +114,8 @@ export const portalEnUS: DeepStrings<typeof portalEsBO> = {
       status: { PENDING_UPLOAD: "Uploading", QUEUED: "Queued", PROCESSING: "Processing", READY: "Ready", REJECTED: "Rejected", DELETING: "Removing" },
       stage: { requesting: "Preparing the upload…", uploading: "Uploading the photo…", processing: "Processing the photo…" }, ready: "Photo ready.",
       reject: { UNREADABLE: "We could not read the image. Try another file.", HEIC_UNSUPPORTED: "HEIC photos cannot be used. Export it as JPG and upload it again.", TOO_MANY_PIXELS: "The photo is too large (over 60 megapixels).", PROCESSING_FAILED: "We could not process the photo. Upload it again." },
-      permissionDenied: "We do not have permission to see your photos. Turn it on in your device settings (Settings, this app, Photos) and try again.",
+      openSettings: "Open settings",
+      permissionDenied: "We do not have permission to see your photos. Turn it on in your device settings, under this app's permissions, and try again.",
       typeError: "Only JPG, PNG or WebP. If your photo is HEIC, export it as JPG.", sizeError: "Each photo may weigh up to 5 MB.", putFailed: "The photo could not be sent. Check your connection and try again.", timeout: "The photo is still processing. It will show up here as soon as it is ready.", limit: "You already have 5 photos. Remove one to add another.",
       shows: "Photo version", showsHelp: "If the photo shows only one version, pick it; otherwise leave it on “The whole product”.", wholeProduct: "The whole product", variantLimit: "“{{variant}}” already has {{max}} photos. Pick another version or remove one of its photos."
     },
@@ -147,6 +148,7 @@ export const portalEnUS: DeepStrings<typeof portalEsBO> = {
     errors: {
       CONTACT_IN_TEXT_AT: "Remove the phone number or link from the {{where}} field: “{{fragment}}”.",
       contactFields: { titles: "Name", descriptions: "Description", details: "Details", variants: "Version name", delivery: "Delivery conditions", template: "WhatsApp message", altText: "Photo text" },
+      ideasLoad: "We could not read the ideas of the new category, so nothing was saved. Check your connection and try again.",
       noVersion: "We do not have the current version of the sheet, so we cannot save it safely. Reload it and try again.",
       notFound: "We could not find this product. It may belong to another business or no longer exist.", forbidden: "This product belongs to another business.", notProduct: "This offer is a service: only products have a sheet.",
       LISTING_INCOMPLETE: "Some information is still missing to publish. Check the missing list.", CONTACT_IN_TEXT: "Remove the phone number or link from the text: “{{fragment}}”.", DESCRIPTION_REPEATS_TITLE: "The description must say what the product includes, not repeat the name.",

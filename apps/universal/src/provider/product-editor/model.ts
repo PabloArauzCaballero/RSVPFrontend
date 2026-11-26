@@ -63,12 +63,12 @@ export const isHttpsUrl = (value: string): boolean => {
 };
 
 /** The editable values of a sheet loaded from the catalog. The editor reads es-BO only, never the interface language: an en-US text must not be rewritten as es-BO. Destinations are not in the sheet body (only their types), so they keep what was typed. */
-export function draftFromSheet(sheet: ProductSheet, _locale: string, keep: Pick<SheetDraft, "whatsapp" | "productPage"> = { whatsapp: "", productPage: "" }): SheetDraft {
+export function draftFromSheet(sheet: ProductSheet, keep: Pick<SheetDraft, "whatsapp" | "productPage"> = { whatsapp: "", productPage: "" }): SheetDraft {
   const text = (map: unknown): string => { const record = (map ?? {}) as Record<string, string>; return record["es-BO"] ?? ""; };
   const variants = (sheet.variants ?? []).map((variant): VariantDraft => ({ id: variant.id, label: variant.label, price: minorText(variant.priceMinor), stock: variant.stock, isDefault: variant.isDefault }));
   const template = text(sheet.whatsappTemplate);
   return {
-    title: text(sheet.titles) || sheet.title, description: text(sheet.descriptions), category: sheet.category, city: sheet.city,
+    title: text(sheet.titles), description: text(sheet.descriptions), category: sheet.category, city: sheet.city,
     dimensions: sheet.details?.dimensions ?? "", weight: sheet.details?.weight ?? "", care: sheet.details?.care ?? "", warranty: sheet.details?.warranty ?? "",
     personalizable: sheet.details?.personalizable ?? false, personalizationNote: sheet.details?.personalizationNote ?? "",
     giftIdeas: sheet.giftIdeas ?? [],
@@ -157,8 +157,8 @@ function detailsOf(draft: SheetDraft): PatchListingInput["details"] | undefined 
   return Object.keys(details).length ? details : undefined;
 }
 
-/** The ideas of `ideas` the category still allows; none when the category's list is not known (the person picks them again in Ideas). */
-export const ideasAllowed = (ideas: readonly string[], allowed: readonly string[] | undefined): string[] => (allowed ? ideas.filter((code) => allowed.includes(code)) : []);
+/** The ideas of `ideas` that appear in `allowed`, the list of ideas of a category. */
+export const ideasAllowed = (ideas: readonly string[], allowed: readonly string[]): string[] => ideas.filter((code) => allowed.includes(code));
 
 /** The texts a sheet already holds in languages other than es-BO (en-US): the portal edits es-BO only and must not erase the rest. */
 const otherLocales = (map: unknown): Record<string, string> => Object.fromEntries(Object.entries((map ?? {}) as Record<string, string>).filter(([locale]) => locale !== "es-BO"));
@@ -179,13 +179,14 @@ export function patchBody(
       // description is sent as a map without es-BO (the catalog then lists DESCRIPTION as missing) instead of being left out, which
       // would keep the old text.
       // The catalog only replaces giftIdeas when they come in the PATCH, and refuses (422 GIFT_IDEA_NOT_ALLOWED) the ones the new category
-      // does not allow. So a changed category sends the ideas it still allows, or none when the list of the new category is not known.
+      // does not allow. So a changed category sends the ideas it still allows. Without the new category's list nothing is guessed: the screen
+      // reads it before saving and never reaches this point without it (sending none would erase ideas that are still compatible).
       const categoryChanged = loaded?.category !== undefined && loaded.category !== draft.category;
       return {
         titles: { ...others(loaded?.titles), "es-BO": draft.title.trim() }, category: draft.category, city: draft.city,
         descriptions: { ...others(loaded?.descriptions), ...(description ? { "es-BO": description } : {}) },
         details: detailsOf(draft) ?? null,
-        ...(categoryChanged ? { giftIdeas: ideasAllowed(draft.giftIdeas, options.ideaCodes) } : {})
+        ...(categoryChanged && options.ideaCodes ? { giftIdeas: ideasAllowed(draft.giftIdeas, options.ideaCodes) } : {})
       };
     }
     case "ideas":

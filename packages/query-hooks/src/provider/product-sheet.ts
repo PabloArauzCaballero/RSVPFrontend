@@ -273,6 +273,11 @@ export function useGiftIdeas(client: ApiClient, category: string | undefined, lo
   });
 }
 
+/** The ideas of a category read now (cache first, same key as `useGiftIdeas`): a save that depends on them must not guess when the list is still loading. Rejects when the read fails. */
+export function fetchGiftIdeas(queryClient: QueryClient, client: ApiClient, category: string, locale: string) {
+  return queryClient.fetchQuery({ queryKey: productSheetKeys.giftIdeas(category, locale), queryFn: () => productSheetService(client).giftIdeas(category, locale), staleTime: 300_000 });
+}
+
 /** GET /providers/{id}/whatsapp-template: the provider's own template, the default one and the allowed variables. */
 export function useWhatsappTemplate(client: ApiClient, providerId: string | undefined) {
   return useQuery({ queryKey: productSheetKeys.whatsappTemplate(providerId ?? ""), queryFn: () => productSheetService(client).whatsappTemplate(providerId ?? ""), enabled: Boolean(providerId), staleTime: 60_000 });

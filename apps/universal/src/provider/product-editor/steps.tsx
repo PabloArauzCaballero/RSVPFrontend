@@ -49,7 +49,7 @@ export function BasicStep({ draft, set, problems, disabled, creating, categories
       <View style={{ gap: spacing[1] }}>
         <Text style={styles.label}>{categoryLabel}</Text>
         {options.length ? (
-          <FilterSelect label={categoryLabel} value={draft.category || (options[0]?.value ?? "")} onChange={(category) => set({ category, giftIdeas: [] })} options={options} testID="product-category" />
+          <FilterSelect label={categoryLabel} value={draft.category || (options[0]?.value ?? "")} onChange={(category) => set({ category })} options={options} testID="product-category" />
         ) : categories.pending ? <Text style={styles.muted} accessibilityLiveRegion="polite">{t("portal.product.basic.loadingCategories")}</Text>
           : categories.error ?? <Text style={styles.muted}>{t("portal.product.basic.emptyCategories")}</Text>}
         <InlineError message={problem(t, problems, "category")} />

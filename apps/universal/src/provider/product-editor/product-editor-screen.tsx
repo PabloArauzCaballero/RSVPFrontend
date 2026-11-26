@@ -2,10 +2,11 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { radius, spacing } from "@rsvp/design-tokens";
+import { useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "@rsvp/api-client";
 import { Chip, StepTransition, pressVisual, useColors, useReducedMotion } from "@rsvp/ui";
 import {
-  newIdempotencyKey, useCreateProduct, useDuplicateListing, useGiftIdeas, useListingSheet, usePatchListing, useProductCategories, useProviderGeo, usePublishListing, useWhatsappTemplate,
+  fetchGiftIdeas, newIdempotencyKey, useCreateProduct, useDuplicateListing, useGiftIdeas, useListingSheet, usePatchListing, useProductCategories, useProviderGeo, usePublishListing, useWhatsappTemplate,
   type ProductSheet, type Provider
 } from "@rsvp/query-hooks";
 import type { AppLocale } from "@rsvp/i18n/server";
@@ -103,9 +104,14 @@ function ProductEditor({ provider, listingId, initialStep, duplicated }: EditorP
   const [draft, setDraft] = useState<SheetDraft>(EMPTY_DRAFT);
   const [problems, setProblems] = useState<readonly LocalProblem[]>([]);
   const loadedVersion = useRef<number | null>(null);
+  const lastOrder = useRef<readonly string[] | null>(null);
   const createKey = useRef(newIdempotencyKey());
   const duplicateKey = useRef(newIdempotencyKey());
-  const ideas = useGiftIdeas(client, draft.category || undefined, locale);
+  const queryClient = useQueryClient();
+  // Ideas are those of the category the catalog holds: with a category change not yet saved in Básico, the backend still validates them against the saved one.
+  const ideas = useGiftIdeas(client, (sheet?.category ?? draft.category) || undefined, locale);
+  const [checkingIdeas, setCheckingIdeas] = useState(false);
+  const [ideasFailed, setIdeasFailed] = useState(false);
   const [published, setPublished] = useState(false);
   // Steps with unsaved edits: leaving one from the step list keeps what was typed there when a newer version of the sheet arrives.
   const dirty = useRef(new Set<EditorStep>());
@@ -118,8 +124,8 @@ function ProductEditor({ provider, listingId, initialStep, duplicated }: EditorP
     if (!sheet || loadedVersion.current === sheet.version) return;
     const first = loadedVersion.current === null;
     loadedVersion.current = sheet.version ?? null;
-    setDraft((typed) => (first ? draftFromSheet(sheet, locale) : keepSteps([step, ...dirty.current], draftFromSheet(sheet, locale), typed)));
-  }, [sheet, locale, step]);
+    setDraft((typed) => (first ? draftFromSheet(sheet) : keepSteps([step, ...dirty.current], draftFromSheet(sheet), typed)));
+  }, [sheet, step]);
   // Ideas the category does not offer (left over from a previous category) are neither shown nor counted nor sent: the open Ideas step drops them.
   useEffect(() => {
     if (step !== "ideas" || !ideas.data) return;
@@ -132,17 +138,17 @@ function ProductEditor({ provider, listingId, initialStep, duplicated }: EditorP
     if (creating && !draft.category && first) setDraft((current) => ({ ...current, category: first }));
   }, [categories.data, creating, draft.category]);
 
-  const set = (change: Partial<SheetDraft>): void => { dirty.current.add(step); setDraft((current) => ({ ...current, ...change })); if (problems.length) setProblems([]); };
+  const set = (change: Partial<SheetDraft>): void => { setIdeasFailed(false); dirty.current.add(step); setDraft((current) => ({ ...current, ...change })); if (problems.length) setProblems([]); };
   const open = (target: EditorStep): void => {
-    setProblems([]); patch.reset(); publish.reset(); setVersionLost(false);
+    setProblems([]); patch.reset(); publish.reset(); setVersionLost(false); setIdeasFailed(false); lastOrder.current = null;
     // The «Copia creada» note belongs to the arrival, not to the product: it goes with the first step change.
     setShowCopyNote(false);
     setStep(target);
     if (listingId) router.setParams({ paso: STEP_SLUG[target], copia: undefined });
   };
   const missing = stepsMissing(sheet?.missing);
-  const busy = create.isPending || patch.isPending || publish.isPending || duplicate.isPending;
-  const reload = (): void => { patch.reset(); void sheetQuery.refetch(); };
+  const busy = checkingIdeas || create.isPending || patch.isPending || publish.isPending || duplicate.isPending;
+  const reload = (): void => { patch.reset(); lastOrder.current = null; setIdeasFailed(false); void sheetQuery.refetch(); };
   const hasDestination = (sheet?.destinations ?? []).some((destination) => destination === "WHATSAPP" || destination === "PRODUCT_PAGE");
 
   const save = (current: StepKey): void => {
@@ -154,14 +160,23 @@ function ProductEditor({ provider, listingId, initialStep, duplicated }: EditorP
       create.mutate({ input: createBody(draft), idempotencyKey: createKey.current }, { onSuccess: (created) => router.replace(productHref(created.id, "ideas") as Href) });
       return;
     }
-    const body = patchBody(current, draft, sheet, { ideaCodes: ideas.data?.map((idea) => idea.code) });
-    if (!body) { open(nextStep(current)); return; }
     // Without a version there is no If-Match: say so and offer to reload, never move on as if it had been saved.
     if (!sheet?.version) { setVersionLost(true); return; }
-    patch.mutate({ version: sheet.version, input: body }, { onSuccess: () => { dirty.current.delete(current); open(nextStep(current)); } });
+    const version = sheet.version;
+    const send = (ideaCodes?: readonly string[]): void => {
+      const body = patchBody(current, draft, sheet, { ideaCodes });
+      if (!body) { open(nextStep(current)); return; }
+      patch.mutate({ version, input: body }, { onSuccess: () => { dirty.current.delete(current); open(nextStep(current)); } });
+    };
+    // A category change must send the ideas the new category allows: read its list first and never guess (a failed read blocks the save).
+    if (current === "basic" && draft.category !== sheet.category) {
+      setCheckingIdeas(true); setIdeasFailed(false);
+      fetchGiftIdeas(queryClient, client, draft.category, locale).then((items) => { setCheckingIdeas(false); send(items.map((idea) => idea.code)); }, () => { setCheckingIdeas(false); setIdeasFailed(true); });
+      return;
+    }
+    send();
   };
-  const lastOrder = useRef<readonly string[] | null>(null);
-  const reorder = (order: readonly string[]): void => { lastOrder.current = order; if (!sheet?.version) { setVersionLost(true); return; } patch.mutate({ version: sheet.version, input: { photoOrder: [...order] } }); };
+  const reorder = (order: readonly string[]): void => { lastOrder.current = order; if (!sheet?.version) { setVersionLost(true); return; } patch.mutate({ version: sheet.version, input: { photoOrder: [...order] } }, { onSuccess: () => { lastOrder.current = null; } }); };
   const publishNow = (): void => { if (sheet && !busy) publish.mutate(sheet.id, { onSuccess: () => { setPublished(true); void sheetQuery.refetch(); } }); };
   const duplicateNow = (): void => {
     if (!sheet || busy) return;
@@ -235,6 +250,7 @@ function ProductEditor({ provider, listingId, initialStep, duplicated }: EditorP
         ) : (
           <>
             {versionLost ? <Notice kind="error"><View style={{ gap: spacing[2] }} testID="sheet-no-version"><Text style={styles.body}>{t("portal.product.errors.noVersion")}</Text><ActionButton icon="refresh" variant="secondary" label={t("portal.product.actions.reload")} onPress={() => { setVersionLost(false); reload(); }} testID="sheet-reload" /></View></Notice> : null}
+            {ideasFailed ? <Notice kind="error"><View style={{ gap: spacing[2] }} testID="ideas-load-error"><Text style={styles.body}>{t("portal.product.errors.ideasLoad")}</Text><ActionButton icon="refresh" variant="secondary" label={t("portal.errors.retry")} onPress={() => save("basic")} testID="ideas-load-retry" /></View></Notice> : null}
             <SheetErrorNotice error={create.error ?? patch.error ?? duplicate.error} onReload={reload} onRetry={() => { if (step !== "photos") save(step); else if (lastOrder.current) reorder(lastOrder.current); }} />
             <StickyActions ground="surface">
               {step === "photos" ? (

@@ -83,18 +83,19 @@ describe("model (pure)", () => {
     expect(stepProblems("contact", EMPTY_DRAFT, { hasDestination: false })).toEqual(["destination"]);
     expect(stepProblems("contact", { ...EMPTY_DRAFT, whatsapp: "+59170012345", ownTemplate: true, template: "Hola {invitado}" })).toEqual(["templateVariables"]);
   });
-  it("changing the category sends only the ideas the new category allows, or none when its list is unknown; the same category sends none", () => {
+  it("changing the category sends only the ideas the new category allows (never a guess when its list is unknown); the same category sends none", () => {
     const loaded = { ...SHEET, category: "TABLEWARE" } as never;
     const draft = { ...EMPTY_DRAFT, title: "Copas", category: "PASTRY", giftIdeas: ["GLASSWARE", "CAKE"] };
     expect(patchBody("basic", draft, loaded, { ideaCodes: ["CAKE", "CUPCAKES"] })).toMatchObject({ category: "PASTRY", giftIdeas: ["CAKE"] });
-    expect(patchBody("basic", draft, loaded)).toMatchObject({ giftIdeas: [] });
+    // Without the list nothing is guessed: no giftIdeas (the catalog refuses instead of silently erasing compatible ideas).
+    expect(patchBody("basic", draft, loaded)).not.toHaveProperty("giftIdeas");
     expect(patchBody("basic", { ...draft, category: "TABLEWARE" }, loaded, { ideaCodes: ["GLASSWARE"] })).not.toHaveProperty("giftIdeas");
     expect(ideasAllowed(["A", "B"], ["B"])).toEqual(["B"]);
-    expect(ideasAllowed(["A", "B"], undefined)).toEqual([]);
   });
   it("the editor reads es-BO only (never the interface language) and the contact save keeps the en-US message", () => {
     const sheet = { ...SHEET, titles: { "en-US": "Set of glasses" }, title: "Set of glasses", descriptions: { "en-US": "English only" }, whatsappTemplate: { "en-US": "Hi {proveedor}" } } as never;
-    const draft = draftFromSheet(sheet, "en-US");
+    const draft = draftFromSheet(sheet);
+    expect(draft.title).toBe("");
     expect(draft.description).toBe("");
     expect(draft.template).toBe("");
     expect(draft.ownTemplate).toBe(false);
@@ -110,7 +111,7 @@ describe("model (pure)", () => {
   });
   it("a new draft carries the WhatsApp the catalog needs to create it; a reload keeps what was typed in the open step only", () => {
     expect(createBody({ ...EMPTY_DRAFT, title: " Copas ", category: "TABLEWARE", whatsapp: "+59170012345" })).toEqual({ type: "PRODUCT", category: "TABLEWARE", city: "la-paz", titles: { "es-BO": "Copas" }, destinations: { WHATSAPP: "https://wa.me/59170012345" } });
-    const fresh = draftFromSheet(SHEET as never, "es-BO");
+    const fresh = draftFromSheet(SHEET as never);
     const typed = { ...fresh, price: "999", title: "Otro" };
     expect(keepSteps(["price", "basic"], { ...fresh, title: "Del servidor" }, typed).title).toBe("Otro");
     const merged = keepStep("price", { ...fresh, title: "Del servidor" }, typed);
@@ -489,12 +490,15 @@ describe("the business WhatsApp message (§5.8, «Cómo te contactan»)", () => 
 });
 
 describe("review fixes of R2", () => {
-  const PASTRY_IDEAS = { items: [{ code: "CAKE", name: "Pastel", names: {}, categories: ["PASTRY"], eventTypes: ["WEDDING"], priceHintMinor: null }] };
+  // GLASSWARE belongs to both categories: it is compatible with PASTRY and must survive the change.
+  const PASTRY_IDEAS = { items: [{ code: "CAKE", name: "Pastel", names: {}, categories: ["PASTRY"], eventTypes: ["WEDDING"], priceHintMinor: null }, IDEAS.items[1]] };
   const ideasOf = (call: { readonly url: string }) => (call.url.includes("category=PASTRY") ? PASTRY_IDEAS : IDEAS);
+  const patches = (calls: readonly { readonly method: string; readonly body: unknown }[]) => calls.filter((call) => call.method === "PATCH");
 
-  it("B-1: saving Básico with another category sends only the ideas it allows, and Ideas then counts and saves just the visible ones", async () => {
+  it("B-1: saving Básico with another category sends the ideas it still allows, and Ideas then counts and saves them", async () => {
     setSearchParams({ lid: LID, paso: "basico" });
-    let current: typeof SHEET = SHEET;
+    const sheet = { ...SHEET, giftIdeas: ["GLASSWARE", "DINNERWARE_SET"] };
+    let current: typeof SHEET = sheet;
     const { client, calls } = fakeClient(handlers({
       [`GET /providers/${PID}/listings/${LID}`]: () => current,
       "GET /providers/gift-ideas": ideasOf,
@@ -504,19 +508,51 @@ describe("review fixes of R2", () => {
     await screen.findByTestId("product-title");
     fireEvent.change(await screen.findByTestId("product-category"), { target: { value: "PASTRY" } });
     fireEvent.click(screen.getByTestId("step-next"));
-    await waitFor(() => expect(calls.filter((call) => call.method === "PATCH")).toHaveLength(1));
-    expect((calls.find((call) => call.method === "PATCH")?.body as { giftIdeas: string[] }).giftIdeas).toEqual([]);
+    await waitFor(() => expect(patches(calls)).toHaveLength(1));
+    expect((patches(calls)[0]?.body as { giftIdeas: string[] }).giftIdeas).toEqual(["GLASSWARE"]);
     fireEvent.click(await screen.findByTestId("idea-CAKE"));
-    expect(screen.queryByTestId("idea-GLASSWARE")).toBeNull();
-    await waitFor(() => expect(document.body.textContent).toContain("1 de 10 elegidas"));
+    expect(screen.queryByTestId("idea-DINNERWARE_SET")).toBeNull();
+    await waitFor(() => expect(document.body.textContent).toContain("2 de 10 elegidas"));
     fireEvent.click(screen.getByTestId("step-next"));
-    await waitFor(() => expect(calls.filter((call) => call.method === "PATCH")).toHaveLength(2));
-    expect(calls.filter((call) => call.method === "PATCH")[1]?.body).toEqual({ giftIdeas: ["CAKE"] });
+    await waitFor(() => expect(patches(calls)).toHaveLength(2));
+    expect(patches(calls)[1]?.body).toEqual({ giftIdeas: ["GLASSWARE", "CAKE"] });
+  });
+
+  it("B-1: if the ideas of the new category cannot be read, nothing is saved and «Reintentar» tries again (never sends none)", async () => {
+    setSearchParams({ lid: LID, paso: "basico" });
+    let down = true;
+    const { client, calls } = fakeClient(handlers({
+      "GET /providers/gift-ideas": (call) => { if (call.url.includes("category=PASTRY") && down) return new HttpFailure(503); return ideasOf(call); },
+      [`PATCH /providers/${PID}/listings/${LID}`]: () => ({ ...SHEET, category: "PASTRY", version: 4 })
+    }));
+    renderApp(<ProductEditorScreen />, client, HOST);
+    await screen.findByTestId("product-title");
+    fireEvent.change(await screen.findByTestId("product-category"), { target: { value: "PASTRY" } });
+    fireEvent.click(screen.getByTestId("step-next"));
+    expect((await screen.findByTestId("ideas-load-error")).textContent).toMatch(/No pudimos leer las ideas de la categoría nueva/);
+    expect(patches(calls)).toHaveLength(0);
+    down = false;
+    fireEvent.click(screen.getByTestId("ideas-load-retry"));
+    await waitFor(() => expect(patches(calls)).toHaveLength(1));
+    expect((patches(calls)[0]?.body as { giftIdeas: string[] }).giftIdeas).toEqual(["GLASSWARE"]);
+  });
+
+  it("MENOR-2: with a category change not yet saved, Ideas still shows and keeps the ideas of the saved category", async () => {
+    setSearchParams({ lid: LID, paso: "basico" });
+    const { client, calls } = fakeClient(handlers({ "GET /providers/gift-ideas": ideasOf }));
+    renderApp(<ProductEditorScreen />, client, HOST);
+    await screen.findByTestId("product-title");
+    fireEvent.change(await screen.findByTestId("product-category"), { target: { value: "PASTRY" } });
+    fireEvent.click(screen.getByTestId("step-ideas"));
+    await screen.findByTestId("idea-GLASSWARE");
+    expect(screen.queryByTestId("idea-CAKE")).toBeNull();
+    expect(calls.some((call) => call.url.includes("category=PASTRY"))).toBe(false);
+    await waitFor(() => expect(document.body.textContent).toContain("1 de 10 elegidas"));
   });
 
   it("B-1: a sheet that still holds an idea of another category does not show, count or send it", async () => {
     setSearchParams({ lid: LID, paso: "ideas" });
-    const stale = { ...SHEET, category: "PASTRY", giftIdeas: ["GLASSWARE", "CAKE"] };
+    const stale = { ...SHEET, category: "PASTRY", giftIdeas: ["DINNERWARE_SET", "CAKE"] };
     const { client, calls } = fakeClient(handlers({
       [`GET /providers/${PID}/listings/${LID}`]: () => stale,
       "GET /providers/gift-ideas": ideasOf,
@@ -524,11 +560,11 @@ describe("review fixes of R2", () => {
     }));
     renderApp(<ProductEditorScreen />, client, HOST);
     await screen.findByTestId("idea-CAKE");
-    expect(screen.queryByTestId("idea-GLASSWARE")).toBeNull();
+    expect(screen.queryByTestId("idea-DINNERWARE_SET")).toBeNull();
     await waitFor(() => expect(document.body.textContent).toContain("1 de 10 elegidas"));
     fireEvent.click(screen.getByTestId("step-next"));
-    await waitFor(() => expect(calls.some((call) => call.method === "PATCH")).toBe(true));
-    expect(calls.find((call) => call.method === "PATCH")?.body).toEqual({ giftIdeas: ["CAKE"] });
+    await waitFor(() => expect(patches(calls)).toHaveLength(1));
+    expect(patches(calls)[0]?.body).toEqual({ giftIdeas: ["CAKE"] });
   });
 
   it("M-2: «Reintentar» in Fotos repeats the reorder that failed", async () => {
@@ -555,7 +591,7 @@ describe("review fixes of R2", () => {
     const { client, calls } = fakeClient(handlers());
     renderApp(<ProductEditorScreen />, client, HOST);
     fireEvent.click(await screen.findByTestId("photo-add"));
-    expect((await screen.findByTestId("sheet-error")).textContent).toMatch(/permiso para ver tus fotos.*ajustes del dispositivo/);
+    expect((await screen.findByTestId("sheet-error")).textContent).toMatch(/permiso para ver tus fotos.*ajustes de tu dispositivo/);
     expect(calls.some((call) => call.path.endsWith("/photos/uploads"))).toBe(false);
     cleanup();
     renderApp(<ProductEditorScreen />, client, HOST, "en-US");

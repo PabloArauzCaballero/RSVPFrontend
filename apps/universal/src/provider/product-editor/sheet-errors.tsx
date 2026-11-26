@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Text, View } from "react-native";
+import { Linking, Platform, Text, View } from "react-native";
 import { spacing } from "@rsvp/design-tokens";
 import { ApiError } from "@rsvp/api-client";
 import { PhotoInputError, PhotoTimeoutError, PhotoUploadError, sheetProblemDetails, type MissingCode } from "@rsvp/query-hooks";
@@ -56,12 +56,15 @@ export function SheetErrorNotice({ error, onReload, onRetry, onMissing }: { read
   const styles = useStyles();
   if (!error) return null;
   const message = sheetErrorMessage(error, t);
+  // Only a device can open its own settings; on the web the browser has no photo permission to give back.
+  const settings = error instanceof ImagePermissionError && Platform.OS !== "web" ? <ActionButton icon="arrow" variant="secondary" label={t("portal.product.photos.openSettings")} onPress={() => { void Linking.openSettings(); }} testID="photo-open-settings" /> : null;
   if (message === null) return <PortalErrorNotice error={error} {...(onReload ? { onReload } : {})} {...(onRetry ? { onRetry } : {})} />;
   const missing = error instanceof ApiError && error.problem?.code === "LISTING_INCOMPLETE" ? sheetProblemDetails(error).missing ?? [] : [];
   return (
     <Notice kind="error">
       <View style={{ gap: spacing[2] }} testID="sheet-error">
         <Text style={styles.body}>{message}</Text>
+        {settings}
         {missing.length && onMissing ? onMissing(missing) : null}
         {needsReload(error) && onReload ? <ActionButton icon="refresh" variant="secondary" label={t("portal.product.actions.reload")} onPress={onReload} testID="sheet-reload" /> : null}
       </View>
