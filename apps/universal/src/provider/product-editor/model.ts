@@ -62,9 +62,9 @@ export const isHttpsUrl = (value: string): boolean => {
   try { const url = new URL(value); return Boolean(url.hostname) && !url.username && !url.password; } catch { return false; }
 };
 
-/** The editable values of a sheet loaded from the catalog. Destinations are not in the sheet body (only their types), so they keep what was typed. */
-export function draftFromSheet(sheet: ProductSheet, locale: string, keep: Pick<SheetDraft, "whatsapp" | "productPage"> = { whatsapp: "", productPage: "" }): SheetDraft {
-  const text = (map: unknown): string => { const record = (map ?? {}) as Record<string, string>; return record["es-BO"] ?? record[locale] ?? ""; };
+/** The editable values of a sheet loaded from the catalog. The editor reads es-BO only, never the interface language: an en-US text must not be rewritten as es-BO. Destinations are not in the sheet body (only their types), so they keep what was typed. */
+export function draftFromSheet(sheet: ProductSheet, _locale: string, keep: Pick<SheetDraft, "whatsapp" | "productPage"> = { whatsapp: "", productPage: "" }): SheetDraft {
+  const text = (map: unknown): string => { const record = (map ?? {}) as Record<string, string>; return record["es-BO"] ?? ""; };
   const variants = (sheet.variants ?? []).map((variant): VariantDraft => ({ id: variant.id, label: variant.label, price: minorText(variant.priceMinor), stock: variant.stock, isDefault: variant.isDefault }));
   const template = text(sheet.whatsappTemplate);
   return {
@@ -157,6 +157,9 @@ function detailsOf(draft: SheetDraft): PatchListingInput["details"] | undefined 
   return Object.keys(details).length ? details : undefined;
 }
 
+/** The ideas of `ideas` the category still allows; none when the category's list is not known (the person picks them again in Ideas). */
+export const ideasAllowed = (ideas: readonly string[], allowed: readonly string[] | undefined): string[] => (allowed ? ideas.filter((code) => allowed.includes(code)) : []);
+
 /** The texts a sheet already holds in languages other than es-BO (en-US): the portal edits es-BO only and must not erase the rest. */
 const otherLocales = (map: unknown): Record<string, string> => Object.fromEntries(Object.entries((map ?? {}) as Record<string, string>).filter(([locale]) => locale !== "es-BO"));
 
@@ -164,7 +167,10 @@ const otherLocales = (map: unknown): Record<string, string> => Object.fromEntrie
  * The PATCH of one step: only that step's fields, so a stale field of another step is never sent back. `variants[]` replaces the
  * list (kept ids keep their photos) and `priceMinor` follows the default variant, as §5.1 requires.
  */
-export function patchBody(step: StepKey, draft: SheetDraft, loaded?: Pick<ProductSheet, "titles" | "descriptions" | "delivery">): PatchListingInput | null {
+export function patchBody(
+  step: StepKey, draft: SheetDraft, loaded?: Pick<ProductSheet, "titles" | "descriptions" | "delivery" | "category" | "whatsappTemplate">,
+  options: { readonly ideaCodes?: readonly string[] | undefined } = {}
+): PatchListingInput | null {
   switch (step) {
     case "basic": {
       const description = draft.description.trim();
@@ -172,10 +178,14 @@ export function patchBody(step: StepKey, draft: SheetDraft, loaded?: Pick<Produc
       // PATCH replaces each text map whole: the other languages the sheet already holds (en-US) go back as they came, and an empty
       // description is sent as a map without es-BO (the catalog then lists DESCRIPTION as missing) instead of being left out, which
       // would keep the old text.
+      // The catalog only replaces giftIdeas when they come in the PATCH, and refuses (422 GIFT_IDEA_NOT_ALLOWED) the ones the new category
+      // does not allow. So a changed category sends the ideas it still allows, or none when the list of the new category is not known.
+      const categoryChanged = loaded?.category !== undefined && loaded.category !== draft.category;
       return {
         titles: { ...others(loaded?.titles), "es-BO": draft.title.trim() }, category: draft.category, city: draft.city,
         descriptions: { ...others(loaded?.descriptions), ...(description ? { "es-BO": description } : {}) },
-        details: detailsOf(draft) ?? null
+        details: detailsOf(draft) ?? null,
+        ...(categoryChanged ? { giftIdeas: ideasAllowed(draft.giftIdeas, options.ideaCodes) } : {})
       };
     }
     case "ideas":
@@ -208,7 +218,11 @@ export function patchBody(step: StepKey, draft: SheetDraft, loaded?: Pick<Produc
       const whatsapp = waLink(draft.whatsapp);
       if (whatsapp) destinations["WHATSAPP"] = whatsapp;
       if (draft.productPage.trim()) destinations["PRODUCT_PAGE"] = draft.productPage.trim();
-      const template = draft.ownTemplate && draft.template.trim() ? { "es-BO": draft.template.trim() } : null;
+      // The message is a text map replaced whole: the en-US text the sheet holds goes back as it came; turning it off leaves only those.
+      const others = otherLocales(loaded?.whatsappTemplate);
+      const own = draft.ownTemplate && draft.template.trim() ? { "es-BO": draft.template.trim() } : {};
+      const merged = { ...others, ...own };
+      const template = Object.keys(merged).length ? merged : null;
       return Object.keys(destinations).length ? { destinations, whatsappTemplate: template } : { whatsappTemplate: template };
     }
   }

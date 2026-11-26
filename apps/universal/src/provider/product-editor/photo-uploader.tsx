@@ -88,7 +88,8 @@ export function PhotoUploader({ sheet, providerId, locale, reordering, onReorder
   };
   const choose = async (): Promise<void> => {
     setLocalError(null); upload.reset(); remove.reset();
-    const picked = await pickImage();
+    let picked: Awaited<ReturnType<typeof pickImage>>;
+    try { picked = await pickImage({ throwOnDenied: true }); } catch (error) { setLocalError(error); return; }
     if (!picked) return;
     const problem = photoInputProblem({ type: picked.type, size: picked.file.size });
     if (problem) { setLocalError(new PhotoInputError(problem)); return; }

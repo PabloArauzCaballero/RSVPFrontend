@@ -114,6 +114,7 @@ export const portalEnUS: DeepStrings<typeof portalEsBO> = {
       status: { PENDING_UPLOAD: "Uploading", QUEUED: "Queued", PROCESSING: "Processing", READY: "Ready", REJECTED: "Rejected", DELETING: "Removing" },
       stage: { requesting: "Preparing the upload…", uploading: "Uploading the photo…", processing: "Processing the photo…" }, ready: "Photo ready.",
       reject: { UNREADABLE: "We could not read the image. Try another file.", HEIC_UNSUPPORTED: "HEIC photos cannot be used. Export it as JPG and upload it again.", TOO_MANY_PIXELS: "The photo is too large (over 60 megapixels).", PROCESSING_FAILED: "We could not process the photo. Upload it again." },
+      permissionDenied: "We do not have permission to see your photos. Turn it on in your device settings (Settings, this app, Photos) and try again.",
       typeError: "Only JPG, PNG or WebP. If your photo is HEIC, export it as JPG.", sizeError: "Each photo may weigh up to 5 MB.", putFailed: "The photo could not be sent. Check your connection and try again.", timeout: "The photo is still processing. It will show up here as soon as it is ready.", limit: "You already have 5 photos. Remove one to add another.",
       shows: "Photo version", showsHelp: "If the photo shows only one version, pick it; otherwise leave it on “The whole product”.", wholeProduct: "The whole product", variantLimit: "“{{variant}}” already has {{max}} photos. Pick another version or remove one of its photos."
     },

@@ -4,6 +4,7 @@ import { spacing } from "@rsvp/design-tokens";
 import { ApiError } from "@rsvp/api-client";
 import { PhotoInputError, PhotoTimeoutError, PhotoUploadError, sheetProblemDetails, type MissingCode } from "@rsvp/query-hooks";
 import type { Translate } from "@rsvp/i18n";
+import { ImagePermissionError } from "../../platform/image-permission-error";
 import { useT } from "../../platform/providers";
 import { ActionButton, Notice, useStyles } from "../../host/ui";
 import { PortalErrorNotice } from "../errors";
@@ -20,6 +21,7 @@ const PHOTO_PUT_FORBIDDEN = 403;
 
 /** Pure: the sentence for a sheet failure, or null when the portal's generic notice words it better (network, 5xx, 401…). */
 export function sheetErrorMessage(error: unknown, t: Translate): string | null {
+  if (error instanceof ImagePermissionError) return t("portal.product.photos.permissionDenied");
   if (error instanceof PhotoInputError) return t(error.code === "PHOTO_TYPE" ? "portal.product.photos.typeError" : "portal.product.photos.sizeError");
   if (error instanceof PhotoUploadError) return t(error.status === PHOTO_PUT_FORBIDDEN ? "portal.product.errors.PHOTO_MISMATCH" : "portal.product.photos.putFailed");
   if (error instanceof PhotoTimeoutError) return t("portal.product.photos.timeout");

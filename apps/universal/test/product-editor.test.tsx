@@ -3,15 +3,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NewProductScreen, ProductEditorScreen } from "../src/provider/product-editor/product-editor-screen";
 import { ServicesScreen } from "../src/provider/services-screen";
 import { DestinationsScreen } from "../src/provider/destinations-screen";
-import { createBody, draftFromSheet, EMPTY_DRAFT, keepStep, keepSteps, MISSING_STEP, patchBody, stepFromSlug, stepProblems, waLink, waNumber, type SheetDraft } from "../src/provider/product-editor/model";
+import { createBody, draftFromSheet, ideasAllowed, EMPTY_DRAFT, keepStep, keepSteps, MISSING_STEP, patchBody, stepFromSlug, stepProblems, waLink, waNumber, type SheetDraft } from "../src/provider/product-editor/model";
 import { writeLocal } from "../src/platform/local-store";
 import { resetSecureStore } from "./stubs/expo-secure-store";
 import { resetRouter, routerCalls, setSearchParams } from "./stubs/expo-router";
 import { fakeClient, GEO, HOST, HttpFailure, renderApp, type Handler } from "./support";
 
 /** The device picker is the platform's; the tests hand it a file (web: an <input type=file>, native: expo-image-picker). */
-const picked = vi.hoisted(() => ({ next: null as null | { file: Blob; name: string; type: string; size: number } }));
-vi.mock("../src/platform/pick-image", () => ({ pickImage: async () => picked.next }));
+const picked = vi.hoisted(() => ({ next: null as null | { file: Blob; name: string; type: string; size: number }, denied: false }));
+vi.mock("../src/platform/pick-image", async () => {
+  const { ImagePermissionError } = await import("../src/platform/image-permission-error");
+  return { pickImage: async () => { if (picked.denied) throw new ImagePermissionError(); return picked.next; } };
+});
 
 /** R2 · the product sheet of the provider portal: steps, missing list, photos, publishing and the catalog's refusals. */
 const PID = "4f0f2d3d-0000-4000-8000-0000000000bb";
@@ -46,7 +49,7 @@ const handlers = (extra: Record<string, Handler> = {}): Record<string, Handler> 
 const type = (label: string, value: string): void => { fireEvent.change(screen.getByLabelText(label), { target: { value } }); };
 
 beforeEach(async () => { resetSecureStore(); resetRouter(); await writeLocal("rsvp.provider.u-host", PID); });
-afterEach(() => { cleanup(); picked.next = null; vi.unstubAllGlobals(); });
+afterEach(() => { cleanup(); picked.next = null; picked.denied = false; vi.unstubAllGlobals(); });
 
 describe("model (pure)", () => {
   it("every missing code opens a step, and step slugs round-trip", () => {
@@ -79,6 +82,25 @@ describe("model (pure)", () => {
     expect(stepProblems("contact", EMPTY_DRAFT, { hasDestination: true })).toEqual([]);
     expect(stepProblems("contact", EMPTY_DRAFT, { hasDestination: false })).toEqual(["destination"]);
     expect(stepProblems("contact", { ...EMPTY_DRAFT, whatsapp: "+59170012345", ownTemplate: true, template: "Hola {invitado}" })).toEqual(["templateVariables"]);
+  });
+  it("changing the category sends only the ideas the new category allows, or none when its list is unknown; the same category sends none", () => {
+    const loaded = { ...SHEET, category: "TABLEWARE" } as never;
+    const draft = { ...EMPTY_DRAFT, title: "Copas", category: "PASTRY", giftIdeas: ["GLASSWARE", "CAKE"] };
+    expect(patchBody("basic", draft, loaded, { ideaCodes: ["CAKE", "CUPCAKES"] })).toMatchObject({ category: "PASTRY", giftIdeas: ["CAKE"] });
+    expect(patchBody("basic", draft, loaded)).toMatchObject({ giftIdeas: [] });
+    expect(patchBody("basic", { ...draft, category: "TABLEWARE" }, loaded, { ideaCodes: ["GLASSWARE"] })).not.toHaveProperty("giftIdeas");
+    expect(ideasAllowed(["A", "B"], ["B"])).toEqual(["B"]);
+    expect(ideasAllowed(["A", "B"], undefined)).toEqual([]);
+  });
+  it("the editor reads es-BO only (never the interface language) and the contact save keeps the en-US message", () => {
+    const sheet = { ...SHEET, titles: { "en-US": "Set of glasses" }, title: "Set of glasses", descriptions: { "en-US": "English only" }, whatsappTemplate: { "en-US": "Hi {proveedor}" } } as never;
+    const draft = draftFromSheet(sheet, "en-US");
+    expect(draft.description).toBe("");
+    expect(draft.template).toBe("");
+    expect(draft.ownTemplate).toBe(false);
+    const loaded = { ...SHEET, whatsappTemplate: { "es-BO": "Hola", "en-US": "Hi {proveedor}" } } as never;
+    expect(patchBody("contact", { ...EMPTY_DRAFT, ownTemplate: true, template: "Hola {proveedor}" }, loaded)).toEqual({ whatsappTemplate: { "en-US": "Hi {proveedor}", "es-BO": "Hola {proveedor}" } });
+    expect(patchBody("contact", { ...EMPTY_DRAFT, ownTemplate: false }, loaded)).toEqual({ whatsappTemplate: { "en-US": "Hi {proveedor}" } });
   });
   it("local rules of each step", () => {
     expect(stepProblems("basic", { ...EMPTY_DRAFT, title: "ab", category: "" }, { creating: true })).toEqual(["title", "category", "whatsapp"]);
@@ -463,5 +485,81 @@ describe("the business WhatsApp message (§5.8, «Cómo te contactan»)", () => 
     const failing = fakeClient(destinationHandlers({ [`GET /providers/${PID}/whatsapp-template`]: () => new HttpFailure(503, { code: "UNAVAILABLE" }) }));
     renderApp(<DestinationsScreen />, failing.client, HOST);
     expect(await within(await screen.findByTestId("business-template")).findByRole("button", { name: /Reintentar/ })).toBeTruthy();
+  });
+});
+
+describe("review fixes of R2", () => {
+  const PASTRY_IDEAS = { items: [{ code: "CAKE", name: "Pastel", names: {}, categories: ["PASTRY"], eventTypes: ["WEDDING"], priceHintMinor: null }] };
+  const ideasOf = (call: { readonly url: string }) => (call.url.includes("category=PASTRY") ? PASTRY_IDEAS : IDEAS);
+
+  it("B-1: saving Básico with another category sends only the ideas it allows, and Ideas then counts and saves just the visible ones", async () => {
+    setSearchParams({ lid: LID, paso: "basico" });
+    let current: typeof SHEET = SHEET;
+    const { client, calls } = fakeClient(handlers({
+      [`GET /providers/${PID}/listings/${LID}`]: () => current,
+      "GET /providers/gift-ideas": ideasOf,
+      [`PATCH /providers/${PID}/listings/${LID}`]: (call) => { const sent = call.body as { category?: string; giftIdeas?: string[] }; current = { ...current, version: current.version + 1, category: sent.category ?? current.category, giftIdeas: sent.giftIdeas ?? current.giftIdeas } as typeof SHEET; return current; }
+    }));
+    renderApp(<ProductEditorScreen />, client, HOST);
+    await screen.findByTestId("product-title");
+    fireEvent.change(await screen.findByTestId("product-category"), { target: { value: "PASTRY" } });
+    fireEvent.click(screen.getByTestId("step-next"));
+    await waitFor(() => expect(calls.filter((call) => call.method === "PATCH")).toHaveLength(1));
+    expect((calls.find((call) => call.method === "PATCH")?.body as { giftIdeas: string[] }).giftIdeas).toEqual([]);
+    fireEvent.click(await screen.findByTestId("idea-CAKE"));
+    expect(screen.queryByTestId("idea-GLASSWARE")).toBeNull();
+    await waitFor(() => expect(document.body.textContent).toContain("1 de 10 elegidas"));
+    fireEvent.click(screen.getByTestId("step-next"));
+    await waitFor(() => expect(calls.filter((call) => call.method === "PATCH")).toHaveLength(2));
+    expect(calls.filter((call) => call.method === "PATCH")[1]?.body).toEqual({ giftIdeas: ["CAKE"] });
+  });
+
+  it("B-1: a sheet that still holds an idea of another category does not show, count or send it", async () => {
+    setSearchParams({ lid: LID, paso: "ideas" });
+    const stale = { ...SHEET, category: "PASTRY", giftIdeas: ["GLASSWARE", "CAKE"] };
+    const { client, calls } = fakeClient(handlers({
+      [`GET /providers/${PID}/listings/${LID}`]: () => stale,
+      "GET /providers/gift-ideas": ideasOf,
+      [`PATCH /providers/${PID}/listings/${LID}`]: () => ({ ...stale, version: 4 })
+    }));
+    renderApp(<ProductEditorScreen />, client, HOST);
+    await screen.findByTestId("idea-CAKE");
+    expect(screen.queryByTestId("idea-GLASSWARE")).toBeNull();
+    await waitFor(() => expect(document.body.textContent).toContain("1 de 10 elegidas"));
+    fireEvent.click(screen.getByTestId("step-next"));
+    await waitFor(() => expect(calls.some((call) => call.method === "PATCH")).toBe(true));
+    expect(calls.find((call) => call.method === "PATCH")?.body).toEqual({ giftIdeas: ["CAKE"] });
+  });
+
+  it("M-2: «Reintentar» in Fotos repeats the reorder that failed", async () => {
+    setSearchParams({ lid: LID, paso: "fotos" });
+    const sheet = { ...SHEET, photos: [photo("ph-1", "READY"), photo("ph-2", "READY")] };
+    let fail = true;
+    const { client, calls } = fakeClient(handlers({
+      [`GET /providers/${PID}/listings/${LID}`]: () => sheet,
+      [`PATCH /providers/${PID}/listings/${LID}`]: () => { if (fail) throw new TypeError("Failed to fetch"); return { ...sheet, version: 4 }; }
+    }));
+    renderApp(<ProductEditorScreen />, client, HOST);
+    fireEvent.click(await screen.findByTestId("photo-cover-ph-2"));
+    fireEvent.click(await screen.findByTestId("error-retry"));
+    await waitFor(() => expect(calls.filter((call) => call.method === "PATCH")).toHaveLength(2));
+    fail = false;
+    fireEvent.click(await screen.findByTestId("error-retry"));
+    await waitFor(() => expect(calls.filter((call) => call.method === "PATCH")).toHaveLength(3));
+    expect(calls.filter((call) => call.method === "PATCH").map((call) => call.body)).toEqual(Array(3).fill({ photoOrder: ["ph-2", "ph-1"] }));
+  });
+
+  it("M-3: a denied photo permission says how to allow it, in both languages, and no upload starts", async () => {
+    setSearchParams({ lid: LID, paso: "fotos" });
+    picked.denied = true;
+    const { client, calls } = fakeClient(handlers());
+    renderApp(<ProductEditorScreen />, client, HOST);
+    fireEvent.click(await screen.findByTestId("photo-add"));
+    expect((await screen.findByTestId("sheet-error")).textContent).toMatch(/permiso para ver tus fotos.*ajustes del dispositivo/);
+    expect(calls.some((call) => call.path.endsWith("/photos/uploads"))).toBe(false);
+    cleanup();
+    renderApp(<ProductEditorScreen />, client, HOST, "en-US");
+    fireEvent.click(await screen.findByTestId("photo-add"));
+    expect((await screen.findByTestId("sheet-error")).textContent).toMatch(/permission to see your photos.*device settings/);
   });
 });

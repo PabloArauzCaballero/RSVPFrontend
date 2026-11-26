@@ -168,6 +168,30 @@ describe("photo upload (§5.2)", () => {
     expect(h.calls.some((call) => call.path.endsWith("/complete"))).toBe(false);
   });
 
+  it("leaving the screen stops the wait of every upload still running, not only the last one", async () => {
+    let reads = 0;
+    const h = harness((seen) => {
+      if (seen.path.endsWith("/photos/uploads")) return { status: 201, body: { ...photo("PENDING_UPLOAD"), upload } };
+      if (seen.path.endsWith("/complete")) return { status: 202, body: photo("QUEUED") };
+      reads += 1;
+      return { body: sheet({ photos: [photo("PROCESSING")] }) };
+    });
+    const release: (() => void)[] = [];
+    const sleep = (): Promise<void> => new Promise((resolve) => { release.push(resolve); });
+    const put = (async () => new Response(null, { status: 200 })) as typeof fetch;
+    const view = renderHook(() => hooks.useUploadListingPhoto(h.client, PID, LID, "es-BO", { put, poll: { intervalMs: 10, sleep } }), { wrapper: h.wrapper });
+    const first = view.result.current.mutateAsync({ file, contentType: "image/jpeg", idempotencyKey: "a" }).catch((error: unknown) => error);
+    const second = view.result.current.mutateAsync({ file, contentType: "image/jpeg", idempotencyKey: "b" }).catch((error: unknown) => error);
+    await waitFor(() => expect(release).toHaveLength(2));
+    expect(reads).toBe(2);
+    view.unmount();
+    release.forEach((resolve) => resolve());
+    const [a, b] = await Promise.all([first, second]);
+    expect(a).toBeInstanceOf(hooks.PhotoTimeoutError);
+    expect(b).toBeInstanceOf(hooks.PhotoTimeoutError);
+    expect(reads).toBe(2);
+  });
+
   it("an idempotent replay without upload link skips the PUT and the complete", async () => {
     const h = harness((seen) => seen.path.endsWith("/photos/uploads") ? { body: { ...photo("QUEUED"), upload: null } } : { body: sheet({ photos: [photo("READY")] }) });
     const put = vi.fn() as unknown as typeof fetch;

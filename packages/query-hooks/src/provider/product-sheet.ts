@@ -216,8 +216,9 @@ export interface UploadPhotoVariables {
 export function useUploadListingPhoto(client: ApiClient, providerId: string, listingId: string, locale: string, options: { readonly put?: typeof fetch; readonly poll?: PollOptions } = {}) {
   const queryClient = useQueryClient();
   // The wait polls the sheet for up to 60 s: leaving the screen stops it instead of reading in the background.
-  const controller = useRef<AbortController | null>(null);
-  useEffect(() => () => { controller.current?.abort(); }, []);
+  // Each upload has its own controller, so unmounting stops every one still running, not only the last.
+  const controllers = useRef(new Set<AbortController>());
+  useEffect(() => () => { controllers.current.forEach((controller) => controller.abort()); }, []);
   return useMutation({
     mutationFn: async ({ file, contentType, idempotencyKey, altText, variantId, onStage }: UploadPhotoVariables): Promise<ListingPhoto | undefined> => {
       const problem = photoInputProblem({ type: contentType, size: file.size });
@@ -234,10 +235,15 @@ export function useUploadListingPhoto(client: ApiClient, providerId: string, lis
       }
       onStage?.("processing");
       if (registered.status === "PENDING_UPLOAD" || registered.upload) await service.completePhoto(providerId, listingId, registered.id);
-      controller.current = new AbortController();
-      const { sheet, photo } = await waitForPhoto(service, { providerId, listingId, photoId: registered.id, locale }, { ...options.poll, signal: controller.current.signal });
-      remember(queryClient, providerId, locale, sheet);
-      return photo;
+      const controller = new AbortController();
+      controllers.current.add(controller);
+      try {
+        const { sheet, photo } = await waitForPhoto(service, { providerId, listingId, photoId: registered.id, locale }, { ...options.poll, signal: controller.signal });
+        remember(queryClient, providerId, locale, sheet);
+        return photo;
+      } finally {
+        controllers.current.delete(controller);
+      }
     },
     onSettled: () => Promise.all([
       queryClient.invalidateQueries({ queryKey: productSheetKeys.sheet(providerId, listingId, locale) }),

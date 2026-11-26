@@ -17,7 +17,7 @@ import { PortalErrorNotice, PortalErrorState } from "../errors";
 import { PORTAL_ROUTES, PortalScreen, usePortalHeader } from "../frame";
 import { RowsSkeleton, StickyActions } from "../parts";
 import {
-  createBody, draftFromSheet, EMPTY_DRAFT, keepSteps, nextStep, patchBody, previousStep, STEP_SLUG, stepFromSlug, stepProblems, STEPS, stepsMissing,
+  createBody, draftFromSheet, ideasAllowed, EMPTY_DRAFT, keepSteps, nextStep, patchBody, previousStep, STEP_SLUG, stepFromSlug, stepProblems, STEPS, stepsMissing,
   type EditorStep, type LocalProblem, type SheetDraft, type StepKey
 } from "./model";
 import { BasicStep, ContactStep, DeliveryStep, IdeasStep, PriceStep } from "./steps";
@@ -120,6 +120,12 @@ function ProductEditor({ provider, listingId, initialStep, duplicated }: EditorP
     loadedVersion.current = sheet.version ?? null;
     setDraft((typed) => (first ? draftFromSheet(sheet, locale) : keepSteps([step, ...dirty.current], draftFromSheet(sheet, locale), typed)));
   }, [sheet, locale, step]);
+  // Ideas the category does not offer (left over from a previous category) are neither shown nor counted nor sent: the open Ideas step drops them.
+  useEffect(() => {
+    if (step !== "ideas" || !ideas.data) return;
+    const allowed = ideas.data.map((idea) => idea.code);
+    setDraft((current) => (current.giftIdeas.every((code) => allowed.includes(code)) ? current : { ...current, giftIdeas: ideasAllowed(current.giftIdeas, allowed) }));
+  }, [step, ideas.data, draft.giftIdeas]);
   // A new product starts on the first product category, so «Categoría» never shows a value the draft does not hold.
   useEffect(() => {
     const first = categories.data?.items[0]?.code;
@@ -148,13 +154,14 @@ function ProductEditor({ provider, listingId, initialStep, duplicated }: EditorP
       create.mutate({ input: createBody(draft), idempotencyKey: createKey.current }, { onSuccess: (created) => router.replace(productHref(created.id, "ideas") as Href) });
       return;
     }
-    const body = patchBody(current, draft, sheet);
+    const body = patchBody(current, draft, sheet, { ideaCodes: ideas.data?.map((idea) => idea.code) });
     if (!body) { open(nextStep(current)); return; }
     // Without a version there is no If-Match: say so and offer to reload, never move on as if it had been saved.
     if (!sheet?.version) { setVersionLost(true); return; }
     patch.mutate({ version: sheet.version, input: body }, { onSuccess: () => { dirty.current.delete(current); open(nextStep(current)); } });
   };
-  const reorder = (order: readonly string[]): void => { if (!sheet?.version) { setVersionLost(true); return; } patch.mutate({ version: sheet.version, input: { photoOrder: [...order] } }); };
+  const lastOrder = useRef<readonly string[] | null>(null);
+  const reorder = (order: readonly string[]): void => { lastOrder.current = order; if (!sheet?.version) { setVersionLost(true); return; } patch.mutate({ version: sheet.version, input: { photoOrder: [...order] } }); };
   const publishNow = (): void => { if (sheet && !busy) publish.mutate(sheet.id, { onSuccess: () => { setPublished(true); void sheetQuery.refetch(); } }); };
   const duplicateNow = (): void => {
     if (!sheet || busy) return;
@@ -228,7 +235,7 @@ function ProductEditor({ provider, listingId, initialStep, duplicated }: EditorP
         ) : (
           <>
             {versionLost ? <Notice kind="error"><View style={{ gap: spacing[2] }} testID="sheet-no-version"><Text style={styles.body}>{t("portal.product.errors.noVersion")}</Text><ActionButton icon="refresh" variant="secondary" label={t("portal.product.actions.reload")} onPress={() => { setVersionLost(false); reload(); }} testID="sheet-reload" /></View></Notice> : null}
-            <SheetErrorNotice error={create.error ?? patch.error ?? duplicate.error} onReload={reload} onRetry={() => { if (step !== "photos") save(step); }} />
+            <SheetErrorNotice error={create.error ?? patch.error ?? duplicate.error} onReload={reload} onRetry={() => { if (step !== "photos") save(step); else if (lastOrder.current) reorder(lastOrder.current); }} />
             <StickyActions ground="surface">
               {step === "photos" ? (
                 <ActionButton icon="arrow" label={t("portal.product.actions.next")} disabled={busy} onPress={() => open(nextStep(step))} testID="step-next" />
