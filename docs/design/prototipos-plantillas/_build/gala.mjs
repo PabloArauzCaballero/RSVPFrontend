@@ -54,7 +54,7 @@ html[data-photo="1"] .hero .dr{display:none}
 .sec{padding:20px 20px 64px;max-width:720px;margin:0 auto}
 .sec>h2{font-size:38px;line-height:1.05;text-align:center;margin:0 0 20px}
 .sep{display:block;width:min(300px,80%);height:28px;margin:0 auto 22px}
-.sec .body{display:grid;gap:0}
+.sec .body{display:grid;row-gap:0}
 .lead{font-size:16.5px;line-height:1.6}
 .sec p+p{margin-top:14px}
 .prog{list-style:none;margin:6px 0 0;padding:0}

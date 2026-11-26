@@ -8,7 +8,8 @@
     "./native": "./src/native.tsx",
     "./styles.css": "./styles.css",
     "./art": "./src/art/index.tsx",
-    "./art.css": "./src/art/art.css"
+    "./art.css": "./src/art/art.css",
+    "./design-documents": "./src/design/documents/index.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",

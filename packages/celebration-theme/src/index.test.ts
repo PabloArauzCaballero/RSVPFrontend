@@ -82,15 +82,15 @@ describe("P22 · PL-A10 · the gifts section is on every invitation", () => {
 const SEEDED_PALETTES: readonly (readonly [string, Palette])[] = seeded.templates.map((template) => [template.key, template.palette]);
 const themeOf = (palette: Palette) => ({ ...themeFromTemplate(null, []), palette });
 
-/** Light-scheme fill and ink the 16 seeds had before the dark-contrast work (b62081b). Light must never move. */
+/** Light-scheme fill and ink of the 30 seeds after the F4 redesign (computed by accentFill on each light palette; light accents already read, so the fill is the accent itself). */
 const LIGHT_FILLS: Readonly<Record<string, { readonly fill: string; readonly ink: string }>> = {
   "clasico-marfil": {
     "fill": "#7A5230",
-    "ink": "#FFFFFF"
+    "ink": "#FFFEFA"
   },
   "minimalista": {
     "fill": "#2F5D50",
-    "ink": "#F6F6F3"
+    "ink": "#FAFAF7"
   },
   "editorial": {
     "fill": "#9C3526",
@@ -118,7 +118,7 @@ const LIGHT_FILLS: Readonly<Record<string, { readonly fill: string; readonly ink
   },
   "arena-terracota": {
     "fill": "#A2431F",
-    "ink": "#F2EBE0"
+    "ink": "#FFFFFF"
   },
   "editorial-granate": {
     "fill": "#8A2638",
@@ -145,7 +145,63 @@ const LIGHT_FILLS: Readonly<Record<string, { readonly fill: string; readonly ink
     "ink": "#FFFFFF"
   },
   "gala-dorada": {
-    "fill": "#7A5A0E",
+    "fill": "#7B2A3C",
+    "ink": "#FFFFFF"
+  },
+  "cumpleanos-adulto": {
+    "fill": "#1D5C73",
+    "ink": "#FFFFFF"
+  },
+  "fiesta-patronal": {
+    "fill": "#8E2D6B",
+    "ink": "#FFFFFF"
+  },
+  "inauguracion": {
+    "fill": "#B03F00",
+    "ink": "#FFFFFF"
+  },
+  "pedida-de-mano": {
+    "fill": "#5B4B8A",
+    "ink": "#FFFFFF"
+  },
+  "despedida": {
+    "fill": "#0B6B8A",
+    "ink": "#FFFFFF"
+  },
+  "bodas-de-oro": {
+    "fill": "#8A4A1E",
+    "ink": "#FFFEFA"
+  },
+  "bodas-de-plata": {
+    "fill": "#3E5C76",
+    "ink": "#FFFFFF"
+  },
+  "reencuentro": {
+    "fill": "#9A3412",
+    "ink": "#FFFFFF"
+  },
+  "fiesta-tematica": {
+    "fill": "#2F4FBF",
+    "ink": "#FFFFFF"
+  },
+  "fin-de-ano": {
+    "fill": "#1F3A6B",
+    "ink": "#FFFFFF"
+  },
+  "otros-evento": {
+    "fill": "#4F5D95",
+    "ink": "#FFFFFF"
+  },
+  "graduacion": {
+    "fill": "#1E3A8A",
+    "ink": "#FFFFFF"
+  },
+  "baby-shower": {
+    "fill": "#A3406F",
+    "ink": "#FFFFFF"
+  },
+  "primera-comunion": {
+    "fill": "#3C6E8F",
     "ink": "#FFFFFF"
   }
 };
@@ -162,11 +218,11 @@ function hue(hex: string): number {
 const hueDistance = (first: string, second: string) => { const gap = Math.abs(hue(first) - hue(second)); return Math.min(gap, 360 - gap); };
 
 describe("palette fixture", () => {
-  it("is a literal copy of the 16 seeds of RSVPBackend, with its origin", () => {
+  it("is a literal copy of the 30 seeds of RSVPBackend, with its origin", () => {
     expect(seeded._origin.repo).toBe("PabloArauzCaballero/RSVPBackend");
     expect(seeded._origin.commit).toMatch(/^[0-9a-f]{40}$/);
-    expect(seeded.templates).toHaveLength(16);
-    expect(new Set(seeded.templates.map((template) => template.key)).size).toBe(16);
+    expect(seeded.templates).toHaveLength(30);
+    expect(new Set(seeded.templates.map((template) => template.key)).size).toBe(30);
     for (const template of seeded.templates) {
       expect(template.file).toMatch(/^\d{3}-[a-z-]+\.json$/);
       expect(Object.keys(template.palette).sort()).toEqual(["accent", "canvas", "muted", "surface", "text"]);
@@ -265,8 +321,9 @@ describe("styles.css and native styles keep the contract the theme assumes", () 
     expect(sizes.filter((size) => size < FLOOR_PX)).toEqual([]);
   });
 
-  it("the washes the theme validates against are the ones the stylesheet paints", () => {
-    expect(css).toContain(`color-mix(in srgb, var(--celebration-accent) ${COVER_WASH * 100}%, transparent)`);
+  it("F4 (PL-A3, PL-M6, PL-M8) · the stylesheet paints no gradient and no saturated cover block; the reply tint is the one the theme validates against", () => {
+    expect(css).not.toMatch(/linear-gradient|radial-gradient/);
+    expect(css).not.toContain(`color-mix(in srgb, var(--celebration-accent) ${COVER_WASH * 100}%, transparent)`);
     expect(css).toMatch(new RegExp(String.raw`data-section="rsvp"\][^}]*color-mix\(in srgb, var\(--celebration-accent\) ${RSVP_WASH * 100}%, var\(--celebration-surface\)\)`));
   });
 
@@ -274,10 +331,6 @@ describe("styles.css and native styles keep the contract the theme assumes", () 
     expect(css).toMatch(/prefers-reduced-motion: no-preference\) \{[^@]*\.celebration-cta:active \{ transform: scale\(\.98\); \}/);
     expect(css).toMatch(/@media \(hover: hover\) and \(prefers-reduced-motion: no-preference\) \{\s*\.celebration-cta:hover \{ transform: scale\(1\.02\); \}/);
     expect(css).not.toContain("translateY(-1px)");
-  });
-
-  it("pressing with a mouse wins over hovering: :hover:active keeps scale(.98), inside the same hover and motion media query", () => {
-    expect(css).toMatch(/@media \(hover: hover\) and \(prefers-reduced-motion: no-preference\) \{[^@]*\.celebration-cta:hover:active \{ transform: scale\(\.98\); \}/);
   });
 
   /** Specificity (ids, classes/attributes/pseudo-classes, elements) of one selector, enough for the selectors this stylesheet writes. */
@@ -307,5 +360,9 @@ describe("styles.css and native styles keep the contract the theme assumes", () 
   it("the button has no second :focus-visible rule for the button (the shared link ring covers it)", () => {
     expect(css).not.toMatch(/\.celebration-cta:focus-visible/);
     expect(css).toMatch(/\.celebration a:focus-visible/);
+  });
+
+  it("pressing with a mouse wins over hovering: :hover:active keeps scale(.98), inside the same hover and motion media query", () => {
+    expect(css).toMatch(/@media \(hover: hover\) and \(prefers-reduced-motion: no-preference\) \{[^@]*\.celebration-cta:hover:active \{ transform: scale\(\.98\); \}/);
   });
 });

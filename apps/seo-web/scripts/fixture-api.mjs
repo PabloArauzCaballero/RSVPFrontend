@@ -2,6 +2,7 @@
 // (celebrations with every section) or no Provider Catalog HTTP service yet.
 //   node apps/seo-web/scripts/fixture-api.mjs   (PORT=28100; FIXTURE_LOCALE=en-US to serve the view in English)
 // It is NOT the backend: evidence produced against it is labelled "fixture" and proves rendering only.
+import { readFileSync } from "node:fs";
 import { createServer } from "node:http";
 
 const PORT = Number(process.env.PORT ?? 28100);
@@ -37,6 +38,19 @@ const restrictedRsvp = {
 };
 const template = { id: "t-classic", name: "Clásico marfil", layout: "classic", eventTypeTags: ["wedding"], theme: { palette: { canvas: "#FFFBF4", surface: "#FFFFFF", text: "#302C28", accent: "#865E36", muted: "#6F665D" }, typography: { heading: "'Cormorant Garamond', Georgia, serif", body: "'Source Sans 3', Arial, sans-serif" }, sectionStyle: "bands" }, sectionOrder: ["story", "schedule", "venues", "gallery", "dressCode", "gifts", "faq", "recommendations", "rsvp"] };
 const gallery = [1, 2, 3].map((n) => ({ id: `g${n}`, width: 1920, height: 1280, isCover: n === 1, variants: { thumb: img(n), medium: img(n), full: img(n), webp: img(n) } }));
+
+// F4 b · the three prototyped templates as design documents v2, read from the very files the backend seeds. Each one is served as a
+// celebration with a cover photo (`fixture-v2-<name>`) and without it (`fixture-v2-<name>-sinfoto`), to prove both covers on the real site.
+const V2_IDS = { marfil: "73477f09-c9a6-544e-9477-948866a907c6", pinata: "c5c5c247-bfaf-52c2-b932-e0ce9f2cb8c7", gala: "e6a5911c-2e0b-5381-a2f8-9d9e0a9b24e8" };
+const v2Template = (name) => {
+  const file = JSON.parse(readFileSync(new URL(`../../../packages/celebration-theme/src/design/documents/${name}.json`, import.meta.url), "utf8"));
+  return { id: V2_IDS[name], name: file.name, description: file.description, status: "PUBLISHED", layout: file.layout, eventTypeTags: file.eventTypeTags, theme: file.theme, sectionOrder: file.sectionOrder, version: 2 };
+};
+const v2Celebrations = Object.entries(V2_IDS).flatMap(([name, templateId], index) => [false, true].map((bare) => ({
+  slug: `fixture-v2-${name}${bare ? "-sinfoto" : ""}`, templateId, bare,
+  view: { ...view, celebrationId: `00000000-0000-4000-8000-0000000001${index}${bare ? 1 : 0}`, slug: `fixture-v2-${name}${bare ? "-sinfoto" : ""}`, templateId,
+    content: name === "pinata" ? { ...view.content, title: "Sofi cumple 6", hosts: {}, eventDate: "2026-12-19T19:00:00.000Z" } : view.content }
+})));
 
 const providers = [
   { listingId: "7d1c1a34-5d4c-4a39-9a2e-0f4f2d3d7b11", providerSlug: "hotel-andino", name: "Hotel Andino", category: "ACCOMMODATION", city: "La Paz", department: "La Paz", verified: true, summary: "Hospedaje boutique en el centro histórico, con salón para recepciones de hasta 120 personas.", priceFrom: { amountMinor: 45000, currency: "BOB" }, imageUrl: img(1), destinations: ["WHATSAPP", "PHONE", "EMAIL", "OFFICIAL_SITE"], coverage: ["La Paz", "El Alto"], address: "Calle Comercio 123, La Paz", hours: ["Lu-Do 08:00-22:00"], lat: -16.4955, lng: -68.1336 },
@@ -81,6 +95,12 @@ createServer((req, res) => {
   if (path === "/celebrations/public") return json(res, 200, { items: [{ slug: SLUG, updatedAt: "2026-11-01T00:00:00Z", supportedLocales: ["es-BO", "en-US"] }] });
   if (path === `/celebrations/public/${SLUG}`) return json(res, 200, view);
   if (path === `/celebrations/public/${CONTACT_SLUG}`) return json(res, 200, restrictedRsvp);
+  const v2 = v2Celebrations.find((item) => path === `/celebrations/public/${item.slug}`);
+  if (v2) return json(res, 200, v2.view);
+  const v2Assets = v2Celebrations.find((item) => path === `/media/public/celebrations/${item.view.celebrationId}/assets`);
+  if (v2Assets) return json(res, 200, { items: v2Assets.bare ? [] : gallery });
+  const v2Name = Object.keys(V2_IDS).find((name) => path === `/media/templates/${V2_IDS[name]}`);
+  if (v2Name) return json(res, 200, v2Template(v2Name));
   if (path.startsWith("/celebrations/public/")) return json(res, 404, { title: "Not found", status: 404 });
   if (path === "/media/templates/t-classic") return json(res, 200, template);
   if (path === `/media/public/celebrations/${view.celebrationId}/assets`) return json(res, 200, { items: gallery });

@@ -37,7 +37,7 @@ export function PublicCelebration({ page, only }: { readonly page: PublicPage; r
           personal». `RsvpCredentialIsland` flips it to «Confirmar asistencia» when this tab holds the guest's credential; the
           token is never put in the markup. The guest arriving by the personal link goes to `/c/{slug}/rsvp/{token}` directly.
           The gifts button needs nothing: it is always `/c/{slug}/regalos`. */}
-      <CelebrationRenderer theme={theme} view={view} gallery={gallery} t={t} only={only} basePath={basePath} now={visualTestNow()} rsvpHelpHref={celebrationPath(view.slug, "rsvp")} rsvpAdaptive />
+      <CelebrationRenderer theme={theme} view={view} gallery={gallery} t={t} only={only} basePath={basePath} rsvpHelpHref={celebrationPath(view.slug, "rsvp")} rsvpAdaptive now={visualTestNow()} />
       <RsvpCredentialIsland slug={view.slug} />
     </>
   );
