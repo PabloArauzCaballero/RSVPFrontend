@@ -1,3 +1,4 @@
+export * as design from "./design/index.js";
 export * from "./types.js";
 export * from "./theme.js";
 export * from "./content.js";
