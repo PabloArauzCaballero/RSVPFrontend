@@ -39,7 +39,14 @@ jobs:
       # The filters come from the package.json files (scripts/test-filters.mjs), not from a hand-kept list: a new package
       # with `test` and no `test:coverage` is picked up here automatically. Its test proves it with a fictitious package.
       - run: node --test scripts/test-filters.test.mjs
-      - run: yarn turbo run test --concurrency=2 $(node scripts/test-filters.mjs)
+      - name: Tests of the packages with no coverage script
+        run: |
+          filters="$(node scripts/test-filters.mjs)"
+          if [ -z "$filters" ]; then
+            echo "Every package with a test script has test:coverage: nothing left for this phase."
+            exit 0
+          fi
+          yarn turbo run test --concurrency=2 $filters
 
   deploy-config:
     # A6/B1/M9 · nginx of the web app with its real image, rendered config and expected headers; build-arg validation.
