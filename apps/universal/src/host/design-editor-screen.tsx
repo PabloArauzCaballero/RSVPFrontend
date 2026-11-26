@@ -12,7 +12,7 @@ import { ActionButton, EmptyState, ErrorNotice, Notice } from "./ui";
 import type { ScreenProps } from "./gate";
 import { HOST_ROUTES, withCelebration } from "./routes";
 
-const toEditable = (record: DesignRecord): EditableDesign => ({ id: record.id, name: record.name, draftVersion: record.draftVersion, document: record.document, ...(record.warnings ? { warnings: record.warnings } : {}) });
+const toEditable = (record: DesignRecord): EditableDesign => ({ id: record.id, name: record.name, draftVersion: record.draftVersion, publishedVersion: record.publishedVersion, document: record.document, ...(record.warnings ? { warnings: record.warnings } : {}) });
 
 /**
  * The invitation editor (plantillas F5), web only: the invitation is web-first and the app shows it in a web view (P10), so
@@ -36,9 +36,12 @@ export function DesignEditorScreen({ celebrationId }: ScreenProps): ReactNode {
   const versions = useMemo(() => {
     const api = designApi(client);
     return {
-      list: async (id: string) => (await api.versions(id)).items,
+      list: async (id: string, before?: number) => {
+        const page = await api.versions(id, before === undefined ? {} : { before });
+        return { items: page.items, nextBefore: page.nextBefore ?? null };
+      },
       publish: async (id: string, draftVersion: number, label: string) => { const done = await api.publish(id, draftVersion, label); return { draftVersion: done.design.draftVersion, version: done.version }; },
-      restore: async (id: string, version: number, draftVersion: number) => { const done = await api.restore(id, version, draftVersion); return { draftVersion: done.draftVersion, document: done.document }; }
+      restore: async (id: string, version: number, draftVersion: number) => { const done = await api.restore(id, version, draftVersion); return { draftVersion: done.draftVersion, document: done.document, ...(done.warnings ? { warnings: done.warnings } : {}) }; }
     };
   }, [client]);
   const tags = eventTypes.data?.items.find((type) => type.code === celebration.data?.eventTypeCode)?.compatibleTemplateTags ?? [];

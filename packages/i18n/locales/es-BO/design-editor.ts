@@ -63,12 +63,7 @@ export const designEditorEsBO = {
   },
   contrast: {
     title: "Contraste",
-    ok: "Todos los textos se leen bien (4,5:1 o más) en claro y en oscuro.",
-    warning: "{{foreground}} sobre {{background}} en {{scheme}}: {{ratio}}:1 (se recomienda {{minimum}}:1).",
-    note: "Es un aviso: puedes publicar igual, pero habrá quien lo lea con dificultad.",
-    apply: "Usar {{hex}}",
-    scheme: { light: "modo claro", dark: "modo oscuro" },
-    role: { canvas: "el fondo", surface: "la tarjeta", text: "el texto", muted: "el texto secundario", accent: "el acento", accentFill: "el relleno del acento", onAccent: "el texto sobre el acento", line: "la línea" }
+    ok: "Todos los textos se leen bien (4,5:1 o más) en claro y en oscuro."
   },
   publish: {
     title: "Publicar y versiones",
@@ -79,14 +74,35 @@ export const designEditorEsBO = {
     unchanged: "No hay cambios nuevos desde la última versión publicada.",
     failed: "No pudimos publicar. Revisa tu conexión; tu borrador está a salvo.",
     blocked: "Antes de publicar hay que resolver el problema de guardado.",
+    conflict: "Otra pestaña o persona guardó un borrador más nuevo, así que no se publicó. Carga la versión del servidor y vuelve a publicar.",
+    signIn: "Tu sesión terminó, así que no se publicó. Vuelve a iniciar sesión (tu borrador sigue en esta pantalla) y reintenta.",
+    forbidden: "No tienes permiso para publicar este diseño.",
     notPublishable: "El servidor no aceptó el diseño para publicar ({{code}}).",
+    reload: "Cargar la versión del servidor",
     history: "Versiones publicadas",
+    listLoading: "Cargando versiones…",
+    listFailed: "No pudimos cargar las versiones publicadas.",
+    retry: "Reintentar",
     empty: "Todavía no publicaste ninguna versión.",
+    more: "Ver más versiones",
+    moreLoading: "Cargando…",
+    moreFailed: "No pudimos cargar más versiones.",
     version: "Versión {{version}}",
     restore: "Restaurar",
+    restoring: "Restaurando…",
+    restoringVersion: "Restaurando la versión {{version}}…",
+    restoreLabel: "Restaurar versión {{version}}",
     restoreHint: "Restaurar copia esa versión a tu borrador; no se publica hasta que tú lo hagas. Puedes deshacerlo.",
+    confirm: "Restaurar la versión {{version}} reemplaza tu borrador actual por esa versión. Puedes deshacerlo con «Deshacer» mientras no cierres el editor.",
+    confirmUnsaved: "Tus últimos cambios todavía no se guardaron en el servidor. Si restauras la versión {{version}}, el borrador del servidor se reemplaza y esos cambios solo quedarán en este editor (con «Deshacer»); si cierras la página se pierden.",
+    confirmAction: "Sí, restaurar la versión {{version}}",
+    cancel: "Cancelar",
     restored: "Versión {{version}} copiada al borrador. Revísala y publícala cuando quieras.",
-    restoreFailed: "No pudimos restaurar esa versión. Tu borrador no cambió."
+    restoreFailed: "No pudimos restaurar esa versión. Tu borrador no cambió.",
+    restoreConflict: "Otra pestaña o persona guardó un borrador más nuevo. No se restauró la versión; carga la versión del servidor y vuelve a intentarlo.",
+    restoreSignIn: "Tu sesión terminó. No se restauró la versión y tu borrador no cambió; vuelve a iniciar sesión y reintenta.",
+    restoreForbidden: "No tienes permiso para restaurar versiones de este diseño. Tu borrador no cambió.",
+    restoreInvalid: "Esa versión ya no cumple las reglas del diseño, así que no se puede restaurar. Tu borrador no cambió."
   },
   customCode: {
     title: "Código propio",
@@ -133,7 +149,7 @@ export const designEditorEsBO = {
     hint: "Es un aviso: puedes publicar igual, pero a algunos invitados les costará leer.",
     item: "En el {{scheme}}, {{foreground}} sobre {{background}} tiene contraste {{ratio}}:1 y el mínimo es {{minimum}}:1.",
     use: "Usar {{colour}}",
-    useLabel: "Cambiar {{foreground}} del {{scheme}} a {{colour}}"
+    useLabel: "Usar {{colour}} en {{foreground}} del {{scheme}}, sobre {{background}}"
   },
   section: { story: "Nuestra historia", schedule: "Itinerario", venues: "Lugares", gallery: "Galería", dressCode: "Código de vestimenta", faq: "Preguntas frecuentes", recommendations: "Recomendaciones", gifts: "Regalos", rsvp: "Confirma tu asistencia" },
   block: {

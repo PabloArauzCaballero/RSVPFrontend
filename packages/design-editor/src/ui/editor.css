@@ -106,14 +106,18 @@ a.de-btn { text-decoration: none; box-sizing: border-box; }
 }
 @media (prefers-reduced-motion: reduce) { .de-frame, .de-btn { transition: none; } }
 .de-contrast, .de-publish { margin-top: 20px; border-top: 1px solid var(--de-border); padding-top: 16px; }
-.de-warnings, .de-versions { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 10px; }
-.de-warnings p { display: flex; gap: 8px; align-items: flex-start; margin: 0 0 6px; font-size: 13px; color: var(--de-danger); }
-.de-swatch { width: 16px; height: 16px; border: 1px solid var(--de-field); border-radius: 3px; display: inline-block; }
-.de-versions li { display: flex; justify-content: space-between; gap: 8px; align-items: center; font-size: 14px; }
+.de-versions { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 10px; }
+.de-versions li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: center; font-size: 14px; }
+.de-confirm { flex-basis: 100%; border: 1px solid var(--de-danger); background: var(--de-danger-bg); border-radius: 6px; padding: 12px; display: grid; gap: 10px; }
+.de-confirm p { margin: 0; font-size: 13px; }
+.de-confirm-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.de-more { display: grid; gap: 8px; justify-items: start; margin-bottom: 12px; }
+.de-list-error { display: grid; gap: 8px; justify-items: start; margin-bottom: 12px; }
 .de-versions small { color: var(--de-muted); }
 .de-publish h3 { font: 500 14px/1.3 Geist, system-ui, sans-serif; margin: 16px 0 8px; }
 .de-publish input[type="text"] { min-height: 44px; border: 1px solid var(--de-field); border-radius: 6px; padding: 0 10px; background: var(--de-surface); color: var(--de-text); font: inherit; width: 100%; }
 .de-publish [data-kind="error"] { color: var(--de-danger); }
+.de-publish .de-hint .de-btn { margin-left: 4px; }
 .de-code { margin-top: 20px; border-top: 1px solid var(--de-border); padding-top: 16px; }
 .de-code h2 { margin-bottom: 12px; }
 .de-code textarea { width: 100%; font: 400 13px/1.5 "Geist Mono", ui-monospace, monospace; color: var(--de-text); background: var(--de-surface); border: 1px solid var(--de-field); border-radius: 6px; padding: 8px; resize: vertical; }

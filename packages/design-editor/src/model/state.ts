@@ -24,6 +24,8 @@ export type EditorAction =
   | { readonly type: "undo" }
   | { readonly type: "redo" }
   | { readonly type: "load"; readonly document: Doc }
+  /** A document that takes the place of the present as ONE undoable step (a restored version): «Deshacer» brings the previous one back. */
+  | { readonly type: "replace"; readonly document: Doc; readonly at: number }
   | { readonly type: "setMode"; readonly mode: EditorMode }
   | { readonly type: "setCanvas"; readonly canvas: CanvasName }
   | { readonly type: "select"; readonly id: string | null }
@@ -61,6 +63,10 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
     }
     case "redo": {
       const history = redo(state.history);
+      return history === state.history ? state : { ...state, history, revision: state.revision + 1, refusal: null };
+    }
+    case "replace": {
+      const history = record(state.history, action.document, null, action.at);
       return history === state.history ? state : { ...state, history, revision: state.revision + 1, refusal: null };
     }
     case "load": return { ...initialEditorState(action.document), mode: state.mode, canvas: state.canvas };
