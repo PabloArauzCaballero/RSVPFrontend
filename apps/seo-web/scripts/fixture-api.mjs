@@ -55,6 +55,11 @@ const V2_CONTENT = { pinata: { title: "Sofi cumple 6", hosts: {}, eventDate: "20
   festivo: { title: "Camila cumple 15", hosts: {} }, "fiesta-lila": { title: "Fiesta lila de Dani", hosts: {} }, "cumpleanos-adulto": { title: "Los 50 de Marcela", hosts: {} },
   "fiesta-tematica": { title: "Noche de los 80", hosts: {} }, "fin-de-ano": { title: "Recibimos el 2027", hosts: {} }, despedida: { title: "Despedida de Andrés", hosts: {} },
   reencuentro: { title: "Promoción 2006", hosts: {} } };
+// F4 c3 · the children and rites group (the id is the seed's: uuid5 of the key, P20), each with the title its event would carry.
+Object.assign(V2_IDS, { "cielo-bautizo": "14924a38-0623-5076-880e-b1b2c631853f", "menta-infantil": "4e35035d-2da1-517c-9ffa-1133d9836c63", "baby-shower": "e983a0c1-0fc2-5e1a-b26b-7ad27d06f673",
+  "primera-comunion": "76bc1ae5-77da-53e9-a4bd-f85babf7fe8b", graduacion: "82ffe36e-53f2-52d2-9e0d-42a6982fa983" });
+Object.assign(V2_CONTENT, { "cielo-bautizo": { title: "Bautizo de Emma", hosts: {} }, "menta-infantil": { title: "Leo cumple 3", hosts: {} }, "baby-shower": { title: "Baby shower de Valentina", hosts: {} },
+  "primera-comunion": { title: "Primera comunión de Sofía", hosts: {} }, graduacion: { title: "Promoción de Camila", hosts: {} } });
 const v2Template = (name) => {
   const file = JSON.parse(readFileSync(new URL(`../../../packages/celebration-theme/src/design/documents/${name}.json`, import.meta.url), "utf8"));
   return { id: V2_IDS[name], name: file.name, description: file.description, status: "PUBLISHED", layout: file.layout, eventTypeTags: file.eventTypeTags, theme: file.theme, sectionOrder: file.sectionOrder, version: 2 };
