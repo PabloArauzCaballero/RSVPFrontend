@@ -7,7 +7,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Until F4/F5 the list leaves out templates whose theme is a design document v2 (the admin cannot open them); one that already exists is archived by id with POST /templates/{id}/archive. */
+        /** @description The list includes templates whose theme is a design document v2. Only while the service gate DESIGN_V2_ACCEPTED is off (on by default since F4 b) does it leave them out, because the admin cannot open them then; one that already exists is archived by id with POST /templates/{id}/archive. */
         get: operations["listAllTemplates"];
         put?: never;
         post?: never;
@@ -57,6 +57,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
+        /** @description Order and cover of the gallery photos (purpose gallery or cover). Other purposes are not part of the order. */
         put: operations["reorderAssets"];
         post?: never;
         delete?: never;
@@ -73,6 +74,23 @@ export interface paths {
             cookie?: never;
         };
         get: operations["getCelebrationDesign"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/celebrations/{celebrationId}/media-usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Quota used and left by the celebration */
+        get: operations["getMediaUsage"];
         put?: never;
         post?: never;
         delete?: never;
@@ -197,6 +215,23 @@ export interface paths {
         put?: never;
         /** Copy a published version into the draft (P15); it does not publish */
         post: operations["restoreDesignVersion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/embeds/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Normalises a pasted link to its allowlisted embed */
+        post: operations["resolveEmbed"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1008,7 +1043,7 @@ export interface components {
             surface: components["schemas"]["HexColour"];
             text: components["schemas"]["HexColour"];
         };
-        /** @description 422 of a v2 design (400 and 413 are plain Problems). code is INVALID_THEME (not an object, neither v1 nor v2, or a schemaVersion that is not the integer 2), DESIGN_SCHEMA_INVALID (issues lists the paths), GIFTS_BLOCK_REQUIRED (no gifts block, said before the schema errors), GIFTS_BLOCK_LOCKED (link or rotation on the gifts element), GIFTS_BLOCK_HIDDEN (not visible or translucent), GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL (under 44 px, or under 44 px of height left once vertical padding and border are taken out), GIFTS_BLOCK_TEXT_TOO_LARGE (label over 32 px or taller than the useful height), GIFTS_BLOCK_COVERED (another element paints over it), GIFTS_BLOCK_LOW_CONTRAST (text under 4.5:1 or contour under 3:1 in either palette), DESIGN_REFERENCE_INVALID, FONT_WEIGHT_UNAVAILABLE, CUSTOM_CODE_UNAVAILABLE (custom html/css until the F5 sanitiser), DESIGN_NOT_PUBLISHABLE (publishing a v2: it stays a draft until the renderer supports it) or DESIGN_V2_NOT_AVAILABLE (POST/PATCH of any v2 theme until F4/F5: the admin and the renderer cannot read it yet; checked before the document is validated). Design endpoints add VERSION_CONFLICT (409, currentVersion), DESIGN_EXISTS (409), PRIVATE_TEMPLATE_LIMIT (409), DESIGN_PUBLISHED (409, a published celebration design cannot be deleted), DESIGN_TOO_LARGE, DESIGN_MEDIA_INVALID (a mediaId that is not a usable photo of the celebration; mediaIds lists them), DESIGN_MEDIA_NOT_ALLOWED (a private template cannot reference photos; mediaIds lists them), CELEBRATION_REQUIRED, CELEBRATION_NOT_ALLOWED and KIND_REQUIRED (422). */
+        /** @description 422 of a v2 design (400 and 413 are plain Problems). code is INVALID_THEME (not an object, neither v1 nor v2, or a schemaVersion that is not the integer 2), DESIGN_SCHEMA_INVALID (issues lists the paths), GIFTS_BLOCK_REQUIRED (no gifts block, said before the schema errors), GIFTS_BLOCK_LOCKED (link or rotation on the gifts element), GIFTS_BLOCK_HIDDEN (not visible or translucent), GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL (under 44 px, or under 44 px of height left once vertical padding and border are taken out), GIFTS_BLOCK_TEXT_TOO_LARGE (label over 32 px or taller than the useful height), GIFTS_BLOCK_COVERED (another element paints over it), GIFTS_BLOCK_LOW_CONTRAST (text under 4.5:1 or contour under 3:1 in either palette), DESIGN_REFERENCE_INVALID, FONT_WEIGHT_UNAVAILABLE, CUSTOM_CODE_UNAVAILABLE (custom html/css until the F5 sanitiser), or DESIGN_V2_NOT_AVAILABLE (POST/PATCH of any v2 theme while the service gate DESIGN_V2_ACCEPTED is off, which is not the default since F4 b; checked before the document is validated). Design endpoints add VERSION_CONFLICT (409, currentVersion), DESIGN_EXISTS (409), PRIVATE_TEMPLATE_LIMIT (409), DESIGN_PUBLISHED (409, a published celebration design cannot be deleted), DESIGN_TOO_LARGE, DESIGN_MEDIA_INVALID (a mediaId that is not a usable photo of the celebration; mediaIds lists them), DESIGN_MEDIA_NOT_ALLOWED (a private template cannot reference photos; mediaIds lists them), CELEBRATION_REQUIRED, CELEBRATION_NOT_ALLOWED and KIND_REQUIRED (422). */
         DesignProblem: components["schemas"]["Problem"] & {
             field?: string;
             issues?: components["schemas"]["DesignIssue"][];
@@ -1117,6 +1152,33 @@ export interface components {
             scheme: "light" | "dark";
             suggestion: components["schemas"]["HexColour"];
         };
+        Embed: {
+            /** @description Value of the iframe allow attribute */
+            allow: string;
+            /** Format: uri */
+            canonicalUrl: string;
+            /**
+             * Format: uri
+             * @description The only URL a renderer may put in an iframe. https, on the allowlist, privacy-enhanced (youtube-nocookie, vimeo dnt=1).
+             */
+            embedUrl: string;
+            /** @enum {string} */
+            kind: "video" | "audio" | "map";
+            /** @enum {string} */
+            provider: "youtube" | "vimeo" | "spotify" | "google_maps";
+            /** @description Provider identifier: YouTube/Vimeo id, Spotify kind/id, or the map query */
+            ref: string;
+            /** @description Value of the iframe sandbox attribute */
+            sandbox: string;
+        };
+        EmbedResolveRequest: {
+            /**
+             * @description Narrows the providers: video = YouTube, Vimeo; music = YouTube, Spotify; map = Google Maps
+             * @enum {string|null}
+             */
+            intent?: "video" | "music" | "map" | null;
+            url: string;
+        };
         /**
          * @description A family of the curated catalogue (P11). The catalogue, with the exact weights of each family and the tested pairs, is x-rsvp-font-catalog. Inter, Roboto, Open Sans, Poppins and IBM Plex are excluded (Poppins became DM Sans and IBM Plex Sans became Source Sans 3 in templates, by data migration 0002).
          * @enum {string}
@@ -1138,11 +1200,18 @@ export interface components {
             /** Format: uuid */
             celebrationId?: string;
             contentType?: string;
+            /** @description Music only, measured from the MP3 frames */
+            durationMs?: number | null;
             filename?: string;
             height?: number | null;
             /** Format: uuid */
             id?: string;
             isCover?: boolean;
+            /** @enum {string} */
+            purpose?: "gallery" | "cover" | "background" | "section" | "element" | "block" | "logo" | "monogram" | "illustration" | "music";
+            /** Format: date-time */
+            rightsAcknowledgedAt?: string | null;
+            rightsNoticeVersion?: string | null;
             sizeBytes?: number;
             sortOrder?: number;
             /**
@@ -1150,14 +1219,30 @@ export interface components {
              * @enum {string}
              */
             status?: "PENDING_UPLOAD" | "PROCESSING" | "PROCESSED" | "REJECTED" | "DELETED";
-            /** @description Presigned GET URLs */
+            /** @description Presigned GET URLs. Photos: thumb, medium, full, webp (WebP) and thumb_avif, medium_avif, full_avif (AVIF). An animated GIF has an animated WebP in full and webp. SVG: svg. Music: audio. */
             variants?: {
+                /** @description Rebuilt MP3 without tags (only for music) */
+                audio?: string;
                 full?: string;
+                full_avif?: string;
                 medium?: string;
+                medium_avif?: string;
+                /** @description Sanitised SVG (only for image/svg+xml) */
+                svg?: string;
                 thumb?: string;
+                thumb_avif?: string;
                 webp?: string;
             };
             width?: number | null;
+        };
+        /** @description Files and bytes the celebration holds (ready, being processed, or reserved by an upload that is still in its window) against its limits. */
+        MediaQuota: {
+            assets: number;
+            bytes: number;
+            /** @description 100 by default, configurable per plan */
+            maxAssets: number;
+            /** @description 500 MiB by default, configurable per plan */
+            maxBytes: number;
         };
         Problem: {
             code?: string;
@@ -1213,6 +1298,7 @@ export interface components {
             /** @constant */
             method?: "PUT";
             objectKey?: string;
+            quota?: components["schemas"]["MediaQuota"];
             requiredHeaders?: Record<string, never>;
             /** Format: uri */
             uploadUrl?: string;
@@ -1309,6 +1395,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         items?: components["schemas"]["MediaAsset"][];
+                        usage?: components["schemas"]["MediaQuota"];
                     };
                 };
             };
@@ -1411,6 +1498,46 @@ export interface operations {
             };
             /** @description Unexpected error (INTERNAL); nothing was stored */
             500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    getMediaUsage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                celebrationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Usage and limits */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaQuota"];
+                };
+            };
+            /** @description Missing or invalid RS256 bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unknown celebration or not yours */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2181,13 +2308,64 @@ export interface operations {
             };
         };
     };
+    resolveEmbed: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmbedResolveRequest"];
+            };
+        };
+        responses: {
+            /** @description The embed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Embed"];
+                };
+            };
+            /** @description Malformed body */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Missing or invalid RS256 bearer token */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description EMBED_NOT_ALLOWED (any host or shape off the list), EMBED_PROVIDER_NOT_ALLOWED_HERE or EMBED_INTENT_UNKNOWN */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
     publicVariant: {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 assetId: components["parameters"]["AssetId"];
-                variant: "thumb" | "medium" | "full" | "webp";
+                variant: "thumb" | "medium" | "full" | "webp" | "thumb_avif" | "medium_avif" | "full_avif" | "svg" | "audio";
             };
             cookie?: never;
         };
@@ -2326,7 +2504,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Invalid theme or design (see DesignProblem); a v2 theme is DESIGN_V2_NOT_AVAILABLE until F4/F5 */
+            /** @description Invalid theme or design (see DesignProblem); a v2 theme is DESIGN_V2_NOT_AVAILABLE only while the service gate DESIGN_V2_ACCEPTED is off (it is on by default since F4 b) */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -2417,7 +2595,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Invalid theme or design (see DesignProblem); editing a PUBLISHED template into a v2 is DESIGN_NOT_PUBLISHABLE; a v2 theme is DESIGN_V2_NOT_AVAILABLE until F4/F5, before any validation */
+            /** @description Invalid theme or design (see DesignProblem); a v2 theme is DESIGN_V2_NOT_AVAILABLE only while the service gate DESIGN_V2_ACCEPTED is off, before any validation. A PUBLISHED template can be edited into a v2 */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -2507,15 +2685,6 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description A design document v2 cannot be published yet (DESIGN_NOT_PUBLISHABLE): it stays a draft until the renderer supports it (F4/F5) */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["DesignProblem"];
-                };
-            };
         };
     };
     renderPlan: {
@@ -2574,7 +2743,7 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Stored object does not match declared type/size, or is not an image (cheap header check done in the request) */
+            /** @description Stored object does not match declared type/size, or is not an image (cheap header check done in the request); INVALID_IMAGE, IMAGE_TOO_LARGE, ANIMATION_TOO_LONG, INVALID_SVG, SVG_TOO_COMPLEX, INVALID_AUDIO or AUDIO_TOO_LONG */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -2597,9 +2766,21 @@ export interface operations {
                 "application/json": {
                     /** Format: uuid */
                     celebrationId: string;
-                    /** @enum {string} */
-                    contentType: "image/jpeg" | "image/png" | "image/webp";
+                    /**
+                     * @description Images (SVG is sanitised, HEIC is converted, GIF becomes an animated WebP) or audio/mpeg for purpose music. audio/mpeg is only valid with purpose music and the reverse.
+                     * @enum {string}
+                     */
+                    contentType: "image/jpeg" | "image/png" | "image/webp" | "image/gif" | "image/avif" | "image/svg+xml" | "image/heic" | "image/heif" | "audio/mpeg";
                     filename: string;
+                    /**
+                     * @description What the file is for. gallery and cover are the ordered photos of the gallery; the rest are placed by the design document. music is MP3 only.
+                     * @default gallery
+                     * @enum {string}
+                     */
+                    purpose?: "gallery" | "cover" | "background" | "section" | "element" | "block" | "logo" | "monogram" | "illustration" | "music";
+                    /** @description Required for purpose music: the version of the rights notice the host accepted (currentVersion in the 422 RIGHTS_NOTICE_REQUIRED / RIGHTS_NOTICE_OUTDATED problem). Stored with the asset as audit. */
+                    rightsNoticeVersion?: string | null;
+                    /** @description Images: up to MEDIA_MAX_IMAGE_BYTES (10 MiB by default). Music: up to MEDIA_MAX_AUDIO_BYTES (15 MiB by default). */
                     sizeBytes: number;
                 };
             };
@@ -2641,7 +2822,16 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
-            /** @description Unsupported MIME type or size, checked before signing */
+            /** @description MEDIA_QUOTA_ASSETS_EXCEEDED or MEDIA_QUOTA_BYTES_EXCEEDED: the celebration reached its quota (100 files / 500 MiB by default). The problem carries `quota`. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unsupported MIME type, purpose, or size; RIGHTS_NOTICE_REQUIRED / RIGHTS_NOTICE_OUTDATED for music; checked before signing */
             422: {
                 headers: {
                     [name: string]: unknown;

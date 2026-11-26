@@ -511,7 +511,10 @@ export interface paths {
         /** Own listings, published or not */
         get: operations["listOwnListings"];
         put?: never;
-        /** Create an unpublished listing */
+        /**
+         * Create an unpublished listing
+         * @description 422 CATEGORY_TYPE_MISMATCH when the listing type differs from the category's listingType (R1, 3.4.0).
+         */
         post: operations["createListing"];
         delete?: never;
         options?: never;
@@ -528,7 +531,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Publish; destinations and fulfillment are mandatory (422, message translated by locale) */
+        /**
+         * Publish; destinations and fulfillment are mandatory (422, message translated by locale)
+         * @description 422 CATEGORY_TYPE_MISMATCH when the listing type differs from the category's listingType (R1, 3.4.0).
+         */
         post: operations["publishListing"];
         delete?: never;
         options?: never;
@@ -1263,7 +1269,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Eleven categories with translations */
+        /** Active categories with translations */
         get: operations["listCategories"];
         put?: never;
         post?: never;
@@ -3103,7 +3109,11 @@ export interface components {
             providerStatus: components["schemas"]["ProviderStatus"];
             published: boolean;
             title: string;
-            type?: string;
+            /**
+             * @description Listing type. Always present (3.4.0); gift-list refuses SERVICE listings as gifts (GIFT_LISTING_NOT_PRODUCT).
+             * @enum {string}
+             */
+            type: "PRODUCT" | "SERVICE";
         };
         Metrics: {
             /** Format: date */
@@ -7962,6 +7972,8 @@ export interface operations {
             query?: {
                 /** @description Overrides Accept-Language. */
                 locale?: "es-BO" | "en-US";
+                /** @description Keeps the categories that accept this listing type: listingType equal to it or null (null accepts both). Another value is 422 INVALID_QUERY. */
+                type?: "PRODUCT" | "SERVICE";
             };
             header?: never;
             path?: never;
@@ -7978,6 +7990,7 @@ export interface operations {
                     "application/json": components["schemas"]["CategoryList"];
                 };
             };
+            422: components["responses"]["Validation"];
         };
     };
     listGeo: {
