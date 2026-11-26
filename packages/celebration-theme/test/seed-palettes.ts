@@ -1,6 +1,11 @@
 /**
  * The 30 seeded templates after the F4 redesign (BE `seeds/templates/data/*.json` on `feat/plantillas-f4-semillas`, copied 2026-11-24): key, name,
  * layout and palette, the inputs the invitation art is measured against. If a seed changes, copy it again here.
+ *
+ * Exception, decided by Pablo (2026-11-24): the row `gala-dorada` follows the new direction «Gala art déco» (wine accent, never
+ * yellow), not the BE seed `016` («Gala dorada», accent `#7A5A0E`, a mustard). The id stays `gala-dorada` because it is the seed's
+ * id and the evidence file names; palette and name follow the prototype (`docs/design/prototipos-plantillas`). Copy the BE seed
+ * again only once it carries the wine accent.
  */
 import type { LayoutId, Palette } from "../src/types.js";
 
