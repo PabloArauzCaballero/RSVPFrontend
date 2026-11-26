@@ -19413,7 +19413,8 @@
           },
           "priceMinor": {
             "type": "integer",
-            "minimum": 1
+            "minimum": 1,
+            "description": "Exact price of the variant in BOB minor units: greater than 0 and below PROVIDER_LISTING_MAX_PRICE_MINOR (20 000 000 = Bs 200 000 by default, §5.13; otherwise 422 PRICE_OUT_OF_RANGE)."
           },
           "stock": {
             "$ref": "#/components/schemas/Stock"

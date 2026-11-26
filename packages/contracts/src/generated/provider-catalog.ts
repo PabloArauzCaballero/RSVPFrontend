@@ -4028,6 +4028,7 @@ export interface components {
             /** @description Exactly one; the first variant when none is marked. */
             isDefault?: boolean;
             label: string;
+            /** @description Exact price of the variant in BOB minor units: greater than 0 and below PROVIDER_LISTING_MAX_PRICE_MINOR (20 000 000 = Bs 200 000 by default, §5.13; otherwise 422 PRICE_OUT_OF_RANGE). */
             priceMinor: number;
             sku?: string | null;
             stock: components["schemas"]["Stock"];
