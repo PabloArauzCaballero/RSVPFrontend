@@ -23,6 +23,7 @@
     "@rsvp/api-client": "workspace:*",
     "@rsvp/auth": "workspace:*",
     "@rsvp/celebration-theme": "workspace:*",
+    "@rsvp/design-editor": "workspace:*",
     "@rsvp/design-tokens": "workspace:*",
     "@rsvp/i18n": "workspace:*",
     "@rsvp/query-hooks": "workspace:*",

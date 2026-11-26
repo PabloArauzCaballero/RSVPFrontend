@@ -124,14 +124,16 @@ export const WEDDINGS = [
     cut(circle(60, 92, 2.6))
   ], 28),
   // ---- Pedida y compromiso ---------------------------------------------------------------------------------------
-  drawing("caja-anillo", "Caja abierta con un anillo", "Open box with a ring", ["pedida"], [
-    ink(rrect(32, 24, 56, 38, 8)),
-    cut(rrect(38, 30, 44, 26, 5)),
-    ink(rrect(28, 62, 64, 32, 8)),
-    cut(rrect(36, 66, 48, 8, 4)),
-    acc(circle(60, 52, 13)),
-    cut(circle(60, 52, 7)),
-    cut(rpoly([[60, 33], [66, 39], [60, 45], [54, 39]], 1.2))
+  drawing("caja-anillo", "Caja con la tapa levantada y un anillo", "Box with its lid raised and a ring", ["pedida"], [
+    ink(rpoly([[34, 60], [86, 60], [92, 24], [28, 24]], 4)),
+    cut(rpoly([[39, 55], [81, 55], [86, 30], [34, 30]], 3)),
+    ink(rrect(30, 60, 60, 34, 6)),
+    cut(rrect(35, 66, 50, 6, 3)),
+    ink(rrect(36, 56, 48, 7, 2)),
+    cut("M47 57V62M60 57V62M73 57V62", 2.5),
+    acc(circle(60, 50, 11)),
+    cut(circle(60, 50, 6)),
+    cut(rpoly([[60, 36], [64, 40], [60, 44], [56, 40]], 1))
   ], 36),
   drawing("solitario", "Anillo con una piedra grande", "Ring with a large stone", ["pedida"], [
     ink(band(arcTrace(60, 72, 21, 21, 0, 360), 9, true)),

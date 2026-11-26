@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@rsvp/api-client": "workspace:*",
+    "@rsvp/celebration-theme": "workspace:*",
     "@rsvp/contracts": "workspace:*"
   },
   "devDependencies": {

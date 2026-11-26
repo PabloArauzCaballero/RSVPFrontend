@@ -29,3 +29,10 @@ web-build-live
 # Poblador de datos de demostración: ids de la última corrida (sin tokens)
 apps/universal/scripts/seed/.last-run.json
 /pw*.log
+
+# Python bytecode de los generadores de documentos
+__pycache__/
+*.pyc
+
+packages/design-editor/test-results/
+packages/design-editor/dist-harness/

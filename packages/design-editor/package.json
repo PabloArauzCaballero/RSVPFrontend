@@ -1,0 +1,42 @@
+{
+  "name": "@rsvp/design-editor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./ui": "./src/ui/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "dependencies": {
+    "@rsvp/celebration-theme": "workspace:*",
+    "parse5": "^7.3.0",
+    "postcss": "^8.5.3",
+    "postcss-selector-parser": "^6.1.2",
+    "postcss-value-parser": "^4.2.0"
+  },
+  "devDependencies": {
+    "@rsvp/config-ts": "workspace:*",
+    "@rsvp/i18n": "workspace:*",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.0",
+    "@types/react": "~19.1.0",
+    "@types/react-dom": "~19.1.0",
+    "@vitest/coverage-v8": "^3.1.2",
+    "jsdom": "^26.1.0",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.2"
+  }
+}
