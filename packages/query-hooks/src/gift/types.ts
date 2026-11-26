@@ -1,7 +1,8 @@
 /** Gift List contract 1.2.0 (gift-list.openapi.json). Money is integer minor units, never a float. */
 export interface Money { readonly amountMinor: number; readonly currency: string }
 export type GiftSource = "CATALOGED" | "EXTERNAL";
-export type GiftItemStatus = "AVAILABLE" | "PROPOSED" | "PENDING_REVIEW" | "COMMITTED" | "REJECTED";
+/** UNAVAILABLE (1.14.0, R1): the gift can no longer be given (its catalog listing is not a product). Guests never see it; the host sees it marked. */
+export type GiftItemStatus = "AVAILABLE" | "PROPOSED" | "PENDING_REVIEW" | "COMMITTED" | "REJECTED" | "UNAVAILABLE";
 export type ReservationStatus = "PENDING_REVIEW" | "COMMITTED" | "REJECTED" | "CANCELLED";
 export type CancellationReason = "RSVP_DECLINED" | "GUEST_CANCELLED" | "HOST_CANCELLED";
 export interface GiftItem {
