@@ -1,0 +1,59 @@
+// Captures of the product sheet against the REAL provider-catalog (serve.mjs): 360/768/1280 × light/dark × es-BO/en-US, axe on
+// every step of the wizard and on «Cómo te contactan». Horizontal overflow and page errors are checked on each one.
+const path = require("node:path");
+const fs = require("node:fs");
+const { chromium } = require("/var/tmp/wt-r2fe/node_modules/playwright");
+const { AxeBuilder } = require("/var/tmp/wt-r2fe/node_modules/@axe-core/playwright");
+const W = __dirname;
+const APP = process.env.APP ?? "http://localhost:8320";
+const walk = JSON.parse(fs.readFileSync(path.join(W, "walk.json"), "utf8"));
+const lid = walk.listingId;
+const copyId = process.env.COPY_ID;
+const SCREENS = [
+  ["resumen-incompleto", `/portal/productos/${copyId}?paso=resumen`, "missing-list"],
+  ["nuevo", "/portal/productos/nuevo", "product-title"],
+  ["ideas", `/portal/productos/${lid}?paso=ideas`, "idea-GLASSWARE"],
+  ["fotos", `/portal/productos/${lid}?paso=fotos`, "photo-count"],
+  ["precio", `/portal/productos/${lid}?paso=precio`, "variant-label-0"],
+  ["entrega", `/portal/productos/${lid}?paso=entrega`, "product-lead"],
+  ["contacto", `/portal/productos/${lid}?paso=contacto`, "template-preview"],
+  ["resumen", `/portal/productos/${lid}?paso=resumen`, "preview-card"],
+  ["ofertas", "/portal/productos", `listing-completeness-${lid}`],
+  ["destinos", "/portal/destinos", "business-template"]
+];
+const WIDTHS = [360, 768, 1280];
+const SCHEMES = ["light", "dark"];
+const LOCALES = ["es-BO", "en-US"];
+const rows = [];
+(async () => {
+  const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH ?? "/opt/pw-browsers/chromium-1243/chrome-linux64/chrome" });
+  for (const locale of LOCALES) for (const scheme of SCHEMES) for (const width of WIDTHS) {
+    const context = await browser.newContext({ viewport: { width, height: 900 }, locale, colorScheme: scheme, reducedMotion: "reduce" });
+    await context.addInitScript(([k, v]) => { try { localStorage.setItem(k, v); } catch { /* none */ } }, [`rsvp.provider.${walk.ownerId}`, walk.providerId]);
+    const page = await context.newPage();
+    const errors = [];
+    page.on("pageerror", (error) => errors.push(error.message));
+    for (const [name, route, ready] of SCREENS.filter(([n]) => !process.env.ONLY || process.env.ONLY.split(",").includes(n))) {
+      errors.length = 0;
+      const row = { screen: name, width, scheme, locale };
+      try {
+        await page.goto(`${APP}${route}`, { waitUntil: "networkidle" });
+        await page.locator(`[data-testid="${ready}"] >> visible=true`).first().waitFor({ timeout: 30000 });
+        await page.waitForTimeout(400);
+        row.theme = await page.evaluate(() => document.documentElement.getAttribute("data-theme"));
+        row.overflowX = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+        row.lang = await page.evaluate(() => document.documentElement.lang);
+        await page.screenshot({ path: path.join(W, "shots", `${name}-${width}-${scheme}-${locale}.png`), fullPage: true });
+        const axe = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
+        row.axe = axe.violations.map((v) => ({ id: v.id, impact: v.impact, nodes: v.nodes.length }));
+        row.serious = row.axe.filter((v) => v.impact === "critical" || v.impact === "serious");
+      } catch (error) { row.error = error.message.split("\n")[0]; }
+      row.pageErrors = [...errors];
+      rows.push(row);
+      console.log(`${name} ${width} ${scheme} ${locale} theme=${row.theme} overflowX=${row.overflowX} serious=${JSON.stringify(row.serious ?? [])} other=${JSON.stringify((row.axe ?? []).filter((v) => !["critical", "serious"].includes(v.impact)))}${row.error ? ` ERROR ${row.error}` : ""}${row.pageErrors.length ? ` PAGEERR ${row.pageErrors[0]}` : ""}`);
+    }
+    await context.close();
+  }
+  fs.writeFileSync(path.join(W, "capture-results.json"), JSON.stringify(rows, null, 2));
+  await browser.close();
+})();
