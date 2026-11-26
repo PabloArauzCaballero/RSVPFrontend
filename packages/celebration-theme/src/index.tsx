@@ -7,3 +7,6 @@ export { LAYOUTS } from "./layouts/index.js";
 export { SECTIONS, type SectionProps } from "./sections/index.js";
 export { CelebrationRenderer, type CelebrationRendererProps } from "./renderer.js";
 export { CelebrationThemeProvider, useCelebrationTheme, type ThemeContextValue } from "./theme-context.js";
+export * from "./media/embed.js";
+export * from "./media/variants.js";
+export { AUTO_SCRIM, AudioPlayer, EmbedFacade, MediaBackground, MediaImage, type AudioPlayerProps, type EmbedFacadeProps, type MediaBackgroundProps, type MediaImageProps } from "./media/components.js";

@@ -44,7 +44,9 @@ export interface GalleryImage {
   readonly width: number | null;
   readonly height: number | null;
   readonly isCover: boolean;
-  readonly variants: Readonly<Partial<Record<"thumb" | "medium" | "full" | "webp", string>>>;
+  readonly purpose?: string;
+  readonly durationMs?: number | null;
+  readonly variants: Readonly<Partial<Record<"thumb" | "medium" | "full" | "webp" | "thumb_avif" | "medium_avif" | "full_avif" | "svg" | "audio", string>>>;
 }
 
 export interface CelebrationContent {

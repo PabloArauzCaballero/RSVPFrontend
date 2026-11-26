@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "RSVP Template and Media API",
-    "version": "1.3.0",
-    "description": "Template/Media Service (lane 16, Django + DRF). Behind Kong at /media (prefix stripped). Errors are RFC 9457 problems. 1.2.0 (F1, additive; the unmerged 1.1.0 of the same change set is superseded): a template theme is either the v1 theme (unchanged) or the invitation design document v2 (DesignDocumentV2, schemaVersion 2), validated against this contract. A v2 without the gifts block is 422 GIFTS_BLOCK_REQUIRED; the mandatory gifts button cannot be redirected, hidden, shrunk below 44 px, moved out of the canvas, covered or left unreadable (GIFTS_BLOCK_LOCKED, GIFTS_BLOCK_HIDDEN, GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL, GIFTS_BLOCK_COVERED, GIFTS_BLOCK_LOW_CONTRAST). Until F4/F5 the admin and the renderer cannot read a v2: POST/PATCH with a v2 theme is 422 DESIGN_V2_NOT_AVAILABLE, the admin list leaves v2 rows out and publishing one is 422 DESIGN_NOT_PUBLISHABLE. The gifts button keeps 44 px of useful height after padding and border and a label of at most 32 px. Poppins and IBM Plex leave the font catalogue. Custom HTML/CSS is 422 CUSTOM_CODE_UNAVAILABLE until the F5 sanitiser exists. A JSON body over 1 MB is 413 PAYLOAD_TOO_LARGE. Low-contrast colour pairs come back as non-blocking warnings (P19). 1.3.0 (F1, additive): per-celebration design storage. A design has a working draft, immutable published versions that can be restored into the draft (P15) and may be a host's private template (P21). Endpoints under /designs; publishing a celebration design emits template.design.published.v1 (AsyncAPI 1.23.0)."
+    "version": "1.4.2",
+    "description": "Template/Media Service (lane 16, Django + DRF). Behind Kong at /media (prefix stripped). Errors are RFC 9457 problems. 1.2.0 (F1, additive; the unmerged 1.1.0 of the same change set is superseded): a template theme is either the v1 theme (unchanged) or the invitation design document v2 (DesignDocumentV2, schemaVersion 2), validated against this contract. A v2 without the gifts block is 422 GIFTS_BLOCK_REQUIRED; the mandatory gifts button cannot be redirected, hidden, shrunk below 44 px, moved out of the canvas, covered or left unreadable (GIFTS_BLOCK_LOCKED, GIFTS_BLOCK_HIDDEN, GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL, GIFTS_BLOCK_COVERED, GIFTS_BLOCK_LOW_CONTRAST). History of 1.2.0 and 1.3.0, superseded in F4 b (see 1.4.1; DESIGN_NOT_PUBLISHABLE no longer exists): until F4/F5 the admin and the renderer could not read a v2: POST/PATCH with a v2 theme was 422 DESIGN_V2_NOT_AVAILABLE, the admin list left v2 rows out and publishing one was 422 DESIGN_NOT_PUBLISHABLE. The gifts button keeps 44 px of useful height after padding and border and a label of at most 32 px. Poppins and IBM Plex leave the font catalogue. Custom HTML/CSS is 422 CUSTOM_CODE_UNAVAILABLE until the F5 sanitiser exists. A JSON body over 1 MB is 413 PAYLOAD_TOO_LARGE. Low-contrast colour pairs come back as non-blocking warnings (P19). 1.3.0 (F1, additive): per-celebration design storage. A design has a working draft, immutable published versions that can be restored into the draft (P15) and may be a host's private template (P21). Endpoints under /designs; publishing a celebration design emits template.design.published.v1 (AsyncAPI 1.23.0). 1.4.0 (F6, additive): more image types (gif, avif, svg, heic), MP3 music, `purpose`, per-celebration quota (409 MEDIA_QUOTA_*), AVIF variants, `POST /embeds/resolve` and `GET /celebrations/{celebrationId}/media-usage`. Nothing was removed or renamed. 1.4.1 (documentation only, no behaviour change): since F4 b the v2 gate DESIGN_V2_ACCEPTED is on by default and DESIGN_NOT_PUBLISHABLE is gone, so POST /templates/{id}/publish no longer lists a 422 and the descriptions that said \"until F4/F5\" now say what the service does. 1.4.2 (F6, narrowing, no endpoint removed): SoundCloud leaves the embeds resolver by product decision; `POST /embeds/resolve` no longer accepts soundcloud.com URLs (they are rejected like any host outside the allowlist) and `provider` loses the `soundcloud` value. The music kind is YouTube, Spotify or an own MP3."
   },
   "servers": [
     {
@@ -146,7 +146,7 @@
             }
           },
           "422": {
-            "description": "Invalid theme or design (see DesignProblem); a v2 theme is DESIGN_V2_NOT_AVAILABLE until F4/F5",
+            "description": "Invalid theme or design (see DesignProblem); a v2 theme is DESIGN_V2_NOT_AVAILABLE only while the service gate DESIGN_V2_ACCEPTED is off (it is on by default since F4 b)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -176,7 +176,7 @@
             }
           }
         },
-        "description": "Until F4/F5 the list leaves out templates whose theme is a design document v2 (the admin cannot open them); one that already exists is archived by id with POST /templates/{id}/archive."
+        "description": "The list includes templates whose theme is a design document v2. Only while the service gate DESIGN_V2_ACCEPTED is off (on by default since F4 b) does it leave them out, because the admin cannot open them then; one that already exists is archived by id with POST /templates/{id}/archive."
       }
     },
     "/templates/{templateId}": {
@@ -229,7 +229,7 @@
             "name": "If-Match",
             "in": "header",
             "required": true,
-            "description": "Version being edited, e.g. \"3\". Missing \u2192 428; stale \u2192 409 VERSION_CONFLICT.",
+            "description": "Version being edited, e.g. \"3\". Missing → 428; stale → 409 VERSION_CONFLICT.",
             "schema": {
               "type": "string"
             }
@@ -285,7 +285,7 @@
             }
           },
           "422": {
-            "description": "Invalid theme or design (see DesignProblem); editing a PUBLISHED template into a v2 is DESIGN_NOT_PUBLISHABLE; a v2 theme is DESIGN_V2_NOT_AVAILABLE until F4/F5, before any validation",
+            "description": "Invalid theme or design (see DesignProblem); a v2 theme is DESIGN_V2_NOT_AVAILABLE only while the service gate DESIGN_V2_ACCEPTED is off, before any validation. A PUBLISHED template can be edited into a v2",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -318,7 +318,7 @@
             "name": "If-Match",
             "in": "header",
             "required": true,
-            "description": "Version being edited, e.g. \"3\". Missing \u2192 428; stale \u2192 409 VERSION_CONFLICT.",
+            "description": "Version being edited, e.g. \"3\". Missing → 428; stale → 409 VERSION_CONFLICT.",
             "schema": {
               "type": "string"
             }
@@ -352,16 +352,6 @@
                 }
               }
             }
-          },
-          "422": {
-            "description": "A design document v2 cannot be published yet (DESIGN_NOT_PUBLISHABLE): it stays a draft until the renderer supports it (F4/F5)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DesignProblem"
-                }
-              }
-            }
           }
         }
       }
@@ -377,7 +367,7 @@
             "name": "If-Match",
             "in": "header",
             "required": true,
-            "description": "Version being edited, e.g. \"3\". Missing \u2192 428; stale \u2192 409 VERSION_CONFLICT.",
+            "description": "Version being edited, e.g. \"3\". Missing → 428; stale → 409 VERSION_CONFLICT.",
             "schema": {
               "type": "string"
             }
@@ -484,13 +474,45 @@
                     "enum": [
                       "image/jpeg",
                       "image/png",
-                      "image/webp"
-                    ]
+                      "image/webp",
+                      "image/gif",
+                      "image/avif",
+                      "image/svg+xml",
+                      "image/heic",
+                      "image/heif",
+                      "audio/mpeg"
+                    ],
+                    "description": "Images (SVG is sanitised, HEIC is converted, GIF becomes an animated WebP) or audio/mpeg for purpose music. audio/mpeg is only valid with purpose music and the reverse."
                   },
                   "sizeBytes": {
                     "type": "integer",
                     "minimum": 1,
-                    "maximum": 10485760
+                    "maximum": 15728640,
+                    "description": "Images: up to MEDIA_MAX_IMAGE_BYTES (10 MiB by default). Music: up to MEDIA_MAX_AUDIO_BYTES (15 MiB by default)."
+                  },
+                  "purpose": {
+                    "type": "string",
+                    "enum": [
+                      "gallery",
+                      "cover",
+                      "background",
+                      "section",
+                      "element",
+                      "block",
+                      "logo",
+                      "monogram",
+                      "illustration",
+                      "music"
+                    ],
+                    "default": "gallery",
+                    "description": "What the file is for. gallery and cover are the ordered photos of the gallery; the rest are placed by the design document. music is MP3 only."
+                  },
+                  "rightsNoticeVersion": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Required for purpose music: the version of the rights notice the host accepted (currentVersion in the 422 RIGHTS_NOTICE_REQUIRED / RIGHTS_NOTICE_OUTDATED problem). Stored with the asset as audit."
                   }
                 }
               }
@@ -539,7 +561,17 @@
             }
           },
           "422": {
-            "description": "Unsupported MIME type or size, checked before signing",
+            "description": "Unsupported MIME type, purpose, or size; RIGHTS_NOTICE_REQUIRED / RIGHTS_NOTICE_OUTDATED for music; checked before signing",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "MEDIA_QUOTA_ASSETS_EXCEEDED or MEDIA_QUOTA_BYTES_EXCEEDED: the celebration reached its quota (100 files / 500 MiB by default). The problem carries `quota`.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -571,7 +603,7 @@
             }
           },
           "422": {
-            "description": "Stored object does not match declared type/size, or is not an image (cheap header check done in the request)",
+            "description": "Stored object does not match declared type/size, or is not an image (cheap header check done in the request); INVALID_IMAGE, IMAGE_TOO_LARGE, ANIMATION_TOO_LONG, INVALID_SVG, SVG_TOO_COMPLEX, INVALID_AUDIO or AUDIO_TOO_LONG",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -645,6 +677,9 @@
                       "items": {
                         "$ref": "#/components/schemas/MediaAsset"
                       }
+                    },
+                    "usage": {
+                      "$ref": "#/components/schemas/MediaQuota"
                     }
                   }
                 }
@@ -721,7 +756,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Order and cover of the gallery photos (purpose gallery or cover). Other purposes are not part of the order."
       }
     },
     "/public/celebrations/{celebrationId}/assets": {
@@ -775,7 +811,12 @@
                 "thumb",
                 "medium",
                 "full",
-                "webp"
+                "webp",
+                "thumb_avif",
+                "medium_avif",
+                "full_avif",
+                "svg",
+                "audio"
               ]
             }
           }
@@ -1797,6 +1838,113 @@
           }
         }
       }
+    },
+    "/celebrations/{celebrationId}/media-usage": {
+      "get": {
+        "operationId": "getMediaUsage",
+        "summary": "Quota used and left by the celebration",
+        "parameters": [
+          {
+            "name": "celebrationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Usage and limits",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaQuota"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid RS256 bearer token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown celebration or not yours",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/embeds/resolve": {
+      "post": {
+        "operationId": "resolveEmbed",
+        "summary": "Normalises a pasted link to its allowlisted embed",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmbedResolveRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The embed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Embed"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed body",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid RS256 bearer token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "EMBED_NOT_ALLOWED (any host or shape off the list), EMBED_PROVIDER_NOT_ALLOWED_HERE or EMBED_INTENT_UNKNOWN",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1857,7 +2005,7 @@
         "name": "If-Match",
         "in": "header",
         "required": true,
-        "description": "draftVersion being edited, e.g. \"3\". Missing \u2192 428; stale \u2192 409 VERSION_CONFLICT.",
+        "description": "draftVersion being edited, e.g. \"3\". Missing → 428; stale → 409 VERSION_CONFLICT.",
         "schema": {
           "type": "string"
         }
@@ -2049,6 +2197,9 @@
           },
           "maxBytes": {
             "type": "integer"
+          },
+          "quota": {
+            "$ref": "#/components/schemas/MediaQuota"
           }
         }
       },
@@ -2115,9 +2266,61 @@
               },
               "webp": {
                 "type": "string"
+              },
+              "thumb_avif": {
+                "type": "string"
+              },
+              "medium_avif": {
+                "type": "string"
+              },
+              "full_avif": {
+                "type": "string"
+              },
+              "svg": {
+                "type": "string",
+                "description": "Sanitised SVG (only for image/svg+xml)"
+              },
+              "audio": {
+                "type": "string",
+                "description": "Rebuilt MP3 without tags (only for music)"
               }
             },
-            "description": "Presigned GET URLs"
+            "description": "Presigned GET URLs. Photos: thumb, medium, full, webp (WebP) and thumb_avif, medium_avif, full_avif (AVIF). An animated GIF has an animated WebP in full and webp. SVG: svg. Music: audio."
+          },
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "gallery",
+              "cover",
+              "background",
+              "section",
+              "element",
+              "block",
+              "logo",
+              "monogram",
+              "illustration",
+              "music"
+            ]
+          },
+          "durationMs": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Music only, measured from the MP3 frames"
+          },
+          "rightsNoticeVersion": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rightsAcknowledgedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
           }
         }
       },
@@ -5039,7 +5242,7 @@
             "html": "#/components/schemas/DesignBlockHtml"
           }
         },
-        "description": "Typed component registry (plan \u00a75)."
+        "description": "Typed component registry (plan §5)."
       },
       "DesignCustomCode": {
         "type": "object",
@@ -12030,7 +12233,7 @@
             }
           }
         ],
-        "description": "422 of a v2 design (400 and 413 are plain Problems). code is INVALID_THEME (not an object, neither v1 nor v2, or a schemaVersion that is not the integer 2), DESIGN_SCHEMA_INVALID (issues lists the paths), GIFTS_BLOCK_REQUIRED (no gifts block, said before the schema errors), GIFTS_BLOCK_LOCKED (link or rotation on the gifts element), GIFTS_BLOCK_HIDDEN (not visible or translucent), GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL (under 44 px, or under 44 px of height left once vertical padding and border are taken out), GIFTS_BLOCK_TEXT_TOO_LARGE (label over 32 px or taller than the useful height), GIFTS_BLOCK_COVERED (another element paints over it), GIFTS_BLOCK_LOW_CONTRAST (text under 4.5:1 or contour under 3:1 in either palette), DESIGN_REFERENCE_INVALID, FONT_WEIGHT_UNAVAILABLE, CUSTOM_CODE_UNAVAILABLE (custom html/css until the F5 sanitiser), DESIGN_NOT_PUBLISHABLE (publishing a v2: it stays a draft until the renderer supports it) or DESIGN_V2_NOT_AVAILABLE (POST/PATCH of any v2 theme until F4/F5: the admin and the renderer cannot read it yet; checked before the document is validated). Design endpoints add VERSION_CONFLICT (409, currentVersion), DESIGN_EXISTS (409), PRIVATE_TEMPLATE_LIMIT (409), DESIGN_PUBLISHED (409, a published celebration design cannot be deleted), DESIGN_TOO_LARGE, DESIGN_MEDIA_INVALID (a mediaId that is not a usable photo of the celebration; mediaIds lists them), DESIGN_MEDIA_NOT_ALLOWED (a private template cannot reference photos; mediaIds lists them), CELEBRATION_REQUIRED, CELEBRATION_NOT_ALLOWED and KIND_REQUIRED (422)."
+        "description": "422 of a v2 design (400 and 413 are plain Problems). code is INVALID_THEME (not an object, neither v1 nor v2, or a schemaVersion that is not the integer 2), DESIGN_SCHEMA_INVALID (issues lists the paths), GIFTS_BLOCK_REQUIRED (no gifts block, said before the schema errors), GIFTS_BLOCK_LOCKED (link or rotation on the gifts element), GIFTS_BLOCK_HIDDEN (not visible or translucent), GIFTS_BLOCK_OUT_OF_CANVAS, GIFTS_BLOCK_TOO_SMALL (under 44 px, or under 44 px of height left once vertical padding and border are taken out), GIFTS_BLOCK_TEXT_TOO_LARGE (label over 32 px or taller than the useful height), GIFTS_BLOCK_COVERED (another element paints over it), GIFTS_BLOCK_LOW_CONTRAST (text under 4.5:1 or contour under 3:1 in either palette), DESIGN_REFERENCE_INVALID, FONT_WEIGHT_UNAVAILABLE, CUSTOM_CODE_UNAVAILABLE (custom html/css until the F5 sanitiser), or DESIGN_V2_NOT_AVAILABLE (POST/PATCH of any v2 theme while the service gate DESIGN_V2_ACCEPTED is off, which is not the default since F4 b; checked before the document is validated). Design endpoints add VERSION_CONFLICT (409, currentVersion), DESIGN_EXISTS (409), PRIVATE_TEMPLATE_LIMIT (409), DESIGN_PUBLISHED (409, a published celebration design cannot be deleted), DESIGN_TOO_LARGE, DESIGN_MEDIA_INVALID (a mediaId that is not a usable photo of the celebration; mediaIds lists them), DESIGN_MEDIA_NOT_ALLOWED (a private template cannot reference photos; mediaIds lists them), CELEBRATION_REQUIRED, CELEBRATION_NOT_ALLOWED and KIND_REQUIRED (422)."
       },
       "DesignKind": {
         "type": "string",
@@ -12243,6 +12446,109 @@
           }
         },
         "description": "201 when a new version was created; 200 when the draft was already the latest published version (idempotent)"
+      },
+      "MediaQuota": {
+        "type": "object",
+        "required": [
+          "assets",
+          "bytes",
+          "maxAssets",
+          "maxBytes"
+        ],
+        "properties": {
+          "assets": {
+            "type": "integer"
+          },
+          "bytes": {
+            "type": "integer"
+          },
+          "maxAssets": {
+            "type": "integer",
+            "description": "100 by default, configurable per plan"
+          },
+          "maxBytes": {
+            "type": "integer",
+            "description": "500 MiB by default, configurable per plan"
+          }
+        },
+        "description": "Files and bytes the celebration holds (ready, being processed, or reserved by an upload that is still in its window) against its limits."
+      },
+      "EmbedResolveRequest": {
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "properties": {
+          "url": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "intent": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "video",
+              "music",
+              "map",
+              null
+            ],
+            "description": "Narrows the providers: video = YouTube, Vimeo; music = YouTube, Spotify; map = Google Maps"
+          }
+        }
+      },
+      "Embed": {
+        "type": "object",
+        "required": [
+          "provider",
+          "kind",
+          "embedUrl",
+          "canonicalUrl",
+          "ref",
+          "sandbox",
+          "allow"
+        ],
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": [
+              "youtube",
+              "vimeo",
+              "spotify",
+              "google_maps"
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "video",
+              "audio",
+              "map"
+            ]
+          },
+          "embedUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "The only URL a renderer may put in an iframe. https, on the allowlist, privacy-enhanced (youtube-nocookie, vimeo dnt=1)."
+          },
+          "canonicalUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "ref": {
+            "type": "string",
+            "description": "Provider identifier: YouTube/Vimeo id, Spotify kind/id, or the map query"
+          },
+          "sandbox": {
+            "type": "string",
+            "description": "Value of the iframe sandbox attribute"
+          },
+          "allow": {
+            "type": "string",
+            "description": "Value of the iframe allow attribute"
+          }
+        }
       }
     }
   }

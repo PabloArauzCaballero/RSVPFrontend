@@ -1,6 +1,6 @@
 import type { ApiClient } from "@rsvp/api-client";
 import type {
-  AuditEntry, Celebration, CelebrationPatch, CreateCelebrationInput, EventTypeDefinition, Items, MediaAsset, PublicPageStatus, PublishCheck,
+  AuditEntry, Celebration, CelebrationPatch, CreateCelebrationInput, EventTypeDefinition, Items, MediaAsset, MediaList, MediaQuota, PresignInput, EmbedIntent, ResolvedEmbed, PublicPageStatus, PublishCheck,
   PublicGalleryImage, SettingsPatch, Template, TemplateInput, TranslatedEventType, UploadIntent
 } from "./types.js";
 
@@ -61,10 +61,13 @@ export function templateApi(client: ApiClient) {
 
 export function mediaApi(client: ApiClient) {
   return {
-    presign: (input: { readonly celebrationId: string; readonly filename: string; readonly contentType: string; readonly sizeBytes: number }) =>
-      client.request<UploadIntent, typeof input>(`${MEDIA}/uploads/presign`, { method: "POST", body: input }),
+    presign: (input: PresignInput) =>
+      client.request<UploadIntent, PresignInput>(`${MEDIA}/uploads/presign`, { method: "POST", body: input }),
     complete: (assetId: string) => client.request<MediaAsset>(`${MEDIA}/uploads/${assetId}/complete`, { method: "POST" }),
-    list: (celebrationId: string, signal?: AbortSignal) => client.request<Items<MediaAsset>>(`${MEDIA}/celebrations/${celebrationId}/assets`, { signal }),
+    list: (celebrationId: string, signal?: AbortSignal) => client.request<MediaList>(`${MEDIA}/celebrations/${celebrationId}/assets`, { signal }),
+    usage: (celebrationId: string, signal?: AbortSignal) => client.request<MediaQuota>(`${MEDIA}/celebrations/${celebrationId}/media-usage`, { signal }),
+    /** POST /media/embeds/resolve: a pasted link to the one embed the invitation may load, or 422 EMBED_NOT_ALLOWED. */
+    resolveEmbed: (url: string, intent?: EmbedIntent) => client.request<ResolvedEmbed, { readonly url: string; readonly intent?: EmbedIntent }>(`${MEDIA}/embeds/resolve`, { method: "POST", body: { url, intent } }),
     reorder: (celebrationId: string, assetIds: readonly string[], coverAssetId: string | null) =>
       client.request<Items<MediaAsset>, { readonly assetIds: readonly string[]; readonly coverAssetId: string | null }>(`${MEDIA}/celebrations/${celebrationId}/assets/order`, { method: "PUT", body: { assetIds, coverAssetId } }),
     remove: (assetId: string) => client.request<void>(`${MEDIA}/assets/${assetId}`, { method: "DELETE" }),

@@ -6,7 +6,7 @@
  */
 import type { LayoutSpec } from "../types.js";
 import { familyById } from "./catalog.js";
-import type { ColourScheme, DesignBox, DesignCanvas, DesignDocumentV2, DesignElement, DesignFont, DesignLink, DesignPage, DesignPalette, DesignTypographyOverride, PaletteRole } from "./types.js";
+import type { ColourScheme, DesignBackground, DesignBox, DesignCanvas, DesignDocumentV2, DesignElement, DesignFont, DesignLink, DesignPage, DesignPalette, DesignTypographyOverride, PaletteRole } from "./types.js";
 
 const ROLES: readonly PaletteRole[] = ["canvas", "surface", "text", "muted", "accent", "accentFill", "onAccent", "line"];
 const HEX = /^#[0-9a-fA-F]{6}$/;
@@ -28,6 +28,19 @@ const BOX_SIDES = ["top", "right", "bottom", "left"] as const;
 function box(value: unknown): DesignBox | undefined {
   if (!isRecord(value) || !BOX_SIDES.every((side) => int(value[side], 0, 256))) return undefined;
   return { top: value["top"] as number, right: value["right"] as number, bottom: value["bottom"] as number, left: value["left"] as number };
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** A background as the renderer may trust it: a palette role, a drawing id, or (F6) a file id with its fit and a veil in 0..0.8. */
+function backgroundOf(value: unknown): DesignBackground | undefined {
+  if (!isRecord(value)) return undefined;
+  if (value["kind"] === "colour" && oneOf(value["role"], ROLES)) return { kind: "colour", role: value["role"] };
+  if (value["kind"] === "illustration" && typeof value["illustrationId"] === "string") return { kind: "illustration", illustrationId: value["illustrationId"] };
+  if (value["kind"] === "media" && typeof value["mediaId"] === "string" && UUID.test(value["mediaId"]) && oneOf(value["fit"], ["cover", "contain"] as const)) {
+    return { kind: "media", mediaId: value["mediaId"], fit: value["fit"], ...(num(value["scrim"], 0, 0.8) ? { scrim: value["scrim"] } : {}) };
+  }
+  return undefined;
 }
 
 function typographyOf(value: unknown): DesignTypographyOverride | undefined {
@@ -79,7 +92,7 @@ function elementOf(value: unknown): DesignElement | null {
     ...(int(value["radius"], 0, 999) ? { radius: value["radius"] } : {}),
     ...(num(value["opacity"], 0, 1) ? { opacity: value["opacity"] } : {}),
     ...(isRecord(border) && int(border["width"], 0, 16) && oneOf(border["style"], ["solid", "dashed", "dotted"] as const) && oneOf(border["colour"], ROLES) ? { border: { width: border["width"], style: border["style"], colour: border["colour"] } } : {}),
-    ...(isRecord(background) && background["kind"] === "colour" && oneOf(background["role"], ROLES) ? { background: { kind: "colour" as const, role: background["role"] } } : {}),
+    ...(backgroundOf(background) ? { background: backgroundOf(background) } : {}),
     ...(typography ? { typography } : {}),
     ...(isRecord(animation) && oneOf(animation["entrance"], ["none", "fade", "rise", "scale", "draw", "envelope"] as const)
       ? { animation: { entrance: animation["entrance"], ...(int(animation["delayMs"], 0, 5000) ? { delayMs: animation["delayMs"] } : {}), ...(int(animation["durationMs"], 100, 3000) ? { durationMs: animation["durationMs"] } : {}) } } : {}),
@@ -102,7 +115,7 @@ function pageOf(value: unknown): DesignPage | null {
   return {
     id: value["id"], kind: value["kind"], ...(typeof value["section"] === "string" ? { section: value["section"] } : {}),
     style: oneOf(value["style"], ["plain", "cards", "bands"] as const) ? value["style"] : "plain",
-    ...(isRecord(background) && background["kind"] === "colour" && oneOf(background["role"], ROLES) ? { background: { kind: "colour" as const, role: background["role"] } } : isRecord(background) && background["kind"] === "illustration" && typeof background["illustrationId"] === "string" ? { background: { kind: "illustration" as const, illustrationId: background["illustrationId"] } } : {}),
+    ...(backgroundOf(background) ? { background: backgroundOf(background) } : {}),
     canvases: { mobile, ...(desktop ? { desktop } : {}) }
   };
 }

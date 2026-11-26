@@ -252,9 +252,11 @@ describe("state · the photo fails to load", () => {
     const { container } = draw(name);
     const photo = container.querySelector("img.cdesign-cover-photo") as HTMLImageElement;
     expect(photo).toBeTruthy();
-    const parent = photo.parentElement;
+    // F6: the photo sits in a <picture> (AVIF/WebP); the box that replaces it takes the place of the whole picture.
+    const parent = (photo.closest("picture") ?? photo).parentElement;
     fireEvent.error(photo);
     expect(container.querySelector("img.cdesign-cover-photo")).toBeNull();
+    expect(container.querySelector(".cdesign-cover picture")).toBeNull();
     const fallback = container.querySelector(".cdesign-cover-photo[data-photo-failed]") as HTMLElement;
     expect(fallback.parentElement).toBe(parent);
     expect(fallback.querySelector('svg[data-art="camara"]')).toBeTruthy();
