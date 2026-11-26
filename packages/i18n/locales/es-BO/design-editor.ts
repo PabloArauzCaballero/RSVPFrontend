@@ -134,6 +134,40 @@ export const designEditorEsBO = {
       MEDIA_REJECTED: "Quitamos una consulta @media no permitida ({{detail}})."
     }
   },
+  canvasEditor: {
+    stage: "Lienzo",
+    pickPrompt: "Toca un elemento para seleccionarlo; arrástralo, cambia su tamaño o gíralo.",
+    keys: "Teclado: Enter o Espacio selecciona. Las flechas mueven una celda (con Mayús, un paso grande). Alt y flechas cambian el tamaño. R gira a la derecha y Mayús con R a la izquierda. Re Pág trae al frente y Av Pág envía al fondo. Supr quita.",
+    skip: "Ir al inspector del elemento",
+    back: "Volver al elemento",
+    sheet: "Ajustar {{block}}",
+    hiddenTag: "Oculto en este lienzo",
+    stageLabel: "Lienzo de {{page}}",
+    free: "Pasar este lienzo a libre",
+    freeHint: "Hasta ahora los elementos se apilan solos. En libre los colocas donde quieras.",
+    desktopCreate: "Crear el lienzo de escritorio a partir del móvil",
+    desktopHint: "Hereda el diseño móvil, ampliado, hasta que lo edites.",
+    resize: "Cambiar tamaño de {{block}}",
+    rotate: "Girar {{block}}",
+    element: "{{block}}",
+    inspector: { close: "Cerrar", title: "Elemento", none: "Elige un elemento del lienzo.", x: "Columna", y: "Fila", w: "Ancho (columnas)", h: "Alto (filas)", rotation: "Giro (grados)", z: "Capa", padding: "Relleno", margin: "Margen", top: "Arriba", right: "Derecha", bottom: "Abajo", left: "Izquierda", front: "Traer al frente", back: "Enviar al fondo", visible: "Visible en este lienzo", remove: "Quitar", invalid: "Escribe un número entero entre {{min}} y {{max}}.", locked: "Este elemento es obligatorio: puedes moverlo y cambiarle el tamaño, pero no quitarlo, ocultarlo ni girarlo." },
+    palette: { title: "Agregar", page: "En la página", heading: "Título", text: "Texto", quote: "Cita", button: "Botón", countdown: "Cuenta atrás", ornament: "Ornamento", spacer: "Espaciador", html: "HTML propio", default: { heading: "Título", text: "Escribe aquí tu mensaje.", quote: "Una frase que te represente.", button: "Ver más" } },
+    block: { cover: "Portada", giftsCta: "Botón de regalos", rsvpCta: "Confirmar asistencia", heading: "Título", text: "Texto", story: "Historia", image: "Imagen", imageText: "Imagen y texto", gallery: "Galería", schedule: "Itinerario", venues: "Lugares", countdown: "Cuenta atrás", dressCode: "Vestimenta", faq: "Preguntas", recommendations: "Recomendaciones", illustration: "Dibujo", monogram: "Monograma", ornament: "Ornamento", spacer: "Espaciador", button: "Botón", quote: "Cita", weddingParty: "Cortejo", video: "Video", music: "Música", map: "Mapa", html: "HTML" },
+    announce: {
+      selected: "Seleccionado: {{block}}.",
+      moved: "{{block}}: columna {{x}}, fila {{y}}.",
+      resized: "{{block}}: {{w}} columnas de ancho por {{h}} filas de alto.",
+      rotated: "{{block}}: giro de {{degrees}} grados.",
+      front: "{{block}} al frente.",
+      back: "{{block}} al fondo.",
+      limit: "{{block}} no puede ir más lejos en esa dirección.",
+      refused: "No se hizo el cambio. {{reason}}",
+      cannotRemoveCover: "La portada no se puede quitar de la invitación.",
+      removedNext: "Se quitó {{block}}. El foco pasó a {{next}}.",
+      removedStage: "Se quitó {{block}}. El foco volvió al lienzo.",
+      applied: "Se cambió {{block}}."
+    }
+  },
   stage: {
     label: "Vista previa del diseño",
     caption: { mobile: "Vista móvil · 390 px", desktop: "Vista escritorio · 1024 px" },

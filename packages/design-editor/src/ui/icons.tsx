@@ -18,3 +18,4 @@ export const ClockIcon = draw(<><circle cx="12" cy="12" r="8.5" /><path d="M12 7
 export const DotIcon = draw(<circle cx="12" cy="12" r="4" fill="currentColor" />);
 /** An open ring: it turns while the draft is being saved (a still ring under reduced motion). */
 export const SpinnerIcon = draw(<path d="M12 3.5a8.5 8.5 0 1 0 8.5 8.5" />);
+export const EyeOffIcon = draw(<><path d="M3 3l18 18" /><path d="M10.6 6.2A9.6 9.6 0 0 1 12 6c5 0 8.5 4.2 9.5 6-.4.8-1.3 2.1-2.6 3.3M6.6 7.7C4.6 9 3.3 10.8 2.5 12c1 1.8 4.5 6 9.5 6 1.5 0 2.8-.4 4-.9" /><path d="M9.9 10a3 3 0 0 0 4.1 4.1" /></>);
