@@ -11,8 +11,8 @@ const banner = (t: number, hang: number, width: number): string => {
 };
 /** A curved horn rising from the left side of the morenada mask; the right one is its mirror. A silhouette only: no eyes, no mouth. */
 const HORN: readonly Cmd[] = [["M", 36, 56], ["C", 22, 54, 16, 40, 24, 28], ["C", 28, 40, 36, 44, 46, 48], ["Z"]];
-/** The greca of the morenada mask: eight square steps of 4.75 across the forehead, 38 wide: the egg is 42 wide at that height, so the band runs from edge to edge. */
-const GRECA = "M41 54V49H45.75V54H50.5V49H55.25V54H60V49H64.75V54H69.5V49H74.25V54H79V49";
+/** The greca of the morenada mask: eight square steps of 5.55 across the forehead, 44.4 wide (x 37.8 to 82.2): the egg is 42.3 to 48.5 wide between y 49 and 54 (45.7 at the middle of the band), so the band runs from edge to edge. */
+const GRECA = "M37.8 54V49H43.35V54H48.9V49H54.45V54H60.0V49H65.55V54H71.1V49H76.65V54H82.2V49";
 const BANNERS = [0.08, 0.22, 0.36, 0.5, 0.64, 0.78, 0.92];
 
 export const PARTIES = [

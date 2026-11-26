@@ -405,10 +405,12 @@ describe("ornaments (PL-M7)", () => {
  * (a greca of small teeth, like a diadem ribbon) that crosses the egg from edge to edge high on the forehead. Everything else on the egg,
  * the forehead above the band included, is plain ink.
  */
-interface Faceless { readonly egg: Box; readonly band: Box; readonly minWidth: number; readonly minTeeth: number }
+interface Faceless { readonly egg: Box; readonly band: Box; readonly minWidth: number; readonly minTeeth: number; readonly ellipse: { readonly cx: number; readonly cy: number; readonly rx: number; readonly ry: number } }
 const FACELESS: Readonly<Record<string, Faceless>> = {
-  "mascara-morenada": { egg: { x0: 32, y0: 38, x1: 88, y1: 102 }, band: { x0: 36, y0: 44, x1: 84, y1: 58 }, minWidth: 36, minTeeth: 4 }
+  "mascara-morenada": { egg: { x0: 32, y0: 38, x1: 88, y1: 102 }, band: { x0: 36, y0: 44, x1: 84, y1: 58 }, minWidth: 36, minTeeth: 4, ellipse: { cx: 60, cy: 70, rx: 28, ry: 32 } }
 };
+/** The real width of the egg (the ellipse of the drawing) at height y. */
+const eggWidthAt = (face: Faceless, y: number): number => 2 * face.ellipse.rx * Math.sqrt(1 - ((y - face.ellipse.cy) / face.ellipse.ry) ** 2);
 type Piece = { readonly role: string; readonly d: string };
 /** A piece is in a zone when its centre is (a ring that only grazes the zone's edge still reads as an eye). */
 const inside = (box: Box, zone: Box): boolean => { const x = (box.x0 + box.x1) / 2; const y = (box.y0 + box.y1) / 2; return x >= zone.x0 && x <= zone.x1 && y >= zone.y0 && y <= zone.y1; };
@@ -438,8 +440,12 @@ describe("faceless drawings (PL-116-R5-1, PL-138-1, PL-138-2)", () => {
       expect(isOrnament(band!, face), `${id}: the ornament is a cutout (no second colour) at least ${face.minWidth} wide, centred in the forehead band`).toBe(true);
       const box = pathBox(band!.d);
       expect(subpathCount(band!.d), "continuous: one stroke").toBe(1);
-      expect(box.x0, "left end on the egg").toBeLessThanOrEqual(face.egg.x0 + 10);
-      expect(box.x1, "right end on the egg").toBeGreaterThanOrEqual(face.egg.x1 - 10);
+      const real = eggWidthAt(face, (box.y0 + box.y1) / 2);
+      expect(Math.abs(box.x1 - box.x0 - real), `${id}: the band is as wide as the egg at its height (${real.toFixed(1)}), within 2: a ribbon from edge to edge, not a floating greca`).toBeLessThanOrEqual(2);
+      expect(box.x0, "left end at the egg's contour (within 2 of it at the band's mid height)").toBeGreaterThanOrEqual(face.ellipse.cx - real / 2 - 2);
+      expect(box.x0, "left end at the egg's contour (within 2 of it at the band's mid height)").toBeLessThanOrEqual(face.ellipse.cx - real / 2 + 2);
+      expect(box.x1, "right end at the egg's contour (within 2 of it at the band's mid height)").toBeGreaterThanOrEqual(face.ellipse.cx + real / 2 - 2);
+      expect(box.x1, "right end at the egg's contour (within 2 of it at the band's mid height)").toBeLessThanOrEqual(face.ellipse.cx + real / 2 + 2);
       expect(Math.abs((box.x0 + box.x1) / 2 - 60), "centred on the figure's axis").toBeLessThan(1);
       expect((band!.d.match(/V/g) ?? []).length, "vertical steps: two per tooth").toBeGreaterThanOrEqual(face.minTeeth * 2);
       expect(item.paths.find((path) => path.d === band!.d)?.stroke, "a stroked band, not a closed shape").toBeDefined();
@@ -476,7 +482,7 @@ describe("faceless drawings (PL-116-R5-1, PL-138-1, PL-138-2)", () => {
       expect(catches("M41 46L50 52L60 46"), "a V brow").toBe(1);
       expect(reachesLowerFace([{ role: "cutout", d: "M41 55L50 61L60 55L70 61L79 55" }], face).length, "the second band that read as a grin").toBe(1);
       expect(reachesLowerFace([{ role: "cutout", d: "M32 70H88" }], face).length, "a long line across the face, whatever its width").toBe(1);
-      expect(loose([{ role: "cutout", d: "M41 54V49H45.75V54H50.5V49H55.25V54H60V49H64.75V54H69.5V49H74.25V54H79V49" }], face).length, "the ornament itself is allowed").toBe(0);
+      expect(loose([{ role: "cutout", d: "M37.8 54V49H43.35V54H48.9V49H54.45V54H60.0V49H65.55V54H71.1V49H76.65V54H82.2V49" }], face).length, "the ornament itself is allowed").toBe(0);
     });
   }
 });
