@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { accentFill, COMPONENT_CONTRAST, compatibleTemplates, contrastRatio, COVER_WASH, darkBackdrops, fontStylesheet, inkOnAccent, LAYOUT_IDS, LAYOUTS, paletteFor, RSVP_WASH, TEXT_CONTRAST, themeFromTemplate, themeVariables, FALLBACK_TEMPLATE, type Palette } from "./index.js";
+import { accentFill, COMPONENT_CONTRAST, compatibleTemplates, contrastRatio, COVER_WASH, darkBackdrops, fontStylesheet, inkOnAccent, LAYOUT_IDS, LAYOUTS, paletteFor, RSVP_WASH, TEXT_CONTRAST, themeFromTemplate, themeVariables, withGifts, FALLBACK_TEMPLATE, type Palette } from "./index.js";
 import { TEMPLATES, WEDDING_SECTIONS } from "../test/fixtures.js";
 import seeded from "../test/seeded-palettes.json";
 
@@ -20,9 +20,9 @@ describe("theme as data", () => {
     expect(theme.sections[0]).toBe("gallery");
   });
 
-  it("sections the event type does not enable are dropped; enabled ones the template omits are hidden, not lost", () => {
+  it("sections the event type does not enable are dropped; enabled ones the template omits are hidden, not lost (gifts aside, P22)", () => {
     const corporate = themeFromTemplate(TEMPLATES[4], ["story", "schedule", "venues", "faq"]);
-    expect(corporate.sections).toEqual(["schedule", "venues", "faq"]);
+    expect(corporate.sections).toEqual(["schedule", "venues", "faq", "gifts"]);
     expect(corporate.hiddenSections).toEqual(["story"]);
   });
 
@@ -37,8 +37,8 @@ describe("theme as data", () => {
     const theme = themeFromTemplate(broken, ["story"]);
     expect(theme.layout).toBe(FALLBACK_TEMPLATE.layout);
     expect(theme.sectionStyle).toBe(FALLBACK_TEMPLATE.theme.sectionStyle);
-    expect(theme.sections).toEqual(["story"]);
-    expect(themeFromTemplate(null, ["faq"]).sections).toEqual(["faq"]);
+    expect(theme.sections).toEqual(["story", "gifts"]);
+    expect(themeFromTemplate(null, ["faq"]).sections).toEqual(["faq", "gifts"]);
   });
 
   it("REQ-F09-04 · the palette becomes CSS variables; light keeps the template's accent exactly", () => {
@@ -57,18 +57,40 @@ describe("theme as data", () => {
   });
 });
 
+describe("P22 · PL-A10 · the gifts section is on every invitation", () => {
+  const withoutGifts = <TSection extends string>(order: readonly TSection[]): TSection[] => order.filter((section) => section !== "gifts");
+
+  it.each(TEMPLATES.map((template) => [template.layout, template] as const))("%s · present when the template omits it and the event type does not enable it", (_layout, template) => {
+    const omitted = { ...template, sectionOrder: withoutGifts(template.sectionOrder) };
+    const theme = themeFromTemplate(omitted, withoutGifts(WEDDING_SECTIONS));
+    expect(theme.sections).toContain("gifts");
+    expect(theme.hiddenSections).not.toContain("gifts");
+    // Right before the reply when the template does not place it.
+    expect(theme.sections.indexOf("gifts")).toBe(theme.sections.indexOf("rsvp") - 1);
+  });
+
+  it("a template that places gifts keeps its position; without a reply section it goes last; it is never repeated", () => {
+    expect(themeFromTemplate(TEMPLATES[0], WEDDING_SECTIONS).sections).toEqual(["story", "schedule", "venues", "gallery", "dressCode", "gifts", "faq", "recommendations", "rsvp"]);
+    expect(withGifts(["story", "faq"])).toEqual(["story", "faq", "gifts"]);
+    expect(withGifts(["rsvp"])).toEqual(["gifts", "rsvp"]);
+    expect(withGifts([])).toEqual(["gifts"]);
+    expect(withGifts(["gifts", "story", "rsvp"])).toEqual(["gifts", "story", "rsvp"]);
+    expect(themeFromTemplate(null, []).sections).toEqual(["gifts"]);
+  });
+});
+
 const SEEDED_PALETTES: readonly (readonly [string, Palette])[] = seeded.templates.map((template) => [template.key, template.palette]);
 const themeOf = (palette: Palette) => ({ ...themeFromTemplate(null, []), palette });
 
-/** Light-scheme fill and ink the 16 seeds had before the dark-contrast work (b62081b). Light must never move. */
+/** Light-scheme fill and ink of the 30 seeds after the F4 redesign (computed by accentFill on each light palette; light accents already read, so the fill is the accent itself). */
 const LIGHT_FILLS: Readonly<Record<string, { readonly fill: string; readonly ink: string }>> = {
   "clasico-marfil": {
     "fill": "#7A5230",
-    "ink": "#FFFFFF"
+    "ink": "#FFFEFA"
   },
   "minimalista": {
     "fill": "#2F5D50",
-    "ink": "#F6F6F3"
+    "ink": "#FAFAF7"
   },
   "editorial": {
     "fill": "#9C3526",
@@ -96,7 +118,7 @@ const LIGHT_FILLS: Readonly<Record<string, { readonly fill: string; readonly ink
   },
   "arena-terracota": {
     "fill": "#A2431F",
-    "ink": "#F2EBE0"
+    "ink": "#FFFFFF"
   },
   "editorial-granate": {
     "fill": "#8A2638",
@@ -123,7 +145,63 @@ const LIGHT_FILLS: Readonly<Record<string, { readonly fill: string; readonly ink
     "ink": "#FFFFFF"
   },
   "gala-dorada": {
-    "fill": "#7A5A0E",
+    "fill": "#7B2A3C",
+    "ink": "#FFFFFF"
+  },
+  "cumpleanos-adulto": {
+    "fill": "#1D5C73",
+    "ink": "#FFFFFF"
+  },
+  "fiesta-patronal": {
+    "fill": "#8E2D6B",
+    "ink": "#FFFFFF"
+  },
+  "inauguracion": {
+    "fill": "#B03F00",
+    "ink": "#FFFFFF"
+  },
+  "pedida-de-mano": {
+    "fill": "#5B4B8A",
+    "ink": "#FFFFFF"
+  },
+  "despedida": {
+    "fill": "#0B6B8A",
+    "ink": "#FFFFFF"
+  },
+  "bodas-de-oro": {
+    "fill": "#8A4A1E",
+    "ink": "#FFFEFA"
+  },
+  "bodas-de-plata": {
+    "fill": "#3E5C76",
+    "ink": "#FFFFFF"
+  },
+  "reencuentro": {
+    "fill": "#9A3412",
+    "ink": "#FFFFFF"
+  },
+  "fiesta-tematica": {
+    "fill": "#2F4FBF",
+    "ink": "#FFFFFF"
+  },
+  "fin-de-ano": {
+    "fill": "#1F3A6B",
+    "ink": "#FFFFFF"
+  },
+  "otros-evento": {
+    "fill": "#4F5D95",
+    "ink": "#FFFFFF"
+  },
+  "graduacion": {
+    "fill": "#1E3A8A",
+    "ink": "#FFFFFF"
+  },
+  "baby-shower": {
+    "fill": "#A3406F",
+    "ink": "#FFFFFF"
+  },
+  "primera-comunion": {
+    "fill": "#3C6E8F",
     "ink": "#FFFFFF"
   }
 };
@@ -140,11 +218,11 @@ function hue(hex: string): number {
 const hueDistance = (first: string, second: string) => { const gap = Math.abs(hue(first) - hue(second)); return Math.min(gap, 360 - gap); };
 
 describe("palette fixture", () => {
-  it("is a literal copy of the 16 seeds of RSVPBackend, with its origin", () => {
+  it("is a literal copy of the 30 seeds of RSVPBackend, with its origin", () => {
     expect(seeded._origin.repo).toBe("PabloArauzCaballero/RSVPBackend");
     expect(seeded._origin.commit).toMatch(/^[0-9a-f]{40}$/);
-    expect(seeded.templates).toHaveLength(16);
-    expect(new Set(seeded.templates.map((template) => template.key)).size).toBe(16);
+    expect(seeded.templates).toHaveLength(30);
+    expect(new Set(seeded.templates.map((template) => template.key)).size).toBe(30);
     for (const template of seeded.templates) {
       expect(template.file).toMatch(/^\d{3}-[a-z-]+\.json$/);
       expect(Object.keys(template.palette).sort()).toEqual(["accent", "canvas", "muted", "surface", "text"]);
@@ -225,9 +303,8 @@ describe("template colours read in both schemes (WCAG AA)", () => {
   });
 });
 
-describe("styles.css and native styles keep the contract the theme assumes", () => {
+describe("styles.css keeps the contract the theme assumes", () => {
   const css = readFileSync(join(process.cwd(), "styles.css"), "utf8");
-  const native = readFileSync(join(process.cwd(), "src/native.tsx"), "utf8");
   const FLOOR_PX = 13;
   const ROOT_PX = 16;
 
@@ -237,14 +314,9 @@ describe("styles.css and native styles keep the contract the theme assumes", () 
     expect(sizes.filter((size) => size.px < FLOOR_PX)).toEqual([]);
   });
 
-  it("no fontSize in native.tsx falls below 13 px", () => {
-    const sizes = [...native.matchAll(/fontSize:\s*(\d+(?:\.\d+)?)/g)].map((match) => Number(match[1]));
-    expect(sizes.length).toBeGreaterThan(5);
-    expect(sizes.filter((size) => size < FLOOR_PX)).toEqual([]);
-  });
-
-  it("the washes the theme validates against are the ones the stylesheet paints", () => {
-    expect(css).toContain(`color-mix(in srgb, var(--celebration-accent) ${COVER_WASH * 100}%, transparent)`);
+  it("F4 (PL-A3, PL-M6, PL-M8) · the stylesheet paints no gradient and no saturated cover block; the reply tint is the one the theme validates against", () => {
+    expect(css).not.toMatch(/linear-gradient|radial-gradient/);
+    expect(css).not.toContain(`color-mix(in srgb, var(--celebration-accent) ${COVER_WASH * 100}%, transparent)`);
     expect(css).toMatch(new RegExp(String.raw`data-section="rsvp"\][^}]*color-mix\(in srgb, var\(--celebration-accent\) ${RSVP_WASH * 100}%, var\(--celebration-surface\)\)`));
   });
 
@@ -254,7 +326,59 @@ describe("styles.css and native styles keep the contract the theme assumes", () 
     expect(css).not.toContain("translateY(-1px)");
   });
 
+  /** Specificity (ids, classes/attributes/pseudo-classes, elements) of one selector, enough for the selectors this stylesheet writes. */
+  const specificity = (selector: string): [number, number, number] => {
+    const bare = selector.replace(/::?[a-z-]+\([^)]*\)/g, (pseudo) => (/^:(?:not|is|where)/.test(pseudo) ? "" : ":x")).replace(/\[[^\]]*\]/g, ".a");
+    return [(bare.match(/#[\w-]+/g) ?? []).length, (bare.match(/\.[\w-]+|:[a-z-]+/g) ?? []).filter((part) => !part.startsWith("::")).length, (bare.match(/(?:^|[\s>+~])[a-z][\w-]*/g) ?? []).length];
+  };
+  const rules = [...css.matchAll(/(^|\n)([^@/\n{}][^{}\n]*)\{([^}]*)\}/g)].map((match, index) => ({ index, selector: match[2]!.trim(), body: match[3]! }));
+  const winsOver = (first: [number, number, number], second: [number, number, number]) => first[0] - second[0] || first[1] - second[1] || first[2] - second[2];
+
+  it("PL-114-V1 · in bands the reply's tint beats the alternate-band rule whatever the section's parity (same specificity, declared later)", () => {
+    const alternate = rules.find((rule) => rule.selector.includes('[data-section-style="bands"]') && rule.selector.includes(":nth-child(even)") && /background/.test(rule.body));
+    const reply = rules.find((rule) => rule.selector.includes('[data-section-style="bands"]') && rule.selector.includes('[data-section="rsvp"]') && /background:\s*color-mix/.test(rule.body));
+    expect(alternate).toBeTruthy();
+    expect(reply).toBeTruthy();
+    expect(winsOver(specificity(reply!.selector), specificity(alternate!.selector))).toBeGreaterThanOrEqual(0);
+    expect(reply!.index).toBeGreaterThan(alternate!.index);
+    expect(reply!.body).toContain(`color-mix(in srgb, var(--celebration-accent) ${RSVP_WASH * 100}%, var(--celebration-surface))`);
+  });
+
+  it("the adaptive reply button stacks its faces in one cell and only hides the one that does not show", () => {
+    expect(css).toMatch(/\.celebration-cta\[data-credential\] \{[^}]*display: inline-grid/);
+    expect(css).toMatch(/\.celebration-cta-face \{[^}]*grid-area: 1 \/ 1/);
+    expect(css).toMatch(/data-credential="absent"\] \.celebration-cta-face\[data-face="confirm"\][^{]*data-credential="present"\] \.celebration-cta-face\[data-face="find"\] \{ visibility: hidden; \}/);
+  });
+
+  it("the button has no second :focus-visible rule for the button (the shared link ring covers it)", () => {
+    expect(css).not.toMatch(/\.celebration-cta:focus-visible/);
+    expect(css).toMatch(/\.celebration a:focus-visible/);
+  });
+
   it("pressing with a mouse wins over hovering: :hover:active keeps scale(.98), inside the same hover and motion media query", () => {
     expect(css).toMatch(/@media \(hover: hover\) and \(prefers-reduced-motion: no-preference\) \{[^@]*\.celebration-cta:hover:active \{ transform: scale\(\.98\); \}/);
+  });
+});
+
+describe("PL-134-R2-M1 · the app's entry (`./model`) carries no renderer and no CSS parser", () => {
+  it("none of its modules, followed through their imports, reaches the renderer, the sections or postcss", async () => {
+    const { existsSync, readFileSync } = await import("node:fs");
+    const { dirname, join, resolve } = await import("node:path");
+    const seen = new Set<string>();
+    const visit = (file: string): void => {
+      if (seen.has(file)) return;
+      seen.add(file);
+      for (const match of readFileSync(file, "utf8").matchAll(/(?:from|import)\s*\(?\s*["']([^"']+)["']/g)) {
+        const target = match[1] as string;
+        if (!target.startsWith(".")) { expect(["postcss", "postcss-selector-parser", "postcss-value-parser"]).not.toContain(target); continue; }
+        const base = resolve(dirname(file), target.replace(/\.js$/, ""));
+        const found = [`${base}.ts`, `${base}.tsx`, join(base, "index.ts"), join(base, "index.tsx")].find(existsSync);
+        if (found) visit(found);
+      }
+    };
+    visit(join(process.cwd(), "src/model.ts"));
+    const names = [...seen].map((file) => file.replace(`${process.cwd()}/src/`, ""));
+    expect(names.filter((name) => /^(renderer|custom\/|sections\/|design\/render|theme-context|media\/components)/.test(name))).toEqual([]);
+    expect(names.length).toBeGreaterThan(5);
   });
 });

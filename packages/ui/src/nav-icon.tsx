@@ -1,5 +1,5 @@
 import { createElement } from 'react';
-import { NAV_ICONS, NAV_ICON_STROKE } from './nav-icon-shapes';
+import { NAV_ICONS, NAV_ICON_STROKE } from '@rsvp/design-tokens';
 
 export interface NavIconProps {
   /** Destination key (`home`, `guests`, `overview`, `review`, …). Unknown keys draw nothing. */

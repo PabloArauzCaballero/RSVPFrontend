@@ -1,12 +1,12 @@
 import { useState, type ReactNode } from "react";
 import { Pressable, Text, View } from "react-native";
-import { themeFromTemplate, type PublicCelebrationView, type TemplateDocument } from "@rsvp/celebration-theme";
-import { CelebrationNativeRenderer } from "@rsvp/celebration-theme/native";
+import { design, themeFromTemplate, type PublicCelebrationView, type TemplateDocument } from "@rsvp/celebration-theme/model";
 import { useAdminTemplates, useSaveTemplate, useTemplateTransition, type LayoutId, type SectionId, type Template, type TemplateInput, type TemplateTheme } from "@rsvp/query-hooks";
 import type { Translate } from "@rsvp/i18n";
 import { useApiClient, useLocale, useT } from "../platform/providers";
 import { ChoiceGroup, ConfirmDialog, Field, FilterSelect, Notice, PageIntro, Section, useStyles } from "../host/ui";
 import { RowsSkeleton } from "../provider/parts";
+import { InvitationPreview } from "../host/invitation-preview";
 import { AdminErrorNotice, AdminListError, Stack } from "./shared";
 import { AdminScreen, splitList, useHeaderSlot } from "./admin-screen";
 import { SECTION_IDS } from "./event-types";
@@ -90,11 +90,53 @@ function Editor({ template, onSaved }: { readonly template: Template | undefined
         ))}
       </View>
       <Text style={styles.label}>{t("admin.templates.preview")}</Text>
-      <View style={[styles.card, { maxHeight: PREVIEW_HEIGHT, overflow: "hidden", padding: 0 }]}><CelebrationNativeRenderer theme={preview} view={sampleView(t, locale)} t={t} /></View>
+      <View style={[styles.card, { height: PREVIEW_HEIGHT, overflow: "hidden", padding: 0 }]}><InvitationPreview theme={preview} view={sampleView(t, locale)} title={t("admin.templates.preview")} testID="admin-preview" /></View>
       <AdminErrorNotice error={save.error ?? transition.error} onRetry={() => saveOnce({ target: template, input }, { onSuccess: onSaved })} />
       {save.isSuccess || transition.isSuccess ? <Notice kind="success">{t("admin.saved")}</Notice> : null}
       <ConfirmDialog visible={confirmArchive} danger title={t("admin.templates.archive")} body={t("admin.templates.archiveConfirm")} confirmLabel={t("admin.templates.archive")}
         onCancel={() => setConfirmArchive(false)} onConfirm={() => { setConfirmArchive(false); if (template) transitionOnce({ target: template, action: "archive" }, { onSuccess: onSaved }); }} />
+    </Section>
+  );
+}
+
+/**
+ * F4 b · a template whose theme is a design document v2. The v1 form (five colours, two font stacks) cannot edit it: the editor of
+ * documents is F5. Until then the admin reads it (name, state, version, palettes, fonts, a live preview) and can still publish or
+ * archive it, so a v2 row never breaks the screen (`theme.palette` does not exist on it).
+ */
+function DesignReader({ template, onSaved }: { readonly template: Template; readonly onSaved: () => void }): ReactNode {
+  const styles = useStyles();
+  const t = useT();
+  const client = useApiClient();
+  const locale = useLocale();
+  const transition = useTemplateTransition(client);
+  const transitionOnce = useSingleMutation(transition);
+  const [confirmArchive, setConfirmArchive] = useState(false);
+  const preview = themeFromTemplate(template as unknown as TemplateDocument, SECTION_IDS);
+  const document = preview.design;
+  useHeaderSlot({
+    items: [
+      ...(template.status === "DRAFT" ? [{ key: "publish", label: t("admin.templates.publish"), onPress: () => transitionOnce({ target: template, action: "publish" }, { onSuccess: onSaved }) }] : []),
+      ...(template.status !== "ARCHIVED" ? [{ key: "archive", label: t("admin.templates.archive"), onPress: () => setConfirmArchive(true), destructive: true }] : [])
+    ]
+  });
+  return (
+    <Section title={t("admin.templates.edit", { name: template.name })}>
+      <Text style={styles.muted}>{`${t(`admin.templates.status.${template.status}`)} · ${t("admin.templates.version", { version: template.version })}`}</Text>
+      <Notice><Text style={styles.body}>{t("admin.templates.designReadOnly")}</Text></Notice>
+      {document ? <Text style={styles.body}>{t("admin.templates.designSummary", { heading: document.tokens.typography.heading.family, body: document.tokens.typography.body.family, pages: document.pages.length })}</Text> : null}
+      <Text style={styles.label}>{t("admin.templates.palette")}</Text>
+      <View style={styles.row}>
+        {(["canvas", "surface", "text", "accent"] as const).map((key) => (
+          <View key={key} accessibilityLabel={`${t(`admin.templates.colors.${key}`)} ${preview.palette[key]}`} style={{ width: 44, height: 44, borderRadius: 6, borderWidth: 1, borderColor: preview.palette.muted, backgroundColor: preview.palette[key] }} />
+        ))}
+      </View>
+      <Text style={styles.label}>{t("admin.templates.preview")}</Text>
+      <View style={[styles.card, { height: PREVIEW_HEIGHT, overflow: "hidden", padding: 0 }]}><InvitationPreview theme={preview} view={sampleView(t, locale)} title={t("admin.templates.preview")} testID="admin-preview" /></View>
+      <AdminErrorNotice error={transition.error} onRetry={() => undefined} />
+      {transition.isSuccess ? <Notice kind="success">{t("admin.saved")}</Notice> : null}
+      <ConfirmDialog visible={confirmArchive} danger title={t("admin.templates.archive")} body={t("admin.templates.archiveConfirm")} confirmLabel={t("admin.templates.archive")}
+        onCancel={() => setConfirmArchive(false)} onConfirm={() => { setConfirmArchive(false); transitionOnce({ target: template, action: "archive" }, { onSuccess: onSaved }); }} />
     </Section>
   );
 }
@@ -113,7 +155,9 @@ export function TemplatesAdminScreen({ onNavigate }: { readonly onNavigate: (hre
       <AdminListError error={list.error} retryTestID="error-retry" onRetry={() => { void list.refetch(); }} />
       <FilterSelect label={t("admin.templates.title")} value={editing} onChange={setEditing}
         options={[{ value: "", label: t("admin.templates.new") }, ...(list.data?.items ?? []).map((item) => ({ value: item.id, label: `${item.name} · ${t(`admin.templates.status.${item.status}`)}` }))]} />
-      <Editor key={`${editing}-${current?.version ?? 0}`} template={current} onSaved={() => { void list.refetch(); }} />
+      {current && design.isDesignV2(current.theme)
+        ? <DesignReader key={`${editing}-${current.version}`} template={current} onSaved={() => { void list.refetch(); }} />
+        : <Editor key={`${editing}-${current?.version ?? 0}`} template={current} onSaved={() => { void list.refetch(); }} />}
       </Stack>
     </AdminScreen>
   );

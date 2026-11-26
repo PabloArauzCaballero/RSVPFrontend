@@ -1,4 +1,5 @@
 export * from "./celebration/index.js";
+export * from "./design/index.js";
 export * from "./guest/index.js";
 export * from "./gift/index.js";
 export * from "./provider/index.js";
@@ -10,3 +11,4 @@ export * from "./invalidation.js";
 export * from "./media/upload.js";
 export * from "./place-search.js";
 export * from "./session-scope.js";
+export * from "./media/queue.js";

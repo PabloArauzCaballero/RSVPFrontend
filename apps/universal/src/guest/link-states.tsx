@@ -34,11 +34,12 @@ export function InvalidLink(): ReactNode {
   return <LinkState illustration="linkExpired" title={t("rsvp.invite.invalidTitle")} body={t("rsvp.invite.invalidBody")} action={t("rsvp.invite.invalidAction")} />;
 }
 
-export function OfflineState({ onRetry, unavailable = false }: { readonly onRetry: () => void; readonly unavailable?: boolean }): ReactNode {
+export function OfflineState({ onRetry, unavailable = false, children }: PropsWithChildren<{ readonly onRetry: () => void; readonly unavailable?: boolean }>): ReactNode {
   const t = useT();
   return (
     <LinkState illustration="offline" title={unavailable ? t("rsvp.invite.unavailableTitle") : t("rsvp.invite.offlineTitle")} body={unavailable ? t("rsvp.invite.unavailableBody") : t("rsvp.invite.offlineBody")}>
       <ActionButton icon="refresh" label={t("rsvp.invite.retry")} onPress={onRetry} testID="guest-retry" />
+      {children}
     </LinkState>
   );
 }

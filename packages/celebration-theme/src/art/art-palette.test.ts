@@ -15,9 +15,9 @@ const CASES = SEED_TEMPLATES.flatMap((template) => (["light", "dark"] as const).
 })));
 
 describe("seed palettes", () => {
-  it("covers the 16 seeded templates", () => {
-    expect(SEED_TEMPLATES).toHaveLength(16);
-    expect(new Set(SEED_TEMPLATES.map((item) => item.key)).size).toBe(16);
+  it("covers the 30 seeded templates", () => {
+    expect(SEED_TEMPLATES).toHaveLength(30);
+    expect(new Set(SEED_TEMPLATES.map((item) => item.key)).size).toBe(30);
   });
 
   it("pins the dark composition of phase 0: the accent reads as text (4.5:1) on both dark grounds", () => {

@@ -1,0 +1,606 @@
+{
+  "key": "despedida",
+  "name": "Despedida de soltero/a",
+  "description": "La noche antes: un antifaz grande y torcido, el brindis en verde esmeralda y un titular de trazo firme que se lee de lejos.",
+  "layout": "festive",
+  "eventTypeTags": [
+    "bachelor-party"
+  ],
+  "sectionOrder": [
+    "schedule",
+    "venues",
+    "story",
+    "gallery",
+    "dressCode",
+    "gifts",
+    "faq",
+    "rsvp"
+  ],
+  "theme": {
+    "schemaVersion": 2,
+    "tokens": {
+      "palettes": {
+        "light": {
+          "canvas": "#F1FAF8",
+          "surface": "#FFFFFF",
+          "text": "#10242A",
+          "muted": "#46605F",
+          "accent": "#0F766E",
+          "accentFill": "#0F766E",
+          "onAccent": "#FFFFFF",
+          "line": "#6F8E8B"
+        },
+        "dark": {
+          "canvas": "#0C1716",
+          "surface": "#142423",
+          "text": "#E4F2F0",
+          "muted": "#A8C2BF",
+          "accent": "#6FD0C4",
+          "accentFill": "#4DBBAE",
+          "onAccent": "#06201D",
+          "line": "#557370"
+        }
+      },
+      "typography": {
+        "heading": {
+          "family": "manrope",
+          "weights": [
+            600,
+            700
+          ]
+        },
+        "body": {
+          "family": "mulish",
+          "weights": [
+            400,
+            600
+          ]
+        },
+        "scale": {
+          "base": 16,
+          "ratio": 1.25
+        }
+      },
+      "spacing": {
+        "unit": 8,
+        "section": 48,
+        "contentMaxWidth": 1080
+      },
+      "radii": {
+        "sm": 4,
+        "md": 8,
+        "lg": 16
+      },
+      "ornament": "none",
+      "illustrationSet": "none"
+    },
+    "pages": [
+      {
+        "id": "page-cover",
+        "kind": "cover",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-cover",
+                "block": "cover",
+                "x": 0,
+                "y": 0,
+                "w": 3,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "rise",
+                  "delayMs": 300,
+                  "durationMs": 800
+                },
+                "typography": {
+                  "align": "start",
+                  "role": "heading",
+                  "size": 44,
+                  "lineHeight": 1.05
+                }
+              },
+              {
+                "id": "el-sombrero",
+                "block": "art-sombrero",
+                "x": 3,
+                "y": 0,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "rotation": 14,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 1300,
+                  "durationMs": 600
+                }
+              },
+              {
+                "id": "el-antifaz",
+                "block": "art-antifaz",
+                "x": 0,
+                "y": 8,
+                "w": 3,
+                "h": 8,
+                "visible": true,
+                "rotation": -8,
+                "animation": {
+                  "entrance": "scale",
+                  "delayMs": 800,
+                  "durationMs": 800
+                }
+              },
+              {
+                "id": "el-coctel",
+                "block": "art-coctel",
+                "x": 3,
+                "y": 8,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 1500,
+                  "durationMs": 600
+                }
+              }
+            ]
+          },
+          "desktop": {
+            "mode": "flow",
+            "columns": 12,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-antifaz",
+                "block": "art-antifaz",
+                "x": 6,
+                "y": 0,
+                "w": 5,
+                "h": 8,
+                "visible": true,
+                "rotation": -8,
+                "animation": {
+                  "entrance": "scale",
+                  "delayMs": 800,
+                  "durationMs": 800
+                }
+              },
+              {
+                "id": "el-cover",
+                "block": "cover",
+                "x": 0,
+                "y": 0,
+                "w": 6,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "rise",
+                  "delayMs": 300,
+                  "durationMs": 800
+                },
+                "typography": {
+                  "align": "start",
+                  "role": "heading",
+                  "size": 88,
+                  "lineHeight": 1.0
+                }
+              },
+              {
+                "id": "el-coctel",
+                "block": "art-coctel",
+                "x": 11,
+                "y": 8,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 1500,
+                  "durationMs": 600
+                }
+              },
+              {
+                "id": "el-sombrero",
+                "block": "art-sombrero",
+                "x": 11,
+                "y": 16,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "rotation": 14,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 1300,
+                  "durationMs": 600
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-schedule",
+        "kind": "section",
+        "section": "schedule",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-reloj",
+                "block": "art-reloj",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-schedule",
+                "block": "schedule",
+                "x": 0,
+                "y": 8,
+                "w": 8,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-venues",
+        "kind": "section",
+        "section": "venues",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-mapa-pin",
+                "block": "art-mapa-pin",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-venues",
+                "block": "venues",
+                "x": 0,
+                "y": 8,
+                "w": 8,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-story",
+        "kind": "section",
+        "section": "story",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-story",
+                "block": "story",
+                "x": 0,
+                "y": 0,
+                "w": 8,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-gallery",
+        "kind": "section",
+        "section": "gallery",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-gallery",
+                "block": "gallery",
+                "x": 0,
+                "y": 0,
+                "w": 8,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-dress-code",
+        "kind": "section",
+        "section": "dressCode",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-dress-code",
+                "block": "dress-code",
+                "x": 0,
+                "y": 0,
+                "w": 8,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-gifts",
+        "kind": "section",
+        "section": "gifts",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-regalo",
+                "block": "art-regalo",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-gifts-cta",
+                "block": "gifts-cta",
+                "x": 0,
+                "y": 8,
+                "w": 8,
+                "h": 6,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-faq",
+        "kind": "section",
+        "section": "faq",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-faq",
+                "block": "faq",
+                "x": 0,
+                "y": 0,
+                "w": 8,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-rsvp",
+        "kind": "section",
+        "section": "rsvp",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-sobre",
+                "block": "art-sobre",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-rsvp-cta",
+                "block": "rsvp-cta",
+                "x": 0,
+                "y": 8,
+                "w": 8,
+                "h": 6,
+                "visible": true
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "blocks": [
+      {
+        "id": "cover",
+        "type": "cover",
+        "config": {
+          "variant": "festive",
+          "envelope": false
+        }
+      },
+      {
+        "id": "art-antifaz",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "antifaz",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "art-coctel",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "coctel",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "art-sombrero",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "sombrero-copa",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "art-reloj",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "reloj",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "schedule",
+        "type": "schedule",
+        "config": {
+          "display": "timeline"
+        }
+      },
+      {
+        "id": "art-mapa-pin",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "mapa-pin",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "venues",
+        "type": "venues",
+        "config": {
+          "display": "cards",
+          "mapOnTap": true
+        }
+      },
+      {
+        "id": "story",
+        "type": "story",
+        "config": {}
+      },
+      {
+        "id": "gallery",
+        "type": "gallery",
+        "config": {
+          "display": "grid"
+        }
+      },
+      {
+        "id": "dress-code",
+        "type": "dressCode",
+        "config": {}
+      },
+      {
+        "id": "art-regalo",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "regalo",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "gifts-cta",
+        "type": "giftsCta",
+        "required": true,
+        "config": {
+          "style": "solid"
+        }
+      },
+      {
+        "id": "faq",
+        "type": "faq",
+        "config": {}
+      },
+      {
+        "id": "art-sobre",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "sobre",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "rsvp-cta",
+        "type": "rsvpCta",
+        "config": {
+          "style": "solid"
+        }
+      }
+    ],
+    "custom": {
+      "html": "",
+      "css": ""
+    }
+  }
+}

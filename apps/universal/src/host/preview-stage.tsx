@@ -1,10 +1,10 @@
 import { useState, type ReactNode } from "react";
-import { ScrollView, View, type LayoutChangeEvent } from "react-native";
-import type { CelebrationTheme, GalleryImage, PublicCelebrationView } from "@rsvp/celebration-theme";
-import { CelebrationNativeRenderer } from "@rsvp/celebration-theme/native";
+import { View, type LayoutChangeEvent } from "react-native";
+import type { CelebrationTheme, GalleryImage, PublicCelebrationView } from "@rsvp/celebration-theme/model";
 import { radius } from "@rsvp/design-tokens";
 import { useT } from "../platform/providers";
 import { useColors } from "@rsvp/ui";
+import { InvitationPreview } from "./invitation-preview";
 import { ChoiceGroup } from "./ui";
 
 /**
@@ -24,7 +24,6 @@ export function fitScale(deviceWidth: number, available: number | null): number 
 }
 
 export function PreviewFrame({ device, theme, view, gallery = [], label, height }: { readonly device: Device; readonly theme: CelebrationTheme; readonly view: PublicCelebrationView; readonly gallery?: readonly GalleryImage[]; readonly label: string; readonly height?: number }): ReactNode {
-  const t = useT();
   const palette = useColors();
   const [available, setAvailable] = useState<number | null>(null);
   const width = DEVICE_WIDTHS[device];
@@ -35,10 +34,8 @@ export function PreviewFrame({ device, theme, view, gallery = [], label, height 
     <View onLayout={onLayout} style={{ width: "100%", alignItems: "center" }}>
       <View testID={`preview-${device}`} role="region" aria-label={label} style={{ width: width * scale, height: frameHeight * scale, overflow: "hidden", borderRadius: radius.lg, borderWidth: 1, borderColor: palette.border, backgroundColor: theme.palette.canvas }}>
         <View style={{ width, height: frameHeight, transform: [{ scale }], transformOrigin: "top left" }}>
-          {/* Focusable: a taller invitation scrolls inside the frame, and a scroll area must be reachable with the keyboard. */}
-          <ScrollView style={{ flex: 1 }} nestedScrollEnabled tabIndex={0}>
-            <CelebrationNativeRenderer theme={theme} view={view} gallery={gallery} t={t} />
-          </ScrollView>
+          {/* The site's own preview page scrolls inside the frame; the frame is a named region the keyboard and screen readers reach. */}
+          <InvitationPreview theme={theme} view={view} gallery={gallery} title={label} testID={`preview-frame-${device}`} />
         </View>
       </View>
     </View>

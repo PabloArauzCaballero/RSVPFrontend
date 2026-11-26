@@ -44,7 +44,9 @@ export interface GalleryImage {
   readonly width: number | null;
   readonly height: number | null;
   readonly isCover: boolean;
-  readonly variants: Readonly<Partial<Record<"thumb" | "medium" | "full" | "webp", string>>>;
+  readonly purpose?: string;
+  readonly durationMs?: number | null;
+  readonly variants: Readonly<Partial<Record<"thumb" | "medium" | "full" | "webp" | "thumb_avif" | "medium_avif" | "full_avif" | "svg" | "audio", string>>>;
 }
 
 export interface CelebrationContent {
@@ -127,7 +129,8 @@ export function hasSectionContent(section: SectionId, content: CelebrationConten
     dressCode: Boolean(content.dressCode),
     faq: Boolean(content.faq.length),
     recommendations: Boolean(content.recommendations.length),
-    gifts: false,
+    // P22: the gifts button is always there, with or without gifts loaded yet; the gift page says what the list holds.
+    gifts: true,
     rsvp: true
   };
   return checks[section];
@@ -226,8 +229,41 @@ export const SECTION_PATHS: Readonly<Partial<Record<SectionId, string>>> = {
   gallery: "galeria",
   dressCode: "dress-code",
   faq: "faq",
-  recommendations: "recomendaciones"
+  recommendations: "recomendaciones",
+  /** Not a section page: the guest's gift list (`/c/{slug}/regalos` on the site, `(guest)/c/[slug]/regalos` in the app). */
+  gifts: "regalos"
 };
+
+/**
+ * The guest's gift list, the same address on the public site and in the app. It never carries the guest's personal link:
+ * the gift page resolves the credential itself (from the session, or by asking for the link).
+ */
+export function giftsPath(slug: string): string {
+  return `/c/${encodeURIComponent(slug)}/regalos`;
+}
+
+/**
+ * What the public view will say about the gift list. Session rsvp-f1 adds `gifts.status` to GET /celebrations/public/{slug}
+ * (final name in CONTRATOS.md); until it exists every invitation is treated as OPEN.
+ */
+export type GiftsStatus = "OPEN" | "EMPTY" | "CLOSED";
+
+/**
+ * The label of the gifts button for each status, in the renderer's own copy (`celebration.gifts.cta*`; the gift page's
+ * `gifts.guest.cta.*` belongs to rsvp-f1 and is not used here). The button is always there and always goes to `/c/{slug}/regalos`:
+ * only its words and its look (`data-gifts-status`) change. Callers pass `giftsStatus` once the public summary exists (BE #128);
+ * until then every invitation is OPEN.
+ */
+export const GIFTS_CTA_KEYS: Readonly<Record<GiftsStatus, string>> = {
+  OPEN: "celebration.gifts.cta",
+  EMPTY: "celebration.gifts.ctaEmpty",
+  CLOSED: "celebration.gifts.ctaClosed"
+};
+
+/** A section is titled by its name in the menu. The gifts block has its own copy (`celebration.gifts.*`), not the gift page's (rsvp-f1's). */
+export function sectionTitleKey(section: SectionId): string {
+  return `celebration.sections.${section}`;
+}
 
 export function sectionForPath(path: string): SectionId | undefined {
   const entry = Object.entries(SECTION_PATHS).find(([, value]) => value === path);
