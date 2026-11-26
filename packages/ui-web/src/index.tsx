@@ -54,28 +54,39 @@ export type ButtonProps = PropsWithChildren<{
 
 const LISTING_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export type PartnerDestination = 'OFFICIAL_SITE' | 'LANDING' | 'WHATSAPP' | 'PHONE' | 'EMAIL' | 'INSTAGRAM' | 'PRODUCT_PAGE';
-export type PartnerSurface = 'PUBLIC_SITE' | 'SEARCH' | 'CELEBRATION_SITE' | 'GIFT_LIST' | 'EMAIL' | 'APP' | 'QUOTE_FORM';
+export type PartnerSurface = 'PUBLIC_SITE' | 'SEARCH' | 'CELEBRATION_SITE' | 'GIFT_LIST' | 'EMAIL' | 'APP' | 'QUOTE_FORM' | 'PREVIEW';
 /** The only way to point at a partner: the redirector `/r/{listingId}`, which records the lead and answers 302. Never the partner URL. */
-export function partnerRedirectHref(listingId: string, options: { destination?: PartnerDestination; surface?: PartnerSurface; celebrationId?: string } = {}): string {
+export function partnerRedirectHref(listingId: string, options: { destination?: PartnerDestination; surface?: PartnerSurface; celebrationId?: string; ctx?: string | null } = {}): string {
   if (!LISTING_ID.test(listingId)) throw new Error('PartnerLink needs a listing id (UUID), never a partner URL');
   const query = new URLSearchParams();
   if (options.destination) query.set('destination', options.destination);
   if (options.surface) query.set('surface', options.surface);
   if (options.celebrationId) query.set('celebrationId', options.celebrationId);
+  // R6a: the member's signed lead context (opaque, ~5 min). Only a link that is clicked in the member's own session carries it.
+  if (options.ctx) query.set('ctx', options.ctx);
   const text = query.toString();
   return `/r/${encodeURIComponent(listingId)}${text ? `?${text}` : ''}`;
+}
+
+/**
+ * The link a person copies or shares: the same redirector, never with `ctx`. The lead context is a bearer: whoever holds the link
+ * would click for free in the member's name, so the type does not even accept it and a stray property is dropped.
+ */
+export function partnerShareHref(listingId: string, options: { destination?: PartnerDestination; surface?: PartnerSurface; celebrationId?: string } = {}): string {
+  const { destination, surface, celebrationId } = options;
+  return partnerRedirectHref(listingId, { destination, surface, celebrationId });
 }
 
 /**
  * A link to a partner. It takes a listing id, not a URL, so a direct partner link is impossible by construction; the rel is always
  * `sponsored nofollow` and the disclaimer travels with the link (visible, and tied to it with aria-describedby).
  */
-export function PartnerLink({ listingId, destination, surface, celebrationId, children, className, disclaimer = true }: PropsWithChildren<{ listingId: string; destination?: PartnerDestination; surface?: PartnerSurface; celebrationId?: string; className?: string; disclaimer?: boolean }>) {
+export function PartnerLink({ listingId, destination, surface, celebrationId, ctx, children, className, disclaimer = true }: PropsWithChildren<{ listingId: string; destination?: PartnerDestination; surface?: PartnerSurface; celebrationId?: string; ctx?: string | null; className?: string; disclaimer?: boolean }>) {
   const t = useStrings();
   const id = useId();
   return (
     <span className="inline-flex flex-col gap-1">
-      <a href={partnerRedirectHref(listingId, { destination, surface, celebrationId })} rel="sponsored nofollow noopener" aria-describedby={disclaimer ? id : undefined} className={cn(buttonVariants({ variant: 'secondary' }), className)}>{children}</a>
+      <a href={partnerRedirectHref(listingId, { destination, surface, celebrationId, ctx })} rel="sponsored nofollow noopener" aria-describedby={disclaimer ? id : undefined} className={cn(buttonVariants({ variant: 'secondary' }), className)}>{children}</a>
       {disclaimer ? <span id={id} className="text-xs text-text-muted">{t.partnerDisclaimer}</span> : null}
     </span>
   );

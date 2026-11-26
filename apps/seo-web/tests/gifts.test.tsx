@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { GiftItem } from "@rsvp/query-hooks";
 import { GiftExperience, arrange } from "../components/gift/gift-experience";
-import { loadGiftPage } from "../lib/gifts";
+import { loadGiftPage, partnerGiftHref } from "../lib/gifts";
 import { createApiClient } from "@rsvp/api-client";
 
 const CELEBRATION = "4f0f2d3d-0000-4000-8000-000000000001";
@@ -350,5 +350,36 @@ describe("D-3 · the guest cancels their own reservation from the gift page", ()
     const keys = calls.filter((call) => call.method === "POST").map((call) => call.key);
     expect(keys.length).toBeGreaterThanOrEqual(2);
     expect(new Set(keys).size).toBe(1);
+  });
+});
+
+describe("R6a · ctx del miembro en los enlaces /r/ de la lista", () => {
+  const TOKEN = "v2.eyJhIjoiYiJ9.c2ln-_";
+  const partnerHrefs = () => screen.getAllByRole("link").map((a) => a.getAttribute("href") ?? "").filter((href) => href.startsWith("/r/"));
+
+  it("a list read that carries leadContext puts it as ctx on every /r/ link, next to celebrationId", async () => {
+    stubFetch(() => json(201, {}), () => json(200, { items: ITEMS, partnerPriorityEnabled: true, leadContext: TOKEN }));
+    renderList();
+    await waitFor(() => expect(partnerHrefs().length).toBeGreaterThan(0));
+    for (const href of partnerHrefs()) {
+      const url = new URL(href, "http://site.test");
+      expect(url.searchParams.get("ctx")).toBe(TOKEN);
+      expect(url.searchParams.get("celebrationId")).toBe(CELEBRATION);
+      expect(url.searchParams.get("surface")).toBe("GIFT_LIST");
+    }
+  });
+
+  it("a guest's list (leadContext null) has no ctx on any /r/ link", async () => {
+    stubFetch(() => json(201, {}), () => json(200, { items: ITEMS, partnerPriorityEnabled: true, leadContext: null }));
+    renderList();
+    await waitFor(() => expect(partnerHrefs().length).toBeGreaterThan(0));
+    for (const href of partnerHrefs()) expect(href).not.toContain("ctx");
+  });
+
+  it("partnerGiftHref adds ctx only when there is one", () => {
+    const listingId = "7d1c1a34-5d4c-4a39-9a2e-0f4f2d3d7b11";
+    expect(partnerGiftHref({ productListingId: listingId }, CELEBRATION)).toBe(`/r/${listingId}?surface=GIFT_LIST&celebrationId=${CELEBRATION}`);
+    expect(partnerGiftHref({ productListingId: listingId }, CELEBRATION, TOKEN)).toBe(`/r/${listingId}?surface=GIFT_LIST&celebrationId=${CELEBRATION}&ctx=${TOKEN}`);
+    expect(partnerGiftHref({ productListingId: null }, CELEBRATION, TOKEN)).toBeNull();
   });
 });

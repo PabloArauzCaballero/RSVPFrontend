@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApiClient } from "@rsvp/api-client";
 import { useMediaAssets, type MediaAsset } from "../src/celebration/index.js";
-import { useAddGift, useGiftList } from "../src/gift/index.js";
+import { LEAD_CONTEXT_REFRESH_MS, leadContextOf, useAddGift, useGiftList } from "../src/gift/index.js";
 import { useChangeGuestGroup, useGuestDetail, useGuestGroups, useGuestList, useRegisterGuest } from "../src/guest/index.js";
 
 function setup(respond: (method: string, path: string) => unknown) {
@@ -131,5 +131,39 @@ describe("targeted resource refresh", () => {
     expect(h.calls.filter((call) => call === "GET /guests/celebrations/c-1/groups")).toHaveLength(2);
     await act(async () => { await view.result.current.move.mutateAsync({ guestId: "guest-1", groupId: "group-1" }); });
     await waitFor(() => expect(view.result.current.detail.data?.groupId).toBe("group-1"));
+  });
+});
+
+describe("R6a · lead context of the gift list", () => {
+  it("the refresh interval is below the 300 s TTL of the context Gift List signs", () => {
+    expect(LEAD_CONTEXT_REFRESH_MS).toBeLessThan(300_000);
+  });
+
+  it("leadContextOf: the signed token, or undefined for a guest, a public read or an older server", () => {
+    expect(leadContextOf({ leadContext: "tok" })).toBe("tok");
+    expect(leadContextOf({ leadContext: null })).toBeUndefined();
+    expect(leadContextOf({ leadContext: "" })).toBeUndefined();
+    expect(leadContextOf({})).toBeUndefined();
+    expect(leadContextOf(undefined)).toBeUndefined();
+  });
+
+  it("a member's list is re-read before the context expires and the new context replaces the old one", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    let reads = 0;
+    const h = setup(() => ({ items: [], partnerPriorityEnabled: true, leadContext: `ctx-${++reads}` }));
+    const view = renderHook(() => useGiftList(h.client, "c-1"), { wrapper: h.wrapper });
+    await waitFor(() => expect(view.result.current.data?.leadContext).toBe("ctx-1"));
+    await act(async () => { await vi.advanceTimersByTimeAsync(LEAD_CONTEXT_REFRESH_MS + 1_000); });
+    await waitFor(() => expect(view.result.current.data?.leadContext).toBe("ctx-2"));
+    expect(h.calls.filter((call) => call.startsWith("GET"))).toHaveLength(2);
+  });
+
+  it("a read without context (guest) never polls", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const h = setup(() => ({ items: [], partnerPriorityEnabled: true, leadContext: null }));
+    const view = renderHook(() => useGiftList(h.client, "c-1", "guest-credential-0123456789"), { wrapper: h.wrapper });
+    await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
+    await act(async () => { await vi.advanceTimersByTimeAsync(LEAD_CONTEXT_REFRESH_MS * 3); });
+    expect(h.calls.filter((call) => call.startsWith("GET"))).toHaveLength(1);
   });
 });

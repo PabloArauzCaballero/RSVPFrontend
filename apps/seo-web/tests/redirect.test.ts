@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { GET } from "../app/r/[listingId]/route";
-import { correlationIdOf, resolveRedirect, withAttribution } from "../lib/redirect";
+import { correlationIdOf, resolveRedirect, SURFACES, withAttribution } from "../lib/redirect";
 import robots from "../app/robots";
 
 const LISTING = "7d1c1a34-5d4c-4a39-9a2e-0f4f2d3d7b11";
@@ -119,6 +119,32 @@ describe("REQ-F27-02/03 · /r/{listingId} redirector", () => {
     await GET(new Request(`http://site.test/r/${LISTING}?destination=javascript:alert(1)`), ctx);
     const [url] = fetchFn.mock.calls[0] as unknown as [URL];
     expect(url.searchParams.has("destination")).toBe(false);
+  });
+
+  it("R6a · ctx (the member's lead context) is forwarded to Provider Catalog unchanged and never reaches the partner URL", async () => {
+    const fetchFn = gateway(upstream302("https://shop.example/torta?utm_source=rsvp"));
+    const token = "v2.eyJhIjoiYiJ9.c2ln-_";
+    const response = await GET(new Request(`http://site.test/r/${LISTING}?surface=GIFT_LIST&celebrationId=22222222-3333-4444-8555-666666666666&ctx=${token}`), ctx);
+    expect(response.status).toBe(302);
+    const [url] = fetchFn.mock.calls[0] as unknown as [URL];
+    expect(url.searchParams.get("ctx")).toBe(token);
+    expect(response.headers.get("location")).not.toContain(token);
+    expect(response.headers.get("location")).not.toContain("ctx=");
+  });
+
+  it("R6a · without ctx none is sent, and an empty one is dropped (a guest's click is billed as before)", async () => {
+    const fetchFn = gateway(upstream302());
+    await GET(new Request(`http://site.test/r/${LISTING}?surface=GIFT_LIST&ctx=`), ctx);
+    const [url] = fetchFn.mock.calls[0] as unknown as [URL];
+    expect(url.searchParams.has("ctx")).toBe(false);
+  });
+
+  it("R6a · PREVIEW is a known surface and is forwarded as the lead's surface", async () => {
+    expect(SURFACES).toContain("PREVIEW");
+    const fetchFn = gateway(upstream302());
+    await GET(new Request(`http://site.test/r/${LISTING}?surface=PREVIEW`), ctx);
+    const [url] = fetchFn.mock.calls[0] as unknown as [URL];
+    expect(url.searchParams.get("surface")).toBe("PREVIEW");
   });
 
   it("/r/ is not indexable", () => {

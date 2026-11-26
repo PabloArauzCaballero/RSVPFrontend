@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import axe from 'axe-core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { Button, Card, PartnerLink, partnerRedirectHref, Checkbox, ComponentCatalog, DatePicker, FileUpload, Input, Modal, Select, Sheet, Table, Toast, UiProvider, componentStates } from './index';
+import { Button, Card, PartnerLink, partnerRedirectHref, partnerShareHref, Checkbox, ComponentCatalog, DatePicker, FileUpload, Input, Modal, Select, Sheet, Table, Toast, UiProvider, componentStates } from './index';
 
 afterEach(cleanup);
 
@@ -129,6 +129,26 @@ describe('PartnerLink: always through /r/{listingId}', () => {
   });
   it('refuses a partner URL instead of a listing id', () => {
     expect(() => partnerRedirectHref('https://tienda.example/x')).toThrow(/listing id/);
+  });
+  it('R6a: carries the member lead context as ctx, encoded, and the PREVIEW surface', () => {
+    const ctx = 'v2.eyJhIjoiYiJ9.c2ln+/=';
+    const url = new URL(partnerRedirectHref(ID, { destination: 'PRODUCT_PAGE', surface: 'GIFT_LIST', celebrationId: 'c1', ctx }), 'http://site.test');
+    expect(url.pathname).toBe(`/r/${ID}`);
+    expect(url.searchParams.get('ctx')).toBe(ctx);
+    expect(url.searchParams.get('celebrationId')).toBe('c1');
+    expect(partnerRedirectHref(ID, { surface: 'PREVIEW' })).toBe(`/r/${ID}?surface=PREVIEW`);
+    render(<PartnerLink listingId={ID} surface="GIFT_LIST" celebrationId="c1" ctx={ctx}>Ir</PartnerLink>);
+    expect(new URL(screen.getByRole('link', { name: 'Ir' }).getAttribute('href') ?? '', 'http://site.test').searchParams.get('ctx')).toBe(ctx);
+  });
+  it('R6a: no ctx when there is none (guest, public read, older server)', () => {
+    expect(partnerRedirectHref(ID, { surface: 'GIFT_LIST', celebrationId: 'c1', ctx: null })).toBe(`/r/${ID}?surface=GIFT_LIST&celebrationId=c1`);
+    expect(partnerRedirectHref(ID, { surface: 'GIFT_LIST', celebrationId: 'c1', ctx: '' })).not.toContain('ctx');
+  });
+  it('R6a · M-4: the link to copy or share NEVER carries ctx (it is a bearer: it would give free clicks to whoever holds it)', () => {
+    const shared = partnerShareHref(ID, { destination: 'PRODUCT_PAGE', surface: 'GIFT_LIST', celebrationId: 'c1', ctx: 'secret-ctx' } as Parameters<typeof partnerShareHref>[1]);
+    expect(shared).toBe(`/r/${ID}?destination=PRODUCT_PAGE&surface=GIFT_LIST&celebrationId=c1`);
+    expect(shared).not.toContain('ctx');
+    expect(shared).not.toContain('secret-ctx');
   });
   it('has no axe violations', async () => {
     const { container } = render(<PartnerLink listingId={ID}>Abrir</PartnerLink>);

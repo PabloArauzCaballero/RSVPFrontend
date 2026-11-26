@@ -5,7 +5,7 @@ import { ApiError, type ApiClient } from '@rsvp/api-client';
 import { createTranslator, formatMinor, type AppLocale } from '@rsvp/i18n/server';
 import {
   activeReservationsByItem, arrangeGifts, giftContactDestinations, giftListBlocker, isGiftTaken, isReservationNotActive, isReserveRetryable, maxPriceMinor, MESSAGE_MAX, NAME_MAX, newIdempotencyKey,
-  reserveFailureKind, reserveFailureMessage, reserveFieldErrors, useCancelGiftReservation, useGiftList, useMyGiftReservations, usePublicListing, useReserveGiftItem,
+  reserveFailureKind, reserveFailureMessage, reserveFieldErrors, useCancelGiftReservation, leadContextOf, useGiftList, useMyGiftReservations, usePublicListing, useReserveGiftItem,
   type GiftFilters, type GiftItem, type GiftItemList, type GiftReservation, type GiftSourceFilter, type ListingSummary
 } from '@rsvp/query-hooks';
 import { PartnerLink } from '@rsvp/ui-web';
@@ -85,6 +85,8 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
   useEffect(() => { setCredential(readGuestCredential(slug)); }, [slug]);
   const ready = credential !== undefined;
   const list = useGiftList(client, ready ? celebrationId : undefined, credential ?? null, credential ? undefined : initial);
+  // R6a: null for a guest; present only when this read came from a celebration member's session.
+  const leadCtx = leadContextOf(list.data);
   const reserve = useReserveGiftItem(client, celebrationId, credential ?? null);
   // D-3 · the guest's own reservations (needs the link credential): after a reload the row still offers to cancel.
   const mineQuery = useMyGiftReservations(client, ready ? celebrationId : undefined, credential ?? null);
@@ -263,7 +265,7 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
           <div className="gift-actions">
             {item.status === 'AVAILABLE' ? <button type="button" className="rsvp-button" onClick={() => open(item)} aria-label={t('gifts.guest.reserveFor', { title: item.title })} data-testid={`reserve-${item.id}`}>{t('gifts.guest.reserve')}</button> : null}
             {listingId ? contact.map((destination) => (
-              <PartnerLink key={destination} listingId={listingId} destination={destination} surface="GIFT_LIST" celebrationId={celebrationId} disclaimer={false} className="gift-partner-link">
+              <PartnerLink key={destination} listingId={listingId} destination={destination} surface="GIFT_LIST" celebrationId={celebrationId} ctx={leadCtx} disclaimer={false} className="gift-partner-link">
                 {t(destination === 'WHATSAPP' ? 'gifts.card.viaWhatsApp' : 'gifts.guest.viaPartner')}
               </PartnerLink>
             )) : null}

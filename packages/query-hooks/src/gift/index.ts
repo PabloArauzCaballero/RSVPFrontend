@@ -80,10 +80,22 @@ export function maxPriceMinor(text: string): number | undefined {
   return value !== "" && Number.isFinite(Number(value)) ? Math.round(Number(value) * 100) : undefined;
 }
 
+/**
+ * R6a · The lead context (`leadContext`) is signed by Gift List with a 300 s TTL (GIFT_LEAD_CONTEXT_TTL_SECONDS, default 300, 60..3600).
+ * A member's list is therefore re-read every 240 s, so the `ctx` of the links is always younger than the TTL (a stale one proves
+ * nothing and the member's click is billed to the provider). Only a read that carries a context polls: guests and the public
+ * read never get one, so they keep the plain cache policy. The poll pauses in a background tab and the 10 s staleTime refetches on focus.
+ */
+export const LEAD_CONTEXT_REFRESH_MS = 240_000;
+
+/** The `ctx` of the `/r/` links of a list: the member's signed lead context, or undefined (guest, public read, older server). */
+export const leadContextOf = (list: Pick<GiftItemList, "leadContext"> | undefined | null): string | undefined => list?.leadContext || undefined;
+
 export function useGiftList(client: ApiClient, celebrationId: string | undefined, credential?: string | null, initialData?: GiftItemList) {
   return useQuery({
     queryKey: [...queryKeys.gift.list(celebrationId ?? ""), credential === undefined ? "host" : "guest"] as const,
     queryFn: ({ signal }) => giftService(client).list(celebrationId ?? "", credential, signal),
+    refetchInterval: (query) => (leadContextOf(query.state.data) ? LEAD_CONTEXT_REFRESH_MS : false),
     ...cachePolicy.gift, ...(initialData ? { initialData } : {}), enabled: Boolean(celebrationId), retry: (count, error) => !(error instanceof ApiError && error.status < 500) && count < 1
   });
 }

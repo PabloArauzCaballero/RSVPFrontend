@@ -22,6 +22,9 @@ export async function loadGiftPage(slug: string, client: ApiClient = publicClien
 }
 
 /** Opens the partner product through the redirector (F27); never the partner URL itself. */
-export function partnerGiftHref(item: Pick<GiftItem, "productListingId">, celebrationId: string): string | null {
-  return item.productListingId ? `/r/${encodeURIComponent(item.productListingId)}?surface=GIFT_LIST&celebrationId=${encodeURIComponent(celebrationId)}` : null;
+export function partnerGiftHref(item: Pick<GiftItem, "productListingId">, celebrationId: string, leadContext?: string | null): string | null {
+  if (!item.productListingId) return null;
+  const query = new URLSearchParams({ surface: "GIFT_LIST", celebrationId });
+  if (leadContext) query.set("ctx", leadContext);
+  return `/r/${encodeURIComponent(item.productListingId)}?${query.toString()}`;
 }

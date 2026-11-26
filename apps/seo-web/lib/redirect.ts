@@ -9,13 +9,17 @@ import { forwardedFor } from "./client-address";
 
 export const REDIRECT_STATUS = 302;
 export const DESTINATIONS = ["OFFICIAL_SITE", "LANDING", "WHATSAPP", "PHONE", "EMAIL", "INSTAGRAM", "PRODUCT_PAGE"] as const;
-export const SURFACES = ["PUBLIC_SITE", "SEARCH", "CELEBRATION_SITE", "GIFT_LIST", "EMAIL", "APP", "QUOTE_FORM"] as const;
+export const SURFACES = ["PUBLIC_SITE", "SEARCH", "CELEBRATION_SITE", "GIFT_LIST", "EMAIL", "APP", "QUOTE_FORM", "PREVIEW"] as const;
 export const CORRELATION_HEADER = "x-correlation-id";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const UTM_PREFIX = "utm_";
-/** Context the backend validates and stores with the lead (RawLeadContext). */
-const CONTEXT_KEYS = ["surface", "celebrationId", "guestId", "locale", "country", "city"] as const;
+/**
+ * Context the backend validates and stores with the lead (RawLeadContext). `ctx` (R6a) is the signed lead context Gift Lists gives
+ * a celebration member: it is forwarded to Provider Catalog unchanged so the member's own click is not billed, and it is never copied
+ * into the partner URL (`withAttribution` only carries utm_* and correlationId).
+ */
+const CONTEXT_KEYS = ["surface", "celebrationId", "guestId", "locale", "country", "city", "ctx"] as const;
 const BAD_REQUEST = 400;
 const NOT_FOUND = 404;
 const UNPROCESSABLE = 422;

@@ -3240,8 +3240,11 @@ export interface components {
             destination?: string;
             /** Format: uuid */
             id?: string;
-            /** @enum {string} */
-            invalidReason?: "dup" | "bot";
+            /**
+             * @description Why the lead is not billable (absent when valid). dup: same visitor, listing and destination inside the deduplication window. bot: automated traffic. Since 3.7.0 (R6a): PREVIEW (preview surface), NOT_ELIGIBLE (product not COMPLETE or hidden), PROVIDER_SELF (the provider's owner) and HOST_OR_PLANNER (a member of the celebration).
+             * @enum {string}
+             */
+            invalidReason?: "dup" | "bot" | "PREVIEW" | "NOT_ELIGIBLE" | "PROVIDER_SELF" | "HOST_OR_PLANNER";
             /** @enum {string} */
             kind?: "REDIRECT" | "FORM";
             /** Format: uuid */
@@ -9510,6 +9513,8 @@ export interface operations {
                 city?: string;
                 correlationId?: string;
                 country?: string;
+                /** @description R6a (3.7.0): signed lead context of a celebration member, copied as is from gift-list listGiftItems leadContext. Only an authentic, unexpired token whose celebration equals celebrationId counts: the click is then an invalid lead (HOST_OR_PLANNER, or PROVIDER_SELF when the member owns the provider). Any other value is ignored and the click is classified as an anonymous visitor's; more than 512 characters is 422 INVALID_LEAD_CONTEXT. Carries no personal data. */
+                ctx?: string;
                 /** @description Absent means the primary destination of the listing: PRODUCT_PAGE of a product, otherwise the first stored and enabled destination in this enum order. */
                 destination?: "OFFICIAL_SITE" | "LANDING" | "WHATSAPP" | "PHONE" | "EMAIL" | "INSTAGRAM" | "PRODUCT_PAGE";
                 /** @description Requires celebrationId. */
@@ -9517,9 +9522,10 @@ export interface operations {
                 locale?: string;
                 /** @description Referrer; defaults to the Referer header. */
                 ref?: string;
-                /** @description Visitor session; derived from IP and user agent when absent. */
+                /** @description Visitor session; derived from IP and user agent when absent. With the listing and the destination it is the deduplication key of billable leads (24 h on GIFT_LIST since 3.7.0). */
                 sessionId?: string;
-                surface?: "PUBLIC_SITE" | "SEARCH" | "CELEBRATION_SITE" | "GIFT_LIST" | "EMAIL" | "APP" | "QUOTE_FORM";
+                /** @description Where the link was shown. PREVIEW (R6a, 3.7.0): a preview in the provider portal or in moderation; the click is recorded as an invalid lead with reason PREVIEW. */
+                surface?: "PUBLIC_SITE" | "SEARCH" | "CELEBRATION_SITE" | "GIFT_LIST" | "EMAIL" | "APP" | "QUOTE_FORM" | "PREVIEW";
             };
             header?: never;
             path: {
@@ -9529,7 +9535,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Temporary redirect only; never301. Stored destination resolved and click/outbox committed first. */
+            /** @description Temporary redirect only; never 301. Stored destination resolved and click/outbox committed first. Every click is recorded as a lead: valid (billable) or invalid with one reason, checked in this order: bot, PREVIEW, NOT_ELIGIBLE, PROVIDER_SELF, HOST_OR_PLANNER, dup. An invalid click still redirects. */
             302: {
                 headers: {
                     /** @description No positive cache; suspension is checked against current persisted provider state on every query. */

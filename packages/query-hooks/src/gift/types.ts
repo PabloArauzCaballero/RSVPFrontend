@@ -17,7 +17,7 @@ export interface GiftItem {
   /** Present only when the host lets this viewer see who reserved (gift-settings). */
   readonly reservedByName?: string;
 }
-export interface GiftItemList { readonly items: readonly GiftItem[]; readonly partnerPriorityEnabled: boolean; /** L4 (1.12.0): next page, null on the last one. */ readonly nextCursor?: string | null }
+export interface GiftItemList { readonly items: readonly GiftItem[]; readonly partnerPriorityEnabled: boolean; /** L4 (1.12.0): next page, null on the last one. */ readonly nextCursor?: string | null; /** R6a (1.16.0): signed lead context of a celebration member's read, otherwise null. Opaque bearer, ~5 min: append it as `ctx` to every `/r/{listingId}` link of this list, never to a link that is copied or shared. */ readonly leadContext?: string | null }
 export interface GiftReservation {
   readonly id: string; readonly itemId: string; readonly celebrationId: string; readonly guestId?: string | null; readonly guestDisplayName?: string | null;
   readonly message?: string | null; readonly status: ReservationStatus; readonly requestedAt: string; readonly resolvedAt?: string | null; readonly resolvedBy?: string | null;
