@@ -49,11 +49,6 @@ export const isGiftsElement = (doc: Doc, elementId: string, canvas?: "mobile" | 
   return doc.pages.some((page) => canvasesOf(page).some(([name, grid]) => (canvas === undefined || canvas === name) && grid.elements.some((element) => element.id === elementId && element.block === block.id)));
 };
 
-function sizePx(element: Element, canvas: Canvas, name: "mobile" | "desktop", maxWidth: number): { readonly width: number; readonly height: number } {
-  const reference = Math.min(REFERENCE_WIDTH[name], maxWidth);
-  return { width: (element.w / canvas.columns) * reference, height: element.h * canvas.rowHeight };
-}
-
 type Box = readonly [left: number, top: number, right: number, bottom: number];
 
 /** The rectangle an element covers in px; the box of a rotated element is its bounding box (as the validator computes it). */
@@ -107,8 +102,8 @@ function giftsReadable(doc: Doc, page: design.DesignPage, element: Element, styl
 /** Height the box loses to padding and border on top and bottom (`_vertical_inset` in rules.py). */
 const verticalInset = (element: Element): number => (element.padding?.top ?? 0) + (element.padding?.bottom ?? 0) + 2 * (element.border?.width ?? 0);
 
-/** Height left for the label once padding and border are taken out of the box (never negative). */
-export const usefulHeightPx = (element: Element, canvas: Canvas): number => Math.max(0, element.h * canvas.rowHeight - verticalInset(element));
+/** Height left for the label once padding and border are taken out of the (bounding) box (never negative). */
+export const usefulHeightPx = (box: Box, element: Element): number => Math.max(0, box[3] - box[1] - verticalInset(element));
 
 /**
  * Everything that would make the backend answer 422 for the gifts block (all of P22), computed on the client so the editor can refuse
@@ -129,14 +124,15 @@ export function giftsIssues(doc: Doc): GiftsIssue[] {
       if (!element) { issues.push({ code: "GIFTS_BLOCK_REQUIRED", canvas: name }); continue; }
       if (element.link !== undefined || (element.rotation ?? 0) !== 0) issues.push({ code: "GIFTS_BLOCK_LOCKED", canvas: name });
       if (!element.visible || (element.opacity ?? 1) < 1) issues.push({ code: "GIFTS_BLOCK_HIDDEN", canvas: name });
-      if (element.x + element.w > canvas.columns || (element.y + element.h) * canvas.rowHeight > MAX_CANVAS_HEIGHT_PX) issues.push({ code: "GIFTS_BLOCK_OUT_OF_CANVAS", canvas: name });
-      const size = sizePx(element, canvas, name, doc.tokens.spacing.contentMaxWidth);
-      const useful = usefulHeightPx(element, canvas);
-      if (size.width < MIN_TARGET_PX || size.height < MIN_TARGET_PX || useful < MIN_TARGET_PX) issues.push({ code: "GIFTS_BLOCK_TOO_SMALL", canvas: name });
+      // Same box the validator measures (the bounding box when rotated, which also raises LOCKED), so both sides agree on every document.
+      const width = Math.min(REFERENCE_WIDTH[name], doc.tokens.spacing.contentMaxWidth);
+      const box = boxPx(element, canvas, width);
+      if (element.x + element.w > canvas.columns || box[3] > MAX_CANVAS_HEIGHT_PX) issues.push({ code: "GIFTS_BLOCK_OUT_OF_CANVAS", canvas: name });
+      const useful = usefulHeightPx(box, element);
+      if (box[2] - box[0] < MIN_TARGET_PX || box[3] - box[1] < MIN_TARGET_PX || useful < MIN_TARGET_PX) issues.push({ code: "GIFTS_BLOCK_TOO_SMALL", canvas: name });
       const label = element.typography?.size;
       if (label !== undefined && (label > GIFTS_MAX_FONT_PX || label * (element.typography?.lineHeight || GIFTS_DEFAULT_LINE_HEIGHT) > useful)) issues.push({ code: "GIFTS_BLOCK_TEXT_TOO_LARGE", canvas: name });
-      const width = Math.min(REFERENCE_WIDTH[name], doc.tokens.spacing.contentMaxWidth);
-      if (coveredBy(canvas.elements, index, boxPx(element, canvas, width), canvas, width)) issues.push({ code: "GIFTS_BLOCK_COVERED", canvas: name });
+      if (coveredBy(canvas.elements, index, box, canvas, width)) issues.push({ code: "GIFTS_BLOCK_COVERED", canvas: name });
       if (!giftsReadable(doc, page, element, style)) issues.push({ code: "GIFTS_BLOCK_LOW_CONTRAST", canvas: name });
     }
   }
