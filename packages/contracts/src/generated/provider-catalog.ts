@@ -3277,8 +3277,11 @@ export interface components {
             /** @description Set by ADMIN only; shown as «Patrocinado». Off today (decision 18). */
             featured?: boolean;
             fulfillment?: components["schemas"]["FulfillmentView"];
-            /** @description Why this listing is hidden; null when it is not. Since 3.4.0 (R1, M-2 bis; decisión de Pablo 2026-11-26) the platform sets CATEGORY_TYPE_MISMATCH (not an enum: since 3.5.0 an administrator's free text, with completeness HIDDEN_BY_ADMIN, travels here too). CATEGORY_TYPE_MISMATCH: the listing's type does not match its category's type (a SERVICE in a PRODUCT category or the other way around), so it is not published and not listed publicly; the provider must create it again in a category of its type. Always present in the provider's own listing responses. */
-            hiddenReason?: string | null;
+            /**
+             * @description Since 3.4.0 (R1, M-2 bis; decisión de Pablo 2026-11-26). Why the platform hid this listing; null when it is not hidden. CATEGORY_TYPE_MISMATCH: the listing's type does not match its category's type (a SERVICE in a PRODUCT category or the other way around), so it is not published and not listed publicly; the provider corrects its category (PATCH) to one of its type and publishes it again, which clears the mark. Always present in the provider's own listing responses.
+             * @enum {string|null}
+             */
+            hiddenReason?: "CATEGORY_TYPE_MISMATCH" | null;
             /** Format: uuid */
             id: string;
             /** @description For a PRODUCT, the card rendition of its cover photo (R2); an external URL stored before R2 is kept as a fallback. */
@@ -4002,12 +4005,13 @@ export interface components {
             weight?: string;
         } | null;
         ProductSheet: components["schemas"]["Listing"] & {
+            /** @description The administrator's reason while completeness is HIDDEN_BY_ADMIN (null otherwise). Only in the owner's GET/PATCH of the sheet. Separate from Listing.hiddenReason, which is the platform's CATEGORY_TYPE_MISMATCH (R1). */
+            adminHiddenReason?: string | null;
             /** @constant */
             currency?: "BOB";
             delivery?: components["schemas"]["ProductDelivery"];
             details?: components["schemas"]["ProductDetails"];
             giftIdeas?: string[];
-            hiddenReason?: string | null;
             photos?: components["schemas"]["ListingPhoto"][];
             priceMinor?: number | null;
             stock?: components["schemas"]["Stock"] | null;

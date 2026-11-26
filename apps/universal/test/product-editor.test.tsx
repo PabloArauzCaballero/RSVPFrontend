@@ -119,6 +119,12 @@ describe("new product (Básico creates the draft)", () => {
 });
 
 describe("editing a product", () => {
+  it("a product hidden by the admin shows adminHiddenReason in the summary (not Listing.hiddenReason)", async () => {
+    setSearchParams({ lid: LID, paso: "resumen" });
+    const { client } = fakeClient(handlers({ [`GET /providers/${PID}/listings/${LID}`]: () => ({ ...SHEET, completeness: "HIDDEN_BY_ADMIN", missing: [], adminHiddenReason: "Foto con marca de agua", hiddenReason: "CATEGORY_TYPE_MISMATCH" }) }));
+    renderApp(<ProductEditorScreen />, client, HOST);
+    expect(await screen.findByText("El equipo ocultó este producto. Motivo: Foto con marca de agua")).toBeTruthy();
+  });
   it("the summary shows the guest's card and what is missing; each missing row opens its step; Publicar stays off", async () => {
     setSearchParams({ lid: LID, paso: "resumen" });
     const { client } = fakeClient(handlers());

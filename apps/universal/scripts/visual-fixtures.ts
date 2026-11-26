@@ -23,7 +23,7 @@ const pastel = (fill: string): string => `data:image/svg+xml;utf8,${encodeURICom
 const readyPhoto = { id: "33333333-3333-4333-8333-333333333333", listingId: L2, variantId: null, status: "READY", rejectReason: null, contentType: "image/jpeg", altText: "Álbum abierto sobre una mesa", position: 0, createdAt: NOW, updatedAt: NOW,
   renditions: { thumb: { url: pastel("#E9E1D3"), width: 160, height: 107 }, card: { url: pastel("#E9E1D3"), width: 480, height: 320 }, full: { url: pastel("#E9E1D3"), width: 1280, height: 853 } } };
 const sheet = {
-  ...listings[1], titles: { "es-BO": "Álbum de 40 páginas" }, descriptions: { "es-BO": "Álbum de fotos con tapa de cuero, 40 páginas de cartulina, 30 × 30 cm." }, disclaimer: "", featured: false, destinations: ["WHATSAPP"], hiddenReason: null,
+  ...listings[1], titles: { "es-BO": "Álbum de 40 páginas" }, descriptions: { "es-BO": "Álbum de fotos con tapa de cuero, 40 páginas de cartulina, 30 × 30 cm." }, disclaimer: "", featured: false, destinations: ["WHATSAPP"], adminHiddenReason: null,
   priceMinor: 90000, currency: "BOB", stock: "AVAILABLE", giftIdeas: ["BOOK"], details: { dimensions: "30 × 30 cm" }, whatsappTemplate: null,
   variants: [{ id: "44444444-4444-4444-8444-444444444441", label: "Tapa negra", priceMinor: 90000, stock: "AVAILABLE", sku: null, position: 0, isDefault: true }, { id: "44444444-4444-4444-8444-444444444442", label: "Tapa con nombre grabado", priceMinor: 120000, stock: "MADE_TO_ORDER", sku: null, position: 1, isDefault: false }],
   delivery: { coverageCities: [], leadTimeDays: 5, shippingCostMinor: 0, pickupAvailable: true, conditions: {} },

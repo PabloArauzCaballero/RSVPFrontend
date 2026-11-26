@@ -236,7 +236,7 @@ function Summary({ sheet, provider, published, onOpen }: { readonly sheet: Produ
     <View style={{ gap: spacing[4] }}>
       <Text style={styles.body}>{t("portal.product.summary.intro")}</Text>
       <PreviewCard sheet={sheet} providerName={provider.name} cities={geo.data?.items} />
-      {sheet.completeness === "HIDDEN_BY_ADMIN" ? <Notice kind="error">{sheet.hiddenReason ? t("portal.product.summary.hidden", { reason: sheet.hiddenReason }) : t("portal.product.summary.hiddenNoReason")}</Notice> : null}
+      {sheet.completeness === "HIDDEN_BY_ADMIN" ? <Notice kind="error">{sheet.adminHiddenReason ? t("portal.product.summary.hidden", { reason: sheet.adminHiddenReason }) : t("portal.product.summary.hiddenNoReason")}</Notice> : null}
       {published ? <SuccessNote message={t("portal.product.summary.published")} detail={t("portal.product.summary.publishedDetail")} />
         : sheet.published && sheet.completeness === "COMPLETE" ? <Text style={styles.muted} testID="summary-published">{t("portal.product.summary.isPublished")}</Text>
         : sheet.completeness === "COMPLETE" ? <Text style={styles.body} testID="summary-ready">{t("portal.product.summary.ready")}</Text> : null}
