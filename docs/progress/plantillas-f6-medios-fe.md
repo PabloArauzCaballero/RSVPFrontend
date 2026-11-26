@@ -1,16 +1,17 @@
 # Plantillas F6 · medios y embebidos (frontend)
 
-Rama `feat/plantillas-f6-medios`, apilada sobre `feat/f1-diseno-v2-esquema` (FE #115). Pruebas del 2026-11-25.
+Rama `feat/plantillas-f6-medios`, base `chore/deploy-contabo-coolify` (FE #115, #131 y #134 ya están en ella). Ronda 2 (2026-11-26, Linux).
 
 | Pieza | Nivel | Evidencia |
 |---|---|---|
-| `packages/celebration-theme/src/media/*` (imágenes AVIF/WebP, fondos con velo, fachadas, reproductor MP3, lista blanca) | TESTED | `yarn workspace @rsvp/celebration-theme test`: 101 pruebas OK |
-| Cola de subida, hooks, tipos | TESTED | `yarn workspace @rsvp/query-hooks test`: 144 OK (10 de la cola) |
-| `MediaUploader` | TESTED en jsdom | `yarn workspace @rsvp/universal test`: 660 OK (6 nuevas) |
-| CSP `frame-src` | TESTED | una prueba compara `next.config.js` con `FRAME_HOSTS` |
-| Capturas Linux (Chromium 1243, 360 y 1280, claro y oscuro) | RUNS | `harness/shoot.mjs`; 0 peticiones de red antes del toque |
-| Playwright contra el backend real, axe, línea base visual | NO PROBADO | el entorno no tiene el stack Docker; las líneas base de macOS no se tocaron |
+| `packages/celebration-theme` (medios, velo por tema, fachadas, reproductor) | TESTED | `yarn workspace @rsvp/celebration-theme test`: 3016 OK (17 archivos) |
+| Cola de subida con `reconcile` (PL-135-M1) | TESTED | `yarn workspace @rsvp/query-hooks test`: 150 OK |
+| `MediaUploader` con REJECTED | TESTED en jsdom | `yarn workspace @rsvp/universal test`: 719 OK, 1 intermitente bajo carga (`account-links.test.tsx`, ajena) que pasa sola 12/12 |
+| Contratos | TESTED | `generate --ref 209b813` (Template/Media 1.4.2, sin SoundCloud); `check:generated` y `check:source` OK |
+| `yarn eslint . --max-warnings 0`, `yarn typecheck` (19 tareas), `yarn workspace @rsvp/seo-web build` | RUNS | salida 0 las tres |
+| `yarn harness:validate` | RUNS | 28 carriles, 61 skills |
+| gitleaks | NO PROBADO | el binario no está en el entorno |
+| LCP | NO MEDIDO | |
+| Playwright con Chrome real contra el backend real, axe, línea base visual | NO PROBADO | sin stack Docker; las líneas base de macOS no se tocaron |
 
-La CSP sigue en `Report-Only` (decisión previa de A6): solo se añadió `frame-src` con la lista y `media-src 'self' https:`.
-Los contratos de `packages/contracts` están fijados a BE `7d36479` (Template/Media 1.4.0). Re-fijarlos al BE más nuevo rompe `FONT_FAMILIES` (catálogo de fuentes de FE #115), así que queda para cuando #115 lo refleje.
-SoundCloud no está en el renderizador (decisión de Pablo, 2026-11-25).
+La CSP sigue en `Report-Only` (decisión previa de A6). SoundCloud no está en el renderizador ni en el contrato (decisión de Pablo, 2026-11-25).
