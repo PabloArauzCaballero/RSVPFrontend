@@ -33,14 +33,13 @@ jobs:
       - run: yarn turbo run build lint typecheck --affected
       # One test pass (PL-FE144-2): the 10 packages with a coverage gate run only `test:coverage` (same `vitest run` plus v8
       # thresholds: lines/statements >= 85 % in the packages with logic and both apps; the suite no longer runs twice). The
-      # 9 packages with no `test:coverage` script keep their plain `test`. Together: the same 19 packages as before.
+      # packages with no `test:coverage` script keep their plain `test` (today 9). Together: the same 19 packages as before.
       # --concurrency=2 matches the 2 vCPU of the runner (turbo's default of 10 starved the 5 s per-test budget).
       - run: yarn turbo run test:coverage --concurrency=2
-      - run: >-
-          yarn turbo run test --concurrency=2
-          --filter=@rsvp/celebration-theme --filter=@rsvp/config-eslint --filter=@rsvp/config-jest
-          --filter=@rsvp/config-tailwind --filter=@rsvp/config-ts --filter=@rsvp/contracts
-          --filter=@rsvp/design-tokens --filter=@rsvp/telemetry --filter=@rsvp/testing
+      # The filters come from the package.json files (scripts/test-filters.mjs), not from a hand-kept list: a new package
+      # with `test` and no `test:coverage` is picked up here automatically. Its test proves it with a fictitious package.
+      - run: node --test scripts/test-filters.test.mjs
+      - run: yarn turbo run test --concurrency=2 $(node scripts/test-filters.mjs)
 
   deploy-config:
     # A6/B1/M9 · nginx of the web app with its real image, rendered config and expected headers; build-arg validation.
