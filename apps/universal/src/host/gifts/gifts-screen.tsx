@@ -3,7 +3,7 @@ import { useRef, useState, type ReactNode } from "react";
 import { Text, View, useWindowDimensions } from "react-native";
 import { radius, spacing } from "@rsvp/design-tokens";
 import { formatMinor } from "@rsvp/i18n";
-import { activeReservationsByItem, catalogedFirst, isGiftListMissing, isReservationNotActive, newIdempotencyKey, useApproveExternalGift, useCancelGiftReservation, useGiftList, useHostReservations, useRejectExternalGift, useGiftSettings, useUpdateGiftSettings, type GiftItem, type GiftReservation } from "@rsvp/query-hooks";
+import { activeReservationsByItem, catalogedFirst, isGiftListMissing, isGiftUnavailable, isReservationNotActive, newIdempotencyKey, useApproveExternalGift, useCancelGiftReservation, useGiftList, useHostReservations, useRejectExternalGift, useGiftSettings, useUpdateGiftSettings, type GiftItem, type GiftReservation } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../../platform/providers";
 import { CelebrationScreen, useScreenHeader, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
@@ -15,7 +15,10 @@ import { RetryNotice } from "../guests/parts";
 import { useSingleFlightGate } from "../../platform/single-flight";
 
 type ChipTone = "yes" | "maybe" | "wait" | "no";
-const STATUS_TONE: Readonly<Record<GiftItem["status"], ChipTone>> = { AVAILABLE: "wait", PROPOSED: "maybe", PENDING_REVIEW: "maybe", COMMITTED: "yes", REJECTED: "no", UNAVAILABLE: "no" };
+type ShownStatus = GiftItem["status"] | "UNAVAILABLE";
+const STATUS_TONE: Readonly<Record<ShownStatus, ChipTone>> = { AVAILABLE: "wait", PROPOSED: "maybe", PENDING_REVIEW: "maybe", COMMITTED: "yes", REJECTED: "no", UNAVAILABLE: "no" };
+/** The chip says «No disponible» from `availability` (gift-list 1.14.0), never from `status`, which keeps the gift's own state. */
+const shownStatus = (item: GiftItem): ShownStatus => (isGiftUnavailable(item) ? "UNAVAILABLE" : item.status);
 
 /** A square monogram: the first letter of the gift on a quiet ground, so every row has a face before it has a photo. */
 function Monogram({ title }: { readonly title: string }): ReactNode {
@@ -42,14 +45,14 @@ function GiftRow({ item, first, currencyLocale, onApprove, onReject, approving, 
         <View style={{ flex: 1, minWidth: 0, gap: spacing[1] }}>
           <Text style={styles.itemTitle} numberOfLines={2}>{item.title}</Text>
           <Text style={styles.muted} numberOfLines={1}>{origin}{narrow ? ` · ${price}` : ""}</Text>
-          {item.status === "UNAVAILABLE" ? <Text style={styles.muted} testID={`gift-unavailable-${item.id}`}>{t("gifts.host.list.unavailableNote")}</Text> : null}
+          {isGiftUnavailable(item) ? <Text style={styles.muted} testID={`gift-unavailable-${item.id}`}>{t("gifts.host.list.unavailableNote")}</Text> : null}
           {item.reservedByName ? <Text style={styles.muted} testID={`gift-by-${item.id}`}>{t("gifts.host.list.reservedBy", { name: item.reservedByName })}</Text> : null}
-          {narrow ? <View testID={`gift-status-${item.id}`} style={{ alignSelf: "flex-start", paddingTop: spacing[1] }}><Chip tone={STATUS_TONE[item.status]}>{t(`gifts.host.status.${item.status}`)}</Chip></View> : null}
+          {narrow ? <View testID={`gift-status-${item.id}`} style={{ alignSelf: "flex-start", paddingTop: spacing[1] }}><Chip tone={STATUS_TONE[shownStatus(item)]}>{t(`gifts.host.status.${shownStatus(item)}`)}</Chip></View> : null}
         </View>
         {narrow ? null : (
           <View style={{ alignItems: "flex-end", gap: spacing[2] }}>
             <Text style={{ color: palette.text, fontSize: 20, lineHeight: 24, fontWeight: "500", letterSpacing: -0.3, fontFamily: fonts.display, fontVariant: ["tabular-nums"] }}>{price}</Text>
-            <View testID={`gift-status-${item.id}`}><Chip tone={STATUS_TONE[item.status]}>{t(`gifts.host.status.${item.status}`)}</Chip></View>
+            <View testID={`gift-status-${item.id}`}><Chip tone={STATUS_TONE[shownStatus(item)]}>{t(`gifts.host.status.${shownStatus(item)}`)}</Chip></View>
           </View>
         )}
       </View>
@@ -68,21 +71,19 @@ function GiftRow({ item, first, currencyLocale, onApprove, onReject, approving, 
   );
 }
 
-/** The list at a glance: how many gifts, and how many are open, taken, waiting for the host or no longer available (R1). */
+/** The list at a glance: how many gifts can still be given, and how many are open, taken or waiting for the host. The unavailable ones are not in these totals (R1): they have their own section. */
 function GiftFigures({ items }: { readonly items: readonly GiftItem[] }): ReactNode {
   const t = useT();
   const live = items.filter((item) => item.status !== "REJECTED");
   const available = live.filter((item) => item.status === "AVAILABLE").length;
   const reserved = live.filter((item) => item.status === "COMMITTED").length;
   const review = live.filter((item) => item.status === "PROPOSED" || item.status === "PENDING_REVIEW").length;
-  const unavailable = live.filter((item) => item.status === "UNAVAILABLE").length;
   return (
     <View testID="gift-figures" style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing[4] }}>
       <Figure testID="gift-count" label={t("gifts.host.figures.gifts")} value={live.length} />
       <Figure testID="gift-available" label={t("gifts.host.figures.available")} value={available} />
       <Figure testID="gift-reserved" label={t("gifts.host.figures.reserved")} value={reserved} />
       {review > 0 ? <Figure testID="gift-review" label={t("gifts.host.figures.review")} value={review} /> : null}
-      {unavailable > 0 ? <Figure testID="gift-unavailable" label={t("gifts.host.figures.unavailable")} value={unavailable} /> : null}
     </View>
   );
 }
@@ -128,7 +129,7 @@ function GiftsBody({ celebrationId, onNavigate }: { readonly celebrationId: stri
   const held = activeReservationsByItem(committed.data?.items);
   const release = useCancelGiftReservation(client, celebrationId);
   const [releaseTarget, setReleaseTarget] = useState<{ readonly item: GiftItem; readonly reservation: GiftReservation } | null>(null);
-  const [released, setReleased] = useState<string | null>(null);
+  const [released, setReleased] = useState<GiftItem | null>(null);
   const releaseKeys = useRef(new Map<string, string>());
   const approve = useApproveExternalGift(client, celebrationId);
   const reject = useRejectExternalGift(client, celebrationId);
@@ -143,8 +144,14 @@ function GiftsBody({ celebrationId, onNavigate }: { readonly celebrationId: stri
   // A celebration that never had a gift gets 404 GIFT_LIST_NOT_FOUND: that is the empty list, not a failure.
   const noListYet = isGiftListMissing(list.error);
   if (list.isError && !noListYet) return <RetryNotice error={list.error} onRetry={() => { void list.refetch(); }} />;
-  const items = list.data ? catalogedFirst(list.data.items) : [];
+  const all = list.data ? catalogedFirst(list.data.items) : [];
+  const items = all.filter((item) => !isGiftUnavailable(item));
+  const unavailable = all.filter(isGiftUnavailable);
+  // The pending count comes from the reservations endpoint, not from these rows: a reservation waiting on a gift that became unavailable still counts, because the host still has to answer it.
   const waiting = reservations.data?.items.filter((entry) => entry.status === "PENDING_REVIEW").length ?? 0;
+  // Releasing does not make an unavailable gift available: what the dialog and the notice promise follows the gift as the list reads it now.
+  const releaseUnavailable = (target: GiftItem): boolean => isGiftUnavailable(all.find((item) => item.id === target.id) ?? target);
+  const renderRow = (item: GiftItem, index: number): ReactNode => <GiftRow key={item.id} first={index === 0} item={item} currencyLocale={locale} onApprove={(id) => { setRejected(null); reject.reset(); if (flight.begin()) approve.mutate(id, { onSettled: flight.end }); }} onReject={(target) => { setRejected(null); approve.reset(); reject.reset(); setRejectTarget(target); }} approving={approve.isPending && approve.variables === item.id} rejecting={reject.isPending && reject.variables === item.id} locked={locked} {...(item.status === "COMMITTED" && held.get(item.id) ? { onRelease: () => { const reservation = held.get(item.id); if (!reservation) return; setReleased(null); release.reset(); setReleaseTarget({ item, reservation }); }, releasing: release.isPending && release.variables?.reservationId === held.get(item.id)?.id } : {})} />;
   return (
     <View style={{ gap: spacing[4] }}>
       {waiting > 0 ? (
@@ -157,9 +164,9 @@ function GiftsBody({ celebrationId, onNavigate }: { readonly celebrationId: stri
       <GiftErrorNotice error={approve.error} onReload={() => { void list.refetch(); }} />
       <GiftErrorNotice error={reject.error} onReload={() => { void list.refetch(); }} />
       {rejected ? <Notice kind="success">{t("gifts.host.proposalRejected", { title: rejected })}</Notice> : null}
-      {released ? <Notice kind="success">{t("gifts.host.release.done", { title: released })}</Notice> : null}
+      {released ? <Notice kind="success">{t(releaseUnavailable(released) ? "gifts.host.release.doneUnavailable" : "gifts.host.release.done", { title: released.title })}</Notice> : null}
       {release.isError && !releaseTarget ? <GiftErrorNotice error={release.error} onReload={() => { void list.refetch(); }} /> : null}
-      {items.length === 0 ? (
+      {all.length === 0 ? (
         <>
           <EmptyState illustration="noGifts" title={t("gifts.host.list.emptyTitle")} body={t("gifts.host.list.emptyBody")} />
           <RequesterVisibility celebrationId={celebrationId} />
@@ -168,15 +175,26 @@ function GiftsBody({ celebrationId, onNavigate }: { readonly celebrationId: stri
         <>
           <GiftFigures items={items} />
           <RequesterVisibility celebrationId={celebrationId} />
-          <RowList>
-            <Stagger>{items.map((item, index) => <GiftRow key={item.id} first={index === 0} item={item} currencyLocale={locale} onApprove={(id) => { setRejected(null); reject.reset(); if (flight.begin()) approve.mutate(id, { onSettled: flight.end }); }} onReject={(target) => { setRejected(null); approve.reset(); reject.reset(); setRejectTarget(target); }} approving={approve.isPending && approve.variables === item.id} rejecting={reject.isPending && reject.variables === item.id} locked={locked} {...(item.status === "COMMITTED" && held.get(item.id) ? { onRelease: () => { const reservation = held.get(item.id); if (!reservation) return; setReleased(null); release.reset(); setReleaseTarget({ item, reservation }); }, releasing: release.isPending && release.variables?.reservationId === held.get(item.id)?.id } : {})} />)}</Stagger>
-          </RowList>
+          {items.length > 0 ? (
+            <View testID="gift-list">
+              <RowList>
+                <Stagger>{items.map(renderRow)}</Stagger>
+              </RowList>
+            </View>
+          ) : null}
+          {unavailable.length > 0 ? (
+            <View testID="gift-unavailable-section" role="region" aria-labelledby="gift-unavailable-title" style={{ gap: spacing[3] }}>
+              <Text nativeID="gift-unavailable-title" accessibilityRole="header" aria-level={2} style={styles.subtitle} testID="gift-unavailable">{t("gifts.host.unavailable.title", { count: unavailable.length })}</Text>
+              <Text style={styles.body}>{t("gifts.host.unavailable.body")}</Text>
+              <RowList>{unavailable.map(renderRow)}</RowList>
+            </View>
+          ) : null}
         </>
       )}
       <ConfirmDialog visible={rejectTarget !== null} danger title={t("gifts.host.rejectConfirm.title")} body={rejectTarget ? t("gifts.host.rejectConfirm.body", { title: rejectTarget.title }) : ""} confirmLabel={t("gifts.host.rejectProposal")}
         onCancel={() => setRejectTarget(null)}
         onConfirm={() => { const target = rejectTarget; setRejectTarget(null); if (target && flight.begin()) reject.mutate(target.id, { onSuccess: () => setRejected(target.title), onSettled: flight.end }); }} />
-      <ConfirmDialog visible={releaseTarget !== null} danger busy={release.isPending} title={t("gifts.host.release.confirmTitle")} body={releaseTarget ? t("gifts.host.release.confirmBody", { title: releaseTarget.item.title }) : ""}
+      <ConfirmDialog visible={releaseTarget !== null} danger busy={release.isPending} title={t("gifts.host.release.confirmTitle")} body={releaseTarget ? t(releaseUnavailable(releaseTarget.item) ? "gifts.host.release.confirmBodyUnavailable" : "gifts.host.release.confirmBody", { title: releaseTarget.item.title }) : ""}
         confirmLabel={t("gifts.host.release.confirm")} cancelLabel={t("gifts.host.release.keep")} confirmTestID="release-confirm" cancelTestID="release-keep"
         onCancel={() => { setReleaseTarget(null); release.reset(); }}
         onConfirm={() => {
@@ -185,7 +203,7 @@ function GiftsBody({ celebrationId, onNavigate }: { readonly celebrationId: stri
           let key = releaseKeys.current.get(target.reservation.id);
           if (!key) { key = newIdempotencyKey(); releaseKeys.current.set(target.reservation.id, key); }
           release.mutate({ reservationId: target.reservation.id, idempotencyKey: key }, {
-            onSuccess: () => { setReleaseTarget(null); setReleased(target.item.title); },
+            onSuccess: () => { setReleaseTarget(null); setReleased(target.item); },
             // A reservation somebody already ended is not a failure to keep on screen: close and show the refreshed list.
             onError: (error) => { if (isReservationNotActive(error)) setReleaseTarget(null); },
             onSettled: flight.end

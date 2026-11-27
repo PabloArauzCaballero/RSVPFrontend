@@ -7,7 +7,7 @@ import { loadGiftPage } from "../lib/gifts";
 import { createApiClient } from "@rsvp/api-client";
 
 const CELEBRATION = "4f0f2d3d-0000-4000-8000-000000000001";
-const item = (over: Partial<GiftItem> & { id: string }): GiftItem => ({ listId: "l", celebrationId: CELEBRATION, title: over.id, price: { amountMinor: 10000, currency: "BOB" }, source: "CATALOGED", status: "AVAILABLE", version: 0, createdAt: "2026-11-01T00:00:00Z", productListingId: `7d1c1a34-5d4c-4a39-9a2e-0f4f2d3d7b${over.id.length}0`, ...over });
+const item = (over: Partial<GiftItem> & { id: string }): GiftItem => ({ listId: "l", celebrationId: CELEBRATION, title: over.id, price: { amountMinor: 10000, currency: "BOB" }, source: "CATALOGED", status: "AVAILABLE", availability: "AVAILABLE", version: 0, createdAt: "2026-11-01T00:00:00Z", productListingId: `7d1c1a34-5d4c-4a39-9a2e-0f4f2d3d7b${over.id.length}0`, ...over });
 const ITEMS = [item({ id: "ext-1", source: "EXTERNAL", productListingId: null, externalUrl: "https://tienda.example/x", title: "Cafetera" }), item({ id: "cat-1", title: "Torta" }), item({ id: "cat-2", title: "Mesa", price: { amountMinor: 900000, currency: "BOB" } }), item({ id: "prop", status: "PROPOSED", source: "EXTERNAL", title: "Propuesta" })];
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { "content-type": status >= 400 ? "application/problem+json" : "application/json" } });
 
@@ -32,6 +32,16 @@ beforeEach(() => {
   HTMLDialogElement.prototype.close = function close(this: HTMLDialogElement) { this.removeAttribute("open"); };
 });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+
+describe("R1 · un regalo UNAVAILABLE no llega al invitado", () => {
+  it("even if the answer carried it, the guest web list leaves it out", async () => {
+    const withUnavailable = [...ITEMS, item({ id: "off", title: "Parlante", availability: "UNAVAILABLE" })];
+    stubFetch(() => json(201, {}), () => json(200, { items: withUnavailable, partnerPriorityEnabled: true }));
+    renderList();
+    await screen.findByText("Torta");
+    expect(screen.queryByText("Parlante")).toBeNull();
+  });
+});
 
 describe("M21 · la lista de regalos de la web es la de la app", () => {
   it("«Regalos» is the cover with the celebration under it, then the rule; the old «Lista de regalos» is gone", async () => {
