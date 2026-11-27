@@ -28,3 +28,16 @@ Pruebas nuevas de esta ronda: `apps/universal/test/portal-preview-links.test.tsx
 
 ## Reversión
 Revertir el PR (o desplegar la imagen anterior de FE). Los contratos vuelven con `generate --ref d3b4b50e311933f987d25af80da2f2a284b14820`.
+
+## Regla para quien use el `ctx` del portal
+
+Sigue el patrón de R6a: el `ctx` no va en el `href`, se añade al navegar y se renueva al volver el foco. Es un bearer de 15 min: nunca en un enlace que se copie o comparta, ni en una clave de consulta.
+
+## Evidencia (BE real, Chrome real)
+
+Ver `docs/progress/evidence/r6b/`: capturas del recorrido, el CSV descargado y los scripts de siembra y recorrido. Entorno: Postgres, RabbitMQ y Redis en Docker; Kong 3.9.1 en Docker con el `kong.yml` del BE; Identity (jar compilado con gradle) y provider-catalog (build local) en el host; Expo web real contra `http://localhost:8000`. Sin `kong-jwt-sync` ni MinIO ni gift-list.
+
+## No verificado
+
+- `HOST_OR_PLANNER` (necesita el `ctx` firmado por gift-list; no se levantó gift-list): solo está cubierto por pruebas unitarias.
+- Clics hechos con `curl` al gateway (`/r/{listingId}`), no a través del sitio seo-web.
