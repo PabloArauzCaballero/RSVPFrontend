@@ -16,17 +16,21 @@ Fecha: 2026-11-26. Base: `origin/chore/deploy-contabo-coolify` (e299654b). Corri
 - Medido en esta tanda: bloque 52.47 px de alto en ambos botones, contraste texto/relleno mínimo 5.56:1, relleno/fondo mínimo 5.31:1; dock con botones de 44 px de alto como mínimo e igual ancho (diferencia 0).
 - No probado: en-US en Chrome (el SSR de seo-web no recibe el estado de la lista de regalos, así que EMPTY y CLOSED se cubren solo en pruebas unitarias, 40 plantillas x 3 estados); backend real; líneas base de macOS.
 
-## Corrección de la ronda 2 (2026-11-27, macOS, Node 24.18.1, Chrome real, fixture de contrato)
+## Verificación de la punta fusionada con la oficial (2026-11-27, Linux, Node 22, Chrome real `/usr/bin/google-chrome`, fixture de contrato)
 
-| Corrida | SHA | Resultado |
-|---|---|---|
-| `celebration-theme`: `tsc --noEmit`, `vitest run` | `6ce7e4a3` | exit 0; 18 archivos, 3394 pruebas pasan |
-| `i18n` / `seo-web`: `tsc`, `vitest run` | `14e46a8e` + oficial `470144bf` + arreglo R2-04 | exit 0; 15 y 210 pasan |
-| `eslint --max-warnings 0` (área y las dos e2e), `harness:validate`, `contracts` (6), `test-filters` (5), gitleaks sobre el rango | igual | exit 0; sin fugas |
-| `next build` de seo-web | `5dad9c10` y `6ce7e4a3` | exit 0 |
-| `playwright.actions.config.ts` | `5dad9c10` | 498 pruebas: **486 pasan, 12 fallan**, todas de `pinata`: aire 20 px < 24. Las 62 de OPEN/EMPTY/CLOSED y las 62 de axe pasan |
+Merge de `origin/chore/deploy-contabo-coolify` (`0fdd74f63`: #156 visor de galería, #112, #161, #146, #160) sobre `2a761c50`. Único conflicto: el snapshot de `renderer.test.tsx`; se conservó el del PR y se regeneró con la galería de la oficial (solo cambia el carrusel y el botón «ampliar»). `next build` + `next start` sobre el fixture, una sola corrida por suite, sin reintentos.
 
-- Los 12 fallos se corrigen en `6ce7e4a3` (piso de 1.5rem). **Esa punta NO se repitió en Chrome:** el disco compartido bajó a 4,9 GB, bajo el límite de 5 GB, y se detuvieron las corridas pesadas. Que `pinata` pase a 24 px sale del cálculo de la regla, no de una medición.
-- **No corridas en la ronda 2:** batería F6 (`playwright.f6.config.ts`; la última completa es la de la revisión (a) sobre `fff430b2`: 454 pasan, anterior a estos cambios de CSS) y `plantillas-v2.spec.ts` (`playwright.v2.config.ts`, cuya aserción de los tres estados cambió en `14e46a8e`).
-- Sin mediciones ni capturas nuevas versionadas: las capturas y los JSON de esta carpeta son de rondas anteriores y no muestran el CSS actual (EMPTY/CLOSED, aire, eje, ancho de 44rem). Desde `14e46a8e` la e2e escribe `mediciones-<pid>.jsonl` fila a fila.
-- Sigue sin probar: backend real, estado de la lista con la API real (en Chrome se fuerza en el DOM), en-US en Chrome, Safari/Firefox, lector de pantalla y líneas base de macOS (no regeneradas).
+| Corrida | Resultado |
+|---|---|
+| `celebration-theme`: `tsc --noEmit`; `vitest run` | exit 0; 18 archivos, 3395 pruebas pasan |
+| `i18n` `vitest run`; `seo-web` `tsc --noEmit`, `vitest run` | 16 pasan; exit 0; 25 archivos, 211 pasan |
+| `eslint --max-warnings 0` (13 archivos `ts/tsx/mjs` del PR), `validate-harness` | exit 0; carriles, skills y recarga válidos |
+| `next build` de seo-web | exit 0 |
+| `playwright.actions.config.ts` | **498 pasan, 0 fallan** (8,3 min); incluye las 16 de `pinata` (los 12 de aire 20 px < 24 px del `5dad9c10` pasan con `6ce7e4a3`) |
+| `playwright.v2.config.ts` (`plantillas-v2.spec.ts`) | primera corrida 125 pasan, **54 fallan**; tras corregir la aserción, **179 pasan, 0 fallan** (3,0 min) |
+| `playwright.f6.config.ts` (medios + ataques + libre) | **454 pasan, 0 fallan** (12,1 min): 414 ataques, 35 medios, 5 libre |
+
+- Causa raíz de los 54 fallos de v2 (marfil, gala, piñata; OPEN/EMPTY/CLOSED): `4ac7a191` cambió la aserción del dock a `borderTopStyle === "none"`, pero el reinicio de Tailwind deja el estilo en `solid` con ancho `0px`. El botón no tiene borde (lo que pide la decisión 8); la prueba ahora mide `borderTopWidth === "0px"`. No se baja ningún umbral ni se quita aserción: el criterio sigue siendo «sin borde propio».
+- Mutación (revertida): quitar el piso `max(1.5rem, ...)` de `.cdesign-actions` en `styles.css` hace fallar 1 prueba (`PL-139-R2-V2/V3/V4`; 3394 pasan de 3395).
+- Los JSON y capturas versionados son de rondas anteriores; no se regeneraron líneas base ni mediciones.
+- Sigue sin probar: backend real, estado de la lista con la API real (en Chrome se fuerza en el DOM), en-US en Chrome, Safari/Firefox, lector de pantalla, líneas base de macOS, `contracts:validate`, gitleaks.
