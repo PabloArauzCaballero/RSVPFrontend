@@ -1159,7 +1159,7 @@ export interface paths {
         put?: never;
         /**
          * Show a hidden product again (ADMIN)
-         * @description R8b (§5.13). Lifts the hiding and restores the publication the product had when hidden (an erased account never gets it back); it is served only while its provider is VERIFIED, like every product. It returns to COMPLETE or INCOMPLETE as its sheet says today and is served again only when COMPLETE. It is not featured again. Idempotent: showing a visible product is 200 with replayed=true. Audited (listing.shown) and announced by provider.listing.completeness-changed.v1.
+         * @description R8b (§5.13). Lifts the hiding and restores the publication the product had when hidden (an erased account never gets it back); it is served only while its provider is VERIFIED, like every product. It returns to COMPLETE or INCOMPLETE as its sheet says today (the own gift catalog, which has no sheet, has no completeness: null). Showing restores the publication the product had when hidden even when the sheet is INCOMPLETE now (a published listing stays published, R2), but every public read (GET /listings, GET /listings/{listingId}, GET /r/{listingId}, the recommendations) requires COMPLETE, so an INCOMPLETE product is served again only after its provider completes the sheet. It is not featured again. Idempotent: showing a visible product is 200 with replayed=true. Audited (listing.shown) and announced by provider.listing.completeness-changed.v1.
          */
         post: operations["showListing"];
         delete?: never;
@@ -3557,7 +3557,7 @@ export interface components {
              */
             adminHiddenBy: string | null;
             adminHiddenReason: string | null;
-            /** @description HIDDEN_BY_ADMIN while hidden; after a show, what the sheet says today. */
+            /** @description HIDDEN_BY_ADMIN while hidden (the R2 CHECK requires a completeness while there is a reason, also for the own catalog, SNAPSHOT_V1); after a show, what the sheet says today. In the own catalog (SNAPSHOT_V1) it is null after a show: that catalog has no sheet. */
             completeness: components["schemas"]["CompletenessState"] | null;
             /** @description Always false while hidden. */
             featured: boolean;
