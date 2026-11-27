@@ -42,7 +42,7 @@ Pruebas nuevas (todas pasan), por nivel `TESTED` (mocks del gateway) salvo lo ma
 - `apps/seo-web/tests/gifts-r7.test.tsx` (4): misma tarjeta en la web, sin enlaces `/r/` cuando está apagada, normal al volver, en-US, axe.
 - `apps/universal/test/gifts-portal.test.tsx`: una aserción R1 ajustada (ver arriba).
 
-### Recorrido real (Playwright + Chrome 1 de la máquina) · nivel `VERIFIED` parcial
+### Recorrido real (Playwright + Google Chrome de la máquina) · nivel `VERIFIED` parcial
 
 `docs/progress/evidence/regalos-r7/live/` (scripts, `results.json`, `walk.out`) y `screens/` (capturas). **44/44 comprobaciones pasan.**
 
