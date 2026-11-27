@@ -180,6 +180,35 @@ describe('PartnerLink: always through /r/{listingId}', () => {
     expect(open).not.toHaveBeenCalled();
     open.mockRestore();
   });
+  it('R5: partnerRedirectHref carries the gift context next to its celebration and nothing about the guest', () => {
+    const url = new URL(partnerRedirectHref(ID, { destination: 'WHATSAPP', surface: 'GIFT_LIST', celebrationId: 'c1', celebrationSlug: 'ana-y-luis', giftItemId: 'g1', variant: 'v1', quantity: 3, locale: 'en-US', city: 'santa-cruz' }), 'http://site.test');
+    expect(Object.fromEntries(url.searchParams)).toEqual({ destination: 'WHATSAPP', surface: 'GIFT_LIST', celebrationId: 'c1', celebrationSlug: 'ana-y-luis', giftItemId: 'g1', variant: 'v1', quantity: '3', city: 'santa-cruz', locale: 'en-US' });
+    for (const quantity of [0, -1, 2.5]) expect(partnerRedirectHref(ID, { surface: 'GIFT_LIST', celebrationId: 'c1', quantity })).not.toContain('quantity');
+    expect(partnerRedirectHref(ID, { surface: 'GIFT_LIST', celebrationId: 'c1', variant: null })).not.toContain('variant');
+  });
+  it('R5: onFollow runs on a click and on a middle click, before leaving, and not on an alt-click or another button', () => {
+    const follow = vi.fn();
+    render(<PartnerLink listingId={ID} surface="GIFT_LIST" celebrationId="c1" onFollow={follow}>Ir</PartnerLink>);
+    const link = screen.getByRole('link', { name: 'Ir' });
+    // jsdom cannot navigate: cancel the default after React's handler ran (a document listener bubbles later than React's root listener).
+    document.addEventListener('click', (event) => event.preventDefault(), { once: true });
+    fireEvent.click(link);
+    expect(follow).toHaveBeenCalledTimes(1);
+    fireEvent(link, new MouseEvent('auxclick', { bubbles: true, cancelable: true, button: 1 }));
+    expect(follow).toHaveBeenCalledTimes(2);
+    fireEvent(link, new MouseEvent('auxclick', { bubbles: true, cancelable: true, button: 2 }));
+    fireEvent.click(link, { altKey: true });
+    expect(follow).toHaveBeenCalledTimes(2);
+  });
+  it('R5: with ctx and onFollow the attempt is recorded and the click still navigates with the ctx', () => {
+    const open = vi.spyOn(window, 'open').mockReturnValue(null);
+    const follow = vi.fn();
+    render(<PartnerLink listingId={ID} surface="GIFT_LIST" celebrationId="c1" ctx="tok" onFollow={follow}>Ir</PartnerLink>);
+    fireEvent.click(screen.getByRole('link', { name: 'Ir' }));
+    expect(follow).toHaveBeenCalledTimes(1);
+    expect(open).toHaveBeenCalledWith(expect.stringContaining('ctx=tok'), '_self');
+    open.mockRestore();
+  });
   it('R6a: an auxclick that is not the middle button is ignored', () => {
     const open = vi.spyOn(window, 'open').mockReturnValue(null);
     render(<PartnerLink listingId={ID} surface="GIFT_LIST" celebrationId="c1" ctx="tok">Ir</PartnerLink>);

@@ -221,3 +221,52 @@ describe("B1 · clientAddressOf / trustedProxyHops", async () => {
     for (const bad of ["-1", "abc", "9", "1.5"]) expect(trustedProxyHops(bad)).toBe(1);
   });
 });
+
+describe("R5 · /r resolves the WhatsApp message on the server", () => {
+  const ITEM = "22222222-3333-4444-8555-666666666666";
+  const VARIANT = "33333333-4444-4555-8666-777777777777";
+  const WA = "https://wa.me/59170000000?text=Hola%20Tortas%2C%20vengo%20de%20DOne.%20Quiero%20regalar%20Vajilla%20%C3%97%202";
+  const celebration = "4f0f2d3d-0000-4000-8000-000000000001";
+
+  it("forwards giftItemId, variant, quantity and celebrationSlug (next to celebrationId) to Provider Catalog", async () => {
+    const fetchFn = gateway(upstream302(WA));
+    await GET(new Request(`http://site.test/r/${LISTING}?destination=WHATSAPP&surface=GIFT_LIST&celebrationId=${celebration}&celebrationSlug=ana-y-luis&giftItemId=${ITEM}&variant=${VARIANT}&quantity=2&locale=es-BO`), ctx);
+    const [url] = fetchFn.mock.calls[0] as unknown as [URL];
+    expect(Object.fromEntries(url.searchParams)).toEqual({ destination: "WHATSAPP", surface: "GIFT_LIST", celebrationId: celebration, celebrationSlug: "ana-y-luis", giftItemId: ITEM, variant: VARIANT, quantity: "2", locale: "es-BO" });
+  });
+
+  it("the answer is exactly the wa.me link of the backend: no utm_* and no correlationId added, the text untouched", async () => {
+    gateway(upstream302(WA));
+    const response = await GET(new Request(`http://site.test/r/${LISTING}?destination=WHATSAPP&utm_campaign=boda&surface=GIFT_LIST`, { headers: { "x-correlation-id": CID } }), ctx);
+    expect(response.status).toBe(302);
+    expect(response.headers.get("location")).toBe(WA);
+    expect(withAttribution(WA, new URLSearchParams("utm_source=x"), CID)).toBe(WA);
+    expect(withAttribution("https://api.whatsapp.com/send?phone=1&text=hola", new URLSearchParams("utm_source=x"), CID)).toBe("https://api.whatsapp.com/send?phone=1&text=hola");
+  });
+
+  it("drops values that do not have the shape of the field instead of failing the click (a quantity that is not a positive integer would be a 422)", async () => {
+    const fetchFn = gateway(upstream302(WA));
+    await GET(new Request(`http://site.test/r/${LISTING}?destination=WHATSAPP&quantity=abc&giftItemId=not-an-id&variant=%3Cscript%3E&celebrationSlug=%20bad%20slug`), ctx);
+    const [url] = fetchFn.mock.calls[0] as unknown as [URL];
+    for (const key of ["quantity", "giftItemId", "variant", "celebrationSlug"]) expect(url.searchParams.has(key)).toBe(false);
+    for (const zero of ["0", "-3", "2.5", "1e3", ""]) {
+      fetchFn.mockClear();
+      await GET(new Request(`http://site.test/r/${LISTING}?destination=WHATSAPP&quantity=${encodeURIComponent(zero)}`), ctx);
+      expect((fetchFn.mock.calls[0] as unknown as [URL])[0].searchParams.has("quantity")).toBe(false);
+    }
+  });
+
+  it("PF-1: a guest's name, phone or free text in the link never reaches Provider Catalog", async () => {
+    const fetchFn = gateway(upstream302(WA));
+    await GET(new Request(`http://site.test/r/${LISTING}?destination=WHATSAPP&text=Hola&name=Marta&phone=70000000&guestName=Marta&email=a%40b.c&message=hola`), ctx);
+    const [url] = fetchFn.mock.calls[0] as unknown as [URL];
+    expect([...url.searchParams.keys()].sort()).toEqual(["destination", "surface"]);
+  });
+
+  it("a backend 422 (for instance INVALID_QUANTITY) is the page of an invalid link, not a crash", async () => {
+    gateway(() => new Response(JSON.stringify({ code: "INVALID_QUANTITY" }), { status: 422 }));
+    const response = await GET(new Request(`http://site.test/r/${LISTING}?destination=WHATSAPP&quantity=2`), ctx);
+    expect(response.status).toBe(400);
+    expect(response.headers.get("location")).toBeNull();
+  });
+});

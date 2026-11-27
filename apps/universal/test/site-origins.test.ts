@@ -50,3 +50,27 @@ describe("R6a: lead context (ctx) of a celebration member", () => {
     expect(partnerRedirectUrl(LISTING, { surface: "GIFT_LIST", celebrationId: "c1", ctx: "" })).not.toContain("ctx");
   });
 });
+
+describe("R5 · the redirector link carries the context of the WhatsApp message, never the guest", () => {
+  const options = { destination: "WHATSAPP", surface: "GIFT_LIST", celebrationId: "c1", celebrationSlug: "ana-y-luis", giftItemId: "g1", variant: "v1", quantity: 2, locale: "es-BO", city: "santa-cruz" } as const;
+
+  it("adds celebrationSlug, giftItemId, variant, quantity, locale and city next to celebrationId", () => {
+    vi.stubEnv("EXPO_PUBLIC_RSVP_ORIGIN", "https://done.bo");
+    vi.stubEnv("EXPO_PUBLIC_SITE_URL", "");
+    expect(Object.fromEntries(new URL(partnerRedirectUrl(LISTING, options)).searchParams)).toEqual({ destination: "WHATSAPP", surface: "GIFT_LIST", celebrationId: "c1", celebrationSlug: "ana-y-luis", giftItemId: "g1", variant: "v1", quantity: "2", city: "santa-cruz", locale: "es-BO" });
+  });
+
+  it("leaves out what is empty, a null version and a quantity that is not a positive integer", () => {
+    vi.stubEnv("EXPO_PUBLIC_RSVP_ORIGIN", "https://done.bo");
+    vi.stubEnv("EXPO_PUBLIC_SITE_URL", "");
+    for (const quantity of [0, -1, 1.5, Number.NaN]) expect(new URL(partnerRedirectUrl(LISTING, { ...options, variant: null, quantity })).searchParams.has("quantity")).toBe(false);
+    expect(new URL(partnerRedirectUrl(LISTING, { ...options, variant: null })).searchParams.has("variant")).toBe(false);
+  });
+
+  it("without a celebration there is no gift context at all (it is only valid next to its celebration)", () => {
+    vi.stubEnv("EXPO_PUBLIC_RSVP_ORIGIN", "https://done.bo");
+    vi.stubEnv("EXPO_PUBLIC_SITE_URL", "");
+    expect(partnerRedirectUrl(LISTING, { surface: "GIFT_LIST", locale: "en-US" })).toBe(`https://done.bo/r/${LISTING}?surface=GIFT_LIST&locale=en-US`);
+  });
+});
+
