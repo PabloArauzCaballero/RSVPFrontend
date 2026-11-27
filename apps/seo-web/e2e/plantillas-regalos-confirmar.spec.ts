@@ -1,4 +1,4 @@
-import { mkdirSync, readdirSync, writeFileSync } from "node:fs";
+import { appendFileSync, mkdirSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { AxeBuilder } from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
@@ -6,7 +6,8 @@ import { expect, test, type Page } from "@playwright/test";
 // FE #114 follow-up, decision 8 · «Confirmar asistencia» and «Regalos» are ONE block of equal weight: they share a container, have the same
 // height, width, weight and ink, sit side by side from 768 px and stacked at 360, and neither is hidden or covered. It runs on the real
 // site (next build + start) over the contract fixture, in the v1 renderer (`fixture-ana-y-luis`) and in v2 documents, with and without
-// the guest's credential. Pictures and measurements are written only when ACTIONS_EVIDENCE_DIR is set (evidence, never a baseline).
+// the guest's credential. Pictures and measurements are written only when ACTIONS_EVIDENCE_DIR is set (evidence, never a baseline); each row is
+// appended to `mediciones-<pid>.jsonl` when its own test ends (PL-139-R2-02), so a run that is cut short keeps every row measured so far.
 const OUT = process.env.ACTIONS_EVIDENCE_DIR;
 // Every design document on disk (a template added later is covered without touching this file) plus the v1 renderer.
 const DOCUMENTS = join(__dirname, "../../../packages/celebration-theme/src/design/documents");
@@ -23,6 +24,8 @@ interface Measure {
   readonly giftsLinks: number;
   readonly giftsSection: { readonly links: number; readonly hasDrawing: boolean } | null;
   readonly emptyCanvases: number;
+  /** PL-139-R2-V2/V3: the air under the block inside its section, and the left edges of the block and of the section's title text (null in v1, whose title is centred by its layout). */
+  readonly gapBelow: number; readonly blockLeft: number; readonly titleLeft: number | null;
 }
 interface Box { readonly left: number; readonly top: number; readonly right: number; readonly bottom: number; readonly width: number; readonly height: number; readonly fontSize: string; readonly fontWeight: string;
   readonly color: string; readonly background: string; readonly border: string; readonly ground: string; readonly href: string | null }
@@ -41,7 +44,10 @@ const MEASURE = `(() => {
   const dockGifts = dock?.querySelector('a[data-action="gifts"]');
   const apart = document.querySelector('main section[data-section="gifts"]');
   const style = getComputedStyle(block);
-  return { reply: box(reply), gifts: box(gifts), stacking: { position: style.position, zIndex: style.zIndex },
+  const section = block.closest("section");
+  const title = section?.querySelector(".cdesign-page-title");
+  const titleLeft = title ? title.getBoundingClientRect().left + parseFloat(getComputedStyle(title).paddingLeft) : null;
+  return { gapBelow: section.getBoundingClientRect().bottom - block.getBoundingClientRect().bottom, blockLeft: block.getBoundingClientRect().left, titleLeft, reply: box(reply), gifts: box(gifts), stacking: { position: style.position, zIndex: style.zIndex },
     dock: dock && dockReply && dockGifts ? { reply: box(dockReply), gifts: box(dockGifts), replyFirst: Boolean(dockReply.compareDocumentPosition(dockGifts) & Node.DOCUMENT_POSITION_FOLLOWING), hit: { reply: hits(dockReply), gifts: hits(dockGifts) }, label: dock.getAttribute("aria-label"), blockLabel: block.getAttribute("aria-label") } : null,
     giftsLinks: document.querySelectorAll('main a[data-action="gifts"]').length,
     giftsSection: apart ? { links: apart.querySelectorAll("a").length, hasDrawing: Boolean(apart.querySelector('[data-block="illustration"], svg[data-art="regalo"]')) } : null,
@@ -64,7 +70,9 @@ async function open(page: Page, slug: string, width: number, scheme: "light" | "
 const channels = (value: string): [number, number, number] => (value.match(/[\d.]+/g) ?? ["0", "0", "0"]).slice(0, 3).map(Number) as [number, number, number];
 const luminance = ([r, g, b]: [number, number, number]): number => { const lin = (c: number): number => { const s = c / 255; return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4; }; return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b); };
 const contrast = (a: string, b: string): number => { const [x, y] = [luminance(channels(a)), luminance(channels(b))]; return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
-const results: Record<string, unknown>[] = [];
+/** One row per finished test, appended at once: the file never depends on the process reaching its end. */
+const record = (row: Record<string, unknown>): void => { if (OUT) { mkdirSync(OUT, { recursive: true }); appendFileSync(`${OUT}/mediciones-${process.pid}.jsonl`, `${JSON.stringify(row)}\n`); } };
+const GIFTS_LABEL = { OPEN: "Ver regalos", EMPTY: "Regalos: próximamente", CLOSED: "Regalos: lista cerrada" } as const;
 
 for (const [name, slug] of TARGETS) {
   for (const scheme of ["light", "dark"] as const) {
@@ -96,6 +104,12 @@ for (const [name, slug] of TARGETS) {
           expect(m.giftsLinks).toBe(1);
           if (m.giftsSection) { expect(m.giftsSection.links).toBe(0); expect(m.giftsSection.hasDrawing).toBe(true); }
           expect(m.emptyCanvases).toBe(0);
+          // PL-139-R2-V2: air under the block inside its section (v1 has 49 px; v2 had 0). PL-139-R2-V4: «Busca tu enlace personal» stays on one line (52 px, not 79).
+          expect(m.gapBelow).toBeGreaterThanOrEqual(24);
+          expect(m.reply.height).toBeLessThanOrEqual(60);
+          expect(m.gifts.height).toBeLessThanOrEqual(60);
+          // PL-139-R2-V3: in a design document the block starts where the page's title and text start (no centred block under a left-aligned title).
+          if (m.titleLeft !== null) expect(Math.abs(m.blockLeft - m.titleLeft)).toBeLessThanOrEqual(1);
           // PL-139-03: the dock too, both buttons, same weight, reply first, never covered, with a name of its own.
           expect(m.dock).not.toBeNull();
           const dock = m.dock as NonNullable<Measure["dock"]>;
@@ -131,7 +145,7 @@ for (const [name, slug] of TARGETS) {
           expect(textContrast).toBeGreaterThanOrEqual(4.5);
           expect(controlContrast).toBeGreaterThanOrEqual(3);
           expect(contrast(m.reply.color, m.reply.background)).toBeGreaterThanOrEqual(4.5);
-          results.push({ target: name, scheme, width, credential, layout: width >= 768 ? "row" : "column", reply: { w: m.reply.width, h: m.reply.height }, gifts: { w: m.gifts.width, h: m.gifts.height },
+          record({ kind: "block", target: name, scheme, width, credential, layout: width >= 768 ? "row" : "column", gapBelow: Number(m.gapBelow.toFixed(1)), axisOffset: m.titleLeft === null ? null : Number((m.blockLeft - m.titleLeft).toFixed(1)), reply: { w: m.reply.width, h: m.reply.height }, gifts: { w: m.gifts.width, h: m.gifts.height },
             dock: { reply: { w: dock.reply.width, h: dock.reply.height }, gifts: { w: dock.gifts.width, h: dock.gifts.height }, textContrast: Number(contrast(dock.gifts.color, dock.gifts.background).toFixed(2)) },
             fontSize: m.gifts.fontSize, fontWeight: m.gifts.fontWeight, textContrast: Number(textContrast.toFixed(2)), controlContrast: Number(controlContrast.toFixed(2)), replyTextContrast: Number(contrast(m.reply.color, m.reply.background).toFixed(2)) });
           if (OUT && SHOTS.has(name) && !credential) {
@@ -141,6 +155,39 @@ for (const [name, slug] of TARGETS) {
         });
       }
     }
+    test(`${name} ${scheme}: gifts in OPEN, EMPTY and CLOSED has the same fill, ink and border as the reply, in the block and in the dock`, async ({ page }) => {
+      await open(page, slug, 768, scheme, false);
+      const rows: Record<string, unknown>[] = [];
+      for (const status of ["OPEN", "EMPTY", "CLOSED"] as const) {
+        // The site does not pass `giftsStatus` yet (BE #128): the seam's own markup is set the way the renderer sets it (label and `data-gifts-status`); what is measured is the real stylesheet.
+        await page.evaluate(([state, label]) => {
+          for (const anchor of document.querySelectorAll('a[data-action="gifts"]')) { anchor.setAttribute("data-gifts-status", state as string); (anchor.querySelector("span") as HTMLElement).textContent = label as string; }
+        }, [status, GIFTS_LABEL[status]]);
+        const paint = async (selector: string): Promise<{ readonly fill: string; readonly ink: string; readonly border: string; readonly borderStyle: string; readonly weight: string; readonly ground: string; readonly height: number }> =>
+          page.locator(selector).evaluate((node) => {
+            const style = getComputedStyle(node);
+            let ground = "rgb(255, 255, 255)";
+            for (let walk = node.parentElement; walk; walk = walk.parentElement) { const value = getComputedStyle(walk).backgroundColor; const alpha = value.match(/[\d.]+/g)?.[3]; if (alpha === undefined || Number(alpha) > 0.95) { ground = value; break; } }
+            return { fill: style.backgroundColor, ink: style.color, border: `${style.borderTopWidth} ${style.borderTopColor}`, borderStyle: style.borderTopStyle, weight: style.fontWeight, ground, height: node.getBoundingClientRect().height };
+          });
+        for (const place of ["main [data-actions-block]", ".cdesign-dock"]) {
+          const reply = await paint(`${place} a[data-action^="rsvp"]`);
+          const gifts = await paint(`${place} a[data-action="gifts"]`);
+          // Decision 8 / PL-139-R2-V1: whatever the list's state, the gifts button keeps the reply's fill, ink, border and weight.
+          expect(gifts.fill, `${status} ${place} fill`).toBe(reply.fill);
+          expect(gifts.ink, `${status} ${place} ink`).toBe(reply.ink);
+          expect(gifts.border, `${status} ${place} border`).toBe(reply.border);
+          expect(gifts.borderStyle, `${status} ${place} border style`).toBe(reply.borderStyle);
+          expect(gifts.weight).toBe(reply.weight);
+          // WCAG 1.4.3 (text >= 4.5) and 1.4.11 (the control against its ground >= 3) in every state.
+          expect(contrast(gifts.ink, gifts.fill)).toBeGreaterThanOrEqual(4.5);
+          expect(contrast(gifts.fill, gifts.ground)).toBeGreaterThanOrEqual(3);
+          expect(gifts.height).toBeGreaterThanOrEqual(44);
+          rows.push({ status, place: place.startsWith("main") ? "block" : "dock", fill: gifts.fill, replyFill: reply.fill, textContrast: Number(contrast(gifts.ink, gifts.fill).toFixed(2)), controlContrast: Number(contrast(gifts.fill, gifts.ground).toFixed(2)) });
+        }
+      }
+      record({ kind: "states", target: name, scheme, width: 768, rows });
+    });
     test(`${name} ${scheme}: axe finds no violations in the invitation, block included`, async ({ page }) => {
       await open(page, slug, 360, scheme, false);
       const result = await new AxeBuilder({ page }).include(".celebration").withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).analyze();
@@ -162,8 +209,4 @@ test("a gifts page that was only the button leaves no page and no empty box (min
   await expect(page.locator('main section[data-section="gifts"]')).toHaveCount(0);
   await expect(page.locator(".cdesign-canvas:empty")).toHaveCount(0);
   await expect(page.locator('main a[data-action="gifts"]')).toHaveCount(1);
-});
-
-test.afterAll(() => {
-  if (OUT && results.length) { mkdirSync(OUT, { recursive: true }); writeFileSync(`${OUT}/mediciones-${process.pid}.json`, JSON.stringify(results, null, 1)); }
 });

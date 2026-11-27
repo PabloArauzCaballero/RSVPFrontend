@@ -14,15 +14,16 @@ const V2: readonly (readonly [string, TemplateDocument])[] = readdirSync(DOCUMEN
   return [entry.key, { id: entry.key, name: entry.name, description: entry.description, status: "PUBLISHED", eventTypeTags: entry.eventTypeTags, layout: entry.layout, theme: entry.theme, sectionOrder: entry.sectionOrder, version: 2 } as unknown as TemplateDocument] as const;
 });
 const V1 = TEMPLATES.map((template) => [`v1 ${template.layout}`, template] as const);
-/** The layouts whose sections carry a drawing (v1) and the documents whose gifts page has something besides the button (v2) keep their gifts section. */
-const keepsGiftsSection = (template: TemplateDocument): boolean => {
-  if (template.version !== 2) return ["classic", "festive", "corporate"].includes(template.layout);
-  const design = template.theme as unknown as { blocks: { id: string; type: string }[]; pages: { section?: string; background?: unknown; canvases: { mobile: { elements: { block: string; visible: boolean }[] }; desktop?: { elements: { block: string; visible: boolean }[] } } }[] };
-  const types = new Map(design.blocks.map((block) => [block.id, block.type]));
-  const page = design.pages.find((item) => item.section === "gifts");
-  const elements = [...(page?.canvases.mobile.elements ?? []), ...(page?.canvases.desktop?.elements ?? [])];
-  return Boolean(page?.background) || elements.some((item) => item.visible && types.get(item.block) !== "giftsCta");
-};
+/**
+ * The two design documents whose gifts page is only the button (PL-139-R2-03): they fold into the block and keep no gifts section. The list is
+ * fixed on purpose: recomputing it from the document would repeat the production predicate and let a drift in both pass unseen. A document that
+ * joins or leaves this list is a deliberate edit of this line.
+ */
+const FOLDED_V2 = ["minimalista", "corporativo-grafito"] as const;
+/** The v1 layouts whose sections carry a drawing keep their gifts section (a drawing and the text, no button). */
+const KEEPS_V1 = ["classic", "festive", "corporate"] as const;
+const keepsGiftsSection = (template: TemplateDocument): boolean =>
+  template.version === 2 ? !(FOLDED_V2 as readonly string[]).includes(template.id) : (KEEPS_V1 as readonly string[]).includes(template.layout);
 const parse = (html: string): Document => new DOMParser().parseFromString(html, "text/html");
 const draw = (template: TemplateDocument, extra: Partial<Parameters<typeof CelebrationRenderer>[0]> = {}): Document =>
   parse(renderToStaticMarkup(<CelebrationRenderer theme={themeFromTemplate(template, VIEW.enabledSections)} view={VIEW} gallery={GALLERY} t={t} now={NOW} basePath={BASE} {...extra} />));
@@ -127,8 +128,8 @@ describe("the reply and the gifts button are one block", () => {
   });
 
   it("negative: a gifts page that is only the button folds into the block (no empty page), and its own page still has the button", () => {
-    const bare = V2.filter(([, template]) => !keepsGiftsSection(template));
-    expect(bare.length).toBeGreaterThanOrEqual(2);
+    const bare = V2.filter(([key]) => (FOLDED_V2 as readonly string[]).includes(key));
+    expect(bare.map(([key]) => key).sort()).toEqual([...FOLDED_V2].sort());
     for (const [, template] of bare) {
       expect(draw(template, { rsvpHelpHref: `${BASE}/rsvp` }).querySelector('main section[data-section="gifts"]')).toBeNull();
       expect(draw(template, { only: "gifts" }).querySelector('main section[data-section="gifts"] a[data-action="gifts"]')).toBeTruthy();
@@ -148,5 +149,18 @@ describe("the reply and the gifts button are one block", () => {
     expect(css).toMatch(/\.celebration \.celebration-actions \.celebration-cta \{[^}]*width: 100%[^}]*min-height: 3rem/);
     // The dock gives the reply no quieter outline any more: the two are of the same weight there too.
     expect(css).not.toMatch(/\.cdesign-dock \.celebration-cta\[data-action="rsvp"\][^{]*\{[^}]*background: transparent/);
+  });
+
+  it("PL-139-R2-V1: no rule makes the gifts button quieter in EMPTY or CLOSED; the status changes the words, not the weight", () => {
+    const css = readFileSync(join(__dirname, "../styles.css"), "utf8");
+    expect(css).not.toMatch(/data-gifts-status="(EMPTY|CLOSED)"/);
+    expect(css).not.toMatch(/data-action="gifts"\][^{]*\{[^}]*(background: (transparent|var\(--celebration-surface\))|border: [^;]*(dashed|var\(--cd-line\)))/);
+  });
+
+  it("PL-139-R2-V2/V3/V4: the v2 block has air under it, sits on the title's axis, and is wide enough for «Busca tu enlace personal» on one line", () => {
+    const css = readFileSync(join(__dirname, "../styles.css"), "utf8");
+    expect(css).toMatch(/\.celebration-design \.cdesign-actions \{[^}]*padding: \.5rem var\(--celebration-space\) calc\(var\(--celebration-gap, 3rem\) \/ 2\)/);
+    expect(css).toMatch(/\.celebration-design \.cdesign-actions \.celebration-actions \{ margin-inline: 0; \}/);
+    expect(css).toMatch(/\.celebration \.celebration-actions \{[^}]*max-width: 44rem/);
   });
 });
