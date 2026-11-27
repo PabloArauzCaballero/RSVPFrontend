@@ -2,8 +2,8 @@ import type { ReactNode } from "react";
 import { GIFTS_CTA_KEYS, navigationHref, partnerHref, shownVenues, type CelebrationContent, type GalleryImage, type GiftsStatus } from "../content.js";
 import { formatTime, zoneLabel } from "../format.js";
 import { ActionIcon } from "../icon.js";
-import { MediaImage } from "../media/components.js";
 import type { SectionId, Translate } from "../types.js";
+import { GalleryView } from "./gallery-view.js";
 
 /** What every section receives. Sections never fetch and never hold copy of their own. */
 export interface SectionProps {
@@ -67,22 +67,16 @@ function Venues({ content, t }: SectionProps): ReactNode {
   );
 }
 
-/** Photos of the gallery (F6): AVIF, then WebP, in a <picture> with the size reserved. They are below the cover, so every one is lazy: only the cover competes for the first paint. */
 function Gallery({ gallery, t }: SectionProps): ReactNode {
-  return (
-    <ul className="celebration-gallery">
-      {gallery.map((image, index) => {
-        const label = t("celebration.gallery.photo", { n: index + 1, total: gallery.length });
-        return (
-          <li key={image.id}>
-            <a href={image.variants.full ?? image.variants.webp} data-link-kind="image" aria-label={t("celebration.gallery.open", { label })}>
-              <MediaImage media={{ id: image.id, width: image.width, height: image.height, variants: image.variants }} alt={label} sizes="(min-width: 768px) 33vw, 100vw" />
-            </a>
-          </li>
-        );
-      })}
-    </ul>
-  );
+  const available = gallery.flatMap(({ id, width, height, variants }) => {
+    const href = variants.full ?? variants.webp ?? variants.svg ?? variants.medium ?? variants.thumb;
+    return href ? [{ media: { id, width, height, variants }, href }] : [];
+  });
+  const photos = available.map((photo, index) => {
+    const label = t("celebration.gallery.photo", { n: index + 1, total: available.length });
+    return { ...photo, label, openLabel: t("celebration.gallery.open", { label }) };
+  });
+  return <GalleryView photos={photos} labels={{ title: t("celebration.sections.gallery"), close: t("celebration.gallery.close"), previous: t("celebration.gallery.previous"), next: t("celebration.gallery.next") }} />;
 }
 
 function DressCode({ content }: SectionProps): ReactNode {
