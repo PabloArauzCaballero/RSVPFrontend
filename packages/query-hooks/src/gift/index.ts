@@ -39,6 +39,7 @@ import type { AddGiftInput, UpdateGiftSettingsInput, GiftItemList, GiftReservati
 export * from "./types.js";
 export * from "./reserve-rules.js";
 export * from "./guest-card.js";
+export * from "./purchase-attempts.js";
 export * from "./purchase-prompt.js";
 export { giftApi as giftService, isGiftListMissing, suggestionsOf, problemCode } from "./api.js";
 import { suggestionsOf, problemCode } from "./api.js";

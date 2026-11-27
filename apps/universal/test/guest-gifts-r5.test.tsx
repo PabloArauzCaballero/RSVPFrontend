@@ -1,3 +1,4 @@
+import axe from "axe-core";
 import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { Linking } from "react-native";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -198,6 +199,22 @@ describe("R5 · «¿Compraste?»", () => {
     const { calls } = show();
     fireEvent.click(await screen.findByTestId(`prompt-yes-${ID}`));
     expect(await screen.findByTestId("gift-taken")).toBeTruthy();
+    expect(calls.some((call) => call.method === "POST")).toBe(false);
+  });
+});
+
+describe("R5 · accessibility of the card (structure; contrast and screen reader are pending on a device)", () => {
+  it("the stepper, the units and group lines, the open form and the «¿Compraste?» card have no structural violation, and the controls are named", async () => {
+    await import("./stubs/expo-secure-store").then((store) => store.setItemAsync("rsvp.gift.purchase.v1", JSON.stringify({ [ID]: { giftItemId: ID, destination: "WHATSAPP", units: 2, at: Date.now(), phase: "away" } })));
+    items = [gift({ quantity: 12, unitsLeft: 8, participants: 1 }), gift({ id: "22222222-3333-4444-8555-666666666666", title: "Mesa", groupGiftEnabled: true, status: "PENDING_REVIEW", participants: 3, contributors: 2, coordinatorName: "Marta" })];
+    const { calls } = show();
+    await screen.findByTestId(`gift-prompt-${ID}`);
+    const run = async (): Promise<string[]> => (await axe.run(document.body, { rules: { "color-contrast": { enabled: false }, region: { enabled: false } } })).violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(" | ")}`);
+    expect(await run()).toEqual([]);
+    expect(screen.getByRole("button", { name: "Más unidades · Vajilla" })).toBeTruthy();
+    fireEvent.click(screen.getByTestId(`prompt-yes-${ID}`));
+    await screen.findByTestId("reserve-confirm");
+    expect(await run()).toEqual([]);
     expect(calls.some((call) => call.method === "POST")).toBe(false);
   });
 });

@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import axe from "axe-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { GiftItem } from "@rsvp/query-hooks";
 import { GiftExperience } from "../components/gift/gift-experience";
@@ -324,5 +325,31 @@ describe("R5 · «¿Compraste?» when the guest comes back", () => {
       expect(screen.queryByTestId(`gift-prompt-${ID}`)).toBeNull();
       expect(row.getByRole("link", { name: "Pedir por WhatsApp" })).toBeTruthy();
     } finally { getItem.mockRestore(); setItem.mockRestore(); }
+  });
+});
+
+describe("R5 · accessibility of the card (structure; contrast needs a real browser)", () => {
+  const violations = async (): Promise<string[]> => (await axe.run(document.body, { rules: { "color-contrast": { enabled: false }, region: { enabled: false } } })).violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(" | ")}`);
+
+  it("a plain gift with the stepper and buttons, a coordinated gift, the open form and the «¿Compraste?» card have no structural violation", async () => {
+    items = [gift({ quantity: 12, unitsLeft: 8, participants: 1 }), gift({ id: "22222222-3333-4444-8555-666666666666", title: "Mesa", groupGiftEnabled: true, status: "PENDING_REVIEW", participants: 3, contributors: 2, coordinatorName: "Marta", productListingId: LISTING })];
+    window.localStorage.setItem("rsvp.gift.purchase.v1", JSON.stringify({ [ID]: { giftItemId: ID, destination: "WHATSAPP", units: 2, at: Date.now(), phase: "away" } }));
+    stub(); renderList();
+    await screen.findByTestId(`gift-prompt-${ID}`);
+    expect(await violations()).toEqual([]);
+    fireEvent.click(screen.getByTestId(`prompt-yes-${ID}`));
+    await screen.findByRole("form");
+    expect(await violations()).toEqual([]);
+  });
+
+  it("the stepper and the card are named for a screen reader, and the answers are real buttons", async () => {
+    items = [gift({ quantity: 12, unitsLeft: 8 })];
+    window.localStorage.setItem("rsvp.gift.purchase.v1", JSON.stringify({ [ID]: { giftItemId: ID, destination: "WHATSAPP", units: 1, at: Date.now(), phase: "away" } }));
+    stub(); renderList();
+    const card = await screen.findByRole("region", { name: "¿Compraste Vajilla?" });
+    expect(within(card).getAllByRole("button").map((b) => b.textContent)).toEqual(["Sí, ya lo compré", "Todavía no", "No"]);
+    expect(screen.getByRole("group", { name: "Cuántos quieres regalar" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Más unidades · Vajilla" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Menos unidades · Vajilla" })).toBeTruthy();
   });
 });
