@@ -8,7 +8,7 @@
 export const PURCHASE_STORE_KEY = "rsvp.gift.purchase.v1";
 /** An attempt older than this is forgotten: the guest is not asked about a click from two weeks ago. */
 export const ATTEMPT_TTL_MS = 14 * 24 * 60 * 60 * 1000;
-/** Few and recent: the whole value stays near 1.3 KB, under the 2048 B at which SecureStore warns on iOS; the oldest are dropped. */
+/** Few and recent: the worst case (10 real UUIDs) is about 1.7 KB, under the 2048 B at which SecureStore warns on iOS; the oldest are dropped. */
 export const MAX_ATTEMPTS = 10;
 
 /** Where the attempts live: one string, so the app (memory), the web (localStorage) and tests share the logic. */

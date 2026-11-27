@@ -36,7 +36,7 @@ Modo Persuade del invitado, mismas piezas de la lista (sin chips de RSVP para re
 Ver el cuerpo del PR. Recorrido: `evidence/regalos-r5-fe/walk/` (`salida.txt`, capturas en `shots/`). Gateway del recorrido = enrutador por prefijos (`gw.mjs`), **no Kong**; Celebration y Guest = stub; sin RabbitMQ.
 
 ## Ronda 2 (revisión de FE #152)
-B-1 botones para quien reserva; M-1 gitleaks en verde (4 huellas falsas de `PURCHASE_STORE_KEY` en `.gitleaksignore`); M-2 contratos @af8280c2; M-3 sin «reservado por» en regalos de aporte; M-5 tarjeta como región con respuestas nombradas, foco (web) y anuncio (app), ayuda de `showName` dentro del nombre de la casilla; M-6 slug de `/r` con la forma del contrato (`^[a-z0-9]+(-[a-z0-9]+)*$`, ≤ 100); M-7 máximo 10 intentos (≈1,3 KB, bajo 2048 B); M-8 claves i18n sin uso quitadas.
+B-1 botones para quien reserva; M-1 gitleaks en verde (4 huellas falsas de `PURCHASE_STORE_KEY` en `.gitleaksignore`); M-2 contratos @af8280c2; M-3 sin «reservado por» en regalos de aporte; M-5 tarjeta como región con respuestas nombradas, foco (web) y anuncio (app), ayuda de `showName` dentro del nombre de la casilla; M-6 slug de `/r` con la forma del contrato (`^[a-z0-9]+(-[a-z0-9]+)*$`, ≤ 100); M-7 máximo 10 intentos (≈1,7 KB con UUID reales en el peor caso (probado), bajo 2048 B); M-8 claves i18n sin uso quitadas.
 
 ## Pendiente
 0. M-4: la tarjeta no muestra la versión elegida, el proveedor con sello ni «Entrega en {ciudad}»: gift-list 1.18.0 solo trae `variantCode` (un id) y el detalle público del listing no trae variantes. Hace falta un campo en el BE (etiqueta de la versión). No se inventa en el FE; solo el mensaje de WhatsApp lleva `{version}`.
