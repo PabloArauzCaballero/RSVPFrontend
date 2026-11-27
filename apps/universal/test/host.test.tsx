@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ContentEditorScreen } from "../src/host/content-editor";
 import { contentPatch, scheduleContent, slugify, toWallClock } from "../src/host/content-draft";
@@ -317,6 +317,9 @@ describe("C7–C11 · content editor", () => {
 });
 
 describe("C12 · gallery", () => {
+  beforeEach(() => localStorage.clear());
+  afterEach(() => vi.useRealTimers());
+
   it("an invalid file is refused with a clear message, before any upload", async () => {
     const { client, calls } = fakeClient({ ...baseHandlers(), "GET /media/celebrations/c-1/assets": () => ({ items: [] }) });
     const pick = vi.fn(async () => ({ file: new Blob(["%PDF"]), name: "contrato.pdf", type: "application/pdf", size: 4 }));
@@ -339,11 +342,25 @@ describe("C12 · gallery", () => {
     await waitFor(() => expect(calls.find((call) => call.method === "PUT")?.body).toEqual({ assetIds: ["a1", "a2"], coverAssetId: "a2" }));
   });
 
+  it.each([
+    ["a slow upload or a device clock ahead", -10 * 60_000],
+    ["a device clock behind", 10 * 60_000]
+  ])("does not offer to delete a photo first seen in PROCESSING with %s", async (_name, offset) => {
+    const asset = { id: "healthy", celebrationId: "c-1", filename: "sana.jpg", contentType: "image/jpeg", sizeBytes: 100, status: "PROCESSING" as const, createdAt: new Date(Date.now() + offset).toISOString(), width: null, height: null, sortOrder: 0, isCover: false, variants: {} };
+    const { client } = fakeClient({ ...baseHandlers(), "GET /media/celebrations/c-1/assets": () => ({ items: [asset] }) });
+    renderApp(<GalleryEditorScreen celebrationId="c-1" onNavigate={navigate} pick={vi.fn()} />, client);
+    expect(await screen.findByText(/sana\.jpg/)).toBeTruthy();
+    expect(screen.queryByTestId("processing-stale-healthy")).toBeNull();
+    expect(screen.queryByTestId("delete-processing-healthy")).toBeNull();
+  });
+
   it("offers check-again and delete actions when a PROCESSING photo is stale and deletes it on confirm", async () => {
-    const stale = new Date(Date.now() - 10 * 60_000).toISOString();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    // The device clock is far behind the server: only the time spent watching may mark the photo as stuck.
+    const createdAt = new Date(Date.now() + 60 * 60_000).toISOString();
     let list = [
       { id: "a1", celebrationId: "c-1", filename: "ok.jpg", contentType: "image/jpeg", sizeBytes: 100, status: "PROCESSED" as const, width: 10, height: 10, sortOrder: 0, isCover: true, variants: { thumb: "https://api.test/rsvp-media/a1-thumb.webp?X-Amz-Signature=s1" } },
-      { id: "stuck", celebrationId: "c-1", filename: "58042.jpg", contentType: "image/jpeg", sizeBytes: 6_318_943, status: "PROCESSING" as const, createdAt: stale, width: null, height: null, sortOrder: 1, isCover: false, variants: {} }
+      { id: "stuck", celebrationId: "c-1", filename: "58042.jpg", contentType: "image/jpeg", sizeBytes: 6_318_943, status: "PROCESSING" as const, createdAt, width: null, height: null, sortOrder: 1, isCover: false, variants: {} }
     ];
     const { client, calls } = fakeClient({
       ...baseHandlers(),
@@ -351,6 +368,10 @@ describe("C12 · gallery", () => {
       "DELETE /media/assets/stuck": () => { list = list.filter((item) => item.id !== "stuck"); return {}; }
     });
     renderApp(<GalleryEditorScreen celebrationId="c-1" onNavigate={navigate} pick={vi.fn()} />, client);
+    expect(await screen.findByText(/58042\.jpg/)).toBeTruthy();
+    expect(screen.queryByTestId("processing-stale-stuck")).toBeNull();
+    // Every answer is identical from here on: the screen must still notice the time passing.
+    await act(async () => { await vi.advanceTimersByTimeAsync(3 * 60_000 + 10_000); });
     expect(await screen.findByTestId("processing-stale-stuck")).toBeTruthy();
     expect(screen.getByText(/58042\.jpg está tardando más de lo normal/)).toBeTruthy();
     fireEvent.click(screen.getByTestId("retry-processing-stuck"));

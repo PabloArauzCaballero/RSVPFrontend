@@ -5,6 +5,7 @@ import { queryKeys } from "../keys.js";
 import { invalidation } from "../invalidation.js";
 import { celebrationApi, mediaApi, templateApi, type Versioned } from "./api.js";
 import { uploadToPresignedUrl } from "../media/upload.js";
+import { processingAge } from "./processing-age.js";
 import type { EmbedIntent, Celebration, CelebrationPatch, CreateCelebrationInput, EventTypeDefinition, MediaAsset, MediaPurpose, SettingsPatch, TemplateInput } from "./types.js";
 
 export * from "./types.js";
@@ -127,22 +128,21 @@ function mediaUrlKey(url: string): string {
   }
 }
 
-const processingObservedAt = new Map<string, number>();
 const stableUrlObservedAt = new Map<string, number>();
 
-/** Age in ms of an asset in PROCESSING, using the runtime server timestamp when present or when this client first observed it. */
-export function processingAgeMs(asset: Pick<MediaAsset, "id"> & { readonly createdAt?: string }, firstSeen: ReadonlyMap<string, number>, now = Date.now(), key = asset.id): number {
-  const raw = (asset as { readonly createdAt?: unknown }).createdAt;
-  const parsed = typeof raw === "string" ? Date.parse(raw) : Number.NaN;
-  if (Number.isFinite(parsed)) return Math.max(0, now - parsed);
-  const seen = firstSeen.get(key);
-  return seen === undefined ? 0 : Math.max(0, now - seen);
+/** Time this client has seen a photo in PROCESSING, as of the latest server answer (see processing-age.ts). */
+export function mediaProcessingAgeMs(celebrationId: string, assetId: string): number {
+  return processingAge.ageMs(celebrationId, assetId);
 }
 
 export function useMediaAssets(client: ApiClient, celebrationId: string) {
   return useQuery({
     queryKey: queryKeys.media.list(celebrationId),
-    queryFn: ({ signal }) => mediaApi(client).list(celebrationId, signal),
+    queryFn: async ({ signal }) => {
+      const list = await mediaApi(client).list(celebrationId, signal);
+      processingAge.observe(celebrationId, (list.items ?? []).filter((asset) => asset.status === "PROCESSING").map((asset) => asset.id));
+      return list;
+    },
     ...cachePolicy.celebration, enabled: Boolean(celebrationId),
     // Presigned GET URLs rotate their signature on every poll; keep the loaded URL stable while the object path is unchanged
     // so existing photos never reload or flicker while another upload is still PROCESSING.
@@ -184,22 +184,9 @@ export function useMediaAssets(client: ApiClient, celebrationId: string) {
     // so a stuck backend job can never trap the client in an infinite refresh loop.
     refetchInterval: (query) => {
       if (query.state.error) return false;
-      const prefix = `${celebrationId}:`;
       const processing = (query.state.data?.items ?? []).filter((asset) => asset.status === "PROCESSING");
-      if (processing.length === 0) {
-        for (const key of processingObservedAt.keys()) if (key.startsWith(prefix)) processingObservedAt.delete(key);
-        return false;
-      }
-      const now = Date.now();
-      const active = new Set<string>();
-      let newestAge = Number.POSITIVE_INFINITY;
-      for (const asset of processing) {
-        const key = `${prefix}${asset.id}`;
-        active.add(key);
-        if (!processingObservedAt.has(key)) processingObservedAt.set(key, now);
-        newestAge = Math.min(newestAge, processingAgeMs(asset, processingObservedAt, now, key));
-      }
-      for (const key of processingObservedAt.keys()) if (key.startsWith(prefix) && !active.has(key)) processingObservedAt.delete(key);
+      if (processing.length === 0) return false;
+      const newestAge = Math.min(...processing.map((asset) => processingAge.ageMs(celebrationId, asset.id)));
       if (newestAge >= MEDIA_PROCESSING_STALE_MS) return false;
       return newestAge >= MEDIA_PROCESSING_SLOW_AFTER_MS ? MEDIA_PROCESSING_SLOW_INTERVAL_MS : MEDIA_PROCESSING_INTERVAL_MS;
     },
