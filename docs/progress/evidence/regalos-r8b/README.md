@@ -118,3 +118,10 @@ BE #169 avanzó de `07b3c855` a `66a77ce7`; solo cambiaron descripciones de prov
 3. Ventana «Recientes»: el contrato admite 1 a 30 días; la pantalla ofrece 7, 14 y 30. ¿Se quieren otros valores?
 4. Aviso al proveedor: el motivo se ve en su ficha; el plan dice «avisa al proveedor». No hay correo ni push de R8b (el evento no lleva el motivo). ¿Se agrega en R7 o más adelante?
 5. Orden de fusión: BE #169 declara 3.11.0 pero estaba construido sobre R6b (3.9.0); el FE se regeneró con `07b3c855`. Si cambia el SHA tras rebasar (R7 3.10.0), hay que repetir `generate --ref`.
+
+## Ronda 4: el contrato dice la verdad sobre los regalos ya agregados (BE #169 en `d7c835d0`)
+
+- BE #169 integró #170 (R7, provider-catalog 3.10.0) por merge commit y ocultar ahora anuncia `provider.listing.availability-changed.v1` (`HIDDEN_BY_ADMIN`): Gift marca el regalo `UNAVAILABLE` y la reserva da 409. El texto del contrato 3.11.0 ya no promete lo que el código no hacía; declara el límite (producto del catálogo propio sin ficha, sin evento).
+- FE regenerado contra `d7c835d0`: `RSVP_BACKEND_REPO=/home/user/wt-c yarn workspace @rsvp/contracts generate --ref d7c835d0c44db82c65d4cb01d4e38759ad69df2c`. `check:generated` y `check:source` verdes (provider-catalog 3.11.0, gift-list 1.19.0); `yarn typecheck` 19/19; vitest de `@rsvp/contracts` (6) y `@rsvp/query-hooks` (250) en verde.
+- Cambia en generated: gift-list 1.19.0 y `giftAvailability` de 3.10.0 (aditivo, ninguna pantalla de R8b lo usa). No se ejecutó Playwright en esta ronda.
+- Orden de fusión: BE #170 antes que BE #169; si #170 cambia de SHA, volver a fusionarla en #169 y regenerar este FE.

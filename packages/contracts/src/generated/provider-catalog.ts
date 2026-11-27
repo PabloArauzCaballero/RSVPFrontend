@@ -3612,6 +3612,13 @@ export interface components {
             /** @description Set by ADMIN only; shown as «Patrocinado». Off today (decision 18). */
             featured?: boolean;
             fulfillment?: components["schemas"]["FulfillmentView"];
+            /** @description Since 3.10.0 (R7). Only in the provider's own product (marketplace PRODUCT) responses. available is false when reason is not null. unavailableVariants: ids of the versions out of stock (a gift that chose one is unavailable although the product is not). */
+            giftAvailability?: {
+                available: boolean;
+                /** @enum {string|null} */
+                reason: "HIDDEN_BY_ADMIN" | "PROVIDER_SUSPENDED" | "PROVIDER_REJECTED" | "PROVIDER_NOT_VERIFIED" | "UNPUBLISHED" | "INCOMPLETE" | "OUT_OF_STOCK" | null;
+                unavailableVariants: string[];
+            };
             /**
              * @description Since 3.4.0 (R1, M-2 bis; decisión de Pablo 2026-11-26). Why the platform hid this listing; null when it is not hidden. CATEGORY_TYPE_MISMATCH: the listing's type does not match its category's type (a SERVICE in a PRODUCT category or the other way around), so it is not published and not listed publicly; the provider corrects its category (PATCH) to one of its type and publishes it again, which clears the mark. Always present in the provider's own listing responses.
              * @enum {string|null}
@@ -3638,7 +3645,15 @@ export interface components {
             /** @description R2: optimistic-lock version (ETag). */
             version?: number;
         };
-        ListingDetail: components["schemas"]["ListingSummary"] & Record<string, never>;
+        ListingDetail: components["schemas"]["ListingSummary"] & {
+            /** @description 3.10.0: the versions a PRODUCT has now and their stock (empty without versions; absent for a SERVICE). Gift List refuses to add a version that is not listed or is OUT_OF_STOCK. */
+            variants?: {
+                /** Format: uuid */
+                id: string;
+                /** @enum {string} */
+                stock: "AVAILABLE" | "OUT_OF_STOCK" | "MADE_TO_ORDER";
+            }[];
+        };
         /** @description R8b: the moderation state of one product after hide or show. */
         ListingModeration: {
             /** Format: date-time */
@@ -10313,6 +10328,7 @@ export interface operations {
                 celebrationId?: string;
                 /** @description Since 3.8.0 (R5): public slug of the celebration whose title, date and delivery notes fill {celebracion}, {fecha} and {entrega}. It counts only when celebrationId is sent and is that celebration's id; a slug without celebrationId is ignored. */
                 celebrationSlug?: string;
+                /** @description City slug (GET /providers/geo). Since 3.8.0 it also gives {ciudad} of the WhatsApp message. */
                 city?: string;
                 correlationId?: string;
                 country?: string;
@@ -10326,6 +10342,7 @@ export interface operations {
                 giftItemId?: string;
                 /** @description Requires celebrationId. */
                 guestId?: string;
+                /** @description es-BO or en-US (or an Accept-Language value). Since 3.8.0 it picks the template language and the formats of price and date of the WhatsApp message. */
                 locale?: string;
                 /** @description Since 3.8.0 (R5): units the guest wants; {cantidad} of the WhatsApp message (default 1). A value above 200 (the most a gift can hold) is cut to 200, so the redirect always lands; 422 INVALID_QUANTITY only when it is not a positive integer. */
                 quantity?: number;

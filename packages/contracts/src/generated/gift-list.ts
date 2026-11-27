@@ -156,6 +156,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/celebrations/{celebrationId}/items/{giftItemId}/replacements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Replacements of an unavailable gift: eligible products of the same gift idea (host or organizer)
+         * @description Since 1.19.0 (R7, plan §5.10). MANAGE only (PF-3): 401 without a token, 403 without MANAGE access, 404 for a gift of another celebration. Up to GIFT_REPLACEMENT_COUNT (1..5, default 3) eligible products of the SAME gift idea as the gift, read live from Provider Catalog's recommendation (provider-catalog 3.6.0: VERIFIED provider, published, COMPLETE, not hidden, in stock), without the products the list already has. With the celebration's eventType and city the ones that deliver there come first. It never writes: the host swaps with POST /items/batch. A gift without an idea, or Provider Catalog unreachable, gives an empty list (200), never an error. Only eventType and city are accepted: any other or repeated parameter is 422 INVALID_QUERY. Cache-Control: no-store, private.
+         */
+        get: operations["listGiftReplacements"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/celebrations/{celebrationId}/items/{giftItemId}/reservations": {
         parameters: {
             query?: never;
@@ -1028,6 +1048,11 @@ export interface components {
             /** @enum {string} */
             status: "AVAILABLE" | "PENDING_REVIEW" | "COMMITTED" | "REJECTED";
             title: string;
+            /**
+             * @description Since 1.19.0 (R7). Why the gift is unavailable; present together with availability=UNAVAILABLE and absent otherwise. LISTING_NOT_PRODUCT: its listing is no longer a PRODUCT (R1). The others come from Provider Catalog: HIDDEN_BY_ADMIN, PROVIDER_SUSPENDED, PROVIDER_REJECTED, PROVIDER_NOT_VERIFIED, UNPUBLISHED, INCOMPLETE, OUT_OF_STOCK (the product) or VARIANT_OUT_OF_STOCK (the version the host chose). Owner's private lists only.
+             * @enum {string}
+             */
+            unavailableReason?: "HIDDEN_BY_ADMIN" | "PROVIDER_SUSPENDED" | "PROVIDER_REJECTED" | "PROVIDER_NOT_VERIFIED" | "UNPUBLISHED" | "INCOMPLETE" | "OUT_OF_STOCK" | "VARIANT_OUT_OF_STOCK" | "LISTING_NOT_PRODUCT";
             version: number;
         } & unknown;
         /** @description Only the product ID is accepted. All commercial content/provider/versions/verification/status/publication come from the current actual public Provider product API, never the client. */
@@ -1229,6 +1254,11 @@ export interface components {
             /** @enum {string} */
             status: "AVAILABLE" | "PENDING_REVIEW" | "COMMITTED" | "REJECTED";
             title: string;
+            /**
+             * @description Since 1.19.0 (R7). Why the gift is unavailable; present together with availability=UNAVAILABLE and absent otherwise. LISTING_NOT_PRODUCT: its listing is no longer a PRODUCT (R1). The others come from Provider Catalog: HIDDEN_BY_ADMIN, PROVIDER_SUSPENDED, PROVIDER_REJECTED, PROVIDER_NOT_VERIFIED, UNPUBLISHED, INCOMPLETE, OUT_OF_STOCK (the product) or VARIANT_OUT_OF_STOCK (the version the host chose). Owner's private lists only.
+             * @enum {string}
+             */
+            unavailableReason?: "HIDDEN_BY_ADMIN" | "PROVIDER_SUSPENDED" | "PROVIDER_REJECTED" | "PROVIDER_NOT_VERIFIED" | "UNPUBLISHED" | "INCOMPLETE" | "OUT_OF_STOCK" | "VARIANT_OUT_OF_STOCK" | "LISTING_NOT_PRODUCT";
             version: number;
         };
         /** @description Since 1.13.0 (R8a). The wanted state: true closes the list, false reopens it. */
@@ -1300,6 +1330,25 @@ export interface components {
                 status?: "AVAILABLE";
             })[];
             nextCursor: string | null;
+        };
+        GiftReplacement: {
+            /** @constant */
+            currency: "BOB";
+            /**
+             * Format: uuid
+             * @description Provider Catalog listing id; add it with POST /celebrations/{celebrationId}/items/batch (an UNAVAILABLE gift does not occupy its idea).
+             */
+            listingId: string;
+            priceMinor: number;
+            title: string;
+        };
+        /** @description Since 1.19.0 (R7). */
+        GiftReplacements: {
+            /** @description The gift idea the replacements are of; null for a gift added outside the assistant (no replacements). */
+            giftIdeaCode: string | null;
+            /** Format: uuid */
+            itemId: string;
+            items: components["schemas"]["GiftReplacement"][];
         };
         /** @description Since 1.17.0 (R4): every reservation object (reserveGift, listReservations, approve, reject, cancel, listMyReservations) also carries units, role and showName. Since 1.18.0 (R5) a plain reservation holds the units the guest asked for (SOLE), the coordinator of a coordinated gift holds the whole quantity and a contributor holds none. Composed by GiftReservationView. */
         GiftReservationUnitFields: {
@@ -1573,6 +1622,11 @@ export interface components {
             /** @enum {string} */
             status: "AVAILABLE" | "PROPOSED" | "PENDING_REVIEW" | "COMMITTED" | "REJECTED";
             title: string;
+            /**
+             * @description Since 1.19.0 (R7). Why the gift is unavailable; present together with availability=UNAVAILABLE and absent otherwise. LISTING_NOT_PRODUCT: its listing is no longer a PRODUCT (R1). The others come from Provider Catalog: HIDDEN_BY_ADMIN, PROVIDER_SUSPENDED, PROVIDER_REJECTED, PROVIDER_NOT_VERIFIED, UNPUBLISHED, INCOMPLETE, OUT_OF_STOCK (the product) or VARIANT_OUT_OF_STOCK (the version the host chose). Owner's private lists only.
+             * @enum {string}
+             */
+            unavailableReason?: "HIDDEN_BY_ADMIN" | "PROVIDER_SUSPENDED" | "PROVIDER_REJECTED" | "PROVIDER_NOT_VERIFIED" | "UNPUBLISHED" | "INCOMPLETE" | "OUT_OF_STOCK" | "VARIANT_OUT_OF_STOCK" | "LISTING_NOT_PRODUCT";
             version: number;
         };
         PrivateMoney: {
@@ -2316,6 +2370,40 @@ export interface operations {
             403: components["responses"]["DevCompatForbidden"];
             404: components["responses"]["DevCompatNotFound"];
             409: components["responses"]["DevCompatGiftConflict"];
+            503: components["responses"]["DevCompatDependencyUnavailable"];
+        };
+    };
+    listGiftReplacements: {
+        parameters: {
+            query?: {
+                city?: string;
+                eventType?: string;
+            };
+            header?: {
+                /** @description Echoed in the response header and in problem.correlationId; generated when absent. */
+                "X-Correlation-Id"?: components["parameters"]["DevCompatCorrelationId"];
+            };
+            path: {
+                celebrationId: components["parameters"]["DevCompatCelebrationId"];
+                giftItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The replacements */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GiftReplacements"];
+                };
+            };
+            401: components["responses"]["DevCompatUnauthorized"];
+            403: components["responses"]["DevCompatForbidden"];
+            404: components["responses"]["DevCompatNotFound"];
+            422: components["responses"]["DevCompatValidation"];
             503: components["responses"]["DevCompatDependencyUnavailable"];
         };
     };
