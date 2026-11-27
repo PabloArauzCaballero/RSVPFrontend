@@ -42,7 +42,8 @@ export function createApiClient(options: CreateApiClientOptions): ApiClient {
     const headers = new Headers(request.headers);
     const correlationId = headers.get("x-correlation-id") ?? options.createCorrelationId?.() ?? DEFAULT_CORRELATION_ID();
     headers.set("x-correlation-id", correlationId);
-    headers.set("accept", "application/json");
+    const asText = request.responseType === "text";
+    headers.set("accept", asText ? "text/csv, text/plain;q=0.9" : "application/json");
     const authenticate = request.auth !== false;
     if (authenticate) {
       const accessToken = await options.tokenStore.getAccessToken();
@@ -75,6 +76,7 @@ export function createApiClient(options: CreateApiClientOptions): ApiClient {
     // 204 and bodiless 2xx answers (Identity's 202 on password recovery) carry no JSON to parse.
     if (response.status === 204) return undefined as TResponse;
     const text = await response.text();
+    if (asText) return text as TResponse;
     return (text ? JSON.parse(text) : undefined) as TResponse;
   };
 
