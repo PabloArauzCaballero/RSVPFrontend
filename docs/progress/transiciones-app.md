@@ -75,3 +75,16 @@ Con `screen-arrival.ts` y `shell.tsx` de `da656abb`: 5 de 30 de `shell-persisten
 - axe, 768 px y es-BO ya se cubren en la e2e (3 anchos × 2 temas × 2 idiomas, 3 destinos cada uno, 0 violaciones críticas o serias); solo esas pantallas, con movimiento reducido y sin comparación de píxeles.
 - Rendimiento: medido con el bundle de desarrollo (React en modo dev, sin minificar) en 4 núcleos compartidos: valores absolutos no representan un dispositivo. Sirve solo de comparación relativa con la oficial (ver PR). El gate absoluto es opt-in (`TRANSITION_BUDGET_MS`) para correrlo con un build de release en hardware real. El token de desarrollo se ignora en producción, por eso no se midió el export de producción.
 - Líneas base de macOS: no se regeneraron (ver PR).
+
+## Sincronización con la oficial `0fdd74f6` (2026-11-27, Linux, Node 22.23.5)
+Merge (no rebase) de `chore/deploy-contabo-coolify` (`0fdd74f6`; la base anterior era `6a2b8a7f`) en `ca3ab1f9`, sin conflictos. Sin cambios de código en este PR: solo sincronización y verificación sobre el árbol fusionado.
+```
+apps/universal: tsc --noEmit                         -> exit 0
+packages/ui:    tsc --noEmit                         -> exit 0
+apps/universal: vitest run --maxWorkers=3            -> 63 archivos, 778 pruebas pasan
+packages/ui:    vitest run --maxWorkers=3            -> 20 archivos, 335 pruebas pasan
+eslint . --max-warnings 0                            -> exit 0
+node scripts/validate-harness.mjs                    -> "28 carriles, 61 skills y recarga por prompt válidos"
+playwright test --project=transitions --repeat-each=1 (Chrome /usr/bin/google-chrome, mock de contratos) -> 41 passed (2.9 m)
+```
+**Pendiente de dispositivo (declarado, no cambiado):** con Fabric (React Native 0.81.5) `findNodeHandle` conserva el tag de una instancia desmontada, por lo que `screenFocusWasLost` nativo (`packages/ui/src/screen-transition.native.tsx`) daría `false` y el foco no volvería al título cuando el esqueleto de código cede a la pantalla. Solo ese caso; no es regresión (la base no enfocaba en nativo). No se modifica sin iOS/Android para comprobarlo; vía posible: comparar la identidad del nodo con `last.node`. Nativo sigue en `WRITTEN`.
