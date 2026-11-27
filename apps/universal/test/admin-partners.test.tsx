@@ -146,6 +146,21 @@ describe("A24 · Partners tab", () => {
     expect(within(detail).getByText("Aceptado")).toBeTruthy();
     expect(within(detail).getByText(/provider\.created-by-admin · admin@done\.bo/)).toBeTruthy();
   });
+
+  it("closes a partner opened from the URL and keeps the list filters", async () => {
+    const { client } = fakeClient(base());
+    const onParams = vi.fn();
+    renderApp(<Harness initial={{ partner: ROW.id, q: "Flores", status: "VERIFIED" }} onParams={onParams} />, client, ADMIN);
+    await screen.findByTestId("partner-detail");
+    fireEvent.click(screen.getByTestId("partner-detail-close"));
+    await waitFor(() => expect(screen.queryByTestId("partner-detail-close")).toBeNull());
+    expect(onParams).toHaveBeenLastCalledWith(expect.objectContaining({ partner: undefined, q: "Flores", status: "VERIFIED" }));
+
+    fireEvent.click(screen.getByTestId(`partner-open-${ROW.id}`));
+    await screen.findByTestId("partner-detail");
+    fireEvent.keyUp(document, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByTestId("partner-detail-close")).toBeNull());
+  });
 });
 
 describe("A24 · «Crear partner» dialog", () => {
@@ -410,6 +425,7 @@ describe("A24 · duplicate NIT (warnings.nitInUse, 409 NIT_IN_USE)", () => {
     expect(await screen.findByText("Flores del Valle (/p/flores-valle)")).toBeTruthy();
     await waitFor(() => expect(calls.some((call) => call.url === "/providers/admin/partners/p-9")).toBe(true));
     fireEvent.click(screen.getByTestId("partner-detail-close"));
+    await waitFor(() => expect(screen.queryByTestId("partner-detail-close")).toBeNull());
     next();
     await waitFor(() => expect(screen.getByRole("progressbar").getAttribute("aria-valuetext")).toBe("Paso 6 de 6: Resumen"));
     expect(within(screen.getByTestId("partner-summary")).getByTestId("nit-in-use")).toBeTruthy();
