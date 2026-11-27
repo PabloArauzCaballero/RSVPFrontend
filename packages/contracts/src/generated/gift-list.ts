@@ -167,7 +167,7 @@ export interface paths {
         put?: never;
         /**
          * Reserve a gift (guest with a link credential, or a member JWT)
-         * @description Concurrency-safe: the transition is UPDATE ... WHERE id = ? AND version = ?. With N simultaneous requests exactly one receives 201 and the others 409 GIFT_NOT_AVAILABLE. The guest is identified by the server: with a link credential, guestId is the one Guest returned for that credential; with a member JWT it is the JWT sub. The body never carries identity.
+         * @description Concurrency-safe: the gift row is locked for the whole transaction and the database also checks that the units never pass the quantity and that a gift has one coordinator. With N simultaneous requests for a gift of quantity 1 exactly one receives 201 and the others 409 GIFT_NOT_AVAILABLE (since 1.18.0, for a quantity of Q units, as many requests as fit in Q). Since 1.18.0 (R5) a 409 is GIFT_NOT_AVAILABLE (nothing left to reserve, or the gift is proposed, rejected or unavailable), INSUFFICIENT_UNITS (fewer units left than asked; carries unitsLeft) or ALREADY_RESERVED (the guest already holds a reservation for this gift), and a 422 is also INVALID_UNITS (units is not an integer between 1 and 200), a showName that is not a boolean (VALIDATION_FAILED) or an Idempotency-Key reused with another number of units (IDEMPOTENCY_KEY_REUSED). The guest is identified by the server: with a link credential, guestId is the one Guest returned for that credential; with a member JWT it is the JWT sub. The body never carries identity.
          */
         post: operations["reserveGift"];
         delete?: never;
@@ -1171,6 +1171,36 @@ export interface components {
             /** @description Since 1.17.0 (R4): the product version the host picked; null when none. The price stored is the listing price Provider Catalog reports (version prices are an open decision). */
             variantCode: string | null;
         };
+        /** @description Since 1.18.0 (R5, plan 5.7): what a guest sees of the units of a gift in listGiftItems. Counts for everyone; names only as each guest chose; never a guest id, phone or e-mail. */
+        GiftItemParticipation: {
+            /** @description Only for the coordinator viewing the gift: the contributors who chose to show their name. Empty for everybody else. */
+            contributorNames?: string[];
+            /** @description In a coordinated gift, how many chip in besides the coordinator ('3 personas aportan'). */
+            contributors?: number;
+            /** @description The coordinator's name only if they chose to show it (showName); otherwise null. */
+            coordinatorName?: string | null;
+            /** @description The price Provider Catalog charges now (the chosen version's price when the gift has a variantCode, else the product's), or null when it could not be read: show price (the snapshot) then. M27. */
+            currentPrice?: {
+                amountMinor: number;
+                currency: string;
+            } | null;
+            /** @description Active reservations (guests signed up). */
+            participants?: number;
+            /** @description quantity minus unitsReserved: the 'Faltan N de M' of the card. */
+            unitsLeft?: number;
+            /** @description Units held by the active reservations (pending or committed). */
+            unitsReserved?: number;
+            /** @description The calling guest's own active reservation on this gift, or null (always null for a member JWT). Only the COORDINATOR should see the provider buttons. */
+            viewer?: {
+                /** Format: uuid */
+                reservationId: string;
+                /** @enum {string} */
+                role: "SOLE" | "COORDINATOR" | "CONTRIBUTOR";
+                /** @enum {string} */
+                status: "PENDING_REVIEW" | "COMMITTED";
+                units: number;
+            } | null;
+        };
         GiftItemUpdateRequest: {
             groupGiftEnabled?: boolean;
             quantity?: number;
@@ -1271,16 +1301,16 @@ export interface components {
             })[];
             nextCursor: string | null;
         };
-        /** @description Since 1.17.0 (R4): every reservation object (reserveGift, listReservations, approve, reject, cancel, listMyReservations) also carries units, role and showName. In 1.17.0 every reservation is 1 unit and SOLE; reserving part of a quantity and joining a coordinated gift arrive with R5. Composed by GiftReservationView. */
+        /** @description Since 1.17.0 (R4): every reservation object (reserveGift, listReservations, approve, reject, cancel, listMyReservations) also carries units, role and showName. Since 1.18.0 (R5) a plain reservation holds the units the guest asked for (SOLE), the coordinator of a coordinated gift holds the whole quantity and a contributor holds none. Composed by GiftReservationView. */
         GiftReservationUnitFields: {
             /**
-             * @description Since 1.17.0 (R4): SOLE until R5.
+             * @description Since 1.17.0 (R4), 1.18.0 (R5): SOLE in a plain gift; COORDINATOR (the first guest) or CONTRIBUTOR in a gift with groupGiftEnabled.
              * @enum {string}
              */
             role: "SOLE" | "COORDINATOR" | "CONTRIBUTOR";
             /** @description Since 1.17.0 (R4): the guest agreed to show their name to the coordinator and contributors. */
             showName: boolean;
-            /** @description Since 1.17.0 (R4): units this reservation holds; always 1 until R5. */
+            /** @description Since 1.17.0 (R4), 1.18.0 (R5): units this reservation holds. SOLE: what the guest asked for (at least 1). COORDINATOR: the whole quantity. CONTRIBUTOR: 0. */
             units: number;
         };
         /** @description Since 1.17.0 (R4): RsvpAwareGiftReservation composed (allOf, per variant) with GiftReservationUnitFields: units, role and showName. Answered by reserveGift, listReservations, approve, reject, cancel and listMyReservations. The frozen DevCompat and RsvpAware schemas are untouched. */
@@ -1293,6 +1323,15 @@ export interface components {
         GiftReservationViewPage: components["schemas"]["GiftReservationViewList"] & {
             /** @description Pass it as cursor to get the next page; null on the last page. */
             nextCursor: string | null;
+        };
+        /** @description Since 1.18.0 (R5): DevCompatReserveGiftRequest plus units and showName. The body never carries identity (guestId is rejected). */
+        GiftReserveRequest: {
+            guestDisplayName?: string | null;
+            message?: string | null;
+            /** @description The guest agrees to show their name to the others of the gift: the coordinator's name to everybody, a contributor's to the coordinator. Default false. */
+            showName?: boolean;
+            /** @description Units the guest takes of a plain gift (default 1). 422 INVALID_UNITS when it is not an integer between 1 and 200; 409 INSUFFICIENT_UNITS (unitsLeft) when fewer are left. Ignored in a gift with groupGiftEnabled, where the server decides (coordinator: the whole quantity; contributor: none). */
+            units?: number;
         };
         LegacyCatalogReference: {
             /** Format: uuid */
@@ -1420,21 +1459,48 @@ export interface components {
             closed: boolean;
             /** @description Since 1.17.0 (R4): the list delivery notes. */
             deliveryNotes?: string | null;
-            /** @description Each item of the page also carries availability (since 1.14.0). */
+            /** @description Each item of the page also carries availability (since 1.14.0) and, since 1.18.0, the fields of GiftItemParticipation. */
             items: {
                 /**
                  * @description Since 1.14.0 (M-6, R1; decisión de Pablo 2026-11-26). UNAVAILABLE: the gift's Provider Catalog listing is no longer a PRODUCT, so it cannot be reserved. It is a field of its own: the frozen status (DevCompatGiftItemStatus) never answers UNAVAILABLE and keeps the value the gift had. Only the host (MANAGE) receives an UNAVAILABLE gift; guest lists, the public summary and READ-only guests leave it out.
                  * @enum {string}
                  */
                 availability: "AVAILABLE" | "UNAVAILABLE";
+                /** @description Only for the coordinator viewing the gift: the contributors who chose to show their name. Empty for everybody else. */
+                contributorNames?: string[];
+                /** @description In a coordinated gift, how many chip in besides the coordinator ('3 personas aportan'). */
+                contributors?: number;
+                /** @description The coordinator's name only if they chose to show it (showName); otherwise null. */
+                coordinatorName?: string | null;
+                /** @description The price Provider Catalog charges now (the chosen version's price when the gift has a variantCode, else the product's), or null when it could not be read: show price (the snapshot) then. M27. */
+                currentPrice?: {
+                    amountMinor: number;
+                    currency: string;
+                } | null;
                 /** @description Since 1.17.0 (R4): the Provider Catalog gift idea the host picked the product for; null outside the assistant. */
                 giftIdeaCode?: string | null;
                 /** @description Since 1.17.0 (R4): the host allows several guests to contribute to this gift. */
                 groupGiftEnabled?: boolean;
+                /** @description Active reservations (guests signed up). */
+                participants?: number;
                 /** @description Since 1.17.0 (R4): units wanted. 1 for every gift added before the assistant. Business cap 50 (GIFT_MAX_QUANTITY_PER_GIFT). */
                 quantity?: number;
+                /** @description quantity minus unitsReserved: the 'Faltan N de M' of the card. */
+                unitsLeft?: number;
+                /** @description Units held by the active reservations (pending or committed). */
+                unitsReserved?: number;
                 /** @description Since 1.17.0 (R4): the product version the host picked; null when none. The price stored is the listing price Provider Catalog reports (version prices are an open decision). */
                 variantCode?: string | null;
+                /** @description The calling guest's own active reservation on this gift, or null (always null for a member JWT). Only the COORDINATOR should see the provider buttons. */
+                viewer?: {
+                    /** Format: uuid */
+                    reservationId: string;
+                    /** @enum {string} */
+                    role: "SOLE" | "COORDINATOR" | "CONTRIBUTOR";
+                    /** @enum {string} */
+                    status: "PENDING_REVIEW" | "COMMITTED";
+                    units: number;
+                } | null;
             }[];
             /** @description Since 1.16.0 (R6a): signed lead context of this viewer, or null. Present for an account that is a member of the celebration; append it unchanged as ctx to every /r/{listingId} link of this list. Opaque and short-lived (re-read the list to refresh it); never shown and never stored. */
             leadContext?: string | null;
@@ -1569,8 +1635,10 @@ export interface components {
             items: components["schemas"]["PublicExternalGiftItem"][];
             nextCursor: string | null;
         };
-        /** @description Since 1.13.0 (M28). What the invitation shows on its gifts button: OPEN -> gifts.guest.cta.open, EMPTY -> gifts.guest.cta.empty, CLOSED -> gifts.guest.cta.closed. */
+        /** @description Since 1.13.0 (M28). What the invitation shows on its gifts button: OPEN -> gifts.guest.cta.open, EMPTY -> gifts.guest.cta.empty, CLOSED -> gifts.guest.cta.closed. Since 1.18.0 it also carries deliveryNotes (text the host chose to publish). */
         PublicGiftsSummary: {
+            /** @description Since 1.18.0 (R5): the delivery instructions the host published (at most 200 characters, no exact address); null when none. Provider Catalog reads them for the {entrega} of the WhatsApp message. Optional for old clients. */
+            deliveryNotes?: string | null;
             /** @description Gifts a guest sees in the list (statuses other than PROPOSED and REJECTED); reserved gifts (PENDING_REVIEW, COMMITTED) count. */
             itemCount: number;
             /** @enum {string} */
@@ -2268,7 +2336,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["DevCompatReserveGiftRequest"];
+                "application/json": components["schemas"]["GiftReserveRequest"];
             };
         };
         responses: {
