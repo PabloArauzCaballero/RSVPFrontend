@@ -45,5 +45,5 @@ out.previewCtx = prev.status;
 out.clicks.push(['WHATSAPP preview ctx v6', await click(A.listingId, `destination=WHATSAPP&surface=PREVIEW&ctx=${prev.body.ctx}`, 6)]);
 out.clicks.push(['B WHATSAPP valid v7', await click(B.listingId, 'destination=WHATSAPP&surface=GIFT_LIST&eventType=WEDDING&city=la-paz', 7)]);
 out.clicks.push(['B WHATSAPP valid v8', await click(B.listingId, 'destination=WHATSAPP&surface=GIFT_LIST&eventType=WEDDING&city=la-paz', 8)]);
-writeFileSync('/var/tmp/r6b/state.json', JSON.stringify({ A, B, tokenA, tokenB, tokenHost, tokenAdmin }, null, 1));
+writeFileSync(`${process.env.R6B_DIR ?? '/var/tmp/r6b'}/state.json`, JSON.stringify({ A, B, tokenA, tokenB, tokenHost, tokenAdmin }, null, 1));
 console.log(JSON.stringify(out, null, 1));

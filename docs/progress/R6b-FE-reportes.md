@@ -41,3 +41,30 @@ Ver `docs/progress/evidence/r6b/`: capturas del recorrido, el CSV descargado y l
 
 - `HOST_OR_PLANNER` (necesita el `ctx` firmado por gift-list; no se levantó gift-list): solo está cubierto por pruebas unitarias.
 - Clics hechos con `curl` al gateway (`/r/{listingId}`), no a través del sitio seo-web.
+
+## Cómo se levantó el entorno del recorrido (ronda 3)
+
+Todo en una máquina Linux con Docker. Nada de esto entra al repositorio; los scripts de `evidence/r6b/` leen y escriben en `R6B_DIR` (por omisión `/var/tmp/r6b`).
+
+1. **Infraestructura del BE (`feat/regalos-r6b-reportes` en `1151e6f`):** `cp .env.example .env && docker compose up -d postgres rabbitmq redis`. MinIO: las imágenes del compose (`cgr.dev`, `quay.io`) no se pueden bajar en el sandbox; se usó `bitnamilegacy/minio` con `--network host`, y `mc` (`bitnamilegacy/minio-client`) para crear `provider-media` (con `mc anonymous set download local/provider-media/public`) y `provider-documents`.
+2. **Servicios en el host:** Identity (`./gradlew bootJar` y `java -jar`, con `IDENTITY_SIGNING_KEY_PEM` de `scripts/gen-identity-dev-key.mjs`), provider-catalog (`yarn workspace @rsvp/provider-catalog-service build`, `yarn db:migrate`, `yarn catalog:seed`, `node dist/runtime/main.js`) y su worker de fotos (`node dist/runtime/marketplace-workers-main.js`), con `PROVIDER_LEAD_CONTEXT_SIGNING_KEY` (base64 de 32 bytes) y `PROVIDER_MEDIA_BUCKET=provider-media`.
+3. **Gateway:** Kong 3.9.1 en Docker con `infra/kong/kong.yml` del BE, `--add-host <servicio>:host-gateway` para cada upstream y el puerto 8000. Sin `kong-jwt-sync` (los servicios validan el JWT).
+4. **ADMIN real:** registrar `e2e-admin@example.test` con Identity sin la variable; **marcar el correo verificado por SQL en la base de prueba** (`UPDATE identity_user SET email_verified_at = now() WHERE email = ...`, no hay camino HTTP sin leer el correo); reiniciar Identity con `IDENTITY_BOOTSTRAP_ADMIN_EMAIL` y volver a iniciar sesión.
+5. **Proveedores:** `siembra-r6b.mjs` crea dos proveedores y marca `VERIFIED` **por SQL en `provider_db`** (`UPDATE provider SET status='VERIFIED'`, solo datos de prueba, como `provider-portal-live.mjs`), una oferta de servicio cada uno y los clics. `siembra-producto-1.mjs` y `siembra-producto-2-ficha-completa.mjs` crean un producto, lo completan (ficha, foto real por URL prefirmada a MinIO y worker hasta `READY`) y lo publican.
+6. **Frontend:** Expo web (`npx expo start --web --port 8081` para el proveedor y `8100` para el admin; son orígenes que Kong ya permite) con `EXPO_PUBLIC_API_URL=http://localhost:8000`, `EXPO_PUBLIC_SITE_URL=http://localhost:3100` y **`EXPO_PUBLIC_DEV_ACCESS_TOKEN`** igual al `accessToken` de un login real de Identity (la sesión de desarrollo; caduca a los 15 min, hay que reiniciar Expo con uno nuevo); seo-web con `RSVP_API_URL=http://localhost:8000 npx next dev -p 3100`.
+7. **Recorridos:** `node recorrido-r6b.mjs` (reportes, CSV) y `node recorrido-r6b-vista-previa.mjs` (vista previa real, `/r` por seo-web, viewports, claro y oscuro, en-US, axe con `@axe-core/playwright`, ya en las dependencias del repositorio). Chrome real (`/usr/bin/google-chrome`).
+
+El sitio de destino (`tienda.example`, `wa.me`) se simula con `context.route`; el navegador no sale a internet.
+
+## Evidencia de la ronda 3 (punta de la rama)
+
+| Comprobación | Resultado |
+|---|---|
+| `yarn lint` / `yarn typecheck` / `yarn build` | exit 0, 19/19 cada uno |
+| `yarn test` | exit 0, 33/33 tareas: universal 812, seo-web 227, query-hooks 193, api-client 19, ui-web 22, ui 333, design-editor 441, celebration-theme 3014, auth 89 (1 omitida preexistente), i18n 15, forms 65, design-tokens 91, contracts 6, telemetry 8 |
+| `check:generated` | 8 contratos en `1151e6f14597` |
+| Vista previa real: «Ver en la tienda» → seo-web `/r` (302) → Kong → `tienda.example` | lead `PREVIEW` no válido y no facturable en `/portal/leads` y en el reporte (PRODUCT_PAGE: 0 válidos) |
+| Clic por seo-web `/r` en Chrome con `eventType=BIRTHDAY&city=la-paz` | lead válido con tipo de evento y ciudad en `/portal/leads` |
+| 4 pantallas × 360/768/1280 × claro/oscuro (+ en-US en 360 y 1280) = 40 combinaciones | 0 desbordes horizontales, 0 claves crudas, axe (wcag2a, wcag2aa, wcag21a, wcag21aa): 0 violaciones |
+
+Capturas en `evidence/r6b/` (`viewports/` trae 360 y 1280, claro y oscuro; el resto está en `axe-resultados.json` por combinación).

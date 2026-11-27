@@ -1,4 +1,5 @@
-import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { focusManager } from "@tanstack/react-query";
+import { act, cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { Linking } from "react-native";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ProductEditorScreen } from "../src/provider/product-editor/product-editor-screen";
@@ -120,9 +121,44 @@ describe("preview of the product sheet", () => {
     await waitFor(() => expect(store.getAttribute("aria-disabled")).not.toBe("true"));
     const real = Date.now();
     vi.spyOn(Date, "now").mockReturnValue(real + 20 * 60_000);
-    fireEvent.click(store);
+    act(() => { focusManager.setFocused(false); focusManager.setFocused(true); }); // back to the app: the stale ctx is asked again, and the answer is a 503
+    await waitFor(() => expect(n).toBeGreaterThanOrEqual(2));
     expect(await screen.findByTestId("preview-unavailable")).toBeTruthy();
+    fireEvent.click(screen.getByTestId("preview-open-PRODUCT_PAGE"));
     expect(open).not.toHaveBeenCalled();
+  });
+
+  it("M-b · a failed renewal does not turn the buttons off while the ctx is still valid: the press opens with it", async () => {
+    const open = vi.spyOn(Linking, "openURL").mockResolvedValue(true);
+    let n = 0;
+    const { client } = fakeClient(handlers({ [`POST /providers/${PID}/lead-context`]: () => (n++ === 0 ? grant("ctx-aun-valido", 2) : new HttpFailure(503, { code: "LEAD_CONTEXT_UNAVAILABLE" })) }));
+    renderApp(<ProductEditorScreen />, client, HOST);
+    await waitFor(() => expect(n).toBeGreaterThanOrEqual(2)); // inside the renewal margin from the start: it is renewed at once, and that fails
+    const store = await screen.findByTestId("preview-open-PRODUCT_PAGE");
+    await waitFor(() => expect(store.getAttribute("aria-disabled")).not.toBe("true"));
+    expect(screen.queryByTestId("preview-unavailable")).toBeNull();
+    fireEvent.click(store);
+    expect(open).toHaveBeenCalledTimes(1); // synchronously: no await between the press and the open
+    expect(new URL(String(open.mock.calls[0]?.[0])).searchParams.get("ctx")).toBe("ctx-aun-valido");
+  });
+
+  it("M-a · inside the renewal margin the buttons wait disabled while the ctx is renewed, and the press then opens synchronously with the new one", async () => {
+    const open = vi.spyOn(Linking, "openURL").mockResolvedValue(true);
+    let n = 0;
+    let release: (() => void) | undefined;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    const { client } = fakeClient(handlers({ [`POST /providers/${PID}/lead-context`]: () => (n++ === 0 ? grant("ctx-por-vencer", 2) : gate.then(() => grant("ctx-renovado", 15))) }));
+    renderApp(<ProductEditorScreen />, client, HOST);
+    const store = await screen.findByTestId("preview-open-PRODUCT_PAGE");
+    await waitFor(() => expect(n).toBeGreaterThanOrEqual(2));
+    expect(store.getAttribute("aria-disabled")).toBe("true");
+    fireEvent.click(store);
+    expect(open).not.toHaveBeenCalled();
+    release?.();
+    await waitFor(() => expect(screen.getByTestId("preview-open-PRODUCT_PAGE").getAttribute("aria-disabled")).not.toBe("true"));
+    fireEvent.click(screen.getByTestId("preview-open-PRODUCT_PAGE"));
+    expect(open).toHaveBeenCalledTimes(1);
+    expect(new URL(String(open.mock.calls[0]?.[0])).searchParams.get("ctx")).toBe("ctx-renovado");
   });
 
   it("a product without a store page or WhatsApp has no buttons and asks for no ctx", async () => {

@@ -98,6 +98,18 @@ describe("useLeadContext (M-1, M-2)", () => {
     await waitFor(() => expect(chosen.result.current.data?.ctx).toBe("preview-token"));
     expect(h.calls[0]?.body).toEqual({ relation: "PREVIEW", listingId: LID });
   });
+  it("renews on focus but does not poll a hidden tab: the stale time is 0 inside the renewal margin and positive before it", async () => {
+    const h = harness(() => json({ ctx: "t", relation: "PROVIDER_OWNER", expiresAt: new Date(Date.now() + 15 * 60_000).toISOString() }));
+    const view = renderHook(() => hooks.useLeadContext(h.client, PID, { relation: "PROVIDER_OWNER" }), { wrapper: h.wrapper });
+    await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
+    const options = h.queryClient.getQueryCache().findAll()[0]?.options as unknown as { refetchIntervalInBackground?: boolean; refetchOnWindowFocus?: boolean; staleTime: (query: unknown) => number };
+    expect(options.refetchIntervalInBackground).toBe(false);
+    expect(options.refetchOnWindowFocus).toBe(true);
+    const at = (ms: number) => ({ state: { data: { ctx: "t", relation: "PROVIDER_OWNER", expiresAt: new Date(Date.now() + ms).toISOString() } } });
+    expect(options.staleTime(at(10 * 60_000))).toBeGreaterThan(0);
+    expect(options.staleTime(at(2 * 60_000))).toBe(0);
+    expect(options.staleTime(at(-1000))).toBe(0);
+  });
   it("a 503 LEAD_CONTEXT_UNAVAILABLE leaves no ctx and is not retried", async () => {
     const h = harness(() => json({ title: "Unavailable", status: 503, code: "LEAD_CONTEXT_UNAVAILABLE" }, 503));
     const view = renderHook(() => hooks.useLeadContext(h.client, PID, { relation: "PROVIDER_OWNER" }), { wrapper: h.wrapper });

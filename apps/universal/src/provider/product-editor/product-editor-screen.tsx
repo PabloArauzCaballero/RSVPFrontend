@@ -273,27 +273,27 @@ const usable = (grant: LeadContext | undefined): grant is LeadContext => Boolean
 
 /**
  * R6b (M-2) · the buttons of the preview open the real destination with the preview's ctx: the portal asks for it (POST lead-context, PREVIEW for this listing)
- * and keeps it fresh until the screen closes. If the ctx is about to expire at the moment of the press, it is renewed first and the tab opens with the new one;
- * if it cannot be had, nothing opens (a click without it would be a normal visitor's, and bill). Only when the card has a button.
+ * and keeps it fresh until the screen closes. A press always opens synchronously (an `await` before `Linking.openURL` loses the user gesture and the popup blocker
+ * stops the tab): the buttons are enabled only with a ctx that is valid and outside the renewal margin («ready»). Inside the margin they wait («preparing», disabled)
+ * while the ctx is renewed; if the renewal fails but the ctx is still valid they stay enabled with it. Without a valid ctx nothing opens (a click without it would be
+ * a normal visitor's, and bill). Only when the card has a button.
  */
 function usePreviewLinks(sheet: ProductSheet, providerId: string): PreviewLinks | undefined {
   const client = useApiClient();
   const hasButtons = (sheet.destinations ?? []).some((destination) => destination === "PRODUCT_PAGE" || destination === "WHATSAPP");
   const grant = useLeadContext(client, providerId, { relation: "PREVIEW", listingId: sheet.id }, hasButtons);
-  const [refused, setRefused] = useState(false);
+  const valid = usable(grant.data);
+  const inMargin = valid && msUntilLeadContextRenewal(grant.data) === 0;
+  const renewing = inMargin && !grant.isError && !grant.isFetching;
+  const refetch = grant.refetch;
+  useEffect(() => { if (renewing) void refetch(); }, [renewing, refetch]);
   if (!hasButtons) return undefined;
-  const open = async (destination: PreviewDestination): Promise<void> => {
-    let current = grant.data;
-    if (!usable(current) || msUntilLeadContextRenewal(current) === 0) {
-      const fresh = await grant.refetch();
-      current = usable(fresh.data) ? fresh.data : usable(current) ? current : undefined;
-    }
-    if (!current) { setRefused(true); return; }
-    setRefused(false);
-    void Linking.openURL(portalRedirectUrl(sheet.id, { relation: "PREVIEW", ctx: current.ctx, destination }));
+  const status: PreviewLinks["status"] = valid && (!inMargin || grant.isError) ? "ready" : !valid && grant.isError ? "unavailable" : "preparing";
+  const onOpen = (destination: PreviewDestination): void => {
+    if (!usable(grant.data)) return;
+    void Linking.openURL(portalRedirectUrl(sheet.id, { relation: "PREVIEW", ctx: grant.data.ctx, destination }));
   };
-  const status = grant.isError || refused ? "unavailable" : usable(grant.data) ? "ready" : "preparing";
-  return { status, onOpen: (destination) => { void open(destination); }, onRetry: () => { setRefused(false); void grant.refetch(); } };
+  return { status, onOpen, onRetry: () => { void grant.refetch(); } };
 }
 
 /** Resumen: the card as the guest sees it, the state, and what is still missing, each item a link to its step. */

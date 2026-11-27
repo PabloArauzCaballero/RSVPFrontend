@@ -12,6 +12,12 @@ import { useStyles } from "../host/ui";
  * Figures only: ids, names of providers and products and counters (PF-1). `billableLeads` is null when the provider is not billed per click.
  */
 
+/** Namespaces that render the report; both must define every key in `REPORT_KEYS` (checked by `tsc` in `test/lead-reports.test.tsx`, so a missing one never shows as a raw key). */
+export type ReportNs = "portal.leadReport" | "admin.leadReport";
+export const REPORT_KEYS = ["valid", "invalid", "billable", "notPerClick", "cap", "noCap", "row", "rowFigures", "unknownProduct"] as const;
+export type ReportKey = (typeof REPORT_KEYS)[number];
+const rk = (ns: ReportNs, key: ReportKey): string => `${ns}.${key}`;
+
 const MONTH = /^(\d{4})-(\d{2})$/;
 const MONTHS_BACK = 12;
 
@@ -68,7 +74,7 @@ export function useDestinationLabel(): (destination: string) => string {
 const BILLING_KEYS = ["CPC", "CPA", "FLAT", "COMMISSION"] as const;
 
 /** One provider's totals for the month: valid, not valid by reason, and the billable total (or why there is none). */
-export function ProviderTotals({ provider, ns, testID }: { readonly provider: LeadReportProvider; readonly ns: "portal.leadReport" | "admin.leadReport"; readonly testID?: string }): ReactNode {
+export function ProviderTotals({ provider, ns, testID }: { readonly provider: LeadReportProvider; readonly ns: ReportNs; readonly testID?: string }): ReactNode {
   const t = useT();
   const locale = useLocale();
   const styles = useStyles();
@@ -79,18 +85,18 @@ export function ProviderTotals({ provider, ns, testID }: { readonly provider: Le
     <View style={{ gap: spacing[2], padding: spacing[5], backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, borderRadius: radius.lg, ...depth(scheme) }} testID={testID}>
       {ns === "admin.leadReport" ? <Text accessibilityRole="header" style={styles.subtitle}>{provider.providerName}</Text> : null}
       <View style={[styles.row, { gap: spacing[2] }]}>
-        <Chip tone="yes">{`${t(`${ns}.valid`)}: ${formatNumber(provider.validLeads, locale)}`}</Chip>
-        <Chip tone="no">{`${t(`${ns}.invalid`)}: ${formatNumber(provider.invalidLeads, locale)}`}</Chip>
+        <Chip tone="yes">{`${t(rk(ns, "valid"))}: ${formatNumber(provider.validLeads, locale)}`}</Chip>
+        <Chip tone="no">{`${t(rk(ns, "invalid"))}: ${formatNumber(provider.invalidLeads, locale)}`}</Chip>
       </View>
       <InvalidBreakdown counts={provider.invalidByReason} />
-      <Text style={styles.label}>{provider.billableLeads === null ? t(`${ns}.notPerClick`, { model }) : `${t(`${ns}.billable`)}: ${formatNumber(provider.billableLeads, locale)}`}</Text>
-      <Text style={styles.muted}>{provider.monthlyCap > 0 ? t(`${ns}.cap`, { cap: formatNumber(provider.monthlyCap, locale) }) : t(`${ns}.noCap`)}</Text>
+      <Text style={styles.label}>{provider.billableLeads === null ? t(rk(ns, "notPerClick"), { model }) : `${t(rk(ns, "billable"))}: ${formatNumber(provider.billableLeads, locale)}`}</Text>
+      <Text style={styles.muted}>{provider.monthlyCap > 0 ? t(rk(ns, "cap"), { cap: formatNumber(provider.monthlyCap, locale) }) : t(rk(ns, "noCap"))}</Text>
     </View>
   );
 }
 
 /** One row per product and button. */
-export function ReportRows({ rows, ns }: { readonly rows: readonly LeadReportRow[]; readonly ns: "portal.leadReport" | "admin.leadReport" }): ReactNode {
+export function ReportRows({ rows, ns }: { readonly rows: readonly LeadReportRow[]; readonly ns: ReportNs }): ReactNode {
   const t = useT();
   const buttonLabel = useDestinationLabel();
   const locale = useLocale();
@@ -100,11 +106,11 @@ export function ReportRows({ rows, ns }: { readonly rows: readonly LeadReportRow
     <Stagger>
       {rows.map((row) => (
         <View key={`${row.providerId}-${row.listingId}-${row.destination}`} style={{ gap: spacing[1], paddingVertical: spacing[3], borderTopWidth: 1, borderTopColor: palette.border }} testID="report-row">
-          <Text style={styles.label}>{t(`${ns}.row`, { product: row.listingTitle ?? t(`${ns}.unknownProduct`), button: buttonLabel(row.destination) })}</Text>
+          <Text style={styles.label}>{t(rk(ns, "row"), { product: row.listingTitle ?? t(rk(ns, "unknownProduct")), button: buttonLabel(row.destination) })}</Text>
           {ns === "admin.leadReport" ? <Text style={styles.muted}>{row.providerName}</Text> : null}
-          <Text style={styles.body}>{t(`${ns}.rowFigures`, { valid: formatNumber(row.validLeads, locale), invalid: formatNumber(row.invalidLeads, locale) })}</Text>
+          <Text style={styles.body}>{t(rk(ns, "rowFigures"), { valid: formatNumber(row.validLeads, locale), invalid: formatNumber(row.invalidLeads, locale) })}</Text>
           <InvalidBreakdown counts={row.invalidByReason} />
-          {row.billableLeads !== null ? <Text style={styles.muted}>{`${t(`${ns}.billable`)}: ${formatNumber(row.billableLeads, locale)}`}</Text> : null}
+          {row.billableLeads !== null ? <Text style={styles.muted}>{`${t(rk(ns, "billable"))}: ${formatNumber(row.billableLeads, locale)}`}</Text> : null}
         </View>
       ))}
     </Stagger>

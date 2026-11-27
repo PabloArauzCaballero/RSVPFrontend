@@ -1,6 +1,10 @@
 import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { currentMonth, recentMonths } from "../src/provider/lead-report-view";
+import { adminEsBO } from "../../../packages/i18n/locales/es-BO/admin";
+import { portalEsBO } from "../../../packages/i18n/locales/es-BO/portal";
+import { adminEnUS } from "../../../packages/i18n/locales/en-US/admin";
+import { portalEnUS } from "../../../packages/i18n/locales/en-US/portal";
+import { REPORT_KEYS, currentMonth, recentMonths, type ReportKey } from "../src/provider/lead-report-view";
 import { LeadsScreen } from "../src/provider/leads-screen";
 import { MetricsScreen as PortalMetricsScreen } from "../src/provider/metrics-screen";
 import { MetricsScreen as AdminMetricsScreen } from "../src/admin/insight";
@@ -30,6 +34,24 @@ const reportRow = { celebrationId: FORBIDDEN_CELEBRATION_ID, guestId: FORBIDDEN_
 
 beforeEach(async () => { resetSecureStore(); saveTextFile.mockClear(); await writeLocal("rsvp.provider.u-host", PID); });
 afterEach(() => { cleanup(); });
+
+// Compile-time guard: if a namespace lacks a key the report view uses, `tsc` fails here (a raw key on screen was B1 of the R6b review).
+const portalKeys: Record<ReportKey, string> = portalEsBO.leadReport;
+const adminKeys: Record<ReportKey, string> = adminEsBO.leadReport;
+const portalKeysEn: Record<ReportKey, string> = portalEnUS.leadReport;
+const adminKeysEn: Record<ReportKey, string> = adminEnUS.leadReport;
+
+describe("report keys", () => {
+  it("every key the report view uses exists in both namespaces and both languages, with the same placeholders", () => {
+    for (const key of REPORT_KEYS) {
+      const forms = [portalKeys[key], adminKeys[key], portalKeysEn[key], adminKeysEn[key]];
+      forms.forEach((text) => expect(typeof text === "string" && text.length > 0, key).toBe(true));
+      const holes = (text: string): string => (text.match(/\{\{\w+\}\}/g) ?? []).sort().join();
+      expect(holes(adminKeys[key]), key).toBe(holes(portalKeys[key]));
+      expect(holes(adminKeysEn[key]), key).toBe(holes(portalKeysEn[key]));
+    }
+  });
+});
 
 describe("month helpers", () => {
   it("currentMonth uses the provider's zone: 01:00 UTC of the 1st is still the previous month in La Paz", () => {
@@ -178,7 +200,13 @@ describe("admin · billable lead report and CSV (D-10 #33)", () => {
     renderApp(<AdminMetricsScreen onNavigate={vi.fn()} />, client, ADMIN);
     expect(await screen.findByTestId(`admin-lead-totals-${PID}`)).toBeTruthy();
     expect(within(screen.getByTestId(`admin-lead-totals-${OTHER}`)).getByText("No se cobra por clic (Tarifa fija)")).toBeTruthy();
-    expect(screen.getAllByTestId("report-row")).toHaveLength(2);
+    const texts = screen.getAllByTestId("report-row").map((row) => row.textContent ?? "");
+    expect(texts).toHaveLength(2);
+    expect(texts[0]).toContain("Torta de chocolate · WhatsApp");
+    expect(texts[0]).toContain("7 válidos · 3 no válidos");
+    expect(texts[1]).toContain("Ramo · Página del producto");
+    expect(texts[1]).toContain("2 válidos · 0 no válidos");
+    expect(document.body.textContent).not.toMatch(/leadReport\./); // never a raw key
     fireEvent.change(screen.getByTestId("admin-lead-provider"), { target: { value: OTHER } });
     expect(screen.getAllByTestId("report-row")).toHaveLength(1);
     expect(screen.queryByTestId(`admin-lead-totals-${PID}`)).toBeNull();

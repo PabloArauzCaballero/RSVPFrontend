@@ -83,8 +83,9 @@ export function msUntilLeadContextRenewal(grant: Pick<LeadContext, "expiresAt"> 
 /**
  * M-1 and M-2 · POST /providers/{id}/lead-context. The portal asks for the signed `ctx` of its owner (`PROVIDER_OWNER`) or of the preview of one listing
  * (`PREVIEW`) and appends it to the `/r/{listingId}` links it opens, so those clicks are invalid leads and never bill. It is a bearer: never put it in a
- * link that is copied or shared, nor in a query key. It is renewed from its own `expiresAt` (timer while the screen is visible, and on returning to the
- * tab or the app, which is when a paused timer would have let it expire). While it is not there (or the answer is a 503 LEAD_CONTEXT_UNAVAILABLE) `data`
+ * link that is copied or shared, nor in a query key. It is renewed from its own `expiresAt`: a timer while the screen is visible, and
+ * on returning to the tab or the app (`refetchOnWindowFocus`, and its `staleTime` is 0 once the renewal margin is reached). The timer does not run in a hidden tab
+ * (`refetchIntervalInBackground: false`): nothing opens a link from there, and the focus refetch gives a fresh ctx before the first press. While it is not there (or the answer is a 503 LEAD_CONTEXT_UNAVAILABLE) `data`
  * is undefined and the screen must not offer the link.
  */
 export function useLeadContext(client: ApiClient, providerId: string | undefined, request: LeadContextRequest, enabled = true) {
@@ -93,7 +94,7 @@ export function useLeadContext(client: ApiClient, providerId: string | undefined
     queryFn: () => leadReportApi(client).issueLeadContext(providerId ?? "", request),
     staleTime: (query) => msUntilLeadContextRenewal(query.state.data), gcTime: MIN_RENEW_GAP_MS,
     refetchInterval: (query) => (query.state.data ? Math.max(MIN_RENEW_GAP_MS, msUntilLeadContextRenewal(query.state.data)) : false),
-    refetchIntervalInBackground: true, refetchOnWindowFocus: true, refetchOnReconnect: true, retry: false,
+    refetchIntervalInBackground: false, refetchOnWindowFocus: true, refetchOnReconnect: true, retry: false,
     enabled: enabled && Boolean(providerId) && (request.relation === "PROVIDER_OWNER" || Boolean(request.listingId))
   });
 }
