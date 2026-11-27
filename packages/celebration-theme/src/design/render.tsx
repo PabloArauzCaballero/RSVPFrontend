@@ -45,7 +45,7 @@ interface Context {
   readonly veil: { readonly light: number; readonly dark: number };
   /** The reply's one actions block is on the page (not a section's own page). */
   readonly merged: boolean;
-  /** The gifts page stays, without its button, because it has content of its own. */
+  /** The gifts page stays, without its buttons, because it has content of its own. */
   readonly giftsApart: boolean;
   readonly cover?: GalleryImage;
   readonly t: Translate;
@@ -253,19 +253,19 @@ function elementStyle(element: DesignElement, mobile: DesignElement | undefined,
 const isActionsBlock = (page: DesignPage): boolean => page.kind === "section" && page.section === "rsvp";
 const isButton = (type: string | undefined): boolean => type === "giftsCta" || type === "rsvpCta";
 
-/** The gifts page keeps whatever is its own (its illustration, texts, background): only its button moves into the block (PL-139-01). */
+/** The gifts page keeps whatever is its own (its illustration, texts, background): its two action buttons, gifts or reply, are the block's (PL-139-01, PL-139-R2-04). */
 function hasOwnContent(page: DesignPage, design: DesignDocumentV2): boolean {
   const types = new Map(design.blocks.map((block) => [block.id, block.type]));
   const elements = [...page.canvases.mobile.elements, ...(page.canvases.desktop?.elements ?? [])];
-  return Boolean(page.background) || elements.some((item) => item.visible && types.get(item.block) !== "giftsCta");
+  return Boolean(page.background) || elements.some((item) => item.visible && !isButton(types.get(item.block)));
 }
 
 function Canvas({ page, context }: { readonly page: DesignPage; readonly context: Context }): ReactNode {
   const { mobile, desktop } = page.canvases;
   const byId = (canvas: DesignCanvas | undefined): Map<string, DesignElement> => new Map((canvas?.elements ?? []).filter((item) => item.visible).map((item) => [item.id, item]));
   const blocks = new Map(context.design.blocks.map((block) => [block.id, block]));
-  // The reply page loses both buttons (the block has them); the gifts page, only its own when the block is on the page.
-  const dropped = isActionsBlock(page) ? (type: string | undefined) => isButton(type) : context.merged && page.section === "gifts" ? (type: string | undefined) => type === "giftsCta" : undefined;
+  // The block has both buttons: the reply page loses its own, and so does the gifts page when the block is on the page. On the gifts section's own page there is no block, so its buttons stay.
+  const dropped = isActionsBlock(page) || (context.merged && page.section === "gifts") ? isButton : undefined;
   const without = (map: Map<string, DesignElement>): Map<string, DesignElement> => (dropped ? new Map([...map].filter(([, item]) => !dropped(blocks.get(item.block)?.type))) : map);
   const phone = without(byId(mobile));
   const wide = without(byId(desktop));

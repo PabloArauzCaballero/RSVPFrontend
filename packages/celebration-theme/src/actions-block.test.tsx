@@ -136,6 +136,36 @@ describe("the reply and the gifts button are one block", () => {
     }
   });
 
+  describe("PL-139-R2-04: an author's reply button on the gifts page is the same action as the block's", () => {
+    /** The document with a visible reply button added to its gifts page, on both canvases. */
+    const withReplyOnGifts = (key: string): TemplateDocument => {
+      const [, template] = V2.find(([name]) => name === key) as (typeof V2)[number];
+      const theme = JSON.parse(JSON.stringify(template.theme)) as { blocks: { id: string; type: string; config: object }[]; pages: { section?: string; canvases: Record<string, { elements: { id: string; block: string }[] } | undefined> }[] };
+      theme.blocks.push({ id: "own-reply", type: "rsvpCta", config: {} });
+      const page = theme.pages.find((item) => item.section === "gifts") as (typeof theme.pages)[number];
+      for (const canvas of Object.values(page.canvases)) {
+        const model = canvas?.elements[0];
+        if (model) canvas.elements.push({ ...model, id: "own-reply-element", block: "own-reply" });
+      }
+      return { ...template, theme } as unknown as TemplateDocument;
+    };
+
+    it.each(["clasico-marfil", ...FOLDED_V2])("%s: the reply stays once in the page body, in the block", (key) => {
+      const document = draw(withReplyOnGifts(key), { rsvpHelpHref: `${BASE}/rsvp` });
+      expect(document.querySelectorAll('main a[data-action^="rsvp"]')).toHaveLength(1);
+      expect(document.querySelector('main a[data-action^="rsvp"]')?.closest("[data-actions-block]")).toBeTruthy();
+      expect(document.querySelectorAll('main a[data-action="gifts"]')).toHaveLength(1);
+      // A gifts page that was only buttons still folds; one with a drawing stays.
+      expect(document.querySelector('main section[data-section="gifts"]') !== null).toBe(!(FOLDED_V2 as readonly string[]).includes(key));
+    });
+
+    it("negative: on the gifts section's own page (no block there) the document keeps both of its buttons", () => {
+      const document = draw(withReplyOnGifts("clasico-marfil"), { only: "gifts", rsvpHelpHref: `${BASE}/rsvp` });
+      expect(document.querySelector('main section[data-section="gifts"] a[data-action="gifts"]')).toBeTruthy();
+      expect(document.querySelector('main section[data-section="gifts"] a[data-action^="rsvp"]')).toBeTruthy();
+    });
+  });
+
   it("the protected layer keeps its stacking defence: position relative and z-index 1000, under the dock (FE #131, PL-139-02)", () => {
     const css = readFileSync(join(__dirname, "../styles.css"), "utf8");
     expect(css).toMatch(/\.celebration \.celebration-actions\.rsvp-protected \{ position: relative; z-index: 1000; \}/);
