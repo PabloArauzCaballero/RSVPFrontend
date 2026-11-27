@@ -388,8 +388,7 @@ html:has(.cdesign-dock) { scroll-padding-bottom: 6rem; }
 .celebration-design .cdesign-cover[data-variant="deco"]::before { top: 4px; }
 .celebration-design .cdesign-cover[data-variant="deco"]::after { bottom: 4px; }
 .celebration-design .cdesign-cover[data-variant="deco"] .cdesign-cover-photo { width: min(72%, 16rem); aspect-ratio: 4 / 5; height: auto; max-height: none; clip-path: polygon(1.5rem 0, 100% 0, 100% calc(100% - 1.5rem), calc(100% - 1.5rem) 100%, 0 100%, 0 1.5rem); }
-/* The photo sits in a <picture> (AVIF and WebP): it takes no box of its own, so the image is the grid item and every variant centres it on the block's axis (PL-FE145-V1). */
-.celebration-design .cdesign-cover > picture { display: contents; }
+/* The photo's <picture> takes no box of its own (`display: contents`, see the cover block above), so the image is the grid item and every variant centres it on the block's axis (PL-FE145-V1). */
 /* Wide block, as the prototypes lay it out on desktop (PL-FE145-V2; a container query: the document decides how wide the cover is): arch = window on the left and the names on the right behind a vertical rule; hanging = names on the left and the
    round photo on the right; deco = date, photo and venue in one row, the title under it. Without a photo each one keeps its centred stack. */
 @container (min-width: 34rem) {

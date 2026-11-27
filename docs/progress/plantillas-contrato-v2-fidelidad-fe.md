@@ -28,10 +28,12 @@ Fecha: 2026-11-26 (Linux, Node 22, Chrome real `/usr/bin/google-chrome`). Contra
 | `yarn test` (turbo) | celebration-theme 3070, design-editor 474, design-tokens 92, query-hooks 149, ui 333, seo-web 210, forms 65, auth 89 (+1 skip previo), api-client 17, i18n 15, contracts 6: OK. En la corrida completa bajo carga fallaron 2 pruebas de `versions.test.tsx` (timeouts de 5000 ms, archivo no tocado; el CI de la oficial ya los tiene) y una de `account-links.test.tsx` en universal; las dos pasan al repetirlas solas (474/474 y 16/16) |
 | `yarn workspace @rsvp/contracts check:generated` y `check:source` (contra BE local) | OK; BE `25976e7d`, template-media 1.8.0, celebration 1.6.0 |
 | Playwright con Chrome real, `playwright.v2f.config.ts`, `next build` + `next start` sobre el fixture | 54/54: Marfil/Piñata/Gala, con y sin foto, claro/oscuro, 360/768/1280 (variante de portada, foto en el eje o en las columnas del prototipo, botón de regalos ≥ 44 px y no cubierto, sin desborde, axe sin hallazgos, sin paneles ni balanceo con movimiento reducido, puertas sin tomar el clic, piñata que se mece) y 4 de AA medido sobre `fixture-v2-velo` |
-| `playwright.f6.config.ts` (medios, libre) | 40/40 |
-| `playwright.f6.config.ts` (ataques) | solo se corrieron las 23 primeras de 414 (hojas #0 a #8 a 360 y 1280) antes de detenerlas por el tiempo de la máquina: 23/23 OK; **no se corrió la batería completa** |
+| `playwright.f6.config.ts` (medios + ataques + libre), Chrome real, `next build` + `next start` sobre el fixture (2026-11-27, sobre la oficial `eb392573`) | **454/454** (14,3 min): la batería completa de ataques son 414 (PL-FE145-R2-2 cerrado) + medios y libre 40. En una primera ejecución, lanzada con `nohup &`, el proceso recibió SIGTERM del entorno (salida 143) a mitad de la batería y no cuenta; la cifra vale solo para la ejecución completa |
 
 Capturas (evidencia, no líneas base): `docs/progress/evidence/plantillas-v2-fidelidad/`. Se regeneraron las capturas de evidencia de esta carpeta (28 PNG; evidencia, no líneas base). Líneas base commiteadas que cambian: ninguna (no se ejecutó `test:visual` ni se actualizó ningún `__screenshots__`).
+
+## Integración con la oficial (2026-11-27)
+Merge de `chore/deploy-contabo-coolify` (`eb392573`, trae FE #144, #146, #157) sin conflictos. FE #146 ya añadió a la oficial `.cdesign-cover > picture { display: contents }` y `> source { display: none }`; se quita la regla duplicada de esta rama (la portada conserva la de la oficial). Tras el merge: `lint:code` 0, `typecheck` 19/19, `build` 0, `harness:validate` 0; celebration-theme 3071, design-editor 483, query-hooks 149, seo-web 210, universal 726, i18n 16, contracts 6; `check:generated` y `check:source` (BE `25976e7d`, BE #164 sin cambios) OK; `playwright.v2f.config.ts` 54/54.
 
 ## No probado
 - Una foto real con velo degradado: `fixture-v2-velo` usa un tablero blanco y negro (el peor caso), no una fotografía.
