@@ -139,8 +139,10 @@ describe("the three prototyped templates as design documents v2", () => {
     const design = JSON.parse(JSON.stringify(template.theme)) as DesignDocumentV2 & { pages: { canvases: { mobile: { elements: { block: string; visible: boolean }[] } } }[] };
     for (const page of design.pages) for (const item of page.canvases.mobile.elements) if (item.block === "gifts-cta") item.visible = false;
     const markup = renderToStaticMarkup(<CelebrationRenderer theme={themeFromTemplate({ ...template, theme: design as unknown as TemplateDocument["theme"] }, WEDDING_VIEW.enabledSections)} view={WEDDING_VIEW} t={t} now={NOW} />);
-    expect([...markup.matchAll(/data-action="gifts"/g)]).toHaveLength(1);
+    // The document's own button is replaced by the one block of the reply page, so a hidden element cannot take the button away: block + dock.
+    expect([...markup.matchAll(/data-action="gifts"/g)]).toHaveLength(2);
     expect(markup).toContain('data-dock=""');
+    expect(markup).toContain('data-actions-block=""');
   });
 
   it("a link of the document: listing goes through the redirector, gifts to the list, url only https", () => {
@@ -295,7 +297,7 @@ describe("state · the photo fails to load", () => {
 
 describe("state · «Ver regalos» in its three states (giftsStatus seam, BE #128 not connected)", () => {
   const LABEL = { OPEN: "celebration.gifts.cta", EMPTY: "celebration.gifts.ctaEmpty", CLOSED: "celebration.gifts.ctaClosed" } as const;
-  it.each(NAMES)("%s: OPEN, EMPTY and CLOSED each say their own words, look different and keep the link, twice", (name) => {
+  it.each(NAMES)("%s: OPEN, EMPTY and CLOSED each say their own words and keep the link, twice", (name) => {
     for (const status of ["OPEN", "EMPTY", "CLOSED"] as const) {
       const markup = html(name, { giftsStatus: status });
       const buttons = [...parse(markup).querySelectorAll('a[data-action="gifts"]')];
@@ -308,10 +310,9 @@ describe("state · «Ver regalos» in its three states (giftsStatus seam, BE #12
       expect(markup).not.toContain("gifts.guest.cta");
     }
   });
-  it("the stylesheet gives EMPTY and CLOSED a look of their own on palette roles", () => {
+  it("the stylesheet gives EMPTY and CLOSED no look of their own: the same primary as OPEN (decision 8, PL-139-R2-V1)", () => {
     const css = readFileSync(join(__dirname, "../../styles.css"), "utf8");
-    expect(css).toMatch(/\[data-gifts-status="EMPTY"\][^}]*dashed/);
-    expect(css).toMatch(/\[data-gifts-status="CLOSED"\][^}]*var\(--celebration-muted\)/);
+    expect(css).not.toMatch(/data-gifts-status="(EMPTY|CLOSED)"/);
   });
   it("the labels exist in both languages and none is a gifts.guest key", () => {
     const es = readFileSync(join(__dirname, "../../../i18n/locales/es-BO/celebration.ts"), "utf8");

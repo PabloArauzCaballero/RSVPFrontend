@@ -157,3 +157,15 @@
 - **Pendiente de Pablo: redacción de los avisos y de «Ver mi respuesta»** (plazo vencido, regalos vacío/cerrado, sin enlace personal): son propuestas, no copy aprobado.
 - Hecho sin decisión de Pablo (verificable en el catálogo): las tres parejas tipográficas salen del catálogo curado de F1, así que no se amplía el catálogo.
 
+
+## Confirmar asistencia y regalos en el mismo bloque (FE #139, decisión 8 de Pablo sobre FE #114) · 2026-11-27
+
+- **Decidido por Pablo (decisión 8):** «Confirmar asistencia» y «Regalos» van en el MISMO bloque, los dos primarios con el mismo peso, lado a lado desde 768 px y apilados en móvil. La respuesta va primero.
+- **Es cromo del renderizador, no un elemento editable.** `ActionsBlock` (`rsvp-protected`, `role="group"`, nombre propio «Confirmar asistencia y regalos») cae fuera de todo `.cdesign-author`; ningún documento ni CSS de autor puede separar, ocultar o debilitar uno de los dos. Conserva la defensa de FE #131: `position: relative; z-index: 1000`, por debajo del dock (`z-index: 2000`).
+- **La página o sección de regalos no se pierde (PL-139-01).** Solo se quita su botón, que pasa al bloque. En v1 la sección sigue cuando el layout dibuja el dibujo de sección (clásico, festivo, corporativo); en v2 sigue cuando la página tiene algo propio (ilustración, textos o fondo): 28 de 30 documentos. Cuando la página era solo el botón (`minimalista`, `corporativo-grafito`), no queda nada que conservar y se pliega al bloque, sin lienzo vacío. En la página propia de regalos (`only: "gifts"`) el botón sigue donde estaba.
+- **Dock:** respuesta primero y regalos después, mismo peso y, en escritorio, mismo ancho (16 rem). Su nombre accesible («Acciones de la invitación») es distinto del del bloque.
+- **EMPTY y CLOSED pesan lo mismo que OPEN (PL-139-R2-V1).** Lo resuelve la propia decisión 8: se retiran las reglas que los dibujaban atenuados (bloque, dock y página de regalos); el estado cambia las palabras, no el peso.
+- **Los dos botones de acción de la página de regalos pasan al bloque (PL-139-R2-04):** `giftsCta` y también un `rsvpCta` de autor. En la página propia de regalos no hay bloque y ambos se conservan.
+- **Aire bajo el bloque v2 (PL-139-R2-V2):** `max(1.5rem, sectionGap / 2)`; el token del documento admite 0.
+- **Pendientes de Pablo:** si el dock se queda (R2-V5), el rótulo del primario sin credencial (R2-V6), ubicación del bloque, título, orden del dock, bloque doble siempre, y si la sección de regalos conservada lleva enlace propio.
+- **Reversión:** `git revert` de los commits del PR; sin datos, contratos ni semillas. Las claves `celebration.actions.*` quedan sin uso.
