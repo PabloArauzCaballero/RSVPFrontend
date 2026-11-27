@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Image, Platform, Share, Text, View } from "react-native";
 import { isPublicPageInTransition, missingFieldsOf, useEditCelebration, useMediaAssets, usePublicationAction, usePublicPageStatus, usePublishCheck, type Celebration, type TranslatedEventType } from "@rsvp/query-hooks";
 import type { Translate } from "@rsvp/i18n";
-import { formatDate } from "@rsvp/celebration-theme";
+import { formatDate } from "@rsvp/celebration-theme/model";
 import { useApiClient, useT } from "../platform/providers";
 import { CelebrationScreen, useScreenHeader, type ScreenProps } from "./gate";
 import { asText } from "./content-draft";

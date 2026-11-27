@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
-import { navigationHref, partnerHref, shownVenues, type CelebrationContent, type GalleryImage } from "../content.js";
+import { GIFTS_CTA_KEYS, navigationHref, partnerHref, shownVenues, type CelebrationContent, type GalleryImage, type GiftsStatus } from "../content.js";
 import { formatTime, zoneLabel } from "../format.js";
+import { ActionIcon } from "../icon.js";
+import { MediaImage } from "../media/components.js";
 import type { SectionId, Translate } from "../types.js";
 
 /** What every section receives. Sections never fetch and never hold copy of their own. */
@@ -10,8 +12,20 @@ export interface SectionProps {
   readonly timeZone: string;
   readonly locale: string;
   readonly t: Translate;
-  /** Where the RSVP call to action points (the guest's magic link lives in their invitation). */
+  /** Where the RSVP call to action points when the visitor has their personal link: «Confirmar asistencia». */
   readonly rsvpHref?: string;
+  /** Where a visitor without their personal link is helped (`/c/{slug}/rsvp`): «Busca tu enlace personal». */
+  readonly rsvpHelpHref?: string;
+  /**
+   * The page is shared and server-rendered, so it cannot know whether the visitor holds their link. With this on, the help
+   * button carries both faces («Busca tu enlace personal» / «Confirmar asistencia») stacked in one box, so a client island
+   * can switch the face (`data-credential`) without moving anything. The destination is the same either way and never has a token.
+   */
+  readonly rsvpAdaptive?: boolean;
+  /** The guest's gift list (`giftsPath`); never carries the guest's link. */
+  readonly giftsHref: string;
+  /** What the gift list holds; until the public view says it, OPEN. Only the button's label depends on it. */
+  readonly giftsStatus?: GiftsStatus;
 }
 
 type Section = (props: SectionProps) => ReactNode;
@@ -53,21 +67,16 @@ function Venues({ content, t }: SectionProps): ReactNode {
   );
 }
 
-const IMAGE_WIDTHS = { thumb: 320, medium: 960, full: 1920 } as const;
-
+/** Photos of the gallery (F6): AVIF, then WebP, in a <picture> with the size reserved. They are below the cover, so every one is lazy: only the cover competes for the first paint. */
 function Gallery({ gallery, t }: SectionProps): ReactNode {
   return (
     <ul className="celebration-gallery">
       {gallery.map((image, index) => {
-        const srcSet = (["thumb", "medium", "full"] as const)
-          .filter((size) => image.variants[size])
-          .map((size) => `${image.variants[size]} ${IMAGE_WIDTHS[size]}w`).join(", ");
         const label = t("celebration.gallery.photo", { n: index + 1, total: gallery.length });
         return (
           <li key={image.id}>
             <a href={image.variants.full ?? image.variants.webp} data-link-kind="image" aria-label={t("celebration.gallery.open", { label })}>
-              <img src={image.variants.medium ?? image.variants.webp} srcSet={srcSet || undefined} sizes="(min-width: 768px) 33vw, 100vw" alt={label}
-                width={image.width ?? undefined} height={image.height ?? undefined} loading={index ? "lazy" : "eager"} decoding="async" />
+              <MediaImage media={{ id: image.id, width: image.width, height: image.height, variants: image.variants }} alt={label} sizes="(min-width: 768px) 33vw, 100vw" />
             </a>
           </li>
         );
@@ -104,17 +113,57 @@ function Recommendations({ content, t }: SectionProps): ReactNode {
   );
 }
 
-function Rsvp({ t, rsvpHref }: SectionProps): ReactNode {
+/**
+ * PL-A11: the reply always leads somewhere. With the personal link, «Confirmar asistencia»; without it, the help that
+ * explains the personal link and lets an open celebration register the visitor (`/c/{slug}/rsvp`).
+ */
+export function RsvpAction({ t, rsvpHref, rsvpHelpHref, rsvpAdaptive, label, variant }: Pick<SectionProps, "t" | "rsvpHref" | "rsvpHelpHref" | "rsvpAdaptive"> & { readonly label?: string; readonly variant?: string }): ReactNode {
+  const confirm = label ?? t("celebration.rsvp.cta");
+  const action = rsvpHref
+    ? <a className="celebration-cta" href={rsvpHref} data-link-kind="internal" data-action="rsvp" data-variant={variant}><ActionIcon name="check" /><span>{confirm}</span></a>
+    : null;
+  const help = !rsvpHref && rsvpHelpHref
+    ? rsvpAdaptive
+      ? (
+        <a className="celebration-cta" href={rsvpHelpHref} data-link-kind="internal" data-action="rsvp-help" data-credential="absent" data-variant={variant}>
+          <span className="celebration-cta-face" data-face="find"><ActionIcon name="invitation" /><span>{t("celebration.rsvp.findLink")}</span></span>
+          <span className="celebration-cta-face" data-face="confirm" aria-hidden="true"><ActionIcon name="check" /><span>{confirm}</span></span>
+        </a>
+      )
+      : <a className="celebration-cta" href={rsvpHelpHref} data-link-kind="internal" data-action="rsvp-help" data-variant={variant}><ActionIcon name="invitation" /><span>{t("celebration.rsvp.findLink")}</span></a>
+    : null;
+  return <>{action}{help}</>;
+}
+
+function Rsvp(props: SectionProps): ReactNode {
   return (
     <>
-      <p>{t("celebration.rsvp.body")}</p>
-      {rsvpHref ? <a className="celebration-cta" href={rsvpHref} data-link-kind="internal">{t("celebration.rsvp.cta")}</a> : null}
+      <p>{props.t("celebration.rsvp.body")}</p>
+      <RsvpAction {...props} />
     </>
   );
 }
 
-/** Gift lists are owned by lane F22 and render on their own page. */
-const Gifts: Section = () => null;
+/**
+ * P22 / PL-A10: the gifts button. Always `giftsHref` (`/c/{slug}/regalos`, never the guest's token); only its label depends on the
+ * gift list's status, unless a design document gives it a label of its own.
+ */
+export function GiftsAction({ t, giftsHref, giftsStatus, label, variant, dock }: Pick<SectionProps, "t" | "giftsHref" | "giftsStatus"> & { readonly label?: string; readonly variant?: string; readonly dock?: boolean }): ReactNode {
+  return <a className="celebration-cta" href={giftsHref} data-link-kind="internal" data-action="gifts" data-gifts-status={giftsStatus} data-variant={variant} data-dock={dock ? "" : undefined}><ActionIcon name="gifts" /><span>{label ?? t(GIFTS_CTA_KEYS[giftsStatus ?? "OPEN"])}</span></a>;
+}
+
+/**
+ * P22 / PL-A10: the gifts button, present on every invitation. The list itself lives on its own page, which resolves the
+ * guest's credential; this link never carries it.
+ */
+function Gifts(props: SectionProps): ReactNode {
+  return (
+    <>
+      <p>{props.t("celebration.gifts.intro")}</p>
+      <GiftsAction {...props} />
+    </>
+  );
+}
 
 export const SECTIONS: Readonly<Record<SectionId, Section>> = {
   story: Story,

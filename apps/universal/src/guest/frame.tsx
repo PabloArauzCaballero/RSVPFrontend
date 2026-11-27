@@ -11,7 +11,9 @@ import { LanguageSwitch } from "../auth/auth-ui";
  * Guests arrive from a link on a phone, so the column is narrow and centred on wide screens.
  */
 
-const COLUMN = 640;
+/** The one column every guest state uses (the invitation's loading, its offline card, the answer…). */
+export const GUEST_COLUMN = 640;
+const COLUMN = GUEST_COLUMN;
 /** Under this the sheet uses less padding and a smaller title. */
 const COMPACT = 520;
 
@@ -38,7 +40,7 @@ export function GuestFrame({ heading, lead, meta, children }: PropsWithChildren<
   const size = compact ? 40 : 56;
   return (
     <ScrollView role="main" tabIndex={0} style={s.page} contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-      <View style={s.inner}>
+      <View style={s.inner} testID="guest-column">
         <View style={s.top}><Logo tone="auto" height={26} /></View>
         <View style={[s.sheet, { padding: pad, gap: spacing[8] }]}>
           {heading ? (

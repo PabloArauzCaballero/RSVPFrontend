@@ -17,14 +17,36 @@ jobs:
       - run: yarn harness:validate
       - run: yarn lint:code  # ESLint over the whole repo, including rsvp/no-literal-strings (REQ-F06-06)
       - run: yarn workspace @rsvp/contracts check:generated
-      # M8: the vendored specs must be the backend commit pinned in packages/contracts/backend.lock.json. Read through the
-      # GitHub API with a read-only token of the backend repository; without the secret this step fails (it never skips).
+      # M8: the vendored specs must be the backend commit pinned in packages/contracts/backend.lock.json. The backend is
+      # read from a git clone made with a READ-ONLY deploy key of RSVPBackend (secret RSVP_BACKEND_CONTRACTS_DEPLOY_KEY):
+      # it does not expire and is not tied to a personal account. Without the secret the clone fails (it never skips).
+      - uses: actions/checkout@v4
+        with:
+          repository: PabloArauzCaballero/RSVPBackend
+          ssh-key: ${{ secrets.RSVP_BACKEND_CONTRACTS_DEPLOY_KEY }}
+          path: .backend-contracts
+          fetch-depth: 0
       - run: yarn workspace @rsvp/contracts check:source
         env:
-          RSVP_BACKEND_TOKEN: ${{ secrets.RSVP_BACKEND_CONTRACTS_TOKEN }}
-      - run: yarn turbo run build lint typecheck test --affected
-      # Coverage gate: lines/statements >= 85 % in the packages with logic and both apps (vitest thresholds fail the job below it).
-      - run: yarn test:coverage
+          RSVP_BACKEND_REPO: ${{ github.workspace }}/.backend-contracts
+      - run: rm -rf .backend-contracts
+      - run: yarn turbo run build lint typecheck --affected
+      # One test pass (PL-FE144-2): the 10 packages with a coverage gate run only `test:coverage` (same `vitest run` plus v8
+      # thresholds: lines/statements >= 85 % in the packages with logic and both apps; the suite no longer runs twice). The
+      # packages with no `test:coverage` script keep their plain `test` (today 9). Together: the same 19 packages as before.
+      # --concurrency=2 matches the 2 vCPU of the runner (turbo's default of 10 starved the 5 s per-test budget).
+      - run: yarn turbo run test:coverage --concurrency=2
+      # The filters come from the package.json files (scripts/test-filters.mjs), not from a hand-kept list: a new package
+      # with `test` and no `test:coverage` is picked up here automatically. Its test proves it with a fictitious package.
+      - run: node --test scripts/test-filters.test.mjs
+      - name: Tests of the packages with no coverage script
+        run: |
+          filters="$(node scripts/test-filters.mjs)"
+          if [ -z "$filters" ]; then
+            echo "Every package with a test script has test:coverage: nothing left for this phase."
+            exit 0
+          fi
+          yarn turbo run test --concurrency=2 $filters
 
   deploy-config:
     # A6/B1/M9 · nginx of the web app with its real image, rendered config and expected headers; build-arg validation.

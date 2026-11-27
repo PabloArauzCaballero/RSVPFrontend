@@ -5,19 +5,29 @@
   "type": "module",
   "exports": {
     ".": "./src/index.tsx",
-    "./native": "./src/native.tsx",
-    "./styles.css": "./styles.css"
+    "./model": "./src/model.ts",
+    "./styles.css": "./styles.css",
+    "./art": "./src/art/index.tsx",
+    "./art.css": "./src/art/art.css",
+    "./design-documents": "./src/design/documents/index.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "coverage": "vitest run --coverage"
+    "coverage": "vitest run --coverage",
+    "art:catalogue": "node scripts/art-catalogue.mjs",
+    "art:hydration": "node scripts/art-hydration-check.mjs"
+  },
+  "dependencies": {
+    "@rsvp/design-tokens": "workspace:*",
+    "postcss": "^8.5.3",
+    "postcss-selector-parser": "^6.1.2",
+    "postcss-value-parser": "^4.2.0"
   },
   "peerDependencies": {
-    "react": ">=18",
-    "react-native": ">=0.79"
+    "react": ">=18"
   },
   "devDependencies": {
     "@rsvp/config-ts": "workspace:*",
@@ -29,14 +39,7 @@
     "jsdom": "^26.1.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "react-native": "0.81.5",
-    "react-native-web": "^0.21.0",
     "typescript": "^5.8.3",
     "vitest": "^3.1.2"
-  },
-  "peerDependenciesMeta": {
-    "react-native": {
-      "optional": true
-    }
   }
 }

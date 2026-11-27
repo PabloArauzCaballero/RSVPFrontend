@@ -1,0 +1,614 @@
+{
+  "key": "menta-infantil",
+  "name": "Menta infantil",
+  "description": "Juguetes de madera: el globo y el tren sobre el piso, un verde menta oscuro en la sola pieza de color y una tipografía redonda y gruesa.",
+  "layout": "festive",
+  "eventTypeTags": [
+    "baptism",
+    "birthday"
+  ],
+  "sectionOrder": [
+    "story",
+    "schedule",
+    "venues",
+    "gallery",
+    "gifts",
+    "faq",
+    "rsvp"
+  ],
+  "theme": {
+    "schemaVersion": 2,
+    "tokens": {
+      "palettes": {
+        "light": {
+          "canvas": "#F0FAF6",
+          "surface": "#FFFFFF",
+          "text": "#142822",
+          "muted": "#4A6158",
+          "accent": "#0C7566",
+          "accentFill": "#0C7566",
+          "onAccent": "#FFFFFF",
+          "line": "#6E8F85"
+        },
+        "dark": {
+          "canvas": "#08161A",
+          "surface": "#0F2429",
+          "text": "#E2F3EF",
+          "muted": "#A1C1BA",
+          "accent": "#7ED3C0",
+          "accentFill": "#66C2AD",
+          "onAccent": "#06201A",
+          "line": "#4F7771"
+        }
+      },
+      "typography": {
+        "heading": {
+          "family": "fredoka",
+          "weights": [
+            500,
+            600
+          ]
+        },
+        "body": {
+          "family": "mulish",
+          "weights": [
+            400,
+            600
+          ]
+        },
+        "scale": {
+          "base": 16,
+          "ratio": 1.25
+        }
+      },
+      "spacing": {
+        "unit": 8,
+        "section": 48,
+        "contentMaxWidth": 1040
+      },
+      "radii": {
+        "sm": 8,
+        "md": 16,
+        "lg": 28
+      },
+      "ornament": "none",
+      "illustrationSet": "none"
+    },
+    "pages": [
+      {
+        "id": "page-cover",
+        "kind": "cover",
+        "style": "plain",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 4,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-globos",
+                "block": "art-globos",
+                "x": 1,
+                "y": 0,
+                "w": 2,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "draw",
+                  "delayMs": 100,
+                  "durationMs": 1200
+                }
+              },
+              {
+                "id": "el-cover",
+                "block": "cover",
+                "x": 0,
+                "y": 8,
+                "w": 4,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "rise",
+                  "delayMs": 800,
+                  "durationMs": 800
+                },
+                "typography": {
+                  "align": "center",
+                  "role": "heading",
+                  "size": 56,
+                  "lineHeight": 1.05
+                },
+                "padding": {
+                  "top": 24,
+                  "right": 16,
+                  "bottom": 24,
+                  "left": 16
+                },
+                "radius": 28,
+                "background": {
+                  "kind": "colour",
+                  "role": "surface"
+                },
+                "border": {
+                  "width": 1,
+                  "style": "solid",
+                  "colour": "line"
+                }
+              },
+              {
+                "id": "el-tren",
+                "block": "art-tren",
+                "x": 0,
+                "y": 16,
+                "w": 4,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "rise",
+                  "delayMs": 1400,
+                  "durationMs": 800
+                }
+              }
+            ]
+          },
+          "desktop": {
+            "mode": "flow",
+            "columns": 12,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-tren",
+                "block": "art-tren",
+                "x": 0,
+                "y": 0,
+                "w": 5,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "draw",
+                  "delayMs": 100,
+                  "durationMs": 1400
+                }
+              },
+              {
+                "id": "el-cover",
+                "block": "cover",
+                "x": 5,
+                "y": 0,
+                "w": 5,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "rise",
+                  "delayMs": 900,
+                  "durationMs": 800
+                },
+                "typography": {
+                  "align": "start",
+                  "role": "heading",
+                  "size": 72,
+                  "lineHeight": 1.05
+                },
+                "padding": {
+                  "top": 32,
+                  "right": 32,
+                  "bottom": 32,
+                  "left": 32
+                },
+                "radius": 28,
+                "background": {
+                  "kind": "colour",
+                  "role": "surface"
+                },
+                "border": {
+                  "width": 1,
+                  "style": "solid",
+                  "colour": "line"
+                }
+              },
+              {
+                "id": "el-globos",
+                "block": "art-globos",
+                "x": 10,
+                "y": 0,
+                "w": 2,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "scale",
+                  "delayMs": 1500,
+                  "durationMs": 700
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-story",
+        "kind": "section",
+        "section": "story",
+        "style": "cards",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-story",
+                "block": "story",
+                "x": 0,
+                "y": 0,
+                "w": 8,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-schedule",
+        "kind": "section",
+        "section": "schedule",
+        "style": "cards",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-reloj",
+                "block": "art-reloj",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-schedule",
+                "block": "schedule",
+                "x": 0,
+                "y": 8,
+                "w": 8,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-venues",
+        "kind": "section",
+        "section": "venues",
+        "style": "cards",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-mapa-pin",
+                "block": "art-mapa-pin",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-venues",
+                "block": "venues",
+                "x": 0,
+                "y": 8,
+                "w": 8,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-gallery",
+        "kind": "section",
+        "section": "gallery",
+        "style": "cards",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-camara",
+                "block": "art-camara",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-gallery",
+                "block": "gallery",
+                "x": 0,
+                "y": 8,
+                "w": 8,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-gifts",
+        "kind": "section",
+        "section": "gifts",
+        "style": "cards",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-regalo",
+                "block": "art-regalo",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-gifts-cta",
+                "block": "gifts-cta",
+                "x": 0,
+                "y": 8,
+                "w": 8,
+                "h": 6,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-faq",
+        "kind": "section",
+        "section": "faq",
+        "style": "cards",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-pregunta",
+                "block": "art-pregunta",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-faq",
+                "block": "faq",
+                "x": 0,
+                "y": 8,
+                "w": 8,
+                "h": 1,
+                "visible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "page-rsvp",
+        "kind": "section",
+        "section": "rsvp",
+        "style": "cards",
+        "canvases": {
+          "mobile": {
+            "mode": "flow",
+            "columns": 8,
+            "rowHeight": 8,
+            "elements": [
+              {
+                "id": "el-art-sobre",
+                "block": "art-sobre",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 8,
+                "visible": true,
+                "animation": {
+                  "entrance": "fade",
+                  "delayMs": 0,
+                  "durationMs": 500
+                }
+              },
+              {
+                "id": "el-rsvp-cta",
+                "block": "rsvp-cta",
+                "x": 0,
+                "y": 8,
+                "w": 8,
+                "h": 6,
+                "visible": true
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "blocks": [
+      {
+        "id": "cover",
+        "type": "cover",
+        "config": {
+          "variant": "festive",
+          "envelope": false
+        }
+      },
+      {
+        "id": "art-globos",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "globos",
+          "tint": "accent",
+          "drawOnEnter": true
+        }
+      },
+      {
+        "id": "art-tren",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "tren",
+          "tint": "accent",
+          "drawOnEnter": true
+        }
+      },
+      {
+        "id": "story",
+        "type": "story",
+        "config": {}
+      },
+      {
+        "id": "art-reloj",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "reloj",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "schedule",
+        "type": "schedule",
+        "config": {
+          "display": "timeline"
+        }
+      },
+      {
+        "id": "art-mapa-pin",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "mapa-pin",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "venues",
+        "type": "venues",
+        "config": {
+          "display": "cards",
+          "mapOnTap": true
+        }
+      },
+      {
+        "id": "art-camara",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "camara",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "gallery",
+        "type": "gallery",
+        "config": {
+          "display": "grid"
+        }
+      },
+      {
+        "id": "art-regalo",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "regalo",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "gifts-cta",
+        "type": "giftsCta",
+        "required": true,
+        "config": {
+          "style": "solid"
+        }
+      },
+      {
+        "id": "art-pregunta",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "pregunta",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "faq",
+        "type": "faq",
+        "config": {}
+      },
+      {
+        "id": "art-sobre",
+        "type": "illustration",
+        "config": {
+          "illustrationId": "sobre",
+          "tint": "accent",
+          "drawOnEnter": false
+        }
+      },
+      {
+        "id": "rsvp-cta",
+        "type": "rsvpCta",
+        "config": {
+          "style": "solid"
+        }
+      }
+    ],
+    "custom": {
+      "html": "",
+      "css": ""
+    }
+  }
+}

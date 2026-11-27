@@ -5,6 +5,8 @@ import { visualTestNow } from "../lib/dev-surfaces";
 import { eventJsonLd, jsonLdScript } from "../lib/json-ld";
 import { uiLocale } from "../lib/locale";
 import { celebrationPath, siteUrl } from "../lib/metadata";
+import { earlyCredentialScript } from "../lib/guest-credential";
+import { RsvpCredentialIsland } from "./rsvp-credential-island";
 
 /** The public celebration (A1) or one of its sections (A2–A8), server-rendered with its theme. */
 export function PublicCelebration({ page, only }: { readonly page: PublicPage; readonly only?: SectionId }) {
@@ -20,6 +22,8 @@ export function PublicCelebration({ page, only }: { readonly page: PublicPage; r
     <>
       {/* The invitation is the guest's page: the site's sales navigation and pitch step back (see `body:has([data-quiet-chrome])` in globals.css). */}
       <span hidden data-quiet-chrome="" />
+      {/* PL-134-M1: a credential in the fragment is stored and the address cleaned before anything of a third party can load. */}
+      <script dangerouslySetInnerHTML={{ __html: earlyCredentialScript(view.slug) }} />
       {fonts ? <link rel="stylesheet" href={fonts} precedence="default" /> : null}
       {jsonLd ? <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} /> : null}
       {languages.length > 1 ? (
@@ -31,7 +35,13 @@ export function PublicCelebration({ page, only }: { readonly page: PublicPage; r
           ))}
         </nav>
       ) : null}
-      <CelebrationRenderer theme={theme} view={view} gallery={gallery} t={t} only={only} basePath={basePath} now={visualTestNow()} />
+      {/* The page is shared and server-rendered, so it never knows the visitor's personal link: the reply always goes to
+          `/c/{slug}/rsvp` (the help, which also registers them when the celebration is open) and starts as «Busca tu enlace
+          personal». `RsvpCredentialIsland` flips it to «Confirmar asistencia» when this tab holds the guest's credential; the
+          token is never put in the markup. The guest arriving by the personal link goes to `/c/{slug}/rsvp/{token}` directly.
+          The gifts button needs nothing: it is always `/c/{slug}/regalos`. */}
+      <CelebrationRenderer theme={theme} view={view} gallery={gallery} t={t} only={only} basePath={basePath} rsvpHelpHref={celebrationPath(view.slug, "rsvp")} rsvpAdaptive now={visualTestNow()} />
+      <RsvpCredentialIsland slug={view.slug} />
     </>
   );
 }
