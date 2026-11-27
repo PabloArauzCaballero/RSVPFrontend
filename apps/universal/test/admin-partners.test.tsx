@@ -62,6 +62,11 @@ function Harness({ initial = {}, onParams }: { readonly initial?: UrlParams; rea
   return <PartnersScreen onNavigate={() => undefined} params={params} onParams={(next) => { onParams?.(next); setParams(next); }} />;
 }
 const next = (): void => { fireEvent.click(screen.getByTestId("partner-next")); };
+async function advanceTo(label: string): Promise<void> {
+  await waitFor(() => expect(screen.getByTestId("partner-next").getAttribute("aria-disabled")).not.toBe("true"));
+  await act(async () => { next(); });
+  await waitFor(() => expect(screen.getByRole("progressbar").getAttribute("aria-valuetext")).toBe(label));
+}
 const sent = (calls: readonly Call[], method: string, path: string): Call[] => calls.filter((call) => call.method === method && call.path === path);
 
 /** react-native-web reads `documentElement.clientWidth` (0 in jsdom: the narrow layout unless a test widens it). */
@@ -76,40 +81,103 @@ describe("A24 · Partners tab", () => {
     expect(calls).toHaveLength(0);
   });
 
-  it("table: columns, owner and creator e-mails from Identity, badges, server sort on the header and filters written to the URL", async () => {
+  it("shows the partner's details and only requests the owner email; the sort button toggles the server order", async () => {
     const onParams = vi.fn();
     const { client, calls } = fakeClient(base());
     setWidth(1280);
     renderApp(<Harness onParams={onParams} />, client, ADMIN);
-    const table = await screen.findByRole("table", { name: "Partners" });
-    expect(within(table).getAllByRole("columnheader").map((header) => header.textContent)).toEqual(["Partner", "Dueño", "Estado", "KYP", "Categoría y ciudad", "Alta", "Última modificación", "Origen", "Ofertas publicadas", "Plan", "Acciones"]);
-    expect(await within(table).findByText("ana@sol.bo")).toBeTruthy();
-    expect(within(table).getByText("Admin · admin@done.bo")).toBeTruthy();
-    expect(within(table).getByText("Verificado")).toBeTruthy();
-    expect(within(table).getByText("KYP por vencer")).toBeTruthy();
-    expect(within(table).getByText("Flores · La Paz")).toBeTruthy();
-    expect(within(table).getByText("/p/flores-sol")).toBeTruthy();
+    const list = await screen.findByRole("list", { name: "Partners" });
+    const row = within(within(list).getByRole("listitem"));
+    expect(await row.findByText("ana@sol.bo")).toBeTruthy();
+    for (const value of ["Flores Sol", "/p/flores-sol", "Backoffice", "Verificado", "KYP por vencer", "Flores · La Paz", "Gratis", "3 ofertas", /^Alta: /, /^Mod: /]) {
+      expect(row.getByText(value)).toBeTruthy();
+    }
     expect(screen.getByTestId("partners-total").textContent).toBe("1 partner");
-    expect(calls.find((call) => call.path === "/identity/admin/users")?.url).toBe(`/identity/admin/users?ids=${encodeURIComponent([OWNER.id, ADMIN_USER.id].sort().join(","))}&page=0&size=2`);
-    // The current sort (newest first) is announced on its header; another header asks the server for its order.
-    const created = within(table).getAllByRole("columnheader")[5] as HTMLElement;
-    expect(created.getAttribute("aria-sort")).toBe("descending");
-    fireEvent.click(screen.getByTestId("partners-table-sort-name"));
+    expect(sent(calls, "GET", "/identity/admin/users").map((call) => call.url)).toEqual([`/identity/admin/users?ids=${OWNER.id}&page=0&size=1`]);
+    expect(screen.getByRole("button", { name: "Alta, descendente" }).getAttribute("aria-pressed")).toBe("true");
+    fireEvent.click(screen.getByTestId("partners-sort-name"));
     await waitFor(() => expect(calls.some((call) => call.url.includes("sort=name"))).toBe(true));
     expect(onParams).toHaveBeenLastCalledWith(expect.objectContaining({ sort: "name", page: undefined }));
+    fireEvent.click(screen.getByRole("button", { name: "Partner, ascendente" }));
+    await waitFor(() => expect(calls.some((call) => call.url.includes("sort=-name"))).toBe(true));
     fireEvent.change(screen.getByLabelText("Estado"), { target: { value: "SUSPENDED" } });
-    await waitFor(() => expect(calls.some((call) => call.url.includes("status=SUSPENDED") && call.url.includes("sort=name"))).toBe(true));
+    await waitFor(() => expect(calls.some((call) => call.url.includes("status=SUSPENDED") && call.url.includes("sort=-name"))).toBe(true));
     fireEvent.click(screen.getByTestId("filter-expiring"));
     await waitFor(() => expect(calls.some((call) => call.url.includes("kypExpiringWithinDays=30"))).toBe(true));
     fireEvent.click(screen.getByTestId("filters-clear"));
     expect(onParams).toHaveBeenLastCalledWith(expect.objectContaining({ status: undefined, expiring: undefined, sort: undefined }));
   });
 
+  it("uses the filtered total and server page size; size, sort and search return to the first page", async () => {
+    const { client, calls } = fakeClient(base({
+      "GET /providers/admin/partners": (call) => {
+        const query = new URLSearchParams(call.url.split("?")[1]);
+        const page = Number(query.get("page"));
+        const pageSize = Number(query.get("pageSize"));
+        return { items: [{ ...ROW, publishedListings: 0 }, { ...ROW, id: "p-2", publishedListings: 1 }], page, pageSize, total: 124 };
+      }
+    }));
+    renderApp(<Harness initial={{ status: "VERIFIED", page: "12", pageSize: "10" }} />, client, ADMIN);
+    expect((await screen.findByTestId("partners-pages-range")).textContent).toBe("121–124 de 124");
+    expect(screen.getByTestId("partners-pages-page").textContent).toBe("Pág. 13 / 13");
+    expect(screen.getByTestId("partners-pages-next").getAttribute("aria-disabled")).toBe("true");
+    expect(screen.getByText("0 ofertas")).toBeTruthy();
+    expect(screen.getByText("1 oferta")).toBeTruthy();
+    expect(await screen.findAllByText(OWNER.email)).toHaveLength(2);
+    expect(sent(calls, "GET", "/identity/admin/users")).toHaveLength(1);
+
+    fireEvent.change(screen.getByLabelText("Partners por página"), { target: { value: "50" } });
+    await waitFor(() => expect(screen.getByTestId("partners-pages-range").textContent).toBe("1–50 de 124"));
+    expect(screen.getByTestId("partners-pages-page").textContent).toBe("Pág. 1 / 3");
+    expect(screen.getByTestId("partners-pages-prev").getAttribute("aria-disabled")).toBe("true");
+    fireEvent.click(screen.getByTestId("partners-pages-next"));
+    await waitFor(() => expect(screen.getByTestId("partners-pages-range").textContent).toBe("51–100 de 124"));
+    fireEvent.click(screen.getByTestId("partners-sort-updatedAt"));
+    await waitFor(() => expect(calls.some((call) => call.url.includes("status=VERIFIED&sort=-updatedAt&page=0&pageSize=50"))).toBe(true));
+    await waitFor(() => expect(screen.getByTestId("partners-pages-range").textContent).toBe("1–50 de 124"));
+    fireEvent.click(screen.getByTestId("partners-pages-next"));
+    await waitFor(() => expect(screen.getByTestId("partners-pages-range").textContent).toBe("51–100 de 124"));
+    fireEvent.change(screen.getByRole("textbox", { name: "Buscar" }), { target: { value: "Sol" } });
+    fireEvent.click(screen.getByRole("button", { name: "Buscar", exact: true }));
+    await waitFor(() => expect(calls.some((call) => call.url.includes("q=Sol&status=VERIFIED&sort=-updatedAt&page=0&pageSize=50"))).toBe(true));
+  });
+
+  it("keeps the empty state on a filtered page and skips Identity when no owner IDs are available", async () => {
+    const { client, calls } = fakeClient(base({
+      "GET /providers/admin/partners": () => ({ items: [], page: 0, pageSize: 25, total: 0 })
+    }));
+    renderApp(<Harness initial={{ q: "sin coincidencias" }} />, client, ADMIN);
+    expect(await screen.findByText("Ningún partner coincide")).toBeTruthy();
+    expect(screen.getByTestId("empty-clear")).toBeTruthy();
+    expect(screen.queryByTestId("partners-pages")).toBeNull();
+    expect(sent(calls, "GET", "/identity/admin/users")).toHaveLength(0);
+  });
+
+  it("shows a loading skeleton and retries a failed list request with the same filters", async () => {
+    let fail = true;
+    const { client, calls } = fakeClient(base({
+      "GET /providers/admin/partners": () => fail
+        ? new HttpFailure(503)
+        : { items: [ROW], page: 0, pageSize: 10, total: 1 }
+    }));
+    renderApp(<Harness initial={{ q: "Flores", pageSize: "10" }} />, client, ADMIN);
+    expect(screen.getByText("Cargando…").closest('[role="status"]')?.getAttribute("aria-busy")).toBe("true");
+    const retry = await screen.findByTestId("partners-list-retry");
+    expect(sent(calls, "GET", "/identity/admin/users")).toHaveLength(0);
+    fail = false;
+    fireEvent.click(retry);
+    expect(await screen.findByTestId("partner-row-p-1")).toBeTruthy();
+    expect(sent(calls, "GET", "/providers/admin/partners").map((call) => call.url)).toEqual(
+      Array<string>(2).fill("/providers/admin/partners?q=Flores&sort=-createdAt&page=0&pageSize=10")
+    );
+  });
+
   it("URL ⇄ filters round-trip, and garbage in the URL is ignored", () => {
     const filters = filtersFromParams({ q: " sol ", status: "VERIFIED", kyp: "EXPIRED", person: "JURIDICA", origin: "ADMIN", plan: "FREE", expiring: "1", from: "2026-01-01", to: "nope", listings: "no", sort: "name", page: "2" });
     expect(filters).toEqual({ q: "sol", status: "VERIFIED", kypStatus: "EXPIRED", personType: "JURIDICA", origin: "ADMIN", plan: "FREE", kypExpiringWithinDays: 30, createdFrom: "2026-01-01", hasPublishedListings: false, sort: "name", page: 2 });
     expect(filtersFromParams(paramsFromFilters(filters))).toEqual(filters);
-    expect(filtersFromParams({ status: "INVENTADO", sort: "drop table", page: "-1" })).toEqual({});
+    expect(filtersFromParams({ status: "INVENTADO", sort: "unsupported", page: "-1", pageSize: "99" })).toEqual({});
+    expect(filtersFromParams(paramsFromFilters({ page: 1, pageSize: 50, sort: "-kypStatus" }))).toEqual({ page: 1, pageSize: 50, sort: "-kypStatus" });
   });
 
   it("the row menu offers every action; with EXPO_PUBLIC_PARTNER_OWNER_CHANGE off, changing the owner is visible but disabled; suspending asks for a reason", async () => {
@@ -217,8 +285,7 @@ describe("A24 · «Crear partner» dialog", () => {
     fireEvent.click(await screen.findByTestId("draft-continue-i-1"));
     await screen.findByDisplayValue("Flores Sol");
     for (const label of ["Paso 3 de 6: Contacto", "Paso 4 de 6: Cobertura", "Paso 5 de 6: KYP", "Paso 6 de 6: Resumen"]) {
-      next();
-      await waitFor(() => expect(screen.getByRole("progressbar").getAttribute("aria-valuetext")).toBe(label));
+      await advanceTo(label);
     }
     expect(sent(calls, "PATCH", "/providers/admin/intakes/i-1").map((call) => Object.keys(call.body as object))).toEqual([["identity"], ["contact"], ["coverage"], ["kyp", "representativeInRegistration"]]);
     return calls;
@@ -405,8 +472,7 @@ describe("A24 · duplicate NIT (warnings.nitInUse, 409 NIT_IN_USE)", () => {
     fireEvent.click(await screen.findByTestId("draft-continue-i-1"));
     await screen.findByDisplayValue("Flores Sol");
     for (const label of ["Paso 3 de 6: Contacto", "Paso 4 de 6: Cobertura", "Paso 5 de 6: KYP"]) {
-      next();
-      await waitFor(() => expect(screen.getByRole("progressbar").getAttribute("aria-valuetext")).toBe(label));
+      await advanceTo(label);
     }
     return calls;
   }
