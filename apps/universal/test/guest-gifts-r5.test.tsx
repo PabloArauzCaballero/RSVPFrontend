@@ -272,4 +272,31 @@ describe("R5 · accessibility of the card (structure; contrast and screen reader
     fireEvent.click((await row()).getByTestId(`reserve-${ID}`));
     expect(screen.getByRole("checkbox", { name: /Mostrar mi nombre a los demás invitados\. Solo si escribiste tu nombre/ })).toBeTruthy();
   });
+
+  it("M-9 · the question is announced once per attempt, not again when a filter remounts the card", async () => {
+    const { AccessibilityInfo } = await import("react-native");
+    const announce = vi.fn();
+    (AccessibilityInfo as unknown as { announceForAccessibility: typeof announce }).announceForAccessibility = announce;
+    await import("./stubs/expo-secure-store").then((store) => store.setItemAsync("rsvp.gift.purchase.v1", JSON.stringify({ [ID]: { giftItemId: ID, destination: "WHATSAPP", units: 1, at: Date.now(), phase: "away" } })));
+    items = [gift({ quantity: 12, unitsLeft: 8 })]; show();
+    await screen.findByTestId(`gift-prompt-${ID}`);
+    expect(announce).toHaveBeenCalledTimes(1);
+    fireEvent.change(screen.getByLabelText("Precio máximo"), { target: { value: "5" } });
+    expect(screen.queryByTestId(`gift-prompt-${ID}`)).toBeNull();
+    fireEvent.change(screen.getByLabelText("Precio máximo"), { target: { value: "500" } });
+    await screen.findByTestId(`gift-prompt-${ID}`);
+    expect(announce).toHaveBeenCalledTimes(1);
+  });
+
+  it("M-11 · «Reservaste N» and the buttons read the same units (the list's viewer wins over a stale my-reservations)", async () => {
+    const launch = vi.spyOn(Linking, "openURL").mockResolvedValue(undefined);
+    try {
+      items = [gift({ quantity: 12, unitsLeft: 9, viewer: viewer("SOLE", 3) })];
+      mine = [{ id: "r-1", itemId: ID, celebrationId: "c-1", status: "PENDING_REVIEW", units: 2, role: "SOLE", requestedAt: "2026-11-01T00:00:00Z" }]; show();
+      const r = await row();
+      expect(await r.findByText("Reservaste 3 unidades")).toBeTruthy();
+      fireEvent.click(r.getByRole("button", { name: "Pedir por WhatsApp" }));
+      expect(lastLaunch(launch)).toMatchObject({ quantity: "3" });
+    } finally { launch.mockRestore(); }
+  });
 });

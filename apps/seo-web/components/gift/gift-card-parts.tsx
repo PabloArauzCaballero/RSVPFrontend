@@ -40,10 +40,10 @@ export function UnitsAndGroup({ id, state, t }: { readonly id: string; readonly 
 }
 
 /** The card that appears when the guest comes back from the provider. It is a labelled group, so a screen reader announces the question with its options. */
-export function PurchasePromptCard({ id, title, units, reminder, t, onAnswer }: { readonly id: string; readonly title: string; readonly units: number; readonly reminder: boolean; readonly t: T; readonly onAnswer: (answer: PurchaseAnswer) => void }): ReactNode {
-  // The question appears when the guest comes back: it takes focus so a screen reader says it (the same as the page's other inline answers).
+export function PurchasePromptCard({ id, title, units, reminder, t, onAnswer, claimAnnouncement }: { readonly id: string; readonly title: string; readonly units: number; readonly reminder: boolean; readonly t: T; readonly onAnswer: (answer: PurchaseAnswer) => void; readonly claimAnnouncement: () => boolean }): ReactNode {
+  // The question appears when the guest comes back: it takes focus ONCE per attempt (not each time the row remounts, e.g. when a filter changes: WCAG 3.2.2) so a screen reader says it.
   const ref = useRef<HTMLElement>(null);
-  useEffect(() => { ref.current?.focus({ preventScroll: false }); }, []);
+  useEffect(() => { if (claimAnnouncement()) ref.current?.focus({ preventScroll: false }); }, [claimAnnouncement]);
   return (
     <section ref={ref} tabIndex={-1} className="gift-note gift-note--info gift-prompt" aria-labelledby={`gift-prompt-${id}-title`} data-testid={`gift-prompt-${id}`}>
       <h3 id={`gift-prompt-${id}-title`}>{units > 1 ? t('gifts.guest.prompt.titleUnits', { units, title }) : t('gifts.guest.prompt.title', { title })}</h3>

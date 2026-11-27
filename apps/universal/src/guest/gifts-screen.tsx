@@ -287,7 +287,7 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
             <Text style={[styles.body, { fontWeight: "600" }]}>{state.role === "COORDINATOR" ? t("gifts.guest.group.youCoordinate") : state.role === "CONTRIBUTOR" ? t("gifts.guest.group.youContribute") : held?.status === "PENDING_REVIEW" ? t("gifts.guest.mine.pendingLabel") : t("gifts.guest.mine.label")}</Text>
             {state.role === "COORDINATOR" ? <Text style={styles.muted}>{t("gifts.guest.group.youCoordinateHelp")}</Text> : null}
             {state.role === "CONTRIBUTOR" ? <Text style={styles.muted}>{t("gifts.guest.group.youContributeHelp")}</Text> : null}
-            {state.role === "SOLE" && (held?.units ?? item.viewer?.units ?? 0) > 0 && state.showUnits ? <Text style={styles.muted}>{t("gifts.guest.units.mine", { count: held?.units ?? item.viewer?.units ?? 1 })}</Text> : null}
+            {state.role === "SOLE" && state.heldUnits > 0 && state.showUnits ? <Text style={styles.muted}>{t("gifts.guest.units.mine", { count: state.heldUnits })}</Text> : null}
             {held ? <ActionButton icon="close" variant="secondary" label={state.role === "CONTRIBUTOR" ? t("gifts.guest.group.leave") : t("gifts.guest.mine.cancel")} disabled={cancel.isPending} onPress={() => askCancel(item, held)} testID={`cancel-reservation-${item.id}`} /> : null}
           </View>
         ) : null}
@@ -303,7 +303,7 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
             )}
           </View>
         ) : null}
-        {asked && !opened ? <PurchasePromptCard id={item.id} title={item.title} units={asked.units} reminder={asked.phase === "reminder"} onAnswer={(answer) => answerPrompt(item, answer)} /> : null}
+        {asked && !opened ? <PurchasePromptCard id={item.id} title={item.title} units={asked.units} reminder={asked.phase === "reminder"} onAnswer={(answer) => answerPrompt(item, answer)} claimAnnouncement={() => prompt.claimAnnouncement(item.id)} /> : null}
         {note ? <Text accessibilityLiveRegion="polite" role="status" style={styles.muted} testID={`gift-prompt-note-${item.id}`}>{t(note)}</Text> : null}
         {opened ? form(item) : (
           <View style={{ gap: spacing[3] }}>

@@ -59,11 +59,12 @@ export function UnitsAndGroup({ id, state }: { readonly id: string; readonly sta
 }
 
 /** The card that appears when the guest comes back. It is a named region and its question is announced when it appears, so a screen reader hears it on return. */
-export function PurchasePromptCard({ id, title, units, reminder, onAnswer }: { readonly id: string; readonly title: string; readonly units: number; readonly reminder: boolean; readonly onAnswer: (answer: PurchaseAnswer) => void }): ReactNode {
+export function PurchasePromptCard({ id, title, units, reminder, onAnswer, claimAnnouncement }: { readonly id: string; readonly title: string; readonly units: number; readonly reminder: boolean; readonly onAnswer: (answer: PurchaseAnswer) => void; readonly claimAnnouncement: () => boolean }): ReactNode {
   const styles = useStyles();
   const t = useT();
   const question = units > 1 ? t("gifts.guest.prompt.titleUnits", { units, title }) : t("gifts.guest.prompt.title", { title });
-  useEffect(() => { try { AccessibilityInfo?.announceForAccessibility?.(question); } catch { /* no screen reader bridge (web, tests) */ } }, [question]);
+  // Once per attempt: a remount caused by a filter must not announce the question again.
+  useEffect(() => { if (!claimAnnouncement()) return; try { AccessibilityInfo?.announceForAccessibility?.(question); } catch { /* no screen reader bridge (web, tests) */ } }, [question, claimAnnouncement]);
   return (
     <Notice kind="info">
       <View role="region" aria-label={question} testID={`gift-prompt-${id}`} style={{ gap: spacing[2] }}>

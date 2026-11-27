@@ -18,6 +18,11 @@ export interface PurchasePrompt {
   /** Call when the guest taps a provider button, before leaving. */
   readonly record: (input: { readonly giftItemId: string; readonly destination: string; readonly units: number }) => void;
   readonly answer: (giftItemId: string, answer: PurchaseAnswer) => PurchaseAttempt | undefined;
+  /**
+   * Focus and screen-reader announcement go ONCE per attempt (WCAG 3.2.2: a card that remounts because a filter changed must not pull the focus
+   * again), and when several cards appear together only the first to ask gets them. A card calls this when it mounts and acts only on `true`.
+   */
+  readonly claimAnnouncement: (giftItemId: string) => boolean;
 }
 
 /** `enabled` is false until the list is ready (a card needs its gift on screen); reminders are only consumed once the list can show them. */
@@ -25,12 +30,15 @@ export function usePurchasePrompt(env: PurchasePromptEnv, enabled: boolean): Pur
   const [asking, setAsking] = useState<ReadonlyMap<string, PurchaseAttempt>>(new Map());
   // The cards on screen are also kept in a ref: an answer reads the attempt from here, because a reminder is already consumed in the store.
   const shown = useRef(new Map<string, PurchaseAttempt>());
+  const announced = useRef(new Set<string>());
+  const batchClaimed = useRef(false);
   const envRef = useRef(env);
   envRef.current = env;
   const clock = useCallback((): number => (envRef.current.now ?? Date.now)(), []);
   const merge = useCallback((due: readonly PurchaseAttempt[]) => {
     if (due.length === 0) return;
     for (const a of due) shown.current.set(a.giftItemId, a);
+    batchClaimed.current = false;
     setAsking(new Map(shown.current));
   }, []);
   useEffect(() => {
@@ -47,5 +55,15 @@ export function usePurchasePrompt(env: PurchasePromptEnv, enabled: boolean): Pur
     answerAttempt(envRef.current.store, attempt, value, clock());
     return attempt;
   }, [clock]);
-  return useMemo(() => ({ asking, record, answer }), [asking, record, answer]);
+  const claimAnnouncement = useCallback((giftItemId: string): boolean => {
+    const attempt = shown.current.get(giftItemId);
+    if (!attempt) return false;
+    const key = `${giftItemId}:${attempt.at}`;
+    if (announced.current.has(key)) return false;
+    announced.current.add(key);
+    if (batchClaimed.current) return false;
+    batchClaimed.current = true;
+    return true;
+  }, []);
+  return useMemo(() => ({ asking, record, answer, claimAnnouncement }), [asking, record, answer, claimAnnouncement]);
 }

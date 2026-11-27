@@ -19,9 +19,9 @@ export interface GuestGiftState {
   readonly group: boolean;
   /** The viewer's own role in this gift, or null when they hold nothing. */
   readonly role: ReservationRole | null;
-  /** The viewer can start a reservation (plain: units left; group: always, as coordinator or contributor). */
   /** Units the viewer's own reservation holds (SOLE or COORDINATOR); 0 when they hold nothing or are a contributor. */
   readonly heldUnits: number;
+  /** The viewer can start a reservation (plain: units left; group: always, as coordinator or contributor). */
   readonly canReserve: boolean;
   /** Plain gift with more than one free unit: the guest chooses how many. */
   readonly chooseUnits: boolean;

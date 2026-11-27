@@ -59,15 +59,20 @@ describe("R5 · «¿Compraste?»: local attempts", () => {
     expect(takeDue(broken, "open", T0)).toEqual([]);
   });
 
-  it("keeps the 10 newest attempts, a value far under the 2048 B SecureStore warns at", () => {
+  it("keeps the 10 newest attempts; with real UUIDs, the longest button, 200 units and the reminder phase the value stays under the 2048 B SecureStore warns at", () => {
     const store = memoryStore();
-    for (let n = 0; n < 55; n++) recordAttempt(store, { ...input, giftItemId: `g${n}` }, T0 + n);
-    const kept = Object.keys(readAttempts(store, T0 + 100));
+    const uuid = (n: number) => `${String(n).padStart(8, "0")}-4f0f-4d3d-8000-${String(n).padStart(12, "a")}`;
+    for (let n = 0; n < 55; n++) recordAttempt(store, { giftItemId: uuid(n), destination: "PRODUCT_PAGE", units: 200 }, T0 + n);
+    const all = readAttempts(store, T0 + 100);
+    const kept = Object.keys(all);
     expect(kept).toHaveLength(10);
-    expect(kept).not.toContain("g0");
+    expect(kept).not.toContain(uuid(0));
+    expect(kept).toContain(uuid(54));
     expect(MAX_ATTEMPTS).toBe(10);
-    expect(kept).toContain("g54");
-    expect(store.value!.length).toBeLessThan(2048);
+    // the worst case: every attempt already a reminder
+    for (const a of Object.values(all)) answerAttempt(store, a, "later", T0 + 200);
+    for (const k of kept) { const a = readAttempts(store, T0 + 300)[k]!; expect(a.phase).toBe("reminder"); }
+    expect(new TextEncoder().encode(store.value!).length).toBeLessThan(2048);
   });
 
   it("stores no personal data: only the gift id, the button, the units and the time", () => {
@@ -79,9 +84,10 @@ describe("R5 · «¿Compraste?»: local attempts", () => {
 
 describe("R5 · usePurchasePrompt", () => {
   const setup = (store: PurchaseStore, enabled = true) => {
+    let tick = T0 + 1000;
     let fire: () => void = () => undefined;
     let unsubscribed = 0;
-    const env: PurchasePromptEnv = { store, now: () => T0 + 1000, onReturn: (listener) => { fire = listener; return () => { unsubscribed += 1; }; } };
+    const env: PurchasePromptEnv = { store, now: () => (tick += 1), onReturn: (listener) => { fire = listener; return () => { unsubscribed += 1; }; } };
     const hook = renderHook(({ on }) => usePurchasePrompt(env, on), { initialProps: { on: enabled } });
     return { hook, fire: () => act(() => fire()), unsubscribed: () => unsubscribed };
   };
@@ -122,6 +128,31 @@ describe("R5 · usePurchasePrompt", () => {
     act(() => { next.hook.result.current.answer("g1", "later"); });
     next.hook.unmount();
     expect(setup(store).hook.result.current.asking.size).toBe(0);
+  });
+
+  it("the announcement (focus) is claimed once per attempt, however often the card remounts, and by one card of several", () => {
+    const store = memoryStore();
+    recordAttempt(store, input, T0);
+    recordAttempt(store, { ...input, giftItemId: "g2" }, T0 + 1);
+    const { hook } = setup(store);
+    expect(hook.result.current.asking.size).toBe(2);
+    expect(hook.result.current.claimAnnouncement("g1")).toBe(true);
+    expect(hook.result.current.claimAnnouncement("g2")).toBe(false);
+    expect(hook.result.current.claimAnnouncement("g1")).toBe(false);
+    expect(hook.result.current.claimAnnouncement("g2")).toBe(false);
+    expect(hook.result.current.claimAnnouncement("nope")).toBe(false);
+  });
+
+  it("a new attempt after returning is announced again", () => {
+    const store = memoryStore();
+    const { hook, fire } = setup(store);
+    act(() => hook.result.current.record(input));
+    fire();
+    expect(hook.result.current.claimAnnouncement("g1")).toBe(true);
+    act(() => { hook.result.current.answer("g1", "no"); });
+    act(() => hook.result.current.record({ ...input, destination: "PRODUCT_PAGE" }));
+    fire();
+    expect(hook.result.current.claimAnnouncement("g1")).toBe(true);
   });
 
   it("answering a card that is not showing does nothing", () => {

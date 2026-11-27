@@ -382,4 +382,32 @@ describe("R5 · accessibility of the card (structure; contrast needs a real brow
     expect(within(card).getByRole("button", { name: "Todavía no compré Vajilla" })).toBeTruthy();
     expect(within(card).getByRole("button", { name: "No compré Vajilla" })).toBeTruthy();
   });
+
+  it("B-2 · WCAG 3.2.2: a card that remounts because a filter changed does not pull the focus back; it takes it once per attempt", async () => {
+    items = [gift({ quantity: 12, unitsLeft: 8 })];
+    window.localStorage.setItem("rsvp.gift.purchase.v1", JSON.stringify({ [ID]: { giftItemId: ID, destination: "WHATSAPP", units: 1, at: Date.now(), phase: "away" } }));
+    stub(); renderList();
+    const card = await screen.findByRole("region", { name: "¿Compraste Vajilla?" });
+    expect(document.activeElement).toBe(card);
+    const price = screen.getByLabelText("Precio máximo") as HTMLInputElement;
+    price.focus();
+    fireEvent.change(price, { target: { value: "5" } });
+    expect(screen.queryByTestId(`gift-prompt-${ID}`)).toBeNull();
+    expect(document.activeElement).toBe(price);
+    fireEvent.change(price, { target: { value: "500" } });
+    expect(await screen.findByTestId(`gift-prompt-${ID}`)).toBeTruthy();
+    expect(document.activeElement).toBe(price);
+  });
+
+  it("with two pending cards only the first takes the focus", async () => {
+    const OTHER = "22222222-3333-4444-8555-666666666666";
+    items = [gift({ quantity: 12, unitsLeft: 8 }), gift({ id: OTHER, title: "Mesa" })];
+    window.localStorage.setItem("rsvp.gift.purchase.v1", JSON.stringify({
+      [ID]: { giftItemId: ID, destination: "WHATSAPP", units: 1, at: Date.now(), phase: "away" }, [OTHER]: { giftItemId: OTHER, destination: "WHATSAPP", units: 1, at: Date.now(), phase: "away" } }));
+    stub(); renderList();
+    await screen.findByTestId(`gift-prompt-${ID}`); await screen.findByTestId(`gift-prompt-${OTHER}`);
+    const focused = document.activeElement as HTMLElement;
+    expect(focused.tagName).toBe("SECTION");
+    expect(screen.getAllByRole("region").filter((r) => r === focused)).toHaveLength(1);
+  });
 });
