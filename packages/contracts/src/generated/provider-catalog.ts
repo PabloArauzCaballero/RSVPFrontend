@@ -1159,7 +1159,7 @@ export interface paths {
         put?: never;
         /**
          * Show a hidden product again (ADMIN)
-         * @description R8b (§5.13). Lifts the hiding and republishes the product if it was published when hidden. It returns to COMPLETE or INCOMPLETE as its sheet says today and is served again only when COMPLETE. It is not featured again. Idempotent: showing a visible product is 200 with replayed=true. Audited (listing.shown) and announced by provider.listing.completeness-changed.v1.
+         * @description R8b (§5.13). Lifts the hiding and restores the publication the product had when hidden (an erased account never gets it back); it is served only while its provider is VERIFIED, like every product. It returns to COMPLETE or INCOMPLETE as its sheet says today and is served again only when COMPLETE. It is not featured again. Idempotent: showing a visible product is 200 with replayed=true. Audited (listing.shown) and announced by provider.listing.completeness-changed.v1.
          */
         post: operations["showListing"];
         delete?: never;
