@@ -60,7 +60,7 @@ export const adminEnUS: DeepStrings<typeof adminEsBO> = {
   leadReport: {
     title: "Billable lead report", intro: "The month's leads by provider, product and button. Valid, not valid by reason and the billable total by billing model. No personal data.", month: "Month", provider: "Provider", allProviders: "All providers", download: "Download CSV", downloading: "Preparing the CSV…",
     downloaded: "We downloaded {{name}}.", shared: "We shared {{name}}.", downloadFailed: "We could not prepare the CSV. Try again.", fileName: "leads-{{month}}.csv",
-    valid: "Valid", invalid: "Not valid", billable: "Billable", provider_total: "{{name}} · {{model}}", billingModel: { CPC: "CPC (per click)", CPA: "CPA", FLAT: "Flat fee", COMMISSION: "Commission" },
+    valid: "Valid", invalid: "Not valid", billable: "Billable", billingModel: { CPC: "CPC (per click)", CPA: "CPA", FLAT: "Flat fee", COMMISSION: "Commission" },
     notPerClick: "Not billed per click", cap: "Cap: {{cap}}", noCap: "No cap", totals: "{{valid}} valid · {{invalid}} not valid", billableTotal: "Billable: {{count}}", invalidBreakdown: "Not valid by reason",
     emptyTitle: "No leads this month", empty: "No clicks were recorded for this month and filter.", invalidMonth: "Pick a valid month.", unknownProduct: "Untitled product", tz: "Each provider counts the month in its own time zone.", rowsTitle: "Detail by product and button"
   },

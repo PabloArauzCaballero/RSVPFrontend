@@ -46,7 +46,7 @@ export const leadReportApi = (client: ApiClient) => ({
   adminReport: (month: string, providerId?: string) => client.request<AdminLeadReport>(`/providers/admin/leads/report${qs({ month, providerId })}`),
   adminCsv: async (month: string, providerId?: string): Promise<string> => {
     const text = await client.request<string>(`/providers/admin/leads/report.csv${qs({ month, providerId })}`, { responseType: "text" });
-    return text.replace(/^﻿/, ""); // the file saver adds its own byte order mark
+    return text.replace(/^\uFEFF/, ""); // the file saver adds its own byte order mark
   },
   issueLeadContext: (providerId: string, body: LeadContextRequest) =>
     client.request<LeadContext, LeadContextRequest>(`/providers/${encodeURIComponent(providerId)}/lead-context`, { method: "POST", body })

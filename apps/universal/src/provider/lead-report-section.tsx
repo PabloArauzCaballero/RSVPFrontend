@@ -21,7 +21,7 @@ export function LeadReportSection({ provider }: { readonly provider: Provider })
   const report = useProviderLeadReport(client, provider.id, filters);
   const own = report.data?.providers.find((row) => row.providerId === provider.id) ?? report.data?.providers[0];
   return (
-    <View style={{ gap: spacing[4] }} testID="lead-report">
+    <View style={{ gap: spacing[4] }} testID="report-leads">
       <View style={{ gap: spacing[1] }}>
         <Text accessibilityRole="header" style={styles.subtitle}>{t("portal.leadReport.title")}</Text>
         <Text style={styles.muted}>{t("portal.leadReport.intro")}</Text>
@@ -33,7 +33,7 @@ export function LeadReportSection({ provider }: { readonly provider: Provider })
       {report.data ? (
         report.data.rows.length === 0 ? <EmptyState illustration="emptySearch" title={t("portal.leadReport.emptyTitle")} body={t("portal.leadReport.empty")} /> : (
           <View style={{ gap: spacing[4] }}>
-            {own ? <ProviderTotals provider={own} ns="portal.leadReport" testID="lead-report-totals" /> : null}
+            {own ? <ProviderTotals provider={own} ns="portal.leadReport" testID="report-totals" /> : null}
             <View>
               <Text accessibilityRole="header" style={styles.subtitle}>{t("portal.leadReport.rowsTitle")}</Text>
               <ReportRows rows={report.data.rows} ns="portal.leadReport" />

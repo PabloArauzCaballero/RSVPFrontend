@@ -70,14 +70,14 @@ describe("portal · leads list with filters (D-10 #34, PF-1)", () => {
     const { client, calls } = fakeClient(portal({ [`GET /providers/${PID}/leads`]: (call) => (call.url.includes("destination=PHONE") ? { items: [], total: 0 } : { items: [lead("a")], total: 1 }) }));
     renderApp(<LeadsScreen />, client, HOST);
     await screen.findByTestId("lead-a");
-    await waitFor(() => expect((screen.getByTestId("lead-filter-product") as HTMLSelectElement).options.length).toBe(2));
-    fireEvent.change(screen.getByTestId("lead-filter-month"), { target: { value: currentMonth("America/La_Paz") } });
-    fireEvent.change(screen.getByTestId("lead-filter-product"), { target: { value: LID } });
-    fireEvent.change(screen.getByTestId("lead-filter-destination"), { target: { value: "PHONE" } });
+    await waitFor(() => expect((screen.getByTestId("filter-product") as HTMLSelectElement).options.length).toBe(2));
+    fireEvent.change(screen.getByTestId("filter-month"), { target: { value: currentMonth("America/La_Paz") } });
+    fireEvent.change(screen.getByTestId("filter-product"), { target: { value: LID } });
+    fireEvent.change(screen.getByTestId("filter-destination"), { target: { value: "PHONE" } });
     expect(await screen.findByText("Ningún toque coincide con estos filtros.")).toBeTruthy();
     const last = calls.filter((call) => call.path === `/providers/${PID}/leads`).at(-1);
     expect(last?.url).toBe(`/providers/${PID}/leads?limit=50&offset=0&month=${currentMonth("America/La_Paz")}&listingId=${LID}&destination=PHONE`);
-    fireEvent.change(screen.getByTestId("lead-filter-destination"), { target: { value: "__all__" } });
+    fireEvent.change(screen.getByTestId("filter-destination"), { target: { value: "__all__" } });
     await screen.findByTestId("lead-a");
     expect(calls.some((call) => call.url === `/providers/${PID}/leads?limit=50&offset=0&month=${currentMonth("America/La_Paz")}&listingId=${LID}`)).toBe(true);
     expect(screen.queryByText("Ningún toque coincide con estos filtros.")).toBeNull();
@@ -94,30 +94,30 @@ describe("portal · monthly report on Resultados", () => {
   it("asks for the current month of the provider's zone and shows totals, billable and the breakdown by reason", async () => {
     const { client, calls } = fakeClient(portal(reportHandler()));
     renderApp(<PortalMetricsScreen />, client, HOST);
-    const totals = await screen.findByTestId("lead-report-totals");
+    const totals = await screen.findByTestId("report-totals");
     expect(within(totals).getByText("Válidos: 7")).toBeTruthy();
     expect(within(totals).getByText("No válidos: 3")).toBeTruthy();
     expect(within(totals).getByText("Cobrables: 7")).toBeTruthy();
     expect(within(totals).getByText("Duplicado (mismo visitante en 24 h): 1 · Anfitrión u organizador: 2")).toBeTruthy();
-    expect(within(screen.getByTestId("lead-report-row")).getByText("Torta de chocolate · WhatsApp")).toBeTruthy();
+    expect(within(screen.getByTestId("report-row")).getByText("Torta de chocolate · WhatsApp")).toBeTruthy();
     expect(calls.find((call) => call.path === `/providers/${PID}/leads/report`)?.url).toBe(`/providers/${PID}/leads/report?month=${currentMonth("America/La_Paz")}`);
   });
   it("a provider not billed per click sees why there is no billable figure", async () => {
     const flat = { ...providerRow, billingModel: "FLAT", billableLeads: null, monthlyCap: 0 };
     const { client } = fakeClient(portal(reportHandler({ providers: [flat], rows: [{ ...reportRow, billableLeads: null }] })));
     renderApp(<PortalMetricsScreen />, client, HOST);
-    const totals = await screen.findByTestId("lead-report-totals");
+    const totals = await screen.findByTestId("report-totals");
     expect(within(totals).getByText("No se cobra por toque (tarifa fija)")).toBeTruthy();
     expect(within(totals).getByText("Sin tope mensual")).toBeTruthy();
-    expect(within(screen.getByTestId("lead-report-row")).queryByText(/Cobrables/)).toBeNull();
+    expect(within(screen.getByTestId("report-row")).queryByText(/Cobrables/)).toBeNull();
   });
   it("changing the product and button sends them with the month; an empty month has its own state", async () => {
     const { client, calls } = fakeClient(portal({ [`GET /providers/${PID}/leads/report`]: (call) => (call.url.includes("listingId") ? { month: "x", providers: [], rows: [] } : { month: "x", providers: [providerRow], rows: [reportRow] }) }));
     renderApp(<PortalMetricsScreen />, client, HOST);
-    await screen.findByTestId("lead-report-totals");
-    await waitFor(() => expect((screen.getByTestId("lead-filter-product") as HTMLSelectElement).options.length).toBe(2));
-    fireEvent.change(screen.getByTestId("lead-filter-product"), { target: { value: LID } });
-    fireEvent.change(screen.getByTestId("lead-filter-destination"), { target: { value: "WHATSAPP" } });
+    await screen.findByTestId("report-totals");
+    await waitFor(() => expect((screen.getByTestId("filter-product") as HTMLSelectElement).options.length).toBe(2));
+    fireEvent.change(screen.getByTestId("filter-product"), { target: { value: LID } });
+    fireEvent.change(screen.getByTestId("filter-destination"), { target: { value: "WHATSAPP" } });
     expect(await screen.findByText("Sin toques este mes")).toBeTruthy();
     expect(calls.filter((call) => call.path.endsWith("/leads/report")).at(-1)?.url).toContain(`listingId=${LID}&destination=WHATSAPP`);
   });
@@ -131,7 +131,7 @@ describe("portal · monthly report on Resultados", () => {
     const { client } = fakeClient(portal(reportHandler()));
     renderApp(<PortalMetricsScreen />, client, HOST, "en-US");
     expect(await screen.findByText("Monthly request report")).toBeTruthy();
-    expect(within(await screen.findByTestId("lead-report-totals")).getByText("Valid: 7")).toBeTruthy();
+    expect(within(await screen.findByTestId("report-totals")).getByText("Valid: 7")).toBeTruthy();
   });
 });
 
@@ -148,9 +148,9 @@ describe("admin · billable lead report and CSV (D-10 #33)", () => {
     renderApp(<AdminMetricsScreen onNavigate={vi.fn()} />, client, ADMIN);
     expect(await screen.findByTestId(`admin-lead-totals-${PID}`)).toBeTruthy();
     expect(within(screen.getByTestId(`admin-lead-totals-${OTHER}`)).getByText("No se cobra por clic")).toBeTruthy();
-    expect(screen.getAllByTestId("lead-report-row")).toHaveLength(2);
+    expect(screen.getAllByTestId("report-row")).toHaveLength(2);
     fireEvent.change(screen.getByTestId("admin-lead-provider"), { target: { value: OTHER } });
-    expect(screen.getAllByTestId("lead-report-row")).toHaveLength(1);
+    expect(screen.getAllByTestId("report-row")).toHaveLength(1);
     expect(screen.queryByTestId(`admin-lead-totals-${PID}`)).toBeNull();
     expect(calls.find((call) => call.path === "/providers/admin/leads/report")?.url).toMatch(/^\/providers\/admin\/leads\/report\?month=20\d\d-\d\d$/);
   });

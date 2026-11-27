@@ -32,18 +32,18 @@ export function LeadFilterBar({ provider, value, onChange, allMonths = false, ns
   const productKey = ns === "portal.leads" ? "filterProduct" : "product";
   const buttonKey = ns === "portal.leads" ? "filterDestination" : "destination";
   return (
-    <View style={[styles.row, { alignItems: "flex-end", gap: spacing[3] }]} testID="lead-filters">
+    <View style={[styles.row, { alignItems: "flex-end", gap: spacing[3] }]} testID="filters-bar">
       <View style={{ flexGrow: 1, flexBasis: 160, gap: spacing[1] }}>
         <Text style={styles.label}>{t(`${ns}.${monthKey}`)}</Text>
-        <FilterSelect<string> label={t(`${ns}.${monthKey}`)} value={value.month || ALL} onChange={(next) => onChange({ ...value, month: next === ALL ? "" : next })} options={monthOptions} testID="lead-filter-month" />
+        <FilterSelect<string> label={t(`${ns}.${monthKey}`)} value={value.month || ALL} onChange={(next) => onChange({ ...value, month: next === ALL ? "" : next })} options={monthOptions} testID="filter-month" />
       </View>
       <View style={{ flexGrow: 1, flexBasis: 160, gap: spacing[1] }}>
         <Text style={styles.label}>{t(`${ns}.${productKey}`)}</Text>
-        <FilterSelect<string> label={t(`${ns}.${productKey}`)} value={value.listingId || ALL} onChange={(next) => onChange({ ...value, listingId: next === ALL ? "" : next })} options={products} testID="lead-filter-product" />
+        <FilterSelect<string> label={t(`${ns}.${productKey}`)} value={value.listingId || ALL} onChange={(next) => onChange({ ...value, listingId: next === ALL ? "" : next })} options={products} testID="filter-product" />
       </View>
       <View style={{ flexGrow: 1, flexBasis: 160, gap: spacing[1] }}>
         <Text style={styles.label}>{t(`${ns}.${buttonKey}`)}</Text>
-        <FilterSelect<string> label={t(`${ns}.${buttonKey}`)} value={value.destination || ALL} onChange={(next) => onChange({ ...value, destination: next === ALL ? "" : (next as LeadDestination) })} options={buttons} testID="lead-filter-destination" />
+        <FilterSelect<string> label={t(`${ns}.${buttonKey}`)} value={value.destination || ALL} onChange={(next) => onChange({ ...value, destination: next === ALL ? "" : (next as LeadDestination) })} options={buttons} testID="filter-destination" />
       </View>
     </View>
   );

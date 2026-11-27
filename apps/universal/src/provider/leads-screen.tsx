@@ -37,7 +37,7 @@ function LeadRow({ lead, timeZone, cities }: { readonly lead: Lead; readonly tim
     <View style={{ gap: spacing[1], padding: spacing[5], marginBottom: spacing[3], backgroundColor: palette.surface, borderWidth: 1, borderColor: palette.border, borderRadius: radius.lg, ...depth(scheme) }} testID={`lead-${lead.id}`}>
       <View style={[styles.row, { justifyContent: "space-between", flexWrap: "nowrap" }]}><Text style={[styles.label, { flex: 1 }]}>{t(`portal.leads.kind.${lead.kind}`)}</Text><Chip tone={lead.valid ? "yes" : "no"}>{lead.valid ? t("portal.leads.valid") : t(`portal.leads.invalid.${lead.invalidReason ?? "bot"}`)}</Chip></View>
       <Text style={styles.muted}>{formatCelebrationDate(lead.occurredAt, { locale, timeZone })}</Text>
-      <Text style={styles.body} testID={`lead-product-${lead.id}`}>{t("portal.leads.product", { title: lead.listingTitle ?? t("portal.leads.productUnknown") })}</Text>
+      <Text style={styles.body} testID={`product-of-${lead.id}`}>{t("portal.leads.product", { title: lead.listingTitle ?? t("portal.leads.productUnknown") })}</Text>
       {lead.destination ? <Text style={styles.body}>{t("portal.leads.destination", { destination: destinationLabel(lead.destination) })}</Text> : null}
       {eventType ? <Text style={styles.body}>{t("portal.leads.eventType", { type: eventTypeLabel(t, eventType) })}</Text> : null}
       {city ? <Text style={styles.body}>{t("portal.leads.city", { city: cityName(cities, city) })}</Text> : null}

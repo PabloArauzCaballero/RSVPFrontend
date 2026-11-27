@@ -91,7 +91,7 @@ export function ReportRows({ rows, ns }: { readonly rows: readonly LeadReportRow
   return (
     <Stagger>
       {rows.map((row) => (
-        <View key={`${row.providerId}-${row.listingId}-${row.destination}`} style={{ gap: spacing[1], paddingVertical: spacing[3], borderTopWidth: 1, borderTopColor: palette.border }} testID="lead-report-row">
+        <View key={`${row.providerId}-${row.listingId}-${row.destination}`} style={{ gap: spacing[1], paddingVertical: spacing[3], borderTopWidth: 1, borderTopColor: palette.border }} testID="report-row">
           <Text style={styles.label}>{t(`${ns}.row`, { product: row.listingTitle ?? t(`${ns}.unknownProduct`), button: buttonLabel(row.destination) })}</Text>
           {ns === "admin.leadReport" ? <Text style={styles.muted}>{row.providerName}</Text> : null}
           <Text style={styles.body}>{t(`${ns}.rowFigures`, { valid: formatNumber(row.validLeads, locale), invalid: formatNumber(row.invalidLeads, locale) })}</Text>
