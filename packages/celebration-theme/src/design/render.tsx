@@ -107,6 +107,10 @@ function BackgroundArt({ background }: { readonly background: DesignBackground |
 /** Templates whose cover photo is put on the axis of the centred text (PL-FE143-V2). */
 const PHOTO_ON_TEXT_AXIS: ReadonlySet<string> = new Set(Object.values(EXTRA_TEMPLATE_IDS));
 
+/** Templates drawn and measured with a script title whose facts (date, place, countdown) keep the body face (PL-FE143-V1). Any other design with a script heading keeps the face it had
+ * (PL-FE143-R4-1): the marker is only emitted for these, whatever the heading family of a user's design or of one already published. Like `PHOTO_ON_TEXT_AXIS` it is keyed to the theme id. */
+const SCRIPT_TITLE_FACTS_IN_BODY: ReadonlySet<string> = new Set(Object.values(EXTRA_TEMPLATE_IDS));
+
 /** The title block of the cover: who, when and where. The photo, when there is one, is part of the same block (PL-A9: every template decides where it goes). When the document centres the text
  * (`typography.align: "center"`) the photo shares its axis (PL-FE143-V2), but only for the templates that were drawn and measured with it (`PHOTO_ON_TEXT_AXIS`): the older templates keep the geometry
  * they had (PL-FE143-R2-2), until the owner decides whether the same fix reaches them. */
@@ -356,7 +360,7 @@ export function DesignRenderer(props: DesignRendererProps): ReactNode {
   const pages = props.only ? placed.filter((page) => page.kind === "section" && page.section === props.only) : placed;
   return (
     <article className="celebration celebration-design" data-design="2" data-layout={theme.layout} data-color-scheme={scheme ?? "light"} data-scheme-source={scheme ? "prop" : "system"}
-      data-section-style={theme.sectionStyle} data-divider={layout.divider} data-images={layout.imageTreatment} data-heading-face={familyById(design.tokens.typography.heading.family)?.category === "script" ? "script" : undefined} lang={view.locale} style={style}>
+      data-section-style={theme.sectionStyle} data-divider={layout.divider} data-images={layout.imageTreatment} data-heading-face={SCRIPT_TITLE_FACTS_IN_BODY.has(theme.id) && familyById(design.tokens.typography.heading.family)?.category === "script" ? "script" : undefined} lang={view.locale} style={style}>
       {scheme ? null : <SystemColours theme={theme} />}
       <CustomCss design={design} />
       <Dock t={t} giftsHref={context.giftsHref} giftsStatus={props.giftsStatus} rsvpHref={props.rsvpHref} rsvpHelpHref={props.rsvpHelpHref} rsvpAdaptive={props.rsvpAdaptive} />

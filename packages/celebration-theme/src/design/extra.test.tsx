@@ -194,6 +194,32 @@ describe("the six extra templates as documents v2", () => {
     expect(css).toMatch(/\[data-heading-face="script"\] :is\(h1, h2, h3[^)]*\) \{ font-family: var\(--celebration-heading-font\); \}/);
   });
 
+  it("PL-FE143-R4-1 · a script heading marks the page only in the six extra templates: a user's design, or an older one, with Great Vibes (or any script) keeps the face of its date, place and countdown", () => {
+    const scripts = ["great-vibes", "pinyon-script", "parisienne", "dancing-script", "allura", "italianno", "alex-brush"];
+    const dir = join(__dirname, "documents");
+    const older = readdirSync(dir).filter((file) => file.endsWith(".json")).map((file) => file.slice(0, -5)).filter((name) => !(name in EXTRA_TEMPLATES));
+    const withHeading = (theme: unknown, family: string): unknown => {
+      const copy = JSON.parse(JSON.stringify(theme)) as { tokens: { typography: { heading: { family: string } } } };
+      copy.tokens.typography.heading.family = family;
+      return copy;
+    };
+    const markup = (template: object): string =>
+      renderToStaticMarkup(<CelebrationRenderer theme={themeFromTemplate(template as never, SECTIONS)} view={VIEW} gallery={GALLERY} t={t} now={NOW} basePath="/c/ana-y-luis" />);
+    for (const name of older) {
+      const file = JSON.parse(readFileSync(join(dir, `${name}.json`), "utf8")) as { name: string; description: string; eventTypeTags: string[]; layout: string; theme: unknown; sectionOrder: string[] };
+      for (const family of scripts) {
+        const template = { id: `older-${name}`, name: file.name, description: file.description, status: "PUBLISHED", eventTypeTags: file.eventTypeTags, layout: file.layout, theme: withHeading(file.theme, family), sectionOrder: file.sectionOrder, version: 2 };
+        expect(markup(template), `${name} + ${family}`).not.toContain("data-heading-face");
+      }
+    }
+    const base = extraTemplate("pedida-rosa");
+    expect(markup({ ...base, id: "a-users-copy", theme: withHeading(base.theme, "great-vibes") }), "a design that is not one of the six").not.toContain("data-heading-face");
+    for (const name of NAMES) {
+      const template = extraTemplate(name);
+      expect(markup({ ...template, theme: withHeading(template.theme, "great-vibes") }), `${name} with Great Vibes`).toContain('data-heading-face="script"');
+    }
+  });
+
   it("PL-FE143-R2-2 · the photo-on-the-text-axis rule reaches the six extra templates only: the older templates (even those that centre the cover) keep the markup and the geometry they had", () => {
     const dir = join(__dirname, "documents");
     const older = readdirSync(dir).filter((file) => file.endsWith(".json")).map((file) => file.slice(0, -5)).filter((name) => !(name in EXTRA_TEMPLATES));
