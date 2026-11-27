@@ -54,6 +54,18 @@ El disco compartido bajó de 8 GB (otro proyecto estaba corriendo su suite); se 
 - **Cobertura:** hoja «Más» a 360 px (e2e), dos pares de pantallas con igual título (e2e y vitest) y, en `screen-arrival.native.test.tsx`, que `Screen` entrega nodo y título a `moveScreenFocus` (sobre react-native-web, no en dispositivo).
 - **Pendiente en nativo (leído, no ejecutado):** en React Native 0.81.5, `findNodeHandle` en Fabric devuelve `__nativeTag`, que la instancia conserva al desmontarse (`ReactFabricPublicInstance.getNativeTagFromPublicInstance`). Por eso `screenFocusWasLost` nativo daría `false` y el foco no volvería al título cuando el esqueleto de código cede a la pantalla. No se cambió sin dispositivo con el que comprobarlo; falta también VoiceOver/TalkBack durante el empuje y al cerrar el `Modal`.
 
+Evidencia sobre `3c90240d` (oficial `6a2b8a7f` integrada en `786478c6`; Node 24.18.1, Google Chrome, mock de contratos):
+```
+apps/universal: vitest run --maxWorkers=3         -> 63 archivos, 756 pruebas pasan
+packages/ui:    vitest run --maxWorkers=3         -> 20 archivos, 335 pruebas pasan
+tsc --noEmit (universal sin .expo/, y packages/ui) -> exit 0
+eslint . --max-warnings 0                         -> exit 0
+yarn harness:validate                             -> exit 0
+gitleaks 8.30.1 (oficial..HEAD)                   -> no leaks found
+playwright test --project=transitions --repeat-each=2 -> 82 passed (4.0 m): 41 casos, dos veces
+```
+Con `screen-arrival.ts` y `shell.tsx` de `da656abb`: 5 de 30 de `shell-persistence` fallan; en Chrome fallan los casos del editor, de Regalos y del foco en el título desde 1280 px. El de la hoja «Más» y el de foco desde 360 px pasan también con el código anterior (son guardias).
+
 ## No probado / límites
 - «Adelante» del navegador remonta el área: expo-router 6.0.24 reconstruye el estado desde el historial. Observado también en la oficial `ad6dd0ac` (la primera pantalla del `Stack` sale del DOM). Resaltado, foco y título quedan bien; el estado local de la pantalla restaurada se pierde.
 - Al cruzar 960 px la cabecera cambia de sitio: el foco del título y de la pestaña activa se devuelve (ronda 2); el de otra pestaña o una acción, y el estado abierto de un menú de la cabecera, no se conservan.
