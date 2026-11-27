@@ -44,6 +44,8 @@ function ReportDialog({ slug, locale, target, onClose, client }: { readonly slug
   const submitRef = useRef<HTMLButtonElement>(null);
   const doneTitleRef = useRef<HTMLHeadingElement>(null);
   const inFlight = useRef(false);
+  // Counts the dialog's lives: a send only reports back if the dialog it started in is still the one on screen.
+  const attempt = useRef(0);
 
   useEffect(() => {
     const dialog = ref.current;
@@ -53,6 +55,10 @@ function ReportDialog({ slug, locale, target, onClose, client }: { readonly slug
       return;
     }
     if (dialog.open) dialog.close();
+    // A send still in flight belongs to a dialog that is gone (the browser can force the close while it sends: a second Escape or «back»):
+    // its answer must not leave a result in the next report, and its lock must not block the next send.
+    attempt.current += 1;
+    inFlight.current = false;
     // The form is cleared on the way out: showModal() focuses what is in the DOM at that instant, so a leftover confirmation would
     // take the focus of the next report and then unmount with it.
     setPhase('editing'); setFailure(null); setTouched(false); setReason(''); setComment('');
@@ -68,18 +74,18 @@ function ReportDialog({ slug, locale, target, onClose, client }: { readonly slug
     setTouched(true);
     if (reportDraftProblem({ reason: reason || null, comment }) || !reason) return;
     inFlight.current = true;
+    const mine = attempt.current;
     // The fields are disabled while it sends, and a disabled control drops its focus: the send button holds it and is never `disabled`.
     submitRef.current?.focus();
     setPhase('sending'); setFailure(null);
     try {
       http.current ??= createGuestClient();
       await submitPublicReport(http.current, slug, { reason, comment, element: shown === 'music' ? MUSIC_ELEMENT : null });
-      setPhase('done');
+      if (attempt.current === mine) setPhase('done');
     } catch (error) {
-      setFailure(reportFailure(error));
-      setPhase('editing');
+      if (attempt.current === mine) { setFailure(reportFailure(error)); setPhase('editing'); }
     } finally {
-      inFlight.current = false;
+      if (attempt.current === mine) inFlight.current = false;
     }
   };
   const music = shown === 'music';

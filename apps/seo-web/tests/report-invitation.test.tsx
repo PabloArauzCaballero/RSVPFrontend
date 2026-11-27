@@ -209,6 +209,60 @@ describe("what goes wrong, and what the guest keeps", () => {
     release(received());
     expect(await screen.findByText("Recibimos tu denuncia")).toBeTruthy();
   });
+
+  // PL-155 N1 · the browser can force the dialog shut while it sends (a second Escape, «back»): `close` fires with the request in flight.
+  describe("the browser closes the dialog while it sends", () => {
+    const forceClose = () => { const dialog = screen.getByRole("dialog", { hidden: true }); dialog.removeAttribute("open"); fireEvent(dialog, new Event("close")); };
+    const reopenPage = () => fireEvent.click(screen.getByRole("button", { name: "Denunciar esta invitación" }));
+
+    it("an answer that arrives after the close leaves nothing in the next report, and its lock does not block the next send", async () => {
+      const answers: Array<(value: Response) => void> = [];
+      mount({ respond: () => new Promise<Response>((resolve) => { answers.push(resolve); }) });
+      reopenPage(); choose("SPAM"); submit();
+      await screen.findByRole("button", { name: "Enviando…" });
+      forceClose();
+      await waitFor(() => expect(screen.getByRole("dialog", { hidden: true }).hasAttribute("open")).toBe(false));
+      answers[0]?.(received());
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      reopenPage();
+      expect(screen.queryByText("Recibimos tu denuncia")).toBeNull();
+      expect((screen.getByLabelText("Motivo") as HTMLSelectElement).value).toBe("");
+      choose("SPAM"); submit();
+      await waitFor(() => expect(sent).toHaveLength(2));
+      answers[1]?.(received());
+      expect(await screen.findByText("Recibimos tu denuncia")).toBeTruthy();
+    });
+
+    it("a failure that arrives after the close does not show up in the next report", async () => {
+      const answers: Array<(value: Response) => void> = [];
+      mount({ respond: () => new Promise<Response>((resolve) => { answers.push(resolve); }) });
+      reopenPage(); choose("SPAM"); submit();
+      await screen.findByRole("button", { name: "Enviando…" });
+      forceClose();
+      answers[0]?.(problem(500, "INTERNAL"));
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      reopenPage();
+      expect(screen.queryByRole("alert")).toBeNull();
+      expect(screen.getByRole("button", { name: "Enviar denuncia" })).toBeTruthy();
+    });
+
+    it("reopened before the answer, the send works: the old lock is released", async () => {
+      const answers: Array<(value: Response) => void> = [];
+      mount({ respond: () => new Promise<Response>((resolve) => { answers.push(resolve); }) });
+      reopenPage(); choose("SPAM"); submit();
+      await screen.findByRole("button", { name: "Enviando…" });
+      forceClose();
+      reopenPage();
+      choose("SPAM"); submit();
+      await waitFor(() => expect(sent).toHaveLength(2));
+      answers[0]?.(received());
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      expect(screen.queryByText("Recibimos tu denuncia")).toBeNull();
+      expect(screen.getByRole("button", { name: "Enviando…" })).toBeTruthy();
+      answers[1]?.(received());
+      expect(await screen.findByText("Recibimos tu denuncia")).toBeTruthy();
+    });
+  });
 });
 
 describe("the public page carries the foot", () => {

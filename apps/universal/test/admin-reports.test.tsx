@@ -166,6 +166,38 @@ describe("the focus follows the administrator", () => {
     vi.restoreAllMocks();
   });
 
+  // PL-155 N2 · «Reintentar» unmounts itself while it asks again: the focus goes to the heading of its section, not to <body>.
+  it("retrying the hidden files hands the focus to their heading while it asks again, and keeps it when the list arrives", async () => {
+    let fail = true;
+    let release: (value: unknown) => void = () => undefined;
+    const { client } = fakeClient(withDetail({ "GET /media/celebrations/11111111-1111-4111-8111-111111111111/assets": () => (fail ? new HttpFailure(500) : new Promise((resolve) => { release = resolve; })) }));
+    renderApp(<ReportsScreen onNavigate={navigate} />, client, ADMIN);
+    await openDetail();
+    const retry = await screen.findByTestId("files-retry");
+    retry.focus();
+    fail = false;
+    fireEvent.click(retry);
+    const heading = await screen.findByText("Archivos ocultos");
+    await waitFor(() => expect(screen.queryByTestId("files-retry")).toBeNull());
+    expect(document.activeElement).toBe(heading);
+    release({ items: [ASSETS.items[2]] });
+    await screen.findByTestId("files-none");
+    expect(document.activeElement).toBe(heading);
+  });
+
+  it("retrying a report that could not be read keeps the focus on its heading", async () => {
+    let fail = true;
+    const { client } = fakeClient({ ...queue([REPORT]), "GET /celebrations/admin/reports/r-1": () => (fail ? new HttpFailure(500) : DETAIL), "GET /media/celebrations/11111111-1111-4111-8111-111111111111/assets": () => ASSETS });
+    renderApp(<ReportsScreen onNavigate={navigate} />, client, ADMIN);
+    fireEvent.click(await screen.findByRole("button", { name: "Abrir denuncia ana-y-luis" }));
+    const retry = await screen.findByTestId("report-retry");
+    retry.focus();
+    fail = false;
+    fireEvent.click(retry);
+    await screen.findByTestId("report-comment");
+    expect(document.activeElement).toBe(screen.getByText("Denuncia de ana-y-luis"));
+  });
+
   it("asking for a hidden file never lets go of the button, while the link is requested and after it arrives", async () => {
     let release: (value: unknown) => void = () => undefined;
     const { client, calls } = fakeClient(withDetail({ "POST /media/admin/assets/a-photo/preview-links": () => new Promise((resolve) => { release = resolve; }) }));

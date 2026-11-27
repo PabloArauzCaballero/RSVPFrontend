@@ -15,7 +15,8 @@ import { AdminListError, QueryBoundary, Stack, useStamp } from "./shared";
  * F7 · «Denuncias»: the queue of public reports, one report with its decisions and history, and the hidden files of that celebration, each
  * with a link to look at it that works ONCE (Template/Media 1.9.0, ADMIN only). The reporter's comment is plain text from a stranger: it
  * is rendered as `<Text>`, never as markup. The link is held in component state only and never written anywhere (it burns on first use).
- * No view change drops the focus: opening a report takes it to the new heading, going back returns it to the button that opened it.
+ * No view change drops the focus: opening a report takes it to the new heading, going back returns it to the button that opened it, and
+ * «Reintentar» (which unmounts itself while it asks again) hands it to the heading of the section it belongs to.
  */
 const PAGE = 10;
 type Nav = { readonly onNavigate: (href: string) => void };
@@ -105,13 +106,14 @@ function HiddenFiles({ celebrationId }: { readonly celebrationId: string }): Rea
   const styles = useStyles();
   const client = useApiClient();
   const assets = useMediaAssets(client, celebrationId);
+  const heading = useRef<Text>(null);
   const hidden = assets.data?.items.filter((asset) => asset.hidden === true) ?? [];
   return (
     <View style={{ gap: spacing[3] }}>
-      <Text accessibilityRole="header" style={styles.subtitle}>{t("moderation.admin.files.title")}</Text>
+      <Text ref={heading} accessibilityRole="header" style={styles.subtitle}>{t("moderation.admin.files.title")}</Text>
       <Text style={styles.muted}>{t("moderation.admin.files.help")}</Text>
       {assets.isPending ? <RowsSkeleton count={2} minHeight={64} trailing={false} /> : null}
-      {assets.error ? <Notice kind="error"><Text style={styles.body}>{t("moderation.admin.files.loadFailed")}</Text><ActionButton icon="refresh" variant="secondary" label={t("host.common.retry")} onPress={() => { void assets.refetch(); }} testID="files-retry" /></Notice> : null}
+      {assets.error ? <Notice kind="error"><Text style={styles.body}>{t("moderation.admin.files.loadFailed")}</Text><ActionButton icon="refresh" variant="secondary" label={t("host.common.retry")} onPress={() => { moveFocus(heading.current); void assets.refetch(); }} testID="files-retry" /></Notice> : null}
       {!assets.isPending && !assets.error && hidden.length === 0 ? <Text style={styles.muted} testID="files-none">{t("moderation.admin.files.none")}</Text> : null}
       {hidden.map((asset) => <HiddenFile key={asset.id} assetId={asset.id} name={asset.filename} music={asset.purpose === "music"} />)}
     </View>
@@ -169,7 +171,7 @@ function ReportDetailView({ reportId, slug, onBack }: { readonly reportId: strin
       <ActionButton variant="secondary" label={t("moderation.admin.back")} onPress={onBack} testID="report-back" />
       <Text ref={heading} accessibilityRole="header" style={[styles.title, { overflowWrap: "anywhere" } as object]}>{t("moderation.admin.detailTitle", { slug })}</Text>
       {detail.isPending ? <RowsSkeleton count={3} minHeight={88} />
-        : detail.error || !detail.data ? <AdminListError error={detail.error} onRetry={() => { void detail.refetch(); }} retryTestID="report-retry" />
+        : detail.error || !detail.data ? <AdminListError error={detail.error} onRetry={() => { moveFocus(heading.current); void detail.refetch(); }} retryTestID="report-retry" />
           : <ReportBody detail={detail.data} />}
     </Stack>
   );
