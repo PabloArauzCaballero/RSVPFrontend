@@ -14,11 +14,11 @@ La tabla exigía un ancho mínimo por columna. La lista distribuye los once camp
 | `yarn workspace @rsvp/query-hooks test` | 157 pruebas en 15 archivos |
 | `yarn exec turbo run test --filter=@rsvp/i18n --filter=@rsvp/design-tokens` | 107 pruebas |
 | `yarn workspace @rsvp/universal build` con `EXPO_PUBLIC_API_URL=/api` | Export web completo |
-| `yarn workspace @rsvp/contracts check:generated`, `check:source` y `yarn harness:validate` | Salida 0. El chequeo de contratos verifica la referencia vendorizada de la base |
+| `yarn workspace @rsvp/contracts check:generated`, `check:source` y `yarn harness:validate` | Salida 0. El chequeo de contratos verificó la referencia vendorizada de la base de ese momento. El pin pasó a `7aa7990e` en un cambio posterior |
 
 ## Integración local
 
-El recorrido `node verify-partners.mjs` terminó con salida 0 en Playwright, Chromium y servicios reales de Docker. El catálogo y la autenticación se probaron por Kong contra PostgreSQL con datos sintéticos. El contrato de Provider Catalog es 3.4.0. [Backend a57a30f](https://github.com/PabloArauzCaballero/RSVPBackend/commit/a57a30fbd34b9015765bf59bdd0fc7960ff5c5ae)
+El recorrido `node verify-partners.mjs` terminó con salida 0 en Playwright, Chromium y servicios reales de Docker. El catálogo y la autenticación se probaron por Kong contra PostgreSQL con datos sintéticos. En esa corrida, el commit de la rama [Backend a57a30f](https://github.com/PabloArauzCaballero/RSVPBackend/commit/a57a30fbd34b9015765bf59bdd0fc7960ff5c5ae) rotulaba el contrato de Provider Catalog como 3.4.0. Al integrarse en la rama oficial, el contrato con los ocho órdenes quedó como 3.5.0 (RSVPBackend `7aa7990e`, PR #171). El 3.4.0 oficial (`c3158a49`) solo declara `name`, `-createdAt`, `-updatedAt` y `kypStatus`.
 
 - 124 de 128 registros coincidieron con la búsqueda y el estado. Se verificaron los ocho valores de `sort` en la primera y última página de cada tamaño, y la transición de página en la interfaz.
 - Los cambios de orden, tamaño, filtro y búsqueda volvieron a la primera página. El último rango parcial, los controles de extremos y el estado sin coincidencias se verificaron en el navegador.
@@ -35,4 +35,4 @@ El recorrido `node verify-partners.mjs` terminó con salida 0 en Playwright, Chr
 
 ## Publicación
 
-Desplegar primero el backend con el contrato 3.4.0 en Coolify y comprobar HTTP 200 con `GET /providers/admin/partners?sort=-name` en una sesión ADMIN. Después se puede integrar la rama de frontend. Para revertir la interfaz, revertir el commit del PR de frontend.
+Desplegar primero en Coolify el backend con el contrato de Provider Catalog 3.5.0 (`7aa7990e` o posterior; el 3.4.0 oficial no sirve) y comprobar HTTP 200 con `GET /providers/admin/partners?sort=-name` en una sesión ADMIN. Después se puede integrar la rama de frontend. Para revertir la interfaz, revertir el commit del PR de frontend.
