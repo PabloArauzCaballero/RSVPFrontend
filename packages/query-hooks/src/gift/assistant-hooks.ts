@@ -1,10 +1,10 @@
 "use client";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ApiError, type ApiClient } from "@rsvp/api-client";
+import type { ApiClient } from "@rsvp/api-client";
 import { invalidation } from "../invalidation.js";
 import { newIdempotencyKey } from "../guest/rsvp-flow.js";
-import { assistantApi, createBatchKeys, type GiftBatchRequest, type GiftItemUpdateRequest } from "./assistant.js";
+import { assistantApi, createBatchKeys, mayHaveBeenApplied, type GiftBatchRequest, type GiftItemUpdateRequest } from "./assistant.js";
 
 // A client module on purpose: `useState` does not exist in the server build of React, and seo-web's server components import this barrel.
 const refetchAll = (queryClient: ReturnType<typeof useQueryClient>, keys: readonly (readonly unknown[])[]) => Promise.all(keys.map((queryKey) => queryClient.invalidateQueries({ queryKey })));
@@ -12,8 +12,8 @@ const refetchAll = (queryClient: ReturnType<typeof useQueryClient>, keys: readon
 /**
  * Adds the gifts of the assistant in ONE call (all or nothing). The key is stable for the same body: a retry after a lost answer or a 5xx replays it
  * and the server answers the stored result (201 Idempotency-Replayed), so nothing is added twice; another body gets a new key and a success forgets it.
- * The list is read again ONLY after an answer that says what the list is: a success or a 409. A lost answer that was applied must not refresh the list
- * under the screen, or the selection would look already added and the retry could never reach «Listo».
+ * The list is read again after every DEFINITIVE answer (2xx or 4xx: the server said what the list holds). It is NOT read after a missing answer or a 5xx:
+ * the write may have been applied, and refreshing the list under the screen would make the selection look already added before the replay answers.
  */
 export function useAddGiftBatch(client: ApiClient, celebrationId: string) {
   const queryClient = useQueryClient();
@@ -21,7 +21,7 @@ export function useAddGiftBatch(client: ApiClient, celebrationId: string) {
   return useMutation({
     mutationFn: (body: GiftBatchRequest) => assistantApi(client).addBatch(celebrationId, body, keyFor(body)),
     onSuccess: () => { keyFor.reset(); void refetchAll(queryClient, invalidation.giftReservationChanged(celebrationId)); },
-    onError: (error) => { if (error instanceof ApiError && error.status === 409) void refetchAll(queryClient, invalidation.giftReservationChanged(celebrationId)); }
+    onError: (error) => { if (!mayHaveBeenApplied(error)) void refetchAll(queryClient, invalidation.giftReservationChanged(celebrationId)); }
   });
 }
 /** PATCH /items/{id}: quantity and coordinated-gift switch, with the version the host read (409 GIFT_VERSION_CONFLICT when stale). */

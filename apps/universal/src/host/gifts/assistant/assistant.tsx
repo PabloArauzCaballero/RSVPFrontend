@@ -46,7 +46,9 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
   const [failed, setFailed] = useState<Readonly<Record<string, string>>>({});
   const [added, setAdded] = useState(0);
   // The exact request of a batch whose answer never arrived (no answer or 5xx): it may have been applied, so it is repeated byte for byte, with the same key and the lines the host saw.
-  const [pending, setPending] = useState<{ readonly body: GiftBatchRequest; readonly order: readonly string[] } | null>(null);
+  // `edited`: the host changed something since; the pending request is then settled first (the list is read) and only the rest gets a new body.
+  const [pending, setPending] = useState<{ readonly body: GiftBatchRequest; readonly order: readonly string[]; readonly edited: boolean } | null>(null);
+  const touch = (): void => setPending((current) => (current && !current.edited ? { ...current, edited: true } : current));
 
   const geo = useProviderGeo(client);
   const cities = geo.data?.items ?? [];
@@ -64,7 +66,10 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
   const settled = useMemo(() => (pending ? new Set([...listed].filter((code) => !pending.order.includes(code))) : listed), [listed, pending]);
   const ideas: readonly GiftRecommendation[] | undefined = recs.data?.items;
   // The ideas of step 2 and 3: ticked, still recommended and not already on the list, in the order the catalog recommends them.
-  const active = useMemo(() => (ideas ?? []).filter((entry) => ticked.includes(entry.idea.code) && !settled.has(entry.idea.code)), [ideas, ticked, settled]);
+  // While a request waits for its answer and nothing was edited, the lines are exactly the ones it carries, whatever the recommendations do meanwhile.
+  const active = useMemo(() => (pending && !pending.edited
+    ? (ideas ?? []).filter((entry) => pending.order.includes(entry.idea.code))
+    : (ideas ?? []).filter((entry) => ticked.includes(entry.idea.code) && !settled.has(entry.idea.code))), [ideas, ticked, settled, pending]);
   const productOf = (entry: GiftRecommendation): RecommendedProductCard | undefined => entry.products.find((product) => product.listingId === picks[entry.idea.code]?.listingId);
   const picked = (entry: GiftRecommendation): boolean => { const product = productOf(entry); return product !== undefined && isOrderable(product.stock) && failed[entry.idea.code] === undefined; };
   const complete = active.length > 0 && active.every(picked);
@@ -89,29 +94,29 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
   const guard = list.isError && !isGiftListMissing(list.error);
 
   const go = (next: Step): void => { setMoved(true); setStep(next); };
-  const toggle = (code: string): void => { setPending(null); setTicked((current) => (current.includes(code) ? current.filter((item) => item !== code) : [...current, code])); };
+  const toggle = (code: string): void => { touch(); setTicked((current) => (current.includes(code) ? current.filter((item) => item !== code) : [...current, code])); };
   const clearFailure = (code: string): void => setFailed(({ [code]: _gone, ...rest }) => rest);
   const choose = (code: string, product: RecommendedProductCard): void => {
     if (picks[code]?.listingId === product.listingId) return;
     clearFailure(code);
-    setPending(null);
+    touch();
     setPicks((current) => ({ ...current, [code]: { listingId: product.listingId, variantId: defaultVariant(product), quantity: 1, group: suggestGroupGift(unitPriceOf(product, defaultVariant(product)), 1), groupTouched: false } }));
   };
-  const change = (code: string, next: Pick): void => { clearFailure(code); setPending(null); setPicks((current) => ({ ...current, [code]: next })); };
+  const change = (code: string, next: Pick): void => { clearFailure(code); touch(); setPicks((current) => ({ ...current, [code]: next })); };
 
-  const submit = (): void => {
-    if (!complete || notesTooLong || !flight.begin()) return;
+  const toEntries = (entries: readonly GiftRecommendation[]) => entries.flatMap((entry) => { const pick = picks[entry.idea.code]; return pick ? [toBatchEntry({ ideaCode: entry.idea.code, listingId: pick.listingId, variantId: pick.variantId, quantity: pick.quantity, groupGift: pick.group })] : []; });
+  // Omitted keeps the saved notes; null clears them (contract).
+  const bodyOf = (entries: readonly GiftRecommendation[], saved: string): GiftBatchRequest => {
     const trimmed = notesValue.trim();
-    // A pending request is repeated as it was; otherwise the body is built from what the host sees now.
-    const items = active.flatMap((entry) => { const pick = picks[entry.idea.code]; return pick ? [toBatchEntry({ ideaCode: entry.idea.code, listingId: pick.listingId, variantId: pick.variantId, quantity: pick.quantity, groupGift: pick.group })] : []; });
-    // Omitted keeps the saved notes; null clears them (contract).
-    const fresh: GiftBatchRequest = { items, ...(trimmed !== savedNotes.trim() ? { deliveryNotes: trimmed === "" ? null : trimmed } : {}) };
-    const body = pending?.body ?? fresh;
-    const order = pending?.order ?? active.map((entry) => entry.idea.code);
+    return { items: toEntries(entries), ...(trimmed !== saved.trim() ? { deliveryNotes: trimmed === "" ? null : trimmed } : {}) };
+  };
+  const finish = (count: number): void => { setPending(null); setFailed({}); setAdded(count); setTicked([]); setPicks({}); setNotes(null); setBand(null); setStep("done"); };
+
+  const send = (body: GiftBatchRequest, order: readonly string[]): void => {
     add.mutate(body, {
-      onSuccess: (result) => { setPending(null); setFailed({}); setAdded(result.items.length); setTicked([]); setPicks({}); setNotes(null); setBand(null); setStep("done"); },
+      onSuccess: (result) => finish(result.items.length),
       onError: (error) => {
-        setPending(mayHaveBeenApplied(error) ? { body, order } : null);
+        setPending(mayHaveBeenApplied(error) ? { body, order, edited: false } : null);
         const found: readonly BatchFailure[] = batchFailures(error);
         const byIdea = Object.fromEntries(found.flatMap((failure) => { const idea = order[failure.itemIndex]; return idea ? [[idea, failure.code] as const] : []; }));
         setFailed(byIdea);
@@ -120,6 +125,31 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
       },
       onSettled: flight.end
     });
+  };
+
+  /**
+   * A request whose answer was lost may have been applied, and the host edited the selection since. Before building a new body the list is read:
+   * the ideas it already holds were applied (all or nothing) and leave the selection; what remains gets a new body and a new key. With nothing left
+   * the earlier request WAS the whole selection: the host is told «Listo». A list that cannot be read keeps everything and shows its own retry.
+   */
+  const settleThenSend = async (before: { readonly order: readonly string[] }): Promise<void> => {
+    try {
+      const read = await list.refetch();
+      if (read.isError || !read.data) { flight.end(); return; }
+      const live = new Set(read.data.items.filter((item) => LIVE_STATUS.has(item.status)).flatMap((item) => (item.giftIdeaCode ? [item.giftIdeaCode] : [])));
+      const rest = active.filter((entry) => !live.has(entry.idea.code));
+      setPending(null);
+      if (rest.length === 0) { finish(before.order.filter((code) => live.has(code)).length); flight.end(); return; }
+      send(bodyOf(rest, read.data.deliveryNotes ?? ""), rest.map((entry) => entry.idea.code));
+    } catch { flight.end(); }
+  };
+
+  const submit = (): void => {
+    if (!complete || notesTooLong || !flight.begin()) return;
+    if (pending?.edited) { void settleThenSend(pending); return; }
+    // A pending request is repeated as it was (same body, same key); otherwise the body is built from what the host sees now.
+    if (pending) send(pending.body, pending.order);
+    else send(bodyOf(active, savedNotes), active.map((entry) => entry.idea.code));
   };
 
   const failures = batchFailures(add.error);
@@ -155,7 +185,7 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
           <StepHeading focusOnMount={moved} testID="wizard-step-title">{title}</StepHeading>
           {celebration.currency !== "BOB" && step !== "ideas" ? <Text style={styles.muted}>{t("gifts.host.wizard.products.currencyNote")}</Text> : null}
           {step === "ideas" ? (
-            <IdeasStep ideas={ideas} ticked={ticked} listed={listed} headline={headline} cities={cities} city={city} onCity={setChosenCity} band={band} onClearBand={() => setBand(null)} onToggle={toggle} onStore={onStore} onSeeList={onSeeList}
+            <IdeasStep ideas={ideas} ticked={ticked} listed={settled} headline={headline} cities={cities} city={city} onCity={(slug) => { touch(); setChosenCity(slug); }} band={band} onClearBand={() => setBand(null)} onToggle={toggle} onStore={onStore} onSeeList={onSeeList}
               loading={recs.isPending} error={recs.isError} offline={isNoAnswer(recs.error)} onRetry={() => { void recs.refetch(); }} />
           ) : null}
           {step === "products" ? (
@@ -166,7 +196,7 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
             </>
           ) : null}
           {step === "summary" ? (
-            <SummaryStep lines={lines} totalMinor={totalMinor} report={report} guests={guests} notes={notesValue} onNotes={(value) => { setPending(null); setNotes(value); }} showCurrencyNote={celebration.currency !== "BOB"}
+            <SummaryStep lines={lines} totalMinor={totalMinor} report={report} guests={guests} notes={notesValue} onNotes={(value) => { touch(); setNotes(value); }} showCurrencyNote={celebration.currency !== "BOB"}
               onSeeCheap={() => { setBand("b1"); go("ideas"); }} onChange={() => go("products")} />
           ) : null}
         </View>
@@ -186,7 +216,7 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
         </View>
       ) : null}
       {guard && step === "summary" ? (
-        <Notice kind="error">
+        <Notice key={list.errorUpdateCount} kind="error">
           <Text style={styles.body} testID="wizard-list-error">{t("gifts.host.wizard.errors.listUnreadable")}</Text>
           <ActionButton icon="refresh" variant="secondary" label={t("gifts.host.wizard.errors.listRetry")} busy={list.isFetching} onPress={() => { void list.refetch(); }} testID="wizard-list-retry" />
         </Notice>

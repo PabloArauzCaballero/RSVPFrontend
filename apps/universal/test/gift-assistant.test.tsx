@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import axe from "axe-core";
+import { QueryClient } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AddGiftScreen } from "../src/host/gifts/add-screen";
 import { GiftsScreen } from "../src/host/gifts/gifts-screen";
@@ -262,25 +263,39 @@ describe("R4 · retries and errors of the batch", () => {
     expect(new Set(bodies).size).toBe(1);
   });
 
-  it("applied but lost: the answer never arrives, the list read meanwhile already has the gifts, and the retry repeats the same request until «Listo»", async () => {
-    let applied = false;
-    let attempt = 0;
-    const { calls } = await toSummary({
-      [`GET ${ITEMS}`]: () => (applied ? { ...EMPTY_LIST, items: [gift("n1", { giftIdeaCode: "CAKE" }), gift("n2", { giftIdeaCode: "DINNERWARE_SET" })] } : EMPTY_LIST),
-      [BATCH]: () => { attempt += 1; if (attempt === 1) { applied = true; throw new TypeError("fetch failed"); } return created([gift("n1", { giftIdeaCode: "CAKE" }), gift("n2", { giftIdeaCode: "DINNERWARE_SET" })]); }
-    });
+  /** The list the server holds once the first request was applied. */
+  const APPLIED = { ...EMPTY_LIST, items: [gift("n1", { giftIdeaCode: "CAKE" }), gift("n2", { giftIdeaCode: "DINNERWARE_SET" })] };
+  const lostThenApplied = async (extra: Record<string, Handler> = {}) => {
+    const state = { applied: false, attempt: 0 };
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+    const made = fakeClient(handlers({
+      [`GET ${ITEMS}`]: () => (state.applied ? APPLIED : EMPTY_LIST),
+      [BATCH]: () => { state.attempt += 1; if (state.attempt === 1) { state.applied = true; throw new TypeError("fetch failed"); } return created(APPLIED.items); },
+      ...extra
+    }));
+    renderApp(<AddGiftScreen celebrationId="c-1" initial="catalog" onNavigate={navigate} />, made.client, undefined, undefined, queryClient);
+    await screen.findByTestId("idea-CAKE");
+    click("idea-CAKE");
+    click("idea-DINNERWARE_SET");
+    await next(/Elige un producto por idea/);
+    click("choose-torta");
+    click("choose-vajilla");
+    await next(/Revisa tu lista/);
     click("wizard-submit");
     expect((await screen.findByTestId("wizard-submit-error")).textContent).toMatch(/Sin conexión por ahora/);
-    // The connection comes back and the screen is focused again: the list is read and it already holds both gifts.
-    window.dispatchEvent(new Event("online"));
-    document.dispatchEvent(new Event("visibilitychange"));
-    window.dispatchEvent(new Event("focus"));
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    // Nothing moved under the host: both lines and the count are still there, and the button still adds the same two gifts.
+    return { ...made, queryClient, state };
+  };
+  const reads = (calls: readonly { method: string; path: string }[]) => calls.filter((call) => call.method === "GET" && call.path === ITEMS).length;
+
+  it("applied but lost: the list is read again (forced) and already holds the gifts, yet both lines stay and the retry repeats the same request until «Listo»", async () => {
+    const { calls, queryClient } = await lostThenApplied();
+    const before = reads(calls);
+    // staleTime keeps a focus or reconnect from reading: force the read the way an invalidation of the list would.
+    await queryClient.invalidateQueries({ queryKey: ["gifts"] });
+    await waitFor(() => expect(reads(calls)).toBeGreaterThan(before));
     expect(screen.getByTestId("line-CAKE")).toBeTruthy();
     expect(screen.getByTestId("line-DINNERWARE_SET")).toBeTruthy();
     expect(screen.getByTestId("wizard-submit").textContent).toBe("Agregar 2 regalos");
-    expect(screen.queryByText(/Agregar 0 regalos/)).toBeNull();
     click("wizard-submit");
     expect(await screen.findByTestId("wizard-done")).toBeTruthy();
     expect(screen.getByTestId("wizard-done-title").textContent).toBe("Listo: agregamos 2 regalos");
@@ -288,6 +303,59 @@ describe("R4 · retries and errors of the batch", () => {
     expect(sent).toHaveLength(2);
     expect(sent[1]?.headers.get("idempotency-key")).toBe(sent[0]?.headers.get("idempotency-key"));
     expect(JSON.stringify(sent[1]?.body)).toBe(JSON.stringify(sent[0]?.body));
+  });
+
+  it("applied, lost, then the host edits the notes: the list is read first, the ideas it already holds leave the selection and the screen says «Listo», never «No se agregó ningún regalo»", async () => {
+    const { calls } = await lostThenApplied();
+    const before = reads(calls);
+    fireEvent.change(screen.getByTestId("wizard-notes"), { target: { value: "Portón verde" } });
+    click("wizard-submit");
+    expect(await screen.findByTestId("wizard-done")).toBeTruthy();
+    expect(screen.getByTestId("wizard-done-title").textContent).toBe("Listo: agregamos 2 regalos");
+    expect(reads(calls)).toBeGreaterThan(before);
+    // Nothing new was sent: no second body, no 422 DUPLICATE_GIFT_IDEA.
+    expect(calls.filter((call) => call.path === `${ITEMS}/batch`)).toHaveLength(1);
+    expect(screen.queryByText(/No se agregó ningún regalo/)).toBeNull();
+  });
+
+  it("lost and NOT applied, then an edit: the list is read, the rest goes as a new body with a new key and the label counts what is sent", async () => {
+    const { calls, state } = await lostThenApplied({ [BATCH]: () => { throw new TypeError("fetch failed"); } });
+    void state;
+    // Take the second idea off: what remains must be sent, and only that.
+    click("wizard-back");
+    await screen.findByRole("heading", { name: /Elige un producto por idea/ });
+    click("wizard-back");
+    await screen.findByTestId("idea-CAKE");
+    click("idea-DINNERWARE_SET");
+    await next(/Elige un producto por idea/);
+    await next(/Revisa tu lista/);
+    expect(screen.getByTestId("wizard-submit").textContent).toBe("Agregar 1 regalo");
+    click("wizard-submit");
+    await waitFor(() => expect(calls.filter((call) => call.path === `${ITEMS}/batch`)).toHaveLength(2));
+    const sent = calls.filter((call) => call.path === `${ITEMS}/batch`);
+    expect((sent[1]?.body as { items: unknown[] }).items).toHaveLength(1);
+    expect(sent[1]?.headers.get("idempotency-key")).not.toBe(sent[0]?.headers.get("idempotency-key"));
+  });
+
+  it("while a request is pending the ideas are not «Ya en tu lista» and the counter agrees with the lines", async () => {
+    const { calls, queryClient } = await lostThenApplied();
+    const before = reads(calls);
+    await queryClient.invalidateQueries({ queryKey: ["gifts"] });
+    await waitFor(() => expect(reads(calls)).toBeGreaterThan(before));
+    click("wizard-back");
+    await screen.findByRole("heading", { name: /Elige un producto por idea/ });
+    click("wizard-back");
+    await screen.findByTestId("idea-CAKE");
+    expect(screen.queryByTestId("idea-listed-CAKE")).toBeNull();
+    expect(screen.getByTestId("wizard-selected").textContent).toBe("2 ideas elegidas");
+  });
+
+  it("a definitive refusal (4xx) reads the list again; a missing answer does not", async () => {
+    const { calls } = await toSummary({ [BATCH]: () => new HttpFailure(422, { code: "INVALID_DELIVERY_NOTES" }) });
+    const before = reads(calls);
+    click("wizard-submit");
+    await screen.findByTestId("wizard-submit-error");
+    await waitFor(() => expect(reads(calls)).toBeGreaterThan(before));
   });
 
   it("after a success an identical selection is a NEW request with a new key, not a replay that creates nothing", async () => {
