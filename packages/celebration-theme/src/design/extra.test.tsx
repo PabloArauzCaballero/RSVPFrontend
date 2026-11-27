@@ -194,6 +194,22 @@ describe("the six extra templates as documents v2", () => {
     expect(css).toMatch(/\[data-heading-face="script"\] :is\(h1, h2, h3[^)]*\) \{ font-family: var\(--celebration-heading-font\); \}/);
   });
 
+  it("PL-FE143-R2-2 · the photo-on-the-text-axis rule reaches the six extra templates only: the older templates (even those that centre the cover) keep the markup and the geometry they had", () => {
+    const dir = join(__dirname, "documents");
+    const older = readdirSync(dir).filter((file) => file.endsWith(".json")).map((file) => file.slice(0, -5)).filter((name) => !(name in EXTRA_TEMPLATES));
+    expect(older.length).toBeGreaterThanOrEqual(30);
+    let centring = 0;
+    for (const name of older) {
+      const file = JSON.parse(readFileSync(join(dir, `${name}.json`), "utf8")) as { name: string; description: string; eventTypeTags: string[]; layout: string; theme: unknown; sectionOrder: string[] };
+      const template = { id: `older-${name}`, name: file.name, description: file.description, status: "PUBLISHED", eventTypeTags: file.eventTypeTags, layout: file.layout, theme: file.theme, sectionOrder: file.sectionOrder, version: 2 };
+      const markup = renderToStaticMarkup(<CelebrationRenderer theme={themeFromTemplate(template as never, SECTIONS)} view={VIEW} gallery={GALLERY} t={t} now={NOW} basePath="/c/ana-y-luis" />);
+      expect(markup, name).not.toContain("data-align=");
+      if (JSON.stringify(file.theme).includes('"align":"center"')) centring += 1;
+    }
+    expect(centring, "older templates that centre text (the case the rule must not change)").toBeGreaterThan(10);
+    expect(NAMES.filter((name) => html(name).includes('data-align="center"')).sort()).toEqual(["despedida-esmoquin", "otros-mesa", "pedida-rosa", "pedida-solitario"]);
+  });
+
   it("PL-FE143-V5 · the accents of the templates of one event type are at least 30 degrees apart (light), whatever the other templates are", () => {
     const dir = join(__dirname, "documents");
     const documents = readdirSync(dir).filter((file) => file.endsWith(".json")).map((file) => JSON.parse(readFileSync(join(dir, file), "utf8")) as { key: string; eventTypeTags: string[]; theme: { tokens: { palettes: { light: { accent: string } } } } });

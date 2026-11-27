@@ -4,6 +4,7 @@ import otrosMesa from "./otros-mesa.json" with { type: "json" };
 import otrosRumbo from "./otros-rumbo.json" with { type: "json" };
 import pedidaRosa from "./pedida-rosa.json" with { type: "json" };
 import pedidaSolitario from "./pedida-solitario.json" with { type: "json" };
+import { EXTRA_TEMPLATE_IDS } from "./extra-ids.js";
 import type { DesignDocumentV2 } from "../types.js";
 import type { TemplateDocument } from "../../types.js";
 
@@ -19,14 +20,7 @@ export const EXTRA_TEMPLATES = {
 
 export type ExtraName = keyof typeof EXTRA_TEMPLATES;
 
-export const EXTRA_TEMPLATE_IDS: Readonly<Record<ExtraName, string>> = {
-  "otros-rumbo": "0f2e158b-0faa-5132-993c-a4ea99322775",
-  "otros-mesa": "2c2ff3d9-90a2-5fb3-a785-fb02b683e647",
-  "despedida-disco": "222aca44-32fa-55c3-af78-2787ceee0130",
-  "despedida-esmoquin": "9b901c0b-4178-534c-8166-de476e77527d",
-  "pedida-solitario": "577d5708-976d-53e0-897b-5c299f4b79bf",
-  "pedida-rosa": "d76ce414-6e7d-5f66-b34e-1165c3df4f94"
-};
+export { EXTRA_TEMPLATE_IDS } from "./extra-ids.js";
 
 /** The row `GET /media/templates/{id}` would return for one of them. */
 export function extraTemplate(name: ExtraName): TemplateDocument {

@@ -16,6 +16,7 @@ import type { CelebrationTheme, SectionId, Translate } from "../types.js";
 import { scopeCss } from "../custom/css.js";
 import { requiredScrim } from "./colour.js";
 import { familyById } from "./catalog.js";
+import { EXTRA_TEMPLATE_IDS } from "./documents/extra-ids.js";
 import { designPalette, fontStack } from "./read.js";
 import type { DesignBackground, PaletteRole, DesignBlock, DesignCanvas, DesignDocumentV2, DesignElement, DesignLink, DesignPage } from "./types.js";
 
@@ -103,8 +104,12 @@ function BackgroundArt({ background }: { readonly background: DesignBackground |
   return drawing ? <InvitationArt drawing={drawing} className="cdesign-bg-art" /> : null;
 }
 
+/** Templates whose cover photo is put on the axis of the centred text (PL-FE143-V2). */
+const PHOTO_ON_TEXT_AXIS: ReadonlySet<string> = new Set(Object.values(EXTRA_TEMPLATE_IDS));
+
 /** The title block of the cover: who, when and where. The photo, when there is one, is part of the same block (PL-A9: every template decides where it goes). When the document centres the text
- * (`typography.align: "center"`) the photo shares its axis (PL-FE143-V2). */
+ * (`typography.align: "center"`) the photo shares its axis (PL-FE143-V2), but only for the templates that were drawn and measured with it (`PHOTO_ON_TEXT_AXIS`): the older templates keep the geometry
+ * they had (PL-FE143-R2-2), until the owner decides whether the same fix reaches them. */
 function CoverBlock({ block, context, centred }: { readonly block: DesignBlock; readonly context: Context; readonly centred: boolean }): ReactNode {
   const { content, view, t, cover } = context;
   const image = cover && (cover.variants.medium || cover.variants.full || cover.variants.webp || cover.variants.svg) ? asMedia(cover) : null;
@@ -146,7 +151,7 @@ function BlockBody({ block, element, context }: { readonly block: DesignBlock; r
     giftsHref: context.giftsHref, giftsStatus: props.giftsStatus
   };
   switch (block.type) {
-    case "cover": return <CoverBlock block={block} context={context} centred={element.typography?.align === "center"} />;
+    case "cover": return <CoverBlock block={block} context={context} centred={element.typography?.align === "center" && PHOTO_ON_TEXT_AXIS.has(context.theme.id)} />;
     case "giftsCta": return <GiftsAction {...sectionProps} label={str(settings["label"])} variant={str(settings["style"])} />;
     case "rsvpCta": return <RsvpAction {...sectionProps} label={str(settings["label"])} variant={str(settings["style"])} />;
     case "story": case "schedule": case "venues": case "gallery": case "faq": case "recommendations": {
