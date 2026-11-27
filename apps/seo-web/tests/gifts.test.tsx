@@ -92,6 +92,75 @@ describe("M21 · la lista de regalos de la web es la de la app", () => {
   });
 });
 
+describe('REG-01 · lista cerrada por el anfitrión', () => {
+  const MINE = { id: 'res-1', itemId: 'cat-2', celebrationId: CELEBRATION, status: 'COMMITTED', requestedAt: '2026-11-20T00:00:00Z' };
+  /** The server as Gift List 1.15.0 answers: `closed` in the list, 409 LIST_CLOSED on a reservation, own reservations and cancel untouched. */
+  function stubClosable(state: { closed: boolean; mine?: boolean }) {
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes('/listings/')) return json(404, {});
+      if (init?.method === 'POST') {
+        posts.push({ url, key: new Headers(init.headers).get('idempotency-key') });
+        if (url.endsWith('/cancel')) { state.mine = false; return json(200, { ...MINE, status: 'CANCELLED' }); }
+        state.closed = true;
+        return json(409, { type: 'x', title: 'Conflict', status: 409, code: 'LIST_CLOSED' });
+      }
+      if (url.includes('/my-reservations')) return json(200, { items: state.mine ? [MINE] : [] });
+      const items = ITEMS.map((gift) => (gift.id === 'cat-2' && state.mine ? { ...gift, status: 'COMMITTED' } : gift));
+      return json(200, { items, partnerPriorityEnabled: true, closed: state.closed });
+    }));
+  }
+  const reserveButtons = () => screen.queryAllByRole('button', { name: /^Reservar / });
+
+  it('says the list is closed and offers no reservation, in es-BO and en-US', async () => {
+    stubClosable({ closed: true });
+    const first = renderList();
+    expect((await screen.findByTestId('gift-list-closed')).textContent).toBe('La lista de regalos está cerradaQuienes te invitan la cerraron: ya no se pueden reservar regalos.');
+    expect(screen.getByText('Torta')).toBeTruthy();
+    expect(reserveButtons()).toHaveLength(0);
+    expect(screen.queryByText('Reserva un regalo en un toque y nadie más regalará lo mismo.')).toBeNull();
+    expect(document.activeElement).not.toBe(screen.getByTestId('gift-list-closed'));
+    first.unmount();
+    render(<GiftExperience slug="ana-luis" celebrationId={CELEBRATION} celebrationTitle="Ana y Luis" locale="en-US" />);
+    expect((await screen.findByTestId('gift-list-closed')).textContent).toBe('The gift list is closedYour hosts closed it: gifts can no longer be reserved.');
+  });
+
+  it('closed while the form was open: the 409 closes the form, explains it and never offers a retry', async () => {
+    const state = { closed: false };
+    stubClosable(state);
+    renderList();
+    fireEvent.click(await screen.findByRole('button', { name: 'Reservar Torta' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar reserva' }));
+    const note = await screen.findByTestId('gift-list-closed');
+    await waitFor(() => expect(document.activeElement).toBe(note));
+    expect(screen.queryByRole('button', { name: 'Confirmar reserva' })).toBeNull();
+    expect(reserveButtons()).toHaveLength(0);
+    expect(screen.queryByText(/Inténtalo de nuevo|Puedes volver a tocar/)).toBeNull();
+    expect(posts).toHaveLength(1);
+  });
+
+  it('what the guest already reserved stays and can still be cancelled, warned that it cannot be taken back while closed', async () => {
+    stubClosable({ closed: true, mine: true });
+    renderList();
+    const mine = within(await screen.findByTestId('my-reservation'));
+    expect(screen.getByTestId('gift-list-closed').textContent).toContain('Lo que ya reservaste se mantiene. Si quieres, puedes cancelarlo.');
+    fireEvent.click(mine.getByRole('button', { name: 'Cancelar mi reserva de Mesa' }));
+    expect(screen.getByRole('dialog').textContent).toContain('no podrás volver a reservarlo mientras siga cerrada');
+    expect(screen.getByRole('dialog').textContent).not.toContain('Si cambias de idea');
+    fireEvent.click(screen.getByRole('button', { name: 'Sí, cancelar la reserva' }));
+    expect(await screen.findByTestId('reservation-cancelled')).toBeTruthy();
+    expect(posts.map((post) => post.url.endsWith('/reservations/res-1/cancel'))).toEqual([true]);
+    expect(reserveButtons()).toHaveLength(0);
+  });
+
+  it('an open list (closed false, reopened) offers to reserve and shows no notice', async () => {
+    stubClosable({ closed: false });
+    renderList();
+    expect(await screen.findByRole('button', { name: 'Reservar Torta' })).toBeTruthy();
+    expect(screen.queryByTestId('gift-list-closed')).toBeNull();
+  });
+});
+
 describe('Guest gift photos', () => {
   it('shows the catalog photo using an anonymous public request and keeps the token out of the image referrer', async () => {
     stubFetch(() => json(201, {}), undefined, () => json(200, { imageUrl: 'https://images.example/torta.jpg' }));

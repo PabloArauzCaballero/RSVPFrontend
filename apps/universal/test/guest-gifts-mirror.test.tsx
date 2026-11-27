@@ -1,4 +1,4 @@
-import { fireEvent, screen, within } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { Linking } from "react-native";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MOCK_VALID_TOKEN } from "@rsvp/testing/contract-mock";
@@ -185,5 +185,37 @@ describe("D-3 · the guest cancels their own reservation in the app", () => {
     expect(await screen.findByText("Esta reserva ya no estaba activa. Actualizamos la lista.")).toBeTruthy();
     const keys = calls.filter((call) => call.method === "POST").map((call) => call.headers.get("idempotency-key"));
     expect(new Set(keys).size).toBe(1);
+  });
+});
+
+describe("REG-01 · lista cerrada por el anfitrión (app)", () => {
+  const MINE = { id: "res-1", itemId: VELAS, celebrationId: "c-1", status: "COMMITTED", requestedAt: "2026-11-20T00:00:00Z" };
+  const closable = (state: { closed: boolean }, extra: Readonly<Record<string, Handler>> = {}) => show({}, {
+    "GET /gifts/celebrations/c-1/items": () => ({ items: ITEMS, partnerPriorityEnabled: true, closed: state.closed }),
+    [`POST /gifts/celebrations/c-1/items/${TORTA}/reservations`]: () => { state.closed = true; return new HttpFailure(409, { code: "LIST_CLOSED" }); },
+    ...extra
+  });
+  beforeEach(() => { saveGiftCredential("ana-luis", TOKEN); });
+
+  it("says the list is closed, offers no reservation and keeps the guest's own reservation cancellable", async () => {
+    closable({ closed: true }, { "GET /gifts/celebrations/c-1/my-reservations": () => ({ items: [MINE] }) });
+    await screen.findByTestId(`cancel-reservation-${VELAS}`);
+    const note = screen.getByTestId("gift-list-closed");
+    expect(note.textContent).toContain("La lista de regalos está cerrada");
+    expect(note.textContent).toContain("Lo que ya reservaste se mantiene.");
+    expect(screen.queryByTestId(`reserve-${TORTA}`)).toBeNull();
+    expect(screen.queryByTestId(`reserve-${MESA}`)).toBeNull();
+    fireEvent.click(screen.getByTestId(`cancel-reservation-${VELAS}`));
+    expect(screen.getByText(/no podrás volver a reservarlo mientras siga cerrada/)).toBeTruthy();
+  });
+
+  it("closed while the form was open: the 409 closes the form and says why, with nothing to retry", async () => {
+    closable({ closed: false });
+    fireEvent.click(await screen.findByTestId(`reserve-${TORTA}`));
+    fireEvent.click(screen.getByTestId("reserve-confirm"));
+    expect(await screen.findByTestId("gift-list-closed")).toBeTruthy();
+    await waitFor(() => expect(screen.queryByTestId("reserve-confirm")).toBeNull());
+    expect(screen.queryByTestId(`reserve-${TORTA}`)).toBeNull();
+    expect(screen.queryByTestId("reserve-error")).toBeNull();
   });
 });
