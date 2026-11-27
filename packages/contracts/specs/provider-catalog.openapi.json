@@ -12267,7 +12267,23 @@
             "required": [
               "giftEligible"
             ],
-            "description": "3.6.0: GET /listings/{listingId} always sends giftEligible (ListingSummary leaves it optional because GET /listings does not carry it)."
+            "description": "3.6.0: GET /listings/{listingId} always sends giftEligible (ListingSummary leaves it optional because GET /listings does not carry it).",
+            "properties": {
+              "variants": {
+                "type": "array",
+                "maxItems": 20,
+                "description": "3.10.0: the versions a PRODUCT has now and their stock (empty without versions; absent for a SERVICE). Gift List refuses to add a version that is not listed or is OUT_OF_STOCK.",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["id", "stock"],
+                  "properties": {
+                    "id": { "type": "string", "format": "uuid" },
+                    "stock": { "type": "string", "enum": ["AVAILABLE", "OUT_OF_STOCK", "MADE_TO_ORDER"] }
+                  }
+                }
+              }
+            }
           }
         ]
       },

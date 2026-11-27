@@ -3578,7 +3578,15 @@ export interface components {
             /** @description R2: optimistic-lock version (ETag). */
             version?: number;
         };
-        ListingDetail: components["schemas"]["ListingSummary"] & Record<string, never>;
+        ListingDetail: components["schemas"]["ListingSummary"] & {
+            /** @description 3.10.0: the versions a PRODUCT has now and their stock (empty without versions; absent for a SERVICE). Gift List refuses to add a version that is not listed or is OUT_OF_STOCK. */
+            variants?: {
+                /** Format: uuid */
+                id: string;
+                /** @enum {string} */
+                stock: "AVAILABLE" | "OUT_OF_STOCK" | "MADE_TO_ORDER";
+            }[];
+        };
         ListingPhoto: {
             altText: string | null;
             /**
