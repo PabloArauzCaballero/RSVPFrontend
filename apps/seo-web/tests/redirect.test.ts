@@ -174,6 +174,31 @@ describe("REQ-F27-02/03 · /r/{listingId} redirector", () => {
     expect(fetchFn).toHaveBeenCalledTimes(1);
   });
 
+  it("R6b · eventType is forwarded to Provider Catalog (the provider's report shows it) and never reaches the partner URL", async () => {
+    const fetchFn = gateway(upstream302("https://shop.example/torta?utm_source=rsvp"));
+    const response = await GET(new Request(`http://site.test/r/${LISTING}?surface=GIFT_LIST&eventType=WEDDING`), ctx);
+    const [url] = fetchFn.mock.calls[0] as unknown as [URL];
+    expect(url.searchParams.get("eventType")).toBe("WEDDING");
+    expect(response.headers.get("location")).not.toContain("eventType");
+  });
+
+  it("R6b · the portal's ctx (PROVIDER_OWNER or PREVIEW) is forwarded like a member's one, and a link without eventType sends none", async () => {
+    const fetchFn = gateway(upstream302());
+    await GET(new Request(`http://site.test/r/${LISTING}?surface=PREVIEW&ctx=portal-ctx-de-prueba`), ctx);
+    const [url] = fetchFn.mock.calls[0] as unknown as [URL];
+    expect(url.searchParams.get("ctx")).toBe("portal-ctx-de-prueba");
+    expect(url.searchParams.get("surface")).toBe("PREVIEW");
+    expect(url.searchParams.has("eventType")).toBe(false);
+  });
+
+  it("M34 · no session identifier travels to Provider Catalog: not in the query, not in the headers", async () => {
+    const fetchFn = gateway(upstream302());
+    await GET(new Request(`http://site.test/r/${LISTING}?sessionId=abc&surface=GIFT_LIST`, { headers: { "x-session-id": "abc" } }), ctx);
+    const [url, init] = fetchFn.mock.calls[0] as unknown as [URL, RequestInit];
+    expect(url.searchParams.has("sessionId")).toBe(false);
+    expect(new Headers(init.headers as Record<string, string>).has("x-session-id")).toBe(false);
+  });
+
   it("/r/ is not indexable", () => {
     const rule = (robots().rules as { disallow: string[] }[])[0];
     expect(rule?.disallow).toContain("/r/");
