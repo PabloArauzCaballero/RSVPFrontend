@@ -11,7 +11,7 @@ Fuera de carril; sigue §5.9 y R6 del plan «Regalos solo de proveedores cargado
 
 ## No hay (y por qué)
 - **`PROVIDER_OWNER` sin llamador:** ninguna pantalla del portal abre hoy un `/r/` a una oferta propia fuera de la vista previa. El hook y `portalRedirectUrl` lo soportan y están probados.
-- Playwright con Chrome real contra el BE real: pendiente (no se levantó el stack de BE #166). iOS y Android no probados. 360/768/1280, claro/oscuro, axe y comparación visual: pendientes (las capturas de macOS no se regeneran en Linux).
+- Del recorrido con Chrome real (sección «Evidencia») no se recorrió la vista previa con enlaces ni la renovación del ctx: solo hay pruebas de pantalla con red simulada. iOS y Android no probados. 360/768/1280, claro/oscuro, axe y comparación visual: pendientes (las capturas de macOS no se regeneran en Linux).
 
 ## Comandos y resultados (sobre la punta de la rama)
 | Comando | Resultado |
@@ -19,10 +19,10 @@ Fuera de carril; sigue §5.9 y R6 del plan «Regalos solo de proveedores cargado
 | `corepack yarn typecheck` | exit 0, 19/19 |
 | `corepack yarn lint` | exit 0, 19/19 |
 | `corepack yarn workspace @rsvp/contracts check:generated` | exit 0, 8 contratos en `1151e6f14597` |
-| api-client / ui-web / query-hooks / seo-web `test` | exit 0: 19 / 22 / 191 / 225 |
-| universal `test` | exit 0: 808 y 817 pruebas (dos proyectos de vitest). Una primera corrida simultánea con el build de seo-web salió con exit 1 sin que yo viera el motivo; la repetición a solas pasó |
+| api-client / ui-web / query-hooks / seo-web `test` (sobre la punta `624c42f9`) | exit 0: 19 / 22 / 192 / 227 |
+| universal `test` | exit 0: 809 pruebas, 64 archivos (sobre `624c42f9`). Una primera corrida simultánea con el build de seo-web salió con exit 1 sin que yo viera el motivo; la repetición a solas pasó |
 | `corepack yarn workspace @rsvp/seo-web build` | exit 0 |
-| `gitleaks git --log-opts="origin/chore/deploy-contabo-coolify..HEAD"` v8.28.0 | 44 commits escaneados, no leaks found |
+| `gitleaks git --log-opts="origin/chore/deploy-contabo-coolify..HEAD"` v8.28.0 | no leaks found, con `.gitleaksignore` (2 huellas exactas de `6c57caa1`, fixtures falsos corregidos en `76c572c4`; sin él: 2 `generic-api-key`) |
 
 Pruebas nuevas de esta ronda: `apps/universal/test/portal-preview-links.test.tsx` (9) y `packages/query-hooks/test/lead-report.test.tsx` (+3, renovación desde `expiresAt`).
 
