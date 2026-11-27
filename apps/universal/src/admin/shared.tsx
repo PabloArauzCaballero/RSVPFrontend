@@ -101,7 +101,7 @@ export function ReasonDialog({ visible, title, body, confirmLabel, onConfirm, on
   const close = (): void => { setReason(""); setTouched(false); onCancel(); };
   const value = reason.trim();
   const tooLong = maxLength !== undefined && value.length > maxLength;
-  const tooShort = minLength !== undefined && value.length > 0 && value.length < minLength;
+  const tooShort = minLength !== undefined && value !== "" && value.length < minLength;
   const error = touched && !value ? t("admin.common.reasonRequired") : tooLong ? t("admin.common.reasonTooLong", { max: maxLength ?? 0 }) : touched && tooShort ? t("admin.common.reasonTooShort", { min: minLength ?? 0 }) : undefined;
   return (
     <ConfirmDialog visible={visible} danger busy={busy} title={title} body={body} confirmLabel={confirmLabel} onCancel={close}

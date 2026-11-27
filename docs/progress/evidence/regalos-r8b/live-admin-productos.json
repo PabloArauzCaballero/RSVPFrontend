@@ -1,0 +1,93 @@
+{
+  "date": "2026-11-27T03:16:37.847Z",
+  "app": "http://localhost:8320",
+  "checks": [
+    {
+      "id": "L1",
+      "text": "the inbox lists the 3 products the service published, with the counters of the service",
+      "status": "PASS",
+      "observed": "3 rows, counters 3/0, axe 0 critical/serious"
+    },
+    {
+      "id": "L2",
+      "text": "hide needs 3 to 500 characters: «ab» is refused in place and nothing is sent",
+      "status": "PASS",
+      "observed": null
+    },
+    {
+      "id": "L3",
+      "text": "hide with a reason: the service records it, the product leaves the public reads and its owner sees why",
+      "status": "PASS",
+      "observed": "GET /listings/{id} 404, GET /r/{id} 404, owner sheet HIDDEN_BY_ADMIN with the reason"
+    },
+    {
+      "id": "L4",
+      "text": "«Ocultos»: the hidden product shows its reason and date, and its featured switch is disabled",
+      "status": "PASS",
+      "observed": "the service refuses it too: 409 LISTING_HIDDEN"
+    },
+    {
+      "id": "L5",
+      "text": "featured on a visible product: the switch sends PUT, the service stores it and the UI reflects it",
+      "status": "PASS",
+      "observed": "filter featured=true returns only that product"
+    },
+    {
+      "id": "L6",
+      "text": "filters reach the service: featured=false excludes the featured one",
+      "status": "PASS",
+      "observed": null
+    },
+    {
+      "id": "L7",
+      "text": "show: the product is visible again, republished and NOT featured again",
+      "status": "PASS",
+      "observed": "GET /listings/{id} 200, owner sheet COMPLETE, hidden counter 0"
+    },
+    {
+      "id": "L8",
+      "text": "a network failure shows the error state with a retry that recovers",
+      "status": "PASS",
+      "observed": null
+    },
+    {
+      "id": "L9",
+      "text": "no page errors in the console",
+      "status": "PASS",
+      "observed": null
+    }
+  ],
+  "axe": [
+    {
+      "screen": "bandeja",
+      "violations": []
+    },
+    {
+      "screen": "dialogo-ocultar",
+      "violations": []
+    },
+    {
+      "screen": "ocultos",
+      "violations": []
+    }
+  ],
+  "wire": [
+    "GET /providers/categories?… 200",
+    "GET /providers/admin/moderation/listings?… 200",
+    "POST /providers/admin/listings/1fccf630-a70d-42fe-9385-5d2ff2312d4e/hide 200",
+    "GET /providers/categories?… 200",
+    "GET /providers/admin/moderation/listings?… 200",
+    "GET /providers/admin/moderation/listings?… 200",
+    "PUT /providers/admin/listings/742413f3-e43f-4243-b03f-f7efb0c09469/featured 200",
+    "GET /providers/categories?… 200",
+    "GET /providers/admin/moderation/listings?… 200",
+    "GET /providers/admin/moderation/listings?… 200",
+    "GET /providers/admin/moderation/listings?… 200",
+    "POST /providers/admin/listings/1fccf630-a70d-42fe-9385-5d2ff2312d4e/show 200",
+    "GET /providers/categories?… 200",
+    "GET /providers/admin/moderation/listings?… 200",
+    "GET /providers/categories?… 200",
+    "GET /providers/admin/moderation/listings?… 200",
+    "GET /providers/admin/moderation/listings?… 200"
+  ]
+}
