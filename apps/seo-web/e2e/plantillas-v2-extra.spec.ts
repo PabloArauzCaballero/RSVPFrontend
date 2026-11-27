@@ -153,32 +153,44 @@ for (const name of NAMES) {
 }
 
 // PL-FE143-V1 · a script face is for titles only: no text node under 32 px (31.5 px, the fluid heading size rounds to 31.99) wears it (the date, the place, the countdown, the times and the venue names are facts a guest reads at 15 to 21 px).
-// PL-FE143-V2 · the photo and the cover text share one axis when the document centres the text.
+// PL-FE143-V2 · the photo and the cover text share one axis when the document centres the text. Mesa larga, Black tie, Solitario and Rosa centre it (PL-FE143-R2-4: asserted, not conditional), with and without photo, light and dark.
+const CENTRED: ReadonlySet<string> = new Set(["otros-mesa", "despedida-esmoquin", "pedida-solitario", "pedida-rosa"]);
 for (const name of NAMES) {
-  for (const width of WIDTHS) {
-    test(`${name} ${width}px: no script text under 32 px and the cover photo shares the axis of the text`, async ({ page }) => {
-      await open(page, `fixture-v2-${name}`, width, "light");
-      const small = await page.evaluate(() => {
-        const found: string[] = [];
-        const walker = document.createTreeWalker(document.querySelector(".celebration") as Node, NodeFilter.SHOW_TEXT);
-        for (let text = walker.nextNode(); text; text = walker.nextNode()) {
-          const el = text.parentElement;
-          if (!el || !(text.textContent ?? "").trim() || el.closest("svg, style, script")) continue;
-          const style = getComputedStyle(el);
-          if (/allura/i.test(style.fontFamily) && parseFloat(style.fontSize) < 31.5) found.push(`${(text.textContent ?? "").trim().slice(0, 24)} ${style.fontSize}`);
-        }
-        return found;
-      });
-      expect(small, "script text under 32 px").toEqual([]);
-      const axes = await page.evaluate(() => {
-        const cover = [...document.querySelectorAll<HTMLElement>(".cdesign-cover")].find((node) => node.getBoundingClientRect().width > 0) as HTMLElement;
-        const photo = cover.querySelector(".cdesign-cover-photo")?.getBoundingClientRect();
-        const copy = cover.querySelector(".cdesign-cover-copy h1")?.getBoundingClientRect();
-        return { centred: cover.dataset["align"] === "center", photo: photo ? photo.x + photo.width / 2 : null, copy: copy ? copy.x + copy.width / 2 : null, photoWidth: photo?.width ?? 0, coverWidth: cover.getBoundingClientRect().width };
-      });
-      // A photo as wide as the whole cover (Black tie, Rumbo) has no axis to lose; a narrower one (arch, circle) must sit on the text's axis when the text is centred.
-      if (axes.centred && axes.photo !== null && axes.copy !== null && axes.photoWidth < axes.coverWidth - 1) expect(Math.abs(axes.photo - axes.copy), "photo axis vs text axis").toBeLessThanOrEqual(1.5);
-    });
+  for (const variant of ["", "-sinfoto"] as const) {
+    for (const scheme of ["light", "dark"] as const) {
+      for (const width of WIDTHS) {
+        test(`${name}${variant} ${scheme} ${width}px: no script text under 32 px and the cover photo shares the axis of the text`, async ({ page }) => {
+          await open(page, `fixture-v2-${name}${variant}`, width, scheme);
+          const small = await page.evaluate(() => {
+            const found: string[] = [];
+            const walker = document.createTreeWalker(document.querySelector(".celebration") as Node, NodeFilter.SHOW_TEXT);
+            for (let text = walker.nextNode(); text; text = walker.nextNode()) {
+              const el = text.parentElement;
+              if (!el || !(text.textContent ?? "").trim() || el.closest("svg, style, script")) continue;
+              const style = getComputedStyle(el);
+              if (/allura/i.test(style.fontFamily) && parseFloat(style.fontSize) < 31.5) found.push(`${(text.textContent ?? "").trim().slice(0, 24)} ${style.fontSize}`);
+            }
+            return found;
+          });
+          expect(small, "script text under 32 px").toEqual([]);
+          const axes = await page.evaluate(() => {
+            const cover = [...document.querySelectorAll<HTMLElement>(".cdesign-cover")].find((node) => node.getBoundingClientRect().width > 0) as HTMLElement;
+            const photo = cover.querySelector(".cdesign-cover-photo")?.getBoundingClientRect();
+            const copy = cover.querySelector(".cdesign-cover-copy h1")?.getBoundingClientRect();
+            return { centred: cover.dataset["align"] === "center", photo: photo ? photo.x + photo.width / 2 : null, copy: copy ? copy.x + copy.width / 2 : null, photoWidth: photo?.width ?? 0, coverWidth: cover.getBoundingClientRect().width };
+          });
+          expect(axes.centred, "the cover carries data-align=center").toBe(CENTRED.has(name));
+          if (!CENTRED.has(name)) return;
+          expect(axes.copy, "title measured").not.toBeNull();
+          if (variant === "-sinfoto") { expect(axes.photo, "no photo").toBeNull(); return; }
+          expect(axes.photo, "photo measured").not.toBeNull();
+          // Black tie (corporate) has a photo as wide as the cover: no axis to lose. The arch and the circle are narrower: that is where the photo could drift off the axis of the centred text.
+          if (name === "despedida-esmoquin") expect(axes.photoWidth, "photo as wide as the cover").toBeGreaterThanOrEqual(axes.coverWidth - 1);
+          else expect(axes.photoWidth, "photo narrower than the cover").toBeLessThan(axes.coverWidth - 1);
+          expect(Math.abs((axes.photo as number) - (axes.copy as number)), "photo axis vs text axis").toBeLessThanOrEqual(1.5);
+        });
+      }
+    }
   }
 }
 
