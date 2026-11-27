@@ -46,9 +46,17 @@ La prueba de caché de la e2e esperaba `aria-busy` = 0, que se cumple durante lo
 
 El disco compartido bajó de 8 GB (otro proyecto estaba corriendo su suite); se cerraron los servidores y se esperó a que volviera a 9,7 GB. La corrida final de la e2e (72/72) empezó con 7,9 GB libres.
 
+## Corrección de la ronda 2 de revisión (2026-11-27, macOS)
+
+- **Título perdido entre pantallas con el mismo título:** la limpieza de `nameDocument` comparaba el texto. En un `push`, la pantalla nueva nombra el documento y la anterior recibe `blur` después; al coincidir el texto, restauraba `DOne`. Ahora el dueño es la identidad de la última escritura. Reproducido antes de corregir: en vitest (`blur` en un `act` posterior: `expected 'DOne' to be 'Editor · DOne'`) y en Chrome (secciones del editor y pestañas de Regalos quedaban en `DOne`).
+- **Foco en el título al cruzar 960 px:** el título y las pestañas se dibujan de nuevo. `useKeepHeaderFocus` anota, antes de que React confirme el otro ancho, si el foco estaba en el título o en la pestaña activa y se lo devuelve; en cualquier otro caso no mueve nada.
+- **Volver desde una ruta sin `Screen`:** la llegada se confundía con un redibujado. Ahora un `blur` marca que la pantalla dejó el frente.
+- **Cobertura:** hoja «Más» a 360 px (e2e), dos pares de pantallas con igual título (e2e y vitest) y, en `screen-arrival.native.test.tsx`, que `Screen` entrega nodo y título a `moveScreenFocus` (sobre react-native-web, no en dispositivo).
+- **Pendiente en nativo (leído, no ejecutado):** en React Native 0.81.5, `findNodeHandle` en Fabric devuelve `__nativeTag`, que la instancia conserva al desmontarse (`ReactFabricPublicInstance.getNativeTagFromPublicInstance`). Por eso `screenFocusWasLost` nativo daría `false` y el foco no volvería al título cuando el esqueleto de código cede a la pantalla. No se cambió sin dispositivo con el que comprobarlo; falta también VoiceOver/TalkBack durante el empuje y al cerrar el `Modal`.
+
 ## No probado / límites
 - «Adelante» del navegador remonta el área: expo-router 6.0.24 reconstruye el estado desde el historial. Observado también en la oficial `ad6dd0ac` (la primera pantalla del `Stack` sale del DOM). Resaltado, foco y título quedan bien; el estado local de la pantalla restaurada se pierde.
-- Al cruzar 960 px la cabecera sí cambia de sitio: un foco puesto en ella (pestaña, acción) o el estado abierto de un menú de la cabecera no se conserva.
+- Al cruzar 960 px la cabecera cambia de sitio: el foco del título y de la pestaña activa se devuelve (ronda 2); el de otra pestaña o una acción, y el estado abierto de un menú de la cabecera, no se conservan.
 - El detalle de invitado tiene dos h1 («Invitado» y «Su enlace personal»), anterior a esta rama; no se tocó.
 - iOS y Android nativos: no se ejecutaron (sin simulador/dispositivo). El empuje de plataforma, el gesto de volver y `useReducedMotion` nativo quedan sin verificar.
 - Backend real: el recorrido usa el mock de contratos (como el gate visual), no el gateway Docker.

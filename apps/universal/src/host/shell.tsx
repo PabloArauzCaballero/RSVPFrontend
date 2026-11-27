@@ -416,7 +416,7 @@ export function Screen({ title, intro, nav, current, onNavigate, actions, menu, 
   const { focused, route } = useScreenFocused();
   const headingRef = useRef<Text>(null);
   const activeTabRef = useRef<View>(null);
-  useScreenArrival(focused, route, title, current, { heading: headingRef, tab: activeTabRef });
+  useScreenArrival(focused, route, title, current, wide, { heading: headingRef, tab: activeTabRef });
   const publisher = shell ? <ShellPublisher store={shell} focused={focused} nav={items} current={current} onNavigate={onNavigate} /> : null;
   const sectionTabs = destination?.tabs;
   // A change of destination fades in with a short rise, sibling tabs only fade; scroll returns to the top (docs/design/motion.md). Focus is

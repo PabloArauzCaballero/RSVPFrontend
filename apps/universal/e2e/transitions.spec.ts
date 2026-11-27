@@ -250,6 +250,54 @@ test.describe("arrival: focus and announcement", () => {
     });
   }
 
+  test("360px: moving through the More sheet puts focus on the title of the new screen and names the document", async ({ page }) => {
+    await page.emulateMedia({ colorScheme: "light", reducedMotion: "no-preference" });
+    await open(page, `/inicio${C}`, 360);
+    const more = page.getByRole("navigation", { name: MENU }).getByRole("button", { name: "More" });
+    // The second round shows screens that are still mounted in the Stack.
+    for (const name of ["Notices", "Settings", "Notices", "Settings"]) {
+      await more.click();
+      await page.getByRole("dialog").getByRole("link", { name, exact: true }).click();
+      await expect(page.getByRole("dialog")).toHaveCount(0);
+      await expect(more).toHaveAttribute("aria-current", "true");
+      await expectArrival(page);
+    }
+  });
+
+  // These pairs share one title. A push mounts the new screen before the old one hears of its blur: the old one must not
+  // take the document's name away.
+  test("sections of the editor, which share a title, keep the document named after it", async ({ page }) => {
+    await page.emulateMedia({ colorScheme: "light", reducedMotion: "no-preference" });
+    const loaded = trackFirstLoads(page);
+    await open(page, `/editor/general${C}`, 1280);
+    const title = (await heading(page).textContent()) ?? "";
+    const list = page.getByRole("navigation", { name: "Parts of your invitation" }).filter({ visible: true });
+    // The second round runs with the code already loaded, so no skeleton redraws the new screen and renames the document again.
+    for (const [part, path] of [["Who", "anfitriones"], ["Where", "lugares"], ["Story", "historia"], ["The basics", "general"], ["Who", "anfitriones"], ["Where", "lugares"]] as const) {
+      await list.getByText(part, { exact: true }).click();
+      await expect(page).toHaveURL(new RegExp(`/editor/${path}`));
+      await loaded();
+      await expect(page.locator("[data-testid=screen-stack]:visible")).toHaveCount(1);
+      await expect(heading(page)).toHaveText(title);
+      await expect(page).toHaveTitle(`${title} · DOne`);
+    }
+  });
+
+  test("the two gift tabs, which share a title, keep the document named after it", async ({ page }) => {
+    await page.emulateMedia({ colorScheme: "light", reducedMotion: "no-preference" });
+    const loaded = trackFirstLoads(page);
+    await open(page, `/regalos${C}`, 1280);
+    const title = (await heading(page).textContent()) ?? "";
+    for (const name of ["Reservations", "My list", "Reservations", "My list"]) {
+      await tab(page, name).click();
+      await expect(tab(page, name)).toHaveAttribute("aria-selected", "true");
+      await loaded();
+      await expect(page.locator("[data-testid=screen-stack]:visible")).toHaveCount(1);
+      await expect(heading(page)).toHaveText(title);
+      await expect(page).toHaveTitle(`${title} · DOne`);
+    }
+  });
+
   test("a section tab keeps keyboard focus on the tab of the screen it opens, and the document is renamed", async ({ page }) => {
     await page.emulateMedia({ colorScheme: "light", reducedMotion: "no-preference" });
     await open(page, `/editor/general${C}`, 1280);
@@ -323,6 +371,20 @@ test.describe("deep links and history", () => {
 });
 
 test.describe("state across the breakpoint", () => {
+  for (const start of [1280, 360]) {
+    test(`from ${start}px: focus left on the title by a navigation stays on the title across 960px`, async ({ page }) => {
+      await page.emulateMedia({ colorScheme: "light", reducedMotion: "no-preference" });
+      await open(page, `/inicio${C}`, start);
+      await go(page, "Guests");
+      const title = await expectArrival(page);
+      for (const width of start >= WIDE ? [959, 960, 360, 1280] : [960, 959, 1280, 360]) {
+        await page.setViewportSize({ width, height: 900 });
+        await expect(page.getByRole("navigation")).toHaveCount(1);
+        await expect.poll(() => focus(page)).toBe(`h1: ${title}`);
+      }
+    });
+  }
+
   for (const start of [{ width: 1280, widths: [961, 960, 959, 600, 360, 959, 960, 1280] }, { width: 360, widths: [959, 960, 1280, 959, 360] }]) {
     test(`from ${start.width}px: crossing 960px keeps what was typed in the filter and leaves focus in it`, async ({ page }) => {
       await page.emulateMedia({ colorScheme: "light", reducedMotion: "no-preference" });

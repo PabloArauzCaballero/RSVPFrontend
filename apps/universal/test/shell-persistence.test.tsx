@@ -113,19 +113,24 @@ type Key = "summary" | "guests";
 const TITLES: Readonly<Record<Key, string>> = { summary: "Resumen", guests: "Invitados" };
 
 /** A `Stack` as the navigator keeps it: every visited screen stays mounted, each with its own route; only one is focused. */
-function createStack() {
+function createStack(titles: Readonly<Record<Key, string>> = TITLES) {
   const routes = new Map<Key, TestNavigation>();
   const redraws = new Map<Key, () => void>();
   let open: (key: Key) => void = () => undefined;
+  let mount: (key: Key) => void = () => undefined;
   const routeOf = (key: Key, focused = false): TestNavigation => { const known = routes.get(key); if (known) return known; const created = createTestNavigation(focused); routes.set(key, created); return created; };
   /** One route component with state of its own: its queries answering re-render this screen alone, focused or not. */
   function Entry({ screenKey }: { readonly screenKey: Key }): ReactNode {
     const [version, setVersion] = useState(0);
     redraws.set(screenKey, () => setVersion((n) => n + 1));
-    return <Screen title={TITLES[screenKey]} nav={hostNav(t, "c-1")} current={screenKey} onNavigate={() => undefined}><span>{`${screenKey} ${version}`}</span></Screen>;
+    return <Screen title={titles[screenKey]} nav={hostNav(t, "c-1")} current={screenKey} onNavigate={() => undefined}><span>{`${screenKey} ${version}`}</span></Screen>;
   }
   function Screens(): ReactNode {
     const [mounted, setMounted] = useState<readonly Key[]>(["summary"]);
+    mount = (key) => {
+      routeOf(key).setFocused(true);
+      setMounted((keys) => (keys.includes(key) ? keys : [...keys, key]));
+    };
     open = (key) => {
       setMounted((keys) => (keys.includes(key) ? keys : [...keys, key]));
       const next = routeOf(key);
@@ -134,7 +139,13 @@ function createStack() {
     };
     return <>{mounted.map((key) => <TestRoute key={key} navigation={routeOf(key, key === "summary")}><Entry screenKey={key} /></TestRoute>)}</>;
   }
-  return { Screens, open: (key: Key) => act(() => open(key)), redraw: (key: Key) => act(() => redraws.get(key)!()) };
+  return {
+    Screens, open: (key: Key) => act(() => open(key)), redraw: (key: Key) => act(() => redraws.get(key)!()),
+    /** A push as React Navigation runs it: the new screen mounts (and runs its effects) in one commit, and only afterwards does the one left behind get `blur`. */
+    pushThenBlur: (key: Key, left: Key) => { act(() => mount(key)); act(() => routeOf(left).setFocused(false)); },
+    /** A route that draws no `Screen` comes to the front: every screen here stays mounted behind it. */
+    leave: () => act(() => routes.forEach((route) => route.setFocused(false)))
+  };
 }
 
 describe("several screens mounted, as the Stack keeps them", () => {
@@ -178,6 +189,39 @@ describe("several screens mounted, as the Stack keeps them", () => {
     stack.redraw("guests");
     stack.redraw("summary");
     expect(document.activeElement).toBe(document.body);
+    expect(document.title).toBe("Invitados · DOne");
+  });
+
+  it.each([{ name: "a push whose blur arrives after the new screen mounted", late: true }, { name: "a move between two screens already mounted", late: false }])("two screens with the same title ($name): the document keeps that title", ({ late }) => {
+    const stack = createStack({ summary: "Editor", guests: "Editor" });
+    renderApp(<PersistentShell><stack.Screens /></PersistentShell>, fakeClient({}).client);
+    expect(document.title).toBe("Editor · DOne");
+    if (late) stack.pushThenBlur("guests", "summary"); else stack.open("guests");
+    expect(document.title).toBe("Editor · DOne");
+    stack.open("summary");
+    expect(document.title).toBe("Editor · DOne");
+    stack.open("guests");
+    expect(document.title).toBe("Editor · DOne");
+  });
+
+  it("the screen that named the document gives the name back when it leaves, even if an earlier one had the same title", () => {
+    const stack = createStack({ summary: "Editor", guests: "Editor" });
+    const view = renderApp(<PersistentShell><stack.Screens /></PersistentShell>, fakeClient({}).client);
+    stack.pushThenBlur("guests", "summary");
+    view.unmount();
+    expect(document.title).toBe("DOne");
+  });
+
+  it("coming back from a route that draws no Screen is a navigation too: focus goes to the title again", () => {
+    const stack = createStack();
+    renderApp(<PersistentShell><stack.Screens /></PersistentShell>, fakeClient({}).client);
+    stack.open("guests");
+    stack.leave();
+    expect(document.title).toBe("DOne");
+    // What had focus on the other route went away with it.
+    (document.activeElement as HTMLElement).blur();
+    stack.open("guests");
+    expect(focusedHeading()).toBe("Invitados");
     expect(document.title).toBe("Invitados · DOne");
   });
 
@@ -256,6 +300,46 @@ describe("crossing the desktop width", () => {
       expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Invitados");
     }
     expect(mounts).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("the header moves when the width crosses 960 px", () => {
+  beforeEach(() => resetScreenArrivals());
+  afterEach(() => setWidth(1024));
+
+  it.each([{ name: "inside the persistent frame", framed: true }, { name: "a screen that draws its own frame", framed: false }])("$name: focus left on the title after a navigation stays on the title", ({ framed }) => {
+    setWidth(1280);
+    // Without the persistent frame a screen stands alone (a `Stack` always has the frame around it).
+    const stack = createStack();
+    renderApp(framed ? <PersistentShell><stack.Screens /></PersistentShell> : <Screen title="Invitados" nav={nav} current="guests" onNavigate={() => undefined}>x</Screen>, fakeClient({}).client);
+    if (framed) stack.open("guests");
+    else { const title = screen.getByRole("heading", { level: 1 }); title.setAttribute("tabindex", "-1"); title.focus(); }
+    for (const width of [959, 960, 390, 1280]) {
+      setWidth(width);
+      expect(isPhoneLayout()).toBe(width < 960);
+      expect(focusedHeading()).toBe("Invitados");
+      expect(document.activeElement?.isConnected).toBe(true);
+    }
+  });
+
+  it("crossing steals nothing: with focus nowhere, it stays nowhere", () => {
+    setWidth(1280);
+    const stack = createStack();
+    renderApp(<PersistentShell><stack.Screens /></PersistentShell>, fakeClient({}).client);
+    stack.open("guests");
+    (document.activeElement as HTMLElement).blur();
+    for (const width of [959, 960]) { setWidth(width); expect(document.activeElement).toBe(document.body); }
+  });
+
+  it("focus left on the active section tab stays on that tab", () => {
+    setWidth(1280);
+    const guests = nav.find((item) => item.key === "guests")!.tabs!;
+    renderApp(<Screen title="Invitados" nav={nav} current={guests[0]!.key} onNavigate={() => undefined}>x</Screen>, fakeClient({}).client);
+    screen.getByRole("tab", { name: guests[0]!.label }).focus();
+    for (const width of [959, 960]) {
+      setWidth(width);
+      expect(document.activeElement).toBe(screen.getByRole("tab", { name: guests[0]!.label }));
+    }
   });
 });
 
