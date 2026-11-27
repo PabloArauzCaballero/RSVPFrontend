@@ -338,6 +338,22 @@ describe('ScreenTransition', () => {
     expect(document.activeElement?.tagName).toBe('H1');
   });
 
+  it('focuses the heading of its own screen, not the hidden one an earlier screen left first in the document', async () => {
+    matchMedia(true);
+    vi.stubGlobal('scrollTo', vi.fn());
+    const Stacked = ({ top }: { top: boolean }) => (
+      <>
+        <section style={{ display: 'none' }}><h1>Anterior</h1></section>
+        <section><h1>Actual</h1><ScreenTransition routeKey={top ? 'b' : 'a'} groupKey="g">x</ScreenTransition></section>
+      </>
+    );
+    const { rerender } = render(<Stacked top={false} />);
+    await frames(10);
+    rerender(<Stacked top />);
+    await frames(10);
+    expect(document.activeElement?.textContent).toBe('Actual');
+  });
+
   it('can opt out of focus and scroll', async () => {
     matchMedia(false);
     const { rerender } = render(<Page routeKey="a" group="g" />);

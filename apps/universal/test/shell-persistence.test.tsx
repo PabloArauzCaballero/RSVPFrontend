@@ -5,9 +5,11 @@ import { MOTION } from "@rsvp/ui";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { hostNav } from "../src/host/routes";
 import { PersistentShell, Screen, ShellStore } from "../src/host/shell";
+import { resetScreenArrivals } from "../src/platform/screen-arrival";
 import { LoadingContent } from "../src/platform/loading-content";
 import { routePathOf, stackAnimation, topLevelPaths } from "../src/platform/navigation";
 import { useAfterDelay } from "../src/platform/use-after-delay";
+import { createTestNavigation, TestRoute, type TestNavigation } from "./stubs/expo-router";
 import { fakeClient, renderApp } from "./support";
 
 /** Smooth navigation: the frame mounts once, a tab change swaps only the content, skeletons never flash, Reduce Motion never slides. */
@@ -27,10 +29,13 @@ function Area({ onNavigate }: { readonly onNavigate?: (href: string) => void }):
   );
 }
 
+// react-native-web reads `documentElement.clientWidth` (0 in jsdom, so every test that does not set it renders the narrow layout).
 function setWidth(width: number): void {
-  Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: width });
+  Object.defineProperty(document.documentElement, "clientWidth", { configurable: true, value: width });
   act(() => { window.dispatchEvent(new Event("resize")); });
 }
+/** The bottom bar's "More" only exists in the phone layout: tells which of the two is really on screen. */
+const isPhoneLayout = (): boolean => screen.queryByRole("button", { name: t("common.more") }) !== null;
 
 describe("persistent frame", () => {
   afterEach(() => setWidth(1024));
@@ -39,6 +44,7 @@ describe("persistent frame", () => {
     setWidth(width);
     const navigate = vi.fn();
     renderApp(<Area onNavigate={navigate} />, fakeClient({}).client);
+    expect(isPhoneLayout()).toBe(width < 960);
     const before = screen.getByRole("navigation");
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Resumen");
     const target = screen.getAllByRole("link").find((link) => link.textContent?.includes(nav.find((item) => item.key === "guests")?.label ?? "?"));
@@ -96,6 +102,181 @@ describe("persistent frame", () => {
     renderApp(<Screen title="Solo" nav={nav} current="summary" onNavigate={() => undefined}>x</Screen>, fakeClient({}).client);
     expect(screen.getByRole("navigation")).toBeTruthy();
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Solo");
+  });
+});
+
+const labelOf = (key: string): string => nav.find((item) => item.key === key)!.label;
+const currentLinks = (): string[] => screen.queryAllByRole("link").filter((link) => link.getAttribute("aria-current") === "page").map((link) => link.textContent ?? "");
+const focusedHeading = (): string | null => (document.activeElement?.getAttribute("aria-level") === "1" ? document.activeElement.textContent : null);
+
+type Key = "summary" | "guests";
+const TITLES: Readonly<Record<Key, string>> = { summary: "Resumen", guests: "Invitados" };
+
+/** A `Stack` as the navigator keeps it: every visited screen stays mounted, each with its own route; only one is focused. */
+function createStack() {
+  const routes = new Map<Key, TestNavigation>();
+  const redraws = new Map<Key, () => void>();
+  let open: (key: Key) => void = () => undefined;
+  const routeOf = (key: Key, focused = false): TestNavigation => { const known = routes.get(key); if (known) return known; const created = createTestNavigation(focused); routes.set(key, created); return created; };
+  /** One route component with state of its own: its queries answering re-render this screen alone, focused or not. */
+  function Entry({ screenKey }: { readonly screenKey: Key }): ReactNode {
+    const [version, setVersion] = useState(0);
+    redraws.set(screenKey, () => setVersion((n) => n + 1));
+    return <Screen title={TITLES[screenKey]} nav={hostNav(t, "c-1")} current={screenKey} onNavigate={() => undefined}><span>{`${screenKey} ${version}`}</span></Screen>;
+  }
+  function Screens(): ReactNode {
+    const [mounted, setMounted] = useState<readonly Key[]>(["summary"]);
+    open = (key) => {
+      setMounted((keys) => (keys.includes(key) ? keys : [...keys, key]));
+      const next = routeOf(key);
+      routes.forEach((route) => { if (route !== next) route.setFocused(false); });
+      next.setFocused(true);
+    };
+    return <>{mounted.map((key) => <TestRoute key={key} navigation={routeOf(key, key === "summary")}><Entry screenKey={key} /></TestRoute>)}</>;
+  }
+  return { Screens, open: (key: Key) => act(() => open(key)), redraw: (key: Key) => act(() => redraws.get(key)!()) };
+}
+
+describe("several screens mounted, as the Stack keeps them", () => {
+  beforeEach(() => { resetScreenArrivals(); setWidth(1280); document.title = "DOne"; });
+  afterEach(() => setWidth(1024));
+
+  it("an unfocused screen that re-renders never overwrites the highlight of the one in front", () => {
+    const store = new ShellStore();
+    const stack = createStack();
+    renderApp(<PersistentShell store={store}><stack.Screens /></PersistentShell>, fakeClient({}).client);
+    expect(currentLinks()).toEqual([labelOf("home")]);
+    stack.open("guests");
+    expect(currentLinks()).toEqual([labelOf("guests")]);
+    // The hidden summary re-renders on its own, as when one of its queries answers.
+    stack.redraw("summary");
+    expect(screen.getByText("summary 1")).toBeTruthy();
+    expect(currentLinks()).toEqual([labelOf("guests")]);
+    expect(store.snapshot().current).toBe("guests");
+  });
+
+  it("going back to a screen that is still mounted moves the highlight, the document title and focus, with nothing remounting", () => {
+    const stack = createStack();
+    renderApp(<PersistentShell><stack.Screens /></PersistentShell>, fakeClient({}).client);
+    // The first screen of the session keeps the browser's focus.
+    expect(document.activeElement).toBe(document.body);
+    expect(document.title).toBe("Resumen · DOne");
+    stack.open("guests");
+    expect(focusedHeading()).toBe("Invitados");
+    expect(document.title).toBe("Invitados · DOne");
+    const [summaryHeading] = screen.getAllByRole("heading", { level: 1 });
+    stack.open("summary");
+    expect(currentLinks()).toEqual([labelOf("home")]);
+    expect(document.title).toBe("Resumen · DOne");
+    // Its own heading (the same node as before), not just the first one of the document.
+    expect(document.activeElement).toBe(summaryHeading);
+    stack.open("guests");
+    // The second screen's heading, although the hidden first one comes earlier in the document.
+    expect(focusedHeading()).toBe("Invitados");
+    // A redraw is not a navigation: focus stays where the person put it.
+    (document.activeElement as HTMLElement).blur();
+    stack.redraw("guests");
+    stack.redraw("summary");
+    expect(document.activeElement).toBe(document.body);
+    expect(document.title).toBe("Invitados · DOne");
+  });
+
+  it("the code-loading frame giving way to the screen keeps focus on the title, and steals nothing on the first load", () => {
+    const first = createTestNavigation(true);
+    const second = createTestNavigation(true);
+    function Loading({ route, loaded }: { readonly route: TestNavigation; readonly loaded: boolean }): ReactNode {
+      const screenOf = <Screen title="Resumen" nav={nav} current="summary"><span>x</span></Screen>;
+      return <TestRoute navigation={route}>{loaded ? <section>{screenOf}</section> : <div>{screenOf}</div>}</TestRoute>;
+    }
+    const { client } = fakeClient({});
+    function Flow(): ReactNode {
+      const [step, setStep] = useState(0);
+      return (
+        <PersistentShell>
+          <button onClick={() => setStep(step + 1)}>next</button>
+          <Loading key={step < 2 ? "a" : "b"} route={step < 2 ? first : second} loaded={step % 2 === 1} />
+        </PersistentShell>
+      );
+    }
+    renderApp(<Flow />, client);
+    const next = (): void => { fireEvent.click(screen.getByText("next")); };
+    next(); // first screen of the session: loading -> loaded
+    expect(document.activeElement).toBe(document.body);
+    next(); // a navigation, still loading
+    expect(focusedHeading()).toBe("Resumen");
+    const loadingHeading = document.activeElement;
+    next(); // its code arrived: the heading is a new node
+    expect(loadingHeading?.isConnected).toBe(false);
+    expect(focusedHeading()).toBe("Resumen");
+  });
+
+  it("a section tab keeps focus on the tab of the screen it opens, not on the title", () => {
+    const guestsTabs = nav.find((item) => item.key === "guests")!.tabs!;
+    function Tabs(): ReactNode {
+      const [route, setRoute] = useState(() => ({ current: guestsTabs[0]!.key, navigation: createTestNavigation(true) }));
+      return (
+        <PersistentShell>
+          <TestRoute key={route.current} navigation={route.navigation}>
+            <Screen title={route.current} nav={nav} current={route.current} onNavigate={(href) => setRoute({ current: guestsTabs.find((tab) => tab.href === href)!.key, navigation: createTestNavigation(true) })}>x</Screen>
+          </TestRoute>
+        </PersistentShell>
+      );
+    }
+    renderApp(<Tabs />, fakeClient({}).client);
+    for (const tab of [guestsTabs[1]!, guestsTabs[2]!]) {
+      const button = screen.getByRole("tab", { name: tab.label });
+      button.focus();
+      fireEvent.click(button);
+      expect(document.activeElement).toBe(screen.getByRole("tab", { name: tab.label }));
+      expect(document.activeElement?.getAttribute("aria-selected")).toBe("true");
+    }
+  });
+});
+
+describe("crossing the desktop width", () => {
+  afterEach(() => setWidth(1024));
+
+  it.each([{ name: "inside the persistent frame", framed: true }, { name: "a screen that draws its own frame", framed: false }])("$name: the content is never remounted, so what was typed and the focus stay", ({ framed }) => {
+    resetScreenArrivals();
+    setWidth(1280);
+    const mounts = vi.fn();
+    function Typed(): ReactNode { useEffect(() => { mounts(); }, []); const [text, setText] = useState(""); return <input aria-label="buscar" value={text} onChange={(event) => setText(event.target.value)} />; }
+    const page = <Screen title="Invitados" nav={nav} current="guests" onNavigate={() => undefined}><Typed /></Screen>;
+    renderApp(framed ? <PersistentShell>{page}</PersistentShell> : page, fakeClient({}).client);
+    const input = screen.getByLabelText("buscar") as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "Ana" } });
+    input.focus();
+    expect(isPhoneLayout()).toBe(false);
+    for (const width of [959, 960, 390, 1280]) {
+      setWidth(width);
+      expect(isPhoneLayout()).toBe(width < 960);
+      expect(screen.getByLabelText("buscar")).toBe(input);
+      expect(input.value).toBe("Ana");
+      expect(document.activeElement).toBe(input);
+      expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Invitados");
+    }
+    expect(mounts).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("what the frame redraws", () => {
+  it("a change in a tab's label or address alone is published (a language change), the same content is not", () => {
+    const store = new ShellStore();
+    const items = (label: string, href: string) => [{ key: "guests", label: "Invitados", href: "/invitados", tabs: [{ key: "guests", label, href }] }];
+    store.publish(items("Lista", "/invitados"), "guests", undefined);
+    store.publish(items("Lista", "/invitados"), "guests", undefined);
+    expect(store.publishes).toBe(1);
+    store.publish(items("List", "/invitados"), "guests", undefined);
+    expect(store.publishes).toBe(2);
+    store.publish(items("List", "/invitados?c=2"), "guests", undefined);
+    expect(store.publishes).toBe(3);
+  });
+
+  it.each([{ current: "alerts", expected: "true" }, { current: "summary", expected: null }])("the phone's More button says it holds the current screen ($current)", ({ current, expected }) => {
+    setWidth(390);
+    renderApp(<Screen title="x" nav={nav} current={current}>x</Screen>, fakeClient({}).client);
+    expect(screen.getByRole("button", { name: t("common.more") }).getAttribute("aria-current")).toBe(expected);
+    setWidth(1024);
   });
 });
 

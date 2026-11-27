@@ -1,5 +1,4 @@
-import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type PropsWithChildren, type ReactNode } from "react";
-import { useNavigation } from "expo-router";
+import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type MutableRefObject, type PropsWithChildren, type ReactNode } from "react";
 import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type LayoutChangeEvent, type ViewStyle } from "react-native";
 import { radius, spacing } from "@rsvp/design-tokens";
 import { Logo, NavIcon, OverlayEnter, PageIntro, PressFeedback, ScreenTransition, SwitchRow, StickyActions, fonts, overlayAnimation, useColors, useThemedStyles, type Palette } from "@rsvp/ui";
@@ -7,11 +6,13 @@ import { useAuth } from "../auth/auth-context";
 import { useConfirmSignOut } from "../auth/sign-out";
 import { useT } from "../platform/providers";
 import { useThemePreference } from "../platform/theme";
+import { requestTabFocus, useScreenArrival, useScreenFocused } from "../platform/screen-arrival";
 
 /**
  * Frame of every signed-in screen (host, admin, provider), laid out like a printed invitation: warm paper canvas, ink,
  * hairlines. Wide screens: a light sidebar with the logo, the destinations and sign-out. Narrow screens: a light top bar
- * on the canvas and a bottom bar with the main destinations plus "More" (the rest and sign-out). One layout is mounted at a time.
+ * on the canvas and a bottom bar with the main destinations plus "More" (the rest and sign-out). Only one chrome is mounted at a
+ * time, around a content slot that stays put when the width changes.
  *
  * Navigation has two levels (docs/design/upgrade-brief.md §2): few destinations in the sidebar / bottom bar, and
  * `SectionTabs` under the title with the screens of the active destination. Both come from one `NavItem[]`
@@ -69,6 +70,7 @@ const createShellStyles = (palette: Palette) => StyleSheet.create({
   headRow: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: spacing[4] },
   headText: { flex: 1, minWidth: 0, gap: spacing[3] },
   headActions: { flexDirection: "row", alignItems: "center", gap: spacing[2], flexShrink: 0, minHeight: 52, marginTop: -4 },
+  mContent: { flexGrow: 1 },
   mTabs: { marginHorizontal: -spacing[5], marginTop: spacing[2] },
   mTitle: { color: palette.text, fontSize: 32, lineHeight: 36, fontWeight: "500", letterSpacing: -0.9, fontFamily: fontDisplay },
   stack: { flexGrow: 1, gap: spacing[8] },
@@ -120,7 +122,7 @@ function EdgeFade({ side, color }: { readonly side: "left" | "right"; readonly c
  * on narrow screens, Left/Right/Home/End move the focus. Selecting a tab navigates to its route. When the list overflows,
  * a fade shows on the side that has more, and the active tab is brought into view.
  */
-function SectionTabs({ tabs, current, onNavigate, inset }: { readonly tabs: readonly NavTab[]; readonly current?: string; readonly onNavigate?: (href: string) => void; readonly inset: boolean }): ReactNode {
+function SectionTabs({ tabs, current, onNavigate, inset, activeRef }: { readonly tabs: readonly NavTab[]; readonly current?: string; readonly onNavigate?: (href: string) => void; readonly inset: boolean; readonly activeRef: MutableRefObject<View | null> }): ReactNode {
   const s = useThemedStyles(createShellStyles);
   const palette = useColors();
   const tabRing = ring(palette.primary);
@@ -168,7 +170,7 @@ function SectionTabs({ tabs, current, onNavigate, inset }: { readonly tabs: read
             const box = [s.sectionTab, active && s.sectionTabActive];
             const text = [s.sectionTabText, active && s.sectionTabTextActive];
             return (
-              <Pressable key={tab.key} ref={(node) => { refs.current[index] = node; }} onLayout={(event) => { const { x, width } = event.nativeEvent.layout; spans.current[index] = { x, w: width }; }} role="tab" aria-selected={active} aria-current={active ? "page" : undefined} onPress={() => onNavigate?.(tab.href)} {...({ onKeyDown: (event: { key: string; preventDefault: () => void }) => onKey(event, index) } as object)} style={[...box, tabRing]}>
+              <Pressable key={tab.key} ref={(node) => { refs.current[index] = node; if (active) activeRef.current = node; }} onLayout={(event) => { const { x, width } = event.nativeEvent.layout; spans.current[index] = { x, w: width }; }} role="tab" aria-selected={active} aria-current={active ? "page" : undefined} onPress={() => { requestTabFocus(tab.key); onNavigate?.(tab.href); }} {...({ onKeyDown: (event: { key: string; preventDefault: () => void }) => onKey(event, index) } as object)} style={[...box, tabRing]}>
                 <Text numberOfLines={1} style={text}>{tab.label}</Text>
               </Pressable>
             );
@@ -263,7 +265,7 @@ function MobileNav({ nav, current, onNavigate }: { readonly nav: readonly NavIte
             );
           })}
           {overflow || signedIn ? (
-            <PressFeedback ref={moreButton} accessibilityRole="button" aria-expanded={open} accessibilityLabel={t("common.more")} onPress={() => setOpen(true)} style={[s.tab, tabRing]}>
+            <PressFeedback ref={moreButton} accessibilityRole="button" aria-current={hiddenActive ? "true" : undefined} aria-expanded={open} accessibilityLabel={t("common.more")} onPress={() => setOpen(true)} style={[s.tab, tabRing]}>
               <View style={s.tabInner}>
                 <View style={[s.tabDot, hiddenActive && s.tabDotActive]} />
                 <NavIcon name="more" size={22} color={hiddenActive ? palette.text : palette.textMuted} />
@@ -300,10 +302,6 @@ function MobileNav({ nav, current, onNavigate }: { readonly nav: readonly NavIte
   );
 }
 
-function MobileFrame({ nav, current, onNavigate, children }: PropsWithChildren<{ readonly nav: readonly NavItem[]; readonly current?: string; readonly onNavigate?: (href: string) => void }>): ReactNode {
-  return <><MobileTopBar />{children}<MobileNav nav={nav} current={current} onNavigate={onNavigate} /></>;
-}
-
 /** Focused flows without sections (onboarding, access denied): the logo and sign-out, nothing else. */
 function BareTopBar(): ReactNode {
   const confirmSignOut = useConfirmSignOut();
@@ -323,8 +321,6 @@ function BareTopBar(): ReactNode {
   );
 }
 
-function BareFrame({ children }: PropsWithChildren): ReactNode { return <><BareTopBar />{children}</>; }
-
 /**
  * What the persistent frame draws: the destinations and which one is current. A screen reports them (`Screen` does it in a layout
  * effect, before paint) and the frame, mounted once in the group layout, redraws only its highlight: the sidebar, the top bar and
@@ -343,7 +339,8 @@ export class ShellStore {
   readonly navigate = (href: string): void => { this.latest?.(href); };
   publish(nav: readonly NavItem[], current: string | undefined, onNavigate: ((href: string) => void) | undefined): void {
     this.latest = onNavigate;
-    const signature = `${current ?? ""}|${nav.map((item) => `${item.key}:${item.href}:${item.label}:${item.tabs?.map((tab) => tab.key).join(",") ?? ""}`).join("|")}`;
+    // Everything the frame draws, tabs' labels and addresses included: `NavItem` is plain data.
+    const signature = JSON.stringify([current ?? null, nav]);
     if (signature === this.signature) return;
     this.signature = signature;
     this.state = { nav, current };
@@ -357,13 +354,7 @@ export class ShellStore {
  * (and they re-render on their own queries), so an unfocused screen must never overwrite the highlight of the one in front. Runs in a
  * layout effect: the highlight is right in the first frame.
  */
-function ShellPublisher({ store, nav, current, onNavigate }: { readonly store: ShellStore; readonly nav: readonly NavItem[]; readonly current: string | undefined; readonly onNavigate: ((href: string) => void) | undefined }): null {
-  const navigation = useNavigation();
-  const focused = useSyncExternalStore(
-    (notify) => { const unfocus = navigation.addListener("blur", notify); const focus = navigation.addListener("focus", notify); return () => { unfocus(); focus(); }; },
-    () => navigation.isFocused(),
-    () => true
-  );
+function ShellPublisher({ store, focused, nav, current, onNavigate }: { readonly store: ShellStore; readonly focused: boolean; readonly nav: readonly NavItem[]; readonly current: string | undefined; readonly onNavigate: ((href: string) => void) | undefined }): null {
   useLayoutEffect(() => { if (focused) store.publish(nav, current, onNavigate); });
   return null;
 }
@@ -373,27 +364,37 @@ const ShellFrameContext = createContext<ShellStore | null>(null);
 export const useShellStore = (): ShellStore | null => useContext(ShellFrameContext);
 
 /**
+ * The menus around a content slot, one tree for every case: the slot is always the second child of the root, so a screen that
+ * has no menu (onboarding), a resize across the breakpoint or a new menu never remounts what is inside it (the `Stack`, or the
+ * screen with what the person typed).
+ */
+function ShellChrome({ nav, current, onNavigate, testID, children }: PropsWithChildren<{ readonly nav: readonly NavItem[]; readonly current: string | undefined; readonly onNavigate: ((href: string) => void) | undefined; readonly testID?: string }>): ReactNode {
+  const s = useThemedStyles(createShellStyles);
+  const { width } = useWindowDimensions();
+  const hasNav = nav.length > 0;
+  const wide = width >= WIDE;
+  const chrome = !hasNav ? <BareTopBar /> : wide ? <Sidebar nav={nav} current={current} onNavigate={onNavigate} /> : <MobileTopBar />;
+  return (
+    <View style={[s.root, hasNav && wide && s.rootWide]} testID={testID}>
+      {chrome}
+      <View style={s.scroll}>{children}</View>
+      {hasNav && !wide ? <MobileNav nav={nav} current={current} onNavigate={onNavigate} /> : null}
+    </View>
+  );
+}
+
+/**
  * The frame of every signed-in area, mounted once by the group layout (`(host)`, `(provider)`, `(admin)`) around the `Stack`.
  * Moving between screens swaps only the content area: the nav keeps its state, scroll position of the menu and focus, and
  * nothing blanks while the next screen loads. Wide: sidebar beside the content. Narrow: top bar, content, bottom bar.
  */
 export function PersistentShell({ store, children }: PropsWithChildren<{ readonly store?: ShellStore }>): ReactNode {
   const [own] = useState(() => store ?? new ShellStore());
-  const s = useThemedStyles(createShellStyles);
-  const { width } = useWindowDimensions();
   const { nav, current } = useSyncExternalStore(own.subscribe, own.snapshot, own.snapshot);
-  const content = <ShellFrameContext.Provider value={own}>{children}</ShellFrameContext.Provider>;
-  const hasNav = nav.length > 0;
-  const wide = width >= WIDE;
-  // One tree for every case: the content slot is always the second child of the root, so a screen that has no menu (onboarding), a
-  // resize across the breakpoint or a new menu never remounts the Stack (which would reset navigation and flash the content).
-  const chrome = !hasNav ? <BareTopBar /> : wide ? <Sidebar nav={nav} current={current} onNavigate={own.navigate} /> : <MobileTopBar />;
   return (
-    <View style={[s.root, hasNav && wide && s.rootWide]} testID="persistent-shell">
-      {chrome}
-      <View style={s.scroll}>{content}</View>
-      {hasNav && !wide ? <MobileNav nav={nav} current={current} onNavigate={own.navigate} /> : null}
-    </View>
+    <ShellChrome nav={nav} current={current} onNavigate={own.navigate} testID="persistent-shell">
+      <ShellFrameContext.Provider value={own}>{children}</ShellFrameContext.Provider>
+    </ShellChrome>
   );
 }
 
@@ -412,52 +413,43 @@ export function Screen({ title, intro, nav, current, onNavigate, actions, menu, 
   const items = nav ?? [];
   const shell = useShellStore();
   const destination = items.find((item) => isCurrentDestination(item, current));
-  const publisher = shell ? <ShellPublisher store={shell} nav={items} current={current} onNavigate={onNavigate} /> : null;
+  const { focused, route } = useScreenFocused();
+  const headingRef = useRef<Text>(null);
+  const activeTabRef = useRef<View>(null);
+  useScreenArrival(focused, route, title, current, { heading: headingRef, tab: activeTabRef });
+  const publisher = shell ? <ShellPublisher store={shell} focused={focused} nav={items} current={current} onNavigate={onNavigate} /> : null;
   const sectionTabs = destination?.tabs;
-  // A change of destination fades in with a short rise, sibling tabs only fade; scroll returns to the top and focus goes to the h1 (docs/design/motion.md).
+  // A change of destination fades in with a short rise, sibling tabs only fade; scroll returns to the top (docs/design/motion.md). Focus is
+  // decided above, by the navigator's focus: this transition only sees mounts, and going back mounts nothing.
   const actionsInHeader = width >= ACTIONS_IN_HEADER;
   // The transition wraps the children in its own box, so the column's gap would stop at it: the stack re-applies it, and a screen's blocks (a notice, then a card) never touch.
   const stack = <View testID="screen-stack" style={[s.stack, wide && s.stackWide]}>{status && actionsInHeader ? status : null}{children}</View>;
-  const content = animate ? <ScreenTransition routeKey={current ?? title} groupKey={destination?.key}>{stack}</ScreenTransition> : stack;
+  const content = animate ? <ScreenTransition routeKey={current ?? title} groupKey={destination?.key} focusHeading={false}>{stack}</ScreenTransition> : stack;
   const headerActions = menu || (actions && actionsInHeader) ? <View style={s.headActions}>{menu}{actionsInHeader ? actions : null}</View> : null;
   const stickyActions = actions && !actionsInHeader ? <StickyActions testID="screen-sticky-actions" {...(status ? { summary: status } : {})}>{actions}</StickyActions> : null;
   const tabs = sectionTabs && sectionTabs.length > 1 ? sectionTabs : undefined;
-  if (wide) {
-    const main = (
-      <View style={s.scroll}>
-        <View style={s.band}>
-          <View style={[s.bandInner, s.headRow]}>
-            <View style={s.headText}>
-              <Text accessibilityRole="header" aria-level={1} style={s.title}>{title}</Text>
-              {intro ? <PageIntro>{intro}</PageIntro> : null}
-            </View>
-            {headerActions}
-          </View>
-          {tabs ? <View style={s.bandTabs}><SectionTabs tabs={tabs} current={current} onNavigate={onNavigate} inset={false} /></View> : null}
-        </View>
-        <ScrollView role="main" tabIndex={0} style={s.scroll} contentContainerStyle={[s.content, s.contentWide]} keyboardShouldPersistTaps="handled">{content}</ScrollView>
+  const heading = <Text ref={headingRef} accessibilityRole="header" aria-level={1} style={wide ? s.title : s.mTitle}>{title}</Text>;
+  const headRow = (
+    <>
+      <View style={s.headText}>
+        {heading}
+        {intro ? <PageIntro>{intro}</PageIntro> : null}
       </View>
-    );
-    if (shell) return <>{publisher}{main}</>;
-    if (items.length === 0) return <View style={s.root}><BareFrame>{main}</BareFrame></View>;
-    return <View style={[s.root, s.rootWide]}><Sidebar nav={items} current={current} onNavigate={onNavigate} />{main}</View>;
-  }
-  const body = (
-    <ScrollView role="main" tabIndex={0} style={s.scroll} contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-      <View style={s.mHeader}>
-        <View style={s.headRow}>
-          <View style={s.headText}>
-            <Text accessibilityRole="header" aria-level={1} style={s.mTitle}>{title}</Text>
-            {intro ? <PageIntro>{intro}</PageIntro> : null}
-          </View>
-          {headerActions}
-        </View>
-        {tabs ? <View style={s.mTabs}><SectionTabs tabs={tabs} current={current} onNavigate={onNavigate} inset /></View> : null}
-      </View>
-      <View style={s.mSheet}>{content}{stickyActions}</View>
-    </ScrollView>
+      {headerActions}
+    </>
   );
-  if (shell) return <>{publisher}{body}</>;
-  if (items.length === 0) return <View style={s.root}><BareFrame>{body}</BareFrame></View>;
-  return <View style={s.root}><MobileFrame nav={items} current={current} onNavigate={onNavigate}>{body}</MobileFrame></View>;
+  const sectionTabBar = tabs ? <View style={wide ? s.bandTabs : s.mTabs}><SectionTabs tabs={tabs} current={current} onNavigate={onNavigate} inset={!wide} activeRef={activeTabRef} /></View> : null;
+  // One tree for both widths: the header moves from the scrolling page (narrow) to a fixed band (wide), and the content keeps its
+  // place, so crossing the breakpoint never remounts it (what the person typed, its scroll and focus stay).
+  const main = (
+    <View style={s.scroll}>
+      {wide ? <View style={s.band}><View style={[s.bandInner, s.headRow]}>{headRow}</View>{sectionTabBar}</View> : null}
+      <ScrollView role="main" tabIndex={0} style={s.scroll} contentContainerStyle={wide ? [s.content, s.contentWide] : s.mContent} keyboardShouldPersistTaps="handled">
+        {wide ? null : <View style={s.mHeader}><View style={s.headRow}>{headRow}</View>{sectionTabBar}</View>}
+        <View style={wide ? undefined : s.mSheet}>{content}{stickyActions}</View>
+      </ScrollView>
+    </View>
+  );
+  if (shell) return <>{publisher}{main}</>;
+  return <ShellChrome nav={items} current={current} onNavigate={onNavigate}>{main}</ShellChrome>;
 }
