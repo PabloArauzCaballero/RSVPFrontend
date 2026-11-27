@@ -114,6 +114,11 @@ const libreTemplate = () => {
 };
 const libre = { slug: "fixture-v2-libre", view: { ...view, celebrationId: "00000000-0000-4000-8000-000000000198", slug: "fixture-v2-libre", templateId: "6f6f6f6f-6f6f-46f6-86f6-6f6f6f6f6f6f" } };
 const medios = { slug: "fixture-v2-medios", view: { ...view, celebrationId: "00000000-0000-4000-8000-000000000199", slug: "fixture-v2-medios", templateId: "5e5e5e5e-5e5e-45e5-85e5-5e5e5e5e5e5e" } };
+// F7 · `fixture-v2-musica-oculta`: the same page as `fixture-v2-medios` after moderation hid the own MP3 only (decision of Pablo 2026-11-26). The view says so in `hiddenElements`
+// and the media service no longer lists the file; the invitation, its photos and both buttons stay.
+const musicaOculta = { slug: "fixture-v2-musica-oculta", view: { ...medios.view, celebrationId: "00000000-0000-4000-8000-000000000200", slug: "fixture-v2-musica-oculta", hiddenElements: [{ kind: "SECTION", id: "music" }] } };
+// F7 · `fixture-v2-medios-en`: the same page published in English, to see the report's words in en-US.
+const mediosEn = { slug: "fixture-v2-medios-en", view: { ...medios.view, celebrationId: "00000000-0000-4000-8000-000000000201", slug: "fixture-v2-medios-en", locale: "en-US" } };
 const silence = () => { const rate = 8000, samples = rate * 2, data = Buffer.alloc(samples * 2); const head = Buffer.alloc(44); head.write("RIFF", 0); head.writeUInt32LE(36 + data.length, 4); head.write("WAVEfmt ", 8); head.writeUInt32LE(16, 16); head.writeUInt16LE(1, 20); head.writeUInt16LE(1, 22); head.writeUInt32LE(rate, 24); head.writeUInt32LE(rate * 2, 28); head.writeUInt16LE(2, 32); head.writeUInt16LE(16, 34); head.write("data", 36); head.writeUInt32LE(data.length, 40); return Buffer.concat([head, data]); };
 let sharpModule;
 const encoded = new Map();
@@ -172,6 +177,10 @@ createServer(async (req, res) => {
   if (path === `/celebrations/public/${medios.slug}`) return json(res, 200, medios.view);
   if (path === `/media/public/celebrations/${medios.view.celebrationId}/assets`) return json(res, 200, { items: mediosGallery });
   if (path === `/media/templates/${medios.view.templateId}`) return json(res, 200, mediosTemplate());
+  if (path === `/celebrations/public/${mediosEn.slug}`) return json(res, 200, mediosEn.view);
+  if (path === `/media/public/celebrations/${mediosEn.view.celebrationId}/assets`) return json(res, 200, { items: mediosGallery });
+  if (path === `/celebrations/public/${musicaOculta.slug}`) return json(res, 200, musicaOculta.view);
+  if (path === `/media/public/celebrations/${musicaOculta.view.celebrationId}/assets`) return json(res, 200, { items: mediosGallery.filter((item) => item.purpose !== "music") });
   if (path.startsWith("/img/")) { res.writeHead(200, { "content-type": "image/svg+xml", "cache-control": "public, max-age=3600" }); return res.end(image(Number(path.match(/(\d+)/)?.[1] ?? 1) * 70)); }
   if (path === "/celebrations/public") return json(res, 200, { items: [{ slug: SLUG, updatedAt: "2026-11-01T00:00:00Z", supportedLocales: ["es-BO", "en-US"] }] });
   if (path === `/celebrations/public/${SLUG}`) return json(res, 200, view);

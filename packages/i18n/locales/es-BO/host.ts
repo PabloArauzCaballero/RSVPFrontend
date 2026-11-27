@@ -37,7 +37,7 @@ export const hostEsBO = {
   },
   nav: { label: "Secciones del panel" },
   dest: { home: "Inicio", guests: "Invitados", gifts: "Regalos", invitation: "Mi invitación", alerts: "Avisos", settings: "Ajustes" },
-  tabs: { moderation: "Moderación", summary: "Resumen", guests: "Quién viene", report: "Respuestas", requests: "Acompañantes", gifts: "Mi lista", giftInbox: "Reservas", editor: "Contenido", gallery: "Galería", translations: "Idiomas", templates: "Estilo", preview: "Vista previa", notifications: "Bandeja", preferences: "Preferencias", publish: "Publicar", settings: "Configuración", modes: "Modos de control", celebrations: "Mis celebraciones", organizations: "Equipo", label: "Pestañas de la sección" },
+  tabs: { summary: "Resumen", guests: "Quién viene", report: "Respuestas", requests: "Acompañantes", gifts: "Mi lista", giftInbox: "Reservas", editor: "Contenido", gallery: "Galería", translations: "Idiomas", templates: "Estilo", preview: "Vista previa", notifications: "Bandeja", preferences: "Preferencias", publish: "Publicar", settings: "Configuración", modes: "Modos de control", celebrations: "Mis celebraciones", organizations: "Equipo", label: "Pestañas de la sección" },
   picker: { title: "Mis celebraciones", intro: "Cada celebración tiene su invitación, sus invitados y sus regalos.", emptyTitle: "Aquí vivirán tus celebraciones", emptyBody: "Crea la primera en tres pasos y mira cómo se ve antes de compartirla.", create: "Crear celebración", open: "Abrir {{title}}", untitled: "Sin título", noDate: "Sin fecha todavía", status: { DRAFT: "Borrador", PUBLISHED: "Publicada", ARCHIVED: "Archivada" } },
   onboarding: {
     joinNames: "{{first}} y {{second}}",

@@ -1,15 +1,13 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { ApiError, type ApiClient } from "@rsvp/api-client";
 import type { CelebrationComponents, TemplateMediaComponents } from "@rsvp/contracts";
-import { cachePolicy, retryTransient } from "../policy.js";
-import { queryKeys } from "../keys.js";
 
 /**
  * F7 moderation (Celebration 1.8.0 and Template/Media 1.9.0, provisional: re-vendor from the official branch when BE #167 merges).
- * The types are the contract's own, so a renamed field breaks `tsc` here. Three audiences:
+ * The types are the contract's own, so a renamed field breaks `tsc` here. Two audiences:
  *  - the public guest sends a report (no session, see `submitPublicReport`);
- *  - the host reads what was hidden and appeals once per decision;
  *  - the administrator reads the queue and looks at a hidden file with a link that works once (see `useHiddenAssetPreview`).
+ * The host's own «Moderación» screen (what was hidden, appeal) is not built yet: it waits for Pablo's answer in the PR.
  */
 type C = CelebrationComponents["schemas"];
 type T = TemplateMediaComponents["schemas"];
@@ -19,7 +17,6 @@ export type ReportStatus = C["ReportStatus"];
 export type ElementRef = C["ElementRef"];
 export type ReportInput = C["ReportInput"];
 export type ReceivedReport = C["ReceivedReport"];
-export type HostTakedown = C["HostTakedown"];
 export type AdminReport = C["AdminReport"];
 export type ReportDetail = C["ReportDetail"];
 export type Takedown = C["Takedown"];
@@ -32,13 +29,6 @@ export const REPORT_STATUSES: readonly ReportStatus[] = ["OPEN", "DISMISSED", "A
 export const REPORT_COMMENT_MAX = 1000;
 /** `SECTION music` is the own music (MP3): the only reserved element. Hiding it leaves the invitation and its photos visible. */
 export const MUSIC_ELEMENT: ElementRef = { kind: "SECTION", id: "music" };
-
-export type HiddenScope = "PAGE" | "MUSIC" | "ELEMENT";
-/** What a decision hid, as the host reads it: the whole page, only the music, or one element. */
-export function hiddenScope(takedown: Pick<HostTakedown, "scope" | "element">): HiddenScope {
-  if (takedown.scope === "PAGE") return "PAGE";
-  return takedown.element?.kind === "SECTION" && takedown.element.id === MUSIC_ELEMENT.id ? "MUSIC" : "ELEMENT";
-}
 
 export interface ReportDraft { readonly reason: ReportReason; readonly comment: string; readonly element?: ElementRef | null }
 
@@ -78,15 +68,6 @@ export function reportFailure(error: unknown): ReportFailure {
   return { key: "generic" };
 }
 
-export type AppealFailureKey = "used" | "notActive" | "readOnly" | "generic";
-/** 409 APPEAL_ALREADY_USED / TAKEDOWN_NOT_ACTIVE, 403 read-only actor. The message length is checked in the form, so a 422 is unexpected and reads as generic. */
-export function appealFailure(error: unknown): AppealFailureKey {
-  if (!(error instanceof ApiError)) return "generic";
-  if (error.status === 403) return "readOnly";
-  if (error.status === 409) return error.problem?.code === "APPEAL_ALREADY_USED" ? "used" : error.problem?.code === "TAKEDOWN_NOT_ACTIVE" ? "notActive" : "generic";
-  return "generic";
-}
-
 export type PreviewFailureKey = "notHidden" | "notQuarantined" | "notFound" | "forbidden" | "generic";
 /** 409 ASSET_NOT_HIDDEN / ASSET_NOT_QUARANTINED, 404, 403. */
 export function previewFailure(error: unknown): PreviewFailureKey {
@@ -95,26 +76,6 @@ export function previewFailure(error: unknown): PreviewFailureKey {
   if (error.status === 404) return "notFound";
   if (error.status === 409) return error.problem?.code === "ASSET_NOT_QUARANTINED" ? "notQuarantined" : error.problem?.code === "ASSET_NOT_HIDDEN" ? "notHidden" : "generic";
   return "generic";
-}
-
-// ---- Host: what was hidden, and the appeal (once per decision)
-export const hostModerationKey = (celebrationId: string) => [...queryKeys.celebration.detail(celebrationId), "moderation"] as const;
-
-export function useHostModeration(client: ApiClient, celebrationId: string) {
-  return useQuery({
-    queryKey: hostModerationKey(celebrationId),
-    queryFn: ({ signal }) => client.request<{ readonly items: readonly HostTakedown[] }>(`/celebrations/${encodeURIComponent(celebrationId)}/moderation`, { signal }),
-    ...cachePolicy.celebration, retry: retryTransient, enabled: Boolean(celebrationId)
-  });
-}
-
-export function useAppealTakedown(client: ApiClient, celebrationId: string) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ takedownId, message }: { readonly takedownId: string; readonly message: string }) =>
-      client.request<HostTakedown, { readonly message: string }>(`/celebrations/${encodeURIComponent(celebrationId)}/takedowns/${encodeURIComponent(takedownId)}/appeal`, { method: "POST", body: { message: message.trim() } }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: hostModerationKey(celebrationId) })
-  });
 }
 
 // ---- Administrator: the queue, one report with its trail, and the preview of a hidden file

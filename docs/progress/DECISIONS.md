@@ -157,3 +157,9 @@
 - **Pendiente de Pablo: redacción de los avisos y de «Ver mi respuesta»** (plazo vencido, regalos vacío/cerrado, sin enlace personal): son propuestas, no copy aprobado.
 - Hecho sin decisión de Pablo (verificable en el catálogo): las tres parejas tipográficas salen del catálogo curado de F1, así que no se amplía el catálogo.
 
+
+## Moderación F7 en el frontend: contratos provisionales y vista previa de un solo uso · 2026-11-27
+
+- **Contratos 1.8.0 (Celebration) y 1.9.0 (Template/Media) provisionales.** Se vendorizan de la cabeza de BE #167 (`bf93c097`), aún sin fusionar, con el generador del repo. Alternativa descartada: esperar a la fusión (bloquea la denuncia de la música y la vista previa, ya decididas por Pablo el 2026-11-26). Riesgo: la numeración puede cambiar según el orden de fusión (#159, #164, #167); se vuelve a vendorizar desde la oficial al fusionar. Reversión: volver a vendorizar el lock anterior (`generate --ref` del commit previo) y quitar la ruta `/admin/denuncias`.
+- **El enlace de vista previa nunca es una consulta.** Un `useQuery` lo guardaría en caché y lo volvería a pedir, y un segundo uso es un 404: es una mutación con `gcTime: 0` cuyo resultado vive en el estado del componente, un enlace nuevo por cada petición, y la pantalla explica el 404 de un enlace usado en vez de reintentar a ciegas.
+- **El comentario de un denunciante es texto.** Se pinta con `<Text>`; una prueba con `<img onerror>` lo comprueba en Chrome real.

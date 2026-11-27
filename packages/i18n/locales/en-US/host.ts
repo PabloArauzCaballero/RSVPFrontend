@@ -40,7 +40,7 @@ export const hostEnUS: DeepStrings<typeof hostEsBO> = {
   },
   nav: { label: "Dashboard sections" },
   dest: { home: "Home", guests: "Guests", gifts: "Gifts", invitation: "My invitation", alerts: "Notices", settings: "Settings" },
-  tabs: { moderation: "Moderation", summary: "Summary", guests: "Who is coming", report: "Replies", requests: "Companions", gifts: "My list", giftInbox: "Reservations", editor: "Content", gallery: "Gallery", translations: "Languages", templates: "Style", preview: "Preview", notifications: "Inbox", preferences: "Preferences", publish: "Publish", settings: "Configuration", modes: "Control modes", celebrations: "My celebrations", organizations: "Team", label: "Section tabs" },
+  tabs: { summary: "Summary", guests: "Who is coming", report: "Replies", requests: "Companions", gifts: "My list", giftInbox: "Reservations", editor: "Content", gallery: "Gallery", translations: "Languages", templates: "Style", preview: "Preview", notifications: "Inbox", preferences: "Preferences", publish: "Publish", settings: "Configuration", modes: "Control modes", celebrations: "My celebrations", organizations: "Team", label: "Section tabs" },
   picker: { title: "My celebrations", intro: "Each celebration has its own invitation, guests and gifts.", emptyTitle: "Your celebrations will live here", emptyBody: "Create the first one in three steps and see how it looks before you share it.", create: "Create a celebration", open: "Open {{title}}", untitled: "Untitled", noDate: "No date yet", status: { DRAFT: "Draft", PUBLISHED: "Published", ARCHIVED: "Archived" } },
   onboarding: {
     joinNames: "{{first}} and {{second}}",
