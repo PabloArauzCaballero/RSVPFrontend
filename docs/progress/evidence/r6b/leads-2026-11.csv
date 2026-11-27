@@ -1,0 +1,4 @@
+﻿month,providerId,provider,listingId,product,destination,validLeads,invalidLeads,invalid_dup,invalid_bot,invalid_PREVIEW,invalid_NOT_ELIGIBLE,invalid_PROVIDER_SELF,invalid_HOST_OR_PLANNER,invalid_OTHER,billingModel,billableLeads
+2026-11,01524162-42a3-4bd5-93ca-17519677534f,Dulce Sol R6b,84e4b1cd-dd73-458b-90ac-71018d8d2e78,Catering Dulce Sol,OFFICIAL_SITE,1,0,0,0,0,0,0,0,0,CPC,1
+2026-11,01524162-42a3-4bd5-93ca-17519677534f,Dulce Sol R6b,84e4b1cd-dd73-458b-90ac-71018d8d2e78,Catering Dulce Sol,WHATSAPP,3,3,1,0,1,0,1,0,0,CPC,3
+2026-11,7c757e02-64d7-4d31-8757-a1dbdd332a01,Flores Andes R6b,cea57043-fe40-4deb-9efe-f4af08e1048f,Catering Flores Andes,WHATSAPP,2,0,0,0,0,0,0,0,0,CPC,2
