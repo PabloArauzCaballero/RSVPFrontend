@@ -19,7 +19,7 @@ export const giftsEsBO = {
     groupPartner: "De nuestros aliados", groupOther: "Ideas de quienes te invitan",
     status: { AVAILABLE: "Disponible", PENDING_REVIEW: "Esperando aprobación", COMMITTED: "Reservado" },
     /** R5 · tarjeta del invitado: cantidad por unidades, aporte coordinado, precio vigente y «¿lo compraste?». */
-    units: { left_one: "Falta {{count}} de {{total}}", left_other: "Faltan {{count}} de {{total}}", all: "{{total}} en total", choose: "Cuántos quieres regalar", less: "Menos unidades", more: "Más unidades", value: "{{count}} unidades", help: "Quedan {{left}}. Reservas solo las que vas a regalar.", mine_one: "Reservaste {{count}} unidad", mine_other: "Reservaste {{count}} unidades", soldOut: "Ya no quedan unidades" },
+    units: { left_one: "Falta {{count}} de {{total}}", left_other: "Faltan {{count}} de {{total}}", all: "{{total}} en total", choose: "Cuántos quieres regalar", less: "Menos unidades", more: "Más unidades", value_one: "{{count}} unidad", value_other: "{{count}} unidades", help: "Quedan {{left}}. Reservas solo las que vas a regalar.", mine_one: "Reservaste {{count}} unidad", mine_other: "Reservaste {{count}} unidades", soldOut: "Ya no quedan unidades" },
     group: {
       badge: "Entre varios", contributorsNone: "Todavía nadie se sumó", contributors_one: "1 persona aporta", contributors_other: "{{count}} personas aportan",
       noCoordinator: "Sé quien coordina: reservas el regalo y compras en la tienda; los demás se suman con su parte.",
@@ -57,7 +57,7 @@ export const giftsEsBO = {
       expired: "Tu enlace ya no funciona. Pídele uno nuevo a quien te invitó.", forbidden: "Con este enlace no se pueden reservar regalos. Pídele uno nuevo a quien te invitó.", notFound: "Este enlace es de otra celebración. Abre el que te enviaron para esta.",
       busy: "Hubo muchas solicitudes seguidas. Espera un momento y vuelve a intentarlo.", busyWait: "Hubo muchas solicitudes seguidas. Espera {{seconds}} s y vuelve a intentarlo.", busyMinutes: "Hubo muchas solicitudes. Podrás volver a intentarlo en unos {{minutes}} min. Tu mensaje sigue aquí.",
       validation: "El nombre o el mensaje son demasiado largos. Acórtalos y vuelve a intentarlo.", offline: "Sin conexión por ahora. Tu mensaje sigue aquí; reintenta cuando vuelva internet.", generic: "No pudimos reservar el regalo. Inténtalo de nuevo.",
-      units: "Ya solo quedan {{count}} unidades. Elige una cantidad menor y vuelve a intentarlo.", unitsNone: "Ya no quedan unidades de este regalo. Actualizamos la lista.", already: "Ya tienes una reserva de este regalo. Cancélala primero si quieres cambiarla.",
+      units_one: "Ya solo queda {{count}} unidad. Elige 1 y vuelve a intentarlo.", units_other: "Ya solo quedan {{count}} unidades. Elige una cantidad menor y vuelve a intentarlo.", unitsNone: "Ya no quedan unidades de este regalo. Actualizamos la lista.", already: "Ya tienes una reserva de este regalo. Cancélala primero si quieres cambiarla.",
       retryHint: "Puedes volver a tocar «Confirmar reserva»: no se reservará dos veces.", nameTooLong: "El nombre admite hasta {{max}} caracteres.", messageTooLong: "El mensaje admite hasta {{max}} caracteres."
     }
   },

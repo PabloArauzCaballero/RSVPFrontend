@@ -21,7 +21,7 @@ export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
     groupPartner: "From our partners", groupOther: "Ideas from your hosts",
     status: { AVAILABLE: "Available", PENDING_REVIEW: "Waiting for approval", COMMITTED: "Reserved" },
     /** R5 · guest card: quantity by units, coordinated contribution, current price and «did you buy it?». */
-    units: { left_one: "{{count}} of {{total}} still needed", left_other: "{{count}} of {{total}} still needed", all: "{{total}} in total", choose: "How many do you want to give", less: "Fewer units", more: "More units", value: "{{count}} units", help: "{{left}} left. Reserve only the ones you will give.", mine_one: "You reserved {{count}} unit", mine_other: "You reserved {{count}} units", soldOut: "No units left" },
+    units: { left_one: "{{count}} of {{total}} still needed", left_other: "{{count}} of {{total}} still needed", all: "{{total}} in total", choose: "How many do you want to give", less: "Fewer units", more: "More units", value_one: "{{count}} unit", value_other: "{{count}} units", help: "{{left}} left. Reserve only the ones you will give.", mine_one: "You reserved {{count}} unit", mine_other: "You reserved {{count}} units", soldOut: "No units left" },
     group: {
       badge: "Together", contributorsNone: "Nobody has joined yet", contributors_one: "1 person is chipping in", contributors_other: "{{count}} people are chipping in",
       noCoordinator: "Be the one who coordinates: you reserve the gift and buy it at the store; the others join with their share.",
@@ -59,7 +59,7 @@ export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
       expired: "Your link no longer works. Ask whoever invited you for a new one.", forbidden: "This link cannot reserve gifts. Ask whoever invited you for a new one.", notFound: "This link is for another celebration. Open the one you were sent for this one.",
       busy: "There were a lot of requests in a row. Wait a moment and try again.", busyWait: "There were a lot of requests in a row. Wait {{seconds}} s and try again.", busyMinutes: "There were a lot of requests. You can try again in about {{minutes}} min. Your message is still here.",
       validation: "The name or the message is too long. Shorten it and try again.", offline: "No connection right now. Your message is still here; try again when your internet is back.", generic: "We could not reserve the gift. Try again.",
-      units: "Only {{count}} units are left. Pick a smaller number and try again.", unitsNone: "No units of this gift are left. We refreshed the list.", already: "You already hold a reservation for this gift. Cancel it first if you want to change it.",
+      units_one: "Only {{count}} unit is left. Pick 1 and try again.", units_other: "Only {{count}} units are left. Pick a smaller number and try again.", unitsNone: "No units of this gift are left. We refreshed the list.", already: "You already hold a reservation for this gift. Cancel it first if you want to change it.",
       retryHint: "You can tap “Confirm reservation” again: it will not be reserved twice.", nameTooLong: "The name accepts up to {{max}} characters.", messageTooLong: "The message accepts up to {{max}} characters."
     }
   },
