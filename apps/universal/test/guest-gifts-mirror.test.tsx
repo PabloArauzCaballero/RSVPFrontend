@@ -80,13 +80,13 @@ describe("Espejo web · A14 the gift list at /c/{slug}/regalos in the app", () =
     const launch = vi.spyOn(Linking, "openURL").mockResolvedValue(undefined);
     try {
       show({ token: TOKEN }, { [`GET /listings/${LISTING}`]: () => ({ id: LISTING, destinationTypes: ["WHATSAPP"] }) });
-      fireEvent.click(await screen.findByRole("button", { name: "Consultar por WhatsApp" }));
+      fireEvent.click(await screen.findByRole("button", { name: "Pedir por WhatsApp" }));
       expect(screen.queryByTestId(`partner-${TORTA}`)).toBeNull();
       expect(screen.getByTestId(`reserve-${TORTA}`)).toBeTruthy();
       expect(launch.mock.calls).toHaveLength(1);
       const target = new URL(launch.mock.calls[0]![0]);
       expect(target.pathname).toBe(`/r/${LISTING}`);
-      expect(Object.fromEntries(target.searchParams)).toEqual({ destination: "WHATSAPP", surface: "GIFT_LIST", celebrationId: "c-1" });
+      expect(Object.fromEntries(target.searchParams)).toEqual({ destination: "WHATSAPP", surface: "GIFT_LIST", celebrationId: "c-1", celebrationSlug: "ana-luis", giftItemId: TORTA, quantity: "1", locale: "es-BO" });
     } finally {
       launch.mockRestore();
     }
@@ -97,7 +97,7 @@ describe("Espejo web · A14 the gift list at /c/{slug}/regalos in the app", () =
     try {
       const withCtx = (leadContext: string | null) => ({ "GET /gifts/celebrations/c-1/items": () => ({ items: ITEMS, partnerPriorityEnabled: true, leadContext }), [`GET /listings/${LISTING}`]: () => ({ id: LISTING, destinationTypes: ["WHATSAPP"] }) });
       show({ token: TOKEN }, withCtx("lead-context-de-prueba"));
-      fireEvent.click(await screen.findByRole("button", { name: "Consultar por WhatsApp" }));
+      fireEvent.click(await screen.findByRole("button", { name: "Pedir por WhatsApp" }));
       expect(new URL(launch.mock.calls[0]![0]).searchParams.get("ctx")).toBe("lead-context-de-prueba");
     } finally {
       launch.mockRestore();
@@ -108,7 +108,7 @@ describe("Espejo web · A14 the gift list at /c/{slug}/regalos in the app", () =
     const launch = vi.spyOn(Linking, "openURL").mockResolvedValue(undefined);
     try {
       const { calls } = show({ token: TOKEN }, { "GET /gifts/celebrations/c-1/items": () => ({ items: ITEMS, partnerPriorityEnabled: true, leadContext: null }), [`GET /listings/${LISTING}`]: () => ({ id: LISTING, destinationTypes: ["WHATSAPP"] }) });
-      fireEvent.click(await screen.findByRole("button", { name: "Consultar por WhatsApp" }));
+      fireEvent.click(await screen.findByRole("button", { name: "Pedir por WhatsApp" }));
       expect(calls.find((call) => call.path === "/gifts/celebrations/c-1/items")?.headers.get("authorization")).toBe(`Bearer ${TOKEN}`);
       expect(new URL(launch.mock.calls[0]![0]).searchParams.has("ctx")).toBe(false);
     } finally {

@@ -63,10 +63,22 @@ export type PartnerSurface = 'PUBLIC_SITE' | 'SEARCH' | 'CELEBRATION_SITE' | 'GI
  * A `ctx` (the member's signed lead context) is only valid together with the celebration it was signed for, so the type demands `celebrationId`
  * whenever `ctx` is a value. Without a celebration there is no `ctx`.
  */
+export interface PartnerGiftContext {
+  /** Public slug of the celebration; with `celebrationId` (always send both) it fills {celebracion}, {fecha} and {entrega} of the WhatsApp message. */
+  celebrationSlug?: string;
+  /** The gift of the guest's list the click comes from (stored with the lead, never shown to the provider). */
+  giftItemId?: string;
+  /** The product version (the gift's `variantCode`). */
+  variant?: string | null;
+  /** Units the guest wants, a positive integer: {cantidad}. */
+  quantity?: number;
+  /** City slug of the celebration, when known: {ciudad}. */
+  city?: string;
+}
 export type PartnerLinkContext =
-  | { celebrationId: string; ctx?: string | null }
+  | ({ celebrationId: string; ctx?: string | null } & PartnerGiftContext)
   | { celebrationId?: undefined; ctx?: undefined };
-export type PartnerRedirectOptions = { destination?: PartnerDestination; surface?: PartnerSurface } & PartnerLinkContext;
+export type PartnerRedirectOptions = { destination?: PartnerDestination; surface?: PartnerSurface; /** es-BO or en-US: the language of the provider's template. */ locale?: string } & PartnerLinkContext;
 
 /**
  * The only way to point at a partner: the redirector `/r/{listingId}`, which records the lead and answers 302. Never the partner URL.
@@ -77,7 +89,16 @@ export function partnerRedirectHref(listingId: string, options: PartnerRedirectO
   const query = new URLSearchParams();
   if (options.destination) query.set('destination', options.destination);
   if (options.surface) query.set('surface', options.surface);
-  if (options.celebrationId) query.set('celebrationId', options.celebrationId);
+  if (options.celebrationId) {
+    query.set('celebrationId', options.celebrationId);
+    // R5: what the redirector needs to resolve the WhatsApp message on the server. Never the guest's name, phone or id (PF-1).
+    if (options.celebrationSlug) query.set('celebrationSlug', options.celebrationSlug);
+    if (options.giftItemId) query.set('giftItemId', options.giftItemId);
+    if (options.variant) query.set('variant', options.variant);
+    if (Number.isInteger(options.quantity) && (options.quantity ?? 0) > 0) query.set('quantity', String(options.quantity));
+    if (options.city) query.set('city', options.city);
+  }
+  if (options.locale) query.set('locale', options.locale);
   // R6a: the member's signed lead context (opaque, ~5 min).
   if (options.ctx) query.set('ctx', options.ctx);
   const text = query.toString();
@@ -97,7 +118,7 @@ export function partnerRedirectHref(listingId: string, options: PartnerRedirectO
  *  2. Safari fires no `click` for a middle-click on a link (it opens the `href` directly), so there the new tab carries no `ctx`.
  *  3. Before hydration the handlers do not exist: a click then follows the plain `href` and carries no `ctx`.
  */
-export function PartnerLink({ listingId, children, className, disclaimer = true, ...link }: PropsWithChildren<{ listingId: string; className?: string; disclaimer?: boolean } & PartnerRedirectOptions>) {
+export function PartnerLink({ listingId, children, className, disclaimer = true, onFollow, ...link }: PropsWithChildren<{ listingId: string; className?: string; disclaimer?: boolean; /** R5: called when the visitor follows the link (click, Enter or middle click), before leaving: the gift list records the attempt for «¿Lo compraste?». */ onFollow?: () => void } & PartnerRedirectOptions>) {
   const t = useStrings();
   const id = useId();
   const href = partnerRedirectHref(listingId, { ...link, ctx: undefined });
@@ -109,14 +130,18 @@ export function PartnerLink({ listingId, children, className, disclaimer = true,
         rel="sponsored nofollow noopener"
         aria-describedby={disclaimer ? id : undefined}
         className={cn(buttonVariants({ variant: 'secondary' }), className)}
-        onClick={bearer ? (event) => {
+        onClick={bearer || onFollow ? (event) => {
           if (event.defaultPrevented || event.altKey || event.button !== 0) return;
+          onFollow?.();
+          if (!bearer) return;
           event.preventDefault();
           if (event.metaKey || event.ctrlKey || event.shiftKey) window.open(bearer, '_blank', 'noopener');
           else window.open(bearer, '_self');
         } : undefined}
-        onAuxClick={bearer ? (event) => {
+        onAuxClick={bearer || onFollow ? (event) => {
           if (event.button !== 1) return;
+          onFollow?.();
+          if (!bearer) return;
           event.preventDefault();
           window.open(bearer, '_blank', 'noopener');
         } : undefined}

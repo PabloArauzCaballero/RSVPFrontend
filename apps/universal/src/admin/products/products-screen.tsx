@@ -140,8 +140,8 @@ function ProductRow({ item, busy, onHide, onShow, onFeatured }: { readonly item:
       <SwitchRow label={t("admin.products.row.featuredNamed", { name: item.title })} hint={item.hidden ? t("admin.products.row.featuredHidden") : t("admin.products.row.featuredHint")} value={item.featured} disabled={busy || item.hidden} onChange={onFeatured} testID={`product-featured-${item.listingId}`} />
       <View style={styles.row}>
         {item.hidden
-          ? <ActionButton variant="secondary" accessibleName={t("admin.products.actions.showNamed", { name: item.title })} label={t("admin.products.actions.show")} busy={busy} onPress={onShow} testID={`product-show-${item.listingId}`} />
-          : <ActionButton variant="danger" accessibleName={t("admin.products.actions.hideNamed", { name: item.title })} label={t("admin.products.actions.hide")} busy={busy} onPress={onHide} testID={`product-hide-${item.listingId}`} />}
+          ? <ActionButton variant="secondary" accessibilityLabel={t("admin.products.actions.showNamed", { name: item.title })} label={t("admin.products.actions.show")} busy={busy} onPress={onShow} testID={`product-show-${item.listingId}`} />
+          : <ActionButton variant="danger" accessibilityLabel={t("admin.products.actions.hideNamed", { name: item.title })} label={t("admin.products.actions.hide")} busy={busy} onPress={onHide} testID={`product-hide-${item.listingId}`} />}
       </View>
     </View>
   );
