@@ -1,7 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { cleanup, fireEvent, render } from "@testing-library/react";
-import postcss from "postcss";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { GALLERY, NOW, t, VIEW } from "../../test/fixtures.js";
@@ -328,13 +327,8 @@ describe("the documents themselves", () => {
     expect(css).toMatch(/\.celebration-design \.cdesign-cover > picture > source \{ display: none; \}/);
     // The editorial phone rule is keyed to the <img> and is no longer needed on the wrapper.
     expect(css).toMatch(/@media \(max-width: 56\.1875rem\) \{ \.celebration-design \.cdesign-cover\[data-variant="editorial"\] \.cdesign-cover-photo \{ order: 1;/);
-    const groupedCoverPictures: string[] = [];
-    postcss.parse(css).walkRules(({ selectors }) => {
-      groupedCoverPictures.push(...selectors.filter((selector) =>
-        /\.cdesign-cover(?![\w-])/.test(selector) && /:is\(\s*picture\s*,/.test(selector)
-      ));
-    });
-    expect(groupedCoverPictures).toEqual([]);
+    // No cover rule goes back to placing the wrapper. Scoped to the cover: the gallery styles its own <picture> with `:is(picture, img)`.
+    expect(css).not.toMatch(/\.cdesign-cover[^{},]*:is\(picture, /);
   });
   it.each(NAMES)("%s: exactly one gifts button, required, and no link on it (the destination is the renderer's)", (name) => {
     const design = DESIGN_TEMPLATES[name].theme as unknown as DesignDocumentV2;
