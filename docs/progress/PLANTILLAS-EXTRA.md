@@ -19,6 +19,48 @@ Ramas FE y BE `feat/plantillas-extra-otros-despedida-pedida` (se retoma el WIP `
 - PL-FE143-1/-3: se registra PL-EXTRA-2 en `bugs/catalogo`; `seeded-palettes.json` y `seed-palettes.ts` ya no citan ramas que se borran tras el squash.
 - Hallazgo nuevo (no corregido aqui): `Canvas` toma la tipografia del elemento movil (`phone.get(id) ?? wide.get(id)`), de modo que `typography` del lienzo de escritorio (tamano 72/80/104, alineacion) no se aplica; las portadas de escritorio usan el tamano fluido del movil. Se registra en `bugs/catalogo`.
 
+## Ronda 2 del orquestador (corrección) · 2026-11-27
+
+Entorno: Linux, Google Chrome `/usr/bin/google-chrome` con el proxy del entorno para cargar Google Fonts, `next build` + `next start` sobre `apps/seo-web/scripts/fixture-api.mjs` (NO backend real). `yarn` no es alcanzable desde el sandbox (`repo.yarnpkg.com` bloqueado): dependencias instaladas con npm en un directorio fuera del repo y enlazadas; `gitleaks` no está instalado (no se ejecutó en esta ronda). Playwright con un config temporal fuera del repo (mismos `use` que `playwright.config.ts`, sin `webServer`).
+
+### PL-FE143-R2-2 · el cambio de motor ya no mueve las portadas existentes
+- Causa: `data-align="center"` en `CoverBlock` (y su regla `picture { width: 100%; display: flex }`) se emitía para todo documento con `typography.align: "center"` en la portada, también para las plantillas que ya existían.
+- Solución: `render.tsx` solo emite `data-align` si el `theme.id` está en `EXTRA_TEMPLATE_IDS` (ahora en `documents/extra-ids.ts`, sin importar los JSON). Las 30 plantillas existentes no reciben el atributo ni la regla.
+- Prueba: `e2e/plantillas-v2-portadas-existentes.spec.ts` mide h1 y foto (`getBoundingClientRect`) de las 30 existentes, con y sin foto, a 360 y 1280 (120 casos) contra `e2e/fixtures/portadas-base.json`, medido en la rama oficial `58ddce68` (tolerancia 1 px), y comprueba que no hay `data-align` ni `display:flex` en el `<picture>`. Prueba unitaria equivalente en `design/extra.test.tsx`.
+```
+base 58ddce68 (grabación, COVER_GEOMETRY_RECORD)       -> 120 passed (3.0m)
+0adae467 (antes de la corrección), misma prueba        -> 52 failed, 68 passed: 22 casos con geometría distinta (foto x 33 -> 74 en jardin-botanico, cielo-bautizo,
+                                                          arena-terracota, fiesta-patronal; x 16 -> 68 en bodas-de-oro e inauguracion; 405 -> 318 en gala y editorial-granate
+                                                          a 1280; h1 x 33 -> 45,7 en menta-infantil con y sin foto; h1 x 296 -> 393 en fin-de-ano-sinfoto) y 30 con el atributo
+2b051796 (con la corrección), misma prueba             -> 120 passed (2.7m)
+```
+- Decisión pendiente (no la tomo yo): si el mismo arreglo debe alcanzar a las plantillas existentes (es plausiblemente la corrección correcta del mismo defecto de eje), se amplía el conjunto con una línea y se regeneran las líneas base de esta prueba. Va como pregunta 5 en el PR.
+
+### PL-FE143-R2-4 · cobertura del eje foto/texto
+`plantillas-v2-extra.spec.ts`: `data-align=center` se afirma en Mesa larga, Black tie, Solitario y Rosa (y su ausencia en Rumbo y Disco); en las que llevan foto en arco o círculo se afirma que la foto es más estrecha que la portada y que su eje coincide con el del h1 (±1,5 px); en Black tie, que la foto ocupa todo el ancho. Ahora corre con y sin foto, en claro y oscuro, a 360/768/1280 (72 casos; antes 18, condicionales).
+
+### Comandos y salidas
+```
+packages/celebration-theme: npx tsc --noEmit -> rc=0 · npx vitest run -> Test Files 18 passed (18), Tests 3281 passed (3281)
+apps/seo-web: npx tsc --noEmit -> rc=0
+npx eslint packages/celebration-theme apps/seo-web/e2e --max-warnings 0 -> sin salida, rc=0
+node scripts/validate-harness.mjs -> Harness frontend: 28 carriles, 61 skills y recarga por prompt válidos.
+next build (apps/seo-web, NEXT_DIST_DIR=.next-visual) -> OK (incluye el chequeo de tipos de la app)
+playwright test plantillas-v2 (todas las v2, Chrome real, fixture): ver «Corrida final» abajo
+```
+
+### Corrida final (commit `7eb3665a`, Chrome real, fixture, sin reintentos)
+```
+playwright test plantillas-v2 (v2, v2-bodas, v2-fiestas, v2-infantil-ritos, v2-sobrio, v2-extra, v2-portadas-existentes) -> 6 failed, 1119 passed (12.5m)
+  4 preexistentes a 360x800 (PL-OF-1, arreglados en FE #146): fin-de-ano, bodas-de-plata, primera-comunion, otros-evento («title ends above the dock»);
+     fallan igual en la rama oficial 58ddce68 (la misma prueba, build propia).
+  2 intermitentes de plantillas-v2.spec.ts «gifts button EMPTY» (gala light/dark 390px; la carrera del color de fondo del dock durante su transición, con la máquina bajo carga de memoria):
+     10/10 pasan al repetirlos (--repeat-each=5); en la rama oficial el mismo grupo también falló 1 de 228 (marfil light 320px, `--repeat-each=2`). No tocan portadas ni este PR.
+plantillas-v2-extra.spec.ts (151 antes -> 72 + 72 + 18 + 1 ahora, todos en verde en la corrida final)
+plantillas-v2-portadas-existentes.spec.ts -> 120 passed
+```
+Primera corrida (antes de afirmar `centred` en Black tie): 12 fallos de Black tie en la prueba nueva, porque el documento de Black tie también centra el texto; la aserción se corrigió (foto de ancho completo) y la corrida final está en verde.
+
 ## Líneas base macOS que cambian
 Ninguna. Capturas nuevas solo en `docs/progress/evidence/plantillas-extra/` (360/768/1280, claro y oscuro, con y sin foto) y `contraste.md` / `contrast.jsonl`.
 
