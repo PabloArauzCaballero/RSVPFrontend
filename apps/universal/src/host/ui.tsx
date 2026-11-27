@@ -179,8 +179,8 @@ export function ToggleChip({ label, on, onPress, testID, disabled = false }: { r
 }
 
 /** Host and admin actions are the shared `@rsvp/ui` Button; only the busy/disabled vocabulary is adapted here. */
-export function ActionButton({ label, onPress, variant = "primary", busy = false, disabled = false, testID, icon }: { readonly icon?: string; readonly label: string; readonly onPress: () => void; readonly variant?: "primary" | "secondary" | "danger"; readonly busy?: boolean; readonly disabled?: boolean; readonly testID?: string }): ReactNode {
-  return <Button accessibilityLabel={label} icon={icon} variant={variant} state={busy ? "loading" : disabled ? "disabled" : "default"} onPress={onPress} testID={testID}>{label}</Button>;
+export function ActionButton({ label, onPress, variant = "primary", busy = false, disabled = false, testID, icon, buttonRef }: { readonly buttonRef?: Ref<View>; readonly icon?: string; readonly label: string; readonly onPress: () => void; readonly variant?: "primary" | "secondary" | "danger"; readonly busy?: boolean; readonly disabled?: boolean; readonly testID?: string }): ReactNode {
+  return <Button accessibilityLabel={label} icon={icon} variant={variant} state={busy ? "loading" : disabled ? "disabled" : "default"} onPress={onPress} testID={testID} buttonRef={buttonRef}>{label}</Button>;
 }
 
 export function Notice({ kind = "info", children }: PropsWithChildren<{ readonly kind?: "info" | "error" | "success" }>): ReactNode {

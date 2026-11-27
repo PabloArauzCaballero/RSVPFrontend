@@ -41,20 +41,35 @@ function ReportDialog({ slug, locale, target, onClose, client }: { readonly slug
   const [failure, setFailure] = useState<ReportFailure | null>(null);
   const [shown, setShown] = useState<Target>('page');
   const http = useRef<ApiClient | null>(client ?? null);
+  const submitRef = useRef<HTMLButtonElement>(null);
+  const doneTitleRef = useRef<HTMLHeadingElement>(null);
+  const inFlight = useRef(false);
 
   useEffect(() => {
     const dialog = ref.current;
     if (!dialog) return;
-    if (target && !dialog.open) { setShown(target); setPhase('editing'); setFailure(null); setTouched(false); setReason(''); setComment(''); dialog.showModal(); }
-    if (!target && dialog.open) dialog.close();
+    if (target) {
+      if (!dialog.open) { setShown(target); dialog.showModal(); }
+      return;
+    }
+    if (dialog.open) dialog.close();
+    // The form is cleared on the way out: showModal() focuses what is in the DOM at that instant, so a leftover confirmation would
+    // take the focus of the next report and then unmount with it.
+    setPhase('editing'); setFailure(null); setTouched(false); setReason(''); setComment('');
   }, [target]);
+
+  // The form unmounts with the focus inside it: the confirmation's title takes it.
+  useEffect(() => { if (phase === 'done') doneTitleRef.current?.focus(); }, [phase]);
 
   const problem = touched ? reportDraftProblem({ reason: reason || null, comment }) : null;
   const send = async (event: FormEvent): Promise<void> => {
     event.preventDefault();
-    if (phase === 'sending') return;
+    if (inFlight.current) return;
     setTouched(true);
     if (reportDraftProblem({ reason: reason || null, comment }) || !reason) return;
+    inFlight.current = true;
+    // The fields are disabled while it sends, and a disabled control drops its focus: the send button holds it and is never `disabled`.
+    submitRef.current?.focus();
     setPhase('sending'); setFailure(null);
     try {
       http.current ??= createGuestClient();
@@ -63,6 +78,8 @@ function ReportDialog({ slug, locale, target, onClose, client }: { readonly slug
     } catch (error) {
       setFailure(reportFailure(error));
       setPhase('editing');
+    } finally {
+      inFlight.current = false;
     }
   };
   const music = shown === 'music';
@@ -72,39 +89,41 @@ function ReportDialog({ slug, locale, target, onClose, client }: { readonly slug
   const closeDialog = (): void => { if (phase !== 'sending') onClose(); };
   return (
     <dialog ref={ref} className="report-dialog" aria-labelledby={`${id}-title`} aria-describedby={`${id}-intro`} onCancel={(event) => { event.preventDefault(); closeDialog(); }} onClose={onClose}>
-      {target || phase === 'done' ? (
-        phase === 'done' ? (
-          <div className="report-done" role="status">
-            <h2 id={`${id}-title`}>{t('moderation.report.doneTitle')}</h2>
-            <p id={`${id}-intro`}>{t('moderation.report.doneBody')}</p>
-            <div className="rsvp-actions"><button type="button" className="rsvp-button" onClick={onClose} data-report-close="">{t('moderation.report.close')}</button></div>
+      {target && phase !== 'done' ? (
+        <form className="rsvp-form report-form" onSubmit={(event) => { void send(event); }} noValidate>
+          <h2 id={`${id}-title`}>{t(music ? 'moderation.report.titleMusic' : 'moderation.report.titlePage')}</h2>
+          <p id={`${id}-intro`} className="rsvp-hint">{t(music ? 'moderation.report.introMusic' : 'moderation.report.introPage')}</p>
+          <div className="rsvp-field">
+            <label htmlFor={`${id}-reason`}>{t('moderation.report.reason')}</label>
+            <select id={`${id}-reason`} value={reason} onChange={(event) => setReason(event.target.value as ReportReason | '')} aria-invalid={reasonError ? 'true' : undefined} aria-describedby={reasonError ? `${id}-reason-error` : undefined} disabled={phase === 'sending'} required>
+              <option value="">{t('moderation.report.reasonPlaceholder')}</option>
+              {REPORT_REASONS.map((value) => <option key={value} value={value}>{t(`moderation.reasons.${value}`)}</option>)}
+            </select>
+            {reasonError ? <p id={`${id}-reason-error`} className="rsvp-error" role="alert">{reasonError}</p> : null}
           </div>
-        ) : (
-          <form className="rsvp-form report-form" onSubmit={(event) => { void send(event); }} noValidate>
-            <h2 id={`${id}-title`}>{t(music ? 'moderation.report.titleMusic' : 'moderation.report.titlePage')}</h2>
-            <p id={`${id}-intro`} className="rsvp-hint">{t(music ? 'moderation.report.introMusic' : 'moderation.report.introPage')}</p>
-            <div className="rsvp-field">
-              <label htmlFor={`${id}-reason`}>{t('moderation.report.reason')}</label>
-              <select id={`${id}-reason`} value={reason} onChange={(event) => setReason(event.target.value as ReportReason | '')} aria-invalid={reasonError ? 'true' : undefined} aria-describedby={reasonError ? `${id}-reason-error` : undefined} disabled={phase === 'sending'} required>
-                <option value="">{t('moderation.report.reasonPlaceholder')}</option>
-                {REPORT_REASONS.map((value) => <option key={value} value={value}>{t(`moderation.reasons.${value}`)}</option>)}
-              </select>
-              {reasonError ? <p id={`${id}-reason-error`} className="rsvp-error" role="alert">{reasonError}</p> : null}
-            </div>
-            <div className="rsvp-field">
-              <label htmlFor={`${id}-comment`}>{t('moderation.report.comment')} <span className="rsvp-hint">({t(reason === 'OTHER' ? 'moderation.report.commentRequiredHint' : 'moderation.report.commentOptional')})</span></label>
-              <textarea id={`${id}-comment`} value={comment} onChange={(event) => setComment(event.target.value)} rows={4} aria-invalid={commentError ? 'true' : undefined} aria-describedby={`${id}-comment-help${commentError ? ` ${id}-comment-error` : ''}`} disabled={phase === 'sending'} />
-              <p id={`${id}-comment-help`} className="rsvp-hint report-help"><span>{t('moderation.report.commentHelp', { max: REPORT_COMMENT_MAX })}</span><span aria-hidden="true">{t('moderation.report.counter', { count: comment.length, max: REPORT_COMMENT_MAX })}</span></p>
-              {commentError ? <p id={`${id}-comment-error`} className="rsvp-error" role="alert">{commentError}</p> : null}
-            </div>
-            {failureText ? <p className="rsvp-error" role="alert" data-report-failure={failure?.key}>{failureText}</p> : null}
-            <div className="rsvp-actions">
-              <button type="submit" className="rsvp-button" disabled={phase === 'sending'} aria-disabled={phase === 'sending'}>{phase === 'sending' ? t('moderation.report.sending') : t('moderation.report.send')}</button>
-              <button type="button" className="rsvp-button rsvp-button--secondary" disabled={phase === 'sending'} onClick={closeDialog}>{t('moderation.report.cancel')}</button>
-            </div>
-          </form>
-        )
+          <div className="rsvp-field">
+            <label htmlFor={`${id}-comment`}>{t('moderation.report.comment')} <span className="rsvp-hint">({t(reason === 'OTHER' ? 'moderation.report.commentRequiredHint' : 'moderation.report.commentOptional')})</span></label>
+            <textarea id={`${id}-comment`} value={comment} onChange={(event) => setComment(event.target.value)} rows={4} aria-invalid={commentError ? 'true' : undefined} aria-describedby={`${id}-comment-help${commentError ? ` ${id}-comment-error` : ''}`} disabled={phase === 'sending'} />
+            <p id={`${id}-comment-help`} className="rsvp-hint report-help"><span>{t('moderation.report.commentHelp', { max: REPORT_COMMENT_MAX })}</span><span aria-hidden="true">{t('moderation.report.counter', { count: comment.length, max: REPORT_COMMENT_MAX })}</span></p>
+            {commentError ? <p id={`${id}-comment-error`} className="rsvp-error" role="alert">{commentError}</p> : null}
+          </div>
+          {failureText ? <p className="rsvp-error" role="alert" data-report-failure={failure?.key}>{failureText}</p> : null}
+          <div className="rsvp-actions">
+            <button type="submit" ref={submitRef} className="rsvp-button" aria-disabled={phase === 'sending'}>{phase === 'sending' ? t('moderation.report.sending') : t('moderation.report.send')}</button>
+            <button type="button" className="rsvp-button rsvp-button--secondary" disabled={phase === 'sending'} onClick={closeDialog}>{t('moderation.report.cancel')}</button>
+          </div>
+        </form>
       ) : null}
+      {/* The live region is mounted before it has anything to say: a region inserted together with its text may not be announced. */}
+      <div role="status" className={phase === 'done' ? 'report-done' : undefined}>
+        {phase === 'done' ? (
+          <>
+            <h2 id={`${id}-title`} ref={doneTitleRef} tabIndex={-1}>{t('moderation.report.doneTitle')}</h2>
+            <p id={`${id}-intro`}>{t('moderation.report.doneBody')}</p>
+          </>
+        ) : null}
+      </div>
+      {phase === 'done' ? <div className="rsvp-actions report-done-actions"><button type="button" className="rsvp-button" onClick={onClose} data-report-close="">{t('moderation.report.close')}</button></div> : null}
     </dialog>
   );
 }

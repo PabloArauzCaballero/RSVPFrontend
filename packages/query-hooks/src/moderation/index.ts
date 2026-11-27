@@ -86,8 +86,11 @@ export const adminReportKeys = {
   detail: (id: string) => ["admin", "reports", "detail", id] as const
 } as const;
 
+/** The largest page the contract accepts. The queue is oldest first, so a full page means newer reports may exist beyond it. */
+export const REPORT_QUEUE_LIMIT = 100;
+
 export function useAdminReports(client: ApiClient, status: ReportStatus = "OPEN") {
-  return useQuery({ queryKey: adminReportKeys.list(status), queryFn: () => client.request<{ readonly items: readonly AdminReport[] }>(`/celebrations/admin/reports?status=${status}&limit=100`), ...FRESH });
+  return useQuery({ queryKey: adminReportKeys.list(status), queryFn: () => client.request<{ readonly items: readonly AdminReport[] }>(`/celebrations/admin/reports?status=${status}&limit=${REPORT_QUEUE_LIMIT}`), ...FRESH });
 }
 
 export function useAdminReport(client: ApiClient, reportId: string) {
@@ -97,11 +100,13 @@ export function useAdminReport(client: ApiClient, reportId: string) {
 /**
  * POST /media/admin/assets/{id}/preview-links (ADMIN). The link works ONCE and for five minutes, so it is a one-shot mutation result:
  * never a query (a query would be cached and refetched, and a second use is a 404), never stored, `gcTime: 0`, and the caller keeps it
- * in component state only until it is used or `expiresAt`. A 409 `ASSET_NOT_QUARANTINED` means the bytes are still moving: retry shortly.
+ * in component state only until it is used or `expiresAt`. `retry: false` is said here, not left to defaults: a client-wide mutation
+ * retry would issue extra single-use links nobody asked for (the only re-send is api-client's one after a token refresh). A 409 `ASSET_NOT_QUARANTINED` means the bytes are still moving: retry shortly.
  */
 export function useHiddenAssetPreview(client: ApiClient) {
   return useMutation({
     gcTime: 0,
+    retry: false,
     mutationFn: (assetId: string) => client.request<HiddenAssetPreviewLink, Record<string, never>>(`/media/admin/assets/${encodeURIComponent(assetId)}/preview-links`, { method: "POST", body: {} })
   });
 }

@@ -57,7 +57,7 @@ async function open(page: Page, width = 390, scheme: "light" | "dark" = "light")
   await page.goto("/admin/denuncias", { waitUntil: "domcontentloaded", timeout: 120_000 });
 }
 const shot = async (page: Page, name: string): Promise<void> => { if (OUT) { mkdirSync(OUT, { recursive: true }); await page.screenshot({ path: `${OUT}/${name}.png`, fullPage: true }); } };
-const detail = async (page: Page): Promise<void> => { await page.getByRole("button", { name: "Abrir denuncia ana-y-luis" }).click(); await expect(page.getByText("Denuncia de ana-y-luis")).toBeVisible({ timeout: 30_000 }); };
+const detail = async (page: Page): Promise<void> => { await page.getByRole("button", { name: "Abrir denuncia ana-y-luis" }).click(); await expect(page.getByTestId("report-comment")).toBeVisible({ timeout: 30_000 }); };
 
 test("F7 · an empty queue says there is nothing open", async ({ page }) => {
   await serve(page, { queue: json(200, { items: [] }) });
@@ -131,6 +131,35 @@ test("F7 · the files that cannot be read leave a retry, not a blank block", asy
   await page.getByTestId("files-retry").click();
   await expect(page.getByTestId("files-none")).toBeVisible();
 });
+
+for (const scheme of ["light", "dark"] as const) {
+  test(`F7 · keyboard only: opening a report, asking for the hidden file and going back never drop the focus to the body, ${scheme}`, async ({ page }) => {
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    const { issued } = await serve(page, { issue: async (route) => { await gate; await json(201, { url: `${MEDIA}/public/previews/token-1`, expiresAt: "2026-11-27T12:05:00Z", variant: "thumb", singleUse: true })(route); } });
+    await oneShotLinks(page);
+    await open(page, 390, scheme);
+    const opener = page.getByRole("button", { name: "Abrir denuncia ana-y-luis" });
+    await expect(opener).toBeVisible({ timeout: 60_000 });
+    await opener.focus();
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("heading", { name: "Denuncia de ana-y-luis" })).toBeFocused();
+    await expect(page.getByTestId("report-comment")).toBeVisible();
+    const ask = page.getByTestId("preview-ask-a-photo");
+    await ask.focus();
+    await page.keyboard.press("Enter");
+    await expect(ask).toHaveAccessibleName("Pidiendo el enlace…");
+    await expect(ask).toBeFocused();
+    await page.keyboard.press("Enter");
+    release();
+    await expect(page.getByRole("img", { name: /Archivo oculto/ })).toBeVisible();
+    await expect(ask).toBeFocused();
+    expect(issued).toHaveLength(1);
+    await page.getByTestId("report-back").focus();
+    await page.keyboard.press("Enter");
+    await expect(opener).toBeFocused();
+  });
+}
 
 for (const scheme of ["light", "dark"] as const) {
   for (const width of [360, 768, 1280] as const) {

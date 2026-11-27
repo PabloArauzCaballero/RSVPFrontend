@@ -74,7 +74,7 @@ describe("administrator", () => {
     expect(new URL(url).searchParams.get("status")).toBe("DISMISSED");
   });
 
-  it("asks for a link per request, never reuses one, and keeps nothing in the cache", async () => {
+  it("asks for a link per request and never reuses one", async () => {
     let issued = 0;
     server.use(http.post(`${BASE}/media/admin/assets/a-1/preview-links`, () => HttpResponse.json({ url: `https://media.test/public/previews/t${++issued}`, expiresAt: "2026-11-27T12:05:00Z", variant: "thumb", singleUse: true }, { status: 201 })));
     const { result } = renderHook(() => useHiddenAssetPreview(client), { wrapper });
@@ -83,6 +83,36 @@ describe("administrator", () => {
     await act(async () => { await result.current.mutateAsync("a-1"); });
     await waitFor(() => expect(result.current.data?.url).toBe("https://media.test/public/previews/t2"));
     expect(issued).toBe(2);
+  });
+
+  // The app's own QueryClient may one day retry mutations: a retried preview request issues a second single-use link nobody asked for.
+  it.each([
+    ["a 500", () => refuse(500, "INTERNAL")],
+    ["a lost connection", () => HttpResponse.error()]
+  ] as const)("posts exactly once after %s, even when the client retries every other mutation", async (_name, respond) => {
+    let posts = 0;
+    server.use(http.post(`${BASE}/media/admin/assets/a-1/preview-links`, () => { posts += 1; return respond(); }));
+    const retrying = new QueryClient({ defaultOptions: { mutations: { retry: 2, retryDelay: 0 } } });
+    const { result, unmount } = renderHook(() => useHiddenAssetPreview(client), { wrapper: ({ children }: { children: ReactNode }) => <QueryClientProvider client={retrying}>{children}</QueryClientProvider> });
+    await act(async () => { await result.current.mutateAsync("a-1").catch(() => undefined); });
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(posts).toBe(1);
+    unmount();
+    retrying.clear();
+  });
+
+  it("forgets the link when the screen goes away: no mutation stays cached and no query ever holds it", async () => {
+    const url = "https://media.test/public/previews/secret-token";
+    server.use(http.post(`${BASE}/media/admin/assets/a-1/preview-links`, () => HttpResponse.json({ url, expiresAt: "2026-11-27T12:05:00Z", variant: "thumb", singleUse: true }, { status: 201 })));
+    const fresh = new QueryClient();
+    const { result, unmount } = renderHook(() => useHiddenAssetPreview(client), { wrapper: ({ children }: { children: ReactNode }) => <QueryClientProvider client={fresh}>{children}</QueryClientProvider> });
+    await act(async () => { await result.current.mutateAsync("a-1"); });
+    await waitFor(() => expect(result.current.data?.url).toBe(url));
+    expect(fresh.getMutationCache().getAll()).toHaveLength(1);
+    unmount();
+    await waitFor(() => expect(fresh.getMutationCache().getAll()).toHaveLength(0));
+    expect(JSON.stringify(fresh.getQueryCache().getAll().map((query) => [query.queryKey, query.state.data]))).not.toContain("secret-token");
+    fresh.clear();
   });
 
   it("surfaces a 409 while the bytes are still moving and a 403 for anyone who is not an administrator", async () => {

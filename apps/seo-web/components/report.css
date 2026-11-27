@@ -5,7 +5,11 @@
 .report-dialog { width: min(100% - 2rem, 32rem); max-height: calc(100dvh - 2rem); overflow: auto; border: 1px solid var(--border); border-radius: var(--radius-cell, 12px); padding: 0; background: var(--surface); color: var(--text); box-shadow: var(--shadow-float); }
 .report-dialog::backdrop { background: var(--scrim); }
 .report-form, .report-done { display: grid; gap: 1rem; padding: 1.5rem; }
+.report-done { padding-bottom: 0; }
+.report-done-actions { padding: 1rem 1.5rem 1.5rem; }
+.report-form .rsvp-button[aria-disabled="true"] { cursor: not-allowed; opacity: .55; transform: none; }
 .report-dialog h2 { margin: 0; font-size: 1.4rem; }
 .report-form p, .report-done p { margin: 0; }
-.report-help { display: flex; justify-content: space-between; gap: 1rem; }
+.report-help { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .25rem 1rem; }
+.report-help span:last-child { white-space: nowrap; margin-left: auto; }
 @media (prefers-reduced-motion: no-preference) { .report-dialog[open] { animation: report-in .16s var(--ease-out, ease-out); } @keyframes report-in { from { opacity: 0; transform: translateY(.5rem); } } }

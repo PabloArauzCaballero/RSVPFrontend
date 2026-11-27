@@ -74,7 +74,7 @@ test("reporting the page: validation in place, one anonymous request, the receiv
   await opener.click();
   await expect(dialog(page)).toBeVisible();
   await expect(dialog(page)).toHaveAccessibleName("Denunciar esta invitación");
-  await expect(dialog(page).getByLabel("Motivo")).toBeFocused({ timeout: 2000 }).catch(() => undefined);
+  await expect(dialog(page).getByLabel("Motivo")).toBeFocused();
   await dialog(page).getByRole("button", { name: "Enviar denuncia" }).click();
   await expect(dialog(page).getByRole("alert")).toHaveText("Elige un motivo.");
   expect(sent).toHaveLength(0);
@@ -93,6 +93,51 @@ test("reporting the page: validation in place, one anonymous request, the receiv
   await dialog(page).getByRole("button", { name: "Cerrar" }).click();
   await expect(dialog(page)).toBeHidden();
   await expect(opener).toBeFocused();
+  // A second report opens on a clean form with the focus on its first field, not on a leftover of the confirmation.
+  await opener.click();
+  await expect(dialog(page).getByLabel("Motivo")).toBeFocused();
+});
+
+for (const scheme of ["light", "dark"] as const) {
+  test(`keyboard only: focus is never dropped to the body while it sends, after a failure or on the confirmation, ${scheme}`, async ({ page }) => {
+    const sent: Sent[] = [];
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    let first = true;
+    await answer(page, sent, async (route) => { if (first) { first = false; await gate; await refuse(500, "INTERNAL")(route); return; } await received(route); });
+    await open(page, WITH_MUSIC, 390, scheme);
+    const opener = page.getByRole("button", { name: "Denunciar esta invitación" });
+    await opener.focus();
+    await page.keyboard.press("Enter");
+    await dialog(page).getByLabel("Motivo").selectOption("SPAM");
+    const send = dialog(page).getByRole("button", { name: "Enviar denuncia" });
+    await send.focus();
+    await page.keyboard.press("Enter");
+    const sending = dialog(page).getByRole("button", { name: "Enviando…" });
+    await expect(sending).toHaveAttribute("aria-disabled", "true");
+    await expect(sending).toBeFocused();
+    await page.keyboard.press("Enter");
+    release();
+    await expect(dialog(page).locator("[data-report-failure]")).toBeVisible();
+    await expect(send).toBeFocused();
+    expect(sent).toHaveLength(1);
+    await page.keyboard.press("Enter");
+    await expect(dialog(page).getByRole("heading", { name: "Recibimos tu denuncia" })).toBeFocused();
+    await expect(dialog(page).getByRole("status")).toContainText("Recibimos tu denuncia");
+    await page.keyboard.press("Tab");
+    await expect(dialog(page).getByRole("button", { name: "Cerrar" })).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(opener).toBeFocused();
+  });
+}
+
+test("at 360px the counter is never split in two lines", async ({ page }) => {
+  await open(page, WITH_MUSIC, 360);
+  await page.getByRole("button", { name: "Denunciar esta invitación" }).click();
+  await dialog(page).getByLabel(/Comentario/).fill("x".repeat(1000));
+  const counter = dialog(page).getByText("1000 de 1000");
+  const lines = await counter.evaluate((node) => { const range = document.createRange(); range.selectNodeContents(node); return new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size; });
+  expect(lines).toBe(1);
 });
 
 test("reporting the music sends the reserved element and says only the music is reviewed", async ({ page }) => {

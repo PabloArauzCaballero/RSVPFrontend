@@ -1,4 +1,5 @@
-import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { focusManager } from "@tanstack/react-query";
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ReportsScreen } from "../src/admin/reports";
 import { adminNav } from "../src/admin/routes";
@@ -22,7 +23,7 @@ const ASSETS = { items: [
 const LINK = { url: "https://media.test/public/previews/token-1", expiresAt: "2026-11-27T12:05:00Z", variant: "thumb", singleUse: true };
 const queue = (items: readonly object[]): Record<string, Handler> => ({ "GET /celebrations/admin/reports": () => ({ items }) });
 const withDetail = (extra: Record<string, Handler> = {}): Record<string, Handler> => ({ ...queue([REPORT, MUSIC_REPORT]), "GET /celebrations/admin/reports/r-1": () => DETAIL, "GET /media/celebrations/11111111-1111-4111-8111-111111111111/assets": () => ASSETS, ...extra });
-const openDetail = async (): Promise<void> => { fireEvent.click(await screen.findByRole("button", { name: "Abrir denuncia ana-y-luis" })); await screen.findByText("Denuncia de ana-y-luis"); };
+const openDetail = async (): Promise<void> => { fireEvent.click(await screen.findByRole("button", { name: "Abrir denuncia ana-y-luis" })); await screen.findByTestId("report-comment"); };
 
 describe("access", () => {
   it.each([["HOST", HOST], ["GUEST", GUEST]] as const)("%s sees access denied and no request leaves", (_role, claims) => {
@@ -112,6 +113,139 @@ describe("one report", () => {
     renderApp(<ReportsScreen onNavigate={navigate} />, client, ADMIN);
     fireEvent.click(await screen.findByRole("button", { name: "Abrir denuncia ana-y-luis" }));
     expect(await screen.findByTestId("report-retry")).toBeTruthy();
+  });
+});
+
+// PL-155-V2 · each of the three transitions used to leave the focus on <body>.
+describe("the focus follows the administrator", () => {
+  const focused = (): string => document.activeElement?.textContent ?? "";
+
+  it("opening a report moves it to the heading of the new view, already while it loads", async () => {
+    const { client } = fakeClient(withDetail({ "GET /celebrations/admin/reports/r-1": () => new Promise(() => undefined) }));
+    renderApp(<ReportsScreen onNavigate={navigate} />, client, ADMIN);
+    const open = await screen.findByRole("button", { name: "Abrir denuncia ana-y-luis" });
+    open.focus();
+    fireEvent.click(open);
+    const heading = await screen.findByText("Denuncia de ana-y-luis");
+    await waitFor(() => expect(document.activeElement).toBe(heading));
+  });
+
+  it("the heading keeps it once the report arrives", async () => {
+    const { client } = fakeClient(withDetail());
+    renderApp(<ReportsScreen onNavigate={navigate} />, client, ADMIN);
+    await openDetail();
+    expect(document.activeElement).toBe(screen.getByText("Denuncia de ana-y-luis"));
+  });
+
+  it("going back returns it to the button that opened that report", async () => {
+    const { client } = fakeClient(withDetail({ "GET /celebrations/admin/reports/r-2": () => ({ ...DETAIL, report: MUSIC_REPORT }) }));
+    renderApp(<ReportsScreen onNavigate={navigate} />, client, ADMIN);
+    fireEvent.click(await screen.findByRole("button", { name: "Abrir denuncia marta-xv" }));
+    await screen.findByTestId("report-comment");
+    fireEvent.click(screen.getByTestId("report-back"));
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("button", { name: "Abrir denuncia marta-xv" })));
+  });
+
+  it("goes back to the introduction of the queue when that report is no longer listed", async () => {
+    let listed: readonly object[] = [REPORT];
+    const { client, calls } = fakeClient(withDetail({ "GET /celebrations/admin/reports": () => ({ items: listed }) }));
+    const dateNow = Date.now;
+    renderApp(<ReportsScreen onNavigate={navigate} />, client, ADMIN);
+    await openDetail();
+    listed = [MUSIC_REPORT];
+    // While the report is open the administrator leaves the window and comes back: the queue is stale by then and is read again.
+    vi.spyOn(Date, "now").mockImplementation(() => dateNow() + 30_000);
+    const reads = (): number => calls.filter((call) => call.path === "/celebrations/admin/reports").length;
+    act(() => { focusManager.setFocused(false); focusManager.setFocused(true); });
+    await waitFor(() => expect(reads()).toBe(2));
+    fireEvent.click(screen.getByTestId("report-back"));
+    await screen.findByRole("button", { name: "Abrir denuncia marta-xv" });
+    await waitFor(() => expect(document.activeElement).not.toBe(document.body));
+    expect(focused()).toBe("Denuncias de las invitaciones públicas. Abre una para ver el detalle y mirar los archivos ocultos.");
+    focusManager.setFocused(undefined);
+    vi.restoreAllMocks();
+  });
+
+  it("asking for a hidden file never lets go of the button, while the link is requested and after it arrives", async () => {
+    let release: (value: unknown) => void = () => undefined;
+    const { client, calls } = fakeClient(withDetail({ "POST /media/admin/assets/a-photo/preview-links": () => new Promise((resolve) => { release = resolve; }) }));
+    renderApp(<ReportsScreen onNavigate={navigate} />, client, ADMIN);
+    await openDetail();
+    const row = await screen.findByTestId("hidden-file-a-photo");
+    const button = within(row).getByRole("button", { name: "Ver archivo oculto" });
+    button.focus();
+    fireEvent.click(button);
+    await waitFor(() => expect(button.getAttribute("aria-label")).toBe("Pidiendo el enlace…"));
+    expect(button.hasAttribute("disabled")).toBe(false);
+    expect(document.activeElement).toBe(button);
+    fireEvent.click(button);
+    expect(calls.filter((call) => call.method === "POST")).toHaveLength(1);
+    release(LINK);
+    await within(row).findByRole("img");
+    expect(document.activeElement).toBe(button);
+  });
+});
+
+describe("no contract value reaches the screen untranslated", () => {
+  const ELEMENT_REPORT = { ...REPORT, element: { kind: "IMAGE", id: "img-123456789" } };
+  const detailWith = (patch: object): Record<string, Handler> => withDetail({ ...queue([ELEMENT_REPORT]), "GET /celebrations/admin/reports/r-1": () => ({ ...DETAIL, report: ELEMENT_REPORT, ...patch }) });
+
+  it("names the kind of element in words and keeps its id as a secondary reference", async () => {
+    const { client } = fakeClient(detailWith({}));
+    renderApp(<ReportsScreen onNavigate={navigate} />, client, ADMIN);
+    expect(await screen.findByText(/^Una imagen · Spam · /)).toBeTruthy();
+    expect(screen.getByText("Referencia interna: img-123456789")).toBeTruthy();
+    await openDetail();
+    expect(screen.getByText("Una imagen · Spam")).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/IMAGE|Elemento/);
+  });
+
+  it.each([["DRAFT", "borrador"], ["PUBLISHED", "publicada"], ["ARCHIVED", "archivada"], ["SOMETHING_NEW", "no reconocido"]] as const)("says the celebration state %s in words", async (status, words) => {
+    const { client } = fakeClient(detailWith({ celebration: { ...DETAIL.celebration, status } }));
+    renderApp(<ReportsScreen onNavigate={navigate} />, client, ADMIN);
+    await openDetail();
+    expect(screen.getByText(`Estado de la celebración: ${words}`)).toBeTruthy();
+    expect(document.body.textContent).not.toContain(status);
+  });
+
+  // BE #167 writes CONTENT_RESTORED in the trail (migration 0009) although the 1.8.0 enum does not list it yet.
+  it("translates a restoration in the history, and an action it does not know is not printed as a key", async () => {
+    const entry = DETAIL.audit[0];
+    const { client } = fakeClient(detailWith({ audit: [{ ...entry, id: "e-2", action: "CONTENT_RESTORED" }, { ...entry, id: "e-3", action: "FUTURE_ACTION" }] }));
+    renderApp(<ReportsScreen onNavigate={navigate} />, client, ADMIN);
+    await openDetail();
+    expect(screen.getByText(/^Contenido restaurado · /)).toBeTruthy();
+    expect(screen.getByText(/^Otra acción · /)).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/auditActions|CONTENT_RESTORED|FUTURE_ACTION/);
+  });
+
+  it("says the same in en-US", async () => {
+    const { client } = fakeClient(detailWith({}));
+    renderApp(<ReportsScreen onNavigate={navigate} />, client, ADMIN, "en-US");
+    expect(await screen.findByText(/^An image · Spam · /)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Open report ana-y-luis" }));
+    expect(await screen.findByText("Celebration status: published")).toBeTruthy();
+    expect(screen.getByText("Internal reference: img-123456789")).toBeTruthy();
+  });
+});
+
+// PL-155-5 · the queue asks for one page of 100, oldest first: a full page can hide newer reports, and the screen must say so.
+describe("a queue longer than one page", () => {
+  const many = (count: number) => Array.from({ length: count }, (_, index) => ({ ...REPORT, id: `r-${index}`, slug: `celebracion-${index}` }));
+
+  it("says that newer reports may exist when the page comes back full", async () => {
+    const { client, calls } = fakeClient(queue(many(100)));
+    renderApp(<ReportsScreen onNavigate={navigate} />, client, ADMIN);
+    expect(await screen.findByTestId("reports-truncated")).toBeTruthy();
+    expect(screen.getByTestId("reports-truncated").textContent).toBe("Se muestran las 100 denuncias más antiguas. Puede haber otras más nuevas que esta pantalla todavía no muestra.");
+    expect(calls[0]?.url).toContain("limit=100");
+  });
+
+  it("says nothing with 99", async () => {
+    const { client } = fakeClient(queue(many(99)));
+    renderApp(<ReportsScreen onNavigate={navigate} />, client, ADMIN);
+    await screen.findByText("celebracion-0");
+    expect(screen.queryByTestId("reports-truncated")).toBeNull();
   });
 });
 

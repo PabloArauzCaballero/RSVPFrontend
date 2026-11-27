@@ -29,3 +29,29 @@ Ver el cuerpo del PR para comandos y salidas. Capturas en `docs/progress/evidenc
 - CSP/`img-src` de la app universal en producción no se revisó para el origen público de medios y el redireccionamiento de 30 s al almacenamiento.
 - gitleaks no está instalado en el sandbox: el escaneo de secretos queda como bloqueo externo.
 - Líneas base Playwright (macOS) intactas: ninguna cambia ni se regeneró; `screens.ts` del universal no incluye la pantalla nueva.
+
+## Corrección de la ronda 1 (2026-11-27)
+
+### Qué cambió
+
+- **PL-155-1.** `useHiddenAssetPreview` declara `retry: false` (antes dependía del valor por defecto). Pruebas nuevas: un solo POST tras un 500 y tras red caída con un `QueryClient` que reintenta mutaciones (`retry: 2`), y al desmontar no queda la mutación en caché ni el enlace en ninguna consulta. La prueba que decía «no guarda nada en caché» sin afirmarlo se reemplazó.
+- **PL-155-4.** La aserción anulada con `.catch` ahora afirma el foco inicial en «Motivo».
+- **PL-155-V1.** La región `role="status"` está montada antes de tener texto; el título de la confirmación toma el foco; mientras envía, el botón usa `aria-disabled` (no `disabled`, que suelta el foco) y un `ref` impide el doble envío. Además, el formulario se limpia al cerrar: antes, en la segunda denuncia, `showModal()` enfocaba la confirmación anterior y el foco acababa en `body`.
+- **PL-155-V2.** Abrir una denuncia enfoca su encabezado (presente desde la carga); volver enfoca el botón que la abrió (o la introducción si una relectura de la cola ya no la trae); pedir el enlace no deshabilita el botón. `move-focus.ts` (web) y `move-focus.native.ts` (VoiceOver/TalkBack, sin ejecutar). `Button` de `@rsvp/ui` expone `buttonRef`.
+- **PL-155-V3 / PL-155-6.** El tipo de elemento y el estado de la celebración se muestran en palabras (es-BO y en-US); el id queda como «Referencia interna».
+- **Hallazgo nuevo (corrector).** BE #167 (`bf93c097`) escribe `CONTENT_RESTORED` en el historial (migración `0009`, `appeals.ts`, y `e2e/gateway/reports-live.mjs` lo exige), pero el enum `ModerationAuditEntry.action` de su OpenAPI 1.8.0 no lo lista: la pantalla habría pintado la clave i18n. El FE lo traduce y una acción desconocida se muestra como «Otra acción». **Falta en BE:** añadir `CONTENT_RESTORED` al enum y volver a vendorizar.
+- **PL-155-5.** Si la cola devuelve 100 filas (el máximo del contrato), la pantalla avisa de que puede haber más nuevas. No hay paginación ni filtro: es una pregunta abierta para Pablo.
+- **PL-155-V5 (parcial).** El parámetro `{{slug}}` de `moderation.admin.row` ahora es `{{target}}`. El texto «no guardamos tu dirección» no se tocó: su redacción es pregunta para Pablo.
+- **PL-155-V6.** El contador baja completo a su propia línea cuando no cabe.
+- **PL-155-7.** `playwright.states.config.ts` vuelve a ser solo `HOST` y el administrador tiene `playwright.admin-states.config.ts` (base común en `playwright.states.shared.ts`). `admin-reports-denied.spec.ts` prueba en Chrome que un HOST es rechazado.
+
+### No cambiado
+
+- **PL-155-V4** (bloquear el desplazamiento del fondo): forma parte de la pregunta 2 de la ronda 1 (b) para Pablo; no se decidió. **PL-155-V7:** observación sin cambio pedido.
+- **PL-155-2 (depende de BE, no se modificó).** `infra/kong/kong.yml:357`, tanto en `bf93c097` como en la rama oficial del backend: `exposed_headers` no incluye `Retry-After`. Con sitio y gateway en orígenes distintos, `ApiError.retryAfterSeconds` queda vacío y el invitado ve «más tarde». Haría falta: añadir `"Retry-After"` a esa lista y, en `e2e/gateway/kong-live.mjs` (o `reports-live.mjs`), provocar el 429 con un `Origin` cruzado y afirmar `Access-Control-Expose-Headers`. El FE ya lee el encabezado. Autorizarlo o aceptar el texto genérico es pregunta para Pablo. El e2e del 429 añade ese encabezado en su respuesta falsa, así que no acredita el gateway.
+- **PL-155-8 (info):** el HTML público se cachea 60 s; el audio oculto ya responde 404 en el origen.
+- **PL-155-9 (info):** sigue sin recorrido contra backend real; no fusionar antes de fusionar BE #167, volver a vendorizar y recorrer el gateway. `PL-142-R4` y el hallazgo del enum siguen sin registrar en `bugs/catalogo`.
+
+### CI (`affected` sobre `3bbd6d8a`, PL-155-3)
+
+Log real (run 45966000508, job 140394712889): único fallo `@rsvp/design-editor#test:coverage`, `canvas-ui.test.tsx > inspector and palette > edits the selected element numerically…`, 5398 ms, `Test timed out in 5000ms`. El PR no toca `packages/design-editor` (entra en `--affected` por `celebration-theme`). Es el patrón del issue FE #140. FE #144 (abierto, checks en verde) baja turbo a `--concurrency=2` y quita la doble pasada, que reduce la contención; **no parte este caso concreto**, así que no está demostrado que lo elimine. No se subió ningún timeout.

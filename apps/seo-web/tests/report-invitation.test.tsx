@@ -117,6 +117,36 @@ describe("reporting only the music", () => {
   });
 });
 
+// PL-155-V1 · the form unmounts with the focus inside it: keyboard and screen-reader users need an anchor, and a live region that already existed.
+describe("focus and announcement", () => {
+  const openPage = () => fireEvent.click(screen.getByRole("button", { name: "Denunciar esta invitación" }));
+
+  it("the status region exists while the form is shown, receives the confirmation, and focus lands on its title", async () => {
+    mount();
+    openPage();
+    const region = screen.getByRole("status", { hidden: true });
+    expect(region.textContent).toBe("");
+    choose("SPAM"); submit();
+    const title = await screen.findByRole("heading", { name: "Recibimos tu denuncia", hidden: true });
+    expect(screen.getByRole("status", { hidden: true })).toBe(region);
+    expect(region.contains(title)).toBe(true);
+    await waitFor(() => expect(document.activeElement).toBe(title));
+  });
+
+  it("a second report starts on a clean form: the previous confirmation is gone before the dialog opens again", async () => {
+    mount();
+    openPage(); choose("SPAM"); submit();
+    await screen.findByText("Recibimos tu denuncia");
+    fireEvent.click(screen.getByRole("button", { name: "Cerrar" }));
+    expect(screen.queryByText("Recibimos tu denuncia")).toBeNull();
+    let shownWith = "";
+    HTMLDialogElement.prototype.showModal = function showModal(this: HTMLDialogElement) { shownWith = this.textContent ?? ""; this.setAttribute("open", ""); };
+    openPage();
+    expect(shownWith).toContain("Enviar denuncia");
+    expect(shownWith).not.toContain("Recibimos tu denuncia");
+  });
+});
+
 describe("what goes wrong, and what the guest keeps", () => {
   const filled = async (respond: () => Response | Promise<Response>) => {
     mount({ music: true, respond });
@@ -169,7 +199,11 @@ describe("what goes wrong, and what the guest keeps", () => {
     let release: (value: Response) => void = () => undefined;
     await filled(() => new Promise<Response>((resolve) => { release = resolve; }));
     const button = await screen.findByRole("button", { name: "Enviando…" });
-    expect((button as HTMLButtonElement).disabled).toBe(true);
+    // Announced as unavailable but not `disabled`: a disabled button throws the focus it holds to the body.
+    expect(button.getAttribute("aria-disabled")).toBe("true");
+    expect((button as HTMLButtonElement).disabled).toBe(false);
+    expect(document.activeElement).toBe(button);
+    fireEvent.click(button);
     fireEvent.submit(button.closest("form") as HTMLFormElement);
     expect(sent).toHaveLength(1);
     release(received());
