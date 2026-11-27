@@ -113,10 +113,9 @@ function Filters({ filters, onChange, onClear, categories, cities }: {
   const value = (raw: string): string | undefined => raw || undefined;
   return (
     <View role="group" aria-label={t("admin.partners.filters.label")} style={{ gap: spacing[3] }}>
-      <View style={[styles.row, { alignItems: "flex-end" }]}>
-        <View style={{ flexGrow: 3, flexBasis: 280 }}><Field label={t("admin.partners.filters.q")} help={t("admin.partners.filters.qHelp")} value={text} onChange={setText} onSubmit={search} testID="partners-q" {...(tooLong ? { error: t("admin.partners.codes.TOO_LONG") } : {})} /></View>
-        <ActionButton icon="search" variant="secondary" label={t("admin.partners.filters.search")} onPress={search} testID="partners-search" />
-      </View>
+      <Field label={t("admin.partners.filters.q")} help={t("admin.partners.filters.qHelp")} value={text} onChange={setText} onSubmit={search} testID="partners-q"
+        trailing={<ActionButton icon="search" variant="secondary" label={t("admin.partners.filters.search")} onPress={search} testID="partners-search" />}
+        {...(tooLong ? { error: t("admin.partners.codes.TOO_LONG") } : {})} />
       <View style={styles.row}>
         <View style={cell}><Picker label={t("admin.partners.columns.status")} value={filters.status ?? ""} onChange={(status) => onChange({ status: value(status) as PartnerFilters["status"] })} options={PARTNER_STATUSES.map((status) => ({ value: status, label: t(`admin.partners.statuses.${status}`) }))} testID="filter-status" /></View>
         <View style={cell}><Picker label={t("admin.partners.columns.kyp")} value={filters.kypStatus ?? ""} onChange={(kyp) => onChange({ kypStatus: value(kyp) as PartnerFilters["kypStatus"] })} options={KYP_STATUSES.map((status) => ({ value: status, label: t(`admin.partners.kypStatuses.${status}`) }))} testID="filter-kyp" /></View>
@@ -169,10 +168,10 @@ function PartnersScreenContent({ onNavigate, params, onParams }: PartnersScreenP
   const email = (id: string | null): string => (id ? people.data?.get(id)?.email ?? t("admin.partners.unknownUser") : "—");
   const view = params.view === "requests" ? "requests" : "partners";
   const pending = usePendingRequestCount();
-  const write = (next: PartnerFilters, partner = openPartner): void => onParams(paramsFromFilters(next, partner, params.view));
+  const write = (next: PartnerFilters): void => onParams(paramsFromFilters(next, openPartner, params.view));
   /** A new filter starts again on the first page; the open partner stays open. */
   const change = (patch: Partial<PartnerFilters>): void => { setNotice(null); write(Object.fromEntries(Object.entries({ ...filters, ...patch, page: undefined }).filter(([, item]) => item !== undefined)) as PartnerFilters); };
-  const open = (id: string | undefined): void => write(filters, id);
+  const open = (id: string | undefined): void => onParams(paramsFromFilters(filters, id, params.view));
   const done = (id: string, kind: "created" | "saved" | "kyp"): void => { setWizard(null); setNotice(t(`admin.partners.done.${kind}`)); open(id); };
 
   const columns: readonly DataColumn<PartnerRow>[] = [

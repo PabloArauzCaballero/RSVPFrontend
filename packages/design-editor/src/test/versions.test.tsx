@@ -34,13 +34,18 @@ describe("contrast: one list, one source (P19)", () => {
     expect(screen.queryByTestId("design-warnings")).toBeNull();
   });
 
-  it("previews live from the colours, suggests the nearest passing one, applies it on click, and never disables anything", () => {
+  it("previews live from the colours and suggests the nearest passing one, without disabling anything", () => {
     open(undefined, lowAccent());
     const list = screen.getByTestId("design-warnings");
     expect(list.textContent).toMatch(/En el tema claro, acento sobre fondo tiene contraste 1\.\d\d:1 y el mínimo es 4\.5:1\./);
     expect(list.textContent).toContain("puedes publicar igual");
     const apply = within(list).getAllByRole("button", { name: /^Usar #\w+ en acento del tema claro, sobre / })[0] as HTMLButtonElement;
     expect(apply.disabled).toBe(false);
+  });
+
+  it("applies the suggestion on click and undo brings the warning back", () => {
+    open(undefined, lowAccent());
+    const apply = within(screen.getByTestId("design-warnings")).getAllByRole("button", { name: /^Usar #\w+ en acento del tema claro, sobre / })[0] as HTMLButtonElement;
     fireEvent.click(apply);
     expect(screen.queryByText(/acento sobre fondo tiene contraste 1\./)).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Deshacer" }));
@@ -150,16 +155,14 @@ describe("publish and versions (P15)", () => {
     expect(screen.getByRole("button", { name: "Sí, descartar y cargar" })).toBeTruthy();
   });
 
-  it("a session that ended (401) or a missing permission (403) while publishing say so, each in its own words", async () => {
-    open(gateway({ publish: async () => { throw failure(401); } }));
+  it.each<[string, number, RegExp]>([
+    ["a session that ended (401)", 401, /Tu sesión terminó/],
+    ["a missing permission (403)", 403, /No tienes permiso para publicar/]
+  ])("%s while publishing says so in its own words", async (_label, status, pattern) => {
+    open(gateway({ publish: async () => { throw failure(status); } }));
     await screen.findByText("Versión 1");
     await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Publicar" })); });
-    await waitFor(() => expect(screen.getByText(/Tu sesión terminó/)).toBeTruthy());
-    cleanup();
-    open(gateway({ publish: async () => { throw failure(403); } }));
-    await screen.findByText("Versión 1");
-    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Publicar" })); });
-    await waitFor(() => expect(screen.getByText(/No tienes permiso para publicar/)).toBeTruthy());
+    await waitFor(() => expect(screen.getByText(pattern)).toBeTruthy());
   });
 
   it("an edit made while publishing is not marked saved: it waits for the publish, then the autosave sends it from the version the publish answered with (M3)", async () => {
