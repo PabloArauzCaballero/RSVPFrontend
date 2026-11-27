@@ -18,7 +18,9 @@ async function load(initial: boolean) {
   const rn = await import('react-native');
   const listeners: Listener[] = [];
   // react-native-web swaps `Animated` for an instant mock whenever NODE_ENV is "test"; the real implementation (JS driver) is what lets opacity be observed mid-animation.
+  // @ts-expect-error react-native-web ships no types for its vendored Animated files
   const real = (await import('react-native-web/dist/vendor/react-native/Animated/AnimatedImplementation')).default;
+  // @ts-expect-error react-native-web ships no types for its vendored Animated files
   const AnimatedView = (await import('react-native-web/dist/vendor/react-native/Animated/components/AnimatedView')).default;
   vi.doMock('react-native', () => ({
     ...rn,
