@@ -495,7 +495,9 @@ html:has(.cdesign-dock) { scroll-padding-bottom: 6rem; }
    the canvas is z-index 1 as well and later in the document, so it keeps its place, and the protected buttons (P22) and the dock live above both. */
 .celebration-design .cdesign-page > :is(.cdesign-page-title, .cdesign-intro) { position: relative; z-index: 1; isolation: isolate; }
 .celebration-design .cdesign-page[data-veil="graded"] > :is(.cdesign-page-title, .cdesign-intro)::before { z-index: -1; }
-.celebration-design .cdesign-cover[data-variant="poster"][data-has-image="true"] .cdesign-cover-copy { position: relative; }
+/* The same layering for the poster's text box: the panel goes BEHIND its own text (a stacking context of the box, the panel at -1), above the picture and the light veil of the cover. */
+.celebration-design .cdesign-cover[data-variant="poster"][data-has-image="true"] .cdesign-cover-copy { position: relative; isolation: isolate; }
+.celebration-design .cdesign-cover[data-variant="poster"][data-has-image="true"] .cdesign-cover-copy::before { z-index: -1; }
 
 /* Named animations (rsvp-motion-design). One time, transform and opacity only (the curtain also trims with clip-path, which never changes layout), off under reduced motion
    (the final state shows at once, nothing is hidden), never interactive: the panels take no click and sit below the protected blocks, so the gifts and reply buttons stay reachable while they play.
