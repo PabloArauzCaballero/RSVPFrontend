@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { useMutation, useQuery, useQueryClient, type QueryKey } from "@tanstack/react-query";
 import type { ApiClient } from "@rsvp/api-client";
 import { cachePolicy, retryTransient } from "../policy.js";
@@ -112,19 +113,95 @@ export function useTemplateTransition(client: ApiClient) {
   });
 }
 
+export const MEDIA_PROCESSING_INTERVAL_MS = 2_000;
+export const MEDIA_PROCESSING_SLOW_INTERVAL_MS = 5_000;
+export const MEDIA_PROCESSING_SLOW_AFTER_MS = 60_000;
+export const MEDIA_PROCESSING_STALE_MS = 3 * 60_000;
+const MEDIA_URL_STABLE_MS = 5 * 60_000;
+
+function mediaUrlKey(url: string): string {
+  try {
+    const parsed = new URL(url);
+    return `${parsed.origin}${parsed.pathname}`;
+  } catch {
+    return url;
+  }
+}
+
+/** Age in ms of an asset in PROCESSING, using the runtime server timestamp when present or when this client first observed it. */
+export function processingAgeMs(asset: Pick<MediaAsset, "id"> & { readonly createdAt?: string }, firstSeen: ReadonlyMap<string, number>, now = Date.now()): number {
+  const raw = (asset as { readonly createdAt?: unknown }).createdAt;
+  const parsed = typeof raw === "string" ? Date.parse(raw) : Number.NaN;
+  if (Number.isFinite(parsed)) return Math.max(0, now - parsed);
+  const seen = firstSeen.get(asset.id);
+  return seen === undefined ? 0 : Math.max(0, now - seen);
+}
+
 export function useMediaAssets(client: ApiClient, celebrationId: string) {
+  const firstSeen = useRef<Map<string, number>>(new Map());
+  const stableUrls = useRef<Map<string, { readonly key: string; readonly url: string; readonly at: number }>>(new Map());
   return useQuery({
     queryKey: queryKeys.media.list(celebrationId),
     queryFn: ({ signal }) => mediaApi(client).list(celebrationId, signal),
     ...cachePolicy.celebration, enabled: Boolean(celebrationId),
-    // /complete returns 202 PROCESSING. Refetch only this resource until the worker finishes.
-    // Requests share the query cache, pause in hidden tabs and stop on terminal states or errors.
-    refetchInterval: (query) => !query.state.error && query.state.data?.items.some((asset) => asset.status === "PROCESSING") ? MEDIA_PROCESSING_INTERVAL_MS : false,
+    // Presigned GET URLs rotate their signature on every poll; keep the loaded URL stable while the object path is unchanged
+    // so existing photos never reload or flicker while another upload is still PROCESSING.
+    structuralSharing: (_prev, next) => {
+      const list = next as { readonly items?: readonly MediaAsset[] } | undefined;
+      if (!list?.items) return next;
+      const now = Date.now();
+      const cache = stableUrls.current;
+      const activeIds = new Set<string>();
+      const items = list.items.map((asset) => {
+        activeIds.add(asset.id);
+        if (asset.status !== "PROCESSED" || !asset.variants) return asset;
+        let changed = false;
+        const stabilized: Record<string, string> = {};
+        for (const [name, url] of Object.entries(asset.variants)) {
+          if (!url) continue;
+          const cacheKey = `${asset.id}:${name}`;
+          const resourceKey = mediaUrlKey(url);
+          const entry = cache.get(cacheKey);
+          if (entry && entry.key === resourceKey && now - entry.at < MEDIA_URL_STABLE_MS) {
+            stabilized[name] = entry.url;
+            if (entry.url !== url) changed = true;
+          } else {
+            cache.set(cacheKey, { key: resourceKey, url, at: now });
+            stabilized[name] = url;
+          }
+        }
+        return changed ? { ...asset, variants: stabilized } : asset;
+      });
+      for (const cacheKey of cache.keys()) {
+        const assetId = cacheKey.slice(0, cacheKey.indexOf(":"));
+        if (!activeIds.has(assetId)) cache.delete(cacheKey);
+      }
+      return { ...list, items };
+    },
+    // /complete returns 202 PROCESSING. Poll quickly at first, back off after 1 min, and stop once all processing assets are stale
+    // so a stuck backend job can never trap the client in an infinite refresh loop.
+    refetchInterval: (query) => {
+      if (query.state.error) return false;
+      const processing = (query.state.data?.items ?? []).filter((asset) => asset.status === "PROCESSING");
+      if (processing.length === 0) {
+        firstSeen.current.clear();
+        return false;
+      }
+      const now = Date.now();
+      const active = new Set<string>();
+      let newestAge = Number.POSITIVE_INFINITY;
+      for (const asset of processing) {
+        active.add(asset.id);
+        if (!firstSeen.current.has(asset.id)) firstSeen.current.set(asset.id, now);
+        newestAge = Math.min(newestAge, processingAgeMs(asset, firstSeen.current, now));
+      }
+      for (const id of firstSeen.current.keys()) if (!active.has(id)) firstSeen.current.delete(id);
+      if (newestAge >= MEDIA_PROCESSING_STALE_MS) return false;
+      return newestAge >= MEDIA_PROCESSING_SLOW_AFTER_MS ? MEDIA_PROCESSING_SLOW_INTERVAL_MS : MEDIA_PROCESSING_INTERVAL_MS;
+    },
     refetchIntervalInBackground: false
   });
 }
-
-const MEDIA_PROCESSING_INTERVAL_MS = 2_000;
 
 export interface UploadInput {
   readonly file: Blob;
