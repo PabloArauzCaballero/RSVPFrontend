@@ -1,4 +1,5 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { AxeBuilder } from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 
@@ -7,11 +8,9 @@ import { expect, test, type Page } from "@playwright/test";
 // site (next build + start) over the contract fixture, in the v1 renderer (`fixture-ana-y-luis`) and in v2 documents, with and without
 // the guest's credential. Pictures and measurements are written only when ACTIONS_EVIDENCE_DIR is set (evidence, never a baseline).
 const OUT = process.env.ACTIONS_EVIDENCE_DIR;
-const TARGETS = [
-  ["v1-clasico", "fixture-ana-y-luis"], ["marfil", "fixture-v2-marfil"], ["pinata", "fixture-v2-pinata"], ["gala", "fixture-v2-gala"],
-  ["jardin-botanico", "fixture-v2-jardin-botanico"], ["festivo", "fixture-v2-festivo"], ["cielo-bautizo", "fixture-v2-cielo-bautizo"], ["minimalista", "fixture-v2-minimalista"],
-  ["corporativo", "fixture-v2-corporativo"], ["marfil-sinfoto", "fixture-v2-marfil-sinfoto"]
-] as const;
+// Every design document on disk (a template added later is covered without touching this file) plus the v1 renderer.
+const DOCUMENTS = join(__dirname, "../../../packages/celebration-theme/src/design/documents");
+const TARGETS: readonly (readonly [string, string])[] = [["v1-clasico", "fixture-ana-y-luis"], ...readdirSync(DOCUMENTS).filter((file) => file.endsWith(".json")).sort().map((file) => [file.replace(/\.json$/, ""), `fixture-v2-${file.replace(/\.json$/, "")}`] as const)];
 const SHOTS = new Set(["v1-clasico", "marfil", "pinata"]);
 const WIDTHS = [360, 768, 1280] as const;
 const TOKEN = "tok-aaaaaaaaaaaaaaaaaaaaaaaa";
@@ -19,6 +18,11 @@ const TOKEN = "tok-aaaaaaaaaaaaaaaaaaaaaaaa";
 interface Measure {
   readonly reply: Box; readonly gifts: Box; readonly sameContainer: boolean; readonly containerCount: number; readonly overflow: boolean;
   readonly hit: { readonly reply: boolean; readonly gifts: boolean };
+  readonly stacking: { readonly position: string; readonly zIndex: string };
+  readonly dock: { readonly reply: Box; readonly gifts: Box; readonly replyFirst: boolean; readonly hit: { readonly reply: boolean; readonly gifts: boolean }; readonly label: string | null; readonly blockLabel: string | null } | null;
+  readonly giftsLinks: number;
+  readonly giftsSection: { readonly links: number; readonly hasDrawing: boolean } | null;
+  readonly emptyCanvases: number;
 }
 interface Box { readonly left: number; readonly top: number; readonly right: number; readonly bottom: number; readonly width: number; readonly height: number; readonly fontSize: string; readonly fontWeight: string;
   readonly color: string; readonly background: string; readonly border: string; readonly ground: string; readonly href: string | null }
@@ -32,7 +36,17 @@ const MEASURE = `(() => {
   const box = (node) => { const r = node.getBoundingClientRect(); const s = getComputedStyle(node);
     return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height, fontSize: s.fontSize, fontWeight: s.fontWeight, color: s.color, background: s.backgroundColor, border: s.borderTopWidth + " " + s.borderTopStyle + " " + s.borderTopColor, ground: opaque(node.parentElement), href: node.getAttribute("href") }; };
   const hits = (node) => { const r = node.getBoundingClientRect(); const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return top !== null && (top === node || node.contains(top)); };
-  return { reply: box(reply), gifts: box(gifts), sameContainer: reply.parentElement === gifts.parentElement && reply.parentElement === block, containerCount: blocks.length, overflow: document.documentElement.scrollWidth > innerWidth, hit: { reply: hits(reply), gifts: hits(gifts) } };
+  const dock = document.querySelector("[data-dock]");
+  const dockReply = dock?.querySelector('a[data-action^="rsvp"]');
+  const dockGifts = dock?.querySelector('a[data-action="gifts"]');
+  const apart = document.querySelector('main section[data-section="gifts"]');
+  const style = getComputedStyle(block);
+  return { reply: box(reply), gifts: box(gifts), stacking: { position: style.position, zIndex: style.zIndex },
+    dock: dock && dockReply && dockGifts ? { reply: box(dockReply), gifts: box(dockGifts), replyFirst: Boolean(dockReply.compareDocumentPosition(dockGifts) & Node.DOCUMENT_POSITION_FOLLOWING), hit: { reply: hits(dockReply), gifts: hits(dockGifts) }, label: dock.getAttribute("aria-label"), blockLabel: block.getAttribute("aria-label") } : null,
+    giftsLinks: document.querySelectorAll('main a[data-action="gifts"]').length,
+    giftsSection: apart ? { links: apart.querySelectorAll("a").length, hasDrawing: Boolean(apart.querySelector('[data-block="illustration"], svg[data-art="regalo"]')) } : null,
+    emptyCanvases: [...document.querySelectorAll(".cdesign-canvas")].filter((canvas) => canvas.children.length === 0).length,
+    sameContainer: reply.parentElement === gifts.parentElement && reply.parentElement === block, containerCount: blocks.length, overflow: document.documentElement.scrollWidth > innerWidth, hit: { reply: hits(reply), gifts: hits(gifts) } };
 })()`;
 
 async function open(page: Page, slug: string, width: number, scheme: "light" | "dark", credential: boolean): Promise<void> {
@@ -77,6 +91,26 @@ for (const [name, slug] of TARGETS) {
           expect(m.reply.height).toBeGreaterThanOrEqual(44);
           expect(m.gifts.height).toBeGreaterThanOrEqual(44);
           expect(m.reply.width).toBeGreaterThanOrEqual(44);
+          // PL-139-02: the protected layer keeps its stacking defence (FE #131); PL-139-01/07: one gifts button in the page body, the gifts section (when it stays) has no link, no empty canvas.
+          expect(m.stacking).toEqual({ position: "relative", zIndex: "1000" });
+          expect(m.giftsLinks).toBe(1);
+          if (m.giftsSection) { expect(m.giftsSection.links).toBe(0); expect(m.giftsSection.hasDrawing).toBe(true); }
+          expect(m.emptyCanvases).toBe(0);
+          // PL-139-03: the dock too, both buttons, same weight, reply first, never covered, with a name of its own.
+          expect(m.dock).not.toBeNull();
+          const dock = m.dock as NonNullable<Measure["dock"]>;
+          expect(dock.replyFirst).toBe(true);
+          expect(dock.hit).toEqual({ reply: true, gifts: true });
+          expect(dock.gifts.href).toBe(`/c/${slug}/regalos`);
+          expect(Math.abs(dock.reply.height - dock.gifts.height)).toBeLessThanOrEqual(1);
+          expect(Math.abs(dock.reply.width - dock.gifts.width)).toBeLessThanOrEqual(1);
+          expect(dock.reply.background).toBe(dock.gifts.background);
+          expect(dock.reply.color).toBe(dock.gifts.color);
+          expect(dock.reply.border).toBe(dock.gifts.border);
+          expect(dock.reply.height).toBeGreaterThanOrEqual(44);
+          expect(contrast(dock.gifts.color, dock.gifts.background)).toBeGreaterThanOrEqual(4.5);
+          expect(contrast(dock.gifts.background, dock.gifts.ground)).toBeGreaterThanOrEqual(3);
+          expect(dock.label).not.toBe(dock.blockLabel);
           // Layout: side by side from 768 px (same row, reply first), stacked below (same column, reply on top).
           if (width >= 768) {
             expect(Math.abs(m.reply.top - m.gifts.top)).toBeLessThanOrEqual(1);
@@ -98,6 +132,7 @@ for (const [name, slug] of TARGETS) {
           expect(controlContrast).toBeGreaterThanOrEqual(3);
           expect(contrast(m.reply.color, m.reply.background)).toBeGreaterThanOrEqual(4.5);
           results.push({ target: name, scheme, width, credential, layout: width >= 768 ? "row" : "column", reply: { w: m.reply.width, h: m.reply.height }, gifts: { w: m.gifts.width, h: m.gifts.height },
+            dock: { reply: { w: dock.reply.width, h: dock.reply.height }, gifts: { w: dock.gifts.width, h: dock.gifts.height }, textContrast: Number(contrast(dock.gifts.color, dock.gifts.background).toFixed(2)) },
             fontSize: m.gifts.fontSize, fontWeight: m.gifts.fontWeight, textContrast: Number(textContrast.toFixed(2)), controlContrast: Number(controlContrast.toFixed(2)), replyTextContrast: Number(contrast(m.reply.color, m.reply.background).toFixed(2)) });
           if (OUT && SHOTS.has(name) && !credential) {
             mkdirSync(OUT, { recursive: true });
@@ -114,11 +149,19 @@ for (const [name, slug] of TARGETS) {
   }
 }
 
-test("the gifts page is reachable from the block and from the dock, and the page has no section of its own for it", async ({ page }) => {
+test("the gifts page is reachable from the block and from the dock; its section keeps the illustration but not the button", async ({ page }) => {
   await open(page, "fixture-v2-marfil", 360, "light", false);
-  await expect(page.locator('main section[data-section="gifts"]')).toHaveCount(0);
+  await expect(page.locator('main section[data-section="gifts"] [data-block="illustration"]')).toHaveCount(1);
+  await expect(page.locator('main section[data-section="gifts"] a')).toHaveCount(0);
   await expect(page.locator('[data-actions-block] a[data-action="gifts"]')).toHaveAttribute("href", "/c/fixture-v2-marfil/regalos");
   await expect(page.locator('.cdesign-dock a[data-action="gifts"]')).toHaveAttribute("href", "/c/fixture-v2-marfil/regalos");
+});
+
+test("a gifts page that was only the button leaves no page and no empty box (minimalista)", async ({ page }) => {
+  await open(page, "fixture-v2-minimalista", 360, "light", false);
+  await expect(page.locator('main section[data-section="gifts"]')).toHaveCount(0);
+  await expect(page.locator(".cdesign-canvas:empty")).toHaveCount(0);
+  await expect(page.locator('main a[data-action="gifts"]')).toHaveCount(1);
 });
 
 test.afterAll(() => {
