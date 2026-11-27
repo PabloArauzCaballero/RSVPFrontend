@@ -225,7 +225,7 @@ body:has(.cdesign-dock) { padding-bottom: 5.5rem; }
 .celebration[data-align="center"] .celebration-actions, .celebration-design .celebration-actions { margin-inline: auto; }
 .celebration .celebration-actions .celebration-cta { width: 100%; max-width: none; min-height: 3rem; margin-top: 0; box-sizing: border-box; }
 @media (min-width: 48rem) { .celebration .celebration-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.celebration-design .cdesign-actions { width: min(100%, var(--celebration-max-width)); margin: 0 auto; padding: .5rem var(--celebration-space) calc(var(--celebration-gap, 3rem) / 2); box-sizing: border-box; }
+.celebration-design .cdesign-actions { width: min(100%, var(--celebration-max-width)); margin: 0 auto; padding: .5rem var(--celebration-space) max(1.5rem, calc(var(--celebration-gap, 3rem) / 2)); box-sizing: border-box; }
 /* The block sits on the axis of the page's title and text (they start at the left edge of the content column), not centred under them (PL-139-R2-V3). */
 .celebration-design .cdesign-actions .celebration-actions { margin-inline: 0; }
 

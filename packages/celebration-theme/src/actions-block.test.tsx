@@ -189,7 +189,8 @@ describe("the reply and the gifts button are one block", () => {
 
   it("PL-139-R2-V2/V3/V4: the v2 block has air under it, sits on the title's axis, and is wide enough for «Busca tu enlace personal» on one line", () => {
     const css = readFileSync(join(__dirname, "../styles.css"), "utf8");
-    expect(css).toMatch(/\.celebration-design \.cdesign-actions \{[^}]*padding: \.5rem var\(--celebration-space\) calc\(var\(--celebration-gap, 3rem\) \/ 2\)/);
+    // A floor of 1.5rem: the document's section spacing may be small (`pinata`, 40 px, left 20 px) or even 0.
+    expect(css).toMatch(/\.celebration-design \.cdesign-actions \{[^}]*padding: \.5rem var\(--celebration-space\) max\(1\.5rem, calc\(var\(--celebration-gap, 3rem\) \/ 2\)\)/);
     expect(css).toMatch(/\.celebration-design \.cdesign-actions \.celebration-actions \{ margin-inline: 0; \}/);
     expect(css).toMatch(/\.celebration \.celebration-actions \{[^}]*max-width: 44rem/);
   });
