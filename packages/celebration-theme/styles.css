@@ -490,7 +490,11 @@ html:has(.cdesign-dock) { scroll-padding-bottom: 6rem; }
 .celebration-design .cdesign-page[data-veil="graded"] .cdesign-el[data-text]::before, .celebration-design .cdesign-page[data-veil="graded"] :is(.cdesign-page-title, .cdesign-intro)::before, .celebration-design .cdesign-cover[data-variant="poster"][data-has-image="true"] .cdesign-cover-copy::before {
   content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none; --cd-panel: color-mix(in srgb, var(--celebration-canvas) var(--cd-tv, 85%), transparent);
   background: var(--cd-panel); box-shadow: 0 0 1.25rem .75rem var(--cd-panel); }
-.celebration-design .cdesign-page[data-veil="graded"] :is(.cdesign-page-title, .cdesign-intro) { position: relative; }
+/* The title and the introduction come BEFORE the picture in the document (heading first, then the page's backdrop and canvas), and the backdrop is positioned: without a layer of their own the
+   picture paints over them. They sit one layer above it (z-index 1, a stacking context of their own, so the panel of the graded veil can go BEHIND the text with -1 and never over it);
+   the canvas is z-index 1 as well and later in the document, so it keeps its place, and the protected buttons (P22) and the dock live above both. */
+.celebration-design .cdesign-page > :is(.cdesign-page-title, .cdesign-intro) { position: relative; z-index: 1; isolation: isolate; }
+.celebration-design .cdesign-page[data-veil="graded"] > :is(.cdesign-page-title, .cdesign-intro)::before { z-index: -1; }
 .celebration-design .cdesign-cover[data-variant="poster"][data-has-image="true"] .cdesign-cover-copy { position: relative; }
 
 /* Named animations (rsvp-motion-design). One time, transform and opacity only (the curtain also trims with clip-path, which never changes layout), off under reduced motion

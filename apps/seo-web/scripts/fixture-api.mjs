@@ -128,14 +128,16 @@ async function rasterOf(n, width, format) {
 
 // PL-FE145-2 / V6 · `fixture-v2-velo`: Marfil with the WORST picture (a black and white checkerboard, every pixel a pure extreme) behind every page, under the graded veil, and a block of every kind
 // that carries text over it. The e2e measures the painted panel and the ink of each text against that picture.
-const VELO = { bg: "44444444-4444-4444-8444-444444444444" };
+const VELO = { bg: "44444444-4444-4444-8444-444444444444", gradient: "55555555-5555-4555-8555-555555555555" };
 const veloGallery = [{ id: "g1", width: 1920, height: 1280, isCover: true, purpose: "cover", variants: raster(1) }, { id: "g2", width: 1920, height: 1280, isCover: false, purpose: "gallery", variants: raster(2) },
-  { id: VELO.bg, width: 1920, height: 1280, isCover: false, purpose: "background", variants: raster(9) }, { id: MEDIOS.song, width: null, height: null, isCover: false, purpose: "music", durationMs: 2000, variants: { audio: `http://localhost:${PORT}/audio/song.wav` } }];
-const veloTemplate = () => {
+  { id: VELO.bg, width: 1920, height: 1280, isCover: false, purpose: "background", variants: raster(9) }, { id: VELO.gradient, width: 1920, height: 1280, isCover: false, purpose: "background", variants: raster(5) }, { id: MEDIOS.song, width: null, height: null, isCover: false, purpose: "music", durationMs: 2000, variants: { audio: `http://localhost:${PORT}/audio/song.wav` } }];
+// R3-1: the same page over a smooth gradient picture (`-degradado`) and under the even veil (`-parejo`), so the titles and introductions are measured on pixels in every case.
+const VELO_VARIANTS = { velo: { picture: 9, veil: "graded" }, "velo-degradado": { picture: 5, veil: "graded" }, "velo-parejo": { picture: 5, veil: "even" } };
+const veloTemplate = (variant = "velo") => {
   const base = v2Template("marfil");
   const theme = structuredClone(base.theme);
   theme.pages = theme.pages.map((page) => {
-    const withBg = { ...page, background: { kind: "media", mediaId: VELO.bg, fit: "cover", veil: "graded" } };
+    const withBg = { ...page, background: { kind: "media", mediaId: VELO_VARIANTS[variant].picture === 9 ? VELO.bg : VELO.gradient, fit: "cover", veil: VELO_VARIANTS[variant].veil } };
     if (page.section !== "story") return withBg;
     const at = (id, block, y) => ({ id, block, x: 0, y, w: 4, h: 1, visible: true });
     return { ...withBg, canvases: { ...withBg.canvases, mobile: { ...withBg.canvases.mobile, elements: [...withBg.canvases.mobile.elements, at("v-btn", "v-btn", 1), at("v-vid", "v-vid", 2), at("v-map", "v-map", 3), at("v-song", "v-song", 4), at("v-party", "v-party", 5), at("v-gal", "v-gal", 6)] } } };
@@ -147,9 +149,21 @@ const veloTemplate = () => {
     { id: "v-song", type: "music", config: { source: "media", ref: MEDIOS.song } },
     { id: "v-party", type: "weddingParty", config: { people: [{ name: "Camila Rojas", role: "Dama de honor" }, { name: "Tomás Vega", role: "Padrino" }] } },
     { id: "v-gal", type: "gallery", config: { display: "grid" } }];
-  return { ...base, id: "7a7a7a7a-7a7a-47a7-87a7-7a7a7a7a7a7a", theme };
+  return { ...base, id: veloIds[variant][1], theme };
 };
-const velo = { slug: "fixture-v2-velo", view: { ...view, celebrationId: "00000000-0000-4000-8000-000000000197", slug: "fixture-v2-velo", templateId: "7a7a7a7a-7a7a-47a7-87a7-7a7a7a7a7a7a" } };
+const veloIds = { velo: ["00000000-0000-4000-8000-000000000197", "7a7a7a7a-7a7a-47a7-87a7-7a7a7a7a7a7a"], "velo-degradado": ["00000000-0000-4000-8000-000000000196", "7a7a7a7a-7a7a-47a7-87a7-7a7a7a7a7a7b"], "velo-parejo": ["00000000-0000-4000-8000-000000000195", "7a7a7a7a-7a7a-47a7-87a7-7a7a7a7a7a7c"] };
+const velos = Object.entries(veloIds).map(([key, [celebrationId, templateId]]) => ({ key, slug: `fixture-v2-${key}`, view: { ...view, celebrationId, slug: `fixture-v2-${key}`, templateId } }));
+
+// R3-4 · `fixture-v2-poster`: the `poster` cover variant (the photo fills the block, the text rides on its own strong veil) over the worst picture, a black and white checkerboard.
+const posterId = { celebrationId: "00000000-0000-4000-8000-000000000194", templateId: "7a7a7a7a-7a7a-47a7-87a7-7a7a7a7a7a7d" };
+const posterGallery = [{ id: "g1", width: 1920, height: 1280, isCover: true, purpose: "cover", variants: raster(9) }];
+const posterTemplate = () => {
+  const base = v2Template("marfil");
+  const theme = structuredClone(base.theme);
+  theme.blocks = theme.blocks.map((block) => block.type === "cover" ? { ...block, config: { ...block.config, variant: "poster" } } : block);
+  return { ...base, id: posterId.templateId, theme };
+};
+const poster = { slug: "fixture-v2-poster", view: { ...view, celebrationId: posterId.celebrationId, slug: "fixture-v2-poster", templateId: posterId.templateId } };
 
 const providers = [
   { listingId: "7d1c1a34-5d4c-4a39-9a2e-0f4f2d3d7b11", providerSlug: "hotel-andino", name: "Hotel Andino", category: "ACCOMMODATION", city: "La Paz", department: "La Paz", verified: true, summary: "Hospedaje boutique en el centro histórico, con salón para recepciones de hasta 120 personas.", priceFrom: { amountMinor: 45000, currency: "BOB" }, imageUrl: img(1), destinations: ["WHATSAPP", "PHONE", "EMAIL", "OFFICIAL_SITE"], coverage: ["La Paz", "El Alto"], address: "Calle Comercio 123, La Paz", hours: ["Lu-Do 08:00-22:00"], lat: -16.4955, lng: -68.1336 },
@@ -196,9 +210,14 @@ createServer(async (req, res) => {
   if (path === `/celebrations/public/${libre.slug}`) return json(res, 200, libre.view);
   if (path === `/media/public/celebrations/${libre.view.celebrationId}/assets`) return json(res, 200, { items: gallery });
   if (path === `/media/templates/${libre.view.templateId}`) return json(res, 200, libreTemplate());
-  if (path === `/celebrations/public/${velo.slug}`) return json(res, 200, velo.view);
-  if (path === `/media/public/celebrations/${velo.view.celebrationId}/assets`) return json(res, 200, { items: veloGallery });
-  if (path === `/media/templates/${velo.view.templateId}`) return json(res, 200, veloTemplate());
+  if (path === `/celebrations/public/${poster.slug}`) return json(res, 200, poster.view);
+  if (path === `/media/public/celebrations/${poster.view.celebrationId}/assets`) return json(res, 200, { items: posterGallery });
+  if (path === `/media/templates/${poster.view.templateId}`) return json(res, 200, posterTemplate());
+  for (const velo of velos) {
+    if (path === `/celebrations/public/${velo.slug}`) return json(res, 200, velo.view);
+    if (path === `/media/public/celebrations/${velo.view.celebrationId}/assets`) return json(res, 200, { items: veloGallery });
+    if (path === `/media/templates/${velo.view.templateId}`) return json(res, 200, veloTemplate(velo.key));
+  }
   if (path === `/celebrations/public/${medios.slug}`) return json(res, 200, medios.view);
   if (path === `/media/public/celebrations/${medios.view.celebrationId}/assets`) return json(res, 200, { items: mediosGallery });
   if (path === `/media/templates/${medios.view.templateId}`) return json(res, 200, mediosTemplate());

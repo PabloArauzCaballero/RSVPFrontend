@@ -144,3 +144,100 @@ for (const scheme of ["light", "dark"] as const) {
     });
   }
 }
+
+// PL-145-R3-1 / R3-4 · the AA claim measured on PIXELS the browser paints, not on a formula: every text node of the chosen elements is located (its line boxes), all ink is
+// made transparent (and the dock, which floats over the page, hidden), the page is photographed and the worst pixel under each line box is held against the ink the line really
+// has. A title that the picture covers, or a panel that paints over the text, shows here as a ratio near 1:1 because the picture is what stands behind the ink.
+type Measured = { readonly failures: string[]; readonly lines: number; readonly worst: number };
+async function paintedContrast(page: Page, selector: string, expected: { readonly minimum: number; readonly large: number }): Promise<Measured> {
+  const lines = await page.evaluate((query) => {
+    const canvas = document.createElement("canvas"); canvas.width = canvas.height = 1;
+    const context = canvas.getContext("2d", { willReadFrequently: true }) as CanvasRenderingContext2D;
+    const parse = (value: string): readonly number[] => { context.clearRect(0, 0, 1, 1); context.fillStyle = "#000"; context.fillStyle = value; context.fillRect(0, 0, 1, 1); const [r, g, b, a] = context.getImageData(0, 0, 1, 1).data; return [r as number, g as number, b as number, (a as number) / 255]; };
+    const found: { label: string; large: boolean; ink: readonly number[]; x: number; y: number; w: number; h: number }[] = [];
+    for (const element of document.querySelectorAll<HTMLElement>(query)) {
+      if (getComputedStyle(element).display === "none") continue;
+      const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        const holder = node.parentElement; const text = (node.textContent ?? "").trim();
+        if (!holder || !text || holder.closest("[aria-hidden='true']")) continue;
+        const style = getComputedStyle(holder);
+        if (style.display === "none" || style.visibility === "hidden") continue;
+        const size = Number.parseFloat(style.fontSize); const large = size >= 24 || (size >= 18.66 && Number(style.fontWeight) >= 700);
+        const range = document.createRange(); range.selectNodeContents(node);
+        for (const rect of range.getClientRects()) {
+          if (rect.width < 2 || rect.height < 2) continue;
+          found.push({ label: `${element.className.toString().split(" ")[0] || element.tagName.toLowerCase()} «${text.slice(0, 22)}»`, large, ink: parse(style.color), x: rect.x + window.scrollX, y: rect.y + window.scrollY, w: rect.width, h: rect.height });
+        }
+      }
+    }
+    return found;
+  }, selector);
+  await page.addStyleTag({ content: ".cdesign-dock { visibility: hidden !important }" });
+  await page.evaluate(() => document.fonts.ready);
+  const shown = (await page.screenshot({ fullPage: true })).toString("base64");
+  await page.addStyleTag({ content: "*, *::before, *::after { color: transparent !important; text-shadow: none !important; -webkit-text-fill-color: transparent !important; text-decoration-color: transparent !important; caret-color: transparent !important }" });
+  const bare = (await page.screenshot({ fullPage: true })).toString("base64");
+  const result = await page.evaluate(async ({ png, withInk, boxes, minimum, large }) => {
+    const draw = async (base64: string): Promise<{ readonly width: number; readonly height: number; readonly context: CanvasRenderingContext2D }> => {
+      const bytes = Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
+      const bitmap = await createImageBitmap(new Blob([bytes], { type: "image/png" }));
+      const canvas = document.createElement("canvas"); canvas.width = bitmap.width; canvas.height = bitmap.height;
+      const context = canvas.getContext("2d", { willReadFrequently: true }) as CanvasRenderingContext2D; context.drawImage(bitmap, 0, 0);
+      return { width: bitmap.width, height: bitmap.height, context };
+    };
+    const [background, inked] = [await draw(png), await draw(withInk)];
+    const bitmap = background; const context = background.context;
+    const channel = (value: number): number => { const s = value / 255; return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4; };
+    const lum = (r: number, g: number, b: number): number => 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+    const failures: string[] = []; let worst = Infinity;
+    for (const box of boxes) {
+      const x = Math.max(0, Math.floor(box.x)); const y = Math.max(0, Math.floor(box.y));
+      const w = Math.min(bitmap.width - x, Math.ceil(box.w)); const h = Math.min(bitmap.height - y, Math.ceil(box.h));
+      if (w <= 0 || h <= 0) { failures.push(`${box.label}: outside the photograph`); continue; }
+      const data = context.getImageData(x, y, w, h).data; const seen = inked.context.getImageData(x, y, w, h).data; let lowest = Infinity; let inkPixels = 0;
+      for (let index = 0; index < data.length; index += 4) {
+        const alpha = (box.ink[3] as number);
+        const r = (box.ink[0] as number) * alpha + (data[index] as number) * (1 - alpha); const g = (box.ink[1] as number) * alpha + (data[index + 1] as number) * (1 - alpha); const b = (box.ink[2] as number) * alpha + (data[index + 2] as number) * (1 - alpha);
+        const a = lum(r, g, b); const c = lum(data[index] as number, data[index + 1] as number, data[index + 2] as number);
+        lowest = Math.min(lowest, (Math.max(a, c) + 0.05) / (Math.min(a, c) + 0.05));
+        // The ink is really on the page when some pixel of the photograph WITH text is the ink itself (a picture or a panel painted over the text hides every one of them).
+        if ([0, 1, 2].every((k) => Math.abs((seen[index + k] as number) - (box.ink[k] as number)) <= 32) && [0, 1, 2].some((k) => Math.abs((seen[index + k] as number) - (data[index + k] as number)) > 64)) inkPixels += 1;
+      }
+      if (inkPixels < 3) failures.push(`${box.label}: the text is not painted on top (${inkPixels} pixels of its ink)`);
+      worst = Math.min(worst, lowest);
+      if (lowest < (box.large ? large : minimum)) failures.push(`${box.label}: ${lowest.toFixed(2)}:1 under the ink, needs ${box.large ? large : minimum}:1`);
+    }
+    return { failures, worst };
+  }, { png: bare, withInk: shown, boxes: lines, minimum: expected.minimum, large: expected.large });
+  return { failures: result.failures, lines: lines.length, worst: result.worst };
+}
+
+// The titles (h2) and the introductions of every page over the worst picture (checkerboard) and over a smooth one, under the graded veil (they ride on their panel) and under the even one (`-parejo`, the shape the shipped pages with a picture have): they are painted ABOVE the picture and keep AA.
+for (const slug of ["fixture-v2-velo", "fixture-v2-velo-degradado", "fixture-v2-velo-parejo"]) {
+  for (const scheme of ["light", "dark"] as const) {
+    for (const width of WIDTHS) {
+      test(`${slug} · ${scheme} · ${width}: titles and introductions keep AA on the painted pixels`, async ({ page }) => {
+        await open(page, slug, width, scheme, "reduce");
+        const measured = await paintedContrast(page, ".cdesign-page[data-bg-media] > :is(.cdesign-page-title, .cdesign-intro)", { minimum: 4.5, large: 3 });
+        expect(measured.lines, "titles and introductions were located").toBeGreaterThanOrEqual(6);
+        expect(measured.failures).toEqual([]);
+      });
+    }
+  }
+}
+
+// R3-4 · the `poster` cover: the photo fills the block, the title rides on its own strong veil (3:1 large) and the rest of the text on it too (4.5:1), measured on pixels.
+for (const scheme of ["light", "dark"] as const) {
+  for (const width of WIDTHS) {
+    test(`fixture-v2-poster · ${scheme} · ${width}: the poster cover keeps AA over the checkerboard`, async ({ page }) => {
+      await open(page, "fixture-v2-poster", width, scheme, "reduce");
+      await expect(page.locator(".cdesign-cover").first()).toHaveAttribute("data-variant", "poster");
+      await expect(page.locator('.cdesign-cover[data-has-image="true"] img.cdesign-cover-photo')).toHaveCount(1);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+      const measured = await paintedContrast(page, ".cdesign-cover .cdesign-cover-copy", { minimum: 4.5, large: 3 });
+      expect(measured.lines, "the title, the date and the venue were located").toBeGreaterThanOrEqual(3);
+      expect(measured.failures).toEqual([]);
+    });
+  }
+}

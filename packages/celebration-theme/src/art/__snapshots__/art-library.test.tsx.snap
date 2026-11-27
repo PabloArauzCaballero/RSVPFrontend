@@ -1138,7 +1138,7 @@ exports[`ornaments (PL-M7) > 'banderin' is a golden 1`] = `
     "height": 28,
     "paths": [
       {
-        "d": "M6 5Q60 24 116 5L124 5Q180 24 234 5",
+        "d": "M6 5Q60 24 116 5C119 3.98 121 3.98 124 5Q180 24 234 5",
         "role": "ink",
         "stroke": 1.8,
       },
