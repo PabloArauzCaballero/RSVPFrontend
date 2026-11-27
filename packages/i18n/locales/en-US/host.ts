@@ -74,7 +74,7 @@ export const hostEnUS: DeepStrings<typeof hostEsBO> = {
     extra: { dressCode: "Dress code", faq: "FAQ", question: "Question", answer: "Answer", addFaq: "Add question", recommendations: "Recommendations", recommendationName: "Name", recommendationDescription: "Description", recommendationKind: "Type", kinds: { lodging: "Lodging", transport: "Transport", other: "Other" }, listingId: "Partner code (optional)", listingHelp: "If it's a partner, its link goes through our redirector.", addRecommendation: "Add recommendation", item: "Item {{n}}" }
   },
   gallery: {
-    processing: "Preparing {{name}}… It will appear here when it's ready.", rejected: "We couldn't prepare {{name}}. Delete this photo and try uploading another.", refreshFailedTitle: "We couldn't refresh your photos",
+    processing: "Preparing {{name}}… It will appear here when it's ready.", processingSlow: "{{name}} is taking longer than usual. You can check again or delete it and try another photo.", checkAgain: "Check again", rejected: "We couldn't prepare {{name}}. Delete this photo and try uploading another.", refreshFailedTitle: "We couldn't refresh your photos",
     title: "Your photos", intro: "The first one is the cover. You can change it whenever you like.", help: "JPG, PNG or WebP, up to 10 MB each.",
     add: "Add photo", uploading: "Uploading {{name}}… {{percent}} %", cover: "Cover", makeCover: "Use as cover", delete: "Delete",
     emptyTitle: "Your story's photos go here", emptyBody: "Upload the first one and it becomes your invitation's cover.", loadFailedTitle: "We couldn't load your photos",

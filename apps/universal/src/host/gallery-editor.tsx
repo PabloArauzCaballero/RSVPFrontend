@@ -1,8 +1,8 @@
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { Image, Text, View } from "react-native";
 import { radius, spacing } from "@rsvp/design-tokens";
 import { CheckMark, Enter, Skeleton, SkeletonList, useColors } from "@rsvp/ui";
-import { useDeleteMedia, useMediaAssets, useReorderMedia, useUploadMedia, type MediaAsset } from "@rsvp/query-hooks";
+import { MEDIA_PROCESSING_STALE_MS, processingAgeMs, useDeleteMedia, useMediaAssets, useReorderMedia, useUploadMedia, type MediaAsset } from "@rsvp/query-hooks";
 import { pickImage as defaultPick, type PickedImage } from "../platform/pick-image";
 import { useApiClient, useT } from "../platform/providers";
 import { CelebrationScreen, useScreenHeader, type ScreenProps } from "./gate";
@@ -48,9 +48,16 @@ function Gallery({ celebrationId, pick }: { readonly celebrationId: string; read
   const [problem, setProblem] = useState<string | null>(null);
   const [toDelete, setToDelete] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
+  const firstSeenProcessing = useRef<Map<string, number>>(new Map());
   const items: readonly MediaAsset[] = (assets.data?.items ?? []).filter((asset) => asset.status === "PROCESSED");
   const processing = (assets.data?.items ?? []).filter((asset) => asset.status === "PROCESSING");
   const rejected = (assets.data?.items ?? []).filter((asset) => asset.status === "REJECTED");
+  const now = Date.now();
+  for (const asset of processing) {
+    if (!firstSeenProcessing.current.has(asset.id)) firstSeenProcessing.current.set(asset.id, now);
+  }
+  const processingIds = new Set(processing.map((asset) => asset.id));
+  for (const id of firstSeenProcessing.current.keys()) if (!processingIds.has(id)) firstSeenProcessing.current.delete(id);
   const ids = items.map((asset) => asset.id);
   const cover = items.find((asset) => asset.isCover)?.id ?? null;
 
@@ -96,7 +103,18 @@ function Gallery({ celebrationId, pick }: { readonly celebrationId: string; read
         </View>
       ) : null}
       {problem ? <Notice kind="error">{problem}</Notice> : null}
-      {processing.map((asset) => <Notice key={asset.id}>{t("host.gallery.processing", { name: asset.filename })}</Notice>)}
+      {processing.map((asset) => {
+        const stale = processingAgeMs(asset, firstSeenProcessing.current, now) >= MEDIA_PROCESSING_STALE_MS;
+        return stale ? (
+          <View key={asset.id} style={{ gap: spacing[2] }} testID={`processing-stale-${asset.id}`}>
+            <Notice kind="error">{t("host.gallery.processingSlow", { name: asset.filename })}</Notice>
+            <View style={styles.row}>
+              <ActionButton icon="refresh" variant="secondary" label={t("host.gallery.checkAgain")} onPress={() => { void assets.refetch(); }} testID={`retry-processing-${asset.id}`} />
+              <ActionButton icon="close" variant="secondary" label={t("host.gallery.delete")} onPress={() => { remove.reset(); setToDelete(asset.id); }} testID={`delete-processing-${asset.id}`} />
+            </View>
+          </View>
+        ) : <Notice key={asset.id}>{t("host.gallery.processing", { name: asset.filename })}</Notice>;
+      })}
       {rejected.map((asset) => <View key={asset.id} style={{ gap: spacing[2] }}>
         <Notice kind="error">{t("host.gallery.rejected", { name: asset.filename })}</Notice>
         <ActionButton variant="secondary" label={t("host.gallery.delete")} onPress={() => { remove.reset(); setToDelete(asset.id); }} />
@@ -129,7 +147,7 @@ function Gallery({ celebrationId, pick }: { readonly celebrationId: string; read
           </View>
         ))}
       </View>
-      <ConfirmDialog visible={toDelete !== null} danger title={t("host.gallery.deleteTitle")} body={t("host.gallery.deleteBody")} confirmLabel={t("host.gallery.delete")} onCancel={() => setToDelete(null)}
+      <ConfirmDialog visible={toDelete !== null} danger title={t("host.gallery.deleteTitle")} body={t("host.gallery.deleteBody")} confirmLabel={t("host.gallery.delete")} confirmTestID="confirm-delete-photo" onCancel={() => setToDelete(null)}
         onConfirm={() => { const id = toDelete; setToDelete(null); if (id) remove.mutate(id, { onSuccess: () => setDone(t("host.gallery.deleted")) }); }} />
     </View>
   );
