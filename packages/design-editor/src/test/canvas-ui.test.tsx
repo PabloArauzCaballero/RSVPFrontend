@@ -186,13 +186,18 @@ describe("keyboard: everything the pointer does, without a mouse (A1)", () => {
     expect(announced()).toBe("Texto no puede ir más lejos en esa dirección.");
   });
 
-  it("Alt+arrows resize, R rotates (Shift+R the other way), PageUp and PageDown change the layer", () => {
+  it("Alt+arrows resize and announce the new size", () => {
     withText();
     const text = addText();
     const height = px(text.style.height);
     fireEvent.keyDown(text, { key: "ArrowDown", altKey: true });
     expect(px(text.style.height)).toBe(height + 8);
     expect(announced()).toMatch(/^Texto: \d+ columnas de ancho por \d+ filas de alto\.$/);
+  });
+
+  it("R rotates (Shift+R the other way) and announces the angle", () => {
+    withText();
+    const text = addText();
     // far from the gifts button, so rotating is allowed
     fireEvent.keyDown(text, { key: "ArrowDown", shiftKey: true });
     commit(screen.getByLabelText("Fila"), "60");
@@ -202,6 +207,11 @@ describe("keyboard: everything the pointer does, without a mouse (A1)", () => {
     fireEvent.keyDown(text, { key: "R", shiftKey: true });
     fireEvent.keyDown(text, { key: "R", shiftKey: true });
     expect(text.style.transform).toBe("rotate(-5deg)");
+  });
+
+  it("PageUp and PageDown change the layer and announce it", () => {
+    withText();
+    const text = addText();
     fireEvent.keyDown(text, { key: "PageUp" });
     const front = Number(text.style.zIndex);
     expect(front).toBeGreaterThan(Number(gifts().style.zIndex));

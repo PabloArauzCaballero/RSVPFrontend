@@ -1,7 +1,6 @@
 /**
- * Every screen of the host's workspace, behind one `import()` (M13): `load.ts` is the only door, so web downloads this zone
- * in one chunk the first time one of its routes opens; a guest answering an invitation never does. Route files take their
- * screen with `lazyScreen(loadHostScreens, (zone) => zone.X)`.
+ * Shared host screens, loaded through `loadHostScreens` (M13). The design editor has its own lazy route so opening another
+ * host screen does not download the editor or its style parsers.
  */
 export { RequestsScreen } from "./guests/requests-screen";
 export { GiftInboxScreen } from "./gifts/inbox-screen";
@@ -32,4 +31,3 @@ export { GiftsScreen } from "./gifts/gifts-screen";
 export { ProvidersScreen } from "./gifts/providers-screen";
 export { ReportScreen } from "./guests/report-screen";
 export { TemplatesScreen } from "./templates-screen";
-export { DesignEditorScreen } from "./design-editor-screen";

@@ -24,6 +24,8 @@ export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
     done: { confirmedTitle: "Gift reserved", confirmedBody: "“{{title}}” is yours. Your hosts will see it on their list in a moment.", pendingTitle: "Reservation sent", pendingBody: "Your hosts approve each reservation. Meanwhile, nobody else can reserve “{{title}}”." },
     taken: { title: "Someone got there first", body: "Someone else already reserved “{{title}}”. It happens. Here are other options.", alternatives: "Other available gifts", none: "There are no available gifts left. Thank you for wanting to join them." },
     empty: { title: "No gifts yet", body: "Your hosts have not added any yet. Come back in a few days." },
+    /** R8a · gifts button on the invitation, driven by `GET /gifts/public/celebrations/{slug}/gifts/summary` (OPEN | EMPTY | CLOSED). */
+    cta: { open: "View gifts", empty: "Gift list (coming soon)", closed: "View gifts" },
     error: {
       expiredTitle: "Your link no longer works", expiredBody: "Ask whoever invited you for a new one.",
       otherTitle: "This link is for another celebration", otherBody: "Open the link you were sent for this celebration. If you cannot find it, ask whoever invited you for a new one.",
@@ -45,12 +47,13 @@ export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
   },
   host: {
     title: "Gifts", intro: "What you add here your guests see and reserve with one tap.", nav: "Gifts",
-    figures: { gifts: "Gifts", available: "Available", reserved: "Reserved", review: "To review", unavailable: "Unavailable" }, list: {
+    figures: { gifts: "Gifts", available: "Available", reserved: "Reserved", review: "To review" }, list: {
       emptyTitle: "Your list starts with one gift", emptyBody: "Pick products from our partners or link one from your favorite store. Guests reserve it, so nobody gives the same thing twice.",
       add: "Add a gift", fromPartner: "From a partner", external: "From a store", reservedBy: "Reserved by {{name}}",
       more: "More options", pending: "Reservations to review: {{count}}", pendingBody: "Your guests are waiting for your answer.", pendingAction: "Review reservations",
       unavailableNote: "Your guests no longer see it: this gift is no longer available in the catalog."
     },
+    unavailable: { title: "Unavailable ({{count}})", body: "These gifts can no longer be given and your guests do not see them. They are not counted in your list total." },
     status: { AVAILABLE: "Available", PROPOSED: "To review", PENDING_REVIEW: "Reservation to review", COMMITTED: "Reserved", REJECTED: "Rejected", UNAVAILABLE: "Unavailable" },
     visibility: { title: "Who sees who reserved", intro: "You decide whether names show in your dashboard and in your guests' list.", host: "Show the name in my dashboard", hostHelp: "If you turn it off, you see reservations without a name.", guests: "Show the name to other guests", guestsHelp: "Off: guests only see that the gift is already reserved.", saved: "Preference saved. It applies from now on." },
     approveProposal: "Approve proposal", approvingProposal: "Approving…",
@@ -64,7 +67,7 @@ export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
       hint: { catalog: "Products from verified providers, ready to add.", store: "A link from any store. First we show you partner options." },
       seeList: "See my list"
     },
-    catalog: { photo: "Photo of {{title}}", alreadyListed: "Already on your list.", prompt: "Type what you are looking for, like a cake or a dinner set.", search: "Search", searchLabel: "Search the catalog", searchPlaceholder: "Cake, tableware, flowers…", add: "Add to my list", adding: "Adding…", added: "Added: {{title}}", none: "We found no products for that search or category. Try another word or pick \"All\".", empty: "There are no products from verified providers yet. When a provider publishes one, you will see it here.", error: "We could not load the catalog products.", category: "Category", allCategories: "All", categoriesError: "We could not load the categories; you can still search.", disclaimer: "DOne connects you with the provider; it does not sell or guarantee the product. Agree price, delivery and timing with them.", unavailable: "Product unavailable", unavailableBody: "That product is no longer in the catalog. Pick another.", priceFrom: "From {{price}}" },
+    catalog: { photo: "Photo of {{title}}", alreadyListed: "Already on your list.", prompt: "Type what you are looking for, like a cake or a dinner set.", search: "Search", searchLabel: "Search the catalog", searchPlaceholder: "Cake, tableware, flowers…", add: "Add to my list", adding: "Adding…", added: "Added: {{title}}", none: "We found no products for that search or category. Try another word or pick \"All\".", empty: "There are no products from verified providers yet. When a provider publishes one, you will see it here.", error: "We could not load the catalog products.", offline: "No connection right now: we could not load the catalog products. Check your internet and try again.", categoriesOffline: "No connection right now: we could not load the categories. Check your internet; you can still search.", category: "Category", allCategories: "All", categoriesError: "We could not load the categories; you can still search.", disclaimer: "DOne connects you with the provider; it does not sell or guarantee the product. Agree price, delivery and timing with them.", unavailable: "Product unavailable", unavailableBody: "That product is no longer in the catalog. Pick another.", priceFrom: "From {{price}}" },
     store: {
       ruleTitle: "Partners first", ruleOn: "Before you add a store gift we show you similar partner products. If none fits, you add it anyway.", ruleOff: "You can add gifts from any store with no steps before.", ruleChange: "Change in Control modes",
       modeAUTO_ACCEPT: "Your store gifts show on the list right away.", modeRESTRICTED: "Your store gifts wait for review: you approve them from My list.",

@@ -1,18 +1,19 @@
+import type { GiftListComponents } from "@rsvp/contracts";
 /** Gift List (gift-list.openapi.json; vendored version in packages/contracts/backend.lock.json, 1.14.0). Money is integer minor units, never a float. */
 export interface Money { readonly amountMinor: number; readonly currency: string }
 export type GiftSource = "CATALOGED" | "EXTERNAL";
 /**
- * UNAVAILABLE (1.14.0, R1, M-6): the gift can no longer be given (its catalog listing is not a product). Guests never see it;
- * the host sees it marked. Written by hand, not derived: gift-list 1.14.0 declares UNAVAILABLE in GiftCatalogedItem and the
- * legacy schemas, but listGiftItems answers DevCompatGiftItem, whose DevCompatGiftItemStatus still omits it although the
- * service returns it. Derive it from the contract once that enum is fixed in the backend.
+ * `status` never says UNAVAILABLE (gift-list 1.14.0, R1, M-6): it keeps the value the gift had. That a gift can no longer be
+ * given (its catalog listing is not a product) is `GiftItem.availability`, a field of its own. Both derive from the contract.
  */
-export type GiftItemStatus = "AVAILABLE" | "PROPOSED" | "PENDING_REVIEW" | "COMMITTED" | "REJECTED" | "UNAVAILABLE";
+export type GiftItemStatus = GiftListComponents["schemas"]["DevCompatGiftItemStatus"];
+/** Gift availability (1.14.0, required on every v2 item). The host (MANAGE) receives UNAVAILABLE gifts; a guest never does. */
+export type GiftAvailability = GiftListComponents["schemas"]["PagedGiftItemPage"]["items"][number]["availability"];
 export type ReservationStatus = "PENDING_REVIEW" | "COMMITTED" | "REJECTED" | "CANCELLED";
 export type CancellationReason = "RSVP_DECLINED" | "GUEST_CANCELLED" | "HOST_CANCELLED";
 export interface GiftItem {
   readonly id: string; readonly listId: string; readonly celebrationId: string; readonly title: string; readonly description?: string | null;
-  readonly price: Money; readonly source: GiftSource; readonly status: GiftItemStatus; readonly version: number;
+  readonly price: Money; readonly source: GiftSource; readonly status: GiftItemStatus; /** Required by gift-list 1.14.0 (v2). A pre-1.14 payload without it is read as available (see `isGiftUnavailable`). */ readonly availability: GiftAvailability; readonly version: number;
   readonly productListingId?: string | null; readonly providerId?: string | null; readonly externalUrl?: string | null; readonly createdAt: string;
   /** Present only when the host lets this viewer see who reserved (gift-settings). */
   readonly reservedByName?: string;
