@@ -3,8 +3,8 @@ import { Text, View } from "react-native";
 import { Enter } from "@rsvp/ui";
 import { spacing } from "@rsvp/design-tokens";
 import {
-  DELIVERY_NOTES_MAX, MAX_GIFT_QUANTITY, balanceOf, batchFailures, defaultVariant, isGiftListMissing, isIdempotencyReused, isNoAnswer, isOrderable, mayHaveBeenApplied, suggestGroupGift, toBatchEntry, unitPriceOf,
-  useAddGiftBatch, useGiftList, useGiftRecommendations, useGuestSummary, useProviderGeo,
+  DELIVERY_NOTES_MAX, MAX_GIFT_QUANTITY, balanceOf, batchFailures, defaultVariant, isGiftListMissing, isIdempotencyReused, isNoAnswer, isOrderable, mayHaveBeenApplied, problemCode, suggestGroupGift, toBatchEntry, unitPriceOf,
+  useAddGiftBatch, useSetDeliveryNotes, useGiftList, useGiftRecommendations, useGuestSummary, useProviderGeo,
   type BalanceBandId, type BatchFailure, type Celebration, type GiftBatchRequest, type GiftRecommendation, type RecommendedProductCard
 } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../../../platform/providers";
@@ -45,9 +45,20 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
   const [band, setBand] = useState<BalanceBandId | null>(null);
   const [failed, setFailed] = useState<Readonly<Record<string, string>>>({});
   const [added, setAdded] = useState(0);
-  // The exact request of a batch whose answer never arrived (no answer or 5xx): it may have been applied, so it is repeated byte for byte, with the same key and the lines the host saw.
-  // `edited`: the host changed something since; the pending request is then settled first (the list is read) and only the rest gets a new body.
-  const [pending, setPending] = useState<{ readonly body: GiftBatchRequest; readonly order: readonly string[]; readonly edited: boolean } | null>(null);
+  /**
+   * ONE sending state for the whole «Agregar»: reading the list, the batch and the delivery notes. While it lasts the button is busy and nothing is editable.
+   * The delivery notes belong to the LIST (their own PUT), not to the batch, so a batch never overwrites notes somebody else saved.
+   */
+  const [sending, setSending] = useState(false);
+  const [crashed, setCrashed] = useState<unknown>(null);
+  /** The gifts were added but the notes were not saved: what the host typed is kept for the retry. */
+  const [unsaved, setUnsaved] = useState<{ readonly notes: string | null; readonly code: string | undefined; readonly count: number } | null>(null);
+  /**
+   * A batch whose answer never arrived (no answer or 5xx) may have been applied. It is kept with a SNAPSHOT of the lines the host saw, so while nothing is
+   * edited the summary, the button and the body are the same whatever the recommendations or the list do meanwhile, and the identical retry replays the same key.
+   * `edited`: the host changed something since; the next «Agregar» first reads the list and only what the server does not hold goes with a new body.
+   */
+  const [pending, setPending] = useState<{ readonly body: GiftBatchRequest; readonly order: readonly string[]; readonly lines: readonly SummaryLine[]; readonly edited: boolean } | null>(null);
   const touch = (): void => setPending((current) => (current && !current.edited ? { ...current, edited: true } : current));
 
   const geo = useProviderGeo(client);
@@ -59,6 +70,7 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
   const list = useGiftList(client, celebration.id);
   const guestSummary = useGuestSummary(client, celebration.id);
   const add = useAddGiftBatch(client, celebration.id);
+  const putNotes = useSetDeliveryNotes(client, celebration.id);
 
   const listItems = useMemo(() => (list.data?.items ?? []).filter((item) => LIVE_STATUS.has(item.status)), [list.data]);
   const listed = useMemo(() => new Set(listItems.flatMap((item) => (item.giftIdeaCode ? [item.giftIdeaCode] : []))), [listItems]);
@@ -66,15 +78,13 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
   const settled = useMemo(() => (pending ? new Set([...listed].filter((code) => !pending.order.includes(code))) : listed), [listed, pending]);
   const ideas: readonly GiftRecommendation[] | undefined = recs.data?.items;
   // The ideas of step 2 and 3: ticked, still recommended and not already on the list, in the order the catalog recommends them.
-  // While a request waits for its answer and nothing was edited, the lines are exactly the ones it carries, whatever the recommendations do meanwhile.
-  const active = useMemo(() => (pending && !pending.edited
-    ? (ideas ?? []).filter((entry) => pending.order.includes(entry.idea.code))
-    : (ideas ?? []).filter((entry) => ticked.includes(entry.idea.code) && !settled.has(entry.idea.code))), [ideas, ticked, settled, pending]);
+  const active = useMemo(() => (ideas ?? []).filter((entry) => ticked.includes(entry.idea.code) && !settled.has(entry.idea.code)), [ideas, ticked, settled]);
   const productOf = (entry: GiftRecommendation): RecommendedProductCard | undefined => entry.products.find((product) => product.listingId === picks[entry.idea.code]?.listingId);
   const picked = (entry: GiftRecommendation): boolean => { const product = productOf(entry); return product !== undefined && isOrderable(product.stock) && failed[entry.idea.code] === undefined; };
-  const complete = active.length > 0 && active.every(picked);
+  const frozen = pending !== null && !pending.edited;
+  const complete = frozen || (active.length > 0 && active.every(picked));
 
-  const lines: readonly SummaryLine[] = active.flatMap((entry) => {
+  const liveLines: readonly SummaryLine[] = active.flatMap((entry) => {
     const product = productOf(entry);
     const pick = picks[entry.idea.code];
     if (!product || !pick) return [];
@@ -82,6 +92,7 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
     const code = failed[entry.idea.code];
     return [{ ideaCode: entry.idea.code, idea: entry.idea.name, title: product.title, version: variant?.label ?? null, quantity: pick.quantity, unitMinor: unitPriceOf(product, pick.variantId), group: pick.group, ...(code ? { problem: problemText(code) } : {}) }];
   });
+  const lines: readonly SummaryLine[] = frozen ? pending.lines : liveLines;
   function problemText(code: string): string { return ENTRY_CODES.has(code) ? t(`gifts.host.wizard.errors.codes.${code}`, { max: MAX_GIFT_QUANTITY }) : t("gifts.host.wizard.errors.entryFallback"); }
   const problems = Object.fromEntries(Object.entries(failed).map(([idea, code]) => [idea, problemText(code)]));
 
@@ -93,72 +104,102 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
   const notesTooLong = notesValue.length > DELIVERY_NOTES_MAX;
   const guard = list.isError && !isGiftListMissing(list.error);
 
-  const go = (next: Step): void => { setMoved(true); setStep(next); };
-  const toggle = (code: string): void => { touch(); setTicked((current) => (current.includes(code) ? current.filter((item) => item !== code) : [...current, code])); };
+  const go = (next: Step): void => { if (sending) return; setMoved(true); setStep(next); };
+  const toggle = (code: string): void => { if (sending) return; touch(); setTicked((current) => (current.includes(code) ? current.filter((item) => item !== code) : [...current, code])); };
   const clearFailure = (code: string): void => setFailed(({ [code]: _gone, ...rest }) => rest);
   const choose = (code: string, product: RecommendedProductCard): void => {
-    if (picks[code]?.listingId === product.listingId) return;
+    if (sending || picks[code]?.listingId === product.listingId) return;
     clearFailure(code);
     touch();
     setPicks((current) => ({ ...current, [code]: { listingId: product.listingId, variantId: defaultVariant(product), quantity: 1, group: suggestGroupGift(unitPriceOf(product, defaultVariant(product)), 1), groupTouched: false } }));
   };
-  const change = (code: string, next: Pick): void => { clearFailure(code); touch(); setPicks((current) => ({ ...current, [code]: next })); };
+  const change = (code: string, next: Pick): void => { if (sending) return; clearFailure(code); touch(); setPicks((current) => ({ ...current, [code]: next })); };
 
-  const toEntries = (entries: readonly GiftRecommendation[]) => entries.flatMap((entry) => { const pick = picks[entry.idea.code]; return pick ? [toBatchEntry({ ideaCode: entry.idea.code, listingId: pick.listingId, variantId: pick.variantId, quantity: pick.quantity, groupGift: pick.group })] : []; });
-  // Omitted keeps the saved notes; null clears them (contract).
-  const bodyOf = (entries: readonly GiftRecommendation[], saved: string): GiftBatchRequest => {
-    const trimmed = notesValue.trim();
-    return { items: toEntries(entries), ...(trimmed !== saved.trim() ? { deliveryNotes: trimmed === "" ? null : trimmed } : {}) };
+  const bodyOf = (entries: readonly GiftRecommendation[]): GiftBatchRequest => ({
+    items: entries.flatMap((entry) => { const pick = picks[entry.idea.code]; return pick ? [toBatchEntry({ ideaCode: entry.idea.code, listingId: pick.listingId, variantId: pick.variantId, quantity: pick.quantity, groupGift: pick.group })] : []; })
+  });
+  const finish = (count: number): void => { setPending(null); setFailed({}); setAdded(count); setTicked([]); setPicks({}); setNotes(null); setBand(null); setUnsaved(null); setStep("done"); };
+  const batchFailed = (error: unknown, batch: { readonly body: GiftBatchRequest; readonly order: readonly string[]; readonly lines: readonly SummaryLine[] }): void => {
+    setPending(mayHaveBeenApplied(error) ? { ...batch, edited: false } : null);
+    const found: readonly BatchFailure[] = batchFailures(error);
+    setFailed(Object.fromEntries(found.flatMap((failure) => { const idea = batch.order[failure.itemIndex]; return idea ? [[idea, failure.code] as const] : []; })));
+    // A product the catalog refused may have left the recommendation: read it again so the host never picks from a stale list.
+    if (found.length > 0) void recs.refetch();
   };
-  const finish = (count: number): void => { setPending(null); setFailed({}); setAdded(count); setTicked([]); setPicks({}); setNotes(null); setBand(null); setStep("done"); };
-
-  const send = (body: GiftBatchRequest, order: readonly string[]): void => {
-    add.mutate(body, {
-      onSuccess: (result) => finish(result.items.length),
-      onError: (error) => {
-        setPending(mayHaveBeenApplied(error) ? { body, order, edited: false } : null);
-        const found: readonly BatchFailure[] = batchFailures(error);
-        const byIdea = Object.fromEntries(found.flatMap((failure) => { const idea = order[failure.itemIndex]; return idea ? [[idea, failure.code] as const] : []; }));
-        setFailed(byIdea);
-        // A product the catalog refused may have left the recommendation: read it again so the host never picks from a stale list.
-        if (found.length > 0) void recs.refetch();
-      },
-      onSettled: flight.end
-    });
+  /** The notes are saved on their own and only when the host touched them and they differ from what the server holds (never overwriting others' notes by default). */
+  const notesToSave = (serverNotes: string): string | null | undefined => {
+    if (notes === null) return undefined;
+    const trimmed = notes.trim();
+    return trimmed === serverNotes.trim() ? undefined : trimmed === "" ? null : trimmed;
+  };
+  const saveNotes = async (value: string | null, count: number): Promise<boolean> => {
+    try { await putNotes.mutateAsync(value); return true; } catch (error) { setAdded(count); setUnsaved({ notes: value, code: problemCode(error), count }); return false; }
   };
 
-  /**
-   * A request whose answer was lost may have been applied, and the host edited the selection since. Before building a new body the list is read:
-   * the ideas it already holds were applied (all or nothing) and leave the selection; what remains gets a new body and a new key. With nothing left
-   * the earlier request WAS the whole selection: the host is told «Listo». A list that cannot be read keeps everything and shows its own retry.
-   */
-  const settleThenSend = async (before: { readonly order: readonly string[] }): Promise<void> => {
-    try {
-      const read = await list.refetch();
-      if (read.isError || !read.data) { flight.end(); return; }
-      const live = new Set(read.data.items.filter((item) => LIVE_STATUS.has(item.status)).flatMap((item) => (item.giftIdeaCode ? [item.giftIdeaCode] : [])));
-      const rest = active.filter((entry) => !live.has(entry.idea.code));
-      setPending(null);
-      if (rest.length === 0) { finish(before.order.filter((code) => live.has(code)).length); flight.end(); return; }
-      send(bodyOf(rest, read.data.deliveryNotes ?? ""), rest.map((entry) => entry.idea.code));
-    } catch { flight.end(); }
-  };
-
-  const submit = (): void => {
+  const submit = async (): Promise<void> => {
     if (!complete || notesTooLong || !flight.begin()) return;
-    if (pending?.edited) { void settleThenSend(pending); return; }
-    // A pending request is repeated as it was (same body, same key); otherwise the body is built from what the host sees now.
-    if (pending) send(pending.body, pending.order);
-    else send(bodyOf(active, savedNotes), active.map((entry) => entry.idea.code));
+    setSending(true);
+    setCrashed(null);
+    try {
+      let serverNotes = savedNotes;
+      let applied = 0;
+      let batch: { readonly body: GiftBatchRequest; readonly order: readonly string[]; readonly lines: readonly SummaryLine[] } | null;
+      if (pending?.edited) {
+        // The earlier request may have been applied: read the list. No list yet (404) means nothing was applied; any other failure keeps everything and shows the retry.
+        const read = await list.refetch();
+        if (read.isError && !isGiftListMissing(read.error)) return;
+        const live = new Set((read.data?.items ?? []).filter((item) => LIVE_STATUS.has(item.status)).flatMap((item) => (item.giftIdeaCode ? [item.giftIdeaCode] : [])));
+        serverNotes = read.data?.deliveryNotes ?? "";
+        applied = pending.order.filter((code) => live.has(code)).length;
+        const rest = active.filter((entry) => !live.has(entry.idea.code));
+        setPending(null);
+        batch = rest.length === 0 ? null : { body: bodyOf(rest), order: rest.map((entry) => entry.idea.code), lines: liveLines.filter((line) => rest.some((entry) => entry.idea.code === line.ideaCode)) };
+      } else if (pending) batch = pending;
+      else batch = { body: bodyOf(active), order: active.map((entry) => entry.idea.code), lines: liveLines };
+      let count = applied;
+      if (batch) {
+        let result: Awaited<ReturnType<typeof add.mutateAsync>>;
+        try { result = await add.mutateAsync(batch.body); } catch (error) { batchFailed(error, batch); return; }
+        count += result.items.length;
+      }
+      const wanted = notesToSave(serverNotes);
+      if (wanted !== undefined && !(await saveNotes(wanted, count))) return;
+      finish(count);
+    } catch (error) {
+      // Not an answer of the server: something in the screen itself. The host sees a generic error and keeps the selection; the error is kept in state, not dropped.
+      setCrashed(error);
+    } finally {
+      flight.end();
+      setSending(false);
+    }
+  };
+  const retryNotes = async (): Promise<void> => {
+    if (!unsaved || !flight.begin()) return;
+    setSending(true);
+    try { if (await saveNotes(unsaved.notes, unsaved.count)) finish(unsaved.count); } finally { flight.end(); setSending(false); }
   };
 
   const failures = batchFailures(add.error);
   const itemLevel = failures.length > 0;
-  const noteCode = add.error && (add.error as { problem?: { code?: string } }).problem?.code === "INVALID_DELIVERY_NOTES";
   const name = t(`gifts.host.wizard.stepName.${step === "done" ? "summary" : step}`);
   const title = step === "ideas" ? t("gifts.host.wizard.ideas.title") : step === "products" ? t("gifts.host.wizard.products.title") : t("gifts.host.wizard.summary.title");
   const headline = eventTypeName ? (cityName ? t("gifts.host.wizard.ideas.recommended", { event: eventTypeName, city: cityName }) : t("gifts.host.wizard.ideas.recommendedNoCity", { event: eventTypeName })) : t("gifts.host.wizard.ideas.title");
   const index = Math.max(0, STEPS.indexOf(step === "done" ? "summary" : step));
+
+  if (unsaved) {
+    return (
+      <View style={{ gap: spacing[4] }} testID="wizard-notes-failed">
+        <Notice kind="error">
+          <StepHeading focusOnMount testID="wizard-notes-failed-title">{t("gifts.host.wizard.errors.notesUnsavedTitle", { count: unsaved.count })}</StepHeading>
+          <Text style={styles.body}>{unsaved.code === "INVALID_DELIVERY_NOTES" ? t("gifts.host.wizard.errors.invalidNotes", { max: DELIVERY_NOTES_MAX }) : t("gifts.host.wizard.errors.notesUnsaved")}</Text>
+        </Notice>
+        <View style={styles.row}>
+          <ActionButton icon="refresh" label={sending ? t("gifts.host.wizard.summary.submitting") : t("gifts.host.wizard.errors.listRetry")} busy={sending} disabled={sending} onPress={() => { void retryNotes(); }} testID="wizard-notes-retry" />
+          <ActionButton variant="secondary" label={t("gifts.host.wizard.summary.seeList")} onPress={onSeeList} testID="wizard-see-list" />
+        </View>
+      </View>
+    );
+  }
 
   if (step === "done") {
     return (
@@ -185,7 +226,7 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
           <StepHeading focusOnMount={moved} testID="wizard-step-title">{title}</StepHeading>
           {celebration.currency !== "BOB" && step !== "ideas" ? <Text style={styles.muted}>{t("gifts.host.wizard.products.currencyNote")}</Text> : null}
           {step === "ideas" ? (
-            <IdeasStep ideas={ideas} ticked={ticked} listed={settled} headline={headline} cities={cities} city={city} onCity={(slug) => { touch(); setChosenCity(slug); }} band={band} onClearBand={() => setBand(null)} onToggle={toggle} onStore={onStore} onSeeList={onSeeList}
+            <IdeasStep ideas={ideas} ticked={ticked} listed={settled} headline={headline} cities={cities} city={city} onCity={(slug) => { if (sending) return; touch(); setChosenCity(slug); }} band={band} onClearBand={() => setBand(null)} onToggle={toggle} onStore={onStore} onSeeList={onSeeList}
               loading={recs.isPending} error={recs.isError} offline={isNoAnswer(recs.error)} onRetry={() => { void recs.refetch(); }} />
           ) : null}
           {step === "products" ? (
@@ -196,7 +237,7 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
             </>
           ) : null}
           {step === "summary" ? (
-            <SummaryStep lines={lines} totalMinor={totalMinor} report={report} guests={guests} notes={notesValue} onNotes={(value) => { touch(); setNotes(value); }} showCurrencyNote={celebration.currency !== "BOB"}
+            <SummaryStep lines={lines} totalMinor={totalMinor} report={report} guests={guests} notes={notesValue} onNotes={(value) => { if (sending) return; touch(); setNotes(value); }} showCurrencyNote={celebration.currency !== "BOB"}
               onSeeCheap={() => { setBand("b1"); go("ideas"); }} onChange={() => go("products")} />
           ) : null}
         </View>
@@ -209,10 +250,9 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
               <Text style={styles.body}>{t("gifts.host.wizard.errors.failedHelp")}</Text>
               <ActionButton variant="secondary" label={t("gifts.host.wizard.errors.fix")} onPress={() => go("products")} testID="wizard-fix" />
             </Notice>
-          ) : noteCode ? <Notice kind="error">{t("gifts.host.wizard.errors.invalidNotes", { max: DELIVERY_NOTES_MAX })}</Notice>
-          : isNoAnswer(add.error) ? <Notice kind="error">{t("gifts.host.wizard.errors.offline")}</Notice>
+          ) : isNoAnswer(add.error) ? <Notice kind="error">{t("gifts.host.wizard.errors.offline")}</Notice>
           : <GiftErrorNotice error={add.error} onReload={() => { void list.refetch(); }} />}
-          {!itemLevel && !noteCode && !isIdempotencyReused(add.error) ? <Text style={styles.muted}>{t("gifts.host.wizard.errors.retryHint")}</Text> : null}
+          {!itemLevel && !isIdempotencyReused(add.error) ? <Text style={styles.muted}>{t("gifts.host.wizard.errors.retryHint")}</Text> : null}
         </View>
       ) : null}
       {guard && step === "summary" ? (
@@ -221,6 +261,7 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
           <ActionButton icon="refresh" variant="secondary" label={t("gifts.host.wizard.errors.listRetry")} busy={list.isFetching} onPress={() => { void list.refetch(); }} testID="wizard-list-retry" />
         </Notice>
       ) : null}
+      {crashed !== null && step === "summary" ? <Notice kind="error"><Text style={styles.body} testID="wizard-crashed">{t("gifts.host.wizard.errors.generic")}</Text></Notice> : null}
       <View style={styles.row}>
         {step === "ideas" ? (
           <>
@@ -229,7 +270,7 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
           </>
         ) : null}
         {step === "products" ? <ActionButton label={t("gifts.host.wizard.next")} disabled={!complete} onPress={() => go("summary")} testID="wizard-next" /> : null}
-        {step === "summary" ? <ActionButton label={add.isPending ? t("gifts.host.wizard.summary.submitting") : t("gifts.host.wizard.summary.submit", { count: lines.length })} busy={add.isPending} disabled={!complete || notesTooLong || add.isPending} onPress={submit} testID="wizard-submit" /> : null}
+        {step === "summary" ? <ActionButton label={sending ? t("gifts.host.wizard.summary.submitting") : t("gifts.host.wizard.summary.submit", { count: lines.length })} busy={sending} disabled={!complete || notesTooLong || sending} onPress={() => { void submit(); }} testID="wizard-submit" /> : null}
       </View>
     </View>
   );

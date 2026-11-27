@@ -59,6 +59,8 @@ export const giftsWizardEsBO = {
     failedHelp: "Corrige lo marcado y vuelve a tocar «Agregar». Lo demás se conserva.", fix: "Corregir",
     invalidNotes: "Revisa las indicaciones de entrega: admiten hasta {{max}} caracteres y no deben llevar la dirección exacta.",
     retryHint: "Puedes volver a tocar «Agregar»: no se agregará dos veces.", offline: "Sin conexión por ahora. Tu selección sigue aquí; reintenta cuando vuelva internet.",
+    notesUnsavedTitle_one: "Agregamos {{count}} regalo, pero no pudimos guardar tus indicaciones", notesUnsavedTitle_other: "Agregamos {{count}} regalos, pero no pudimos guardar tus indicaciones",
+    notesUnsaved: "No se perdió nada: tus regalos ya están en la lista. Reintenta para guardar las indicaciones de entrega, o corrígelas después desde tu lista.", generic: "No pudimos completar el envío. Tu selección sigue aquí; vuelve a tocar «Agregar».",
     listUnreadable: "No pudimos leer tu lista de regalos. Sin ella no podemos saber qué ya agregaste.", listRetry: "Reintentar"
   },
   list: { quantity: "Cantidad: {{count}}", group: "Se puede regalar entre varios", delivery: "Indicaciones de entrega: {{notes}}" }

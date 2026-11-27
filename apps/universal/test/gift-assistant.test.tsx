@@ -51,6 +51,34 @@ const click = (id: string): void => { fireEvent.click(screen.getByTestId(id)); }
 const next = async (title: RegExp): Promise<void> => { click("wizard-next"); await screen.findByRole("heading", { name: title }); };
 const posts = (calls: readonly { method: string; path: string }[]) => calls.filter((call) => call.method === "POST" && call.path.endsWith("/items/batch"));
 
+const NOTES = `PUT ${LIST}/delivery-notes`;
+/** A server that remembers what was applied and what notes the list holds. */
+const server = (over: { applied?: Record<string, unknown>[]; notes?: string | null } = {}) => {
+  const state = { items: over.applied ?? [], notes: over.notes ?? null, batches: 0, puts: [] as unknown[] };
+  return { state, handlers: {
+    [`GET ${ITEMS}`]: () => ({ ...EMPTY_LIST, items: state.items, deliveryNotes: state.notes }),
+    [NOTES]: (call: { body?: unknown }) => { state.puts.push(call.body); state.notes = (call.body as { deliveryNotes: string | null }).deliveryNotes; return { ...EMPTY_LIST, items: state.items, deliveryNotes: state.notes }; }
+  } as Record<string, Handler> };
+};
+const lostFirst = (state: { items: Record<string, unknown>[]; batches: number }, applyOnLoss: boolean, items: Record<string, unknown>[]): Handler => () => {
+  state.batches += 1;
+  if (state.batches === 1) { if (applyOnLoss) state.items = items; throw new TypeError("fetch failed"); }
+  state.items = items;
+  return created(items);
+};
+const IDEA_CAKE = gift("n1", { giftIdeaCode: "CAKE" });
+const IDEA_DINNER = gift("n2", { giftIdeaCode: "DINNERWARE_SET" });
+const toSummaryWith = async (srv: { handlers: Record<string, Handler> }, extra: Record<string, Handler>, only?: "CAKE") => {
+  const made = await open({ ...srv.handlers, ...extra });
+  click("idea-CAKE");
+  if (only !== "CAKE") click("idea-DINNERWARE_SET");
+  await next(/Elige un producto por idea/);
+  click("choose-torta");
+  if (only !== "CAKE") click("choose-vajilla");
+  await next(/Revisa tu lista/);
+  return made;
+};
+
 beforeEach(() => { navigate.mockClear(); resetSecureStore(); });
 afterEach(() => { cleanup(); vi.unstubAllEnvs(); });
 
@@ -263,6 +291,21 @@ describe("R4 · retries and errors of the batch", () => {
     expect(new Set(bodies).size).toBe(1);
   });
 
+  const lostWithClient = async (srv: { handlers: Record<string, Handler> }, extra: Record<string, Handler>) => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+    const made = fakeClient(handlers({ ...srv.handlers, ...extra }));
+    renderApp(<AddGiftScreen celebrationId="c-1" initial="catalog" onNavigate={navigate} />, made.client, undefined, undefined, queryClient);
+    await screen.findByTestId("idea-CAKE");
+    click("idea-CAKE");
+    click("idea-DINNERWARE_SET");
+    await next(/Elige un producto por idea/);
+    click("choose-torta");
+    click("choose-vajilla");
+    await next(/Revisa tu lista/);
+    click("wizard-submit");
+    await screen.findByTestId("wizard-submit-error");
+    return { ...made, queryClient };
+  };
   /** The list the server holds once the first request was applied. */
   const APPLIED = { ...EMPTY_LIST, items: [gift("n1", { giftIdeaCode: "CAKE" }), gift("n2", { giftIdeaCode: "DINNERWARE_SET" })] };
   const lostThenApplied = async (extra: Record<string, Handler> = {}) => {
@@ -305,17 +348,116 @@ describe("R4 · retries and errors of the batch", () => {
     expect(JSON.stringify(sent[1]?.body)).toBe(JSON.stringify(sent[0]?.body));
   });
 
-  it("applied, lost, then the host edits the notes: the list is read first, the ideas it already holds leave the selection and the screen says «Listo», never «No se agregó ningún regalo»", async () => {
-    const { calls } = await lostThenApplied();
+  it("applied, lost, then the host edits the notes: the list is read first, nothing is re-sent, the notes go with their own PUT and the screen says «Listo»", async () => {
+    const srv = server();
+    const { calls } = await toSummaryWith(srv, { [BATCH]: lostFirst(srv.state, true, [IDEA_CAKE, IDEA_DINNER]) });
+    click("wizard-submit");
+    await screen.findByTestId("wizard-submit-error");
     const before = reads(calls);
     fireEvent.change(screen.getByTestId("wizard-notes"), { target: { value: "Portón verde" } });
     click("wizard-submit");
     expect(await screen.findByTestId("wizard-done")).toBeTruthy();
     expect(screen.getByTestId("wizard-done-title").textContent).toBe("Listo: agregamos 2 regalos");
     expect(reads(calls)).toBeGreaterThan(before);
-    // Nothing new was sent: no second body, no 422 DUPLICATE_GIFT_IDEA.
     expect(calls.filter((call) => call.path === `${ITEMS}/batch`)).toHaveLength(1);
+    expect(srv.state.puts).toEqual([{ deliveryNotes: "Portón verde" }]);
+    // The list is read again after the PUT: it is what the host list will show.
+    const order = calls.map((call) => `${call.method} ${call.path}`);
+    expect(order.lastIndexOf(`GET ${ITEMS}`)).toBeGreaterThan(order.lastIndexOf(NOTES));
+    expect(srv.state.notes).toBe("Portón verde");
     expect(screen.queryByText(/No se agregó ningún regalo/)).toBeNull();
+  });
+
+  it("lost, and the list read answers 404 GIFT_LIST_NOT_FOUND: nothing was applied, so the rest is sent (addBatch creates the list) and the host is not stuck", async () => {
+    const srv = server();
+    const calls404 = { reads: 0 };
+    const { calls } = await toSummaryWith(srv, { [BATCH]: lostFirst(srv.state, false, [IDEA_CAKE, IDEA_DINNER]), [`GET ${ITEMS}`]: () => { calls404.reads += 1; return calls404.reads === 1 ? EMPTY_LIST : new HttpFailure(404, { code: "GIFT_LIST_NOT_FOUND" }); } });
+    click("wizard-submit");
+    await screen.findByTestId("wizard-submit-error");
+    fireEvent.change(screen.getByTestId("wizard-notes"), { target: { value: "Portón verde" } });
+    click("wizard-submit");
+    expect(await screen.findByTestId("wizard-done")).toBeTruthy();
+    const sent = calls.filter((call) => call.path === `${ITEMS}/batch`);
+    expect(sent).toHaveLength(2);
+    // The same body: the same key is the safe choice (a replay creates it once).
+    expect(sent[1]?.headers.get("idempotency-key")).toBe(sent[0]?.headers.get("idempotency-key"));
+    expect(screen.queryByTestId("wizard-list-error")).toBeNull();
+  });
+
+  it("the count of «Listo» adds the ideas the earlier request already put on the list to the ones of the new batch", async () => {
+    const srv = server();
+    await toSummaryWith(srv, { [BATCH]: lostFirst(srv.state, true, [IDEA_CAKE]) }, "CAKE");
+    click("wizard-submit");
+    await screen.findByTestId("wizard-submit-error");
+    // The host adds a second idea while the first request is unconfirmed.
+    click("wizard-back"); await screen.findByRole("heading", { name: /Elige un producto por idea/ });
+    click("wizard-back"); await screen.findByTestId("idea-CAKE");
+    click("idea-DINNERWARE_SET");
+    await next(/Elige un producto por idea/);
+    click("choose-vajilla");
+    await next(/Revisa tu lista/);
+    srv.state.batches = 1;
+    click("wizard-submit");
+    expect(await screen.findByTestId("wizard-done-title")).toBeTruthy();
+    expect(screen.getByTestId("wizard-done-title").textContent).toBe("Listo: agregamos 2 regalos");
+  });
+
+  it("an unconfirmed request keeps its own summary: when the recommendations change meanwhile, the lines, the button and the identical retry do not", async () => {
+    const srv = server();
+    let recsMode: "both" | "cake" = "both";
+    const { calls, queryClient } = await lostWithClient(srv, { [BATCH]: lostFirst(srv.state, false, [IDEA_CAKE, IDEA_DINNER]), [RECS]: () => (recsMode === "both" ? RECOMMENDATIONS : { ...RECOMMENDATIONS, items: [CAKE] }) });
+    recsMode = "cake";
+    await queryClient.invalidateQueries({ queryKey: ["providers"] });
+    await waitFor(() => expect(calls.filter((call) => call.path === "/providers/gift-ideas/recommendations").length).toBeGreaterThan(1));
+    expect(screen.getByTestId("line-CAKE")).toBeTruthy();
+    expect(screen.getByTestId("line-DINNERWARE_SET")).toBeTruthy();
+    expect(screen.getByTestId("wizard-submit").textContent).toBe("Agregar 2 regalos");
+    expect(screen.getByTestId("wizard-submit").getAttribute("aria-disabled")).not.toBe("true");
+    click("wizard-submit");
+    expect(await screen.findByTestId("wizard-done")).toBeTruthy();
+    const sent = calls.filter((call) => call.path === `${ITEMS}/batch`);
+    expect(sent[1]?.headers.get("idempotency-key")).toBe(sent[0]?.headers.get("idempotency-key"));
+    expect(JSON.stringify(sent[1]?.body)).toBe(JSON.stringify(sent[0]?.body));
+  });
+
+  it("while it sends, one state covers everything: the button is busy and disabled and neither the notes nor the step can be changed", async () => {
+    let release: (value: unknown) => void = () => undefined;
+    const gate = new Promise((resolve) => { release = resolve; });
+    await toSummaryWith(server(), { [BATCH]: () => gate as never });
+    fireEvent.change(screen.getByTestId("wizard-notes"), { target: { value: "Primera" } });
+    click("wizard-submit");
+    await waitFor(() => expect(screen.getByTestId("wizard-submit").getAttribute("aria-disabled")).toBe("true"));
+    fireEvent.change(screen.getByTestId("wizard-notes"), { target: { value: "Otra" } });
+    expect((screen.getByTestId("wizard-notes") as HTMLTextAreaElement).value).toBe("Primera");
+    click("wizard-back");
+    expect(screen.getByTestId("wizard-submit")).toBeTruthy();
+    release(created([IDEA_CAKE, IDEA_DINNER]));
+    expect(await screen.findByTestId("wizard-done")).toBeTruthy();
+  });
+
+  it("a list that fails to refresh twice in a row announces the notice again (a new alert each time, even with the earlier data still held)", async () => {
+    let down = false;
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+    const made = fakeClient(handlers({ [`GET ${ITEMS}`]: () => (down ? new HttpFailure(503) : EMPTY_LIST) }));
+    renderApp(<AddGiftScreen celebrationId="c-1" initial="catalog" onNavigate={navigate} />, made.client, undefined, undefined, queryClient);
+    await screen.findByTestId("idea-CAKE");
+    click("idea-CAKE");
+    await next(/Elige un producto por idea/);
+    click("choose-torta");
+    await next(/Revisa tu lista/);
+    down = true;
+    await queryClient.invalidateQueries({ queryKey: ["gifts"] });
+    const first = await screen.findByTestId("wizard-list-error", {}, { timeout: SLOW });
+    fireEvent.click(screen.getByTestId("wizard-list-retry"));
+    await waitFor(() => expect(screen.getByTestId("wizard-list-error")).not.toBe(first), { timeout: SLOW });
+  });
+
+  it("an error of the screen itself is shown, not swallowed: a generic notice and the selection stays", async () => {
+    await toSummary({ [BATCH]: () => ({}) as never });
+    click("wizard-submit");
+    expect((await screen.findByTestId("wizard-crashed")).textContent).toBe("No pudimos completar el envío. Tu selección sigue aquí; vuelve a tocar «Agregar».");
+    expect(screen.getByTestId("line-CAKE")).toBeTruthy();
+    expect(screen.queryByTestId("wizard-done")).toBeNull();
   });
 
   it("lost and NOT applied, then an edit: the list is read, the rest goes as a new body with a new key and the label counts what is sent", async () => {
@@ -501,8 +643,9 @@ describe("R4 · step 3 · balance and delivery notes", () => {
     }
   });
 
-  it("the delivery notes go along only when changed, count the 200 characters and block the call above them", async () => {
-    const { calls } = await toSummary({ [BATCH]: () => created([gift("n1"), gift("n2")]) });
+  it("the delivery notes belong to the list: the batch carries only the items, the notes go with their own PUT (trimmed) after it, and the 200 characters block the call", async () => {
+    const srv = server();
+    const { calls } = await toSummaryWith(srv, { [BATCH]: () => created([IDEA_CAKE, IDEA_DINNER]) });
     const notes = screen.getByTestId("wizard-notes") as HTMLTextAreaElement;
     expect(screen.getByTestId("wizard-notes-counter").textContent).toBe("0 de 200 caracteres");
     expect(screen.getByText(/No escribas la dirección exacta/)).toBeTruthy();
@@ -517,22 +660,55 @@ describe("R4 · step 3 · balance and delivery notes", () => {
     fireEvent.change(notes, { target: { value: "  Entregar en portería, por la tarde  " } });
     click("wizard-submit");
     await screen.findByTestId("wizard-done");
-    expect(calls.find((call) => call.path === `${ITEMS}/batch`)?.body).toMatchObject({ deliveryNotes: "Entregar en portería, por la tarde" });
+    expect(Object.keys(calls.find((call) => call.path === `${ITEMS}/batch`)?.body as object)).toEqual(["items"]);
+    expect(srv.state.puts).toEqual([{ deliveryNotes: "Entregar en portería, por la tarde" }]);
+    const order = calls.map((call) => `${call.method} ${call.path}`);
+    expect(order.indexOf(NOTES)).toBeGreaterThan(order.indexOf(`POST ${ITEMS}/batch`));
   });
 
-  it("saved notes are prefilled and omitted when untouched; clearing them sends null; 422 INVALID_DELIVERY_NOTES is worded", async () => {
-    const saved = { ...EMPTY_LIST, deliveryNotes: "Portón verde" };
-    const first = await toSummary({ [`GET ${ITEMS}`]: () => saved, [BATCH]: () => created([gift("n1")]) });
+  it("saved notes are prefilled and never rewritten when untouched; clearing them sends null with the PUT", async () => {
+    const first = server({ notes: "Portón verde" });
+    const one = await toSummaryWith(first, { [BATCH]: () => created([IDEA_CAKE]) });
     expect((screen.getByTestId("wizard-notes") as HTMLTextAreaElement).value).toBe("Portón verde");
     click("wizard-submit");
     await screen.findByTestId("wizard-done");
-    expect(Object.keys(first.calls.find((call) => call.path === `${ITEMS}/batch`)?.body as object)).toEqual(["items"]);
+    expect(first.state.puts).toEqual([]);
+    expect(Object.keys(one.calls.find((call) => call.path === `${ITEMS}/batch`)?.body as object)).toEqual(["items"]);
     cleanup();
-    const second = await toSummary({ [`GET ${ITEMS}`]: () => saved, [BATCH]: () => new HttpFailure(422, { code: "INVALID_DELIVERY_NOTES" }) });
+    const second = server({ notes: "Portón verde" });
+    await toSummaryWith(second, { [BATCH]: () => created([IDEA_CAKE]) });
     fireEvent.change(screen.getByTestId("wizard-notes"), { target: { value: "" } });
     click("wizard-submit");
-    expect((await screen.findByTestId("wizard-submit-error")).textContent).toMatch(/Revisa las indicaciones de entrega/);
-    expect(second.calls.find((call) => call.path === `${ITEMS}/batch`)?.body).toMatchObject({ deliveryNotes: null });
+    await screen.findByTestId("wizard-done");
+    expect(second.state.puts).toEqual([{ deliveryNotes: null }]);
+  });
+
+  it("the gifts were added but the notes failed: no «Listo», a notice that says so, nothing is added twice and «Reintentar» saves the notes", async () => {
+    for (const failure of [() => new HttpFailure(503), () => { throw new TypeError("fetch failed"); }]) {
+      cleanup();
+      const srv = server();
+      let puts = 0;
+      const { calls } = await toSummaryWith(srv, { [BATCH]: () => created([IDEA_CAKE, IDEA_DINNER]), [NOTES]: (call) => { puts += 1; return puts === 1 ? failure() as never : srv.handlers[NOTES]!(call); } });
+      fireEvent.change(screen.getByTestId("wizard-notes"), { target: { value: "Portón verde" } });
+      click("wizard-submit");
+      const panel = await screen.findByTestId("wizard-notes-failed");
+      expect(panel.textContent).toMatch(/Agregamos 2 regalos, pero no pudimos guardar tus indicaciones/);
+      expect(screen.queryByTestId("wizard-done")).toBeNull();
+      fireEvent.click(screen.getByTestId("wizard-notes-retry"));
+      expect(await screen.findByTestId("wizard-done")).toBeTruthy();
+      expect(screen.getByTestId("wizard-done-title").textContent).toBe("Listo: agregamos 2 regalos");
+      expect(srv.state.puts).toEqual([{ deliveryNotes: "Portón verde" }]);
+      expect(calls.filter((call) => call.path === `${ITEMS}/batch`)).toHaveLength(1);
+    }
+  });
+
+  it("422 INVALID_DELIVERY_NOTES of the PUT is worded and the gifts stay added", async () => {
+    const srv = server();
+    await toSummaryWith(srv, { [BATCH]: () => created([IDEA_CAKE, IDEA_DINNER]), [NOTES]: () => new HttpFailure(422, { code: "INVALID_DELIVERY_NOTES" }) });
+    fireEvent.change(screen.getByTestId("wizard-notes"), { target: { value: "Calle 5 número 12" } });
+    click("wizard-submit");
+    expect((await screen.findByTestId("wizard-notes-failed")).textContent).toMatch(/Revisa las indicaciones de entrega/);
+    expect(screen.queryByTestId("wizard-done")).toBeNull();
   });
 });
 

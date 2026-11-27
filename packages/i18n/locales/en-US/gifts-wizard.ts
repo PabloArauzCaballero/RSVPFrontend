@@ -61,6 +61,8 @@ export const giftsWizardEnUS: DeepStrings<typeof giftsWizardEsBO> = {
     failedHelp: "Fix what is marked and tap “Add” again. The rest is kept.", fix: "Fix",
     invalidNotes: "Check the delivery notes: they allow up to {{max}} characters and must not carry the exact address.",
     retryHint: "You can tap “Add” again: nothing is added twice.", offline: "No connection right now. Your selection is still here; retry when the internet is back.",
+    notesUnsavedTitle_one: "We added {{count}} gift, but could not save your notes", notesUnsavedTitle_other: "We added {{count}} gifts, but could not save your notes",
+    notesUnsaved: "Nothing was lost: your gifts are already on your list. Try again to save the delivery notes, or fix them later from your list.", generic: "We could not complete that. Your selection is still here; tap “Add” again.",
     listUnreadable: "We could not read your gift list. Without it we cannot tell what you already added.", listRetry: "Try again"
   },
   list: { quantity: "Quantity: {{count}}", group: "Can be given by several people", delivery: "Delivery notes: {{notes}}" }
