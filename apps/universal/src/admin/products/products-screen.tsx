@@ -62,7 +62,6 @@ function Tabs({ view, counts, onChange }: { readonly view: ModerationView; reado
 function Filters({ view, draft, onChange, categories }: { readonly view: ModerationView; readonly draft: Draft; readonly onChange: (next: Draft) => void; readonly categories: readonly { readonly code: string; readonly name: string }[] }): ReactNode {
   const t = useT();
   const styles = useStyles();
-  const palette = useColors();
   const [provider, setProvider] = useState(draft.providerId);
   const providerInvalid = provider.trim() !== "" && !UUID.test(provider.trim());
   const cell = { flexGrow: 1, flexBasis: 180, gap: spacing[1] } as const;
@@ -89,7 +88,6 @@ function Filters({ view, draft, onChange, categories }: { readonly view: Moderat
         <ActionButton icon="search" variant="secondary" label={t("admin.products.filters.apply")} onPress={submitProvider} disabled={providerInvalid} testID="products-provider-apply" />
         {active ? <ActionButton variant="secondary" label={t("admin.products.filters.clear")} onPress={() => { setProvider(""); onChange(NO_FILTERS); }} testID="products-clear" /> : null}
       </View>
-      {providerInvalid ? <Text role="alert" style={[styles.muted, { color: palette.danger }]}>{t("admin.products.filters.providerInvalid")}</Text> : null}
     </View>
   );
 }
