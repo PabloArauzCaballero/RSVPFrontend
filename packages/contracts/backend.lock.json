@@ -2,8 +2,8 @@
   "$comment": "Backend commit whose OpenAPI specs are vendored in specs/. It must be the backend deployed with this frontend. Change it only with: yarn workspace @rsvp/contracts generate --ref <sha|branch|tag> (see README.md).",
   "repository": "PabloArauzCaballero/RSVPBackend",
   "path": "packages/contracts-openapi/specs",
-  "ref": "1151e6f145978b88129696c026d48c0052e45b17",
-  "refName": "1151e6f145978b88129696c026d48c0052e45b17",
+  "ref": "24c0730250b9ea7b0e2907c29a0e78deaa96275a",
+  "refName": "24c07302",
   "specs": {
     "celebration": {
       "version": "1.6.0",
@@ -14,8 +14,8 @@
       "sha256": "1307c08dc3ff407e77cb4a56b7f60a699ea42fcd898232825f213a40205486a5"
     },
     "gift-list": {
-      "version": "1.16.0",
-      "sha256": "62e9c24d71e2ea93341221561feb2fdbc5e18f53edf247b0fc171906668c79df"
+      "version": "1.18.0",
+      "sha256": "dc04d6bb2a61bbeb1497bf14e3cd9c9ee062988d88057635abef86b4bbc9d1db"
     },
     "guest-rsvp": {
       "version": "1.13.0",
@@ -31,7 +31,7 @@
     },
     "provider-catalog": {
       "version": "3.9.0",
-      "sha256": "e57971c08a9ec81afb5a0041a77621e2dd651a820163940cb83be00996d38186"
+      "sha256": "1dc9beda060ed1cf27dae952a6d928b4f5172dc713da14e35c198293ff06200b"
     },
     "template-media": {
       "version": "1.5.0",

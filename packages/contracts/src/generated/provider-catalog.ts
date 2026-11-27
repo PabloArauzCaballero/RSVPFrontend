@@ -115,7 +115,7 @@ export interface paths {
         };
         /**
          * Published listings of verified providers by title (consumed by gift-list-service)
-         * @description R2 (3.5.0, decision 11): a PRODUCT is listed only when published, COMPLETE and not hidden, from a VERIFIED provider; SERVICE listings as before. imageUrl of a product is the card of its cover photo.
+         * @description R2 (3.5.0, decision 11) and R3 (3.6.0, §5.5): a PRODUCT is listed only when eligible for the gift recommendation: published, COMPLETE and not hidden, stock other than OUT_OF_STOCK, from a VERIFIED provider below its monthly lead cap; SERVICE listings as before. imageUrl of a product is the card of its cover photo. With city, products that deliver there come first. ORDER (3.6.0, decision pending for the product owner): the city comes BEFORE relevance, so a product that delivers to the city but matches fewer words is listed above a better match that does not deliver there; the alternative (relevance first, city as a tie-break) is not decided.
          */
         get: operations["searchListings"];
         put?: never;
@@ -135,6 +135,23 @@ export interface paths {
         };
         /** Published listing of a VERIFIED provider (consumed by gift-list-service); 404 otherwise */
         get: operations["getListing"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/listings/current-prices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Price charged now of up to 50 eligible products and of their versions (public) */
+        get: operations["getCurrentPrices"];
         put?: never;
         post?: never;
         delete?: never;
@@ -562,7 +579,7 @@ export interface paths {
         put?: never;
         /**
          * Create an unpublished listing
-         * @description 422 CATEGORY_TYPE_MISMATCH when the listing type differs from the category's listingType (R1, 3.4.0). R2 (3.5.0): Idempotency-Key; PRODUCT sheet fields; 422 IMAGE_URL_NOT_ALLOWED, PRICE_OUT_OF_RANGE, GIFT_IDEA_NOT_ALLOWED, UNKNOWN_CITY, CONTACT_IN_TEXT, DESCRIPTION_REPEATS_TITLE, PRODUCT_FIELDS_ONLY. The response is the ProductSheet (a superset of Listing) with completeness and missing.
+         * @description 422 CATEGORY_TYPE_MISMATCH when the listing type differs from the category's listingType (R1, 3.4.0). R2 (3.5.0): Idempotency-Key; PRODUCT sheet fields; 422 IMAGE_URL_NOT_ALLOWED, PRICE_OUT_OF_RANGE, GIFT_IDEA_NOT_ALLOWED, UNKNOWN_CITY, CONTACT_IN_TEXT, DESCRIPTION_REPEATS_TITLE, PRODUCT_FIELDS_ONLY. The response is the ProductSheet (a superset of Listing) with completeness and missing. 422 STOCK_MISMATCH_DEFAULT_VARIANT (3.6.0): with variants, stock must be the default variant's stock or be left out; a PATCH of stock alone is checked against the stored default variant.
          */
         post: operations["createListing"];
         delete?: never;
@@ -587,7 +604,7 @@ export interface paths {
         head?: never;
         /**
          * Edit a listing (R2); a published product stays published and its completeness is recomputed
-         * @description variants[] replaces the list (kept ids keep their photos), photoOrder reorders the photos. provider.listing.completeness-changed.v1 is emitted only when the state or missing[] changes. HIDDEN_BY_ADMIN survives the edit. The own gift catalog (SNAPSHOT_V1) is 409 LISTING_NOT_EDITABLE.
+         * @description variants[] replaces the list (kept ids keep their photos), photoOrder reorders the photos. provider.listing.completeness-changed.v1 is emitted only when the state or missing[] changes. HIDDEN_BY_ADMIN survives the edit. The own gift catalog (SNAPSHOT_V1) is 409 LISTING_NOT_EDITABLE. 422 STOCK_MISMATCH_DEFAULT_VARIANT (3.6.0): with variants, stock must be the default variant's stock or be left out; a PATCH of stock alone is checked against the stored default variant.
          */
         patch: operations["patchListing"];
         trace?: never;
@@ -1535,6 +1552,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/providers/gift-ideas/recommendations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Gift ideas with eligible products for an event type and a city (public, Cache-Control: public, max-age=60)
+         * @description R3 (§5.5). Anonymous and read-only: it takes only the event type and the city of the celebration. Eligible product: VERIFIED provider below its monthly lead cap, PRODUCT published, COMPLETE, not hidden, stock other than OUT_OF_STOCK, declaring the idea. Order inside an idea: featured, delivers to the city, catalog score (location tier of the listing against the city, then plan), shorter lead time, older. Query parameters: only eventType, city, ideas, productsPerIdea, offset and locale are accepted; ANY other parameter (a cache-buster such as ?_=1 included) or one given twice is 422 INVALID_QUERY (details.parameters lists the unknown ones), so a client must not append parameters. An eventType that is well formed but unknown to the catalog is not an error: it falls back to scope ALL_IDEAS (every idea with eligible products).
+         */
+        get: operations["recommendGiftIdeas"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/providers/health": {
         parameters: {
             query?: never;
@@ -1740,7 +1777,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description One partner redirector (A23). The own gift-catalog products (H05B) resolve their PRODUCT_PAGE through the H05B boundary: the stored validated officialProductUrl with controlled UTM and correlationId, an anonymous nonbillable click (valid:false, reason unassessed) and its provider.lead.marked-invalid.v1 outbox committed atomically before the 302; a suspended provider records the click (reason suspended) and answers 404 without Location; unknown or duplicate query keys (url, next, redirect...) answer 422. Every other listing and destination (OFFICIAL_SITE, LANDING, WHATSAPP, PHONE, EMAIL, INSTAGRAM, PRODUCT_PAGE) is resolved by the marketplace redirector: the lead (valid, or invalid dup/bot) and its event are stored in one transaction before the 302 (never 301). Only a destination stored on the listing, enabled in its lead configuration and still passing its whitelist can become the Location; anything else is 404. tel: and mailto: targets are returned intact; https targets get utm_source, utm_medium, utm_campaign and correlationId. Failure to persist the click or its outbox answers 503 and never 302. */
+        /** @description One partner redirector (A23). The own gift-catalog products (H05B) resolve their PRODUCT_PAGE through the H05B boundary: the stored validated officialProductUrl with controlled UTM and correlationId, an anonymous nonbillable click (valid:false, reason unassessed) and its provider.lead.marked-invalid.v1 outbox committed atomically before the 302; a suspended provider records the click (reason suspended) and answers 404 without Location; unknown or duplicate query keys (url, next, redirect...) answer 422. Every other listing and destination (OFFICIAL_SITE, LANDING, WHATSAPP, PHONE, EMAIL, INSTAGRAM, PRODUCT_PAGE) is resolved by the marketplace redirector: the lead (valid, or invalid dup/bot) and its event are stored in one transaction before the 302 (never 301). Only a destination stored on the listing, enabled in its lead configuration and still passing its whitelist can become the Location; anything else is 404. tel: and mailto: targets are returned intact; https targets get utm_source, utm_medium, utm_campaign and correlationId. Failure to persist the click or its outbox answers 503 and never 302. Since 3.8.0 (R5) a PRODUCT's WHATSAPP redirect carries the provider's message in the text parameter of the wa.me link (see the API description); no query parameter can add text to it. */
         get: operations["resolveListingRedirect"];
         put?: never;
         post?: never;
@@ -1881,6 +1918,12 @@ export interface components {
                 /** @description 0 = Sunday. */
                 weekdays: number[];
             }[];
+        };
+        /** @description Exact price in bolivianos (decision 30), in minor units. */
+        BobPrice: {
+            amountMinor: number;
+            /** @constant */
+            currency: "BOB";
         };
         Booking: {
             /** Format: date */
@@ -2502,6 +2545,7 @@ export interface components {
             priceFromMinor?: number;
             /** @description R2: exact price in BOB minor units, greater than 0 and below PROVIDER_LISTING_MAX_PRICE_MINOR (20 000 000 = Bs 200 000 by default, §5.13; otherwise 422 PRICE_OUT_OF_RANGE). With variants it is the default variant's price. */
             priceMinor?: number;
+            /** @description Stock: with variants it is the default variant's stock (422 STOCK_MISMATCH_DEFAULT_VARIANT when a different one is sent). */
             stock?: components["schemas"]["Stock"];
             titles: {
                 [key: string]: string;
@@ -2511,6 +2555,21 @@ export interface components {
             /** @description Replaces the whole list. */
             variants?: components["schemas"]["ProductVariantInput"][];
             whatsappTemplate?: components["schemas"]["WhatsappTemplate"];
+        };
+        /** @description Since 3.8.0 (R5, M27). */
+        CurrentPriceList: {
+            items: {
+                currency: string;
+                /** Format: uuid */
+                listingId: string;
+                /** @description The product's price now in minor units (the default version's when it has versions); null when it has none. */
+                priceMinor: number | null;
+                variants: {
+                    /** Format: uuid */
+                    id: string;
+                    priceMinor: number;
+                }[];
+            }[];
         };
         /** @enum {string} */
         Destination: "OFFICIAL_SITE" | "LANDING" | "WHATSAPP" | "PHONE" | "EMAIL" | "INSTAGRAM" | "PRODUCT_PAGE";
@@ -3205,6 +3264,38 @@ export interface components {
             /** @description null in every idea for now (decision 10). */
             priceHintMinor: number | null;
         };
+        GiftRecommendation: {
+            idea: {
+                code: string;
+                /** @description In the requested locale. */
+                name: string;
+            };
+            /** @description offset of the next page of this idea (send it with ideas=<this code>), or null. */
+            nextOffset: number | null;
+            /** @description Lowest and highest price among the products of the idea and their versions in stock. */
+            priceRange: {
+                /** @constant */
+                currency: "BOB";
+                maxMinor: number;
+                minMinor: number;
+            };
+            /** @description Eligible products of the idea (all pages). */
+            productCount: number;
+            /** @description This page of the idea, in recommendation order (empty past the last product). */
+            products: components["schemas"]["RecommendedProductCard"][];
+        };
+        GiftRecommendations: {
+            city: string | null;
+            /** @description The eventType asked for, upper-cased. */
+            eventType: string | null;
+            /** @description Only ideas with eligible products (decision 3), in the order of the approved table (§5.4). */
+            items: components["schemas"]["GiftRecommendation"][];
+            /**
+             * @description EVENT_TYPE: the ideas of the event type. ALL_IDEAS: no event type, or one without ideas yet (every idea, §5.4). REQUESTED: exactly the ideas asked for.
+             * @enum {string}
+             */
+            scope: "EVENT_TYPE" | "ALL_IDEAS" | "REQUESTED";
+        };
         /** @description A whole directory page in one request: 1 to 50 distinct listing ids (duplicates collapse). Ids that are unknown, unpublished or of a non-VERIFIED provider are skipped, not rejected. */
         ImpressionsRequest: {
             listingIds: string[];
@@ -3480,6 +3571,7 @@ export interface components {
             /** @description R2: optimistic-lock version (ETag). */
             version?: number;
         };
+        ListingDetail: components["schemas"]["ListingSummary"] & Record<string, never>;
         ListingPhoto: {
             altText: string | null;
             /**
@@ -3568,8 +3660,12 @@ export interface components {
         };
         ListingSummary: {
             category?: string;
+            /** @description 3.6.0: only on PRODUCT items of GET /listings?city=; true when the product delivers to that city. */
+            deliversToCity?: boolean;
             /** @description Destination types available through the public redirector. Returned by GET /listings/{listingId} without target URLs. */
             destinationTypes?: components["schemas"]["Destination"][];
+            /** @description 3.6.0: only on GET /listings/{listingId}. True when the listing is a product a host can add as a gift now (VERIFIED provider below its lead cap, PRODUCT published, COMPLETE, not hidden, not OUT_OF_STOCK). A non-eligible listing still answers 200 so gifts already added keep reading it. */
+            giftEligible?: boolean;
             /** Format: uuid */
             id: string;
             /** Format: uri */
@@ -3982,6 +4078,7 @@ export interface components {
             priceFromMinor?: number;
             /** @description R2: exact price in BOB minor units, greater than 0 and below PROVIDER_LISTING_MAX_PRICE_MINOR (20 000 000 = Bs 200 000 by default, §5.13; otherwise 422 PRICE_OUT_OF_RANGE). With variants it is the default variant's price. */
             priceMinor?: number;
+            /** @description Stock: with variants it is the default variant's stock (422 STOCK_MISMATCH_DEFAULT_VARIANT when a different one is sent). */
             stock?: components["schemas"]["Stock"];
             titles?: {
                 [key: string]: string;
@@ -4418,6 +4515,55 @@ export interface components {
         };
         ReasonRequest: {
             reason: string;
+        };
+        /** @description What a host or planner needs to choose a product (§5.5). Never carries destination URLs, the WhatsApp template, the owner or lead data (PF-1). */
+        RecommendedProductCard: {
+            /** @description The product delivers to the requested city (delivery.coverageCities). Products of other cities are shown after, never hidden. */
+            deliversToCity: boolean;
+            /** @description Redirect destination types enabled for the product; open them through GET /r/{listingId}?destination=…, never directly. */
+            destinations: components["schemas"]["Destination"][];
+            /** @description Sponsored placement, set only by an administrator (decision 18). */
+            featured: boolean;
+            leadTimeDays: number;
+            /** Format: uuid */
+            listingId: string;
+            /** @description Cover photo (the first READY photo). Null only when the deployment has no media bucket configured. */
+            photo: null | {
+                altText: string | null;
+                /**
+                 * Format: uri
+                 * @description WebP, 480 px.
+                 */
+                card: string;
+                /**
+                 * Format: uri
+                 * @description WebP, 160 px.
+                 */
+                thumb: string;
+            };
+            price: components["schemas"]["BobPrice"];
+            provider: {
+                name: string;
+                slug: string;
+                /** @constant */
+                verified: true;
+            };
+            /** @description 0 = free shipping. */
+            shippingCostMinor: number;
+            stock: components["schemas"]["Stock"];
+            /** @description In the requested locale. */
+            title: string;
+            /** @description Versions in position order, including those OUT_OF_STOCK (marked). */
+            variants: {
+                /**
+                 * Format: uuid
+                 * @description The version a gift stores (R4).
+                 */
+                id: string;
+                label: string;
+                price: components["schemas"]["BobPrice"];
+                stock: components["schemas"]["Stock"];
+            }[];
         };
         RegisterProvider: {
             /** @default BOB */
@@ -5201,9 +5347,12 @@ export interface operations {
     searchListings: {
         parameters: {
             query?: {
+                /** @description 3.6.0 (M26): city slug of the event (GET /providers/geo). Products that deliver there (delivery.coverageCities) come first, and every product item carries deliversToCity. An unknown slug only means nobody delivers there. */
+                city?: string;
                 limit?: number;
                 /** @description Overrides Accept-Language. */
                 locale?: "es-BO" | "en-US";
+                /** @description Words of 3 or more characters match as substrings of the title, the names of the product's gift ideas, the category names or the description; words of 1 or 2 characters (Spanish and English articles and prepositions are ignored) match only whole words of the title, gift ideas or category. A listing matches when any word matches and ranks by title, then gift idea and category, then description. */
                 q?: string;
                 type?: "SERVICE" | "PRODUCT";
             };
@@ -5247,10 +5396,35 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ListingSummary"];
+                    "application/json": components["schemas"]["ListingDetail"];
                 };
             };
             404: components["responses"]["NotFound"];
+        };
+    };
+    getCurrentPrices: {
+        parameters: {
+            query: {
+                /** @description Comma-separated listing ids, 1 to 50 (422 INVALID_QUERY otherwise). */
+                ids: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One item per published PRODUCT of a VERIFIED provider; any other id is absent. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CurrentPriceList"];
+                };
+            };
+            422: components["responses"]["Validation"];
+            429: components["responses"]["RateLimited"];
         };
     };
     registerPrivateProvider: {
@@ -9238,6 +9412,42 @@ export interface operations {
             422: components["responses"]["Validation"];
         };
     };
+    recommendGiftIdeas: {
+        parameters: {
+            query?: {
+                /** @description City slug of the celebration (GET /providers/geo). Without it nobody delivers to the city and every listing is in the country tier. */
+                city?: string;
+                /** @description Event type code of the celebration (WEDDING, QUINCEANERA, BAUTIZO, ANNIVERSARY, BIRTHDAY, CORPORATE…), any case. A type without ideas yet gets every idea (scope ALL_IDEAS). */
+                eventType?: string;
+                /** @description Comma-separated gift-idea codes (GET /providers/gift-ideas); when present only these ideas are answered (scope REQUESTED). At most 25 entries, counted as sent (duplicates included; more is 422 INVALID_QUERY); repeated codes are answered once. An unknown or inactive code is 422 UNKNOWN_GIFT_IDEA (details.giftIdeas). */
+                ideas?: string;
+                /** @description Overrides Accept-Language. Any value other than es-BO or en-US is 422 INVALID_QUERY. */
+                locale?: "es-BO" | "en-US";
+                /** @description Page of ONE idea: an offset above 0 needs exactly one code in ideas (422 INVALID_QUERY otherwise). */
+                offset?: number;
+                productsPerIdea?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Recommendation */
+            200: {
+                headers: {
+                    "Cache-Control"?: "public, max-age=60";
+                    /** @description The language is chosen by Accept-Language when ?locale= is absent. */
+                    Vary?: "Accept-Language";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GiftRecommendations"];
+                };
+            };
+            422: components["responses"]["Validation"];
+        };
+    };
     healthPrefixed: {
         parameters: {
             query?: never;
@@ -9820,6 +10030,8 @@ export interface operations {
         parameters: {
             query?: {
                 celebrationId?: string;
+                /** @description Since 3.8.0 (R5): public slug of the celebration whose title, date and delivery notes fill {celebracion}, {fecha} and {entrega}. It counts only when celebrationId is sent and is that celebration's id; a slug without celebrationId is ignored. */
+                celebrationSlug?: string;
                 city?: string;
                 correlationId?: string;
                 country?: string;
@@ -9829,15 +10041,21 @@ export interface operations {
                 destination?: "OFFICIAL_SITE" | "LANDING" | "WHATSAPP" | "PHONE" | "EMAIL" | "INSTAGRAM" | "PRODUCT_PAGE";
                 /** @description Type of the celebration (a code such as WEDDING). Stored with the click so the provider sees it without seeing the celebration (D-10 #34). */
                 eventType?: string;
+                /** @description Since 3.8.0 (R5): the gift of the guest's list the click comes from. Stored with the lead; never shown to the provider. */
+                giftItemId?: string;
                 /** @description Requires celebrationId. */
                 guestId?: string;
                 locale?: string;
+                /** @description Since 3.8.0 (R5): units the guest wants; {cantidad} of the WhatsApp message (default 1). A value above 200 (the most a gift can hold) is cut to 200, so the redirect always lands; 422 INVALID_QUANTITY only when it is not a positive integer. */
+                quantity?: number;
                 /** @description Referrer; defaults to the Referer header. */
                 ref?: string;
                 /** @description Ignored since 3.9.0 (M34). The visitor is always the server's hash of the client address and user agent, never a value the client sends; with the listing and the destination it is the deduplication key of billable leads (24 h on GIFT_LIST). Old links that still carry it keep working. */
                 sessionId?: string;
                 /** @description Where the link was shown. PREVIEW: a preview in the provider portal or in moderation; since 3.9.0 (M-2) it only counts with a ctx issued for that listing (issueLeadContext, relation PREVIEW). Without it the click is evaluated like any other and recorded as PUBLIC_SITE. */
                 surface?: "PUBLIC_SITE" | "SEARCH" | "CELEBRATION_SITE" | "GIFT_LIST" | "EMAIL" | "APP" | "QUOTE_FORM" | "PREVIEW";
+                /** @description Since 3.8.0 (R5): the id of the product version (gift-list variantCode). Sets {version} and the price of the WhatsApp message; an id that is not a version of the product is ignored (the product's price, no version). */
+                variant?: string;
             };
             header?: never;
             path: {
