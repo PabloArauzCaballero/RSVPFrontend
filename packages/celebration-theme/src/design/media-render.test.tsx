@@ -192,6 +192,49 @@ describe("F6 · embeds (P17)", () => {
   });
 });
 
+describe("F7 · the own music that moderation hid (decision of Pablo 2026-11-26: only the MP3 goes, the invitation stays)", () => {
+  const MUSIC_HIDDEN = { ...VIEW, hiddenElements: [{ kind: "SECTION" as const, id: "music" }] };
+  const withMusic = (): DesignDocumentV2 => documentWith([{ block: block("mus", "music", { source: "media", ref: SONG }), element: {} }]);
+  const drawView = (view: typeof VIEW, files: readonly GalleryImage[]) => render(
+    <CelebrationRenderer theme={themeFromTemplate({ ...designTemplate("marfil"), theme: withMusic() }, view.enabledSections)} view={view} gallery={files} t={t} now={NOW} basePath="/c/ana-y-luis" rsvpHelpHref="/c/ana-y-luis/rsvp" />
+  );
+
+  it("hiddenElements with the music: no player and no empty box in the grid, while the cover, the photos and both buttons stay", () => {
+    const { container } = drawView(MUSIC_HIDDEN, FILES);
+    expect(container.querySelector("audio")).toBeNull();
+    expect(container.querySelector('.cdesign-el[data-block="music"]')).toBeNull();
+    expect(container.querySelector(".cdesign-cover h1")?.textContent).toBe(VIEW.content.title);
+    expect(container.querySelectorAll('a[data-action="gifts"][href="/c/ana-y-luis/regalos"]').length).toBeGreaterThanOrEqual(1);
+    expect(container.querySelectorAll('[data-action="rsvp"], [data-action="rsvp-help"]').length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("the file the media service no longer lists (hidden, deleted) leaves no box either, even if the page still names it", () => {
+    const { container } = drawView(VIEW, FILES.filter((file) => file.id !== SONG));
+    expect(container.querySelector("audio")).toBeNull();
+    expect(container.querySelector('.cdesign-el[data-block="music"]')).toBeNull();
+  });
+
+  it("negative: without the hiding, the same music plays as before", () => {
+    const { container } = drawView(VIEW, FILES);
+    expect(container.querySelector("audio")?.getAttribute("src")).toBe("https://media.test/song.mp3");
+    expect(container.querySelector('.cdesign-el[data-block="music"]')).toBeTruthy();
+  });
+
+  it("negative: hiding another element, or a block or image that is called music, does not touch the player", () => {
+    for (const hidden of [[{ kind: "SECTION" as const, id: "gallery" }], [{ kind: "BLOCK" as const, id: "music" }], [{ kind: "IMAGE" as const, id: "music" }]]) {
+      const { container } = drawView({ ...VIEW, hiddenElements: hidden }, FILES);
+      expect(container.querySelector("audio")).toBeTruthy();
+      cleanup();
+    }
+  });
+
+  it("a music link to YouTube or Spotify is not a file of the media service: it is not judged here (open question to Pablo)", () => {
+    const external = documentWith([{ block: block("mus", "music", { source: "spotify", ref: "https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC" }), element: {} }]);
+    const { getByRole } = render(<CelebrationRenderer theme={themeFromTemplate({ ...designTemplate("marfil"), theme: external }, VIEW.enabledSections)} view={MUSIC_HIDDEN} gallery={FILES} t={t} now={NOW} basePath="/c/ana-y-luis" />);
+    expect(getByRole("button", { name: /celebration\.media\.playMusic/ })).toBeTruthy();
+  });
+});
+
 describe("F6 · the advanced CSS (F5) is rebuilt from the allowlist and goes in as text", () => {
   const painted = (css: string): string | null => draw(documentWith([], { css })).container.querySelector("style[data-celebration-custom]")?.textContent ?? null;
 

@@ -9,12 +9,12 @@ export type { paths as ProviderCatalogPaths, components as ProviderCatalogCompon
 export type { paths as TemplateMediaPaths, components as TemplateMediaComponents, operations as TemplateMediaOperations } from './template-media.js';
 
 export const contractVersions = {
-  "celebration": "323e4004c28e9184",
+  "celebration": "6e928b8aef080195",
   "gateway": "1307c08dc3ff407e",
   "gift-list": "d946e69dacc89ad6",
   "guest-rsvp": "532ec48dcd10e0c5",
   "identity": "5f2ae92b0403aee8",
   "notification": "670dd80c6c1e7fd0",
   "provider-catalog": "174212bf43093810",
-  "template-media": "76758751d9ac980c"
+  "template-media": "aa8c338cf5bfcef2"
 } as const;

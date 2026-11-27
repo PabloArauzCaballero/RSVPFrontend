@@ -1,0 +1,11 @@
+/* F7 · the foot of the public invitation. Page chrome below the article, in the site's own tokens (follows the visitor's scheme). The renderer's dock stays above everything. */
+.report-footer { display: flex; flex-wrap: wrap; justify-content: center; gap: .25rem 1.5rem; padding: 1.5rem 1.25rem 2rem; background: var(--canvas); border-top: 1px solid var(--border); }
+.report-link { min-height: 44px; padding: .5rem .25rem; border: 0; background: transparent; color: var(--text-muted); font: inherit; font-size: .9rem; text-decoration: underline; text-underline-offset: .2em; cursor: pointer; }
+.report-link:hover { color: var(--text); }
+.report-dialog { width: min(100% - 2rem, 32rem); max-height: calc(100dvh - 2rem); overflow: auto; border: 1px solid var(--border); border-radius: var(--radius-cell, 12px); padding: 0; background: var(--surface); color: var(--text); box-shadow: var(--shadow-float); }
+.report-dialog::backdrop { background: var(--scrim); }
+.report-form, .report-done { display: grid; gap: 1rem; padding: 1.5rem; }
+.report-dialog h2 { margin: 0; font-size: 1.4rem; }
+.report-form p, .report-done p { margin: 0; }
+.report-help { display: flex; justify-content: space-between; gap: 1rem; }
+@media (prefers-reduced-motion: no-preference) { .report-dialog[open] { animation: report-in .16s var(--ease-out, ease-out); } @keyframes report-in { from { opacity: 0; transform: translateY(.5rem); } } }

@@ -1,7 +1,7 @@
 import { Fragment, type CSSProperties, type ReactNode } from "react";
 import { artPalette, artVariables } from "../art/palette.js";
 import { drawingById, InvitationArt, ornamentSetById, OrnamentCorner, OrnamentFrame, OrnamentSeparator } from "../art/index.js";
-import { daysUntil, giftsPath, hasSectionContent, partnerHref, readContent, SECTION_PATHS, sectionTitleKey, type CelebrationContent, type GalleryImage, type PublicCelebrationView } from "../content.js";
+import { daysUntil, giftsPath, hasSectionContent, isMusicHidden, partnerHref, readContent, SECTION_PATHS, sectionTitleKey, type CelebrationContent, type GalleryImage, type PublicCelebrationView } from "../content.js";
 import { Dock } from "../dock.js";
 import { Flourish } from "../flourish.js";
 import { formatDate } from "../format.js";
@@ -187,7 +187,7 @@ function BlockBody({ block, element, context }: { readonly block: DesignBlock; r
     case "video": return <EmbedFacade embed={embedFromConfig("video", settings)} title={content.title} t={t} />;
     case "music": {
       if (settings["source"] === "media") {
-        const file = context.media.find((item) => item.id === settings["ref"]);
+        const file = isMusicHidden(view) ? undefined : context.media.find((item) => item.id === settings["ref"]);
         return file?.variants.audio ? <AudioPlayer media={{ ...asMedia(file), durationMs: file.durationMs ?? null }} title={content.title} t={t} /> : null;
       }
       return <EmbedFacade embed={embedFromConfig("music", settings)} title={content.title} t={t} />;
@@ -245,6 +245,14 @@ function elementStyle(element: DesignElement, mobile: DesignElement | undefined,
   } as CSSProperties;
 }
 
+/** A music block that plays the host's own MP3 whose file is hidden by moderation or is not in the public gallery any more. External embeds (YouTube, Spotify) are not files of the media service: they are never judged here. */
+function ownMusicGone(block: DesignBlock, context: Context): boolean {
+  if (block.type !== "music") return false;
+  const settings = config(block);
+  if (settings["source"] !== "media") return false;
+  return isMusicHidden(context.view) || !context.media.some((item) => item.id === settings["ref"] && item.variants.audio);
+}
+
 function Canvas({ page, context }: { readonly page: DesignPage; readonly context: Context }): ReactNode {
   const { mobile, desktop } = page.canvases;
   const byId = (canvas: DesignCanvas | undefined): Map<string, DesignElement> => new Map((canvas?.elements ?? []).filter((item) => item.visible).map((item) => [item.id, item]));
@@ -259,6 +267,8 @@ function Canvas({ page, context }: { readonly page: DesignPage; readonly context
         const element = (phone.get(id) ?? wide.get(id)) as DesignElement;
         const block = blocks.get(element.block);
         if (!block) return null;
+        // F7: an own MP3 that moderation hid, or that the media service no longer lists, leaves no empty box in the grid (the rest of the page and the buttons stay).
+        if (ownMusicGone(block, context)) return null;
         const protectedBlock = block.type === "giftsCta" || block.type === "rsvpCta";
         // The block's content goes in the author container; the gifts and reply buttons do not: they are the grid item itself, a sibling layer the stylesheet cannot reach.
         const content = <BlockBody block={block} element={element} context={context} />;

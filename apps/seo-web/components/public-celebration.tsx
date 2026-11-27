@@ -1,4 +1,4 @@
-import { CelebrationRenderer, fontStylesheet, themeFromTemplate, type SectionId } from "@rsvp/celebration-theme";
+import { CelebrationRenderer, fontStylesheet, hasOwnMusic, themeFromTemplate, type SectionId } from "@rsvp/celebration-theme";
 import { createTranslator, supportedLocales } from "@rsvp/i18n/server";
 import type { PublicPage } from "../lib/celebration";
 import { visualTestNow } from "../lib/dev-surfaces";
@@ -6,6 +6,7 @@ import { eventJsonLd, jsonLdScript } from "../lib/json-ld";
 import { uiLocale } from "../lib/locale";
 import { celebrationPath, siteUrl } from "../lib/metadata";
 import { earlyCredentialScript } from "../lib/guest-credential";
+import { ReportInvitation } from "./report-invitation";
 import { RsvpCredentialIsland } from "./rsvp-credential-island";
 
 /** The public celebration (A1) or one of its sections (A2–A8), server-rendered with its theme. */
@@ -42,6 +43,8 @@ export function PublicCelebration({ page, only }: { readonly page: PublicPage; r
           The gifts button needs nothing: it is always `/c/{slug}/regalos`. */}
       <CelebrationRenderer theme={theme} view={view} gallery={gallery} t={t} only={only} basePath={basePath} rsvpHelpHref={celebrationPath(view.slug, "rsvp")} rsvpAdaptive now={visualTestNow()} />
       <RsvpCredentialIsland slug={view.slug} />
+      {/* F7: anyone may report the page, and the own music apart (only when this page plays one that is not already hidden). */}
+      <ReportInvitation slug={view.slug} locale={locale} hasOwnMusic={hasOwnMusic(view, gallery)} />
     </>
   );
 }
