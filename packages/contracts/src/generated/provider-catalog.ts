@@ -504,6 +504,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/providers/{providerId}/lead-context": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Signed ctx of the portal (PROVIDER_OWNER) or of a preview of one listing (PREVIEW)
+         * @description M-1: PROVIDER_OWNER only for the authenticated owner; every click of that owner on the provider's listings is then PROVIDER_SELF and never bills, member of a celebration or not. M-2: PREVIEW for one listing of the provider, to its owner or to an administrator (moderation); it is the only thing that makes surface=PREVIEW count. 15 minutes of life.
+         */
+        post: operations["issueLeadContext"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/providers/{providerId}/leads": {
         parameters: {
             query?: never;
@@ -511,8 +531,31 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Raw leads (valid and invalid) for auditing */
+        /**
+         * The provider's clicks (valid and invalid) with filters, for the portal
+         * @description D-10 #34 and A35: product, button, date, event type and city of each click, newest first. Owner or admin. Never the celebration, guest or referrer.
+         */
         get: operations["listLeads"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/{providerId}/leads/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Monthly lead report of one provider (portal /portal/metricas)
+         * @description Same figures the administrator sees for this provider: valid and invalid leads by reason per product and button, and the billable total by billing model. Owner or admin; read under the provider's row-level scope.
+         */
+        get: operations["getProviderLeadReport"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1036,6 +1079,46 @@ export interface paths {
         put?: never;
         /** Verify the uploaded object (HEAD) */
         post: operations["completePartnerIntakeDocument"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/admin/leads/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Monthly lead report per provider, product and button (ADMIN)
+         * @description D-10 #33. Rows: provider, product, button, valid, invalid by reason and billable total by billing model. No personal data. ADMIN only (PF-3).
+         */
+        get: operations["adminLeadReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/admin/leads/report.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The monthly lead report as CSV (ADMIN)
+         * @description Same rows as adminLeadReport. UTF-8 with a byte order mark, CRLF lines, one line per provider, product and button. A cell a spreadsheet would read as a formula (starts with = + - @, a tab or a carriage return) is prefixed with an apostrophe.
+         */
+        get: operations["adminLeadReportCsv"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1777,6 +1860,16 @@ export interface components {
             to: string;
             /** @description Valid leads in the range. */
             total: number;
+        };
+        AdminLeadReport: {
+            month: string;
+            /**
+             * Format: uuid
+             * @description The provider asked for, null for every provider.
+             */
+            providerId: string | null;
+            providers: components["schemas"]["LeadReportProvider"][];
+            rows: components["schemas"]["LeadReportRow"][];
         };
         AuditEntry: {
             action: string;
@@ -3303,6 +3396,16 @@ export interface components {
             providerId: string;
             timeZone: string;
         };
+        /** @description Invalid leads by reason. OTHER holds the legacy reasons (unassessed, suspended) of clicks recorded by the gift-catalog redirect. */
+        InvalidLeadCounts: {
+            bot: number;
+            dup: number;
+            HOST_OR_PLANNER: number;
+            NOT_ELIGIBLE: number;
+            OTHER: number;
+            PREVIEW: number;
+            PROVIDER_SELF: number;
+        };
         /** @description PUT the raw bytes to uploadUrl sending exactly `headers` (presigned, 10 minutes), then POST .../complete. */
         KypDocumentUpload: {
             /** Format: uuid */
@@ -3322,26 +3425,45 @@ export interface components {
          * @enum {string}
          */
         KypStatus: "COMPLETE" | "PENDING" | "EXPIRING" | "EXPIRED";
+        /** @description What the provider sees of a click (D-10 #34, A35, PF-1): product, button, date, event type and city. Never the celebration, the guest, the referrer or the visitor. */
         Lead: {
             billable?: boolean;
-            category?: string;
-            context?: Record<string, never>;
+            category?: string | null;
+            /** @description City slug of the click; null when absent. */
+            city?: string | null;
+            /** @description Closed since 3.9.0 (A35, PF-1): only these fields; never celebrationId, guestId or the referrer. null for what the click did not carry (the gift-catalog redirect stores no context: its surface is GIFT_CATALOG). */
+            context?: {
+                city?: string | null;
+                country?: string | null;
+                device?: string | null;
+                eventType?: string | null;
+                locale?: string | null;
+                surface?: string | null;
+            };
             /** Format: uuid */
             correlationId?: string;
             destination?: string;
+            /** @enum {string|null} */
+            device?: "MOBILE" | "TABLET" | "DESKTOP" | "UNKNOWN" | null;
+            /** @description Type of the celebration the click came from (a code such as WEDDING); null when the link did not carry it. */
+            eventType?: string | null;
             /** Format: uuid */
             id?: string;
             /**
-             * @description Why the lead is not billable (absent when valid). dup: same visitor, listing and destination inside the deduplication window. bot: automated traffic. Since 3.7.0 (R6a): PREVIEW (preview surface), NOT_ELIGIBLE (product not COMPLETE or hidden), PROVIDER_SELF (the provider's owner) and HOST_OR_PLANNER (a member of the celebration).
+             * @description Why the lead is not billable (absent when valid). dup: same visitor, listing and destination inside the deduplication window. bot: automated traffic. Since 3.7.0 (R6a): PREVIEW (preview surface), NOT_ELIGIBLE (product not COMPLETE or hidden), PROVIDER_SELF (the provider's owner) and HOST_OR_PLANNER (a member of the celebration). UNASSESSED and SUSPENDED are the legacy reasons of the gift-catalog redirect (H05B); the reports count them as OTHER.
              * @enum {string}
              */
-            invalidReason?: "dup" | "bot" | "PREVIEW" | "NOT_ELIGIBLE" | "PROVIDER_SELF" | "HOST_OR_PLANNER";
+            invalidReason?: "dup" | "bot" | "PREVIEW" | "NOT_ELIGIBLE" | "PROVIDER_SELF" | "HOST_OR_PLANNER" | "UNASSESSED" | "SUSPENDED";
             /** @enum {string} */
             kind?: "REDIRECT" | "FORM";
             /** Format: uuid */
             listingId?: string;
+            /** @description Title of the product in the request locale. */
+            listingTitle?: string | null;
             /** Format: date-time */
             occurredAt?: string;
+            /** @enum {string|null} */
+            surface?: "PUBLIC_SITE" | "SEARCH" | "CELEBRATION_SITE" | "GIFT_LIST" | "EMAIL" | "APP" | "QUOTE_FORM" | "PREVIEW" | "GIFT_CATALOG" | null;
             utm?: Record<string, never>;
             valid?: boolean;
         };
@@ -3356,9 +3478,61 @@ export interface components {
             utmMedium: string;
             utmSource: string;
         };
+        LeadContext: {
+            /** @description Short-lived signed token to append as ?ctx= to a link /r/{listingId}. A bearer: never put it in a shared link. Carries a provider or listing id and an instant, no account. */
+            ctx: string;
+            /** Format: date-time */
+            expiresAt: string;
+            /** @enum {string} */
+            relation: "PROVIDER_OWNER" | "PREVIEW";
+        };
+        LeadContextRequest: {
+            /**
+             * Format: uuid
+             * @description Required for PREVIEW, forbidden for PROVIDER_OWNER.
+             */
+            listingId?: string;
+            /** @enum {string} */
+            relation: "PROVIDER_OWNER" | "PREVIEW";
+        };
         LeadList: {
             items?: components["schemas"]["Lead"][];
             total?: number;
+        };
+        /** @description Monthly lead report: ids, names of providers and products, and counters. No personal data (PF-1). */
+        LeadReport: {
+            month: string;
+            providers: components["schemas"]["LeadReportProvider"][];
+            /** @description One row per provider, product and button, ordered by provider name, product and button. */
+            rows: components["schemas"]["LeadReportRow"][];
+        };
+        LeadReportProvider: {
+            /** @description Valid leads when the provider pays per click (CPC). null for CPA, FLAT and COMMISSION: they are not billed per lead. */
+            billableLeads: number | null;
+            /** @enum {string} */
+            billingModel: "CPC" | "CPA" | "FLAT" | "COMMISSION";
+            invalidByReason: components["schemas"]["InvalidLeadCounts"];
+            invalidLeads: number;
+            /** @description 0 = no cap. Informative: leads above the cap are still valid. */
+            monthlyCap: number;
+            /** Format: uuid */
+            providerId: string;
+            providerName: string;
+            validLeads: number;
+        };
+        LeadReportRow: {
+            /** @description Valid leads when the provider pays per click (CPC). null for CPA, FLAT and COMMISSION: they are not billed per lead. */
+            billableLeads: number | null;
+            destination: string;
+            invalidByReason: components["schemas"]["InvalidLeadCounts"];
+            invalidLeads: number;
+            /** Format: uuid */
+            listingId: string;
+            listingTitle: string | null;
+            /** Format: uuid */
+            providerId: string;
+            providerName: string;
+            validLeads: number;
         };
         Listing: {
             category: string;
@@ -3371,6 +3545,13 @@ export interface components {
             /** @description Set by ADMIN only; shown as «Patrocinado». Off today (decision 18). */
             featured?: boolean;
             fulfillment?: components["schemas"]["FulfillmentView"];
+            /** @description Since 3.10.0 (R7). Only in the provider's own product (marketplace PRODUCT) responses. available is false when reason is not null. unavailableVariants: ids of the versions out of stock (a gift that chose one is unavailable although the product is not). */
+            giftAvailability?: {
+                available: boolean;
+                /** @enum {string|null} */
+                reason: "HIDDEN_BY_ADMIN" | "PROVIDER_SUSPENDED" | "PROVIDER_REJECTED" | "PROVIDER_NOT_VERIFIED" | "UNPUBLISHED" | "INCOMPLETE" | "OUT_OF_STOCK" | null;
+                unavailableVariants: string[];
+            };
             /**
              * @description Since 3.4.0 (R1, M-2 bis; decisión de Pablo 2026-11-26). Why the platform hid this listing; null when it is not hidden. CATEGORY_TYPE_MISMATCH: the listing's type does not match its category's type (a SERVICE in a PRODUCT category or the other way around), so it is not published and not listed publicly; the provider corrects its category (PATCH) to one of its type and publishes it again, which clears the mark. Always present in the provider's own listing responses.
              * @enum {string|null}
@@ -6897,10 +7078,55 @@ export interface operations {
             422: components["responses"]["Validation"];
         };
     };
+    issueLeadContext: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                providerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeadContextRequest"];
+            };
+        };
+        responses: {
+            /** @description Context */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadContext"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["Validation"];
+            /** @description LEAD_CONTEXT_UNAVAILABLE: PROVIDER_LEAD_CONTEXT_SIGNING_KEY is not configured. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
     listLeads: {
         parameters: {
             query?: {
+                /** @description Only this button. */
+                destination?: "OFFICIAL_SITE" | "LANDING" | "WHATSAPP" | "PHONE" | "EMAIL" | "INSTAGRAM" | "PRODUCT_PAGE" | "QUOTE_FORM";
                 limit?: number;
+                /** @description Only this product. */
+                listingId?: string;
+                /** @description Calendar month YYYY-MM in the provider's own time zone (the one its monthly cap uses). 422 INVALID_MONTH otherwise. */
+                month?: string;
                 offset?: number;
             };
             header?: never;
@@ -6922,6 +7148,41 @@ export interface operations {
             };
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["Validation"];
+        };
+    };
+    getProviderLeadReport: {
+        parameters: {
+            query: {
+                /** @description Only this button. */
+                destination?: "OFFICIAL_SITE" | "LANDING" | "WHATSAPP" | "PHONE" | "EMAIL" | "INSTAGRAM" | "PRODUCT_PAGE" | "QUOTE_FORM";
+                /** @description Only this product. */
+                listingId?: string;
+                /** @description Calendar month YYYY-MM in the provider's own time zone (the one its monthly cap uses). 422 INVALID_MONTH otherwise. */
+                month: string;
+            };
+            header?: never;
+            path: {
+                providerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Report */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadReport"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["Validation"];
         };
     };
     listOwnListings: {
@@ -8234,6 +8495,62 @@ export interface operations {
                     "application/problem+json": components["schemas"]["Problem"];
                 };
             };
+        };
+    };
+    adminLeadReport: {
+        parameters: {
+            query: {
+                /** @description Calendar month YYYY-MM in the provider's own time zone (the one its monthly cap uses). 422 INVALID_MONTH otherwise. */
+                month: string;
+                /** @description Only this provider. */
+                providerId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Report */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminLeadReport"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            422: components["responses"]["Validation"];
+        };
+    };
+    adminLeadReportCsv: {
+        parameters: {
+            query: {
+                /** @description Calendar month YYYY-MM in the provider's own time zone (the one its monthly cap uses). 422 INVALID_MONTH otherwise. */
+                month: string;
+                /** @description Only this provider. */
+                providerId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description CSV */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            422: components["responses"]["Validation"];
         };
     };
     setListingFeatured: {
@@ -9726,10 +10043,12 @@ export interface operations {
                 city?: string;
                 correlationId?: string;
                 country?: string;
-                /** @description R6a (3.7.0): signed lead context of a celebration member, copied as is from gift-list listGiftItems leadContext. Only an authentic, unexpired token whose celebration equals celebrationId counts: the click is then an invalid lead (HOST_OR_PLANNER, or PROVIDER_SELF when the member owns the provider). Any other value is ignored and the click is classified as an anonymous visitor's; more than 512 characters is 422 INVALID_LEAD_CONTEXT. Carries no personal data. */
+                /** @description R6a (3.7.0): signed lead context of a celebration member, copied as is from gift-list listGiftItems leadContext. Only an authentic, unexpired token whose celebration equals celebrationId counts: the click is then an invalid lead (HOST_OR_PLANNER, or PROVIDER_SELF when the member owns the provider). Any other value is ignored and the click is classified as an anonymous visitor's; more than 512 characters is 422 INVALID_LEAD_CONTEXT. Carries no personal data. Since 3.9.0 it can also be the portal's token of issueLeadContext: PROVIDER_OWNER (the click is PROVIDER_SELF without any celebration, M-1) or PREVIEW (M-2). A token of one kind never passes for the other. */
                 ctx?: string;
                 /** @description Absent means the primary destination of the listing: PRODUCT_PAGE of a product, otherwise the first stored and enabled destination in this enum order. */
                 destination?: "OFFICIAL_SITE" | "LANDING" | "WHATSAPP" | "PHONE" | "EMAIL" | "INSTAGRAM" | "PRODUCT_PAGE";
+                /** @description Type of the celebration (a code such as WEDDING). Stored with the click so the provider sees it without seeing the celebration (D-10 #34). */
+                eventType?: string;
                 /** @description Since 3.8.0 (R5): the gift of the guest's list the click comes from. Stored with the lead; never shown to the provider. */
                 giftItemId?: string;
                 /** @description Requires celebrationId. */
@@ -9740,9 +10059,9 @@ export interface operations {
                 quantity?: number;
                 /** @description Referrer; defaults to the Referer header. */
                 ref?: string;
-                /** @description Visitor session; derived from IP and user agent when absent. With the listing and the destination it is the deduplication key of billable leads (24 h on GIFT_LIST since 3.7.0). */
+                /** @description Ignored since 3.9.0 (M34). The visitor is always the server's hash of the client address and user agent, never a value the client sends; with the listing and the destination it is the deduplication key of billable leads (24 h on GIFT_LIST). Old links that still carry it keep working. */
                 sessionId?: string;
-                /** @description Where the link was shown. PREVIEW (R6a, 3.7.0): a preview in the provider portal or in moderation; the click is recorded as an invalid lead with reason PREVIEW. */
+                /** @description Where the link was shown. PREVIEW: a preview in the provider portal or in moderation; since 3.9.0 (M-2) it only counts with a ctx issued for that listing (issueLeadContext, relation PREVIEW). Without it the click is evaluated like any other and recorded as PUBLIC_SITE. */
                 surface?: "PUBLIC_SITE" | "SEARCH" | "CELEBRATION_SITE" | "GIFT_LIST" | "EMAIL" | "APP" | "QUOTE_FORM" | "PREVIEW";
                 /** @description Since 3.8.0 (R5): the id of the product version (gift-list variantCode). Sets {version} and the price of the WhatsApp message; an id that is not a version of the product is ignored (the product's price, no version). */
                 variant?: string;
