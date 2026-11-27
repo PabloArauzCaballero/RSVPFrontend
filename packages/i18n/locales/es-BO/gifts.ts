@@ -1,3 +1,4 @@
+import { giftsReplacementsEsBO } from "./gifts-replacements.js";
 import { giftsWizardEsBO } from "./gifts-wizard.js";
 /** Lista de regalos pública (F22) y gestión del anfitrión (F23). */
 export const giftsEsBO = {
@@ -18,6 +19,7 @@ export const giftsEsBO = {
     title: "Regalos", intro: "Reserva un regalo en un toque y nadie más regalará lo mismo.", rule: "Cada persona puede tener un máximo de regalos reservados a la vez.", backToRsvp: "Volver a mi respuesta", loading: "Abriendo la lista…",
     groupPartner: "De nuestros aliados", groupOther: "Ideas de quienes te invitan",
     status: { AVAILABLE: "Disponible", PENDING_REVIEW: "Esperando aprobación", COMMITTED: "Reservado" },
+    unavailable: { note: "El proveedor ya no lo ofrece", chip: "No disponible", label: "{{title}}: no disponible. El proveedor ya no lo ofrece." },
     /** R5 · tarjeta del invitado: cantidad por unidades, aporte coordinado, precio vigente y «¿lo compraste?». */
     units: { left_one: "Falta {{count}} de {{total}}", left_other: "Faltan {{count}} de {{total}}", all: "{{total}} en total", choose: "Cuántos quieres regalar", less: "Menos unidades", more: "Más unidades", value_one: "{{count}} unidad", value_other: "{{count}} unidades", help: "Quedan {{left}}. Reservas solo las que vas a regalar.", mine_one: "Reservaste {{count}} unidad", mine_other: "Reservaste {{count}} unidades", soldOut: "Ya no quedan unidades" },
     group: {
@@ -90,6 +92,7 @@ export const giftsEsBO = {
       suggestionsTitle: "Antes de seguir, mira estas opciones de aliados", suggestionsBody: "Tu lista pone primero a los aliados. Elige una de estas o agrega tu regalo igual.", useSuggestion: "Agregar este",
       added: "Regalo de tienda agregado.", proposed: "Regalo propuesto: queda por revisar en Mi lista.", invalidUrl: "Escribe un enlace válido que empiece con http:// o https://.", titleTooLong: "El nombre admite hasta {{max}} caracteres.", invalidMoney: "Escribe un precio válido, por ejemplo 150.50.", required: "Completa el nombre, el enlace y el precio."
     },
+    replacements: giftsReplacementsEsBO,
     wizard: giftsWizardEsBO,
     errors: { codes: { notAvailable: "Alguien se te adelantó: ese regalo ya no está disponible. Actualizamos la lista.", alreadyAnswered: "Ese regalo ya tiene otra respuesta y la lista cambió. La actualizamos.", reservationAnswered: "Esa reserva ya tiene respuesta. Actualizamos la lista.", requestReused: "Esa solicitud ya se envió con otros datos. Vuelve a empezar desde la lista.", validation: "Revisa los datos del regalo e inténtalo otra vez.", invalidUrl: "Ese enlace no es válido. Debe empezar con http:// o https://.", invalidMoney: "Ese precio no es válido. Usa solo números, por ejemplo 150.50.", invalidTitle: "Revisa el nombre del regalo: no puede estar vacío ni ser demasiado largo.", invalidCurrency: "La moneda del regalo no es válida para esta celebración.", giftGone: "Ese regalo ya no está en la lista. La actualizamos.", listMissing: "La lista de regalos no está disponible. Vuelve a intentarlo.", reservationNotActive: "Esa reserva ya no estaba activa. Actualizamos la lista.", reservationGone: "No encontramos esa reserva. Actualizamos la lista.", forbidden: "Solo los anfitriones u organizadores de esta celebración pueden administrar los regalos.", notProduct: "Eso es un servicio, no un producto: no se puede agregar como regalo. Elige un producto del catálogo." }, forbidden: "Solo los anfitriones u organizadores de esta celebración pueden administrar los regalos.", conflict: "Esta lista cambió mientras la editabas. La actualizamos.", validation: "Revisa los datos del regalo.", retry: "Reintentar" }
   }

@@ -1,3 +1,4 @@
+import { giftsReplacementsEnUS } from "./gifts-replacements.js";
 import type { DeepStrings } from "../types.js";
 import type { giftsEsBO } from "../es-BO/gifts.js";
 import { giftsWizardEnUS } from "./gifts-wizard.js";
@@ -20,6 +21,7 @@ export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
     title: "Gifts", intro: "Reserve a gift in one tap and nobody else will give the same one.", rule: "Each person can hold a limited number of reserved gifts at a time.", backToRsvp: "Back to my answer", loading: "Opening the list…",
     groupPartner: "From our partners", groupOther: "Ideas from your hosts",
     status: { AVAILABLE: "Available", PENDING_REVIEW: "Waiting for approval", COMMITTED: "Reserved" },
+    unavailable: { note: "The provider no longer offers this", chip: "Unavailable", label: "{{title}}: unavailable. The provider no longer offers this." },
     /** R5 · guest card: quantity by units, coordinated contribution, current price and «did you buy it?». */
     units: { left_one: "{{count}} of {{total}} still needed", left_other: "{{count}} of {{total}} still needed", all: "{{total}} in total", choose: "How many do you want to give", less: "Fewer units", more: "More units", value_one: "{{count}} unit", value_other: "{{count}} units", help: "{{left}} left. Reserve only the ones you will give.", mine_one: "You reserved {{count}} unit", mine_other: "You reserved {{count}} units", soldOut: "No units left" },
     group: {
@@ -92,6 +94,7 @@ export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
       suggestionsTitle: "Before you go on, look at these partner options", suggestionsBody: "Your list puts partners first. Pick one of these or add your gift anyway.", useSuggestion: "Add this one",
       added: "Store gift added.", proposed: "Gift proposed: it waits for review in My list.", invalidUrl: "Enter a valid link starting with http:// or https://.", titleTooLong: "The name can be up to {{max}} characters.", invalidMoney: "Enter a valid price, for example 150.50.", required: "Fill in the name, the link and the price."
     },
+    replacements: giftsReplacementsEnUS,
     wizard: giftsWizardEnUS,
     errors: { codes: { notAvailable: "Someone got there first: that gift is no longer available. We refreshed the list.", alreadyAnswered: "That gift already has another answer and the list changed. We refreshed it.", reservationAnswered: "That reservation already has an answer. We refreshed the list.", requestReused: "That request was already sent with other details. Start again from the list.", validation: "Check the gift details and try again.", invalidUrl: "That link is not valid. It must start with http:// or https://.", invalidMoney: "That price is not valid. Use numbers only, for example 150.50.", invalidTitle: "Check the gift name: it cannot be empty or too long.", invalidCurrency: "The gift currency is not valid for this celebration.", giftGone: "That gift is no longer on the list. We refreshed it.", listMissing: "The gift list is unavailable. Please try again.", reservationNotActive: "That reservation was no longer active. We refreshed the list.", reservationGone: "We could not find that reservation. We refreshed the list.", forbidden: "Only the hosts or organizers of this celebration can manage gifts.", notProduct: "That is a service, not a product, so it cannot be a gift. Choose a product from the catalog." }, forbidden: "Only the hosts or organizers of this celebration can manage gifts.", conflict: "This list changed while you were editing. We refreshed it.", validation: "Check the gift data.", retry: "Try again" }
   }

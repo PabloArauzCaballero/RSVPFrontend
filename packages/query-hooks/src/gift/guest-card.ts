@@ -1,4 +1,4 @@
-import type { GiftItem, GiftReservation, Money, ReservationRole } from "./types.js";
+import { isGiftUnavailable, type GiftItem, type GiftReservation, type Money, type ReservationRole } from "./types.js";
 
 /**
  * R5 · What the guest's card of a gift says and offers, derived in one place so the app and the public site agree (plan 5.7 and 5.11).
@@ -11,6 +11,8 @@ import type { GiftItem, GiftReservation, Money, ReservationRole } from "./types.
  *           buttons; the rest see who buys it and how many chip in, and can join or leave.
  */
 export interface GuestGiftState {
+  /** R7: the provider no longer offers it. The card is muted, says so and has no reserve, store or WhatsApp button (a reservation the guest already holds stays visible so it can be cancelled). */
+  readonly unavailable: boolean;
   /** Units the host wants, and how many are still free. */
   readonly quantity: number;
   readonly unitsLeft: number;
@@ -51,12 +53,13 @@ export function guestGiftState(item: GiftItem, held?: Pick<GiftReservation, "rol
   const group = item.groupGiftEnabled === true;
   const role = item.viewer?.role ?? held?.role ?? (held ? "SOLE" : null);
   const hasCoordinator = group && ((item.participants ?? 0) > 0 || role === "COORDINATOR");
-  const open = HOLDS.has(item.status);
+  const unavailable = isGiftUnavailable(item);
+  const open = HOLDS.has(item.status) && !unavailable;
   const canReserve = role === null && open && (group || (item.status === "AVAILABLE" && unitsLeft > 0));
-  const showProviderButtons = group ? role === "COORDINATOR" : role === null && item.status === "AVAILABLE" && unitsLeft > 0;
+  const showProviderButtons = !unavailable && (group ? role === "COORDINATOR" : role === null && item.status === "AVAILABLE" && unitsLeft > 0);
   const name = typeof item.coordinatorName === "string" && item.coordinatorName.trim() ? item.coordinatorName.trim() : null;
   return {
-    quantity, unitsLeft, showUnits: quantity > 1, group, role, canReserve,
+    unavailable, quantity, unitsLeft, showUnits: quantity > 1, group, role, canReserve,
     chooseUnits: !group && canReserve && unitsLeft > 1,
     showProviderButtons, hasCoordinator,
     coordinator: group && hasCoordinator && role !== "COORDINATOR" ? { name } : null,

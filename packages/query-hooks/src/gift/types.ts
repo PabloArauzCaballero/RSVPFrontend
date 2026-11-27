@@ -1,13 +1,20 @@
-/** Gift List (gift-list.openapi.json; vendored version in packages/contracts/backend.lock.json, 1.18.0). Money is integer minor units, never a float. */
+/** Gift List (gift-list.openapi.json; vendored version in packages/contracts/backend.lock.json, 1.19.0). Money is integer minor units, never a float. */
 export interface Money { readonly amountMinor: number; readonly currency: string }
 export type GiftSource = "CATALOGED" | "EXTERNAL";
 /**
- * UNAVAILABLE (1.14.0, R1, M-6): the gift can no longer be given (its catalog listing is not a product). Guests never see it;
- * the host sees it marked. Written by hand, not derived: gift-list 1.14.0 declares UNAVAILABLE in GiftCatalogedItem and the
- * legacy schemas, but listGiftItems answers DevCompatGiftItem, whose DevCompatGiftItemStatus still omits it although the
- * service returns it. Derive it from the contract once that enum is fixed in the backend.
+ * UNAVAILABLE (1.14.0, R1, M-6; reasons since 1.19.0, R7): the gift can no longer be given. On the wire the frozen `status` NEVER says UNAVAILABLE
+ * (gift-list keeps the value the gift had, `wireGiftStatus`): what says it is `availability` + `unavailableReason`, and only the host (MANAGE)
+ * receives such a gift. `status` keeps the literal only for payloads of a server that still wrote it there; read the state through `isGiftUnavailable`.
  */
 export type GiftItemStatus = "AVAILABLE" | "PROPOSED" | "PENDING_REVIEW" | "COMMITTED" | "REJECTED" | "UNAVAILABLE";
+export type GiftAvailability = "AVAILABLE" | "UNAVAILABLE";
+export const GIFT_UNAVAILABLE_REASONS = ["HIDDEN_BY_ADMIN", "PROVIDER_SUSPENDED", "PROVIDER_REJECTED", "PROVIDER_NOT_VERIFIED", "UNPUBLISHED", "INCOMPLETE", "OUT_OF_STOCK", "VARIANT_OUT_OF_STOCK", "LISTING_NOT_PRODUCT"] as const;
+export type GiftUnavailableReason = (typeof GIFT_UNAVAILABLE_REASONS)[number];
+/** The gift cannot be reserved or bought any more: its provider stopped offering it. It comes back by itself when the listing is eligible again. */
+export const isGiftUnavailable = (item: { readonly availability?: GiftAvailability; readonly status?: string }): boolean => item.availability === "UNAVAILABLE" || item.status === "UNAVAILABLE";
+/** The reason to show, only for one the contract knows (a newer server may add one: the screen then says it generically). */
+export const unavailableReasonOf = (item: { readonly unavailableReason?: string | null }): GiftUnavailableReason | null =>
+  (GIFT_UNAVAILABLE_REASONS as readonly string[]).includes(item.unavailableReason ?? "") ? (item.unavailableReason as GiftUnavailableReason) : null;
 export type ReservationStatus = "PENDING_REVIEW" | "COMMITTED" | "REJECTED" | "CANCELLED";
 export type CancellationReason = "RSVP_DECLINED" | "GUEST_CANCELLED" | "HOST_CANCELLED";
 export interface GiftItem {
@@ -16,6 +23,10 @@ export interface GiftItem {
   readonly productListingId?: string | null; readonly providerId?: string | null; readonly externalUrl?: string | null; readonly createdAt: string;
   /** Present only when the host lets this viewer see who reserved (gift-settings). */
   readonly reservedByName?: string;
+  /** 1.14.0 (R1): `UNAVAILABLE` when the catalog listing can no longer be bought; absent or `AVAILABLE` otherwise. Read it with `isGiftUnavailable`. */
+  readonly availability?: GiftAvailability;
+  /** 1.19.0 (R7): why the gift is unavailable; present only with `availability: "UNAVAILABLE"` and only in the host's lists. */
+  readonly unavailableReason?: GiftUnavailableReason | null;
   /** 1.17.0 (R4): units wanted (1 before the assistant), the coordinated-gift switch, and the idea and version the host picked. */
   readonly quantity?: number; readonly groupGiftEnabled?: boolean; readonly giftIdeaCode?: string | null; readonly variantCode?: string | null;
   /** 1.18.0 (R5, GiftItemParticipation): what a guest may see of the units of the gift. Counts only; a name appears only when its owner chose to show it (PF-1). */

@@ -277,14 +277,19 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
     const note = promptNote?.itemId === item.id ? promptNote.key : null;
     const heldUnits = held?.units ?? item.viewer?.units ?? 0;
     return (
-      <li key={item.id} className="gift-row" data-gift-id={item.id} data-source={item.source}>
+      <li key={item.id} className={state.unavailable ? 'gift-row gift-row--unavailable' : 'gift-row'} data-gift-id={item.id} data-source={item.source} {...(state.unavailable ? { 'data-availability': 'UNAVAILABLE' } : {})}>
         <GiftPhoto item={item} url={listing?.imageUrl} t={t} />
         <div className="gift-row__head">
           <h3 className="gift-row__title">{onlyItemId ? item.title : <a href={`/c/${encodeURIComponent(slug)}/regalos/${encodeURIComponent(item.id)}?lang=${locale}`} aria-label={t('gifts.card.open', { title: item.title })}>{item.title}</a>}</h3>
           <p className="gift-row__price" data-testid={`gift-price-${item.id}`}>{formatMinor(price.amountMinor, price.currency, locale)}</p>
         </div>
         {item.description ? <p className="rsvp-hint">{item.description}</p> : null}
-        <UnitsAndGroup id={item.id} state={state} t={t} />
+        {state.unavailable ? (
+          <div className="gift-unavailable" data-testid={`gift-unavailable-${item.id}`}>
+            <p className="guest-chip" data-tone="no">{t('gifts.guest.unavailable.chip')}</p>
+            <p className="gift-unavailable__note" data-testid={`gift-unavailable-note-${item.id}`}>{t('gifts.guest.unavailable.note')}</p>
+          </div>
+        ) : <UnitsAndGroup id={item.id} state={state} t={t} />}
         {item.status !== 'AVAILABLE' && !state.group ? <p className="guest-chip" data-tone={item.status === 'PENDING_REVIEW' ? 'wait' : 'yes'}>{t(`gifts.guest.status.${item.status}`)}</p> : null}
         {item.reservedByName ? <p className="rsvp-hint" data-testid="reserved-by">{t('gifts.guest.reservedBy', { name: item.reservedByName })}</p> : null}
         {held || state.role ? (
@@ -308,7 +313,7 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
             )}
           </div>
         ) : null}
-        {asked && !opened ? <PurchasePromptCard id={item.id} title={item.title} units={asked.units} reminder={asked.phase === 'reminder'} t={t} onAnswer={(answer) => answerPrompt(item, answer)} /> : null}
+        {asked && !opened && !state.unavailable ? <PurchasePromptCard id={item.id} title={item.title} units={asked.units} reminder={asked.phase === 'reminder'} t={t} onAnswer={(answer) => answerPrompt(item, answer)} /> : null}
         {note ? <FocusNote tone="info" testId={`gift-prompt-note-${item.id}`}><p>{t(note)}</p></FocusNote> : null}
         {opened ? form(item) : (
           <>

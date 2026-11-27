@@ -270,7 +270,7 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
     const quantity = buttonQuantity(state, chosen);
     const note = promptNote?.itemId === item.id ? promptNote.key : null;
     return (
-      <View key={item.id} testID={`gift-${item.id}`} style={{ gap: spacing[2], paddingVertical: spacing[4], borderBottomWidth: 1, borderBottomColor: palette.border }}>
+      <View key={item.id} testID={`gift-${item.id}`} style={{ gap: spacing[2], paddingVertical: spacing[4], borderBottomWidth: 1, borderBottomColor: palette.border, ...(state.unavailable ? { backgroundColor: palette.surfaceMuted, paddingHorizontal: spacing[3] } : {}) }}>
         <GiftPhoto item={item} url={listing?.imageUrl} />
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", gap: spacing[3] }}>
           {onlyItemId ? <Text accessibilityRole="header" aria-level={3} style={[styles.subtitle, { flex: 1 }]}>{item.title}</Text> : (
@@ -281,7 +281,12 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
           <Text testID={`gift-price-${item.id}`} style={[styles.body, { fontWeight: "600", fontVariant: ["tabular-nums"] }]}>{formatMinor(price.amountMinor, price.currency, locale)}</Text>
         </View>
         {item.description ? <Text style={styles.muted}>{item.description}</Text> : null}
-        <UnitsAndGroup id={item.id} state={state} />
+        {state.unavailable ? (
+          <View testID={`gift-unavailable-${item.id}`} style={{ gap: spacing[2], alignItems: "flex-start" }}>
+            <Chip tone="no">{t("gifts.guest.unavailable.chip")}</Chip>
+            <Text style={[styles.body, { color: palette.textMuted, fontWeight: "600" }]} testID={`gift-unavailable-note-${item.id}`}>{t("gifts.guest.unavailable.note")}</Text>
+          </View>
+        ) : <UnitsAndGroup id={item.id} state={state} />}
         {item.status !== "AVAILABLE" && !state.group ? <Chip tone={item.status === "PENDING_REVIEW" ? "wait" : "yes"}>{t(`gifts.guest.status.${item.status}`)}</Chip> : null}
         {item.reservedByName ? <Text style={styles.muted} testID={`gift-by-${item.id}`}>{t("gifts.guest.reservedBy", { name: item.reservedByName })}</Text> : null}
         {held || state.role ? (
@@ -305,7 +310,7 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
             )}
           </View>
         ) : null}
-        {asked && !opened ? <PurchasePromptCard id={item.id} title={item.title} units={asked.units} reminder={asked.phase === "reminder"} onAnswer={(answer) => answerPrompt(item, answer)} /> : null}
+        {asked && !opened && !state.unavailable ? <PurchasePromptCard id={item.id} title={item.title} units={asked.units} reminder={asked.phase === "reminder"} onAnswer={(answer) => answerPrompt(item, answer)} /> : null}
         {note ? <Text accessibilityLiveRegion="polite" role="status" style={styles.muted} testID={`gift-prompt-note-${item.id}`}>{t(note)}</Text> : null}
         {opened ? form(item) : (
           <View style={{ gap: spacing[3] }}>
