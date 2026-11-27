@@ -87,6 +87,14 @@ Backend real, Docker y PostgreSQL (la web leyó el fixture); `contracts:validate
 ### PL-EXTRA-3 (sin tocar; registrado en `bugs/catalogo`)
 Reproducido en este merge: el h1 de `pedida-rosa` mide 47,99 px a 360, 56 px a 768 y 56 px a 1280, aunque el lienzo de escritorio del documento pide `size: 104`. `Canvas` (`render.tsx:266`) toma `phone.get(id) ?? wide.get(id)`. Arreglarlo cambia la portada de las 36 plantillas, así que no entra en este PR.
 
+## Ronda 4 · corrector FE (HEAD revisado 2b448cea)
+
+- PL-143-R4-1: `data-heading-face="script"` solo se emite si el id del tema es uno de las seis (`SCRIPT_TITLE_FACTS_IN_BODY`, mismo criterio que R2-2). Prueba `extra.test.tsx` (R4-1): 30 plantillas existentes x 7 familias script, una copia con otro id y Great Vibes -> sin atributo; las seis con Great Vibes -> con atributo. Mutación (quitar el filtro por id) -> falla en `arena-terracota + great-vibes`.
+- PL-143-R4-2 (PREGUNTA PARA PABLO, no resuelta): `PHOTO_ON_TEXT_AXIS` y `SCRIPT_TITLE_FACTS_IN_BODY` dependen de `theme.id`. Una copia de una de las seis con otro id pierde el arreglo de eje y la fuente del cuerpo en los datos. Depende de cómo el BE identifica las copias (id propio, `sourceTemplateId`, `key`): ¿qué campo debe usar el FE para reconocer una copia?
+- PL-143-R4-4: merge (no rebase) de `origin/chore/deploy-contabo-coolify` (9425493d2) sin conflictos; `portadas-base.json` no cambió (120 passed).
+- PL-143-R4-5: `plantillas-v2-extra` y `plantillas-v2-sobrio` miden también 390x844 con la aserción PL-130-M2.
+- R4-3, R4-6, R4-7: declarados, sin tocar en esta ronda.
+
 ## Líneas base macOS que cambian
 Ninguna. Capturas nuevas solo en `docs/progress/evidence/plantillas-extra/` (360/768/1280, claro y oscuro, con y sin foto) y `contraste.md` / `contrast.jsonl`.
 
