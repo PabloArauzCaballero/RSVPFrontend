@@ -2,7 +2,7 @@ import { useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
 import { radius, spacing } from "@rsvp/design-tokens";
 import { formatMinor } from "@rsvp/i18n";
-import { Chip, Enter, Stagger, fonts, useColors } from "@rsvp/ui";
+import { Chip, Enter, Stagger, StickyActions, fonts, useColors } from "@rsvp/ui";
 import { useCreateOwnListing, useOfferCategories, useOwnListings, useProviderGeo, usePublishListing, type CreateListingInput, type OwnListing, type Provider, type ProviderGeoCity } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../platform/providers";
 import { ActionButton, ChoiceGroup, EmptyState, Field, FilterSelect, Illustration, Notice, OverflowMenu, PageIntro, Section, SuccessNote, ToggleChip, useStyles } from "../host/ui";
@@ -10,7 +10,7 @@ import { PortalErrorNotice as ErrorNotice, PortalErrorState } from "./errors";
 import { parseMinor } from "../host/gifts/money";
 import { PortalScreen, usePortalHeader, type PortalRoute } from "./frame";
 import { useSingleMutation } from "../platform/single-flight";
-import { MoreToggle, RowsSkeleton, StickyActions } from "./parts";
+import { MoreToggle, RowsSkeleton } from "./parts";
 
 const MAX_TITLE = 120;
 const MAX_IMAGE_URL = 500;
@@ -184,7 +184,7 @@ function NewOffer({ providerId, onClose, onCreated }: { readonly providerId: str
       ) : null}
       {errors.length ? <Notice kind="error">{errors.map((message) => <Text key={message} style={styles.body}>{message}</Text>)}</Notice> : null}
       <ErrorNotice error={create.error} onRetry={submit} />
-      <StickyActions ground="surface">
+      <StickyActions>
         <ActionButton icon="plus" label={create.isPending ? t("portal.services.new.creating") : t("portal.services.new.submit")} busy={create.isPending} disabled={create.isPending || !category} onPress={submit} testID="listing-submit" />
         <ActionButton icon="close" variant="secondary" label={t("portal.services.new.cancel")} disabled={create.isPending} onPress={onClose} testID="offer-new-close" />
       </StickyActions>

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type PropsWithChildren, type ReactNode } from "react";
 import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type LayoutChangeEvent, type ViewStyle } from "react-native";
 import { radius, spacing } from "@rsvp/design-tokens";
-import { Logo, NavIcon, OverlayEnter, PageIntro, PressFeedback, ScreenTransition, SwitchRow, StickyActions, fonts, overlayAnimation, useColors, useThemedStyles, type Palette } from "@rsvp/ui";
+import { ActionDock, Logo, NavIcon, OverlayEnter, PageIntro, PressFeedback, ScreenTransition, SwitchRow, StickyActions, fonts, overlayAnimation, useColors, useThemedStyles, type Palette } from "@rsvp/ui";
 import { useAuth } from "../auth/auth-context";
 import { useConfirmSignOut } from "../auth/sign-out";
 import { useT } from "../platform/providers";
@@ -324,7 +324,7 @@ function BareFrame({ children }: PropsWithChildren): ReactNode {
  * under the title when `nav` has one with two or more tabs; a screen never builds its own.
  * `actions` is the screen's single primary action (one button) and `menu` its secondary actions (`OverflowMenu`).
  * From 768 px both sit at the right of the header, aligned with the title (`menu` then `actions`). Below 768 px
- * `menu` stays at the top right and `actions` moves to a `StickyActions` bar at the foot of the content.
+ * `menu` stays at the top right and `actions` moves to a `StickyActions` bar fixed at the bottom edge (docked under the scroll area on native, sticky on web).
  * `status` is the one line that says where the work stands (see the prop).
  */
 export function Screen({ title, intro, nav, current, onNavigate, actions, menu, status, animate = true, children }: PropsWithChildren<{ readonly title: string; readonly intro?: string; readonly nav?: readonly NavItem[]; readonly current?: string; readonly onNavigate?: (href: string) => void; readonly actions?: ReactNode; readonly menu?: ReactNode; /** One short line about the work in progress ("unsaved changes", "saved"). Sits above the sticky action bar below 768 px and at the top of the content from 768 px. */ readonly status?: ReactNode; readonly animate?: boolean }>): ReactNode {
@@ -340,7 +340,7 @@ export function Screen({ title, intro, nav, current, onNavigate, actions, menu, 
   const stack = <View testID="screen-stack" style={[s.stack, wide && s.stackWide]}>{status && actionsInHeader ? status : null}{children}</View>;
   const content = animate ? <ScreenTransition routeKey={current ?? title} groupKey={destination?.key}>{stack}</ScreenTransition> : stack;
   const headerActions = menu || (actions && actionsInHeader) ? <View style={s.headActions}>{menu}{actionsInHeader ? actions : null}</View> : null;
-  const stickyActions = actions && !actionsInHeader ? <StickyActions testID="screen-sticky-actions" {...(status ? { summary: status } : {})}>{actions}</StickyActions> : null;
+  const stickyActions = actions && !actionsInHeader ? <StickyActions testID="screen-sticky-actions" priority={0} {...(status ? { summary: status } : {})}>{actions}</StickyActions> : null;
   const tabs = sectionTabs && sectionTabs.length > 1 ? sectionTabs : undefined;
   if (wide) {
     const main = (
@@ -361,7 +361,10 @@ export function Screen({ title, intro, nav, current, onNavigate, actions, menu, 
     if (items.length === 0) return <View style={s.root}><BareFrame>{main}</BareFrame></View>;
     return <View style={[s.root, s.rootWide]}><Sidebar nav={items} current={current} onNavigate={onNavigate} />{main}</View>;
   }
+  // On a phone the action is fixed at the bottom (MV-D1): the dock draws the `StickyActions` bar under this scroll area, so the
+  // scroll never wraps the bar and the content ends above it. Header actions and the form's own bars all go through it.
   const body = (
+    <ActionDock>
     <ScrollView role="main" tabIndex={0} style={s.scroll} contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
       <View style={s.mHeader}>
         <View style={s.headRow}>
@@ -375,6 +378,7 @@ export function Screen({ title, intro, nav, current, onNavigate, actions, menu, 
       </View>
       <View style={s.mSheet}>{content}{stickyActions}</View>
     </ScrollView>
+    </ActionDock>
   );
   if (items.length === 0) return <View style={s.root}><BareFrame>{body}</BareFrame></View>;
   return <View style={s.root}><MobileFrame nav={items} current={current} onNavigate={onNavigate}>{body}</MobileFrame></View>;

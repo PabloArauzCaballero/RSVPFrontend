@@ -22,6 +22,7 @@ export * from './identity';
 export { fonts } from './fonts';
 export { EmptyState, PageIntro, SuccessNote, Celebrate, type EmptyStateProps } from './personality';
 export { StickyActions, type StickyActionsProps } from './sticky-actions';
+export { ActionDock } from './action-dock';
 export { OverflowMenu, type OverflowMenuItem, type OverflowMenuProps } from './overflow-menu';
 export { FilterSelect, FILTER_SELECT_THRESHOLD, type FilterOption, type FilterSelectProps } from './filter-select';
 export { ButtonAlignContext, pressVisual } from './press-visual';
