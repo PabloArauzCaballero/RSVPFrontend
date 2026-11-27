@@ -107,3 +107,16 @@ Sin cambios (decisión de Pablo): el BE oculta los UNAVAILABLE al invitado.
 | `corepack yarn workspace @rsvp/seo-web build` | exit 0 |
 | `corepack yarn workspace @rsvp/contracts check:generated` | exit 0, `verified 8 contracts at …@4977789e7a7a` |
 | `corepack yarn harness:validate` | exit 0 |
+
+### Suites de la ronda 3
+
+gitleaks 8.28.0 sobre `1a419775..HEAD` (hasta el commit de código de la ronda 3): `9 commits scanned … no leaks found`.
+
+| Suite | Resultado |
+|---|---|
+| `corepack yarn lint` | exit 0, `Tasks: 19 successful, 19 total` |
+| `corepack yarn typecheck` | exit 0, `Tasks: 19 successful, 19 total` |
+| `corepack yarn test` | exit 0, `Tasks: 33 successful, 33 total`; universal `66` / `865`; seo-web `28` / `254`; query-hooks `20` / `240`; i18n `3` / `15` |
+| build seo-web | exit 0 |
+| `check:generated` | exit 0, `verified 8 contracts at …@4977789e7a7a` |
+| `harness:validate` | exit 0 |
