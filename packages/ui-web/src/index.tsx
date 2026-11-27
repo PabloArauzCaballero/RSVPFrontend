@@ -91,6 +91,11 @@ export function partnerRedirectHref(listingId: string, options: PartnerRedirectO
  * R6a: the DOM `href` NEVER carries `ctx` (the lead context is a bearer: «copy link address», a long-press or a middle-click preview would hand it
  * out). It is added only when navigating: a plain click or Enter opens it in this tab, ctrl/cmd/shift-click and middle-click in a new tab. The browser
  * context menu («open in new tab») uses the `href`, so that click is evaluated without a member context (billed as a normal visitor's).
+ *
+ * Limits of navigating with `window.open(..., 'noopener')` instead of the `href` (all of them fall back to a click without a member context, never to a leak):
+ *  1. A blocked pop-up cannot be detected: with `noopener` it always returns null, so a blocked new tab is silent (a click that is a user gesture is rarely blocked).
+ *  2. Safari fires no `click` for a middle-click on a link (it opens the `href` directly), so there the new tab carries no `ctx`.
+ *  3. Before hydration the handlers do not exist: a click then follows the plain `href` and carries no `ctx`.
  */
 export function PartnerLink({ listingId, children, className, disclaimer = true, ...link }: PropsWithChildren<{ listingId: string; className?: string; disclaimer?: boolean } & PartnerRedirectOptions>) {
   const t = useStrings();

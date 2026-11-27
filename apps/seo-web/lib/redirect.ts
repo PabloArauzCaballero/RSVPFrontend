@@ -17,15 +17,18 @@ const UTM_PREFIX = "utm_";
  * Context the backend validates and stores with the lead (RawLeadContext). `ctx` (R6a) is the signed lead context Gift Lists gives
  * a celebration member: it is forwarded to Provider Catalog unchanged so the member's own click is not billed, and it is never copied
  * into the partner URL (`withAttribution` only carries utm_* and correlationId). A click always redirects: an empty, oversized or malformed `ctx` is
- * dropped here (it would only be a 422 INVALID_LEAD_CONTEXT), and if the backend still answers that 422 the call is repeated once without `ctx`
- * (the click is then evaluated as an ordinary visitor's).
+ * dropped here (an oversized one would be a 422 INVALID_LEAD_CONTEXT), so the click is evaluated as an ordinary visitor's and still redirects.
  */
 const CONTEXT_KEYS = ["surface", "celebrationId", "guestId", "locale", "country", "city"] as const;
-/** Provider Catalog rejects a `ctx` longer than this with 422 INVALID_LEAD_CONTEXT. */
+/**
+ * Provider Catalog (feat/regalos-r6a-leads-v2, server.ts GET /r/:lid) rejects with 422 INVALID_LEAD_CONTEXT only a `ctx` longer than this; any other
+ * value it cannot verify is ignored (the click is billed as a visitor's). The same code is shared by sessionId, surface, celebrationId, guestId, country,
+ * city and referrer, so a 422 is not evidence of a bad `ctx` and the call is NOT retried: the oversized `ctx` is filtered here, before calling.
+ */
 const MAX_CTX_LENGTH = 512;
 /** A signed token is printable ASCII without spaces; anything else (control characters, spaces) is not one and is not worth a 422. */
 const CTX_SHAPE = /^[\x21-\x7e]+$/;
-const INVALID_LEAD_CONTEXT = "INVALID_LEAD_CONTEXT";
+
 const BAD_REQUEST = 400;
 const NOT_FOUND = 404;
 const UNPROCESSABLE = 422;
@@ -72,14 +75,6 @@ function failureOf(status: number): { readonly reason: RedirectFailure; readonly
   return { reason: "unavailable", status: status >= 500 ? SERVICE_UNAVAILABLE : BAD_GATEWAY };
 }
 
-/** Whether the 422 is the backend refusing the `ctx` (problem+json `code`). The body is read from a clone, so the response stays usable. */
-async function isInvalidLeadContext(response: Response): Promise<boolean> {
-  try {
-    const problem: unknown = await response.clone().json();
-    return typeof problem === "object" && problem !== null && (problem as { readonly code?: unknown }).code === INVALID_LEAD_CONTEXT;
-  } catch { return false; }
-}
-
 export async function resolveRedirect(request: RedirectRequest): Promise<RedirectOutcome> {
   const correlationId = correlationIdOf(request.correlationId, request.searchParams.get("correlationId"));
   if (!UUID.test(request.listingId)) return { kind: "failure", reason: "not-found", status: NOT_FOUND, correlationId };
@@ -111,9 +106,7 @@ export async function resolveRedirect(request: RedirectRequest): Promise<Redirec
 
   try {
     // redirect: "manual" so the 302 (and its Location) is read here and never followed server-side.
-    const call = (withCtx: string | null) => (request.fetchFn ?? fetch)(upstreamUrl(withCtx), { method: "GET", headers, redirect: "manual", cache: "no-store" });
-    let response = await call(ctx);
-    if (ctx && response.status === UNPROCESSABLE && (await isInvalidLeadContext(response))) response = await call(null);
+    const response = await (request.fetchFn ?? fetch)(upstreamUrl(ctx), { method: "GET", headers, redirect: "manual", cache: "no-store" });
     const location = response.headers.get("location");
     if (REDIRECT_STATUSES.has(response.status) && location) return { kind: "redirect", location: withAttribution(location, request.searchParams, correlationId), correlationId };
     return { kind: "failure", ...failureOf(response.status), correlationId };
