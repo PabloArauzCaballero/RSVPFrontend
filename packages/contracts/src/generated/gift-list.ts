@@ -112,7 +112,11 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Take an unavailable gift off the list (host or organizer)
+         * @description Since 1.20.0 (R7). MANAGE only (PF-3). Only a gift that is UNAVAILABLE (its product left the gift lists, or the host swapped it for a replacement): 409 GIFT_NOT_REMOVABLE otherwise, and 409 GIFT_HAS_RESERVATIONS while it holds an active reservation (cancel it first). The gift stops appearing in listGiftItems and frees its gift idea and its product for a new pick. Repeating the call answers 204 again (PF-4). A gift of another celebration answers 404 (PF-3). No request body and no query parameters.
+         */
+        delete: operations["removeGiftItem"];
         options?: never;
         head?: never;
         /**
@@ -2271,6 +2275,36 @@ export interface operations {
                     "application/problem+json": components["schemas"]["DevCompatProblem"];
                 };
             };
+            422: components["responses"]["DevCompatValidation"];
+            503: components["responses"]["DevCompatDependencyUnavailable"];
+        };
+    };
+    removeGiftItem: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Echoed in the response header and in problem.correlationId; generated when absent. */
+                "X-Correlation-Id"?: components["parameters"]["DevCompatCorrelationId"];
+            };
+            path: {
+                celebrationId: components["parameters"]["DevCompatCelebrationId"];
+                giftItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The gift is no longer on the list (also when it already was not) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["DevCompatUnauthorized"];
+            403: components["responses"]["DevCompatForbidden"];
+            404: components["responses"]["DevCompatNotFound"];
+            409: components["responses"]["DevCompatGiftConflict"];
             422: components["responses"]["DevCompatValidation"];
             503: components["responses"]["DevCompatDependencyUnavailable"];
         };

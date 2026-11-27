@@ -79,8 +79,8 @@ describe("R1 · M-6 · a gift that can no longer be given (UNAVAILABLE)", () => 
     expect(screen.queryByTestId("gift-unavailable-Torta")).toBeNull();
     expect(screen.getByTestId("gift-unavailable").getAttribute("aria-label")).toBe("No disponibles: 1");
     expect(screen.getByTestId("gift-available").getAttribute("aria-label")).toBe("Disponibles: 1");
-    // R7: the single control of an unavailable gift is the one that opens its replacements; approve, reject and release are never offered.
-    expect(within(screen.getByTestId("gift-Musica")).queryAllByRole("button").map((button) => button.getAttribute("data-testid"))).toEqual(["replacements-toggle-Musica"]);
+    // R7: an unavailable gift offers two controls, the one that opens its replacements and (Gift 1.20.0) the one that takes it off the list; approve, reject and release are never offered.
+    expect(within(screen.getByTestId("gift-Musica")).queryAllByRole("button").map((button) => button.getAttribute("data-testid"))).toEqual(["replacements-toggle-Musica", "remove-gift-Musica"]);
   });
   it("without unavailable gifts the figure does not appear", async () => {
     const { client } = fakeClient(handlers({ "GET /gifts/celebrations/c-1/items": () => GIFTS }));

@@ -267,6 +267,61 @@ describe("R7 · host list: the unavailable gift", () => {
   });
 });
 
+describe("R7 · host list: take the unavailable gift off the list (Gift 1.20.0, removeGiftItem)", () => {
+  const REMOVE = `DELETE ${ITEMS}/dead`;
+  it("only a «No disponible» gift has «Quitar de la lista»; it asks first, sends DELETE once, reads the list again, and the row leaves with a notice", async () => {
+    let removed = false;
+    const { client, calls } = fakeClient(handlers({
+      [REMOVE]: () => { removed = true; return undefined; },
+      [`GET ${ITEMS}`]: () => ({ items: removed ? [gift("ok")] : [gift("ok"), dead()], partnerPriorityEnabled: true, nextCursor: null })
+    }));
+    renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    await screen.findByTestId("gift-dead");
+    expect(screen.queryByTestId("remove-gift-ok")).toBeNull();
+    fireEvent.click(screen.getByTestId("remove-gift-dead"));
+    expect(calls.some((call) => call.method === "DELETE")).toBe(false);
+    fireEvent.click(await screen.findByTestId("remove-confirm"));
+    await waitFor(() => expect(screen.queryByTestId("gift-dead")).toBeNull());
+    expect(calls.filter((call) => call.method === "DELETE").map((call) => call.path)).toEqual([`${ITEMS}/dead`]);
+    expect((await screen.findByTestId("gift-removed")).textContent).toContain("Quitaste «Vajilla dorada» de la lista.");
+    expect(screen.getByTestId("gift-ok")).toBeTruthy();
+  });
+
+  it("«No, dejarlo» sends nothing", async () => {
+    const { client, calls } = fakeClient(handlers({}));
+    renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    fireEvent.click(await screen.findByTestId("remove-gift-dead"));
+    fireEvent.click(await screen.findByTestId("remove-keep"));
+    expect(calls.some((call) => call.method === "DELETE")).toBe(false);
+    expect(screen.getByTestId("gift-dead")).toBeTruthy();
+  });
+
+  it("409 GIFT_HAS_RESERVATIONS: says to release the reservation first and keeps the dialog; the gift stays", async () => {
+    const { client } = fakeClient(handlers({ [REMOVE]: () => new HttpFailure(409, { code: "GIFT_HAS_RESERVATIONS" }) }));
+    renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    fireEvent.click(await screen.findByTestId("remove-gift-dead"));
+    fireEvent.click(await screen.findByTestId("remove-confirm"));
+    expect((await screen.findByText(/todavía tiene una reserva/)).textContent).toContain("Libérala primero");
+    expect(screen.getByTestId("gift-dead")).toBeTruthy();
+  });
+
+  it("409 GIFT_NOT_REMOVABLE closes the dialog, says why and refreshes the list", async () => {
+    const { client } = fakeClient(handlers({ [REMOVE]: () => new HttpFailure(409, { code: "GIFT_NOT_REMOVABLE" }) }));
+    renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    fireEvent.click(await screen.findByTestId("remove-gift-dead"));
+    fireEvent.click(await screen.findByTestId("remove-confirm"));
+    expect((await screen.findByText(/Solo se puede quitar un regalo que ya no está disponible/)).textContent).toBeTruthy();
+    expect(screen.queryByTestId("remove-confirm")).toBeNull();
+  });
+
+  it("the button names the gift for a screen reader", async () => {
+    const { client } = fakeClient(handlers({}));
+    renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    const button = await screen.findByTestId("remove-gift-dead");
+    expect(button.getAttribute("aria-label") ?? button.getAttribute("accessibilityLabel")).toBe("Quitar «Vajilla dorada» de la lista");
+  });
+});
+
 describe("R7 · guest card: the unavailable gift", () => {
   const TOKEN = MOCK_VALID_TOKEN;
   const LISTING = "6f1c2a3b-4d5e-4f60-8a7b-9c0d1e2f3a4b";

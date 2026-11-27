@@ -186,6 +186,11 @@ export function useRejectExternalGift(client: ApiClient, celebrationId: string) 
   const queryClient = useQueryClient();
   return useMutation({ mutationFn: (giftItemId: string) => giftService(client).rejectExternal(celebrationId, giftItemId), onSettled: () => refetchAll(queryClient, invalidation.giftReservationChanged(celebrationId)) });
 }
+/** Gift List 1.20.0 · the host takes a gift that is «No disponible» off the list (removeGiftItem). 409 GIFT_NOT_REMOVABLE / GIFT_HAS_RESERVATIONS; repeating it is harmless. */
+export function useRemoveGiftItem(client: ApiClient, celebrationId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({ mutationFn: (giftItemId: string) => giftService(client).remove(celebrationId, giftItemId), onSettled: () => refetchAll(queryClient, invalidation.giftReservationChanged(celebrationId)) });
+}
 export const partnerSuggestionsOf = suggestionsOf;
 
 /** REQ-F23-06 · who may see the requester of a reservation (host only). */

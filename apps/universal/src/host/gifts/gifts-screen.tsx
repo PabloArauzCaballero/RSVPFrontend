@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Text, View, useWindowDimensions } from "react-native";
 import { radius, spacing } from "@rsvp/design-tokens";
 import { formatMinor } from "@rsvp/i18n";
-import { activeReservationsByItem, catalogedFirst, createBodyKeys, isGiftListMissing, isGiftUnavailable, unavailableReasonOf, isReservationNotActive, newIdempotencyKey, useApproveExternalGift, useCancelGiftReservation, useAddGiftBatch, useGiftList, useHostReservations, useRejectExternalGift, useGiftSettings, useUpdateGiftSettings, type GiftItem, type GiftReservation } from "@rsvp/query-hooks";
+import { activeReservationsByItem, catalogedFirst, createBodyKeys, isGiftListMissing, isGiftUnavailable, unavailableReasonOf, isReservationNotActive, newIdempotencyKey, problemCode, useApproveExternalGift, useCancelGiftReservation, useAddGiftBatch, useGiftList, useHostReservations, useRejectExternalGift, useRemoveGiftItem, useGiftSettings, useUpdateGiftSettings, type GiftItem, type GiftReservation } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../../platform/providers";
 import { CelebrationScreen, useScreenHeader, type ScreenProps } from "../gate";
 import { HOST_ROUTES, withCelebration } from "../routes";
@@ -34,7 +34,7 @@ function Monogram({ title }: { readonly title: string }): ReactNode {
 interface SwapContext { readonly celebrationId: string; readonly eventType: string; readonly content: Readonly<Record<string, unknown>>; readonly onSwapped: (oldTitle: string, newTitle: string) => void; readonly onStore: () => void; readonly onGone: () => void; readonly add: SwapMutation; readonly owner: string | null; readonly onOwner: (itemId: string) => void }
 
 /** C29 · One gift: a monogram, the title with its origin, the price set apart on the right, the status as a chip and, for a proposal, the two decisions. */
-function GiftRow({ item, first, currencyLocale, onApprove, onReject, approving, rejecting, locked, onRelease, releasing, swap }: { readonly item: GiftItem; readonly first: boolean; readonly currencyLocale: ReturnType<typeof useLocale>; readonly onApprove: (id: string) => void; readonly onReject: (item: GiftItem) => void; readonly approving: boolean; readonly rejecting: boolean; readonly locked: boolean; /** D-3 · present when the gift is held by a committed reservation the host can release. */ readonly onRelease?: () => void; readonly releasing?: boolean; /** R7 · what the replacements panel of an unavailable gift needs from the screen. */ readonly swap?: SwapContext }): ReactNode {
+function GiftRow({ item, first, currencyLocale, onApprove, onReject, approving, rejecting, locked, onRelease, releasing, swap, onRemove, removing }: { readonly item: GiftItem; readonly first: boolean; readonly currencyLocale: ReturnType<typeof useLocale>; readonly onApprove: (id: string) => void; readonly onReject: (item: GiftItem) => void; readonly approving: boolean; readonly rejecting: boolean; readonly locked: boolean; /** D-3 · present when the gift is held by a committed reservation the host can release. */ readonly onRelease?: () => void; readonly releasing?: boolean; /** R7 · what the replacements panel of an unavailable gift needs from the screen. */ readonly swap?: SwapContext; /** Gift 1.20.0 · present while the gift is «No disponible»: the host takes it off the list. */ readonly onRemove?: () => void; readonly removing?: boolean }): ReactNode {
   const styles = useStyles();
   const palette = useColors();
   const t = useT();
@@ -74,6 +74,11 @@ function GiftRow({ item, first, currencyLocale, onApprove, onReject, approving, 
         <View style={{ paddingLeft: narrow ? 0 : 48 + spacing[4], gap: spacing[2] }}>
           <ReplacementsToggle toggleRef={toggleRef} item={item} open={replacementsOpen} onToggle={() => setReplacementsOpen((open) => !open)} />
           {replacementsOpen ? <ReplacementsPanel item={item} {...swap} onSwapped={(oldTitle, newTitle) => { refocus.current = true; setReplacementsOpen(false); swap.onSwapped(oldTitle, newTitle); }} /> : null}
+        </View>
+      ) : null}
+      {unavailable && onRemove ? (
+        <View style={[styles.row, { paddingLeft: narrow ? 0 : 48 + spacing[4], paddingTop: spacing[2] }]}>
+          <ActionButton icon="close" variant="secondary" label={t("gifts.host.remove.action")} accessibilityLabel={t("gifts.host.remove.actionFor", { title: item.title })} busy={removing ?? false} disabled={locked} onPress={onRemove} testID={`remove-gift-${item.id}`} />
         </View>
       ) : null}
       {item.status === "PROPOSED" ? (
@@ -162,7 +167,11 @@ function GiftsBody({ celebrationId, eventType, content, onNavigate }: { readonly
   const reject = useRejectExternalGift(client, celebrationId);
   const [rejectTarget, setRejectTarget] = useState<GiftItem | null>(null);
   const [rejected, setRejected] = useState<string | null>(null);
-  const locked = approve.isPending || reject.isPending || release.isPending;
+  // Gift 1.20.0 · a gift that is «No disponible» leaves the list when the host says so (the replacement does not remove it by itself).
+  const remove = useRemoveGiftItem(client, celebrationId);
+  const [removeTarget, setRemoveTarget] = useState<GiftItem | null>(null);
+  const [removed, setRemoved] = useState<string | null>(null);
+  const locked = approve.isPending || reject.isPending || release.isPending || remove.isPending;
   const flight = useSingleFlightGate();
   const go = (path: string) => () => onNavigate(withCelebration(path, celebrationId));
   // «Agregar regalo» is the screen's one action, always in the same place; the people waiting are a message, not a second primary.
@@ -186,6 +195,8 @@ function GiftsBody({ celebrationId, eventType, content, onNavigate }: { readonly
       <GiftErrorNotice error={reject.error} onReload={() => { void list.refetch(); }} />
       {rejected ? <Notice kind="success">{t("gifts.host.proposalRejected", { title: rejected })}</Notice> : null}
       {swapped ? <Notice kind="success"><Text style={styles.body} testID="gift-swapped">{t("gifts.host.replacements.done", { old: swapped.oldTitle, new: swapped.newTitle })}</Text></Notice> : null}
+      {removed ? <Notice kind="success"><Text style={styles.body} testID="gift-removed">{t("gifts.host.remove.done", { title: removed })}</Text></Notice> : null}
+      {remove.isError && !removeTarget ? <GiftErrorNotice error={remove.error} onReload={() => { void list.refetch(); }} /> : null}
       {released ? <Notice kind="success">{t("gifts.host.release.done", { title: released })}</Notice> : null}
       {release.isError && !releaseTarget ? <GiftErrorNotice error={release.error} onReload={() => { void list.refetch(); }} /> : null}
       {items.length === 0 ? (
@@ -199,13 +210,28 @@ function GiftsBody({ celebrationId, eventType, content, onNavigate }: { readonly
           {list.data?.deliveryNotes ? <Text style={styles.body} testID="gift-delivery-notes">{t("gifts.host.wizard.list.delivery", { notes: list.data.deliveryNotes })}</Text> : null}
           <RequesterVisibility celebrationId={celebrationId} />
           <RowList>
-            <Stagger>{items.map((item, index) => <GiftRow key={item.id} first={index === 0} item={item} currencyLocale={locale} onApprove={(id) => { setRejected(null); reject.reset(); if (flight.begin()) approve.mutate(id, { onSettled: flight.end }); }} onReject={(target) => { setRejected(null); approve.reset(); reject.reset(); setRejectTarget(target); }} approving={approve.isPending && approve.variables === item.id} rejecting={reject.isPending && reject.variables === item.id} locked={locked} swap={{ add: swapBatch, owner: swapOwner, onOwner: setSwapOwner, celebrationId, eventType, content, onSwapped: (oldTitle, newTitle) => setSwapped({ oldTitle, newTitle }), onStore: go(HOST_ROUTES.giftCatalog), onGone: () => { void list.refetch(); } }} {...(item.status === "COMMITTED" && held.get(item.id) ? { onRelease: () => { const reservation = held.get(item.id); if (!reservation) return; setReleased(null); release.reset(); setReleaseTarget({ item, reservation }); }, releasing: release.isPending && release.variables?.reservationId === held.get(item.id)?.id } : {})} />)}</Stagger>
+            <Stagger>{items.map((item, index) => <GiftRow key={item.id} first={index === 0} item={item} currencyLocale={locale} onApprove={(id) => { setRejected(null); reject.reset(); if (flight.begin()) approve.mutate(id, { onSettled: flight.end }); }} onReject={(target) => { setRejected(null); approve.reset(); reject.reset(); setRejectTarget(target); }} approving={approve.isPending && approve.variables === item.id} rejecting={reject.isPending && reject.variables === item.id} locked={locked} swap={{ add: swapBatch, owner: swapOwner, onOwner: setSwapOwner, celebrationId, eventType, content, onSwapped: (oldTitle, newTitle) => setSwapped({ oldTitle, newTitle }), onStore: go(HOST_ROUTES.giftCatalog), onGone: () => { void list.refetch(); } }} {...(isGiftUnavailable(item) ? { onRemove: () => { setRemoved(null); remove.reset(); setRemoveTarget(item); }, removing: remove.isPending && remove.variables === item.id } : {})} {...(item.status === "COMMITTED" && held.get(item.id) ? { onRelease: () => { const reservation = held.get(item.id); if (!reservation) return; setReleased(null); release.reset(); setReleaseTarget({ item, reservation }); }, releasing: release.isPending && release.variables?.reservationId === held.get(item.id)?.id } : {})} />)}</Stagger>
           </RowList>
         </>
       )}
       <ConfirmDialog visible={rejectTarget !== null} danger title={t("gifts.host.rejectConfirm.title")} body={rejectTarget ? t("gifts.host.rejectConfirm.body", { title: rejectTarget.title }) : ""} confirmLabel={t("gifts.host.rejectProposal")}
         onCancel={() => setRejectTarget(null)}
         onConfirm={() => { const target = rejectTarget; setRejectTarget(null); if (target && flight.begin()) reject.mutate(target.id, { onSuccess: () => setRejected(target.title), onSettled: flight.end }); }} />
+      <ConfirmDialog visible={removeTarget !== null} danger busy={remove.isPending} title={t("gifts.host.remove.confirmTitle")} body={removeTarget ? t("gifts.host.remove.confirmBody", { title: removeTarget.title }) : ""}
+        confirmLabel={t("gifts.host.remove.confirm")} cancelLabel={t("gifts.host.remove.keep")} confirmTestID="remove-confirm" cancelTestID="remove-keep"
+        onCancel={() => { setRemoveTarget(null); remove.reset(); }}
+        onConfirm={() => {
+          const target = removeTarget;
+          if (!target || !flight.begin()) return;
+          remove.mutate(target.id, {
+            onSuccess: () => { setRemoveTarget(null); setRemoved(target.title); },
+            // Somebody already took it off, or it is not «No disponible» any more: close and show the refreshed list (the notice words the 409).
+            onError: (error) => { if (problemCode(error) !== "GIFT_HAS_RESERVATIONS") setRemoveTarget(null); },
+            onSettled: flight.end
+          });
+        }}>
+        {remove.isError && removeTarget ? <GiftErrorNotice error={remove.error} /> : null}
+      </ConfirmDialog>
       <ConfirmDialog visible={releaseTarget !== null} danger busy={release.isPending} title={t("gifts.host.release.confirmTitle")} body={releaseTarget ? t("gifts.host.release.confirmBody", { title: releaseTarget.item.title }) : ""}
         confirmLabel={t("gifts.host.release.confirm")} cancelLabel={t("gifts.host.release.keep")} confirmTestID="release-confirm" cancelTestID="release-keep"
         onCancel={() => { setReleaseTarget(null); release.reset(); }}
