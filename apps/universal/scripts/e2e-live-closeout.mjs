@@ -253,33 +253,23 @@ async function f23() {
     assert.equal((await http("GET", `/gifts/celebrations/${cid}/gift-settings`, { token: hostToken })).json.showRequesterToHost, true);
     await context.close();
   }
-  // discovery
-  await shots("F23", world.host.email, `/regalos/proveedores${c}`, "F6-descubrir-proveedores", (page) => page.locator('[data-testid^="provider-"]').first().waitFor());
+  // catalog (the only product source since R1: GET /listings?type=PRODUCT)
+  await shots("F23", world.host.email, `/regalos/catalogo${c}`, "F6-catalogo", (page) => page.getByTestId("catalog-query").waitFor());
   {
     const { page, context } = await session(world.host.email);
     const requests = [];
-    page.on("request", (request) => { if (request.url().includes("/providers?") || request.url().endsWith("/providers")) requests.push(request.url()); });
-    await go(page, `/regalos/proveedores${c}`);
-    await page.locator('[data-testid^="provider-"]').first().waitFor();
-    assert.ok(requests.some((url) => url.includes(":28000/providers?")), "GET /providers called");
-    const card = page.locator('[data-testid^="provider-"]').first();
-    const text = await card.innerText();
-    assert.match(text, /Plazo: \d+ días/); assert.match(text, /Cobertura:/); assert.match(text, /no presta ni garantiza/);
-    await page.getByTestId("provider-category").selectOption("CATERING");
-    await page.waitForResponse((response) => response.url().includes("category=CATERING"));
-    await page.locator('[data-testid^="provider-"]').first().waitFor();
-    await snap("F23", page, "F7-filtrado-catering", 1280);
-    // destinations go through the redirector, never the partner URL
-    const redirects = [];
-    page.context().on("request", (request) => { if (request.url().startsWith(`${SITE}/r/`)) redirects.push(request.url()); });
-    await page.locator('[data-testid^="dest-"]').first().click();
-    await sleep(1500);
-    assert.ok(redirects.length >= 1, "the click goes through /r/ first (then the redirector answers 302 to the partner)");
-    assert.match(redirects[0], /surface=APP/);
-    await page.locator('[data-testid^="add-provider-"]').first().click();
+    page.on("request", (request) => { if (request.url().includes("/listings?")) requests.push(request.url()); });
+    await go(page, `/regalos/catalogo${c}`);
+    await page.getByTestId("catalog-query").fill("torta");
+    await page.getByTestId("catalog-search").click();
+    const hit = page.locator('[data-testid^="hit-"]').first();
+    await hit.waitFor();
+    assert.ok(requests.some((url) => url.includes("type=PRODUCT")), "GET /listings?type=PRODUCT called");
+    await snap("F23", page, "F7-catalogo-resultados", 1280);
+    await hit.getByRole("button", { name: /^(Agregar a la lista|Agregar a mi lista)$/ }).click();
     await page.getByText(/^Agregado:/).waitFor();
-    await snap("F23", page, "F8-agregado-desde-descubrir", 1280);
-    record("F23", "REQ-F23-05", `descubrir proveedores desde el panel con GET /providers (tarjeta ampliada: oferta, negocio, plazo, cobertura, deslinde); filtro de categoria; destino por ${redirects[0].replace(SITE, "")}; agregar como regalo CATALOGED`);
+    await snap("F23", page, "F8-agregado-desde-catalogo", 1280);
+    record("F23", "REQ-F23-05", "catalogo de productos: GET /listings?type=PRODUCT y alta de un regalo CATALOGED");
     await context.close();
   }
 }

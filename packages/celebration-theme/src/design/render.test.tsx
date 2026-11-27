@@ -322,6 +322,15 @@ describe("state · «Ver regalos» in its three states (giftsStatus seam, BE #12
 });
 
 describe("the documents themselves", () => {
+  it("PL-OF-1 · the cover photo's <picture> is a direct child of the cover and the stylesheet takes it out of the grid (display: contents), so every rule on the <img> places it", () => {
+    const css = readFileSync(join(__dirname, "../../styles.css"), "utf8");
+    expect(css).toMatch(/\.celebration-design \.cdesign-cover > picture \{ display: contents; \}/);
+    expect(css).toMatch(/\.celebration-design \.cdesign-cover > picture > source \{ display: none; \}/);
+    // The editorial phone rule is keyed to the <img> and is no longer needed on the wrapper.
+    expect(css).toMatch(/@media \(max-width: 56\.1875rem\) \{ \.celebration-design \.cdesign-cover\[data-variant="editorial"\] \.cdesign-cover-photo \{ order: 1;/);
+    // No cover rule goes back to placing the wrapper. Scoped to the cover: the gallery styles its own <picture> with `:is(picture, img)`.
+    expect(css).not.toMatch(/\.cdesign-cover[^{},]*:is\(picture, /);
+  });
   it.each(NAMES)("%s: exactly one gifts button, required, and no link on it (the destination is the renderer's)", (name) => {
     const design = DESIGN_TEMPLATES[name].theme as unknown as DesignDocumentV2;
     const gifts = design.blocks.filter((block) => block.type === "giftsCta");

@@ -1,4 +1,4 @@
-import { ApiError, type ApiClient } from "@rsvp/api-client";
+import type { ApiClient } from "@rsvp/api-client";
 import type { ProviderCard, ProviderDiscoveryQuery, ProviderPage, Availability, Booking, BookingPage, BookingRequestInput, BookingStatus, Calendar, CreateListingInput, Lead, ListingHit, ListingSummary, LeadConfig, Metrics, OfferCategory, OwnListing, Provider, QuoteInput, QuoteReceipt, ProviderQuote, ProviderQuotePage, RegisterProviderInput, UpdateProviderInput, Microsite, MicrositeInput, ProviderDocument, DocumentInput, DocumentRegistration, DocumentDownload } from "./types.js";
 import { pageCount } from "./directory.js";
 
@@ -6,7 +6,9 @@ const qs = (params: Record<string, string | number | undefined>): string => {
   const entries = Object.entries(params).filter((entry): entry is [string, string | number] => entry[1] !== undefined && entry[1] !== "");
   return entries.length ? `?${new URLSearchParams(entries.map(([key, value]) => [key, String(value)]))}` : "";
 };
-const NOT_ROUTED = 404;
+const PRODUCT = "PRODUCT";
+/** `GET /listings` answers at most 50 hits (provider-catalog `limit` maximum). */
+const MAX_LISTING_SEARCH = 50;
 /** Bookings per page (the catalog accepts 1 to 100). */
 export const BOOKINGS_PAGE_SIZE = 50;
 const MAX_DIRECTORY_PAGE_SIZE = 50;
@@ -76,31 +78,29 @@ export function providerService(client: ApiClient) {
     quote: (providerId: string, quoteId: string) => client.request<ProviderQuote>(`${base(providerId)}/quotes/${encodeURIComponent(quoteId)}`),
     requestQuote: (providerId: string, body: QuoteInput, locale: string) => client.request<QuoteReceipt, QuoteInput>(`${base(providerId)}/quotes${qs({ locale })}`, { method: "POST", body }),
     /**
-     * GET /listings?q= (host picker for cataloged gifts). Older gateways without this route fall back to public provider cards.
+     * GET /listings?q=&type=PRODUCT (host picker for cataloged gifts, A27/A28). This is the only source: when it fails the
+     * error reaches the screen, which offers «Reintentar»; there is no alternative source. Fails closed: only a hit whose
+     * `type` is PRODUCT is kept (provider-catalog 3.4.0 always sends it); one without a type or with SERVICE is dropped,
+     * because only products can become gifts (D-10 decision 7). At most `limit` (50) hits: the category filter of the
+     * screen narrows these on the client; the server-side filter and the recommendation arrive in R3.
      */
-    searchListings: async (q: string, limit = 20, locale = "es-BO"): Promise<{ items: readonly ListingHit[]; viaFallback: boolean }> => {
-      try {
-        const result = await client.request<{ items: readonly ListingSearchItem[] }>(`/listings${qs({ q, type: "PRODUCT", limit, locale })}`, { auth: false });
-        const items = result.items.map(({ priceFrom, ...item }): ListingHit => priceFrom
+    searchListings: async (q: string, locale = "es-BO", limit = MAX_LISTING_SEARCH): Promise<{ items: readonly ListingHit[] }> => {
+      const result = await client.request<{ items: readonly ListingSearchItem[] }>(`/listings${qs({ q, type: PRODUCT, limit, locale })}`, { auth: false });
+      const items = result.items
+        .filter((item) => item.type === PRODUCT)
+        .map(({ priceFrom, ...item }): ListingHit => priceFrom
           ? { ...item, priceFromMinor: priceFrom.amountMinor, currency: priceFrom.currency }
           : item);
-        return { items, viaFallback: false };
-      } catch (error) {
-        // Kong answers an unrouted path with a bare 404 that carries no CORS headers, so in a browser it surfaces as a network TypeError, not an ApiError.
-        if (error instanceof ApiError && error.status !== NOT_ROUTED) throw error;
-        const page = await client.request<Pick<ProviderPage, "items">>(`/providers${qs({ pageSize: 50 })}`, { auth: false });
-        const needle = q.trim().toLowerCase();
-        const items = page.items.filter((card) => !needle || `${card.name} ${card.summary ?? ""}`.toLowerCase().includes(needle)).slice(0, limit)
-          .map((card): ListingHit => ({
-            id: card.listingId,
-            providerId: card.providerSlug,
-            title: card.summary ?? card.name,
-            ...(card.category ? { category: card.category } : {}),
-            ...(card.priceFrom ? { priceFromMinor: card.priceFrom.amountMinor, currency: card.priceFrom.currency } : {}),
-            ...(card.imageUrl ? { imageUrl: card.imageUrl } : {})
-          }));
-        return { items, viaFallback: true };
-      }
+      return { items };
+    },
+    /**
+     * GET /providers/categories?type=PRODUCT (M23): the product categories, named in `locale`, read from the catalog
+     * instead of a list fixed in the app. Categories for both offer types (`listingType: null`) count as product ones;
+     * the filter on `listingType` also holds against a catalog that still ignores `type`.
+     */
+    productCategories: async (locale: string): Promise<{ items: readonly OfferCategory[] }> => {
+      const result = await client.request<{ items: readonly OfferCategory[] }>(`/providers/categories${qs({ type: PRODUCT, locale })}`, { auth: false });
+      return { items: result.items.filter((category) => category.listingType === undefined || category.listingType === null || category.listingType === PRODUCT) };
     }
   } as const;
 }
