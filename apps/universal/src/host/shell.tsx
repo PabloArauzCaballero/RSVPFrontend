@@ -223,7 +223,13 @@ function Sidebar({ nav, current, onNavigate }: { readonly nav: readonly NavItem[
   );
 }
 
-function MobileFrame({ nav, current, onNavigate, children }: PropsWithChildren<{ readonly nav: readonly NavItem[]; readonly current?: string; readonly onNavigate?: (href: string) => void }>): ReactNode {
+function MobileTopBar(): ReactNode {
+  const s = useThemedStyles(createShellStyles);
+  return <View style={s.topBar}><Logo tone="auto" height={24} /></View>;
+}
+
+/** Bottom bar and the "more" sheet. A separate component so a persistent frame keeps its state (the sheet open or not) while the content swaps. */
+function MobileNav({ nav, current, onNavigate }: { readonly nav: readonly NavItem[]; readonly current?: string; readonly onNavigate?: (href: string) => void }): ReactNode {
   const confirmSignOut = useConfirmSignOut();
   const moreButton = useRef<View>(null);
   const s = useThemedStyles(createShellStyles);
@@ -241,10 +247,6 @@ function MobileFrame({ nav, current, onNavigate, children }: PropsWithChildren<{
   const go = (href: string): void => { setOpen(false); onNavigate?.(href); };
   return (
     <>
-      <View style={s.topBar}>
-        <Logo tone="auto" height={24} />
-      </View>
-      {children}
       {nav.length ? (
         <View role="navigation" aria-label={t("host.nav.label")} style={s.tabBar}>
           {tabs.map((item) => {
@@ -297,27 +299,30 @@ function MobileFrame({ nav, current, onNavigate, children }: PropsWithChildren<{
   );
 }
 
+function MobileFrame({ nav, current, onNavigate, children }: PropsWithChildren<{ readonly nav: readonly NavItem[]; readonly current?: string; readonly onNavigate?: (href: string) => void }>): ReactNode {
+  return <><MobileTopBar />{children}<MobileNav nav={nav} current={current} onNavigate={onNavigate} /></>;
+}
+
 /** Focused flows without sections (onboarding, access denied): the logo and sign-out, nothing else. */
-function BareFrame({ children }: PropsWithChildren): ReactNode {
+function BareTopBar(): ReactNode {
   const confirmSignOut = useConfirmSignOut();
   const s = useThemedStyles(createShellStyles);
   const palette = useColors();
   const t = useT();
   const auth = useAuth();
   return (
-    <>
-      <View style={s.topBar}>
-        <Logo tone="auto" height={24} />
-        {auth.state.status === "authenticated" ? (
-          <Pressable role="button" accessibilityLabel={t("common.signOut")} onPress={() => confirmSignOut()} style={[{ minHeight: MIN_TOUCH, justifyContent: "center" }, ring(palette.primary)]}>
-            <Text style={s.sidebarText}>{t("common.signOut")}</Text>
-          </Pressable>
-        ) : null}
-      </View>
-      {children}
-    </>
+    <View style={s.topBar}>
+      <Logo tone="auto" height={24} />
+      {auth.state.status === "authenticated" ? (
+        <Pressable role="button" accessibilityLabel={t("common.signOut")} onPress={() => confirmSignOut()} style={[{ minHeight: MIN_TOUCH, justifyContent: "center" }, ring(palette.primary)]}>
+          <Text style={s.sidebarText}>{t("common.signOut")}</Text>
+        </Pressable>
+      ) : null}
+    </View>
   );
 }
+
+function BareFrame({ children }: PropsWithChildren): ReactNode { return <><BareTopBar />{children}</>; }
 
 /**
  * What the persistent frame draws: the destinations and which one is current. A screen reports them (`Screen` does it in a layout
@@ -361,9 +366,18 @@ export function PersistentShell({ store, children }: PropsWithChildren<{ readonl
   const { width } = useWindowDimensions();
   const { nav, current } = useSyncExternalStore(own.subscribe, own.snapshot, own.snapshot);
   const content = <ShellFrameContext.Provider value={own}>{children}</ShellFrameContext.Provider>;
-  if (nav.length === 0) return <View style={s.root} testID="persistent-shell"><BareFrame>{content}</BareFrame></View>;
-  if (width >= WIDE) return <View style={[s.root, s.rootWide]} testID="persistent-shell"><Sidebar nav={nav} current={current} onNavigate={own.navigate} /><View style={s.scroll}>{content}</View></View>;
-  return <View style={s.root} testID="persistent-shell"><MobileFrame nav={nav} current={current} onNavigate={own.navigate}>{content}</MobileFrame></View>;
+  const hasNav = nav.length > 0;
+  const wide = width >= WIDE;
+  // One tree for every case: the content slot is always the second child of the root, so a screen that has no menu (onboarding), a
+  // resize across the breakpoint or a new menu never remounts the Stack (which would reset navigation and flash the content).
+  const chrome = !hasNav ? <BareTopBar /> : wide ? <Sidebar nav={nav} current={current} onNavigate={own.navigate} /> : <MobileTopBar />;
+  return (
+    <View style={[s.root, hasNav && wide && s.rootWide]} testID="persistent-shell">
+      {chrome}
+      <View style={s.scroll}>{content}</View>
+      {hasNav && !wide ? <MobileNav nav={nav} current={current} onNavigate={own.navigate} /> : null}
+    </View>
+  );
 }
 
 /**

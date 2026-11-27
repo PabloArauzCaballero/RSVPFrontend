@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { act, fireEvent, render, renderHook, screen } from "@testing-library/react";
 import { createTranslator } from "@rsvp/i18n";
 import { MOTION } from "@rsvp/ui";
@@ -66,6 +66,30 @@ describe("persistent frame", () => {
     fireEvent.click(screen.getByText("again 0"));
     expect(screen.getByText("again 1")).toBeTruthy();
     expect(store.publishes).toBe(1);
+  });
+
+  it.each([{ name: "wide", width: 1280 }, { name: "phone", width: 390 }])("$name: a screen without menu (onboarding), and back, never remounts what the frame hosts (the Stack)", async ({ width }) => {
+    setWidth(width);
+    const mounts = vi.fn();
+    function Host(): ReactNode { useEffect(() => { mounts(); }, []); return null; }
+    function Flow(): ReactNode {
+      const [bare, setBare] = useState(false);
+      return (
+        <PersistentShell>
+          <Host />
+          <Screen key={String(bare)} title={bare ? "Bienvenida" : "Resumen"} nav={bare ? [] : nav} current="summary" onNavigate={() => setBare((value) => !value)}><button onClick={() => setBare((value) => !value)}>toggle</button></Screen>
+        </PersistentShell>
+      );
+    }
+    renderApp(<Flow />, fakeClient({}).client);
+    expect(screen.getByRole("navigation")).toBeTruthy();
+    fireEvent.click(screen.getByText("toggle"));
+    expect(await screen.findByRole("heading", { level: 1, name: "Bienvenida" })).toBeTruthy();
+    expect(screen.queryByRole("navigation")).toBeNull();
+    fireEvent.click(screen.getByText("toggle"));
+    expect(await screen.findByRole("heading", { level: 1, name: "Resumen" })).toBeTruthy();
+    expect(screen.getByRole("navigation")).toBeTruthy();
+    expect(mounts).toHaveBeenCalledTimes(1);
   });
 
   it("a screen outside any frame (guest, account) still draws its own", () => {
