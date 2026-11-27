@@ -62,6 +62,11 @@ function Harness({ initial = {}, onParams }: { readonly initial?: UrlParams; rea
   return <PartnersScreen onNavigate={() => undefined} params={params} onParams={(next) => { onParams?.(next); setParams(next); }} />;
 }
 const next = (): void => { fireEvent.click(screen.getByTestId("partner-next")); };
+async function advanceTo(label: string): Promise<void> {
+  await waitFor(() => expect(screen.getByTestId("partner-next").getAttribute("aria-disabled")).not.toBe("true"));
+  await act(async () => { next(); });
+  await waitFor(() => expect(screen.getByRole("progressbar").getAttribute("aria-valuetext")).toBe(label));
+}
 const sent = (calls: readonly Call[], method: string, path: string): Call[] => calls.filter((call) => call.method === method && call.path === path);
 
 /** react-native-web reads `documentElement.clientWidth` (0 in jsdom: the narrow layout unless a test widens it). */
@@ -280,8 +285,7 @@ describe("A24 · «Crear partner» dialog", () => {
     fireEvent.click(await screen.findByTestId("draft-continue-i-1"));
     await screen.findByDisplayValue("Flores Sol");
     for (const label of ["Paso 3 de 6: Contacto", "Paso 4 de 6: Cobertura", "Paso 5 de 6: KYP", "Paso 6 de 6: Resumen"]) {
-      next();
-      await waitFor(() => expect(screen.getByRole("progressbar").getAttribute("aria-valuetext")).toBe(label));
+      await advanceTo(label);
     }
     expect(sent(calls, "PATCH", "/providers/admin/intakes/i-1").map((call) => Object.keys(call.body as object))).toEqual([["identity"], ["contact"], ["coverage"], ["kyp", "representativeInRegistration"]]);
     return calls;
@@ -468,8 +472,7 @@ describe("A24 · duplicate NIT (warnings.nitInUse, 409 NIT_IN_USE)", () => {
     fireEvent.click(await screen.findByTestId("draft-continue-i-1"));
     await screen.findByDisplayValue("Flores Sol");
     for (const label of ["Paso 3 de 6: Contacto", "Paso 4 de 6: Cobertura", "Paso 5 de 6: KYP"]) {
-      next();
-      await waitFor(() => expect(screen.getByRole("progressbar").getAttribute("aria-valuetext")).toBe(label));
+      await advanceTo(label);
     }
     return calls;
   }
