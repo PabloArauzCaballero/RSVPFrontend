@@ -24,6 +24,15 @@ describe("translation resources", () => {
   });
 });
 
+describe("R8a · gifts button on the invitation", () => {
+  it("publishes one label per gifts summary status in both languages", () => {
+    const es = createTranslator("es-BO");
+    const en = createTranslator("en-US");
+    expect([es("gifts.guest.cta.open"), es("gifts.guest.cta.empty"), es("gifts.guest.cta.closed")]).toEqual(["Ver regalos", "Lista de regalos (pronto)", "Ver regalos"]);
+    expect([en("gifts.guest.cta.open"), en("gifts.guest.cta.empty"), en("gifts.guest.cta.closed")]).toEqual(["View gifts", "Gift list (coming soon)", "View gifts"]);
+  });
+});
+
 describe("B6 · legal texts", () => {
   it("every section of both documents has a heading and a body in both languages, and both carry the same version", async () => {
     const { LEGAL_DOCUMENTS, legalBlocks } = await import("../src/index.js");
