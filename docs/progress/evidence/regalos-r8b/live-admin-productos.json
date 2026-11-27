@@ -1,5 +1,5 @@
 {
-  "date": "2026-11-27T03:16:37.847Z",
+  "date": "2026-11-27T08:31:55.247Z",
   "app": "http://localhost:8320",
   "checks": [
     {
@@ -74,16 +74,16 @@
   "wire": [
     "GET /providers/categories?… 200",
     "GET /providers/admin/moderation/listings?… 200",
-    "POST /providers/admin/listings/1fccf630-a70d-42fe-9385-5d2ff2312d4e/hide 200",
+    "POST /providers/admin/listings/7f9eb07b-4465-4e24-974f-cc91ea5f3022/hide 200",
     "GET /providers/categories?… 200",
     "GET /providers/admin/moderation/listings?… 200",
     "GET /providers/admin/moderation/listings?… 200",
-    "PUT /providers/admin/listings/742413f3-e43f-4243-b03f-f7efb0c09469/featured 200",
+    "PUT /providers/admin/listings/d70e9317-a5ef-43e7-849b-db478734a0cf/featured 200",
     "GET /providers/categories?… 200",
     "GET /providers/admin/moderation/listings?… 200",
     "GET /providers/admin/moderation/listings?… 200",
     "GET /providers/admin/moderation/listings?… 200",
-    "POST /providers/admin/listings/1fccf630-a70d-42fe-9385-5d2ff2312d4e/show 200",
+    "POST /providers/admin/listings/7f9eb07b-4465-4e24-974f-cc91ea5f3022/show 200",
     "GET /providers/categories?… 200",
     "GET /providers/admin/moderation/listings?… 200",
     "GET /providers/categories?… 200",

@@ -129,7 +129,7 @@ await check("L6", "filters reach the service: featured=false excludes the featur
 await check("L7", "show: the product is visible again, republished and NOT featured again", async () => {
   await page.getByTestId("products-tab-hidden").click();
   await page.getByTestId(`product-show-${A}`).click();
-  await page.getByText("Producto visible otra vez. No vuelve a estar destacado.").waitFor();
+  await page.getByText("Se quitó el ocultamiento. El producto recupera la publicación que tenía antes").waitFor();
   const publicRead = await http("GET", `/listings/${A}`, { token: null });
   assert.equal(publicRead.status, 200, `GET /listings/{id} after show: ${publicRead.status} ${JSON.stringify(publicRead.json).slice(0, 200)}`);
   const inbox = await http("GET", "/providers/admin/moderation/listings?view=HIDDEN");

@@ -1,8 +1,8 @@
 # R8b FE · Moderación del admin (`/admin/productos`)
 
 - Fecha: 2026-11-27. Rama `feat/regalos-r8b-moderacion`, creada desde `origin/feat/regalos-r6a-leads` (FE #147, punta `fbc73c27`).
-- Plan: `PLAN-REGALOS-PROVEEDORES.md` §5.13 (moderación), §5.14 (privacidad, PF-1), §8 fila R8; decisiones 17 y 18. BE: PR #169, `feat/regalos-r8b-moderacion` @ `07b3c855` (el recorrido en vivo de abajo corrió antes, contra `e2ea4cfb`).
-- Contratos: `generate --ref 07b3c855b96e7824057c3e72111a4103a17579f4` con el generador oficial (provider-catalog **3.11.0**; gift-list 1.16.0, celebration 1.6.0 sin cambio). Ningún archivo generado se editó a mano; `check:generated` y `check:source` pasan.
+- Plan: `PLAN-REGALOS-PROVEEDORES.md` §5.13 (moderación), §5.14 (privacidad, PF-1), §8 fila R8; decisiones 17 y 18. BE: PR #169, `feat/regalos-r8b-moderacion` @ `66a77ce7` (ronda 3b). El recorrido en vivo de abajo se repitió contra `66a77ce7` (ver «Ronda 2026-11-27: alineación con 66a77ce7»); la primera corrida fue contra `e2ea4cfb`.
+- Contratos: alineados con `66a77ce797debe86e98d8c3eab89b7476a6d2f07` (antes `07b3c855b96e7824057c3e72111a4103a17579f4`) con el generador oficial (provider-catalog **3.11.0**; gift-list 1.16.0, celebration 1.6.0 sin cambio). Ningún archivo generado se editó a mano; `check:generated` y `check:source` pasan.
 - Nivel: **TESTED** (unitarias + recorrido en Chrome real contra el servicio real provider-catalog sobre PostgreSQL 16). **NO VERIFIED, NO DONE**: falta el recorrido con el gateway Docker (Kong) y TEST, y el recorrido real de la pantalla del proveedor.
 
 ## Qué se construyó (vertical slice: el admin oculta un producto y deja de recomendarse)
@@ -76,6 +76,30 @@ Reproducir: levantar PG y el arnés (ver cabecera de `be-harness.mjs`), `cors-pr
 - **No repetido: recorrido en vivo L1 a L9 contra `07b3c855`** (sobre todo L7, Mostrar). El arnés necesita PostgreSQL 16, compilar el servicio y Chrome; Docker/Kong no corren en el sandbox y no se levantó el arnés en esta ronda. Queda cubierto por pruebas unitarias contra el contrato regenerado; falta el recorrido.
 - gitleaks (`go install github.com/zricethezav/gitleaks/v8@latest`, v8.30.x): `gitleaks detect --log-opts="origin/chore/deploy-contabo-coolify..HEAD"` sobre los commits de esta rama: **no leaks found**. Un escaneo de todas las refs del clon marca 17 falsos positivos `generic-api-key` en commits de otras ramas y evidencia histórica (fixtures de pruebas), ajenos a este PR. Una segunda corrida independiente del revisor también dio «no leaks found» (exit 0).
 - La prueba de M2 busca el texto concreto del error dentro del diálogo; comprobado que falla si se quita `error={...}` de `ReasonDialog`.
+
+## Ronda 2026-11-27: alineación con BE `66a77ce7` y recorrido en vivo repetido
+
+BE #169 avanzó de `07b3c855` a `66a77ce7`; solo cambiaron descripciones de provider-catalog (sigue 3.11.0). Cambia la descripción de `POST /providers/admin/listings/{id}/show` y la de `completeness` (catálogo propio `SNAPSHOT_V1`: `null` tras mostrar; mostrar restaura la publicación previa aunque la ficha esté INCOMPLETE, pero las lecturas públicas solo sirven COMPLETE). La pantalla ya trata `completeness` nulo (`state ? <Chip…> : null`) y el texto `admin.products.done.shown` (es-BO y en-US) ya dice «solo se muestra si su ficha está completa y su proveedor está verificado»: coherente, sin cambios de i18n.
+
+| Comando (worktree limpio, Node 22.23.5) | Resultado |
+|---|---|
+| `corepack yarn install --immutable` | OK |
+| `RSVP_BACKEND_REPO=/home/user/RSVPBackend corepack yarn workspace @rsvp/contracts generate --ref 66a77ce797debe86e98d8c3eab89b7476a6d2f07` | 8 contratos, provider-catalog 3.11.0; cambian lock, spec, `generated/index.ts` y `generated/provider-catalog.ts` (solo descripciones) |
+| `corepack yarn workspace @rsvp/contracts check:generated` | OK |
+| `RSVP_BACKEND_REPO=/home/user/RSVPBackend corepack yarn workspace @rsvp/contracts check:source` | OK contra `66a77ce7` |
+| `corepack yarn typecheck` / `corepack yarn lint` | 19/19 / 19/19 |
+| `@rsvp/universal` / `@rsvp/query-hooks` / `@rsvp/i18n` test | 805/805 / 185/185 / 15/15 |
+| `corepack yarn workspace @rsvp/seo-web build` | OK |
+
+### Recorrido en vivo L1 a L9 contra `66a77ce7`: 9/9 PASS
+
+- BE: worktree del BE en `66a77ce7`, `yarn install --immutable`, `turbo run build --filter=@rsvp/provider-catalog-service...`, harness `be-harness.mjs` copiado a `apps/provider-catalog-service/test/r8b-fe-harness.mjs`; servicio provider-catalog real, PostgreSQL 16.15 local (`/var/tmp`, puerto 55701), migraciones de producción (incluida `20261127000100_listing_moderation`). Sin Docker ni Kong (el daemon de Docker no corre en el sandbox).
+- FE: Expo web (puerto 8320) con `EXPO_PUBLIC_API_URL` al `cors-proxy.mjs` y JWT de ADMIN de llave desechable; Google Chrome real (`/usr/bin/google-chrome`) con Playwright.
+- `STATE=… APP=http://localhost:8320 API=http://localhost:28010 CHROMIUM_PATH=/usr/bin/google-chrome node apps/universal/scripts/live/admin-productos.mjs` -> **9/9 PASS**; axe sin críticos ni serios; capturas y `live-admin-productos.json` regenerados (sin tokens: 0 coincidencias de `eyJ`).
+- Primera corrida 8/9: L7 falló porque el script esperaba el texto antiguo «Producto visible otra vez…» (anterior a la corrección M3); el servicio sí mostró el producto (`GET /listings/{id}` 200). Defecto del script, no de la pantalla: se actualizó la espera al texto vigente de `admin.products.done.shown` y la segunda corrida pasó 9/9.
+- Control de rol directo al servicio: `GET /providers/admin/moderation/listings` con el JWT del dueño del proveedor -> 403; sin token -> 401. El 403 en la interfaz está cubierto por pruebas unitarias; no hay captura en Chrome de 403 ni de 5xx (L8 cubre red caída con reintento).
+- gitleaks v8.28.0 sobre el rango de esta ronda: no leaks found (ver comando en el PR).
+- Sigue sin verificar: Kong/TEST, pantalla del proveedor en Chrome, línea base visual, iOS y Android.
 
 ## No verificado y por qué
 
