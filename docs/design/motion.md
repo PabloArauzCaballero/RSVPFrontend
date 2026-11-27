@@ -175,3 +175,20 @@ Reproducir: exportar con `EXPO_PUBLIC_API_URL=http://localhost:28000 npx expo ex
 2. Usa una pieza existente. Si necesitas un valor nuevo, agrégalo a `MOTION` aquí, no en la pantalla.
 3. Solo `transform` y `opacity`. Transición, no keyframes, salvo el pulso de carga.
 4. Prueba reduced-motion, interrupción y (si hay lista) el tope. Mide en Chrome real.
+
+## 8. Navegación entre pantallas (`fix/app-transiciones-suaves`)
+
+Quién decide cada movimiento al pasar de una pantalla a otra en las áreas con sesión (`(host)`, `(provider)`, `(admin)`). Código: `apps/universal/src/platform/navigation.tsx` y `PersistentShell` en `apps/universal/src/host/shell.tsx`. (Los valores de `screenMs`/`sectionMs` de la sección 2 son los de `packages/ui/src/motion-tokens.ts`: 360 / 220 ms; la tabla de arriba quedó atrasada.)
+
+| Momento | Frecuencia | Propósito | Decisión |
+|---|---|---|---|
+| Barra lateral, barra superior e inferior | decenas/día | continuidad | No se mueven ni se remontan: el marco se monta una vez en el layout del grupo y solo cambia el resaltado. Una pantalla informa al marco (`ShellPublisher`, solo mientras es la enfocada; el `Stack` conserva las anteriores montadas y no deben pisar el resaltado) |
+| Destino o pestaña hermana | decenas/día | evitar el salto | Sin deslizamiento del `Stack` (`animation: "none"`); el único movimiento es el fundido del contenido (`ScreenTransition`) |
+| Pantalla de detalle (un invitado, un ítem) | ocasional | dirección | Empuje nativo de la plataforma y gesto de volver |
+| Cruzar el ancho de escritorio (960 px) | raro | estabilidad | Un solo árbol: el `Stack` no se remonta ni parpadea |
+| Esqueleto de carga | ocasional | estado | Aparece solo si la espera supera `MOTION.loadingDelayMs` (150 ms): un chunk o dato en caché nunca lo muestra |
+| Movimiento reducido (sistema) | siempre | accesibilidad | Sin deslizamiento en ninguna pantalla; el fundido del contenido también se anula |
+
+Las zonas se precargan en segundo plano al montar el marco (`usePrefetchZone`) para que el primer cambio de pestaña no espere un chunk. Interrupción: el `Stack` resuelve cada toque contra el estado actual; navegar a mitad de otra transición termina en el último destino, una sola pantalla visible.
+
+Pruebas: `apps/universal/test/shell-persistence.test.tsx` (vitest) y `apps/universal/e2e/transitions.spec.ts` (Playwright, proyecto `transitions`): marco sin remontes, cruce de ancho, movimiento reducido (con control no vacío), interrupción, sin esqueleto en destinos en caché, medición de cuadros. No se prueba en iOS/Android nativos.

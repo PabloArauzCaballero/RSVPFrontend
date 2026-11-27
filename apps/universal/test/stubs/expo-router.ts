@@ -9,3 +9,4 @@ export const useRouter = () => ({ push: () => undefined, replace: () => undefine
 export const Redirect = ({ href }: { href: string }) => `redirect:${href}` as unknown as null;
 export const Stack = () => null;
 export type Href = string;
+export const useNavigation = () => ({ isFocused: () => true, addListener: () => () => undefined });

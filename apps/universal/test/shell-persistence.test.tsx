@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { act, fireEvent, render, renderHook, screen } from "@testing-library/react";
+import { act, fireEvent, renderHook, screen } from "@testing-library/react";
 import { createTranslator } from "@rsvp/i18n";
 import { MOTION } from "@rsvp/ui";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";

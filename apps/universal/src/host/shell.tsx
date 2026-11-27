@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type PropsWithChildren, type ReactNode } from "react";
+import { useNavigation } from "expo-router";
 import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type LayoutChangeEvent, type ViewStyle } from "react-native";
 import { radius, spacing } from "@rsvp/design-tokens";
 import { Logo, NavIcon, OverlayEnter, PageIntro, PressFeedback, ScreenTransition, SwitchRow, StickyActions, fonts, overlayAnimation, useColors, useThemedStyles, type Palette } from "@rsvp/ui";
@@ -351,6 +352,22 @@ export class ShellStore {
   }
 }
 
+/**
+ * Reports what a screen draws to the frame, but only while that screen is the focused one. The `Stack` keeps earlier screens mounted
+ * (and they re-render on their own queries), so an unfocused screen must never overwrite the highlight of the one in front. Runs in a
+ * layout effect: the highlight is right in the first frame.
+ */
+function ShellPublisher({ store, nav, current, onNavigate }: { readonly store: ShellStore; readonly nav: readonly NavItem[]; readonly current: string | undefined; readonly onNavigate: ((href: string) => void) | undefined }): null {
+  const navigation = useNavigation();
+  const focused = useSyncExternalStore(
+    (notify) => { const unfocus = navigation.addListener("blur", notify); const focus = navigation.addListener("focus", notify); return () => { unfocus(); focus(); }; },
+    () => navigation.isFocused(),
+    () => true
+  );
+  useLayoutEffect(() => { if (focused) store.publish(nav, current, onNavigate); });
+  return null;
+}
+
 const ShellFrameContext = createContext<ShellStore | null>(null);
 /** The store of the persistent frame this screen sits in, or `null` when it draws its own (guest and account screens, tests). */
 export const useShellStore = (): ShellStore | null => useContext(ShellFrameContext);
@@ -394,9 +411,8 @@ export function Screen({ title, intro, nav, current, onNavigate, actions, menu, 
   const wide = width >= WIDE;
   const items = nav ?? [];
   const shell = useShellStore();
-  // Before paint, so the highlight is already right in the first frame of the new screen.
-  useLayoutEffect(() => { shell?.publish(items, current, onNavigate); });
   const destination = items.find((item) => isCurrentDestination(item, current));
+  const publisher = shell ? <ShellPublisher store={shell} nav={items} current={current} onNavigate={onNavigate} /> : null;
   const sectionTabs = destination?.tabs;
   // A change of destination fades in with a short rise, sibling tabs only fade; scroll returns to the top and focus goes to the h1 (docs/design/motion.md).
   const actionsInHeader = width >= ACTIONS_IN_HEADER;
@@ -422,7 +438,7 @@ export function Screen({ title, intro, nav, current, onNavigate, actions, menu, 
         <ScrollView role="main" tabIndex={0} style={s.scroll} contentContainerStyle={[s.content, s.contentWide]} keyboardShouldPersistTaps="handled">{content}</ScrollView>
       </View>
     );
-    if (shell) return main;
+    if (shell) return <>{publisher}{main}</>;
     if (items.length === 0) return <View style={s.root}><BareFrame>{main}</BareFrame></View>;
     return <View style={[s.root, s.rootWide]}><Sidebar nav={items} current={current} onNavigate={onNavigate} />{main}</View>;
   }
@@ -441,7 +457,7 @@ export function Screen({ title, intro, nav, current, onNavigate, actions, menu, 
       <View style={s.mSheet}>{content}{stickyActions}</View>
     </ScrollView>
   );
-  if (shell) return body;
+  if (shell) return <>{publisher}{body}</>;
   if (items.length === 0) return <View style={s.root}><BareFrame>{body}</BareFrame></View>;
   return <View style={s.root}><MobileFrame nav={items} current={current} onNavigate={onNavigate}>{body}</MobileFrame></View>;
 }
