@@ -275,7 +275,6 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
     const chosen = unitsOf(item);
     const quantity = buttonQuantity(state, chosen);
     const note = promptNote?.itemId === item.id ? promptNote.key : null;
-    const heldUnits = held?.units ?? item.viewer?.units ?? 0;
     return (
       <li key={item.id} className={state.unavailable ? 'gift-row gift-row--unavailable' : 'gift-row'} data-gift-id={item.id} data-source={item.source} {...(state.unavailable ? { 'data-availability': 'UNAVAILABLE' } : {})}>
         <GiftPhoto item={item} url={listing?.imageUrl} t={t} />
@@ -291,13 +290,13 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
           </div>
         ) : <UnitsAndGroup id={item.id} state={state} t={t} />}
         {item.status !== 'AVAILABLE' && !state.group ? <p className="guest-chip" data-tone={item.status === 'PENDING_REVIEW' ? 'wait' : 'yes'}>{t(`gifts.guest.status.${item.status}`)}</p> : null}
-        {item.reservedByName ? <p className="rsvp-hint" data-testid="reserved-by">{t('gifts.guest.reservedBy', { name: item.reservedByName })}</p> : null}
+        {item.reservedByName && !state.group ? <p className="rsvp-hint" data-testid="reserved-by">{t('gifts.guest.reservedBy', { name: item.reservedByName })}</p> : null}
         {held || state.role ? (
           <div className="gift-mine" data-testid="my-reservation">
             <p>{state.role === 'COORDINATOR' ? t('gifts.guest.group.youCoordinate') : state.role === 'CONTRIBUTOR' ? t('gifts.guest.group.youContribute') : held?.status === 'PENDING_REVIEW' ? t('gifts.guest.mine.pendingLabel') : t('gifts.guest.mine.label')}</p>
             {state.role === 'COORDINATOR' ? <p className="rsvp-hint">{t('gifts.guest.group.youCoordinateHelp')}</p> : null}
             {state.role === 'CONTRIBUTOR' ? <p className="rsvp-hint">{t('gifts.guest.group.youContributeHelp')}</p> : null}
-            {state.role === 'SOLE' && heldUnits > 0 && state.showUnits ? <p className="rsvp-hint">{t('gifts.guest.units.mine', { count: heldUnits })}</p> : null}
+            {state.role === 'SOLE' && state.heldUnits > 0 && state.showUnits ? <p className="rsvp-hint">{t('gifts.guest.units.mine', { count: state.heldUnits })}</p> : null}
             {held ? <button type="button" className="rsvp-button rsvp-button--secondary" disabled={cancel.isPending} onClick={() => { setCancelled(null); cancel.reset(); setCancelTarget({ item, reservation: held }); }} aria-label={t('gifts.guest.mine.cancelFor', { title: item.title })}>{state.role === 'CONTRIBUTOR' ? t('gifts.guest.group.leave') : t('gifts.guest.mine.cancel')}</button> : null}
           </div>
         ) : null}
@@ -313,7 +312,7 @@ function GiftBody({ slug, celebrationId, celebrationTitle, locale, initial, only
             )}
           </div>
         ) : null}
-        {asked && !opened && !state.unavailable ? <PurchasePromptCard id={item.id} title={item.title} units={asked.units} reminder={asked.phase === 'reminder'} t={t} onAnswer={(answer) => answerPrompt(item, answer)} /> : null}
+        {asked && !opened && !state.unavailable ? <PurchasePromptCard id={item.id} title={item.title} units={asked.units} reminder={asked.phase === 'reminder'} t={t} onAnswer={(answer) => answerPrompt(item, answer)} claimAnnouncement={() => prompt.claimAnnouncement(item.id)} /> : null}
         {note ? <FocusNote tone="info" testId={`gift-prompt-note-${item.id}`}><p>{t(note)}</p></FocusNote> : null}
         {opened ? form(item) : (
           <>

@@ -1202,7 +1202,7 @@ export interface components {
             contributorNames?: string[];
             /** @description In a coordinated gift, how many chip in besides the coordinator ('3 personas aportan'). */
             contributors?: number;
-            /** @description The coordinator's name only if they chose to show it (showName); otherwise null. */
+            /** @description The coordinator's name only if they chose to show it (showName) AND the host allows names for guests (showRequesterToGuests, the same precedence as reservedByName); otherwise null. */
             coordinatorName?: string | null;
             /** @description The price Provider Catalog charges now (the chosen version's price when the gift has a variantCode, else the product's), or null when it could not be read: show price (the snapshot) then. M27. */
             currentPrice?: {
@@ -1519,7 +1519,7 @@ export interface components {
                 contributorNames?: string[];
                 /** @description In a coordinated gift, how many chip in besides the coordinator ('3 personas aportan'). */
                 contributors?: number;
-                /** @description The coordinator's name only if they chose to show it (showName); otherwise null. */
+                /** @description The coordinator's name only if they chose to show it (showName) AND the host allows names for guests (showRequesterToGuests, the same precedence as reservedByName); otherwise null. */
                 coordinatorName?: string | null;
                 /** @description The price Provider Catalog charges now (the chosen version's price when the gift has a variantCode, else the product's), or null when it could not be read: show price (the snapshot) then. M27. */
                 currentPrice?: {

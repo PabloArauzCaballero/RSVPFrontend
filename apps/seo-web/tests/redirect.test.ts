@@ -269,4 +269,18 @@ describe("R5 · /r resolves the WhatsApp message on the server", () => {
     expect(response.status).toBe(400);
     expect(response.headers.get("location")).toBeNull();
   });
+
+  it("M-6 · the slug has the contract's shape (lowercase words with single hyphens, at most 100): anything else is dropped, never a 422", async () => {
+    const fetchFn = gateway(upstream302(WA));
+    for (const slug of ["Ana_y_Luis", "ana--luis", "-ana", "ana-", "ana luis", "a".repeat(101)]) {
+      fetchFn.mockClear();
+      await GET(new Request(`http://site.test/r/${LISTING}?destination=WHATSAPP&celebrationSlug=${encodeURIComponent(slug)}`), ctx);
+      expect((fetchFn.mock.calls[0] as unknown as [URL])[0].searchParams.has("celebrationSlug")).toBe(false);
+    }
+    for (const slug of ["ana-y-luis", "boda2026", "a".repeat(100)]) {
+      fetchFn.mockClear();
+      await GET(new Request(`http://site.test/r/${LISTING}?destination=WHATSAPP&celebrationSlug=${slug}`), ctx);
+      expect((fetchFn.mock.calls[0] as unknown as [URL])[0].searchParams.get("celebrationSlug")).toBe(slug);
+    }
+  });
 });

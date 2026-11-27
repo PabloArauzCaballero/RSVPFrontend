@@ -1,0 +1,67 @@
+--- 1. Ana: «Faltan 12 de 12», 3 unidades, «Pedir por WhatsApp» por /r, vuelve y «Sí» reserva
+PASS  la tarjeta dice «Faltan 12 de 12»
+PASS  precio vigente Bs 450 en la tarjeta
+PASS  el selector de unidades marca 3
+PASS  dos botones: «Ver en la tienda» y «Pedir por WhatsApp»
+PASS  ningún enlace sale directo al proveedor: los dos van por /r/{listingId}
+      /r/7e33b691-fc1f-4dc9-83ea-f410335dbbaa?destination=PRODUCT_PAGE&surface=GIFT_LIST&celebrationId=0dfef8a0-7e96-4eda-ad39-24e67aca07ef&celebrationSlug=ana-y-luis&giftItemId=ee4d9da4-ffc4-48e4-b4b3-9221bd2a8efb&quantity=3&locale=es-BO | /r/7e33b691-fc1f-4dc9-83ea-f410335dbbaa?destination=WHATSAPP&surface=GIFT_LIST&celebrationId=0dfef8a0-7e96-4eda-ad39-24e67aca07ef&celebrationSlug=ana-y-luis&giftItemId=ee4d9da4-ffc4-48e4-b4b3-9221bd2a8efb&quantity=3&locale=es-BO
+      wa.me URL: https://wa.me/59170000000?text
+      texto: Hola Tortas Walk 1795764017850, vengo de DOne. Quiero regalar Vajilla Walk R5 × 3, precio Bs 450, para Boda de Ana y Luis el 12 de diciembre de 2026.
+PASS  wa.me con solo el parámetro text (sin utm_* ni correlationId)
+PASS  el texto exacto: proveedor, producto × 3, precio vigente, celebración y fecha en su zona
+PASS  PF-1: el mensaje no lleva datos del invitado (ni nombre ni credencial)
+PASS  el intento se guardó en este navegador (id, botón, unidades, hora) y nada más
+PASS  al volver aparece «¿Compraste 3 × Vajilla Walk R5?»
+      ¿Compraste 3 × Vajilla Walk R5?
+PASS  «Sí» abre la reserva con las 3 unidades
+PASS  Gift: 3 reservadas, quedan 9 y el regalo sigue disponible
+      {"unitsReserved":3,"unitsLeft":9,"status":"AVAILABLE"}
+--- 2. Beto: reserva 2 de 12 y ve «Faltan 7 de 12»
+PASS  Beto ve «Faltan 9 de 12» (las 3 de Ana)
+PASS  Gift: 5 reservadas entre Ana y Beto, quedan 7
+      {"unitsReserved":5,"unitsLeft":7}
+PASS  PF-1: lo que ve otro invitado no lleva ids, teléfonos ni correos de los demás
+--- 3. Carla: «Ver en la tienda», vuelve, «Todavía no», un recordatorio y luego nada
+PASS  «Ver en la tienda» llega a la tienda del proveedor con utm_* y correlationId (solo WhatsApp va limpio)
+PASS  «Todavía no» confirma el recordatorio único
+PASS  al abrir la lista otra vez aparece el recordatorio
+PASS  el recordatorio lo dice
+PASS  la tercera vez ya no pregunta
+--- 4. Aporte coordinado: Carla coordina, Beto se suma, Ana solo ve conteos
+PASS  antes de que alguien coordine, nadie tiene botones del proveedor
+PASS  el coordinador (Carla) ve los botones del proveedor
+PASS  Beto ve «Carla lo comprará» (ella eligió mostrar su nombre)
+PASS  Beto, que aún no se suma, no tiene botones del proveedor
+PASS  Beto es aportante: sin botones del proveedor y con «Salirme del regalo»
+PASS  Ana ve «1 persona aporta»
+PASS  PF-1: Ana no ve el nombre del aportante
+PASS  API: los nombres de aportantes solo llegan al coordinador
+      {"ana":[],"carla":["Beto"]}
+PASS  Carla (coordinadora) ve «Se sumaron: Beto», solo el nombre que Beto quiso mostrar
+--- 5. Matriz 360/768/1280 × claro/oscuro × es-BO/en-US con axe (incluye contraste) sobre la lista con tarjeta, selector y aporte
+PASS  360px light es-BO: sin scroll horizontal y axe sin violaciones serias o críticas (0 menores)
+PASS  360px light en-US: sin scroll horizontal y axe sin violaciones serias o críticas (0 menores)
+PASS  360px dark es-BO: sin scroll horizontal y axe sin violaciones serias o críticas (0 menores)
+PASS  360px dark en-US: sin scroll horizontal y axe sin violaciones serias o críticas (0 menores)
+PASS  768px light es-BO: sin scroll horizontal y axe sin violaciones serias o críticas (0 menores)
+PASS  768px light en-US: sin scroll horizontal y axe sin violaciones serias o críticas (0 menores)
+PASS  768px dark es-BO: sin scroll horizontal y axe sin violaciones serias o críticas (0 menores)
+PASS  768px dark en-US: sin scroll horizontal y axe sin violaciones serias o críticas (0 menores)
+PASS  1280px light es-BO: sin scroll horizontal y axe sin violaciones serias o críticas (0 menores)
+PASS  1280px light en-US: sin scroll horizontal y axe sin violaciones serias o críticas (0 menores)
+PASS  1280px dark es-BO: sin scroll horizontal y axe sin violaciones serias o críticas (0 menores)
+PASS  1280px dark en-US: sin scroll horizontal y axe sin violaciones serias o críticas (0 menores)
+--- 6. Casos negativos contra Gift real
+PASS  units 0 -> 422 INVALID_UNITS
+      "INVALID_UNITS"
+PASS  reservar sin credencial -> 401
+      401
+PASS  Ana ya tiene reserva de este regalo -> 409 ALREADY_RESERVED
+      "ALREADY_RESERVED"
+PASS  otro invitado toma 6 mientras Carla llena el formulario
+      201
+PASS  409 INSUFFICIENT_UNITS: el formulario dice cuántas quedan y conserva lo escrito
+      Ya solo queda 1 unidad. Elige 1 y vuelve a intentarlo.
+PASS  el nombre escrito sigue ahí
+
+TODO PASS

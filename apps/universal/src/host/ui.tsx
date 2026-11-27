@@ -179,7 +179,7 @@ export function ToggleChip({ label, on, onPress, testID, disabled = false }: { r
 }
 
 /** Host and admin actions are the shared `@rsvp/ui` Button; only the busy/disabled vocabulary is adapted here. */
-export function ActionButton({ label, accessibilityLabel, onPress, variant = "primary", busy = false, disabled = false, testID, icon }: { readonly icon?: string; readonly label: string; /** Longer accessible name for repeated buttons; it must start with the visible `label` (WCAG 2.5.3). */ readonly accessibilityLabel?: string; readonly onPress: () => void; readonly variant?: "primary" | "secondary" | "danger"; readonly busy?: boolean; readonly disabled?: boolean; readonly testID?: string }): ReactNode {
+export function ActionButton({ label, onPress, variant = "primary", busy = false, disabled = false, testID, icon, accessibilityLabel }: { readonly icon?: string; readonly label: string; /** The name a screen reader says, when the visible label alone does not say what it acts on. */ readonly accessibilityLabel?: string; readonly onPress: () => void; readonly variant?: "primary" | "secondary" | "danger"; readonly busy?: boolean; readonly disabled?: boolean; readonly testID?: string }): ReactNode {
   return <Button accessibilityLabel={accessibilityLabel ?? label} icon={icon} variant={variant} state={busy ? "loading" : disabled ? "disabled" : "default"} onPress={onPress} testID={testID}>{label}</Button>;
 }
 

@@ -27,7 +27,8 @@ const CONTEXT_KEYS = ["surface", "celebrationId", "guestId", "locale", "country"
  * the guest's name, phone or `text` never reach it (PF-1), and the backend ignores any other key.
  */
 const GIFT_CONTEXT: Readonly<Record<string, RegExp>> = {
-  celebrationSlug: /^[a-z0-9][a-z0-9_-]{0,119}$/i,
+  // The contract's own slug: lowercase words joined by single hyphens, at most 100 characters (anything else is a 422 INVALID_LEAD_CONTEXT).
+  celebrationSlug: /^(?=.{1,100}$)[a-z0-9]+(?:-[a-z0-9]+)*$/,
   giftItemId: UUID,
   variant: UUID,
   quantity: /^[1-9][0-9]{0,5}$/
