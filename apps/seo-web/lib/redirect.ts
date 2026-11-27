@@ -9,8 +9,6 @@ import { forwardedFor } from "./client-address";
 
 export const REDIRECT_STATUS = 302;
 export const DESTINATIONS = ["OFFICIAL_SITE", "LANDING", "WHATSAPP", "PHONE", "EMAIL", "INSTAGRAM", "PRODUCT_PAGE"] as const;
-/** Surfaces Provider Catalog accepts; the backend validates `surface` (an unknown one is its 422), so it is forwarded as received, not filtered here. */
-export const SURFACES = ["PUBLIC_SITE", "SEARCH", "CELEBRATION_SITE", "GIFT_LIST", "EMAIL", "APP", "QUOTE_FORM", "PREVIEW"] as const;
 export const CORRELATION_HEADER = "x-correlation-id";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -18,11 +16,22 @@ const UTM_PREFIX = "utm_";
 /**
  * Context the backend validates and stores with the lead (RawLeadContext). `ctx` (R6a) is the signed lead context Gift Lists gives
  * a celebration member: it is forwarded to Provider Catalog unchanged so the member's own click is not billed, and it is never copied
- * into the partner URL (`withAttribution` only carries utm_* and correlationId). Since 3.9.0 the portal's own ctx (PROVIDER_OWNER, PREVIEW) travels the same way,
- * and `eventType` (the celebration's type, from the link) is forwarded for the provider's report. `sessionId` is no longer sent (M34): the visitor is the
- * server's hash of address and user agent, never a value the client chooses.
+ * into the partner URL (`withAttribution` only carries utm_* and correlationId). A click always redirects: an empty, oversized or malformed `ctx` is
+ * dropped here (an oversized one would be a 422 INVALID_LEAD_CONTEXT), so the click is evaluated as an ordinary visitor's and still redirects.
+ * Since 3.9.0 the portal's own ctx (PROVIDER_OWNER, PREVIEW) travels the same way. `eventType` (the celebration's type, from the link) is forwarded for the
+ * provider's report only when it is a type code; `sessionId` is no longer sent (M34): the visitor is the server's hash of address and user agent.
  */
-const CONTEXT_KEYS = ["surface", "celebrationId", "guestId", "locale", "country", "city", "ctx", "eventType"] as const;
+const CONTEXT_KEYS = ["surface", "celebrationId", "guestId", "locale", "country", "city", "eventType"] as const;
+/**
+ * Provider Catalog (feat/regalos-r6a-leads-v2, server.ts GET /r/:lid) rejects with 422 INVALID_LEAD_CONTEXT only a `ctx` longer than this; any other
+ * value it cannot verify is ignored (the click is billed as a visitor's). The same code is shared by sessionId, surface, celebrationId, guestId, country,
+ * city and referrer, so a 422 is not evidence of a bad `ctx` and the call is NOT retried: the oversized `ctx` is filtered here, before calling.
+ */
+const MAX_CTX_LENGTH = 512;
+/** A signed token is printable ASCII without spaces; anything else (control characters, spaces) is not one and is not worth a 422. */
+const CTX_SHAPE = /^[\x21-\x7e]+$/;
+/** An event type code (WEDDING, BABY_SHOWER): anything else is dropped so the click still redirects instead of failing upstream. */
+const EVENT_TYPE_SHAPE = /^[A-Z][A-Z0-9_]{1,59}$/;
 const BAD_REQUEST = 400;
 const NOT_FOUND = 404;
 const UNPROCESSABLE = 422;
@@ -77,13 +86,21 @@ export async function resolveRedirect(request: RedirectRequest): Promise<Redirec
   const requested = request.searchParams.get("destination");
   const destination = requested !== null && (DESTINATIONS as readonly string[]).includes(requested) ? requested : null;
 
-  const upstream = new URL(`${apiBaseUrl()}/r/${request.listingId}`);
-  if (destination) upstream.searchParams.set("destination", destination);
-  for (const key of CONTEXT_KEYS) {
-    const value = request.searchParams.get(key);
-    if (value) upstream.searchParams.set(key, value);
-  }
-  if (!upstream.searchParams.has("surface")) upstream.searchParams.set("surface", "PUBLIC_SITE");
+  const rawCtx = request.searchParams.get("ctx");
+  const ctx = rawCtx !== null && rawCtx.length <= MAX_CTX_LENGTH && CTX_SHAPE.test(rawCtx) ? rawCtx : null;
+
+  const upstreamUrl = (withCtx: string | null): URL => {
+    const url = new URL(`${apiBaseUrl()}/r/${request.listingId}`);
+    if (destination) url.searchParams.set("destination", destination);
+    for (const key of CONTEXT_KEYS) {
+      const value = request.searchParams.get(key);
+      if (!value || (key === "eventType" && !EVENT_TYPE_SHAPE.test(value))) continue;
+      url.searchParams.set(key, value);
+    }
+    if (withCtx) url.searchParams.set("ctx", withCtx);
+    if (!url.searchParams.has("surface")) url.searchParams.set("surface", "PUBLIC_SITE");
+    return url;
+  };
 
   const headers: Record<string, string> = { [CORRELATION_HEADER]: correlationId, ...forwardedFor(request.clientAddress) };
   if (request.userAgent) headers["user-agent"] = request.userAgent;
@@ -91,7 +108,7 @@ export async function resolveRedirect(request: RedirectRequest): Promise<Redirec
 
   try {
     // redirect: "manual" so the 302 (and its Location) is read here and never followed server-side.
-    const response = await (request.fetchFn ?? fetch)(upstream, { method: "GET", headers, redirect: "manual", cache: "no-store" });
+    const response = await (request.fetchFn ?? fetch)(upstreamUrl(ctx), { method: "GET", headers, redirect: "manual", cache: "no-store" });
     const location = response.headers.get("location");
     if (REDIRECT_STATUSES.has(response.status) && location) return { kind: "redirect", location: withAttribution(location, request.searchParams, correlationId), correlationId };
     return { kind: "failure", ...failureOf(response.status), correlationId };

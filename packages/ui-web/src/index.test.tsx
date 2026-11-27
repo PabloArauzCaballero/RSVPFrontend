@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import axe from 'axe-core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { Button, Card, PartnerLink, partnerRedirectHref, partnerShareHref, Checkbox, ComponentCatalog, DatePicker, FileUpload, Input, Modal, Select, Sheet, Table, Toast, UiProvider, componentStates } from './index';
+import { Button, Card, PartnerLink, partnerRedirectHref, Checkbox, ComponentCatalog, DatePicker, FileUpload, Input, Modal, Select, Sheet, Table, Toast, UiProvider, componentStates } from './index';
 
 afterEach(cleanup);
 
@@ -130,25 +130,72 @@ describe('PartnerLink: always through /r/{listingId}', () => {
   it('refuses a partner URL instead of a listing id', () => {
     expect(() => partnerRedirectHref('https://tienda.example/x')).toThrow(/listing id/);
   });
-  it('R6a: carries the member lead context as ctx, encoded, and the PREVIEW surface', () => {
+  it('R6a: partnerRedirectHref carries the member lead context as ctx, encoded, and supports the PREVIEW surface', () => {
     const ctx = 'lead context+/=de prueba';
     const url = new URL(partnerRedirectHref(ID, { destination: 'PRODUCT_PAGE', surface: 'GIFT_LIST', celebrationId: 'c1', ctx }), 'http://site.test');
     expect(url.pathname).toBe(`/r/${ID}`);
     expect(url.searchParams.get('ctx')).toBe(ctx);
     expect(url.searchParams.get('celebrationId')).toBe('c1');
     expect(partnerRedirectHref(ID, { surface: 'PREVIEW' })).toBe(`/r/${ID}?surface=PREVIEW`);
-    render(<PartnerLink listingId={ID} surface="GIFT_LIST" celebrationId="c1" ctx={ctx}>Ir</PartnerLink>);
-    expect(new URL(screen.getByRole('link', { name: 'Ir' }).getAttribute('href') ?? '', 'http://site.test').searchParams.get('ctx')).toBe(ctx);
   });
   it('R6a: no ctx when there is none (guest, public read, older server)', () => {
     expect(partnerRedirectHref(ID, { surface: 'GIFT_LIST', celebrationId: 'c1', ctx: null })).toBe(`/r/${ID}?surface=GIFT_LIST&celebrationId=c1`);
     expect(partnerRedirectHref(ID, { surface: 'GIFT_LIST', celebrationId: 'c1', ctx: '' })).not.toContain('ctx');
   });
-  it('R6a · M-4: the link to copy or share NEVER carries ctx (it is a bearer: it would give free clicks to whoever holds it)', () => {
-    const shared = partnerShareHref(ID, { destination: 'PRODUCT_PAGE', surface: 'GIFT_LIST', celebrationId: 'c1', ctx: 'secret-ctx' } as Parameters<typeof partnerShareHref>[1]);
-    expect(shared).toBe(`/r/${ID}?destination=PRODUCT_PAGE&surface=GIFT_LIST&celebrationId=c1`);
-    expect(shared).not.toContain('ctx');
-    expect(shared).not.toContain('secret-ctx');
+  it('R6a · M-4: the DOM href NEVER carries ctx (it is a bearer: «copy link address» would hand out free clicks)', () => {
+    const ctx = 'secret-ctx';
+    render(<PartnerLink listingId={ID} destination="PRODUCT_PAGE" surface="GIFT_LIST" celebrationId="c1" ctx={ctx}>Ir</PartnerLink>);
+    const link = screen.getByRole('link', { name: 'Ir' });
+    expect(link.getAttribute('href')).toBe(`/r/${ID}?destination=PRODUCT_PAGE&surface=GIFT_LIST&celebrationId=c1`);
+    expect(link.outerHTML).not.toContain(ctx);
+    expect(link.outerHTML).not.toContain('ctx');
+  });
+  it('R6a: a plain click or Enter navigates this tab with ctx; ctrl/cmd/shift-click and middle-click open a new tab with ctx', () => {
+    const ctx = 'lead context+/=de prueba';
+    const open = vi.spyOn(window, 'open').mockReturnValue(null);
+    render(<PartnerLink listingId={ID} surface="GIFT_LIST" celebrationId="c1" ctx={ctx}>Ir</PartnerLink>);
+    const link = screen.getByRole('link', { name: 'Ir' });
+    const target = (call: number) => new URL(String(open.mock.calls[call]?.[0]), 'http://site.test');
+    expect(fireEvent.click(link)).toBe(false);
+    expect(open.mock.calls[0]?.[1]).toBe('_self');
+    expect(target(0).searchParams.get('ctx')).toBe(ctx);
+    expect(target(0).searchParams.get('celebrationId')).toBe('c1');
+    fireEvent.click(link, { ctrlKey: true });
+    fireEvent.click(link, { metaKey: true });
+    fireEvent.click(link, { shiftKey: true });
+    fireEvent(link, new MouseEvent('auxclick', { bubbles: true, cancelable: true, button: 1 }));
+    expect(open.mock.calls.slice(1).map((call) => call[1])).toEqual(['_blank', '_blank', '_blank', '_blank']);
+    expect(open.mock.calls.slice(1).map((call) => call[2])).toEqual(['noopener', 'noopener', 'noopener', 'noopener']);
+    for (let call = 1; call < 5; call += 1) expect(target(call).searchParams.get('ctx')).toBe(ctx);
+    open.mockRestore();
+  });
+  it('R6a: alt-click (download) and an already handled click are left to the browser', () => {
+    const open = vi.spyOn(window, 'open').mockReturnValue(null);
+    render(<PartnerLink listingId={ID} surface="GIFT_LIST" celebrationId="c1" ctx="tok">Ir</PartnerLink>);
+    const link = screen.getByRole('link', { name: 'Ir' });
+    fireEvent.click(link, { altKey: true });
+    expect(open).not.toHaveBeenCalled();
+    link.addEventListener('click', (event) => event.preventDefault(), { once: true });
+    fireEvent.click(link);
+    expect(open).not.toHaveBeenCalled();
+    open.mockRestore();
+  });
+  it('R6a: an auxclick that is not the middle button is ignored', () => {
+    const open = vi.spyOn(window, 'open').mockReturnValue(null);
+    render(<PartnerLink listingId={ID} surface="GIFT_LIST" celebrationId="c1" ctx="tok">Ir</PartnerLink>);
+    fireEvent(screen.getByRole('link', { name: 'Ir' }), new MouseEvent('auxclick', { bubbles: true, cancelable: true, button: 2 }));
+    expect(open).not.toHaveBeenCalled();
+    open.mockRestore();
+  });
+  it('R6a: without ctx the click is the browser default (no script navigation)', () => {
+    const open = vi.spyOn(window, 'open').mockReturnValue(null);
+    render(<PartnerLink listingId={ID} surface="GIFT_LIST">Ir</PartnerLink>);
+    const link = screen.getByRole('link', { name: 'Ir' });
+    link.addEventListener('click', (event) => event.preventDefault(), { once: true });
+    fireEvent.click(link);
+    fireEvent(link, new MouseEvent('auxclick', { bubbles: true, cancelable: true, button: 1 }));
+    expect(open).not.toHaveBeenCalled();
+    open.mockRestore();
   });
   it('has no axe violations', async () => {
     const { container } = render(<PartnerLink listingId={ID}>Abrir</PartnerLink>);

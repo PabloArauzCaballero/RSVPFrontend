@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { partnerRedirectUrl, partnerShareUrl } from "../src/platform/partner-link";
+import { partnerRedirectUrl } from "../src/platform/partner-link";
 import { publicSiteOrigin, siteOrigin } from "../src/platform/site-origin";
 import { publicUrl } from "../src/host/device-preview";
 
@@ -47,15 +47,6 @@ describe("R6a: lead context (ctx) of a celebration member", () => {
     vi.stubEnv("EXPO_PUBLIC_RSVP_ORIGIN", "https://done.bo");
     vi.stubEnv("EXPO_PUBLIC_SITE_URL", "");
     expect(partnerRedirectUrl(LISTING, { surface: "GIFT_LIST", celebrationId: "c1", ctx: null })).toBe(`https://done.bo/r/${LISTING}?surface=GIFT_LIST&celebrationId=c1`);
-    expect(partnerRedirectUrl(LISTING, { surface: "GIFT_LIST", ctx: "" })).not.toContain("ctx");
-  });
-
-  it("M-4: the link to copy or share NEVER carries ctx, even when one is passed by mistake", () => {
-    vi.stubEnv("EXPO_PUBLIC_RSVP_ORIGIN", "https://done.bo");
-    vi.stubEnv("EXPO_PUBLIC_SITE_URL", "");
-    const shared = partnerShareUrl(LISTING, { destination: "PRODUCT_PAGE", surface: "GIFT_LIST", celebrationId: "c1", ctx: "secret-ctx" } as Parameters<typeof partnerShareUrl>[1]);
-    expect(shared).toBe(`https://done.bo/r/${LISTING}?destination=PRODUCT_PAGE&surface=GIFT_LIST&celebrationId=c1`);
-    expect(shared).not.toContain("secret-ctx");
-    expect(() => partnerShareUrl("https://wa.me/591", { surface: "GIFT_LIST" })).toThrow();
+    expect(partnerRedirectUrl(LISTING, { surface: "GIFT_LIST", celebrationId: "c1", ctx: "" })).not.toContain("ctx");
   });
 });

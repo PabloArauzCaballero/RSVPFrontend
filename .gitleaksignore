@@ -1,0 +1,4 @@
+# Fixture de prueba falso con forma de JWT (no es un secreto): el commit ca4e81b0 de FE #147 lo introdujo y 9918fdfd lo corrigió en la punta.
+# No se puede reescribir el historial (sin force-push), así que se ignoran solo estos dos hallazgos por huella exacta.
+ca4e81b0516bd57ebfbbdf278c5627f436033b44:apps/seo-web/tests/gifts.test.tsx:generic-api-key:357
+ca4e81b0516bd57ebfbbdf278c5627f436033b44:apps/seo-web/tests/redirect.test.ts:generic-api-key:126

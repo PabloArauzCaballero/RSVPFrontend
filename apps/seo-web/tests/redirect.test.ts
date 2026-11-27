@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { GET } from "../app/r/[listingId]/route";
-import { correlationIdOf, resolveRedirect, SURFACES, withAttribution } from "../lib/redirect";
+import { correlationIdOf, resolveRedirect, withAttribution } from "../lib/redirect";
 import robots from "../app/robots";
 
 const LISTING = "7d1c1a34-5d4c-4a39-9a2e-0f4f2d3d7b11";
@@ -140,7 +140,6 @@ describe("REQ-F27-02/03 · /r/{listingId} redirector", () => {
   });
 
   it("R6a · PREVIEW is a known surface and is forwarded as the lead's surface", async () => {
-    expect(SURFACES).toContain("PREVIEW");
     const fetchFn = gateway(upstream302());
     await GET(new Request(`http://site.test/r/${LISTING}?surface=PREVIEW`), ctx);
     const [url] = fetchFn.mock.calls[0] as unknown as [URL];
@@ -170,6 +169,53 @@ describe("REQ-F27-02/03 · /r/{listingId} redirector", () => {
     const [url, init] = fetchFn.mock.calls[0] as unknown as [URL, RequestInit];
     expect(url.searchParams.has("sessionId")).toBe(false);
     expect(new Headers(init.headers as Record<string, string>).has("x-session-id")).toBe(false);
+  });
+
+  it("I1 · an eventType that is not a type code (lowercase, 61 characters, symbols) is dropped and the click still redirects", async () => {
+    for (const bad of ["wedding", "A".repeat(61), "WEDDING%20X", "1WEDDING", "A", "BODA%3Cscript%3E"]) {
+      const fetchFn = gateway(upstream302());
+      const response = await GET(new Request(`http://site.test/r/${LISTING}?surface=GIFT_LIST&eventType=${bad}`), ctx);
+      expect(response.status).toBe(302);
+      const [url] = fetchFn.mock.calls[0] as unknown as [URL];
+      expect(url.searchParams.has("eventType")).toBe(false);
+    }
+  });
+
+  it("I1 · the longest valid type code (60 characters) and BABY_SHOWER are forwarded", async () => {
+    for (const good of ["BABY_SHOWER", `A${"B".repeat(59)}`]) {
+      const fetchFn = gateway(upstream302());
+      await GET(new Request(`http://site.test/r/${LISTING}?surface=GIFT_LIST&eventType=${good}`), ctx);
+      const [url] = fetchFn.mock.calls[0] as unknown as [URL];
+      expect(url.searchParams.get("eventType")).toBe(good);
+    }
+  });
+
+  it("R6a · a ctx longer than 512 characters, with spaces or with control characters is dropped before calling the backend, and the click still redirects", async () => {
+    for (const bad of ["a".repeat(513), "con espacio", "tab%09", "salto%0Ade-linea", "acentuaci%C3%B3n"]) {
+      const fetchFn = gateway(upstream302());
+      const response = await GET(new Request(`http://site.test/r/${LISTING}?surface=GIFT_LIST&celebrationId=22222222-3333-4444-8555-666666666666&ctx=${bad}`), ctx);
+      expect(response.status).toBe(302);
+      expect(fetchFn).toHaveBeenCalledTimes(1);
+      const [url] = fetchFn.mock.calls[0] as unknown as [URL];
+      expect(url.searchParams.has("ctx")).toBe(false);
+      expect(url.searchParams.get("celebrationId")).toBe("22222222-3333-4444-8555-666666666666");
+    }
+  });
+
+  it("R6a · a ctx of exactly 512 characters is still forwarded", async () => {
+    const fetchFn = gateway(upstream302());
+    const token = "a".repeat(512);
+    await GET(new Request(`http://site.test/r/${LISTING}?surface=GIFT_LIST&ctx=${token}`), ctx);
+    const [url] = fetchFn.mock.calls[0] as unknown as [URL];
+    expect(url.searchParams.get("ctx")).toBe(token);
+  });
+
+  it("R6a · a 422 INVALID_LEAD_CONTEXT is NOT retried (the code is shared by sessionId, surface, celebrationId…): one backend call and the failure is reported", async () => {
+    const fetchFn = vi.fn(async () => new Response(JSON.stringify({ code: "INVALID_LEAD_CONTEXT" }), { status: 422 }));
+    vi.stubGlobal("fetch", fetchFn);
+    const response = await GET(new Request(`http://site.test/r/${LISTING}?surface=NO_EXISTE&ctx=token`), ctx);
+    expect(response.status).toBe(400);
+    expect(fetchFn).toHaveBeenCalledTimes(1);
   });
 
   it("/r/ is not indexable", () => {

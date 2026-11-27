@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, type Query } from "@tanstack/react-query";
 import { ApiError, type ApiClient } from "@rsvp/api-client";
 import { cachePolicy } from "../policy.js";
 import { queryKeys } from "../keys.js";
@@ -83,7 +83,7 @@ export function maxPriceMinor(text: string): number | undefined {
 /**
  * R6a · The lead context (`leadContext`) is signed by Gift List with a 300 s TTL (GIFT_LEAD_CONTEXT_TTL_SECONDS, default 300, 60..3600).
  * With `refreshLeadContext`, a member's list is re-read every 240 s, so the `ctx` of the links is always younger than the TTL (a stale one proves
- * nothing and the member's click is billed to the provider). Only a read that carries a context polls (guests never get one). The poll pauses in a background tab; whether focus refetches depends on the app's QueryClient (seo-web turns it off).
+ * nothing and the member's click is billed to the provider). Only a read that carries a context polls (guests never get one). The poll pauses in the background, so the query also refetches every time the tab or the app returns to the foreground (`refetchOnWindowFocus: "always"` overrides the app default, which seo-web turns off, and ignores staleTime). On Expo the foreground signal is React Query's focusManager, fed by AppState in the app providers.
  */
 export const LEAD_CONTEXT_REFRESH_MS = 240_000;
 
@@ -96,10 +96,17 @@ export interface GiftListOptions {
 }
 
 export function useGiftList(client: ApiClient, celebrationId: string | undefined, credential?: string | null, initialData?: GiftItemList, options: GiftListOptions = {}) {
+  // Documented limit: the app default is read only when it is a boolean or "always". React Query also allows a function of the query there; this repo's
+  // apps (seo-web: false, universal: unset) never use one, and the function's parameter type (Query<unknown>) cannot take a typed gift query without a cast,
+  // so a function default is treated as React Query's own default (true) for a read without a lead context.
+  const configured = useQueryClient().getDefaultOptions().queries?.refetchOnWindowFocus;
+  const appFocusDefault = typeof configured === "function" || configured === undefined ? true : configured;
   return useQuery({
     queryKey: [...queryKeys.gift.list(celebrationId ?? ""), credential === undefined ? "host" : "guest"] as const,
     queryFn: ({ signal }) => giftService(client).list(celebrationId ?? "", credential, signal),
     refetchInterval: (query) => (options.refreshLeadContext && leadContextOf(query.state.data) ? LEAD_CONTEXT_REFRESH_MS : false),
+    // Only a read that carries a context overrides the app default; any other keeps it (seo-web: off, universal: React Query's on).
+    ...(options.refreshLeadContext ? { refetchOnWindowFocus: (query: Query<GiftItemList>) => (leadContextOf(query.state.data) ? "always" as const : appFocusDefault) } : {}),
     ...cachePolicy.gift, ...(initialData ? { initialData } : {}), enabled: Boolean(celebrationId), retry: (count, error) => !(error instanceof ApiError && error.status < 500) && count < 1
   });
 }

@@ -257,7 +257,7 @@ export function GuestGiftsScreen({ slug, token, onlyItemId, onNavigate: go }: Gu
             {listingId ? contact.map((destination) => (
               <ActionButton key={destination} icon="arrow" variant="secondary"
                 label={t(destination === "WHATSAPP" ? "gifts.card.viaWhatsApp" : "gifts.guest.viaPartner")}
-                onPress={() => { void Linking.openURL(partnerRedirectUrl(listingId, { destination, surface: "GIFT_LIST", ...(celebrationId ? { celebrationId } : {}), ...(leadCtx ? { ctx: leadCtx } : {}) })); }}
+                onPress={() => { void Linking.openURL((celebrationId ? partnerRedirectUrl(listingId, { destination, surface: "GIFT_LIST", celebrationId, ctx: leadCtx }) : partnerRedirectUrl(listingId, { destination, surface: "GIFT_LIST" }))); }}
                 testID={`${destination === "WHATSAPP" ? "whatsapp" : "partner"}-${item.id}`} />
             )) : null}
             {viaOther ? <ActionButton icon="arrow" variant="secondary" label={t("gifts.card.viaOther")} onPress={() => { void Linking.openURL(viaOther); }} testID={`store-${item.id}`} /> : null}
