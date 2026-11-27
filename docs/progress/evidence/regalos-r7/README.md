@@ -1,6 +1,6 @@
 # R7 FE · «No disponible y reemplazos» (serie regalos/proveedores)
 
-Fecha: 2026-11-27. Rama `feat/regalos-r7-disponibilidad`, desde `1a419775` (punta de R5 FE). Contrato: `RSVPBackend@4977789e` (gift-list 1.19.0, provider-catalog 3.10.0).
+Fecha: 2026-11-27. Rama `feat/regalos-r7-disponibilidad`, desde `1a419775` (punta de R5 FE). Contrato: `RSVPBackend@cdfc3573` (gift-list 1.19.0, provider-catalog 3.10.0; desde la ronda 4, antes `4977789e`). Base R5 integrada por merge: `origin/feat/regalos-r5-invitado` en `12dfb4e5`.
 Niveles: ver cada fila. Nada de lo de abajo está marcado `DONE`: falta el PR, la revisión humana y la integración con Provider real y RabbitMQ.
 
 ## Qué cambia
@@ -119,4 +119,19 @@ gitleaks 8.28.0 sobre `1a419775..HEAD` (hasta el commit de código de la ronda 3
 | `corepack yarn test` | exit 0, `Tasks: 33 successful, 33 total`; universal `66` / `865`; seo-web `28` / `254`; query-hooks `20` / `240`; i18n `3` / `15` |
 | build seo-web | exit 0 |
 | `check:generated` | exit 0, `verified 8 contracts at …@4977789e7a7a` |
+| `harness:validate` | exit 0 |
+
+## Ronda 4 (merge de R5 `12dfb4e5` y contratos `@cdfc3573`)
+
+- Merge (no rebase) de `origin/feat/regalos-r5-invitado` en `12dfb4e5`. Conflictos resueltos conservando los dos lados: `guest-card.ts` (`unavailable` de R7 sobre el `heldUnits` y el botón para `SOLE` de R5; con regalo no disponible no hay botones), `ActionButton` (se tomó la versión de R5 con `accessibilityLabel`, equivalente a la mía), la tarjeta del invitado en app y web (`claimAnnouncement` de R5 + `!state.unavailable` de R7) y los generados (regenerados).
+- `chore(contracts)` aparte: `generate --ref cdfc3573`. El cambio de gift-list 1.19.0 son solo descripciones (nombre del coordinador y ronda 3 del BE): no afecta al código FE.
+- gitleaks 8.28.0 sobre `1a419775..HEAD`: `17 commits scanned. no leaks found`.
+
+| Suite | Resultado |
+|---|---|
+| `corepack yarn lint` | exit 0, `Tasks: 19 successful, 19 total` |
+| `corepack yarn typecheck` | exit 0, `Tasks: 19 successful, 19 total` |
+| `corepack yarn test` | exit 0, `Tasks: 33 successful, 33 total`; universal `66` / `872`; seo-web `28` / `260`; query-hooks `20` / `244`; i18n `3` / `15` |
+| build seo-web | exit 0 |
+| `check:generated` | exit 0, `verified 8 contracts at …@cdfc35737c75` |
 | `harness:validate` | exit 0 |
