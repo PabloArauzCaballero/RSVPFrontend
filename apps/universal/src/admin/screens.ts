@@ -8,4 +8,5 @@ export { MetricsScreen, OrganizationsScreen, UsersScreen } from "./insight";
 export { ModerationScreen, VerificationScreen } from "./queues";
 export { TemplatesAdminScreen } from "./templates";
 export { EventTypesScreen } from "./event-types";
+export { ProductsScreen } from "./products/products-screen";
 export { PartnersScreen } from "./partners/partners-screen";
