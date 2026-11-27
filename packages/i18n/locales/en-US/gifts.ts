@@ -24,6 +24,8 @@ export const giftsEnUS: DeepStrings<typeof giftsEsBO> = {
     done: { confirmedTitle: "Gift reserved", confirmedBody: "“{{title}}” is yours. Your hosts will see it on their list in a moment.", pendingTitle: "Reservation sent", pendingBody: "Your hosts approve each reservation. Meanwhile, nobody else can reserve “{{title}}”." },
     taken: { title: "Someone got there first", body: "Someone else already reserved “{{title}}”. It happens. Here are other options.", alternatives: "Other available gifts", none: "There are no available gifts left. Thank you for wanting to join them." },
     empty: { title: "No gifts yet", body: "Your hosts have not added any yet. Come back in a few days." },
+    /** R8a · gifts button on the invitation, driven by `GET /gifts/public/celebrations/{slug}/gifts/summary` (OPEN | EMPTY | CLOSED). */
+    cta: { open: "View gifts", empty: "Gift list (coming soon)", closed: "View gifts" },
     error: {
       expiredTitle: "Your link no longer works", expiredBody: "Ask whoever invited you for a new one.",
       otherTitle: "This link is for another celebration", otherBody: "Open the link you were sent for this celebration. If you cannot find it, ask whoever invited you for a new one.",
