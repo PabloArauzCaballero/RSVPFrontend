@@ -86,6 +86,13 @@ Ninguna.
 Cambios: el cambio con un toque tiene una sola rama de error (si pudo aplicarse —sin respuesta o 5xx— dice «No sabemos si el cambio se aplicó…» y el reintento repite la MISMA `Idempotency-Key`; 422 conocido, su texto; otro, `GiftErrorNotice`); la mutación del lote vive en `GiftsBody` (la clave por cuerpo sobrevive al cierre y reapertura del panel) y el panel limpia un error ajeno al abrirse; tras el cambio el foco vuelve a «Ver reemplazos» de la fila; `ActionButton` acepta `accessibilityLabel` opcional (en `apps/universal/src/host/ui.tsx`, no en `packages/ui`) y los botones «Cambiar por este: {nuevo} (reemplaza {viejo})» tienen nombre propio que empieza con el texto visible; «Ver reemplazos de la misma idea» ya no dice «3»; `.gift-row.gift-row--unavailable` conserva el padding; se quitó `gifts.guest.unavailable.label` (sin uso); la prueba de reserva propia comprueba el botón de cancelar. Pruebas nuevas: pérdida de red en el cambio con la misma clave en el reintento y una sola alerta, nombres accesibles, foco con `document.activeElement`.
 Sin cambios (decisión de Pablo): el BE oculta los UNAVAILABLE al invitado.
 
+### Ronda 3 (sobre 8cd24ae1)
+
+- El error y el estado ocupado del cambio son de la fila dueña (`swapOwner` en `GiftsBody`, fijado al llamar a `mutate`); se quitó el `reset()` al abrir, así el aviso «No sabemos si…» persiste al cerrar y reabrir. Prueba con dos filas no disponibles y dos paneles abiertos.
+- La clave de idempotencia es una por cuerpo (`createBodyKeys`, un `Map` creado en `GiftsBody`): el reintento de A repite la clave de A aunque se haya probado B en medio. `useAddGiftBatch` recibe un tercer parámetro opcional `keys`; sin él se comporta como antes (la prueba del asistente R4 sigue en verde) y `BatchKeys.reset` acepta un cuerpo opcional. Prueba unitaria de ambos.
+- Se quitó la clave muerta `error.swap.unknown`; el botón ocupado deja de llevar `accessibilityLabel` para que «Cambiando…» sea su nombre.
+- **Límite:** el retorno del foco al botón «Ver reemplazos» solo se verificó en web (jsdom con `document.activeElement`); no está verificado en iOS ni Android.
+
 ### gitleaks (binario oficial 8.28.0, descargado de GitHub releases a /var/tmp)
 
 `gitleaks git --log-opts="1a419775..HEAD" --redact -v .` → `6 commits scanned. scanned ~194215 bytes (194.21 KB) in 191ms. no leaks found`.

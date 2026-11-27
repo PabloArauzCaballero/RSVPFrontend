@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { ApiError, createApiClient, toApiError } from "@rsvp/api-client";
 import {
-  GIFT_UNAVAILABLE_REASONS, arrangeGifts, guestGiftState, isGiftUnavailable, replacementsFailure, replacementsPath, replacementsRetryable, swapEntry, swapFailureCode,
+  createBatchKeys, createBodyKeys, GIFT_UNAVAILABLE_REASONS, arrangeGifts, guestGiftState, isGiftUnavailable, replacementsFailure, replacementsPath, replacementsRetryable, swapEntry, swapFailureCode,
   unavailableReasonOf, useGiftReplacements, type GiftItem
 } from "../src/index.js";
 
@@ -154,5 +154,27 @@ describe("R7 · useGiftReplacements", () => {
     renderHook(() => useGiftReplacements(h.client, "c-1", "g-1", {}, false), { wrapper: h.wrapper });
     await new Promise((resolve) => setTimeout(resolve, 30));
     expect(h.calls).toHaveLength(0);
+  });
+});
+
+describe("R7 · createBodyKeys (one Idempotency-Key per body)", () => {
+  const a = { items: [{ productListingId: "a", giftIdeaCode: "X" }] } as never;
+  const b = { items: [{ productListingId: "b", giftIdeaCode: "X" }] } as never;
+  it("keeps A's key after B was tried, and a success forgets only that body", () => {
+    let n = 0;
+    const keys = createBodyKeys(() => `k${++n}`);
+    const first = keys(a);
+    expect(keys(b)).not.toBe(first);
+    expect(keys(a)).toBe(first);
+    keys.reset(a);
+    expect(keys(a)).not.toBe(first);
+    expect(keys(b)).toBe("k2");
+  });
+  it("the default single-body keys are unchanged: another body replaces the key", () => {
+    let n = 0;
+    const keys = createBatchKeys(() => `k${++n}`);
+    const first = keys(a);
+    keys(b);
+    expect(keys(a)).not.toBe(first);
   });
 });

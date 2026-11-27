@@ -21,8 +21,8 @@ const FAILURE_KEY = { forbidden: "forbidden", notFound: "notFound", unavailable:
 /** The batch mutation lives in the screen (not here) so its Idempotency-Key per body survives closing and reopening the panel. */
 export type SwapMutation = ReturnType<typeof useAddGiftBatch>;
 
-export function ReplacementsPanel({ celebrationId, item, eventType, content, add, onSwapped, onStore, onGone }: {
-  readonly add: SwapMutation; readonly celebrationId: string; readonly item: GiftItem; readonly eventType: string; readonly content: Readonly<Record<string, unknown>>;
+export function ReplacementsPanel({ celebrationId, item, eventType, content, add, onSwapped, onStore, onGone, owner, onOwner }: {
+  readonly add: SwapMutation; readonly owner: string | null; readonly onOwner: (itemId: string) => void; readonly celebrationId: string; readonly item: GiftItem; readonly eventType: string; readonly content: Readonly<Record<string, unknown>>;
   readonly onSwapped: (oldTitle: string, newTitle: string) => void; readonly onStore: () => void; readonly onGone: () => void;
 }): ReactNode {
   const styles = useStyles();
@@ -45,14 +45,13 @@ export function ReplacementsPanel({ celebrationId, item, eventType, content, add
   const reported = useRef(false);
   useEffect(() => { if (gone && !reported.current) { reported.current = true; onGone(); } }, [gone, onGone]);
 
-  // The mutation is shared by every panel of the screen: an error left by another row is not this panel's.
-  // Runs once, when the panel opens.
-  useEffect(() => { if (add.isError) add.reset();
-  }, []);
+  // The mutation is shared by every panel of the screen: its error and busy state belong only to the row that started the last swap.
+  const mine = owner === item.id;
 
   const swap = (replacement: GiftReplacement): void => {
     if (!ideaCode || !flight.begin()) return;
     setPicked(replacement.listingId);
+    onOwner(item.id);
     add.mutate({ items: [swapEntry(item, replacement, ideaCode)] }, {
       onSuccess: () => onSwapped(item.title, replacement.title),
       onSettled: flight.end
@@ -83,16 +82,16 @@ export function ReplacementsPanel({ celebrationId, item, eventType, content, add
     }
     return (
       <View style={{ gap: spacing[3] }}>
-        {add.isError ? <SwapError error={add.error} id={item.id} /> : null}
+        {mine && add.isError ? <SwapError error={add.error} id={item.id} /> : null}
         {options.map((option) => {
-          const busy = add.isPending && picked === option.listingId;
+          const busy = mine && add.isPending && picked === option.listingId;
           return (
             <View key={option.listingId} testID={`replacement-${item.id}-${option.listingId}`} style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: spacing[3], padding: spacing[3], borderWidth: 1, borderColor: palette.border, borderRadius: radius.md, backgroundColor: palette.surface }}>
               <View style={{ flex: 1, minWidth: 160, gap: spacing[1] }}>
                 <Text style={styles.itemTitle} numberOfLines={2}>{option.title}</Text>
                 <Text style={[styles.muted, { fontVariant: ["tabular-nums"] }]}>{t("gifts.host.replacements.price", { price: formatMinor(option.priceMinor, option.currency, locale) })}</Text>
               </View>
-              <ActionButton icon="check" variant="secondary" label={busy ? t("gifts.host.replacements.swapping") : t("gifts.host.replacements.swap")} accessibilityLabel={t("gifts.host.replacements.swapLabel", { old: item.title, new: option.title })} busy={busy} disabled={add.isPending && !busy}
+              <ActionButton icon="check" variant="secondary" label={busy ? t("gifts.host.replacements.swapping") : t("gifts.host.replacements.swap")} {...(busy ? {} : { accessibilityLabel: t("gifts.host.replacements.swapLabel", { old: item.title, new: option.title }) })} busy={busy} disabled={add.isPending && !busy}
                 onPress={() => swap(option)} testID={`swap-${item.id}-${option.listingId}`} />
             </View>
           );

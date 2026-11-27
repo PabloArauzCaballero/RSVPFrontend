@@ -122,6 +122,42 @@ describe("R7 · host list: the unavailable gift", () => {
     expect(posts[1]?.headers.get("idempotency-key")).toBe(posts[0]?.headers.get("idempotency-key"));
   });
 
+  it("two unavailable rows with both panels open: the swap error is only in the row that owns it, opening B keeps A's notice, and A's retry replays A's key after B was tried", async () => {
+    const dead2 = dead({ id: "dead2", title: "Torta rota", giftIdeaCode: "CAKE", quantity: 1, groupGiftEnabled: false });
+    const cake = { itemId: "dead2", giftIdeaCode: "CAKE", items: [{ listingId: L3, title: "Torta de chocolate", priceMinor: 15000, currency: "BOB" }] };
+    let attempts = 0;
+    const { client, calls } = fakeClient(handlers({
+      [`GET ${ITEMS}`]: () => ({ items: [dead(), dead2], partnerPriorityEnabled: true, nextCursor: null }),
+      [REPLACEMENTS]: () => OPTIONS, [`GET ${ITEMS}/dead2/replacements`]: () => cake,
+      [BATCH]: (call) => { attempts += 1; const entry = (call.body as { items: { giftIdeaCode: string }[] }).items[0]; if (attempts === 1 || entry?.giftIdeaCode === "CAKE") throw new TypeError("fetch failed"); return { items: [gift("new")], deliveryNotes: null }; }
+    }));
+    renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);
+    fireEvent.click(await screen.findByTestId("replacements-toggle-dead"));
+    fireEvent.click(await screen.findByTestId("replacements-toggle-dead2"));
+    await screen.findByTestId(`swap-dead-${L2}`);
+    await screen.findByTestId(`swap-dead2-${L3}`);
+    fireEvent.click(screen.getByTestId(`swap-dead-${L2}`));
+    await screen.findByTestId("replacements-swap-error-dead");
+    expect(screen.queryByTestId("replacements-swap-error-dead2")).toBeNull();
+    // Opening and closing B does not wipe A's notice.
+    fireEvent.click(screen.getByTestId("replacements-toggle-dead2"));
+    fireEvent.click(screen.getByTestId("replacements-toggle-dead2"));
+    await screen.findByTestId(`swap-dead2-${L3}`);
+    expect(screen.getByTestId("replacements-swap-error-dead").textContent).toMatch(/No sabemos si/);
+    expect(screen.queryByTestId("replacements-swap-error-dead2")).toBeNull();
+    // B is tried (and fails): the error moves to B only.
+    fireEvent.click(screen.getByTestId(`swap-dead2-${L3}`));
+    await screen.findByTestId("replacements-swap-error-dead2");
+    expect(screen.queryByTestId("replacements-swap-error-dead")).toBeNull();
+    // A retried after B: the same key as A's first attempt.
+    fireEvent.click(screen.getByTestId(`swap-dead-${L2}`));
+    await screen.findByTestId("gift-swapped");
+    const keys = calls.filter((call) => call.method === "POST").map((call) => call.headers.get("idempotency-key"));
+    expect(keys).toHaveLength(3);
+    expect(keys[2]).toBe(keys[0]);
+    expect(keys[1]).not.toBe(keys[0]);
+  });
+
   it("the three swap buttons have distinct accessible names that start with the visible text; the toggle too", async () => {
     const { client } = fakeClient(handlers({ [REPLACEMENTS]: () => OPTIONS }));
     renderApp(<GiftsScreen celebrationId="c-1" onNavigate={navigate} />, client);

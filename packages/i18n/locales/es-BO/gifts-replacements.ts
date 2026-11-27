@@ -28,8 +28,7 @@ export const giftsReplacementsEsBO = {
       DUPLICATE_GIFT_IDEA: "Esa idea ya tiene otro regalo en tu lista. Actualizamos la lista.",
       INVALID_QUANTITY: "La cantidad de este regalo no es válida para el nuevo producto.",
       INVALID_GIFT_IDEA: "Esa idea de regalo ya no existe.",
-      maybeApplied: "No sabemos si el cambio se aplicó. Toca otra vez el mismo producto para confirmarlo: no se agregará dos veces.",
-      unknown: "No pudimos cambiar el regalo. No se cambió nada: puedes intentarlo otra vez."
+      maybeApplied: "No sabemos si el cambio se aplicó. Toca otra vez el mismo producto para confirmarlo: no se agregará dos veces."
     }
   }
 } as const;

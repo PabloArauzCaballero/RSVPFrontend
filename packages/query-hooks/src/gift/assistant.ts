@@ -141,7 +141,18 @@ export const mayHaveBeenApplied = (error: unknown): boolean => isNoAnswer(error)
  * result), and a changed selection gets a new one (the same key with another body is 422 IDEMPOTENCY_KEY_REUSED). `reset` forgets the key once the
  * batch succeeded, so an identical body sent later is a NEW request and not a replay that creates nothing.
  */
-export type BatchKeys = ((body: GiftBatchRequest) => string) & { readonly reset: () => void };
+export type BatchKeys = ((body: GiftBatchRequest) => string) & { /** Forgets the key of a succeeded batch (`body`), or all of them when none is given. */ readonly reset: (body?: GiftBatchRequest) => void };
+/** One key PER body, kept while the screen lives: a retry of body A replays A's key even after the host tried body B in between. */
+export function createBodyKeys(newKey: () => string): BatchKeys {
+  const keys = new Map<string, string>();
+  const keyFor = (body: GiftBatchRequest): string => {
+    const signature = JSON.stringify(body);
+    let key = keys.get(signature);
+    if (!key) { key = newKey(); keys.set(signature, key); }
+    return key;
+  };
+  return Object.assign(keyFor, { reset: (body?: GiftBatchRequest): void => { if (body) keys.delete(JSON.stringify(body)); else keys.clear(); } });
+}
 export function createBatchKeys(newKey: () => string): BatchKeys {
   let signature = "";
   let key = "";

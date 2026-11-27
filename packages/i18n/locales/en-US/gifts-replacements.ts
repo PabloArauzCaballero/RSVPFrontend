@@ -31,8 +31,7 @@ export const giftsReplacementsEnUS: DeepStrings<typeof giftsReplacementsEsBO> = 
       DUPLICATE_GIFT_IDEA: "That idea already has another gift on your list. We refreshed the list.",
       INVALID_QUANTITY: "This gift's quantity is not valid for the new product.",
       INVALID_GIFT_IDEA: "That gift idea no longer exists.",
-      maybeApplied: "We do not know whether the swap was applied. Tap the same product again to confirm it: it will not be added twice.",
-      unknown: "We could not swap the gift. Nothing was changed: you can try again."
+      maybeApplied: "We do not know whether the swap was applied. Tap the same product again to confirm it: it will not be added twice."
     }
   }
 };
