@@ -265,7 +265,7 @@ body:has(.cdesign-dock) { padding-bottom: 5.5rem; }
 @media (min-width: 37.5rem) and (max-width: 56.1875rem) {
   .celebration-design .cdesign-page[data-page-kind="cover"] .cdesign-art { max-height: 13rem; width: auto; max-width: 100%; margin-inline: auto; }
 }
-/* The states of «Ver regalos» (`giftsStatus`: OPEN, EMPTY, CLOSED) change its words (`gifts.guest.cta.*`), never its weight: the button leads to /c/{slug}/regalos in every state and is a primary of the same fill as the reply (decision 8; PL-139-R2-V1). A quieter look for CLOSED would be a decision of the product owner (question 3 of the PR). */
+/* The states of «Ver regalos» (`giftsStatus`: OPEN, EMPTY, CLOSED) change its words (`celebration.gifts.cta*`), never its weight: the button leads to /c/{slug}/regalos in every state and is a primary of the same fill as the reply (decision 8; PL-139-R2-V1). A quieter look in any state would be a change to that decision, which only the product owner makes. */
 /* A photo that did not load (`Photo`): the same box on the palette's surface with the camera drawing, never a broken hole. */
 .celebration [data-photo-failed] { display: grid; place-items: center; box-sizing: border-box; background: var(--celebration-surface); border: 1px solid var(--cd-line); aspect-ratio: 4 / 3; width: 100%; overflow: clip; }
 .celebration .celebration-photo-art { display: block; width: min(40%, 6rem); height: auto; }
