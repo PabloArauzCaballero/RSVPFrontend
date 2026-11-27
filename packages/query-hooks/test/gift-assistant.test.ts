@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { ApiError, createApiClient } from "@rsvp/api-client";
 import {
-  AFFORDABLE_UNITS_PER_GUESTS, assistantApi, balanceOf, bandOf, batchFailures, createBatchKeys, defaultVariant, ideaOverlapsBand, mayHaveBeenApplied, recommendationPath, suggestGroupGift, toBatchEntry, unitPriceOf
+  AFFORDABLE_UNITS_PER_GUESTS, assistantApi, balanceOf, bandOf, batchFailures, createBatchKeys, defaultVariant, deliveryNotesProblem, notesLength, ideaOverlapsBand, mayHaveBeenApplied, recommendationPath, suggestGroupGift, toBatchEntry, unitPriceOf
 } from "../src/index.js";
 
 interface Call { readonly method: string; readonly path: string; readonly headers: Headers; readonly body: unknown }
@@ -83,6 +83,18 @@ describe("R4 · 422 of the batch: itemIndex and failures", () => {
     expect(batchFailures(error({ code: "INVALID_DELIVERY_NOTES" }))).toEqual([]);
     expect(batchFailures(new ApiError(409, "c", { title: "x", status: 409, code: "X", itemIndex: 1 }))).toEqual([]);
     expect(batchFailures(new Error("boom"))).toEqual([]);
+  });
+});
+
+describe("R4 · delivery notes, the same checks as the backend", () => {
+  it("counts code points of the trimmed, NFC text and refuses control characters but not tab or line breaks", () => {
+    expect(notesLength("  😀😀  ")).toBe(2);
+    expect(notesLength("e\u0301")).toBe(1);
+    expect(deliveryNotesProblem("😀".repeat(200))).toBeNull();
+    expect(deliveryNotesProblem("😀".repeat(201))).toBe("tooLong");
+    expect(deliveryNotesProblem("a\u0000b")).toBe("control");
+    expect(deliveryNotesProblem("a\u007fb")).toBe("control");
+    expect(deliveryNotesProblem("uno\ndos\r\n\ttres")).toBeNull();
   });
 });
 

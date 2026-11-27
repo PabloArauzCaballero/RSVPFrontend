@@ -3,13 +3,13 @@ import { Text, View } from "react-native";
 import { Enter } from "@rsvp/ui";
 import { spacing } from "@rsvp/design-tokens";
 import {
-  DELIVERY_NOTES_MAX, MAX_GIFT_QUANTITY, balanceOf, batchFailures, defaultVariant, isGiftListMissing, isIdempotencyReused, isNoAnswer, isOrderable, mayHaveBeenApplied, problemCode, suggestGroupGift, toBatchEntry, unitPriceOf,
+  DELIVERY_NOTES_MAX, MAX_GIFT_QUANTITY, deliveryNotesProblem, notesLength, balanceOf, batchFailures, defaultVariant, isGiftListMissing, isIdempotencyReused, isNoAnswer, isOrderable, mayHaveBeenApplied, problemCode, suggestGroupGift, toBatchEntry, unitPriceOf,
   useAddGiftBatch, useSetDeliveryNotes, useGiftList, useGiftRecommendations, useGuestSummary, useProviderGeo,
   type BalanceBandId, type BatchFailure, type Celebration, type GiftBatchRequest, type GiftRecommendation, type RecommendedProductCard
 } from "@rsvp/query-hooks";
 import { useApiClient, useLocale, useT } from "../../../platform/providers";
 import { useSingleFlightGate } from "../../../platform/single-flight";
-import { ActionButton, Notice, useStyles } from "../../ui";
+import { ActionButton, Field, Notice, useStyles } from "../../ui";
 import { StepProgress } from "../../step-progress";
 import { GiftErrorNotice } from "../gift-errors";
 import { celebrationCityHint } from "./city";
@@ -52,13 +52,16 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
   const [sending, setSending] = useState(false);
   const [crashed, setCrashed] = useState<unknown>(null);
   /** The gifts were added but the notes were not saved: what the host typed is kept for the retry. */
-  const [unsaved, setUnsaved] = useState<{ readonly notes: string | null; readonly code: string | undefined; readonly count: number } | null>(null);
+  const [unsaved, setUnsaved] = useState<{ readonly notes: string | null; readonly code: string | undefined; readonly count: number; /** A 4xx: the same text would fail again, so the host edits it. */ readonly definitive: boolean } | null>(null);
+  const [draft, setDraft] = useState("");
+  /** Failed attempts to save the notes: each one is a new alert for assistive technology, even with the same code. */
+  const [notesAttempts, setNotesAttempts] = useState(0);
   /**
    * A batch whose answer never arrived (no answer or 5xx) may have been applied. It is kept with a SNAPSHOT of the lines the host saw, so while nothing is
    * edited the summary, the button and the body are the same whatever the recommendations or the list do meanwhile, and the identical retry replays the same key.
    * `edited`: the host changed something since; the next «Agregar» first reads the list and only what the server does not hold goes with a new body.
    */
-  const [pending, setPending] = useState<{ readonly body: GiftBatchRequest; readonly order: readonly string[]; readonly lines: readonly SummaryLine[]; readonly edited: boolean } | null>(null);
+  const [pending, setPending] = useState<{ readonly body: GiftBatchRequest; readonly order: readonly string[]; readonly lines: readonly SummaryLine[]; readonly edited: boolean; /** Gifts of earlier requests already on the list: «Listo» counts them too. */ readonly alreadyApplied: number } | null>(null);
   const touch = (): void => setPending((current) => (current && !current.edited ? { ...current, edited: true } : current));
 
   const geo = useProviderGeo(client);
@@ -101,7 +104,7 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
   const totalMinor = lines.reduce((sum, line) => sum + line.unitMinor * line.quantity, 0);
   const savedNotes = list.data?.deliveryNotes ?? "";
   const notesValue = notes ?? savedNotes;
-  const notesTooLong = notesValue.length > DELIVERY_NOTES_MAX;
+  const notesTooLong = deliveryNotesProblem(notesValue) !== null;
   const guard = list.isError && !isGiftListMissing(list.error);
 
   const go = (next: Step): void => { if (sending) return; setMoved(true); setStep(next); };
@@ -119,8 +122,8 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
     items: entries.flatMap((entry) => { const pick = picks[entry.idea.code]; return pick ? [toBatchEntry({ ideaCode: entry.idea.code, listingId: pick.listingId, variantId: pick.variantId, quantity: pick.quantity, groupGift: pick.group })] : []; })
   });
   const finish = (count: number): void => { setPending(null); setFailed({}); setAdded(count); setTicked([]); setPicks({}); setNotes(null); setBand(null); setUnsaved(null); setStep("done"); };
-  const batchFailed = (error: unknown, batch: { readonly body: GiftBatchRequest; readonly order: readonly string[]; readonly lines: readonly SummaryLine[] }): void => {
-    setPending(mayHaveBeenApplied(error) ? { ...batch, edited: false } : null);
+  const batchFailed = (error: unknown, batch: { readonly body: GiftBatchRequest; readonly order: readonly string[]; readonly lines: readonly SummaryLine[] }, alreadyApplied: number): void => {
+    setPending(mayHaveBeenApplied(error) ? { ...batch, edited: false, alreadyApplied } : null);
     const found: readonly BatchFailure[] = batchFailures(error);
     setFailed(Object.fromEntries(found.flatMap((failure) => { const idea = batch.order[failure.itemIndex]; return idea ? [[idea, failure.code] as const] : []; })));
     // A product the catalog refused may have left the recommendation: read it again so the host never picks from a stale list.
@@ -133,7 +136,13 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
     return trimmed === serverNotes.trim() ? undefined : trimmed === "" ? null : trimmed;
   };
   const saveNotes = async (value: string | null, count: number): Promise<boolean> => {
-    try { await putNotes.mutateAsync(value); return true; } catch (error) { setAdded(count); setUnsaved({ notes: value, code: problemCode(error), count }); return false; }
+    try { await putNotes.mutateAsync(value); return true; } catch (error) {
+      setAdded(count);
+      setDraft(value ?? "");
+      setNotesAttempts((attempts) => attempts + 1);
+      setUnsaved({ notes: value, code: problemCode(error), count, definitive: !mayHaveBeenApplied(error) });
+      return false;
+    }
   };
 
   const submit = async (): Promise<void> => {
@@ -142,7 +151,7 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
     setCrashed(null);
     try {
       let serverNotes = savedNotes;
-      let applied = 0;
+      let applied = pending?.alreadyApplied ?? 0;
       let batch: { readonly body: GiftBatchRequest; readonly order: readonly string[]; readonly lines: readonly SummaryLine[] } | null;
       if (pending?.edited) {
         // The earlier request may have been applied: read the list. No list yet (404) means nothing was applied; any other failure keeps everything and shows the retry.
@@ -150,7 +159,7 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
         if (read.isError && !isGiftListMissing(read.error)) return;
         const live = new Set((read.data?.items ?? []).filter((item) => LIVE_STATUS.has(item.status)).flatMap((item) => (item.giftIdeaCode ? [item.giftIdeaCode] : [])));
         serverNotes = read.data?.deliveryNotes ?? "";
-        applied = pending.order.filter((code) => live.has(code)).length;
+        applied += pending.order.filter((code) => live.has(code)).length;
         const rest = active.filter((entry) => !live.has(entry.idea.code));
         setPending(null);
         batch = rest.length === 0 ? null : { body: bodyOf(rest), order: rest.map((entry) => entry.idea.code), lines: liveLines.filter((line) => rest.some((entry) => entry.idea.code === line.ideaCode)) };
@@ -159,7 +168,7 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
       let count = applied;
       if (batch) {
         let result: Awaited<ReturnType<typeof add.mutateAsync>>;
-        try { result = await add.mutateAsync(batch.body); } catch (error) { batchFailed(error, batch); return; }
+        try { result = await add.mutateAsync(batch.body); } catch (error) { batchFailed(error, batch, applied); return; }
         count += result.items.length;
       }
       const wanted = notesToSave(serverNotes);
@@ -176,7 +185,9 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
   const retryNotes = async (): Promise<void> => {
     if (!unsaved || !flight.begin()) return;
     setSending(true);
-    try { if (await saveNotes(unsaved.notes, unsaved.count)) finish(unsaved.count); } finally { flight.end(); setSending(false); }
+    // A refusal (4xx) is retried with the text the host edited; anything else repeats the same text.
+    const value = unsaved.definitive ? (draft.trim() === "" ? null : draft.trim()) : unsaved.notes;
+    try { if (await saveNotes(value, unsaved.count)) finish(unsaved.count); } finally { flight.end(); setSending(false); }
   };
 
   const failures = batchFailures(add.error);
@@ -187,14 +198,20 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
   const index = Math.max(0, STEPS.indexOf(step === "done" ? "summary" : step));
 
   if (unsaved) {
+    const problem = unsaved.definitive ? deliveryNotesProblem(draft) : null;
     return (
       <View style={{ gap: spacing[4] }} testID="wizard-notes-failed">
-        <Notice kind="error">
+        <Notice key={notesAttempts} kind="error">
           <StepHeading focusOnMount testID="wizard-notes-failed-title">{t("gifts.host.wizard.errors.notesUnsavedTitle", { count: unsaved.count })}</StepHeading>
-          <Text style={styles.body}>{unsaved.code === "INVALID_DELIVERY_NOTES" ? t("gifts.host.wizard.errors.invalidNotes", { max: DELIVERY_NOTES_MAX }) : t("gifts.host.wizard.errors.notesUnsaved")}</Text>
+          <Text style={styles.body} testID="wizard-notes-failed-body">{unsaved.code === "INVALID_DELIVERY_NOTES" ? t("gifts.host.wizard.errors.invalidNotes", { max: DELIVERY_NOTES_MAX }) : t("gifts.host.wizard.errors.notesUnsaved")}</Text>
         </Notice>
+        {unsaved.definitive ? (
+          <Field label={t("gifts.host.wizard.errors.notesEdit")} value={draft} onChange={(value) => { if (!sending) setDraft(value); }} multiline testID="wizard-notes-edit" editable={!sending}
+            help={t("gifts.host.wizard.summary.delivery.warning")}
+            {...(problem === "tooLong" ? { error: t("gifts.host.wizard.summary.delivery.tooLong", { count: notesLength(draft) - DELIVERY_NOTES_MAX, max: DELIVERY_NOTES_MAX }) } : problem === "control" ? { error: t("gifts.host.wizard.summary.delivery.control") } : {})} />
+        ) : null}
         <View style={styles.row}>
-          <ActionButton icon="refresh" label={sending ? t("gifts.host.wizard.summary.submitting") : t("gifts.host.wizard.errors.listRetry")} busy={sending} disabled={sending} onPress={() => { void retryNotes(); }} testID="wizard-notes-retry" />
+          <ActionButton icon={unsaved.definitive ? undefined : "refresh"} label={sending ? t("gifts.host.wizard.errors.notesSaving") : unsaved.definitive ? t("gifts.host.wizard.errors.notesSave") : t("gifts.host.wizard.errors.listRetry")} busy={sending} disabled={sending || problem !== null} onPress={() => { void retryNotes(); }} testID="wizard-notes-retry" />
           <ActionButton variant="secondary" label={t("gifts.host.wizard.summary.seeList")} onPress={onSeeList} testID="wizard-see-list" />
         </View>
       </View>
@@ -226,7 +243,7 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
           <StepHeading focusOnMount={moved} testID="wizard-step-title">{title}</StepHeading>
           {celebration.currency !== "BOB" && step !== "ideas" ? <Text style={styles.muted}>{t("gifts.host.wizard.products.currencyNote")}</Text> : null}
           {step === "ideas" ? (
-            <IdeasStep ideas={ideas} ticked={ticked} listed={settled} headline={headline} cities={cities} city={city} onCity={(slug) => { if (sending) return; touch(); setChosenCity(slug); }} band={band} onClearBand={() => setBand(null)} onToggle={toggle} onStore={onStore} onSeeList={onSeeList}
+            <IdeasStep ideas={ideas} ticked={ticked} listed={settled} headline={headline} cities={cities} city={city} onCity={(slug) => { if (sending) return; touch(); setChosenCity(slug); }} band={band} onClearBand={() => { if (!sending) setBand(null); }} onToggle={toggle} onStore={onStore} onSeeList={onSeeList}
               loading={recs.isPending} error={recs.isError} offline={isNoAnswer(recs.error)} onRetry={() => { void recs.refetch(); }} />
           ) : null}
           {step === "products" ? (
@@ -238,7 +255,7 @@ export function GiftAssistant({ celebration, eventTypeName, onSeeList, onStore }
           ) : null}
           {step === "summary" ? (
             <SummaryStep lines={lines} totalMinor={totalMinor} report={report} guests={guests} notes={notesValue} onNotes={(value) => { if (sending) return; touch(); setNotes(value); }} showCurrencyNote={celebration.currency !== "BOB"}
-              onSeeCheap={() => { setBand("b1"); go("ideas"); }} onChange={() => go("products")} />
+              onSeeCheap={() => { if (sending) return; setBand("b1"); go("ideas"); }} onChange={() => go("products")} />
           ) : null}
         </View>
       </Enter>

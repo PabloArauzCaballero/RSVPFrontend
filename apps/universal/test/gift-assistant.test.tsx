@@ -452,6 +452,67 @@ describe("R4 · retries and errors of the batch", () => {
     await waitFor(() => expect(screen.getByTestId("wizard-list-error")).not.toBe(first), { timeout: SLOW });
   });
 
+  it("A lost, edited, B lost, B repeated: «Listo» counts the gifts of both requests", async () => {
+    const srv = server();
+    let attempt = 0;
+    await toSummaryWith(srv, { [BATCH]: () => {
+      attempt += 1;
+      if (attempt === 1) { srv.state.items = [IDEA_CAKE]; throw new TypeError("fetch failed"); }
+      if (attempt === 2) throw new TypeError("fetch failed");
+      return created([IDEA_DINNER]);
+    } }, "CAKE");
+    click("wizard-submit");
+    await screen.findByTestId("wizard-submit-error");
+    click("wizard-back"); await screen.findByRole("heading", { name: /Elige un producto por idea/ });
+    click("wizard-back"); await screen.findByTestId("idea-CAKE");
+    click("idea-DINNERWARE_SET");
+    await next(/Elige un producto por idea/);
+    click("choose-vajilla");
+    await next(/Revisa tu lista/);
+    click("wizard-submit");
+    await waitFor(() => expect(attempt).toBe(2));
+    await waitFor(() => expect(screen.getByTestId("wizard-submit").getAttribute("aria-disabled")).not.toBe("true"));
+    expect(screen.getByTestId("line-DINNERWARE_SET")).toBeTruthy();
+    click("wizard-submit");
+    expect(await screen.findByTestId("wizard-done-title")).toBeTruthy();
+    expect(screen.getByTestId("wizard-done-title").textContent).toBe("Listo: agregamos 2 regalos");
+  });
+
+  it("the unconfirmed request stays retryable when its product leaves the recommendations or runs out of stock", async () => {
+    const srv = server();
+    let mode: "same" | "soldOut" | "none" = "same";
+    const soldOut = { ...RECOMMENDATIONS, items: [idea("CAKE", "Torta o repostería", [product("torta", { stock: "OUT_OF_STOCK", price: { amountMinor: 15_000, currency: "BOB" } }), product("tres-leches", { price: { amountMinor: 18_000, currency: "BOB" } })]), DINNER] };
+    const { calls, queryClient } = await lostWithClient(srv, { [BATCH]: lostFirst(srv.state, false, [IDEA_CAKE, IDEA_DINNER]), [RECS]: () => (mode === "same" ? RECOMMENDATIONS : mode === "soldOut" ? soldOut : { ...RECOMMENDATIONS, items: [] }) });
+    for (const next of ["soldOut", "none"] as const) {
+      mode = next;
+      const before = calls.filter((call) => call.path === "/providers/gift-ideas/recommendations").length;
+      await queryClient.invalidateQueries({ queryKey: ["providers"] });
+      await waitFor(() => expect(calls.filter((call) => call.path === "/providers/gift-ideas/recommendations").length).toBeGreaterThan(before));
+      expect(screen.getByTestId("wizard-submit").textContent).toBe("Agregar 2 regalos");
+      expect(screen.getByTestId("wizard-submit").getAttribute("aria-disabled")).not.toBe("true");
+    }
+    click("wizard-submit");
+    expect(await screen.findByTestId("wizard-done")).toBeTruthy();
+    const sent = calls.filter((call) => call.path === `${ITEMS}/batch`);
+    expect(JSON.stringify(sent[1]?.body)).toBe(JSON.stringify(sent[0]?.body));
+  });
+
+  it("the balance link does nothing while it sends: it neither leaves the summary nor sets the range filter", async () => {
+    let fail: (reason: unknown) => void = () => undefined;
+    const gate = new Promise((_, reject) => { fail = reject; });
+    await toSummaryWith({ handlers: { "GET /guests/celebrations/c-1/guest-summary": () => ({ celebrationId: "c-1", total: 40, confirmed: 10, declined: 0, pending: 30, companions: 0, openCompanionRequests: 0, freshness: { pendingEvents: 0 } }) } }, { [BATCH]: () => gate as never });
+    await screen.findByTestId("balance-see-cheap");
+    click("wizard-submit");
+    await waitFor(() => expect(screen.getByTestId("wizard-submit").getAttribute("aria-disabled")).toBe("true"));
+    click("balance-see-cheap");
+    expect(screen.getByTestId("wizard-submit")).toBeTruthy();
+    fail(new TypeError("fetch failed"));
+    await screen.findByTestId("wizard-submit-error");
+    click("wizard-back"); await screen.findByRole("heading", { name: /Elige un producto por idea/ });
+    click("wizard-back"); await screen.findByTestId("idea-CAKE");
+    expect(screen.queryByTestId("wizard-band-filter")).toBeNull();
+  });
+
   it("an error of the screen itself is shown, not swallowed: a generic notice and the selection stays", async () => {
     await toSummary({ [BATCH]: () => ({}) as never });
     click("wizard-submit");
@@ -709,6 +770,56 @@ describe("R4 · step 3 · balance and delivery notes", () => {
     click("wizard-submit");
     expect((await screen.findByTestId("wizard-notes-failed")).textContent).toMatch(/Revisa las indicaciones de entrega/);
     expect(screen.queryByTestId("wizard-done")).toBeNull();
+  });
+  it("422 of the PUT leaves a way out: the text is kept in an editable field, «Guardar indicaciones» sends ONLY the PUT with the new text", async () => {
+    const srv = server();
+    let puts = 0;
+    const { calls } = await toSummaryWith(srv, { [BATCH]: () => created([IDEA_CAKE, IDEA_DINNER]), [NOTES]: (call) => { puts += 1; return puts === 1 ? new HttpFailure(422, { code: "INVALID_DELIVERY_NOTES" }) as never : srv.handlers[NOTES]!(call); } });
+    fireEvent.change(screen.getByTestId("wizard-notes"), { target: { value: "Calle 5 número 12" } });
+    click("wizard-submit");
+    await screen.findByTestId("wizard-notes-failed");
+    expect((screen.getByTestId("wizard-notes-edit") as HTMLTextAreaElement).value).toBe("Calle 5 número 12");
+    expect(screen.getByTestId("wizard-notes-retry").textContent).toBe("Guardar indicaciones");
+    fireEvent.change(screen.getByTestId("wizard-notes-edit"), { target: { value: "Entregar en portería" } });
+    click("wizard-notes-retry");
+    expect(await screen.findByTestId("wizard-done-title")).toBeTruthy();
+    expect(srv.state.puts).toEqual([{ deliveryNotes: "Entregar en portería" }]);
+    expect(calls.filter((call) => call.path === `${ITEMS}/batch`)).toHaveLength(1);
+  });
+
+  it("the client checks what the backend checks: control characters and the 200 characters counted as code points", async () => {
+    await toSummaryWith(server(), { [BATCH]: () => created([IDEA_CAKE, IDEA_DINNER]) });
+    const notes = screen.getByTestId("wizard-notes");
+    // An emoji is one character for the backend (not two UTF-16 units): 200 of them are fine, 201 are not.
+    fireEvent.change(notes, { target: { value: "😀".repeat(200) } });
+    expect(screen.getByTestId("wizard-notes-counter").textContent).toBe("200 de 200 caracteres");
+    expect(screen.getByTestId("wizard-submit").getAttribute("aria-disabled")).not.toBe("true");
+    fireEvent.change(notes, { target: { value: "😀".repeat(201) } });
+    expect(screen.getByText("Quita 1 carácter: el máximo es 200.")).toBeTruthy();
+    expect(screen.getByTestId("wizard-submit").getAttribute("aria-disabled")).toBe("true");
+    fireEvent.change(notes, { target: { value: "Portón\u0007 verde" } });
+    expect(screen.getByText("Quita los caracteres de control: solo se admite texto.")).toBeTruthy();
+    expect(screen.getByTestId("wizard-submit").getAttribute("aria-disabled")).toBe("true");
+    fireEvent.change(notes, { target: { value: "Línea uno\nlínea dos\tfin" } });
+    expect(screen.getByTestId("wizard-submit").getAttribute("aria-disabled")).not.toBe("true");
+  });
+
+  it("the notice of a failed save is announced again each time, the busy label says «Guardando…» and the promise of editing later from the list is gone", async () => {
+    const srv = server();
+    let release: (value: unknown) => void = () => undefined;
+    const gate = new Promise((resolve) => { release = resolve; });
+    let puts = 0;
+    await toSummaryWith(srv, { [BATCH]: () => created([IDEA_CAKE, IDEA_DINNER]), [NOTES]: (call) => { puts += 1; if (puts <= 2) return new HttpFailure(503) as never; if (puts === 3) return gate as never; return srv.handlers[NOTES]!(call); } });
+    fireEvent.change(screen.getByTestId("wizard-notes"), { target: { value: "Portón verde" } });
+    click("wizard-submit");
+    const first = await screen.findByTestId("wizard-notes-failed-body");
+    expect(first.textContent).toBe("No se perdió nada: tus regalos ya están en la lista. Reintenta para guardar las indicaciones de entrega.");
+    fireEvent.click(screen.getByTestId("wizard-notes-retry"));
+    await waitFor(() => expect(screen.getByTestId("wizard-notes-failed-body")).not.toBe(first));
+    fireEvent.click(screen.getByTestId("wizard-notes-retry"));
+    await waitFor(() => expect(screen.getByTestId("wizard-notes-retry").getAttribute("aria-label")).toBe("Guardando…"));
+    release({ ...EMPTY_LIST });
+    expect(await screen.findByTestId("wizard-done")).toBeTruthy();
   });
 });
 

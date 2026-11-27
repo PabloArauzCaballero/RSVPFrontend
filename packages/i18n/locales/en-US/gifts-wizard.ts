@@ -42,7 +42,7 @@ export const giftsWizardEnUS: DeepStrings<typeof giftsWizardEsBO> = {
       needAffordableNone: "You have no gifts up to {{max}} and {{guests}}: add affordable ideas.",
       seeCheap: "See ideas up to {{max}}", ok: "Your list has gifts for different budgets.", noGuests: "Once you invite people, we compare your list with them.", loadingGuests: "Working it out with your guests…", guestsError: "We could not read your guests; the balance is shown without comparing."
     },
-    delivery: { label: "Delivery notes (optional)", help: "For example: “Deliver to the front desk, in the afternoon”. Your guests and the provider they message will see it.", warning: "Do not write the exact address.", counter: "{{count}} of {{max}} characters", tooLong_one: "Remove {{count}} character: the limit is {{max}}.", tooLong_other: "Remove {{count}} characters: the limit is {{max}}." },
+    delivery: { label: "Delivery notes (optional)", help: "For example: “Deliver to the front desk, in the afternoon”. Your guests and the provider they message will see it.", warning: "Do not write the exact address.", control: "Remove the control characters: only text is allowed.", counter: "{{count}} of {{max}} characters", tooLong_one: "Remove {{count}} character: the limit is {{max}}.", tooLong_other: "Remove {{count}} characters: the limit is {{max}}." },
     submit_one: "Add {{count}} gift", submit_other: "Add {{count}} gifts", submitting: "Adding…",
     doneTitle_one: "Done: we added {{count}} gift", doneTitle_other: "Done: we added {{count}} gifts", doneBody: "They are on your list and your guests will see them.", seeList: "See my list", addMore: "Add more"
   },
@@ -62,7 +62,8 @@ export const giftsWizardEnUS: DeepStrings<typeof giftsWizardEsBO> = {
     invalidNotes: "Check the delivery notes: they allow up to {{max}} characters and must not carry the exact address.",
     retryHint: "You can tap “Add” again: nothing is added twice.", offline: "No connection right now. Your selection is still here; retry when the internet is back.",
     notesUnsavedTitle_one: "We added {{count}} gift, but could not save your notes", notesUnsavedTitle_other: "We added {{count}} gifts, but could not save your notes",
-    notesUnsaved: "Nothing was lost: your gifts are already on your list. Try again to save the delivery notes, or fix them later from your list.", generic: "We could not complete that. Your selection is still here; tap “Add” again.",
+    notesSaving: "Saving…", notesEdit: "Edit delivery notes", notesSave: "Save notes",
+    notesUnsaved: "Nothing was lost: your gifts are already on your list. Try again to save the delivery notes.", generic: "We could not complete that. Your selection is still here; tap “Add” again.",
     listUnreadable: "We could not read your gift list. Without it we cannot tell what you already added.", listRetry: "Try again"
   },
   list: { quantity: "Quantity: {{count}}", group: "Can be given by several people", delivery: "Delivery notes: {{notes}}" }

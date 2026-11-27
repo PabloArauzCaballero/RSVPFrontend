@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Text, View } from "react-native";
 import { SkeletonList, useColors } from "@rsvp/ui";
 import { radius, spacing } from "@rsvp/design-tokens";
-import { BALANCE_BANDS, DELIVERY_NOTES_MAX, type BalanceBandId, type BalanceReport } from "@rsvp/query-hooks";
+import { BALANCE_BANDS, DELIVERY_NOTES_MAX, hasControlCharacters, notesLength, type BalanceBandId, type BalanceReport } from "@rsvp/query-hooks";
 import { formatBs } from "./money";
 import { useLocale, useT } from "../../../platform/providers";
 import { ActionButton, Field, Notice, useStyles } from "../../ui";
@@ -90,7 +90,7 @@ export function SummaryStep({ lines, totalMinor, report, guests, notes, onNotes,
   const styles = useStyles();
   const t = useT();
   const locale = useLocale();
-  const over = notes.length - DELIVERY_NOTES_MAX;
+  const over = notesLength(notes) - DELIVERY_NOTES_MAX;
   return (
     <View style={{ gap: spacing[6] }}>
       <Text style={styles.body}>{t("gifts.host.wizard.summary.intro")}</Text>
@@ -111,8 +111,8 @@ export function SummaryStep({ lines, totalMinor, report, guests, notes, onNotes,
       <View style={{ gap: spacing[2] }}>
         <Field label={t("gifts.host.wizard.summary.delivery.label")} value={notes} onChange={onNotes} multiline testID="wizard-notes"
           help={`${t("gifts.host.wizard.summary.delivery.help")} ${t("gifts.host.wizard.summary.delivery.warning")}`}
-          {...(over > 0 ? { error: t("gifts.host.wizard.summary.delivery.tooLong", { count: over, max: DELIVERY_NOTES_MAX }) } : {})} />
-        <Text style={styles.muted} testID="wizard-notes-counter">{t("gifts.host.wizard.summary.delivery.counter", { count: notes.length, max: DELIVERY_NOTES_MAX })}</Text>
+          {...(over > 0 ? { error: t("gifts.host.wizard.summary.delivery.tooLong", { count: over, max: DELIVERY_NOTES_MAX }) } : hasControlCharacters(notes) ? { error: t("gifts.host.wizard.summary.delivery.control") } : {})} />
+        <Text style={styles.muted} testID="wizard-notes-counter">{t("gifts.host.wizard.summary.delivery.counter", { count: notesLength(notes), max: DELIVERY_NOTES_MAX })}</Text>
       </View>
     </View>
   );

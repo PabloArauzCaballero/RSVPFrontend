@@ -40,7 +40,7 @@ export const giftsWizardEsBO = {
       needAffordableNone: "No tienes regalos hasta {{max}} y {{guests}}: agrega ideas económicas.",
       seeCheap: "Ver ideas hasta {{max}}", ok: "Tu lista tiene regalos para distintos bolsillos.", noGuests: "Cuando invites personas, comparamos tu lista con ellas.", loadingGuests: "Calculando con tus invitados…", guestsError: "No pudimos leer tus invitados; el equilibrio se muestra sin compararlos."
     },
-    delivery: { label: "Indicaciones de entrega (opcional)", help: "Por ejemplo: «Entregar en portería, por la tarde». Lo verán tus invitados y el proveedor al que le escriban.", warning: "No escribas la dirección exacta.", counter: "{{count}} de {{max}} caracteres", tooLong_one: "Quita {{count}} carácter: el máximo es {{max}}.", tooLong_other: "Quita {{count}} caracteres: el máximo es {{max}}." },
+    delivery: { label: "Indicaciones de entrega (opcional)", help: "Por ejemplo: «Entregar en portería, por la tarde». Lo verán tus invitados y el proveedor al que le escriban.", warning: "No escribas la dirección exacta.", control: "Quita los caracteres de control: solo se admite texto.", counter: "{{count}} de {{max}} caracteres", tooLong_one: "Quita {{count}} carácter: el máximo es {{max}}.", tooLong_other: "Quita {{count}} caracteres: el máximo es {{max}}." },
     submit_one: "Agregar {{count}} regalo", submit_other: "Agregar {{count}} regalos", submitting: "Agregando…",
     doneTitle_one: "Listo: agregamos {{count}} regalo", doneTitle_other: "Listo: agregamos {{count}} regalos", doneBody: "Ya están en tu lista y tus invitados los verán.", seeList: "Ver mi lista", addMore: "Agregar más"
   },
@@ -60,7 +60,8 @@ export const giftsWizardEsBO = {
     invalidNotes: "Revisa las indicaciones de entrega: admiten hasta {{max}} caracteres y no deben llevar la dirección exacta.",
     retryHint: "Puedes volver a tocar «Agregar»: no se agregará dos veces.", offline: "Sin conexión por ahora. Tu selección sigue aquí; reintenta cuando vuelva internet.",
     notesUnsavedTitle_one: "Agregamos {{count}} regalo, pero no pudimos guardar tus indicaciones", notesUnsavedTitle_other: "Agregamos {{count}} regalos, pero no pudimos guardar tus indicaciones",
-    notesUnsaved: "No se perdió nada: tus regalos ya están en la lista. Reintenta para guardar las indicaciones de entrega, o corrígelas después desde tu lista.", generic: "No pudimos completar el envío. Tu selección sigue aquí; vuelve a tocar «Agregar».",
+    notesSaving: "Guardando…", notesEdit: "Editar indicaciones de entrega", notesSave: "Guardar indicaciones",
+    notesUnsaved: "No se perdió nada: tus regalos ya están en la lista. Reintenta para guardar las indicaciones de entrega.", generic: "No pudimos completar el envío. Tu selección sigue aquí; vuelve a tocar «Agregar».",
     listUnreadable: "No pudimos leer tu lista de regalos. Sin ella no podemos saber qué ya agregaste.", listRetry: "Reintentar"
   },
   list: { quantity: "Cantidad: {{count}}", group: "Se puede regalar entre varios", delivery: "Indicaciones de entrega: {{notes}}" }
