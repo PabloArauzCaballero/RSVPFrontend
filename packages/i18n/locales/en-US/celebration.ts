@@ -10,7 +10,7 @@ export const celebrationEnUS: DeepStrings<typeof celebrationEsBO> = {
   schedule: { zoneNote: "Times are in the event's local time ({{zone}})." },
   venues: { howToGetThere: "Get directions", kind: { ceremony: "Ceremony", reception: "Reception", other: "Venue" } },
   recommendations: { view: "See option", kind: { lodging: "Lodging", transport: "Transport", other: "Recommendation" } },
-  gallery: { photo: "Photo {{n}} of {{total}}", open: "Open {{label}} full size" },
+  gallery: { photo: "Photo {{n}} of {{total}}", open: "Open {{label}} full size", enlarge: "Enlarge photo", close: "Close", previous: "Previous", next: "Next" },
   rsvp: { body: "Reply from the personal link you received with your invitation.", cta: "Reply now", findLink: "Find your personal link" },
   gifts: { intro: "Reserve a gift in one tap and nobody else will give the same one.", cta: "See gifts", ctaEmpty: "Gifts: coming soon", ctaClosed: "Gifts: list closed" },
   media: { pauseShort: "Pause", openVideo: "Watch the video", openMusic: "Listen", openMap: "Show the map", retryShort: "Try again", loading: "Loading {{provider}}…", loadFailed: "We could not load {{provider}}. Check your connection and try again.", retry: "Try again: {{title}}", playVideo: "Watch the video: {{title}}", playMusic: "Listen: {{title}}", showMap: "Show the map: {{title}}", privacy: "Tapping loads content from {{provider}}, and that site may receive data about your visit.", play: "Play {{title}}", pause: "Pause {{title}}", progress: "Progress of {{title}}", audioError: "We could not play the music. Try again." },

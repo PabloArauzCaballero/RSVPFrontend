@@ -71,7 +71,7 @@ export const hostEsBO = {
     extra: { dressCode: "Código de vestimenta", faq: "Preguntas frecuentes", question: "Pregunta", answer: "Respuesta", addFaq: "Agregar pregunta", recommendations: "Recomendaciones", recommendationName: "Nombre", recommendationDescription: "Descripción", recommendationKind: "Tipo", kinds: { lodging: "Hospedaje", transport: "Transporte", other: "Otra" }, listingId: "Código de partner (opcional)", listingHelp: "Si es un partner, su enlace pasa por nuestro redirector.", addRecommendation: "Agregar recomendación", item: "Elemento {{n}}" }
   },
   gallery: {
-    processing: "Preparando {{name}}… Aparecerá aquí cuando esté lista.", rejected: "No pudimos preparar {{name}}. Elimina esta foto e intenta subir otra.", refreshFailedTitle: "No pudimos actualizar tus fotos",
+    processing: "Preparando {{name}}… Aparecerá aquí cuando esté lista.", processingSlow: "{{name}} está tardando más de lo normal. Puedes comprobar de nuevo o eliminarla e intentar con otra foto.", checkAgain: "Comprobar de nuevo", rejected: "No pudimos preparar {{name}}. Elimina esta foto e intenta subir otra.", refreshFailedTitle: "No pudimos actualizar tus fotos",
     title: "Tus fotos", intro: "La primera es la portada. Puedes cambiarla cuando quieras.", help: "JPG, PNG o WebP, de hasta 10 MB cada una.",
     add: "Agregar foto", uploading: "Subiendo {{name}}… {{percent}} %", cover: "Portada", makeCover: "Usar como portada", delete: "Eliminar",
     emptyTitle: "Aquí van las fotos de su historia", emptyBody: "Sube la primera y será la portada de tu invitación.", loadFailedTitle: "No pudimos cargar tus fotos",

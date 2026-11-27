@@ -17,11 +17,11 @@ export type CiExtension = "LP" | "CB" | "SC" | "OR" | "PT" | "CH" | "TJ" | "BE" 
 export type KypDocumentKind = "IDENTITY" | "BUSINESS_REGISTRATION" | "TAX_ID" | "ADDRESS_PROOF" | "POWER_OF_ATTORNEY" | "BANK_CERTIFICATE" | "OTHER";
 export type DocumentReview = "PENDING" | "ACCEPTED" | "REJECTED";
 export type IntakeStatus = "OPEN" | "COMMITTED" | "DISCARDED";
-export type PartnerSort = "name" | "-createdAt" | "-updatedAt" | "kypStatus";
+export type PartnerSort = (typeof PARTNER_SORTS)[number];
 export const PARTNER_STATUSES: readonly PartnerStatus[] = ["DRAFT", "PENDING_VERIFICATION", "VERIFIED", "SUSPENDED", "REJECTED"];
 export const KYP_STATUSES: readonly KypStatus[] = ["COMPLETE", "PENDING", "EXPIRING", "EXPIRED"];
 export const PARTNER_ORIGINS: readonly PartnerOrigin[] = ["ADMIN", "SELF_SERVICE"];
-export const PARTNER_SORTS: readonly PartnerSort[] = ["name", "-createdAt", "-updatedAt", "kypStatus"];
+export const PARTNER_SORTS = ["name", "-name", "kypStatus", "-kypStatus", "createdAt", "-createdAt", "updatedAt", "-updatedAt"] as const;
 export const PARTNERS_PAGE_SIZE = 25;
 
 export interface PartnerIdentity { readonly name?: string; readonly slug?: string; readonly categoryCodes?: readonly string[]; readonly description?: string; readonly plan?: string }
@@ -97,9 +97,9 @@ export interface GeoList { readonly country?: string; readonly items: readonly G
 export interface IdentityUser { readonly id: string; readonly email: string; readonly roles: readonly string[]; readonly status: "ACTIVE" | "SUSPENDED"; readonly createdAt: string }
 
 export interface PartnerFilters {
-  readonly q?: string; readonly status?: PartnerStatus; readonly kypStatus?: KypStatus; readonly categoryCode?: string; readonly cityCode?: string;
+  readonly q?: string; readonly status?: PartnerStatus; readonly kypStatus?: KypStatus; readonly categoryCode?: string; readonly cityCode?: string; readonly zoneCode?: string;
   readonly personType?: PersonType; readonly origin?: PartnerOrigin; readonly plan?: string; readonly kypExpiringWithinDays?: number;
-  readonly createdFrom?: string; readonly createdTo?: string; readonly hasPublishedListings?: boolean; readonly sort?: PartnerSort; readonly page?: number;
+  readonly createdFrom?: string; readonly createdTo?: string; readonly hasPublishedListings?: boolean; readonly sort?: PartnerSort; readonly page?: number; readonly pageSize?: number;
 }
 
 export const partnerKeys = {
@@ -121,7 +121,7 @@ const enc = encodeURIComponent;
 const INTAKES = "/providers/admin/intakes";
 const PARTNERS = "/providers/admin/partners";
 
-/** GET /providers/admin/partners with only the filters that are set; page and pageSize always (server pagination, 25 per page). */
+/** Provider Catalog 3.4.0 applies the filters and sort before paginating the result. */
 export function adminPartnersPath(filters: PartnerFilters): string {
   const params = new URLSearchParams();
   const put = (key: string, value: string | number | boolean | undefined): void => { if (value !== undefined && value !== "") params.append(key, String(value)); };
@@ -130,6 +130,7 @@ export function adminPartnersPath(filters: PartnerFilters): string {
   put("kypStatus", filters.kypStatus);
   put("categoryCode", filters.categoryCode);
   put("cityCode", filters.cityCode);
+  put("zoneCode", filters.zoneCode);
   put("personType", filters.personType);
   put("origin", filters.origin);
   put("plan", filters.plan);
@@ -139,7 +140,7 @@ export function adminPartnersPath(filters: PartnerFilters): string {
   put("hasPublishedListings", filters.hasPublishedListings);
   put("sort", filters.sort ?? "-createdAt");
   put("page", filters.page ?? 0);
-  put("pageSize", PARTNERS_PAGE_SIZE);
+  put("pageSize", filters.pageSize ?? PARTNERS_PAGE_SIZE);
   return `${PARTNERS}?${params.toString()}`;
 }
 

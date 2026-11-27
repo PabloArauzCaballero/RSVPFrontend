@@ -351,7 +351,8 @@ export interface paths {
         post?: never;
         delete?: never;
         options?: never;
-        head?: never;
+        /** @description Not allowed. HEAD never opens a preview link, so a link previewer (chat, mail, antivirus, browser prefetch) cannot use up the single use. The link stays valid. */
+        head: operations["headHiddenAssetPreview"];
         patch?: never;
         trace?: never;
     };
@@ -1474,6 +1475,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HiddenAssetPreviewLink"];
+                };
+            };
+            /** @description `variant` is not one of the listed values */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
                 };
             };
             /** @description No valid token */
@@ -2635,6 +2645,28 @@ export interface operations {
             };
             /** @description Used, expired, forged, malformed, unknown, the file is not hidden any more or is gone: one and the same answer */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    headHiddenAssetPreview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Method not allowed; the link is not touched */
+            405: {
                 headers: {
                     [name: string]: unknown;
                 };

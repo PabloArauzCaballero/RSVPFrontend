@@ -11,10 +11,10 @@ export type { paths as TemplateMediaPaths, components as TemplateMediaComponents
 export const contractVersions = {
   "celebration": "6e928b8aef080195",
   "gateway": "1307c08dc3ff407e",
-  "gift-list": "d946e69dacc89ad6",
+  "gift-list": "2a3c5ff48eb03b06",
   "guest-rsvp": "532ec48dcd10e0c5",
   "identity": "5f2ae92b0403aee8",
   "notification": "670dd80c6c1e7fd0",
-  "provider-catalog": "174212bf43093810",
-  "template-media": "aa8c338cf5bfcef2"
+  "provider-catalog": "3ad9475fbf5ce10c",
+  "template-media": "3282cb2d184e218c"
 } as const;

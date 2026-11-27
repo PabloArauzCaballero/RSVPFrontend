@@ -338,6 +338,27 @@ describe("C12 · gallery", () => {
     fireEvent.click(await screen.findByRole("menuitem", { name: "Usar como portada" }));
     await waitFor(() => expect(calls.find((call) => call.method === "PUT")?.body).toEqual({ assetIds: ["a1", "a2"], coverAssetId: "a2" }));
   });
+
+  it("offers check-again and delete actions when a PROCESSING photo is stale and deletes it on confirm", async () => {
+    const stale = new Date(Date.now() - 10 * 60_000).toISOString();
+    let list = [
+      { id: "a1", celebrationId: "c-1", filename: "ok.jpg", contentType: "image/jpeg", sizeBytes: 100, status: "PROCESSED" as const, width: 10, height: 10, sortOrder: 0, isCover: true, variants: { thumb: "https://api.test/rsvp-media/a1-thumb.webp?X-Amz-Signature=s1" } },
+      { id: "stuck", celebrationId: "c-1", filename: "58042.jpg", contentType: "image/jpeg", sizeBytes: 6_318_943, status: "PROCESSING" as const, createdAt: stale, width: null, height: null, sortOrder: 1, isCover: false, variants: {} }
+    ];
+    const { client, calls } = fakeClient({
+      ...baseHandlers(),
+      "GET /media/celebrations/c-1/assets": () => ({ items: list }),
+      "DELETE /media/assets/stuck": () => { list = list.filter((item) => item.id !== "stuck"); return {}; }
+    });
+    renderApp(<GalleryEditorScreen celebrationId="c-1" onNavigate={navigate} pick={vi.fn()} />, client);
+    expect(await screen.findByTestId("processing-stale-stuck")).toBeTruthy();
+    expect(screen.getByText(/58042\.jpg está tardando más de lo normal/)).toBeTruthy();
+    fireEvent.click(screen.getByTestId("retry-processing-stuck"));
+    await waitFor(() => expect(calls.filter((call) => call.path === "/media/celebrations/c-1/assets").length).toBeGreaterThanOrEqual(2));
+    fireEvent.click(screen.getByTestId("delete-processing-stuck"));
+    fireEvent.click(await screen.findByTestId("confirm-delete-photo"));
+    await waitFor(() => expect(calls.some((call) => call.method === "DELETE" && call.path === "/media/assets/stuck")).toBe(true));
+  });
 });
 
 describe("C13–C16 · translations, templates, preview, publishing", () => {

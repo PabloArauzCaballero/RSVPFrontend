@@ -67,6 +67,11 @@ export const adminEsBO = {
   partners: {
     title: "Partners", intro: "Los proveedores de la plataforma. Aquí se crean, con su KYP completo, y se administran.", create: "Crear partner",
     total_one: "{{count}} partner", total_other: "{{count}} partners", unknownUser: "Cuenta no encontrada", noSlug: "Sin micrositio", ciDue: "CI vence el {{date}}", choose: "Elige una opción",
+    list: {
+      sort: "Ordenar:", updatedSort: "Última mod.", ascending: "{{column}}, ascendente", descending: "{{column}}, descendente",
+      offers_one: "{{count}} oferta", offers_other: "{{count}} ofertas", origins: { ADMIN: "Backoffice", SELF_SERVICE: "Autoservicio" },
+      created: "Alta: {{date}}", modified: "Mod: {{date}}", see: "Ver:", pageSize: "Partners por página", page: "Pág. {{page}} / {{pages}}"
+    },
     columns: { partner: "Partner", owner: "Dueño", status: "Estado", kyp: "KYP", categoryCity: "Categoría y ciudad", created: "Alta", updated: "Última modificación", origin: "Origen", listings: "Ofertas publicadas" },
     statuses: { DRAFT: "Borrador", PENDING_VERIFICATION: "En verificación", VERIFIED: "Verificado", SUSPENDED: "Suspendido", REJECTED: "Rechazado" },
     kypStatuses: { COMPLETE: "KYP completo", PENDING: "KYP pendiente", EXPIRING: "KYP por vencer", EXPIRED: "KYP vencido" },
